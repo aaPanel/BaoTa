@@ -22,7 +22,6 @@ def set_mysql_root(password):
     sql = db.Sql()
     
     root_mysql = '''#!/bin/bash
-
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 pwd=$1
