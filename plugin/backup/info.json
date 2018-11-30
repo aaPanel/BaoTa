@@ -1,0 +1,16 @@
+{
+	"title":"宝塔配置备份",
+	"tip":"lib",
+	"name":"backup",
+	"type":"系统工具",
+	"ps":"快速备份宝塔相关配置数据!",
+	"versions":"1.0",
+	"shell":"install.sh",
+	"checks":"/www/server/panel/plugin/backup/backup_main.py",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2018-11-28",
+	"default":false,
+	"display":0,
+	"api":true
+}

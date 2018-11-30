@@ -1,0 +1,366 @@
+<style>
+        .bt-box{
+            display: none;
+        }
+        .title_tip{
+            height: 40px;
+            line-height: 40px;
+            margin-bottom: 10px;
+            text-align: center;
+            margin-left: 29px;
+            font-size: 15px;
+        }
+        .title_tip  .layui-layer-ico{
+            height: 32px;
+            width: 30px;
+            left: 130px;
+            top: 16px;
+            display: inline-block;
+            position: absolute;
+        }
+        .tab_conter i{
+            font-style: inherit;
+            font-size: 13px;
+            margin:0 5px;
+			color:#f48d1c;
+        }
+        .tab_conter{
+            font-size: 13px;
+            line-height: 25px;
+        }
+        .tab_conter  .list_title{
+            margin-bottom: 5px;
+            padding: 5px 15px;
+            border-bottom: 2px solid #ececec;
+        }
+        .tab_conter .list_title span{
+            display: inline-block;
+            width: 30%;
+            text-align: left;
+        }
+        .tab_conter .list_title .list_title_state{
+            display: inline-block;
+            width: 70%;
+            text-align: right;
+        }
+        .list_conter dd{
+            padding: 5px 15px;
+        }
+        .list_conter dd span:nth-child(1){
+            display: inline-block;
+            width: 50%;
+            text-align: left;
+        }
+        .list_conter dd span:nth-child(2){
+            display: inline-block;
+            width: 50%;
+            text-align: right;
+        }
+		#backup_fix{
+  			height: 350px;
+    		overflow: auto;
+		}
+    </style>
+      <div class="pd15 layout-conter">
+        <div class="bt-box" style="display:block;">
+          <button class="btn btn-success btn-sm ml0 mlr15 add_backup">创建备份</button> <button class="btn btn-success btn-sm update_backup_event">本地文件恢复</button>
+          <div id="backup_fix" class="divtable mt10 relative">
+            <table class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0">
+              <thead><tr><th>文件名称</th><th>文件大小</th><th> 备份时间</th><th style="text-align:right;"> 操作</th></tr></thead>
+              <tbody class="backup_list"></tbody>
+            </table>
+          </div>
+			<ul class="help-info-text c7 ptb10" style="margin-top: 0px;">
+              <li>备份信息： FTP用户密码  网站配置相关信息 防火墙配置信息  面板日志信息</li>
+              <li>还原备份： 还原FTP、网站、防火墙配置和面板日志信息，如面板中已存在，则跳过此项。</li>
+            </ul>
+        </div>
+	  </div>
+    <script src="/static/js/upload.js?date=6.5.0"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            var  backup = {
+                bind:function(){
+                    var _this = this;
+                    this.get_bakcup_list();
+                    $('.backup_list').on('click','.del_backup',function(e){
+                        var  filename = $(this).attr('data-name');
+                        _this.del_bakcup(0,filename);
+                    });
+                    $('.Import_list').on('click','.del_backup',function(e){
+                        var  filename = $(this).attr('data-name');
+                        _this.del_bakcup(1,filename);
+                    });
+                    $('.backup_list').on('click','.import_file',function(e){
+                        var  filename = $(this).attr('data-name');
+                        _this.set_local_Import(filename);
+                    });
+                    $('.add_backup').unbind().click(function(e){
+                        _this.set_backup_all(function(res){
+                            if(typeof res  == 'string'){
+                                layer.msg('备份成功',{icon:1});
+                                _this.get_bakcup_list();
+                            }
+                        });
+                    });
+                    $('.update_backup_event').unbind().click(function(e){
+                        e.stopPropagation();
+                        e.preventDefault();
+                        _this.update_backup();
+                    });
+                },
+                // 创建备份
+                set_backup_all:function(callback){
+                    var  load  = layer.load();
+                    $.post('/plugin?action=a&name=backup&s=Backup_all',function(res){
+                        layer.close(load);
+                        if(callback) callback(res);
+                    });
+                },
+                // 获取备份列表
+                get_bakcup_list:function(){
+                    var load = layer.load();
+                    $.post('/plugin?action=a&name=backup&s=GetBuckup',function(res){
+                        layer.close(load);
+                        if(res.length){
+                            var conter = '';
+                            for(var i = 0; i<res.length; i++){
+                                conter += '<tr><td>'+res[i].filename +'</td><td>'+ res[i].size +'</td><td>'+ getLocalTime(res[i].time) +'</td><td style="text-align:right;"><a href="javascript:;" data-name="'+ res[i].filename  +'" class="btlink import_file">恢复备份</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="'+ res[i].download+'" class="btlink">下载</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="del_backup btlink"   data-name="'+ res[i].filename +'">删除</a></td></tr>'
+                            }
+                        }else if(res.length == 0) {
+                             conter  = '<tr ><td colspan="4">当前没有数据</td></tr>'
+                        }else{
+                            layer.msg('获取备份列表失败，请重新获取...');
+                        }
+                        $('.backup_list').html(conter);
+						setTimeout(function(){
+							tableFixed('backup_fix');
+						});
+                    });
+                },
+                // 删除备份
+                del_bakcup:function(type,filename){
+                    var obj = {};
+                    if(type == 0){
+                        obj = {
+                            tip:'该备份文件?',
+                            url:'/plugin?action=a&name=backup&s=DelFile'
+                        }
+                    }else{
+                        obj = {
+                            tip:'该导入文件?',
+                            url:'/plugin?action=a&name=backup&s=DelFile2'
+                        }
+                    }
+                    var _this = this;
+                    var confirm = layer.confirm('是否删除该<a href="javascript:;" class="btlink">&nbsp;['+ filename+']</a>&nbsp; '+ obj.tip, {title:'警告',btn: ['确定','取消'],icon:0,closeBtn:2}, function(){
+                        $.post(obj.url,{filename:filename},function(res){
+                            layer.msg(res.msg,{icon:res.status?1:0});
+                            type == 0 ? _this.get_bakcup_list() : _this.get_Import_list()
+                        });
+                    },function(){
+                        layer.close(confirm);
+                    });
+                },
+                // 上传导入本地文件
+                update_backup:function(){
+                    var _this = this;
+                    var update_layer = layer.open({
+                        type:1,
+                        closeBtn: 2,
+                        title:lan.files.up_title+'&nbsp;[仅支持zip格式上传]&nbsp;',
+                        area: ['500px','500px'], 
+                        shadeClose:false,
+                        content:'<div class="fileUploadDiv"><input type="hidden" id="input-val" value="/www/server/backup/Disposable" />\
+                                <input type="file" id="file_input" autocomplete="off" accept="aplication/zip" />\
+                                <button type="button"  id="opt" autocomplete="off">'+lan.files.up_add+'</button>\
+                                <button type="button" id="up" autocomplete="off" >'+lan.files.up_start+'</button>\
+                                <span id="totalProgress" style="position: absolute;top: 7px;right: 147px;"></span>\
+                                <span style="float:right;margin-top: 9px;">\
+                                <font>'+lan.files.up_coding+':</font>\
+                                <select id="fileCodeing" >\
+                                    <option value="byte">'+lan.files.up_bin+'</option>\
+                                </select>\
+                                </span>\
+                                <button type="button" id="filesClose" autocomplete="off" onClick="" >'+lan.public.close+'</button>\
+                                <ul id="up_box"></ul></div>'
+                        // ,cancel:function(index, layero){ 
+                        //         _this.decompress_import();
+                        //     }
+                    });
+					UploadStart(true);
+					var upbox = setInterval(function(){
+						if($("#up_box li").eq(0).find('em').html() == "已上传成功"){
+							_this.decompress_import();
+							clearInterval(upbox);
+                        	layer.close(update_layer);
+						}
+                    },100);
+                    $('#filesClose').click(function(e){
+                        layer.close(update_layer);
+						clearInterval(upbox);
+                    });
+                },
+                // 解压文件
+                decompress_import:function(){
+                    var _this = this;
+                    var  load  = layer.msg('正在恢复面板备份信息，请稍后...',{icon:16,time:0,shade: [0.3, '#000']});
+                    $.ajax({
+                        method:'post',
+                        url:'/plugin?action=a&name=backup&s=Decompression',
+                        async:false,
+                        cache:false,
+                        data:{type:'decompress'},
+                        timeout:9999999999,
+                        success:function(res){
+                            layer.close(load);
+                            _this.import_tip(res);
+                        },
+                        error:function(res){
+                            layer.close(load);
+                            layer.msg('网络错误，请稍后重试。')
+                        }
+                    });
+                },
+                // 获取导入文件列表
+                get_Import_list:function(){ 
+                    var load = layer.load();
+                    $.post('/plugin?action=a&name=backup&s=GetBackupSite',function(res){
+                        layer.close(load);
+                        if(res.length){
+                            var conter = '';
+                            for(var i = 0; i<res.length; i++){
+                                conter += '<tr><td>'+ res[i].filename +'</td><td>'+ res[i].size +'</td><td>'+ getLocalTime(res[i].time) +'</td><td style="text-align:right;"><a href="javascript:;" class="btlink import_file" data-name="'+ res[i].filename +'">恢复备份</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="del_backup btlink"   data-name="'+ res[i].filename +'">删除</a></td></tr>'
+                            }
+                        }else if(res.length == 0) {
+                             conter  = '<tr ><td colspan="4">当前没有数据</td></tr>'
+                        }else{
+                            layer.msg('获取还原文件列表失败，请重新获取...');
+                        }
+                        $('.Import_list').html(conter);
+                    });
+                },
+                // 导入本地文件
+                set_local_Import:function(fileName){
+                    var _this = this;
+                    var confirm = layer.confirm('是否恢复面板备份信息<a href="javascript:;" class="btlink">&nbsp;['+ fileName+']</a>&nbsp;?', {title:'提示',btn: ['确定','取消'],icon:0,closeBtn:2}, function(){
+                        var  load = layer.msg('正在恢复面板备份信息，请稍后...',{icon:16,time:0,shade: [0.3, '#000']});
+                        setTimeout(function(){
+                            $.ajax({
+                                method:'post',
+                                url:'/plugin?action=a&name=backup&s=LocalImport',
+                                async:false,
+                                cache:false,
+                                data:{path:fileName,type:'local'},
+                                timeout:99999999,
+                                success:function(res){
+                                    layer.close(load);
+                                    _this.import_tip(res);
+                                },
+                                error:function(res){
+                                    layer.close(load);
+                                    layer.msg('网络错误，请稍后重试。')
+                                }
+                            },100);
+                        })
+
+                    },function(){
+                        layer.close(confirm);
+                    });
+                },
+                // 导入提示
+                import_tip:function(res){
+                    if(!res.status){
+                        layer.msg(res.msg,{icon:2});
+                        return false;
+                    }
+                    var firewalld = '<dd><span>端口</span><span>状态</span></dd>',firewalld_state = '',firewallds = res.msg.firewalld,firewalld_index = 0;
+                    if(firewallds.length != 0){
+                        for(var i = 0; i < firewallds.length;i++){
+                            firewalld +=  '<dd><span>'+ firewallds[i].port +'</span><span>'+ (firewallds[i].status?'<i style="color:#20a53a">导入成功</i>':'<i>数据已存在</i>') +'</span></dd>';
+                            if(firewallds[i].status === false){
+                                firewalld_index += 1;
+                            }
+                        }
+                        console.log(firewalld_index);
+                        firewalld_state = '导入成功(<i style="color:#20a53a">'+ (firewallds.length - firewalld_index) +'</i>)个,忽略数据(<i>'+ firewalld_index +'</i>)个';
+                    }else{
+                        firewalld_state = "无数据";
+                    }
+                    var ftp = '<dd><span>FTP名称</span><span>状态</span></dd>',ftp_state = '',ftps = res.msg.ftp,ftp_index = 0;
+                    if(ftps.length != 0){
+                        for(var i = 0; i < ftps.length;i++){
+                            ftp +=  '<dd><span>'+ ftps[i].ftp_name +'</span><span>'+ (ftps[i].status?'<i style="color:#20a53a">导入成功</i>':'<i>数据已存在</i>') +'</span></dd>'
+                            if(ftps[i].status === false){
+                                ftp_index += 1;
+                            }
+                        }
+                        ftp_state = '导入成功(<i style="color:#20a53a">'+ (ftps.length - ftp_index)  +'</i>)个,忽略数据(<i>'+ ftp_index +'</i>)个';
+                    }else{
+                        ftp_state = "无数据";
+                    }
+                    var site = '<dd><span>站点名称</span><span>状态</span></dd>',site_state = '',sites = res.msg.site, site_index = 0;
+                    if(sites.length != 0){
+                        for(var i = 0; i < sites.length;i++){
+                            site +=  '<dd><span>'+ sites[i].site_name +'</span><span>'+ (sites[i].status?'<i style="color:#20a53a">导入成功</i>':'<i>数据已存在</i>') +'</span></dd>'
+                            if(sites[i].status === false){
+                                site_index += 1;
+                            }
+                        }
+                        site_state = '导入成功(<i style="color:#20a53a">'+ (sites.length - site_index)  +'</i>)个,忽略数据(<i >'+ site_index +'</i>)个';
+                    }else{
+                        site_state = "无数据";
+                    }
+                    layer.open({
+                        type:1,
+                        closeBtn: 2,
+                        title:'面板备份导入详情',
+                        area: ['450px','400px'], 
+                        shadeClose:false,
+                        content:'<div class="divtable relative mt10 details_Import pd30" style="padding: 10px 30px 15px 30px;">'+
+                            '<div class="tab_conter">'+
+                                '<div class="backup_list">'+
+                                    '<div class="list_title">'+
+                                        '<span>防火墙配置</span>'+
+                                        '<div class="list_title_state">'+ firewalld_state +'</div>'+
+                                    '</div>'+
+                                    '<dl class="list_conter">'+ firewalld +'</dl>'+
+                                '</div>' +
+                                '<div class="backup_list">'+
+                                    '<div class="list_title">'+
+                                        '<span>面板日志</span>'+
+                                        '<div class="list_title_state">'+ (res.msg.log?'<span style="color:#20a53a">导入成功</span>':'<span style="color:red">导入失败</span>')   +'</div>'+
+                                    '</div>'+
+                                    '<dl class="list_conter"></dl>'+
+                                '</div>' +
+                                '<div class="backup_list">'+
+                                    '<div class="list_title">'+
+                                        '<span>FTP</span><div class="list_title_state">' + ftp_state +'</div>'+
+                                    '</div>'+
+                                    '<dl class="list_conter">'+ ftp  +'</dl>'+
+                                '</div>' +
+                                '<div class="backup_list">'+
+                                    '<div class="list_title">'+
+                                        '<span>站点配置</span><div class="list_title_state">'+  site_state +'</div>'+
+                                    '</div>'+
+                                    '<dl class="list_conter">'+ site +'</dl>'+
+                                '</div>' +
+                            '</div>'+
+                        '</div>'
+                    });
+                    layer.msg('面板配置导入完成',{icon:1});
+                }
+            }
+            backup.bind();
+          //表格头固定
+          function tableFixed(name){
+            var tableName = document.querySelector('#'+name);
+            tableName.addEventListener('scroll',scrollHandle);
+          }
+          function scrollHandle (e){
+            var scrollTop = this.scrollTop;
+            //this.querySelector('thead').style.transform = 'translateY(' + scrollTop + 'px)';
+            $(this).find("thead").css({"transform":"translateY("+scrollTop+"px)","position":"relative","z-index":"1"});
+          }
+        });
+    </script>
