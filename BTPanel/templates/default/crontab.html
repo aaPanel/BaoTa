@@ -1,0 +1,189 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="main-content">
+    <div class="container-fluid" style="padding-bottom:54px">
+        <div class="pos-box bgw mtb15">
+            <div class="position f14 c9 pull-left">
+                <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
+            </div>
+        </div>
+        <div class="setbox bgw mtb15">
+            <div class="title c6 plr15">
+                <h3 class="f16">{{data['lan']['H3']}}</h3>
+            </div>
+            <div class="setting-con ptb20">
+                <div class="clearfix plan">
+                    <span class="typename c4 pull-left f14 text-right mr20">{{data['lan']['T1']}}</span>
+                    <div class="dropdown planjs pull-left mr20">
+                        <button class="btn btn-default dropdown-toggle" type="button" id="excode" data-toggle="dropdown" style="width:auto">
+                            <b val="toShell">{{data['lan']['TT1']}}</b>
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu" aria-labelledby="excode">
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="toShell">{{data['lan']['TT1']}}</a>
+                            </li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="site">{{data['lan']['TT2']}}</a>
+                            </li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="database">{{data['lan']['TT3']}}</a>
+                            </li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="logs">{{data['lan']['TT4']}}</a>
+                            </li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="path">备份目录</a>
+                            </li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="rememory">{{data['lan']['TT5']}}</a>
+                            </li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="toUrl">{{data['lan']['TT6']}}</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <span class="planSign"><i>*</i>{{data['lan']['PS']}}</span>
+                </div>
+                <div class="clearfix plan">
+                    <span class="typename c4 pull-left f14 text-right mr20">{{data['lan']['T2']}}</span>
+                    <div class="planname pull-left"><input type="text" name="name" class="bt-input-text"></div>
+                </div>
+                <div class="clearfix plan">
+                    <span class="typename c4 pull-left f14 text-right mr20">{{data['lan']['T3']}}</span>
+                    <div class="dropdown plancycle pull-left mr20">
+                        <button class="btn btn-default dropdown-toggle" type="button" id="cycle" data-toggle="dropdown" style="width:94px">
+                            <b val="week">{{data['lan']['TZ6']}}</b>
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu" aria-labelledby="cycle">
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="day">{{data['lan']['TZ1']}}</a>
+                            </li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="day-n">{{data['lan']['TZ2']}}</a>
+                            </li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="hour">{{data['lan']['TZ3']}}</a>
+                            </li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="hour-n">{{data['lan']['TZ4']}}</a>
+                            </li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="minute-n">{{data['lan']['TZ5']}}</a>
+                            </li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="week">{{data['lan']['TZ6']}}</a>
+                            </li>
+                            <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="month">{{data['lan']['TZ7']}}</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div id="ptime" class="pull-left">
+                        <div class="dropdown planweek pull-left mr20">
+                            <button class="btn btn-default dropdown-toggle" type="button" id="excode" data-toggle="dropdown"><b val="1">{{data['lan']['TZZ1']}}</b> <span class="caret"></span></button>
+                            <ul class="dropdown-menu" role="menu" aria-labelledby="excode">
+                                <li>
+                                    <a role="menuitem" tabindex="-1" href="javascript:;" value="1">{{data['lan']['TZZ1']}}</a>
+                                </li>
+                                <li>
+                                    <a role="menuitem" tabindex="-1" href="javascript:;" value="2">{{data['lan']['TZZ2']}}</a>
+                                </li>
+                                <li>
+                                    <a role="menuitem" tabindex="-1" href="javascript:;" value="3">{{data['lan']['TZZ3']}}</a>
+                                </li>
+                                <li>
+                                    <a role="menuitem" tabindex="-1" href="javascript:;" value="4">{{data['lan']['TZZ4']}}</a>
+                                </li>
+                                <li>
+                                    <a role="menuitem" tabindex="-1" href="javascript:;" value="5">{{data['lan']['TZZ5']}}</a>
+                                </li>
+                                <li>
+                                    <a role="menuitem" tabindex="-1" href="javascript:;" value="6">{{data['lan']['TZZ6']}}</a>
+                                </li>
+                                <li>
+                                    <a role="menuitem" tabindex="-1" href="javascript:;" value="0">{{data['lan']['TZZ7']}}</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="plan_hms pull-left mr20 bt-input-text"> <span><input type="number" name="hour" value="1" maxlength="2" max="23" min="0"></span> <span class="name">{{data['lan']['TZS1']}}</span> </div>
+                        <div class="plan_hms pull-left mr20 bt-input-text"> <span><input type="number" name="minute" value="30" maxlength="2" max="59" min="0"></span> <span class="name">{{data['lan']['TZS2']}}</span> </div>
+                    </div>
+                </div>
+                <div class="clearfix plan">
+                    <span class="typename controls c4 pull-left f14 text-right mr20">{{data['lan']['T4']}}</span>
+                    <div id="implement" style="line-height:34px"><textarea class="txtsjs bt-input-text" name="sBody"></textarea></div>
+                </div>
+                <div class="clearfix plan">
+                    <div class="bt-submit plan-submit" onclick="planAdd()">{{data['lan']['T5']}}</div>
+                </div>
+                <ul class="help-info-text c7 ptb15 mlr20">
+                    <li>当添加完备份任务，应该手动运行一次，并检查备份包是否完整</li>
+                    <li>磁盘容量不够、数据库密码错误、网络不稳定等原因，可能导致数据备份不完整</li>
+                </ul>
+            </div>
+            <form id="set-Config" action="/crontab?action=AddCrontab" enctype="multipart/form-data" method="post" style="display: none;">
+                <input type="text" name="name" value="" />
+                <input type="text" name="type" value="" />
+                <input type="number" name="where1" value="" />
+                <input type="number" name="hour" value="" />
+                <input type="number" name="minute" value="" />
+                <input type="text" name="week" value="" />
+                <input type="text" name="sType" value="" />
+                <textarea name='sBody'></textarea>
+                <input id="sFile" type="file" name="sFile" value="" />
+                <input id="sName" type="text" name="sName" value="" />
+                <input id="backupTo" type="text" name="backupTo" value="localhost" />
+                <input type="number" name="save" value="" />
+                <input type="submit" />
+            </form>
+        </div>
+        <div class="setbox bgw mtb15">
+            <div class="title c6 plr15">
+                <h3 class="f16">{{data['lan']['H4']}}</h3>
+                <span id="allDelete" style="float: right;display: none;">
+                    <button onclick="allDeleteCron();" class="btn btn-default btn-sm">{{data['lan']['BTN1']}}</button>
+                </span>
+            </div>
+            <div class="setting-con divtable pd15">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th width='30px'><input onclick="checkSelect();" type="checkbox" id="setBox"></th>
+                            <th>{{data['lan']['TH1']}}</th>
+                            <th>{{data['lan']['TH6']}}</th>
+                            <th>{{data['lan']['TH2']}}</th>
+                            <th>{{data['lan']['TH3']}}</th>
+                            <th>{{data['lan']['TH7']}}</th>
+                            <th>{{data['lan']['TH8']}}</th>
+                            <th>{{data['lan']['TH4']}}</th>
+                            <th width="190">{{data['lan']['TH5']}}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cronbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<style>
+.layer-create-content .layui-layer-content{
+    overflow: inherit;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+	<script src="/static/js/crontab.js?date=20180530"></script>
+	<script type="text/javascript">
+	    setCookie('serverType',"{{session['webserver']}}");
+		toWeek();
+		toHour();
+		toMinute();
+		toShell();
+		getCronData();
+	</script>
+{% endblock %}

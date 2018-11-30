@@ -1,0 +1,197 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="main-content">
+    <div class="container-fluid" style="padding-bottom:54px">
+        <div class="pos-box bgw mtb15">
+            <div class="position f14 c9 pull-left">
+                <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
+            </div>
+        </div>
+        <div class="clearfix bgw mtb15 pd15">
+            <div class="safe-port pull-left">
+                <div class="ss-text pull-left mr50">
+                    <em>{{data['lan']['I1']}}</em>
+                    <div class='ssh-item'>
+                        <input class='btswitch btswitch-ios' id='closePl' type='checkbox'>
+                        <label class='btswitch-btn' for='closePl' onclick='ClosePanel()'></label>
+                    </div>
+                </div>
+                <!--<div class="ss-text pull-left mr50">
+                    <em>{{data['lan']['I2']}}</em>
+                    <div class='ssh-item'>
+                        <input class='btswitch btswitch-ios' id='autoUpdate' type='checkbox' {{data['panel']['auto']}}>
+                        <label class='btswitch-btn' for='autoUpdate' onclick="SetPanelAutoUpload()"></label>
+                    </div>
+                </div>-->
+                <div class="ss-text pull-left mr50">
+                    <em class="btlink" style="color: #20a53a;" onclick="GetPanelSSL()" title="点击自定义面板证书">{{data['lan']['I3']}}</em>
+                    <div class='ssh-item'>
+                        <input class='btswitch btswitch-ios' id='panelSSL' type='checkbox'>
+                        <label class='btswitch-btn' for='panelSSL' onclick="setPanelSSL()"></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="setbox bgw mtb15">
+            <div class="title c6 plr15">
+                <h3 class="f16">{{data['lan']['C1']}}</h3>
+                <button class="btn btn-default btn-sm" style="float: right;margin-top: 10px;display: none;" onclick="apiSetup()">{{data['lan']['C2']}}</button>
+            </div>
+            <div class="info-title-tips" style="margin: 20px 30px 0px;">
+                <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span>{{data['lan']['C3']}}</p>
+            </div>
+            <div class="setting-con pd15">
+                <form id="set-Config">
+                    <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT1']}}">{{data['lan']['CT1']}}</span><input id="webname" name="webname" class="inputtxt bt-input-text" type="text" value="{{session['title']}}"><span class="set-info c7">{{data['lan']['CY1']}}</span></p>
+                    <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT2']}}">{{data['lan']['CT2']}}</span><input id="banport" name="port" class="inputtxt bt-input-text" type="number" value="{{data['panel']['port']}}" maxlength="5"><span class="set-info c7">{{data['lan']['CY2']}}</span></p>
+                    <p class="mtb15"><span class="set-tit text-right" title="管理入口路径">安全入口</span><input id="admin_path" name="admin_path" class="inputtxt bt-input-text disable" type="text" value="{{data['panel']['admin_path']}}" disabled><span class="modify btn btn-xs btn-success" onclick="modify_auth_path()">{{data['lan']['CY10']}}</span><span class="set-info c7">面板管理入口,设置后只能通过指定安全入口登录面板,如: /www_bt_cn</span></p>
+                    <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT3']}}">{{data['lan']['CT3']}}</span><input name="domain" class="inputtxt bt-input-text" type="text" value="{{data['panel']['domain']}}"><span class="set-info c7">{{data['lan']['CY3']}}</span></p>
+                    <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT4']}}">{{data['lan']['CT4']}}</span><input name="limitip" class="inputtxt bt-input-text" type="text" value="{{data['panel']['limitip']}}"><span class="set-info c7">{{data['lan']['CY4']}}</span></p>
+                    <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT5']}}">{{data['lan']['CT5']}}</span><input name="sites_path" class="inputtxt bt-input-text" type="text" value="{{data['sites_path']}}"><span class="set-info c7">{{data['lan']['CY5']}}</span></p>
+                    <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT6']}}">{{data['lan']['CT6']}}</span><input name="backup_path" class="inputtxt bt-input-text" type="text" value="{{data['backup_path']}}"><span class="set-info c7">{{data['lan']['CY6']}}</span></p>
+                    <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT7']}}">{{data['lan']['CT7']}}</span><input name="address" class="inputtxt bt-input-text" type="text" value="{{data['panel']['address']}}"><span class="set-info c7">{{data['lan']['CY7']}}</span></p>
+                    <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT8']}}">{{data['lan']['CT8']}}</span><input id="systemdate" name="systemdate" class="inputtxt bt-input-text disable" type="text" value="{{data['systemdate']}}"><span class="modify btn btn-xs btn-success" onclick="syncDate()">{{data['lan']['CY8']}}</span></p>
+                    <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT9']}}">{{data['lan']['CT9']}}</span><input name="username_" class="inputtxt bt-input-text disable" type="text" value="{{session['username']}}" disabled><span class="modify btn btn-xs btn-success" onclick="setUserName()">{{data['lan']['CY9']}}</span></p>
+                    <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT10']}}">{{data['lan']['CT10']}}</span><input name="password_" class="inputtxt bt-input-text disable" type="text" value="******" disabled><span class="modify btn btn-xs btn-success" onclick="setPassword()">{{data['lan']['CY10']}}</span></p>
+                    <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT11']}}">{{data['lan']['CT11']}}</span><input name="btusername" class="inputtxt bt-input-text disable" type="text" value="" disabled><span class="modify btn btn-xs btn-success mr5" onclick="bindBTName(2,'b')">{{data['lan']['CY11']}}</span></p>
+                    <p class="mtb15 wxapp_p"><span class="set-tit text-right">微信小程序</span><input class="inputtxt bt-input-text disable" type="text" value="{{data['wx']}}" disabled><span class="modify btn btn-xs btn-success mr5" onclick="open_wxapp()">绑定</span></p>
+                </form>
+                <div class="bt-submit set-submit">{{data['lan']['C4']}}</div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .boxConter {
+        height: 458px;
+        position: relative;
+        overflow: auto;
+    }
+
+    .iconCode {
+        padding: 50px 60px;
+    }
+
+    .box-conter {
+        width: 100%;
+    }
+
+    #QRcode {
+        margin-bottom: 25px;
+        text-align: center;
+    }
+
+    .iconCode #QRcode,
+    .iconCode .codeTip {
+        width: 100%;
+        text-align: center;
+        font-size: 17px;
+    }
+
+    .iconCode .weChatSamll img {
+        width: 100%;
+    }
+
+    .iconCode .weChatSamll {
+        display: none;
+        width: 200px;
+        height: 200px;
+        position: absolute;
+        border: 1px solid #ececec;
+        border-radius: 5px;
+        bottom: 150px;
+        right: 50px;
+        padding: 20px;
+        background-color: #fff;
+    }
+
+        .iconCode .weChatSamll:after {
+            content: '';
+            width: 15px;
+            height: 15px;
+            background: #ffffff;
+            border-bottom: 1px solid #ececec;
+            border-right: 1px solid #ececec;
+            transform: rotate(45deg);
+            position: absolute;
+            border-radius: 4px;
+            left: 90px;
+            bottom: -8px;
+        }
+
+    .iconCode .weChat {
+        margin-left: 15px;
+    }
+
+        .iconCode .weChat:hover .weChatSamll {
+            display: block;
+        }
+
+    .iconCode .QRcode {
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .codeTip ul li {
+        margin-bottom: 10px;
+    }
+
+    .personalDetails .head_img {
+        width: 50px;
+        height: 50px;
+        float: left;
+        margin-right: 30px;
+    }
+
+        .personalDetails .head_img img {
+            height: 100%;
+            border-radius: 50%;
+        }
+
+    .personalDetails .nick_name {
+        height: 50px;
+        line-height: 50px;
+        width: 148px;
+        float: left;
+        font-size: 15px;
+        color: #808080;
+    }
+
+    .personalDetails .userList {
+        height: 100%;
+    }
+
+        .personalDetails .userList .addweChat {
+            height: 50px;
+            text-align: center;
+            padding-top: 20px;
+            color: #20a53a;
+            font-size: 16px;
+        }
+
+            .personalDetails .userList .addweChat:hover {
+            }
+
+        .personalDetails .userList .item {
+            height: 70px;
+            padding: 10px 15px;
+            border: 1px solid #ececec;
+            margin: 15px 65px;
+            border-radius: 5px;
+        }
+
+        .personalDetails .userList .cancelBind {
+            height: 50px;
+            width: 60px;
+            float: right;
+            line-height: 50px;
+            text-align: center;
+        }
+</style>
+<script type="text/javascript" src="/static/js/jquery.qrcode.min.js"></script>
+<script src="/static/js/config.js?date={{g['version']}}"></script>
+<script type="text/javascript">
+	setCookie('serverType',"{{session['webserver']}}");
+</script>
+{% endblock %}

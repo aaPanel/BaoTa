@@ -1,0 +1,7 @@
+{
+	"clients": ["MicroMessenger", "Windows", "Android", "iPhone", "Mac OS X", "Edeg", "Firefox", "MSIE", "MetaSr", "360SE", "The World", "TencentTraveler", "Maxthon", "Opera", "QQBrowser", "UCWEB", "Chrome"],
+	"open": true,
+	"sites": {
+	},
+	"spiders": ["bingbot", "Sosospider", "Sosoimagespider", "Yahoo! Slurp China;", "Yahoo! Slurp;", "Sogou Pic Spider", "Sogou web spider", "Googlebot-Image", "Googlebot", "AdsBot-Google-Mobile", "Baiduspider-image", "Baiduspider-video", "Baiduspider-news", "Baiduspider-favo", "Baiduspider-cpro", "Baiduspider-mobile", "Baiduspider", "360Spider", "YoudaoBot", "YandexBot", "DNSPod-Monitor", "Yisouspider"]
+}

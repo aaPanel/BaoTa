@@ -1,0 +1,15 @@
+{
+	"title":"Linux工具箱",
+	"tip":"lib",
+	"name":"linuxsys",
+	"type":"系统工具",
+	"ps":"Linux系统工具，配置DNS、Swap、时区、IP配置、内存盘!",
+	"versions":"1.4",
+	"shell":"linuxsys.sh",
+	"checks":"/www/server/panel/plugin/linuxsys",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2018-01-22",
+	"default":false,
+	"display":1
+}

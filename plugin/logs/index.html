@@ -1,0 +1,1073 @@
+<style>
+	/*未购买企业运维版弹窗*/
+	.boxshow{
+		background-color: #fff;
+		padding: 25px 20px;
+		width: 400px;
+		height: 150px;
+	}
+	.boxtext {
+	    line-height: 32px;
+	    margin-top: -17px;
+	    text-align: center;
+	    border-bottom: #eee 1px solid;
+	    height: 39px;
+	    font-size: 14px;
+	}
+	.btvipinfo {
+	    width: 200px;
+	    float: left;
+	    padding: 5px 10px;
+	    line-height: 32px;
+	}
+	.btPayment {
+	    float: left;
+	    padding: 8px 10px;
+	    width: 190px;
+	    height: 100px;
+	    line-height: 33px;
+	    text-align: center;
+	    border-left: 1px solid #ececec;
+	}
+	.btPayment .price {
+	    color: #20A53A;
+	    font-size: 18px;
+	    margin: 0 5px;
+	}
+	.viewCut a:visited {   
+		font-size: 12px;   
+		color: #000000;   
+		text-decoration: none;   
+	}
+	.bt-border-left{
+	    border-top-left-radius: 0px;
+	    border-bottom-left-radius: 0px;
+	}
+	.bt-border-right {
+	    border-top-right-radius: 0px;
+	    border-bottom-right-radius: 0px;
+	}
+
+
+	.logsList{
+		margin-bottom: 15px !important;
+	}
+	.pull-box {
+	    overflow: hidden;
+	    margin-top: 10px;
+	}
+
+	.returnBtn img {
+	    width: 18px;
+	    margin: -2px 5px 0 0;
+	    margin-top: -2px;
+	}
+	.searcCondition{
+		margin-bottom: 15px;
+		height: 30px;
+		padding-right: 5px;
+		position: relative;
+	}
+
+	/*文字省略*/
+	.omitSize{
+		width:150px;
+		white-space:nowrap;
+		overflow:hidden;
+		display: block;
+		text-overflow:ellipsis;
+	}
+
+	.searcCondition .time .bt,
+	.searcCondition .time .et,
+	.userDefined{
+		float: left;
+		margin-right: 10px;
+	}
+	.searcCondition .time span{
+		margin-right: 5px;
+	}
+	.DomainName{
+		font-size: 14px;
+		height: 30px;
+		line-height: 30px;
+		color: #555;
+	}
+	.DomainName span{
+		float: left;
+	}
+	.traffic{
+		float: left !important;
+		border: #ddd solid 1px;
+		font-family: "Arial";
+		font-size: 14px;
+		padding: 0 11px;
+		color: #777;
+		display: inline-block;
+		height: 28px;
+		line-height: 28px;
+	}
+
+	.contentViewOne,
+	.contentViewTwo{
+		overflow: auto;
+		padding: 15px;
+	}
+
+	.echarts .btn-group{
+		position: absolute;
+		right: 35px;
+		top: 60px;
+		z-index: 999;
+	}
+	.bt-w-menu a{
+		text-decoration: none !important;
+	}
+	.wicon {
+	    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAASCAYAAABIB77kAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyFpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNS1jMDE0IDc5LjE1MTQ4MSwgMjAxMy8wMy8xMy0xMjowOToxNSAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6MTZENEZGODMwMjY4MTFFODhCQzc4RURCMEVDMDQ4QzAiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6MTZENEZGODIwMjY4MTFFODhCQzc4RURCMEVDMDQ4QzAiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIChXaW5kb3dzKSI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkU3MjNFRDU2MDI2NzExRTg5RkIzRkQ4NTNDOUJBQjU0IiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkU3MjNFRDU3MDI2NzExRTg5RkIzRkQ4NTNDOUJBQjU0Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+SPrjUwAAAI1JREFUeNpi9FgZ85+BimB72GJGfPJMDHQGTPxsIiBXMUz0nMDw9d9Pkg0A6QHpBZkBMosQYBz2QcoCCoYVAf1UMSxiQyHhOKR7ohkUFq59fI3BbGUkw63Pb8H8kPXZYAwCIDGQHEjNkPAhQ/j6gv/UAlCzGPDh0TgcjcPBH6QsH3+9YfBcFUs3CwECDADUYwQGgqAPewAAAABJRU5ErkJggg==');
+	    background-repeat: no-repeat;
+	    background-position: right center;
+	}
+</style>
+<div class="webEdit" style="display: block;">
+	<div class="bt-w-menu soft-man-menu" style="height: 758px;">
+		<p class="bgw"><a href="javascript:;" onclick="logsCheck.getSitesInfo(false)">全部站点</a></p>
+	</div>
+	<div class="contentViewOne">
+		<div class="soft-man-con relative  divtable">
+			<table class="table table-hover">
+				<thead><tr><th>站点名称</th><th>总请求</th><th>POST请求数</th><th>GET请求数</th><th>总流量</th><th>过期时间</th><th>最后请求时间</th><th>操作</th></tr></thead>
+				<tbody class="siteList"></tbody>
+			</table>
+			<div class="siteListPage page"></div>
+		</div>
+	</div>
+</div>
+<div class="viewCut" style="display: none;">
+	<div class="bt-w-menu soft-man-menu">
+		<p class="bgw"><a href="javascript:" data-type="chart">概览</a></p>
+		<p><a href="javascript:;" data-type="succeed">全部日志</a></p>
+		<p><a href="javascript:;" data-type="error">错误日志</a></p>
+		<p><a href="javascript:;" data-type="terminal">终端排行</a></p>
+		<p><a href="javascript:;" data-type="browser">浏览器排行</a></p>
+		<p><a href="javascript:;" data-type="ip">IP排行</a></p>
+		<p><a href="javascript:;" data-type="url">URL排行</a></p>
+		<p><a href="javascript:;" data-type="referer">来路排行</a></p>
+		<p><a href="javascript:;" data-type="spider">蜘蛛排行</a></p>
+	</div>
+	<div class="contentViewTwo" style="display: none;">
+		<div class="soft-man-con relative  divtable">
+			<div class="header" style="display: block;margin-bottom: 15px;">
+				<div class="pull-box" style="border-bottom: 1px solid #ececec;margin-top: 0;padding-bottom: 5px;">
+					<div class="pull-left">
+						<h3 style="" class="DomainName"></h3>
+					</div>
+					<div class="pull-right">
+						<a href="javascript:;" class="returnBtn btlink" style="height: 30px;line-height: 30px;"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAUCAYAAACTQC2+AAACSklEQVRIS7VVS3LaQBTsNxrWOCewbxB8gsiBrCMqsEiloOAEFicAn8D2CaCgUlmgFMrakMgnCL4BuQF7Rnqpp0/4FBjZRbST9Ga6p1+/HkLOx+nbZ9rSXYBbphBe+p+DRc6lcRnlKa5//VBCxH0AJaln4MprTIM8a7Oao0C1YcUFuEtEBMYchHcnBRKpCtrqA+SA8bgKjaO1dgnongwoliqMJiC6YODGa0x7IkFtVOmdDGi9Gf8hpZzxl4d5pvMGUI+YglW4evLbwTJPr/71KHaV1hMCbGb8MKFp7W5SH75vgZSYYv0wLxjkm4K5f86JMdCnUdkhRj9peOSOmz8Hh1jWRhU7/WeDUSKCvBfjb8yDVRh29p2SBESBJgA/QanWplR5JMmIKiY3diTzEkTVXfuvgZgXsFT1NUAZoZS0qFGMwNXvjZm/NUeJHDwg0DnA7rgxu897mt0655t9oY0VgFHcTJBtM1h6QISPDATGmOqu1kKIgF9JO2KJ5jLEBPLHzYfHDDRNkoCB315jerU3giQJiNBjZt7VOrN33E+mJSiOpMwIiftCcyME031us+HeG0EJo2gA0Ftm3HnNaefQwIpUhZWyAdXKzEDgjji3NiovwDT3mlPnYNalEdQD6BrAHIraHLEsOBhBibR8JwTBUZuhziQnvebszdFQzZwkUhKRXA2l57IuvU6SXjM6RLiFosujQCJZfDpL+yJN3muiPqwEm3OVC2gr6xi2JPmxjIt7Z7TkZFGC+UVAL52t+qgs/br+70DZ8DLg/gXM6UgNKh3FuQAAAABJRU5ErkJggg==">网站列表</a>
+					</div>
+				</div>			
+			</div>
+			<div class="searcCondition">
+				<div class="pull-left">
+					<div class="oneKeysearchBar">
+						<input class="searchInput bt-input-text bt-border-right" type="text" placeholder="请输入访问的IP地址" value="" style="width:150px;margin-right: -5px;outline: none;">
+						<button class="btn btn-success btn-sm bt-border-left va0 searchClick" style="margin-right:5px;">搜索</button>
+					</div>
+				</div>
+				<div class="searcTime pull-right" style="margin-top:0;">
+					<div class="btn-group pull-left" style="margin-right: 15px;">
+					  <button type="button" class="btn btn-success btn-sm" data-val="0">全部</button>
+					  <button type="button" class="btn btn-default btn-sm" data-val="-1">昨天</button>
+					  <button type="button" class="btn btn-default btn-sm" data-val="1">今天</button>
+					  <button type="button" class="btn btn-default btn-sm" data-val="7">最近7天</button>
+					  <button type="button" class="btn btn-default btn-sm" data-val="30">最近30天</button>
+					</div>
+					<div class="time pull-right">
+					    <input type="text" id="ranges01" class="bt-input-text wicon" style="min-width: 250px;padding-right: 35px;">
+					</div>
+                </div>
+			</div>
+			<table class="table table-hover logsList"></table>
+			<div class="logsListPage page"></div>
+		</div>
+	</div>
+	<div class="echarts pd15" style="float: left; display: block;">
+		<div class="header" style="display: block;margin-bottom: 15px;">
+			<div class="pull-box" style="border-bottom: 1px solid #ececec;margin-top: 0;padding-bottom: 5px;">
+				<div class="pull-left">
+					<h3 class="DomainName"><span><a href="javascript:;">日志分析-[&nbsp;dairoot.cn&nbsp;]</a></span><span>&nbsp;/&nbsp;<a href="javascript:;" onclick="logsCheck.getLineData()">概览</a></span></h3>
+				</div>
+				<div class="pull-right">
+					<a href="javascript:;" class="returnBtn btlink" style="height: 30px;line-height: 30px;"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAUCAYAAACTQC2+AAACSklEQVRIS7VVS3LaQBTsNxrWOCewbxB8gsiBrCMqsEiloOAEFicAn8D2CaCgUlmgFMrakMgnCL4BuQF7Rnqpp0/4FBjZRbST9Ga6p1+/HkLOx+nbZ9rSXYBbphBe+p+DRc6lcRnlKa5//VBCxH0AJaln4MprTIM8a7Oao0C1YcUFuEtEBMYchHcnBRKpCtrqA+SA8bgKjaO1dgnongwoliqMJiC6YODGa0x7IkFtVOmdDGi9Gf8hpZzxl4d5pvMGUI+YglW4evLbwTJPr/71KHaV1hMCbGb8MKFp7W5SH75vgZSYYv0wLxjkm4K5f86JMdCnUdkhRj9peOSOmz8Hh1jWRhU7/WeDUSKCvBfjb8yDVRh29p2SBESBJgA/QanWplR5JMmIKiY3diTzEkTVXfuvgZgXsFT1NUAZoZS0qFGMwNXvjZm/NUeJHDwg0DnA7rgxu897mt0655t9oY0VgFHcTJBtM1h6QISPDATGmOqu1kKIgF9JO2KJ5jLEBPLHzYfHDDRNkoCB315jerU3giQJiNBjZt7VOrN33E+mJSiOpMwIiftCcyME031us+HeG0EJo2gA0Ftm3HnNaefQwIpUhZWyAdXKzEDgjji3NiovwDT3mlPnYNalEdQD6BrAHIraHLEsOBhBibR8JwTBUZuhziQnvebszdFQzZwkUhKRXA2l57IuvU6SXjM6RLiFosujQCJZfDpL+yJN3muiPqwEm3OVC2gr6xi2JPmxjIt7Z7TkZFGC+UVAL52t+qgs/br+70DZ8DLg/gXM6UgNKh3FuQAAAABJRU5ErkJggg==">网站列表</a>
+				</div>
+			</div>
+			<div class="pull-box btn-group pull-right">
+				<button type="button" class="btn btn-success btn-sm" data-val="0">全部</button>
+				<button type="button" class="btn btn-default btn-sm" data-val="-1">昨天</button>
+				<button type="button" class="btn btn-default btn-sm" data-val="1">今天</button>
+				<button type="button" class="btn btn-default btn-sm" data-val="7">最近7天</button>
+				<button type="button" class="btn btn-default btn-sm" data-val="30">最近30天</button>
+			</div>
+			<div class="pull-box pull-left"><a href="javascript:;" class="btn btn-success btn-sm" onclick="logsCheck.refreshContent()" style="position: absolute;top: 70px;z-index: 999;">立即刷新</a></div>
+		</div>
+		<div id="echarts" style="width: 1060px; height: 350px;"></div>
+		<div id="echarts1" style="width: 530px; height: 300px; clear: both; display: inline-block; float: left;"></div>
+		<div id="echarts2" style="width: 510px; height: 300px; clear: both; display: inline-block; margin-right: 20px;"></div>
+	</div>
+</div>
+<script type="text/javascript" src="/static/js/echarts.min.js"></script>
+<script type="javascript/text">
+		var logsCheck = {
+			siteName:'',
+			startTime:'',
+			tableName:'',
+			endTime:'',
+			siteList:[],
+			sitePage:'',
+			logsList:[],
+			logsPageList:'',
+			logsPage:'',
+			methodName:'',
+			yunweiPay:true,
+			typeName:'',
+			typeTitle:'',
+			typeValue:'',
+			condition:false,
+			requestUrl:'',
+			isLogins:false,
+			// 初始化
+			initialize(){
+				$('.layui-layer-page').width(1200);
+				$('.layui-layer-page').height(800);
+				$('.bt-w-menu').height(799 - $('.layui-layer-title').height())
+				var width = $(document).width();
+				var height = $(document).height();
+				var boxwidth =  (width / 2) - 600;
+				var boxheight =  (height / 2) - 400;
+				$('.layui-layer-page').css({
+					'left': boxwidth + 'px',
+					'top': boxheight +'px'
+				});
+				this.isLogins = true;
+				this.getSitesInfo();
+			},
+			// 获取站点列表
+			getSitesInfo(status){
+				var _this = this;
+				layer.closeAll('dialog');
+				if (!status) this.sitePage = '';
+				this.isLogins = false;
+				$.get('/plugin?action=a&s=isRuning&name=logs',function(data){
+					if (data.status) {
+						layer.msg('正在分析数据中,请稍后...',{time:0,shade: [0.4,'#fff'],icon:16});
+						if (this.sitePage == undefined) this.sitePage = ''
+						$.post('/plugin?action=a&name=logs&s=getSitesInfo&p=1&row=20' + this.sitePage,function(data){
+							layer.closeAll('dialog');
+							if (!data.status && data.status != undefined){
+								layer.msg(data.msg,{icon:0,time:5000});
+								return false;
+							}
+							var datas = data.data;
+							var domList = '';
+							_this.siteList = datas;
+							for (var i = 0; i < datas.length; i++) {
+								var  total_size = '', expiredtime = '',lasttime = '';
+								expiredtime  = datas[i].expiredtime / 3600 / 24;
+								lasttime = _this.formatDateTime(datas[i].lasttime);
+								domList += '<tr>\
+											<td><a href="javascript:;" onclick="logsCheck.detectionPay('+i+')" class="btlink" title="日志分析">'+ datas[i].site +'</a></td>\
+											<td>'+ datas[i].access_num +'</td>\
+											<td>'+ datas[i].post_num +'</td>\
+											<td>'+ datas[i].get_num +'</td>\
+											<td>'+ _this.flowFormat(datas[i].total_size) +'</td>\
+											<td><a href="javascript:;" class="btlink" onclick="logsCheck.saveLogTime('+i+')"><span>'+ expiredtime +'</span>天<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAABF0lEQVQ4T72UP07DMBSHf88LYis3eJyAjHWmcoMyQopabgA34AZwg4JoYKQ3aKekG71B3xHCwsBgIxdVaiCOEymq12d/+t4/Ezo+1DEPhwHyNOrh6PisZG/pU5JsHcronyHP9C2IHioffn+dyM26cDGe6ScQiSTZ/f7dEpDf+gyjNrD2Tkb5o8/mF4YhQIO/1mXgS38ApRaSZN7a1sGcQCtgCNYK2ATWGOiDcaoLKBvJ5Up29Q6mXGfGaWxhzLlcr5aNgJxq1+lJVTe3o9MeGLsZm/sGujUwtBVhYBpHAD5A9kKu8nkdkF/1EJbeocyptyl7KzUO2W3j1j7LKJ94V28XYGdqTK8WqlRRVdvDfF+N0vVc6tzwBy9OnxWTtDIsAAAAAElFTkSuQmCC" style="position: relative;top: -1px;"></a></td><td>'+ lasttime +'</td><td><a href="javascript:;" onclick="logsCheck.detectionPay('+i+');" title="日志分析" class="btlink '+_this.pay+'">日志分析</td>\
+											</tr>'
+							}
+							var page = data.page;
+							$('.siteList').empty().append(domList)
+							$('.siteListPage').empty().append(page);
+						});
+					}else{
+						layer.msg(data.msg,{icon:16,time:0});
+						if (isLogins) {
+							setTimeout(function(){
+								_this.getSitesInfo();
+								$('.layui-layer-dialog .layui-layer-content').empty().append('<i class="layui-layer-ico layui-layer-ico16"></i>' + data.msg);
+							},30000);
+						}
+					}
+				});
+			},
+			// 获取成功日志(完成)
+			getSucceedLogs(){
+				var _this = this;
+				var time = ''
+				$('.DomainName').find('span').eq(2).remove();
+				this.startTime == ''?time = '':time = '&start=' + this.startTime+'&end=' + this.endTime;
+				this.requestUrl = '/plugin?action=a&name=logs&s=getNormalLog&row=15&site='+ this.siteName + this.logsPage + time
+				this.methodName = 'getSucceedLogs';
+				this.listAjax(this.requestUrl,function(){
+					DomList = '<thead><tr><th>访问IP地址</th><th>响应状态</th><th width="200">URL</th><th>响应大小</th><th>Referer来源</th><th>终端类型</th><th>浏览器类型</th><th>搜索引擎</th><th>请求时间</th></tr></thead><tbody>';
+					for (var i = 0; i < _this.logsList.length; i++) {
+						var logtime = _this.formatDateTime(_this.logsList[i].logtime);
+						DomList += '<tr>\
+										<td><a class="btlink" onclick="logsCheck.logsBytype(\'ip\',\''+ _this.logsList[i].ip +'\')">'+_this.logsList[i].ip+'</a></td>\
+										<td><a class="btlink" onclick="logsCheck.logsBytype(\'status\',\''+ _this.logsList[i].status +'\')">'+_this.logsList[i].status+'</a></td>\
+										<td><a class="btlink omitSize" title="'+ _this.logsList[i].url +'" onclick="logsCheck.logsBytype(\'url\',\''+ _this.logsList[i].url +'\')">'+_this.logsList[i].url+'</a></td>\
+										<td>'+_this.flowFormat(_this.logsList[i].size)+'</td>\
+										<td><a class="btlink omitSize" title="'+ _this.logsList[i].referer +'" onclick="logsCheck.logsBytype(\'referer\',\''+ escape(_this.logsList[i].referer) +'\')">'+_this.logsList[i].referer+'</a></td>\
+										<td><a class="btlink" title="'+ _this.logsList[i].terminal +'" onclick="logsCheck.logsBytype(\'terminal\',\''+ escape(_this.logsList[i].terminal) +'\')">'+_this.logsList[i].terminal+'</a></td>\
+										<td><a class="btlink" title="'+ _this.logsList[i].url +'" onclick="logsCheck.logsBytype(\'browser\',\''+_this.logsList[i].browser+'\')">'+_this.logsList[i].browser+'</a></td>\
+										<td><a class="btlink" onclick="logsCheck.logsBytype(\'spider\',\''+_this.logsList[i].spider+'\')">'+_this.logsList[i].spider+'</a></td>\
+										<td>'+logtime+'</td>\
+									</tr>'
+					}
+					DomList+='</today>';
+					$('.logsList').empty().append(DomList);
+					$('.logsListPage').empty().append(_this.logsPageList);
+				});
+			},
+			// 获取错误日志
+			getErrorLogs(){
+				var _this = this;
+				var time = '';
+				this.startTime == ''?time = '':time = '&start=' + this.startTime+'&end=' + this.endTime;
+				this.requestUrl = '/plugin?action=a&name=logs&s=getErrorLog&row=15&site='+ this.siteName + this.logsPage + time;
+				this.methodName = 'getErrorLogs';
+				this.listAjax(this.requestUrl,function(){
+					DomList = '<thead>\
+									<tr><th>错误编号</th><th>错误等级</th><th>错误信息</th><th>请求时间</th></tr>\
+									</thead><tbody>';
+					for (var i = 0; i < _this.logsList.length; i++) {
+						DomList += '<tr><td>'+_this.logsList[i].errorid+'</td><td>'+_this.logsList[i].level+'</td><td><span class="omitSize" style="width:700px" title="'+_this.logsList[i].errorinfo+'">'+_this.logsList[i].errorinfo+'</span></td><td>'+_this.formatDateTime(_this.logsList[i].logtime)+'</td></tr>'
+					}
+					DomList+='</today>'
+					$('.logsList').empty().append(DomList);
+					$('.logsListPage').empty().append(_this.logsPageList);
+				});
+			},
+			// 获取各类型的统计数据
+			getStatistics(){
+				var _this = this;
+				var time = '';
+				this.tableName = 'normallog';
+				this.startTime == ''?time = '':time = '&start=' + this.startTime+'&end=' + this.endTime;
+				if (this.typeName == 'terminal' || this.typeName == 'browser' || this.typeName == 'spider'){
+					this.requestUrl = '/plugin?action=a&s=getLogsGroupByType&name=logs&type='+ this.typeName +'&row=15&table='+ this.tableName +'&site=' + this.siteName + time + this.logsPage;
+					$('.searcTime button:eq(2)').show();
+				}else{
+					this.requestUrl = '/plugin?action=a&s=getLogsGroupByTypePage&name=logs&type='+ this.typeName +'&row=15&table='+ this.tableName +'&site=' + this.siteName + time + this.logsPage;
+					$('.searcTime button:eq(2)').hide();
+				}
+				this.listAjax(_this.requestUrl,function(data){
+					switch (_this.typeName){
+						case 'terminal':
+							_this.typeTitle = "终端设备"
+						break;
+						case 'browser':
+							_this.typeTitle = "浏览器类型"
+						break;
+						case 'ip':
+							_this.typeTitle = "IP地址"
+						break;
+						case 'url':
+							_this.typeTitle = "URL地址"
+						break;
+						case 'referer':
+							_this.typeTitle = "来路地址"
+						break;
+						case 'spider':
+							_this.typeTitle = "蜘蛛类型"
+						break;
+					}
+					DomList = '<thead><tr><th>'+ _this.typeTitle +'</th><th>请求数</th></tr></thead><tbody>';
+					for (var i = 0; i < _this.logsList.length; i++) {
+						DomList +='<td><a class="btlink omitSize" style="width:800px" data-type="'+ _this.typeName +'" title="点击查看当前类型详细数据">'+ _this.logsList[i][logsCheck.typeName] +'</a></td><td>'+_this.logsList[i].num+'</td></tr>';
+					}
+					DomList+='</today>'
+					$('.logsList').empty().append(DomList);
+					$('.logsListPage').empty().append(_this.logsPageList);
+				});
+			},
+			// 判断类型
+			judgeTypeName(status){
+				if(status == true){
+					this.condition = false;
+					$('.viewCut .bgw a').click();
+				}
+				if (this.condition){
+					this.logsBytype();
+				}else{
+					switch(this.typeName){
+						case 'chart':
+							this.getLineData();
+							$('.searcTime button:eq(2)').show();
+						break;
+						case 'succeed':
+							this.getSucceedLogs();
+							$('.searcTime button:eq(2)').show();
+						break;
+						case 'error':
+							this.getErrorLogs();
+							$('.searcTime button:eq(2)').show();
+						break;
+						default:
+							this.getStatistics();
+						break;
+					}
+				}
+			},
+			// 列表ajax
+			listAjax(reqUrl,Callback){
+				var _this = this;
+				layer.msg('正在分析数据中,请稍后...',{time:0,shade: [0.4,'#fff'],icon:16});
+				$.post(reqUrl,function(data){
+					var DomList = '';
+					_this.logsList = data.data;
+					layer.closeAll('dialog');
+					if (data.table != undefined){_this.tableName = data.table;}else{_this.tableName = 'normallog'}
+					if (data.page != undefined){_this.logsPageList = data.page;}else{_this.logsPageList = ''}
+					Callback(data);
+				}).error(function(error) {
+					if (error != 200) {
+						layer.closeAll('dialog');
+						layer.msg(error.statusText+','+ error.statusCode.name+':'+error.status,{time:6000});
+					}
+				});
+			},
+			// 查询
+			logsBytype(type,value){
+				var _this = this;
+				var time = ''
+				if (type != undefined) {
+					this.typeName = type;
+					this.typeValue = value;
+					this.logsPage = '';
+				}
+				if ($('.contentViewTwo .DomainName').find('span').eq(2).length == 0){
+					$('.contentViewTwo .DomainName').append('<span class="omitSize" style="width:250px;" title="'+ unescape(this.typeValue)+ '">&nbsp;/&nbsp;搜索条件:\''+ unescape(this.typeValue) +'\'</span>')
+				}else{
+					$('.contentViewTwo .DomainName').find('span').eq(2).html('&nbsp;/&nbsp;搜索条件:\''+ unescape(this.typeValue) + '\'').attr('title',unescape(this.typeValue));
+				}
+				this.startTime == ''?time = '':time = '&start=' + this.startTime+'&end='+ this.endTime;
+				this.requestUrl = '/plugin?action=a&name=logs&s=getLogsByTypeValue&row=15&table='+ this.tableName +'&type='+ this.typeName +'&value='+ this.typeValue +'&site='+ this.siteName + this.logsPage + time;
+				this.methodName = 'logsBytype';
+				this.listAjax(this.requestUrl,function(data){
+					_this.condition = true;
+					_this.logsList = data.data;
+					$('.searchInput').val('');
+					DomList = '<thead><tr><th>访问IP地址</th><th>响应状态</th><th width="200">URL</th><th>响应大小</th><th>Referer来源</th><th>终端类型</th><th>浏览器类型</th><th>搜索引擎</th><th>请求时间</th></tr></thead><tbody>';
+					for (var i = 0; i < _this.logsList.length; i++) {
+						var logtime = _this.formatDateTime(_this.logsList[i].logtime);
+						DomList += '<tr>\
+							<td><a class="btlink" onclick="logsCheck.logsBytype(\'ip\',\''+ _this.logsList[i].ip +'\')">'+_this.logsList[i].ip+'</a></td>\
+							<td><a class="btlink" onclick="logsCheck.logsBytype(\'status\',\''+ _this.logsList[i].status +'\')">'+_this.logsList[i].status+'</a></td>\
+							<td><a class="btlink omitSize" title="'+ _this.logsList[i].url +'" onclick="logsCheck.logsBytype(\'url\',\''+ escape(_this.logsList[i].url) +'\')">'+_this.logsList[i].url+'</a></td>\
+							<td>'+ _this.flowFormat(_this.logsList[i].size) +'</td>\
+							<td><a class="btlink omitSize" title="'+ _this.logsList[i].referer +'" onclick="logsCheck.logsBytype(\'referer\',\''+ escape(_this.logsList[i].referer) +'\')">'+_this.logsList[i].referer+'</a></td>\
+							<td><a class="btlink" title="'+ _this.logsList[i].terminal +'" onclick="logsCheck.logsBytype(\'terminal\',\''+ _this.logsList[i].terminal +'\')">'+_this.logsList[i].terminal+'</a></td>\
+							<td><a class="btlink" title="'+ _this.logsList[i].url +'" onclick="logsCheck.logsBytype(\'browser\',\''+_this.logsList[i].browser+'\')">'+_this.logsList[i].browser+'</a></td>\
+							<td><a class="btlink" onclick="logsCheck.logsBytype(\'spider\',\''+_this.logsList[i].spider+'\')">'+_this.logsList[i].spider+'</a></td>\
+							<td>'+logtime+'</td>\
+						</tr>'
+					}
+					DomList+='</today>';
+					$('.logsList').empty().append(DomList);
+					$('.logsListPage').empty().append(data.page);
+				});	
+			},
+			// 流量格式转化
+			flowFormat(fileSize){
+				if(fileSize > 1024 * 1024 * 1024){
+					fileSize = (fileSize / (1024 * 1024 * 1024)).toFixed(2) + 'GB';
+				}else  if(fileSize > 1024 * 1024){
+					fileSize = (fileSize / (1024 * 1024)).toFixed(2) + 'MB';
+				}else if (fileSize > 1024) {
+					fileSize = (fileSize / 1024).toFixed(2) + 'KB';
+				}else{
+					fileSize = fileSize + 'B';
+				}
+				return fileSize;
+			},
+			// 设置日志保存时间
+			saveLogTime(index){
+				var _this = this;
+				var time = $('.siteList tr').eq(index).find('td:eq(5) a>span').html();
+				var editView = layer.open({
+					type: 1,
+					area: ['350px','200px'],
+					title:'设置日志保存时间',
+					shadeClose: false,
+					closeBtn: 2,
+					btn: ['确定','取消'],
+					content: '<div class="blj-box" style="margin-top:25px;">\
+					            <div class="line">\
+					                <span class="tname" style="width:75px;margin-left:20px;">保存天数</span>\
+					                <div class="tinfo" style="width:350px;"><input class="bt-input-text logstime" type="text" value="'+ time +'" style="width:220px;"></div>\
+					            </div>\
+					        </div>',
+					yes:function(){
+						var logstime = $('.logstime').val();
+						logstime = logstime * 24 * 3600;
+						$.get('/plugin?action=a&s=setExpiredTime&name=logs',{site:_this.siteList[index].site,expiredtime:logstime},function(data){
+							if (data.status){
+								layer.close(editView);
+								$('.siteList tr').eq(index).find('td:eq(5) a>span').html(logstime / 24 / 3600);
+								layer.msg(data.msg,{icon:1});
+							}else{
+								layer.msg(data.msg,{icon:2})
+							}
+						});
+					},btn2:function(){
+						layer.close(editView);
+					}
+				});
+			},
+			// 是否支付企业运维版
+			detectionPay(i){
+				var _this = this;
+				if(_this.yunweiPay){
+					this.siteName = this.siteList[i].site;
+					$('.webEdit,#webEdit-con').hide();
+					$('.viewCut,.echarts').show();
+					$('.DomainName').html('<span><a href="javascript:;">日志分析-[&nbsp;'+this.siteName+'&nbsp;]</a></span>'+'<span>&nbsp;/&nbsp;<a href="javascript:;" class="btlink" onclick="'+$('.viewCut .bgw a').attr('data-req')+'()">'+ $('.viewCut .bgw>a').text() +'</a></span>');
+					this.getLineData();
+					return false;
+				}
+				layer.load();
+				layer.msg('正在获取支付状态,请稍后...',{time:0,shade: [0.4,'#fff'],icon:16});
+				$.get('/plugin?action=a&name=safelogin&s=GetServerInfo',function(data){
+					layer.closeAll('dialog');
+					if (!data.status){
+						layer.open({
+							type: 1,
+							area: ['400px', '150px'],
+							closeBtn:2,
+							title: false,
+							content: '<div class="boxshow">\
+										<div class="boxtext">\
+											<span>未开通此服务，如需使用请开通企业运维版。</span>\
+										</div>\
+										<div class="btvipinfo" style="width: 170px;padding-left: 20px">\
+											<p style="height: 25px">1、一对一运维人员对接</p>\
+											<p style="height: 25px">2、提供每月3次运维服务</p>\
+											<p style="height: 25px">3、双重安全隔离登录</p>\
+										</div>\
+										<div class="btPayment">\
+											<span class="t2">企业运维版<span class="price">98</span>元/月</span>\
+											<a href="https://www.bt.cn/admin/index.html"class="btn btn-success btn-sm" style="width:80%" target="_blank">立即开通</a>\
+										</div>\
+						 			</div>'
+						});
+					}
+					_this.yunweiPay = data.status;
+				});
+			},
+			// 获取生成图表
+			getLineData(status){
+				var _this = this;
+				var visitArray = [],_502Array = [],_500Array = [],timeArray = [],statusName = [],statusNum = [],terminalName = [], terminalNum = [];
+				var time = '';
+				this.startTime == '' || isNaN(this.startTime)?time = '':time = '&start=' + this.startTime+'&end=' + this.endTime;
+				this.requestUrl = '/plugin?action=a&s=timeZoneInfo&name=logs&site='+ this.siteName + time;
+				layer.msg('正在分析数据中,请稍后...',{time:0,shade: [0.4,'#fff'],icon:16});
+				$.post(this.requestUrl,function(data){
+					layer.closeAll('dialog');
+					for (var i = 0;i<data.length; i++) {
+						_500Array.push(data[i].s500)
+						_502Array.push(data[i].s502)
+						visitArray.push(data[i].access_num)
+						timeArray.push(new Date(_this.formatDateTime(data[i].start_time)).format('MM/dd hh:mm'))
+					}
+					$('.webEdit').hide();
+					$('.echarts').show();
+					var myChart = echarts.init(document.getElementById('echarts'));
+					var	option = {
+						    title: {
+						        text: '访问量统计',
+						        subtext:'日志分析数据，仅供参考',
+						        left: '50%',
+						        top:'0px',
+						        textAlign: 'center',
+						        textStyle: {
+						            fontWeight: 'normal',
+						            fontSize: 18
+					        	},
+						    },
+						    tooltip: {
+						        trigger: 'axis'
+						    },
+						    legend: {
+						        right: 'center',
+						        top:'60px',
+						        orient: 'horizontal',
+						        data: ['请求数','500','502']
+						    },
+						    grid:{
+						    	y:'100px'
+						    },
+						    xAxis: {
+						        type: 'category',
+						        name: '时间',
+						        data: timeArray,
+						        boundaryGap: false,
+						        splitLine: {
+						            show: true,
+						            interval: 'auto',
+						            lineStyle: {
+						                color: ['#ddd']
+						            }
+						        },
+						        axisTick: {
+						            show: false
+						        },
+						        axisLine: {
+						            lineStyle: {
+						                color: '#666'
+						            }
+						        },
+						        axisLabel: {
+						            margin: 10,
+						            textStyle: {
+						                fontSize: 14
+						            }
+						        }
+						    },
+						    yAxis: {
+						        type: 'value',
+						        name: '访问量',
+						        formatter:'{value}',
+						        splitLine: {
+						            lineStyle: {
+						                color: ['#ddd']
+						            }
+						        },
+						        axisTick: {
+						            show: false
+						        },
+						        axisLine: {
+						            lineStyle: {
+						                color: '#666'
+						            }
+						        },
+						        axisLabel: {
+						            margin: 10,
+						            textStyle: {
+						                fontSize: 14
+						            }
+						        }
+						    },
+							dataZoom: [{
+								type: 'inside',
+								start: 0,
+								end: 100,
+								zoomLock:true
+							}, {
+								start: 0,
+								end: 100,
+								handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+								handleSize: '80%',
+								handleStyle: {
+									color: '#fff',
+									shadowBlur: 3,
+									shadowColor: 'rgba(0, 0, 0, 0.6)',
+									shadowOffsetX: 2,
+									shadowOffsetY: 2
+								}
+							}],
+						    series: [{
+						        name: '请求数',
+						        type: 'line',
+						        smooth: true,
+						        showSymbol: false,
+						        symbol: 'circle',
+						        symbolSize: 6,
+						        data: visitArray,
+						        areaStyle: {
+						            normal: {
+						                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+						                    offset: 0,
+						                    color: 'rgba(134, 213, 95, 0.6)'
+						                }, {
+						                    offset: 1,
+						                    color: 'rgba(134, 213, 95, 0.2)'
+						                }], false)
+						            }
+						        },
+						        itemStyle: {
+						            normal: {
+						                color: '#86d55f'
+						            }
+						        },
+						        lineStyle: {
+						            normal: {
+						                width: 3
+						            }
+						        }
+						    },{
+						        name: '500',
+						        type: 'line',
+						        smooth: true,
+						        showSymbol: false,
+						        symbol: 'circle',
+						        symbolSize: 6,
+						        data: _500Array,
+						        areaStyle: {
+						            normal: {
+						                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+						                    offset: 0,
+						                    color: 'rgba(255, 153, 154, 0.6)'
+						                }, {
+						                    offset: 1,
+						                    color: 'rgba(255, 153, 154, 0.2)'
+						                }], false)
+						            }
+						        },
+						        itemStyle: {
+						            normal: {
+						                color: '#ff999b'
+						            }
+						        },
+						        lineStyle: {
+						            normal: {
+						                width: 3
+						            }
+						        }
+						    },{
+						        name: '502',
+						        type: 'line',
+						        smooth: true,
+						        showSymbol: false,
+						        symbol: 'circle',
+						        symbolSize: 6,
+						        data: _502Array,
+						        areaStyle: {
+						            normal: {
+						                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+						                    offset: 0,
+						                    color: 'rgba(254, 204, 103, 0.6)'
+						                }, {
+						                    offset: 1,
+						                    color: 'rgba(254, 204, 103, 0.2)'
+						                }], false)
+						            }
+						        },
+						        itemStyle: {
+						            normal: {
+						                color: '#fecc67'
+						            }
+						        },
+						        lineStyle: {
+						            normal: {
+						                width: 3
+						            }
+						        }
+						    }]
+					};
+					myChart.setOption(option,true);
+				});
+				layer.msg('正在分析数据中,请稍后...',{time:0,shade: [0.4,'#fff'],icon:16});
+				$.post('/plugin?action=a&s=getPieInfo&name=logs&site=' + _this.siteName + time,function(data){
+					layer.closeAll('dialog');
+					var statusObj = data.status;
+					var terminalObj = data.terminal;
+					for(var name in statusObj){
+						statusName.push(name.replace(/^s/g,''));
+						statusNum.push({'name':name.replace(/^s/g,''),'value':statusObj[name]});
+					}
+					for(var name in terminalObj){
+						terminalName.push(name);
+						terminalNum.push({'name':name,'value':terminalObj[name]});
+					}
+					var myChart = echarts.init(document.getElementById('echarts1'));
+					var option = {
+					    title : {
+					        text: '状态码统计',
+					        subtext: '日志分析数据，仅供参考',
+					        x:'center',
+					        y:'20px',
+					        textStyle: {
+					            fontWeight: 'normal',
+					            fontSize: 18
+					        },
+					    },
+					    tooltip : {
+					        trigger: 'item',
+					        formatter: "{a}:{b}<br/>数量:{c} ({d}%)",
+					    },
+					    legend: {
+					        type: 'scroll',
+					        orient: 'vertical',
+					       	right: '20px',
+					        top:'80px',
+					        data: statusName,
+					    },
+					    series : [
+					        {
+					            name: '请求状态码',
+					            type: 'pie',
+					            selectedMode: 'single',
+					            center: ['center', '70%'],
+					            radius: ['25%', '50%'],
+					            color: ['#FF999A', '#FFCC67', '#59ADF3', '#AF89D6', '#86D560'],
+					            data: statusNum,
+					            itemStyle: {
+					                emphasis: {
+					                    shadowBlur: 10,
+					                    shadowOffsetX: 0,
+					                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+					                },
+					                normal:{
+					                    label:{
+					                        show:true,
+					                        formatter: '{b}:{d}%',
+					                        textStyle: {
+					                            fontWeight: 'normal',
+					                            fontSize: 15
+					                        },
+					                    }
+					                }
+					            }
+					        }
+					    ]
+					};
+					myChart.setOption(option);
+					var myChart = echarts.init(document.getElementById('echarts2'));
+					var option = {
+						title:{
+						 	text: '终端统计',
+						 	subtext: '日志分析数据，仅供参考',
+						 	x:'center',
+						 	y:'20px',
+						 	textStyle: {
+						 	    fontWeight: 'normal',
+						 	    fontSize: 18
+						 	}
+					   },
+					   tooltip : {
+					       trigger: 'item',
+					       formatter: "{a}:{b}<br/>访问量:{c} ({d}%)"
+					   },
+					   legend: {
+					       type: 'scroll',
+					       orient: 'vertical',
+					       right: '20px',
+					       top: '80px',
+					       data:terminalName,
+					   },
+					   series : [
+					       {
+					           name: '终端类型',
+					           type: 'pie',
+					           selectedMode: 'single',
+					           center: ['center', '70%'],
+					           radius: ['25%', '50%'],
+					           color: ['#86D560', '#AF89D6', '#59ADF3', '#FF999A', '#FFCC67','#75c1d0'],
+					           data:terminalNum,
+					           itemStyle: {
+					               emphasis: {
+					                   shadowBlur: 10,
+					                   shadowOffsetX: 0,
+					                   shadowColor: 'rgba(0, 0, 0, 0.5)'
+					               },
+					               normal:{
+					                   label:{
+					                       show:true,
+					                       formatter: '{b}:{d}%',
+					                       textStyle: {
+					                           fontWeight: 'normal',
+					                           fontSize: 15
+					                       },
+					                   }
+					               }
+					           }
+					       }
+					   ]
+					}
+					myChart.setOption(option);
+				});
+
+			},
+			// 时间戳转换日期
+			formatDateTime(timeStamp) {   
+			    var date = new Date();  
+			    date.setTime(timeStamp * 1000);  
+			    var y = date.getFullYear();      
+			    var m = date.getMonth() + 1;      
+			    m = m < 10 ? ('0' + m) : m;      
+			    var d = date.getDate();      
+			    d = d < 10 ? ('0' + d) : d;      
+			    var h = date.getHours();    
+			    h = h < 10 ? ('0' + h) : h;    
+			    var minute = date.getMinutes();    
+			    var second = date.getSeconds();    
+			    minute = minute < 10 ? ('0' + minute) : minute;      
+			    second = second < 10 ? ('0' + second) : second;     
+			    return y + '-' + m + '-' + d+' '+h+':'+minute+':'+second;      
+			},
+			// 立即刷新
+			refreshContent(){
+				var _this = this;
+				var logsTip = layer.confirm('刷新日志需要等待时间较长，是否刷新？', {
+				  btn: ['确认','取消'] //按钮
+				}, function(){
+					 layer.msg('请稍后,正在分析日志文件中...',{time:0,shade: [0.4,'#fff'],icon:16});
+					 $.post(' /plugin?action=a&name=logs&s=Statistical',{site:_this.siteName}, function(data) {
+					 	layer.closeAll('dialog');
+					 	if (data.status) {
+					 		_this.getLineData();
+					 		layer.msg(data.msg,{icon:1});
+					 	}else{
+					 		layer.msg(data.msg,{icon:2});
+					 	}
+					 });
+				}, function(){
+				 	layer.close(logsTip);
+				});
+			}
+		}
+		$(function(){
+			logsCheck.initialize();
+			//分页点击
+			$('.viewCut').on('click', '.logsListPage a', function(event){
+				event.preventDefault();
+				var page = $(this).attr('href');
+				logsCheck.logsPage = page.replace(/\?/g,'&');
+				logsCheck.judgeTypeName();
+			});
+			//分页点击
+			$('.webEdit').on('click', '.siteListPage a', function(event){
+				event.preventDefault();
+				var page = $(this).attr('href');
+				logsCheck.sitePage = page.replace(/\?/g,'&');
+				logsCheck.getSitesInfo();
+			});
+			// 时间段点击
+			$('.searcCondition .btn-group button,.echarts .btn-group button').click(function() {
+				$(this).parent().find('button').removeClass('btn-success').addClass("btn-default");
+				$(this).removeClass('btn-default').addClass("btn-success");
+				var time = $(this).attr('data-val');
+				var today = '',todayStamp = '',startTime = '',endTime = '',currentTime = '';
+				today = new Date().format('yyyy-MM-dd 00:00:00');
+				currentTime = new Date().format('yyyy-MM-dd hh:mm:ss');
+				todayStamp = parseInt(new Date(today).getTime()/1000);
+				if (time == -1) {
+					startTime = logsCheck.formatDateTime(todayStamp - (Math.abs(time)* 24*60*60));
+					endTime = today;
+				}else if (time == 1) {
+					startTime = new Date(today).format('yyyy-MM-dd hh:mm:ss');
+					endTime = currentTime;
+				}else{
+					startTime = logsCheck.formatDateTime(todayStamp - (time*24*60*60));
+					endTime = currentTime;
+
+				}
+				if(time == '0'){
+					logsCheck.startTime = '';
+					logsCheck.endTime = '';
+				}else{
+					logsCheck.startTime = parseInt(new Date(startTime).getTime()/1000);
+					logsCheck.endTime = parseInt(new Date(endTime).getTime()/1000);
+				}
+				if ($(this).parent().hasClass('pull-box')){
+					logsCheck.getLineData();
+				}else{
+                	if(time != '0'){
+						$('#ranges01').val(startTime + ' 至 ' +endTime);
+					}else{
+						$('#ranges01').val('');
+						logsCheck.startTime = '';
+						logsCheck.endTime = '';
+					}
+					logsCheck.judgeTypeName();
+				}
+			});
+			$('.userDefined').click(function(event) {
+				logsCheck.startTime = parseInt(new Date($('.btime').val()).getTime()/1000);
+				logsCheck.endTime = parseInt(new Date($('.etime').val()).getTime()/1000);
+				logsCheck.logsPage = '';
+				eval('logsCheck.'+logsCheck.methodName+'()')
+			});
+			$(".viewCut .bt-w-menu p a").click(function(){
+				$(this).parent().addClass("bgw").siblings().removeClass("bgw");
+				var typeName = $(this).attr('data-type');
+				$('.DomainName').find('span').eq(2).remove();
+				$('.DomainName').html('<span><a href="javascript:;">日志分析-[&nbsp;'+logsCheck.siteName+'&nbsp;]</a></span>'+'<span>&nbsp;/&nbsp;<a href="javascript:;" class="btlink" onclick="logsCheck.judgeTypeName(true)">'+ $('.viewCut .bgw>a').text() +'</a></span>');
+				if(typeName == 'chart'){
+					$('.contentViewTwo').hide();
+					$('.echarts').show();
+					logsCheck.startTime = '';
+					logsCheck.endTime = '';
+				}else{
+					$('.contentViewTwo').show();
+					$('.echarts').hide();
+				}
+				if (typeName == 'succeed'){
+					$('.oneKeysearchBar').show();
+				}else{
+					$('.oneKeysearchBar').hide();
+				}
+				logsCheck.typeName = typeName;
+				logsCheck.logsPage = '';
+				logsCheck.condition = '';
+				logsCheck.judgeTypeName();
+
+			});
+			// 返回网站列表
+			$('.returnBtn').click(function(event) {
+				logsCheck.getSitesInfo();
+				logsCheck.startTime = '';
+				logsCheck.endTime = '';
+				$('.echarts .btn-group button:eq(0)').addClass('btn-success').siblings().addClass('btn-default').removeClass('btn-success');
+				$('.logsList,.logsListPage').empty();
+				$('.viewCut p a').eq(0).parent().addClass("bgw").siblings().removeClass("bgw");
+				$('.webEdit,.echarts').show();
+				$('.viewCut,.contentViewTwo').hide();
+			});
+
+			$('.viewCut').on('click', '.logsList a', function(event){
+				$(".bt-w-menu p a:eq(2)").parent().addClass("bgw").siblings().removeClass("bgw");
+				var type = $(this).attr('data-type');
+                if(type == 'referer' || type == 'url'){
+                	var val = escape($(this).html());
+                }else{
+                	var val = $(this).html();
+                }
+				$('.DomainName').html('<span><a href="javascript:;">日志分析-[&nbsp;'+logsCheck.siteName+'&nbsp;]</a></span>'+'<span>&nbsp;/&nbsp;<a href="javascript:;" class="btlink" onclick="logsCheck.judgeTypeName(true)">'+ $('.viewCut .bgw>a').text() +'</a></span>');
+				logsCheck.logsBytype(type,val);
+			});
+			$('.searchClick').click(function(event) {
+				var val = $('.searchInput').val();
+				if ( val == '') {
+					layer.msg('请输入访问的IP地址');
+				}else{
+					logsCheck.logsBytype('ip',val);
+				}
+			});
+			$('body').on('click', '.layui-layer-close', function(event) {
+				event.preventDefault();
+				layer.closeAll('dialog');
+				logsCheck.isLogins = true;
+			});
+		});
+		Date.prototype.format = function(fmt) { 
+		    var o = { 
+		        "M+" : this.getMonth()+1,                 //月份 
+		        "d+" : this.getDate(),                    //日 
+		        "h+" : this.getHours(),                   //小时 
+		        "m+" : this.getMinutes(),                 //分 
+		        "s+" : this.getSeconds(),                 //秒 
+		        "q+" : Math.floor((this.getMonth()+3)/3), //季度 
+		        "S"  : this.getMilliseconds()             //毫秒 
+		    }
+		    if(/(y+)/.test(fmt)) {
+		            fmt=fmt.replace(RegExp.$1, (this.getFullYear()+"").substr(4 - RegExp.$1.length)); 
+		    }
+		     for(var k in o) {
+		        if(new RegExp("("+ k +")").test(fmt)){
+		             fmt = fmt.replace(RegExp.$1, (RegExp.$1.length==1) ? (o[k]) : (("00"+ o[k]).substr((""+ o[k]).length)));
+		         }
+		     }
+		    return fmt; 
+		}
+</script>

@@ -1,0 +1,16 @@
+{
+	"id":1,
+	"title":"PM2管理器",
+	"tip":"lib",
+	"name":"pm2",
+	"type":"运行环境",
+	"ps":"Node.js管理器，内置 node.js + npm + nvm + pm2.",
+	"versions":"2.6.1",
+	"shell":"pm2.sh",
+	"checks":"/www/server/panel/plugin/pm2",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2017-09-11",
+	"default":false,
+	"display":1
+}

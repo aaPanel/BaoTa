@@ -1,0 +1,12 @@
+{
+  "language": "Simplified_Chinese",
+  "title": "宝塔Linux面板",
+  "brand": "宝塔",
+  "product": "Linux面板",
+  "home": "http://www.bt.cn",
+  "root_path": "/www",
+  "setup_path": "/www/server",
+  "logs_path": "/www/wwwlogs",
+  "recycle_bin": true,
+  "template": "default"
+}

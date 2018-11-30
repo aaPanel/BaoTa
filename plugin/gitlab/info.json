@@ -1,0 +1,15 @@
+{
+	"title":"GitLab",
+	"tip":"soft",
+	"name":"gitlab",
+	"type":"通用软件",
+	"ps":"GitLab中文社区版，当前只支持Centos6/7 64位系统，内存小于2GB的机器请勿安装!",
+	"versions":"8.8.5",
+	"shell":"gitlab.sh",
+	"checks":"/opt/gitlab/embedded/service/gitlab-rails/Gemfile",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2017-08-05",
+	"default":false,
+	"display":0
+}

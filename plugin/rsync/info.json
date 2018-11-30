@@ -1,0 +1,15 @@
+{
+	"title":"宝塔数据同步工具",
+	"tip":"lib",
+	"name":"rsync",
+	"type":"系统工具",
+	"ps":"基于rsync开发的数据同步工具",
+	"versions":"2.3",
+	"shell":"rsync.sh",
+	"checks":"/www/server/panel/plugin/rsync",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2018-02-28",
+	"default":false,
+	"display":0
+}

@@ -1,0 +1,22 @@
+[
+{"name":"ZendGuardLoader","versions":["53","54","55","56"],"type":"Script Decoder","msg":"Using for decoding ZendGuard encrypted script!","shell":"zend_guard_loader.sh","check":"ZendGuardLoader.so"},
+{"name":"ZendOptimizer","versions":["52"],"type":"Script Decoder","msg":"Using for decoding ZendOptimizer encrypted script!","shell":"zend_optimizer.sh","check":"ZendOptimizer.so"},
+{"name":"ionCube","versions":["52","53","54","55","56","70"],"type":"Script Decoder","msg":"Using for decoding ionCube Encoder encrypted script!","shell":"ioncube.sh","check":"ioncube_loader_lin"},
+{"name":"fileinfo","versions":["53","54","55","56","70","71"],"type":"General Extension","msg":"Using for obtaining information about MIME document and encoding document!","shell":"fileinfo.sh","check":"fileinfo.so"},
+{"name":"opcache","versions":["53","54","55","56","70","71"],"type":"Buffer","msg":"Using to speed up PHP script!","shell":"opcache.sh","check":"opcache.so"},
+{"name":"xcache","versions":["52","53","54","55","56"],"type":"Buffer","msg":"Supporting script cache and variable cache!","shell":"xcache.sh","check":"xcache.so"},
+{"name":"memcache","versions":["52","53","54","55","56","70","71"],"type":"Buffer","msg":"Strong content buffer, do not support cluster","shell":"memcache.sh","check":"memcache.so"},
+{"name":"memcached","versions":["53","54","55","56","70","71"],"type":"Buffer","msg":"Strong content buffer, support cluster","shell":"memcached.sh","check":"memcached.so"},
+{"name":"redis","versions":["53","54","55","56","70","71"],"type":"Buffer","msg":"Strong content buffer, support cluster","shell":"redis.sh","check":"redis.so"},
+{"name":"apc","versions":["53","54"],"type":"Buffer","msg":"Script Buffer","shell":"apc.sh","check":"apc.so"},
+{"name":"imagemagick","versions":["54","55","56","70","71"],"type":"General Extension","msg":"This library of image is stronger than GD","shell":"imagemagick.sh","check":"imagick.so"},
+{"name":"xdebug","versions":["53","54","55","56","70","71"],"type":"Debugger","msg":"For Developer uses for debugging","shell":"xdebug.sh","check":"xdebug.so"},
+{"name":"imap","versions":["53","54","55","56","70","71"],"type":"Email Service","msg":"Important part of email server","shell":"imap.sh","check":"imap.so"},
+{"name":"exif","versions":["53","54","55","56","70","71"],"type":"General Extension","msg":"Using for reading EXIF information","shell":"exif.sh","check":"exif.so"},
+{"name":"intl","versions":["53","54","55","56","70","71"],"type":"General Extension","msg":"Providing international support","shell":"intl.sh","check":"intl.so"},
+{"name":"xsl","versions":["53","54","55","56","70","71"],"type":"General Extension","msg":"xsl parser extension","shell":"xsl.sh","check":"xsl.so"},
+{"name":"Swoole","versions":["53","54","55","56","70","71"],"type":"General Extension","msg":"asynchronous, parallel, high performance network communications engine","shell":"swoole.sh","check":"swoole.so"},
+{"name":"eAccelerator","versions":["52","53","54"],"type":"Buffer","msg":"Content buffer","shell":"eaccelerator.sh","check":"eaccelerator.so"},
+{"name":"yaf","versions":["54","55","56","70","71"],"type":"Framework","msg":"Yaf is a encoding by C language framwork for PHP","shell":"yaf.sh","check":"yaf.so"},
+{"name":"mongo","versions":["53","54","55","56"],"type":"General Extension","msg":" Driver of Mongodb database access","shell":"mongo.sh","check":"mongo.so"}
+]

@@ -1,0 +1,150 @@
+<style>
+	.help{
+		background-color: #f6f6f6;
+		border: 1px solid #dedede;
+		border-radius: 3px;
+		line-height: 24px;
+		margin-top: 20px;
+		padding: 10px;
+	}
+</style>
+<div class="divtable pd20">
+	<button class="btn btn-success btn-sm" style="margin-bottom: 5px;" onclick="AddHook()">添加</button>
+	<table class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0">
+		<thead>
+			<tr>
+				<th>名称</th>
+				<th>添加时间</th>
+				<th>近期调用</th>
+				<th>调用次数</th>
+				<th>密钥</th>
+				<th style="text-align: right;" width="150">操作</th>
+			</tr>
+		</thead>
+		<tbody id="zipBody"></tbody>
+	</table>
+</div>
+<script type="javascript/text">
+	//添加
+	function AddHook(act){
+		if(act == 1){
+			var loadT = layer.msg("提交中...",{icon:16,time:0});
+			var data = "title="+$("#hook_title").val()+"&shell="+encodeURI($("#hook_shell").val());
+			$.post("/plugin?action=a&s=AddHook&name=webhook",data,function(rdata){
+				$(".closeWebHook").click();
+				layer.close(loadT);
+				layer.msg(rdata.msg,{icon:rdata.status?1:2});
+				if(rdata.status) GetHookList();
+			})
+			return;
+		}
+		var index = layer.open({
+			type: 1,
+			area: '600px',
+			title: '添加Hook',
+			closeBtn: 2,
+			shift: 5,
+			shadeClose: false,
+			content: "<div class='bt-form pd20 pb70'>\
+						<div class='line'>\
+						<span class='tname'>名称</span>\
+						<div class='info-r'><input class='bt-input-text' type='text' id='hook_title' name='title' style='width:340px' /></div>\
+						</div>\
+						<div class='line'>\
+						<span class='tname'>执行脚本</span>\
+						<div class='info-r'><textarea name='shell' id='hook_shell' class='bt-input-text' style='width:340px; height:120px' value=''></textarea></div>\
+						</div>\
+						<div class='bt-form-submit-btn'>\
+							<button type='button' class='btn btn-danger btn-sm closeWebHook' >关闭</button>\
+					        <button type='button' class='btn btn-success btn-sm' onclick=\"AddHook(1)\" >提交</button>\
+				        </div>\
+				      </div>"
+		});
+		$(".closeWebHook").click(function(){
+			layer.close(index);
+		})
+	}
+	//获取列表
+	function GetHookList(){
+		var loadT = layer.msg('正在获取列表...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.get('/plugin?action=a&name=webhook&s=GetList',function(mlist){
+			layer.close(loadT);
+			var zbody = '';
+			for(var i=0;i<mlist.length;i++){
+				zbody += '<tr>'
+							+'<td>'+mlist[i].title+'</td>'
+							+'<td>'+getLocalTime(mlist[i].addtime)+'</td>'
+							+'<td>'+getLocalTime(mlist[i].uptime)+'</td>'
+							+'<td>'+mlist[i].count+'</td>'
+							+'<td><a href="javascript:showWebHookCode(\''+mlist[i].url+'\',\''+mlist[i].access_key+'\')" class="btlink">查看密钥</a></td>'
+							+'<td><a href="javascript:RunHook(\''+mlist[i].access_key+'\');" class="btlink">测试</a> | '
+							+'<a href="javascript:OnlineEditFile(0,\'/www/server/panel/plugin/webhook/script/'+mlist[i].access_key+'\');" class="btlink">编辑</a> | '
+							+'<a href="javascript:GetLogs(\'/www/server/panel/plugin/webhook/script/'+mlist[i].access_key+'.log\');" class="btlink">日志</a> | '
+							+'<a href="javascript:DeleteHook(\''+mlist[i].access_key+'\');" class="btlink">删除</a></td>'
+						+'</tr>'
+			}
+			$("#zipBody").html(zbody);
+		});
+	}
+	//查看密钥
+	function showWebHookCode(url,code){
+		layer.open({
+			type:1,
+			title:'查看密钥',
+			area: '510px', 
+			shadeClose:false,
+			closeBtn:2,
+			content:'<div class="bt-form pd20">\
+					<div class="line"><span class="tname" style="width:50px">密钥</span><input class="bt-input-text" value="'+code+'" style="width:420px"></div>\
+					<div class="line help">\
+						<b>宝塔WebHook使用方法:</b><br>\
+						GET/POST:<br>\
+						http://面板/hook?access_key=123&amp;param=aaa<br>\
+						@param access_key  string  HOOK密钥<br>\
+						@param param string 自定义参数（在hook脚本中使用$1接收）<br>\
+					</div>\
+					</div>'	
+		})
+	}
+	
+	//查看日志
+	function GetLogs(path){
+		loadT = layer.msg('正在获取...',{icon:16,time:0,shade: [0.3, '#000']});
+		var data='&path='+path
+		$.post('/files?action=GetFileBody',data,function(rdata){
+			layer.close(loadT);
+			if(!rdata.status) {
+				layer.msg(rdata.msg,{icon:2});
+				return;
+			};
+			layer.open({
+				type:1,
+				title:'任务执行日志',
+				area: ['60%','500px'], 
+				shadeClose:false,
+				closeBtn:2,
+				content:'<div class="setchmod bt-form pd20 pb70">'
+						+'<pre style="overflow: auto; border: 0px none; padding: 15px; margin: 0px; height: 410px; background-color: rgb(255, 255, 255);">'+rdata.data+'</pre>'
+						+'<div class="bt-form-submit-btn" style="margin-top: 0px;">'
+					    +'</div>'
+						+'</div>'
+			});
+		});
+	}
+	//运行
+	function RunHook(key){
+		$.post("/plugin?action=a&s=RunShell&name=webhook","access_key="+key,function(rdata){
+			layer.msg(rdata.msg,{icon:rdata.status?1:2});
+			GetHookList();
+		})
+	}
+	//删除
+	function DeleteHook(key){
+		$.post("/plugin?action=a&s=DelHook&name=webhook","access_key="+key,function(rdata){
+			layer.msg(rdata.msg,{icon:rdata.status?1:2});
+			GetHookList();
+		})
+	}
+	
+	GetHookList();
+</script>

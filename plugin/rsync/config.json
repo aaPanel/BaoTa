@@ -1,0 +1,23 @@
+{
+	"global": {
+		"uid": "root",
+		"use chroot": "no",
+		"dont compress": "*.gz *.tgz *.zip *.z *.Z *.rpm *.deb *.bz2 *.mp4 *.avi *.swf *.rar",
+		"hosts allow": "",
+		"max connections": 200,
+		"gid": "root",
+		"timeout": 600,
+		"lock file": "/var/run/rsync.lock",
+		"pid file": "/var/run/rsyncd.pid",
+		"log file": "/var/log/rsyncd.log",
+		"port": 873
+	},
+	"modules": [],
+	"settings": {
+		"logfile": "/www/server/panel/plugin/rsync/lsyncd.log",
+		"inotifyMode": "CloseWrite",
+		"maxProcesses": "8",
+		"statusFile": "/www/server/panel/plugin/rsync/lsyncd.status"
+	},
+	"client": []
+}

@@ -1,0 +1,14 @@
+location / {
+	index index.html index.php; 
+	if (-f $request_filename/index.html){ 
+		rewrite (.*) $1/index.html break; 
+	} 
+	if (-f $request_filename/index.php){ 
+		rewrite (.*) $1/index.php; 
+	} 
+	if (!-f $request_filename){ 
+		rewrite (.*) /index.php; 
+	} 
+} 
+
+rewrite /wp-admin$ $scheme://$host$uri/ permanent;

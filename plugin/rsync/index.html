@@ -1,0 +1,1148 @@
+<style>
+.bt-w-menu p a{
+	text-decoration: none;
+}
+
+.bt-w-con .serverSide,
+.bt-w-con .clientSide,
+.bt-w-con .logsSide{
+	margin: 0 20px;
+}
+.serverSide .header,
+.clientSide .header{
+	padding-top:20px; 
+	overflow: hidden;
+}
+.serverSide .header .switch span{
+	font-size: 14px;
+}
+.ssh-item{
+	display: inline-block;
+	height: 20px;
+	line-height: 32px;
+	float: none;
+	margin: 0 10px;
+}
+.serverSide .header  .pull-right button{
+	margin-right: 10px;
+}
+.serverSide .conter,
+.clientSide .conter{
+	margin-top: 20px;
+}
+.serverSide .divtable,
+.clientSide .divtable{
+	height: 450px;
+	overflow-y: auto;
+}
+.psShow{
+	cursor: pointer;
+}
+.pullDown{
+	position: relative;
+	padding: 5px 0;
+}
+.pullDown:hover ul{
+	display: block !important;
+}
+.pullDown ul{
+	position: absolute;
+	right: -7px;
+	top: 27px;
+	z-index: 999;
+	width: 45px;
+	text-align: center;
+	background: #fff;
+	border: 1px solid #ececec;
+}
+.pullDown ul li{
+	padding: 4px 0;
+}
+.pullDown ul:after{
+	content: '';
+	width: 10px;
+	height: 10px;
+	position: absolute;
+	top: -6px;
+	left: 19px;
+	background: #fff;
+	transform: rotate(45deg);
+	border-top: 1px solid #ececec;
+	border-left: 1px solid #ececec; 
+}
+.wafConf{
+	overflow: hidden;
+	margin:15px; 
+}
+.wafConf fieldset {
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	float: left;
+	padding-bottom: 0;
+	width: 370px
+}
+
+.wafConf fieldset:nth-of-type(2) {
+	margin: 0px;
+	margin-left:15px;
+}
+
+.wafConf legend {
+	border: 0 none;
+	font-size: 14px;
+	margin: 0 6px;
+	padding: 3px;
+	width: auto
+}
+
+.wafConf fieldset input {
+	margin-left: 4px
+}
+
+.wafConf fieldset .table {
+	margin-top: -1px;
+	margin-bottom: 0
+}
+
+.wafConf fieldset .table tr td:nth-of-type(2) {
+	width: 42px
+}
+
+.wafConf fieldset .table-overflow {
+	overflow: auto;
+	margin-top: 10px;
+	border-top: #ddd 1px solid
+}
+
+.wafConf-btn {
+	border-bottom: #ddd 1px solid;
+	margin-bottom: 12px;
+	padding-bottom: 15px;
+	height: 45px
+}
+
+.wafConf-btn span {
+	float: left;
+	margin-right: 8px;
+	line-height: 33px
+}
+
+.wafConf-btn .btn {
+	margin-right: 10px
+}
+
+.wafConf-btn .ssh-item {
+	margin-right: 50px
+}
+.wafConf .table>tbody>tr:last-child{
+	border-bottom: #ddd 1px solid;
+}
+.help-info-text li{
+	list-style-type: decimal;
+}
+.bt-monitor .line{
+	/*overflow: ;*/
+	height: 44px;
+}
+.plan_hms{
+	height: 30px;
+}
+.plan_hms span{
+	height: 28px;
+	line-height: 28px;
+}
+.plan_hms input{
+	height: 30px;
+}
+.plan_hms span input{
+	height: 27px;
+}
+code{
+	padding: 1px 5px;
+    font-size: 90%;
+    color: #2196F3;
+    background-color: #EEE;
+    border-radius: 4px;
+    margin: 2px;
+}
+.demo-class .line{
+	padding-left: 35px;
+}
+.demo-class .bt-form{
+	margin-top:10px;
+}
+.global-class .line{
+	padding: 9px 0;
+}
+.clientSide .pull-left .btn{
+	margin-right: 5px;
+}
+.help-info-text{
+	margin-left: 10px;
+}
+.rsync_set_ip{
+	width: 250px;
+	display: inline-block;
+}
+.rsync_tip{
+	display: inline-block;
+	width: 200px;
+	height: 100px;
+	vertical-align: top;
+	line-height: 25px;
+	padding-left: 10px;
+	padding-top: 8px;
+}
+</style>
+
+<div class="tsynsList" style="display: none;">
+	<div class="bt-w-menu">
+		<p class="bgw"><a href="javascript:;" onclick="tsync.getClientInfo();">发送配置</a></p>
+		<p><a href="javascript:;" onclick="tsync.getServerInfo();">接收配置</a></p>
+		<p><a href="javascript:;" onclick="tsync.get_logs();">操作日志</a></p>
+	</div>
+	<div class="bt-w-con" style="height: 658px;">
+		<div class="clientSide" >
+			<div class="header">
+				<div class="pull-left">
+					<button class="btn btn-success btn-sm va0" onclick="tsync.setClientView(false)">创建发送任务</button>
+					<button class="btn btn-success btn-sm va0" onclick="tsync.setClientLocal()">创建本地同步</button>
+					<button class="btn btn-default btn-sm va0" onclick="tsync.methodLogs('lsyncd_logs')">实时日志</button>
+				</div>
+			</div>
+			<div class="conter divtable">
+				<table class="table table-hover">
+					<thead>
+						<tr><th>名称(标识)</th><th>源目录</th><th>同步到</th><th width="40">模式</th><th>周期</th><th style="text-align: right;" width="190">操作</th></tr>
+					</thead>
+					<tbody class="sideList"></tbody>
+				</table>
+			</div>
+		</div>
+		<div class="serverSide" style="display: none;">
+			<div class="header">
+              	<div class="pull-left">
+                  	<button class="btn btn-success btn-sm va0" onclick="tsync.setServerView(false)" style="margin-right: 6px;">创建接收任务</button>
+					<button class="btn btn-default btn-sm va0" onclick="tsync.setOverallView()">全局配置</button>
+				</div>
+				<div class="switch pull-right">
+					<span class="switchText"></span>
+					<div class="ssh-item">
+						<input class="btswitch btswitch-ios" id="switch" type="checkbox" onclick="tsync.serverSwitch()">
+						<label class="btswitch-btn" for="switch"></label>
+					</div>
+				</div>		
+			</div>
+			<div class="conter divtable">
+				<table class="table table-hover">
+					<thead>
+						<tr><th >用户名</th><th width="120">密码</th><th>目录</th><th width="200">备注</th><th style="text-align: right;">操作</th></tr>
+					</thead>
+					<tbody class="sideList"></tbody>
+				</table>
+			</div>
+		</div>
+		<div class="logsSide" style="display: none;padding-top: 20px;">
+			<div class="conter divtable">
+				<table class="table table-hover">
+					<thead>
+						<tr><th >详情</th><th style="text-align: right;">操作时间</th></tr>
+					</thead>
+					<tbody class="logsList"></tbody>
+				</table>
+				<div class="page"></div>
+			</div>
+		</div>
+		<span class="tip" style="position: absolute;bottom:20px;line-height: 22px;color: #777;margin: 20px 25px;">
+			温馨提示：<br/>
+			1. 如需将其他服务器数据同步到本服务器，请在接收配置中“创建接收任务”。<br/>
+			2. 如需将本服务器数据同步到其他服务器，请在发送配置里“创建发送任务”。<br/>
+			3. 如需将本服务器内部的两个文件夹的数据进行同步，请在发送配置里“创建本地同步”。<br/>
+			4. 注意：不同的同步任务及服务器请不要使用相同的同步名称及用户名，这会导致管理混乱。<br/>
+			5. <a class="btlink" target="_blank" href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=11231">详细使用方法，请点击这里查看教程</a><a href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=11231" target="_blank" class="bt-ico-ask" style="cursor: pointer;">?</a>
+		</span>
+	</div>
+</div>
+<script type="javascript/text">
+	var tsync = {
+		setStatus:false,
+		setTitle:'添加目录',
+		setSubmit:'提交',
+		set_layer_View:'',
+		cancelLog:'',
+		setServerForm:{
+			mName:'',
+			path:'/www/wwwroot/',
+			passwd:'',
+			comment:''
+		},
+		globals:{
+			port:'',
+			ip:''
+		},
+		setClientForm:{
+			args:'',
+			cron_info:{
+				where_hour:'',
+				id:'',
+				type:'',
+				where1:'1',
+				where_minute:'1'
+			},
+			inotify_info:true,
+			secret_key:'',
+			ip:'',
+			mName:'',
+			path:'/www/wwwroot/',
+			exclude:'',
+			include:''
+		},
+		// 初始化
+		initial:function(){
+			var width = 1000;
+			var height = 700;
+			var _this = this;
+			var boxwidth =  ($(document).width() / 2) - (width / 2);
+			var boxheight =  ($(document).height() / 2) - (height / 2);
+			$('.layui-layer-page').width(width);
+			$('.layui-layer-page').height(height);
+			$('.bt-w-menu').height((height - 1) - $('.layui-layer-title').height())
+			$('.layui-layer-page').css({
+				'left': boxwidth + 'px',
+				'top': boxheight +'px'
+			});
+			$(".bt-w-menu p").click(function(){
+				var index = $(this).index();
+				$(this).addClass("bgw").siblings().removeClass("bgw");
+				$('.bt-w-con>div:eq('+ index +')').show().siblings().hide();
+				$('.tip').show();
+			});
+			$('.tsynsList').show();
+			this.getClientInfo();
+		},
+		get_logs:function(p){
+			if(p == undefined) p = 1;
+			var loadget =  layer.msg('正在获取操作日志...',{icon:16,time:0,shade: [0.3, '#000']});
+			$.get('/plugin?action=a&name=rsync&s=get_logs&tojs=tsync.get_logs&p='+p,function(res){
+				layer.close(loadget);
+				var tbody = '';
+				for(var i=0;i<res.data.length;i++){
+					tbody += '<tr><td>'+res.data[i].log+'</td><td style="text-align: right;">'+res.data[i].addtime+'</td></tr>'
+				}
+				$(".logsList").html(tbody);
+				$(".page").html(res.page);
+			});
+		},
+		// 接收端 - 获取配置信息
+		getServerInfo:function(){
+			var _this = this;
+			var loadget =  layer.msg('正在获取配置信息...',{icon:16,time:0,shade: [0.3, '#000']});
+			$.get('/plugin?action=a&name=rsync&s=get_global_conf',function(res){
+				layer.close(loadget);
+				if (res.open){
+					$('#switch').attr('checked',res.open);
+					$('.switchText').empty().append('<span style="color:#20a53a">服务已开启</span>');
+					$('.restart').show();
+				}else{
+					$('#switch').attr('checked',res.open);
+					$('.switchText').empty().append('<span style="color:red">服务已关闭</span>');
+					$('.restart').hide();
+				}
+				var domData = '';
+				for (var i = 0; i < res['modules'].length; i++) {
+					domData += '<tr>\
+									<td>'+ res['modules'][i].name +'</td>\
+									<td width="120" style="position: relative;">\
+										<span class="password" data-pw="'+ res['modules'][i].password + '">******</span>\
+										<span class="glyphicon glyphicon-eye-open psShow" title="显示密码" style="margin-left:5px"></span>\
+									</td>\
+									<td><a href="javascript:;" onclick="openPath(\''+ res['modules'][i].path+'\')" class="btlink">'+ res['modules'][i].path +'</a></td>\
+									<td>'+ res['modules'][i].comment +'</td>\
+									<td style="text-align: right;">\
+										<a href="javascript:;" class="btlink generateKey" data-mName="'+res['modules'][i].name +'">密钥</a> | \
+										<a href="javascript:;" class="btlink" onclick="tsync.setServerView(\''+ res['modules'][i].name +'\')">编辑</a> | \
+										<a href="javascript:;" style="color:red" onclick="tsync.delServerInfo(\''+ res['modules'][i].name +'\')">删除</a>\
+									</td>\
+								</tr>' 
+				}
+				$('.serverSide .sideList').empty().append(domData);
+				$('.psShow').click(function(event) {
+					if ($(this).hasClass('glyphicon-eye-open')) {
+						$(this).removeClass('glyphicon-eye-open').addClass('glyphicon-eye-close');
+						$(this).prev().text($(this).prev().attr('data-pw'));
+					}else{
+						$(this).removeClass('glyphicon-eye-close').addClass('glyphicon-eye-open');
+						$(this).prev().text('******');
+					}
+				});
+				$('.generateKey').click(function(event) {
+					$.post('/plugin?action=a&name=rsync&s=get_secretkey',{mName:$(this).attr('data-mName')},function(res){
+						this.set_layer_View = layer.open({
+							type: 1,
+							area: '500px',
+							title: '接收密钥',
+							closeBtn: 2,
+							shift: 0,
+							shadeClose: false,
+							content: "<div style='margin:30px;'><textarea class='form-control' rows='6' readonly='readonly'>"+ res +"</textarea></div>"
+							});
+					});
+				});
+				$('body').on('click', '.btcopy', function(event) {
+					event.preventDefault();
+					btcopy();
+				});
+			});
+		},
+		// 接收端 - 设置配置信息(编辑和添加)
+		setServerView:function(mName){
+			$.post('/plugin?action=a&name=rsync&s=get_module',{mName:mName},function(rdata){
+				var _this = this,readonly = '';
+				var status = true;
+				if(!mName) {
+					status = false;
+					mName = '';
+				}
+				this.setStatus = status;
+				if (status){
+					this.setTitle = '编辑接收';
+					this.setSubmit = '保存';
+					readonly = 'readonly="readonly" disabled="disabled"'
+					action = 'modify_module';
+				}else{
+					this.setTitle = '创建接收';
+					this.setSubmit = '提交';
+					action = 'add_module'
+					this.setServerForm = {
+						mName:'',
+						path:'/www/wwwroot/',
+						dont_commpress:'',
+						password:RandomStrPwd(12),
+						comment:''
+					}
+					rdata = this.setServerForm;
+				}
+				tsync.set_layer_View = layer.open({
+					type: 1,
+					area: '500px',
+					title: _this.setTitle,
+					closeBtn: 2,
+					shift: 0,
+					shadeClose: false,
+					content: "<form class='bt-form pd20 pb70' id='fromServerPath' accept-charset='utf-8' enctype='application/x-www-form-urlencoded'>\
+								<div class='line'>\
+									<span class='tname'>用户名</span>\
+									<div class='info-r c4'>\
+										<input class='bt-input-text' type='text' name='mName' "+ readonly +"  placeholder='请填写用户名,不能有中文或特殊符号' value='"+ mName +"' style='width:300px' />\
+									</div>\
+								</div>\
+								<div class='line'>\
+									<span class='tname'>密码</span>\
+									<div class='info-r c4'>\
+										<input class='bt-input-text' type='text' name='password' placeholder='请输入密码' value='"+ rdata.password +"' style='width:300px' />\
+										<span title='随机密码' style='margin-right: 10px;' class='glyphicon glyphicon-repeat cursor pws'></span>\
+									</div>\
+								</div>\
+								<div class='line'>\
+									<span class='tname'>同步到</span>\
+									<div class='info-r c4'>\
+										<input id='inputPath' class='bt-input-text mr5' type='text' name='path' value='"+ rdata.path +"' placeholder='请选择本地路径' style='width:300px' /><span class='glyphicon glyphicon-folder-open cursor' onclick='ChangePath(\"inputPath\")'></span>\
+									</div>\
+								</div>\
+								<div class='line'>\
+									<span class='tname'>备注</span>\
+									<div class='info-r c4'>\
+										<input class='bt-input-text' type='text' name='comment' placeholder='' value='"+ rdata.comment +"' style='width:300px' />\
+									</div>\
+								</div>\
+								<div class='bt-form-submit-btn'>\
+									<button type='button' class='btn btn-danger btn-sm btn-title colseView' onclick='layer.close(tsync.set_layer_View)'>取消</button>\
+									<button type='button' class='btn btn-success btn-sm btn-title setViewData'>"+ _this.setSubmit +"</button>\
+								</div>\
+							  </form>",
+					});
+				$('.setViewData').click(function(event) {
+					_this.setServerForm = {
+						mName: $("input[name='mName']").val(),
+						password: $("input[name='password']").val(),
+						path: $("input[name='path']").val(),
+						comment: $("input[name='comment']").val()
+					}
+					for(var index in _this.setServerForm){
+						if (_this.setServerForm['mName'] == ''){
+							layer.msg('请输入当前用户名!');
+							return false;
+						}
+						if (_this.setServerForm['password'] == ''){
+							layer.msg('请输入当前用户名密码!');
+							return false;
+						}
+						if (_this.setServerForm['path'] == ''){
+							layer.msg('请输入当前同步目录!');
+							return false;
+						}
+					}
+					var loadget =  layer.msg('正在提交表单信息，请稍后...',{icon:16,time:0,shade: [0.3, '#000']});
+					$.post('/plugin?action=a&name=rsync&s=' + action,_this.setServerForm,function(res){
+						layer.close(loadget);
+						if (res.status){
+	                    	layer.close(tsync.set_layer_View);
+	                        tsync.getServerInfo();
+							layer.msg(res.msg,{icon:1});
+						}else{
+							layer.msg(res.msg,{icon:2});
+						}
+					});
+				});
+				$('.pws').click(function(event) {
+					$('input[name="password"]').val(RandomStrPwd(12));
+				});
+			});
+		},
+		// 接收端 - 全局配置
+		setOverallView:function(){
+			$.get('/plugin?action=a&name=rsync&s=get_global_conf',function(rdata){
+				tsync.set_layer_View = layer.open({
+					type: 1,
+					skin: 'global-class',
+					area: '600px',
+					title: 'rsync服务器全局配置',
+					closeBtn: 2,
+					shift: 0,
+					shadeClose: false,
+					content: "<form class='bt-form pd20 pb70' id='fromServerPath' >\
+								<div class='line'>\
+									<span class='tname'>监听端口</span>\
+									<div class='info-r c4'>\
+										<input style='width:60px;background-color: #f1f1f1;margin-right:5px;' class='bt-input-text' type='number' name='port' readonly value='"+ rdata.global['port'] +"' />\
+										<span>请将此端口在防火墙和安全组放行，否则发送端无法连接</span>\
+									</div>\
+								</div>\
+								<div class='line'>\
+									<span class='tname'>最大连接数</span>\
+									<div class='info-r c4'>\
+										<input style='width:60px;margin-right:5px;' class='bt-input-text' type='number' name='max_connections' value='"+ rdata.global['max connections'] +"' />\
+										<span>请设置合理的最大连接数,过高会增加服务器负载，过低则影响同步效率</span>\
+									</div>\
+								</div>\
+								<div class='line'>\
+									<span class='tname'>超时时间</span>\
+									<div class='info-r c4'>\
+										<input style='width:60px;margin-right:5px;' class='bt-input-text' type='number' name='timeout' value='"+ rdata.global['timeout'] +"' />\
+										<span>秒，根据您要同步的文件情况设置，建议设置300-1800之间</span>\
+									</div>\
+								</div>\
+								<div class='line'>\
+									<span class='tname'>不压缩的文件</span>\
+									<div class='info-r c4'>\
+										<input style='width:360px;margin-right:5px;' class='bt-input-text' type='text' name='dont_compress' value='"+ rdata.global['dont compress'] +"' />\
+										<span>每个用空格隔开</span>\
+									</div>\
+								</div>\
+								<div class='line'>\
+									<span class='tname'>IP白名单</span>\
+									<div class='info-r c4'>\
+										<div class='rsync_set_ip'><textarea class='bt-input-text' rows='3' style='width:250px;height:100px;line-height: 20px;' name='hosts_allow' placeholder='每行添加一个IP地址&#10;使用回车分割IP地址，例如：&#10;192.168.1.1&#10;127.0.0.1'>"+ rdata.global['hosts allow'].replace(/ /g,"\n") +"</textarea></div>\
+										<div class='rsync_tip'>只允许IP白名单内的机器与本服务器进行数据同步，每行1个IP地址，若不作IP限制请留空</div>\
+									</div>\
+								</div>\
+								<div class='bt-form-submit-btn'>\
+									<button type='button' class='btn btn-danger btn-sm btn-title colseView' onclick='layer.close(tsync.set_layer_View)'>取消</button>\
+									<button type='button' class='btn btn-success btn-sm btn-title setViewData'>提交</button>\
+								</div>\
+							  </form>",
+					});
+				$('.setViewData').click(function(event) {
+					var pdata = {
+						hosts_allow:$("textarea[name='hosts_allow']").val(),
+						max_connections:$("input[name='max_connections']").val(),
+						dont_compress:$("input[name='dont_compress']").val(),
+						timeout:$("input[name='timeout']").val()
+					}
+					var loadget =  layer.msg('正在提交表单信息，请稍后...',{icon:16,time:0,shade: [0.3, '#000']});
+					$.post('/plugin?action=a&name=rsync&s=modify_global_conf',pdata,function(res){
+						layer.close(loadget);
+						if (res.status){
+							layer.msg(res.msg,{icon:1});
+							layer.close(tsync.set_layer_View);
+						}else{
+							layer.msg(res.msg,{icon:2});
+						}
+					});
+				});
+			});
+		},
+		// 接收端 - 删除配置信息
+		delServerInfo:function(mName){
+			SafeMessage('删除接收','即将删除接收['+mName+'],确定吗？',function(){
+				var loadT = layer.msg('正在删除接收['+mName+'] <img src="/static/img/ing.gif">',{icon:16,time:0,shade: [0.3, "#000"]});
+				$.post('/plugin?action=a&name=rsync&s=remove_module',{mName:mName},function(res){
+					layer.close(loadT);
+					layer.msg(res.msg,{icon:res.status?1:2});
+					if (res.status) tsync.getServerInfo();
+				});
+			});
+		},
+		// 接收端 - 配置开关
+		serverSwitch:function(switchs){
+			var _this = this;
+			var title = '';
+			if (switchs == undefined){
+				if ($('#switch').is(':checked')) {
+					$('.switchText').empty().append('<span style="color:#20a53a">服务已开启</span>');
+					$('.restart').show();
+					switchs = 'start';
+					title = '正在开启服务中，请稍后...';
+				}else{
+					$('.switchText').empty().append('<span style="color:red">服务已关闭</span>');
+					$('.restart').hide();
+					switchs = 'stop';
+					title = '正在关闭服务中，请稍后...';
+				}
+			}else{
+				$('.switchText').empty().append('<span style="color:#20a53a">服务已开启</span>');
+				switchs = 'start';
+			}
+			// layer.load();
+			var loadget =  layer.msg(title,{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/plugin?action=a&name=rsync&s=rsync_service',{state:switchs},function(res){
+				layer.close(loadget);
+				if (res.status){
+					layer.msg(res.msg,{icon:1});
+				}else{
+					layer.msg(res.msg,{icon:2});
+				}
+			});
+		},
+		get_cycle:function(cron){
+			var cycle_str = '';
+			if(cron['type'] == 'minute-n'){
+				cycle_str = '每隔' + cron['where1'] + '分钟';
+			}else{
+				cycle_str = '每天' + cron['hour'] + '时'+cron['minute']+'分';
+			}
+			return cycle_str;
+		},
+		// 发送端  - 获取配置信息
+		getClientInfo:function(){
+			var _this = this,domData = '';
+			var loadget =  layer.msg('正在获取配置信息...',{icon:16,time:0,shade: [0.3, '#000']});
+			$.get('/plugin?action=a&name=rsync&s=get_send_conf',function(res){
+				layer.close(loadget);
+				if(res.status === false){
+					layer.closeAll();
+					layer.msg(res.msg,{icon:2})
+					return;
+				}
+				for(var i=0;i<res.length;i++){
+				var to = '接收服务器:'+res[i].ip+'::'+res[i].name.replace(/(\d+\.){3,3}\d+_/,'');
+				var edits = 'tsync.setClientView(\''+ res[i].name +'\','+i+')';
+				if(res[i].model == 'default.direct'){
+					to = '<a href="javascript:;" onclick="openPath(\''+ res[i].to+'\')" class="btlink">本地:'+ res[i].to +'</a>';
+					edits = 'tsync.setClientLocal(\''+ res[i].name +'\',\''+ res[i].path +'\',\''+ res[i].to +'\','+i+')';
+				}
+				domData += '<tr>\
+						<td>'+ res[i].name +'</td>\
+						<td><a href="javascript:;" onclick="openPath(\''+ res[i].path+'\')" class="btlink">'+ res[i].path +'</a></td>\
+						<td>'+ to +'</td>\
+						<td>'+ (res[i].delete == 'true'?'完全':'增量') +'</td>\
+						<td>'+(res[i].realtime?'实时':tsync.get_cycle(res[i].cron))+'</td>\
+						<td style="text-align: right;">\
+							<a href="javascript:;" class="btlink" title="立即同步" onclick="tsync.exec_cmd(\''+ res[i].name +'\')">同步</a> | \
+							<a href="javascript:;" class="btlink" title="查看同步日志" onclick="tsync.methodLogs(\''+ res[i].name +'\')">日志</a> | \
+							<a href="javascript:;" class="btlink" onclick="tsync.blackWhiteList(\''+ res[i].name +'\')">过滤器</a> | \
+							<a href="javascript:;" class="btlink" onclick="'+edits+'">编辑</a> | \
+							<a href="javascript:;" class="btlink" style="color:red" onclick="tsync.delClientInfo(\''+ res[i].name +'\')">删除</a>\
+						</td>\
+					</tr>';
+				}
+				$('.clientSide .sideList').empty().append(domData);
+				$('.psShow').click(function(event) {
+					if ($(this).hasClass('glyphicon-eye-open')) {
+						$(this).removeClass('glyphicon-eye-open').addClass('glyphicon-eye-close');
+						$(this).prev().text($(this).prev().attr('data-pw'));
+					}else{
+						$(this).removeClass('glyphicon-eye-close').addClass('glyphicon-eye-open');
+						$(this).prev().text('******');
+					}
+				});
+			});
+		},
+		exec_cmd:function(name){
+			var loadget =  layer.msg('正在发送同步指令...',{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/plugin?action=a&name=rsync&s=exec_cmd',{mName:name},function(res){
+				layer.close(loadget);
+				layer.msg(res.msg,{icon:res.status?1:2});
+			});
+		},
+		setClientLocal:function(name,path,to,index){
+			if (name == undefined) name = '';
+			if (path == undefined) path = '';
+			if (to == undefined) to = '';
+			this.set_layer_View = layer.open({
+				type: 1,
+				area: '500px',
+				title: '本地文件夹同步任务',
+				closeBtn: 2,
+				shift: 0,
+				shadeClose: false,
+				content: "<form class='bt-form pd20 pb70' id='fromServerPath' accept-charset='utf-8'>\
+							<div class='line'>\
+								<span class='tname'>名称</span>\
+								<div class='info-r c4'>\
+									<input class='bt-input-text' type='text' name='mName' placeholder='请填写名称,不能有中文或特殊符号' value='"+name+"' style='width:300px;"+(name==''?'':'background-color:#f1f1f1;')+"' "+(name==''?'':'readonly')+" />\
+								</div>\
+							</div>\
+							<div class='line'>\
+								<span class='tname'>从</span>\
+								<div class='info-r c4'>\
+									<input id='inputPath' class='bt-input-text mr5' type='text' name='path' value='"+path+"' placeholder='请选择被同步的文件夹' style='width:300px' /><span class='glyphicon glyphicon-folder-open cursor' onclick='ChangePath(\"inputPath\")'></span>\
+								</div>\
+							</div>\
+							<div class='line'>\
+								<span class='tname'>同步到</span>\
+								<div class='info-r c4'>\
+									<input id='inputPath2' class='bt-input-text mr5' type='text' name='path' value='"+to+"' placeholder='请选择目标文件夹' style='width:300px' /><span class='glyphicon glyphicon-folder-open cursor' onclick='ChangePath(\"inputPath2\")'></span>\
+								</div>\
+							</div>\
+							<div class='bt-form-submit-btn'>\
+								<button type='button' class='btn btn-danger btn-sm btn-title colseView' onclick='layer.close(tsync.set_layer_View)'>取消</button>\
+								<button type='button' class='btn btn-success btn-sm btn-title' onclick='tsync.add_local_sync("+index+")'>"+(name==''?'添加':'保存')+"</button>\
+							</div>\
+							<ul class=\"help-info-text c7\">\
+								<li>【同步目录】：若不以<code>/</code>结尾，则表示将数据同步到二级目录</li>\
+							  	<li>【注意】： 此处为服务器内部目录的同步，添加后两个目录即保持实时同步!</li>\
+							  </ul>\
+						  </form>",
+				});
+		},
+		add_local_sync:function(index){
+			var pdata = {
+				mName:$("input[name='mName']").val(),
+				path:$("#inputPath").val(),
+				to:$("#inputPath2").val(),
+				model:'default.direct',
+				index:index
+			}
+			
+			if(pdata['nName'] == '' || pdata['path'] == '' || pdata['to'] == ''){
+				layer.msg('请填写任务名称、被同步的文件夹、目标文件夹!');
+				return;
+			}
+			var loading = layer.msg('提交数据中,请稍后...',{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/plugin?action=a&name=rsync&s=add_ormodify_send',pdata,function(rdata){
+				layer.close(loading);
+				layer.msg(rdata.msg,{icon:rdata.status?1:2});
+				if(rdata.status){
+					layer.close(tsync.set_layer_View)
+					tsync.getClientInfo();
+				} 
+			});
+		},
+		// 发送端 - 设置配置信息(编辑和添加)
+		setClientView:function(mName,index){
+			var loadget =  layer.msg('正在获取配置信息...',{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/plugin?action=a&name=rsync&s=get_send_byname',{mName:mName},function(rdata){
+				layer.close(loadget);
+				var _this = this,aulv = '',alwv = '',real ='',timing='',day = '',min='',none='',hour='',minuten='';
+				var status = (mName == false)?false:true;
+				console.log(status)
+				this.setStatus = status;
+				if (status){
+					this.setTitle = '编辑同步任务';
+					this.setSubmit = '保存';
+					this.setClientForm = rdata;
+					if (this.setClientForm.delete != 'true'){
+						aulv = 'selected ="selected "';
+					}else{
+						alwv = 'selected ="selected "';
+					}
+					if (this.setClientForm.realtime) {
+						real = 'selected ="selected "';
+						none = 'display:none;';
+					}else{
+						timing ='selected ="selected "';
+						none = 'display:block;';
+					}
+					if (this.setClientForm.cron.type == 'day'){
+						day = 'selected ="selected "';
+						hour = 'display:block;';
+						minuten = 'display:none;';
+					}else{
+						min ='selected ="selected "';
+						hour = 'display:none;';
+						minuten = 'display:block;';
+					}
+				}else{
+					this.setTitle = '创建发送任务';
+					this.setSubmit = '提交';
+					none = 'display:none;';
+					minuten = 'display:none;';
+					this.setClientForm = {
+						delete:'false',
+						cron:{
+							where_hour:'0',
+							id:'',
+							type:'',
+							where1:'1',
+							where_minute:'0'
+						},
+						rsync:{
+							bwlimit:1024
+						},
+						delay:3,
+						realtime:true,
+						secret_key:'',
+						ip:'',
+						mName:'',
+						path:'/www/wwwroot/',
+						exclude:'',
+					}
+				}
+				tsync.set_layer_View = layer.open({
+					type: 1,
+					skin: 'demo-class',
+					area: '600px',
+					title: _this.setTitle,
+					closeBtn: 2,
+					shift: 0,
+					shadeClose: false,
+					content: "<form class='bt-form pd20 pb70 ' id='fromServerPath' accept-charset='utf-8'>\
+								<div class='line'>\
+									<span class='tname'>服务器IP</span>\
+									<div class='info-r c4'>\
+										<input class='bt-input-text' type='text' name='ip' placeholder='请输入接收服务器IP' value='"+ _this.setClientForm.ip +"' style='width:310px' />\
+									</div>\
+								</div>\
+								<div class='line'>\
+									<span class='tname'>同步目录</span>\
+									<div class='info-r c4'>\
+										<input id='inputPath' class='bt-input-text mr5' type='text' name='path' value='"+ _this.setClientForm.path +"' placeholder='请选择同步目录' style='width:310px' /><span class='glyphicon glyphicon-folder-open cursor' onclick='ChangePath(\"inputPath\")'></span>\
+									</div>\
+								</div>\
+								<div class='line'>\
+									<span class='tname'>同步方式</span>\
+									<div class='info-r c4'>\
+										<select class='bt-input-text' name='delete' style='width:100px'>\
+											<option value='false' "+ aulv +">增量</option>\
+											<option value='true' "+ alwv +">完全</option>\
+										</select>\
+										<a href='https://www.bt.cn/bbs/forum.php?mod=viewthread&amp;tid=11231' target='_blank' class='bt-ico-ask' style='cursor: pointer;'>?</a>\
+										<span style='margin-left: 20px;margin-right: 10px;'>同步周期</span>\
+										<select class='bt-input-text synchronization' name='realtime' style='width:100px'>\
+											<option value='true' "+ real +">实时同步</option>\
+											<option value='false' "+ timing +">定时同步</option>\
+										</select>\
+									</div>\
+								</div>\
+								<!--<div class='line'>\
+									<span class='tname'>同步周期</span>\
+									<div class='info-r c4'>\
+										<select class='bt-input-text synchronization' name='realtime' style='width:100px'>\
+											<option value='true' "+ real +">实时同步</option>\
+											<option value='false' "+ timing +">定时同步</option>\
+										</select>\
+									</div>\
+								</div>-->\
+								<div class='line' id='period' style='"+ none +"height:45px;'>\
+									<span class='tname'>定时周期</span>\
+									<div class='info-r c4'>\
+										<select class='bt-input-text pull-left mr20' name='period' style='width:100px;'>\
+											<option value='day' "+ day +">每天</option>\
+											<option value='minute-n' "+ min +">N分钟</option>\
+										</select>\
+										<div class='plan_hms pull-left mr20 bt-input-text hour' style='"+ hour +"'>\
+											<span><input type='number' name='hour' value='"+ _this.setClientForm.cron.hour +"' maxlength='2' max='23' min='0'></span>\
+											<span class='name'>小时</span>\
+										</div>\
+										<div class='plan_hms pull-left mr20 bt-input-text minute' style='"+ hour +"'>\
+											<span><input type='number' name='minute' value='"+ _this.setClientForm.cron.minute +"' maxlength='2' max='59' min='0'></span>\
+											<span class='name'>分钟</span>\
+										</div>\
+										<div class='plan_hms pull-left mr20 bt-input-text minute-n' style='"+ minuten +"'>\
+											<span><input type='number' name='minute-n' value='"+ _this.setClientForm.cron.where1 +"' maxlength='2' max='59' min='0'></span>\
+											<span class='name'>分钟</span>\
+										</div>\
+									</div>\
+								</div>\
+								<div class='line'>\
+									<span class='tname'>限速</span>\
+									<div class='info-r c4'>\
+										<input class='bt-input-text' type='number' name='bwlimit' min='0'  value='"+ _this.setClientForm.rsync.bwlimit +"' style='width:100px' /> KB\
+										<span style='margin-left: 54px;margin-right: 10px;'>延迟</span><input class='bt-input-text' min='0' type='number' name='delay'  value='"+ _this.setClientForm.delay +"' style='width:100px' /> 秒\
+									</div>\
+								</div>\
+								<div class='line'>\
+									<span class='tname'>接收密钥</span>\
+									<div class='info-r c4'>\
+										<textarea id='mainDomain' class='bt-input-text' name='secret_key' style='width:310px;height:75px;line-height:22px' placeholder='此密钥为 接收配置[接收账号] 的密钥'>"+ _this.setClientForm.secret_key +"</textarea>\
+									</div>\
+								</div>\
+								<div class='bt-form-submit-btn'>\
+									<button type='button' class='btn btn-danger btn-sm btn-title colseView' onclick='layer.close(tsync.set_layer_View)'>取消</button>\
+									<button type='button' class='btn btn-success btn-sm btn-title setViewData'>"+ _this.setSubmit +"</button>\
+								</div>\
+								<ul class=\"help-info-text c7\">\
+									<li>【同步目录】：若不以<code>/</code>结尾，则表示将数据同步到二级目录，一般情况下目录路径请以<code>/</code>结尾</li>\
+								  	<li>【同步方式】增量： 数据更改/增加时同步，且只追加和替换文件</li>\
+								  	<li>【同步方式】完全： 保持两端的数据与目录结构的一致性，会同步删除、追加和替换文件和目录</li>\
+								  	<li>【限速】：限制数据同步任务的速度，防止因同步数据导致带宽跑高</li>\
+								  	<li>【延迟】：在延迟时间周期内仅记录不同步，到达周期后一次性同步数据，以节省开销</li>\
+								  </ul>\
+							  </form>",
+					});
+				$('.synchronization').click(function(event) {
+					var selVal = $('.synchronization option:selected').val();
+					if (selVal == "false"){
+						$('#period').show();
+					}else{
+						$('#period').hide();
+						$('.hour input,.minute input').val('0');
+						$('.minute-n input').val('1');
+					}
+				});
+				$('#period select').click(function(event) {
+					var selVal = $('#period select option:selected').val();
+					if (selVal == 'day'){
+						$('.hour,.minute').show();
+						if ($('.hour input').val() == ''){
+							$('.hour input,.minute input').val('0');
+						}
+						$('.minute-n').hide();
+					}else{
+						$('.hour,.minute').hide();
+						$('.minute-n').show();
+						if ($('.minute-n input').val() == ''){
+							$('.minute-n input').val('1');
+						}
+					}
+				});
+				$('.setViewData').click(function(event) {
+					var server = {
+						ip:'',
+						path:'',
+						secret_key:'',
+						delete:'true',
+						realtime:'true',
+						cron:{
+							type:'',
+							where1:'',
+							hour:'',
+							minute:'',
+							id:'',
+						}
+					}
+					if ($('input[name="ip"]').val() != ''){
+						server.ip = $('input[name="ip"]').val();
+					}else{
+						layer.msg('请输入服务器IP地址！');
+						return false;
+					}
+					if($('input[name="bwlimit"]').val() > -1){
+						server.bwlimit = $('input[name="bwlimit"]').val();
+					}
+					
+					if($('input[name="delay"]').val() > -1){
+						server.delay = $('input[name="delay"]').val();
+					}
+	
+					if ($('input[name="path"]').val() != ''){
+						server.path = $('input[name="path"]').val();
+					}else{
+						layer.msg('请输入同步目录！');
+						return false;
+					}
+					server.delete = $('select[name="delete"] option:selected').val();
+					server.realtime = ($('select[name="realtime"] option:selected').val() == 'true'?true:false);
+					if (!server.realtime) {
+						server.cron.type = $('select[name="period"] option:selected').val();
+						if (server.cron.type == 'day') {
+							server.cron.hour = $('input[name="hour"]').val();
+							server.cron.minute = $('input[name="minute"]').val();
+							if (server.cron.hour == '' || server.cron.minute =='') {
+								layer.msg('请输入同步时间！');
+								return false;
+							}
+						}else{
+							server.cron.where1 = $('input[name="minute-n"]').val();
+							if (server.cron.where1 == '') {
+								layer.msg('请输入同步时间！');
+								return false;
+							}
+						}
+					}
+					if ( $('textarea[name="secret_key"]').val() != ''){
+						server.secret_key = $('textarea[name="secret_key"]').val();
+					}else{
+						layer.msg('请输入接收密钥！');
+						return false;
+					}
+					
+					server.cron = JSON.stringify(server.cron);
+					server.index = index
+					var loading = layer.msg('提交数据中,请稍后...',{icon:16,time:0,shade: [0.3, '#000']});
+					$.post('/plugin?action=a&name=rsync&s=add_ormodify_send',server,function(res){
+						layer.close(loading);
+						if (res.status){
+							layer.close(tsync.set_layer_View);
+							tsync.getClientInfo();
+							setTimeout(function(){
+								layer.msg(res.msg,{icon:1});
+							},200)
+						}else{
+							layer.msg(res.msg,{icon:2});
+						}
+						
+					});
+					function method(){
+	
+					}
+				});
+			});
+		},
+		// 发送端 - 删除配置信息
+		delClientInfo:function(mName){
+			var _this = this;
+			SafeMessage('删除同步任务','即将删除同步任务['+mName+'],确定吗？',function(){
+				var loadT = layer.msg('正在删除同步任务['+mName+'] <img src="/static/img/ing.gif">',{icon:16,time:0,shade: [0.3, "#000"]});
+				$.post('/plugin?action=a&name=rsync&s=remove_send',{mName:mName},function(res){
+					layer.close(loadT);
+					if (res.status){
+						layer.msg(res.msg,{icon:1});
+						_this.getClientInfo();
+					}else{
+						layer.msg(res.msg,{icon:2});
+					}
+				});
+			});
+		},
+		// 发送端 - 获取日志
+		methodLogs:function(mName){
+			tsync.set_layer_View = layer.msg('正在获取同步日志',{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/plugin?action=a&name=rsync&s=get_rsync_logs',{mName:mName}, function(res) {
+				layer.close(tsync.set_layer_View);
+				tsync.cancelLog = layer.open({
+					type:1,
+					title:'查看同步日志['+mName+']',
+					area: ['1000px','540px'], 
+					shadeClose:false,
+					closeBtn:2,
+					content:'<div class="setchmod bt-form pd20 pb70">'
+							+'<pre style="overflow: auto; border: 0px none; padding: 15px; margin: 0px; height: 410px; background-color: #333;color: #fff;" id ="preLogs">'+res.msg+'</pre>'
+							+'<div class="bt-form-submit-btn" style="margin-top: 0px;">'
+							+'<button type="button" class="btn btn-success btn-sm btn-delLogs" style="margin-right:10px;">清空日志</button>'
+							+'<button type=white"button" class="btn btn-danger btn-sm" onclick="layer.close(tsync.cancelLog)">取消</button>'
+						    +'</div>'
+							+'</div>'
+				});
+				setTimeout(function(){
+					var ob = document.getElementById('preLogs');
+					ob.scrollTop = ob.scrollHeight;	
+				},300);	
+				$('.btn-delLogs').click(function(event) {
+					layer.confirm('确定删除'+ mName +'吗？',{title:'删除日志',icon:3},function(){
+						$.post('/plugin?action=a&name=rsync&s=remove_rsync_logs',{mName:mName}, function(res) {
+							if (res.status){
+								$('#preLogs').html('');
+								layer.msg(res.msg,{icon:1});
+							}else{
+								layer.msg(res.msg,{icon:2});
+							}
+						});
+					});
+				});
+			});
+		},
+		// 发送端 - 黑白名单
+		blackWhiteList:function(name){
+			var _this = this;
+				layer.open({
+					type:1,
+					title:'过滤器',
+					area: '400px', 
+					shadeClose:false,
+					closeBtn:2,
+					content:'<div class="wafConf">\
+								<div style="overflow:hidden;">\
+									<fieldset>\
+										<legend>排除的文件和目录</legend>\
+										<input type="text" class="bt-input-text mr5" data-type="exclude" title="例如：.log, .log, /\home/\www/\" placeholder="例如：.log, test.log, /\home/\www/\" style="width:305px;">\
+										<button data-type="exclude" class=" addList btn btn-default btn-sm">添加</button>\
+										<div class="table-overflow">\
+											<table class="table table-hover BlockList"><tbody></tbody></table>\
+										</div>\
+									</fieldset>\
+								</div>\
+								<div>\
+									<ul class="help-info-text c7" style="list-style-type:decimal;">\
+										<li>排除的文件和目录是指当前目录下不需要同步的目录或者文件</li>\
+										<li>如果规则以斜线 <code>/</code>开头，则从头开始要匹配全部</li>\
+										<li>如果规则以 <code>/</code>结尾，则要匹配监控路径的末尾</li>\
+										<li><code>?</code> 匹配任何字符，但不包括<code>/</code></li>\
+										<li><code>*</code> 匹配0或多个字符，但不包括<code>/</code></li>\
+										<li><code>**</code> 匹配0或多个字符，可以是<code>/</code></li>\
+									</ul>\
+								</div>\
+							</div>'
+				});
+			function getIncludeExclude(mName){
+				loadT = layer.msg('正在获取数据...',{icon:16,time:0,shade: [0.3, '#000']});
+				$.post('/plugin?action=a&name=rsync&s=get_exclude', {mName:mName}, function(res) {
+					layer.close(loadT);
+					var list=''
+					for (var i = 0; i < res.length; i++) {
+						list += '<tr><td>'+ res[i] +'</td><td><a href="javascript:;" data-type='+ mName +' class="delList">删除</a></td></tr>';
+					}
+					$('.wafConf .BlockList tbody').empty().append(list);
+				});
+			}
+			getIncludeExclude(name);
+			function addArgs(mName,exclude){
+				console.log(mName + ',' + exclude)
+				loadT = layer.msg('正在添加...',{icon:16,time:0,shade: [0.3, '#000']});
+				$.post('/plugin?action=a&name=rsync&s=add_exclude', {mName:mName,exclude:exclude}, function(res){
+					layer.close(loadT);
+					if (res.status){
+						getIncludeExclude(mName);
+						$('.wafConf input').val('');
+						layer.msg(res.msg);
+					}else{
+						layer.msg(res.msg);
+					}
+				});
+			}
+			$('.addList').click(function(event) {
+				var val = $(this).prev().val();
+				if(val == ''){
+					layer.msg('当前输入内容为空,请输入');
+					return false;
+				}
+				addArgs(name,val);
+			});
+			$('.wafConf input').keyup(function(event){
+				if (event.which == 13){
+					var val = $(this).val();
+					if(val == ''){
+						layer.msg('当前输入内容为空,请输入');
+						return false;
+					}
+					addArgs(name,val);
+				}
+			});
+			$('.wafConf').on('click', '.delList', function(event) {
+				var val = $(this).parent().prev().text();
+				loadT = layer.msg('正在删除...',{icon:16,time:0,shade: [0.3, '#000']});
+				$.post('/plugin?action=a&name=rsync&s=remove_exclude', {mName:name,exclude:val}, function(res){
+					layer.close(loadT)
+					if (res.status){
+						getIncludeExclude(name);
+						layer.msg(res.msg);
+					}else{
+						layer.msg(res.msg);
+					}
+				});
+			});
+		}
+	}
+	tsync.initial();
+</script>

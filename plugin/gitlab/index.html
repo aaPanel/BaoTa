@@ -1,0 +1,171 @@
+<style>
+.soft-man-con .title{
+	height:30px;
+	line-height:30px;
+}
+.SetAggregateOne {
+    height: 60px;
+}
+.gitservice {
+    margin-bottom: 13px;
+    margin-right: 0;
+    text-align: right;
+    width: 120px;
+}
+.gitlab{
+	margin-bottom:30px;
+	padding-top:15px;
+}
+.gitlabUrl{
+	display:inline-block;
+	width:206px;
+}
+</style>
+<div class="bt-w-main">
+	<div class="bt-w-menu">
+		<p class="bgw" onclick="service">服务状态</p>
+		<p>公钥</p>
+		<p>配置文件</p>
+	</div>
+	<div id="webEdit-con" class="bt-w-con pd15">
+	</div>
+</div>
+<script type="javascript/text">
+	$(".bt-w-menu p").click(function(){
+		var i = $(this).index();
+		$(this).addClass("bgw").siblings().removeClass("bgw");
+		switch(i){
+			case 0:
+				GetStatus();
+				break;
+			case 1:
+				GetSSHKey();
+				break;
+			case 2:
+				GetConfig();
+				break;
+		}
+	});
+	
+	
+	function ServiceStatus(status){
+		var loadT = layer.msg('正在处理...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.get('/plugin?action=a&s=ServiceAdmin&name=gitlab&status='+status,function(rdata){
+			layer.close(loadT);
+			if(rdata.status) GetStatus();
+			setTimeout(function(){
+				layer.msg(rdata.msg,{icon:rdata.status?1:5,time:5000});
+			},1000);
+		});
+	}
+	
+	function SetPort(){
+		port = $("input[name='gitlabPort']").val();
+		var loadT = layer.msg('正在修改GitLab端口...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&s=SetPort&name=gitlab','port='+port,function(rdata){
+			layer.close(loadT);
+			if(rdata.status) GetStatus();
+			setTimeout(function(){
+				layer.msg(rdata.msg,{icon:rdata.status?1:5,time:5000});
+			},1000);
+		});
+	}
+	
+	function GetStatus(){
+		var con = '<div class="soft-man-con">\
+			<div class="title c3">状态</div>\
+			<div class="gitlab">\
+				<div class="SetAggregateOne"></div>\
+				<div class="gitlabBtn mtb15"></div>\
+			</div>\
+			<div class="title c3">GitLab</div>\
+			<div class="gitlab">\
+				<div class="line">\
+					<span class="tname">端口</span>\
+					<div class="info-r"><input class="bt-input-text mr20" type="number" min="81" max="65535" name="gitlabPort" style="width:140px"><button class="btn btn-default btn-sm va0" onclick="SetPort()">修改</button></div>\
+				</div>\
+				<div class="line">\
+					<span class="tname">访问地址</span>\
+					<div class="info-r"><a href="#" target="_blank" class="bt-input-text btlink gitlabUrl"></a></div>\
+				</div>\
+			</div>\
+			<ul class="help-info-text c7 mtb15">\
+				<li>GitLab中的nginx/redis等服务为独立服务，与面板无关</li>\
+				<li>GitLab不能直接使用80/443端口，若您有此需要，请在站点管理中做反向代理</li>\
+				<li>若重启或修改端口等操作后出现502错误，您可能需要等待3-5分钟才能正常访问GitLab</li>\
+			</ul>\
+		</div>';
+		$("#webEdit-con").html(con);
+		var loadT = layer.msg('正在获取服务状态...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.get('/plugin?action=a&s=GetStatus&name=gitlab',function(rdata){
+			layer.close(loadT);
+			if(rdata.status === false){
+				layer.closeAll();
+				layer.msg(rdata.msg,{icon:5});
+				return;
+			}
+			
+			var opt = '';
+			for(var i=0;i<rdata.list.length;i++){
+				opt += '<p class="pull-left gitservice"><span>'+rdata.list[i].name+'</span><span style="color: '+(rdata.list[i].status?'#20a53a':'red')+'; margin-left: 3px;" class="glyphicon glyphicon '+(rdata.list[i].status?'glyphicon-play':'glyphicon-pause')+'"></span></p>'
+			}
+			
+			var btns = '<button class="btn btn-default btn-sm mr5" onclick="ServiceStatus(\'start\')">启动</button>';
+			if(rdata.list[0].status){
+				btns = '<button class="btn btn-default btn-sm mr5" onclick="ServiceStatus(\'stop\')">停止</button>\
+						<button class="btn btn-default btn-sm" onclick="ServiceStatus(\'restart\')">重启</button>';
+			}
+			$('.gitlabBtn').html(btns);
+			$("input[name='gitlabPort']").val(rdata.port);
+			$('.SetAggregateOne').html(opt);
+			$('.gitlabUrl').html(rdata.url);
+			$('.gitlabUrl').attr('href',rdata.url);
+		});
+	}
+	
+	function GetConfig(){
+		var con = '<p style="color: #666; margin-bottom: 7px">提示：Ctrl+F 搜索关键字，Ctrl+G 查找下一个，Ctrl+S 保存，Ctrl+Shift+R 查找替换</p><textarea class="bt-input-text" style="height: 320px; line-height:18px;" id="textBody"></textarea>\
+					<button id="OnlineEditFileBtn" class="btn btn-success btn-sm" style="margin-top:10px;">保存</button>\
+					<ul class="help-info-text c7 ptb15">\
+						<li>此处为GitLab Nginx配置文件,修改后需重启GitLab服务才生效。</li>\
+					</ul>';
+		$("#webEdit-con").html(con);
+		fileName = '/var/opt/gitlab/nginx/conf/gitlab-http.conf';
+		var loadT = layer.msg("读取中...",{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/files?action=GetFileBody', 'path=' + fileName, function(rdata) {
+			layer.close(loadT);
+			$("#textBody").empty().text(rdata.data);
+			$(".CodeMirror").remove();
+			var editor = CodeMirror.fromTextArea(document.getElementById("textBody"), {
+				extraKeys: {"Ctrl-Space": "autocomplete"},
+				lineNumbers: true,
+				matchBrackets:true,
+			});
+			editor.focus();
+			$(".CodeMirror-scroll").css({"height":"360px","margin":0,"padding":0});
+			$("#OnlineEditFileBtn").click(function(){
+				$("#textBody").text(editor.getValue());
+				confSafe(fileName);
+			});
+		});
+	}
+	
+	
+	function GetSSHKey(action){
+		var con ='<textarea class="sshKey bt-input-text" style="height: 200px; line-height: 20px; width: 100%; padding:10px"></textarea>\
+			<div class="line mtb15"><button class="btn btn-default btn-sm" onclick="GetSSHKey(1)">更新</button></div>\
+			<ul class="help-info-text c7 mtb15">\
+			<li>此处SSH Key主要用于GitLab生成SSH密钥</li>\
+			<li>点击更新可以重新生成SSH Key</li></ul>';
+		$("#webEdit-con").html(con);
+		if(!action) action = '0';
+		var loadT = layer.msg('正在获取SSH Key...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.get('/plugin?action=a&s=GetSSHKey&name=gitlab&setkey=' + action,function(rdata){
+			layer.close(loadT);
+			$('.sshKey').text(rdata);
+		});
+	}
+		
+	
+	GetStatus();
+</script>

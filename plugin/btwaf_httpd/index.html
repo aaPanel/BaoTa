@@ -1,0 +1,2133 @@
+<style>
+/*waf*/
+.lib-con-title{
+	height: 26px;
+	border-bottom: #ccc 1px solid;
+	margin-bottom: 10px;
+	width: 100%;
+	/*float: left;*/
+}
+.lib-con-title span{
+	font-weight: bold;
+	float:left;
+}
+.lib-con-title .ssh-item{
+	margin-top:0;
+	padding:0;
+}
+.lib-con{
+	margin-bottom: 10px;
+	width:100%;
+}
+.waftable .ssh-item{
+	display: inline-block;
+	padding-top: 0;
+}
+.waftable .ssh-item .btswitch+.btswitch-btn,.lib-con-title .ssh-item .btswitch+.btswitch-btn{
+	width: 2.0em;
+	height: 1.2em;
+	margin-bottom: 0
+}
+.rule_btn button {
+	margin: 10px;
+}
+.table .gztr td,#LogDayCon td{
+	word-break:break-all;
+}
+.wavbox {
+    width: 322px;
+    float: left;
+    height: 60px;
+    line-height: 52px;
+    text-align: center;
+	margin-bottom:10px;
+	margin-top:5px;
+	padding:0;
+}
+.wavbox span{
+	font-size:18px;
+	margin:0 6px;
+	font-weight:bold;
+}
+.lib-con .line {
+    width: 33.333%;
+	text-align: center;
+	height: 70px;
+	float: left;
+	margin: 6px 0;
+}
+.lib-con .line:nth-of-type(3n-1) {
+    margin-right: 0;
+}
+.lib-con .line .name {
+    width: auto;
+    display: block;
+    text-align: center;
+    margin: 5px 0 8px;
+	color:#666;
+}
+.lib-con .line .val {
+    font-size: 18px;
+    display: block;
+    text-align: center;
+	font-weight:bold
+}
+.wafview-head{
+	height: 30px;
+	border-bottom: #ccc 1px solid;
+	margin-bottom: 10px;
+}
+.waf-switch{
+	margin-left:20px;
+	margin-top:-3px;
+}
+.wafinfo{
+	line-height:18px;
+	margin-right:10px;
+}
+.wafinfo .safetotal{
+	margin:0 6px;
+	font-size:16px;
+}
+.gjcs{
+	background-color:#fafafa;
+	border:#ddd 1px solid;
+	padding:0;
+	float: left;
+	border-radius: 4px;
+	margin-top: 5px;
+	margin-bottom:10px;
+	width:100%;
+}
+.table .sitename,.filtertext{
+	width:100px;
+	display:block;
+	overflow: hidden;
+	text-overflow:ellipsis;
+	white-space: nowrap;
+}
+.td3txt{
+	max-width:260px;
+	display:block;
+	overflow: hidden;
+	text-overflow:ellipsis;
+	white-space: nowrap;
+}
+.tdhide{
+	display:none
+}
+.divpre{
+	padding: 9.5px;
+	margin: 0 0 10px;
+	font-size: 13px;
+	line-height: 1.42857143;
+	color: #333;
+	word-break: break-all;
+	word-wrap: break-word;
+	background-color: #f6f6f6;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	max-height:100px;
+	overflow:auto
+}
+.lib-con .table > tbody > tr.active td{
+	background-color: #E4EEE0;
+}
+.table_head_fix{
+	position:relative;
+}
+.tipsval{
+	margin-left: 2px;
+    color: #fc6d26;
+    padding: 0 2px;
+    height: 14px;
+    line-height: 14px;
+    border-radius: 3px;
+    font-family: arial;
+    vertical-align: 2px;
+	font-weight:700
+}
+.tipsvalnull{
+	color:#ccc;
+	font-weight:normal
+}
+.dot{
+	position:relative;
+}
+.dot:after{
+	content: "";
+    height: 4px;
+    width: 4px;
+    border-radius: 2px;
+    background: #fc6d26;
+    position: absolute;
+    left: -7px;
+    top: 5px;
+}
+</style>
+<div class="bt-form">
+	<div class="bt-w-main" style="height: 630px;">
+		<div class="bt-w-menu">
+			<p class="bgw" onclick="wafview()">首页</p>
+			<p onclick="wafconfig()">全局配置</p>
+			<p onclick="siteconfig()">站点配置</p>
+			<p onclick="Protectionlog()">封锁历史</p>
+			<p onclick="viewdata()">操作日志</p>
+		</div>
+		<div class="bt-w-con pd15">
+			<div class="wafcon"></div>
+		</div>
+	</div>
+</div>
+<script type="javascript/text">
+$('.layui-layer-page').css('width','800px');
+$(".bt-w-menu p").click(function(){
+	$(this).addClass("bgw").siblings().removeClass("bgw");
+});
+wafview()
+//概览
+function wafview(){
+	var wafcon = '';
+	var loadT = layer.msg('正在获取，请稍候..',{icon:16,time:0});
+	$.get('/plugin?action=a&name=btwaf_httpd&s=get_total_all',function(rdata){
+		layer.close(loadT);
+		if(rdata.status === false){
+			layer.closeAll()
+			layer.msg(rdata.msg,{icon:2});
+			return;
+		}
+		var iplist = '';
+		var rules = '';
+		var rulesDate = rdata.total.rules;
+		wafcon = '<span class="pull-left" style="font-weight:bold">网站防火墙开关</span><div class="waf-switch pull-left">\
+					<input class="btswitch btswitch-ios" id="closewaf" type="checkbox" '+(rdata.open?'checked':'')+'>\
+					<label class="btswitch-btn" for="closewaf" onclick="set_open()"></label>\
+				</div>'
+		if(rulesDate !=''){
+			$.each(rulesDate,function(key,val){
+				rules += '<div class="line"><span class="name">'+val.name+'</span><span class="val">'+val.value+'</span></div>';
+			})
+		}
+		var con='<div class="lib-box wafview">\
+			<div class="wafview-head"><div class="wafinfo pull-right" style="display:none">宝塔WAF为您安全防护<span class="safetotal">'+rdata.safe_day+'</span>天</div>'+wafcon+'\</div>\
+			<div class="lib-con pull-left">\
+				<div class="wavbox alert alert-success" style="margin-right:16px">总拦截<span>'+rdata.total.total+'</span>次</div>\
+				<div class="wavbox alert alert-info">安全防护<span>'+rdata.safe_day+'</span>天</div>\
+				<div class="gjcs">'+rules+'</div></div>\
+		</div><ul class="help-info-text c7">\
+					<li>在此处关闭防火墙后,所有站点将失去保护</li>\
+					<li>宝塔网站防火墙会使Apache有一定的性能损失</li>\
+					<li>宝塔网站防火墙仅主要针对网站渗透攻击,暂时不具备系统加固功能</li>\
+					<li>我们尽可能提供精炼的过滤规则,但如果有误报,请关闭对应规则并到<a class="btlink" href="https://www.bt.cn/bbs" target="_blank">论坛反馈</a></li>\
+					<li>如果您在使用过程中发现Bug或对产品有什么建议,请到<a class="btlink" href="https://www.bt.cn/bbs" target="_blank">论坛反馈</a></li>\
+				</ul>';
+		$(".wafcon").html(con);
+	})
+
+}
+
+var create_l = 0;
+var create_2 = 0;
+
+//时间转换
+function formatDate(ns) {
+	ns = ns*1000;
+	var d = new Date(ns);  
+	var dformat = [ d.getFullYear(), d.getMonth() + 1, d.getDate() ].join('-')   
+			+ ' ' + [ d.getHours(), d.getMinutes(), d.getSeconds() ].join(':');  
+	return dformat;  
+}
+
+//表格头固定
+function tableFixed(name){
+	var tableName = document.querySelector('#'+name);
+	tableName.addEventListener('scroll',scrollHandle);
+}
+function scrollHandle (e){
+	var scrollTop = this.scrollTop;
+	//this.querySelector('thead').style.transform = 'translateY(' + scrollTop + 'px)';
+	$(this).find("thead").css({"transform":"translateY("+scrollTop+"px)","position":"relative","z-index":"1"});
+}
+
+//全局配置
+function wafconfig(){
+	var loadT = layer.msg('正在获取防火墙配置..',{icon:16,time:0});
+	$.get('/plugin?action=a&name=btwaf_httpd&s=get_config',function(rdata){
+		layer.close(loadT);
+		var con = '<div class="lib-box">\
+					<div class="lib-con">\
+						<div class="divtable">\
+							<table class="table table-hover waftable">\
+								<thead>\
+									<tr><th>名称</th><th>描述</th><th>响应</th><th style="text-align: center;">状态</th><th style="text-align: right;">操作</th></tr>\
+								</thead>\
+								<tbody>\
+									<tr>\
+										<td>CC防御</td><td>防御CC攻击，具体防御参数请到站点配置中调整</td><td><a class="btlink" onclick="set_request_code(\'cc\','+rdata.cc.status+')">'+rdata.cc.status+'</a></td><td><div class="ssh-item">\
+											<input class="btswitch btswitch-ios" id="closecc" type="checkbox" '+(rdata.cc.open?'checked':'')+'>\
+											<label class="btswitch-btn" for="closecc" onclick="set_obj_open(\'cc\')"></label>\
+										</div></td><td class="text-right"><a class="btlink" onclick="set_cc_rule('+rdata.cc.cycle+','+rdata.cc.limit+','+rdata.cc.endtime+',\'undefined\','+rdata.cc.increase+')">初始规则</a></td>\
+									</tr>\
+									<tr>\
+										<td>恶意容忍度</td>\
+										<td>封锁连续恶意请求，请到站点配置中调整容忍阈值</td>\
+										<td><a class="btlink" onclick="set_request_code(\'cc\','+rdata.cc.status+')">'+rdata.cc.status+'</a></td>\
+										<td style="text-align: center;">--</td>\
+										<td class="text-right"><a class="btlink" onclick="set_retry('+rdata.retry_cycle+','+rdata.retry+','+rdata.retry_time+')">初始规则</a></td>\
+									</tr>\
+									<tr>\
+										<td>GET-URI过滤</td><td>'+rdata.get.ps+'</td><td><a class="btlink" onclick="set_request_code(\'get\','+rdata.get.status+')">'+rdata.get.status+'</a></td><td><div class="ssh-item">\
+											<input class="btswitch btswitch-ios" id="closeget" type="checkbox" '+(rdata.get.open?'checked':'')+'>\
+											<label class="btswitch-btn" for="closeget" onclick="set_obj_open(\'get\')"></label>\
+										</div></td><td class="text-right"><a class="btlink" onclick="set_obj_conf(\'url\')">规则</a> | <a class="btlink" href="javascript:;" onclick="OnlineEditFile(0,\'/www/server/btwaf/html/get.html\')">响应内容</a></td>\
+									</tr>\
+									<tr>\
+										<td>GET-参数过滤</td><td>'+rdata.get.ps+'</td><td><a class="btlink" onclick="set_request_code(\'get\','+rdata.get.status+')">'+rdata.get.status+'</a></td><td><div class="ssh-item">\
+											<input class="btswitch btswitch-ios" id="closeget" type="checkbox" '+(rdata.get.open?'checked':'')+'>\
+											<label class="btswitch-btn" for="closeget" onclick="set_obj_open(\'get\')"></label>\
+										</div></td><td class="text-right"><a class="btlink" onclick="set_obj_conf(\'args\')">规则</a> | <a class="btlink" href="javascript:;" onclick="OnlineEditFile(0,\'/www/server/btwaf/html/get.html\')">响应内容</a></td>\
+									</tr>\
+									<tr>\
+										<td>POST过滤</td><td>'+rdata.post.ps+'</td><td><a class="btlink" onclick="set_request_code(\'post\','+rdata.post.status+')">'+rdata.post.status+'</a></td><td><div class="ssh-item">\
+											<input class="btswitch btswitch-ios" id="closepost" type="checkbox" '+(rdata.post.open?'checked':'')+'>\
+											<label class="btswitch-btn" for="closepost" onclick="set_obj_open(\'post\')"></label>\
+										</div></td><td class="text-right"><a class="btlink" onclick="set_obj_conf(\'post\')">规则</a> | <a class="btlink" href="javascript:;" onclick="OnlineEditFile(0,\'/www/server/btwaf/html/post.html\')">响应内容</a></td>\
+									</tr>\
+									<tr>\
+										<td>User-Agent过滤</td><td>'+rdata['user-agent'].ps+'</td><td><a class="btlink" onclick="set_request_code(\'user-agent\','+rdata['user-agent'].status+')">'+rdata['user-agent'].status+'</a></td><td><div class="ssh-item">\
+											<input class="btswitch btswitch-ios" id="closeua" type="checkbox" '+(rdata['user-agent'].open?'checked':'')+'>\
+											<label class="btswitch-btn" for="closeua" onclick="set_obj_open(\'user-agent\')"></label>\
+										</div></td><td class="text-right"><a class="btlink" onclick="set_obj_conf(\'user_agent\')">规则</a> | <a class="btlink" href="javascript:;" onclick="OnlineEditFile(0,\'/www/server/btwaf/html/user_agent.html\')">响应内容</a></td>\
+									</tr>\
+									<tr>\
+										<td>Cookie过滤</td><td>'+rdata.cookie.ps+'</td><td><a class="btlink" onclick="set_request_code(\'cookie\','+rdata.cookie.status+')">'+rdata.cookie.status+'</a></td><td><div class="ssh-item">\
+											<input class="btswitch btswitch-ios" id="closecookie" type="checkbox" '+(rdata.cookie.open?'checked':'')+'>\
+											<label class="btswitch-btn" for="closecookie" onclick="set_obj_open(\'cookie\')"></label>\
+										</div></td><td class="text-right"><a class="btlink" onclick="set_obj_conf(\'cookie\')">规则</a> | <a class="btlink" href="javascript:;" onclick="OnlineEditFile(0,\'/www/server/btwaf/html/cookie.html\')">响应内容</a></td>\
+									</tr>\
+									<tr>\
+										<td>禁止国外访问</td><td>'+rdata.drop_abroad.ps+'</td><td><a class="btlink" onclick="set_request_code(\'drop_abroad\','+rdata.drop_abroad.status+')">'+rdata.drop_abroad.status+'</a></td><td><div class="ssh-item">\
+											<input class="btswitch btswitch-ios" id="closeabroad" type="checkbox" '+(rdata.drop_abroad.open?'checked':'')+'>\
+											<label class="btswitch-btn" for="closeabroad" onclick="set_obj_open(\'drop_abroad\')"></label>\
+										</div></td><td class="text-right"><a class="btlink" onclick="cn_iplist()">设置</a> | <a class="btlink" onclick="sync_iplist()">同步</a></td>\
+									</tr>\
+									<tr>\
+										<td>常见扫描器</td><td>'+rdata.scan.ps+'</td><td><a class="btlink" onclick="set_request_code(\'scan\','+rdata.scan.status+')">'+rdata.scan.status+'</a></td><td><div class="ssh-item">\
+											<input class="btswitch btswitch-ios" id="closescan" type="checkbox" '+(rdata.scan.open?'checked':'')+'>\
+											<label class="btswitch-btn" for="closescan" onclick="set_obj_open(\'scan\')"></label>\
+										</div></td><td class="text-right"><a class="btlink" onclick="scan_rule()">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>IP白名单</td><td>所有规则对IP白名单无效</td><td style="text-align: center;">--</td>\
+										<td style="text-align: center;">--</td>\
+										<td class="text-right"><a class="btlink" onclick="ip_white()">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>IP黑名单</td><td>禁止访问的IP</td><td><a class="btlink" onclick="set_request_code(\'cc\','+rdata.cc.status+')">'+rdata.cc.status+'</a></td>\
+										<td style="text-align: center;">--</td>\
+										<td class="text-right"><a class="btlink" onclick="ip_black()">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>URL白名单</td><td>大部分规则对URL白名单无效</td><td style="text-align: center;">--</td>\
+										<td style="text-align: center;">--</td>\
+										<td class="text-right"><a class="btlink" onclick="url_white()">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>URL黑名单</td><td>禁止访问的URL地址</td><td><a class="btlink" onclick="set_request_code(\'get\','+rdata.get.status+')">'+rdata.get.status+'</a></td>\
+										<td style="text-align: center;">--</td>\
+										<td class="text-right"><a class="btlink" onclick="url_black()">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>其它</td><td>'+rdata.other.ps+'</td><td><a class="btlink" onclick="set_request_code(\'other\','+rdata.other.status+')">'+rdata.other.status+'</a></td>\
+										<td style="text-align: center;">--</td>\
+										<td class="text-right"><a class="btlink" href="javascript:;" onclick="OnlineEditFile(0,\'/www/server/btwaf/html/other.html\')">响应内容</a></td>\
+									</tr>\
+								</tbody>\
+							</table>\
+						</div>\
+					</div>\
+					<ul class="help-info-text c7">\
+					<li>继承: 全局设置将在站点配置中自动继承为默认值</li>\
+					<li>优先级: IP白名单 > IP黑名单 > URL白名单 > URL黑名单 > CC防御 > 禁止国外IP访问 > User-Agent > URI过滤 > URL参数 > Cookie > POST</li>\
+				</ul></div>\
+				</div>';
+		$(".wafcon").html(con);
+	});
+}
+
+//同步国内IP库
+function sync_iplist(){
+	var loadT = layer.msg('正在从云端更新国内IP库..',{icon:16,time:0});
+	$.get('/plugin?action=a&name=btwaf_httpd&s=sync_cnlist',function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+
+//IP白名单
+function ip_white(type){
+	if(type == undefined){
+		create_l = layer.open({
+			type: 1,
+			title: "管理IP白名单",
+			area: ['500px','500px'],
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<div class="pd15">\
+					<div style="border-bottom:#ccc 1px solid;margin-bottom:10px;padding-bottom:10px">\
+						<input class="bt-input-text" name="start_ip" type="text" value="" style="width:150px;margin-right:15px;margin-left:5px" placeholder="起始IP地址">\
+						<input class="bt-input-text mr5" name="end_ip" type="text" style="width:150px;margin-left:5px;margin-right:20px" placeholder="结束IP地址">\
+						<button class="btn btn-success btn-sm va0 pull-right" onclick="add_ip_white();">添加</button>\</div>\
+					<div class="divtable">\
+					<div id="ipWhite" style="max-height:300px;overflow:auto;border:#ddd 1px solid">\
+					<table class="table table-hover" style="border:none">\
+						<thead>\
+							<tr>\
+								<th>超始IP</th>\
+								<th>结束IP</th>\
+								<th style="text-align: right;">操作</th>\
+							</tr>\
+						</thead>\
+						<tbody id="ip_white_con" class="gztr"></tbody>\
+					</table>\
+					</div>\
+				</div>\
+				<ul class="help-info-text c7 ptb10">\
+					<li>所有规则对白名单中的IP段无效,包括IP黑名单和URL黑名单,IP白名单具备最高优先权</li>\
+				</ul></div>'
+		});
+		tableFixed("ipWhite");
+	}
+	var loadT = layer.msg('正在获取防火墙配置..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_rule',{ruleName:'ip_white'},function(rdata){
+		layer.close(loadT);
+		var tbody = ''
+		for(var i=0;i<rdata.length;i++){
+			tbody += '<tr>\
+						<td>'+rdata[i][0].join('.')+'</td>\
+						<td>'+rdata[i][1].join('.')+'</td>\
+						<td class="text-right"><a class="btlink" onclick="remove_ip_white('+i+')">删除</a></td>\
+					</tr>'
+		}
+		$("#ip_white_con").html(tbody);
+	});
+}
+
+
+//IP黑名单
+function ip_black(type){
+	if(type == undefined){
+		create_l = layer.open({
+			type: 1,
+			title: "管理IP黑名单",
+			area: ['500px','500px'],
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<div class="pd15">\
+					<div style="border-bottom:#ccc 1px solid;margin-bottom:10px;padding-bottom:10px">\
+						<input class="bt-input-text" name="start_ip" type="text" value="" style="width:150px;margin-right:15px;margin-left:5px" placeholder="起始IP地址">\
+						<input class="bt-input-text mr5" name="end_ip" type="text" style="width:150px;margin-left:5px;margin-right:20px" placeholder="结束IP地址">\
+						<button class="btn btn-success btn-sm va0 pull-right" onclick="add_ip_black();">添加</button>\</div>\
+					<div class="divtable">\
+					<div id="ipBlack" style="max-height:300px;overflow:auto;border:#ddd 1px solid">\
+					<table class="table table-hover" style="border:none">\
+						<thead>\
+							<tr>\
+								<th>超始IP</th>\
+								<th>结束IP</th>\
+								<th style="text-align: right;">操作</th>\
+							</tr>\
+						</thead>\
+						<tbody id="ip_black_con" class="gztr"></tbody>\
+					</table>\
+					</div>\
+				</div>\
+				<ul class="help-info-text c7 ptb10">\
+					<li>黑名单中的IP段将被禁止访问,IP白名单中已存在的除外</li>\
+				</ul></div>'
+		});
+		tableFixed("ipBlack")
+	}
+	var loadT = layer.msg('正在获取防火墙配置..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_rule',{ruleName:'ip_black'},function(rdata){
+		layer.close(loadT);
+		var tbody = ''
+		for(var i=0;i<rdata.length;i++){
+			tbody += '<tr>\
+						<td>'+rdata[i][0].join('.')+'</td>\
+						<td>'+rdata[i][1].join('.')+'</td>\
+						<td class="text-right"><a class="btlink" onclick="remove_ip_black('+i+')">删除</a></td>\
+					</tr>'
+		}
+		$("#ip_black_con").html(tbody)
+	});
+}
+
+
+//添加IP段到IP白名单
+function add_ip_white(){
+	var pdata = {
+		start_ip: $("input[name='start_ip']").val(),
+		end_ip:$("input[name='end_ip']").val()
+	}
+	
+	if(pdata['start_ip'].split('.').length < 4 || pdata['end_ip'].split('.').length < 4){
+		layer.msg('起始IP或结束IP格式不正确!');
+		return;
+	}
+	
+	var loadT = layer.msg('正在添加..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=add_ip_white',pdata,function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+		if(rdata.status){
+			ip_white(1);
+		}
+	});
+}
+
+
+//从IP白名单删除IP段
+function remove_ip_white(index){
+	var loadT = layer.msg('正在删除..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=remove_ip_white',{index:index},function(rdata){
+		layer.close(loadT);
+		if(rdata.status){
+			ip_white(1);
+		}
+		layer.msg(rdata.msg,{icon:rdata.status?1:2})
+	});
+}
+
+//从IP黑名单删除IP段
+function remove_ip_black(index){
+	var loadT = layer.msg('正在删除..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=remove_ip_black',{index:index},function(rdata){
+		layer.close(loadT);
+		if(rdata.status){
+			ip_black(1);
+		}
+		layer.msg(rdata.msg,{icon:rdata.status?1:2})
+	});
+}
+
+//添加IP段到IP黑名单
+function add_ip_black(){
+	var pdata = {
+		start_ip: $("input[name='start_ip']").val(),
+		end_ip:$("input[name='end_ip']").val()
+	}
+	
+	if(pdata['start_ip'].split('.').length < 4 || pdata['end_ip'].split('.').length < 4){
+		layer.msg('起始IP或结束IP格式不正确!');
+		return;
+	}
+	
+	var loadT = layer.msg('正在添加..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=add_ip_black',pdata,function(rdata){
+		layer.close(loadT);
+		if(rdata.status){
+			ip_black(1);
+		}
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+//从日志中添加IP到黑名单
+function add_log_ip_black(ip){
+	var pdata = {
+		start_ip:ip,
+		end_ip:ip
+	}
+	layer.confirm('是否将 <span style="color:red">'+ip+'</span> 添加到IP黑名单？',{title:'加入IP黑名单',closeBtn:2},function(){
+		$.post('/plugin?action=a&name=btwaf_httpd&s=add_ip_black',pdata,function(rdata){
+			layer.msg(rdata.msg,{icon:rdata.status?1:2})
+		})
+	})
+}
+//URL白名单
+function url_white(type){
+	if(type == undefined){
+		create_l = layer.open({
+			type: 1,
+			title: "管理URL白名单",
+			area: ['500px','500px'],
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<div class="pd15">\
+					<div style="border-bottom:#ccc 1px solid;margin-bottom:10px;padding-bottom:10px">\
+						<input class="bt-input-text" name="url_white_address" type="text" value="" style="width:400px;margin-right:15px;margin-left:5px" placeholder="URL地址,支持正则表达式">\
+						<button class="btn btn-success btn-sm va0 pull-right" onclick="add_url_white();">添加</button>\</div>\
+					<div class="divtable">\
+					<div id="urlWhite" style="max-height:300px;overflow:auto;border:#ddd 1px solid">\
+					<table class="table table-hover" style="border:none">\
+						<thead>\
+							<tr>\
+								<th>URL</th>\
+								<th style="text-align: right;">操作</th>\
+							</tr>\
+						</thead>\
+						<tbody id="url_white_con" class="gztr"></tbody>\
+					</table>\
+					</div>\
+				</div>\
+				<ul class="help-info-text c7 ptb10">\
+					<li>所有规则对白名单中的URL无效,包括IP黑名单和URL黑名单</li>\
+				</ul></div>'
+		});
+		tableFixed("urlWhite");
+	}
+	var loadT = layer.msg('正在获取URL白名单列表..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_rule',{ruleName:'url_white'},function(rdata){
+		layer.close(loadT);
+		var tbody = ''
+		for(var i=0;i<rdata.length;i++){
+			tbody += '<tr>\
+						<td>'+rdata[i]+'</td>\
+						<td class="text-right"><a class="btlink" onclick="remove_url_white('+i+')">删除</a></td>\
+					</tr>'
+		}
+		$("#url_white_con").html(tbody)
+	});
+}
+
+//URL黑名单
+function url_black(type){
+	if(type == undefined){
+		create_l = layer.open({
+			type: 1,
+			title: "管理URL黑名单",
+			area: ['500px','500px'],
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<div class="pd15">\
+					<div style="border-bottom:#ccc 1px solid;margin-bottom:10px;padding-bottom:10px">\
+						<input class="bt-input-text" name="url_black_address" type="text" value="" style="width:400px;margin-right:15px;margin-left:5px" placeholder="URL地址,支持正则表达式">\
+						<button class="btn btn-success btn-sm va0 pull-right" onclick="add_url_black();">添加</button>\</div>\
+					<div class="divtable">\
+					<div id="urlBlack" style="max-height:300px;overflow:auto;border:#ddd 1px solid">\
+					<table class="table table-hover" style="border:none">\
+						<thead>\
+							<tr>\
+								<th>URL</th>\
+								<th style="text-align: right;">操作</th>\
+							</tr>\
+						</thead>\
+						<tbody id="url_black_con" class="gztr"></tbody>\
+					</table>\
+					</div>\
+				</div>\
+				<ul class="help-info-text c7 ptb10">\
+					<li>禁止访问URL黑名单,URL白名单和IP白名单中存在时除外</li>\
+				</ul></div>'
+		});
+		tableFixed("urlBlack")
+	}
+	var loadT = layer.msg('正在获取URL黑名单列表..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_rule',{ruleName:'url_black'},function(rdata){
+		layer.close(loadT);
+		var tbody = ''
+		for(var i=0;i<rdata.length;i++){
+			tbody += '<tr>\
+						<td>'+rdata[i]+'</td>\
+						<td class="text-right"><a class="btlink" onclick="remove_url_black('+i+')">删除</a></td>\
+					</tr>'
+		}
+		$("#url_black_con").html(tbody)
+		
+	});
+}
+
+//添加URL白名单
+function add_url_white(){
+	var pdata = {url_rule: $("input[name='url_white_address']").val()}
+	if(pdata['url_rule'] == ''){
+		layer.msg('URL地址不能为空');
+		return;
+	}
+	
+	var loadT = layer.msg('正在添加..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=add_url_white',pdata,function(rdata){
+		layer.close(loadT);
+		if(rdata.status){
+			url_white(1);
+		}
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+
+//添加URL黑名单
+function add_url_black(){
+	var pdata = {url_rule: $("input[name='url_black_address']").val()}
+	if(pdata['url_rule'] == ''){
+		layer.msg('URL地址不能为空');
+		return;
+	}
+	
+	var loadT = layer.msg('正在添加..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=add_url_black',pdata,function(rdata){
+		layer.close(loadT);
+		if(rdata.status){
+			url_black(1);
+		}
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+
+//删除URL白名单
+function remove_url_white(index){
+	var loadT = layer.msg('正在删除..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=remove_url_white',{index:index},function(rdata){
+		layer.close(loadT);
+		if(rdata.status){
+			url_white(1);
+		}
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+
+//删除URL黑名单
+function remove_url_black(index){
+	var loadT = layer.msg('正在删除..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=remove_url_black',{index:index},function(rdata){
+		layer.close(loadT);
+		if(rdata.status){
+			url_black(1);
+		}
+		layer.msg(rdata.msg,{icon:rdata.status?1:2})
+	});
+}
+
+
+//国内IP表
+function cn_iplist(type){
+	if(type == undefined){
+		create_l = layer.open({
+			type: 1,
+			title: "管理国内IP段",
+			area: ['500px','500px'],
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<div class="pd15">\
+					<div style="border-bottom:#ccc 1px solid;margin-bottom:10px;padding-bottom:10px">\
+						<input class="bt-input-text" name="start_ip" type="text" value="" style="width:150px;margin-right:15px;margin-left:5px" placeholder="起始IP地址">\
+						<input class="bt-input-text mr5" name="end_ip" type="text" style="width:150px;margin-left:5px;margin-right:20px" placeholder="结束IP地址">\
+						<button class="btn btn-success btn-sm va0 pull-right" onclick="add_cnip();">添加</button>\</div>\
+					<div class="divtable">\
+					<div id="cnIpList" class="cnIpList" style="max-height:300px;overflow:auto;border:#ddd 1px solid">\
+					<table class="table table-hover" style="border:none">\
+						<thead>\
+							<tr>\
+								<th>超始IP</th>\
+								<th>结束IP</th>\
+								<th style="text-align: right;">操作</th>\
+							</tr>\
+						</thead>\
+						<tbody id="cn_iplist_con" class="gztr"></tbody>\
+					</table>\
+					</div>\
+				</div>\
+				<ul class="help-info-text c7">\
+					<li>如果有遗漏的国内IP段,请在此添加</li>\
+				</ul></div>'
+		});
+		tableFixed("cnIpList");
+	}
+	var loadT = layer.msg('正在获取防火墙配置..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_rule',{ruleName:'cn'},function(rdata){
+		layer.close(loadT);
+		var tbody = ''
+		for(var i=0;i<rdata.length;i++){
+			tbody += '<tr>\
+						<td>'+rdata[i][0].join('.')+'</td>\
+						<td>'+rdata[i][1].join('.')+'</td>\
+						<td class="text-right"><a class="btlink" onclick="remove_cn_ip('+i+')">删除</a></td>\
+					</tr>'
+		}
+		$("#cn_iplist_con").html(tbody)
+	});
+}
+
+//从国内IP库删除IP
+function remove_cn_ip(index){
+	var loadT = layer.msg('正在删除..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=remove_cnip',{index:index},function(rdata){
+		layer.close(loadT);
+		if(rdata.status){
+			cn_iplist(1);
+		}
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+
+//添加IP段到国内IP库
+function add_cnip(){
+	var pdata = {
+		start_ip: $("input[name='start_ip']").val(),
+		end_ip:$("input[name='end_ip']").val()
+	}
+	
+	if(pdata['start_ip'].split('.').length < 4 || pdata['end_ip'].split('.').length < 4){
+		layer.msg('起始IP或结束IP格式不正确!');
+		return;
+	}
+	
+	var loadT = layer.msg('正在添加..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=add_cnip',pdata,function(rdata){
+		layer.close(loadT);
+		if(rdata.status){
+			cn_iplist(1);
+		}
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+
+//常用扫描器
+function scan_rule(){
+	var loadT = layer.msg('正在获取防火墙配置..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_rule',{ruleName:'scan_black'},function(rdata){
+		layer.close(loadT);
+		create_l = layer.open({
+			type: 1,
+			title: "常用扫描器过滤规则",
+			area: '650px',
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<form class="bt-form pd20 pb70">\
+						<div class="line">\
+							<span class="tname">Header</span>\
+							<div class="info-r"><textarea style="margin: 0px;width:475px;height: 75px;line-height:20px" class="bt-input-text" name="scan_header" >'+rdata.header+'</textarea></div>\
+						</div>\
+						<div class="line">\
+							<span class="tname">Cookie</span>\
+							<div class="info-r"><textarea style="margin: 0px;width:475px;height: 75px;line-height:20px" class="bt-input-text" name="scan_cookie" >'+rdata.cookie+'</textarea></div>\
+						</div>\
+						<div class="line">\
+							<span class="tname">Args</span>\
+							<div class="info-r"><textarea style="margin: 0px;width:475px;height: 75px;line-height:20px" class="bt-input-text" name="scan_args" >'+rdata.args+'</textarea></div>\
+						</div>\
+						<ul class="help-info-text c7 ptb10">\
+							<li>会同时过滤key和value,请谨慎设置</li>\
+							<li>请使用正则表达式,提交前应先备份原有表达式</li>\
+						</ul>\
+						<div class="bt-form-submit-btn">\
+							<button type="button" class="btn btn-success btn-sm btn-title" onclick="save_scan_rule()">确定</button>\
+						</div>\
+					</form>'
+		});
+	});
+}
+
+//保存扫描器规则
+function save_scan_rule(){
+	pdata = {
+		header: $("textarea[name='scan_header']").val(),
+		cookie: $("textarea[name='scan_cookie']").val(),
+		args: $("textarea[name='scan_args']").val()
+	}
+	var loadT = layer.msg('正在保存..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=save_scan_rule',pdata,function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+
+//设置retry规则
+function set_retry(retry_cycle,retry,retry_time,siteName){
+	create_l = layer.open({
+		type: 1,
+		title: "设置恶意容忍规则",
+		area: '500px',
+		closeBtn: 2,
+		shadeClose: false,
+		content:'<form class="bt-form pd20 pb70">\
+					<div class="line">\
+						<span class="tname">周期</span>\
+						<div class="info-r"><input class="bt-input-text" name="retry_cycle" type="number" value="'+retry_cycle+'" /> 秒</div>\
+					</div>\
+					<div class="line">\
+						<span class="tname">频率</span>\
+						<div class="info-r"><input class="bt-input-text" name="retry" type="number" value="'+retry+'" /> 次</div>\
+					</div>\
+					<div class="line">\
+						<span class="tname">封锁时间</span>\
+						<div class="info-r"><input class="bt-input-text" name="retry_time" type="number" value="'+retry_time+'" /> 秒</div>\
+					</div>\
+					<ul class="help-info-text c7 ptb10">\
+						<li><font style="color:red;">'+retry_cycle+'</font> 秒内累计恶意请求超过  <font style="color:red;">'+retry+'</font> 次,封锁 <font style="color:red;">'+retry_time+'</font> 秒</li>\
+					</ul>\
+					<div class="bt-form-submit-btn">\
+						<button type="button" class="btn btn-success btn-sm btn-title" onclick="save_retry(\''+siteName+'\')">确定</button>\
+					</div>\
+				</form>'
+	});
+}
+
+//保存retry规则
+function save_retry(siteName){
+	var pdata = {
+		siteName:siteName,
+		retry: $("input[name='retry']").val(),
+		retry_time: $("input[name='retry_time']").val(),
+		retry_cycle: $("input[name='retry_cycle']").val()
+	}
+	
+	var act = 'set_retry';
+	if(siteName != 'undefined') act = 'set_site_retry';
+	var loadT = layer.msg('正在保存，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s='+act,pdata,function(rdata){
+		layer.close(loadT);
+		if(rdata.status){
+			layer.close(create_l);
+			if(siteName != 'undefined'){
+				site_waf_config(siteName,1);
+			}else{
+				wafconfig();
+			}
+		}
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+
+//设置CC规则
+function set_cc_rule(cycle,limit,endtime,siteName,increase){
+	var incstr = '<li style="color:red;">此处设置仅对当前站点有效。</li>';
+	if(siteName == 'undefined') incstr = '<li style="color:red;">此处设置的是初始值，新添加站点时将继承，对现有站点无效。</li>';
+	create_l = layer.open({
+		type: 1,
+		title: "设置CC规则",
+		area: '500px',
+		closeBtn: 2,
+		shadeClose: false,
+		content:'<form class="bt-form pd20 pb70">\
+					<div class="line">\
+						<span class="tname">周期</span>\
+						<div class="info-r"><input class="bt-input-text" name="cc_cycle" type="number" value="'+cycle+'" /> 秒</div>\
+					</div>\
+					<div class="line">\
+						<span class="tname">频率</span>\
+						<div class="info-r"><input class="bt-input-text" name="cc_limit" type="number" value="'+limit+'" /> 次</div>\
+					</div>\
+					<div class="line">\
+						<span class="tname">封锁时间</span>\
+						<div class="info-r"><input class="bt-input-text" name="cc_endtime" type="number" value="'+endtime+'" /> 秒</div>\
+					</div>\
+					<div class="line">\
+						<span class="tname">增强模式</span>\
+						<div class="info-r"><input class="bt-input-text" name="cc_increase" type="checkbox" '+(increase?'checked':'')+' /> <a style="position: fixed;margin-top: 10px;margin-left: 5px;">CC防御威力加强版，开启后可能会影响用户体验</a></div>\
+					</div>\
+					<ul class="help-info-text c7 ptb10">'+incstr+'\
+						<li><font style="color:red;">'+cycle+'</font> 秒内累计请求同一URL超过  <font style="color:red;">'+limit+'</font> 次,触发CC防御,封锁此IP <font style="color:red;">'+endtime+'</font> 秒</li>\
+						<li>请不要设置过于严格的CC规则,以免影响正常用户体验</li>\
+					</ul>\
+					<div class="bt-form-submit-btn">\
+						<button type="button" class="btn btn-success btn-sm btn-title" onclick="save_cc_rule(\''+siteName+'\')">确定</button>\
+					</div>\
+				</form>'
+	});
+}
+
+
+//保存CC规则 
+function save_cc_rule(siteName){
+	var pdata = {
+		siteName:siteName,
+		cycle: $("input[name='cc_cycle']").val(),
+		limit: $("input[name='cc_limit']").val(),
+		endtime: $("input[name='cc_endtime']").val(),
+		increase:$("input[name='cc_increase']").is(':checked')?1:0
+	}
+	
+	var act = 'set_cc_conf';
+	if(siteName != 'undefined') act = 'set_site_cc_conf';
+	var loadT = layer.msg('正在保存，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s='+act,pdata,function(rdata){
+		layer.close(loadT);
+		if(rdata.status){
+			layer.close(create_l);
+			if(siteName != 'undefined'){
+				site_waf_config(siteName,1);
+			}else{
+				wafconfig();
+			}
+		}
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+
+//设置响应代码
+function set_request_code(ruleName,statusCode){
+	create_l = layer.open({
+			type: 1,
+			title: "设置响应代码【"+ruleName+"】",
+			area: '300px',
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<form class="bt-form pd20 pb70">\
+						<div class="line">\
+								<span class="tname">响应代码</span>\
+							<div class="info-r">\
+								<select id="statusCode" class="bt-input-text mr5" style="width:150px;">\
+									<option value="200" '+(statusCode == 200?'selected':'')+'>正常(200)</option>\
+									<option value="404" '+(statusCode == 404?'selected':'')+'>文件不存在(404)</option>\
+									<option value="403" '+(statusCode == 403?'selected':'')+'>拒绝访问(403)</option>\
+									<option value="416" '+((statusCode == 416 || statusCode == 444)?'selected':'')+'>超出响应范围(416)</option>\
+									<option value="500" '+(statusCode == 500?'selected':'')+'>应用程序错误(500)</option>\
+									<option value="502" '+(statusCode == 502?'selected':'')+'>连接超时(502)</option>\
+									<option value="503" '+(statusCode == 503?'selected':'')+'>服务器不可用(503)</option>\
+								</select>\
+							</div>\
+						</div>\
+						<div class="bt-form-submit-btn">\
+							<button type="button" class="btn btn-success btn-sm btn-title" onclick="set_state(\''+ruleName+'\')">确定</button>\
+						</div>\
+					</form>'
+		});
+}
+
+
+//保存响应代码
+function set_state(ruleName){
+	var pdata = {
+		obj:ruleName,
+		statusCode: $("#statusCode").val(),
+	}
+	var loadT = layer.msg('正在保存，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=set_obj_status',pdata,function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+		if(rdata.status){
+			wafconfig();
+		}
+	});
+}
+
+//设置规则
+function set_obj_conf(ruleName,type){
+	if(type == undefined){
+		create_l = layer.open({
+			type: 1,
+			title: "编辑规则【"+ruleName+"】",
+			area: ['700px','530px'],
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<div class="pd15">\
+					<div style="border-bottom:#ccc 1px solid;margin-bottom:10px;padding-bottom:10px">\
+					<input class="bt-input-text" name="ruleValue" type="text" value="" style="width:470px;margin-right:12px;" placeholder="规则内容,请使用正则表达式">\
+					<input class="bt-input-text mr5" name="rulePs" type="text" style="width:120px;" placeholder="描述">\
+					<button class="btn btn-success btn-sm va0 pull-right" onclick="add_rule(\''+ruleName+'\');">添加</button>\</div>\
+					<div class="divtable">\
+					<div id="jc-file-table" class="table_head_fix" style="max-height:300px;overflow:auto;border:#ddd 1px solid">\
+					<table class="table table-hover" style="border:none">\
+						<thead>\
+							<tr>\
+								<th width="360">规则</th>\
+								<th>说明</th>\
+								<th>操作</th>\
+								<th style="text-align: right;">状态</th>\
+							</tr>\
+						</thead>\
+						<tbody id="set_obj_conf_con" class="gztr"></tbody>\
+					</table>\
+					</div>\
+				</div>\
+				<ul class="help-info-text c7 ptb10">\
+					<li style="color:red;">注意:如果您不了解正则表达式,请不要随意修改规则内容</li>\
+					<li>您可以添加或修改规则内容,但请使用正则表达式</li>\
+					<li>内置规则允许修改,但不可以直接删除,您可以设置规则状态来定义防火墙是否使用此规则</li>\
+				</ul></div>'
+		});
+		tableFixed("jc-file-table")
+	}
+	var loadT = layer.msg('正在获取配置规则，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_rule',{ruleName:ruleName},function(rdata){
+		layer.close(loadT);
+		var tbody = ''
+		for(var i=0;i<rdata.length;i++){
+			var removeRule = ''
+			if(rdata[i][3] != 0)removeRule = ' | <a class="btlink" onclick="remove_rule(\''+ruleName+'\','+i+')">删除</a>';
+			tbody += '<tr>\
+						<td class="rule_body_'+i+'">'+rdata[i][1]+'</td>\
+						<td class="rule_ps_'+i+'">'+rdata[i][2]+'</td>\
+						<td class="rule_modify_'+i+'"><a class="btlink" onclick="modify_rule('+i+',\''+ruleName+'\')">编辑</a>'+removeRule+'</td>\
+						<td class="text-right">\
+							<div class="pull-right">\
+							<input class="btswitch btswitch-ios" id="closeua_'+i+'" type="checkbox" '+(rdata[i][0]?'checked':'')+'>\
+							<label class="btswitch-btn" style="width:2.0em;height:1.2em;margin-bottom: 0" for="closeua_'+i+'" onclick="set_rule_state(\''+ruleName+'\','+i+')"></label>\
+							</div>\
+						</td>\
+					</tr>'
+		}
+		$("#set_obj_conf_con").html(tbody)
+	});
+}
+
+
+
+function remove_rule(ruleName,index){
+	var pdata = {
+		'index': index,
+		'ruleName':ruleName
+	}
+	SafeMessage('删除规则','您真的要删除这条过滤规则吗？',function(){
+		var loadT = layer.msg('正在删除规则，请稍候..',{icon:16,time:0});
+		$.post('/plugin?action=a&name=btwaf_httpd&s=remove_rule',pdata,function(rdata){
+			layer.close(loadT);
+			layer.msg(rdata.msg,{icon:rdata.status?1:2});
+			if(rdata.status){
+				set_obj_conf(ruleName,1);
+			}
+		});
+	});
+}
+
+function set_rule_state(ruleName,index){
+	var pdata = {
+		'index': index,
+		'ruleName':ruleName
+	}
+	var loadT = layer.msg('正在设置规则状态，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=set_rule_state',pdata,function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+
+function add_rule(ruleName){
+	var pdata = {
+		'ruleValue': $("input[name='ruleValue']").val(),
+		'ps': $("input[name='rulePs']").val(),
+		'ruleName':ruleName
+	}
+	var loadT = layer.msg('正在添加，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=add_rule',pdata,function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+		if(rdata.status){
+			set_obj_conf(ruleName,1);
+		}
+	});
+}
+
+
+function modify_rule(index,ruleName){
+	var ruleValue = $('.rule_body_' + index).text();
+	$('.rule_body_' + index).html('<textarea class="bt-input-text" name="rule_body_'+index+'" style="margin: 0px; height: 70px; width: 99%;line-height:20px">'+ruleValue+'</textarea>');
+	var rulePs = $('.rule_ps_' + index).text();
+	$('.rule_ps_' + index).html('<input class="bt-input-text" type="text" name="rule_ps_'+index+'" value="'+rulePs+'" />');
+	$('.rule_modify_' + index).html('<a class="btlink" onclick="modify_rule_save('+index+',\''+ruleName+'\')">保存</a> | <a class="btlink modr_cancel_'+index+'">取消</a>');
+	$(".modr_cancel_"+index).click(function(){
+		$('.rule_body_' + index).html(ruleValue);
+		$('.rule_ps_' + index).html(rulePs);
+		$('.rule_modify_' + index).html('<a class="btlink" onclick="modify_rule('+index+',\''+ruleName+'\')">编辑</a>');
+	})
+}
+
+function modify_rule_save(index,ruleName){
+	var pdata = {
+		index:index,
+		ruleName:ruleName,
+		ruleBody:$("textarea[name='rule_body_"+index+"']").val(),
+		rulePs: $("input[name='rule_ps_"+index+"']").val()
+	}
+	var loadT = layer.msg('正在保存，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=modify_rule',pdata,function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+		if(rdata.status){
+			set_obj_conf(ruleName,1);
+		}
+	});
+}
+
+//WAF开关
+function set_open(){
+	var loadT = layer.msg('正在处理，请稍候..',{icon:16,time:0});
+	$.get('/plugin?action=a&name=btwaf_httpd&s=set_open',function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+
+//WAF功能开关
+function set_obj_open(obj){
+	var loadT = layer.msg('正在处理，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=set_obj_open',{obj:obj},function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+
+
+//站点配置
+function siteconfig(){
+	var loadT = layer.msg('正在获取，请稍候..',{icon:16,time:0});
+	$.get('/plugin?action=a&name=btwaf_httpd&s=get_site_config',function(rdata){
+		layer.close(loadT);
+		var tbody = '';
+		var i=0;
+		$.each(rdata, function(k,v) {
+			i +=1;
+			tbody += '<tr>\
+						<td><a onclick="site_waf_config(\''+v.siteName+'\')" class="sitename btlink" title="'+v.siteName+'">'+v.siteName+'</a></td>\
+						<td>\
+							<input onclick="set_site_obj_state(\''+v.siteName+'\',\'get\')" type="checkbox" '+(v.get?'checked':'')+'><span class="'+back_css(v.total[1].value)+'" title="拦截GET渗透次数:'+v.total[1].value+'">'+v.total[1].value+'</span>\
+						</td>\
+						<td>\
+							<input onclick="set_site_obj_state(\''+v.siteName+'\',\'post\')"  type="checkbox" '+(v.post?'checked':'')+'><span class="'+back_css(v.total[0].value)+'"  title="拦截POST渗透次数:'+v.total[0].value+'">'+v.total[0].value+'</span>\
+						</td>\
+						<td>\
+							<input onclick="set_site_obj_state(\''+v.siteName+'\',\'user-agent\')"  type="checkbox" '+(v['user-agent']?'checked':'')+'><span class="'+back_css(v.total[3].value)+'" title="拦截恶意User-Agent次数:'+v.total[3].value+'">'+v.total[3].value+'</span>\
+						</td>\
+						<td>\
+							<input onclick="set_site_obj_state(\''+v.siteName+'\',\'cookie\')"  type="checkbox" '+(v.cookie?'checked':'')+'><span class="'+back_css(v.total[4].value)+'" title="拦截Cookie渗透次数:'+v.total[4].value+'">'+v.total[4].value+'</span>\
+						</td>\
+						<td>\
+							<input onclick="set_site_obj_state(\''+v.siteName+'\',\'drop_abroad\')"  type="checkbox" '+(v.drop_abroad?'checked':'')+'>\
+						</td>\
+						<td>\
+							<input onclick="set_site_obj_state(\''+v.siteName+'\',\'cc\')"  type="checkbox" '+(v.cc.open?'checked':'')+'><span class="'+back_css(v.total[2].value)+'" title="拦截CC攻击次数:'+v.total[2].value+'">'+v.total[2].value+'</span>\
+						</td>\
+						<td>\
+							<div class="ssh-item" style="margin-left:0">\
+								<input class="btswitch btswitch-ios" id="closeget_'+i+'" type="checkbox" '+(v.open?'checked':'')+'>\
+								<label class="btswitch-btn" for="closeget_'+i+'" onclick="set_site_obj_state(\''+v.siteName+'\',\'open\')"></label>\
+							</div>\
+						</td>\
+						<td class="text-right"><a onclick="site_waf_log(\''+v.siteName+'\')" class="btlink '+(v.log_size>0?'dot':'')+'">日志</a> | <a onclick="site_waf_config(\''+v.siteName+'\')" class="btlink">设置</a></td>\
+					</tr>'
+		});
+		
+		var con = '<div class="lib-box">\
+						<div class="lib-con">\
+							<div class="divtable">\
+							<div id="siteCon_fix" style="max-height:580px; overflow:auto;border:#ddd 1px solid">\
+							<table class="table table-hover waftable" style="border:none">\
+								<thead>\
+									<tr>\
+										<th>站点</th>\
+										<th>GET</th>\
+										<th>POST</th>\
+										<th>User-Agent</th>\
+										<th>Cookie</th>\
+										<th>禁国外</th>\
+										<th>CC防御</th>\
+										<th>状态</th>\
+										<th style="text-align: right;">操作</th>\
+									</tr>\
+								</thead>\
+								<tbody>'+tbody+'</tbody>\
+							</table>\
+							</div>\
+							</div>\
+						</div>\
+				</div>';
+		$(".wafcon").html(con);
+		tableFixed("siteCon_fix");
+	});
+}
+//返回css
+function back_css(v){
+	if(v > 0){
+		return 'tipsval'
+	}
+	else{
+		return 'tipsval tipsvalnull'
+	}
+}
+//查看网站日志
+function site_waf_log(siteName){
+	var loadT = layer.msg('正在处理，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_logs_list',{siteName:siteName},function(rdata){
+		layer.close(loadT);
+		var selectLogDay = "";
+		var day = rdata[0];
+		for(var i=0; i<rdata.length ;i++){
+			selectLogDay += '<option value="'+rdata[i]+'">'+rdata[i]+'</option>';
+		}
+		if(rdata == "") {
+			layer.msg("暂无日志记录",{icon:6,shade:0.3,time:1000});
+			return
+		}
+		layer.open({
+			type: 1,
+			title: "日志【"+siteName+"】",
+			area: ['880px','540px'],
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<div class="lib-box pd15 lib-box-log">\
+					<div class="lib-con-title" style="height:40px;"><select id="selectLogDay" class="bt-input-text" onchange="site_log_con(\''+siteName+'\',this.options[this.options.selectedIndex].value,1)">'+selectLogDay+'</select></div>\
+					<div class="lib-con">\
+						<div class="divtable">\
+							<div id="site_waf_log" style="max-height:400px;overflow:auto;border:#ddd 1px solid">\
+							<table class="table table-hover" style="border:none;">\
+								<thead><tr><th width="150">时间</th><th width="120">用户IP</th><th width="70">类型</th><th>URI地址</th><th class="tdhide">User-Agent</th><th width="60">状态</th><th width="100">过滤器</th><th class="tdhide">过滤规则</th><th width="50" class="text-right">操作</th></tr></thead>\
+								<tbody id="LogDayCon"></tbody>\
+							</table>\
+							</div>\
+						</div>\
+						<div class="page pull-right" id="size_log_page" style="margin-top:10px"></div>\
+					</div>\
+					</div>'
+		});
+		site_log_con(siteName,day,1);
+		tableFixed("site_waf_log");	
+	});
+}
+
+//日志内容
+function site_log_con(siteName,day,page){
+	if(!page) page = 1;
+	var last = page-1;
+	var next = page+1;
+	var pagehtml = '';
+	$("#site_waf_log").scrollTop(0);
+	var loadT = layer.msg('正在获取，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_safe_logs',{siteName:siteName,toDate:day,p:page},function(rdata){
+		layer.close(loadT);
+		var con = '';
+		for(var i=0; i<rdata.length; i++){
+			con += '<tr title="URI:\n'+rdata[i][3]+'\n\nUser-Agent:\n'+rdata[i][4]+'\n\n过滤规则:\n'+rdata[i][6].replace(/"/g,"&quot;")+'">\
+			<td class="td0">'+rdata[i][0]+'</td>\
+			<td class="td1"><a class="btlink" href="javascript:add_log_ip_black(\''+rdata[i][1]+'\');" title="加入黑名单">'+rdata[i][1]+'</a></td>\
+			<td class="td2">'+rdata[i][2]+'</td>\
+			<td class="td3"><span class="td3txt">'+rdata[i][3]+'</span></td>\
+			<td class="tdhide td4">'+rdata[i][4]+'</td><td>已拦截</td>\
+			<td class="td5"><span class="filtertext">'+rdata[i][5]+'</span></td>\
+			<td class="tdhide td6">'+rdata[i][6]+'</td>\
+			<td class="text-right"><a href="javascript:;" class="btlink showtd">详细</a></td></tr>'
+		}
+		
+		$("#LogDayCon").html(con);
+		pagehtml = '<a class="Pstart" onclick="site_log_con(\''+siteName+'\',\''+day+'\',1)">首页</a><a class="prevPage" onclick="site_log_con(\''+siteName+'\',\''+day+'\','+last+')">上一页</a><a class="nextPage" onclick="site_log_con(\''+siteName+'\',\''+day+'\','+next+')">下一页</a><a class="Pcount">第 '+page+' 页</a>';
+		$("#size_log_page").html(pagehtml);
+		if(rdata.length < 1){
+			$(".nextPage").hide();
+		}
+		if(last < 1){
+			$(".prevPage").hide();
+		}
+		$(".showtd").click(function(){
+			var td0=$(this).parents('tr').find(".td0").text();
+			var td1=$(this).parents('tr').find(".td1").text();
+			var td2=$(this).parents('tr').find(".td2").text();
+			var td3=$(this).parents('tr').find(".td3").text();
+			var td4=$(this).parents('tr').find(".td4").text();
+			var td5=$(this).parents('tr').find(".td5").text();
+			var td6=$(this).parents('tr').find(".td6").text();
+			td6 =td6.split(" >> ");
+			var td6_1 = td6[1];
+			if(td6_1 == undefined) td6_1 ='空';
+			var td7 = td6_1.match(new RegExp(td6[0].replace(/\//g,'\\/'),'i'));
+			if(td7){
+				td7 = td7[0];
+			}else{
+				td7 = '空';
+			}
+			layer.open({
+				type: 1,
+				title: td0+"详情",
+				area: '600px',
+				closeBtn: 2,
+				shadeClose: false,
+				content:'<div class="pd15 lib-box">\
+							<table class="table" style="border:#ddd 1px solid; margin-bottom:10px">\
+							<tbody><tr><th>时间</th><td>'+td0+'</td><th>用户IP</th><td><a class="btlink" href="javascript:add_log_ip_black(\''+td1+'\')" title="加入黑名单">'+td1+'</a></td></tr><tr><th>类型</th><td>'+td2+'</td><th>过滤器</th><td>'+td5+'</td></tr></tbody></table>\
+							<div><b style="margin-left:10px">URI地址</b></div>\
+							<div class="lib-con pull-left mt10"><div class="divpre">'+html_decode(td3)+'</div></div>\
+							<div><b style="margin-left:10px">User-Agent</b></div>\
+							<div class="lib-con pull-left mt10"><div class="divpre">'+html_decode(td4)+'</div></div>\
+							<div><b style="margin-left:10px">过滤规则</b></div>\
+							<div class="lib-con pull-left mt10"><div class="divpre">'+td6[0]+'</div></div>\
+							<div><b style="margin-left:10px">传入值</b></div>\
+							<div class="lib-con pull-left mt10"><div class="divpre">'+html_decode(td6_1)+'</div></div>\
+							<div><b style="margin-left:10px">风险值</b></div>\
+							<div class="lib-con pull-left mt10"><div class="divpre">'+html_decode(td7)+'</div></div>\
+						</div>'
+			})
+		})
+		$("#LogDayCon td").click(function(){
+			$(this).parents("tr").addClass("active").siblings().removeClass("active");
+		});
+	})
+}
+
+function html_encode(value){
+	return $('<div />').html(value).text();
+}
+
+function html_decode(value){
+	return $('<div />').text(value).html();
+}
+
+//设置网站防御功能
+function set_site_obj_state(siteName,obj){
+	var loadT = layer.msg('正在处理，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=set_site_obj_open',{siteName:siteName,obj:obj},function(rdata){
+		layer.close(loadT);
+		site_waf_config(siteName,1);
+		siteconfig();
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+
+//网站设置
+function site_waf_config(siteName,type){
+	if(type == undefined){
+		create_2 = layer.open({
+			type: 1,
+			title: "网站配置【"+siteName+"】",
+			area: ['700px','726px'],
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<div id="s_w_c"></div>'
+		});
+	}
+	var loadT = layer.msg('正在获取网站配置..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_site_config_byname',{siteName:siteName},function(rdata){
+		layer.close(loadT);
+		var con = '<div class="pd15">\
+					<div class="lib-con-title">\
+						<span>网站防火墙开关</span>\
+						<div class="ssh-item" style="margin-right:20px;">\
+							<input class="btswitch btswitch-ios" id="closewaf_open" type="checkbox" '+(rdata.open?'checked':'')+'>\
+							<label class="btswitch-btn" for="closewaf_open" onclick="set_site_obj_state(\''+siteName+'\',\'open\')" style="width:2.4em;height:1.4em;margin-bottom: 0"></label>\
+						</div>\
+					</div>\
+					<div class="lib-con">\
+						<div class="divtable">\
+							<table class="table table-hover waftable">\
+								<thead>\
+									<tr>\
+										<th>名称</th>\
+										<th>描述</th>\
+										<th width="80">状态</th>\
+										<th style="text-align: right;">操作</th>\
+									</tr>\
+								</thead>\
+								<tbody>\
+									<tr>\
+										<td>CC防御</td>\
+										<td><font style="color:red;">'+rdata.cc.cycle+'</font> 秒内,请求同一URI累计超过 <font style="color:red;">'+rdata.cc.limit+'</font> 次,封锁IP <font style="color:red;">'+rdata.cc.endtime+'</font> 秒</td>\
+										<td>\
+											<div class="ssh-item" style="margin-left:0">\
+												<input class="btswitch btswitch-ios" id="closecc" type="checkbox" '+(rdata.cc.open?'checked':'')+'>\
+												<label class="btswitch-btn" for="closecc" onclick="set_site_obj_state(\''+siteName+'\',\'cc\')"></label>\
+											</div>\
+										</td>\
+										<td class="text-right"><a class="btlink" onclick="set_cc_rule('+rdata.cc.cycle+','+rdata.cc.limit+','+rdata.cc.endtime+',\''+siteName+'\','+rdata.cc.increase+')">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>恶意容忍设置</td>\
+										<td><font style="color:red;">'+rdata.retry_cycle+'</font> 秒内,累计超过 <font style="color:red;">'+rdata.retry+'</font> 次恶意请求,封锁IP <font style="color:red;">'+rdata.retry_time+'</font> 秒</td>\
+										<td style="text-align: left;">&nbsp;&nbsp;--</td>\
+										<td class="text-right"><a class="btlink" onclick="set_retry('+rdata.retry_cycle+','+rdata.retry+','+rdata.retry_time+',\''+siteName+'\')">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>GET-URI过滤</td>\
+										<td>'+rdata.top.get.ps+'</td>\
+										<td>\
+											<div class="ssh-item" style="margin-left:0">\
+												<input class="btswitch btswitch-ios" id="closeget" type="checkbox" '+(rdata.get?'checked':'')+'>\
+												<label class="btswitch-btn" for="closeget" onclick="set_site_obj_state(\''+siteName+'\',\'get\')"></label>\
+											</div>\
+										</td>\
+										<td class="text-right"><a class="btlink" onclick="set_site_obj_conf(\''+siteName+'\',\'url\')">规则</a></td>\
+									</tr>\
+									<tr>\
+										<td>GET-参数过滤</td>\
+										<td>'+rdata.top.get.ps+'</td>\
+										<td>\
+											<div class="ssh-item" style="margin-left:0">\
+												<input class="btswitch btswitch-ios" id="closeargs" type="checkbox" '+(rdata.get?'checked':'')+'>\
+												<label class="btswitch-btn" for="closeargs" onclick="set_site_obj_state(\''+siteName+'\',\'get\')"></label>\
+											</div>\
+										</td>\
+										<td class="text-right"><a class="btlink" onclick="set_site_obj_conf(\''+siteName+'\',\'args\')">规则</a></td>\
+									</tr>\
+									<tr>\
+										<td>POST过滤</td>\
+										<td>'+rdata.top.post.ps+'</td>\
+										<td>\
+											<div class="ssh-item" style="margin-left:0">\
+												<input class="btswitch btswitch-ios" id="closepost" type="checkbox" '+(rdata.post?'checked':'')+'>\
+												<label class="btswitch-btn" for="closepost" onclick="set_site_obj_state(\''+siteName+'\',\'post\')"></label>\
+											</div>\
+										</td>\
+										<td class="text-right"><a class="btlink" onclick="set_site_obj_conf(\''+siteName+'\',\'post\')">规则</a></td>\
+									</tr>\
+									<tr>\
+										<td>User-Agent过滤</td>\
+										<td>'+rdata.top['user-agent'].ps+'</td>\
+										<td>\
+											<div class="ssh-item" style="margin-left:0">\
+												<input class="btswitch btswitch-ios" id="closeua" type="checkbox" '+(rdata['user-agent']?'checked':'')+'>\
+												<label class="btswitch-btn" for="closeua" onclick="set_site_obj_state(\''+siteName+'\',\'user-agent\')"></label>\
+											</div>\
+										</td>\
+										<td class="text-right"><a class="btlink" onclick="set_site_obj_conf(\''+siteName+'\',\'user_agent\')">规则</a></td>\
+									</tr>\
+									<tr>\
+										<td>Cookie过滤</td>\
+										<td>'+rdata.top.cookie.ps+'</td>\
+										<td>\
+										<div class="ssh-item" style="margin-left:0">\
+											<input class="btswitch btswitch-ios" id="closecookie" type="checkbox" '+(rdata.cookie?'checked':'')+'>\
+											<label class="btswitch-btn" for="closecookie" onclick="set_site_obj_state(\''+siteName+'\',\'cookie\')"></label>\
+										</div>\
+										</td>\
+										<td class="text-right"><a class="btlink" onclick="set_site_obj_conf(\''+siteName+'\',\'cookie\')">规则</a></td>\
+									</tr>\
+									<tr>\
+										<td>禁止国外访问</td>\
+										<td>'+rdata.top.drop_abroad.ps+'</td>\
+										<td>\
+											<div class="ssh-item" style="margin-left:0">\
+												<input class="btswitch btswitch-ios" id="closeabroad" type="checkbox" '+(rdata.drop_abroad?'checked':'')+'>\
+												<label class="btswitch-btn" for="closeabroad" onclick="set_site_obj_state(\''+siteName+'\',\'drop_abroad\')"></label>\
+											</div>\
+										</td>\
+										<td class="text-right"><a class="btlink" onclick="cn_iplist()">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>常见扫描器</td><td>'+rdata.top.scan.ps+'</td>\
+										<td>\
+											<div class="ssh-item" style="margin-left:0">\
+												<input class="btswitch btswitch-ios" id="closescan" type="checkbox" '+(rdata.scan?'checked':'')+'>\
+												<label class="btswitch-btn" for="closescan" onclick="set_site_obj_state(\''+siteName+'\',\'scan\')"></label>\
+											</div>\
+										</td>\
+										<td class="text-right"><a class="btlink" onclick="scan_rule()">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>使用CDN</td>\
+										<td>该站点使用了CDN,启用后方可正确获取客户IP</td>\
+										<td>\
+											<div class="ssh-item" style="margin-left:0">\
+												<input class="btswitch btswitch-ios" id="closecdn" type="checkbox" '+(rdata.cdn?'checked':'')+'>\
+												<label class="btswitch-btn" for="closecdn" onclick="set_site_obj_state(\''+siteName+'\',\'cdn\')"></label>\
+											</div>\
+										</td>\
+										<td class="text-right"><a class="btlink" onclick="cdn_header(\''+siteName+'\')">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>禁止执行PHP的URL</td>\
+										<td>禁止在指定URL运行PHP脚本</td>\
+										<td style="text-align: left;">&nbsp;&nbsp;--</td>\
+										<td class="text-right"><a class="btlink" onclick="site_rule_admin(\''+siteName+'\',\'disable_php_path\')">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>禁止访问的URL</td>\
+										<td>禁止访问指定的URL</td>\
+										<td style="text-align: left;">&nbsp;&nbsp;--</td>\
+										<td class="text-right"><a class="btlink" onclick="site_rule_admin(\''+siteName+'\',\'disable_path\')">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>禁止扩展名</td>\
+										<td>禁止访问指定扩展名</td>\
+										<td style="text-align: left;">&nbsp;&nbsp;--</td>\
+										<td class="text-right"><a class="btlink" onclick="site_rule_admin(\''+siteName+'\',\'disable_ext\')">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>禁止上传的文件类型</td>\
+										<td>禁止上传指定的文件类型</td>\
+										<td style="text-align: left;">&nbsp;&nbsp;--</td>\
+										<td class="text-right"><a class="btlink" onclick="site_rule_admin(\''+siteName+'\',\'disable_upload_ext\')">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>受保护的URL</td>\
+										<td>通过自定义参数加密URL地址,参数错误将被拦截</td>\
+										<td style="text-align: left;">&nbsp;&nbsp;--</td>\
+										<td class="text-right"><a class="btlink" onclick="site_url_tell(\''+siteName+'\')">设置</a></td>\
+									</tr>\
+									<tr>\
+										<td>URL专用过滤</td>\
+										<td>为特定URL地址设置过滤规则</td>\
+										<td style="text-align: left;">&nbsp;&nbsp;--</td>\
+										<td class="text-right"><a class="btlink" onclick="site_url_rule(\''+siteName+'\')">设置</a></td>\
+									</tr>\
+								</tbody>\
+							</table>\
+						</div>\
+					</div>\
+					<ul class="help-info-text c7">\
+						<li>注意: 此处大部分配置,仅对当前站点有效!</li>\
+					</ul>\
+				</div>';
+			$("#s_w_c").html(con);
+	});
+}
+
+//URL专用过滤
+function site_url_rule(siteName,type){
+	if(type == undefined){
+		create_l = layer.open({
+			type: 1,
+			title: "管理网站过滤规则【URL专用过滤】",
+			area: ['500px','500px'],
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<div class="pd15">\
+					<div style="border-bottom:#ccc 1px solid;margin-bottom:10px;padding-bottom:10px">\
+						<input class="bt-input-text" name="site_url_tell_address" type="text" value="" style="width:200px;" placeholder="URI地址,支持正则表达式">\
+						<input class="bt-input-text" name="site_url_tell_value" type="text" value="" style="width:200px;" placeholder="过滤规则,请使用正由表大式">\
+						<button class="btn btn-success btn-sm va0 pull-right" onclick="add_site_url_rule(\''+siteName+'\');">添加</button>\</div>\
+					<div class="divtable">\
+					<div id="siteUrlRule" style="max-height:300px;overflow:auto;border:#ddd 1px solid">\
+					<table class="table table-hover" style="border:none">\
+						<thead>\
+							<tr>\
+								<th>URI地址</th>\
+								<th>过滤规则</th>\
+								<th style="text-align: right;">操作</th>\
+							</tr>\
+						</thead>\
+						<tbody id="site_url_rule_con" class="gztr"></tbody>\
+					</table>\
+					</div>\
+				</div>\
+				<ul class="help-info-text c7 ptb10">\
+					<li>可用于加强登陆入口、回帖评论等接口的保护,快速修补第三方程序安全漏洞</li>\
+					<li>参数名与参数值对大小写敏感</li>\
+					<li>本过滤器同时作用于GET和POST参数</li>\
+				</ul></div>'
+		});
+		tableFixed("siteUrlRule")
+	}
+	var loadT = layer.msg('正在获取网站规则..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_site_rule',{siteName:siteName,ruleName:'url_rule'},function(rdata){
+		layer.close(loadT);
+		var tbody = ''
+		for(var i=0;i<rdata.length;i++){
+			tbody += '<tr>\
+						<td>'+rdata[i][0]+'</td>\
+						<td>'+rdata[i][1]+'</td>\
+						<td class="text-right"><a class="btlink" onclick="remove_site_rule(\''+siteName+'\',\'url_rule\','+i+')">删除</a></td>\
+					</tr>'
+		}
+		$("#site_url_rule_con").html(tbody)
+	});
+}
+
+//受保护的URL地址
+function site_url_tell(siteName,type){
+	if(type == undefined){
+		create_l = layer.open({
+			type: 1,
+			title: "管理网站过滤规则【受保护的URI地址】",
+			area: ['500px','500px'],
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<div class="pd15">\
+					<div style="border-bottom:#ccc 1px solid;margin-bottom:10px;padding-bottom:10px">\
+						<input class="bt-input-text" name="site_url_tell_address" type="text" value="" style="width:200px;" placeholder="URI地址,支持正则表达式">\
+						<input class="bt-input-text" name="site_url_tell_key" type="text" value="" style="width:100px;" placeholder="参数名">\
+						<input class="bt-input-text" name="site_url_tell_value" type="text" value="" style="width:100px;" placeholder="参数值">\
+						<button class="btn btn-success btn-sm va0 pull-right" onclick="add_site_url_tell(\''+siteName+'\');">添加</button>\</div>\
+					<div class="divtable">\
+					<div id="site_url_table_fix" style="max-height: 380px; overflow: auto; border:#ddd 1px solid">\
+					<table class="table table-hover" style="border:none">\
+						<thead>\
+							<tr>\
+								<th>URI地址</th>\
+								<th>参数名</th>\
+								<th>参数值</th>\
+								<th style="text-align: right;">操作</th>\
+							</tr>\
+						</thead>\
+						<tbody id="site_url_tell_con" class="gztr"></tbody>\
+					</table>\
+					</div>\
+				</div>\
+				<ul class="help-info-text c7 ptb10">\
+					<li>可用于保护网站后台地址,API接口等非公众URI地址不被渗透</li>\
+					<li>参数名与参数值对大小写敏感</li>\
+					<li>设置受保护的URL,访问该URL时必需带有指定的参数名和参数值,否则将被防火墙拦截</li>\
+					<li>假设URI地址: ^/admin/admin.php 参数名: test 参数值: bt.cn</li>\
+					<li>正确的访问方式: /admin/admin.php?test=bt.cn</li>\
+				</ul></div>'
+		});
+		tableFixed("site_url_table_fix")
+	}
+	var loadT = layer.msg('正在获取网站规则..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_site_rule',{siteName:siteName,ruleName:'url_tell'},function(rdata){
+		layer.close(loadT);
+		var tbody = ''
+		for(var i=0;i<rdata.length;i++){
+			tbody += '<tr>\
+						<td>'+rdata[i][0]+'</td>\
+						<td>'+rdata[i][1]+'</td>\
+						<td>'+rdata[i][2]+'</td>\
+						<td class="text-right"><a class="btlink" onclick="remove_site_rule(\''+siteName+'\',\'url_tell\','+i+')">删除</a></td>\
+					</tr>'
+		}
+		$("#site_url_tell_con").html(tbody)
+	});
+}
+
+
+//添加受保护的URL地址
+function add_site_url_tell(siteName){
+	var pdata = {
+		ruleValue:$("input[name='site_url_tell_key']").val(),
+		rulePass:$("input[name='site_url_tell_value']").val(),
+		ruleUri:$("input[name='site_url_tell_address']").val(),
+		siteName:siteName,
+		ruleName:'url_tell'
+	}
+	
+	if(pdata['ruleValue'] == '' || pdata['rulePass'] == '' || pdata['ruleUri'] == ''){
+		layer.msg('URI地址、字段名、字段值不能为空');
+		return;
+	}
+	
+	var loadT = layer.msg('正在添加，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=add_site_rule',pdata,function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+		if(rdata.status){
+			site_url_tell(siteName,1);
+		} 
+	});
+}
+
+
+//添加URL专用过滤规则
+function add_site_url_rule(siteName){
+	var pdata = {
+		ruleValue:$("input[name='site_url_tell_value']").val(),
+		ruleUri:$("input[name='site_url_tell_address']").val(),
+		siteName:siteName,
+		ruleName:'url_rule'
+	}
+	
+	if(pdata['ruleValue'] == '' || pdata['ruleUri'] == ''){
+		layer.msg('URI地址、过滤规则不能为空');
+		return;
+	}
+	
+	var loadT = layer.msg('正在添加，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=add_site_rule',pdata,function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+		if(rdata.status){
+			site_url_rule(siteName,1);
+		}
+	});
+}
+
+
+//网站规则管理
+function site_rule_admin(siteName,ruleName,type){
+	var placeho = '';
+	var ps = '';
+	var title = '';
+	switch(ruleName){
+		case 'disable_php_path':
+			placeho = 'URI地址,支持正则表达式';
+			ps = '<li>此处请不要包含URI参数,一般针对目录URL,示例：/admin</li>'
+			title = '禁止运行PHP的URL地址'
+			break;
+		case 'disable_path':
+			placeho = 'URI地址,支持正则表达式';
+			ps = '<li>此处请不要包含URI参数,一般针对目录URL,示例：/admin</li>'
+			title = '禁止访问的URL地址'
+			break;
+		case 'disable_ext':
+			placeho = '扩展名，不包含点(.)，示例：sql';
+			ps = '<li>直接填要被禁止访问的扩展名，如我希望禁止访问*.sql文件：sql</li>'
+			title = '禁止访问的扩展名'
+			break;
+		case 'disable_upload_ext':
+			placeho = '扩展名，不包含点(.)，示例：sql';
+			ps = '<li>直接填要被禁止访问的扩展名，如我希望禁止上传*.php文件：php</li>'
+			title = '禁止上传的文件类型'
+			break;
+	}
+	if(type == undefined){
+		create_l = layer.open({
+			type: 1,
+			title: "管理网站过滤规则【"+title+"】",
+			area: ['500px','500px'],
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<div class="pd15">\
+					<div style="border-bottom:#ccc 1px solid;margin-bottom:10px;padding-bottom:10px">\
+						<input class="bt-input-text" name="site_rule_value" type="text" value="" style="width:400px;margin-right:15px;margin-left:5px" placeholder="'+placeho+'">\
+						<button class="btn btn-success btn-sm va0 pull-right" onclick="add_site_rule(\''+siteName+'\',\''+ruleName+'\');">添加</button>\</div>\
+					<div class="divtable">\
+					<div id="siteRuleAdmin" class="siteRuleAdmin" style="max-height:273px;overflow:auto;border:#ddd 1px solid">\
+					<table class="table table-hover" style="border:none">\
+						<thead>\
+							<tr>\
+								<th>规则</th>\
+								<th style="text-align: right;">操作</th>\
+							</tr>\
+						</thead>\
+						<tbody id="site_rule_admin_con" class="gztr"></tbody>\
+					</table>\
+					</div>\
+				</div>\
+				<ul class="help-info-text c7 ptb10">\
+					<li>除正则表达式语句外规则值对大小写不敏感,建议统一使用小写</li>'+ps+'\
+				</ul></div>'
+		});
+		tableFixed("siteRuleAdmin")
+	}
+	var loadT = layer.msg('正在获取网站规则..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_site_rule',{siteName:siteName,ruleName:ruleName},function(rdata){
+		layer.close(loadT);
+		var tbody = ''
+		for(var i=0;i<rdata.length;i++){
+			tbody += '<tr>\
+						<td>'+rdata[i]+'</td>\
+						<td class="text-right"><a class="btlink" onclick="remove_site_rule(\''+siteName+'\',\''+ruleName+'\','+i+')">删除</a></td>\
+					</tr>'
+		}
+		$("#site_rule_admin_con").html(tbody)
+	});
+}
+
+//添加站点过滤规则
+function add_site_rule(siteName,ruleName){
+	var pdata = {
+		ruleValue:$("input[name='site_rule_value']").val(),
+		siteName:siteName,
+		ruleName:ruleName
+	}
+	
+	if(pdata['ruleValue'] == ''){
+		layer.msg('过滤规则不能为空');
+		$("input[name='site_rule_value']").focus();
+		return;
+	}
+	
+	var loadT = layer.msg('正在添加，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=add_site_rule',pdata,function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+		if(rdata.status){
+			site_rule_admin(siteName,ruleName,1);
+		} 
+	});
+}
+
+//删除站点过滤规则
+function remove_site_rule(siteName,ruleName,index){
+	var pdata = {
+		index:index,
+		siteName:siteName,
+		ruleName:ruleName
+	}
+	var loadT = layer.msg('正在删除，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=remove_site_rule',pdata,function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+		if(rdata.status){
+			if(ruleName == 'url_tell'){
+				site_url_tell(siteName,1);
+				return;
+			}
+			
+			if(ruleName == 'url_rule'){
+				site_url_rule(siteName,1);
+				return;
+			}
+			site_rule_admin(siteName,ruleName,1);
+		}
+	});
+}
+
+
+
+//CDN-Header配置
+function cdn_header(siteName,type){
+	if(type == undefined){
+		create_l = layer.open({
+			type: 1,
+			title: "管理网站【"+siteName+"】CDN-Headers",
+			area: ['500px','500px'],
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<div class="pd15">\
+					<div style="border-bottom:#ccc 1px solid;margin-bottom:10px;padding-bottom:10px">\
+						<input class="bt-input-text" name="cdn_header_key" type="text" value="" style="width:400px;margin-right:15px;margin-left:5px" placeholder="header名称">\
+						<button class="btn btn-success btn-sm va0 pull-right" onclick="add_cdn_header(\''+siteName+'\');">添加</button>\</div>\
+					<div class="divtable">\
+					<div id="cdnHeader" style="max-height:300px;overflow:auto;border:#ddd 1px solid">\
+					<table class="table table-hover" style="border:none">\
+						<thead>\
+							<tr>\
+								<th>header</th>\
+								<th style="text-align: right;">操作</th>\
+							</tr>\
+						</thead>\
+						<tbody id="cdn_header_con" class="gztr"></tbody>\
+					</table>\
+				</div>\
+				</div>\
+				<ul class="help-info-text c7 ptb10">\
+					<li>防火墙将尝试在以上header中获取客户IP</li>\
+				</ul></div>'
+		});
+		tableFixed("cdnHeader")
+	}
+	var loadT = layer.msg('正在获取网站配置..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_site_cdn_header',{siteName:siteName},function(rdata){
+		layer.close(loadT);
+		var tbody = ''
+		for(var i=0;i<rdata.length;i++){
+			tbody += '<tr>\
+						<td>'+rdata[i]+'</td>\
+						<td class="text-right"><a class="btlink" onclick="remove_cdn_header(\''+siteName+'\',\''+rdata[i]+'\')">删除</a></td>\
+					</tr>'
+		}
+		$("#cdn_header_con").html(tbody)
+		
+	});
+}
+
+//添加CDN-Header
+function add_cdn_header(siteName){
+	var pdata = {
+		cdn_header:$("input[name='cdn_header_key']").val(),
+		siteName:siteName
+	}
+	
+	if(pdata['cdn_header'] == ''){
+		layer.msg('header不能为空');
+		$("input[name='cdn_header_key']").focus();
+		return;
+	}
+	
+	var loadT = layer.msg('正在添加，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=add_site_cdn_header',pdata,function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+		if(rdata.status){
+			cdn_header(siteName,1);
+		} 
+	});
+}
+
+//删除CDN-Header
+function remove_cdn_header(siteName,cdn_header_key){
+	var loadT = layer.msg('正在删除，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=remove_site_cdn_header',{siteName:siteName,cdn_header:cdn_header_key},function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+		if(rdata.status){
+			cdn_header(siteName,1);
+		}
+	});
+}
+
+
+//网站规则设置
+function set_site_obj_conf(siteName,ruleName,type){
+	if(type == undefined){
+		create_l = layer.open({
+			type: 1,
+			title: "编辑网站【"+siteName+"】规则【"+ruleName+"】",
+			area: ['700px','530px'],
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<div class="pd15">\
+					<div class="divtable">\
+					<div id="SetSiteObjConf" class="table_head_fix" style="max-height:375px;overflow:auto;border:#ddd 1px solid">\
+					<table class="table table-hover" style="border:none">\
+						<thead>\
+							<tr>\
+								<th width="450">规则</th>\
+								<th>说明</th>\
+								<th style="text-align: right;">状态</th>\
+							</tr>\
+						</thead>\
+						<tbody id="set_site_obj_conf_con" class="gztr"></tbody>\
+					</table>\
+					</div>\
+				</div>\
+				<ul class="help-info-text c7 ptb10">\
+					<li>此处继承全局设置中已启用的规则</li>\
+					<li>此处的设置仅对当前站点有效</li>\
+				</ul></div>'
+		});
+		tableFixed("SetSiteObjConf");
+	}
+	var loadT = layer.msg('正在获配置规则..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=get_site_disable_rule',{siteName:siteName,ruleName:ruleName},function(rdata){
+		layer.close(loadT);
+		var tbody = ''
+		for(var i=0;i<rdata.length;i++){
+			if(rdata[i][0] == -1) continue;
+			tbody += '<tr>\
+						<td>'+rdata[i][1]+'</td>\
+						<td>'+rdata[i][2]+'</td>\
+						<td style="text-align: right;">\
+							<div class="pull-right"><input class="btswitch btswitch-ios" id="close_'+i+'" type="checkbox" '+(rdata[i][0]?'checked':'')+'>\
+							<label class="btswitch-btn" for="close_'+i+'" style="width:2em;height:1.2em;margin-bottom: 0" for="closeua_'+i+'" onclick="set_site_rule_state(\''+siteName+'\',\''+ruleName+'\','+i+')"></label></div>\
+						</td>\
+					</tr>'
+		}
+		$("#set_site_obj_conf_con").html(tbody)
+	});
+}
+
+//设置网站规则状态
+function set_site_rule_state(siteName,ruleName,index){
+	var loadT = layer.msg('正在处理，请稍候..',{icon:16,time:0});
+	$.post('/plugin?action=a&name=btwaf_httpd&s=set_site_disable_rule',{siteName:siteName,ruleName:ruleName,index:index},function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2});
+	});
+}
+
+//封锁历史
+function Protectionlog(page){
+	var noiplog = '';
+	var con = '';
+	if(!page) page = 1;
+	var last = page-1;
+	var next = page+1;
+	var loadT = layer.msg('正在获取，请稍候..',{icon:16,time:0});
+	$.get('/plugin?action=a&name=btwaf_httpd&s=get_safe_logs',{drop_ip:1,p:page},function(rdata){
+		layer.close(loadT);
+		if(rdata == ''){
+			noiplog = '<tr><td colspan="6">暂无日志</td></tr>';
+		}
+		else{
+			for(var i=0,n=rdata.length;i<n;i++){
+				var noiplogtd ='';
+				var btime = rdata[i][0];
+				var status = rdata[i][6];
+				var ip = rdata[i][1];
+				var iptext = '';
+				if(status){
+					status='<span style="color:red">封锁中</span>';
+					iptext = '<a class="btlink" href="javascript:UncoverIp(\''+ip+'\');" title="解封当前IP">'+ip+'</a>';
+				}
+				else{
+					status="已解封";
+					iptext = ip;
+				}
+				var pe = '';
+				switch(rdata[i][5]){
+					case 'cc':
+						pe = 'CC攻击';
+						break;
+					case 'inc':
+						pe = '多次恶意请求';
+						break;
+				}
+				
+				noiplog += '<tr><td>'+formatDate(btime)+'</td><td>'+iptext+'</td><td>'+rdata[i][2]+'</td><td>'+pe+'</td><td>'+rdata[i][4]+'秒</td><td>'+status+'</td></tr>'
+			}
+		}
+		con ='<div class="lib-con pull-left">\
+					<div class="divtable mt10">\
+						<table class="table table-hover">\
+							<thead>\
+								<tr><th>开始时间</th><th>IP</th><th>站点</th><th>封锁原因</th><th>封锁时长</th><th>状态</th></tr>\
+							</thead>\
+							<tbody>'+noiplog+'</tbody>\
+						</table>\
+						<div class="page pull-right" id="size_log_page" style="margin-top:10px"></div>\
+					</div>\
+				</div>';
+		$(".wafcon").html(con);
+		var pagehtml = '<a class="Pstart" onclick="Protectionlog(1)">首页</a><a class="prevPage" onclick="Protectionlog('+last+')">上一页</a><a class="nextPage" onclick="Protectionlog('+next+')">下一页</a><a class="Pcount">第'+page+'页</a>';
+		$("#size_log_page").html(pagehtml);
+		if(rdata.length < 1){
+			$(".nextPage").hide();
+		}
+		if(last < 1){
+			$(".prevPage").hide();
+		}
+	})
+}
+//解封所有IP
+function UncoverAll(){
+	layer.confirm('是否要从防火墙解封所有IP',{title:'解封IP地址'},function(){
+		var loadT = layer.msg('正在处理，请稍候..',{icon:16,time:0});
+		$.get("/plugin?action=a&name=btwaf_httpd&s=clean_waf_drop_ip",function(rdata){
+			layer.close(loadT);
+			if(rdata.status){
+				layer.msg(rdata.msg,{icon:1});
+				Protectionlog(1)
+			}
+			else{
+				layer.msg(rdata.msg,{icon:2});
+			}
+		});
+	});
+}
+
+//解封单个IP
+function UncoverIp(ip){
+	layer.confirm('是否要从防火墙解封IP['+ip+']',{title:'解封IP地址'},function(){
+		var loadT = layer.msg('正在处理，请稍候..',{icon:16,time:0});
+		$.post("/plugin?action=a&name=btwaf_httpd&s=remove_waf_drop_ip",{ip:ip},function(rdata){
+			layer.close(loadT);
+			if(rdata.status){
+				layer.msg(rdata.msg,{icon:1});
+				Protectionlog(1)
+			}
+			else{
+				layer.msg(rdata.msg,{icon:2});
+			}
+		});
+	});
+}
+
+//操作日志
+function viewdata(p){
+	if(!p) p = 1;
+	var loadT = layer.msg('正在获取，请稍候..',{icon:16,time:0});
+	$.get('/plugin?action=a&name=btwaf_httpd&s=get_gl_logs&tojs=viewdata&p=' + p,function(rdata){
+		layer.close(loadT);
+		var tbody = ''
+		for(var i=0;i<rdata.data.length;i++){
+			tbody += '<tr><td>'+rdata.data[i].log+'</td><td class="text-right">'+rdata.data[i].addtime+'</td></tr>'
+		}
+		
+		var con = '<div class="lib-box">\
+					<div class="lib-con">\
+						<div class="divtable">\
+							<table width="100%" border="0" cellpadding="0" cellspacing="0" class="table table-hover">\
+								<thead>\
+									<tr>\
+										<th>详情</th>\
+										<th width="150" class="text-right">操作时间</th>\
+									</tr>\
+								</thead>\
+								<tbody id="logsBody">'+tbody+'</tbody>\
+							</table>\
+						</div>\
+						<div class="page" style="margin-top:10px">'+rdata.page+'</div>\
+					</div>\
+				</div>';
+		$(".wafcon").html(con);
+	});
+}
+
+//预警设置
+function warnsetting(){
+	var con = '<div class="lib-con">\
+			<div class="plan pull-left" style="padding:10px 0">\
+				<span class="typename c4 pull-left f14 text-right mr20" style="width:80px">执行周期</span>\
+				<div id="ptime" class="pull-left">\
+					<div class="plan_hms pull-left mr20 bt-input-text" style="padding-left:0">\
+						<span class="name" style="border-right:1px solid #ccc;border-left:0;">每</span>\
+						<span><input type="number" name="minute" value="30" maxlength="2" max="59" min="0"></span>\
+						<span class="name">分钟</span>\
+					</div>\
+					<div class="plan_hms pull-left mr20 bt-input-text" style="padding-left:0">\
+						<span class="name" style="border-right:1px solid #ccc;border-left:0;">发送</span>\
+						<span><input type="number" name="minute" value="30" maxlength="2" max="59" min="0"></span>\
+						<span class="name">次</span>\
+					</div>\
+				</div>\
+			</div>\
+			</div>';
+	$(".wafcon").html(con);
+}
+</script>

@@ -1,0 +1,1520 @@
+<style>
+  .bt-w-menu p{
+  	text-align: center;
+  	padding-left: 0;
+  }
+  .divtable{
+  	padding-top: 10px;
+  }
+  .header{
+  	overflow: hidden;
+  }
+  .bt-border-left{
+  	border-top-left-radius: 0px;
+  	border-bottom-left-radius: 0px;
+  }
+  .bt-border-right{
+  	border-top-right-radius: 0px;
+  	border-bottom-right-radius: 0px;
+  }
+  .pull-box{
+  	overflow: hidden;
+  	margin-top: 10px;
+  }
+  .returnBtn{
+  	color: #20a53a;
+  	margin-right: 5px;
+  }
+  .returnBtn img{
+  	width: 18px;
+  	margin: -2px 5px 0 0;
+  	margin-top: -2px;
+  }
+  .labelimg{
+  	font-size: 12px;
+  	font-weight: 600;
+  	height: 30px;
+  	line-height: 29px;
+  	margin-left: 5px;
+  	display: block;
+  	background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFYAAAAoCAYAAABkfg1GAAACAUlEQVRoQ+3aT1LCMBQG8C9duHAjnsAcAXe2G+EE4hod9QRyA70JzkjdKicAN+iSGxhugDtGZ/qcAraUFvqHZEH7WIcvza9v0iapAP+MCAgjqRwKhjVUBAzLsIYEDMVyxTKsIQFDsYUqVrrOBYC6oWva31jyFH5nfXU3nmaGld16DQeH9yB0IFDb39GbvnJSsKiZCVa6Th2gV0BI05dVkvx+KuwclTDgKs1xywnbpwJGzYG51nRjxTJqcVT/n4mwjLobaiIso+6OGoNlVD2oEdhkVHpfdiUBcaKv2/InzefYOCpNANFS7dH4n0D27CcIcVN+Ej0jXMLaX2sv/6erqAGuaw8Bca6n63KnCPl81oBlDcJh0rdqfyQuWaXrPAJ4KDeJntHFYQlTdTU6Topn2Ozo/1OBijycPK+prj+H6zGyZw8gRCN7fHVbhg8vkD9/Hi0oyIe+jDy8XKcL4La6VPlGHqy8ljtYK7i+r489X5/5r1u8s5XDNrKkTcTNEcZNQ4HYXgHj6imPzZswkTlXT2dVStm+bci4hWth6wkCTwuFXdM/MWLcYripZ17BJg1PC3mE0w8Tgw2YxfF3B6BOuJDI01dV2tIEFjUyVWxsaftit0CCP9iI1Yqn8DN7y/XBRlXqTdc4C1Wsrs7LnMOwhu4uwzKsIQFDsVyxDGtIwFDsHwahjIycAVN+AAAAAElFTkSuQmCC');
+  	background-repeat: no-repeat;
+  	background-size: 80px;
+  	background-position: 0px;
+  	text-align: center;
+  	margin-top: 3px;
+  	width: 90px;
+  	float: left;
+  	color: #fff;
+  }
+  .addDns input,
+  .editDns input{
+	padding: 2px;
+  }
+  .addDns input,.addDns select,
+  .editDns input,.editDns select{
+  	width: 90%;
+	height: 24px;
+	line-height: 24px;
+	border: 1px solid #e0e0e0;
+	border-radius: 3px;
+	-webkit-border-radius: 3px;
+	display: inline-block;
+	vertical-align: middle;
+  }
+  .addDns input:hover,
+  .addDns select:hover,
+  .editDns input:hover,
+  .editDns select:hover{
+	border-color: #5AA0F4;
+  }
+  .selectTpye,.selectCircuit{
+  	height: 30px;
+  	line-height: 30px;
+  	padding: 0 5px;
+  	font-size: 12px;
+  }
+  .MoreSettings span{
+  	margin-right: 10px;
+  }
+  .MoreSettings:before{
+  	position: absolute;
+  	right: 8px;
+  	top: 15px;
+  	width: 0;
+  	height: 0;
+  	content: '';
+  	border-top: 4px solid #20a53a;
+  	border-left: 4px solid transparent;
+  	border-right: 4px solid transparent;
+  }
+  .MoreSettings:hover .pull-down{
+  		display: block;
+  }
+  .pull-down:before{
+	content:'';
+	width: 10px;
+	height: 10px;
+	transform: rotate(45deg);
+	border-left:1px solid #ddd;
+	border-top: 1px solid #ddd;
+	position: absolute;
+	top: -5px;
+	left: 19.5px;
+	background-color: #fff;
+  }
+  .pull-down:after{
+  	content: '';
+  	width: 25px;
+  	height: 25px;
+  	position: absolute;
+  	top: -20px;
+  	left: 50%;
+  	margin-left: -12.5px;
+  }
+  .pull-down{
+  	display: none;
+	position: absolute;
+	padding: 5px 0;
+	width: 50px;
+	height: auto;
+	background: #fff;
+	border: 1px solid #ddd;
+	z-index: 999;
+	right: 0;
+	top: 30px;
+  }
+  .pull-down li{
+  	display: block;
+  	text-align: center;
+  	padding: 4px;
+  }
+  .pull-down li:hover{
+  	background-color: #f3f3f3;
+  }
+  .pull-down li a{
+  	display: block
+  }
+  /*ns图标*/
+  .Ns-icon{
+  	position: relative;
+  	display: inline-block;
+  	width: 17px;
+  	height: 17px;
+  	vertical-align: middle;
+  	background-image: url('static/img/ns-icon.png');
+  	background-repeat: no-repeat;
+  }
+/*  .Ns-icon:hover{
+  	cursor: pointer;
+
+  }*/
+.Ns-icon:hover .ns-tip{
+	display: block;
+}
+.ns-tip{
+	display: none;
+	position: absolute;
+	z-index: 999;
+	top: 23px;
+	left: -127px;
+	width: 280px;
+	height: auto;
+	line-height: 20px;
+	padding: 15px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	background: #fff;
+}
+.ns-tip button{
+	display: block;
+	margin-top: 10px;
+	margin-left: 70px;
+}
+.ns-tip:before{
+	content: '';
+	display: block;
+	position: absolute;
+	left: 47%;
+	top: -6px;
+	width: 10px;
+	height: 10px;
+	border-left: 1px solid #ccc;
+	border-top: 1px solid #ccc;
+	background: #fff;
+	transform: rotate(45deg);
+	border-radius: 2px;
+}
+.nsshow span{
+	display: block;
+	text-align: center;
+}
+#Ns-tip + .Ns-icon{
+	display: inline-block !important;
+}
+.page{
+	margin-top: 15px;
+}
+.helpDns span{
+	line-height: 20px;
+	margin: 5px 0;
+	display: block;
+	font-size: 12px;
+}
+</style>
+<div class="bt-form" style ="background:#fff;width:1200px;height:600px;overflow: hidden;" id="templateTpl">
+	<div class="layui-layer-title" style="cursor: move;margin-top: -42px;">DNS域名管理</div>
+	<div class="bt-w-menu Domains">
+		<p class="bgw" onclick="Domains.DomainListRequest(1,true)">全部域名</p>
+		<!-- <p>付费域名</p> -->
+	</div>
+	<div class="bt-w-con pd15 Domains">
+		<div class="soft-man-con viewZoo">
+			<div class="header">
+				<div class="pull-left">
+					<button class="btn btn-success btn-sm" onclick="Domains.AddDomain()">添加域名</button>
+				</div>
+				<div class="pull-right">
+					<div class="oneKeysearchBar">
+						<input class="searchInput bt-input-text bt-border-right" type="text" placeholder="请输入域名或备注" value="" style="width:150px;margin-right: -5px;outline: none;">
+						<button class="btn btn-default btn-sm bt-border-left va0" onclick="Domains.DomainListRequest(1,true)" style="margin-right:5px;">搜索</button>
+					</div>
+				</div>
+			</div>
+			<div class="divtable">
+				<table class="table table-hover" width="100%">
+					<thead>
+						<tr >
+							<th width="400">域名</th>
+							<th>套餐服务</th>
+							<th>域名状态</th>
+							<th style="text-align: right;" width="150">操作</th>
+						</tr>
+					</thead>
+					<tbody class="DomainList"></tbody>
+				</table>
+				<div class="page DomainPageList">
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="bt-w-menu Analysis" style="display: none;">
+		<p class="bgw">解析域名</p>
+		<p>请求数</p>
+		<p>操作日志</p>
+	</div>
+	<div class="bt-w-con pd15 Analysis" style="display: none;">
+		<div class="soft-man-con">
+			<div class="header">
+				<div class="pull-box" style="border-bottom: 1px solid #ececec;margin-top: 0;padding-bottom: 5px;">
+					<div class="pull-left">
+						<h3 style="font-size: 20px;font-weight: 600;height: 30px;line-height: 30px;color: #555;" class="AnalysisDomainName"></h3>
+					</div>
+					<div class="pull-left" style="line-height: 30px">
+						<span class="labelimg">普通版</span>
+					</div>
+					<div class="pull-right">
+						<a href="javascript:;" class="returnBtn" onclick="Domains.ReturnList()" style="height: 30px;line-height: 30px;"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAUCAYAAACTQC2+AAACSklEQVRIS7VVS3LaQBTsNxrWOCewbxB8gsiBrCMqsEiloOAEFicAn8D2CaCgUlmgFMrakMgnCL4BuQF7Rnqpp0/4FBjZRbST9Ga6p1+/HkLOx+nbZ9rSXYBbphBe+p+DRc6lcRnlKa5//VBCxH0AJaln4MprTIM8a7Oao0C1YcUFuEtEBMYchHcnBRKpCtrqA+SA8bgKjaO1dgnongwoliqMJiC6YODGa0x7IkFtVOmdDGi9Gf8hpZzxl4d5pvMGUI+YglW4evLbwTJPr/71KHaV1hMCbGb8MKFp7W5SH75vgZSYYv0wLxjkm4K5f86JMdCnUdkhRj9peOSOmz8Hh1jWRhU7/WeDUSKCvBfjb8yDVRh29p2SBESBJgA/QanWplR5JMmIKiY3diTzEkTVXfuvgZgXsFT1NUAZoZS0qFGMwNXvjZm/NUeJHDwg0DnA7rgxu897mt0655t9oY0VgFHcTJBtM1h6QISPDATGmOqu1kKIgF9JO2KJ5jLEBPLHzYfHDDRNkoCB315jerU3giQJiNBjZt7VOrN33E+mJSiOpMwIiftCcyME031us+HeG0EJo2gA0Ftm3HnNaefQwIpUhZWyAdXKzEDgjji3NiovwDT3mlPnYNalEdQD6BrAHIraHLEsOBhBibR8JwTBUZuhziQnvebszdFQzZwkUhKRXA2l57IuvU6SXjM6RLiFosujQCJZfDpL+yJN3muiPqwEm3OVC2gr6xi2JPmxjIt7Z7TkZFGC+UVAL52t+qgs/br+70DZ8DLg/gXM6UgNKh3FuQAAAABJRU5ErkJggg==">返回列表</a>
+					</div>
+				</div>			
+			</div>
+			<div class="view0">
+				<div class="pull-box">
+					<div class="pull-left">
+						<button class="btn btn-success btn-sm" onclick="Domains.AddAnalysis()">添加解析</button>
+					</div>
+					<div class="pull-right">
+						<div class="oneKeysearchBar">
+							<input class="searchInputOne bt-input-text bt-border-right" type="text" placeholder="请输入主机记录或备注" value="" style="width:150px;margin-right: -5px;outline: none;">
+							<button class="btn btn-default btn-sm bt-border-left va0" onclick="Domains.AnalysisListRequest(1,Domains.AnalysisIndex,true)" style="margin-right:5px;">搜索</button>
+						</div>
+					</div>
+				</div>
+				<div class="pull-box nsloading" style="display:none">
+					<div class="ns" style="border: 1px solid #ddd;border-radius: 4px;padding: 15px;background: #f5f6fa;line-height: 20px;">
+						您当前的NS服务器为：</br>
+						<span class="nsdocs" style="margin: 5px 0;display: inline-block;color:#bfbfbf;">
+							<span><img src="static/img/ns-loading.gif"></span>
+						</span></br>
+						请您到域名注册商将域名NS修改为：</br>
+						<span class="nsdoc" style="margin: 5px 0;display: inline-block;color:#bfbfbf;">
+							<span style="color:#20a53a;margin-top: 5px ">ns1.dns.com</span>&nbsp;&nbsp;|&nbsp;&nbsp;
+							<span style="color:#20a53a;margin-top: 5px ">ns2.dns.com</span>
+						</span></br>
+						如您已经修改上述NS服务器，可能由于域名服务商或LocalDNS的缓存原因，请稍后再试！
+						<button class="btn btn-success btn-sm" style="display: block;margin-top: 10px;margin-left: 0px;" onclick="Domains.NsVerify()">验证NS服务器</button>
+					</div>
+				</div>
+				<div class="divtable  nstable">
+					<table class="table table-hover" width="100%">
+						<thead>
+							<tr >
+								<th>主机记录</th>
+								<th>类型</th>
+								<th>线路</th>
+								<th>记录值</th>
+								<th width="60">MX</th>
+								<th width="60">TTL</th>
+								<th width="40">状态</th>
+								<th width="100">备注</th>
+								<th style="text-align: right;" width="100">操作</th>
+							</tr>
+						</thead>
+						<tbody class="AnalysisList">
+
+						</tbody>
+					</table>
+					<div class="page AnalysisPageList">
+						
+					</div>
+				</div>
+			</div>
+			<div class="view1" style="display: none">
+				<div class="btn-group" role="group" style="position:relative;left:820px;margin-top:30px;">
+					<button type="button"  class="btn btn-default btn-sm btn-success">实时请求数</button>
+					<button type="button"  class="btn btn-default btn-sm">天请求数</button>
+					<button type="button"  class="btn btn-default btn-sm">月请求数</button>
+				</div>
+				<div id="EchartsView" style="width: 1050px;height:400px;margin-top: 30px;"></div>
+			</div>
+			<div class="view2" style="display: none">
+				<div class="divtable">
+					<table class="table table-hover" width="100%">
+						<thead>
+							<tr>
+								<th>操作类型</th>
+								<th width="600">操作内容</th>
+								<th style="text-align: right;">操作时间</th>
+							</tr>
+						</thead>
+						<tbody class="LogsList">
+						</tbody>
+					</table>
+					<div class="page Logspage">
+						
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript" src="/static/js/echarts.min.js"></script>
+<script type="javascript/text">
+	var Domains = {
+		DomainList:[],
+		DomainPageList:'',
+		nsloading:true,
+		AnalysisList:[],
+		AnalysisPageList:'',
+		ParseIndex: 0,
+		EchartsIndex:0,
+		AnalysisIndex:null,
+		nsServer:null,
+		searchConterone:'',
+		searchContertwo:'',
+		ParseLinkList:['解析域名','请求数','操作日志'],
+		AnalysisTypeList:['A','CNAME','MX','TXT','NS','AAAA','SRV','CAA'],
+		AnalysisCommonCircuitList:[['','默认'],[285344768,'电信'],[285345792,'联通'],[285346816,'移动']],
+		CheckedDomain:{
+			domainId:'',
+			domain:'',
+			index:''
+		},
+		CheckedAnalysis:{
+		},
+		EchartsData:{
+			title:'',
+			xtitle:'时间',
+			ytitle:'QPS',
+			xData:[],
+			yData:[],
+		},
+		HelpConter:'<span>宝塔提示您：要解析 www.sss.com，请填写 www 哦～</span><span>主机记录就是域名前缀，常见用法有：</span><span>www：解析后的域名为 www.sss.com</span><span>@：直接解析主域名sss.com</span><span>*：泛解析，匹配其他所有域名 *.sss.com</span>',
+		// 获取域名列表请求
+		DomainListRequest:function(page,type){
+			layer.load();
+			var _this = this;
+			type == undefined?type = true:type;
+			page == undefined?page = 1:page;
+			this.searchConterone = $('.oneKeysearchBar input').val();
+			setCookie('DomainPage',page);
+			if (!type) {
+				this.DomainDomList();
+			}else{
+				$('.oneKeysearchBar input').val('');
+				$.get('/plugin?action=a&name=dns&s=get_domains',{p:page,query:_this.searchConterone},function(res){
+					if (res.data != undefined) {
+						_this.DomainList = res.data;
+						_this.DomainPageList = res.page;
+						_this.DomainDomList();
+					}
+					if (res.status != undefined || res.status == false) {
+						layer.msg(res.msg + "<a href='../config' style='color:#fff;margin-left:5px;text-decoration: underline;'>点击绑定</a>",{time:10000});
+						return false;
+					}
+				}).error(function(err) {
+					if(err.status == 500){
+						layer.closeAll("loading");
+						layer.msg("服务器500错误，未响应。",{time:10000});
+					}
+				});
+			}
+		},
+		// 域名DOM渲染
+		DomainDomList:function(){
+			var list = '';
+			var userLock = '';
+			var ps = '';
+			var DomainGroup = '';
+			var StatusName = '';
+			var handle = '';
+			this.nsloading = true;
+			for (var i = 0; i < this.DomainList.length;i++) {
+					if(this.DomainList[i].userLock == 0){
+						userLock = 'onclick="Domains.AnalysisListRequest(1,'+ i +',true)" title="添加域名解析" ';
+					}else{
+						userLock = 'title="当前域名已锁定"';
+					}
+					if(this.DomainList[i].ps == ''){
+						ps =' 备注';
+					}else{
+						ps = this.DomainList[i].ps;
+					}
+					switch(this.DomainList[i].nsGroupId){
+						case 199:
+							DomainGroup = '普通版'
+						break;
+						default:
+						break;
+					}
+					switch(this.DomainList[i].state){
+				 		case 0:
+				 			StatusName = '<a href="javascript:;" title="点击暂停域名解析"  onclick="Domains.PauseDomain('+ i +')" style="color:#20a53a">正常</a>';
+				 		break;
+				 		case 1:
+				 			StatusName = '停止';
+				 		break;
+				 		case 2:
+				 			StatusName = '<a href="javascript:;" title="点击开启域名解析" onclick="Domains.StartDomain('+ i +')" style="color:red">暂停</a>';
+				 		break;
+				 		case 3:
+				 			StatusName = '<span style="color:red">系统暂停</span>';
+				 		break;
+				 	}
+					if(this.DomainList[i].state == 0){
+						if(this.DomainList[i].userLock == 1){
+							handle = '<a href="javascript:;" onclick="Domains.LockDomain('+ i +')" title="解除该域名锁定" class="btlink">解锁</a>'
+						}else{
+							handle = '<a href="javascript:;" onclick="Domains.AnalysisListRequest(1,'+ i +',true)" title="添加域名解析" class="btlink">解析</a>&nbsp;&nbsp;|&nbsp;&nbsp;'+
+												'<span class="MoreSettings btlink"><span>更多</span>'+
+													'<ul class="pull-down boxDown">'+
+														'<li><a href="javascript:;" title="暂停当前域名后,该域名解析将无法使用" onclick="Domains.PauseDomain('+ i +')">暂停</a></li>'+
+														'<li><a href="javascript:;" title="锁定当前域名后,无法添加解析" onclick="Domains.UnlockDomain('+ i +')">锁定</a></li>'+
+														'<li><a href="javascript:;" style="color: red;" onclick="Domains.RemoveDomain('+ i +')">删除</a></li>'+
+													'</ul>'+
+												'</span>'
+						}
+					}else{
+						handle = '<a href="javascript:;" class="btlink" onclick="Domains.StartDomain('+ i +')">启动</a>'
+					}
+					list += '<tr>'+
+								'<td>'+
+									'<a href="javascript:;" '+ userLock +' class="btlink">'+ this.DomainList[i].domain +'</a>&nbsp;('+
+									'<a href="javascript:;" title="添加域名备注" onclick="Domains.Domainmodify('+ i +')" class="btlink">'+ ps +'</a>)'+
+								'</td>'+
+								'<td>'+ DomainGroup +'</td>'+
+								'<td><span class="nsstate">'+ StatusName +'</span></td>'+
+								'<td style="text-align: right;position: relative;" width="80"> '+ handle +'</td>'+
+							'</tr>'
+			}
+			$('.DomainList').empty().append(list);
+			$('.DomainPageList').empty().append(this.DomainPageList);
+			layer.closeAll('loading');
+		},
+		
+		// 添加域名
+		AddDomain:function(){
+			var _this = this;
+			var addView = layer.open({
+			    type: 1,
+			    area: ['350px','200px'],
+			    title:'添加域名',
+			    shadeClose: false,
+			    closeBtn: 2,
+			    btn: ['确定','取消'],
+			    content: '<div class="blj-box" style="margin-top:25px;">\
+			                <div class="line">\
+			                    <span class="tname" style="width:75px;margin-left:20px;">域名</span>\
+			                    <div class="tinfo" style="width:350px;"><input class="bt-input-text Domain" type="text" style="width:200px;"><p class="help-info" style="margin-left: 96px;margin-top: 5px;">请输入您要解析的一级域名如：bt.cn</p></div>\
+			                </div>\
+			            </div>',
+			    yes:function(){
+			    	var DomainVal = $('.Domain').val();
+			    	if(DomainVal == ''){
+			    		layer.msg('当前域名不能为空');
+			    		return false;
+			    	}
+		    		layer.load();
+		    		$.post('/plugin?action=a&name=dns&s=create_domain',{domain:DomainVal}, function(res) {
+		    			layer.closeAll('loading');
+		    		    if (res.status) {
+		    		    	layer.close(addView);
+		    		        Domains.DomainListRequest(1,true);
+                            layer.open({
+                              type: 1 
+                              ,area: ['380px', '250px']
+                              ,title:false
+                              ,content: '<div class="succeed_tip" style="font-family: 微软雅黑;padding:25px 15px">'+
+                                          '<div class="tip_img" style="text-align:center;color:#6d6d6d;font-weight: 600;">'+
+                                            '<img src="data:image/png;base64,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" style="width:50px;height:50px" />'+
+                                            '<div class="succeed_title" style="margin-top: 20px;font-size: 18px;">域名['+ DomainVal +']添加成功</div>'+
+                                          '</div>'+
+                                          '<div class="tip_conter" style="text-align: center;margin-top: 17px;font-weight: 100;line-height: 20px;font-size: 16px;">'+
+                                            '<div class="nstitle" style="margin-bottom: 7px;">请您到域名注册商将域名NS修改为:</div>'+
+                                            '<div class="nsName" style="line-height: 25px;">NS1.DNS.COM</br>NS2.DNS.COM</div>'+
+                                          '</div>'+
+                                        '</div>'
+                            });
+		    		    }else{
+		    		    	if(res.data == '') {
+		    		    		layer.msg(res.msg, {icon: 2});
+		    		    	}else{
+		    		    		layer.msg(res.data.message, {icon: 2});
+		    		    	}
+		    		        
+		    		    }
+		    		}).error(function(error) {
+		    			console.log(error);
+		    		});
+			    },
+			    btn2:function(){
+			        layer.close(addView);
+			    },
+			    cancel: function(){ 
+			      layer.close(addView);
+			    }    
+			});
+		},
+		
+		// 删除域名
+		RemoveDomain:function(index){
+			var _this = this;
+			var indexDel = layer.confirm('你确认删除当前域名[&nbsp;'+ _this.DomainList[index].domain +'&nbsp;]吗？', {
+				  btn: ['确认','取消'], //按钮
+				  icon:3,
+				  closeBtn: 2
+				}, function(){
+					layer.close(indexDel);
+					layer.load();
+				    $.post('/plugin?action=a&name=dns&s=remove_domain',{domain:_this.DomainList[index].domain},function(res){
+	    				layer.closeAll('loading');
+	    				if (res.status){
+	    					_this.DomainList.splice(index,1);
+	    					if(_this.DomainList.length == 0){
+	    						_this.DomainListRequest(getCookie('DomainPage') - 1,true);
+	    					}else{
+	    						_this.DomainListRequest(getCookie('DomainPage'),true);
+	    					}
+	    					layer.msg(res.msg,{icon:1});
+	    				}else{
+	    					layer.msg(res.msg,{icon:2});
+	    				}
+	    			});
+				}, function(){
+				    layer.closeAll('confirm');
+				});			
+		},
+		// 锁定域名
+		UnlockDomain:function(index){
+			var _this = this;
+			var indexDel = layer.confirm('锁定域名后将无法删除和添加解析，你确认锁定该域名[&nbsp;'+ _this.DomainList[index].domain +'&nbsp;]吗？', {
+			  btn: ['确认','取消'], //按钮
+			  icon:3,
+			  closeBtn: 2
+			}, function(){
+				layer.close(indexDel);
+				layer.load();
+				$.post('/plugin?action=a&name=dns&s=lock_domain',{domain:_this.DomainList[index].domain},function(res){
+					layer.closeAll('loading');
+					if (res.status){
+						_this.DomainList[index].userLock = 1;
+						_this.DomainListRequest(getCookie('DomainPage'),false);
+						layer.msg(res.msg,{icon:1});
+					}else{
+						layer.msg(res.msg,{icon:2});
+					}
+				});
+			}, function(){
+			    layer.closeAll('confirm');
+			});	
+		},
+		// 解除锁定域名
+		LockDomain:function(index){
+			layer.load();
+			var _this = this;
+			$.post('/plugin?action=a&name=dns&s=unlock_domain',{domain:_this.DomainList[index].domain},function(res){
+				layer.closeAll('loading');
+					if (res.status){
+						_this.DomainList[index].userLock = 0;
+						_this.DomainListRequest(getCookie('DomainPage'),false);
+						layer.msg(res.msg,{icon:1});
+					}else{
+						layer.msg(res.msg,{icon:2});
+					}
+			});
+		},
+		// 暂停域名
+		PauseDomain:function(index){
+			var _this = this;
+			var indexDel = layer.confirm('暂停域名后,当前域名解析将失效，您确定暂停使用当前域名[&nbsp;'+ _this.DomainList[index].domain +'&nbsp;]吗？', {
+			  btn: ['确认','取消'], //按钮
+			  icon:3,
+			  closeBtn: 2
+			},function(){
+				layer.close(indexDel);
+				layer.load();
+				$.post('/plugin?action=a&name=dns&s=pause_domain',{domain:_this.DomainList[index].domain},function(res){
+					layer.closeAll('loading');
+					if (res.status){
+						_this.DomainList[index].state = 2;
+						_this.DomainListRequest(getCookie('DomainPage'),false);
+						layer.msg(res.msg,{icon:1});
+					}else{
+						layer.msg(res.msg,{icon:2});
+					}
+				});
+			}, function(){
+			    layer.closeAll('confirm');
+			});	
+		},
+		// 启动域名
+		StartDomain:function(index){
+			layer.load();
+			var _this = this;
+			_this.CheckedDomain = _this.DomainList[index];
+			$.post('/plugin?action=a&name=dns&s=start_domain',{domain:_this.CheckedDomain.domain},function(res){
+				layer.closeAll('loading');
+				if (res.status){
+					_this.DomainList[index].state = 0;
+					_this.DomainListRequest(getCookie('DomainPage'),false);
+					layer.msg(res.msg,{icon:1});
+				}else{
+					layer.msg(res.msg,{icon:2});
+				}
+			});
+		},
+		// 添加或修改域名备注
+		Domainmodify:function(index){
+			var _this = this;
+			var modifyps = layer.open({
+			    type: 1,
+			    area: ['350px','180px'],
+			    title:'设置域名备注',
+			    shadeClose: false,
+			    closeBtn: 2,
+			    btn: ['确定','取消'],
+			    content: '<div class="blj-box" style="margin-top:25px;">\
+			                <div class="line">\
+			                    <span class="tname" style="width:75px;margin-left:20px;">域名备注</span>\
+			                    <div class="tinfo" style="width:350px;"><input class="bt-input-text Domainps" type="text" value="'+ _this.DomainList[index].ps +'" style="width:200px;"></div>\
+			                </div>\
+			            </div>',
+			    yes:function(){
+			    	var DomainpsVal = $('.Domainps').val();
+			    	if(DomainpsVal != '' && DomainpsVal.length < 12){
+			    		layer.load();
+			    		$.post('/plugin?action=a&name=dns&s=set_domain_ps',{domain:_this.DomainList[index].domain,ps:DomainpsVal},function(res){
+			    			layer.closeAll('loading');
+			    			if (res.status) {
+			    				layer.close(modifyps);
+			    				_this.DomainList[index].ps = DomainpsVal;
+			    				_this.DomainListRequest(getCookie('DomainPage'),false);
+			    				layer.msg(res.msg,{icon:1});
+			    			}else{
+			    				layer.msg(res.msg,{icon:2});
+			    			}
+			    		});
+			    	}else{
+			    		layer.msg('请输入域名备注名称');
+			    	}
+			    },
+			    btn2:function(){
+			        layer.close(modifyps);
+			    },
+			    cancel: function(){ 
+			      layer.close(modifyps);
+			    }    
+			});
+		},
+		// 获取指定域名的解析列表
+		AnalysisListRequest:function(page,index,type){
+			$('.Analysis p').removeClass('bgw');
+			$('.Analysis p:eq(0)').addClass('bgw');
+			$('.Analysis .view0').show();
+			$('.Analysis .soft-man-con>div').hide();
+			$('.Analysis .soft-man-con>div:eq(0)').show();
+			$('.Analysis .soft-man-con>div:eq(1)').show();
+			var _this = this;
+			if (index == undefined) {
+				var i = _this.AnalysisIndex;
+				_this.CheckedDomain = _this.DomainList[i];
+			}else{
+				 _this.AnalysisIndex = index;
+				 _this.CheckedDomain = _this.DomainList[index];
+			}
+			_this.searchContertwo = $(".searchInputOne").val();
+			page==undefined?page=1:page;
+			type==undefined?type=true:type;
+			layer.load();
+			function record_list(){
+				if (type) {
+					$('.oneKeysearchBar input').val('');
+					$.post('/plugin?action=a&name=dns&s=get_record_list',{p:page,domainId:_this.CheckedDomain.domainId,query:_this.searchContertwo},function(res){
+						_this.AnalysisList = res.data;
+						_this.AnalysisPageList = res.page;
+						_this.AnalysisDomList();
+					});
+				}else{
+					_this.AnalysisDomList();
+				}
+			}
+			if (_this.nsloading) {
+				$.get('/plugin?action=a&name=dns&s=get_domain_ns',{domain:_this.CheckedDomain.domain},function(data){
+					if (data.length != 0){
+						for (var i = 0; i < data.length; i++) {
+							console.log(data[i].indexOf('.dns.com') == -1);
+							if(data[i].indexOf('.dns.com') == -1){
+								_this.nsloading = false;
+								setCookie(_this.CheckedDomain.domain,_this.nsloading);
+								$('.nsloading').show();
+								break;
+							}else{
+								_this.nsloading = true;
+								setCookie(_this.CheckedDomain.domain,_this.nsloading);
+								$('.nsloading').hide();
+							}
+						}
+					}else{
+						$('.nsloading').show();
+					}
+					if (!_this.nsloading) {
+						$('.Domains').hide();
+						$('.Analysis').show();
+						$('.AnalysisDomainName').html(_this.CheckedDomain.domain + (_this.CheckedDomain.ps!=''?'-' + _this.CheckedDomain.ps:_this.CheckedDomain.ps));
+						$('.AnalysisList').empty();
+						$('.nsdocs').html('<span style="color:red">'+data[0]+'</span>&nbsp;&nbsp;|&nbsp;&nbsp;<span style="color:red">'+data[1]+'</span></br>');
+						layer.closeAll('loading');
+						return false;
+					}
+					record_list();
+				});
+			}else{
+				record_list();
+			}
+			
+		},
+		// 渲染解析DOM页面
+		AnalysisDomList:function(){
+			var list = '';
+			var ispName = '';
+			var MxName = '';
+			var StateName = '';
+			var StateNameTwo = ''
+			for (var i =0;i < this.AnalysisList.length; i++) {
+				switch(this.AnalysisList[i].ispId){
+					case 0: ispName = '默认'; break;
+					case 285344768: ispName = '电信'; break;
+					case 285345792: ispName = '联通'; break;
+					case 285346816: ispName = '移动'; break;
+				}
+				if(this.AnalysisList[i].record_type != 'MX'){
+					MxName = '-';
+				}else{
+					MxName = this.AnalysisList[i].record_mx;
+				}
+				if (this.AnalysisList[i].state == 0) {
+					StateName = '<a href="javascript:;" title="点击暂停该解析" onclick="Domains.PauseAnalysis('+ i +')" style="color:#20a53a">正常</a>'
+					StateNameTwo = '<li><a href="javascript:;" title="点击暂停该解析" onclick="Domains.PauseAnalysis('+ i +')">暂停</a></li>'
+				}else{
+					StateName = '<a href="javascript:;" title="点击开启该解析" class="btlink" onclick="Domains.StartAnalysis('+ i +')" style="color:red">暂停</a>'
+					StateNameTwo = '<li><a href="javascript:;" title="点击启动该解析" class="btlink" onclick="Domains.StartAnalysis('+ i +')">启动</a></li>'
+				}
+				list += '<tr>'+
+							'<td>'+ this.AnalysisList[i].record_host +'</td>'+
+							'<td>'+ this.AnalysisList[i].record_type +'</td>'+
+							'<td>'+ ispName +'</td>'+
+							'<td>'+ this.AnalysisList[i].record_value +'</td>'+
+							'<td>'+ MxName +'</td>'+
+							'<td>'+ this.AnalysisList[i].record_ttl +'</td>'+
+							'<td>'+ StateName +'</td>'+
+							'<td>'+ this.AnalysisList[i].ps +'</td>'+
+							'<td style="text-align: right;position: relative;" width="100"><a href="javascript:;" title="编辑当前解析内容" class="btlink" onclick="Domains.EditAnalysis('+ i +')">编辑</a>&nbsp;&nbsp;|&nbsp;&nbsp;'+
+								'<span class="MoreSettings btlink"><span>更多</span>'+
+									'<ul class="pull-down boxDown">'+ StateNameTwo +
+										'<li><a href="javascript:;" title="点击删除该解析" style="color: red" onclick="Domains.RemoveAnalysis('+ i +')">删除</a></li>'+
+									'</ul>'+
+								'</span>'+
+							'</td>'+
+						'</tr>'
+			}
+			$('.Domains').hide();
+			$('.Analysis').show();
+			$('.AnalysisDomainName').empty().append(this.CheckedDomain.domain + (this.CheckedDomain.ps!=''?'-' + this.CheckedDomain.ps:this.CheckedDomain.ps));
+			$('.AnalysisList').empty().append(list);
+			$('.AnalysisPageList').empty().append(this.AnalysisPageList);
+			layer.closeAll('loading');
+		},
+		// 返回域名列表
+		ReturnList:function(){
+			$('.Domains').show();
+			$('.Analysis').hide();
+			this.nsloading = true;
+		},
+		// 添加解析页面
+		AddAnalysis:function(){
+			this.HelpConter = '<span>宝塔提示您：要解析 www.sss.com，请填写 www 哦～</span><span>主机记录就是域名前缀，常见用法有：</span><span>www：解析后的域名为 www.sss.com</span><span>@：直接解析主域名sss.com</span><span>*：泛解析，匹配其他所有域名 *.sss.com</span>'
+			if(this.nsloading){
+				var list = '';
+				list = '<tr class="addDns">'+
+							'<td><input type="text" name="mainRecorded" help-id="0"></td>'+
+							'<td>'+
+								'<select name="AnalysisType" help-id="1">'+
+									'<option value="A">A</option>'+
+									'<option value="CNAME">CNAME</option>'+
+									'<option value="MX">MX</option>'+
+									'<option value="TXT">TXT</option>'+
+									'<option value="AAAA">AAAA</option>'+
+									'<option value="SRV">SRV</option>'+
+									'<option value="CAA">CAA</option>'+
+								'</select>'+
+							'</td>'+
+							'<td>'+
+								'<select name="AnalysisCommonCircuit" help-id="2">'+
+								  '<option value="">默认</option>'+
+								  '<option value="285344768">电信</option>'+
+								  '<option value="285345792">联通</option>'+
+								  '<option value="285346816">移动</option>'+
+								  '<option disabled="disabled">更多线路</option>'+
+								'</select>'+
+							'</td>'+
+							'<td><input type="text" name="Recorded"  class="Dns-Recorded" help-id="3"></td>'+
+							'<td><input type="text" name="MX" class="Dns-MX" disabled="disabled"  help-id="4"></td>'+
+							'<td><input type="text" name="TTL" class="Dns-TTL" value="600"  help-id="5"></td>'+
+							'<td></td>'+
+							'<td><input type="text" name="remark" class="Dns-remark" help-id="6"></td>'+
+							'<td style="text-align: right;" width="80">'+
+								'<a href="javascript:;" class="btlink" onclick="Domains.AddAnalysisRequest()">添加</a>&nbsp;&nbsp;|&nbsp;&nbsp;'+
+								'<a href="javascript:;" class="btlink" onclick="Domains.CancelAnalysis()">取消</a>'+
+							'</td>'+
+						'</tr>'+
+						'<tr class="helpDns"><td colspan="11">'+ this.HelpConter +'</td></tr>'
+				$('.AnalysisList').empty().append(list);
+			}else{
+				layer.msg('请验证NS服务器');
+			}
+		},
+		// 取消添加
+		CancelAnalysis:function(){
+			$('.AnalysisList').empty();
+			this.AnalysisDomList();
+		},
+		// 添加解析请求
+		AddAnalysisRequest:function(){
+			var type,host,value,ttl,mx,remark;
+			var _this = this;
+			type = $('select[name="AnalysisType"] option:selected').val();
+			viewId = $('select[name="AnalysisCommonCircuit"]  option:selected').val();
+			host = $('input[name="mainRecorded"]').val();
+			value = $('input[name="Recorded"]').val();
+			ttl = $('input[name="TTL"]').val();
+			mx = $('input[name="MX"]').val();
+			remark = $('input[name="remark"]').val();
+			if (host == '' || value =='' || ttl =='') {
+				layer.msg('当前填写信息不完善');
+				return false;
+			}
+			layer.load();
+			$.post('/plugin?action=a&name=dns&s=create_record',
+				{
+					domainId:_this.CheckedDomain.domainId,
+					type:type,
+					viewId:viewId,
+					host:host,
+					value:value,
+					ttl:ttl,
+					mx:mx,
+					remark:remark
+				},function(res){
+					layer.closeAll('loading');
+					if (res.status){
+						layer.msg(res.msg,{icon:1});
+						_this.Analysis = false;
+						_this.AnalysisHelp = false;
+						_this.AnalysisList = true;
+						_this.AnalysisListRequest(1,_this.CheckedDomain.index,true);
+					}else{
+						layer.msg(res.msg,{icon:2});
+					}
+			});
+		},
+		// 编辑解析页面
+		EditAnalysis:function(index){
+			this.CheckedAnalysis = Domains.AnalysisList[index];
+			this.CheckedAnalysis.index = index;
+			var list = '';
+			var type = '';
+			var Circuit = '';
+			for (var i = 0; i < this.AnalysisTypeList.length;i++) {
+				if (this.AnalysisTypeList[i] == this.CheckedAnalysis.record_type) {
+					type += '<option selected="selected" value="'+ this.AnalysisTypeList[i] +'">'+ this.AnalysisTypeList[i] +'</option>';
+				}else{
+					type += '<option value="'+ this.AnalysisTypeList[i] +'">'+ this.AnalysisTypeList[i] +'</option>';
+				}
+			}
+			for (var i = 0; i < this.AnalysisCommonCircuitList.length;i++) {
+				if (this.AnalysisCommonCircuitList[i][0] == this.CheckedAnalysis.ispId) {
+					Circuit += '<option selected="selected" value="'+ this.AnalysisCommonCircuitList[i][0] +'">'+ this.AnalysisCommonCircuitList[i][1] +'</option>' ;
+				}else{
+					Circuit += '<option value="'+ this.AnalysisCommonCircuitList[i][0] +'">'+ this.AnalysisCommonCircuitList[i][1] +'</option>' ;
+				}
+			}
+			list = '<td><input type="text" name="Edit-mainRecorded" value="'+ this.CheckedAnalysis.record_host +'"></td>'+
+					'<td>'+
+						'<select name="Edit-AnalysisType">'+ type +'</select>'+
+					'</td>'+
+					'<td>'+
+						'<select name="Edit-AnalysisCommonCircuit">'+ Circuit +'</select>'+
+					'</td>'+
+					'<td><input type="text" name="Edit-Recorded"  class="Dns-Recorded" value="'+ this.CheckedAnalysis.record_value +'"></td>'+
+					'<td><input type="text" name="Edit-MX" class="Dns-MX" disabled="disabled" value="'+ this.CheckedAnalysis.record_mx +'"></td>'+
+					'<td><input type="text" name="Edit-TTL" class="Dns-TTL" value="600" value="'+ this.CheckedAnalysis.record_ttl +'"></td>'+
+					'<td></td>'+
+					'<td><input type="text" name="Edit-remark" class="Dns-remark" value="'+ this.CheckedAnalysis.ps +'"></td>'+
+					'<td style="text-align: right;" width="80">'+
+						'<a href="javascript:;" class="btlink" onclick="Domains.EditAnalysisRequest()">保存</a>&nbsp;&nbsp;|&nbsp;&nbsp;'+
+						'<a href="javascript:;" class="btlink" onclick="Domains.CancelAnalysis()">取消</a>'+
+					'</td>';
+			$('.AnalysisList tr:eq('+index+')').empty().html(list).addClass('editDns');
+		},
+		// 编辑解析请求
+		EditAnalysisRequest:function(){
+			layer.load();
+			var type,host,value,ttl,mx,remark;
+			var _this = this;
+			type = $('select[name="Edit-AnalysisType"] option:selected').val();
+			viewId = $('select[name="Edit-AnalysisCommonCircuit"]  option:selected').val();
+			host = $('input[name="Edit-mainRecorded"]').val();
+			value = $('input[name="Edit-Recorded"]').val();
+			ttl = $('input[name="Edit-TTL"]').val();
+			mx = $('input[name="Edit-MX"]').val();
+			remark = $('input[name="Edit-remark"]').val();
+			$.post('/plugin?action=a&name=dns&s=modify_record',{
+				domainId:_this.CheckedDomain.domainId,
+				recordId:_this.CheckedAnalysis.recordId,
+				type:type,
+				viewId:viewId,
+				host:host,
+				value:value,
+				ttl:ttl,
+				mx:mx,
+				remark:remark
+			},function(res){
+				layer.closeAll('loading');
+				if (res.status){
+					layer.msg(res.msg,{icon:1});
+					console.log(_this.CheckedAnalysis.index)
+					_this.AnalysisList[_this.CheckedAnalysis.index].record_type = type;
+					_this.AnalysisList[_this.CheckedAnalysis.index].record_host = host;
+					_this.AnalysisList[_this.CheckedAnalysis.index].record_value = value;
+					_this.AnalysisList[_this.CheckedAnalysis.index].record_ttl = ttl;
+					_this.AnalysisList[_this.CheckedAnalysis.index].record_mx = (mx == ''?0:mx);
+					_this.AnalysisList[_this.CheckedAnalysis.index].ispId = parseInt(viewId == ''?0:viewId);
+					_this.AnalysisList[_this.CheckedAnalysis.index].ps = remark;
+					_this.CancelAnalysis();
+				}else{
+					layer.msg(res.msg,{icon:2});
+				}
+			});
+		},
+		// 删除解析
+		RemoveAnalysis:function(index){
+			var _this = this;
+			var indexDel = layer.confirm('你确认删除当前解析吗？', {
+			  btn: ['确认','取消'], //按钮
+			  icon:3,
+			  closeBtn: 2
+			}, function(){
+				layer.close(indexDel);
+				layer.load();
+				console.log(_this.CheckedDomain.domainId,_this.CheckedDomain.recordId);
+			    $.post('/plugin?action=a&name=dns&s=remove_record',{domainId:_this.CheckedDomain.domainId,recordId:_this.AnalysisList[index].recordId},function(res){
+    				layer.closeAll('loading');
+    				if (res.status){
+    					_this.AnalysisListRequest(1,_this.CheckedDomain.index,true);
+    					layer.msg(res.msg,{icon:1});
+    				}else{
+    					layer.msg(res.msg,{icon:2});
+    				}
+    			});
+			}, function(){
+			    layer.closeAll('confirm');
+			});
+		},
+		// 暂停解析
+		PauseAnalysis:function(index){
+			var _this = this;
+			var indexDel = layer.confirm('暂停该解析后,该解析将暂停服务,您确认暂停该解析吗？', {
+			  btn: ['确认','取消'], //按钮
+			  icon:3,
+			  closeBtn: 2
+			}, function(){
+				layer.close(indexDel);
+				layer.load();
+				$.post('/plugin?action=a&name=dns&s=pause_record',{domainId:_this.CheckedDomain.domainId,recordId:_this.AnalysisList[index].recordId},function(res){
+					layer.closeAll('loading');
+					if (res.status){
+						_this.AnalysisList[index].state = 1;
+						_this.AnalysisListRequest(1,_this.CheckedDomain.index,false);
+						layer.msg(res.msg,{icon:1});
+					}else{
+						layer.msg(res.msg,{icon:2});
+					}
+				});
+			}, function(){
+			    layer.closeAll('confirm');
+			});	
+		},
+		// 启动解析
+		StartAnalysis:function(index){
+			layer.load();
+			var _this = this;
+			$.post('/plugin?action=a&name=dns&s=start_record',{domainId:_this.CheckedDomain.domainId,recordId:_this.AnalysisList[index].recordId},function(res){
+				layer.closeAll('loading');
+				if (res.status){
+					_this.AnalysisList[index].state = 0;
+					_this.AnalysisListRequest(1,_this.CheckedDomain.index,false);
+					layer.msg(res.msg,{icon:1});
+				}else{
+					layer.msg(res.msg,{icon:2});
+				}
+			});
+		},
+		// 操作日志获取
+		LogsListRequest:function(page){
+			layer.load();
+			var _this = this;
+			page == undefined?page=1:page;
+			$.post('/plugin?action=a&name=dns&s=get_domain_logs',{p:page,domainId:_this.CheckedDomain.domainId},function(res){
+				layer.closeAll('loading');
+				var list = '';
+				var time = '';
+				for (var i = 0; i < res.data.length; i++) {
+					time = new Date(parseInt(res.data[i].addtime) * 1000).toLocaleString().replace(/年|月/g, "-").replace(/日|上午|下午/g, " ");
+					list += '<tr>'+
+								'<td>'+res.data[i].type+'</td>'+
+								'<td>'+res.data[i].log+'</td>'+
+								'<td style="text-align: right;">'+ time +'</td>'+
+							'</tr>'
+				}
+				$('.LogsList').empty().append(list);
+				$('.Logspage').empty().append(res.page);
+				// template.defaults.imports.TimeStamp = function(date){
+				// 	return new Date(parseInt(date) * 1000).toLocaleString().replace(/年|月/g, "-").replace(/日|上午|下午/g, " ");				}
+				// $('#templateTpl').html(template('tpl',Domains));
+			});
+		},
+		// 请求(实时QPS)折线图
+		RequestRealtime:function(){
+			layer.load();
+			var xData = [],yData = [];
+			var _this = this;
+			_this.EchartsIndex = 0;
+			$.post('/plugin?action=a&name=dns&s=get_qps_hour',{domainId:_this.CheckedDomain.domainId},function(res){
+				layer.closeAll("loading");
+				for(var i = 0; i < res.length; i++){
+					xData.push(getLocalTime(res[i][0]));
+					yData.push(res[i][1]);
+				}
+				_this.EchartsData.xData = xData;
+				_this.EchartsData.yData = yData;
+				_this.EchartsData.title = '实时请求数(QPS)';
+				_this.EchartsIndex = 0;
+				_this.EchartsApply();
+			});
+		},
+		// 请求(天QPS)折线图
+		RequestDay:function(){
+			layer.load();
+			var xData = [],yData = [];
+			var _this = this;
+			_this.EchartsIndex = 1;
+			$.post('/plugin?action=a&name=dns&s=get_qps_day',{domainId:_this.CheckedDomain.domainId},function(res){
+				layer.closeAll("loading");
+				for(var i = 0; i < res.length; i++){
+					xData.push(new Date(res[i][0]).format("MM/dd"));
+					yData.push(res[i][1]);
+				}
+				_this.EchartsData.xData = xData;
+				_this.EchartsData.yData = yData;
+				_this.EchartsData.title = '天请求数(QPS)';
+				_this.EchartsApply();
+			});
+		},
+		// 请求(月QPS)折线图
+		RequestMonth:function(){
+			layer.load();
+			var xData = [],yData = [];
+			var _this = this;
+			_this.EchartsIndex = 2;
+			$.post('/plugin?action=a&name=dns&s=get_qps_year',{domainId:_this.CheckedDomain.domainId},function(res){
+				layer.closeAll("loading");
+				for(var i = 0; i < res.length; i++){
+					xData.push(res[i][0]);
+					yData.push(res[i][1]);
+				}
+				_this.EchartsData.xData = xData;
+				_this.EchartsData.yData = yData;
+				_this.EchartsData.title = '月请求(QPS)';
+				_this.EchartsApply();
+			});
+		},
+		// 图表渲染
+		EchartsApply:function(){
+			var _this = this;
+			var myChart =  echarts.init(document.getElementById("EchartsView"));
+			myChart.setOption({
+			    title: {
+			        text: _this.EchartsData.title,
+			        left: '50%',
+			        textAlign: 'center'
+			    },
+			    tooltip: {
+			        trigger: 'axis',
+			        axisPointer: {
+			            lineStyle: {
+			                color: '#ddd'
+			            }
+			        },
+			        backgroundColor: 'rgba(255,255,255,1)',
+			        padding: [5, 10],
+			        textStyle: {
+			            color: '#20a53a',
+			        },
+			        extraCssText: 'box-shadow: 0 0 5px rgba(0,0,0,0.3)'
+			    },
+			    legend: {
+			        right: '20',
+			        orient: 'vertical',
+			        data:['QPS'],
+			        textAlign: 'center'
+			    },
+			    xAxis: {
+			        type: 'category',
+			        name: _this.EchartsData.xtitle,
+			        boundaryGap: false,
+			        data:_this.EchartsData.xData,
+			        splitLine: {
+			            show: false
+			        },
+			        axisTick: {
+			            show: false
+			        },
+			        axisLine: {
+			            lineStyle: {
+			                color: '#666'
+			            }
+			        },
+			        axisLabel: {
+			            margin: 10,
+			            textStyle: {
+			                fontSize: 14
+			            }
+			        }
+			    },
+			    yAxis: {
+			        type: 'value',
+			        name: _this.EchartsData.ytitle,
+			        splitLine: {
+			            lineStyle: {
+			                color: '#ccc'
+			            }
+			        },
+			        axisTick: {
+			            show: false
+			        },
+			        axisLine: {
+			            lineStyle: {
+			                color: '#666'
+			            }
+			        },
+			        axisLabel: {
+			            margin: 10,
+			            textStyle: {
+			                fontSize: 14
+			            }
+			        }
+			    },
+			    series: [{
+			        name: _this.EchartsData.ytitle,
+			        type: 'line',
+			        smooth: true,
+			        showSymbol: false,
+			        symbol: 'circle',
+			        symbolSize: 6,
+			        data:_this.EchartsData.yData,
+			        itemStyle: {
+			            normal: {
+			                color: '#20a53a'
+			            }
+			        },
+			        lineStyle: {
+			            normal: {
+			                width: 2
+			            }
+			        }
+			    }]
+			});
+		},
+		NsVerify:function(){
+			var _this = this;
+			$('.nsdocs').html('<span><img src="static/img/ns-loading.gif"></span></br>');
+			$.get('/plugin?action=a&name=dns&s=get_domain_ns',{domain:_this.CheckedDomain.domain},function(res){
+				_this.CheckedDomain.ns = res;
+				if (res.length != 0){
+					for (var i = 0; i < res.length; i++) {
+						if(res[i].indexOf('.dns.com') > -1){
+							_this.nsloading = false;
+							_this.AnalysisListRequest(1,_this.CheckedDomain.index,true);
+							break;
+						}else{
+							_this.nsloading = true;
+							break;
+						}
+					}
+				}
+				$('.nsdocs').empty();
+				$('.nsdocs').append('<span style="color:red">'+res[0]+'</span>&nbsp;&nbsp;|&nbsp;&nbsp;');
+				$('.nsdocs').append('<span style="color:red">'+res[1]+'</span></br>');
+			});
+		}
+	}
+	Domains.DomainListRequest(1,true);
+	$(function(){
+		$('.layui-layer-page').width(1200);
+		var width = $(document).width();
+		var height = $(document).height();
+		var boxwidth =  (width / 2) - 600;
+		var boxheight =  (height / 2) - 321;
+		$('.layui-layer-page').css({
+			'left': boxwidth + 'px',
+			'top': boxheight +'px'
+		});
+		layer.load();
+	});
+	// 时间戳转换
+	function getLocalTime(tm) {
+		tm = tm.toString();
+		if(tm.length > 10){
+			tm = tm.substring(0,10);
+		}
+		return new Date(parseInt(tm) * 1000).format("hh:mm");
+	}
+	// IPv6效验
+  	function isIPv6(str) {
+  		console.log((str.split(':').length - 1) <= 7);
+  		var reg = /^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$/
+  		return reg.test(str);
+	}
+	function delCookie(name)  {  
+	    var exp = new Date();  
+	    exp.setTime(exp.getTime() - 1);  
+	    var cval=getCookie(name);  
+	    if(cval!=null)  
+	        document.cookie= name + "="+cval+";expires="+exp.toGMTString();  
+	} 
+	// 时间格式
+	Date.prototype.format = function(format){
+		 var o = {
+		 "M+" : this.getMonth()+1, //month
+		 "d+" : this.getDate(),    //day
+		 "h+" : this.getHours(),   //hour
+		 "m+" : this.getMinutes(), //minute
+		 "s+" : this.getSeconds(), //second
+		 "q+" : Math.floor((this.getMonth()+3)/3),  //quarter
+		 "S" : this.getMilliseconds() //millisecond
+		 }
+		 if(/(y+)/.test(format)) format=format.replace(RegExp.$1,
+		 (this.getFullYear()+"").substr(4 - RegExp.$1.length));
+		 for(var k in o)if(new RegExp("("+ k +")").test(format))
+		 format = format.replace(RegExp.$1,
+		 RegExp.$1.length==1 ? o[k] :
+		 ("00"+ o[k]).substr((""+ o[k]).length));
+		 return format;
+	}
+	$('.bt-form').on('mouseout','.Ns-icon',function(){
+		var name = '';
+		var _this = $(this);
+		Domains.CheckedAnalysis = Domains.DomainList[$(this).attr('data-id')];
+		$('.nsdocs1,.nsdocs1').empty();
+		$.get('/plugin?action=a&name=dns&s=get_domain_ns',{domain:Domains.CheckedAnalysis.domain},function(res){
+			_this.find('.nsshow').hide().next().show();
+			if (res.length != 0){
+				$('.nsdocs1').html(res[0]);
+				$('.nsdocs2').html(res[1]);
+				for (var i = 0; i < res.length; i++) {
+					if(res[i].indexOf('.dns.com') > -1){
+						$('.nsdocs1').html(res[0]);
+						$('.nsdocs1').html(res[1]);
+						_this.parent().find('.nsstate').html('正常').removeAttr('style');
+						break;
+					}
+				}
+			}
+		});
+	});
+	$('.bt-form').on('keyup','.searchInput',function(event){
+		if (event.keyCode==13) {
+			if($(this).val() == ''){
+				layer.msg('请输入搜索内容');
+			}else{
+				Domains.DomainListRequest(1,true);
+			}
+		}
+	});
+	$('.bt-form').on('keyup','.searchInputOne',function(event){
+		if (event.keyCode==13) {
+			if($(this).val() == ''){
+				layer.msg('请输入搜索内容');
+			}else{
+				Domains.AnalysisListRequest(1,Domains.AnalysisIndex,true);
+			}
+		}
+	});
+	$('.bt-form').on('click','select[name="AnalysisType"]',function(){
+		$('input,select').removeAttr('style');
+		if ($(this).val() == 'MX') {
+			$('input[name="MX"]').removeAttr('disabled').val('15');
+		}else{
+			$('input[name="MX"]').attr('disabled','disabled').val('');
+		}
+	});
+	$('.bt-form').on('click','select[name="Edit-AnalysisType"]',function(){
+		if ($(this).val() == 'MX') {
+			$('input[name="Edit-MX"]').removeAttr('disabled').val('15');
+		}else{
+			$('input[name="Edit-MX"]').attr('disabled','disabled').val('');
+		}
+	});
+	$('.bt-form').on('mouseover','input,select',function() {
+		var type = parseInt($(this).attr('help-id'))
+		switch(type){
+			case 0:
+				Domains.HelpConter = '<span>宝塔提示您：要解析 www.sss.com，请填写 www 哦～</span>'+
+									'<span>主机记录就是域名前缀，常见用法有：</span>'+
+									'<span>www：解析后的域名为 www.sss.com</span>'+
+									'<span>@：直接解析主域名sss.com</span>'+
+									'<span>*：泛解析，匹配其他所有域名 *.sss.com</span>';
+			break;
+			case 1:
+				Domains.HelpConter = '<span>宝塔提示您：要指向空间商提供的 IP 地址，选择「类型 A」，要指向一个域名，选择「类型 CNAME」</span>'+
+									'<span>A：地址记录，用来指定域名的IPv4地址（如：8.8.8.8），如果需要将域名指向一个IP地址，就需要添加A记录。</span>'+
+									'<span>CNAME：如果需要将域名指向另一个域名，再由另一个域名提供ip地址，就需要添加CNAME记录。</span>'+
+									'<span>MX：如果需要设置邮箱，让邮箱能收到邮件，就需要添加MX记录。</span>'+
+									'<span>TXT：在这里可以填写任何东西，长度限制255。绝大多数的TXT记录是用来做SPF记录（反垃圾邮件）。</span>'+
+									'<span>NS：域名服务器记录，如果需要把子域名交给其他DNS服务商解析，就需要添加NS记录。</span>'+
+									'<span>AAAA：用来指定主机名（或域名）对应的IPv6地址（例如：aa51::c3）记录。解析到 IPv6 的地址。</span>'+
+									'<span>SRV：记录了哪台计算机提供了哪个服务。格式为：服务的名字、点、协议的类型，例如：_xmpp-server._tcp。</span>'+
+									'<span>CAA：CA证书颁发机构授权校验。格式为：flag tag value</span>';
+			break;
+			case 2:
+				Domains.HelpConter = '<span>宝塔提示您：若空间商只提供了一个 IP 地址或域名，选择「默认」就可以了</span>'+
+									'<span>让指定线路的用户访问这个IP</span>'+
+									'<span>常见方法有：</span>'+
+									'<span>默认：必须添加，否则只有单独指定的线路才能访问您的网站。如果双线解析，建议「默认」线路填写「电信IP」</span>'+
+									'<span>联通：单独为「联通用户」指定服务器 IP，其他用户依然访问「默认」</span>'+
+									'<span>搜索引擎：指定一个服务器 IP 让蜘蛛抓取</span>';
+			break;
+			case 3:
+				Domains.HelpConter = '<span>宝塔提示您：最常见的是将空间商提供的「IP地址」填写在这里哦～</span>'+
+									'<span>A记录：填写您服务器 IP，如果您不知道，请咨询您的空间商</sapn>'+
+									'<span>CNAME记录：填写空间商给您提供的域名，例如：51DNS.com</sapn>'+
+									'<span>MX记录：填写企业邮局给您提供的域名，如果您不知道，请咨询您的邮件服务提供商</sapn>'+
+									'<span>TXT记录：一般用于 Google、QQ等企业邮箱的反垃圾邮件设置</sapn>'+
+									'<span>NS记录：不常用。系统默认添加的两个NS记录请不要修改。NS向下授权，填写dns域名，例如：ns1.51DNS.com</sapn>'+
+									'<span>AAAA：不常用。解析到 IPv6 的地址。</sapn>'+
+									'<span>SRV：不常用。格式为：优先级、空格、权重、空格、端口、空格、主机名，记录生成后会自动在域名后面补一个“.”，这是正常现象。例如：5 0 5269 xmpp-server.l.google.com</sapn>'+
+									'<span>CAA：格式为：flag tag value。 其中flag目前取值为0、128；tag取值为issue、issuewild、iodef；value为不包含|、""、\\、<>、中文字符的字符串。例如：0 issue www.dns.com</sapn>'
+			break;
+			case 4:
+				Domains.HelpConter = '<spanMX优先级，用来指定邮件服务器接收邮件的先后顺序（1-55），一般默认设置为5、10、15等</span>'+
+									'<span>MX优先级，用来指定邮件服务器接收邮件的先后顺序（1-55），一般默认设置为5、10、15等</span>';
+			break;
+			case 5:
+				Domains.HelpConter = '<span>宝塔提示您：我们默认的 600 秒是最常用的，不用修改</span>'+
+									'<span>缓存的生存时间。指地方dns缓存您域名记录信息的时间，缓存失效后会再次到服务器获取记录值。</span>'+
+									'<span>600（10分钟）：建议正常情况下使用600。</span>'+
+									'<span>60（1分钟）：如果您经常修改IP，修改记录一分钟即可生效。长期使用60，解析速度会略受影响。</span>'+
+									'<span>3600（1小时）：如果您IP极少变动（一年几次），建议选择3600，解析速度快。如果要修改IP，提前一天改为60，即可快速生效。</span>';
+			break;
+			case 6:
+				Domains.HelpConter = '<span>宝塔提示您：该字段可以填写解析备注</span>';
+			break;
+
+		}
+		$('.helpDns td').html(Domains.HelpConter);
+	});
+	$('.bt-form').on('blur','input[name="Recorded"]',function(){
+		var thisVal =  $(this).val();
+		var thislength =  thisVal.split('.').length - 1;
+		var selected = $('select[name="AnalysisType"]').find("option:selected").val();
+		if (selected == 'A') {
+			var reg =  /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/;
+			if (thisVal != '' && !reg.test(thisVal)) {
+				$(this).css('border-color', 'red');
+				layer.msg("记录值:ip地址错误",{icon:2});
+			}else{
+				$(this).removeAttr('style');
+			}
+		}else if (selected == 'CNAME'){
+			if (thisVal != '' && thislength < 1 || thislength > 2){
+				$(this).css('border-color', 'red');
+				layer.msg("记录值:域名地址错误。",{icon:2});
+			}else{
+				$(this).removeAttr('style');
+			}
+		}else if(selected == 'NS'){
+			if(thisVal != '' && thislength == 2){
+				$(this).css('border-color', 'red');
+				layer.msg("记录值:NS地址格式错误。",{icon:2});
+			}else{
+				$(this).removeAttr('style');
+			}	
+		}else if (selected == 'TXT') {
+			if (thisVal.length > 225) {
+				$(this).css('border-color', 'red');
+				layer.msg("记录值:TXT类型最大支持225字符。",{icon:2});
+			}else{
+				$(this).removeAttr('style');
+			}
+		}else if(selected == 'AAAA'){
+			if (!isIPv6(thisVal)) {
+				if (thisVal != '') {
+					$(this).css('border-color', 'red');
+					layer.msg("记录值:IPv6格式错误。",{icon:2});
+				}else{
+					$(this).removeAttr('style');
+				}
+			}else{
+				$(this).removeAttr('style');
+			}
+		}
+	});
+	$('.bt-form').on('blur','input[name="MX"]',function(){
+		var isMx = $('select[name="AnalysisType"]').find('option:selected').val();
+		if (isMx == 'MX') {
+			if($(this).val() >= 1 && $(this).val() <= 55){
+				$(this).removeAttr('style');
+			}else{
+				$(this).css('border-color', 'red');
+				layer.msg("MX记录值在1-55之间，当前数值不合法。",{icon:2});
+			}
+		}
+	});
+	$('.bt-form').on('blur','input[name="TTL"]',function(){
+		var isMx = $('select[name="AnalysisType"]').find('option:selected').val();
+		if($(this).val() >= 600){
+			$(this).removeAttr('style');
+		}else{
+			$(this).css('border-color', 'red');
+			layer.msg("当前套餐不支持TTL设置600秒以下，请升级套餐。",{icon:2});
+		}
+		if($(this).val() > 604800){
+			$(this).css('border-color', 'red');
+			layer.msg("TTL最大值为604800秒",{icon:2});
+		}
+	});
+	$('.bt-form').on('blur','input[name="remark"]',function(){
+		if ($(this).val() > 12){
+			$(this).css('border-color', 'red');
+			layer.msg("备注限制为12个字符",{icon:2});
+		}else{
+			$(this).removeAttr('style');
+		}
+	});
+	$('.Analysis p').click(function(event) {
+		var index = $(this).index();
+		$(this).parent().find('p').removeClass('bgw');
+		$(this).addClass('bgw');
+		$('.Analysis .soft-man-con>div').hide();
+		$('.Analysis .soft-man-con>div:eq(0)').show();
+		switch(index){
+			case 0:
+				$('.view0').show();
+				Domains.AnalysisListRequest(1,Domains.CheckedDomain.index,true);
+			break;
+			case 1:
+				$('.view1').show();
+				Domains.RequestRealtime();
+			break;
+			case 2:
+				$('.view2').show();
+				Domains.LogsListRequest(1);
+			break;
+		}
+	});
+	$('.view1 button').click(function(){
+		$(this).parent().find('button').removeClass('btn-success');
+		$(this).addClass('btn-success');
+		switch($(this).index()){
+			case 0:
+				Domains.RequestRealtime();
+			break;
+			case 1:
+				Domains.RequestDay();
+			break;
+			case 2:
+				Domains.RequestMonth();
+			break;
+		}
+	})
+</script>

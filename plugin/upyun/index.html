@@ -1,0 +1,335 @@
+<style>
+    .upyunCon {
+        height: 628px;
+    }
+
+    .up-place {
+        height: 62px;
+        border-bottom: 1px solid #ddd;
+    }
+
+        .up-place .btn {
+            border-radius: 0;
+        }
+
+        .up-place .place-input {
+            background-color: #f3f3f3;
+            border: 1px solid #ccc;
+            height: 30px;
+            line-height: 28px;
+            overflow: hidden;
+            margin: 1px 0 0 -1px;
+            width: 340px;
+        }
+
+    .place-input ul {
+        display: inline-block;
+        position: relative;
+        width: auto;
+    }
+
+        .place-input ul li {
+            background: url("/static/img/ico/ico-ltr.png") no-repeat right center;
+            float: left;
+            padding-left: 10px;
+            padding-right: 18px;
+        }
+
+            .place-input ul li a {
+                height: 28px;
+                cursor: pointer;
+                display: inline-block;
+            }
+
+    .upyunlist {
+        height: 516px;
+        overflow: auto;
+    }
+
+    .up-bottom {
+        background-color: #fafafa;
+        border-top: 1px solid #eee;
+        bottom: 0;
+        position: absolute;
+        width: 100%;
+    }
+
+    .up-use {
+        line-height: 50px
+    }
+
+    .list-list .cursor span {
+        line-height: 30px;
+    }
+
+    .btn-title {
+        margin-top: 1px
+    }
+</style>
+<div class="upyunCon"></div>
+<script type="javascript/text">
+    function upyun(path){
+        var loadT = layer.msg('正在获取文件列表...',{icon:16,time:0,shade: [0.3, '#000']});
+        $.post('/plugin?action=a&s=GetList&name=upyun',{path:path},function(mlist){
+            layer.close(loadT);
+            if(mlist === false){
+                upyunApi();
+                return;
+            }
+            var listBody = ''
+            var listFiles = ''
+            for(var i=0;i<mlist.list.length;i++){
+                if(mlist.list[i].type == 'F'){
+                    listBody += '<tr><td class="cursor" onclick="upyun(\''+(path+'/'+mlist.list[i].name).replace('//','/')+'\')"><span class="ico ico-folder"></span><span>'+mlist.list[i].name+'</span></td><td>-</td><td>'+getLocalTime(mlist.list[i].time)+'</td><td class="text-right"><a class="btlink" onclick="DelUpFile(\''+mlist.list[i].name+'\')">删除</a></td></tr>'
+                }else{
+                    listFiles += '<tr><td class="cursor"><span class="ico ico-file"></span><span>'+mlist.list[i].name+'</span></td><td>'+ToSize(mlist.list[i].size)+'</td><td>'+getLocalTime(mlist.list[i].time)+'</td><td class="text-right"><a target="_blank" href="http://'+(mlist.domain + path + '/' + mlist.list[i].name).replace('//','/')+'" class="btlink">下载</a> | <a class="btlink" onclick="DelUpFile(\''+mlist.list[i].name+'\')">删除</a></td></tr>'
+                }
+            }
+            listBody += listFiles;
+
+            var pathLi='';
+            var tmp = path.split('/')
+            var pathname = '';
+            var n = 0;
+            for(var i=0;i<tmp.length;i++){
+                if(n > 0 && tmp[i] == '') continue;
+                var dirname = tmp[i];
+                if(dirname == '') {
+                    dirname = '根目录';
+                    n++;
+                }
+                pathname += '/' + tmp[i];
+                pathname = pathname.replace('//','/');
+                pathLi += '<li><a title="'+pathname+'" onclick="upyun(\''+pathname+'\')">'+dirname+'</a></li>';
+            }
+            var backPath = tmp.slice(0,tmp.length-1).join('/') || '/';
+            var con='<div class="up-place pd15">\
+                        <button id="backBtn" class="btn btn-default btn-sm glyphicon glyphicon-arrow-left pull-left" title="后退" onClick="upyun(\''+backPath+'\')"></button>\
+                        <input id="myPath" style="display:none;" type="text" value="'+path+'">\
+                        <input type="file" style="display:none;" id="Upupload" multiple="multiple">\
+                        <div class="place-input pull-left"><div style="width:1400px;height:28px"><ul>'+pathLi+'</ul></div></div>\
+                        <button class="refreshBtn btn btn-default btn-sm glyphicon glyphicon-refresh pull-left mr20" title="刷新" onclick="upyun(\''+path+'\')" style="margin-left:-1px;"></button>\
+                        <button class="btn btn-default btn-sm pull-right btn-title" onclick="upyunApi()">API设置</button>\
+                        <button class="btn btn-default btn-sm pull-right mr20 btn-title" onclick="UploadUp()">上传</button>\
+                        <button class="btn btn-default btn-sm pull-right mr20 btn-title" onclick="CreateDir()">新建文件夹</button>\
+                    </div><div class="upyunlist pd15">\
+                    <div class="divtable" style="margin-bottom:15px">\
+                        <table class="table table-hover">\
+                            <thead><tr><th>名称</th><th>大小</th><th>更新时间</th><th class="text-right">操作</th></tr></thead>\
+                            <tbody class="list-list">'+listBody+'</tbody>\
+                        </table>\
+                    </div>\
+                </div>\
+                <div class="up-bottom plr15">\
+                    <span class="up-use f14 pull-right c6">已使用：'+ToSize(mlist.usage)+'</span>\
+                </div>';
+
+            $(".upyunCon").html(con);
+            upPathLeft();
+
+        });
+    }
+    //计算当前目录偏移
+    function upPathLeft(){
+        var UlWidth = $(".place-input ul").width();
+        var SpanPathWidth = $(".place-input").width() - 20;
+        var Ml = UlWidth - SpanPathWidth;
+        if(UlWidth > SpanPathWidth ){
+            $(".place-input ul").css("left",-Ml)
+        }
+        else{
+            $(".place-input ul").css("left",0)
+        }
+    }
+    //上传文件
+    function UploadUp(){
+        $("#Upupload").on("change", function () {
+            var files = $("#Upupload")[0].files;
+            AllUploadTo(files,0,'');
+         });
+
+        $("#Upupload").click();
+    }
+    var loadTup = null;
+    var n = 0;
+    function AllUploadTo(files,successCount,errorMsg){
+        var path = $("#myPath").val();
+        if(files.length == successCount) {
+            layer.close(loadTup);
+            upyun(path);
+            setTimeout(function(){layer.msg('成功上传['+successCount+']个文件!',{icon:1,time:5000});},1000);
+            return;
+        }
+
+        if(!$(".upyun_name").html()){
+            loadTup = layer.msg('正在上传 >> <a class="upyun_name">' + files[successCount].name + '</a>...',{icon:16,time:0,shade: [0.3, '#000']});
+        }else{
+            $(".upyun_name").text(files[successCount].name);
+        }
+        $.post('/plugin?action=a&name=upyun&s=GetSgin',{filename:path + '/' +files[successCount].name},function(token){
+            var formData = new FormData();
+            formData.append("policy", token[0]);
+            formData.append("authorization", token[1]);
+            formData.append("file", files[successCount]);
+            $.ajax({
+                url : "https://v0.api.upyun.com/" + token[2],
+                type : "POST",
+                data : formData,
+                processData : false,
+                contentType : false,
+                beforeSend: function (request) {
+                    request.setRequestHeader("authorization", token[1]);
+                },
+                success : function(data) {
+                    data = eval('('+data+')');
+                    n++;
+                    successCount++;
+                    if(n > 4){
+                        upyun(path);
+                        n = 0;
+                    }
+                    setTimeout(function(){
+                        AllUploadTo(files,successCount,errorMsg);
+                    },200);
+
+                },
+                error : function(responseStr) {
+                    layer.msg('上传失败2!',{icon:2});
+                    console.log(responseStr);
+                    successCount++;
+                    setTimeout(function(){
+                        AllUploadTo(files,successCount,errorMsg);
+                    },200);
+                }
+            });
+         });
+    }
+
+    function CreateDir(){
+        var i = layer.open({
+                    type: 1,
+                    area: "400px",
+                    title: "创建目录",
+                    closeBtn: 2,
+                    shift: 5,
+                    shadeClose: false,
+                    content:'<div class="bingfa mtb15">\
+                                <p>\
+                                    <span class="span_tit">目录名称：</span>\
+                                    <input style="width: 200px;" type="text" name="newPath" value="">\
+                                </p>\
+                                <div class="submit-btn">\
+                                    <button type="button" class="btn btn-danger btn-sm bt-cancel">取消</button>\
+                                    <button class="btn btn-success btn-sm createDir" onclick="CreateUpDir()">确定</button>\
+                                </div>\
+                            </div>'
+            });
+            $(".bt-cancel,.createDir").click(function(){
+                layer.close(i)
+            });
+
+            $("input[name='newPath']").focus().keyup(function(e){
+                if(e.keyCode == 13) $(".createDir").click();
+            });
+
+    }
+
+    //创建目录
+    function CreateUpDir(name){
+        name = $("input[name='newPath']").val();
+        if(name == ''){
+            layer.msg('目录名称不能为空!',{icon:2});
+            return;
+        }
+        var path = $("#myPath").val()
+        var filename = path + '/' + name;
+        var loadT = layer.msg('正在创建目录['+name+']...',{icon:16,time:0,shade: [0.3, '#000']});
+        $.post('/plugin?action=a&s=CreateDir&name=upyun',{path:filename},function(rdata){
+            layer.close(loadT);
+            layer.msg(rdata.msg,{icon:rdata.status?1:2});
+            if(rdata.status) upyun(path);
+        });
+    }
+
+    //删除文件
+    function DelUpFile(name){
+        SafeMessage('删除文件','删除后将无法恢复，真的要删除['+name+']吗?',function(){
+            var path = $("#myPath").val()
+            var filename = path + '/' + name;
+            var loadT = layer.msg('正在删除文件['+name+']...',{icon:16,time:0,shade: [0.3, '#000']});
+            $.post('/plugin?action=a&s=DeleteFile&name=upyun',{filename:filename},function(rdata){
+                layer.close(loadT);
+                layer.msg(rdata.msg,{icon:rdata.status?1:2});
+                if(rdata.status) upyun(path);
+            });
+        });
+    }
+
+    var i = null;
+    //设置API
+    function upyunApi(){
+        $.get('/plugin?action=a&s=UsAge&name=upyun',function(token){
+            if(token === false){
+                token = {'domain':'','service':'','username':'','password':''}
+            }
+            var apicon = '<div class="bingfa mtb15">\
+                            <p><span class="span_tit"> </span><a class="btn btn-success btm-xs" style="margin-left: 4px; margin-bottom: 10px" href="https://console.upyun.com/register/?invite=B1bZJtIYb" target="_blank">注册账号</a></p>\
+                            <p>\
+                                <span class="span_tit">服务名称：</span>\
+                                <input placeholder="服务名称" style="width: 300px;" type="text" name="upyun_service" value="'+token.service+'">  *云存储服务名称 \
+                                <a href="https://www.bt.cn/bbs/thread-6736-1-1.html" target="_blank" class="btlink">[帮助]</a>\
+                            </p>\
+                            <p>\
+                                <span class="span_tit">操作员帐号：</span>\
+                                <input style="width: 300px;" type="text" name="upyun_username" value="'+token.username+'">  *云存储操作员帐号\
+                            </p>\
+                            <p>\
+                                <span class="span_tit">操作员密码：</span>\
+                                <input style="width: 300px;" type="password" name="upyun_password" value="'+token.password+'">   *云存储操作员密码\
+                            </p>\
+                            <p>\
+                                <span class="span_tit">外链域名：</span>\
+                                <input placeholder="加速域名" style="width: 300px;" type="text" name="upyun_domain" value="'+token.domain+'">   *云存储加速域名\
+                            </p>\
+                            <div class="submit-btn">\
+                                <button type="button" class="btn btn-danger btn-sm bt-cancel">取消</button>\
+                                <button class="btn btn-success btn-sm" onclick="SetUpyunApi()">保存</button>\
+                            </div>\
+                            </div>';
+            i = layer.open({
+                    type: 1,
+                    area: "600px",
+                    title: "又拍云API设置",
+                    closeBtn: 2,
+                    shift: 5,
+                    shadeClose: false,
+                    content:apicon
+                });
+                $(".bt-cancel").click(function(){
+                    layer.close(i)
+                });
+        });
+    }
+
+    //提交API
+    function SetUpyunApi(){
+        var data = {
+            username:$("input[name='upyun_username']").val(),
+            password:$("input[name='upyun_password']").val(),
+            service:$("input[name='upyun_service']").val(),
+            domain:$("input[name='upyun_domain']").val()
+        }
+        var loadT = layer.msg('正在校验...',{icon:16,time:0,shade: [0.3, '#000']});
+        $.post('/plugin?action=a&s=SetToken&name=upyun',data,function(rdata){
+            layer.close(loadT);
+            layer.msg(rdata.msg,{icon:rdata.status?1:2});
+            if(rdata.status) {
+                layer.close(i);
+                upyun('/');
+            }
+        });
+    }
+
+    upyun('/');
+    $('.layui-layer-page').css('height','670px');
+</script>

@@ -1,0 +1,517 @@
+<style>
+.tasklist{
+	padding-left: 0;
+	padding-top: 0;
+}
+.tab-con{
+	margin-left: 15px;
+}
+.tab-con .SetDns{
+	overflow: hidden;
+}
+.tab-con .clearfixDns>p{
+	float: left;
+    margin-top: 35px;
+    margin-left: 25px;
+}
+.tab-con .clearfixDns>p button{
+	margin-right: 15px;
+    padding-left: 18px;
+    padding-right: 18px;
+}
+.tab-con .SetDns .SetAggregateOne p{
+	margin-top: 15px;
+}
+.tab-con .SetDns .SetAggregateOne p span{
+	margin-right:15px;
+    display: inline-block;
+    width: 51px;
+    text-align: right;
+}
+.tab-con .SetDns .SetAggregateOne p input{
+	height: 30px;
+	width: 240px;
+	padding-left: 10px;
+	font-size: 13px;
+}
+.tab-con .SetDns .SetAggregateOne{
+	width: 325px;
+	float: left;
+}
+.tab-con .SetZone .Setshow{
+	margin: 15px 0;
+	font-size: 14px;
+}
+.tab-con .SetZone .Setshow span{
+	margin-right: 5px;
+	font-size: 14px;
+}
+.tab-con .SetZont .SetTime button{
+	margin-top: -5px;
+	margin-right: 15px;
+	padding-left: 18px;
+	padding-right: 18px;
+	margin-left: 20px;
+}
+.tab-con .SetZone .SetTime{
+	margin-left: 20px;
+	margin-bottom: 20px;
+	margin: 0 10px 20px 0px;
+}
+.tab-con .SetZone .SetTime select{
+	height: 30px;
+	font-size: 14px;
+}
+.tab-con .SetTime span{
+	margin-right: 10px;
+}
+.tab-con .clearfixSwap>p{
+	clear: both;
+    margin-top: 15px;
+    margin-bottom: 17px;
+}
+.tab-con .clearfixSwap>p span{
+	margin-right: 15px;
+}
+.tab-con .clearfixSwap>p input{
+	height: 30px;
+    width: 130px;
+	padding-left: 10px;
+	margin-left: 10px;
+	font-size: 13px;
+}
+.tab-con .clearfixSwap>p button,
+.tab-con .SetTime button{
+	margin-top: -5px;
+	margin-right: 15px;
+	padding-left: 18px;
+	padding-right: 18px;
+	margin-left: 20px;
+}
+.tab-con .SetSwap .SetAggregateTwo{
+	overflow: hidden;
+    margin-top: 14px;
+	margin-bottom:20px;
+}
+.tab-con .SetSwap .SetAggregateTwo p{
+    float: left;
+	margin-right:50px;
+}
+.tab-con .SetSwap .SetAggregateTwo size{
+	font-size:14px;
+}
+.tab-con .SetSwap .SetAggregateTwo span{
+	margin-right: 10px;
+}
+.tab-con .SetDns .clearfixDns{
+	overflow: hidden;
+	margin-bottom: 25px;
+}
+.tasklist .tab-nav{
+	background-color: #F0F0F1;
+    width: 125px;
+    height: 550px;
+    float: left;
+}
+.tasklist .tab-nav span{
+	display: block;
+	width: 125px;
+	padding-right:0 ;
+	height: 40px;
+	line-height: 40px; 
+	padding-left: 20px; 
+	position: relative; 
+	cursor: pointer;
+	border:none;
+	background: #F0F0F1;
+}
+.tasklist .tab-nav span.on{
+	background-color:#fff ;
+}
+</style>
+<div class="tasklist">
+	<div class="tab-nav">
+		<span class="on">DNS设置</span>
+		<span class="">Swap/虚拟内存</span>
+		<span class="">时区设置</span>
+		<span class="">系统密码</span>
+		<span class="">IP设置</span>
+		<span class="">内存盘</span>
+	</div>
+	<div class="tab-con">
+		<div id="dns" class="SetDns" style="display: block;">
+			<div class="clearfixDns">
+				<div class="SetAggregateOne">
+					<p><span>主要DNS</span><input class="bt-input-text" name="dns1" type="text" value="" /></p>
+					<p><span>备用DNS</span><input class="bt-input-text" name="dns2" type="text" value="" /></p>
+				</div>
+				<p><button class="btn btn-default btn-sm btn-title" onclick="TestDns();">测试</button><button class="btn btn-default btn-sm btn-title" onclick="SetDnsInfo();">保存</button></p>
+			</div>
+			<ul class="help-info-text c7 mtb15">
+				<li>若DNS设置错误，会导致您的服务器无法解析域名，即无法通过服务器访问域名!</li>
+				<li>请在保存之前先点击测试按钮以测试您设置的DNS是否有效!</li>
+			</ul>
+		</div>
+		<div id="swap" class="SetSwap" style="display: none;">
+			<div class="clearfixSwap">
+				<div class="SetAggregateTwo">
+					<p><span>总容量:</span><size id="total"></size></p>
+					<p><span>已用:</span><size id="used"></size></p>
+					<p><span>可用:</span><size id="free"></size></p>
+				</div>
+				<p>
+					<span>添加Swap</span><input class="bt-input-text" name="size" type="number" value="" /> MB 
+					<button class="btn btn-default btn-sm btn-title" onclick="SetSwap()">确定</button>
+				</p>
+			</div>
+			<ul class="help-info-text c7 mtb15">
+				<li>swap是Linux下的虚拟内存，设置适当的swap可增加服务器稳定性</li>
+				<li>建议swap容量在真实内存容量的1.5倍左右，若您的服务器内存大于4GB，可设1-2GB的固定值</li>
+				<li>swap文件默认保存在/www/swap，设置前请确保磁盘空间够用</li>
+				<li>若您不需要swap，请将容量设为0</li>
+				<li>OVZ虚拟架构机器不可用此功能</li>
+			</ul>
+		</div>
+		<div id="zone" class="SetZone" style="display: none;">
+			<p class="Setshow"><span>当前时间:</span><date id="date"></date></p>
+			<p class="SetTime">
+				<span>设置时区:</span>
+				<select class="bt-input-text" name="zone"></select>
+				<select class="bt-input-text" name="area"></select>
+				<button class="btn btn-default btn-sm btn-title" onclick="SetZone()">确定</button>
+			</p>
+			<ul class="help-info-text c7 mtb15">
+				<li>若时区设置不正确，可能导致服务器时间'不准确'！</li>
+				<li>北京时间(CST +0800)，请选择Asia/Shanghai</li>
+			</ul>
+		</div>
+		<div id="root" class="SetDns" style="display: none;">
+			<div class="clearfixDns">
+				<div class="SetAggregateOne">
+					<p><span>用户名</span><input class="bt-input-text" name="linuxuser" type="text" value="" /></p>
+					<p><span>新密码</span><input class="bt-input-text" name="userpass1" type="password" value="" /></p>
+					<p><span>重复密码</span><input class="bt-input-text" name="userpass2" type="password" value="" /></p>
+				</div>
+			</div>
+			<p><button style="margin-left: 261px;" class="btn btn-default btn-sm btn-title" onclick="SetRoot();">修改</button></p>
+			<ul class="help-info-text c7 mtb15">
+				<li>程序自动获取系统当前用户</li>
+				<li>ubuntu请手动输入要修改的用户名</li>
+			</ul>
+		</div>		
+		<div id="root" class="SetDns" style="display: none;">
+			<div class="divtable" style="width: 520px;">
+				<input class="bt-input-text mr5" name="address" type="text" value="" style="width:140px" placeholder="IP地址" />
+				<input class="bt-input-text mr5" name="netmask" type="text" value="" style="width:140px" placeholder="子网掩码" />
+				<input class="bt-input-text mr5" name="gateway" type="text" value="" style="width:140px" placeholder="网关" />
+				<button class="btn btn-default btn-sm va0" onclick="SetAddress();">添加</button>
+				<table class="table table-hover" style="margin-top: 10px; max-height: 380px; overflow: auto;">
+					<thead>
+						<tr>
+							<th>IP地址</th>
+							<th>子网掩码</th>
+							<th>网关</th>
+							<th style="text-align: right;">操作</th>
+						</tr>
+					</thead>
+					<tbody id="iplist"></tbody>
+				</table>
+			</div>	
+		</div>
+		<div id="memory" class="SetMemory" style="display: none;">
+			<div class="divtable" style="width: 520px;">
+				<input class="bt-input-text mr5" id="inputPath" name="mountpath" type="text" value="" style="width:140px" placeholder="挂载目录" />
+				<span class="glyphicon glyphicon-folder-open cursor" onclick="ChangePath('inputPath')" style="margin-right: 18px;"></span>
+				<input class="bt-input-text mr5" name="mountsize" type="number" min="1" value="20" style="width:80px" placeholder="挂载大小" />MB
+				<button class="btn btn-default btn-sm va0" onclick="SetMemory();" style="margin-left:  18px;">添加</button>
+				<table class="table table-hover" style="margin-top: 10px; max-height: 380px; overflow: auto;">
+					<thead>
+						<tr>
+							<th>目录</th>
+							<th>容量</th>
+							<th>已使用</th>
+							<th style="text-align: right;">操作</th>
+						</tr>
+					</thead>
+					<tbody id="memorylist"></tbody>
+				</table>
+			</div>
+			<ul class="help-info-text c7 mtb15">
+				<li>内存盘具有物理磁盘无法比拟的读写速度，但只能用于保存临时数据!</li>
+				<li>内存盘是直接将部分物理内存挂载为磁盘，请根据当前服务器内存使用情况合理安排挂载容量!</li>
+				<li>重启服务器，或卸载内存盘后，保存在该内存盘的数据将被清空!</li>
+			</ul>
+		</div>
+
+	</div>
+</div>
+<script type="javascript/text">
+	$(".tab-nav span").click(function(){
+		var i = $(this).index();
+		$(this).addClass("on").siblings().removeClass("on");
+		$(".tab-con > div").hide().eq(i).show();
+		switch(i){
+			case 0:
+				GetDnsInfo();
+				break;
+			case 1:
+				GetSwap();
+				break;
+			case 2:
+				GetZone()
+				break;
+			case 3:
+				GetRoot()
+				break;
+			case 4:
+				GetAddress();
+				break;
+			case 5:
+				GetMemory();
+				break;
+		}
+	});
+	
+	mainAd = null;
+	
+	function closeF(){
+		layer.close(mainAd);
+	}
+	
+	function GetAddress(){
+		$.get('/plugin?action=a&name=linuxsys&s=GetAddress',function(data){
+			if(data === false){
+				layer.msg('当前仅支持Centos!',{icon:5});
+				return;
+			}
+			if(data.status === false){
+				mainAd = layer.open({
+					type: 1,
+					skin: 'demo-class',
+					area: '330px',
+					title: '初始化网卡',
+					closeBtn: 2,
+					shift: 5,
+					shadeClose: false,
+					content:"<div class='bt-form pd20 pb70'>"
+								+"<div class='line'><span class='tname'>IP地址</span><input class='bt-input-text' name='mainAddress' value='' style='width:170px'></div>"
+								+"<div class='line'><span class='tname'>子网掩码</span><input class='bt-input-text' name='mainNetmask' value='' style='width:170px'></div>"
+								+"<div class='line'><span class='tname'>网关</span><input class='bt-input-text' name='mainGateway' value='' style='width:170px'></div>"
+								+"<div class='bt-form-submit-btn'><button class='btn btn-danger btn-sm' onclick='closeF()'>取消</button><button class='btn btn-success btn-sm' onclick='CheckConfig()'>确定</button></div>"
+							+"</div>"
+				});
+				return;
+			}
+			var tbody = ''
+			for(var i=0;i<data.length;i++){
+				tbody += '<tr><td>'+data[i].address+'</td><td>'+data[i].netmask+'</td><td>'+data[i].gateway+'</td><td style="text-align: right;"><a href="#" class="btlink" onclick="DelAddress(\''+data[i].address+'\')">删除</a></td></tr>';
+			}
+			if(data.length > 0){
+				$("input[name='netmask']").val(data[0].netmask);
+				$("input[name='gateway']").val(data[0].gateway);
+			}
+			$("input[name='address']").val('');
+			$("#iplist").html(tbody);
+		});
+		
+		
+	}
+	
+	function GetMemory(){
+		$.get('/plugin?action=a&s=GetMountInfo&name=linuxsys',function(data){
+			console.log(data)
+			data = data.mount_info
+			var tbody = ''
+			for (var path in data){
+				console.log(path, data[path].mount_szie);
+				tbody += '<tr><td>'+path+'</td><td>'+data[path].mount_szie+'M</td><td>'+ToSize(data[path].useed_szie)+'</td><td style="text-align: right;"><a href="#" class="btlink" onclick="DelMemory(\''+path+'\')">卸载</a></td></tr>';
+			}
+			$("#memorylist").html(tbody);
+		});
+	}
+	
+	function CheckConfig(){
+		var pdata =  "address="+$("input[name='mainAddress']").val()+"&netmask="+$("input[name='mainNetmask']").val()+"&gateway="+$("input[name='mainGateway']").val();
+		var loadT = layer.msg('正在初始化网卡...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&name=linuxsys&s=CheckConfig',pdata,function(data){
+			layer.close(loadT);
+			layer.msg(data.msg,{icon:data.status?1:5});
+			if(data.status){
+				layer.close(mainAd);
+				var loadT = layer.msg('正在初始化网卡...',{icon:16,time:0,shade: [0.3, '#000']});
+				$.get('/plugin?action=a&name=linuxsys&s=ReloadNetwork',function(){
+					layer.close(loadT);
+					layer.msg(data.msg,{icon:data.status?1:5});
+					GetAddress();
+				});
+			}
+		});
+	}
+	
+	function SetAddress(){
+		var pdata = 'address=' + $("input[name='address']").val()+'&netmask=' + $("input[name='netmask']").val()+'&gateway=' + $("input[name='gateway']").val();
+		var loadT = layer.msg('正在添加...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&name=linuxsys&s=SetAddress',pdata,function(data){
+			layer.close(loadT);
+			layer.msg(data.msg,{icon:data.status?1:5});
+			if(data.status){
+				var loadT = layer.msg('正在添加...',{icon:16,time:0,shade: [0.3, '#000']});
+				$.get('/plugin?action=a&name=linuxsys&s=ReloadNetwork',function(){
+					layer.close(loadT);
+					layer.msg(data.msg,{icon:data.status?1:5});
+					GetAddress();
+				});
+			}
+		});
+	}
+
+	function SetMemory(){
+		var pdata = 'path=' + $("input[name='mountpath']").val()+'&size=' + $("input[name='mountsize']").val();
+		var loadT = layer.msg('正在添加...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&s=SetMountMemory&name=linuxsys',pdata,function(data){
+			layer.close(loadT);
+			layer.msg(data.msg,{icon:data.status?1:5});
+			GetMemory();
+		});
+	}
+	
+	function DelAddress(address){
+		layer.confirm('确定要从网卡配置中删除['+address+']吗？',{title:'删除IP地址',icon:3},function(){
+			var loadT = layer.msg('正在删除...',{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/plugin?action=a&name=linuxsys&s=DelAddress','address='+address,function(data){
+				layer.close(loadT);
+				layer.msg(data.msg,{icon:data.status?1:5});
+				if(data.status){
+					var loadT = layer.msg('正在添加...',{icon:16,time:0,shade: [0.3, '#000']});
+					$.get('/plugin?action=a&name=linuxsys&s=ReloadNetwork',function(){
+						layer.close(loadT);
+						layer.msg(data.msg,{icon:data.status?1:5});
+						GetAddress();
+					});
+				}
+			});
+		});
+	}
+	
+	function DelMemory(path){
+		SafeMessage('卸载内存盘', '<p style="color:red;">卸载内存盘后，目标挂载目录将被清空</p>确定要卸载该挂载目录['+path+']吗？',function(){
+			var loadT = layer.msg('正在卸载...',{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/plugin?action=a&s=DelMountMemory&name=linuxsys&path='+path,function(data){
+				layer.close(loadT);
+				layer.msg(data.msg,{icon:data.status?1:5});
+				GetMemory();
+			});
+		});
+	}
+	
+	function GetRoot(){
+		$.get('/plugin?action=a&name=linuxsys&s=GetRoot',function(user){
+			$("input[name='linuxuser']").val(user);
+		});
+	}
+	
+	function SetRoot(){
+		var user = $("input[name='linuxuser']").val();
+		var pass1 = $("input[name='userpass1']").val();
+		var pass2 = $("input[name='userpass2']").val();
+		var data = 'user='+user+'&passwd1='+pass1+'&passwd2='+pass2;
+		var loadT = layer.msg('正在修改密码...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&name=linuxsys&s=SetRoot',data,function(rdata){
+			layer.close(loadT);
+			layer.msg(rdata.msg,{icon:rdata.status?1:5});
+		});
+		
+	}
+	
+	function GetZone(){
+		var zone = $("select[name='zone']").val();
+		if(!zone) zone = 'Asia';
+		var data = 'zone=' + zone;
+		$.post('/plugin?action=a&name=linuxsys&s=GetZoneinfo',data,function(rdata){
+			var zoneList = areaList = '';
+			var isarea = rdata.date.indexOf('+0800');
+			for(var i=0;i<rdata.zoneList.length;i++){
+				var opt = '';
+				if(rdata.zone == rdata.zoneList[i]) opt = 'selected';
+				zoneList += '<option value="'+rdata.zoneList[i]+'" '+opt+'>'+rdata.zoneList[i]+'</option>'
+			}
+			for(var i=0;i<rdata.areaList.length;i++){
+				var opt = '';
+				if(rdata.areaList[i] == 'Shanghai' && isarea != -1) opt = 'selected';
+				areaList += '<option value="'+rdata.areaList[i]+'" '+opt+'>'+rdata.areaList[i]+'</option>'
+			}
+			$("#date").html(rdata.date);
+			$("select[name='zone']").html(zoneList);
+			$("select[name='area']").html(areaList);
+		});
+	}
+	
+	function SetZone(){
+		var zone = $("select[name='zone']").val();
+		var area = $("select[name='area']").val();
+		var data = 'zone=' + zone + '&area=' + area;
+		var loadT = layer.msg('正在设置时区...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&name=linuxsys&s=SetZone',data,function(rdata){
+			layer.close(loadT);
+			layer.msg(rdata.msg,{icon:rdata?1:5});
+			$("#date").html(rdata.date);
+		});
+		
+	}
+	
+	$("select[name='zone']").change(function(){
+		GetZone();
+	});
+	
+	function GetSwap(){
+		$.get('/plugin?action=a&name=linuxsys&s=GetSwap',function(rdata){
+			$("#total").html(rdata.total + ' MB');
+			$("#used").html(rdata.used + ' MB');
+			$("#free").html(rdata.free + ' MB');
+			$("input[name='size']").val(rdata.size / 1024 / 1024);
+		});
+	}
+	function SetSwap(){
+		var data = 'size=' + $("input[name='size']").val();
+		var loadT = layer.msg('正在设置Swap...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&name=linuxsys&s=SetSwap',data,function(rdata){
+			layer.close(loadT);
+			$("#total").html(rdata.total + ' MB');
+			$("#used").html(rdata.used + ' MB');
+			$("#free").html(rdata.free + ' MB');
+			$("input[name='size']").val(rdata.size / 1024 / 1024);
+			layer.msg(rdata.msg,{icon:rdata.status?1:5});
+		});
+	}
+	
+	function GetDnsInfo(){
+		$.get('/plugin?action=a&name=linuxsys&s=GetConfig',function(rdata){
+			$("input[name='dns1']").val(rdata.dns1);
+			$("input[name='dns2']").val(rdata.dns2);
+		});
+	}
+	
+	function SetDnsInfo(){
+		var dns1 = $("input[name='dns1']").val();
+		var dns2 = $("input[name='dns2']").val();
+		var data = 'dns1='+dns1+'&dns2='+dns2;
+		var loadT = layer.msg('正在保存配置...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&name=linuxsys&s=SetConfig',data,function(rdata){
+			layer.close(loadT);
+			layer.msg(rdata.msg,{icon:rdata.status?1:5});
+		});
+	}
+	
+	function TestDns(){
+		var dns1 = $("input[name='dns1']").val();
+		var dns2 = $("input[name='dns2']").val();
+		var data = 'dns1='+dns1+'&dns2='+dns2;
+		var loadT = layer.msg('正在测试DNS是否有效...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&name=linuxsys&s=TestDns',data,function(rdata){
+			layer.close(loadT);
+			layer.msg(rdata.msg,{icon:rdata.status?1:5,time:5000,area:'500px'});
+		});
+	}
+	
+	GetDnsInfo();
+</script>

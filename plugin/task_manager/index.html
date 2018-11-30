@@ -1,0 +1,687 @@
+<style>
+/*任务管理器*/
+.man-menu-sub {
+    background-color: #fff;
+    border-bottom: 1px solid #ccc;
+    height: 50px;
+    line-height: 50px;
+}
+.t-mana .table > tbody > tr.active td{
+	background-color: #E4EEE0;
+}
+.search-bar{
+    position: absolute;
+    top: 10px;
+	right:15px;
+    z-index: 20;
+}
+.man-menu-sub{
+	background-color: #fff;
+    border-bottom: 1px solid #ccc;
+    height: 50px;
+    line-height: 50px;
+}
+.man-menu-sub span{
+	height: 50px;
+    padding: 0 15px;
+	cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+}
+.man-menu-sub .on {
+    border-bottom: 2px solid #20a53a;
+    color: #20a53a;
+    font-weight: bold;
+}
+.soft-ico-min{
+	display:inline-block;
+	width:16px;
+	margin-right:5px;
+}
+.soft-ico-min img{
+	width:16px;
+}
+.table-cont{
+	height:395px;
+	overflow:auto;
+	border:#ddd 1px solid;
+	position:relative;
+}
+.ts-line{
+	position:absolute;
+	top:99px;
+	height:1px;
+	background-color:#ddd;
+	left:16px;
+	z-index:2;
+}
+.t-mana .bt-ico-ask{
+	height:14px;
+	width:14px;
+	line-height:14px;
+}
+.mini-info{
+	width: 100%;
+	border-top: #DBDBEA 1px solid;
+	background-color: #f6f6f6;
+	padding: 15px;
+}
+.mini-info-box{
+	width: 500px;
+	margin: 0 auto;
+	background-color: #fff;
+	border: #DBDBEA 1px solid;
+	border-radius: 6px;
+	height: 66px;
+	box-shadow: 0 0 40px #eee;
+}
+.mini-info-con {
+    float: left;
+	height: 100%;
+	width: 33%;
+	line-height: 26px;
+	padding: 6px 16px;
+}
+.mini-info-con:nth-of-type(2){
+	border-left:#DBDBEA 1px solid;
+	border-right:#DBDBEA 1px solid;
+	width: 34%;
+}
+.mini-info-con p{
+	text-align: right;
+	position: relative;
+}
+.mini-info-con .tname{
+	display:inline-block;
+	position: absolute;
+	left: 0;
+}
+.mini-level{
+	border: #ddd 1px solid;
+	width: 166px;
+	background-color: #fff;
+	border-radius: 6px;
+	margin: 0 auto;
+	height: 66px;
+	line-height: 66px;
+	text-align: center;
+}
+.jc-detail .tname{
+	font-size: 12px;
+	font-weight: bold;
+	margin-right: 10px;
+}
+.jc-detail h3.tname{
+	margin-bottom: 10px;
+	margin-top: 15px;
+	color: #999;
+}
+.jc-detail .jc-info{
+	margin: 10px 0;
+	border-bottom: #ddd 1px solid;
+	padding-bottom: 10px;
+}
+</style>
+<div class="t-mana">
+	<div class="man-menu-sub mlr15">
+		<span class="on" onclick="get_process_list()">进程</span>
+		<span onclick="get_run_list()">启动项</span>
+		<span onclick="get_service_list()">服务</span>
+		<span onclick="get_network_list()">网络</span>
+		<span onclick="get_user_list()">用户</span>
+		<span onclick="get_cron_list()">计划任务</span>
+		<span onclick="get_who_list()">会话</span>
+	</div>
+	<div class="ts-line"></div>
+	<div class="divtable pd15">
+		<div id="table-cont" class="table-cont">
+		<table id="TaskManagement" class="table table-hover" width="100%" style="border:none">
+		</table>
+		</div>
+	</div>
+	<div class="mini-info" id="load_average"></div>
+</div>
+<script type="javascript/text">
+	$('.layui-layer-page').css({'width':'900px'});
+	$('.t-mana .man-menu-sub span').click(function(){
+		$(this).addClass("on").siblings().removeClass("on");
+	});
+	
+	get_process_list();
+	function get_process_list(sortx){
+		if(sortx == undefined) sortx = 'cpu_percent';
+		var loadT = layer.msg('正在获取进程列表..',{icon:16,time:0,shade: [0.3, '#000']})
+		$.post('/plugin?action=a&name=task_manager&s=get_process_list',{sortx:sortx},function(data){
+			layer.close(loadT);
+			if(data.status === false){
+				layer.closeAll();
+				layer.msg(data.msg,{icon:2});
+				return;
+			}
+			var tbody_tr = ''
+			var year = new Date().getFullYear();
+			for(var i=0;i<data.process_list.length;i++){
+				if(data.process_list[i].status == '活动') data.process_list[i].status = '<span style="color:green;">活动</span>';
+				tbody_tr += '<tr title="'+data.process_list[i].exe+' Ps: '+data.process_list[i].ps+'">\
+					<td><a class="btlink" onclick="get_process_info('+data.process_list[i].pid+')">'+data.process_list[i].name+'</a></td>\
+					<td>'+data.process_list[i].pid+'</td>\
+					<td>'+data.process_list[i].threads+'</td>\
+					<td>'+data.process_list[i].user+'</td>\
+					<td>'+data.process_list[i].cpu_percent+'%</td>\
+					<td>'+ToSize(data.process_list[i].memory_used).replace(' ','')+'</td>\
+					<td>'+ToSize(data.process_list[i].io_read_speed).replace(' ','')+'</td>\
+					<td>'+ToSize(data.process_list[i].io_write_speed).replace(' ','')+'</td>\
+					<td>'+data.process_list[i].connects+'</td>\
+					<td>'+data.process_list[i].status+'</td>\
+					<td>'+getLocalTime(data.process_list[i].create_time).replace(new RegExp(year + '/'),'')+'</td>\
+					<td><a class="btlink" onclick="kill_process('+data.process_list[i].pid+')">结束</a></td>\
+				</tr>';
+			}
+			var tbody = '<thead>\
+				<tr style="cursor: pointer;">\
+					<th class="pro_name" onclick="get_process_list(\'name\')">应用名称</th>\
+					<th class="pro_pid" onclick="get_process_list(\'pid\')">PID</th>\
+					<th class="pro_threads" onclick="get_process_list(\'threads\')">线程</th>\
+					<th class="pro_user" onclick="get_process_list(\'user\')">用户</th>\
+					<th class="pro_cpu_percent" onclick="get_process_list(\'cpu_percent\')">CPU</th>\
+					<th class="pro_memory_used" onclick="get_process_list(\'memory_used\')">内存</th>\
+					<th class="pro_io_read_speed" onclick="get_process_list(\'io_read_speed\')">io读</th>\
+					<th class="pro_io_write_speed" onclick="get_process_list(\'io_write_speed\')">io写</th>\
+					<th class="pro_connects" onclick="get_process_list(\'connects\')">Socket</th>\
+					<th class="pro_status" onclick="get_process_list(\'status\')">状态</th>\
+					<th class="pro_create_time" onclick="get_process_list(\'create_time\')">进程创建时间</th>\
+					<th style="cursor:text">操作</th>\
+				</tr>\
+			</thead>\
+			<tbody>'+tbody_tr+'</tbody>';
+			$("#TaskManagement").html(tbody);
+			var topMsg = '<div class="mini-info-box">\
+										<div class="mini-info-con"><p><span class="tname">CPU：</span>'+data.info.cpu+'%</p><p><span class="tname">内存：</span>'+ToSize(data.info.mem)+'</p></div>\
+										<div class="mini-info-con"><p style="text-align:center">负载(load average)<a class="bt-ico-ask" target="_blank" href="https://www.bt.cn/bbs/thread-12682-1-1.html" title="查看说明">?</a></p><p style="text-align:center">' + data.info.load_average[1] + ', ' + data.info.load_average[5] + ', ' + data.info.load_average[15] + '</p></div>\
+										<div class="mini-info-con"><p><span class="tname">进程数：</span>'+data.process_list.length+'</p><p><span class="tname">磁盘：</span>'+ ToSize(data.info.disk) +'</p></div>\
+									</div>';
+			$("#load_average").html(topMsg).show();
+			$(".pro_" + sortx).append('<span class="glyphicon glyphicon-triangle-bottom" style="margin-left:5px;color:#bbb"></span>');
+			$(".table-cont").css("height","395px");
+			show_task();
+		});
+		
+		/*if($('.t-mana .man-menu-sub .on').text() != '进程') return;
+		setTimeout(function(){
+			get_process_list(sortx);
+		},3000);*/
+	}
+	
+	//查看计划任务列表
+	function get_cron_list(){
+		var loadT = layer.msg('获取计划任务列表..',{icon:16,time:0,shade: [0.3, '#000']})
+		$.post('/plugin?action=a&name=task_manager&s=get_cron_list',{},function(rdata){
+			layer.close(loadT);
+			var tbody_tr = ''
+			for(var i=0;i<rdata.length;i++){
+				tbody_tr += '<tr title=\''+rdata[i].command+'\'>\
+					<td>'+rdata[i].cycle+'</td>\
+					<td><a class="btlink" onclick="online_edit_file(\''+rdata[i].exe+'\')">'+rdata[i].exe+'</a></td>\
+					<td>'+rdata[i].ps+'</td>\
+					<td><a class="btlink" onclick="remove_cron('+i+')">删除</a></td>\
+				</tr>';
+			}
+			var tbody = '<thead>\
+				<tr>\
+					<th>周期</th>\
+					<th>执行</th>\
+					<th>描述</th>\
+					<th width="50">操作</th>\
+				</tr>\
+			</thead>\
+			<tbody>'+tbody_tr+'</tbody>';
+			$("#TaskManagement").html(tbody);
+			var topMsg = '';
+			$("#load_average").html(topMsg).hide();
+			$(".table-cont").css("height","491px");
+			show_task();
+		});
+	}
+	
+	
+	//查看网络状态
+	function get_network_list(rflush){
+		var loadT = layer.msg(lan.public.the_get,{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&name=task_manager&s=get_network_list','',function(rdata){
+			layer.close(loadT);
+			var tbody_tr = ""
+			for(var i=0;i<rdata.list.length;i++){
+				tbody_tr += "<tr>"
+							+"<td>" + rdata.list[i].type + "</td>"
+							+"<td>" + rdata.list[i].laddr[0]+ ":" + rdata.list[i].laddr[1] + "</td>"
+							+"<td>" + (rdata.list[i].raddr.length > 1?"<a style='color:blue;' title='"+lan.index.net_dorp_ip+"' href=\"javascript:dropAddress('" + rdata.list[i].raddr[0] + "');\">"+rdata.list[i].raddr[0]+"</a>:" + rdata.list[i].raddr[1]:'NONE') + "</td>"
+							+"<td>" + rdata.list[i].status + "</td>"
+							+"<td>" + rdata.list[i].process + "</td>"
+							+"<td>" + rdata.list[i].pid + "</td>"
+						+"</tr>"
+			}
+			
+			tbody = "<thead>\
+							<tr>\
+								<th>"+lan.index.net_protocol+"</th>\
+								<th>"+lan.index.net_address_dst+"</th>\
+								<th>"+lan.index.net_address_src+"</th>\
+								<th>"+lan.index.net_address_status+"<a class='bt-ico-ask' target='_blank' href='https://www.bt.cn/bbs/thread-12682-1-1.html' title='查看说明'>?</a></th>\
+								<th>"+lan.index.net_process+"</th>\
+								<th>"+lan.index.net_process_pid+"</th>\
+							</tr>\
+							</thead>\
+							<tbody>"+tbody_tr+"</tbody>"
+			
+			$("#TaskManagement").html(tbody);
+			var topMsg = '<div class="mini-info-box" style="width:666px">\
+										<div class="mini-info-con" style="width:25%">\
+											<p><span class="tname">总发送：</span>'+ToSize(rdata.state.upTotal)+'</p>\
+											<p><span class="tname">总接收：</span>'+ToSize(rdata.state.downTotal)+'</p>\
+										</div>\
+										<div class="mini-info-con" style="width:25%">\
+											<p><span class="tname">上行：</span>'+ToSize(rdata.state.up)+'</p>\
+											<p><span class="tname">下行：</span>'+ToSize(rdata.state.down)+'</p>\
+										</div>\
+										<div class="mini-info-con" style="width:25%;border-right:#DBDBEA 1px solid">\
+											<p><span class="tname">总发包：</span>'+to_max(rdata.state.upPackets)+'</p>\
+											<p><span class="tname">总收包：</span>'+to_max(rdata.state.downPackets)+'</p>\
+										</div>\
+										<div class="mini-info-con" style="width:25%;">\
+											<p><span class="tname">包发送/秒：</span>'+to_max(rdata.state.upPackets_s)+'</p>\
+											<p><span class="tname">包接收/秒：</span>'+to_max(rdata.state.downPackets_s)+'</p>\
+										</div>\
+									</div>';
+			$("#load_average").html(topMsg).show();
+			$(".table-cont").css("height","395px");
+			show_task();
+		});
+	}
+	
+	function to_max(num){
+		if(num > 10000) {
+			num = num / 10000;
+			if(num > 10000){
+				num = num / 10000;
+				return num.toFixed(5) + ' 亿';
+			}
+			return num.toFixed(5) + ' 万';
+		}
+		return num;
+	}
+	
+	//获取会话列表
+	function get_who_list(){
+		var loadT = layer.msg('正在获取用户会话列表..',{icon:16,time:0,shade: [0.3, '#000']})
+		$.post('/plugin?action=a&name=task_manager&s=get_who',{},function(rdata){
+			layer.close(loadT);
+			var tbody_tr = ''
+			for(var i=0;i<rdata.length;i++){
+				tbody_tr += '<tr>\
+					<td>'+rdata[i].user+'</td>\
+					<td>'+rdata[i].pts+'</td>\
+					<td>'+rdata[i].ip+'</td>\
+					<td>'+rdata[i].date+'</td>\
+					<td><a class="btlink" onclick="pkill_session(\''+rdata[i].pts+'\')">强制断开</a></td>\
+				</tr>';
+			}
+			var tbody = '<thead>\
+				<tr>\
+					<th>用户</th>\
+					<th>PTS</th>\
+					<th>登陆IP</th>\
+					<th>登陆时间</th>\
+					<th width="80">操作</th>\
+				</tr>\
+			</thead>\
+			<tbody>'+tbody_tr+'</tbody>';
+			$("#TaskManagement").html(tbody);
+			var topMsg = '';
+			$("#load_average").html(topMsg).hide();
+			$(".table-cont").css("height","491px");
+			show_task();
+		});
+	}
+	
+	//获取启动列表
+	function get_run_list(){
+		var loadT = layer.msg('正在获取启动项列表..',{icon:16,time:0,shade: [0.3, '#000']})
+		$.post('/plugin?action=a&name=task_manager&s=get_run_list',{},function(rdata){
+			layer.close(loadT);
+			var tbody_tr = ''
+			for(var i=0;i<rdata.run_list.length;i++){
+				tbody_tr += '<tr>\
+					<td>'+rdata.run_list[i].name+'</td>\
+					<td>'+rdata.run_list[i].srcfile+'</td>\
+					<td>'+ToSize(rdata.run_list[i].size)+'</td>\
+					<td>'+rdata.run_list[i].access+'</td>\
+					<td>'+rdata.run_list[i].ps+'</td>\
+					<td><a class="btlink" onclick="online_edit_file(\''+rdata.run_list[i].srcfile+'\')">编辑</a></td>\
+				</tr>';
+			}
+			var tbody = '<thead>\
+				<tr>\
+					<th>名称</th>\
+					<th>启动路径</th>\
+					<th>文件大小</th>\
+					<th>文件权限</th>\
+					<th>描述</th>\
+					<th width="50">操作</th>\
+				</tr>\
+			</thead>\
+			<tbody>'+tbody_tr+'</tbody>';
+			$("#TaskManagement").html(tbody);
+			var topMsg = '<div class="mini-level">当前运行级别： level-'+rdata.run_level+'<a class="bt-ico-ask" target="_blank" href="https://www.bt.cn/bbs/thread-12682-1-1.html" title="查看说明">?</a></div>';
+			$("#load_average").html(topMsg).show();
+			$(".table-cont").css("height","395px");
+			show_task();
+		});
+	}
+	
+	//获取服务列表
+	function get_service_list(){
+		var loadT = layer.msg('正在获取服务列表..',{icon:16,time:0,shade: [0.3, '#000']})
+		$.post('/plugin?action=a&name=task_manager&s=get_service_list',{},function(rdata){
+			layer.close(loadT);
+			var tbody_tr = ''
+			for(var i=0;i<rdata.serviceList.length;i++){
+				tbody_tr += '<tr>\
+					<td>'+rdata.serviceList[i].name+'</td>\
+					<td><a style="cursor:pointer" onclick="set_runlevel_state(0,\''+rdata.serviceList[i].name+'\')">'+rdata.serviceList[i].runlevel_0+'</a></td>\
+					<td><a style="cursor:pointer" onclick="set_runlevel_state(1,\''+rdata.serviceList[i].name+'\')">'+rdata.serviceList[i].runlevel_1+'</a></td>\
+					<td><a style="cursor:pointer" onclick="set_runlevel_state(2,\''+rdata.serviceList[i].name+'\')">'+rdata.serviceList[i].runlevel_2+'</a></td>\
+					<td><a style="cursor:pointer" onclick="set_runlevel_state(3,\''+rdata.serviceList[i].name+'\')">'+rdata.serviceList[i].runlevel_3+'</a></td>\
+					<td><a style="cursor:pointer" onclick="set_runlevel_state(4,\''+rdata.serviceList[i].name+'\')">'+rdata.serviceList[i].runlevel_4+'</a></td>\
+					<td><a style="cursor:pointer" onclick="set_runlevel_state(5,\''+rdata.serviceList[i].name+'\')">'+rdata.serviceList[i].runlevel_5+'</a></td>\
+					<td><a style="cursor:pointer" onclick="set_runlevel_state(6,\''+rdata.serviceList[i].name+'\')">'+rdata.serviceList[i].runlevel_6+'</a></td>\
+					<td>'+rdata.serviceList[i].ps+'</td>\
+					<td><a class="btlink" onclick="remove_service(\''+rdata.serviceList[i].name+'\')">删除</a></td>\
+				</tr>';
+			}
+			var tbody = '<thead>\
+				<tr>\
+					<th>名称</th>\
+					<th>Level-0</th>\
+					<th>Level-1</th>\
+					<th>Level-2</th>\
+					<th>Level-3</th>\
+					<th>Level-4</th>\
+					<th>Level-5</th>\
+					<th>Level-6</th>\
+					<th>描述</th>\
+					<th width="50">操作</th>\
+				</tr>\
+			</thead>\
+			<tbody>'+tbody_tr+'</tbody>';
+			$("#TaskManagement").html(tbody);
+			var topMsg = '<div class="mini-level">当前运行级别： level-'+rdata.runlevel+'<a class="bt-ico-ask" target="_blank" href="https://www.bt.cn/bbs/thread-12682-1-1.html" title="查看说明">?</a></div>';
+			$("#load_average").html(topMsg).show();
+			$(".table-cont").css("height","395px");
+			show_task();
+		});
+	}
+	//取用户列表
+	function get_user_list(){
+		var loadT = layer.msg('正在获取用户列表..',{icon:16,time:0,shade: [0.3, '#000']})
+		$.post('/plugin?action=a&name=task_manager&s=get_user_list',{},function(rdata){
+			layer.close(loadT);
+			var tbody_tr = ''
+			for(var i=0;i<rdata.length;i++){
+				tbody_tr += '<tr>\
+					<td>'+rdata[i].username+'</td>\
+					<td>'+rdata[i].home+'</td>\
+					<td>'+rdata[i].group+'</td>\
+					<td>'+rdata[i].uid+'</td>\
+					<td>'+rdata[i].gid+'</td>\
+					<td>'+rdata[i].login_shell+'</td>\
+					<td>'+rdata[i].ps+'</td>\
+					<td><a class="btlink" onclick="userdel(\''+rdata[i].username+'\')">删除</a></td>\
+				</tr>';
+			}
+			var tbody = '<thead>\
+				<tr>\
+					<th>用户名</th>\
+					<th>home</th>\
+					<th>用户组</th>\
+					<th>uid</th>\
+					<th>gid</th>\
+					<th>登陆脚本<a class="bt-ico-ask" target="_blank" href="https://www.bt.cn/bbs/thread-12682-1-1.html" title="查看说明">?</a></th>\
+					<th>描述</th>\
+					<th width="50">操作</th>\
+				</tr>\
+			</thead>\
+			<tbody>'+tbody_tr+'</tbody>';
+			$("#TaskManagement").html(tbody);
+			var topMsg = '';
+			$("#load_average").html(topMsg).hide();
+			$(".table-cont").css("height","491px");
+			show_task();
+		});
+	}
+	
+	//删除用户
+	function userdel(user){
+		SafeMessage('删除用户【'+user+'】','删除后可能导致您的环境无法正常运行,继续吗？',function(){
+			var loadT = layer.msg('正在删除用户['+user+']..',{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/plugin?action=a&name=task_manager&s=remove_user',{user:user},function(rdata){
+				layer.close(loadT);
+				layer.msg(rdata.msg,{icon:rdata.status?1:2});
+				if(rdata.status) get_user_list();
+			});
+		});
+	}
+	
+	//结束进程
+	function kill_process(pid){
+		var w = layer.confirm('您是否要结束 ('+pid+') 进程？', {
+			btn: ['结束','取消'], //按钮
+			title: '结束'+pid,
+			closeBtn:2
+		}, function(){
+			var loadT = layer.msg('正在结束进程['+pid+']..',{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/plugin?action=a&name=task_manager&s=kill_process',{pid:pid},function(rdata){
+				layer.close(loadT);
+				layer.msg(rdata.msg,{icon:rdata.status?1:2});
+				if(rdata.status) get_process_list();
+			})
+		}, function(){
+			layer.close(w)
+		})
+	}
+	
+	//结束进程树
+	function kill_process_all(pid){
+		var loadT = layer.msg('正在结束进程树['+pid+']..',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&name=task_manager&s=kill_process&killall=1',{pid:pid},function(rdata){
+			layer.close(loadT);
+			layer.msg(rdata.msg,{icon:rdata.status?1:2});
+		});
+	}
+	
+	//打开文件所在位置
+	function open_path(path){
+		tmp = path.split('/')
+		tmp[tmp.length-1] = '';
+		path = '/' + tmp.join('/');
+		openPath(path);
+	}
+	
+	//删除服务
+	function remove_service(serviceName){
+		SafeMessage('删除服务【'+serviceName+'】','删除后可能导致您的环境无法正常运行,继续吗？',function(){
+			var loadT = layer.msg('正在删除服务['+serviceName+']..',{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/plugin?action=a&name=task_manager&s=remove_service',{serviceName:serviceName},function(rdata){
+				layer.close(loadT);
+				layer.msg(rdata.msg,{icon:rdata.status?1:2});
+				if(rdata.status) get_service_list();
+			});
+		});
+	}
+	
+	//在线编辑文件
+	function online_edit_file(fileName){
+		OnlineEditFile(0,fileName);
+	}
+	
+	//删除计划任务
+	function remove_cron(index){
+		SafeMessage('删除计划任务['+index+']','删除后将无法恢复,继续吗？',function(){
+			var loadT = layer.msg('正在删除计划任务..',{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/plugin?action=a&name=task_manager&s=remove_cron',{index:index},function(rdata){
+				layer.close(loadT);
+				layer.msg(rdata.msg,{icon:rdata.status?1:2});
+				if(rdata.status) get_cron_list();
+			});
+		});
+	}
+	
+	//强制断开会话
+	function pkill_session(pts){
+		SafeMessage('强制断开会话['+pts+']','强制断开此会话吗？',function(){
+			var loadT = layer.msg('正在断开会话..',{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/plugin?action=a&name=task_manager&s=pkill_session',{pts:pts},function(rdata){
+				layer.close(loadT);
+				layer.msg(rdata.msg,{icon:rdata.status?1:2});
+				if(rdata.status) get_who_list();
+			});
+		});
+	}
+	
+	//设置服务启动级别状态
+	function set_runlevel_state(runlevel,serviceName){
+		var loadT = layer.msg('正在设置服务['+serviceName+']..',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&name=task_manager&s=set_runlevel_state',{runlevel:runlevel,serviceName:serviceName},function(rdata){
+			layer.close(loadT);
+			layer.msg(rdata.msg,{icon:rdata.status?1:2});
+			if(rdata.status) get_service_list();
+		});
+	}
+		
+	//查看进程详情
+	function get_process_info(pid){
+		var loadT = layer.msg('正在获取进程信息['+pid+']..',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&name=task_manager&s=get_process_info',{pid:pid},function(rdata){
+			layer.close(loadT);
+			fileBody = '';
+			for(var i=0;i<rdata.open_files.length;i++)
+			{
+				fileBody += '<tr><td>'+rdata.open_files[i].path+'</td><td>'+rdata.open_files[i].mode+'</td><td>'+rdata.open_files[i].position+'</td><td>'+rdata.open_files[i].flags+'</td><td>'+rdata.open_files[i].fd+'</td></tr>';
+			}
+			var cbody = '<div class="pd15 jc-detail">\
+							<div class="divtable">\
+								<table class="table">\
+									<tbody>\
+										<tr>\
+											<th width="70">名称</th><td  width="180">'+rdata.name+'</td>\
+											<th width="50">PID</th><td  width="180">'+rdata.pid+'</td>\
+											<th width="50">状态</th><td  width="180">'+rdata.status+'</td>\
+										</tr>\
+										<tr>\
+											<th>父进程</th><td>'+rdata.pname+'('+rdata.ppid+')</td>\
+											<th>用户</th><td>'+rdata.user+'</td>\
+											<th>线程</th><td>'+rdata.threads+'</td>\
+										</tr>\
+										<tr>\
+											<th>Socket</th><td>'+rdata.connects+'</td>\
+											<th>io读</th><td>'+ToSize(rdata.io_read_bytes)+'</td>\
+											<th>io写</th><td>'+ToSize(rdata.io_write_bytes)+'</td>\
+										</tr>\
+										<tr>\
+											<th>启动时间</th><td>'+getLocalTime(rdata.create_time)+'</td>\
+											<th>描述</th><td colspan="3">'+rdata.ps+'</td>\
+										</tr>\
+										<tr>\
+											<th>启动命令</th><td colspan="5">'+rdata.comline.join(" ")+'</td>\
+										</tr>\
+									</tbody>\
+								</table>\
+							</div>\
+							<h3 class="tname">内存</h3>\
+							<div class="divtable">\
+								<table class="table">\
+									<tbody>\
+										<tr>\
+											<th width="70">rss</th><td width="180">'+ToSize(rdata.memory_full.rss)+'</td>\
+											<th width="50">pss</th><td width="180">'+ToSize(rdata.memory_full.pss)+'</td>\
+											<th width="50">uss</th><td width="180">'+ToSize(rdata.memory_full.uss)+'</td>\
+										</tr>\
+										<tr>\
+											<th>vms</th><td>'+ToSize(rdata.memory_full.vms)+'</td>\
+											<th>swap</th><td>'+ToSize(rdata.memory_full.swap)+'</td>\
+											<th>shared</th><td>'+ToSize(rdata.memory_full.shared)+'</td>\
+										</tr>\
+										<tr>\
+											<th>data</th><td>'+ToSize(rdata.memory_full.data)+'</td>\
+											<th>text</th><td>'+ToSize(rdata.memory_full.text)+'</td>\
+											<th>dirty</th><td>'+ToSize(rdata.memory_full.dirty)+'</td>\
+										</tr>\
+									</tbody>\
+								</table>\
+							</div>\
+							<h3 class="tname">打开的文件列表</h3>\
+							<div class="divtable">\
+								<div id="jc-file-table" class="jc-file-table" style="height:206px;overflow:auto;border:#ddd 1px solid">\
+									<table class="table table-hover" style="border:none">\
+										<thead>\
+											<tr>\
+												<th>文件</th>\
+												<th>mode</th>\
+												<th>position</th>\
+												<th>flags</th>\
+												<th>fd</th>\
+											</tr>\
+										</thead>\
+										<tbody>'+fileBody+'</tbody>\
+									</table>\
+								</div>\
+							</div>\
+						</div>\
+						<div class="mini-info">\
+							<button class="btn btn-sm btn-default mr5" onclick="open_path(\''+rdata.exe+'\')">打开文件位置</button>\
+							<button class="btn btn-sm btn-default" onclick="kill_process_all('+rdata.pid+')">结束进程树</button>\
+						</div>';
+			
+			layer.open({
+				type: 1,
+			    title: '进程属性[' + rdata.name + '] -- ' + rdata.exe,
+			    area: '750px',
+			    closeBtn: 2,
+			    shadeClose: false,
+			    content:cbody
+			});
+			show_jc_flie();
+		});
+	}
+	
+	//屏蔽指定IP
+	function dropAddress(address){
+		layer.confirm(lan.index.net_doup_ip_msg,{icon:3,closeBtn:2},function(){
+			loadT = layer.msg(lan.index.net_doup_ip_to,{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/firewall?action=AddDropAddress','port='+address+'&ps='+lan.index.net_doup_ip_ps,function(rdata){
+				layer.close(loadT);
+				layer.msg(rdata.msg,{icon:rdata.status?1:2});
+			});
+		});
+	}
+	
+	function show_task(){
+		$(".ts-line").width($("#TaskManagement").width());
+		$("#TaskManagement tbody td").click(function(){
+			$(this).parents("tr").addClass("active").siblings().removeClass("active");
+		});
+		var tableCont = document.querySelector('#table-cont');
+		//表格固定
+		var sct = tableCont.scrollTop;
+		tableCont.querySelector('thead').style.transform = 'translateY(' + sct + 'px)';
+		tableCont.addEventListener('scroll',scrollHandle);
+	}
+	function show_jc_flie(){
+		var tableJc = document.querySelector('#jc-file-table');
+		//文件表格固定
+		tableJc.addEventListener('scroll',scrollHandle);
+	}
+	function scrollHandle (e){
+		var scrollTop = this.scrollTop;
+		this.querySelector('thead').style.transform = 'translateY(' + scrollTop + 'px)';
+	}
+</script>

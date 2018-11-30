@@ -1,0 +1,61 @@
+{
+	"open": true,
+	"reqfile_path": "/www/server/btwaf/html",
+	"logs_path": "/www/wwwlogs/btwaf",
+	"log": true,
+	"log_save": 30,
+	"start_time": 0,
+	"retry": 6,
+	"retry_cycle": 60,
+	"retry_time": 180,
+	"drop_abroad": {
+		"status": 444,
+		"ps": "禁止中国大陆以外的地区访问站点",
+		"open": true,
+		"reqfile": ""
+	},
+	"scan": {
+		"status": 444,
+		"ps": "过滤常见扫描测试工具的渗透测试",
+		"open": true,
+		"reqfile": ""
+	},
+	"cc": {
+		"status": 444,
+		"ps": "过虑CC攻击",
+		"limit": 120,
+		"endtime": 300,
+		"open": true,
+		"reqfile": "",
+		"cycle": 60
+	},
+	"get": {
+		"status": 403,
+		"ps": "过滤uri、uri参数中常见sql注入、xss等攻击",
+		"open": true,
+		"reqfile": "get.html"
+	},
+	"user-agent": {
+		"status": 403,
+		"ps": "通常用于过滤浏览器、蜘蛛及一些自动扫描器",
+		"open": true,
+		"reqfile": "user_agent.html"
+	},
+	"other": {
+		"status": 403,
+		"ps": "其它非通用过滤",
+		"reqfile": "other.html"
+	},
+	"cookie": {
+		"status": 403,
+		"ps": "过滤利用Cookie发起的渗透攻击",
+		"open": true,
+		"reqfile": "cookie.html"
+	},
+	"post": {
+		"status": 403,
+		"ps": "过滤POST参数中常见sql注入、xss等攻击",
+		"open": true,
+		"reqfile": "post.html"
+	}
+}

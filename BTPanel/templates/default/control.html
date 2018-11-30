@@ -1,0 +1,143 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="main-content">
+    <div class="container-fluid" style="padding-bottom: 50px;">
+        <div class="pos-box bgw mtb15">
+            <div class="position f14 c9 pull-left">
+                <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
+            </div>
+        </div>
+        <div class="safe container-fluid  bgw mtb15 pd15" style="overflow: hidden;">
+            <div class="mr50 pull-left">
+                <div class="ss-text pull-left">
+                    <em>{{data['lan']['C1']}}</em>
+                    <div class='ssh-item' id="openJK">
+                    </div>
+                </div>
+            </div>
+            <div class="mr50 pull-left">
+                <div class="ss-text pull-left">
+                    <em>{{data['lan']['C2']}}</em>
+                    <input class="bt-input-text" id="saveDay" value="" type="number">
+                </div>
+                <div class="ss-text pull-left" style="margin-left:10px">
+                    <button class="btn btn-default btn-sm" type="button" onclick="SetControl(true);">{{data['lan']['C3']}}</button>
+                </div>
+            </div>
+            <div class="mr50 pull-left" style="padding-left:50px; border-left:#ccc 1px solid; margin-right:0">
+                <button class="btn btn-default btn-sm" type="button" onclick="CloseControl()">{{data['lan']['C4']}}</button>
+            </div>
+        </div>
+        <div class="control">
+            <div class="col-xs-12 col-sm-12 col-md-12 pull-left pd0 view0">
+                <div class="mb15">
+                    <div class="bgw pb15">
+                        <div class="title c6 plr15 mb15">
+                            <h3 class="c-tit f16">平均负载</h3>
+                            <div class="searcTime pull-right">
+                                <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="Wday(1,'getload')">{{data['lan']['D1']}}</span><span class="gt on" onclick="Wday(0,'getload')">{{data['lan']['D2']}}</span><span class="gt" onclick="Wday(7,'getload')">{{data['lan']['D3']}}</span><span class="gt" onclick="Wday(30,'getload')">{{data['lan']['D4']}}</span>
+                                <div class="ss">
+                                    <span class="st">{{data['lan']['S2']}}</span>
+                                    <div class="time">
+                                        <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
+                                        <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
+                                        <div class="sbtn loadbtn">{{data['lan']['G3']}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="getloadview" style="width:100%; height:330px"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view1">
+                <div class="pr8">
+                    <div class="bgw pb15">
+                        <div class="title c6 plr15">
+                            <h3 class="c-tit f16">{{data['lan']['T1']}}</h3>
+                            <div class="searcTime pull-right">
+                                <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="Wday(1,'cpu')">{{data['lan']['D1']}}</span><span class="gt on" onclick="Wday(0,'cpu')">{{data['lan']['D2']}}</span><span class="gt" onclick="Wday(7,'cpu')">{{data['lan']['D3']}}</span><span class="gt" onclick="Wday(30,'cpu')">{{data['lan']['D4']}}</span>
+                                <div class="ss">
+                                    <span class="st">{{data['lan']['S2']}}</span>
+                                    <div class="time">
+                                        <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
+                                        <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
+                                        <div class="sbtn cpubtn">{{data['lan']['G3']}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="cupview" style="width:100%; height:330px"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view2">
+                <div class="pl7">
+                    <div class="bgw pb15">
+                        <div class="title c6 plr15">
+                            <h3 class="c-tit f16">{{data['lan']['T2']}}</h3>
+                            <div class="searcTime pull-right">
+                                <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="Wday(1,'mem')">{{data['lan']['D1']}}</span><span class="gt on" onclick="Wday(0,'mem')">{{data['lan']['D2']}}</span><span class="gt" onclick="Wday(7,'mem')">{{data['lan']['D3']}}</span><span class="gt" onclick="Wday(30,'mem')">{{data['lan']['D4']}}</span>
+                                <div class="ss">
+                                    <span class="st">{{data['lan']['S2']}}</span>
+                                    <div class="time">
+                                        <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
+                                        <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
+                                        <div class="sbtn membtn">{{data['lan']['G3']}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="memview" style="width:100%; height:330px"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view1">
+                <div class="pr8">
+                    <div class="bgw pb15">
+                        <div class="title c6 plr15 mb15">
+                            <h3 class="c-tit f16">{{data['lan']['T3']}}</h3>
+                            <div class="searcTime pull-right">
+                                <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="Wday(1,'disk')">{{data['lan']['D1']}}</span><span class="gt on" onclick="Wday(0,'disk')">{{data['lan']['D2']}}</span><span class="gt" onclick="Wday(7,'disk')">{{data['lan']['D3']}}</span><span class="gt" onclick="Wday(30,'disk')">{{data['lan']['D4']}}</span>
+                                <div class="ss">
+                                    <span class="st">{{data['lan']['S2']}}</span>
+                                    <div class="time">
+                                        <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
+                                        <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
+                                        <div class="sbtn diskbtn">{{data['lan']['G3']}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="diskview" style="width:100%; height:330px"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view2">
+                <div class="pl7">
+                    <div class="bgw pb15">
+                        <div class="title c6 plr15 mb15">
+                            <h3 class="c-tit f16">{{data['lan']['T4']}}</h3>
+                            <div class="searcTime pull-right">
+                                <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="Wday(1,'network')">{{data['lan']['D1']}}</span><span class="gt on" onclick="Wday(0,'network')">{{data['lan']['D2']}}</span><span class="gt" onclick="Wday(7,'network')">{{data['lan']['D3']}}</span><span class="gt" onclick="Wday(30,'network')">{{data['lan']['D4']}}</span>
+                                <div class="ss">
+                                    <span class="st">{{data['lan']['S2']}}</span>
+                                    <div class="time">
+                                        <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
+                                        <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
+                                        <div class="sbtn networkbtn">{{data['lan']['G3']}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="network" style="width:100%; height:330px"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/static/js/echarts.min.js"></script>
+<script src="/static/js/control.js?date={{g['version']}}"></script>
+{% endblock %}

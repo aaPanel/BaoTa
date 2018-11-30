@@ -1,0 +1,13 @@
+<div>
+	<p style="margin-bottom:8px"><span style="display: inline-block; width: 104px;">目标URL</span><input class="bt-input-text" type="text" name="toUrl" value="http://" style="margin-left: 5px;width: 380px;height: 30px;margin-right:10px;" placeholder="请填写完整URL,例：http://www.test.com"></p>
+	<p style="margin-bottom:8px"><span style="display: inline-block; width: 104px;">发送域名</span><input class="bt-input-text" type="text" name="toDomain" value="$host" style="margin-left: 5px;width: 380px;height: 30px;margin-right:10px;" placeholder="发送到目标服务器的域名,例：www.test.com"></p>
+	<p style="margin-bottom:8px"><span style="display: inline-block; width: 104px;">内容替换</span><input class="bt-input-text" type="text" name="sub1" value="" style="margin-left: 5px;width: 182px;height: 30px;margin-right:10px;" placeholder="被替换的文本,可留空"><input class="bt-input-text" type="text" name="sub2" value="" style="margin-left: 5px;width: 183px;height: 30px;margin-right:10px;" placeholder="替换为,可留空"></p>
+	<div class="label-input-group ptb10"><label style="font-weight:normal"><input type="checkbox" name="status" onclick="Proxy('w6.hao.com',1)">启用反向代理</label><label style="margin-left: 18px;"><input type="checkbox" name="status" onclick="OpenCache('w6.hao.com',1)">开启缓存</label></div>
+	<ul class="help-info-text c7 ptb10">
+		<li>目标Url必需是可以访问的，否则将直接502</li>
+		<li>默认本站点所有域名访问将被传递到目标服务器，请确保目标服务器已绑定域名</li>
+		<li>若您是被动代理，请在发送域名处填写上目标站点的域名</li>
+		<li>若您不需要内容替换功能，请直接留空</li>
+		<li>可通过purge清理指定URL的缓存,示例：http://test.com/purge/test.png</li>
+	</ul>
+</div>

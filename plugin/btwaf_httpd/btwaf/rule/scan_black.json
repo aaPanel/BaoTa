@@ -1,0 +1,1 @@
+{"header": "(Acunetix-Aspect|Acunetix-Aspect-Password|Acunetix-Aspect-Queries|X-WIPP|X-RequestManager-Memo|X-Request-Memo|X-Scan-Memo)", "args": "(/acunetix-wvs-test-for-some-inexistent-file|netsparker|acunetix_wvs_security_test|AppScan|XSS@HERE)", "cookie": "(CustomCookie|acunetixCookie)"}

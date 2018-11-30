@@ -1,0 +1,468 @@
+{
+	"public":
+	[
+		{
+			"name":"gcc",
+			"ps":"C 语言编译器",
+			"check":"/usr/bin/gcc",
+			"debian":"apt install gcc -y",
+			"redhat":"yum install gcc -y",
+			"getv":"gcc --version|grep gcc|awk '{print $3}'"
+		},
+		{
+			"name":"gcc-c++",
+			"ps":"C++编译器",
+			"check":"/usr/bin/g++",
+			"debian":"apt install gcc-c++ -y",
+			"redhat":"yum install gcc-c++ -y",
+			"getv":"g++ --version|grep g++|awk '{print $3}'"
+		},
+		{
+			"name":"flex",
+			"ps":"快速词法分析器",
+			"check":"/usr/bin/flex",
+			"debian":"apt install flex -y",
+			"redhat":"yum install flex -y",
+			"getv":"flex -V|awk '{print $2}'"
+		},
+		{
+			"name":"bison",
+			"ps":"Yacc-like分析器生成器",
+			"check":"/usr/bin/bison",
+			"debian":"apt install bison -y",
+			"redhat":"yum install bison bison-devel -y",
+			"getv":"bison -V|grep bison|awk '{print $4}'"
+		},
+		{
+			"name":"file",
+			"ps":"Determine type of FILEs",
+			"check":"/usr/bin/file",
+			"debian":"apt install file -y",
+			"redhat":"yum install file -y",
+			"getv":"file -v|grep file|grep -oE [0-9].+"
+		},
+		{
+			"name":"libtool",
+			"ps":"通用库支持脚本",
+			"check":"/usr/bin/libtool",
+			"debian":"apt install libtool libltdl7 libltdl-dev -y",
+			"redhat":"yum install libtool libtool-libs -y",
+			"getv":"libtool --version|grep libtool |awk '{print $4}'"
+		},
+		{
+			"name":"autoconf",
+			"ps":"编译、安装和打包软件的配置脚本工具",
+			"check":"/usr/bin/autoconf",
+			"debian":"apt install autoconf -y",
+			"redhat":"yum install autoconf -y",
+			"getv":"autoconf -V|grep autoconf|awk '{print $4}'"
+		},
+		{
+			"name":"patch",
+			"ps":"更新文本补丁工具",
+			"check":"/usr/bin/patch",
+			"debian":"apt install patch -y",
+			"redhat":"yum install patch -y",
+			"getv":"patch -v|grep patch|awk '{print $3}'"
+		},
+		{
+			"name":"libjpeg",
+			"ps":"处理JPEG图像数据格式的C library",
+			"check":"/usr/lib/libjpeg.so,/usr/lib64/libjpeg.so",
+			"debian":"apt install libjpeg62-turbo libjpeg62-turbo-dev -y",
+			"redhat":"yum install libjpeg libjpeg-devel -y",
+			"getv":"rpm -q grep libjpeg-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep libjpeg|awk '{print $3}'|tail -1"
+		},
+		{
+			"name":"libpng",
+			"ps":"处理PNG图像的C library",
+			"check":"/usr/lib/libpng.so,/usr/lib64/libpng.so",
+			"debian":"apt install libpng-dev -y",
+			"redhat":"yum install libpng libpng-devel -y",
+			"getv":"rpm -q libpng-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep libpng|awk '{print $3}'|tail -1"
+		},
+		{
+			"name":"gd",
+			"ps":"动态创建图像的C library",
+			"check":"/usr/lib/libgd.so,/usr/lib64/libgd.so,/usr/lib/x86_64-linux-gnu/libgd.so",
+			"debian":"apt install libgd3 libgd-dev -y",
+			"redhat":"yum install gd gd-devel -y",
+			"getv":"rpm -q gd-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep libgd3|awk '{print $3}'"
+		},
+		{
+			"name":"zlib",
+			"ps":"数据压缩用的函式库",
+			"check":"/usr/lib/libz.so,/usr/lib64/libz.so,/usr/lib/x86_64-linux-gnu/libz.so",
+			"debian":"apt install zlib1g zlib1g-dev -y",
+			"redhat":"yum install zlib zlib-devel -y",
+			"getv":"rpm -q zlib-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep zlib1g-dev|awk '{print $3}'"
+		},
+		{
+			"name":"libxml2",
+			"ps":"XML C解析器和工具包",
+			"check":"/usr/lib/libxml2.so,/usr/lib64/libxml2.so,/usr/lib/x86_64-linux-gnu/libxml2.so",
+			"debian":"apt install libxml2 libxml2-dev -y",
+			"redhat":"yum install libxml2 libxml2-devel -y",
+			"getv":"rpm -q libxml2-devel|grep -oE [0-9].+-[0-9]+|sed 's/2-devel-//' :D dpkg -l|grep libxml2-dev|awk '{print $3}'"
+		},
+		{
+			"name":"glib2",
+			"ps":" C 语言编写的库和程序提供了核心应用程序组件",
+			"check":"/usr/lib/libglib-2.0.so,/usr/lib64/libglib-2.0.so,/usr/lib/x86_64-linux-gnu/libglib-2.0.so",
+			"debian":"apt install libglib2.0-0 libglib2.0-dev -y",
+			"redhat":"yum install glib2 glib2-devel -y",
+			"getv":"rpm -q glib2-devel|grep -oE [0-9].+-[0-9]+|sed 's/2-devel-//' :D dpkg -l|grep libglib2.0-dev|awk '{print $3}'"
+		},
+		{
+			"name":"libevent",
+			"ps":"事件通知库",
+			"check":"/usr/lib/libevent.so,/usr/lib64/libevent.so,/usr/lib/x86_64-linux-gnu/libevent.so",
+			"debian":"apt install libevent-dev -y",
+			"redhat":"yum install libevent libevent-devel -y",
+			"getv":"rpm -q libevent-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l |grep libevent-dev|awk '{print $3}'"
+		},
+		{
+			"name":"ncurses",
+			"ps":"字符终端处理库",
+			"check":"/usr/lib/libcurses.so,/usr/lib64/libcurses.so,/usr/lib/x86_64-linux-gnu/libncurses.so",
+			"debian":"apt install libncurses5 libncurses5-dev -y",
+			"redhat":"yum install ncurses ncurses-devel -y",
+			"getv":"rpm -q ncurses-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep libncurses5-dev|awk '{print $3}'"
+		},
+		{
+			"name":"curl",
+			"ps":"文件传输工具",
+			"check":"/usr/bin/curl",
+			"debian":"apt install curl",
+			"redhat":"yum install curl curl-devel -y",
+			"getv":"curl -V|grep curl|awk '{print $2}'"
+		},
+		{
+			"name":"libidn",
+			"ps":"字符串预处理工具",
+			"check":"/usr/lib/libidn.so,/usr/lib64/libidn.so,/lib/x86_64-linux-gnu/libidn.so.11,/usr/lib/x86_64-linux-gnu/libidn.so.11",
+			"debian":"apt install libidn11 -y",
+			"redhat":"yum install libidn libidn-devel -y",
+			"getv":"rpm -q libidn-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep libidn11|awk '{print $3}'"
+		},
+    {
+      "name": "openssl",
+      "ps": "C语言编写的安全库",
+      "check": "/usr/bin/openssl",
+      "debian": "apt install openssl libssl-dev -y",
+      "redhat": "yum install openssl openssl-devel -y",
+      "getv": "/usr/bin/openssl version|awk '{print $2}'|cut -f1 -d'-'"
+    },
+		{
+			"name":"gettext",
+			"ps":"国际化和本地化编写工具",
+			"check":"/usr/bin/gettext",
+			"debian":"apt install gettext -y",
+			"redhat":"yum install gettext gettext -y",
+			"getv":"gettext -V|grep gettext|awk '{print $4}'"
+		},
+		{
+			"name":"gmp",
+			"ps":"精密算法库",
+			"check":"/usr/lib/libgmp.so,/usr/lib64/libgmp.so,/usr/lib/x86_64-linux-gnu/libgmp.so.10",
+			"debian":"apt install libgmp10 -y",
+			"redhat":"yum install gmp-devel -y",
+			"getv":"rpm -q gmp-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep libgmp10 |awk '{print $3}'"
+		},
+		{
+			"name":"libcap",
+			"ps":"网络数据包捕获函数包",
+			"check":"/usr/lib/libcap.so,/usr/lib64/libcap.so,/usr/lib/x86_64-linux-gnu/libcap.so",
+			"debian":"apt install libcap-dev -y",
+			"redhat":"yum install libcap libcap-devel -y",
+			"getv":"rpm -q libcap-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep libcap-dev|awk '{print $3}'"
+		},
+		{
+			"name":"libXpm",
+			"ps":"X11 pixmap library",
+			"check":"/usr/lib/libXpm.so,/usr/lib64/libXpm.so,/usr/lib/x86_64-linux-gnu/libXpm.so",
+			"debian":"apt install libxpm-dev -y",
+			"redhat":"yum install libXpm-devel -y",
+			"getv":"rpm -q libXpm-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep libxpm-dev|awk '{print $3}'"
+		},
+		{
+			"name":"c-ares",
+			"ps":"异步请求DNS的C library",
+			"check":"/usr/lib/libcares.so,/usr/lib64/libcares.so,/usr/lib/x86_64-linux-gnu/libcares.so",
+			"debian":"apt install libc-ares2 libc-ares-dev -y",
+			"redhat":"yum install c-ares c-ares-devel -y",
+			"getv":"rpm -q c-ares-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep libc-ares-dev|awk '{print $3}'"
+		},
+		{
+			"name":"libicu",
+			"ps":"Unicode的国际组件",
+			"check":"/usr/bin/icu-config",
+			"debian":"apt install libicu-dev -y",
+			"redhat":"yum install libicu libicu-devel -y",
+			"getv":"icu-config --version"
+		},
+		{
+			"name":"libxslt",
+			"ps":"XSLT C library",
+			"check":"/usr/lib/libxslt.so,/usr/lib64/libxslt.so,/usr/lib/x86_64-linux-gnu/libxslt.so",
+			"debian":"apt install libxslt1-dev -y",
+			"redhat":"yum install libxslt libxslt-devel -y",
+			"getv":"rpm -q libxslt-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep libxslt1-dev|awk '{print $3}'"
+		},
+		{
+			"name":"pcre",
+			"ps":"正则表达库",
+			"check":"/usr/bin/pcre-config",
+			"debian":"apt install libpcre3 libpcre3-dev -y",
+			"redhat":"yum install pcre pcre-devel -y",
+			"getv":"pcre-config --version"
+		},
+		{
+			"name":"expat",
+			"ps":"XML解析器",
+			"check":"/usr/lib64/libexpat.so,/usr/lib/libexpat.so,/usr/lib/x86_64-linux-gnu/libexpat.so",
+			"debian":"apt install libexpat1-dev -y",
+			"redhat":"yum install expat-devel -y",
+			"getv":"rpm -q expat-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep libexpat1-dev|awk '{print $3}'"
+		},
+		{
+			"name":"readline",
+			"ps":"C Library",
+			"check":"/usr/lib/libreadline.so,/usr/lib64/libreadline.so,/usr/lib/x86_64-linux-gnu/libreadline.so",
+			"debian":"apt install libreadline-dev -y",
+			"redhat":"yum install readline-devel -y",
+			"getv":"rpm -q readline-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep libreadline-dev|awk '{print $3}'"
+		},
+		{
+			"name":"libc-client",
+			"ps":"c-client library for mail protocols",
+			"check":"/usr/lib/libc-client.so,/usr/lib64/libc-client.so",
+			"debian":"apt install libc-client2007e libc-client2007e-dev -y",
+			"redhat":"yum install libc-client libc-client-devel -y",
+			"getv":"rpm -q libc-client|grep -oE [0-9]+[a-z]-[0-9]+ :D dpkg -l|grep libc-client2007e-dev|awk '{print $3}'"
+		},
+		{
+			"name":"freetype",
+			"ps":"字体渲染库/usr/lib64/libfreetype.so",
+			"check":"/usr/lib/libfreetype.so,/usr/lib64/libfreetype.so,/usr/lib/x86_64-linux-gnu/libfreetype.so",
+			"debian":"apt install libfreetype6 libfreetype6-dev -y",
+			"redhat":"yum install freetype freetype-devel -y",
+			"getv":"rpm -q freetype-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep libfreetype6-dev|awk '{print $3}'"
+		},
+    {
+      "name": "bt-openssl",
+      "ps": "宝塔单独安装的openssl库",
+      "check": "/usr/local/openssl/bin/openssl",
+      "debian": "curl http://download.bt.cn/install/libsh/openssl.sh|bash",
+      "redhat": "curl http://download.bt.cn/install/libsh/openssl.sh|bash",
+      "getv": "/usr/local/openssl/bin/openssl version|awk '{print $2}'"
+    },
+		{
+			"name":"libkrb5",
+			"ps":"MIT Kerberos",
+			"check":"/usr/bin/krb5-config",
+			"debian":"apt install libkrb5-dev -y",
+			"redhat":"yum install krb5 krb5-devel -y",
+			"getv":"/usr/bin/krb5-config --version|awk '{print $4}'"
+		},
+		{
+			"name":"libaio",
+			"ps":"原生异步IO接口",
+			"check":"/usr/lib/libaio.so,/usr/lib64/libaio.so,/usr/lib/x86_64-linux-gnu/libaio.so",
+			"debian":"apt install libaio1 libaio-dev -y",
+			"redhat":"yum install libaio libaio-devel -y",
+			"getv":"rpm -q libaio-devel|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep libaio-dev|awk '{print $3}'"
+		}
+	],
+	"system":
+	[
+    {
+      "name": "diffutils",
+      "ps": "命令行工具",
+      "check": "/usr/bin/diff",
+      "debian": "apt install diffutils -y",
+      "redhat": "yum install diffutils -y",
+      "getv": "/usr/bin/diff --version|grep diff|awk '{print $4}'"
+    },
+		{
+			"name":"net-tools",
+			"ps":"NET-3网络工具包",
+			"check":"/bin/netstat",
+			"debian":"apt install net-tools -y",
+			"redhat":"yum install net-tools -y",
+			"getv":"rpm -q net-tools|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep net-tools|awk '{print $3}'"
+		},
+		{
+			"name":"zip",
+			"ps":"文件压缩工具",
+			"check":"/usr/bin/zip",
+			"debian":"apt install zip -y",
+			"redhat":"yum install zip -y",
+			"getv":"zip -v|grep Zip|grep Info-ZIP|awk '{print $4}'"
+		},
+		{
+			"name":"unzip",
+			"ps":"解压ZIP压缩格式的工具",
+			"check":"/usr/bin/unzip",
+			"debian":"apt install unzip -y",
+			"redhat":"yum install unzip -y",
+			"getv":"unzip|grep UnZip|awk '{print $2}'"
+		},
+		{
+			"name":"tar",
+			"ps":"文件压缩工具",
+			"check":"/usr/bin/tar,/bin/tar",
+			"debian":"apt install tar -y",
+			"redhat":"yum install tar -y",
+			"getv":"tar --version|grep tar|awk '{print $4}'"
+		},
+		{
+			"name":"bzip2",
+			"ps":"文件压缩工具",
+			"check":"/usr/bin/bzip2,/bin/bzip2",
+			"debian":"apt install bzip2 -y",
+			"redhat":"yum install bzip2 -y",
+			"getv":"rpm -q bzip2|grep -oE [0-9].+-[0-9]+ :D pkg -l|grep bzip2|awk '{print $3}'|head -n 1"
+		},
+		{
+			"name":"lsof",
+			"ps":"列出打开文件工具",
+			"check":"/usr/bin/lsof,/usr/sbin/lsof,/bin/lsof",
+			"debian":"apt install lsof -y",
+			"redhat":"yum install lsof -y",
+			"getv":"rpm -q lsof|grep -oE [0-9].+[0-9]-[0-9]+ :D dpkg -l |grep lsof|awk '{print $3}'"
+		},
+		{
+			"name":"perl",
+			"ps":"计算机程序语言",
+			"check":"/usr/bin/perl",
+			"debian":"apt install perl libperl-dev -y",
+			"redhat":"yum install perl perl-devel perl-Data-Dumper -y",
+			"getv":"perl -v|grep -oE v[0-9].[0-9]+.[0-9]+"
+		},
+		{
+			"name":"cron",
+			"ps":"计划任务",
+			"check":"/usr/bin/crontab",
+			"debian":"apt install cron -y",
+			"redhat":"yum install crontabs -y",
+			"getv":"rpm -q crontabs|grep -oE [0-9].+-[0-9]+ :D dpkg -l|grep cron|awk '{print $3}'|tail -1"
+		},
+		{
+			"name":"glibc",
+			"ps":"C library",
+			"check":"/usr/bin/ldd,/usr/sbin/ldd,/bin/ldd",
+			"debian":"apt install libc6 libc6-dev -y",
+			"redhat":"yum install glibc glibc-devel glibc.i686 -y",
+			"getv":"ldd --version|grep ldd|awk '{print $4}'"
+		},
+    {
+      "name": "lua",
+      "ps": "脚本语言",
+      "check": "/usr/bin/lua",
+      "debian": "apt install lua5.1 lua5.1-dev -y",
+      "redhat": "yum install lua lua-devel -y",
+      "getv": "/usr/bin/lua -v 2>&1|awk '{print $2}'"
+    },
+		{
+			"name":"cjson",
+			"ps":"Json格式解析库",
+			"check":"/usr/local/lib/lua/5.1/cjson.so",
+			"debian":"curl http://download.bt.cn/install/libsh/cjson.sh|bash",
+			"redhat":"curl http://download.bt.cn/install/libsh/cjson.sh|bash",
+			"getv":"echo 2.1.0"
+		},
+    {
+      "name": "git",
+      "ps": "分布式版本控制系统",
+      "check": "/usr/bin/git",
+      "debian": "apt install git -y",
+      "redhat": "yum install git -y",
+      "getv": "/usr/bin/git --version|awk '{print $3}'"
+    },
+		{
+			"name":"e2fsprogs",
+			"ps":"文件系统工具集",
+			"check":"/usr/sbin/mkfs.ext4",
+			"debian":"apt install e2fsprogs -y",
+			"redhat":"yum install e2fsprogs e2fsproglibtools-devel -y",
+			"getv":"rpm -q e2fsprogs|grep -oE 1.+-[0-9]+ :D dpkg -l|grep e2fsprogs|awk '{print $3}'"
+		}
+	],
+	"php":
+	[
+		{
+			"name":"bt-curl",
+			"ps":"文件传输工具",
+			"check":"/usr/local/curl/bin/curl",
+			"debian":"curl http://download.bt.cn/install/libsh/curl.sh|bash",
+			"redhat":"curl http://download.bt.cn/install/libsh/curl.sh|bash",
+			"getv":"/usr/local/curl/bin/curl --version|grep curl|awk '{print $2}'"
+		},
+		{
+			"name":"libiconv",
+			"ps":"编码转换工具",
+			"check":"/usr/local/libiconv/bin/iconv",
+			"debian":"curl http://download.bt.cn/install/libsh/libiconv.sh|bash",
+			"redhat":"curl http://download.bt.cn/install/libsh/libiconv.sh|bash",
+			"getv":"/usr/local/libiconv/bin/iconv --version|grep iconv|awk '{print $4}'|grep -oE [0-9].[0-9]+"
+		},
+		{
+			"name":"libmcrypt",
+			"ps":"文件加密工具",
+			"check":"/usr/local/bin/libmcrypt-config",
+			"debian":"curl http://download.bt.cn/install/libsh/libmcrypt.sh|bash",
+			"redhat":"curl http://download.bt.cn/install/libsh/libmcrypt.sh|bash",
+			"getv":"/usr/local/bin/libmcrypt-config --version"
+		},
+		{
+			"name":"mcrypt",
+			"ps":"文件加密工具",
+			"check":"/usr/local/bin/mcrypt",
+			"debian":"curl http://download.bt.cn/install/libsh/mcrypt.sh|bash",
+			"redhat":"curl http://download.bt.cn/install/libsh/mcrypt.sh|bash",
+			"getv":"echo 2.6.8"
+		},
+		{
+			"name":"Mhash",
+			"ps":"加密扩展库",
+			"check":"/usr/local/lib/libmhash.so",
+			"debian":"curl http://download.bt.cn/install/libsh/mhash.sh|bash",
+			"redhat":"curl http://download.bt.cn/install/libsh/mhash.sh|bash",
+			"getv":"echo 0.9.9.9"
+		}
+
+	],
+	"apache":
+	[
+		{
+			"name":"nghttp2",
+			"ps":" HTTP/2 C Library ",
+			"check":"/usr/local/nghttp2/lib/libnghttp2.so",
+			"debian":"curl http://download.bt.cn/install/libsh/nghttp2.sh|bash",
+			"redhat":"curl http://download.bt.cn/install/libsh/nghttp2.sh|bash",
+			"getv":"cat /usr/local/nghttp2/version.pl"
+		}
+	],
+	"nginx":
+	[
+		{
+			"name":"luajit",
+			"ps":" lua即时编译器",
+			"check":"/usr/local/lib/libluajit-5.1.so.2",
+			"debian":"curl http://download.bt.cn/install/libsh/luajit.sh|bash",
+			"redhat":"curl http://download.bt.cn/install/libsh/luajit.sh|bash",
+			"getv":"echo 2.0.4"
+		}
+	],
+	"mysql":[
+		{
+			"name":"cmake",
+			"ps":"C/C++编译器,编译MySQL时需要它",
+			"check":"/usr/bin/cmake",
+			"debian":"apt install cmake -y",
+			"redhat":"yum install cmake -y",
+			"getv":"cmake --version|awk '{print $3}'"
+		}
+	]
+}

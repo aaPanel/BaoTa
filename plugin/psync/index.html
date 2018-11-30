@@ -1,0 +1,559 @@
+<style>
+	.layout-one,
+	.layout-two{
+		position: relative;
+	}
+	.lct{
+		margin: 20px 0;
+	}
+	.lct::after {
+		background-color: #ddd;
+		border-top: 2px solid #ccc;
+		content: "";
+		display: block;
+		height: 2px;
+		left: 84px;
+		position: absolute;
+		top: 12px;
+		width: 420px;
+		z-index: -1;
+	}
+	.lct ul li{
+		width: 24.5%;
+		display: inline-block;
+	}
+	.lct ul li span{
+		width: 30px;
+		height: 30px;
+		line-height: 30px;
+		display: block;
+		border-radius: 15px;
+		background-color: #ddd;
+		color: #878787;
+		margin: 0 auto;
+		text-align: center;
+		font-size: 16px;
+	}
+	.lct ul li.active span{
+		background-color: #20A53A;
+		color: #fff;
+	}
+	.lct ul li p{
+		text-align: center;
+		margin-top: 20px;
+	}
+	.oneCon .p1{
+		line-height: 24px;
+		color: #666;
+	}
+	.selectdata{
+		background-color: #FAFAFA;
+		border: #ddd 1px solid;
+		border-radius: 4px;
+		padding: 20px;
+		margin-bottom: 20px;
+	}
+	.selectdata label{
+		font-weight: normal;
+		margin-right: 35px;
+	}
+	.selectdata label input{
+		margin-right: 5px;
+		vertical-align: -2px;
+	}
+	.bt-progress {
+		background-color: #e2e2e2;
+		border-radius: 8px;
+		height: 16px;
+		line-height: 16px;
+		position: relative;
+	}
+	.bt-progress-bar {
+		background-color: #5ab76c;
+		border-radius: 8px;
+		height: 16px;
+		max-width: 100%;
+		position: absolute;
+		text-align: right;
+		transition: all 0.3s ease 0s;
+		width: 0;
+	}
+	.bt-progress-text {
+		font-size: 12px;
+		color: #fff;
+		padding: 0 10px;
+		position: static;
+	}
+	.qystatus{
+		color: #666;
+		margin-bottom: 10px;
+		margin-left: 5px;
+	}
+	.success{
+		padding: 50px 0 60px;
+		margin-left: -60px;
+	}
+	.success p{
+		margin-top: 20px;
+		font-size: 16px;
+		color: #666;
+	}
+	.oneCon .table > tbody > tr > td:nth-child(2n),.oneCon .table > thead > tr > th:nth-child(2n),.terlist .table > thead > tr > th:nth-child(2n),.terlist .table > tbody > tr > td:nth-child(2n){
+		border-right:#ddd 1px solid;
+	}
+	
+	.selectdown {
+		display: inline-block;
+		width: 150px;
+		margin-right: 12px;
+		vertical-align: top;
+	}
+	.selectdown ul{
+		background-color: #fff;
+		border: 1px solid #ccc;
+		max-height: 174px;
+		overflow: auto;
+		padding: 5px 7px;
+		width: 100%;
+		margin-left: -8px;
+		display: block;
+	}
+	.selectdown .glyphicon{
+		margin-left: 4px;
+		cursor: pointer;
+	}
+
+	.selectdata label{
+		font-weight: normal;
+		white-space: nowrap;
+	}
+
+	.layout-one .help-info-text>li{
+		padding-left: 32px;
+	}
+
+	.service_tip{
+		line-height: 30px;
+		color: red;
+		position: absolute;
+		bottom: 0px;
+		left: 110px;
+		display: block;
+		width: 590px;
+		height: 35px;
+		line-height: 35px;
+		padding-right: 15px;
+		text-align: right;
+		background-color: #f0f0f1;
+	}
+</style>
+
+<div class="bt-form">
+	<div class="bt-w-main">
+		<div class="bt-w-menu">
+			<p>迁出数据</p>
+			<p>迁入数据</p>
+		</div>
+		<div class="bt-w-con pd15 layout-conter">
+			<div class="layout-one" style="display:none;">
+				<div class="line mtb10" style="height:44px">
+					<span class="tname">开启接口</span>
+					<div class="ssh-item" style="margin-left:0">
+						<input class="btswitch btswitch-ios" id="terclose" type="checkbox" />
+						<label class="btswitch-btn" for="terclose" onclick="terclose()"></label>
+					</div>
+					<span class="c8 panel_tip" style="line-height: 30px;margin-left:30px;"></span>
+				</div>
+				<div class="line mtb10">
+					<span class="tname">面板地址</span>
+					<input class="bt-input-text" type="text" name="panel_url" style="width: 400px;" readonly />
+				</div>
+				<div class="line mtb10">
+					<span class="tname">迁移秘钥</span>
+					<input class="bt-input-text" type="text" name="panel_key" style="width: 400px;" readonly />
+				</div>
+				<ul class="help-info-text c7 ptb10">
+					<li>宝塔一键迁移仅支持宝塔linux面板最新版本且同环境的机器。</li>
+					<li>如需把数据迁移到其他机器，在迁入数据机器填写此密钥即可。</li>
+					<li>秘钥有效期为7天,为了您的数据安全，建议您使用完后手动关闭接口。</li>
+				</ul>
+			</div>
+			<div class="layout-two" style="display:none;">
+			</div>
+		</div>
+	</div>
+	<span class="service_tip"></span>
+</div>
+
+<script type="text/javascript">
+
+	//数据迁移
+	$(function(){
+		$(".bt-w-menu p").click(function(){
+			$(this).addClass('bgw').siblings().removeClass("bgw");
+			$('.layout-conter>div:eq('+ $(this).index() +')').show().siblings().hide();
+			$(this).index() == '0' ? oneTransfer() : twoTransfer()
+		});
+		twoTransfer();
+		detectionService();
+	});
+	
+	//服务检查
+	function detectionService(){
+		$.get('/plugin?action=a&name=psync&s=get_rsync_chekc',function(res){
+			if(res.status){
+				$('.service_tip').html('[ Rsync服务:'+ res.msg +' ]').css('color','#20a53a');
+			}else{
+				$('.service_tip').html('[ Rsync服务:'+ res.msg +' ]&nbsp;&nbsp;<a href="javascript:;" onclick="SetService('+res.status +')" style="color:#20a53a">启动服务</a>').css('color','red');
+			}
+		});
+	}
+	
+	// 开启服务
+	function SetService(status){
+		var loadT = layer.msg('正在启动Rsync服务',{icon:16,time:0,shade: [0.3, "#000"]});
+		$.get('/plugin?action=a&name=psync&s=get_rsync&setup=1',function(rdata){
+			layer.close(loadT);
+			rdata.status?detectionService():'';
+			layer.msg(rdata.msg,{icon:rdata.status?1:5});
+		});
+	}
+
+	//迁出数据
+	function oneTransfer(){
+		var loadT = layer.msg('正在获取Token <img src="/static/img/ing.gif">',{icon:16,time:0,shade: [0.3, "#000"]});
+		$.get('/plugin?action=a&name=psync&s=GetToken',function(token){
+			layer.close(loadT);
+			$(".bt-w-menu p").eq(0).addClass('bgw').parent().next().find('.layout-one').show();
+			$('[name="panel_url"]').val(((window.location.protocol.indexOf('https') == -1)?'http://':'https://') + window.location.host);
+			$('[name="panel_key"]').val(token.token?token.token:'接口未开启，如需使用，请开启接口');
+			$('.panel_tip').html('将在 '+(getLocalTime(token.timeout?token.timeout:'1234567891'))+' 自动关闭接口');
+			$('#terclose').attr('checked',token.token);
+		});
+	}
+
+	//关闭一键迁移弹窗
+	function terclose(){
+		var status = $("#terclose").prop("checked");
+		layer.confirm(status?'关闭接口前确保数据传输完毕，确定关闭？':'开启宝塔一键迁移，仅支持宝塔linux面板最新版本且同环境的机器',{
+			title:'警告',icon:3,closeBtn:2,
+		cancel:function(){
+			$("#terclose").prop("checked",status);
+		}},function(){
+			SetPsync(status)
+		},function(){
+			$("#terclose").prop("checked",status);
+		})
+	}
+
+	// 设置迁移开关
+	function SetPsync(status) {
+		var loadT = layer.msg('正在处理 <img src="/static/img/ing.gif">',{icon:16,time:0,shade: [0.3, "#000"]});
+		$.get('/plugin?action=a&name=psync&s=SetToken' + (status ? '&close=1' : ''),function(rdata){
+			layer.close(loadT);
+			rdata.status ? oneTransfer() : ''
+			layer.msg(rdata.msg,{icon:rdata.status?1:5});
+		});
+	}
+
+	// 迁入数据
+	function twoTransfer() {
+		var loadT = layer.msg('正在获取密钥 <img src="/static/img/ing.gif">',{icon:16,time:0,shade: [0.3, "#000"]});
+		$.get('/plugin?action=a&name=psync&s=GetToToken',function(token){
+			layer.close(loadT);
+			$(".bt-w-menu p").eq(1).addClass('bgw').parent().next().find('.layout-two').show();
+			var con='<div class="lct"><ul><li class="active"><span>1</span><p>填写信息</p></li><li><span>2</span><p>检测环境</p></li><li><span>3</span><p>选择数据</p></li><li><span>4</span><p>一键迁移</p></li></ul></div>\
+					<div class="oneCon pd15">\
+					<div class="line mtb10"><span class="tname">面板地址</span><input name="psync_url" class="bt-input-text" type="text" style="width: 300px;" value="'+token.url+'" /></div>\
+					<div class="line mtb10"><span class="tname">迁移秘钥</span><input name="psync_token" class="bt-input-text" type="text" style="width: 300px;" value="'+token.token+'" /></div>\
+					<div class="line mt10"><button class="btn btn-success btn-sm" style="margin-left:100px" onclick="Testing()">下一步</button></div>\
+					</div>\
+					<ul class="help-info-text c7 ptb10" style="margin-top: 0px;"><li>宝塔一键迁移仅支持宝塔linux面板最新版本且同环境的机器</li><li>数据迁移步骤：填写信息>检测环境>选择数据>迁移</li></ul>';
+			$(".layout-two").html(con);
+			GetToStatus();
+		});
+	}
+
+	//检测环境
+	function Testing(){
+		var data = 'url=' + $("input[name='psync_url']").val() + '&token=' + $("input[name='psync_token']").val();
+		var loadT = layer.msg('正在检测远程服务器环境 <img src="/static/img/ing.gif">',{icon:16,time:0,shade: [0.3, "#000"]});
+		$.post('/plugin?action=a&name=psync&s=CheckToServer',data,function(result){
+			if(result.status === false){
+				layer.msg(result.msg,{icon:5});
+				return;
+			}
+			layer.close(loadT);
+			
+			var con = '<div class="divtable"><table class="table table-hover">\
+				<thead><tr><th style="border-right:1px solid #ddd">服务</th><th>当前服务器</th><th>远程服务器</th></tr></thead>\
+				<tr><td style="border-right:1px solid #ddd">网站服务</td><td>'+result['local'].webserver+'</td><td>'+result['to'].webserver+'</td></tr>\
+				<tr><td style="border-right:1px solid #ddd">安装MySQL</td><td>'+(result['local'].mysql?'是':'否')+'</td><td>'+(result['to'].mysql?'是':'否')+'</td></tr>\
+				<tr><td style="border-right:1px solid #ddd">安装FTP</td><td>'+(result['local'].ftp?'是':'否')+'</td><td>'+(result['to'].ftp?'是':'否')+'</td></tr>\
+				<tr><td style="border-right:1px solid #ddd">安装PHP</td><td>'+result['local'].php.join('/')+'</td><td>'+result['to'].php.join('/')+'</td></tr>\
+				<tr><td style="border-right:1px solid #ddd">可用磁盘</td><td>'+ToSize(result['local'].disk)+'</td><td>'+ToSize(result['to'].disk)+'</td></tr>\
+			</table></div>\
+			<div class="line mtb20"><button class="btn btn-default btn-sm mr20" onclick="Testing()">重新检测</button><button class="btn btn-default btn-sm psync-next mr20" onclick="twoTransfer()">上一步</button><button class="btn btn-success btn-sm psync-next" onclick="seclectData()">下一步</button></div>';
+			$(".oneCon").html(con);
+			$(".lct ul li").eq(1).addClass("active").siblings().removeClass("active")
+			
+			var status = true;
+			if(result['local'].webserver != result['to'].webserver){
+				layer.msg('请将网站服务器切换为:' + result['to'].webserver,{icon:2,time:0,shade:0.3,shadeClose:true});
+				status = false;
+			}
+			
+			if(result['local'].mysql != result['to'].mysql &&  result['to'].mysql != false){
+				layer.msg('请先安装MySQL!',{icon:2,time:0,shade:0.3,shadeClose:true});
+				status = false;
+			}
+			
+			if(result['local'].ftp != result['to'].ftp && result['to'].ftp != false){
+				layer.msg('请先安装pure-ftpd!',{icon:2,time:0,shade:0.3,shadeClose:true});
+				status = false;
+			}
+			
+			if(result['local'].disk < (1073741824 * 3)){
+				layer.msg('可用磁盘空间小于3GB!',{icon:2,time:0,shade:0.3,shadeClose:true});
+				status = false;
+			}
+			
+			var phpm = []
+			for(var i=0;i<result['to'].php.length;i++){
+				if($.inArray(result['to'].php[i],result['local'].php) != -1){
+					continue;
+				}
+				phpm.push('PHP-' + result['to'].php[i]);
+			}
+			
+			if(phpm.length > 0){
+				layer.msg('缺少以下PHP版本，请到软件管理中安装： <br><p style="color:red;">' + phpm.join('<br>') + '</p>',{icon:2,time:0,shade:0.3,shadeClose:true});
+				status = false;
+			}
+			if(!status) $('.psync-next').attr('disabled',true);
+		});
+	}
+	
+	//取消迁移
+	function CancelTransfer(){
+		twoTransfer();
+	}
+	
+	//选择数据
+	function seclectData(){
+		var data = 'url=' + $("input[name='psync_url']").val() + '&token=' + $("input[name='psync_token']").val();
+		var loadT = layer.msg('正在获取远程列表 <img src="/static/img/ing.gif">',{icon:16,time:0,shade: [0.3, "#000"]});
+		$.post('/plugin?action=a&name=psync&s=CheckToServer',data,function(result){
+			layer.close(loadT);
+			var siteList = '';
+			var sites_html = '',datas_html='',ftps_html='';
+			if(result.to.siteList.length>0 && result.to.webserver == result.local.webserver)
+			{
+				sites_html	='<div class="relative selectdown"><label><input type="checkbox" id="sites_All" checked>网站</label><span class="glyphicon glyphicon-menu-down glyphicon-menu-up"></span><ul>';								
+				$.each(result.to.siteList,function(i,v){
+					sites_html+='<li> <label><input type="checkbox" id="sites_'+v.id+'"  values="'+v.name+'"  name="site" checked>'+v.name+'</label></li>';
+				});
+				sites_html +=' </ul></div>';
+			}
+			if(result.to.dataList.length>0  && result.to.mysql == true && result.local.mysql == true)
+			{
+				datas_html	='<div class="relative selectdown"><label><input type="checkbox" id="datas_All"  checked>数据库</label><span class="glyphicon glyphicon-menu-down glyphicon-menu-up"></span><ul>';								
+				$.each(result.to.dataList,function(i,v){
+					datas_html+='<li> <label><input type="checkbox" id="database_'+v.id+'"  values="'+v.name+'" name="database" checked>'+v.name+'</label></li>';
+				});
+				datas_html +=' </ul></div>';
+			}
+		
+			if(result.to.ftpList.length>0  && result.to.ftp == true && result.local.ftp == true)
+			{
+				ftps_html	='<div class="relative selectdown"><label><input type="checkbox" id="ftps_All"  checked>FTP</label><span class="glyphicon glyphicon-menu-down glyphicon-menu-up"></span><ul>';								
+				$.each(result.to.ftpList,function(i,v){
+					ftps_html+='<li> <label><input type="checkbox" id="ftp_'+v.id+'"  values="'+v.name+'" name="ftp" checked>'+v.name+'</label></li>';
+				});
+				ftps_html +=' </ul></div>';
+			}
+			
+			var con = '<div class="selectdata">'
+						+ sites_html 
+						+ datas_html 
+						+ ftps_html
+						+ '</div>';
+			
+			con += '<div class="line mtb20"  style="margin-bottom:0"><button class="btn btn-default btn-sm psync-next mr20" onclick="Testing()">上一步</button><button class="btn btn-success btn-sm" onclick="OnekeyTransfer()">一键迁移</button></div>';
+			$(".oneCon").html(con);
+			
+			$(".lct ul li").eq(2).addClass("active").siblings().removeClass("active");
+			
+			$(".selectdown input[type='checkbox']").click(function(){
+				if($(this).attr("id").indexOf('All')>=0)
+				{
+					var checked = $(this).prop('checked');
+					$(this).parents('.selectdown').find('input[type="checkbox"]').prop('checked',checked);
+				}
+			});
+			
+			
+			$(".selectdown .glyphicon").click(function(){
+				$(this).next().toggle();
+				$(this).toggleClass("glyphicon-menu-up");
+			});
+		});
+	}
+
+	//一键迁移
+	function OnekeyTransfer(){
+		var selecteds = ['site','ftp','database'];
+		var data = {}
+		for(var n=0;n<selecteds.length;n++){
+			var tmps = $("input[name='"+selecteds[n]+"']:checked");
+			tmp = [];
+			for(var i=0;i<tmps.length;i++){
+				tmp.push(tmps[i].parentElement.innerText);
+			}
+			data[selecteds[n]] = JSON.stringify(tmp);
+		}
+		var loadT = layer.msg('正在生成迁移任务 <img src="/static/img/ing.gif">',{icon:16,time:0,shade: [0.3, "#000"]});
+		$.post('/plugin?action=a&name=psync&s=get_to_rsync_port',data,function (resdata) {
+				if(resdata == 'true'){
+					$.post('/plugin?action=a&name=psync&s=SetToConfig',data,function(res){
+						layer.close(loadT);
+						if(!res.msg == undefined){
+							var loadConfirm = layer.confirm('请检查本机873端口是否开启(安全组)',{title:'错误',closeBtn:2,icon:2,btn:['确认']},function () {
+								layer.close(loadConfirm);
+							});
+						}else{
+							ShowPr();
+							GetToStatus();
+						}
+					});
+				}else{
+					layer.close(loadT);
+					var loadConfirm = layer.confirm('请检查本机873端口是否开启(安全组)',{title:'错误',closeBtn:2,icon:2,btn:['确认']},function () {
+							layer.close(loadConfirm);
+						});
+				}
+		});
+	}
+
+
+	function ShowPr(){
+		var con = '<div class="line"><div class="qystatus">正在准备迁移 <img src="/static/img/ing.gif"></div><div class="bt-progress"><div class="bt-progress-bar"><span class="bt-progress-text">0%</span></div></div><button style="margin-top:15px;" class="btn btn-success btn-sm psync-next mr20" onclick="repealTransfer()">取消迁移</button></div>';
+		$(".oneCon").html(con);
+		$(".lct ul li").eq(3).addClass("active").siblings().removeClass("active");
+		$('.bt-progress-bar').css('width','0%');$('.bt-progress-text').text('0%');
+	}
+
+	//获取当前迁移状态
+	function GetToStatus(){
+		var oldTime = 0;
+		$.get('/plugin?action=a&name=psync&s=GetToStatus',function(restatus){
+			if(restatus.status === true){
+				var body='<div class="line"><div class="success text-center"><img src="/static/img/ico-success.png"><p>数据迁移完成,请务必检查数据完整性!</p><p class="mtb15"><button class="btn btn-success btn-sm mr5" onclick="SetRe();">确定完成</button> <button class="btn btn-default btn-sm" onclick="showterlist();">查看记录</button></p></div></div>';
+				$(".oneCon").html(body);
+				$(".lct ul li").eq(3).addClass("active").siblings().removeClass("active");
+				return;
+			}
+			if(restatus.status !== false){
+				if(restatus.name == '迁移完成'){
+					TransferSuccess();
+					return;
+				}else{
+					if(!$('.qystatus').text()){
+						ShowPr();
+					}
+				}
+				speed = '<span>远程服务器正在压缩数据 <img src="/static/img/ing.gif"></span>';
+				if(restatus.speed){
+					if(restatus.speed.total == 0 && restatus.speed.speed == 0){
+						if(restatus.name.indexOf('数据库') != -1){
+							speed = '<span>正在导入数据 <img src="/static/img/ing.gif"></span>';
+						}else if(restatus.name == '操作日志'){
+							speed = '<span>正在插入数据 <img src="/static/img/ing.gif"></span>';
+						}else{
+							speed = '<span>正在解压 <img src="/static/img/ing.gif"></span>';
+						}
+						
+					}else{
+						speed = '<span> 正在传输：'+ToSize(restatus.speed.used)+'/'+ToSize(restatus.speed.total)+'</span> | <span>速度：'+ToSize(restatus.speed.speed)+'/S</span> | <span>进度：'+restatus.speed.pre+'%</span>'
+					}
+				}
+				
+				$('.qystatus').html('正在迁移' + restatus.name + '（' +speed + '）');
+				
+				var p = parseInt(restatus.done / (restatus.count / 100));
+				$('.bt-progress-bar').css('width',p+'%');$('.bt-progress-text').text(p+'%');
+			}
+			
+			if($('.qystatus').text()){
+				var timestamp = Date.parse(new Date()) / 1000;
+				if((timestamp - oldTime) < 1) return;
+				oldTime = timestamp;
+				setTimeout(function(){
+					GetToStatus();
+				},1000);
+			}
+		});
+	}
+
+	//查看记录
+	function showterlist(){
+		$.get('/plugin?action=a&name=psync&s=GetToStatus',function(restatus){
+			if(restatus.status === true){
+				body = '<div class="pd15 terlist" style="height:340px;overflow:auto"><div class="divtable"><table class="table table-hover" style="margin-bottom:15px"><thead><tr><th>网站</th><th>状态</th><th>数据库</th><th>状态</th><th>FTP</th><th>状态</th></tr></thead>'
+				len = restatus.site.length;
+				if(restatus.database.length > len) len = restatus.database.length;
+				if(restatus.ftp.length > len) len = restatus.ftp.length;
+				names = ['site','database','ftp']
+				for(var i=0;i<len;i++){
+					var tmp = {name:'',to:''};
+					for(var n = 0;n<names.length;n++){
+						if(!restatus[names[n]][i]){
+							restatus[names[n]].push(tmp)
+						}else{
+							restatus[names[n]][i].to = (restatus[names[n]][i].to?'<a style="color:green;">成功</a>':'<a style="color:red;">未完成</a>')
+						}
+					}
+
+					body += '<tr><td>'+restatus.site[i].name+'</td><td>'+restatus.site[i].to+'</td><td>'+restatus.database[i].name+'</td><td>'+restatus.database[i].to+'</td><td>'+restatus.ftp[i].name+'</td><td>'+restatus.ftp[i].to+'</td></tr>';
+				}
+				
+				body += '</table></div></div>';
+				layer.open({
+					type: 1,
+					area: "640px",
+					title: "迁移记录",
+					closeBtn: 2,
+					shift: 5,
+					shadeClose: false,
+					content: body
+				})
+			}
+		})
+	}
+
+	//确认迁移结果
+	function SetRe(){
+		var loadT = layer.msg('正在确认,请稍候 <img src="/static/img/ing.gif">',{icon:16,time:0,shade: [0.3, "#000"]});
+		$.get('/plugin?action=a&name=psync&s=SetRe',function(rdata){
+			layer.close(loadT);
+			layer.msg(rdata.msg,{icon:rdata.status?1:5});
+			if(rdata.status){
+				twoTransfer();
+			}
+		});
+	}
+
+	//迁移完成
+	function TransferSuccess(){
+		var con='<div class="line"><div class="success text-center"><img style="width: 128px;" src="/static/img/success-pic.png"><p>数据迁移完成,请务必检查数据完整性！</p></div></div>';
+		$(".oneCon").html(con);
+		$(".lct ul li").eq(3).addClass("active").siblings().removeClass("active")
+	}
+
+	// 撤销迁移
+	function repealTransfer(){
+		$.get('/plugin?action=a&name=psync&s=clear&clear=1',function (rdata) {
+			SetRe();
+		})
+	}
+</script>

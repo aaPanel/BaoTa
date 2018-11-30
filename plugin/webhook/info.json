@@ -1,0 +1,15 @@
+{
+	"title":"宝塔WebHook",
+	"tip":"lib",
+	"name":"webhook",
+	"type":"扩展",
+	"ps":"WebHook，可设置回调脚本，通常用于第三方回调通知!",
+	"versions":"1.0",
+	"shell":"webhook.sh",
+	"checks":"/www/server/panel/plugin/webhook",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2017-07-05",
+	"default":false,
+	"display":0
+}

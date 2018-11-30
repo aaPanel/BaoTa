@@ -1,0 +1,376 @@
+<style>
+    .wafview-head {
+        height: 30px;
+        border-bottom: #ccc 1px solid;
+        margin-bottom: 10px;
+    }
+</style>
+<div class="bt-form">
+	<div class="bt-w-main">
+		<div class="bt-w-menu">
+			<p class="bgw" onclick="system_reinforcement.all_config()">防护配置</p>
+            <p onclick="system_reinforcement.show_lock_address()">封锁IP</p>
+			<p onclick="system_reinforcement.operation_log()">操作日志</p>
+		</div>
+		<div class="bt-w-con pd15">
+			<div class="sys-re-con"></div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+$('.layui-layer-page').css('width','800px');
+$(".bt-w-menu p").click(function() {
+	$(this).addClass('bgw').siblings().removeClass('bgw')
+});
+//系统加固
+    var system_reinforcement = {
+    message_box_noe : null,
+	box: function() {
+		layer.open({
+			type: 1,
+			title: '系统加固',
+			area: "700px",
+			closeBtn: 2,
+			shadeClose: true,
+			content: system_reinforcement.html()
+		})
+		$(".bt-w-menu p").click(function() {
+			$(this).addClass('bgw').siblings().removeClass('bgw')
+		});
+		system_reinforcement.all_config();
+    },
+    set_open: function () {
+        var loadT = layer.msg('正在保存配置...', { icon: 16, time: 0 })
+        $.post('/plugin?name=syssafe&action=a&s=set_open', {}, function (rdata) {
+            layer.close(loadT);
+            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+        });
+    },
+    set_safe_status: function (s_key) {
+        var loadT = layer.msg('正在保存配置...', { icon: 16, time: 0 })
+        $.post('/plugin?name=syssafe&action=a&s=set_safe_status', { s_key: s_key }, function (rdata) {
+            layer.close(loadT);
+            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+        });
+    },
+    add_safe_config: function (s_key) {
+        pdata = {
+            s_key: s_key,
+            path: $("input[name='s_path']").val(),
+            d_mode: $("input[name='d_mode']").val(),
+            chattr: $("select[name='chattr']").val()
+        }
+        var loadT = layer.msg('正在添加对象...', { icon: 16, time: 0 });
+        $.post('/plugin?name=syssafe&action=a&s=add_safe_path', pdata, function (rdata) {
+            layer.close(loadT)
+            setTimeout(function () {
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+            }, 500)
+            if (rdata.status) system_reinforcement.safe_config(s_key);
+        });
+
+    },
+    remove_safe_config: function (s_key, path) {
+        var loadT = layer.msg('正在删除对象...', { icon: 16, time: 0 });
+        $.post('/plugin?name=syssafe&action=a&s=remove_safe_path', { s_key: s_key, path: path }, function (rdata) {
+            layer.close(loadT)
+            setTimeout(function () {
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+            }, 500)
+            if (rdata.status) system_reinforcement.safe_config(s_key);
+        });
+
+        },
+    add_process_config: function () {
+        pdata = {
+            process_name: $("input[name='p_name']").val()
+        }
+        var loadT = layer.msg('正在添加对象...', { icon: 16, time: 0 });
+        $.post('/plugin?name=syssafe&action=a&s=add_process_white', pdata, function (rdata) {
+            layer.close(loadT)
+            setTimeout(function () {
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+            }, 500)
+            if (rdata.status) system_reinforcement.process_config();
+        });
+
+    },
+    remove_process_config: function (p_name) {
+        var loadT = layer.msg('正在删除对象...', { icon: 16, time: 0 });
+        $.post('/plugin?name=syssafe&action=a&s=remove_process_white', { process_name: p_name }, function (rdata) {
+            layer.close(loadT)
+            setTimeout(function () {
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+            }, 500)
+            if (rdata.status) system_reinforcement.process_config();
+        });
+
+    },
+    unlock_address: function (s_address) {
+        var loadT = layer.msg('正在解封IP地址...', { icon: 16, time: 0 });
+        $.post('/plugin?name=syssafe&action=a&s=remove_ssh_limit', { ip: s_address }, function (rdata) {
+            layer.close(loadT)
+            setTimeout(function () {
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+            }, 500)
+            if (rdata.status) system_reinforcement.show_lock_address();
+        });
+
+        },
+     add_lock_address: function () {
+         var loadT = layer.msg('正在提交IP地址...', { icon: 16, time: 0 });
+         var s_address = $("input[name='s_address']").val()
+         if (!bt.check_ip(s_address)) {
+             layer.msg('IP地址格式不正确!', { icon: 2 });
+             return;
+         }
+        $.post('/plugin?name=syssafe&action=a&s=add_ssh_limit', { ip: s_address }, function (rdata) {
+            layer.close(loadT)
+            setTimeout(function () {
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+            }, 500)
+            if (rdata.status) system_reinforcement.show_lock_address();
+        });
+
+    },
+    show_lock_address: function () {
+        var loadT = layer.msg('正在获取数据...', { icon: 16, time: 0 })
+        $.post('/plugin?name=syssafe&action=a&s=get_ssh_limit_info', {}, function (rdata) {
+            layer.close(loadT)
+            var my_list = '';
+            for (var i = 0; i < rdata.length; i++) {
+                my_list += '<tr><td>' + rdata[i].address + '</td><td>' + ((rdata[i].end > 0) ? bt.format_data(rdata[i].end):'手动解封') + '</td><td style="text-align: right;"><a class="btlink" onclick="system_reinforcement.unlock_address(\'' + rdata[i].address + '\')">立即解封</a></td></tr>';
+            }
+
+            var con = '<div class="sys_rule_list">\
+                        <div style="margin-bottom:10px;">\
+                            <input class="bt-input-text" name="s_address" type="text" value="" style="width:250px;margin-right:12px;" placeholder="IP地址">\
+                            <button class="btn btn-success btn-sm va0" onclick="system_reinforcement.add_lock_address();">添加</button>\
+                        </div>\
+                        <div class="divtable">\
+                        <div class="table_head_fix" style="max-height:375px;overflow:auto;">\
+						<table class="table table-hover">\
+							<thead>\
+								<tr><th>IP地址</th><th>解封时间</th><th style="text-align: right;">操作</th></tr>\
+							</thead>\
+							<tbody>'+ my_list + '</tbody>\
+						</table></div>\
+					</div><ul class="help-info-text c7 ptb10" style="margin-top: 5px;">\
+					    <li>【封锁IP】此处封锁的IP仅针对SSH服务，即被封锁的IP将无法连接SSH</li>\
+                        <li>【添加】手动添加的IP封锁只能手动解封!</li>\
+				    </ul></div>';
+            $(".sys-re-con").html(con);
+        });
+    },
+    process_config: function () {
+        var loadT = layer.msg('正在获取数据...', { icon: 16, time: 0 });
+        $.post('/plugin?name=syssafe&action=a&s=get_process_white', {}, function (rdata) {
+            layer.close(loadT)
+            var tbody = '';
+            for (var i = 0; i < rdata.length; i++) {
+                tbody += '<tr><td>' + rdata[i] + '</td>\
+                            <td style="text-align: right;"><a class="btlink" onclick="system_reinforcement.remove_process_config(\'' + rdata[i] + '\')">删除</a></td></tr>'
+            }
+            if (system_reinforcement.message_box_noe) {
+                layer.close(system_reinforcement.message_box_noe);
+                system_reinforcement.message_box_noe = null;
+            }
+
+            system_reinforcement.message_box_noe = layer.open({
+                type: 1,
+                title: "管理进程白名单",
+                area: ['700px', '550px'],
+                closeBtn: 2,
+                shadeClose: false,
+                content: '<div class="pd15">\
+					<div style="border-bottom:#ccc 1px solid;margin-bottom:10px;padding-bottom:10px">\
+					<input class="bt-input-text" name="p_name" id="s_path" type="text" value="" style="width:250px;margin-right:12px;" placeholder="完整的进程名称">\
+					<button class="btn btn-success btn-sm va0 pull-right" onclick="system_reinforcement.add_process_config();">添加</button>\</div>\
+					<div class="divtable">\
+					<div id="jc-file-table" class="table_head_fix" style="max-height:300px;overflow:auto;border:#ddd 1px solid">\
+					<table class="table table-hover" style="border:none">\
+						<thead>\
+							<tr>\
+								<th width="360">进程名称</th>\
+                                <th style="text-align: right;">操作</th>\
+							</tr>\
+						</thead>\
+						<tbody class="gztr">'+ tbody + '</tbody>\
+					</table>\
+					</div>\
+				</div>\
+				<ul class="help-info-text c7 ptb10" style="margin-top: 5px;">\
+					<li>【进程名称】请填写完整的进程名称,如: mysqld</li>\
+                    <li>【说明】在白名单列表中的进程将不再检测范围,建议将常用软件的进程添加进白名单</li>\
+				</ul></div>'
+            });
+        });
+
+        },
+    save_ssh_config: function () {
+        pdata = {
+            cycle: $("input[name='s_cycle']").val(),
+            limit: $("input[name='s_limit']").val(),
+            limit_count: $("input[name='s_limit_count']").val()
+        }
+        console.log(pdata)
+        var loadT = layer.msg('正在保存配置...', { icon: 16, time: 0 });
+        $.post('/plugin?name=syssafe&action=a&s=save_ssh_config', pdata, function (rdata) {
+            layer.close(loadT)
+            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+        });
+    },
+    ssh_config: function () {
+        var loadT = layer.msg('正在获取数据...', { icon: 16, time: 0 });
+        $.post('/plugin?name=syssafe&action=a&s=get_ssh_config', {}, function (rdata) {
+            layer.close(loadT)
+            layer.open({
+                type: 1,
+                title: "配置SSH加固策略",
+                area: ['700px'],
+                closeBtn: 2,
+                shadeClose: false,
+                content: '<div class="pd15">\
+					<div style="border-bottom:#ccc 1px solid;margin-bottom:10px;padding-bottom:10px">\
+					在(检测周期)<input class="bt-input-text" min="30" max="1800" name="s_cycle" type="number" value="'+rdata.cycle+'" style="width:80px;margin-right:12px;">秒内,\
+                    登录错误(检测阈值)<input min="3" max="100" class="bt-input-text" name="s_limit_count" type="number" value="'+ rdata.limit_count +'" style="width:80px;margin-right:12px;">次,\
+					封锁(封锁时间)<input min="60" class="bt-input-text" name="s_limit" type="number" value="'+ rdata.limit +'" style="width:80px;margin-right:12px;">秒\
+					<button class="btn btn-success btn-sm va0 pull-right" onclick="system_reinforcement.save_ssh_config();">保存</button>\</div>\
+				<ul class="help-info-text c7 ptb10" style="margin-top: 5px;">\
+					<li>触发以上策略后，客户端IP将被封锁一段时间</li>\
+                    <li>请在面板日志或操作日志中查看封锁记录</li>\
+                    <li>请在面板日志或操作日志中查看SSH成功登录的记录</li>\
+				</ul></div>'
+            });
+        });
+    },
+    safe_config: function (s_key) {
+        if (s_key == 'process') {
+            system_reinforcement.process_config()
+            return;
+        }
+
+        if (s_key == 'ssh') {
+            system_reinforcement.ssh_config()
+            return;
+        }
+        
+
+        var loadT = layer.msg('正在获取数据...', { icon: 16, time: 0 });
+        $.post('/plugin?name=syssafe&action=a&s=get_safe_config', { s_key: s_key }, function (rdata) {
+            layer.close(loadT)
+            var chattrs = { "a": "追加", "i": "只读" }
+            var states = { true: "<a style=\"color:green;\">已保护</a>", false:"<a style=\"color:red;\">未保护</a>"}
+            var tbody = '';
+            for (var i = 0; i < rdata.paths.length; i++) {
+                tbody += '<tr><td>' + rdata.paths[i].path + '</td>\
+                            <td>' + chattrs[rdata.paths[i].chattr] + '</td>\
+                            <td>' + (rdata.paths[i].s_mode == rdata.paths[i].d_mode ? rdata.paths[i].s_mode:(rdata.paths[i].s_mode + ' >> ' + rdata.paths[i].d_mode)) + '</td>\
+                            <td>' + states[rdata.paths[i].state] + '</td>\
+                            <td style="text-align: right;"><a class="btlink" onclick="system_reinforcement.remove_safe_config(\''+ s_key + '\',\'' + rdata.paths[i].path + '\')">删除</a></td></tr>'
+            }
+            if (system_reinforcement.message_box_noe) {
+                layer.close(system_reinforcement.message_box_noe);
+                system_reinforcement.message_box_noe = null;
+            }
+
+            system_reinforcement.message_box_noe = layer.open({
+                type: 1,
+                title: "配置【" + rdata.name + "】",
+                area: ['700px', '550px'],
+                closeBtn: 2,
+                shadeClose: false,
+                content: '<div class="pd15">\
+					<div style="border-bottom:#ccc 1px solid;margin-bottom:10px;padding-bottom:10px">\
+					<input class="bt-input-text" name="s_path" id="s_path" type="text" value="" style="width:250px;margin-right:5px;" placeholder="被保护的文件或目录完整路径"><a class="glyphicon cursor glyphicon-folder-open" onclick="bt.select_path(\'s_path\')" style="color:#edca5c;margin-right:20px;font-size:16px"></a>\
+                    <select class="bt-input-text" name="chattr"><option value="i">只读</option><option value="a">追加</option></select>\
+					<input class="bt-input-text mr5" name="d_mode" type="text" style="width:120px;" placeholder="权限">\
+					<button class="btn btn-success btn-sm va0 pull-right" onclick="system_reinforcement.add_safe_config(\''+ s_key + '\');">添加</button>\</div>\
+					<div class="divtable">\
+					<div id="jc-file-table" class="table_head_fix" style="max-height:300px;overflow:auto;border:#ddd 1px solid">\
+					<table class="table table-hover" style="border:none">\
+						<thead>\
+							<tr>\
+								<th width="360">路径</th>\
+								<th>模式</th>\
+								<th>权限</th>\
+								<th>状态</th>\
+                                <th style="text-align: right;">操作</th>\
+							</tr>\
+						</thead>\
+						<tbody class="gztr">'+ tbody+'</tbody>\
+					</table>\
+					</div>\
+				</div>\
+				<ul class="help-info-text c7 ptb10" style="margin-top: 5px;">\
+					<li>【只读】无法修改、创建、删除文件和目录</li>\
+					<li>【追加】只能追加内容，不能删除或修改原有内容</li>\
+					<li>【权限】设置文件或目录在受保护状态下的权限(非继承),关闭保护后权限自动还原</li>\
+                    <li>【如何填写权限】请填写Linux权限代号,如:644、755、600、555等,如果不填写,则使用文件原来的权限</li>\
+				</ul></div>'
+            });
+
+        });
+    },
+    all_config: function () {
+        var loadT = layer.msg('正在获取数据...', { icon: 16, time: 0 })
+        $.post('/plugin?name=syssafe&action=a&s=get_safe_status', {}, function (rdata) {
+            layer.close(loadT)
+
+            var tbody = '';
+            for (var i = 0; i < rdata.list.length; i++) {
+                tbody += '<tr>'
+                    + '<td>' + rdata.list[i].name+'</td>'
+                    + '<td>' + rdata.list[i].ps +'</td>'
+                        + '<td><div class="ssh-item">'
+                    + '<input class="btswitch btswitch-ios" id="close_' + rdata.list[i].key + '" type="checkbox" ' + (rdata.list[i].open ?'checked':'')+'>'
+                    + '<label class="btswitch-btn" for="close_' + rdata.list[i].key + '" style="width: 2em; height: 1.1em;padding:1px;" onclick="system_reinforcement.set_safe_status(\'' + rdata.list[i].key+'\')"></label>'
+                        + '</div></td>'
+                    + '<td class="text-right"><a class="btlink" onclick="system_reinforcement.safe_config(\'' + rdata.list[i].key+'\')">配置</a></td>'
+                    + '</tr>'
+            }
+            
+            var con = '<div class="wafview-head"><span class="pull-left" style="font-weight:bold">宝塔系统加固</span><div class="waf-switch pull-left" style="margin-left:20px;margin-top:-2px"><input class="btswitch btswitch-ios" id="close_syssafe" type="checkbox" ' + (rdata.open ?'checked':'')+'><label class="btswitch-btn" for="close_syssafe" onclick="system_reinforcement.set_open()"></label></div></div>'
+                + '<div class="divtable">'
+                + '<table class="table table-hover waftable" >'
+                    + '<thead >'
+                        + '<tr>'
+                            + '<th>名称</th><th>描述</th><th style="text-align: center;">状态</th><th style="text-align: right;">操作</th>'
+                        + '</tr>'
+                + '</thead>' + tbody+ '<tbody>'
+                + '</tbody>'
+                + '</table>'
+                + '<ul class="help-info-text c7" >'
+                    + '<li>【异常进程监控】与【SSH服务加固】会占用一定服务器开销</li>'
+                    + '<li>开启系统加固功能后，一些如软件安装等敏感操作将被禁止</li>'
+                + '<li>开启【SSH服务加固】之后，用户登录SSH的行为将受到监控，若连续多次登录失败，将采取封IP措施</li>'
+                + '<li style="color:red;">【注意】如果您需要安装软件或插件，请先将系统加固关闭!</li>'
+                +'</ul>'
+            $(".sys-re-con").html(con);	
+        });     
+		
+	},
+    operation_log: function (p) {
+        var loadT = layer.msg('正在获取数据...', { icon: 16, time: 0 })
+        if (p == undefined) p = 1;
+        $.post('/plugin?name=syssafe&action=a&s=get_logs', { p: p, tojs: 'system_reinforcement.operation_log' }, function (rdata) {
+            layer.close(loadT)
+            var my_list = '';
+            for (var i = 0; i < rdata.data.length; i++) {
+                my_list += '<tr><td>' + rdata.data[i].addtime + '</td><td>' + rdata.data[i].log + '</td></tr>';
+            }
+
+            var con = '<div class="sys_rule_list"><div class="divtable">\
+						<table class="table table-hover">\
+							<thead>\
+								<tr><th>时间</th><th>详情</th></tr>\
+							</thead>\
+							<tbody>'+ my_list + '</tbody>\
+						</table>\
+					</div><div class="page">'+ rdata.page + '</div></div>';
+            $(".sys-re-con").html(con);
+        });
+	}
+    }
+    system_reinforcement.all_config()
+</script>

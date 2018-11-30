@@ -1,0 +1,16 @@
+{
+	"id":3,
+	"title":"宝塔任务管理器",
+	"tip":"lib",
+	"name":"task_manager",
+	"type":"扩展",
+	"ps":"轻松管理进程、启动项、用户、服务、计划任务、会话 (首月1元/台)<a href=\"https://www.bt.cn/bbs/thread-12682-1-1.html\" target=\"_blank\" class=\"btlink\"> >>使用帮助</a>",
+	"versions":"1.2",
+	"shell":"task_manager.sh",
+	"checks":"/www/server/panel/plugin/task_manager",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2018-04-16",
+	"default":false,
+	"display":0
+}

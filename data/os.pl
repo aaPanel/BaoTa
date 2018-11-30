@@ -1,0 +1,1 @@
+{"x": "RHEL", "osname": "CentOS"}

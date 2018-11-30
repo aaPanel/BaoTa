@@ -1,0 +1,18 @@
+{
+	"pid":9,
+	"title":"阿里云OSS",
+	"tip":"lib",
+	"name":"alioss",
+	"type":"计划任务",
+	"id":2,
+	"sort":1001,
+	"ps":"将网站或数据库打包备份到阿里云OSS对象存储空间,阿里云OSS提供5GB免费存储空间, <a class='link' href='https://www.aliyun.com/product/oss?spm=5176.8142029.388261.46.psCRgl' target='_blank'>点击申请</a>",
+	"versions":"1.2",
+	"shell":"alioss.sh",
+	"checks":"/usr/lib/python2.6/site-packages/oss2/auth.py,/usr/local/lib/python2.6/dist-packages/oss2/auth.py,/usr/lib/python2.7/site-packages/oss2/auth.py,/usr/local/lib/python2.7/dist-packages/oss2/auth.py",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs/thread-1061-1-1.html",
+	"date":"2017-02-02",
+	"default":false,
+	"display":0
+}

@@ -1,0 +1,254 @@
+<style>
+	.boxConter{
+		width: 500px;
+		height: 458px;
+		position: relative;
+	}
+	.iconCode{
+		padding: 50px 60px;
+	}
+	.box-conter{
+		width: 100%;
+	}
+	#QRcode{
+		margin-bottom: 25px;
+		text-align: center;
+	}
+
+	.iconCode #QRcode,
+	.iconCode .codeTip{
+		width: 100%;
+		text-align: center;
+		font-size: 17px;
+	}
+	.iconCode .weChatSamll img{
+		width: 100%;
+	}
+	.iconCode .weChatSamll{
+		display: none;
+		width: 200px;
+		height: 200px;
+		position: absolute;
+		border: 1px solid #ececec;
+		border-radius: 5px;
+		bottom: 150px;
+		right: 50px;
+		padding: 20px;
+		background-color: #fff;
+	}
+	.iconCode .weChatSamll:after{
+		content: '';
+		width: 15px;
+		height: 15px;
+		background: #ffffff;
+		border-bottom: 1px solid #ececec;
+		border-right: 1px solid #ececec;
+		transform: rotate(45deg);
+		position: absolute;
+		border-radius: 4px;
+		left: 90px;
+		bottom: -8px;
+	}
+	.iconCode .weChat{
+		margin-left: 15px;
+	}
+	.iconCode .weChat:hover .weChatSamll{
+		display: block;
+	}
+	.iconCode .QRcode{
+		margin-bottom: 15px;
+		text-align: center;
+	}
+
+	.codeTip ul li{
+		margin-bottom: 10px;
+	}
+
+	.personalDetails .head_img{
+		width: 60px;
+		height: 60px;
+		float: left;
+		margin-right: 30px;
+	}
+	.personalDetails .head_img img{
+		height: 100%;
+		border-radius:50%;
+	}
+	.personalDetails .nick_name{
+		height: 60px;
+		line-height: 60px;
+		width: 148px;
+		float: left;
+		font-size: 15px;
+		color: #808080;
+	}
+	.personalDetails .userList{
+		height: 100%;
+	}
+	.personalDetails .userList .addweChat{
+		height: 50px;
+		text-align: center;
+		padding-top: 20px;
+		color: #20a53a;
+		font-size: 16px;
+	}
+	.personalDetails .userList .addweChat:hover{
+		
+	}
+	.personalDetails .userList .item{
+		height: 80px;
+		padding: 10px 15px;
+		border: 1px solid #ececec;
+		margin: 25px 75px;
+		border-radius: 5px;
+	}
+	.personalDetails .userList .cancelBind{
+		height: 60px;
+		width: 60px;
+		float: right;
+		line-height: 60px;
+		text-align: center;
+	}
+</style>
+<div class="boxConter" style="display: none">
+	<div class="iconCode" >
+		<div class="box-conter">
+			<div id="QRcode"></div>
+			<div class="codeTip">
+				<ul>
+					<li>1、打开宝塔面板小程序<span class="btlink weChat">小程序二维码<div class="weChatSamll"><img src="https://app.bt.cn/static/app.png"></div></span></li>
+					<li>2、使用宝塔小程序扫描当前二维码，绑定该面板</li>
+				</ul>
+				<span><a href="javascript:;" title="返回面板绑定列表" class="btlink" style="margin: 0 auto" onclick="weChat.getUserDetails(true)">查看绑定列表</a></span>
+			</div>
+		</div>
+	</div>
+	<div class="personalDetails" style="display: none">
+		<ul class="userList"></ul>
+	</div>
+</div>
+<script type="text/javascript" src="/static/js/jquery.qrcode.min.js"></script>
+<script type="javascript/text">
+	var weChat = {
+		settiming:'',
+		relHeight:500,
+		relWidth:500,
+		userLength:'',
+		init:function(){
+			var _this = this;
+			$('.layui-layer-page').css('display', 'none');
+			$('.layui-layer-page').width(_this.relWidth);
+			$('.layui-layer-page').height(_this.relHeight);
+			$('.bt-w-menu').height((_this.relWidth - 1) - $('.layui-layer-title').height());
+			var width = $(document).width();
+			var height = $(document).height();
+			var boxwidth =  (width / 2) - (_this.relWidth / 2);
+			var boxheight =  (height / 2) - (_this.relHeight / 2);
+			$('.layui-layer-page').css({
+				'left':boxwidth +'px',
+				'top':boxheight+'px'
+			});
+			$('.boxConter,.layui-layer-page').css('display', 'block');
+			$('.layui-layer-close').click(function(event) {
+				window.clearInterval(_this.settiming);
+			});
+			this.getUserDetails();
+			$('.iconCode').hide();
+			$('.personalDetails').show();
+		},
+		// 获取二维码
+		getQRCode:function(){
+			var _this = this;
+			var qrLoading = layer.msg('正在获取二维码,请稍后...',{time:0,shade: [0.4,'#fff'],icon:16});
+			$.get('/plugin?action=a&name=app&s=blind_qrcode', function(res) {
+				layer.close(qrLoading);
+				if (res.status){
+                	$('#QRcode').empty();
+					$('#QRcode').qrcode({
+					    render: "canvas", //也可以替换为table
+					    width: 200,
+					    height: 200,
+					    text:res.msg
+					});
+					// $('.QRcode img').attr('src', res.msg);
+					_this.settiming =  setInterval(function(){
+						_this.verifyBdinding();
+					},2000);
+				}else{
+					layer.msg('无法获取二维码，请稍后重试',{icon:2});
+				}
+			});
+		},
+		// 获取用户信息
+		getUserDetails:function(type){
+			var _this = this;
+			var conter = '';
+			$.get('/plugin?action=a&name=app&s=get_user_info',function(res){
+				clearInterval(_this.settiming);
+				if (!res.status){
+					layer.msg(res.msg,{icon:2,time:3000});
+					$('.iconCode').hide();
+					return false;
+				}
+				if (JSON.stringify(res.msg) =='{}'){
+					if (type){
+						layer.msg('当前绑定列表为空,请先绑定然后重试',{icon:2});
+					}else{
+						_this.getQRCode();
+					}
+					$('.iconCode').show();
+					$('.personalDetails').hide();
+					return false;
+				}
+				$('.iconCode').hide();
+				$('.personalDetails').show();
+				var datas = res.msg;
+				for(var item in datas){
+					conter += '<li class="item">\
+								<div class="head_img"><img src="'+datas[item].avatarUrl+'" title="用户头像" /></div>\
+								<div class="nick_name"><span>昵称:</span><span class="nick"></span>'+datas[item].nickName+'</div>\
+								<div class="cancelBind">\
+									<a href="javascript:;" class="btlink" title="取消当前微信小程序的绑定" onclick="weChat.cancelBdinding(\''+ item +'\')">取消绑定</a>\
+								</div>\
+							</li>'
+				}
+				conter += '<li class="item addweChat" style="height:45px;"><a href="javascript:;" class="btlink" onclick="weChat.addweChatView()"><span class="glyphicon glyphicon-plus"></span>添加绑定账号</a></li>'
+				$('.userList').empty().append(conter);
+			});
+		},
+		// 添加绑定视图
+		addweChatView:function(){
+			$('.iconCode').show();
+			$('.personalDetails').hide();
+			this.getQRCode();
+		},
+		// 取消当前绑定
+		cancelBdinding:function(uid){
+			var _this = this;
+			var bdinding = layer.confirm('您确定要取消当前绑定吗？',{
+				btn:['确认','取消'],
+				icon:3,
+				title:'取消绑定'
+			},function(){
+				$.get('/plugin?action=a&name=app&s=blind_del',{uid:uid}, function(res) {
+					layer.msg(res.msg,{icon:res.status?1:2});
+					_this.getUserDetails();
+				});
+			},function(){
+				layer.close(bdinding);
+			});
+		},
+		// 监听是否绑定
+		verifyBdinding:function(){
+			var _this = this;
+			$.get('/plugin?action=a&name=app&s=blind_result',function(res){
+				if(res){
+					layer.msg('绑定成功',{icon:1});
+					clearInterval(_this.settiming);
+					_this.getUserDetails();
+				}
+			});
+		},
+	}
+	weChat.init();
+</script>

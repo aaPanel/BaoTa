@@ -1,0 +1,222 @@
+<style>
+    .upyunCon {
+        height: 628px;
+    }
+
+    .up-place {
+        height: 62px;
+        border-bottom: 1px solid #ddd;
+    }
+
+        .up-place .btn {
+            border-radius: 0;
+        }
+
+        .up-place .place-input {
+            background-color: #f3f3f3;
+            border: 1px solid #ccc;
+            height: 30px;
+            line-height: 28px;
+            overflow: hidden;
+            margin: 1px 0 0 -1px;
+            width: 340px;
+        }
+
+    .place-input ul {
+        display: inline-block;
+        position: relative;
+        width: auto;
+    }
+
+        .place-input ul li {
+            background: url("/static/img/ico/ico-ltr.png") no-repeat right center;
+            float: left;
+            padding-left: 10px;
+            padding-right: 18px;
+        }
+
+            .place-input ul li a {
+                height: 28px;
+                cursor: pointer;
+                display: inline-block;
+            }
+
+    .upyunlist {
+        height: 516px;
+        overflow: auto;
+    }
+
+    .up-bottom {
+        background-color: #fafafa;
+        border-top: 1px solid #eee;
+        bottom: 0;
+        position: absolute;
+        width: 100%;
+    }
+
+    .up-use {
+        line-height: 50px
+    }
+
+    .list-list .cursor span {
+        line-height: 30px;
+    }
+
+    .btn-title {
+        margin-top: 1px
+    }
+</style>
+<div class="upyunCon"></div>
+<script type="javascript/text">
+    function upyun(path){
+        var loadT = layer.msg('正在获取文件列表...',{icon:16,time:0,shade: [0.3, '#000']});
+        $.post('/plugin?action=a&s=GetList&name=qiniu',{path:path},function(mlist){
+            layer.close(loadT);
+            if(mlist === false){
+                upyunApi();
+                return;
+            }
+            var listBody = ''
+            var listFiles = ''
+            for(var i=0;i<mlist.length;i++){
+                if(mlist[i].type == 1){
+                    listBody += '<tr><td class="cursor" onclick="upyun(\''+(path+'/'+mlist.list[i].name).replace('//','/')+'\')"><span class="ico ico-folder"></span><span>'+mlist.list[i].name+'</span></td><td>-</td><td>'+getLocalTime(mlist.list[i].time)+'</td><td class="text-right"><a class="btlink" onclick="DelUpFile(\''+mlist.list[i].name+'\')">删除</a></td></tr>'
+                }else{
+                    listFiles += '<tr><td class="cursor"><span class="ico ico-file"></span><span>'+mlist[i].key+'</span></td><td>'+ToSize(mlist[i].fsize)+'</td><td>'+getLocalTime(mlist[i].putTime)+'</td>\
+                                <td class="text-right"><a target="_blank" href="/cloud?name='+mlist[i].key+'&filename=qiniu" class="btlink">下载</a> | <a class="btlink" onclick="DelUpFile(\''+mlist[i].key+'\')">删除</a></td></tr>'
+                }
+            }
+            listBody += listFiles;
+
+            var pathLi='';
+            var tmp = path.split('/')
+            var pathname = '';
+            var n = 0;
+            for(var i=0;i<tmp.length;i++){
+                if(n > 0 && tmp[i] == '') continue;
+                var dirname = tmp[i];
+                if(dirname == '') {
+                    dirname = '根目录';
+                    n++;
+                }
+                pathname += '/' + tmp[i];
+                pathname = pathname.replace('//','/');
+                pathLi += '<li><a title="'+pathname+'" onclick="upyun(\''+pathname+'\')">'+dirname+'</a></li>';
+            }
+            var backPath = tmp.slice(0,tmp.length-1).join('/') || '/';
+            var con='<div class="up-place pd15">\
+                        <button id="backBtn" class="btn btn-default btn-sm glyphicon glyphicon-arrow-left pull-left" title="后退" onClick="upyun(\''+backPath+'\')"></button>\
+                        <input id="myPath" style="display:none;" type="text" value="'+path+'">\
+                        <input type="file" style="display:none;" id="Upupload" multiple="multiple">\
+                        <div class="place-input pull-left"><div style="width:1400px;height:28px"><ul>'+pathLi+'</ul></div></div>\
+                        <button class="refreshBtn btn btn-default btn-sm glyphicon glyphicon-refresh pull-left mr20" title="刷新" onclick="upyun(\''+path+'\')" style="margin-left:-1px;"></button>\
+                        <button class="btn btn-default btn-sm pull-right btn-title" onclick="upyunApi()">API设置</button>\
+                    </div><div class="upyunlist pd15">\
+                    <div class="divtable" style="margin-bottom:15px">\
+                        <table class="table table-hover">\
+                            <thead><tr><th>名称</th><th>大小</th><th>更新时间</th><th class="text-right">操作</th></tr></thead>\
+                            <tbody class="list-list">'+listBody+'</tbody>\
+                        </table>\
+                    </div>\
+                </div>';
+
+            $(".upyunCon").html(con);
+            upPathLeft();
+
+        });
+    }
+    //计算当前目录偏移
+    function upPathLeft(){
+        var UlWidth = $(".place-input ul").width();
+        var SpanPathWidth = $(".place-input").width() - 20;
+        var Ml = UlWidth - SpanPathWidth;
+        if(UlWidth > SpanPathWidth ){
+            $(".place-input ul").css("left",-Ml)
+        }
+        else{
+            $(".place-input ul").css("left",0)
+        }
+    }
+
+    //删除文件
+    function DelUpFile(name){
+        SafeMessage('删除文件','删除后将无法恢复，真的要删除['+name+']吗?',function(){
+            var path = $("#myPath").val()
+            var filename = name;
+            if(path != '/') filename = path + '/' + name;
+            var loadT = layer.msg('正在删除文件['+name+']...',{icon:16,time:0,shade: [0.3, '#000']});
+            $.post('/plugin?action=a&s=DeleteFile&name=qiniu',{filename:filename},function(rdata){
+                layer.close(loadT);
+                layer.msg(rdata.msg,{icon:rdata.status?1:2});
+                if(rdata.status) upyun(path);
+            });
+        });
+    }
+
+    var i = null;
+    //设置API
+    function upyunApi(){
+        $.get('/plugin?action=a&s=GetConfig&name=qiniu',function(token){
+            if(token === false){
+                token = ['','','','']
+            }
+            var apicon = '<div class="bingfa mtb15">\
+                            <p><span class="span_tit"> </span><a class="btn btn-success btm-xs" style="margin-left: 4px; margin-bottom: 10px" href="https://portal.qiniu.com/signup?code=3liz7nbopjd5e" target="_blank">注册账号</a></p>\
+                            <p>\
+                                <span class="span_tit">access_key：</span>\
+                                <input placeholder="请输入AccessKey" style="width: 300px;" type="text" name="access_key" value="'+token[0]+'">  *七牛秘钥中的AK \
+                            </p>\
+                            <p>\
+                                <span class="span_tit">secret_key：</span>\
+                                <input placeholder="请输入SecretKey" style="width: 300px;" type="text" name="secret_key" value="'+token[1]+'">  *七牛秘钥中的SK\
+                            </p>\
+                            <p>\
+                                <span class="span_tit">存储空间：</span>\
+                                <input placeholder="请输入对象存储空间名称" style="width: 300px;" type="text" name="bucket_name" value="'+token[2]+'">   *七牛对象存储空间名称\
+                            </p>\
+                            <p>\
+                                <span class="span_tit">加速域名：</span>\
+                                <input placeholder="请输入绑定域名或测试域名" style="width: 300px;" type="text" name="bucket_domain" value="'+token[3]+'">   *绑定的加速域名或测试域名\
+                            </p>\
+                            <div class="submit-btn">\
+                                <button type="button" class="btn btn-danger btn-sm bt-cancel">取消</button>\
+                                <button class="btn btn-success btn-sm" onclick="SetUpyunApi()">保存</button>\
+                            </div>\
+                            </div>';
+            i = layer.open({
+                    type: 1,
+                    area: "600px",
+                    title: "七牛对象存储API设置",
+                    closeBtn: 2,
+                    shift: 5,
+                    shadeClose: false,
+                    content:apicon
+                });
+                $(".bt-cancel").click(function(){
+                    layer.close(i)
+                });
+        });
+    }
+
+    //提交API
+    function SetUpyunApi(){
+        var data = {
+            access_key:$("input[name='access_key']").val(),
+            secret_key:$("input[name='secret_key']").val(),
+            bucket_name:$("input[name='bucket_name']").val(),
+            bucket_domain:$("input[name='bucket_domain']").val()
+        }
+        var loadT = layer.msg('正在校验...',{icon:16,time:0,shade: [0.3, '#000']});
+        $.post('/plugin?action=a&s=SetConfig&name=qiniu',data,function(rdata){
+            layer.close(loadT);
+            layer.msg(rdata.msg,{icon:rdata.status?1:2});
+            if(rdata.status) {
+                layer.close(i);
+                upyun('/');
+            }
+        });
+    }
+
+    upyun('/');
+    $('.layui-layer-page').css('height','670px');
+</script>

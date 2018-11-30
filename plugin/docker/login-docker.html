@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="icon" href="favicon.ico" type="image/x-icon" />
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<title>docker管理</title>
+<link rel="stylesheet" type="text/css" href="/static/css/reset.css">
+<link rel="stylesheet" type="text/css" href="/static/css/login.css">
+</head>
+
+<body>
+<div class="main">
+<div class="login">
+	<form class="loginform" method="post" action="/login.php">
+	<div class="rlogo">docker管理</div>
+	<div class="line"><input class="inputtxt" value="" name="username" datatype="*" nullmsg="请填写账号" errormsg="格式不对" placeholder="账号" type="text"><div class="Validform_checktip"></div></div>
+	<div class="line"><input class="inputtxt" name="password" value="" datatype="*" nullmsg="请填写密码" errormsg="请填写密码" placeholder="密码" type="password"><div class="Validform_checktip"></div></div>
+	<div style="color: red;margin-bottom: 13px;margin-top: -11px;display:none"></div>
+		<div class="login_btn"><input id="login-button" value="登录" type="submit"></div>
+	</form>
+</div>
+</div>
+<script type="text/javascript" src="/static/js/jquery-1.10.2.min.js"></script>
+<script type="text/javascript" src="/static/layer/layer.js"></script>
+<script type="text/javascript" src="/static/js/Validform_v5.3.2_min.js"></script>
+<script type="text/javascript">
+function Wreset(){
+	var w = $(window).width();
+	var yzmw = $(".login .line").width() - 140;
+	if($(".login").find(".yzm").length>0 && w > 640){
+		$(".login").css({"height":"332px","margin-top":"-211px"})
+	}
+	else{
+		$(".login").removeAttr("style")
+	}
+	$(".login .yzm .inputtxt").width(yzmw);
+}
+$(function(){
+	Wreset()
+})
+window.onresize=function(){
+	Wreset()
+}
+$(function(){
+	$(".loginform").Validform({
+		tiptype:function(msg,o,cssctl){
+			if(!o.obj.is("form")){
+				var objtip=o.obj.siblings(".Validform_checktip");
+				cssctl(objtip,o.type);
+				objtip.text(msg);
+			}
+		}
+	});
+});
+</script>
+</body>
+</html>

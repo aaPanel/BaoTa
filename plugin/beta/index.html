@@ -1,0 +1,86 @@
+<div id="beta-1" class="bt-form pd20 pb55" style="padding-top:0">
+	<div class="neice_con">
+		<div class="tit">注意事项</div>
+		<div class="nc_con">
+			<p style="color:red">1、注意，请不要在正式商用网站及自己生产环境的面板申请测试版。</p>
+			<p>2、所有新功能做完内部初审后都会第一时间向所有内测用户推送。</p>
+			<p>3、内测版会有诸多小Bug，如遇到，可以论坛或QQ找我们，我们一定负责到底。</p>
+			<p>4、内测意义在于为广大宝塔用户找Bug，宝塔团队再一次感谢您的积极参与。</p>
+			<p>5、如果你不是愿意付出及肯折腾学习的人，我们不建议申请内测。</p>
+		</div>
+		<div class="nc_opt"><label><input type="checkbox" name="yes" value="yes" />以上5句我已阅读并知晓</label></div>
+		<div class="tit">联系方式</div>
+		<div class="nc_con nc_con_user">
+			<p><span>论坛用户名</span><input id="ename" name="name" value=""></p>
+			<p style="line-height: 10px; margin-left: 80px; position: relative; top: -5px;">请如实填写宝塔论坛账号，提交后我们会审核，如未有，<a style="color:#20a53a" href="http://www.bt.cn/bbs/member.php?mod=register" target="_blank">去注册宝塔论坛账户</a></p>
+			<p><span>QQ号码</span><input id="qq" name="qq" value=""></p>
+			<p><span>邮箱</span><input id="email" name="email" value=""></p>
+		</div>
+	</div>
+	<div class="bt-form-submit-btn">
+		<button type="button" class="btn btn-danger btn-sm" onclick="layer.closeAll()">取消</button>
+		<button type="button" class="btn btn-success btn-sm" onclick="neice()">提交</button>
+	</div>
+</div>
+<div id="beta-2" class="nc-tips" style="display:none;">
+	<p style="font-size: 16px; margin-bottom: 10px;">恭喜您，成为内测组的一员！</p>
+	<p>您的宝塔论坛认证用户为：<span id="bbs_user"></span></p>
+	<p>您可以用这个账号在内测专用版块反馈交流，<a href="http://www.bt.cn/bbs/forum.php?mod=forumdisplay&fid=39" target="_blank">宝塔论坛内测专用版块</a></p>
+	<p>如果您想返回正式版，则直接SSH里再执行安装代码即可</p>
+</div>
+<script type="javascript/text">
+	$(function(){
+		$(".nc_con_user input").addClass("disabled").attr({"disabled":"disabled","placeholder":"阅读注意事项并确认"});
+		$.get('/plugin?action=a&name=beta&s=GetConfig',function(rdata){
+			if(rdata.status === false){
+				layer.closeAll();
+				layer.msg(rdata.msg,{icon:5});
+				return;
+			}
+			if(rdata != 'False'){
+				$("#beta-1").hide();
+				$("#beta-2").show();
+				$("#bbs_user").text(rdata.split('|')[0]);
+			}else{
+				$("#beta-2").hide();
+				$("#beta-1").show();
+			}
+		});
+	});
+	
+	$(".nc_opt label").click(function(){
+		var check = $(".nc_opt input").prop("checked");
+		if(!check){
+			$(".nc_con_user input").addClass("disabled").attr({"disabled":"disabled","placeholder":"阅读注意事项并确认"});
+		}
+		else{
+			$(".nc_con_user input").removeClass("disabled").removeAttr("disabled").removeAttr("placeholder");
+		}
+	});
+	$('#qq').on('input', function() {
+		var str = $(this).val();
+		$("#email").val(str+"@qq.com");
+	});
+	
+	
+	
+	function neice(){
+		var bbs_name = $("#ename").val();
+		var qq = $("#qq").val();
+		var email = $("#email").val();
+		
+		if(bbs_name == '' || qq == '' || email == ''){
+			layer.msg('论坛用户名/QQ/邮箱不能为空!',{icon:2});
+			return;
+		}
+		
+		var data = 'bbs_name=' + bbs_name + '&qq=' + qq + '&email=' + email;
+		var loadT = layer.msg("正在提交,请稍候...",{icon:16,time:0,shade:[0.3,'#000']});
+		$.post('/plugin?action=a&name=beta&s=SetConfig',data,function(rdata){
+			layer.close(loadT);
+			if(rdata.status) layer.closeAll();
+			layer.msg(rdata.msg,{icon:rdata.status?1:2});
+		});
+	}
+	
+</script>

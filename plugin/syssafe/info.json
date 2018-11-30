@@ -1,0 +1,16 @@
+{
+  "id": 3,
+  "title": "宝塔系统加固",
+  "tip": "lib",
+  "name": "syssafe",
+  "type": "扩展",
+  "ps": "提供灵活的系统加固功能，防止系统被植入木马",
+  "versions": "1.0",
+  "shell": "syssafe.sh",
+  "checks": "/www/server/panel/plugin/syssafe",
+  "author": "宝塔",
+  "home": "http://www.bt.cn/bbs",
+  "date": "2018-10-20",
+  "default": false,
+  "display": 0
+}

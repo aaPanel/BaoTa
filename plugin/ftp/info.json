@@ -1,0 +1,15 @@
+{
+	"title":"FTP客户端",
+	"tip":"lib",
+	"name":"ftp",
+	"type":"扩展",
+	"ps":"将网站或数据库打包备份到FTP存储空间.",
+	"versions":"1.6",
+	"shell":"ftp.sh",
+	"checks":"/www/server/panel/plugin/ftp",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2017-10-16",
+	"default":false,
+	"display":0
+}

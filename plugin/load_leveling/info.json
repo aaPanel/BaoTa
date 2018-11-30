@@ -1,0 +1,16 @@
+{
+	"id":3,
+	"title":"宝塔负载均衡",
+	"tip":"lib",
+	"name":"load_leveling",
+	"type":"扩展",
+	"ps":"基于nginx的负载均衡，apache环境用户请不要安装(首月1元/台)<a href=\"https://www.bt.cn/bbs/thread-13074-1-1.html\" target=\"_blank\" class=\"btlink\"> >>使用帮助</a>",
+	"versions":"1.1",
+	"shell":"load_leveling.sh",
+	"checks":"/www/server/panel/plugin/load_leveling",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2018-05-02",
+	"default":false,
+	"display":0
+}

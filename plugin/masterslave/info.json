@@ -1,0 +1,15 @@
+{
+	"title":"MySQL主从复制",
+	"tip":"lib",
+	"name":"masterslave",
+	"type":"系统工具",
+	"ps":"轻松实现MySQL主从复制、主主复制 (首月1元/台)<a href=\"https://www.bt.cn/bbs/thread-12900-1-1.html\" target=\"_blank\" class=\"btlink\"> >>使用帮助</a>",
+	"versions":"1.1",
+	"shell":"masterslave.sh",
+	"checks":"/www/server/panel/plugin/masterslave",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2018-04-26",
+	"default":false,
+	"display":0
+}

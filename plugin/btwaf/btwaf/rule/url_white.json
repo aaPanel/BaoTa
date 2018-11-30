@@ -1,0 +1,5 @@
+[
+	"^/phpmyadmin_",
+	"^/wp-content/themes/begin/timthumb\\.php",
+	"^/web/index\\.php\\?c=cloud"
+]

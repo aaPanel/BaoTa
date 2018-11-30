@@ -1,0 +1,79 @@
+[
+  {
+    "title": "首页",
+    "href": "/",
+    "class": "menu_home",
+    "id": "memuA",
+    "sort": 1
+  },
+  {
+    "title": "网站",
+    "href": "/site",
+    "class": "menu_web",
+    "id": "memuAsite",
+    "sort": 2
+  },
+  {
+    "title": "FTP",
+    "href": "/ftp",
+    "class": "menu_ftp",
+    "id": "memuAftp",
+    "sort": 3
+  },
+  {
+    "title": "数据库",
+    "href": "/database",
+    "class": "menu_data",
+    "id": "memuAdatabase",
+    "sort": 4
+  },
+  {
+    "title": "监控",
+    "href": "/control",
+    "class": "menu_control",
+    "id": "memuAcontrol",
+    "sort": 5
+  },
+  {
+    "title": "安全",
+    "href": "/firewall",
+    "class": "menu_firewall",
+    "id": "memuAfirewall",
+    "sort": 6
+  },
+  {
+    "title": "文件",
+    "href": "/files",
+    "class": "menu_folder",
+    "id": "memuAfiles",
+    "sort": 7
+  },
+  {
+    "title": "计划任务",
+    "href": "/crontab",
+    "class": "menu_day",
+    "id": "memuAcrontab",
+    "sort": 8
+  },
+  {
+    "title": "软件管理",
+    "href": "/soft",
+    "class": "menu_soft",
+    "id": "memuAsoft",
+    "sort": 9
+  },
+  {
+    "title": "面板设置",
+    "href": "/config",
+    "class": "menu_set",
+    "id": "memuAconfig",
+    "sort": 10
+  },
+  {
+    "title": "退出",
+    "href": "/login?dologin=True",
+    "class": "menu_exit",
+    "id": "dologin",
+    "sort": 11
+  }
+]

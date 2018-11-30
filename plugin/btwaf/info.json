@@ -1,0 +1,15 @@
+{
+	"title":"宝塔网站防火墙",
+	"tip":"lib",
+	"name":"btwaf",
+	"type":"系统工具",
+	"ps":"有效防止sql注入/xss/一句话木马等常见渗透攻击(当前仅支持nginx)",
+	"versions":"2.3",
+	"shell":"btwaf.sh",
+	"checks":"/www/server/panel/plugin/btwaf",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2018-05-10",
+	"default":false,
+	"display":0
+}

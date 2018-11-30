@@ -1,0 +1,195 @@
+#!/bin/bash
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
+export PATH
+
+#备份网站
+Backup_Site()
+{
+    #准备必要信息
+	startTime=`date +%s`
+	myDate=`date +"%Y%m%d_%H%M%S"`
+	zipName=${1}_${myDate}.zip
+	backupDir=${backup_path}/site
+	fileName=$backupDir/$zipName
+	tmp=`$Sql_Exec -e "SELECT id,path FROM bt_sites WHERE name='$1'"`;
+	pid=`echo $tmp|awk '{print $3}'`
+	sitePath=`echo $tmp|awk '{print $4}'`
+	
+	if [ "$pid" == '' ];then
+		endDate=`date +"%Y-%m-%d %H:%M:%S"`
+		log="网站[$1]不存在!"
+		echo "★[$endDate] $log"
+		echo '----------------------------------------------------------------------------'
+		exit
+	fi
+	
+	if [ ! -d $backupDir ];then
+		mkdir -p $backupDir
+	fi
+	
+	#取目录名称
+	oldIFS=$IFS
+	IFS=/
+	nameArr=($sitePath)
+	pathName=${nameArr[@]: -1};
+	IFS=$oldIFS
+	
+	#压缩
+	cd $sitePath
+	cd ..
+	zip -r $fileName $pathName > /dev/null
+	
+	if [ ! -f $fileName ];then
+		endDate=`date +"%Y-%m-%d %H:%M:%S"`
+		log="网站[$1]备份失败!"
+		echo "★[$endDate] $log"
+		echo '----------------------------------------------------------------------------'
+		exit
+	fi
+	
+	#记录日志
+	endDate=`date +"%Y-%m-%d %H:%M:%S"`
+	endTime=`date +%s`
+	((outTime=($endTime-$startTime)))
+	
+	log="网站[$1]备份成功,用时[$outTime]秒"
+	$Sql_Exec -e "INSERT INTO  bt_backup(type,name,pid,filename,addtime) VALUES(0,'$zipName',$pid,'$fileName','$endDate')"
+	$Sql_Exec -e "INSERT INTO  bt_logs(type,log,addtime) VALUES('计划任务','$log','$endDate')"
+	echo "★[$endDate] $log"
+	echo "|---保留最新的[$2]份备份"
+	echo "|---文件名:$fileName"
+	
+	#清理多余备份
+	tmp=`$Sql_Exec -e "SELECT COUNT(*) FROM bt_backup WHERE type=0 AND pid=$pid"`;
+	count=`echo $tmp|awk '{print $2}'`
+	((sum=($count-$2)))
+	if [ $sum -gt 0 ];then
+		str=`$Sql_Exec -e "SELECT filename FROM bt_backup WHERE type=0 AND pid=$pid ORDER BY id ASC LIMIT $sum"`
+		str=`echo $str|sed "s#filename##"|sed "s# ##"`
+		oldIFS=$IFS
+		IFS=' '
+		arr=($str)
+		for s in ${arr[@]}
+		do
+			if [ -f $s ];then
+				rm -f $s
+			fi
+			echo "|---已清理过期备份文件：$s"
+			$Sql_Exec -e "DELETE FROM bt_backup WHERE filename='$s'" > /dev/null
+		done
+		IFS=$oldIFS
+	fi
+	
+	echo '----------------------------------------------------------------------------'
+}
+
+#备份数据库
+Backup_Database()
+{
+	#准备必要信息
+	startTime=`date +%s`
+	mysqlRoot=`echo $select |grep mysql_root|awk '{print $3}'`
+	myDate=`date +"%Y%m%d_%H%M%S"`
+	sqlName=${1}_${myDate}.sql
+	zipName=${1}_${myDate}.zip
+	backupDir=${backup_path}/database
+	tmp=`$Sql_Exec -e "SELECT id FROM bt_databases WHERE name='$1'"`;
+	pid=`echo $tmp|awk '{print $2}'`
+	
+	if [ "$pid" == '' ];then
+		endDate=`date +"%Y-%m-%d %H:%M:%S"`
+		log="数据库[$1]不存在!"
+		echo "★[$endDate] $log"
+		echo '----------------------------------------------------------------------------'
+		exit
+	fi
+	
+	if [ ! -d $backupDir ];then
+		mkdir -p $backupDir
+	fi
+	
+	
+	#sed -i "s###"
+	isWrite=`cat /etc/my.cnf|grep 'user=root'`
+	if [ "${isWrite}" == '' ];then
+		echo -e "\n[mysqldump]\nuser=root\npassword=$mysqlRoot" >> /etc/my.cnf
+	else
+		sed -i "s#password=.*#password=$mysqlRoot#" /etc/my.cnf
+	fi
+	
+	#导出数据库
+	cd $backupDir
+	/www/server/mysql/bin/mysqldump -uroot -p$mysqlRoot -R $1 > $sqlName
+	
+	sed -i "/\[mysqldump\]/d" /etc/my.cnf
+	sed -i "/user=root/d" /etc/my.cnf
+	sed -i "/password=.*/d" /etc/my.cnf
+	sed -i "s/quick/\[mysqldump\]\nquick/" /etc/my.cnf
+	
+	
+	if [ ! -f $sqlName ];then
+		endDate=`date +"%Y-%m-%d %H:%M:%S"`
+		log="数据库[$1]备份失败!"
+		echo "★[$endDate] $log"
+		echo '----------------------------------------------------------------------------'
+		exit
+	fi
+	
+	#压缩
+	zip -r $zipName $sqlName > /dev/null
+	rm -f $sqlName
+	
+	#记录日志
+	endDate=`date +"%Y-%m-%d %H:%M:%S"`
+	endTime=`date +%s`
+	((outTime=($endTime-$startTime)))
+	fileName=$backupDir/$zipName
+	log="数据库[$1]备份成功,用时[$outTime]秒"
+	$Sql_Exec -e "INSERT INTO  bt_backup(type,name,pid,filename,addtime) VALUES(1,'$zipName',$pid,'$fileName','$endDate')" > /dev/null
+	$Sql_Exec -e "INSERT INTO  bt_logs(type,log,addtime) VALUES('计划任务','$log','$endDate')" > /dev/null
+	echo "★[$endDate] $log"
+	echo "|---保留最新的[$2]份备份"
+	echo "|---文件名:$fileName"
+	
+	#清理多余备份
+	tmp=`$Sql_Exec -e "SELECT COUNT(*) FROM bt_backup WHERE type=1 AND pid=$pid"`;
+	count=`echo $tmp|awk '{print $2}'`
+	((sum=($count-$2)))
+	if [ $sum -gt 0 ];then
+		str=`$Sql_Exec -e "SELECT filename FROM bt_backup WHERE type=1 AND pid=$pid ORDER BY id ASC LIMIT $sum"`
+		str=`echo $str|sed "s#filename##"|sed "s# ##"`
+		oldIFS=$IFS
+		IFS=' '
+		arr=($str)
+		for s in ${arr[@]}
+		do
+			if [ -f $s ];then
+				rm -f $s
+			fi
+			echo "|---已清理过期备份文件：$s"
+			$Sql_Exec -e "DELETE FROM bt_backup WHERE filename='$s'" > /dev/null
+		done
+		IFS=$oldIFS
+	fi
+	echo '----------------------------------------------------------------------------'
+}
+
+
+#准备基础信息
+action=$1
+name=$2
+num=$3
+dbPwd=`cat /www/wwwroot/default/conf/sql.config.php |grep 'DB_PWD'|awk '{print $3}'|sed "s#'##g"|sed "s#,##g"`
+dbName='bt_default'
+Sql_Exec="/www/server/mysql/bin/mysql -u$dbName -p$dbPwd --default-character-set=utf8 -D $dbName"
+select=`$Sql_Exec -e "SELECT mysql_root,backup_path FROM bt_config WHERE id=1"`
+backup_path=`echo $select |grep backup_path|awk '{print $4}'`
+
+case "${action}" in
+	'site')
+		Backup_Site $name $num
+		;;
+	'database')
+		Backup_Database $name $num
+		;;
+esac

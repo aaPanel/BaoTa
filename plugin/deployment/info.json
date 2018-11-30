@@ -1,0 +1,15 @@
+{
+	"title":"宝塔一键部署源码",
+	"tip":"lib",
+	"name":"deployment",
+	"type":"扩展",
+	"ps":"快速部署常用程序!",
+	"versions":"1.1",
+	"shell":"deployment.sh",
+	"checks":"/www/server/panel/plugin/deployment",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2017-07-26",
+	"default":false,
+	"display":0
+}

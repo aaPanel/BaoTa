@@ -1,0 +1,738 @@
+<style>
+.alarmcon{
+	float: left;
+	width: 100%;
+}
+.bt-legend {
+	border-color:#ccc;
+    font-size: 14px;
+    padding-bottom: 6px;
+	margin-bottom:10px;
+}
+.bt-legend .btswitch+.btswitch-btn {
+    width: 2.4em;
+    height: 1.4em;
+    margin-bottom: 0;
+}
+</style>
+<div class="bt-form">
+		<div class="bt-w-main">
+			<div class="bt-w-menu">
+				<p class="bgw" onclick="LBList()">负载均衡</p>
+				<p onclick="AlarmSetting()">预警设置</p>
+				<p onclick="LBLog()">日志</p>
+			</div>
+			<div class="bt-w-con pd15">
+				<div class="LBcon"></div>
+			</div>
+		</div>
+	</div>
+<script type="javascript/text">
+    $.getScript("./static/js/site.js?date=20180424");
+    LBList();
+    $(".bt-w-menu p").click(function(){
+        $(this).addClass("bgw").siblings().removeClass("bgw");
+    });
+    //负载列表
+    function LBList(){
+        var loadT = layer.msg('正在获取负载均衡列表..',{icon:16,time:0,shade: [0.3, '#000']});
+        $.get('/plugin?action=a&name=load_leveling&s=get_loadleveling_list',function(rdata){
+            layer.close(loadT);
+            if(rdata.status === false){
+                layer.closeAll();
+                layer.msg(rdata.msg,{icon:rdata.status?1:2});
+                return;
+            }
+            var tbody = ''
+            var mods = {'ip_hash':'IP地址','sticky':'Cookie','off':'关闭'}
+
+            for(var i=0;i<rdata.length;i++){
+                tbody += '<tr>\
+                            <td class="leveling_name_'+i+'">'+rdata[i].name+'</td>\
+                            <td><a class="btlink" onclick="webEdit('+rdata[i].site_id+',\''+rdata[i].site+'\',\'0000-00-00\',\''+getLocalTime(rdata[i].time)+'\')">'+rdata[i].site+'</a></td>\
+                            <td><a class="btlink" onclick="modify_session(\''+rdata[i].name+'\')">'+mods[rdata[i].session_type]+'</a></td>\
+                            <td><a class="btlink" onclick="get_nodes(\''+rdata[i].name+'\')">'+rdata[i].nodes.length+'个</a></td>\
+                            <td class="leveling_ps_'+i+'"><a class="btlink" onclick="modify_ps_start('+i+')">'+rdata[i].ps+'</a></td>\
+                            <td style="text-align: right;"><a class="btlink" onclick="get_nodes(\''+rdata[i].name+'\')">节点管理</a> | <a class="btlink" onclick="remove_leveling(\''+rdata[i].name+'\')">删除</a></td>\
+                        </tr>'
+            }
+
+            var con = '<div class="lbcon">\
+                            <button class="btn btn-success btn-sm va0" onclick="createLb()">创建</button>\
+                            <div class="divtable" style="margin-top:15px">\
+                                <table class="table table-hover">\
+                                    <thead>\
+                                        <tr><th>名称</th><th>关联站点</th><th>会话跟随</th><th>节点数</th><th>备注</th><th style="text-align: right;">操作</th></tr>\
+                                    </thead>\
+                                    <tbody id="lbListcon">'+tbody+'</tbody>\
+                                </table>\
+                            </div>\
+                        </div>';
+            $(".LBcon").html(con);
+        });
+    }
+
+
+    function modify_session(upname){
+        $.get('/plugin?action=a&name=load_leveling&s=get_leveling_info&upname=' + upname,function(rdata){
+            create_l = layer.open({
+                type: 1,
+                title: "设置会话属性",
+                area: '600px',
+                closeBtn: 2,
+                shadeClose: false,
+                content:'<div class="bt-form pd20 pb70">\
+                            <div class="line">\
+                                <span class="tname" style="width:160px">会话跟随</span>\
+                                <div class="info-r c4" style="margin-left:160px">\
+                                    <select name="session_type" class="bt-input-text" style="width:160px;margin-right:15px">\
+                                        <option value="sticky" '+((rdata.session_type == 'session_type')?'selected':'')+'>Cookie</option>\
+                                        <option value="ip_hash" '+((rdata.session_type == 'ip_hash')?'selected':'')+'>IP地址</option>\
+                                        <option value="off" '+((rdata.session_type == 'off')?'selected':'')+'>关闭</option>\
+                                    </select>\
+                                </div>\
+                            </div>\
+                            <div class="line">\
+                                <span class="tname" style="width:160px">Cookie标识</span>\
+                                <div class="info-r c4" style="margin-left:160px">\
+                                    <input class="bt-input-text" name="cookie_name" type="text" style="width:160px" placeholder="Cookie标识"  value="'+rdata.cookie_name+'">\
+                                </div>\
+                            </div>\
+                            <div class="line">\
+                                <span class="tname" style="width:160px">Cookie过期时间</span>\
+                                <div class="info-r c4" style="margin-left:160px">\
+                                    <input class="bt-input-text" name="expires" type="number" style="width:160px;margin-right:10px" placeholder="expires"  value="'+rdata.expires+'">小时\
+                                </div>\
+                            </div>\
+                            <div class="line">\
+                                <span class="tname" style="width:160px">Cookie保护(HttpOnly)</span>\
+                                <div class="info-r c4" style="margin-left:160px;line-height:30px">\
+                                    <input style="vertical-align:-2px" name="httponly" type="checkbox" placeholder="httponly" '+(rdata.httponly?'checked':'')+'>\
+                                    <span>禁止通过JS脚本获取Cookie</span>\
+                                </div>\
+                            </div>\
+                            <div class="line">\
+                                <span class="tname" style="width:160px">Cookie保护(Secure)</span>\
+                                <div class="info-r c4" style="margin-left:160px;line-height:30px">\
+                                    <input style="vertical-align:-2px" name="secure" type="checkbox" placeholder="secure" '+(rdata.secure?'checked':'')+'>\
+                                    <span>Cookie只对https协议有效</span>\
+                                </div>\
+                            </div>\
+                            <div class="bt-form-submit-btn">\
+                                <button type="button" class="btn btn-danger btn-sm bt-cancel" onclick="close_win()">取消</button>\
+                                <button type="button" class="btn btn-success btn-sm" onclick="modify_session_save(\''+upname+'\')">保存</button>\
+                            </div>\
+                            <ul style="margin-left:10px" class="help-info-text c7 ptb10">\
+                                <li>会话跟随: 保持用户会话(登陆状态)不丢失的方法</li>\
+                                <li>Cookie: 通过Cookie来识别用户会话,建议使用CDN的用户选择此项</li>\
+                                <li>IP地址: 通过客户的IP地址来保持会话</li>\
+                                <li>关闭: 关闭会话跟随,最大化利用负载均衡</li>\
+                                <li>注意: Cookie相关配置仅对Cookie模式下有效</li>\
+                            </ul>\
+                        </div>'
+            });
+        });
+    }
+
+    function modify_session_save(upname){
+        var pdata = {
+            upname: upname,
+            session_type: $("select[name='session_type']").val(),
+            cookie_name: $("input[name='cookie_name']").val(),
+            upexpires: $("input[name='expires']").val(),
+            httponly: $("input[name='httponly']").prop('checked')?1:0,
+            secure: $("input[name='secure']").prop('checked')?1:0
+        }
+        var loadT = layer.msg('正在保存节点配置['+pdata['server']+':'+pdata['port']+']..',{icon:16,time:10000,shade: [0.3, '#000']});
+        $.post('/plugin?action=a&name=load_leveling&s=modify_sticky_conf',pdata,function(rdata){
+            layer.close(loadT);
+            if(rdata.status) {
+                close_win();
+                modify_session(upname);
+            }
+            setTimeout(function(){
+                layer.msg(rdata.msg,{icon:rdata.status?1:2});
+            },500);
+        });
+    }
+
+
+
+    function modify_ps_start(num){
+        var ps = $(".leveling_ps_" + num + ' a').text();
+        $(".leveling_ps_" + num).html("<input class='bt-input-text' type='text' value='"+ps+"' onblur='modify_ps_save("+num+")' style='height:24px' />");
+        $(".bt-input-text").focus();
+    }
+
+    function modify_ps_save(num){
+        pdata = {
+            upname:$('.leveling_name_' + num).text(),
+            ps:$('.leveling_ps_' + num + ' input').val()
+        }
+        var loadT = layer.msg('正在保存..',{icon:16,time:10000,shade: [0.3, '#000']});
+        $.post('/plugin?action=a&name=load_leveling&s=modify_ps',pdata,function(rdata){
+            layer.close(loadT);
+            $('.leveling_ps_' + num).html('<a class="btlink" onclick="modify_ps_start('+num+')">'+pdata['ps']+'</a>');
+        });
+    }
+
+    var nodeState = 0;
+    //取节点列表
+    function get_nodes(upname){
+        var loadT = layer.msg('正在检测节点状态..',{icon:16,time:0,shade: [0.3, '#000']});
+        $.get('/plugin?action=a&name=load_leveling&s=get_node_list&upname=' + upname,function(rdata){
+            layer.close(loadT);
+            nodeState = 0;
+            var tbody = '';
+            var status = {'1':'参与','0':'停用','2':'备份'};
+            for(var i=0;i<rdata.length;i++){
+                if(rdata[i].state == 1) nodeState++;
+                var check = '<span style="color:rgb(92, 184, 92)" class="glyphicon glyphicon-play"></span>';
+                if(!rdata[i].check) check = '<span style="color:rgb(255, 0, 0)" class="glyphicon glyphicon-pause"></span>';
+                tbody += '<tr>\
+                <td class="modify_host_'+i+'">'+rdata[i].server + ':' + rdata[i].port + '</td>\
+                <td>'+check+'</td>\
+                <td class="modify_state_'+i+'"><a>'+ status[rdata[i].state] +'</a></td>\
+                <td class="modify_weight_'+i+'"><a>'+ rdata[i].weight +'</a></td>\
+                <td class="modify_max_fails_'+i+'"><a>'+ rdata[i].max_fails +'次</a></td>\
+                <td class="modify_fail_timeout_'+i+'"><a>'+ rdata[i].fail_timeout +'秒</a></td>\
+                <td>'+ getLocalTime(rdata[i].addtime) +'</td>\
+                <td class="node_modify_'+i+'" style="text-align: right;"><a class="btlink" onclick="modify_node_start('+i+',\''+upname+'\')">修改</a> | <a class="btlink" onclick="remove_node(\''+upname+'\',\''+rdata[i].server+'\','+rdata[i].port+','+rdata[i].state+')">删除</a></td></tr>';
+            }
+            create_l = layer.open({
+                type: 1,
+                title: "节点管理【"+upname+"】",
+                area: '700px',
+                closeBtn: 2,
+                shadeClose: false,
+                content:'<div class="pd15">\
+                        <div style="border-bottom:#ccc 1px solid;margin-bottom:10px;padding-bottom:10px"><input class="bt-input-text mr5" name="server" type="text" value="" style="width:140px;margin-right:15px" placeholder="服务器IP地址">\
+                        端口<input class="bt-input-text" name="port" type="number" value="80" style="width:70px;margin-right:15px;margin-left:5px" placeholder="端口">\
+                        类型<select class="bt-input-text" name="state" style="margin-left:5px;margin-right:15px">\
+                            <option value="1">参与</option>\
+                            <option value="2">备份</option>\
+                        </select>\
+                        权重<input class="bt-input-text mr5" name="weight" type="number" value="1" style="width:40px;margin-left:5px;margin-right:20px" placeholder="权重">\
+                        <button class="btn btn-success btn-sm va0 pull-right" onclick="add_node(\''+upname+'\');">添加</button>\</div>\
+                        <div class="divtable">\
+                        <table class="table table-hover" style="margin-top: 10px; max-height: 380px; overflow: auto;">\
+                            <thead>\
+                                <tr>\
+                                    <th>节点地址</th>\
+                                    <th>状态</th>\
+                                    <th>类型</th>\
+                                    <th>权重</th>\
+                                    <th>阈值</th>\
+                                    <th>恢复时间</th>\
+                                    <th>添加时间</th>\
+                                    <th style="text-align: right;">操作</th>\
+                                </tr>\
+                            </thead>\
+                            <tbody>'+tbody+'</tbody>\
+                        </table>\
+                    </div>\
+                    <ul class="help-info-text c7 ptb10">\
+                        <li>权重: 权重越高,负载分配越高,假设节点A=3,节点B=1, 每4次请求中节点A将会被请求3次</li>\
+                        <li>参与: 正常参与负载均衡,请至少保留1个正常参与节点</li>\
+                        <li>备份: 备用节点,当其它节点都无法使用时才会使用此节点</li>\
+                        <li>停用: 停用的节点,不参与负载均衡</li>\
+                        <li>阈值: 在轮循过程中连续出现N次异常后暂停此节点参与负载均衡</li>\
+                        <li>恢复时间: 在节点因异常次数达到阈值被暂停后自动恢复参与负载均衡的间隔时间</li>\
+                    </ul></div>'
+            });
+        });
+    }
+
+    //开始修改节点
+    function modify_node_start(num,upname){
+        var state = $(".modify_state_" + num + " a").text();
+        var opts = [['参与',1],['备份',2],['停用',0]]
+        var opt = ''
+        for(var i=0;i<opts.length;i++){
+            opt += '<option value="'+opts[i][1]+'"'+((opts[i][0] == state)?' selected':'')+'>'+opts[i][0]+'</option>';
+        }
+        $(".modify_state_" + num).html('<select class="bt-input-text">'+opt+'</select>');
+
+        var weight = $(".modify_weight_" + num + " a").text();
+        $(".modify_weight_" + num).html('<input class="bt-input-text" type="number" style="width: 40px;" value="'+weight+'" />');
+
+        var max_fails = $(".modify_max_fails_" + num + " a").text().replace('次','');
+        $(".modify_max_fails_" + num).html('<input class="bt-input-text" type="number" style="width: 40px;" value="'+max_fails+'" />');
+
+        var fail_timeout = $(".modify_fail_timeout_" + num + " a").text().replace('秒','');
+        $(".modify_fail_timeout_" + num).html('<input class="bt-input-text" type="number" style="width: 80px;" value="'+fail_timeout+'" />');
+
+        $(".node_modify_" + num).html('<a class="btlink" onclick="modify_node_save('+num+',\''+upname+'\')">保存</a>')
+    }
+
+    //保存节点修改
+    function modify_node_save(num,upname){
+        var host = $('.modify_host_' + num).text().split(':');
+        var pdata = {
+            upname: upname,
+            server: host[0],
+            port: host[1],
+            state: $('.modify_state_' + num + ' select').val(),
+            weight: $('.modify_weight_' + num + ' input').val(),
+            max_fails: $('.modify_max_fails_' + num + ' input').val(),
+            fail_timeout: $('.modify_fail_timeout_' + num + ' input').val()
+        }
+        var loadT = layer.msg('正在保存节点配置['+pdata['server']+':'+pdata['port']+']..',{icon:16,time:10000,shade: [0.3, '#000']});
+        $.post('/plugin?action=a&name=load_leveling&s=modify_node',pdata,function(rdata){
+            layer.close(loadT);
+            if(rdata.status) {
+                close_win();
+                get_nodes(upname);
+            }
+            setTimeout(function(){
+                layer.msg(rdata.msg,{icon:rdata.status?1:2});
+            },500);
+        });
+
+    }
+
+    //添加节点
+    function add_node(upname){
+
+        pdata = {
+            upname:upname,
+            server:$("input[name='server']").val(),
+            port:$("input[name='port']").val(),
+            state:$("select[name='state']").val(),
+            weight:$("input[name='weight']").val(),
+            max_fails:2,
+            fail_timeout:180,
+            addtime:Date.parse(new Date())/1000
+        }
+
+        if(pdata['server'] < 1){
+            layer.msg('服务器IP不能为空');
+            return;
+        }
+
+        if(pdata['weight'] < 1){
+            layer.msg('节点权重不能小于1');
+            return;
+        }
+
+        if(pdata['weight'] > 65535 || pdata['weight'] < 1){
+            layer.msg('端口范围不正确!');
+            return;
+        }
+        var loadT = layer.msg('正在添加节点['+pdata['server']+':'+pdata['port']+']..',{icon:16,time:10000,shade: [0.3, '#000']});
+        $.post('/plugin?action=a&name=load_leveling&s=add_node',pdata,function(rdata){
+            layer.close(loadT);
+            if(rdata.status) {
+                close_win();
+                get_nodes(upname);
+            }
+            setTimeout(function(){
+                layer.msg(rdata.msg,{icon:rdata.status?1:2});
+            },500);
+        });
+    }
+
+
+    //删除节点
+    function remove_node(upname,server,port,state){
+        if(nodeState == 1 && state == '1'){
+            layer.msg('最后一个正常参与节点不能删除!');
+            return;
+        }
+        SafeMessage('删除节点','您真的要删除节点['+server+':'+port+']吗？',function(){
+            var loadT = layer.msg('正在删除节点['+server+':'+port+']..',{icon:16,time:0,shade: [0.3, '#000']});
+            $.post('/plugin?action=a&name=load_leveling&s=remove_node',{upname:upname,server:server,port:port},function(rdata){
+                layer.close(loadT);
+                if(rdata.status) {
+                    close_win();
+                    get_nodes(upname);
+                }
+                setTimeout(function(){
+                    layer.msg(rdata.msg,{icon:rdata.status?1:2});
+                },500);
+            });
+        });
+    }
+
+
+    //删除负载均衡
+    function remove_leveling(upname){
+        SafeMessage('删除负载均衡','删除负载均衡的是时，也会删除其关联站点，您真的要删除['+upname+']吗？',function(){
+            var loadT = layer.msg('正在删除负载均衡['+upname+']..',{icon:16,time:10000,shade: [0.3, '#000']});
+            $.post('/plugin?action=a&name=load_leveling&s=remove_loadleveling',{upname:upname},function(rdata){
+                layer.close(loadT);
+                if(rdata.status) LBList();
+                setTimeout(function(){
+                    layer.msg(rdata.msg,{icon:rdata.status?1:2});
+                },500);
+            });
+        });
+    }
+
+    //报警设置
+    function AlarmSetting(){
+        var loadT = layer.msg('正在邮箱列表..',{icon:16,time:10000,shade: [0.3, '#000']});
+        $.get('/plugin?action=a&name=load_leveling&s=get_email_list',function(rdata){
+            layer.close(loadT);
+            var tbody = '';
+            for(var i=0;i<rdata.emails.length;i++){
+                tbody += '<tr><td>'+rdata.emails[i]+'</td><td style="text-align: right;"><a class="btlink" onclick="remove_email(\''+rdata.emails[i]+'\')">删除</a></td></tr>';
+            }
+
+            var hcheck = 'checked="checked"';
+            var hfun = 'heartbeat_off'
+            if(rdata.heartbeat.open < 1){
+                var hcheck = '';
+                var hfun = 'modify_heartbeat_conf'
+            }
+
+            var con='<fieldset class="bt-fieldset" style="margin-bottom:15px">\
+                        <legend class="bt-legend">心跳包检测<div class="index-item pull-right"><input class="btswitch btswitch-ios" id="Heartbeat" type="checkbox" '+hcheck+'><label class="btswitch-btn" for="Heartbeat" onclick="'+hfun+'()"></label></div></legend>\
+                        <div class="line">\
+                            <span class="tname c6">检测路径</span>\
+                            <div class="info-r c4">\
+                                <input type="text" class="bt-input-text" name="hpath" value="'+rdata.heartbeat.path+'" />\
+                            </div>\
+                        </div>\
+                        <div class="line">\
+                            <span class="tname c6">心跳周期</span>\
+                            <div class="info-r c4">\
+                                <input type="number" class="bt-input-text" style="width:138px" name="htime" max="1440" min="10" value="'+rdata.heartbeat.time+'" /> 分钟\
+                            </div>\
+                        </div>\
+                        <div class="line">\
+                            <span class="tname c6">预警阈值</span>\
+                            <div class="info-r c4">\
+                                <input type="number" class="bt-input-text" name="hwarning" value="'+rdata.heartbeat.warning+'" />\
+                            </div>\
+                        </div>\
+                        <button class="btn btn-success btn-sm" onclick="modify_heartbeat_conf()" style="position: absolute;right: 170px;top: 100px;">保存</button>\
+                    </fieldset>\
+                    <fieldset class="bt-fieldset">\
+                        <legend class="bt-legend">预警接收邮箱列表</legend>\
+                            <input class="bt-input-text mr5" name="email" type="email" value="" style="width:238px" placeholder="邮箱地址">\
+                            <button class="btn btn-default btn-sm va0" onclick="add_email();">添加</button>\
+                        <div class="divtable" style="margin-top: 10px; max-height: 100px; overflow: auto;">\
+                            <table class="table table-hover">\
+                                <thead>\
+                                    <tr>\
+                                        <th>邮箱地址</th>\
+                                        <th style="text-align: right;">操作</th>\
+                                    </tr>\
+                                </thead>\
+                                <tbody id="EmailList">'+tbody+'</tbody>\
+                            </table>\
+                        </div>\
+                        </fieldset>\
+                        <ul style="margin-left:10px" class="help-info-text c7 ptb10">\
+                        <li>心跳包: 定期检测所有节点是否正常,若某节点无法访问,会自动向用户发送预警邮件</li>\
+                        <li>检测路径: 用于心跳检测的请求路径,如: /check.txt</li>\
+                        <li>心跳周期: 每隔多少分钟检测一次节点状态</li>\
+                        <li>预警阈值: 当节点连续N次请求失败时,向用户发送预警邮件</li>\
+                        <li>预警接收邮箱列表: 最多支持3个邮箱</li>\
+                    </ul>';
+            $(".LBcon").html(con);
+        });
+    }
+
+    //关闭心跳包
+    function heartbeat_off(){
+        var loadT = layer.msg('正在设置..',{icon:16,time:10000,shade: [0.3, '#000']});
+        $.get('/plugin?action=a&name=load_leveling&s=heartbeat_off',function(rdata){
+            layer.close(loadT);
+            if(rdata.status) AlarmSetting();
+            setTimeout(function(){
+                layer.msg(rdata.msg,{icon:rdata.status?1:2});
+            },500);
+        });
+    }
+
+    //心跳包设置
+    function modify_heartbeat_conf(){
+        var pdata = {
+                hpath:$("input[name='hpath']").val(),
+                htime:$("input[name='htime']").val(),
+                hwarning:$("input[name='hwarning']").val()
+            }
+
+        if(pdata['hpath'] == '' || pdata['hpath'].indexOf('://') != -1){
+            layer.msg('检测路径不正确!');
+            return;
+        }
+
+        if(pdata['htime'] < 10 || pdata['htime'] > 1440){
+            layer.msg('心跳周期必需为10 - 1440分钟之间');
+            return;
+        }
+
+        if(pdata['hwarning'] < 1 || pdata['hwarning'] > 100){
+            layer.msg('预警阈值必需为 1 - 100次之间');
+            return;
+        }
+
+        var loadT = layer.msg('正在保存..',{icon:16,time:10000,shade: [0.3, '#000']});
+        $.post('/plugin?action=a&name=load_leveling&s=modify_heartbeat_conf',pdata,function(rdata){
+            layer.close(loadT);
+            if(rdata.status) AlarmSetting();
+            setTimeout(function(){
+                layer.msg(rdata.msg,{icon:rdata.status?1:2});
+            },500);
+        });
+    }
+
+    //添加邮箱
+    function add_email(){
+        var elan = $("#EmailList tr").length;
+        if(elan > 3){
+            layer.msg("最多支持3个邮箱，请删除后添加。",{icon:6});
+            return;
+        }
+        var email = $("input[name='email']").val();
+        var loadT = layer.msg('正在添加邮箱..',{icon:16,time:10000,shade: [0.3, '#000']});
+        $.post('/plugin?action=a&name=load_leveling&s=add_email',{email:email},function(rdata){
+            layer.close(loadT);
+            if(rdata.status) AlarmSetting();
+            setTimeout(function(){
+                layer.msg(rdata.msg,{icon:rdata.status?1:2});
+            },500);
+        });
+    }
+
+    //删除邮箱
+    function remove_email(email){
+        var loadT = layer.msg('正在删除邮箱..',{icon:16,time:10000,shade: [0.3, '#000']});
+        $.post('/plugin?action=a&name=load_leveling&s=remove_email',{email:email},function(rdata){
+            layer.close(loadT);
+            if(rdata.status) AlarmSetting();
+            setTimeout(function(){
+                layer.msg(rdata.msg,{icon:rdata.status?1:2});
+            },500);
+        });
+    }
+
+    //日志
+    function LBLog(p){
+        if(p == undefined) p = 1;
+        var loadT = layer.msg('正在获取日志..',{icon:16,time:10000,shade: [0.3, '#000']});
+        $.get('/plugin?action=a&name=load_leveling&s=get_logs&tojs=LBLog&p=' + p,function(rdata){
+            layer.close(loadT);
+            var tbody = '';
+            for(var i=0;i<rdata.data.length;i++){
+                tbody += '<tr><td>'+rdata.data[i].log+'</td><td>'+rdata.data[i].addtime+'</td></tr>'
+            }
+
+            var con='<div class="divtable">\
+                    <table width="100%" border="0" cellpadding="0" cellspacing="0" class="table table-hover">\
+                    <thead>\
+                        <tr>\
+                            <th>详情</th>\
+                            <th>操作时间</th>\
+                        </tr>\
+                    </thead>\
+                    <tbody id="logsBody">'+tbody+'</tbody>\
+                </table>\
+                </div><div class="page" style="margin-top:10px">'+rdata.page+'</div>';
+            $(".LBcon").html(con);
+        });
+    }
+    var create_l = null
+
+    //创建负载均衡
+    function createLb(){
+         create_l = layer.open({
+            type: 1,
+            title: "创建负载",
+            area: '600px',
+            closeBtn: 2,
+            shadeClose: false,
+            content:'<div class="bt-form pd20 pb70">\
+                        <div class="line">\
+                            <span class="tname">名称</span>\
+                            <div class="info-r c4">\
+                                <input class="bt-input-text" name="upname" type="text" style="width:407px" placeholder="节点名称,可以是英文字母和下划线,不能使用中文"  value="">\
+                            </div>\
+                        </div>\
+                        <div class="line">\
+                            <span class="tname">域名</span>\
+                            <div class="info-r c4"><textarea id="mainDomain" class="bt-input-text" name="webname" style="width:407px;height:100px;line-height:22px"></textarea></div>\
+                        </div>\
+                        <div class="line">\
+                            <span class="tname">会话跟随</span>\
+                            <div class="info-r c4">\
+                                <select name="session_type" class="bt-input-text" style="width:170px;margin-right:15px">\
+                                    <option value="sticky">Cookie</option>\
+                                    <option value="ip_hash">IP地址</option>\
+                                    <option value="off">关闭</option>\
+                                </select>\
+                            </div>\
+                        </div>\
+                        <div class="line">\
+                            <span class="tname">节点</span>\
+                            <div class="info-r c4">\
+                                <div class="divtable" style="max-height:137px;overflow:auto; margin-bottom:15px;width:407px">\
+                                    <div id="node-table" class="table-con">\
+                                        <table class="table table-hover">\
+                                            <thead><tr><th width="180">IP地址</th><th width="95">端口</th><th>状态</th><th width="60" class="text-right">操作</th></tr></thead>\
+                                            <tbody id="nodecon"></tbody>\
+                                        </table>\
+                                    </div>\
+                                </div>\
+                                <div class="node-port">\
+                                    <input class="bt-input-text" name="host" type="text" placeholder="节点地址,不包含http://" style="width:170px;margin-right:8px">\
+                                    <input class="bt-input-text" name="port" type="number" placeholder="端口" value="80" style="width:79px;margin-right:8px">\
+                                    <select name="state" class="bt-input-text" style="width:80px;margin-right:5px">\
+                                        <option value="普通">普通节点</option>\
+                                        <option value="备份">备份节点</option>\
+                                    </select>\
+                                    <span class="plus btn btn-success btn-sm" style="vertical-align:0">添加</span>\
+                                </div>\
+                            </div>\
+                        </div>\
+                        <div class="line">\
+                            <span class="tname">备注</span>\
+                            <div class="info-r c4">\
+                                <input class="bt-input-text" name="ps" type="text" style="width:407px"  value="">\
+                            </div>\
+                        </div>\
+                        <div class="bt-form-submit-btn">\
+                            <button type="button" class="btn btn-danger btn-sm bt-cancel" onclick="close_win()">取消</button>\
+                            <button type="button" class="btn btn-success btn-sm" onclick="create_leveling()">提交</button>\
+                        </div>\
+                        <ul style="margin-left:10px" class="help-info-text c7 ptb10">\
+                            <li>会话跟随: 保持用户会话(登陆状态)不丢失的方法</li>\
+                            <li>Cookie: 通过Cookie来识别用户会话,建议使用CDN的用户选择此项</li>\
+                            <li>IP地址: 通过客户的IP地址来保持会话</li>\
+                            <li>关闭: 关闭会话跟随,最大化利用负载均衡(仅适用不需要用户登陆的站点)</li>\
+                            <li>备份节点: 当其它节点都无法使用时才会使用此节点</li>\
+                            <li>普通节点: 正常参与负载均衡,请至少添加1个普通节点</li>\
+                            <li>节点地址: 节点地址必需支持http协议,否则无法正常参与负载均衡</li>\
+                        </ul>\
+                    </div>'
+        });
+        var placeholder = "<div class='placeholder c9' style='top:10px;left:10px'>每行填写一个域名，默认为80端口<br>泛解析添加方法 *.domain.com<br>如另加端口格式为 www.domain.com:88</div>";
+        $('#mainDomain').after(placeholder);
+        $(".placeholder").click(function(){
+            $(this).hide();
+            $('#mainDomain').focus();
+        })
+        $('#mainDomain').focus(function() {
+            $(".placeholder").hide();
+        });
+
+        $('#mainDomain').blur(function() {
+            if($(this).val().length==0){
+                $(".placeholder").show();
+            }
+        });
+        nodeconNull();
+        $(".plus").click(function(){
+            var name1 = $(".node-port input[name='port']").val();
+            var name2 = $(".node-port select[name='state']").val();
+            var host = $(".node-port input[name='host']").val();
+            if(host == '') {
+                layer.msg('节点地址不能为空!',{icon:2});
+                return;
+            }
+
+            if(host.indexOf(':') != -1){
+                layer.msg('节点地址格式不正确,不要填写协议和端口!',{icon:2});
+                return;
+            }
+            var upnode = $("#nodecon tr");
+            for(var i=0;i<upnode.length;i++){
+                if(upnode[i].childNodes[0].innerText == host && upnode[i].childNodes[1].innerText == name1){
+                    layer.msg('指定节点已经添加过了!');
+                    return;
+                }
+            }
+            var nodecon= '<tr><td>'+host+'</td><td>'+name1+'</td><td>'+name2+'</td><td class="text-right" width="50"><a href="javascript:;" class="btlink minus">删除</a></td></tr>';
+            $("#nodecon").append(nodecon);
+            $(".minus").click(function(){
+                $(this).parents("tr").remove();
+                nodeconNull()
+            });
+            nodeconNull()
+        });
+    }
+    function nodeconNull(){
+        var t = $("#nodecon");
+        if(t.html().length==0){
+            //t.parents(".divtable").hide()
+            t.html("<tr class='nulltr'><td colspan='4'>当前节点为空，请至少添加一个普通节点</td></tr>")
+        }
+        else{
+            //t.parents(".divtable").show()
+            $(".nulltr").remove()
+        }
+    }
+    function close_win(){
+        layer.close(create_l);
+    };
+
+    //创建负载均衡
+    function create_leveling(){
+        var domainstr = $("#mainDomain").val();
+        var domainarr = domainstr.split("\n")
+        if(domainarr.length == 0 || domainstr == ''){
+            layer.msg('域名不能为空!');
+            $("#mainDomain").focus();
+            return;
+        }
+
+        var domains = JSON.stringify(domainarr);
+        var upname = $("input[name='upname']").val();
+        var re = /^[a-zA-Z]+[a-zA-Z0-9_]+$/
+        if(!re.test(upname)){
+            layer.msg('负载均衡名称只能以字母开头，名称中允许字母和数字以及下划线!');
+            $("input[name='upname']").focus();
+            return;
+        }
+
+        var session_type = $("select[name='session_type']").val();
+        var ps = $("input[name='ps']").val();
+        var upnode = $("#nodecon tr");
+        var upnodes = [];
+        var nodeIs = 0;
+        var uptime = Date.parse(new Date()) / 1000;
+        for(var i=0;i<upnode.length;i++){
+            if(upnode[i].childNodes[2].innerText.indexOf('普通') != -1) nodeIs++;
+            var tmp = {
+                server: upnode[i].childNodes[0].innerText,
+                port: parseInt(upnode[i].childNodes[1].innerText),
+                state: (upnode[i].childNodes[2].innerText.indexOf('普通') != -1)?1:2,
+                weight: 1,
+                max_fails:2,
+                fail_timeout:180,
+                addtime: uptime
+            }
+            upnodes.push(tmp);
+        }
+        if(nodeIs == 0){
+            layer.msg('请添加至少1个普通节点!');
+            return;
+        }
+        upnodes = JSON.stringify(upnodes);
+
+        pdata = {
+            upname: upname,
+            domains: domains,
+            upnodes: upnodes,
+            ps: ps,
+            session_type: session_type,
+            upexpires: 12
+        }
+
+        var loadT = layer.msg('正在创建负载均衡..',{icon:16,time:0,shade: [0.3, '#000']});
+        $.post('/plugin?action=a&name=load_leveling&s=cerate_loadleveling',pdata,function(rdata){
+            layer.close(loadT);
+            if(rdata.status){
+                close_win();
+                LBList();
+            }
+            setTimeout(function(){
+                layer.msg(rdata.msg,{icon:rdata.status?1:2});
+            },500);
+        });
+    }
+
+</script>

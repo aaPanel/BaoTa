@@ -1,0 +1,214 @@
+<style>
+.soft-man-con .title{
+	height:30px;
+	line-height:30px;
+}
+.SetAggregateOne {
+    height: 60px;
+}
+.gitservice {
+    margin-bottom: 13px;
+    margin-right: 0;
+    text-align: right;
+    width: 120px;
+}
+.gitlab{
+	margin-bottom:30px;
+	padding-top:15px;
+}
+.gitlabUrl{
+	display:inline-block;
+	width:206px;
+}
+</style>
+<div class="bt-w-main">
+	<div class="bt-w-menu">
+		<p class="bgw" >服务状态</p>
+		<p>数据库</p>
+		<p>配置项</p>
+		<p>配置文件</p>
+		<p>日志</p>
+	</div>
+	<div id="webEdit-con" class="bt-w-con pd15">
+	</div>
+</div>
+<script type="javascript/text">
+	var serviceStatus = true;
+	$(".bt-w-menu p").click(function(){
+		var i = $(this).index();
+		$(this).addClass("bgw").siblings().removeClass("bgw");
+		switch(i){
+			case 0:
+				GetStatus();
+				break;
+			case 1:
+				if(!serviceStatus){
+					layer.msg('请先启动mongodb服务!',{icon:2});
+					return;
+				}
+				GetDatabases();
+				break;
+			case 2:
+				GetOptions();
+				break;
+			case 3:
+				GetConfBody();
+				break;
+			case 4:
+				GetLogList();
+				break;
+		}
+	});
+	
+	function GetStatus(){
+		var loadT = layer.msg('正在获取状态...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.get('/plugin?action=a&name=mongodb&s=get_service_status',function(rdata){
+			layer.close(loadT);
+			serviceStatus = rdata;
+			var sBody = '<div class="soft-man-con"><p class="status">当前状态：<span>'+(rdata?'开启':'关闭')+'</span><span style="color: '+(rdata?'#20a53a':'red')+'; margin-left: 3px;" class="glyphicon glyphicon '+(rdata?'glyphicon-play':'glyphicon-pause')+'"></span></p>\
+			<div class="sfm-opt">\
+				<button class="btn btn-default btn-sm" onclick="ServiceMongodbAdmin('+(rdata?0:1)+')">'+(rdata?'停止':'启动')+'</button>\
+				<button class="btn btn-default btn-sm" onclick="ServiceMongodbAdmin(2)" style="display:'+(rdata?'inline':'none')+';">重启</button>\
+			</div></div>'
+			$("#webEdit-con").html(sBody);
+		});
+	}
+	
+	function ServiceMongodbAdmin(status){
+		var loadT = layer.msg('正在执行操作...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&name=mongodb&s=service_admin',{status:status},function(rdata){
+			layer.close(loadT);
+			layer.msg(rdata.msg,{icon:rdata.status?1:2});
+			if(rdata.status) GetStatus();
+		});
+	}
+	
+	function GetDatabases(){
+		var loadT = layer.msg('正在获取数据库列表...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.get('/plugin?action=a&name=mongodb&s=get_databases',function(dbList){
+			layer.close(loadT);
+			var tableBody = "";
+			for(var i=0;i<dbList.databases.length;i++){
+				tableBody += '<tr><td>'+dbList.databases[i].name+'</td><td>'+ToSize(dbList.databases[i].sizeOnDisk)+'</td><td style="text-align: right;"><a class="btlink" onclick="RemoveDatabase(\''+dbList.databases[i].name+'\')">删除</a></td></tr>';
+			}
+			var sBody = '<input name="db_name" type="text" class="bt-input-text mr5" placeholder="数据库名称"><button class="btn btn-default btn-sm" onclick="CreateDatabase()" style="margin-top: -3px;">创建数据库</button>\
+						<div class="divtable mtb15">\
+							<table class="table table-hover">\
+							<thead>\
+								<tr>\
+									<th>数据库名称</th>\
+									<th>数据大小</th>\
+									<th style="text-align: right;">操作</th>\
+								</tr>\
+							</thead>\
+							<tbody>'+tableBody+'</tbody>\
+							</table>'
+			$("#webEdit-con").html(sBody);
+		});
+	}
+	
+	function CreateDatabase(){
+		var dbname = $("input[name='db_name']").val();
+		if(dbname == ''){
+			layer.msg('数据库名称不能为空!',{icon:2});
+			$("input[name='db_name']").focus();
+			return;
+		}
+		var loadT = layer.msg('正在创建数据库...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&name=mongodb&s=create_database',{dbname:dbname},function(rdata){
+			layer.close(loadT);
+			layer.msg(rdata.msg,{icon:rdata.status?1:2});
+			if(rdata.status) GetDatabases();
+		});
+	}
+	
+	function RemoveDatabase(dbname){
+		SafeMessage('删除数据库','您真的要删除数据库['+dbname+']吗?',function(){
+			var loadT = layer.msg('正在删除数据库...',{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/plugin?action=a&name=mongodb&s=remove_database',{dbname:dbname},function(rdata){
+				layer.close(loadT);
+				layer.msg(rdata.msg,{icon:rdata.status?1:2});
+				if(rdata.status) GetDatabases();
+			});
+		});
+	}
+	
+	function GetOptions(){
+		var loadT = layer.msg('正在获取数据...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.get('/plugin?action=a&name=mongodb&s=get_options',function(options){
+			layer.close(loadT);
+			var sBody = '<div class="conf_p" style="margin-bottom:0">\
+				<p><span>bindIp</span><input style="width: 120px;" class="bt-input-text mr5" name="monbind" value="'+options.bindIp+'" type="text"><font>监听IP,请勿随意修改</font></p>\
+				<p><span>port</span><input style="width: 120px;" class="bt-input-text mr5" max="65535" name="monport" value="'+options.port+'" type="number"><font>监听端口,一般无需修改</font></p>\
+				<p><span>dbPath</span><input style="width: 300px;" class="bt-input-text mr5"  name="mondbpath" value="'+options.dbPath+'" type="text"><font>数据存储位置</font></p>\
+				<p><span>path</span><input style="width: 300px;" class="bt-input-text mr5" name="monpath" value="'+options.path+'" type="text">,<font>日志文件位置</font></p>\
+				<p><span>pidFilePath</span><input style="width: 300px;" class="bt-input-text mr5" name="monpidfilepath" value="'+options.pidFilePath+'" type="text"><font>PID保存路径</font></p>\
+				<div style="margin-top:10px; padding-right:110px" class="text-right"><button class="btn btn-success btn-sm" onclick="SetOptions()">保存</button></div>\
+			</div>'
+			$("#webEdit-con").html(sBody);
+		});
+	}
+	
+	function SetOptions(){
+		var data = {
+			bindIp:$("input[name='monbind']").val(),
+			port:$("input[name='monport']").val(),
+			dbPath:$("input[name='mondbpath']").val(),
+			path:$("input[name='monpath']").val(),
+			pidFilePath:$("input[name='monpidfilepath']").val()
+		}
+		if(data.port < 80 || data.port > 65535){
+			layer.msg('端口范围不合法',{icon:2});
+			return;
+		}
+		var loadT = layer.msg('正在保存配置...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.post('/plugin?action=a&name=mongodb&s=save_options',data,function(rdata){
+			layer.close(loadT);
+			layer.msg(rdata.msg,{icon:rdata.status?1:2});
+		});
+	}
+	
+	function GetConfBody(){
+		var loadT = layer.msg('正在获取数据...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.get('/plugin?action=a&name=mongodb&s=get_config',function(conf){
+			layer.close(loadT);
+			var sBody = '<div class="soft-man-con">\
+				<p style="color: #666; margin-bottom: 7px">提示：Ctrl+F 搜索关键字，Ctrl+G 查找下一个，Ctrl+S 保存，Ctrl+Shift+R 查找替换!</p>\
+				<textarea class="bt-input-text" style="height: 320px; line-height: 18px; display: none;" id="textBody"></textarea>\
+				<button id="OnlineEditFileBtn" class="btn btn-success btn-sm" style="margin-top:10px;">保存</button>\
+				<ul class="help-info-text c7 ptb15">\
+					<li>此处为MongoDB主配置文件,若您不了解配置规则,请勿随意修改。</li>\
+				</ul>\
+			</div>'
+			$("#webEdit-con").html(sBody);
+			$("#textBody").empty().text(conf);
+			$(".CodeMirror").remove();
+			var editor = CodeMirror.fromTextArea(document.getElementById("textBody"), {
+				extraKeys: {"Ctrl-Space": "autocomplete"},
+				lineNumbers: true,
+				matchBrackets:true,
+			});
+			editor.focus();
+			$(".CodeMirror-scroll").css({"height":"300px","margin":0,"padding":0});
+			$("#OnlineEditFileBtn").click(function(){
+				var loadT = layer.msg('正在保存配置文件...',{icon:16,time:0,shade: [0.3, '#000']});
+				$.post('/plugin?action=a&name=mongodb&s=save_config',{config_body: editor.getValue()},function(rdata){
+					layer.close(loadT);
+					layer.msg(rdata.msg,{icon:rdata.status?1:2});
+				});
+			});
+		});
+	}
+	
+	function GetLogList(){
+		var loadT = layer.msg('正在获取数据...',{icon:16,time:0,shade: [0.3, '#000']});
+		$.get('/plugin?action=a&name=mongodb&s=get_logs',function(logs){
+			layer.close(loadT);
+			var sBody = '<div class="soft-man-con"><textarea readonly="" style="margin: 0px;width: 560px;height: 520px;background-color: #333;color:#fff; padding:0 5px" id="error_log">'+logs+'</textarea></div>';
+			$("#webEdit-con").html(sBody);
+			var ob = document.getElementById('error_log');
+			ob.scrollTop = ob.scrollHeight;
+		});
+	}
+	GetStatus();
+</script>

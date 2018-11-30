@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+	<title>docker用户后台</title>
+	<link href="/static/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+	<link href="/static/css/reset.css" rel="stylesheet" type="text/css">
+	<link href="/static/css/site.css" rel="stylesheet" type="text/css">
+	<script src="/static/js/jquery-1.10.2.min.js" language="javascript"></script>
+	<style>
+		html,body{
+			height:100%;
+		}
+		.bt-w-main{
+			height:100%;
+		}
+
+		/*docker*/
+		.relabel{
+			line-height: 30px;
+			margin-bottom: 0;
+			font-weight: normal;
+		}
+		.relabel input[type='radio']{
+			margin-right: 5px;
+		}
+		.type-radio{
+			margin-bottom: 10px;
+		}
+		.type-port{
+			margin-top: 10px;
+		}
+		.type-port .plus,.type-port .minus{
+			cursor: pointer;
+			display: inline-block;
+			font-size: 16px;
+			text-align: center;
+			width: 20px;
+		}
+		.ceart-docker .help{
+			color: #999;
+			font-style: normal;
+			margin-left: 20px;
+		}
+		.dc-un{
+			display: inline-block;
+			width: 20px;
+			margin-left: 7px;
+		}
+		.infoline .cname{
+			display: inline-block;
+			width: 200px;
+		}
+		.infoline{
+			border-bottom: #eee 1px solid;
+			padding: 20px 0;
+		}
+		.dk-table > thead > tr > th{
+			font-weight: normal;
+			background-color: #F5F7FA;
+			border: #F0F0F0 1px solid;
+			padding: 12px 8px;
+		}
+		.dk-table > tbody > tr > td{
+			padding: 12px 8px;
+			line-height: 30px;
+		}
+		.dk-table{
+			border-bottom: #ddd 1px solid;
+		}
+		.image-search input{
+			border-radius: 0;
+		}
+		.image-search .s-btn{
+			border: #ddd 1px solid;
+			height: 30px;
+			line-height: 30px;
+			cursor: pointer;
+			margin-left: -1px;
+		}
+		.image-list{
+			margin-top: 20px;
+		}
+		.image-list ul li{
+			float: left;
+			height: 166px;
+			width: 190px;
+			border: #ddd 1px solid;
+			margin-right: 20px;
+			margin-bottom: 20px;
+		}
+		.image-list ul li:nth-of-type(4n){
+			margin-right: 0;
+		}
+		.image-list .image-ico{
+			height: 90px;
+			line-height: 90px;
+			vertical-align: middle;
+		}
+		.image-list .image-ico img{
+			vertical-align: middle;
+		}
+		.image-list .tt{
+			font-weight: bold;
+			line-height: 30px;
+		}
+		.image-list .oper{
+			line-height: 30px;
+		}
+		.image-list .oper span{
+			border: 1px solid #ddd;
+			border-radius: 3px;
+			display: inline-block;
+			height: 26px;
+			line-height: 24px;
+			width: 56px;
+		}
+	</style>
+</head>
+<body>
+<div class="bt-form">
+	<div class="bt-w-main">
+		<div class="bt-w-menu">
+			<p class="bgw" onclick="DockerInfo()" style="margin-top:30px">容器信息</p>
+			<p onclick="MappedPort()">映射端口</p>
+			<p onclick="ManaKey()">管理密钥</p>
+			<p>退出</p>
+		</div>
+		<div class="bt-w-con pd15">
+			<div class="mydocker-con"></div>
+		</div>
+	</div>
+</div>
+<script>
+$(function(){
+	DockerInfo();
+	$(".bt-w-menu p").click(function(){
+		$(this).addClass("bgw").siblings().removeClass("bgw");
+	})
+})
+//容器信息
+function DockerInfo(){
+	var con = '<div class="infoline">\
+				<div class="cname">当前状态：运行中 <span class="glyphicon glyphicon-play" style="color:#20a53a;font-size:12px"></span></div>\
+				<button class="btn btn-default btn-sm mr20">重启</button>\
+				<button class="btn btn-default btn-sm mr20">停止</button>\
+				<button class="btn btn-default btn-sm mr20">保存镜像</button>\
+				<button class="btn btn-default btn-sm">保存快照</button>\
+			</div>\
+			<div class="infoline">\
+				<div class="cname">运行时间：4天5小时28分钟</div>\
+				<button class="btn btn-default btn-sm mr20">查看日志</button>\
+			</div>\
+			<div class="infoline">\
+				<div class="cname">进程数量：102个</div>\
+				<button class="btn btn-default btn-sm mr20">查看</button>\
+			</div>\
+			<div class="infoline">\
+				<div class="cname">使用镜像：centos 7.2</div>\
+			</div>\
+			<div class="infoline" style="border-bottom:0 none">\
+				<div class="cname">使用状态： </div>\
+				<ul class="c-c">\
+					<li class="col-xs-6 col-sm-3 col-md-3 col-lg-2 mtb20 circle-box text-center">\
+						<h4 class="c5 f12">CPU使用率</h3>\
+						<div class="circle"><div class="pie_left"><div class="left" style="transform: rotate(133.2deg);"></div></div><div class="pie_right"><div class="right" style="transform: rotate(180deg);"></div></div><div class="mask"><span>87</span>%</div></div>\
+						<h4 id="core" class="c5 f12">1 核心</h4>\
+					</li>\
+					<li class="col-xs-6 col-sm-3 col-md-3 col-lg-2 mtb20 circle-box text-center">\
+						<h4 class="c5 f12">内存使用率</h3>\
+						<div class="circle"><div class="pie_left"><div class="left" style="transform: rotate(133.2deg);"></div></div><div class="pie_right"><div class="right" style="transform: rotate(180deg);"></div></div><div class="mask"><span>87</span>%</div></div>\
+						<h4 id="core" class="c5 f12">1 核心</h4>\
+					</li>\
+					<li class="col-xs-6 col-sm-3 col-md-3 col-lg-2 mtb20 circle-box text-center">\
+						<h4 class="c5 f12">磁盘使用率</h3>\
+						<div class="circle"><div class="pie_left"><div class="left" style="transform: rotate(133.2deg);"></div></div><div class="pie_right"><div class="right" style="transform: rotate(180deg);"></div></div><div class="mask"><span>87</span>%</div></div>\
+						<h4 id="core" class="c5 f12">1 核心</h4>\
+					</li>\
+				</ui>\
+			</div>';
+	$(".mydocker-con").html(con);
+}
+//映射端口
+function MappedPort(){
+	var con = '<button class="btn btn-default btn-sm dkadd-port">添加端口</button>\
+		<table class="table dk-table mtb15">\
+			<thead>\
+				<tr><th>容器端口</th><th>协议</th><th>服务端口</th><th class="text-right">操作</th></tr>\
+			</thead>\
+			<tbody class="docker-port-list">\
+				<tr><td><input class="bt-input-text" placeholder="1-65536内的整数"></td>\
+				<td><select class="bt-input-text"><option value="TCP">TCP</optin><option value="UDP">UDP</optin></select></td>\
+				<td><input class="bt-input-text" placeholder="1-65536内的整数"></td>\
+				<td class="text-right"><a href="#" class="btlink">确定</a>  |  <a href="javascript:;" class="btlink del">删除</a></td>\
+				</tr>\
+				<tr><td>8888</td><td>TCP</td><td>8888</td><td class="text-right"><a href="#" class="btlink">修改</a>  |  <a href="javascript:;" class="btlink del">删除</a></td></tr>\
+			</tbody>\
+		</table>';
+	$(".mydocker-con").html(con);
+	$(".dkadd-port").click(function(){
+		var portcon = '<tr><td><input class="bt-input-text" placeholder="1-65536内的整数"></td>\
+				<td><select class="bt-input-text"><option value="TCP">TCP</optin><option value="UDP">UDP</optin></select></td>\
+				<td><input class="bt-input-text" placeholder="1-65536内的整数"></td>\
+				<td class="text-right"><a href="#" class="btlink">确定</a>  |  <a href="javascript:;" class="btlink del">删除</a></td>\
+				</tr>' 
+		$(".docker-port-list").prepend(portcon);
+		$(".del").click(function(){
+			$(this).parents("tr").remove();
+		})
+	});
+	
+	$(".del").click(function(){
+		$(this).parents("tr").remove();
+	})
+}
+//管理密钥
+function ManaKey(){
+	var con = '<div class="bt-form">\
+		<div class="line">\
+			<span class="tname">容器地址:</span>\
+			<div class="info-r c4"><input class="bt-input-text" type="text" style="width:400px" value="http://192.168.1.245:8888" disabled></div>\
+		</div>\
+		<div class="line">\
+			<span class="tname">用户名:</span>\
+			<div class="info-r c4"><input class="bt-input-text" type="text" style="width:400px" value="mytest" disabled></div>\
+		</div>\
+		<div class="line">\
+			<span class="tname">密钥:</span>\
+			<div class="info-r c4"><input class="bt-input-text mr20" type="text" style="width:400px" value="mytest"><button class="btn btn-success btn-sm">更新密钥</button></div>\
+		</div>\
+	</div>';
+	$(".mydocker-con").html(con);
+}
+</script>
+</body>
+</html>

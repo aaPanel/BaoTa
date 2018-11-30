@@ -1,0 +1,16 @@
+{
+	"id":3,
+	"title":"腾讯云COS 存储",
+	"tip":"lib",
+	"name":"txcos",
+	"type":"扩展",
+	"ps":"腾讯云对象存储,</a>",
+	"versions":"1.1",
+	"shell":"txcos.sh",
+	"checks":"/www/server/panel/plugin/txcos",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2018-09-10",
+	"default":false,
+	"display":0
+}

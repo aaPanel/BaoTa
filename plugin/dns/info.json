@@ -1,0 +1,15 @@
+{
+	"title":"云解析",
+	"tip":"lib",
+	"name":"dns",
+	"type":"扩展",
+	"ps":"提供200000Q/S的域名DNS云解析服务(需购买企业运维版)",
+	"versions":"1.1",
+	"shell":"dns.sh",
+	"checks":"/www/server/panel/plugin/dns",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2017-12-25",
+	"default":false,
+	"display":0
+}
