@@ -13,6 +13,7 @@ class crontab:
     #取计划任务列表
     def GetCrontab(self,get):
         self.checkBackup()
+        self.__clean_log()
         cront = public.M('crontab').order("id desc").field(self.field).select()
         if type(cront) == str:
             public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'status' INTEGER DEFAULT 1",())
@@ -44,12 +45,26 @@ class crontab:
                 tmp['cycle']=public.getMsg('CRONTAB_N_MINUTE_CYCLE',(str(cront[i]['where1']),))
             elif cront[i]['type']=="week":
                 tmp['type']=public.getMsg('CRONTAB_WEEK')
+                if not cront[i]['where1']: cront[i]['where1'] = '0'
                 tmp['cycle']= public.getMsg('CRONTAB_WEEK_CYCLE',(self.toWeek(int(cront[i]['where1'])),str(cront[i]['where_hour']),str(cront[i]['where_minute'])))
             elif cront[i]['type']=="month":
                 tmp['type']=public.getMsg('CRONTAB_MONTH')
                 tmp['cycle']=public.getMsg('CRONTAB_MONTH_CYCLE',(str(cront[i]['where1']),str(cront[i]['where_hour']),str(cront[i]['where_minute'])))
             data.append(tmp)
         return data
+
+
+    #清理日志
+    def __clean_log(self):
+        log_file = '/www/server/cron'
+        if not os.path.exists(log_file): return False
+        for f in os.listdir(log_file):
+            if f[-4:] != '.log': continue
+            filename = log_file + '/' + f
+            if os.path.getsize(filename) < 1048576 /2: continue
+            tmp = public.GetNumLines(filename,100)
+            public.writeFile(filename,tmp)
+
     
     #转换大写星期
     def toWeek(self,num):
@@ -156,7 +171,8 @@ class crontab:
         cronName=self.GetShell(cronInfo)
         if type(cronName) == dict: return cronName;
         cuonConfig += ' ' + cronPath+'/'+cronName+' >> '+ cronPath+'/'+cronName+'.log 2>&1'
-        self.WriteShell(cuonConfig)
+        wRes = self.WriteShell(cuonConfig)
+        if type(wRes) != bool: return False
         self.CrondReload()
         
     #添加计划任务
@@ -168,7 +184,9 @@ class crontab:
         cronName=self.GetShell(get)
         if type(cronName) == dict: return cronName;
         cuonConfig += ' ' + cronPath+'/'+cronName+' >> '+ cronPath+'/'+cronName+'.log 2>&1'
-        self.WriteShell(cuonConfig)
+
+        wRes = self.WriteShell(cuonConfig)
+        if type(wRes) != bool: return wRes
         self.CrondReload()
         addData=public.M('crontab').add(
             'name,type,where1,where_hour,where_minute,echo,addtime,status,save,backupTo,sType,sName,sBody,urladdress',
@@ -282,7 +300,7 @@ class crontab:
         try:
             id = get['id']
             find = public.M('crontab').where("id=?",(id,)).field('name,echo').find()
-            self.remove_for_crond(find['echo'])
+            if not self.remove_for_crond(find['echo']): return public.returnMsg(False,'无法写入文件，请检查是否开启了系统加固功能!');
             cronPath = public.GetConfigValue('setup_path') + '/cron'
             sfile = cronPath + '/' + find['echo']
             if os.path.exists(sfile): os.remove(sfile)
@@ -297,16 +315,17 @@ class crontab:
 
     #从crond删除
     def remove_for_crond(self,echo):
-        x = session['server_os']['x'];
-        if x == 'RHEL':
+        u_file = '/var/spool/cron/crontabs/root'
+        if not os.path.exists(u_file):
             file='/var/spool/cron/root'
         else:
-            file='/var/spool/cron/crontabs/root'
+            file=u_file
         conf=public.readFile(file)
         rep = ".+" + str(echo) + ".+\n"
         conf = re.sub(rep, "", conf)
-        public.writeFile(file,conf)
+        if not public.writeFile(file,conf): return False
         self.CrondReload()
+        return True
     
     #取执行脚本
     def GetShell(self,param):
@@ -383,22 +402,22 @@ echo "--------------------------------------------------------------------------
         
     #将Shell脚本写到文件
     def WriteShell(self,config):
-        x = session['server_os']['x'];
-        if x == 'RHEL':
+        u_file = '/var/spool/cron/crontabs/root'
+        if not os.path.exists(u_file):
             file='/var/spool/cron/root'
         else:
-            file='/var/spool/cron/crontabs/root'
+            file=u_file
         
         if not os.path.exists(file): public.writeFile(file,'')
         conf = public.readFile(file)
         conf += config + "\n"
         if public.writeFile(file,conf):
-            if x == 'RHEL':
+            if not os.path.exists(u_file):
                 public.ExecShell("chmod 600 '" + file + "' && chown root.root " + file)
             else:
                 public.ExecShell("chmod 600 '" + file + "' && chown root.crontab " + file)
             return True
-        return public.returnMsg(False,'FILE_WRITE_ERR')
+        return public.returnMsg(False,'文件写入失败,请检查是否开启系统加固功能!')
     
     #立即执行任务
     def StartTask(self,get):

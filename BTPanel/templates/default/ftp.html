@@ -164,7 +164,7 @@
 	}
 	bt.set_cookie('sites_path',"{{session['config']['sites_path']}}");
     {% if not data['isSetup'] %}
-		layer.msg('{{data["lan"]["JS1"]}}<a href="/soft" style="color:#20a53a; float: right;">{{data["lan"]["JS1"]}}</a>',{icon:7,time:0,shade: [0.3, '#000']});
+		layer.msg('{{data["lan"]["JS1"]}}<a href="/soft" style="color:#20a53a; float: right;">{{data["lan"]["JS2"]}}</a>',{icon:7,time:0,shade: [0.3, '#000']});
         $(".layui-layer-shade").css("margin-left", "180px");
     {% else %}
     	ftp.get_list();

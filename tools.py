@@ -4,7 +4,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 黄文良 <2879625666@qq.com>
+# | Author: 黄文良 <287962566@qq.com>
 # +-------------------------------------------------------------------
 
 #------------------------------
@@ -16,14 +16,12 @@ os.chdir(panelPath)
 sys.path.append(panelPath + "class/")
 import public,time,json
 
-
 #设置MySQL密码
 def set_mysql_root(password):
     import db,os
     sql = db.Sql()
     
     root_mysql = '''#!/bin/bash
-
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 pwd=$1
@@ -32,7 +30,7 @@ mysqld_safe --skip-grant-tables&
 echo '正在修改密码...';
 echo 'The set password...';
 sleep 6
-m_version=$(cat /www/server/mysql/version.pl|grep -E "(5.1.|5.5.|5.6.)")
+m_version=$(cat /www/server/mysql/version.pl|grep -E "(5.1.|5.5.|5.6.|mariadb)")
 if [ "$m_version" != "" ];then
     mysql -uroot -e "insert into mysql.user(Select_priv,Insert_priv,Update_priv,Delete_priv,Create_priv,Drop_priv,Reload_priv,Shutdown_priv,Process_priv,File_priv,Grant_priv,References_priv,Index_priv,Alter_priv,Show_db_priv,Super_priv,Create_tmp_table_priv,Lock_tables_priv,Execute_priv,Repl_slave_priv,Repl_client_priv,Create_view_priv,Show_view_priv,Create_routine_priv,Alter_routine_priv,Create_user_priv,Event_priv,Trigger_priv,Create_tablespace_priv,User,Password,host)values('Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','root',password('${pwd}'),'127.0.0.1')"
     mysql -uroot -e "insert into mysql.user(Select_priv,Insert_priv,Update_priv,Delete_priv,Create_priv,Drop_priv,Reload_priv,Shutdown_priv,Process_priv,File_priv,Grant_priv,References_priv,Index_priv,Alter_priv,Show_db_priv,Super_priv,Create_tmp_table_priv,Lock_tables_priv,Execute_priv,Repl_slave_priv,Repl_client_priv,Create_view_priv,Show_view_priv,Create_routine_priv,Alter_routine_priv,Create_user_priv,Event_priv,Trigger_priv,Create_tablespace_priv,User,Password,host)values('Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','root',password('${pwd}'),'localhost')"
@@ -128,6 +126,10 @@ def PackagePanel():
     os.system('rm -f /www/server/panel/data/address.pl')
     os.system('rm -f /www/server/panel/data/*.login')
     os.system('rm -f /www/server/panel/data/domain.conf')
+    os.system('rm -f /www/server/panel/data/user*')
+    os.system('rm -f /www/server/panel/data/admin_path.pl')
+    os.system('rm -f /root/.ssh/*')
+
     print('\t\033[1;32m[done]\033[0m')
     print('|-正在清理系统使用痕迹...'),
     command = '''cat /dev/null > /var/log/boot.log
@@ -294,13 +296,11 @@ def ClearOther():
         for d in os.listdir(c['path']):
             if d.find(c['find']) == -1: continue;
             filename = c['path'] + '/' + d;
+            if os.path.isdir(filename): continue
             fsize = os.path.getsize(filename);
             print('|---['+ToSize(fsize)+'] del ' + filename),
             total += fsize
-            if os.path.isdir(filename):
-                shutil.rmtree(filename)
-            else:
-                os.remove(filename)
+            os.remove(filename)
             print('\t\033[1;32m[OK]\033[0m')
             count += 1;
     public.serviceReload();
@@ -363,19 +363,21 @@ def setup_idc():
         c_url = 'http://www.bt.cn/api/idc/get_idc_info_bycode?o=%s' % o
         idcInfo = json.loads(public.httpGet(c_url))
         if not idcInfo['status']: return False
-        pFile = panelPath + '/static/language/Simplified_Chinese/public.json'
+        pFile = panelPath + '/config/config.json'
         pInfo = json.loads(public.readFile(pFile))
-        pInfo['BRAND'] = idcInfo['msg']['name']
-        pInfo['PRODUCT'] = u'与宝塔联合定制版'
-        pInfo['NANE'] = pInfo['BRAND'] + pInfo['PRODUCT']
+        pInfo['brand'] = idcInfo['msg']['name']
+        pInfo['product'] = u'与宝塔联合定制版'
         public.writeFile(pFile,json.dumps(pInfo))
         tFile = panelPath + '/data/title.pl'
-        titleNew = (pInfo['BRAND'] + u'面板').encode('utf-8')
+        titleNew = (pInfo['brand'] + u'面板').encode('utf-8')
         if os.path.exists(tFile):
             title = public.readFile(tFile).strip()
-            if title == '宝塔Linux面板' or title == '': public.writeFile(tFile,titleNew)
+            if title == '宝塔Linux面板' or title == '': 
+                public.writeFile(tFile,titleNew)
+                public.SetConfigValue('title',titleNew)
         else:
             public.writeFile(tFile,titleNew)
+            public.SetConfigValue('title',titleNew)
         return True
     except:pass
 
@@ -400,23 +402,26 @@ def update_to6():
     print("====================================================")
 
 #命令行菜单
-def bt_cli():
+def bt_cli(u_input = 0):
     raw_tip = "==============================================="
-    print("===============宝塔面板命令行==================")
-    print("(01) 重启面板服务           (08) 改面板端口")
-    print("(02) 停止面板服务           (09) 清除面板缓存")
-    print("(03) 启动面板服务           (10) 清除登录限制")
-    print("(04) 重载面板服务           (11) 取消入口限制")
-    print("(05) 修改面板密码           (12) 取消域名绑定限制")
-    print("(06) 修改面板用户名         (13) 取消IP访问限制")
-    print("(07) 强制修改MySQL密码      (14) 查看面板默认信息")
-    print("(00) 取消                   (15) 清理系统垃圾")
-    print(raw_tip)
-    try:
-        u_input = input("请输入命令编号：")
-        if sys.version_info[0] == 3: u_input = int(u_input)
-    except: u_input = 0
-    nums = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+    if not u_input:
+        print("===============宝塔面板命令行==================")
+        print("(1) 重启面板服务           (8) 改面板端口")
+        print("(2) 停止面板服务           (9) 清除面板缓存")
+        print("(3) 启动面板服务           (10) 清除登录限制")
+        print("(4) 重载面板服务           (11) 取消入口限制")
+        print("(5) 修改面板密码           (12) 取消域名绑定限制")
+        print("(6) 修改面板用户名         (13) 取消IP访问限制")
+        print("(7) 强制修改MySQL密码      (14) 查看面板默认信息")
+        print("(22) 显示面板错误日志      (15) 清理系统垃圾")
+        print("(0) 取消                   (16) 修复面板(检查错误并更新面板文件到最新版)")
+        print(raw_tip)
+        try:
+            u_input = input("请输入命令编号：")
+            if sys.version_info[0] == 3: u_input = int(u_input)
+        except: u_input = 0
+
+    nums = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,22]
     if not u_input in nums:
         print(raw_tip)
         print("已取消!")
@@ -481,7 +486,7 @@ def bt_cli():
             print("|-错误，与面板当前端口一致，无需修改")
             return;
 
-        is_exists = public.ExecShell("lsof -i:%s" % input_port)
+        is_exists = public.ExecShell("lsof -i:%s|grep LISTEN|grep -v grep" % input_port)
         if len(is_exists[0]) > 5:
             print("|-错误，指定端口已被其它应用占用")
             return;
@@ -496,6 +501,7 @@ def bt_cli():
         else:
             os.system("ufw allow %s" % input_port)
             os.system("ufw reload")
+        os.system("/etc/init.d/bt reload")
         print("|-已将面板端口修改为：%s" % input_port)
         print("|-若您的服务器提供商是[阿里云][腾讯云][华为云]或其它开启了[安全组]的服务器,请在安全组放行[%s]端口才能访问面板" % input_port)
     elif u_input == 9:
@@ -523,6 +529,12 @@ def bt_cli():
         os.system("/etc/init.d/bt default")
     elif u_input == 15:
         ClearSystem()
+    elif u_input == 16:
+        os.system("curl http://download.bt.cn/install/update6.sh|bash")
+    elif u_input == 22:
+        os.system('tail -100 /www/server/panel/logs/error.log')
+
+
 
 
 
@@ -553,6 +565,8 @@ if __name__ == "__main__":
     elif type == 'update_to6':
         update_to6()
     elif type == "cli":
-        bt_cli()
+        clinum = 0
+        if len(sys.argv) > 2: clinum = int(sys.argv[2])
+        bt_cli(clinum)
     else:
         print('ERROR: Parameter error')

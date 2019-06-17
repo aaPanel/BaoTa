@@ -77,7 +77,9 @@ function UploadStart(d) {
 				layer.msg(lan.get('update_num',[this.MaxUpNum]), {
 					icon: 5
 				})
-			}
+            }
+
+            
 			for(var j = 0; j < f; j++) {
 				e = h[j];
 				g = e.name.split(".");
@@ -90,17 +92,19 @@ function UploadStart(d) {
 						return
 					}
 				}
-				if(!e) {
+				if(!e){
 					this.up_box.insertAdjacentHTML("beforeEnd", "<li>" + e.name + "<em style='color: red;'>"+lan.upload.file_err+"</em></li>")
-				} else {
-					if(this.uptype.length > 0 && this.uptype.indexOf(g.toLowerCase()) === -1) {
+                } else {
+                    if (this.uptype.length > 0 && this.uptype.indexOf(g.toLowerCase()) === -1) {
 						this.up_box.insertAdjacentHTML("beforeEnd", "<li>" + e.name + "<em style='color: red;'>"+lan.upload.file_type_err+"</em></li>")
-					} else {
+                    } else {
+                        
 						if(e.size <= 0) {
 							this.up_box.insertAdjacentHTML("beforeEnd", "<li>" + e.name + "<em style='color: red;'>"+lan.upload.file_err_empty+"</em></li>")
 						} else {
 							this.up_box.insertAdjacentHTML("beforeEnd", "<li><span class='filename'>" + e.name + "</span><span class='filesize'>" + (ToSize(e.size)) + "</span><em>"+lan.upload.up_sleep+"</em></li>");
-							this.FilesArray.push([e, (this.filesalllength - 1 < 0 ? 0 : this.filesalllength) + j])
+                            this.FilesArray.push([e, (this.filesalllength - 1 < 0 ? 0 : this.filesalllength) + j])
+                            $('#file_input').replaceWith('<input type="file" id="file_input" multiple="true" autocomplete="off">')
 						}
 					}
 				}

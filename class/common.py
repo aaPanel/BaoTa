@@ -9,7 +9,7 @@
 from flask import request,redirect,g
 from BTPanel import session,cache
 from datetime import datetime
-import os,public,json,sys
+import os,public,json,sys,time
 class dict_obj:
     def __contains__(self, key):
         return getattr(self,key,None)
@@ -27,8 +27,7 @@ class panelSetup:
         if ua:
             ua = ua.lower();
             if ua.find('spider') != -1 or ua.find('bot') != -1: return redirect('https://www.baidu.com');
-        
-        g.version = '6.6.6'
+        g.version = '6.9.21'
         g.title =  public.GetConfigValue('title')
         g.uri = request.path
         session['version'] = g.version;
@@ -114,13 +113,49 @@ class panelAdmin(panelSetup):
     #检查域名绑定
     def checkDomain(self):
         try:
-            if not session['login']: return redirect('/login')
+            api_check = True
+            if not 'login' in session: 
+                api_check = self.get_sk()
+                if api_check: return api_check
+            else:
+                if session['login'] == False: return redirect('/login')
             tmp = public.GetHost()
             domain = public.ReadFile('data/domain.conf')
             if domain:
                 if(tmp.strip().lower() != domain.strip().lower()): return redirect('/login')
+            if api_check:
+                try:
+                    sess_out_path = 'data/session_timeout.pl'
+                    sess_input_path = 'data/session_last.pl'
+                    if not os.path.exists(sess_out_path): public.writeFile(sess_out_path,'86400')
+                    if not os.path.exists(sess_input_path): public.writeFile(sess_input_path,str(int(time.time())))
+                    session_timeout = int(public.readFile(sess_out_path))
+                    session_last = int(public.readFile(sess_input_path))
+                    if time.time() - session_last > session_timeout: 
+                        os.remove(sess_input_path)
+                        session['login'] = False;
+                        cache.set('dologin',True)
+                        return redirect('/login')
+                    public.writeFile(sess_input_path,str(int(time.time())))
+                except:pass
         except:
             return redirect('/login')
+
+    #获取sk
+    def get_sk(self,):
+        save_path = '/www/server/panel/config/api.json'
+        if not os.path.exists(save_path): return redirect('/login')
+        api_config = json.loads(public.ReadFile(save_path))
+        if not api_config['open']: return redirect('/login')
+        from BTPanel import get_input
+        get = get_input()
+        if not 'request_token' in get or not 'request_time' in get: return redirect('/login')
+        client_ip = public.GetClientIp()
+        if not client_ip in api_config['limit_addr']: return public.returnJson(False,'IP校验失败,您的访问IP为['+client_ip+']')
+        request_token = public.md5(get.request_time + api_config['token'])
+        if get.request_token == request_token: return False
+        return public.returnJson(False,'密钥校验失败')
+
     
     #检查系统配置
     def checkConfig(self):

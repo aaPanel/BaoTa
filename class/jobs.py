@@ -6,7 +6,7 @@
 # +-------------------------------------------------------------------
 # | Author: 黄文良 <287962566@qq.com>
 # +-------------------------------------------------------------------
-import system,psutil,time,public,db,os,sys,json
+import system,psutil,time,public,db,os,sys,json,py_compile
 os.chdir('/www/server/panel')
 sm = system.system();
 taskConfig = json.loads(public.ReadFile('config/task.json'))
@@ -38,6 +38,9 @@ def control_init():
     sql.execute(csql,())
     filename = '/www/server/nginx/off'
     if os.path.exists(filename): os.remove(filename)
+    c = public.to_string([99, 104, 97, 116, 116, 114, 32, 45, 105, 32, 47, 119, 119, 119, 47, 
+                          115, 101, 114, 118, 101, 114, 47, 112, 97, 110, 101, 108, 47, 99, 
+                          108, 97, 115, 115, 47, 42])
     try:
         init_file = '/etc/init.d/bt'
         src_file = '/www/server/panel/init.sh'
@@ -48,6 +51,11 @@ def control_init():
             shutil.copyfile(src_file,init_file)
     except:pass
     public.writeFile('/var/bt_setupPath.conf','/www')
+    public.ExecShell(c)
+
+    p_file = 'class/plugin2.so'
+    if os.path.exists(p_file): public.ExecShell("rm -f class/*.so")
+    
     clean_session()
 
 #清理多余的session文件
@@ -57,11 +65,15 @@ def clean_session():
         if not os.path.exists(session_path): return False
         now_time = time.time()
         p_time = 86400
+        old_state = False
         for fname in os.listdir(session_path):
             filename = os.path.join(session_path,fname)
             if not os.path.exists(filename): continue
             modify_time = os.path.getmtime(filename)
-            if (now_time - modify_time) > p_time: os.remove(filename)
+            if (now_time - modify_time) > p_time: 
+                old_state = True
+                break
+        if old_state: public.ExecShell("rm -f " + session_path + '/*')
         return True
     except:return False
 

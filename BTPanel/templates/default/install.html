@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="robots" content="noindex,nofollow">
+		<title>初始化宝塔软件</title>
+		<link href="/static/css/install.css" rel="stylesheet">
+		<script type="text/javascript" src="/static/js/jquery.js"></script>
+		<script type="text/javascript" src="/static/layer/layer.js"></script>
+	</head>
+	<body>
+		<div class="main">
+		{% if data['status'] %}
+			<div class="warp">
+				<div class="title">初始化宝塔Linux面板</div>
+				<form class="form" action="/install?action=install" method="post" onsubmit="return checkSubmit()">
+					<fieldset>
+						<legend>管理员设置</legend>
+						<p><span class="tit">用户名</span><input type="text" name="bt_username" value="{{data['username']}}" /> *请设置管理员名称</p>
+						<p><span class="tit">管理密码</span><input type="password" name="bt_password1" value="" /> *请设置管理员密码</p>
+						<p><span class="tit">重复密码 </span><input type="password" name="bt_password2" value="" /> *再输一次管理员密码</p>
+					</fieldset>
+					<input class="submit-btn" type="submit" value="确定" />
+				</form>
+			</div>
+		{% else %}
+			<div class="success">
+			<p>宝塔Linux面板初始化成功</p>
+			<a href="/login">登陆页面</a>
+			</div>
+        {% endif %}
+		</div>
+		<div class="copyright">Copyright © 2014-2099 <a href="http://www.bt.cn" target="_blank">宝塔</a>|让你更简单的使用服务器(<a href="http://www.bt.cn" target="_blank">www.bt.cn</a>) All Rights Reserved</div>
+		<script>
+			function checkSubmit(){
+				var username = $("input[name='bt_username']").val();
+				var password1 = $("input[name='bt_password1']").val();
+				var password2 = $("input[name='bt_password2']").val();
+				if(username == '' || password1 == ''){
+					layer.msg('用户名或密码不能为空!',{icon:5});
+					return false;
+				}
+				
+				if(password1 != password2){
+					layer.msg('两次输入的密码不一致，请重新输入!',{icon:5});
+					return false;
+				}
+				layer.msg('正在处理...',{icon:16,time:0});
+				return true;
+			}
+			var main = $(".main");
+			$(window).resize(function () {
+			  var wh = $(window).height();
+			  main.height(wh);
+			}).resize();
+		</script>
+	</body>
+</html>

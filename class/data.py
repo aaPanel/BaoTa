@@ -80,8 +80,8 @@ class data:
                 
             #返回
             return data;
-        except Exception as ex:
-            return str(ex);
+        except:
+            return public.get_error_info();
     
     '''
      * 取数据库行
@@ -143,6 +143,7 @@ class data:
         #取查询条件
         where = ''
         if hasattr(get,'search'):
+            if sys.version_info[0] == 2: get.search = get.search.encode('utf-8')
             where = self.GetWhere(get.table,get.search);
             if get.table == 'backup':
                 where += " and type='" + get.type+"'";

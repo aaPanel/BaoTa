@@ -20,22 +20,32 @@ if [ "$py26" != "" ];then
 fi
 panel_start()
 {
-        isStart=`ps aux|grep 'gunicorn -c runconfig.py runserver:app'|grep -v grep|awk '{print $2}'`
+        isStart=`ps aux|grep 'runserver:app'|grep -v grep|awk '{print $2}'`
         if [ "$isStart" == '' ];then
-                echo -e "Starting Bt-Panel... \c"
+                echo -e "Starting Bt-Panel.\c"
+				rm -f $pidfile
                 gunicorn -c runconfig.py runserver:app
-                sleep 0.1
                 port=$(cat /www/server/panel/data/port.pl)
-                isStart=$(lsof -i :$port|grep LISTEN)
+				isStart=""
+				n=0
+				while [[ "$isStart" == "" ]];
+				do
+					echo -e ".\c"
+					sleep 0.5
+					isStart=$(lsof -n -P -i:$port|grep LISTEN|grep -v grep|awk '{print $2}'|xargs)
+					let n+=1
+					if [ $n -gt 8 ];then
+						break;
+					fi
+				done
                 if [ "$isStart" == '' ];then
                         echo -e "\033[31mfailed\033[0m"
                         echo '------------------------------------------------------'
                         tail -n 20 $panel_path/logs/error.log
                         echo '------------------------------------------------------'
                         echo -e "\033[31mError: BT-Panel service startup failed.\033[0m"
-                        return;
                 fi
-                echo -e "\033[32mdone\033[0m"
+                echo -e "	\033[32mdone\033[0m"
         else
                 echo "Starting Bt-Panel... Bt-Panel (pid $(echo $isStart)) already running"
         fi
@@ -43,18 +53,18 @@ panel_start()
         isStart=$(ps aux |grep 'task.py'|grep -v grep|awk '{print $2}')
         if [ "$isStart" == '' ];then
                 echo -e "Starting Bt-Tasks... \c"
-                nohup python task.py > /tmp/panelTask.pl 2>&1 &
+                nohup python task.py >> /www/server/panel/logs/task.log 2>&1 &
                 sleep 0.2
                 isStart=$(ps aux |grep 'task.py'|grep -v grep|awk '{print $2}')
                 if [ "$isStart" == '' ];then
                         echo -e "\033[31mfailed\033[0m"
                         echo '------------------------------------------------------'
-                        cat /tmp/panelTask.pl
+                        tail -n 20 /www/server/panel/logs/task.log
                         echo '------------------------------------------------------'
                         echo -e "\033[31mError: BT-Task service startup failed.\033[0m"
                         return;
                 fi
-                echo -e "\033[32mdone\033[0m"
+                echo -e "	\033[32mdone\033[0m"
         else
                 echo "Starting Bt-Tasks... Bt-Tasks (pid $isStart) already running"
         fi
@@ -62,7 +72,7 @@ panel_start()
 
 panel_stop()
 {
-	echo -e "Stopping Bt-Tasks... \c";
+	echo -e "Stopping Bt-Tasks...\c";
     pids=$(ps aux | grep 'task.py'|grep -v grep|awk '{print $2}')
     arr=($pids)
 
@@ -70,10 +80,10 @@ panel_stop()
     do
             kill -9 $p
     done
-    echo -e "\033[32mdone\033[0m"
+    echo -e "	\033[32mdone\033[0m"
 
-    echo -e "Stopping Bt-Panel... \c";
-    arr=`ps aux|grep 'gunicorn -c runconfig.py runserver:app'|grep -v grep|awk '{print $2}'`
+    echo -e "Stopping Bt-Panel...\c";
+    arr=`ps aux|grep 'runserver:app'|grep -v grep|awk '{print $2}'`
 	for p in ${arr[@]}
     do
             kill -9 $p &>/dev/null
@@ -82,12 +92,13 @@ panel_stop()
     if [ -f $pidfile ];then
     	rm -f $pidfile
     fi
-    echo -e "\033[32mdone\033[0m"
+    echo -e "	\033[32mdone\033[0m"
 }
 
 panel_status()
 {
-        isStart=$(ps aux|grep 'gunicorn -c runconfig.py runserver:app'|grep -v grep|awk '{print $2}')
+        port=$(cat /www/server/panel/data/port.pl)
+        isStart=$(lsof -i:$port|grep LISTEN|grep -v grep|awk '{print $2}'|xargs)
         if [ "$isStart" != '' ];then
                 echo -e "\033[32mBt-Panel (pid $(echo $isStart)) already running\033[0m"
         else
@@ -104,17 +115,30 @@ panel_status()
 
 panel_reload()
 {
-	isStart=$(ps aux|grep 'gunicorn -c runconfig.py runserver:app'|grep -v grep|awk '{print $2}')
+	isStart=$(ps aux|grep 'runserver:app'|grep -v grep|awk '{print $2}')
     
     if [ "$isStart" != '' ];then
-    	echo -e "Reload Bt-Panel... \c";
-	    arr=`ps aux|grep 'gunicorn -c runconfig.py runserver:app'|grep -v grep|awk '{print $2}'`
+    	echo -e "Reload Bt-Panel.\c";
+	    arr=`ps aux|grep 'runserver:app'|grep -v grep|awk '{print $2}'`
 		for p in ${arr[@]}
         do
                 kill -9 $p
         done
+		rm -f $pidfile
         gunicorn -c runconfig.py runserver:app
-        isStart=`ps aux|grep 'gunicorn -c runconfig.py runserver:app'|grep -v grep|awk '{print $2}'`
+		port=$(cat /www/server/panel/data/port.pl)
+		isStart=""
+		n=0
+		while [[ "$isStart" == "" ]];
+		do
+			echo -e ".\c"
+			sleep 0.5
+			isStart=$(lsof -n -P -i:$port|grep LISTEN|grep -v grep|awk '{print $2}'|xargs)
+			let n+=1
+			if [ $n -gt 8 ];then
+				break;
+			fi
+		done
         if [ "$isStart" == '' ];then
                 echo -e "\033[31mfailed\033[0m"
                 echo '------------------------------------------------------'
@@ -123,7 +147,7 @@ panel_reload()
                 echo -e "\033[31mError: BT-Panel service startup failed.\033[0m"
                 return;
         fi
-        echo -e "\033[32mdone\033[0m"
+        echo -e "	\033[32mdone\033[0m"
     else
         echo -e "\033[31mBt-Panel not running\033[0m"
         panel_start
@@ -195,7 +219,7 @@ case "$1" in
                 echo -e "=================================================================="
                 ;;
         *)
-                python $panel_path/tools.py cli $2
+                python $panel_path/tools.py cli $1
         ;;
 esac
 

@@ -68,6 +68,7 @@ class firewalls:
         import re
         rep = "^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d{1,2})?$"
         if not re.search(rep,get.port): return public.returnMsg(False,'FIREWALL_IP_FORMAT');
+        if not public.check_ip(get.port.split('/')[0]): return public.returnMsg(False,'FIREWALL_IP_FORMAT');
         address = get.port
         if public.M('firewall').where("port=?",(address,)).count() > 0: return public.returnMsg(False,'FIREWALL_IP_EXISTS')
         if self.__isUfw:
@@ -109,6 +110,7 @@ class firewalls:
     #添加放行端口
     def AddAcceptPort(self,get):
         import re
+        get.port = get.port.replace('-',':')
         rep = "^\d{1,5}(:\d{1,5})?$"
         if not re.search(rep,get.port): return public.returnMsg(False,'PORT_CHECK_RANGE');
         import time
@@ -141,7 +143,7 @@ class firewalls:
         port = get.port
         id = get.id
         try:
-            if(port == public.GetHost(True)): return public.returnMsg(False,'FIREWALL_PORT_PANEL')
+            if(port == public.GetHost(True) or port == public.readFile('data/port.pl').strip()): return public.returnMsg(False,'FIREWALL_PORT_PANEL')
             if self.__isUfw:
                 public.ExecShell('ufw delete allow ' + port + '/tcp');
                 public.ExecShell('ufw delete allow ' + port + '/udp');
@@ -211,7 +213,7 @@ class firewalls:
         port = get.port
         if int(port) < 22 or int(port) > 65535: return public.returnMsg(False,'FIREWALL_SSH_PORT_ERR');
         ports = ['21','25','80','443','8080','888','8888'];
-        if port in ports: return public.returnMsg(False,'');
+        if port in ports: return public.returnMsg(False,'请不要使用常用程序的默认端口!');
         
         file = '/etc/ssh/sshd_config'
         conf = public.readFile(file)
@@ -248,12 +250,15 @@ class firewalls:
         
         version = panelsys.GetSystemVersion();
         if os.path.exists('/usr/bin/apt-get'):
-             status = public.ExecShell("service ssh status | grep -P '(dead|stop)'")
+            if os.path.exists('/etc/init.d/sshd'):
+                status = public.ExecShell("service sshd status | grep -P '(dead|stop)'|grep -v grep")
+            else:
+                status = public.ExecShell("service ssh status | grep -P '(dead|stop)'|grep -v grep")
         else:
             if version.find(' 7.') != -1:
-                status = public.ExecShell("systemctl status sshd.service | grep 'dead'")
+                status = public.ExecShell("systemctl status sshd.service | grep 'dead'|grep -v grep")
             else:
-                status = public.ExecShell("/etc/init.d/sshd status | grep -e 'stopped' -e '已停'")
+                status = public.ExecShell("/etc/init.d/sshd status | grep -e 'stopped' -e '已停'|grep -v grep")
             
 #       return status;
         if len(status[0]) > 3:

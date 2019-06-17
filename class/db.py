@@ -2,13 +2,13 @@
 # +-------------------------------------------------------------------
 # | 宝塔Linux面板
 # +-------------------------------------------------------------------
-# | Copyright (c) 2015-2016 宝塔软件(http://bt.cn) All rights reserved.
+# | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
 # | Author: 黄文良 <287962566@qq.com>
 # +-------------------------------------------------------------------
 
 import sqlite3
-import os
+import os,re,public
 
 class Sql():
     #------------------------------
@@ -31,6 +31,7 @@ class Sql():
         try:
             if self.__DB_CONN == None:
                 self.__DB_CONN = sqlite3.connect(self.__DB_FILE)
+                self.__DB_CONN.text_factory = str
         except Exception as ex:
             return "error: " + str(ex)
             
@@ -48,8 +49,17 @@ class Sql():
         #WHERE条件
         if where:
             self.__OPT_WHERE = " WHERE " + where
-            self.__OPT_PARAM = param
+            self.__OPT_PARAM = self.__to_tuple(param)
         return self
+
+    def __to_tuple(self,param):
+        #将参数转换为tuple
+        if type(param) != tuple: 
+            if type(param) == list:
+                param = tuple(param)
+            else:
+                param = (param,)
+        return param
     
     
     def order(self,order):
@@ -77,17 +87,18 @@ class Sql():
         #查询数据集
         self.__GetConn()
         try:
+            self.__get_columns()
             sql = "SELECT " + self.__OPT_FIELD + " FROM " + self.__DB_TABLE + self.__OPT_WHERE + self.__OPT_ORDER + self.__OPT_LIMIT
             result = self.__DB_CONN.execute(sql,self.__OPT_PARAM)
             data = result.fetchall()
-            #构造字曲系列
+            #构造字典系列
             if self.__OPT_FIELD != "*":
-                field = self.__OPT_FIELD.split(',')
+                fields = self.__format_field(self.__OPT_FIELD.split(','))
                 tmp = []
                 for row in data:
                     i=0
                     tmp1 = {}
-                    for key in field:
+                    for key in fields:
                         tmp1[key] = row[i]
                         i += 1
                     tmp.append(tmp1)
@@ -103,14 +114,37 @@ class Sql():
             return data
         except Exception as ex:
             return "error: " + str(ex)
+
+    def get(self):
+        self.__get_columns()
+        return self.select()
+
+    def __format_field(self,field):
+        fields = []
+        for key in field:
+            s_as = re.search('\s+as\s+',key,flags=re.IGNORECASE)
+            if s_as:
+                as_tip = s_as.group()
+                key = key.split(as_tip)[1]
+            fields.append(key)
+        return fields
     
-    
+    def __get_columns(self):
+        if self.__OPT_FIELD == '*':
+            tmp_cols = self.query('PRAGMA table_info('+self.__DB_TABLE+')',())
+            cols = []
+            for col in tmp_cols:
+                if len(col) > 2: cols.append(col[1])
+            if len(cols) > 0: self.__OPT_FIELD = ','.join(cols)
+
     def getField(self,keyName):
         #取回指定字段
-        result = self.field(keyName).select();
-        if len(result) == 1:
-            return result[0][keyName]
-        return result
+        try:
+            result = self.field(keyName).select();
+            if len(result) != 0:
+                return result[0][keyName]
+            return result
+        except: return None
     
     
     def setField(self,keyName,keyValue):
@@ -120,10 +154,12 @@ class Sql():
     
     def find(self):
         #取一行数据
-        result = self.limit("1").select()
-        if len(result) == 1:
-            return result[0]
-        return result
+        try:
+            result = self.limit("1").select()
+            if len(result) == 1:
+                return result[0]
+            return result
+        except:return None
     
     
     def count(self):
@@ -146,13 +182,33 @@ class Sql():
                 values += "?,"
             values = values[0:len(values)-1];
             sql = "INSERT INTO "+self.__DB_TABLE+"("+keys+") "+"VALUES("+values+")"
-            result = self.__DB_CONN.execute(sql,param)
+            result = self.__DB_CONN.execute(sql,self.__to_tuple(param))
             id = result.lastrowid
             self.__close()
             self.__DB_CONN.commit()
             return id
         except Exception as ex:
             return "error: " + str(ex)
+
+    #插入数据
+    def insert(self,pdata):
+        if not pdata: return False
+        keys,param = self.__format_pdata(pdata)
+        return self.add(keys,param)
+
+    #更新数据
+    def update(self,pdata):
+        if not pdata: return False
+        keys,param = self.__format_pdata(pdata)
+        return self.save(keys,param)
+    
+    #构造数据
+    def __format_pdata(self,pdata):
+        keys = pdata.keys()
+        keys_str = ','.join(keys)
+        param = []
+        for k in keys: param.append(pdata[k])
+        return keys_str,tuple(param)
     
     def addAll(self,keys,param):
         #插入数据
@@ -164,7 +220,7 @@ class Sql():
                 values += "?,"
             values = values[0:len(values)-1]
             sql = "INSERT INTO "+self.__DB_TABLE+"("+keys+") "+"VALUES("+values+")"
-            result = self.__DB_CONN.execute(sql,param)
+            result = self.__DB_CONN.execute(sql,self.__to_tuple(param))
             return True
         except Exception as ex:
             return "error: " + str(ex)
@@ -184,12 +240,9 @@ class Sql():
                 opt += key + "=?,"
             opt = opt[0:len(opt)-1]
             sql = "UPDATE " + self.__DB_TABLE + " SET " + opt+self.__OPT_WHERE
-            
-            import public
-            public.writeFile('/tmp/test.pl',sql)
-                        
+                                    
             #处理拼接WHERE与UPDATE参数
-            tmp = list(param)
+            tmp = list(self.__to_tuple(param))
             for arg in self.__OPT_PARAM:
                 tmp.append(arg)
             self.__OPT_PARAM = tuple(tmp)
@@ -216,22 +269,23 @@ class Sql():
             return "error: " + str(ex)
         
     
-    def execute(self,sql,param):
+    def execute(self,sql,param = ()):
         #执行SQL语句返回受影响行
         self.__GetConn()
         try:
-            result = self.__DB_CONN.execute(sql,param)
+            
+            result = self.__DB_CONN.execute(sql,self.__to_tuple(param))
             self.__DB_CONN.commit()
             return result.rowcount
         except Exception as ex:
             return "error: " + str(ex)
     
     
-    def query(self,sql,param):
+    def query(self,sql,param = ()):
         #执行SQL语句返回数据集
         self.__GetConn()
         try:
-            result = self.__DB_CONN.execute(sql,param)
+            result = self.__DB_CONN.execute(sql,self.__to_tuple(param))
             #将元组转换成列表
             data = list(map(list,result))
             return data

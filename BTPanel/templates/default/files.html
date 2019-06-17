@@ -15,6 +15,10 @@
                         </div>
                         <div class="pull-left mlr15" style="line-height:26px"><span id='DirInfo'></span></div>
                         <div class="search pull-right" style="position: absolute; top: 6px; right: 5px;">
+                            <div class="search_box">
+                                <input id="search_all" type="checkbox">
+                                <label for="search_all">包含子目录</label>
+                            </div>
                             <form target="hid" onsubmit='GetFiles(1)'>
                                 <input type="text" id="SearchValue" class="ser-text pull-left" placeholder="" />
                                 <button type="button" class="ser-sub pull-left" onclick='GetFiles(1)'></button>

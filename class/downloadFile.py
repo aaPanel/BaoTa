@@ -6,11 +6,13 @@
 # +-------------------------------------------------------------------
 # | Author: 黄文良 <2879625666@qq.com>
 # +-------------------------------------------------------------------
-import os,sys,public,json
+import os,sys,public,json,time
 class downloadFile:
     logPath = 'data/speed.json'
     timeoutCount = 0;
     oldTime = 0;
+    writeTime = 0;
+    down_count = 0;
     #下载文件
     def DownloadFile(self,url,filename):
         try:
@@ -27,7 +29,10 @@ class downloadFile:
                 urllib.urlretrieve(url,filename=filename,reporthook= self.DownloadHook)
             else:
                 urllib.request.urlretrieve(url,filename=filename,reporthook= self.DownloadHook)
-            self.WriteLogs(json.dumps({'name':'下载文件','total':0,'used':0,'pre':0,'speed':0}));
+            speed = self.GetSpeed()
+            speed['pre'] = 100;
+            speed['used'] = speed['total']
+            self.WriteLogs(json.dumps(speed));
         except:
             if self.timeoutCount > 5: return;
             self.timeoutCount += 1
@@ -38,11 +43,15 @@ class downloadFile:
     def DownloadHook(self,count, blockSize, totalSize):
         used = count * blockSize
         pre1 = int((100.0 * used / totalSize))
-        if self.pre != pre1:
-            dspeed = used / (time.time() - self.oldTime);
+        my_time = time.time()
+        if self.pre != pre1 or (my_time - self.writeTime) > 1:
+            dspeed = ((count -self.down_count) * blockSize)   / (my_time - self.oldTime)
             speed = {'name':'下载文件','total':totalSize,'used':used,'pre':self.pre,'speed':dspeed}
             self.WriteLogs(json.dumps(speed))
             self.pre = pre1
+            self.writeTime = my_time
+            self.down_count = count
+            self.oldTime = my_time
 
     #取下载进度
     def GetSpeed(self):

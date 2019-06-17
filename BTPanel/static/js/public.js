@@ -1,4 +1,3 @@
-
 $(document).ready(function() {
 	$(".sub-menu a.sub-menu-a").click(function() {
 		$(this).next(".sub").slideToggle("slow").siblings(".sub:visible").slideUp("slow");
@@ -299,6 +298,7 @@ function BackFile() {
 function GetfilePath() {
 	var a = $("#PathPlace").find("span").text();
 	a = a.replace(new RegExp(/(\\)/g), "/");
+	setCookie('path_dir_change',a);
 	$("#" + getCookie("SetId")).val(a + getCookie("SetName"));
 	layer.close(getCookie("ChangePath"))
 }
@@ -320,7 +320,7 @@ function getCookie(b) {
 }
 
 function aotuHeight() {
-	var a = $("body").height() - 40;
+	var a = $("body").height() - 50;
 	$(".main-content").css("min-height", a)
 }
 $(function() {
@@ -694,21 +694,6 @@ function SafeMessage(j, h, g, f) {
 	})
 }
 
-var W_window = $(window).width();
-if(W_window <= 980) {
-	$(window).scroll(function() {
-		var a = $(window).scrollTop();
-		$(".sidebar-scroll").css({
-			position: "absolute",
-			top: a
-		})
-	})
-} else {
-	$(".sidebar-scroll").css({
-		position: "fixed",
-		top: "0"
-	})
-}
 $(function() {
 	$(".fb-ico").hover(function() {
 		$(".fb-text").css({
@@ -1615,8 +1600,21 @@ function scroll_handle(e){
 	var scrollTop = this.scrollTop;
 	$(this).find("thead").css({"transform":"translateY("+scrollTop+"px)","position":"relative","z-index":"1"});
 }
-var clipboard, interval, socket, gterm;
+var clipboard, interval, socket, gterm,ssh_login;
 
+function ssh_login_def() {
+    var pdata = {
+        ssh_user : $("input[name='ssh_user']").val(),
+        ssh_passwd: $("input[name='ssh_passwd']").val()
+    }
+    if (!pdata.ssh_user || !pdata.ssh_passwd) {
+        layer.msg('SSH用户名和密码不能为空!');
+        return;
+    }
+    layer.close(ssh_login);
+    socket.emit('webssh', pdata);
+    gterm.focus();
+}
 
 function web_shell() {
     var termCols = 100;
@@ -1629,6 +1627,37 @@ function web_shell() {
     term.setOption('cursorBlink', true);
 
     socket.on('server_response', function (data) {
+        if (data.data == "连接SSH服务失败!\r\n") {
+            if ($("input[name='ssh_user']").attr('autocomplete')) return;
+            var s_body = '<div class="bt-form bt-form pd20 pb70"><div class="line " style="display:none;">\
+                            <span class="tname">id</span><div class="info-r "><input name="id" class="bt-input-text mr5" type="text" style="width:330px" value=""></div></div>\
+                            <div class="line "><span class="tname">用户名</span><div class="info-r "><input name="ssh_user" class="bt-input-text mr5" type="text" style="width:330px" value="" readonly="readonly" autocomplete="off"></div></div>\
+                            <div class="line "><span class="tname">密码</span><div class="info-r "><input name="ssh_passwd" class="bt-input-text mr5" type="password" style="width:330px" value="" readonly="readonly" autocomplete="off"></div></div>\
+                            <div class="bt-form-submit-btn"><button type="button" class="btn btn-sm btn-danger" onclick="layer.closeAll()">关闭</button><button type="button" class="btn btn-sm btn-success ssh-login" onclick="ssh_login_def()">登录SSH</button></div></div>';
+            ssh_login = layer.open({
+                type: 1,
+                title: '请输入SSH登录帐户和密码',
+                area: "500px",
+                closeBtn: 0,
+                shadeClose: false,
+                content: s_body
+            });
+
+            setTimeout(function removeReadonly() {
+                $("input[name='ssh_user']").removeAttr('readonly');
+                $("input[name='ssh_passwd']").removeAttr('readonly');
+                $("input[name='ssh_user']").focus();
+
+                $("input[name='ssh_passwd']").keydown(function (e) {
+                    if (e.keyCode == 13) {
+                        $('.ssh-login').click();
+                    }
+                });
+
+            }, 500);
+            return;
+        }
+
         term.write(data.data);
 
         if (data.data == '\r\n登出\r\n' || data.data == '登出\r\n' || data.data == '\r\nlogout\r\n' || data.data == 'logout\r\n') {
@@ -1642,7 +1671,7 @@ function web_shell() {
         socket.emit('connect_event', '');
         interval = setInterval(function () {
             socket.emit('connect_event', '');
-        }, 500);
+        }, 1000);
     }
     
     term.on('data', function (data) {
@@ -1678,6 +1707,7 @@ function web_shell() {
     setTimeout(function () {
         $('.terminal').detach().appendTo('#term');
         $("#term").show();
+        socket.emit('webssh', "\u0015");
         socket.emit('webssh', "\n");
         term.focus();
 
@@ -1814,3 +1844,4 @@ function shell_paste_text(){
 function remove_ssh_menu() {
     $(".contextmenu").remove();
 }
+

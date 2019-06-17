@@ -42,6 +42,14 @@ if [ -f "/etc/init.d/php-fpm-72" ];then
 	/etc/init.d/php-fpm-72 reload
 fi
 
+if [ -f "/etc/init.d/php-fpm-73" ];then
+	/etc/init.d/php-fpm-73 reload
+fi
+
+if [ -f "/etc/init.d/php-fpm-74" ];then
+	/etc/init.d/php-fpm-74 reload
+fi
+
 if [ -f "/etc/init.d/mysqld" ];then
 	/etc/init.d/mysqld reload
 fi

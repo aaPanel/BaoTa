@@ -55,7 +55,7 @@ if __name__ == '__main__':
         if siteName[-4:] == '.log': 
             siteName = siteName[:-4]
         else:
-            siteName = siteName.replace("-access_log")
+            siteName = siteName.replace("-access_log",'')
         oldFileName = logsPath+sys.argv[1]
         split_logs(oldFileName,num)
 

@@ -5,7 +5,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2017 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 黄文良 <2879625666@qq.com>
+# | Author: 黄文良 <287962566@qq.com>
 # +-------------------------------------------------------------------
 
 #------------------------------
@@ -44,7 +44,7 @@ class tomcat:
     def AddVhost(self,path,domain):
         if self.GetVhost(domain): return False;
         if not os.path.exists(path): return False;
-        attr = {"appBase":path,"autoDeploy":"true","name":domain,"unpackWARs":"true","xmlNamespaceAware":"false","xmlValidation":"false"}
+        attr = {"autoDeploy":"true","name":domain,"unpackWARs":"true","xmlNamespaceAware":"false","xmlValidation":"false"}
         Host = Element("Host", attr);
         attr = {"docBase":path,"path":"","reloadable":"true","crossContext":"true",}
         Context = Element("Context", attr);
@@ -75,7 +75,7 @@ class tomcat:
         if not os.path.exists(path): return False;
         host = self.GetVhost(name);
         if not host: return False
-        host.attrib['appBase'] = path;
+        #host.attrib['appBase'] = path;
         host.getchildren()[0].attrib['docBase'] = path;
         self.Save();
         return True;
@@ -107,5 +107,5 @@ class tomcat:
             em.tail = i
 if __name__ == '__main__':
     tom = tomcat();
-    print tom.DelVhost('w1.hao.com');
+    print(tom.DelVhost('w1.hao.com'));
     

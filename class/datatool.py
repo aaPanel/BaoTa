@@ -14,7 +14,7 @@ import sys, os
 os.chdir("/www/server/panel")
 sys.path.append('class')
 import panelMysql
-import re,json
+import re,json,public
 
 class datatools:
     DB_MySQL = None
@@ -49,18 +49,19 @@ class datatools:
 
             ret3 = []
             for i in tables:
-                    
+                if i == 1049: return public.returnMsg(False,'指定数据库不存在!')
                 table = self.map_to_list(self.DB_MySQL.query("show table status from `%s` where name = '%s'" % (db_name, i[0])))
-
-                ret2 = {}
-
-                ret2['type']=table[0][1]
-                data_size = table[0][6]
-                ret2['rows_count'] = table[0][4]
-                ret2['collation'] = table[0][14]
-                ret2['data_size'] = self.ToSize(int(data_size))
-                ret2['table_name'] = i[0]
-                ret3.append(ret2)
+                if not table: continue
+                try:
+                    ret2 = {}
+                    ret2['type']=table[0][1]
+                    data_size = table[0][6]
+                    ret2['rows_count'] = table[0][4]
+                    ret2['collation'] = table[0][14]
+                    ret2['data_size'] = self.ToSize(int(data_size))
+                    ret2['table_name'] = i[0]
+                    ret3.append(ret2)
+                except: continue
             ret['tables'] = (ret3)
         return ret
 

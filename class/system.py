@@ -288,8 +288,9 @@ class system:
             time.sleep(1)
         new_cpu_time = self.get_cpu_time()
         new_process_time = self.get_process_cpu_time()
-        percent = round(100.00 * ((new_process_time - old_process_time) / (new_cpu_time - old_cpu_time)),2)
-
+        try:
+            percent = round(100.00 * ((new_process_time - old_process_time) / (new_cpu_time - old_cpu_time)),2)
+        except: percent = 0.00
         cache.set('old_cpu_time',new_cpu_time)
         cache.set('old_process_time',new_process_time)
         if percent > 100: percent = 100
@@ -410,12 +411,10 @@ class system:
             for d in os.listdir(c['path']):
                 if d.find(c['find']) == -1: continue;
                 filename = c['path'] + '/' + d;
+                if os.path.isdir(filename): continue
                 fsize = os.path.getsize(filename);
                 total += fsize
-                if os.path.isdir(filename):
-                    shutil.rmtree(filename)
-                else:
-                    os.remove(filename)
+                os.remove(filename)
                 count += 1;
         public.serviceReload();
         filename = '/www/server/nginx/off'
@@ -545,11 +544,42 @@ class system:
         cache.set('io_read',io_read)
         if disk_io_read > 0: return int(disk_io_read)
         return 0
+
+    #检查并修复MySQL目录权限
+    def __check_mysql_path(self):
+        try:
+            #获取datadir路径
+            mypath = '/etc/my.cnf'
+            if not os.path.exists(mypath): return False
+            mycnf = public.readFile(mypath)
+            tmp = re.findall('datadir\s*=\s*(.+)',mycnf)
+            if not tmp: return False
+            datadir = tmp[0]
+
+            #可以被启动的权限
+            accs = ['755','777']
+
+            #处理data目录权限
+            mode_info = public.get_mode_and_user(datadir)
+            if not mode_info['mode'] in accs or mode_info['user'] != 'mysql':
+                public.ExecShell('chmod 755 ' + datadir)
+                public.ExecShell('chown -R mysql:mysql ' + datadir)
+        
+            #递归处理父目录权限
+            datadir = os.path.dirname(datadir)
+            while datadir != '/':
+                if datadir == '/': break;
+                mode_info = public.get_mode_and_user(datadir)
+                if not mode_info['mode'] in accs:
+                    public.ExecShell('chmod 755 ' + datadir)
+                datadir = os.path.dirname(datadir)
+        except: pass
     
     def ServiceAdmin(self,get=None):
         #服务管理
-        
-        if get.name == 'mysqld': public.CheckMyCnf();
+        if get.name == 'mysqld': 
+            public.CheckMyCnf();
+            self.__check_mysql_path()
         
         if get.name == 'phpmyadmin':
             import ajax
@@ -570,7 +600,7 @@ class system:
                 public.ExecShell('/etc/init.d/httpd stop');
                 self.kill_port()
                 
-            result = public.ExecShell('ulimit -n 10240 && ' + self.setupPath+'/apache/bin/apachectl -t');
+            result = public.ExecShell('ulimit -n 8192 && ' + self.setupPath+'/apache/bin/apachectl -t');
             if result[1].find('Syntax OK') == -1:
                 public.WriteLog("TYPE_SOFT",'SYS_EXEC_ERR', (str(result),));
                 return public.returnMsg(False,'SYS_CONF_APACHE_ERR',(result[1].replace("\n",'<br>'),));
@@ -589,7 +619,7 @@ class system:
                 public.ExecShell('mkdir ' + vhostPath);
                 public.ExecShell('/etc/init.d/nginx start');
             
-            result = public.ExecShell('ulimit -n 10240 && nginx -t -c '+self.setupPath+'/nginx/conf/nginx.conf');
+            result = public.ExecShell('ulimit -n 8192 && nginx -t -c '+self.setupPath+'/nginx/conf/nginx.conf');
             if result[1].find('perserver') != -1:
                 limit = self.setupPath + '/nginx/conf/nginx.conf';
                 nginxConf = public.readFile(limit);
@@ -613,6 +643,13 @@ class system:
             if get.type == 'start': 
                 self.kill_port()
                 time.sleep(0.5)
+        if get.name == 'redis':
+            redis_init = '/etc/init.d/redis'
+            if os.path.exists(redis_init):
+                init_body = public.ReadFile(redis_init)
+                if init_body.find('pkill -9 redis') == -1:
+                    public.ExecShell("wget -O " + redis_init + " " + public.get_url() + '/init/redis.init')
+                    public.ExecShell("chmod +x " + redis_init)
         
         #执行
         execStr = "/etc/init.d/"+get.name+" "+get.type
@@ -635,7 +672,7 @@ class system:
         if get.type != 'test':
             public.WriteLog("TYPE_SOFT", 'SYS_EXEC_SUCCESS',(execStr,));
         
-        if len(result[1]) > 1 and get.name != 'pure-ftpd': return public.returnMsg(False, '<p>警告消息： <p>' + result[1].replace('\n','<br>'));
+        if len(result[1]) > 1 and get.name != 'pure-ftpd' and get.name != 'redis': return public.returnMsg(False, '<p>警告消息： <p>' + result[1].replace('\n','<br>'));
         return public.returnMsg(True,'SYS_EXEC_SUCCESS');
     
     def RestartServer(self,get):

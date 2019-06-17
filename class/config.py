@@ -7,7 +7,7 @@
 # | Author: 黄文良 <287962566@qq.com>
 # +-------------------------------------------------------------------
 
-import public,re,sys,os
+import public,re,sys,os,nginx,apache,json,time
 from BTPanel import session,admin_path_checks
 from flask import request
 class config:
@@ -32,17 +32,33 @@ class config:
     
     def setPanel(self,get):
         if not public.IsRestart(): return public.returnMsg(False,'EXEC_ERR_TASK');
-        
+        isReWeb = False
+        sess_out_path = 'data/session_timeout.pl'
+        if 'session_timeout' in get:
+            session_timeout = int(get.session_timeout)
+            if int(public.readFile(sess_out_path)) != session_timeout:
+                if session_timeout < 300: return public.returnMsg(False,'超时时间不能小于300秒')
+                public.writeFile(sess_out_path,str(session_timeout))
+                isReWeb = True
+
+        workers_p = 'data/workers.pl'
+        if 'workers' in get:
+            workers = int(get.workers)
+            if int(public.readFile(workers_p)) != workers:
+                if workers < 1 or workers > 1024: return public.returnMsg(False,'面板线程数范围应该在1-1024之间')
+                public.writeFile(workers_p,str(workers))
+                isReWeb = True
+
         if get.domain:
             reg = "^([\w\-\*]{1,100}\.){1,4}(\w{1,10}|\w{1,10}\.\w{1,10})$";
             if not re.match(reg, get.domain): return public.returnMsg(False,'SITE_ADD_ERR_DOMAIN');
-        isReWeb = False
+        
         oldPort = public.GetHost(True);
         newPort = get.port;
         if oldPort != get.port:
             get.port = str(int(get.port))
             if self.IsOpen(get.port):
-                return public.returnMsg(False,'PORT_CHECK_EXISTS',(get,port,))
+                return public.returnMsg(False,'PORT_CHECK_EXISTS',(get.port,))
             if int(get.port) >= 65535 or  int(get.port) < 100: return public.returnMsg(False,'PORT_CHECK_RANGE');
             public.writeFile('data/port.pl',get.port)
             import firewalls
@@ -64,13 +80,14 @@ class config:
         public.writeFile('data/domain.conf',get.domain.strip())
         public.writeFile('data/iplist.txt',get.address)
         
+        
         public.M('config').where("id=?",('1',)).save('backup_path,sites_path',(get.backup_path,get.sites_path))
-        session['config']['backup_path'] = get.backup_path
-        session['config']['sites_path'] = get.sites_path
+        session['config']['backup_path'] = os.path.join('/',get.backup_path)
+        session['config']['sites_path'] = os.path.join('/',get.sites_path)
         mhost = public.GetHost()
         if get.domain.strip(): mhost = get.domain
         data = {'uri':request.path,'host':mhost+':'+newPort,'status':True,'isReWeb':isReWeb,'msg':public.getMsg('PANEL_SAVE')}
-        public.WriteLog('TYPE_PANEL','PANEL_SAVE',(newPort,get.domain,get.backup_path,get.sites_path,get.address,get.limitip))
+        public.WriteLog('TYPE_PANEL','PANEL_SET_SUCCESS',(newPort,get.domain,get.backup_path,get.sites_path,get.address,get.limitip))
         if isReWeb: public.restart_panel()
         return data
 
@@ -82,6 +99,7 @@ class config:
             if len(get.admin_path) < 6: return public.returnMsg(False,'安全入口地址长度不能小于6位!')
             if get.admin_path in admin_path_checks: return public.returnMsg(False,'该入口已被面板占用,请使用其它入口!')
             if not re.match("^/[\w\./-_]+$",get.admin_path):  return public.returnMsg(False,'入口地址格式不正确,示例: /my_panel')
+            if get.admin_path[0] != '/': return public.returnMsg(False,'入口地址格式不正确,示例: /my_panel')
         else:
             get.domain = public.readFile('data/domain.conf')
             if not get.domain: get.domain = '';
@@ -554,14 +572,127 @@ class config:
         filename = '/www/server/php/' + get.version + '/etc/php.ini';
         phpini = public.readFile(filename);
         for g in gets:
-            rep = g + '\s*=\s*(.+)\r?\n';
-            val = g+' = ' + get[g] + '\n';
-            phpini = re.sub(rep,val,phpini);
+            try:
+                rep = g + '\s*=\s*(.+)\r?\n';
+                val = g+' = ' + get[g] + '\n';
+                phpini = re.sub(rep,val,phpini);
+            except: continue
         
         public.writeFile(filename,phpini);
         os.system('/etc/init.d/php-fpm-' + get.version + ' reload');
         return public.returnMsg(True,'SET_SUCCESS');
     
+  
+ # 取Session缓存方式
+    def GetSessionConf(self,get):
+        phpini = public.readFile('/www/server/php/' + get.version + '/etc/php.ini')
+        rep = 'session.save_handler\s*=\s*([0-9A-Za-z_& ~]+)(\s*;?|\r?\n)'
+        save_handler = re.search(rep, phpini)
+        if save_handler:
+            save_handler = save_handler.group(1)
+        else:
+            save_handler = "files"
+
+        reppath = '\nsession.save_path\s*=\s*"tcp\:\/\/([\d\.]+):(\d+).*\r?\n'
+        passrep = '\nsession.save_path\s*=\s*"tcp://[\w\.\?\:]+=(.*)"\r?\n'
+        save_path = re.search(reppath, phpini)
+        passwd = re.search(passrep, phpini)
+        port = ""
+        if passwd:
+            passwd = passwd.group(1)
+        else:
+            passwd = ""
+        if save_path:
+            port = save_path.group(2)
+            save_path = save_path.group(1)
+
+        else:
+            save_path = ""
+        return {"save_handler": save_handler, "save_path": save_path, "passwd": passwd, "port": port}
+
+    # 设置Session缓存方式
+    def SetSessionConf(self, get):
+        g = get.save_handler
+        ip = get.ip
+        port = get.port
+        passwd = get.passwd
+        if g != "files":
+            iprep = "(2(5[0-5]{1}|[0-4]\d{1})|[0-1]?\d{1,2})\.(2(5[0-5]{1}|[0-4]\d{1})|[0-1]?\d{1,2})\.(2(5[0-5]{1}|[0-4]\d{1})|[0-1]?\d{1,2})\.(2(5[0-5]{1}|[0-4]\d{1})|[0-1]?\d{1,2})"
+            if not re.search(iprep, ip):
+                return public.returnMsg(False, '请输入正确的IP地址')
+            try:
+                port = int(port)
+                if port >= 65535 or port < 1:
+                    return public.returnMsg(False, '请输入正确的端口号')
+            except:
+                return public.returnMsg(False, '请输入正确的端口号')
+            prep = "[\~\`\/\=]"
+            if re.search(prep,passwd):
+                return public.returnMsg(False, '请不要输入以下特殊字符 " ~ ` / = "')
+        filename = '/www/server/php/' + get.version + '/etc/php.ini'
+        phpini = public.readFile(filename)
+        rep = 'session.save_handler\s*=\s*(.+)\r?\n'
+        val = 'session.save_handler = ' + g + '\n'
+        phpini = re.sub(rep, val, phpini)
+        if g == "memcache":
+            if not re.search("memcache.so",phpini):
+                return public.returnMsg(False, '请先安装%s扩展' % g)
+            rep = '\nsession.save_path\s*=\s*(.+)\r?\n'
+            val = '\nsession.save_path = "tcp://%s:%s"\n' % (ip, port)
+            if re.search(rep, phpini):
+                phpini = re.sub(rep, val, phpini)
+            else:
+                phpini = re.sub('\n;session.save_path = "/tmp"', '\n;session.save_path = "/tmp"' + val, phpini)
+        if g == "redis":
+            if not re.search("redis.so",phpini):
+                return public.returnMsg(False, '请先安装%s扩展' % g)
+            if passwd:
+                passwd = "?auth=" + passwd
+            else:
+                passwd = ""
+            rep = '\nsession.save_path\s*=\s*(.+)\r?\n'
+            val = '\nsession.save_path = "tcp://%s:%s%s"\n' % (ip, port, passwd)
+            res = re.search(rep, phpini)
+            if res:
+                phpini = re.sub(rep, val, phpini)
+            else:
+                phpini = re.sub('\n;session.save_path = "/tmp"', '\n;session.save_path = "/tmp"' + val, phpini)
+        if g == "files":
+            rep = '\nsession.save_path\s*=\s*(.+)\r?\n'
+            val = '\nsession.save_path = "/tmp"\n'
+            if re.search(rep, phpini):
+                phpini = re.sub(rep, val, phpini)
+            else:
+                phpini = re.sub('\n;session.save_path = "/tmp"', '\n;session.save_path = "/tmp"' + val, phpini)
+        public.writeFile(filename, phpini)
+        os.system('/etc/init.d/php-fpm-' + get.version + ' reload')
+        return public.returnMsg(True, 'SET_SUCCESS')
+
+    # 获取Session文件数量
+    def GetSessionCount(self, get):
+        d="/tmp"
+        count = 0
+        list = os.listdir(d)
+        for l in list:
+            if "sess_" in l:
+                count += 1
+
+        s = "find /tmp -mtime +1 |grep 'sess_'|wc -l"
+        old_file_conf = int(public.ExecShell(s)[0].split("\n")[0])
+
+        return {"total":count,"oldfile":old_file_conf}
+
+    # 删除老文件
+    def DelOldSession(self,get):
+        s = "find /tmp -mtime +1 |grep 'sess_'|xargs rm -f"
+        os.system(s)
+        s = "find /tmp -mtime +1 |grep 'sess_'|wc -l"
+        old_file_conf = int(public.ExecShell(s)[0].split("\n")[0])
+        if old_file_conf == 0:
+            return public.returnMsg(True, '清理成功')
+        else:
+            return public.returnMsg(True, '清理失败')
+  
     #获取面板证书
     def GetPanelSSL(self,get):
         cert = {}
@@ -603,6 +734,129 @@ class config:
         pluginTmp = public.httpPost(url,pdata)
         pluginInfo = json.loads(pluginTmp)
         return pluginInfo
-            
-       
+
+    def get_token(self,get):
+        import json
+        save_path = '/www/server/panel/config/api.json'
+        if not os.path.exists(save_path): 
+            data = { "open":False, "token":"", "limit_addr":[] }
+            public.WriteFile(save_path,json.dumps(data))
+            public.ExecShell("chmod 600 " + save_path)
+        data = json.loads(public.ReadFile(save_path))
+        data['token'] = "***********************************"
+        data['limit_addr'] = '\n'.join(data['limit_addr'])
+        return data
+
+    def set_token(self,get):
+        import json
+        #panel_password = public.M('users').where('id=?',(1,)).getField('password')
+        #if not public.md5(get.panel_password.strip()) == panel_password: return public.returnMsg(False,'面板密码错误!')
+        if 'request_token' in get: return public.returnMsg(False,'不能通过API接口配置API')
+        save_path = '/www/server/panel/config/api.json'
+        data = json.loads(public.ReadFile(save_path))
+        if get.t_type == '1':
+            token = public.GetRandomString(32)
+            data['token'] = public.md5(token)
+            public.WriteLog('API配置','重新生成API-Token')
+        elif get.t_type == '2':
+            data['open'] = not data['open']
+            stats = {True:'开启',False:'关闭'}
+            public.WriteLog('API配置','%sAPI接口' % stats[data['open']])
+            token = stats[data['open']] + '成功!'
+        elif get.t_type == '3':
+            data['limit_addr'] = get.limit_addr.split('\n')
+            public.WriteLog('API配置','变更IP限制为[%s]' % get.limit_addr)
+            token ='保存成功!'
+
+        public.WriteFile(save_path,json.dumps(data))
+        return public.returnMsg(True,token)
+
+
+    def get_tmp_token(self,get):
+        save_path = '/www/server/panel/config/api.json'
+        if not 'request_token' in get: return public.returnMsg(False,'只能通过API接口获取临时密钥')
+        data = json.loads(public.ReadFile(save_path))
+        data['tmp_token'] = public.GetRandomString(64)
+        data['tmp_time'] = time.time()
+        public.WriteFile(save_path,json.dumps(data))
+        return public.returnMsg(True,data['tmp_token'])
+
+
+    def GetNginxValue(self,get):
+        n = nginx.nginx()
+        return n.GetNginxValue()
+
+    def SetNginxValue(self,get):
+        n = nginx.nginx()
+        return n.SetNginxValue(get)
+
+    def GetApacheValue(self,get):
+        a = apache.apache()
+        return a.GetApacheValue()
+
+    def SetApacheValue(self,get):
+        a = apache.apache()
+        return a.SetApacheValue(get)
+
+    def get_ipv6_listen(self,get):
+        return os.path.exists('data/ipv6.pl')
+
+    def set_ipv6_status(self,get):
+        ipv6_file = 'data/ipv6.pl'
+        if self.get_ipv6_listen(get):
+            os.remove(ipv6_file)
+            public.WriteLog('面板设置','关闭面板IPv6兼容!')
+        else:
+            public.writeFile(ipv6_file,'True')
+            public.WriteLog('面板设置','开启面板IPv6兼容!')
+        public.restart_panel()
+        return public.returnMsg(True,'设置成功!')
+
+    #自动补充CLI模式下的PHP版本
+    def auto_cli_php_version(self,get):
+        import panelSite
+        php_versions = panelSite.panelSite().GetPHPVersion(get)
+        php_bin_src = "/www/server/php/%s/bin/php" % php_versions[-1]['version']
+        if not os.path.exists(php_bin_src): return public.returnMsg(False,'未安装PHP!')
+        get.php_version = php_versions[-1]['version']
+        self.set_cli_php_version(get)
+        return php_versions[-1]
+
+    #获取CLI模式下的PHP版本
+    def get_cli_php_version(self,get):
+        php_bin = '/usr/bin/php'
+        if not os.path.exists(php_bin) or not os.path.islink(php_bin):  return self.auto_cli_php_version(get)
+        link_re = os.readlink(php_bin)
+        if not os.path.exists(link_re): return self.auto_cli_php_version(get)
+        import panelSite
+        php_versions = panelSite.panelSite().GetPHPVersion(get)
+        del(php_versions[0])
+        for v in php_versions:
+            if link_re.find(v['version']) != -1: return {"select":v,"versions":php_versions}
+        return {"select":self.auto_cli_php_version(get),"versions":php_versions}
+
+    #设置CLI模式下的PHP版本
+    def set_cli_php_version(self,get):
+        php_bin = '/usr/bin/php'
+        php_bin_src = "/www/server/php/%s/bin/php" % get.php_version
+        php_ize = '/usr/bin/phpize'
+        php_ize_src = "/www/server/php/%s/bin/phpize" % get.php_version
+        php_fpm = '/usr/bin/php-fpm'
+        php_fpm_src = "/www/server/php/%s/sbin/php-fpm" % get.php_version
+        php_pecl = '/usr/bin/pecl'
+        php_pecl_src = "/www/server/php/%s/bin/pecl" % get.php_version
+        php_pear = '/usr/bin/pear'
+        php_pear_src = "/www/server/php/%s/bin/pear" % get.php_version
+        if not os.path.exists(php_bin_src): return public.returnMsg(False,'指定PHP版本未安装!')
+        is_chattr = public.ExecShell('lsattr /usr|grep /usr/bin')[0].find('-i-')
+        if is_chattr != -1: public.ExecShell('chattr -i /usr/bin')
+        public.ExecShell("rm -f " + php_bin + ' '+ php_ize + ' ' + php_fpm + ' ' + php_pecl + ' ' + php_pear)
+        public.ExecShell("ln -sf %s %s" % (php_bin_src,php_bin))
+        public.ExecShell("ln -sf %s %s" % (php_ize_src,php_ize))
+        public.ExecShell("ln -sf %s %s" % (php_fpm_src,php_fpm))
+        public.ExecShell("ln -sf %s %s" % (php_pecl_src,php_pecl))
+        public.ExecShell("ln -sf %s %s" % (php_pear_src,php_pear))
+        if is_chattr != -1:  public.ExecShell('chattr +i /usr/bin')
+        return public.returnMsg(True,'设置成功!')
+
         

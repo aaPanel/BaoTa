@@ -99,7 +99,120 @@ class database(datatool.datatools):
         if "using password:" in mysqlMsg: return public.returnMsg(False,'DATABASE_ERR_PASS')
         if "Connection refused" in mysqlMsg: return public.returnMsg(False,'DATABASE_ERR_CONNECT')
         if "1133" in mysqlMsg: return public.returnMsg(False,'DATABASE_ERR_NOT_EXISTS')
+        if "libmysqlclient" in mysqlMsg: 
+            result = self.rep_lnk()
+            os.system("pip uninstall mysql-python -y")
+            os.system("pip install mysql-python")
+            public.writeFile('data/restart.pl','True')
+            return public.returnMsg(False,"执行失败，已尝试自动修复，请稍候重试!")
         return None
+
+    def rep_lnk(self):
+        shell_cmd = '''
+Setup_Path=/www/server/mysql
+#删除软链
+DelLink()
+{	
+	rm -f /usr/bin/mysql*
+	rm -f /usr/lib/libmysql*
+	rm -f /usr/lib64/libmysql*
+    rm -f /usr/bin/myisamchk
+    rm -f /usr/bin/mysqldump
+    rm -f /usr/bin/mysql
+    rm -f /usr/bin/mysqld_safe
+    rm -f /usr/bin/mysql_config
+}
+#设置软件链
+SetLink()
+{
+    ln -sf ${Setup_Path}/bin/mysql /usr/bin/mysql
+    ln -sf ${Setup_Path}/bin/mysqldump /usr/bin/mysqldump
+    ln -sf ${Setup_Path}/bin/myisamchk /usr/bin/myisamchk
+    ln -sf ${Setup_Path}/bin/mysqld_safe /usr/bin/mysqld_safe
+    ln -sf ${Setup_Path}/bin/mysqlcheck /usr/bin/mysqlcheck
+	ln -sf ${Setup_Path}/bin/mysql_config /usr/bin/mysql_config
+	
+	rm -f /usr/lib/libmysqlclient.so.16
+	rm -f /usr/lib64/libmysqlclient.so.16
+	rm -f /usr/lib/libmysqlclient.so.18
+	rm -f /usr/lib64/libmysqlclient.so.18
+	rm -f /usr/lib/libmysqlclient.so.20
+	rm -f /usr/lib64/libmysqlclient.so.20
+	rm -f /usr/lib/libmysqlclient.so.21
+	rm -f /usr/lib64/libmysqlclient.so.21
+	
+	if [ -f "${Setup_Path}/lib/libmysqlclient.so.18" ];then
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.18 /usr/lib/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.18 /usr/lib64/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.18 /usr/lib/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.18 /usr/lib64/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.18 /usr/lib/libmysqlclient.so.20
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.18 /usr/lib64/libmysqlclient.so.20
+	elif [ -f "${Setup_Path}/lib/mysql/libmysqlclient.so.18" ];then
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.18 /usr/lib/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.18 /usr/lib64/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.18 /usr/lib/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.18 /usr/lib64/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.18 /usr/lib/libmysqlclient.so.20
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.18 /usr/lib64/libmysqlclient.so.20
+	elif [ -f "${Setup_Path}/lib/libmysqlclient.so.16" ];then
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.16 /usr/lib/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.16 /usr/lib64/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.16 /usr/lib/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.16 /usr/lib64/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.16 /usr/lib/libmysqlclient.so.20
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.16 /usr/lib64/libmysqlclient.so.20
+	elif [ -f "${Setup_Path}/lib/mysql/libmysqlclient.so.16" ];then
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.16 /usr/lib/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.16 /usr/lib64/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.16 /usr/lib/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.16 /usr/lib64/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.16 /usr/lib/libmysqlclient.so.20
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.16 /usr/lib64/libmysqlclient.so.20
+	elif [ -f "${Setup_Path}/lib/libmysqlclient_r.so.16" ];then
+		ln -sf ${Setup_Path}/lib/libmysqlclient_r.so.16 /usr/lib/libmysqlclient_r.so.16
+		ln -sf ${Setup_Path}/lib/libmysqlclient_r.so.16 /usr/lib64/libmysqlclient_r.so.16
+	elif [ -f "${Setup_Path}/lib/mysql/libmysqlclient_r.so.16" ];then
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient_r.so.16 /usr/lib/libmysqlclient_r.so.16
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient_r.so.16 /usr/lib64/libmysqlclient_r.so.16
+	elif [ -f "${Setup_Path}/lib/libmysqlclient.so.20" ];then
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.20 /usr/lib/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.20 /usr/lib64/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.20 /usr/lib/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.20 /usr/lib64/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.20 /usr/lib/libmysqlclient.so.20
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.20 /usr/lib64/libmysqlclient.so.20
+	elif [ -f "${Setup_Path}/lib/libmysqlclient.so.21" ];then
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.21 /usr/lib/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.21 /usr/lib64/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.21 /usr/lib/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.21 /usr/lib64/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.21 /usr/lib/libmysqlclient.so.20
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.21 /usr/lib64/libmysqlclient.so.20
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.21 /usr/lib/libmysqlclient.so.21
+		ln -sf ${Setup_Path}/lib/libmysqlclient.so.21 /usr/lib64/libmysqlclient.so.21
+	elif [ -f "${Setup_Path}/lib/libmariadb.so.3" ]; then
+		ln -sf ${Setup_Path}/lib/libmariadb.so.3 /usr/lib/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/libmariadb.so.3 /usr/lib64/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/libmariadb.so.3 /usr/lib/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/libmariadb.so.3 /usr/lib64/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/libmariadb.so.3 /usr/lib/libmysqlclient.so.20
+		ln -sf ${Setup_Path}/lib/libmariadb.so.3 /usr/lib64/libmysqlclient.so.20
+		ln -sf ${Setup_Path}/lib/libmariadb.so.3 /usr/lib/libmysqlclient.so.21
+		ln -sf ${Setup_Path}/lib/libmariadb.so.3 /usr/lib64/libmysqlclient.so.21
+	elif [ -f "${Setup_Path}/lib/mysql/libmysqlclient.so.20" ];then
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.20 /usr/lib/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.20 /usr/lib64/libmysqlclient.so.16
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.20 /usr/lib/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.20 /usr/lib64/libmysqlclient.so.18
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.20 /usr/lib/libmysqlclient.so.20
+		ln -sf ${Setup_Path}/lib/mysql/libmysqlclient.so.20 /usr/lib64/libmysqlclient.so.20
+	fi
+}
+DelLink
+SetLink
+'''    
+        return public.ExecShell(shell_cmd);
     
     #删除数据库
     def DeleteDatabase(self,get):
@@ -345,7 +458,7 @@ class database(datatool.datatools):
                  
             if not os.path.exists(backupPath + '/' + tmpFile) or tmpFile == '': return public.returnMsg(False, 'FILE_NOT_EXISTS',(tmpFile,))
             self.mypass(True, root);
-            public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " + backupPath + '/' +tmpFile)
+            os.system(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " + backupPath + '/' +tmpFile)
             self.mypass(False, root);
             if isgizp:
                 os.system('cd ' +backupPath+ ' && gzip ' + file.split('/')[-1][:-3]);
@@ -353,7 +466,7 @@ class database(datatool.datatools):
                 os.system("rm -f " +  backupPath + '/' +tmpFile)
         else:
             self.mypass(True, root);
-            public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " +  file)
+            os.system(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " +  file)
             self.mypass(False, root);
                 
             
@@ -430,6 +543,7 @@ class database(datatool.datatools):
         if isError != None: return isError
         users = panelMysql.panelMysql().query("select User,Host from mysql.user where User!='root' AND Host!='localhost' AND Host!=''")
         if type(users) == str: return public.returnMsg(False,users)
+        
         sql = public.M('databases')
         nameArr = ['information_schema','performance_schema','mysql','sys']
         n = 0
@@ -475,7 +589,6 @@ class database(datatool.datatools):
     
     #设置数据库权限
     def SetDatabaseAccess(self,get):
-        #try:
         name = get['name']
         db_name = public.M('databases').where('username=?',(name,)).getField('name');
         access = get['access']
@@ -483,16 +596,9 @@ class database(datatool.datatools):
         users = panelMysql.panelMysql().query("select Host from mysql.user where User='" + name + "' AND Host!='localhost'")
         for us in users:
             panelMysql.panelMysql().execute("drop user '" + name + "'@'" + us[0] + "'")
-
         self.__CreateUsers(db_name,name,password,access)
 
-        #for a in access.split(','):
-        #    panelMysql.panelMysql().execute("grant all privileges on " + db_name + ".* to '" + name + "'@'" + a + "' identified by '" + password + "'")
-        #panelMysql.panelMysql().execute("flush privileges")
         return public.returnMsg(True, 'SET_SUCCESS')
-        #except Exception as ex:
-            #public.WriteLog("TYPE_DATABASE",'DATABASE_ACCESS_ERR',(name ,str(ex)))
-            #return public.returnMsg(False,'SET_ERROR')
         
     
     #获取数据库配置信息
@@ -571,6 +677,7 @@ class database(datatool.datatools):
     def BinLog(self,get):
         myfile = '/etc/my.cnf';
         mycnf = public.readFile(myfile);
+        masterslaveconf = "/www/server/panel/plugin/masterslave/data.json"
         if mycnf.find('#log-bin=mysql-bin') != -1:
             if hasattr(get,'status'): return public.returnMsg(False,'0');
             mycnf = mycnf.replace('#log-bin=mysql-bin','log-bin=mysql-bin')
@@ -586,7 +693,8 @@ class database(datatool.datatools):
                     if n[0:9] == 'mysql-bin':
                         dsize += os.path.getsize(path + '/' + n);
                 return public.returnMsg(True,dsize);
-            
+            if os.path.exists(masterslaveconf):
+                return public.returnMsg(False, "请先卸载Mysql主从复制插件后再关闭二进制日志！！")
             mycnf = mycnf.replace('log-bin=mysql-bin','#log-bin=mysql-bin')
             mycnf = mycnf.replace('binlog_format=mixed','#binlog_format=mixed')
             os.system('sync')
@@ -657,7 +765,7 @@ class database(datatool.datatools):
     
     #取慢日志
     def GetSlowLogs(self,get):
-        path = '/www/server/data/mysql-slow.log';
+        path = self.GetMySQLInfo(get)['datadir'] + '/mysql-slow.log';
         if not os.path.exists(path): return public.returnMsg(False,'日志文件不存在!');
         return public.returnMsg(True,public.GetNumLines(path,1000));
     

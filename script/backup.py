@@ -50,7 +50,7 @@ class backupTools:
         print(u"|---文件名:"+filename)
         
         #清理多余备份     
-        backups = sql.table('backup').where('type=? and pid=?',('0',pid)).field('id,filename').select();
+        backups = sql.table('backup').where('type=? and pid=? and filename!=? and filename!=? and filename!=? and filename!=? and filename!=?',('0',pid,'alioss','txcos','upyun','qiniu','ftp')).field('id,filename').select();
         
         num = len(backups) - int(count)
         if  num > 0:
@@ -63,7 +63,7 @@ class backupTools:
     
     def backupDatabase(self,name,count):
         sql = db.Sql();
-        path = sql.table('databases').where('name=?',(name,)).getField('path');
+        path = sql.table('databases').where('name=?',(name,)).getField('id');
         startTime = time.time();
         if not path:
             endDate = time.strftime('%Y/%m/%d %X',time.localtime())
@@ -88,7 +88,7 @@ class backupTools:
         if len(mycnf) > 100:
             public.writeFile('/etc/my.cnf',mycnf);
         
-        public.ExecShell("/www/server/mysql/bin/mysqldump --opt --default-character-set=utf8 " + name + " | gzip > " + filename)
+        public.ExecShell("/www/server/mysql/bin/mysqldump --force --opt " + name + " | gzip > " + filename)
         
         if not os.path.exists(filename):
             endDate = time.strftime('%Y/%m/%d %X',time.localtime())
@@ -114,7 +114,7 @@ class backupTools:
         print(u"|---文件名:"+filename)
         
         #清理多余备份     
-        backups = sql.table('backup').where('type=? and pid=?',('1',pid)).field('id,filename').select();
+        backups = sql.table('backup').where('type=? and pid=? and filename!=? and filename!=? and filename!=? and filename!=? and filename!=?',('1',pid,'alioss','txcos','upyun','qiniu','ftp')).field('id,filename').select();
         
         num = len(backups) - int(count)
         if  num > 0:
@@ -152,8 +152,7 @@ class backupTools:
         print(u"|---文件名:"+filename)
         
         #清理多余备份     
-        backups = sql.table('backup').where('type=? and pid=?',('2',0)).field('id,filename').select();
-        
+        backups = sql.table('backup').where('type=? and pid=? and name=?',('2',0,path)).field('id,filename').select();
         num = len(backups) - int(count)
         if  num > 0:
             for backup in backups:

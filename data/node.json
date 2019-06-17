@@ -1,5 +1,26 @@
 [
-	{"protocol":"http://","address":"125.88.182.172","port":"5880","ping":500},
-	{"protocol":"http://","address":"103.224.251.67","port":"5880","ping":500},
-	{"protocol":"http://","address":"128.1.164.196","port":"5880","ping":500}
+  {
+    "protocol": "http://",
+    "address": "125.88.182.172",
+    "port": "5880",
+    "ping": 500
+  },
+  {
+    "protocol": "http://",
+    "address": "103.224.251.67",
+    "port": "80",
+    "ping": 500
+  },
+  {
+    "protocol": "http://",
+    "address": "183.235.223.101",
+    "port": "3389",
+    "ping": 500
+  },
+  {
+    "protocol": "http://",
+    "address": "128.1.164.196",
+    "port": "80",
+    "ping": 500
+  }
 ]

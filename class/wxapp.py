@@ -68,14 +68,18 @@ class SelfModule():
         self.user_info_file = self.app_path + "user.json"
         if not os.path.exists(self.user_info_file):
             public.ExecShell("echo '{}' > " + self.user_info_file)
-        self.user_info = json.loads(public.readFile(self.user_info_file))
+        try:
+            self.user_info = json.loads(public.readFile(self.user_info_file))
+        except: public.ExecShell("echo '{}' > " + self.user_info_file)
         
         user_info_file_app = self.app_path_p + "user.json"
         if os.path.exists(user_info_file_app):
-            user_info_app = json.loads(public.readFile(user_info_file_app))
-            for userId in user_info_app.keys():
-                if userId in self.user_info: continue;
-                self.user_info[userId] = user_info_app[userId];
+            try:
+                user_info_app = json.loads(public.readFile(user_info_file_app))
+                for userId in user_info_app.keys():
+                    if userId in self.user_info: continue;
+                    self.user_info[userId] = user_info_app[userId];
+            except:pass
         
     def blind_qrcode(self, get):
         '''

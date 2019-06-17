@@ -442,3 +442,81 @@ function bt_init() {
         $('.wxapp_p .modify').attr("onclick", "");
     }
 }
+
+
+
+function GetPanelApi() {
+    var loadT = layer.msg('正在获取API接口信息...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+    $.post('/config?action=get_token', {}, function (rdata) {
+        layer.close(loadT);
+        isOpen = rdata.open ? 'checked' : '';
+        layer.open({
+            type: 1,
+            area: "500px",
+            title: "配置面板API",
+            closeBtn: 2,
+            shift: 5,
+            shadeClose: false,
+			content: ' <div class="bt-form bt-form" style="padding:15px 25px">\
+						<div class="line">\
+							<span class="tname">API接口</span>\
+							<div class="info-r" style="height:28px;">\
+								<input class="btswitch btswitch-ios" id="panelApi_s" type="checkbox" '+ isOpen+'>\
+								<label style="position: relative;top: 5px;" class="btswitch-btn" for="panelApi_s" onclick="SetPanelApi(2)"></label>\
+							</div>\
+						</div>\
+                        <div class="line">\
+                            <span class="tname">接口密钥</span>\
+                            <div class="info-r">\
+                                <input disabled="disabled" name="panel_token_value" class="bt-input-text mr5 disable" type="text" style="width: 310px" value="'+rdata.token+'" disable>\
+                                <button class="btn btn-xs btn-success btn-sm" style="margin-left: -50px;" onclick="SetPanelApi(1)">重置</button>\
+                            </div>\
+                        </div>\
+                        <div class="line ">\
+                            <span class="tname" style="overflow: initial;height:20px;line-height:20px;">IP白名单</br>(每行1个)</span>\
+                            <div class="info-r">\
+                                <textarea name="api_limit_addr" class="bt-input-text mr5" type="text" style="width: 310px;height:80px;line-height: 20px;padding: 5px 8px;margin-bottom:10px;">'+ rdata.limit_addr +'</textarea>\
+                                <button class="btn btn-success btn-sm" onclick="SetPanelApi(3)">保存</button>\
+                            </div>\
+                        </div>\
+                        <ul class="help-info-text c7">\
+                            <li>开启API后，必需在IP白名单列表中的IP才能访问面板API接口</li>\
+                            <li>接口密钥只要重置时显示1次，之后不再显示，请保管好您的密钥</li>\
+                            <li>API接口文档在这里：<a class="btlink" href="https://www.bt.cn/bbs/thread-20376-1-1.html" target="_blank">https://www.bt.cn/bbs/thread-20376-1-1.html</a></li>\
+                        </ul>\
+                    </div>'
+        })
+    });
+}
+
+
+function SetPanelApi(t_type) {
+    var pdata = {}
+    pdata['t_type'] = t_type
+    if (t_type == 3) {
+        pdata['limit_addr'] = $("textarea[name='api_limit_addr']").val()
+    }
+    var loadT = layer.msg('正在提交...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+    $.post('/config?action=set_token', pdata, function (rdata) {
+        if (t_type == 1) {
+            if (rdata.status) {
+                $("input[name='panel_token_value']").val(rdata.msg);
+                layer.msg('接口密钥已生成，请保管好您的新密钥，此密钥只显示一次!', { icon: 1 });
+                return;
+            }
+        }
+        
+        layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+        if (rdata.msg == '开启成功!') {
+            GetPanelApi();
+        }
+    })
+}
+
+function SetIPv6() {
+    var loadT = layer.msg('正在配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+    $.post('/config?action=set_ipv6_status', {}, function (rdata) {
+        layer.close(loadT);
+        bt.msg(rdata);
+    });
+}

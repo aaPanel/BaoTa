@@ -27,7 +27,7 @@ function Recycle_bin(type){
 									<a class="btlink" href="javascript:;" onclick="ReRecycleBin(\'' + rdata.dirs[i].rname.replace(/'/,"\\'") + '\',this)">'+lan.files.recycle_bin_re+'</a>\
 									 | <a class="btlink" href="javascript:;" onclick="DelRecycleBin(\'' + rdata.dirs[i].rname.replace(/'/,"\\'") + '\',this)">'+lan.files.recycle_bin_del+'</a>\
 								</td>\
-							</tr>'
+							</tr>';
 				}
 				for(var i=0;i<rdata.files.length;i++){
 					if(rdata.files[i].name.indexOf('BTDB_') != -1){
@@ -294,31 +294,85 @@ function Set_Recycle_bin(db){
 		layer.msg(rdata.msg,{icon:rdata.status?1:5});
 	});
 }
-function GetFiles(Path) {
-	var searchtype = Path;
-	if(isNaN(Path)){
-		var p = '1';
-		Path = encodeURIComponent(Path)
-	}else{
-		var p = Path;
+
+function get_path_size(path) {
+    var loadT = layer.msg('正在计算目录大小,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+    $.post('/files?action=get_path_size', { path: path }, function (rdata) {
+        layer.close(loadT);
+        var myclass = '.' + rdata.path.replace(/[^\w]/g, '-');
+        console.log(myclass)
+        console.log($(myclass).text())
+        $(myclass).text(ToSize(rdata.size));
+    });
+}
+
+
+function path_check(path) {
+    if (path == '/') return path;
+    path = path.replace(/[\/]{2,}/g, '/');
+    path = path.replace(/[\/]+$/g, '');
+    return path;
+}
+
+function GetFiles(Path,sort) {
+    var searchtype = Path;
+    var p = '1';
+	if(!isNaN(Path)){
+		p = Path;
 		Path = getCookie('Path');
-	}
-	
+    }
+
+    Path = path_check(Path);
+
+    var data = {};
 	var search = '';
 	var searchV = $("#SearchValue").val();
-	if(searchV.length > 1 && searchtype == "1"){
-		search = "&search="+searchV;
-	}
+    if (searchV.length > 0 && searchtype == "1") {
+        data['search'] = searchV;
+        if ($("#search_all")[0].checked) {
+            data['all'] = 'True'
+        }
+    }
+
+    var sorted = '';
+    var reverse = '';
+    if (!sort) {
+        sort = getCookie('files_sort');
+        reverse = getCookie(sort + '_reverse');
+    } else {
+        reverse = getCookie(sort + '_reverse');
+        if (reverse === 'True') {
+            reverse = 'False';
+        } else {
+            reverse = 'True';
+        }
+    }
+    if (sort) {
+        data['sort'] = sort;
+        data['reverse'] = reverse;
+        setCookie(sort + '_reverse', reverse);
+        setCookie('files_sort', sort);
+    }
+
+
 	var showRow = getCookie('showRow');
-	if(!showRow) showRow = '100';
+	if(!showRow) showRow = '200';
 	var Body = '';
-	var data = 'path=' + Path;
-	var loadT = layer.load();
+    data['path'] = Path;
+
+
+    if (search) {
+        var loadT = layer.msg('正在搜索,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000']});
+    }
 	var totalSize = 0;
 	$.post('/files?action=GetDir&tojs=GetFiles&p=' + p + '&showRow=' + showRow + search, data, function(rdata) {
-		layer.close(loadT);
+        if (search) layer.close(loadT);
+        if (rdata.status === false) {
+            layer.msg(rdata.msg, { icon: 2 });
+            return;
+        }
 		
-		var rows = ['100','200','500','1000','2000'];
+		var rows = ['10','50','100','200','500','1000','2000'];
 		var rowOption = '';
 		for(var i=0;i<rows.length;i++){
 			var rowSelected = '';
@@ -349,7 +403,7 @@ function GetFiles(Path) {
 					Body += "<tr class='folderBoxTr' data-path='" + rdata.PATH + "/" + fmp[0] + "' filetype='dir'>\
 						<td><input type='checkbox' name='id' value='"+fmp[0]+"'></td>\
 						<td class='column-name'><span class='cursor' onclick=\"GetFiles('" + rdata.PATH + "/" + fmp[0] + "')\"><span class='ico ico-folder'></span><a class='text' title='" + fmp[0] + fmp[5] + "'>" + cnametext + "</a></span></td>\
-						<td>"+ToSize(fmp[1])+"</td>\
+						<td><a class='btlink "+ (rdata.PATH + '/' + fmp[0]).replace(/[^\w]/g,'-') + "' onclick=\"get_path_size('" + rdata.PATH + "/" + fmp[0]+"')\">点击计算</a></td>\
 						<td>"+getLocalTime(fmp[2])+"</td>\
 						<td>"+fmp[3]+"</td>\
 						<td>"+fmp[4]+"</td>\
@@ -401,9 +455,29 @@ function GetFiles(Path) {
 			}
 			
 			totalSize +=  parseInt(fmp[1]);
-			if(getCookie("rank")=="a"){
+            if (getCookie("rank") == "a") {
+                var fileMsg = '';
+                switch (fmp[0]) {
+                    case '.user.ini':
+                        fileMsg = 'PS: PHP用户配置文件(防跨站)!';
+                        break;
+                    case '.htaccess':
+                        fileMsg = 'PS: Apache用户配置文件(伪静态)';
+                        break;
+                    case 'swap':
+                        fileMsg = 'PS: 宝塔默认设置的SWAP交换分区文件';
+                        break;
+                }
+
+                if (fmp[0].indexOf('.upload.tmp') != -1) {
+                    fileMsg = 'PS: 宝塔文件上传临时文件,重新上传从断点续传,可删除';
+                }
+
+                if (fileMsg != '') {
+                    fileMsg = '<span style="margin-left: 30px; color: #999;">' + fileMsg + '</span>';
+                }
 				Body += "<tr class='folderBoxTr' data-path='" + rdata.PATH +"/"+ fmp[0] + "' filetype='" + fmp[0] + "'><td><input type='checkbox' name='id' value='"+fmp[0]+"'></td>\
-						<td class='column-name'><span class='ico ico-"+(GetExtName(fmp[0]))+"'></span><a class='text' title='" + fmp[0] + fmp[5] + "'>" + cnametext + "</a></td>\
+						<td class='column-name'><span class='ico ico-"+ (GetExtName(fmp[0])) + "'></span><a class='text' title='" + fmp[0] + fmp[5] + "'>" + cnametext + fileMsg+"</a></td>\
 						<td>" + (ToSize(fmp[1])) + "</td>\
 						<td>" + ((fmp[2].length > 11)?fmp[2]:getLocalTime(fmp[2])) + "</td>\
 						<td>"+fmp[3]+"</td>\
@@ -425,24 +499,41 @@ function GetFiles(Path) {
 						<div class='titleBox'><span class='tname'>" + fmp[0] + "</span></div>\
 						</div>";
 			}
-		}
-		var dirInfo = '('+lan.files.get_size.replace('{1}',rdata.DIR.length+'').replace('{2}',rdata.DIR.length+'')+'<font id="pathSize">'+(ToSize(totalSize))+'<a class="btlink ml5" onClick="GetPathSize()">'+lan.files.get+'</a></font>)';
+        }
+        var dirInfo = '(' + lan.files.get_size.replace('{1}', rdata.DIR.length + '').replace('{2}', rdata.FILES.length + '') + '<font id="pathSize">' + (ToSize(totalSize)) + '<a class="btlink ml5" onClick="GetPathSize()">' + lan.files.get + '</a></font>)';
 		$("#DirInfo").html(dirInfo);
-		if(getCookie("rank")=="a"){
-			var tablehtml = '<table width="100%" border="0" cellpadding="0" cellspacing="0" class="table table-hover">\
+        if (getCookie("rank") === "a") {
+            var sort_icon = '<span data-id="status" class="glyphicon glyphicon-triangle-' + ((data['reverse'] !== 'False') ? 'bottom' :'top')+'" style="margin-left:5px;color:#bbb"></span>';
+            var tablehtml = '<div class="newTable"><table width="100%" border="0" cellpadding="0" cellspacing="0" class="table table-hover">\
+                              <thead>\
+                                  <tr>\
+                                      <th width="30"><input type="checkbox" id="setBox" placeholder=""></th>\
+                                      <th><a style="cursor: pointer;" onclick="GetFiles('+ p + ',\'name\')">' + lan.files.file_name + ((data['sort'] === 'name' || !data['sort']) ? sort_icon:'') +'</a></th>\
+                                      <th><a style="cursor: pointer;" onclick="GetFiles('+ p + ',\'size\')">' + lan.files.file_size + ((data['sort'] === 'size') ? sort_icon : '') +'</a></th>\
+                                      <th><a style="cursor: pointer;" onclick="GetFiles('+ p + ',\'mtime\')">' + lan.files.file_etime + ((data['sort'] === 'mtime') ? sort_icon : '') +'</a></th>\
+                                      <th><a style="cursor: pointer;" onclick="GetFiles('+ p + ',\'accept\')">' + lan.files.file_auth + ((data['sort'] === 'accept') ? sort_icon : '') +'</a></th>\
+                                      <th><a style="cursor: pointer;" onclick="GetFiles('+ p + ',\'user\')">' + lan.files.file_own + ((data['sort'] === 'user') ? sort_icon : '') +'</a></th>\
+                                      <th style="text-align: right;" width="330">'+lan.files.file_act+'</th>\
+									  <th></th>\
+                                  </tr>\
+                              </thead>\
+                              </table>\
+							</div>\
+							<div class="newTableShadow"></div>\
+            				<div class="oldTable" style="overflow: auto;height: 500px;margin-top: -8px;"><table width="100%" border="0" cellpadding="0" cellspacing="0" class="table table-hover">\
 							<thead>\
 								<tr>\
 									<th width="30"><input type="checkbox" id="setBox" placeholder=""></th>\
-									<th>'+lan.files.file_name+'</th>\
-									<th>'+lan.files.file_size+'</th>\
-									<th>'+lan.files.file_etime+'</th>\
-									<th>'+lan.files.file_auth+'</th>\
-									<th>'+lan.files.file_own+'</th>\
+									<th><a style="cursor: pointer;" class="btlink" onclick="GetFiles('+ p + ',\'name\')">' + lan.files.file_name + ((data['sort'] === 'name' || !data['sort']) ? sort_icon:'') +'</a></th>\
+									<th><a style="cursor: pointer;" class="btlink" onclick="GetFiles('+ p + ',\'size\')">' + lan.files.file_size + ((data['sort'] === 'size') ? sort_icon : '') +'</a></th>\
+									<th><a style="cursor: pointer;" class="btlink" onclick="GetFiles('+ p + ',\'mtime\')">' + lan.files.file_etime + ((data['sort'] === 'mtime') ? sort_icon : '') +'</a></th>\
+									<th><a style="cursor: pointer;" class="btlink" onclick="GetFiles('+ p + ',\'accept\')">' + lan.files.file_auth + ((data['sort'] === 'accept') ? sort_icon : '') +'</a></th>\
+									<th><a style="cursor: pointer;" class="btlink" onclick="GetFiles('+ p + ',\'user\')">' + lan.files.file_own + ((data['sort'] === 'user') ? sort_icon : '') +'</a></th>\
 									<th style="text-align: right;" width="330">'+lan.files.file_act+'</th>\
 								</tr>\
 							</thead>\
 							<tbody id="filesBody" class="list-list">'+Body+'</tbody>\
-						</table>';
+						</table></div><div class="oldTableShadow"></div>';
 			$("#fileCon").removeClass("fileList").html(tablehtml);
 			$("#tipTools").width($("#fileCon").width());
 		}
@@ -475,7 +566,7 @@ function GetFiles(Path) {
 		$("#Batch").html('');
 		var BatchTools = '';
 		var isBatch = getCookie('BatchSelected');
-		if (isBatch == 1 || isBatch == '1') {
+		if (isBatch == 1 || isBatch == '1'){
 			BatchTools += ' <button onclick="javascript:BatchPaste();" class="btn btn-default btn-sm">'+lan.files.paste_all+'</button>';
 		}
 		$("#Batch").html(BatchTools);
@@ -505,18 +596,19 @@ function GetFiles(Path) {
 				$("#filesBody > tr").removeClass("ui-selected");
 			}
 			showSeclect();
-		});
+        });
+
 		$("#filesBody .btlink").click(function(e){
 			e.stopPropagation();
 		});
 		$("input[name=id]").dblclick(function(e){
 			e.stopPropagation();
 		});
-		$("#fileCon").bind("contextmenu",function(e){
+        $("#filesBody").bind("contextmenu",function(e){
 			return false;
 		});
 		bindselect();
-		$("#fileCon").mousedown(function(e){
+        $("#filesBody").mousedown(function(e){
 			var count = totalFile();
 			if(e.which == 3) {
 				if(count>1){
@@ -544,8 +636,30 @@ function GetFiles(Path) {
 			GetFiles(p);
 		});
 		PathPlaceBtn(rdata.PATH);
+      	auto_table_width();
 	});
 }
+function auto_table_width(){
+	var oldTable = $(window).height() - $('#tipTools')[0].getBoundingClientRect().height - $('#filePage')[0].getBoundingClientRect().height - $('.footer')[0].getBoundingClientRect().height - 111;
+	var oldTable_heigth =  $('.oldTable table').height();
+    $('.oldTable thead th').each(function(index,el){
+        var table_th = $('.oldTable thead th').length;
+        $('.newTable thead th').eq(index).attr('width',el.offsetWidth);
+        if(index == (table_th - 1)) $('.newTable thead th').eq(table_th).attr('width','10').css('padding','0');
+    });
+	if(oldTable_heigth > oldTable){
+		$('.oldTableShadow,.newTableShadow').show();
+		$('.oldTable').css('marginTop','-8px')
+	}else{
+    	$('.oldTableShadow,.newTableShadow').hide();
+		$('.oldTable').css('marginTop','0')
+	}
+  	$('.oldTable').height(oldTable);
+	$('.oldTable table').css({'marginTop':'-39px'})
+
+}
+
+
 function totalFile(){
 	var el = $("input[name='id']");
 	var len = el.length;
@@ -558,7 +672,7 @@ function totalFile(){
 	return count;
 }
 function bindselect(){
-	$("#filesBody,#fileCon").selectable({
+	$("#filesBody").selectable({
 		autoRefresh: false,
 		filter:"tr,.folderBox",
 		cancel: "a,span,input,.ico-folder",
@@ -580,7 +694,7 @@ function bindselect(){
 			$("#rmenu").hide()
 		}
 	});
-	$("#filesBody,#fileCon").selectable("refresh");
+	$("#filesBody").selectable("refresh");
 	$(".ico-folder").click(function(){
 		$(this).parent().addClass("ui-selected").siblings().removeClass("ui-selected");
 		$(".ui-selectee").find("input").prop("checked", false);
@@ -602,13 +716,6 @@ function showSeclect(){
 		$("#Batch").html(BatchTools);
 	}
 }
-$(window).scroll(function () {
-	if($(window).scrollTop() > 16){
-		$("#tipTools").css({"position":"fixed","top":"0","left":"195px","box-shadow":"0 1px 10px 3px #ccc"});
-	}else{
-		$("#tipTools").css({"position":"absolute","top":"0","left":"0","box-shadow":"none"});
-	}
-});
 $("#tipTools").width($(".file-box").width());
 $("#PathPlaceBtn").width($(".file-box").width()-700);
 $("#DirPathPlace input").width($(".file-box").width()-700);
@@ -624,6 +731,7 @@ window.onresize = function(){
 	}
 	PathLeft();
 	IsDiskWidth()
+  	auto_table_width();
 }
 function Batch(type,access){
 	var path = $("#DirPathPlace input").val();
@@ -641,7 +749,7 @@ function Batch(type,access){
 		}
     }
 
-    data += "&data=" + JSON.stringify(datas)
+    data += "&data=" + encodeURIComponent(JSON.stringify(datas))
 	
 	if(type == 3 && access == undefined){
 		SetChmod(0,lan.files.all);
@@ -676,7 +784,7 @@ function Batch(type,access){
 		
 	myloadT = layer.msg("<div class='myspeed'>"+lan.public.the+"</div>",{icon:16,time:0,shade: [0.3, '#000']});
 	setTimeout(function(){getSpeed('.myspeed');},1000);
-	$.post('files?action=SetBatchData',data,function(rdata){
+	$.post('/files?action=SetBatchData',data,function(rdata){
 		layer.close(myloadT);
 		GetFiles(path);
 		layer.msg(rdata.msg,{icon:1});
@@ -895,13 +1003,24 @@ function DownloadFile(action){
 		var fUrl = $("#mUrl").val();
 		fUrl = encodeURIComponent(fUrl);
 		fpath = $("#dpath").val();
-		fname = encodeURIComponent($("#dfilename").val());
+        fname = encodeURIComponent($("#dfilename").val());
+        if (!fname) {
+            durl = $("#mUrl").val()
+            tmp = durl.split('/')
+            $("#dfilename").val(tmp[tmp.length - 1])
+            fname = encodeURIComponent($("#dfilename").val());
+            if (!fname) {
+                layer.msg('文件名不能为空!');
+                return;
+            }
+        }
 		layer.closeAll();
 		layer.msg(lan.files.down_task,{time:0,icon:16,shade: [0.3, '#000']});
 		$.post('/files?action=DownloadFile','path='+fpath+'&url='+fUrl+'&filename='+fname,function(rdata){
 			layer.closeAll();
 			GetFiles(fpath);
-			GetTaskCount();
+            GetTaskCount();
+            task_stat();
 			layer.msg(rdata.msg,{icon:rdata.status?1:2});
 		});
 		return;
@@ -929,12 +1048,12 @@ function DownloadFile(action){
 					</div>\
 				</form>'
 	});
-	fly("dlok");
-	$("#mUrl").keyup(function(){
+    //fly("dlok");
+    $("#mUrl").change(function () {
 		durl = $(this).val()
 		tmp = durl.split('/')
 		$("#dfilename").val(tmp[tmp.length-1])
-	});
+    });
 }
 function ExecShell(action){
 	if(action == 1){
@@ -997,7 +1116,7 @@ function ReName(type, fileName) {
 			icon: 16,
 			time: 10000
 		});
-		$.post('/files?action=MvFile', 'sfile=' + oldFileName + '&dfile=' + newFileName, function(rdata) {
+		$.post('/files?action=MvFile', 'sfile=' + oldFileName + '&dfile=' + newFileName + '&rename=true', function(rdata) {
 			layer.closeAll();
 			layer.msg(rdata.msg, {
 				icon: rdata.status ? 1 : 2
@@ -1116,10 +1235,12 @@ function Zip(dirName,submits) {
 			sfile = encodeURIComponent(dirName);
 		}
 		
-		dfile = encodeURIComponent($("#dfile").val());
+        dfile = encodeURIComponent($("#dfile").val());
+        var z_type = $("select[name='z_type']").val();
+        if (!z_type) z_type = 'tar.gz';
 		layer.closeAll();
 		layer.msg(lan.files.zip_the, {icon: 16,time: 0,shade: [0.3, '#000']});
-		$.post('/files?action=Zip', 'sfile=' + sfile + '&dfile=' + dfile + '&type=tar&path='+encodeURIComponent(path), function(rdata) {
+		$.post('/files?action=Zip', 'sfile=' + sfile + '&dfile=' + dfile + '&z_type='+z_type+'&path='+encodeURIComponent(path), function(rdata) {
 			layer.closeAll();
 			if(rdata == null || rdata == undefined){
 				layer.msg(lan.files.zip_ok,{icon:1});
@@ -1128,7 +1249,10 @@ function Zip(dirName,submits) {
 				return;
 			}
 			layer.msg(rdata.msg, {icon: rdata.status ? 1 : 2});
-			if(rdata.status) GetFiles(path);
+            if (rdata.status) {
+                task_stat()
+                GetFiles(path);
+            }
 		});
 		return
 	}
@@ -1147,9 +1271,10 @@ function Zip(dirName,submits) {
 		title: lan.files.zip_title,
 		content: '<div class="bt-form pd20 pb70">'
 					+'<div class="line noborder">'
-					+'<input type="text" class="form-control" id="sfile" value="' +param + '" placeholder="" style="display:none" />'
+                    + '<input type="text" class="form-control" id="sfile" value="' + param + '" placeholder="" style="display:none" />'
+                    + '<p style="margin-bottom: 10px;"><span>压缩类型</span><select style="margin-left: 8px;" class="bt-input-text" name="z_type"><option value="tar.gz">tar.gz (推荐)</option><option value="zip">zip (通用格式)</option><option value="rar">rar (WinRAR对中文兼容较好)</option></select></p>'
 					+'<span>'+lan.files.zip_to+'</span><input type="text" class="bt-input-text" id="dfile" value="'+dirName + '.tar.gz" placeholder="'+lan.files.zip_to+'" style="width: 75%; display: inline-block; margin: 0px 10px 0px 20px;" /><span class="glyphicon glyphicon-folder-open cursor" onclick="ChangePath(\'dfile\')"></span>'
-					+'</div>'
+                    + '</div>'
 					+'<div class="bt-form-submit-btn">'
 					+'<button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">'+lan.public.close+'</button>'
 					+'<button type="button" id="ReNameBtn" class="btn btn-success btn-sm btn-title" onclick="Zip(\'' + param + '\',1)">'+lan.files.file_menu_zip+'</button>'
@@ -1157,16 +1282,11 @@ function Zip(dirName,submits) {
 				+'</div>'
 	});
 	
-	setTimeout(function(){
-		$("#dfile").change(function(){
-			var dfile = $(this).val()
-			tmp = dfile.split('.');
-			if(tmp[tmp.length-1] != 'gz'){
-				var path = $("#DirPathPlace input").val();
-				tmp = path.split('/');
-				dfile += '/' + tmp[tmp.length-1] + '.tar.gz'
-				$(this).val(dfile.replace(/\/\//g,'/'))
-			}
+    setTimeout(function (){
+		$("select[name='z_type']").change(function(){
+            var z_type = $(this).val();
+            dirName = dirName.replace("tar.gz", z_type)
+            $("#dfile").val(dirName + '.' + z_type);
 		});
 	},100);
 	
@@ -1182,7 +1302,8 @@ function UnZip(fileName,type) {
 		layer.msg(lan.files.unzip_the, {icon: 16,time: 0,shade: [0.3, '#000']});
 		$.post('/files?action=UnZip', 'sfile=' + sfile + '&dfile=' + dfile +'&type=' + type + '&coding=' + coding + '&password=' + password, function(rdata) {
 			layer.closeAll();
-			layer.msg(rdata.msg, {icon: rdata.status ? 1 : 2});
+            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+            task_stat()
 			GetFiles(path);
 		});
 		return
@@ -1218,17 +1339,21 @@ function UnZip(fileName,type) {
 function isZip(fileName){
 	var ext = fileName.split('.');
 	var extName = ext[ext.length-1].toLowerCase();
-	if( extName == 'zip') return 0;
+    if (extName == 'zip' || extName == 'war' || extName == 'rar') return 0;
 	if( extName == 'gz' || extName == 'tgz') return 1;
 	return -1;
 }
 function isText(fileName){
-	var exts = ['rar','zip','tar.gz','gz','iso','xsl','doc','xdoc','jpeg','jpg','png','gif','bmp','tiff','exe','so','7z','bz'];
+	var exts = ['rar','war','zip','tar.gz','gz','iso','xsl','doc','xdoc','jpeg','jpg','png','gif','bmp','tiff','exe','so','7z','bz'];
 	return isExts(fileName,exts)?false:true;
 }
 function isImage(fileName){
 	var exts = ['jpg','jpeg','png','bmp','gif','tiff','ico'];
 	return isExts(fileName,exts);
+}
+function isVideo(fileName) {
+    var exts = ['mp4', 'mpeg', 'mpg', 'mov', 'avi', 'webm', 'mkv'];
+    return isExts(fileName, exts);
 }
 function isExts(fileName,exts){
 	var ext = fileName.split('.');
@@ -1251,11 +1376,33 @@ function GetImage(fileName){
 	});
 	$(".layui-layer").css("top", "30%");
 }
+
+function GetPlay(fileName) {
+    var imgUrl = '/download?filename=' + fileName;
+    layer.open({
+        type: 1,
+        closeBtn: 2,
+        title: '播放[' + fileName+']',
+        area: '500px',
+        shadeClose: false,
+        content: '<div class="showpicdiv"><video src="' + imgUrl +'" controls="controls" autoplay="autoplay" width="100%" type="video/mp4">\
+                    您的浏览器不支持 video 标签。\
+                    </video></div>'
+    });
+    $(".layui-layer").css("top", "30%");
+}
 function GetFileBytes(fileName, fileSize){
 	window.open('/download?filename='+encodeURIComponent(fileName));
 }
-function UploadFiles(){
-	var path = $("#DirPathPlace input").val()+"/";
+function UploadFiles() {
+
+    var path = $("#DirPathPlace input").val() + "/";
+    bt_upload_file.open(path, null, null, function (path) {
+        GetFiles(path);
+    });
+    return;
+
+    /*
 	layer.open({
 		type:1,
 		closeBtn: 2,
@@ -1278,13 +1425,14 @@ function UploadFiles(){
 				<button type="button" id="filesClose" autocomplete="off" onClick="layer.closeAll()" >'+lan.public.close+'</button>\
 				<ul id="up_box"></ul></div>'
 	});
-	UploadStart();
+	UploadStart();*/
 }
 function SetChmod(action,fileName){
 	if(action == 1){
 		var chmod = $("#access").val();
-		var chown = $("#chown").val();
-		var data = 'filename='+ encodeURIComponent(fileName)+'&user='+chown+'&access='+chmod;
+        var chown = $("#chown").val();
+        var all = $("#accept_all").prop("checked") ? 'True' : 'False';
+		var data = 'filename='+ encodeURIComponent(fileName)+'&user='+chown+'&access='+chmod+'&all=' + all;
 		var loadT = layer.msg(lan.public.config,{icon:16,time:0,shade: [0.3, '#000']});
 		$.post('files?action=SetFileAccess',data,function(rdata){
 			layer.close(loadT);
@@ -1330,7 +1478,9 @@ function SetChmod(action,fileName){
 							<option value="www" '+(rdata.chown=='www'?'selected="selected"':'')+'>www</option>\
 							<option value="mysql" '+(rdata.chown=='mysql'?'selected="selected"':'')+'>mysql</option>\
 							<option value="root" '+(rdata.chown=='root'?'selected="selected"':'')+'>root</option>\
-						</select></span></div>\
+						</select></span>\
+                        <span><input type="checkbox" id="accept_all" checked /><label for="accept_all" style="position: absolute;margin-top: 4px; margin-left: 5px;font-weight: 400;">应用到子目录</label></span>\
+                        </div>\
 						<div class="bt-form-submit-btn">\
 							<button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">'+lan.public.close+'</button>\
 					        <button type="button" class="btn btn-success btn-sm btn-title" onclick="'+toExec+'" >'+lan.public.ok+'</button>\
@@ -1411,10 +1561,15 @@ function RClick(type,path,name){
 	  {text: lan.files.file_menu_auth, 	onclick: function() {SetChmod(0,path)}},
 	  {text: lan.files.file_menu_zip, onclick: function() {Zip(path)}}
 	  
-	]};
+    ]
+    };  
+    
 	if(type == "dir"){
 		options.items.push({text: lan.files.file_menu_del, onclick: function() {DeleteDir(path)}});
-	}
+    }
+    //else if (isVideo(type)) {
+    //    options.items.push({ text: '播放', onclick: function () { GetPlay(path) } }, { text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } });
+    //}
 	else if(isText(type)){
 		options.items.push({text: lan.files.file_menu_edit, onclick: function() {OnlineEditFile(0,path)}},{text: lan.files.file_menu_down, onclick: function() {GetFileBytes(path)}},{text: lan.files.file_menu_del, onclick: function() {DeleteFile(path)}});
 	}
@@ -1423,12 +1578,14 @@ function RClick(type,path,name){
 	}
 	else if(isImage(type)){
 		options.items.push({text: lan.files.file_menu_img, onclick: function() {GetImage(path)}},{text: lan.files.file_menu_down, onclick: function() {GetFileBytes(path)}},{text: lan.files.file_menu_del, onclick: function() {DeleteFile(path)}});
-	}
+    }
 	else{
 		options.items.push({text: lan.files.file_menu_down, onclick: function() {GetFileBytes(path)}},{text: lan.files.file_menu_del, onclick: function() {DeleteFile(path)}});
 	}
 	return options;
 }
+
+
 function RClickAll(e){
 	var menu = $("#rmenu");
 	var windowWidth = $(window).width(),
@@ -1462,7 +1619,8 @@ $("#DirPathPlace input").keyup(function(e){
 });
 function PathPlaceBtn(path){
 	var html = '';
-	var title = '';
+    var title = '';
+    path = path.replace('//', '/');
 	var	Dpath = path;
 	if(path == '/'){
 		html ='<li><a title="/">'+lan.files.path_root+'</a></li>';

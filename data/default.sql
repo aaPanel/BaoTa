@@ -57,10 +57,6 @@ CREATE TABLE IF NOT EXISTS `databases` (
 CREATE TABLE IF NOT EXISTS `firewall` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `port` TEXT,
-  `ports` TEXT,
-  `address` TEXT,
-  `protocol` TEXT,
-  `type` TEXT,
   `ps` TEXT,
   `addtime` TEXT
 );

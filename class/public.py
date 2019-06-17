@@ -11,7 +11,7 @@
 # 宝塔公共库
 #--------------------------------
 
-import json,os,sys,time,re
+import json,os,sys,time,re,socket
 
 if sys.version_info[0] == 2:
     reload(sys)
@@ -22,7 +22,7 @@ def M(table):
     sql = db.Sql()
     return sql.table(table);
 
-def HttpGet(url,timeout = 60):
+def HttpGet(url,timeout = 10):
     """
     发送GET请求
     @url 被请求的URL地址(必需)
@@ -56,11 +56,11 @@ def HttpGet(url,timeout = 60):
             return str(ex)
 
 
-def httpGet(url,timeout=60):
+def httpGet(url,timeout=10):
     return HttpGet(url,timeout)
 
 
-def HttpPost(url,data,timeout = 60):
+def HttpPost(url,data,timeout = 10):
     """
     发送POST请求
     @url 被请求的URL地址(必需)
@@ -71,7 +71,9 @@ def HttpPost(url,data,timeout = 60):
     if sys.version_info[0] == 2:
         try:
             import urllib,urllib2,ssl
-            ssl._create_default_https_context = ssl._create_unverified_context
+            try:
+                ssl._create_default_https_context = ssl._create_unverified_context
+            except:pass
             data = urllib.urlencode(data)
             req = urllib2.Request(url, data)
             response = urllib2.urlopen(req,timeout = timeout)
@@ -93,7 +95,7 @@ def HttpPost(url,data,timeout = 60):
         except Exception as ex:
             return str(ex);
 
-def httpPost(url,data,timeout=60):
+def httpPost(url,data,timeout=10):
     return HttpPost(url,data,timeout)
 
 def check_home():
@@ -147,7 +149,7 @@ def FileMd5(filename):
     if not os.path.isfile(filename): return False;
     import hashlib;
     my_hash = hashlib.md5()
-    f = file(filename,'rb')
+    f = open(filename,'rb')
     while True:
         b = f.read(8096)
         if not b :
@@ -201,9 +203,23 @@ def returnMsg(status,msg,args = ()):
 
 def GetFileMode(filename):
     '''取文件权限'''
-    stat = os.stat(filePath)
+    stat = os.stat(filename)
     accept = str(oct(stat.st_mode)[-3:]);
     return accept
+
+def get_mode_and_user(path):
+    '''取文件或目录权限信息'''
+    import pwd
+    data = {}
+    if not os.path.exists(path): return None
+    stat = os.stat(path)
+    data['mode'] = str(oct(stat.st_mode)[-3:])
+    try:
+        data['user'] = pwd.getpwuid(stat.st_uid).pw_name
+    except:
+        data['user'] = str(stat.st_uid)
+    return data
+
 
 def GetJson(data):
     """
@@ -225,9 +241,15 @@ def ReadFile(filename,mode = 'r'):
     """
     import os
     if not os.path.exists(filename): return False
-    fp = open(filename, mode)
-    f_body = fp.read()
-    fp.close()
+    try:
+        fp = open(filename, mode)
+        f_body = fp.read()
+        fp.close()
+    except:
+        fp = open(filename, mode,encoding="utf-8")
+        f_body = fp.read()
+        fp.close()
+
     return f_body
 
 def readFile(filename,mode='r'):
@@ -246,7 +268,13 @@ def WriteFile(filename,s_body,mode='w+'):
         fp.close()
         return True
     except:
-        return False
+        try:
+            fp = open(filename, mode,encoding="utf-8");
+            fp.write(s_body)
+            fp.close()
+            return True
+        except:
+            return False
 
 def writeFile(filename,s_body,mode='w+'):
     return WriteFile(filename,s_body,mode)
@@ -383,12 +411,14 @@ def ExecShell(cmdstring, cwd=None, timeout=None, shell=True):
             if end_time <= datetime.datetime.now():
                 raise Exception("Timeout：%s"%cmdstring)
     a,e = sub.communicate()
-    if type(a) == bytes: a = a.decode('utf-8')
-    if type(e) == bytes: e = e.decode('utf-8')
+    try:
+        if type(a) == bytes: a = a.decode('utf-8')
+        if type(e) == bytes: e = e.decode('utf-8')
+    except:pass
     return a,e
 
 def GetLocalIp():
-    #取本地外网IP
+    #取本地外网IP    
     try:
         filename = 'data/iplist.txt'
         ipaddress = readFile(filename)
@@ -396,29 +426,56 @@ def GetLocalIp():
             import urllib2
             url = 'http://pv.sohu.com/cityjson?ie=utf-8'
             opener = urllib2.urlopen(url)
-            str = opener.read()
-            ipaddress = re.search('\d+.\d+.\d+.\d+',str).group(0)
+            m_str = opener.read()
+            ipaddress = re.search('\d+.\d+.\d+.\d+',m_str).group(0)
             WriteFile(filename,ipaddress)
-        
-        ipaddress = re.search('\d+.\d+.\d+.\d+',ipaddress).group(0);
+        c_ip = check_ip(ipaddress)
+        if not c_ip: return GetHost()
         return ipaddress
     except:
+        return get_error_info()
         try:
             url = GetConfigValue('home') + '/Api/getIpAddress';
-            opener = urllib2.urlopen(url)
-            return opener.read()
+            return HttpGet(url)
         except:
             return GetHost();
 
+def is_ipv4(ip):
+    try:
+        socket.inet_pton(socket.AF_INET, ip)
+    except AttributeError:
+        try:
+            socket.inet_aton(ip)
+        except socket.error:
+            return False
+        return ip.count('.') == 3
+    except socket.error:
+        return False
+    return True
+ 
+ 
+def is_ipv6(ip):
+    try:
+        socket.inet_pton(socket.AF_INET6, ip)
+    except socket.error:
+        return False
+    return True
+ 
+ 
+def check_ip(ip):
+    return is_ipv4(ip) or is_ipv6(ip)
+
 def GetHost(port = False):
     from flask import request
-    h = request.headers.get('host').split(':')
+    host_tmp = request.headers.get('host')
+    if host_tmp.find(':') == -1: host_tmp += ':80';
+    h = host_tmp.split(':')
     if port: return h[1]
     return h[0]
 
 def GetClientIp():
     from flask import request
-    return request.remote_addr
+    return request.remote_addr.replace('::ffff:','')
 
 def phpReload(version):
     #重载PHP配置
@@ -439,6 +496,7 @@ def get_url(timeout = 0.5):
             if not node['ping']: continue;
             if not mnode: mnode = node;
             if node['ping'] < mnode['ping']: mnode = node;
+            if mnode['ping'] < 50: break
         return mnode['protocol'] + mnode['address'] + ':' + mnode['port'];
     except:
         return 'http://download.bt.cn';
@@ -526,7 +584,7 @@ def CheckCert(certPath = 'ssl/certificate.pem'):
     return True;
 
 
- # 获取面板地址
+# 获取面板地址
 def getPanelAddr():
     from flask import request
     protocol = 'https://' if os.path.exists("data/ssl.pl") else 'http://'
@@ -583,12 +641,15 @@ def getSpeed():
     return json.loads(data);
 
 def downloadFile(url,filename):
-    if sys.version_info[0] == 2:
-        import urllib
-        urllib.urlretrieve(url,filename=filename ,reporthook= downloadHook)
-    else:
-        import urllib.request
-        urllib.request.urlretrieve(url,filename=filename ,reporthook= downloadHook)
+    try:
+        if sys.version_info[0] == 2:
+            import urllib
+            urllib.urlretrieve(url,filename=filename ,reporthook= downloadHook)
+        else:
+            import urllib.request
+            urllib.request.urlretrieve(url,filename=filename ,reporthook= downloadHook)
+    except:
+        return False
     
 def downloadHook(count, blockSize, totalSize):
     speed = {'total':totalSize,'block':blockSize,'count':count}
@@ -606,13 +667,36 @@ def inArray(arrays,searchStr):
     
     return False
 
+
 #检查Web服务器配置文件是否有错误
 def checkWebConfig():
+    f1 = '/www/server/panel/vhost/'
+    f2 = '/www/server/panel/plugin/'
+    if not os.path.exists(f2 + 'btwaf'):
+        f3 = f1 + 'nginx/btwaf.conf'
+        if os.path.exists(f3): os.remove(f3)
+    if not os.path.exists(f2 + 'btwaf_httpd'):
+        f3 = f1 + 'apache/btwaf.conf'
+        if os.path.exists(f3): os.remove(f3)
+
+    if not os.path.exists(f2 + 'total'):
+        f3 = f1 + 'apache/total.conf'
+        if os.path.exists(f3): os.remove(f3)
+        f3 = f1 + 'nginx/total.conf'
+        if os.path.exists(f3): os.remove(f3)
+    else:
+        if os.path.exists('/www/server/apache/modules/mod_lua.so'): 
+            writeFile(f1 + 'apache/btwaf.conf','LoadModule lua_module modules/mod_lua.so')
+            writeFile(f1 + 'apache/total.conf','LuaHookLog /www/server/total/httpd_log.lua run_logs')
+        else:
+            f3 = f1 + 'apache/total.conf'
+            if os.path.exists(f3): os.remove(f3)
+
     if get_webserver() == 'nginx':
-        result = ExecShell("ulimit -n 10240 && /www/server/nginx/sbin/nginx -t -c /www/server/nginx/conf/nginx.conf");
+        result = ExecShell("ulimit -n 8192 && /www/server/nginx/sbin/nginx -t -c /www/server/nginx/conf/nginx.conf");
         searchStr = 'successful'
     else:
-        result = ExecShell("ulimit -n 10240 && /www/server/apache/bin/apachectl -t");
+        result = ExecShell("ulimit -n 8192 && /www/server/apache/bin/apachectl -t");
         searchStr = 'Syntax OK'
     
     if result[1].find(searchStr) == -1:
@@ -667,11 +751,13 @@ def hasPwd(password):
     import crypt;
     return crypt.crypt(password,password);
 
-def get_timeout(url):
-    start = time.time();
-    result = httpGet(url);
-    if result != 'True': return False;
-    return int((time.time() - start) * 1000);
+def get_timeout(url,timeout=3):
+    try:
+        start = time.time();
+        result = httpGet(url,timeout);
+        if result != 'True': return False;
+        return int((time.time() - start) * 1000);
+    except: return False
 
 def getDate(format='%Y-%m-%d %X'):
     #取格式时间
@@ -851,11 +937,16 @@ def GetToken():
         from json import loads
         tokenFile = 'data/token.json';
         if not os.path.exists(tokenFile): return False;
-        token = loads(public.readFile(tokenFile));
+        token = loads(readFile(tokenFile));
         return token;
     except:
         return False
 
+def to_btint(string):
+    m_list = []
+    for s in string:
+        m_list.append(ord(s))
+    return m_list;
 
 def load_module(pluginCode):
     from imp import new_module
@@ -948,6 +1039,7 @@ def get_uuid():
 #进程是否存在
 def process_exists(pname,exe = None):
     try:
+        import psutil
         pids = psutil.pids()
         for pid in pids:
             try:
@@ -985,3 +1077,97 @@ def to_string(lites):
             m_str += chr(mu)
     return m_str
 
+#xss 防御
+def xssencode(text):
+    import cgi
+    list=['`','~','&','#','/','*','$','@','<','>','\"','\'',';','%',',','.','\\u']
+    ret=[]
+    for i in text:
+        if i in list:
+            i=''
+        ret.append(i)
+    str_convert = ''.join(ret)
+    text2=cgi.escape(str_convert, quote=True)
+    return text2
+
+# 取缓存
+def cache_get(key):
+    from BTPanel import cache
+    return cache.get(key)
+
+# 设置缓存
+def cache_set(key,value,timeout = None):
+    from BTPanel import cache
+    return cache.set(key,value,timeout)
+
+# 删除缓存
+def cache_remove(key):
+    from BTPanel import cache
+    return cache.delete(key)
+
+# 取session值
+def sess_get(key):
+    from BTPanel import session
+    if key in session: return session[key]
+    return None
+
+# 设置或修改session值
+def sess_set(key,value):
+    from BTPanel import session
+    session[key] = value
+    return True
+
+# 删除指定session值
+def sess_remove(key):
+    from BTPanel import session
+    if key in session: del(session[key])
+    return True
+
+# 构造分页
+def get_page(count,p=1,rows=12,callback='',result='1,2,3,4,5,8'):
+    import page
+    from BTPanel import request
+    page = page.Page();
+    info = { 'count':count,  'row':rows,  'p':p, 'return_js':callback ,'uri':request.full_path}
+    data = { 'page': page.GetPage(info,result),  'shift': str(page.SHIFT), 'row': str(page.ROW) }
+    return data
+
+# 取面板版本
+def version():
+    from BTPanel import g
+    try:
+        return g.version
+    except:
+        comm = ReadFile('/www/server/panel/class/common.py')
+        return re.search("g\.version\s*=\s*'(\d+\.\d+\.\d+)'",comm).groups()[0]
+
+
+#取文件或目录大小
+def get_path_size(path):
+    if not os.path.exists(path): return 0;
+    if not os.path.isdir(path): return os.path.getsize(path)
+    size_total = 0
+    for nf in os.walk(path):
+        for f in nf[2]:
+            filename = nf[0] + '/' + f
+            if not os.path.exists(filename): continue;
+            if os.path.islink(filename): continue;
+            size_total += os.path.getsize(filename)
+    return size_total
+
+#写关键请求日志
+def write_request_log():
+    try:
+        log_path = '/www/server/panel/logs/request'
+        log_file = getDate(format='%Y-%m-%d') + '.json'
+        if not os.path.exists(log_path): os.makedirs(log_path)
+
+        from flask import request
+        log_data = {}
+        log_data['date'] = getDate()
+        log_data['ip'] = GetClientIp()
+        log_data['method'] = request.method
+        log_data['uri'] = request.full_path
+        log_data['user-agent'] = request.headers.get('User-Agent')
+        WriteFile(log_path + '/' + log_file,json.dumps(log_data) + "\n",'a+')
+    except: pass

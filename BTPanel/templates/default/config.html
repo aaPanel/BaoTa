@@ -17,18 +17,25 @@
                         <label class='btswitch-btn' for='closePl' onclick='ClosePanel()'></label>
                     </div>
                 </div>
-                <!--<div class="ss-text pull-left mr50">
-                    <em>{{data['lan']['I2']}}</em>
+                <div class="ss-text pull-left mr50">
+                    <em title="开启后允许使用ipv6访问面板">监听IPv6</em>
                     <div class='ssh-item'>
-                        <input class='btswitch btswitch-ios' id='autoUpdate' type='checkbox' {{data['panel']['auto']}}>
-                        <label class='btswitch-btn' for='autoUpdate' onclick="SetPanelAutoUpload()"></label>
+                        <input class='btswitch btswitch-ios' id='panelIPv6' type='checkbox' {{data['ipv6']}}>
+                        <label class='btswitch-btn' for='panelIPv6' onclick="SetIPv6()"></label>
                     </div>
-                </div>-->
+                </div>
                 <div class="ss-text pull-left mr50">
                     <em class="btlink" style="color: #20a53a;" onclick="GetPanelSSL()" title="点击自定义面板证书">{{data['lan']['I3']}}</em>
                     <div class='ssh-item'>
                         <input class='btswitch btswitch-ios' id='panelSSL' type='checkbox'>
                         <label class='btswitch-btn' for='panelSSL' onclick="setPanelSSL()"></label>
+                    </div>
+                </div>
+                <div class="ss-text pull-left mr50">
+                    <em class="btlink" style="color: #20a53a;" onclick="GetPanelApi()" title="点击配置API接口">API接口</em>
+                    <div class='ssh-item'>
+                        <input class='btswitch btswitch-ios' id='panelApi' type='checkbox' {{data['api']}}>
+                        <label class='btswitch-btn' for='panelApi' onclick="SetPanelApi(2)"></label>
                     </div>
                 </div>
             </div>
@@ -45,6 +52,8 @@
                 <form id="set-Config">
                     <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT1']}}">{{data['lan']['CT1']}}</span><input id="webname" name="webname" class="inputtxt bt-input-text" type="text" value="{{session['title']}}"><span class="set-info c7">{{data['lan']['CY1']}}</span></p>
                     <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT2']}}">{{data['lan']['CT2']}}</span><input id="banport" name="port" class="inputtxt bt-input-text" type="number" value="{{data['panel']['port']}}" maxlength="5"><span class="set-info c7">{{data['lan']['CY2']}}</span></p>
+                    <p class="mtb15"><span class="set-tit text-right" title="面板性能调整">并发线程</span><input name="workers" class="inputtxt bt-input-text" type="number" min="1" max="1024" value="{{data['workers']}}"><span class="set-info c7">除非每秒有超过10人访问面板，建议值不要超过2，注意：>1时会导致宝塔终端插件异常</span></p>
+                    <p class="mtb15"><span class="set-tit text-right" title="登录会话超时间">超时时间</span><input name="session_timeout" class="inputtxt bt-input-text" type="number" value="{{data['session_timeout']}}"><span class="set-info c7">秒, 若用户在<a style="color:red;">{{data['session_timeout']}}</a>秒内没有任何操作，将自动退出面板</span></p>
                     <p class="mtb15"><span class="set-tit text-right" title="管理入口路径">安全入口</span><input id="admin_path" name="admin_path" class="inputtxt bt-input-text disable" type="text" value="{{data['panel']['admin_path']}}" disabled><span class="modify btn btn-xs btn-success" onclick="modify_auth_path()">{{data['lan']['CY10']}}</span><span class="set-info c7">面板管理入口,设置后只能通过指定安全入口登录面板,如: /www_bt_cn</span></p>
                     <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT3']}}">{{data['lan']['CT3']}}</span><input name="domain" class="inputtxt bt-input-text" type="text" value="{{data['panel']['domain']}}"><span class="set-info c7">{{data['lan']['CY3']}}</span></p>
                     <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT4']}}">{{data['lan']['CT4']}}</span><input name="limitip" class="inputtxt bt-input-text" type="text" value="{{data['panel']['limitip']}}"><span class="set-info c7">{{data['lan']['CY4']}}</span></p>

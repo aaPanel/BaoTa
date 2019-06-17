@@ -1,0 +1,101 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="main-content">
+    <div class="container-fluid" style="padding-bottom:50px">
+        <div class="file-box bgw mtb15" style="position:relative; padding-top:110px">
+            <div id="tipTools" class="plr15">
+                <div class="ptb15">
+                    <div class="clearfix">
+                        <div class="pull-left">
+                            <button id="backBtn" class="backBtn btn btn-default btn-sm glyphicon glyphicon-arrow-left pull-left" title="{{data['lan']['BTN1']}}" onClick="BackDir()"></button>
+                            <button class="backBtn refreshBtn btn btn-default btn-sm glyphicon glyphicon-refresh pull-right" title="{{data['lan']['BTN2']}}" style="margin-left:-1px;"></button>
+                            <span id='DirPathPlace' class="pull-left"><input id="fileInputPath" type="text"></span>
+                            <span id='PathPlaceBtn' class="pull-left"></span>
+                        </div>
+                        <div class="pull-left mlr15" style="line-height:26px"><span id='DirInfo'></span></div>
+                        <div class="search pull-right" style="position: absolute; top: 6px; right: 5px;">
+                            <form target="hid" onsubmit='GetFiles(1)'>
+                                <input type="text" id="SearchValue" class="ser-text pull-left" placeholder="" />
+                                <button type="button" class="ser-sub pull-left" onclick='GetFiles(1)'></button>
+                            </form>
+                            <iframe name='hid' id="hid" style="display:none"></iframe>
+                        </div>
+                    </div>
+                </div>
+                <div class="clearfix ptb10">
+                    <button class="btn btn-default btn-sm pull-left" onclick="UploadFiles()">{{data['lan']['BTN3']}}</button>
+                    <button class="btn btn-default btn-sm pull-left" onclick="DownloadFile()" title="{{data['lan']['TI1']}}" style="margin:0 5px">{{data['lan']['BTN4']}}</button>
+                    <span id='BarTools'></span>
+                    <span id='Batch' style="background-color:#fff;position:absolute;right:190px;z-index:10"></span>
+                    <span id='comlist' class="comlist"></span>
+                    <div class="btn-group btn-group-sm pull-right" style="margin-right:5px;">
+                        <button id="set_icon" title="{{data['lan']['TI2']}}" type="button" class="btn btn-default">
+                            <i class="glyphicon glyphicon-th"></i>
+                        </button>
+                        <button id="set_list" title="{{data['lan']['TI3']}}" type="button" class="btn btn-default active">
+                            <i class="glyphicon glyphicon-th-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="divtable pd15" id="fileCon"></div>
+            <div class="dataTables_paginate paging_bootstrap pagination plr15" style="position: relative; top: -15px;">
+                <ul id="filePage" class="page"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+<ul id="rmenu" class="dropdown-menu" style="display:none">
+    <li onclick="javascript:Batch(1);"><a style="cursor: pointer;">{{data['lan']['L1']}}</a></li>
+    <li onclick="javascript:Batch(2);"><a style="cursor: pointer;">{{data['lan']['L2']}}</a></li>
+    <li onclick="javascript:Batch(5);"><a style="cursor: pointer;">{{data['lan']['L3']}}</a></li>
+    <li onclick="javascript:Batch(3);"><a style="cursor: pointer;">{{data['lan']['L4']}}</a></li>
+    <li onclick="javascript:Batch(4);"><a style="cursor: pointer;">{{data['lan']['L5']}}</a></li>
+</ul>
+{% endblock %}
+
+
+{% block scripts %}
+<script src="/static/js/jquery-ui.min.js"></script>
+<script src="/static/js/jquery.contextify.min.js"></script>
+<script src="/static/js/files.js?date={{g.version}}"></script>
+<script src="/static/js/upload.js?date={{g.version}}"></script>
+<script type="text/javascript">
+//	setTimeout(function(){
+//		GetDisk();
+//	},500);
+//	var xPath = getCookie('Path');
+//	setTimeout(function(){
+//		GetFiles((xPath!=undefined?xPath:'/www/wwwroot'));
+//	},800);
+//
+//	PathPlaceBtn((xPath!=undefined?xPath:'/www/wwwroot'));
+//	setCookie('uploadSize',1024 * 1024 * 1024);
+//	if(getCookie('rank') == undefined || getCookie('rank') == null){
+//		setCookie('rank','a');
+//	}
+//	$("#set_icon").click(function(){
+//		setCookie('rank','b');
+//		$(this).addClass("active");
+//		$("#set_list").removeClass("active");
+//		GetFiles(getCookie('Path'));
+//	});
+//	$("#set_list").click(function(){
+//		setCookie('rank','a');
+//		$(this).addClass("active");
+//		$("#set_icon").removeClass("active");
+//		GetFiles(getCookie('Path'));
+//	})
+//	$(".refreshBtn").click(function(){
+//		GetFiles(getCookie('Path'));
+//	})
+//	
+
+	var files = {
+		
+	}
+	
+	
+</script>
+{% endblock %}

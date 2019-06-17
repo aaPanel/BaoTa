@@ -273,7 +273,8 @@
 			})	
 		},
 		get_log_list:function(page,search){
-			if(page==undefined) page=1;			
+            if (page == undefined) page = 1;
+            if (search == undefined) search = $("#SearchValue").val();
 			bt.firewall.get_log_list(page,search,function(rdata){
 				$('.logsBody').html(rdata.page);
 				var _tab =  bt.render({

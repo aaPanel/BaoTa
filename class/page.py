@@ -6,7 +6,7 @@
 # +-------------------------------------------------------------------
 # | Author: 黄文良 <287962566@qq.com>
 # +-------------------------------------------------------------------
-import math,string,public
+import math,string,public,re
 
 class Page():
     #--------------------------
@@ -197,11 +197,14 @@ class Page():
         #取总页数
         return int(math.ceil(self.__COUNT_ROW / float(self.ROW)))
     
-    def __SetUri(self,input):
+    def __SetUri(self,request_uri):
         #构造URI
-        if not 'args' in input: return '' 
-        uri = '?'
-        for key in input.args:
-            if key == 'p': continue
-            uri += key+'='+input[key]+'&'
-        return str(uri)
+        try:
+            request_uri = re.sub("&p=\d+",'&',request_uri)
+            request_uri = re.sub("\?p=\d+",'?',request_uri)
+            if request_uri.find('&') == -1:
+                if request_uri[-1] != '?': request_uri += '?'
+            else:
+                if request_uri[-1] != '&': request_uri += '&'
+            return request_uri
+        except: return '';

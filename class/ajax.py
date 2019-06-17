@@ -7,22 +7,52 @@
 # | Author: 黄文良 <287962566@qq.com>
 # +-------------------------------------------------------------------
 from BTPanel import session
-import public,os,json,time
+import public,os,json,time,apache,psutil
 class ajax:
-    
+
+    def GetApacheStatus(self,get):
+        a = apache.apache()
+        return a.GetApacheStatus()
+  
+    def GetProcessCpuPercent(self,i,process_cpu):
+        try:
+            pp = psutil.Process(i)
+            if pp.name() not in process_cpu.keys():
+                process_cpu[pp.name()] = float(pp.cpu_percent(interval=0.1))
+            process_cpu[pp.name()] += float(pp.cpu_percent(interval=0.1))
+        except:
+            pass
     def GetNginxStatus(self,get):
+        process_cpu = {}
+        worker = int(public.ExecShell("ps aux|grep nginx|grep 'worker process'|wc -l")[0])-1
+        workermen = int(public.ExecShell("ps aux|grep nginx|grep 'worker process'|awk '{memsum+=$6};END {print memsum}'")[0]) / 1024
+        for proc in psutil.process_iter():
+            if proc.name() == "nginx":
+                self.GetProcessCpuPercent(proc.pid,process_cpu)
+        time.sleep(0.5)
         #取Nginx负载状态
-        self.CheckStatusConf();
+        self.CheckStatusConf()
         result = public.HttpGet('http://127.0.0.1/nginx_status')
         tmp = result.split()
         data = {}
-        data['active']   = tmp[2]
-        data['accepts']  = tmp[9]
-        data['handled']  = tmp[7]
-        data['requests'] = tmp[8]
-        data['Reading']  = tmp[11]
-        data['Writing']  = tmp[13]
-        data['Waiting']  = tmp[15]
+        if "request_time" in tmp:
+            data['accepts']  = tmp[8]
+            data['handled']  = tmp[9]
+            data['requests'] = tmp[10]
+            data['Reading']  = tmp[13]
+            data['Writing']  = tmp[15]
+            data['Waiting']  = tmp[17]
+        else:
+            data['accepts'] = tmp[9]
+            data['handled'] = tmp[7]
+            data['requests'] = tmp[8]
+            data['Reading'] = tmp[11]
+            data['Writing'] = tmp[13]
+            data['Waiting'] = tmp[15]
+        data['active'] = tmp[2]
+        data['worker'] = worker
+        data['workercpu'] = round(float(process_cpu["nginx"]),2)
+        data['workermen'] = "%s%s" % (int(workermen), "MB")
         return data
     
     def GetPHPStatus(self,get):
@@ -38,7 +68,8 @@ class ajax:
     def CheckStatusConf(self):
         if public.get_webserver() != 'nginx': return;
         filename = session['setupPath'] + '/panel/vhost/nginx/phpfpm_status.conf';
-        if os.path.exists(filename): return;
+        if os.path.exists(filename):
+            if public.ReadFile(filename).find('74.sock')!=-1: return;
         
         conf = '''server {
     listen 80;
@@ -85,6 +116,16 @@ class ajax:
     }
     location /phpfpm_72_status {
         fastcgi_pass unix:/tmp/php-cgi-72.sock;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME \$fastcgi_script_name;
+    }
+    location /phpfpm_73_status {
+        fastcgi_pass unix:/tmp/php-cgi-73.sock;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME \$fastcgi_script_name;
+    }
+    location /phpfpm_74_status {
+        fastcgi_pass unix:/tmp/php-cgi-74.sock;
         include fastcgi_params;
         fastcgi_param SCRIPT_FILENAME \$fastcgi_script_name;
     }
@@ -366,6 +407,8 @@ class ajax:
             except:
                 pass
         return softs;
+
+
     
     #获取SSH爆破次数
     def get_ssh_intrusion(self):
@@ -377,6 +420,57 @@ class ajax:
             l = fp.readline();
         fp.close();
         return intrusion_total;
+
+    #申请内测版
+    def apple_beta(self,get):
+        try:
+            userInfo = json.loads(public.ReadFile('data/userInfo.json'))
+            p_data = {}
+            p_data['uid'] = userInfo['uid'];
+            p_data['access_key'] = userInfo['access_key']
+            p_data['username'] = userInfo['username']
+            result = public.HttpPost(public.GetConfigValue('home') + '/api/panel/apple_beta',p_data,5)
+            try:
+                return json.loads(result)
+            except: return public.returnMsg(False,'AJAX_CONN_ERR')
+        except: return public.returnMsg(False,'AJAX_USER_BINDING_ERR')
+
+    def to_not_beta(self,get):
+        try:
+            userInfo = json.loads(public.ReadFile('data/userInfo.json'))
+            p_data = {}
+            p_data['uid'] = userInfo['uid'];
+            p_data['access_key'] = userInfo['access_key']
+            p_data['username'] = userInfo['username']
+            result = public.HttpPost(public.GetConfigValue('home') + '/api/panel/to_not_beta',p_data,5)
+            try:
+                return json.loads(result)
+            except: return public.returnMsg(False,'AJAX_CONN_ERR')
+        except: return public.returnMsg(False,'AJAX_USER_BINDING_ERR')
+
+    def to_beta(self):
+        try:
+            userInfo = json.loads(public.ReadFile('data/userInfo.json'))
+            p_data = {}
+            p_data['uid'] = userInfo['uid'];
+            p_data['access_key'] = userInfo['access_key']
+            p_data['username'] = userInfo['username']
+            public.HttpPost(public.GetConfigValue('home') + '/api/panel/to_beta',p_data,5)
+        except: pass
+
+    def get_uid(self):
+        try:
+            userInfo = json.loads(public.ReadFile('data/userInfo.json'))
+            return userInfo['uid']
+        except: return 0
+
+    #获取最新的5条测试版更新日志
+    def get_beta_logs(self,get):
+        try:
+            data = json.loads(public.HttpGet(public.GetConfigValue('home') + '/api/panel/get_beta_logs'))
+            return data
+        except:
+            return public.returnMsg(False,'AJAX_CONN_ERR')
     
     def UpdatePanel(self,get):
         try:
@@ -396,9 +490,12 @@ class ajax:
                     os.remove(login_temp);
                 else:
                     logs = '';
-                import psutil,panelPlugin,system;
+                import psutil,system,sys
                 mem = psutil.virtual_memory();
+                
+                import panelPlugin
                 mplugin = panelPlugin.panelPlugin();
+
                 mplugin.ROWS = 10000;
                 panelsys = system.system();
                 data = {}
@@ -410,23 +507,27 @@ class ajax:
                 data['logs'] = logs
                 data['oem'] = ''
                 data['intrusion'] = 0;
-                msg = public.getMsg('PANEL_UPDATE_MSG');
+                data['uid'] = self.get_uid()
+                #msg = public.getMsg('PANEL_UPDATE_MSG');
+                data['o'] = ''
+                filename = '/www/server/panel/data/o.pl'
+                if os.path.exists(filename): data['o'] = str(public.readFile(filename))
                 sUrl = public.GetConfigValue('home') + '/api/panel/updateLinux';                
                 updateInfo = json.loads(public.httpPost(sUrl,data));
                 if not updateInfo: return public.returnMsg(False,"CONNECT_ERR");
-                updateInfo['msg'] = msg;
+                #updateInfo['msg'] = msg;
                 session['updateInfo'] = updateInfo;
                 
             #检查是否需要升级
-            if updateInfo['version'] ==session['version']:
-                try:
-                    return public.returnMsg(False,updateInfo['msg']);
-                except:
-                    return public.returnMsg(False,'PANEL_UPDATE_ERR_NEW');
+            if updateInfo['is_beta'] == 1:
+                if updateInfo['beta']['version'] ==session['version']: return public.returnMsg(False,updateInfo);
+            else:
+                if updateInfo['version'] ==session['version']: return public.returnMsg(False,updateInfo);
             
             
             #是否执行升级程序 
             if(updateInfo['force'] == True or hasattr(get,'toUpdate') == True or os.path.exists('data/autoUpdate.pl') == True):
+                if updateInfo['is_beta'] == 1: updateInfo['version'] = updateInfo['beta']['version']
                 setupPath = public.GetConfigValue('setup_path');
                 uptype = 'update';
                 httpUrl = public.get_url();
@@ -441,6 +542,7 @@ class ajax:
                 if os.path.exists('panel.zip'):os.remove("panel.zip")
                 session['version'] = updateInfo['version']
                 if 'getCloudPlugin' in session: del(session['getCloudPlugin']);
+                if updateInfo['is_beta'] == 1: self.to_beta()
                 return public.returnMsg(True,'PANEL_UPDATE',(updateInfo['version'],));
             
             #输出新版本信息
@@ -451,7 +553,7 @@ class ajax:
             };
             
             public.ExecShell('rm -rf /www/server/phpinfo/*');
-            return data;
+            return public.returnMsg(True,updateInfo);
         except Exception as ex:
             return public.returnMsg(False,"CONNECT_ERR");
          
@@ -545,12 +647,24 @@ class ajax:
     
     #检测PHPINFO配置
     def CheckPHPINFO(self):
-        php_versions = ['52','53','54','55','56','70','71','72'];
+        php_versions = ['52','53','54','55','56','70','71','72','73','74','75'];
         path = public.GetConfigValue('setup_path') + '/panel/vhost/nginx/phpinfo.conf';
-        if not os.path.exists(path):
+        nginx_path = '/www/server/nginx/conf/enable-php-'
+        if not os.path.exists(path) or not os.path.exists(nginx_path + '75.conf'):
             opt = "";
             for version in php_versions:
                 opt += "\n\tlocation /"+version+" {\n\t\tinclude enable-php-"+version+".conf;\n\t}";
+                nginx_conf = nginx_path + version + '.conf'
+                if not os.path.exists(nginx_conf):
+                    nginx_body = '''location ~ [^/]\.php(/|$)
+{
+    try_files $uri =404;
+    fastcgi_pass  unix:/tmp/php-cgi-%s.sock;
+    fastcgi_index index.php;
+    include fastcgi.conf;
+	include pathinfo.conf;
+}''' % version
+                    public.WriteFile(nginx_conf,nginx_body)
             
             phpinfoBody = '''server
 {
@@ -562,6 +676,7 @@ class ajax:
 %s   
 }''' % (opt,);
             public.writeFile(path,phpinfoBody);
+
         
         
         path = public.GetConfigValue('setup_path') + '/panel/vhost/apache/phpinfo.conf';
@@ -601,7 +716,6 @@ ServerName 127.0.0.2
     
     #清理日志
     def delClose(self,get):
-        #return public.returnMsg(False,'演示服务器，禁止此操作!');
         public.M('logs').where('id>?',(0,)).delete();
         public.WriteLog('TYPE_CONFIG','LOG_CLOSE');
         return public.returnMsg(True,'LOG_CLOSE');
@@ -618,8 +732,9 @@ ServerName 127.0.0.2
         conf = public.readFile(filename);
         if hasattr(get,'port'):
             mainPort = public.readFile('data/port.pl').strip();
-            if mainPort == get.port:
-                return public.returnMsg(False,'SOFT_PHPVERSION_ERR_PORT_RE');
+            rulePort = ['80','443','21','20','8080','8081','8089','11211','6379']
+            if get.port in rulePort:
+                return public.returnMsg(False,'AJAX_PHPMYADMIN_PORT_ERR');
             if public.get_webserver() == 'nginx':
                 rep = "listen\s+([0-9]+)\s*;"
                 oldPort = re.search(rep,conf).groups()[0];
@@ -720,7 +835,7 @@ ServerName 127.0.0.2
     #获取警告标识
     def GetWarning(self,get):
         warningFile = 'data/warning.json'
-        if not os.path.exists(warningFile): return public.returnMsg(False,'警告列表不存在!');
+        if not os.path.exists(warningFile): return public.returnMsg(False,'AJAX_WARNING_ERR');
         import json,time;
         wlist = json.loads(public.readFile(warningFile));
         wlist['time'] = int(time.time());
@@ -743,29 +858,29 @@ ServerName 127.0.0.2
     #获取memcached状态
     def GetMemcachedStatus(self,get):
         import telnetlib,re;
-        tn = telnetlib.Telnet('127.0.0.1',11211);
-        tn.write(b"stats\n");
-        tn.write(b"quit\n");
-        data = tn.read_all();
+        conf = public.readFile('/etc/init.d/memcached')
+        result = {}
+        result['bind'] = re.search('IP=(.+)',conf).groups()[0]
+        result['port'] = int(re.search('PORT=(\d+)',conf).groups()[0])
+        result['maxconn'] = int(re.search('MAXCONN=(\d+)',conf).groups()[0])
+        result['cachesize'] = int(re.search('CACHESIZE=(\d+)',conf).groups()[0])
+        tn = telnetlib.Telnet(result['bind'],result['port'])
+        tn.write(b"stats\n")
+        tn.write(b"quit\n")
+        data = tn.read_all()
         if type(data) == bytes: data = data.decode('utf-8')
         data = data.replace('STAT','').replace('END','').split("\n");
-        result = {}
         res = ['cmd_get','get_hits','get_misses','limit_maxbytes','curr_items','bytes','evictions','limit_maxbytes','bytes_written','bytes_read','curr_connections'];
         for d in data:
             if len(d)<3: continue;
             t = d.split();
             if not t[0] in res: continue;
-            result[t[0]] = int(t[1]);
-        result['hit'] = 1;
+            result[t[0]] = int(t[1])
+        result['hit'] = 1
         if result['get_hits'] > 0 and result['cmd_get'] > 0:
-            result['hit'] = float(result['get_hits']) / float(result['cmd_get']) * 100;
-        
-        conf = public.readFile('/etc/init.d/memcached');
-        result['bind'] = re.search('IP=(.+)',conf).groups()[0];
-        result['port'] = int(re.search('PORT=(\d+)',conf).groups()[0]);
-        result['maxconn'] = int(re.search('MAXCONN=(\d+)',conf).groups()[0]);
-        result['cachesize'] = int(re.search('CACHESIZE=(\d+)',conf).groups()[0]);
-        return result;
+            result['hit'] = float(result['get_hits']) / float(result['cmd_get']) * 100
+
+        return result
     
     #设置memcached缓存大小
     def SetMemcachedCache(self,get):
@@ -778,7 +893,7 @@ ServerName 127.0.0.2
         conf = re.sub('CACHESIZE=\d+','CACHESIZE='+get.cachesize,conf);
         public.writeFile(confFile,conf);
         os.system(confFile + ' reload');
-        return public.returnMsg(True,'设置成功!');
+        return public.returnMsg(True,'SET_SUCCESS');
     
     #取redis状态
     def GetRedisStatus(self,get):
@@ -818,20 +933,39 @@ ServerName 127.0.0.2
     #取PHP-FPM日志
     def GetFpmLogs(self,get):
         path = '/www/server/php/' + get.version + '/var/log/php-fpm.log';
-        if not os.path.exists(path): return public.returnMsg(False,'日志文件不存在!');
+        if not os.path.exists(path): return public.returnMsg(False,'AJAX_LOG_FILR_NOT_EXISTS');
         return public.returnMsg(True,public.GetNumLines(path,1000));
     
     #取PHP慢日志
     def GetFpmSlowLogs(self,get):
         path = '/www/server/php/' + get.version + '/var/log/slow.log';
-        if not os.path.exists(path): return public.returnMsg(False,'日志文件不存在!');
+        if not os.path.exists(path): return public.returnMsg(False,'AJAX_LOG_FILR_NOT_EXISTS');
         return public.returnMsg(True,public.GetNumLines(path,1000));
     
     #取指定日志
     def GetOpeLogs(self,get):
-        if not os.path.exists(get.path): return public.returnMsg(False,'日志文件不存在!');
+        if not os.path.exists(get.path): return public.returnMsg(False,'AJAX_LOG_FILR_NOT_EXISTS');
         return public.returnMsg(True,public.GetNumLines(get.path,1000));
     
+    #检查用户绑定是否正确
+    def check_user_auth(self,get):
+        m_key = 'check_user_auth'
+        if m_key in session: return session[m_key]
+        u_path = 'data/userInfo.json'
+        try:
+            userInfo = json.loads(public.ReadFile(u_path))
+        except: 
+            if os.path.exists(u_path): os.remove(u_path)
+            return public.returnMsg(False,'宝塔帐户绑定已失效，请在[设置]页面重新绑定!')
+        pdata = {'access_key':userInfo['access_key'],'secret_key':userInfo['secret_key']}
+        result = public.HttpPost(public.GetConfigValue('home') + '/api/panel/check_auth_key',pdata,3);
+        if result == '0': 
+            if os.path.exists(u_path): os.remove(u_path)
+            return public.returnMsg(False,'宝塔帐户绑定已失效，请在[设置]页面重新绑定!')
+        if result == '1':
+            session[m_key] = public.returnMsg(True,'绑定有效!')
+            return session[m_key]
+        return public.returnMsg(True,result)
         
         
         

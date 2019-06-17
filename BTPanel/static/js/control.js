@@ -24,6 +24,7 @@ $(".st").hover(function(){
 		$(this).hide();
 	})
 })
+
 $(".searcTime .gt").click(function(){
 	$(this).addClass("on").siblings().removeClass("on");
 })
@@ -392,8 +393,8 @@ function disk(b, e) {
         //var zData = [];
 
         for (var i = 0; i < rdata.length; i++) {
-            rData.push((rdata[i].read_bytes / 1024).toFixed(3));
-            wData.push((rdata[i].write_bytes / 1024).toFixed(3));
+            rData.push((rdata[i].read_bytes / 1024 / 60).toFixed(3));
+            wData.push((rdata[i].write_bytes / 1024 / 60).toFixed(3));
             xData.push(rdata[i].addtime);
             //yData.push(rdata[i].read_count);
             //zData.push(rdata[i].write_count);
@@ -948,3 +949,6 @@ function getload(b,e){
 	})
 	})
 }
+
+$('.btime').val(GetToday() + ' 00:00:00');
+$('.etime').val(GetToday() + ' 23:59:59');
