@@ -1,0 +1,110 @@
+html,body{ 
+	width:100%;
+	height:100%;
+}
+
+.count-particles{
+  background: #000022;
+  position: absolute;
+  top: 48px;
+  left: 0;
+  width: 80px;
+  color: #13E8E9;
+  font-size: .8em;
+  text-align: left;
+  text-indent: 4px;
+  line-height: 14px;
+  padding-bottom: 2px;
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: bold;
+}
+
+.js-count-particles{
+  font-size: 1.1em;
+}
+
+#stats,
+.count-particles{
+  -webkit-user-select: none;
+  margin-top: 5px;
+  margin-left: 5px;
+}
+
+#stats{
+  border-radius: 3px 3px 0 0;
+  overflow: hidden;
+}
+
+.count-particles{
+  border-radius: 0 0 3px 3px;
+}
+
+
+#particles-js{
+	width: 100%;
+	height: 100%;
+	position: relative;
+	background:#099B27 url(../img/bg.png) center top no-repeat;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.sk-rotating-plane {
+	display: none;
+    width: 80px;
+    height: 80px;
+    margin: auto;
+    background-color: white;
+    -webkit-animation: sk-rotating-plane 1.2s infinite ease-in-out;
+    animation: sk-rotating-plane 1.2s infinite ease-in-out;
+    z-index: 1;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-left: -40px;
+    margin-top: -80px;
+}
+.sk-rotating-plane.active{display: block;}
+
+@keyframes sk-rotating-plane{
+	0% {
+	    -webkit-transform: perspective(120px) rotateX(0deg) rotateY(0deg);
+	    transform: perspective(120px) rotateX(0deg) rotateY(0deg);
+	}
+	50% {
+	    -webkit-transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg);
+	    transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg);
+	}
+	100% {
+	    -webkit-transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
+	    transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
+	}
+}
+
+@keyframes login-small{
+	0%{
+		transform: scale(1);-moz-transform: scale(1);	/* Firefox 4 */-webkit-transform: scale(1);	/* Safari 和 Chrome */-o-transform: scale(1);	/* Opera */-ms-transform:scale(1); 	/* IE 9 */
+	}
+	100%{
+		transform: scale(0.2);-moz-transform: scale(0.1);	/* Firefox 4 */-webkit-transform: scale(0.2);	/* Safari 和 Chrome */-o-transform: scale(0.1);	/* Opera */-ms-transform:scale(0.1); 	/* IE 9 */
+	}
+}
+
+.login{z-index: 2;position:absolute;width: 400px;border-radius: 5px;height: 520px;background: white;box-shadow: 0px 0px 5px #333333;top: 50%;left: 50%;margin-top: -260px;margin-left: -200px;transition: all 1s;-moz-transition: all 1s;	/* Firefox 4 */-webkit-transition: all 1s;	/* Safari 和 Chrome */-o-transition: all 1s;	/* Opera */}
+.login-top{font-size: 28px;margin-top: 70px;text-align:center;box-sizing: border-box;color: #333333;margin-bottom: 60px;}
+.login-center{width: 100%;box-sizing: border-box;padding: 0 40px;margin-bottom: 30px;position:relative;}
+.login-center-img{width: 20px;height: 20px;float: left;margin-top: 8px;}
+.login-center-img>img{width: 100%;}
+.login-center-input{float: left;width: 250px;margin-left: 15px;height: 40px;position: relative;}
+.login-center-input input{z-index: 2;transition: all 0.5s;padding-left: 10px;color: #333333;width: 100%;height: 40px;border: 0;border: 1px solid #cccccc;box-sizing: border-box;outline: none;position: relative;font-size:16px}
+.login-center-input input:focus{border: 1px solid #20a53a;}
+.login-center-input-text{background: white;padding: 0 5px;position: absolute;z-index: 2;opacity: .6;height: 20px;top: 50%;margin-top: -10px;font-size: 14px;left: 5px;color: #666;line-height: 20px;transition: all 0.5s;-moz-transition: all 0.5s;	/* Firefox 4 */-webkit-transition: all 0.5s;	/* Safari 和 Chrome */-o-transition: all 0.5s;	/* Opera */}
+.login-center-input input:focus~.login-center-input-text,.login-center-input-text-hover{top: 0;z-index: 3;opacity: 1;margin-top: -10px;color:#20a53a}
+.login-center-input-text-hover{color:#666}
+.login.active{-webkit-animation: login-small 0.8s ; animation: login-small 0.8s ;animation-fill-mode:forwards;-webkit-animation-fill-mode:forwards}
+.login-button{cursor: pointer;width: 250px;text-align: center;height: 42px;line-height: 42px;background-color: #20a53a;border-radius: 5px;margin: 0 auto;margin-top: 50px;color: white;font-size:16px}
+.ver-code-box{display:none}
+.ver-code{border:#ccc 1px solid;margin-left:10px;}
+.ver-code img{width:100%;height:38px;cursor:pointer}
+.error{display:none;position: absolute;top: -40px;left: 75px;color: red;border: #f3e1c5 1px solid;padding: 7px 15px;border-radius: 6px;background-color: #fff7ea;}
+.error:after{content: "";display: block;border-width: 6px;position: absolute;bottom: -13px;left: 10px; border-style: solid dashed dashed;border-color: #f3e1c5 transparent transparent;}

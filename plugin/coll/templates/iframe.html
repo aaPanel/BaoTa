@@ -1,0 +1,33 @@
+{% include "head.html" %}
+<style>
+	.layui-card{
+		height:600px;
+		font-size:60px;
+		text-align:center;
+		line-height:600px;
+	}
+</style>
+</head>
+<body class="layui-layout-body">
+<div class="layui-fluid">
+	<div class="layui-row layui-col-space20">
+		<div class="layui-col-md6">
+			<div class="layui-card a">
+				内容A
+			</div>
+		</div>
+		<div class="layui-col-md6">
+			<div class="layui-card b">
+				内容B
+			</div>
+		</div>
+	</div>
+	<div class="server-add"><button class="layui-btn layui-btn-normal server-add-btn">改变父域内容</button></div>
+</div>
+<script>
+$('.server-add-btn').on('click', function(){
+	parent.layer.tips('Hi，我是tips', '#qiao');
+});
+</script>
+</body>
+</html>

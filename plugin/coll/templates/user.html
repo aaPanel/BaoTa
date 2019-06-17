@@ -1,0 +1,382 @@
+{% include "head.html" %}
+<script type="text/javascript" src="static/js/jquery.ztree.core.js"></script>
+<script type="text/javascript" src="static/js/jquery.ztree.excheck.js"></script>
+<script type="text/javascript" src="static/js/jquery.ztree.exedit.js"></script>
+<script type="text/javascript">
+	<!--
+	var setting = {
+		check: {
+			enable: true
+		},
+		data: {
+			simpleData: {
+				enable: true
+			}
+		},
+		edit: {
+			enable: true,
+			showRemoveBtn: showRemoveBtn,
+			showRenameBtn: showRemoveBtn
+		},
+		view: {
+			showLine: false,
+			addDiyDom: addDiyDom
+		}
+	};
+
+	
+	//全选和反选
+	function checkNode(e) {
+		var zTree = $.fn.zTree.getZTreeObj("treeDemo"),
+		type = e.data.type,
+		nodes = zTree.getSelectedNodes();
+		if (type.indexOf("All")<0 && nodes.length == 0) {
+			alert("请先选择一个节点");
+		}
+
+		if (type == "checkAllTrue") {
+			zTree.checkAllNodes(true);
+		}
+		if (type == "checkAllFalse") {
+			zTree.checkAllNodes(false);
+		}
+	}
+	
+	//全部展开和隐藏
+	function expandNode(e) {
+		var zTree = $.fn.zTree.getZTreeObj("treeDemo"),
+		type = e.data.type,
+		nodes = zTree.getSelectedNodes();
+		if (type.indexOf("All")<0 && nodes.length == 0) {
+			alert("请先选择一个父节点");
+		}
+
+		if (type == "expandAll") {
+			zTree.expandAll(true);
+		}
+		if (type == "collapseAll") {
+			zTree.expandAll(false);
+		}
+    }
+
+    //获取节点列表
+    function get_select_nodes() {
+        var zTree = $.fn.zTree.getZTreeObj("treeDemo")
+        var tmp_nodes = zTree.transformToArray(zTree.getNodes())
+        var nodes = []
+        for (var i=0; i < tmp_nodes.length; i++) {
+            if (!tmp_nodes[i].checked) {
+                console.log(tmp_nodes[i].checked)
+                continue;
+            }
+            nodes.push({ nid: tmp_nodes[i].id, p_nid: tmp_nodes[i].pId ? tmp_nodes[i].pId : 0,uid:_uid })
+        }
+        return nodes
+    }
+	
+	var newCount = 1;
+	//定义添加按钮
+	function addDiyDom(treeId, treeNode) {
+		if (treeNode.parentNode && treeNode.parentNode.id!=2) return;
+		var sObj = $("#" + treeNode.tId + "_span");
+		//指定文件目录显示添加按钮
+		var arrId = [115,125,135,145,155];
+		for(v of arrId) {
+			if(v === treeNode.id) {
+				var addStr = "<span class='button add' id='addBtn_" + treeNode.tId + "' title='add node' onfocus='this.blur();'></span>";
+				sObj.after(addStr);
+				var btn = $("#addBtn_"+treeNode.tId);
+				var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+				if (btn) btn.bind("click", function(){
+					layer.prompt({title: '添加授权目录路径'}, function(text, index){
+						layer.close(index);
+						zTree.addNodes(treeNode, {id:(100 + newCount), pId:treeNode.id, noRemoveBtn:true, noEditBtn:true, name:text});
+					});
+					return false;
+				});
+			}
+		}
+	}
+	
+	//是否显示编辑按钮
+	function showRenameBtn(treeId, treeNode){
+		if(treeNode.noEditBtn != undefined && treeNode.noEditBtn){
+			return false;
+		}else
+		{
+			return true;
+		}
+	}
+	
+	//是否显示删除按钮
+	function showRemoveBtn(treeId, treeNode){
+		if(treeNode.noRemoveBtn != undefined && treeNode.noRemoveBtn){
+			return true;
+		}else
+		{
+			return false;
+		}
+    }    
+	
+	//-->
+</script>
+</head>
+
+<body class="layui-layout-body">
+<div id="LAY_app">
+	<div class="layui-layout layui-layout-admin">
+		<!-- 侧边栏 -->
+		{% include "menu.html" %}
+		<!-- 主体内容 -->
+		<div class="layui-body" id="LAY_app_body">
+			<div class="layadmin-tabsbody-item layui-show">
+				<div class="layui-fluid">
+					<div class="layui-row">
+						<div class="user-side">
+							<div class="layui-card-header">用户列表</div>
+							<div class="user-side-scroll">
+								<div class="layui-card">
+									<div class="layui-card-body">
+										<ul class="layui-nav-user">
+                                            {% for userInfo in data['userList'] %}
+											<li class="layui-nav-item">
+                                                <a href="javascript:;" onclick="get_accept({{userInfo['uid']}})">{{userInfo['username']}}
+                                                    <span class="tag">({% if not userInfo['ps'] %} 未设置 {% else %} {{userInfo['ps']}} {% endif %})</span>
+                                                    <span class="icon icon-edit" onclick="modify_user({{userInfo['uid']}},'{{userInfo['username']}}',{{userInfo['state']}},'{{userInfo['ps']}}')"></span>
+                                                </a>
+                                            </li>
+											{% endfor %}
+										</ul>
+										<button class="layui-btn layui-btn-normal add-user" onclick="create_user()">添加用户</button>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="user-content">
+							<div class="layui-card">
+								<div class="layui-card-header">权限列表</div>
+								<div class="layui-card-body">
+									<div class="check-box">
+                                        <div class="layui-btn-container bt-user-btngroup">
+                                            <a id="checkAllTrue" class="layui-btn layui-btn-sm layui-btn-primary" href="#" onclick="return false;">全选</a>
+                                            <a id="checkAllFalse" class="layui-btn layui-btn-sm layui-btn-primary" href="#" onclick="return false;">取消全选</a>
+                                            <a id="expandAllBtn" class="layui-btn layui-btn-sm layui-btn-primary" href="#" onclick="return false;">全部展开</a>
+                                            <a id="collapseAllBtn" class="layui-btn layui-btn-sm layui-btn-primary" href="#" onclick="return false;">全部折叠</a>
+                                        </div>
+										<div class="tree-box">
+											<ul id="treeDemo" class="ztree"></ul>
+											<button id="coll_user_save" class="layui-btn layui-btn-sm layui-btn-normal" style="width:200px;height:40px">提交</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="static/layui/layui.js"></script>
+<script type="text/javascript">
+    
+    $('.layui-nav-user li:first').addClass('active')
+    $('.layui-nav-user li a:first').click()
+    layui.use('layer', function(){
+      var layer = layui.layer;
+    });
+    var _uid = null;
+
+    function loginout() {
+        layer.msg('正在退出...')
+        window.location.href = 'ajax.html?m=coll_user&f=loginout'
+    }
+
+    function user_content_heiht() {
+	    var sideHeight = $(".user-side").height();
+	    $(".user-content").height(sideHeight);
+	    $(".tree-box").height(sideHeight-148)
+    }
+
+
+    function get_accept(uid) {
+        _uid = uid
+        $.post('ajax.json', { m: 'coll_user', f: 'get_nodes', uid: uid }, function (rdata) {
+            $.fn.zTree.init($("#treeDemo"), setting, rdata);
+            $("#checkAllTrue").bind("click", { type: "checkAllTrue" }, checkNode);
+            $("#checkAllFalse").bind("click", { type: "checkAllFalse" }, checkNode);
+            $("#expandAllBtn").bind("click", { type: "expandAll" }, expandNode);
+            $("#collapseAllBtn").bind("click", { type: "collapseAll" }, expandNode);
+        });
+    }
+
+
+    function get_nodes(uid) {
+        _uid = uid;
+        var pdata = {
+            uid: uid,
+            m: 'coll_user',
+            f:'get_nodes'
+        }
+        $.post('ajax.json', pdata, function (rdata) {
+            console.log(rdata)
+        });
+    }
+
+
+    function modify_user(uid, username, state, ps) {
+        layer.open({
+            type: 1,
+            title: "编辑用户",
+            closeBtn: 1,
+            area: ['400px', '360px'],
+            shadeClose: false,
+            resize: false,
+            content: '<div class="add-user-box">\
+					    <div class="layui-form">\
+						    <div class="layui-form-item">\
+							    <label class="layui-form-label">用户名</label>\
+							    <div class="layui-input-block">\
+							      <input type="text" name="username" lay-verify="username" value="'+ username +'" autocomplete="off" placeholder="请输入用户名" class="layui-input">\
+							    </div>\
+						    </div>\
+						    <div class="layui-form-item">\
+							    <label class="layui-form-label">密码</label>\
+							    <div class="layui-input-block">\
+							      <input type="text" name="password" lay-verify="password" autocomplete="off" placeholder="不修改请留空" class="layui-input">\
+							    </div>\
+						    </div>\
+                            <div class="layui-form-item">\
+							    <label class="layui-form-label">状态</label>\
+							    <div class="layui-input-block">\
+							      <select name="state" class="layui-select" style="display:block;"><option value="1" '+ (state == 1 ? 'selected' : '') + '>启用</option><option value="0" ' + (state == 0 ? 'selected' : '') +'>停用</option></select>\
+							    </div>\
+						    </div>\
+						    <div class="layui-form-item">\
+							    <label class="layui-form-label">备注</label>\
+							    <div class="layui-input-block">\
+							      <input type="text" name="ps" lay-verify="ps" autocomplete="off" value="'+ps+'" placeholder="请输入备注" class="layui-input">\
+							    </div>\
+						    </div>\
+					    </div>\
+					    <div class="layui-btn-bt-box"><a class="layui-btn layui-btn-normal" onclick="modify_user_submit('+ uid + ')">提交</a><a class="layui-btn layui-btn-danger" onclick="remove_user(' + uid +',\''+username+'\')">删除</a></div>\
+				    </div>'
+        })
+    }
+
+    function remove_user(uid,username) {
+        layer.confirm('您真的要删除用户['+username+']吗?', {title:'删除确认',icon:12}, function () {
+            var pdata = {
+                uid: uid,
+            }
+            pdata['m'] = 'coll_user';
+            pdata['f'] = 'remove_user';
+            var loadT = layer.msg('正在删除...', { icon: 16, time: 0, shade: 0.3 });
+            $.post('ajax.json', pdata, function (rdata) {
+                layer.close(loadT);
+                if (rdata.status) {
+                    layer.closeAll();
+                    window.location.reload()
+                }
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+            });
+        });
+    }
+
+    function modify_user_submit(uid) {
+        var pdata = {
+            uid: uid,
+            username: $("input[name='username']").val(),
+            state: $("select[name='state']").val(),
+            ps: $("input[name='ps']").val()
+        }
+        var password = $("input[name='password']").val();
+        if (password) {
+            if (password.length < 8) {
+                layer.msg('密码长度不能小于8位!');
+                return;
+            }
+
+            pdata['password'] = password;
+        }
+        pdata['m'] = 'coll_user';
+        pdata['f'] = 'modify_user';
+
+        var loadT = layer.msg('正在提交...', { icon: 16, time: 0, shade: 0.3 });
+        $.post('ajax.json', pdata, function (rdata) {
+            layer.close(loadT);
+            if (rdata.status) layer.closeAll();
+            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+        });
+    }
+
+    user_content_heiht();
+    window.onresize = user_content_heiht;
+
+    $(".layui-nav-user li").click(function(){
+	    $(this).addClass("active").siblings().removeClass("active")
+    })
+
+
+
+    function create_user () {
+	    layer.open({
+		    type: 1,
+		    title: "添加用户",
+		    closeBtn: 1,
+		    area: ['400px', '310px'],
+		    shadeClose: false,
+		    resize: false,
+		    content: '<div class="add-user-box">\
+					    <div class="layui-form">\
+						    <div class="layui-form-item">\
+							    <label class="layui-form-label">用户名</label>\
+							    <div class="layui-input-block">\
+							      <input type="text" name="username" lay-verify="username" autocomplete="off" placeholder="请输入用户名" class="layui-input">\
+							    </div>\
+						    </div>\
+						    <div class="layui-form-item">\
+							    <label class="layui-form-label">密码</label>\
+							    <div class="layui-input-block">\
+							      <input type="text" name="password" lay-verify="password" autocomplete="off" placeholder="请输入密码" class="layui-input">\
+							    </div>\
+						    </div>\
+						    <div class="layui-form-item">\
+							    <label class="layui-form-label">备注</label>\
+							    <div class="layui-input-block">\
+							      <input type="text" name="ps" lay-verify="ps" autocomplete="off" placeholder="请输入备注" class="layui-input">\
+							    </div>\
+						    </div>\
+					    </div>\
+					    <div class="layui-btn-bt-box"><a class="layui-btn layui-btn-normal" onclick="create_user_submit()">提交</a></div>\
+				    </div>'
+	    })
+    }
+
+    function create_user_submit() {
+        var pdata = {
+            username: $("input[name='username']").val(),
+            password: $("input[name='password']").val(),
+            ps: $("input[name='ps']").val()
+        }
+        if (pdata['password'].length < 8) {
+            layer.msg('密码长度不能小于8位!');
+            return;
+        }
+        pdata['m'] = 'coll_user';
+        pdata['f'] = 'create_user';
+
+        var loadT = layer.msg('正在提交...', { icon: 16, time: 0, shade: 0.3 });
+        $.post('ajax.json', pdata, function (rdata) {
+            layer.close(loadT);
+            if (rdata.status) {
+                layer.closeAll();
+                setTimeout(function () {
+                    window.location.reload()
+                }, 1000);
+            }
+            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+        });
+    }
+</script>
+</html>

@@ -1,0 +1,284 @@
+<style>
+    /*样式写这里*/
+    .info-table table tbody tr td span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 580px;
+        display: block;
+    }
+    .openfog-margin-1 {
+        margin-top: 10px;
+    }
+    .openfog-paragraph {
+        font-size: 14px;
+        margin-bottom: 10px;
+        margin-top: 10px;
+    }
+    .openfog-title {
+        margin-top: 20px;
+        font-size: 18px;
+    }
+    .openfog-footer-container {
+        /*position: relative;*/
+        /*height: 450px;*/
+        margin-top: 30px;
+        font-size: 14px;
+    }
+    .openfog-footer-container1 {
+        /*position: relative;*/
+        /*height: 100px;*/
+        margin-top: 30px;
+        font-size: 14px;
+    }
+    .openfog-footer-content {
+        /*position: absolute;*/
+        /*right: 10px;*/
+        /*bottom: 10px;*/
+        /*width: 170px;*/
+        /*margin-top: 30px;*/
+    }
+    .openfog-footer-content-p {
+        /*display: inline-block;*/
+    }
+
+
+</style>
+<div class="bt-form">
+    <div class="bt-w-main">
+        <!--菜单部分-->
+        <div class="bt-w-menu">
+            <p class="bgw" onclick="openfogos.get_index()">服务状态</p>
+            <p onclick="openfogos.get_info()">绑定账号</p>
+        </div>
+        <!--内容部分-->
+        <div class="bt-w-con pd15">
+            <div class="plugin_body"></div>
+        </div>
+    </div>
+</div>
+<!--JS脚本部分，不要将JS脚本写在其它地方-->
+<script type="text/javascript">
+
+    //定义窗口尺寸
+    $('.layui-layer-page').css({'width': '900px'});
+
+    //左测菜单切换效果
+    $(".bt-w-menu p").click(function () {
+        $(this).addClass('bgw').siblings().removeClass('bgw')
+    });
+
+    /**
+     * 插件交互对象
+     * 您的所有JS代码可以写在里面
+     * 若不习惯JS的面向对象编程，可删除此对象，使用传统函数化的方式编写
+     * */
+    const status_opened = '当前状态：<span>开启</span><span style="color: #20a53a; margin-left: 3px;" class="glyphicon glyphicon glyphicon-play"></span>';
+    const status_opening = '当前状态：正在开启...';
+    const status_stopping = '当前状态：正在关闭...';
+    const status_stopped = '当前状态：<span>关闭</span><span style="color: red; margin-left: 3px;" class="glyphicon glyphicon-pause"></span>';
+    const start_button = '<button class="btn btn-default btn-sm" onclick="openfogos.start()">启动</button>';
+    const stop_button = '<button class="btn btn-default btn-sm" onclick="openfogos.stop()">停止</button>';
+    const bind_title = '<p class="openfog-paragraph">开启插件并与OpenFogOS账号（<a class="btn-link" href="https://account.openfogos.com/signup?source=i.openfogos.com" target="_blank">立即注册</a>）绑定，即可获取收益。</p>';
+    const bind_local = '<div>\n' +
+        '    <h3 class="openfog-margin-1 openfog-title">方式一</h3>' +
+        '<p class="openfog-paragraph">1. 输入您的手机号，并点击绑定。</p>' +
+        '<div class="input-group mb-3">\n' +
+        '<form>\n' +
+        '  <div class="form-group">\n' +
+        '    <input type="text" class="form-control" id="openfog-phone" placeholder="手机号">\n' +
+        '  </div>\n' +
+        '</form>' +
+        '<button class="btn btn-default btn-sm openfog-margin-1" onclick="openfogos.bind()">绑定</button>' +
+        '</div>' +
+        '<p class="openfog-paragraph">2. 5分钟后，<a class="btn-link" href="https://i.openfogos.com" target="_blank">登录OpenFogOS</a>，查看列表中的节点是否包含本机MAC(<span id="openfog-mac"></span>)。若包含则绑定成功，若绑定失败，请通过方式二进行绑定。</p>' +
+        '<img src="https://km.webrtc.win/index.php?share/fileProxy&user=102&sid=mzDxj3fy" class="img-responsive" alt="节点绑定结果">' +
+        '</div>';
+    const bind_remote = '<h3 class="openfog-margin-1 openfog-title">方式二</h3>' +
+        '<p class="openfog-paragraph">1. <a class="btn-link" href="https://i.openfogos.com" target="_blank">登录OpenFogOS</a>，点击“远程绑定节点”按钮。</p>' +
+        '<img src="https://km.webrtc.win/index.php?share/fileProxy&user=102&sid=VNJfsjKA" class="img-responsive" alt="节点绑定按钮">' +
+        '<p class="openfog-paragraph">2. 根据下表填入MAC地址和NodeID，并点击绑定。</p>';
+    const contact_us = '<div class="openfog-footer-container">' +
+        '<div class="openfog-footer-content">' +
+        '<p class="openfog-paragraph openfog-footer-content-p">联系我们</p>' +
+        '<p class="openfog-footer-content-p">微信&emsp;&ensp;OpenFogOS</p>' +
+        '<p class="openfog-footer-content-p">QQ群&emsp;715017630</p>' +
+        '</div>' +
+        '</div>';
+    const contact_us1 = '<div class="openfog-footer-container1">' +
+        '<div class="openfog-footer-content">' +
+        '<p class="openfog-paragraph openfog-footer-content-p">联系我们</p>' +
+        '<p class="openfog-footer-content-p">微信&emsp;&ensp;OpenFogOS</p>' +
+        '<p class="openfog-footer-content-p">QQ群&emsp;715017630</p>' +
+        '</div>' +
+        '</div>';
+    var intervalID = 0;
+    var openfogos = {
+        //构造概览内容
+        get_index: function () {
+
+            var status_p = '<p class="status"></p>';
+            var buttons_div = '<div class="sfm-opt buttons">' +
+                '<button class="btn btn-default btn-sm" onclick="openfogos.start()">启动</button>' +
+                '<button class="btn btn-default btn-sm" onclick="openfogos.stop()">停止</button>' +
+                '</div>';
+            var body = '<div class="soft-man-con bt-form">' + status_p + buttons_div  + contact_us + '</div>';
+
+            $('.plugin_body').html(body);
+            request_plugin('openfogos', 'state', null, function (rdata) {
+                // console.log('get info result', rdata);
+                // console.log('type', typeof rdata);
+                if((rdata.result||"").indexOf("openfog") >= 0){
+                    $('.status').html(status_opened);
+                    $('.buttons').html(stop_button);
+                } else {
+                    $('.status').html(status_stopped);
+                    $('.buttons').html(start_button);
+                }
+            });
+
+            // $('.plugin_body').html("<h1 style='text-align:center;margin-top:30%;'>这是一个示例插件22!</h1>");
+        },
+        start: function () {
+            $('.status').html(status_opening);
+            request_plugin('openfogos', 'start', null, function (rdata) {
+                if(rdata.result.indexOf('openfog') >= 0) {
+                    $('.status').html(status_opened);
+                    $('.buttons').html(stop_button);
+                }
+            })
+        },
+
+        stop: function () {
+            $('.status').html(status_stopping);
+            request_plugin('openfogos', 'stop', null, function (rdata) {
+                if(rdata.result.indexOf('openfog') >= 0) {
+                    $('.status').html(status_stopped);
+                    $('.buttons').html(start_button);
+                }
+            })
+        },
+
+        bind: function () {
+            request_plugin('openfogos', 'bind', {phone:$("#openfog-phone").val()}, function (rdata) {
+                if(rdata.indexOf('phone') >= 0) {
+                    alert('绑定成功！');
+                }
+            })
+        },
+
+
+        /**
+         * 获取面板日志
+         * @param p 被获取的分页
+         */
+        /*get_logs: function (p) {
+            if (p == undefined) p = 1;
+            request_plugin('demo', 'get_logs', {p: p, callback: 'demo.get_logs'}, function (rdata) {
+                var log_body = '';
+                for (var i = 0; i < rdata.data.length; i++) {
+                    log_body += '<tr><td>' + rdata.data[i].addtime + '</td><td><span title="' + rdata.data[i].log + '">' + rdata.data[i].log + '</span></td></tr>'
+                }
+
+                var my_body = '<div class="info-table"><div class="divtable">'
+                    + '<table class="table table-hover">'
+                    + '<thead>'
+                    + '<tr><th width="150">时间</th><th>详情</th></tr>'
+                    + '</thead>'
+                    + '<tbody>' + log_body + '</tbody>'
+                    + '</table>'
+                    + '</div><div class="page" style="margin-top:15px">' + rdata.page + '</div</div>';
+
+                $('.plugin_body').html(my_body);
+            });
+        },*/
+        /**
+         * 获取MAC和PearID
+         */
+        get_info: function () {
+            request_plugin('openfogos', 'info', null, function (rdata) {
+                var mac = '';
+                var pearid = '';
+                if(rdata.indexOf("mac") >= 0){
+                    data = JSON.parse(rdata||"");
+                    mac = data.mac? data.mac : '';
+                    pearid = data.prid? data.prid: '';
+                }
+
+                var log_body = mac?'<tr><td>MAC地址</td><td id="openfog-table-mac">' + (mac? mac:'程序正在准备中，请稍等片刻') + '</td></tr>'+
+                    '<tr><td>NodeID</td><td id="openfog-table-pearid">' + (pearid? pearid:'程序正在准备中，请稍等片刻') + '</td></tr>':'<tr><td>MAC地址</td><td id="openfog-table-mac">' + (mac? mac:'请启动程序后再查看') + '</td></tr>'+
+                    '<tr><td>NodeID</td><td id="openfog-table-pearid">' + (pearid? pearid:'请启动程序后再查看') + '</td></tr>';
+
+                var my_body = '<div>' + bind_title + bind_local + bind_remote +
+                    '<div class="info-table divtable">'
+                    + '<table class="table table-hover">'
+                    + '<tbody>' + log_body + '</tbody>'
+                    + '</table>'
+                    + '</div>' +
+                    contact_us1 +
+                    '</div>';
+
+                $('.plugin_body').html(my_body);
+                $('#openfog-mac').text(mac);
+                if(!pearid){
+                    window.setTimeout("openfogos.get_mac()", 1000);
+                }
+            });
+        },
+        get_mac: function () {
+            request_plugin('openfogos', 'info', null, function (rdata) {
+                var mac = '';
+                var pearid = '';
+                if(rdata.indexOf("mac") >= 0){
+                    data = JSON.parse(rdata||"");
+                    mac = data.mac? data.mac : '';
+                    pearid = data.prid? data.prid: '';
+                }
+                $('#openfog-mac').text(mac);
+                $('#openfog-table-mac').text(mac);
+                $('#openfog-table-pearid').text(pearid);
+                if(!pearid){
+                    window.setTimeout("openfogos.get_mac()", 1000);
+                }
+            });
+        }
+
+
+    }
+
+    /**
+     * 发送请求到插件
+     * 注意：除非你知道如何自己构造正确访问插件的ajax，否则建议您使用此方法与后端进行通信
+     * @param plugin_name    插件名称 如：demo
+     * @param function_name  要访问的方法名，如：get_logs
+     * @param args           传到插件方法中的参数 请传入数组，示例：{p:1,rows:10,callback:"demo.get_logs"}
+     * @param callback       请传入处理函数，响应内容将传入到第一个参数中
+     */
+    function request_plugin(plugin_name, function_name, args, callback, timeout) {
+        if (!timeout) timeout = 36000;
+        $.ajax({
+            type: 'POST',
+            url: '/plugin?action=a&s=' + function_name + '&name=' + plugin_name,
+            data: args,
+            timeout: timeout,
+            success: function (rdata) {
+                if (!callback) {
+                    layer.msg(rdata.msg, {icon: rdata.status ? 1 : 2});
+                    return;
+                }
+                return callback(rdata);
+            },
+            error: function (ex) {
+                if (!callback) {
+                    layer.msg('请求过程发现错误!', {icon: 2});
+                    return;
+                }
+                return callback(ex);
+            }
+        });
+    }
+
+    //第一次打开窗口时调用
+    openfogos.get_index();
+
+</script>

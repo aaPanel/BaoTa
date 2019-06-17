@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>登录</title>
+    <meta name="description" content="particles.js is a lightweight JavaScript library for creating particles.">
+    <meta name="author" content="Vincent Garreau" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" media="screen" href="/coll/static/css/login.css">
+    <link rel="stylesheet" type="text/css" href="/coll/static/css/reset.css" />
+    <script src="/static/js/jquery-1.10.2.min.js"></script>
+</head>
+<body>
+    <div id="particles-js">
+        <div class="login">
+            <div class="login-top">
+                登录
+            </div>
+            <div class="login-center clearfix">
+                <div class="login-center-img"><img src="/coll/static/img/name.png" /></div>
+                <div class="login-center-input">
+                    <input class="input-txt" type="text" name="username" value="" />
+                    <div class="login-center-input-text">用户名</div>
+                </div>
+                <div class="error"></div>
+            </div>
+            <div class="login-center clearfix">
+                <div class="login-center-img"><img src="/coll/static/img/password.png" /></div>
+                <div class="login-center-input">
+                    <input class="input-txt" type="password" name="password" value="" />
+                    <div class="login-center-input-text">密码</div>
+                </div>
+            </div>
+            {% if session['coll_code'] %}
+            <div class="login-center clearfix">
+                <div class="login-center-img"><img src="/coll/static/img/code.png" /></div>
+                <div class="login-center-input" style="width:148px">
+                    <input class="input-txt" type="text" name="" value="" />
+                    <div class="login-center-input-text">验证码</div>
+                </div>
+                <div class="ver-code fl"><img src="/code" onclick="this.src=this.src.split('?')[0] + '?'+new Date().getTime()" /></div>
+            </div>
+            {% endif %}
+            <div class="login-button">
+                登录
+            </div>
+        </div>
+        <div class="sk-rotating-plane"></div>
+    </div>
+    <!-- scripts -->
+    <script type="text/javascript" src="/static/layer/layer.js"></script>
+    <script type="text/javascript">
+        $(".login-center-input").click(function () {
+            var isFocus = $(".input-txt").is(":focus");
+            if (true == isFocus) {
+                $(".error").hide()
+            }
+        })
+        $(".input-txt").blur(function () {
+            if ($(this).val().length > 0) {
+                $(this).next().addClass("login-center-input-text-hover")
+            }
+            else {
+                $(this).next().removeClass("login-center-input-text-hover")
+            }
+        });
+        $(".login-center-input-text").click(function () {
+            $(this).prev().focus()
+        });
+        $(".login-button").click(function () {
+            var username = $("input[name='username']").val();
+            var password = $("input[name='password']").val();
+            var code = $("input[name='code']").val();
+            if (username != '' && password != '') {
+
+                $.post('ajax.json', { m: 'coll_user', f: 'login', username: username, password: password, code: code }, function (rdata) {
+                    if (!rdata.status) {
+                        layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+                        return;
+                    }
+
+                    $(".login").addClass("active");
+                    $(".sk-rotating-plane").addClass("active");
+                    $(".login").hide();
+                    setTimeout(function () {
+                        window.location.href = 'user.html'
+                    }, 1000)
+                    return;
+                });
+            }
+            else {
+                if (username == "") $(".error").text("账号未填写").show();
+                if (password == "" && username != "") $(".error").text("密码未填写").show();
+                return
+            }
+        })
+    </script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+{% include "head.html" %}
+<style>
+	.layui-layout-admin .layui-body{
+		left:260px;
+	}
+	.server-menu {
+		background-color:#b2b2bc;
+		position: fixed;
+		left: 140px;
+		top: 0;
+		bottom: 0;
+		z-index: 999;
+		width: 120px;
+		overflow-x: hidden;
+	}
+	.server-menu-button{
+		height:50px;
+		background-color:#9797A6;
+		line-height:50px;
+	}
+	.server-menu-button .ico-edit{
+		float:right;
+		margin-right:10px;
+	}
+	.server-menu-button span{
+		display: block;
+		width: 17px;
+		height: 17px;
+		margin-left: 10px;
+		float: left;
+		margin-top: 14px;
+		cursor:pointer;
+	}
+	.s-box-item{
+		margin:10px 0;
+		padding:4px 0;
+		cursor:pointer;
+	}
+	.s-box .active,.s-box li:hover{
+		background-color:#F0F0F0;
+	}
+	.s-box-item .icon{
+		width: 40px;
+		height: 40px;
+		background-size: 20px;
+		float: left;
+		background-repeat: no-repeat;
+		background-position: center center;
+	}
+	.s-box-item .info{
+		line-height:20px;
+		font-size:12px;
+		color:#313131;
+	}
+	.iframe-box{
+		padding-top:15px;
+	}
+	.iframe-box iframe{
+		display:none
+	}
+	@media screen and (max-width: 992px) {
+		.layui-layout-admin .layui-body{
+			left:120px;
+		}
+	}
+</style>
+</head>
+
+<body class="layui-layout-body">
+<div id="LAY_app">
+	<div class="layui-layout layui-layout-admin">
+		<!-- 侧边栏 -->
+		{% include "menu.html" %}
+		<div class="server-menu">
+			<div class="server-menu-button">
+				<span class="ico-shrink"></span>
+				<span class="ico-edit"></span>
+			</div>
+            <ul class="s-box">
+                {% for s in data['serverList'] %}
+                <li class="s-box-item active" id="server_{{s.sid}}" data-sid="{{s.sid}}" data-panel="{{s.panel}}">
+                    <div class="icon icon-china"></div>
+                    <div class="info">
+                        <p>{{s.ps}}</p>
+                        <p>{{s.address}}</p>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+		</div>
+		<!-- 主体内容 -->
+		<div class="layui-body" id="LAY_app_body">
+			<div class="iframe-box">
+			</div>
+		</div>
+	</div>
+</div>
+<script src="static/layui/layui.js"></script>
+<script>
+    var layer;
+    layui.use('layer', function(){
+      layer = layui.layer;
+    
+        function user_content_heiht() {
+	        var sideHeight = $(window).height();
+	        $(".iframe-box").height(sideHeight-20);
+        }
+        user_content_heiht();
+        window.onresize = user_content_heiht;
+
+        $(".s-box li").click(function(){
+	        var i = $(this).index();
+            $(this).addClass("active").siblings().removeClass("active");
+            var sid = $(this).attr('data-sid');
+            $(".iframe-box iframe").hide();
+            //$(".iframe-box").html('')
+            var iframeObj = $(".iframe-box #server_iframe_" + sid);
+            
+            
+            var panel = $(this).attr('data-panel');
+            var loadT = layer.msg('正在生成密钥...', { icon: 16, time: 0 });
+            $.post('ajax.json', { m: 'coll_server', f: 'get_tmp_token', sid: sid }, function (rdata) {
+                layer.close(loadT);
+                if (rdata.status === false) {
+                    layer.msg(rdata.msg, { icon: 2 });
+                    return;
+                }
+
+                //var loadT = layer.msg('正在登录面板...', { icon: 16, time: 0 });
+                //$.post(panel + '/login', { tmp_token: rdata.msg }, function (ret) {
+                    //layer.close(loadT);
+                    //if (ret.status === false) {
+                    //    layer.msg(ret.msg, { icon: 2 });
+                    //    return;
+                    //}
+                    if (iframeObj.attr('src')) {
+                        iframeObj.show();
+                        return;
+                    } else {
+                        $(".iframe-box").append('<iframe id="server_iframe_' + sid + '" src="' + panel + '/login?tmp_token='+rdata.msg+'" height="100%" width="100%" frameborder="0"></iframe>');
+                        $(".iframe-box #server_iframe_" + sid).show();
+                    }
+                    
+                //});
+
+            });
+
+            //console.log($(this).attr('data-panel'))
+	        //$(".iframe-box iframe").eq(i).show().siblings().hide();
+        })
+
+        $(".s-box li:first").click()
+
+        $(document).ready(function() {
+            $('.layui-logo').click(function () {
+                $('#test').contents().find('.a').html("我被改变了").css("background-color","#73B9FF");
+            });
+        });
+
+    });
+</script>
+</html>

@@ -1,0 +1,111 @@
+<style>
+    /*样式写这里*/
+    .demo-table table tbody tr td span{
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width:580px;
+        display:block;
+    }
+
+</style>
+<div class="bt-form">
+    <div class="bt-w-main">
+        <!--菜单部分-->
+        <div class="bt-w-menu">
+            <p class="bgw" onclick="demo.get_index()">概览</p>
+            <p onclick="demo.get_logs()">操作日志</p>
+        </div>
+        <!--内容部分-->
+        <div class="bt-w-con pd15">
+            <div class="plugin_body"></div>
+        </div>
+    </div>
+</div>
+
+<!--JS脚本部分，不要将JS脚本写在其它地方-->
+<script type="text/javascript" src="/demo/static/js/test.js"></script> <!--引用插件目录下的static/js/test.js-->
+<script type="text/javascript">
+
+    //定义窗口尺寸
+    $('.layui-layer-page').css({ 'width': '900px' });
+
+    //左测菜单切换效果
+    $(".bt-w-menu p").click(function () {
+        $(this).addClass('bgw').siblings().removeClass('bgw')
+    });
+
+    /**
+     * 插件交互对象
+     * 您的所有JS代码可以写在里面
+     * 若不习惯JS的面向对象编程，可删除此对象，使用传统函数化的方式编写
+     * */
+    var demo = {
+        //构造概览内容
+        get_index: function () {
+            $('.plugin_body').html("<h1 style='text-align:center;margin-top:30%;'>这是一个示例插件!</h1>");
+        },
+
+        /**
+         * 获取面板日志
+         * @param p 被获取的分页
+         */
+        get_logs : function (p) {
+            if (p == undefined) p = 1;
+            request_plugin('demo', 'get_logs', { p: p, callback: 'demo.get_logs' }, function (rdata) {
+                var log_body = '';
+                for (var i = 0; i < rdata.data.length; i++) {
+                    log_body += '<tr><td>' + rdata.data[i].addtime + '</td><td><span title="' + rdata.data[i].log + '">' + rdata.data[i].log + '</span></td></tr>'
+                }
+
+                var my_body = '<div class="demo-table"><div class="divtable">'
+                            +'<table class="table table-hover">'
+                                +'<thead>'
+                                    +'<tr><th width="150">时间</th><th>详情</th></tr>'
+                                +'</thead>'
+                                +'<tbody>'+ log_body + '</tbody>'
+                            +'</table>'
+                    + '</div><div class="page" style="margin-top:15px">' + rdata.page + '</div</div>';
+
+                $('.plugin_body').html(my_body);
+            });
+        }
+
+    }
+
+    /**
+     * 发送请求到插件
+     * 注意：除非你知道如何自己构造正确访问插件的ajax，否则建议您使用此方法与后端进行通信
+     * @param plugin_name    插件名称 如：demo
+     * @param function_name  要访问的方法名，如：get_logs
+     * @param args           传到插件方法中的参数 请传入数组，示例：{p:1,rows:10,callback:"demo.get_logs"}
+     * @param callback       请传入处理函数，响应内容将传入到第一个参数中
+     */
+    function request_plugin(plugin_name, function_name, args, callback, timeout) {
+        if (!timeout) timeout = 3600;
+        $.ajax({
+            type:'POST',
+            url: '/plugin?action=a&s=' + function_name + '&name=' + plugin_name,
+            data: args,
+            timeout:timeout,
+            success: function(rdata) {
+                if (!callback) {
+                    layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+                    return;
+                }
+                return callback(rdata);
+            },
+            error: function(ex) {
+                if (!callback) {
+                    layer.msg('请求过程发现错误!', { icon: 2 });
+                    return;
+                }
+                return callback(ex);
+            }
+        });
+    }
+
+    //第一次打开窗口时调用
+    demo.get_index();
+
+</script>

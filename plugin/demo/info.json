@@ -1,0 +1,9 @@
+{
+  "title": "宝塔插件DEMO",
+  "name": "demo",
+  "ps": "宝塔插件开发示例项目",
+  "versions": "1.0",
+  "checks": "/www/server/panel/plugin/demo",
+  "author": "宝塔",
+  "home": "https://www.bt.cn"
+}

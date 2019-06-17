@@ -1,0 +1,259 @@
+{% include "head.html" %}
+</head>
+
+<body class="layui-layout-body">
+<div id="LAY_app">
+	<div class="layui-layout layui-layout-admin">
+		<!-- 侧边栏 -->
+		{% include "menu.html" %}
+		<!-- 主体内容 -->
+		<div class="layui-body" id="LAY_app_body">
+			<div class="layadmin-tabsbody-item layui-show">
+				<div class="layui-fluid">
+					<div class="layui-row layui-col-space20 server-list">
+                        {% for server in data['serverList'] %}
+						<div class="layui-col-sm12 layui-col-md6 sid-{{server.sid}}">
+							<div class="layui-card">
+								<div class="layui-row">
+									<div class="layui-col-sm3 layui-col-md3 flex-box">
+										<div class="server-name">
+											<p class="logo-tips"><span class="icon icon-china"></span></p>
+											<p class="ip" data-id="{{server.sid}}">{{server.address}}</p>
+											<p class="name">{{server.ps}}</p>
+										</div>
+									</div>
+									<div class="layui-col-sm4 layui-col-md4 flex-box">
+										<div class="server-monitor">
+											<div class="line load">
+												<span class="txt-name">负载</span>
+												<div class="layui-progress layui-progress-big"><div class="layui-progress-bar" style="width:0%"><span class="layui-progress-text">0%</span></div></div>
+											</div>
+											<div class="line cpu">
+												<span class="txt-name">CPU</span>
+												<div class="layui-progress layui-progress-big"><div class="layui-progress-bar" style="width:0%"><span class="layui-progress-text">0%</span></div></div>
+											</div>
+											<div class="line">
+												<span class="txt-name">网络</span>
+												<div class="network-val">
+													<div class="up">0KB</div>
+													<div class="down">0KB</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="layui-col-sm2 layui-col-md2 server-status flex-box">
+										<div class="server-healthy">
+											<h3>健康值</h3>
+											<p><cite>90</cite></p>
+										</div>
+									</div>
+									<div class="layui-col-sm3 layui-col-md3 flex-box">
+										<div class="server-setting">
+											<p><a href="#"><span class="icon icon-jk"></span>信息监控</a></p>
+											<p><a href="#" onclick="modify_server({{server.sid}})"><span class="icon icon-set"></span>关联设置</a></p>
+											<p><a href="#"><span class="icon icon-ssh"></span>SSH终端</a></p>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						{% endfor %}
+					</div>
+					<div class="server-add"><button class="layui-btn layui-btn-normal server-add-btn"><span>+</span>添加服务器</button></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+<script src="static/layui/layui.js"></script>
+<script type="text/javascript">
+    var layer;
+    var index;
+    layui.use('layer', function () {
+        layer = layui.layer;
+
+        var len = $(".server-list > div").length;
+        for (var i = 0; i < len; i++) {
+            var sid = $(".server-list > div").eq(i).find(".ip").attr("data-id");
+            get_server_status(sid);
+        }
+        function get_server_status(sid) {
+            var pdata = {
+                "action": "GetNetWork"
+            };
+
+            var data = {
+                "m": "coll_server",
+                "f": "send_panel",
+                "sid": sid,
+                "p_uri": "system",
+                "pdata": JSON.stringify(pdata)
+            };
+            $.post("ajax.json", data, function (res) {
+                console.log(res);
+                var _this = $(".sid-" + sid);
+                var _lval = Math.round((res.load.one / res.load.max) * 100);
+                _this.find(".load .layui-progress-text").text(_lval + "%");
+                _this.find(".load .layui-progress-bar").css("width", _lval + "%");
+                _this.find(".cpu .layui-progress-text").text(res.cpu[0] + "%");
+                _this.find(".cpu .layui-progress-bar").css("width", res.cpu[0] + "%");
+                _this.find(".up").html(res.up + ' KB');
+                _this.find(".down").html(res.down + ' KB');
+            })
+        }
+
+    
+
+        $(".server-add-btn").click(function () {
+            index = layer.open({
+                type: 1,
+                title: "添加服务器",
+                closeBtn: 1,
+                area: ['500px', '500px'],
+                shadeClose: false,
+                resize: false,
+                content: '<div class="add-user-box">\
+				    <div class="layui-form">\
+                        <div class="layui-form-item">\
+						    <label class="layui-form-label">服务器IP</label>\
+						    <div class="layui-input-block">\
+							    <input type="text" name="address" placeholder="请输入服务器IP" class="layui-input" />\
+						    </div>\
+					    </div>\
+                        <div class="layui-form-item">\
+						    <label class="layui-form-label">面板地址</label>\
+						    <div class="layui-input-block">\
+							    <input type="text" name="panel" placeholder="如: http://192.168.1.245:8888" class="layui-input" />\
+						    </div>\
+					    </div>\
+					    <div class="layui-form-item">\
+						    <label class="layui-form-label">API密钥</label>\
+						    <div class="layui-input-block">\
+							    <textarea name="token" placeholder="请输入API密钥" class="layui-textarea"></textarea>\
+						    </div>\
+					    </div>\
+					    <div class="layui-form-item">\
+						    <label class="layui-form-label">备注</label>\
+						    <div class="layui-input-block">\
+							    <input type="text" name="ps" autocomplete="off" placeholder="请输入备注" class="layui-input">\
+						    </div>\
+					    </div>\
+				    </div>\
+				    <div class="layui-btn-bt-box"><a class="layui-btn layui-btn-normal" onclick="add_server()">提交</a></div>\
+			    </div>'
+            });
+        });
+    });
+
+
+    function add_server() {
+        var pdata = {
+            address: $("input[name='address']").val(),
+            panel: $("input[name='panel']").val(),
+            token: $("textarea[name='token']").val(),
+            ps: $("input[name='ps']").val(),
+            m: 'coll_server',
+            f: 'add_server'
+        }
+
+        if (!pdata.address || !pdata.panel || !pdata.token || !pdata.ps) {
+            layer.msg('请填写完整的表单再提交!', { icon: 2 });
+            return;
+        }
+
+        $.post('ajax.json', pdata, function (rdata) {
+
+            layer.msg(rdata.msg, { icon: rdata.status?1:2 })
+            if (rdata.status === true) {
+                layer.close(index);
+                setTimeout(function () { window.location.reload(); }, 3000);
+                return;
+            }
+        });
+    }
+
+    function modify_server_to(sid) {
+        var pdata = {
+            sid:sid,
+            address: $("input[name='address']").val(),
+            panel: $("input[name='panel']").val(),
+            token: $("textarea[name='token']").val(),
+            ps: $("input[name='ps']").val(),
+            m: 'coll_server',
+            f: 'modify_server'
+        }
+        if (!pdata.address || !pdata.panel || !pdata.token || !pdata.ps) {
+            layer.msg('请填写完整的表单再提交!', { icon: 2 });
+            return;
+        }
+        $.post('ajax.json', pdata, function (rdata) {
+            
+            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 })
+            if (rdata.status === true) {
+                layer.close(index);
+                setTimeout(function () { window.location.reload(); }, 3000);
+                return;
+            }
+        });
+    }
+
+
+    function remove_server(sid) {
+        bt.show_confirm('删除服务器关联', '您真的要删除服务器sid[' + sid + ']的关联吗?', function () {
+            $.post('ajax.json', { m: 'coll_server', f: 'remove_server', sid: sid }, function (rdata) {
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 })
+                if (rdata.status === true) {
+                    layer.close(index);
+                    setTimeout(function () { window.location.reload(); }, 3000);
+                    return;
+                }
+            })
+        });
+    }
+
+
+    function modify_server(sid) {
+        $.post('ajax.json', { m: 'coll_server', f: 'get_server_find', sid: sid }, function (server) {
+            index = layer.open({
+                type: 1,
+                title: "添加服务器",
+                closeBtn: 1,
+                area: ['500px', '500px'],
+                shadeClose: false,
+                resize: false,
+                content: '<div class="add-user-box">\
+				    <div class="layui-form">\
+                        <div class="layui-form-item">\
+						    <label class="layui-form-label">服务器IP</label>\
+						    <div class="layui-input-block">\
+							    <input type="text" name="address" placeholder="请输入服务器IP" class="layui-input" value="'+server.address+'" />\
+						    </div>\
+					    </div>\
+                        <div class="layui-form-item">\
+						    <label class="layui-form-label">面板地址</label>\
+						    <div class="layui-input-block">\
+							    <input type="text" name="panel" placeholder="如: http://192.168.1.245:8888" class="layui-input" value="'+server.panel+'" />\
+						    </div>\
+					    </div>\
+					    <div class="layui-form-item">\
+						    <label class="layui-form-label">API密钥</label>\
+						    <div class="layui-input-block">\
+							    <textarea name="token" placeholder="请输入API密钥" class="layui-textarea">'+ server.token +'</textarea>\
+						    </div>\
+					    </div>\
+					    <div class="layui-form-item">\
+						    <label class="layui-form-label">备注</label>\
+						    <div class="layui-input-block">\
+							    <input type="text" name="ps" autocomplete="off" placeholder="请输入备注" class="layui-input" value="'+ server.ps +'">\
+						    </div>\
+					    </div>\
+				    </div>\
+				    <div class="layui-btn-bt-box"><a class="layui-btn layui-btn-normal" onclick="modify_server_to('+ sid + ')">提交</a><a class="layui-btn layui-btn-normal" onclick="remove_server(' + sid +')">删除服务器</a></div>\
+			    </div>'
+            });
+        });
+    }
+
+</script>
+</html>

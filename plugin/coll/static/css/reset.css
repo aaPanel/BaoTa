@@ -1,0 +1,25 @@
+@charset "utf-8";
+/* CSS Document */
+/*Reset*/
+*{box-sizing:content-box;}
+a:hover, a:focus{text-decoration:none;}
+body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,textarea,p,blockquote,th,td{margin:0;padding:0;}
+table{border-collapse:collapse;border-spacing:0;}
+body{-webkit-text-size-adjust:none;}
+fieldset,img{border:0;}
+img{ vertical-align: top; max-width: 100%; }
+address,caption,cite,code,dfn,em,th,var{font-style:normal;font-weight:normal;}
+ol,ul{list-style:none;}
+caption,th{text-align:left;}
+h1,h2,h3,h4,h5,h6{font-size:100%;font-weight:normal;}
+q:before,q:after{content:'';}
+abbr,acronym {border:0;}
+.clearfix:after{visibility:hidden;display: block;font-size:0;content:" ";clear:both;height:0;}
+* html .clearfix{ zoom: 1; } /* IE6 */
+*:first-child+html .clearfix { zoom: 1; } /* IE7 */
+.cli{ clear:both; font-size:0; height:0; overflow:hidden;display:block;}
+.lclear{clear:left;font-size:0;height:0;overflow:hidden;}	
+.fl{float:left;}
+.fr{float:right;}
+body{font-size:12px;font-family:'微软雅黑',"宋体","Arial Narrow",Helvetica,sans-serif;color:#000;line-height:1.2;text-align:left;}
+a{color:#333;text-decoration:none;}

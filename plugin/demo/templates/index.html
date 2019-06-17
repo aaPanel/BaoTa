@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+    the is test!
+    <table>
+        <thead>
+            <tr>
+                <th>时间</th>
+                <th>详情</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for value in data['data'] %}
+            <tr>
+                <td>{{value['addtime']}}</td>
+                <td>{{value['log']}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p>{{data['page']|safe}}</p>
+</body>
+<script type="text/javascript" src="/demo/static/js/test.js"></script>
+</html>

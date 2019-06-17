@@ -1,0 +1,9 @@
+{
+  "title": "OpenFogOS",
+  "name": "openfogos",
+  "ps": "利用服务器闲置的带宽资源获取收益。",
+  "versions": "0.1",
+  "checks": "/www/server/panel/plugin/openfogos",
+  "author": "Pear",
+  "home": "https://i.openfogos.com"
+}

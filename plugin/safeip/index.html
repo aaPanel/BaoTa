@@ -1,0 +1,1178 @@
+<style>
+/*高防IP*/
+.BtDdos{
+	
+}
+.bt-plug-select{
+	width: 316px;
+	height: 40px;
+	border:1px solid #ddd;
+	padding:0 10px;
+}
+.bt-plug .line .tname{
+	height: 40px;
+	line-height: 40px;
+}
+.bt-btn-group{
+	position: relative;
+    display: inline-block;
+    vertical-align: middle;
+}
+.bt-btn-group li{
+	position:relative;
+	float: left;
+	width: 106px;
+    height: 40px;
+    line-height: 38px;
+    display: block;
+    margin-bottom: -1px;
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid #ddd;
+    box-sizing: border-box;
+    margin-left: -1px;
+    transition: border-color .1s ease-in,color .1s ease-in;
+}
+.bt-btn-group .active, .bt-btn-group .active:hover, .bt-btn-group li:hover{
+    border: 1px solid #20a53a;
+    color: #20a53a;
+    z-index: 2;
+    cursor: pointer;
+}
+.data-info{
+	display: inline-block;
+	line-height: 40px;
+}
+.data-price{
+	height: 60px;
+	font-size: 20px;
+	color: #ff0000;
+}
+.btn-plug-submit{
+	margin: 0 auto;
+	text-align: center;
+	width: 200px;
+	height: 40px;
+	line-height: 40px;
+	background-color: #20a53a;
+	color: #fff;
+	cursor: pointer;
+}
+.order-info{
+	padding: 10px 15px;
+    border: #eee 1px solid;
+    background-color: #f6f6f6;
+    line-height: 24px;
+    margin-bottom: 50px;
+}
+.safeip-info>tbody>tr>td,.safeip-info>tbody>tr>th{
+	border-right:#ddd 1px solid;
+	padding-left: 20px;
+}
+.safeip-info p{
+	line-height: 22px;
+}
+
+.search-day{
+	height:32px;
+	margin-left:1px;
+	margin-bottom:15px;
+}
+.search-day span{
+	float:left;
+	height:32px;
+	line-height:30px;
+	border:#ddd 1px solid;
+	padding:0 20px;
+	margin-left:-1px;
+	cursor:pointer;
+	position:relative;
+}
+.search-day span.cur{
+	background-color:#20a53a;
+	color:#fff;
+}
+.search-day span.cur input,.search-day span.cur em{
+	color:#666;
+}
+.search-day span:last-child{
+	padding:0;
+}
+.search-day span input{
+	border: 0 none;
+	height:30px;
+	padding:0 10px;
+	width:105px;
+	background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAHBAMAAADOnLEXAAAAA3NCSVQICAjb4U/gAAAAElBMVEX////v7++oqKiSkpJgYGAzMzNVUvUKAAAABnRSTlMA//////96eeD+AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAFnRFWHRDcmVhdGlvbiBUaW1lADA3LzEzLzE442/mwwAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAApSURBVAiZYxBiAAJFBhEDBgZmRwbmYAYGUwMQBrGAXBAHyAVxgFwgBwBYpgOoNMjLNgAAAABJRU5ErkJggg==");
+	background-repeat:no-repeat;
+	background-position:86px center;
+}
+.search-day span input:active{
+	border:0 none;
+}
+.search-day span.cur input{
+	color:#fff;
+	background-color:#20a53a;
+	background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAHBAMAAADOnLEXAAAAA3NCSVQICAjb4U/gAAAAElBMVEX////f8+Pg8+Sx2LghpTsgpTp3yIRgAAAACXBIWXMAAA6cAAAOnAEHlFPdAAAAFnRFWHRDcmVhdGlvbiBUaW1lADA3LzEzLzE442/mwwAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAAxSURBVAiZY1B2DQ0NNWJQMA0NDWZkCGYODTUwZQBiIIshNJjZwBRIhRoAhYFUMFARAPlECn96zZKZAAAAAElFTkSuQmCC");
+}
+.table .sitename, .filtertext {
+    width: 190px;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.site-all .data-count-box{
+	width:25%
+}
+.data-count-all {
+    background-color: #FAFAFA;
+    border: #ddd 1px solid;
+    width: 100%;
+    margin-bottom: 15px;
+    float: left;
+}
+
+.data-count-all .data-count-box {
+    height: 100%;
+    text-align: center;
+    width: 25%;
+    float: left;
+    margin-bottom: 15px;
+}
+
+.data-count-box .dname {
+    color: #78797D;
+    margin-top: 12px;
+    margin-bottom: 10px;
+}
+
+.data-count-box .dval {
+    color: #333;
+}
+
+.data-count-box .dval span {
+	font-family: arial;
+	color: #121313;
+	font-size: 20px;
+}
+.data-count-box .dval span span{
+    font-size: 14px;
+    margin-left: 4px;
+}
+.data-count-cc {
+    width: 100%;
+    margin-bottom: 15px;
+    float: left;
+}
+.data-count-cc .data-count-box1{
+	width:49%;
+	border:#D6E9C6 1px solid;
+	background-color: #DFF0D8;
+	color: #3C763D;
+	margin-right: 15px;
+	padding-bottom: 15px;
+	float:left;
+	text-align:center;
+}
+.data-count-cc .data-count-box2{
+	width:49%;
+	border:#BCE8F1 1px solid;
+	background-color: #D9EDF7;
+	color: #31708D;
+	padding-bottom: 15px;
+	float:left;
+	text-align:center;
+}
+.data-count-chart{
+    width:760px;
+    height: 300px;
+}
+.safenodecon{
+	width: 106px;
+	height: 38px;
+	padding: 0 2%;
+	border: 1px solid #ddd;
+	margin-left: -1px;
+	text-align-last: center;
+    -moz-text-align-last: right;
+}
+.safenodecon option{
+	text-align:center;
+}
+.edit_domain_layer .info-r label{
+    height: 30px;
+    line-height: 30px;
+    margin: 0;
+    margin-right: 15px;
+    cursor: pointer;
+}
+.edit_domain_layer .info-r label input{
+    margin-right: 4px;
+    display: inline-block;
+    position: relative;
+    top: 2px;
+}
+.edit_domain_layer .info-r>input{
+    width: 280px;
+}
+.edit_domain_layer .info-r>textarea{
+    margin: 0px; 
+    width: 280px;
+    height: 70px;
+}
+/*续费*/
+.cycle{
+	float: left;
+	margin-bottom: 30px;
+}
+.cycle-item{
+	float: left;
+	width: 130px;
+	height: 130px;
+	border: #ddd 1px solid;
+	margin-right: 15px;
+	box-sizing: border-box;
+	cursor: pointer;
+	transition: border-color .1s ease-in,color .1s ease-in;
+}
+.cycle-item:last-child{
+	margin-right: 0;
+}
+.cycle-item:hover{
+	border: #20A53A 1px solid;
+}
+.cycle-item.on{
+	background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAMAAADzN3VRAAAAA3NCSVQICAjb4U/gAAAAdVBMVEX///8loj4moz/z//bu//Hr/+/j/+nc/+PZ/+HP/9jB/866/8iy/8Gv/7+t/72i/7Wa/69y74tT0GxRzmpQzWlNymZLyGRJxmJIxWFEwV0/vFg9ulY7uFQ3tFA2s081sk40sU0zsEwyr0sxrkowrUktqkYsqUU5eNs/AAAAJ3RSTlMAd4j///////////////////////////////////////////////+C06LGAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAFnRFWHRDcmVhdGlvbiBUaW1lADA2LzA3LzE49xpTkAAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAACFSURBVCiRdc5JAoIwEETRgigqiorzhAND3/+Iik2AJN21+Ju3KcSkDNAIKkEliLR7duLT3uRWLL2qtmezrXthapabkuiWZCUNwnQw689jnr5pLEzHySpdFOQK02k6u5MvTJcrheKeh0quIFJlRL4MFEhPoVgSpCNJmET5kywtKfIjTRB9Ac7nKdRpF+QDAAAAAElFTkSuQmCC") no-repeat right top;
+	border: #20A53A 1px solid;
+}
+.total{
+	text-align: center;
+	height: 83px;
+	padding-top: 16px;
+}
+.total .sale-price{
+	font-size: 30px;
+	color: #313131;
+	margin-right: 5px;
+}
+.total .yuan{
+	font-size: 14px;
+	color: #969696;
+}
+.total .o-price{
+	color: #aaa;
+}
+.cy-len{
+	border-top: 1px dashed #ddd;
+	margin: 0 10px;
+	text-align: center;
+	height: 38px;
+	line-height: 38px;
+	font-size: 16px;
+	position: relative;
+}
+.cy-len span{
+    color: #ff7300;
+}
+.lib-price-box {
+    padding-bottom: 9px;
+}
+.lib-price-name, .price-txt {
+    margin-right: 10px;
+    font-size: 14px;
+}
+.price-txt{
+	color: #FF7301;
+}
+.pay-sale-price {
+    font-size: 20px;
+    margin-right: 5px;
+}
+.lib-price-box{
+	float: left;
+	height: 30px;
+	width: 100%;
+	text-align: center;
+}
+.wepay .paymethod{
+	clear: both;
+	text-align: center;
+	margin-bottom: 15px;
+}
+.wepay .paymethod .pay-wx {
+    width: 162px;
+    height: 162px;
+    margin: 6px auto;
+}
+.pay-wx-info{
+	font-size: 16px;
+}
+.cost-price{
+	color: #666;
+}
+.coupon-info{
+	margin-top: 25px;
+	color: #666;
+}
+.submit-btn{
+	clear: both;
+	text-align: center;
+	padding:10px 0 25px 0;
+}
+.submit-btn button{
+	border: #20a53a 1px solid;
+	background-color: #20a53a;
+	border-radius: 3px;
+	width: 240px;
+	height: 40px;
+	line-height: 40px;
+	text-align: center;
+	color: #fff;
+	cursor: pointer;
+}
+</style>
+<div class="bt-form">
+	<div class="bt-w-main">
+		<div class="bt-w-menu">
+			<p class="bgw" onclick="BtDdos.init()">高防服务</p>
+			<p onclick="BtDdos.total()">监控报表</p>
+		</div>
+		<div class="bt-w-con pd15">
+			<div class="sys-re-con"></div>
+		</div>
+	</div>
+</div>
+<script type="javascript/text" src="/static/js/echarts.min.js"></script>
+<script type="text/javascript">
+    $('.layui-layer-page').css({ 'width': '900px' });
+    $(".bt-w-menu p").click(function() {
+        $(this).addClass('bgw').siblings().removeClass('bgw')
+    });
+    
+    
+
+    //高防IP
+    var BtDdos = {
+        loadT: false,
+        s_ip: '',
+        wxpayTimeSafeId_xf: 0,
+        renewWindow: null,
+        init: function () {
+            var loadT = layer.msg('正在获取订单中，请稍后...', { icon: 16, time: 0, shade: .3 });
+            $.post("/plugin?action=a&name=safeip&s=get_order", function (rdata) {
+                layer.close(loadT);
+                if (rdata.code === '900005') {
+                    layer.closeAll();
+                    layer.msg('IP资源不足，请联系客服', { icon: 2,time:5000 });
+                    return;
+                }
+                if (rdata.status == false) {
+                    if (rdata.msg == '订单不存在或未付款!') {
+                        BtDdos.server();
+                    } else {
+                        bt.pub.bind_btname();
+                    }
+                }
+                else {
+                    BtDdos.safeip_order(rdata);
+                }
+            })
+        },
+        server: function (isp) {
+            if (isp == undefined) isp = 'BGP';
+            var loadT = layer.msg('正在获取服务线路，请稍后...', { icon: 16, time: 0,shade:.3});
+            $.post('/plugin?action=a&name=safeip&s=get_products', function (rdata) {
+                layer.close(loadT);
+                var isps = { '电信': 1, '联通': 2, '移动': 3, 'BGP': 4 };
+                var isp_id = isps[isp]
+                var base_sizes = '';
+                var avt = 'class="active"';
+                var cc_safe = 0;
+                var src_size = 0;
+                var price = 0;
+                var src_price = 0;
+				var stylex = '';
+                for (var i = 0; i < rdata.products.length; i++) {
+                    if (rdata.products[i].channel != isp_id) continue;
+                    base_sizes += '<li data-id=' + rdata.products[i].id + ' ' + avt + ' onclick="BtDdos.select_size(' + rdata.products[i].price + ',' + rdata.products[i].discount + ',' + rdata.products[i].cc + ',' + rdata.products[i].size + ')">' + rdata.products[i].base_size + 'G</li>';
+                    if (avt != '') {
+                        cc_safe = rdata.products[i].cc;
+                        src_size = rdata.products[i].size;
+                        price = rdata.products[i].price * rdata.products[i].discount;
+                        src_price = rdata.products[i].price
+                    }
+                    avt = '';
+                }
+
+                var nodes = '';
+                for (var i = 0; i < rdata.nodes.length; i++) {
+                    if (rdata.nodes[i].isp_id != isp_id) continue;
+                    nodes += '<option value="' + rdata.nodes[i].id + '">' + rdata.nodes[i].name + '</option>';
+                }
+				
+				if(price == src_price){
+					stylex = 'style="display:none"';
+				}
+
+                var con = '<div class="bt-form bt-plug">\
+                        <div class="line"><span class="tname">线路选择</span><div class="info-r c4"><ul class="bt-btn-group isp-select" onclick="BtDdos.select_isp()"><li '+ (isp_id == 4 ? 'class="active"' : '') + '>BGP</li><li ' + (isp_id == 1 ? 'class="active"' : '') +'>电信</li></ul></div></div>\
+                        <div class="line"><span class="tname">节点选择</span><div class="info-r c4"><select class="safenodecon">'+nodes+'</select></div></div>\
+                        <div class="line"><span class="tname">基础防护峰值</span><div class="info-r c4"><ul class="bt-btn-group safe-base">'+ base_sizes +'</ul></div></div>\
+                        <div class="line"><span class="tname">CC防护峰值</span><div class="info-r c4"><span class="data-info safe-cc">'+ cc_safe+'QPS</span></div></div>\
+                        <div class="line"><span class="tname">回源带宽</span><div class="info-r c4"><span class="data-info safe-size">'+ src_size+'M</span></div></div>\
+                        <div class="line"><span class="tname">使用时长</span><div class="info-r c4"><ul class="bt-btn-group safeip-cycle"><li class="active" data-cycle="1">1个月</li><li data-cycle="3">3个月</li><li data-cycle="6">半年</li><li data-cycle="12">1年</li></ul></div></div>\
+                        <div class="line"><span class="tname">价格</span><div class="info-r c4"><span class="data-info data-price safe-price" data-src="'+ src_price + '">￥' + price + '</span><s class="cost-price src-price2" '+stylex+'>￥' + src_price+'</s><input type="number" class="src-price" style="display:none;" value="' + src_price +'" /><input type="number" class="one-price" style="display:none;" value="'+price+'" /></div></div>\
+                        <div class="btn-plug-submit"><span>立即购买</span></div>\
+						<p style="margin-top:40px;color:red">注意：使用高防IP需要备案且合法经营，色情、博彩、诈骗等非法站点，一经发现，立即关停且不退款，同时将相关资料提交网警处理。</p>\
+                        </div>';
+                $(".sys-re-con").html(con);
+                $(".btn-plug-submit").click(function () {
+                    BtDdos.pay()
+                });
+
+                $(".bt-btn-group li").click(function () {
+                    $(this).addClass('active').siblings().removeClass('active');
+                });
+                $(".safeip-cycle li").click(function () {
+                    var cycle = $(this).attr('data-cycle');
+                    var price = $(".one-price").val() * cycle
+                    var src_price = $(".safe-price").attr("data-src");
+                    $('.safe-price').text("￥" + price);
+                    $(".src-price").val(src_price * cycle);
+                    $(".src-price2").text('￥' + (src_price * cycle));
+                });
+            });
+        },
+        pay: function () {
+            var isp = $(".isp-select li.active").text();
+            var isps = { '电信': 1, '联通': 2, '移动': 3, 'BGP': 4 };
+            var pid = $(".safe-base li.active").attr('data-id');
+            var isp_id = $(".safenodecon").val();
+			var old_price = $(".src-price2").text();
+			var sale_price = $(".safe-price").text();
+			var stylex = '';
+			if(sale_price == old_price){
+				stylex= 'style="display:none"';
+			}
+            //console.log(pid)
+            var pdata = {
+                isp_name: isp,
+                isp_id: isp,
+                base_size: $(".safe-base li.active").text(),
+                cc: $(".safe-cc").text(),
+                size: $(".safe-size").text(),
+                cycle: $(".safeip-cycle li.active").attr("data-cycle"),
+                room: $(".safenodecon").find("option:selected").text()
+            }
+			
+            var con = '<div class="bt-plug-pay">\
+                        <div class="order-info">\
+                            <p>线路：'+ pdata.room +pdata.isp_name + '</p>\
+                            <p>基础防护峰值：'+ pdata.base_size +'</p>\
+                            <p>CC防护峰值：'+ pdata.cc +'</p>\
+                            <p>带宽：'+ pdata.size +'</p>\
+                            <p>开通时长：'+ pdata.cycle +'</p></div>\
+                        <div class="lib-price-box text-center">\
+                        <span class="lib-price-name f14"><b>总计</b></span>\
+                        <span class="price-txt"><b class="sale-price">'+ sale_price +'</b>元</span>\
+                        <s class="cost-price" '+stylex+'>'+old_price+'元</s>\
+                        </div>\
+                        <div class="paymethod">\
+                        <div class="pay-wx" style="height:auto">\
+                        <canvas width="256" height="256"></canvas>\
+                        </div>\
+                        <div class="pay-wx-info f16 text-center">\
+                        <span class="wx-pay-ico mr5"></span>微信扫码支付</div>\
+                        </div>\
+                        </div>';
+            $(".sys-re-con").html(con);
+			var wxpayTimeSafeId = 0;
+			$(".pay-wx").html("<div class='loading'>加载中，请稍后</div>");
+            $.post('/plugin?action=a&name=safeip&s=create_order', { pid: pid, cycle: pdata.cycle, isp_id: isp_id }, function (rdata) {
+                console.log(rdata);
+				$(".pay-wx").html("");
+				$(".pay-wx").qrcode(rdata.msg.code);
+				clearInterval(wxpayTimeSafeId);
+				wxpayTimeSafeId = setInterval(function(){
+					$.post('/plugin?action=a&name=safeip&s=order_stat',{order_id:rdata.msg.oid},function(rdata){
+						if(rdata === 1) {
+							clearInterval(wxpayTimeSafeId);
+							layer.msg('支付成功!',{icon:1,time:5000});
+                            BtDdos.init();
+						}
+					})
+				},3000);
+            });
+
+        },
+        select_isp: function () {
+            var isp = $(".isp-select li.active").text().replace(/\s/g, '');
+            console.log(isp)
+            BtDdos.server(isp);
+        },
+        select_size: function (price, discount, cc, size) {
+            var cycle = $(".safeip-cycle li.active").attr('data-cycle');
+            one_price = price * discount;
+            new_price = one_price * cycle;
+            console.log(one_price)
+            $('.one-price').attr("value", one_price);
+            $(".safe-price").attr("data-src", price);
+            $('.safe-price').text("￥" + new_price);
+            $('.safe-size').text(size + 'M');
+            $('.safe-cc').text(cc + 'QPS');
+            $('.src-price').attr('value',price * cycle);
+            $('.src-price2').text('￥' + (price * cycle));
+        },
+		checkStatus:function(status){
+			var txt = '';
+			if(status==0) txt = '未支付';
+			else txt = '已支付';
+			return txt;
+        },
+        show_safe_ips: function () {
+            var loadT = layer.msg('正在获取回源IP段，请稍后...', { icon: 16, time: 0, shade: .3 });
+            $.post('/plugin?action=a&name=safeip&s=ip_source', function (rdata) {
+                layer.confirm(rdata.join('<br>').replace(/,/g,'<br>'), {
+                    title: '查看回源IP段',
+                    btn: ['知道了']
+                });
+            });
+        },
+        safeip_order: function (res) {
+
+            BtDdos.s_ip = res.s_ip;
+			var orderListHtml = '<div class="safeip-con">\
+                    <div class="divtable">\
+                        <table class="table table-hover safeip-info">\
+                                <thead>\
+                                    <tr><th>订单信息</th><th>线路信息</th><th>防护信息</th><th>安全统计</th></tr>\
+                                </thead>\
+                                <tbody>\
+                                    <tr><td><p>到期时间：'+ bt.format_data(res.endtime).split(' ')[0] + '<a class="btlink" href="javascript:BtDdos.xufei('+res.id+','+res.pid+')" style="margin-left:5px">续费</a></p><p>业务带宽：' + res.size + ' Mbps</p></td><td><p>' + res.area + '：<span id="s_ip">' + res.s_ip + '</span></p></td><td><p>保底防护带宽：' + res.base_size + ' Gbps</p><p>弹性防护带宽：' + res.max_size +' Gbps</p></td><td><p>本月流量峰值：<span class="safeip-total-net">获取中</span></p><p>本月攻击次数：<span class="safeip-total-count">获取中</span></p><p><a href="#" class="btlink" onclick="BtDdos.event_list_box()">查看</a></p></td></tr>\
+                                </tbody>\
+                            </table>\
+                    </div>\
+                    <button class="btn btn-success btn-sm" type="button" style="margin-top:20px;margin-bottom:10px" onclick="BtDdos.safeip_domain()">添加域名</button>\
+                    <div class="divtable">\
+                        <div id="safeip_domain_list" style="max-height:230px;overflow:auto;border:#ddd 1px solid">\
+							<table class="table table-hover" style="border:none">\
+                                <thead>\
+                                    <tr><th>域名</th><th>源站IP</th><th>CNAME</th><th>状态</th><th style="text-align:right;">操作</th></tr>\
+                                </thead>\
+                                <tbody id="safeip_domains"></tbody>\
+                            </table>\
+						</div>\
+                    </div>\
+                    <ul class="help-info-text c7">\
+                        <li>要升级基础防御或弹性防御，请<a href="http://q.url.cn/abvgP3?_type=wpa&amp;qidian=true" class="btlink" target="_blank">[联系客服]</a></li>\
+                        <li><a style="color:red;">请确保您添加的域名是已备案的且合法的</a>，并在添加域名后到域名管理后台解析CNAME记录</li>\
+                        <li>如果使用了宝塔nginx/apache防火墙,请将防火墙中的【开启CDN】选项勾选</li>\
+                        <li>如果您使用了其它第三方防火墙导致误报,请将回源IP段添加到防火墙白名单<a class="btlink" onclick="BtDdos.show_safe_ips()">[查看回源IP段]</a></li>\
+                    </ul >\
+                    </div>';
+            $(".sys-re-con").html(orderListHtml);
+			table_fixed("safeip_domain_list");
+
+            $.post('/plugin?action=a&name=safeip&s=ip_total', { ip: res.s_ip }, function (rdata) {
+                $(".safeip-total-net").text(bt.format_size(rdata.monthPeak).replace('B','bps'));
+                $(".safeip-total-count").text(rdata.monthCountEvent + ' 次');
+            });
+
+            BtDdos.safeip_get_domains();
+        },
+        safeip_get_domains: function () {
+            var loadT = layer.msg('正在处理中...', { icon: 16, time: 0,shade:.3});
+            $.post("/plugin?action=a&name=safeip&s=get_l7_list", function (rdata) {
+                layer.close(loadT);
+                var siteBody = '';
+                var stats = ["", "创建待下发", "创建下发中", "创建下发失败", "创建下发成功", "修改待下发", "修改下发中", "修改下发失败", "修改下发成功", "删除待下发", "删除下发中", "删除下发失败", "删除下发成功"];
+				if(rdata == '') siteBody = '<tr><td colspan="5">暂无数据</td></tr>';
+                for (var i = 0; i < rdata.length; i++) {
+                    //if (rdata[i].shieldForwardL7IpCollection[0].shieldForwardL7Enabled == 0) continue;
+                    siteBody += '<tr><td>' + rdata[i].shieldForwardL7Domain + '</td><td>' + rdata[i].shieldForwardL7ItemContent + '</td><td>' + (rdata[i].shieldForwardL7Record ? rdata[i].shieldForwardL7Record : stats[rdata[i].shieldForwardL7DispatchState])
+                        + '</td><td>' + (rdata[i].shieldForwardL7IpCollection[0].shieldForwardL7Enabled ? '正常' : stats[rdata[i].shieldForwardL7DispatchState])
+                        + '</td><td style="text-align:right;"><a href="javascript:BtDdos.safeip_domain_edit(' + rdata[i].shieldForwardL7Id + ')" class="btlink">编辑</a> | <a onclick="BtDdos.safeip_domain_del(\''+ rdata[i].shieldForwardL7Domain+'\','+ rdata[i].shieldForwardL7Id + ')" href="#" class="btlink">删除</a></td></tr>';
+                }
+
+                $("#safeip_domains").html(siteBody);
+            });
+        },
+        safeip_domain: function () {
+            BtDdos.loadT = layer.open({
+                type: 1,
+                title: '添加防护域名',
+                area: '480px',
+                closeBtn: 2,
+                shadeClose: false,
+                content: '<div class="bt-form pd20 pb70 edit_domain_layer">\
+						<form id="safeip_domain">\
+                        <div class="line"><span class="tname">域名</span><div class="info-r"><input name="sip_domain" class="bt-input-text" type="text" placeholder="网站域名"></div></div>\
+                        <div class="line"><span class="tname">协议</span><div class="info-r"><label><input name="pool" type="radio" value="1" checked="checked">HTTP</label><label><input type="radio" name="pool" value="2">HTTPS</label><label><input type="radio" name="pool" value="3">HTTP+HTTPS</label></div></div>\
+                        <div class="line"><span class="tname">回源IP</span><div class="info-r"><input name="sip_dip" type="text" class="bt-input-text" value="" placeholder="您的服务器IP" /></div></div>\
+                        <div class="line sip-cert" style="display:none;"><span class="tname">公钥(KEY)</span><div class="info-r"><textarea name="sip_key" type="text" class="bt-input-text" value=""></textarea></div></div>\
+                        <div class="line sip-cert" style="display:none;"><span class="tname">证书(PEM)</span><div class="info-r"><textarea name="sip_pem" type="text" class="bt-input-text" value=""></textarea></div></div>\
+                        <div class="bt-form-submit-btn"><button type="button" class="btn btn-sm btn-danger" onclick="layer.close(BtDdos.loadT)">关闭</button><button type="button" class="btn btn-sm btn-success" onclick="BtDdos.safeip_domain_add()">提交</button></div>\
+						</form>\
+                    </div>'
+            });
+
+            $("input[name='pool']").change(function () {
+                if ($(this).val() > 1) {
+                    $(".sip-cert").show();
+                } else {
+                    $(".sip-cert").hide();
+                }
+            });
+        },
+        safeip_domain_add: function () {
+            var forward_ips = [{
+                shieldForwardL7Enabled: 1,
+                shieldForwardL7Ip:$("#s_ip").text().replace(/\s/g,'')
+            }]
+            var pdata = {
+                forward_ips: JSON.stringify(forward_ips),
+                domain: $("input[name='sip_domain']").val().replace(/\s/g, ''),
+                pool: $("input[name='pool']:checked").val().replace(/\s/g, ''),
+                content: $("input[name='sip_dip']").val().replace(/\s/g, ''),
+                public_pem: $("textarea[name='sip_pem']").val(),
+                private_key: $("textarea[name='sip_key']").val()
+            }
+
+            if (!bt.check_domain(pdata.domain)) {
+                layer.msg('域名格式不正确!', { icon: 2 });
+                return;
+            }
+
+            if (!bt.check_ip(pdata.content)) {
+                layer.msg('源站IP格式不正确!', { icon: 2 });
+                return;
+            }
+
+            if (pdata.pool > 1) {
+                if (pdata.public_pem.length < 10) {
+                    layer.msg('证书不能为空!', { icon: 2 });
+                    return;
+                }
+
+                if (pdata.private_key.length < 10) {
+                    layer.msg('公钥不能为空!', { icon: 2 });
+                    return;
+                }
+            }
+            var loadT = layer.msg('正在处理中...', { icon: 16, time: 0,shade:.3});
+            $.post("/plugin?action=a&name=safeip&s=l7_insert", pdata, function (rdata) {
+                layer.close(loadT);
+                if (!rdata.message) {
+                    layer.close(BtDdos.loadT);
+                    BtDdos.safeip_get_domains();
+                    return;
+                }
+                bt.msg(rdata);
+            });
+
+        },
+        safeip_domain_edit: function (l7_id) {
+            var loadT = layer.msg('正在处理中...', { icon: 16, time: 0,shade:.3});
+            $.post("/plugin?action=a&name=safeip&s=get_l7_find", { l7_id: l7_id }, function (rdata) {
+                layer.close(loadT);
+                BtDdos.loadT = layer.open({
+                    type: 1,
+                    title: '编辑域名【' + rdata.shieldForwardL7Domain + '】',
+                    area: '480px',
+                    closeBtn: 2,
+                    shadeClose: false,
+                    content: '<div class="bt-form pd20 pb70 edit_domain_layer">\
+                            <div class="line"><span class="tname">域名</span><div class="info-r"><input name="sip_domain" class="bt-input-text" type="text" value="'+ rdata.shieldForwardL7Domain + '" readonly="readonly" style="background-color: #f3f3f3;"></div></div>\
+                            <div class="line"><span class="tname">协议</span><div class="info-r"><label><input name="pool" type="radio" value="1" '+ (rdata.shieldForwardL7Protocol == 1? 'checked="checked"': '') + '>HTTP</label><label><input type="radio" name="pool" value="2" ' + (rdata.shieldForwardL7Protocol == 2? 'checked="checked"': '') + '>HTTPS</label><label><input type="radio" name="pool" value="3" ' + (rdata.shieldForwardL7Protocol == 3? 'checked="checked"': '') +'>HTTP+HTTPS</label></div></div>\
+                            <div class="line"><span class="tname">源站IP</span><div class="info-r"><input name="sip_dip" type="text" class="bt-input-text" value="'+ rdata.shieldForwardL7ItemContent +'" /></div></div>\
+                            <div class="line sip-cert" '+ (rdata.shieldForwardL7Protocol == 1 ? 'style="display:none;"' : '') + '><span class="tname">私钥(KEY)</span><div class="info-r"><textarea name="sip_key" type="text" class="bt-input-text">' + rdata.shieldForwardL7Privatekey +'</textarea></div></div>\
+                            <div class="line sip-cert" '+ (rdata.shieldForwardL7Protocol == 1 ? 'style="display:none;"' : '') + '><span class="tname">证书(PEM)</span><div class="info-r"><textarea name="sip_pem" type="text" class="bt-input-text">' + rdata.shieldForwardL7Publickey + '</textarea></div></div>\
+                            <div class="bt-form-submit-btn"><button type="button" class="btn btn-sm btn-danger" onclick="layer.close(BtDdos.loadT)">关闭</button><button type="button" class="btn btn-sm btn-success" onclick="BtDdos.safeip_domain_modify('+ l7_id +')">提交</button></div>\
+                        </div>'
+                });
+
+                $("input[name='pool']").change(function () {
+                    if ($(this).val() > 1) {
+                        $(".sip-cert").show();
+                    } else {
+                        $(".sip-cert").hide();
+                    }
+                });
+            });
+        },
+        safeip_domain_modify: function (l7_id) {
+            var forward_ips = [{
+                shieldForwardL7Enabled: 1,
+                shieldForwardL7Ip: $("#s_ip").text().replace(/\s/g, '')
+            }]
+            var pdata = {
+                l7_id: l7_id,
+                forward_ips: JSON.stringify(forward_ips),
+                domain: $("input[name='sip_domain']").val().replace(/\s/g, ''),
+                pool: $("input[name='pool']:checked").val().replace(/\s/g, ''),
+                content: $("input[name='sip_dip']").val().replace(/\s/g, ''),
+                public_pem: $("textarea[name='sip_pem']").val(),
+                private_key: $("textarea[name='sip_key']").val()
+            }
+
+            if (!bt.check_domain(pdata.domain)) {
+                layer.msg('域名格式不正确!', { icon: 2 });
+                return;
+            }
+
+            if (!bt.check_ip(pdata.content)) {
+                layer.msg('源站IP格式不正确!', { icon: 2 });
+                return;
+            }
+
+            if (pdata.pool > 1) {
+                if (pdata.public_pem.length < 10) {
+                    layer.msg('证书不能为空!', { icon: 2 });
+                    return;
+                }
+
+                if (pdata.private_key.length < 10) {
+                    layer.msg('公钥不能为空!', { icon: 2 });
+                    return;
+                }
+            }
+            var loadT = layer.msg('正在处理中...', { icon: 16, time: 0,shade:.3});
+            $.post("/plugin?action=a&name=safeip&s=l7_update", pdata, function (rdata) {
+                layer.close(loadT);
+                if (!rdata.message) {
+                    layer.close(BtDdos.loadT);
+                    BtDdos.safeip_get_domains();
+                    return;
+                }
+                bt.msg(rdata);
+            });
+        },
+        safeip_domain_del: function (domain,l7_id) {
+            bt.show_confirm('删除域名【'+ domain +'】', "您真的要删除域名吗？", function () {
+                var pdata = {
+                    l7_id: l7_id
+                }
+                var loadT = layer.msg('正在处理中...',{ icon: 16, time: 0,shade:.3});
+                $.post("/plugin?action=a&name=safeip&s=l7_delete", pdata, function (rdata) {
+                    layer.close(loadT);
+                    if (!rdata.message) {
+                        layer.close(BtDdos.loadT);
+                        BtDdos.safeip_get_domains();
+                        return;
+                    }
+                    bt.msg(rdata);
+                });
+            });
+        },
+        total: function () {
+            var end_time = new Date().getTime();
+            var start_time = end_time - (3600 * 1000) + 30
+            this.total_req({
+                ip: BtDdos.s_ip,
+                end_time: end_time,
+                start_time: start_time
+            },function(rdata){
+                console.log(rdata);
+                var i = rdata.ddos.length - 1,bus = rdata.bus,ddos = rdata.ddos;
+                var chart_obj = {
+                    chart_title:'高防实时监控',
+                    x_title:'',
+                    y_title:'Mbps',
+                    total:{
+                        title:['流入流量','滤后流量','转发流量','回源流量'],
+                        time:[],
+                        series:[{data:[], color:'#37a2da'},{data:[], color:'#9fe6b8'},{data:[], color:'#fb7293'},{data:[], color:'#ffdb5c'}]
+                    },
+                }
+                var option = {
+                    // title: {
+                    //     text: chart_obj.chart_title,
+                    //     left: '50%',
+                    //     textAlign: 'center'
+                    // },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            lineStyle: {
+                                color: '#ddd'
+                            }
+                        },
+                        backgroundColor: 'rgba(255,255,255,1)',
+                        padding: [5, 10],
+                        textStyle: {
+                            color: '#666',
+                        },
+                        extraCssText: 'box-shadow: 0 0 5px rgba(0,0,0,0.3)'
+                    },
+                    legend: {
+                        data:chart_obj.total.title,
+                        top:'25px',
+                        textAlign: 'center'
+                    },
+                    xAxis: {
+                        type: 'category',
+                        name: chart_obj.x_title,
+                        boundaryGap: false,
+                        data:chart_obj.total.time,
+                        splitLine: {
+                            show: false
+                        },
+                        axisTick: {
+                            show: false
+                        },
+                        axisLine: {
+                            lineStyle: {
+                                color: '#666'
+                            }
+                        },
+                        axisLabel: {
+                            margin: 10,
+                            textStyle: {
+                                fontSize: 14
+                            }
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: chart_obj.y_title,
+                        splitLine: {
+                            lineStyle: {
+                                color: '#ccc'
+                            }
+                        },
+                        axisTick: {
+                            show: false
+                        },
+                        axisLine: {
+                            lineStyle: {
+                                color: '#666'
+                            }
+                        },
+                        axisLabel: {
+                            margin: 10,
+                            textStyle: {
+                                fontSize: 14
+                            }
+                        }
+                    },
+                    dataZoom: [{
+                        type: 'inside',
+                        start: 0,
+                        end: 100,
+                        zoomLock:true
+                    }, {
+                        start: 0,
+                        end: 100,
+                        handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+                        handleSize: '80%',
+                        handleStyle: {
+                            color: '#fff',
+                            shadowBlur: 3,
+                            shadowColor: 'rgba(0, 0, 0, 0.6)',
+                            shadowOffsetX: 2,
+                            shadowOffsetY: 2
+                        }
+                    }],
+                    series: []
+                }
+                var con = '<div class="sys_rule_list">\
+                            <div class="data-count-all">\
+                                <div class="data-count-box"><p class="dname">实时流入流量</p><p class="dval"><span>'+ BtDdos.kbps_company(ddos[i].data[0].bps,true) +'</span></p></div>\
+                                <div class="data-count-box"><p class="dname">实时滤后流量</p><p class="dval"><span>'+ BtDdos.kbps_company(ddos[i].data[1].bps,true) +'</span></p></div>\
+                                <div class="data-count-box"><p class="dname">实时转发流量</p><p class="dval"><span>'+ BtDdos.kbps_company(bus[i].data[1].bps,true) +'</span></p></div>\
+                                <div class="data-count-box"><p class="dname">实时回源流量</p><p class="dval"><span>'+ BtDdos.kbps_company(bus[i].data[0].bps,true) +'</span></p></div>\
+                            </div>\
+                            <div class="data-count-cc">\
+                                <div class="data-count-box data-count-box1"><p class="dname">实时总请求</p><p class="dval"><span>'+ ddos[i].data[0].pps +'<span>qps</span></span></p></div>\
+                                <div class="data-count-box data-count-box2"><p class="dname">实时CC攻击</p><p class="dval"><span>'+ (ddos[i].data[0].pps - ddos[i].data[1].pps) +'<span>qps</span></span></p></div>\
+                            </div>\
+                            <div class="data-count-chart" id="EchartsView"></div>\
+                        </div>';
+                $(".sys-re-con").html(con);
+                var data_lenth = bus.length > ddos.length?ddos.length:bus.length;
+                for(var i = 0; i < data_lenth; i++){
+                    chart_obj.total.time.push(BtDdos.timestampToTime(bus[i].time));
+                    chart_obj.total.series[0].data.push(BtDdos.kbps_company(ddos[i].data[0].bps,false));
+                    chart_obj.total.series[1].data.push(BtDdos.kbps_company(ddos[i].data[1].bps,false));
+                    chart_obj.total.series[2].data.push(BtDdos.kbps_company(bus[i].data[1].bps,false));
+                    chart_obj.total.series[3].data.push(BtDdos.kbps_company(bus[i].data[0].bps,false));
+                }
+                for(var j = 0; j < chart_obj.total.series.length; j++){
+                    option.series.push({
+                        name: chart_obj.total.title[j],
+                        type: 'line',
+                        smooth: true,
+                        showSymbol: false,
+                        symbol: 'circle',
+                        symbolSize: 6,
+                        data: chart_obj.total.series[j].data,
+                        itemStyle: {normal: {color: chart_obj.total.series[j].color}},
+                        lineStyle: { normal: { width: 2}}
+                    });
+                    
+                }
+                console.log(option,chart_obj)
+                var myChart =  echarts.init(document.getElementById("EchartsView"));
+                myChart.setOption(option);
+            });
+        },
+        timestampToTime(timestamp) {
+            var date = new Date(timestamp);
+            var Y = date.getFullYear() + '-';
+            var M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '-';
+            var D = date.getDate() + ' ';
+            var h = (date.getHours() + 1 < 10?'0'+ (date.getHours()+ 1): date.getHours()+1)+ ':';
+            var m = (date.getMinutes() + 1 < 10?'0'+ (date.getMinutes()+ 1): date.getMinutes()+1) + ':';
+            var s = (date.getSeconds() + 1 < 10?'0'+ (date.getSeconds()+ 1): date.getSeconds()+1);
+            return M+D+h+m+s;
+        },
+        total_req:function(obj,callback){
+            var loadT = layer.msg('正在获取监控数据,请稍后<img src="/static/img/ing.gif">',{ icon: 16, time: 0,shade:.3});
+            $.post("/plugin?action=a&name=safeip&s=ddos_stat", {
+                ip:obj.ip,
+                end_time:obj.end_time,
+                start_time:obj.start_time
+            }, function (rdata) {
+                layer.close(loadT);
+                if(rdata.status === false){
+                    layer.msg(res.msg,{icon:2});
+                    return false
+                }
+                if(callback) callback(rdata);
+            });
+        },
+        kbps_company:function(val,type){
+            return (val / 1000).toFixed(2) + (type?'<span>Mbps</span>':'');
+        },
+		//定义周期时间
+		getBeforeDate: function(n,state){
+			var n = n;
+			var d = new Date();
+			var year = d.getFullYear();
+			var mon=d.getMonth()+1;
+			var day=d.getDate();
+			if(day <= n){
+				if(mon>1) {
+				   mon=mon-1;
+				}
+				else {
+				 year = year-1;
+				 mon = 12;
+				}
+			}
+			d.setDate(d.getDate()-n);
+			year = d.getFullYear();
+			mon=d.getMonth()+1;
+			day=d.getDate();
+			s = year+"-"+(mon<10?('0'+mon):mon)+"-"+(day<10?('0'+day):day);
+			if(state == 0){
+				return Date.parse(new Date(s+' 00:00:00'));
+			}
+			else{
+				return Date.parse(new Date(s+' 23:59:59'));
+			}
+		},
+		event_list_box:function(){
+			var end_time = new Date().getTime();
+            var start_time = end_time - (3600 * 1000) + 30;
+			var con = '<div class="pd20">\
+				<div class="search-day">\
+				<span class="cur" onclick="BtDdos.event_list('+start_time+','+end_time+')">1小时</span>\
+				<span onclick="BtDdos.event_list(BtDdos.getBeforeDate(0,0),BtDdos.getBeforeDate(0,1))">今日</span>\
+				<span onclick="BtDdos.event_list(BtDdos.getBeforeDate(1,0),BtDdos.getBeforeDate(1,1))">昨日</span>\
+				<span class="last-span"><input id="safeipdate-select" type="text" value=""></span>\
+				</div>\
+				<div class="divtable">\
+				<table class="table table-hover">\
+					<thead><tr><th>防护IP</th><th>线路类型</th><th>攻击开始时间</th><th>攻击结束时间</th><th>攻击峰值</th><th>攻击时长</th><th>攻击状态</th><th>防护结果</th></tr></thead>\
+					<tbody id="AttackTable"></tbody>\
+				</table>\
+				</div></div>';
+				
+				layer.open({
+					type: 1,
+					title: '攻击事件',
+					area: '800px',
+					closeBtn: 2,
+					shadeClose: false,
+					content: con
+				});
+				laydate.render({
+					elem: '#safeipdate-select',
+					value: new Date(),
+					max: 0,
+					done: function(value, date, endDate){
+						BtDdos.event_list(Date.parse(new Date(value+' 00:00:00')),Date.parse(new Date(value+' 23:59:59')));
+						$("#date-select").val(value);
+						$(".last-span").addClass("cur").siblings().removeClass("cur");
+					}
+				});
+				$(".search-day span").not(".last-span").click(function(){
+					$(this).addClass("cur").siblings().removeClass("cur");
+				});
+				BtDdos.event_list(start_time,end_time);
+		},
+        event_list: function (s,e) {
+            var loadT = layer.msg('正在处理中...',{ icon: 16, time: 0,shade:.3});
+            var pdata = {
+                ip: BtDdos.s_ip,
+                end_time: e,
+                start_time: s
+            };
+			
+			var tr = '';
+            $.post("/plugin?action=a&name=safeip&s=attack_list", pdata, function (rdata) {
+                layer.close(loadT);
+				if(rdata == ''){
+					tr = '<tr><td colspan="8">暂无数据</td></tr>';
+				}
+				else{
+					for(var i=0;i<rdata.length; i++){
+						tr +='<tr><td>'+rdata[i].shieldAttackIp+'</td>\
+								<td>'+rdata[i].shieldAttackNodeName+BtDdos.ToNode(rdata[i].shieldAttackIdc)+'</td>\
+								<td>'+bt.format_data(rdata[i].shieldAttackBegin)+'</td>\
+								<td>'+bt.format_data(rdata[i].shieldAttackEnd)+'</td>\
+								<td>'+ToSize(rdata[i].shieldAttackPeak)+'</td>\
+								<td>'+rdata[i].shieldAttackDuration+'秒</td>\
+								<td>'+BtDdos.ToState(rdata[i].shieldAttackState)+'</td>\
+								<td>'+(rdata[i].shieldAttackResult == 1 ? "成功":"失败")+'</td>\
+								</tr>';
+					}
+				}
+				$("#AttackTable").html(tr);
+            });
+        },
+		ToState:function(name){
+			var txt = '';
+			switch(name){
+				case 1:
+					txt = '触发进行中';
+					break;
+				case 2:
+					txt = '持续进行中';
+					break;
+				case 3:
+					txt = '结束';
+					break;
+			}
+			return txt	
+		},
+		ToNode:function(name){
+			var txt = '';
+			switch(name){
+				case 1:
+					txt = '电信';
+					break;
+				case 2:
+					txt = '联通';
+					break;
+				case 3:
+					txt = '移动';
+					break;
+				case 4:
+					txt = 'BGP';
+					break;
+			}
+			return txt	
+		},
+        xufei: function (order_id, pid) {
+            var loadT = layer.msg('正在获取产品信息...', { icon: 16, time: 0, shade: .3 });
+            $.post('/plugin?action=a&name=safeip&s=get_products', {}, function (rdata) {
+                layer.close(loadT)
+                var price = 0;
+                var discount = 0;
+                for (var i = 0; i < rdata.products.length; i++) {
+                    if (rdata.products[i].id == pid) {
+                        price = rdata.products[i].price;
+                        discount = rdata.products[i].discount;
+                    }
+                }
+
+                var con = '<div class="pd20"><div class="wepay">\
+                                <a class="renew-safeip" style="display:none;">true</a>\
+								<div class="cycle">\
+									<div class="cycle-item on">\
+										<div class="total">\
+											<p><span class="sale-price">'+ (price * discount) + '</span><span class="yuan">元</span></p>\
+											<p><s class="o-price">'+ price +'元</s></p>\
+										</div>\
+										<div class="cy-len" data-cycle="1">1个月</div>\
+									</div>\
+									<div class="cycle-item">\
+										<div class="total">\
+											<p><span class="sale-price">'+ (price * 6 * discount) + '</span><span class="yuan">元</span></p>\
+											<p><s class="o-price">'+ (price * 6)+'元</s></p>\
+										</div>\
+										<div class="cy-len" data-cycle="6">6个月</div>\
+									</div>\
+									<div class="cycle-item">\
+										<div class="total">\
+											<p><span class="sale-price">'+ (price * 12 * discount) + '</span><span class="yuan">元</span></p>\
+											<p><s class="o-price">'+ (price * 12) +'元</s></p>\
+										</div>\
+										<div class="cy-len" data-cycle="12">1年</div>\
+									</div>\
+									<div class="cycle-item">\
+										<div class="total">\
+											<p><span class="sale-price">'+ (price * 24 * discount)+'</span><span class="yuan">元</span></p>\
+											<p><s class="o-price">'+ (price * 24) +'元</s></p>\
+										</div>\
+										<div class="cy-len" data-cycle="24">2年</div>\
+									</div>\
+								</div>\
+								<div class="lib-price-box text-center">\
+									<span class="lib-price-name"><b>总计</b></span>\
+									<span class="price-txt"><b class="pay-sale-price safeip-xf-price">'+ (price * discount) + '</b>元</span>\
+									<s class="cost-price safeip-xf-oprice">'+price+'元</s>\
+								</div>\
+								<div class="paymethod safeip-xf">\
+									<div class="pay-wx"><img src="ewm.png"></div>\
+									<div class="pay-wx-info"><span class="wx-pay-ico"></span>微信扫码支付</div>\
+								</div>\
+							</div></div>'
+                BtDdos.renewWindow = layer.open({
+                    type: 1,
+                    title: '续费',
+                    area: '605px',
+                    closeBtn: 2,
+                    shadeClose: false,
+                    content: con
+                });
+				BtDdos.xufei_post(order_id,1);
+				$(".cycle .cycle-item").click(function(){
+					$(this).addClass("on").siblings().removeClass("on");
+					var data_cycle = $(this).find(".cy-len").attr("data-cycle");
+					var xf_price = $(this).find(".sale-price").text();
+					var xf_oprice = $(this).find(".o-price").text();
+					BtDdos.xufei_post(order_id,data_cycle);
+					$(".safeip-xf-price").text(xf_price);
+					$(".safeip-xf-oprice").text(xf_oprice);
+				})
+            });
+		},
+		xufei_post:function(order_id, cycle){
+			$(".pay-wx").html("<div class='loading'>加载中，请稍后</div>");
+			$.post("/plugin?action=a&name=safeip&s=renew_order",{order_id:order_id,cycle:cycle},function(rdata){
+				$(".safeip-xf .pay-wx").html("");
+				$(".safeip-xf .pay-wx").qrcode(rdata.msg.code);
+                clearInterval(BtDdos.wxpayTimeSafeId_xf);
+                BtDdos.wxpayTimeSafeId_xf = setInterval(function () {
+                    if (!$(".renew-safeip").html()) {
+                        clearInterval(BtDdos.wxpayTimeSafeId_xf);
+                        return;
+                    }
+					$.post('/plugin?action=a&name=safeip&s=renew_stat',{order_id:rdata.msg.oid},function(rdata){
+                        if (rdata === 1) {
+                            clearInterval(BtDdos.wxpayTimeSafeId_xf);
+                            layer.close(BtDdos.renewWindow);
+							layer.msg('支付成功!',{icon:1,time:5000});
+							BtDdos.init();
+						}
+					})
+				},3000);
+			});
+		}
+    }
+    BtDdos.init()
+</script>
