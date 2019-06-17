@@ -1,8 +1,0 @@
-{
-  "title": "高防IP",
-  "name": "safeip",
-  "type": "付费插件",
-  "ps": "高防IP，对最多50个网站提供有效DDOS防护，注意：仅能保护已备案的域名",
-  "versions": "1.0",
-  "checks": "/www/server/panel/plugin/safeip"
-}

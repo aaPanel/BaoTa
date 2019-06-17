@@ -1,9 +1,0 @@
-{
-  "title": "PostgreSQL管理器",
-  "name": "pgsql_manager",
-  "ps": "用于安装并管理 PostgreSQL数据库",
-  "versions": "1.0",
-  "checks": "/www/server/panel/plugin/pgsql_manager",
-  "author": "宝塔",
-  "home": "https://www.bt.cn/bbs"
-}
