@@ -4,11 +4,11 @@
 ##### Bug提交：https://www.bt.cn/bbs/forum-39-1.html
 
 ##### Centos安装命令：
-'''bash
+```bash
 yum install -y wget && wget -O install.sh http://download.bt.cn/install/install_6.0.sh && sh install.sh
-'''
+```
 
 ##### Ubuntu/Debian安装命令：
-'''bash
+```bash
 wget -O install.sh http://download.bt.cn/install/install-ubuntu_6.0.sh && sudo bash install.sh
-'''
+```
