@@ -16,7 +16,6 @@ os.chdir(panelPath)
 sys.path.append(panelPath + "class/")
 import public,time,json
 
-
 #设置MySQL密码
 def set_mysql_root(password):
     import db,os
