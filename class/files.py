@@ -282,7 +282,7 @@ class files:
             stat = self.__get_stat(filename,path)
             if not stat: return None
             tmp_stat = stat.split(';')
-            file_info = {'name': self.xssencode(tmp_stat[0]),'size':int(tmp_stat[1]),'mtime':int(tmp_stat[2]),'accept':int(tmp_stat[3]),'user':tmp_stat[4],'link':tmp_stat[5]}
+            file_info = {'name': self.xssencode(tmp_stat[0].replace('/','')),'size':int(tmp_stat[1]),'mtime':int(tmp_stat[2]),'accept':int(tmp_stat[3]),'user':tmp_stat[4],'link':tmp_stat[5]}
             return file_info
         except: return None
         
@@ -331,7 +331,8 @@ class files:
         size = str(stat.st_size)
         link = '';
         if os.path.islink(filename): link = ' -> ' + os.readlink(filename)
-        if path:filename = filename.replace((path + '/').replace('//','/'),'')
+        tmp_path = (path + '/').replace('//','/')
+        if path and tmp_path != '/':filename = filename.replace(tmp_path,'')
         return filename + ';' + size + ';' + mtime+ ';' +accept+ ';' +user+ ';' +link
 
     

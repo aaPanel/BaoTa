@@ -55,6 +55,13 @@ def control_init():
 
     p_file = 'class/plugin2.so'
     if os.path.exists(p_file): public.ExecShell("rm -f class/*.so")
+    public.ExecShell("chmod -R  600 /www/server/panel/data")
+    public.ExecShell("chmod -R  600 /www/server/panel/config")
+    public.ExecShell("chmod -R  700 /www/server/cron")
+    public.ExecShell("chmod -R  600 /www/server/cron/*.log")
+    public.ExecShell("chown -R root:root /www/server/panel/data")
+    public.ExecShell("chown -R root:root /www/server/panel/config")
+
     
     clean_session()
 

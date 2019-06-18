@@ -267,3 +267,5 @@ demo.py
 tocc.sh
 *.user
 *.pubxml
+*.pyproj
+*.sln
