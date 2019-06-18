@@ -361,12 +361,12 @@ function GetFiles(Path,sort) {
     data['path'] = Path;
 
 
-    if (search) {
+    if (searchV) {
         var loadT = layer.msg('正在搜索,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000']});
     }
 	var totalSize = 0;
 	$.post('/files?action=GetDir&tojs=GetFiles&p=' + p + '&showRow=' + showRow + search, data, function(rdata) {
-        if (search) layer.close(loadT);
+        if (searchV) layer.close(loadT);
         if (rdata.status === false) {
             layer.msg(rdata.msg, { icon: 2 });
             return;
