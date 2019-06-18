@@ -814,7 +814,7 @@ def webssh(msg):
     ssh_success = True
     if type(msg) == dict:
         if 'ssh_user' in msg:
-            connect_ssh(msg['ssh_user'],msg['ssh_passwd'])
+            connect_ssh(msg['ssh_user'].strip(),msg['ssh_passwd'].strip())
     if not shell: ssh_success = connect_ssh()
     if not shell:
         emit('server_response',{'data':public.getMsg('INIT_WEBSSH_CONN_ERR')})
