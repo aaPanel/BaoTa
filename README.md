@@ -1,3 +1,4 @@
+##### 宝塔开源许可协议：https://www.bt.cn/kyxy.html
 ##### 使用手册：http://docs.bt.cn
 ##### 论坛地址：https://www.bt.cn/bbs
 ##### 反馈建议： https://www.bt.cn/bbs/forum-43-1.html
