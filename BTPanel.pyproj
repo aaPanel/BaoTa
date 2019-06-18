@@ -32,10 +32,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="class\ajax.py" />
+    <Compile Include="class\apache.py" />
     <Compile Include="class\btkill.py" />
     <Compile Include="class\common.py" />
     <Compile Include="class\config.py" />
     <Compile Include="class\crontab.py" />
+    <Compile Include="class\crontab_ssl.py" />
     <Compile Include="class\data.py" />
     <Compile Include="class\database.py" />
     <Compile Include="class\datatool.py" />
@@ -780,6 +782,7 @@
     <Content Include="BTPanel\static\js\jquery.qrcode.min.js" />
     <Content Include="BTPanel\static\js\public.js" />
     <Content Include="BTPanel\static\js\requestAnimationFrame.js" />
+    <Content Include="BTPanel\static\js\site.js" />
     <Content Include="BTPanel\static\js\socket.io.min.js" />
     <Content Include="BTPanel\static\js\upload.js" />
     <Content Include="BTPanel\static\js\Validform_v5.3.2_min.js" />
