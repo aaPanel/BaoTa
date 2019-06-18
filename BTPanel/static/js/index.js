@@ -392,7 +392,7 @@ var index = {
                         clickName = 'onclick="soft.set_soft_config(\'' + rdata[i].name + '\')"';
                     }
                     var icon = rdata[i].name;
-                    if (bt.contains(rdata[i].name, 'php')) {
+                    if (bt.contains(rdata[i].name, 'php-')) {
                         icon = 'php';
                         rdata[i].version = '';
                     }

@@ -606,7 +606,19 @@ class panelPlugin:
             softInfo['fpm'] = os.path.exists('/etc/init.d/php-fpm-' + v2)
             softInfo['status'] = os.path.exists('/tmp/php-cgi-'+v2+'.sock')
         if softInfo['name'] == 'mysql': softInfo['status'] = self.process_exists('mysqld')
+        if softInfo['name'] == 'phpmyadmin': softInfo['status'] = self.get_phpmyadmin_stat()
         return softInfo
+
+    #取phpmyadmin状态
+    def get_phpmyadmin_stat(self):
+        if public.get_webserver() == 'nginx':
+            filename = public.GetConfigValue('setup_path') + '/nginx/conf/nginx.conf';
+        else:
+            filename = public.GetConfigValue('setup_path') + '/apache/conf/extra/httpd-vhosts.conf';
+        if not os.path.exists(filename): return False
+        conf = public.readFile(filename)
+        if not conf: return False
+        return conf.find('/www/server/stop') == -1
 
     #获取指定软件信息
     def get_soft_find(self,get = None):

@@ -532,7 +532,7 @@ var soft = {
             });
             var menu = $('.bt-soft-menu').data("data", rdata);
             setTimeout(function () {
-                if (name != 'phpmyadmin') menu.append($('<p class="bgw bt_server" onclick="soft.get_tab_contents(\'service\',this)">' + lan.soft.service + '</p>'))
+                menu.append($('<p class="bgw bt_server" onclick="soft.get_tab_contents(\'service\',this)">' + lan.soft.service + '</p>'))
                 if (rdata.version_coexist) {
                     var ver = name.split('-')[1].replace('.', '');
                     var opt_list = [
@@ -590,11 +590,15 @@ var soft = {
             case 'service':
 
                 var tabCon = $(".soft-man-con").empty();
+                
                 var status_list = [
                     { opt: data.status ? 'stop' : 'start', title: data.status ? lan.soft.stop : lan.soft.start },
                     { opt: 'restart', title: lan.soft.restart },
                     { opt: 'reload', title: lan.soft.reload }
                 ]
+                if (data.name == 'phpmyadmin') {
+                    status_list = [status_list[0]];
+                }
                 var btns = $('<div class="sfm-opt"></div>');
                 for (var i = 0; i < status_list.length; i++)  btns.append('<button class="btn btn-default btn-sm" onclick="bt.pub.set_server_status(\'' + data.name + '\',\'' + status_list[i].opt + '\')">' + status_list[i].title + '</button>');
                 tabCon.append('<p class="status">' + lan.soft.status + '：<span>' + (data.status ? lan.soft.on : lan.soft.off) + '</span><span style="color: ' + (data.status ? '#20a53a;' : 'red;') + ' margin-left: 3px;" class="glyphicon ' + (data.status ? 'glyphicon glyphicon-play' : 'glyphicon-pause') + '"></span></p');
