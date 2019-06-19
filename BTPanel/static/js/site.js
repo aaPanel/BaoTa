@@ -1122,6 +1122,10 @@ var site = {
                                         var loading = bt.load()
                                         bt.site.get_order_list(web.name, function (odata) {
                                             loading.close();
+                                            if (odata.status === false) {
+                                                layer.msg(odata.msg, { icon: 2 });
+                                                return;
+                                            }
                                             robj.append("<div class=\"divtable mtb15 table-fixed-box\" style=\"max-height:200px;overflow-y: auto;\"><table id='bt_order_list' class='table table-hover'></table></div>");
                                             bt.render({
                                                 table: '#bt_order_list',

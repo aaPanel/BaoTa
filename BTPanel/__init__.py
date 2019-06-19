@@ -20,11 +20,11 @@ from werkzeug.contrib.cache import SimpleCache
 from werkzeug.wrappers import Response
 from flask_socketio import SocketIO,emit,send
 
-from flask_basicauth import BasicAuth
-app.config['BASIC_AUTH_USERNAME'] = 'admin'
-app.config['BASIC_AUTH_PASSWORD'] = 'amwyygyyv'
-app.config['BASIC_AUTH_FORCE'] = True
-basic_auth = BasicAuth(app)
+#from flask_basicauth import BasicAuth
+#app.config['BASIC_AUTH_USERNAME'] = 'admin'
+#app.config['BASIC_AUTH_PASSWORD'] = '11111'
+#app.config['BASIC_AUTH_FORCE'] = True
+#basic_auth = BasicAuth(app)
 
 
 cache = SimpleCache()
