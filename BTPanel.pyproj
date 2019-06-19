@@ -838,6 +838,7 @@
     <Content Include="BTPanel\templates\default\site.html" />
     <Content Include="BTPanel\templates\default\soft.html" />
     <Content Include="class\fonts\2.ttf" />
+    <Content Include="config\hosts.json" />
     <Content Include="config\index.json" />
     <Content Include="config\link.json" />
     <Content Include="config\task.json" />
