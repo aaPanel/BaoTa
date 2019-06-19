@@ -22,7 +22,7 @@ def M(table):
     sql = db.Sql()
     return sql.table(table);
 
-def HttpGet(url,timeout = 3,headers = {}):
+def HttpGet(url,timeout = 6,headers = {}):
     """
     发送GET请求
     @url 被请求的URL地址(必需)
@@ -81,14 +81,22 @@ def http_get_home(url,timeout,ex):
             res = HttpGet(new_url,timeout,headers)
             if res: 
                 writeFile("data/home_host.pl",host)
+                set_home_host(host)
                 return res
         return ex
     except: return ex
 
-def httpGet(url,timeout=3):
+
+def set_home_host(host):
+    ExecShell('sed -i "/www.bt.cn/d" /etc/hosts')
+    ExecShell("echo '' >> /etc/hosts")
+    ExecShell("echo '%s www.bt.cn' >> /etc/hosts" % host)
+    ExecShell('sed -i "/^\s*$/d" /etc/hosts')
+
+def httpGet(url,timeout=6):
     return HttpGet(url,timeout)
 
-def HttpPost(url,data,timeout = 3,headers = {}):
+def HttpPost(url,data,timeout = 6,headers = {}):
     """
     发送POST请求
     @url 被请求的URL地址(必需)
@@ -148,40 +156,16 @@ def http_post_home(url,data,timeout,ex):
             res = HttpPost(new_url,data,timeout,headers)
             if res: 
                 writeFile("data/home_host.pl",host)
+                set_home_host(host)
                 return res
         return ex
     except: return ex
 
-def httpPost(url,data,timeout=3):
+def httpPost(url,data,timeout=6):
     return HttpPost(url,data,timeout)
 
 def check_home():
-    try:
-        if HttpGet('http://www.bt.cn/test.txt') ==  'True': return True
-        hosts = '/etc/hosts'
-        hosts_body  = ReadFile(hosts)
-        if hosts_body.find('www.bt.cn') != -1: return True
-        
-        url = 'http://125.88.182.170/test.txt'
-        if sys.version_info[0] == 2:
-            import urllib2
-            req = urllib2.Request(url)
-            req.add_header('host','www.bt.cn')
-            result = urllib2.urlopen(req).read()
-        else:
-            import urllib.request
-            req = urllib.request.Request(url)
-            req.add_header('host','www.bt.cn')
-            result = urllib.request.urlopen(req).read()
-            result = result.decode('utf-8')
-        if result != 'True': return True
-        ExecShell("echo '' >> /etc/hosts")
-        ExecShell("echo '125.88.182.170 www.bt.cn' >> /etc/hosts")
-        return True
-    except:
-        return True
-
-
+    return True
 
 def Md5(strings):
     """
