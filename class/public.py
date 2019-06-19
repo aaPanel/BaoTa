@@ -22,13 +22,20 @@ def M(table):
     sql = db.Sql()
     return sql.table(table);
 
-def HttpGet(url,timeout = 10):
+def HttpGet(url,timeout = 3,headers = {}):
     """
     发送GET请求
     @url 被请求的URL地址(必需)
     @timeout 超时时间默认60秒
     return string
     """
+    home = 'www.bt.cn'
+    host_home = 'data/home_host.pl'
+    old_url = url
+    if url.find(home) != -1:
+        if os.path.exists(host_home): 
+            headers['host'] = home
+            url = url.replace(home,readFile(host_home))
     if sys.version_info[0] == 2:
         try:
             import urllib2,ssl
@@ -38,9 +45,12 @@ def HttpGet(url,timeout = 10):
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except:pass;
-            response = urllib2.urlopen(url,timeout=timeout)
+            req = urllib2.Request(url, headers = headers)
+            response = urllib2.urlopen(req,timeout = timeout,)
             return response.read()
         except Exception as ex:
+            if old_url.find(home) != -1: return http_get_home(old_url,timeout,str(ex))
+            if headers: return False
             return str(ex);
     else:
         try:
@@ -48,19 +58,37 @@ def HttpGet(url,timeout = 10):
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except:pass;
-            response = urllib.request.urlopen(url,timeout=timeout)
+            req = urllib.request.Request(url,headers = headers)
+            response = urllib.request.urlopen(req,timeout = timeout)
             result = response.read()
             if type(result) == bytes: result = result.decode('utf-8')
             return result
         except Exception as ex:
+            if old_url.find(home) != -1: return http_get_home(old_url,timeout,str(ex))
+            if headers: return False
             return str(ex)
 
+def http_get_home(url,timeout,ex):
+    try:
+        home = 'www.bt.cn'
+        if url.find(home) == -1: return ex
+        hosts_file = "config/hosts.json"
+        if not os.path.exists(hosts_file): return ex
+        hosts = json.loads(readFile(hosts_file))
+        headers = {"host":home}
+        for host in hosts:
+            new_url = url.replace(home,host)
+            res = HttpGet(new_url,timeout,headers)
+            if res: 
+                writeFile("data/home_host.pl",host)
+                return res
+        return ex
+    except: return ex
 
-def httpGet(url,timeout=10):
+def httpGet(url,timeout=3):
     return HttpGet(url,timeout)
 
-
-def HttpPost(url,data,timeout = 10):
+def HttpPost(url,data,timeout = 3,headers = {}):
     """
     发送POST请求
     @url 被请求的URL地址(必需)
@@ -68,17 +96,27 @@ def HttpPost(url,data,timeout = 10):
     @timeout 超时时间默认60秒
     return string
     """
+    home = 'www.bt.cn'
+    host_home = 'data/home_host.pl'
+    old_url = url
+    if url.find(home) != -1:
+        if os.path.exists(host_home): 
+            headers['host'] = home
+            url = url.replace(home,readFile(host_home))
+
     if sys.version_info[0] == 2:
         try:
             import urllib,urllib2,ssl
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except:pass
-            data = urllib.urlencode(data)
-            req = urllib2.Request(url, data)
-            response = urllib2.urlopen(req,timeout = timeout)
+            data2 = urllib.urlencode(data)
+            req = urllib2.Request(url, data2,headers = headers)
+            response = urllib2.urlopen(req,timeout=timeout)
             return response.read()
         except Exception as ex:
+            if old_url.find(home) != -1: return http_post_home(old_url,data,timeout,str(ex))
+            if headers: return False
             return str(ex);
     else:
         try:
@@ -86,16 +124,35 @@ def HttpPost(url,data,timeout = 10):
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except:pass;
-            data = urllib.parse.urlencode(data).encode('utf-8')
-            req = urllib.request.Request(url, data)
+            data2 = urllib.parse.urlencode(data).encode('utf-8')
+            req = urllib.request.Request(url, data2,headers = headers)
             response = urllib.request.urlopen(req,timeout = timeout)
             result = response.read()
             if type(result) == bytes: result = result.decode('utf-8')
             return result
         except Exception as ex:
+            if old_url.find(home) != -1: return http_post_home(old_url,data,timeout,str(ex))
+            if headers: return False
             return str(ex);
 
-def httpPost(url,data,timeout=10):
+def http_post_home(url,data,timeout,ex):
+    try:
+        home = 'www.bt.cn'
+        if url.find(home) == -1: return ex
+        hosts_file = "config/hosts.json"
+        if not os.path.exists(hosts_file): return ex
+        hosts = json.loads(readFile(hosts_file))
+        headers = {"host":home}
+        for host in hosts:
+            new_url = url.replace(home,host)
+            res = HttpPost(new_url,data,timeout,headers)
+            if res: 
+                writeFile("data/home_host.pl",host)
+                return res
+        return ex
+    except: return ex
+
+def httpPost(url,data,timeout=3):
     return HttpPost(url,data,timeout)
 
 def check_home():
