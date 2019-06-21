@@ -207,10 +207,14 @@ case "$1" in
                 if [ "$address" = "" ];then
                 	address=$(curl -sS --connect-timeout 10 -m 60 https://www.bt.cn/Api/getIpAddress)
                 fi
+				pool=http
+				if [ -f $panel_path/data/ssl.pl ];then
+					pool=https
+				fi
                 echo -e "=================================================================="
                 echo -e "\033[32mBT-Panel default info!\033[0m"
                 echo -e "=================================================================="
-                echo  "Bt-Panel-URL: http://$address:$port$auth_path"
+                echo  "Bt-Panel-URL: $pool://$address:$port$auth_path"
                 echo -e `python $panel_path/tools.py username`
                 echo -e "password: $password"
                 echo -e "\033[33mWarning:\033[0m"
