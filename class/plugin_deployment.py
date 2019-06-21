@@ -308,7 +308,7 @@ class plugin_deployment:
         #执行额外shell进行依赖安装
         self.WriteLogs(json.dumps({'name':'执行额外SHELL','total':0,'used':0,'pre':0,'speed':0}));
         if os.path.exists(path+'/install.sh'): 
-            os.system('cd '+path+' && bash ' + 'install.sh ' + find['name']);
+            os.system('cd '+path+' && bash ' + 'install.sh ' + find['name'] + " &> install.log");
             os.system('rm -f ' + path+'/install.sh')
             
         #是否执行Composer
@@ -369,6 +369,7 @@ class plugin_deployment:
                     public.writeFile(siteConfigFile,siteConfig)
 
         #清理文件和目录
+        self.WriteLogs(json.dumps({'name':'清理多余的文件','total':0,'used':0,'pre':0,'speed':0}));
         for f_path in pinfo['remove_file']:
             filename = (path + '/' + f_path).replace('//','/')
             if os.path.exists(filename):

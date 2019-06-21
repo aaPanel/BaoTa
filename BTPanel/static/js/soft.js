@@ -572,9 +572,16 @@ var soft = {
                 bt.soft.get_soft_find('apache', function (rdata) {
                     if (rdata.setup) {
                         if (rdata.version.indexOf('2.2') >= 0) {
-                            $(".apache24").hide();
-                            $(".bt_server").remove();
-                            $(".bt-w-menu p:eq(0)").trigger("click");
+                            if (name.indexOf('php-') != -1) {
+                                $(".apache24").hide();
+                                $(".bt_server").remove();
+                                $(".bt-w-menu p:eq(0)").trigger("click");
+                            }
+
+                            if (name.indexOf('apache') != -1) {
+                                $(".bt-soft-menu p:eq(3)").remove()
+                                $(".bt-soft-menu p:eq(3)").remove()
+                            }
                         }
                     }
                 })
