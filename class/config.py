@@ -736,7 +736,6 @@ class config:
         return pluginInfo
 
     def get_token(self,get):
-        import json
         save_path = '/www/server/panel/config/api.json'
         if not os.path.exists(save_path): 
             data = { "open":False, "token":"", "limit_addr":[] }
@@ -748,9 +747,6 @@ class config:
         return data
 
     def set_token(self,get):
-        import json
-        #panel_password = public.M('users').where('id=?',(1,)).getField('password')
-        #if not public.md5(get.panel_password.strip()) == panel_password: return public.returnMsg(False,'面板密码错误!')
         if 'request_token' in get: return public.returnMsg(False,'不能通过API接口配置API')
         save_path = '/www/server/panel/config/api.json'
         data = json.loads(public.ReadFile(save_path))
@@ -857,6 +853,7 @@ class config:
         public.ExecShell("ln -sf %s %s" % (php_pecl_src,php_pecl))
         public.ExecShell("ln -sf %s %s" % (php_pear_src,php_pear))
         if is_chattr != -1:  public.ExecShell('chattr +i /usr/bin')
+        public.WriteLog('面板设置','设置PHP-CLI版本为: %s' % get.php_version)
         return public.returnMsg(True,'设置成功!')
 
     
@@ -888,6 +885,19 @@ class config:
         
         public.writeFile(path,json.dumps(ba_conf))
         os.chmod(path,384)
+        public.WriteLog('面板设置','设置BasicAuth状态为: %s' % is_open)
         public.writeFile('data/reload.pl','True')
         return public.returnMsg(True,"设置成功!")
-        
+
+    #取面板运行日志
+    def get_panel_error_logs(self,get):
+        filename = 'logs/error.log'
+        if not os.path.exists(filename): return public.returnMsg(False,'没有找到运行日志')
+        result = public.GetNumLines(filename,2000)
+        return public.returnMsg(True,result)
+    #清空面板运行日志
+    def clean_panel_error_logs(self,get):
+        filename = 'logs/error.log'
+        public.writeFile(filename,'')
+        public.WriteLog('面板配置','清空面板运行日志')
+        public.returnMsg(True,'已清空!')

@@ -101,6 +101,7 @@
                     <div class="title c6 plr15">
                         <h3 class="f16">{{data['lan']['H4']}}</h3>
                         <a class="btn btn-default btn-sm va0" onclick="bt.firewall.clear_logs(function(){firewall.get_log_list()});">{{data['lan']['BTN5']}}</a>
+                        <span class="btn btn-default btn-sm" style="position: absolute;right: 30px;margin-top: 10px;" onclick="firewall.get_panel_error_logs()">面板运行日志</span>
                     </div>
                     <div class="divtable pd15">
                         <div class="tablescroll">
@@ -288,7 +289,48 @@
 					data:rdata.data
 				})		
 			})			
-		}
+        },
+        //查看面板运行日志
+        get_panel_error_logs: function () {
+            layer.msg(lan.public.the_get, { icon: 16, time: 0, shade: [0.3, '#000'] });
+            $.post('/config?action=get_panel_error_logs', {}, function (rdata) {
+                layer.closeAll();
+                if (!rdata.status) {
+                    layer.msg(rdata.msg, { icon: 2 });
+                    return;
+                };
+                layer.open({
+                    type: 1,
+                    title: '面板运行日志',
+                    area: ['700px', '490px'],
+                    shadeClose: false,
+                    closeBtn: 2,
+                    content: '<div class="setchmod bt-form  pb70">'
+                        + '<pre class="crontab-log" style="overflow: auto; border: 0px none; line-height:23px;padding: 15px; margin: 0px; white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0px;font-family: \"微软雅黑\"">' + (rdata.msg == '' ? '当前日志为空' : rdata.msg) + '</pre>'
+                        + '<div class="bt-form-submit-btn" style="margin-top: 0px;">'
+                        + '<button type="button" class="btn btn-danger btn-sm btn-title" style="margin-right:15px;" onclick="firewalld.clean_panel_error_logs()">' + lan.public.empty + '</button>'
+                        + '<button type="button" class="btn btn-success btn-sm btn-title" onclick="layer.closeAll()">' + lan.public.close + '</button>'
+                        + '</div>'
+                        + '</div>'
+                });
+                setTimeout(function () {
+                    $("#crontab-log").text(rdata.msg);
+                    var div = document.getElementsByClassName('crontab-log')[0]
+                    div.scrollTop = div.scrollHeight;
+                }, 200)
+            }).error(function () {
+                layer.closeAll();
+                layer.msg('无法取回日志信息!', { icon: 2 });
+            });
+        },
+        //清空面板错误日志
+        clean_panel_error_logs:function() {
+            layer.msg(lan.public.the_get, { icon: 16, time: 0, shade: [0.3, '#000'] });
+            $.post('/config?action=clean_panel_error_logs', {}, function (rdata) {
+                layer.closeAll();
+                layer.msg(rdata.msg, { icon: 2 });
+            });
+        }
 	}
 	firewall.get_init();
 </script>
