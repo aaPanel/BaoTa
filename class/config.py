@@ -900,4 +900,4 @@ class config:
         filename = 'logs/error.log'
         public.writeFile(filename,'')
         public.WriteLog('面板配置','清空面板运行日志')
-        public.returnMsg(True,'已清空!')
+        return public.returnMsg(True,'已清空!')
