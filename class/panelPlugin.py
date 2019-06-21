@@ -603,8 +603,9 @@ class panelPlugin:
                 self.get_icon(softInfo['name'])
         if softInfo['name'].find('php-') != -1: 
             v2= softInfo['versions'][0]['m_version'].replace('.','')
-            softInfo['fpm'] = os.path.exists('/etc/init.d/php-fpm-' + v2)
+            softInfo['fpm'] = os.path.exists('/www/server/php/' + v2 + '/sbin/php-fpm')
             softInfo['status'] = os.path.exists('/tmp/php-cgi-'+v2+'.sock')
+            if not softInfo['fpm']: softInfo['status'] = True
         if softInfo['name'] == 'mysql': softInfo['status'] = self.process_exists('mysqld')
         if softInfo['name'] == 'phpmyadmin': softInfo['status'] = self.get_phpmyadmin_stat()
         return softInfo

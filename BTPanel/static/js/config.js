@@ -520,3 +520,66 @@ function SetIPv6() {
         bt.msg(rdata);
     });
 }
+
+
+function modify_basic_auth_to() {
+    var pdata = {
+        open: $("select[name='open']").val(),
+        basic_user: $("input[name='basic_user']").val(),
+        basic_pwd: $("input[name='basic_pwd']").val()
+    }
+    var loadT = layer.msg('正在配置BasicAuth服务，请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+    $.post('/config?action=set_basic_auth', pdata, function (rdata) {
+        layer.close(loadT);
+        if (rdata.status) {
+            layer.closeAll();
+            setTimeout(function () { window.location.reload(); }, 3000);
+        }
+        layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+    });
+
+}
+
+function modify_basic_auth() {
+    var loadT = layer.msg('正在获取配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+    $.post('/config?action=get_basic_auth_stat', {}, function (rdata) {
+        layer.close(loadT);
+        layer.open({
+            type: 1,
+            area: "500px",
+            title: "配置BasicAuth认证",
+            closeBtn: 2,
+            shift: 5,
+            shadeClose: false,
+            content: ' <div class="bt-form bt-form" style="padding:15px 25px">\
+						<div class="line">\
+							<span class="tname">服务状态</span>\
+							<div class="info-r" style="height:28px;">\
+								<select class="bt-input-text" name="open">\
+                                    <option value="True" '+(rdata.open?'selected':'')+'>开启</option>\
+                                    <option value="False" '+ (rdata.open ? '' : 'selected' )+'>关闭</option>\
+                                </select>\
+							</div>\
+						</div>\
+                        <div class="line">\
+                            <span class="tname">用户名</span>\
+                            <div class="info-r">\
+                                <input name="basic_user" class="bt-input-text mr5" type="text" style="width: 310px" value="" placeholder="'+ (rdata.basic_user?'不修改请留空':'请设置用户名') +'">\
+                            </div>\
+                        </div>\
+                        <div class="line">\
+                            <span class="tname">密码</span>\
+                            <div class="info-r">\
+                                <input name="basic_pwd" class="bt-input-text mr5" type="text" style="width: 310px" value="" placeholder="'+ (rdata.basic_pwd ? '不修改请留空' : '请设置密码') +'">\
+                            </div>\
+                        </div>\
+                        <span><button class="btn btn-success btn-sm" style="    margin-left: 340px;" onclick="modify_basic_auth_to()">保存配置</button></span>\
+                        <ul class="help-info-text c7">\
+                            <li style="color:red;">注意：请不要在这里使用您的常用密码，这可能导致密码泄漏！</li>\
+                            <li>开启后，以任何方式访问面板，将先要求输入BasicAuth用户名和密码</li>\
+                            <li>开启后，能有效防止面板被扫描发现，但并不能代替面板本身的帐号密码</li>\
+                        </ul>\
+                    </div>'
+        })
+    });
+}

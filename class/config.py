@@ -859,4 +859,35 @@ class config:
         if is_chattr != -1:  public.ExecShell('chattr +i /usr/bin')
         return public.returnMsg(True,'设置成功!')
 
+    
+    #获取BasicAuth状态
+    def get_basic_auth_stat(self,get):
+        path = 'config/basic_auth.json'
+        is_install = True
+        if not os.path.exists(path): return {"basic_user":"","basic_pwd":"","open":False,"is_install":is_install}
+        ba_conf = json.loads(public.readFile(path))
+        ba_conf['is_install'] = is_install
+        return ba_conf
+
+    #设置BasicAuth
+    def set_basic_auth(self,get):
+        is_open = False
+        if get.open == 'True': is_open = True
+        tips = '_bt.cn'
+        path = 'config/basic_auth.json'
+        ba_conf = None
+        if os.path.exists(path):
+            ba_conf = json.loads(public.readFile(path))
+
+        if not ba_conf: 
+            ba_conf = {"basic_user":public.md5(get.basic_user.strip() + tips),"basic_pwd":public.md5(get.basic_pwd.strip() + tips),"open":is_open}
+        else:
+            if get.basic_user: ba_conf['basic_user'] = public.md5(get.basic_user.strip() + tips)
+            if get.basic_pwd: ba_conf['basic_pwd'] = public.md5(get.basic_pwd.strip() + tips)
+            ba_conf['open'] = is_open
+        
+        public.writeFile(path,json.dumps(ba_conf))
+        os.chmod(path,384)
+        public.writeFile('data/reload.pl','True')
+        return public.returnMsg(True,"设置成功!")
         

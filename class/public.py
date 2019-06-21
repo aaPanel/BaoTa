@@ -1212,3 +1212,15 @@ def write_request_log():
         log_data['user-agent'] = request.headers.get('User-Agent')
         WriteFile(log_path + '/' + log_file,json.dumps(log_data) + "\n",'a+')
     except: pass
+
+#重载模块
+def mod_reload(mode):
+    if not mode: return False
+    try:
+        if sys.version_info[0] == 2:
+            reload(mode)
+        else:
+            import imp
+            imp.reload(module)
+        return True
+    except: return False

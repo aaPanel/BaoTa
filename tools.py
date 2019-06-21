@@ -414,14 +414,15 @@ def bt_cli(u_input = 0):
         print("(6) 修改面板用户名         (13) 取消IP访问限制")
         print("(7) 强制修改MySQL密码      (14) 查看面板默认信息")
         print("(22) 显示面板错误日志      (15) 清理系统垃圾")
-        print("(0) 取消                   (16) 修复面板(检查错误并更新面板文件到最新版)")
+        print("(23) 关闭BasicAuth认证     (16) 修复面板(检查错误并更新面板文件到最新版)")
+        print("(0) 取消                   ")
         print(raw_tip)
         try:
             u_input = input("请输入命令编号：")
             if sys.version_info[0] == 3: u_input = int(u_input)
         except: u_input = 0
 
-    nums = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,22]
+    nums = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,22,23]
     if not u_input in nums:
         print(raw_tip)
         print("已取消!")
@@ -533,8 +534,11 @@ def bt_cli(u_input = 0):
         os.system("curl http://download.bt.cn/install/update6.sh|bash")
     elif u_input == 22:
         os.system('tail -100 /www/server/panel/logs/error.log')
-
-
+    elif u_input == 23:
+        filename = '/www/server/panel/config/basic_auth.json'
+        if os.path.exists(filename): os.remove(filename)
+        os.system('bt reload')
+        print("|-已关闭BasicAuth认证")
 
 
 
