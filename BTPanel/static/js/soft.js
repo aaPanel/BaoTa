@@ -350,22 +350,36 @@ var soft = {
 				                <th>简介</th>\
 				                <th>支持PHP版本</th>\
                                 <th>提供者</th>\
-				                <th style="text-align: right;" width="80">操作</th>\
+				                <th style="text-align: right;" width="120">操作</th>\
 			                </tr>\
 		                </thead>';
             for (var i = 0; i < rdata.list.length; i++) {
+                var remove_opt = '';
+                if (rdata.list[i].id === 0) {
+                    remove_opt = ' | <a class="btlink" onclick="soft.remove_other_dep(\'' + rdata.list[i].name + '\')">删除</a>';
+                }
                 zbody += '<tr>'
                     + '<td><img src="'+rdata.list[i].min_image+'">' + rdata.list[i].title + '</td>'
                     + '<td>' + rdata.list[i].version + '</td>'
                     + '<td>' + rdata.list[i].ps + '</td>'
                     + '<td>' + rdata.list[i].php + '</td>'
                     + '<td><a class="btlink" target="_blank" href="' + rdata.list[i].official + '">' + (rdata.list[i].author == '宝塔' ? rdata.list[i].title : rdata.list[i].author) + '</a></td>'
-                    + '<td class="text-right"><a href="javascript:onekeyCodeSite(\'' + rdata.list[i].name + '\',\'' + rdata.list[i].php + '\',\'' + rdata.list[i].title + '\',\'' + rdata.list[i].enable_functions + '\');" class="btlink">一键部署</a></td>'
+                    + '<td class="text-right"><a href="javascript:onekeyCodeSite(\'' + rdata.list[i].name + '\',\'' + rdata.list[i].php + '\',\'' + rdata.list[i].title + '\',\'' + rdata.list[i].enable_functions + '\');" class="btlink">一键部署</a>' + remove_opt+'</td>'
                     + '</tr>'
             }
             $("#softList").html(zbody);
             $(".searchInput").val('');
 
+        });
+    },
+    remove_other_dep: function (name) {
+        bt.show_confirm('删除自定义项目', '您真的要删除[' + name + ']吗?', function () {
+            var loadT = layer.msg('正在删除，请稍候...', { icon: 16, time: 0, shade: 0.3 });
+            $.post('/deployment?action=DelPackage', { dname: name }, function (rdata) {
+                layer.close(loadT);
+                if (rdata.status) soft.get_dep_list();
+                setTimeout(function () { layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 }); }, 1000);
+            });
         });
     },
     input_package: function () {

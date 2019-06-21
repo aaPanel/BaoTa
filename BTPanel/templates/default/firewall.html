@@ -308,7 +308,7 @@
                     content: '<div class="setchmod bt-form  pb70">'
                         + '<pre class="crontab-log" style="overflow: auto; border: 0px none; line-height:23px;padding: 15px; margin: 0px; white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0px;font-family: \"微软雅黑\"">' + (rdata.msg == '' ? '当前日志为空' : rdata.msg) + '</pre>'
                         + '<div class="bt-form-submit-btn" style="margin-top: 0px;">'
-                        + '<button type="button" class="btn btn-danger btn-sm btn-title" style="margin-right:15px;" onclick="firewalld.clean_panel_error_logs()">' + lan.public.empty + '</button>'
+                        + '<button type="button" class="btn btn-danger btn-sm btn-title" style="margin-right:15px;" onclick="firewall.clean_panel_error_logs()">' + lan.public.empty + '</button>'
                         + '<button type="button" class="btn btn-success btn-sm btn-title" onclick="layer.closeAll()">' + lan.public.close + '</button>'
                         + '</div>'
                         + '</div>'
@@ -328,7 +328,7 @@
             layer.msg(lan.public.the_get, { icon: 16, time: 0, shade: [0.3, '#000'] });
             $.post('/config?action=clean_panel_error_logs', {}, function (rdata) {
                 layer.closeAll();
-                layer.msg(rdata.msg, { icon: 2 });
+                layer.msg(rdata.msg, { icon: 1 });
             });
         }
 	}
