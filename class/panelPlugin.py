@@ -161,8 +161,7 @@ class panelPlugin:
             if os.path.exists(pluginInfo['install_checks']): update =pluginInfo['versions'][0]['version_msg']
             return self.update_zip(None,toFile,update);
         else:
-            if not 'download_url' in session: session['download_url'] = 'http://download.bt.cn';
-            download_url = session['download_url'] + '/install/plugin/' + pluginInfo['name'] + '/install.sh';
+            download_url = public.get_url() + '/install/plugin/' + pluginInfo['name'] + '/install.sh';
             toFile = '/tmp/%s.sh' % pluginInfo['name']
             public.downloadFile(download_url,toFile);
             os.system('/bin/bash ' + toFile + ' install > /tmp/panelShell.pl');
