@@ -289,8 +289,11 @@ class config:
     
     #同步时间
     def syncDate(self,get):
-        dateStr = public.HttpGet(public.GetConfigValue('home') + '/api/index/get_date')
-        result = public.ExecShell('date -s "%s"' % dateStr);
+        time_str = public.HttpGet(public.GetConfigValue('home') + '/api/index/get_time')
+        new_time = int(time_str)
+        time_arr = time.localtime(new_time)
+        date_str = time.strftime("%Y-%m-%d %H:%M:%S", time_arr)
+        result = public.ExecShell('date -s "%s"' % date_str);
         public.WriteLog("TYPE_PANEL", "DATE_SUCCESS");
         return public.returnMsg(True,"DATE_SUCCESS");
         
