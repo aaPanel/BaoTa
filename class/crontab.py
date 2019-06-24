@@ -338,7 +338,9 @@ class crontab:
             log='-access_log'
             if public.get_webserver()=='nginx':
                 log='.log'
-                
+            if type in ['site','path'] and param['sBody'] != 'undefined' and len(param['sBody']) > 1:
+                exports = param['sBody'].replace("\r\n","\n").replace("\n",",")
+                head += "BT_EXCLUDE=\"" + exports.strip() + "\"\nexport BT_EXCLUDE\n"
             wheres={
                     'path': head + "python " + public.GetConfigValue('setup_path')+"/panel/script/backup.py path "+param['sName']+" "+str(param['save']),
                     'site'  :   head + "python " + public.GetConfigValue('setup_path')+"/panel/script/backup.py site "+param['sName']+" "+str(param['save']),
