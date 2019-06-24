@@ -967,6 +967,7 @@ def publicObject(toObject,defs,action=None,get = None):
 
     if hasattr(get,'path'):
             get.path = get.path.replace('//','/').replace('\\','/');
+            if get.path.find('..') != -1: return public.ReturnJson(False,'不安全的路径'),json_header
             if get.path.find('->') != -1:
                 get.path = get.path.split('->')[0].strip();
     not_acts = ['GetTaskSpeed','GetNetWork','check_pay_status','get_re_order_status','get_order_stat']

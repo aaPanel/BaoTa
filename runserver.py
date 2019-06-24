@@ -10,6 +10,8 @@ from os import environ
 from BTPanel import app,socketio,sys
 
 if __name__ == '__main__':
-    PORT = 8888
+    f = open('data/port.pl')
+    PORT = int(f.read())
     HOST = '0.0.0.0'
+    f.close()
     socketio.run(app,host=HOST,port=PORT)

@@ -257,6 +257,8 @@ class bt_task:
             os.system('echo "'+password+'"|' + rar_file + ' x -u -y "' + sfile + '" "' + dfile + '" &> ' + log_file)
         elif sfile[-4:] == '.war':
              os.system("unzip -P '"+password+"' -o '" + sfile + "' -d '" + dfile + "' &> " + log_file)
+        elif sfile[-4:] == '.bz2':
+            os.system("tar jxvf '" + sfile + "' -C '" + dfile + "' &> " + log_file)
         else:
             os.system("gunzip -c " + sfile + " > " + sfile[:-3])
 
