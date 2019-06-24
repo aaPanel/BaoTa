@@ -214,7 +214,7 @@ function edit_task_info(id){
 									</div>\
 								</div>\
 								<div class="clearfix plan ptb10"  style="display:'+ ((obj.from.sType == "toShell" || obj.from.sType == 'site' || obj.from.sType == 'path')?'block;':'none') +'">\
-									<span class="typename controls c4 pull-left f14 text-right mr20">脚本内容</span>\
+									<span class="typename controls c4 pull-left f14 text-right mr20">'+ (obj.from.sType == "toShell" ?'脚本内容':'排除规则')+'</span>\
 									<div style="line-height:22px"><textarea style="line-height:22px" class="txtsjs bt-input-text sBody_create" name="sBody">'+ obj.from.sBody +'</textarea></div>\
 								</div>\
 								<div class="clearfix plan ptb10" style="display:'+ (obj.from.sType == "rememory"?'block;':'none') +'">\
@@ -821,7 +821,7 @@ function toBackup(type){
 					</div>';
         if (sType == 'sites') {
             sBody += '<p class="clearfix plan">\
-                    <div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">排除目录</div>\
+                    <div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">排除规则</div>\
                     <div class="dropdown planBackupTo pull-left mr20">\
                         <span><textarea style=" height: 100px;width:300px;line-height:22px;" class="bt-input-text" type="text" name="sBody" id="exclude" placeholder="每行一条规则,目录不能以/结尾，示例：\ndata/config.php\nstatic/upload\n *.log\n"></textarea></span>\
                     </div>\
