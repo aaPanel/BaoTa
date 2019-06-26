@@ -325,10 +325,9 @@ class system:
         #取磁盘分区信息
         diskIo = psutil.disk_partitions();
         diskInfo = []
-        
+        cuts = ['/mnt/cdrom','/boot','/boot/efi','/dev','/dev/shm','/run/lock','/run','/run/shm','/run/user'];
         for disk in diskIo:
-            if disk[1] == '/mnt/cdrom':continue;
-            if disk[1] == '/boot':continue;
+            if not cuts: continue
             tmp = {}
             tmp['path'] = disk[1]
             tmp['size'] = psutil.disk_usage(disk[1])
@@ -448,6 +447,9 @@ class system:
             networkInfo['cpu'] = self.GetCpuInfo()
             networkInfo['load'] = self.GetLoadAverage(get);
             networkInfo['mem'] = self.GetMemInfo(get)
+            networkInfo['version'] = session['version']
+            networkInfo['disk'] = self.GetDiskInfo2()
+
 
         return networkInfo
         
