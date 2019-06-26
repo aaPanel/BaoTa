@@ -164,6 +164,17 @@ class plugin_deployment:
 
         public.writeFile(jsonFile,json.dumps(data));
         return public.returnMsg(True,'导入成功!');
+
+    #取本地包信息
+    def GetPackageOther(self,get):
+        jsonFile = self.__setupPath + '/deployment_list_other.json';
+        if not os.path.exists(jsonFile): public.returnMsg(False,'没有找到[%s]' % p_name)
+        data = json.loads(public.readFile(jsonFile));
+        p_name = get.p_name
+        for i in range(len(data)):
+            if data[i]['name'] == p_name: return data[i]
+        return public.returnMsg(False,'没有找到[%s]' % p_name)
+                
     
     #删除程序包
     def DelPackage(self,get):
@@ -265,7 +276,7 @@ class plugin_deployment:
         self.WriteLogs(json.dumps({'name':'设置权限','total':0,'used':0,'pre':0,'speed':0}));
         os.system('chmod -R 755 ' + path);
         os.system('chown -R www.www ' + path);
-        if pinfo['chmod'] != "":
+        if pinfo['chmod']:
             for chm in pinfo['chmod']:
                 os.system('chmod -R ' + str(chm['mode']) + ' ' + (path + '/' + chm['path']).replace('//','/'));
         

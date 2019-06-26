@@ -406,7 +406,7 @@ def deployment(pdata = None):
     if comReturn: return comReturn
     import plugin_deployment
     sysObject = plugin_deployment.plugin_deployment()
-    defs = ('GetList','AddPackage','DelPackage','SetupPackage','GetSpeed')
+    defs = ('GetList','AddPackage','DelPackage','SetupPackage','GetSpeed','GetPackageOther')
     return publicObject(sysObject,defs,None,pdata);
 
 @app.route('/data',methods=method_all)
@@ -536,8 +536,8 @@ def coll_socket(msg):
         return;
     emit('coll_response',getattr(t,msg['f'])(msg))
 
-@app.route('/btco',methods=method_all)
-@app.route('/btco/',methods=method_all)
+@app.route('/coll',methods=method_all)
+@app.route('/coll/',methods=method_all)
 @app.route('/<name>/<fun>',methods=method_all)
 @app.route('/<name>/<fun>/<path:stype>',methods=method_all)
 def panel_other(name=None,fun = None,stype=None):
@@ -552,7 +552,7 @@ def panel_other(name=None,fun = None,stype=None):
 
     #前置准备
 
-    if not name: name = 'btco'
+    if not name: name = 'coll'
 
     #是否响应面板默认静态文件
     if name == 'static':
