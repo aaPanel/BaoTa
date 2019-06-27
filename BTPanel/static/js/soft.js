@@ -350,16 +350,18 @@ var soft = {
 				                <th>简介</th>\
 				                <th>支持PHP版本</th>\
                                 <th>提供者</th>\
-				                <th style="text-align: right;" width="120">操作</th>\
+				                <th style="text-align: right;" width="150">操作</th>\
 			                </tr>\
 		                </thead>';
+            var icon_other ='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAYFJREFUeNpi/P//P8NAAhZkzrVr1zyB1FwglqSiHSZAfBZZQEtLC7sDQJZLSUlJcnNzU8Xm27dvg6jVQByqqqp6FpsaJjS+JCcnJ8O/f/+ogkFATk5uJ8gRQMcYE+MAqgN2dvYMeXn5g0DmGmyOYKJHQmNjY0tQUFA4gc0RLLS0mI+PD5YOQCACSp8BYka6OEBUVJRBXFwcW8IkPgQ+r2lk+PPsJnl5XEqdgTeknvhyABsAWS6Ytwyr3PtJUTjlYPKEAEWJEGQ5MZbQzAGEQoDmDhgNAWITGk0dQCkYcAewUJoIh38IgIpTchMai6Qa5Q4gVJYP+SgYcAcwIjfLHxZo0qWNLj/hOp4GCQs7bo0121D4D1u8wGIwGlkcd/3+k/xyANlgdMcgy8McRbM0QIoFVC8J8VkOCxVSHMdCTZ+TEyooDvjPKfCP8ddXJgZGJqISIskW/v8HtIP/H85seGdWYT3L/eN1jN8/0qR8+M8l8PePgkWzSlp/I1YHDAQACDAAtKS/DHmsv9AAAAAASUVORK5CYII='
             for (var i = 0; i < rdata.list.length; i++) {
                 var remove_opt = '';
                 if (rdata.list[i].id === 0) {
-                    remove_opt = ' | <a class="btlink" onclick="soft.remove_other_dep(\'' + rdata.list[i].name + '\')">删除</a>';
+                    remove_opt = ' | <a class="btlink" onclick="soft.update_package(\'' + rdata.list[i].name + '\')">更新</a> | <a class="btlink" onclick="soft.remove_other_dep(\'' + rdata.list[i].name + '\')">删除</a>';
+                    rdata.list[i].min_image = icon_other
                 }
                 zbody += '<tr>'
-                    + '<td><img src="'+rdata.list[i].min_image+'">' + rdata.list[i].title + '</td>'
+                    + '<td><img src="' + rdata.list[i].min_image +'">' + rdata.list[i].title + '</td>'
                     + '<td>' + rdata.list[i].version + '</td>'
                     + '<td>' + rdata.list[i].ps + '</td>'
                     + '<td>' + rdata.list[i].php + '</td>'
@@ -425,6 +427,51 @@ var soft = {
             closeBtn: 2,
             shadeClose: false,
             content: con
+        });
+    },
+    update_package: function (p_name) {
+        $.post('/deployment?action=GetPackageOther', { p_name: p_name }, function (rdata) {
+            var con = '<form class="bt-form pd20 pb70" id="input_package">\
+					<div class="line"><span class="tname">英文名</span>\
+						<input class="bt-input-text" type="text" value="'+rdata.name+'" name="name"  placeholder="项目英文名" style="width:190px" />\
+					    <span class="c9" style="margin-left: 5px;">格式: [0-9A-Za-z_-]+，不要带有空格和特殊字符</span>\
+					</div>\
+					<div class="line"><span class="tname">中文名</span>\
+						<input class="bt-input-text" name="title" value="'+ rdata.title +'" placeholder="项目中文名" style="width:190px" type="text">\
+                        <span class="c9" style="margin-left: 5px;">用于显示到列表的名称</span>\
+					</div>\
+                    <div class="line"><span class="tname">PHP版本</span>\
+						<input class="bt-input-text mr5 " name="php"  placeholder="如：53,54,55,56,70,71,72" style="width:190px" value="'+ rdata.php +'" type="text" />\
+						<span class="c9">多个请使用","(逗号)隔开，不要使用PHP5.2</span>\
+					</div>\
+					<div class="line"><span class="tname">解禁的函数</span>\
+						<input class="bt-input-text mr5" name="enable_functions" value="'+ rdata.enable_functions +'" style="width:190px" placeholder="如：system,exec" type="text" />\
+						<span class="c9">多个请使用","(逗号)隔开，只解禁必要函数</span>\
+					</div>\
+                    <div class="line"><span class="tname">项目版本</span>\
+						<input class="bt-input-text mr5" name="version" value="'+ rdata.version +'" style="width:190px" placeholder="如：5.2.1" type="text" />\
+						<span class="c9">当前导入的项目版本</span>\
+					</div>\
+                    <div class="line"><span class="tname">简介</span>\
+						<div class="info-r c15"><input  class="bt-input-text mr5" name="ps" value="'+ rdata.ps +'" type="text" style="width:290px" /></div>\
+					</div>\
+					<div class="line"><span class="tname">上传项目包</span>\
+						<input class="bt-input-text mr5" name="dep_zip" type="file" style="width:290px" placeholder="如：system,exec" >\
+						<span class="c9">请上传zip格式的项目包,里面必需包含auto_insatll.json配置文件</span>\
+					</div>\
+					<div class="bt-form-submit-btn">\
+						<button type="button" class="btn btn-danger btn-sm onekeycodeclose" onclick="layer.closeAll()">取消</button>\
+						<button type="button" class="btn btn-success btn-sm" onclick="soft.input_package_to()">更新</button>\
+					</div>\
+				</from>';
+            layer.open({
+                type: 1,
+                title: "更新一键部署项目包",
+                area: '600px',
+                closeBtn: 2,
+                shadeClose: false,
+                content: con
+            });
         });
     },
     input_package_to: function () {
