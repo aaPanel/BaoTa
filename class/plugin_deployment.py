@@ -167,10 +167,11 @@ class plugin_deployment:
 
     #取本地包信息
     def GetPackageOther(self,get):
+        p_name = get.p_name
         jsonFile = self.__setupPath + '/deployment_list_other.json';
         if not os.path.exists(jsonFile): public.returnMsg(False,'没有找到[%s]' % p_name)
         data = json.loads(public.readFile(jsonFile));
-        p_name = get.p_name
+        
         for i in range(len(data)):
             if data[i]['name'] == p_name: return data[i]
         return public.returnMsg(False,'没有找到[%s]' % p_name)

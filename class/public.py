@@ -1227,3 +1227,29 @@ def mod_reload(mode):
             imp.reload(module)
         return True
     except: return False
+
+#设置权限
+def set_mode(filename,mode):
+    if not os.path.exists(filename): return False
+    mode = int(str(mode),8)
+    os.chmod(filename,mode)
+    return True
+
+
+#设置用户组
+def set_own(filename,user,group=None):
+    if not os.path.exists(filename): return False
+    from pwd import getpwnam
+    try:
+        user_info = getpwnam(user)
+        user = user_info.pw_uid
+        if group:
+            user_info = getpwnam(group)
+        group = user_info.pw_gid
+    except:
+        #如果指定用户或组不存在，则使用www
+        user_info = getpwnam('www')
+        user = user_info.pw_uid
+        group = user_info.pw_gid
+    os.chown(filename,user,group)
+    return True

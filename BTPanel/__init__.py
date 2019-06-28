@@ -311,6 +311,35 @@ def firewall_new(pdata = None):
     return publicObject(firewallObject,defs,None,pdata);
 
 
+@app.route('/monitor', methods=method_all)
+def panel_monitor(pdata=None):
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    import monitor
+    dataObject = monitor.Monitor()
+    defs = ('get_access_ip', 'get_exception', 'get_exception_logs', 'get_attack_nums', 'php_count', 'return_php', 'mysql_client_count')
+    return publicObject(dataObject, defs, None, pdata)
+
+
+@app.route('/san', methods=method_all)
+def san_baseline(pdata=None):
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    import san_baseline
+    dataObject = san_baseline.san_baseline()
+    defs = ('start', 'get_api_log', 'get_resut', 'get_ssh_errorlogin')
+    return publicObject(dataObject, defs, None, pdata)
+  
+  
+@app.route('/abnormal', methods=method_all)
+def abnormal(pdata=None):
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    import abnormal
+    dataObject = abnormal.abnormal()
+    defs = ( 'mysql_server', 'mysql_cpu', 'mysql_count', 'php_server', 'php_conn_max', 'php_cpu', 'CPU', 'Memory', 'disk', 'not_root_user','start')
+    return publicObject(dataObject, defs, None, pdata)
+
 @app.route('/files',methods=method_all)
 def files(pdata = None):
     comReturn = comm.local()

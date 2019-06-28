@@ -560,7 +560,7 @@ function planAdd(){
 			return;
 		}
 	}else{
-		if(sBody == ''){
+        if (sBody == '' && sType == 'toShell'){
 			$("#implement textarea[name='sBody']").focus();
 			layer.msg(lan.crontab.input_script_err,{icon:2});
 			return;
