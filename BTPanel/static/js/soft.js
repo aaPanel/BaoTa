@@ -359,6 +359,8 @@ var soft = {
                 if (rdata.list[i].id === 0) {
                     remove_opt = ' | <a class="btlink" onclick="soft.update_package(\'' + rdata.list[i].name + '\')">更新</a> | <a class="btlink" onclick="soft.remove_other_dep(\'' + rdata.list[i].name + '\')">删除</a>';
                     rdata.list[i].min_image = icon_other
+                } else {
+                    rdata.list[i].min_image += '?t=' + new Date().format("yyyyMMdd");
                 }
                 zbody += '<tr>'
                     + '<td><img src="' + rdata.list[i].min_image +'">' + rdata.list[i].title + '</td>'
@@ -370,6 +372,7 @@ var soft = {
                     + '</tr>'
             }
             $("#softList").html(zbody);
+            $("#softPage").html('');
             $(".searchInput").val('');
 
         });

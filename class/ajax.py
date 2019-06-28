@@ -484,15 +484,9 @@ class ajax:
             if 'updateInfo' in session and hasattr(get,'check') == False:
                 updateInfo = session['updateInfo'];
             else:
-                login_temp = 'data/login.temp';
-                if os.path.exists(login_temp):
-                    logs = public.readFile(login_temp)
-                    os.remove(login_temp);
-                else:
-                    logs = '';
+                logs = '';
                 import psutil,system,sys
                 mem = psutil.virtual_memory();
-                
                 import panelPlugin
                 mplugin = panelPlugin.panelPlugin();
 

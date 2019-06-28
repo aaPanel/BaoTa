@@ -300,6 +300,10 @@ var site = {
     //PHP-CLI
     get_cli_version: function () {
         $.post('/config?action=get_cli_php_version', {}, function (rdata) {
+            if (rdata.status === false) {
+                layer.msg(rdata.msg, { icon: 2 });
+                return;
+            }
             var _options = '';
             for (var i = rdata.versions.length - 1; i >= 0; i--) {
                 var ed = '';

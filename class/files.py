@@ -116,11 +116,11 @@ class files:
         os.renames(save_path, new_name)
         if 'dir_mode' in args and 'file_mode' in args:
             mode_tmp1 = args.dir_mode.split(',')
-            public.ExecShell("chmod " + mode_tmp1[0] + " " + args.f_path )
-            public.ExecShell("chown " + mode_tmp1[1] + ":" + mode_tmp1[1] + " " + args.f_path)
+            public.set_mode(args.f_path,mode_tmp1[0])
+            public.set_own(args.f_path,mode_tmp1[1])
             mode_tmp2 = args.file_mode.split(',')
-            public.ExecShell("chmod " + mode_tmp2[0] + " " + new_name )
-            public.ExecShell("chown " + mode_tmp2[1] + ":" + mode_tmp2[1] + " " + new_name )
+            public.set_mode(new_name,mode_tmp2[0])
+            public.set_own(new_name,mode_tmp2[1])
 
         else:
             self.set_mode(new_name)
