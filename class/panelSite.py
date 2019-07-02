@@ -2537,12 +2537,12 @@ server
         if public.get_webserver() == 'nginx':
             shutil.copyfile(ng_file, '/tmp/ng_file_bk.conf')
 
-        if os.path.exists('/www/server/nginx/src/ngx_cache_purge'):
-            cureCache += '''
-        location ~ /purge(/.*) {
-            proxy_cache_purge cache_one $1$is_args$args;
-            #access_log  /www/wwwlogs/%s_purge_cache.log;
-        }''' % (get.sitename)
+        #if os.path.exists('/www/server/nginx/src/ngx_cache_purge'):
+        cureCache += '''
+    location ~ /purge(/.*) {
+        proxy_cache_purge cache_one $host$1$is_args$args;
+        #access_log  /www/wwwlogs/%s_purge_cache.log;
+    }''' % (get.sitename)
         if os.path.exists(ng_file):
             self.CheckProxy(get)
             ng_conf = public.readFile(ng_file)

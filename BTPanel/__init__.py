@@ -89,7 +89,7 @@ def service_status():
 @app.before_request
 def basic_auth_check():
     if app.config['BASIC_AUTH_OPEN']:
-        if request.path in ['/public']: return;
+        if request.path in ['/public','/download']: return;
         auth = request.authorization
         if not comm.get_sk(): return;
         if not auth: return send_authenticated()
