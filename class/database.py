@@ -102,7 +102,7 @@ class database(datatool.datatools):
         if "libmysqlclient" in mysqlMsg: 
             result = self.rep_lnk()
             os.system("pip uninstall mysql-python -y")
-            os.system("pip install mysql-python")
+            os.system("pip install pymysql")
             public.writeFile('data/restart.pl','True')
             return public.returnMsg(False,"执行失败，已尝试自动修复，请稍候重试!")
         return None

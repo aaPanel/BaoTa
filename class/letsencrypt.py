@@ -24,9 +24,9 @@
 import argparse, subprocess, json, os, sys, base64, binascii, time, hashlib, re, copy, textwrap, logging, requests
 
 try:
-    from urllib.request import urlopen, Request  # Python 3
+    from urllib.request import urlopen, Request  # 3
 except ImportError:
-    from urllib2 import urlopen, Request  # Python 2
+    from urllib2 import urlopen, Request  # 2
 
 DEFAULT_CA = "https://acme-v02.api.letsencrypt.org"
 # DEFAULT_CA = "https://acme-staging-v02.api.letsencrypt.org"
@@ -65,7 +65,8 @@ def get_crt(account_key, csr, acme_dir, log=LOGGER, CA=DEFAULT_CA, disable_check
         if depth < 100 and code == 400 and resp_data['type'] == "urn:ietf:params:acme:error:badNonce":
             raise IndexError(resp_data)
         if code not in [200, 201, 204]:
-            raise ValueError("{0}:\nUrl: {1}\nData: {2}\nResponse Code: {3}\nResponse: {4}".format(err_msg, url, data, code, resp_data))
+            # print("{0}:\nUrl: {1}\nData: {2}\nResponse Code: {3}".format(err_msg, url, data, code))
+            sys.exit(json.dumps(resp_data))
         return resp_data, code, headers
 
     def _send_signed_request(url, payload, err_msg, depth=0):
@@ -167,7 +168,8 @@ def get_crt(account_key, csr, acme_dir, log=LOGGER, CA=DEFAULT_CA, disable_check
         authorization = _poll_until_not(auth_url, ["pending"], "Error checking challenge status for {0}".format(domain))
         if authorization['status'] != "valid":
             public.WriteFile(os.path.join(path, "check_authorization_status_response"), json.dumps(authorization), mode="w")
-            raise ValueError("Challenge did not pass for {0}: {1}".format(domain, authorization))
+            print("Challenge did not pass for {0}".format(domain, ))
+            sys.exit(json.dumps(authorization))
         log.info("{0} verified!".format(domain))
 
     # finalize the order with the csr
@@ -195,12 +197,12 @@ if __name__ == "__main__":  # 文件验证调用脚本
     data = json.loads(sys.argv[1])
     print (data)
     sitedomain = data['siteName']
-    path = os.path.join("/www/server/panel/vhost/cert/", sitedomain)
+    path = data['path']
     public.ExecShell("mkdir -p {}".format(path))
     KEY_PREFIX = os.path.join(path, "privkey")
     ACCOUNT_KEY = os.path.join(path, "letsencrypt-account.key")
     DOMAIN_KEY = os.path.join(path, "privkey.pem")
-    DOMAIN_DIR = os.path.join("/www/wwwroot", sitedomain)
+    DOMAIN_DIR = data['sitePath']
     DOMAINS = data['DOMAINS']
     DOMAIN_PEM = KEY_PREFIX + ".pem"
     DOMAIN_CSR = KEY_PREFIX + ".csr"
