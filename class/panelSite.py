@@ -2282,15 +2282,15 @@ server
             os.remove(useriniPath)
 
         for p1 in os.listdir(path):
-            npath = path + '/' + p1;
-            if not os.path.isdir(npath): continue
-            useriniPath = npath + '/.user.ini';
-            if os.path.exists(useriniPath): 
-                public.ExecShell('chattr -i ' + useriniPath);
-                os.remove(useriniPath)
-
-            if up < 3: self.DelUserInI(npath, up + 1);
-            
+            try:
+                npath = path + '/' + p1;
+                if not os.path.isdir(npath): continue
+                useriniPath = npath + '/.user.ini';
+                if os.path.exists(useriniPath): 
+                    public.ExecShell('chattr -i ' + useriniPath);
+                    os.remove(useriniPath)
+                if up < 3: self.DelUserInI(npath, up + 1);
+            except: continue
         return True;
             
             
