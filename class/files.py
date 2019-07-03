@@ -890,7 +890,9 @@ class files:
                         else:
                             shutil.rmtree(filename)
                     else:
-                        if key == '.user.ini': os.system('chattr -i ' + filename);
+                        if key == '.user.ini': 
+                            if l > 1: continue
+                            os.system('chattr -i ' + filename);
                         if isRecyle:
                             
                             self.Mv_Recycle_bin(get)
