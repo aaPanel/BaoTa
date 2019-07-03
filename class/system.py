@@ -602,7 +602,7 @@ class system:
                 public.ExecShell('/etc/init.d/httpd stop');
                 self.kill_port()
                 
-            result = public.ExecShell('ulimit -n 8192 && ' + self.setupPath+'/apache/bin/apachectl -t');
+            result = public.ExecShell('ulimit -n 8192 ; ' + self.setupPath+'/apache/bin/apachectl -t');
             if result[1].find('Syntax OK') == -1:
                 public.WriteLog("TYPE_SOFT",'SYS_EXEC_ERR', (str(result),));
                 return public.returnMsg(False,'SYS_CONF_APACHE_ERR',(result[1].replace("\n",'<br>'),));
@@ -621,7 +621,7 @@ class system:
                 public.ExecShell('mkdir ' + vhostPath);
                 public.ExecShell('/etc/init.d/nginx start');
             
-            result = public.ExecShell('ulimit -n 8192 && nginx -t -c '+self.setupPath+'/nginx/conf/nginx.conf');
+            result = public.ExecShell('ulimit -n 8192 ; nginx -t -c '+self.setupPath+'/nginx/conf/nginx.conf');
             if result[1].find('perserver') != -1:
                 limit = self.setupPath + '/nginx/conf/nginx.conf';
                 nginxConf = public.readFile(limit);
