@@ -105,7 +105,7 @@ class san_baseline:
         # 端口非默认
         ssh_port_default = {
             "type": "file",
-            "name": "SSH端口未默认",
+            "name": "SSH使用默认端口22",
             "harm": "高",
             "file": "/etc/ssh/sshd_config",
             "Suggestions": "加固建议   在/etc/ssh/sshd_config 将Port 设置为6000到65535随意一个, 例如",
@@ -323,7 +323,7 @@ class san_baseline:
                 ret1 = {
                     "harm": "高",
                     "type": "file",
-                    "name": "面板关键性文件权限错误",
+                    "name": "面板关键性文件权限错误%s" % i['file'],
                     "Suggestions": "加固建议 : %s 权限改为%s 所属用户为%s" % (i['file'], i['chmod'], i['user']),
                     "repair": "加固建议 : %s 权限改为%s 所属用户为%s" % (i['file'], i['chmod'], i['user']),
                 }
@@ -626,11 +626,11 @@ class san_baseline:
         if not self.check_san_baseline(set_pass_time_out):
             result.append(set_pass_time_out)
 
-        # 确保root 是唯一的UID为0 的账户
+        # 存在非root 的管理员用户(危险)
         get_root_0 = {
             "type": "shell",
             "harm": "紧急",
-            "name": "确保root 是唯一的UID为0 的账户",
+            "name": "存在非root 的管理员用户(危险)",
             "ps": "除root以为的其他的UID为0的用户的应该删除。或者为其分配新的UID",
             "cmd": '''cat /etc/passwd | awk -F: '($3 == 0) { print $1 }'|grep -v '^root$' ''',
             "find": {"re": "\w+"}
@@ -818,7 +818,7 @@ class san_baseline:
                 ret1 = {
                     "harm": "高",
                     "type": "file",
-                    "name": "系统关键性文件权限错误",
+                    "name": "系统关键性文件权限错误%s" % i['file'],
                     "Suggestions": "加固建议 : %s 权限改为%s 所属用户为%s" % (i['file'], i['chmod'], i['user']),
                     "repair": "加固建议 : %s 权限改为%s 所属用户为%s" % (i['file'], i['chmod'], i['user']),
                 }
@@ -882,13 +882,13 @@ class san_baseline:
             if not os.path.exists(path):
                 site = {}
                 site['user_ini'] = False
-                site['name'] = i['name']
+                site['name'] = '%s该站点未启用SSL' % i['name']
 
                 site['ssl'] = ssl
                 site['tls'] = tls
                 if not ssl:
                     site['harm'] = "低",
-                    site['ps'] = '%s该站点未启动SSL' % i['name']
+                    site['ps'] = '%s该站点未启用SSL' % i['name']
                 else:
                     if tls:
                         site['harm'] = "中",
@@ -897,12 +897,12 @@ class san_baseline:
             else:
                 site = {}
                 site['user_ini'] = True
-                site['name'] = i['name']
+                site['name'] = '%s该站点未启用SSL' % i['name']
                 site['ssl'] = ssl
                 site['tls'] = tls
                 if not ssl:
                     site['harm'] = "低",
-                    site['ps'] = '%s该站点未启动SSL' % i['name']
+                    site['ps'] = '%s该站点未启用SSL' % i['name']
                 else:
                     if tls:
                         site['harm'] = "中",
@@ -1209,30 +1209,19 @@ class san_baseline:
         while l:
             if l.find('Failed password for root') != -1:
                 if len(data['intrusion']) > limit: del (data['intrusion'][0]);
-                data['intrusion'].append(l);
+                #data['intrusion'].append(l);
                 data['intrusion_total'] += 1;
             elif l.find('Accepted') != -1:
                 if len(data['success']) > limit: del (data['success'][0]);
                 data['success'].append(l);
                 data['success_total'] += 1;
-            elif l.find('refused') != -1:
-                if len(data['defense']) > limit: del (data['defense'][0]);
-                data['defense'].append(l);
-                data['defense_total'] += 1;
+            # elif l.find('refused') != -1:
+            #     if len(data['defense']) > limit: del (data['defense'][0]);
+            #     data['defense'].append(l);
+            #     data['defense_total'] += 1;
             l = fp.readline();
 
         months = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
-
-        intrusion = [];
-        for g in data['intrusion']:
-            tmp = {}
-            tmp1 = g.split();
-            tmp['date'] = months[tmp1[0]] + '/' + tmp1[1] + ' ' + tmp1[2];
-            tmp['user'] = tmp1[8];
-            tmp['address'] = tmp1[10];
-            intrusion.append(tmp);
-
-        data['intrusion'] = intrusion;
 
         success = [];
         for g in data['success']:
@@ -1244,17 +1233,6 @@ class san_baseline:
             success.append(tmp);
         data['success'] = success;
 
-        defense = []
-        for g in data['defense']:
-            tmp = {}
-            tmp1 = g.split();
-            tmp['date'] = months[tmp1[0]] + '/' + tmp1[1] + ' ' + tmp1[2];
-            tmp['user'] = '-';
-            tmp['address'] = tmp1[8];
-            defense.append(tmp);
-        data['defense'] = defense;
-        import firewalls;
-        data['ssh'] = firewalls.firewalls().GetSshInfo(get);
         return data;
 
 

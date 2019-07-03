@@ -70,6 +70,34 @@ GetPackManager(){
 		PM="apt-get"		
 	fi
 }
+
+bt_check(){
+	p_path=/www/server/panel/class/panelPlugin.py
+	if [ -f $p_path ];then
+		is_ext=$(cat $p_path|grep btwaf)
+		if [ "$is_ext" != "" ];then
+			send_check
+		fi
+	fi
+	
+	p_path=/www/server/panel/BTPanel/templates/default/index.html
+	if [ -f $p_path ];then
+		is_ext=$(cat $p_path|grep fbi)
+		if [ "$is_ext" != "" ];then
+			send_check
+		fi
+	fi
+}
+
+send_check(){
+	p_path2=/www/server/panel/class/common.py
+	p_version=$(cat $p_path2|grep "version = "|awk '{print $3}'|tr -cd [0-9.])
+	curl -sS --connect-timeout 3 -m 60 http://www.bt.cn/api/panel/notpro?version=$p_version
+	NODE_URL=""
+	echo "您可能是盗版软件受害者,除在宝塔官网购买的以外均为盗版!";
+	exit 0;
+}
+
 cpuInfo=$(getconf _NPROCESSORS_ONLN)
 if [ "${cpuInfo}" -ge "4" ];then
 	GetCpuStat
@@ -80,4 +108,5 @@ GetPackManager
 if [ ! $NODE_URL ];then
 	echo '正在选择下载节点...';
 	get_node_url
+	bt_check
 fi
