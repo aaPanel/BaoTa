@@ -23,14 +23,17 @@ class abnormal():
         if not self.__ajax:
             self.__ajax=ajax.ajax()
 
-    #Mysql 服务是否启动
-    def mysql_server(self,get):
-        get.sName='mysql'
-        mysql=self.__plugin.get_soft_find(get)
-        if mysql['status']:
-            return True
+    # Mysql 服务是否启动
+    def mysql_server(self, get):
+        if os.path.exists('/www/server/mysql'):
+            get.sName = 'mysql'
+            mysql = self.__plugin.get_soft_find(get)
+            if mysql['status']:
+                return True
+            else:
+                return False
         else:
-            return False
+            return True
 
 
     # 取占用最大cpu的进程
@@ -103,6 +106,7 @@ class abnormal():
                     php={}
                     php['version']=i
                     php['children']=tmp['max children reached']
+                    php['start_time'] = tmp['start time']
                     ret.append(php)
                 except:
                     php={}

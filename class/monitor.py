@@ -26,6 +26,13 @@ class Monitor:
                 except: pass
         return data
 
+    def __get_file_json(self, filename):
+        try:
+            if not os.path.exists(filename): return {}
+            return json.loads(public.readFile(filename))
+        except:
+            return {}
+
     def _get_site_list(self):
         sites = public.M('sites').where('status=?', (1,)).field('name').get()
         return sites
@@ -78,24 +85,38 @@ class Monitor:
             for fname in os.listdir(path):
                 status_code = fname.split('.')[0]
                 log_path = os.path.join(path, fname)
-                log_body = self._get_file_json(log_path)
-                for item in log_body:
-                    if self._is_today(item[0]):
-                        if status_code == '401':
-                            count_401 += 1
-                        elif status_code == '500':
-                            count_500 += 1
-                        elif status_code == '502':
-                            count_502 += 1
-                        elif status_code == '503':
-                            count_503 += 1
+                num = 100
+                log_body = public.GetNumLines(log_path, num).split('\n')
+                while True:
+                    if not self._is_today(json.loads(log_body[0])[0]):
+                        break
+                    else:
+                        num += 100
+                        log_body = public.GetNumLines(log_path, num).split('\n')
+                for line in log_body:
+                    try:
+                        item = json.loads(line)
+                        if self._is_today(item[0]):
+                            if status_code == '401':
+                                count_401 += 1
+                            elif status_code == '500':
+                                count_500 += 1
+                            elif status_code == '502':
+                                count_502 += 1
+                            elif status_code == '503':
+                                count_503 += 1
+                    except: continue
         return {'401': count_401, '500': count_500, '502': count_502, '503': count_503}
 
     def _get_slow_log_nums(self, args):
-        import database
+        # 从配置文件中匹配到慢日志存放路径
+        if not os.path.exists('/etc/my.cnf'):
+            return 0
 
-        my_obj = database.database()
-        filename = my_obj.GetMySQLInfo(args)['datadir'] + '/mysql-slow.log'
+        ret = re.findall(r'datadir\s*=\s*(.+)', public.ReadFile('/etc/my.cnf'))
+        if not ret:
+            return 0
+        filename = ret[0] + '/mysql-slow.log'
 
         if not os.path.exists(filename):
             return 0
@@ -254,3 +275,68 @@ class Monitor:
             return int(file_body['total'])
         except:
             return 0
+
+    # 获取蜘蛛数量分布
+    def get_spider(self, args):
+        today = time.strftime('%Y-%m-%d', time.localtime())
+
+        sites = self._get_site_list()
+
+        data = {}
+        for site in sites:
+            site_name = site['name']
+            file_name = '/www/server/total/total/' + site_name + '/spider/' + today + '.json'
+            if not os.path.exists(file_name): continue
+
+            day_data = self.__get_file_json(file_name)
+
+            for s_data in day_data.values():
+                for s_key in s_data.keys():
+                    if s_key not in data:
+                        data[s_key] = s_data[s_key]
+                    else:
+                        data[s_key] += s_data[s_key]
+
+        return data
+
+    # 取指定站点的请求数
+    def _get_site_request_count(self, site_name):
+        today = time.strftime('%Y-%m-%d', time.localtime())
+        path = '/www/server/total/total/' + site_name + '/request/' + today + '.json'
+        day_request = 0
+        if os.path.exists(path):
+            spdata = self.__get_file_json(path)
+            for c in spdata.values():
+                for d in c:
+                    if re.match(r"^\d+$", d): day_request += c[d]
+        return day_request
+
+    # 取服务器的请求数
+    def _get_request_count(self):
+        request_count = 0
+        sites = self._get_site_list()
+        for site in sites:
+            site_name = site['name']
+            request_count += self._get_site_request_count(site_name)
+        return request_count
+
+    # 计算qps
+    def get_request_count_qps(self, args):
+        from BTPanel import cache
+
+        cache_timeout = 86400
+
+        old_total_request = cache.get('old_total_request')
+        otime = cache.get("old_get_time")
+        if not old_total_request or not otime:
+            otime = time.time()
+            old_total_request = self._get_request_count()
+            time.sleep(1)
+        ntime = time.time()
+        new_total_request = self._get_request_count()
+
+        qps = int(round(float(new_total_request - old_total_request) / (ntime - otime)))
+
+        cache.set('old_total_request', new_total_request, cache_timeout)
+        cache.set('old_get_time', ntime, cache_timeout)
+        return {'qps': qps, 'request_count': new_total_request}
