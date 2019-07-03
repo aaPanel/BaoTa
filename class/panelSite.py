@@ -2277,20 +2277,20 @@ server
     #清除多余user.ini
     def DelUserInI(self,path,up = 0):
         useriniPath = path + '/.user.ini'
-        public.ExecShell('chattr -i ' + useriniPath);
-        public.ExecShell('rm -f ' + useriniPath);
+        if os.path.exists(useriniPath):
+            public.ExecShell('chattr -i ' + useriniPath);
+            os.remove(useriniPath)
+
         for p1 in os.listdir(path):
-            try:
-                npath = path + '/' + p1;
-                if os.path.isdir(npath):
-                    if up < 2: self.DelUserInI(npath, up + 1);
-                else:
-                    continue;
-                useriniPath = npath + '/.user.ini';
-                if not os.path.exists(useriniPath): continue;
+            npath = path + '/' + p1;
+            if not os.path.isdir(npath): continue
+            useriniPath = npath + '/.user.ini';
+            if os.path.exists(useriniPath): 
                 public.ExecShell('chattr -i ' + useriniPath);
-                public.ExecShell('rm -f ' + useriniPath);
-            except: continue;
+                os.remove(useriniPath)
+
+            if up < 3: self.DelUserInI(npath, up + 1);
+            
         return True;
             
             
