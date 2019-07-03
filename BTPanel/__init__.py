@@ -38,6 +38,7 @@ socketio.init_app(app)
 import common,db,jobs,uuid
 jobs.control_init()
 app.secret_key = uuid.UUID(int=uuid.getnode()).hex[-12:]
+local_ip = None
 
 
 try:
@@ -99,7 +100,9 @@ def basic_auth_check():
 
 
 def send_authenticated():
-    return Response('', 401,{'WWW-Authenticate': 'Basic realm="Login Required"'})
+    global local_ip
+    if not local_ip: local_ip = public.GetLocalIp()
+    return Response('', 401,{'WWW-Authenticate': 'Basic realm="%s"' % local_ip})
 
 @app.route('/',methods=method_all)
 def home():
