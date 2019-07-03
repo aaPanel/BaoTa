@@ -390,8 +390,9 @@ class files:
         
         try:
             #检查是否存在.user.ini
-            if os.path.exists(get.path+'/.user.ini'):
-                os.system("chattr -i '"+get.path+"/.user.ini'")
+            #if os.path.exists(get.path+'/.user.ini'):
+            #    os.system("chattr -i '"+get.path+"/.user.ini'")
+            os.system("chattr -R -i " + get.path)
             if hasattr(get,'empty'):
                 if not self.delete_empty(get.path): return public.returnMsg(False,'DIR_ERR_NOT_EMPTY');
             
@@ -883,6 +884,7 @@ class files:
                     public.writeSpeed(key,i,l);
                     if os.path.isdir(filename):
                         if not self.CheckDir(filename): return public.returnMsg(False,'FILE_DANGER');
+                        os.system("chattr -R -i " + filename)
                         if isRecyle:
                             self.Mv_Recycle_bin(get)
                         else:
