@@ -278,6 +278,7 @@ var site = {
     set_default_site: function () {
         bt.site.get_default_site(function (rdata) {
             var arrs = [];
+            arrs.push({title:"未设置默认站点",value:'0'})
             for (var i = 0; i < rdata.sites.length; i++) arrs.push({ title: rdata.sites[i].name, value: rdata.sites[i].name })
             var form = {
                 title: lan.site.default_site_yes,

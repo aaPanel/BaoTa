@@ -3468,8 +3468,10 @@ location %s
     #设置默认站点
     def SetDefaultSite(self,get):
         import time;
+
+        default_site_save = 'data/defaultSite.pl'
         #清理旧的
-        defaultSite = public.readFile('data/defaultSite.pl');
+        defaultSite = public.readFile(default_site_save);
         http2 = ''
         versionStr = public.readFile('/www/server/nginx/version.pl');
         if versionStr:
@@ -3487,6 +3489,13 @@ location %s
                 rep = "listen\s+\[::\]:443.+;"
                 conf = re.sub(rep,'listen [::]:443 ssl'+http2+';',conf,1);
                 public.writeFile(path,conf);
+        
+            path = self.setupPath + '/apache/htdocs/.htaccess'
+            if os.path.exists(path): os.remove(path)
+
+        if get.name == '0': 
+            os.remove(default_site_save)
+            return public.returnMsg(True,'设置成功!')
 
         #处理新的
         path = self.setupPath + '/apache/htdocs';
@@ -3516,7 +3525,7 @@ location %s
         
         path = self.setupPath + '/panel/vhost/nginx/default.conf';
         if os.path.exists(path): public.ExecShell('rm -f ' + path);
-        public.writeFile('data/defaultSite.pl',get.name);
+        public.writeFile(default_site_save,get.name);
         public.serviceReload();
         return public.returnMsg(True,'SET_SUCCESS');
     
