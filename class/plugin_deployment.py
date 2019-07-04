@@ -346,6 +346,13 @@ class plugin_deployment:
             rewriteConf = public.readFile(swfile);
             dwfile = self.__panelPath + '/vhost/rewrite/' + site_name + '.conf';
             public.writeFile(dwfile,rewriteConf);
+
+        swfile = path + '/.htaccess';
+        if os.path.exists(swfile):
+            swpath = (path + '/'+ pinfo['run_path'] + '/.htaccess').replace('//','/')
+            if pinfo['run_path'] != '/' and not os.path.exists(swpath):
+                public.writeFile(swpath, public.readFile(swfile))
+
                 
         #删除伪静态文件
         public.ExecShell("rm -f " + path + '/*.rewrite')
@@ -428,9 +435,9 @@ class plugin_deployment:
                 os.remove(p_info)
                 i_ndex_html = path + '/index.html'
                 if os.path.exists(i_ndex_html): os.remove(i_ndex_html)
-                public.ExecShell("\cp -a -r " + p_tmp + '/* ' + path + '/')
+                os.system("\cp -arf " + p_tmp + '/. ' + path + '/')
             except: pass
-        public.ExecShell("rm -rf " + self.__tmp + '/*')
+        os.system("rm -rf " + self.__tmp + '/*')
         return p_config
                 
     

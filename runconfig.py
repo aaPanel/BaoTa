@@ -13,7 +13,7 @@ w_num = 'data/workers.pl'
 if not os.path.exists(w_num): public.writeFile(w_num,'1')
 workers = int(public.readFile(w_num))
 if not workers: workers = 1
-threads = 4
+threads = 1
 backlog = 512
 reload = False
 daemon = True
