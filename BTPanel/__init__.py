@@ -403,7 +403,9 @@ def config(pdata = None):
         workers_p = 'data/workers.pl'
         if not os.path.exists(workers_p): public.writeFile(workers_p,'1')
         data['workers'] = int(public.readFile(workers_p))
-        data['session_timeout'] = int(public.readFile(sess_out_path))
+        s_time_tmp = public.readFile(sess_out_path)
+        if not s_time_tmp: s_time_tmp = '0'
+        data['session_timeout'] = int(s_time_tmp)
         if c_obj.get_ipv6_listen(None): data['ipv6'] = 'checked'
         if c_obj.get_token(None)['open']: data['api'] = 'checked'
         data['basic_auth'] = c_obj.get_basic_auth_stat(None)

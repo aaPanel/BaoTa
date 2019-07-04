@@ -36,7 +36,9 @@ class config:
         sess_out_path = 'data/session_timeout.pl'
         if 'session_timeout' in get:
             session_timeout = int(get.session_timeout)
-            if int(public.readFile(sess_out_path)) != session_timeout:
+            s_time_tmp = public.readFile(sess_out_path)
+            if not s_time_tmp: s_time_tmp = '0'
+            if int(s_time_tmp) != session_timeout:
                 if session_timeout < 300: return public.returnMsg(False,'超时时间不能小于300秒')
                 public.writeFile(sess_out_path,str(session_timeout))
                 isReWeb = True
