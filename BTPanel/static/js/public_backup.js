@@ -515,12 +515,15 @@ var bt =
 		if(!config.hasOwnProperty('time')) config.time = 2000;		
 		if(typeof config.msg=='string' && bt.contains(config.msg,'ERROR')) config.time = 0;
 		
-		if(config.hasOwnProperty('icon')){
-			if(typeof config.icon=='boolean') config.icon = config.icon?1:2;
-		}
-		else if(config.hasOwnProperty('status')){
-			config.icon=config.status?1:2;
-		}
+        if (config.hasOwnProperty('icon')) {
+            if (typeof config.icon == 'boolean') config.icon = config.icon ? 1 : 2;
+        }
+        else if (config.hasOwnProperty('status')) {
+            config.icon = config.status ? 1 : 2;
+            if (!config.status) {
+                btnObj.time = 0;
+            }
+        }
 		if(config.icon) btnObj.icon = config.icon;
 		btnObj.time = config.time;
 		var msg = ''
