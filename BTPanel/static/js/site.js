@@ -597,8 +597,10 @@ var site = {
             })
         },
         reload: function (index) {
-            site.reload(7);
-            $('#ssl_tabs span:eq(' + index + ')').trigger('click');
+            if (index == undefined) index = 0
+            var _sel = $('#ssl_tabs .on');
+            if (_sel.length == 0) _sel = $('#ssl_tabs span:eq(0)');
+            _sel.trigger('click');
         }
     },
     edit: {
@@ -2341,7 +2343,11 @@ var site = {
         })
     },
     reload: function (index) {
-        $('.site-menu p:eq(' + index + ')').trigger('click');
+        if (index == undefined) index = 0
+
+        var _sel = $('.site-menu p.bgw');
+        if (_sel.length == 0) _sel = $('.site-menu p:eq(0)');
+        _sel.trigger('click');
     },
     plugin_firewall: function () {
         var typename = bt.get_cookie('serverType');
