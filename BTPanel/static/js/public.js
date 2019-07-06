@@ -4,6 +4,23 @@ $(document).ready(function() {
 	});
 });
 
+var my_headers = {};
+var request_token_ele = document.getElementById("request_token_head");
+if (request_token_ele) {
+    var request_token = request_token_ele.getAttribute('token');
+    if (request_token) {
+        my_headers['x-http-token'] = request_token
+    }
+}
+request_token_cookie = getCookie('request_token');
+if (request_token_cookie) {
+    my_headers['x-cookie-token'] = request_token_cookie
+}
+
+if (my_headers) {
+    $.ajaxSetup({ headers: my_headers });
+}
+
 function RandomStrPwd(b) {
 	b = b || 32;
 	var c = "AaBbCcDdEeFfGHhiJjKkLMmNnPpRSrTsWtXwYxZyz2345678";

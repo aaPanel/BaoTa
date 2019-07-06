@@ -178,9 +178,9 @@ def is_login(result):
     if 'login' in session:
         if session['login'] == True:
             result = make_response(result)
-            request_token = public.md5(app.secret_key + str(time.time()))
+            request_token = public.GetRandomString(48)
             session['request_token'] = request_token
-            result.set_cookie('request_token',request_token,httponly=True,max_age=86400*30)
+            result.set_cookie('request_token',request_token,max_age=86400*30)
     return result
 
 @app.route('/site',methods=method_all)
@@ -987,14 +987,19 @@ def websocket_test(data):
     if not hasattr(pdata,'s_response'): pdata.s_response = 'response'
     emit(pdata.s_response,{'data':result})
 
+def check_csrf():
+    request_token = request.cookies.get('request_token')
+    if session['request_token'] != request_token: return False
+    http_token = request.headers.get('x-http-token')
+    if not http_token: return False
+    if http_token != session['request_token_head']: return False
+    cookie_token = request.headers.get('x-cookie-token')
+    if cookie_token != session['request_token']: return False
+    return True
+
 def publicObject(toObject,defs,action=None,get = None):
     if 'request_token' in session and 'login' in session:
-        request_token = request.cookies.get('request_token')
-        if session['request_token'] != request_token:
-            if session['login'] != False:
-                session['login'] = False;
-                cache.set('dologin',True)
-                return redirect('/login')
+        if not check_csrf(): return public.ReturnJson(False,'Csrf-Token error.'),json_header
 
     if not get: get = get_input()
     if action: get.action = action
@@ -1021,6 +1026,8 @@ def check_login():
     if cache.get('dologin'): return False
     if 'login' in session: 
         loginStatus = session['login']
+        if loginStatus:
+            if not check_csrf(): return False
         return loginStatus
     return False
 
