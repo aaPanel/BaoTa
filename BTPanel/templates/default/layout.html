@@ -34,6 +34,7 @@
 <body>
     <div class="bt-warp bge6">
         <div class="top-tips">当前IE浏览器版本过低,部分功能无法展示,请更换至其他浏览器，国产浏览器请使用极速模式！</div>
+        <a style="display:none;" id="request_token_head" token="{{session['request_token_head']}}"></a>
         <div id="container" class="container-fluid {% if 'tmp_login' in session %}group-control{% endif %}">
             <div class="sidebar-scroll{% if 'tmp_login' in session %}-panel{% endif %}">
                 <div class="sidebar-auto">
@@ -88,7 +89,7 @@
             <script src="/static/build/addons/search/search.js"></script>
             <script src="/static/build/addons/winptyCompat/winptyCompat.js"></script>
             <script type="text/javascript" src="/static/js/clipboard.min.js"></script>
-            <script src="/static/js/public.js?version={{g['version']}}"></script>
+            <script src="/static/js/public.js?v={{g['version']}}"></script>
             <script src="/static/js/public_backup.js?version={{g['version']}}"></script>
             <script src="/static/js/bt_upload.js?version={{g['version']}}"></script>
             {% block content %}{% endblock %}
@@ -97,7 +98,7 @@
     </div>
 </body>
 </html>
-<script type="text/javascript">
+<script type="text/javascript">   
     if (navigator.appName == "Microsoft Internet Explorer" && parseInt(navigator.appVersion.split(";")[1].replace(/[ ]/g, "").replace("MSIE", "")) < 9) {
         $(".main-content").css("margin-top", "50px");
         $('.top-tips').show();
@@ -132,6 +133,8 @@
                 }
                 return;
             }
+
+            console.log(task_list.length)
             var msg_body = '';
             var is_add = false;
             for (var i = 0; i < task_list.length; i++) {

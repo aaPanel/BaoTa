@@ -18,6 +18,11 @@ py26=$(python -V 2>&1|grep '2.6.')
 if [ "$py26" != "" ];then
 	pythonV=python3
 fi
+env_path=$panel_path/env/bin/activate
+if [ -f $env_path ];then
+	source $env_path
+fi
+
 panel_start()
 {
         isStart=`ps aux|grep 'runserver:app'|grep -v grep|awk '{print $2}'`

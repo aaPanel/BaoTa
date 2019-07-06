@@ -45,6 +45,7 @@ class userlogin:
             cache.delete('dologin')
             sess_input_path = 'data/session_last.pl'
             public.writeFile(sess_input_path,str(int(time.time())))
+            self.set_request_token()
             return public.returnJson(True,'LOGIN_SUCCESS'),json_header
         except Exception as ex:
             stringEx = str(ex)
@@ -114,6 +115,10 @@ class userlogin:
         if not 'code' in session:
             session['code'] = False
         self.error_num(False)
+
+    #生成request_token
+    def set_request_token(self):
+        session['request_token_head'] = public.GetRandomString(48)
 
     #防暴破
     def error_num(self,s = True):
