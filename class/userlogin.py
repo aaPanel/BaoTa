@@ -46,6 +46,7 @@ class userlogin:
             sess_input_path = 'data/session_last.pl'
             public.writeFile(sess_input_path,str(int(time.time())))
             self.set_request_token()
+            self.login_token()
             return public.returnJson(True,'LOGIN_SUCCESS'),json_header
         except Exception as ex:
             stringEx = str(ex)
@@ -79,9 +80,16 @@ class userlogin:
             del(data['tmp_token'])
             del(data['tmp_time'])
             public.writeFile(save_path,json.dumps(data))
+            self.set_request_token()
+            self.login_token()
             return redirect('/')
         except:
             return public.returnJson(False,'登录失败,' + public.get_error_info()),json_header
+
+
+    def login_token(self):
+        import config
+        config.config().reload_session()
 
     def request_get(self,get):
         #if os.path.exists('/www/server/panel/install.pl'): raise redirect('/install');

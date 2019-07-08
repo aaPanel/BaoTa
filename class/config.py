@@ -14,12 +14,19 @@ class config:
     
     def getPanelState(self,get):
         return os.path.exists('/www/server/panel/data/close.pl');
+
+    def reload_session(self):
+        userInfo = public.M('users').where("username=?",(session['username'],)).find()
+        token = public.Md5(userInfo['username'] + '/' + userInfo['password'])
+        public.writeFile('data/login_token.pl',token)
+        session['login_token'] = token
     
     def setPassword(self,get):
         if get.password1 != get.password2: return public.returnMsg(False,'USER_PASSWORD_CHECK')
         if len(get.password1) < 5: return public.returnMsg(False,'USER_PASSWORD_LEN')
         public.M('users').where("username=?",(session['username'],)).setField('password',public.md5(get.password1.strip()))
         public.WriteLog('TYPE_PANEL','USER_PASSWORD_SUCCESS',(session['username'],))
+        self.reload_session()
         return public.returnMsg(True,'USER_PASSWORD_SUCCESS')
     
     def setUsername(self,get):
@@ -28,6 +35,7 @@ class config:
         public.M('users').where("username=?",(session['username'],)).setField('username',get.username1.strip())
         public.WriteLog('TYPE_PANEL','USER_USERNAME_SUCCESS',(session['username'],get.username2))
         session['username'] = get.username1
+        self.reload_session()
         return public.returnMsg(True,'USER_USERNAME_SUCCESS')
     
     def setPanel(self,get):
