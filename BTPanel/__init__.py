@@ -875,14 +875,15 @@ except:
 
 @socketio.on('webssh')
 def webssh(msg):
-    if not check_login(): 
+    if not check_login(msg['x_http_token']): 
         emit('server_response',{'data':public.getMsg('INIT_WEBSSH_LOGOUT')})
         return None
+
     global shell,ssh
     ssh_success = True
-    if type(msg) == dict:
-        if 'ssh_user' in msg:
-            connect_ssh(msg['ssh_user'].strip(),msg['ssh_passwd'].strip())
+    if type(msg['data']) == dict:
+        if 'ssh_user' in msg['data']:
+            connect_ssh(msg['data']['ssh_user'].strip(),msg['data']['ssh_passwd'].strip())
     if not shell: ssh_success = connect_ssh()
     if not shell:
         emit('server_response',{'data':public.getMsg('INIT_WEBSSH_CONN_ERR')})
@@ -891,13 +892,10 @@ def webssh(msg):
     if not ssh_success:
         emit('server_response',{'data':public.getMsg('INIT_WEBSSH_CONN_ERR')})
         return;
-    shell.send(msg)
-    try:
-        time.sleep(0.005)
-        recv = shell.recv(4096)
-        emit('server_response',{'data':recv.decode("utf-8")})
-    except Exception as ex:
-        pass
+    shell.send(msg['data'])
+    time.sleep(0.005)
+    recv = shell.recv(4096)
+    emit('server_response',{'data':recv.decode("utf-8")})
 
 def connect_ssh(user=None,passwd=None):
     global shell,ssh
@@ -966,26 +964,11 @@ def connected_msg(msg):
     if not shell: connect_ssh()
     if shell:
         try:
-            #shell.send(msg)
             recv = shell.recv(8192)
             emit('server_response',{'data':recv.decode("utf-8")})
         except:
             pass
 
-
-@socketio.on('panel')
-def websocket_test(data):
-    pdata = data
-    if not check_login():
-        emit(pdata.s_response,{'data':public.returnMsg(-1,public.getMsg('INIT_WEBSSH_LOGOUT'))})
-        return None 
-    mods = ['site','ftp','database','ajax','system','crontab','files','config','panel_data','plugin','ssl','auth','firewall','panel_wxapp']
-    if not pdata['s_module'] in mods:
-        result = public.returnMsg(False,"INIT_WEBSOCKET_ERR")
-    else:
-        result = eval("%s(pdata)" % pdata['s_module'])
-    if not hasattr(pdata,'s_response'): pdata.s_response = 'response'
-    emit(pdata.s_response,{'data':result})
 
 def check_csrf():
     request_token = request.cookies.get('request_token')
@@ -1022,12 +1005,12 @@ def publicObject(toObject,defs,action=None,get = None):
     return public.ReturnJson(False,'ARGS_ERR'),json_header
 
 
-def check_login():
+def check_login(http_token=None):
     if cache.get('dologin'): return False
     if 'login' in session: 
         loginStatus = session['login']
-        if loginStatus:
-            if not check_csrf(): return False
+        if loginStatus and http_token:
+            if session['request_token_head'] != http_token: return False
         return loginStatus
     return False
 

@@ -138,6 +138,13 @@ class panelAdmin(panelSetup):
                         return redirect('/login')
                     public.writeFile(sess_input_path,str(int(time.time())))
                 except:pass
+
+            filename = 'data/login_token.pl'
+            if os.path.exists(filename):
+                token = public.readFile(filename).strip()
+                if 'login_token' in session:
+                    if session['login_token'] != token:
+                        return redirect('/login?dologin=True')
         except:
             return redirect('/login')
 
