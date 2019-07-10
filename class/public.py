@@ -708,6 +708,12 @@ def inArray(arrays,searchStr):
     
     return False
 
+#格式化指定时间戳
+def format_date(format="%Y-%m-%d %H:%M:%S",times = None):
+    if not times: times = int(time.time())
+    time_local = time.localtime(times)
+    return time.strftime(format, time_local) 
+
 
 #检查Web服务器配置文件是否有错误
 def checkWebConfig():

@@ -93,7 +93,7 @@ class panelSite(panelRedirect):
         
         listen = "\nListen "+tmp[0]
         listen_ipv6 = ''
-        if self.is_ipv6: listen_ipv6 = "\nListen [::]:" + port
+        #if self.is_ipv6: listen_ipv6 = "\nListen [::]:" + port
         allConf = allConf.replace(listen,listen + "\nListen " + port + listen_ipv6)
         public.writeFile(filename, allConf)
         return True
@@ -777,35 +777,23 @@ class panelSite(panelRedirect):
     
     # 保存第三方证书
     def SetSSL(self, get):
-        # type = get.type;
         siteName = get.siteName;
         path = '/www/server/panel/vhost/cert/' + siteName;
-        if not os.path.exists(path):
-            public.ExecShell('mkdir -p ' + path)
-
-        csrpath = path + "/fullchain.pem";  # 生成证书路径
-        keypath = path + "/privkey.pem";  # 密钥文件路径
+        csrpath = path + "/fullchain.pem"
+        keypath = path + "/privkey.pem"
 
         if (get.key.find('KEY') == -1): return public.returnMsg(False, 'SITE_SSL_ERR_PRIVATE');
         if (get.csr.find('CERTIFICATE') == -1): return public.returnMsg(False, 'SITE_SSL_ERR_CERT');
         public.writeFile('/tmp/cert.pl', get.csr);
         if not public.CheckCert('/tmp/cert.pl'): return public.returnMsg(False, '证书错误,请粘贴正确的PEM格式证书!');
+        backup_cert = '/tmp/backup_cert_' + siteName
+        
+        import shutil
+        if os.path.exists(backup_cert): shutil.rmtree(backup_cert)
+        if os.path.exists(path): shutil.move(path,backup_cert)
+        if os.path.exists(path): shutil.rmtree(path)
 
-        public.ExecShell('\\cp -a ' + keypath + ' /tmp/backup1.conf');
-        public.ExecShell('\\cp -a ' + csrpath + ' /tmp/backup2.conf');
-
-        # 清理旧的证书链
-        if os.path.exists(path + '/README'):
-            public.ExecShell('rm -rf ' + path);
-            public.ExecShell('rm -rf ' + path + '-00*');
-            public.ExecShell('rm -rf /etc/letsencrypt/archive/' + get.siteName);
-            public.ExecShell('rm -rf /etc/letsencrypt/archive/' + get.siteName + '-00*');
-            public.ExecShell('rm -f /etc/letsencrypt/renewal/' + get.siteName + '.conf');
-            public.ExecShell('rm -f /etc/letsencrypt/renewal/' + get.siteName + '-00*.conf');
-            public.ExecShell('rm -f /etc/letsencrypt/live/' + get.siteName + '/README')
-            public.ExecShell('rm -f ' + path + '/README');
-            public.ExecShell('mkdir -p ' + path);
-
+        public.ExecShell('mkdir -p ' + path)
         public.writeFile(keypath, get.key);
         public.writeFile(csrpath, get.csr);
 
@@ -815,16 +803,19 @@ class panelSite(panelRedirect):
         isError = public.checkWebConfig();
 
         if (type(isError) == str):
-            public.ExecShell('\\cp -a /tmp/backup1.conf ' + keypath);
-            public.ExecShell('\\cp -a /tmp/backup2.conf ' + csrpath);
+            if os.path.exists(path): shutil.rmtree(backup_cert)
+            shutil.move(backup_cert,path)
             return public.returnMsg(False, 'ERROR: <br><a style="color:red;">' + isError.replace("\n", '<br>') + '</a>');
         public.serviceReload();
 
-        if os.path.exists(path + '/partnerOrderId'): os.system('rm -f ' + path + '/partnerOrderId');
-        p_file = '/etc/letsencrypt/live/' + get.siteName + '/partnerOrderId'
-        if os.path.exists(p_file): os.system('rm -f ' + p_file);
-        public.WriteLog('TYPE_SITE', 'SITE_SSL_SAVE_SUCCESS');
-        return public.returnMsg(True, 'SITE_SSL_SUCCESS');
+        if os.path.exists(path + '/partnerOrderId'): os.remove(path + '/partnerOrderId')
+        p_file = '/etc/letsencrypt/live/' + get.siteName
+        if os.path.exists(p_file): shutil.rmtree(p_file)
+        public.WriteLog('TYPE_SITE', 'SITE_SSL_SAVE_SUCCESS')
+
+        #清理备份证书
+        if os.path.exists(backup_cert): shutil.rmtree(backup_cert)
+        return public.returnMsg(True, 'SITE_SSL_SUCCESS')
         
     #获取运行目录
     def GetRunPath(self,get):
@@ -837,329 +828,73 @@ class panelSite(panelRedirect):
         if type(get.id) == list: get.id = get.id[0]['id'];
         result = self.GetSiteRunPath(get);
         return result['runPath'];
-    
+
+
     # 创建Let's Encrypt免费证书
-    def CreateLet(self, get):
-        import time
-        
-        # 确定主域名顺序
+    def CreateLet(self,get):
+
         domains = json.loads(get.domains)
-        domainsTmp = []
-        if get.siteName in domains: domainsTmp.append(get.siteName);
-        Wildcard_domain = ''
-        for domainTmp in domains:
-            if domainTmp.startswith("*."):
-                Wildcard_domain = domainTmp
-            if domainTmp == get.siteName: continue;
-            domainsTmp.append(domainTmp);
-        domains = domainsTmp;
-        if not len(domains): return public.returnMsg(False, '请选择域名');
-        get.first_domain = domains[0].replace("*.", '')
-        if len(domains) > 1 and Wildcard_domain:
-            for dom in domains:
-                if "*." in dom: continue
-                if len(dom.split(".")) == 2: continue
-                if Wildcard_domain.replace("*.", "") == dom.split(".")[-2] + "." + dom.split(".")[-1]:
-                    return public.returnMsg(False, '通配符域名不能和子域名一起申请证书');
+        if not len(domains): 
+            return public.returnMsg(False, '请选择域名');
 
-        # 定义证书目录
-        path = os.path.join('/www/server/panel/vhost/cert/', get.first_domain);
-        path = path.replace("*.", '')
-        if os.path.isdir(path):
-            public.ExecShell("rm -rf {}".format(path))
-        public.ExecShell("mkdir -p {}".format(path))
-        csrpath = os.path.join(path, "fullchain.pem");  # 生成证书路径
-        keypath = os.path.join(path, "privkey.pem");  # 密钥文件路径
-
-        # 准备基础信息
-        actionstr = get.updateOf
-        siteInfo = public.M('sites').where('name=?', (get.siteName,)).field('id,name,path').find();
-        runPath = self.GetRunPath(get);
-        srcPath = siteInfo['path'];
-        if runPath != False and runPath != '/': siteInfo['path'] += runPath;
-        get.path = siteInfo['path'];
+        file_auth =  True
+        if hasattr(get, 'dnsapi'): 
+            file_auth = False
+        
+        if not hasattr(get, 'dnssleep'): 
+            get.dnssleep = 10
 
         email = public.M('users').getField('email');
         if hasattr(get, 'email'):
-            if get.email.strip() != '':
-                public.M('users').setField('email', get.email);
-                email = get.email;
-                if "@" not in email: email = ''
-
-        force = False;
-        dns = False
-        dns_plu = False
-        crontab = ''
-        renew = False
-        file_auth = False
-        if not hasattr(get, "dnsapi"):
-            file_auth = True
-
-        if hasattr(get, 'force'):
-            if get.force == 'true':
-                force = True;
-
-        if hasattr(get, 'renew'):  # 验证手动的dns txt解析
-            file_auth = False
-            renew = True
-            public.ExecShell('''cd {} && rm -rf account_key.key fullchain.pem privkey.pem  Confirmation_verification domain_txt_dns_value.json '''.format(path))
-            result = [" ", " "]
-            public.WriteFile(os.path.join(path, "Confirmation_verification"), "ok", mode="w")
-            num = 0
-            while True:
-                num += 1
-                if os.path.isfile(csrpath) and os.path.isfile(keypath):
-                    break
-                else:
-                    data = {};
-                    data['err'] = result;
-                    data['out'] = result
-                    if os.path.isfile(os.path.join(path, "check_authorization_status_response")):
-                        result[1] = public.ReadFile(os.path.join(path, "check_authorization_status_response"))
-                        public.ExecShell("cd {} &&  rm -rf  check_authorization_status_response".format(path))
-                        public.WriteFile(os.path.join(path, "timeout_info"), "", mode="w")
-                        data['msg'] = '<h2>验证txt解析记录失败,没有添加txt解析或添加错误!</h2>';
-                        data['status'] = False;
-                        return data
-                    elif os.path.isfile(os.path.join(path, "timeout_info")) or num > 60:
-                        result[1] = "验证TXT记录值错误,当前TXT记录值已经失效或过期"
-                        data['msg'] = '<h2>当前TXT记录值已经过期，请重新获取!</h2>';
-                        data['status'] = False;
-                        return data
-                    elif not public.ExecShell('''ps aux|grep -v grep|grep sewer_Usage''')[0]:
-                        return public.returnMsg(False, 'TXT记录值已失效,请重新获取TXT记录值')
-                time.sleep(5)
-        else:
-            if not file_auth:
-                dnssleep = get.dnssleep
-                dnsapi = get.dnsapi
+            if get.email.find('@') == -1: 
+                get.email = email
             else:
-                dnssleep = 10
-                dnsapi = ''
-            public.ExecShell(
-                '''cd {} && rm -rf account_key.key fullchain.pem privkey.pem check_authorization_status_response Confirmation_verification domain_txt_dns_value.json apply_for_cert_issuance_response timeout_info'''.format(
-                    path))
-            json_parem = {"dnsapi": dnsapi, "domain_alt_names": "", "contact_email": email, "dnssleep": dnssleep, "key": "", "secret": "", "path": path}
-            if hasattr(get, 'dnsapi'):
-                if get.dnsapi == 'dns':
-                    json_parem['dnssleep'] = get.dnssleep
-                    dns = True
-                else:
-                    if not self.Check_DnsApi(get.dnsapi): return public.returnMsg(False, '请先设置该API');
-                    if get.dnsapi == 'dns_bt':
-                        c_file = '/www/server/panel/plugin/dns/dns_main.py';
-                        if not os.path.exists(c_file): return public.returnMsg(False, '请先安装[云解析]插件');
-                        c_conf = public.readFile(c_file)
-                        if c_conf.find('add_txt') == -1:
-                            os.system('wget -O ' + c_file + ' http://download.bt.cn/install/plugin/dns/dns_main.py -T 5')
-                        sys.path.append('/www/server/panel/plugin/dns')
-                        import dns_main
-                        dns_plu = dns_main.dns_main()
-                    else:
-                        dns_api_list = self.GetDnsApi(get)
-                        for i in dns_api_list:
-                            if i['name'] == get.dnsapi:
-                                json_parem['key'] = i['data'][0]['value']
-                                json_parem['secret'] = i['data'][1]['value']
-
-        # 构造参数
-        domainCount = 0
-        errorDomain = "";
-        errorDns = "";
-        done = '';
-        dns_type = hasattr(get, 'dnsapi')
+                get.email = get.email.strip()
+                public.M('users').where('id=?',(1,)).setField('email',get.email);
+        else:
+            get.email = email
+              
         for domain in domains:
             if public.checkIp(domain): continue;
-            if not dns_type:
-                if domain.find('*.') != -1:
-                    if not renew:
-                        return public.returnMsg(False, '泛域名不能使用【文件验证】的方式申请证书!');
-            get.domain = domain;
-            if public.M('domain').where('name=?', (domain,)).count():
-                p = siteInfo['path'];
-            else:
-                p = public.M('binding').where('domain=?', (domain,)).getField('path');
-            get.path = p;
-            if force:
-                if not self.CheckDomainPing(get): errorDomain += '<li>' + domain + '</li>';
-            if dns_plu:
-                domainId, key = dns_plu.get_domainid_byfull('test.' + domain)
-                if not domainId: errorDns += '<li>' + domain + '</li>';
-            if p != done:
-                done = p;
+            if domain.find('*.') >=0 and not file_auth:
+                return public.returnMsg(False, '泛域名不能使用【文件验证】的方式申请证书!');
 
-            domainCount += 1
-
-        if errorDomain: return public.returnMsg(False, 'SITE_SSL_ERR_DNS', ('<span style="color:red;"><br>' + errorDomain + '</span>',));
-        # 获取域名数据
-        if domainCount == 0: return public.returnMsg(False, 'SITE_SSL_ERR_EMPTY')
-
-        # 检查是否自定义证书
-        partnerOrderId = path + '/partnerOrderId';
-        if os.path.exists(partnerOrderId):
-            os.remove(partnerOrderId)
-
-        #检查依赖
-        self.check_ssl_pack()
-
-        # dns调用脚本获取ssl证书
-        if dns_type:
-            json_parem['domain_alt_names'] = ",".join(domains)
-            if dns:
-                result = public.ExecShell('''nohup python /www/server/panel/class/sewer_Usage.py  '{}'  > sewer_Usage.log 2>&1 & '''.format(json.dumps(json_parem)))
-            else:
-                shell_str = '''python /www/server/panel/class/sewer_Usage.py  '{}'  '''.format(json.dumps(json_parem))
-                result = public.ExecShell(shell_str);
-                crontab = shell_str
-        if dns:  # 返回txt手动解析信息
-            while True:
-                if os.path.isfile(os.path.join(path, "domain_txt_dns_value.json")):
-                    txt_domain_value_li = json.loads(public.ReadFile(os.path.join(path, "domain_txt_dns_value.json")))
-                    break
-                elif os.path.isfile(os.path.join(path, "apply_for_cert_issuance_response")):
-                    data = {};
-                    data['err'] = ["", public.ReadFile(os.path.join(path, "apply_for_cert_issuance_response"))]
-                    data['out'] = data['err'][1]
-                    data['result'] = json.loads(data['err'][1]);
-                    if data['result']['status'] == 429:
-                        data['msg'] = '<h2>签发失败,您尝试申请证书的失败次数已达上限!</h2>';
-                    if data['result']['status'] == 400:
-                        data['msg'] = '<h2>签发失败,::通配符域名不能和子域名一起申请证书!</h2>';
-                    data['status'] = False;
-                    return data
-                time.sleep(5)
-            try:
-                data = {}
-                data['err'] = result;
-                data['out'] = result[0];
-                data['status'] = True
-                data['fullDomain'] = []
-                data['txtValue'] = []
-                data['msg'] = "获取成功,请手动解析域名"
-                for i in txt_domain_value_li:
-                    data['fullDomain'].append('_acme-challenge.' + i['dns_name'].replace('*.',''))
-                    data['txtValue'].append(i['acme_txt_value'])
-                return data
-            except:
-                data = {};
-                data['err'] = result;
-                data['out'] = result[0];
-                data['msg'] = '获取失败!';
-                data['result'] = {};
-                return data
-
-        # 判断是否获取成功
-        if not os.path.exists(csrpath) and not os.path.exists(keypath) and dns_type:
-            data = {};
-            data['err'] = result;
-            data['out'] = result[0];
-            try:
-                msg = json.loads(re.search("{.+}", result[1]).group())['data']
-                data['msg'] = "<h2>签发失败," + msg + "</h2>"
-            except Exception:
-                data['msg'] = '签发失败,我们无法验证您的域名:<p>1、检查域名是否绑定到对应站点</p><p>2、检查域名是否正确解析到本服务器,或解析还未完全生效</p><p>3、如果您的站点设置了反向代理,或使用了CDN,请先将其关闭</p><p>4、如果您的站点设置了301重定向,请先将其关闭</p><p>5、如果以上检查都确认没有问题，请尝试更换DNS服务商</p>';
-            data['result'] = {};
-            if os.path.isfile(os.path.join(path, "check_authorization_status_response")):
-                data['result'] = json.loads(public.ReadFile(os.path.join(path, "check_authorization_status_response")));
-                if data['result']['status'] == "invalid":
-                    data['msg'] = '<h2>签发失败,验证TXT解析失败，域名解析错误，或解析未生效!</h2>'
-            if os.path.isfile("timeout_info"):
-                data['msg'] = '<h2>签发失败,当前txt解析记录已经过期，请重新获取!</h2>'
-            if os.path.isfile(os.path.join(path, "apply_for_cert_issuance_response")):
-                data['result'] = json.loads(public.ReadFile(os.path.join(path, "apply_for_cert_issuance_response")));
-                if data['result']['status'] == 429:
-                    data['msg'] = '<h2>签发失败,您今天尝试申请证书的次数已达上限!</h2>';
-                if data['result']['status'] == 400:
-                    data['msg'] = '<h2>签发失败,::通配符域名不能和子域名一起申请证书!</h2>';
-
-            data['status'] = False;
-            return data
-
-        if file_auth:  # 文件验证调用脚本
-            # 检查是否设置301和反向代理
+        if file_auth:
             get.sitename = get.siteName
             if self.GetRedirectList(get): return public.returnMsg(False, 'SITE_SSL_ERR_301');
             if self.GetProxyList(get): return public.returnMsg(False,'已开启反向代理的站点无法申请SSL!');
+            data = self.get_site_info(get.siteName)
+            get.site_dir = data['path']
+        else:          
+            dns_api_list = self.GetDnsApi(get)
+            get.dns_param = None
+            for dns in dns_api_list:                
+                if dns['name'] == get.dnsapi:        
+                    param = [];
+                    if not dns['data']: continue 
+                    for val in dns['data']:
+                        param.append(val['value'])
+                    get.dns_param  = '|'.join(param)
+            n_list = ['dns' , 'dns_bt']
+            if not get.dnsapi in n_list:
+                if len(get.dns_param) < 16: return public.returnMsg(False, '请先设置【%s】的API接口参数.' % get.dnsapi);
+            if get.dnsapi == 'dns_bt':
+                if not os.path.exists('plugin/dns/dns_main.py'):
+                    return public.returnMsg(False, '请先到软件商店安装【云解析】，并完成域名NS绑定.');
 
-            DOMAINS = ''
-            for dom in domains:
-                DOMAINS += 'DNS:{},'.format(dom)
-            json_parem = {"path": path, "siteName": get.siteName, "DOMAINS": DOMAINS[:-1],"sitePath":siteInfo['path']}
-            result = public.ExecShell('''python  /www/server/panel/class/letsencrypt.py '{}' '''.format(json.dumps(json_parem)))
-            crontab = '''python  /www/server/panel/class/letsencrypt.py '{}' '''.format(json.dumps(json_parem))
-            if os.path.exists(csrpath) and os.path.exists(keypath):
-                pass
-            else:
-                if result[1]:
-                    data = {};
-                    data['err'] = result;
-                    data['out'] = result[0];
-                    data['msg'] = '签发失败,我们无法验证您的域名:<p>1、检查域名是否绑定到对应站点</p><p>2、检查域名是否正确解析到本服务器,或解析还未完全生效</p><p>3、如果您的站点设置了反向代理,或使用了CDN,请先将其关闭</p><p>4、如果您的站点设置了301重定向,请先将其关闭</p><p>5、如果以上检查都确认没有问题，请尝试更换DNS服务商</p>';
-                    data['result'] = result;
-                    if "too many certificates already issued for exact set of domains" in result[1] or "Error creating new account :: too many registrations for this IP" in result[1]:
-                        data['msg'] = '<h2>签发失败,您今天尝试申请证书的次数已达上限!</h2>';
-                    elif "DNS problem: NXDOMAIN looking up A for" in result[1] or "No valid IP addresses found for" in result[1] or "Invalid response from" in result[1] \
-                            or "Policy forbids issuing for name" in result[1] or "\'status\'\:\ 4" in result[1] or '''"status": 4''' in result[1]:
-                        data['msg'] = '<h2>签发失败,域名解析错误，或解析未生效，或域名未备案!</h2>';
-                    elif "错误，找不到文件openssl.cnf,请安装openssl" in result[1]:
-                        data['msg'] = '<h2>签发失败，请安装openssl!</h2>';
-                    data['status'] = False;
-                    public.ExecShell("rm -rf {}/*".format(path))
-                    return data
+        self.check_ssl_pack()
+        import panelLets
+        lets = panelLets.panelLets()
+        result = lets.apple_lest_cert(get)
+        if result['status'] and not 'code' in result:       
+            get.onkey = 1;
+            result = self.SetSSLConf(get)
+        return result
 
-        public.ExecShell('echo "let" > "' + path + '/README"');
-        if (actionstr == '2'): return public.returnMsg(True, 'SITE_SSL_UPDATE_SUCCESS');
+    def get_site_info(self,siteName):
+        data = public.M("sites").where('name=?',siteName).field('path,name').find()
+        return data
 
-        # 定时任务
-        if crontab:
-            if "0 0 1 * * python /www/server/panel/class/crontab_ssl.py" not in public.ExecShell("crontab -l")[0]:
-                with open("/var/spool/cron/root", "a") as f:
-                    f.write("\n0 0 1 * * python /www/server/panel/class/crontab_ssl.py")
-            crontab_path = "/www/server/panel/vhost/crontab.json"
-            crontab_list = []
-            if os.path.isfile(crontab_path):
-                crontab_list = json.loads(public.ReadFile(crontab_path))
-            if crontab_list :
-                modify = False
-                for i in crontab_list:
-                    if get.siteName == i["siteName"]:
-                        i["cmd"] = crontab
-                        modify = True
-                if not modify:
-                    crontab_list.append({"siteName": get.siteName, "cmd": crontab})
-            else:
-                crontab_list.append({"siteName": get.siteName, "cmd": crontab})
-            public.WriteFile(crontab_path, json.dumps(crontab_list), mode="w")
-
-        sitekey = os.path.join("/www/server/panel/vhost/cert", get.siteName, 'privkey.pem')
-        sitecsr = os.path.join("/www/server/panel/vhost/cert", get.siteName, 'fullchain.pem')
-        public.ExecShell("mkdir -p {}".format(os.path.join("/www/server/panel/vhost/cert", get.siteName)))
-        public.ExecShell('''echo "let" > {}'''.format(os.path.join("/www/server/panel/vhost/cert", get.siteName, "README")));
-        if not os.path.isfile(sitecsr) and not os.path.isfile(sitekey):
-            public.ExecShell("/bin/cp {} {}".format(csrpath, sitecsr))
-            public.ExecShell("/bin/cp {} {}".format(keypath, sitekey))
-
-        # 写入配置文件
-        result = self.SetSSLConf(get);
-        result['csr'] = public.readFile(csrpath);
-        result['key'] = public.readFile(keypath);
-        public.serviceReload();
-        return result;
-
-
-    #处理acme.sh安装位置问题
-    def CheckAcme(self):
-        p1 = '/root/.acme.sh/'
-        p2 = '/.acme.sh/'
-
-        r_name = 'account.conf'
-        check_names = ['account.conf','acme.sh','dnsapi','deploy']
-        for r_name in check_names:
-            if os.path.exists(p1 +r_name):
-                if not os.path.exists(p2 + r_name): public.ExecShell("ln -sf " + p1 +r_name + ' ' + p2 +r_name)
-            else:
-                if os.path.exists(p2 + r_name): public.ExecShell("ln -sf " + p2 +r_name + ' ' + p1 +r_name)
-        return True
 
     #检测依赖库
     def check_ssl_pack(self):
@@ -1188,15 +923,10 @@ class panelSite(panelRedirect):
         apis = json.loads(public.ReadFile('./config/dns_api.json'))
         path = '/root/.acme.sh'
         if not os.path.exists(path + '/account.conf'): path = "/.acme.sh"
-        #if not os.path.exists(path + '/dnsapi'): os.makedirs(path + '/dnsapi')
         account = public.readFile(path + '/account.conf')
         if not account: account = ''
         is_write = False
         for i in range(len(apis)):
-            #filename = path + '/dnsapi/' + apis[i]['name'] + '.sh'
-            #if not os.path.exists(filename) and apis[i]['name'] != 'dns': 
-            #    public.downloadFile('http://download.bt.cn/install/dnsapi/' + apis[i]['name'] + '.sh',filename)
-            #    public.ExecShell("chmod +x " + filename)
             if not apis[i]['data']: continue
             for j in range(len(apis[i]['data'])):
                 if apis[i]['data'][j]['value']: continue
@@ -1208,9 +938,6 @@ class panelSite(panelRedirect):
 
     #设置DNS-API
     def SetDnsApi(self,get):
-        #path = '/root/.acme.sh'
-        #if not os.path.exists(path + '/account.conf'): path = "/.acme.sh"
-        #filename = path + '/account.conf'
         pdata = json.loads(get.pdata)
         apis = json.loads(public.ReadFile('./config/dns_api.json'))
         is_write = False
@@ -1221,9 +948,6 @@ class panelSite(panelRedirect):
                     if apis[i]['data'][j]['key'] != key: continue
                     apis[i]['data'][j]['value'] = pdata[key]
                     is_write = True
-                    #kvalue = key + "='" + pdata[key] + "'"
-                    #public.ExecShell("sed -i '/%s/d' %s" % (key,filename))
-                    #public.ExecShell("echo \"%s\" >> %s" % (kvalue,filename))
 
         if is_write: public.writeFile('./config/dns_api.json',json.dumps(apis))
         return public.returnMsg(True,"设置成功!")
@@ -1242,7 +966,7 @@ class panelSite(panelRedirect):
             tmp['binding'] = True
             domains.append(tmp)
         data['domains'] = domains
-        data['email'] = public.M('users').getField('email')
+        data['email'] = public.M('users').where('id=?',(1,)).getField('email')
         if data['email'] == '287962566@qq.com': data['email'] = ''
         return data
     
@@ -1275,7 +999,15 @@ class panelSite(panelRedirect):
         if nginx_v and openssl_v:
             return ' TLSv1.3'
         return ''
-        
+  
+    # 获取apache反向代理
+    def get_apache_proxy(self,conf):
+        rep = "\n*#引用反向代理规则，注释后配置的反向代理将无效\n+\s+IncludeOptiona[\s\w\/\.\*]+"
+        proxy = re.search(rep,conf)
+        if proxy:
+            return proxy.group()
+        return ""
+  
     # 添加SSL配置
     def SetSSLConf(self, get):
         siteName = get.siteName
@@ -1329,6 +1061,7 @@ class panelSite(panelRedirect):
         file = self.setupPath + '/panel/vhost/apache/' + siteName + '.conf';
         conf = public.readFile(file);
         if conf:
+            ap_proxy = self.get_apache_proxy(conf)
             if conf.find('SSLCertificateFile') == -1:
                 find = public.M('sites').where("name=?", (siteName,)).field('id,path').find()
                 tmp = public.M('domain').where('pid=?', (find['id'],)).field('name').select()
@@ -1367,7 +1100,7 @@ class panelSite(panelRedirect):
     #errorDocument 404 /404.html
     ErrorLog "%s-error_log"
     CustomLog "%s-access_log" combined
-
+    %s
     #SSL
     SSLEngine On
     SSLCertificateFile /www/server/panel/vhost/cert/%s/fullchain.pem
@@ -1391,7 +1124,7 @@ class panelSite(panelRedirect):
         %s
         DirectoryIndex %s
     </Directory>
-</VirtualHost>''' % (vName, path, siteName, domains, public.GetConfigValue('logs_path') + '/' + siteName, public.GetConfigValue('logs_path') + '/' + siteName, get.first_domain, get.first_domain, phpConfig, path, apaOpt, index)
+</VirtualHost>''' % (vName, path, siteName, domains, public.GetConfigValue('logs_path') + '/' + siteName, public.GetConfigValue('logs_path') + '/' + siteName ,ap_proxy ,get.first_domain, get.first_domain, phpConfig, path, apaOpt, index)
 
                 conf = conf + "\n" + sslStr;
                 self.apacheAddPort('443');
@@ -1413,7 +1146,10 @@ class panelSite(panelRedirect):
         public.serviceReload();
         self.save_cert(get);
         public.WriteLog('TYPE_SITE', 'SITE_SSL_OPEN_SUCCESS', (siteName,));
-        return public.returnMsg(True, 'SITE_SSL_OPEN_SUCCESS');
+        result = public.returnMsg(True, 'SITE_SSL_OPEN_SUCCESS');
+        result['csr'] = public.readFile('/www/server/panel/vhost/cert/' + get.siteName + '/fullchain.pem');
+        result['key'] = public.readFile( '/www/server/panel/vhost/cert/' + get.siteName + '/privkey.pem');
+        return result
 
     def save_cert(self, get):
         # try:
@@ -1584,7 +1320,10 @@ class panelSite(panelRedirect):
             get.certPath = csrpath
             import panelSSL
             cert_data = panelSSL.panelSSL().GetCertName(get)
-        return {'status': status, 'domain': domains, 'key': key, 'csr': csr, 'type': type, 'httpTohttps': toHttps,'cert_data':cert_data}
+
+        email = public.M('users').where('id=?',(1,)).getField('email')
+        if email == '287962566@qq.com': email = ''
+        return {'status': status, 'domain': domains, 'key': key, 'csr': csr, 'type': type, 'httpTohttps': toHttps,'cert_data':cert_data,'email':email}
     
     
     #启动站点
