@@ -114,6 +114,7 @@ def home():
     data['ftpCount'] = public.M('ftps').count()
     data['databaseCount'] = public.M('databases').count()
     data['lan'] = public.GetLan('index')
+    data['724'] = public.format_date("%m%d") == '0724'
     return render_template( 'index.html',data = data)
 
 @app.route('/close',methods=method_get)
@@ -483,7 +484,7 @@ def ssl(pdata = None):
     if comReturn: return comReturn
     import panelSSL
     toObject = panelSSL.panelSSL()
-    defs = ('RemoveCert','SetCertToSite','GetCertList','SaveCert','GetCert','GetCertName','DelToken','GetToken','GetUserInfo','GetOrderList','GetDVSSL','Completed','SyncOrder','GetSSLInfo','downloadCRT','GetSSLProduct','Renew_SSL','Get_Renew_SSL')
+    defs = ('RemoveCert','renew_lets_ssl','SetCertToSite','GetCertList','SaveCert','GetCert','GetCertName','DelToken','GetToken','GetUserInfo','GetOrderList','GetDVSSL','Completed','SyncOrder','GetSSLInfo','downloadCRT','GetSSLProduct','Renew_SSL','Get_Renew_SSL')
     result = publicObject(toObject,defs,None,pdata);
     return result;
 

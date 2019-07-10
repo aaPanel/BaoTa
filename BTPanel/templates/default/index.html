@@ -4,18 +4,24 @@
 <div class="main-content">
     <div class="container-fluid" style="padding-bottom: 66px;">
 		<div class="index-pos-box bgw mtb15">
-			<div class="position f12 c6 pull-left" style="background:none;padding-left:15px">
-				<span class="bind-user c4">
-					<a href="javascript:bt.pub.bind_btname();" class="btlink">宝塔账户</a>
-				</span>
-				{% if data['pd'].find('免费版') != -1 %}
-				<span class="bt-dashi">
-				<a class="btlink" href="https://www.bt.cn/invite" target="_blank" style="margin-left:5px">邀请奖励</a>
-				</span>
-				{% endif %}
-				<span class="bind-weixin c4"><a href="javascript:bt.weixin.open_wxapp();" class="btlink">微信</a></span>
-				<span class="ico-system">系统:</span><span id="info" style="margin-left:10px;"> {{data['lan']['S2']}}</span>&#12288;&#12288;{{data['lan']['S3']}} <span id="running">{{data['lan']['S4']}}</span>
-			</div>
+            <div class="position f12 c6 pull-left" style="background:none;padding-left:15px">
+                <span class="bind-user c4">
+                    <a href="javascript:bt.pub.bind_btname();" class="btlink">宝塔账户</a>
+                </span>
+                {% if data['pd'].find('免费版') != -1 %}
+                    {% if not data['724'] %}
+                        <span id="bt-fuli" class="bt-dashi">
+                            <a class="btlink" href="https://www.bt.cn/invite" target="_blank" style="margin-left:5px">邀请奖励</a>
+                        </span>
+                    {% else %}
+                        <span id="bt-fuli" class="bt-724">
+                            <a class="btlink" href="https://www.bt.cn/724.html" target="_blank" style="margin-left:5px">运维节</a>
+                        </span>
+                    {% endif %}
+                {% endif %}
+                <span class="bind-weixin c4"><a href="javascript:bt.weixin.open_wxapp();" class="btlink">微信</a></span>
+                <span class="ico-system">系统:</span><span id="info" style="margin-left:10px;"> {{data['lan']['S2']}}</span>&#12288;&#12288;{{data['lan']['S3']}} <span id="running">{{data['lan']['S4']}}</span>
+            </div>
 			<span class="pull-right f12 c6" style="line-height:52px; margin-right:15px">
 				{{data['pd']|safe}} <span id="btversion" style="margin-right:10px"><a onclick="index.open_log()">{{session['version']}}</a></span>
 				<span id="toUpdate"><a class="btlink" href="javascript:index.check_update();">更新</a></span>

@@ -421,9 +421,6 @@ class config:
             os.system('rm -f ' + sslConf);
             return public.returnMsg(True,'PANEL_SSL_CLOSE');
         else:
-            os.system('pip insatll cffi==1.10');
-            os.system('pip install cryptography==2.1');
-            os.system('pip install pyOpenSSL==16.2');
             try:
                 if not self.CreateSSL(): return public.returnMsg(False,'PANEL_SSL_ERR');
                 public.writeFile(sslConf,'True')
@@ -438,7 +435,7 @@ class config:
         key.generate_key(OpenSSL.crypto.TYPE_RSA, 2048)
         cert = OpenSSL.crypto.X509()
         cert.set_serial_number(0)
-        cert.get_subject().CN = '120.27.27.98';
+        cert.get_subject().CN = public.GetLocalIp()
         cert.set_issuer(cert.get_subject())
         cert.gmtime_adj_notBefore( 0 )
         cert.gmtime_adj_notAfter(86400 * 3650)

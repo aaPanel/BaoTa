@@ -341,28 +341,61 @@ class panelSSL:
         return data;
     
     #获取证书名称
-    def GetCertName(self,get):
+    def GetCertName(self,get):            
         try:
-            openssl = '/usr/local/openssl/bin/openssl';
-            if not os.path.exists(openssl): openssl = 'openssl';
-            result = public.ExecShell(openssl + " x509 -in "+get.certPath+" -noout -subject -enddate -startdate -issuer")
-            tmp = result[0].split("\n");
+            from OpenSSL import crypto 
+            from urllib3.contrib import pyopenssl as reqs
+        except :
+            os.system('pip install crypto')
+            os.system('pip install pyopenssl')
+
+            from OpenSSL import crypto 
+            from urllib3.contrib import pyopenssl as reqs
+            
+        certPath = get.certPath     
+        if os.path.exists(certPath):
             data = {}
-            data['subject'] = tmp[0].split('=')[-1]
-            data['notAfter'] = self.strfToTime(tmp[1].split('=')[1])
-            data['notBefore'] = self.strfToTime(tmp[2].split('=')[1])
-            data['issuer'] = tmp[3].split('O=')[-1].split(',')[0]
-            if data['issuer'].find('/') != -1: data['issuer'] = data['issuer'].split('/')[0];
-            result = public.ExecShell(openssl + " x509 -in "+get.certPath+" -noout -text|grep DNS")
-            data['dns'] = result[0].replace('DNS:','').replace(' ','').strip().split(',');
-            return data;
-        except:
-            return None;
+            f = open(certPath,'rb') 
+            pfx_buffer = f.read() 
+            cret_data = pfx_buffer
+            if certPath[-4:] == '.pfx':   
+                if hasattr(get, 'password'):
+                    p12 = crypto.load_pkcs12(pfx_buffer,get.password)
+                else:
+                    p12 = crypto.load_pkcs12(pfx_buffer)
+                x509 = p12.get_certificate()
+                data['type'] = 'pfx'     
+            else:
+                x509 = crypto.load_certificate(crypto.FILETYPE_PEM, pfx_buffer)
+                data['type'] = 'pem'
+            buffs = x509.digest('sha1')            
+            data['hash'] =  bytes.decode(buffs).replace(':','')
+            data['number'] = x509.get_serial_number()
+            issuser = x509.get_issuer()
+
+            is_key = 'O'
+            if len(issuser.get_components()) == 1: is_key = 'CN'                
+            for item in issuser.get_components():                 
+                if bytes.decode(item[0]) == is_key:                   
+                    data['issuer'] = bytes.decode(item[1])
+                    break
+            
+            data['notAfter'] = self.strfToTime(bytes.decode( x509.get_notAfter())[:-1])
+            data['notBefore'] = self.strfToTime(bytes.decode(x509.get_notBefore())[:-1])
+            data['version'] = x509.get_version()
+            data['timeout'] = x509.has_expired()
+            x509name = x509.get_subject()
+            data['subject'] = x509name.commonName.replace('*','_')
+            data['dns'] = []
+            alts = reqs.get_subj_alt_name(x509)
+            for x in alts:  
+                data['dns'].append(x[1])
+        return data;
     
     #转换时间
     def strfToTime(self,sdate):
         import time
-        return time.strftime('%Y-%m-%d',time.strptime(sdate,'%b %d %H:%M:%S %Y %Z'))
+        return time.strftime('%Y-%m-%d',time.strptime(sdate,'%Y%m%d%H%M%S'))
         
     
     #获取产品列表
@@ -394,89 +427,31 @@ class panelSSL:
         if type(result) != str: result = result.decode('utf-8')
         return json.loads(result);
     
-    
     # 手动一键续签
-    def Renew_SSL(self, get):
-        if not os.path.isfile("/www/server/panel/vhost/crontab.json"):
-            return {"status": False, "msg": "当前没有可以续订的证书!"}
-        cmd_list = json.loads(public.ReadFile("/www/server/panel/vhost/crontab.json"))
-        import panelTask
-        task = panelTask.bt_task()
-        Renew = True
-        for xt in task.get_task_list():
-                if xt['status'] != 1: Renew = False
-        if not Renew:
-            return {"status": False, "msg": "当前有续订任务正在执行!"}
-        for j in cmd_list:
-            siteName = j['siteName']
-            home_path = os.path.join("/www/server/panel/vhost/cert/", siteName)
-            public.ExecShell("mkdir -p {}".format(home_path))
-            public.ExecShell('''cd {} && rm -rf  check_authorization_status_response Confirmation_verification domain_txt_dns_value.json apply_for_cert_issuance_response timeout_info'''.format(home_path))
-            cmd = j['cmd']
-            for x in task.get_task_list():
-                if x['name'] == siteName:
-                    get.id = x['id']
-                    task.remove_task(get)  # 删除旧的任务
-            task.create_task(siteName, 0, cmd)
+    def renew_lets_ssl(self, get):
+        if not os.path.exists('vhost/cert/crontab.json'):  
+            return public.returnMsg(False,'当前没有可以续订的证书!')      
+        
+        old_list = json.loads(public.ReadFile("vhost/cert/crontab.json"))
+        cron_list = old_list
+        if hasattr(get, 'siteName'):
+            if not get.siteName in old_list:
+                return public.returnMsg(False,'当前网站没有可以续订的证书.')  
+            cron_list = {}
+            cron_list[get.siteName] = old_list[get.siteName]
 
-        return {"status": True, "msg": "已将续订任务添加到队列!"}
+        import panelLets
+        lets = panelLets.panelLets()
 
-    # 获取一键续订结果
-    def Get_Renew_SSL(self, get):
-        if not os.path.isfile("/www/server/panel/vhost/crontab.json"):
-            return {"status": False, "msg": "获取失败,当前没有结果!", "data": []}
-        cmd_list = json.loads(public.ReadFile("/www/server/panel/vhost/crontab.json"))
-        import panelTask
-        CertList = self.GetCertList(get)
-        data = []
-        for j in cmd_list:
-            siteName = j['siteName']
-            cmd = j['cmd']
-            home_path = os.path.join("/www/server/panel/vhost/cert/", siteName)
-            home_csr = os.path.join(home_path, "fullchain.pem")
-            home_key = os.path.join(home_path, "privkey.pem")
-
-            task = panelTask.bt_task()
-            for i in task.get_task_list():
-                if i['name'] == siteName:
-                    siteName_task = {'status': i['status']}
-                    siteName_task['subject'] = siteName
-                    siteName_task['dns'] = [siteName, ]
-                    for item in CertList:
-                        if siteName == item['subject']:
-                            siteName_task['dns'] = item['dns']
-                            siteName_task['notAfter'] = item['notAfter']
-                            siteName_task['issuer'] = item['issuer']
-                    timeArray = time.localtime(i['addtime'])
-                    siteName_task['addtime'] = time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
-                    if i['endtime']:
-                        timeArray = time.localtime(i['endtime'])
-                        siteName_task['endtime'] = time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
-                    else:
-                        siteName_task['endtime'] = i['endtime']
-                    if i['status'] == -1:
-                        siteName_task['msg'] = "正在续订中"
-                    if i['status'] == 0:
-                        siteName_task['msg'] = "等待续订中"
-                    if i['status'] == 1:
-                        get.keyPath =home_key
-                        get.certPath = home_csr
-                        self.SaveCert(get);
-                        siteName_task['msg'] = "续订成功"
-                        siteName_task['status'] = True
-                        if not os.path.isfile(home_key) and not os.path.isfile(home_csr):
-                            siteName_task['msg'] = '续签失败,请尝试关闭SSL，使用文件验证或DNS验证方式重新申请此域名证书!'
-                            siteName_task['status'] = False
-                        if os.path.isfile(os.path.join(home_path, "check_authorization_status_response")):
-                            siteName_task['msg'] = '续签失败,域名解析错误，或解析未生效!'
-                            siteName_task['status'] = False
-                        if os.path.isfile(os.path.join(home_path, "apply_for_cert_issuance_response")):
-                            siteName_task['msg'] = '续签失败,您尝试申请证书的失败次数已达上限!'
-                            siteName_task['status'] = False
-
-                    data.append(siteName_task)
-                    break
-        if data:
-            return {"status": True, "msg": "获取成功!", "data": data}
-        else:
-            return {"status": False, "msg": "获取失败,当前没有结果!", "data": []}
+        result = {}
+        result['status'] = True
+        result['sucess_list']  = []
+        result['err_list'] = []
+        for siteName in cron_list:
+            data = cron_list[siteName]
+            ret = lets.renew_lest_cert(data)
+            if ret['status']:
+                result['sucess_list'].append(siteName)
+            else:
+                result['err_list'].append({"siteName":siteName,"msg":ret['msg']})
+        return result;
