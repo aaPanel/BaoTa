@@ -1,7 +1,6 @@
 #!/usr/bin/python
 #coding: utf-8
 
-import sys
 import os
 import json
 import time
@@ -15,17 +14,6 @@ class Monitor:
     def __init__(self):
         pass
 
-    def _get_file_json(self, filename):
-        if not os.path.exists(filename):
-            return []
-        data = []
-        with open(filename) as f:
-            for line in f:
-                try:
-                    data.append(json.loads(line))
-                except: pass
-        return data
-
     def __get_file_json(self, filename):
         try:
             if not os.path.exists(filename): return {}
@@ -37,79 +25,41 @@ class Monitor:
         sites = public.M('sites').where('status=?', (1,)).field('name').get()
         return sites
 
-    def _ip_query(self, ip):
-        import ipdb
+    def _statuscode_distribute_site(self, site_name):
+        today = time.strftime('%Y-%m-%d', time.localtime())
+        path = '/www/server/total/total/' + site_name + '/request/' + today + '.json'
 
-        db = ipdb.City("/www/server/panel/data/data.ipdb")
-        if sys.version_info[0] == 2:
-            ip_info = db.find_info(unicode(ip), "CN")
-        else:
-            ip_info = db.find_info(ip, "CN")
-        if ip_info.country_name == '中国':
-            return ip_info.region_name
-        return None
+        day_401 = 0
+        day_500 = 0
+        day_502 = 0
+        day_503 = 0
+        if os.path.exists(path):
+            spdata = self.__get_file_json(path)
 
-    def get_access_ip(self, args):
-        if hasattr(args, 'date_str'):
-            date_str = args['date_str']
-        else:
-            date_str = time.strftime('%Y-%m-%d', time.localtime())
+            for c in spdata.values():
+                for d in c:
+                    if '401' == d: day_401 += c['401']
+                    if '500' == d: day_500 += c['500']
+                    if '502' == d: day_502 += c['502']
+                    if '503' == d: day_503 += c['503']
 
-        sites = self._get_site_list()
-
-        t_access_ip = {}
-        for site in sites:
-            site_name = site['name']
-            log_path = '/www/server/total/logs/{0}/{1}.log'.format(site_name, date_str)
-            log_body = self._get_file_json(log_path)
-            for item in log_body:
-                ua = item[-2]
-                client_ip = item[1]
-                ip_region = self._ip_query(client_ip)
-                if not ip_region or not ua or 'bot' in ua or 'spider' in ua:
-                    continue
-                t_access_ip[client_ip] = ip_region
-
-        return t_access_ip
+        return day_401, day_500, day_502, day_503
 
     def _statuscode_distribute(self, args):
         sites = self._get_site_list()
 
         count_401, count_500, count_502, count_503 = 0, 0, 0, 0
-
         for site in sites:
             site_name = site['name']
-            path = '/www/server/total/logs/' + site_name + '/error'
-            if not os.path.isdir(path): continue
-
-            for fname in os.listdir(path):
-                status_code = fname.split('.')[0]
-                log_path = os.path.join(path, fname)
-                num = 100
-                log_body = public.GetNumLines(log_path, num).split('\n')
-                while True:
-                    if not self._is_today(json.loads(log_body[0])[0]):
-                        break
-                    else:
-                        num += 100
-                        log_body = public.GetNumLines(log_path, num).split('\n')
-                for line in log_body:
-                    try:
-                        item = json.loads(line)
-                        if self._is_today(item[0]):
-                            if status_code == '401':
-                                count_401 += 1
-                            elif status_code == '500':
-                                count_500 += 1
-                            elif status_code == '502':
-                                count_502 += 1
-                            elif status_code == '503':
-                                count_503 += 1
-                    except: continue
+            day_401, day_500, day_502, day_503 = self._statuscode_distribute_site(site_name)
+            count_401 += day_401
+            count_500 += day_500
+            count_502 += day_502
+            count_503 += day_503
         return {'401': count_401, '500': count_500, '502': count_502, '503': count_503}
 
+    # 获取mysql当天的慢查询数量
     def _get_slow_log_nums(self, args):
-        # 从配置文件中匹配到慢日志存放路径
         if not os.path.exists('/etc/my.cnf'):
             return 0
 
@@ -132,22 +82,7 @@ class Monitor:
                         count += 1
         return count
 
-    def _utc_to_stamp(self, utc_time_str, utc_format='%Y-%m-%dT%H:%M:%SZ'):
-        import pytz
-
-        local_tz = pytz.timezone('Asia/Shanghai')
-        local_format = "%Y-%m-%d %H:%M:%S"
-        utc_dt = datetime.datetime.strptime(utc_time_str, utc_format)
-        local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
-        time_str = local_dt.strftime(local_format)
-        return int(time.mktime(time.strptime(time_str, local_format)))
-
-    def _str_to_stamp(self, time_str):
-        try:
-            return int(time.mktime(time.strptime(time_str, '%Y-%m-%d %H:%M:%S')))
-        except:
-            return int(time.mktime(time.strptime(time_str, "%y%m%d %H:%M:%S")))
-
+    # 判断字符串格式的时间是不是今天
     def _is_today(self, time_str):
         try:
             time_date = datetime.datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S").date()
@@ -183,90 +118,8 @@ class Monitor:
 
         return result
 
-    # 取php版本
-    def return_php(self, get):
-        ret = []
-        if not os.path.exists('/www/server/php'):
-            return ret
-        for i in os.listdir('/www/server/php'):
-            if os.path.isdir('/www/server/php/' + i):
-                ret.append(i)
-        return ret
-
-    # mysql是否到最大连接数测试
-    def mysql_client_count(self, get):
-        ret = public.M('config').field('mysql_root').select()
-        password = ret[0]['mysql_root']
-        sql = ''' mysql -uroot -p''' + password + ''' -e "select User,Host from mysql.user where host='%'" '''
-        result = public.ExecShell(sql)
-        if re.search('Too many connections', result[1]):
-            return True
-        else:
-            return False
-
-    def _get_error_log_nums(self, args):
-        import database
-
-        my_obj = database.database()
-        path = my_obj.GetMySQLInfo(args)['datadir']
-        filename = ''
-        for n in os.listdir(path):
-            if len(n) < 5: continue
-            if n[-3:] == 'err':
-                filename = path + '/' + n
-                break
-
-        if not os.path.exists(filename):
-            return 0
-
-        count = 0
-        zero_point = int(time.time()) - int(time.time() - time.timezone) % 86400
-        with open(filename) as f:
-            for line in f:
-                line = line.strip()
-                if '[ERROR]' in line or '[Note]' in line:
-                    line_arr = line.split()
-                    if len(line_arr[0]) > 11:
-                        timestamp = self._utc_to_stamp(line_arr[0].split('.')[0] + 'Z')
-                    else:
-                        timestamp = self._str_to_stamp(line_arr[0] + ' ' + line_arr[1])
-                    if timestamp > zero_point:
-                        count += 1
-        return count
-
-    def get_exception(self, args):
-        data = {'mysql_slow': self._get_slow_log_nums(args), 'php_slow': self._php_count(args), 'attack_num': self.get_attack_nums(args)}
-        statuscode_distribute = self._statuscode_distribute(args)
-        data.update(statuscode_distribute)
-        return data
-
-    # 获取异常日志
-    def get_exception_logs(self, get):
-        import page
-
-        page = page.Page()
-        count = public.M('logs').where("type=? and strftime('%m-%d','now','localtime') = strftime('%m-%d',addtime)", (u'消息推送',)).count()
-        limit = 12
-        info = {}
-        info['count'] = count
-        info['row'] = limit
-        info['p'] = 1
-        if hasattr(get, 'p'):
-            info['p'] = int(get['p'])
-        info['uri'] = get
-        info['return_js'] = ''
-        if hasattr(get, 'tojs'):
-            info['return_js'] = get.tojs
-        data = {}
-
-        # 获取分页数据
-        data['page'] = page.GetPage(info, '1,2,3,4,5,8')
-        data['data'] = public.M('logs').where("type=? and strftime('%m-%d','now','localtime') = strftime('%m-%d',addtime)", (u'消息推送',))\
-            .order('id desc').limit(str(page.SHIFT) + ',' + str(page.ROW)).field('log,addtime').select()
-        return data
-
     # 获取攻击数
-    def get_attack_nums(self, args):
+    def _get_attack_nums(self, args):
         file_name = '/www/server/btwaf/total.json'
         if not os.path.exists(file_name): return 0
 
@@ -276,10 +129,15 @@ class Monitor:
         except:
             return 0
 
+    def get_exception(self, args):
+        data = {'mysql_slow': self._get_slow_log_nums(args), 'php_slow': self._php_count(args), 'attack_num': self._get_attack_nums(args)}
+        statuscode_distribute = self._statuscode_distribute(args)
+        data.update(statuscode_distribute)
+        return data
+
     # 获取蜘蛛数量分布
     def get_spider(self, args):
         today = time.strftime('%Y-%m-%d', time.localtime())
-
         sites = self._get_site_list()
 
         data = {}
@@ -287,40 +145,54 @@ class Monitor:
             site_name = site['name']
             file_name = '/www/server/total/total/' + site_name + '/spider/' + today + '.json'
             if not os.path.exists(file_name): continue
-
             day_data = self.__get_file_json(file_name)
-
             for s_data in day_data.values():
                 for s_key in s_data.keys():
                     if s_key not in data:
                         data[s_key] = s_data[s_key]
                     else:
                         data[s_key] += s_data[s_key]
-
         return data
 
-    # 取指定站点的请求数
-    def _get_site_request_count(self, site_name):
-        today = time.strftime('%Y-%m-%d', time.localtime())
-        path = '/www/server/total/total/' + site_name + '/request/' + today + '.json'
-        day_request = 0
-        if os.path.exists(path):
-            spdata = self.__get_file_json(path)
-            for c in spdata.values():
-                for d in c:
-                    if re.match(r"^\d+$", d): day_request += c[d]
-        return day_request
+    # 获取负载和上行流量
+    def load_and_up_flow(self, args):
+        import psutil
 
-    # 取服务器的请求数
-    def _get_request_count(self):
-        request_count = 0
+        load_five = float(os.getloadavg()[1])
+        cpu_count = psutil.cpu_count()
+
+        up_flow = 0
+        data = public.M('network').dbfile('system').field('up').order('id desc').limit("5").get()
+        if len(data) == 5:
+            up_flow = round(sum([item['up'] for item in data]) / 5, 2)
+
+        return {'load_five': load_five, 'cpu_count': cpu_count, 'up_flow': up_flow}
+
+    # 取每小时的请求数
+    def get_request_count_by_hour(self, args):
+        today = time.strftime('%Y-%m-%d', time.localtime())
+
+        request_data = {}
         sites = self._get_site_list()
         for site in sites:
-            site_name = site['name']
-            request_count += self._get_site_request_count(site_name)
-        return request_count
+            path = '/www/server/total/total/' + site['name'] + '/request/' + today + '.json'
+            if os.path.exists(path):
+                spdata = self.__get_file_json(path)
+                for hour, value in spdata.items():
+                    count = value.get('GET', 0) + value.get('POST', 0)
+                    if hour not in request_data:
+                        request_data[hour] = count
+                    else:
+                        request_data[hour] = request_data[hour] + count
 
-    # 计算qps
+        return request_data
+
+    # 取服务器的请求数
+    def _get_request_count(self, args):
+        request_data = self.get_request_count_by_hour(args)
+        return sum(request_data.values())
+
+    # 获取瞬时请求数和qps
     def get_request_count_qps(self, args):
         from BTPanel import cache
 
@@ -330,10 +202,10 @@ class Monitor:
         otime = cache.get("old_get_time")
         if not old_total_request or not otime:
             otime = time.time()
-            old_total_request = self._get_request_count()
-            time.sleep(1)
+            old_total_request = self._get_request_count(args)
+            time.sleep(2)
         ntime = time.time()
-        new_total_request = self._get_request_count()
+        new_total_request = self._get_request_count(args)
 
         qps = int(round(float(new_total_request - old_total_request) / (ntime - otime)))
 

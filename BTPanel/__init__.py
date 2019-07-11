@@ -19,6 +19,7 @@ from flask_session import Session
 from werkzeug.contrib.cache import SimpleCache
 from werkzeug.wrappers import Response
 from flask_socketio import SocketIO,emit,send
+dns_client = None
 
 #设置BasicAuth
 basic_auth_conf = 'config/basic_auth.json' 
@@ -983,7 +984,7 @@ def check_csrf():
 
 def publicObject(toObject,defs,action=None,get = None):
     if 'request_token' in session and 'login' in session:
-        if not check_csrf(): return public.ReturnJson(False,'Csrf-Token error.'),json_header
+        if not check_csrf(): return public.ReturnJson(False,'CSRF校验失败，请重新登录面板'),json_header
 
     if not get: get = get_input()
     if action: get.action = action

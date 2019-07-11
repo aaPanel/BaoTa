@@ -343,59 +343,27 @@ class panelSSL:
     #获取证书名称
     def GetCertName(self,get):            
         try:
-            from OpenSSL import crypto 
-            from urllib3.contrib import pyopenssl as reqs
-        except :
-            os.system('pip install crypto')
-            os.system('pip install pyopenssl')
-
-            from OpenSSL import crypto 
-            from urllib3.contrib import pyopenssl as reqs
-            
-        certPath = get.certPath     
-        if os.path.exists(certPath):
+            openssl = '/usr/local/openssl/bin/openssl';
+            if not os.path.exists(openssl): openssl = 'openssl';
+            result = public.ExecShell(openssl + " x509 -in "+get.certPath+" -noout -subject -enddate -startdate -issuer")
+            tmp = result[0].split("\n");
             data = {}
-            f = open(certPath,'rb') 
-            pfx_buffer = f.read() 
-            cret_data = pfx_buffer
-            if certPath[-4:] == '.pfx':   
-                if hasattr(get, 'password'):
-                    p12 = crypto.load_pkcs12(pfx_buffer,get.password)
-                else:
-                    p12 = crypto.load_pkcs12(pfx_buffer)
-                x509 = p12.get_certificate()
-                data['type'] = 'pfx'     
-            else:
-                x509 = crypto.load_certificate(crypto.FILETYPE_PEM, pfx_buffer)
-                data['type'] = 'pem'
-            buffs = x509.digest('sha1')            
-            data['hash'] =  bytes.decode(buffs).replace(':','')
-            data['number'] = x509.get_serial_number()
-            issuser = x509.get_issuer()
-
-            is_key = 'O'
-            if len(issuser.get_components()) == 1: is_key = 'CN'                
-            for item in issuser.get_components():                 
-                if bytes.decode(item[0]) == is_key:                   
-                    data['issuer'] = bytes.decode(item[1])
-                    break
-            
-            data['notAfter'] = self.strfToTime(bytes.decode( x509.get_notAfter())[:-1])
-            data['notBefore'] = self.strfToTime(bytes.decode(x509.get_notBefore())[:-1])
-            data['version'] = x509.get_version()
-            data['timeout'] = x509.has_expired()
-            x509name = x509.get_subject()
-            data['subject'] = x509name.commonName.replace('*','_')
-            data['dns'] = []
-            alts = reqs.get_subj_alt_name(x509)
-            for x in alts:  
-                data['dns'].append(x[1])
-        return data;
+            data['subject'] = tmp[0].split('=')[-1]
+            data['notAfter'] = self.strfToTime(tmp[1].split('=')[1])
+            data['notBefore'] = self.strfToTime(tmp[2].split('=')[1])
+            data['issuer'] = tmp[3].split('O=')[-1].split(',')[0]
+            if data['issuer'].find('/') != -1: data['issuer'] = data['issuer'].split('/')[0];
+            result = public.ExecShell(openssl + " x509 -in "+get.certPath+" -noout -text|grep DNS")
+            data['dns'] = result[0].replace('DNS:','').replace(' ','').strip().split(',');
+            return data;
+        except:
+            print(public.get_error_info())
+            return None;
     
     #转换时间
     def strfToTime(self,sdate):
         import time
-        return time.strftime('%Y-%m-%d',time.strptime(sdate,'%Y%m%d%H%M%S'))
+        return time.strftime('%Y-%m-%d',time.strptime(sdate,'%b %d %H:%M:%S %Y %Z'))
         
     
     #获取产品列表

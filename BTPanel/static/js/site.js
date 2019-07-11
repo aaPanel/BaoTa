@@ -8,16 +8,7 @@ var site = {
         }
         bt.site.get_list(page, search, type, function (rdata) {
             $('.dataTables_paginate').html(rdata.page);
-            //bt.plugin.get_firewall_state(function (fdata) {
                 var data = rdata.data;
-            //    for (var x = 0; x < data.length; x++) {
-            //        data[x]['firewall'] = false;
-            //        data[x]['waf_setup'] = false;
-            //        if (fdata.status !== false) {
-            //            data[x]['firewall'] = true
-            //            data[x]['waf_setup'] = true
-             //       }
-            //    }
                 var _tab = bt.render({
                     table: '#webBody',
                     columns: [
@@ -69,20 +60,10 @@ var site = {
                                 return "<span class='c9 input-edit'  onclick=\"bt.pub.set_data_by_key('sites','ps',this)\">" + item.ps + "</span>";
                             }
                         },
-                        /*bt.os == 'Linux' ? {
-                            field: 'id', title: '防火墙', templet: function (item) {
-                                var _check = ' onclick="site.no_firewall(this)"';
-                                if (item.waf_setup) _check = ' onclick="set_site_obj_state(\'' + item.name + '\',\'open\')"';
-                                var _waf = '<input class="btswitch btswitch-ios " ' + _check + ' id="closewaf_' + item.name + '" ' + (item.firewall ? 'checked' : '') + ' type="checkbox">';
-                                _waf += '<label class="btswitch-btn bt-waf-firewall" for="closewaf_' + item.name + '" title="' + bt.get_cookie('serverType') + '防火墙开关"></label>';
-                                return _waf;
-                            }
-                        } : '',*/
+
                         {
                             field: 'opt', width: 260, title: '操作', align: 'right', templet: function (item) {
                                 var opt = '';
-                                //var _check = ' onclick="site.no_firewall()"';
-                                //if (item.waf_setup) 
                                 var _check = ' onclick="site.site_waf(\'' + item.name + '\')"';
 
                                 if (bt.os == 'Linux') opt += '<a href="javascript:;" ' + _check + ' class="btlink ">防火墙</a> | ';
@@ -1319,7 +1300,6 @@ var site = {
                                 ], [
                                     '在DNS验证中，我们提供了3个自动化DNS-API，并提供了手动模式',
                                     '使用DNS接口申请证书可自动续期，手动模式下证书到期后手需重新申请',
-                                    '使用【宝塔DNS云解析】接口前您需要确认当前要申请SSL证书的域名DNS为【云解析】',
                                     '使用【DnsPod/阿里云DNS】接口前您需要先在弹出的窗口中设置对应接口的API'
                                 ]]
                                 var datas = [
@@ -1402,18 +1382,12 @@ var site = {
                                                                         }
                                                                     }
                                                                 },
-                                                                {
-                                                                    title: '等待 ', name: 'dnssleep', width: '60px', type: 'number', value: 10, unit: '秒', callback: function (obj) {
-                                                                        if (obj.val() < 10) obj.val(10);
-                                                                        if (obj.val() > 120) obj.val(120);
-                                                                    }
-                                                                }
                                                             ]
                                                         }
                                                             , {
                                                                 title: ' ', class: 'checks_line label-input-group', items:
                                                                     [
-                                                                        { css: 'label-input-group ptb10', text: '申请泛域名', name: 'app_root', type: 'checkbox' }
+                                                                        { css: 'label-input-group ptb10', text: '自动组合泛域名', name: 'app_root', type: 'checkbox' }
                                                                     ]
                                                             }
                                                        ]
@@ -1661,11 +1635,24 @@ var site = {
                     var isHttps = $("#toHttps").attr('checked');
                     if (isHttps) {
                         layer.confirm('关闭强制HTTPS后需要清空浏览器缓存才能看到效果,继续吗?', { icon: 3, title: "关闭强制HTTPS" }, function () {
-                            bt.site.close_http_to_https(web.name, function () { site.reload(7); })
+                            bt.site.close_http_to_https(web.name, function (rdata) {
+                                if (rdata.status) {
+                                    setTimeout(function () {
+                                        site.reload(7);
+                                    }, 3000);
+                                }
+                            })
                         });
                     }
                     else {
-                        bt.site.set_http_to_https(web.name, function () { site.reload(7); })
+                        bt.site.set_http_to_https(web.name, function (rdata) {
+                            if (!rdata.status) {
+                                setTimeout(function () {
+                                    site.reload(7);
+                                }, 3000);
+                            }
+                            
+                        })
                     }
                 })
                 switch (rdata.type) {

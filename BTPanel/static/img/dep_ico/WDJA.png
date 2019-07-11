@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+   	<meta name="applicable-device" content="pc">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  	<meta name="referrer" content="always">
+    <meta name="description" content="宝塔，让运维简单高效。面板支持Linux与Windows系统。一键配置：LAMP/LNMP、网站、数据库、FTP、SSL，通过Web端轻松管理服务器。">
+    <meta name="keywords" content="LAMP/LNMP一键安装包,运维,服务器运维,免费主机管理系统,linux面板,windows面板">
+    <title>宝塔面板 - 简单好用的Linux/Windows服务器运维管理面板</title>
+    <link href="https://www.bt.cn/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <link href="https://www.bt.cn/" rel="canonical">
+    <link href="/Public/css/bt/reset.css" rel="stylesheet" type="text/css">
+    <link href="/Public/css/bt/common.css?4.0149" rel="stylesheet" type="text/css">
+    <link href="/Public/css/bt/login.css?2.1" rel="stylesheet" type="text/css">
+    
+<link href="/Public/css/bt/css.css?1.91" rel="stylesheet" type="text/css">
+
+</head>
+<body>
+	<div class="main">
+      	
+		<div class="head" style="background-color:rgba(0,0,0,0.80);">
+			<div class="layout">
+				<div class="logo fl"><a href="/"><img src="/Public/images/logo.png" alt="宝塔面板"></a></div>
+				<div class="menu fl">
+					<ul>
+												<li><a  class="active"  href="/" >首页</a></li>
+												<li><a  href="/download/linuxpro.html" >Linux专业版</a></li>
+												<li><a  href="/download/linux.html" >Linux免费版</a></li>
+												<li><a  href="/download/windows.html" >Windows免费版</a></li>
+												<li><a  href="/partner" >IDC推荐</a></li>
+												<li><a  href="/invite" >邀请大使</a></li>
+												<li><a  href="/bbs/portal.php"  target="_blank" >论坛</a></li>
+											</ul>
+				</div>
+				<div class="login fr">
+					<div class="loginr">
+												<div class="pull-right m-t-sm">
+														<a href="/login.html" id="login" class="mip-btn mip-btn-primary">登录</a>
+														<a href="/register.html" id="register" class="mip-btn mip-btn-default m-l ">注册</a>
+													</div>
+									      </div>
+				</div>
+			</div>
+		</div>
+      	
+		
+<!-- <div class="chunlian_box">
+	<div class="chunlian">
+		</div>
+		<div class="dl_r">
+		<div class="dl_l">
+			<div class="top_pendant"></div>
+			<div class="top"></div>
+			<div class="con" style="height: 0px;"></div>
+			<div class="bottom"></div>
+			<div class="bottom_pendant"></div>
+			<div class="top_pendant"></div>
+			<div class="top"></div>
+			<div class="con" style="height: 0px;"></div>
+			<div class="bottom"></div>
+			<div class="bottom_pendant"></div>
+		</div>
+	</div>
+</div> -->
+	<style>
+		.bt_invite_tips{
+			height:220px;
+			background: #20a53a;
+			display: none;
+		}
+		.bt_invite_tips .tips_username{
+			padding-top: 50px;
+		}
+		.bt_invite_tips .tips_username,
+		.bt_invite_tips .tips_package,
+		.bt_invite_tips .tips_btn{
+			color: #fff;
+			text-align: center;
+			margin-bottom: 15px;
+		}
+		.bt_invite_tips .tips_username{
+				font-size: 16px;
+		}
+
+		.bt_invite_tips .tips_package{
+			font-size: 16px;
+		}
+		.bt_invite_tips .tips_package span{
+			font-size: 26px;
+			margin: 0 2px;
+			color:#ff0;
+			font-weight: 600px;
+		}
+		.bt_invite_tips .tips_btn span{
+			display: inline-block;
+			width: 180px;
+			color: red;
+			padding: 10px;
+			font-size: 15px;
+			background: #ff0;
+			border-radius: 3px;
+		}
+		.tips_btn span{
+			cursor: pointer;
+		}
+	</style>
+<div class="bt_invite_tips" style="height:220px;background: #20a53a;">
+	<div class="tips_username">宝塔邀请大使<span></span>赠送您</div>
+	<div class="tips_package">￥<span>3188</span>元礼包</div>
+	<div class="tips_btn"><span>立即领取</span></div>
+</div>
+<div class="bttip_box">
+	<div class="layout">
+		<div class="banner">
+          <h3 class="title" style="width:570px"><font style="letter-spacing:2px">简单好用的服务器运维面板</font><span style="border: 1px solid red;right:-15px">永久免费</span></h3>
+			<div class="downBtn">
+				<span class="on">Linux 版</span>
+				<span>Windows 版</span>
+			</div>
+			<div class="downInfo">
+				<p><span class="version">6.9免费版</span>|<span class="update">2019/6/12·每月更新</span>|<a class="download" href="https://github.com/aaPanel/BaoTa"
+					 target="_blank" style="margin-right:5px">GitHub</a>|<a class="download" href="http://27.50.161.190:8888/login"
+					 target="_blank" style="margin-right:5px">演示</a>|<a class="download" href="/bbs/thread-19376-1-1.html">立即安装</a></p>
+				<p style="margin-bottom:7px;display:none"><span class="version">5.5.1测试版</span>|<span class="update">2017/11/22·每周更新</span>|<a
+					 class="download" href="http://27.50.161.190:8888/login" target="_blank" style="margin-right:5px">查看演示</a>|<a class="download"
+					 href="/bbs/thread-5195-1-1.html">查看安装</a></p>
+			</div>
+			<div class="softtxt">
+				Linux版请确保纯净系统安装(支持CentOS、Ubuntu、Debian、Fedora、deepin)，Web端管理，QQ群及论坛技术支持<br>一键创建网站、FTP、数据库、SSL；安全管理，计划任务，文件管理，PHP多版本共存及切换；自带LNMP与LAMP
+			</div>
+		</div>
+	</div>
+	<div class="preview">
+		<div class="linux"><img src="/Public/images/linux_pc_free.png"></div>
+		<div class="windows" style="display:none"><img src="/Public/images/windows_web.png">
+			<!-- <div class="WSoft-min"><img src="/Public/images/windows-soft.png" width="100%"></div> -->
+		</div>
+	</div>
+	<div class="linex"></div>
+	<div class="yaoqing"><p>免费加入宝塔邀请大使，帮助他人同时还能赚钱</p><a href="https://www.bt.cn/invite" target="_blank">立即免费加入</a></div>
+	<div class="layout" style="padding-bottom: 30px;">
+		<div class="zunad" onclick="javascript:window.open('http://www.zun.com/alllist.html','_blank')">
+			尊云，价格厚道的云服务器，<span>6核10G，99元</span>
+		</div>
+		<div class="zunad" onclick="javascript:window.open('http://www.zun.com/tiyan.html','_blank')" style="display:none">
+			尊云9元福利云，预装宝塔面板，<span>9元</span>最高能用<span style='margin-left:5px'>45天</span>，宝塔极力推荐！
+		</div>
+		<div class="row">
+			<div class="box pro1 fl">
+				<div class="text">
+					<h3 class="p1" onclick="javascript:window.location.href='/Download/btmstsc.html'">远程桌面连接工具</h3>
+					<p><a href="/update/net/Bt_Mstsc.exe">下载</a></p>
+				</div>
+			</div>
+			<div class="box pro2 fl">
+				<div class="text">
+					<h3 class="p1" onclick="javascript:window.location.href='/btcode.html'">Linux面板命令大全</h3>
+					<p><a href="https://www.bt.cn/btcode.html">查看</a></p>
+				</div>
+			</div>
+			<div class="box pro3 fl">
+				<div class="text">
+					<h3 class="p1">IDC推荐</h3>
+					<p><a href="https://www.bt.cn/partner">查看</a></p>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div style="float:left;width:333px">
+				<div class="box pro4 fl" style="height:115px;margin-bottom:20px;background-color:#f0f0f0">
+					<div class="text">
+						<h3 class="p1">宝塔币商城</h3>
+						<p><a href="https://www.bt.cn/integral">查看</a></p>
+					</div>
+				</div>
+				<div class="box pro5 fl" style="height:115px;background-color:#f0f0f0">
+					<div class="text">
+						<h3 class="p1">宝塔跑分排行榜</h3>
+						<p><a href="https://www.bt.cn/score">查看</a></p>
+					</div>
+				</div>
+			</div>
+			<div class="news yunwei center" style="margin: 0 20px">
+				<img src="Public/images/ico_yunwei.png">
+				<div class="yunwei-font">
+					<span style="font-size: 21px;">宝塔运维</span>
+					<span style="font-size: 16px;margin-top: 17px;color:#454545;">付费运维已停止接单，论坛可免费求助</span>
+				</div>
+				<a href="https://www.bt.cn/yunwei" style="margin-top: 15px;">点击查看</a>
+			</div>
+			<div class="news yunwei center">
+				<img src="Public/images/ico_other.png" />
+				<div class="yunwei-font">
+					<span style="font-size: 21px;">开发者中心</span>
+					<span style="font-size: 16px;margin-top: 17px;color:red;">诚邀开发者入驻，让创作更有价值</span>
+				</div>
+				<a href="https://www.bt.cn/developer" style="margin-top: 15px;">点击查看</a>
+			</div>
+		</div>
+	</div>
+	<div class="linex"></div>
+	<div class="layout">
+		<style type="text/css">
+			.row .news {
+				background-color: #f0f0f0;
+			}
+
+			.news h4 {
+				font-size: 21px;
+				margin-top: 30px;
+				font-weight: normal;
+				font-weight: inherit;
+			}
+
+			.center {
+				text-align: center;
+			}
+
+			.news>a,
+			.conterRight>a {
+				width: 100px;
+				height: 30px;
+				line-height: 30px;
+				display: block;
+				font-size: 12px;
+				text-align: center;
+				color: #646472;
+				border: 1px solid #CACAD9;
+				border-radius: 4px;
+				margin: 0 auto;
+				margin-top: 30px;
+				background: #fff;
+				clear: both;
+			}
+
+			.news>a:hover,
+			.conterRight>a:hover {
+				background-color: #20A53A;
+				color: #fff;
+			}
+
+			.conterLeft {
+				float: left;
+				position: relative;
+				top: -16px;
+			}
+
+			.conterRight {
+				float: right;
+				width: 180px;
+			}
+
+			.conterTop {
+				height: 50%;
+				overflow: hidden;
+				border-bottom: 1px solid #dedede;
+			}
+
+			.conterTop img {
+				float: left;
+				margin-left: 25px;
+				margin-top: 40px;
+			}
+
+			.conterTop h4 {
+				float: right;
+				margin-top: 45px;
+				margin-right: 40px;
+			}
+
+			.hz-tit {
+				font-size: 26px;
+				color: #454545;
+				text-align: center;
+				padding-bottom: 50px;
+			}
+
+			.hz-con a {
+				background-color: #fafafa;
+				border: #ddd 1px solid;
+				float: left;
+				width: 219px;
+				height: 80px;
+				line-height: 80px;
+				text-align: center;
+				margin-bottom: 40px;
+				margin-right: 50px;
+			}
+
+			.hz-con a:hover {
+				box-shadow: 0 0 6px #dedede;
+			}
+
+			.hz-con a img {
+				vertical-align: middle;
+			}
+
+			.yunwei img {
+				width: 70px;
+				margin-top: 22px;
+				margin-bottom: 15px;
+			}
+
+			.yunwei span {
+				display: block;
+			}
+			
+			.yaoqing{
+				height:90px;
+				width:1040px;
+				line-height:88px;
+				text-align:center;
+				background-color:#20a53a;
+				margin:20px auto 30px;
+			}
+			.yaoqing p{
+				font-family:"微软雅黑";
+				font-size:25px;
+				color:#fff;
+				display:inline-block;
+				margin-right:30px;
+			}
+			.yaoqing a{
+				display:inline-block;
+				height:36px;
+				width:150px;
+				background-color:#FFFF00;
+				text-align:center;
+				line-height:36px;
+				color:#FF2626;
+				font-size:16px;
+				border-radius:3px;
+				vertical-align:3px;
+			}
+			.yaoqing a:hover{
+				background-color:#FFe000;
+			}
+		</style>
+		<div class="row">
+			<div class="hz-tit">
+				<p>合作伙伴</p>
+				<p><a href="https://www.bt.cn/partner" style="color:#20a53a;font-size:14px" target="_blank">申请IDC定制版合作</a></p>
+			</div>
+			<div class="hz-con">
+				<a href="https://www.zun.com" target="_blank"><img src="/Public/images/p-zun.png" alt="尊云"></a>
+				<a href="https://www.wy.cn" target="_blank"><img src="/Public/images/p-wy.png" alt="唯一网络"></a>
+				<a href="https://www.dns.com" target="_blank"><img src="/Public/images/p-dns.png" alt="DNS"></a>
+				<!--<a href="https://www.ddos.com" target="_blank" style="margin-right:0"><img src="/Public/images/p-ddos.png" alt="DDOS"></a> -->
+				<a href="https://www.trustasia.com/" target="_blank" style="margin-right:0"><img src="/Public/images/p-yz.png" alt="亚洲诚信"></a>
+				<a href="https://www.aliyun.com" target="_blank"><img src="/Public/images/p-aliyun.png" alt="阿里云"></a>
+				<a href="https://www.jcloud.com" target="_blank"><img src="/Public/images/p-jd.png" alt="京东云"></a>
+				<a href="https://www.upyun.com" target="_blank"><img src="/Public/images/p-up.png" alt="又拍云"></a>
+				<a href="https://www.ddos.com" target="_blank" style="margin-right:0"><img src="/Public/images/p-ddos.png" alt="网堤安全"></a>
+			</div>
+		</div>
+		
+		
+			<div class="row" style="margin-top:20px">
+				<div class="flink">
+					<span style="float:left">友情链接：</span>
+                  	<p style="display: inline;">
+					<a href="https://www.aapanel.com/" target="_blank" style="margin: 0px 7px 15px; display: inline-block">Hosting control panel</a>
+									        <a href="https://www.bt.cn/Download/btsoftlinux.html" target="_blank" title="LAMP" style="margin: 0px 7px 15px; display: inline-block;">LAMP</a>
+				    				        <a href="https://www.bt.cn/Download/btsoftlinux.html" target="_blank" title="LNMP" style="margin: 0px 7px 15px; display: inline-block;">LNMP</a>
+				    				        <a href="http://www.wy.cn" target="_blank" title="唯一网络" style="margin: 0px 7px 15px; display: inline-block;">唯一网络</a>
+				    				        <a href="http://www.ddun.com" target="_blank" title="CC防护 " style="margin: 0px 7px 15px; display: inline-block;">CC防护</a>
+				    				        <a href="http://www.ddos.com" target="_blank" title="ddos防护" style="margin: 0px 7px 15px; display: inline-block;">ddos防护</a>
+				    				        <a href="http://www.dns.com" target="_blank" title="dns解析" style="margin: 0px 7px 15px; display: inline-block;">dns解析</a>
+				    				        <a href="http://www.wcloud.com" target="_blank" title="云主机" style="margin: 0px 7px 15px; display: inline-block;">云主机</a>
+				    				        <a href="http://www.om.cn" target="_blank" title="3dmax模型免费下载,设计模型,3d模型下载" style="margin: 0px 7px 15px; display: inline-block;">3D模型</a>
+				    				        <a href="http://www.yunsuo.com.cn" target="_blank" title="云锁-服务器安全" style="margin: 0px 7px 15px; display: inline-block;">云锁-服务器安全</a>
+				    				        <a href="http://www.xmirror.cn" target="_blank" title="悬镜-服务器安全" style="margin: 0px 7px 15px; display: inline-block;">悬镜-服务器安全</a>
+				    				        <a href="http://kodcloud.com" target="_blank" title="可道私有云" style="margin: 0px 7px 15px; display: inline-block;">可道私有云</a>
+				    				        <a href="http://www.jieqi.com" target="_blank" title="杰奇" style="margin: 0px 7px 15px; display: inline-block;">杰奇</a>
+				    				        <a href="https://www.tipask.com" target="_blank" title="Tipask" style="margin: 0px 7px 15px; display: inline-block;">Tipask</a>
+				    				        <a href="http://www.maccms.com" target="_blank" title="苹果CMS" style="margin: 0px 7px 15px; display: inline-block;">苹果CMS</a>
+				    				        <a href="http://www.zhujiwu.com" target="_blank" title="主机屋" style="margin: 0px 7px 15px; display: inline-block;">主机屋</a>
+				    				        <a href="https://www.mituo.cn" target="_blank" title="米托网站制作" style="margin: 0px 7px 15px; display: inline-block;">建网站</a>
+				    				        <a href="https://www.dscmall.cn" target="_blank" title="大商创b2b2c" style="margin: 0px 7px 15px; display: inline-block;">大商创b2b2c</a>
+				    				        <a href="https://www.59dun.com/" target="_blank" title="高防服务器" style="margin: 0px 7px 15px; display: inline-block;">高防服务器</a>
+				    				        <a href="https://www.huzhan.com" target="_blank" title="互站网" style="margin: 0px 7px 15px; display: inline-block;">互站网</a>
+				    				        <a href="https://www.zhongjie.com" target="_blank" title="中介网" style="margin: 0px 7px 15px; display: inline-block;">中介网</a>
+				    				        <a href="http://www.qy.cn" target="_blank" title="云服务器" style="margin: 0px 7px 15px; display: inline-block;">云服务器</a>
+				    				        <a href="https://www.51.la" target="_blank" title="51la网站统计" style="margin: 0px 7px 15px; display: inline-block;">51la网站统计</a>
+				    				        <a href="http://www.35hw.com/" target="_blank" title="东莞网站建设" style="margin: 0px 7px 15px; display: inline-block;">东莞网站建设</a>
+				    				        <a href="http://www.vpn.cn" target="_blank" title="国内200+城市线路VPN" style="margin: 0px 7px 15px; display: inline-block;">国内200+城市线路VPN</a>
+				                      	</p>
+				</div>
+			</div>
+		</div>
+		
+  		
+		<div class="btfooter">
+			<div class="footer_nav layout">
+				<div class="nav_groud">
+					<ul class="nav_list ">
+						<li class="item">常用文档</li>
+						<li ><a href="http://docs.bt.cn/424204">宝塔使用手册</a></li>
+						<li ><a href="https://www.bt.cn/btcode.html">Linux面板命令</a></li>
+						<li ><a href="https://www.bt.cn/bbs/thread-20376-1-1.html" target="_blank">API接口文档</a></li>
+						<li><a href="http://www.bt.cn/kyxy.html" target="_blank">宝塔开源协议</a></li>
+					</ul>
+					<ul class="nav_list ">
+						<li class="item">快捷入口</li>
+						<li><a href="https://www.bt.cn/about.html">公司简介</a></li>
+						<li><a href="https://www.bt.cn/about.html#job">加入我们</a></li>
+						<li><a href="https://www.bt.cn/invite">邀请大使</a></li>
+						<li><a href="https://github.com/aaPanel/BaoTa" target="_blank">GitHub</a></li>
+					</ul>
+					<ul class="nav_list ">
+						<li class="item">联系我们</li>
+						<li><span>周一至周六，节假日除外</span></li>
+						<li><span>9:15~12:30，14:00~18:15</span></li>
+						<li><span>客服咨询QQ：<a href="http://q.url.cn/abvgP3?_type=wpa&qidian=true" target="_blank">800176556</a></span></li>
+						<li><span>投诉建议QQ：<a href="tencent://message/?uin=394030111">394030111</a></span></li>
+					</ul>
+				</div>
+				<div class="nav_logo">
+					<img src="/Public/images/bt_logo.png" alt="" title="这是宝塔吉祥物【小河妖】"/>
+					<span>宝塔，让运维简单高效</span>
+				</div>
+			</div>
+			<div class="copyright">
+				<p>Copyright © 2014-2019 <a href="http://www.bt.cn/" title="宝塔面板">宝塔面板</a>|让运维简单高效(www.bt.cn) 东莞市百塔网络科技有限公司 All
+					Rights Reserved</p>
+				<p><a href="http://www.beian.miit.gov.cn" target="_blank" style="margin-right:15px">粤ICP备17030143号</a> <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44190002003211">粤公网安备
+						44190002003211号</a> <span style="margin-left:15px">宝塔论坛正在使用宝塔Linux面板维护管理并由<a href="https://www.zun.com" target="_blank">尊云云服务器</a>提供支持</span></p>
+				<p></p>
+			</div>
+		</div>
+  		
+  		
+	</div>
+	<script type="text/javascript" src="/Public/js/jquery.js"></script>
+	<script type="text/javascript" src="/Public/js/tongji.js"></script><!--统计js-->
+	
+<script type="text/javascript" src="/Public/layer/layer.js"></script>
+<script>
+	$(document).ready(function () {
+		var index = {
+			userStatus:'',
+			invite_code:'',
+			init: function () {
+				var _this = this;
+				this.userStatus = localStorage.getItem('userStatus');
+				this.invite_code = this.to_query_params.call(window.location.search);
+				this.invite_code = this.invite_code.invite_code == undefined?'':this.invite_code.invite_code;
+				if(this.invite_code != '') this.set_cookie('invite_code',this.invite_code, 1)
+				if(this.userStatus) this.add_user_agent_detail(function(){});//加入代理
+				//获取礼包信息
+				this.get_package_info(function(res){
+					var info = res.info.mobile;
+					$('.bt_invite_tips').show().find('.tips_username span').html(info);
+					$('.yaoqing').hide();
+					$('.tips_btn span').click(function(){
+						if(_this.userStatus){
+							//领取礼包
+							_this.get_package_byuser(res.data.id,function(res){
+								layer.msg(res.msg,{icon:res.status?1:2});
+								setTimeout(function(){window.location = '/admin/profe'},2000);
+							});
+						}else{
+							window.location = '/login';
+						}
+					});
+				});
+				$('.bttip_colse').click(function () {
+					$('.bttip,.bttip_box').addClass('top');
+					setTimeout(function () {
+						$('.bttip').css('display', 'none');
+						$('.bttip_box').removeClass('top');
+					}, 1000);
+				});
+				$(".downBtn span").click(function () {
+					var i = $(this).index();
+					$(this).addClass("on").siblings().removeClass("on");
+					$(".preview > div").hide().eq(i).show();
+					if (i == 0) {
+						$(".downInfo").html('<p><span class="version">6.9免费版</span>|<span class="update">2019/6/12·每月更新</span>|<a class="download" href="https://github.com/aaPanel/BaoTa" target="_blank" style="margin-right:5px">GitHub</a>|<a class="download" href="http://27.50.161.190:8888/login" target="_blank" style="margin-right:5px">演示</a>|<a class="download" href="/bbs/thread-19376-1-1.html">立即安装</a></p><p style="margin-bottom:7px;display:none"><span class="version">5.5.1测试版</span>|<span class="update">2017/11/22·每周更新</span>|<a class="download" href="/bbs/thread-5195-1-1.html">查看安装</a></p>');
+						$(".softtxt").html("Linux版请确保纯净系统安装(支持CentOS、Ubuntu、Debian、Fedora)，Web端管理，QQ群及论坛技术支持<br> 一键创建网站、FTP、数据库、SSL；安全管理，计划任务，文件管理，PHP多版本共存及切换；自带LNMP与LAMP");
+					} else {
+						$(".downInfo").html('<span class="version">6.2免费版</span>|<span class="update">2019/06/12·每月更新</span>|<a class="download" href="http://download.bt.cn/win/panel/BtSoft.zip">立即安装</a>');
+						$(".softtxt").html("Windows版支持2008/2012/2016/2019，64位系统，支持Web端管理，QQ群及论坛技术支持</br>一键创建网站、FTP、数据库；安全管理，文件管理，PHP多版本共存及切换；</br>环境支持:ASP+ASPX+PHP+MYSQL5.5/5.6/5.7+MSSQL05/08/12/14/17+mariaDB+FTP+Apache,<font style='color:red'>目前暂不支持Nginx,正在开发中</font>");
+					}
+				});
+			},
+			// 设置cookie
+			set_cookie: function (name, value, time) {
+				if (time == undefined) time = 30;
+				var exp = new Date();
+				exp.setTime(exp.getTime() + time * 24 * 60 * 60 * 1000);
+				document.cookie = name + "=" + escape(value) + ";expires=" + exp.toGMTString();
+			},
+			//读取cookies 
+			getCookie:function(name){ 
+					var arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+					if(arr=document.cookie.match(reg)){
+							return unescape(arr[2]); 
+				}else{
+					return null;
+				}
+			},
+			get_package_info:function(callback){
+				if(this.invite_code == '') return false;
+				$.post('/api/Btparter/get_bt_packages',{userCode:this.invite_code},function(res){
+					if(callback) callback(res);
+				});
+			},
+			get_package_byuser:function(id,callback){
+				$.post('/api/Btparter/get_package_byuser',{package_id:id},function(res){
+					if(callback) callback(res);
+				});
+			},
+			// 登录设置邀请用户
+			add_user_agent_detail:function (callback){
+				var invite_code = this.getCookie('invite_code');
+				if(invite_code == '') callback();
+				$.post('/api/Btparter/add_user_agent_detail', {
+					userCode:invite_code,
+				}, function (res) {
+					console.log(invite_code)
+					console.log(res);
+					if(callback) callback(res);
+				});
+			},
+			// 序列化
+			to_query_params: function () {
+				var search = this.replace(/^\s+/, '').replace(/\s+$/, '').match(/([^?#]*)(#.*)?$/); //提取location.search中'?'后面的部分
+				if (!search) return {}
+				var searchStr = search[1];
+				var searchHash = searchStr.split('&');
+				var ret = {};
+				for (var i = 0, len = searchHash.length; i < len; i++) { //这里可以调用each方法
+					var pair = searchHash[i];
+					if ((pair = pair.split('='))[0]) {
+						var key = decodeURIComponent(pair.shift());
+						var value = pair.length > 1 ? pair.join('=') : pair[0];
+						if (value != undefined) {
+							value = decodeURIComponent(value);
+						}
+						if (key in ret) {
+							if (ret[key].constructor != Array) {
+								ret[key] = [ret[key]];
+							}
+							ret[key].push(value);
+						} else {
+							ret[key] = value;
+						}
+					}
+				}
+				return ret;
+			}
+		}
+		index.init();
+		console.log(index);
+	})
+</script>
+
+</body>
+
+</html>
