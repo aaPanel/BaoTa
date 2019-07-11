@@ -1,5 +1,5 @@
 import os,time,sys,ssl
-sys.path.append('/www/server/panel/class')
+sys.path.insert(0,'/www/server/panel/class')
 import public
 bt_port = public.readFile('data/port.pl')
 if bt_port: bt_port.strip()

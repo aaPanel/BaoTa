@@ -496,7 +496,7 @@ class ajax:
                 data['sites'] = str(public.M('sites').count());
                 data['ftps'] = str(public.M('ftps').count());
                 data['databases'] = str(public.M('databases').count());
-                data['system'] = panelsys.GetSystemVersion() + '|' + str(mem.total / 1024 / 1024) + 'MB|' + public.getCpuType() + '*' + str(psutil.cpu_count()) + '|' + public.get_webserver() + '|' +session['version'];
+                data['system'] = panelsys.GetSystemVersion() + '|' + str(mem.total / 1024 / 1024) + 'MB|' + str(public.getCpuType()) + '*' + str(psutil.cpu_count()) + '|' + str(public.get_webserver()) + '|' +session['version'];
                 data['system'] += '||'+self.GetInstalleds(mplugin.getPluginList(None));
                 data['logs'] = logs
                 data['oem'] = ''
@@ -506,7 +506,7 @@ class ajax:
                 data['o'] = ''
                 filename = '/www/server/panel/data/o.pl'
                 if os.path.exists(filename): data['o'] = str(public.readFile(filename))
-                sUrl = public.GetConfigValue('home') + '/api/panel/updateLinux';                
+                sUrl = public.GetConfigValue('home') + '/api/panel/updateLinux';     
                 updateInfo = json.loads(public.httpPost(sUrl,data));
                 if not updateInfo: return public.returnMsg(False,"CONNECT_ERR");
                 #updateInfo['msg'] = msg;

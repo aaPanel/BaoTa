@@ -74,7 +74,7 @@ class plugin_deployment:
         m_uri = pinfo['min_image']
         pinfo['min_image'] = '/static/img/dep_ico/' + pinfo['name'] + '.png'
         if os.path.exists(filename): 
-            if os.path.getsize(filename) > 1024: return pinfo
+            if os.path.getsize(filename) > 100: return pinfo
         os.system("wget -O " + filename + ' http://www.bt.cn' + m_uri + " &")
         return pinfo
     

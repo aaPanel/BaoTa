@@ -838,6 +838,7 @@ class san_baseline:
         csr = public.readFile(csrpath);
         file = self.setupPath + '/panel/vhost/' + public.get_webserver() + '/' + siteName + '.conf'
         conf = public.readFile(file);
+        if not conf: return False
         keyText = 'SSLCertificateFile'
         if public.get_webserver() == 'nginx': keyText = 'ssl_certificate';
         status = True
@@ -853,6 +854,8 @@ class san_baseline:
             ret = public.ReadFile('/www/server/panel/vhost/nginx/%s.conf' % siteName)
             valuse = re.findall('ssl_protocols\s+(.+)', ret)
             print(valuse)
+            if not valuse: return tls
+            if not valuse[0]: return tls
             if 'TLSv1' in valuse[0]:
                 tls.append('TLSv1')
             if 'TLSv1.1' in valuse[0]:
@@ -946,6 +949,8 @@ class san_baseline:
                 ret = public.ReadFile(base_json['file'])
                 for i in base_json['rule']:
                     valuse = re.findall(i['re'], ret)
+                    if not valuse: return False
+                    if not valuse[0]: return False
                     if i['check']['type'] == 'string':
                         if valuse[0] in i['check']['value']:
                             return True

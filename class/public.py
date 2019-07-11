@@ -778,12 +778,17 @@ def getStrBetween(startStr,endStr,srcStr):
 
 #取CPU类型
 def getCpuType():
-    cpuinfo = open('/proc/cpuinfo','r').read();
+    cpuinfo = open('/proc/cpuinfo','r').read()
     rep = "model\s+name\s+:\s+(.+)"
-    tmp = re.search(rep,cpuinfo);
-    cpuType = None
+    tmp = re.search(rep,cpuinfo,re.I);
+    cpuType = ''
     if tmp:
-        cpuType = tmp.groups()[0];
+        cpuType = tmp.groups()[0]
+    else:
+        cpuinfo = ExecShell('LANG="en_US.UTF-8" && lscpu')[0]
+        rep = "Model\s+name:\s+(.+)"
+        tmp = re.search(rep,cpuinfo,re.I)
+        if tmp: cpuType = tmp.groups()[0]
     return cpuType;
 
 

@@ -16,9 +16,9 @@ class config:
         return os.path.exists('/www/server/panel/data/close.pl');
 
     def reload_session(self):
-        userInfo = public.M('users').where("username=?",(session['username'],)).find()
+        userInfo = public.M('users').where("id=?",(1,)).field('username,password').find()
         token = public.Md5(userInfo['username'] + '/' + userInfo['password'])
-        public.writeFile('data/login_token.pl',token)
+        public.writeFile('/www/server/panel/data/login_token.pl',token)
         session['login_token'] = token
     
     def setPassword(self,get):

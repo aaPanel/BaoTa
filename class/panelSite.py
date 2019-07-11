@@ -856,7 +856,7 @@ class panelSite(panelRedirect):
               
         for domain in domains:
             if public.checkIp(domain): continue;
-            if domain.find('*.') >=0 and not file_auth:
+            if domain.find('*.') >=0 and file_auth:
                 return public.returnMsg(False, '泛域名不能使用【文件验证】的方式申请证书!');
 
         if file_auth:
@@ -934,7 +934,9 @@ class panelSite(panelRedirect):
                 if match: apis[i]['data'][j]['value'] = match.groups()[0]
                 if apis[i]['data'][j]['value']: is_write = True
         if is_write: public.writeFile('./config/dns_api.json',json.dumps(apis))
-        return apis
+        result = []
+        for i in apis: result.insert(0,i)
+        return result
 
     #设置DNS-API
     def SetDnsApi(self,get):

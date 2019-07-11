@@ -4651,7 +4651,8 @@ bt.site = {
 	set_cert_ssl:function(certName,siteName,callback){
 		var loadT = bt.load('正在部署证书...');
 		bt.send('SetCertToSite','ssl/SetCertToSite',{certName:certName,siteName:siteName},function(rdata){
-			loadT.close();			
+            loadT.close();
+            site.reload();
 			if(callback) callback(rdata);	
 			bt.msg(rdata);
 		})	
@@ -4878,7 +4879,7 @@ bt.form ={
 		data_access:{ title:'访问权限',items:[
 					{name:'dataAccess',type:'select',width:'100px',items:[
 					{title:'本地服务器',value:'127.0.0.1'},
-					{title:'所有人',value:'%'},
+					{title:'所有人(不安全)',value:'%'},
 					{title:'指定IP',value:'ip'}
 				],callback:function(obj){
 					var subid = obj.attr('name')+'_subid';
