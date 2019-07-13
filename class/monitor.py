@@ -207,7 +207,7 @@ class Monitor:
         ntime = time.time()
         new_total_request = self._get_request_count(args)
 
-        qps = int(round(float(new_total_request - old_total_request) / (ntime - otime)))
+        qps = float(new_total_request - old_total_request) / (ntime - otime)
 
         cache.set('old_total_request', new_total_request, cache_timeout)
         cache.set('old_get_time', ntime, cache_timeout)

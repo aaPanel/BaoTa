@@ -283,6 +283,8 @@ class Dns_com(object):
         if result == "False":
             raise ValueError('[DNS]当前绑定的宝塔DNS云解析账户里面不存在这个域名,添加解析失败!')
         print("[DNS]TXT记录创建成功")
+        print("[DNS]尝试验证TXT记录")
+        time.sleep(10)
 
     def delete_dns_record(self, domain_name, domain_dns_value):
         root, _, acme_txt = self.extract_zone(domain_name)

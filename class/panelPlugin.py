@@ -1552,6 +1552,7 @@ class panelPlugin:
     def a(self,get):
         if not hasattr(get,'name'): return public.returnMsg(False,'PLUGIN_INPUT_A');
         try:
+            if not public.path_safe_check("%s/%s" % (get.name,get.s)): return public.returnMsg(False,'PLUGIN_INPUT_C');
             path = self.__install_path + '/' + get.name
             if not os.path.exists(path + '/'+get.name+'_main.py'): return public.returnMsg(False,'PLUGIN_INPUT_B');
             if not self.check_accept(get):return public.returnMsg(False,public.to_string([24744, 26410, 36141, 20080, 91, 37, 115, 93, 25110, 25480, 26435, 24050, 21040, 26399, 33]) % (self.get_title_byname(get),))

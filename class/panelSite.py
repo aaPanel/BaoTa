@@ -884,6 +884,7 @@ class panelSite(panelRedirect):
 
         self.check_ssl_pack()
         import panelLets
+        public.mod_reload(panelLets)
         lets = panelLets.panelLets()
         result = lets.apple_lest_cert(get)
         if result['status'] and not 'code' in result:       

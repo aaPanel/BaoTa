@@ -88,7 +88,10 @@ class panelMysql:
             self.__DB_CUR.execute(sql)
             result = self.__DB_CUR.fetchall()
             #将元组转换成列表
-            data = map(list,result)
+            if sys.version_info[0] == 2:
+                data = map(list,result)
+            else:
+                data = list(map(list,result))
             self.__Close()
             return data
         except Exception as ex:

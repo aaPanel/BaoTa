@@ -1196,36 +1196,53 @@ class san_baseline:
 
     # 取爆破
     def get_ssh_errorlogin(self, get):
+        import datetime
         path = '/var/log/secure'
         if not os.path.exists(path): public.writeFile(path, '');
         fp = open(path, 'r');
         l = fp.readline();
         data = {};
         data['intrusion'] = [];
-        data['intrusion_total'] = 0;
+        # data['intrusion_total'] = 0;
 
         data['defense'] = [];
         data['defense_total'] = 0;
 
         data['success'] = [];
         data['success_total'] = 0;
-
-        limit = 100;
-        while l:
+        day_count = 0
+        data['intrusion_total'] = day_count
+        limit = 10000;
+        flag_limit = 1
+        while l and flag_limit <= 10000:
             if l.find('Failed password for root') != -1:
+                flag_limit += 1
                 if len(data['intrusion']) > limit: del (data['intrusion'][0]);
+
+                months = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
+                time_str11 = re.findall(r'\w+\s+\d+\s+.\d+:\d+:\d+', l)
+                if time_str11[0]:
+                    time_str = re.findall(r'\w+\s+\d+', time_str11[0])
+                    month = int(months[time_str[0].split()[0]])
+                    day = int(time_str[0].split()[1])
+                    cur_month = datetime.datetime.now().month
+                    cur_day = datetime.datetime.now().day
+                    if month != cur_month:
+                        continue
+                    else:
+                        if month == cur_month and day == cur_day:
+                            day_count+=1
+                else:
+                    continue
+
                 #data['intrusion'].append(l);
-                data['intrusion_total'] += 1;
+                #data['intrusion_total'] += 1;
             elif l.find('Accepted') != -1:
                 if len(data['success']) > limit: del (data['success'][0]);
                 data['success'].append(l);
-                data['success_total'] += 1;
-            # elif l.find('refused') != -1:
-            #     if len(data['defense']) > limit: del (data['defense'][0]);
-            #     data['defense'].append(l);
-            #     data['defense_total'] += 1;
+                # data['success_total'] += 1;
             l = fp.readline();
-
+        data['intrusion_total'] = day_count
         months = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
 
         success = [];
