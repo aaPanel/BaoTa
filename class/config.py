@@ -421,6 +421,9 @@ class config:
             os.system('rm -f ' + sslConf);
             return public.returnMsg(True,'PANEL_SSL_CLOSE');
         else:
+            os.system('pip install cffi');
+            os.system('pip install cryptography');
+            os.system('pip install pyOpenSSL');
             try:
                 if not self.CreateSSL(): return public.returnMsg(False,'PANEL_SSL_ERR');
                 public.writeFile(sslConf,'True')

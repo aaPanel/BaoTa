@@ -92,7 +92,7 @@ class backupTools:
         if len(mycnf) > 100:
             public.writeFile('/etc/my.cnf',mycnf);
         
-        public.ExecShell("/www/server/mysql/bin/mysqldump --force --opt " + name + " | gzip > " + filename)
+        public.ExecShell("/www/server/mysql/bin/mysqldump --default-character-set="+ public.get_database_character(name) +" --force --opt " + name + " | gzip > " + filename)
         
         if not os.path.exists(filename):
             endDate = time.strftime('%Y/%m/%d %X',time.localtime())

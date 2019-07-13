@@ -13,7 +13,9 @@ import cryptography
 
 from . import __version__ as sewer_version
 from .config import ACME_DIRECTORY_URL_PRODUCTION
-requests.packages.urllib3.disable_warnings()
+try:
+    requests.packages.urllib3.disable_warnings()
+except:pass
 
 
 class Client(object):

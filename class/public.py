@@ -1264,3 +1264,46 @@ def set_own(filename,user,group=None):
         group = user_info.pw_gid
     os.chown(filename,user,group)
     return True
+
+#校验路径安全
+def path_safe_check(path):
+    checks = ['..','./','\\','%','$','^','&','*','~','@','#']
+    for c in checks:
+        if path.find(c) != -1: return False
+    rep = "^[\w\s\.\/-]+$"
+    if not re.match(rep,path): return False
+    return True
+
+#取数据库字符集
+def get_database_character(db_name):
+    try:
+        import panelMysql
+        tmp = panelMysql.panelMysql().query("show create database `%s`" % db_name.strip())
+        return str(re.findall("SET\s+(.+)\s",tmp[0][1])[0])
+    except:
+        return 'utf8'
+
+def en_punycode(domain):
+        tmp = domain.split('.');
+        newdomain = '';
+        for dkey in tmp:
+            #匹配非ascii字符
+            match = re.search(u"[\x80-\xff]+",dkey);
+            if not match: match = re.search(u"[\u4e00-\u9fa5]+",dkey);
+            if not match:
+                newdomain += dkey + '.';
+            else:
+                newdomain += 'xn--' + dkey.encode('punycode').decode('utf-8') + '.'
+        return newdomain[0:-1];
+
+#punycode 转中文
+def de_punycode(domain):
+    tmp = domain.split('.');
+    newdomain = '';
+    for dkey in tmp:
+        if dkey.find('xn--') >=0:
+            newdomain += dkey.replace('xn--','').encode('utf-8').decode('punycode') + '.'
+        else:
+            newdomain += dkey + '.'
+    return newdomain[0:-1];
+

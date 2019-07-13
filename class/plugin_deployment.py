@@ -70,9 +70,10 @@ class plugin_deployment:
     def get_icon(self,pinfo):
         path = '/www/server/panel/BTPanel/static/img/dep_ico'
         if not os.path.exists(path): os.makedirs(path,384)
-        filename = path + '/' + pinfo['name'] + '.png'
+        filename = "%s/%s.png" %  (path, pinfo['name'])
         m_uri = pinfo['min_image']
-        pinfo['min_image'] = '/static/img/dep_ico/' + pinfo['name'] + '.png'
+        pinfo['min_image'] = '/static/img/dep_ico/%s.png' % pinfo['name']
+        if sys.version_info[0] == 2: filename = filename.encode('utf-8')
         if os.path.exists(filename): 
             if os.path.getsize(filename) > 100: return pinfo
         os.system("wget -O " + filename + ' http://www.bt.cn' + m_uri + " &")
