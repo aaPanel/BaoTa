@@ -27,7 +27,7 @@ class panelSetup:
         if ua:
             ua = ua.lower();
             if ua.find('spider') != -1 or ua.find('bot') != -1: return redirect('https://www.baidu.com');
-        g.version = '6.9.26'
+        g.version = '6.9.27'
         g.title =  public.GetConfigValue('title')
         g.uri = request.path
         session['version'] = g.version;
@@ -61,7 +61,7 @@ class panelAdmin(panelSetup):
     def checkAddressWhite(self):
         token = self.GetToken();
         if not token: return redirect('/login');
-        if not request.remote_addr in token['address']: return redirect('/login');
+        if not public.GetClientIp() in token['address']: return redirect('/login');
         
     
     #检查IP限制
@@ -70,7 +70,7 @@ class panelAdmin(panelSetup):
             iplist = public.ReadFile('data/limitip.conf')
             if iplist:
                 iplist = iplist.strip();
-                if not request.remote_addr in iplist.split(','): return redirect('/login')
+                if not public.GetClientIp() in iplist.split(','): return redirect('/login')
     
     #设置基础Session
     def setSession(self):
