@@ -332,7 +332,7 @@ def san_baseline(pdata=None):
     if comReturn: return comReturn
     import san_baseline
     dataObject = san_baseline.san_baseline()
-    defs = ('start', 'get_api_log', 'get_resut', 'get_ssh_errorlogin')
+    defs = ('start', 'get_api_log', 'get_resut', 'get_ssh_errorlogin','repair','repair_all')
     return publicObject(dataObject, defs, None, pdata)
 
 

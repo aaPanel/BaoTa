@@ -15,7 +15,8 @@ from OpenSSL import crypto
 try:
     requests.packages.urllib3.disable_warnings()
 except:pass
-import BTPanel
+if __name__ != '__main__':
+    import BTPanel
 try:
     import dns.resolver
 except:
@@ -248,19 +249,32 @@ class panelLets:
         public.writeFile(path + "/README","let") 
         
         #计划任务续签
-        echo = public.md5(public.md5('renew_lets_ssl_bt'))
-        crontab = public.M('crontab').where('echo=?',(echo,)).find()
-        if not crontab:
-            cronPath = public.GetConfigValue('setup_path') + '/cron/' + echo    
-            shell = 'python %s/panel/class/panelLets.py renew_lets_ssl ' % (self.setupPath)
-            public.writeFile(cronPath,shell)
-            public.M('crontab').add('name,type,where1,where_hour,where_minute,echo,addtime,status,save,backupTo,sType,sName,sBody,urladdress',("续签Let's Encrypt证书",'day','','0','10',echo,time.strftime('%Y-%m-%d %X',time.localtime()),1,'','localhost','toShell','',shell,''))
-        
+        self.set_crond()
         return public.returnMsg(True, '申请成功.')
 
+    #创建计划任务
+    def set_crond(self):
+        try:
+            echo = public.md5(public.md5('renew_lets_ssl_bt'))
+            cron_id = public.M('crontab').where('echo=?',(echo,)).getField('id')
 
-
-
+            import crontab
+            args_obj = public.dict_obj()
+            if not cron_id:
+                cronPath = public.GetConfigValue('setup_path') + '/cron/' + echo    
+                shell = 'python %s/panel/class/panelLets.py renew_lets_ssl ' % (self.setupPath)
+                public.writeFile(cronPath,shell)
+                args_obj.id = public.M('crontab').add('name,type,where1,where_hour,where_minute,echo,addtime,status,save,backupTo,sType,sName,sBody,urladdress',("续签Let's Encrypt证书",'day','','0','10',echo,time.strftime('%Y-%m-%d %X',time.localtime()),0,'','localhost','toShell','',shell,''))
+                crontab.crontab().set_cron_status(args_obj)
+            else:
+                cron_path = public.get_cron_path()
+                if os.path.exists(cron_path):
+                    cron_s = public.readFile(cron_path)
+                    if cron_s.find(echo) == -1:
+                        public.M('crontab').where('echo=?',(echo,)).setField('status',0)
+                        args_obj.id = cron_id
+                        crontab.crontab().set_cron_status(args_obj)
+        except:pass
 
     #手动解析
     def crate_let_by_oper(self,data):

@@ -1,5 +1,11 @@
-#!/usr/bin/python
 #coding: utf-8
+# +-------------------------------------------------------------------
+# | 宝塔Linux面板
+# +-------------------------------------------------------------------
+# | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
+# +-------------------------------------------------------------------
+# | Author: 王张杰 <750755014@qq.com>
+# +-------------------------------------------------------------------
 
 import os
 import json
@@ -20,6 +26,14 @@ class Monitor:
             return json.loads(public.readFile(filename))
         except:
             return {}
+
+    def __get_file_nums(self, filepath):
+        if not os.path.exists(filepath): return 0
+
+        count = 0
+        for index, line in enumerate(open(filepath, 'r')):
+            count += 1
+        return count
 
     def _get_site_list(self):
         sites = public.M('sites').where('status=?', (1,)).field('name').get()
@@ -120,14 +134,14 @@ class Monitor:
 
     # 获取攻击数
     def _get_attack_nums(self, args):
-        file_name = '/www/server/btwaf/total.json'
-        if not os.path.exists(file_name): return 0
+        today = time.strftime('%Y-%m-%d', time.localtime())
+        sites = self._get_site_list()
 
-        try:
-            file_body = json.loads(public.readFile(file_name))
-            return int(file_body['total'])
-        except:
-            return 0
+        count = 0
+        for site in sites:
+            file_path = '/www/wwwlogs/btwaf/{0}_{1}.log'.format(site['name'], today)
+            count += self.__get_file_nums(file_path)
+        return count
 
     def get_exception(self, args):
         data = {'mysql_slow': self._get_slow_log_nums(args), 'php_slow': self._php_count(args), 'attack_num': self._get_attack_nums(args)}

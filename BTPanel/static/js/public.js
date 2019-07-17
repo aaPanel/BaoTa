@@ -1631,7 +1631,7 @@ function ssh_login_def() {
     pdata_socket['data'] = {};
     pdata_socket['data']['ssh_user'] = $("input[name='ssh_user']").val();
     pdata_socket['data']['ssh_passwd'] = $("input[name='ssh_passwd']").val();
-    if (!pdata_socket.ssh_user || !pdata_socket.ssh_passwd) {
+    if (!pdata_socket.data.ssh_user || !pdata_socket.data.ssh_passwd) {
         layer.msg('SSH用户名和密码不能为空!');
         return;
     }

@@ -199,12 +199,17 @@ class bt_task:
     
     #清理任务日志
     def clean_log(self):
+        import shutil
         s_time = int(time.time())
         timeout = 86400
         for f in os.listdir(self.__task_path):
             filename = self.__task_path + f
             c_time = os.stat(filename).st_ctime
-            if s_time - c_time > timeout: os.remove(filename)
+            if s_time - c_time > timeout: 
+                if os.path.isdir(filename):
+                    shutil.rmtree(filename)
+                else:
+                    os.remove(filename)
         return True
 
     #文件压缩
