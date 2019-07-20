@@ -3349,6 +3349,7 @@ location %s
     #设置防盗链
     def SetSecurity(self,get):
         if len(get.fix) < 2: return public.returnMsg(False,'URL后缀不能为空!');
+        if len(get.domains) < 3: return public.returnMsg(False,'防盗链域名不能为空!'); 
         file = '/www/server/panel/vhost/nginx/' + get.name + '.conf';
         if os.path.exists(file):
             conf = public.readFile(file);

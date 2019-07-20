@@ -61,7 +61,7 @@ def control_init():
     public.ExecShell("chmod -R  600 /www/server/cron/*.log")
     public.ExecShell("chown -R root:root /www/server/panel/data")
     public.ExecShell("chown -R root:root /www/server/panel/config")
-    disable_putenv('putenv')
+    #disable_putenv('putenv')
     clean_session()
     set_crond()
 
