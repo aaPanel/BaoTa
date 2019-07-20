@@ -11,7 +11,7 @@ if sys.version_info[0] == 2:
     sys.setdefaultencoding('utf-8')
 os.chdir('/www/server/panel')
 sys.path.append("class/")
-import time, hashlib, sys, os, json, requests, re, public, random, string, requests
+import time, hashlib, sys, os, json, requests, re, public, random, string
 
 
 class san_baseline:
@@ -52,6 +52,7 @@ class san_baseline:
         return result
 
     ######面板安全监测##########################
+
     # 监测是否开启IP限制登陆
     def get_limitip(self):
         if os.path.exists('/www/server/panel/data/limitip.conf'):
@@ -118,8 +119,9 @@ class san_baseline:
         if not self.get_limitip():
             ret1 = {
                 'id': 7,
-                "harm": "中",
-                "level": "2",
+                "repaired": "0",
+                "harm": "警告",
+                "level": "1",
                 "type": "file",
                 "name": "宝塔面板登陆未开启（授权IP）限制登陆",
                 "Suggestions": "加固建议 :如果你的IP存在固定IP建议添加到面板的授权IP",
@@ -131,6 +133,7 @@ class san_baseline:
             if not get_port_default:
                 ret1 = {
                     'id': 8,
+                    "repaired": "0",
                     "harm": "中",
                     "level": "2",
                     "type": "file",
@@ -143,6 +146,7 @@ class san_baseline:
             if not get_admin_path:
                 ret1 = {
                     'id': 9,
+                    "repaired": "0",
                     "harm": "高",
                     "level": "3",
                     "type": "file",
@@ -155,6 +159,7 @@ class san_baseline:
             if not get_api_open:
                 ret1 = {
                     'id': 10,
+                    "repaired": "0",
                     "harm": "中",
                     "level": "2",
                     "type": "file",
@@ -168,6 +173,7 @@ class san_baseline:
             ret1 = {
                 'id': 11,
                 "harm": "高",
+                "repaired": "0",
                 "level": "3",
                 "type": "file",
                 "name": "面板用户名过于简单",
@@ -181,6 +187,7 @@ class san_baseline:
             ret1 = {
                 'id': 12,
                 "harm": "高",
+                "repaired": "0",
                 "level": "3",
                 "type": "file",
                 "name": "存在国家不允许的翻墙插件",
@@ -280,6 +287,7 @@ class san_baseline:
                 ret1 = {
                     'id': i['id'],
                     "harm": "高",
+                    "repaired": "1",
                     "level": "3",
                     "type": "file",
                     "name": "面板关键性文件权限错误%s" % i['file'],
@@ -325,6 +333,7 @@ class san_baseline:
                             "type": "file",
                             "harm": "中",
                             "level": "2",
+                            "repaired": "1",
                             "name": "PHP 版本泄露",
                             "file": php_path + i + '/etc/php.ini',
                             "Suggestions": "加固建议, 在%s expose_php的值修改为Off中修改" % (php_path + i + '/etc/php.ini'),
@@ -351,6 +360,7 @@ class san_baseline:
                             "type": "diff",
                             "harm": "严重",
                             "level": "5",
+                            "repaired": "1",
                             "name": "PHP%s 中存在危险函数未禁用" % i,
                             "file": php_path + i + '/etc/php.ini',
                             "Suggestions": "加固建议, 在%s 中 disable_functions= 修改成如下:" % (php_path + i + '/etc/php.ini'),
@@ -370,6 +380,7 @@ class san_baseline:
             "type": "dir",
             "harm": "高",
             "level": "3",
+            "repaired": "0",
             "name": "PHP 5.2 版本过旧",
             "file": '/www/server/php/52',
             "Suggestions": "加固建议：不再使用php5.2 ",
@@ -396,6 +407,7 @@ class san_baseline:
                             "type": "file",
                             "harm": "中",
                             "level": "2",
+                            "repaired": "1",
                             "name": "PHP%s 版本泄露" % i,
                             "file": php_path + i + '/etc/php.ini',
                             "Suggestions": "加固建议, 在%s expose_php的值修改为Off中修改" % (php_path + i + '/etc/php.ini'),
@@ -415,6 +427,7 @@ class san_baseline:
                             "type": "diff",
                             "harm": "严重",
                             "level": "5",
+                            "repaired": "1",
                             "name": "PHP%s 中存在危险函数未禁用" % i,
                             "file": php_path + i + '/etc/php.ini',
                             "Suggestions": "加固建议, 在%s 中 disable_functions= 修改成如下:" % (php_path + i + '/etc/php.ini'),
@@ -431,6 +444,7 @@ class san_baseline:
             "type": "dir",
             "harm": "高",
             "level": "3",
+            "repaired": "0",
             "name": "PHP 5.2 版本过旧",
             "file": '/www/server/php/52',
             "Suggestions": "加固建议：不再使用php5.2 ",
@@ -450,6 +464,7 @@ class san_baseline:
             "type": "file",
             "harm": "高",
             "level": "3",
+            "repaired": "0",
             "name": "Redis 监听的地址为0.0.0.0",
             "file": '/www/server/redis/redis.conf',
             "Suggestions": "加固建议, 在%s 中的监听IP设置为127.0.0.1 例如" % ('/www/server/redis/redis.conf'),
@@ -466,10 +481,11 @@ class san_baseline:
             "type": "password",
             "harm": "高",
             "level": "3",
+            "repaired": "0",
             "name": "Redis 查看是否设置密码",
             "file": '/www/server/redis/redis.conf',
             "Suggestions": "加固建议, 在%s 中的为未设置密码 例如" % ('/www/server/redis/redis.conf'),
-            "repair": "requirepass requirepass@#$$%#@%#@!!",
+            "repair": "requirepass requirepassQWERQQQQQQQ",
             "rule": [
                 {"re": "\nrequirepass\s*(.+)", "check": {"type": "string", "value": []}}]
         }
@@ -482,10 +498,11 @@ class san_baseline:
             "type": "password",
             "harm": "高",
             "level": "3",
+            "repaired": "0",
             "name": "Redis 存在弱密码",
             "file": '/www/server/redis/redis.conf',
             "Suggestions": "加固建议, 在%s 中requirepass 设置为强密码" % ('/www/server/redis/redis.conf'),
-            "repair": "requirepass requirepass@#$$%#@%#@!!",
+            "repair": "requirepass requirepassQWERQQQQQQQ",
             "rule": [
                 {"re": "\nrequirepass\s*(.+)", "check": {"type": "string", "value": ['123456', 'admin', 'damin888']}}]
         }
@@ -500,6 +517,7 @@ class san_baseline:
                     "type": "password",
                     "harm": "高",
                     "level": "3",
+                    "repaired": "0",
                     "name": "Redis 版本低于最新版本",
                     "file": '/www/server/redis/redis.conf',
                     "Suggestions": "加固建议,升级到最新版的redis",
@@ -511,6 +529,19 @@ class san_baseline:
     # memcached 配置安全
     def memcache_security(self):
         ret = []
+        memcache_bind = {
+            'id': 46,
+            "type": "file",
+            "harm": "高",
+            "level": "3",
+            "repaired": "0",
+            "name": "Memcache 监听IP为0.0.0.0",
+            "file": '/etc/init.d/memcached',
+            "Suggestions": "加固建议, 在%s 中的监听IP设置为127.0.0.1 例如" % ('/etc/init.d/memcached'),
+            "repair": "IP=127.0.0.1",
+            "rule": [
+                {"re": "\nIP\s?=\s?(.+)", "check": {"type": "string", "value": ['0.0.0.0']}}]
+        }
         if self.check_san_baseline(self.__repair['46']):
             ret.append(self.__repair['46'])
         return ret
@@ -543,6 +574,7 @@ class san_baseline:
                 'id': 47,
                 "type": "password",
                 "harm": "高",
+                "repaired": "0",
                 "level": "3",
                 "name": "Mysql root密码为弱密码",
                 "file": '/etc/init.d/memcached',
@@ -556,6 +588,7 @@ class san_baseline:
                 'id': 48,
                 "type": "password",
                 "harm": "高",
+                "repaired": "0",
                 "level": "3",
                 "name": "3306 端口对外开放",
                 "file": '/etc/init.d/memcached',
@@ -570,9 +603,10 @@ class san_baseline:
                 'id': 49,
                 "type": "password",
                 "harm": "高",
+                "repaired": "0",
                 "level": "3",
                 "name": "Mysql 存在外部连接用户",
-                "file": '/etc/init.d/memcached',
+                "file": '/etc/my.local',
                 "Suggestions": "加固建议： 进入数据库查看mysql用户表",
                 "repair": e,
             }
@@ -592,10 +626,9 @@ class san_baseline:
         # 存在非root 的管理员用户(危险)
         get_root_0 = {
             'id': 53,
-            "Suggestions":"加固建议：删除其他的UID为的0用户",
-            "repair":"除root以为的其他的UID为0的用户的应该删除。或者为其分配新的UID",
             "type": "shell",
             "harm": "紧急",
+            "repaired": "0",
             "level": "5",
             "name": "存在非root 的管理员用户(危险)",
             "ps": "除root以为的其他的UID为0的用户的应该删除。或者为其分配新的UID",
@@ -615,6 +648,7 @@ class san_baseline:
                 'id': 56,
                 "type": "file",
                 "harm": "中",
+                "repaired": "0",
                 "level": "2",
                 "name": "系统存在空密码的用户",
                 "file": "/etc/login.defs ",
@@ -666,9 +700,10 @@ class san_baseline:
                             task ={
                                 'name': "异常计划任务",
                                 "harm": "高",
+                                "repaired": "0",
                                 "level": 3,
-                                "repair": "排查清楚计划任务是否非正常",
-                                "Suggestions":"加固建议：请排查是否是异常下载",
+                                "repair": "请排查是否是异常下载",
+                                "Suggestions":"请排查是否是异常下载",
                                 'list': i2
                             }
                             ret.append(task)
@@ -690,7 +725,7 @@ class san_baseline:
                 'id': 58,
                 "type": "chmod",
                 "file": "/etc/shadow",
-                "chmod": [400],
+                "chmod": [400,000],
                 "user": ['root'],
                 'group': ['root']
             }, {
@@ -704,7 +739,7 @@ class san_baseline:
                 'id': 60,
                 "type": "chmod",
                 "file": "/etc/gshadow",
-                "chmod": [400],
+                "chmod": [400,000],
                 "user": ['root'],
                 'group': ['root']
             }, {
@@ -777,6 +812,7 @@ class san_baseline:
                 ret1 = {
                     'id':i['id'],
                     "harm": "高",
+                    "repaired": "1",
                     "type": "file",
                     "name": "系统关键性文件权限错误%s" % i['file'],
                     "Suggestions": "加固建议 : %s 权限改为%s 所属用户为%s" % (i['file'], i['chmod'], i['user']),
@@ -846,40 +882,32 @@ class san_baseline:
                 site = {
                     "user_ini":False,
                     "level":1,
+                    "repaired": "0",
                     "name":'%s该站点未启用SSL' % i['name'],
                     "ssl":ssl,
                     "tls":tls,
                     "harm":"警告",
                 }
                 if not ssl:
-                    site['Suggestions']='加固建议使用https为访问方式'
-                    site['repair']='https 强制模式'
                     site['ps'] = '%s该站点未启用SSL' % i['name']
                 else:
                     if tls:
-                        site['Suggestions'] = '加固建议: 建议使用TLS1.2及以上的安全协议'
-                        site['repair']='TLS1.2 或者TLS1.3'
-                        site['name']='%s该站点启用了不安全的SSL协议LSv1 或者LSv1.1' % i['name']
                         site['ps'] = '%s该站点启用了不安全的SSL协议LSv1 或者LSv1.1' % i['name']
                 site_secr.append(site)
             else:
                 site = {
-                    "user_ini": True,
+                    "user_ini": False,
                     "level": 1,
+                    "repaired": "0",
                     "name": '%s该站点未启用SSL' % i['name'],
                     "ssl": ssl,
                     "tls": tls,
                     "harm": "警告",
                 }
                 if not ssl:
-                    site['Suggestions']='加固建议使用https为访问方式'
-                    site['repair']='https 强制模式'
                     site['ps'] = '%s该站点未启用SSL' % i['name']
                 else:
                     if tls:
-                        site['Suggestions'] = '加固建议: 建议使用TLS1.2及以上的安全协议'
-                        site['repair']='TLS1.2 或者TLS1.3'
-                        site['name']='%s该站点启用了不安全的SSL协议LSv1 或者LSv1.1' % i['name']
                         site['ps'] = '%s该站点启用了不安全的SSL协议LSv1 或者LSv1.1' % i['name']
                 site_secr.append(site)
         resutl['site_list'] = site_secr
@@ -1007,6 +1035,7 @@ class san_baseline:
                     if ret.status_code != 200:
                         ret_status = {
                             "type": "site",
+                            "repaired": "0",
                             "name": "%s站点通过本机访问失败" % i['nane'],
                             "harm": "警告",
                             'level':"1",
@@ -1029,6 +1058,7 @@ class san_baseline:
             "name": "Nginx 版本泄露",
             "harm": "低",
             'level': "1",
+            "repaired": "0",
             "file": '/www/server/nginx/conf/nginx.conf',
             "Suggestions": "加固建议, 在%s expose_php的值修改为Off中修改" % ('/www/server/nginx/conf/nginx.conf'),
             "repair": "expose_php = Off",
@@ -1044,6 +1074,7 @@ class san_baseline:
                     'id': 71,
                     "type": "file",
                     'level': "1",
+                    "repaired": "0",
                     "name": "Nginx 版本过低",
                     "harm": "低",
                     "file": '/www/server/nginx/conf/nginx.conf',
@@ -1212,9 +1243,13 @@ class san_baseline:
                             day_count+=1
                 else:
                     continue
+
+                #data['intrusion'].append(l);
+                #data['intrusion_total'] += 1;
             elif l.find('Accepted') != -1:
                 if len(data['success']) > limit: del (data['success'][0]);
                 data['success'].append(l);
+                # data['success_total'] += 1;
             l = fp.readline();
         data['intrusion_total'] = day_count
         months = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
@@ -1263,7 +1298,8 @@ class san_baseline:
     # 修复全部
     def repair_all(self,get):
         for i in self.__repair:
-             self.repair_san_baseline(self.__repair[i])
+            if self.__repair[i]['repaired']=='1':
+                self.repair_san_baseline(self.__repair[i])
         return True
 
 if __name__ == '__main__':

@@ -132,8 +132,35 @@ class Monitor:
 
         return result
 
-    # 获取攻击数
-    def _get_attack_nums(self, args):
+    # 获取当天cc攻击数
+    def _get_cc_attack_num(self, args):
+        zero_point = int(time.time()) - int(time.time() - time.timezone) % 86400
+        log_path = '/www/server/btwaf/drop_ip.log'
+        if not os.path.exists(log_path): return 0
+
+        num = 100
+        log_body = public.GetNumLines(log_path, num).split('\n')
+        while True:
+            if len(log_body) < num:
+                break
+            if json.loads(log_body[0])[0] < zero_point:
+                break
+            else:
+                num += 100
+                log_body = public.GetNumLines(log_path, num).split('\n')
+
+        num = 0
+        for line in log_body:
+            try:
+                item = json.loads(line)
+                if item[0] > zero_point and item[-1] == 'cc':
+                    num += 1
+            except: continue
+
+        return num
+
+    # 获取当天攻击总数
+    def _get_attack_num(self, args):
         today = time.strftime('%Y-%m-%d', time.localtime())
         sites = self._get_site_list()
 
@@ -144,7 +171,8 @@ class Monitor:
         return count
 
     def get_exception(self, args):
-        data = {'mysql_slow': self._get_slow_log_nums(args), 'php_slow': self._php_count(args), 'attack_num': self._get_attack_nums(args)}
+        data = {'mysql_slow': self._get_slow_log_nums(args), 'php_slow': self._php_count(args),
+                'attack_num': self._get_attack_num(args), 'cc_attack_num': self._get_cc_attack_num(args)}
         statuscode_distribute = self._statuscode_distribute(args)
         data.update(statuscode_distribute)
         return data

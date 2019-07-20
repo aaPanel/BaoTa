@@ -24,15 +24,10 @@ import panelSite
 class dict_obj:
     def __contains__(self, key):
         return getattr(self, key, None)
-
     def __setitem__(self, key, value): setattr(self, key, value)
-
     def __getitem__(self, key): return getattr(self, key, None)
-
     def __delitem__(self, key): delattr(self, key)
-
     def __delattr__(self, key): delattr(self, key)
-
     def get_items(self): return self
 
 
