@@ -20,6 +20,7 @@ from werkzeug.contrib.cache import SimpleCache
 from werkzeug.wrappers import Response
 from flask_socketio import SocketIO,emit,send
 dns_client = None
+app.config['DEBUG'] = os.path.exists('data/debug.pl')
 
 #设置BasicAuth
 basic_auth_conf = 'config/basic_auth.json' 
@@ -413,9 +414,11 @@ def config(pdata = None):
         data['basic_auth'] = c_obj.get_basic_auth_stat(None)
         data['basic_auth']['value'] = '已关闭'
         if data['basic_auth']['open']: data['basic_auth']['value'] = '已开启'
+        data['debug'] = ''
+        if app.config['DEBUG']: data['debug'] = 'checked'
         return render_template( 'config.html',data=data)
     import config
-    defs = ('get_panel_error_logs','clean_panel_error_logs','get_basic_auth_stat','set_basic_auth','get_cli_php_version','get_tmp_token','set_cli_php_version','DelOldSession', 'GetSessionCount', 'SetSessionConf', 'GetSessionConf','get_ipv6_listen','set_ipv6_status','GetApacheValue','SetApacheValue','GetNginxValue','SetNginxValue','get_token','set_token','set_admin_path','is_pro','get_php_config','get_config','SavePanelSSL','GetPanelSSL','GetPHPConf','SetPHPConf','GetPanelList','AddPanelInfo','SetPanelInfo','DelPanelInfo','ClickPanelInfo','SetPanelSSL','SetTemplates','Set502','setPassword','setUsername','setPanel','setPathInfo','setPHPMaxSize','getFpmConfig','setFpmConfig','setPHPMaxTime','syncDate','setPHPDisable','SetControl','ClosePanel','AutoUpdatePanel','SetPanelLock')
+    defs = ('get_cert_source','set_debug','get_panel_error_logs','clean_panel_error_logs','get_basic_auth_stat','set_basic_auth','get_cli_php_version','get_tmp_token','set_cli_php_version','DelOldSession', 'GetSessionCount', 'SetSessionConf', 'GetSessionConf','get_ipv6_listen','set_ipv6_status','GetApacheValue','SetApacheValue','GetNginxValue','SetNginxValue','get_token','set_token','set_admin_path','is_pro','get_php_config','get_config','SavePanelSSL','GetPanelSSL','GetPHPConf','SetPHPConf','GetPanelList','AddPanelInfo','SetPanelInfo','DelPanelInfo','ClickPanelInfo','SetPanelSSL','SetTemplates','Set502','setPassword','setUsername','setPanel','setPathInfo','setPHPMaxSize','getFpmConfig','setFpmConfig','setPHPMaxTime','syncDate','setPHPDisable','SetControl','ClosePanel','AutoUpdatePanel','SetPanelLock')
     return publicObject(config.config(),defs,None,pdata);
 
 @app.route('/ajax',methods=method_all)
@@ -918,6 +921,7 @@ def connected_msg(msg):
 
 
 def check_csrf():
+    if app.config['DEBUG']: return True
     request_token = request.cookies.get('request_token')
     if session['request_token'] != request_token: return False
     http_token = request.headers.get('x-http-token')

@@ -2084,7 +2084,9 @@ server
         n = 0
         for w in ["nginx", "apache"]:
             conf_path = "%s/panel/vhost/%s/%s.conf" % (self.setupPath, w, get.sitename)
-            old_conf = public.readFile(conf_path)
+            old_conf = ""
+            if os.path.exists(conf_path):
+                old_conf = public.readFile(conf_path)
             rep = "(#PROXY-START(\n|.)+#PROXY-END)"
             url_rep = "proxy_pass (.*);|ProxyPass\s/\s(.*)|Host\s(.*);"
             host_rep = "Host\s(.*);"

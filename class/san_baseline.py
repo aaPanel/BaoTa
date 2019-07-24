@@ -11,7 +11,7 @@ if sys.version_info[0] == 2:
     sys.setdefaultencoding('utf-8')
 os.chdir('/www/server/panel')
 sys.path.append("class/")
-import time, hashlib, sys, os, json, requests, re, public, random, string
+import time, hashlib, sys, os, json, requests, re, public, random, string, requests
 
 
 class san_baseline:
@@ -153,19 +153,6 @@ class san_baseline:
                     "name": "宝塔面板登陆未开启安全入口",
                     "Suggestions": "加固建议 : 修改安全入口例如 /123456789",
                     "repair": "首页-->面板设置->安全入口->修改安全入口-->保存",
-                }
-                result.append(ret1)
-            get_api_open = self.get_api_open()
-            if not get_api_open:
-                ret1 = {
-                    'id': 10,
-                    "repaired": "0",
-                    "harm": "中",
-                    "level": "2",
-                    "type": "file",
-                    "name": "面板已经开启API(请注意是否需要开启API或者API的白名单IP是否是授权IP)",
-                    "Suggestions": "加固建议 : 不必要使用时刻建议关闭",
-                    "repair": "首页-->面板设置->API接口->关闭|开启",
                 }
                 result.append(ret1)
         get_username = self.get_username()
@@ -375,6 +362,7 @@ class san_baseline:
 
     # 版本过旧
     def php_dir(self):
+
         php_version_dir = {
             'id':41,
             "type": "dir",
@@ -452,7 +440,7 @@ class san_baseline:
             "rule": []
         }
         if not self.check_san_baseline(php_version_dir):
-            return php_version_dir
+            ret.append(php_version_dir)
         return ret
 
     # Redis 配置按
@@ -465,6 +453,7 @@ class san_baseline:
             "harm": "高",
             "level": "3",
             "repaired": "0",
+            "check_file":"/www/server/redis",
             "name": "Redis 监听的地址为0.0.0.0",
             "file": '/www/server/redis/redis.conf',
             "Suggestions": "加固建议, 在%s 中的监听IP设置为127.0.0.1 例如" % ('/www/server/redis/redis.conf'),
@@ -481,6 +470,7 @@ class san_baseline:
             "type": "password",
             "harm": "高",
             "level": "3",
+            "check_file": "/www/server/redis",
             "repaired": "0",
             "name": "Redis 查看是否设置密码",
             "file": '/www/server/redis/redis.conf',
@@ -499,6 +489,7 @@ class san_baseline:
             "harm": "高",
             "level": "3",
             "repaired": "0",
+            "check_file": "/www/server/redis",
             "name": "Redis 存在弱密码",
             "file": '/www/server/redis/redis.conf',
             "Suggestions": "加固建议, 在%s 中requirepass 设置为强密码" % ('/www/server/redis/redis.conf'),
@@ -516,6 +507,7 @@ class san_baseline:
                     'id': 45,
                     "type": "password",
                     "harm": "高",
+                    "check_file": "/www/server/redis",
                     "level": "3",
                     "repaired": "0",
                     "name": "Redis 版本低于最新版本",
@@ -536,6 +528,7 @@ class san_baseline:
             "level": "3",
             "repaired": "0",
             "name": "Memcache 监听IP为0.0.0.0",
+            "check_file": "/usr/local/memcached",
             "file": '/etc/init.d/memcached',
             "Suggestions": "加固建议, 在%s 中的监听IP设置为127.0.0.1 例如" % ('/etc/init.d/memcached'),
             "repair": "IP=127.0.0.1",
@@ -549,6 +542,7 @@ class san_baseline:
     # 查看是否是弱密码
     def get_root_pass(self):
         # mysql 弱密码
+        if not os.path.exists('/www/server/mysql'): return True
         ret = public.M('config').field('mysql_root').select()[0]['mysql_root']
         if ret == '123456' or ret == 'admin':
             return False
@@ -558,6 +552,7 @@ class san_baseline:
 
     # 查看mysql 是否有对外连接用户
     def chekc_mysql_user(self):
+        if not  os.path.exists('/www/server/mysql'):return True
         ret = public.M('config').field('mysql_root').select()[0]['mysql_root']
         sql = ''' mysql -uroot -p''' + ret + ''' -e "select User,Host from mysql.user where host='%'" '''
         resutl = public.ExecShell(sql)
@@ -685,7 +680,7 @@ class san_baseline:
     # 计划任务 安全
     def tasks_security(self):
         ret = []
-        f = open('/var/spool/cron/root', 'r')
+        f = open(public.get_cron_path(), 'r')
         for i in f.readlines():
 
             if not i: continue;
@@ -725,7 +720,7 @@ class san_baseline:
                 'id': 58,
                 "type": "chmod",
                 "file": "/etc/shadow",
-                "chmod": [400,000],
+                "chmod": [400],
                 "user": ['root'],
                 'group': ['root']
             }, {
@@ -739,7 +734,7 @@ class san_baseline:
                 'id': 60,
                 "type": "chmod",
                 "file": "/etc/gshadow",
-                "chmod": [400,000],
+                "chmod": [400],
                 "user": ['root'],
                 'group': ['root']
             }, {
@@ -865,7 +860,6 @@ class san_baseline:
         else:
             return False
 
-    # 站点安全
     def site_security(self):
         # 是否开启防御跨站的
         resutl = {}
@@ -880,34 +874,42 @@ class san_baseline:
                 tls = self.get_ssl_tls(i['name'])
             if not os.path.exists(path):
                 site = {
-                    "user_ini":False,
-                    "level":1,
-                    "repaired": "0",
-                    "name":'%s该站点未启用SSL' % i['name'],
-                    "ssl":ssl,
-                    "tls":tls,
-                    "harm":"警告",
-                }
-                if not ssl:
-                    site['ps'] = '%s该站点未启用SSL' % i['name']
-                else:
-                    if tls:
-                        site['ps'] = '%s该站点启用了不安全的SSL协议LSv1 或者LSv1.1' % i['name']
-                site_secr.append(site)
-            else:
-                site = {
                     "user_ini": False,
                     "level": 1,
-                    "repaired": "0",
                     "name": '%s该站点未启用SSL' % i['name'],
                     "ssl": ssl,
                     "tls": tls,
                     "harm": "警告",
                 }
                 if not ssl:
+                    site['Suggestions'] = '加固建议使用https为访问方式'
+                    site['repair'] = 'https 强制模式'
                     site['ps'] = '%s该站点未启用SSL' % i['name']
                 else:
                     if tls:
+                        site['Suggestions'] = '加固建议: 建议使用TLS1.2及以上的安全协议'
+                        site['repair'] = 'TLS1.2 或者TLS1.3'
+                        site['name'] = '%s该站点启用了不安全的SSL协议LSv1 或者LSv1.1' % i['name']
+                        site['ps'] = '%s该站点启用了不安全的SSL协议LSv1 或者LSv1.1' % i['name']
+                site_secr.append(site)
+            else:
+                site = {
+                    "user_ini": True,
+                    "level": 1,
+                    "name": '%s该站点未启用SSL' % i['name'],
+                    "ssl": ssl,
+                    "tls": tls,
+                    "harm": "警告",
+                }
+                if not ssl:
+                    site['Suggestions'] = '加固建议使用https为访问方式'
+                    site['repair'] = 'https 强制模式'
+                    site['ps'] = '%s该站点未启用SSL' % i['name']
+                else:
+                    if tls:
+                        site['Suggestions'] = '加固建议: 建议使用TLS1.2及以上的安全协议'
+                        site['repair'] = 'TLS1.2 或者TLS1.3'
+                        site['name'] = '%s该站点启用了不安全的SSL协议LSv1 或者LSv1.1' % i['name']
                         site['ps'] = '%s该站点启用了不安全的SSL协议LSv1 或者LSv1.1' % i['name']
                 site_secr.append(site)
         resutl['site_list'] = site_secr
@@ -917,31 +919,35 @@ class san_baseline:
     # 主判断函数
     def check_san_baseline(self, base_json):
         if base_json['type'] == 'file':
-            if os.path.exists(base_json['file']):
-                ret = public.ReadFile(base_json['file'])
-                for i in base_json['rule']:
-                    valuse = re.findall(i['re'], ret)
-                    print(valuse)
-                    if i['check']['type'] == 'number':
-                        if not valuse: return False
-                        if not valuse[0]: return False
-                        valuse = int(valuse[0])
-
-                        if valuse > i['check']['min'] and valuse < i['check']['max']:
-                            return True
-                        else:
-                            return False
-                    elif i['check']['type'] == 'string':
-
-                        if not valuse: return False
-                        if not valuse[0]: return False
-                        valuse = valuse[0]
+            if 'check_file' in base_json:
+                if not os.path.exists(base_json['check_file']):
+                    return False
+            else:
+                if os.path.exists(base_json['file']):
+                    ret = public.ReadFile(base_json['file'])
+                    for i in base_json['rule']:
+                        valuse = re.findall(i['re'], ret)
                         print(valuse)
-                        if valuse in i['check']['value']:
-                            return True
-                        else:
-                            return False
-            return True
+                        if i['check']['type'] == 'number':
+                            if not valuse: return False
+                            if not valuse[0]: return False
+                            valuse = int(valuse[0])
+
+                            if valuse > i['check']['min'] and valuse < i['check']['max']:
+                                return True
+                            else:
+                                return False
+                        elif i['check']['type'] == 'string':
+
+                            if not valuse: return False
+                            if not valuse[0]: return False
+                            valuse = valuse[0]
+                            print(valuse)
+                            if valuse in i['check']['value']:
+                                return True
+                            else:
+                                return False
+                return True
 
         elif base_json['type'] == 'diff':
             if os.path.exists(base_json['file']):

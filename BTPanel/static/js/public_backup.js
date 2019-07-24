@@ -779,10 +779,17 @@ var bt =
 			var _form = $("<div data-id='form"+bs+"' class='bt-form bt-form pd20 pb70'></div>");			
 			var _lines = data.list; 
 			var clicks = [];
-			for (var i = 0;i<_lines.length;i++){
-				var rRet = bt.render_form_line(_lines[i],bs);
-				for(var s = 0;s<rRet.clicks.length;s++) clicks.push(rRet.clicks[s]);			
-				_form.append(rRet.html);				
+			for (var i = 0; i < _lines.length; i++)
+            {
+                var _obj = _lines[i]
+                if (_obj.hasOwnProperty("html")) {
+                    _form.append(_obj.html)
+                }
+                else {
+                    var rRet = bt.render_form_line(_obj, bs);
+                    for (var s = 0; s < rRet.clicks.length; s++) clicks.push(rRet.clicks[s]);
+                    _form.append(rRet.html);	
+                }			
 			}
 			
 			var _btn_html = '';
@@ -799,7 +806,8 @@ var bt =
 				area: data.area,
 				title: data.title,
 				closeBtn: 2,
-				content:_form.prop("outerHTML")
+				content:_form.prop("outerHTML"),
+                end: data.end ? data.end : false
 			})				
 			setTimeout(function(){
 				bt.render_clicks(clicks,loadOpen,callback);			
