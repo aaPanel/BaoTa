@@ -605,7 +605,7 @@ def GetNumLines(path,num,p=1):
                         buf = "\n" + buf
             if not b: break;
         fp.close()
-    except: return []
+    except: return ""
     return "\n".join(data)
 
 #验证证书
@@ -1279,7 +1279,10 @@ def get_database_character(db_name):
     try:
         import panelMysql
         tmp = panelMysql.panelMysql().query("show create database `%s`" % db_name.strip())
-        return str(re.findall("SET\s+(.+)\s",tmp[0][1])[0])
+        c_type = str(re.findall("SET\s+([\w\d-]+)\s",tmp[0][1])[0])
+        c_types = ['utf8','utf-8','gbk','big5','utf8mb4']
+        if not c_type.lower() in c_types: return 'utf8'
+        return c_type
     except:
         return 'utf8'
 
@@ -1316,6 +1319,31 @@ def get_cron_path():
         file=u_file
     return file
 
+#加密字符串
+def en_crypt(key,strings):
+    try:
+        if type(strings) != bytes: strings = strings.encode('utf-8')
+        from cryptography.fernet import Fernet
+        f = Fernet(key)
+        result = f.encrypt(strings)
+        return result.decode('utf-8')
+    except:
+        print(get_error_info())
+        return strings
+
+#解密字符串
+def de_crypt(key,strings):
+    try:
+        if type(strings) != bytes: strings = strings.encode('utf-8')
+        from cryptography.fernet import Fernet
+        f = Fernet(key)
+        result =  f.decrypt(strings).decode('utf-8')
+        return result
+    except:
+        print(get_error_info())
+        return strings
+
+
 #取通用对象
 class dict_obj:
     def __contains__(self, key):
@@ -1325,4 +1353,8 @@ class dict_obj:
     def __delitem__(self,key): delattr(self,key)
     def __delattr__(self, key): delattr(self,key)
     def get_items(self): return self
+
+
+
+
 

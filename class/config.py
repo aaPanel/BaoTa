@@ -416,20 +416,29 @@ class config:
     
     #设置面板SSL
     def SetPanelSSL(self,get):
-        sslConf = '/www/server/panel/data/ssl.pl';
-        if os.path.exists(sslConf):
-            os.system('rm -f ' + sslConf);
-            return public.returnMsg(True,'PANEL_SSL_CLOSE');
+        if hasattr(get,"email"):
+            rep_mail = "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$"
+            if not re.search(rep_mail,get.email):
+                return public.returnMsg(False,'邮箱格式不合法')
+            import setPanelLets
+            sp = setPanelLets.setPanelLets()
+            sps = sp.set_lets(get)
+            return sps
         else:
-            os.system('pip install cffi');
-            os.system('pip install cryptography');
-            os.system('pip install pyOpenSSL');
-            try:
-                if not self.CreateSSL(): return public.returnMsg(False,'PANEL_SSL_ERR');
-                public.writeFile(sslConf,'True')
-            except Exception as ex:
-                return public.returnMsg(False,'PANEL_SSL_ERR');
-            return public.returnMsg(True,'PANEL_SSL_OPEN');
+            sslConf = '/www/server/panel/data/ssl.pl';
+            if os.path.exists(sslConf):
+                os.system('rm -f ' + sslConf);
+                return public.returnMsg(True,'PANEL_SSL_CLOSE');
+            else:
+                os.system('pip install cffi');
+                os.system('pip install cryptography');
+                os.system('pip install pyOpenSSL');
+                try:
+                    if not self.CreateSSL(): return public.returnMsg(False,'PANEL_SSL_ERR');
+                    public.writeFile(sslConf,'True')
+                except Exception as ex:
+                    return public.returnMsg(False,'PANEL_SSL_ERR');
+                return public.returnMsg(True,'PANEL_SSL_OPEN');
     #自签证书
     def CreateSSL(self):
         if os.path.exists('ssl/input.pl'): return True;
@@ -447,8 +456,8 @@ class config:
         cert_ca = OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
         private_key = OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key)
         if len(cert_ca) > 100 and len(private_key) > 100:
-            public.writeFile('ssl/certificate.pem',cert_ca)
-            public.writeFile('ssl/privateKey.pem',private_key)
+            public.writeFile('ssl/certificate.pem',cert_ca,'wb+')
+            public.writeFile('ssl/privateKey.pem',private_key,'wb+')
             return True
         return False
         
@@ -914,3 +923,23 @@ class config:
         public.writeFile(filename,'')
         public.WriteLog('面板配置','清空面板运行日志')
         return public.returnMsg(True,'已清空!')
+
+    # 获取lets证书
+    def get_cert_source(self,get):
+        import setPanelLets
+        sp = setPanelLets.setPanelLets()
+        spg = sp.get_cert_source()
+        return spg
+
+    #设置debug模式
+    def set_debug(self,get):
+        debug_path = 'data/debug.pl'
+        if os.path.exists(debug_path):
+            t_str = '关闭'
+            os.remove(debug_path)
+        else:
+            t_str = '开启'
+            public.writeFile(debug_path,'True')
+        public.WriteLog('面板配置','%s开发者模式(debug)' % t_str)
+        public.restart_panel()
+        return public.returnMsg(True,'设置成功!')
