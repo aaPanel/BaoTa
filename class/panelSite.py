@@ -864,7 +864,15 @@ class panelSite(panelRedirect):
             if self.GetRedirectList(get): return public.returnMsg(False, 'SITE_SSL_ERR_301');
             if self.GetProxyList(get): return public.returnMsg(False,'已开启反向代理的站点无法申请SSL!');
             data = self.get_site_info(get.siteName)
-            get.site_dir = data['path']
+            get.id = data['id']
+            runPath = self.GetRunPath(get)
+            if runPath != '/':
+                if runPath[:1] != '/': runPath = '/' + runPath
+            else:
+                runPath = ''
+            get.site_dir = data['path'] + runPath
+            print(get.site_dir)
+            
         else:          
             dns_api_list = self.GetDnsApi(get)
             get.dns_param = None
@@ -893,7 +901,7 @@ class panelSite(panelRedirect):
         return result
 
     def get_site_info(self,siteName):
-        data = public.M("sites").where('name=?',siteName).field('path,name').find()
+        data = public.M("sites").where('name=?',siteName).field('id,path,name').find()
         return data
 
 
