@@ -83,15 +83,15 @@ class panelLets:
     def get_error(self,error):
 
         if error.find("Max checks allowed") >= 0 :
-            return "CA服务器验证超时，请等待5-10分钟后重试."
+            return "CA无法验证您的域名，请检查域名解析是否正确，或等待5-10分钟后重试."
         elif error.find("Max retries exceeded with") >= 0:
-            return "CA服务器连接超时，请确保服务器网络通畅."
+            return "CA服务器连接超时，请稍候重试."
         elif error.find("The domain name belongs") >= 0:
             return "域名不属于此DNS服务商，请确保域名填写正确."
         elif error.find('login token ID is invalid') >=0:
             return 'DNS服务器连接失败，请检查密钥是否正确.'
         elif "too many certificates already issued for exact set of domains" in error or "Error creating new account :: too many registrations for this IP" in error:
-            return '<h2>签发失败,您今天尝试申请证书的次数已达上限!</h2>'
+            return '<h2>签发失败,您1小时内超过5次验证失败，请等待1小时再重试!</h2>'
         elif "DNS problem: NXDOMAIN looking up A for" in error or "No valid IP addresses found for" in error or "Invalid response from" in error:
             return '<h2>签发失败,域名解析错误，或解析未生效，或域名未备案!</h2>'
         elif error.find('TLS Web Server Authentication') != -1:

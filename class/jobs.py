@@ -63,7 +63,18 @@ def control_init():
     public.ExecShell("chown -R root:root /www/server/panel/config")
     #disable_putenv('putenv')
     clean_session()
-    set_crond()
+    #set_crond()
+    clean_max_log('/www/server/panel/plugin/rsync/lsyncd.log')
+
+
+#清理大日志
+def clean_max_log(log_file,max_size = 104857600,old_line = 100):
+    if not os.path.exists(log_file): return False
+    if os.path.getsize(log_file) > max_size:
+        try:
+            old_body = public.GetNumLines(old_line)
+            public.writeFile(log_file,old_body)
+        except:pass
 
 #默认禁用指定PHP函数
 def disable_putenv(fun_name):

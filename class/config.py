@@ -943,3 +943,16 @@ class config:
         public.WriteLog('面板配置','%s开发者模式(debug)' % t_str)
         public.restart_panel()
         return public.returnMsg(True,'设置成功!')
+
+
+    #设置离线模式
+    def set_local(self,get):
+        d_path = 'data/not_network.pl'
+        if os.path.exists(d_path):
+            t_str = '关闭'
+            os.remove(d_path)
+        else:
+            t_str = '开启'
+            public.writeFile(d_path,'True')
+        public.WriteLog('面板配置','%s离线模式' % t_str)
+        return public.returnMsg(True,'设置成功!')

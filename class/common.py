@@ -42,36 +42,18 @@ class panelAdmin(panelSetup):
     def local(self):
         result = panelSetup().init()
         if result: return result
-        result = self.checkLimitIp()
-        if result: return result
         result = self.setSession();
         if result: return result
         result = self.checkClose();
         if result: return result
         result = self.checkWebType();
         if result: return result
-        result = self.checkDomain();
+        result = self.check_login();
         if result: return result
         result = self.checkConfig();
-        #self.checkSafe();
         self.GetOS();
     
-    
-    #检查IP白名单
-    def checkAddressWhite(self):
-        token = self.GetToken();
-        if not token: return redirect('/login');
-        if not public.GetClientIp() in token['address']: return redirect('/login');
         
-    
-    #检查IP限制
-    def checkLimitIp(self):
-        if os.path.exists('data/limitip.conf'):
-            iplist = public.ReadFile('data/limitip.conf')
-            if iplist:
-                iplist = iplist.strip();
-                if not public.GetClientIp() in iplist.split(','): return redirect('/login')
-    
     #设置基础Session
     def setSession(self):
         session['menus'] = sorted(json.loads(public.ReadFile('config/menu.json')),key=lambda x:x['sort'])
@@ -110,8 +92,8 @@ class panelAdmin(panelSetup):
         if os.path.exists('data/close.pl'):
             return redirect('/close');
         
-    #检查域名绑定
-    def checkDomain(self):
+    #检查登录
+    def check_login(self):
         try:
             api_check = True
             if not 'login' in session: 
@@ -119,10 +101,6 @@ class panelAdmin(panelSetup):
                 if api_check: return api_check
             else:
                 if session['login'] == False: return redirect('/login')
-            tmp = public.GetHost()
-            domain = public.ReadFile('data/domain.conf')
-            if domain:
-                if(tmp.strip().lower() != domain.strip().lower()): return redirect('/login')
             if api_check:
                 try:
                     sess_out_path = 'data/session_timeout.pl'
@@ -172,23 +150,6 @@ class panelAdmin(panelSetup):
                 session['config']['email'] = public.M('users').where("id=?",('1',)).getField('email');
             if not 'address' in session:
                 session['address'] = public.GetLocalIp()
-    
-    def checkSafe(self):
-        mods = ['/','/site','/ftp','/database','/plugin','/soft','/public'];
-        if not os.path.exists('/www/server/panel/data/userInfo.json'):
-            if 'vip' in session: del(session.vip);
-        if not request.path in mods: return True
-        if 'vip' in session: return True
-        
-        import panelAuth
-        data = panelAuth.panelAuth().get_order_status(None);
-        try:
-            if data['status'] == True: 
-                session.vip = data
-                return True
-            return redirect('/vpro');
-        except:pass
-        return False
     
     #获取操作系统类型 
     def GetOS(self):

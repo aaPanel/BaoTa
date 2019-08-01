@@ -2449,7 +2449,12 @@ server
         return f.SaveFileBody(get)
         #	return public.returnMsg(True, '保存成功')                                                                 
 
-
+    # 检查是否存在#Set Nginx Cache
+    def check_annotate(self,data):
+        rep = "\n\s*#Set\s*Nginx\s*Cache"
+        if re.search(rep,data):
+            return True
+                                                                             
     # 修改反向代理
     def ModifyProxy(self, get):
         proxyname_md5 = self.__calc_md5(get.proxyname)
@@ -2487,11 +2492,20 @@ server
     proxy_cache cache_one;
     proxy_cache_key $host$uri$is_args$args;
     proxy_cache_valid 200 304 301 302 %sm;""" % (get.cachetime)
-                            cache_rep = '#proxy_set_header\s+Connection\s+"upgrade";'
-                            ng_conf = re.sub(cache_rep,'#proxy_set_header Connection "upgrade";\n'+ng_cache,ng_conf)
+                            if self.check_annotate(ng_conf):
+                                cache_rep = '\n\s*#Set\s*Nginx\s*Cache(.|\n)*no-cache;'
+                                ng_conf = re.sub(cache_rep,'\n\t#Set Nginx Cache\n'+ng_cache,ng_conf)
+                            else:
+                                cache_rep = '#proxy_set_header\s+Connection\s+"upgrade";'
+                                ng_conf = re.sub(cache_rep, '\n\t#proxy_set_header Connection "upgrade";\n\t#Set Nginx Cache' + ng_cache,
+                                                 ng_conf)
                     else:
-                        rep = '\s+proxy_cache\s+cache_one.*[\n\s\w\_\";\$]+m;'
-                        ng_conf = re.sub(rep, "", ng_conf)
+                        if self.check_annotate(ng_conf):
+                            rep = '\n\s*#Set\s*Nginx\s*Cache(.|\n)*1m;'
+                            ng_conf = re.sub(rep, "\n\t#Set Nginx Cache\n\tadd_header Cache-Control no-cache;", ng_conf)
+                        else:
+                            rep = '\s+proxy_cache\s+cache_one.*[\n\s\w\_\";\$]+m;'
+                            ng_conf = re.sub(rep, '\n\t#Set Nginx Cache\n\tadd_header Cache-Control no-cache;', ng_conf)
 
                     sub_rep = "sub_filter"
                     subfilter = json.loads(get.subfilter)
@@ -2593,8 +2607,9 @@ location %s
     #proxy_http_version 1.1;
     #proxy_set_header Upgrade $http_upgrade;
     #proxy_set_header Connection "upgrade";
-
     add_header X-Cache $upstream_cache_status;
+    
+    #Set Nginx Cache
     %s
     %s
 }
@@ -2628,14 +2643,14 @@ location %s
                     get.proxydir, get.proxydir,get.proxysite, get.todomain, "#持久化连接相关配置" ,ng_sub_filter, ng_cache ,get.proxydir)
             if type == 1 and cache == 0:
                 ng_proxy_cache += ng_proxy % (
-                    get.proxydir, get.proxydir, get.proxysite, get.todomain, "#持久化连接相关配置" ,ng_sub_filter,'' ,get.proxydir)
+                    get.proxydir, get.proxydir, get.proxysite, get.todomain, "#持久化连接相关配置" ,ng_sub_filter,'\tadd_header Cache-Control no-cache;' ,get.proxydir)
         else:
             if type == 1 and cache == 1:
                 ng_proxy_cache += ng_proxy % (
                     get.proxydir, get.proxydir, get.proxysite, get.todomain, "#持久化连接相关配置" ,ng_sub_filter, ng_cache, get.proxydir)
             if type == 1 and cache == 0:
                 ng_proxy_cache += ng_proxy % (
-                    get.proxydir, get.proxydir, get.proxysite, get.todomain, "#持久化连接相关配置" ,ng_sub_filter, '', get.proxydir)
+                    get.proxydir, get.proxydir, get.proxysite, get.todomain, "#持久化连接相关配置" ,ng_sub_filter, '\tadd_header Cache-Control no-cache;', get.proxydir)
         public.writeFile(ng_proxyfile, ng_proxy_cache)
 
 
@@ -2668,7 +2683,7 @@ location %s
                     del p_conf[i]
             return public.returnMsg(False, 'ERROR: %s<br><a style="color:red;">' % public.GetMsg("CONFIG_ERROR") + isError.replace("\n",
                                                                                                           '<br>') + '</a>')
-        return public.returnMsg(True, 'SUCCESS')          
+        return public.returnMsg(True, 'SUCCESS')        
     
     
     #开启缓存

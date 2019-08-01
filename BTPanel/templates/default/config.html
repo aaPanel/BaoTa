@@ -45,6 +45,13 @@
                         <label class='btswitch-btn' for='panelDebug' onclick="SetDebug()"></label>
                     </div>
                 </div>
+                <div class="ss-text pull-left mr50">
+                    <em title="开启后面板将停止连接云端，介时软件安装、卸载、面板更新等功能将无法使用">离线模式</em>
+                    <div class='ssh-item'>
+                        <input class='btswitch btswitch-ios' id='panelLocal' type='checkbox' {{data['is_local']}}>
+                        <label class='btswitch-btn' for='panelLocal' onclick="set_local()"></label>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="setbox bgw mtb15">
