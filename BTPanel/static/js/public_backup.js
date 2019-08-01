@@ -533,7 +533,7 @@ var bt =
 		
 		layer.msg(msg,btnObj);	
 	},
-	confirm : function(config,callback){
+	confirm : function(config,callback,callback1){
 		var btnObj =  {						
 			title:config.title?config.title:false,
 			time : config.time?config.time:0,					
@@ -541,10 +541,13 @@ var bt =
 			closeBtn: config.closeBtn?config.closeBtn:2,	
 			scrollbar:true,
 			shade:0.3,
-			icon:3
+			icon:3,
+			cancel: (config.cancel?config.cancel:function(){})
 		};
 		layer.confirm(config.msg, btnObj, function(index){
 		 	if(callback) callback(index);
+		},function(index){
+			if(callback1) callback1(index);
 		});
 	},
 	load : function(msg)  

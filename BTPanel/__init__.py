@@ -1015,7 +1015,7 @@ def notfound(e):
     except IndexError: pass
     return errorStr,404
   
-@app.errorhandler(Exception)
+@app.errorhandler(500)
 def internalerror(e):
     if str(e).find('Permanent Redirect') != -1: return e
     errorStr = public.ReadFile('./BTPanel/templates/' + public.GetConfigValue('template') + '/error.html')
