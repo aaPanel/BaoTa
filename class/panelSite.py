@@ -2511,7 +2511,7 @@ server
                     subfilter = json.loads(get.subfilter)
                     if str(proxyUrl[i]["subfilter"]) != str(subfilter):
                         if re.search(sub_rep, ng_conf):
-                            sub_rep = "\s+proxy_set_header\s+Accept-Encoding.*[\n\s\w\_\";]+off;"
+                            sub_rep = "\s+proxy_set_header\s+Accept-Encoding(.|\n)+off;"
                             ng_conf = re.sub(sub_rep,"",ng_conf)
 
                         # 构造替换字符串

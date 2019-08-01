@@ -329,35 +329,47 @@ function SavePanelSSL(){
 	});
 }
 
+
 function SetDebug() {
     var status_s = {false:'开启',true:'关闭'}
     var debug_stat = $("#panelDebug").prop('checked');
-    bt.confirm({ title: status_s[debug_stat] + "开发者模式", msg: "您真的要" + status_s[debug_stat]+"开发者模式吗？"}, function () {
-        var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-        $.post('/config?action=set_debug', {}, function (rdata) {
-            layer.close(loadT);
-            if (rdata.status) {
-                layer.closeAll();
-            }
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-        });
-    });
+    bt.confirm({
+		title: status_s[debug_stat] + "开发者模式",
+		msg: "您真的要"+ status_s[debug_stat]+"开发者模式?",
+		cancel: function () {
+			$("#panelDebug").prop('checked',debug_stat);
+    	}}, function () {
+			var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
+			$.post('/config?action=set_debug', {}, function (rdata) {
+				layer.close(loadT);
+				if (rdata.status) layer.closeAll()
+				layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+			});
+		},function () {
+		$("#panelDebug").prop('checked',debug_stat);
+	});
 }
 
 function set_local() {
     var status_s = { false: '开启', true: '关闭' }
     var debug_stat = $("#panelLocal").prop('checked');
-    bt.confirm({ title: status_s[debug_stat] + "离线模式", msg: "您真的要" + status_s[debug_stat] + "离线模式？" }, function () {
-        var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-        $.post('/config?action=set_local', {}, function (rdata) {
-            layer.close(loadT);
-            if (rdata.status) {
-                layer.closeAll();
-            }
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-        });
+    bt.confirm({
+		title: status_s[debug_stat] + "离线模式",
+		msg: "您真的要"+ status_s[debug_stat] + "离线模式 ?",
+	    cancel: function () {
+			$("#panelLocal").prop('checked',debug_stat);
+    	}}, function () {
+        	var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
+			$.post('/config?action=set_local', {}, function (rdata) {
+				layer.close(loadT);
+				if (rdata.status) layer.closeAll();
+				layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+			});
+        },function () {
+		$("#panelLocal").prop('checked',debug_stat);
     });
 }
+
 
 if(window.location.protocol.indexOf('https') != -1){
 	$("#panelSSL").attr('checked',true);

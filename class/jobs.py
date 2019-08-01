@@ -65,6 +65,7 @@ def control_init():
     clean_session()
     #set_crond()
     clean_max_log('/www/server/panel/plugin/rsync/lsyncd.log')
+    remove_tty1()
 
 
 #清理大日志
@@ -75,6 +76,17 @@ def clean_max_log(log_file,max_size = 104857600,old_line = 100):
             old_body = public.GetNumLines(old_line)
             public.writeFile(log_file,old_body)
         except:pass
+
+#删除tty1
+def remove_tty1():
+    file_path = '/etc/systemd/system/getty@tty1.service'
+    if not os.path.exists(file_path): return False
+    if not os.path.islink(file_path): return False
+    if os.readlink(file_path) != '/dev/null': return False
+    try:
+        os.remove(file_path)
+    except:pass
+
 
 #默认禁用指定PHP函数
 def disable_putenv(fun_name):
