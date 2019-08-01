@@ -767,7 +767,7 @@ SetLink
     def GetSlowLogs(self,get):
         path = self.GetMySQLInfo(get)['datadir'] + '/mysql-slow.log';
         if not os.path.exists(path): return public.returnMsg(False,'日志文件不存在!');
-        return public.returnMsg(True,public.GetNumLines(path,1000));
+        return public.returnMsg(True,public.GetNumLines(path,100));
     
 
     # 获取当前数据库信息

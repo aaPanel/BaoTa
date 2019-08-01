@@ -439,6 +439,7 @@ def panel_status():
     panel_url = pool + '127.0.0.1:' + port + '/service_status'
     panel_pid = get_panel_pid()
     n = 0
+    s = 0
     while True:
         time.sleep(1)
         if not panel_pid: panel_pid = get_panel_pid()
@@ -456,6 +457,25 @@ def panel_status():
             continue
 
         n += 1
+        v += 1
+
+        if v > 10:
+            v = 0
+            log_path = panel_path + '/logs/error.log'
+            if os.path.exists(log_path):
+                e_body = public.GetNumLines(10)
+                if e_body:
+                    if e_body.find('PyWSGIServer.do_close') != -1 or e_body.find('Expected GET method:')!=-1 or e_body.find('Invalid HTTP method:') != -1 or e_body.find('table session') != -1:
+                        result = public.httpGet(panel_url)
+                        if result != 'True':
+                            if e_body.find('table session') != -1:
+                                sess_file = '/dev/shm/session.db'
+                                if os.path.exists(sess_file): os.remove(sess_file)
+                            os.system("/etc/init.d/bt reload &")
+                            time.sleep(10)
+                            result = public.httpGet(panel_url)
+                            if result == 'True':
+                                public.WriteLog('守护程序','检查到面板服务异常,已自动恢复!')
 
         if n > 18000:
             n = 0

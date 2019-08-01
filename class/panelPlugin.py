@@ -260,7 +260,7 @@ class panelPlugin:
             import panelAuth
             pdata = panelAuth.panelAuth().create_serverid(None)
             listTmp = public.httpPost(cloudUrl,pdata,10)
-            if len(listTmp) < 200:
+            if not listTmp or len(listTmp) < 200:
                 listTmp = public.readFile(lcoalTmp)
             try:
                 softList = json.loads(listTmp)

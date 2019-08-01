@@ -29,6 +29,8 @@ def HttpGet(url,timeout = 6,headers = {}):
     @timeout 超时时间默认60秒
     return string
     """
+
+    if is_local(): return False
     home = 'www.bt.cn'
     host_home = 'data/home_host.pl'
     old_url = url
@@ -104,6 +106,7 @@ def HttpPost(url,data,timeout = 6,headers = {}):
     @timeout 超时时间默认60秒
     return string
     """
+    if is_local(): return False
     home = 'www.bt.cn'
     host_home = 'data/home_host.pl'
     old_url = url
@@ -1211,19 +1214,19 @@ def get_path_size(path):
     return size_total
 
 #写关键请求日志
-def write_request_log():
+def write_request_log(reques = None):
     try:
         log_path = '/www/server/panel/logs/request'
         log_file = getDate(format='%Y-%m-%d') + '.json'
         if not os.path.exists(log_path): os.makedirs(log_path)
 
         from flask import request
-        log_data = {}
-        log_data['date'] = getDate()
-        log_data['ip'] = GetClientIp()
-        log_data['method'] = request.method
-        log_data['uri'] = request.full_path
-        log_data['user-agent'] = request.headers.get('User-Agent')
+        log_data = []
+        log_data.append(getDate())
+        log_data.append(GetClientIp())
+        log_data.append(request.method)
+        log_data.append(request.full_path)
+        log_data.append(request.headers.get('User-Agent'))
         WriteFile(log_path + '/' + log_file,json.dumps(log_data) + "\n",'a+')
     except: pass
 
@@ -1342,6 +1345,61 @@ def de_crypt(key,strings):
     except:
         print(get_error_info())
         return strings
+
+
+#检查IP白名单
+def check_ip_panel():
+    ip_file = 'data/limitip.conf'
+    if os.path.exists(ip_file):
+        iplist = ReadFile(ip_file)
+        if iplist:
+            iplist = iplist.strip();
+            if not GetClientIp() in iplist.split(','): 
+                errorStr = ReadFile('./BTPanel/templates/' + GetConfigValue('template') + '/error2.html')
+                try:
+                    errorStr = errorStr.format(getMsg('PAGE_ERR_TITLE'),getMsg('PAGE_ERR_IP_H1'),getMsg('PAGE_ERR_IP_P1',(GetClientIp(),)),getMsg('PAGE_ERR_IP_P2'),getMsg('PAGE_ERR_IP_P3'),getMsg('NAME'),getMsg('PAGE_ERR_HELP'))
+                except IndexError:pass
+                return errorStr
+    return False
+
+#检查面板域名
+def check_domain_panel():
+    tmp = GetHost()
+    domain = ReadFile('data/domain.conf')
+    if domain:
+        if tmp.strip().lower() != domain.strip().lower(): 
+            errorStr = ReadFile('./BTPanel/templates/' + GetConfigValue('template') + '/error2.html')
+            try:
+                errorStr = errorStr.format(getMsg('PAGE_ERR_TITLE'),getMsg('PAGE_ERR_DOMAIN_H1'),getMsg('PAGE_ERR_DOMAIN_P1'),getMsg('PAGE_ERR_DOMAIN_P2'),getMsg('PAGE_ERR_DOMAIN_P3'),getMsg('NAME'),getMsg('PAGE_ERR_HELP'))
+            except IndexError:pass
+            return errorStr
+    return False
+
+#是否离线模式
+def is_local():
+    s_file = '/www/server/panel/data/not_network.pl'
+    return os.path.exists(s_file)
+
+
+#自动备份面板数据
+def auto_backup_panel():
+    b_path = '/www/backup/panel'
+    backup_path = b_path + '/' + format_date('%Y-%m-%d')
+    panel_paeh = '/www/server/panel'
+    if os.path.exists(backup_path): return True
+    os.makedirs(backup_path,384)
+    import shutil
+    shutil.copytree(panel_paeh + '/data',backup_path + '/data')
+    shutil.copytree(panel_paeh + '/config',backup_path + '/config')
+    time_now = time.time() - (86400 * 15)
+    for f in os.listdir(b_path):
+        try:
+            if time.mktime(time.strptime(f, "%Y-%m-%d")) < time_now: 
+                path = b_path + '/' + f
+                if os.path.exists(path): shutil.rmtree(path)
+        except: continue
+
+
 
 
 #取通用对象
