@@ -446,7 +446,7 @@ function GetFiles(Path,sort) {
 				bodyZip = "<a class='btlink' href='javascript:;' onclick=\"UnZip('" + rdata.PATH +"/" +fmp[0] + "'," + displayZip + ")\">"+lan.files.file_menu_unzip+"</a> | ";
 			}
 			if(isText(fmp[0])){
-				bodyZip = "<a class='btlink' href='javascript:;' onclick=\"OnlineEditFile(0,'" + rdata.PATH +"/"+ fmp[0] + "')\">"+lan.files.file_menu_edit+"</a> | ";
+				bodyZip = "<a class='btlink' href='javascript:;' onclick=\"openEditorView(0,'" + rdata.PATH +"/"+ fmp[0] + "')\">"+lan.files.file_menu_edit+"</a> | ";
 			}
 			if(isImage(fmp[0])){
 				download = "<a class='btlink' href='javascript:;' onclick=\"GetImage('" + rdata.PATH +"/"+ fmp[0] + "')\">"+lan.files.file_menu_img+"</a> | ";
@@ -895,7 +895,7 @@ function CreateFile(type, path) {
 			});
 			if(rdata.status){
 				GetFiles($("#DirPathPlace input").val());
-				OnlineEditFile(0,path + '/' + fileName);
+				openEditorView(0,path + '/' + fileName);
 			}
 		});
 		return;
@@ -1571,7 +1571,7 @@ function RClick(type,path,name){
     //    options.items.push({ text: '播放', onclick: function () { GetPlay(path) } }, { text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } });
     //}
 	else if(isText(type)){
-		options.items.push({text: lan.files.file_menu_edit, onclick: function() {OnlineEditFile(0,path)}},{text: lan.files.file_menu_down, onclick: function() {GetFileBytes(path)}},{text: lan.files.file_menu_del, onclick: function() {DeleteFile(path)}});
+		options.items.push({text: lan.files.file_menu_edit, onclick: function() {openEditorView(0,path)}},{text: lan.files.file_menu_down, onclick: function() {GetFileBytes(path)}},{text: lan.files.file_menu_del, onclick: function() {DeleteFile(path)}});
 	}
 	else if(displayZip != -1){
 		options.items.push({text: lan.files.file_menu_unzip, onclick: function() {UnZip(path,displayZip)}},{text: lan.files.file_menu_down, onclick: function() {GetFileBytes(path)}},{text: lan.files.file_menu_del, onclick: function() {DeleteFile(path)}});

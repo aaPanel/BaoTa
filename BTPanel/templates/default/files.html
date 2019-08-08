@@ -57,10 +57,120 @@
     <li onclick="javascript:Batch(3);"><a style="cursor: pointer;">{{data['lan']['L4']}}</a></li>
     <li onclick="javascript:Batch(4);"><a style="cursor: pointer;">{{data['lan']['L5']}}</a></li>
 </ul>
+    <!--<link rel="stylesheet" href="./static/ace/font-awesome/css/font-awesome.min.css">-->
+<script type="text/tmplate" id="aceTmplate">
+    <div id="ace_conter">
+        <div class="ace_header">
+            <span class="saveFile"><i class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></i>保存</span>
+            <span class="saveFileAll"><i class="glyphicon glyphicon-duplicate" aria-hidden="true"></i>全部保存</span>
+            <span class="refreshs"><i class="glyphicon glyphicon-refresh" aria-hidden="true"></i>刷新</span>
+            <!-- <span class="searchs"><i class="fa fa-search" aria-hidden="true"></i>搜索</span>
+            <span class="replaces"><i class="fa fa-random" aria-hidden="true"></i>替换</span>
+            <span class="fontSize"><i class="fa fa-text-height" aria-hidden="true"></i>字体</span> -->
+            <!-- <span class="themes"><i class="fa fa-tachometer" aria-hidden="true"></i>主题</span> -->
+            <span class="helps"><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i>帮助</span>
+            <div class="pull-down" title="隐藏工具条"><i class="glyphicon glyphicon-menu-down" aria-hidden="true"></i></div>
+        </div>
+        <div class="ace_overall">
+            <!-- 编辑器目录 -->
+            <div class="ace_catalogue">
+                <div class="ace_catalogue_title">收藏夹</div>
+                <div class="ace_catalogue_list">
+                    <ul class="cd-accordion-menu animated">
+                        <li class="has-children">
+                            <input type="checkbox" name ="group-1" id="group-1" checked>
+                            <label for="group-1">Group 1</label>
+                            <ul>
+                                <li class="has-children">
+                                    <input type="checkbox" name ="sub-group-1" id="sub-group-1">
+                                    <label for="sub-group-1">Sub Group 1</label>
+                                    <ul>
+                                        <li><a href="#0">Image</a></li>
+                                        <li><a href="#0">Image</a></li>
+                                        <li><a href="#0">Image</a></li>
+                                    </ul>
+                                </li>
+                                <li class="has-children">
+                                    <input type="checkbox" name ="sub-group-2" id="sub-group-2">
+                                    <label for="sub-group-2">Sub Group 2</label>
+                                    <ul>
+                                        <li class="has-children">
+                                            <input type="checkbox" name ="sub-group-level-3" id="sub-group-level-3">
+                                            <label for="sub-group-level-3">Sub Group Level 3</label>
+                                            <ul>
+                                                <li><a href="#0">Image</a></li>
+                                                <li><a href="#0">Image</a></li>
+                                            </ul>
+                                        </li>
+                                        <li><a href="#0">Image</a></li>
+                                    </ul>
+                                </li>
+                                <li><a href="#0">Image</a></li>
+                                <li><a href="#0">Image</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <!-- 编辑内容 -->
+            <!-- <div class="ace_catalogue_sidebar"><img src="/static/img/col-resize.png" /></div> -->
+            <div class="ace_editor_main">
+                <div class="ace_conter_menu">
+                    <div class="ace_editor_add" style="display:none;"><i class="fa fa-plus-square" aria-hidden="true"></i></div>
+                </div>
+                <div class="ace_editor_main_storey"></div>
+                <div class="ace_conter_editor"></div>
+                <div class="ace_conter_toolbar">
+                    <div class="pull-left">
+                        <span data-type="path"></span>
+                    </div>
+                    <div class="pull-right">
+                        <span data-type="cursor"></span>
+                        <span data-type="tab"></span>
+                        <span data-type="encoding"></span>
+                        <span data-type="lang"></span>
+                        <!--<span data-type="history"></span>-->
+                    </div>
+                </div>
+            </div>
+            <div class="ace_toolbar_menu" style="display: none;">
+                <div class="menu-item menu-tabs" style="display: none;">
+                    <div class="menu-title">设置制表符</div>
+                    <ul class="tabsType">
+                        <li data-value="nbsp">使用空格缩进</li>
+                        <li data-value="tabs">使用 "Tab" 缩进</li>
+                    </ul>
+                    <div class="menu-title" style="margin-top:15px">设置制表符长度</div>
+                    <ul class="tabsSize">
+                        <li data-value="1">1</li>
+                        <li data-value="2">2</li>
+                        <li data-value="3">3</li>
+                        <li data-value="4">4</li>
+                        <li data-value="5">5</li>
+                        <li data-value="6">6</li>
+                        <li data-value="7">7</li>
+                        <li data-value="8">8</li>
+                    </ul>
+                </div>
+                <div class="menu-item menu-encoding" style="display: none;">
+                    <div class="menu-title">设置文件保存编码格式</div>
+                    <ul></ul>
+                </div>
+                <div class="menu-item menu-files" style="display: none;">
+                    <div class="menu-conter"><input type="text" class="menu-input" placeholder="输入语言模式"><i class="fa fa-close" aria-hidden="true"></i></div>
+                    <div class="menu-title">设置文件语言关联</div>
+                    <ul></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
 <script src="/static/js/jquery-ui.min.js"></script>
 <script src="/static/js/jquery.contextify.min.js"></script>
 <script src="/static/js/files.js?date={{g.version}}"></script>
 <script src="/static/js/upload.js?date={{g.version}}"></script>
+<script type="text/javascript" src="./static/ace/ace.js"></script>
+<script type="text/javascript" src="./static/ace/ext-language_tools.js"></script>
 <script type="text/javascript">
 	setTimeout(function(){
 	GetDisk();

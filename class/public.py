@@ -1383,10 +1383,13 @@ def is_local():
 
 #自动备份面板数据
 def auto_backup_panel():
+    panel_paeh = '/www/server/panel'
+    paths = panel_paeh + '/data/not_auto_backup.pl'
+    if os.path.exists(paths): return False
     b_path = '/www/backup/panel'
     backup_path = b_path + '/' + format_date('%Y-%m-%d')
-    panel_paeh = '/www/server/panel'
     if os.path.exists(backup_path): return True
+    if os.path.getsize(panel_paeh + '/data/default.db') > 104857600 * 2: return False
     os.makedirs(backup_path,384)
     import shutil
     shutil.copytree(panel_paeh + '/data',backup_path + '/data')
@@ -1400,7 +1403,24 @@ def auto_backup_panel():
         except: continue
 
 
-
+#检查端口状态
+def check_port_stat(port):
+    import socket
+    localIP = '127.0.0.1';
+    temp = {}
+    temp['port'] = port;
+    temp['local'] = True;
+    try:
+        s = socket.socket()
+        s.settimeout(0.15)
+        s.connect((localIP,port))
+        s.close()
+    except:
+        temp['local'] = False;
+        
+    result = 0;
+    if temp['local']: result +=2;
+    return result;
 
 #取通用对象
 class dict_obj:

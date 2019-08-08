@@ -89,6 +89,17 @@ class firewalls:
                                                            data['accept'][i]['address'],addtime))
                 except:
                     return public.get_error_info()
+            count =  public.M('firewall').count();
+            data = {}
+            data['page'] = public.get_page(count,int(get.p),12,get.collback)
+            data['data'] = public.M('firewall').limit(data['page']['shift'] + ',' + data['page']['row']).order('id desc').select()
+            for i in range(len(data['data'])):
+                if data['data'][i]['port'].find(':') != -1 or data['data'][i]['port'].find('.') != -1 or data['data'][i]['port'].find('-') != -1:
+                        data['data'][i]['status'] = -1;
+                else:
+                    data['data'][i]['status'] = public.check_port_stat(int(data['data'][i]['port']));
+
+            data['page'] = data['page']['page']
             return data
         except Exception as ex:
             return public.get_error_info()

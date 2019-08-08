@@ -31,10 +31,14 @@ class panelSSL:
                     self.__userInfo = {}
             else:
                 self.__userInfo = {}
-
-            if self.__userInfo:
-                pdata['access_key'] = self.__userInfo['access_key'];
-                data['secret_key'] = self.__userInfo['secret_key'];
+            try:
+                if self.__userInfo:
+                    pdata['access_key'] = self.__userInfo['access_key'];
+                    data['secret_key'] = self.__userInfo['secret_key'];
+            except:
+                self.__userInfo = {}
+                pdata['access_key'] = 'test';
+                data['secret_key'] = '123456';
         else:
             pdata['access_key'] = 'test';
             data['secret_key'] = '123456';

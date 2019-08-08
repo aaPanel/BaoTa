@@ -110,13 +110,14 @@ class firewalls:
     #添加放行端口
     def AddAcceptPort(self,get):
         import re
+        src_port = get.port
         get.port = get.port.replace('-',':')
         rep = "^\d{1,5}(:\d{1,5})?$"
         if not re.search(rep,get.port): return public.returnMsg(False,'PORT_CHECK_RANGE');
         import time
         port = get.port
         ps = get.ps
-        if public.M('firewall').where("port=?",(port,)).count() > 0: return public.returnMsg(False,'FIREWALL_PORT_EXISTS')
+        if public.M('firewall').where("port=? or port=?",(port,src_port)).count() > 0: return public.returnMsg(False,'FIREWALL_PORT_EXISTS')
         notudps = ['80','443','8888','888','39000:40000','21','22']
         if self.__isUfw:
             public.ExecShell('ufw allow ' + port + '/tcp');

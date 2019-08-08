@@ -135,6 +135,21 @@ var index = {
                 layer.closeAll('tips');
             })
 
+            $('.cpubox').hover(function () {
+                var _this = $(this);
+                var d = _this.parents('ul').data('data').cpu;
+                var crs = '';
+                var n1 = 0;
+                for (var i = 0; i < d[2].length; i++) {
+                    n1++;
+                    crs += 'CPU-' + i + ": " + d[2][i] + '%' + (n1 % 2 == 0?'</br>':' | ');
+                    
+                }
+                layer.tips(d[3] +"</br>"+ crs, _this.find('.cicle'), { time: 0, tips: [1, '#999'] });
+            }, function () {
+                layer.closeAll('tips');
+            });
+
             $(".mem-release").hover(function () {
                 $(this).addClass("shine_green");
                 if (!($(this).hasClass("mem-action"))) {
