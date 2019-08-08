@@ -3269,7 +3269,7 @@ location %s
         if os.path.exists(path):
             conf = '''<IfModule mod_rewrite.c>
   RewriteEngine on
-  RewriteCond %{HTTP_HOST} !^127.0.0.1 [NC] 
+  RewriteCond %{HTTP_HOST} !^127.0.0.1 [NC]
   RewriteRule (.*) http://%s/$1 [L]
 </IfModule>'''
             conf = conf.replace("%s",get.name)

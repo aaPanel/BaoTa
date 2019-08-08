@@ -489,7 +489,7 @@ var soft = {
             return;
         }
         var f = fs[0]
-        if (f.type !== 'application/x-zip-compressed' && f.type !== 'application/zip') {
+        if (f.type.indexOf('zip') == -1) {
             layer.msg('只支持zip格式的文件！');
             return;
         }

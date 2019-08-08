@@ -1,0 +1,351 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+   .weblog {
+        font-size: 14px;
+        display: inline-block;
+        line-height: 30px;
+    }
+	.weblog em {
+		font-style: normal;
+		color: #666;
+		margin: 0 15px;
+		font-size:12px;
+	}
+	.weblog span {
+		margin-right: 10px;
+	}
+	.weblog a {
+		color: #20a53a;
+	}
+	.firewall-port-box{
+		margin-bottom:15px;
+	}
+</style>
+<div class="main-content">
+    <div class="container-fluid" style="padding-bottom: 50px;">
+        <div class="pos-box bgw mtb15">
+            <div class="position f14 c9 pull-left">
+                <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
+            </div>
+            <div class="search pull-right">
+                <form target="hid" onsubmit='firewall.get_log_list(1,$("#SearchValue").prop("value"))'>
+                    <input type="text" id="SearchValue" class="ser-text pull-left" placeholder="{{data['lan']['SEARCH']}}" />
+                    <button type="button" class="ser-sub pull-left" onclick='firewall.get_log_list(1,$("#SearchValue").prop("value"))'></button>
+                </form>
+                <iframe name='hid' id="hid" style="display:none"></iframe>
+            </div>
+        </div>
+        <div class="safe container-fluid bgw mtb15 pd15">
+            <div class="mr50 pull-left">
+                <form>
+                    <div class="ss-text pull-left">
+                        <em>{{data['lan']['BTN1']}}</em>
+                        <div class='ssh-item' id="in_safe">
+                        	<input class='btswitch btswitch-ios' id='sshswitch' type='checkbox' checked><label class='btswitch-btn sshswitch' for='sshswitch' ></label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="mr50 pull-left">
+                <div class="ss-text pull-left mr5">
+                    <em>{{data['lan']['BTN2']}}</em>
+                    <input type="text" class="bt-input-text" id="mstscPort" value="" />
+                </div>
+                <div class="ss-text pull-left">
+                    <button id="mstscSubmit" onclick='bt.firewall.set_mstsc($("#mstscPort").prop("value"))' class="btn btn-default btn-sm" type="button">{{data['lan']['BTN3']}}</button>
+                </div>
+            </div>
+            <div class="mr50 pull-left" style="border-right: 1px solid #ccc; padding-right: 40px;">
+                <div class="ss-text pull-left">
+                    <em>{{data['lan']['BTN4']}}</em>
+                    <div class='ssh-item' id="isPing">
+                    	<input class='btswitch btswitch-ios' id='noping' type='checkbox' checked><label class='btswitch-btn noping' for='noping' ></label>
+                    </div>
+                </div>
+            </div>
+            <div class="weblog">
+                <span class="f12 c5">{{data['lan']['S1']}}</span><a href="javascript:openPath('{{session['logsPath']}}');">{{session['logsPath']}}</a><em id="logSize">0KB</em>
+                <button class="btn btn-default btn-sm" onclick="firewall.clear_logs_files();">{{data['lan']['BTN5']}}</button>
+            </div>
+        </div>
+        <div class="white-black-ip bgw mtb15">
+            <div class="black-ip">
+                <div class="def-log">
+                    <div class="title c6 plr15">
+                        <h3 class="f16">{{data['lan']['H3']}}</h3>
+                    </div>
+                    <div class="divtable pd15">
+                        <div class="firewall-port-box">
+                            <select id="firewalldType" class="bt-input-text c5 mr5" name="type" style="width:120px;">
+                                <option value="port">{{data['lan']['F1']}}</option>
+                                <option value="address">{{data['lan']['F2']}}</option>
+                                <option value="ip_port">指定IP放行端口</option>
+                            </select>
+                            <select id="type_pool" class="bt-input-text c5 mr5" name="type" style="width:80px;">
+                                <option value="tcp">TCP</option>
+                                <option value="udp">UDP</option>
+                            </select>
+                            <input type="text" class="bt-input-text mr5" style="width: 117px;" id="AcceptPort" placeholder="{{data['lan']['F3']}}">
+                            <input type="text" class="bt-input-text mr5" style="width: 150px;display:none;" id="AcceptAddress" placeholder="被放行的IP地址">
+                            <input type="text" class="bt-input-text mr5" id="Ps" placeholder="{{data['lan']['F4']}}">
+                            <button id="toAccept" onclick="firewall.add_accept_port()" class="btn btn-default btn-sm va0" type="button">{{data['lan']['F5']}}</button>
+                            <span id="f-ps" class="c9" style="margin-left: 10px;">{{data['lan']['F6']}}</span>
+                        </div>
+                        <div class="tablescroll">
+                            <table id="firewallBody" class="table table-hover" style="min-width: 640px;border: 0 none;">                               
+                            </table>
+                        </div>
+                        <div class="dataTables_paginate paging_bootstrap page firewallBody" style="margin-bottom:0">
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="white-black-ip bgw mtb15">
+            <div class="black-ip">
+                <div class="def-log">
+                    <div class="title c6 plr15">
+                        <h3 class="f16">{{data['lan']['H4']}}</h3>
+                        <a class="btn btn-default btn-sm va0" onclick="bt.firewall.clear_logs(function(){firewall.get_log_list()});">{{data['lan']['BTN5']}}</a>
+                        <span class="btn btn-default btn-sm" style="position: absolute;right: 30px;margin-top: 10px;" onclick="firewall.get_panel_error_logs()">面板运行日志</span>
+                    </div>
+                    <div class="divtable pd15">
+                        <div class="tablescroll">
+                            <table id="logsBody" class="table table-hover" style="min-width: 640px;border: 0 none;">
+                                                        
+                            </table>
+                        </div>
+                         <div class="dataTables_paginate paging_bootstrap page logsBody" style="margin-bottom:0">              
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+	
+	var firewall = {		
+		get_init:function(){			
+			firewall.flush_init();
+			firewall.get_list();
+			firewall.get_log_list();
+			firewall.get_logs_size();			
+			$('.sshswitch').click(function(){
+				var status = $("#sshswitch").prop("checked")==true?1:0;
+				bt.firewall.set_mstsc_status(status,function(rdata){
+					if(rdata===-1){
+						if(status){
+							$("#sshswitch").prop("checked","checked")
+						}else{
+							$("#sshswitch").removeAttr('checked');
+						}
+					}else{						
+						bt.msg(rdata);
+						firewall.flush_init();
+					}
+				})
+			})
+			$('.noping').click(function(){
+				var status = $("#noping").prop("checked")==true?1:0;
+				bt.firewall.ping(status,function(rdata){
+					if(rdata===-1){
+						if(status){
+							$("#noping").prop("checked","checked")
+						}else{
+							$("#noping").removeAttr('checked');
+						}
+					}else{						
+						bt.msg(rdata);
+						firewall.flush_init();
+					}
+				})
+			})			
+			$("#firewalldType").change(function(){
+				var type = $(this).val();
+				var w = '120px';
+				var p = lan.firewall.port;
+				var t = lan.firewall.accept;
+                var m = lan.firewall.port_ps;
+                $("#AcceptAddress").hide();
+                if (type == 'address') {
+                    w = '150px';
+                    p = lan.firewall.ip;
+                    t = lan.firewall.drop;
+                    m = lan.firewall.ip_ps;
+                } else if (type === 'ip_port') {
+                    $("#AcceptAddress").show();
+                    m = '说明: 只允许指定IP访问某端口，如: 只允许192.168.0.1访问8080端口';
+                }
+				$("#AcceptPort").css("width",w);
+				$("#AcceptPort").attr('placeholder',p);
+				$("#toAccept").html(t);
+				$("#f-ps").html(m);			
+			});
+		},
+		flush_init:function(){
+			bt.firewall.get_ssh_info(function(rdata){				
+				if(!rdata.status){
+					$("#mstscSubmit").attr('disabled','disabled')
+					$("#mstscPort").attr('disabled','disabled')
+					$('#sshswitch').removeAttr('checked');
+				}
+				else{
+					$("#mstscSubmit").removeAttr('disabled')
+					$("#mstscPort").removeAttr('disabled')
+					$('#sshswitch').attr('checked','checked');
+				}
+				if(rdata.ping){
+					$('#noping').removeAttr('checked');
+				}else{
+					$('#noping').attr('checked','checked');
+				}
+				$("#mstscPort").val(rdata.port);
+			})
+		},
+		get_logs_size:function(){
+			bt.firewall.get_logs_size(function(rdata){
+				$("#logSize").text(rdata);
+			})
+		},
+		clear_logs_files:function(){
+			bt.firewall.clear_logs_files(function(rdata){
+				$("#logSize").text(rdata);						
+				bt.msg({msg:lan.firewall.empty,icon:1});
+			})
+		},
+		add_accept_port:function(){
+			var type = $("#firewalldType").val();
+			var port = $("#AcceptPort").val();
+			var ps = $("#Ps").val();
+			bt.firewall.add_accept_port(type,port,ps,function(rdata){
+				if(rdata.status){
+					firewall.get_list();
+					$("#AcceptPort").val('');
+					$("#Ps").val('');
+				}
+				bt.msg(rdata);
+			})
+        },
+        remove_accept_port: function (id,port) {
+            bt.firewall.del_accept_port(id, port, function (rdata) {
+                if (rdata.status) {
+                    firewall.get_list();
+                }
+                bt.msg(rdata);
+            })
+        },
+		get_list:function(page,search){
+			if(page==undefined) page=1;			
+            $.post('/firewall_new?action=GetList', { p: page, search: search,collback:'firewall.get_list' }, function (rdata) {
+
+                $('.firewallBody').html(rdata.page);
+                var ports_ps = { "3306": "MySQL服务默认端口", "888": "phpMyAdmin默认端口", "22": "SSH远程服务", "20": "FTP主动模式数据端口", "21": "FTP协议默认端口", "39000-40000": "FTP被动模端口范围", "30000-40000": "FTP被动模端口范围","11211":"Memcached服务端口","873":"rsync数据同步服务","8888":"宝塔Linux面板默认端口"}
+				var _tab =  bt.render({
+					table:'#firewallBody',
+					columns:[						
+						{ field: 'id', title: "{{data['lan']['TH1']}}"},	
+						{ field: 'port', title: "{{data['lan']['TH2']}}",templet:function(item){
+							var _ps = lan.firewall.accept_port;
+							if(bt.contains(item.port,'.')){
+								_ps = lan.firewall.drop_ip;
+							}
+							_ps += ':['+item.port+']'
+							return _ps;
+						}},
+						{ field: 'status', title: "{{data['lan']['TH3']}}",templet:function(item){
+							var status = '';
+							switch(item.status){
+								case 0:
+									status = lan.firewall.status_not;
+									break;
+								case 1:
+									status = lan.firewall.status_net;
+									break;
+								default:
+									status = lan.firewall.status_ok;
+									break;
+							}
+							return status;
+						},help:'https://www.bt.cn/bbs/thread-4708-1-1.html'},
+                        { field: 'addtime', title: "{{data['lan']['TH4']}}"},
+                        { field: 'ps', title: "{{data['lan']['TH5']}}", templet: function (item) {
+                            if (item.port in ports_ps) return ports_ps[item.port];
+                            return item.ps;
+                         }},	
+						{ field: 'opt',align:'right',width:50, title: "{{data['lan']['TH6']}}",templet:function(item){
+							return '<a href="javascript:;" class="btlink" onclick="firewall.remove_accept_port('+item.id+',\''+item.port+'\')">删除</a>';
+						}}
+					],
+					data:rdata.data
+				})		
+			})	
+		},
+		get_log_list:function(page,search){
+            if (page == undefined) page = 1;
+            if (search == undefined) search = $("#SearchValue").val();
+			bt.firewall.get_log_list(page,search,function(rdata){
+				$('.logsBody').html(rdata.page);
+				var _tab =  bt.render({
+					table:'#logsBody',
+					columns:[						
+						{ field: 'id', title: "{{data['lan']['LTH1']}}"},	
+						{ field: 'type', title: "{{data['lan']['LTH2']}}"},	
+						{ field: 'log', title: "{{data['lan']['LTH3']}}"},		
+						{ field: 'addtime', title: "{{data['lan']['LTH4']}}"}				
+					],
+					data:rdata.data
+				})		
+			})			
+        },
+        //查看面板运行日志
+        get_panel_error_logs: function () {
+            layer.msg(lan.public.the_get, { icon: 16, time: 0, shade: [0.3, '#000'] });
+            $.post('/config?action=get_panel_error_logs', {}, function (rdata) {
+                layer.closeAll();
+                if (!rdata.status) {
+                    layer.msg(rdata.msg, { icon: 2 });
+                    return;
+                };
+                layer.open({
+                    type: 1,
+                    title: '面板运行日志',
+                    area: ['700px', '490px'],
+                    shadeClose: false,
+                    closeBtn: 2,
+                    content: '<div class="setchmod bt-form  pb70">'
+                        + '<pre class="crontab-log" style="overflow: auto; border: 0px none; line-height:23px;padding: 15px; margin: 0px; white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0px;font-family: \"微软雅黑\"">' + (rdata.msg == '' ? '当前日志为空' : rdata.msg) + '</pre>'
+                        + '<div class="bt-form-submit-btn" style="margin-top: 0px;">'
+                        + '<button type="button" class="btn btn-danger btn-sm btn-title" style="margin-right:15px;" onclick="firewall.clean_panel_error_logs()">' + lan.public.empty + '</button>'
+                        + '<button type="button" class="btn btn-success btn-sm btn-title" onclick="layer.closeAll()">' + lan.public.close + '</button>'
+                        + '</div>'
+                        + '</div>'
+                });
+                setTimeout(function () {
+                    $("#crontab-log").text(rdata.msg);
+                    var div = document.getElementsByClassName('crontab-log')[0]
+                    div.scrollTop = div.scrollHeight;
+                }, 200)
+            }).error(function () {
+                layer.closeAll();
+                layer.msg('无法取回日志信息!', { icon: 2 });
+            });
+        },
+        //清空面板错误日志
+        clean_panel_error_logs:function() {
+            layer.msg(lan.public.the_get, { icon: 16, time: 0, shade: [0.3, '#000'] });
+            $.post('/config?action=clean_panel_error_logs', {}, function (rdata) {
+                layer.closeAll();
+                layer.msg(rdata.msg, { icon: 1 });
+            });
+        }
+	}
+	firewall.get_init();
+</script>
+{% endblock %}

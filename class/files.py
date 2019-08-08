@@ -705,7 +705,8 @@ class files:
                 else:
                     data['data'] = srcBody.decode('utf-8')
                 data['encoding'] = u'utf-8';
-
+            if hasattr(get,'filename'): get.path = get.filename
+            data['historys'] = self.get_history(get.path)
             return data;
         except Exception as ex:
             return public.returnMsg(False,u'文件编码不被兼容，无法正确读取文件!' + str(ex));
@@ -742,12 +743,14 @@ class files:
                         pass
             
             if get.encoding == 'ascii':get.encoding = 'utf-8';
+            self.save_history(get.path)
             if sys.version_info[0] == 2:
                 data = data.encode(get.encoding,errors='ignore');
                 fp = open(get.path,'w+')
             else:
                 data = data.encode(get.encoding,errors='ignore').decode(get.encoding);
                 fp = open(get.path,'w+',encoding=get.encoding)
+            
             fp.write(data)
             fp.close()
             
@@ -765,7 +768,39 @@ class files:
         except Exception as ex:
             return public.returnMsg(False,'FILE_SAVE_ERR' + str(ex));
         
-    
+    #保存历史副本
+    def save_history(self,filename):
+        try:
+            save_path = ('/www/backup/file_history/' + filename).replace('//','/')
+            if not os.path.exists(save_path): os.makedirs(save_path,384)
+            public.writeFile(save_path + '/' + str(int(time.time())),public.readFile(filename,'rb'),'wb')
+            his_list = sorted(os.listdir(save_path))
+            num =  public.readFile('data/history_num.pl')
+            if not num: 
+                num = 10
+            else:
+                num = int(num)
+            d_num = len(his_list)
+            for i in range(d_num):
+                if d_num <= num: break;
+                rm_file = save_path + '/' + his_list[i]
+                if os.path.exists(rm_file): os.remove(rm_file)
+        except:pass
+
+    #取历史副本
+    def get_history(self,filename):
+        try:
+            save_path = ('/www/backup/file_history/' + filename).replace('//','/')
+            if not os.path.exists(save_path): return []
+            return sorted(os.listdir(save_path))
+        except: return []
+
+    #读取指定历史副本
+    def read_history(self,args):
+        save_path = ('/www/backup/file_history/' + args.filename).replace('//','/')
+        args.path = save_path + '/' + args.history
+        return self.GetFileBody(args)
+
     #文件压缩
     def Zip(self,get) :
         if not 'z_type' in get: get.z_type = 'rar'

@@ -273,7 +273,10 @@ class system:
         #取CPU信息
         cpuCount = psutil.cpu_count()
         used = self.get_cpu_percent()
-        return used,cpuCount
+        used_all = psutil.cpu_percent(percpu=True)
+        cpu_name = public.getCpuType()
+        return used,cpuCount,used_all,cpu_name
+
 
     def GetCpuInfo_new(self):
         cpuCount = psutil.cpu_count()

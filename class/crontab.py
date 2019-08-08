@@ -363,7 +363,7 @@ class crontab:
                 shell=wheres[type]
             except:
                 if type == 'toUrl':
-                    shell = head + "curl -sS --connect-timeout 10 -m 60 '" + param['urladdress']+"'";
+                    shell = head + "curl -sS --connect-timeout 10 -m 3600 '" + param['urladdress']+"'";
                 else:
                     shell=head+param['sBody'].replace("\r\n","\n")
                     
