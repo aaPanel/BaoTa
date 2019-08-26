@@ -383,7 +383,7 @@ var database = {
                     type: 1,
                     skin: 'demo-class',
                     area: '600px',
-                    title: lan.database.input_title_file,
+                    title: lan.database.input_title_file+'['+name+']',
                     closeBtn: 2,
                     shift: 5,
                     shadeClose: false,

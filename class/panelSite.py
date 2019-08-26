@@ -239,7 +239,7 @@ class panelSite(panelRedirect):
         get.path = self.__get_site_format_path(get.path)
         siteMenu = json.loads(get.webname)
         self.siteName     = self.ToPunycode(siteMenu['domain'].strip().split(':')[0]).strip().lower();
-        self.sitePath     = self.ToPunycodePath(self.GetPath(get.path.replace(' ','')));
+        self.sitePath     = self.ToPunycodePath(self.GetPath(get.path.replace(' ',''))).strip();
         self.sitePort     = get.port.strip().replace(' ','');
 
         if self.sitePort == "": get.port = "80";
@@ -929,7 +929,14 @@ class panelSite(panelRedirect):
     
     #获取DNS-API列表
     def GetDnsApi(self,get):
-        apis = json.loads(public.ReadFile('./config/dns_api.json'))
+        api_path = './config/dns_api.json'
+        api_init = './config/dns_api_init.json'
+        if not os.path.exists(api_path):
+            if os.path.exists(api_init):
+                import shutil
+                shutil.copyfile(api_init,api_path)
+        apis = json.loads(public.ReadFile(api_path))
+        
         path = '/root/.acme.sh'
         if not os.path.exists(path + '/account.conf'): path = "/.acme.sh"
         account = public.readFile(path + '/account.conf')
@@ -1348,12 +1355,14 @@ class panelSite(panelRedirect):
         conf = public.readFile(file);
         if conf:
             conf = conf.replace(Path, sitePath);
+            conf = conf.replace("#include","include")
             public.writeFile(file,conf)
         #apaceh
         file = self.setupPath + '/panel/vhost/apache/'+get.name+'.conf';
         conf = public.readFile(file);
         if conf:
             conf = conf.replace(Path, sitePath);
+            conf = conf.replace("#IncludeOptional", "IncludeOptional")
             public.writeFile(file,conf)
         
         public.M('sites').where("id=?",(id,)).setField('status','1');
@@ -1384,6 +1393,7 @@ class panelSite(panelRedirect):
         conf = public.readFile(file);
         if conf:
             conf = conf.replace(sitePath,path);
+            conf = conf.replace("include","#include")
             public.writeFile(file,conf)
         
         #apache
@@ -1391,6 +1401,7 @@ class panelSite(panelRedirect):
         conf = public.readFile(file);
         if conf:
             conf = conf.replace(sitePath,path);
+            conf = conf.replace("IncludeOptional", "#IncludeOptional")
             public.writeFile(file,conf)
         public.M('sites').where("id=?",(id,)).setField('status','0');
         public.serviceReload();
@@ -3269,7 +3280,7 @@ location %s
         if os.path.exists(path):
             conf = '''<IfModule mod_rewrite.c>
   RewriteEngine on
-  RewriteCond %{HTTP_HOST} !^127.0.0.1 [NC]
+  RewriteCond %{HTTP_HOST} !^127.0.0.1 [NC] 
   RewriteRule (.*) http://%s/$1 [L]
 </IfModule>'''
             conf = conf.replace("%s",get.name)

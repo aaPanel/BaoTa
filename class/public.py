@@ -765,6 +765,7 @@ def checkIp(ip):
     
 #检查端口是否合法
 def checkPort(port):
+    if not re.match("^\d+$",port): return False
     ports = ['21','25','443','8080','888','8888','8443'];
     if port in ports: return False;
     intport = int(port);
@@ -1192,8 +1193,8 @@ def get_page(count,p=1,rows=12,callback='',result='1,2,3,4,5,8'):
 
 # 取面板版本
 def version():
-    from BTPanel import g
     try:
+        from BTPanel import g
         return g.version
     except:
         comm = ReadFile('/www/server/panel/class/common.py')
@@ -1238,7 +1239,7 @@ def mod_reload(mode):
             reload(mode)
         else:
             import imp
-            imp.reload(module)
+            imp.reload(mode)
         return True
     except: return False
 

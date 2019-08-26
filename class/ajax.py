@@ -713,16 +713,187 @@ ServerName 127.0.0.2
         public.M('logs').where('id>?',(0,)).delete();
         public.WriteLog('TYPE_CONFIG','LOG_CLOSE');
         return public.returnMsg(True,'LOG_CLOSE');
+
+    def __get_webserver_conffile(self):
+        if public.get_webserver() == 'nginx':
+            filename = public.GetConfigValue('setup_path') + '/nginx/conf/nginx.conf'
+        else:
+            filename = public.GetConfigValue('setup_path') + '/apache/conf/extra/httpd-vhosts.conf'
+        return filename
+
+    # 获取phpmyadmin ssl配置
+    def get_phpmyadmin_conf(self):
+        if public.get_webserver() == "nginx":
+            conf_file = "/www/server/panel/vhost/nginx/phpmyadmin.conf"
+            rep = "listen\s*(\d+)"
+        else:
+            conf_file = "/www/server/panel/vhost/apache/phpmyadmin.conf"
+            rep = "Listen\s*(\d+)"
+        return {"conf_file":conf_file,"rep":rep}
+
+    # 设置phpmyadmin路径
+    def set_phpmyadmin_session(self):
+        import re
+        conf_file = self.get_phpmyadmin_conf()
+        conf = public.readFile(conf_file["conf_file"])
+        rep = conf_file["rep"]
+        if conf:
+            port = re.search(rep,conf).group(1)
+            path = session['phpmyadminDir'].split("/")[-1]
+            ip = public.GetHost()
+            session['phpmyadminDir'] = "https://{}:{}/{}".format(ip, port, path)
+
+    # 获取phpmyadmin ssl状态
+    def get_phpmyadmin_ssl(self,get):
+        import re
+        conf_file = self.get_phpmyadmin_conf()
+        conf = public.readFile(conf_file["conf_file"])
+        rep = conf_file["rep"]
+        if conf:
+            port = re.search(rep, conf).group(1)
+            return {"status":True,"port":port}
+        return {"status":False,"port":""}
+
+	# 修改php ssl端口
+    def change_phpmyadmin_ssl_port(self,get):
+        import re
+        try:
+            port = int(get.port)
+            if 1 > port > 65535:
+                return public.returnMsg(False, '端口范围不正确')
+        except:
+            return public.returnMsg(False, '端口格式不正确')
+        filename = self.get_phpmyadmin_conf()
+        conf = public.readFile(filename["conf_file"])
+        if conf:
+            rulePort = ['80', '443', '21', '20', '8080', '8081', '8089', '11211', '6379']
+            if get.port in rulePort:
+                return public.returnMsg(False, 'AJAX_PHPMYADMIN_PORT_ERR')
+            if public.get_webserver() == 'nginx':
+                rep = "listen\s+([0-9]+)\s*;"
+                oldPort = re.search(rep, conf).groups()[0]
+                conf = re.sub(rep, 'listen ' + get.port + ';\n', conf)
+            else:
+                rep = "Listen\s+([0-9]+)\s*\n"
+                oldPort = re.search(rep, conf).groups()[0]
+                conf = re.sub(rep, "Listen " + get.port + "\n", conf, 1)
+                rep = "VirtualHost\s+\*:[0-9]+"
+                conf = re.sub(rep, "VirtualHost *:" + get.port, conf, 1)
+
+            if oldPort == get.port: return public.returnMsg(False, 'SOFT_PHPVERSION_ERR_PORT')
+
+            public.writeFile(filename["conf_file"], conf)
+            import firewalls
+            get.ps = public.getMsg('SOFT_PHPVERSION_PS');
+            fw = firewalls.firewalls();
+            fw.AddAcceptPort(get);
+            public.serviceReload();
+            public.WriteLog('TYPE_SOFT', 'SOFT_PHPMYADMIN_PORT', (get.port,))
+            get.id = public.M('firewall').where('port=?', (oldPort,)).getField('id');
+            get.port = oldPort;
+            fw.DelAcceptPort(get);
+            return public.returnMsg(True, 'SET_PORT_SUCCESS');
+        else:
+            return public.returnMsg(False, '设置端口错误,请先开启 PhoMyAdmin SSL 后再设置');
+
+    # 设置phpmyadmin ssl
+    def set_phpmyadmin_ssl(self,get):
+        if not os.path.exists("/www/server/panel/ssl/certificate.pem"):
+            return public.returnMsg(False,'面板证书不存在，请申请面板证书后再试')
+        filename = self.__get_webserver_conffile()
+        if get.v == "1":
+        # nginx配置文件
+            if "nginx" in filename:
+                ssl_conf = """server
+    {
+        listen 887 ssl;
+        server_name phpmyadmin;
+        index index.html index.htm index.php;
+        root  /www/server/phpmyadmin;
+        #SSL-START SSL相关配置，请勿删除或修改下一行带注释的404规则
+        #error_page 404/404.html;
+        ssl_certificate    /www/server/panel/ssl/certificate.pem;
+        ssl_certificate_key    /www/server/panel/ssl/privateKey.pem;
+        ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+        ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:HIGH:!aNULL:!MD5:!RC4:!DHE;
+        ssl_prefer_server_ciphers on;
+        ssl_session_cache shared:SSL:10m;
+        ssl_session_timeout 10m;
+        error_page 497  https://$host$request_uri;
+        #SSL-END
+        include enable-php.conf;
+        location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+        {
+            expires      30d;
+        }
+        location ~ .*\.(js|css)?$
+        {
+            expires      12h;
+        }
+        location ~ /\.
+        {
+            deny all;
+        }
+        access_log  /www/wwwlogs/access.log;
+    }"""
+                public.writeFile("/www/server/panel/vhost/nginx/phpmyadmin.conf",ssl_conf)
+            else:
+                import panelPlugin
+                get.sName = "phpmyadmin"
+                v = panelPlugin.panelPlugin().get_soft_find(get)
+                public.writeFile("/tmp/2",str(v["ext"]["phpversion"]))
+                # apache配置
+                ssl_conf = '''Listen 887
+<VirtualHost *:887>
+    ServerAdmin webmaster@example.com
+    DocumentRoot "/www/server/phpmyadmin"
+    ServerName 0b842aa5.phpmyadmin
+    ServerAlias phpmyadmin.com
+    #ErrorLog "/www/wwwlogs/BT_default_error.log"
+    #CustomLog "/www/wwwlogs/BT_default_access.log" combined
+    
+    #SSL
+    SSLEngine On
+    SSLCertificateFile /www/server/panel/ssl/certificate.pem
+    SSLCertificateKeyFile /www/server/panel/ssl/privateKey.pem
+    SSLCipherSuite EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH
+    SSLProtocol All -SSLv2 -SSLv3
+    SSLHonorCipherOrder On
+    
+    #PHP
+    <FilesMatch \.php$>
+           SetHandler "proxy:unix:/tmp/php-cgi-{}.sock|fcgi://localhost"
+    </FilesMatch>
+    
+    #DENY FILES
+    <Files ~ (\.user.ini|\.htaccess|\.git|\.svn|\.project|LICENSE|README.md)$>
+      Order allow,deny
+      Deny from all
+    </Files>
+    
+    #PATH
+    <Directory "/www/wwwroot/bt.youbadbad.cn/">
+       SetOutputFilter DEFLATE
+       Options FollowSymLinks
+       AllowOverride All
+       Require all granted
+       DirectoryIndex index.php index.html index.htm default.php default.html default.htm
+    </Directory>
+</VirtualHost>'''.format(v["ext"]["phpversion"])
+                public.writeFile("/www/server/panel/vhost/apache/phpmyadmin.conf", ssl_conf)
+        else:
+            if "nginx" in filename:
+                os.remove("/www/server/panel/vhost/nginx/phpmyadmin.conf")
+            else:
+                os.remove("/www/server/panel/vhost/apache/phpmyadmin.conf")
+        public.serviceReload()
+        return public.returnMsg(True,'开启成功')
     
     #设置PHPMyAdmin
     def setPHPMyAdmin(self,get):
         import re;
         #try:
-        if public.get_webserver() == 'nginx':
-            filename = public.GetConfigValue('setup_path') + '/nginx/conf/nginx.conf';
-        else:
-            filename = public.GetConfigValue('setup_path') + '/apache/conf/extra/httpd-vhosts.conf';
-        
+        filename = self.__get_webserver_conffile()
         conf = public.readFile(filename);
         if hasattr(get,'port'):
             mainPort = public.readFile('data/port.pl').strip();

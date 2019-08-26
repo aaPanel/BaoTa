@@ -438,7 +438,7 @@ class plugin_deployment:
                 if os.path.exists(i_ndex_html): os.remove(i_ndex_html)
                 os.system("\cp -arf " + p_tmp + '/. ' + path + '/')
             except: pass
-        os.system("rm -rf " + self.__tmp + '/*')
+        #os.system("rm -rf " + self.__tmp + '/*')
         return p_config
                 
     

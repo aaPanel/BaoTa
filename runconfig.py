@@ -25,10 +25,10 @@ worker_class = 'geventwebsocket.gunicorn.workers.GeventWebSocketWorker'
 chdir = '/www/server/panel'
 capture_output = True
 graceful_timeout=0
-loglevel = 'debug'
-access_log_format = '%(h) -  %(t)s - %(u)s - %(s)s %(H)s'
+loglevel = 'info'
+if debug: loglevel = 'debug'
 errorlog = chdir + '/logs/error.log'
-accesslog = chdir + '/logs/access.log'
+accesslog = chdir + '/logs/error.log'
 pidfile = chdir + '/logs/panel.pid'
 if os.path.exists(chdir + '/data/ssl.pl'):
     certfile = 'ssl/certificate.pem'

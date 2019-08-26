@@ -4,118 +4,6 @@ $(document).ready(function() {
 	});
 });
 
-function openEditorView(type,path){
-	var paths = path.split('/'),_fileName = paths[paths.length -1], _aceTmplate = document.getElementById("aceTmplate").innerHTML;
-	_aceTmplate = _aceTmplate.replace(/\<\\\/script\>/g,'</script>');
-	if(aceEditor.editor !== null){
-		if(aceEditor.isAceView == false){
-			aceEditor.isAceView = true;
-			$('.aceEditors .layui-layer-max').click()
-		}
-		for(var i=0;i<aceEditor.pathAarry.length;i++){
-			if(path === aceEditor.pathAarry[i]){
-				layer.msg('文件已打开',{icon:0});
-				return false;
-			}
-		}
-		aceEditor.openEditorView(path);
-		return false;
-	}
-	var r = layer.open({
-		type: 1,
-		maxmin: true,
-		shade:false,
-		area: ['80%','80%'],
-		title: "在线文本编辑器",
-		skin:'aceEditors',
-		zIndex:19999,
-		content: _aceTmplate,
-		success:function(layero,index){
-			aceEditor.layer_view = index;
-			aceEditor.ace_active = '';
-			aceEditor.eventEditor();
-			ace.require("/ace/ext/language_tools");
-			ace.config.set("modePath", "/static/ace");
-			ace.config.set("workerPath", "/static/ace");
-			ace.config.set("themePath", "/static/ace");
-			aceEditor.openEditorView(path);
-			$('.aceEditors .layui-layer-min').click(function (e){
-				aceEditor.isAceView = false;
-				setTimeout(function(){
-					var _id = $('.ace_conter_menu .active').attr('data-id');
-					aceEditor.editor['ace_editor_'+_id].ace.resize();
-				},105);
-			});
-			$('.aceEditors .layui-layer-max').click(function (e){
-				setTimeout(function(){
-					aceEditor.setEditorView();
-					var _id = $('.ace_conter_menu .active').attr('data-id');
-					aceEditor.editor['ace_editor_'+_id].ace.resize();
-				},105);
-			});
-		},
-		cancel:function(){
-			for(var item in aceEditor.editor){
-				if(aceEditor.editor[item].fileType == 1){
-					layer.open({
-						type: 1,
-						area: ['400px', '180px'],
-						title: '保存提示',
-						content: '<div class="ace-clear-form">\
-							<div class="clear-icon"></div>\
-							<div class="clear-title">检测到文件未保存，是否保存文件更改？</div>\
-							<div class="clear-tips">如果不保存，更改会丢失！</div>\
-							<div class="ace-clear-btn" style="">\
-								<button type="button" class="btn btn-sm btn-default" style="float:left" data-type="2">不保存文件</button>\
-								<button type="button" class="btn btn-sm btn-default" style="margin-right:10px;" data-type="1">取消</button>\
-								<button type="button" class="btn btn-sm btn-success" data-type="0">保存文件</button>\
-							</div>\
-						</div>',
-						success: function (layers, indexs) {
-							$('.ace-clear-btn button').click(function(){
-								var _type = $(this).attr('data-type');
-								switch(_type){
-									case '2':
-										aceEditor.editor = null;
-										layer.closeAll();
-									break;
-									case '1':
-										layer.close(indexs);
-									break;
-									case '0':
-										var _arry = [],editor = aceEditor['editor'];
-										for(var item in editor){
-											_arry.push({
-												path: editor[item]['path'],
-												data: editor[item]['ace'].getValue(),
-												encoding: editor[item]['encoding'],
-											})
-										}
-										aceEditor.saveAllFileBody(_arry,function(){
-											$('.ace_conter_menu>.item').each(function (el,indexx) {
-												var _id = $(this).attr('data-id');
-												$(this).find('i').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove').attr('data-file-state','0')
-												aceEditor.editor['ace_editor_'+_id].fileType = 0;
-											});
-											aceEditor.editor = null;
-											aceEditor.pathAarry = [];
-											layer.closeAll();
-										});
-									break;
-								}
-							});
-						}
-					});
-					return false;
-				}
-			}
-			aceEditor.editor = null;
-			aceEditor.pathAarry = [];
-			aceEditor.editorLength = 0;
-		}
-	});
-}
-
 var aceEditor = {
 	layer_view:'',
 	editor: null,
@@ -175,17 +63,13 @@ var aceEditor = {
 	encodingList: ['UTF-8', 'GBK', 'GB2312', 'BIG5'],
 	themeList: [
 		'chrome',
-		'clouds',
-		'crimson_editor',
-		'ambiance',
-		'chaos',
 		'monokai'
 	],
+	fontSize:'13px',
 	editorTheme: 'monokai', // 编辑器主题
 	editorLength: 0,
 	isAceView:true,
 	ace_active:'',
-	// aceEditor:'',
 	// 事件编辑器-方法，事件绑定
 	eventEditor: function () {
 		var _this = this;
@@ -266,7 +150,6 @@ var aceEditor = {
 								var _type = $(this).attr('data-type');
 								switch (_type) {
 									case '0': //保存文件
-										console.log()
 										_this.saveFileBody({
 											path:_path,
 											data:editor_item.ace.getValue(),
@@ -329,7 +212,7 @@ var aceEditor = {
 				case 'encoding':
 					$('.ace_toolbar_menu .menu-encoding').show().siblings().hide();
 					_this.setEncodingType();
-					$('.menu-encoding ul li').click(function (e) {
+					$('.menu-encoding ul li').click(function(e){
 						layer.msg('设置文件编码：' + $(this).attr('data-value'));
 						$('.ace_conter_toolbar [data-type="encoding"]').html('编码：<i>'+ $(this).attr('data-value') +'</i>');
 						$(this).addClass('active').append(_icon).siblings().removeClass('active').find('span').remove();
@@ -339,18 +222,8 @@ var aceEditor = {
 				case 'lang':
 					$('.ace_toolbar_menu').hide();
 					layer.msg('暂不支持切换语言模式，敬请期待!',{icon:6});
-					// $('.ace_toolbar_menu .menu-files').show().siblings().hide();
-					// _this.getRelevanceList(_item.fileName);
 				break;
 			}
-			$('.ace_toolbar_menu').click(function(e){
-				e.stopPropagation();
-				e.preventDefault();
-			});
-			$(document).click(function(e){
-				$('.ace_toolbar_menu').hide();
-				$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
-			})
 			e.stopPropagation();
 			e.preventDefault();
 		});
@@ -372,8 +245,8 @@ var aceEditor = {
 		});
 		
 		// 状态
-		$('.ace_header span').click(function () {
-			var type =  $(this).attr('class'),editor_item =  _this.editor['ace_editor_'+ _this.ace_active ];
+		$('.ace_header span').click(function (e) {
+			var type =  $(this).attr('class'),editor_item =  _this.editor['ace_editor_'+ _this.ace_active];
 			switch(type){
 				case 'saveFile': //保存当时文件
 					_this.saveFileBody({
@@ -474,25 +347,103 @@ var aceEditor = {
 				break;
 				// 字体
 				case 'fontSize':
-					layer.open({
-						type:1,
-						area:['400px','300px'],
-						title:'提示',
-						btn:['保存','取消'],
-						content:'<div class="ace-fontSize">\
-							<div class="line"><div class="">字体样式</div><div class=""></div></div>\
-							<div class="line"><div class="">字体大小</div><div class=""><input type="text" />px</div></div>\
-						</div>',
-						yes:function(layers,index){
-							
-						},
-						btn1:function(layers,index){
-							
+					$('.ace_toolbar_menu').show().find('.menu-fontSize').show().siblings().hide();
+					$('.menu-fontSize .menu-conter .set_font_size input').val(_this.fontSize.match(/([0-9]*)px/)[1]);
+					$('.menu-fontSize .menu-conter .set_font_size input').unbind('keyup').keyup(function (e){
+						var _val = $(this).val();
+						if(_val == ''){
+							$(this).css('border','1px solid red');
+							$(this).next('.tips').text('字体设置范围 12-45');
+						}else if(!isNaN(_val)){
+							$(this).removeAttr('style');
+							if(parseInt(_val) > 11 && parseInt(_val) <45){
+								$('.ace_conter_editor .ace_editors').css('fontSize', _val +'px')
+							}else{
+								$('.ace_conter_editor .ace_editors').css('fontSize', '13px');
+								$(this).css('border','1px solid red');
+								$(this).next('.tips').text('字体设置范围 12-45');
+							}
+						}else{
+							$(this).css('border','1px solid red');
+							$(this).next('.tips').text('字体设置范围 12-45');
 						}
 					});
+					$('.menu-fontSize .menu-conter .set_font_size input').unbind('change').change(function (){
+						var _val = $(this).val();
+						$('.ace_conter_editor .ace_editors').css('fontSize',_val+'px')
+					});
+					$('.set_font_size .btn-save').unbind('click').click(function(){
+						var _fontSize = $('.set_font_size input').val(),
+						_theme = JSON.parse(getCookie('aceEditor')).theme,
+						_data = JSON.stringify({"fontSize": _fontSize +"px","theme":_theme});
+						_this.saveFileBody({
+							path:'/www/server/panel/BTPanel/static/ace/editor.config.json',
+							data:_data,
+							encoding:'utf-8'
+						},function(res){
+							if(res.status){
+								_this.fontSize = _fontSize +'px'
+								setCookie('aceEditor',_data);
+								layer.msg('设置成功', {icon: 1});
+								return false;
+							}
+							layer.msg(res.msg, {icon: 2});
+						});
+					});
+					$('.ace_toolbar_menu').unbind('click').click(function(e){
+						e.stopPropagation();
+						e.preventDefault();
+					});
+					$(document).unbind('click').click(function(e){
+						$('.ace_toolbar_menu').hide();
+						$('.ace_conter_editor .ace_editors').css('fontSize', _this.fontSize);
+						$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
+					});
 				break;
+				//主题
 				case 'themes':
-					layer.msg('主题功能正在开发中，敬请期待！',{icon:6});
+					$('.ace_toolbar_menu').show().find('.menu-themes').show().siblings().hide();
+					var _html = '',_arry = ['白色主题','黑色主题'],_icon = '<span class="icon"><i class="glyphicon glyphicon-ok" aria-hidden="true"></i></span>';
+					for(var i=0;i<_this.themeList.length;i++){
+						if(_this.themeList[i] != _this.editorTheme){
+							_html += '<li data-value="'+ _this.themeList[i] +'">'+ _this.themeList[i] +'【'+ _arry[i] +'】</li>';
+						}else{
+							_html += '<li data-value="'+ _this.themeList[i] +'" class="active">'+ _this.themeList[i] +'【'+ _arry[i] +'】'+ _icon +'</li>';
+						}
+					}
+					$('.menu-themes ul').html(_html);
+					$('.menu-themes ul li').click(function(){
+						var _theme = $(this).attr('data-value');
+						$(this).addClass('active').append(_icon).siblings().removeClass('active').find('.icon').remove();
+						var _fontSize = JSON.parse(getCookie('aceEditor')).fontSize.match(/([0-9]*)px/)[1],
+							_data = JSON.stringify({"fontSize": _fontSize +"px","theme":_theme});
+						for(var item in _this.editor){
+							_this.editor[item].ace.setTheme("ace/theme/"+_theme);
+						}
+						_this.saveFileBody({
+							path:'/www/server/panel/BTPanel/static/ace/editor.config.json',
+							data:_data,
+							encoding:'utf-8'
+						},function(res){
+							if(res.status){
+								_this.editorTheme = _theme;
+								$('#ace_conter').removeAttr('class').addClass(_theme);
+								setCookie('aceEditor',_data);
+								layer.msg('设置成功', {icon: 1});
+								return false;
+							}
+							layer.msg(res.msg, {icon: 2});
+						});
+					});
+					$('.ace_toolbar_menu').unbind('click').click(function(e){
+						e.stopPropagation();
+						e.preventDefault();
+					});
+					$(document).unbind('click').click(function(e){
+						$('#ace_conter').removeAttr('class').addClass(_this.editorTheme);
+						$('.ace_toolbar_menu').hide();
+						$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
+					});
 				break;
 				case 'helps':
 					layer.open({
@@ -556,10 +507,18 @@ var aceEditor = {
 					});
 				break;
 			}
+			e.stopPropagation();
+			e.preventDefault();
 		});
-		
+		$('.ace_toolbar_menu').click(function(e){
+			e.stopPropagation();
+			e.preventDefault();
+		});
+		$(document).click(function(e){
+			$('.ace_toolbar_menu').hide();
+			$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
+		})
 		// 选择语言
-		
 		this.setEditorView();
 	},
 	// 设置搜索视图
@@ -646,10 +605,11 @@ var aceEditor = {
 	creationEditor: function (obj, callabck) {
 		var _this = this;
 		$('#ace_editor_' + obj.id).text(obj.data || '');
-		if(this.editor == null) this.editor = {}
+		$('.ace_conter_editor .ace_editors').css('fontSize', _this.fontSize);
+		if(this.editor == null) this.editor = {};
 		this.editor['ace_editor_' + obj.id] = {
 			ace: ace.edit("ace_editor_" + obj.id, {
-				theme: "ace/theme/monokai", //主题
+				theme: "ace/theme/"+_this.editorTheme, //主题
 				mode: "ace/mode/" + (obj.fileName != undefined ? obj.mode : 'text'), // 语言类型
 				wrap: true,
 				showInvisibles:false,
@@ -659,7 +619,7 @@ var aceEditor = {
 				enableLiveAutocompletion: true,
 				useSoftTabs:false,
 				tabSize:4,
-				KeyboardHandler:'sublime'
+				keyboardHandler:'sublime'
 			}), //ACE编辑器对象
 			id: obj.id,
 			wrap: true, //是否换行
@@ -698,7 +658,6 @@ var aceEditor = {
 			readOnly: false // 如果不需要使用只读模式，这里设置false
 		});
 		
-		
 		// 获取光标位置
 		ACE.ace.getSession().selection.on('changeCursor', function(e) {
 			var _cursor = ACE.ace.selection.getCursor();
@@ -714,18 +673,17 @@ var aceEditor = {
 	},
 	// 获取文件模型
 	getFileType: function (fileName) {
-		var filenames = fileName.split('.')[1],modesByName = {};
+		var filenames = fileName.match(/\.([0-9A-z]*)$/);
+		filenames = (filenames == null?'text':filenames[1]);
 		for (var name in this.supportedModes) {
-			var data = this.supportedModes[name];
-			var suffixs = data[0].split('|');
-			var filename = name.toLowerCase()
+			var data = this.supportedModes[name],suffixs = data[0].split('|'),filename = name.toLowerCase();
 			for (var i = 0; i < suffixs.length; i++) {
 				if (filenames == suffixs[i]){
-					return { name: name,mode: filename }
+					return { name: name,mode: filename };
 				}
 			}
 		}
-		return {name:'Text',mode:'text'}
+		return {name:'Text',mode:'text'};
 	},
 	// 新建编辑器视图-方法
 	addEditor: function () {
@@ -780,7 +738,7 @@ var aceEditor = {
 		    $('.ace_conter_menu .item').removeClass('active');
     		$('.ace_conter_editor .ace_editors').removeClass('active');
     		$('.ace_conter_menu .ace_editor_add').before('<div class="item active item_tab_' + _id +'" title="'+ path +'" data-type="'+ _type +'" data-mode="'+ _mode +'" data-id="'+ _id +'" data-index="'+ _index +'" data-fileName="'+ _fileName +'">\
-    			<span class="icon_file"><img src="/static/img/iconfont_code.png" style="width:16px;" /></span><span>' + _fileName + '</span>\
+    			<span class="icon_file"><i class="'+ _mode +'-icon"></i></span><span title="'+ _fileName +'">' + _fileName + '</span>\
     			<i class="glyphicon glyphicon-remove icon-tool" aria-hidden="true" data-file-state="0" data-title="' + _fileName + '"></i>\
     		</div>');
     		$('.ace_conter_editor').append('<div id="ace_editor_'+_id +'" class="ace_editors active"></div>');
@@ -820,6 +778,12 @@ var aceEditor = {
 			if (callback) callback(res)
 		});
 	},
+	// 获取配置文件
+	getEditorConfig:function(callback) {
+		$.get('/static/ace/editor.config.json?'+ RandomStrPwd(5),function (res){
+			if(callback) callback(res);
+		});
+	},
 	// 递归保存文件
 	saveAllFileBody:function(arry,num,callabck) {
 		var _this = this;
@@ -842,6 +806,141 @@ var aceEditor = {
 			aceEditor.saveAllFileBody(arry,num,callabck);
 		});
 	}
+}
+
+function openEditorView(type,path){
+	var paths = path.split('/'),_fileName = paths[paths.length -1], _aceTmplate = document.getElementById("aceTmplate").innerHTML;
+	_aceTmplate = _aceTmplate.replace(/\<\\\/script\>/g,'</script>');
+	if(aceEditor.editor !== null){
+		if(aceEditor.isAceView == false){
+			aceEditor.isAceView = true;
+			$('.aceEditors .layui-layer-max').click()
+		}
+		for(var i=0;i<aceEditor.pathAarry.length;i++){
+			if(path === aceEditor.pathAarry[i]){
+				layer.msg('文件已打开',{icon:0});
+				return false;
+			}
+		}
+		aceEditor.openEditorView(path);
+		return false;
+	}
+	var r = layer.open({
+		type: 1,
+		maxmin: true,
+		shade:false,
+		area: ['80%','80%'],
+		title: "在线文本编辑器",
+		skin:'aceEditors',
+		zIndex:19999,
+		content: _aceTmplate,
+		success:function(layero,index){
+			function set_edit_file(){
+				aceEditor.layer_view = index;
+				aceEditor.ace_active = '';
+				aceEditor.eventEditor();
+				$('#ace_conter').addClass(aceEditor.editorTheme);
+				ace.require("/ace/ext/language_tools");
+				ace.config.set("modePath", "/static/ace");
+				ace.config.set("workerPath", "/static/ace");
+				ace.config.set("themePath", "/static/ace");
+				aceEditor.openEditorView(path);
+				$('.aceEditors .layui-layer-min').click(function (e){
+					aceEditor.isAceView = false;
+					setTimeout(function(){
+						var _id = $('.ace_conter_menu .active').attr('data-id');
+						aceEditor.editor['ace_editor_'+_id].ace.resize();
+					},105);
+				});
+				$('.aceEditors .layui-layer-max').click(function (e){
+					setTimeout(function(){
+						aceEditor.setEditorView();
+						var _id = $('.ace_conter_menu .active').attr('data-id');
+						aceEditor.editor['ace_editor_'+_id].ace.resize();
+					},105);
+				});
+			}
+			if(getCookie('aceEditor') == null){
+				// 获取编辑器配置
+				aceEditor.getEditorConfig(function(res){
+					var _rdata = (typeof res == "string")?JSON.parse(res):res;
+					if(typeof res != "string") res = JSON.stringify(res);
+					setCookie('aceEditor',res);
+					aceEditor.fontSize = _rdata.fontSize;
+					aceEditor.editorTheme = _rdata.theme;
+					$('.ace_editors').css('fontSize',_rdata.fontSize);
+					$('#ace_conter').addClass(_rdata.theme);
+					set_edit_file();
+				});
+			}else{
+				var aceConfig = JSON.parse(getCookie('aceEditor'));
+				aceEditor.fontSize = aceConfig.fontSize;
+				aceEditor.editorTheme = aceConfig.theme;
+				$('.ace_editors').css('fontSize',aceConfig.fontSize);
+				$('#ace_conter').addClass(aceConfig.theme);
+				set_edit_file();
+			}
+		},
+		cancel:function(){
+			for(var item in aceEditor.editor){
+				if(aceEditor.editor[item].fileType == 1){
+					layer.open({
+						type: 1,
+						area: ['400px', '180px'],
+						title: '保存提示',
+						content: '<div class="ace-clear-form">\
+							<div class="clear-icon"></div>\
+							<div class="clear-title">检测到文件未保存，是否保存文件更改？</div>\
+							<div class="clear-tips">如果不保存，更改会丢失！</div>\
+							<div class="ace-clear-btn" style="">\
+								<button type="button" class="btn btn-sm btn-default" style="float:left" data-type="2">不保存文件</button>\
+								<button type="button" class="btn btn-sm btn-default" style="margin-right:10px;" data-type="1">取消</button>\
+								<button type="button" class="btn btn-sm btn-success" data-type="0">保存文件</button>\
+							</div>\
+						</div>',
+						success: function (layers, indexs) {
+							$('.ace-clear-btn button').click(function(){
+								var _type = $(this).attr('data-type');
+								switch(_type){
+									case '2':
+										aceEditor.editor = null;
+										layer.closeAll();
+									break;
+									case '1':
+										layer.close(indexs);
+									break;
+									case '0':
+										var _arry = [],editor = aceEditor['editor'];
+										for(var item in editor){
+											_arry.push({
+												path: editor[item]['path'],
+												data: editor[item]['ace'].getValue(),
+												encoding: editor[item]['encoding'],
+											})
+										}
+										aceEditor.saveAllFileBody(_arry,function(){
+											$('.ace_conter_menu>.item').each(function (el,indexx) {
+												var _id = $(this).attr('data-id');
+												$(this).find('i').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove').attr('data-file-state','0')
+												aceEditor.editor['ace_editor_'+_id].fileType = 0;
+											});
+											aceEditor.editor = null;
+											aceEditor.pathAarry = [];
+											layer.closeAll();
+										});
+									break;
+								}
+							});
+						}
+					});
+					return false;
+				}
+			}
+			aceEditor.editor = null;
+			aceEditor.pathAarry = [];
+			aceEditor.editorLength = 0;
+		}
+	});
 }
 
 var my_headers = {};
@@ -2461,7 +2560,7 @@ function scroll_handle(e){
 	var scrollTop = this.scrollTop;
 	$(this).find("thead").css({"transform":"translateY("+scrollTop+"px)","position":"relative","z-index":"1"});
 }
-var clipboard, interval, socket, gterm, ssh_login;
+var clipboard, interval, socket, gterm, ssh_login,term_box;
 
 var pdata_socket = {
     x_http_token: document.getElementById("request_token_head").getAttribute('token')
@@ -2527,7 +2626,7 @@ function web_shell() {
 
         if (data.data == '\r\n登出\r\n' || data.data == '登出\r\n' || data.data == '\r\nlogout\r\n' || data.data == 'logout\r\n') {
             setTimeout(function () {
-                layer.closeAll();
+                layer.close(term_box);
             }, 500);
         }
     });
@@ -2545,7 +2644,7 @@ function web_shell() {
     });
 
 
-    var term_box = layer.open({
+    term_box = layer.open({
         type: 1,
         title: "宝塔终端",
         area: ['920px','640px'],
@@ -2672,7 +2771,6 @@ function web_shell() {
             term.focus();
         })
         $("textarea[name='ssh_copy']").keydown(function (e) {
-
             if (e.ctrlKey && e.keyCode == 13) {
                 $(".shell_btn_1").click();
             } else if (e.altKey && e.keyCode == 13) {
@@ -2681,8 +2779,6 @@ function web_shell() {
         });
 
     }, 100)
-
-    
 }
 
 function shell_translate_text() {

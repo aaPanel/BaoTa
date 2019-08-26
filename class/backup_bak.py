@@ -15,6 +15,7 @@ os.chdir('/www/server/panel')
 sys.path.append("class/")
 import time,hashlib,sys,os,json,requests,re,public,random,string,panelMysql,downloadFile
 class backup_bak:
+    _chek_site_file='/tmp/chekc_site.json'
     _check_database = '/www/server/panel/data/check_database.json'
     _check_site = '/www/server/panel/data/check_site_data.json'
     _chekc_path='/www/server/panel/data/check_path_data.json'
@@ -23,13 +24,30 @@ class backup_bak:
     _check_site_data=[]
     _check_path_data=[]
     _down_path_data=[]
-
+    #备份所有站点的进度
+    _check_all_site = '/www/server/panel/data/check_site_data_all.json'
+    _check_site_all_data=[]
+    #备份所有数据库的进度
+    _check_all_date = '/www/server/panel/data/check_date_data_all.json'
+    _check_date_all_data=[]
     def __init__(self):
+        if not os.path.exists(self._check_all_site):
+            ret = []
+            public.writeFile(self._check_all_site, json.dumps(ret))
+        else:
+            ret = public.ReadFile(self._check_all_site)
+            self._check_site_all_data = json.loads(ret)
+
+        if not os.path.exists(self._check_all_date):
+            ret = []
+            public.writeFile(self._check_all_date, json.dumps(ret))
+        else:
+            ret = public.ReadFile(self._check_all_date)
+            self._check_date_all_data = json.loads(ret)
         if not os.path.exists('/www/backup/site_backup'):
             os.system('mkdir /www/backup/site_backup -p')
         if not os.path.exists('/www/backup/database_backup'):
             os.system('mkdir /www/backup/database_backup')
-
         if not os.path.exists(self._check_database):
             ret = []
             public.writeFile(self._check_database, json.dumps(ret))
@@ -137,6 +155,8 @@ class backup_bak:
         if not public.M('databases').where("name=?",(get.name,)).count():return public.returnMsg(False,'数据库不存在')
         id=public.M('databases').where("name=?", (get.name,)).getField('id')
         if not id:return public.returnMsg(False,'数据库不存在')
+        if os.path.exists(self._chek_site_file):
+            return public.returnMsg(False, '这个时间段中存在有运行任务,建议更换计划任务的时间备份')
         os.system('python /www/server/panel/class/backup_bak.py database %s &'%id)
         return public.returnMsg(True,'OK')
 
@@ -145,6 +165,12 @@ class backup_bak:
         if not public.M('sites').where("name=?", (get.name,)).count(): return public.returnMsg(False, "网站不存在")
         id = public.M('sites').where('name=?',(get.name,)).getField('id')
         if not id:return public.returnMsg(False, "网站不存在")
+
+        #监测是否存在任务
+        if os.path.exists(self._chek_site_file):
+            return public.returnMsg(False, '这个时间段中存在有运行任务,建议更换计划任务的时间备份')
+
+
         os.system('python /www/server/panel/class/backup_bak.py sites %s &' % id)
         return public.returnMsg(True, 'OK')
 
@@ -195,7 +221,10 @@ class backup_bak:
         ret['path']=False
         ret['chekc'] = True
         self.set_database_data(ret)
+        if not os.path.exists(self._chek_site_file): os.system('touch %s' % self._chek_site_file)
         path=self.backup_database_data(id)
+        os.remove(self._chek_site_file)
+
         ret['status'] = True
         ret['path'] = path
         self.set_database_data(ret)
@@ -244,7 +273,9 @@ class backup_bak:
         ret['path']=False
         ret['chekc'] = True
         self.set_site_data(ret)
+        if not os.path.exists(self._chek_site_file): os.system('touch %s' % self._chek_site_file)
         path=self.backup_site_data(id)
+        os.remove(self._chek_site_file)
         ret['status'] = True
         ret['path'] = path
         self.set_site_data(ret)
@@ -331,7 +362,7 @@ class backup_bak:
         else:
             return public.returnMsg(False, 'False')
 
-###########文件下载
+    ###########文件下载
     # 判断是否在_check_database_data 中
     def check_down_data(self, data, ret):
         if len(data) == 0: return False
@@ -402,7 +433,79 @@ class backup_bak:
         else:
             return public.returnMsg(False, 'False')
 
+    # backup_database
+    def backup_site_all(self, get):
+        #监测是否存在任务
+        if os.path.exists(self._chek_site_file):
+            return public.returnMsg(False, '这个时间段中存在有运行任务,建议更换计划任务的时间备份')
 
+        os.system('python /www/server/panel/class/backup_bak.py sites_ALL 11 &')
+        return public.returnMsg(True, 'OK')
+
+    def set_backup_all(self):
+        data = public.M('sites').field('id,name,path,status,ps,addtime,edate').select()
+        site_list = []
+        #进度格式 总数量 当前数量  和返回的结果
+        jindu={}
+        jindu['start_count']=len(data)
+        jindu['end_count']=0
+        jindu['resulit']=site_list
+        public.writeFile(self._check_all_site, json.dumps(jindu))
+        if not os.path.exists(self._chek_site_file): os.system('touch %s' % self._chek_site_file)
+        for i in data:
+            path = self.backup_site_data(i['id'])
+            if path:
+                resulit = {}
+                resulit['id'] = i['id']
+                resulit['path'] = path
+                resulit['type'] = 'sites'
+                resulit['name']=i['name']
+                jindu['resulit'].append(resulit)
+            jindu['end_count'] +=1
+            print(jindu)
+            public.writeFile(self._check_all_site, json.dumps(jindu))
+        os.remove(self._chek_site_file)
+        return site_list
+
+    #查看网站备份进度
+    def get_all_site_progress(self,get):
+        return self._check_site_all_data
+
+    # backup_database
+    def backup_date_all(self, get):
+        if os.path.exists(self._chek_site_file):
+            return public.returnMsg(False, '这个时间段中存在有运行任务,建议更换计划任务的时间备份')
+        os.system('python /www/server/panel/class/backup_bak.py database_ALL 11 &')
+        return public.returnMsg(True, 'OK')
+
+    def backup_all_database(self):
+        data = public.M('databases').field('id,name,username,password,accept,ps,addtime').select()
+        site_list = []
+        #进度格式 总数量 当前数量  和返回的结果
+        jindu={}
+        jindu['start_count']=len(data)
+        jindu['end_count']=0
+        jindu['resulit']=site_list
+        public.writeFile(self._check_all_date, json.dumps(jindu))
+        if not os.path.exists(self._chek_site_file): os.system('touch %s' % self._chek_site_file)
+        for i in data:
+            path = self.backup_database_data(i['id'])
+            if path:
+                resulit = {}
+                resulit['id'] = i['id']
+                resulit['path'] = path
+                resulit['type'] = 'sites'
+                resulit['name'] = i['name']
+                jindu['resulit'].append(resulit)
+            jindu['end_count'] +=1
+            print(jindu)
+            public.writeFile(self._check_all_date, json.dumps(jindu))
+        os.remove(self._chek_site_file)
+        return site_list
+
+    #查看网站备份进度
+    def get_all_date_progress(self,get):
+        return self._check_date_all_data
 
 if __name__ == '__main__':
     p = backup_bak()
@@ -410,6 +513,10 @@ if __name__ == '__main__':
     type = sys.argv[2]
     if ret =='sites':
         p.backup_site2(type)
+    elif ret=='sites_ALL':
+        p.set_backup_all()
+    elif ret=='database_ALL':
+        p.backup_all_database()
     elif ret=='database':
         p.backup_database2(type)
     elif ret=='path':

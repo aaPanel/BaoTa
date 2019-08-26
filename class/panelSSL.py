@@ -129,6 +129,10 @@ class panelSSL:
         else:
             get.siteName = public.M('sites').where('id=?',(get.id,)).getField('name');
         
+        if get.domain[:4] == 'www.':
+            if not public.M('domain').where('name=?',(get.domain[4:],)).count():
+                return public.returnMsg(False,"申请[%s]证书需要验证[%s]请将[%s]绑定并解析到站点!" % (get.domain,get.domain[4:],get.domain[4:]))
+
         runPath = self.GetRunPath(get);
         if runPath != False and runPath != '/': get.path +=  runPath;
         authfile = get.path + '/.well-known/pki-validation/fileauth.txt';
@@ -184,7 +188,12 @@ class panelSSL:
             get.path = public.M('sites').where('name=?',(get.siteName,)).getField('path');
             runPath = self.GetRunPath(get);
             if runPath != False and runPath != '/': get.path +=  runPath;
-            sslInfo = json.loads(public.httpPost(self.__APIURL + '/SyncOrder',self.__PDATA));
+            tmp = public.httpPost(self.__APIURL + '/SyncOrder',self.__PDATA)
+            try:
+                sslInfo = json.loads(tmp);
+            except:
+                return public.returnMsg(False,tmp)
+
             sslInfo['data'] = self.En_Code(sslInfo['data']);
             try:
                 spath = get.path + '/.well-known/pki-validation';
@@ -355,7 +364,10 @@ class panelSSL:
             data['subject'] = tmp[0].split('=')[-1]
             data['notAfter'] = self.strfToTime(tmp[1].split('=')[1])
             data['notBefore'] = self.strfToTime(tmp[2].split('=')[1])
-            data['issuer'] = tmp[3].split('O=')[-1].split(',')[0]
+            if tmp[3].find('O=') == -1:
+                data['issuer'] = tmp[3].split('CN=')[-1]
+            else:
+                data['issuer'] = tmp[3].split('O=')[-1].split(',')[0]
             if data['issuer'].find('/') != -1: data['issuer'] = data['issuer'].split('/')[0];
             result = public.ExecShell(openssl + " x509 -in "+get.certPath+" -noout -text|grep DNS")
             data['dns'] = result[0].replace('DNS:','').replace(' ','').strip().split(',');

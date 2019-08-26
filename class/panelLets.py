@@ -6,7 +6,7 @@
 # +-------------------------------------------------------------------
 # | Author: 曹觉心 <314866873@qq.com>
 # +-------------------------------------------------------------------
-import os,sys,json,time
+import os,sys,json,time,re
 setup_path = '/www/server/panel'
 os.chdir(setup_path)
 sys.path.append("class/")
@@ -81,7 +81,6 @@ class panelLets:
 
     #格式化错误输出
     def get_error(self,error):
-
         if error.find("Max checks allowed") >= 0 :
             return "CA无法验证您的域名，请检查域名解析是否正确，或等待5-10分钟后重试."
         elif error.find("Max retries exceeded with") >= 0:
@@ -90,13 +89,33 @@ class panelLets:
             return "域名不属于此DNS服务商，请确保域名填写正确."
         elif error.find('login token ID is invalid') >=0:
             return 'DNS服务器连接失败，请检查密钥是否正确.'
-        elif "too many certificates already issued for exact set of domains" in error or "Error creating new account :: too many registrations for this IP" in error:
-            return '<h2>签发失败,您1小时内超过5次验证失败，请等待1小时再重试!</h2>'
-        elif "DNS problem: NXDOMAIN looking up A for" in error or "No valid IP addresses found for" in error or "Invalid response from" in error:
-            return '<h2>签发失败,域名解析错误，或解析未生效，或域名未备案!</h2>'
+        elif "too many certificates already issued for exact set of domains" in error:
+            return '签发失败,该域名%s超出了每周的重复签发次数限制!' % re.findall("exact set of domains: (.+):",error)
+        elif "Error creating new account :: too many registrations for this IP" in error:
+            return '签发失败,当前服务器IP已达到每3小时最多创建10个帐户的限制.'
+        elif "DNS problem: NXDOMAIN looking up A for" in error:
+            return '验证失败,没有解析域名,或解析未生效!'
+        elif "Invalid response from" in error:
+            return '验证失败,域名解析错误或验证URL无法被访问!'
         elif error.find('TLS Web Server Authentication') != -1:
             public.restart_panel()
             return "连接CA服务器失败，请稍候重试."
+        elif error.find('Name does not end in a public suffix') !=-1:
+            return "不支持的域名%s，请检查域名是否正确!" % re.findall("Cannot issue for \"(.+)\":",error)
+        elif error.find('No valid IP addresses found for') != -1:
+            return "域名%s没有找到解析记录，请检查域名是否解析生效!" % re.findall("No valid IP addresses found for (.+)",error)
+        elif error.find('No TXT record found at') != -1:
+            return "没有在域名%s中找到有效的TXT解析记录,请检查是否正确解析TXT记录,如果是DNSAPI方式申请的,请10分钟后重试!" % re.findall("No TXT record found at (.+)",error)
+        elif error.find('Incorrect TXT record') != -1:
+            return "在%s上发现错误的TXT记录:%s,请检查TXT解析是否正确,如果是DNSAPI方式申请的,请10分钟后重试!" % (re.findall("found at (.+)",error),re.findall("Incorrect TXT record \"(.+)\"",error))
+        elif error.find('Domain not under you or your user') != -1:
+            return "这个dnspod账户下面不存在这个域名，添加解析失败!"
+        elif error.find('SERVFAIL looking up TXT for') != -1:
+            return "没有在域名%s中找到有效的TXT解析记录,请检查是否正确解析TXT记录,如果是DNSAPI方式申请的,请10分钟后重试!" % re.findall("looking up TXT for (.+)",error)
+        elif error.find('Timeout during connect') != -1:
+            return "连接超时,CA服务器无法访问您的网站!"
+        elif error.find("DNS problem: SERVFAIL looking up CAA for") != -1:
+            return "域名%s当前被要求验证CAA记录，请手动解析CAA记录，或1小时后重新尝试申请!" % re.findall("looking up CAA for (.+)",error)
         else:
             return error;
 
@@ -328,7 +347,7 @@ class panelLets:
                         BTPanel.dns_client.respond_to_challenge(i["acme_keyauthorization"], i["dns_challenge_url"])
 
                 for i in responders:
-                    BTPanel.dns_client.check_authorization_status(i["authorization_url"], ["valid"])
+                    BTPanel.dns_client.check_authorization_status(i["authorization_url"], ["valid","invalid"])
 
                 certificate_url = BTPanel.dns_client.send_csr(finalize_url)
                 certificate = BTPanel.dns_client.download_certificate(certificate_url)
@@ -345,8 +364,13 @@ class panelLets:
                     result['msg'] = '证书获取失败，请稍后重试.'
 
         except Exception as e:
-            print(public.get_error_info())
-            result['msg'] =  self.get_error(str(e)) 
+            res = str(e).split('>>>>')
+            err = False
+            try:
+                err = json.loads(res[1])
+            except: err = False
+            result['msg'] =  [self.get_error(res[0]),err]
+
         return result
 
     #dns验证
@@ -375,26 +399,27 @@ class panelLets:
                     dns_name = identifier_auth["domain"]
                     dns_token = identifier_auth["dns_token"]
                     dns_challenge_url = identifier_auth["dns_challenge_url"]
-
                     acme_keyauthorization, domain_dns_value = client.get_keyauthorization(dns_token)
                     dns_class.create_dns_record(public.de_punycode(dns_name), domain_dns_value)
                     self.check_dns(self.get_acme_name(dns_name),domain_dns_value)
                     dns_names_to_delete.append({"dns_name": public.de_punycode(dns_name), "domain_dns_value": domain_dns_value})
                     responders.append({"authorization_url": authorization_url, "acme_keyauthorization": acme_keyauthorization,"dns_challenge_url": dns_challenge_url} )
-                n = 0
-                while n<2:
-                    print("第",n+1,"次验证")
-                    try:
-                        for i in responders:     
-                            auth_status_response = client.check_authorization_status(i["authorization_url"])
-                            r_data = auth_status_response.json()
-                            if r_data["status"] == "pending":
-                                client.respond_to_challenge(i["acme_keyauthorization"], i["dns_challenge_url"])
 
-                        for i in responders: client.check_authorization_status(i["authorization_url"], ["valid"])
-                        break
-                    except:
-                        n+=1
+                try:
+                    for i in responders:
+                        auth_status_response = client.check_authorization_status(i["authorization_url"])
+                        r_data = auth_status_response.json()
+                        if r_data["status"] == "pending":
+                            client.respond_to_challenge(i["acme_keyauthorization"], i["dns_challenge_url"])
+
+                    for i in responders: client.check_authorization_status(i["authorization_url"], ["valid","invalid"])
+                except:
+                    for i in responders:
+                        auth_status_response = client.check_authorization_status(i["authorization_url"])
+                        r_data = auth_status_response.json()
+                        if r_data["status"] == "pending":
+                            client.respond_to_challenge(i["acme_keyauthorization"], i["dns_challenge_url"])
+                    for i in responders: client.check_authorization_status(i["authorization_url"], ["valid","invalid"])
 
                 certificate_url = client.send_csr(finalize_url)
                 certificate = client.download_certificate(certificate_url)
@@ -407,7 +432,6 @@ class panelLets:
                     result['status'] = True
 
             except Exception as e:
-                print(public.get_error_info())
                 raise e
             finally:   
                 try:
@@ -415,9 +439,16 @@ class panelLets:
                 except :
                     pass
 
-        except Exception as err:  
-            print(public.get_error_info())
-            result['msg'] =  self.get_error(str(err)) 
+        except Exception as e:  
+            try:
+                for i in dns_names_to_delete: dns_class.delete_dns_record(i["dns_name"], i["domain_dns_value"])
+            except:pass
+            res = str(e).split('>>>>')
+            err = False
+            try:
+                err = json.loads(res[1])
+            except: err = False
+            result['msg'] =  [self.get_error(res[0]),err]
         return result
 
     #文件验证
@@ -466,19 +497,18 @@ class panelLets:
                         pass
                     n += 1;
                     time.sleep(1)
-                if is_check: 
-                    sucess_domains.append(http_name) 
-                    responders.append({"authorization_url": authorization_url, "acme_keyauthorization": acme_keyauthorization,"http_challenge_url": http_challenge_url})
+                sucess_domains.append(http_name) 
+                responders.append({"authorization_url": authorization_url, "acme_keyauthorization": acme_keyauthorization,"http_challenge_url": http_challenge_url})
 
             if len(sucess_domains) > 0: 
                 #验证
                 for i in responders:
-                    auth_status_response = client.check_authorization_status(i["authorization_url"])          
+                    auth_status_response = client.check_authorization_status(i["authorization_url"])
                     if auth_status_response.json()["status"] == "pending":
-                        client.respond_to_challenge(i["acme_keyauthorization"], i["http_challenge_url"])
+                        client.respond_to_challenge(i["acme_keyauthorization"], i["http_challenge_url"]).json()
 
                 for i in responders:
-                    client.check_authorization_status(i["authorization_url"], ["valid"])
+                    client.check_authorization_status(i["authorization_url"], ["valid","invalid"])
 
                 certificate_url = client.send_csr(finalize_url)
                 certificate = client.download_certificate(certificate_url)
@@ -495,7 +525,12 @@ class panelLets:
             else:
                 result['msg'] = "签发失败,我们无法验证您的域名:<p>1、检查域名是否绑定到对应站点</p><p>2、检查域名是否正确解析到本服务器,或解析还未完全生效</p><p>3、如果您的站点设置了反向代理,或使用了CDN,请先将其关闭</p><p>4、如果您的站点设置了301重定向,请先将其关闭</p><p>5、如果以上检查都确认没有问题，请尝试更换DNS服务商</p>'"
         except Exception as e:
-            result['msg'] =  self.get_error(str(e))
+            res = str(e).split('>>>>')
+            err = False
+            try:
+                err = json.loads(res[1])
+            except: err = False
+            result['msg'] =  [self.get_error(res[0]),err]
         return result
 
     

@@ -18,6 +18,7 @@ try:
 except:pass
 
 
+
 class Client(object):
     """
     todo: improve documentation.
@@ -402,7 +403,7 @@ class Client(object):
         client via the "errors" field in the challenge and the Retry-After
         """
         self.logger.info("check_authorization_status")
-        desired_status = desired_status or ["pending", "valid"]
+        desired_status = desired_status or ["pending", "valid","invalid"]
         number_of_checks = 0
         while True:
             headers = {"User-Agent": self.User_Agent}
@@ -410,7 +411,7 @@ class Client(object):
                 authorization_url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers,verify=False
             )
             a_auth = check_authorization_status_response.json()
-            print(a_auth)
+            print(type(a_auth),a_auth)
             authorization_status = a_auth["status"]
             number_of_checks = number_of_checks + 1
             self.logger.debug(
@@ -421,14 +422,35 @@ class Client(object):
             )
             if number_of_checks == self.ACME_AUTH_STATUS_MAX_CHECKS:
                 raise StopIteration(
-                    "Checks done={0}. Max checks allowed={1}. Interval between checks={2}seconds.".format(
+                    "Checks done={0}. Max checks allowed={1}. Interval between checks={2}seconds. >>>> {3}".format(
                         number_of_checks,
                         self.ACME_AUTH_STATUS_MAX_CHECKS,
                         self.ACME_AUTH_STATUS_WAIT_PERIOD,
+                        json.dumps(a_auth)
                     )
                 )
-
+            print(authorization_status,desired_status)
             if authorization_status in desired_status:
+                if authorization_status == "invalid":
+                    try:
+                        import panelLets
+                        if 'error' in a_auth['challenges'][0]:
+                            ret_title = a_auth['challenges'][0]['error']['detail']
+                        elif 'error' in a_auth['challenges'][1]:
+                            ret_title = a_auth['challenges'][1]['error']['detail']
+                        elif 'error' in a_auth['challenges'][2]:
+                            ret_title = a_auth['challenges'][2]['error']['detail']
+                        else:
+                            ret_title = str(a_auth)
+                        ret_title = panelLets.panelLets().get_error(ret_title)
+                    except:
+                        ret_title = str(a_auth)
+                    raise StopIteration(
+                        "{0} >>>> {1}".format(
+                            ret_title,
+                            json.dumps(a_auth)
+                        )
+                    )
                 break
             else:
                 # for any other status, sleep then retry

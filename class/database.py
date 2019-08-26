@@ -30,7 +30,7 @@ class database(datatool.datatools):
             if data_name in checks or len(data_name) < 1: return public.returnMsg(False,'数据库名称不合法!');
             data_pwd = get['password']
             if len(data_pwd)<1:
-                data_pwd = public.md5(time.time())[0:8]
+                data_pwd = public.md5(str(time.time()))[0:8]
             
             sql = public.M('databases')
             if sql.where("name=? or username=?",(data_name,username)).count(): return public.returnMsg(False,'DATABASE_NAME_EXISTS')
@@ -79,7 +79,7 @@ class database(datatool.datatools):
         mysql_obj.execute("grant all privileges on %s.* to `%s`@`localhost`" % (dbname,username))
         for a in address.split(','):
             mysql_obj.execute("CREATE USER `%s`@`%s` IDENTIFIED BY '%s'" % (username,a,password))
-            mysql_obj.execute("grant all privileges on %s.* to `%s`@`%s`" % (dbname,username,a))
+            mysql_obj.execute("grant all privileges on `%s`.* to `%s`@`%s`" % (dbname,username,a))
         mysql_obj.execute("flush privileges")
         
     #检查是否在回收站
@@ -299,6 +299,7 @@ SetLink
     def SetupPassword(self,get):
         password = get['password'].strip()
         try:
+            if not password: return public.returnMsg(False,'root密码不能为空')
             rep = "^[\w@\.]+$"
             if not re.match(rep, password): return public.returnMsg(False, 'DATABASE_NAME_ERR_T')
             mysql_root = public.M('config').where("id=?",(1,)).getField('mysql_root')
@@ -341,6 +342,7 @@ SetLink
             newpassword = get['password']
             username = get['name']
             id = get['id']
+            if not newpassword: return public.returnMsg(False,'数据库[%s]密码不能为空' % username)
             name = public.M('databases').where('id=?',(id,)).getField('name');
             
             rep = "^[\w@\.]+$"
@@ -374,7 +376,7 @@ SetLink
             return public.returnMsg(True,'DATABASE_PASS_SUCCESS',(name,))
         except Exception as ex:
             import traceback
-            public.WriteLog("TYPE_DATABASE", 'DATABASE_PASS_ERROR',(name,traceback.format_exc(limit=True).replace('\n','<br>')))
+            public.WriteLog("TYPE_DATABASE", 'DATABASE_PASS_ERROR',(username,traceback.format_exc(limit=True).replace('\n','<br>')))
             return public.returnMsg(False,'DATABASE_PASS_ERROR',(name,))    
     
     #备份
@@ -447,26 +449,24 @@ SetLink
             tmpFile = tmpFile.replace('.' + ext, '.sql')
             tmpFile = tmpFile.replace('tar.', '')
             backupPath = session['config']['backup_path'] + '/database'
-                
             if ext == 'zip':
-                public.ExecShell("cd "  +  backupPath  +  " && unzip " +  file)
+                public.ExecShell("cd "  +  backupPath  +  " && unzip " + '"'+file+'"')
             else:
-                public.ExecShell("cd "  +  backupPath  +  " && tar zxf " +  file)
+                public.ExecShell("cd "  +  backupPath  +  " && tar zxf " +  '"'+file+'"')
                 if not os.path.exists(backupPath  +  "/"  +  tmpFile): 
-                    public.ExecShell("cd "  +  backupPath  +  " && gunzip -q " +  file)
-                    isgizp = True
-                 
+                    public.ExecShell("cd "  +  backupPath  +  " && gunzip -q " +  '"'+file+'"')
+                    isgzip = True
             if not os.path.exists(backupPath + '/' + tmpFile) or tmpFile == '': return public.returnMsg(False, 'FILE_NOT_EXISTS',(tmpFile,))
             self.mypass(True, root);
-            os.system(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " + backupPath + '/' +tmpFile)
+            os.system(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " +'"'+ backupPath + '/' +tmpFile+'"')
             self.mypass(False, root);
-            if isgizp:
+            if isgzip:
                 os.system('cd ' +backupPath+ ' && gzip ' + file.split('/')[-1][:-3]);
             else:
                 os.system("rm -f " +  backupPath + '/' +tmpFile)
         else:
             self.mypass(True, root);
-            os.system(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " +  file)
+            os.system(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < "+'"' +  file+'"')
             self.mypass(False, root);
                 
             

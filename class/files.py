@@ -249,6 +249,7 @@ class files:
             data['FILES'] = filenames
 
         data['PATH'] = str(get.path)
+        data['STORE'] = self.get_files_store(None)
         if hasattr(get,'disk'):
             import system
             data['DISK'] = system.system().GetDiskInfo();
@@ -275,6 +276,20 @@ class files:
         
         for f in tmp_files: tmp_dirs.append(f)
         return tmp_dirs
+
+    def __save_list_history(self,path):
+        max_num = 20
+        path = path.strip()
+        save_path = '/www/server/panel/config/list_history.json'
+        if not os.path.exists(save_path): public.writeFile(save_path,'{}')
+        list_history = json.loads(public.readFile(save_path))
+        if path in list_history:
+            list_history[path] += 1
+        else:
+            list_history[path] = 1
+
+        #sorted(list_history,key=lambda x:x )
+
 
 
     def __format_stat(self,filename,path):
@@ -316,6 +331,7 @@ class files:
         data['FILES'] = sorted(my_files)
         data['PATH'] = str(get.path)
         data['PAGE'] = public.get_page(len(my_dirs) + len(my_files),1,max,'GetFiles')['page']
+        data['STORE'] = self.get_files_store(None)
         return data
 
 
@@ -773,18 +789,27 @@ class files:
         try:
             save_path = ('/www/backup/file_history/' + filename).replace('//','/')
             if not os.path.exists(save_path): os.makedirs(save_path,384)
-            public.writeFile(save_path + '/' + str(int(time.time())),public.readFile(filename,'rb'),'wb')
-            his_list = sorted(os.listdir(save_path))
+            
+            his_list = sorted(os.listdir(save_path),reverse=True)
             num =  public.readFile('data/history_num.pl')
             if not num: 
                 num = 10
             else:
                 num = int(num)
             d_num = len(his_list)
+            is_write = True
+            new_file_md5 = public.FileMd5(filename)
             for i in range(d_num):
-                if d_num <= num: break;
                 rm_file = save_path + '/' + his_list[i]
-                if os.path.exists(rm_file): os.remove(rm_file)
+                if i == 0: #判断是否和上一份副本相同
+                    old_file_md5 = public.FileMd5(rm_file)
+                    if old_file_md5 == new_file_md5: is_write = False
+
+                if i+1 >= num: #删除多余的副本
+                    if os.path.exists(rm_file): os.remove(rm_file)
+                    continue
+            #写入新的副本
+            if is_write: public.writeFile(save_path + '/' + str(int(time.time())),public.readFile(filename,'rb'),'wb')
         except:pass
 
     #取历史副本
@@ -1220,5 +1245,82 @@ cd %s
         os.system("pip install rarfile")
         #public.writeFile('data/restart.pl','True')
         return True
+    
+    def get_store_data(self):
+        data = {}
+        path = 'data/file_store.json'
+        try:
+            if os.path.exists(path):
+                data = json.loads(public.readFile(path))
+        except :
+            data = {}
+        if not data:
+            data['默认分类'] = []
+        return data
+
+    def set_store_data(self,data):
+        public.writeFile('data/file_store.json',json.dumps(data))
+        return True
+
+    #添加收藏夹分类
+    def add_files_store_types(self,get):
+        file_type = get.file_type
+        data = self.get_store_data()
+        if file_type in data:  return public.returnMsg(False,'请勿重复添加分类!') 
         
+        data[file_type] = []
+        self.set_store_data(data)
+        return public.returnMsg(True,'添加收藏夹分类成功!') 
+     
+    #删除收藏夹分类
+    def del_files_store_types(self,get):
+        file_type = get.file_type
+        if file_type == '默认分类': return public.returnMsg(False,'默认分类不可被删除!') 
+        data = self.get_store_data()
+        del data[file_type]
+        self.set_store_data(data)
+        return public.returnMsg(True,'删除[' + file_type + ']成功!') 
+
+    #获取收藏夹
+    def get_files_store(self,get):
+        data = self.get_store_data()
+        result = []
+        for key in data:
+            rlist = []
+            for path in data[key]:
+                info = { 'path': path,'name':os.path.basename(path)}
+
+                if os.path.isdir(path) :
+                    info['type'] = 'dir'
+                else:
+                    info['type'] = 'file'
+                rlist.append(info)
+            result.append({'name':key,'data':rlist})    
        
+        return result
+
+    #添加收藏夹
+    def add_files_store(self,get):
+        file_type = get.file_type
+        path = get.path
+        if not os.path.exists(path):  return public.returnMsg(False,'文件或目录不存在!') 
+            
+        data = self.get_store_data()
+        if path in data[file_type]:  return public.returnMsg(False,'请勿重复添加!') 
+        
+        data[file_type].append(path)
+        self.set_store_data(data)
+        return public.returnMsg(True,'添加成功!') 
+
+    #删除收藏夹
+    def del_files_store(self,get):
+        file_type = get.file_type
+        path = get.path
+
+        data = self.get_store_data()
+        if not file_type in data:  return public.returnMsg(False,'找不到此收藏夹分类!') 
+        data[file_type].remove(path)
+        if len(data[file_type]) <= 0: data[file_type] = []
+
+        self.set_store_data(data)
+        return public.returnMsg(True,'删除成功!') 
