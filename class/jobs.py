@@ -52,6 +52,7 @@ def control_init():
             if os.path.getsize(init_file) < 10:
                 os.system("chattr -i " + init_file)
                 os.system("\cp -arf %s %s" % (src_file,init_file))
+                os.system("chmod +x %s" % init_file)
     except:pass
     public.writeFile('/var/bt_setupPath.conf','/www')
     public.ExecShell(c)

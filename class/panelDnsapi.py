@@ -110,11 +110,11 @@ class AliyunDns(object):
         req = requests.get(url=self.url, params=paramsdata)
         if req.status_code != 200:
             if req.json()['Code'] == 'IncorrectDomainUser' or req.json()['Code'] == 'InvalidDomainName.NoExist':
-                raise ValueError(json.dumps({"data": "这个阿里云账户下面不存在这个域名，添加解析失败", "msg": req.json()}))
+                raise ValueError("这个阿里云账户下面不存在这个域名，添加解析失败")
             elif req.json()['Code'] == 'InvalidAccessKeyId.NotFound' or req.json()['Code'] == 'SignatureDoesNotMatch':
-                raise ValueError(json.dumps({"data": "API密钥错误，添加解析失败", "msg": req.json()}))
+                raise ValueError("API密钥错误，添加解析失败")
             else:
-                raise ValueError(json.dumps({"data": req.json()['Message'], "msg": req.json()}))
+                raise ValueError(req.json()['Message'])
         print("create_dns_record end")
 
     def query_recored_items(self, host, zone=None, tipe=None, page=1, psize=200):
@@ -165,7 +165,7 @@ class AliyunDns(object):
         paramsdata['Signature'] = Signature
         req = requests.get(url=self.url, params=paramsdata)
         if req.status_code != 200:
-            raise ValueError(json.dumps({"data": "删除解析记录失败", "msg": req.json()}))
+            raise ValueError("删除解析记录失败")
         print("delete_dns_record end: ", acme_txt)
 
 class CloudxnsDns(object):

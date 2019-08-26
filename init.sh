@@ -23,6 +23,8 @@ if [ -f $env_path ];then
 	source $env_path
 fi
 
+
+
 panel_start()
 {
         isStart=`ps aux|grep 'runserver:app'|grep -v grep|awk '{print $2}'`

@@ -57,7 +57,7 @@
     <li onclick="javascript:Batch(3);"><a style="cursor: pointer;">{{data['lan']['L4']}}</a></li>
     <li onclick="javascript:Batch(4);"><a style="cursor: pointer;">{{data['lan']['L5']}}</a></li>
 </ul>
-    <!--<link rel="stylesheet" href="./static/ace/font-awesome/css/font-awesome.min.css">-->
+<link rel="stylesheet" href="./static/ace/styles/icons.css">
 <script type="text/tmplate" id="aceTmplate">
     <div id="ace_conter">
         <div class="ace_header">
@@ -65,9 +65,9 @@
             <span class="saveFileAll"><i class="glyphicon glyphicon-duplicate" aria-hidden="true"></i>全部保存</span>
             <span class="refreshs"><i class="glyphicon glyphicon-refresh" aria-hidden="true"></i>刷新</span>
             <!-- <span class="searchs"><i class="fa fa-search" aria-hidden="true"></i>搜索</span>
-            <span class="replaces"><i class="fa fa-random" aria-hidden="true"></i>替换</span>
-            <span class="fontSize"><i class="fa fa-text-height" aria-hidden="true"></i>字体</span> -->
-            <!-- <span class="themes"><i class="fa fa-tachometer" aria-hidden="true"></i>主题</span> -->
+            <span class="replaces"><i class="fa fa-random" aria-hidden="true"></i>替换</span> -->
+            <span class="fontSize"><i class="glyphicon glyphicon-text-width" aria-hidden="true"></i>字体</span>
+            <span class="themes"><i class="glyphicon glyphicon-magnet" aria-hidden="true"></i>主题</span>
             <span class="helps"><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i>帮助</span>
             <div class="pull-down" title="隐藏工具条"><i class="glyphicon glyphicon-menu-down" aria-hidden="true"></i></div>
         </div>
@@ -148,8 +148,6 @@
                         <li data-value="4">4</li>
                         <li data-value="5">5</li>
                         <li data-value="6">6</li>
-                        <li data-value="7">7</li>
-                        <li data-value="8">8</li>
                     </ul>
                 </div>
                 <div class="menu-item menu-encoding" style="display: none;">
@@ -157,8 +155,25 @@
                     <ul></ul>
                 </div>
                 <div class="menu-item menu-files" style="display: none;">
-                    <div class="menu-conter"><input type="text" class="menu-input" placeholder="输入语言模式"><i class="fa fa-close" aria-hidden="true"></i></div>
+                    <div class="menu-conter">
+                    	<input type="text" class="menu-input" placeholder="输入语言模式">
+                    	<i class="fa fa-close" aria-hidden="true"></i>
+                    </div>
                     <div class="menu-title">设置文件语言关联</div>
+                    <ul></ul>
+                </div>
+                <div class="menu-item menu-fontSize" style="display: none;">
+                    <div class="menu-title">设置编辑器字体大小</div>
+                    <div class="menu-conter">
+                        <div class="set_font_size">
+                            <input type="number" min="12" max="45"/>
+                            <span class="tips error">字体设置范围 12-45</span>
+                            <button class="btn-save">保存</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-item menu-themes" style="display: none;">
+                    <div class="menu-title">设置编辑器主题</div>
                     <ul></ul>
                 </div>
             </div>
@@ -169,13 +184,13 @@
 <script src="/static/js/jquery.contextify.min.js"></script>
 <script src="/static/js/files.js?date={{g.version}}"></script>
 <script src="/static/js/upload.js?date={{g.version}}"></script>
-<script type="text/javascript" src="./static/ace/ace.js"></script>
-<script type="text/javascript" src="./static/ace/ext-language_tools.js"></script>
+<script type="text/javascript" src="./static/ace/ace.js?date=2"></script>
+<script type="text/javascript" src="./static/ace/ext-language_tools.js?date=2"></script>
 <script type="text/javascript">
 	setTimeout(function(){
-	GetDisk();
-},500);
-var xPath = getCookie('Path');
+		GetDisk();
+	},500);
+	var xPath = getCookie('Path');
 	setTimeout(function(){
 		GetFiles((xPath!=undefined?xPath:'/www/wwwroot'));
 	},800);

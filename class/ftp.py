@@ -18,6 +18,7 @@ class ftp:
     #添加FTP
     def AddUser(self,get):
         try:
+            if not os.path.exists('/www/server/pure-ftpd/sbin/pure-ftpd'): return public.returnMsg(False,'请先到软件商店安装Pure-FTPd服务')
             import files,time
             fileObj=files.files()
             if re.search("\W + ",get['ftp_username']): return {'status':False,'code':501,'msg':public.getMsg('FTP_USERNAME_ERR_T')}

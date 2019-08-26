@@ -130,8 +130,11 @@ class panelPlugin:
         if 'version' in get:
             for versionInfo in pluginInfo['versions']:
                 if versionInfo['m_version'] != get.version: continue
-                if not self.check_cpu_limit(versionInfo['cpu_limit']): return public.returnMsg(False,'至少需要[%d]个CPU核心才能安装' % versionInfo['cpu_limit'])
-                if not self.check_mem_limit(versionInfo['mem_limit']): return public.returnMsg(False,'至少需要[%dMB]内存才能安装' % versionInfo['mem_limit'])
+                if not 'type' in get: get.type = '0'
+                if int(get.type) > 3: get.type = '0'
+                if get.type == '0':
+                    if not self.check_cpu_limit(versionInfo['cpu_limit']): return public.returnMsg(False,'至少需要[%d]个CPU核心才能安装' % versionInfo['cpu_limit'])
+                    if not self.check_mem_limit(versionInfo['mem_limit']): return public.returnMsg(False,'至少需要[%dMB]内存才能安装' % versionInfo['mem_limit'])
                 if not self.check_os_limit(versionInfo['os_limit']): 
                     m_ps = {0:"所有的",1:"Centos",2:"Ubuntu/Debian"}
                     return public.returnMsg(False,'仅支持[%s]系统' % m_ps[int(versionInfo['os_limit'])])
@@ -257,6 +260,7 @@ class panelPlugin:
         if not softList or focre > 0:
             self.clean_panel_log()
             cloudUrl = public.GetConfigValue('home') + '/api/panel/get_soft_list_test'
+            print(cloudUrl)
             import panelAuth
             pdata = panelAuth.panelAuth().create_serverid(None)
             listTmp = public.httpPost(cloudUrl,pdata,10)

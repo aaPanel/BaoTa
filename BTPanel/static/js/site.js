@@ -109,6 +109,15 @@ var site = {
         }
         
     },
+    html_encode: function (html) {
+        var temp = document.createElement("div");
+        //2.然后将要转换的字符串设置为这个元素的innerText(ie支持)或者textContent(火狐，google支持)
+        (temp.textContent != undefined) ? (temp.textContent = html) : (temp.innerText = html);
+        //3.最后返回这个元素的innerHTML，即得到经过HTML编码转换的字符串了
+        var output = temp.innerHTML;
+        temp = null;
+        return output;
+    },
     get_types: function (callback) {
         bt.site.get_type(function (rdata) {
             var optionList = '';
@@ -1201,6 +1210,9 @@ var site = {
                                                 '有效期1年，不支持续签，到期后需要重新申请',
                                                 '建议使用二级域名为www的域名申请证书,此时系统会默认赠送顶级域名为可选名称',
                                                 '在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点',
+                                                '<a style="color:red;">如果重新申请证书时提示【订单已存在】请登录宝塔官网删除对应SSL订单</a>',
+                                                '<a style="color:red;">如果您的站点有使用CDN、高防IP、反向代理、301重定向等功能，可能导致验证失败</a>',
+                                                '<a style="color:red;">申请www.bt.cn这种以www为二级域名的证书，需绑定并解析顶级域名(bt.cn)，否则将验证失败</a>',
                                             ]
                                             robj.append(bt.render_help(helps));
                                         })
@@ -1287,6 +1299,7 @@ var site = {
                                     '有效期1年，不支持续签，到期后需要重新申请',
                                     '建议使用二级域名为www的域名申请证书,此时系统会默认赠送顶级域名为可选名称',
                                     '在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点',
+                                    '如果重新申请证书时提示【订单已存在】请登录宝塔官网删除对应SSL订单',
                                 ]
                                 robj.append(bt.render_help(['已为您自动生成Let\'s Encrypt免费证书；', '如需使用其他SSL,请切换其他证书后粘贴您的KEY以及PEM内容，然后保存即可。']));
                                 return;
@@ -1454,6 +1467,26 @@ var site = {
                                             site.create_let(ddata, function (res) {
                                                 if (res.status === true) {
                                                     site.reload();
+                                                } else {
+                                                    var area_size = '500px';
+                                                    console.log(res.msg[1])
+                                                    var err_info = "";
+                                                    if (res.msg[1].status === 'invalid') {
+                                                        area_size = '600px';
+                                                        var check_url = "http://" + res.msg[1].identifier.value + '/.well-known/acme-challenge/' + res.msg[1].challenges[0].token
+                                                        err_info += "<p><span>验证域名:</span>" + res.msg[1].identifier.value + "</p>"
+                                                        err_info += "<p><span>验证URL:</span><a class='btlink' href='" + check_url+"' target='_blank'>点击查看</a></p>"
+                                                        err_info += "<p><span>验证内容:</span>" + res.msg[1].challenges[0].token + "</p>"
+                                                        err_info += "<p><span>验证结果:</span> <a style='color:red;'>验证失败</a></p>"
+                                                        err_info += "<p><span>错误代码:</span>" + site.html_encode(res.msg[1].challenges[0].error.detail) + "</p>"
+                                                    }
+                                                    
+                                                    layer.msg('<div class="ssl-file-error"><a style="color: red;font-weight: 900;">' + res.msg[0]+ '</a>' + err_info + '</div>', {
+                                                        icon: 2, time: 0,
+                                                        shade:0.3,
+                                                        shadeClose: true,
+                                                        area: area_size
+                                                    });
                                                 }
 
                                             });
@@ -1505,14 +1538,67 @@ var site = {
                                                                 if (ldata.status) {
                                                                     b_load.close();
                                                                     site.ssl.reload(1);
+                                                                } else {
+                                                                    var area_size = '500px';
+                                                                    var err_info = "";
+
+                                                                    if (ldata.msg[1].status === 'invalid') {
+                                                                        area_size = '600px';
+                                                                        var trs = $("#dns_txt_jx tbody tr");
+                                                                        var dns_value = "";
+                                                                        for (var imd = 0; imd < trs.length; imd++) {
+                                                                            if (trs[imd].outerText.indexOf(ldata.msg[1].identifier.value) == -1) continue;
+                                                                            var s_tmp = trs[imd].outerText.split("\t")
+                                                                            if (s_tmp.length > 1) {
+                                                                                dns_value = s_tmp[1]
+                                                                                break;
+                                                                            }
+                                                                        }
+                                                                        var check_url = "_acme-challenge." + ldata.msg[1].identifier.value
+                                                                        err_info += "<p><span>验证域名:</span>" + ldata.msg[1].identifier.value + "</p>"
+                                                                        err_info += "<p><span>验证解析:</span>"+check_url+"</p>"
+                                                                        err_info += "<p><span>验证内容:</span>" + dns_value + "</p>"
+                                                                        err_info += "<p><span>验证结果:</span> <a style='color:red;'>验证失败</a></p>"
+                                                                        err_info += "<p><span>错误代码:</span>" + site.html_encode(ldata.msg[1].challenges[1].error.detail) + "</p>"
+                                                                    }
+
+                                                                    layer.msg('<div class="ssl-file-error"><a style="color: red;font-weight: 900;">' + ldata.msg[0] + '</a>' + err_info + '</div>', {
+                                                                        icon: 2, time: 0,
+                                                                        shade: 0.3,
+                                                                        shadeClose: true,
+                                                                        area: area_size
+                                                                    });
                                                                 }
                                                             });
                                                         })
                                                     }, 100)
                                                 }
                                                 else {
-                                                    site.reload();
-                                                    bt.msg(ret);
+                                                    if (ret.status) {
+                                                        site.reload();
+                                                        bt.msg(ret);
+                                                    } else {
+                                                        var area_size = '500px';
+                                                        var err_info = "";
+
+                                                        if (ret.msg[1].status === 'invalid') {
+                                                            area_size = '600px';
+                                                            var check_url = "_acme-challenge." + ret.msg[1].identifier.value
+                                                            err_info += "<p><span>验证域名:</span>" + ret.msg[1].identifier.value + "</p>"
+                                                            err_info += "<p><span>验证解析:</span>" + check_url + "</p>"
+                                                            err_info += "<p><span>验证结果:</span> <a style='color:red;'>验证失败</a></p>"
+                                                            err_info += "<p><span>错误代码:</span>" + site.html_encode(ret.msg[1].challenges[1].error.detail) + "</p>"
+                                                        }
+
+                                                        layer.msg('<div class="ssl-file-error"><a style="color: red;font-weight: 900;">' + ret.msg[0] + '</a>' + err_info + '</div>', {
+                                                            icon: 2, time: 0,
+                                                            shade: 0.3,
+                                                            shadeClose: true,
+                                                            area: area_size
+                                                        });
+                                                    }
+
+                                                    
                                                 }
                                             })
                                         }
@@ -2383,7 +2469,16 @@ var site = {
                     return;
                 }
             } else {
+                if (ret.msg) {
+                    if (typeof (ret.msg) == 'string') {
+                        ret.msg = [ret.msg, ""];
+                    }
+                }
                 if (!ret.out) {
+                    if (callback) {
+                        callback(ret);
+                        return;
+                    }
                     bt.msg(ret);
                     return;
                 }

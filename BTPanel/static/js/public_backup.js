@@ -779,7 +779,7 @@ var bt =
 	render_form:function(data,callback){
 			if(data){		
 			var bs = '_' + bt.get_random(6);
-			var _form = $("<div data-id='form"+bs+"' class='bt-form bt-form pd20 pb70'></div>");			
+			var _form = $("<div data-id='form"+bs+"' class='bt-form bt-form pd20 pb70 "+ (data.class?data.class:'')  +"'></div>");
 			var _lines = data.list; 
 			var clicks = [];
 			for (var i = 0; i < _lines.length; i++)
@@ -3769,9 +3769,9 @@ bt.soft = {
 				if(pluginName) qlen = qlen-1;
 				//折扣列表
 				for(var i=0;i<qlen;i++){
-					var j = qarr[i];
-					var a = rdata[j].price;
-					var b = rdata[j].sprice;
+                    var j = qarr[i];
+                    var a = rdata[j].price.toFixed(2);
+                    var b = rdata[j].sprice.toFixed(2);
 					var c = rdata[j].discount;
 					coucon +='<li class="pay-cycle-btn" onclick="bt.soft.get_rscode('+pid+','+a+','+b+','+j+')"><span>'+bt.soft.pro.conver_unit(j)+'</span>'+(c==1?"":'<em>'+c*10+'折</em>')+'</li>';
 				}

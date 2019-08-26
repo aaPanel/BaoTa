@@ -250,6 +250,7 @@ def FtpPort():
 
 @app.route('/database',methods=method_all)
 def database(pdata = None):
+    import ajax
     comReturn = comm.local()
     if comReturn: return comReturn
     if request.method == method_get[0] and not pdata:
@@ -257,6 +258,7 @@ def database(pdata = None):
         session['phpmyadminDir'] = False
         if pmd: 
             session['phpmyadminDir'] = 'http://' + public.GetHost() + ':'+ pmd[1] + '/' + pmd[0];
+        ajax.ajax().set_phpmyadmin_session()
         data = {}
         data['isSetup'] = os.path.exists(public.GetConfigValue('setup_path') + '/mysql/bin');
         data['mysql_root'] = public.M('config').where('id=?',(1,)).getField('mysql_root');
@@ -353,6 +355,15 @@ def san_baseline(pdata=None):
     defs = ('start', 'get_api_log', 'get_resut', 'get_ssh_errorlogin','repair','repair_all')
     return publicObject(dataObject, defs, None, pdata)
 
+@app.route('/password', methods=method_all)
+def panel_password(pdata=None):
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    import password
+    dataObject = password.password()
+    defs = ('set_root_password', 'get_mysql_root', 'set_mysql_password', 'set_panel_password', 'SetPassword', 'SetSshKey','StopKey','GetConfig','StopPassword','GetKey','get_databses','rem_mysql_pass','set_mysql_access',"get_panel_username")
+    return publicObject(dataObject, defs, None, pdata)
+
 
 @app.route('/bak', methods=method_all)
 def backup_bak(pdata=None):
@@ -363,7 +374,6 @@ def backup_bak(pdata=None):
     defs = ('get_sites', 'get_databases', 'backup_database', 'backup_site', 'backup_path', 'get_database_progress',
             'get_site_progress', 'down','get_down_progress','download_path','backup_site_all','get_all_site_progress','backup_date_all','get_all_date_progress')
     return publicObject(dataObject, defs, None, pdata)
-
 
 
 @app.route('/abnormal', methods=method_all)
@@ -388,7 +398,7 @@ def files(pdata = None):
     defs = ('CheckExistsFiles','GetExecLog','GetSearch','ExecShell','GetExecShellMsg','UploadFile','GetDir','CreateFile','CreateDir','DeleteDir','DeleteFile',
             'CopyFile','CopyDir','MvFile','GetFileBody','SaveFileBody','Zip','UnZip','SearchFiles','upload','read_history',
             'GetFileAccess','SetFileAccess','GetDirSize','SetBatchData','BatchPaste','install_rar','get_path_size',
-            'DownloadFile','GetTaskSpeed','CloseLogs','InstallSoft','UninstallSoft','SaveTmpFile','GetTmpFile',
+            'DownloadFile','GetTaskSpeed','CloseLogs','InstallSoft','UninstallSoft','SaveTmpFile','GetTmpFile','del_files_store','add_files_store','get_files_store','del_files_store_types','add_files_store_types'
             'RemoveTask','ActionTask','Re_Recycle_bin','Get_Recycle_bin','Del_Recycle_bin','Close_Recycle_bin','Recycle_bin')
     return publicObject(filesObject,defs,None,pdata);
 
@@ -458,7 +468,7 @@ def ajax(pdata = None):
     if comReturn: return comReturn
     import ajax
     ajaxObject = ajax.ajax()
-    defs = ('check_user_auth','to_not_beta','get_beta_logs','apple_beta','GetApacheStatus','GetCloudHtml','get_load_average','GetOpeLogs','GetFpmLogs','GetFpmSlowLogs','SetMemcachedCache','GetMemcachedStatus','GetRedisStatus','GetWarning','SetWarning','CheckLogin','GetSpeed','GetAd','phpSort','ToPunycode','GetBetaStatus','SetBeta','setPHPMyAdmin','delClose','KillProcess','GetPHPInfo','GetQiniuFileList','UninstallLib','InstallLib','SetQiniuAS','GetQiniuAS','GetLibList','GetProcessList','GetNetWorkList','GetNginxStatus','GetPHPStatus','GetTaskCount','GetSoftList','GetNetWorkIo','GetDiskIo','GetCpuIo','CheckInstalled','UpdatePanel','GetInstalled','GetPHPConfig','SetPHPConfig')
+    defs = ('change_phpmyadmin_ssl_port','set_phpmyadmin_ssl','get_phpmyadmin_ssl','check_user_auth','to_not_beta','get_beta_logs','apple_beta','GetApacheStatus','GetCloudHtml','get_load_average','GetOpeLogs','GetFpmLogs','GetFpmSlowLogs','SetMemcachedCache','GetMemcachedStatus','GetRedisStatus','GetWarning','SetWarning','CheckLogin','GetSpeed','GetAd','phpSort','ToPunycode','GetBetaStatus','SetBeta','setPHPMyAdmin','delClose','KillProcess','GetPHPInfo','GetQiniuFileList','UninstallLib','InstallLib','SetQiniuAS','GetQiniuAS','GetLibList','GetProcessList','GetNetWorkList','GetNginxStatus','GetPHPStatus','GetTaskCount','GetSoftList','GetNetWorkIo','GetDiskIo','GetCpuIo','CheckInstalled','UpdatePanel','GetInstalled','GetPHPConfig','SetPHPConfig')
     return publicObject(ajaxObject,defs,None,pdata);
 
 @app.route('/system',methods=method_all)

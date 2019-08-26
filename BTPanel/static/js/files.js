@@ -556,13 +556,42 @@ function GetFiles(Path,sort) {
 		}
 		setCookie('Path',rdata.PATH);
 		BarTools += ' <button onclick="javascript:GetFiles(\'' + rdata.PATH + '\');" class="btn btn-default btn-sm glyphicon glyphicon-refresh" title="'+lan.public.fresh+'"></button> <button onclick="web_shell()" title="'+lan.files.shell+'" type="button" class="btn btn-default btn-sm"><em class="ico-cmd"></em></button>';
-		var copyName = getCookie('copyFileName');
-		var cutName = getCookie('cutFileName');
-		var isPaste = (copyName == 'null') ? cutName : copyName;
-		if (isPaste != 'null' && isPaste != undefined) {
-			BarTools += ' <button onclick="javascript:PasteFile(\'' + (GetFileName(isPaste)) + '\');" class="btn btn-Warning btn-sm">'+lan.files.paste+'</button>';
-		}
 		
+
+        //收藏夹
+        var shtml = '<div class="btn-group">\
+						<button style="margin-left: 5px;" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">收藏夹 <span class="caret"></span>\
+						</button>\
+						<ul class="dropdown-menu">'
+
+        for (var i = 0; i < rdata.STORE.length; i++) {
+            shtml += '<li class="file-types"><div style=" padding: 3px 0;"><span class="ico ico-folder"></span><a href="javascript:;">' + rdata.STORE[i].name + '</a><span class="glyphicon glyphicon-triangle-right file-type-span" aria-hidden="true"></span></div><ul data-file-type="' + rdata.STORE[i].name + '" class="dropdown-menu-li">'
+            if (rdata.STORE[i].data.length > 0) {
+                for (var j = 0; j < rdata.STORE[i].data.length; j++) {
+                    if (rdata.STORE[i].data[j].type == "dir") {
+                        shtml += '<li title="' + rdata.STORE[i].data[j].path + '" class = "file-type-li"><div style=" padding: 3px 0;"><span class="ico ico-folder"></span><a  href="javascript:;" onclick="GetFiles(\'' + rdata.STORE[i].data[j].path + '\');">' + rdata.STORE[i].data[j].path + '</a></div></li>';
+                    }
+                    else {
+                        shtml += '<li title="' + rdata.STORE[i].data[j].path + '" class = "file-type-li"><div  style=" padding: 3px 0;"><span class="ico ico-file"></span><a href="javascript:;" onclick="openEditorView(0,\'' + rdata.STORE[i].data[j].path + '\')" >' + rdata.STORE[i].data[j].path + '</a></div></li>';
+                    }
+                }
+            }
+            else {
+                shtml += '<li><a style="padding-left: 15px;" href="javascript:;">暂无数据</a></li>';
+            }
+            shtml += '</ul>';
+        }
+        shtml += '<li style="text-align: center;"><a href="javascript: ;" onclick="set_file_store(\'' + rdata.path + '\')">+ 管理</a></li></ul></div>'
+
+        BarTools += shtml;
+
+        var copyName = getCookie('copyFileName');
+        var cutName = getCookie('cutFileName');
+        var isPaste = (copyName == 'null') ? cutName : copyName;
+        if (isPaste != 'null' && isPaste != undefined) {
+            BarTools += ' <button onclick="javascript:PasteFile(\'' + (GetFileName(isPaste)) + '\');" class="btn btn-Warning btn-sm">' + lan.files.paste + '</button>';
+        }
+
 		$("#Batch").html('');
 		var BatchTools = '';
 		var isBatch = getCookie('BatchSelected');
@@ -584,7 +613,19 @@ function GetFiles(Path,sort) {
 				$(this).parents("tr").removeClass("ui-selected");
 			}
 			showSeclect()
-		});
+        });
+
+        // 鼠标移入移出事件
+        $('.file-types').hover(function () {
+            // 鼠标移入时添加hover类            
+            $('.dropdown-menu-li').hide();
+            $(this).find('.dropdown-menu-li').show();
+
+        }, function () {
+            $('.dropdown-menu-li').hide();
+            // 鼠标移出时移出hover类
+
+        });
 
 		$("#setBox").click(function() {
 			if ($(this).prop("checked")) {
@@ -624,7 +665,7 @@ function GetFiles(Path,sort) {
 			if(e.which == 3) {
 				if(count <= 1){
 					var a = $(this);
-					a.contextify(RClick(a.attr("filetype"),a.attr("data-path"),a.find("input").val()));
+					a.contextify(RClick(a.attr("filetype"),a.attr("data-path"),a.find("input").val(),rdata));
 				}
 				else{
 					RClickAll(e);
@@ -884,15 +925,10 @@ function BackDir() {
 function CreateFile(type, path) {
 	if (type == 1) {
 		var fileName = $("#newFileName").val();
-		layer.msg(lan.public.the, {
-			icon: 16,
-			time: 10000
-		});
+		layer.msg(lan.public.the, { icon: 16, time: 10000 });
 		$.post('/files?action=CreateFile', 'path=' + encodeURIComponent(path + '/' + fileName), function(rdata) {
-			layer.closeAll();
-			layer.msg(rdata.msg, {
-				icon: rdata.status ? 1 : 2
-			});
+			layer.close(getCookie('layers'));
+			layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2});
 			if(rdata.status){
 				GetFiles($("#DirPathPlace input").val());
 				openEditorView(0,path + '/' + fileName);
@@ -900,7 +936,7 @@ function CreateFile(type, path) {
 		});
 		return;
 	}
-	layer.open({
+	var layers = layer.open({
 		type: 1,
 		shift: 5,
 		closeBtn: 2,
@@ -911,11 +947,17 @@ function CreateFile(type, path) {
 					<input type="text" class="bt-input-text" name="Name" id="newFileName" value="" placeholder="'+lan.files.file_name+'" style="width:100%" />\
 					</div>\
 					<div class="bt-form-submit-btn">\
-					<button type="button" class="btn btn-danger btn-sm" onclick="layer.closeAll()">'+lan.public.close+'</button>\
+					<button type="button" class="btn btn-danger btn-sm layer_close">'+lan.public.close+'</button>\
 					<button id="CreateFileBtn" type="button" class="btn btn-success btn-sm" onclick="CreateFile(1,\'' + path + '\')">'+lan.files.new+'</button>\
 					</div>\
-				</div>'
+				</div>',
+		success:function(layers,index){
+			$('.layer_close').click(function(){
+				layer.close(index);
+			});
+		}
 	});
+	setCookie('layers',layers);
 	$("#newFileName").focus().keyup(function(e){
 		if(e.keyCode == 13) $("#CreateFileBtn").click();
 	});
@@ -928,15 +970,13 @@ function CreateDir(type, path) {
 			time: 10000
 		});
 		$.post('/files?action=CreateDir', 'path=' + encodeURIComponent(path + '/' + dirName), function(rdata) {
-			layer.closeAll();
-			layer.msg(rdata.msg, {
-				icon: rdata.status ? 1 : 2
-			});
+			layer.close(getCookie('layers'));
+			layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
 			GetFiles($("#DirPathPlace input").val());
 		});
 		return;
 	}
-	layer.open({
+	var layers = layer.open({
 		type: 1,
 		shift: 5,
 		closeBtn: 2,
@@ -947,45 +987,48 @@ function CreateDir(type, path) {
 					<input type="text" class="bt-input-text" name="Name" id="newDirName" value="" placeholder="'+lan.files.dir_name+'" style="width:100%" />\
 					</div>\
 					<div class="bt-form-submit-btn">\
-					<button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">'+lan.public.close+'</button>\
+					<button type="button" class="btn btn-danger btn-sm btn-title layer_close">'+lan.public.close+'</button>\
 					<button type="button" id="CreateDirBtn" class="btn btn-success btn-sm btn-title" onclick="CreateDir(1,\'' + path + '\')">'+lan.files.new+'</button>\
 					</div>\
-				</div>'
+				</div>',
+		success:function(layers,index){
+			$('.layer_close').click(function(){
+				layer.close(index);
+			});
+		}
 	});
+	setCookie('layers',layers);
 	$("#newDirName").focus().keyup(function(e){
 		if(e.keyCode == 13) $("#CreateDirBtn").click();
 	});
 }
+// 删除文件
 function DeleteFile(fileName){
-	layer.confirm(lan.get('recycle_bin_confirm',[fileName]),{title:lan.files.del_file,closeBtn:2,icon:3},function(){
+	layer.confirm(lan.get('recycle_bin_confirm',[fileName]),{title:lan.files.del_file,closeBtn:2,icon:3},function(index){
 		layer.msg(lan.public.the,{icon:16,time:0,shade: [0.3, '#000']});
 		$.post('/files?action=DeleteFile', 'path=' + encodeURIComponent(fileName), function(rdata) {
-			layer.closeAll();
-			layer.msg(rdata.msg, {
-				icon: rdata.status ? 1 : 2
-			});
+			layer.close(index);
+			layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
 			GetFiles($("#DirPathPlace input").val());
 		});
 	});
 }
 function DeleteDir(dirName){
-	layer.confirm(lan.get('recycle_bin_confirm_dir',[dirName]),{title:lan.files.del_dir,closeBtn:2,icon:3},function(){
+	layer.confirm(lan.get('recycle_bin_confirm_dir',[dirName]),{title:lan.files.del_dir,closeBtn:2,icon:3},function(index){
 		layer.msg(lan.public.the,{icon:16,time:0,shade: [0.3, '#000']});
 		$.post('/files?action=DeleteDir', 'path=' + encodeURIComponent(dirName), function(rdata) {
-			layer.closeAll();
-			layer.msg(rdata.msg, {
-				icon: rdata.status ? 1 : 2
-			});
+			layer.close(index);
+			layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
 			GetFiles($("#DirPathPlace input").val());
 		});
 	});
 }
 function AllDeleteFileSub(data,path){
-	layer.confirm(lan.files.del_all_msg,{title:lan.files.del_all_file,closeBtn:2,icon:3},function(){
+	layer.confirm(lan.files.del_all_msg,{title:lan.files.del_all_file,closeBtn:2,icon:3},function(index){
 		layer.msg("<div class='myspeed'>"+lan.public.the+"</div>",{icon:16,time:0,shade: [0.3, '#000']});
 		setTimeout(function(){getSpeed('.myspeed');},1000);
 		$.post('files?action=SetBatchData',data,function(rdata){
-			layer.closeAll();
+			layer.close(index);
 			GetFiles(path);
 			layer.msg(rdata.msg,{icon:1});
 		});
@@ -998,7 +1041,6 @@ function ReloadFiles(){
 	},3000);
 }
 function DownloadFile(action){
-	
 	if(action == 1){
 		var fUrl = $("#mUrl").val();
 		fUrl = encodeURIComponent(fUrl);
@@ -1014,19 +1056,18 @@ function DownloadFile(action){
                 return;
             }
         }
-		layer.closeAll();
+		layer.close(getCookie('layers'))
 		layer.msg(lan.files.down_task,{time:0,icon:16,shade: [0.3, '#000']});
 		$.post('/files?action=DownloadFile','path='+fpath+'&url='+fUrl+'&filename='+fname,function(rdata){
-			layer.closeAll();
+			layer.msg(rdata.msg,{icon:rdata.status?1:2});
 			GetFiles(fpath);
             GetTaskCount();
             task_stat();
-			layer.msg(rdata.msg,{icon:rdata.status?1:2});
 		});
 		return;
 	}
 	var path = $("#DirPathPlace input").val();
-	layer.open({
+	var layers = layer.open({
 		type: 1,
 		shift: 5,
 		closeBtn: 2,
@@ -1043,11 +1084,17 @@ function DownloadFile(action){
 					<span class="tname">'+lan.files.file_name+':</span><input type="text" class="bt-input-text" name="filename" id="dfilename" value="" placeholder="'+lan.files.down_save+'" style="width:330px" />\
 					</div>\
 					<div class="bt-form-submit-btn">\
-					<button type="button" class="btn btn-danger btn-sm" onclick="layer.closeAll()">'+lan.public.close+'</button>\
+					<button type="button" class="btn btn-danger btn-sm layer_close">'+lan.public.close+'</button>\
 					<button type="button" id="dlok" class="btn btn-success btn-sm dlok" onclick="DownloadFile(1)">'+lan.public.ok+'</button>\
 					</div>\
-				</form>'
+				</form>',
+		success:function(layers,index){
+			$('.layer_close').click(function(){
+				layer.close(index)
+			});
+		}
 	});
+	setCookie('layers',layers);
     //fly("dlok");
     $("#mUrl").change(function () {
 		durl = $(this).val()
@@ -1112,35 +1159,36 @@ function ReName(type, fileName) {
 		var path = $("#DirPathPlace input").val();
 		var newFileName = encodeURIComponent(path + '/' + $("#newFileName").val());
 		var oldFileName = encodeURIComponent(path + '/' + fileName);
-		layer.msg(lan.public.the, {
-			icon: 16,
-			time: 10000
-		});
+		layer.msg(lan.public.the, {icon: 16,time: 10000});
 		$.post('/files?action=MvFile', 'sfile=' + oldFileName + '&dfile=' + newFileName + '&rename=true', function(rdata) {
-			layer.closeAll();
-			layer.msg(rdata.msg, {
-				icon: rdata.status ? 1 : 2
-			});
+			layer.close(getCookie('layers'));
+			layer.msg(rdata.msg, {icon: rdata.status ? 1 : 2});
 			GetFiles(path);
 		});
 		return;
 	}
-	layer.open({
+	var layers = layer.open({
 		type: 1,
 		shift: 5,
 		closeBtn: 2,
 		area: '320px', 
 		title: lan.files.file_menu_rename,
 		content: '<div class="bt-form pd20 pb70">\
-					<div class="line">\
-					<input type="text" class="bt-input-text" name="Name" id="newFileName" value="' + fileName + '" placeholder="'+lan.files.file_name+'" style="width:100%" />\
-					</div>\
-					<div class="bt-form-submit-btn">\
-					<button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">'+lan.public.close+'</button>\
-					<button type="button" id="ReNameBtn" class="btn btn-success btn-sm btn-title" onclick="ReName(1,\'' + fileName.replace(/'/,"\\'") + '\')">'+lan.public.save+'</button>\
-					</div>\
-				</div>'
+				<div class="line">\
+				<input type="text" class="bt-input-text" name="Name" id="newFileName" value="' + fileName + '" placeholder="'+lan.files.file_name+'" style="width:100%" />\
+				</div>\
+				<div class="bt-form-submit-btn">\
+				<button type="button" class="btn btn-danger btn-sm btn-title layers_close">'+lan.public.close+'</button>\
+				<button type="button" id="ReNameBtn" class="btn btn-success btn-sm btn-title" onclick="ReName(1,\'' + fileName.replace(/'/,"\\'") + '\')">'+lan.public.save+'</button>\
+				</div>\
+			</div>',
+		success:function (layers,index){
+			$('.layers_close').click(function(){
+				layer.close(index);
+			});
+		}
 	});
+	setCookie('layers',layers);
 	$("#newFileName").focus().keyup(function(e){
 		if(e.keyCode == 13) $("#ReNameBtn").click();
 	});
@@ -1149,20 +1197,14 @@ function CutFile(fileName) {
 	var path = $("#DirPathPlace input").val();
 	setCookie('cutFileName', fileName);
 	setCookie('copyFileName', null);
-	layer.msg(lan.files.mv_ok, {
-		icon: 1,
-		time: 1
-	});
+	layer.msg(lan.files.mv_ok, {icon: 1,time: 1000});
 	GetFiles(path);
 }
 function CopyFile(fileName) {
 	var path = $("#DirPathPlace input").val();
 	setCookie('copyFileName', fileName);
 	setCookie('cutFileName', null);
-	layer.msg(lan.files.copy_ok, {
-		icon: 1,
-		time: 1
-	});
+	layer.msg(lan.files.copy_ok, {icon: 1,time: 1000});
 	GetFiles(path);
 }
 function PasteFile(fileName) {
@@ -1225,6 +1267,7 @@ function PasteTo(path,copyName,cutName,fileName){
 		setCookie('cutFileName', null);
 	}
 }
+// 压缩文件
 function Zip(dirName,submits) {
 	var path = $("#DirPathPlace input").val();
 	if(submits != undefined){
@@ -1234,14 +1277,13 @@ function Zip(dirName,submits) {
 		}else{
 			sfile = encodeURIComponent(dirName);
 		}
-		
         dfile = encodeURIComponent($("#dfile").val());
         var z_type = $("select[name='z_type']").val();
         if (!z_type) z_type = 'tar.gz';
-		layer.closeAll();
-		layer.msg(lan.files.zip_the, {icon: 16,time: 0,shade: [0.3, '#000']});
+		layer.close(getCookie('layers'));
+		var layers = layer.msg(lan.files.zip_the, {icon: 16,time: 0,shade: [0.3, '#000']});
 		$.post('/files?action=Zip', 'sfile=' + sfile + '&dfile=' + dfile + '&z_type='+z_type+'&path='+encodeURIComponent(path), function(rdata) {
-			layer.closeAll();
+			layer.close(layers);
 			if(rdata == null || rdata == undefined){
 				layer.msg(lan.files.zip_ok,{icon:1});
 				GetFiles(path)
@@ -1263,7 +1305,7 @@ function Zip(dirName,submits) {
 		dirName = path + '/' + tmp[tmp.length-1]
 	}
 	
-	layer.open({
+	var layers = layer.open({
 		type: 1,
 		shift: 5,
 		closeBtn: 2,
@@ -1276,12 +1318,17 @@ function Zip(dirName,submits) {
 					+'<span>'+lan.files.zip_to+'</span><input type="text" class="bt-input-text" id="dfile" value="'+dirName + '.tar.gz" placeholder="'+lan.files.zip_to+'" style="width: 75%; display: inline-block; margin: 0px 10px 0px 20px;" /><span class="glyphicon glyphicon-folder-open cursor" onclick="ChangePath(\'dfile\')"></span>'
                     + '</div>'
 					+'<div class="bt-form-submit-btn">'
-					+'<button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">'+lan.public.close+'</button>'
+					+'<button type="button" class="btn btn-danger btn-sm btn-title layer_close">'+lan.public.close+'</button>'
 					+'<button type="button" id="ReNameBtn" class="btn btn-success btn-sm btn-title" onclick="Zip(\'' + param + '\',1)">'+lan.files.file_menu_zip+'</button>'
 					+'</div>'
-				+'</div>'
+				+'</div>',
+		success:function(layers,index){
+			$('.layer_close').click(function(){
+				layer.close(index);
+			});
+		}
 	});
-	
+	setCookie('layers',layers);
     setTimeout(function (){
 		$("select[name='z_type']").change(function(){
             var z_type = $(this).val();
@@ -1298,12 +1345,11 @@ function UnZip(fileName,type) {
 		var dfile = encodeURIComponent($("#dfile").val());
 		var password = encodeURIComponent($("#unpass").val());
 		coding = $("select[name='coding']").val();
-		layer.closeAll();
+		layer.close(getCookie('layers'));
 		layer.msg(lan.files.unzip_the, {icon: 16,time: 0,shade: [0.3, '#000']});
 		$.post('/files?action=UnZip', 'sfile=' + sfile + '&dfile=' + dfile +'&type=' + type + '&coding=' + coding + '&password=' + password, function(rdata) {
-			layer.closeAll();
             layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-            task_stat()
+            task_stat();
 			GetFiles(path);
 		});
 		return
@@ -1314,7 +1360,7 @@ function UnZip(fileName,type) {
 	if(type == 'zip'){
 		umpass = '<div class="line"><span class="tname">'+lan.files.zip_pass_title+'</span><input type="text" class="bt-input-text" id="unpass" value="" placeholder="'+lan.files.zip_pass_msg+'" style="width:330px" /></div>'
 	}
-	layer.open({
+	var layers = layer.open({
 		type: 1,
 		shift: 5,
 		closeBtn: 2,
@@ -1330,11 +1376,17 @@ function UnZip(fileName,type) {
 					+'</select>'
 					+'</div>'
 					+'<div class="bt-form-submit-btn">'
-					+'<button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">'+lan.public.close+'</button>'
+					+'<button type="button" class="btn btn-danger btn-sm btn-title layer_close">'+lan.public.close+'</button>'
 					+'<button type="button" id="ReNameBtn" class="btn btn-success btn-sm btn-title" onclick="UnZip(\'' + fileName + '\',\''+type+'\')">'+lan.files.file_menu_unzip+'</button>'
 					+'</div>'
-				+'</div>'
+				+'</div>',
+		success:function(layers,index){
+			$('.layer_close').click(function(){
+				layer.close(index);
+			});
+		}
 	});
+	setCookie('layers',layers);
 }
 function isZip(fileName){
 	var ext = fileName.split('.');
@@ -1427,6 +1479,8 @@ function UploadFiles() {
 	});
 	UploadStart();*/
 }
+
+// 设置权限
 function SetChmod(action,fileName){
 	if(action == 1){
 		var chmod = $("#access").val();
@@ -1436,7 +1490,7 @@ function SetChmod(action,fileName){
 		var loadT = layer.msg(lan.public.config,{icon:16,time:0,shade: [0.3, '#000']});
 		$.post('files?action=SetFileAccess',data,function(rdata){
 			layer.close(loadT);
-			if(rdata.status) layer.closeAll();
+			if(rdata.status) layer.close(getCookie('layers'));
 			layer.msg(rdata.msg,{icon:rdata.status?1:2});
 			var path = $("#DirPathPlace input").val();
 			GetFiles(path)
@@ -1447,7 +1501,7 @@ function SetChmod(action,fileName){
 	var toExec = fileName == lan.files.all?'Batch(3,1)':'SetChmod(1,\''+fileName+'\')';
 	
 	$.post('/files?action=GetFileAccess','filename='+encodeURIComponent(fileName),function(rdata){
-		layer.open({
+		var layers = layer.open({
 			type:1,
 			closeBtn: 2,
 			title: lan.files.set_auth + '['+fileName+']',
@@ -1482,11 +1536,17 @@ function SetChmod(action,fileName){
                         <span><input type="checkbox" id="accept_all" checked /><label for="accept_all" style="position: absolute;margin-top: 4px; margin-left: 5px;font-weight: 400;">应用到子目录</label></span>\
                         </div>\
 						<div class="bt-form-submit-btn">\
-							<button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">'+lan.public.close+'</button>\
+							<button type="button" class="btn btn-danger btn-sm btn-title layer_close">'+lan.public.close+'</button>\
 					        <button type="button" class="btn btn-success btn-sm btn-title" onclick="'+toExec+'" >'+lan.public.ok+'</button>\
 				        </div>\
-					</div>'
+					</div>',
+			success:function(layers,index){
+				$('.layer_close').click(function(){
+					layer.close(index);
+				})
+			}
 		});
+		setCookie('layers',layers);
 		
 		onAccess();
 		$("#access").keyup(function(){
@@ -1552,7 +1612,7 @@ function onAccess(){
 		}
 	}
 }
-function RClick(type,path,name){
+function RClick(type, path, name, file_store){
 	var displayZip = isZip(type);
 	var options = {items:[
 	  {text: lan.files.file_menu_copy, 	onclick: function() {CopyFile(path)}},
@@ -1581,7 +1641,43 @@ function RClick(type,path,name){
     }
 	else{
 		options.items.push({text: lan.files.file_menu_down, onclick: function() {GetFileBytes(path)}},{text: lan.files.file_menu_del, onclick: function() {DeleteFile(path)}});
-	}
+    }
+
+    options.items.push({
+        text: "收藏夹", onclick: function () {
+
+            var datas = []
+            for (var i = 0; i < file_store.STORE.length; i++) {
+                datas.push({ title: file_store.STORE[i].name, value: file_store.STORE[i].name })
+            }
+            var file_data = {
+                title: '加入收藏夹',
+                area: '500px',
+                list: [
+                    { name: 'path', disabled: true, width: '300px', value: path },
+                    { name: 'file_type', type: 'select', width: '300px', items: datas }
+                ],
+                btns: [
+                    bt.form.btn.close(),
+                    {
+                        title: '添加', name: 'submit', css: 'btn-success', callback: function (rdata, load) {
+                            var loading = bt.load();
+                            bt.send('add_files_store', 'files/add_files_store', rdata, function (rRet) {
+                                loading.close();
+                                bt.msg(rRet);
+                                if (rRet.status) {
+                                    load.close();
+                                    GetFiles(file_store.PATH)
+                                }
+                            })
+                        }
+                    }
+                ]
+            }
+            var bs = bt.render_form(file_data);
+            $(".bt-form" + bs).find(".info-r").css("margin-left", "15px")
+        }
+    })
 	return options;
 }
 
@@ -1658,6 +1754,129 @@ function PathLeft(){
 		$("#PathPlaceBtn ul").css("left",0)
 	}
 }
+
+var store_type_index = 0
+//删除分类或者文件
+function del_files_store(path, obj, parent_name) {
+    var _item = $(obj).parents('tr').data('item')
+    var action = '', msg = '';
+    var data = {}
+    if (parent_name != undefined) {
+        action = 'del_files_store';
+        data['file_type'] = parent_name
+        data['path'] = _item.path;
+        msg = "是否确定删除路径【" + _item.path + "】?"
+    }
+    else {
+        action = 'del_files_store_types';
+        data['file_type'] = _item.name;
+        msg = "是否确定删除分类【" + _item.name + "】?"
+    }
+    bt.confirm({ msg: msg, title: '提示' }, function () {
+        var loading = bt.load();
+        bt.send(action, 'files/' + action, data, function (rRet) {
+            loading.close();
+            if (parent_name) {
+                store_type_index.close();
+            }
+
+            if (rRet.status) {
+                set_file_store(path)
+                GetFiles(getCookie('Path'))
+            }
+            bt.msg(rRet);
+        })
+    })
+}
+
+function set_file_store(path) {
+
+    var loading = bt.load();
+    bt.send('get_files_store', 'files/get_files_store', {}, function (rRet) {
+        loading.close();
+        if ($('#stroe_tab_list').length <= 0) {
+            bt.open({
+                type: 1,
+                skin: 'demo-class',
+                area: '510px',
+                title: "管理收藏夹",
+                closeBtn: 2,
+                shift: 5,
+                shadeClose: false,
+                content: "<div class='divtable pd15 style='padding-bottom: 0'><input name='type_name' class='bt-input-text mr5 type_name' placeholder='请填写分类名称' type='text' style='width:420px'/><button id='btn_data_store_add' class='btn btn-success btn-sm' type='button' style='margin-bottom:10px'>添加</button><table width='100%' id='stroe_tab_list' class='table table-hover'></table><div class='page sitebackup_page'></div></div>",
+                success: function () {
+                    $('#btn_data_store_add').click(function () {
+                        bt.send('add_files_store_types', 'files/add_files_store_types', { file_type: $(".type_name").val() }, function (rRet) {
+                            loading.close();
+
+                            if (rRet.status) {
+                                set_file_store(path)
+
+                                GetFiles(path)
+                            }
+                            bt.msg(rRet);
+                        })
+                    })
+                    reload_sort_data(path)
+                }
+            });
+        }
+        else {
+            reload_sort_data(path)
+        }
+
+        function reload_sort_data(path) {
+            var _tab = bt.render({
+                table: '#stroe_tab_list',
+                columns: [
+                    { field: 'name', title: '分类名称' },
+                    {
+                        field: 'opt', align: 'right', title: '操作', templet: function (item) {
+                            var opt = ' <a class="btlink show_file_store_detail" >查看</a>'
+                            if (item.name != '默认分类') {
+                                opt += ' | <a class="btlink del_file_store" onclick="del_files_store(\'' + path + '\',this)" >删除</a>';
+                            }
+                            return opt;
+                        }
+                    },
+                ],
+                data: rRet
+            });
+
+            $(".show_file_store_detail").click(function () {
+                var _item = $(this).parents('tr').data('item')
+                store_type_index = bt.open({
+                    type: 1,
+                    skin: 'demo-class',
+                    area: '710px',
+                    title: "管理[" + _item['name'] + ']',
+                    closeBtn: 2,
+                    shift: 5,
+                    shadeClose: false,
+                    content: "<div class='divtable pd15 style='padding-bottom: 0'><table width='100%' id='stroe_tab_list_detail' class='table table-hover'></table><div class='page sitebackup_page'></div></div>",
+                    success: function () {
+                        var _tab = bt.render({
+                            table: '#stroe_tab_list_detail',
+                            columns: [
+                                { field: 'path', title: '路径名称' },
+                                {
+                                    field: 'opt', align: 'right', title: '操作', templet: function (item) {
+                                        var opt = ' <a class="btlink del_file_store" onclick="del_files_store(\'' + path + '\',this,\'' + _item['name'] + '\')" >删除</a>'
+                                        return opt;
+                                    }
+                                },
+                            ],
+                            data: _item.data
+                        });
+                    }
+                });
+            })
+        }
+    })
+}
+
+
+
 $("#PathPlaceBtn").on("click", function(e){
 	if($("#DirPathPlace").is(":hidden")){
 		$("#DirPathPlace").css("display","inline");

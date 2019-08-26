@@ -883,8 +883,13 @@ class config:
     def get_basic_auth_stat(self,get):
         path = 'config/basic_auth.json'
         is_install = True
-        if not os.path.exists(path): return {"basic_user":"","basic_pwd":"","open":False,"is_install":is_install}
-        ba_conf = json.loads(public.readFile(path))
+        result = {"basic_user":"","basic_pwd":"","open":False,"is_install":is_install}
+        if not os.path.exists(path): return result
+        try:
+            ba_conf = json.loads(public.readFile(path))
+        except: 
+            os.remove(path)
+            return result
         ba_conf['is_install'] = is_install
         return ba_conf
 
@@ -896,7 +901,10 @@ class config:
         path = 'config/basic_auth.json'
         ba_conf = None
         if os.path.exists(path):
-            ba_conf = json.loads(public.readFile(path))
+            try:
+                ba_conf = json.loads(public.readFile(path))
+            except:
+                os.remove(path)
 
         if not ba_conf: 
             ba_conf = {"basic_user":public.md5(get.basic_user.strip() + tips),"basic_pwd":public.md5(get.basic_pwd.strip() + tips),"open":is_open}

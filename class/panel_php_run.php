@@ -51,6 +51,29 @@ class bt_panel_plugin
 	}
 }
 
+
+
+class db extends SQLite3
+{
+	function __construct($db_file = '/www/server/panel/data/default.db')
+    {
+        $this->open($db_file);
+    }
+
+	public function queryute($sql){
+		$result = $this->query($sql);
+		$data = $result->fetchArray(SQLITE3_ASSOC);
+		return $data;
+	}
+
+	public function execute(){
+		$result = $this->exec($sql);
+		return $result;
+	}
+}
+
+
+
 //取指安参数
 function _args($_t,$key){
 	if(!file_exists(PLU_ARGS_TMP))  {
@@ -89,6 +112,43 @@ function return_status($status,$msg){
 //返回数据
 function _return($data){
 	exit(json_encode($data));
+}
+
+/**
+ * 发起GET请求
+ * @param String $url 目标网填，带http://
+ * @return bool
+ */
+function _httpGet($url) {
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $url);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	curl_setopt($ch, CURLOPT_HTTPHEADER,array('Accept-Encoding: gzip, deflate'));
+	curl_setopt($ch, CURLOPT_ENCODING, 'gzip,deflate');
+	curl_setopt($ch, CURLOPT_USERAGENT, "BT-Panel for PHP-Plugin");
+	curl_setopt($ch, CURLOPT_HEADER, 0);
+	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 3);
+	$output = curl_exec($ch);
+	curl_close($ch);
+	return $output;
+}
+
+//发起POST请求
+function _httpPost($url,$data){
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $url);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+	curl_setopt($ch, CURLOPT_POST, 1);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	curl_setopt($ch, CURLOPT_USERAGENT, "BT-Panel for PHP-Plugin");
+	curl_setopt($ch, CURLOPT_HEADER, 0);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+	$output = curl_exec($ch);
+	curl_close($ch);
+	return $output;
 }
 
 //启动插件
