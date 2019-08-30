@@ -13,6 +13,7 @@
 import io,re,public,os,sys,shutil,json,hashlib,socket,time
 from BTPanel import session
 from panelRedirect import  panelRedirect
+import site_dir_auth
 class panelSite(panelRedirect):
     siteName = None #网站名称
     sitePath = None #根目录
@@ -3478,3 +3479,23 @@ location %s
         for s_id in site_ids:
             site_sql.where("id=?",(s_id,)).setField("type_id",get.id)
         return public.returnMsg(True,"设置成功!")
+        
+    # 设置目录保护
+    def set_dir_auth(self,get):
+        sd = site_dir_auth.SiteDirAuth()
+        return sd.set_dir_auth(get)
+
+    # 删除目录保护
+    def delete_dir_auth(self,get):
+        sd = site_dir_auth.SiteDirAuth()
+        return sd.delete_dir_auth(get)
+
+    # 获取目录保护列表
+    def get_dir_auth(self,get):
+        sd = site_dir_auth.SiteDirAuth()
+        return sd.get_dir_auth(get)
+
+    # 修改目录保护密码
+    def modify_dir_auth_pass(self,get):
+        sd = site_dir_auth.SiteDirAuth()
+        return sd.modify_dir_auth_pass(get)

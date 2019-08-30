@@ -124,6 +124,7 @@ def PackagePanel():
     os.system('rm -f /www/server/panel/data/domain.conf')
     os.system('rm -f /www/server/panel/data/user*')
     os.system('rm -f /www/server/panel/data/admin_path.pl')
+    os.system("rm -f /www/server/panel/data/licenes.pl")
     os.system('rm -f /root/.ssh/*')
 
     print('\t\033[1;32m[done]\033[0m')

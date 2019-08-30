@@ -414,7 +414,7 @@ var aceEditor = {
 					$('.menu-themes ul').html(_html);
 					$('.menu-themes ul li').click(function(){
 						var _theme = $(this).attr('data-value');
-						$(this).addClass('active').append(_icon).siblings().removeClass('active').find('.icon').remove();
+                        $(this).addClass('active').append(_icon).siblings().removeClass('active').find('.icon').remove();
 						var _fontSize = JSON.parse(getCookie('aceEditor')).fontSize.match(/([0-9]*)px/)[1],
 							_data = JSON.stringify({"fontSize": _fontSize +"px","theme":_theme});
 						for(var item in _this.editor){
@@ -872,13 +872,27 @@ function openEditorView(type,path){
 					$('#ace_conter').addClass(_rdata.theme);
 					set_edit_file();
 				});
-			}else{
-				var aceConfig = JSON.parse(getCookie('aceEditor'));
-				aceEditor.fontSize = aceConfig.fontSize;
-				aceEditor.editorTheme = aceConfig.theme;
-				$('.ace_editors').css('fontSize',aceConfig.fontSize);
-				$('#ace_conter').addClass(aceConfig.theme);
-				set_edit_file();
+            } else {
+                var aceConfig = JSON.parse(getCookie('aceEditor'));
+                if (aceConfig.theme === undefined) {
+                    aceEditor.getEditorConfig(function (res) {
+                        var _rdata = (typeof res == "string") ? JSON.parse(res) : res;
+                        if (typeof res != "string") res = JSON.stringify(res);
+                        setCookie('aceEditor', res);
+                        var aceConfig = JSON.parse(getCookie('aceEditor'));
+                        aceEditor.fontSize = aceConfig.fontSize;
+                        aceEditor.editorTheme = aceConfig.theme;
+                        $('.ace_editors').css('fontSize', aceConfig.fontSize);
+                        $('#ace_conter').addClass(aceConfig.theme);
+                        set_edit_file();
+                    });
+                } else {
+                    aceEditor.fontSize = aceConfig.fontSize;
+                    aceEditor.editorTheme = aceConfig.theme;
+                    $('.ace_editors').css('fontSize', aceConfig.fontSize);
+                    $('#ace_conter').addClass(aceConfig.theme);
+                    set_edit_file();
+                }
 			}
 		},
 		cancel:function(){
@@ -2630,13 +2644,13 @@ function web_shell() {
             }, 500);
         }
     });
-
+    /*
     if (socket) {
         socket.emit('connect_event', '');
         interval = setInterval(function () {
             socket.emit('connect_event', '');
         }, 1000);
-    }
+    }*/
     
     term.on('data', function (data) {
         pdata_socket['data'] = data;

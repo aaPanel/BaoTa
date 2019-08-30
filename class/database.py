@@ -76,7 +76,7 @@ class database(datatool.datatools):
     def __CreateUsers(self,dbname,username,password,address):
         mysql_obj = panelMysql.panelMysql()
         mysql_obj.execute("CREATE USER `%s`@`localhost` IDENTIFIED BY '%s'" % (username,password))
-        mysql_obj.execute("grant all privileges on %s.* to `%s`@`localhost`" % (dbname,username))
+        mysql_obj.execute("grant all privileges on `%s`.* to `%s`@`localhost`" % (dbname,username))
         for a in address.split(','):
             mysql_obj.execute("CREATE USER `%s`@`%s` IDENTIFIED BY '%s'" % (username,a,password))
             mysql_obj.execute("grant all privileges on `%s`.* to `%s`@`%s`" % (dbname,username,a))
