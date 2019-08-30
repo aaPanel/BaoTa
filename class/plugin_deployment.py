@@ -392,7 +392,9 @@ class plugin_deployment:
         #清理文件和目录
         self.WriteLogs(json.dumps({'name':'清理多余的文件','total':0,'used':0,'pre':0,'speed':0}));
         if type(pinfo['remove_file']) == str : pinfo['remove_file'] = pinfo['remove_file'].strip().split(',')
+        print(pinfo['remove_file'])
         for f_path in pinfo['remove_file']:
+            if not f_path: continue
             filename = (path + '/' + f_path).replace('//','/')
             if os.path.exists(filename):
                 if not os.path.isdir(filename):
@@ -436,10 +438,28 @@ class plugin_deployment:
                 os.remove(p_info)
                 i_ndex_html = path + '/index.html'
                 if os.path.exists(i_ndex_html): os.remove(i_ndex_html)
-                os.system("\cp -arf " + p_tmp + '/. ' + path + '/')
+                if not self.copy_to(p_tmp,path): os.system(("\cp -arf " + p_tmp + '/. ' + path + '/').replace('//','/'))
             except: pass
-        #os.system("rm -rf " + self.__tmp + '/*')
+        os.system("rm -rf " + self.__tmp + '/*')
         return p_config
+
+
+    def copy_to(self,src,dst):
+        try:
+            if src[-1] == '/': src = src[:-1]
+            if dst[-1] == '/': dst = dst[:-1]
+            if not os.path.exists(src): return False
+            if not os.path.exists(dst): os.makedirs(dst)
+            import shutil
+            for p_name in os.listdir(src):
+                f_src = src + '/' + p_name
+                f_dst = dst + '/' + p_name
+                if os.path.isdir(f_src):
+                    print(shutil.copytree(f_src,f_dst))
+                else:
+                    print(shutil.copyfile(f_src,f_dst))
+            return True
+        except: return False
                 
     
     #提交安装统计

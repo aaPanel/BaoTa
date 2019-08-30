@@ -262,15 +262,17 @@ class files:
         tmp_files = []
         tmp_dirs = []
         for f_name in os.listdir(path):
-            if py_v == 2: f_name = f_name.encode('utf-8');
-            filename = os.path.join(path,f_name)
-            if not os.path.exists(filename): continue
-            file_info = self.__format_stat(filename,path)
-            if not file_info: continue
-            if os.path.isdir(filename):
-                tmp_dirs.append(file_info)
-            else:
-                tmp_files.append(file_info)
+            try:
+                if py_v == 2: f_name = f_name.encode('utf-8');
+                filename = os.path.join(path,f_name)
+                if not os.path.exists(filename): continue
+                file_info = self.__format_stat(filename,path)
+                if not file_info: continue
+                if os.path.isdir(filename):
+                    tmp_dirs.append(file_info)
+                else:
+                    tmp_files.append(file_info)
+            except: continue
         tmp_dirs = sorted(tmp_dirs,key=lambda x:x[my_sort],reverse=reverse)
         tmp_files = sorted(tmp_files,key=lambda x:x[my_sort],reverse=reverse)
         

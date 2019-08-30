@@ -925,6 +925,50 @@ var site = {
                 })
             })
         },
+        set_dirguard: function(web){
+        	String.prototype.myReplace = function (f, e) {//吧f替换成e
+                var reg = new RegExp(f, "g"); //创建正则RegExp对象
+                return this.replace(reg, e);
+            }
+        	bt.site.get_dir_auth(web.id,function(res) {
+        		var datas = {
+        			items: [{ name: 'add_dir_guard',text:'添加目录保护',type: 'button',callback: function(data){site.edit.template_Dir(web.id,true)}}]
+        		}
+        		var form_line = bt.render_form_line(datas);
+                $('#webedit-con').append(form_line.html);
+                bt.render_clicks(form_line.clicks);
+                $('#webedit-con').addClass('divtable').append('<table id="dir_guard" class="table table-hover"></table>');
+                setTimeout(function() {
+                	var data = [];
+            		var _tab = bt.render({
+                		table: '#dir_guard',
+                		columns: [
+                			{
+                				field: 'name', title: '名称', template: function(item) {
+                					return '<span style="width:60px;" title="'+ item.name +'">'+ item.name +'</span>'
+                				}
+                			},
+                			{
+                				field: 'site_dir', title: '保护的目录', template: function(item) {
+                					return '<span style="width:60px;" title="'+ item.site_dir +'">'+ item.site_dir +'</span>'
+                				}
+                			},
+                			{
+                                field: 'dname', title: '操作', align: 'right', templet: function (item) {
+                                var dirName = item.name
+                                item = JSON.stringify(item).myReplace('"', '\'');
+	                                var conter = '<a class="btlink" onclick="site.edit.template_Dir(\'' + web.id + '\',false,' + item + ')" href="javascript:;">编辑</a> ' +
+	                                    '| <a class="btlink" onclick="bt.site.delete_dir_guard(\'' + web.id + '\',\'' + dirName + '\',function(rdata){if(rdata.status)site.reload()})" href="javascript:;">删除</a>';
+	                                return conter
+                            	}
+                            }
+                		],
+                		data:res[web.name] || []
+                	})
+
+                })
+        	});
+        },
         limit_network: function (web) {
             bt.site.get_limitnet(web.id, function (rdata) {
                 var limits = [
@@ -1939,6 +1983,79 @@ var site = {
             });
 
         },
+        template_Dir: function(id,type,obj){
+        	if(type){
+        		obj = {"name":"","sitedir": "", "username":"","password":""};
+        	}else{
+        		obj = {"name":obj.name,"sitedir": obj.site_dir, "username":"","password":""};
+        	}
+        	var form_directory = bt.open({
+        		type: 1,
+        		skin: 'demo-class',
+        		area: '550px',
+        		title: type ? '添加目录保护' : '修改目录目录',
+        		closeBtn:  2,
+        		shift: 5,
+        		shadeClose: false,
+        		content: "<form id='form_dir' class='divtable pd15' style='padding: 40px 0 90px 60px'>" +
+        			"<div class='line'>" +
+                    "<span class='tname'>名称</span>" +
+                    "<div class='info-r ml0'><input name='dir_name' class='bt-input-text mr10' type='text' style='width:270px' value='" + obj.name + "'>" +
+                    "</div></div>" +
+        			"<div class='line'>" +
+                    "<span class='tname'>保护的目录</span>" +
+                    "<div class='info-r ml0'><input name='dir_sitedir' placeholder='输入需要保护的目录，如：/text/' class='bt-input-text mr10' type='text' style='width:270px' value='" + obj.sitedir + "'>" +
+                    "</div></div>" +
+        			"<div class='line'>" +
+                    "<span class='tname'>用户名</span>" +
+                    "<div class='info-r ml0'><input name='dir_username' AUTOCOMPLETE='off' class='bt-input-text mr10' type='text' style='width:270px' value='" + obj.username + "'>" +
+                    "</div></div>" +
+        			"<div class='line'>" +
+                    "<span class='tname'>密码</span>" +
+                    "<div class='info-r ml0'><input name='dir_password' AUTOCOMPLETE='off' class='bt-input-text mr10' type='password' style='width:270px' value='" + obj.password + "'>" +
+                    "</div></div>"+
+                    "<ul class='help-info-text c7 plr20'>"+
+                        "<li>目录设置保护后，访问时需要输入账号密码才能访问</li>"+
+                        "<li>例如我设置了保护目录 /test/ ,那我访问 http://aaa.com/test/ 是就要输入账号密码才能访问</li>"+
+                    "</ul>"+
+                    "<div class='bt-form-submit-btn'><button type='button' class='btn btn-sm btn-danger btn-colse-guard'>关闭</button><button type='button' class='btn btn-sm btn-success btn-submit-guard'>" + (type ? '提交' : '保存') + "</button></div></form>"
+        	});
+        	$('.btn-colse-guard').click(function () {
+                form_directory.close();
+            });
+            $('.btn-submit-guard').click(function() {
+            	var guardData = {};
+            	guardData['id'] = id;
+            	guardData['name'] = $('input[name="dir_name"]').val();
+            	guardData['site_dir'] = $('input[name="dir_sitedir"]').val();
+            	guardData['username'] = $('input[name="dir_username"]').val();
+            	guardData['password'] = $('input[name="dir_password"]').val();
+            	if(type){
+            		bt.site.create_dir_guard(guardData, function (rdata) {
+                        if (rdata.status) {
+                            form_directory.close();
+                        	site.reload()
+                        }
+                        bt.msg(rdata);
+                    });
+            	}else{
+            		bt.site.edit_dir_account(guardData, function (rdata) {
+                        if (rdata.status) {
+                            form_directory.close();
+                        	site.reload()
+                        }
+                        bt.msg(rdata);
+                    });
+            	}
+            });
+        	setTimeout(function(){
+        		if(!type){
+        			$('input[name="dir_name"]').attr('disabled', 'disabled');
+        			$('input[name="dir_sitedir"]').attr('disabled', 'disabled');
+        		}
+        	},500)
+
+        },
         set_301_old:function(web){				
             bt.site.get_domains(web.id,function(rdata){							
                 var domains = [{title:'整站',value:'all'}];
@@ -2532,7 +2649,7 @@ var site = {
         var item = $(obj).parents('tr').data('item');
         bt.open({
             type: 1,
-            area: ['700px', '650px'],
+            area: ['700px', '690px'],
             title: lan.site.website_change + '[' + item.name + ']  --  ' + lan.site.addtime + '[' + item.addtime + ']',
             closeBtn: 2,
             shift: 0,
@@ -2543,6 +2660,7 @@ var site = {
                 { title: '域名管理', callback: site.edit.set_domains },
                 { title: '子目录绑定', callback: site.edit.set_dirbind },
                 { title: '网站目录', callback: site.edit.set_dirpath },
+                { title: '目录保护', callback: site.edit.set_dirguard },
                 { title: '流量限制', callback: site.edit.limit_network },
                 { title: '伪静态', callback: site.edit.get_rewrite_list },
                 { title: '默认文档', callback: site.edit.set_default_index },
