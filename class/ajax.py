@@ -895,6 +895,7 @@ ServerName 127.0.0.2
         #try:
         filename = self.__get_webserver_conffile()
         conf = public.readFile(filename);
+        if not conf: return public.returnMsg(False,'ERROR');
         if hasattr(get,'port'):
             mainPort = public.readFile('data/port.pl').strip();
             rulePort = ['80','443','21','20','8080','8081','8089','11211','6379']

@@ -244,8 +244,12 @@ class firewalls:
     def GetSshInfo(self,get):
         file = '/etc/ssh/sshd_config'
         conf = public.readFile(file)
+        if not conf: conf = ''
         rep = "#*Port\s+([0-9]+)\s*\n"
-        port = re.search(rep,conf).groups(0)[0]
+        tmp1 = re.search(rep,conf)
+        port = '22'
+        if tmp1:
+            port = tmp1.groups(0)[0]
         import system
         panelsys = system.system();
         
@@ -275,8 +279,6 @@ class firewalls:
             if tmp == '1': isPing = False
         except:
             isPing = True
-        
-        
         
         data = {}
         data['port'] = port

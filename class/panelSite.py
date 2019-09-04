@@ -411,6 +411,24 @@ class panelSite(panelRedirect):
         m_path = self.setupPath+'/panel/vhost/apache/proxy/'+siteName
         if os.path.exists(m_path): public.ExecShell("rm -rf %s" % m_path)
 
+        # 删除目录保护
+        _dir_aith_file = "%s/panel/data/site_dir_auth.json" % self.setupPath
+        _dir_aith_conf = public.readFile(_dir_aith_file)
+        if _dir_aith_conf:
+            try:
+                _dir_aith_conf = json.loads(_dir_aith_conf)
+                if siteName in _dir_aith_conf:
+                    del(_dir_aith_conf[siteName])
+            except:
+                pass
+        self.__write_config(_dir_aith_file,_dir_aith_conf)
+
+        dir_aith_path = self.setupPath+'/panel/vhost/nginx/dir_auth/'+siteName
+        if os.path.exists(dir_aith_path): public.ExecShell("rm -rf %s" % dir_aith_path)
+
+        dir_aith_path = self.setupPath+'/panel/vhost/apache/dir_auth/'+siteName
+        if os.path.exists(dir_aith_path): public.ExecShell("rm -rf %s" % dir_aith_path)
+
         #删除重定向
         __redirectfile = "%s/panel/data/redirect.conf" % self.setupPath
         redirectconf = self.__read_config(__redirectfile)
@@ -1634,6 +1652,8 @@ class panelSite(panelRedirect):
             os.system('mkdir -p ' + path);
             os.system('chmod 755 ' + path);
             os.system('chown www:www ' + path);
+            get.path = path
+            self.SetDirUserINI(get)
             siteName = public.M('sites').where('id=?',(get.id,)).getField('name')
             public.WriteLog('网站管理','站点['+siteName+'],根目录['+path+']不存在,已重新创建!');
         dirnames = []
@@ -3247,7 +3267,6 @@ location %s
     #设置默认站点
     def SetDefaultSite(self,get):
         import time;
-
         default_site_save = 'data/defaultSite.pl'
         #清理旧的
         defaultSite = public.readFile(default_site_save);
@@ -3273,7 +3292,7 @@ location %s
             if os.path.exists(path): os.remove(path)
 
         if get.name == '0': 
-            os.remove(default_site_save)
+            if os.path.exists(default_site_save): os.remove(default_site_save)
             return public.returnMsg(True,'设置成功!')
 
         #处理新的

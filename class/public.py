@@ -434,31 +434,35 @@ def serviceReload():
 
 
 def ExecShell(cmdstring, cwd=None, timeout=None, shell=True):
-    #通过管道执行SHELL
-    import shlex
-    import datetime
-    import subprocess
-    import time
-
-    if shell:
-        cmdstring_list = cmdstring
-    else:
-        cmdstring_list = shlex.split(cmdstring)
-    if timeout:
-        end_time = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
-    
-    sub = subprocess.Popen(cmdstring_list, cwd=cwd, stdin=subprocess.PIPE,shell=shell,bufsize=4096,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    
-    while sub.poll() is None:
-        time.sleep(0.1)
-        if timeout:
-            if end_time <= datetime.datetime.now():
-                raise Exception("Timeout：%s"%cmdstring)
-    a,e = sub.communicate()
     try:
-        if type(a) == bytes: a = a.decode('utf-8')
-        if type(e) == bytes: e = e.decode('utf-8')
-    except:pass
+        #通过管道执行SHELL
+        import shlex
+        import datetime
+        import subprocess
+        import time
+
+        if shell:
+            cmdstring_list = cmdstring
+        else:
+            cmdstring_list = shlex.split(cmdstring)
+        if timeout:
+            end_time = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
+        sub = subprocess.Popen(cmdstring_list, cwd=cwd, stdin=subprocess.PIPE,shell=shell,bufsize=4096,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        while sub.poll() is None:
+            time.sleep(0.1)
+            if timeout:
+                if end_time <= datetime.datetime.now():
+                    raise Exception("Timeout：%s"%cmdstring)
+        a,e = sub.communicate()
+        try:
+            if type(a) == bytes: a = a.decode('utf-8')
+            if type(e) == bytes: e = e.decode('utf-8')
+        except:pass
+    except:
+        if not a:
+            e = ''
+            a = os.popen(cmdstring).read()
+
     return a,e
 
 def GetLocalIp():
@@ -512,6 +516,11 @@ def check_ip(ip):
 def GetHost(port = False):
     from flask import request
     host_tmp = request.headers.get('host')
+    if not host_tmp: 
+        if request.url_root:
+            host_tmp = re.findall("^https?://([\w:\.-]+)",request.url_root)[0]
+    if not host_tmp:
+        host_tmp = GetLocalIp() + ':' + readFile('data/port.pl').strip()
     if host_tmp.find(':') == -1: host_tmp += ':80';
     h = host_tmp.split(':')
     if port: return h[1]
@@ -640,10 +649,10 @@ def to_size(size):
     d = ('b','KB','MB','GB','TB');
     s = d[0];
     for b in d:
-        if size < 1024: return str(size) + ' ' + b;
+        if size < 1024: return ("%.2f" % size) + ' ' + b;
         size = size / 1024;
         s = b;
-    return str(size) + ' ' + b;
+    return ("%.2f" % size) + ' ' + b;
 
 
 def checkCode(code,outime = 120):
@@ -703,6 +712,25 @@ def get_error_info():
     import traceback
     errorMsg = traceback.format_exc();
     return errorMsg
+
+def submit_error(err_msg = None):
+    try:
+        if os.path.exists('/www/server/panel/not_submit_errinfo.pl'): return False
+        from BTPanel import request
+        import system
+        if not err_msg: err_msg = get_error_info()
+        pdata = {}
+        pdata['err_info'] = err_msg
+        pdata['path_full'] = request.full_path
+        pdata['version'] = 'Linux-Panel-%s' % version()
+        pdata['os'] = system.system().GetSystemVersion()
+        pdata['py_version'] = sys.version
+        pdata['install_date'] = int(os.stat('/www/server/panel/class/common.py').st_mtime)
+        httpPost("http://www.bt.cn/api/panel/s_error",pdata,timeout=3)
+    except:
+        pass
+
+
 
 #搜索数据中是否存在
 def inArray(arrays,searchStr):
