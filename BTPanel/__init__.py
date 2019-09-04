@@ -91,6 +91,7 @@ def service_status():
 
 @app.before_request
 def request_check():
+    
     if not request.path in ['/safe','/hook','/public']:
         ip_check = public.check_ip_panel()
         if ip_check: return ip_check
@@ -168,6 +169,7 @@ def login():
 
     if hasattr(get,'dologin'):
         login_path = '/login'
+        if not 'login' in session: return redirect(login_path)
         if os.path.exists(admin_path_file): login_path = route_path
         if session['login'] != False:
             session['login'] = False;
@@ -573,6 +575,7 @@ def panel_public():
     get = get_input();
     get.client_ip = public.GetClientIp();
     if not hasattr(get,'name'): get.name = ''
+    if not hasattr(get,'fun'): return abort(404)
     if not public.path_safe_check("%s/%s" % (get.name,get.fun)): return abort(404)
     if get.fun in ['scan_login', 'login_qrcode', 'set_login', 'is_scan_ok', 'blind','static']:
         if get.fun == 'static':
@@ -722,7 +725,9 @@ def panel_other(name=None,fun = None,stype=None):
             if r_type == dict: return public.returnJson(False,'错误的返回类型[%s]' % r_type),json_header
             return data
     except:
-        return public.get_error_info().replace('\n','<br>\n')
+        error_info = public.get_error_info()
+        public.submit_error(error_info)
+        return error_info.replace('\n','<br>\n')
 
 
 @app.route('/wxapp',methods=method_all)
@@ -877,7 +882,8 @@ except:
 @socketio.on('connect')
 def socket_connect(msg=None):
     if not check_login(): 
-        raise emit('server_response',{'data':public.getMsg('INIT_WEBSSH_LOGOUT')})
+        emit('server_response',{'data':public.getMsg('111')})
+        return False
 
 @socketio.on('webssh')
 def webssh(msg):
@@ -1080,6 +1086,7 @@ def notfound(e):
 @app.errorhandler(500)
 def internalerror(e):
     #if str(e).find('Permanent Redirect') != -1: return e
+    public.submit_error()
     errorStr = public.ReadFile('./BTPanel/templates/' + public.GetConfigValue('template') + '/error.html')
     try:
         if not app.config['DEBUG']:
@@ -1093,14 +1100,12 @@ def internalerror(e):
 #获取输入数据
 def get_input():
     data = common.dict_obj()
-    post = request.form.to_dict()
-    get = request.args.to_dict()
-    data.args = get
-    for key in get.keys():
-        data[key] = str(get[key])
-    for key in post.keys():
-        data[key] = str(post[key])
-
+    exludes = ['blob']
+    for key in request.args.keys():
+        data[key] = str(request.args.get(key,''))
+    for key in request.form.keys():
+        if key in exludes: continue
+        data[key] = str(request.form.get(key,''))
     if not hasattr(data,'data'): data.data = []
     return data
 

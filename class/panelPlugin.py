@@ -1576,7 +1576,7 @@ class panelPlugin:
         except Exception as ex:
             import traceback
             errorMsg = traceback.format_exc();
-            public.writeFile('logs/done.log',errorMsg)
+            public.submit_error(errorMsg)
             return public.returnMsg(False,'抱歉，出错了：<br> %s ' % errorMsg.replace('\n','<br>'))
 
     

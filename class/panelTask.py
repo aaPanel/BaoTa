@@ -56,6 +56,10 @@ class bt_task:
             else:
                 sql = sql.where('status=?',(get.status,))
         data = sql.field('id,name,type,shell,other,status,exectime,endtime,addtime').order('id asc').limit('10').select();
+        if type(data) == str: 
+            public.WriteLog('任务队列',data)
+            return []
+
         if not 'num' in get: get.num = 15
         num = int(get.num)
         for i in range(len(data)):

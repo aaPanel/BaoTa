@@ -711,8 +711,12 @@ SetLink
         gets = ['table_open_cache','thread_cache_size','query_cache_type','key_buffer_size','query_cache_size','tmp_table_size','max_heap_table_size','innodb_buffer_pool_size','innodb_additional_mem_pool_size','innodb_log_buffer_size','max_connections','sort_buffer_size','read_buffer_size','read_rnd_buffer_size','join_buffer_size','thread_stack','binlog_cache_size'];
         result['mem'] = {}
         for d in data:
-            for g in gets:
-                if d[0] == g: result['mem'][g] = d[1];
+            try:
+                for g in gets:
+                    if d[0] == g: result['mem'][g] = d[1];
+            except:
+                continue
+
         if 'query_cache_type' in result['mem']:
             if result['mem']['query_cache_type'] != 'ON': result['mem']['query_cache_size'] = '0';
         return result;

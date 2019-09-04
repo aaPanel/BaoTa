@@ -7,7 +7,7 @@
 # +-------------------------------------------------------------------
 # | Author: 黄文良 <287962566@qq.com>
 # +-------------------------------------------------------------------
-import sys,os,public,time,json,pwd,cgi
+import sys,os,public,time,json,pwd,cgi,shutil
 from BTPanel import session,request
 class files:
     #检查敏感目录
@@ -90,6 +90,12 @@ class files:
         if sys.version_info[0] == 2: 
             args.f_name = args.f_name.encode('utf-8')
             args.f_path = args.f_path.encode('utf-8')
+        if not 'f_name' in args:
+            args.f_name = request.form.get('f_name')
+            args.f_path = request.form.get('f_path')
+            args.f_size = request.form.get('f_size')
+            args.f_start = request.form.get('f_start')
+
         if args.f_name.find('./') != -1 or args.f_path.find('./') != -1: 
             return public.returnMsg(False,'错误的参数')
         if not os.path.exists(args.f_path): 
@@ -147,6 +153,8 @@ class files:
         if get.path == '': get.path = '/www';
         if not os.path.exists(get.path): 
             return public.ReturnMsg(False,'指定目录不存在!')
+        if not os.path.isdir(get.path):
+            get.path = os.path.dirname(get.path)
             
         import pwd 
         dirnames = []
@@ -356,6 +364,7 @@ class files:
     
     #计算文件数量
     def GetFilesCount(self,path,search):
+        if os.path.isfile(path): return 1
         i=0;
         for name in os.listdir(path):
             if search:
@@ -609,15 +618,14 @@ class files:
         if not os.path.exists(get.sfile):
             return public.returnMsg(False,'DIR_NOT_EXISTS');
         
-        if os.path.exists(get.dfile):
-            return public.returnMsg(False,'DIR_EXISTS');
+        #if os.path.exists(get.dfile):
+        #    return public.returnMsg(False,'DIR_EXISTS');
         
         #if not self.CheckDir(get.dfile):
         #    return public.returnMsg(False,'FILE_DANGER');
         
-        import shutil
         try:
-            shutil.copytree(get.sfile, get.dfile)
+            self.copytree(get.sfile, get.dfile)
             stat = os.stat(get.sfile)
             os.chown(get.dfile,stat.st_uid,stat.st_gid)
             public.WriteLog('TYPE_FILE','DIR_COPY_SUCCESS',(get.sfile,get.dfile))
@@ -641,11 +649,8 @@ class files:
         
         if not self.CheckDir(get.sfile):
             return public.returnMsg(False,'FILE_DANGER');
-        
-        import shutil
         try:
-            shutil.move(get.sfile, get.dfile)
-            
+            self.move(get.sfile,get.dfile)
             if hasattr(get,'rename'):
                 public.WriteLog('TYPE_FILE','[%s]重命名为[%s]' % (get.sfile,get.dfile))
                 return public.returnMsg(True,'重命名成功!')
@@ -888,8 +893,7 @@ class files:
     #取目录大小
     def GetDirSize(self,get):
         if sys.version_info[0] == 2: get.path = get.path.encode('utf-8');
-        tmp = public.ExecShell('du -sbh '+ get.path)
-        return tmp[0].split()[0]
+        return public.to_size(public.get_path_size(get.path))
 
     #取目录大小2
     def get_path_size(self,get):
@@ -930,7 +934,6 @@ class files:
             public.WriteLog('TYPE_FILE','FILE_ALL_ACCESS')
             return public.returnMsg(True,'FILE_ALL_ACCESS')
         else:
-            import shutil
             isRecyle = os.path.exists('data/recycle_bin.pl')
             path = get.path
             get.data = json.loads(get.data)
@@ -988,7 +991,7 @@ class files:
                         dfile = get.path + '/' + key
 
                     if os.path.isdir(sfile):
-                        shutil.copytree(sfile,dfile)
+                        self.copytree(sfile,dfile)
                     else:
                         shutil.copyfile(sfile,dfile)
                     stat = os.stat(sfile)
@@ -1007,7 +1010,7 @@ class files:
                     else:
                         sfile = session['selected']['path'] + '/' + key
                         dfile = get.path + '/' + key
-                    shutil.move(sfile,dfile)
+                    self.move(sfile,dfile)
                 except:
                     continue;
             public.WriteLog('TYPE_FILE','FILE_ALL_MOTE',(session['selected']['path'],get.path))
@@ -1015,6 +1018,43 @@ class files:
         errorCount = len(myfiles) - i
         del(session['selected'])
         return public.returnMsg(True,'FILE_ALL',(str(i),str(errorCount)));
+
+    #移动和重命名
+    def move(self,sfile,dfile):
+        if not os.path.exists(sfile): return False
+        is_dir = os.path.isdir(sfile)
+        if not os.path.exists(dfile) or not is_dir:
+            shutil.move(sfile, dfile)
+        else:
+            self.copytree(sfile,dfile)
+            if os.path.exists(sfile):
+                if is_dir: 
+                    shutil.rmtree(sfile)
+                else:
+                    os.remove(sfile)
+        return True
+
+    #复制目录
+    def copytree(self,sfile,dfile):
+        for f_name in os.listdir(sfile):
+            src_filename = (sfile + '/' + f_name).replace('//','/')
+            dst_filename = (dfile + '/' + f_name).replace('//','/')
+            mode_info = public.get_mode_and_user(src_filename)
+            if os.path.isdir(src_filename):
+                if not os.path.exists(dst_filename):
+                    os.makedirs(dst_filename)
+                    public.set_mode(dst_filename,mode_info['mode'])
+                    public.set_own(dst_filename,mode_info['user'])
+                self.copytree(src_filename,dst_filename)
+            else:
+                try:
+                    shutil.copy2(src_filename,dst_filename)
+                    public.set_mode(dst_filename,mode_info['mode'])
+                    public.set_own(dst_filename,mode_info['user'])
+                except:pass
+        return True
+
+
     
     #下载文件
     def DownloadFile(self,get):

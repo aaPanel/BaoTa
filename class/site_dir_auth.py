@@ -33,9 +33,10 @@ class SiteDirAuth:
             conf = {}
             public.writeFile(self.conf_file, json.dumps(conf))
         return conf
+        
     def _write_conf(self,conf,site_name):
         c = self._read_conf()
-        if not c:
+        if not c or site_name not in c:
             c[site_name] = [conf]
         else:
             if site_name in c:
