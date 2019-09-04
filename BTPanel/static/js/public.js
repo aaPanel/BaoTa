@@ -2644,13 +2644,13 @@ function web_shell() {
             }, 500);
         }
     });
-    /*
+    
     if (socket) {
         socket.emit('connect_event', '');
         interval = setInterval(function () {
             socket.emit('connect_event', '');
         }, 1000);
-    }*/
+    }
     
     term.on('data', function (data) {
         pdata_socket['data'] = data;

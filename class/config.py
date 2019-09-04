@@ -617,7 +617,10 @@ class config:
 
         reppath = '\nsession.save_path\s*=\s*"tcp\:\/\/([\d\.]+):(\d+).*\r?\n'
         passrep = '\nsession.save_path\s*=\s*"tcp://[\w\.\?\:]+=(.*)"\r?\n'
+        memcached = '\nsession.save_path\s*=\s*"([\d\.]+):(\d+)"'
         save_path = re.search(reppath, phpini)
+        if not save_path:
+            save_path = re.search(memcached, phpini)
         passwd = re.search(passrep, phpini)
         port = ""
         if passwd:
@@ -656,6 +659,15 @@ class config:
         rep = 'session.save_handler\s*=\s*(.+)\r?\n'
         val = 'session.save_handler = ' + g + '\n'
         phpini = re.sub(rep, val, phpini)
+        if g == "memcached":
+            if not re.search("memcached.so", phpini):
+                return public.returnMsg(False, '请先安装%s扩展' % g)
+            rep = '\nsession.save_path\s*=\s*(.+)\r?\n'
+            val = '\nsession.save_path = "%s:%s" \n' % (ip,port)
+            if re.search(rep, phpini):
+                phpini = re.sub(rep, val, phpini)
+            else:
+                phpini = re.sub('\n;session.save_path = "/tmp"', '\n;session.save_path = "/tmp"' + val, phpini)
         if g == "memcache":
             if not re.search("memcache.so",phpini):
                 return public.returnMsg(False, '请先安装%s扩展' % g)
@@ -692,24 +704,39 @@ class config:
 
     # 获取Session文件数量
     def GetSessionCount(self, get):
-        d="/tmp"
+        d=["/tmp","/www/php_session"]
+        
         count = 0
-        list = os.listdir(d)
-        for l in list:
-            if "sess_" in l:
-                count += 1
+        for i in d:
+            if not os.path.exists(i): os.makedirs(i)
+            list = os.listdir(i)
+            for l in list:
+                if os.path.isdir(i+"/"+l):
+                    l1 = os.listdir(i+"/"+l)
+                    for ll in l1:
+                        if "sess_" in ll:
+                            count += 1
+                    continue
+                if "sess_" in l:
+                    count += 1
 
         s = "find /tmp -mtime +1 |grep 'sess_'|wc -l"
-        old_file_conf = int(public.ExecShell(s)[0].split("\n")[0])
+        old_file = int(public.ExecShell(s)[0].split("\n")[0])
 
-        return {"total":count,"oldfile":old_file_conf}
+        s = "find /www/php_session -mtime +1 |grep 'sess_'|wc -l"
+        old_file += int(public.ExecShell(s)[0].split("\n")[0])
+
+        return {"total":count,"oldfile":old_file}
 
     # 删除老文件
     def DelOldSession(self,get):
         s = "find /tmp -mtime +1 |grep 'sess_'|xargs rm -f"
         os.system(s)
-        s = "find /tmp -mtime +1 |grep 'sess_'|wc -l"
-        old_file_conf = int(public.ExecShell(s)[0].split("\n")[0])
+        s = "find /www/php_session -mtime +1 |grep 'sess_'|xargs rm -f"
+        os.system(s)
+        # s = "find /tmp -mtime +1 |grep 'sess_'|wc -l"
+        # old_file_conf = int(public.ExecShell(s)[0].split("\n")[0])
+        old_file_conf = self.GetSessionCount(get)
         if old_file_conf == 0:
             return public.returnMsg(True, '清理成功')
         else:
@@ -964,3 +991,58 @@ class config:
             public.writeFile(d_path,'True')
         public.WriteLog('面板配置','%s离线模式' % t_str)
         return public.returnMsg(True,'设置成功!')
+        
+    # 修改.user.ini文件
+    def _edit_user_ini(self,file,s_conf,act,session_path):
+        os.system("chattr -i {}".format(file))
+        conf = public.readFile(file)
+        if act == "1":
+            if "session.save_path" in conf:
+                return False
+            conf = conf + ":{}/".format(session_path)
+            conf = conf + "\n" + s_conf
+        else:
+            rep = "\n*session.save_path(.|\n)*files"
+            rep1 = ":{}".format(session_path)
+            conf = re.sub(rep,"",conf)
+            conf = re.sub(rep1,"",conf)
+        public.writeFile(file, conf)
+        os.system("chattr +i {}".format(file))
+
+    # 设置php_session存放到独立文件夹
+    def set_php_session_path(self,get):
+        '''
+        get.id      site id
+        get.act     0/1
+        :param get:
+        :return:
+        '''
+        import panelSite
+        site_info = public.M('sites').where('id=?', (get.id,)).field('name,path').find()
+        session_path = "/www/php_session/{}".format(site_info["name"])
+        if os.path.exists(session_path):
+            os.makedirs(session_path)
+        run_path = panelSite.panelSite().GetSiteRunPath(get)["runPath"]
+        user_ini_file = "{site_path}{run_path}/.user.ini".format(site_path=site_info["path"], run_path=run_path)
+        conf = "session.save_path={}/\nsession.save_handler = files".format(session_path)
+        if get.act == "1":
+            if not os.path.exists(user_ini_file):
+                public.writeFile(user_ini_file,conf)
+                os.system("chattr +i {}".format(user_ini_file))
+                return public.returnMsg(True,"设置成功")
+            self._edit_user_ini(user_ini_file,conf,get.act,session_path)
+            return public.returnMsg(True, "设置成功")
+        else:
+            self._edit_user_ini(user_ini_file,conf,get.act,session_path)
+            return public.returnMsg(True, "设置成功")
+
+    # 获取php_session是否存放到独立文件夹
+    def get_php_session_path(self,get):
+        import panelSite
+        site_info = public.M('sites').where('id=?', (get.id,)).field('name,path').find()
+        run_path = panelSite.panelSite().GetSiteRunPath(get)["runPath"]
+        user_ini_file = "{site_path}{run_path}/.user.ini".format(site_path=site_info["path"], run_path=run_path)
+        conf = public.readFile(user_ini_file)
+        if conf and "session.save_path" in conf:
+            return True
+        return False

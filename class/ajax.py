@@ -23,47 +23,55 @@ class ajax:
         except:
             pass
     def GetNginxStatus(self,get):
-        process_cpu = {}
-        worker = int(public.ExecShell("ps aux|grep nginx|grep 'worker process'|wc -l")[0])-1
-        workermen = int(public.ExecShell("ps aux|grep nginx|grep 'worker process'|awk '{memsum+=$6};END {print memsum}'")[0]) / 1024
-        for proc in psutil.process_iter():
-            if proc.name() == "nginx":
-                self.GetProcessCpuPercent(proc.pid,process_cpu)
-        time.sleep(0.5)
-        #取Nginx负载状态
-        self.CheckStatusConf()
-        result = public.HttpGet('http://127.0.0.1/nginx_status')
-        tmp = result.split()
-        data = {}
-        if "request_time" in tmp:
-            data['accepts']  = tmp[8]
-            data['handled']  = tmp[9]
-            data['requests'] = tmp[10]
-            data['Reading']  = tmp[13]
-            data['Writing']  = tmp[15]
-            data['Waiting']  = tmp[17]
-        else:
-            data['accepts'] = tmp[9]
-            data['handled'] = tmp[7]
-            data['requests'] = tmp[8]
-            data['Reading'] = tmp[11]
-            data['Writing'] = tmp[13]
-            data['Waiting'] = tmp[15]
-        data['active'] = tmp[2]
-        data['worker'] = worker
-        data['workercpu'] = round(float(process_cpu["nginx"]),2)
-        data['workermen'] = "%s%s" % (int(workermen), "MB")
-        return data
+        try:
+            process_cpu = {}
+            worker = int(public.ExecShell("ps aux|grep nginx|grep 'worker process'|wc -l")[0])-1
+            workermen = int(public.ExecShell("ps aux|grep nginx|grep 'worker process'|awk '{memsum+=$6};END {print memsum}'")[0]) / 1024
+            for proc in psutil.process_iter():
+                if proc.name() == "nginx":
+                    self.GetProcessCpuPercent(proc.pid,process_cpu)
+            time.sleep(0.5)
+            #取Nginx负载状态
+            self.CheckStatusConf()
+            result = public.HttpGet('http://127.0.0.1/nginx_status')
+            tmp = result.split()
+            data = {}
+            if "request_time" in tmp:
+                data['accepts']  = tmp[8]
+                data['handled']  = tmp[9]
+                data['requests'] = tmp[10]
+                data['Reading']  = tmp[13]
+                data['Writing']  = tmp[15]
+                data['Waiting']  = tmp[17]
+            else:
+                data['accepts'] = tmp[9]
+                data['handled'] = tmp[7]
+                data['requests'] = tmp[8]
+                data['Reading'] = tmp[11]
+                data['Writing'] = tmp[13]
+                data['Waiting'] = tmp[15]
+            data['active'] = tmp[2]
+            data['worker'] = worker
+            data['workercpu'] = round(float(process_cpu["nginx"]),2)
+            data['workermen'] = "%s%s" % (int(workermen), "MB")
+            return data
+        except Exception as ex: 
+            public.WriteLog('信息获取',"Nginx负载状态获取失败: %s" % ex)
+            return public.returnMsg(False,'数据获取失败!')
     
     def GetPHPStatus(self,get):
         #取指定PHP版本的负载状态
-        self.CheckStatusConf();
-        version = get.version
-        result = public.HttpGet('http://127.0.0.1/phpfpm_'+version+'_status?json')
-        tmp = json.loads(result)
-        fTime = time.localtime(int(tmp['start time']))
-        tmp['start time'] = time.strftime('%Y-%m-%d %H:%M:%S',fTime)
-        return tmp
+        try:
+            self.CheckStatusConf();
+            version = get.version
+            result = public.HttpGet('http://127.0.0.1/phpfpm_'+version+'_status?json')
+            tmp = json.loads(result)
+            fTime = time.localtime(int(tmp['start time']))
+            tmp['start time'] = time.strftime('%Y-%m-%d %H:%M:%S',fTime)
+            return tmp
+        except Exception as ex:
+            public.WriteLog('信息获取',"PHP负载状态获取失败: %s" % ex)
+            return public.returnMsg(False,'负载状态获取失败!')
         
     def CheckStatusConf(self):
         if public.get_webserver() != 'nginx': return;

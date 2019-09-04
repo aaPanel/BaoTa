@@ -210,7 +210,6 @@ class firewalls:
     
     #改远程端口
     def SetSshPort(self,get):
-        #return public.returnMsg(False,'演示服务器，禁止此操作!');
         port = get.port
         if int(port) < 22 or int(port) > 65535: return public.returnMsg(False,'FIREWALL_SSH_PORT_ERR');
         ports = ['21','25','80','443','8080','888','8888'];
@@ -224,7 +223,7 @@ class firewalls:
         public.writeFile(file,conf)
         
         if self.__isFirewalld:
-            self.__Obj.AddAcceptPort(port);
+            public.ExecShell('firewall-cmd --permanent --zone=public --add-port='+port+'/tcp')
             public.ExecShell('setenforce 0');
             public.ExecShell('sed -i "s#SELINUX=enforcing#SELINUX=disabled#" /etc/selinux/config');
             public.ExecShell("systemctl restart sshd.service")
@@ -236,7 +235,8 @@ class firewalls:
             public.ExecShell("/etc/init.d/sshd restart")
         
         self.FirewallReload()
-        public.M('firewall').where("ps=?",('SSH远程管理服务',)).setField('port',port)
+        public.M('firewall').where("ps=? or ps=? or port=?",('SSH远程管理服务','SSH远程服务',port)).delete()
+        public.M('firewall').add('port,ps,addtime',(port,'SSH远程服务',time.strftime('%Y-%m-%d %X',time.localtime())))
         public.WriteLog("TYPE_FIREWALL", "FIREWALL_SSH_PORT",(port,))
         return public.returnMsg(True,'EDIT_SUCCESS') 
     

@@ -20,14 +20,13 @@ class dict_obj:
     def get_items(self): return self
 
 
-
 class panelSetup:
     def init(self):
         ua = request.headers.get('User-Agent')
         if ua:
             ua = ua.lower();
             if ua.find('spider') != -1 or ua.find('bot') != -1: return redirect('https://www.baidu.com');
-        g.version = '6.9.8'
+        g.version = '6.9.9'
         g.title =  public.GetConfigValue('title')
         g.uri = request.path
         session['version'] = g.version;
