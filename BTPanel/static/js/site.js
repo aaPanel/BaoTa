@@ -1831,6 +1831,25 @@ var site = {
                     _html.append(bt.render_help(['请根据您的程序需求选择版本', '若非必要,请尽量不要使用PHP5.2,这会降低您的服务器安全性；', 'PHP7不支持mysql扩展，默认安装mysqli以及mysql-pdo。']));
                     $('#webedit-con').append(_html);
                     bt.render_clicks(_form_data.clicks);
+                    $('#webedit-con').append('<div class="user_pw_tit" style="margin-top: 2px;padding-top: 11px;border-top: #ccc 1px dashed;"><span class="tit">session隔离</span><span class="btswitch-p"style="display: inline-flex;"><input class="btswitch btswitch-ios" id="session_switch" type="checkbox"><label class="btswitch-btn session-btn" for="session_switch" ></label></span></div><div class="user_pw" style="margin-top: 10px; display: block;"></div>'
+                        + bt.render_help(['开启后将会把session文件存放到独立文件夹独立文件夹，不与其他站点公用存储位置','若您在PHP配置中将session保存到memcache/redis等缓存器时，请不要开启此选项']));
+                    function get_session_status(){
+                    	var loading = bt.load('正在获取session状态请稍后');
+                    	bt.send('get_php_session_path','config/get_php_session_path',{id:web.id},function(tdata){
+							loading.close();
+							$('#session_switch').prop("checked",tdata);
+						})
+                    };
+                    get_session_status()
+                    $('#session_switch').click(function() {
+                        var val = $(this).prop('checked');
+                        bt.send('set_php_session_path','config/set_php_session_path',{id:web.id,act:val? 1:0},function(rdata){
+                        	bt.msg(rdata)
+                        })
+                        setTimeout(function () {
+	                        get_session_status();
+	                    }, 500)
+                    })
                 })
             })
         },

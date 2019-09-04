@@ -434,6 +434,8 @@ def serviceReload():
 
 
 def ExecShell(cmdstring, cwd=None, timeout=None, shell=True):
+    a = ''
+    e = ''
     try:
         #通过管道执行SHELL
         import shlex
@@ -460,7 +462,6 @@ def ExecShell(cmdstring, cwd=None, timeout=None, shell=True):
         except:pass
     except:
         if not a:
-            e = ''
             a = os.popen(cmdstring).read()
 
     return a,e
@@ -518,7 +519,8 @@ def GetHost(port = False):
     host_tmp = request.headers.get('host')
     if not host_tmp: 
         if request.url_root:
-            host_tmp = re.findall("^https?://([\w:\.-]+)",request.url_root)[0]
+            tmp = re.findall("(https|http)://([\w:\.-]+)",request.url_root)
+            if tmp: host_tmp = tmp[0]
     if not host_tmp:
         host_tmp = GetLocalIp() + ':' + readFile('data/port.pl').strip()
     if host_tmp.find(':') == -1: host_tmp += ':80';

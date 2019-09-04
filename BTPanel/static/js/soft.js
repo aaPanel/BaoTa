@@ -1767,6 +1767,7 @@ var soft = {
                                     '<option value="files" '+ (res.save_handler == 'files'?'selected':'') +'>files</option>'+
                                     (version != '52'?'<option value="redis" '+ (res.save_handler == 'redis'?'selected':'') +'>redis</option>':'') +
                                     (version != '73'?'<option value="memcache" '+ (res.save_handler == 'memcache'?'selected':'') +'>memcache</option>':'')+
+                                    '<option value="memcached" '+ (res.save_handler == 'memcached'?'selected':'') +'>memcached</option>'+
                                 '</select>'+
                             '</div>'+
                         '</div>'+
@@ -1830,6 +1831,10 @@ var soft = {
                                 $('[name="ip"]').val('127.0.0.1');
                                 $('[name="port"]').val('11211');
                             break;
+                            case 'memcached':
+                                $('[name="ip"]').val('127.0.0.1');
+                                $('[name="port"]').val('11211');
+                            break;
                         }
                     });
                     $('.btn_conf_save').click(function(){
@@ -1859,6 +1864,11 @@ var soft = {
                                 $('[name="passwd"]').attr('disabled',false);
                             break;
                             case 'memcache':
+                                $('[name="ip"]').attr('disabled',false);
+                                $('[name="port"]').attr('disabled',false);
+                                $('[name="passwd"]').attr('disabled','disabled').val('');
+                            break;
+                            case 'memcached':
                                 $('[name="ip"]').attr('disabled',false);
                                 $('[name="port"]').attr('disabled',false);
                                 $('[name="passwd"]').attr('disabled','disabled').val('');

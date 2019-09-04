@@ -50,6 +50,7 @@ class datatools:
             ret3 = []
             for i in tables:
                 if i == 1049: return public.returnMsg(False,'指定数据库不存在!')
+                if type(i) == int: continue
                 table = self.map_to_list(self.DB_MySQL.query("show table status from `%s` where name = '%s'" % (db_name, i[0])))
                 if not table: continue
                 try:

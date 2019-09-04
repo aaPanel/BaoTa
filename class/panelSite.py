@@ -2050,7 +2050,9 @@ server
         data = {}
         data['logs'] = self.GetLogsStatus(get);
         data['userini'] = False;
-        if os.path.exists(path+'/.user.ini'):
+        user_ini_file = path+'/.user.ini'
+        user_ini_conf = public.readFile(user_ini_file)
+        if user_ini_conf and "open_basedir" in user_ini_conf:
             data['userini'] = True;
         data['runPath'] = self.GetSiteRunPath(get);
         data['pass'] = self.GetHasPwd(get);
@@ -2061,7 +2063,9 @@ server
         useriniPath = path + '/.user.ini'
         if os.path.exists(useriniPath):
             public.ExecShell('chattr -i ' + useriniPath);
-            os.remove(useriniPath)
+            try:
+                os.remove(useriniPath)
+            except:pass
 
         for p1 in os.listdir(path):
             try:
@@ -2081,21 +2085,36 @@ server
         path = get.path
         runPath = self.GetRunPath(get)
         filename = path+runPath+'/.user.ini';
-        if os.path.exists(filename):
-            public.ExecShell("chattr -i "+filename);
-            os.remove(filename)
-            return public.returnMsg(True, 'SITE_BASEDIR_CLOSE_SUCCESS');
-
-        if len(runPath) > 1: 
-            self.DelUserInI(path + runPath);
-        else:
-            self.DelUserInI(path);
-        
-        public.writeFile(filename, 'open_basedir='+path+'/:/tmp/:/proc/');
-        public.ExecShell("chattr +i "+filename);
-        
-        return public.returnMsg(True,'SITE_BASEDIR_OPEN_SUCCESS');
-
+        conf = public.readFile(filename)
+        try:
+            public.ExecShell("chattr -i " + filename)
+            # if "open_basedir" not in conf:
+            #     return public.returnMsg(True, 'SITE_BASEDIR_CLOSE_SUCCESS');
+            if conf and "open_basedir" in conf:
+                rep = "\n*open_basedir.*"
+                conf = re.sub(rep,"",conf)
+                if not conf:
+                    os.remove(filename)
+                else:
+                    public.writeFile(filename,conf)
+                    public.ExecShell("chattr +i " + filename)
+                return public.returnMsg(True, 'SITE_BASEDIR_CLOSE_SUCCESS')
+            #
+            # if len(runPath) > 1:
+            #     self.DelUserInI(path + runPath);
+            # else:
+            #     self.DelUserInI(path);
+            if conf and "session.save_path" in conf:
+                rep = "session.save_path\s*=\s*(.*)"
+                s_path = re.search(rep,conf).groups(1)[0]
+                public.writeFile(filename, conf + '\nopen_basedir={}/:/tmp/:/proc/:{}'.format(path,s_path))
+            else:
+                public.writeFile(filename,'open_basedir={}/:/tmp/:/proc/'.format(path))
+            public.ExecShell("chattr +i " + filename)
+            return public.returnMsg(True,'SITE_BASEDIR_OPEN_SUCCESS');
+        except Exception as e:
+            public.ExecShell("chattr +i " + filename)
+            return e
 
 
        # 读配置
@@ -2993,6 +3012,7 @@ location %s
     def GetLogsStatus(self,get):
         filename = public.GetConfigValue('setup_path') + '/panel/vhost/'+public.get_webserver()+'/' + get.name + '.conf';
         conf = public.readFile(filename);
+        if not conf: return True
         if conf.find('#ErrorLog') != -1: return False;
         if conf.find("access_log  /dev/null") != -1: return False;
         return True;
@@ -3238,7 +3258,7 @@ location %s
     def SetSiteRunPath(self,get):
         siteName = public.M('sites').where('id=?',(get.id,)).getField('name');
         sitePath = public.M('sites').where('id=?',(get.id,)).getField('path');
-        
+        old_run_path = self.GetRunPath(get)
         #处理Nginx
         filename = self.setupPath + '/panel/vhost/nginx/' + siteName + '.conf'
         if os.path.exists(filename):
@@ -3257,10 +3277,16 @@ location %s
             conf = conf.replace(path,sitePath + get.runPath);
             public.writeFile(filename,conf);
 
-        self.DelUserInI(sitePath);
-        get.path = sitePath;
-        self.SetDirUserINI(get);
-        
+        # self.DelUserInI(sitePath);
+        # get.path = sitePath;
+        # self.SetDirUserINI(get);
+        s_path = sitePath+old_run_path+"/.user.ini"
+        d_path = sitePath + get.runPath+"/.user.ini"
+        if s_path != d_path:
+            os.system("chattr -i {}".format(s_path))
+            os.system("mv {} {}".format(s_path,d_path))
+            os.system("chattr +i {}".format(d_path))
+
         public.serviceReload();
         return public.returnMsg(True,'SET_SUCCESS');
     
