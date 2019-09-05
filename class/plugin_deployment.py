@@ -474,7 +474,7 @@ class plugin_deployment:
     #获取进度
     def GetSpeed(self,get):
         try:
-            if not os.path.exists(self.logPath): public.returnMsg(False,'当前没有部署任务!');
+            if not os.path.exists(self.logPath): return public.returnMsg(False,'当前没有部署任务!');
             return json.loads(public.readFile(self.logPath));
         except:
             return {'name':'准备部署','total':0,'used':0,'pre':0,'speed':0}

@@ -87,14 +87,15 @@ class files:
 
     #上传文件2
     def upload(self,args):
-        if sys.version_info[0] == 2: 
-            args.f_name = args.f_name.encode('utf-8')
-            args.f_path = args.f_path.encode('utf-8')
         if not 'f_name' in args:
             args.f_name = request.form.get('f_name')
             args.f_path = request.form.get('f_path')
             args.f_size = request.form.get('f_size')
             args.f_start = request.form.get('f_start')
+
+        if sys.version_info[0] == 2: 
+            args.f_name = args.f_name.encode('utf-8')
+            args.f_path = args.f_path.encode('utf-8')
 
         if args.f_name.find('./') != -1 or args.f_path.find('./') != -1: 
             return public.returnMsg(False,'错误的参数')
@@ -666,6 +667,7 @@ class files:
         data = [];
         filesx = [];
         if not hasattr(get,'filename'):
+            if not 'selected' in session: return []
             filesx = json.loads(session['selected']['data']);
         else:
             filesx.append(get.filename);
@@ -692,6 +694,7 @@ class files:
             public.writeFile(get.path,'');
         
         if os.path.getsize(get.path) > 2097152: return public.returnMsg(False,u'不能在线编辑大于2MB的文件!');
+        if not os.path.isfile(get.path): return public.returnMsg(False,'这不是一个文件!')
         fp = open(get.path,'rb')
         data = {}
         data['status'] = True
@@ -723,11 +726,7 @@ class files:
                     else:
                         data['data'] = srcBody.decode(data['encoding'])
             else:
-                if sys.version_info[0] == 2: 
-                    data['data'] = srcBody.decode('utf-8').encode('utf-8');
-                else:
-                    data['data'] = srcBody.decode('utf-8')
-                data['encoding'] = u'utf-8';
+               return public.returnMsg(False,'打开文件失败，文件可能被其它进程占用!')
             if hasattr(get,'filename'): get.path = get.filename
             data['historys'] = self.get_history(get.path)
             return data;
@@ -975,6 +974,7 @@ class files:
         import shutil
         if sys.version_info[0] == 2: get.path = get.path.encode('utf-8');
         if not self.CheckDir(get.path): return public.returnMsg(False,'FILE_DANGER');
+        if not 'selected' in session: return public.returnMsg(False,'操作失败,请重新操作复制或剪切过程')
         i = 0;
         myfiles = json.loads(session['selected']['data'])
         l = len(myfiles);
@@ -1307,6 +1307,7 @@ cd %s
     #添加收藏夹分类
     def add_files_store_types(self,get):
         file_type = get.file_type
+        if sys.version_info[0] == 2: file_type = file_type.decode('utf-8')
         data = self.get_store_data()
         if file_type in data:  return public.returnMsg(False,'请勿重复添加分类!') 
         
@@ -1317,11 +1318,14 @@ cd %s
     #删除收藏夹分类
     def del_files_store_types(self,get):
         file_type = get.file_type
+        if sys.version_info[0] == 2: file_type = file_type.decode('utf-8')
         if file_type == '默认分类': return public.returnMsg(False,'默认分类不可被删除!') 
         data = self.get_store_data()
-        del data[file_type]
-        self.set_store_data(data)
-        return public.returnMsg(True,'删除[' + file_type + ']成功!') 
+        if file_type in data:
+            del data[file_type]
+            self.set_store_data(data)
+            return public.returnMsg(True,'删除[' + file_type + ']成功!') 
+        return public.returnMsg(False,'删除[' + file_type + ']失败!')
 
     #获取收藏夹
     def get_files_store(self,get):
@@ -1344,6 +1348,7 @@ cd %s
     #添加收藏夹
     def add_files_store(self,get):
         file_type = get.file_type
+        if sys.version_info[0] == 2: file_type = file_type.decode('utf-8')
         path = get.path
         if not os.path.exists(path):  return public.returnMsg(False,'文件或目录不存在!') 
             
@@ -1357,8 +1362,8 @@ cd %s
     #删除收藏夹
     def del_files_store(self,get):
         file_type = get.file_type
+        if sys.version_info[0] == 2: file_type = file_type.decode('utf-8')
         path = get.path
-
         data = self.get_store_data()
         if not file_type in data:  return public.returnMsg(False,'找不到此收藏夹分类!') 
         data[file_type].remove(path)

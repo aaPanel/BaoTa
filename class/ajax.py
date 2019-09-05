@@ -762,7 +762,18 @@ ServerName 127.0.0.2
             return {"status":True,"port":port}
         return {"status":False,"port":""}
 
-	# 修改php ssl端口
+    # 获取phpmyadmin ssl状态
+    def get_phpmyadmin_ssl(self,get):
+        import re
+        conf_file = self.get_phpmyadmin_conf()
+        conf = public.readFile(conf_file["conf_file"])
+        rep = conf_file["rep"]
+        if conf:
+            port = re.search(rep, conf).group(1)
+            return {"status":True,"port":port}
+        return {"status":False,"port":""}
+
+    # 修改php ssl端口
     def change_phpmyadmin_ssl_port(self,get):
         import re
         try:
@@ -771,48 +782,54 @@ ServerName 127.0.0.2
                 return public.returnMsg(False, '端口范围不正确')
         except:
             return public.returnMsg(False, '端口格式不正确')
-        filename = self.get_phpmyadmin_conf()
-        conf = public.readFile(filename["conf_file"])
-        if conf:
+        for i in ["nginx","apache"]:
+            file = "/www/server/panel/vhost/{}/phpmyadmin.conf".format(i)
+            conf = public.readFile(file)
+            if not conf:
+                return public.returnMsg(False,"没有找到{}配置文件，请尝试关闭ssl端口设置后再打开".format(i))
             rulePort = ['80', '443', '21', '20', '8080', '8081', '8089', '11211', '6379']
             if get.port in rulePort:
                 return public.returnMsg(False, 'AJAX_PHPMYADMIN_PORT_ERR')
-            if public.get_webserver() == 'nginx':
-                rep = "listen\s+([0-9]+)\s*;"
-                oldPort = re.search(rep, conf).groups()[0]
-                conf = re.sub(rep, 'listen ' + get.port + ';\n', conf)
+            if i == "nginx":
+                if not os.path.exists("/www/server/panel/vhost/apache/phpmyadmin.conf"):
+                    return public.returnMsg(False, "没有找到 apache phpmyadmin ssl 配置文件，请尝试关闭ssl端口设置后再打开")
+                rep = "listen\s*([0-9]+)\s*.*;"
+                oldPort = re.search(rep, conf)
+                if not oldPort:
+                    return public.returnMsg(False, '没有检测到 nginx phpmyadmin监听的端口，请确认是否手动修改过文件')
+                oldPort = oldPort.groups()[0]
+                conf = re.sub(rep, 'listen ' + get.port + ' ssl;', conf)
             else:
-                rep = "Listen\s+([0-9]+)\s*\n"
-                oldPort = re.search(rep, conf).groups()[0]
+                rep = "Listen\s*([0-9]+)\s*\n"
+                oldPort = re.search(rep, conf)
+                if not oldPort:
+                    return public.returnMsg(False, '没有检测到 apache phpmyadmin监听的端口，请确认是否手动修改过文件')
+                oldPort = oldPort.groups()[0]
                 conf = re.sub(rep, "Listen " + get.port + "\n", conf, 1)
-                rep = "VirtualHost\s+\*:[0-9]+"
+                rep = "VirtualHost\s*\*:[0-9]+"
                 conf = re.sub(rep, "VirtualHost *:" + get.port, conf, 1)
-
             if oldPort == get.port: return public.returnMsg(False, 'SOFT_PHPVERSION_ERR_PORT')
-
-            public.writeFile(filename["conf_file"], conf)
-            import firewalls
-            get.ps = public.getMsg('SOFT_PHPVERSION_PS');
-            fw = firewalls.firewalls();
-            fw.AddAcceptPort(get);
-            public.serviceReload();
-            public.WriteLog('TYPE_SOFT', 'SOFT_PHPMYADMIN_PORT', (get.port,))
-            get.id = public.M('firewall').where('port=?', (oldPort,)).getField('id');
-            get.port = oldPort;
-            fw.DelAcceptPort(get);
-            return public.returnMsg(True, 'SET_PORT_SUCCESS');
-        else:
-            return public.returnMsg(False, '设置端口错误,请先开启 PhoMyAdmin SSL 后再设置');
+            public.writeFile(file, conf)
+            public.serviceReload()
+            if i=="apache":
+                import firewalls
+                get.ps = public.getMsg('SOFT_PHPVERSION_PS')
+                fw = firewalls.firewalls()
+                fw.AddAcceptPort(get)
+                public.serviceReload()
+                public.WriteLog('TYPE_SOFT', 'SOFT_PHPMYADMIN_PORT', (get.port,))
+                get.id = public.M('firewall').where('port=?', (oldPort,)).getField('id')
+                get.port = oldPort
+                fw.DelAcceptPort(get)
+        return public.returnMsg(True, 'SET_PORT_SUCCESS')
 
     # 设置phpmyadmin ssl
     def set_phpmyadmin_ssl(self,get):
         if not os.path.exists("/www/server/panel/ssl/certificate.pem"):
             return public.returnMsg(False,'面板证书不存在，请申请面板证书后再试')
-        filename = self.__get_webserver_conffile()
         if get.v == "1":
         # nginx配置文件
-            if "nginx" in filename:
-                ssl_conf = """server
+            ssl_conf = """server
     {
         listen 887 ssl;
         server_name phpmyadmin;
@@ -844,14 +861,13 @@ ServerName 127.0.0.2
         }
         access_log  /www/wwwlogs/access.log;
     }"""
-                public.writeFile("/www/server/panel/vhost/nginx/phpmyadmin.conf",ssl_conf)
-            else:
-                import panelPlugin
-                get.sName = "phpmyadmin"
-                v = panelPlugin.panelPlugin().get_soft_find(get)
-                public.writeFile("/tmp/2",str(v["ext"]["phpversion"]))
-                # apache配置
-                ssl_conf = '''Listen 887
+            public.writeFile("/www/server/panel/vhost/nginx/phpmyadmin.conf",ssl_conf)
+            import panelPlugin
+            get.sName = "phpmyadmin"
+            v = panelPlugin.panelPlugin().get_soft_find(get)
+            public.writeFile("/tmp/2",str(v["ext"]["phpversion"]))
+            # apache配置
+            ssl_conf = '''Listen 887
 <VirtualHost *:887>
     ServerAdmin webmaster@example.com
     DocumentRoot "/www/server/phpmyadmin"
@@ -888,14 +904,17 @@ ServerName 127.0.0.2
        DirectoryIndex index.php index.html index.htm default.php default.html default.htm
     </Directory>
 </VirtualHost>'''.format(v["ext"]["phpversion"])
-                public.writeFile("/www/server/panel/vhost/apache/phpmyadmin.conf", ssl_conf)
+            public.writeFile("/www/server/panel/vhost/apache/phpmyadmin.conf", ssl_conf)
         else:
-            if "nginx" in filename:
+            if os.path.exists("/www/server/panel/vhost/nginx/phpmyadmin.conf"):
                 os.remove("/www/server/panel/vhost/nginx/phpmyadmin.conf")
-            else:
+            if os.path.exists("/www/server/panel/vhost/apache/phpmyadmin.conf"):
                 os.remove("/www/server/panel/vhost/apache/phpmyadmin.conf")
+            public.serviceReload()
+            return public.returnMsg(True, '关闭成功')
         public.serviceReload()
-        return public.returnMsg(True,'开启成功')
+        return public.returnMsg(True,'开启成功，请手动放行phpmyadmin ssl端口')
+
     
     #设置PHPMyAdmin
     def setPHPMyAdmin(self,get):

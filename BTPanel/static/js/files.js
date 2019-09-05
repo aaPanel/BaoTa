@@ -581,7 +581,7 @@ function GetFiles(Path,sort) {
             }
             shtml += '</ul>';
         }
-        shtml += '<li style="text-align: center;"><a href="javascript: ;" onclick="set_file_store(\'' + rdata.path + '\')">+ 管理</a></li></ul></div>'
+        shtml += '<li style="text-align: center;"><a href="javascript: ;" onclick="set_file_store(\'' + rdata.PATH + '\')">+ 管理</a></li></ul></div>'
 
         BarTools += shtml;
 
@@ -1811,7 +1811,6 @@ function set_file_store(path) {
 
                             if (rRet.status) {
                                 set_file_store(path)
-
                                 GetFiles(path)
                             }
                             bt.msg(rRet);
