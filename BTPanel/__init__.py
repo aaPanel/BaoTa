@@ -414,7 +414,7 @@ def files(pdata = None):
     defs = ('CheckExistsFiles','GetExecLog','GetSearch','ExecShell','GetExecShellMsg','UploadFile','GetDir','CreateFile','CreateDir','DeleteDir','DeleteFile',
             'CopyFile','CopyDir','MvFile','GetFileBody','SaveFileBody','Zip','UnZip','SearchFiles','upload','read_history',
             'GetFileAccess','SetFileAccess','GetDirSize','SetBatchData','BatchPaste','install_rar','get_path_size',
-            'DownloadFile','GetTaskSpeed','CloseLogs','InstallSoft','UninstallSoft','SaveTmpFile','GetTmpFile','del_files_store','add_files_store','get_files_store','del_files_store_types','add_files_store_types'
+            'DownloadFile','GetTaskSpeed','CloseLogs','InstallSoft','UninstallSoft','SaveTmpFile','GetTmpFile','del_files_store','add_files_store','get_files_store','del_files_store_types','add_files_store_types',
             'RemoveTask','ActionTask','Re_Recycle_bin','Get_Recycle_bin','Del_Recycle_bin','Close_Recycle_bin','Recycle_bin')
     return publicObject(filesObject,defs,None,pdata);
 
@@ -1108,10 +1108,13 @@ def get_input():
             if key in exludes: continue
             data[key] = str(request.form.get(key,''))
     except:
-        post = request.form.to_dict()
-        for key in post.keys():
-            if key in exludes: continue
-            data[key] = str(post[key])
+        try:
+            post = request.form.to_dict()
+            for key in post.keys():
+                if key in exludes: continue
+                data[key] = str(post[key])
+        except:
+            pass
 
     if not hasattr(data,'data'): data.data = []
     return data

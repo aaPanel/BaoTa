@@ -520,10 +520,13 @@ def GetHost(port = False):
     if not host_tmp: 
         if request.url_root:
             tmp = re.findall("(https|http)://([\w:\.-]+)",request.url_root)
-            if tmp: host_tmp = tmp[0]
+            if tmp: host_tmp = tmp[0][1]
     if not host_tmp:
         host_tmp = GetLocalIp() + ':' + readFile('data/port.pl').strip()
-    if host_tmp.find(':') == -1: host_tmp += ':80';
+    try:
+        if host_tmp.find(':') == -1: host_tmp += ':80';
+    except:
+        host_tmp = "127.0.0.1:8888"
     h = host_tmp.split(':')
     if port: return h[1]
     return h[0]

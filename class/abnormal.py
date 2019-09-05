@@ -84,10 +84,16 @@ class abnormal():
             for i in php_count:
                 get.sName = 'php-%s.%s'%(i[0],i[1])
                 mysql = self.__plugin.get_soft_find(get)
-                php={}
-                php['version']=i
-                php['status']=mysql['status']
-                ret.append(php)
+                if not mysql:
+                    php={}
+                    php['version']=i
+                    php['status']=False
+                    ret.append(php)
+                else:
+                    php = {}
+                    php['version'] = i
+                    php['status'] = mysql['status']
+                    ret.append(php)
             else:
                 return ret
         else:
