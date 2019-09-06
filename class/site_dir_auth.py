@@ -64,7 +64,7 @@ class SiteDirAuth:
         '''
         name = get.name
         site_dir = get.site_dir
-        if not get.password or not get.password:
+        if not hasattr(get,"password") or not get.password or not hasattr(get,"username") or not get.username:
             return public.returnMsg(False, '请输入账号或密码')
         if not get.site_dir:
             return public.returnMsg(False, '请输入需要保护的目录')
@@ -117,9 +117,8 @@ class SiteDirAuth:
 
     # 获取站点名
     def get_site_info(self,id):
-        site_name = public.M('sites').where('id=?', (id,)).getField('name')
-        site_path = public.M('sites').where('id=?', (id,)).getField('path')
-        return {"site_name":site_name,"site_path":site_path}
+        site_info = public.M('sites').where('id=?', (id,)).field('name,path').find()
+        return {"site_name":site_info["name"],"site_path":site_info["path"]}
 
     # 设置独立认证文件
     def set_dir_auth_file(self,site_path,site_name,name,username,site_dir,auth_file):

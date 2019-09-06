@@ -289,11 +289,18 @@ def ReadFile(filename,mode = 'r'):
         fp = open(filename, mode)
         f_body = fp.read()
         fp.close()
-    except:
-        fp = open(filename, mode,encoding="utf-8")
-        f_body = fp.read()
-        fp.close()
-
+    except Exception as ex:
+        if sys.version_info[0] != 2:
+            try:
+                fp = open(filename, mode,encoding="utf-8");
+                f_body = fp.read()
+                fp.close()
+            except Exception as ex2:
+                WriteLog('打开文件',str(ex2))
+                return False
+        else:
+            WriteLog('打开文件',str(ex))
+            return False
     return f_body
 
 def readFile(filename,mode='r'):

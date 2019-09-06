@@ -59,7 +59,6 @@ class bt_task:
         if type(data) == str: 
             public.WriteLog('任务队列',data)
             return []
-
         if not 'num' in get: get.num = 15
         num = int(get.num)
         for i in range(len(data)):

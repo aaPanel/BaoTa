@@ -243,10 +243,11 @@ class plugin_deployment:
         site_name = get.site_name;
         php_version = get.php_version;
         #取基础信息
-        find = public.M('sites').where('name=?',(site_name,)).field('id,path,name').find();
-        path = find['path'];
+        find = public.M('sites').where('name=?',(site_name,)).field('id,path,name').find()
+        if not  'path' in find:
+            return public.returnMsg(False, '网站不存在!')
+        path = find['path']
         if path.replace('//','/') == '/': return public.returnMsg(False,'危险的网站根目录!')
-        
         #获取包信息
         pinfo = self.GetPackageInfo(name);
         id = pinfo['id']
@@ -474,7 +475,7 @@ class plugin_deployment:
     #获取进度
     def GetSpeed(self,get):
         try:
-            if not os.path.exists(self.logPath): return public.returnMsg(False,'当前没有部署任务!');
+            if not os.path.exists(self.logPath): public.returnMsg(False,'当前没有部署任务!');
             return json.loads(public.readFile(self.logPath));
         except:
             return {'name':'准备部署','total':0,'used':0,'pre':0,'speed':0}

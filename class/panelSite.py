@@ -3225,13 +3225,19 @@ location %s
             if os.path.exists(filename):
                 conf = public.readFile(filename)
                 rep = '\s*root\s*(.+);'
-                path = re.search(rep,conf).groups()[0];
+                path = re.search(rep,conf)
+                if not path:
+                    return public.returnMsg(False,"获取站点运行目录失败")
+                path = path.groups()[0]
         else:
             filename = self.setupPath + '/panel/vhost/apache/' + siteName + '.conf'
             if os.path.exists(filename):
                 conf = public.readFile(filename)
                 rep = '\s*DocumentRoot\s*"(.+)"\s*\n'
-                path = re.search(rep,conf).groups()[0];
+                path = re.search(rep,conf)
+                if not path:
+                    return public.returnMsg(False,"获取站点运行目录失败")
+                path = path.groups()[0]
         
         data = {}
         if sitePath == path: 
@@ -3253,6 +3259,7 @@ location %s
         
         data['dirs'] = dirnames;
         return data;
+
     
     #设置当前站点运行目录
     def SetSiteRunPath(self,get):

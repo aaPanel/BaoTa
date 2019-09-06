@@ -389,14 +389,14 @@ SetLink
         name = public.M('databases').where("id=?",(id,)).getField('name')
         root = public.M('config').where('id=?',(1,)).getField('mysql_root');
         if not os.path.exists(session['config']['backup_path'] + '/database'): os.system('mkdir -p ' + session['config']['backup_path'] + '/database');
-        self.mypass(True, root);
+        if not self.mypass(True, root):return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
         
         fileName = name + '_' + time.strftime('%Y%m%d_%H%M%S',time.localtime()) + '.sql.gz'
         backupName = session['config']['backup_path'] + '/database/' + fileName
         public.ExecShell("/www/server/mysql/bin/mysqldump --default-character-set="+ public.get_database_character(name) +" --force --opt \"" + name + "\" | gzip > " + backupName)
         if not os.path.exists(backupName): return public.returnMsg(False,'BACKUP_ERROR');
-        
-        self.mypass(False, root);
+
+        if not self.mypass(True, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
         
         sql = public.M('backup')
         addTime = time.strftime('%Y-%m-%d %X',time.localtime())
@@ -457,17 +457,17 @@ SetLink
                     public.ExecShell("cd "  +  backupPath  +  " && gunzip -q " +  '"'+file+'"')
                     isgzip = True
             if not os.path.exists(backupPath + '/' + tmpFile) or tmpFile == '': return public.returnMsg(False, 'FILE_NOT_EXISTS',(tmpFile,))
-            self.mypass(True, root);
+            if not self.mypass(True, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
             os.system(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " +'"'+ backupPath + '/' +tmpFile+'"')
-            self.mypass(False, root);
+            if not self.mypass(True, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
             if isgzip:
                 os.system('cd ' +backupPath+ ' && gzip ' + file.split('/')[-1][:-3]);
             else:
                 os.system("rm -f " +  backupPath + '/' +tmpFile)
         else:
-            self.mypass(True, root);
+            if not self.mypass(True, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
             os.system(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < "+'"' +  file+'"')
-            self.mypass(False, root);
+            if not self.mypass(True, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
                 
             
         public.WriteLog("TYPE_DATABASE", 'DATABASE_INPUT_SUCCESS',(name,))
@@ -508,8 +508,10 @@ SetLink
             rep = "\[mysqldump\]\nuser=root"
             sea = "[mysqldump]\n"
             subStr = sea + "user=root\npassword=\"" + root + "\"\n";
+            if type(mycnf)==bool:return False
             mycnf = mycnf.replace(sea,subStr)
             if len(mycnf) > 100: public.writeFile('/etc/my.cnf',mycnf);
+            return True
     
     #添加到服务器
     def ToDataBase(self,find):
@@ -593,14 +595,16 @@ SetLink
         db_name = public.M('databases').where('username=?',(name,)).getField('name');
         access = get['access']
         password = public.M('databases').where("username=?",(name,)).getField('password')
-        users = panelMysql.panelMysql().query("select Host from mysql.user where User='" + name + "' AND Host!='localhost'")
+        mysql_obj = panelMysql.panelMysql()
+        result = mysql_obj.query("show databases")
+        isError = self.IsSqlError(result)
+        if isError != None: return isError
+        users = mysql_obj.query("select Host from mysql.user where User='" + name + "' AND Host!='localhost'")
         for us in users:
-            panelMysql.panelMysql().execute("drop user '" + name + "'@'" + us[0] + "'")
+            mysql_obj.execute("drop user '" + name + "'@'" + us[0] + "'")
         self.__CreateUsers(db_name,name,password,access)
-
         return public.returnMsg(True, 'SET_SUCCESS')
-        
-    
+
     #获取数据库配置信息
     def GetMySQLInfo(self,get):
         data = {}
@@ -756,7 +760,10 @@ SetLink
         except:pass
         for d in data:
             for g in gets:
-                if d[0] == g: result[g] = d[1];
+                try:
+                    if d[0] == g: result[g] = d[1];
+                except:
+                    pass
         result['Run'] = int(time.time()) - int(result['Uptime'])
         tmp = panelMysql.panelMysql().query('show master status');
         try:
@@ -766,6 +773,7 @@ SetLink
             result['File'] = 'OFF';
             result['Position'] = 'OFF';
         return result;
+    
     
     #取慢日志
     def GetSlowLogs(self,get):

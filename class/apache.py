@@ -37,7 +37,10 @@ class apache:
             public.writeFile(apacheconf,confcontent)
             public.serviceReload()
         result = public.HttpGet('http://127.0.0.1/server-status?auto')
-        workermen = int(public.ExecShell("ps aux|grep httpd|grep 'start'|awk '{memsum+=$6};END {print memsum}'")[0]) / 1024
+        try:
+            workermen = int(public.ExecShell("ps aux|grep httpd|grep 'start'|awk '{memsum+=$6};END {print memsum}'")[0]) / 1024
+        except:
+            return public.returnMsg(False,"获取内存错误")
         for proc in psutil.process_iter():
             if proc.name() == "httpd":
                 self.GetProcessCpuPercent(proc.pid,process_cpu)
@@ -46,7 +49,10 @@ class apache:
         data = {}
 
         # 计算启动时间
-        Uptime = int(re.search("ServerUptimeSeconds:\s+(.*)",result).group(1))
+        Uptime = re.search("ServerUptimeSeconds:\s+(.*)",result)
+        if not Uptime:
+            return public.returnMsg(False, "获取启动时间错误")
+        Uptime = int(Uptime.group(1))
         min = Uptime / 60
         hours = min / 60
         days = math.floor(hours / 24)
@@ -54,10 +60,19 @@ class apache:
         min = math.floor(min - (days * 60 * 24) - (hours * 60))
 
         #格式化重启时间
-        restarttime = re.search("RestartTime:\s+(.*)",result).group(1)
-        rep = "\w+,\s([\w-]+)\s([\d\:]+)\sCST"
-        date = re.search(rep,restarttime).group(1)
-        timedetail = re.search(rep,restarttime).group(2)
+        restarttime = re.search("RestartTime:\s+(.*)",result)
+        if not restarttime:
+            return public.returnMsg(False, "获取重启时间错误")
+        restarttime = restarttime.group(1)
+        rep = "\w+,\s([\w-]+)\s([\d\:]+)\s\w+"
+        date = re.search(rep,restarttime)
+        if not date:
+            return public.returnMsg(False, "获取日期错误")
+        date = date.group(1)
+        timedetail = re.search(rep,restarttime)
+        if not timedetail:
+            return public.returnMsg(False, "获取时间详情错误")
+        timedetail=timedetail.group(2)
         monthen = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
         n = 0
         for m in monthen:
@@ -67,16 +82,31 @@ class apache:
         date = date.split("-")
         date = "%s-%s-%s" % (date[2],date[1],date[0])
 
-        reqpersec = re.search("ReqPerSec:\s+(.*)", result).group(1)
+        reqpersec = re.search("ReqPerSec:\s+(.*)", result)
+        if not reqpersec:
+            return public.returnMsg(False, "获取 reqpersec  错误")
+        reqpersec = reqpersec.group(1)
         if re.match("^\.", reqpersec):
             reqpersec = "%s%s" % (0,reqpersec)
         data["RestartTime"] = "%s %s" % (date,timedetail)
-        data["UpTime"] = "%s天%s小时%s分钟" % (str(int(days)),str(int(hours)),str(int(min)))
-        data["TotalAccesses"] = re.search("Total Accesses:\s+(\d+)",result).group(1)
-        data["TotalKBytes"] = re.search("Total kBytes:\s+(\d+)",result).group(1)
+        data["UpTime"] = "%s day %s hour %s minute" % (str(int(days)),str(int(hours)),str(int(min)))
+        total_acc = re.search("Total Accesses:\s+(\d+)",result)
+        if not total_acc:
+            return public.returnMsg(False, "获取 TotalAccesses 错误")
+        data["TotalAccesses"] = total_acc.group(1)
+        total_kb = re.search("Total kBytes:\s+(\d+)",result)
+        if not total_kb:
+            return public.returnMsg(False, "获取 TotalKBytes 错误")
+        data["TotalKBytes"] = total_kb.group(1)
         data["ReqPerSec"] = round(float(reqpersec), 2)
-        data["BusyWorkers"] = re.search("BusyWorkers:\s+(\d+)",result).group(1)
-        data["IdleWorkers"] = re.search("IdleWorkers:\s+(\d+)",result).group(1)
+        busywork = re.search("BusyWorkers:\s+(\d+)",result)
+        if not busywork:
+            return public.returnMsg(False, "获取 BusyWorkers 错误")
+        data["BusyWorkers"] = busywork.group(1)
+        idlework = re.search("IdleWorkers:\s+(\d+)",result)
+        if not idlework:
+            return public.returnMsg(False, "获取 IdleWorkers 错误")
+        data["IdleWorkers"] = idlework.group(1)
         data["workercpu"] = round(float(process_cpu["httpd"]),2)
         data["workermem"] = "%s%s" % (int(workermen),"MB")
         return data
@@ -93,8 +123,14 @@ class apache:
         n = 0
         for i in gets:
             rep = "(%s)\s+(\w+)" % i
-            k = re.search(rep, apachedefaultcontent).group(1)
-            v = re.search(rep, apachedefaultcontent).group(2)
+            k = re.search(rep, apachedefaultcontent)
+            if not k:
+                return public.returnMsg(False, "获取 Key {} 错误".format(k))
+            k = k.group(1)
+            v = re.search(rep, apachedefaultcontent)
+            if not v:
+                return public.returnMsg(False, "获取 Value {} 错误".format(v))
+            v = v.group(2)
             psstr = ps[n]
             kv = {"name":k,"value":v,"ps":psstr}
             conflist.append(kv)
@@ -105,8 +141,14 @@ class apache:
         n = 0
         for i in gets:
             rep = "(%s)\s+(\w+)" % i
-            k = re.search(rep, apachempmcontent).group(1)
-            v = re.search(rep, apachempmcontent).group(2)
+            k = re.search(rep, apachempmcontent)
+            if not k:
+                return public.returnMsg(False, "获取 Key {} 错误".format(k))
+            k = k.group(1)
+            v = re.search(rep, apachempmcontent)
+            if not v:
+                return public.returnMsg(False, "获取 Value {} 错误".format(v))
+            v = v.group(2)
             psstr = ps[n]
             kv = {"name": k, "value": v, "ps": psstr}
             conflist.append(kv)
