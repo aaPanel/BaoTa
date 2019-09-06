@@ -2,7 +2,7 @@
 #-------------------------------------------------------------------
 # 宝塔Linux面板
 #-------------------------------------------------------------------
-# Copyright (c) 2015-2018 宝塔软件(http:#bt.cn) All rights reserved.
+# Copyright (c) 2015-2099 宝塔软件(http:#bt.cn) All rights reserved.
 #-------------------------------------------------------------------
 # Author: 黄文良 <287962566@qq.com>
 #-------------------------------------------------------------------
@@ -28,8 +28,14 @@ class nginx:
         n = 0
         for i in gets:
             rep = "(%s)\s+(\w+)" % i
-            k = re.search(rep, ngconfcontent).group(1)
-            v = re.search(rep, ngconfcontent).group(2)
+            k = re.search(rep, ngconfcontent)
+            if not k:
+                return public.returnMsg(False,"获取 key {} 失败".format(k))
+            k = k.group(1)
+            v = re.search(rep, ngconfcontent)
+            if not v:
+                return public.returnMsg(False,"获取 value {} 失败".format(v))
+            v = v.group(2)
             if re.search(unitrep,v):
                 u = str.upper(v[-1])
                 v = v[:-1]
@@ -48,8 +54,14 @@ class nginx:
         n = 0
         for i in gets:
             rep = "(%s)\s+(\w+)" % i
-            k = re.search(rep, proxycontent).group(1)
-            v = re.search(rep, proxycontent).group(2)
+            k = re.search(rep, proxycontent)
+            if not k:
+                return public.returnMsg(False,"获取 key {} 失败".format(k))
+            k=k.group(1)
+            v = re.search(rep, proxycontent)
+            if not v:
+                return public.returnMsg(False,"获取 value {} 失败".format(v))
+            v = v.group(2)
             if re.search(unitrep, v):
                 u = str.upper(v[-1])
                 v = v[:-1]

@@ -976,6 +976,7 @@ class files:
         if not self.CheckDir(get.path): return public.returnMsg(False,'FILE_DANGER');
         if not 'selected' in session: return public.returnMsg(False,'操作失败,请重新操作复制或剪切过程')
         i = 0;
+        if not 'selected' in session:return public.returnMsg(False,'操作失败,请重新操作');
         myfiles = json.loads(session['selected']['data'])
         l = len(myfiles);
         if get.type == '1':
@@ -1036,6 +1037,7 @@ class files:
 
     #复制目录
     def copytree(self,sfile,dfile):
+        if not os.path.exists(dfile): os.makedirs(dfile)
         for f_name in os.listdir(sfile):
             src_filename = (sfile + '/' + f_name).replace('//','/')
             dst_filename = (dfile + '/' + f_name).replace('//','/')
