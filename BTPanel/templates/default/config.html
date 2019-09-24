@@ -52,6 +52,13 @@
                         <label class='btswitch-btn' for='panelLocal' onclick="set_local()"></label>
                     </div>
                 </div>
+                <div class="ss-text pull-left mr50">
+                    <em title="基于Google Authenticator对用户进行登录认证"><a href="javascript:;" class="btlink open_two_verify_view">Google身份认证</a></em>
+                    <div class='ssh-item'>
+                        <input class='btswitch btswitch-ios' id='panel_verification' type='checkbox'/>
+                        <label class='btswitch-btn' for='panel_verification'></label>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="setbox bgw mtb15">
@@ -186,32 +193,93 @@
         height: 100%;
     }
 
-        .personalDetails .userList .addweChat {
-            height: 50px;
-            text-align: center;
-            padding-top: 20px;
-            color: #20a53a;
-            font-size: 16px;
-        }
+    .personalDetails .userList .addweChat {
+        height: 50px;
+        text-align: center;
+        padding-top: 20px;
+        color: #20a53a;
+        font-size: 16px;
+    }
 
-            .personalDetails .userList .addweChat:hover {
-            }
+    .personalDetails .userList .item {
+        height: 70px;
+        padding: 10px 15px;
+        border: 1px solid #ececec;
+        margin: 15px 65px;
+        border-radius: 5px;
+    }
 
-        .personalDetails .userList .item {
-            height: 70px;
-            padding: 10px 15px;
-            border: 1px solid #ececec;
-            margin: 15px 65px;
-            border-radius: 5px;
-        }
-
-        .personalDetails .userList .cancelBind {
-            height: 50px;
-            width: 60px;
-            float: right;
-            line-height: 50px;
-            text-align: center;
-        }
+    .personalDetails .userList .cancelBind {
+        height: 50px;
+        width: 60px;
+        float: right;
+        line-height: 50px;
+        text-align: center;
+    }
+    .verify_title{
+        color: #555;
+        text-align: center;
+        font-size: 20px;
+        height: 40px;
+        line-height: 40px;
+        margin-bottom: 20px;
+    }
+    .verify_item{
+        padding: 0 35px;
+    }
+    .verify_item .verify_vice_title{
+        font-size: 15.5px;
+        color: #666;
+        margin-bottom: 10px;
+    }
+    .verify_tips{
+        margin: 0 15px;
+        margin-top: 25px;
+        padding: 20px 25px;
+        font-size: 14px;
+        color: #666;
+        border-top: 1px solid #ececec;
+    }
+    .verify_tips p{
+        margin-bottom: 10px;
+    }
+    .verify_box{
+        background: #f8f8f8;
+        padding: 15px 25px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+        /* width: 200px; */
+    }
+    .verify_box .verify_box_line{
+        height: 25px;
+        line-height: 25px;
+        font-size: 14px;
+        color: #444;
+        font-weight: 500;
+    }
+    .verify_box .verify_box_line span{
+        color: #666;
+    }
+    	.download_Qcode{
+		overflow: hidden;
+		padding: 10px 0;
+	}
+	.download_Qcode .item_down{
+		width: 50%;
+		float: left;
+		border-right: 1px solid #ececee;
+		text-align: center;
+		box-sizing: border-box;
+	}
+	.download_Qcode .item_down:last-child{
+		border-right: none;
+	}
+	.download_Qcode .qcode_title{
+		margin-bottom: 5px;
+	}
+	.download_Qcode .item_down img{
+		width: 120px;
+	}
 </style>
 <script type="text/javascript" src="/static/js/jquery.qrcode.min.js"></script>
 <script src="/static/js/config.js?date={{g['version']}}"></script>

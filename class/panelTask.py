@@ -159,11 +159,14 @@ class bt_task:
     #开始检测任务
     def start_task(self):
         noe = False
+        n = 0
         while True: 
             try:
                 time.sleep(1);
-                if not os.path.exists(self.__task_tips) and noe: continue;
+                n+=1
+                if not os.path.exists(self.__task_tips) and noe and n < 60: continue;
                 if os.path.exists(self.__task_tips): os.remove(self.__task_tips)
+                n = 0
                 public.M(self.__table).where('status=?',('-1',)).setField('status',0)
                 task_list = self.get_task_list(0)
                 for task_info in task_list:

@@ -764,9 +764,11 @@ SetLink
                     if d[0] == g: result[g] = d[1];
                 except:
                     pass
-        result['Run'] = int(time.time()) - int(result['Uptime'])
+        if not 'Run' in result and result:
+            result['Run'] = int(time.time()) - int(result['Uptime'])
         tmp = panelMysql.panelMysql().query('show master status');
         try:
+
             result['File'] = tmp[0][0];
             result['Position'] = tmp[0][1];
         except:

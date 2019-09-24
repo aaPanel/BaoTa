@@ -299,6 +299,42 @@
             var data = { username: username, password: md5(md5(password) + '' + '_bt.cn'), code: code }
             var loadT = layer.msg("{{data['lan']['JS2']}}", { icon: 16, time: 0, shade: [0.3, '#000'] });
             $.post('/login', data, function (rdata) {
+            	if(rdata == '1'){
+                    layer.close(loadT);
+            		layer.open({
+                        type:1,
+                        title:false,
+                        area: ['350px', '265px'],
+                        content:'<div class="verification_view">\
+                                    <div class="v_title">Google身份认证</div>\
+                                    <div class="v_input"><input type="text" class="v_code" name="v_code" placeholder="请输入动态口令"/></div>\
+                                    <div class="v_btn"><input id="auth_verif_btn" value="验证并登录" type="submit"></div>\
+                                    <div class="v_tips">* 请使用Google身份验证器APP获取验证代码<br><a target="_blank" href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=37437"  class="btlink">无法验证,点击帮助</a></div>\
+                                </div>',
+                        success:function(){
+                            // 点击验证登录
+                            $('[name="v_code"]').keyup(function(e){
+                                if(e.keyCode == 13){
+                                    $('#auth_verif_btn').click();
+                                }
+                            });
+                            $('#auth_verif_btn').click(function(e){
+                                data['vcode'] = $('[name="v_code"]').val();
+                                var loadT = layer.msg("{{data['lan']['JS2']}}", { icon: 16, time: 0, shade: [0.3, '#000'] });
+                                $.post('/login', data, function (rdata) {
+                                    layer.close(loadT);
+                                    if(!rdata.status){
+                                        layer.msg(rdata.msg, { icon: 2 });
+                                        return false;
+                                    }
+                                    layer.msg(rdata.msg, { icon: 16, time: 0, shade: [0.3, '#000'] });
+                                    window.location.href = '/';
+                                });
+                            });
+                        }
+                    });
+                    return false;
+            	}
                 layer.close(loadT);
                 if (!rdata.status) {
                     $("#errorStr").html(rdata.msg);

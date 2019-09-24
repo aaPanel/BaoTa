@@ -3806,10 +3806,17 @@ bt.soft = {
 		if(type == undefined) type = 0;
 		if(search == undefined) search = '';
 		var force = bt.get_cookie('force');
-		if(force == undefined) force = 0;
-		var loading = bt.load(lan.public.the,1);
-		bt.send('get_soft_list','plugin/get_soft_list',{p:p,type:type,tojs:'soft.get_list',force:force,query:search},function(rdata){
-			loading.close();
+        if (force == undefined) force = 0;
+        p = p + ''
+        if (p.indexOf('not_load') == -1) {
+            var loading = bt.load(lan.public.the, 1);
+        } else {
+            var loading = null;
+            p = p.split("not_load")[0];
+        }
+		
+        bt.send('get_soft_list', 'plugin/get_soft_list', { p: p, type: type, tojs: 'soft.get_list', force: force, query: search }, function (rdata) {
+            if (loading) loading.close();
 			bt.set_cookie('force',0);
 			if(callback) callback(rdata);
 		})

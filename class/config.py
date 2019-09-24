@@ -8,9 +8,19 @@
 # +-------------------------------------------------------------------
 
 import public,re,sys,os,nginx,apache,json,time
+try:
+    import pyotp
+except:
+    os.system("pip install pyotp &")
+
 from BTPanel import session,admin_path_checks
 from flask import request
 class config:
+    _setup_path = "/www/server/panel"
+    _key_file = _setup_path+"/data/two_step_auth.txt"
+    _bk_key_file = _setup_path + "/data/bk_two_step_auth.txt"
+    _username_file = _setup_path + "/data/username.txt"
+    _core_fle_path = _setup_path + '/data/qrcode'
     
     def getPanelState(self,get):
         return os.path.exists('/www/server/panel/data/close.pl');
@@ -708,7 +718,7 @@ class config:
         
         count = 0
         for i in d:
-            if not os.path.exists(i): os.makedirs(i)
+            if not os.path.exists(i): os.system('mkdir -p %s'%i)
             list = os.listdir(i)
             for l in list:
                 if os.path.isdir(i+"/"+l):
@@ -875,6 +885,8 @@ class config:
         if not os.path.exists(link_re): return self.auto_cli_php_version(get)
         import panelSite
         php_versions = panelSite.panelSite().GetPHPVersion(get)
+        if len(php_versions)==0:
+            return public.returnMsg(False,'获取失败!')
         del(php_versions[0])
         for v in php_versions:
             if link_re.find(v['version']) != -1: return {"select":v,"versions":php_versions}
@@ -1046,3 +1058,70 @@ class config:
         if conf and "session.save_path" in conf:
             return True
         return False
+        
+    def _create_key(self):
+        get_token = pyotp.random_base32() # returns a 16 character base32 secret. Compatible with Google Authenticator
+        public.writeFile(self._key_file,get_token)
+        username = self.get_random()
+        public.writeFile(self._username_file, username)
+
+    def get_key(self,get):
+        key = public.readFile(self._key_file)
+        username = public.readFile(self._username_file)
+        if not key:
+            return public.returnMsg(False, "秘钥不存在，请开启后再试")
+        if not username:
+            return public.returnMsg(False, "用户名不存在，请开启后再试")
+        return {"key":key,"username":username}
+
+    def get_random(self):
+        import random
+        seed = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        sa = []
+        for i in range(8):
+            sa.append(random.choice(seed))
+        salt = ''.join(sa)
+        return salt
+
+    def set_two_step_auth(self,get):
+        if not hasattr(get,"act") or not get.act:
+            return public.returnMsg(False, "请输入操作方式")
+        if get.act == "1":
+            if not os.path.exists(self._core_fle_path):
+                os.makedirs(self._core_fle_path)
+            username = public.readFile(self._username_file)
+            if not os.path.exists(self._bk_key_file):
+                secret_key = public.readFile(self._key_file)
+                if not secret_key or not username:
+                    self._create_key()
+            else:
+                os.rename(self._bk_key_file,self._key_file)
+            secret_key = public.readFile(self._key_file)
+            username = public.readFile(self._username_file)
+            local_ip = public.GetLocalIp()
+            if not secret_key:
+                return public.returnMsg(False,"生成key或username失败，请检查硬盘空间是否不足或目录无法写入[ {} ]".format(self._setup_path+"/data/"))
+            try:
+                data = pyotp.totp.TOTP(secret_key).provisioning_uri(username, issuer_name=local_ip)
+                public.writeFile(self._core_fle_path+'/qrcode.txt',str(data))
+                return public.returnMsg(True, "开启成功")
+            except Exception as e:
+                return public.returnMsg(False, e)
+        else:
+            if os.path.exists(self._key_file):
+                os.rename(self._key_file,self._bk_key_file)
+            return public.returnMsg(True, "关闭成功")
+
+    # 检测是否开启双因素验证
+    def check_two_step(self,get):
+        secret_key = public.readFile(self._key_file)
+        if not secret_key:
+            return public.returnMsg(False, "没有开启二步验证")
+        return public.returnMsg(True, "已经开启二步验证")
+        
+    # 读取二维码data
+    def get_qrcode_data(self,get):
+        data = public.readFile(self._core_fle_path + '/qrcode.txt')
+        if data:
+            return data
+        return public.returnMsg(True, "没有二维码数据，请重新开启")

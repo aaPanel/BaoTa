@@ -124,7 +124,6 @@ def PackagePanel():
     os.system('rm -f /www/server/panel/data/domain.conf')
     os.system('rm -f /www/server/panel/data/user*')
     os.system('rm -f /www/server/panel/data/admin_path.pl')
-    os.system("rm -f /www/server/panel/data/licenes.pl")
     os.system('rm -f /root/.ssh/*')
 
     print('\t\033[1;32m[done]\033[0m')
@@ -412,14 +411,15 @@ def bt_cli(u_input = 0):
         print("(7) 强制修改MySQL密码      (14) 查看面板默认信息")
         print("(22) 显示面板错误日志      (15) 清理系统垃圾")
         print("(23) 关闭BasicAuth认证     (16) 修复面板(检查错误并更新面板文件到最新版)")
-        print("(0) 取消                   (17) 设置日志切割是否压缩")
+        print("(24) 关闭谷歌认证          (17) 设置日志切割是否压缩")
+        print("(0) 取消")
         print(raw_tip)
         try:
             u_input = input("请输入命令编号：")
             if sys.version_info[0] == 3: u_input = int(u_input)
         except: u_input = 0
 
-    nums = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,22,23]
+    nums = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,22,23,24]
     if not u_input in nums:
         print(raw_tip)
         print("已取消!")
@@ -546,6 +546,10 @@ def bt_cli(u_input = 0):
         if os.path.exists(filename): os.remove(filename)
         os.system('bt reload')
         print("|-已关闭BasicAuth认证")
+    elif u_input == 24:
+        filename = '/www/server/panel/data/two_step_auth.txt'
+        if os.path.exists(filename): os.remove(filename)
+        print("|-已关闭谷歌认证")
 
 
 

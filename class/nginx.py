@@ -21,6 +21,9 @@ class nginx:
     def GetNginxValue(self):
         ngconfcontent = public.readFile(self.nginxconf)
         proxycontent = public.readFile(self.proxyfile)
+        for i in [[ngconfcontent,self.nginxconf],[proxycontent,self.proxyfile]]:
+            if not i[0]:
+                return public.returnMsg(False,"Can not find nginx config file [ {} ]".format(i[1]))
         unitrep = "[kmgKMG]"
         conflist = []
         ps = ["处理进程,auto表示自动,数字表示进程数","最大并发链接数","连接超时时间","是否开启压缩传输","最小压缩文件","压缩率","最大上传文件","服务器名字的hash表大小","客户端请求头buffer大小"]

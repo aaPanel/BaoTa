@@ -214,7 +214,6 @@ class firewalls:
         if int(port) < 22 or int(port) > 65535: return public.returnMsg(False,'FIREWALL_SSH_PORT_ERR');
         ports = ['21','25','80','443','8080','888','8888'];
         if port in ports: return public.returnMsg(False,'请不要使用常用程序的默认端口!');
-        
         file = '/etc/ssh/sshd_config'
         conf = public.readFile(file)
         

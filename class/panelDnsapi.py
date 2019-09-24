@@ -50,16 +50,30 @@ import public
 
 
 def extract_zone(domain_name):
-        domain_name = domain_name.lstrip("*.")
-        if domain_name.count(".") > 1:
-            zone, middle, last = str(domain_name).rsplit(".", 2)
-            root = ".".join([middle, last])
-            acme_txt = "_acme-challenge.%s" % zone
-        else:
-            zone = ""
-            root = domain_name
-            acme_txt = "_acme-challenge"
-        return root, zone, acme_txt
+    domain_name = domain_name.lstrip("*.")
+    top_domain_list = ['.ac.cn', '.ah.cn', '.bj.cn', '.com.cn', '.cq.cn', '.fj.cn', '.gd.cn', 
+                        '.gov.cn', '.gs.cn', '.gx.cn', '.gz.cn', '.ha.cn', '.hb.cn', '.he.cn', 
+                        '.hi.cn', '.hk.cn', '.hl.cn', '.hn.cn', '.jl.cn', '.js.cn', '.jx.cn', 
+                        '.ln.cn', '.mo.cn', '.net.cn', '.nm.cn', '.nx.cn', '.org.cn']
+    old_domain_name = domain_name
+    m_count = domain_name.count(".")
+    top_domain = "."+".".join(domain_name.rsplit('.')[-2:])
+    new_top_domain = "." + top_domain.replace(".","")
+    is_tow_top = False
+    if top_domain in top_domain_list:
+        is_tow_top = True
+        domain_name = domain_name[:-len(top_domain)] + new_top_domain
+
+    if domain_name.count(".") > 1:
+        zone, middle, last = domain_name.rsplit(".", 2)        
+        acme_txt = "_acme-challenge.%s" % zone
+        if is_tow_top: last = top_domain[1:]
+        root = ".".join([middle, last])
+    else:
+        zone = ""
+        root = old_domain_name
+        acme_txt = "_acme-challenge"
+    return root, zone, acme_txt
 
 class AliyunDns(object):
     def __init__(self, key, secret, ):
@@ -105,6 +119,8 @@ class AliyunDns(object):
             "Type": "TXT",
             "Value": domain_dns_value,
         }
+
+        print(paramsdata)
         Signature = self.sign(self.secret, paramsdata)
         paramsdata['Signature'] = Signature
         req = requests.get(url=self.url, params=paramsdata)
@@ -257,17 +273,6 @@ class CloudxnsDns(object):
 
 class Dns_com(object):
 
-    def extract_zone(self,domain_name):
-        domain_name = domain_name.lstrip("*.")
-        if domain_name.count(".") > 1:
-            zone, middle, last = str(domain_name).rsplit(".", 2)
-            root = ".".join([middle, last])
-            acme_txt = "_acme-challenge.%s" % zone
-        else:
-            zone = ""
-            root = domain_name
-            acme_txt = "_acme-challenge"
-        return root, zone, acme_txt
     
     def get_dns_obj(self):
         p_path = '/www/server/panel/plugin/dns'
@@ -277,7 +282,7 @@ class Dns_com(object):
         return dns_main.dns_main()
 
     def create_dns_record(self, domain_name, domain_dns_value):
-        root, _, acme_txt = self.extract_zone(domain_name)
+        root, _, acme_txt = extract_zone(domain_name)
         print("[DNS]创建TXT记录,", acme_txt, domain_dns_value)
         result = self.get_dns_obj().add_txt(acme_txt + '.' + root,domain_dns_value)
         if result == "False":
@@ -287,7 +292,7 @@ class Dns_com(object):
         time.sleep(10)
 
     def delete_dns_record(self, domain_name, domain_dns_value):
-        root, _, acme_txt = self.extract_zone(domain_name)
+        root, _, acme_txt = extract_zone(domain_name)
         print("[DNS]准备删除TXT记录: ", acme_txt, domain_dns_value)
         result = self.get_dns_obj().remove_txt(acme_txt + '.' + root)
         print("[DNS]TXT记录删除成功")

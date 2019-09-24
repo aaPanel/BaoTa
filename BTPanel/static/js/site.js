@@ -1586,6 +1586,12 @@ var site = {
                                                                     var area_size = '500px';
                                                                     var err_info = "";
 
+                                                                    if (!new_data.msg[1].challenges[1]) {
+                                                                        if (new_data.msg[1].challenges[0]) {
+                                                                            new_data.msg[1].challenges[1] = new_data.msg[1].challenges[0]
+                                                                        }
+                                                                    }
+
                                                                     if (ldata.msg[1].status === 'invalid') {
                                                                         area_size = '600px';
                                                                         var trs = $("#dns_txt_jx tbody tr");
@@ -1622,6 +1628,11 @@ var site = {
                                                         site.reload();
                                                         bt.msg(ret);
                                                     } else {
+                                                        if (!ret.msg[1].challenges[1]) {
+                                                            if (ret.msg[1].challenges[0]) {
+                                                                ret.msg[1].challenges[1] = ret.msg[1].challenges[0]
+                                                            }
+                                                        }
                                                         var area_size = '500px';
                                                         var err_info = "";
 

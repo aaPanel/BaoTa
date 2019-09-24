@@ -1,8 +1,9 @@
 var soft = {
+    is_install: false,
     get_list: function (page, type, search) {
-        if (page == undefined) page = 0;
-        if (type == undefined) type = 0;
-
+        if (page == undefined || page == 'null' || page == 'undefined') page = 0;
+        if (type == undefined || type == 'null' || type == 'undefined') type = 0;
+        if (search == undefined || search == 'null' || search == 'undefined') search = undefined;
         var _this = this;
         var istype = getCookie('softType');
         if (istype == 'undefined' || istype == 'null' || !istype) {
@@ -14,9 +15,8 @@ var soft = {
             soft.get_dep_list(1)
             return;
         }
-
+        soft.is_install = false;
         bt.soft.get_soft_list(page, type, search, function (rdata) {
-
             if (rdata.pro >= 0) {
                 $("#updata_pro_info").html('');
             } else if (rdata.pro === -2) {
@@ -222,7 +222,7 @@ var soft = {
                                 }
                             }
                             else {
-                                if (item.setup) {
+                                if (item.setup && item.task == '1') {
                                     if (pay_opt == '') {
                                         if (item.versions.length > 1) {
                                             for (var i = 0; i < item.versions.length; i++) {
@@ -252,9 +252,15 @@ var soft = {
                                 }
                                 else if (item.task == '-1') {
                                     option = '<a class="btlink" onclick="messagebox()"  >正在安装</a>';
+                                    soft.is_install = true;
                                 }
                                 else if (item.task == '0') {
                                     option = '<a class="btlink" onclick="messagebox()"  >等待安装</a>';
+                                    soft.is_install = true;
+                                }
+                                else if (item.task == '-2') {
+                                    option = '<a class="btlink" onclick="messagebox()"  >正在更新</a>';
+                                    soft.is_install = true;
                                 }
                                 else {
                                     if (pay_opt) {
@@ -271,6 +277,14 @@ var soft = {
                 ],
                 data: data
             })
+            bt.set_cookie('load_page', (page+'').split('not_load')[0])
+            bt.set_cookie('load_type', type)
+            bt.set_cookie('load_search', search)
+            if (soft.is_install) {
+                setTimeout(function () {
+                    soft.get_list(bt.get_cookie('load_page') + 'not_load', bt.get_cookie('load_type'), bt.get_cookie('load_search'));
+                }, 3000);
+            }
         })
     },
     get_dep_list: function (p) {

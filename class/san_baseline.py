@@ -680,6 +680,7 @@ class san_baseline:
     # 计划任务 安全
     def tasks_security(self):
         ret = []
+        if not os.path.exists(public.get_cron_path()):return ret
         f = open(public.get_cron_path(), 'r')
         for i in f.readlines():
 

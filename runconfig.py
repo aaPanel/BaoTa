@@ -1,7 +1,7 @@
-import os,time,sys,ssl
-sys.path.insert(0,'/www/server/panel/class')
-import public
-bt_port = public.readFile('data/port.pl')
+import os
+f = open('data/port.pl','r')
+bt_port = f.read()
+f.close()
 if bt_port: bt_port.strip()
 bind = []
 if os.path.exists('data/ipv6.pl'): 
@@ -10,9 +10,11 @@ else:
     bind.append('0.0.0.0:%s' % bt_port)
 
 w_num = 'data/workers.pl'
-if not os.path.exists(w_num): public.writeFile(w_num,'1')
-workers = int(public.readFile(w_num))
-if not workers: workers = 1
+workers = 1
+if os.path.exists(w_num): 
+    f = open(w_num,'r')
+    workers = int(f.read().strip())
+    f.close()
 threads = 3
 backlog = 512
 daemon = True

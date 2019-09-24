@@ -6,7 +6,7 @@
 #-------------------------------------------------------------------
 # Author: 黄文良 <287962566@qq.com>
 #-------------------------------------------------------------------
-import public,os,sys,json,time,psutil,py_compile
+import public,os,sys,json,time,psutil,py_compile,re
 from BTPanel import session,cache
 if sys.version_info[0] == 3: from importlib import reload
 class mget: pass;
@@ -119,6 +119,7 @@ class panelPlugin:
     #安装插件
     def install_plugin(self,get):
         if not self.check_sys_write(): return public.returnMsg(False,'<a style="color:red;">错误：检测到系统关键目录不可写!</a><br>1、如果安装了[宝塔系统加固]，请先关闭<br><br>2、如果安装了云锁，请关闭[系统加固]功能<br>3、如果安装了安全狗，请关闭[系统防护]功能<br>4、如果使用了其它安全软件，请先卸载<br>')
+        if not 'sName' in get: return public.returnMsg(False,'请指定软件名称!')
         pluginInfo = self.get_soft_find(get.sName);
         p_node = '/www/server/panel/install/public.sh'
         if os.path.exists(p_node):
@@ -344,6 +345,10 @@ class panelPlugin:
             else:
                 if name1 == 'pure': name1 = 'pure-ftpd';
                 if name1 == sName: isTask = task['status']; 
+
+            if isTask == '-1' or isTask == '0':
+                if task['name'].find('upgrade') != -1: isTask = '-2'
+            break
         return isTask
 
 
@@ -352,7 +357,7 @@ class panelPlugin:
         m_version = info['versions'].split(".")
         if len(m_version) < 2: return None
         if len(m_version) > 2:
-            tmp = m_version.copy()
+            tmp = m_version[:]
             del(tmp[0])
             m_version[1] = '.'.join(tmp)
 
@@ -713,23 +718,38 @@ class panelPlugin:
             versions[i]['setup'] = (version[:vLen] == vTmp)
         return versions
 
+    #取pids
+    def get_pids(self):
+        pids = []
+        for pid in os.listdir('/proc'):
+            if re.match("^\d+$",pid): pids.append(pid)
+        return pids
 
 
     #进程是否存在
     def process_exists(self,pname,exe = None):
-        try:
-            if not self.pids: self.pids = psutil.pids()
-            for pid in self.pids:
-                try:
-                    p = psutil.Process(pid)
-                    if p.name() == pname: 
-                        if not exe:
-                            return True;
-                        else:
-                            if p.exe() == exe: return True
-                except:pass
-            return False
-        except: return True
+        if not self.pids: self.pids = psutil.pids() #self.get_pids() #
+        for pid in self.pids:
+            l = '/proc/%s/exe' % pid
+            f = '/proc/%s/comm' % pid
+            p_exe = ''
+            p_name = ''
+            if os.path.exists(l): 
+                p_exe = os.readlink(l)
+                if not p_name: p_name = p_exe.split('/')[-1]
+
+            if not p_name and os.path.exists(f):
+                fp = open(f,'r')
+                p_name = fp.read().strip()
+                fp.close()
+
+            if not p_name: continue
+            if p_name == pname: 
+                if not exe:
+                    return True;
+                else:
+                    if p_exe == exe: return True
+        return False
 
      #取分页
     def get_page(self,data,get):
@@ -742,7 +762,10 @@ class panelPlugin:
         info['row']   = self.ROWS;
         info['p'] = 1
         if hasattr(get,'p'):
-            info['p']     = int(get['p'])
+            try:
+                info['p']     = int(get['p'])
+            except:
+                info['p'] = 1
         info['uri']   = {}
         info['return_js'] = ''
         if hasattr(get,'tojs'):
