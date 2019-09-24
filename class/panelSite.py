@@ -289,7 +289,10 @@ class panelSite(panelRedirect):
         
         #创建根目录
         if not os.path.exists(self.sitePath): 
-            os.makedirs(self.sitePath)
+            try:
+                os.makedirs(self.sitePath)
+            except Exception as ex:
+                return public.returnMsg(False,'创建根目录失败, %s' % ex)
             public.ExecShell('chmod -R 755 ' + self.sitePath);
             public.ExecShell('chown -R www:www ' + self.sitePath);
         
@@ -549,6 +552,7 @@ class panelSite(panelRedirect):
         if isError != True:
             return public.returnMsg(False,'ERROR: 检测到配置文件有错误,请先排除后再操作<br><br><a style="color:red;">'+isError.replace("\n",'<br>')+'</a>');
         
+        if not 'domain' in get: return public.returnMsg(False,'请填写域名!')
         if len(get.domain) < 3: return public.returnMsg(False,'SITE_ADD_DOMAIN_ERR_EMPTY');
         domains = get.domain.replace(' ','').split(',')
         
@@ -576,8 +580,6 @@ class panelSite(panelRedirect):
             if public.M('binding').where('domain=?',(get.domain,)).count():
                 return public.returnMsg(False,'SITE_ADD_ERR_DOMAIN_EXISTS');
 
-                
-            
             #写配置文件
             self.NginxDomain(get)
             try:
@@ -720,6 +722,8 @@ class panelSite(panelRedirect):
     
     #删除域名
     def DelDomain(self,get):
+        if not 'id' in get:return public.returnMsg(False,'请选择域名')
+        if not 'port' in get: return public.returnMsg(False, '请选择端口')
         sql = public.M('domain');
         id=get['id'];
         port = get.port;
@@ -846,7 +850,9 @@ class panelSite(panelRedirect):
         if not get.id: return False;
         if type(get.id) == list: get.id = get.id[0]['id'];
         result = self.GetSiteRunPath(get);
-        return result['runPath'];
+        if 'runPath' in result:
+            return result['runPath'];
+        return False
 
 
     # 创建Let's Encrypt免费证书
@@ -1838,7 +1844,7 @@ server
         
         public.M('binding').where("id=?",(id,)).delete();
         filename = self.setupPath + '/panel/vhost/rewrite/' + siteName + '_' + binding['path'] + '.conf';
-        if os.path.exists(filename): os.remove(filename)
+        if os.path.exists(filename): os.system('rm -rf %s'%filename)
         public.serviceReload();
         public.WriteLog('TYPE_SITE', 'SITE_BINDING_DEL_SUCCESS',(siteName,binding['path']));
         return public.returnMsg(True,'DEL_SUCCESS')
@@ -1888,9 +1894,10 @@ server
             rep = "\s+index\s+(.+);";
         else:
             rep = "DirectoryIndex\s+(.+)\n";
-            
-        tmp = re.search(rep,conf).groups()
-        return tmp[0].replace(' ',',')
+        if re.search(rep,conf):
+            tmp = re.search(rep,conf).groups()
+            return tmp[0].replace(' ',',')
+        return public.returnMsg(False,'获取失败,配置文件中不存在默认文档')
     
     #设置默认文档
     def SetIndex(self,get):
@@ -2018,33 +2025,35 @@ server
     def SetPHPVersion(self,get):
         siteName = get.siteName
         version = get.version
+        try:
+            #nginx
+            file = self.setupPath + '/panel/vhost/nginx/'+siteName+'.conf';
+            conf = public.readFile(file);
+            if conf:
+                rep = "enable-php-([0-9]{2,3})\.conf";
+                tmp = re.search(rep,conf).group()
+                conf = conf.replace(tmp,'enable-php-'+version+'.conf');
+                public.writeFile(file,conf)
         
-        #nginx
-        file = self.setupPath + '/panel/vhost/nginx/'+siteName+'.conf';
-        conf = public.readFile(file);
-        if conf:
-            rep = "enable-php-([0-9]{2,3})\.conf";
-            tmp = re.search(rep,conf).group()
-            conf = conf.replace(tmp,'enable-php-'+version+'.conf');
-            public.writeFile(file,conf)
+            #apache
+            file = self.setupPath + '/panel/vhost/apache/'+siteName+'.conf';
+            conf = public.readFile(file);
+            if conf:
+                rep = "php-cgi-([0-9]{2,3})\.sock";
+                tmp = re.search(rep,conf).group()
+                conf = conf.replace(tmp,'php-cgi-'+version+'.sock');
+                public.writeFile(file,conf)
         
-        #apache
-        file = self.setupPath + '/panel/vhost/apache/'+siteName+'.conf';
-        conf = public.readFile(file);
-        if conf:
-            rep = "php-cgi-([0-9]{2,3})\.sock";
-            tmp = re.search(rep,conf).group()
-            conf = conf.replace(tmp,'php-cgi-'+version+'.sock');
-            public.writeFile(file,conf)
-        
-        public.serviceReload();
-        public.WriteLog("TYPE_SITE", "SITE_PHPVERSION_SUCCESS",(siteName,version));
-        return public.returnMsg(True,'SITE_PHPVERSION_SUCCESS',(siteName,version));
+            public.serviceReload();
+            public.WriteLog("TYPE_SITE", "SITE_PHPVERSION_SUCCESS",(siteName,version));
+            return public.returnMsg(True,'SITE_PHPVERSION_SUCCESS',(siteName,version));
+        except: return public.returnMsg(False,'设置失败，没有在网站配置文件中找到enable-php-xx相关配置项!')
 
     
     #是否开启目录防御
     def GetDirUserINI(self,get):
-        path = get.path + self.GetRunPath(get);
+        path = get.path + self.GetRunPath(get)
+        if not path:return public.returnMsg(False,'获取目录失败')
         id = get.id;
         get.name = public.M('sites').where("id=?",(id,)).getField('name');
         data = {}
@@ -3023,6 +3032,7 @@ location %s
             get.siteName = public.M('sites').where('id=?',(get.id,)).getField('name');
             get.configFile = self.setupPath + '/panel/vhost/nginx/' + get.siteName + '.conf';
         conf = public.readFile(get.configFile);
+        if type(conf)==bool:return False
         if conf.find('#AUTH_START') != -1: return True;
         return False;
             
@@ -3225,19 +3235,15 @@ location %s
             if os.path.exists(filename):
                 conf = public.readFile(filename)
                 rep = '\s*root\s*(.+);'
-                path = re.search(rep,conf)
-                if not path:
-                    return public.returnMsg(False,"获取站点运行目录失败")
-                path = path.groups()[0]
+                tmp1 = re.search(rep,conf)
+                if tmp1: path = tmp1.groups()[0];
         else:
             filename = self.setupPath + '/panel/vhost/apache/' + siteName + '.conf'
             if os.path.exists(filename):
                 conf = public.readFile(filename)
                 rep = '\s*DocumentRoot\s*"(.+)"\s*\n'
-                path = re.search(rep,conf)
-                if not path:
-                    return public.returnMsg(False,"获取站点运行目录失败")
-                path = path.groups()[0]
+                tmp1 = re.search(rep,conf)
+                if tmp1: path = tmp1.groups()[0];
         
         data = {}
         if sitePath == path: 
@@ -3259,7 +3265,6 @@ location %s
         
         data['dirs'] = dirnames;
         return data;
-
     
     #设置当前站点运行目录
     def SetSiteRunPath(self,get):
@@ -3419,6 +3424,7 @@ location %s
         file = '/www/server/panel/vhost/nginx/' + get.name + '.conf';
         conf = public.readFile(file);
         data = {}
+        if type(conf)==bool:return public.returnMsg(False,'读取配置文件失败!')
         if conf.find('SECURITY-START') != -1:
             rep = "#SECURITY-START(\n|.){1,500}#SECURITY-END";
             tmp = re.search(rep,conf).group()

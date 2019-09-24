@@ -1,3 +1,4 @@
+#coding: utf-8
 try:
 	import urllib.parse as urlparse
 except:
@@ -27,28 +28,56 @@ class DNSPodDns(common.BaseDns):
             self.DNSPOD_API_BASE_URL = DNSPOD_API_BASE_URL
         super(DNSPodDns, self).__init__()
 
+    def extract_zone(self,domain_name):
+        domain_name = domain_name.lstrip("*.")
+        top_domain_list = ['.ac.cn', '.ah.cn', '.bj.cn', '.com.cn', '.cq.cn', '.fj.cn', '.gd.cn', 
+                            '.gov.cn', '.gs.cn', '.gx.cn', '.gz.cn', '.ha.cn', '.hb.cn', '.he.cn', 
+                            '.hi.cn', '.hk.cn', '.hl.cn', '.hn.cn', '.jl.cn', '.js.cn', '.jx.cn', 
+                            '.ln.cn', '.mo.cn', '.net.cn', '.nm.cn', '.nx.cn', '.org.cn']
+        old_domain_name = domain_name
+        m_count = domain_name.count(".")
+        top_domain = "."+".".join(domain_name.rsplit('.')[-2:])
+        new_top_domain = "." + top_domain.replace(".","")
+        is_tow_top = False
+        if top_domain in top_domain_list:
+            is_tow_top = True
+            domain_name = domain_name[:-len(top_domain)] + new_top_domain
+
+        if domain_name.count(".") > 1:
+            zone, middle, last = domain_name.rsplit(".", 2)        
+            acme_txt = "_acme-challenge.%s" % zone
+            if is_tow_top: last = top_domain[1:]
+            root = ".".join([middle, last])
+        else:
+            zone = ""
+            root = old_domain_name
+            acme_txt = "_acme-challenge"
+        return root, zone, acme_txt
+
     def create_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("create_dns_record")
         # if we have been given a wildcard name, strip wildcard
-        domain_name = domain_name.lstrip("*.")
-        subd = ""
-        if domain_name.count(".") != 1:  # not top level domain
-            pos = domain_name.rfind(".", 0, domain_name.rfind("."))
-            subd = domain_name[:pos]
-            domain_name = domain_name[pos + 1 :]
-            if subd != "":
-                subd = "." + subd
+        #domain_name = domain_name.lstrip("*.")
+        #subd = ""
+        #if domain_name.count(".") != 1:  # not top level domain
+        #    pos = domain_name.rfind(".", 0, domain_name.rfind("."))
+        #    subd = domain_name[:pos]
+        #    domain_name = domain_name[pos + 1 :]
+        #    if subd != "":
+        #        subd = "." + subd
 
+        domain_name,_,subd = self.extract_zone(domain_name)
         url = urlparse.urljoin(self.DNSPOD_API_BASE_URL, "Record.Create")
         body = {
             "record_type": "TXT",
             "domain": domain_name,
-            "sub_domain": "_acme-challenge" + subd,
+            "sub_domain": subd,
             "value": domain_dns_value,
             "record_line_id": "0",
             "format": "json",
             "login_token": self.DNSPOD_LOGIN,
         }
+        print(body)
         create_dnspod_dns_record_response = requests.post(
             url, data=body, timeout=self.HTTP_TIMEOUT
         ).json()
@@ -71,18 +100,19 @@ class DNSPodDns(common.BaseDns):
 
     def delete_dns_record(self, domain_name, domain_dns_value):
         self.logger.info("delete_dns_record")
-        domain_name = domain_name.lstrip("*.")
-        subd = ""
-        if domain_name.count(".") != 1:  # not top level domain
-            pos = domain_name.rfind(".", 0, domain_name.rfind("."))
-            subd = domain_name[:pos]
-            domain_name = domain_name[pos + 1 :]
-            if subd != "":
-                subd = "." + subd
+        #domain_name = domain_name.lstrip("*.")
+        #subd = ""
+        #if domain_name.count(".") != 1:  # not top level domain
+        #    pos = domain_name.rfind(".", 0, domain_name.rfind("."))
+        #    subd = domain_name[:pos]
+        #    domain_name = domain_name[pos + 1 :]
+        #    if subd != "":
+        #        subd = "." + subd
 
+        domain_name,_,subd = self.extract_zone(domain_name)
         url = urllib.parse.urljoin(self.DNSPOD_API_BASE_URL, "Record.List")
         # pos = domain_name.rfind(".",0, domain_name.rfind("."))
-        subdomain = "_acme-challenge." + subd
+        subdomain = subd
         rootdomain = domain_name
         body = {
             "login_token": self.DNSPOD_LOGIN,
@@ -91,6 +121,7 @@ class DNSPodDns(common.BaseDns):
             "subdomain": subdomain,
             "record_type": "TXT",
         }
+        print(body)
         list_dns_response = requests.post(url, data=body, timeout=self.HTTP_TIMEOUT).json()
         if list_dns_response["status"]["code"] != "1":
             self.logger.error(
@@ -119,3 +150,5 @@ class DNSPodDns(common.BaseDns):
                 )
 
         self.logger.info("delete_dns_record_success")
+
+

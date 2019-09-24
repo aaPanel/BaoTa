@@ -369,7 +369,7 @@ var database = {
     },
     input_database: function (name) {
         var path = bt.get_cookie('backup_path') + "/database";
-        bt.files.get_files(path, '', function (rdata) {
+        bt.send('get_files', 'files/GetDir', 'reverse=True&sort=mtime&tojs=GetFiles&p=1&showRow=100&path=' + path, function (rdata) {
             var data = [];
             for (var i = 0; i < rdata.FILES.length; i++) {
                 if (rdata.FILES[i] == null) continue;
@@ -411,7 +411,7 @@ var database = {
                         },
                         {
                             field: 'opt', title: '操作', align: 'right', templet: function (item) {
-                                return '<a class="btlink" herf="javascrpit:;" onclick="bt.database.input_sql(\'' + bt.rtrim(rdata.PATH, '/') + "/" + item.name + '\',\'' + name + '\')">导入</a>  ';;
+                                return '<a class="btlink" herf="javascrpit:;" onclick="bt.database.input_sql(\'' + bt.rtrim(rdata.PATH, '/') + "/" + item.name + '\',\'' + name + '\')">导入</a>  | <a class="btlink" onclick="database.remove_input_file(\'' + bt.rtrim(rdata.PATH, '/') + "/" + item.name + '\',\'' + name + '\')">删除</a>';
                             }
                         },
                     ],
@@ -419,5 +419,15 @@ var database = {
                 });
             }, 100)
         })
+    },
+    remove_input_file: function (fileName,name) {
+        layer.confirm(lan.get('recycle_bin_confirm', [fileName]), { title: lan.files.del_file, closeBtn: 2, icon: 3 }, function (index) {
+            layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
+            $.post('/files?action=DeleteFile', 'path=' + encodeURIComponent(fileName), function (rdata) {
+                layer.close(index);
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+                database.input_database(name);
+            });
+        });
     }
 }

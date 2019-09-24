@@ -272,7 +272,10 @@ def GetJson(data):
     """
     from json import dumps
     if data == bytes: data = data.decode('utf-8')
-    return dumps(data)
+    try:
+        return dumps(data)
+    except:
+        return dumps(returnMsg(False,"错误的响应: %s" % str(data)))
 
 def getJson(data):
     return GetJson(data)
@@ -479,17 +482,14 @@ def GetLocalIp():
         filename = 'data/iplist.txt'
         ipaddress = readFile(filename)
         if not ipaddress:
-            import urllib2
             url = 'http://pv.sohu.com/cityjson?ie=utf-8'
-            opener = urllib2.urlopen(url)
-            m_str = opener.read()
+            m_str = HttpGet(url)
             ipaddress = re.search('\d+.\d+.\d+.\d+',m_str).group(0)
             WriteFile(filename,ipaddress)
         c_ip = check_ip(ipaddress)
         if not c_ip: return GetHost()
         return ipaddress
     except:
-        return get_error_info()
         try:
             url = GetConfigValue('home') + '/Api/getIpAddress';
             return HttpGet(url)
@@ -1412,7 +1412,7 @@ def check_domain_panel():
             errorStr = ReadFile('./BTPanel/templates/' + GetConfigValue('template') + '/error2.html')
             try:
                 errorStr = errorStr.format(getMsg('PAGE_ERR_TITLE'),getMsg('PAGE_ERR_DOMAIN_H1'),getMsg('PAGE_ERR_DOMAIN_P1'),getMsg('PAGE_ERR_DOMAIN_P2'),getMsg('PAGE_ERR_DOMAIN_P3'),getMsg('NAME'),getMsg('PAGE_ERR_HELP'))
-            except IndexError:pass
+            except:pass
             return errorStr
     return False
 
@@ -1462,6 +1462,26 @@ def check_port_stat(port):
     result = 0;
     if temp['local']: result +=2;
     return result;
+
+
+#同步时间
+def sync_date():
+    tip_file = "/dev/shm/last_sync_time.pl"
+    s_time = int(time.time())
+    try:
+        if os.path.exists(tip_file):
+            if s_time - int(readFile(tip_file)) < 60: return False
+            os.remove(tip_file)
+        time_str = HttpGet('http://www.bt.cn/api/index/get_time')
+        new_time = int(time_str)
+        time_arr = time.localtime(new_time)
+        date_str = time.strftime("%Y-%m-%d %H:%M:%S", time_arr)
+        os.system('date -s "%s"' % date_str)
+        writeFile(tip_file,str(s_time))
+        return True
+    except: 
+        if os.path.exists(tip_file): os.remove(tip_file)
+        return False
 
 #取通用对象
 class dict_obj:

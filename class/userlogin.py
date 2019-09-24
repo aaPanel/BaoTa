@@ -14,7 +14,7 @@ from flask import request,redirect,g
 class userlogin:
     
     def request_post(self,post):
-        if not (hasattr(post, 'username') or hasattr(post, 'password') or hasattr(post, 'code')):
+        if not hasattr(post, 'username') or not hasattr(post, 'password'):
             return public.returnJson(False,'LOGIN_USER_EMPTY'),json_header
         
         self.error_num(False)
@@ -26,7 +26,8 @@ class userlogin:
         userInfo = sql.table('users').where("id=?",(1,)).field('id,username,password').find()
         m_code = cache.get('codeStr')
         if 'code' in session:
-            if session['code']:
+            if session['code'] and not 'is_verify_password' in session:
+                if not hasattr(post, 'code'): return public.returnJson(False,'验证码不能为空!'),json_header
                 if not public.checkCode(post.code):
                     public.WriteLog('TYPE_LOGIN','LOGIN_ERR_CODE',('****','****',public.GetClientIp()));
                     return public.returnJson(False,'CODE_ERR'),json_header
@@ -36,18 +37,32 @@ class userlogin:
                 public.WriteLog('TYPE_LOGIN','LOGIN_ERR_PASS',('****','******',public.GetClientIp()));
                 num = self.limit_address('+');
                 return public.returnJson(False,'LOGIN_USER_ERR',(str(num),)),json_header
-            
-            session['login'] = True;
-            session['username'] = userInfo['username'];
-            public.WriteLog('TYPE_LOGIN','LOGIN_SUCCESS',(userInfo['username'],public.GetClientIp()));
-            self.limit_address('-');
-            cache.delete('panelNum')
-            cache.delete('dologin')
-            sess_input_path = 'data/session_last.pl'
-            public.writeFile(sess_input_path,str(int(time.time())))
-            self.set_request_token()
-            self.login_token()
-            return public.returnJson(True,'LOGIN_SUCCESS'),json_header
+            _key_file = "/www/server/panel/data/two_step_auth.txt"
+            if hasattr(post,'vcode'):
+                if self.limit_address('?',v="vcode") < 1: return public.returnJson(False,'您多次验证失败，禁止10分钟'),json_header
+                import pyotp
+                secret_key = public.readFile(_key_file)
+                if not secret_key:
+                    return public.returnJson(False, "没有找到key,请尝试在命令行关闭谷歌验证后在开启"),json_header
+                t = pyotp.TOTP(secret_key)
+                result = t.verify(post.vcode)
+                if not result:
+                    if public.sync_date(): result = t.verify(post.vcode)
+                    if not result:
+                        num = self.limit_address('++',v="vcode")
+                        return public.returnJson(False, '验证失败，您还可以尝试[{}]次!'.format(num)), json_header
+                now = int(time.time())
+                public.writeFile("/www/server/panel/data/dont_vcode_ip.txt",json.dumps({"client_ip":public.GetClientIp(),"add_time":now}))
+                self.limit_address('--',v="vcode")
+                return self._set_login_session(userInfo)
+
+            acc_client_ip = self.check_two_step_auth()
+
+            if not os.path.exists(_key_file) or acc_client_ip:
+                return self._set_login_session(userInfo)
+            self.limit_address('-')
+            session['is_verify_password'] = True
+            return "1"
         except Exception as ex:
             stringEx = str(ex)
             if stringEx.find('unsupported') != -1 or stringEx.find('-1') != -1: 
@@ -139,10 +154,10 @@ class userlogin:
         if num > 6: session['code'] = True;
     
     #IP限制
-    def limit_address(self,type):
+    def limit_address(self,type,v=""):
         import time
         clientIp = public.GetClientIp();
-        numKey = 'limitIpNum_' + clientIp
+        numKey = 'limitIpNum_' + v + clientIp
         limit = 6;
         outTime = 600;
         try:
@@ -158,9 +173,22 @@ class userlogin:
                 self.error_num();
                 session['code'] = True;
                 return limit - (num1+1);
-            
+
+            #计数验证器
+            if type == '++':
+                cache.inc(numKey,1)
+                self.error_num();
+                session['code'] = False;
+                return limit - (num1+1);
+
             #清空
             if type == '-':
+                cache.delete(numKey);
+                session['code'] = False;
+                return 1;
+
+            #清空验证器
+            if type == '--':
                 cache.delete(numKey);
                 session['code'] = False;
                 return 1;
@@ -168,4 +196,41 @@ class userlogin:
         except:
             return limit;
 
+    # 登录成功设置session
+    def _set_login_session(self,userInfo):
+        try:
+            session['login'] = True
+            session['username'] = userInfo['username']
+            public.WriteLog('TYPE_LOGIN','LOGIN_SUCCESS',(userInfo['username'],public.GetClientIp()))
+            self.limit_address('-')
+            cache.delete('panelNum')
+            cache.delete('dologin')
+            sess_input_path = 'data/session_last.pl'
+            public.writeFile(sess_input_path,str(int(time.time())))
+            self.set_request_token()
+            self.login_token()
+            return public.returnJson(True,'LOGIN_SUCCESS'),json_header
+        except Exception as ex:
+            stringEx = str(ex)
+            if stringEx.find('unsupported') != -1 or stringEx.find('-1') != -1:
+                os.system("rm -f /tmp/sess_*")
+                os.system("rm -f /www/wwwlogs/*log")
+                public.ServiceReload()
+                return public.returnJson(False,'USER_INODE_ERR'),json_header
+            public.WriteLog('TYPE_LOGIN','LOGIN_ERR_PASS',('****','******',public.GetClientIp()))
+            num = self.limit_address('+');
+            return public.returnJson(False,'LOGIN_USER_ERR',(str(num),)),json_header
 
+
+    # 检查是否需要进行二次验证
+    def check_two_step_auth(self):
+        dont_vcode_ip_info = public.readFile("/www/server/panel/data/dont_vcode_ip.txt")
+        acc_client_ip = False
+        if dont_vcode_ip_info:
+            dont_vcode_ip_info = json.loads(dont_vcode_ip_info)
+            ip = dont_vcode_ip_info["client_ip"] == public.GetClientIp()
+            now = int(time.time())
+            v_time = now - int(dont_vcode_ip_info["add_time"])
+            if ip and v_time < 86400:
+                acc_client_ip = True
+        return acc_client_ip
