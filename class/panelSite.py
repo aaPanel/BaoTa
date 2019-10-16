@@ -916,7 +916,12 @@ class panelSite(panelRedirect):
                     return public.returnMsg(False, '请先到软件商店安装【云解析】，并完成域名NS绑定.');
 
         self.check_ssl_pack()
-        import panelLets
+        try:
+            import panelLets
+        except Exception as ex:
+            if str(ex).find('No module named requests') != -1:
+                os.system("pip install requests &")
+                return public.returnMsg(False,'缺少requests组件，请尝试修复面板!')
         public.mod_reload(panelLets)
         lets = panelLets.panelLets()
         result = lets.apple_lest_cert(get)

@@ -132,6 +132,10 @@ class panelLets:
             return "连接超时,CA服务器无法访问您的网站!"
         elif error.find("DNS problem: SERVFAIL looking up CAA for") != -1:
             return "域名%s当前被要求验证CAA记录，请手动解析CAA记录，或1小时后重新尝试申请!" % re.findall("looking up CAA for (.+)",error)
+        elif error.find("Read timed out.") != -1:
+            return "验证超时,请检查域名是否正确解析，若已正确解析，可能服务器与Let'sEncrypt连接异常，请稍候再重试!"
+        elif error.find("Error creating new order") != -1:
+            return "订单创建失败，请稍候重试!"
         else:
             return error;
 
