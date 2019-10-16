@@ -33,7 +33,7 @@ class ajax:
             time.sleep(0.5)
             #取Nginx负载状态
             self.CheckStatusConf()
-            result = public.HttpGet('http://127.0.0.1/nginx_status')
+            result = public.ExecShell('/usr/local/curl/bin/curl -Ss http://127.0.0.1/nginx_status')[0]
             tmp = result.split()
             data = {}
             if "request_time" in tmp:

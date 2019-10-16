@@ -144,11 +144,96 @@ class backup_bak:
     # 显示所有网站信息
     def get_sites(self,get):
         data= public.M('sites').field('id,name,path,status,ps,addtime,edate').select()
+        for i in data:
+            data2=self.GetSSL(i['name'])
+            i['ssl']=data2['status']
+            if data2['status']:
+                i['time'] = data2['cert_data']
+            else:
+                i['time'] =False
         return data
+
 
     def get_databases(self,get):
         data= public.M('databases').field('id,name,username,password,accept,ps,addtime').select()
         return data
+
+    # 是否跳转到https
+    def IsToHttps(self, siteName):
+        file = self.setupPath + '/panel/vhost/nginx/' + siteName + '.conf';
+        conf = public.readFile(file);
+        if conf:
+            if conf.find('HTTP_TO_HTTPS_START') != -1: return True;
+            if conf.find('$server_port !~ 443') != -1: return True;
+        return False;
+
+    # 取SSL状态
+    def GetSSL(self, siteName):
+        self.setupPath = '/www/server'
+        path = os.path.join('/www/server/panel/vhost/cert/', siteName)
+        if not os.path.isfile(os.path.join(path, "fullchain.pem")) and not os.path.isfile(os.path.join(path, "privkey.pem")):
+            path = os.path.join('/etc/letsencrypt/live/', siteName)
+        type = 0;
+        if os.path.exists(path + '/README'):  type = 1;
+        if os.path.exists(path + '/partnerOrderId'):  type = 2;
+        csrpath = path + "/fullchain.pem";  # 生成证书路径
+        keypath = path + "/privkey.pem";  # 密钥文件路径
+        key = public.readFile(keypath);
+        csr = public.readFile(csrpath);
+        file = self.setupPath + '/panel/vhost/' + public.get_webserver() + '/' + siteName + '.conf';
+        conf = public.readFile(file);
+        keyText = 'SSLCertificateFile'
+        if public.get_webserver() == 'nginx': keyText = 'ssl_certificate';
+        status = True
+        if (conf.find(keyText) == -1):
+            status = False
+            type = -1
+        toHttps = self.IsToHttps(siteName)
+        id = public.M('sites').where("name=?", (siteName,)).getField('id')
+        domains = public.M('domain').where("pid=?", (id,)).field('name').select()
+        cert_data= {}
+        if csr:
+            cert_data = self.GetCertName(csrpath)
+        email = public.M('users').where('id=?',(1,)).getField('email')
+        if email == '287962566@qq.com': email = ''
+        return {'status': status, 'cert_data':cert_data}
+
+    #转换时间
+    def strfToTime(self,sdate):
+        import time
+        return time.strftime('%Y-%m-%d',time.strptime(sdate,'%b %d %H:%M:%S %Y %Z'))
+
+    #获取证书名称
+    def GetCertName(self,certPath):
+        try:
+            openssl = '/usr/local/openssl/bin/openssl';
+            if not os.path.exists(openssl): openssl = 'openssl';
+            result = public.ExecShell(openssl + " x509 -in "+certPath+" -noout -subject -enddate -startdate -issuer")
+            tmp = result[0].split("\n");
+            data = {}
+            data['subject'] = tmp[0].split('=')[-1]
+            data['notAfter'] = self.strfToTime(tmp[1].split('=')[1])
+            data['notBefore'] = self.strfToTime(tmp[2].split('=')[1])
+            if tmp[3].find('O=') == -1:
+                data['issuer'] = tmp[3].split('CN=')[-1]
+            else:
+                data['issuer'] = tmp[3].split('O=')[-1].split(',')[0]
+            if data['issuer'].find('/') != -1: data['issuer'] = data['issuer'].split('/')[0];
+            result = public.ExecShell(openssl + " x509 -in "+certPath+" -noout -text|grep DNS")
+            data['dns'] = result[0].replace('DNS:','').replace(' ','').strip().split(',');
+            return data;
+        except:
+            print(public.get_error_info())
+            return None;
+
+
+    # 显示所有网站信息
+    def get_sites_or_ssl(self,get):
+        data= public.M('sites').field('id,name,path,status,ps,addtime,edate').select()
+        for i in data:
+            i['ssl']=self.GetSSL(i['name'])
+        return data
+
 
     #backup_database
     def backup_database(self,get):

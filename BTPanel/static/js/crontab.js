@@ -819,7 +819,7 @@ function toBackup(type){
 					<span><input type="number" name="save" id="save" value="3" maxlength="4" max="100" min="1"></span>\
 					<span class="name">'+lan.crontab.save_num+'</span>\
 					</div>';
-        if (sType == 'sites') {
+        if (sType == 'sites' && sMsg !== lan.crontab.backup_log) {
             sBody += '<p class="clearfix plan">\
                     <div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">排除规则</div>\
                     <div class="dropdown planBackupTo pull-left mr20">\

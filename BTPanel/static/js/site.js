@@ -6,6 +6,7 @@ var site = {
         if (type == '-1' || type == undefined) {
             type = $('.site_type select').val();
         }
+        if (!search) search = $("#SearchValue").val();
         bt.site.get_list(page, search, type, function (rdata) {
             $('.dataTables_paginate').html(rdata.page);
                 var data = rdata.data;

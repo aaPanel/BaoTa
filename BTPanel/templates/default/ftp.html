@@ -42,7 +42,8 @@
 	
 	var ftp = {
 		get_list:function(page,search){
-			if(page==undefined) page=1;			
+            if (page == undefined) page = 1;			
+            if (!search) search = $("#SearchValue").val();
 			bt.ftp.get_list(page,search,function(rdata){
 				$('.dataTables_paginate').html(rdata.page);
 				var _tab =  bt.render({

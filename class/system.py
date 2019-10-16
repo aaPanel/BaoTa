@@ -272,10 +272,14 @@ class system:
         time.sleep(0.5)
         #取CPU信息
         cpuCount = psutil.cpu_count()
+        cpuNum = psutil.cpu_count(logical=False)
+        c_tmp = public.readFile('/proc/cpuinfo')
+        d_tmp = re.findall("physical id.+",c_tmp)
+        cpuW = len(set(d_tmp))
         used = self.get_cpu_percent()
         used_all = psutil.cpu_percent(percpu=True)
-        cpu_name = public.getCpuType()
-        return used,cpuCount,used_all,cpu_name
+        cpu_name = public.getCpuType() + " * {}".format(cpuW)
+        return used,cpuCount,used_all,cpu_name,cpuNum,cpuW
 
 
     def GetCpuInfo_new(self):

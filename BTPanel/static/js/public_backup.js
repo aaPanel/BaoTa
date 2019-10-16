@@ -3973,11 +3973,12 @@ bt.soft = {
                     </div>'
         });
     },
-    update_soft: function (name,title, version, min_version) {
+    update_soft: function (name,title, version, min_version,update_msg) {
         var _this = this;
-		var msg = "<li>建议您在服务器负载闲时进行软件更新.</li>";
+		var msg = "<li style='color:red;'>建议您在服务器负载闲时进行软件更新.</li>";
 		if(name == 'mysql') msg = "<ul style='color:red;'><li>更新数据库有风险,建议在更新前,先备份您的数据库.</li><li>如果您的是云服务器,强烈建议您在更新前做一个快照.</li><li>建议您在服务器负载闲时进行软件更新.</li></ul>";
-        bt.show_confirm('更新[' + title + ']', '更新过程可能会导致服务中断,您真的现在就将[' + title+']更新到['+version+'.'+min_version+']吗?',function(){
+        if (update_msg) msg += '<div style="    margin-top: 10px;"><span style="font-size: 14px;font-weight: 900;">本次更新说明: </span><hr style="margin-top: 5px; margin-bottom: 5px;" /><pre>' + update_msg.replace(/(_bt_)/g, "\n") +'</pre><hr style="margin-top: -5px; margin-bottom: -5px;" /></div>';
+        bt.show_confirm('更新[' + title + ']', '更新过程可能会导致服务中断,您真的现在就将[' + title + ']更新到[' + version + '.' + min_version + ']吗?', function () {
             var loadT = bt.load('正在更新到[' + title+'-'+version+'.'+min_version+'],请稍候...');
             bt.send('install_plugin', 'plugin/install_plugin', { sName: name, version: version, upgrade: version }, function (rdata) {
                 if (rdata.size) {

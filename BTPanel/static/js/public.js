@@ -339,11 +339,11 @@ var aceEditor = {
 				break;
 				// 搜索
 				case 'searchs':
-					
+					editor_item.ace.execCommand('find');
 				break;
 				// 替换
 				case 'replaces':
-					
+					editor_item.ace.execCommand('replace');
 				break;
 				// 字体
 				case 'fontSize':
@@ -458,7 +458,7 @@ var aceEditor = {
 									ctrl+a&nbsp;&nbsp;全选&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+x&nbsp;&nbsp;剪切</br>\
 									ctrl+c&nbsp;&nbsp;复制&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+v&nbsp;&nbsp;粘贴</br>\
 									ctrl+z&nbsp;&nbsp;撤销&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+y&nbsp;&nbsp;反撤销</br>\
-									ctrl+f&nbsp;&nbsp;查找&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+alt+f&nbsp;&nbsp;替换</br>\
+									ctrl+f&nbsp;&nbsp;查找&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+h;&nbsp;替换</br>\
 									win+alt+0&nbsp;&nbsp;折叠所有</br>\
 									win+alt+shift+0&nbsp;&nbsp;展开所有</br>\
 									esc&nbsp;&nbsp;[退出搜索,取消自动提示...]</br>\
@@ -2574,254 +2574,204 @@ function scroll_handle(e){
 	var scrollTop = this.scrollTop;
 	$(this).find("thead").css({"transform":"translateY("+scrollTop+"px)","position":"relative","z-index":"1"});
 }
-var clipboard, interval, socket, gterm, ssh_login,term_box;
+var clipboard, interval, socket, term, ssh_login,term_box;
 
 var pdata_socket = {
     x_http_token: document.getElementById("request_token_head").getAttribute('token')
 }
 
-function ssh_login_def() {
-    pdata_socket['data'] = {};
-    pdata_socket['data']['ssh_user'] = $("input[name='ssh_user']").val();
-    pdata_socket['data']['ssh_passwd'] = $("input[name='ssh_passwd']").val();
-    if (!pdata_socket.data.ssh_user || !pdata_socket.data.ssh_passwd) {
-        layer.msg('SSH用户名和密码不能为空!');
-        return;
-    }
-
-    layer.close(ssh_login);
-    socket.emit('webssh', pdata_socket);
-    gterm.focus();
-}
-
 function web_shell() {
     var termCols = 100;
-    var termRows = 29;
-    var sendTotal = 0;
-    if(!socket)socket = io.connect();
-    var term = new Terminal({ cols: termCols, rows: termRows, screenKeys: true, useStyle: true});
-    term.open();
-    gterm = term
+    var termRows = 34;
+    if (!socket) connect_io()
+    term = new Terminal({ cols: termCols, rows: termRows, screenKeys: true, useStyle: true });
     term.setOption('cursorBlink', true);
 
-    socket.on('server_response', function (data) {
-        if (data.data == "连接SSH服务失败!\r\n") {
-            if ($("input[name='ssh_user']").attr('autocomplete')) return;
-            var s_body = '<div class="bt-form bt-form pd20 pb70"><div class="line " style="display:none;">\
-                            <span class="tname">id</span><div class="info-r "><input name="id" class="bt-input-text mr5" type="text" style="width:330px" value=""></div></div>\
-                            <div class="line "><span class="tname">用户名</span><div class="info-r "><input name="ssh_user" class="bt-input-text mr5" type="text" style="width:330px" value="" readonly="readonly" autocomplete="off"></div></div>\
-                            <div class="line "><span class="tname">密码</span><div class="info-r "><input name="ssh_passwd" class="bt-input-text mr5" type="password" style="width:330px" value="" readonly="readonly" autocomplete="off"></div></div>\
-                            <div class="bt-form-submit-btn"><button type="button" class="btn btn-sm btn-danger" onclick="layer.closeAll()">关闭</button><button type="button" class="btn btn-sm btn-success ssh-login" onclick="ssh_login_def()">登录SSH</button></div></div>';
-            ssh_login = layer.open({
-                type: 1,
-                title: '请输入SSH登录帐户和密码',
-                area: "500px",
-                closeBtn: 0,
-                shadeClose: false,
-                content: s_body
-            });
+    term_box = layer.open({
+        type: 1,
+        title: '宝塔终端',
+        area: ['920px', '630px'],
+        closeBtn: 2,
+        shadeClose: false,
+        content: '<a class="btlink" onclick="show_ssh_login(1)" style="position: fixed;margin-left: 83px;margin-top: -30px;">[设置]</a><div class="term-box" style="background-color:#000"><div id="term"></div></div>',
+        cancel: function () {
+            term.destroy();
+        },
+        success: function () {
+            term.open(document.getElementById('term'));
+        }
+    });
 
-            setTimeout(function removeReadonly() {
-                $("input[name='ssh_user']").removeAttr('readonly');
-                $("input[name='ssh_passwd']").removeAttr('readonly');
-                $("input[name='ssh_user']").focus();
+    term.on('data', function (data) {
+        socket.emit('webssh', data);
+    });
 
-                $("input[name='ssh_passwd']").keydown(function (e) {
-                    if (e.keyCode == 13) {
-                        $('.ssh-login').click();
-                    }
-                });
+	$(".shell_btn_close").click(function(){
+		layer.close(term_box);
+		term.destroy();
+	})
+	
+    setTimeout(function () {
+        socket.emit('webssh', "\u0015");
+        socket.emit('webssh', "new_bt_terminal");
+        //socket.emit('webssh', "new_bt_terminal");
+        term.focus();
+    }, 100)
+}
 
-            }, 500);
+
+function connect_io() {
+    socket = io.connect();
+    socket.on('ssh_data', function (data) {
+        if (data === "\r服务器连接失败!\r" || data === "\r用户名或密码错误!\r") {
+            show_ssh_login(0);
             return;
         }
 
-        term.write(data.data);
+        term.write(data);
 
-        if (data.data == '\r\n登出\r\n' || data.data == '登出\r\n' || data.data == '\r\nlogout\r\n' || data.data == 'logout\r\n') {
+        if (data == '\r\n登出\r\n' || data == '登出\r\n' || data == '\r\nlogout\r\n' || data == 'logout\r\n') {
             setTimeout(function () {
                 layer.close(term_box);
             }, 500);
         }
     });
-    
-    if (socket) {
-        socket.emit('connect_event', '');
-        interval = setInterval(function () {
-            socket.emit('connect_event', '');
-        }, 1000);
+}
+
+function show_ssh_login(is_config) {
+    if ($("input[name='ssh_user']").attr('autocomplete')) return;
+    var s_body = '<div class="bt-form bt-form pd20 pb70">\
+                            <style>.ssh_check_s1{    display: inline-block;\
+    height: 38px;\
+    background-color: #fff;\
+    color: #050505;\
+    white-space: nowrap;\
+    text-align: center;\
+    cursor: pointer;\
+    border-radius: 0;\
+    margin-left: 0px !important;\
+    position: relative;\
+    top: 2px;\
+    line-height: 34px;\
+    font-size: 13px;\
+    border-color: #e6e6e6;\
+    padding: 0 14px;\
+    border: 1px solid #e0dfdf;}\
+    .ssh_check_s2{margin-left: 0 !important;\
+            position: relative;\
+            top: 2px;\
+            border-color: #e6e6e6;\
+            display: inline - block;\
+            height: 38px;\
+            line-height: 38px;\
+            padding: 0 18px;\
+            background-color: #20a53a;\
+            color: #fff;\
+            white-space: nowrap;\
+            text-align: center;\
+            font-size: 14px;\
+            border: none;\
+            border-radius: 2px;\
+            cursor: pointer;}        </style >\
+                            <div class="line "><span class="tname">连接地址</span><div class="info-r "><input name="ssh_host" class="bt-input-text mr5" type="text" style="width:330px" value="127.0.0.1" autocomplete="off"></div></div>\
+                            <div class="line "><span class="tname">端口</span><div class="info-r "><input name="ssh_port" class="bt-input-text mr5" type="text" style="width:330px" value="22" autocomplete="off"></div></div>\
+                            <div class="line "><span class="tname">用户名</span><div class="info-r "><input name="ssh_user" class="bt-input-text mr5" type="text" style="width:330px" value="root" readonly="readonly" autocomplete="off"></div></div>\
+                            <div class="line "><span class="tname">验证方式</span><div class="info-r "><button class="ssh_check_s2" id="pass_check" onclick="pass_check()">密码验证</button><button id="rsa_check" class="ssh_check_s1" onclick="rsa_check()">私钥验证</button></div></div>\
+                            <div class="line ssh_passwd"><span class="tname">密码</span><div class="info-r "><input name="ssh_passwd" readonly="readonly" class="bt-input-text mr5" type="password" style="width:330px" value="" autocomplete="off"></div></div>\
+                            <div class="line ssh_pkey" style="display:none;"><span class="tname">私钥</span><div class="info-r "><textarea name="ssh_pkey" class="bt-input-text mr5" style="width:330px;height:80px;" ></textarea></div></div>\
+                            <div class="line "><span class="tname"></span><div class="info-r "><input style="margin-top: 1px;width: 16px;" name="ssh_is_save" id="ssh_is_save" class="bt-input-text mr5" type="checkbox" ><label style="position: absolute;margin-top: 7px;margin-left: 5px;" for="ssh_is_save">记住密码，下次使用宝塔终端将自动登录</label></div></div>\
+                            <p style="color: red;margin-top: 10px;text-align: center;">仅支持登录本服务器，如需登录其他服务器，可以使用<a class="btlink" href="https://www.bt.cn/platform" target="_blank">【堡塔云控平台】</a>进行多机管理</p>\
+                            <div class="bt-form-submit-btn"><button type="button" class="btn btn-sm btn-danger" onclick="'+ (is_config ? 'layer.close(ssh_login)' :'layer.closeAll()')+'">关闭</button><button type="button" class="btn btn-sm btn-success ssh-login" onclick="send_ssh_info('+is_config+')">'+(is_config?'确定':'登录SSH')+'</button></div></div>';
+    ssh_login = layer.open({
+        type: 1,
+        title: is_config?'请填写SSH连接配置':'请输入SSH登录帐户和密码',
+        area: "500px",
+        closeBtn: 0,
+        shadeClose: false,
+        content: s_body
+    });
+
+    setTimeout(function removeReadonly() {
+        $("input[name='ssh_user']").removeAttr('readonly');
+        $("input[name='ssh_passwd']").removeAttr('readonly');
+        $("input[name='ssh_passwd']").focus();
+
+        $("input[name='ssh_passwd']").keydown(function (e) {
+            if (e.keyCode == 13) {
+                $('.ssh-login').click();
+            }
+        });
+
+    }, 500);
+}
+
+
+function pass_check() {
+    $("#pass_check").attr("class", "ssh_check_s2");
+    $("#rsa_check").attr("class", "ssh_check_s1");
+    $(".ssh_pkey").hide();
+    $(".ssh_passwd").show();
+}
+
+function rsa_check() {
+    $("#pass_check").attr("class", "ssh_check_s1");
+    $("#rsa_check").attr("class", "ssh_check_s2");
+    $(".ssh_pkey").show();
+    $(".ssh_passwd").hide();
+}
+
+
+function send_ssh_info() {
+    pdata = {
+        host: $("input[name='ssh_host']").val(),
+        port: Number($("input[name='ssh_port']").val()),
+        password: $("input[name='ssh_passwd']").val(),
+        username: $("input[name='ssh_user']").val(),
+        pkey: $("textarea[name='ssh_pkey']").val()
+    }
+    if (pdata['host'] !== '127.0.0.1' && pdata['host'] !== 'localhost') {
+        layer.msg("连接地址只能是127.0.0.1或localhost");
+        $("input[name='ssh_host']").focus();
+        return;
+    }
+    if (pdata['port'] < 1 || pdata['port'] > 65535) {
+        layer.msg("端口范围不正确[1-65535]");
+        $("input[name='ssh_port']").focus();
+        return;
+    }
+    if (!pdata['username']) {
+        layer.msg("用户名不能为空!");
+        $("input[name='ssh_user']").focus();
+        return;
+    }
+
+    if ($("#rsa_check").attr("class") === "ssh_check_s2") {
+        pdata['c_type'] = 'True'
+        if (!pdata['pkey']) {
+            layer.msg("私钥不能为空!");
+            $("input[name='ssh_pkey']").focus();
+            return;
+        }
+    } else {
+        if (!pdata['password']) {
+            layer.msg("密码不能为空!");
+            $("input[name='ssh_passwd']").focus();
+            return;
+        }
+    }
+    if ($("#ssh_is_save").prop("checked")) {
+        pdata['is_save'] = '1';
     }
     
-    term.on('data', function (data) {
-        pdata_socket['data'] = data;
-        socket.emit('webssh', pdata_socket);
-    });
-
-
-    term_box = layer.open({
-        type: 1,
-        title: "宝塔终端",
-        area: ['920px','640px'],
-        closeBtn: 2,
-        shadeClose: false,
-        content: '<div class="term-box"><div id="term"></div></div>\
-					<div class="shell-text-input">\
-                    <textarea type="text" class="bt-input-text-shell" placeholder="请将命令粘贴到此处.." value="" name="ssh_copy" />\
-					<div class="shell-btn-group">\
-                    <button class="shellbutton btn btn-success btn-sm pull-right shell_btn_1">发送(Ctrl+Enter)</button>\
-					<button class="shellbutton btn btn-default btn-sm pull-right shell_btn_close">关闭</button>\
-					</div>\
-                </div>',
-        cancel: function () {
-            term.destroy();
-            clearInterval(interval)
-        }
-    });
-	$(".shell_btn_close").click(function(){
-		layer.close(term_box);
-		term.destroy();
-        clearInterval(interval)
-	})
-	
-    setTimeout(function () {
-        $('.terminal').detach().appendTo('#term');
-        $("#term").show();
-        pdata_socket['data'] = "\u0015"
-        socket.emit('webssh', pdata_socket);
-        pdata_socket['data'] = "\n"
-        socket.emit('webssh', pdata_socket);
+    var loadT = layer.msg('正在尝试登录SSH...', { icon: 16, time: 0, shade: 0.3 });
+    $.post("/term_open", { data: JSON.stringify(pdata) }, function () {
+        layer.close(loadT)
+        socket.emit('webssh', pdata);
+        layer.close(ssh_login)
         term.focus();
-
-        // 鼠标右键事件
-        var can = $("#term");
-        can.contextmenu(function (e) {
-            var winWidth = can.width();
-            var winHeight = can.height();
-            var mouseX = e.pageX;
-            var mouseY = e.pageY;
-            var menuWidth = $(".contextmenu").width();
-            var menuHeight = $(".contextmenu").height();
-            var minEdgeMargin = 10;
-            if (mouseX + menuWidth + minEdgeMargin >= winWidth &&
-                mouseY + menuHeight + minEdgeMargin >= winHeight) {
-                menuLeft = mouseX - menuWidth - minEdgeMargin + "px";
-                menuTop = mouseY - menuHeight - minEdgeMargin + "px";
-            }
-            else if (mouseX + menuWidth + minEdgeMargin >= winWidth) {
-                menuLeft = mouseX - menuWidth - minEdgeMargin + "px";
-                menuTop = mouseY + minEdgeMargin + "px";
-            }
-            else if (mouseY + menuHeight + minEdgeMargin >= winHeight) {
-                menuLeft = mouseX + minEdgeMargin + "px";
-                menuTop = mouseY - menuHeight - minEdgeMargin + "px";
-            }
-            else {
-                menuLeft = mouseX + minEdgeMargin + "px";
-                menuTop = mouseY + minEdgeMargin + "px";
-            };
-
-            var selectText = term.getSelection()
-            var style_str = '';
-            var paste_str = '';
-            if (!selectText) {
-                if (!getCookie('shell_copy_body')) {
-                    paste_str = 'style="color: #bbb;" disable';
-                }
-                style_str = 'style="color: #bbb;" disable';
-            } else {
-                setCookie('ssh_selection', selectText);
-            }
-
-
-            var menudiv = '<ul class="contextmenu">\
-                        <li>\
-                            <a class="shell_copy_btn menu_ssh" data-clipboard-text="'+ selectText + '" ' + style_str + '>复制到剪切板</a>\
-                        </li>\
-                        <li>\
-                            <a  onclick="shell_paste_text()" '+ paste_str+'>粘贴选中项</a>\
-                        </li>\
-                        <li>\
-                            <a onclick="shell_translate_text()" ' + style_str + '>翻译</a>\
-                        </li>\
-                        <li>\
-                            <a onclick="shell_to_baidu()" ' + style_str + '>百度搜索</a>\
-                        </li>\
-                    </ul>';
-            $("body").append(menudiv);
-            $(".contextmenu").css({
-                "left": menuLeft,
-                "top": menuTop
-            });
-            return false;
-        });
-        can.click(function () {
-            remove_ssh_menu();
-        });
-
-        clipboard = new ClipboardJS('.shell_copy_btn');
-        clipboard.on('success', function (e) {
-            layer.msg('复制成功!');
-            setCookie('shell_copy_body', e.text)
-            remove_ssh_menu();
-            term.focus();
-        });
-
-        clipboard.on('error', function (e) {
-            layer.msg('复制失败，浏览器不兼容!');
-            setCookie('shell_copy_body', e.text)
-            remove_ssh_menu();
-            term.focus();
-        });
-
-        $(".shellbutton").click(function () {
-            var tobj = $("textarea[name='ssh_copy']");
-            var ptext = tobj.val();
-            tobj.val('');
-            if ($(this).text().indexOf('Alt') != -1) {
-                ptext +="\n";
-            }
-            pdata_socket['data'] = ptext;
-            socket.emit('webssh', pdata_socket);
-            term.focus();
-        })
-        $("textarea[name='ssh_copy']").keydown(function (e) {
-            if (e.ctrlKey && e.keyCode == 13) {
-                $(".shell_btn_1").click();
-            } else if (e.altKey && e.keyCode == 13) {
-                $(".shell_btn_1").click();
-            }
-        });
-
-    }, 100)
+    })
+    
+    
 }
 
-function shell_translate_text() {
-    remove_ssh_menu();
-    var selectText = getCookie('ssh_selection');
-    var loadT = layer.msg('正在翻译...', { icon: 16, time: 1000 * 60, });
-    $.get('https://www.bt.cn/api/index/fanyi', { query: selectText }, function (rdata) {
-        layer.close(loadT);
-        layer.msg("原文: " + rdata.src + '<br>译文: ' + rdata.dst, { time: 1000 * 10, shadeClose: true, shade: 0.01 });
-    }, 'JSONP');
-    gterm.focus();
-}
-
-function shell_to_baidu() {
-    var selectText = getCookie('ssh_selection');
-    remove_ssh_menu();
-    window.open('https://www.baidu.com/s?wd=' + selectText)
-    gterm.focus();
-}
-
-
-function shell_paste_text() {
-    pdata_socket['data'] = getCookie('ssh_selection')
-    socket.emit('webssh', pdata_socket);
-    remove_ssh_menu();
-    gterm.focus();
-}
-
-function remove_ssh_menu() {
-    $(".contextmenu").remove();
-}
 

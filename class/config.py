@@ -801,7 +801,11 @@ class config:
             public.WriteFile(save_path,json.dumps(data))
             public.ExecShell("chmod 600 " + save_path)
         data = json.loads(public.ReadFile(save_path))
-        data['token'] = "***********************************"
+        
+        if 'token_crypt' in data:
+            data['token'] = public.de_crypt(data['token'],data['token_crypt'])
+        else:
+            data['token'] = "***********************************"
         data['limit_addr'] = '\n'.join(data['limit_addr'])
         return data
 
@@ -812,6 +816,7 @@ class config:
         if get.t_type == '1':
             token = public.GetRandomString(32)
             data['token'] = public.md5(token)
+            data['token_crypt'] = public.en_crypt(data['token'],token).decode('utf-8')
             public.WriteLog('API配置','重新生成API-Token')
         elif get.t_type == '2':
             data['open'] = not data['open']
@@ -824,6 +829,7 @@ class config:
             token ='保存成功!'
 
         public.WriteFile(save_path,json.dumps(data))
+        public.ExecShell("chmod 600 " + save_path)
         return public.returnMsg(True,token)
 
 
@@ -1125,3 +1131,12 @@ class config:
         if data:
             return data
         return public.returnMsg(True, "没有二维码数据，请重新开启")
+
+    # 设置是否云控打开
+    def set_coll_open(self,get):
+        if not 'coll_show' in get: return public.returnMsg(False,'错误的参数!')
+        if get.coll_show == 'True':
+            session['tmp_login'] = True
+        else:
+            session['tmp_login'] = False
+        return public.returnMsg(True,'设置成功!')

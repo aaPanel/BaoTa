@@ -27,7 +27,7 @@ class panelAuth:
             if len(tmp) < 2: tmp = '{}'
             data = json.loads(tmp);
             if not data: return public.returnMsg(False,'请先登陆宝塔官网用户');
-            if not hasattr(data,'serverid'):
+            if not 'serverid' in data:
                 s1 = self.get_mac_address() + self.get_hostname()
                 s2 = self.get_cpuname();
                 serverid = public.md5(s1) + public.md5(s2);

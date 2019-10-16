@@ -117,6 +117,22 @@ class SiteDirAuth:
                 if name in i.values() or site_dir == i["site_dir"]:
                     return True
 
+    # 获取当前站点php版本
+    def get_site_php_version(self,siteName):
+        try:
+            conf = public.readFile(self.setup_path + '/panel/vhost/'+public.get_webserver()+'/'+siteName+'.conf');
+            if public.get_webserver() == 'nginx':
+                rep = "enable-php-([0-9]{2,3})\.conf"
+            else:
+                rep = "php-cgi-([0-9]{2,3})\.sock"
+            tmp = re.search(rep,conf).groups()
+            if tmp:
+                return tmp[0]
+            else:
+                return ""
+        except:
+            return public.returnMsg(False, 'SITE_PHPVERSION_ERR_A22')
+
     # 获取站点名
     def get_site_info(self,id):
         site_info = public.M('sites').where('id=?', (id,)).field('name,path').find()
@@ -124,6 +140,10 @@ class SiteDirAuth:
 
     # 设置独立认证文件
     def set_dir_auth_file(self,site_path,site_name,name,username,site_dir,auth_file):
+        php_ver = self.get_site_php_version(site_name)
+        php_conf = ""
+        if php_ver:
+            php_conf = "include enable-php-{}.conf;".format(php_ver)
         for i in ["nginx","apache"]:
             file_path = "{setup_path}/panel/vhost/{webserver}/dir_auth/{site_name}"
             if i == "nginx":
@@ -132,8 +152,9 @@ class SiteDirAuth:
     #AUTH_START
     auth_basic "Authorization";
     auth_basic_user_file %s;
+    %s
     #AUTH_END
-}''' % (site_dir,auth_file)
+}''' % (site_dir,auth_file,php_conf)
             else:
             # 设置apache
                 conf = '''<Directory "{site_path}{site_dir}/">

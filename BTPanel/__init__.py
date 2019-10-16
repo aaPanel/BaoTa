@@ -9,7 +9,7 @@
 import sys,json,os,time,logging,re
 if sys.version_info[0] != 2:
         from imp import reload
-sys.path.insert(0,'class/')
+sys.path.insert(0,'/www/server/panel/class/')
 import public
 from flask import Flask
 app = Flask(__name__,template_folder="templates/" + public.GetConfigValue('template'))
@@ -19,6 +19,7 @@ from flask_session import Session
 from werkzeug.contrib.cache import SimpleCache
 from werkzeug.wrappers import Response
 from flask_socketio import SocketIO,emit,send
+from threading import Lock
 dns_client = None
 app.config['DEBUG'] = os.path.exists('data/debug.pl')
 
@@ -37,11 +38,11 @@ cache = SimpleCache()
 socketio = SocketIO()
 socketio.init_app(app)
 
-import common,db,jobs,uuid
+import common,db,jobs,uuid,ssh_terminal
 jobs.control_init()
 app.secret_key = uuid.UUID(int=uuid.getnode()).hex[-12:]
 local_ip = None
-
+my_terms = {}
 
 try:
     from flask_sqlalchemy import SQLAlchemy
@@ -67,7 +68,10 @@ app.config['SESSION_COOKIE_NAME'] = "BT_PANEL_6"
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400
 Session(app)
 
-if s_sqlite: sdb.create_all()
+
+if s_sqlite: 
+    sdb.create_all()
+    public.ExecShell("chmod 600 /dev/shm/session.db")
 
 from datetime import datetime
 import socket
@@ -88,6 +92,56 @@ if admin_path in admin_path_checks: admin_path = '/bt'
 def service_status():
     return 'True'
 
+
+
+@socketio.on('connect')
+def socket_connect(msg=None):
+    if not check_login():
+        emit('server_response',{'data':public.getMsg('111')})
+        return False
+
+@socketio.on('webssh')
+def webssh(msg):
+    if not check_login(): 
+        emit('server_response',"面板会话丢失，请重新登录面板!")
+        return None
+    if not 'ssh_obj' in session:
+        session['ssh_obj'] = ssh_terminal.ssh_terminal()
+    session['ssh_obj'].send(msg)
+
+
+@app.route('/term_open',methods=method_all)
+def term_open():
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    args = get_input()
+    if 'get_ssh_info' in args: 
+        key = 'ssh_' + args['host']
+        if key in session:
+            return public.getJson(session[key]),json_header
+        return public.returnMsg(False,'获取失败!')
+    session['ssh_info'] = json.loads(args.data)
+    key = 'ssh_' + session['ssh_info']['host']
+    session[key] = session['ssh_info']
+    s_file = '/www/server/panel/config/t_info.json'
+    if 'is_save' in session['ssh_info']:
+        public.writeFile(s_file,public.de_hexb(json.dumps(session['ssh_info'])))
+        public.set_mode(s_file,600)
+    else:
+        if os.path.exists(s_file): os.remove(s_file)
+    return public.returnJson(True,'设置成功!');
+
+@app.route('/reload_mod',methods=method_all)
+def reload_mod():
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    args = get_input()
+    mod_name = None
+    if 'mod_name' in args:
+        mod_name = args.mod_name
+    result = public.reload_mod(mod_name)
+    if result: return public.returnJson(True,result),json_header
+    return public.returnJson(False,'重载失败!'),json_header
 
 @app.before_request
 def request_check():
@@ -475,7 +529,7 @@ def config(pdata = None):
         if public.is_local(): data['is_local'] = 'checked'
         return render_template( 'config.html',data=data)
     import config
-    defs = ('get_qrcode_data','check_two_step','set_two_step_auth','get_key','get_php_session_path','set_php_session_path','get_cert_source','set_local','set_debug','get_panel_error_logs','clean_panel_error_logs','get_basic_auth_stat','set_basic_auth','get_cli_php_version','get_tmp_token','set_cli_php_version','DelOldSession', 'GetSessionCount', 'SetSessionConf', 'GetSessionConf','get_ipv6_listen','set_ipv6_status','GetApacheValue','SetApacheValue','GetNginxValue','SetNginxValue','get_token','set_token','set_admin_path','is_pro','get_php_config','get_config','SavePanelSSL','GetPanelSSL','GetPHPConf','SetPHPConf','GetPanelList','AddPanelInfo','SetPanelInfo','DelPanelInfo','ClickPanelInfo','SetPanelSSL','SetTemplates','Set502','setPassword','setUsername','setPanel','setPathInfo','setPHPMaxSize','getFpmConfig','setFpmConfig','setPHPMaxTime','syncDate','setPHPDisable','SetControl','ClosePanel','AutoUpdatePanel','SetPanelLock')
+    defs = ('set_coll_open','get_qrcode_data','check_two_step','set_two_step_auth','get_key','get_php_session_path','set_php_session_path','get_cert_source','set_local','set_debug','get_panel_error_logs','clean_panel_error_logs','get_basic_auth_stat','set_basic_auth','get_cli_php_version','get_tmp_token','set_cli_php_version','DelOldSession', 'GetSessionCount', 'SetSessionConf', 'GetSessionConf','get_ipv6_listen','set_ipv6_status','GetApacheValue','SetApacheValue','GetNginxValue','SetNginxValue','get_token','set_token','set_admin_path','is_pro','get_php_config','get_config','SavePanelSSL','GetPanelSSL','GetPHPConf','SetPHPConf','GetPanelList','AddPanelInfo','SetPanelInfo','DelPanelInfo','ClickPanelInfo','SetPanelSSL','SetTemplates','Set502','setPassword','setUsername','setPanel','setPathInfo','setPHPMaxSize','getFpmConfig','setFpmConfig','setPHPMaxTime','syncDate','setPHPDisable','SetControl','ClosePanel','AutoUpdatePanel','SetPanelLock')
     return publicObject(config.config(),defs,None,pdata);
 
 @app.route('/ajax',methods=method_all)
@@ -583,6 +637,7 @@ def panel_public():
     if not public.path_safe_check("%s/%s" % (get.name,get.fun)): return abort(404)
     if get.fun in ['scan_login', 'login_qrcode', 'set_login', 'is_scan_ok', 'blind','static']:
         if get.fun == 'static':
+            if not 'filename' in get: return abort(404)
             if not public.path_safe_check("%s" % (get.filename)): return abort(404)
             s_file = '/www/server/panel/BTPanel/static/' + get.filename
             if s_file.find('..') != -1 or s_file.find('./') != -1: return abort(404)
@@ -875,122 +930,6 @@ def panel_cloud():
         if download_url.find('http') != 0:download_url = 'http://' + download_url
     return redirect(download_url)
 
-ssh = None
-shell = None
-try:
-    import paramiko
-    ssh = paramiko.SSHClient()
-except:
-    public.ExecShell('pip install paramiko==2.0.2 &')
-
-@socketio.on('connect')
-def socket_connect(msg=None):
-    if not check_login(): 
-        emit('server_response',{'data':public.getMsg('111')})
-        return False
-
-@socketio.on('webssh')
-def webssh(msg):
-    if not check_login(msg['x_http_token']): 
-        emit('server_response',{'data':public.getMsg('INIT_WEBSSH_LOGOUT')})
-        return None
-
-    global shell,ssh
-    ssh_success = True
-    if type(msg['data']) == dict:
-        if 'ssh_user' in msg['data']:
-            connect_ssh(msg['data']['ssh_user'].strip(),msg['data']['ssh_passwd'].strip())
-    if not shell: ssh_success = connect_ssh()
-    if not shell:
-        emit('server_response',{'data':public.getMsg('INIT_WEBSSH_CONN_ERR')})
-        return;
-    if shell.exit_status_ready(): ssh_success = connect_ssh()
-    if not ssh_success:
-        emit('server_response',{'data':public.getMsg('INIT_WEBSSH_CONN_ERR')})
-        return;
-    shell.send(msg['data'])
-    time.sleep(0.005)
-    recv = shell.recv(4096)
-    emit('server_response',{'data':recv.decode("utf-8")})
-
-def connect_ssh(user=None,passwd=None):
-    global shell,ssh
-    pkey = '/root/.ssh/id_rsa_bt'
-    if not os.path.exists('/root/.ssh/authorized_keys') or not os.path.exists(pkey):
-        create_rsa()
-    try:
-        if not user:
-            key=paramiko.RSAKey.from_private_key_file(pkey)
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        try:
-            if not user:
-                ssh.connect('127.0.0.1', public.GetSSHPort(),pkey=key)
-            else:
-                ssh.connect('127.0.0.1', public.GetSSHPort(),username=user,password=passwd)
-        except:
-            if public.GetSSHStatus():
-                try:
-                    if not user:
-                        ssh.connect('localhost', public.GetSSHPort(),pkey=key)
-                    else:
-                        ssh.connect('localhost', public.GetSSHPort(),username=user,password=passwd)
-                except:
-                    create_rsa()
-                    return False;
-            import firewalls
-            fw = firewalls.firewalls()
-            get = common.dict_obj()
-            ssh_status = fw.GetSshInfo(get)['status']
-            if not ssh_status:
-                get.status = '0';
-                fw.SetSshStatus(get)
-
-            if not user:
-                ssh.connect('127.0.0.1', public.GetSSHPort(),pkey=key)
-            else:
-                ssh.connect('127.0.0.1', public.GetSSHPort(),username=user,password=passwd)
-
-            if not ssh_status:
-                get.status = '1';
-                fw.SetSshStatus(get);
-        shell = ssh.invoke_shell(term='xterm', width=100, height=29)
-        shell.setblocking(0)
-        return True
-    except:
-        shell = None
-        return False
-
-def create_rsa():
-    id_ras = '/root/.ssh/id_rsa_bt'
-    a_keys = '/root/.ssh/authorized_keys'
-    if not os.path.exists(a_keys) or not os.path.exists(id_ras):
-        public.ExecShell("rm -f /root/.ssh/id_rsa_bt*")
-        public.ExecShell('ssh-keygen -q -t rsa -P "" -f /root/.ssh/id_rsa_bt')
-        public.ExecShell('cat /root/.ssh/id_rsa_bt.pub >> /root/.ssh/authorized_keys')
-    else:
-        id_ras_pub = '/root/.ssh/id_rsa_bt.pub'
-        if os.path.exists(id_ras_pub):
-            pub_body = public.readFile(id_ras_pub)
-            keys_body = public.readFile(a_keys)
-            if keys_body.find(pub_body) == -1:
-                public.ExecShell('cat /root/.ssh/id_rsa_bt.pub >> /root/.ssh/authorized_keys')
-    public.ExecShell('chmod 600 /root/.ssh/authorized_keys')
-    
-@socketio.on('connect_event')
-def connected_msg(msg):
-    if not check_login(): 
-        emit('server_response',{'data':public.getMsg('INIT_WEBSSH_LOGOUT')})
-        return None 
-    global shell
-    if not shell: connect_ssh()
-    if shell:
-        try:
-            recv = shell.recv(8192)
-            emit('server_response',{'data':recv.decode("utf-8")})
-        except:
-            pass
-
-
 def check_csrf():
     if app.config['DEBUG']: return True
     request_token = request.cookies.get('request_token')
@@ -1014,6 +953,10 @@ def publicObject(toObject,defs,action=None,get = None):
             if get.path.find('./') != -1: return public.ReturnJson(False,'不安全的路径'),json_header
             if get.path.find('->') != -1:
                 get.path = get.path.split('->')[0].strip();
+    if hasattr(get,'sfile'):
+        get.sfile = get.sfile.replace('//','/').replace('\\','/');
+    if hasattr(get,'dfile'):
+        get.dfile = get.dfile.replace('//','/').replace('\\','/');
         
     if hasattr(toObject,'site_path_check'):
         if not toObject.site_path_check(get): return public.ReturnJson(False,'越权的操作!'),json_header

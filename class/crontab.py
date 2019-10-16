@@ -316,10 +316,7 @@ class crontab:
     #从crond删除
     def remove_for_crond(self,echo):
         u_file = '/var/spool/cron/crontabs/root'
-        if not os.path.exists(u_file):
-            file='/var/spool/cron/root'
-        else:
-            file=u_file
+        file = self.get_cron_file()
         conf=public.readFile(file)
         rep = ".+" + str(echo) + ".+\n"
         conf = re.sub(rep, "", conf)
@@ -405,11 +402,7 @@ echo "--------------------------------------------------------------------------
     #将Shell脚本写到文件
     def WriteShell(self,config):
         u_file = '/var/spool/cron/crontabs/root'
-        if not os.path.exists(u_file):
-            file='/var/spool/cron/root'
-        else:
-            file=u_file
-        
+        file = self.get_cron_file()
         if not os.path.exists(file): public.writeFile(file,'')
         conf = public.readFile(file)
         if type(conf)==bool:return public.returnMsg(False,'读取文件失败!')
@@ -429,6 +422,26 @@ echo "--------------------------------------------------------------------------
         os.system('chmod +x ' + execstr)
         os.system('nohup ' + execstr + ' >> ' + execstr + '.log 2>&1 &');
         return public.returnMsg(True,'CRONTAB_TASK_EXEC')
+
+    #获取计划任务文件位置
+    def get_cron_file(self):
+        u_path = '/var/spool/cron/crontabs'
+        u_file = u_path + '/root'
+        c_file = '/var/spool/cron/root'
+        cron_path = c_file
+        if not os.path.exists(u_path):
+            cron_path=c_file
+        if os.path.exists('/usr/bin/yum'):
+            cron_path = c_file
+        elif os.path.exists("/usr/bin/apt-get"):
+            cron_path = u_file
+
+        if cron_path == u_file:
+            if not os.path.exists(u_path): 
+                os.makedirs(u_path,472)
+                public.ExecShell("chown root:crontab {}".format(u_path))
+        return cron_path
+        
         
     
         

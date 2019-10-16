@@ -732,8 +732,8 @@ session.save_handler = files'''.format(path,sess_path,sess_path)
         if not os.path.exists(get.sfile):
             return public.returnMsg(False,'FILE_NOT_EXISTS')
         
-        #if os.path.exists(get.dfile):
-        #    return public.returnMsg(False,'FILE_EXISTS')
+        if get.dfile == get.sfile:
+            return public.returnMsg(False,'无意义操作');
         
         if not self.CheckDir(get.sfile):
             return public.returnMsg(False,'FILE_DANGER');
@@ -1114,6 +1114,9 @@ session.save_handler = files'''.format(path,sess_path,sess_path)
 
     #移动和重命名
     def move(self,sfile,dfile):
+        sfile = sfile.replace('//','/')
+        dfile = dfile.replace('//','/')
+        if sfile == dfile: return False
         if not os.path.exists(sfile): return False
         is_dir = os.path.isdir(sfile)
         if not os.path.exists(dfile) or not is_dir:
@@ -1130,6 +1133,7 @@ session.save_handler = files'''.format(path,sess_path,sess_path)
 
     #复制目录
     def copytree(self,sfile,dfile):
+        if sfile == dfile: return False
         if not os.path.exists(dfile): os.makedirs(dfile)
         for f_name in os.listdir(sfile):
             src_filename = (sfile + '/' + f_name).replace('//','/')
@@ -1243,6 +1247,7 @@ done
         freshFile = '/tmp/panelFresh'
         import db
         find = db.Sql().table('tasks').where('status=? OR status=?',('-1','0')).field('id,type,name,execstr').find()
+        if(type(find) == str): return public.returnMsg(False,"查询发生错误，"+find)
         if not len(find): return public.returnMsg(False,'当前没有任务队列在执行-2!')
         isTask = '/tmp/panelTask.pl'
         public.writeFile(isTask,'True');
