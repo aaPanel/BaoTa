@@ -11,11 +11,11 @@
                 {% if data['pd'].find('免费版') != -1 %}
                     {% if not data['724'] %}
                         <span id="bt-fuli" class="bt-dashi">
-                            <a class="btlink" href="https://www.bt.cn/invite" target="_blank" style="margin-left:5px">邀请奖励</a>
+                            <a class="btlink ml5" href="https://www.bt.cn/invite" target="_blank">邀请奖励</a>
                         </span>
                     {% else %}
                         <span id="bt-fuli" class="bt-724">
-                            <a class="btlink" href="https://www.bt.cn/724.html" target="_blank" style="margin-left:5px">运维节</a>
+                            <a class="btlink ml5" href="https://www.bt.cn/724.html" target="_blank">运维节</a>
                         </span>
                     {% endif %}
                 {% endif %}
@@ -32,7 +32,7 @@
         <div class="danger-tips">
             <div class="important-title" id="messageError" style="display: none; margin-top:15px"></div>
         </div>
-        <div class="conter-box server bgw mtb15">
+        <div class="server bgw mtb15">
             <div class="title c6 f16 plr15">
                 <h3 class="c6 f16 pull-left">状态</h3>
             </div>
@@ -82,10 +82,8 @@
                 </ul>
             </div>
         </div>
-        <div class="conter-box system-info bgw clearfix mtb15">
-            <div class="title c6 f16 plr15">
-                概览
-            </div>
+        <div class="system-info bgw clearfix mtb15">
+            <div class="title c6 f16 plr15">概览</div>
             <div class="system-info-con mtb20">
                 <ul class="clearfix text-center">
                     <li class="sys-li-box col-xs-3 col-sm-3 col-md-3 col-lg-3">
@@ -105,7 +103,7 @@
         </div>
         <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0">
             <div class="pr8">
-                <div class="bgw conter-box">
+                <div class="bgw">
                     <div class="title c6 f16 plr15">{{data['lan']['P4']}}</div>
                     <div class="setting-con" style="padding:0; height:442px; margin-right: -4px; overflow: hidden;">
                         <div class="container-fluid soft-man">
@@ -118,7 +116,7 @@
         </div>
         <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0">
             <div class="pl7">
-                <div class="bgw conter-box" style="height:491px">
+                <div class="bgw" style="height:491px">
                     <div class="title c6 f16 plr15">流量</div>
                     <div class="bw-info">
                         <div class="col-sm-6 col-md-3"><p class="c9"><span class="ico-up"></span>上行</p><a id="upSpeed">{{data['lan']['S2']}}</a></div>
@@ -144,7 +142,7 @@
 <script type="text/javascript" src="/static/js/index.js?version={{g['version']}}"></script>
 <script type="text/javascript" src="/static/js/soft.js?version={{g['version']}}"></script>
 <script type="text/javascript">
-	$(".btpro").click(function(){
+	$(".btpro span").click(function(){
         layer.confirm('切换回免费版可通过解绑账号实现', { icon: 3, btn: ['解绑账号'], closeBtn: 2, title: '是否取消授权' }, function () {
             $.post('/ssl?action=DelToken', {}, function (rdata) {
                 layer.msg(rdata.msg);

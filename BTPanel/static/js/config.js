@@ -749,14 +749,14 @@ function GetPanelApi() {
 							<span class="tname">API接口</span>\
 							<div class="info-r" style="height:28px;">\
 								<input class="btswitch btswitch-ios" id="panelApi_s" type="checkbox" '+ isOpen+'>\
-								<label style="position: relative;top: 5px;" class="btswitch-btn" for="panelApi_s" onclick="SetPanelApi(2)"></label>\
+								<label style="position: relative;top: 5px;" class="btswitch-btn" for="panelApi_s" onclick="SetPanelApi(2,0)"></label>\
 							</div>\
 						</div>\
                         <div class="line">\
                             <span class="tname">接口密钥</span>\
                             <div class="info-r">\
                                 <input readonly="readonly" name="panel_token_value" class="bt-input-text mr5 disable" type="text" style="width: 310px" value="'+rdata.token+'" disable>\
-                                <button class="btn btn-xs btn-success btn-sm" style="margin-left: -70px;" onclick="SetPanelApi(1)">显示密钥</button>\
+								<button class="btn btn-xs btn-success btn-sm" style="margin-left: -48px;" onclick="SetPanelApi(1)">重置</button>\
                             </div>\
                         </div>\
                         <div class="line ">\
@@ -768,37 +768,59 @@ function GetPanelApi() {
                         </div>\
                         <ul class="help-info-text c7">\
                             <li>开启API后，必需在IP白名单列表中的IP才能访问面板API接口</li>\
-                            <li>接口密钥只在点【显示密钥】后显示1次，之后不再显示，请保管好您的密钥</li>\
+                            <li style="color:red;">如需本机调用面板API密钥，请添加" 127.0.0.1 "和本机IP至IP白名单</li>\
                             <li>API接口文档在这里：<a class="btlink" href="https://www.bt.cn/bbs/thread-20376-1-1.html" target="_blank">https://www.bt.cn/bbs/thread-20376-1-1.html</a></li>\
                         </ul>\
                     </div>'
         })
     });
 }
+function showPawApi(){
+	layer.msg('面板API密钥仅支持一次性显示,请妥善保管。<br>如需显示面板API密钥,请点击重置按钮，重新获取新的API密钥。<br><span style="color:red;">注意事项：重置密钥后，已关联密钥产品，将失效，请重新添加新密钥至产品。</span>',{icon:0,time:0,shadeClose:true,shade:0.1});
+}
 
 
-function SetPanelApi(t_type) {
+function SetPanelApi(t_type,index) {
     var pdata = {}
     pdata['t_type'] = t_type
     if (t_type == 3) {
         pdata['limit_addr'] = $("textarea[name='api_limit_addr']").val()
     }
-    var loadT = layer.msg('正在提交...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-    $.post('/config?action=set_token', pdata, function (rdata) {
-        if (t_type == 1) {
-            if (rdata.status) {
-                $("input[name='panel_token_value']").val(rdata.msg);
-                layer.msg('接口密钥已生成，请保管好您的新密钥，此密钥只显示一次!', { icon: 1, time: 0, shade: 0.3, shadeClose:true });
-                return;
-            }
-        }
-        
-        layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+    if(t_type == 1){
+    	var bdinding = layer.confirm('您确定要重置当前密钥吗？<br><span style="color:red;">重置密钥后，已关联密钥产品，将失效，请重新添加新密钥至产品。</span>',{
+			btn:['确认','取消'],
+			icon:3,
+			closeBtn: 2,
+			title:'重置密钥'
+		},function(){
+		    var loadT = layer.msg('正在提交...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+		    set_token_req(pdata,function(rdata){
+	    		if (rdata.status) {
+	                $("input[name='panel_token_value']").val(rdata.msg);
+	                layer.msg('接口密钥已生成，重置密钥后，已关联密钥产品，将失效，请重新添加新密钥至产品。', { icon: 1, time: 0, shade: 0.3, shadeClose:true,closeBtn:2});
+	            }else{
+	            	layer.msg(rdata.msg, { icon: 2});
+	            }
+	            return false;
+		    });
+		});
+		return false
+    }
+    set_token_req(pdata,function(rdata){
+    	layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
         if (rdata.msg == '开启成功!') {
-            GetPanelApi();
+            if(t_type == 2 && index != '0') GetPanelApi();
         }
-    })
+    });
 }
+
+function set_token_req(pdata,callback){
+	$.post('/config?action=set_token', pdata, function (rdata) {
+		if(callback) callback(rdata);
+	});
+}
+
+
 
 function SetIPv6() {
     var loadT = layer.msg('正在配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });

@@ -158,6 +158,7 @@ class panelPlugin:
         if 'download' in pluginInfo['versions'][0]:
             tmp_path = '/www/server/panel/temp'
             if not os.path.exists(tmp_path): os.makedirs(tmp_path,mode=384);
+            public.ExecShell("rm -rf " + tmp_path + '/*')
             toFile = tmp_path + '/' + pluginInfo['name'] + '.zip'
             public.downloadFile('http://www.bt.cn/api/Pluginother/get_file?fname=' + pluginInfo['versions'][0]['download'],toFile)
             if public.FileMd5(toFile) != pluginInfo['versions'][0]['md5']: return public.returnMsg(False,'文件Hash校验失败,停止安装!')
@@ -277,7 +278,9 @@ class panelPlugin:
             public.writeFile("/tmp/" + cache.get('p_token'),str(softList['pro']))
         except:pass
         sType = 0
-        if hasattr(get,'type'): sType = int(get['type'])
+        try:
+            if hasattr(get,'type'): sType = int(get['type'])
+        except:pass
         softList['list'] = self.get_local_plugin(softList['list'])
         softList['list'] = self.get_types(softList['list'],sType)
         if hasattr(get,'query'):
@@ -687,10 +690,11 @@ class panelPlugin:
 
         if sInfo['name'] == 'mysql':
             vFile3 = sInfo['uninsatll_checks'] + '/version.pl'
+            version_str = None
             if os.path.exists(vFile3): 
                 version_str = public.readFile(vFile3)
                 if version_str.find('AliSQL') != -1: version = 'AliSQL'
-            if version == 'Linux':
+            if version == 'Linux' and version_str:
                 version = version_str
                 public.writeFile(vFile1,version)
 
@@ -730,25 +734,27 @@ class panelPlugin:
     def process_exists(self,pname,exe = None):
         if not self.pids: self.pids = psutil.pids() #self.get_pids() #
         for pid in self.pids:
-            l = '/proc/%s/exe' % pid
-            f = '/proc/%s/comm' % pid
-            p_exe = ''
-            p_name = ''
-            if os.path.exists(l): 
-                p_exe = os.readlink(l)
-                if not p_name: p_name = p_exe.split('/')[-1]
+            try:
+                l = '/proc/%s/exe' % pid
+                f = '/proc/%s/comm' % pid
+                p_exe = ''
+                p_name = ''
+                if os.path.exists(l): 
+                    p_exe = os.readlink(l)
+                    if not p_name: p_name = p_exe.split('/')[-1]
 
-            if not p_name and os.path.exists(f):
-                fp = open(f,'r')
-                p_name = fp.read().strip()
-                fp.close()
+                if not p_name and os.path.exists(f):
+                    fp = open(f,'r')
+                    p_name = fp.read().strip()
+                    fp.close()
 
-            if not p_name: continue
-            if p_name == pname: 
-                if not exe:
-                    return True;
-                else:
-                    if p_exe == exe: return True
+                if not p_name: continue
+                if p_name == pname: 
+                    if not exe:
+                        return True;
+                    else:
+                        if p_exe == exe: return True
+            except: continue
         return False
 
      #取分页

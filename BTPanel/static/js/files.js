@@ -690,13 +690,13 @@ function auto_table_width(){
     });
 	if(oldTable_heigth > oldTable){
 		$('.oldTableShadow,.newTableShadow').show();
-		$('.oldTable').css('marginTop','-8px')
+		$('.oldTable').css('marginTop','0')
 	}else{
     	$('.oldTableShadow,.newTableShadow').hide();
 		$('.oldTable').css('marginTop','0')
 	}
   	$('.oldTable').height(oldTable);
-	$('.oldTable table').css({'marginTop':'-39px'})
+	$('.oldTable table').css({'marginTop':'-47px'})
 
 }
 

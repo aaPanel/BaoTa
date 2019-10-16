@@ -2,6 +2,7 @@
 var database = {
     get_list: function (page, search) {
         if (page == undefined) page = 1;
+        if (!search) search = $("#SearchValue").val();
         bt.database.get_list(page, search, function (rdata) {
             $('#databasePage').html(rdata.page);
             var _tab = bt.render({

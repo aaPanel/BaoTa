@@ -35,29 +35,18 @@
     <div class="bt-warp bge6">
         <div class="top-tips">当前IE浏览器版本过低,部分功能无法展示,请更换至其他浏览器，国产浏览器请使用极速模式！</div>
         <a style="display:none;" id="request_token_head" token="{{session['request_token_head']}}"></a>
-        <div id="container" class="container-fluid {% if 'tmp_login' in session %}group-control{% endif %}">
-            <div class="sidebar-scroll{% if 'tmp_login' in session %}-panel{% endif %}">
+        <div id="container" class="container-fluid">
+            <div class="sidebar-scroll">
                 <div class="sidebar-auto">
                     <div id="task" class="task cw" onclick="messagebox()"></div>
                     <h3 class="mypcip"><span class="f14 cw">{{session['address']}}</span></h3>
                     <ul class="menu">
                         {% for menu in session['menus'] %}
-                        {% if menu['class'] == 'menu_exit' %}
-                        {% if not 'tmp_login' in session %}
-                        {% if menu['href'] == g.uri %}
-                        <li id="{{menu['id']}}" class="current"> <a class="{{menu['class']}}" href="{{menu['href']}}">{{menu['title']}}</a></li>
-                        {% else %}
-                        <li id="{{menu['id']}}"> <a class="{{menu['class']}}" href="{{menu['href']}}">{{menu['title']}}</a></li>
-                        {% endif %}
-                        {% endif %}
-                        {% else %}
-                        {% if menu['href'] == g.uri %}
-                        <li id="{{menu['id']}}" class="current"> <a class="{{menu['class']}}" href="{{menu['href']}}">{{menu['title']}}</a></li>
-                        {% else %}
-                        <li id="{{menu['id']}}"> <a class="{{menu['class']}}" href="{{menu['href']}}">{{menu['title']}}</a></li>
-                        {% endif %}
-                        {% endif %}
-
+                            {% if menu['href'] == g.uri %}
+                            <li id="{{menu['id']}}" class="current"> <a class="{{menu['class']}}" href="{{menu['href']}}">{{menu['title']}}</a></li>
+                            {% else %}
+                            <li id="{{menu['id']}}"> <a class="{{menu['class']}}" href="{{menu['href']}}">{{menu['title']}}</a></li>
+                            {% endif %}
                         {% endfor %}
                     </ul>
                     <div id="newbtpc"></div>
@@ -80,13 +69,13 @@
             <script src="/static/codemirror/addon/scroll/annotatescrollbar.js"></script>
             <script src="/static/js/jquery.qrcode.min.js"></script>
             <script src="/static/js/socket.io.min.js"></script>
-            <link rel="stylesheet" href="/static/build/xterm.css" />
-            <link rel="stylesheet" href="/static/build/addons/fullscreen/fullscreen.css" />
-            <script src="/static/build/xterm.js"></script>
-            <script src="/static/build/addons/attach/attach.js"></script>
-            <script src="/static/build/addons/fit/fit.js"></script>
-            <script src="/static/build/addons/fullscreen/fullscreen.js"></script>
-            <script src="/static/build/addons/search/search.js"></script>
+            <link rel="stylesheet" href="/static/build/xterm.min.css" />
+            <link rel="stylesheet" href="/static/build/addons/fullscreen/fullscreen.min.css" />
+            <script src="/static/build/xterm.min.js"></script>
+            <script src="/static/build/addons/attach/attach.min.js"></script>
+            <script src="/static/build/addons/fit/fit.min.js"></script>
+            <script src="/static/build/addons/fullscreen/fullscreen.min.js"></script>
+            <script src="/static/build/addons/search/search.min.js"></script>
             <script src="/static/build/addons/winptyCompat/winptyCompat.js"></script>
             <script type="text/javascript" src="/static/js/clipboard.min.js"></script>
             <script src="/static/js/public.js?v3={{g['version']}}"></script>

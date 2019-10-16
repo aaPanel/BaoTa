@@ -230,7 +230,7 @@ var index = {
             var load_arr = [{ title: '运行堵塞', val: 100, color: '#dd2f00' }, { title: '运行缓慢', val: 90, color: '#ff9900' }, { title: '运行正常', val: 70, color: '#20a53a' }, { title: '运行流畅', val: 30, color: '#20a53a' }];
             var _cpubox = $('.cpubox'), _membox = $('.membox'), _loadbox = $('.loadbox')
 
-            index.set_val(_cpubox, { usage: net.cpu[0], title: net.cpu[1] + ' ' + lan.index.cpu_core, items: pub_arr })
+            index.set_val(_cpubox, { usage: net.cpu[0], title: net.cpu[5] * net.cpu[4] + '核' + net.cpu[1]+'线程', items: pub_arr })
             index.set_val(_membox, { usage: (net.mem.memRealUsed * 100 / net.mem.memTotal).toFixed(1), items: pub_arr, title: net.mem.memRealUsed + '/' + net.mem.memTotal + '(MB)' })
             bt.set_cookie('memSize', net.mem.memTotal)
 
@@ -446,7 +446,9 @@ var index = {
         })
     },
     check_update: function () {
+    	var _load = bt.load('正在获取更新内容，请稍后...');
         bt.system.check_update(function (rdata) {
+        	_load.close();
             if (rdata.status === false) {
                 if (!rdata.msg.beta) {
                     bt.msg(rdata);

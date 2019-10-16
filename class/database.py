@@ -690,6 +690,7 @@ SetLink
             os.system('/etc/init.d/mysqld restart');
         else:
             path = self.GetMySQLInfo(get)['datadir'];
+            if not os.path.exists(path): return public.returnMsg(False,'数据库目录不存在!')
             if hasattr(get,'status'): 
                 dsize = 0;
                 for n in os.listdir(path):
