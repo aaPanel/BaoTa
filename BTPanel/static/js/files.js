@@ -802,8 +802,9 @@ function Batch(type,access){
 	
 	if(access == 1){
 		var access = $("#access").val();
-		var chown = $("#chown").val();
-		data += '&access='+access+'&user='+chown;
+        var chown = $("#chown").val();
+        var all = $("#accept_all").prop("checked") ? 'True' : 'False';
+		data += '&access='+access+'&user='+chown+"&all="+all;
 		layer.closeAll();
 	}
 	if(type == 4){

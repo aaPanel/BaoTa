@@ -27,7 +27,7 @@ class panelSetup:
         if ua:
             ua = ua.lower();
             if ua.find('spider') != -1 or ua.find('bot') != -1: return redirect('https://www.baidu.com');
-        g.version = '7.0.1'
+        g.version = '7.0.2'
         g.title =  public.GetConfigValue('title')
         g.uri = request.path
         session['version'] = g.version;
@@ -98,9 +98,13 @@ class panelAdmin(panelSetup):
             api_check = True
             if not 'login' in session: 
                 api_check = self.get_sk()
-                if api_check: return api_check
+                if api_check: 
+                    session.clear()
+                    return api_check
             else:
-                if session['login'] == False: return redirect('/login')
+                if session['login'] == False: 
+                    session.clear()
+                    return redirect('/login')
             if api_check:
                 try:
                     sess_out_path = 'data/session_timeout.pl'
@@ -113,6 +117,7 @@ class panelAdmin(panelSetup):
                         os.remove(sess_input_path)
                         session['login'] = False;
                         cache.set('dologin',True)
+                        session.clear()
                         return redirect('/login')
                     public.writeFile(sess_input_path,str(int(time.time())))
                 except:pass
@@ -122,8 +127,10 @@ class panelAdmin(panelSetup):
                 token = public.readFile(filename).strip()
                 if 'login_token' in session:
                     if session['login_token'] != token:
+                        session.clear()
                         return redirect('/login?dologin=True')
         except:
+            session.clear()
             return redirect('/login')
 
     #获取sk

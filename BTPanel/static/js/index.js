@@ -145,7 +145,7 @@ var index = {
                     crs += 'CPU-' + i + ": " + d[2][i] + '%' + (n1 % 2 == 0?'</br>':' | ');
                     
                 }
-                layer.tips(d[3] +"</br>"+ crs, _this.find('.cicle'), { time: 0, tips: [1, '#999'] });
+                layer.tips(d[3] + "</br>" + d[5] + "个物理CPU，" + d[4] + "个物理核心，" + d[4]+"线程</br>"+ crs, _this.find('.cicle'), { time: 0, tips: [1, '#999'] });
             }, function () {
                 layer.closeAll('tips');
             });
@@ -230,7 +230,7 @@ var index = {
             var load_arr = [{ title: '运行堵塞', val: 100, color: '#dd2f00' }, { title: '运行缓慢', val: 90, color: '#ff9900' }, { title: '运行正常', val: 70, color: '#20a53a' }, { title: '运行流畅', val: 30, color: '#20a53a' }];
             var _cpubox = $('.cpubox'), _membox = $('.membox'), _loadbox = $('.loadbox')
 
-            index.set_val(_cpubox, { usage: net.cpu[0], title: net.cpu[5] * net.cpu[4] + '核' + net.cpu[1]+'线程', items: pub_arr })
+            index.set_val(_cpubox, { usage: net.cpu[0], title: net.cpu[1]+' 核心', items: pub_arr })
             index.set_val(_membox, { usage: (net.mem.memRealUsed * 100 / net.mem.memTotal).toFixed(1), items: pub_arr, title: net.mem.memRealUsed + '/' + net.mem.memTotal + '(MB)' })
             bt.set_cookie('memSize', net.mem.memTotal)
 

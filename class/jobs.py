@@ -78,6 +78,16 @@ def clean_hook_log():
         if name[-4:] != ".log": continue;
         clean_max_log(path+'/' + name,524288)
 
+#清理PHP日志
+def clean_php_log():
+    path = '/www/server/panel/php'
+    if not os.path.exists(path): return False
+    for name in os.listdir(path):
+        filename = path + '/var/log/php-fpm.log'
+        if os.path.exists(filename): clean_max_log(filename)
+        filename = path + '/var/log/slow.log'
+        if os.path.exists(filename): clean_max_log(filename)
+
 #清理大日志
 def clean_max_log(log_file,max_size = 104857600,old_line = 100):
     if not os.path.exists(log_file): return False
