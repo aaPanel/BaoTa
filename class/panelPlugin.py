@@ -262,7 +262,6 @@ class panelPlugin:
         if not softList or focre > 0:
             self.clean_panel_log()
             cloudUrl = public.GetConfigValue('home') + '/api/panel/get_soft_list_test'
-            print(cloudUrl)
             import panelAuth
             pdata = panelAuth.panelAuth().create_serverid(None)
             listTmp = public.httpPost(cloudUrl,pdata,10)

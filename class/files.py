@@ -781,7 +781,7 @@ session.save_handler = files'''.format(path,sess_path,sess_path)
                 return public.returnMsg(False,'FILE_NOT_EXISTS',(get.path,))
             public.writeFile(get.path,'');
         
-        if os.path.getsize(get.path) > 2097152: return public.returnMsg(False,u'不能在线编辑大于2MB的文件!');
+        if os.path.getsize(get.path) > 3145928: return public.returnMsg(False,u'不能在线编辑大于3MB的文件!');
         if not os.path.isfile(get.path): return public.returnMsg(False,'这不是一个文件!')
         fp = open(get.path,'rb')
         data = {}
@@ -1016,8 +1016,11 @@ session.save_handler = files'''.format(path,sess_path,sess_path)
                     if sys.version_info[0] == 2: key = key.encode('utf-8')
                     filename = get.path+'/'+key
                     if not self.CheckDir(filename): return public.returnMsg(False,'FILE_DANGER');
-                    os.system('chmod -R '+get.access+" '"+filename+"'")
-                    os.system('chown -R '+get.user+':'+get.user+" '"+filename+"'")
+                    ret = ' -R '
+                    if 'all' in get:
+                        if get.all == 'False': ret = ''
+                    os.system('chmod '+ret+get.access+" '"+filename+"'")
+                    os.system('chown '+ret+get.user+':'+get.user+" '"+filename+"'")
                 except:
                     continue;
             public.WriteLog('TYPE_FILE','FILE_ALL_ACCESS')

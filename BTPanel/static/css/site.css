@@ -1670,7 +1670,7 @@ html .menu .menu_exit:hover {
 	bottom: 0;
 	left: 0;
 	padding: 8px 20px 10px;
-	position: fixed;
+	position: absolute;
 	text-align: right;
 	width: 100%
 }

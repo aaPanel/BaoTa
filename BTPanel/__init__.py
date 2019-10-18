@@ -103,6 +103,7 @@ def socket_connect(msg=None):
 @socketio.on('webssh')
 def webssh(msg):
     if not check_login(): 
+        session.clear()
         emit('server_response',"面板会话丢失，请重新登录面板!")
         return None
     if not 'ssh_obj' in session:
@@ -145,10 +146,14 @@ def reload_mod():
 
 @app.before_request
 def request_check():
-    
     if not request.path in ['/safe','/hook','/public']:
         ip_check = public.check_ip_panel()
         if ip_check: return ip_check
+        
+    if request.path.find('/static/') != -1 or request.path == '/code':
+        if not 'login' in session and not 'admin_auth' in session: 
+            session.clear()
+            if request.path == '/code': return abort(401)
     domain_check = public.check_domain_panel()
     if domain_check: return domain_check
     if public.is_local():
@@ -175,7 +180,9 @@ def request_end(reques = None):
 def send_authenticated():
     global local_ip
     if not local_ip: local_ip = public.GetLocalIp()
-    return Response('', 401,{'WWW-Authenticate': 'Basic realm="%s"' % local_ip.strip()})
+    result = Response('', 401,{'WWW-Authenticate': 'Basic realm="%s"' % local_ip.strip()})
+    if not 'login' in session and not 'admin_auth' in session: session.clear()
+    return result
 
 @app.route('/',methods=method_all)
 def home():
@@ -666,6 +673,7 @@ def panel_public():
     comm.checkWebType()
     comm.GetOS()
     result = plu.a(get)
+    session.clear()
     return public.getJson(result),json_header
 
 @app.route('/favicon.ico',methods=method_get)
@@ -729,7 +737,9 @@ def panel_other(name=None,fun = None,stype=None):
         comReturn = comm.local()
         if comReturn: 
             if not is_php:
-                if not hasattr(plu,'_check'): return public.returnJson(False,'指定插件不支持公共访问!'),json_header
+                if not hasattr(plu,'_check'): 
+                    session.clear()
+                    return public.returnJson(False,'指定插件不支持公共访问!'),json_header
                 checks = plu._check(args)
                 r_type = type(checks)
                 if r_type == Response: return checks
@@ -806,6 +816,7 @@ def panel_hook():
     if not os.path.exists('plugin/webhook'): return public.getJson(public.returnMsg(False,'INIT_WEBHOOK_ERR'));
     sys.path.append('plugin/webhook');
     import webhook_main
+    session.clear()
     return public.getJson(webhook_main.webhook_main().RunHook(get));
 
 @app.route('/safe',methods=method_all)
@@ -828,13 +839,16 @@ def panel_safe():
     if not hasattr(s,get.data['action']): return public.returnJson(False,'INIT_FUN_NOT_EXISTS');
     defs = ('GetServerInfo','add_ssh_limit','remove_ssh_limit','get_ssh_limit','get_login_log','get_panel_limit','add_panel_limit','remove_panel_limit','close_ssh_limit','close_panel_limit','get_system_info','get_service_info','get_ssh_errorlogin')
     if not get.data['action'] in defs: return 'False';
-    return public.getJson(eval('s.' + get.data['action'] + '(get)'));
+    result = public.getJson(eval('s.' + get.data['action'] + '(get)'));
+    session.clear()
+    return result
 
 
 @app.route('/install',methods=method_all)
 def install():
     if public.M('config').where("id=?",('1',)).getField('status') == 1: 
         if os.path.exists('install.pl'): os.remove('install.pl');
+        session.clear()
         return redirect('/login')
     ret_login = os.path.join('/',admin_path)
     if admin_path == '/' or admin_path == '/bt': ret_login = '/login'

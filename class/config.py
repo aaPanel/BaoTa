@@ -427,7 +427,8 @@ class config:
     #设置面板SSL
     def SetPanelSSL(self,get):
         if hasattr(get,"email"):
-            rep_mail = "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$"
+            #rep_mail = "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$"
+            rep_mail = "[\w!#$%&'*+/=?^_`{|}~-]+(?:\.[\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\w](?:[\w-]*[\w])?\.)+[\w](?:[\w-]*[\w])?"
             if not re.search(rep_mail,get.email):
                 return public.returnMsg(False,'邮箱格式不合法')
             import setPanelLets
