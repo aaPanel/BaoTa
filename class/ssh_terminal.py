@@ -135,6 +135,7 @@ class ssh_terminal:
                     return
         except:
             self.close()
+            socketio.emit(self._room,'\r连接服务器失败!\r')
             print(public.get_error_info())
 
     def recv(self):

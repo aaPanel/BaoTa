@@ -2625,7 +2625,7 @@ function connect_io() {
     socket.on('ssh_data', function (data) {
         if (data === "\r服务器连接失败!\r" || data === "\r用户名或密码错误!\r") {
             show_ssh_login(0);
-            return;
+            //return;
         }
 
         term.write(data);

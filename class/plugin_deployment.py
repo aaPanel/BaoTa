@@ -287,7 +287,7 @@ class plugin_deployment:
         self.WriteLogs(json.dumps({'name':'安装必要的PHP扩展','total':0,'used':0,'pre':0,'speed':0}));
         import files
         mfile = files.files();
-        if type(pinfo['php_ext']) == str : pinfo['php_ext'] = pinfo['php_ext'].strip().split(',')
+        if type(pinfo['php_ext']) != list : pinfo['php_ext'] = pinfo['php_ext'].strip().split(',')
         for ext in pinfo['php_ext']:
             if ext == 'pathinfo': 
                 import config

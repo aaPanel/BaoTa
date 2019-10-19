@@ -2837,10 +2837,12 @@ html .menu .menu_exit:hover {
 	vertical-align: middle;
 	padding: 5px 10px;
     height: 40px;
-    font-size: 12.5px;
+    font-size: 12px;
 	box-sizing: border-box;
 }
-
+.table>tbody{
+	border-bottom: 1px solid #ddd;
+}
 .showpicdiv {
 	max-height: 500px;
 	overflow: hidden;

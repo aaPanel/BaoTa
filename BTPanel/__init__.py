@@ -153,7 +153,7 @@ def request_check():
     if request.path.find('/static/') != -1 or request.path == '/code':
         if not 'login' in session and not 'admin_auth' in session: 
             session.clear()
-            if request.path == '/code': return abort(401)
+            return abort(401)
     domain_check = public.check_domain_panel()
     if domain_check: return domain_check
     if public.is_local():
