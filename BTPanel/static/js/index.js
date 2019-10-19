@@ -145,7 +145,7 @@ var index = {
                     crs += 'CPU-' + i + ": " + d[2][i] + '%' + (n1 % 2 == 0?'</br>':' | ');
                     
                 }
-                layer.tips(d[3] + "</br>" + d[5] + "个物理CPU，" + d[4] + "个物理核心，" + d[4]+"线程</br>"+ crs, _this.find('.cicle'), { time: 0, tips: [1, '#999'] });
+                layer.tips(d[3] + "</br>" + d[5] + "个物理CPU，" + (d[5] * d[4]) + "个物理核心，" + d[1]+"线程</br>"+ crs, _this.find('.cicle'), { time: 0, tips: [1, '#999'] });
             }, function () {
                 layer.closeAll('tips');
             });

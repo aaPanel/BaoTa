@@ -1525,6 +1525,8 @@ def reload_mod(mod_name = None):
 
 
 def de_hexb(data):
+    if sys.version_info[0] != 2:
+        if type(data) == str: data = data.encode('utf-8')
     pdata = base64.b64encode(data);
     if sys.version_info[0] != 2:
         if type(pdata) == str: pdata = pdata.encode('utf-8')

@@ -463,13 +463,15 @@ var bt =
 
                 //会话失效时自动跳转到登录页面
                 if (typeof (rdata) == 'string') {
-                    if (rdata.indexOf('/static/favicon.ico') != -1 && rdata.indexOf('/static/img/qrCode.png') != -1) {
+                    if ((rdata.indexOf('/static/favicon.ico') != -1 && rdata.indexOf('/static/img/qrCode.png') != -1) || rdata.indexOf('<!DOCTYPE html>') === 0) {
                         window.location.href = "/login"
                         return
                     }
                 }
+                
 				if(callback) callback(rdata);
-            }).error(function () {
+            }).error(function (e, f) {
+                console.log(e,f)
 				if(callback) callback('error');
 			});
 		}
