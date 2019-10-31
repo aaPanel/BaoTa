@@ -1098,10 +1098,10 @@ html .menu .menu_exit:hover {
 }
 .tablescroll {
     overflow: auto;
-    /*border: #e6e6e6 1px solid;*/
+    border: #e6e6e6 1px solid;
 }
 .divtable .table {
-	/*border: 1px solid #ddd;*/
+	border: 1px solid #ddd;
 	color: #666;
 	font-size: 12px;
 	margin-bottom: 0;
@@ -1123,8 +1123,7 @@ html .menu .menu_exit:hover {
 	color: #666;
 	font-weight: normal;
 	padding: 5px 10px;
-    height: 35px;
-    font-size: 12.5px;
+    height: 24px;
     box-sizing: content-box;
 }
 .divtable .table_toolbar{
@@ -2400,6 +2399,11 @@ html .menu .menu_exit:hover {
 .list-list span.glyphicon-cloud-download {
 	font-size: 12px
 }
+.list-list tr>td{
+	padding: 5px 10px !important;
+	line-height: 1.42857143;
+	height: auto;
+}
 
 .newFolderName {
 	border: #ccc 1px solid;
@@ -2835,8 +2839,7 @@ html .menu .menu_exit:hover {
 
 .table>tbody>tr>td {
 	vertical-align: middle;
-	padding: 5px 10px;
-    height: 40px;
+    height: 24px;
     font-size: 12px;
 	box-sizing: border-box;
 }
@@ -4916,11 +4919,11 @@ select[disabled]{
 .search_box{
 	position: absolute;
     right: 65px;
-    top: 12px;
+    top: 16px;
+    height: 16px;
 }
 .search_box input{
-	position: relative;
-	top: 2.5px;
+	vertical-align: sub;
 }
 .search_box label{
 	color: #666;

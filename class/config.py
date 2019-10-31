@@ -747,7 +747,7 @@ class config:
         os.system(s)
         # s = "find /tmp -mtime +1 |grep 'sess_'|wc -l"
         # old_file_conf = int(public.ExecShell(s)[0].split("\n")[0])
-        old_file_conf = self.GetSessionCount(get)
+        old_file_conf = self.GetSessionCount(get)["oldfile"]
         if old_file_conf == 0:
             return public.returnMsg(True, '清理成功')
         else:

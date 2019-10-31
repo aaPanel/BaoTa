@@ -16,24 +16,26 @@
             </div>
         </div>
         <div class="safe bgw mtb15 pd15">
+            <div class="info-title-tips">
+                <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span> 请在添加数据库后，务必到<a class="btlink" href="/crontab">[计划任务]</a>页面添加定时备份任务，以确保您的数据安全。</p>
+            </div>
             <button onclick="database.add_database()" title="{{data['lan']['BTNT1']}}" class="btn btn-success btn-sm" type="button" style="margin-right: 5px;">{{data['lan']['BTN1']}}</button>
             <button onclick="bt.database.set_root()" title="{{data['lan']['BTNT2']}}" class="btn btn-default btn-sm" type="button" style="margin-right: 5px;">{{data['lan']['BTN2']}}</button>
             <button onclick="bt.database.open_phpmyadmin('','root','{{data['mysql_root']}}')" title="{{data['lan']['BTNT3']}}" class="btn btn-default btn-sm" type="button" style="margin-right: 5px;">{{data['lan']['BTN3']}}</button>
-            <span style="float:right">            	
+            <span style="float:right">
                 <button batch="true" style="float: right;display: none;margin-left:10px;" onclick="database.batch_database('del');" title="{{data['lan']['BTNT4']}}" class="btn btn-default btn-sm">{{data['lan']['BTN4']}}</button>
                 <button onclick="bt.recycle_bin.open_recycle_bin(6)" id="dataRecycle" title="{{data['lan']['BTNT4']}}" class="btn btn-default btn-sm" style="margin-left: 5px;"><span class="glyphicon glyphicon-trash" style="margin-right: 5px;"></span>回收站</button>
             </span>
             <div class="divtable mtb10">
                 <div class="tablescroll">
-                    <table id="DataBody" class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0" style="border: 0 none;">      
-                    </table>                    
+                    <table id="DataBody" class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0" style="border: 0 none;"></table>
                 </div>
-                 <div id='databasePage' class="dataTables_paginate paging_bootstrap page">                   
+                <div id='databasePage' class="dataTables_paginate paging_bootstrap page">
                 </div>
                 <div class="table_toolbar">
                     <span class="sync btn btn-default btn-sm" style="margin-right:5px" onclick="database.sync_to_database(1)" title="{{data['lan']['TP1']}}">{{data['lan']['SP1']}}</span>
                     <span class="sync btn btn-default btn-sm" style="margin-right:5px" onclick="database.sync_to_database(0)" title="{{data['lan']['TP2']}}">{{data['lan']['SP2']}}</span>
-                    <span class="sync btn btn-default btn-sm" onclick="database.sync_database()" title="{{data['lan']['TP3']}}">{{data['lan']['SP3']}}</span>  
+                    <span class="sync btn btn-default btn-sm" onclick="database.sync_database()" title="{{data['lan']['TP3']}}">{{data['lan']['SP3']}}</span>
                 </div>
             </div>
         </div>

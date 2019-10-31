@@ -12,13 +12,8 @@ exec_tips = None
 from BTPanel import cache
 
 def control_init():
-    global exec_tips
-    if exec_tips: return
-    exec_tips = True
-    sql_tips = '/dev/shm/bt_sql_tips.pl'
-
-    if not os.path.exists(sql_tips):
-        sql = db.Sql().dbfile('system')
+    sql = db.Sql().dbfile('system')
+    if not sql.table('sqlite_master').where('type=? AND name=?', ('table', 'load_average')).count():
         csql = '''CREATE TABLE IF NOT EXISTS `load_average` (
 `id` INTEGER PRIMARY KEY AUTOINCREMENT,
 `pro` REAL,
@@ -28,17 +23,19 @@ def control_init():
 `addtime` INTEGER
 )'''
         sql.execute(csql,())
+    if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'sites','%type_id%')).count():
         public.M('sites').execute("alter TABLE sites add edate integer DEFAULT '0000-00-00'",());
         public.M('sites').execute("alter TABLE sites add type_id integer DEFAULT 0",());
 
-        sql = db.Sql()
+    sql = db.Sql()
+    if not sql.table('sqlite_master').where('type=? AND name=?', ('table', 'site_types')).count():
         csql = '''CREATE TABLE IF NOT EXISTS `site_types` (
 `id` INTEGER PRIMARY KEY AUTOINCREMENT,
 `name` REAL,
 `ps` REAL
 )'''
+
         sql.execute(csql,())
-        public.writeFile(sql_tips,'True')
 
     filename = '/www/server/nginx/off'
     if os.path.exists(filename): os.remove(filename)

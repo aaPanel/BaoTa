@@ -396,7 +396,7 @@ SetLink
         public.ExecShell("/www/server/mysql/bin/mysqldump --default-character-set="+ public.get_database_character(name) +" --force --opt \"" + name + "\" | gzip > " + backupName)
         if not os.path.exists(backupName): return public.returnMsg(False,'BACKUP_ERROR');
 
-        if not self.mypass(True, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
+        if not self.mypass(False, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
         
         sql = public.M('backup')
         addTime = time.strftime('%Y-%m-%d %X',time.localtime())

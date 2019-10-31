@@ -149,7 +149,7 @@ class data:
                 where += " and type='" + get.type+"'";
             
             if get.table == 'sites' and get.search:
-                pid = SQL.table('domain').where('name=?',(get.search,)).getField('pid');
+                pid = SQL.table('domain').where("name LIKE '%"+get.search+"%'",()).getField('pid');
                 if pid: where = "id=" + str(pid);
 
         if get.table == 'sites' and hasattr(get,'type'):
