@@ -1436,7 +1436,7 @@ var soft = {
                             },
                         ]
                     })
-                    var helps = ['请按实际需求安装扩展,不要安装不必要的PHP扩展,这会影响PHP执行效率,甚至出现异常', 'opcache/xcache/apc等脚本缓存扩展,请只安装其中1个,否则可能导致您的站点程序异常']
+                    var helps = ['Redis扩展仅支持一个PHP版本安装使用，若在其它PHP版本已安装redis扩展，请勿再装','请按实际需求安装扩展,不要安装不必要的PHP扩展,这会影响PHP执行效率,甚至出现异常', 'opcache/xcache/apc等脚本缓存扩展,请只安装其中1个,否则可能导致您的站点程序异常']
                     $(".soft-man-con").append(bt.render_help(helps));
 
                     var divObj = document.getElementById('phpextdiv');

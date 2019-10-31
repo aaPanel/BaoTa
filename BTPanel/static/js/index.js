@@ -262,6 +262,11 @@ var index = {
                 $("#messageError").show();
                 $("#messageError").append('<p><span class="glyphicon glyphicon-alert" style="color: #ff4040; margin-right: 10px;"></span>' + lan.index.user_warning + '<span class="c7 mr5" title="此安全问题不可忽略，请尽快处理" style="cursor:no-drop"> [不可忽略]</span><a class="btlink" href="javascript:setUserName();"> [立即修改]</a></p>')
             }
+
+            if (info.isport === true) {
+                $("#messageError").show();
+                $("#messageError").append('<p><span class="glyphicon glyphicon-alert" style="color: #ff4040; margin-right: 10px;"></span>当前面板使用的是默认端口[8888]，有安全隐患，请到面板设置中修改面板端口!<span class="c7 mr5" title="此安全问题不可忽略，请尽快处理" style="cursor:no-drop"> [不可忽略]</span><a class="btlink" href="/config"> [立即修改]</a></p>')
+            }
             var _system = info.system;
             $("#info").html(_system);
             $("#running").html(info.time);
@@ -297,11 +302,16 @@ var index = {
                     obj.rate = item.size[3].replace('%', '');
                     obj.free = item.size[2];
                     var arr = [];
-                    arr.push({ title: 'Inode信息', value: '' })
+                    arr.push({ title: '<b>Inode信息</b>', value: '' })
                     arr.push({ title: '总数', value: item.inodes[0] })
-                    arr.push({ title: '已使用', value: item.inodes[1] })
+                    arr.push({ title: '已用', value: item.inodes[1] })
                     arr.push({ title: '可用', value: item.inodes[2] })
                     arr.push({ title: 'Inode使用率', value: item.inodes[3] })
+                    arr.push({ title: '<b>容量信息</b>', value: '' })
+                    arr.push({ title: '容量', value: item.size[0] })
+                    arr.push({ title: '已用', value: item.size[1] })
+                    arr.push({ title: '可用', value: item.size[2] })
+                    arr.push({ title: '使用率', value: item.size[3] })
                     obj.masks = arr;
                     data.items.push(obj)
                 }

@@ -918,11 +918,13 @@ class panelSite(panelRedirect):
         self.check_ssl_pack()
         try:
             import panelLets
+            public.mod_reload(panelLets)
         except Exception as ex:
             if str(ex).find('No module named requests') != -1:
                 os.system("pip install requests &")
                 return public.returnMsg(False,'缺少requests组件，请尝试修复面板!')
-        public.mod_reload(panelLets)
+            return public.returnMsg(False,str(ex))
+        
         lets = panelLets.panelLets()
         result = lets.apple_lest_cert(get)
         if result['status'] and not 'code' in result:       

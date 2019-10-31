@@ -1539,6 +1539,23 @@ def en_hexb(data):
     if type(result) != str: result = result.decode('utf-8')
     return result;
 
+def upload_file_url(filename):
+    try:
+        if os.path.exists(filename):
+            data = ExecShell('/usr/bin/curl https://scanner.baidu.com/enqueue -F archive=@%s' % filename)
+            data = json.loads(data[0])
+            time.sleep(1)
+            import requests
+            default_headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36'
+            }
+            data_list = requests.get(url=data['url'], headers=default_headers, verify=False)
+            return (data_list.json())
+        else:
+            return False
+    except:
+        return False
+
 #取通用对象
 class dict_obj:
     def __contains__(self, key):

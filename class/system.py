@@ -217,6 +217,10 @@ class system:
         data['time'] = self.GetBootTime();
         data['system'] = self.GetSystemVersion();
         data['isuser'] = public.M('users').where('username=?',('admin',)).count();
+        try:
+            data['isport'] = public.GetHost(True) == '8888'
+        except:data['isport'] = False
+
         data['version'] = session['version'];
         return data
     

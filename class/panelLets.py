@@ -271,7 +271,10 @@ class panelLets:
         cpath = self.setupPath + '/panel/vhost/cert/crontab.json'
         config = {}
         if os.path.exists(cpath):
-            config = json.loads(public.readFile(cpath))
+            try:
+                config = json.loads(public.readFile(cpath))
+            except:pass
+
         config[data['siteName']] = data
         public.writeFile(cpath,json.dumps(config))
         public.set_mode(cpath,600)
@@ -300,7 +303,7 @@ class panelLets:
             import crontab
             args_obj = public.dict_obj()
             if not cron_id:
-                cronPath = public.GetConfigValue('setup_path') + '/cron/' + echo    
+                cronPath = public.GetConfigValue('setup_path') + '/cron/' + echo
                 shell = 'python %s/panel/class/panelLets.py renew_lets_ssl ' % (self.setupPath)
                 public.writeFile(cronPath,shell)
                 args_obj.id = public.M('crontab').add('name,type,where1,where_hour,where_minute,echo,addtime,status,save,backupTo,sType,sName,sBody,urladdress',("续签Let's Encrypt证书",'day','','0','10',echo,time.strftime('%Y-%m-%d %X',time.localtime()),0,'','localhost','toShell','',shell,''))
@@ -321,8 +324,7 @@ class panelLets:
         result['status'] = False
         try:
             if not data['email']: data['email'] = public.M('users').getField('email')
-            
-            
+
             #手动解析记录值
             if not 'renew' in data:
                 BTPanel.dns_client = sewer.Client(domain_name = data['first_domain'],dns_class = None,account_key = data['account_key'],domain_alt_names = data['domains'],contact_email = str(data['email']) ,ACME_AUTH_STATUS_WAIT_PERIOD = 15,ACME_AUTH_STATUS_MAX_CHECKS = 5,ACME_REQUEST_TIMEOUT = 20,ACME_DIRECTORY_URL = self.let_url)
@@ -357,7 +359,6 @@ class panelLets:
                 dns['finalize_url'] = finalize_url
                 return dns
             else:
-
                 responders = data['dns']['responders']
                 dns_names_to_delete = data['dns']['dns_names']
                 finalize_url = data['dns']['finalize_url']
