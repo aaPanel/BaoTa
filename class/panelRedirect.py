@@ -252,7 +252,7 @@ class panelRedirect:
         }
 """
             pathstr = """
-        rewrite ^%s(.*) %s/%s %s;
+        rewrite ^%s(.*) %s%s %s;
 """
             rconf = "#REWRITE-START"
             if get.domainorpath == "domain":
