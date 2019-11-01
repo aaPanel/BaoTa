@@ -825,7 +825,7 @@ session.save_handler = files'''.format(path,sess_path,sess_path)
     #保存文件
     def SaveFileBody(self,get):
         if not 'path' in get: return public.returnMsg(False,'path参数不能为空!')
-        if not 'data' in get: return public.returnMsg(False,'data参数不能为空!')
+        #if not 'data' in get: return public.returnMsg(False,'data参数不能为空!')
         if sys.version_info[0] == 2: get.path = get.path.encode('utf-8');
         if not os.path.exists(get.path):
             if get.path.find('.htaccess') == -1:
