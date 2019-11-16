@@ -51,9 +51,9 @@ def control_init():
             import shutil
             shutil.copyfile(src_file,init_file)
             if os.path.getsize(init_file) < 10:
-                os.system("chattr -i " + init_file)
-                os.system("\cp -arf %s %s" % (src_file,init_file))
-                os.system("chmod +x %s" % init_file)
+                public.ExecShell("chattr -i " + init_file)
+                public.ExecShell("\cp -arf %s %s" % (src_file,init_file))
+                public.ExecShell("chmod +x %s" % init_file)
     except:pass
     public.writeFile('/var/bt_setupPath.conf','/www')
     public.ExecShell(c)
@@ -66,6 +66,25 @@ def control_init():
     clean_max_log('/www/server/panel/plugin/rsync/lsyncd.log')
     remove_tty1()
     clean_hook_log()
+    run_new()
+
+#尝试启动新架构
+def run_new():
+    try:
+        new_file = '/www/server/panel/data/new.pl'
+        port_file = '/www/server/panel/data/port.pl'
+        if os.path.exists(new_file): return False
+        if not os.path.exists(port_file): return False
+        port = public.readFile(port_file)
+        if not port: return False
+        cmd_line = public.ExecShell('lsof -P -i:{}|grep LISTEN|grep -v grep'.format(int(port)))[0]
+        if len(cmd_line) < 20: return False
+        if cmd_line.find('BT-Panel') != -1: return False
+        public.writeFile('/www/server/panel/data/restart.pl','True')
+        public.writeFile(new_file,'True')
+        return True
+    except:
+        return False
 
 #清理webhook日志
 def clean_hook_log():

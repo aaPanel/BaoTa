@@ -45,9 +45,9 @@ class backup_bak:
             ret = public.ReadFile(self._check_all_date)
             self._check_date_all_data = json.loads(ret)
         if not os.path.exists('/www/backup/site_backup'):
-            os.system('mkdir /www/backup/site_backup -p')
+            public.ExecShell('mkdir /www/backup/site_backup -p')
         if not os.path.exists('/www/backup/database_backup'):
-            os.system('mkdir /www/backup/database_backup')
+            public.ExecShell('mkdir /www/backup/database_backup')
         if not os.path.exists(self._check_database):
             ret = []
             public.writeFile(self._check_database, json.dumps(ret))
@@ -242,7 +242,7 @@ class backup_bak:
         if not id:return public.returnMsg(False,'数据库不存在')
         if os.path.exists(self._chek_site_file):
             return public.returnMsg(False, '这个时间段中存在有运行任务,建议更换计划任务的时间备份')
-        os.system('python /www/server/panel/class/backup_bak.py database %s &'%id)
+        public.ExecShell('python /www/server/panel/class/backup_bak.py database %s &'%id)
         return public.returnMsg(True,'OK')
 
     # backup_database
@@ -256,13 +256,13 @@ class backup_bak:
             return public.returnMsg(False, '这个时间段中存在有运行任务,建议更换计划任务的时间备份')
 
 
-        os.system('python /www/server/panel/class/backup_bak.py sites %s &' % id)
+        public.ExecShell('python /www/server/panel/class/backup_bak.py sites %s &' % id)
         return public.returnMsg(True, 'OK')
 
     # backup_path
     def backup_path_data(self, get):
         if not os.path.exists(get.path):return public.returnMsg(False, "目录不存在")
-        os.system('python /www/server/panel/class/backup_bak.py path %s &' % get.path)
+        public.ExecShell('python /www/server/panel/class/backup_bak.py path %s &' % get.path)
         return public.returnMsg(True, 'OK')
 
     #检测数据库执行错误
@@ -277,8 +277,8 @@ class backup_bak:
 
     #配置
     def mypass(self,act,root):
-        os.system("sed -i '/user=root/d' /etc/my.cnf")
-        os.system("sed -i '/password=/d' /etc/my.cnf")
+        public.ExecShell("sed -i '/user=root/d' /etc/my.cnf")
+        public.ExecShell("sed -i '/password=/d' /etc/my.cnf")
         if act:
             mycnf = public.readFile('/etc/my.cnf');
             rep = "\[mysqldump\]\nuser=root"
@@ -306,7 +306,7 @@ class backup_bak:
         ret['path']=False
         ret['chekc'] = True
         self.set_database_data(ret)
-        if not os.path.exists(self._chek_site_file): os.system('touch %s' % self._chek_site_file)
+        if not os.path.exists(self._chek_site_file): public.ExecShell('touch %s' % self._chek_site_file)
         path=self.backup_database_data(id)
         os.remove(self._chek_site_file)
 
@@ -358,7 +358,7 @@ class backup_bak:
         ret['path']=False
         ret['chekc'] = True
         self.set_site_data(ret)
-        if not os.path.exists(self._chek_site_file): os.system('touch %s' % self._chek_site_file)
+        if not os.path.exists(self._chek_site_file): public.ExecShell('touch %s' % self._chek_site_file)
         path=self.backup_site_data(id)
         os.remove(self._chek_site_file)
         ret['status'] = True
@@ -373,7 +373,7 @@ class backup_bak:
         if isError: return isError
         name = public.M('databases').where("id=?", (id,)).getField('name')
         root = public.M('config').where('id=?', (1,)).getField('mysql_root')
-        if not os.path.exists('/www/server/panel/BTPanel/static' + '/database'): os.system(
+        if not os.path.exists('/www/server/panel/BTPanel/static' + '/database'): public.ExecShell(
             'mkdir -p ' + '/www/server/panel/BTPanel/static' + '/database');
         self.mypass(True, root)
         path_id = ''.join(random.sample(string.ascii_letters + string.digits, 20))
@@ -485,7 +485,7 @@ class backup_bak:
         ret['status']=False
         self.set_down_data(ret)
         print('python /www/server/panel/class/backup_bak.py down  %s %s %s %s %s &'%(get.url,filename,get.type,get.id,get.name))
-        os.system('python /www/server/panel/class/backup_bak.py down  %s %s %s %s %s &'%(get.url,filename,get.type,get.id,get.name))
+        public.ExecShell('python /www/server/panel/class/backup_bak.py down  %s %s %s %s %s &'%(get.url,filename,get.type,get.id,get.name))
         return True
 
     def down2(self,url,filename,type,id,name):
@@ -524,7 +524,7 @@ class backup_bak:
         if os.path.exists(self._chek_site_file):
             return public.returnMsg(False, '这个时间段中存在有运行任务,建议更换计划任务的时间备份')
 
-        os.system('python /www/server/panel/class/backup_bak.py sites_ALL 11 &')
+        public.ExecShell('python /www/server/panel/class/backup_bak.py sites_ALL 11 &')
         return public.returnMsg(True, 'OK')
 
     def set_backup_all(self):
@@ -536,7 +536,7 @@ class backup_bak:
         jindu['end_count']=0
         jindu['resulit']=site_list
         public.writeFile(self._check_all_site, json.dumps(jindu))
-        if not os.path.exists(self._chek_site_file): os.system('touch %s' % self._chek_site_file)
+        if not os.path.exists(self._chek_site_file): public.ExecShell('touch %s' % self._chek_site_file)
         for i in data:
             path = self.backup_site_data(i['id'])
             if path:
@@ -560,7 +560,7 @@ class backup_bak:
     def backup_date_all(self, get):
         if os.path.exists(self._chek_site_file):
             return public.returnMsg(False, '这个时间段中存在有运行任务,建议更换计划任务的时间备份')
-        os.system('python /www/server/panel/class/backup_bak.py database_ALL 11 &')
+        public.ExecShell('python /www/server/panel/class/backup_bak.py database_ALL 11 &')
         return public.returnMsg(True, 'OK')
 
     def backup_all_database(self):
@@ -572,7 +572,7 @@ class backup_bak:
         jindu['end_count']=0
         jindu['resulit']=site_list
         public.writeFile(self._check_all_date, json.dumps(jindu))
-        if not os.path.exists(self._chek_site_file): os.system('touch %s' % self._chek_site_file)
+        if not os.path.exists(self._chek_site_file): public.ExecShell('touch %s' % self._chek_site_file)
         for i in data:
             path = self.backup_database_data(i['id'])
             if path:

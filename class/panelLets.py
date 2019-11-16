@@ -20,7 +20,7 @@ if __name__ != '__main__':
 try:
     import dns.resolver
 except:
-    os.system("pip install dnspython")
+    public.ExecShell("pip install dnspython")
     try:
         import dns.resolver
     except:

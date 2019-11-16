@@ -22,7 +22,7 @@ class downloadFile:
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except:pass
-            socket.setdefaulttimeout(10)
+            socket.setdefaulttimeout(30)
             self.pre = 0;
             self.oldTime = time.time();
             if sys.version_info[0] == 2:

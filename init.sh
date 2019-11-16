@@ -22,17 +22,26 @@ env_path=$panel_path/env/bin/activate
 if [ -f $env_path ];then
 	source $env_path
 fi
+chmod 700 $panel_path/BT-Panel
+log_file=/www/server/panel/logs/error.log
+if [ -f $panel_path/data/ssl.pl ];then
+	log_file=/dev/null
+fi
 
-
+port=$(cat /www/server/panel/data/port.pl)
 
 panel_start()
 {
         isStart=`ps aux|grep 'runserver:app'|grep -v grep|awk '{print $2}'`
+		if [ "$isStart" != '' ];then
+			kill -9 $isStart
+		fi
+		isStart=`ps aux|grep 'BT-Panel'|grep -v grep|awk '{print $2}'`
         if [ "$isStart" == '' ];then
-                echo -e "Starting Bt-Panel.\c"
 				rm -f $pidfile
-                gunicorn -c runconfig.py runserver:app
-                port=$(cat /www/server/panel/data/port.pl)
+				panel_port_check
+				echo -e "Starting Bt-Panel.\c"
+                nohup $panel_path/BT-Panel >> $log_file 2>&1 &
 				isStart=""
 				n=0
 				while [[ "$isStart" == "" ]];
@@ -48,7 +57,7 @@ panel_start()
                 if [ "$isStart" == '' ];then
                         echo -e "\033[31mfailed\033[0m"
                         echo '------------------------------------------------------'
-                        tail -n 20 $panel_path/logs/error.log
+                        tail -n 20 $log_file
                         echo '------------------------------------------------------'
                         echo -e "\033[31mError: BT-Panel service startup failed.\033[0m"
                 fi
@@ -77,6 +86,66 @@ panel_start()
         fi
 }
 
+panel_port_check()
+{
+	is_process=$(lsof -n -P -i:$port|grep LISTEN|grep -v grep|awk '{print $1}'|sort|uniq|xargs)
+	for pn in ${is_process[@]}
+    do
+          if [ "$pn" = "nginx" ];then
+				/etc/init.d/nginx restart
+		  fi
+
+		  if [ "$pn" = "httpd" ];then
+				/etc/init.d/httpd restart
+		  fi
+
+		  if [ "$pn" = "mysqld" ];then
+				/etc/init.d/mysqld restart
+		  fi
+
+		  if [ "$pn" = "superviso" ];then
+				pkill -9 superviso
+				sleep 0.2
+				supervisord -c /etc/supervisor/supervisord.conf
+		  fi
+
+		  if [ "$pn" = "pure-ftpd" ];then
+				/etc/init.d/pure-ftpd restart
+		  fi
+
+		  if [ "$pn" = "memcached" ];then
+				/etc/init.d/memcached restart
+		  fi
+
+		  if [ "$pn" = "sudo" ];then
+				if [ -f /etc/init.d/redis ];then
+					/etc/init.d/redis restart
+				fi
+		  fi
+
+		  if [ "$pn" = "php-fpm" ];then
+				php_v=(52 53 54 55 56 70 71 72 73 74);
+				for pv in ${php_v[@]};
+				do
+					if [ -f /etc/init.d/php-fpm-${pv} ];then
+						if [ -f /www/server/php/%{pv}/sbin/php-fpm ];then
+							if [ -f /tmp/php-cgi-${pv}.sock ];then
+								/etc/init.d/php-fpm-${pv} start
+							fi
+							/etc/init.d/php-fpm-${pv} restart
+						fi
+					fi
+				done
+		  fi
+    done
+	
+	is_ports=$(lsof -n -P -i:$port|grep LISTEN|grep -v grep|awk '{print $2}'|xargs)
+	if [ "$is_ports" != '' ];then
+		kill -9 $is_ports
+		sleep 1
+	fi
+}
+
 panel_stop()
 {
 	echo -e "Stopping Bt-Tasks...\c";
@@ -90,7 +159,7 @@ panel_stop()
     echo -e "	\033[32mdone\033[0m"
 
     echo -e "Stopping Bt-Panel...\c";
-    arr=`ps aux|grep 'runserver:app'|grep -v grep|awk '{print $2}'`
+    arr=`ps aux|grep -E '(runserver|BT-Panel)'|grep -v grep|awk '{print $2}'`
 	for p in ${arr[@]}
     do
             kill -9 $p &>/dev/null
@@ -123,17 +192,22 @@ panel_status()
 panel_reload()
 {
 	isStart=$(ps aux|grep 'runserver:app'|grep -v grep|awk '{print $2}')
-    
     if [ "$isStart" != '' ];then
-    	echo -e "Reload Bt-Panel.\c";
-	    arr=`ps aux|grep 'runserver:app'|grep -v grep|awk '{print $2}'`
+		kill -9 $isStart
+		sleep 0.5
+	fi
+	isStart=$(ps aux|grep 'BT-Panel'|grep -v grep|awk '{print $2}')
+    if [ "$isStart" != '' ];then
+    	
+	    arr=`ps aux|grep 'BT-Panel'|grep -v grep|awk '{print $2}'`
 		for p in ${arr[@]}
         do
                 kill -9 $p
         done
 		rm -f $pidfile
-        gunicorn -c runconfig.py runserver:app
-		port=$(cat /www/server/panel/data/port.pl)
+		panel_port_check
+		echo -e "Reload Bt-Panel.\c";
+        nohup $panel_path/BT-Panel >> $log_file 2>&1 &
 		isStart=""
 		n=0
 		while [[ "$isStart" == "" ]];
@@ -149,7 +223,7 @@ panel_reload()
         if [ "$isStart" == '' ];then
                 echo -e "\033[31mfailed\033[0m"
                 echo '------------------------------------------------------'
-                tail -n 20 $panel_path/logs/error.log
+                tail -n 20 $log_file
                 echo '------------------------------------------------------'
                 echo -e "\033[31mError: BT-Panel service startup failed.\033[0m"
                 return;
@@ -174,7 +248,7 @@ install_used()
 
 error_logs()
 {
-	tail -n 100 $panel_path/logs/error.log
+	tail -n 100 $log_file
 }
 
 
@@ -188,6 +262,7 @@ case "$1" in
                 ;;
         'restart')
                 panel_stop
+				sleep 1
                 panel_start
                 ;;
         'reload')

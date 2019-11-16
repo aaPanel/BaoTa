@@ -6,18 +6,20 @@
 # +-------------------------------------------------------------------
 # | Author: 黄文良 <287962566@qq.com>
 # +-------------------------------------------------------------------
-
-import paramiko
+try:
+    import paramiko
+except: pass
 import json
 import time
 import os
 import sys
 import socket
+import threading
 
 sys.path.insert(0, '/www/server/panel/class/')
 import public
 from io import BytesIO, StringIO
-from BTPanel import session,socketio
+from BTPanel import session
 
 class ssh_terminal:
     __log_type = '宝塔终端'
@@ -31,6 +33,8 @@ class ssh_terminal:
     _my_terms = {}
     _room = "ssh_data"
     _send_last = False
+    _send_last_time = 0
+    _connect_time = 0
 
     def __init__(self):
         pass
@@ -48,7 +52,7 @@ class ssh_terminal:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 262144)
             sock.connect((self._ssh_info['host'], int(self._ssh_info['port'])))
         except Exception as e:
-            socketio.emit(self._room,"\r服务器连接失败!\r")
+            self._web_socket.send("\r服务器连接失败!\r")
             return False
         # 使用Transport连接
         p1 = paramiko.Transport(sock)
@@ -67,7 +71,7 @@ class ssh_terminal:
                 # print('-----------使用密码登陆-----------')
                 p1.auth_password(username=self._ssh_info['username'].strip(), password=self._ssh_info['password'])
         except Exception as e:
-            socketio.emit(self._room,"\r用户名或密码错误!\r")
+            self._web_socket.send("\r用户名或密码错误!\r")
             p1.close()
             return False
 
@@ -84,6 +88,7 @@ class ssh_terminal:
         #print("登录成功")
         self._my_terms[self._host].last_send = []
         self._send_last = True
+        self._connect_time = time.time()
         return True
 
     def resize(self, data):
@@ -95,64 +100,54 @@ class ssh_terminal:
             print(public.get_error_info())
             return False
 
-    def send(self,c_data):
+    def send(self):
         try:
-            if not c_data: return
-            if not self._thread:
-                s_file = '/www/server/panel/config/t_info.json'
-                ssh_info = None
-                if os.path.exists(s_file):
-                    ssh_info = json.loads(public.en_hexb(public.readFile(s_file)))
-
-                if not 'host' in c_data: 
-                    host = "127.0.0.1"
-                    if ssh_info: 
-                        c_data = ssh_info
-                        host = c_data['host']
-                else:
-                    host = c_data['host']
-                if not host: 
-                    if not ssh_info: return socketio.emit(self._room,"\r用户名或密码错误!\r")
-                    c_data = ssh_info
-                key = 'ssh_' + host
-                if 'password' in c_data:
-                    session[key] = c_data
-                if not key in session: return socketio.emit(self._room,"\r用户名或密码错误!\r")
-                result = self.run(session[key])
-            else:
+            while not self._web_socket.closed:
+                c_data = self._web_socket.receive()
+                if not c_data: continue
                 if len(c_data) > 10:
-                    if c_data == 'new_bt_terminal': 
-                        if not self._send_last: self.last_send()
-                        self._send_last = False
-                        return
-                    if c_data.find('resize_pty') != -1:
-                        if self.resize(c_data): return
-                if type(c_data) == dict: return
+                    if c_data.find('new_terminal') != -1:
+                        if not self._host in self._my_terms: 
+                            self.connect()
+                        else:
+                            if time.time() - self._connect_time > 3:
+                                self.last_send()
+                        continue
+                    if c_data.find("reset_connect") != -1:
+                        if not self._host in self._my_terms: self.connect()
+                        continue
+
                 if self._host in self._my_terms:
                     self._my_terms[self._host].last_time = time.time()
                     self._my_terms[self._host].tty.send(c_data)
                 else:
                     return
         except:
-            self.close()
-            socketio.emit(self._room,'\r连接服务器失败!\r')
             print(public.get_error_info())
 
     def recv(self):
         try:
-            while True:
+            n = 0
+            while not self._web_socket.closed:
+                self.not_send()
+                #if n == 0: self.last_send()
                 data = self._my_terms[self._host].tty.recv(1024)
+                self.not_send()
                 if not data:
                     self.close()
-                    socketio.emit(self._room,"\r连接已断开,按回车将尝试重新连接!\r")
+                    self._web_socket.send('连接已断开,连续按两次回车将尝试重新连接!')
                     return
                 try:
                     result = data.decode()
                 except:
                     result = str(data)
                 if not result: continue
+                if self._web_socket.closed:
+                    self._my_terms[self._host].not_send = result
+                    return
                 self.set_last_send(result)
-                socketio.emit(self._room,result)
+                if not n: n = 1
+                self._web_socket.send(result)
         except:
             print(public.get_error_info())
 
@@ -169,14 +164,17 @@ class ssh_terminal:
     def not_send(self):
         if 'not_send' in self._my_terms[self._host]:
             if self._my_terms[self._host].not_send:
-                socketio.emit(self._room,self._my_terms[self._host].not_send)
+                self._web_socket.send(self._my_terms[self._host].not_send)
                 self._my_terms[self._host].not_send = ""
 
     def last_send(self):
+        if time.time()- self._send_last_time < 3: return False
+        self._send_last_time = time.time()
         time.sleep(0.3)
+        if not self._host in self._my_terms: return False
         if 'last_send' in self._my_terms[self._host]:
             for d in self._my_terms[self._host].last_send:
-                socketio.emit(self._room,d)
+                self._web_socket.send(d)
 
     def close(self):
         try:
@@ -186,14 +184,22 @@ class ssh_terminal:
             del self._my_terms[self._host] 
         self._thread = None
 
-    def run(self, ssh_info=None):
-        if not ssh_info:
-            return
+    def run(self,web_socket, ssh_info=None):
+        self._web_socket = web_socket
         if 'id' in ssh_info:
             self._ssh_info = self.get_server_ssh_info(ssh_info)
         else:
             self._ssh_info = ssh_info
+        if not self._ssh_info:
+            return
         result = self.connect()
-        if result and not self._thread:
-            self._thread = socketio.start_background_task(target=self.recv)
-        return result
+        time.sleep(0.1)
+        if result:
+            sendt = threading.Thread(target=self.send)
+            recvt = threading.Thread(target=self.recv)
+            sendt.start()
+            recvt.start()
+            sendt.join()
+            recvt.join()
+            if time.time() - self._my_terms[self._host].last_time > 86400: self.close()
+            self._web_socket = None

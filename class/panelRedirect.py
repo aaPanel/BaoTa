@@ -326,7 +326,7 @@ class panelRedirect:
                 redirectdir = "%s/panel/vhost/%s/redirect/%s" % (self.setupPath,w,get.sitename)
 
                 if not os.path.exists(redirectdir):
-                    os.system("mkdir -p %s" % redirectdir)
+                    public.ExecShell("mkdir -p %s" % redirectdir)
                 if w == "nginx":
                     public.writeFile(redirectfile,nginxrconf)
                 else:
@@ -380,8 +380,8 @@ class panelRedirect:
         for i in range(len(redirectconf)):
             if redirectconf[i]["sitename"] == sitename and redirectconf[i]["redirectname"] == redirectname:
                 proxyname_md5 = self.__calc_md5(redirectconf[i]["redirectname"])
-                os.system("rm -f %s/panel/vhost/nginx/redirect/%s/%s_%s.conf" % (self.setupPath,redirectconf[i]["sitename"],proxyname_md5,redirectconf[i]["sitename"]))
-                os.system("rm -f %s/panel/vhost/apache/redirect/%s/%s_%s.conf" % (self.setupPath,redirectconf[i]["sitename"],proxyname_md5, redirectconf[i]["sitename"]))
+                public.ExecShell("rm -f %s/panel/vhost/nginx/redirect/%s/%s_%s.conf" % (self.setupPath,redirectconf[i]["sitename"],proxyname_md5,redirectconf[i]["sitename"]))
+                public.ExecShell("rm -f %s/panel/vhost/apache/redirect/%s/%s_%s.conf" % (self.setupPath,redirectconf[i]["sitename"],proxyname_md5, redirectconf[i]["sitename"]))
                 del redirectconf[i]
                 self.__write_config(self.__redirectfile,redirectconf)
                 self.SetRedirectNginx(get)
@@ -422,7 +422,7 @@ class panelRedirect:
 
             # 备份并替换老虚拟主机配置文件
             # if not os.path.exists(conf_path + "_bak"):
-            #     os.system("cp %s %s_bak" % (conf_path, conf_path))
+            #     public.ExecShell("cp %s %s_bak" % (conf_path, conf_path))
             # conf = re.sub(rep, "", old_conf)
             # public.writeFile(conf_path, conf)
             #self.CreateRedirect(get)

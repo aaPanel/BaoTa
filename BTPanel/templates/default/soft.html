@@ -51,6 +51,7 @@
 <script type="text/javascript" src="/static/laydate/laydate.js?date=20180301"></script>
 <script type="text/javascript" src="/static/js/soft.js?version={{g['version']}}"></script>
 <script type="text/javascript">
+    bt.set_cookie('sites_path', "{{session['config']['sites_path']}}");
     bt.set_cookie('serverType', "{{session['webserver']}}");
     $(document).ready(function () {
         soft.get_list();

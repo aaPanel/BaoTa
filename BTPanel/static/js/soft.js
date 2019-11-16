@@ -27,7 +27,7 @@ var soft = {
             }
 
             if (type == 10) {
-                $("#updata_pro_info").html('<div class="alert alert-info" style="margin-bottom:15px"><strong>宝塔开发者平台已上线，诚邀全球优秀的开发者加入，门槛低，收入高。</strong><a class="btn btn-success btn-xs va0" href="https://www.bt.cn/developer/" title="免费入驻" style="margin-left: 8px" target="_blank">免费入驻</a><a class="btn btn-success btn-xs va0" href="https://www.bt.cn/bbs/forum-40-1.html" title="点击获取第三方应用" style="margin-left: 8px" target="_blank">获取第三方应用</a><input type="file" style="display:none;" accept=".zip,.tar.gz" id="update_zip" multiple="multiple"><button class="btn btn-success btn-xs" onclick="soft.update_zip_open()" style="margin-left:8px">导入插件</button></div>')
+                $("#updata_pro_info").html('<div class="alert alert-danger" style="margin-bottom:15px"><strong>安全提醒：第三方插件上架前，宝塔官方进行了安全审计，但可能还存在安全风险，在生产环境使用前请自行甄别 </strong><a class="btn btn-success btn-xs va0" href="https://www.bt.cn/developer/" title="免费入驻" style="margin-left: 8px" target="_blank">免费入驻</a><a class="btn btn-success btn-xs va0" href="https://www.bt.cn/bbs/forum-40-1.html" title="点击获取第三方应用" style="margin-left: 8px" target="_blank">获取第三方应用</a><input type="file" style="display:none;" accept=".zip,.tar.gz" id="update_zip" multiple="multiple"><button class="btn btn-success btn-xs" onclick="soft.update_zip_open()" style="margin-left:8px">导入插件</button></div>')
             } else if (type == 11) {
                 $("#updata_pro_info").html('<div class="alert alert-info" style="margin-bottom:15px"><strong>即将上线，敬请期待</strong></div>')
             }
@@ -110,7 +110,7 @@ var soft = {
                         }
                     },
                     {
-                        field: 'price', title: '价格', width: 92, templet: function (item) {
+                        field: 'price', title: '价格', width: 72, templet: function (item) {
                             var price = '免费';
                             if (item.price > 0) {
                                 price = '<span style="color:#fc6d26">￥' + item.price + '</span>';
@@ -118,6 +118,11 @@ var soft = {
                             return price;
                         }
                     },
+                    (type ==10?{
+                        field: 'sort', width: 60, title: '评分', templet: function (item) {
+                            return item.sort !== undefined?('<a href="javascript:;" onclick="score.open_score_view('+ item.pid +',\''+ item.title +'\','+ item.count +')" class="btlink open_sort_view">' + (item.sort <= 0 || item.sort >5?'无评分':item.sort.toFixed(1))  +'</a>'):'--';
+                        }
+                    }:''),
                     {
                         field: 'endtime', width: 120, title: '到期时间', templet: function (item) {
                             var endtime = '--';
@@ -155,7 +160,7 @@ var soft = {
                             return path;
                         }
                     },
-                    {
+                    (type !=10?{
                         field: 'status', width: 40, title: '状态', templet: function (item) {
                             var status = '';
                             if (item.setup) {
@@ -168,7 +173,7 @@ var soft = {
                             }
                             return status;
                         }
-                    },
+                    }:''),
                     {
                         field: 'index', width: 64, title: '首页显示', templet: function (item) {
                             var to_index = '';
@@ -365,6 +370,7 @@ var soft = {
 				                <th>简介</th>\
 				                <th>支持PHP版本</th>\
                                 <th>提供者</th>\
+                                <th>评价</th>\
 				                <th style="text-align: right;" width="150">操作</th>\
 			                </tr>\
 		                </thead>';
@@ -383,6 +389,8 @@ var soft = {
                     + '<td>' + rdata.list[i].ps + '</td>'
                     + '<td>' + rdata.list[i].php + '</td>'
                     + '<td><a class="btlink" target="_blank" href="' + rdata.list[i].official + '">' + (rdata.list[i].author == '宝塔' ? rdata.list[i].title : rdata.list[i].author) + '</a></td>'
+                    + '<td>' + (rdata.list[i].sort !== undefined?('<a href="javascript:;" class="btlink open_score_view" onclick="score.open_score_view('+ rdata.list[i].id +',\''+ rdata.list[i].title +'\','+ rdata.list[i].count +')" >' + (rdata.list[i].sort <= 0 || rdata.list[i].sort > 5?'无评分':rdata.list[i].sort.toFixed(1))+'</a>'):'--')
+                    + '</td>'
                     + '<td class="text-right"><a href="javascript:onekeyCodeSite(\'' + rdata.list[i].name + '\',\'' + rdata.list[i].php + '\',\'' + rdata.list[i].title + '\',\'' + rdata.list[i].enable_functions + '\');" class="btlink">一键部署</a>' + remove_opt+'</td>'
                     + '</tr>'
             }
@@ -674,9 +682,7 @@ var soft = {
         if (data.name.indexOf('php-') >= 0) version = data.name.split('-')[1].replace('.', '');
         switch (key) {
             case 'service':
-
                 var tabCon = $(".soft-man-con").empty();
-                
                 var status_list = [
                     { opt: data.status ? 'stop' : 'start', title: data.status ? lan.soft.stop : lan.soft.start },
                     { opt: 'restart', title: lan.soft.restart },
@@ -726,7 +732,6 @@ var soft = {
                     if (data.versions[i].setup) opt_version = data.name + ' ' + data.versions[i].m_version;
                     _list.push({ value: data.name + ' ' + data.versions[i].m_version, title: data.name + ' ' + data.versions[i].m_version });
                 }
-
                 var _form_data = {
                     title: lan.soft.select_version, items: [
                         { name: 'phpVersion', width: '160px', type: 'select', value: opt_version, items: _list },
@@ -1170,7 +1175,6 @@ var soft = {
                         items: [{
                             text: lan.public.save, type: 'button', name: 'bt_apache_save', callback: function (item) {
                                     delete item['bt_apache_save'];
-                                    console.log(item)
                                     bt.send('SetApacheValue','config/SetApacheValue',item, function (rdata) {
                                         layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
                                     });
@@ -1402,8 +1406,12 @@ var soft = {
             case 'set_php_config':
 
                 bt.soft.php.get_config(version, function (rdata) {
-                    $(".soft-man-con").empty().append('<div class="divtable" id="phpextdiv" style="margin-right:10px;height: 420px; overflow: auto; margin-right: 0px;"><table id="tab_phpext" class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"></div></div>');
+                    var divObj = document.getElementById('phpextdiv');
+                    var scrollTopNum = 0;
+                    if (divObj) scrollTopNum = divObj.scrollTop;
 
+                    $(".soft-man-con").empty().append('<div class="divtable" id="phpextdiv" style="margin-right:10px;height: 420px; overflow: auto; margin-right: 0px;"><table id="tab_phpext" class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"></div></div>');
+                    
                     var list = [];
                     for (var i = 0; i < rdata.libs.length; i++) {
                         if (rdata.libs[i].versions.indexOf(version) == -1) continue;
@@ -1436,13 +1444,11 @@ var soft = {
                             },
                         ]
                     })
-                    var helps = ['Redis扩展仅支持一个PHP版本安装使用，若在其它PHP版本已安装redis扩展，请勿再装','请按实际需求安装扩展,不要安装不必要的PHP扩展,这会影响PHP执行效率,甚至出现异常', 'opcache/xcache/apc等脚本缓存扩展,请只安装其中1个,否则可能导致您的站点程序异常']
+                    var helps = ['Redis扩展仅支持一个PHP版本安装使用，若在其它PHP版本已安装redis扩展，请勿再装', '请按实际需求安装扩展,不要安装不必要的PHP扩展,这会影响PHP执行效率,甚至出现异常', 'opcache/xcache/apc等脚本缓存扩展,请只安装其中1个,否则可能导致您的站点程序异常']
                     $(".soft-man-con").append(bt.render_help(helps));
-
+                    
                     var divObj = document.getElementById('phpextdiv');
-                    var scrollTopNum = 0;
-                    if (divObj) scrollTopNum = divObj.scrollTop;
-                    document.getElementById('phpextdiv').scrollTop = scrollTopNum;
+                    if (divObj) divObj.scrollTop = scrollTopNum;
                     $('a').click(function () {
                         var _obj = $(this);
                         if (_obj.hasClass('lib-uninstall')) {
@@ -1460,6 +1466,12 @@ var soft = {
                             });
                         }
                     })
+
+                    if ($(".bt-soft-menu .bgw").text() === "安装扩展") {
+                        setTimeout(function () {
+                            soft.get_tab_contents('set_php_config', obj);
+                        }, 3000)
+                    }
                 })
                 break;
             case 'get_phpinfo':
@@ -1629,7 +1641,6 @@ var soft = {
                                 field: 'opt', title: lan.public.action, width: 50, templet: function (item) {
                                     var new_disable_functions = disable_functions.slice()
                                     new_disable_functions.splice($.inArray(item.name, new_disable_functions), 1)
-                                    console.log(new_disable_functions)
                                     return '<a class="del_functions" style="float:right;" data-val="shell_exec" onclick="set_disable_functions(\'' + version + '\',\'' + new_disable_functions.join(',') + '\')" href="javascript:;">删除</a>';
                                 }
                             }
@@ -1701,7 +1712,6 @@ var soft = {
                         { title: 'max_spare_servers', name: 'max_spare_servers', value: rdata.max_spare_servers, type: 'number', width: '100px', ps: '*' + lan.soft.php_fpm_ps5 },
                         {
                             title: ' ', text: lan.public.save, name: 'btn_children_submit', css: 'btn-success', type: 'button', callback: function (ldata) {
-                                console.log(ldata)
                                 bt.pub.get_menm(function (memInfo) {
                                     var limit_children = parseInt(memInfo['memTotal'] / 8);
                                     if (limit_children < parseInt(ldata.max_children)) {
@@ -1817,7 +1827,6 @@ var soft = {
                     '</div>');
                     if(res.save_handler == 'files'){
                         bt.soft.php.get_session_count(function(res){
-                            console.log(res);
                             $('.clear_conter').html('<div class="session_clear_list"><div class="line"><span>总Session文件数量</span><span>'+ res.total +'</span></div><div class="line"><span>可清理的Session文件数量</span><span>'+ res.oldfile +'</span></div></div><button class="btn btn-success btn-sm clear_session_file">清理session文件</button>')
                             $('.clear_session_file').click(function(){
                                 bt.soft.php.clear_session_count({
@@ -2213,7 +2222,8 @@ function onekeyCodeSite(codename, versions,title,enable_functions) {
             layer.msg('缺少被支持的PHP版本，请安装!', { icon: 5 });
             return;
         }
-
+        var default_path = bt.get_cookie('sites_path');
+        if (!default_path) default_path = '/www/wwwroot';
         
 
         var con = '<form class="bt-form pd20 pb70" id="addweb">\
@@ -2226,7 +2236,7 @@ function onekeyCodeSite(codename, versions,title,enable_functions) {
 						<div class="info-r c4"><input id="Wbeizhu" class="bt-input-text" name="ps" placeholder="网站备注" style="width:398px" type="text"> </div>\
 					</div>\
 					<div class="line"><span class="tname">根目录</span>\
-						<div class="info-r c4"><input id="inputPath" class="bt-input-text mr5" name="path" value="/www/wwwroot/" placeholder="网站根目录" style="width:398px" type="text"><span class="glyphicon glyphicon-folder-open cursor" onclick="ChangePath(\'inputPath\')"></span> </div>\
+						<div class="info-r c4"><input id="inputPath" class="bt-input-text mr5" name="path" value="'+ default_path+'" placeholder="网站根目录" style="width:398px" type="text"><span class="glyphicon glyphicon-folder-open cursor" onclick="ChangePath(\'inputPath\')"></span> </div>\
 					</div>\
 					<div class="line"><span class="tname">数据库</span>\
 						<div class="info-r c4">\
@@ -2281,7 +2291,8 @@ function onekeyCodeSite(codename, versions,title,enable_functions) {
         });
         //FTP账号数据绑定域名
         $('#mainDomain').on('input', function () {
-            var defaultPath = '/www/wwwroot';
+            var default_path = bt.get_cookie('sites_path');
+            if (!default_path) default_path = '/www/wwwroot';
             var array;
             var res, ress;
             var str = $(this).val();
@@ -2325,4 +2336,433 @@ function _getRandomString(len) {
         pwd += $chars.charAt(Math.floor(Math.random() * maxPos));
     }
     return pwd;
+}
+var score = {
+    total:1,
+    type:'',
+    data:[],
+    // 获取评论信息
+    get_score_info:function (obj,callback) {
+        var loadT = layer.msg('<div class="depSpeed">正在获取评论信息 <img src="/static/img/ing.gif"></div>', { icon: 16, time: 0, shade: [0.3, "#000"] });
+        bt.send('get_score','plugin/get_score',{
+            pid:obj.pid,
+            p:obj.p,
+            limit_num:obj.limit_num
+        },function(res){
+            layer.close(loadT);
+            if(res.status === false){
+                layer.msg(res.msg,{icon:2});
+                return false;
+            }
+            if(callback) callback(res);
+        });
+    },
+    render_score_info:function(obj,callback){
+        var config = {pid:obj.pid},_this = this;
+        obj.p == undefined?config.p = 1:config.p = parseInt(obj.p)
+        obj.limit_num == undefined?config.limit_num = '':config.limit_num = obj.limit_num
+        score.get_score_info(config,function(res){
+            var _split_score = res.split.reverse(),_average_score = (_split_score[4]*1+_split_score[3]*2+_split_score[2]*3+_split_score[1]*4 +_split_score[0]*5)/res.total,_data = res.data,_html ='';
+            _this.total = res.total;
+            $('.comment_user_count').text(obj.count);
+            $('.comment_num').text((res.total!==0?_average_score:0).toFixed(1));
+            $('.comment_partake').text(res.total);
+            $('.comment_rate').text(res.total!==0?((((_split_score[0]+_split_score[1])/res.total).toFixed(2)*100)+'%'):'0%');
+            for(var i=0;i<5;i++){
+                $('.comment_star_group:eq('+ i +')').find('.comment_progress .comment_progress_bgw').css('width',((_split_score[i] / res.total).toFixed(2)*100)+'%')
+            }
+            $('.comment_tab span:eq(1)').find('i').text(_split_score[0]+_split_score[1]);
+            $('.comment_tab span:eq(2)').find('i').text(_split_score[2]+_split_score[3]);
+            $('.comment_tab span:eq(3)').find('i').text(_split_score[4]);
+            
+            for (var j = 0; j < _data.length; j++){
+                _html += '<div class="comment_box" data-index="'+ ((config.p == 1?'':config.p-1)+(j+'')) +'">\
+                    <div class="comment_box_title">\
+                        <span class="nice_star">\
+                            <span class="glyphicon '+ (_data[j].num >=1?'star_active':'') +' glyphicon-star" aria-hidden="true"></span>\
+                            <span class="glyphicon '+ (_data[j].num >=2?'star_active':'') +' glyphicon-star" aria-hidden="true"></span>\
+                            <span class="glyphicon '+ (_data[j].num >=3?'star_active':'') +' glyphicon-star" aria-hidden="true"></span>\
+                            <span class="glyphicon '+ (_data[j].num >=4?'star_active':'') +' glyphicon-star" aria-hidden="true"></span>\
+                            <span class="glyphicon '+ (_data[j].num >=5?'star_active':'') +' glyphicon-star" aria-hidden="true"></span>\
+                        </span>\
+                        <span class="nice_name" title="'+ _data[j].nickname +'">'+ _data[j].nickname +'</span>\
+                        <span class="nice_time" title="'+ bt.format_data(_data[j].addtime ) +'">'+ timeago(_data[j].addtime * 1000) +'</span>\
+                    </div>\
+                    <div class="comment_box_content">'+ (getLength(_data[j].ps)>65?reBytesStr(_data[j].ps,65)+'...&nbsp;<a href="javascript:;" class="btlink">详情</a>':_data[j].ps) +'</div>\
+                </div>'
+                // console.log(getLength(_data[j].ps)>70?reBytesStr(_data[j].ps,70)+'&nbsp;<a href="javascript:;" class="btlink">详情</a>':_data[j].ps);
+            }
+            _this.data = _this.data.concat(_data);
+            if(res.total > 10 && _data.length === 10){
+                _html += '<div class="comment_box get_next_page"><span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>点击获取更多评论</div>'
+            }
+            $('.comment_content').find('.get_next_page').remove();
+            $('.comment_content').append(_html);
+            if($('.comment_content .comment_box').length > 6){
+                $('.comment_content').addClass('box-shadow');
+            }else{
+                $('.comment_content').removeClass('box-shadow');
+            }
+            if(callback) callback(res);
+        });
+    },
+    // 设置评论信息
+    set_score_info:function (obj,callback){
+        var loadT = layer.msg('<div class="depSpeed">正在提交评论信息 <img src="/static/img/ing.gif"></div>', { icon: 16, time: 0, shade: [0.3, "#000"] });
+        bt.send('set_score','plugin/set_score',{
+            pid:obj.pid,
+            num:obj.num,
+            ps:obj.ps
+        },function(res){
+            layer.close(loadT);
+            if(res.status === false){
+                layer.msg(res.msg,{icon:2});
+                return false;
+            }
+            if(callback) callback(res);
+        });
+    },
+    open_score_view:function(_pid,_name,_count){
+        layer.open({
+            type: 1,
+            title:'【'+ _name + '】评分',
+            area:['550px','350px'],
+            closeBtn: 2,
+            shadeClose: false,
+            content:'<div class="pd20 score_info_view"><div class="comment_title">\
+                    <div class="comment_left">\
+                        <div class="comment_num">--</div>\
+                        <ul class="comment_num_tips">\
+                            <li>使用人数&nbsp;<span class="comment_user_count">--</span></li>\
+                            <li>共&nbsp;<span class="comment_partake">--</span>&nbsp;人参与评分</li>\
+                            <li><span class="comment_rate">--</span>&nbsp;好评率</li>\
+                        </ul>\
+                    </div>\
+                    <div class="comment_right">\
+                        <div class="comment_star_group">\
+                            <div class="comment_star">\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                            </div>\
+                            <div class="comment_progress">\
+                                <div class="comment_progress_bgw"></div>\
+                                <div class="comment_progress_speed"></div>\
+                            </div>\
+                        </div>\
+                        <div class="comment_star_group">\
+                            <div class="comment_star">\
+                                <span class="glyphicon star_none glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                            </div>\
+                            <div class="comment_progress">\
+                                <div class="comment_progress_bgw"></div>\
+                                <div class="comment_progress_speed"></div>\
+                            </div>\
+                        </div>\
+                        <div class="comment_star_group">\
+                            <div class="comment_star">\
+                                <span class="glyphicon star_none glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_none glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                            </div>\
+                            <div class="comment_progress">\
+                                <div class="comment_progress_bgw"></div>\
+                                <div class="comment_progress_speed"></div>\
+                            </div>\
+                        </div>\
+                        <div class="comment_star_group">\
+                            <div class="comment_star">\
+                                <span class="glyphicon star_none glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_none glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_none glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                            </div>\
+                            <div class="comment_progress">\
+                                <div class="comment_progress_bgw"></div>\
+                                <div class="comment_progress_speed"></div>\
+                            </div>\
+                        </div>\
+                        <div class="comment_star_group">\
+                            <div class="comment_star">\
+                                <span class="glyphicon star_none glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_none glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_none glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_none glyphicon-star" aria-hidden="true"></span>\
+                                <span class="glyphicon star_active glyphicon-star" aria-hidden="true"></span>\
+                            </div>\
+                            <div class="comment_progress">\
+                                <div class="comment_progress_bgw"></div>\
+                                <div class="comment_progress_speed"></div>\
+                            </div>\
+                        </div>\
+                    </div>\
+                </div>\
+                <div class="comment_tab">\
+                    <span class="active" data-num="">全部评价</span>\
+                    <span data-num="5">好评&nbsp;<i>--</i>&nbsp;</span>\
+                    <span data-num="3">中评&nbsp;<i>--</i>&nbsp;</span>\
+                    <span data-num="1">差评&nbsp;<i>--</i>&nbsp;</span>\
+                </div>\
+                <div class="comment_content">\
+                </div>\
+                <div class="add_score_view">\
+                    <div class="score_icon_group" data-icon="5">\
+                        <span class="glyphicon glyphicon-star active" aria-hidden="true" title="非常差：1分"></span>\
+                        <span class="glyphicon glyphicon-star active" aria-hidden="true" title="差：2分"></span>\
+                        <span class="glyphicon glyphicon-star active" aria-hidden="true" title="一般：3分"></span>\
+                        <span class="glyphicon glyphicon-star active" aria-hidden="true" title="好：4分"></span>\
+                        <span class="glyphicon glyphicon-star active" aria-hidden="true" title="非常好：5分" ></span>\
+                    </div>\
+                    <div class="score_icon_group_tips">力荐：5分</div>\
+                    <textarea class="score_input bt-input-text" placeholder="请输入评价内容，字数少于60字，可为空。" name="score_val"></textarea>\
+                    <span class="score_input_tips pull-right">还可输入&nbsp;<i>60</i>&nbsp;个字</span>\
+                </div>\
+                <div class="edit_view ">\
+                    <span>参与评分</span>\
+                </div>\
+            </div>'
+            ,success:function(index,layero){
+                score.data = [];
+                score.render_score_info({pid:_pid,count:_count},function(){
+                    $('.score_info_view').show();
+                });
+                score.score_icon_time = null;
+                $('.score_icon_group span').hover(function(){
+                    var _active = $(this).hasClass('active');
+                    // if($(this).prevAll().length == 0 && $(this).nextAll('.active').length == 0 && _active){
+                    //     $(this).removeClass('active').nextAll().removeClass('active')
+                    //     $('.score_icon_group_tips').html('选择以上图标选择评分等级1-5');
+                    //     $('.score_icon_group').attr('data-icon',0)
+                    // }else{
+                        // $(this).addClass('active').nextAll().removeClass('active');
+                        // $(this).prevAll().addClass('active');
+                        // $('.score_icon_group').attr('data-icon',$(this).prevAll().length +1)
+                        // var _title =  $(this).attr('title');
+                        // $('.score_icon_group_tips').text(_title);
+                    // }
+                });
+                $('.score_icon_group span').click(function(){
+                    var _active = $(this).hasClass('active');
+                    if($(this).prevAll().length == 0 && $(this).nextAll('.active').length == 0 && _active){
+                        $('.edit_view').addClass('active');
+                        $(this).removeClass('active').nextAll().removeClass('active')
+                        $('.score_icon_group_tips').html('点击选择图标评分等级1-5星');
+                        $('.score_icon_group').attr('data-icon',0)
+                    }else{
+                        $('.edit_view').removeClass('active');
+                        $(this).addClass('active').nextAll().removeClass('active');
+                        $(this).prevAll().addClass('active');
+                        $('.score_icon_group').attr('data-icon',$(this).prevAll().length +1)
+                        var _title =  $(this).attr('title');
+                        $('.score_icon_group_tips').text(_title);
+                    }
+                });
+                $('.comment_tab span').click(function(e){
+                    var _num = $(this).attr('data-num');
+                    $('.comment_content').removeClass('box-shadow');
+                    $(this).addClass('active').siblings().removeClass('active');
+                    $('.comment_content').html('');
+                    score.data = []
+                    score.type = _num;
+                    score.render_score_info({pid:_pid,limit_num:_num,count:_count});
+
+                });
+                $('.comment_content').on('click','.get_next_page',function () {
+                    var _next_page = ($('.comment_content .comment_box').length / 10)+1;
+                    score.render_score_info({pid:_pid,limit_num:score.type,p:_next_page,count:_count});
+                });
+                $('.comment_content').on('click','.comment_box',function(){
+                    if(!$(this).hasClass('get_next_page')){
+                        var _index = $(this).attr('data-index');
+                        layer.open({
+                            type: 1,
+                            title:false,
+                            area:['350px','200px'],
+                            closeBtn: 2,
+                            shadeClose: false,
+                            content: '<div class="score_details" >'+ $(this).html() +'</div>',
+                            success:function(index,layers) {
+                                $('.score_details .comment_box_content').html(score.data[_index]['ps']);
+                            }
+                        });
+                    }
+                });
+                $('.edit_view').click(function(){
+                    if($('.edit_view').hasClass('active')){
+                        // layer.msg('请选择评分等级',{icon:2});
+                        $('.score_icon_group_tips').css('color','red');
+                        setTimeout(function(){
+                            $('.score_icon_group_tips').removeAttr('style')
+                        },1000);
+                        return false
+                    }
+                    var _num = parseInt($('.score_icon_group').attr('data-icon')),_ps = $('.score_input').val();
+                    if(_num == 0){
+                        layer.msg('评分等级不能为空',{icon:2});
+                        return false;
+                    }
+                    if(120 - getLength(_ps)<0){
+                        layer.msg('评价信息不能超过60个字',{icon:2});
+                        return false;
+                    }
+                    score.set_score_info({pid:_pid,num:_num,ps:_ps == ''?'用户未做任何评价': _ps},function(res){
+                        layer.msg(res.msg,{icon:1});
+                        score.render_score_info({pid:_pid,limit_num:score.type,count:_count});
+                        soft.flush_cache();
+                        layer.close(index);
+                    });
+                    return false
+                    layer.open({
+                        type: 1,
+                        title:'添加评论',
+                        area:['400px','350px'],
+                        closeBtn: 2,
+                        shadeClose: false,
+                        btn:['确认','取消'],
+                        content:'<div class="add_score_view">\
+                            <div class="score_icon_group" data-icon="0">\
+                                <span class="glyphicon glyphicon-star" aria-hidden="true" title="很差：1分"></span>\
+                                <span class="glyphicon glyphicon-star" aria-hidden="true" title="较差：2分"></span>\
+                                <span class="glyphicon glyphicon-star" aria-hidden="true" title="还行：3分"></span>\
+                                <span class="glyphicon glyphicon-star" aria-hidden="true" title="推荐：4分"></span>\
+                                <span class="glyphicon glyphicon-star" aria-hidden="true" title="力荐：5分" ></span>\
+                            </div>\
+                            <div class="score_icon_group_tips">(点击以上图标选择评分等级1-5)</div>\
+                            <textarea class="score_input bt-input-text" placeholder="请输入评价内容，字数少于60字，可为空。" name="score_val"></textarea>\
+                            <span class="score_input_tips pull-right">还可输入&nbsp;<i>60</i>&nbsp;个字</span>\
+                        </div>',
+                        success:function(){
+                            $('.score_icon_group span').click(function(){
+                                var _active = $(this).hasClass('active');
+                                if($(this).prevAll().length == 0 && $(this).nextAll('.active').length == 0 && _active){
+                                    $(this).removeClass('active').nextAll().removeClass('active')
+                                    $('.score_icon_group_tips').html('(点击以上图标选择评分等级1-5)');
+                                    $('.score_icon_group').attr('data-icon',0)
+                                }else{
+                                    $(this).addClass('active').nextAll().removeClass('active');
+                                    $(this).prevAll().addClass('active');
+                                    $('.score_icon_group').attr('data-icon',$(this).prevAll().length +1)
+                                    var _title =  $(this).attr('title');
+                                    $('.score_icon_group_tips').text(_title);
+                                }
+                            });
+                            $('.score_input').on('keydown keyup focus click',function(){
+                                var _val = $('.score_input').val(),_size = 120 - getLength(_val);
+                                if(_size > 0){
+                                    $('.score_input_tips i').css('color',_size > 20?'#666':'red').text(parseInt(_size/2));
+                                    $('.score_input').attr('style','');
+                                }else{
+                                    $('.score_input_tips i').text(0)
+                                    $('.score_input').css({'outline-color':'red','border':'1px solid red'});
+                                }
+                            });
+                        },
+                        yes:function(index,layero){
+                            var _num = parseInt($('.score_icon_group').attr('data-icon')),_ps = $('.score_input').val();
+                            if(_num == 0){
+                                layer.msg('评分等级不能为空',{icon:2});
+                                return false;
+                            }
+                            if(120 - getLength(_ps)<0){
+                                layer.msg('评价信息不能超过60个字',{icon:2});
+                                return false;
+                            }
+                            score.set_score_info({pid:_pid,num:_num,ps:_ps == ''?'用户未做任何评价': _ps},function(res){
+                                layer.msg(res.msg,{icon:1});
+                                score.render_score_info({pid:_pid,limit_num:score.type,count:_count});
+                                soft.flush_cache();
+                                layer.close(index);
+                            });
+                        }
+                    });
+                });
+            }
+        })
+    }
+}
+
+function timeago(dateTimeStamp){   //dateTimeStamp是一个时间毫秒，注意时间戳是秒的形式，在这个毫秒的基础上除以1000，就是十位数的时间戳。13位数的都是时间毫秒。
+    if(dateTimeStamp.toString().length < 10) dateTimeStamp = dateTimeStamp * 1000
+    var minute = 1000 * 60,
+        hour = minute * 60,
+        day = hour * 24,
+        week = day * 7,
+        halfamonth = day * 15,
+        month = day * 30,
+        now = new Date().getTime(),   //获取当前时间毫秒
+        diffValue = now - dateTimeStamp;//时间差
+    if(diffValue <= 0){return '刚刚';}
+    var minC = diffValue/minute,  //计算时间差的分，时，天，周，月
+        hourC = diffValue/hour,
+        dayC = diffValue/day,
+        weekC = diffValue/week,
+        monthC = diffValue/month,
+        result ='刚刚';
+    if(monthC >= 1 && monthC <= 3){
+        result = " " + parseInt(monthC) + "月前"
+    }else if(weekC >= 1 && weekC <= 3){
+        result = " " + parseInt(weekC) + "周前"
+    }else if(dayC >= 1 && dayC <= 6){
+        result = " " + parseInt(dayC) + "天前"
+    }else if(hourC >= 1 && hourC <= 23){
+        result = " " + parseInt(hourC) + "小时前"
+    }else if(minC >= 1 && minC <= 59){
+        result =" " + parseInt(minC) + "分钟前"
+    }else if(diffValue >= 0 && diffValue <= minute){
+        result = "刚刚"
+    }else {
+        var datetime = new Date();
+        datetime.setTime(dateTimeStamp);
+        var Nyear = datetime.getFullYear(),
+            Nmonth = datetime.getMonth() + 1 < 10 ? "0" + (datetime.getMonth() + 1) : datetime.getMonth() + 1,
+            Ndate = datetime.getDate() < 10 ? "0" + datetime.getDate() : datetime.getDate(),
+            Nhour = datetime.getHours() < 10 ? "0" + datetime.getHours() : datetime.getHours(),
+            Nminute = datetime.getMinutes() < 10 ? "0" + datetime.getMinutes() : datetime.getMinutes(),
+            Nsecond = datetime.getSeconds() < 10 ? "0" + datetime.getSeconds() : datetime.getSeconds(),
+            result =  Nmonth + "-" + Ndate
+    }
+    if (!result) result = '刚刚'
+    return ((result == undefined || result == 'undefined')?'刚刚':result);
+}
+// 规则转码
+function escapeHTML(val) {
+    val = "" + val;
+    return val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, '&quot;').replace(/'/g, "‘").replace(/\(/g, "&#40;").replace(/\&#60;/g, "&lt;").replace(/\&#62;/g, "&gt;").replace(/`/g, "&#96;").replace(/=/g, "＝");
+}
+function getLength(val) {  
+    var str = new String(val);  
+    var bytesCount = 0;  
+    for (var i = 0 ,n = str.length; i < n; i++) {  
+        var c = str.charCodeAt(i);  
+        if ((c >= 0x0001 && c <= 0x007e) || (0xff60<=c && c<=0xff9f)) {  
+            bytesCount += 1;  
+        } else {  
+            bytesCount += 2;  
+        }  
+    }  
+    return bytesCount;  
+} 
+function reBytesStr(str, len) {
+    if ((!str && typeof(str) != 'undefined')) {return '';}
+    var num = 0;
+    var str1 = str;
+    var str = '';
+    for (var i = 0,lens = str1.length; i < lens; i++) {
+        num += ((str1.charCodeAt(i) > 255) ? 2 : 1);
+        if (num > len) {
+            break;
+        } else {
+            str = str1.substring(0, i + 1);
+        }
+    }
+    return str;
 }

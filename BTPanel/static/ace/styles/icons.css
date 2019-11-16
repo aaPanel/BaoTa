@@ -4911,3 +4911,8 @@
   content: "\1b6";
   top: 2px;
 }
+.sh-icon:before{
+	color: #aa759f;
+	content: '\f0c8';
+	font-family: file-icons;
+}

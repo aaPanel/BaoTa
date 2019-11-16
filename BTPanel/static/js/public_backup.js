@@ -1315,7 +1315,7 @@ bt.index = {
 				var m = "<input id='data_" + l[h].name + "' data-info='" + l[h].name + " " + l[h].versions[0].version + "' type='checkbox' checked>";
 				for(var b = 0; b < l[h].versions.length; b++) {
 					var d = "";
-					if((l[h].name == "PHP" && (l[h].versions[b].version == "7.3" || l[h].versions[b].version == "7.3")) || (l[h].name == "MySQL" && l[h].versions[b].version == "5.6") || (l[h].name == "phpMyAdmin" && l[h].versions[b].version == "4.7")) {
+					if((l[h].name == "PHP" && (l[h].versions[b].version == "5.6" || l[h].versions[b].version == "5.6")) || (l[h].name == "MySQL" && l[h].versions[b].version == "5.6") || (l[h].name == "phpMyAdmin" && l[h].versions[b].version == "4.4")) {
 						d = "selected";
 						m = "<input id='data_" + l[h].name + "' data-info='" + l[h].name + " " + l[h].versions[b].version + "' type='checkbox' checked>"
 					}
@@ -3209,9 +3209,9 @@ bt.soft = {
 	},
 	php : {
 		get_config:function(version,callback){ //获取禁用函数,扩展列表
-			var loading = bt.load();
+			//var loading = bt.load();
 			bt.send('GetPHPConfig','ajax/GetPHPConfig',{version:version},function(rdata){				
-				loading.close();
+				//loading.close();
 				if(callback) callback(rdata);
 			})
 		},

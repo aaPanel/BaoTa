@@ -10,6 +10,7 @@ import sys,json,os,time,logging,re
 if sys.version_info[0] != 2:
         from imp import reload
 sys.path.insert(0,'/www/server/panel/class/')
+sys.setrecursionlimit(1000000)
 import public
 from flask import Flask
 app = Flask(__name__,template_folder="templates/" + public.GetConfigValue('template'))
@@ -18,8 +19,10 @@ from flask import Flask,current_app,session,render_template,send_file,request,re
 from flask_session import Session
 from werkzeug.contrib.cache import SimpleCache
 from werkzeug.wrappers import Response
-from flask_socketio import SocketIO,emit,send
 from threading import Lock
+from flask_sockets import Sockets
+sockets = Sockets(app)
+
 dns_client = None
 app.config['DEBUG'] = os.path.exists('data/debug.pl')
 
@@ -35,11 +38,12 @@ if os.path.exists(basic_auth_conf):
     except: pass
 
 cache = SimpleCache()
-socketio = SocketIO()
-socketio.init_app(app)
 
-import common,db,jobs,uuid,ssh_terminal
-jobs.control_init()
+import common,db,jobs,uuid,threading
+job = threading.Thread(target=jobs.control_init)
+job.setDaemon(True)
+job.start()
+
 app.secret_key = uuid.UUID(int=uuid.getnode()).hex[-12:]
 local_ip = None
 my_terms = {}
@@ -92,23 +96,26 @@ if admin_path in admin_path_checks: admin_path = '/bt'
 def service_status():
     return 'True'
 
-
-
-@socketio.on('connect')
-def socket_connect(msg=None):
-    if not check_login():
-        emit('server_response',{'data':public.getMsg('111')})
-        return False
-
-@socketio.on('webssh')
-def webssh(msg):
+@sockets.route('/webssh')
+def webssh(ws):
     if not check_login(): 
         session.clear()
         emit('server_response',"面板会话丢失，请重新登录面板!")
         return None
     if not 'ssh_obj' in session:
+        import ssh_terminal
         session['ssh_obj'] = ssh_terminal.ssh_terminal()
-    session['ssh_obj'].send(msg)
+    if not 'ssh_info' in session: 
+        s_file = '/www/server/panel/config/t_info.json'
+        if os.path.exists(s_file):
+            try:
+                session['ssh_info'] = json.loads(public.en_hexb(public.readFile(s_file)))
+            except:
+                session['ssh_info'] = {"host":"127.0.0.1","port":22}
+        else:
+            session['ssh_info'] = {"host":"127.0.0.1","port":22}
+
+    session['ssh_obj'].run(ws,session['ssh_info'])
 
 
 @app.route('/term_open',methods=method_all)
@@ -126,10 +133,11 @@ def term_open():
     session[key] = session['ssh_info']
     s_file = '/www/server/panel/config/t_info.json'
     if 'is_save' in session['ssh_info']:
-        public.writeFile(s_file,public.de_hexb(json.dumps(session['ssh_info'])))
+        public.writeFile(s_file,public.de_hexb(json.dumps(session['ssh_info'])),'wb+')
         public.set_mode(s_file,600)
     else:
         if os.path.exists(s_file): os.remove(s_file)
+    if 'ssh_obj' in session: session['ssh_obj']._ssh_info = session['ssh_info']
     return public.returnJson(True,'设置成功!');
 
 @app.route('/reload_mod',methods=method_all)
@@ -146,7 +154,9 @@ def reload_mod():
 
 @app.before_request
 def request_check():
-    if not request.path in ['/safe','/hook','/public']:
+    if request.path in ['/service_status']: return
+
+    if not request.path in ['/safe','/hook','/public','/mail_sys']:
         ip_check = public.check_ip_panel()
         if ip_check: return ip_check
         
@@ -162,7 +172,7 @@ def request_check():
             return public.returnJson(False,'离线模式下无法使用此功能!'),json_header
 
     if app.config['BASIC_AUTH_OPEN']:
-        if request.path in ['/public','/download']: return;
+        if request.path in ['/public','/download','/mail_sys','/hook']: return;
         auth = request.authorization
         if not comm.get_sk(): return;
         if not auth: return send_authenticated()
@@ -582,7 +592,7 @@ def code():
     try:
         import vilidate,time
     except:
-        os.system("pip install Pillow==5.4.1 -I")
+        public.ExecShell("pip install Pillow==5.4.1 -I")
         return "Pillow not install!"
     code_time = cache.get('codeOut')
     if code_time: return u'Error: Don\'t request validation codes frequently';
@@ -630,7 +640,7 @@ def plugin(pdata = None):
     if comReturn: return comReturn
     import panelPlugin
     pluginObject = panelPlugin.panelPlugin()
-    defs = ('update_zip','input_zip','export_zip','add_index','remove_index','sort_index','install_plugin','uninstall_plugin','get_soft_find','get_index_list','get_soft_list','get_cloud_list','check_deps','flush_cache','GetCloudWarning','install','unInstall','getPluginList','getPluginInfo','getPluginStatus','setPluginStatus','a','getCloudPlugin','getConfigHtml','savePluginSort')
+    defs = ('set_score','get_score','update_zip','input_zip','export_zip','add_index','remove_index','sort_index','install_plugin','uninstall_plugin','get_soft_find','get_index_list','get_soft_list','get_cloud_list','check_deps','flush_cache','GetCloudWarning','install','unInstall','getPluginList','getPluginInfo','getPluginStatus','setPluginStatus','a','getCloudPlugin','getConfigHtml','savePluginSort')
     return publicObject(pluginObject,defs,None,pdata);
 
 
@@ -662,6 +672,7 @@ def panel_public():
         data = public.getJson(eval('pluwx.'+get.fun+'(get)'))
         return data,json_header
     
+    if get.name != 'app': return abort(404)
     import panelPlugin
     plu = panelPlugin.panelPlugin()
     get.s = '_check';
@@ -688,13 +699,25 @@ def send_favicon():
 @app.route('/<name>/<fun>',methods=method_all)
 @app.route('/<name>/<fun>/<path:stype>',methods=method_all)
 def panel_other(name=None,fun = None,stype=None):
+    is_accept = False
+    if not fun: fun = 'index.html'
+    if not stype:
+        tmp = fun.split('.')
+        fun = tmp[0]
+        if len(tmp) == 1:  tmp.append('')
+        stype = tmp[1]
+    
+    if not name in ['mail_sys'] or not fun in ['send_mail_http']:
+        comReturn = comm.local()
+        if comReturn: return comReturn
+    else:
+        is_accept = True
     if not name: name = 'coll'
     if not public.path_safe_check("%s/%s/%s" % (name,fun,stype)): return abort(404)
     if name.find('./') != -1 or not re.match("^[\w-]+$",name): return abort(404)
     if not name: return public.returnJson(False,'请传入插件名称!'),json_header
     p_path = '/www/server/panel/plugin/' + name
     if not os.path.exists(p_path): return abort(404)
-
 
     #是否响插件应静态文件
     if fun == 'static':
@@ -705,16 +728,10 @@ def panel_other(name=None,fun = None,stype=None):
         if not public.path_safe_check(s_file): return abort(404)
         if not os.path.exists(s_file): return abort(404)
         return send_file(s_file,conditional=True,add_etags=True)
-
+    
     #准备参数
     args = get_input();
     args.client_ip = public.GetClientIp();
-    if not fun: fun = 'index.html'
-    if not stype:
-        tmp = fun.split('.')
-        fun = tmp[0]
-        if len(tmp) == 1:  tmp.append('')
-        stype = tmp[1]
     args.fun = fun
     
     #初始化插件对象
@@ -733,32 +750,12 @@ def panel_other(name=None,fun = None,stype=None):
             plu = eval('plugin_main.' + name + '_main()')
             if not hasattr(plu,fun): return public.returnJson(False,'指定方法不存在!'),json_header
 
-        #检查访问权限
-        comReturn = comm.local()
-        if comReturn: 
-            if not is_php:
-                if not hasattr(plu,'_check'): 
-                    session.clear()
-                    return public.returnJson(False,'指定插件不支持公共访问!'),json_header
-                checks = plu._check(args)
-                r_type = type(checks)
-                if r_type == Response: return checks
-                if r_type != bool or not checks: return public.getJson(checks),json_header
-
-            #初始化面板数据
-            comm.setSession()
-            comm.init()
-            comm.checkWebType()
-            comm.GetOS()
-    
-            import panelPlugin
-            plugins = panelPlugin.panelPlugin()
-            args.name = name
-            if not plugins.check_accept(args):
-                return public.returnMsg(False,public.to_string([24744, 26410, 36141, 20080, 91, 37, 115, 93, 25110, 25480, 26435, 24050, 21040, 26399, 33]) % (plugins.get_title_byname(args),))
     
         #执行插件方法
         if not is_php:
+            if is_accept:
+                checks = plu._check(args)
+                if type(checks) != bool or not checks: return public.getJson(checks),json_header
             data = eval('plu.'+fun+'(args)')
         else:
             import panelPHP
@@ -975,15 +972,7 @@ def publicObject(toObject,defs,action=None,get = None):
     if hasattr(toObject,'site_path_check'):
         if not toObject.site_path_check(get): return public.ReturnJson(False,'越权的操作!'),json_header
 
-    for key in defs:
-        if key == get.action:
-            fun = 'toObject.'+key+'(get)'
-            if hasattr(get,'html') or hasattr(get,'s_module'):
-                return eval(fun)
-            else:
-                return public.GetJson(eval(fun)),json_header
-    
-    return public.ReturnJson(False,'ARGS_ERR'),json_header
+    return run_exec().run(toObject,defs,get)
 
 
 def check_login(http_token=None):
@@ -994,6 +983,7 @@ def check_login(http_token=None):
             if session['request_token_head'] != http_token: return False
         return loginStatus
     return False
+
 
 def get_pd():
     tmp = -1
@@ -1089,3 +1079,17 @@ def get_input_data(data):
     for key in data.keys():
         pdata[key] = str(data[key])
     return pdata
+
+
+class run_exec:
+
+    def run(self,toObject,defs,get):
+        for key in defs:
+            if key == get.action:
+                fun = 'toObject.'+key+'(get)'
+                if hasattr(get,'html') or hasattr(get,'s_module'):
+                    return eval(fun)
+                else:
+                    return public.GetJson(eval(fun)),json_header
+    
+        return public.ReturnJson(False,'ARGS_ERR'),json_header

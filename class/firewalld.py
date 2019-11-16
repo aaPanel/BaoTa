@@ -320,14 +320,14 @@ class firewalld:
 
     # 服务控制
     def FirewalldService(self, type):
-        os.system('systemctl ' + type + ' firewalld.service')
+        public.ExecShell('systemctl ' + type + ' firewalld.service')
         return public.returnMsg(True, 'SUCCESS')
 
     # 保存配置
     def Save(self):
         self.format(self.__ROOT)
         self.__TREE.write(self.__CONF_FILE, 'utf-8')
-        os.system('firewall-cmd --reload')
+        public.ExecShell('firewall-cmd --reload')
 
     # 整理配置文件格式
     def format(self, em, level=0):

@@ -433,7 +433,7 @@ class system:
         public.serviceReload();
         filename = '/www/server/nginx/off'
         if os.path.exists(filename): os.remove(filename)
-        os.system('echo > /tmp/panelBoot.pl');
+        public.ExecShell('echo > /tmp/panelBoot.pl');
         return total,count
     
     def GetNetWork(self,get=None):
@@ -671,14 +671,14 @@ class system:
         #执行
         execStr = "/etc/init.d/"+get.name+" "+get.type
         if execStr == '/etc/init.d/pure-ftpd reload': execStr = self.setupPath+'/pure-ftpd/bin/pure-pw mkdb '+self.setupPath+'/pure-ftpd/etc/pureftpd.pdb'
-        if execStr == '/etc/init.d/pure-ftpd start': os.system('pkill -9 pure-ftpd');
+        if execStr == '/etc/init.d/pure-ftpd start': public.ExecShell('pkill -9 pure-ftpd');
         if execStr == '/etc/init.d/tomcat reload': execStr = '/etc/init.d/tomcat stop && /etc/init.d/tomcat start';
         if execStr == '/etc/init.d/tomcat restart': execStr = '/etc/init.d/tomcat stop && /etc/init.d/tomcat start';
         
         if get.name != 'mysqld':
             result = public.ExecShell(execStr);
         else:
-            os.system(execStr);
+            public.ExecShell(execStr);
             result = [];
             result.append('');
             result.append('');
@@ -705,7 +705,7 @@ class system:
     
     #释放内存
     def ReMemory(self,get):
-        os.system('sync');
+        public.ExecShell('sync');
         scriptFile = 'script/rememory.sh'
         if not os.path.exists(scriptFile):
             public.downloadFile(public.GetConfigValue('home') + '/script/rememory.sh',scriptFile);
@@ -717,7 +717,7 @@ class system:
         #s = time.time()
         #if not self.shell: self.connect_ssh()
         #self.shell.send("nohup /etc/init.d/bt restart && sleep 1 && /etc/init.d/bt start > /dev/null &\n")
-        #os.system("nohup sleep 2 && /etc/init.d/bt restart 2>&1 >/dev/null &")
+        #public.ExecShell("nohup sleep 2 && /etc/init.d/bt restart 2>&1 >/dev/null &")
         
         public.ExecShell("/etc/init.d/bt start")
         public.writeFile('data/restart.pl','True')
@@ -749,13 +749,13 @@ class system:
     
     #修复面板
     def RepPanel(self,get):
-        os.system("wget -O update.sh " + public.get_url() + "/install/update6.sh && bash update.sh");
+        public.ExecShell("wget -O update.sh " + public.get_url() + "/install/update6.sh && bash update.sh");
         self.ReWeb(None)
         return True;
     
     #升级到专业版
     def UpdatePro(self,get):
-        os.system("wget -O update.sh " + public.get_url() + "/install/update6.sh && bash update.sh");
+        public.ExecShell("wget -O update.sh " + public.get_url() + "/install/update6.sh && bash update.sh");
         self.ReWeb(None)
         return True;
         

@@ -396,13 +396,20 @@ function GetFiles(Path, sort) {
                     cnametext = cnametext.substring(0, 10) + '...'
                 }
             }
+            var fileMsg = '';
+            if (fmp[0].indexOf('Recycle_bin') != -1) {
+                fileMsg = 'PS: 回收站目录,勿动!';
+            }
+            if (fileMsg != '') {
+                fileMsg = '<span style="margin-left: 30px; color: #999;">' + fileMsg + '</span>';
+            }
             var timetext = '--';
             if (getCookie("rank") == "a") {
                 $("#set_list").addClass("active");
                 $("#set_icon").removeClass("active");
                 Body += "<tr class='folderBoxTr' data-path='" + rdata.PATH + "/" + fmp[0] + "' filetype='dir'>\
 						<td><input type='checkbox' name='id' value='"+ fmp[0] + "'></td>\
-						<td class='column-name'><span class='cursor' onclick=\"GetFiles('" + rdata.PATH + "/" + fmp[0] + "')\"><span class='ico ico-folder'></span><a class='text' title='" + fmp[0] + fmp[5] + "'>" + cnametext + "</a></span></td>\
+						<td class='column-name'><span class='cursor' onclick=\"GetFiles('" + rdata.PATH + "/" + fmp[0] + "')\"><span class='ico ico-folder'></span><a class='text' title='" + fmp[0] + fmp[5] + "'>" + cnametext + fileMsg + "</a></span></td>\
 						<td><a class='btlink "+ (rdata.PATH + '/' + fmp[0]).replace(/[^\w]/g, '-') + "' onclick=\"get_path_size('" + rdata.PATH + "/" + fmp[0] + "')\">点击计算</a></td>\
 						<td>"+ getLocalTime(fmp[2]) + "</td>\
 						<td>"+ fmp[3] + "</td>\
@@ -500,7 +507,7 @@ function GetFiles(Path, sort) {
 						</div>";
             }
         }
-        var dirInfo = '(' + lan.files.get_size.replace('{1}', rdata.DIR.length + '').replace('{2}', rdata.FILES.length + '') + '<font id="pathSize">' + (ToSize(totalSize)) + '<a class="btlink ml5" onClick="GetPathSize()">' + lan.files.get + '</a></font>)';
+        var dirInfo = '(' + lan.files.get_size.replace('{1}', rdata.DIR.length + '').replace('{2}', rdata.FILES.length + '') + '<font id="pathSize"><a class="btlink ml5" onClick="GetPathSize()">' + lan.files.get + '</a></font>)';
         $("#DirInfo").html(dirInfo);
         if (getCookie("rank") === "a") {
             var sort_icon = '<span data-id="status" class="glyphicon glyphicon-triangle-' + ((data['reverse'] !== 'False') ? 'bottom' : 'top') + '" style="margin-left:5px;color:#bbb"></span>';
@@ -535,11 +542,11 @@ function GetFiles(Path, sort) {
 							<tbody id="filesBody" class="list-list">'+ Body + '</tbody>\
 						</table></div><div class="oldTableShadow"></div>';
             $("#fileCon").removeClass("fileList").html(tablehtml);
-            $("#tipTools").width($("#fileCon")[0].clientWidth - 20);
+            $("#tipTools").width($("#fileCon")[0].clientWidth - 30);
         }
         else {
             $("#fileCon").addClass("fileList").html(Body);
-            $("#tipTools").width($("#fileCon")[0].clientWidth - 20);
+            $("#tipTools").width($("#fileCon")[0].clientWidth - 30);
         }
         $("#DirPathPlace input").val(rdata.PATH);
         var BarTools = '<div class="btn-group">\
@@ -757,14 +764,14 @@ function showSeclect() {
         $("#Batch").html(BatchTools);
     }
 }
-$("#tipTools").width($(".file-box")[0].clientWidth);
+$("#tipTools").width($(".file-box")[0].clientWidth-30);
 $("#PathPlaceBtn").width($(".file-box").width() - 700);
 $("#DirPathPlace input").width($(".file-box").width() - 700);
 if ($(window).width() < 1160) {
     $("#PathPlaceBtn").width(290);
 }
 window.onresize = function () {
-    $("#tipTools").width($(".file-box")[0].clientWidth);
+    $("#tipTools").width($(".file-box")[0].clientWidth-30);
     $("#PathPlaceBtn").width($(".file-box").width() - 700);
     $("#DirPathPlace input").width($(".file-box").width() - 700);
     if ($(window).width() < 1160) {

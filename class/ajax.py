@@ -545,6 +545,8 @@ class ajax:
                 session['version'] = updateInfo['version']
                 if 'getCloudPlugin' in session: del(session['getCloudPlugin']);
                 if updateInfo['is_beta'] == 1: self.to_beta()
+                public.ExecShell("/etc/init.d/bt start")
+                public.writeFile('data/restart.pl','True')
                 return public.returnMsg(True,'PANEL_UPDATE',(updateInfo['version'],));
             
             #输出新版本信息
@@ -644,7 +646,7 @@ class ajax:
         public.ExecShell("mkdir -p " + sPath);
         public.writeFile(sPath + '/phpinfo.php','<?php phpinfo(); ?>');
         phpinfo = public.HttpGet('http://127.0.0.2/' + get.version + '/phpinfo.php');
-        os.system("rm -rf " + sPath);
+        public.ExecShell("rm -rf " + sPath);
         return phpinfo;
     
     #检测PHPINFO配置
@@ -1085,7 +1087,7 @@ ServerName 127.0.0.2
         conf = re.sub('MAXCONN=\d+','MAXCONN='+get.maxconn,conf);
         conf = re.sub('CACHESIZE=\d+','CACHESIZE='+get.cachesize,conf);
         public.writeFile(confFile,conf);
-        os.system(confFile + ' reload');
+        public.ExecShell(confFile + ' reload');
         return public.returnMsg(True,'SET_SUCCESS');
     
     #取redis状态
