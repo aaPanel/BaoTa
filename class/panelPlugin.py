@@ -169,7 +169,7 @@ class panelPlugin:
             download_url = public.get_url() + '/install/plugin/' + pluginInfo['name'] + '/install.sh';
             toFile = '/tmp/%s.sh' % pluginInfo['name']
             public.downloadFile(download_url,toFile);
-            os.system('/bin/bash ' + toFile + ' install > /tmp/panelShell.pl');
+            public.ExecShell('/bin/bash ' + toFile + ' install > /tmp/panelShell.pl');
             if os.path.exists(pluginInfo['install_checks']):
                 public.WriteLog('TYPE_SETUP','PLUGIN_INSTALL_LIB',(pluginInfo['title'],));
                 if os.path.exists(toFile): os.remove(toFile)
@@ -215,12 +215,12 @@ class panelPlugin:
                 public.downloadFile(download_url,toFile)
                 if os.path.exists(toFile):
                     if os.path.getsize(toFile) > 100:
-                        os.system('/bin/bash ' + toFile + ' uninstall')
+                        public.ExecShell('/bin/bash ' + toFile + ' uninstall')
             
             if os.path.exists(pluginPath + '/install.sh'):
-                os.system('/bin/bash ' + pluginPath + '/install.sh uninstall');
+                public.ExecShell('/bin/bash ' + pluginPath + '/install.sh uninstall');
 
-            if os.path.exists(pluginPath): os.system('rm -rf ' + pluginPath)
+            if os.path.exists(pluginPath): public.ExecShell('rm -rf ' + pluginPath)
             public.WriteLog('TYPE_SETUP','PLUGIN_UNINSTALL_SOFT',(pluginInfo['title'],));
             return public.returnMsg(True,'PLUGIN_UNINSTALL');
         else:
@@ -234,7 +234,7 @@ class panelPlugin:
             if get.sName.find('php-') != -1:
                 get.sName = get.sName.split('-')[0]
             execstr = "cd /www/server/panel/install && /bin/bash install_soft.sh "+get.type+" uninstall " + get.sName.lower() + " "+ get.version.replace('.','');
-            os.system(execstr);
+            public.ExecShell(execstr);
             public.WriteLog('TYPE_SETUP','PLUGIN_UNINSTALL',(get.sName,get.version));
             return public.returnMsg(True,"PLUGIN_UNINSTALL");
 
@@ -286,6 +286,7 @@ class panelPlugin:
         softList['list'] = self.get_types(softList['list'],sType)
         if hasattr(get,'query'):
             if get.query:
+                get.query = get.query.lower()
                 tmpList = []
                 for softInfo in softList['list']:
                     if softInfo['name'].lower().find(get.query) != -1 or \
@@ -294,6 +295,46 @@ class panelPlugin:
                         tmpList.append(softInfo)
                 softList['list'] = tmpList
         return softList
+
+    #提交用户评分
+    def set_score(self,args):
+        try:
+            import panelAuth
+            pdata = panelAuth.panelAuth().create_serverid(None)
+            pdata['ps'] = args.ps
+            pdata['num'] = int(args.num)
+            pdata['pid'] = int(args.pid)
+            if 1< pdata['num'] >5: return public.returnMsg(False,'评分范围[1-5]')
+            if not pdata['pid']: return public.returnMsg(False,'指定插件不存在!')
+        
+            result = public.httpPost(public.GetConfigValue('home') + '/api/panel/plugin_score',pdata,10)
+            result = json.loads(result);
+            return result
+        except:
+            return public.returnMsg(False,'连接服务器失败!')
+
+    #获取指定插件评分
+    def get_score(self,args):
+        try:
+            import panelAuth
+            pdata = panelAuth.panelAuth().create_serverid(None)
+            pdata['pid'] = int(args.pid)
+            if not pdata['pid']: return []
+            u_args = ""
+            sp_tip = '?'
+            if 'p' in args:
+                u_args += sp_tip + 'p=' + args.p
+                sp_tip = '&'
+            if 'tojs' in args:
+                u_args += sp_tip + 'tojs='+ args.tojs
+                sp_tip = '&'
+            if 'limit_num' in args:
+                pdata['limit_num'] = int(args.limit_num)
+            result = public.httpPost(public.GetConfigValue('home') + '/api/panel/get_plugin_socre' + u_args,pdata,10)
+            result = json.loads(result);
+            return result
+        except:
+            return public.returnMsg(False,'连接服务器失败!')
 
     #清除多余面板日志
     def clean_panel_log(self):
@@ -962,21 +1003,21 @@ class panelPlugin:
             pluginInfo = json.loads(public.readFile(self.__install_path + '/' + get.name + '/info.json'));
         
         if pluginInfo['tip'] == 'lib':
-            if not os.path.exists(self.__install_path + '/' + pluginInfo['name']): os.system('mkdir -p ' + self.__install_path + '/' + pluginInfo['name']);
+            if not os.path.exists(self.__install_path + '/' + pluginInfo['name']): public.ExecShell('mkdir -p ' + self.__install_path + '/' + pluginInfo['name']);
             if not 'download_url' in session: session['download_url'] = 'http://download.bt.cn';
             download_url = session['download_url'] + '/install/plugin/' + pluginInfo['name'] + '/install.sh';
             toFile = self.__install_path + '/' + pluginInfo['name'] + '/install.sh';
             public.downloadFile(download_url,toFile);
-            os.system('/bin/bash ' + toFile + ' install');
+            public.ExecShell('/bin/bash ' + toFile + ' install');
             if self.checksSetup(pluginInfo['name'],pluginInfo['checks'],pluginInfo['versions'])[0]['status'] or os.path.exists(self.__install_path + '/' + get.name):
                 public.WriteLog('TYPE_SETUP','PLUGIN_INSTALL_LIB',(pluginInfo['title'],));
-                #os.system('rm -f ' + toFile);
+                #public.ExecShell('rm -f ' + toFile);
                 return public.returnMsg(True,'PLUGIN_INSTALL_SUCCESS');
             return public.returnMsg(False,'PLUGIN_INSTALL_ERR');
         else:
             import db,time
             path = '/www/server/php'
-            if not os.path.exists(path): os.system("mkdir -p " + path);
+            if not os.path.exists(path): public.ExecShell("mkdir -p " + path);
             issue = public.readFile('/etc/issue')
             if session['server_os']['x'] != 'RHEL': get.type = '3'
             
@@ -1013,16 +1054,16 @@ class panelPlugin:
             pluginInfo = json.loads(public.readFile(self.__install_path + '/' + get.name + '/info.json'));
         
         if pluginInfo['tip'] == 'lib':
-            if not os.path.exists(self.__install_path+ '/' + pluginInfo['name']): os.system('mkdir -p ' + self.__install_path + '/' + pluginInfo['name']);
+            if not os.path.exists(self.__install_path+ '/' + pluginInfo['name']): public.ExecShell('mkdir -p ' + self.__install_path + '/' + pluginInfo['name']);
             download_url = session['download_url'] + '/install/plugin/' + pluginInfo['name'] + '/install.sh';
             toFile = self.__install_path + '/' + pluginInfo['name'] + '/uninstall.sh';
             public.downloadFile(download_url,toFile)
-            os.system('/bin/bash ' + toFile + ' uninstall')
-            os.system('rm -rf ' + session['download_url'] + '/install/plugin/' + pluginInfo['name'])
+            public.ExecShell('/bin/bash ' + toFile + ' uninstall')
+            public.ExecShell('rm -rf ' + session['download_url'] + '/install/plugin/' + pluginInfo['name'])
             pluginPath = self.__install_path + '/' + pluginInfo['name']
             
             if os.path.exists(pluginPath + '/install.sh'):
-                os.system('/bin/bash ' + pluginPath + '/install.sh uninstall');
+                public.ExecShell('/bin/bash ' + pluginPath + '/install.sh uninstall');
                 
             if os.path.exists(pluginPath):
                 public.ExecShell('rm -rf ' + pluginPath);
@@ -1035,7 +1076,7 @@ class panelPlugin:
             if session['server_os']['x'] != 'RHEL': get.type = '3'
             public.writeFile('/var/bt_setupPath.conf',public.GetConfigValue('root_path'))
             execstr = "cd /www/server/panel/install && /bin/bash install_soft.sh "+get.type+" uninstall " + get.name.lower() + " "+ get.version.replace('.','');
-            os.system(execstr);
+            public.ExecShell(execstr);
             public.WriteLog('TYPE_SETUP','PLUGIN_UNINSTALL',(get.name,get.version));
             return public.returnMsg(True,"PLUGIN_UNINSTALL");
     
@@ -1170,7 +1211,7 @@ class panelPlugin:
                         public.ExecShell("echo `"+path+"/bin/php 2>/dev/null -v|grep cli|awk '{print $2}'` > " + path + '/version.pl')
                     try:
                         v1 = public.readFile(path+'/version.pl').strip();
-                        if not v1: os.system('rm -f ' + path + '/version.pl');
+                        if not v1: public.ExecShell('rm -f ' + path + '/version.pl');
                     except:
                         v1 = "";
                     if os.path.exists(tm.replace('VERSION',v2)): status = True;
@@ -1288,7 +1329,7 @@ class panelPlugin:
                 if os.path.exists(pidf):
                     pid = public.readFile(pidf)
                     versions[i]['run'] = self.checkProcess(pid)
-                    if not versions[i]['run']: os.system('rm -f ' + pidf)
+                    if not versions[i]['run']: public.ExecShell('rm -f ' + pidf)
         elif name == 'phpmyadmin':
             for i in range(len(versions)):
                 if versions[i]['status']: versions[i] = self.getPHPMyAdminStatus();
@@ -1298,14 +1339,14 @@ class panelPlugin:
                 if os.path.exists(pidf):
                     pid = public.readFile(pidf)
                     versions[i]['run'] = self.checkProcess(pid)
-                    if not versions[i]['run']: os.system('rm -f ' + pidf)
+                    if not versions[i]['run']: public.ExecShell('rm -f ' + pidf)
         elif name == 'memcached':
             for i in range(len(versions)):
                 pidf = '/var/run/memcached.pid'
                 if os.path.exists(pidf):
                     pid = public.readFile(pidf)
                     versions[i]['run'] = self.checkProcess(pid)
-                    if not versions[i]['run']: os.system('rm -f ' + pidf)
+                    if not versions[i]['run']: public.ExecShell('rm -f ' + pidf)
         else:
             for i in range(len(versions)):
                 if versions[i]['status']: versions[i]['run'] = True;
@@ -1480,7 +1521,7 @@ class panelPlugin:
             path = '/www/server/php';
             if get.status == '0':
                 versions = self.GetFind(get.name)['versions']
-                os.system('rm -f ' + path + '/' + get.version.replace('.','') + '/display.pl');
+                public.ExecShell('rm -f ' + path + '/' + get.version.replace('.','') + '/display.pl');
                 for version in versions.split(','):
                     if os.path.exists(path + '/' + version.replace('.','') + '/display.pl'):
                         isRemove = False;

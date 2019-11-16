@@ -32,12 +32,12 @@ import hmac
 try:
     import requests
 except:
-    os.system('pip install requests')
+    public.ExecShell('pip install requests')
     import requests
 try:
     import OpenSSL
 except:
-    os.system('pip install pyopenssl')
+    public.ExecShell('pip install pyopenssl')
     import OpenSSL
 import random
 import datetime

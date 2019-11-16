@@ -1357,7 +1357,7 @@ var site = {
                                     '在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点'
                                 ], [
                                     '在DNS验证中，我们提供了3个自动化DNS-API，并提供了手动模式',
-                                    '使用DNS接口申请证书可自动续期，手动模式下证书到期后手需重新申请',
+                                    '使用DNS接口申请证书可自动续期，手动模式下证书到期后需重新申请',
                                     '使用【DnsPod/阿里云DNS】接口前您需要先在弹出的窗口中设置对应接口的API'
                                 ]]
                                 var datas = [
@@ -2552,6 +2552,14 @@ var site = {
                             {
                                 text: '启用防盗链', name: 'status', value: rdata.status, type: 'checkbox', callback: function (sdata) {
                                     bt.site.set_site_security(web.id, web.name, sdata.sec_fix, sdata.sec_domains, sdata.status, function (ret) {
+                                        if (ret.status) site.reload(13)
+                                        bt.msg(ret);
+                                    })
+                                }
+                            },
+                            {
+                                text: '允许空HTTP_REFERER请求', name: 'none', value: rdata.none, type: 'checkbox', callback: function (sdata) {
+                                    bt.site.set_site_security(web.id, web.name, sdata.sec_fix, sdata.sec_domains, '1', function (ret) {
                                         if (ret.status) site.reload(13)
                                         bt.msg(ret);
                                     })

@@ -41,7 +41,7 @@ class password:
 
     # 设置root 密码
     def set_root_password(self,get):
-        os.system("echo"+get.user+":"+get.password+"|chpasswd")
+        public.ExecShell("echo"+get.user+":"+get.password+"|chpasswd")
         return True
 
     #查看mysql_root密码
@@ -110,7 +110,7 @@ class password:
         for i in file:
             if os.path.exists(i):
                 os.remove(i)
-        os.system("ssh-keygen -t %s -P '' -f ~/.ssh/id_rsa |echo y" % type)
+        public.ExecShell("ssh-keygen -t %s -P '' -f ~/.ssh/id_rsa |echo y" % type)
         if os.path.exists(file[0]):
             public.ExecShell('cat %s >%s && chmod 600 %s' % (file[0], file[-1], file[-1]))
             rec = '\n#?RSAAuthentication\s\w+'

@@ -11,7 +11,7 @@
 # 宝塔公共库
 #--------------------------------
 
-import json,os,sys,time,re,socket,importlib,binascii,base64
+import json,os,sys,time,re,socket,importlib,binascii,base64,io
 
 if sys.version_info[0] == 2:
     reload(sys)
@@ -446,33 +446,27 @@ def serviceReload():
 def ExecShell(cmdstring, cwd=None, timeout=None, shell=True):
     a = ''
     e = ''
+    import subprocess,tempfile
+    
     try:
-        #通过管道执行SHELL
-        import shlex
-        import datetime
-        import subprocess
-        import time
-
-        if shell:
-            cmdstring_list = cmdstring
-        else:
-            cmdstring_list = shlex.split(cmdstring)
-        if timeout:
-            end_time = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
-        sub = subprocess.Popen(cmdstring_list, cwd=cwd, stdin=subprocess.PIPE,shell=shell,bufsize=4096,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        while sub.poll() is None:
-            time.sleep(0.1)
-            if timeout:
-                if end_time <= datetime.datetime.now():
-                    raise Exception("Timeout：%s"%cmdstring)
-        a,e = sub.communicate()
-        try:
-            if type(a) == bytes: a = a.decode('utf-8')
-            if type(e) == bytes: e = e.decode('utf-8')
-        except:pass
+        rx = md5(cmdstring)
+        succ_f = tempfile.SpooledTemporaryFile(max_size=4096,mode='wb+',suffix='_succ',prefix='btex_' + rx ,dir='/dev/shm')
+        err_f = tempfile.SpooledTemporaryFile(max_size=4096,mode='wb+',suffix='_err',prefix='btex_' + rx ,dir='/dev/shm')
+        sub = subprocess.Popen(cmdstring, close_fds=True, shell=shell,bufsize=128,stdout=succ_f,stderr=err_f)
+        sub.wait()
+        err_f.seek(0)
+        succ_f.seek(0)
+        a = succ_f.read()
+        e = err_f.read()
+        if not err_f.closed: err_f.close()
+        if not succ_f.closed: succ_f.close()
     except:
-        if not a:
-            a = os.popen(cmdstring).read()
+        print(get_error_info())
+    try:
+        #编码修正
+        if type(a) == bytes: a = a.decode('utf-8')
+        if type(e) == bytes: e = e.decode('utf-8')
+    except:pass
 
     return a,e
 
@@ -986,7 +980,7 @@ MySQL_Opt
         mycnf = mycnf.replace('/www/server/data',newPath);
         writeFile('/etc/my.cnf',mycnf);
         
-    os.system(shellStr);
+    ExecShell(shellStr);
     WriteLog('TYPE_SOFE', 'MYSQL_CHECK_ERR');
     return True;
 
@@ -1476,7 +1470,7 @@ def sync_date():
         new_time = int(time_str)
         time_arr = time.localtime(new_time)
         date_str = time.strftime("%Y-%m-%d %H:%M:%S", time_arr)
-        os.system('date -s "%s"' % date_str)
+        ExecShell('date -s "%s"' % date_str)
         writeFile(tip_file,str(s_time))
         return True
     except: 

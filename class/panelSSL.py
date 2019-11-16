@@ -66,7 +66,7 @@ class panelSSL:
     
     #删除Token
     def DelToken(self,get):
-        os.system("rm -f " + self.__UPATH);
+        public.ExecShell("rm -f " + self.__UPATH);
         session['focre_cloud'] = True
         return public.returnMsg(True,"SSL_BTUSER_UN");
     
@@ -172,7 +172,7 @@ class panelSSL:
         try:
             epass = public.GetRandomString(32);
             spath = get.path + '/.well-known/pki-validation';
-            if not os.path.exists(spath): os.system("mkdir -p '" + spath + "'");
+            if not os.path.exists(spath): public.ExecShell("mkdir -p '" + spath + "'");
             public.writeFile(spath + '/fileauth.txt',epass);
             result = public.httpGet('http://' + get.domain + '/.well-known/pki-validation/fileauth.txt');
             if result == epass: return True
@@ -197,7 +197,7 @@ class panelSSL:
             sslInfo['data'] = self.En_Code(sslInfo['data']);
             try:
                 spath = get.path + '/.well-known/pki-validation';
-                if not os.path.exists(spath): os.system("mkdir -p '" + spath + "'");
+                if not os.path.exists(spath): public.ExecShell("mkdir -p '" + spath + "'");
                 public.writeFile(spath + '/fileauth.txt',sslInfo['data']['authValue']);
             except:
                 return public.returnMsg(False,'SSL_CHECK_WRITE_ERR');
@@ -305,7 +305,7 @@ class panelSSL:
     def GetCertList(self,get):
         try:
             vpath = '/www/server/panel/vhost/ssl'
-            if not os.path.exists(vpath): os.system("mkdir -p " + vpath);
+            if not os.path.exists(vpath): public.ExecShell("mkdir -p " + vpath);
             data = []
             for d in os.listdir(vpath):
                 mpath = vpath + '/' + d + '/info.json';
@@ -323,7 +323,7 @@ class panelSSL:
         try:
             vpath = '/www/server/panel/vhost/ssl/' + get.certName.replace("*.",'')
             if not os.path.exists(vpath): return public.returnMsg(False,'证书不存在!');
-            os.system("rm -rf " + vpath)
+            public.ExecShell("rm -rf " + vpath)
             return public.returnMsg(True,'证书已删除!');
         except:
             return public.returnMsg(False,'删除失败!');
@@ -336,7 +336,7 @@ class panelSSL:
             vpath = '/www/server/panel/vhost/ssl/' + certInfo['subject'];
             vpath=vpath.replace("*.",'')
             if not os.path.exists(vpath):
-                os.system("mkdir -p " + vpath);
+                public.ExecShell("mkdir -p " + vpath);
             public.writeFile(vpath + '/privkey.pem',public.readFile(get.keyPath));
             public.writeFile(vpath + '/fullchain.pem',public.readFile(get.certPath));
             public.writeFile(vpath + '/info.json',json.dumps(certInfo));

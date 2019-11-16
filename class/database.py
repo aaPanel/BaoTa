@@ -101,8 +101,8 @@ class database(datatool.datatools):
         if "1133" in mysqlMsg: return public.returnMsg(False,'DATABASE_ERR_NOT_EXISTS')
         if "libmysqlclient" in mysqlMsg: 
             result = self.rep_lnk()
-            os.system("pip uninstall mysql-python -y")
-            os.system("pip install pymysql")
+            public.ExecShell("pip uninstall mysql-python -y")
+            public.ExecShell("pip install pymysql")
             public.writeFile('data/restart.pl','True')
             return public.returnMsg(False,"执行失败，已尝试自动修复，请稍候重试!")
         return None
@@ -300,8 +300,8 @@ SetLink
         password = get['password'].strip()
         try:
             if not password: return public.returnMsg(False,'root密码不能为空')
-            rep = "^[\w@\.]+$"
-            if not re.match(rep, password): return public.returnMsg(False, 'DATABASE_NAME_ERR_T')
+            rep = "^[\w%@#!\.\+-~]+$"
+            if not re.match(rep, password): return public.returnMsg(False,  '数据库密码不能带有特殊符号')
             mysql_root = public.M('config').where("id=?",(1,)).getField('mysql_root')
             #修改MYSQL
             mysql_obj = panelMysql.panelMysql()
@@ -314,7 +314,7 @@ SetLink
                 result = mysql_obj.query("show databases")
                 isError=self.IsSqlError(result)
                 if  isError != None: 
-                    os.system("cd /www/server/panel && python tools.py root \"" + password + "\"")
+                    public.ExecShell("cd /www/server/panel && python tools.py root \"" + password + "\"")
                     is_modify = False
             if is_modify:
                 m_version = public.readFile(public.GetConfigValue('setup_path') + '/mysql/version.pl')
@@ -345,9 +345,8 @@ SetLink
             if not newpassword: return public.returnMsg(False,'数据库[%s]密码不能为空' % username)
             name = public.M('databases').where('id=?',(id,)).getField('name');
             
-            rep = "^[\w@\.]+$"
-            if len(re.search(rep, newpassword).groups()) > 0: return public.returnMsg(False, 'DATABASE_NAME_ERR_T')
-            
+            rep = "^[\w%@#!\.\+-~]+$"
+            if  not re.match(rep, newpassword): return public.returnMsg(False, '数据库密码不能带有特殊符号')
             #修改MYSQL
             mysql_obj = panelMysql.panelMysql()
             m_version = public.readFile(public.GetConfigValue('setup_path') + '/mysql/version.pl')
@@ -388,7 +387,7 @@ SetLink
         id = get['id']
         name = public.M('databases').where("id=?",(id,)).getField('name')
         root = public.M('config').where('id=?',(1,)).getField('mysql_root');
-        if not os.path.exists(session['config']['backup_path'] + '/database'): os.system('mkdir -p ' + session['config']['backup_path'] + '/database');
+        if not os.path.exists(session['config']['backup_path'] + '/database'): public.ExecShell('mkdir -p ' + session['config']['backup_path'] + '/database');
         if not self.mypass(True, root):return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
         
         fileName = name + '_' + time.strftime('%Y%m%d_%H%M%S',time.localtime()) + '.sql.gz'
@@ -458,15 +457,15 @@ SetLink
                     isgzip = True
             if not os.path.exists(backupPath + '/' + tmpFile) or tmpFile == '': return public.returnMsg(False, 'FILE_NOT_EXISTS',(tmpFile,))
             if not self.mypass(True, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
-            os.system(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " +'"'+ backupPath + '/' +tmpFile+'"')
+            public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " +'"'+ backupPath + '/' +tmpFile+'"')
             if not self.mypass(True, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
             if isgzip:
-                os.system('cd ' +backupPath+ ' && gzip ' + file.split('/')[-1][:-3]);
+                public.ExecShell('cd ' +backupPath+ ' && gzip ' + file.split('/')[-1][:-3]);
             else:
-                os.system("rm -f " +  backupPath + '/' +tmpFile)
+                public.ExecShell("rm -f " +  backupPath + '/' +tmpFile)
         else:
             if not self.mypass(True, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
-            os.system(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < "+'"' +  file+'"')
+            public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < "+'"' +  file+'"')
             if not self.mypass(True, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
                 
             
@@ -501,8 +500,8 @@ SetLink
     
     #配置
     def mypass(self,act,root):
-        os.system("sed -i '/user=root/d' /etc/my.cnf")
-        os.system("sed -i '/password=/d' /etc/my.cnf")
+        public.ExecShell("sed -i '/user=root/d' /etc/my.cnf")
+        public.ExecShell("sed -i '/password=/d' /etc/my.cnf")
         if act:
             mycnf = public.readFile('/etc/my.cnf');
             rep = "\[mysqldump\]\nuser=root"
@@ -625,16 +624,16 @@ SetLink
     #修改数据库目录
     def SetDataDir(self,get):
         if get.datadir[-1] == '/': get.datadir = get.datadir[0:-1];
-        if not os.path.exists(get.datadir): os.system('mkdir -p ' + get.datadir);
+        if not os.path.exists(get.datadir): public.ExecShell('mkdir -p ' + get.datadir);
         mysqlInfo = self.GetMySQLInfo(get);
         if mysqlInfo['datadir'] == get.datadir: return public.returnMsg(False,'DATABASE_MOVE_RE');
         
-        os.system('/etc/init.d/mysqld stop');
-        os.system('\cp -a -r ' + mysqlInfo['datadir'] + '/* ' + get.datadir + '/');
-        os.system('chown -R mysql.mysql ' + get.datadir);
-        os.system('chmod -R 755 ' + get.datadir);
-        os.system('rm -f ' + get.datadir + '/*.pid');
-        os.system('rm -f ' + get.datadir + '/*.err');
+        public.ExecShell('/etc/init.d/mysqld stop');
+        public.ExecShell('\cp -a -r ' + mysqlInfo['datadir'] + '/* ' + get.datadir + '/');
+        public.ExecShell('chown -R mysql.mysql ' + get.datadir);
+        public.ExecShell('chmod -R 755 ' + get.datadir);
+        public.ExecShell('rm -f ' + get.datadir + '/*.pid');
+        public.ExecShell('rm -f ' + get.datadir + '/*.err');
         
         public.CheckMyCnf();
         myfile = '/etc/my.cnf';
@@ -642,15 +641,15 @@ SetLink
         public.writeFile('/etc/my_backup.cnf',mycnf);
         mycnf = mycnf.replace(mysqlInfo['datadir'],get.datadir);
         public.writeFile(myfile,mycnf);
-        os.system('/etc/init.d/mysqld start');
+        public.ExecShell('/etc/init.d/mysqld start');
         result = public.ExecShell('ps aux|grep mysqld|grep -v grep');
         if len(result[0]) > 10:
             public.writeFile('data/datadir.pl',get.datadir);
             return public.returnMsg(True,'DATABASE_MOVE_SUCCESS');
         else:
-            os.system('pkill -9 mysqld');
+            public.ExecShell('pkill -9 mysqld');
             public.writeFile(myfile,public.readFile('/etc/my_backup.cnf'));
-            os.system('/etc/init.d/mysqld start');
+            public.ExecShell('/etc/init.d/mysqld start');
             return public.returnMsg(False,'DATABASE_MOVE_ERR');
     
     #修改数据库端口
@@ -660,7 +659,7 @@ SetLink
         rep = "port\s*=\s*([0-9]+)\s*\n"
         mycnf = re.sub(rep,'port = ' + get.port + '\n',mycnf);
         public.writeFile(myfile,mycnf);
-        os.system('/etc/init.d/mysqld restart');
+        public.ExecShell('/etc/init.d/mysqld restart');
         return public.returnMsg(True,'EDIT_SUCCESS');
     
     #获取错误日志
@@ -687,8 +686,8 @@ SetLink
             if hasattr(get,'status'): return public.returnMsg(False,'0');
             mycnf = mycnf.replace('#log-bin=mysql-bin','log-bin=mysql-bin')
             mycnf = mycnf.replace('#binlog_format=mixed','binlog_format=mixed')
-            os.system('sync')
-            os.system('/etc/init.d/mysqld restart');
+            public.ExecShell('sync')
+            public.ExecShell('/etc/init.d/mysqld restart');
         else:
             path = self.GetMySQLInfo(get)['datadir'];
             if not os.path.exists(path): return public.returnMsg(False,'数据库目录不存在!')
@@ -703,9 +702,9 @@ SetLink
                 return public.returnMsg(False, "请先卸载Mysql主从复制插件后再关闭二进制日志！！")
             mycnf = mycnf.replace('log-bin=mysql-bin','#log-bin=mysql-bin')
             mycnf = mycnf.replace('binlog_format=mixed','#binlog_format=mixed')
-            os.system('sync')
-            os.system('/etc/init.d/mysqld restart');
-            os.system('rm -f ' + path + '/mysql-bin.*')
+            public.ExecShell('sync')
+            public.ExecShell('/etc/init.d/mysqld restart');
+            public.ExecShell('rm -f ' + path + '/mysql-bin.*')
         
         public.writeFile(myfile,mycnf);
         return public.returnMsg(True,'SUCCESS');

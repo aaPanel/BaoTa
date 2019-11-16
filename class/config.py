@@ -11,7 +11,7 @@ import public,re,sys,os,nginx,apache,json,time
 try:
     import pyotp
 except:
-    os.system("pip install pyotp &")
+    public.ExecShell("pip install pyotp &")
 
 from BTPanel import session,admin_path_checks
 from flask import request
@@ -413,7 +413,7 @@ class config:
     def Set502(self,get):
         filename = 'data/502Task.pl';
         if os.path.exists(filename):
-            os.system('rm -f ' + filename)
+            public.ExecShell('rm -f ' + filename)
         else:
             public.writeFile(filename,'True')
         
@@ -438,12 +438,12 @@ class config:
         else:
             sslConf = '/www/server/panel/data/ssl.pl';
             if os.path.exists(sslConf):
-                os.system('rm -f ' + sslConf);
+                public.ExecShell('rm -f ' + sslConf);
                 return public.returnMsg(True,'PANEL_SSL_CLOSE');
             else:
-                os.system('pip install cffi');
-                os.system('pip install cryptography');
-                os.system('pip install pyOpenSSL');
+                public.ExecShell('pip install cffi');
+                public.ExecShell('pip install cryptography');
+                public.ExecShell('pip install pyOpenSSL');
                 try:
                     if not self.CreateSSL(): return public.returnMsg(False,'PANEL_SSL_ERR');
                     public.writeFile(sslConf,'True')
@@ -612,7 +612,7 @@ class config:
             except: continue
         
         public.writeFile(filename,phpini);
-        os.system('/etc/init.d/php-fpm-' + get.version + ' reload');
+        public.ExecShell('/etc/init.d/php-fpm-' + get.version + ' reload');
         return public.returnMsg(True,'SET_SUCCESS');
     
   
@@ -710,7 +710,7 @@ class config:
             else:
                 phpini = re.sub('\n;session.save_path = "/tmp"', '\n;session.save_path = "/tmp"' + val, phpini)
         public.writeFile(filename, phpini)
-        os.system('/etc/init.d/php-fpm-' + get.version + ' reload')
+        public.ExecShell('/etc/init.d/php-fpm-' + get.version + ' reload')
         return public.returnMsg(True, 'SET_SUCCESS')
 
     # 获取Session文件数量
@@ -719,7 +719,7 @@ class config:
         
         count = 0
         for i in d:
-            if not os.path.exists(i): os.system('mkdir -p %s'%i)
+            if not os.path.exists(i): public.ExecShell('mkdir -p %s'%i)
             list = os.listdir(i)
             for l in list:
                 if os.path.isdir(i+"/"+l):
@@ -742,9 +742,9 @@ class config:
     # 删除老文件
     def DelOldSession(self,get):
         s = "find /tmp -mtime +1 |grep 'sess_'|xargs rm -f"
-        os.system(s)
+        public.ExecShell(s)
         s = "find /www/php_session -mtime +1 |grep 'sess_'|xargs rm -f"
-        os.system(s)
+        public.ExecShell(s)
         # s = "find /tmp -mtime +1 |grep 'sess_'|wc -l"
         # old_file_conf = int(public.ExecShell(s)[0].split("\n")[0])
         old_file_conf = self.GetSessionCount(get)["oldfile"]
@@ -1013,7 +1013,7 @@ class config:
         
     # 修改.user.ini文件
     def _edit_user_ini(self,file,s_conf,act,session_path):
-        os.system("chattr -i {}".format(file))
+        public.ExecShell("chattr -i {}".format(file))
         conf = public.readFile(file)
         if act == "1":
             if "session.save_path" in conf:
@@ -1026,7 +1026,7 @@ class config:
             conf = re.sub(rep,"",conf)
             conf = re.sub(rep1,"",conf)
         public.writeFile(file, conf)
-        os.system("chattr +i {}".format(file))
+        public.ExecShell("chattr +i {}".format(file))
 
     # 设置php_session存放到独立文件夹
     def set_php_session_path(self,get):
@@ -1047,7 +1047,7 @@ class config:
         if get.act == "1":
             if not os.path.exists(user_ini_file):
                 public.writeFile(user_ini_file,conf)
-                os.system("chattr +i {}".format(user_ini_file))
+                public.ExecShell("chattr +i {}".format(user_ini_file))
                 return public.returnMsg(True,"设置成功")
             self._edit_user_ini(user_ini_file,conf,get.act,session_path)
             return public.returnMsg(True, "设置成功")

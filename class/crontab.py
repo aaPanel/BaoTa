@@ -419,8 +419,8 @@ echo "--------------------------------------------------------------------------
     def StartTask(self,get):
         echo = public.M('crontab').where('id=?',(get.id,)).getField('echo');
         execstr = public.GetConfigValue('setup_path') + '/cron/' + echo;
-        os.system('chmod +x ' + execstr)
-        os.system('nohup ' + execstr + ' >> ' + execstr + '.log 2>&1 &');
+        public.ExecShell('chmod +x ' + execstr)
+        public.ExecShell('nohup ' + execstr + ' >> ' + execstr + '.log 2>&1 &');
         return public.returnMsg(True,'CRONTAB_TASK_EXEC')
 
     #获取计划任务文件位置

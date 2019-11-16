@@ -35,7 +35,12 @@ m_version=$(cat /www/server/mysql/version.pl|grep -E "(5.1.|5.5.|5.6.|10.0|10.1)
 if [ "$m_version" != "" ];then
     mysql -uroot -e "UPDATE mysql.user SET password=PASSWORD('${pwd}') WHERE user='root'";
 else
-    mysql -uroot -e "update mysql.user set authentication_string=password('${pwd}') where user='root';"
+    m_version=$(cat /www/server/mysql/version.pl|grep -E "(5.7.|8.0.)")
+    if [ "$m_version" != "" ];then
+        mysql -uroot -e "FLUSH PRIVILEGES;update mysql.user set authentication_string='' where user='root';alter user 'root'@'localhost' identified by '${pwd}';alter user 'root'@'127.0.0.1' identified by '${pwd}';FLUSH PRIVILEGES;";
+    else
+        mysql -uroot -e "update mysql.user set authentication_string=password('${pwd}') where user='root';"
+    fi
 fi
 mysql -uroot -e "FLUSH PRIVILEGES";
 pkill -9 mysqld_safe

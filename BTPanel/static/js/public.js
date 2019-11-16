@@ -154,7 +154,7 @@ var aceEditor = {
 											path:_path,
 											data:editor_item.ace.getValue(),
 											encoding:editor_item.ace.getValue()
-										},function(){
+										},function(res){
 											layer.msg(res.msg, {icon: 1});
 											editor_item.fileType = 0;
 											$('.item_tab_' + editor_item.id + ' .icon-tool').attr('data-file-state', '0').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove');
@@ -650,7 +650,7 @@ var aceEditor = {
 					data: editor.getValue(),
 					encoding: ACE.encoding
 				}, function (res) {
-					layer.msg(res.msg, {icon: 1});
+					layer.msg(res.msg, {icon: res.status?1:2});
 					ACE.fileType = 0;
 					$('.item_tab_' + ACE.id + ' .icon-tool').attr('data-file-state', '0').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove');
 				});
@@ -2441,8 +2441,9 @@ function remind(a){
 
 function GetReloads() {
 	var a = 0;
-	var mm = $(".bt-w-menu .bgw").html()
-	if(mm == undefined || mm.indexOf(lan.bt.task_list) == -1) {
+    var mm = $("#taskList").html()
+    console.log(lan.bt.task_list)
+    if (mm == undefined || mm.indexOf(lan.bt.task_list) == -1 ) {
 		clearInterval(speed);
 		a = 0;
 		speed = null;
@@ -2450,15 +2451,22 @@ function GetReloads() {
 	}
 	if(speed) return;
 	speed = setInterval(function() {
-		var mm = $(".bt-w-menu .bgw").html()
-		if(mm == undefined || mm.indexOf(lan.bt.task_list) == -1) {
+        var mm = $("#taskList").html()
+        if (mm == undefined || mm.indexOf(lan.bt.task_list) == -1) {
 			clearInterval(speed);
 			speed = null;
 			a = 0;
 			return
 		}
 		a++;
-		$.post("/files?action=GetTaskSpeed", "", function(h) {
+        $.post("/files?action=GetTaskSpeed", "", function (h) {
+            if (h.status === false) {
+                clearInterval(speed);
+                speed = null;
+                a = 0;
+                return
+            }
+
 			if(h.task == undefined) {
 				$(".cmdlist").html(lan.bt.task_not_list);
 				return
@@ -2580,63 +2588,169 @@ var pdata_socket = {
     x_http_token: document.getElementById("request_token_head").getAttribute('token')
 }
 
-function web_shell() {
-    var termCols = 100;
-    var termRows = 34;
-    if (!socket) connect_io()
-    term = new Terminal({ cols: termCols, rows: termRows, screenKeys: true, useStyle: true });
-    term.setOption('cursorBlink', true);
 
-    term_box = layer.open({
-        type: 1,
-        title: '宝塔终端',
-        area: ['920px', '630px'],
-        closeBtn: 2,
-        shadeClose: false,
-        content: '<a class="btlink" onclick="show_ssh_login(1)" style="position: fixed;margin-left: 83px;margin-top: -30px;">[设置]</a><div class="term-box" style="background-color:#000"><div id="term"></div></div>',
-        cancel: function () {
-            term.destroy();
-        },
-        success: function () {
-            term.open(document.getElementById('term'));
+var Term = {
+    bws: null,      //websocket对象
+    route: '/webssh',  //被访问的方法
+    term: null,
+    term_box: null,
+    ssh_info: null,
+
+    //连接websocket
+    connect: function () {
+        if (!Term.bws || Term.bws.readyState == 3 || Term.bws.readyState == 2) {
+            //连接
+            ws_url = (window.location.protocol === 'http:' ? 'ws://' : 'wss://') + window.location.host + Term.route;
+            
+            Term.bws = new WebSocket(ws_url);
+
+
+            //绑定事件
+            Term.bws.addEventListener('message', Term.on_message);
+            Term.bws.addEventListener('close', Term.on_close);
+            Term.bws.addEventListener('error', Term.on_error);
+
+            if (Term.ssh_info) Term.send(JSON.stringify(Term.ssh_info))
         }
-    });
+    },
 
-    term.on('data', function (data) {
-        socket.emit('webssh', data);
-    });
-
-	$(".shell_btn_close").click(function(){
-		layer.close(term_box);
-		term.destroy();
-	})
-	
-    setTimeout(function () {
-        socket.emit('webssh', "\u0015");
-        socket.emit('webssh', "new_bt_terminal");
-        //socket.emit('webssh', "new_bt_terminal");
-        term.focus();
-    }, 100)
-}
-
-
-function connect_io() {
-    socket = io.connect();
-    socket.on('ssh_data', function (data) {
-        if (data === "\r服务器连接失败!\r" || data === "\r用户名或密码错误!\r") {
-            show_ssh_login(0);
-            //return;
+    //服务器消息事件
+    on_message: function (ws_event) {
+        result = ws_event.data;
+        if (result === "\r服务器连接失败!\r" || result === "\r用户名或密码错误!\r") {
+            show_ssh_login(result);
+            self.close();
+            return;
         }
+        Term.term.write(result);
 
-        term.write(data);
-
-        if (data == '\r\n登出\r\n' || data == '登出\r\n' || data == '\r\nlogout\r\n' || data == 'logout\r\n') {
+        if (result == '\r\n登出\r\n' || result == '登出\r\n' || result == '\r\nlogout\r\n' || result == 'logout\r\n') {
             setTimeout(function () {
-                layer.close(term_box);
+                layer.close(Term.term_box);
             }, 500);
+            self.close();
+            Term.bws = null;
         }
-    });
+    },
+    //websocket关闭事件
+    on_close: function (ws_event) {
+        Term.bws = null;
+    },
+
+    //websocket错误事件
+    on_error: function (ws_event) {
+        console.log(ws_event)
+    },
+
+    //关闭连接
+    close: function () {
+        //Term.send('exit\n');
+        Term.bws.close();
+    },
+
+    resize: function () {
+        var m_width = 100;
+        var m_height = 34;
+        Term.term.resize(m_width, m_height);
+        Term.term.scrollToBottom();
+        Term.term.focus();
+        Term.send('new_terminal');
+    },
+
+    //发送数据
+    //@param event 唯一事件名称
+    //@param data 发送的数据
+    //@param collback 服务器返回结果时回调的函数,运行完后将被回收
+    send: function (data, num) {
+        //如果没有连接，则尝试连接服务器
+        if (!Term.bws || Term.bws.readyState == 3 || Term.bws.readyState == 2) {
+            Term.connect();
+        }
+
+        //判断当前连接状态,如果!=1，则100ms后尝试重新发送
+        if (Term.bws.readyState === 1) {
+            Term.bws.send(data);
+        } else {
+            if (!num) num = 0;
+            if (num < 5) {
+                num++;
+                setTimeout(function () { Term.send(data, num++); }, 100)
+            }
+        }
+    },
+    run: function (ssh_info) {
+        var termCols = 100;
+        var termRows = 34;
+        Term.term = new Terminal({ cols: termCols, rows: termRows, screenKeys: true, useStyle: true });
+        Term.term.setOption('cursorBlink', true);
+
+        Term.term_box = layer.open({
+            type: 1,
+            title: '宝塔终端',
+            area: ['920px', '630px'],
+            closeBtn: 2,
+            shadeClose: false,
+            content: '<a class="btlink" onclick="show_ssh_login(1)" style="position: fixed;margin-left: 83px;margin-top: -30px;">[设置]</a><div class="term-box" style="background-color:#000"><div id="term"></div></div>',
+            cancel: function () {
+                Term.term.destroy();
+
+            },
+            success: function () {
+                Term.term.open(document.getElementById('term'));
+                Term.resize();
+            }
+        });
+
+        Term.term.on('data', function (data) {
+            try {
+                Term.bws.send(data)
+            } catch (e) {
+                Term.term.write('\r\n连接丢失,正在尝试重新连接!\r\n')
+                Term.connect()
+            }
+        });
+        if (ssh_info) Term.ssh_info = ssh_info
+        Term.connect();
+    },
+    reset_login: function () {
+        var ssh_info = {
+            data: JSON.stringify({
+                host: $("input[name='host']").val(),
+                port: $("input[name='port']").val(),
+                username: $("input[name='username']").val(),
+                password: $("input[name='password']").val()
+            })
+        }
+        $.post('/term_open', ssh_info, function (rdata) {
+            if (rdata.status === false) {
+                layer.msg(rdata.msg);
+                return;
+            }
+            layer.closeAll();
+            Term.connect();
+            Term.term.scrollToBottom();
+            Term.term.focus();
+        });
+    }
 }
+
+function web_shell() {
+    Term.run();
+}
+
+socket = {
+    emit: function (data,data2) {
+        if (data === 'webssh') {
+            data = data2
+        }
+        if (typeof(data) === 'object') {
+            return;
+        }
+        Term.send(data);
+    }
+}
+
+
 
 function show_ssh_login(is_config) {
     if ($("input[name='ssh_user']").attr('autocomplete')) return;
@@ -2681,7 +2795,7 @@ function show_ssh_login(is_config) {
                             <div class="line ssh_pkey" style="display:none;"><span class="tname">私钥</span><div class="info-r "><textarea name="ssh_pkey" class="bt-input-text mr5" style="width:330px;height:80px;" ></textarea></div></div>\
                             <div class="line "><span class="tname"></span><div class="info-r "><input style="margin-top: 1px;width: 16px;" name="ssh_is_save" id="ssh_is_save" class="bt-input-text mr5" type="checkbox" ><label style="position: absolute;margin-left: 5px;" for="ssh_is_save">记住密码，下次使用宝塔终端将自动登录</label></div></div>\
                             <p style="color: red;margin-top: 10px;text-align: center;">仅支持登录本服务器，如需登录其他服务器，可以使用<a class="btlink" href="https://www.bt.cn/platform" target="_blank">【堡塔云控平台】</a>进行多机管理</p>\
-                            <div class="bt-form-submit-btn"><button type="button" class="btn btn-sm btn-danger" onclick="'+ (is_config ? 'layer.close(ssh_login)' :'layer.closeAll()')+'">关闭</button><button type="button" class="btn btn-sm btn-success ssh-login" onclick="send_ssh_info('+is_config+')">'+(is_config?'确定':'登录SSH')+'</button></div></div>';
+                            <div class="bt-form-submit-btn"><button type="button" class="btn btn-sm btn-danger" onclick="'+ (is_config ? 'layer.close(ssh_login)' :'layer.closeAll()')+'">关闭</button><button type="button" class="btn btn-sm btn-success ssh-login" onclick="send_ssh_info()">'+(is_config?'确定':'登录SSH')+'</button></div></div>';
     ssh_login = layer.open({
         type: 1,
         title: is_config?'请填写SSH连接配置':'请输入SSH登录帐户和密码',
@@ -2766,9 +2880,9 @@ function send_ssh_info() {
     var loadT = layer.msg('正在尝试登录SSH...', { icon: 16, time: 0, shade: 0.3 });
     $.post("/term_open", { data: JSON.stringify(pdata) }, function () {
         layer.close(loadT)
-        socket.emit('webssh', pdata);
+        Term.send('reset_connect');
         layer.close(ssh_login)
-        term.focus();
+        Term.term.focus();
     })
     
     

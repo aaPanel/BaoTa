@@ -60,7 +60,6 @@ class firewalls:
         else:
             public.ExecShell('/etc/init.d/iptables save')
             public.ExecShell('/etc/init.d/iptables restart')
-            
         
     #添加屏蔽IP
     def AddDropAddress(self,get):
@@ -117,7 +116,7 @@ class firewalls:
         import time
         port = get.port
         ps = get.ps
-        if public.M('firewall').where("port=? or port=?",(port,src_port)).count() > 0: return public.returnMsg(False,'FIREWALL_PORT_EXISTS')
+        is_exists = public.M('firewall').where("port=? or port=?",(port,src_port)).count()
         notudps = ['80','443','8888','888','39000:40000','21','22']
         if self.__isUfw:
             public.ExecShell('ufw allow ' + port + '/tcp');
@@ -133,8 +132,7 @@ class firewalls:
                 if not port in notudps: public.ExecShell('iptables -I INPUT -p tcp -m state --state NEW -m udp --dport '+port+' -j ACCEPT')
         public.WriteLog("TYPE_FIREWALL", 'FIREWALL_ACCEPT_PORT',(port,))
         addtime = time.strftime('%Y-%m-%d %X',time.localtime())
-        public.M('firewall').add('port,ps,addtime',(port,ps,addtime))
-        
+        if not is_exists: public.M('firewall').add('port,ps,addtime',(port,ps,addtime))
         self.FirewallReload()
         return public.returnMsg(True,'ADD_SUCCESS')
     

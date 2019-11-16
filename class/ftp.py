@@ -30,7 +30,7 @@ class ftp:
             get.path = get['path'].replace(' ','')
             get.path = get.path.replace("\\", "/")
             fileObj.CreateDir(get)
-            os.system('chown www.www ' + get.path)
+            public.ExecShell('chown www.www ' + get.path)
             public.ExecShell(self.__runPath + '/pure-pw useradd ' + username + ' -u www -d ' + get.path + '<<EOF \n' + password + '\n' + password + '\nEOF')
             self.FtpReload()
             ps=get['ps']
