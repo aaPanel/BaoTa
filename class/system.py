@@ -280,7 +280,7 @@ class system:
         c_tmp = public.readFile('/proc/cpuinfo')
         d_tmp = re.findall("physical id.+",c_tmp)
         cpuW = len(set(d_tmp))
-        used = self.get_cpu_percent()
+        used = psutil.cpu_percent(1)
         used_all = psutil.cpu_percent(percpu=True)
         cpu_name = public.getCpuType() + " * {}".format(cpuW)
         return used,cpuCount,used_all,cpu_name,cpuNum,cpuW
@@ -362,7 +362,7 @@ class system:
                 if len(disk) < 5: continue;
                 if disk[1].find('M') != -1: continue;
                 if disk[1].find('K') != -1: continue;
-                if len(disk[5].split('/')) > 4: continue;
+                if len(disk[5].split('/')) > 10: continue;
                 if disk[5] in cuts: continue;
                 arr = {}
                 arr['path'] = disk[5];

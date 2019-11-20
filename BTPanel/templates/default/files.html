@@ -1,5 +1,4 @@
 {% extends "layout.html" %}
-
 {% block content %}
 <div class="main-content">
     <div class="container-fluid" style="padding-bottom:50px">
@@ -68,22 +67,24 @@
             <span class="replaces"><i class="glyphicon glyphicon-retweet" aria-hidden="true"></i>替换</span>
             <span class="fontSize"><i class="glyphicon glyphicon-text-width" aria-hidden="true"></i>字体</span>
             <span class="themes"><i class="glyphicon glyphicon-magnet" aria-hidden="true"></i>主题</span>
+            <span class="setUp"><i class="glyphicon glyphicon-cog" aria-hidden="true"></i>设置</span>
             <span class="helps"><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i>帮助</span>
             <div class="pull-down" title="隐藏工具条"><i class="glyphicon glyphicon-menu-down" aria-hidden="true"></i></div>
         </div>
         <div class="ace_overall">
             <!-- 编辑器目录 -->
             <div class="ace_catalogue">
-                <div class="ace_catalogue_title">收藏夹</div>
+                <div class="ace_catalogue_title">文件目录<div class="dir-menu-right"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></div></div>
                 <div class="ace_catalogue_list">
                     <ul class="cd-accordion-menu animated">
+                        <li class="has-children "><span>返回上一级</span></li>
                         <li class="has-children">
                             <input type="checkbox" name ="group-1" id="group-1" checked>
-                            <label for="group-1">Group 1</label>
+                            <label for="group-1" class="file_fold"><span class="glyphicon glyphicon-menu-right"></span><span><i class="folder_icon"></i>文件列表</span></label>
                             <ul>
                                 <li class="has-children">
                                     <input type="checkbox" name ="sub-group-1" id="sub-group-1">
-                                    <label for="sub-group-1">Sub Group 1</label>
+                                    <label for="sub-group-1">文件列表</label>
                                     <ul>
                                         <li><a href="#0">Image</a></li>
                                         <li><a href="#0">Image</a></li>
@@ -129,7 +130,6 @@
                         <span data-type="tab"></span>
                         <span data-type="encoding"></span>
                         <span data-type="lang"></span>
-                        <!--<span data-type="history"></span>-->
                     </div>
                 </div>
             </div>
@@ -182,7 +182,7 @@
 </script>
 <script src="/static/js/jquery-ui.min.js"></script>
 <script src="/static/js/jquery.contextify.min.js"></script>
-<script src="/static/js/files.js?f3={{g.version}}"></script>
+<script src="/static/js/files.js?date={{g.version}}"></script>
 <script src="/static/js/upload.js?date={{g.version}}"></script>
 <script type="text/javascript" src="./static/ace/ace.js?date=2"></script>
 <script type="text/javascript" src="./static/ace/ext-language_tools.js?date=2"></script>
@@ -211,9 +211,9 @@
 		$(this).addClass("active");
 		$("#set_icon").removeClass("active");
 		GetFiles(getCookie('Path'));
-	})
+	});
 	$(".refreshBtn").click(function(){
 		GetFiles(getCookie('Path'));
-	})
+    });
 </script>
 {% endblock %}

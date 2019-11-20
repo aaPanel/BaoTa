@@ -409,7 +409,6 @@ class Client(object):
                 authorization_url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers,verify=False
             )
             a_auth = check_authorization_status_response.json()
-            print(type(a_auth),a_auth)
             authorization_status = a_auth["status"]
             number_of_checks = number_of_checks + 1
             self.logger.debug(
@@ -427,7 +426,6 @@ class Client(object):
                         json.dumps(a_auth)
                     )
                 )
-            print(authorization_status,desired_status)
             if authorization_status in desired_status:
                 if authorization_status == "invalid":
                     try:
@@ -628,7 +626,6 @@ class Client(object):
             header["jwk"] = jwk
         else:
             header["kid"] = self.kid
-        print('h:',url,header)
         return header
 
     def make_signed_acme_request(self, url, payload):

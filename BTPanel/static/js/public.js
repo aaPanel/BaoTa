@@ -957,22 +957,25 @@ function openEditorView(type,path){
 	});
 }
 
-var my_headers = {};
-var request_token_ele = document.getElementById("request_token_head");
-if (request_token_ele) {
-    var request_token = request_token_ele.getAttribute('token');
-    if (request_token) {
-        my_headers['x-http-token'] = request_token
+function ajaxSetup() {
+    var my_headers = {};
+    var request_token_ele = document.getElementById("request_token_head");
+    if (request_token_ele) {
+        var request_token = request_token_ele.getAttribute('token');
+        if (request_token) {
+            my_headers['x-http-token'] = request_token
+        }
+    }
+    request_token_cookie = getCookie('request_token');
+    if (request_token_cookie) {
+        my_headers['x-cookie-token'] = request_token_cookie
+    }
+
+    if (my_headers) {
+        $.ajaxSetup({ headers: my_headers });
     }
 }
-request_token_cookie = getCookie('request_token');
-if (request_token_cookie) {
-    my_headers['x-cookie-token'] = request_token_cookie
-}
-
-if (my_headers) {
-    $.ajaxSetup({ headers: my_headers });
-}
+ajaxSetup();
 
 function RandomStrPwd(b) {
 	b = b || 32;
@@ -2619,7 +2622,7 @@ var Term = {
         result = ws_event.data;
         if (result === "\r服务器连接失败!\r" || result === "\r用户名或密码错误!\r") {
             show_ssh_login(result);
-            self.close();
+            Term.close();
             return;
         }
         Term.term.write(result);
@@ -2628,7 +2631,7 @@ var Term = {
             setTimeout(function () {
                 layer.close(Term.term_box);
             }, 500);
-            self.close();
+            Term.close();
             Term.bws = null;
         }
     },
@@ -2644,7 +2647,6 @@ var Term = {
 
     //关闭连接
     close: function () {
-        //Term.send('exit\n');
         Term.bws.close();
     },
 

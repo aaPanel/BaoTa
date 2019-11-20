@@ -2316,7 +2316,7 @@ server
                 return public.returnMsg(False, "请输入数字")
 
         rep = "http(s)?\:\/\/"
-        repd = "http(s)?\:\/\/([a-zA-Z0-9][-a-zA-Z0-9]{0,62}\.)+([a-zA-Z0-9][a-zA-Z0-9]{0,62})+.?"
+        #repd = "http(s)?\:\/\/([a-zA-Z0-9][-a-zA-Z0-9]{0,62}\.)+([a-zA-Z0-9][a-zA-Z0-9]{0,62})+.?"
         tod = "[a-zA-Z]+$"
         repte = "[\?\=\[\]\)\(\*\&\^\%\$\#\@\!\~\`{\}\>\<\,\',\"]+"
         # 检测代理目录格式
@@ -2491,8 +2491,9 @@ server
         self.__write_config(self.__proxyfile, proxyUrl)
         self.SetNginx(get)
         self.SetApache(get.sitename)
-        self.SetProxy(get)
-            # return public.returnMsg(False, '配置冲突')
+        status = self.SetProxy(get)
+        if not status["status"]:
+            return status
         get.version = '00'
         get.siteName = get.sitename
         self.SetPHPVersion(get)
@@ -2555,15 +2556,19 @@ server
                     ng_conf = re.sub("location\s+%s" % proxyUrl[i]["proxydir"],"location "+get.proxydir,ng_conf)
                     ng_conf = re.sub("proxy_pass\s+%s" % proxyUrl[i]["proxysite"],"proxy_pass "+get.proxysite,ng_conf)
                     ng_conf = re.sub("\sHost\s+%s" % proxyUrl[i]["todomain"]," Host "+get.todomain,ng_conf)
-                    cache_rep = "proxy_cache_valid\s+200\s+304\s+301\s+302\s+"
+                    cache_rep = "proxy_cache_valid\s+200\s+304\s+301\s+302\s+\d+m;((\n|.)+expires\s+\d+m;)*"
                     if int(get.cache) == 1:
                         if re.search(cache_rep,ng_conf):
-                            ng_conf = re.sub(cache_rep+"%sm;" % proxyUrl[i]["cachetime"], "proxy_cache_valid 200 304 301 302 %sm;" % get.cachetime, ng_conf)
+                            expires_rep = "\{\n\s+expires\s+12h;"
+                            ng_conf = re.sub(expires_rep, "{",ng_conf)
+                            ng_conf = re.sub(cache_rep, "proxy_cache_valid 200 304 301 302 {0}m;\n\texpires {0}m;".format(get.cachetime), ng_conf)
                         else:
                             ng_cache = """
+    proxy_ignore_headers Set-Cookie Cache-Control expires;
     proxy_cache cache_one;
     proxy_cache_key $host$uri$is_args$args;
-    proxy_cache_valid 200 304 301 302 %sm;""" % (get.cachetime)
+    proxy_cache_valid 200 304 301 302 %sm;
+    expires %sm;""" % (get.cachetime,get.cachetime)
                             if self.check_annotate(ng_conf):
                                 cache_rep = '\n\s*#Set\s*Nginx\s*Cache(.|\n)*no-cache;'
                                 ng_conf = re.sub(cache_rep,'\n\t#Set Nginx Cache\n'+ng_cache,ng_conf)
@@ -2573,11 +2578,11 @@ server
                                                  ng_conf)
                     else:
                         if self.check_annotate(ng_conf):
-                            rep = '\n\s*#Set\s*Nginx\s*Cache(.|\n)*1m;'
-                            ng_conf = re.sub(rep, "\n\t#Set Nginx Cache\n\tadd_header Cache-Control no-cache;", ng_conf)
+                            rep = '\n\s*#Set\s*Nginx\s*Cache(.|\n)*\d+m;'
+                            ng_conf = re.sub(rep, "\n\t#Set Nginx Cache\n\tproxy_ignore_headers Set-Cookie Cache-Control expires;\n\tadd_header Cache-Control no-cache;\n\texpires 0m;", ng_conf)
                         else:
                             rep = '\s+proxy_cache\s+cache_one.*[\n\s\w\_\";\$]+m;'
-                            ng_conf = re.sub(rep, '\n\t#Set Nginx Cache\n\tadd_header Cache-Control no-cache;', ng_conf)
+                            ng_conf = re.sub(rep, '\n\t#Set Nginx Cache\n\tproxy_ignore_headers Set-Cookie Cache-Control expires;\n\tadd_header Cache-Control no-cache;\n\texpires 0m;', ng_conf)
 
                     sub_rep = "sub_filter"
                     subfilter = json.loads(get.subfilter)
@@ -2652,33 +2657,31 @@ server
 
         # 构造缓存配置
         ng_cache = """
+    proxy_ignore_headers Set-Cookie Cache-Control expires;
     proxy_cache cache_one;
     proxy_cache_key $host$uri$is_args$args;
-    proxy_cache_valid 200 304 301 302 %sm;""" % (cachetime)
-        rep = "(https?://[\w\.]+)"
+    proxy_cache_valid 200 304 301 302 %sm;
+    expires %sm;""" % (cachetime,cachetime)
+        # rep = "(https?://[\w\.]+)"
         # proxysite1 = re.search(rep,get.proxysite).group(1)
         ng_proxy = '''
 #PROXY-START%s
-location %s
+location  ~* \.(php|jsp|cgi|asp|aspx)$
 {
-    expires 12h;
-    if ($request_uri ~* "(php|jsp|cgi|asp|aspx)")
-    {
-         expires 0;
-    }
     proxy_pass %s;
     proxy_set_header Host %s;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header REMOTE-HOST $remote_addr;
-    
-    %s
-    #proxy_connect_timeout 30s;
-    #proxy_read_timeout 86400s;
-    #proxy_send_timeout 30s;
-    #proxy_http_version 1.1;
-    #proxy_set_header Upgrade $http_upgrade;
-    #proxy_set_header Connection "upgrade";
+}
+location %s
+{
+    proxy_pass %s;
+    proxy_set_header Host %s;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header REMOTE-HOST $remote_addr;
+
     add_header X-Cache $upstream_cache_status;
     
     #Set Nginx Cache
@@ -2712,17 +2715,17 @@ location %s
         if advanced == 1:
             if type == 1 and cache == 1:
                 ng_proxy_cache += ng_proxy % (
-                    get.proxydir, get.proxydir,get.proxysite, get.todomain, "#持久化连接相关配置" ,ng_sub_filter, ng_cache ,get.proxydir)
+                    get.proxydir, get.proxysite ,get.todomain,get.proxydir,get.proxysite,get.todomain ,ng_sub_filter, ng_cache ,get.proxydir)
             if type == 1 and cache == 0:
                 ng_proxy_cache += ng_proxy % (
-                    get.proxydir, get.proxydir, get.proxysite, get.todomain, "#持久化连接相关配置" ,ng_sub_filter,'\tadd_header Cache-Control no-cache;' ,get.proxydir)
+                    get.proxydir,get.proxysite ,get.todomain, get.proxydir,get.proxysite,get.todomain ,ng_sub_filter,'\tadd_header Cache-Control no-cache;' ,get.proxydir)
         else:
             if type == 1 and cache == 1:
                 ng_proxy_cache += ng_proxy % (
-                    get.proxydir, get.proxydir, get.proxysite, get.todomain, "#持久化连接相关配置" ,ng_sub_filter, ng_cache, get.proxydir)
+                    get.proxydir, get.proxysite ,get.todomain, get.proxydir,get.proxysite,get.todomain ,ng_sub_filter, ng_cache, get.proxydir)
             if type == 1 and cache == 0:
                 ng_proxy_cache += ng_proxy % (
-                    get.proxydir, get.proxydir, get.proxysite, get.todomain, "#持久化连接相关配置" ,ng_sub_filter, '\tadd_header Cache-Control no-cache;', get.proxydir)
+                    get.proxydir, get.proxysite ,get.todomain,get.proxydir,get.proxysite,get.todomain ,ng_sub_filter, '\tadd_header Cache-Control no-cache;', get.proxydir)
         public.writeFile(ng_proxyfile, ng_proxy_cache)
 
 
@@ -2753,6 +2756,7 @@ location %s
             for i in range(len(p_conf)-1,-1,-1):
                 if get.sitename == p_conf[i]["sitename"] and p_conf[i]["proxyname"]:
                     del p_conf[i]
+            self.RemoveProxy(get)
             return public.returnMsg(False, 'ERROR: %s<br><a style="color:red;">' % public.GetMsg("CONFIG_ERROR") + isError.replace("\n",
                                                                                                           '<br>') + '</a>')
         return public.returnMsg(True, 'SUCCESS')        

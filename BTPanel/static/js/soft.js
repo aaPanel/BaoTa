@@ -32,7 +32,7 @@ var soft = {
                 $("#updata_pro_info").html('<div class="alert alert-info" style="margin-bottom:15px"><strong>即将上线，敬请期待</strong></div>')
             }
             var tBody = '';
-            rdata.type.unshift({ icon: 'icon', id: 0, ps: '全部', sort: 1, title: '全部' })
+            rdata.type.unshift({ icon: 'icon', id: 0, ps: '全部', sort: 1, title: '全部' },{ icon: 'icon', id: -1, ps: '已安装', sort: 1, title: '已安装' })
             for (var i = 0; i < rdata.type.length; i++) {
                 var c = '';
                 if (istype == rdata.type[i].id) {
@@ -315,8 +315,7 @@ var soft = {
         $.post('/deployment?action=GetList', pdata, function (rdata) {
             layer.close(loadT)
             var tBody = '';
-            rdata.type.unshift({ icon: 'icon', id: 0, ps: '全部', sort: 1, title: '全部' })
-            
+            rdata.type.unshift({ icon: 'icon', id: 0, ps: '全部', sort: 1, title: '全部' },{ icon: 'icon', id: -1, ps: '已安装', sort: 1, title: '已安装' });
             for (var i = 0; i < rdata.type.length; i++) {
                 var c = '';
                 if ('11' == rdata.type[i].id) {
@@ -2291,8 +2290,8 @@ function onekeyCodeSite(codename, versions,title,enable_functions) {
         });
         //FTP账号数据绑定域名
         $('#mainDomain').on('input', function () {
-            var default_path = bt.get_cookie('sites_path');
-            if (!default_path) default_path = '/www/wwwroot';
+            var defaultPath = bt.get_cookie('sites_path');
+            if (!defaultPath) defaultPath = '/www/wwwroot';
             var array;
             var res, ress;
             var str = $(this).val();
