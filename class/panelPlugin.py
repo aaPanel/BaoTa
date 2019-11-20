@@ -132,7 +132,7 @@ class panelPlugin:
             for versionInfo in pluginInfo['versions']:
                 if versionInfo['m_version'] != get.version: continue
                 if not 'type' in get: get.type = '0'
-                if int(get.type) > 3: get.type = '0'
+                if int(get.type) > 4: get.type = '0'
                 if get.type == '0':
                     if not self.check_cpu_limit(versionInfo['cpu_limit']): return public.returnMsg(False,'至少需要[%d]个CPU核心才能安装' % versionInfo['cpu_limit'])
                     if not self.check_mem_limit(versionInfo['mem_limit']): return public.returnMsg(False,'至少需要[%dMB]内存才能安装' % versionInfo['mem_limit'])
@@ -184,7 +184,7 @@ class panelPlugin:
             mtype = 'update'
             mmsg = 'upgrade'
         if not 'type' in get: get.type = '0'
-        if int(get.type) > 3: get.type = '0'
+        if int(get.type) > 4: get.type = '0'
         if get.sName == 'nginx': 
             if get.version == '1.8': return public.returnMsg(False,'Nginx 1.8.1版本过旧,不再提供支持，请选择其它版本!')
         if get.sName.find('php-') != -1: get.sName = get.sName.split('-')[0]
@@ -195,7 +195,11 @@ class panelPlugin:
             apacheVersion = public.readFile('/www/server/apache/version.pl');
         public.writeFile('/var/bt_apacheVersion.pl',apacheVersion)
         public.writeFile('/var/bt_setupPath.conf','/www')
-        if os.path.exists('/usr/bin/apt-get'): get.type = '3'
+        if os.path.exists('/usr/bin/apt-get'): 
+            if get.type == '0':
+                get.type = '3'
+            else:
+                get.type = '4'
         execstr = "cd /www/server/panel/install && /bin/bash install_soft.sh " + get.type + " "+mtype+" " + get.sName + " "+ get.version;
         public.M('tasks').add('id,name,type,status,addtime,execstr',(None, mmsg + '['+get.sName+'-'+get.version+']','execshell','0',time.strftime('%Y-%m-%d %H:%M:%S'),execstr))
         cache.delete('install_task')
@@ -454,7 +458,7 @@ class panelPlugin:
                 
     #处理分类
     def get_types(self,sList,sType):
-        if sType == 0: return sList
+        if sType <= 0: return sList
         newList = []
         for sInfo in sList:
             if sInfo['type'] == sType: newList.append(sInfo)
@@ -488,8 +492,17 @@ class panelPlugin:
             softList = self.get_cloud_list(get)
             if not softList: return public.returnMsg(False,'软件列表获取失败(401)!')
         softList['list'] = self.set_coexist(softList['list'])
-        softList['list'] = self.get_page(softList['list'],get)
-        softList['list']['data'] = self.check_isinstall(softList['list']['data'])
+        if not 'type' in get: get.type = '0'
+        if get.type == '-1':
+            soft_list_tmp = []
+            softList['list'] = self.check_isinstall(softList['list'])
+            for val in softList['list']:
+                if val['setup']: soft_list_tmp.append(val);
+            softList['list'] = soft_list_tmp;
+            softList['list'] = self.get_page(softList['list'],get)
+        else:
+            softList['list'] = self.get_page(softList['list'],get)
+            softList['list']['data'] = self.check_isinstall(softList['list']['data'])
         softList['apache22'] = False
         softList['apache24'] = False
         check_version_path = '/www/server/apache/version_check.pl'

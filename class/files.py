@@ -832,6 +832,8 @@ session.save_handler = files'''.format(path,sess_path,sess_path)
             if get.path.find('.htaccess') == -1:
                 return public.returnMsg(False,'FILE_NOT_EXISTS')
         
+        his_path = '/www/backup/file_history/'
+        if get.path.find(his_path) != -1: return public.returnMsg(False,'不能直接修改历史副本!')
         try:
             isConf = -1
             if os.path.exists('/etc/init.d/nginx') or os.path.exists('/etc/init.d/httpd'):
@@ -884,7 +886,9 @@ session.save_handler = files'''.format(path,sess_path,sess_path)
     #保存历史副本
     def save_history(self,filename):
         try:
-            save_path = ('/www/backup/file_history/' + filename).replace('//','/')
+            his_path = '/www/backup/file_history/'
+            if filename.find(his_path) != -1: return
+            save_path = ( his_path + filename).replace('//','/')
             if not os.path.exists(save_path): os.makedirs(save_path,384)
             
             his_list = sorted(os.listdir(save_path),reverse=True)
@@ -1393,85 +1397,66 @@ cd %s
         return True
     
     def get_store_data(self):
-        data = {}
+        data = []
         path = 'data/file_store.json'
         try:
             if os.path.exists(path):
                 data = json.loads(public.readFile(path))
         except :
-            data = {}
-        if not data:
-            data['默认分类'] = []
+            data = []
+        if type(data) == dict:
+            result = []
+            for key in data:
+                for path in data[key]:
+                    result.append(path)
+            self.set_store_data(result)
+            return result
         return data
 
     def set_store_data(self,data):
         public.writeFile('data/file_store.json',json.dumps(data))
         return True
-
-    #添加收藏夹分类
-    def add_files_store_types(self,get):
-        file_type = get.file_type
-        if sys.version_info[0] == 2: file_type = file_type.decode('utf-8')
-        data = self.get_store_data()
-        if file_type in data:  return public.returnMsg(False,'请勿重复添加分类!') 
-        
-        data[file_type] = []
-        self.set_store_data(data)
-        return public.returnMsg(True,'添加收藏夹分类成功!') 
-     
-    #删除收藏夹分类
-    def del_files_store_types(self,get):
-        file_type = get.file_type
-        if sys.version_info[0] == 2: file_type = file_type.decode('utf-8')
-        if file_type == '默认分类': return public.returnMsg(False,'默认分类不可被删除!') 
-        data = self.get_store_data()
-        if file_type in data:
-            del data[file_type]
-            self.set_store_data(data)
-            return public.returnMsg(True,'删除[' + file_type + ']成功!') 
-        return public.returnMsg(False,'删除[' + file_type + ']失败!')
-
+    
     #获取收藏夹
     def get_files_store(self,get):
         data = self.get_store_data()
         result = []
-        for key in data:
-            rlist = []
-            for path in data[key]:
-                info = { 'path': path,'name':os.path.basename(path)}
-
-                if os.path.isdir(path) :
-                    info['type'] = 'dir'
-                else:
-                    info['type'] = 'file'
-                rlist.append(info)
-            result.append({'name':key,'data':rlist})    
-       
+        for path in data:
+            if type(path) == dict:
+                path = path['path']
+            info = { 'path': path,'name':os.path.basename(path)}
+            if os.path.isdir(path) :
+                info['type'] = 'dir'
+            else:
+                info['type'] = 'file'
+            result.append(info)
         return result
 
     #添加收藏夹
     def add_files_store(self,get):
-        file_type = get.file_type
-        if sys.version_info[0] == 2: file_type = file_type.decode('utf-8')
         path = get.path
         if not os.path.exists(path):  return public.returnMsg(False,'文件或目录不存在!') 
-            
         data = self.get_store_data()
-        if path in data[file_type]:  return public.returnMsg(False,'请勿重复添加!') 
-        
-        data[file_type].append(path)
+        if path in data:  return public.returnMsg(False,'请勿重复添加!') 
+        data.append(path)
         self.set_store_data(data)
         return public.returnMsg(True,'添加成功!') 
 
     #删除收藏夹
     def del_files_store(self,get):
-        file_type = get.file_type
-        if sys.version_info[0] == 2: file_type = file_type.decode('utf-8')
         path = get.path
         data = self.get_store_data()
-        if not file_type in data:  return public.returnMsg(False,'找不到此收藏夹分类!') 
-        data[file_type].remove(path)
-        if len(data[file_type]) <= 0: data[file_type] = []
-
+        if not path in data:  
+            is_go = False
+            for info in data:
+                if type(info) == dict:
+                    if info['path'] == path: 
+                        path = info
+                        is_go = True
+                        break
+            if not is_go:
+                return public.returnMsg(False,'找不到此收藏对象!') 
+        data.remove(path)
+        if len(data) <= 0: data = []
         self.set_store_data(data)
         return public.returnMsg(True,'删除成功!') 

@@ -1,3 +1,72 @@
+function modify_port_val(port){
+	layer.open({
+		type: 1,
+		area: '350px',
+		title: '修改端口',
+		closeBtn:2,
+		shadeClose: false,
+		btn:['确认','取消'],
+		content: '<div class="bt-form pd20 pd70" style="padding:20px 35px;">\
+				<ul style="margin-bottom:10px;color:red;width: 100%;background: #f7f7f7;padding: 10px;border-radius: 5px;font-size: 12px;">\
+					<li style="color:red;">有安全组的服务器请提前在安全组放行新端口。<a target="_blank" class="btlink" href="https://www.bt.cn/bbs/thread-40037-1-1.html">如何放行端口？</a></li>\
+				</ul>\
+				<div class="line">\
+	                <span class="tname" style="width: 70px;">面板端口</span>\
+	                <div class="info-r" style="margin-left:70px">\
+	                    <input name="port" class="bt-input-text mr5" type="text" style="width:200px" value="'+ port +'">\
+	                </div>\
+                </div>\
+                <div class="details" style="margin-top:5px;padding-left: 3px;">\
+					<input type="checkbox" id="check_port">\
+					<label style="font-weight: 400;margin: 3px 5px 0px;" for="check_port">我已经了解详情</label>\
+				</div>\
+			</div>',
+		yes:function(index,layero){
+			var check_port = $('#check_port').prop('checked'),_tips = '';
+			if(!check_port){
+				_tips = layer.tips('请勾选已了解详情', '#check_port', {tips:[1,'#ff0000'],time:5000});
+				return false;
+			}
+			layer.close(_tips);
+			$('#banport').val($('[name="port"]').val());
+			var _data = $("#set-Config").serializeObject();
+			_data['port'] = $('[name="port"]').val();
+			var loadT = layer.msg(lan.config.config_save,{icon:16,time:0,shade: [0.3, '#000']});
+			$.post('/config?action=setPanel',_data,function(rdata){
+				layer.close(loadT);
+				layer.msg(rdata.msg,{icon:rdata.status?1:2});
+				if(rdata.status){
+					layer.close(index);
+					setTimeout(function(){
+						window.location.href = ((window.location.protocol.indexOf('https') != -1)?'https://':'http://') + rdata.host + window.location.pathname;
+					},1500);
+				}
+			});
+		},
+		success:function(){
+			$('#check_port').click(function(){
+				layer.closeAll('tips');
+			});
+		}
+	});
+}
+$.fn.serializeObject = function(){   
+   var o = {};   
+   var a = this.serializeArray();   
+   $.each(a, function() {   
+       if (o[this.name]) {   
+           if (!o[this.name].push) {   
+               o[this.name] = [o[this.name]];   
+           }   
+           o[this.name].push(this.value || '');   
+       } else {   
+           o[this.name] = this.value || '';   
+       }   
+   });   
+   return o;   
+};
+
+
 //关闭面板
 function ClosePanel(){
 	layer.confirm(lan.config.close_panel_msg,{title:lan.config.close_panel_title,closeBtn:2,icon:13,cancel:function(){
@@ -512,7 +581,7 @@ function SetDebug() {
     var debug_stat = $("#panelDebug").prop('checked');
     bt.confirm({
 		title: status_s[debug_stat] + "开发者模式",
-		msg: "您真的要"+ status_s[debug_stat]+"开发者模式?",
+		msg: "开启开发者模式后面板可能会占用大量内存开销，您真的要"+ status_s[debug_stat]+"开发者模式?",
 		cancel: function () {
 			$("#panelDebug").prop('checked',debug_stat);
     	}}, function () {

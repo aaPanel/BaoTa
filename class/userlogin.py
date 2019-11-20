@@ -249,9 +249,9 @@ class userlogin:
             sql._Sql__DB_FILE = session_file
             if s_size > 1024 * 1024 * 10:
                 sql.table('session').where('session_id!=?',(sid,)).delete()
+                sql.table('session').execute('VACUUM',())
             else:
                 sql.table('session').where('session_id!=? AND expiry<?',(sid,public.format_date())).delete()
-            sql.table('session').execute('VACUUM',())
             sql.close()
             return True
         except:
