@@ -1550,6 +1550,25 @@ def upload_file_url(filename):
     except:
         return False
 
+#直接请求到PHP-FPM
+#version php版本
+#uri 请求uri
+#filename 要执行的php文件
+#args 请求参数
+#method 请求方式
+def request_php(version,uri,filename,args,method='GET'):
+    import fastcgi_client
+    client= fastcgi_client.fastcgi_client('/tmp/php-cgi-'+version+'.sock',None, 3000, 0)
+    params = {
+                'REQUEST_METHOD': method,
+                'SCRIPT_FILENAME': filename,
+                'SCRIPT_NAME': uri,
+                'QUERY_STRING': args,
+                'CONTENT_LENGTH': 0
+            }
+    result = client.request(params)
+    return result
+
 #取通用对象
 class dict_obj:
     def __contains__(self, key):

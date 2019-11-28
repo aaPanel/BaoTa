@@ -67,66 +67,43 @@
             <span class="replaces"><i class="glyphicon glyphicon-retweet" aria-hidden="true"></i>替换</span>
             <span class="fontSize"><i class="glyphicon glyphicon-text-width" aria-hidden="true"></i>字体</span>
             <span class="themes"><i class="glyphicon glyphicon-magnet" aria-hidden="true"></i>主题</span>
-            <span class="setUp"><i class="glyphicon glyphicon-cog" aria-hidden="true"></i>设置</span>
             <span class="helps"><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i>帮助</span>
             <div class="pull-down" title="隐藏工具条"><i class="glyphicon glyphicon-menu-down" aria-hidden="true"></i></div>
         </div>
         <div class="ace_overall">
             <!-- 编辑器目录 -->
             <div class="ace_catalogue">
-                <div class="ace_catalogue_title">文件目录<div class="dir-menu-right"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></div></div>
+                <div class="ace_catalogue_title">目录<div class="dir-menu-right"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></div></div>
                 <div class="ace_catalogue_list">
-                    <ul class="cd-accordion-menu animated">
-                        <li class="has-children "><span>返回上一级</span></li>
-                        <li class="has-children">
-                            <input type="checkbox" name ="group-1" id="group-1" checked>
-                            <label for="group-1" class="file_fold"><span class="glyphicon glyphicon-menu-right"></span><span><i class="folder_icon"></i>文件列表</span></label>
-                            <ul>
-                                <li class="has-children">
-                                    <input type="checkbox" name ="sub-group-1" id="sub-group-1">
-                                    <label for="sub-group-1">文件列表</label>
-                                    <ul>
-                                        <li><a href="#0">Image</a></li>
-                                        <li><a href="#0">Image</a></li>
-                                        <li><a href="#0">Image</a></li>
-                                    </ul>
-                                </li>
-                                <li class="has-children">
-                                    <input type="checkbox" name ="sub-group-2" id="sub-group-2">
-                                    <label for="sub-group-2">Sub Group 2</label>
-                                    <ul>
-                                        <li class="has-children">
-                                            <input type="checkbox" name ="sub-group-level-3" id="sub-group-level-3">
-                                            <label for="sub-group-level-3">Sub Group Level 3</label>
-                                            <ul>
-                                                <li><a href="#0">Image</a></li>
-                                                <li><a href="#0">Image</a></li>
-                                            </ul>
-                                        </li>
-                                        <li><a href="#0">Image</a></li>
-                                    </ul>
-                                </li>
-                                <li><a href="#0">Image</a></li>
-                                <li><a href="#0">Image</a></li>
-                            </ul>
-                        </li>
-                    </ul>
+                    <ul class="cd-accordion-menu"></ul>
+                	<ul class="ace_catalogue_menu">
+	                    <li data-type="0"><i class="folder-icon"></i>新建文件夹</li>
+	                    <li data-type="1"><i class="text-icon"></i>新建文件</li>
+	                    <li data-type="2"><i class="rename-icon img-icon"></i>重命名</li>
+	                    <li data-type="3"><i class="del-icon img-icon"></i>删除</li>
+	                </ul>
                 </div>
+                <div class="ace_catalogue_drag_icon">
+                    <div class="drag_icon_conter"></div>
+                    <span class="fold_icon_conter" title="隐藏文件目录"></span>
+                </div>
+
             </div>
             <!-- 编辑内容 -->
-            <!-- <div class="ace_catalogue_sidebar"><img src="/static/img/col-resize.png" /></div> -->
             <div class="ace_editor_main">
                 <div class="ace_conter_menu">
                     <div class="ace_editor_add" style="display:none;"><i class="fa fa-plus-square" aria-hidden="true"></i></div>
                 </div>
+                <div class="ace_conter_tips"><div class="tips"></div></div>
                 <div class="ace_editor_main_storey"></div>
                 <div class="ace_conter_editor"></div>
                 <div class="ace_conter_toolbar">
-                    <div class="pull-left">
-                        <span data-type="path"></span>
+                    <div class="pull-left size_ellipsis">
+                        <span data-type="path" class="size_ellipsis"></span>
                     </div>
                     <div class="pull-right">
                         <span data-type="cursor"></span>
+                        <span data-type="history"></span>
                         <span data-type="tab"></span>
                         <span data-type="encoding"></span>
                         <span data-type="lang"></span>
@@ -176,13 +153,17 @@
                     <div class="menu-title">设置编辑器主题</div>
                     <ul></ul>
                 </div>
+                <div class="menu-item menu-history" style="display: none;">
+                    <div class="menu-title">文件历史版本</div>
+                    <ul></ul>
+                </div>
             </div>
         </div>
     </div>
 </script>
 <script src="/static/js/jquery-ui.min.js"></script>
 <script src="/static/js/jquery.contextify.min.js"></script>
-<script src="/static/js/files.js?date={{g.version}}"></script>
+<script src="/static/js/files.js?date11={{g.version}}"></script>
 <script src="/static/js/upload.js?date={{g.version}}"></script>
 <script type="text/javascript" src="./static/ace/ace.js?date=2"></script>
 <script type="text/javascript" src="./static/ace/ext-language_tools.js?date=2"></script>

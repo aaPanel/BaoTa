@@ -461,8 +461,10 @@ def panel_status():
     v = 0
     while True:
         time.sleep(5)
+        check_session()
         if not panel_pid: panel_pid = get_panel_pid()
         if not panel_pid: run_panel()
+
         try:
             f = psutil.Process(panel_pid).cmdline()[-1]
             if f.find('runserver') == -1 and f.find('BT-Panel') == -1: 
@@ -513,6 +515,27 @@ def panel_status():
 
 def run_panel():
     public.ExecShell("/etc/init.d/bt start &")
+
+def check_session():
+    try:
+        session_file = '/dev/shm/session.db'
+        if not os.path.exists(session_file): #如果session文件不存在
+            return False
+        s_size = os.path.getsize(session_file)
+        if s_size < 1024 * 1024 * 2: return False
+        if s_size > 1024 * 1024 * 10:
+            #大于10MB
+            if os.path.exists(session_file): os.remove(session_file)
+            public.ExecShell("/etc/init.d/bt reload &")
+        else:
+            sql = db.Sql()
+            sql._Sql__DB_FILE = session_file
+            sql.table('session').where('expiry<?',(public.format_date())).delete()
+            sql.table('session').execute('VACUUM',())
+            sql.close()
+        return True
+    except:
+        return False
 
 #重启面板服务
 def restart_panel_service():

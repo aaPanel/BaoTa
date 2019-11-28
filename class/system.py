@@ -364,6 +364,7 @@ class system:
                 if disk[1].find('K') != -1: continue;
                 if len(disk[5].split('/')) > 10: continue;
                 if disk[5] in cuts: continue;
+                if disk[5].find('docker') != -1: continue
                 arr = {}
                 arr['path'] = disk[5];
                 tmp1 = [disk[1],disk[2],disk[3],disk[4]];

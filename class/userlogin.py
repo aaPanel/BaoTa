@@ -238,21 +238,19 @@ class userlogin:
 
     # 清理多余SESSION数据
     def clear_session(self):
-        session_file = '/dev/shm/session.db'
-        if not os.path.exists(session_file): return False
-        s_size = os.path.getsize(session_file)
-        if s_size < 1024 * 512: return False
         try:
-            sid = 'BT_:' + session.sid
-            import db
-            sql = db.Sql()
-            sql._Sql__DB_FILE = session_file
+            session_file = '/dev/shm/session.db'
+            if not os.path.exists(session_file): return False
+            s_size = os.path.getsize(session_file)
+            if s_size < 1024 * 512: return False
             if s_size > 1024 * 1024 * 10:
-                sql.table('session').where('session_id!=?',(sid,)).delete()
-                sql.table('session').execute('VACUUM',())
-            else:
-                sql.table('session').where('session_id!=? AND expiry<?',(sid,public.format_date())).delete()
-            sql.close()
+                from BTPanel import sdb
+                if os.path.exists(session_file): os.remove(session_file)
+                sdb.create_all()
+                if not os.path.exists(session_file): 
+                    public.writeFile('/www/server/panel/data/reload.pl','True')
+                    return False
             return True
         except:
             return False
+

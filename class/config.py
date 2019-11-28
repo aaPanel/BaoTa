@@ -72,8 +72,9 @@ class config:
         if get.domain:
             reg = "^([\w\-\*]{1,100}\.){1,4}(\w{1,10}|\w{1,10}\.\w{1,10})$";
             if not re.match(reg, get.domain): return public.returnMsg(False,'SITE_ADD_ERR_DOMAIN');
-        
         oldPort = public.GetHost(True);
+        if not 'port' in get:
+            get.port = oldPort
         newPort = get.port;
         if oldPort != get.port:
             get.port = str(int(get.port))

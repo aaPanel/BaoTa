@@ -62,9 +62,9 @@ class ajax:
     def GetPHPStatus(self,get):
         #取指定PHP版本的负载状态
         try:
-            self.CheckStatusConf();
             version = get.version
-            result = public.HttpGet('http://127.0.0.1/phpfpm_'+version+'_status?json')
+            uri = "/phpfpm_"+version+"_status"
+            result = public.request_php(version,uri,uri,'json')
             tmp = json.loads(result)
             fTime = time.localtime(int(tmp['start time']))
             tmp['start time'] = time.strftime('%Y-%m-%d %H:%M:%S',fTime)
@@ -77,7 +77,7 @@ class ajax:
         if public.get_webserver() != 'nginx': return;
         filename = session['setupPath'] + '/panel/vhost/nginx/phpfpm_status.conf';
         if os.path.exists(filename):
-            if public.ReadFile(filename).find('74.sock')!=-1: return;
+            if public.ReadFile(filename).find('nginx_status')!=-1: return;
         
         conf = '''server {
     listen 80;
@@ -86,56 +86,6 @@ class ajax:
     location /nginx_status {
         stub_status on;
         access_log off;
-    }
-    location /phpfpm_52_status {
-        fastcgi_pass unix:/tmp/php-cgi-52.sock;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME \$fastcgi_script_name;
-    }
-    location /phpfpm_53_status {
-        fastcgi_pass unix:/tmp/php-cgi-53.sock;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME \$fastcgi_script_name;
-    }
-    location /phpfpm_54_status {
-        fastcgi_pass unix:/tmp/php-cgi-54.sock;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME \$fastcgi_script_name;
-    }
-    location /phpfpm_55_status {
-        fastcgi_pass unix:/tmp/php-cgi-55.sock;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME \$fastcgi_script_name;
-    }
-    location /phpfpm_56_status {
-        fastcgi_pass unix:/tmp/php-cgi-56.sock;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME \$fastcgi_script_name;
-    }
-    location /phpfpm_70_status {
-        fastcgi_pass unix:/tmp/php-cgi-70.sock;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME \$fastcgi_script_name;
-    }
-    location /phpfpm_71_status {
-        fastcgi_pass unix:/tmp/php-cgi-71.sock;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME \$fastcgi_script_name;
-    }
-    location /phpfpm_72_status {
-        fastcgi_pass unix:/tmp/php-cgi-72.sock;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME \$fastcgi_script_name;
-    }
-    location /phpfpm_73_status {
-        fastcgi_pass unix:/tmp/php-cgi-73.sock;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME \$fastcgi_script_name;
-    }
-    location /phpfpm_74_status {
-        fastcgi_pass unix:/tmp/php-cgi-74.sock;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME \$fastcgi_script_name;
     }
 }'''
         public.writeFile(filename,conf);
@@ -640,83 +590,14 @@ class ajax:
         
     #取PHPINFO信息
     def GetPHPInfo(self,get):
-        self.CheckPHPINFO();
-        sPath = public.GetConfigValue('setup_path') + '/phpinfo/' + get.version;
-        public.ExecShell("rm -rf /www/server/phpinfo/*");
-        public.ExecShell("mkdir -p " + sPath);
-        public.writeFile(sPath + '/phpinfo.php','<?php phpinfo(); ?>');
-        phpinfo = public.HttpGet('http://127.0.0.2/' + get.version + '/phpinfo.php');
-        public.ExecShell("rm -rf " + sPath);
-        return phpinfo;
-    
-    #检测PHPINFO配置
-    def CheckPHPINFO(self):
-        php_versions = ['52','53','54','55','56','70','71','72','73','74','75'];
-        path = public.GetConfigValue('setup_path') + '/panel/vhost/nginx/phpinfo.conf';
-        nginx_path = '/www/server/nginx/conf/enable-php-'
-        if not os.path.exists(path) or not os.path.exists(nginx_path + '75.conf'):
-            opt = "";
-            for version in php_versions:
-                opt += "\n\tlocation /"+version+" {\n\t\tinclude enable-php-"+version+".conf;\n\t}";
-                nginx_conf = nginx_path + version + '.conf'
-                if not os.path.exists(nginx_conf):
-                    nginx_body = '''location ~ [^/]\.php(/|$)
-{
-    try_files $uri =404;
-    fastcgi_pass  unix:/tmp/php-cgi-%s.sock;
-    fastcgi_index index.php;
-    include fastcgi.conf;
-	include pathinfo.conf;
-}''' % version
-                    public.WriteFile(nginx_conf,nginx_body)
-            
-            phpinfoBody = '''server
-{
-    listen 80;
-    server_name 127.0.0.2;
-    allow 127.0.0.1;
-    index phpinfo.php index.html index.php;
-    root  /www/server/phpinfo;
-%s   
-}''' % (opt,);
-            public.writeFile(path,phpinfoBody);
-
-        
-        
-        path = public.GetConfigValue('setup_path') + '/panel/vhost/apache/phpinfo.conf';
-        if not os.path.exists(path):
-            opt = "";
-            for version in php_versions:
-                opt += """\n<Location /%s>
-    SetHandler "proxy:unix:/tmp/php-cgi-%s.sock|fcgi://localhost"
-</Location>""" % (version,version);
-            
-            try:
-                apacheVersion = public.readFile('/www/server/apache/version.pl').strip();
-                if apacheVersion == '2.2': opt = "";
-            except:
-                pass;
-            
-            
-            phpinfoBody = '''
-<VirtualHost *:80>
-DocumentRoot "/www/server/phpinfo"
-ServerAdmin phpinfo
-ServerName 127.0.0.2
-%s
-<Directory "/www/server/phpinfo">
-    SetOutputFilter DEFLATE
-    Options FollowSymLinks
-    AllowOverride All
-    Order allow,deny
-    Allow from all
-    DirectoryIndex index.php index.html index.htm default.php default.html default.htm
-</Directory>
-</VirtualHost>
-''' % (opt,);
-            public.writeFile(path,phpinfoBody);
-        public.serviceReload();
-            
+        sPath = '/www/server/phpinfo';
+        if os.path.exists(sPath): 
+            public.ExecShell("rm -rf " + sPath);
+        p_file = '/dev/shm/phpinfo.php'
+        public.writeFile(p_file,'<?php phpinfo(); ?>');
+        phpinfo = public.request_php(get.version,'/phpinfo.php',p_file,'')
+        if os.path.exists(p_file): os.remove(p_file)
+        return phpinfo;         
     
     #清理日志
     def delClose(self,get):
@@ -749,9 +630,10 @@ ServerName 127.0.0.2
         rep = conf_file["rep"]
         if conf:
             port = re.search(rep,conf).group(1)
-            path = session['phpmyadminDir'].split("/")[-1]
-            ip = public.GetHost()
-            session['phpmyadminDir'] = "https://{}:{}/{}".format(ip, port, path)
+            if session['phpmyadminDir']:
+                path = session['phpmyadminDir'].split("/")[-1]
+                ip = public.GetHost()
+                session['phpmyadminDir'] = "https://{}:{}/{}".format(ip, port, path)
 
     # 获取phpmyadmin ssl状态
     def get_phpmyadmin_ssl(self,get):
@@ -1161,6 +1043,28 @@ ServerName 127.0.0.2
             session[m_key] = public.returnMsg(True,'绑定有效!')
             return session[m_key]
         return public.returnMsg(True,result)
+
+
+    #PHP探针
+    def php_info(self,args):
+        php_version = args.php_version.replace('.','')
+        php_path = '/www/server/php/'
+        php_bin = php_path + php_version + '/bin/php'
+        php_ini = php_path + php_version + '/etc/php.ini'
+        tmp = public.ExecShell(php_bin + ' /www/server/panel/class/php_info.php')[0]
+        result = json.loads(tmp)
+        result['phpinfo'] = {}
+        result['phpinfo']['php_version'] = result['php_version']
+        result['phpinfo']['php_path'] = php_path
+        result['phpinfo']['php_bin'] = php_bin
+        result['phpinfo']['php_ini'] = php_ini
+        result['phpinfo']['modules'] = ' '.join(result['modules'])
+        result['phpinfo']['ini'] = result['ini']
+        result['phpinfo']['keys'] = { "1cache": "缓存器", "2crypt": "加密解密库", "0db": "数据库驱动", "4network": "网络通信库", "5io_string": "文件和字符串处理库", "3photo":"图片处理库","6other":"其它第三方库"}
+        del(result['php_version'])
+        del(result['modules'])
+        del(result['ini'])
+        return result
         
         
         

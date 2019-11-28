@@ -319,7 +319,7 @@ SetLink
             if is_modify:
                 m_version = public.readFile(public.GetConfigValue('setup_path') + '/mysql/version.pl')
                 
-                if m_version.find('5.7') == 0  or m_version.find('8.0') == 0:
+                if m_version.find('5.7') == 0  or m_version.find('8.0') == 0 or m_version.find('10.4.') != -1:
                     panelMysql.panelMysql().execute("UPDATE mysql.user SET authentication_string='' WHERE user='root'")
                     panelMysql.panelMysql().execute("ALTER USER 'root'@'localhost' IDENTIFIED BY '%s'" % password)
                     panelMysql.panelMysql().execute("ALTER USER 'root'@'127.0.0.1' IDENTIFIED BY '%s'" % password)
@@ -350,7 +350,7 @@ SetLink
             #修改MYSQL
             mysql_obj = panelMysql.panelMysql()
             m_version = public.readFile(public.GetConfigValue('setup_path') + '/mysql/version.pl')
-            if m_version.find('5.7') == 0  or m_version.find('8.0') == 0:
+            if m_version.find('5.7') == 0  or m_version.find('8.0') == 0 or m_version.find('10.4.') != -1:
                 accept = self.map_to_list(panelMysql.panelMysql().query("select Host from mysql.user where User='" + name + "' AND Host!='localhost'"));
                 mysql_obj.execute("update mysql.user set authentication_string='' where User='" + username + "'")
                 result = mysql_obj.execute("ALTER USER `%s`@`localhost` IDENTIFIED BY '%s'" % (username,newpassword))
