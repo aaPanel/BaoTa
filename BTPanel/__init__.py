@@ -47,7 +47,7 @@ job.start()
 app.secret_key = uuid.UUID(int=uuid.getnode()).hex[-12:]
 local_ip = None
 my_terms = {}
-
+sdb = None
 try:
     from flask_sqlalchemy import SQLAlchemy
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////dev/shm/session.db'
@@ -483,7 +483,7 @@ def files(pdata = None):
     import files
     filesObject = files.files()
     defs = ('CheckExistsFiles','GetExecLog','GetSearch','ExecShell','GetExecShellMsg','UploadFile','GetDir','CreateFile','CreateDir','DeleteDir','DeleteFile',
-            'CopyFile','CopyDir','MvFile','GetFileBody','SaveFileBody','Zip','UnZip','SearchFiles','upload','read_history',
+            'CopyFile','CopyDir','MvFile','GetFileBody','SaveFileBody','Zip','UnZip','SearchFiles','upload','read_history','re_history','auto_save_temp','get_auto_save_body',
             'GetFileAccess','SetFileAccess','GetDirSize','SetBatchData','BatchPaste','install_rar','get_path_size',
             'DownloadFile','GetTaskSpeed','CloseLogs','InstallSoft','UninstallSoft','SaveTmpFile','GetTmpFile','del_files_store','add_files_store','get_files_store','del_files_store_types','add_files_store_types',
             'RemoveTask','ActionTask','Re_Recycle_bin','Get_Recycle_bin','Del_Recycle_bin','Close_Recycle_bin','Recycle_bin')
@@ -555,7 +555,7 @@ def ajax(pdata = None):
     if comReturn: return comReturn
     import ajax
     ajaxObject = ajax.ajax()
-    defs = ('change_phpmyadmin_ssl_port','set_phpmyadmin_ssl','get_phpmyadmin_ssl','check_user_auth','to_not_beta','get_beta_logs','apple_beta','GetApacheStatus','GetCloudHtml','get_load_average','GetOpeLogs','GetFpmLogs','GetFpmSlowLogs','SetMemcachedCache','GetMemcachedStatus','GetRedisStatus','GetWarning','SetWarning','CheckLogin','GetSpeed','GetAd','phpSort','ToPunycode','GetBetaStatus','SetBeta','setPHPMyAdmin','delClose','KillProcess','GetPHPInfo','GetQiniuFileList','UninstallLib','InstallLib','SetQiniuAS','GetQiniuAS','GetLibList','GetProcessList','GetNetWorkList','GetNginxStatus','GetPHPStatus','GetTaskCount','GetSoftList','GetNetWorkIo','GetDiskIo','GetCpuIo','CheckInstalled','UpdatePanel','GetInstalled','GetPHPConfig','SetPHPConfig')
+    defs = ('php_info','change_phpmyadmin_ssl_port','set_phpmyadmin_ssl','get_phpmyadmin_ssl','check_user_auth','to_not_beta','get_beta_logs','apple_beta','GetApacheStatus','GetCloudHtml','get_load_average','GetOpeLogs','GetFpmLogs','GetFpmSlowLogs','SetMemcachedCache','GetMemcachedStatus','GetRedisStatus','GetWarning','SetWarning','CheckLogin','GetSpeed','GetAd','phpSort','ToPunycode','GetBetaStatus','SetBeta','setPHPMyAdmin','delClose','KillProcess','GetPHPInfo','GetQiniuFileList','UninstallLib','InstallLib','SetQiniuAS','GetQiniuAS','GetLibList','GetProcessList','GetNetWorkList','GetNginxStatus','GetPHPStatus','GetTaskCount','GetSoftList','GetNetWorkIo','GetDiskIo','GetCpuIo','CheckInstalled','UpdatePanel','GetInstalled','GetPHPConfig','SetPHPConfig')
     return publicObject(ajaxObject,defs,None,pdata);
 
 @app.route('/system',methods=method_all)
@@ -849,7 +849,8 @@ def install():
         return redirect('/login')
     ret_login = os.path.join('/',admin_path)
     if admin_path == '/' or admin_path == '/bt': ret_login = '/login'
-
+    session['admin_path'] = False
+    session['login'] = False
     if request.method == method_get[0]:
         if not os.path.exists('install.pl'): return redirect(ret_login)
         data = {}

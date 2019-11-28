@@ -616,7 +616,7 @@ class panelSite(panelRedirect):
             conf = conf.replace(tmp,newServerName)
         
         #添加端口
-        rep = "listen\s+([0-9]+)\s*[default_server]*\s*;";
+        rep = "listen\s+[\[\]\:]*([0-9]+).*;";
         tmp = re.findall(rep,conf);
         if not public.inArray(tmp,get.port):
             listen = re.search(rep,conf).group()
@@ -744,13 +744,11 @@ class panelSite(panelRedirect):
             conf = conf.replace(tmp,newServerName);
             
             #删除端口
-            rep = "listen\s+([0-9]+);";
+            rep = "listen.*[\s:]+(\d+).*;";
             tmp = re.findall(rep,conf);
             port_count = sql.table('domain').where('pid=? AND port=?',(get.id,get.port)).count()
             if public.inArray(tmp,port) == True and  port_count < 2:
-                rep = "\n*\s+listen\s+"+port+";";
-                conf = re.sub(rep,'',conf);
-                rep = "\n*\s+listen\s+\[::\]:"+port+";";
+                rep = "\n*\s+listen.*[\s:]+"+port+".*;";
                 conf = re.sub(rep,'',conf);
             #保存配置
             public.writeFile(file,conf)
@@ -1079,7 +1077,7 @@ class panelSite(panelRedirect):
                 sslStr = """#error_page 404/404.html;
     ssl_certificate    /www/server/panel/vhost/cert/%s/fullchain.pem;
     ssl_certificate_key    /www/server/panel/vhost/cert/%s/privkey.pem;
-    ssl_protocols TLSv1 TLSv1.1 TLSv1.2%s;
+    ssl_protocols TLSv1.1 TLSv1.2%s;
     ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:HIGH:!aNULL:!MD5:!RC4:!DHE;
     ssl_prefer_server_ciphers on;
     ssl_session_cache shared:SSL:10m;
@@ -1091,7 +1089,7 @@ class panelSite(panelRedirect):
 
                 conf = conf.replace('#error_page 404/404.html;', sslStr);
                 # 添加端口
-                rep = "listen\s+([0-9]+)\s*[default_server]*;";
+                rep = "listen.*[\s:]+(\d+).*;";
                 tmp = re.findall(rep, conf);
                 if not public.inArray(tmp, '443'):
                     listen = re.search(rep,conf).group()
@@ -1157,7 +1155,7 @@ class panelSite(panelRedirect):
     SSLCertificateFile /www/server/panel/vhost/cert/%s/fullchain.pem
     SSLCertificateKeyFile /www/server/panel/vhost/cert/%s/privkey.pem
     SSLCipherSuite EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH
-    SSLProtocol All -SSLv2 -SSLv3
+    SSLProtocol All -SSLv2 -SSLv3 -TLSv1
     SSLHonorCipherOrder On
     %s
 
@@ -1355,8 +1353,8 @@ class panelSite(panelRedirect):
         key = public.readFile(keypath);
         csr = public.readFile(csrpath);
         file = self.setupPath + '/panel/vhost/' + public.get_webserver() + '/' + siteName + '.conf';
-        if not os.path.exists(file): return public.returnMsg(False,'指定网站配置文件不存在!')
         conf = public.readFile(file);
+        if not conf: return public.returnMsg(False,'指定网站配置文件不存在!')
         keyText = 'SSLCertificateFile'
         if public.get_webserver() == 'nginx': keyText = 'ssl_certificate';
         status = True
@@ -3347,6 +3345,7 @@ location %s
 
         if get.name == '0': 
             if os.path.exists(default_site_save): os.remove(default_site_save)
+            public.serviceReload();
             return public.returnMsg(True,'设置成功!')
 
         #处理新的

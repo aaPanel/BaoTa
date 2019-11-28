@@ -22,6 +22,12 @@
   font-weight: normal;
   font-style: normal;
 }
+@font-face {
+  font-family: octicons;
+  src: url("../icons/octicons.woff2");
+  font-weight: normal;
+  font-style: normal;
+}
 .binary-icon:before {
   font-family: "Octicons Regular";
   font-size: 16px;
@@ -109,12 +115,6 @@
   font-size: 16px;
   top: 1px;
   content: "\f0b0";
-}
-.markdown-icon:before {
-  font-family: "Octicons Regular";
-  font-size: 16px;
-  top: 1px;
-  content: "\f0c9";
 }
 .package-icon:before {
   font-family: "Octicons Regular";
@@ -698,7 +698,8 @@
   top: 3px;
   content: "\e618";
 }
-.perl-icon:before {
+.perl-icon:before{
+  color: #ff9800;
   font-family: Devicons;
   font-size: 16px;
   top: 3px;
@@ -4914,5 +4915,28 @@
 .sh-icon:before{
 	color: #aa759f;
 	content: '\f0c8';
-	font-family: file-icons;
+  font-family: file-icons;
+  font-size: 14px;
+}
+.text-icon:before{
+  color: #cccccc;
+  content: '\f011';
+  font-family: octicons;
+}
+
+.compress-icon:before{
+  color: #46788d;
+  content: '\f013';
+  font-family: octicons;
+}
+
+.images-icon:before{
+  color: #d28445;
+  content: '\f012';
+  font-family: octicons;
+}
+.markdown-icon:before {
+  color: #6a9fb5;
+  font-family: octicons;
+  content: "\f0c9";
 }

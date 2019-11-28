@@ -574,39 +574,39 @@ function GetFiles(Path, sort) {
         for (var i = 0; i < rdata.STORE.length; i++) {
             shtml += '<li class="file-types" title="'+ rdata.STORE[i].path +'"><div style="width:200px"><span class="ico '+ (rdata.STORE[i].type ==='file'?'ico-file':'ico-folder') +'"></span><a href="javascript:;"  style="display: inline-block;width:150px;overflow: hidden;text-overflow: ellipsis;vertical-align: top;" onclick="'+ (rdata.STORE[i].type ==='file'?'openEditorView(0,\''+ rdata.STORE[i].path +'\')':'GetFiles(\''+ rdata.STORE[i].path +'\')') +'">' + rdata.STORE[i].name + '</a></div>';
         }
-        shtml += '<li style="text-align: center;"><a href="javascript: ;" onclick="set_file_store(\'' + rdata.PATH + '\')">+ 管理</a></li></ul></div>'
+        shtml += '<li style="text-align: center;"><a href="javascript: ;" onclick="set_file_store(\'' + rdata.PATH + '\')">管理收藏夹</a></li></ul></div>'
 
         BarTools += shtml;
 
-        // var copyName = getCookie('copyFileName');
-        // var cutName = getCookie('cutFileName');
-        // var isPaste = (copyName == 'null') ? cutName : copyName;
-        // if (isPaste != 'null' && isPaste != undefined) {
-        //     BarTools += ' <button onclick="javascript:PasteFile(\'' + (GetFileName(isPaste)) + '\');" class="btn btn-Warning btn-sm">' + lan.files.paste + '</button>';
-        // }
+        var copyName = getCookie('copyFileName');
+        var cutName = getCookie('cutFileName');
+        var isPaste = (copyName == 'null') ? cutName : copyName;
+        if (isPaste != 'null' && isPaste != undefined) {
+            BarTools += ' <button onclick="javascript:PasteFile(\'' + (GetFileName(isPaste)) + '\');" class="btn btn-default btn-Warning btn-sm">' + lan.files.paste + '</button>';
+        }
 
-        // $("#Batch").html('');
-        // var BatchTools = '';
-        // var isBatch = getCookie('BatchSelected');
-        // if (isBatch == 1 || isBatch == '1') {
-        //     BatchTools += ' <button onclick="javascript:BatchPaste();" class="btn btn-default btn-sm">' + lan.files.paste_all + '</button>';
-        // }
-        // $("#Batch").html(BatchTools);
-        // $("#setBox").prop("checked", false);
+        $("#Batch").html('');
+        var BatchTools = '';
+        var isBatch = getCookie('BatchSelected');
+        if (isBatch == 1 || isBatch == '1') {
+            BatchTools += ' <button onclick="javascript:BatchPaste();" class="btn btn-default btn-sm">' + lan.files.paste_all + '</button>';
+        }
+        $("#Batch").html(BatchTools);
+        $("#setBox").prop("checked", false);
 
         $("#BarTools").html(BarTools);
 
-        // $("input[name=id]").click(function () {
-        //     if ($(this).prop("checked")) {
-        //         $(this).prop("checked", true);
-        //         $(this).parents("tr").addClass("ui-selected");
-        //     }
-        //     else {
-        //         $(this).prop("checked", false);
-        //         $(this).parents("tr").removeClass("ui-selected");
-        //     }
-        //     showSeclect()
-        // });
+        $("input[name=id]").click(function () {
+            if ($(this).prop("checked")) {
+                $(this).prop("checked", true);
+                $(this).parents("tr").addClass("ui-selected");
+            }
+            else {
+                $(this).prop("checked", false);
+                $(this).parents("tr").removeClass("ui-selected");
+            }
+            showSeclect()
+        });
 
         // // 鼠标移入移出事件
         // $('.file-types').hover(function () {
@@ -1645,34 +1645,10 @@ function RClick(type, path, name, file_store) {
                 loading.close();
                 bt.msg(rRet);
                 if (rRet.status) {
-                    load.close();
+                    console.log(file_store.PATH);
                     GetFiles(file_store.PATH)
                 }
             });
-            
-            
-            // var datas = []
-            // for (var i = 0; i < file_store.STORE.length; i++) {
-            //     datas.push({ title: file_store.STORE[i].name, value: file_store.STORE[i].name })
-            // }
-            // var file_data = {
-            //     title: '加入收藏夹',
-            //     area: '500px',
-            //     list: [
-            //         { name: 'path', disabled: true, width: '300px', value: path },
-            //         { name: 'file_type', type: 'select', width: '300px', items: datas }
-            //     ],
-            //     btns: [
-            //         bt.form.btn.close(),
-            //         {
-            //             title: '添加', name: 'submit', css: 'btn-success', callback: function (rdata, load) {
-                            
-            //             }
-            //         }
-            //     ]
-            // }
-            // var bs = bt.render_form(file_data);
-            // $(".bt-form" + bs).find(".info-r").css("margin-left", "15px")
         }
     })
     return options;
@@ -1754,29 +1730,17 @@ function PathLeft() {
 
 var store_type_index = 0
 //删除分类或者文件
-function del_files_store(path, obj, parent_name) {
+function del_files_store(path, obj) {
     var _item = $(obj).parents('tr').data('item')
     var action = '', msg = '';
     var data = {}
-    if (parent_name != undefined) {
-        action = 'del_files_store';
-        data['file_type'] = parent_name
-        data['path'] = _item.path;
-        msg = "是否确定删除路径【" + _item.path + "】?"
-    }
-    else {
-        action = 'del_files_store_types';
-        data['file_type'] = _item.name;
-        msg = "是否确定删除分类【" + _item.name + "】?"
-    }
+    action = 'del_files_store';
+    data['path'] = _item.path;
+    msg = "是否确定删除路径【" + _item.path + "】?"
     bt.confirm({ msg: msg, title: '提示' }, function () {
         var loading = bt.load();
         bt.send(action, 'files/' + action, data, function (rRet) {
             loading.close();
-            if (parent_name) {
-                store_type_index.close();
-            }
-
             if (rRet.status) {
                 set_file_store(path)
                 GetFiles(getCookie('Path'))

@@ -2605,7 +2605,7 @@ var site = {
         get_site_logs: function (web) {
             bt.site.get_site_logs(web.name, function (rdata) {
                 var robj = $('#webedit-con');
-                var logs = { class: 'bt-logs', items: [{ name: 'site_logs', height: '520px', value: rdata.msg, width: '100%', type: 'textarea' }] };
+                var logs = { class: 'bt-logs', items: [{ name: 'site_logs', height: '600px', value: rdata.msg, width: '100%', type: 'textarea' }] };
                 var _form_data = bt.render_form_line(logs);
                 robj.append(_form_data.html);
                 bt.render_clicks(_form_data.clicks);

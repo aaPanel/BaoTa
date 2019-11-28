@@ -1,36 +1,37 @@
 function modify_port_val(port){
 	layer.open({
 		type: 1,
-		area: '350px',
+		area: '400px',
 		title: '修改端口',
 		closeBtn:2,
 		shadeClose: false,
 		btn:['确认','取消'],
 		content: '<div class="bt-form pd20 pd70" style="padding:20px 35px;">\
 				<ul style="margin-bottom:10px;color:red;width: 100%;background: #f7f7f7;padding: 10px;border-radius: 5px;font-size: 12px;">\
-					<li style="color:red;">有安全组的服务器请提前在安全组放行新端口。<a target="_blank" class="btlink" href="https://www.bt.cn/bbs/thread-40037-1-1.html">如何放行端口？</a></li>\
+					<li style="color:red;font-size:13px;">1、有安全组的服务器请提前在安全组放行新端口</li>\
+					<li style="color:red;font-size:13px;">2、如果修改端口导致面板无法访问，请在SSH命令行通过bt命令改回原来的端口</li>\
 				</ul>\
 				<div class="line">\
 	                <span class="tname" style="width: 70px;">面板端口</span>\
 	                <div class="info-r" style="margin-left:70px">\
-	                    <input name="port" class="bt-input-text mr5" type="text" style="width:200px" value="'+ port +'">\
+	                    <input name="portss" class="bt-input-text mr5" type="text" style="width:200px" value="'+ port +'">\
 	                </div>\
                 </div>\
                 <div class="details" style="margin-top:5px;padding-left: 3px;">\
 					<input type="checkbox" id="check_port">\
-					<label style="font-weight: 400;margin: 3px 5px 0px;" for="check_port">我已经了解详情</label>\
+					<label style="font-weight: 400;margin: 3px 5px 0px;" for="check_port">我已了解</label>,<a target="_blank" class="btlink" href="https://www.bt.cn/bbs/thread-40037-1-1.html">如何放行端口？</a>\
 				</div>\
 			</div>',
 		yes:function(index,layero){
 			var check_port = $('#check_port').prop('checked'),_tips = '';
 			if(!check_port){
-				_tips = layer.tips('请勾选已了解详情', '#check_port', {tips:[1,'#ff0000'],time:5000});
+				_tips = layer.tips('请勾选我已了解', '#check_port', {tips:[1,'#ff0000'],time:5000});
 				return false;
 			}
 			layer.close(_tips);
-			$('#banport').val($('[name="port"]').val());
+			$('#banport').val($('[name="portss"]').val());
 			var _data = $("#set-Config").serializeObject();
-			_data['port'] = $('[name="port"]').val();
+			_data['port'] = $('[name="portss"]').val();
 			var loadT = layer.msg(lan.config.config_save,{icon:16,time:0,shade: [0.3, '#000']});
 			$.post('/config?action=setPanel',_data,function(rdata){
 				layer.close(loadT);
@@ -39,7 +40,7 @@ function modify_port_val(port){
 					layer.close(index);
 					setTimeout(function(){
 						window.location.href = ((window.location.protocol.indexOf('https') != -1)?'https://':'http://') + rdata.host + window.location.pathname;
-					},1500);
+					},4000);
 				}
 			});
 		},

@@ -1474,23 +1474,56 @@ var soft = {
                 })
                 break;
             case 'get_phpinfo':
-                var con = '<button id="btn_phpinfo" class="btn btn-default btn-sm" >' + lan.soft.phpinfo + '</button>';
-                $(".soft-man-con").html(con);
+                var con = '';
+                var p_status = { true: '<span style="color:green;">Yes</span>', false:'<span style="color:red;">No</span>'};
+                $.post('/ajax?action=php_info', { php_version: version }, function (php_info) {
+                    con += '<button id="btn_phpinfo" class="btn btn-default btn-sm" >' + lan.soft.phpinfo + '</button>'
+                    con += '<div class="php_info_group"><p>基本信息 </p>'
+                    con += '<table id="tab_php_status" class="table table-hover table-bordered" style="margin:0;padding:0">';
+                    con += '<tr><td>P版本</td><td>' + php_info.phpinfo.php_version + '</td><td>安装位置</td><td>' + php_info.phpinfo.php_path + '</td></tr>'
+                    con += '<tr><td>php.ini</td><td colspan="3">' + php_info.phpinfo.php_ini + '</td></tr>'
+                    con += '<tr><td>已加载</td><td colspan="3">' + php_info.phpinfo.modules + '</td></tr>'
+                    con += '</table></div>';
+                    Object.keys(php_info).sort().forEach(function (k) {
+                        if (k !== 'phpinfo') {
+                            con += '<div class="php_info_group"><p>' + php_info.phpinfo.keys[k] + '</p>'
+                            con += '<table id="tab_php_status" class="table table-hover table-bordered" style="margin:0;padding:0">';
+                            var nkey = 0;
+                            Object.keys(php_info[k]).forEach(function (key) {
+                                if (nkey == 0) con += '<tr>';
+                                con += '<td>' + key + '</td><td>' + p_status[php_info[k][key]] + '</td>'
+                                nkey++;
+                                if (nkey >= 3) {
+                                    nkey = 0;
+                                    con += '</tr>';
+                                }
+                            });
 
-                $('#btn_phpinfo').click(function () {
-                    var loadT = bt.load(lan.soft.get);
-                    bt.send('GetPHPInfo', 'ajax/GetPHPInfo', { version: version }, function (rdata) {
-                        loadT.close();
-                        bt.open({
-                            type: 1,
-                            title: "PHP-" + version + "-PHPINFO",
-                            area: ['70%', '90%'],
-                            closeBtn: 2,
-                            shadeClose: true,
-                            content: rdata.replace('a:link {color: #009; text-decoration: none; background-color: #fff;}', '').replace('a:link {color: #000099; text-decoration: none; background-color: #ffffff;}', '')
+                            con += '</table></div>';
+                        }
+                    })
+
+
+
+                    $(".soft-man-con").html(con);
+
+                    $('#btn_phpinfo').click(function () {
+                        var loadT = bt.load(lan.soft.get);
+                        bt.send('GetPHPInfo', 'ajax/GetPHPInfo', { version: version }, function (rdata) {
+                            loadT.close();
+                            bt.open({
+                                type: 1,
+                                title: "PHP-" + version + "-PHPINFO",
+                                area: ['70%', '90%'],
+                                closeBtn: 2,
+                                shadeClose: true,
+                                content: rdata.replace('a:link {color: #009; text-decoration: none; background-color: #fff;}', '').replace('a:link {color: #000099; text-decoration: none; background-color: #ffffff;}', '')
+                            })
                         })
                     })
-                })
+                });
+
+                
                 break;
             case 'config_edit':
                 bt.soft.php.get_php_config(version, function (rdata) {

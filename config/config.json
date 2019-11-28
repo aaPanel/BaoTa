@@ -3,7 +3,7 @@
   "title": "宝塔Linux面板",
   "brand": "宝塔",
   "product": "Linux面板",
-  "home": "http://test0026.bt.cn",
+  "home": "http://www.bt.cn",
   "root_path": "/www",
   "setup_path": "/www/server",
   "logs_path": "/www/wwwlogs",

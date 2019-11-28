@@ -352,19 +352,6 @@ session.save_handler = files'''.format(path,sess_path,sess_path)
         for f in tmp_files: tmp_dirs.append(f)
         return tmp_dirs
 
-    def __save_list_history(self,path):
-        max_num = 20
-        path = path.strip()
-        save_path = '/www/server/panel/config/list_history.json'
-        if not os.path.exists(save_path): public.writeFile(save_path,'{}')
-        list_history = json.loads(public.readFile(save_path))
-        if path in list_history:
-            list_history[path] += 1
-        else:
-            list_history[path] = 1
-
-        #sorted(list_history,key=lambda x:x )
-
 
 
     def __format_stat(self,filename,path):
@@ -773,6 +760,11 @@ session.save_handler = files'''.format(path,sess_path,sess_path)
                 tmp['mtime'] = str(int(stat.st_mtime));
                 data.append(tmp);
         return data;
+
+    #取文件扩展名
+    def __get_ext(self,filename):
+        tmp = filename.split('.')
+        return tmp[-1]
             
     
     #获取文件内容
@@ -782,7 +774,8 @@ session.save_handler = files'''.format(path,sess_path,sess_path)
             if get.path.find('rewrite') == -1:
                 return public.returnMsg(False,'FILE_NOT_EXISTS',(get.path,))
             public.writeFile(get.path,'');
-        
+        if self.__get_ext(get.path) in ['gz','zip','rar','exe','db','pdf','doc','xls','docx','xlsx','ppt','pptx','7z','bz2','png','gif','jpg','jpeg','bmp','icon','ico','pyc','class','so','pyd']: 
+            return public.returnMsg(False,'该文件格式不支持在线编辑!')
         if os.path.getsize(get.path) > 3145928: return public.returnMsg(False,u'不能在线编辑大于3MB的文件!');
         if not os.path.isfile(get.path): return public.returnMsg(False,'这不是一个文件!')
         fp = open(get.path,'rb')
@@ -819,6 +812,7 @@ session.save_handler = files'''.format(path,sess_path,sess_path)
                return public.returnMsg(False,'打开文件失败，文件可能被其它进程占用!')
             if hasattr(get,'filename'): get.path = get.filename
             data['historys'] = self.get_history(get.path)
+            data['auto_save'] = self.get_auto_save(get.path)
             return data;
         except Exception as ex:
             return public.returnMsg(False,u'文件编码不被兼容，无法正确读取文件!' + str(ex));
@@ -885,6 +879,7 @@ session.save_handler = files'''.format(path,sess_path,sess_path)
         
     #保存历史副本
     def save_history(self,filename):
+        if os.path.exists('/www/server/panel/data/not_file_history.pl'): return True
         try:
             his_path = '/www/backup/file_history/'
             if filename.find(his_path) != -1: return
@@ -926,6 +921,41 @@ session.save_handler = files'''.format(path,sess_path,sess_path)
         save_path = ('/www/backup/file_history/' + args.filename).replace('//','/')
         args.path = save_path + '/' + args.history
         return self.GetFileBody(args)
+
+    #恢复指定历史副本
+    def re_history(self,args):
+        save_path = ('/www/backup/file_history/' + args.filename).replace('//','/')
+        args.path = save_path + '/' + args.history
+        if not os.path.exists(args.path): return public.returnMsg(False,'指定历史副本不存在!')
+        import shutil
+        shutil.copyfile(args.path,args.filename)
+        return self.GetFileBody(args)
+
+    #自动保存配置
+    def auto_save_temp(self,args):
+        save_path = '/www/backup/file_auto_save/'
+        if not os.path.exists(save_path): os.makedirs(save_path,384)
+        filename = save_path + args.filename
+        if os.path.exists(filename):
+            f_md5 = public.FileMd5(filename)
+            s_md5 = public.md5(args.body)
+            if f_md5 == s_md5: return public.returnMsg(True,'未修改!')
+        public.writeFile(filename,args.body)
+        return public.returnMsg(True,'自动保存成功!')
+    
+    #取上一次自动保存的结果
+    def get_auto_save_body(self,args):
+        save_path = '/www/backup/file_auto_save/'
+        args.path = save_path + args.filename
+        return self.GetFileBody(args)
+
+    #取自动保存结果
+    def get_auto_save(self,filename):
+        try:
+            save_path = ('/www/backup/file_auto_save/' + filename).replace('//','/')
+            if not os.path.exists(save_path): return None
+            return os.stat(save_path).st_mtime
+        except: return None
 
     #文件压缩
     def Zip(self,get) :
@@ -1455,7 +1485,8 @@ cd %s
                         is_go = True
                         break
             if not is_go:
-                return public.returnMsg(False,'找不到此收藏对象!') 
+                return public.returnMsg(False,'找不到此收藏对象!')
+
         data.remove(path)
         if len(data) <= 0: data = []
         self.set_store_data(data)

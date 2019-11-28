@@ -3,7 +3,6 @@ $(document).ready(function() {
 		$(this).next(".sub").slideToggle("slow").siblings(".sub:visible").slideUp("slow");
 	});
 });
-
 var aceEditor = {
 	layer_view:'',
 	editor: null,
@@ -49,7 +48,9 @@ var aceEditor = {
 		VBScript: ["vbs|vb"],
 		Verilog: ["v|vh|sv|svh"],
 		XML: ["xml|rdf|rss|wsdl|xslt|atom|mathml|mml|xul|xbl|xaml"],
-		YAML: ["yaml|yml"]
+		YAML: ["yaml|yml"],
+		Compress:['tar|zip|7z|rar|gz|arj|z'],
+		images:['icon|jpg|jpeg|png|bmp|gif|tif|emf']
 	},
 	nameOverrides: {
 		ObjectiveC: "Objective-C",
@@ -70,6 +71,7 @@ var aceEditor = {
 	editorLength: 0,
 	isAceView:true,
 	ace_active:'',
+	is_resizing:false,
 	// 事件编辑器-方法，事件绑定
 	eventEditor: function () {
 		var _this = this;
@@ -77,6 +79,10 @@ var aceEditor = {
 			var _id = $('.ace_conter_menu .active').attr('data-id');
 			aceEditor.editor['ace_editor_'+_id].ace.resize();
 			_this.setEditorView()
+		})
+		$(document).click(function(e){
+			$('.ace_toolbar_menu').hide();
+			$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
 		})
 		// 显示工具条
 		$('.ace_header .pull-down').click(function(){
@@ -91,17 +97,15 @@ var aceEditor = {
 			}
 			_this.setEditorView();
 		});
-
 		// 切换TAB视图
 		$('.ace_conter_menu').on('click', '.item', function (e) {
-			var _id = $(this).attr('data-id');
+			var _id = $(this).attr('data-id'),_item = _this.editor['ace_editor_'+_id]
 			$('.item_tab_'+ _id).addClass('active').siblings().removeClass('active');
 			$('#ace_editor_'+ _id).addClass('active').siblings().removeClass('active');
 			_this.ace_active = _id;
 			_this.currentStatusBar(_id);
-			e.stopPropagation();
+			_this.is_file_history(_item);
 		});
-		
 		// 移上TAB按钮变化，仅文件被修改后
 		$('.ace_conter_menu').on('mouseover', '.item .icon-tool', function () {
 			var type = $(this).attr('data-file-state');
@@ -109,7 +113,6 @@ var aceEditor = {
 				$(this).removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove');
 			}
 		});
-
 		// 移出tab按钮变化，仅文件被修改后
 		$('.ace_conter_menu').on('mouseout', '.item .icon-tool', function () {
 			var type = $(this).attr('data-file-state');
@@ -117,7 +120,6 @@ var aceEditor = {
 				$(this).removeClass('glyphicon-remove').addClass('glyphicon-exclamation-sign');
 			}
 		});
-
 		// 关闭编辑视图
 		$('.ace_conter_menu').on('click', '.item .icon-tool', function (e) {
 			var file_type = $(this).attr('data-file-state');
@@ -137,7 +139,7 @@ var aceEditor = {
 						title: '提示',
 						content: '<div class="ace-clear-form">\
 							<div class="clear-icon"></div>\
-							<div class="clear-title">是否保存对&nbsp' + file_title + '&nbsp的更改？</div>\
+							<div class="clear-title">是否保存对&nbsp<span class="size_ellipsis" style="max-width:150px;vertical-align: top;" title="' + file_title + '">' + file_title + '</span>&nbsp的更改？</div>\
 							<div class="clear-tips">如果不保存，更改会丢失！</div>\
 							<div class="ace-clear-btn" style="">\
 								<button type="button" class="btn btn-sm btn-default" style="float:left" data-type="2">不保存文件</button>\
@@ -147,14 +149,17 @@ var aceEditor = {
 						</div>',
 						success: function (layers, index) {
 							$('.ace-clear-btn .btn').click(function () {
-								var _type = $(this).attr('data-type');
+								var _type = $(this).attr('data-type'),
+								editor_item = _this.editor['ace_editor_'+_id];
 								switch (_type) {
 									case '0': //保存文件
 										_this.saveFileBody({
 											path:_path,
 											data:editor_item.ace.getValue(),
-											encoding:editor_item.ace.getValue()
+											encoding:editor_item.encoding
 										},function(res){
+											layer.close(index);
+											_this.removeEditor(editor_item.id);
 											layer.msg(res.msg, {icon: 1});
 											editor_item.fileType = 0;
 											$('.item_tab_' + editor_item.id + ' .icon-tool').attr('data-file-state', '0').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove');
@@ -175,12 +180,10 @@ var aceEditor = {
 			}
 			e.stopPropagation();
 		});
-
 		// 新建编辑器视图
 		$('.ace_editor_add').click(function () {
 			_this.addEditor();
 		});
-		
 		// 底部状态栏功能按钮
 		$('.ace_conter_toolbar .pull-right span').click(function (e) {
 			var _type = $(this).attr('data-type'),_id = $(this).attr('data-id'),_item = _this.editor['ace_editor_'+_id],_icon = '<span class="icon"><i class="glyphicon glyphicon-ok" aria-hidden="true"></i></span>';
@@ -189,35 +192,55 @@ var aceEditor = {
 				case 'cursor':
 					$('.ace_toolbar_menu').hide();
 				break;
+				case 'history':
+					$('.ace_toolbar_menu').hide();
+					if(_item.historys.length === 0){
+						layer.msg('历史文件为空',{icon:0});
+						return false;
+					}
+					_this.layer_view = layer.open({
+						type: 1,
+						area: '550px',
+						title: '文件历史版本[ '+ _item.fileName +' ]',
+						skin:'historys_layer',
+						content: '<div class="pd20">\
+							<div class="divtable">\
+								<table class="historys table table-hover">\
+									<thead><tr><th>文件名</th><th>版本时间</th><th style="text-align:right;">操作</th></tr></thead>\
+									<tbody></tbody>\
+								</table>\
+							</div>\
+						</div>',
+						success:function(layeo,index){
+							var _html = '';
+							for(var i=0;i<_item.historys.length;i++){
+								_html += '<tr><td><span class="size_ellipsis" style="max-width:200px">'+ _item.fileName +'</span></td><td>'+ bt.format_data(_item.historys[i]) +'</td><td align="right"><a href="javascript:;" class="btlink open_history_file" data-time="'+ _item.historys[i] +'">打开文件</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink recovery_file_historys" data-history="'+ _item.historys[i] +'" data-path="'+ _item.path +'">恢复</a></td></tr>'
+							}
+							if(_html === '') _html += '<tr><td colspan="3">当前文件无历史版本</td></tr>'
+							$('.historys tbody').html(_html);
+							$('.historys_layer').css('top', ($(window).height()/2)-($('.historys_layer').height()/2)+'px')
+							$('.open_history_file').click(function(){
+								var _history = $(this).attr('data-time');
+								_this.openHistoryEditorView({filename:_item.path,history:_history},function(){
+									layer.close(index);
+									$('.ace_conter_tips').show();
+									$('.ace_conter_tips .tips').html('只读文件，文件为'+ _item.path +'，历史版本 [ '+ bt.format_data(new Number(_history)) +' ]<a href="javascript:;" class="ml35 btlink" data-path="'+ _item.path +'" data-history="'+ _history +'">点击恢复当前历史版本</a>');
+								});
+							});
+							$('.recovery_file_historys').click(function(){
+								_this.event_ecovery_file(this);
+							});
+						}
+					});
+				break;
 				case 'tab':
 					$('.ace_toolbar_menu .menu-tabs').show().siblings().hide();
 					$('.tabsType').find(_item.softTabs?'[data-value="nbsp"]':'[data-value="tabs"]').addClass('active').append(_icon);
 					$('.tabsSize [data-value="'+ _item.tabSize +'"]').addClass('active').append(_icon);
-					$('.menu-tabs li').click(function(e){
-						var _val = $(this).attr('data-value');
-						if($(this).parent().hasClass('tabsType')){
-							_item.ace.getSession().setUseSoftTabs(_val == 'nbsp');
-							_item.softTabs = _val == 'nbsp';
-						}else{
-							_item.ace.getSession().setTabSize(_val);
-							_item.tabSize = _val;
-						}
-						$(this).siblings().removeClass('active').find('.icon').remove();
-						$(this).addClass('active').append(_icon);
-						_this.currentStatusBar(_id);
-						e.stopPropagation();
-						e.preventDefault();
-					});
 				break;
 				case 'encoding':
+					_this.getEncodingList('UTF-8');
 					$('.ace_toolbar_menu .menu-encoding').show().siblings().hide();
-					_this.setEncodingType();
-					$('.menu-encoding ul li').click(function(e){
-						layer.msg('设置文件编码：' + $(this).attr('data-value'));
-						$('.ace_conter_toolbar [data-type="encoding"]').html('编码：<i>'+ $(this).attr('data-value') +'</i>');
-						$(this).addClass('active').append(_icon).siblings().removeClass('active').find('span').remove();
-						_item.encoding = $(this).attr('data-value');
-					});
 				break;
 				case 'lang':
 					$('.ace_toolbar_menu').hide();
@@ -227,7 +250,41 @@ var aceEditor = {
 			e.stopPropagation();
 			e.preventDefault();
 		});
-		
+		// 隐藏目录
+		$('.tips_fold_icon .glyphicon').click(function(){
+			if($(this).hasClass('glyphicon-menu-left')){
+				$('.ace_conter_tips').css('right','0');
+				$('.tips_fold_icon').css('left','0');
+				$(this).removeClass('glyphicon-menu-left').addClass('glyphicon-menu-right');
+			}else{
+				$('.ace_conter_tips').css('right','-100%');
+				$('.tips_fold_icon').css('left','-25px');
+				$(this).removeClass('glyphicon-menu-right').addClass('glyphicon-menu-left');
+			}
+		});
+		// 设置换行符
+		$('.menu-tabs').on('click','li',function(e){
+			var _val = $(this).attr('data-value');
+			if($(this).parent().hasClass('tabsType')){
+				_item.ace.getSession().setUseSoftTabs(_val == 'nbsp');
+				_item.softTabs = _val == 'nbsp';
+			}else{
+				_item.ace.getSession().setTabSize(_val);
+				_item.tabSize = _val;
+			}
+			$(this).siblings().removeClass('active').find('.icon').remove();
+			$(this).addClass('active').append(_icon);
+			_this.currentStatusBar(_id);
+			e.stopPropagation();
+			e.preventDefault();
+		});
+		// 设置编码内容
+		$('.menu-encoding').on('click','li',function(e){
+			layer.msg('设置文件编码：' + $(this).attr('data-value'));
+			$('.ace_conter_toolbar [data-type="encoding"]').html('编码：<i>'+ $(this).attr('data-value') +'</i>');
+			$(this).addClass('active').append(_icon).siblings().removeClass('active').find('span').remove();
+			_item.encoding = $(this).attr('data-value');
+		});
 		// 搜索内容键盘事件
 		$('.menu-files .menu-input').keyup(function () {
 			_this.searchRelevance($(this).val());
@@ -237,14 +294,12 @@ var aceEditor = {
 				$(this).next().hide();
 			}
 		});
-		
 		// 清除搜索内容事件
 		$('.menu-files .menu-conter .fa').click(function(){
 			$('.menu-files .menu-input').val('').next().hide();
 			_this.searchRelevance()
 		});
-		
-		// 状态
+		// 顶部状态栏
 		$('.ace_header span').click(function (e) {
 			var type =  $(this).attr('class'),editor_item =  _this.editor['ace_editor_'+ _this.ace_active];
 			switch(type){
@@ -458,7 +513,7 @@ var aceEditor = {
 									ctrl+a&nbsp;&nbsp;全选&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+x&nbsp;&nbsp;剪切</br>\
 									ctrl+c&nbsp;&nbsp;复制&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+v&nbsp;&nbsp;粘贴</br>\
 									ctrl+z&nbsp;&nbsp;撤销&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+y&nbsp;&nbsp;反撤销</br>\
-									ctrl+f&nbsp;&nbsp;查找&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+h;&nbsp;替换</br>\
+									ctrl+f&nbsp;&nbsp;查找&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+h&nbsp;替换</br>\
 									win+alt+0&nbsp;&nbsp;折叠所有</br>\
 									win+alt+shift+0&nbsp;&nbsp;展开所有</br>\
 									esc&nbsp;&nbsp;[退出搜索,取消自动提示...]</br>\
@@ -510,24 +565,532 @@ var aceEditor = {
 			e.stopPropagation();
 			e.preventDefault();
 		});
+		// 菜单状态
 		$('.ace_toolbar_menu').click(function(e){
 			e.stopPropagation();
 			e.preventDefault();
 		});
-		$(document).click(function(e){
-			$('.ace_toolbar_menu').hide();
-			$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
-		})
-		// 选择语言
+		// 文件目录选择
+		$('.ace_catalogue_list').on('click','.has-children .file_fold',function(e){
+			var _layers = $(this).attr('data-layer'),_type = $(this).find('data-type'),_path=$(this).parent().attr('data-paths'),_menu = $(this).find('.glyphicon'),_group = parseInt($(this).attr('data-group')),_file = $(this).attr('data-file'),_tath = $(this);
+			var _active = $('.ace_catalogue_list .has-children .file_fold.edit_file_group');
+			if(_active.length>0 && $(this).attr('data-edit') === undefined){
+				switch(_active.attr('data-edit')){
+					case '2':
+						_active.find('.file_input').siblings().show();
+						_active.find('.file_input').remove();
+						_active.removeClass('edit_file_group').removeAttr('data-edit');
+					break;
+					case '1':
+					case '0':
+						_active.parent().remove();
+					break;
+				}
+				layer.closeAll('tips');
+			}
+			if($(this).hasClass('edit_file_group')) return false;
+			$('.ace_catalogue_list .has-children .file_fold').removeClass('bg');
+			$(this).addClass('bg');
+			$('.ace_catalogue_menu').hide();
+			if($(this).attr('data-file') == 'Dir'){
+				if(_menu.hasClass('glyphicon-menu-right')){
+					_menu.removeClass('glyphicon-menu-right').addClass('glyphicon-menu-down');
+					$(this).next().show();
+					if($(this).next().find('li').length == 0) _this.reader_file_dir_menu({el:$(this).next(),path:_path,group:_group+1});
+				}else{
+					_menu.removeClass('glyphicon-menu-down').addClass('glyphicon-menu-right');
+					$(this).next().hide();
+				}
+			}else{
+				_this.openEditorView(_path,function(res){
+					if(res.status) _tath.addClass('active');
+				});
+			}
+			e.stopPropagation();
+			e.preventDefault();
+		});
+		// 禁用目录选择
+		$('.ace_catalogue').bind("selectstart",function(){
+			return false;
+		});
+		// 返回目录
+		$('.ace_catalogue_list').on('click','.has-children.upper_level',function(e){
+			var _paths = $(this).attr('data-paths');
+			_this.reader_file_dir_menu({path:_paths,is_empty:true});
+			$('.ace_catalogue_title').html('目录：'+ _paths).attr('title',_paths);
+		});
+		// 移动编辑器文件目录
+		$('.ace_catalogue_drag_icon .drag_icon_conter').on('mousedown', function (e) {
+			var _left = $('.aceEditors')[0].offsetLeft;
+			$('.ace_gutter-layer').css('cursor','col-resize');
+			$('#ace_conter').unbind().on('mousemove',function(ev){
+				var _width = (ev.clientX+1) -_left;
+				if(_width >= 250 && _width <= 400){
+					$('.ace_catalogue').css('width',_width);
+					$('.ace_editor_main').css('marginLeft',_width);
+					$('.ace_catalogue_drag_icon ').css('left',_width);
+					$('.file_fold .newly_file_input').width($('.file_fold .newly_file_input').parent().parent().parent().width() - ($('.file_fold .newly_file_input').parent().parent().attr('data-group') * 15 -5)-20-30-53);
+				}
+			}).on('mouseup', function (ev){
+				$('.ace_gutter-layer').css('cursor','inherit');
+				$(this).unbind('mouseup mousemove');
+			});
+		});
+		// 收藏目录显示和隐藏
+		$('.ace_catalogue_drag_icon .fold_icon_conter').on('click',function (e) {
+			if($('.ace_overall').hasClass('active')){
+				$('.ace_overall').removeClass('active');
+				$('.ace_catalogue').css('left','0');
+				$(this).removeClass('active').attr('title','隐藏文件目录');
+				$('.ace_editor_main').css('marginLeft',$('.ace_catalogue').width());
+			}else{
+				$('.ace_overall').addClass('active');
+				$('.ace_catalogue').css('left','-'+$('.ace_catalogue').width()+'px');
+				$(this).addClass('active').attr('title','显示文件目录');
+				$('.ace_editor_main').css('marginLeft',0);
+			}
+		});
+		// 恢复历史文件
+		$('.ace_conter_tips').on('click','a',function(){
+			_this.event_ecovery_file(this);
+		});
+		// 右键菜单
+		$('.ace_catalogue_list').on('mousedown','.has-children .file_fold',function(e){
+			var x = e.clientX,y = e.clientY,_left = $('.aceEditors')[0].offsetLeft,_top = $('.aceEditors')[0].offsetTop;
+			var _that = $('.ace_catalogue_list .has-children .file_fold'),_active =$('.ace_catalogue_list .has-children .file_fold.edit_file_group')
+			if(e.which === 3){
+				if($(this).hasClass('edit_file_group')) return false;
+				$('.ace_catalogue_menu').css({'display':'block','left':x-_left,'top':y-_top});
+				_that.removeClass('bg');
+				$(this).addClass('bg');
+				_active.attr('data-edit') != '2'?_active.parent().remove():'';
+				_that.removeClass('edit_file_group').removeAttr('data-edit');
+				_that.find('.file_input').siblings().show();
+				_that.find('.file_input').remove();
+				if($(this).attr('data-file') == 'Dir'){
+					$('.ace_catalogue_menu li').show();
+				}else{
+					$('.ace_catalogue_menu li:eq(0)').hide();
+					$('.ace_catalogue_menu li:eq(1)').hide();
+				}
+				$(document).click(function(){
+					$('.ace_catalogue_menu').hide();
+					$(this).unbind('click');
+					return false;
+				});
+			}
+		});
+		// 文件目录右键功能		
+		$('.ace_catalogue_menu li').click(function(e){
+			_this.newly_file_type(this);
+		});
+		$('.ace_catalogue_list').on('click','.has-children .edit_file_group .glyphicon-ok',function(){
+			var _file_or_dir = $(this).parent().find('input').val(),_path = $('.has-children .file_fold.bg').parent().attr('data-paths'),_type = parseInt($(this).parent().parent().attr('data-edit'));
+			if(_file_or_dir === ''){
+				$(this).prev().css('border','1px solid #f34a4a');
+				layer.tips(_type===0?'文件目录不能为空':(_type===1?'文件名称不能空':'新名称不能为空'),$(this).prev(),{tips: [1,'#f34a4a'],time:0});
+				return false;
+			}else if($(this).prev().attr('data-type') === 0){
+				return false;
+			}
+			switch(_type){
+				case 0: //文件夹
+					_this.event_create_dir({path:_path+'/'+_file_or_dir},this);
+				break;
+				case 1: //文件
+					_this.event_create_file({path:_path+'/'+_file_or_dir},this);
+				break;
+				case 2: //重命名
+					console.log(_this.get_file_dir(_path,1),_file_or_dir)
+					_this.event_rename_currency({sfile:_path,dfile:_this.get_file_dir(_path,1)+'/'+_file_or_dir},this);
+				break;
+			}
+		});
+		$('.ace_catalogue_list').on('keyup','.has-children .edit_file_group input',function(e){
+			var _type = $(this).parent().parent().attr('data-edit'),_arry = $('.has-children .file_fold.bg+ul>li [data-file="'+ (_type == 0?'Dir':'Files') +'"]');
+			for(var i=0;i<_arry.length;i++){
+				if($(_arry[i]).find('.file_title span').html() === $(this).val()){
+					$(this).css('border','1px solid #f34a4a');
+					$(this).attr('data-type',0);
+					layer.tips(_type == 0?'文件目录存在同名目录':'文件名称存在同名文件',$(this)[0],{tips: [1,'#f34a4a'],time:0});
+					return false
+				}
+			}
+			if(_type == 1 && $(this).val().indexOf('.')) $(this).prev().removeAttr('class').addClass(_this.get_file_suffix($(this).val())+'-icon');
+			$(this).removeAttr('data-type');
+			$(this).css('border','1px solid #528bff');
+			layer.closeAll('tips');
+			if(e.keyCode === 13) $(this).next().click()
+			e.stopPropagation();
+			e.preventDefault();
+		});
+		$('.ace_catalogue_list').on('click','.has-children .edit_file_group .glyphicon-remove',function(){
+			layer.closeAll('tips');
+			if($(this).parent().parent().attr('data-edit') === '2'){
+				$(this).parent().parent().removeClass('edit_file_group').removeAttr('data-edit');
+				$(this).parent().siblings().show();
+				$(this).parent().remove();
+				return false;
+			}
+			$(this).parent().parent().parent().remove();
+		});
+		//屏蔽浏览器右键菜单
+		$('.ace_catalogue_list')[0].oncontextmenu=function(){
+			return false;
+		}
 		this.setEditorView();
+		this.reader_file_dir_menu();
 	},
-	// 设置搜索视图
-	setSearchView:function(){
-		
+	// 新建文件类型
+	newly_file_type:function(that){
+		var _type = parseInt($(that).attr('data-type')),_file_fold = $('.ace_catalogue .ace_catalogue_list .has-children .file_fold.bg'),_group = parseInt(_file_fold.attr('data-group')),_path = _file_fold.parent().attr('data-paths'),_this = this;
+		switch(_type){
+			case 0: //新建文件
+			case 1:
+				if(_file_fold.next().find('li').length === 0){
+					this.reader_file_dir_menu({el:_file_fold.next(),path:_path,group:_group+1},function(res){
+						_this.newly_file_type_dom(_file_fold,_group,_type);
+					});
+				}else{
+					_this.newly_file_type_dom(_file_fold,_group,_type);
+				}
+			break;
+			case 2: //文件重命名
+				var _types = _file_fold.attr('data-file');
+				if(_file_fold.hasClass('active')){
+					layer.msg('该文件已打开，无法修改名称',{icon:0});
+					return false;
+				}
+				_file_fold.attr('data-edit',2);
+				_file_fold.addClass('edit_file_group');
+				_file_fold.find('.file_title').hide();
+				_file_fold.find('.glyphicon').hide();
+				_file_fold.prepend('<span class="file_input"><i class="'+ (_types==='Dir'?'folder':(_this.get_file_suffix(_file_fold.find('.file_title span').html()))) +'-icon"></i><input type="text" class="newly_file_input" value="'+ (_file_fold.find('.file_title span').html()) +'"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>')
+				$('.file_fold .newly_file_input').width($('.file_fold .newly_file_input').parent().parent().parent().width() - ($('.file_fold .newly_file_input').parent().parent().attr('data-group') * 15 -5)-20-30-53);
+				$('.file_fold .newly_file_input').focus();
+			break;
+			case 3:
+				var is_files =  _file_fold.attr('data-file') == 'Files'
+				layer.confirm(lan.get(is_files?'recycle_bin_confirm':'recycle_bin_confirm_dir', [_file_fold.find('.file_title span').html()]), { title: is_files?lan.files.del_file:lan.files.del_dir, closeBtn: 2, icon: 3 }, function (index) {
+					_this[is_files?'del_file_req':'del_dir_req']({path:_path},function(res){
+						layer.msg(res.msg,{icon:res.status?1:2});
+						if(res.status){
+							if(_file_fold.attr('data-group') != 1){
+								_file_fold.parent().parent().prev().addClass('bg');
+							}
+							_this.refresh_meun_list('.has-children .file_fold.bg',function(){
+								layer.msg(res.msg,{icon:1});
+							});
+						}
+					});
+				});
+			break;
+		}
 	},
-	// 设置替换视图
-	setReplaceView:function(){
-		
+	
+	newly_file_type_dom:function(_file_fold,_group,_type,_val){
+		var _html = '',_this = this;
+		_file_fold.next().show();
+		_file_fold.find('.glyphicon').removeClass('glyphicon-menu-right').addClass('glyphicon-menu-down');
+		_html += '<li class="has-children children_'+ (_group+1) +'"><div class="file_fold edit_file_group group_'+ (_group+1) +'" data-group="'+ (_group+1) +'" data-edit="'+ _type +'"><span class="file_input">';
+		_html += '<i class="'+ (_type == 0?'folder':(_type == 1?'text':(_this.get_file_suffix(_val)))) +'-icon"></i>'
+		_html += '<input type="text" class="newly_file_input" value="'+ (_val != undefined?_val:'') +'">'
+		_html += '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></span></div></li>'
+		_file_fold.next().prepend(_html);
+		$('.file_fold .newly_file_input').width($('.file_fold .newly_file_input').parent().parent().parent().width() - ($('.file_fold .newly_file_input').parent().parent().attr('data-group') * 15 -5)-20-30-53);
+		$('.newly_file_input').focus();
+	},
+	// 通用重命名事件
+	event_rename_currency:function(obj,that){
+		var _active = $('.ace_catalogue_list .has-children .file_fold.edit_file_group'),_this = this;
+		this.rename_currency_req({sfile:obj.sfile,dfile:obj.dfile},function(res){
+			layer.msg(res.msg,{icon:res.status?1:2});
+			if(res.status){
+				_this.refresh_meun_list($('.has-children .file_fold.bg').parent().parent().prev()[0],function(){
+					layer.msg(res.msg,{icon:1});
+				});
+			}else{
+				_active.find('.file_input').siblings().show();
+				_active.find('.file_input').remove();
+				_active.removeClass('edit_file_group').removeAttr('data-edit');
+			}
+		})
+	},
+	// 创建文件目录事件
+	event_create_dir:function(obj,that){
+		var _this = this;
+		this.create_dir_req({path:obj.path},function(res){
+			layer.msg(res.msg,{icon:res.status?1:2});
+			if(res.status){
+				_this.refresh_meun_list('.has-children .file_fold.bg',function(){
+					layer.msg(res.msg,{icon:1});
+				});
+			}
+		})
+	},
+	// 创建文件事件
+	event_create_file:function(obj,that){
+		var _this = this;
+		this.create_file_req({path:obj.path},function(res){
+			layer.msg(res.msg,{icon:res.status?1:2});
+			if(res.status){
+				_this.refresh_meun_list('.has-children .file_fold.bg',function(res){
+					layer.msg(res.msg,{icon:1});
+					_this.openEditorView(obj.path);
+				});
+			}
+		})
+	},
+	// 重命名请求
+	rename_currency_req:function(obj,callback){
+		var loadT = layer.msg('正在重命名文件或目录，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']});
+		$.post("/files?action=MvFile",{
+			sfile:obj.sfile,
+			dfile:obj.dfile,
+			rename:'true'
+		},function(res){
+			layer.close(loadT);
+			if(callback) callback(res);
+		});
+	},	
+	// 创建文件事件
+	create_file_req:function(obj,callback){
+		var loadT = layer.msg('正在新建文件，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']});
+		$.post("/files?action=CreateFile",{
+			path:obj.path
+		},function(res){
+			layer.close(loadT);
+			if(callback) callback(res);
+		});
+	},
+	// 创建目录请求
+	create_dir_req:function(obj,callback){
+		var loadT = layer.msg('正在新建目录，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']});
+		$.post("/files?action=CreateDir",{
+			path:obj.path
+		},function(res){
+			layer.close(loadT);
+			if(callback) callback(res);
+		});
+	},
+	// 删除文件请求
+	del_file_req:function(obj,callback){
+		var loadT = layer.msg('正在删除文件，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']});
+		$.post("/files?action=DeleteFile",{
+			path:obj.path
+		},function(res){
+			layer.close(loadT);
+			if(callback) callback(res);
+		});
+	},
+	// 删除目录请求
+	del_dir_req:function(obj,callback){
+		var loadT = layer.msg('正在删除文件目录，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']});
+		$.post("/files?action=DeleteFile",{
+			path:obj.path
+		},function(res){
+			layer.close(loadT);
+			if(callback) callback(res);
+		});
+	},
+	// 临时文件保存
+	auto_save_temp:function(obj,callback){
+		// var loadT = layer.msg('正在新建目录，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']});
+		$.post("/files?action=auto_save_temp",{
+			filename:obj.filename,
+			body:obj.body
+		},function(res){
+			layer.close(loadT);
+			if(callback) callback(res);
+		});
+	},
+	// 获取临时文件内容
+	get_auto_save_body:function(obj,callback){
+		var loadT = layer.msg('正在获取自动保存文件信息，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']});
+		$.post("/files?action=get_auto_save_body",{
+			filename:obj.filename
+		},function(res){
+			layer.close(loadT);
+			if(callback) callback(res);
+		});
+	},
+	// 刷新菜单列表
+	refresh_meun_list:function(el,callback){
+		var _active = $(el),_paths = _active.parent().attr('data-paths'),_group = parseInt(_active.attr('data-group'))+1,_el = _active.next();
+		_active.next().empty();
+		if(_active.length === 0){
+			_el = $('.cd-accordion-menu');
+			_paths = $('.ace_catalogue_title').attr('title');
+			_group = 1;
+			$('.cd-accordion-menu').empty();
+		}
+		this.reader_file_dir_menu({
+			el:_el,
+			path: _paths,
+			group: _group,
+		},function(res){
+			if(callback) callback(res);
+		});
+	},
+	// 恢复历史文件事件
+	event_ecovery_file:function(that){
+		var _path = $(that).attr('data-path'),_history = new Number($(that).attr('data-history')),_this =this;
+		var loadT = layer.open({
+			type: 1,
+			area: ['400px', '180px'],
+			title: '恢复历史文件',
+			content: '<div class="ace-clear-form">\
+				<div class="clear-icon"></div>\
+				<div class="clear-title">是否恢复历史文件&nbsp<span class="size_ellipsis" style="max-width:150px;vertical-align: top;" title="' + bt.format_data(_history) + '">' + bt.format_data(_history) + '</span>?</div>\
+				<div class="clear-tips">恢复历史文件后，当前文件内容将会被替换！</div>\
+				<div class="ace-clear-btn" style="">\
+					<button type="button" class="btn btn-sm btn-default" style="margin-right:10px;" data-type="1">取消</button>\
+					<button type="button" class="btn btn-sm btn-success" data-type="0">恢复历史文件</button>\
+				</div>\
+			</div>',
+			success:function (layero,index) {
+				$('.ace-clear-btn .btn').click(function () {
+					var _type = $(this).attr('data-type');
+					switch (_type) {
+						case '0':
+							_this.recovery_file_history({
+								filename:_path,
+								history:_history
+							},function(res){
+								layer.close(index);
+								layer.msg(res.status?'恢复历史文件成功':'恢复历史文件失败',{icon:res.status?1:2});
+								if(res.status){
+									if(_this.editor['ace_editor_'+_this.ace_active].historys_file){
+										_this.removeEditor(_this.ace_active);
+									}
+									if($('.ace_conter_menu>[title="'+ _path +'"]').length>0){
+										$('.ace_header .refreshs').click();
+										layer.close(_this.layer_view);
+									}
+								}
+							});
+						break;
+						case '1':
+							layer.close(index);
+						break;
+					}
+				});
+			}
+		});
+	},
+	// 判断是否为历史文件
+	is_file_history:function(_item){
+		if(_item.historys_file){
+			$('.ace_conter_tips').show();
+			$('#ace_editor_'+_item.id).css('bottom','50px');
+			$('.ace_conter_tips .tips').html('只读文件，文件为'+ _item.path +'，历史版本 [ '+ bt.format_data(new Number(_item.historys_active)) +' ]<a href="javascript:;" class="ml35 btlink" style="margin-left:35px" data-path="'+ _item.path +'" data-history="'+ _item.historys_active +'">点击恢复当前历史版本</a>');
+		}else{
+			$('.ace_conter_tips').hide();
+		}
+	},
+	// 判断文件是否打开
+	is_file_open:function(path,callabck){
+		var is_state = false
+		for(var i=0;i<this.pathAarry.length;i++){
+			if(path === this.pathAarry[i]) is_state = true
+		}
+		if(callabck){
+			callabck(is_state);
+		}else{
+			return is_state;
+		}
+	},
+	// 恢复文件历史
+	recovery_file_history:function(obj,callback){
+		var loadT = layer.msg('正在恢复历史文件，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']});
+		$.post("/files?action=re_history",{
+			filename:obj.filename,
+			history:obj.history
+		},function(res){
+			layer.close(loadT);
+			if(callback) callback(res);
+		});
+	},
+	// 获取文件列表
+	get_file_dir_list:function(obj,callback){
+		var loadT = layer.msg('正在获取文件内容，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']}),_this = this;
+		if(obj['p'] === undefined) obj['p'] = 1;
+		if(obj['showRow'] === undefined) obj['showRow'] = 200;
+		if(obj['sort'] === undefined) obj['sort'] = 'name';
+		if(obj['reverse'] === undefined) obj['reverse'] = false;
+		$.post("/files?action=GetDir&tojs=GetFiles",{p:obj.p,showRow:obj.showRow,sort:obj.sort,reverse:obj.reverse,path:obj.path}, function(res) {
+			layer.close(loadT);
+			if(callback) callback(res);
+		});
+	},
+	// 获取历史文件
+	get_file_history:function(obj,callback){
+		var loadT = layer.msg('正在获取历史文件内容，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']}),_this = this;
+		$.post("/files?action=read_history",{filename:obj.filename,history:obj.history}, function(res) {
+			layer.close(loadT);
+			if(callback) callback(res);
+		});
+	},
+	// 渲染文件列表
+	reader_file_dir_menu:function(obj,callback){
+		var _path = getCookie('Path'),_this = this;
+		if(obj === undefined) obj = {}
+		if(obj['el'] === undefined) obj['el'] = '.cd-accordion-menu';
+		if(obj['group'] === undefined) obj['group'] = 1;
+		if(obj['p'] === undefined) obj['p'] = 1;
+		if(obj['path'] === undefined) obj['path'] = _path;
+		if(obj['is_empty'] === undefined) obj['is_empty'] = false;
+		this.get_file_dir_list({p:obj.p,path:obj.path},function (res){
+			var _dir = res.DIR,_files = res.FILES,_dir_dom = '',_files_dom = '',_html ='';
+			for(var i=0;i<_dir.length;i++){
+				var _data = _dir[i].split(';');
+				if(_data[0] === '__pycache__') continue;
+				_dir_dom += '<li class="has-children children_'+ obj.group +'" title="'+ (obj.path+'/'+_data[0]) +'" data-paths="'+ (obj.path+'/'+_data[0])+'" data-size="'+ (_data[1]) +'">\
+					<div class="file_fold group_'+ obj.group +'" data-group="'+ obj.group +'" data-file="Dir">\
+						<span class="glyphicon glyphicon-menu-right"></span>\
+						<span class="file_title"><i class="folder-icon"></i><span>'+ _data[0] +'</span></span>\
+					</div>\
+					<ul data-group=""></ul>\
+					<span class="has_children_separator"></span>\
+				</li>';
+			}
+			for(var j=0;j<_files.length;j++){
+				var _data = _files[j].split(';');
+				if(_data[0].indexOf('.pyc') !== -1) continue;
+				_files_dom += '<li class="has-children" title="'+ (obj.path+'/'+_data[0]) +'" data-paths="'+ (obj.path+'/'+_data[0])+'" data-size="'+ (_data[1]) +'" data-suffix="'+ _this.get_file_suffix(_data[0]) +'">\
+					<div class="file_fold  group_'+ obj.group +'" data-group="'+ obj.group +'" data-file="Files">\
+						<span class="file_title"><i class="'+ _this.get_file_suffix(_data[0]) +'-icon"></i><span>'+ _data[0] +'</span></span>\
+					</div>\
+				</li>';
+			}
+			if(res.PATH !== '/' && obj['group'] === 1){
+				_html = '<li class="has-children upper_level" data-paths="'+ _this.get_file_dir(res.PATH,1) +'"><span>返回上级</span></li>'
+				$('.upper_level').attr('data-paths',_this.get_file_dir(res.PATH,1));
+				$('.ace_catalogue_title').html('目录：'+ res.PATH).attr('title',res.PATH);
+			}
+			if(obj.is_empty) $(obj.el).empty();
+			$(obj.el).append(_html+_dir_dom+_files_dom);
+			if(callback) callback(res);
+		});
+	},
+	// 获取文件目录位置
+	get_file_dir:function(path,num){
+		var _arry = path.split('/');
+		if(path === '/') return '/';
+		_arry.splice(-1,num);
+		return _arry == ''?'/':_arry.join('/');
+	},
+	// 获取文件全称
+	get_file_suffix:function(fileName){
+		var filenames = fileName.match(/\.([0-9A-z]*)$/);
+		filenames = (filenames == null?'text':filenames[1]);
+		for (var name in this.supportedModes) {
+			var data = this.supportedModes[name],suffixs = data[0].split('|'),filename = name.toLowerCase();
+			for (var i = 0; i < suffixs.length; i++) {
+				if (filenames == suffixs[i]) return filename;
+			}
+		}
+		return 'text';
 	},
 	// 设置编辑器视图
 	setEditorView:function () {
@@ -594,12 +1157,29 @@ var aceEditor = {
 	// 更新状态栏
 	currentStatusBar: function(id){
 		var _editor = this.editor['ace_editor_'+id];
-		$('.ace_conter_toolbar [data-type="path"]').html('目录：<i>'+ _editor.path +'</i>');
+		$('.ace_conter_toolbar [data-type="history"]').html('历史版本：<i>'+ (_editor.historys.length === 0?'无':_editor.historys.length+'份') +'</i>');
+		$('.ace_conter_toolbar [data-type="path"]').html('文件位置：<i title="'+ _editor.path +'">'+ _editor.path +'</i>');
 		$('.ace_conter_toolbar [data-type="tab"]').html(_editor.softTabs?'空格：<i>'+ _editor.tabSize +'</i>':'制表符长度：<i>'+ _editor.tabSize +'</i>');
 		$('.ace_conter_toolbar [data-type="encoding"]').html('编码：<i>'+ _editor.encoding.toUpperCase() +'</i>');
 		$('.ace_conter_toolbar [data-type="lang"]').html('语言：<i>'+ _editor.type +'</i>');
 		$('.ace_conter_toolbar span').attr('data-id',id);
+		$('.file_fold').removeClass('bg');
+		$('[data-paths="'+ (aceEditor.editor['ace_editor_'+ id].path) +'"]').find('.file_fold').addClass('bg');
+		if(_editor.historys_file){
+			$('.ace_conter_toolbar [data-type="history"]').hide();
+		}else{
+			$('.ace_conter_toolbar [data-type="history"]').show();
+		}
 		_editor.ace.resize();
+	},
+	// 清除状态栏
+	removerStatusBar:function(){
+		$('.ace_conter_toolbar [data-type="history"]').html('');
+		$('.ace_conter_toolbar [data-type="path"]').html('');
+		$('.ace_conter_toolbar [data-type="tab"]').html('');
+		$('.ace_conter_toolbar [data-type="cursor"]').html('');
+		$('.ace_conter_toolbar [data-type="encoding"]').html('');
+		$('.ace_conter_toolbar [data-type="lang"]').html('');
 	},
 	// 创建ACE编辑器-对象
 	creationEditor: function (obj, callabck) {
@@ -619,7 +1199,8 @@ var aceEditor = {
 				enableLiveAutocompletion: true,
 				useSoftTabs:false,
 				tabSize:4,
-				keyboardHandler:'sublime'
+				keyboardHandler:'sublime',
+				readOnly:obj.readOnly === undefined?false:obj.readOnly
 			}), //ACE编辑器对象
 			id: obj.id,
 			wrap: true, //是否换行
@@ -632,7 +1213,9 @@ var aceEditor = {
 			mode: (obj.fileName != undefined ? obj.mode : 'text'), //语言类型
 			type:obj.type,
             fileType: 0, //文件状态 
-            historys: obj.historys
+			historys: obj.historys,
+			historys_file:obj.historys_file === undefined?false:obj.historys_file,
+			historys_active:obj.historys_active === ''?false:obj.historys_active
 		};
 		var ACE = this.editor['ace_editor_' + obj.id];
 		ACE.ace.moveCursorTo(0, 0); //设置鼠标焦点
@@ -670,6 +1253,7 @@ var aceEditor = {
 			ACE.fileType = 1;
 		});
 		this.currentStatusBar(ACE.id);
+		this.is_file_history(ACE);
 	},
 	// 获取文件模型
 	getFileType: function (fileName) {
@@ -713,39 +1297,72 @@ var aceEditor = {
 		}
 		$('.item_tab_' + id).remove();
 		$('#ace_editor_' + id).remove();
-		for(var i=0;i<aceEditor.pathAarry.length;i++){
-		    if(aceEditor.pathAarry[i] == this.editor['ace_editor_' + id].path){
-		        aceEditor.pathAarry.splice(i,1);   
+		for(var i=0;i<this.pathAarry.length;i++){
+		    if(this.pathAarry[i] == this.editor['ace_editor_' + id].path){
+		        this.pathAarry.splice(i,1);
 		    }
 		}
+		if(!aceEditor.editor['ace_editor_'+ id].historys_file) $('[data-paths="'+ (aceEditor.editor['ace_editor_'+ id].path) +'"]').find('.file_fold').removeClass('active bg');
 		delete this.editor['ace_editor_' + id];
 		this.editorLength --;
 		if(this.editorLength === 0){
 			this.ace_active = '';
 			this.pathAarry = [];
-			$('.layui-layer-close').click();
+			this.removerStatusBar();
 		}else{
 			this.currentStatusBar(this.ace_active);
 		}
+		if(this.ace_active != ''){
+			this.is_file_history(this.editor['ace_editor_'+this.ace_active]);
+		}
+	},
+	// 打开历史文件文件-方法
+	openHistoryEditorView: function (obj,callback) {
+		// 文件类型（type，列如：JavaScript） 、文件模型（mode，列如：text）、文件标识（id,列如：x8AmsnYn）、文件编号（index,列如：0）、文件路径 (path，列如：/www/root/)
+		var _this = this,path = obj.filename,paths = path.split('/'),_fileName = paths[paths.length - 1],_fileType = this.getFileType(_fileName),_type = _fileType.name,_mode = _fileType.mode,_id = bt.get_random(8),_index = this.editorLength;
+		this.get_file_history({filename:obj.filename,history:obj.history}, function (res) {
+			_this.pathAarry.push(path);
+			$('.ace_conter_menu .item').removeClass('active');
+			$('.ace_conter_editor .ace_editors').removeClass('active');
+			$('.ace_conter_menu .ace_editor_add').before('<div class="item active item_tab_' + _id +'" title="'+ path +'" data-type="'+ _type +'" data-mode="'+ _mode +'" data-id="'+ _id +'" data-index="'+ _index +'" data-fileName="'+ _fileName +'">\
+				<span class="icon_file"><img src="/static/img/ico-history.png"></span><span title="'+ path + ' 历史版本[ '+ bt.format_data(obj.history) +' ]' +'">' + _fileName +'</span>\
+				<i class="glyphicon glyphicon-remove icon-tool" aria-hidden="true" data-file-state="0" data-title="' + _fileName + '"></i>\
+			</div>');
+			$('.ace_conter_editor').append('<div id="ace_editor_'+_id +'" class="ace_editors active"></div>');
+			$('[data-paths="'+ path +'"]').find('.file_fold').addClass('active bg');
+			_this.ace_active = _id;
+			_this.editorLength = _this.editorLength + 1;
+			_this.creationEditor({id: _id,fileName: _fileName,path: path,mode:_mode,encoding: res.encoding,data: res.data,type:_type,historys:res.historys,readOnly:true,historys_file:true,historys_active:obj.history});
+			if(callback) callback(res);
+		});
 	},
 	// 打开编辑器文件-方法
-	openEditorView: function (path) {
+	openEditorView: function (path,callback) {
 		if(path == undefined) return false;
 		// 文件类型（type，列如：JavaScript） 、文件模型（mode，列如：text）、文件标识（id,列如：x8AmsnYn）、文件编号（index,列如：0）、文件路径 (path，列如：/www/root/)
 	    var _this = this,paths = path.split('/'),_fileName = paths[paths.length - 1],_fileType = this.getFileType(_fileName),_type = _fileType.name,_mode = _fileType.mode,_id = bt.get_random(8),_index = this.editorLength;
-		this.getFileBody({path: path}, function (res) {
-		    _this.pathAarry.push(path);
-		    $('.ace_conter_menu .item').removeClass('active');
-    		$('.ace_conter_editor .ace_editors').removeClass('active');
-    		$('.ace_conter_menu .ace_editor_add').before('<div class="item active item_tab_' + _id +'" title="'+ path +'" data-type="'+ _type +'" data-mode="'+ _mode +'" data-id="'+ _id +'" data-index="'+ _index +'" data-fileName="'+ _fileName +'">\
-    			<span class="icon_file"><i class="'+ _mode +'-icon"></i></span><span title="'+ _fileName +'">' + _fileName + '</span>\
-    			<i class="glyphicon glyphicon-remove icon-tool" aria-hidden="true" data-file-state="0" data-title="' + _fileName + '"></i>\
-    		</div>');
-    		$('.ace_conter_editor').append('<div id="ace_editor_'+_id +'" class="ace_editors active"></div>');
-    		_this.ace_active = _id;
-		    _this.editorLength = _this.editorLength + 1;
-			_this.creationEditor({id: _id,fileName: _fileName,path: path,mode:_mode,encoding: res.encoding,data: res.data,type:_type,historys:res.historys});
+		_this.is_file_open(path,function(is_state){
+			if(is_state){
+				$('.ace_conter_menu').find('[title="'+ path +'"]').click();
+			}else{
+				_this.getFileBody({path: path}, function (res) {
+				    _this.pathAarry.push(path);
+				    $('.ace_conter_menu .item').removeClass('active');
+		    		$('.ace_conter_editor .ace_editors').removeClass('active');
+		    		$('.ace_conter_menu .ace_editor_add').before('<div class="item active item_tab_' + _id +'" title="'+ path +'" data-type="'+ _type +'" data-mode="'+ _mode +'" data-id="'+ _id +'" data-index="'+ _index +'" data-fileName="'+ _fileName +'">\
+		    			<span class="icon_file"><i class="'+ _mode +'-icon"></i></span><span title="'+ path +'">' + _fileName + '</span>\
+		    			<i class="glyphicon glyphicon-remove icon-tool" aria-hidden="true" data-file-state="0" data-title="' + _fileName + '"></i>\
+		    		</div>');
+		    		$('.ace_conter_editor').append('<div id="ace_editor_'+_id +'" class="ace_editors active"></div>');
+					$('[data-paths="'+ path +'"]').find('.file_fold').addClass('active bg');
+					_this.ace_active = _id;
+				    _this.editorLength = _this.editorLength + 1;
+					_this.creationEditor({id: _id,fileName: _fileName,path: path,mode:_mode,encoding: res.encoding,data: res.data,type:_type,historys:res.historys});
+					if(callback) callback(res);
+				});
+			}
 		});
+
 	},
 	// 获取收藏夹列表-方法
 	getFavoriteList: function () {},
@@ -816,12 +1433,6 @@ function openEditorView(type,path){
 			aceEditor.isAceView = true;
 			$('.aceEditors .layui-layer-max').click()
 		}
-		for(var i=0;i<aceEditor.pathAarry.length;i++){
-			if(path === aceEditor.pathAarry[i]){
-				layer.msg('文件已打开',{icon:0});
-				return false;
-			}
-		}
 		aceEditor.openEditorView(path);
 		return false;
 	}
@@ -836,7 +1447,7 @@ function openEditorView(type,path){
 		content: _aceTmplate,
 		success:function(layero,index){
 			function set_edit_file(){
-				aceEditor.layer_view = index;
+				// aceEditor.layer_view = index;
 				aceEditor.ace_active = '';
 				aceEditor.eventEditor();
 				$('#ace_conter').addClass(aceEditor.editorTheme);

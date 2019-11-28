@@ -10,7 +10,6 @@ import sys
 import requests
 import OpenSSL
 import cryptography
-
 from . import __version__ as sewer_version
 from .config import ACME_DIRECTORY_URL_PRODUCTION
 try:
@@ -69,6 +68,8 @@ class Client(object):
         ACME_REQUEST_TIMEOUT=7,
         ACME_AUTH_STATUS_WAIT_PERIOD=8,
         ACME_AUTH_STATUS_MAX_CHECKS=3,
+        ACME_DIRECTORY_URL=ACME_DIRECTORY_URL_PRODUCTION,
+        LOG_LEVEL="INFO",
     ):
 
         self.domain_name = domain_name

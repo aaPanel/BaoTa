@@ -431,10 +431,11 @@ echo "--------------------------------------------------------------------------
         cron_path = c_file
         if not os.path.exists(u_path):
             cron_path=c_file
-        if os.path.exists('/usr/bin/yum'):
-            cron_path = c_file
-        elif os.path.exists("/usr/bin/apt-get"):
+        if os.path.exists("/usr/bin/apt-get"):
             cron_path = u_file
+        elif os.path.exists('/usr/bin/yum'):
+            cron_path = c_file
+        
 
         if cron_path == u_file:
             if not os.path.exists(u_path): 
