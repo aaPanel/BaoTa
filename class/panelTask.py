@@ -10,7 +10,7 @@
 #------------------------------
 # 消息队列
 #------------------------------
-import sys,os
+import sys,os,re
 sys.path.insert(0,'/www/server/panel/class')
 os.chdir('/www/server/panel')
 import public,time,downloadFile,json
@@ -20,6 +20,7 @@ class bt_task:
     __table = 'task_list'
     __task_tips = '/dev/shm/bt_task_now.pl'
     __task_path = '/www/server/panel/tmp/'
+    down_log_total_file = '/tmp/download_total.pl'
     def __init__(self):
 
         #创建数据表
@@ -92,6 +93,8 @@ class bt_task:
         if str(task_info['status']) == '-1':
             public.ExecShell("kill -9 $(ps aux|grep 'task.py'|grep -v grep|awk '{print $2}')")
             if task_info['type'] == '1':
+                public.ExecShell("kill -9 $(ps aux|grep '{}')".format(task_info['other']))
+                time.sleep(1)
                 if os.path.exists(task_info['other']): os.remove(task_info['other'])
             elif task_info['type'] == '3':
                 z_info = json.loads(task_info['other'])
@@ -133,9 +136,9 @@ class bt_task:
         if task_type == 0:      #执行命令
             public.ExecShell(task_shell + ' &> ' + log_file)
         elif task_type == 1:    #下载文件
-            down_file = downloadFile.downloadFile()
-            down_file.logPath = log_file
-            print(down_file.DownloadFile(task_shell,other))
+            if os.path.exists(self.down_log_total_file): os.remove(self.down_log_total_file)
+            public.ExecShell("wget -O '{}' '{}' -T 30 -t 5 -d &> {}".format(other,task_shell,log_file))
+            if os.path.exists(log_file): os.remove(log_file)
         elif task_type == 2:    #解压文件
             zip_info = json.loads(other)
             self._unzip(task_shell,zip_info['dfile'],zip_info['password'],log_file)
@@ -179,28 +182,42 @@ class bt_task:
         log_file = self.__task_path + str(id) + '.log'
         if not os.path.exists(log_file):
             data = ''
-            if(task_type == '1'): data = {'name':'下载文件','total':0,'used':0,'pre':0,'speed':0}
+            if(task_type == '1'): data = {'name':'下载文件','total':0,'used':0,'pre':0,'speed':0,'time':0}
             return data
-        data = public.GetNumLines(log_file,num)
-        n = 0
+        
         if(task_type == '1'): 
-            try:
-                data = json.loads(data)
-            except:
-                if n < 3:
-                    time.sleep(2);
-                    n+=1
-                    self.get_task_log(id,task_type,num)
-                else:
-                    data = {'name':'下载文件','total':0,'used':0,'pre':0,'speed':0}
-            if data == [] and n < 3: 
-                time.sleep(1);
-                n+=1
-                self.get_task_log(id,task_type,num)
+            total = 0
+            if not os.path.exists(self.down_log_total_file):
+                f = open(log_file,'r')
+                head = f.read(4096)
+                content_length = re.findall("Length:\s+(\d+)",head)
+                if content_length: 
+                    total = int(content_length[0])
+                    public.writeFile(self.down_log_total_file,content_length[0])
+            else:
+                total = public.readFile(self.down_log_total_file)
+                if not total: 
+                    total = 0
+                total = int(total)
+
+            filename = public.M(self.__table).where('id=?',(id,)).getField('shell')
+
+            speed_tmp = public.ExecShell("tail -n 2 {}".format(log_file))[0]
+            speed_total = re.findall("([\d\.]+[BbKkMmGg]).+\s+(\d+)%\s+([\d\.]+[KMBGkmbg])\s+(\w+[sS])",speed_tmp)
+            if not speed_total:
+                data = {'name':'下载文件{}'.format(filename),'total':0,'used':0,'pre':0,'speed':0,'time':0}
+            else:
+                speed_total = speed_total[0]
+                used = speed_total[0]
+                if speed_total[0].lower().find('k') != -1:
+                    used = public.to_size(float(speed_total[0].lower().replace('k','')) * 1024)
+                    u_time = speed_total[3].replace('h','小时').replace('m','分').replace('s','秒')
+                data = {'name':'下载文件{}'.format(filename),'total':total,'used':used,'pre':speed_total[1],'speed':speed_total[2],'time':u_time}
         else:
+            data = public.ExecShell("tail -n {} {}".format(num,log_file))[0]
+            n = 0
             if type(data) == list: return ''
             data = data.replace('\x08','').replace('\n','<br>')
-
         return data
     
     #清理任务日志

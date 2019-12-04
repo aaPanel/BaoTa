@@ -58,16 +58,12 @@ class HurricaneDns(common.BaseDns):
         return root, zone, acme_txt
 
     def create_dns_record(self, domain_name, domain_dns_value):
-        self.logger.info("create_dns_record start: %s", (domain_name, domain_dns_value))
 
         root, _, acme_txt = self.extract_zone(domain_name)
         self.clt.add_record(root, acme_txt, "TXT", domain_dns_value, ttl=300)
 
-        self.logger.info("create_dns_record end: %s", (domain_name, domain_dns_value))
 
     def delete_dns_record(self, domain_name, domain_dns_value):
-        self.logger.info("delete_dns_record start: %s", (domain_name, domain_dns_value))
-
         root, _, acme_txt = self.extract_zone(domain_name)
         host = "%s.%s" % (acme_txt, root)
 
@@ -75,5 +71,3 @@ class HurricaneDns(common.BaseDns):
 
         for i in recored_list:
             self.clt.del_record(root, i["id"])
-
-        self.logger.info("delete_dns_record end: %s", (domain_name, domain_dns_value))

@@ -1587,9 +1587,9 @@ var site = {
                                                                     var area_size = '500px';
                                                                     var err_info = "";
 
-                                                                    if (!new_data.msg[1].challenges[1]) {
-                                                                        if (new_data.msg[1].challenges[0]) {
-                                                                            new_data.msg[1].challenges[1] = new_data.msg[1].challenges[0]
+                                                                    if (!ldata.msg[1].challenges[1]) {
+                                                                        if (ldata.msg[1].challenges[0]) {
+                                                                            ldata.msg[1].challenges[1] = ldata.msg[1].challenges[0]
                                                                         }
                                                                     }
 
@@ -1629,6 +1629,11 @@ var site = {
                                                         site.reload();
                                                         bt.msg(ret);
                                                     } else {
+                                                        if (ret.msg[1] === false) {
+                                                            layer.msg(ret.msg[0], { icon: 2 });
+                                                            return;
+                                                        }
+
                                                         if (!ret.msg[1].challenges[1]) {
                                                             if (ret.msg[1].challenges[0]) {
                                                                 ret.msg[1].challenges[1] = ret.msg[1].challenges[0]

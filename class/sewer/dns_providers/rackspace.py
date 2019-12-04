@@ -21,7 +21,6 @@ class RackspaceDns(common.BaseDns):
     dns_providername = "rackspace"
 
     def get_rackspace_credentials(self):
-        self.logger.debug("get_rackspace_credentials")
         RACKSPACE_IDENTITY_URL = "https://identity.api.rackspacecloud.com/v2.0/tokens"
         payload = {
             "auth": {
@@ -32,11 +31,6 @@ class RackspaceDns(common.BaseDns):
             }
         }
         find_rackspace_api_details_response = requests.post(RACKSPACE_IDENTITY_URL, json=payload)
-        self.logger.debug(
-            "find_rackspace_api_details_response. status_code={0}".format(
-                find_rackspace_api_details_response.status_code
-            )
-        )
         if find_rackspace_api_details_response.status_code != 200:
             raise ValueError(
                 "Error getting token and URL details from rackspace identity server: status_code={status_code} response={response}".format(
@@ -75,20 +69,13 @@ class RackspaceDns(common.BaseDns):
         }
 
     def get_dns_zone(self, domain_name):
-        self.logger.debug("get_dns_zone")
         extracted_domain = tldextract.extract(domain_name)
         self.RACKSPACE_DNS_ZONE = ".".join([extracted_domain.domain, extracted_domain.suffix])
 
     def find_dns_zone_id(self, domain_name):
-        self.logger.debug("find_dns_zone_id")
         self.get_dns_zone(domain_name)
         url = self.RACKSPACE_API_BASE_URL + "domains"
         find_dns_zone_id_response = requests.get(url, headers=self.RACKSPACE_HEADERS)
-        self.logger.debug(
-            "find_dns_zone_id_response. status_code={0}".format(
-                find_dns_zone_id_response.status_code
-            )
-        )
         if find_dns_zone_id_response.status_code != 200:
             raise ValueError(
                 "Error getting rackspace dns domain info: status_code={status_code} response={response}".format(
@@ -108,20 +95,12 @@ class RackspaceDns(common.BaseDns):
                 )
             )
         dns_zone_id = domain_data["id"]
-        self.logger.debug("find_dns_zone_id_success")
         return dns_zone_id
 
     def find_dns_record_id(self, domain_name, domain_dns_value):
-        self.logger.debug("find_dns_record_id")
         self.RACKSPACE_DNS_ZONE_ID = self.find_dns_zone_id(domain_name)
         url = self.RACKSPACE_API_BASE_URL + "domains/{0}/records".format(self.RACKSPACE_DNS_ZONE_ID)
         find_dns_record_id_response = requests.get(url, headers=self.RACKSPACE_HEADERS)
-        self.logger.debug(
-            "find_dns_record_id_response. status_code={0}".format(
-                find_dns_record_id_response.status_code
-            )
-        )
-        self.logger.debug(url)
         if find_dns_record_id_response.status_code != 200:
             raise ValueError(
                 "Error finding dns records for {dns_zone}: status_code={status_code} response={response}".format(
@@ -143,7 +122,6 @@ class RackspaceDns(common.BaseDns):
                 )
             )
         record_id = RACKSPACE_RECORD_DATA["id"]
-        self.logger.debug("find_dns_record_id success")
         return record_id
 
     def poll_callback_url(self, callback_url):
@@ -175,7 +153,6 @@ class RackspaceDns(common.BaseDns):
                 break
 
     def create_dns_record(self, domain_name, domain_dns_value):
-        self.logger.info("create_dns_record")
         # strip wildcard if present
         domain_name = domain_name.lstrip("*.")
         self.RACKSPACE_DNS_ZONE_ID = self.find_dns_zone_id(domain_name)
@@ -189,11 +166,7 @@ class RackspaceDns(common.BaseDns):
         create_rackspace_dns_record_response = requests.post(
             url, headers=self.RACKSPACE_HEADERS, json=body, timeout=self.HTTP_TIMEOUT
         )
-        self.logger.debug(
-            "create_rackspace_dns_record_response. status_code={status_code}".format(
-                status_code=create_rackspace_dns_record_response.status_code
-            )
-        )
+
         if create_rackspace_dns_record_response.status_code != 202:
             raise ValueError(
                 "Error creating rackspace dns record: status_code={status_code} response={response}".format(
@@ -206,14 +179,9 @@ class RackspaceDns(common.BaseDns):
         # update when the job is done
         callback_url = create_rackspace_dns_record_response.json()["callbackUrl"]
         self.poll_callback_url(callback_url)
-        self.logger.info(
-            "create_dns_record_success. Name: {record_name} Data: {data}".format(
-                record_name=record_name, data=domain_dns_value
-            )
-        )
+
 
     def delete_dns_record(self, domain_name, domain_dns_value):
-        self.logger.info("delete_dns_record")
         record_name = "_acme-challenge." + domain_name
         self.RACKSPACE_DNS_ZONE_ID = self.find_dns_zone_id(domain_name)
         self.RACKSPACE_RECORD_ID = self.find_dns_record_id(domain_name, domain_dns_value)
@@ -223,9 +191,6 @@ class RackspaceDns(common.BaseDns):
         delete_dns_record_response = requests.delete(url, headers=self.RACKSPACE_HEADERS)
         # After sending a delete request, if all goes well, we get a 202 from the server and a URL that we can poll
         # to see when the job is done
-        self.logger.debug(
-            "delete_dns_record_response={0}".format(delete_dns_record_response.status_code)
-        )
         if delete_dns_record_response.status_code != 202:
             raise ValueError(
                 "Error deleting rackspace dns record: status_code={status_code} response={response}".format(
@@ -235,8 +200,3 @@ class RackspaceDns(common.BaseDns):
             )
         callback_url = delete_dns_record_response.json()["callbackUrl"]
         self.poll_callback_url(callback_url)
-        self.logger.info(
-            "delete_dns_record_success. Name: {record_name} Data: {data}".format(
-                record_name=record_name, data=domain_dns_value
-            )
-        )

@@ -29,7 +29,6 @@ def HttpGet(url,timeout = 6,headers = {}):
     @timeout 超时时间默认60秒
     return string
     """
-
     if is_local(): return False
     home = 'www.bt.cn'
     host_home = 'data/home_host.pl'
@@ -38,37 +37,14 @@ def HttpGet(url,timeout = 6,headers = {}):
         if os.path.exists(host_home): 
             headers['host'] = home
             url = url.replace(home,readFile(host_home))
-    if sys.version_info[0] == 2:
-        try:
-            import urllib2,ssl
-            if sys.version_info[0] == 2:
-                reload(urllib2)
-                reload(ssl)
-            try:
-                ssl._create_default_https_context = ssl._create_unverified_context
-            except:pass;
-            req = urllib2.Request(url, headers = headers)
-            response = urllib2.urlopen(req,timeout = timeout,)
-            return response.read()
-        except Exception as ex:
-            if old_url.find(home) != -1: return http_get_home(old_url,timeout,str(ex))
-            if headers: return False
-            return str(ex);
-    else:
-        try:
-            import urllib.request,ssl
-            try:
-                ssl._create_default_https_context = ssl._create_unverified_context
-            except:pass;
-            req = urllib.request.Request(url,headers = headers)
-            response = urllib.request.urlopen(req,timeout = timeout)
-            result = response.read()
-            if type(result) == bytes: result = result.decode('utf-8')
-            return result
-        except Exception as ex:
-            if old_url.find(home) != -1: return http_get_home(old_url,timeout,str(ex))
-            if headers: return False
-            return str(ex)
+    
+    import http_requests
+    res = http_requests.get(url,timeout=timeout,headers = headers)
+    if res.status_code == 0:
+        if old_url.find(home) != -1: return http_get_home(old_url,timeout,res.text)
+        if headers: return False
+        return res.text
+    return res.text
 
 def http_get_home(url,timeout,ex):
     try:
@@ -115,36 +91,15 @@ def HttpPost(url,data,timeout = 6,headers = {}):
             headers['host'] = home
             url = url.replace(home,readFile(host_home))
 
-    if sys.version_info[0] == 2:
-        try:
-            import urllib,urllib2,ssl
-            try:
-                ssl._create_default_https_context = ssl._create_unverified_context
-            except:pass
-            data2 = urllib.urlencode(data)
-            req = urllib2.Request(url, data2,headers = headers)
-            response = urllib2.urlopen(req,timeout=timeout)
-            return response.read()
-        except Exception as ex:
-            if old_url.find(home) != -1: return http_post_home(old_url,data,timeout,str(ex))
-            if headers: return False
-            return str(ex);
-    else:
-        try:
-            import urllib.request,ssl
-            try:
-                ssl._create_default_https_context = ssl._create_unverified_context
-            except:pass;
-            data2 = urllib.parse.urlencode(data).encode('utf-8')
-            req = urllib.request.Request(url, data2,headers = headers)
-            response = urllib.request.urlopen(req,timeout = timeout)
-            result = response.read()
-            if type(result) == bytes: result = result.decode('utf-8')
-            return result
-        except Exception as ex:
-            if old_url.find(home) != -1: return http_post_home(old_url,data,timeout,str(ex))
-            if headers: return False
-            return str(ex);
+    import http_requests
+    res = http_requests.post(url,data=data,timeout=timeout,headers = headers)
+    if res.status_code == 0:
+        WriteLog('请求错误',res.text)
+        if old_url.find(home) != -1: return http_post_home(old_url,data,timeout,res.text)
+        if headers: return False
+        return res.text
+    return res.text
+            
 
 def http_post_home(url,data,timeout,ex):
     try:
@@ -1556,17 +1511,40 @@ def upload_file_url(filename):
 #filename 要执行的php文件
 #args 请求参数
 #method 请求方式
-def request_php(version,uri,filename,args,method='GET'):
+def request_php(version,uri,filename,args,method='GET',pdata='',timeout=3000):
     import fastcgi_client
-    client= fastcgi_client.fastcgi_client('/tmp/php-cgi-'+version+'.sock',None, 3000, 0)
+    client= fastcgi_client.fastcgi_client('/tmp/php-cgi-'+version+'.sock',None, timeout, 0)
+    if type(args) == dict: args = url_encode(args)
+    if type(pdata) == dict: pdata = url_encode(pdata)
     params = {
                 'REQUEST_METHOD': method,
                 'SCRIPT_FILENAME': filename,
                 'SCRIPT_NAME': uri,
+                'SERVER_PROTOCOL': 'HTTP/1.1',
+                'GATEWAY_INTERFACE': 'CGI/1.1',
                 'QUERY_STRING': args,
-                'CONTENT_LENGTH': 0
+                'CONTENT_TYPE': 'application/x-www-form-urlencoded',
+                'CONTENT_LENGTH': len(pdata)
             }
-    result = client.request(params)
+    result = client.request(params,pdata)
+    return result
+
+
+def url_encode(data):
+    if type(data) == str: return data
+    import urllib
+    if sys.version_info[0] != 2:
+        pdata = urllib.parse.urlencode(data).encode('utf-8')
+    else:
+        pdata = urllib.urlencode(data)
+    return pdata
+
+
+def unicode_encode(data):
+    if sys.version_info[0] == 2:
+        result = unicode(data,errors='ignore')
+    else:
+        result = data.encode('utf8',errors='ignore')
     return result
 
 #取通用对象

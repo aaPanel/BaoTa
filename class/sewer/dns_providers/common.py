@@ -1,5 +1,3 @@
-import logging
-
 
 class BaseDns(object):
     """
@@ -8,14 +6,6 @@ class BaseDns(object):
     def __init__(self, LOG_LEVEL="INFO"):
         self.LOG_LEVEL = LOG_LEVEL
         self.dns_provider_name = self.__class__.__name__
-
-        self.logger = logging.getLogger("sewer")
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(message)s")
-        handler.setFormatter(formatter)
-        if not self.logger.handlers:
-            self.logger.addHandler(handler)
-        self.logger.setLevel(self.LOG_LEVEL)
 
     def log_response(self, response):
         """
@@ -58,7 +48,6 @@ class BaseDns(object):
             Please consult your dns provider on how/format of their DNS TXT records.
             You may also want to consult the cloudflare DNS implementation that is found in this repository.
         """
-        self.logger.info("create_dns_record")
         raise NotImplementedError("create_dns_record method must be implemented.")
 
     def delete_dns_record(self, domain_name, domain_dns_value):
@@ -73,5 +62,4 @@ class BaseDns(object):
 
         This method should return None
         """
-        self.logger.info("delete_dns_record")
         raise NotImplementedError("delete_dns_record method must be implemented.")

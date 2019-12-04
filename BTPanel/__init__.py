@@ -6,22 +6,32 @@
 # +-------------------------------------------------------------------
 # | Author: 黄文良 <287962566@qq.com>
 # +-------------------------------------------------------------------
-import sys,json,os,time,logging,re
-if sys.version_info[0] != 2:
-        from imp import reload
-sys.path.insert(0,'/www/server/panel/class/')
-sys.setrecursionlimit(1000000)
-import public
-from flask import Flask
-app = Flask(__name__,template_folder="templates/" + public.GetConfigValue('template'))
-from flask import Flask,current_app,session,render_template,send_file,request,redirect,g,url_for,make_response,render_template_string,abort
+import sys
+import json
+import os
+import time
+import logging
+import re
+import uuid
+import threading
 
+from flask import Flask,current_app,session,render_template,send_file,request,redirect,g,url_for,make_response,render_template_string,abort
 from flask_session import Session
 from werkzeug.contrib.cache import SimpleCache
 from werkzeug.wrappers import Response
-from threading import Lock
 from flask_sockets import Sockets
+sys.path.insert(0,'/www/server/panel/class/')
+sys.setrecursionlimit(1000000)
+cache = SimpleCache()
+
+import public
+import common
+import db
+import jobs
+
+app = Flask(__name__,template_folder="templates/" + public.GetConfigValue('template'))
 sockets = Sockets(app)
+
 
 dns_client = None
 app.config['DEBUG'] = os.path.exists('data/debug.pl')
@@ -37,9 +47,7 @@ if os.path.exists(basic_auth_conf):
         app.config['BASIC_AUTH_OPEN'] = ba_conf['open']
     except: pass
 
-cache = SimpleCache()
 
-import common,db,jobs,uuid,threading
 job = threading.Thread(target=jobs.control_init)
 job.setDaemon(True)
 job.start()
@@ -89,8 +97,52 @@ cache.set('p_token','bmac_' + public.Md5(public.get_mac_address()))
 admin_path_file = 'data/admin_path.pl'
 admin_path = '/'
 if os.path.exists(admin_path_file): admin_path = public.readFile(admin_path_file).strip()
-admin_path_checks = ['/','/san','/bak','/monitor','/abnormal','/close','/task','/login','/config','/site','/sites','ftp','/public','/database','/data','/download_file','/control','/crontab','/firewall','/files','config','/soft','/ajax','/system','/panel_data','/code','/ssl','/plugin','/wxapp','/hook','/safe','/yield','/downloadApi','/pluginApi','/auth','/download','/cloud','/webssh','/connect_event','/panel']
+admin_path_checks = [
+                    '/',
+                    '/san',
+                    '/bak',
+                    '/monitor',
+                    '/abnormal',
+                    '/close',
+                    '/task',
+                    '/login',
+                    '/config',
+                    '/site',
+                    '/sites',
+                    'ftp',
+                    '/public',
+                    '/database',
+                    '/data',
+                    '/download_file',
+                    '/control',
+                    '/crontab',
+                    '/firewall',
+                    '/files',
+                    'config',
+                    '/soft',
+                    '/ajax',
+                    '/system',
+                    '/panel_data',
+                    '/code',
+                    '/ssl',
+                    '/plugin',
+                    '/wxapp',
+                    '/hook',
+                    '/safe',
+                    '/yield',
+                    '/downloadApi',
+                    '/pluginApi',
+                    '/auth',
+                    '/download',
+                    '/cloud',
+                    '/webssh',
+                    '/connect_event',
+                    '/panel'
+                    ]
 if admin_path in admin_path_checks: admin_path = '/bt'
+
+
+
 
 @app.route('/service_status',methods = method_get)
 def service_status():
@@ -177,7 +229,8 @@ def request_check():
         if not comm.get_sk(): return;
         if not auth: return send_authenticated()
         tips = '_bt.cn'
-        if public.md5(auth.username.strip() + tips) != app.config['BASIC_AUTH_USERNAME'] or public.md5(auth.password.strip() + tips) != app.config['BASIC_AUTH_PASSWORD']:
+        if public.md5(auth.username.strip() + tips) != app.config['BASIC_AUTH_USERNAME'] \
+            or public.md5(auth.password.strip() + tips) != app.config['BASIC_AUTH_PASSWORD']:
             return send_authenticated()
     
 
@@ -231,7 +284,8 @@ def login():
     if os.path.exists('install.pl'): return redirect('/install')
     global admin_check_auth,admin_path,route_path
     is_auth_path = False
-    if admin_path != '/bt' and os.path.exists(admin_path_file) and  not 'admin_auth' in session: is_auth_path = True
+    if admin_path != '/bt' and os.path.exists(admin_path_file) and  not 'admin_auth' in session: 
+        is_auth_path = True
     get = get_input()
     import userlogin
     if hasattr(get,'tmp_token'):
@@ -290,12 +344,15 @@ def site(pdata = None):
         data = {}
         data['isSetup'] = True;
         data['lan'] = public.getLan('site');
-        if os.path.exists(public.GetConfigValue('setup_path')+'/nginx') == False and os.path.exists(public.GetConfigValue('setup_path')+'/apache') == False: data['isSetup'] = False;
+        if os.path.exists(public.GetConfigValue('setup_path')+'/nginx') == False \
+            and os.path.exists(public.GetConfigValue('setup_path')+'/apache') == False: 
+            data['isSetup'] = False;
         return render_template( 'site.html',data=data)
     import panelSite
     siteObject = panelSite.panelSite()
         
-    defs = ('GetRedirectFile','SaveRedirectFile','DeleteRedirect','GetRedirectList','CreateRedirect','ModifyRedirect','set_dir_auth','delete_dir_auth','get_dir_auth','modify_dir_auth_pass',
+    defs = ('GetRedirectFile','SaveRedirectFile','DeleteRedirect','GetRedirectList','CreateRedirect','ModifyRedirect',
+            'set_dir_auth','delete_dir_auth','get_dir_auth','modify_dir_auth_pass',
             'GetSiteLogs','GetSiteDomains','GetSecurity','SetSecurity','ProxyCache','CloseToHttps','HttpToHttps','SetEdate',
             'SetRewriteTel','GetCheckSafe','CheckSafe','GetDefaultSite','SetDefaultSite','CloseTomcat','SetTomcat','apacheAddPort',
             'AddSite','GetPHPVersion','SetPHPVersion','DeleteSite','AddDomain','DelDomain','GetDirBinding','AddDirBinding','GetDirRewrite',
@@ -353,7 +410,10 @@ def database(pdata = None):
         return render_template('database.html',data=data)
     import database
     databaseObject = database.database()
-    defs = ('GetdataInfo','GetInfo','ReTable','OpTable','AlTable','GetSlowLogs','GetRunStatus','SetDbConf','GetDbStatus','BinLog','GetErrorLog','GetMySQLInfo','SetDataDir','SetMySQLPort','AddDatabase','DeleteDatabase','SetupPassword','ResDatabasePassword','ToBackup','DelBackup','InputSql','SyncToDatabases','SyncGetDatabases','GetDatabaseAccess','SetDatabaseAccess')
+    defs = ('GetdataInfo','GetInfo','ReTable','OpTable','AlTable','GetSlowLogs','GetRunStatus',
+            'SetDbConf','GetDbStatus','BinLog','GetErrorLog','GetMySQLInfo','SetDataDir','SetMySQLPort',
+            'AddDatabase','DeleteDatabase','SetupPassword','ResDatabasePassword','ToBackup','DelBackup',
+            'InputSql','SyncToDatabases','SyncGetDatabases','GetDatabaseAccess','SetDatabaseAccess')
     return publicObject(databaseObject,defs,None,pdata);
 
 def get_phpmyadmin_dir():
@@ -406,7 +466,8 @@ def firewall(pdata = None):
         return render_template( 'firewall.html',data=data)
     import firewalls
     firewallObject = firewalls.firewalls()
-    defs = ('GetList','AddDropAddress','DelDropAddress','FirewallReload','SetFirewallStatus','AddAcceptPort','DelAcceptPort','SetSshStatus','SetPing','SetSshPort','GetSshInfo')
+    defs = ('GetList','AddDropAddress','DelDropAddress','FirewallReload','SetFirewallStatus',
+            'AddAcceptPort','DelAcceptPort','SetSshStatus','SetPing','SetSshPort','GetSshInfo')
     return publicObject(firewallObject,defs,None,pdata);
 
 @app.route('/firewall_new',methods=method_all)
@@ -419,7 +480,10 @@ def firewall_new(pdata = None):
         return render_template( 'firewall_new.html',data=data)
     import firewall_new
     firewallObject = firewall_new.firewalls()
-    defs = ('GetList','AddDropAddress','DelDropAddress','FirewallReload','SetFirewallStatus','AddAcceptPort','DelAcceptPort','SetSshStatus','SetPing','SetSshPort','GetSshInfo','AddSpecifiesIp','DelSpecifiesIp')
+    defs = ('GetList','AddDropAddress','DelDropAddress','FirewallReload','SetFirewallStatus',
+            'AddAcceptPort','DelAcceptPort','SetSshStatus','SetPing','SetSshPort','GetSshInfo',
+            'AddSpecifiesIp','DelSpecifiesIp'
+            )
     return publicObject(firewallObject,defs,None,pdata);
 
 
@@ -448,7 +512,10 @@ def panel_password(pdata=None):
     if comReturn: return comReturn
     import password
     dataObject = password.password()
-    defs = ('set_root_password', 'get_mysql_root', 'set_mysql_password', 'set_panel_password', 'SetPassword', 'SetSshKey','StopKey','GetConfig','StopPassword','GetKey','get_databses','rem_mysql_pass','set_mysql_access',"get_panel_username")
+    defs = ('set_root_password', 'get_mysql_root', 'set_mysql_password', 'set_panel_password', 
+            'SetPassword', 'SetSshKey','StopKey','GetConfig','StopPassword','GetKey',
+            'get_databses','rem_mysql_pass','set_mysql_access',"get_panel_username"
+            )
     return publicObject(dataObject, defs, None, pdata)
 
 
@@ -459,7 +526,9 @@ def backup_bak(pdata=None):
     import backup_bak
     dataObject = backup_bak.backup_bak()
     defs = ('get_sites', 'get_databases', 'backup_database', 'backup_site', 'backup_path', 'get_database_progress',
-            'get_site_progress', 'down','get_down_progress','download_path','backup_site_all','get_all_site_progress','backup_date_all','get_all_date_progress')
+            'get_site_progress', 'down','get_down_progress','download_path','backup_site_all','get_all_site_progress',
+            'backup_date_all','get_all_date_progress'
+            )
     return publicObject(dataObject, defs, None, pdata)
 
 
@@ -469,7 +538,9 @@ def abnormal(pdata=None):
     if comReturn: return comReturn
     import abnormal
     dataObject = abnormal.abnormal()
-    defs = ('mysql_server', 'mysql_cpu', 'mysql_count', 'php_server', 'php_conn_max', 'php_cpu', 'CPU', 'Memory', 'disk', 'not_root_user', 'start')
+    defs = ('mysql_server', 'mysql_cpu', 'mysql_count', 'php_server', 'php_conn_max', 
+            'php_cpu', 'CPU', 'Memory', 'disk', 'not_root_user', 'start'
+            )
     return publicObject(dataObject, defs, None, pdata)
 
 @app.route('/files',methods=method_all)
@@ -482,11 +553,15 @@ def files(pdata = None):
         return render_template('files.html',data=data)
     import files
     filesObject = files.files()
-    defs = ('CheckExistsFiles','GetExecLog','GetSearch','ExecShell','GetExecShellMsg','UploadFile','GetDir','CreateFile','CreateDir','DeleteDir','DeleteFile',
-            'CopyFile','CopyDir','MvFile','GetFileBody','SaveFileBody','Zip','UnZip','SearchFiles','upload','read_history','re_history','auto_save_temp','get_auto_save_body',
+    defs = ('CheckExistsFiles','GetExecLog','GetSearch','ExecShell','GetExecShellMsg',
+            'UploadFile','GetDir','CreateFile','CreateDir','DeleteDir','DeleteFile',
+            'CopyFile','CopyDir','MvFile','GetFileBody','SaveFileBody','Zip','UnZip',
+            'SearchFiles','upload','read_history','re_history','auto_save_temp','get_auto_save_body',
             'GetFileAccess','SetFileAccess','GetDirSize','SetBatchData','BatchPaste','install_rar','get_path_size',
-            'DownloadFile','GetTaskSpeed','CloseLogs','InstallSoft','UninstallSoft','SaveTmpFile','GetTmpFile','del_files_store','add_files_store','get_files_store','del_files_store_types','add_files_store_types',
-            'RemoveTask','ActionTask','Re_Recycle_bin','Get_Recycle_bin','Del_Recycle_bin','Close_Recycle_bin','Recycle_bin')
+            'DownloadFile','GetTaskSpeed','CloseLogs','InstallSoft','UninstallSoft','SaveTmpFile',
+            'GetTmpFile','del_files_store','add_files_store','get_files_store','del_files_store_types','add_files_store_types',
+            'RemoveTask','ActionTask','Re_Recycle_bin','Get_Recycle_bin','Del_Recycle_bin','Close_Recycle_bin','Recycle_bin'
+            )
     return publicObject(filesObject,defs,None,pdata);
 
 
@@ -500,7 +575,9 @@ def crontab(pdata = None):
         return render_template( 'crontab.html',data=data)
     import crontab
     crontabObject = crontab.crontab()
-    defs = ('GetCrontab','AddCrontab','GetDataList','GetLogs','DelLogs','DelCrontab','StartTask','set_cron_status','get_crond_find','modify_crond')
+    defs = ('GetCrontab','AddCrontab','GetDataList','GetLogs','DelLogs','DelCrontab',
+            'StartTask','set_cron_status','get_crond_find','modify_crond'
+            )
     return publicObject(crontabObject,defs,None,pdata);
 
 @app.route('/soft',methods=method_all)
@@ -546,7 +623,19 @@ def config(pdata = None):
         if public.is_local(): data['is_local'] = 'checked'
         return render_template( 'config.html',data=data)
     import config
-    defs = ('set_coll_open','get_qrcode_data','check_two_step','set_two_step_auth','get_key','get_php_session_path','set_php_session_path','get_cert_source','set_local','set_debug','get_panel_error_logs','clean_panel_error_logs','get_basic_auth_stat','set_basic_auth','get_cli_php_version','get_tmp_token','set_cli_php_version','DelOldSession', 'GetSessionCount', 'SetSessionConf', 'GetSessionConf','get_ipv6_listen','set_ipv6_status','GetApacheValue','SetApacheValue','GetNginxValue','SetNginxValue','get_token','set_token','set_admin_path','is_pro','get_php_config','get_config','SavePanelSSL','GetPanelSSL','GetPHPConf','SetPHPConf','GetPanelList','AddPanelInfo','SetPanelInfo','DelPanelInfo','ClickPanelInfo','SetPanelSSL','SetTemplates','Set502','setPassword','setUsername','setPanel','setPathInfo','setPHPMaxSize','getFpmConfig','setFpmConfig','setPHPMaxTime','syncDate','setPHPDisable','SetControl','ClosePanel','AutoUpdatePanel','SetPanelLock')
+    defs = ('set_coll_open','get_qrcode_data','check_two_step','set_two_step_auth',
+            'get_key','get_php_session_path','set_php_session_path','get_cert_source',
+            'set_local','set_debug','get_panel_error_logs','clean_panel_error_logs',
+            'get_basic_auth_stat','set_basic_auth','get_cli_php_version','get_tmp_token',
+            'set_cli_php_version','DelOldSession', 'GetSessionCount', 'SetSessionConf', 
+            'GetSessionConf','get_ipv6_listen','set_ipv6_status','GetApacheValue','SetApacheValue',
+            'GetNginxValue','SetNginxValue','get_token','set_token','set_admin_path','is_pro',
+            'get_php_config','get_config','SavePanelSSL','GetPanelSSL','GetPHPConf','SetPHPConf',
+            'GetPanelList','AddPanelInfo','SetPanelInfo','DelPanelInfo','ClickPanelInfo','SetPanelSSL',
+            'SetTemplates','Set502','setPassword','setUsername','setPanel','setPathInfo','setPHPMaxSize',
+            'getFpmConfig','setFpmConfig','setPHPMaxTime','syncDate','setPHPDisable','SetControl',
+            'ClosePanel','AutoUpdatePanel','SetPanelLock'
+            )
     return publicObject(config.config(),defs,None,pdata);
 
 @app.route('/ajax',methods=method_all)
@@ -555,7 +644,14 @@ def ajax(pdata = None):
     if comReturn: return comReturn
     import ajax
     ajaxObject = ajax.ajax()
-    defs = ('php_info','change_phpmyadmin_ssl_port','set_phpmyadmin_ssl','get_phpmyadmin_ssl','check_user_auth','to_not_beta','get_beta_logs','apple_beta','GetApacheStatus','GetCloudHtml','get_load_average','GetOpeLogs','GetFpmLogs','GetFpmSlowLogs','SetMemcachedCache','GetMemcachedStatus','GetRedisStatus','GetWarning','SetWarning','CheckLogin','GetSpeed','GetAd','phpSort','ToPunycode','GetBetaStatus','SetBeta','setPHPMyAdmin','delClose','KillProcess','GetPHPInfo','GetQiniuFileList','UninstallLib','InstallLib','SetQiniuAS','GetQiniuAS','GetLibList','GetProcessList','GetNetWorkList','GetNginxStatus','GetPHPStatus','GetTaskCount','GetSoftList','GetNetWorkIo','GetDiskIo','GetCpuIo','CheckInstalled','UpdatePanel','GetInstalled','GetPHPConfig','SetPHPConfig')
+    defs = ('get_lines','php_info','change_phpmyadmin_ssl_port','set_phpmyadmin_ssl','get_phpmyadmin_ssl',
+            'check_user_auth','to_not_beta','get_beta_logs','apple_beta','GetApacheStatus','GetCloudHtml',
+            'get_load_average','GetOpeLogs','GetFpmLogs','GetFpmSlowLogs','SetMemcachedCache','GetMemcachedStatus',
+            'GetRedisStatus','GetWarning','SetWarning','CheckLogin','GetSpeed','GetAd','phpSort','ToPunycode',
+            'GetBetaStatus','SetBeta','setPHPMyAdmin','delClose','KillProcess','GetPHPInfo','GetQiniuFileList',
+            'UninstallLib','InstallLib','SetQiniuAS','GetQiniuAS','GetLibList','GetProcessList','GetNetWorkList',
+            'GetNginxStatus','GetPHPStatus','GetTaskCount','GetSoftList','GetNetWorkIo','GetDiskIo','GetCpuIo',
+            'CheckInstalled','UpdatePanel','GetInstalled','GetPHPConfig','SetPHPConfig')
     return publicObject(ajaxObject,defs,None,pdata);
 
 @app.route('/system',methods=method_all)
@@ -564,7 +660,9 @@ def system(pdata = None):
     if comReturn: return comReturn
     import system
     sysObject = system.system()
-    defs = ('get_io_info','UpdatePro','GetAllInfo','GetNetWorkApi','GetLoadAverage','ClearSystem','GetNetWorkOld','GetNetWork','GetDiskInfo','GetCpuInfo','GetBootTime','GetSystemVersion','GetMemInfo','GetSystemTotal','GetConcifInfo','ServiceAdmin','ReWeb','RestartServer','ReMemory','RepPanel')
+    defs = ('get_io_info','UpdatePro','GetAllInfo','GetNetWorkApi','GetLoadAverage','ClearSystem',
+            'GetNetWorkOld','GetNetWork','GetDiskInfo','GetCpuInfo','GetBootTime','GetSystemVersion',
+            'GetMemInfo','GetSystemTotal','GetConcifInfo','ServiceAdmin','ReWeb','RestartServer','ReMemory','RepPanel')
     return publicObject(sysObject,defs,None,pdata);
 
 @app.route('/deployment',methods=method_all)
@@ -620,7 +718,9 @@ def ssl(pdata = None):
     if comReturn: return comReturn
     import panelSSL
     toObject = panelSSL.panelSSL()
-    defs = ('RemoveCert','renew_lets_ssl','SetCertToSite','GetCertList','SaveCert','GetCert','GetCertName','DelToken','GetToken','GetUserInfo','GetOrderList','GetDVSSL','Completed','SyncOrder','GetSSLInfo','downloadCRT','GetSSLProduct','Renew_SSL','Get_Renew_SSL')
+    defs = ('RemoveCert','renew_lets_ssl','SetCertToSite','GetCertList','SaveCert','GetCert','GetCertName',
+            'DelToken','GetToken','GetUserInfo','GetOrderList','GetDVSSL','Completed','SyncOrder',
+            'GetSSLInfo','downloadCRT','GetSSLProduct','Renew_SSL','Get_Renew_SSL')
     result = publicObject(toObject,defs,None,pdata);
     return result;
 
@@ -640,7 +740,10 @@ def plugin(pdata = None):
     if comReturn: return comReturn
     import panelPlugin
     pluginObject = panelPlugin.panelPlugin()
-    defs = ('set_score','get_score','update_zip','input_zip','export_zip','add_index','remove_index','sort_index','install_plugin','uninstall_plugin','get_soft_find','get_index_list','get_soft_list','get_cloud_list','check_deps','flush_cache','GetCloudWarning','install','unInstall','getPluginList','getPluginInfo','getPluginStatus','setPluginStatus','a','getCloudPlugin','getConfigHtml','savePluginSort')
+    defs = ('set_score','get_score','update_zip','input_zip','export_zip','add_index','remove_index','sort_index',
+            'install_plugin','uninstall_plugin','get_soft_find','get_index_list','get_soft_list','get_cloud_list',
+            'check_deps','flush_cache','GetCloudWarning','install','unInstall','getPluginList','getPluginInfo',
+            'getPluginStatus','setPluginStatus','a','getCloudPlugin','getConfigHtml','savePluginSort')
     return publicObject(pluginObject,defs,None,pdata);
 
 
@@ -664,7 +767,8 @@ def panel_public():
         #检查是否验证过安全入口
         if get.fun in ['login_qrcode','is_scan_ok']:
             global admin_check_auth,admin_path,route_path,admin_path_file
-            if admin_path != '/bt' and os.path.exists(admin_path_file) and  not 'admin_auth' in session: return 'False'
+            if admin_path != '/bt' and os.path.exists(admin_path_file) and  not 'admin_auth' in session: 
+                return 'False'
         import wxapp
         pluwx = wxapp.wxapp()
         checks = pluwx._check(get)
@@ -748,14 +852,16 @@ def panel_other(name=None,fun = None,stype=None):
                     reload(plugin_main)
             except:pass
             plu = eval('plugin_main.' + name + '_main()')
-            if not hasattr(plu,fun): return public.returnJson(False,'指定方法不存在!'),json_header
+            if not hasattr(plu,fun): 
+                return public.returnJson(False,'指定方法不存在!'),json_header
 
     
         #执行插件方法
         if not is_php:
             if is_accept:
                 checks = plu._check(args)
-                if type(checks) != bool or not checks: return public.getJson(checks),json_header
+                if type(checks) != bool or not checks: 
+                    return public.getJson(checks),json_header
             data = eval('plu.'+fun+'(args)')
         else:
             import panelPHP
@@ -772,7 +878,8 @@ def panel_other(name=None,fun = None,stype=None):
         elif stype == 'html':   #使用模板
             t_path_root = p_path + '/templates/'
             t_path = t_path_root + fun + '.html'
-            if not os.path.exists(t_path): return public.returnJson(False,'指定模板不存在!'),json_header
+            if not os.path.exists(t_path): 
+                return public.returnJson(False,'指定模板不存在!'),json_header
             t_body = public.readFile(t_path)
 
             #处理模板包含
@@ -788,7 +895,8 @@ def panel_other(name=None,fun = None,stype=None):
             return render_template_string(t_body,data = data)
         else:  #直接响应插件返回值,可以是任意flask支持的响应类型
             r_type = type(data)
-            if r_type == dict: return public.returnJson(False,'错误的返回类型[%s]' % r_type),json_header
+            if r_type == dict: 
+                return public.returnJson(False,'错误的返回类型[{}]'.fformat(r_type)),json_header
             return data
     except:
         error_info = public.get_error_info()
@@ -810,7 +918,8 @@ def panel_wxapp(pdata = None):
 @app.route('/hook',methods=method_all)
 def panel_hook():
     get = get_input()
-    if not os.path.exists('plugin/webhook'): return public.getJson(public.returnMsg(False,'INIT_WEBHOOK_ERR'));
+    if not os.path.exists('plugin/webhook'): 
+        return public.getJson(public.returnMsg(False,'INIT_WEBHOOK_ERR'));
     sys.path.append('plugin/webhook');
     import webhook_main
     session.clear()
@@ -834,7 +943,10 @@ def panel_safe():
     reload(safelogin_main);
     s = safelogin_main.safelogin_main();
     if not hasattr(s,get.data['action']): return public.returnJson(False,'INIT_FUN_NOT_EXISTS');
-    defs = ('GetServerInfo','add_ssh_limit','remove_ssh_limit','get_ssh_limit','get_login_log','get_panel_limit','add_panel_limit','remove_panel_limit','close_ssh_limit','close_panel_limit','get_system_info','get_service_info','get_ssh_errorlogin')
+    defs = ('GetServerInfo','add_ssh_limit','remove_ssh_limit','get_ssh_limit',
+            'get_login_log','get_panel_limit','add_panel_limit',
+            'remove_panel_limit','close_ssh_limit','close_panel_limit',
+            'get_system_info','get_service_info','get_ssh_errorlogin')
     if not get.data['action'] in defs: return 'False';
     result = public.getJson(eval('s.' + get.data['action'] + '(get)'));
     session.clear()
@@ -866,7 +978,11 @@ def install():
         if not hasattr(get,'bt_password1'): return '密码不能为空!';
         if not get.bt_password1: return '密码不能为空!';
         if get.bt_password1 != get.bt_password2: return '两次输入的密码不一致，请重新输入!';
-        public.M('users').where("id=?",(1,)).save('username,password',(get.bt_username,public.md5(get.bt_password1.strip())))
+        public.M('users').where("id=?",(1,)).save('username,password',
+                                                  (get.bt_username,
+                                                   public.md5(get.bt_password1.strip())
+                                                   )
+                                                  )
         os.remove('install.pl');
         public.M('config').where("id=?",('1',)).setField('status',1);
         data = {}
@@ -898,7 +1014,13 @@ def auth(pdata = None):
     if comReturn: return comReturn
     import panelAuth
     toObject = panelAuth.panelAuth()
-    defs = ('get_re_order_status_plugin','create_plugin_other_order','get_order_stat','get_voucher_plugin','create_order_voucher_plugin','get_product_discount_by','get_re_order_status','create_order_voucher','create_order','get_order_status','get_voucher','flush_pay_status','create_serverid','check_serverid','get_plugin_list','check_plugin','get_buy_code','check_pay_status','get_renew_code','check_renew_code','get_business_plugin','get_ad_list','check_plugin_end','get_plugin_price')
+    defs = ('get_re_order_status_plugin','create_plugin_other_order','get_order_stat',
+            'get_voucher_plugin','create_order_voucher_plugin','get_product_discount_by',
+            'get_re_order_status','create_order_voucher','create_order','get_order_status',
+            'get_voucher','flush_pay_status','create_serverid','check_serverid',
+            'get_plugin_list','check_plugin','get_buy_code','check_pay_status',
+            'get_renew_code','check_renew_code','get_business_plugin',
+            'get_ad_list','check_plugin_end','get_plugin_price')
     result = publicObject(toObject,defs,None,pdata);
     return result;
 
@@ -922,14 +1044,18 @@ def download():
     extName = filename.split('.')[-1]
     if extName in ['png','gif','jpeg','jpg']: mimetype = None
     #if extName in ['mp4','avi']: mimetype = 'multipart/x-mixed-replace'
-    return send_file(filename,mimetype=mimetype, as_attachment=True,attachment_filename=os.path.basename(filename),cache_timeout=0)
+    return send_file(filename,mimetype=mimetype, 
+                     as_attachment=True,
+                     attachment_filename=os.path.basename(filename),
+                     cache_timeout=0)
 
 @app.route('/cloud',methods=method_get)
 def panel_cloud():
     comReturn = comm.local()
     if comReturn: return comReturn
     get = get_input()
-    if not os.path.exists('plugin/' + get.filename + '/' + get.filename+'_main.py'): return public.returnJson(False,'INIT_PLUGIN_NOT_EXISTS'),json_header
+    if not os.path.exists('plugin/' + get.filename + '/' + get.filename+'_main.py'): 
+        return public.returnJson(False,'INIT_PLUGIN_NOT_EXISTS'),json_header
     sys.path.append('plugin/' + get.filename)
     plugin_main = __import__(get.filename+'_main')
     reload(plugin_main)
@@ -976,6 +1102,7 @@ def publicObject(toObject,defs,action=None,get = None):
     return run_exec().run(toObject,defs,get)
 
 
+
 def check_login(http_token=None):
     if cache.get('dologin'): return False
     if 'login' in session: 
@@ -1003,29 +1130,54 @@ def get_pd():
             tmp = public.readFile(tmp_f)
             if tmp: tmp = int(tmp)
     if tmp == -1:
-        tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 112, 114, 111, 45, 103, 114, 97, 121, 34, 32, 111, 110, 99, 108, 105, 99, 107, 61, 34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 116, 97, 95, 112, 114, 111, 40, 41, 34, 32, 116, 105, 116, 108, 101, 61, 34, 28857, 20987, 21319, 32423, 21040, 19987, 19994, 29256, 34, 62, 20813, 36153, 29256, 60, 47, 115, 112, 97, 110, 62])
+        tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 112, 114, 
+                                 111, 45, 103, 114, 97, 121, 34, 32, 111, 110, 99, 108, 105, 99, 
+                                 107, 61, 34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 
+                                 116, 97, 95, 112, 114, 111, 40, 41, 34, 32, 116, 105, 116, 108, 101, 61, 
+                                 34, 28857, 20987, 21319, 32423, 21040, 19987, 19994, 29256, 34, 62, 
+                                 20813, 36153, 29256, 60, 47, 115, 112, 97, 110, 62])
     elif tmp == -2:
-        tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 112, 114, 111, 45, 103, 114, 97, 121, 34, 62, 60, 115, 112, 97, 110, 32,
-                                115, 116, 121, 108, 101, 61, 34, 99, 111, 108, 111, 114, 58, 32, 35, 102, 99, 54, 100, 50, 54, 59, 102, 111, 110, 116, 45, 119, 101, 105, 103, 
-                                104, 116, 58, 32, 98, 111, 108, 100, 59, 109, 97, 114, 103, 105, 110, 45, 114, 105, 103, 104, 116, 58, 53, 112, 120, 34, 62, 24050, 36807, 26399, 
-                                60, 47, 115, 112, 97, 110, 62, 60, 97, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 108, 105, 110, 107, 34, 32, 111, 110, 99, 108, 105, 99, 107, 61, 
-                                34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 116, 97, 95, 112, 114, 111, 40, 41, 34, 62, 32493, 36153, 60, 47, 97, 62, 60, 47, 115, 112, 97, 110, 62])
+        tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 
+                                112, 114, 111, 45, 103, 114, 97, 121, 34, 62, 60, 115, 112, 97, 110, 32,
+                                115, 116, 121, 108, 101, 61, 34, 99, 111, 108, 111, 114, 58, 32, 35, 
+                                102, 99, 54, 100, 50, 54, 59, 102, 111, 110, 116, 45, 119, 101, 105, 103, 
+                                104, 116, 58, 32, 98, 111, 108, 100, 59, 109, 97, 114, 103, 105, 110, 45, 
+                                114, 105, 103, 104, 116, 58, 53, 112, 120, 34, 62, 24050, 36807, 26399, 
+                                60, 47, 115, 112, 97, 110, 62, 60, 97, 32, 99, 108, 97, 115, 115, 61, 34, 
+                                98, 116, 108, 105, 110, 107, 34, 32, 111, 110, 99, 108, 105, 99, 107, 61, 
+                                34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 116, 97, 95, 
+                                112, 114, 111, 40, 41, 34, 62, 32493, 36153, 60, 47, 97, 62, 60, 
+                                47, 115, 112, 97, 110, 62])
     elif tmp >= 0:
         if tmp == 0:
             tmp2 = public.to_string([27704,20037,25480,26435])
-            tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 112, 114, 111, 34, 62, 123, 48, 125, 60, 115, 112, 97, 110, 32, 115, 116, 
-                                 121, 108, 101, 61, 34, 99, 111, 108, 111, 114, 58, 32, 35, 102, 99, 54, 100, 50, 54, 59, 102, 111, 110, 116, 45, 119, 101, 105, 103, 104, 116,
-                                58, 32, 98, 111, 108, 100, 59, 34, 62, 123, 49, 125, 60, 47, 115, 112, 97, 110, 62, 60, 47, 115, 112, 97, 110, 62]).format(public.to_string([21040,26399,26102,38388,65306]),tmp2)
+            tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 
+                                     112, 114, 111, 34, 62, 123, 48, 125, 60, 115, 112, 97, 110, 32, 115, 116, 
+                                     121, 108, 101, 61, 34, 99, 111, 108, 111, 114, 58, 32, 35, 102, 99, 54, 100, 
+                                     50, 54, 59, 102, 111, 110, 116, 45, 119, 101, 105, 103, 104, 116,
+                                     58, 32, 98, 111, 108, 100, 59, 34, 62, 123, 49, 125, 60, 47, 115, 
+                                     112, 97, 110, 62, 60, 47, 115, 112, 97, 110, 62]).format(
+                                        public.to_string([21040,26399,26102,38388,65306]),tmp2)
         else:
             tmp2 = time.strftime(public.to_string([37, 89, 45, 37, 109, 45, 37, 100]),time.localtime(tmp))
-            tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 112, 114, 111, 34, 62, 21040, 26399, 26102, 38388, 65306, 60, 115, 112, 
-                                     97, 110, 32, 115, 116, 121, 108, 101, 61, 34, 99, 111, 108, 111, 114, 58, 32, 35, 102, 99, 54, 100, 50, 54, 59, 102, 111, 110, 116, 45, 119, 
-                                     101, 105, 103, 104, 116, 58, 32, 98, 111, 108, 100, 59, 109, 97, 114, 103, 105, 110, 45, 114, 105, 103, 104, 116, 58, 53, 112, 120, 34, 62, 123, 
-                                     48, 125, 60, 47, 115, 112, 97, 110, 62, 60, 97, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 108, 105, 110, 107, 34, 32, 111, 110, 99, 108, 105, 99, 
-                                     107, 61, 34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 116, 97, 95, 112, 114, 111, 40, 41, 34, 62, 32493, 36153, 60, 47, 97, 62, 60, 
+            tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 
+                                     112, 114, 111, 34, 62, 21040, 26399, 26102, 38388, 65306, 60, 115, 112, 
+                                     97, 110, 32, 115, 116, 121, 108, 101, 61, 34, 99, 111, 108, 111, 114, 
+                                     58, 32, 35, 102, 99, 54, 100, 50, 54, 59, 102, 111, 110, 116, 45, 119, 
+                                     101, 105, 103, 104, 116, 58, 32, 98, 111, 108, 100, 59, 109, 97, 114, 
+                                     103, 105, 110, 45, 114, 105, 103, 104, 116, 58, 53, 112, 120, 34, 62, 123, 
+                                     48, 125, 60, 47, 115, 112, 97, 110, 62, 60, 97, 32, 99, 108, 97, 115, 
+                                     115, 61, 34, 98, 116, 108, 105, 110, 107, 34, 32, 111, 110, 99, 108, 105, 99, 
+                                     107, 61, 34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 
+                                     116, 97, 95, 112, 114, 111, 40, 41, 34, 62, 32493, 36153, 60, 47, 97, 62, 60, 
                                      47, 115, 112, 97, 110, 62]).format(tmp2)
     else:
-        tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 112, 114, 111, 45, 103, 114, 97, 121, 34, 32, 111, 110, 99, 108, 105, 99, 107, 61, 34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 116, 97, 95, 112, 114, 111, 40, 41, 34, 32, 116, 105, 116, 108, 101, 61, 34, 28857, 20987, 21319, 32423, 21040, 19987, 19994, 29256, 34, 62, 20813, 36153, 29256, 60, 47, 115, 112, 97, 110, 62])
+        tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 112, 
+                                 114, 111, 45, 103, 114, 97, 121, 34, 32, 111, 110, 99, 108, 105, 99, 107, 
+                                 61, 34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 116, 97, 
+                                 95, 112, 114, 111, 40, 41, 34, 32, 116, 105, 116, 108, 101, 61, 34, 28857,
+                                 20987, 21319, 32423, 21040, 19987, 19994, 29256, 34, 62, 20813, 36153, 
+                                 29256, 60, 47, 115, 112, 97, 110, 62])
         
     return tmp3
 
@@ -1034,20 +1186,30 @@ def get_pd():
 def notfound(e):
     errorStr = public.ReadFile('./BTPanel/templates/' + public.GetConfigValue('template') + '/error.html')
     try:
-        errorStr = errorStr.format(public.getMsg('PAGE_ERR_404_TITLE'),public.getMsg('PAGE_ERR_404_H1'),public.getMsg('PAGE_ERR_404_P1'),public.getMsg('NAME'),public.getMsg('PAGE_ERR_HELP'))
+        errorStr = errorStr.format(public.getMsg('PAGE_ERR_404_TITLE'),
+                                   public.getMsg('PAGE_ERR_404_H1'),
+                                   public.getMsg('PAGE_ERR_404_P1'),
+                                   public.getMsg('NAME'),
+                                   public.getMsg('PAGE_ERR_HELP'))
     except IndexError: pass
     return errorStr,404
   
 @app.errorhandler(500)
 def internalerror(e):
-    #if str(e).find('Permanent Redirect') != -1: return e
     public.submit_error()
     errorStr = public.ReadFile('./BTPanel/templates/' + public.GetConfigValue('template') + '/error.html')
     try:
         if not app.config['DEBUG']:
-            errorStr = errorStr.format(public.getMsg('PAGE_ERR_500_TITLE'),public.getMsg('PAGE_ERR_500_H1'),public.getMsg('PAGE_ERR_500_P1'),public.getMsg('NAME'),public.getMsg('PAGE_ERR_HELP'))
+            errorStr = errorStr.format(public.getMsg('PAGE_ERR_500_TITLE'),
+                                       public.getMsg('PAGE_ERR_500_H1'),
+                                       public.getMsg('PAGE_ERR_500_P1'),
+                                       public.getMsg('NAME'),
+                                       public.getMsg('PAGE_ERR_HELP'))
         else:
-            errorStr = errorStr.format(public.getMsg('PAGE_ERR_500_TITLE'),str(e),'<pre>'+public.get_error_info() + '</pre>','以上调试信息仅在开发者模式显示','版本号: ' + public.version())
+            errorStr = errorStr.format(public.getMsg('PAGE_ERR_500_TITLE'),
+                                       str(e),
+                                       '<pre>'+public.get_error_info() + '</pre>',
+                                       '以上调试信息仅在开发者模式显示','版本号: ' + public.version())
     except IndexError:pass
     return errorStr,500
 

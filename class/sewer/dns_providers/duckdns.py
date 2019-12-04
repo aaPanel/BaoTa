@@ -23,7 +23,6 @@ class DuckDNSDns(common.BaseDns):
         super(DuckDNSDns, self).__init__()
 
     def _common_dns_record(self, logger_info, domain_name, payload_end_arg):
-        self.logger.info("{0}".format(logger_info))
         # if we have been given a wildcard name, strip wildcard
         domain_name = domain_name.lstrip("*.")
         # add provider domain to the domain name if not present
@@ -39,11 +38,6 @@ class DuckDNSDns(common.BaseDns):
         )
 
         normalized_response = update_duckdns_dns_record_response.text
-        self.logger.debug(
-            "update_duckdns_dns_record_response. status_code={0}. response={1}".format(
-                update_duckdns_dns_record_response.status_code, normalized_response
-            )
-        )
 
         if update_duckdns_dns_record_response.status_code != 200 or normalized_response != "OK":
             # raise error so that we do not continue to make calls to DuckDNS
@@ -54,7 +48,6 @@ class DuckDNSDns(common.BaseDns):
                     response=normalized_response,
                 )
             )
-        self.logger.info("{0}_success".format(logger_info))
 
     def create_dns_record(self, domain_name, domain_dns_value):
         self._common_dns_record("create_dns_record", domain_name, ("txt", domain_dns_value))

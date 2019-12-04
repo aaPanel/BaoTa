@@ -77,8 +77,10 @@ var aceEditor = {
 		var _this = this;
 		$(window).resize(function(){
 			var _id = $('.ace_conter_menu .active').attr('data-id');
-			aceEditor.editor['ace_editor_'+_id].ace.resize();
-			_this.setEditorView()
+			if(_id != undefined){
+				aceEditor.editor['ace_editor_'+_id].ace.resize();
+				_this.setEditorView()
+			}
 		})
 		$(document).click(function(e){
 			$('.ace_toolbar_menu').hide();

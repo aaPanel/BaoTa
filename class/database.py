@@ -500,16 +500,16 @@ SetLink
     
     #配置
     def mypass(self,act,root):
-        public.ExecShell("sed -i '/user=root/d' /etc/my.cnf")
-        public.ExecShell("sed -i '/password=/d' /etc/my.cnf")
+        conf_file = '/etc/my.cnf'
+        public.ExecShell("sed -i '/user=root/d' {}".format(conf_file))
+        public.ExecShell("sed -i '/password=/d' {}".format(conf_file))
         if act:
-            mycnf = public.readFile('/etc/my.cnf');
-            rep = "\[mysqldump\]\nuser=root"
-            sea = "[mysqldump]\n"
-            subStr = sea + "user=root\npassword=\"" + root + "\"\n";
-            if type(mycnf)==bool:return False
-            mycnf = mycnf.replace(sea,subStr)
-            if len(mycnf) > 100: public.writeFile('/etc/my.cnf',mycnf);
+            mycnf = public.readFile(conf_file);
+            src_dump = "[mysqldump]\n"
+            sub_dump = src_dump + "user=root\npassword=\"{}\"\n".format(root);
+            if not mycnf: return False
+            mycnf = mycnf.replace(src_dump,sub_dump)
+            if len(mycnf) > 100: public.writeFile(conf_file,mycnf);
             return True
         return True
     
@@ -530,11 +530,6 @@ SetLink
             #password = find['password']
         
         self.__CreateUsers(find['name'],find['username'],password,find['accept'])
-        #panelMysql.panelMysql().execute("drop user '" + find['username'] + "'@'localhost'")
-        #panelMysql.panelMysql().execute("drop user '" + find['username'] + "'@'" + find['accept'] + "'")
-        #panelMysql.panelMysql().execute("grant all privileges on " + find['name'] + ".* to '" + find['username'] + "'@'localhost' identified by '" + password + "'")
-        #panelMysql.panelMysql().execute("grant all privileges on " + find['name'] + ".* to '" + find['username'] + "'@'" + find['accept'] + "' identified by '" + password + "'")
-        #panelMysql.panelMysql().execute("flush privileges")
         return 1
     
     

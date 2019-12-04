@@ -37,7 +37,6 @@ class AcmeDnsDns(common.BaseDns):
         super(AcmeDnsDns, self).__init__()
 
     def create_dns_record(self, domain_name, domain_dns_value):
-        self.logger.info("create_dns_record")
         # if we have been given a wildcard name, strip wildcard
         domain_name = domain_name.lstrip("*.")
 
@@ -52,12 +51,6 @@ class AcmeDnsDns(common.BaseDns):
         update_acmedns_dns_record_response = requests.post(
             url, headers=headers, json=body, timeout=self.HTTP_TIMEOUT
         )
-        self.logger.debug(
-            "update_acmedns_dns_record_response. status_code={0}. response={1}".format(
-                update_acmedns_dns_record_response.status_code,
-                self.log_response(update_acmedns_dns_record_response),
-            )
-        )
         if update_acmedns_dns_record_response.status_code != 200:
             # raise error so that we do not continue to make calls to ACME
             # server
@@ -67,9 +60,6 @@ class AcmeDnsDns(common.BaseDns):
                     response=self.log_response(update_acmedns_dns_record_response),
                 )
             )
-        self.logger.info("create_dns_record_end")
 
     def delete_dns_record(self, domain_name, domain_dns_value):
-        self.logger.info("delete_dns_record")
-        # acme-dns doesn't support this
-        self.logger.info("delete_dns_record_success")
+        pass

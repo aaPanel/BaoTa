@@ -7,14 +7,11 @@ import logging
 import binascii
 import platform
 import sys
-import requests
+import http_requests as requests
 import OpenSSL
 import cryptography
 from . import __version__ as sewer_version
 from .config import ACME_DIRECTORY_URL_PRODUCTION
-try:
-    requests.packages.urllib3.disable_warnings()
-except:pass
 
 
 
@@ -87,14 +84,6 @@ class Client(object):
         self.ACME_DIRECTORY_URL = ACME_DIRECTORY_URL
         self.LOG_LEVEL = LOG_LEVEL.upper()
 
-        self.logger = logging.getLogger()
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(message)s")
-        handler.setFormatter(formatter)
-        if not self.logger.handlers:
-            self.logger.addHandler(handler)
-        self.logger.setLevel(self.LOG_LEVEL)
-
         try:
             self.all_domain_names = copy.copy(self.domain_alt_names)
             self.all_domain_names.insert(0, self.domain_name)
@@ -123,15 +112,7 @@ class Client(object):
                 self.account_key = account_key
                 self.PRIOR_REGISTERED = True
 
-            self.logger.info(
-                "intialise_success, sewer_version={0}, domain_names={1}, acme_server={2}".format(
-                    sewer_version.__version__,
-                    self.all_domain_names,
-                    self.ACME_DIRECTORY_URL[:20] + "...",
-                )
-            )
         except Exception as e:
-            self.logger.error("Unable to intialise client. error={0}".format(str(e)))
             raise e
 
     @staticmethod
@@ -157,13 +138,9 @@ class Client(object):
         )
 
     def get_acme_endpoints(self):
-        self.logger.debug("get_acme_endpoints")
         headers = {"User-Agent": self.User_Agent}
         get_acme_endpoints = requests.get(
             self.ACME_DIRECTORY_URL, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers,verify=False
-        )
-        self.logger.debug(
-            "get_acme_endpoints_response. status_code={0}".format(get_acme_endpoints.status_code)
         )
         if get_acme_endpoints.status_code not in [200, 201]:
             raise ValueError(
@@ -175,11 +152,9 @@ class Client(object):
         return get_acme_endpoints
 
     def create_certificate_key(self):
-        self.logger.debug("create_certificate_key")
         return self.create_key().decode()
 
     def create_account_key(self):
-        self.logger.debug("create_account_key")
         return self.create_key().decode()
 
     def create_key(self, key_type=OpenSSL.crypto.TYPE_RSA):
@@ -194,7 +169,6 @@ class Client(object):
         The CSR is sent in the base64url-encoded version of the DER format. (NB: this
         field uses base64url, and does not include headers, it is different from PEM.)
         """
-        self.logger.debug("create_csr")
         X509Req = OpenSSL.crypto.X509Req()
         X509Req.get_subject().CN = self.domain_name
 
@@ -236,7 +210,6 @@ class Client(object):
         provided, then the server SHOULD use status code 409 (Conflict) and
         provide the URL of that account in the Location header field
         """
-        self.logger.info("acme_register")
         if self.PRIOR_REGISTERED:
             payload = {"onlyReturnExisting": True}
         elif self.contact_email:
@@ -249,11 +222,6 @@ class Client(object):
 
         url = self.ACME_NEW_ACCOUNT_URL
         acme_register_response = self.make_signed_acme_request(url=url, payload=payload)
-        self.logger.debug(
-            "acme_register_response. status_code={0}. response={1}".format(
-                acme_register_response.status_code, self.log_response(acme_register_response)
-            )
-        )
 
         if acme_register_response.status_code not in [201, 200, 409]:
             raise ValueError(
@@ -266,7 +234,6 @@ class Client(object):
         kid = acme_register_response.headers["Location"]
         setattr(self, "kid", kid)
 
-        self.logger.info("acme_register_success")
         return acme_register_response
 
     def apply_for_cert_issuance(self):
@@ -287,7 +254,6 @@ class Client(object):
         The date values seem to be ignored by LetsEncrypt although they are
         in the ACME draft spec; https://tools.ietf.org/html/draft-ietf-acme-acme#section-7.4
         """
-        self.logger.info("apply_for_cert_issuance")
         identifiers = []
         for domain_name in self.all_domain_names:
             identifiers.append({"type": "dns", "value": domain_name})
@@ -295,12 +261,6 @@ class Client(object):
         payload = {"identifiers": identifiers}
         url = self.ACME_NEW_ORDER_URL
         apply_for_cert_issuance_response = self.make_signed_acme_request(url=url, payload=payload)
-        self.logger.debug(
-            "apply_for_cert_issuance_response. status_code={0}. response={1}".format(
-                apply_for_cert_issuance_response.status_code,
-                self.log_response(apply_for_cert_issuance_response),
-            )
-        )
 
         if apply_for_cert_issuance_response.status_code != 201:
             raise ValueError(
@@ -314,7 +274,6 @@ class Client(object):
         finalize_url = apply_for_cert_issuance_response_json["finalize"]
         authorizations = apply_for_cert_issuance_response_json["authorizations"]
 
-        self.logger.info("apply_for_cert_issuance_success")
         return authorizations, finalize_url
 
     def get_identifier_authorization(self, url):
@@ -328,16 +287,9 @@ class Client(object):
 
         This is also where we get the challenges/tokens.
         """
-        self.logger.info("get_identifier_authorization")
         headers = {"User-Agent": self.User_Agent}
         get_identifier_authorization_response = requests.get(
             url, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers,verify=False
-        )
-        self.logger.debug(
-            "get_identifier_authorization_response. status_code={0}. response={1}".format(
-                get_identifier_authorization_response.status_code,
-                self.log_response(get_identifier_authorization_response),
-            )
         )
         if get_identifier_authorization_response.status_code not in [200, 201]:
             raise ValueError(
@@ -365,14 +317,10 @@ class Client(object):
             "dns_challenge_url": dns_challenge_url,
         }
 
-        self.logger.debug(
-            "get_identifier_authorization_success. identifier_auth={0}".format(identifier_auth)
-        )
-        self.logger.info("get_identifier_authorization_success")
+
         return identifier_auth
 
     def get_keyauthorization(self, dns_token):
-        self.logger.debug("get_keyauthorization")
         acme_header_jwk_json = json.dumps(
             self.get_acme_header("GET_THUMBPRINT")["jwk"], sort_keys=True, separators=(",", ":")
         )
@@ -401,7 +349,6 @@ class Client(object):
         The server MUST provide information about its retry state to the
         client via the "errors" field in the challenge and the Retry-After
         """
-        self.logger.info("check_authorization_status")
         desired_status = desired_status or ["pending", "valid","invalid"]
         number_of_checks = 0
         while True:
@@ -412,12 +359,6 @@ class Client(object):
             a_auth = check_authorization_status_response.json()
             authorization_status = a_auth["status"]
             number_of_checks = number_of_checks + 1
-            self.logger.debug(
-                "check_authorization_status_response. status_code={0}. response={1}".format(
-                    check_authorization_status_response.status_code,
-                    self.log_response(check_authorization_status_response),
-                )
-            )
             if number_of_checks == self.ACME_AUTH_STATUS_MAX_CHECKS:
                 raise StopIteration(
                     "Checks done={0}. Max checks allowed={1}. Interval between checks={2}seconds. >>>> {3}".format(
@@ -453,7 +394,6 @@ class Client(object):
                 # for any other status, sleep then retry
                 time.sleep(self.ACME_AUTH_STATUS_WAIT_PERIOD)
 
-        self.logger.info("check_authorization_status_success")
         return check_authorization_status_response
 
     def respond_to_challenge(self, acme_keyauthorization, dns_challenge_url):
@@ -471,17 +411,9 @@ class Client(object):
         request to the authorization URL, and the server responds with the
         current authorization object.
         """
-        self.logger.info("respond_to_challenge")
         payload = {"keyAuthorization": "{0}".format(acme_keyauthorization)}
         respond_to_challenge_response = self.make_signed_acme_request(dns_challenge_url, payload)
-        self.logger.debug(
-            "respond_to_challenge_response. status_code={0}. response={1}".format(
-                respond_to_challenge_response.status_code,
-                self.log_response(respond_to_challenge_response),
-            )
-        )
 
-        self.logger.info("respond_to_challenge_success")
         return respond_to_challenge_response
 
     def send_csr(self, finalize_url):
@@ -497,14 +429,8 @@ class Client(object):
         The client should begin polling the order by sending a
         GET request to the order resource to obtain its current state.
         """
-        self.logger.info("send_csr")
         payload = {"csr": self.calculate_safe_base64(self.csr)}
         send_csr_response = self.make_signed_acme_request(url=finalize_url, payload=payload)
-        self.logger.debug(
-            "send_csr_response. status_code={0}. response={1}".format(
-                send_csr_response.status_code, self.log_response(send_csr_response)
-            )
-        )
 
         if send_csr_response.status_code not in [200, 201]:
             raise ValueError(
@@ -515,21 +441,11 @@ class Client(object):
             )
         send_csr_response_json = send_csr_response.json()
         certificate_url = send_csr_response_json["certificate"]
-
-        self.logger.info("send_csr_success")
         return certificate_url
 
     def download_certificate(self, certificate_url):
-        self.logger.info("download_certificate")
-
         download_certificate_response = self.make_signed_acme_request(
             certificate_url, payload="DOWNLOAD_Z_CERTIFICATE"
-        )
-        self.logger.debug(
-            "download_certificate_response. status_code={0}. response={1}".format(
-                download_certificate_response.status_code,
-                self.log_response(download_certificate_response),
-            )
         )
 
         if download_certificate_response.status_code not in [200, 201]:
@@ -540,13 +456,13 @@ class Client(object):
                 )
             )
 
-        pem_certificate = download_certificate_response.content.decode("utf-8")
 
-        self.logger.info("download_certificate_success")
+        pem_certificate = download_certificate_response.content
+        if type(pem_certificate) == bytes: pem_certificate = pem_certificate.decode('utf-8')
+
         return pem_certificate
 
     def sign_message(self, message):
-        self.logger.debug("sign_message")
         pk = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, self.account_key.encode())
         return OpenSSL.crypto.sign(pk, message.encode("utf8"), self.digest)
 
@@ -556,7 +472,6 @@ class Client(object):
         Each request to an ACME server must include a fresh unused nonce
         in order to protect against replay attacks.
         """
-        self.logger.debug("get_nonce")
         headers = {"User-Agent": self.User_Agent}
         response = requests.get(
             self.ACME_GET_NONCE_URL, timeout=self.ACME_REQUEST_TIMEOUT, headers=headers,verify=False
@@ -604,7 +519,6 @@ class Client(object):
         - "nonce". gotten from self.ACME_GET_NONCE_URL
         - "url"
         """
-        self.logger.debug("get_acme_header")
         header = {"alg": "RS256", "nonce": self.get_nonce(), "url": url}
         
         if url in [self.ACME_NEW_ACCOUNT_URL, self.ACME_REVOKE_CERT_URL, "GET_THUMBPRINT"]:
@@ -630,7 +544,6 @@ class Client(object):
         return header
 
     def make_signed_acme_request(self, url, payload):
-        self.logger.debug("make_signed_acme_request")
         headers = {"User-Agent": self.User_Agent}
         payload = self.stringfy_items(payload)
 
@@ -652,7 +565,6 @@ class Client(object):
         return response
 
     def get_certificate(self):
-        self.logger.debug("get_certificate")
         domain_dns_value = "placeholder"
         dns_names_to_delete = []
         try:
@@ -699,7 +611,6 @@ class Client(object):
             certificate_url = self.send_csr(finalize_url)
             certificate = self.download_certificate(certificate_url)
         except Exception as e:
-            self.logger.error("Error: Unable to issue certificate. error={0}".format(str(e)))
             raise e
         finally:
             for i in dns_names_to_delete:
