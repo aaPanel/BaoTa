@@ -165,7 +165,12 @@ class fastcgi_client:
             if response['type'] == self.FCGI_STATE_SUCCESS:
                 self.requests[requestId]
         if self.requests[requestId]['response'].find('\r\n\r\n') != -1:
-            self.requests[requestId]['response'] = self.requests[requestId]['response'].split('\r\n\r\n')[1]
+            tmp = ""
+            tmp2 = self.requests[requestId]['response'].split('\r\n\r\n')
+            for i in range(len(tmp2)):
+                if i == 0: continue
+                tmp += tmp2[i] + '\r\n\r\n'
+            self.requests[requestId]['response'] = tmp.strip()
         return self.requests[requestId]['response']
 
     def __repr__(self):

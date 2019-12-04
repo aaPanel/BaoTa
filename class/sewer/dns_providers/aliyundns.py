@@ -58,60 +58,13 @@ class AliyunDns(common.BaseDns):
             result = json.loads(result)
             if "Message" in result or "Code" in result:
                 result["Success"] = False
-                self.logger.warning("aliyundns resp error: %s", result)
         except Exception as exc:
-            self.logger.warning("aliyundns failed to send request: %s, %s", str(exc), request)
             status, headers, result = 502, {}, '{"Success": false}'
             result = json.loads(result)
 
-        if self._debug:
-            self.logger.info("aliyundns request name: %s", request.__class__.__name__)
-            self.logger.info("aliyundns request query: %s", request.get_query_params())
         return _ResponseForAliyun(status, result, headers)
 
     def query_recored_items(self, host, zone=None, tipe=None, page=1, psize=200):
-        """
-        query recored items.
-        :param str host: like example.com
-        :param str zone: like menduo.example.com
-        :param str tipe: TXT, CNAME, IP or other
-        :param int page:
-        :param int psize:
-        :return dict: res = {
-                'DomainRecords':
-                    {'Record': [
-                        {
-                            'DomainName': 'menduo.net',
-                            'Line': 'default',
-                            'Locked': False,
-                            'RR': 'zb',
-                            'RecordId': '3989515483698964',
-                            'Status': 'ENABLE',
-                            'TTL': 600,
-                            'Type': 'A',
-                            'Value': '127.0.0.1',
-                            'Weight': 1
-                        },
-                        {
-                            'DomainName': 'menduo.net',
-                            'Line': 'default',
-                            'Locked': False,
-                            'RR': 'a.sub',
-                            'RecordId': '3989515480778964',
-                            'Status': 'ENABLE',
-                            'TTL': 600,
-                            'Type': 'CNAME',
-                            'Value': 'h.p.menduo.net',
-                            'Weight': 1
-                        }
-                    ]
-                    },
-                'PageNumber': 1,
-                'PageSize': 20,
-                'RequestId': 'FC4D02CD-EDCC-4EE8-942F-1497CCC3B10E',
-                'TotalCount': 95
-            }
-        """
         request = DescribeDomainRecordsRequest.DescribeDomainRecordsRequest()
         request.get_action_name()
         request.set_DomainName(host)
@@ -167,7 +120,6 @@ class AliyunDns(common.BaseDns):
         :param str domain_dns_value: the value sewer client passed in.
         :return _ResponseForAliyun:
         """
-        self.logger.info("create_dns_record start: %s", (domain_name, domain_dns_value))
         root, _, acme_txt = self.extract_zone(domain_name)
 
         request = AddDomainRecordRequest.AddDomainRecordRequest()
@@ -178,7 +130,30 @@ class AliyunDns(common.BaseDns):
         request.set_Value(domain_dns_value)
         resp = self._send_reqeust(request)
 
-        self.logger.info("create_dns_record end: %s", (domain_name, domain_dns_value, resp.json()))
+        try:
+            request = AddDomainRecordRequest.AddDomainRecordRequest()
+            request.set_DomainName(root)
+            request.set_TTL(600)
+            request.set_RR('@')
+            request.set_Type("CAA")
+            request.set_Value('1 issue letsencrypt.org')
+            resp = self._send_reqeust(request)
+        except:
+            pass
+
+        try:
+            tmp = acme_txt.split('.')
+            if len(tmp) > 1:
+                request = AddDomainRecordRequest.AddDomainRecordRequest()
+                request.set_DomainName(root)
+                request.set_TTL(600)
+                request.set_RR(tmp[-1])
+                request.set_Type("CAA")
+                request.set_Value('1 issue letsencrypt.org')
+                resp = self._send_reqeust(request)
+        except:
+            pass
+
 
         return resp
 
@@ -190,21 +165,35 @@ class AliyunDns(common.BaseDns):
         :return _ResponseForAliyun:
         :return:
         """
-        self.logger.info("delete_dns_record start: %s", (domain_name, domain_dns_value))
-
         root, _, acme_txt = self.extract_zone(domain_name)
 
         record_id = self.query_recored_id(root, acme_txt)
         if not record_id:
-            msg = "failed to find record_id of domain: %s, value: %s", domain_name, domain_dns_value
-            self.logger.warning(msg)
             return
 
-        self.logger.info("start to delete dns record, id: %s", record_id)
 
         request = DeleteDomainRecordRequest.DeleteDomainRecordRequest()
         request.set_RecordId(record_id)
         resp = self._send_reqeust(request)
 
-        self.logger.info("delete_dns_record end: %s", (domain_name, domain_dns_value, resp.json()))
+        try:
+            record_id = self.query_recored_id(root, '@','CAA')
+            if record_id:
+                request = DeleteDomainRecordRequest.DeleteDomainRecordRequest()
+                request.set_RecordId(record_id)
+                self._send_reqeust(request)
+        except:
+            pass
+
+        try:
+            tmp = acme_txt.split('.')
+            if len(tmp) > 1:
+                record_id = self.query_recored_id(root, tmp[-1],'CAA')
+                if record_id:
+                    request = DeleteDomainRecordRequest.DeleteDomainRecordRequest()
+                    request.set_RecordId(record_id)
+                    self._send_reqeust(request)
+        except:
+            pass
+
         return resp

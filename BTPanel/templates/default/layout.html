@@ -136,9 +136,9 @@
                         msg_body += '<div class="mw-con">\
 	                                <ul class="waiting-down-list">\
 		                                <li>\
-			                                <div class="down-filse-name"><span class="fname" style="width:80%;" title="正在下载: '+ task_list[i].other + '">正在下载: ' + task_list[i].other + '</span><span style="position: absolute;left: 84%;top: 25px;color: #999;">' + task_list[i].log.pre + '%</span><span class="btlink" onclick="remove_task(' + task_list[i].id + ')" style="position: absolute;top: 25px;right: 20px;">取消</span></div>\
+			                                <div class="down-filse-name"><span class="fname" style="width:80%;" title="正在下载: '+ task_list[i].shell + '">正在下载: ' + task_list[i].shell + '</span><span style="position: absolute;left: 84%;top: 25px;color: #999;">' + task_list[i].log.pre + '%</span><span class="btlink" onclick="remove_task(' + task_list[i].id + ')" style="position: absolute;top: 25px;right: 20px;">取消</span></div>\
 			                                <div class="down-progress"><div class="done-progress" style="width:'+ task_list[i].log.pre + '%"></div></div>\
-			                                <div class="down-info"><span class="total-size"> '+ ToSize(task_list[i].log.used) + '/' + ToSize(task_list[i].log.total) + '</span><span class="speed-size">' + (task_list[i].log.speed==0?'正在连接..':ToSize(task_list[i].log.speed)) +'/s</span></div>\
+			                                <div class="down-info"><span class="total-size"> '+ task_list[i].log.used + '/' + ToSize(task_list[i].log.total) + '</span><span class="speed-size">' + (task_list[i].log.speed == 0 ? '正在连接..' : task_list[i].log.speed) + '/s</span><span style="margin-left: 20px;">预计还要: ' + task_list[i].log.time +'</span></div>\
 		                                </li>\
                                         </ul>\
                                     </div>'

@@ -118,7 +118,7 @@
   "MYSQL_CHECK_ERR": "检测到MySQL配置文件异常,可能导致mysqld服务无法正常启动,已自动修复!",
   "SYS_EXEC_ERR": "执行失败: {1}",
   "SYS_EXEC_SUCCESS": "{1}执行成功",
-  "LOGIN_ERR_CODE": "<a style='color:red;'>验证码错误</a>,帐号:{1},验证码:{2},登录IP:{3}",
-  "LOGIN_ERR_PASS": "<a style='color:red;'>密码错误</a>,帐号:{1},密码:{2},登录IP:{3}",
-  "LOGIN_SUCCESS": "<a style='color:green;'>登录成功</a>,帐号:{1},登录IP:{2}"
+  "LOGIN_ERR_CODE": "验证码错误,帐号:{1},验证码:{2},登录IP:{3}",
+  "LOGIN_ERR_PASS": "密码错误,帐号:{1},密码:{2},登录IP:{3}",
+  "LOGIN_SUCCESS": "登录成功,帐号:{1},登录IP:{2}"
 }

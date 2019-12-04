@@ -4626,18 +4626,42 @@ bt.site = {
 	},
 	get_site_ssl:function(siteName,callback){
 		var loadT = bt.load(lan.site.the_msg);
-		bt.send('GetSSL','site/GetSSL',{siteName:siteName},function(rdata){
-			loadT.close();			
-			if(callback) callback(rdata);		
-		})	
+        bt.send('GetSSL', 'site/GetSSL', { siteName: siteName }, function (rdata) {
+            loadT.close();
+            if (callback) callback(rdata);
+        });
 	},
 	create_let:function(data,callback){
-		var loadT = bt.load(lan.site.ssl_apply_2);
-		bt.send('CreateLet','site/CreateLet',data,function(rdata){
-			loadT.close();			
-			if(callback) callback(rdata);		
-		})			
-	},	
+        var loadT = layer.open({
+            title: false,
+            type:1,
+            closeBtn:0,
+            shade: 0.3,
+            area: "500px",
+            offset: "30%",
+            content: "<pre style='margin-bottom: 0px;height:250px;text-align: left;background-color: #000;color: #fff;white-space: pre-wrap;' id='create_lst'>正在准备申请证书...</pre>",
+            success:function(layers,index){
+            	bt.site.get_let_logs();
+            	bt.send('CreateLet', 'site/CreateLet', data, function (rdata) {
+		            layer.close(loadT);
+		            if (callback) callback(rdata);
+		        });
+            }
+        });
+    },
+    get_let_logs: function () {
+    	bt.send('get_lines','ajax/get_lines',{ 
+    		num: 10, 
+    		filename: "/www/server/panel/logs/letsencrypt.log" 
+    	},function(rdata){
+            if ($("#create_lst").text() === "") return;
+            if (rdata.status === true) {
+                $("#create_lst").text(rdata.msg);
+                $("#create_lst").scrollTop($("#create_lst")[0].scrollHeight);
+            }
+            setTimeout(function () { bt.site.get_let_logs(); }, 1000);
+    	});
+    },
 	get_dns_api:function(callback){		
 		var loadT = bt.load();
 		bt.send('GetDnsApi','site/GetDnsApi',{},function(rdata){

@@ -3273,7 +3273,7 @@ location %s
                 filePath = sitePath + '/' + filename
                 if os.path.islink(filePath): continue
                 if os.path.isdir(filePath):
-                    dirnames.append('/' + filename)
+                    dirnames.append(public.unicode_encode('/' + filename))
             except:
                 pass
         

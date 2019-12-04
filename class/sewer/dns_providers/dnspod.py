@@ -55,7 +55,6 @@ class DNSPodDns(common.BaseDns):
         return root, zone, acme_txt
 
     def create_dns_record(self, domain_name, domain_dns_value):
-        self.logger.info("create_dns_record")
         # if we have been given a wildcard name, strip wildcard
         #domain_name = domain_name.lstrip("*.")
         #subd = ""
@@ -81,12 +80,6 @@ class DNSPodDns(common.BaseDns):
         create_dnspod_dns_record_response = requests.post(
             url, data=body, timeout=self.HTTP_TIMEOUT
         ).json()
-        self.logger.debug(
-            "create_dnspod_dns_record_response. status_code={0}. response={1}".format(
-                create_dnspod_dns_record_response["status"]["code"],
-                create_dnspod_dns_record_response["status"]["message"],
-            )
-        )
         if create_dnspod_dns_record_response["status"]["code"] != "1":
             # raise error so that we do not continue to make calls to ACME
             # server
@@ -96,10 +89,8 @@ class DNSPodDns(common.BaseDns):
                     response=create_dnspod_dns_record_response["status"]["message"],
                 )
             )
-        self.logger.info("create_dns_record_end")
 
     def delete_dns_record(self, domain_name, domain_dns_value):
-        self.logger.info("delete_dns_record")
         #domain_name = domain_name.lstrip("*.")
         #subd = ""
         #if domain_name.count(".") != 1:  # not top level domain
@@ -123,12 +114,6 @@ class DNSPodDns(common.BaseDns):
         }
         print(body)
         list_dns_response = requests.post(url, data=body, timeout=self.HTTP_TIMEOUT).json()
-        if list_dns_response["status"]["code"] != "1":
-            self.logger.error(
-                "list_dns_record_response. status_code={0}. message={1}".format(
-                    list_dns_response["status"]["code"], list_dns_response["status"]["message"]
-                )
-            )
         for i in range(0, len(list_dns_response["records"])):
             rid = list_dns_response["records"][i]["id"]
             urlr = urllib.parse.urljoin(self.DNSPOD_API_BASE_URL, "Record.Remove")
@@ -141,14 +126,5 @@ class DNSPodDns(common.BaseDns):
             delete_dns_record_response = requests.post(
                 urlr, data=bodyr, timeout=self.HTTP_TIMEOUT
             ).json()
-            if delete_dns_record_response["status"]["code"] != "1":
-                self.logger.error(
-                    "delete_dns_record_response. status_code={0}. message={1}".format(
-                        delete_dns_record_response["status"]["code"],
-                        delete_dns_record_response["status"]["message"],
-                    )
-                )
-
-        self.logger.info("delete_dns_record_success")
 
 

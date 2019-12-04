@@ -334,6 +334,11 @@ function GetFiles(Path, sort) {
         }
     }
 
+    var old_scroll_top = 0;
+    if (getCookie('Path') === Path) {
+        old_scroll_top = $(".oldTable").scrollTop();
+    }
+    
     var sorted = '';
     var reverse = '';
     if (!sort) {
@@ -577,7 +582,7 @@ function GetFiles(Path, sort) {
         shtml += '<li style="text-align: center;"><a href="javascript: ;" onclick="set_file_store(\'' + rdata.PATH + '\')">管理收藏夹</a></li></ul></div>'
 
         BarTools += shtml;
-
+        
         var copyName = getCookie('copyFileName');
         var cutName = getCookie('cutFileName');
         var isPaste = (copyName == 'null') ? cutName : copyName;
@@ -591,11 +596,13 @@ function GetFiles(Path, sort) {
         if (isBatch == 1 || isBatch == '1') {
             BatchTools += ' <button onclick="javascript:BatchPaste();" class="btn btn-default btn-sm">' + lan.files.paste_all + '</button>';
         }
+
+        
         $("#Batch").html(BatchTools);
         $("#setBox").prop("checked", false);
 
         $("#BarTools").html(BarTools);
-
+        $(".oldTable").scrollTop(old_scroll_top);
         $("input[name=id]").click(function () {
             if ($(this).prop("checked")) {
                 $(this).prop("checked", true);
