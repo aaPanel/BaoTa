@@ -1019,7 +1019,7 @@ var aceEditor = {
 		if(obj['p'] === undefined) obj['p'] = 1;
 		if(obj['showRow'] === undefined) obj['showRow'] = 200;
 		if(obj['sort'] === undefined) obj['sort'] = 'name';
-		if(obj['reverse'] === undefined) obj['reverse'] = false;
+		if(obj['reverse'] === undefined) obj['reverse'] = 'False';
 		$.post("/files?action=GetDir&tojs=GetFiles",{p:obj.p,showRow:obj.showRow,sort:obj.sort,reverse:obj.reverse,path:obj.path}, function(res) {
 			layer.close(loadT);
 			if(callback) callback(res);
@@ -3076,17 +3076,18 @@ function GetReloads() {
 		}
 		a++;
         $.post("/files?action=GetTaskSpeed", "", function (h) {
+            if (h.task == undefined) {
+                $(".cmdlist").html(lan.bt.task_not_list);
+                return
+            }
+
             if (h.status === false) {
                 clearInterval(speed);
                 speed = null;
                 a = 0;
                 return
             }
-
-			if(h.task == undefined) {
-				$(".cmdlist").html(lan.bt.task_not_list);
-				return
-			}
+            
 			var b = "";
 			var d = "";
 			$("#task").text(h.task.length);

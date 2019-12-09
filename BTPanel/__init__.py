@@ -24,14 +24,13 @@ sys.path.insert(0,'/www/server/panel/class/')
 sys.setrecursionlimit(1000000)
 cache = SimpleCache()
 
+app = Flask(__name__,template_folder="templates/" + public.GetConfigValue('template'))
+sockets = Sockets(app)
+
 import public
 import common
 import db
 import jobs
-
-app = Flask(__name__,template_folder="templates/" + public.GetConfigValue('template'))
-sockets = Sockets(app)
-
 
 dns_client = None
 app.config['DEBUG'] = os.path.exists('data/debug.pl')
@@ -152,7 +151,7 @@ def service_status():
 def webssh(ws):
     if not check_login(): 
         session.clear()
-        emit('server_response',"面板会话丢失，请重新登录面板!")
+        emit('server_response',"SSH_ERROR")
         return None
     if not 'ssh_obj' in session:
         import ssh_terminal
@@ -179,7 +178,7 @@ def term_open():
         key = 'ssh_' + args['host']
         if key in session:
             return public.getJson(session[key]),json_header
-        return public.returnMsg(False,'获取失败!')
+        return public.returnMsg(False,'SSH_INFO_ERROR')
     session['ssh_info'] = json.loads(args.data)
     key = 'ssh_' + session['ssh_info']['host']
     session[key] = session['ssh_info']
@@ -190,7 +189,7 @@ def term_open():
     else:
         if os.path.exists(s_file): os.remove(s_file)
     if 'ssh_obj' in session: session['ssh_obj']._ssh_info = session['ssh_info']
-    return public.returnJson(True,'设置成功!');
+    return public.returnJson(True,'SET_SUCCESS');
 
 @app.route('/reload_mod',methods=method_all)
 def reload_mod():
@@ -202,7 +201,7 @@ def reload_mod():
         mod_name = args.mod_name
     result = public.reload_mod(mod_name)
     if result: return public.returnJson(True,result),json_header
-    return public.returnJson(False,'重载失败!'),json_header
+    return public.returnJson(False,'INIT_RELOAD_ERR'),json_header
 
 @app.before_request
 def request_check():
@@ -221,7 +220,7 @@ def request_check():
     if public.is_local():
         not_networks = ['uninstall_plugin','install_plugin','UpdatePanel']
         if request.args.get('action') in not_networks: 
-            return public.returnJson(False,'离线模式下无法使用此功能!'),json_header
+            return public.returnJson(False,'INIT_REQUEST_CHECK_LOCAL_ERR'),json_header
 
     if app.config['BASIC_AUTH_OPEN']:
         if request.path in ['/public','/download','/mail_sys','/hook']: return;
@@ -601,7 +600,7 @@ def config(pdata = None):
         try:
             data['wx'] = wxapp.wxapp().get_user_info(None)['msg']
         except:
-            data['wx'] = '当前未绑定微信号'
+            data['wx'] = 'INIT_WX_NOT_BIND'
         data['api'] = ''
         data['ipv6'] = '';
         sess_out_path = 'data/session_timeout.pl'
@@ -615,8 +614,8 @@ def config(pdata = None):
         if c_obj.get_ipv6_listen(None): data['ipv6'] = 'checked'
         if c_obj.get_token(None)['open']: data['api'] = 'checked'
         data['basic_auth'] = c_obj.get_basic_auth_stat(None)
-        data['basic_auth']['value'] = '已关闭'
-        if data['basic_auth']['open']: data['basic_auth']['value'] = '已开启'
+        data['basic_auth']['value'] = public.getMsg('CLOSED')
+        if data['basic_auth']['open']: data['basic_auth']['value'] = public.getMsg('OPENED')
         data['debug'] = ''
         if app.config['DEBUG']: data['debug'] = 'checked'
         data['is_local'] = ''
@@ -819,7 +818,7 @@ def panel_other(name=None,fun = None,stype=None):
     if not name: name = 'coll'
     if not public.path_safe_check("%s/%s/%s" % (name,fun,stype)): return abort(404)
     if name.find('./') != -1 or not re.match("^[\w-]+$",name): return abort(404)
-    if not name: return public.returnJson(False,'请传入插件名称!'),json_header
+    if not name: return public.returnJson(False,'PLUGIN_INPUT_ERR'),json_header
     p_path = '/www/server/panel/plugin/' + name
     if not os.path.exists(p_path): return abort(404)
 
@@ -853,7 +852,7 @@ def panel_other(name=None,fun = None,stype=None):
             except:pass
             plu = eval('plugin_main.' + name + '_main()')
             if not hasattr(plu,fun): 
-                return public.returnJson(False,'指定方法不存在!'),json_header
+                return public.returnJson(False,'PLUGIN_NOT_FUN'),json_header
 
     
         #执行插件方法
@@ -879,7 +878,7 @@ def panel_other(name=None,fun = None,stype=None):
             t_path_root = p_path + '/templates/'
             t_path = t_path_root + fun + '.html'
             if not os.path.exists(t_path): 
-                return public.returnJson(False,'指定模板不存在!'),json_header
+                return public.returnJson(False,'PLUGIN_NOT_TEMPLATE'),json_header
             t_body = public.readFile(t_path)
 
             #处理模板包含
@@ -896,7 +895,7 @@ def panel_other(name=None,fun = None,stype=None):
         else:  #直接响应插件返回值,可以是任意flask支持的响应类型
             r_type = type(data)
             if r_type == dict: 
-                return public.returnJson(False,'错误的返回类型[{}]'.fformat(r_type)),json_header
+                return public.returnJson(False,public.getMsg('PUBLIC_ERR_RETURN').format(r_type)),json_header
             return data
     except:
         error_info = public.get_error_info()
@@ -973,11 +972,11 @@ def install():
     elif request.method == method_post[0]:
         if not os.path.exists('install.pl'): return redirect(ret_login)
         get = get_input()
-        if not hasattr(get,'bt_username'): return '用户名不能为空!';
-        if not get.bt_username: return '用户名不能为空!'
-        if not hasattr(get,'bt_password1'): return '密码不能为空!';
-        if not get.bt_password1: return '密码不能为空!';
-        if get.bt_password1 != get.bt_password2: return '两次输入的密码不一致，请重新输入!';
+        if not hasattr(get,'bt_username'): return public.getMsg('INSTALL_USER_EMPTY')
+        if not get.bt_username: return public.getMsg('INSTALL_USER_EMPTY')
+        if not hasattr(get,'bt_password1'): return public.getMsg('INSTALL_PASS_EMPTY')
+        if not get.bt_password1: return public.getMsg('INSTALL_PASS_EMPTY')
+        if get.bt_password1 != get.bt_password2: return public.getMsg('INSTALL_PASS_CHECK')
         public.M('users').where("id=?",(1,)).save('username,password',
                                                   (get.bt_username,
                                                    public.md5(get.bt_password1.strip())
@@ -1043,7 +1042,6 @@ def download():
     mimetype = "application/octet-stream"
     extName = filename.split('.')[-1]
     if extName in ['png','gif','jpeg','jpg']: mimetype = None
-    #if extName in ['mp4','avi']: mimetype = 'multipart/x-mixed-replace'
     return send_file(filename,mimetype=mimetype, 
                      as_attachment=True,
                      attachment_filename=os.path.basename(filename),
@@ -1081,14 +1079,14 @@ def check_csrf():
 
 def publicObject(toObject,defs,action=None,get = None):
     if 'request_token' in session and 'login' in session:
-        if not check_csrf(): return public.ReturnJson(False,'CSRF校验失败，请重新登录面板'),json_header
+        if not check_csrf(): return public.ReturnJson(False,'INIT_CSRF_ERR'),json_header
 
     if not get: get = get_input()
     if action: get.action = action
 
     if hasattr(get,'path'):
             get.path = get.path.replace('//','/').replace('\\','/');
-            if get.path.find('./') != -1: return public.ReturnJson(False,'不安全的路径'),json_header
+            if get.path.find('./') != -1: return public.ReturnJson(False,'INIT_PATH_NOT_SAFE'),json_header
             if get.path.find('->') != -1:
                 get.path = get.path.split('->')[0].strip();
     if hasattr(get,'sfile'):
@@ -1097,7 +1095,7 @@ def publicObject(toObject,defs,action=None,get = None):
         get.dfile = get.dfile.replace('//','/').replace('\\','/');
         
     if hasattr(toObject,'site_path_check'):
-        if not toObject.site_path_check(get): return public.ReturnJson(False,'越权的操作!'),json_header
+        if not toObject.site_path_check(get): return public.ReturnJson(False,'INIT_ACCEPT_NOT'),json_header
 
     return run_exec().run(toObject,defs,get)
 
@@ -1209,7 +1207,7 @@ def internalerror(e):
             errorStr = errorStr.format(public.getMsg('PAGE_ERR_500_TITLE'),
                                        str(e),
                                        '<pre>'+public.get_error_info() + '</pre>',
-                                       '以上调试信息仅在开发者模式显示','版本号: ' + public.version())
+                                       public.getMsg('INIT_DEBUG_INFO'),public.getMsg('INIT_VERSION_LAST') + public.version())
     except IndexError:pass
     return errorStr,500
 

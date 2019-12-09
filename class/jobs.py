@@ -8,8 +8,6 @@
 # +-------------------------------------------------------------------
 import time,public,db,os,sys,json,re
 os.chdir('/www/server/panel')
-exec_tips = None
-from BTPanel import cache
 
 def control_init():
     sql = db.Sql().dbfile('system')
@@ -67,6 +65,39 @@ def control_init():
     remove_tty1()
     clean_hook_log()
     run_new()
+    clean_max_log('/www/server/cron',1024*1024*5,20)
+
+
+#检测端口放行是否同步
+def check_firewall():
+    data = public.M('firewall').field('port,ps').select()
+    import firewalld,firewalls
+    fs = firewalls.firewalls()
+    accept_ports = firewalld.firewalld().GetAcceptPortList()
+    
+    port_list = []
+    for port_info  in accept_ports:
+        if port_info['port'] in port_list: 
+            continue
+        port_list.append(port_info['port'])
+
+    print(port_list)
+    n = 0
+    for p in data:
+        if p['port'].find('.') != -1:
+            continue
+        if p['port'] in port_list:
+            continue
+        print(p['port'])
+        print(fs.AddAcceptPortAll(p['port'],p['ps']))
+        n+=1
+
+    #重载
+    if n: fs.FirewallReload()
+
+                
+
+
 
 #尝试启动新架构
 def run_new():

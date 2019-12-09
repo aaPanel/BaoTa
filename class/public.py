@@ -12,6 +12,9 @@
 #--------------------------------
 
 import json,os,sys,time,re,socket,importlib,binascii,base64,io
+_LAN_PUBLIC = None
+_LAN_LOG = None
+_LAN_TEMPLATE = None
 
 if sys.version_info[0] == 2:
     reload(sys)
@@ -292,14 +295,16 @@ def WriteLog(type,logMsg,args=()):
     #写日志
     #try:
     import time,db,json
-    logMessage = json.loads(readFile('BTPanel/static/language/' + get_language() + '/log.json'));
-    keys = logMessage.keys();
+    global _LAN_LOG
+    if not _LAN_LOG:
+        _LAN_LOG = json.loads(ReadFile('BTPanel/static/language/' + GetLanguage() + '/log.json'));
+    keys = _LAN_LOG.keys();
     if logMsg in keys:
-        logMsg = logMessage[logMsg];
+        logMsg = _LAN_LOG[logMsg];
         for i in range(len(args)):
             rep = '{'+str(i+1)+'}'
             logMsg = logMsg.replace(rep,args[i]);
-    if type in keys: type = logMessage[type];
+    if type in keys: type = _LAN_LOG[type];
     sql = db.Sql()
     mDate = time.strftime('%Y-%m-%d %X',time.localtime());
     data = (type,logMsg,mDate);
@@ -348,22 +353,26 @@ def GetLan(key):
     """
     取提示消息
     """
-    log_message = json.loads(ReadFile('BTPanel/static/language/' + GetLanguage() + '/template.json'));
-    keys = log_message.keys();
+    global _LAN_TEMPLATE
+    if not _LAN_TEMPLATE:
+        _LAN_TEMPLATE = json.loads(ReadFile('BTPanel/static/language/' + GetLanguage() + '/template.json'));
+    keys = _LAN_TEMPLATE.keys();
     msg = None;
     if key in keys:
-        msg = log_message[key];
+        msg = _LAN_TEMPLATE[key];
     return msg;
 def getLan(key):
     return GetLan(key)
 
 def GetMsg(key,args = ()):
     try:
-        log_message = json.loads(ReadFile('BTPanel/static/language/' + GetLanguage() + '/public.json'));
-        keys = log_message.keys();
+        global _LAN_PUBLIC
+        if not _LAN_PUBLIC:
+            _LAN_PUBLIC = json.loads(ReadFile('BTPanel/static/language/' + GetLanguage() + '/public.json'));
+        keys = _LAN_PUBLIC.keys();
         msg = None;
         if key in keys:
-            msg = log_message[key];
+            msg = _LAN_PUBLIC[key];
             for i in range(len(args)):
                 rep = '{'+str(i+1)+'}'
                 msg = msg.replace(rep,args[i]);
@@ -578,7 +587,8 @@ def GetNumLines(path,num,p=1):
                         buf = "\n" + buf
             if not b: break;
         fp.close()
-    except: return ""
+    except:
+        return ExecShell("tail -n {} {}".format(num,path))[0]
     return "\n".join(data)
 
 #验证证书
@@ -1541,11 +1551,13 @@ def url_encode(data):
 
 
 def unicode_encode(data):
-    if sys.version_info[0] == 2:
-        result = unicode(data,errors='ignore')
-    else:
-        result = data.encode('utf8',errors='ignore')
-    return result
+    try:
+        if sys.version_info[0] == 2:
+            result = unicode(data,errors='ignore')
+        else:
+            result = data.encode('utf8',errors='ignore')
+        return result
+    except: return data
 
 #取通用对象
 class dict_obj:
