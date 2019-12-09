@@ -60,6 +60,19 @@ class firewalls:
         else:
             public.ExecShell('/etc/init.d/iptables save')
             public.ExecShell('/etc/init.d/iptables restart')
+
+    #取防火墙状态
+    def CheckFirewallStatus(self):
+        if self.__isUfw:
+            public.ExecShell("")
+
+        if self.__isFirewalld:
+            res = public.ExecShell("systemctl status firewalld")[0]
+            if res.find('active (running)') != -1: return 1
+            if res.find('disabled') != -1: return -1
+            if res.find('inactive (dead)') != -1: return 0
+        else:
+            public.ExecShell("systemctl status firewalld")[0]
         
     #添加屏蔽IP
     def AddDropAddress(self,get):
@@ -112,11 +125,14 @@ class firewalls:
         src_port = get.port
         get.port = get.port.replace('-',':')
         rep = "^\d{1,5}(:\d{1,5})?$"
-        if not re.search(rep,get.port): return public.returnMsg(False,'PORT_CHECK_RANGE');
+        if not re.search(rep,get.port):
+            return public.returnMsg(False,'PORT_CHECK_RANGE');
+
         import time
         port = get.port
         ps = get.ps
         is_exists = public.M('firewall').where("port=? or port=?",(port,src_port)).count()
+        if is_exists: return public.returnMsg(False,'端口已经放行过了!')
         notudps = ['80','443','8888','888','39000:40000','21','22']
         if self.__isUfw:
             public.ExecShell('ufw allow ' + port + '/tcp');
@@ -135,7 +151,27 @@ class firewalls:
         if not is_exists: public.M('firewall').add('port,ps,addtime',(port,ps,addtime))
         self.FirewallReload()
         return public.returnMsg(True,'ADD_SUCCESS')
-    
+
+
+    #添加放行端口
+    def AddAcceptPortAll(self,port,ps):
+        import re
+        port = port.replace('-',':')
+        rep = "^\d{1,5}(:\d{1,5})?$"
+        if not re.search(rep,port):
+            return False
+        if self.__isUfw:
+            public.ExecShell('ufw allow ' + port + '/tcp');
+            public.ExecShell('ufw allow ' + port + '/udp');
+        else:
+            if self.__isFirewalld:
+                port = port.replace(':','-');
+                public.ExecShell('firewall-cmd --permanent --zone=public --add-port='+port+'/tcp')
+                public.ExecShell('firewall-cmd --permanent --zone=public --add-port='+port+'/udp')
+            else:
+                public.ExecShell('iptables -I INPUT -p tcp -m state --state NEW -m tcp --dport '+port+' -j ACCEPT')
+                public.ExecShell('iptables -I INPUT -p tcp -m state --state NEW -m udp --dport '+port+' -j ACCEPT')
+        return True
     
     #删除放行端口
     def DelAcceptPort(self,get):

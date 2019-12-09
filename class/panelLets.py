@@ -10,7 +10,8 @@ import os,sys,json,time,re
 setup_path = '/www/server/panel'
 os.chdir(setup_path)
 sys.path.append("class/")
-import requests,sewer,public
+import http_requests as requests
+import sewer,public
 from OpenSSL import crypto
 try:
     requests.packages.urllib3.disable_warnings()
@@ -144,6 +145,10 @@ class panelLets:
             return "验证超时,请检查域名是否正确解析，若已正确解析，可能服务器与Let'sEncrypt连接异常，请稍候再重试!"
         elif error.find("Error creating new order") != -1:
             return "订单创建失败，请稍候重试!"
+        elif error.find("Too Many Requests") != -1:
+            return "1小时内超过5次验证失败，暂时禁止申请，请稍候重试!"
+        elif error.find('HTTP Error 400: Bad Request') != -1:
+            return "CA服务器拒绝访问，请稍候重试!"
         else:
             return error;
 
@@ -608,7 +613,7 @@ class panelLets:
             else:
                 result['msg'] = "签发失败,我们无法验证您的域名:<p>1、检查域名是否绑定到对应站点</p><p>2、检查域名是否正确解析到本服务器,或解析还未完全生效</p><p>3、如果您的站点设置了反向代理,或使用了CDN,请先将其关闭</p><p>4、如果您的站点设置了301重定向,请先将其关闭</p><p>5、如果以上检查都确认没有问题，请尝试更换DNS服务商</p>'"
         except Exception as e:
-            self.write_log("|-错误：{}，退出申请程序。".format(e))
+            self.write_log("|-错误：{}，退出申请程序。".format(public.get_error_info()))
             self.write_log("=" * 50)
             res = str(e).split('>>>>')
             err = False
@@ -623,7 +628,6 @@ class panelLets:
         
         headers = {"User-Agent": client.User_Agent}
         get_identifier_authorization_response = requests.get(url, timeout = client.ACME_REQUEST_TIMEOUT, headers=headers,verify=False)
-       
         if get_identifier_authorization_response.status_code not in [200, 201]:
             raise ValueError("Error getting identifier authorization: status_code={status_code}".format(status_code=get_identifier_authorization_response.status_code ) )
         res = get_identifier_authorization_response.json()

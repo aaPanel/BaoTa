@@ -277,8 +277,8 @@ exit($header."\r\n\r\n".json_encode($body));
     #构造适用于CURL的post参数
     def _str_post(self,pdata,headers):
         str_pdata = ''
-        if headers['Content-Type'].find('application/jose') != -1 \
-            or headers['Content-Type'].find('application/josn') != -1:
+        if headers.find('application/jose') != -1 \
+            or headers.find('application/josn') != -1:
             if type(pdata) == dict: 
                 pdata = json.dumps(pdata)
             if type(pdata) == bytes:
@@ -373,9 +373,9 @@ def get_stype(s_type):
 #获取请求头
 def get_headers(headers):
     if type(headers) != dict: headers = {}
-    if 'Content-type' in headers:
-        headers['Content-type'] = DEFAULT_HEADERS['Content-type']
-    if 'User-Agent' in headers:
+    #if not 'Content-type' in headers:
+    #    headers['Content-type'] = DEFAULT_HEADERS['Content-type']
+    if not 'User-Agent' in headers:
         headers['User-Agent'] = DEFAULT_HEADERS['User-Agent']
     return headers
 

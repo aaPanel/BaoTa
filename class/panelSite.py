@@ -2369,7 +2369,7 @@ server
             self.CheckProxy(get)
             ng_conf = public.readFile(ng_file)
             if not p_conf:
-                rep = "#清理缓存规则[\w\s\~\/\(\)\.\*\{\}\;\$\n\#]+.{66,66}\n+[\s\w\/\*\.\;]+include enable-php-"
+                rep = "#清理缓存规则[\w\s\~\/\(\)\.\*\{\}\;\$\n\#]+.+[\s\w\/\*\.\;]+include enable-php-"
                 ng_conf = re.sub(rep, 'include enable-php-', ng_conf)
                 oldconf = '''location ~ .*\\.(gif|jpg|jpeg|png|bmp|swf)$
     {
@@ -2559,28 +2559,28 @@ server
                         if re.search(cache_rep,ng_conf):
                             expires_rep = "\{\n\s+expires\s+12h;"
                             ng_conf = re.sub(expires_rep, "{",ng_conf)
-                            ng_conf = re.sub(cache_rep, "proxy_cache_valid 200 304 301 302 {0}m;\n\texpires {0}m;".format(get.cachetime), ng_conf)
+                            ng_conf = re.sub(cache_rep, "proxy_cache_valid 200 304 301 302 {0}m;".format(get.cachetime), ng_conf)
                         else:
                             ng_cache = """
     proxy_ignore_headers Set-Cookie Cache-Control expires;
     proxy_cache cache_one;
     proxy_cache_key $host$uri$is_args$args;
-    proxy_cache_valid 200 304 301 302 %sm;
-    expires %sm;""" % (get.cachetime,get.cachetime)
+    proxy_cache_valid 200 304 301 302 %sm;""" % (get.cachetime)
                             if self.check_annotate(ng_conf):
                                 cache_rep = '\n\s*#Set\s*Nginx\s*Cache(.|\n)*no-cache;'
                                 ng_conf = re.sub(cache_rep,'\n\t#Set Nginx Cache\n'+ng_cache,ng_conf)
                             else:
-                                cache_rep = '#proxy_set_header\s+Connection\s+"upgrade";'
-                                ng_conf = re.sub(cache_rep, '\n\t#proxy_set_header Connection "upgrade";\n\t#Set Nginx Cache' + ng_cache,
+                                # cache_rep = '#proxy_set_header\s+Connection\s+"upgrade";'
+                                cache_rep = 'proxy_set_header\s+REMOTE-HOST\s+\$remote_addr;'
+                                ng_conf = re.sub(cache_rep, '\n\tproxy_set_header\s+REMOTE-HOST\s+\$remote_addr;\n\t#Set Nginx Cache' + ng_cache,
                                                  ng_conf)
                     else:
                         if self.check_annotate(ng_conf):
                             rep = '\n\s*#Set\s*Nginx\s*Cache(.|\n)*\d+m;'
-                            ng_conf = re.sub(rep, "\n\t#Set Nginx Cache\n\tproxy_ignore_headers Set-Cookie Cache-Control expires;\n\tadd_header Cache-Control no-cache;\n\texpires 0m;", ng_conf)
+                            ng_conf = re.sub(rep, "\n\t#Set Nginx Cache\n\tproxy_ignore_headers Set-Cookie Cache-Control expires;\n\tadd_header Cache-Control no-cache;", ng_conf)
                         else:
                             rep = '\s+proxy_cache\s+cache_one.*[\n\s\w\_\";\$]+m;'
-                            ng_conf = re.sub(rep, '\n\t#Set Nginx Cache\n\tproxy_ignore_headers Set-Cookie Cache-Control expires;\n\tadd_header Cache-Control no-cache;\n\texpires 0m;', ng_conf)
+                            ng_conf = re.sub(rep, '\n\t#Set Nginx Cache\n\tproxy_ignore_headers Set-Cookie Cache-Control expires;\n\tadd_header Cache-Control no-cache;', ng_conf)
 
                     sub_rep = "sub_filter"
                     subfilter = json.loads(get.subfilter)
@@ -2638,7 +2638,6 @@ server
 
 
 
-
         # 设置反向代理
     def SetProxy(self,get):
         sitename = get.sitename  # 站点名称
@@ -2658,8 +2657,7 @@ server
     proxy_ignore_headers Set-Cookie Cache-Control expires;
     proxy_cache cache_one;
     proxy_cache_key $host$uri$is_args$args;
-    proxy_cache_valid 200 304 301 302 %sm;
-    expires %sm;""" % (cachetime,cachetime)
+    proxy_cache_valid 200 304 301 302 %sm;""" % (cachetime)
         # rep = "(https?://[\w\.]+)"
         # proxysite1 = re.search(rep,get.proxysite).group(1)
         ng_proxy = '''
@@ -2679,12 +2677,13 @@ location %s
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header REMOTE-HOST $remote_addr;
-
+    
     add_header X-Cache $upstream_cache_status;
     
     #Set Nginx Cache
     %s
     %s
+    expires 12h;
 }
 
 #PROXY-END%s'''
@@ -3248,7 +3247,7 @@ location %s
             filename = self.setupPath + '/panel/vhost/nginx/' + siteName + '.conf'
             if os.path.exists(filename):
                 conf = public.readFile(filename)
-                rep = '\s*root\s*(.+);'
+                rep = '\s*root\s+(.+);'
                 tmp1 = re.search(rep,conf)
                 if tmp1: path = tmp1.groups()[0];
         else:
@@ -3273,7 +3272,7 @@ location %s
                 filePath = sitePath + '/' + filename
                 if os.path.islink(filePath): continue
                 if os.path.isdir(filePath):
-                    dirnames.append(public.unicode_encode('/' + filename))
+                    dirnames.append('/' + filename)
             except:
                 pass
         
@@ -3289,7 +3288,7 @@ location %s
         filename = self.setupPath + '/panel/vhost/nginx/' + siteName + '.conf'
         if os.path.exists(filename):
             conf = public.readFile(filename)
-            rep = '\s*root\s*(.+);'
+            rep = '\s*root\s+(.+);'
             path = re.search(rep,conf).groups()[0];
             conf = conf.replace(path,sitePath + get.runPath);
             public.writeFile(filename,conf);
