@@ -706,12 +706,12 @@ class panelLets:
             spath =  path + '/' + siteName
             #验证是否存在续签KEY
             if os.path.exists(spath + '/account_key.key'):
-                if public.M('sites').where("name=?",(siteName,)).count():        
+                if public.M('sites').where("name=?",(siteName,)).count():
                     new_list[siteName] = cron_list[siteName]
-                    data = self.get_cert_data(self.setupPath + '/panel/vhost/cert/' + siteName + '/fullchain.pem')                                     
+                    data = self.get_cert_data(self.setupPath + '/panel/vhost/cert/' + siteName + '/fullchain.pem')
                     timeout = int(time.mktime(time.strptime(data['timeout'],'%Y%m%d%H%M%S')))
-                    eday = (timeout - int(time.time())) / 86400                
-                    if eday < 30:                                     
+                    eday = (timeout - int(time.time())) / 86400
+                    if eday < 30:
                         nlist[siteName] = cron_list[siteName]
         #清理过期配置
         public.writeFile(self.setupPath + '/panel/vhost/cert/crontab.json',json.dumps(new_list))
@@ -722,7 +722,7 @@ class panelLets:
     def renew_lets_ssl(self):        
         cpath = self.setupPath + '/panel/vhost/cert/crontab.json'
         if not os.path.exists(cpath):  
-            print("|-当前没有可以续订的证书. " );        
+            print("|-当前没有可以续订的证书. " )      
         else:
             old_list = json.loads(public.ReadFile(cpath))    
             print('=======================================================================')
@@ -744,7 +744,7 @@ class panelLets:
                     sucess_list.append(siteName)
                 else:
                     err_list.append({"siteName":siteName,"msg":ret['msg']})
-            print("|-任务执行完毕，共需续订[%s]，续订成功[%s]，续订失败[%s]. " % (len(cron_list),len(sucess_list),len(err_list)));        
+            print("|-任务执行完毕，共需续订[%s]，续订成功[%s]，续订失败[%s]. " % (len(cron_list),len(sucess_list),len(err_list)))    
             if len(sucess_list) > 0:       
                 print("|-续订成功：%s" % (','.join(sucess_list)))
             if len(err_list) > 0:       
@@ -753,10 +753,11 @@ class panelLets:
                     print("    %s ->> %s" % (x['siteName'],x['msg']))
 
             print('=======================================================================')
-            print(" ");
+            print(" ")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         type = sys.argv[1]
         if type == 'renew_lets_ssl':
             panelLets().renew_lets_ssl()
+            os.system("python /www/server/panel/class/acme_v2.py --renew=1")

@@ -1465,12 +1465,11 @@ var soft = {
                             });
                         }
                     })
-
-                    if ($(".bt-soft-menu .bgw").text() === "安装扩展") {
-                        setTimeout(function () {
+                    setTimeout(function () {
+                        if ($(".bt-soft-menu .bgw").text() === "安装扩展") {
                             soft.get_tab_contents('set_php_config', obj);
-                        }, 3000)
-                    }
+                        }
+                    }, 3000)
                 })
                 break;
             case 'get_phpinfo':

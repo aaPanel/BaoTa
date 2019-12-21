@@ -11,9 +11,9 @@
 # 工具箱
 #------------------------------
 import sys,os
-panelPath = '/www/server/panel/';
+panelPath = '/www/server/panel/'
 os.chdir(panelPath)
-sys.path.append(panelPath + "class/")
+sys.path.insert(0,panelPath + "class/")
 import public,time,json
 if sys.version_info[0] == 3: raw_input = input
 
