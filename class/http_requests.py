@@ -310,6 +310,7 @@ class http_headers:
     def __getitem__(self, key): return getattr(self,key.lower(),None)
     def __delitem__(self,key): delattr(self,key.lower())
     def __delattr__(self, key): delattr(self,key.lower())
+    def get(self,key): return getattr(self,key.lower(),None) 
     def get_items(self): return self
 
 #响应对象
@@ -353,6 +354,7 @@ class response:
 
 DEFAULT_HEADERS = {"Content-type":"application/x-www-form-urlencoded","User-Agent":"BT-Panel"}
 s_types = ['python','php','curl']
+DEFAULT_TYPE = 'python'
 __version__ = 1.0
 
 #请请求方法
@@ -366,8 +368,8 @@ def get_stype(s_type):
                 if tmp_type in s_types: s_type = tmp_type
     else:
         s_type = s_type.lower()
-        if not s_type in s_types: s_type = 'python'
-    if not s_type: s_type = 'python'
+        if not s_type in s_types: s_type = DEFAULT_TYPE
+    if not s_type: s_type = DEFAULT_TYPE
     return s_type
 
 #获取请求头

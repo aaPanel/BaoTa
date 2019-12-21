@@ -14,20 +14,21 @@ import logging
 import re
 import uuid
 import threading
-
+os.chdir('/www/server/panel/')
+sys.path.insert(0,'class/')
+import public
 from flask import Flask,current_app,session,render_template,send_file,request,redirect,g,url_for,make_response,render_template_string,abort
 from flask_session import Session
 from werkzeug.contrib.cache import SimpleCache
 from werkzeug.wrappers import Response
 from flask_sockets import Sockets
-sys.path.insert(0,'/www/server/panel/class/')
 sys.setrecursionlimit(1000000)
 cache = SimpleCache()
 
 app = Flask(__name__,template_folder="templates/" + public.GetConfigValue('template'))
 sockets = Sockets(app)
 
-import public
+
 import common
 import db
 import jobs
@@ -136,7 +137,8 @@ admin_path_checks = [
                     '/cloud',
                     '/webssh',
                     '/connect_event',
-                    '/panel'
+                    '/panel',
+                    '/acme'
                     ]
 if admin_path in admin_path_checks: admin_path = '/bt'
 
@@ -151,7 +153,7 @@ def service_status():
 def webssh(ws):
     if not check_login(): 
         session.clear()
-        emit('server_response',"SSH_ERROR")
+        ws.send('server_response',"SSH_ERROR")
         return None
     if not 'ssh_obj' in session:
         import ssh_terminal
@@ -189,7 +191,7 @@ def term_open():
     else:
         if os.path.exists(s_file): os.remove(s_file)
     if 'ssh_obj' in session: session['ssh_obj']._ssh_info = session['ssh_info']
-    return public.returnJson(True,'SET_SUCCESS');
+    return public.returnJson(True,'SET_SUCCESS')
 
 @app.route('/reload_mod',methods=method_all)
 def reload_mod():
@@ -223,9 +225,9 @@ def request_check():
             return public.returnJson(False,'INIT_REQUEST_CHECK_LOCAL_ERR'),json_header
 
     if app.config['BASIC_AUTH_OPEN']:
-        if request.path in ['/public','/download','/mail_sys','/hook']: return;
+        if request.path in ['/public','/download','/mail_sys','/hook']: return
         auth = request.authorization
-        if not comm.get_sk(): return;
+        if not comm.get_sk(): return
         if not auth: return send_authenticated()
         tips = '_bt.cn'
         if public.md5(auth.username.strip() + tips) != app.config['BASIC_AUTH_USERNAME'] \
@@ -270,7 +272,7 @@ def home():
 def close():
     if not os.path.exists('data/close.pl'): return redirect('/')
     data = {}
-    data['lan'] = public.getLan('close');
+    data['lan'] = public.getLan('close')
     return render_template('close.html',data=data)
 
 route_path = os.path.join(admin_path,'')
@@ -296,7 +298,7 @@ def login():
         if not 'login' in session: return redirect(login_path)
         if os.path.exists(admin_path_file): login_path = route_path
         if session['login'] != False:
-            session['login'] = False;
+            session['login'] = False
             cache.set('dologin',True)
             session.clear()
             session_path = r'/dev/shm/session_py' + str(sys.version_info[0])
@@ -306,7 +308,7 @@ def login():
     if is_auth_path:
         if route_path != request.path and route_path + '/' != request.path: 
             data = {}
-            data['lan'] = public.getLan('close');
+            data['lan'] = public.getLan('close')
             return render_template('autherr.html',data=data)
     session['admin_auth'] = True
     comReturn = common.panelSetup().init()
@@ -341,11 +343,11 @@ def site(pdata = None):
     if comReturn: return comReturn
     if request.method == method_get[0] and not pdata:
         data = {}
-        data['isSetup'] = True;
-        data['lan'] = public.getLan('site');
+        data['isSetup'] = True
+        data['lan'] = public.getLan('site')
         if os.path.exists(public.GetConfigValue('setup_path')+'/nginx') == False \
             and os.path.exists(public.GetConfigValue('setup_path')+'/apache') == False: 
-            data['isSetup'] = False;
+            data['isSetup'] = False
         return render_template( 'site.html',data=data)
     import panelSite
     siteObject = panelSite.panelSite()
@@ -360,7 +362,7 @@ def site(pdata = None):
             'SetSSLConf','CreateLet','CloseSSLConf','GetSSL','SiteStart','SiteStop','Set301Status','Get301Status','CloseLimitNet','SetLimitNet',
             'GetLimitNet','RemoveProxy','GetProxyList','GetProxyDetals','CreateProxy','ModifyProxy','GetProxyFile','SaveProxyFile','ToBackup',
             'DelBackup','GetSitePHPVersion','logsOpen','GetLogsStatus','CloseHasPwd','SetHasPwd','GetHasPwd','GetDnsApi','SetDnsApi')
-    return publicObject(siteObject,defs,None,pdata);
+    return publicObject(siteObject,defs,None,pdata)
 
 @app.route('/ftp',methods=method_all)
 def ftp(pdata = None):
@@ -369,14 +371,14 @@ def ftp(pdata = None):
     if request.method == method_get[0] and not pdata:
         FtpPort()
         data = {}
-        data['isSetup'] = True;
-        if os.path.exists(public.GetConfigValue('setup_path') + '/pure-ftpd') == False: data['isSetup'] = False;
+        data['isSetup'] = True
+        if os.path.exists(public.GetConfigValue('setup_path') + '/pure-ftpd') == False: data['isSetup'] = False
         data['lan'] = public.GetLan('ftp')
         return render_template('ftp.html',data=data)
     import ftp
     ftpObject = ftp.ftp()
     defs = ('AddUser','DeleteUser','SetUserPassword','SetStatus','setPort')
-    return publicObject(ftpObject,defs,None,pdata);
+    return publicObject(ftpObject,defs,None,pdata)
 
 #取端口
 def FtpPort():
@@ -397,14 +399,14 @@ def database(pdata = None):
     comReturn = comm.local()
     if comReturn: return comReturn
     if request.method == method_get[0] and not pdata:
-        pmd = get_phpmyadmin_dir();
+        pmd = get_phpmyadmin_dir()
         session['phpmyadminDir'] = False
         if pmd: 
-            session['phpmyadminDir'] = 'http://' + public.GetHost() + ':'+ pmd[1] + '/' + pmd[0];
+            session['phpmyadminDir'] = 'http://' + public.GetHost() + ':'+ pmd[1] + '/' + pmd[0]
         ajax.ajax().set_phpmyadmin_session()
         data = {}
-        data['isSetup'] = os.path.exists(public.GetConfigValue('setup_path') + '/mysql/bin');
-        data['mysql_root'] = public.M('config').where('id=?',(1,)).getField('mysql_root');
+        data['isSetup'] = os.path.exists(public.GetConfigValue('setup_path') + '/mysql/bin')
+        data['mysql_root'] = public.M('config').where('id=?',(1,)).getField('mysql_root')
         data['lan'] = public.GetLan('database')
         return render_template('database.html',data=data)
     import database
@@ -413,29 +415,29 @@ def database(pdata = None):
             'SetDbConf','GetDbStatus','BinLog','GetErrorLog','GetMySQLInfo','SetDataDir','SetMySQLPort',
             'AddDatabase','DeleteDatabase','SetupPassword','ResDatabasePassword','ToBackup','DelBackup',
             'InputSql','SyncToDatabases','SyncGetDatabases','GetDatabaseAccess','SetDatabaseAccess')
-    return publicObject(databaseObject,defs,None,pdata);
+    return publicObject(databaseObject,defs,None,pdata)
 
 def get_phpmyadmin_dir():
         path = public.GetConfigValue('setup_path') + '/phpmyadmin'
         if not os.path.exists(path): return None
         
-        phpport = '888';
+        phpport = '888'
         try:
             import re;
             if session['webserver'] == 'nginx':
-                filename =public.GetConfigValue('setup_path') + '/nginx/conf/nginx.conf';
-                conf = public.readFile(filename);
-                rep = "listen\s+([0-9]+)\s*;";
-                rtmp = re.search(rep,conf);
+                filename =public.GetConfigValue('setup_path') + '/nginx/conf/nginx.conf'
+                conf = public.readFile(filename)
+                rep = "listen\s+([0-9]+)\s*;"
+                rtmp = re.search(rep,conf)
                 if rtmp:
-                    phpport = rtmp.groups()[0];
+                    phpport = rtmp.groups()[0]
             else:
-                filename = public.GetConfigValue('setup_path') + '/apache/conf/extra/httpd-vhosts.conf';
-                conf = public.readFile(filename);
-                rep = "Listen\s+([0-9]+)\s*\n";
-                rtmp = re.search(rep,conf);
+                filename = public.GetConfigValue('setup_path') + '/apache/conf/extra/httpd-vhosts.conf'
+                conf = public.readFile(filename)
+                rep = "Listen\s+([0-9]+)\s*\n"
+                rtmp = re.search(rep,conf)
                 if rtmp:
-                    phpport = rtmp.groups()[0];
+                    phpport = rtmp.groups()[0]
         except:
             pass
             
@@ -445,6 +447,16 @@ def get_phpmyadmin_dir():
                 if filename[0:10] == 'phpmyadmin':
                     return str(filename),phpport
         return None
+
+@app.route('/acme',methods=method_all)
+def acme(pdata = None):
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    import acme_v2
+    acme_v2_object = acme_v2.acme_v2()
+    defs = ('get_orders','remove_order','get_order_find','revoke_order','create_order','get_account_info','set_account_info','update_zip','get_cert_init_api',
+            'get_auths','auth_domain','check_auth_status','download_cert','apply_cert','renew_cert','apply_cert_api','apply_dns_auth')
+    return publicObject(acme_v2_object,defs,None,pdata)
 
 @app.route('/control',methods=method_all)
 def control(pdata = None):
@@ -467,7 +479,7 @@ def firewall(pdata = None):
     firewallObject = firewalls.firewalls()
     defs = ('GetList','AddDropAddress','DelDropAddress','FirewallReload','SetFirewallStatus',
             'AddAcceptPort','DelAcceptPort','SetSshStatus','SetPing','SetSshPort','GetSshInfo')
-    return publicObject(firewallObject,defs,None,pdata);
+    return publicObject(firewallObject,defs,None,pdata)
 
 @app.route('/firewall_new',methods=method_all)
 def firewall_new(pdata = None):
@@ -483,7 +495,7 @@ def firewall_new(pdata = None):
             'AddAcceptPort','DelAcceptPort','SetSshStatus','SetPing','SetSshPort','GetSshInfo',
             'AddSpecifiesIp','DelSpecifiesIp'
             )
-    return publicObject(firewallObject,defs,None,pdata);
+    return publicObject(firewallObject,defs,None,pdata)
 
 
 @app.route('/monitor', methods=method_all)
@@ -561,7 +573,7 @@ def files(pdata = None):
             'GetTmpFile','del_files_store','add_files_store','get_files_store','del_files_store_types','add_files_store_types',
             'RemoveTask','ActionTask','Re_Recycle_bin','Get_Recycle_bin','Del_Recycle_bin','Close_Recycle_bin','Recycle_bin'
             )
-    return publicObject(filesObject,defs,None,pdata);
+    return publicObject(filesObject,defs,None,pdata)
 
 
 @app.route('/crontab',methods=method_all)
@@ -577,7 +589,7 @@ def crontab(pdata = None):
     defs = ('GetCrontab','AddCrontab','GetDataList','GetLogs','DelLogs','DelCrontab',
             'StartTask','set_cron_status','get_crond_find','modify_crond'
             )
-    return publicObject(crontabObject,defs,None,pdata);
+    return publicObject(crontabObject,defs,None,pdata)
 
 @app.route('/soft',methods=method_all)
 def soft(pdata = None):
@@ -602,7 +614,7 @@ def config(pdata = None):
         except:
             data['wx'] = 'INIT_WX_NOT_BIND'
         data['api'] = ''
-        data['ipv6'] = '';
+        data['ipv6'] = ''
         sess_out_path = 'data/session_timeout.pl'
         if not os.path.exists(sess_out_path): public.writeFile(sess_out_path,'86400')
         workers_p = 'data/workers.pl'
@@ -622,20 +634,16 @@ def config(pdata = None):
         if public.is_local(): data['is_local'] = 'checked'
         return render_template( 'config.html',data=data)
     import config
-    defs = ('set_coll_open','get_qrcode_data','check_two_step','set_two_step_auth',
-            'get_key','get_php_session_path','set_php_session_path','get_cert_source',
-            'set_local','set_debug','get_panel_error_logs','clean_panel_error_logs',
-            'get_basic_auth_stat','set_basic_auth','get_cli_php_version','get_tmp_token',
-            'set_cli_php_version','DelOldSession', 'GetSessionCount', 'SetSessionConf', 
-            'GetSessionConf','get_ipv6_listen','set_ipv6_status','GetApacheValue','SetApacheValue',
-            'GetNginxValue','SetNginxValue','get_token','set_token','set_admin_path','is_pro',
-            'get_php_config','get_config','SavePanelSSL','GetPanelSSL','GetPHPConf','SetPHPConf',
-            'GetPanelList','AddPanelInfo','SetPanelInfo','DelPanelInfo','ClickPanelInfo','SetPanelSSL',
-            'SetTemplates','Set502','setPassword','setUsername','setPanel','setPathInfo','setPHPMaxSize',
-            'getFpmConfig','setFpmConfig','setPHPMaxTime','syncDate','setPHPDisable','SetControl',
-            'ClosePanel','AutoUpdatePanel','SetPanelLock'
-            )
-    return publicObject(config.config(),defs,None,pdata);
+    defs = (
+    'get_panel_error_logs', 'clean_panel_error_logs', 'get_basic_auth_stat', 'set_basic_auth', 'get_cli_php_version',
+    'get_tmp_token', 'set_cli_php_version', 'DelOldSession', 'GetSessionCount', 'SetSessionConf', 'GetSessionConf',
+    'get_ipv6_listen', 'set_ipv6_status', 'GetApacheValue', 'SetApacheValue', 'GetNginxValue', 'SetNginxValue',
+    'get_token', 'set_token', 'set_admin_path', 'is_pro', 'get_php_config', 'get_config', 'SavePanelSSL', 'GetPanelSSL',
+    'GetPHPConf', 'SetPHPConf', 'GetPanelList', 'AddPanelInfo', 'SetPanelInfo', 'DelPanelInfo', 'ClickPanelInfo',
+    'SetPanelSSL', 'SetTemplates', 'Set502', 'setPassword', 'setUsername', 'setPanel', 'setPathInfo', 'setPHPMaxSize',
+    'getFpmConfig', 'setFpmConfig', 'setPHPMaxTime', 'syncDate', 'setPHPDisable', 'SetControl', 'ClosePanel',
+    'AutoUpdatePanel', 'SetPanelLock','return_mail_list','del_mail_list','add_mail_address','user_mail_send','get_user_mail','set_dingding','get_dingding','get_settings','user_stmp_mail_send','user_dingding_send')
+    return publicObject(config.config(),defs,None,pdata)
 
 @app.route('/ajax',methods=method_all)
 def ajax(pdata = None):
@@ -651,7 +659,7 @@ def ajax(pdata = None):
             'UninstallLib','InstallLib','SetQiniuAS','GetQiniuAS','GetLibList','GetProcessList','GetNetWorkList',
             'GetNginxStatus','GetPHPStatus','GetTaskCount','GetSoftList','GetNetWorkIo','GetDiskIo','GetCpuIo',
             'CheckInstalled','UpdatePanel','GetInstalled','GetPHPConfig','SetPHPConfig')
-    return publicObject(ajaxObject,defs,None,pdata);
+    return publicObject(ajaxObject,defs,None,pdata)
 
 @app.route('/system',methods=method_all)
 def system(pdata = None):
@@ -662,7 +670,7 @@ def system(pdata = None):
     defs = ('get_io_info','UpdatePro','GetAllInfo','GetNetWorkApi','GetLoadAverage','ClearSystem',
             'GetNetWorkOld','GetNetWork','GetDiskInfo','GetCpuInfo','GetBootTime','GetSystemVersion',
             'GetMemInfo','GetSystemTotal','GetConcifInfo','ServiceAdmin','ReWeb','RestartServer','ReMemory','RepPanel')
-    return publicObject(sysObject,defs,None,pdata);
+    return publicObject(sysObject,defs,None,pdata)
 
 @app.route('/deployment',methods=method_all)
 def deployment(pdata = None):
@@ -671,7 +679,7 @@ def deployment(pdata = None):
     import plugin_deployment
     sysObject = plugin_deployment.plugin_deployment()
     defs = ('GetList','AddPackage','DelPackage','SetupPackage','GetSpeed','GetPackageOther')
-    return publicObject(sysObject,defs,None,pdata);
+    return publicObject(sysObject,defs,None,pdata)
 
 @app.route('/data',methods=method_all)
 @app.route('/panel_data',methods=method_all)
@@ -681,7 +689,7 @@ def panel_data(pdata = None):
     import data
     dataObject = data.data()
     defs = ('setPs','getData','getFind','getKey')
-    return publicObject(dataObject,defs,None,pdata);
+    return publicObject(dataObject,defs,None,pdata)
 
     
 @app.route('/code')
@@ -692,21 +700,21 @@ def code():
         public.ExecShell("pip install Pillow==5.4.1 -I")
         return "Pillow not install!"
     code_time = cache.get('codeOut')
-    if code_time: return u'Error: Don\'t request validation codes frequently';
-    vie = vilidate.vieCode();
-    codeImage = vie.GetCodeImage(80,4);
+    if code_time: return u'Error: Don\'t request validation codes frequently'
+    vie = vilidate.vieCode()
+    codeImage = vie.GetCodeImage(80,4)
     if sys.version_info[0] == 2:
         try:
             from cStringIO import StringIO
         except:
             from StringIO import StringIO
-        out = StringIO();
+        out = StringIO()
     else:
         from io import BytesIO
-        out = BytesIO();
+        out = BytesIO()
     codeImage[0].save(out, "png")
     cache.set("codeStr",public.md5("".join(codeImage[1]).lower()),180)
-    cache.set("codeOut",1,0.1);
+    cache.set("codeOut",1,0.1)
     out.seek(0)
     return send_file(out, mimetype='image/png', cache_timeout=0)
 
@@ -720,8 +728,8 @@ def ssl(pdata = None):
     defs = ('RemoveCert','renew_lets_ssl','SetCertToSite','GetCertList','SaveCert','GetCert','GetCertName',
             'DelToken','GetToken','GetUserInfo','GetOrderList','GetDVSSL','Completed','SyncOrder',
             'GetSSLInfo','downloadCRT','GetSSLProduct','Renew_SSL','Get_Renew_SSL')
-    result = publicObject(toObject,defs,None,pdata);
-    return result;
+    result = publicObject(toObject,defs,None,pdata)
+    return result
 
 @app.route('/task',methods=method_all)
 def task(pdata = None):
@@ -730,8 +738,8 @@ def task(pdata = None):
     import panelTask
     toObject = panelTask.bt_task()
     defs = ('get_task_lists','remove_task','get_task_find')
-    result = publicObject(toObject,defs,None,pdata);
-    return result;
+    result = publicObject(toObject,defs,None,pdata)
+    return result
 
 @app.route('/plugin',methods=method_all)
 def plugin(pdata = None):
@@ -743,14 +751,14 @@ def plugin(pdata = None):
             'install_plugin','uninstall_plugin','get_soft_find','get_index_list','get_soft_list','get_cloud_list',
             'check_deps','flush_cache','GetCloudWarning','install','unInstall','getPluginList','getPluginInfo',
             'getPluginStatus','setPluginStatus','a','getCloudPlugin','getConfigHtml','savePluginSort')
-    return publicObject(pluginObject,defs,None,pdata);
+    return publicObject(pluginObject,defs,None,pdata)
 
 
 
 @app.route('/public',methods=method_all)
 def panel_public():
-    get = get_input();
-    get.client_ip = public.GetClientIp();
+    get = get_input()
+    get.client_ip = public.GetClientIp()
     if not hasattr(get,'name'): get.name = ''
     if not hasattr(get,'fun'): return abort(404)
     if not public.path_safe_check("%s/%s" % (get.name,get.fun)): return abort(404)
@@ -778,7 +786,7 @@ def panel_public():
     if get.name != 'app': return abort(404)
     import panelPlugin
     plu = panelPlugin.panelPlugin()
-    get.s = '_check';
+    get.s = '_check'
     checks = plu.a(get)
     if type(checks) != bool or not checks: return public.getJson(checks),json_header
     get.s = get.fun
@@ -833,15 +841,15 @@ def panel_other(name=None,fun = None,stype=None):
         return send_file(s_file,conditional=True,add_etags=True)
     
     #准备参数
-    args = get_input();
-    args.client_ip = public.GetClientIp();
+    args = get_input()
+    args.client_ip = public.GetClientIp()
     args.fun = fun
     
     #初始化插件对象
     try:
         is_php = os.path.exists(p_path + '/index.php')
         if not is_php:
-            sys.path.append(p_path);
+            sys.path.append(p_path)
             plugin_main = __import__(name+'_main')
             try:
                 if sys.version_info[0] == 2:
@@ -911,43 +919,43 @@ def panel_wxapp(pdata = None):
     import wxapp
     toObject = wxapp.wxapp()
     defs = ('blind','get_safe_log','blind_result','get_user_info','blind_del','blind_qrcode')
-    result = publicObject(toObject,defs,None,pdata);
-    return result;
+    result = publicObject(toObject,defs,None,pdata)
+    return result
 
 @app.route('/hook',methods=method_all)
 def panel_hook():
     get = get_input()
     if not os.path.exists('plugin/webhook'): 
-        return public.getJson(public.returnMsg(False,'INIT_WEBHOOK_ERR'));
-    sys.path.append('plugin/webhook');
+        return public.getJson(public.returnMsg(False,'INIT_WEBHOOK_ERR'))
+    sys.path.append('plugin/webhook')
     import webhook_main
     session.clear()
-    return public.getJson(webhook_main.webhook_main().RunHook(get));
+    return public.getJson(webhook_main.webhook_main().RunHook(get))
 
 @app.route('/safe',methods=method_all)
 def panel_safe():
     get = get_input()
-    pluginPath = 'plugin/safelogin';
+    pluginPath = 'plugin/safelogin'
     if hasattr(get,'check'):
-        if os.path.exists(pluginPath + '/safelogin_main.py'): return 'True';
-        return 'False';
-    get.data = check_token(get.data);
-    if not get.data: return public.returnJson(False,'INIT_CHECK_ERR');
+        if os.path.exists(pluginPath + '/safelogin_main.py'): return 'True'
+        return 'False'
+    get.data = check_token(get.data)
+    if not get.data: return public.returnJson(False,'INIT_CHECK_ERR')
     comm.setSession()
     comm.init()
     comm.checkWebType()
     comm.GetOS()
-    sys.path.append(pluginPath);
+    sys.path.append(pluginPath)
     import safelogin_main;
-    reload(safelogin_main);
-    s = safelogin_main.safelogin_main();
-    if not hasattr(s,get.data['action']): return public.returnJson(False,'INIT_FUN_NOT_EXISTS');
+    reload(safelogin_main)
+    s = safelogin_main.safelogin_main()
+    if not hasattr(s,get.data['action']): return public.returnJson(False,'INIT_FUN_NOT_EXISTS')
     defs = ('GetServerInfo','add_ssh_limit','remove_ssh_limit','get_ssh_limit',
             'get_login_log','get_panel_limit','add_panel_limit',
             'remove_panel_limit','close_ssh_limit','close_panel_limit',
             'get_system_info','get_service_info','get_ssh_errorlogin')
-    if not get.data['action'] in defs: return 'False';
-    result = public.getJson(eval('s.' + get.data['action'] + '(get)'));
+    if not get.data['action'] in defs: return 'False'
+    result = public.getJson(eval('s.' + get.data['action'] + '(get)'))
     session.clear()
     return result
 
@@ -955,7 +963,7 @@ def panel_safe():
 @app.route('/install',methods=method_all)
 def install():
     if public.M('config').where("id=?",('1',)).getField('status') == 1: 
-        if os.path.exists('install.pl'): os.remove('install.pl');
+        if os.path.exists('install.pl'): os.remove('install.pl')
         session.clear()
         return redirect('/login')
     ret_login = os.path.join('/',admin_path)
@@ -965,7 +973,7 @@ def install():
     if request.method == method_get[0]:
         if not os.path.exists('install.pl'): return redirect(ret_login)
         data = {}
-        data['status'] = os.path.exists('install.pl');
+        data['status'] = os.path.exists('install.pl')
         data['username'] = public.GetRandomString(8).lower()
         return render_template( 'install.html',data = data)
     
@@ -982,29 +990,29 @@ def install():
                                                    public.md5(get.bt_password1.strip())
                                                    )
                                                   )
-        os.remove('install.pl');
-        public.M('config').where("id=?",('1',)).setField('status',1);
+        os.remove('install.pl')
+        public.M('config').where("id=?",('1',)).setField('status',1)
         data = {}
-        data['status'] = os.path.exists('install.pl');
-        data['username'] = get.bt_username;
+        data['status'] = os.path.exists('install.pl')
+        data['username'] = get.bt_username
         return render_template( 'install.html',data = data)
 
 
 #检查Token
 def check_token(data):
-    pluginPath = 'plugin/safelogin/token.pl';
-    if not os.path.exists(pluginPath): return False;
+    pluginPath = 'plugin/safelogin/token.pl'
+    if not os.path.exists(pluginPath): return False
     from urllib import unquote;
     from binascii import unhexlify;
     from json import loads;
         
-    result = unquote(unhexlify(data));
-    token = public.readFile(pluginPath).strip();
+    result = unquote(unhexlify(data))
+    token = public.readFile(pluginPath).strip()
         
-    result = loads(result);
-    if not result: return False;
-    if result['token'] != token: return False;
-    return result;
+    result = loads(result)
+    if not result: return False
+    if result['token'] != token: return False
+    return result
 
 
 @app.route('/auth',methods=method_all)
@@ -1020,8 +1028,8 @@ def auth(pdata = None):
             'get_plugin_list','check_plugin','get_buy_code','check_pay_status',
             'get_renew_code','check_renew_code','get_business_plugin',
             'get_ad_list','check_plugin_end','get_plugin_price')
-    result = publicObject(toObject,defs,None,pdata);
-    return result;
+    result = publicObject(toObject,defs,None,pdata)
+    return result
 
 
 @app.route('/robots.txt',methods=method_all)
@@ -1085,14 +1093,14 @@ def publicObject(toObject,defs,action=None,get = None):
     if action: get.action = action
 
     if hasattr(get,'path'):
-            get.path = get.path.replace('//','/').replace('\\','/');
+            get.path = get.path.replace('//','/').replace('\\','/')
             if get.path.find('./') != -1: return public.ReturnJson(False,'INIT_PATH_NOT_SAFE'),json_header
             if get.path.find('->') != -1:
-                get.path = get.path.split('->')[0].strip();
+                get.path = get.path.split('->')[0].strip()
     if hasattr(get,'sfile'):
-        get.sfile = get.sfile.replace('//','/').replace('\\','/');
+        get.sfile = get.sfile.replace('//','/').replace('\\','/')
     if hasattr(get,'dfile'):
-        get.dfile = get.dfile.replace('//','/').replace('\\','/');
+        get.dfile = get.dfile.replace('//','/').replace('\\','/')
         
     if hasattr(toObject,'site_path_check'):
         if not toObject.site_path_check(get): return public.ReturnJson(False,'INIT_ACCEPT_NOT'),json_header

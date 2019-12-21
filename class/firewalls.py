@@ -64,7 +64,7 @@ class firewalls:
     #取防火墙状态
     def CheckFirewallStatus(self):
         if self.__isUfw:
-            public.ExecShell("")
+            return 1
 
         if self.__isFirewalld:
             res = public.ExecShell("systemctl status firewalld")[0]
@@ -72,7 +72,7 @@ class firewalls:
             if res.find('disabled') != -1: return -1
             if res.find('inactive (dead)') != -1: return 0
         else:
-            public.ExecShell("systemctl status firewalld")[0]
+            return 1
         
     #添加屏蔽IP
     def AddDropAddress(self,get):

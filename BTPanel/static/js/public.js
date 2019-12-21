@@ -3016,44 +3016,51 @@ function execLog(){
 	});
 }
 
-function remind(a){
-	a = a == undefined ? 1 : a;
-	$.post("/data?action=getData", "tojs=remind&table=tasks&result=2,4,6,8&limit=8&p=" + a, function(g) {
-		var e = "";
-		var f = false;
-		var task_count = 0;
-		for(var d = 0; d < g.data.length; d++) {
-			if(g.data[d].status != '1'){
-				task_count++;
-				continue;
-			}
-			e += '<tr><td><input type="checkbox"></td><td><div class="titlename c3">'+g.data[d].name+'</span><span class="rs-status">【'+lan.bt.task_ok+'】<span><span class="rs-time">'+ lan.bt.time + (g.data[d].end - g.data[d].start) + lan.bt.s+'</span></div></td><td class="text-right c3">'+g.data[d].addtime+'</td></tr>'
-		}
-		var con = '<div class="divtable"><table class="table table-hover">\
-					<thead><tr><th width="20"><input id="Rs-checkAll" type="checkbox" onclick="RscheckSelect()"></th><th>'+lan.bt.task_name+'</th><th class="text-right">'+lan.bt.task_time+'</th></tr></thead>\
-					<tbody id="remind">'+e+'</tbody>\
-					</table></div>\
-					<div style="height:32px">\
-						<div class="pull-left buttongroup" style="display:none;"><button class="btn btn-default btn-sm mr5 rs-del" disabled="disabled">'+lan.public.del+'</button><button class="btn btn-default btn-sm mr5 rs-read" disabled="disabled">'+lan.bt.task_tip_read+'</button><button class="btn btn-default btn-sm">'+lan.bt.task_tip_all+'</button></div>\
-						<div id="taskPage" class="page"></div>\
-					</div>';
-		
-		$(".task_count").text(task_count);
-		$(".msg_count").text(g.data.length);
-		$(".taskcon").html(con);
-		$("#taskPage").html(g.page);
-		$("#Rs-checkAll").click(function(){
-			if($(this).prop("checked")){
-				$("#remind").find("input").prop("checked",true)
-			}
-			else{
-				$("#remind").find("input").prop("checked",false)
-			}
-		});
-
-	})
+function get_msg_data(a,fun) {
+    a = a == undefined ? 1 : a;
+    $.post("/data?action=getData", "tojs=remind&table=tasks&result=2,4,6,8&limit=10&search=1&p=" + a, function (g) {
+        fun(g)
+    })
 }
 
+
+function remind(a) {
+    get_msg_data(a, function (g) {
+        var e = "";
+        var f = false;
+        var task_count = 0;
+        for (var d = 0; d < g.data.length; d++) {
+            if (g.data[d].status != '1') {
+                task_count++;
+                continue;
+            }
+            e += '<tr><td><input type="checkbox"></td><td><div class="titlename c3">' + g.data[d].name + '</span><span class="rs-status">【' + lan.bt.task_ok + '】<span><span class="rs-time">' + lan.bt.time + (g.data[d].end - g.data[d].start) + lan.bt.s + '</span></div></td><td class="text-right c3">' + g.data[d].addtime + '</td></tr>'
+        }
+        var con = '<div class="divtable"><table class="table table-hover">\
+					<thead><tr><th width="20"><input id="Rs-checkAll" type="checkbox" onclick="RscheckSelect()"></th><th>'+ lan.bt.task_name + '</th><th class="text-right">' + lan.bt.task_time + '</th></tr></thead>\
+					<tbody id="remind">'+ e + '</tbody>\
+					</table></div>\
+					<div class="mtb15" style="height:32px">\
+						<div class="pull-left buttongroup" style="display:none;"><button class="btn btn-default btn-sm mr5 rs-del" disabled="disabled">'+ lan.public.del + '</button><button class="btn btn-default btn-sm mr5 rs-read" disabled="disabled">' + lan.bt.task_tip_read + '</button><button class="btn btn-default btn-sm">' + lan.bt.task_tip_all + '</button></div>\
+						<div id="taskPage" class="page"></div>\
+					</div>';
+
+
+        var msg_count = g.page.match(/\'Pcount\'>.+<\/span>/)[0].replace(/[^0-9]/ig, "");
+        $(".msg_count").text(parseInt(msg_count) - task_count);
+        $(".taskcon").html(con);
+        $("#taskPage").html(g.page);
+        $("#Rs-checkAll").click(function () {
+            if ($(this).prop("checked")) {
+                $("#remind").find("input").prop("checked", true)
+            }
+            else {
+                $("#remind").find("input").prop("checked", false)
+            }
+        });
+    })
+
+}
 
 function GetReloads() {
 	var a = 0;
@@ -3170,6 +3177,12 @@ function tasklist(a){
 		
 		
 		$(".task_count").text(task_count);
+		
+		get_msg_data(1, function (d) {
+            var msg_count = d.page.match(/\'Pcount\'>.+<\/span>/)[0].replace(/[^0-9]/ig, "");
+            $(".msg_count").text(parseInt(msg_count));
+        })
+
 		$(".cmdlist").html(b + c);
 		GetReloads();
 		return f
@@ -3276,7 +3289,7 @@ var Term = {
     //发送数据
     //@param event 唯一事件名称
     //@param data 发送的数据
-    //@param collback 服务器返回结果时回调的函数,运行完后将被回收
+    //@param callback 服务器返回结果时回调的函数,运行完后将被回收
     send: function (data, num) {
         //如果没有连接，则尝试连接服务器
         if (!Term.bws || Term.bws.readyState == 3 || Term.bws.readyState == 2) {
@@ -3500,8 +3513,165 @@ function send_ssh_info() {
         layer.close(ssh_login)
         Term.term.focus();
     })
-    
-    
+}
+
+
+acme = {
+	speed_msg:"<pre style='margin-bottom: 0px;height:250px;text-align: left;background-color: #000;color: #fff;white-space: pre-wrap;' id='create_lst'>[MSG]</pre>",
+	loadT : null,
+	//获取订单列表
+	get_orders: function(callback){
+		acme.request('get_orders',{},function(rdata){
+			callback(rdata)
+		},'正在获取订单列表...');
+	},
+	//取指定订单
+	get_find: function(index,callback){
+		acme.request('get_order_find',{index:index},function(rdata){
+			callback(rdata)
+		},'正在获取订单信息...')
+	},
+
+	//下载指定证书包
+	download_cert: function(index,callback){
+		acme.request('update_zip',{index:index},function(rdata){
+			if(!rdata.status){
+				bt.msg(rdata);
+				return;
+			}
+			if(callback) {
+				callback(rdata)
+			}else{
+				window.location.href = '/download?filename=' + rdata.msg
+			}
+			
+		},'正在准备下载..');
+	},
+
+	//删除订单
+	remove: function(index,callback){
+		acme.request('remove_order',{index:index},function(rdata){
+			bt.msg(rdata);
+			if(callback) callback(rdata)
+		});
+	},
+
+	//吊销证书
+	revoke: function(index,callback){
+		acme.request('revoke_order',{index:index},function(rdata){
+			bt.msg(rdata);
+			if(callback) callback(rdata)
+		},'正在吊销证书...');
+	},
+
+	//验证域名(手动DNS申请)
+	auth_domain: function(index,callback){
+		acme.show_speed_window('正在验证DNS...',function(){
+			acme.request('apply_dns_auth',{index:index},function(rdata){
+				callback(rdata)
+			},false);
+		});
+	},
+
+	//取证书基本信息
+	get_cert_init: function(pem_file,siteName,callback){
+		acme.request('get_cert_init_api',{pem_file:pem_file,siteName:siteName},function(cert_init){
+			callback(cert_init);
+		},'正在获取证书信息...');
+	},
+
+	//显示进度
+	show_speed: function () {
+    	bt.send('get_lines','ajax/get_lines',{ 
+    		num: 10, 
+    		filename: "/www/server/panel/logs/letsencrypt.log" 
+    	},function(rdata){
+            if ($("#create_lst").text() === "") return;
+            if (rdata.status === true) {
+                $("#create_lst").text(rdata.msg);
+                $("#create_lst").scrollTop($("#create_lst")[0].scrollHeight);
+            }
+            setTimeout(function () { acme.show_speed(); }, 1000);
+    	});
+	},
+	
+	//显示进度窗口
+	show_speed_window: function(msg,callback){
+		 acme.loadT = layer.open({
+            title: false,
+            type:1,
+            closeBtn:0,
+            shade: 0.3,
+            area: "500px",
+            offset: "30%",
+            content: acme.speed_msg.replace('[MSG]',msg),
+            success:function(layers,index){
+				setTimeout(function(){
+					acme.show_speed();
+				},1000);
+				if (callback) callback();
+            }
+        });
+	},
+
+	//一键申请
+	//domain 域名列表 []
+	//auth_type 验证类型 dns/http
+	//auth_to 验证路径 网站根目录或dnsapi
+	//auto_wildcard 是否自动组合通配符 1.是 0.否 默认0
+	apply_cert: function(domains,auth_type,auth_to,auto_wildcard,callback){
+		acme.show_speed_window('正在申请证书...',function(){
+			if(auto_wildcard === undefined) auto_wildcard = '0'
+			pdata = {
+				domains:JSON.stringify(domains),
+				auth_type:auth_type,
+				auth_to:auth_to,
+				auto_wildcard:auto_wildcard
+			}
+
+			if(acme.id) pdata['id'] = acme.id;
+			if(acme.siteName) pdata['siteName'] = acme.siteName;
+			acme.request('apply_cert_api',pdata,function(rdata){
+				callback(rdata);
+			},false);
+		});
+	},
+
+	//续签证书
+	renew: function(index,callback){
+		acme.show_speed_window('正在续签证书...',function(){
+			acme.request('renew_cert',{index:index},function(rdata){
+				callback(rdata)
+			},false);
+		});
+	},
+
+	//获取用户信息
+	get_account_info: function(callback){
+		acme.request('get_account_info',{},function(rdata){
+			callback(rdata)
+		});
+	},
+
+	//设置用户信息
+	set_account_info: function(account,callback){
+		acme.request('set_account_info',account,function(rdata){
+			bt.msg(rdata)
+			if(callback) callback(rdata)
+		});
+	},
+
+	//发送到请求
+	request: function(action,pdata,callback,msg){
+		if(msg == undefined) msg = '正在处理，请稍候...';
+		if(msg){
+			var loadT = layer.msg(msg,{icon:16,time:0,shade:0.3});
+		}
+		$.post("/acme?action=" + action,pdata,function(res){
+			if(msg) layer.close(loadT)
+			if(callback) callback(res)
+		});
+	}
 }
 
 

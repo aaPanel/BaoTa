@@ -15,12 +15,150 @@ except:
 
 from BTPanel import session,admin_path_checks
 from flask import request
+import send_mail
 class config:
     _setup_path = "/www/server/panel"
     _key_file = _setup_path+"/data/two_step_auth.txt"
     _bk_key_file = _setup_path + "/data/bk_two_step_auth.txt"
     _username_file = _setup_path + "/data/username.txt"
     _core_fle_path = _setup_path + '/data/qrcode'
+    __mail_config = '/www/server/panel/data/stmp_mail.json'
+    __mail_list_data = '/www/server/panel/data/mail_list.json'
+    __dingding_config = '/www/server/panel/data/dingding.json'
+    __mail_list = []
+    __weixin_user = []
+
+    def __init__(self):
+        self.mail = send_mail.send_mail()
+        if not os.path.exists(self.__mail_list_data):
+            ret = []
+            public.writeFile(self.__mail_list_data, json.dumps(ret))
+        else:
+            try:
+                mail_data = json.loads(public.ReadFile(self.__mail_list_data))
+                self.__mail_list = mail_data
+            except:
+                ret = []
+                public.writeFile(self.__mail_list_data, json.dumps(ret))
+
+    # 返回配置邮件地址
+    def return_mail_list(self, get):
+        return public.returnMsg(True, self.__mail_list)
+
+    # 删除邮件接口
+    def del_mail_list(self, get):
+        emial = get.email.strip()
+        if emial in self.__mail_list:
+            self.__mail_list.remove(emial)
+            public.writeFile(self.__mail_list_data, json.dumps(self.__mail_list))
+            return public.returnMsg(True, '删除成功')
+        else:
+            return public.returnMsg(True, '邮件不存在')
+
+    #添加接受邮件地址
+    def add_mail_address(self, get):
+        if not hasattr(get, 'email'): return public.returnMsg(False, '请输入邮箱')
+        emailformat = re.compile('[a-zA-Z0-9.-_+%]+@[a-zA-Z0-9]+\.[a-zA-Z0-9]+')
+        if not emailformat.search(get.email): return public.returnMsg(False, '请输入正确的邮箱')
+        # 测试发送邮件
+        if get.email.strip() in self.__mail_list: return public.returnMsg(True, '邮箱已经存在')
+        self.__mail_list.append(get.email.strip())
+        public.writeFile(self.__mail_list_data, json.dumps(self.__mail_list))
+        return public.returnMsg(True, '添加成功')
+
+    # 添加自定义邮箱地址
+    def user_mail_send(self, get):
+        if not (hasattr(get, 'email') or hasattr(get, 'stmp_pwd') or hasattr(get, 'hosts')):
+            return public.returnMsg(False, '请填写完整信息')
+        # 自定义邮件
+        self.mail.qq_stmp_insert(get.email.strip(), get.stmp_pwd.strip(), get.hosts.strip())
+        # 测试发送
+        if self.mail.qq_smtp_send(get.email.strip(), '宝塔告警测试邮件', '宝塔告警测试邮件'):
+            if not get.email.strip() in self.__mail_list:
+                self.__mail_list.append(get.email.strip())
+                public.writeFile(self.__mail_list_data, json.dumps(self.__mail_list))
+            return public.returnMsg(True, '添加成功')
+        else:
+            ret = []
+            public.writeFile(self.__mail_config, json.dumps(ret))
+            return public.returnMsg(False, '邮件发送失败,请查看STMP密码是否正确,或者Hosts是否正确')
+
+    # 查看自定义邮箱配置
+    def get_user_mail(self, get):
+        qq_mail_info = json.loads(public.ReadFile(self.__mail_config))
+        if len(qq_mail_info) == 0:
+            return public.returnMsg(False, '无信息')
+        return public.returnMsg(True, qq_mail_info)
+
+
+    # 用户自定义邮件发送
+    def user_stmp_mail_send(self, get):
+        if not (hasattr(get, 'email')): return public.returnMsg(False, '请填写邮件地址')
+        emailformat = re.compile('[a-zA-Z0-9.-_+%]+@[a-zA-Z0-9]+\.[a-zA-Z0-9]+')
+        if not emailformat.search(get.email): return public.returnMsg(False, '请输入正确的邮箱')
+        # 测试发送邮件
+        if not get.email.strip() in self.__mail_list: return public.returnMsg(True, '邮箱不存在,请添加到邮箱列表中')
+        if not (hasattr(get, 'title')): return public.returnMsg(False, '请填写邮件标题')
+        if not (hasattr(get, 'body')): return public.returnMsg(False, '请输入邮件内容')
+        # 先判断是否存在stmp信息
+        qq_mail_info = json.loads(public.ReadFile(self.__mail_config))
+        if len(qq_mail_info) == 0:
+            return public.returnMsg(False, '未找到STMP的信息,请在设置中重新添加自定义邮件STMP信息')
+        if self.mail.qq_smtp_send(get.email.strip(), get.title.strip(), get.body):
+            # 发送成功
+            return public.returnMsg(True, '发送成功')
+        else:
+            return public.returnMsg(False, '发送失败')
+
+    # 查看能使用的告警通道
+    def get_settings(self, get):
+        qq_mail_info = json.loads(public.ReadFile(self.__mail_config))
+        if len(qq_mail_info) == 0:
+            user_mail = False
+        else:
+            user_mail = True
+        dingding_info = json.loads(public.ReadFile(self.__dingding_config))
+        if len(dingding_info) == 0:
+            dingding = False
+        else:
+            dingding = True
+        ret = {}
+        ret['user_mail'] = {"user_name": user_mail, "mail_list": self.__mail_list}
+        ret['dingding'] = {"dingding": dingding}
+        return ret
+
+    # 设置钉钉报警
+    def set_dingding(self, get):
+        if not (hasattr(get, 'url') or hasattr(get, 'atall')):
+            return public.returnMsg(False, '请填写完整信息')
+        if get.atall:
+            get.atall = 'True'
+        else: get.atall = 'False'
+        self.mail.dingding_insert(get.url.strip(), get.atall)
+        if self.mail.dingding_send('宝塔告警测试'):
+            return public.returnMsg(True, '添加成功')
+        else:
+            ret = []
+            public.writeFile(self.__dingding_config, json.dumps(ret))
+            return public.returnMsg(False, '添加失败,请查看URL是否正确')
+    # 查看钉钉
+    def get_dingding(self, get):
+        qq_mail_info = json.loads(public.ReadFile(self.__dingding_config))
+        if len(qq_mail_info) == 0:
+            return public.returnMsg(False, '无信息')
+        return public.returnMsg(True, qq_mail_info)
+
+    # 使用钉钉发送消息
+    def user_dingding_send(self, get):
+        qq_mail_info = json.loads(public.ReadFile(self.__dingding_config))
+        if len(qq_mail_info) == 0:
+            return public.returnMsg(False, '未找到您配置的钉钉的配置信息,请在设置中添加')
+        if not (hasattr(get, 'content')): return public.returnMsg(False, '请输入你需要发送的数据')
+        if self.mail.dingding_send(get.content):
+            return public.returnMsg(True, '发送成功')
+        else:
+            return public.returnMsg(False, '发送失败')
+
     
     def getPanelState(self,get):
         return os.path.exists('/www/server/panel/data/close.pl');
@@ -105,6 +243,12 @@ class config:
         public.M('config').where("id=?",('1',)).save('backup_path,sites_path',(get.backup_path,get.sites_path))
         session['config']['backup_path'] = os.path.join('/',get.backup_path)
         session['config']['sites_path'] = os.path.join('/',get.sites_path)
+        db_backup  = get.backup_path + '/database'
+        if not os.path.exists(db_backup):
+            os.makedirs(db_backup,384)
+        site_backup  = get.backup_path + '/site'
+        if not os.path.exists(site_backup):
+            os.makedirs(get.backup_path + '/site',384)
         mhost = public.GetHost()
         if get.domain.strip(): mhost = get.domain
         data = {'uri':request.path,'host':mhost+':'+newPort,'status':True,'isReWeb':isReWeb,'msg':public.getMsg('PANEL_SAVE')}

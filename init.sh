@@ -18,10 +18,13 @@ py26=$(python -V 2>&1|grep '2.6.')
 if [ "$py26" != "" ];then
 	pythonV=python3
 fi
-env_path=$panel_path/env/bin/activate
+env_path=$panel_path/pyenv/bin/activate
 if [ -f $env_path ];then
-	source $env_path
+        source $env_path
+        pythonV=$panel_path/pyenv/bin/python
+        sed -i "s@^#!.*@#!$pythonV@" $panel_path/BT-Panel
 fi
+
 chmod 700 $panel_path/BT-Panel
 log_file=/www/server/panel/logs/error.log
 if [ -f $panel_path/data/ssl.pl ];then
@@ -69,7 +72,7 @@ panel_start()
         isStart=$(ps aux |grep 'task.py'|grep -v grep|awk '{print $2}')
         if [ "$isStart" == '' ];then
                 echo -e "Starting Bt-Tasks... \c"
-                nohup python task.py >> /www/server/panel/logs/task.log 2>&1 &
+                nohup $pythonV task.py >> /www/server/panel/logs/task.log 2>&1 &
                 sleep 0.2
                 isStart=$(ps aux |grep 'task.py'|grep -v grep|awk '{print $2}')
                 if [ "$isStart" == '' ];then
