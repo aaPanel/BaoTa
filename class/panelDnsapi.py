@@ -297,7 +297,8 @@ class AliyunDns(object):
         def percent_encode(encodeStr):
             encodeStr = str(encodeStr)
             if sys.version_info[0] == 3:
-                res = urlparse.quote(encodeStr, '')
+                import urllib.request
+                res = urllib.request.quote(encodeStr, '')
             else:
                 res = urllib2.quote(encodeStr, '')
             res = res.replace('+', '%20')
