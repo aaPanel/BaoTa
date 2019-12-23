@@ -910,9 +910,35 @@ function toFile(){
 
 //从脚本
 function toShell(){
-	var tBody = "<textarea class='txtsjs bt-input-text' name='sBody'></textarea>";
+	var shell_body = '';
+	var shell_name = '';
+	if($("b[val='toShell']").text() === '同步时间'){
+		shell_name = '定期同步服务器时间';
+		shell_body = 'echo "|-正在尝试从0.pool.bt.cn同步时间..";\n\
+ntpdate -u 0.pool.bt.cn\n\
+if [ $? = 1 ];then\n\
+	echo "|-正在尝试从1.pool.bt.cn同步时间..";\n\
+	ntpdate -u 1.pool.bt.cn\n\
+fi\n\
+if [ $? = 1 ];then\n\
+	echo "|-正在尝试从0.asia.pool.ntp.org同步时间..";\n\
+	ntpdate -u 0.asia.pool.ntp.org\n\
+fi\n\
+if [ $? = 1 ];then\n\
+	echo "|-正在尝试从www.bt.cn同步时间..";\n\
+	getBtTime=$(curl -sS --connect-timeout 3 -m 60 http://www.bt.cn/api/index/get_time)\n\
+	if [ "${getBtTime}" ];then	\n\
+		date -s "$(date -d @$getBtTime +"%Y-%m-%d %H:%M:%S")"\n\
+	fi\n\
+fi\n\
+echo "|-正在尝试将当前系统时间写入硬件..";\n\
+hwclock -w\n\
+date\n\
+echo "|-时间同步完成!";'
+	}
+	var tBody = "<textarea class='txtsjs bt-input-text' name='sBody' style='margin: 0px; width: 445px; height: 90px;line-height: 16px;'>"+shell_body+"</textarea>";
 	$("#implement").html(tBody);
-	$(".planname input[name='name']").removeAttr('readonly style').val("");
+	$(".planname input[name='name']").removeAttr('readonly style').val(shell_name);
 }
 
 function toPath() {

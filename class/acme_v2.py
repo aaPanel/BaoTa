@@ -1109,7 +1109,9 @@ fullchain.pem       粘贴到证书输入框
             self._config['account'][k] = {}
 
         if not 'key' in self._config['account'][k]:
-            self._config['account'][k]['key'] = self.create_key().encode()
+            self._config['account'][k]['key'] = self.create_key()
+            if type(self._config['account'][k]['key']) == bytes: 
+                self._config['account'][k]['key'] = self._config['account'][k]['key'].decode()
             self.save_config()
         return self._config['account'][k]['key']
 
@@ -1120,10 +1122,12 @@ fullchain.pem       粘贴到证书输入框
             return self._config['orders'][index]['private_key']
         # 创建新的私钥
         private_key = self.create_key()
+        if type(private_key) == bytes:
+            private_key = private_key.decode()
         # 保存私钥到订单配置文件
         self._config['orders'][index]['private_key'] = private_key
         self.save_config()
-        return private_key.decode()
+        return private_key
 
     # 创建Key
     def create_key(self, key_type=OpenSSL.crypto.TYPE_RSA):
@@ -1322,8 +1326,6 @@ def echo_err(msg):
     exit()
 
 # 写日志
-
-
 def write_log(log_str, mode="ab+"):
     if __name__ == "__main__":
         print(log_str)
