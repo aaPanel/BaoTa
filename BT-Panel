@@ -29,13 +29,27 @@ if __name__ == '__main__':
     
     keyfile = 'ssl/privateKey.pem'
     certfile = 'ssl/certificate.pem'
+    is_ssl = False
+    if os.path.exists('data/ssl.pl') and os.path.exists(keyfile) and os.path.exists(certfile):
+        is_ssl = True
     if os.path.exists('data/debug.pl'):
         ssl_context = None
-        if os.path.exists('data/ssl.pl'): ssl_context=(certfile,keyfile)
+        if is_ssl: ssl_context=(certfile,keyfile)
         app.run(host=HOST,port=PORT,threaded=True,debug=True,ssl_context=ssl_context)
     else:
-        if os.path.exists('data/ssl.pl'):
-            http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler,keyfile=keyfile,certfile=certfile,log=None,error_log = None)
+        if is_ssl:
+            my_ssl = {
+                'certfile': certfile,
+                'keyfile': keyfile,
+                'ciphers': 'ECDHE-RSA-AES128-GCM-SHA256:HIGH:!aNULL:!MD5:!RC4:!DHE',
+                'ssl_version':ssl.OP_NO_SSLv3,
+                'suppress_ragged_eofs':False
+            }
+            ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            ssl_context.load_cert_chain(certfile=certfile,keyfile=keyfile)
+            ssl_context.options &= ~ssl.OP_NO_SSLv3
+
+            http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler,ssl_context = ssl_context)
         else:
             http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler)
         http_server.serve_forever()

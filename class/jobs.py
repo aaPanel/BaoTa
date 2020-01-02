@@ -75,24 +75,29 @@ def check_dnsapi():
     dnsapi_file = 'config/dns_api.json'
     tmp = public.readFile(dnsapi_file)
     if not tmp: return False
-    if tmp.find('CloudFlare') != -1: return False
     dnsapi = json.loads(tmp)
-    cloudflare = {
-                    "ps": "使用CloudFlare的API接口自动解析申请SSL",
-                    "title": "CloudFlare",
-                    "data": [{
-                        "value": "",
-                        "key": "SAVED_CF_MAIL",
-                        "name": "E-Mail"
-                    }, {
-                        "value": "",
-                        "key": "SAVED_CF_KEY",
-                        "name": "API Key"
-                    }],
-                    "help": "CloudFlare后台获取Global API Key",
-                    "name": "CloudFlareDns"
-                }
-    dnsapi.insert(0,cloudflare)
+    if tmp.find('CloudFlare') == -1:
+        cloudflare = {
+                        "ps": "使用CloudFlare的API接口自动解析申请SSL",
+                        "title": "CloudFlare",
+                        "data": [{
+                            "value": "",
+                            "key": "SAVED_CF_MAIL",
+                            "name": "E-Mail"
+                        }, {
+                            "value": "",
+                            "key": "SAVED_CF_KEY",
+                            "name": "API Key"
+                        }],
+                        "help": "CloudFlare后台获取Global API Key",
+                        "name": "CloudFlareDns"
+                    }
+        dnsapi.insert(0,cloudflare)
+    check_names = {"dns_bt":"Dns_com","dns_dp":"DNSPodDns","dns_ali":"AliyunDns","dns_cx":"CloudxnsDns"}
+    for i in range(len(dnsapi)):
+        if dnsapi[i]['name'] in check_names:
+            dnsapi[i]['name'] = check_names[dnsapi[i]['name']]
+
     public.writeFile(dnsapi_file,json.dumps(dnsapi))
     return True
 

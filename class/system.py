@@ -596,67 +596,67 @@ class system:
     def ServiceAdmin(self,get=None):
         #服务管理
         if get.name == 'mysqld': 
-            public.CheckMyCnf();
+            public.CheckMyCnf()
             self.__check_mysql_path()
         
         if get.name == 'phpmyadmin':
             import ajax
-            get.status = 'True';
-            ajax.ajax().setPHPMyAdmin(get);
-            return public.returnMsg(True,'SYS_EXEC_SUCCESS');
+            get.status = 'True'
+            ajax.ajax().setPHPMyAdmin(get)
+            return public.returnMsg(True,'SYS_EXEC_SUCCESS')
         
         #检查httpd配置文件
         if get.name == 'apache' or get.name == 'httpd':
-            get.name = 'httpd';
+            get.name = 'httpd'
             if not os.path.exists(self.setupPath+'/apache/bin/apachectl'): return public.returnMsg(True,'SYS_NOT_INSTALL_APACHE');
             vhostPath = self.setupPath + '/panel/vhost/apache'
             if not os.path.exists(vhostPath):
-                public.ExecShell('mkdir ' + vhostPath);
-                public.ExecShell('/etc/init.d/httpd start');
+                public.ExecShell('mkdir ' + vhostPath)
+                public.ExecShell('/etc/init.d/httpd start')
             
             if get.type == 'start': 
-                public.ExecShell('/etc/init.d/httpd stop');
+                public.ExecShell('/etc/init.d/httpd stop')
                 self.kill_port()
                 
-            result = public.ExecShell('ulimit -n 8192 ; ' + self.setupPath+'/apache/bin/apachectl -t');
+            result = public.ExecShell('ulimit -n 8192 ; ' + self.setupPath+'/apache/bin/apachectl -t')
             if result[1].find('Syntax OK') == -1:
-                public.WriteLog("TYPE_SOFT",'SYS_EXEC_ERR', (str(result),));
-                return public.returnMsg(False,'SYS_CONF_APACHE_ERR',(result[1].replace("\n",'<br>'),));
+                public.WriteLog("TYPE_SOFT",'SYS_EXEC_ERR', (str(result),))
+                return public.returnMsg(False,'SYS_CONF_APACHE_ERR',(result[1].replace("\n",'<br>'),))
             
             if get.type == 'restart':
-                public.ExecShell('pkill -9 httpd');
-                public.ExecShell('/etc/init.d/httpd start');
+                public.ExecShell('pkill -9 httpd')
+                public.ExecShell('/etc/init.d/httpd start')
                 time.sleep(0.5)
             
         #检查nginx配置文件
         elif get.name == 'nginx':
             vhostPath = self.setupPath + '/panel/vhost/rewrite'
-            if not os.path.exists(vhostPath): public.ExecShell('mkdir ' + vhostPath);
+            if not os.path.exists(vhostPath): public.ExecShell('mkdir ' + vhostPath)
             vhostPath = self.setupPath + '/panel/vhost/nginx'
             if not os.path.exists(vhostPath):
-                public.ExecShell('mkdir ' + vhostPath);
-                public.ExecShell('/etc/init.d/nginx start');
+                public.ExecShell('mkdir ' + vhostPath)
+                public.ExecShell('/etc/init.d/nginx start')
             
-            result = public.ExecShell('ulimit -n 8192 ; nginx -t -c '+self.setupPath+'/nginx/conf/nginx.conf');
+            result = public.ExecShell('ulimit -n 8192 ; nginx -t -c '+self.setupPath+'/nginx/conf/nginx.conf')
             if result[1].find('perserver') != -1:
-                limit = self.setupPath + '/nginx/conf/nginx.conf';
-                nginxConf = public.readFile(limit);
-                limitConf = "limit_conn_zone $binary_remote_addr zone=perip:10m;\n\t\tlimit_conn_zone $server_name zone=perserver:10m;";
+                limit = self.setupPath + '/nginx/conf/nginx.conf'
+                nginxConf = public.readFile(limit)
+                limitConf = "limit_conn_zone $binary_remote_addr zone=perip:10m;\n\t\tlimit_conn_zone $server_name zone=perserver:10m;"
                 nginxConf = nginxConf.replace("#limit_conn_zone $binary_remote_addr zone=perip:10m;",limitConf);
                 public.writeFile(limit,nginxConf)
-                public.ExecShell('/etc/init.d/nginx start');
-                return public.returnMsg(True,'SYS_CONF_NGINX_REP');
+                public.ExecShell('/etc/init.d/nginx start')
+                return public.returnMsg(True,'SYS_CONF_NGINX_REP')
             
             if result[1].find('proxy') != -1:
                 import panelSite
-                panelSite.panelSite().CheckProxy(get);
-                public.ExecShell('/etc/init.d/nginx start');
-                return public.returnMsg(True,'SYS_CONF_NGINX_REP');
+                panelSite.panelSite().CheckProxy(get)
+                public.ExecShell('/etc/init.d/nginx start')
+                return public.returnMsg(True,'SYS_CONF_NGINX_REP')
             
             #return result
             if result[1].find('successful') == -1:
-                public.WriteLog("TYPE_SOFT",'SYS_EXEC_ERR', (str(result),));
-                return public.returnMsg(False,'SYS_CONF_NGINX_ERR',(result[1].replace("\n",'<br>'),));
+                public.WriteLog("TYPE_SOFT",'SYS_EXEC_ERR', (str(result),))
+                return public.returnMsg(False,'SYS_CONF_NGINX_ERR',(result[1].replace("\n",'<br>'),))
 
             if get.type == 'start': 
                 self.kill_port()
@@ -672,35 +672,35 @@ class system:
         #执行
         execStr = "/etc/init.d/"+get.name+" "+get.type
         if execStr == '/etc/init.d/pure-ftpd reload': execStr = self.setupPath+'/pure-ftpd/bin/pure-pw mkdb '+self.setupPath+'/pure-ftpd/etc/pureftpd.pdb'
-        if execStr == '/etc/init.d/pure-ftpd start': public.ExecShell('pkill -9 pure-ftpd');
-        if execStr == '/etc/init.d/tomcat reload': execStr = '/etc/init.d/tomcat stop && /etc/init.d/tomcat start';
-        if execStr == '/etc/init.d/tomcat restart': execStr = '/etc/init.d/tomcat stop && /etc/init.d/tomcat start';
+        if execStr == '/etc/init.d/pure-ftpd start': public.ExecShell('pkill -9 pure-ftpd')
+        if execStr == '/etc/init.d/tomcat reload': execStr = '/etc/init.d/tomcat stop && /etc/init.d/tomcat start'
+        if execStr == '/etc/init.d/tomcat restart': execStr = '/etc/init.d/tomcat stop && /etc/init.d/tomcat start'
         
         if get.name != 'mysqld':
-            result = public.ExecShell(execStr);
+            result = public.ExecShell(execStr)
         else:
-            public.ExecShell(execStr);
-            result = [];
-            result.append('');
-            result.append('');
+            public.ExecShell(execStr)
+            result = []
+            result.append('')
+            result.append('')
         
         if result[1].find('nginx.pid') != -1:
-            public.ExecShell('pkill -9 nginx && sleep 1');
-            public.ExecShell('/etc/init.d/nginx start');
+            public.ExecShell('pkill -9 nginx && sleep 1')
+            public.ExecShell('/etc/init.d/nginx start')
         if get.type != 'test':
-            public.WriteLog("TYPE_SOFT", 'SYS_EXEC_SUCCESS',(execStr,));
+            public.WriteLog("TYPE_SOFT", 'SYS_EXEC_SUCCESS',(execStr,))
         
         if len(result[1]) > 1 and get.name != 'pure-ftpd' and get.name != 'redis': return public.returnMsg(False, '<p>警告消息： <p>' + result[1].replace('\n','<br>'));
-        return public.returnMsg(True,'SYS_EXEC_SUCCESS');
+        return public.returnMsg(True,'SYS_EXEC_SUCCESS')
     
     def RestartServer(self,get):
-        if not public.IsRestart(): return public.returnMsg(False,'EXEC_ERR_TASK');
-        public.ExecShell("sync && init 6 &");
-        return public.returnMsg(True,'SYS_REBOOT');
+        if not public.IsRestart(): return public.returnMsg(False,'EXEC_ERR_TASK')
+        public.ExecShell("sync && init 6 &")
+        return public.returnMsg(True,'SYS_REBOOT')
 
     def kill_port(self):
-        public.ExecShell('pkill -9 httpd');
-        public.ExecShell('pkill -9 nginx');
+        public.ExecShell('pkill -9 httpd')
+        public.ExecShell('pkill -9 nginx')
         public.ExecShell("kill -9 $(lsof -i :80|grep LISTEN|awk '{print $2}')")
         return True
     

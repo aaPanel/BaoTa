@@ -23,7 +23,7 @@ if sys.version_info[0] == 2:
 def M(table):
     import db
     sql = db.Sql()
-    return sql.table(table);
+    return sql.table(table)
 
 def HttpGet(url,timeout = 6,headers = {}):
     """
@@ -587,9 +587,14 @@ def GetNumLines(path,num,p=1):
                         buf = "\n" + buf
             if not b: break;
         fp.close()
+        result = "\n".join(data)
     except:
-        return ExecShell("tail -n {} {}".format(num,path))[0]
-    return "\n".join(data)
+        result = ExecShell("tail -n {} {}".format(num,path))[0]
+    try:
+        result = json.dumps(result)
+    except:
+        result = str(result).decode('utf8')
+    return json.loads(result)
 
 #验证证书
 def CheckCert(certPath = 'ssl/certificate.pem'):
@@ -1290,28 +1295,37 @@ def get_database_character(db_name):
         return 'utf8'
 
 def en_punycode(domain):
-        tmp = domain.split('.');
-        newdomain = '';
-        for dkey in tmp:
-            #匹配非ascii字符
-            match = re.search(u"[\x80-\xff]+",dkey);
-            if not match: match = re.search(u"[\u4e00-\u9fa5]+",dkey);
-            if not match:
-                newdomain += dkey + '.';
+    if sys.version_info[0] == 2: 
+        domain = domain.encode('utf8')
+    tmp = domain.split('.')
+    newdomain = ''
+    for dkey in tmp:
+        if dkey == '*': continue
+        #匹配非ascii字符
+        match = re.search(u"[\x80-\xff]+",dkey)
+        if not match: match = re.search(u"[\u4e00-\u9fa5]+",dkey)
+        if not match:
+            newdomain += dkey + '.'
+        else:
+            if sys.version_info[0] == 2:
+                newdomain += 'xn--' + dkey.decode('utf-8').encode('punycode') + '.'
             else:
                 newdomain += 'xn--' + dkey.encode('punycode').decode('utf-8') + '.'
-        return newdomain[0:-1];
+    if tmp[0] == '*': newdomain = "*." + newdomain
+    return newdomain[0:-1]
+
+
 
 #punycode 转中文
 def de_punycode(domain):
-    tmp = domain.split('.');
-    newdomain = '';
+    tmp = domain.split('.')
+    newdomain = ''
     for dkey in tmp:
         if dkey.find('xn--') >=0:
             newdomain += dkey.replace('xn--','').encode('utf-8').decode('punycode') + '.'
         else:
             newdomain += dkey + '.'
-    return newdomain[0:-1];
+    return newdomain[0:-1]
 
 #取计划任务文件路径
 def get_cron_path():
@@ -1558,6 +1572,16 @@ def unicode_encode(data):
             result = data.encode('utf8',errors='ignore')
         return result
     except: return data
+
+def unicode_decode(data,charset = 'utf8'):
+    try:
+        if sys.version_info[0] == 2:
+            result = unicode(data,errors='ignore')
+        else:
+            result = data.decode('utf8',errors='ignore')
+        return result
+    except: return data
+
 
 #取通用对象
 class dict_obj:

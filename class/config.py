@@ -15,7 +15,9 @@ except:
 
 from BTPanel import session,admin_path_checks
 from flask import request
-import send_mail
+try:
+    import send_mail
+except:pass
 class config:
     _setup_path = "/www/server/panel"
     _key_file = _setup_path+"/data/two_step_auth.txt"
@@ -29,18 +31,19 @@ class config:
     __weixin_user = []
 
     def __init__(self):
-        self.mail = send_mail.send_mail()
-        if not os.path.exists(self.__mail_list_data):
-            ret = []
-            public.writeFile(self.__mail_list_data, json.dumps(ret))
-        else:
-            try:
-                mail_data = json.loads(public.ReadFile(self.__mail_list_data))
-                self.__mail_list = mail_data
-            except:
+        try:
+            self.mail = send_mail.send_mail()
+            if not os.path.exists(self.__mail_list_data):
                 ret = []
                 public.writeFile(self.__mail_list_data, json.dumps(ret))
-
+            else:
+                try:
+                    mail_data = json.loads(public.ReadFile(self.__mail_list_data))
+                    self.__mail_list = mail_data
+                except:
+                    ret = []
+                    public.writeFile(self.__mail_list_data, json.dumps(ret))
+        except:pass
     # 返回配置邮件地址
     def return_mail_list(self, get):
         return public.returnMsg(True, self.__mail_list)
@@ -701,7 +704,7 @@ class config:
         
         result = []
         for g in gets:
-            rep = g['name'] + '\s*=\s*([0-9A-Za-z_& ~]+)(\s*;?|\r?\n)';
+            rep = g['name'] + '\s*=\s*([0-9A-Za-z_&/ ~]+)(\s*;?|\r?\n)';
             tmp = re.search(rep,phpini)
             if not tmp: continue;
             g['value'] = tmp.groups()[0];

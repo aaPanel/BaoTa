@@ -27,6 +27,7 @@ import sys
 os.chdir('/www/server/panel')
 sys.path.append('class/')
 import http_requests as requests
+requests.DEFAULT_TYPE = 'curl'
 import public
 
 #import requests
@@ -748,44 +749,46 @@ fullchain.pem       粘贴到证书输入框
     def get_cert_init(self, pem_file):
         if not os.path.exists(pem_file):
             return None
-        result = {}
-        x509 = OpenSSL.crypto.load_certificate(
-            OpenSSL.crypto.FILETYPE_PEM, public.readFile(pem_file))
-        # 取产品名称
-        issuer = x509.get_issuer()
-        result['issuer'] = ''
-        if hasattr(issuer, 'CN'):
-            result['issuer'] = issuer.CN
-        if not result['issuer']:
-            is_key = [b'0', '0']
-            issue_comp = issuer.get_components()
-            if len(issue_comp) == 1:
-                is_key = [b'CN', 'CN']
-            for iss in issue_comp:
-                if iss[0] in is_key:
-                    result['issuer'] = iss[1].decode()
-                    break
-        # 取到期时间
-        result['notAfter'] = self.strf_date(
-            bytes.decode(x509.get_notAfter())[:-1])
-        # 取申请时间
-        result['notBefore'] = self.strf_date(
-            bytes.decode(x509.get_notBefore())[:-1])
-        # 取可选名称
-        result['dns'] = []
-        for i in range(x509.get_extension_count()):
-            s_name = x509.get_extension(i)
-            if s_name.get_short_name() in [b'subjectAltName', 'subjectAltName']:
-                s_dns = str(s_name).split(',')
-                for d in s_dns:
-                    result['dns'].append(d.split(':')[1])
-        subject = x509.get_subject().get_components()
-        # 取主要认证名称
-        if len(subject) == 1:
-            result['subject'] = subject[0][1].decode()
-        else:
-            result['subject'] = result['dns'][0]
-        return result
+        try:
+            result = {}
+            x509 = OpenSSL.crypto.load_certificate(
+                OpenSSL.crypto.FILETYPE_PEM, public.readFile(pem_file))
+            # 取产品名称
+            issuer = x509.get_issuer()
+            result['issuer'] = ''
+            if hasattr(issuer, 'CN'):
+                result['issuer'] = issuer.CN
+            if not result['issuer']:
+                is_key = [b'0', '0']
+                issue_comp = issuer.get_components()
+                if len(issue_comp) == 1:
+                    is_key = [b'CN', 'CN']
+                for iss in issue_comp:
+                    if iss[0] in is_key:
+                        result['issuer'] = iss[1].decode()
+                        break
+            # 取到期时间
+            result['notAfter'] = self.strf_date(
+                bytes.decode(x509.get_notAfter())[:-1])
+            # 取申请时间
+            result['notBefore'] = self.strf_date(
+                bytes.decode(x509.get_notBefore())[:-1])
+            # 取可选名称
+            result['dns'] = []
+            for i in range(x509.get_extension_count()):
+                s_name = x509.get_extension(i)
+                if s_name.get_short_name() in [b'subjectAltName', 'subjectAltName']:
+                    s_dns = str(s_name).split(',')
+                    for d in s_dns:
+                        result['dns'].append(d.split(':')[1])
+            subject = x509.get_subject().get_components()
+            # 取主要认证名称
+            if len(subject) == 1:
+                result['subject'] = subject[0][1].decode()
+            else:
+                result['subject'] = result['dns'][0]
+            return result
+        except: return None
 
     # 转换时间
     def strf_date(self, sdate):
