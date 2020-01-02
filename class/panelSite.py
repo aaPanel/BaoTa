@@ -227,7 +227,14 @@ class panelSite(panelRedirect):
         if not os.path.exists(urlrewritePath): os.makedirs(urlrewritePath)
         open(urlrewriteFile,'w+').close()
         return True
-    
+
+    #重新生成nginx配置文件
+    def rep_site_config(self,get):
+        self.siteName = get.siteName
+        siteInfo = public.M('sites').where('name=?',(self.siteName,)).field('id,path,port').find()
+        siteInfo['domains'] = public.M('domains').where('pid=?',(siteInfo['id'],)).field('name,port').select()
+        siteInfo['binding'] = public.M('binding').where('pid=?',(siteInfo['id'],)).field('domain,path').select()
+
      
     #添加站点
     def AddSite(self,get):
@@ -521,16 +528,18 @@ class panelSite(panelRedirect):
         tmp = domain.split('.')
         newdomain = ''
         for dkey in tmp:
-                #匹配非ascii字符
-                match = re.search(u"[\x80-\xff]+",dkey)
-                if not match: match = re.search(u"[\u4e00-\u9fa5]+",dkey)
-                if not match:
-                    newdomain += dkey + '.'
+            if dkey == '*': continue
+            #匹配非ascii字符
+            match = re.search(u"[\x80-\xff]+",dkey)
+            if not match: match = re.search(u"[\u4e00-\u9fa5]+",dkey)
+            if not match:
+                newdomain += dkey + '.'
+            else:
+                if sys.version_info[0] == 2:
+                    newdomain += 'xn--' + dkey.decode('utf-8').encode('punycode') + '.'
                 else:
-                    if sys.version_info[0] == 2:
-                        newdomain += 'xn--' + dkey.decode('utf-8').encode('punycode') + '.'
-                    else:
-                        newdomain += 'xn--' + dkey.encode('punycode').decode('utf-8') + '.'
+                    newdomain += 'xn--' + dkey.encode('punycode').decode('utf-8') + '.'
+        if tmp[0] == '*': newdomain = "*." + newdomain
         return newdomain[0:-1]
     
     #中文路径处理
@@ -1086,6 +1095,7 @@ class panelSite(panelRedirect):
     error_page 497  https://$host$request_uri;
 """ % (get.first_domain, get.first_domain,self.get_tls13())
                 if (conf.find('ssl_certificate') != -1):
+                    public.serviceReload()
                     return public.returnMsg(True, 'SITE_SSL_OPEN_SUCCESS')
 
                 conf = conf.replace('#error_page 404/404.html;', sslStr)

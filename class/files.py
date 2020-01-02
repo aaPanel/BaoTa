@@ -893,22 +893,31 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                 detector.close()
                 char = detector.result
                 data['encoding'] = char['encoding']
-                if char['encoding'] == 'GB2312' or not char['encoding'] or char['encoding'] == 'TIS-620' or char['encoding'] == 'ISO-8859-9':
-                    data['encoding'] = 'GBK'
-                if char['encoding'] == 'ascii' or char['encoding'] == 'ISO-8859-1':
-                    data['encoding'] = 'utf-8'
-                if char['encoding'] == 'Big5':
-                    data['encoding'] = 'BIG5'
-                if not char['encoding'] in ['GBK', 'utf-8', 'BIG5']:
-                    data['encoding'] = 'utf-8'
                 try:
                     if sys.version_info[0] == 2:
                         data['data'] = srcBody.decode(data['encoding']).encode('utf-8', errors='ignore')
                     else:
                         data['data'] = srcBody.decode(data['encoding'])
                 except:
-                    data['encoding'] = char['encoding']
-                    data['data'] = srcBody
+                    try:
+                        if sys.version_info[0] == 2:
+                            data['data'] = srcBody.decode('GBK').encode('utf-8', errors='ignore')
+                        else:
+                            data['data'] = srcBody.decode("GBK")
+                    except:
+                        try:
+                            if sys.version_info[0] == 2:
+                                data['data'] = srcBody.decode('BIG5').encode('utf-8', errors='ignore')
+                            else:
+                                data['data'] = srcBody.decode("BIG5")
+                        except:
+                            try:
+                                if sys.version_info[0] == 2:
+                                    data['data'] = srcBody.decode('utf-8').encode('utf-8', errors='ignore')
+                                else:
+                                    data['data'] = srcBody.decode("utf-8")
+                            except:
+                                return public.returnMsg(False, u'文件编码不被兼容，无法正确读取文件!')
             else:
                 return public.returnMsg(False, '打开文件失败，文件可能被其它进程占用!')
             if hasattr(get, 'filename'):
@@ -917,7 +926,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             data['auto_save'] = self.get_auto_save(get.path)
             return data
         except Exception as ex:
-            return public.returnMsg(False, u'文件编码不被兼容，无法正确读取文件!' + public.get_error_info())
+            return public.returnMsg(False, u'文件编码不被兼容，无法正确读取文件!' + str(ex))
 
     # 保存文件
     def SaveFileBody(self, get):
@@ -965,8 +974,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                     fp = open(get.path, 'w+')
                 else:
                 
-                    data = data.encode(
-                        get.encoding, errors='ignore').decode(get.encoding)
+                    data = data.encode(get.encoding , errors='ignore').decode(get.encoding)
                     fp = open(get.path, 'w+', encoding=get.encoding)
             except:
                 fp = open(get.path, 'w+')

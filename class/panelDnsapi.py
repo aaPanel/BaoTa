@@ -20,12 +20,14 @@ import urllib
 
 if sys.version_info[0] == 2:  # python2
     import urlparse
+    from urlparse import urljoin
     import urllib2
     import cryptography.hazmat
     import cryptography.hazmat.backends
     import cryptography.hazmat.primitives.serialization
 else:  # python3
     from urllib.parse import urlparse
+    from urllib.parse import urljoin
     import cryptography
 import platform
 import hmac
@@ -111,17 +113,11 @@ class DNSPodDns(BaseDns):
     def create_dns_record(self, domain_name, domain_dns_value):
         domain_name,_,subd = extract_zone(domain_name)
         self.add_record(domain_name,subd,domain_dns_value,'TXT')
-        try:
-            self.add_record(domain_name,'@',caa_value,'CAA')
-            tmp = subd.split('.')
-            if len(tmp) > 1:
-                self.add_record(domain_name,tmp[-1],caa_value,'CAA')
-        except:
-            pass
+
        
 
     def add_record(self,domain_name,subd,domain_dns_value,s_type):
-        url = urlparse.urljoin(self.DNSPOD_API_BASE_URL, "Record.Create")
+        url = urljoin(self.DNSPOD_API_BASE_URL, "Record.Create")
         body = {
             "record_type": s_type,
             "domain": domain_name,
@@ -144,7 +140,7 @@ class DNSPodDns(BaseDns):
 
 
     def remove_record(self,domain_name,subd,s_type):
-        url = urlparse.urljoin(self.DNSPOD_API_BASE_URL, "Record.List")
+        url = urljoin(self.DNSPOD_API_BASE_URL, "Record.List")
         rootdomain = domain_name
         body = {
             "login_token": self.DNSPOD_LOGIN,
@@ -156,7 +152,7 @@ class DNSPodDns(BaseDns):
         list_dns_response = requests.post(url, data=body, timeout=self.HTTP_TIMEOUT).json()
         for i in range(0, len(list_dns_response["records"])):
             rid = list_dns_response["records"][i]["id"]
-            urlr = urlparse.urljoin(self.DNSPOD_API_BASE_URL, "Record.Remove")
+            urlr = urljoin(self.DNSPOD_API_BASE_URL, "Record.Remove")
             bodyr = {
                 "login_token": self.DNSPOD_LOGIN,
                 "format": "json",
@@ -170,10 +166,6 @@ class DNSPodDns(BaseDns):
     def delete_dns_record(self, domain_name, domain_dns_value):
         domain_name,_,subd = extract_zone(domain_name)
         self.remove_record(domain_name,subd,'TXT')
-        self.remove_record(domain_name,'@','CAA')
-        tmp = subd.split('.')
-        if len(tmp) > 1:
-            self.remove_record(domain_name,tmp[-1],'CAA')
 
 
 
@@ -204,7 +196,7 @@ class CloudFlareDns(BaseDns):
         super(CloudFlareDns, self).__init__()
 
     def find_dns_zone(self, domain_name):
-        url = urlparse.urljoin(self.CLOUDFLARE_API_BASE_URL, "zones?status=active")
+        url = urljoin(self.CLOUDFLARE_API_BASE_URL, "zones?status=active")
         headers = {"X-Auth-Email": self.CLOUDFLARE_EMAIL, "X-Auth-Key": self.CLOUDFLARE_API_KEY}
         find_dns_zone_response = requests.get(url, headers=headers, timeout=self.HTTP_TIMEOUT)
         if find_dns_zone_response.status_code != 200:
@@ -229,7 +221,7 @@ class CloudFlareDns(BaseDns):
             )
     
     def add_record(self,domain_name,value,s_type):
-        url = urlparse.urljoin(
+        url = urljoin(
             self.CLOUDFLARE_API_BASE_URL,
             "zones/{0}/dns_records".format(self.CLOUDFLARE_DNS_ZONE_ID),
         )
@@ -238,6 +230,32 @@ class CloudFlareDns(BaseDns):
             "type": s_type,
             "name": domain_name,
             "content": "{0}".format(value),
+        }
+        
+        create_cloudflare_dns_record_response = requests.post(
+            url, headers=headers, json=body, timeout=self.HTTP_TIMEOUT
+        )
+        if create_cloudflare_dns_record_response.status_code != 200:
+            raise ValueError(
+                "Error creating cloudflare dns record: status_code={status_code} response={response}".format(
+                    status_code=create_cloudflare_dns_record_response.status_code,
+                    response=self.log_response(create_cloudflare_dns_record_response),
+                )
+            )
+
+    def create_dns_record(self, domain_name, domain_dns_value):
+        domain_name = domain_name.lstrip("*.")
+        self.find_dns_zone(domain_name)
+
+        url = urljoin(
+            self.CLOUDFLARE_API_BASE_URL,
+            "zones/{0}/dns_records".format(self.CLOUDFLARE_DNS_ZONE_ID),
+        )
+        headers = {"X-Auth-Email": self.CLOUDFLARE_EMAIL, "X-Auth-Key": self.CLOUDFLARE_API_KEY}
+        body = {
+            "type": "TXT",
+            "name": "_acme-challenge" + "." + domain_name + ".",
+            "content": "{0}".format(domain_dns_value),
         }
         create_cloudflare_dns_record_response = requests.post(
             url, headers=headers, json=body, timeout=self.HTTP_TIMEOUT
@@ -252,15 +270,12 @@ class CloudFlareDns(BaseDns):
                 )
             )
 
-    def create_dns_record(self, domain_name, domain_dns_value):
-        domain_name = domain_name.lstrip("*.")
-        self.find_dns_zone(domain_name)
-        self.add_record("_acme-challenge" + "." + domain_name,domain_dns_value,'TXT')
+
     def remove_record(self,domain_name,dns_name,s_type):
         headers = {"X-Auth-Email": self.CLOUDFLARE_EMAIL, "X-Auth-Key": self.CLOUDFLARE_API_KEY}
 
         list_dns_payload = {"type": s_type, "name": dns_name}
-        list_dns_url = urlparse.urljoin(
+        list_dns_url = urljoin(
             self.CLOUDFLARE_API_BASE_URL,
             "zones/{0}/dns_records".format(self.CLOUDFLARE_DNS_ZONE_ID),
         )
@@ -271,7 +286,7 @@ class CloudFlareDns(BaseDns):
 
         for i in range(0, len(list_dns_response.json()["result"])):
             dns_record_id = list_dns_response.json()["result"][i]["id"]
-            url = urlparse.urljoin(
+            url = urljoin(
                 self.CLOUDFLARE_API_BASE_URL,
                 "zones/{0}/dns_records/{1}".format(self.CLOUDFLARE_DNS_ZONE_ID, dns_record_id),
             )

@@ -674,7 +674,14 @@ class panelPlugin:
             v2= softInfo['versions'][0]['m_version'].replace('.','')
             softInfo['fpm'] = os.path.exists('/www/server/php/' + v2 + '/sbin/php-fpm')
             softInfo['status'] = os.path.exists('/tmp/php-cgi-'+v2+'.sock')
-            if not softInfo['fpm']: softInfo['status'] = True
+            pid_file = '/www/server/php/' + v2 + '/var/run/php-fpm.pid'
+            if not softInfo['fpm']: 
+                softInfo['status'] = True
+            elif softInfo['status'] and os.path.exists(pid_file):
+                if not self.pids: self.pids = psutil.pids()
+                if not int(public.readFile(pid_file)) in self.pids:
+                    softInfo['status'] = False
+
         if softInfo['name'] == 'mysql': softInfo['status'] = self.process_exists('mysqld')
         if softInfo['name'] == 'phpmyadmin': softInfo['status'] = self.get_phpmyadmin_stat()
         return softInfo
@@ -764,13 +771,13 @@ class panelPlugin:
     #标记当前安装的版本
     def tips_version(self,versions,version):
         if len(versions) == 1:
-            versions[0]['setup'] = True;
+            versions[0]['setup'] = True
             return versions
         
         for i in range(len(versions)):
             if version == (versions[i]['m_version'] + '.' + versions[i]['version']):
                 versions[i]['setup'] = True
-                continue;
+                continue
             vTmp = versions[i]['m_version'].split('_')
             if len(vTmp) > 1: 
                 vTmp = vTmp[1]
@@ -809,7 +816,7 @@ class panelPlugin:
                 if not p_name: continue
                 if p_name == pname: 
                     if not exe:
-                        return True;
+                        return True
                     else:
                         if p_exe == exe: return True
             except: continue
@@ -820,10 +827,10 @@ class panelPlugin:
         #包含分页类
         import page
         #实例化分页类
-        page = page.Page();
+        page = page.Page()
         info = {}
         info['count'] = len(data)
-        info['row']   = self.ROWS;
+        info['row']   = self.ROWS
         info['p'] = 1
         if hasattr(get,'p'):
             try:
@@ -838,14 +845,14 @@ class panelPlugin:
         #获取分页数据
         result = {}
         result['page'] = page.GetPage(info)
-        n = 0;
-        result['data'] = [];
+        n = 0
+        result['data'] = []
         for i in range(info['count']):
-            if n >= page.ROW: break;
-            if i < page.SHIFT: continue;
-            n += 1;
-            result['data'].append(data[i]);
-        return result;
+            if n >= page.ROW: break
+            if i < page.SHIFT: continue
+            n += 1
+            result['data'].append(data[i])
+        return result
         
     
     #取列表
@@ -1286,10 +1293,17 @@ class panelPlugin:
     def checkRun(self,name,versions):
         if name == 'php':
             path = '/www/server/php' 
+            pids = psutil.pids()
             for i in range(len(versions)):
                 if versions[i]['status']:
                     v4 = versions[i]['version'].replace('.','')
                     versions[i]['run'] = os.path.exists('/tmp/php-cgi-' + v4 + '.sock');
+                    pid_file = path + '/' + v4 + '/var/run/php-fpm.pid'
+                    versions[i]['process_id'] = public.readFile(pid_file)
+                    if versions[i]['run'] and os.path.exists(pid_file):
+                        if not int(public.readFile(pid_file)) in pids:
+                            versions[i]['run'] = False
+                    
                     versions[i]['fpm'] = os.path.exists('/etc/init.d/php-fpm-'+v4);
                     phpConfig = self.GetPHPConfig(v4);
                     versions[i]['max'] = phpConfig['max']

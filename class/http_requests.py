@@ -20,6 +20,7 @@ class http:
         pass
 
     def get(self,url,timeout = 60,headers = {},verify = False,type = 'python'):
+        url = self.quote(url)
         if type == 'python':
             if sys.version_info[0] == 2:
                 result = self._get_py2(url,timeout,headers,verify)
@@ -32,6 +33,7 @@ class http:
         return result
 
     def post(self,url,data,timeout = 60,headers = {},verify = False,type = 'python'):
+        url = self.quote(url)
         if type == 'python':
             if sys.version_info[0] == 2:
                 result =  self._post_py2(url,data,timeout,headers,verify)
@@ -48,7 +50,7 @@ class http:
         import urllib2
         req = urllib2.Request(url, self._str_py_post(data,headers),headers = headers)
         try:
-            if verify:
+            if not verify:
                 context = ssl._create_unverified_context()
                 r_response = urllib2.urlopen(req,timeout = timeout,context = context)
             else:
@@ -64,7 +66,7 @@ class http:
         import urllib.request
         req = urllib.request.Request(url, self._str_py_post(data,headers),headers = headers)
         try:
-            if verify:
+            if not verify:
                 context = ssl._create_unverified_context()
                 r_response = urllib.request.urlopen(req,timeout = timeout,context = context)
             else:
@@ -140,7 +142,7 @@ exit($header."\r\n\r\n".json_encode($body));
         import urllib2
         req = urllib2.Request(url, headers = headers)
         try:
-            if verify:
+            if not verify:
                 context = ssl._create_unverified_context()
                 r_response = urllib2.urlopen(req,timeout = timeout,context = context)
             else:
@@ -151,12 +153,26 @@ exit($header."\r\n\r\n".json_encode($body));
             return response(str(err),0,[])
         return response(r_response.read(),r_response.getcode(),r_response.info().headers)
 
+    #URL转码
+    def quote(self,url):
+        url_tmp = url.split('?')
+        if len(url_tmp) == 1: return url
+        url_last = url_tmp[0]
+        url_args = '?'.join(url_tmp[1:])
+        if sys.version_info[0] == 2:
+            import urllib2
+            url_args = urllib2.quote(url_args)
+        else:
+            import urllib.parse
+            url_args = urllib.parse.quote(url_args)
+        return url_last + '?' + url_args
+
     #GET请求 Python3
     def _get_py3(self,url,timeout,headers,verify):
-        import urllib.request
+        import urllib.request       
         req = urllib.request.Request(url,headers = headers)
         try:
-            if verify:
+            if not verify:
                 context = ssl._create_unverified_context()
                 r_response = urllib.request.urlopen(req,timeout = timeout,context = context)
             else:

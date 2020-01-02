@@ -22,9 +22,10 @@ env_path=$panel_path/pyenv/bin/activate
 if [ -f $env_path ];then
         source $env_path
         pythonV=$panel_path/pyenv/bin/python
-        sed -i "s@^#!.*@#!$pythonV@" $panel_path/BT-Panel
+else
+        pythonV=/usr/bin/python
 fi
-
+sed -i "s@^#!.*@#!$pythonV@" $panel_path/BT-Panel
 chmod 700 $panel_path/BT-Panel
 log_file=/www/server/panel/logs/error.log
 if [ -f $panel_path/data/ssl.pl ];then
