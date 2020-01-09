@@ -11,6 +11,7 @@
 # +--------------------------------------------------------------------
 import os,sys,public,base64,json,re
 import smtplib,requests
+#import http_requests as requests
 from email.mime.text import MIMEText
 from email.utils import formataddr
 class send_mail:

@@ -884,40 +884,21 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
 
         try:
             if fp:
-                from chardet.universaldetector import UniversalDetector
-                detector = UniversalDetector()
-                srcBody = b""
-                for line in fp.readlines():
-                    detector.feed(line)
-                    srcBody += line
-                detector.close()
-                char = detector.result
-                data['encoding'] = char['encoding']
+                srcBody = fp.read()
+                fp.close()
                 try:
-                    if sys.version_info[0] == 2:
-                        data['data'] = srcBody.decode(data['encoding']).encode('utf-8', errors='ignore')
-                    else:
-                        data['data'] = srcBody.decode(data['encoding'])
+                    data['encoding'] = 'utf-8'
+                    data['data'] = srcBody.decode(data['encoding'])
                 except:
                     try:
-                        if sys.version_info[0] == 2:
-                            data['data'] = srcBody.decode('GBK').encode('utf-8', errors='ignore')
-                        else:
-                            data['data'] = srcBody.decode("GBK")
+                        data['encoding'] = 'GBK'
+                        data['data'] = srcBody.decode(data['encoding'])
                     except:
                         try:
-                            if sys.version_info[0] == 2:
-                                data['data'] = srcBody.decode('BIG5').encode('utf-8', errors='ignore')
-                            else:
-                                data['data'] = srcBody.decode("BIG5")
+                            data['encoding'] = 'BIG5'
+                            data['data'] = srcBody.decode(data['encoding'])
                         except:
-                            try:
-                                if sys.version_info[0] == 2:
-                                    data['data'] = srcBody.decode('utf-8').encode('utf-8', errors='ignore')
-                                else:
-                                    data['data'] = srcBody.decode("utf-8")
-                            except:
-                                return public.returnMsg(False, u'文件编码不被兼容，无法正确读取文件!')
+                            return public.returnMsg(False, u'文件编码不被兼容，无法正确读取文件!')
             else:
                 return public.returnMsg(False, '打开文件失败，文件可能被其它进程占用!')
             if hasattr(get, 'filename'):
@@ -942,6 +923,9 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         if get.path.find(his_path) != -1:
             return public.returnMsg(False, '不能直接修改历史副本!')
         try:
+            if 'base64' in get:
+                import base64
+                get.data = base64.b64decode(get.data)
             isConf = -1
             if os.path.exists('/etc/init.d/nginx') or os.path.exists('/etc/init.d/httpd'):
                 isConf = get.path.find('nginx')
@@ -953,6 +937,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                     public.ExecShell('\\cp -a '+get.path+' /tmp/backup.conf')
 
             data = get.data
+            if data == 'undefined': return public.returnMsg(False,'错误的文件内容,请重新保存!')
             userini = False
             if get.path.find('.user.ini') != -1:
                 userini = True
@@ -1698,3 +1683,27 @@ cd %s
             data = []
         self.set_store_data(data)
         return public.returnMsg(True, '删除成功!')
+        
+        
+    #单文件木马扫描
+    def file_webshell_check(self,get):
+        if not 'filename' in get: return public.returnMsg(False, '文件不存在!')
+        import webshell_check
+        if webshell_check.webshell_check().upload_file_url(get.filename.strip()):
+            return public.returnMsg(True,'此文件为webshell')
+        else:
+            return public.returnMsg(True, '无风险')
+
+    #目录扫描木马
+    def dir_webshell_check(self,get):
+        if not 'path' in get: return public.returnMsg(False, '请输入有效目录!')
+        path=get.path.strip()
+        if os.path.exists(path):
+            #启动消息队列
+            exec_shell = 'python /www/server/panel/class/webshell_check.py dir %s mail'%path
+            task_name = "扫描目录%s 的木马文件"%path
+            import panelTask
+            task_obj = panelTask.bt_task()
+            task_obj.create_task(task_name, 0, exec_shell)
+            return public.returnMsg(True, '正在启动木马查杀进程。详细信息会在面板安全日志中')
+

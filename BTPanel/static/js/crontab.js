@@ -1,4 +1,4 @@
-var num = 0;
+var num = 0,_radiox ='mail';
 //查看任务日志
 function GetLogs(id){
 	layer.msg(lan.public.the_get,{icon:16,time:0,shade: [0.3, '#000']});
@@ -103,7 +103,7 @@ function edit_task_info(id){
 				save: rdata.save,
 				urladdress: rdata.urladdress,
 			},
-			sTypeArray:[['toShell','Shell脚本'],['site','备份网站'],['database','备份数据库'],['logs','日志切割'],['path','备份目录'],['rememory','释放内存'],['toUrl','访问URL']],
+			sTypeArray:[['toShell','Shell脚本'],['site','备份网站'],['database','备份数据库'],['logs','日志切割'],['path','备份目录'],['rememory','释放内存'],['toUrl','访问URL'],['webshell','木马查杀']],
 			cycleArray:[['day','每天'],['day-n','N天'],['hour','每小时'],['hour-n','N小时'],['minute-n','N分钟'],['week','每星期'],['month','每月']],
 			weekArray:[[1,'周一'],[2,'周二'],[3,'周三'],[4,'周四'],[5,'周五'],[6,'周六'],[7,'周日']],
 			sNameArray:[],
@@ -121,7 +121,7 @@ function edit_task_info(id){
 					if(obj.from['week'] == obj['weekArray'][i][0])  weekName  = obj['weekArray'][i][1];
 					weekDom += '<li><a role="menuitem"  href="javascript:;" value="'+ obj['weekArray'][i][0] +'">'+ obj['weekArray'][i][1] +'</a></li>';
 				}
-				if(obj.from.sType == 'site' || obj.from.sType == 'database' || obj.from.sType == 'path' || obj.from.sType == 'logs'){
+				if(obj.from.sType == 'site' || obj.from.sType == 'database' || obj.from.sType == 'path' || obj.from.sType == 'logs' || obj.from.sType == 'webshell'){
 					$.post('/crontab?action=GetDataList',{type:obj.from.sType  == 'database'?'databases':'sites'},function(rdata){
 						obj.sNameArray = rdata.data;
 						obj.sNameArray.unshift({name:'ALL',ps:'所有'});
@@ -134,6 +134,9 @@ function edit_task_info(id){
 						for(var i = 0; i <obj['backupsArray'].length; i++){
 							if(obj.from['backupTo'] == obj['backupsArray'][i]['value'])  backupsName  = obj['backupsArray'][i]['name'];
 							backupsDom += '<li><a role="menuitem"  href="javascript:;" value="'+ obj['backupsArray'][i]['value'] +'">'+ obj['backupsArray'][i]['name'] +'</a></li>';
+						}
+						if(obj.from.sType == 'webshell'){
+							edit_message_channel(obj.from.urladdress)
 						}
 						callback();
 					});
@@ -225,6 +228,20 @@ function edit_task_info(id){
 									<span class="typename controls c4 pull-left f14 text-right mr20">URL地址</span>\
 									<div style="line-height:34px"><input type="text" style="width:400px; height:34px" class="bt-input-text url_create" name="urladdress"  placeholder="URL地址" value="'+ obj.from.urladdress +'"></div>\
 								</div>\
+								<div class="clearfix plan ptb10" style="display:'+ (obj.from.sType == "webshell"?'block;':'none') +'">\
+									<span class="typename controls c4 pull-left f14 text-right mr20">查杀站点</span>\
+									<div class="dropdown pull-left mr20 sName_btn">\
+										<button class="btn btn-default dropdown-toggle" type="button"  data-toggle="dropdown" style="width:auto" disabled="disabled">\
+											<b id="sName" val="'+ obj.from.sName +'">'+ sNameName +'</b>\
+											<span class="caret"></span>\
+										</button>\
+										<ul class="dropdown-menu" role="menu" aria-labelledby="sName">'+ sNameDom +'</ul>\
+									</div>\
+									<p class="clearfix plan">\
+										<div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">消息通道</div>\
+										<div class="dropdown planBackupTo pull-left mr20 message_start" style="line-height: 34px;"></div>\
+									</p>\
+								</div>\
 								<div class="clearfix plan ptb10">\
 									<div class="bt-submit plan-submits " style="margin-left: 141px;">保存编辑</div>\
 								</div>\
@@ -236,6 +253,8 @@ function edit_task_info(id){
 				}else if(obj.from.sType == 'rememory'){
 					$('.site_list').hide();
 				}else if( obj.from.sType == 'toUrl'){
+					$('.site_list').hide();
+				}else if( obj.from.sType == 'webshell'){
 					$('.site_list').hide();
 				}else{
 					$('.site_list').show();
@@ -361,6 +380,8 @@ function edit_task_info(id){
 					}else if(obj.from.type == 'minute-n'){
 						obj.from.where1 = obj.from.minute;
 						obj.from.minute = '';
+					}else if(obj.from.sType == 'webshell'){
+						obj.from.urladdress = $(".message_start input:checked").val()
 					}
 					layer.msg('正在保存编辑内容，请稍后...',{icon:16,time:0,shade: [0.3, '#000']});
 					$.post('/crontab?action=modify_crond',obj.from,function(rdata){
@@ -373,6 +394,34 @@ function edit_task_info(id){
 		});
 	});
 
+}
+// 修改木马查杀  消息通道
+function edit_message_channel(type){
+	$.post('/config?action=get_settings',function(res){
+		var tMess = "";
+		if(res.user_mail.user_name && !res.dingding.dingding){
+			tMess = '<div class="check_alert" style="margin-right:20px;display: inline-block;">\
+				<input type="radio" name="alert" title="邮箱" value="mail" checked="">\
+				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">邮箱</label>\
+			</div>'
+		}else if(!res.user_mail.user_name && res.dingding.dingding){
+			tMess = '<div class="check_alert" style="display: inline-block;">\
+				<input type="radio" name="alert" title="钉钉" value="dingding" checked="">\
+				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">钉钉</label>\
+			</div>'
+		}else{
+			tMess ='<div class="check_alert" style="margin-right:20px;display: inline-block;">\
+				<input type="radio" name="alert" title="邮箱" value="mail" '+ (type == 'mail'? 'checked' : '') +'>\
+				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">邮箱</label>\
+			</div>\
+			<div class="check_alert" style="display: inline-block;">\
+				<input type="radio" name="alert" title="钉钉" value="dingding" '+ (type == 'dingding'? 'checked' : '') +'>\
+				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">钉钉</label>\
+			</div>'
+		}
+		$(".message_start").html(tMess);
+	})
+	
 }
 
 // 设置计划任务状态
@@ -607,6 +656,9 @@ function planAdd(){
 	var data= $("#set-Config").serialize() + '&sBody='+sBody + '&urladdress=' + urladdress_1;
 	if(data.indexOf('sType=path') > -1){
 		data = data.replace('&sName=&','&sName='+ encodeURIComponent($('#inputPath').val()) +'&')
+	}else if(data.indexOf('sType=webshell') > -1){
+		data = $("#set-Config").serialize() + '&urladdress=' + _radiox;
+		data = data.replace('&sName=&','&sName='+ encodeURIComponent($('#filePath').val()) +'&')
 	}
 
 	$.post('/crontab?action=AddCrontab',data,function(rdata){
@@ -734,6 +786,9 @@ $(".dropdown ul li a").click(function(){
 		case 'toUrl':
 			toUrl();
 			$(".controls").html(lan.crontab.url_address);
+			break;
+		case 'webshell':
+			webShell();
 			break;
 	}
 
@@ -943,6 +998,83 @@ echo "|-时间同步完成!";'
 
 function toPath() {
 
+}
+//木马查杀
+function webShell(){
+	var sOpt = "",sOptBody = '';
+	$.post('/crontab?action=GetDataList&type=sites',function(rdata){
+		$(".planname input[name='name']").attr('readonly','true').css({"background-color":"#f6f6f6","color":"#666"});
+		if(rdata.data.length == 0){
+			layer.msg(lan.public.list_empty,{icon:2})
+			return
+		}
+		for(var i=0;i<rdata.data.length;i++){
+			if(i==0){
+				$(".planname input[name='name']").val("木马查杀"+'['+rdata.data[i].name+']');
+			}
+			sOpt += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="'+rdata.data[i].name+'">'+rdata.data[i].name+'['+rdata.data[i].ps+']</a></li>';			
+		}	
+		sOptBody ='<div class="dropdown pull-left mr20">\
+				  <button class="btn btn-default dropdown-toggle" type="button" id="backdata" data-toggle="dropdown" style="width:auto">\
+					<b id="sName" val="'+rdata.data[0].name+'">'+rdata.data[0].name+'['+rdata.data[0].ps+']</b> <span class="caret"></span>\
+				  </button>\
+				  <ul class="dropdown-menu" role="menu" aria-labelledby="backdata">'+sOpt+'</ul>\
+                </div>'
+		setCookie('default_dir_path','/www/wwwroot/');
+		setCookie('path_dir_change','/www/wwwroot/');
+		setInterval(function(){
+			if(getCookie('path_dir_change') != getCookie('default_dir_path')){
+				var  path_dir_change = getCookie('path_dir_change')
+				$(".planname input").val('木马查杀['+getCookie('path_dir_change')+']');
+				setCookie('default_dir_path',path_dir_change);
+			}
+			$(".check_alert").click(function(){
+				 _radiox = $(this).find("input[name=alert]").val();
+			})
+		},500);
+		sOptBody += '<p class="clearfix plan">\
+            <div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">消息通道</div>\
+            <div class="dropdown planBackupTo pull-left mr20 message_start"></div>\
+        </p>';
+		$("#implement").html(sOptBody);
+		message_channel_start();
+		$("#implement").siblings(".controls").html("查杀站点");
+		getselectname();
+		$(".dropdown ul li a").click(function(){
+			var sName = $("#sName").attr("val");
+			if(!sName) return;
+			$(".planname input[name='name']").val("木马查杀"+'['+sName+']');
+		});	
+	})
+}
+function message_channel_start(){
+	$.post('/config?action=get_settings',function(res){
+		var wBody = "";
+		if(!res.user_mail.user_name && !res.dingding.dingding){
+			wBody = '<span style="color:red;">未设置消息通道，请前往面板设置添加消息通道配置<a href="https://www.bt.cn/bbs/thread-42312-1-1.html" target="_blank" class="bt-ico-ask" style="cursor: pointer;">?</a></span>';
+			$(".plan-submit").css({"pointer-events":"none","background-color":"#e6e6e6","color":"#333"});
+		}else if(res.user_mail.user_name && !res.dingding.dingding){
+			wBody = '<div class="check_alert" style="margin-right:20px;display: inline-block;">\
+				<input type="radio" name="alert" title="邮箱" value="mail" checked="">\
+				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">邮箱</label>\
+			</div>'
+		}else if(!res.user_mail.user_name && res.dingding.dingding){
+			wBody = '<div class="check_alert" style="display: inline-block;">\
+				<input type="radio" name="alert" title="钉钉" value="dingding" checked="">\
+				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">钉钉</label>\
+			</div>'
+		}else{
+			wBody ='<div class="check_alert" style="margin-right:20px;display: inline-block;">\
+				<input type="radio" name="alert" title="邮箱" value="mail" checked="">\
+				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">邮箱</label>\
+			</div>\
+			<div class="check_alert" style="display: inline-block;">\
+				<input type="radio" name="alert" title="钉钉" value="dingding">\
+				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">钉钉</label>\
+			</div>'
+		}
+		$(".message_start").html(wBody);
+	})
 }
 //从url
 function toUrl(){

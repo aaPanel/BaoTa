@@ -274,9 +274,14 @@
 				})		
 			})	
 		},
+		escapeHTML:function (a) {
+			a = "" + a;
+			return a.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, '&quot;').replace(/'/g, "‘").replace(/\(/g, "&#40;").replace(/\&#60;/g, "&lt;").replace(/\&#62;/g, "&gt;").replace(/`/g, "&#96;").replace(/=/g, "＝");
+		},
 		get_log_list:function(page,search){
             if (page == undefined) page = 1;
             if (search == undefined) search = $("#SearchValue").val();
+			var _this = this;
 			bt.firewall.get_log_list(page,search,function(rdata){
 				$('.logsBody').html(rdata.page);
 				var _tab =  bt.render({
@@ -284,11 +289,17 @@
 					columns:[						
 						{ field: 'id', title: "{{data['lan']['LTH1']}}"},	
 						{ field: 'type', title: "{{data['lan']['LTH2']}}"},	
-						{ field: 'log', title: "{{data['lan']['LTH3']}}"},		
+						{ field: 'log', title: "{{data['lan']['LTH3']}}",templet:function(row){
+							return '<span style="display: inline-block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;" title="'+ _this.escapeHTML(row['log']) +'">'+  _this.escapeHTML(row['log']) +'</span>';
+						}},		
 						{ field: 'addtime', title: "{{data['lan']['LTH4']}}"}				
 					],
 					data:rdata.data
-				})		
+				});
+				$('#logsBody tr td span').width($('.main-content').width()*0.7);
+				$(window).resize(function(){
+					$('#logsBody tr td span').width($('.main-content').width()*0.7);
+				});
 			})			
         },
         //查看面板运行日志

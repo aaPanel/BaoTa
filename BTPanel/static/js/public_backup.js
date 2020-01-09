@@ -3927,24 +3927,60 @@ bt.soft = {
 				_this.install_soft(rdata,rdata.versions[0].m_version);
 			}
 		})	
-	},	
+	},
+	//显示进度
+	show_speed: function () {
+		bt.send('get_lines','ajax/get_lines',{ 
+			num: 10, 
+			filename: "/tmp/panelShell.pl" 
+		},function(rdata){
+			if ($("#install_show").length < 1) return;
+			if (rdata.status === true) {
+				$("#install_show").text(rdata.msg);
+				$("#install_show").scrollTop(1000000000);
+			}
+			setTimeout(function () { bt.soft.show_speed(); }, 1000);
+		});
+	},
+	loadT:null,
+	speed_msg:"<pre style='margin-bottom: 0px;height:250px;text-align: left;background-color: #000;color: #fff;white-space: pre-wrap;' id='install_show'>[MSG]</pre>",
+	//显示进度窗口
+	show_speed_window: function(msg,callback){
+		bt.soft.loadT = layer.open({
+			title: false,
+			type:1,
+			closeBtn:0,
+			shade: 0.3,
+			area: "500px",
+			offset: "30%",
+			content: bt.soft.speed_msg.replace('[MSG]',msg),
+			success:function(layers,index){
+				setTimeout(function(){
+					bt.soft.show_speed();
+				},1000);
+				if (callback) callback();
+			}
+		});
+	},
     install_soft: function (item, version, type) { //安装单版本	
         if (type == undefined) type = 0;
 		item.title = bt.replace_all(item.title,'-' + version,'');
 		var msg = item.type!=5?lan.soft.lib_insatll_confirm.replace('{1}',item.title):lan.get('install_confirm',[item.title,version]);
 
 		bt.confirm({msg:msg,title:item.type!=5?lan.soft.lib_install:lan.soft.install_title}, function() {
-            var loadT = bt.load(lan.soft.lib_install_the);
-            bt.send('install_plugin', 'plugin/install_plugin', { sName: item.name, version: version, type: type }, function (rdata) {
+			bt.soft.show_speed_window(lan.soft.lib_install_the,function(){
+				bt.send('install_plugin', 'plugin/install_plugin', { sName: item.name, version: version, type: type }, function (rdata) {
 
-                if (rdata.size) {
-                    _this.install_other(rdata)
-                    return;
-                }
-				loadT.close();		
-				bt.pub.get_task_count();
-				if(soft) soft.get_list();
-				bt.msg(rdata);
+					if (rdata.size) {
+						layer.close(bt.soft.loadT);
+						_this.install_other(rdata)
+						return;
+					}
+					layer.close(bt.soft.loadT);		
+					bt.pub.get_task_count();
+					if(soft) soft.get_list();
+					bt.msg(rdata);
+				})
 			})
 		})
     },
@@ -3985,16 +4021,18 @@ bt.soft = {
 		if(name == 'mysql') msg = "<ul style='color:red;'><li>更新数据库有风险,建议在更新前,先备份您的数据库.</li><li>如果您的是云服务器,强烈建议您在更新前做一个快照.</li><li>建议您在服务器负载闲时进行软件更新.</li></ul>";
         if (update_msg) msg += '<div style="    margin-top: 10px;"><span style="font-size: 14px;font-weight: 900;">本次更新说明: </span><hr style="margin-top: 5px; margin-bottom: 5px;" /><pre>' + update_msg.replace(/(_bt_)/g, "\n") +'</pre><hr style="margin-top: -5px; margin-bottom: -5px;" /></div>';
         bt.show_confirm('更新[' + title + ']', '更新过程可能会导致服务中断,您真的现在就将[' + title + ']更新到[' + version + '.' + min_version + ']吗?', function () {
-            var loadT = bt.load('正在更新到[' + title+'-'+version+'.'+min_version+'],请稍候...');
-            bt.send('install_plugin', 'plugin/install_plugin', { sName: name, version: version, upgrade: version }, function (rdata) {
-                if (rdata.size) {
-                    _this.install_other(rdata)
-                    return;
-                }
-				loadT.close();				
-				bt.pub.get_task_count();
-				if(soft) soft.get_list();
-				bt.msg(rdata);	
+			bt.soft.show_speed_window('正在更新到[' + title+'-'+version+'.'+min_version+'],请稍候...',function(){
+				bt.send('install_plugin', 'plugin/install_plugin', { sName: name, version: version, upgrade: version }, function (rdata) {
+					if (rdata.size) {
+						_this.install_other(rdata)
+						return;
+					}
+					layer.close(bt.soft.loadT);	
+					bt.pub.get_task_count();
+					if(soft) soft.get_list();
+					if(rdata.status === true && rdata.msg.indexOf('队列') === -1) rdata.msg = '更新成功!';
+					bt.msg(rdata);	
+				})
 			})
 		},msg);	
 	},

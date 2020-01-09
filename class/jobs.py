@@ -66,7 +66,7 @@ def control_init():
     clean_hook_log()
     run_new()
     clean_max_log('/www/server/cron',1024*1024*5,20)
-    check_firewall()
+    #check_firewall()
     check_dnsapi()
 
 

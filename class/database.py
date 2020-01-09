@@ -21,7 +21,7 @@ class database(datatool.datatools):
             data_name = get['name'].strip()
             if self.CheckRecycleBin(data_name): return public.returnMsg(False,'数据库['+data_name+']已在回收站，请从回收站恢复!')
             if len(data_name) > 16: return public.returnMsg(False, 'DATABASE_NAME_LEN')
-            reg = "^[\w\.-]+$"
+            reg = r"^[\w\.-]+$"
             if not re.match(reg, data_name): return public.returnMsg(False,'DATABASE_NAME_ERR_T')
             if not hasattr(get,'db_user'): get.db_user = data_name
             username = get.db_user.strip()

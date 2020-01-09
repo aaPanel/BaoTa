@@ -14,8 +14,6 @@
 import re
 import fcntl
 import datetime
-import cryptography
-import OpenSSL
 import binascii
 import hashlib
 import base64
@@ -30,13 +28,11 @@ import http_requests as requests
 requests.DEFAULT_TYPE = 'curl'
 import public
 
-#import requests
-# try:
-#    from requests.packages.urllib3.exceptions import InsecureRequestWarning
-#    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-# except:
-#    pass
-
+try:
+    import OpenSSL
+except:
+    public.ExecShell("pip install pyopenssl")
+    import OpenSSL
 
 class acme_v2:
     _url = None
@@ -109,6 +105,7 @@ class acme_v2:
             self.get_kid()
         account = self._config['account'][k]
         account['email'] = self._config['email']
+        self.set_crond()
         return account
 
     # 设置帐户信息
@@ -209,7 +206,7 @@ class acme_v2:
         top_domain_list = ['.ac.cn', '.ah.cn', '.bj.cn', '.com.cn', '.cq.cn', '.fj.cn', '.gd.cn',
                            '.gov.cn', '.gs.cn', '.gx.cn', '.gz.cn', '.ha.cn', '.hb.cn', '.he.cn',
                            '.hi.cn', '.hk.cn', '.hl.cn', '.hn.cn', '.jl.cn', '.js.cn', '.jx.cn',
-                           '.ln.cn', '.mo.cn', '.net.cn', '.nm.cn', '.nx.cn', '.org.cn']
+                           '.ln.cn', '.mo.cn', '.net.cn', '.nm.cn', '.nx.cn', '.org.cn','my.id']
         old_domain_name = domain_name
         top_domain = "."+".".join(domain_name.rsplit('.')[-2:])
         new_top_domain = "." + top_domain.replace(".", "")
@@ -302,7 +299,14 @@ class acme_v2:
                     self.get_nonce(force=True)
                     res = self.acme_request(self._apis['newOrder'], payload)
             if not res.status_code in [201]:
-                raise Exception("订单创建失败: {}".format(res.json()))
+                a_auth = res.json()
+                ret_title = self.get_error(str(a_auth))
+                raise StopIteration(
+                        "{0} >>>> {1}".format(
+                            ret_title,
+                            json.dumps(a_auth)
+                        )
+                    )
 
         # 返回验证地址和验证
         s_json = res.json()
@@ -411,7 +415,7 @@ class acme_v2:
             import panelDnsapi
             dns_name, key, secret = self.get_dnsapi(auth_to)
             self._dns_class = getattr(panelDnsapi, dns_name)(key, secret)
-        self._dns_class.create_dns_record(domain, dns_value)
+        self._dns_class.create_dns_record(public.de_punycode(domain), dns_value)
         self._dns_domains.append({"domain": domain, "dns_value": dns_value})
 
     # 解析DNSAPI信息
@@ -444,7 +448,7 @@ class acme_v2:
         for dns_info in self._dns_domains:
             try:
                 self._dns_class.delete_dns_record(
-                    dns_info['domain'], dns_info['dns_value'])
+                    public.de_punycode(dns_info['domain']), dns_info['dns_value'])
             except:
                 pass
     # 验证域名
@@ -556,6 +560,8 @@ class acme_v2:
             return "域名%s当前被要求验证CAA记录，请手动解析CAA记录，或1小时后重新尝试申请!" % re.findall("looking up CAA for (.+)", error)
         elif error.find("Read timed out.") != -1:
             return "验证超时,请检查域名是否正确解析，若已正确解析，可能服务器与Let'sEncrypt连接异常，请稍候再重试!"
+        elif error.find('Cannot issue for') != -1:
+            return "无法为{}颁发证书，不能直接用域名后缀申请通配符证书!".format(re.findall(r'for\s+"(.+)"',error))
         elif error.find("Error creating new order") != -1:
             return "订单创建失败，请稍候重试!"
         elif error.find("Too Many Requests") != -1:
@@ -564,6 +570,8 @@ class acme_v2:
             return "CA服务器拒绝访问，请稍候重试!"
         elif error.find('Temporary failure in name resolution') != -1:
             return '服务器DNS故障，无法解析域名，请使用Linux工具箱检查dns配置'
+        elif error.find('Too Many Requests') != -1:
+            return '该域名请求申请次数过多，请3小时后重试'
         else:
             return error
 
@@ -1013,27 +1021,23 @@ fullchain.pem       粘贴到证书输入框
         headers = {"User-Agent": self._user_agent}
         payload = self.stringfy_items(payload)
 
-        if payload in ["GET_Z_CHALLENGE", "DOWNLOAD_Z_CERTIFICATE"]:
-            response = requests.get(
-                url, timeout=self._acme_timeout, headers=headers, verify=self._verify)
+        if payload == "":
+            payload64 = payload
         else:
-            if payload == "":
-                payload64 = payload
-            else:
-                payload64 = self.calculate_safe_base64(json.dumps(payload))
-            protected = self.get_acme_header(url)
-            protected64 = self.calculate_safe_base64(json.dumps(protected))
-            signature = self.sign_message(
-                message="{0}.{1}".format(protected64, payload64))  # bytes
-            signature64 = self.calculate_safe_base64(signature)  # str
-            data = json.dumps(
-                {"protected": protected64, "payload": payload64,
-                    "signature": signature64}
-            )
-            headers.update({"Content-Type": "application/jose+json"})
-            response = requests.post(
-                url, data=data.encode("utf8"), timeout=self._acme_timeout, headers=headers, verify=self._verify
-            )
+            payload64 = self.calculate_safe_base64(json.dumps(payload))
+        protected = self.get_acme_header(url)
+        protected64 = self.calculate_safe_base64(json.dumps(protected))
+        signature = self.sign_message(
+            message="{0}.{1}".format(protected64, payload64))  # bytes
+        signature64 = self.calculate_safe_base64(signature)  # str
+        data = json.dumps(
+            {"protected": protected64, "payload": payload64,
+                "signature": signature64}
+        )
+        headers.update({"Content-Type": "application/jose+json"})
+        response = requests.post(
+            url, data=data.encode("utf8"), timeout=self._acme_timeout, headers=headers, verify=self._verify
+        )
         # 更新随机数
         self.update_replay_nonce(response)
         return response
@@ -1075,12 +1079,15 @@ fullchain.pem       粘贴到证书输入框
     def get_acme_header(self, url):
         header = {"alg": "RS256", "nonce": self.get_nonce(), "url": url}
         if url in [self._apis['newAccount'], 'GET_THUMBPRINT']:
-            private_key = cryptography.hazmat.primitives.serialization.load_pem_private_key(
+            from cryptography.hazmat.backends import default_backend
+            from cryptography.hazmat.primitives import serialization
+            private_key = serialization.load_pem_private_key(
                 self.get_account_key().encode(),
                 password=None,
-                backend=cryptography.hazmat.backends.default_backend(),
+                backend=default_backend(),
             )
             public_key_public_numbers = private_key.public_key().public_numbers()
+
             exponent = "{0:x}".format(public_key_public_numbers.e)
             exponent = "0{0}".format(exponent) if len(
                 exponent) % 2 else exponent
@@ -1252,6 +1259,31 @@ fullchain.pem       粘贴到证书输入框
     # DNS手动验证
     def apply_dns_auth(self, args):
         return self.apply_cert([], auth_type='dns', auth_to='dns', index=args.index)
+
+
+    #创建计划任务
+    def set_crond(self):
+        try:
+            echo = public.md5(public.md5('renew_lets_ssl_bt'))
+            cron_id = public.M('crontab').where('echo=?',(echo,)).getField('id')
+
+            import crontab
+            args_obj = public.dict_obj()
+            if not cron_id:
+                cronPath = public.GetConfigValue('setup_path') + '/cron/' + echo
+                shell = '{} /www/server/panel/class/acme_v2.py --renew=1'.format(sys.executable)
+                public.writeFile(cronPath,shell)
+                args_obj.id = public.M('crontab').add('name,type,where1,where_hour,where_minute,echo,addtime,status,save,backupTo,sType,sName,sBody,urladdress',("续签Let's Encrypt证书",'day','','0','10',echo,time.strftime('%Y-%m-%d %X',time.localtime()),0,'','localhost','toShell','',shell,''))
+                crontab.crontab().set_cron_status(args_obj)
+            else:
+                cron_path = public.get_cron_path()
+                if os.path.exists(cron_path):
+                    cron_s = public.readFile(cron_path)
+                    if cron_s.find(echo) == -1:
+                        public.M('crontab').where('echo=?',(echo,)).setField('status',0)
+                        args_obj.id = cron_id
+                        crontab.crontab().set_cron_status(args_obj)
+        except:pass
 
     # 续签证书
     def renew_cert(self, index):
