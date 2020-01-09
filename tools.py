@@ -50,14 +50,14 @@ sleep 2
 
 echo '==========================================='
 echo "root密码成功修改为: ${pwd}"
-echo "The root password set ${pwd}  successuful"''';
+echo "The root password set ${pwd}  successuful"'''
     
     public.writeFile('mysql_root.sh',root_mysql)
     os.system("/bin/bash mysql_root.sh " + password)
     os.system("rm -f mysql_root.sh")
     
     result = sql.table('config').where('id=?',(1,)).setField('mysql_root',password)
-    print(result);
+    print(result)
 
 #设置面板密码
 def set_panel_pwd(password,ncli = False):
@@ -66,8 +66,8 @@ def set_panel_pwd(password,ncli = False):
     result = sql.table('users').where('id=?',(1,)).setField('password',public.md5(password))
     username = sql.table('users').where('id=?',(1,)).getField('username')
     if ncli:
-        print("|-用户名: " + username);
-        print("|-新密码: " + password);
+        print("|-用户名: " + username)
+        print("|-新密码: " + password)
     else:
         print(username)
 
@@ -98,7 +98,7 @@ echo 'Successful'
 echo '---------------------------------------------------------------------'
 echo "Has changed the MySQL storage directory to: $newDir"
 echo '---------------------------------------------------------------------'
-''';
+'''
 
     public.writeFile('mysql_dir.sh',mysql_dir)
     os.system("/bin/bash mysql_dir.sh " + path)
@@ -109,19 +109,19 @@ echo '---------------------------------------------------------------------'
 def PackagePanel():
     print('========================================================')
     print('|-正在清理日志信息...'),
-    public.M('logs').where('id!=?',(0,)).delete();
+    public.M('logs').where('id!=?',(0,)).delete()
     print('\t\t\033[1;32m[done]\033[0m')
     print('|-正在清理任务历史...'),
-    public.M('tasks').where('id!=?',(0,)).delete();
+    public.M('tasks').where('id!=?',(0,)).delete()
     print('\t\t\033[1;32m[done]\033[0m')
     print('|-正在清理网络监控记录...'),
-    public.M('network').dbfile('system').where('id!=?',(0,)).delete();
+    public.M('network').dbfile('system').where('id!=?',(0,)).delete()
     print('\t\033[1;32m[done]\033[0m')
     print('|-正在清理CPU监控记录...'),
-    public.M('cpuio').dbfile('system').where('id!=?',(0,)).delete();
+    public.M('cpuio').dbfile('system').where('id!=?',(0,)).delete()
     print('\t\033[1;32m[done]\033[0m')
     print('|-正在清理磁盘监控记录...'),
-    public.M('diskio').dbfile('system').where('id!=?',(0,)).delete();
+    public.M('diskio').dbfile('system').where('id!=?',(0,)).delete()
     print('\t\033[1;32m[done]\033[0m')
     print('|-正在清理IP信息...'),
     os.system('rm -f /www/server/panel/data/iplist.txt')
@@ -153,21 +153,21 @@ cat /dev/null > /var/log/wtmp
 cat /dev/null > /var/log/yum.log
 history -c
 '''
-    os.system(command);
+    os.system(command)
     print('\t\033[1;32m[done]\033[0m')
-    public.writeFile('/www/server/panel/install.pl',"True");
-    port = public.readFile('data/port.pl').strip();
-    public.M('config').where("id=?",('1',)).setField('status',0);
+    public.writeFile('/www/server/panel/install.pl',"True")
+    port = public.readFile('data/port.pl').strip()
+    public.M('config').where("id=?",('1',)).setField('status',0)
     print('========================================================')
     print('\033[1;32m|-面板封装成功,请不要再登陆面板做任何其它操作!\033[0m')
     print('\033[1;41m|-面板初始化地址: http://{SERVERIP}:'+port+'/install\033[0m')
 
 #清空正在执行的任务
 def CloseTask():
-    ncount = public.M('tasks').where('status!=?',(1,)).delete();
-    os.system("kill `ps -ef |grep 'python panelSafe.pyc'|grep -v grep|grep -v panelExec|awk '{print $2}'`");
-    os.system("kill `ps -ef |grep 'install_soft.sh'|grep -v grep|grep -v panelExec|awk '{print $2}'`");
-    os.system('/etc/init.d/bt restart');
+    ncount = public.M('tasks').where('status!=?',(1,)).delete()
+    os.system("kill `ps -ef |grep 'python panelSafe.pyc'|grep -v grep|grep -v panelExec|awk '{print $2}'`")
+    os.system("kill `ps -ef |grep 'install_soft.sh'|grep -v grep|grep -v panelExec|awk '{print $2}'`")
+    os.system('/etc/init.d/bt restart')
     print("成功清理 " + int(ncount) + " 个任务!")
     
 #自签证书
@@ -177,7 +177,7 @@ def CreateSSL():
     key.generate_key( OpenSSL.crypto.TYPE_RSA, 2048 )
     cert = OpenSSL.crypto.X509()
     cert.set_serial_number(0)
-    cert.get_subject().CN = public.GetLocalIp();
+    cert.get_subject().CN = public.GetLocalIp()
     cert.set_issuer(cert.get_subject())
     cert.gmtime_adj_notBefore( 0 )
     cert.gmtime_adj_notAfter( 10*365*24*60*60 )
@@ -188,13 +188,13 @@ def CreateSSL():
     if len(cert_ca) > 100 and len(private_key) > 100:
         public.writeFile('ssl/certificate.pem',cert_ca)
         public.writeFile('ssl/privateKey.pem',private_key)
-        print('success');
-        return;
-    print('error');
+        print('success')
+        return
+    print('error')
 
 #创建文件
 def CreateFiles(path,num):
-    if not os.path.exists(path): os.system('mkdir -p ' + path);
+    if not os.path.exists(path): os.system('mkdir -p ' + path)
     import time;
     for i in range(num):
         filename = path + '/' + str(time.time()) + '__' + str(i)
@@ -202,43 +202,43 @@ def CreateFiles(path,num):
 
 #计算文件数量
 def GetFilesCount(path):
-    i=0;
-    for name in os.listdir(path): i += 1;
-    return i;
+    i=0
+    for name in os.listdir(path): i += 1
+    return i
 
 
 #清理系统垃圾
 def ClearSystem():
-    count = total = 0;
-    tmp_total,tmp_count = ClearMail();
-    count += tmp_count;
-    total += tmp_total;
+    count = total = 0
+    tmp_total,tmp_count = ClearMail()
+    count += tmp_count
+    total += tmp_total
     print('=======================================================================')
-    tmp_total,tmp_count = ClearSession();
-    count += tmp_count;
-    total += tmp_total;
+    tmp_total,tmp_count = ClearSession()
+    count += tmp_count
+    total += tmp_total
     print('=======================================================================')
-    tmp_total,tmp_count = ClearOther();
-    count += tmp_count;
-    total += tmp_total;
+    tmp_total,tmp_count = ClearOther()
+    count += tmp_count
+    total += tmp_total
     print('=======================================================================')
-    print('\033[1;32m|-系统垃圾清理完成，共删除['+str(count)+']个文件,释放磁盘空间['+ToSize(total)+']\033[0m');
+    print('\033[1;32m|-系统垃圾清理完成，共删除['+str(count)+']个文件,释放磁盘空间['+ToSize(total)+']\033[0m')
 
 #清理邮件日志
 def ClearMail():
-    rpath = '/var/spool';
-    total = count = 0;
+    rpath = '/var/spool'
+    total = count = 0
     import shutil
-    con = ['cron','anacron','mail'];
+    con = ['cron','anacron','mail']
     for d in os.listdir(rpath):
-        if d in con: continue;
+        if d in con: continue
         dpath = rpath + '/' + d
-        print('|-正在清理' + dpath + ' ...');
-        time.sleep(0.2);
-        num = size = 0;
+        print('|-正在清理' + dpath + ' ...')
+        time.sleep(0.2)
+        num = size = 0
         for n in os.listdir(dpath):
             filename = dpath + '/' + n
-            fsize = os.path.getsize(filename);
+            fsize = os.path.getsize(filename)
             print('|---['+ToSize(fsize)+'] del ' + filename),
             size += fsize
             if os.path.isdir(filename):
@@ -247,23 +247,23 @@ def ClearMail():
                 os.remove(filename)
             print('\t\033[1;32m[OK]\033[0m')
             num += 1
-        print('|-已清理['+dpath+'],删除['+str(num)+']个文件,共释放磁盘空间['+ToSize(size)+']');
-        total += size;
-        count += num;
+        print('|-已清理['+dpath+'],删除['+str(num)+']个文件,共释放磁盘空间['+ToSize(size)+']')
+        total += size
+        count += num
     print('=======================================================================')
-    print('|-已完成spool的清理，删除['+str(count)+']个文件,共释放磁盘空间['+ToSize(total)+']');
+    print('|-已完成spool的清理，删除['+str(count)+']个文件,共释放磁盘空间['+ToSize(total)+']')
     return total,count
 
 #清理php_session文件
 def ClearSession():
     spath = '/tmp'
-    total = count = 0;
+    total = count = 0
     import shutil
-    print('|-正在清理PHP_SESSION ...');
+    print('|-正在清理PHP_SESSION ...')
     for d in os.listdir(spath):
-        if d.find('sess_') == -1: continue;
-        filename = spath + '/' + d;
-        fsize = os.path.getsize(filename);
+        if d.find('sess_') == -1: continue
+        filename = spath + '/' + d
+        fsize = os.path.getsize(filename)
         print('|---['+ToSize(fsize)+'] del ' + filename),
         total += fsize
         if os.path.isdir(filename):
@@ -271,15 +271,15 @@ def ClearSession():
         else:
             os.remove(filename)
         print('\t\033[1;32m[OK]\033[0m')
-        count += 1;
-    print('|-已完成php_session的清理，删除['+str(count)+']个文件,共释放磁盘空间['+ToSize(total)+']');
+        count += 1
+    print('|-已完成php_session的清理，删除['+str(count)+']个文件,共释放磁盘空间['+ToSize(total)+']')
     return total,count
 
 #清空回收站
 def ClearRecycle_Bin():
     import files
-    f = files.files();
-    f.Close_Recycle_bin(None);
+    f = files.files()
+    f.Close_Recycle_bin(None)
     
 #清理其它
 def ClearOther():
@@ -292,22 +292,22 @@ def ClearOther():
                  {'path':'/www/server/panel/install','find':'.gz'}
                  ]
     
-    total = count = 0;
-    print('|-正在清理临时文件及网站日志 ...');
+    total = count = 0
+    print('|-正在清理临时文件及网站日志 ...')
     for c in clearPath:
         for d in os.listdir(c['path']):
-            if d.find(c['find']) == -1: continue;
-            filename = c['path'] + '/' + d;
+            if d.find(c['find']) == -1: continue
+            filename = c['path'] + '/' + d
             if os.path.isdir(filename): continue
-            fsize = os.path.getsize(filename);
+            fsize = os.path.getsize(filename)
             print('|---['+ToSize(fsize)+'] del ' + filename),
             total += fsize
             os.remove(filename)
             print('\t\033[1;32m[OK]\033[0m')
-            count += 1;
-    public.serviceReload();
-    os.system('sleep 1 && /etc/init.d/bt reload > /dev/null &');
-    print('|-已完成临时文件及网站日志的清理，删除['+str(count)+']个文件,共释放磁盘空间['+ToSize(total)+']');
+            count += 1
+    public.serviceReload()
+    os.system('sleep 1 && /etc/init.d/bt reload > /dev/null &')
+    print('|-已完成临时文件及网站日志的清理，删除['+str(count)+']个文件,共释放磁盘空间['+ToSize(total)+']')
     return total,count
 
 #关闭普通日志
@@ -315,23 +315,23 @@ def CloseLogs():
     try:
         paths = ['/usr/lib/python2.7/site-packages/web/httpserver.py','/usr/lib/python2.6/site-packages/web/httpserver.py']
         for path in paths:
-            if not os.path.exists(path): continue;
-            hsc = public.readFile(path);
-            if hsc.find('500 Internal Server Error') != -1: continue;
+            if not os.path.exists(path): continue
+            hsc = public.readFile(path)
+            if hsc.find('500 Internal Server Error') != -1: continue
             rstr = '''def log(self, status, environ):
-        if status != '500 Internal Server Error': return;''';
+        if status != '500 Internal Server Error': return;'''
             hsc = hsc.replace("def log(self, status, environ):",rstr)
-            if hsc.find('500 Internal Server Error') == -1: return False;
+            if hsc.find('500 Internal Server Error') == -1: return False
             public.writeFile(path,hsc)
-    except:pass;
+    except:pass
 
 #字节单位转换
 def ToSize(size):
     ds = ['b','KB','MB','GB','TB']
     for d in ds:
-        if size < 1024: return str(size)+d;
-        size = size / 1024;
-    return '0b';
+        if size < 1024: return str(size)+d
+        size = size / 1024
+    return '0b'
 
 #随机面板用户名
 def set_panel_username(username = None):
@@ -340,14 +340,14 @@ def set_panel_username(username = None):
     if username:
         if len(username) < 5:
             print("|-错误，用户名长度不能少于5位")
-            return;
+            return
         if username in ['admin','root']:
             print("|-错误，不能使用过于简单的用户名")
-            return;
+            return
 
         sql.table('users').where('id=?',(1,)).setField('username',username)
         print("|-新用户名: %s" % username)
-        return;
+        return
     
     username = sql.table('users').where('id=?',(1,)).getField('username')
     if username == 'admin': 
@@ -394,10 +394,10 @@ def update_to6():
         if not os.path.isdir('plugin/' + pname): continue
         if pname in exlodes: continue
         print("|-正在升级【%s】..." % pname),
-        download_url = download_address + '/install/plugin/' + pname + '/install.sh';
+        download_url = download_address + '/install/plugin/' + pname + '/install.sh'
         to_file = '/tmp/%s.sh' % pname
-        public.downloadFile(download_url,to_file);
-        os.system('/bin/bash ' + to_file + ' install &> /tmp/plugin_update.log 2>&1');
+        public.downloadFile(download_url,to_file)
+        os.system('/bin/bash ' + to_file + ' install &> /tmp/plugin_update.log 2>&1')
         print("    \033[32m[成功]\033[0m")
     print("====================================================")
     print("\033[32m所有插件已成功升级到6.0兼容!\033[0m")
@@ -463,17 +463,17 @@ def bt_cli(u_input = 0):
             input_mysql = input("请输入新的MySQL密码：")
         if not input_mysql:
             print("|-错误，不能设置空密码")
-            return;
+            return
 
         if len(input_mysql) < 8:
             print("|-错误，长度不能少于8位")
-            return;
+            return
 
         import re
         rep = "^[\w@\._]+$"
         if not re.match(rep, input_mysql):
             print("|-错误，密码中不能包含特殊符号")
-            return;
+            return
         
         print(input_mysql)
         set_mysql_root(input_mysql.strip())
@@ -482,19 +482,19 @@ def bt_cli(u_input = 0):
         if sys.version_info[0] == 3: input_port = int(input_port)
         if not input_port:
             print("|-错误，未输入任何有效端口")
-            return;
+            return
         if input_port in [80,443,21,20,22]:
             print("|-错误，请不要使用常用端口作为面板端口")
-            return;
+            return
         old_port = int(public.readFile('data/port.pl'))
         if old_port == input_port:
             print("|-错误，与面板当前端口一致，无需修改")
-            return;
+            return
 
         is_exists = public.ExecShell("lsof -i:%s|grep LISTEN|grep -v grep" % input_port)
         if len(is_exists[0]) > 5:
             print("|-错误，指定端口已被其它应用占用")
-            return;
+            return
 
         public.writeFile('data/port.pl',str(input_port))
         if os.path.exists("/usr/bin/firewall-cmd"):
@@ -581,7 +581,7 @@ def bt_cli(u_input = 0):
 
 
 if __name__ == "__main__":
-    type = sys.argv[1];
+    type = sys.argv[1]
     if type == 'root':
         set_mysql_root(sys.argv[2])
     elif type == 'panel':
@@ -592,18 +592,14 @@ if __name__ == "__main__":
         setup_idc()
     elif type == 'mysql_dir':
         set_mysql_dir(sys.argv[2])
-    elif type == 'to':
-        panel2To3()
     elif type == 'package':
-        PackagePanel();
+        PackagePanel()
     elif type == 'ssl':
-        CreateSSL();
-    elif type == 'port':
-        CheckPort();
+        CreateSSL()
     elif type == 'clear':
-        ClearSystem();
+        ClearSystem()
     elif type == 'closelog':
-        CloseLogs();
+        CloseLogs()
     elif type == 'update_to6':
         update_to6()
     elif type == "cli":

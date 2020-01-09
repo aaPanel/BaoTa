@@ -42,7 +42,7 @@ class panelPHP:
     
     #将参数写到文件
     def __write_args(self,args):
-        if os.path.exists(self.__args_tmp): os.remove(args_tmp_file)
+        if os.path.exists(self.__args_tmp): os.remove(self.__args_tmp)
         self.__clean_args_file()
         data = {}
         data['GET'] = request.args.to_dict()
@@ -78,7 +78,7 @@ class panelPHP:
             php_bin = php_path + pv + "/bin/php"
             if os.path.exists(php_bin): 
                 php_v = pv
-                break;
+                break
         #如果没安装直接返回False
         if not php_v: return False
         #处理PHP-CLI-INI配置文件
@@ -90,7 +90,7 @@ class panelPHP:
             shutil.copy(src_php_ini,php_ini)
             #解除所有禁用函数
             php_ini_body = public.readFile(php_ini)
-            php_ini_body = re.sub("disable_functions\s*=.*","disable_functions = ",php_ini_body)
+            php_ini_body = re.sub(r"disable_functions\s*=.*","disable_functions = ",php_ini_body)
             public.writeFile(php_ini,php_ini_body)
         return php_path + php_v + '/bin/php -c ' + php_ini
             

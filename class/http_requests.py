@@ -155,6 +155,7 @@ exit($header."\r\n\r\n".json_encode($body));
 
     #URL转码
     def quote(self,url):
+        if url.find('[') == -1: return url
         url_tmp = url.split('?')
         if len(url_tmp) == 1: return url
         url_last = url_tmp[0]
@@ -409,7 +410,11 @@ def post(url,data = {},timeout = 60,headers = {},verify = False,s_type = None):
     '''
     p = http()
     try:
-        return p.post(url,data,timeout,get_headers(headers),verify,get_stype(s_type))
+        try:
+            import requests
+            return requests.post(url,data,timeout=timeout,headers=get_headers(headers),verify=verify)
+        except:
+            return p.post(url,data,timeout,get_headers(headers),verify,get_stype(s_type))
     except:
         raise Exception(public.get_error_info())
 
@@ -424,7 +429,11 @@ def get(url,timeout = 60,headers = {},verify = False,s_type = None):
     '''
     p = http()
     try:
-        return p.get(url,timeout,get_headers(headers),verify,get_stype(s_type))
+        try:
+            import requests
+            return requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
+        except:
+            return p.get(url,timeout,get_headers(headers),verify,get_stype(s_type))
     except:
         raise Exception(public.get_error_info())
 

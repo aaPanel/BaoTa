@@ -394,6 +394,8 @@ var lan = {
 		"recycle_bin_del_the":"正在删除,请稍候...",
 		"recycle_bin_close_msg":"清空回收站操作会永久删除回收站中的文件，继续吗？",
 		"recycle_bin_close_the":"正在删除,请稍候...",
+		"dir_menu_webshell": "目录查杀",
+		"file_menu_webshell": "查杀",
 		"file_menu_copy":"复制",
 		"file_menu_mv":"剪切",
 		"file_menu_rename":"重命名",

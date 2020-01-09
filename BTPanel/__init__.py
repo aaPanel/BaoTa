@@ -234,7 +234,6 @@ def request_check():
             or public.md5(auth.password.strip() + tips) != app.config['BASIC_AUTH_PASSWORD']:
             return send_authenticated()
     
-
 @app.teardown_request
 def request_end(reques = None):
     not_acts = ['GetTaskSpeed','GetNetWork','check_pay_status','get_re_order_status','get_order_stat']
@@ -571,7 +570,7 @@ def files(pdata = None):
             'GetFileAccess','SetFileAccess','GetDirSize','SetBatchData','BatchPaste','install_rar','get_path_size',
             'DownloadFile','GetTaskSpeed','CloseLogs','InstallSoft','UninstallSoft','SaveTmpFile',
             'GetTmpFile','del_files_store','add_files_store','get_files_store','del_files_store_types','add_files_store_types',
-            'RemoveTask','ActionTask','Re_Recycle_bin','Get_Recycle_bin','Del_Recycle_bin','Close_Recycle_bin','Recycle_bin'
+            'RemoveTask','ActionTask','Re_Recycle_bin','Get_Recycle_bin','Del_Recycle_bin','Close_Recycle_bin','Recycle_bin','file_webshell_check','dir_webshell_check'
             )
     return publicObject(filesObject,defs,None,pdata)
 
@@ -645,7 +644,7 @@ def config(pdata = None):
             'GetPanelList','AddPanelInfo','SetPanelInfo','DelPanelInfo','ClickPanelInfo','SetPanelSSL',
             'SetTemplates','Set502','setPassword','setUsername','setPanel','setPathInfo','setPHPMaxSize',
             'getFpmConfig','setFpmConfig','setPHPMaxTime','syncDate','setPHPDisable','SetControl',
-            'ClosePanel','AutoUpdatePanel','SetPanelLock'
+            'ClosePanel','AutoUpdatePanel','SetPanelLock','return_mail_list','del_mail_list','add_mail_address','user_mail_send','get_user_mail','set_dingding','get_dingding','get_settings','user_stmp_mail_send','user_dingding_send'
             )
     return publicObject(config.config(),defs,None,pdata)
 
@@ -800,7 +799,7 @@ def panel_public():
     comm.checkWebType()
     comm.GetOS()
     result = plu.a(get)
-    session.clear()
+    #session.clear()
     return public.getJson(result),json_header
 
 @app.route('/favicon.ico',methods=method_get)

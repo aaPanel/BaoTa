@@ -37,6 +37,9 @@
                                 <a role="menuitem" tabindex="-1" href="javascript:;" value="path">备份目录</a>
                             </li>
                             <li>
+                                <a role="menuitem" tabindex="-1" href="javascript:;" value="webshell">木马查杀</a>
+                            </li>
+                            <li>
                                 <a role="menuitem" tabindex="-1" href="javascript:;" value="toShell">同步时间</a>
                             </li>
                             <li>
@@ -47,7 +50,7 @@
                             </li>
                         </ul>
                     </div>
-                    <span class="planSign"><i>*</i>{{data['lan']['PS']}}、备份目录、同步时间</span>
+                    <span class="planSign"><i>*</i>{{data['lan']['PS']}}、备份目录、木马查杀、同步时间</span>
                 </div>
                 <div class="clearfix plan">
                     <span class="typename c4 pull-left f14 text-right mr20">{{data['lan']['T2']}}</span>
@@ -181,7 +184,7 @@
 {% endblock %}
 
 {% block scripts %}
-	<script src="/static/js/crontab.js?version={{g['version']}}"></script>
+	<script src="/static/js/crontab.js?date20200106={{g['version']}}"></script>
 	<script type="text/javascript">
 	    setCookie('serverType',"{{session['webserver']}}");
 		toWeek();

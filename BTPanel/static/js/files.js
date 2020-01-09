@@ -5,9 +5,10 @@ function IsDiskWidth() {
         $("#comlist").css({ "width": bodyWidth - 530 + "px", "height": "34px", "overflow": "auto" });
     }
     else {
-        $("#comlist").removeAttr("style");
+        $("#comlist").removeAttr("style"); 
     }
 }
+
 function Recycle_bin(type) {
     $.post('/files?action=Get_Recycle_bin','',function (rdata) {
         var body = '';
@@ -420,6 +421,7 @@ function GetFiles(Path, sort) {
 						<td>"+ fmp[3] + "</td>\
 						<td>"+ fmp[4] + "</td>\
 						<td class='editmenu'><span>\
+						<a class='btlink' href='javascript:;' onclick=\"webshell_dir('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.dir_menu_webshell + "</a> | \
 						<a class='btlink' href='javascript:;' onclick=\"CopyFile('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_copy + "</a> | \
 						<a class='btlink' href='javascript:;' onclick=\"CutFile('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_mv + "</a> | \
 						<a class='btlink' href=\"javascript:ReName(0,'" + fmp[0] + "');\">" + lan.files.file_menu_rename + "</a> | \
@@ -444,6 +446,7 @@ function GetFiles(Path, sort) {
             var displayZip = isZip(fmp[0]);
             var bodyZip = '';
             var download = '';
+            var file_webshell = '';
             var cnametext = fmp[0] + fmp[5];
             fmp[0] = fmp[0].replace(/'/, "\\'");
             if (cnametext.length > 48) {
@@ -453,6 +456,9 @@ function GetFiles(Path, sort) {
                 if (cnametext.length > 16) {
                     cnametext = cnametext.substring(0, 16) + '...'
                 }
+            }
+            if(isPhp(fmp[0])){
+            	file_webshell = "<a class='btlink' href='javascript:;' onclick=\"php_file_webshell('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_webshell + "</a> | ";
             }
             if (displayZip != -1) {
                 bodyZip = "<a class='btlink' href='javascript:;' onclick=\"UnZip('" + rdata.PATH + "/" + fmp[0] + "'," + displayZip + ")\">" + lan.files.file_menu_unzip + "</a> | ";
@@ -495,7 +501,7 @@ function GetFiles(Path, sort) {
 						<td>"+ fmp[3] + "</td>\
 						<td>"+ fmp[4] + "</td>\
 						<td class='editmenu'>\
-						<span><a class='btlink' href='javascript:;' onclick=\"CopyFile('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_copy + "</a> | \
+						<span>"+file_webshell+"<a class='btlink' href='javascript:;' onclick=\"CopyFile('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_copy + "</a> | \
 						<a class='btlink' href='javascript:;' onclick=\"CutFile('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_mv + "</a> | \
 						<a class='btlink' href='javascript:;' onclick=\"ReName(0,'" + fmp[0] + "')\">" + lan.files.file_menu_rename + "</a> | \
 						<a class='btlink' href=\"javascript:SetChmod(0,'" + rdata.PATH + "/" + fmp[0] + "');\">" + lan.files.file_menu_auth + "</a> | \
@@ -680,6 +686,22 @@ function GetFiles(Path, sort) {
         auto_table_width();
     });
 }
+function webshell_dir(path){
+    layer.confirm('目录查杀将包含子目录中的php文件，是否操作？', { title: lan.files.dir_menu_webshell, closeBtn: 2, icon: 3 }, function (index) {
+        layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
+        $.post('/files?action=dir_webshell_check', 'path=' + path, function (rdata) {
+            layer.close(index);
+            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+        });
+    });
+}
+function php_file_webshell(file){
+	var loadT = layer.msg('正在查杀文件中，请稍后...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+	$.post('/files?action=file_webshell_check','filename='+ file,function(rdata){
+		layer.close(loadT);
+        layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+	})
+}
 function auto_table_width() {
     var oldTable = $(window).height() - $('#tipTools')[0].getBoundingClientRect().height - $('#filePage')[0].getBoundingClientRect().height - $('.footer')[0].getBoundingClientRect().height - 111;
     var oldTable_heigth = $('.oldTable table').height();
@@ -822,6 +844,9 @@ function Batch(type, access) {
         }
         Zip(names);
         return;
+    }
+    if(type == 6){
+    	webshell_dir()
     }
 
     myloadT = layer.msg("<div class='myspeed'>" + lan.public.the + "</div>", { icon: 16, time: 0, shade: [0.3, '#000'] });
@@ -1408,6 +1433,10 @@ function isVideo(fileName) {
     var exts = ['mp4', 'mpeg', 'mpg', 'mov', 'avi', 'webm', 'mkv'];
     return isExts(fileName, exts);
 }
+function isPhp(fileName){
+	var exts = ['php'];
+	return isExts(fileName,exts);
+}
 function isExts(fileName, exts) {
     var ext = fileName.split('.');
     if (ext.length < 2) return false;
@@ -1627,7 +1656,14 @@ function RClick(type, path, name, file_store) {
     };
 
     if (type == "dir") {
-        options.items.push({ text: lan.files.file_menu_del, onclick: function () { DeleteDir(path) } });
+        options.items.push(
+        	{ text: lan.files.file_menu_del, onclick: function () { DeleteDir(path) } },
+        	{ text: lan.files.dir_menu_webshell, onclick: function () { webshell_dir(path) } }
+        );
+    }
+    
+    else if(isPhp(type)){
+    	options.items.push({text: lan.files.file_menu_webshell, onclick: function() {php_file_webshell(path)}},{ text: lan.files.file_menu_edit, onclick: function () { openEditorView(0, path) } }, { text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } })
     }
     //else if (isVideo(type)) {
     //    options.items.push({ text: '播放', onclick: function () { GetPlay(path) } }, { text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } });

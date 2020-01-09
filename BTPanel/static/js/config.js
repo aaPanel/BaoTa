@@ -244,8 +244,16 @@ $('.open_two_verify_view').click(function(){
 	check_two_step(function(res){
 		$('#panel_verification').prop('checked',res.status);
 	});
+	get_three_channel(function(res){
+		$('#channel_auth').val(!res.user_mail.user_name && !res.dingding.dingding ? '邮箱未设置 | 钉钉未设置':(res.user_mail.user_name? '邮箱已设置':(res.dingding.dingding? '钉钉已设置': '')))
+	});
 })()
 
+function get_three_channel(callback){
+	$.post('/config?action=get_settings',function(res){
+		if(callback) callback(res);
+	});
+}
 
 function check_two_step(callback){
 	$.post('/config?action=check_two_step',function(res){
@@ -951,6 +959,213 @@ function modify_basic_auth() {
         }
     });
 }
+function open_three_channel_auth(){
+	var loadT = layer.msg('正在获取配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+	$.post('/config?action=get_settings',function(rdata){
+		layer.close(loadT);
+		var isOpen = rdata.dingding.info.msg.isAtAll == 'True' ? 'checked': '';
+		var isDing = rdata.dingding.info.msg == '无信息'? '': rdata.dingding.info.msg.dingding_url;
+		layer.open({
+			type: 1,
+	        area: "600px",
+	        title: "设置消息通道",
+	        closeBtn: 2,
+	        shift: 5,
+	        shadeClose: false,
+	        content: '<div class="bt-form">\
+	        			<div class="bt-w-main">\
+					        <div class="bt-w-menu">\
+					            <p class="bgw">邮箱</p>\
+					            <p>钉钉</p>\
+					        </div>\
+					        <div class="bt-w-con pd15">\
+					            <div class="plugin_body">\
+	                				<div class="conter_box active" >\
+	                					<div class="bt-form">\
+	                						<div class="line">\
+	                							<button class="btn btn-success btn-sm" onclick="add_receive_info()">添加收件者</button>\
+	                							<button class="btn btn-default btn-sm" onclick="sender_info_edit(\''+ rdata.user_mail.info.msg.qq_mail +'\',\''+ rdata.user_mail.info.msg.qq_stmp_pwd +'\',\''+ rdata.user_mail.info.msg.hosts +'\')">发送者设置</button>\
+	                						</div>\
+					                        <div class="line">\
+						                        <div class="divtable">\
+						                        	<table class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"><thead><tr><th>邮箱</th><th width="80px">操作</th></tr></thead></table>\
+						                        	<table class="table table-hover"><tbody id="receive_table"></tbody></table>\
+						                        </div>\
+					                        </div>\
+				                        </div>\
+	                				</div>\
+	                				<div class="conter_box" style="display:none">\
+		                				<div class="bt-form">\
+		                					<div class="line">\
+												<span class="tname">通知全体</span>\
+												<div class="info-r" style="height:28px; margin-left:100px">\
+													<input class="btswitch btswitch-ios" id="panel_alert_all" type="checkbox" '+ isOpen+'>\
+													<label style="position: relative;top: 5px;" class="btswitch-btn" for="panel_alert_all"></label>\
+												</div>\
+											</div>\
+						        			<div class="line">\
+					                            <span class="tname">钉钉URL</span>\
+					                            <div class="info-r">\
+					                                <textarea name="channel_dingding_value" class="bt-input-text mr5" type="text" style="width: 300px; height:90px; line-height:20px">'+isDing+'</textarea>\
+					                            </div>\
+					                            <button class="btn btn-success btn-sm" onclick="SetChannelDing()" style="margin: 10px 0 0 100px;">保存</button>\
+					                        </div>\
+				                        </div>\
+		            				</div>\
+	                			</div>\
+	                		</div>\
+                		</div>\
+                	  </div>'
+		})
+		$(".bt-w-menu p").click(function () {
+            var index = $(this).index();
+            $(this).addClass('bgw').siblings().removeClass('bgw');
+            $('.conter_box').eq(index).show().siblings().hide();
+        });
+		get_receive_list();
+	})
+}
+function sender_info_edit(qq_mail,qq_stmp_pwd,hosts){
+	qq_mail = qq_mail == 'undefined' ? '' : qq_mail;
+	qq_stmp_pwd = qq_stmp_pwd == 'undefined'? '' : qq_stmp_pwd;
+	hosts = hosts == 'undefined'? '' : hosts;
+	layer.open({
+		type: 1,
+        area: "460px",
+        title: "设置发送者邮箱信息",
+        closeBtn: 2,
+        shift: 5,
+        shadeClose: false,
+        content: '<div class="bt-form pd20 pb70">\
+        	<div class="line">\
+                <span class="tname">发送人邮箱</span>\
+                <div class="info-r">\
+                    <input name="channel_email_value" class="bt-input-text mr5" type="text" style="width: 300px" value="'+qq_mail+'">\
+                </div>\
+            </div>\
+            <div class="line">\
+                <span class="tname">smtp密码</span>\
+                <div class="info-r">\
+                    <input name="channel_email_password" class="bt-input-text mr5" type="password" style="width: 300px" value="'+qq_stmp_pwd+'">\
+                </div>\
+            </div>\
+            <div class="line">\
+                <span class="tname">smtp服务器</span>\
+                <div class="info-r">\
+                    <input name="channel_email_server" class="bt-input-text mr5" type="text" style="width: 300px" value="'+hosts+'">\
+                </div>\
+            </div>\
+            <div class="bt-form-submit-btn">\
+	            <button type="button" class="btn btn-danger btn-sm smtp_closeBtn">关闭</button>\
+	            <button class="btn btn-success btn-sm SetChannelEmail">保存</button></div>\
+        	</div>',
+        success:function(layers,index){
+			$(".SetChannelEmail").click(function(){
+				var _email = $('input[name=channel_email_value]').val();
+				var _passW = $('input[name=channel_email_password]').val();
+				var _server = $('input[name=channel_email_server]').val();
+				if(_email == ''){
+					return layer.msg('邮箱地址不能为空！',{icon:2});
+				}else if(_passW == ''){
+					return layer.msg('STMP密码不能为空！',{icon:2});
+				}else if(_server == ''){return layer.msg('STMP服务器地址不能为空！',{icon:2})}
+				var loadT = layer.msg('正在生成邮箱通道中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+				layer.close(index)
+				$.post('/config?action=user_mail_send',{email:_email,stmp_pwd:_passW,hosts:_server},function(rdata){
+					layer.close(loadT);
+					layer.msg(rdata.msg,{icon:rdata.status?1:2})
+				})
+			})
+			$(".smtp_closeBtn").click(function(){
+				layer.close(index)
+			})
+		}
+	})
+}
+function add_receive_info(){
+	layer.open({
+		type: 1,
+        area: "400px",
+        title: "添加收件者邮箱",
+        closeBtn: 2,
+        shift: 5,
+        shadeClose: false,
+        content: '<div class="bt-form pd20 pb70">\
+	        <div class="line">\
+	            <span class="tname">收件人邮箱</span>\
+	            <div class="info-r">\
+	                <input name="creater_email_value" class="bt-input-text mr5" type="text" style="width: 240px" value="">\
+	            </div>\
+	        </div>\
+	        <div class="bt-form-submit-btn">\
+	            <button type="button" class="btn btn-danger btn-sm smtp_closeBtn">关闭</button>\
+	            <button class="btn btn-success btn-sm CreaterReceive">创建</button>\
+	        </div>\
+	        </div>',
+        success:function(layers,index){
+        	$(".CreaterReceive").click(function(){
+        		var _receive = $('input[name=creater_email_value]').val(),_that = this;
+				if(_receive != ''){
+					var loadT = layer.msg('正在创建收件人列表中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+					layer.close(index)
+					$.post('/config?action=add_mail_address',{email:_receive},function(rdata){
+						layer.close(loadT);
+						// 刷新收件列表
+						get_receive_list();
+						layer.msg(rdata.msg,{icon:rdata.status?1:2});
+					})
+				}else{
+					layer.msg('收件人邮箱不能为空！',{icon:2});
+				}
+        	})
+        	
+			$(".smtp_closeBtn").click(function(){
+				layer.close(index)
+			})
+		}
+	})
+}
+function get_receive_list(){
+	$.post('/config?action=get_settings',function(rdata){
+		var _html = '',_list = rdata.user_mail.mail_list;
+		if(_list.length > 0){
+			for(var i= 0; i<_list.length;i++){
+				_html += '<tr>\
+					<td>'+ _list[i] +'</td>\
+					<td width="80px"><a onclick="del_email(\''+ _list[i] + '\')" href="javascript:;" style="color:#20a53a">删除</a></td>\
+					</tr>'
+			}
+		}else{
+			_html = '<tr>没有数据</tr>'
+		}
+		$('#receive_table').html(_html);
+	})
+	
+}
+
+function del_email(mail){
+	var loadT = layer.msg('正在删除【'+mail+'】中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] }),_this = this;
+	$.post('/config?action=del_mail_list',{email:mail},function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2})
+		_this.get_receive_list()
+	})
+}
+// 设置钉钉
+function SetChannelDing(){
+	var _url = $('textarea[name=channel_dingding_value]').val();
+	var _all = $('#panel_alert_all').prop("checked");
+	if(_url != ''){
+		var loadT = layer.msg('正在生成钉钉通道中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+		$.post('/config?action=set_dingding',{url:_url,atall:_all == true? 'True':'False'},function(rdata){
+			layer.close(loadT);
+			layer.msg(rdata.msg,{icon:rdata.status?1:2})
+		})
+	}else{
+		layer.msg('请输入钉钉url',{icon:2})
+	}
+}
+
 
 
 function show_basic_auth(rdata) {

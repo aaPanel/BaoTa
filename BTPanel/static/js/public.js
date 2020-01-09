@@ -61,7 +61,7 @@ var aceEditor = {
 		Perl6: "Perl 6",
 	},
 	pathAarry:[],
-	encodingList: ['UTF-8', 'GBK', 'GB2312', 'BIG5'],
+	encodingList: ['ASCII','UTF-8', 'GBK', 'GB2312', 'BIG5'],
 	themeList: [
 		'chrome',
 		'monokai'
@@ -188,7 +188,7 @@ var aceEditor = {
 		});
 		// 底部状态栏功能按钮
 		$('.ace_conter_toolbar .pull-right span').click(function (e) {
-			var _type = $(this).attr('data-type'),_id = $(this).attr('data-id'),_item = _this.editor['ace_editor_'+_id],_icon = '<span class="icon"><i class="glyphicon glyphicon-ok" aria-hidden="true"></i></span>';
+			var _type = $(this).attr('data-type'),_item = _this.editor['ace_editor_'+_this.ace_active],_icon = '<span class="icon"><i class="glyphicon glyphicon-ok" aria-hidden="true"></i></span>';
 			$('.ace_toolbar_menu').show();
 			switch (_type) {
 				case 'cursor':
@@ -241,7 +241,7 @@ var aceEditor = {
 					$('.tabsSize [data-value="'+ _item.tabSize +'"]').addClass('active').append(_icon);
 				break;
 				case 'encoding':
-					_this.getEncodingList('UTF-8');
+					_this.getEncodingList(_item.encoding);
 					$('.ace_toolbar_menu .menu-encoding').show().siblings().hide();
 				break;
 				case 'lang':
@@ -266,7 +266,7 @@ var aceEditor = {
 		});
 		// 设置换行符
 		$('.menu-tabs').on('click','li',function(e){
-			var _val = $(this).attr('data-value');
+			var _val = $(this).attr('data-value'),_item =  _this.editor['ace_editor_'+ _this.ace_active];
 			if($(this).parent().hasClass('tabsType')){
 				_item.ace.getSession().setUseSoftTabs(_val == 'nbsp');
 				_item.softTabs = _val == 'nbsp';
@@ -282,10 +282,12 @@ var aceEditor = {
 		});
 		// 设置编码内容
 		$('.menu-encoding').on('click','li',function(e){
+			var _item = _this.editor['ace_editor_'+_this.ace_active],_icon = '<span class="icon"><i class="glyphicon glyphicon-ok" aria-hidden="true"></i></span>';
 			layer.msg('设置文件编码：' + $(this).attr('data-value'));
 			$('.ace_conter_toolbar [data-type="encoding"]').html('编码：<i>'+ $(this).attr('data-value') +'</i>');
 			$(this).addClass('active').append(_icon).siblings().removeClass('active').find('span').remove();
 			_item.encoding = $(this).attr('data-value');
+			_this.saveFileMethod(_item);
 		});
 		// 搜索内容键盘事件
 		$('.menu-files .menu-input').keyup(function () {
@@ -306,15 +308,7 @@ var aceEditor = {
 			var type =  $(this).attr('class'),editor_item =  _this.editor['ace_editor_'+ _this.ace_active];
 			switch(type){
 				case 'saveFile': //保存当时文件
-					_this.saveFileBody({
-						path: editor_item.path,
-						data: editor_item.ace.getValue(),
-						encoding: editor_item.encoding
-					}, function (res) {
-						layer.msg(res.msg, {icon: 1});
-						editor_item.fileType = 0;
-						$('.item_tab_' + editor_item.id + ' .icon-tool').attr('data-file-state', '0').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove');
-					});
+					_this.saveFileMethod(editor_item);
 				break;
 				case 'saveFileAll': //保存全部
 					var loadT = layer.open({
@@ -658,8 +652,7 @@ var aceEditor = {
 		});
 		// 右键菜单
 		$('.ace_catalogue_list').on('mousedown','.has-children .file_fold',function(e){
-			var x = e.clientX,y = e.clientY,_left = $('.aceEditors')[0].offsetLeft,_top = $('.aceEditors')[0].offsetTop;
-			var _that = $('.ace_catalogue_list .has-children .file_fold'),_active =$('.ace_catalogue_list .has-children .file_fold.edit_file_group')
+			var x = e.clientX,y = e.clientY,_left = $('.aceEditors')[0].offsetLeft,_top = $('.aceEditors')[0].offsetTop,_that = $('.ace_catalogue_list .has-children .file_fold'),_active =$('.ace_catalogue_list .has-children .file_fold.edit_file_group');
 			if(e.which === 3){
 				if($(this).hasClass('edit_file_group')) return false;
 				$('.ace_catalogue_menu').css({'display':'block','left':x-_left,'top':y-_top});
@@ -682,7 +675,7 @@ var aceEditor = {
 				});
 			}
 		});
-		// 文件目录右键功能		
+		// 文件目录右键功能
 		$('.ace_catalogue_menu li').click(function(e){
 			_this.newly_file_type(this);
 		});
@@ -703,7 +696,6 @@ var aceEditor = {
 					_this.event_create_file({path:_path+'/'+_file_or_dir},this);
 				break;
 				case 2: //重命名
-					console.log(_this.get_file_dir(_path,1),_file_or_dir)
 					_this.event_rename_currency({sfile:_path,dfile:_this.get_file_dir(_path,1)+'/'+_file_or_dir},this);
 				break;
 			}
@@ -1229,16 +1221,7 @@ var aceEditor = {
 				mac: 'Command-S'
 			},
 			exec: function (editor) {
-				// 保存文件
-				_this.saveFileBody({
-					path: ACE.path,
-					data: editor.getValue(),
-					encoding: ACE.encoding
-				}, function (res) {
-					layer.msg(res.msg, {icon: res.status?1:2});
-					ACE.fileType = 0;
-					$('.item_tab_' + ACE.id + ' .icon-tool').attr('data-file-state', '0').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove');
-				});
+				_this.saveFileMethod(ACE);
 			},
 			readOnly: false // 如果不需要使用只读模式，这里设置false
 		});
@@ -1256,6 +1239,18 @@ var aceEditor = {
 		});
 		this.currentStatusBar(ACE.id);
 		this.is_file_history(ACE);
+	},
+	// 保存文件方法
+	saveFileMethod:function(ACE){
+		this.saveFileBody({
+			path: ACE.path,
+			data: ACE.ace.getValue(),
+			encoding: ACE.encoding
+		}, function (res) {
+			layer.msg(res.msg, {icon: res.status?1:2});
+			ACE.fileType = 0;
+			$('.item_tab_' + ACE.id + ' .icon-tool').attr('data-file-state','0').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove');
+		});
 	},
 	// 获取文件模型
 	getFileType: function (fileName) {
@@ -1392,7 +1387,7 @@ var aceEditor = {
 	// 保存文件内容-请求
 	saveFileBody: function (obj, callback) {
 		var loadT = layer.msg('正在保存文件内容，请稍后...', {time: 0,icon: 16,shade: [0.3, '#000']});
-		$.post("/files?action=SaveFileBody","data=" + encodeURIComponent(obj.data) + "&path=" + encodeURIComponent(obj.path) + "&encoding=" + obj.encoding, function(res) {
+		$.post("/files?action=SaveFileBody","data=" + encodeURIComponent(obj.data) + "&path=" + encodeURIComponent(obj.path) + "&encoding=" + obj.encoding.toLowerCase(), function(res) {
 			layer.close(loadT);
 			if (callback) callback(res)
 		});
@@ -3065,7 +3060,6 @@ function remind(a) {
 function GetReloads() {
 	var a = 0;
     var mm = $("#taskList").html()
-    console.log(lan.bt.task_list)
     if (mm == undefined || mm.indexOf(lan.bt.task_list) == -1 ) {
 		clearInterval(speed);
 		a = 0;

@@ -1,5 +1,3 @@
-
-
 var site = {
     get_list: function (page, search, type) {
         if (page == undefined) page = 1;
@@ -665,47 +663,52 @@ var site = {
         show_error:function(res,auth_type){
             var area_size = '500px';
             var err_info = "";
-
-            if (!res.msg[1].challenges[1]) {
-                if (res.msg[1].challenges[0]) {
-                    res.msg[1].challenges[1] = res.msg[1].challenges[0]
-                }
-            }
-            if (res.msg[1].status === 'invalid') {
-                area_size = '600px';
-                var trs = $("#dns_txt_jx tbody tr");
-                var dns_value = "";
-
-                for (var imd = 0; imd < trs.length; imd++) {
-                    if (trs[imd].outerText.indexOf(res.msg[1].identifier.value) == -1) continue;
-                    var s_tmp = trs[imd].outerText.split("\t")
-                    if (s_tmp.length > 1) {
-                        dns_value = s_tmp[1]
-                        break;
+            if(res.msg[1].challenges === undefined){
+                err_info += "<p><span>响应状态:</span>" + res.msg[1].status + "</p>"
+                err_info += "<p><span>错误类型:</span>" + res.msg[1].type + "</p>"
+                err_info += "<p><span>错误代码:</span>" + res.msg[1].detail + "</p>"
+            }else{
+                if (!res.msg[1].challenges[1]) {
+                    if (res.msg[1].challenges[0]) {
+                        res.msg[1].challenges[1] = res.msg[1].challenges[0]
                     }
                 }
-                
-                err_info += "<p><span>验证域名:</span>" + res.msg[1].identifier.value + "</p>"
-                if(auth_type === 'dns'){
-                    var check_url = "_acme-challenge." + res.msg[1].identifier.value
-                    err_info += "<p><span>验证解析:</span>"+check_url+"</p>"
-                    err_info += "<p><span>验证内容:</span>" + dns_value + "</p>"
-                    err_info += "<p><span>错误代码:</span>" + site.html_encode(res.msg[1].challenges[1].error.detail) + "</p>"
-                }else{
-                    var check_url = "http://" + res.msg[1].identifier.value + '/.well-known/acme-challenge/' + res.msg[1].challenges[0].token
-                    err_info += "<p><span>验证URL:</span><a class='btlink' href='" + check_url+"' target='_blank'>点击查看</a></p>"
-                    err_info += "<p><span>验证内容:</span>" + res.msg[1].challenges[0].token + "</p>"
-                    err_info += "<p><span>错误代码:</span>" + site.html_encode(res.msg[1].challenges[0].error.detail) + "</p>"
-                }
-                err_info += "<p><span>验证结果:</span> <a style='color:red;'>验证失败</a></p>"
+                if (res.msg[1].status === 'invalid') {
+                    area_size = '600px';
+                    var trs = $("#dns_txt_jx tbody tr");
+                    var dns_value = "";
 
-                layer.msg('<div class="ssl-file-error"><a style="color: red;font-weight: 900;">' + res.msg[0]+ '</a>' + err_info + '</div>', {
-                    icon: 2, time: 0,
-                    shade:0.3,
-                    shadeClose: true,
-                    area: area_size
-                });
+                    for (var imd = 0; imd < trs.length; imd++) {
+                        if (trs[imd].outerText.indexOf(res.msg[1].identifier.value) == -1) continue;
+                        var s_tmp = trs[imd].outerText.split("\t")
+                        if (s_tmp.length > 1) {
+                            dns_value = s_tmp[1]
+                            break;
+                        }
+                    }
+                    
+                    err_info += "<p><span>验证域名:</span>" + res.msg[1].identifier.value + "</p>"
+                    if(auth_type === 'dns'){
+                        var check_url = "_acme-challenge." + res.msg[1].identifier.value
+                        err_info += "<p><span>验证解析:</span>"+check_url+"</p>"
+                        err_info += "<p><span>验证内容:</span>" + dns_value + "</p>"
+                        err_info += "<p><span>错误代码:</span>" + site.html_encode(res.msg[1].challenges[1].error.detail) + "</p>"
+                    }else{
+                        var check_url = "http://" + res.msg[1].identifier.value + '/.well-known/acme-challenge/' + res.msg[1].challenges[0].token
+                        err_info += "<p><span>验证URL:</span><a class='btlink' href='" + check_url+"' target='_blank'>点击查看</a></p>"
+                        err_info += "<p><span>验证内容:</span>" + res.msg[1].challenges[0].token + "</p>"
+                        err_info += "<p><span>错误代码:</span>" + site.html_encode(res.msg[1].challenges[0].error.detail) + "</p>"
+                    }
+                    err_info += "<p><span>验证结果:</span> <a style='color:red;'>验证失败</a></p>"
+                }
             }
+
+            layer.msg('<div class="ssl-file-error"><a style="color: red;font-weight: 900;">' + res.msg[0]+ '</a>' + err_info + '</div>', {
+                icon: 2, time: 0,
+                shade:0.3,
+                shadeClose: true,
+                area: area_size
+            });
         },
         ssl_result: function(res,auth_type,siteName){
             layer.close(acme.loadT);
@@ -736,7 +739,7 @@ var site = {
                         acme.auth_domain(res.index,function(res1){
                             layer.close(acme.loadT);
                             if(res1.status === true){
-                                layer.close(b_load);
+                                b_load.close()
                                 site.ssl.set_cert(siteName,res1)
                             }else{
                                 site.ssl.show_error(res1,auth_type);
@@ -1730,16 +1733,15 @@ var site = {
                                         if(ldata.check_dns){
                                             auth_type = 'dns'
                                             auth_to = 'dns'
+                                            auto_wildcard = ldata.app_root?'1':'0'
                                             if(ldata.dns_select !== auth_to){
                                                 if(!site.dnsapi[ldata.dns_select].s_key){
                                                     layer.msg("指定dns接口没有设置密钥信息");
                                                     return;
                                                 }
                                                 auth_to = ldata.dns_select + "|" + site.dnsapi[ldata.dns_select].s_key + "|" + site.dnsapi[ldata.dns_select].s_token;
-                                                auto_wildcard = ldata.app_root?'1':'0'
                                             }
                                         }
-
                                         acme.apply_cert(ldata['domains'],auth_type,auth_to,auto_wildcard,function(res){
                                             site.ssl.ssl_result(res,auth_type,web.name);
                                         })
