@@ -1526,6 +1526,8 @@ function openEditorView(type,path){
 								switch(_type){
 									case '2':
 										aceEditor.editor = null;
+										aceEditor.editorLength = 0;
+										aceEditor.pathAarry = [];
 										layer.closeAll();
 									break;
 									case '1':
@@ -2214,20 +2216,6 @@ function divcenter() {
 	$(".layui-layer").css("left", a + "px");
 	$(".layui-layer").css("top", e + "px")
 }
-
-function btcopy(password) {
-	$("#bt_copys").attr('data-clipboard-text',password);
-	$("#bt_copys").click();
-}
-
-var clipboard = new ClipboardJS('#bt_copys');
-clipboard.on('success', function (e) {
-    layer.msg('复制成功!',{icon:1});
-});
-
-clipboard.on('error', function (e) {
-    layer.msg('复制失败，浏览器不兼容!',{icon:2});
-});
 
 function isChineseChar(b) {
 	var a = /[\u4E00-\u9FA5\uF900-\uFA2D]/;
@@ -3211,8 +3199,98 @@ var clipboard, interval, socket, term, ssh_login,term_box;
 var pdata_socket = {
     x_http_token: document.getElementById("request_token_head").getAttribute('token')
 }
+function loadLink(arry,param,callback){
+	var ready = 0;
+	if(typeof param === 'function') callback = param
+	for(var i=0;i<arry.length;i++){
+		if(!Array.isArray(bt['loadLink'])) bt['loadLink'] = []
+		if(!is_file_existence(arry[i],false)){
+			if((arry.length -1) === i && callback) callback();
+			continue;
+		};
+		var link = document.createElement("link"),_arry_split = arry[i].split('/');
+			link.rel = "stylesheet";
+		if(typeof(callback) != "undefined"){
+		    if (link.readyState) {
+			    (function(i){
+			    	link.onreadystatechange = function () {
+			      		if (link.readyState == "loaded" || script.readyState == "complete") {
+				          link.onreadystatechange = null;
+				          bt['loadLink'].push(arry[i]);
+				          ready ++;
+				        }
+			    	};
+			    })(i);
+		    } else {
+		    	(function(i){
+					link.onload=function () {
+			        	bt['loadLink'].push(arry[i]);
+			        	ready ++;
+					};
+		    	})(i);
+			}
+		}
+		link.href = arry[i];
+		document.body.appendChild(link);
+	}
+	var time = setInterval(function(){
+		if(ready === arry.length){
+			clearTimeout(time);
+			callback();
+		}
+	},10);
+};
+function loadScript(arry,param,callback) {
+	var ready = 0;
+	if(typeof param === 'function') callback = param
+	for(var i=0;i<arry.length;i++){
+		if(!Array.isArray(bt['loadScript'])) bt['loadScript'] = []
+		if(!is_file_existence(arry[i],true)){
+			if((arry.length -1) === i && callback) callback();
+			continue;
+		};
+		var script = document.createElement("script"),_arry_split = arry[i].split('/');
+			script.type = "text/javascript";
+		if(typeof(callback) != "undefined"){
+		    if (script.readyState) {
+			    (function(i){
+			    	script.onreadystatechange = function () {
+			      		console.log(arry[i]);
+			      		if (script.readyState == "loaded" || script.readyState == "complete") {
+				          script.onreadystatechange = null;
+				          bt['loadScript'].push(arry[i]);
+				          ready ++;
+				        }
+			    	};
+			    })(i);
+		    } else {
+		    	(function(i){
+					script.onload=function () {
+			        	bt['loadScript'].push(arry[i]);
+			        	ready ++;
+					};
+		    	})(i);
+			}
+		}
+		script.src = arry[i];
+		document.body.appendChild(script);
+	}
+	var time = setInterval(function(){
+		if(ready === arry.length){
+			clearTimeout(time);
+			callback();
+		}
+	},10);
+}
 
-
+// 判断文件是否插入
+function is_file_existence(name,type){
+	var arry = type?bt.loadScript:bt.loadLink
+	for(var i=0;i<arry.length;i++){
+		if(arry[i] === name) return false
+	}
+	return true
+}
 var Term = {
     bws: null,      //websocket对象
     route: '/webssh',  //被访问的方法
@@ -3304,36 +3382,49 @@ var Term = {
     run: function (ssh_info) {
         var termCols = 100;
         var termRows = 34;
-        Term.term = new Terminal({ cols: termCols, rows: termRows, screenKeys: true, useStyle: true });
-        Term.term.setOption('cursorBlink', true);
+        var loadT = layer.msg('正在加载终端所需文件，请稍后...', { icon: 16, time: 0, shade: 0.3 });
+        loadScript([
+        	"/static/build/xterm.min.js",
+        	"/static/build/addons/attach/attach.min.js",
+        	"/static/build/addons/fit/fit.min.js",
+        	"/static/build/addons/fullscreen/fullscreen.min.js",
+        	"/static/build/addons/search/search.min.js",
+        	"/static/build/addons/winptyCompat/winptyCompat.js"
+        ],function(){
+        	layer.close(loadT);
+        	Term.term = new Terminal({ cols: termCols, rows: termRows, screenKeys: true, useStyle: true });
+	        Term.term.setOption('cursorBlink', true);
+	        Term.term_box = layer.open({
+	            type: 1,
+	            title: '宝塔终端',
+	            area: ['920px', '630px'],
+	            closeBtn: 2,
+	            shadeClose: false,
+	            content: '<link rel="stylesheet" href="/static/build/xterm.min.css" />\
+						<link rel="stylesheet" href="/static/build/addons/fullscreen/fullscreen.min.css" />\
+	            <a class="btlink" onclick="show_ssh_login(1)" style="position: fixed;margin-left: 83px;margin-top: -30px;">[设置]</a>\
+	            <div class="term-box" style="background-color:#000"><div id="term"></div></div>',
+	            cancel: function () {
+	                Term.term.destroy();
+	
+	            },
+	            success: function () {
+	                Term.term.open(document.getElementById('term'));
+	                Term.resize();
+	            }
+	        });
+	        Term.term.on('data', function (data) {
+	            try {
+	                Term.bws.send(data)
+	            } catch (e) {
+	                Term.term.write('\r\n连接丢失,正在尝试重新连接!\r\n')
+	                Term.connect()
+	            }
+	        });
+	        if (ssh_info) Term.ssh_info = ssh_info
+	        Term.connect();
+        })
 
-        Term.term_box = layer.open({
-            type: 1,
-            title: '宝塔终端',
-            area: ['920px', '630px'],
-            closeBtn: 2,
-            shadeClose: false,
-            content: '<a class="btlink" onclick="show_ssh_login(1)" style="position: fixed;margin-left: 83px;margin-top: -30px;">[设置]</a><div class="term-box" style="background-color:#000"><div id="term"></div></div>',
-            cancel: function () {
-                Term.term.destroy();
-
-            },
-            success: function () {
-                Term.term.open(document.getElementById('term'));
-                Term.resize();
-            }
-        });
-
-        Term.term.on('data', function (data) {
-            try {
-                Term.bws.send(data)
-            } catch (e) {
-                Term.term.write('\r\n连接丢失,正在尝试重新连接!\r\n')
-                Term.connect()
-            }
-        });
-        if (ssh_info) Term.ssh_info = ssh_info
-        Term.connect();
     },
     reset_login: function () {
         var ssh_info = {

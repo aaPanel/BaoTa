@@ -1122,7 +1122,7 @@ class panelSite(panelRedirect):
         conf = public.readFile(file)
         if conf:
             ap_proxy = self.get_apache_proxy(conf)
-            if conf.find('SSLCertificateFile') == -1:
+            if conf.find('SSLCertificateFile') == -1 and conf.find('proxy:unix:/tmp/php-cgi') != -1:
                 find = public.M('sites').where("name=?", (siteName,)).field('id,path').find()
                 tmp = public.M('domain').where('pid=?', (find['id'],)).field('name').select()
                 domains = ''
@@ -1141,7 +1141,7 @@ class panelSite(panelRedirect):
                     apaOpt = "Order allow,deny\n\t\tAllow from all"
                 else:
                     vName = ""
-                    rep = "php-cgi-([0-9]{2,3})\.sock"
+                    rep = r"php-cgi-([0-9]{2,3})\.sock"
                     version = re.search(rep, conf).groups()[0]
                     if len(version) < 2: return public.returnMsg(False, 'PHP_GET_ERR')
                     phpConfig = '''
@@ -1386,23 +1386,23 @@ class panelSite(panelRedirect):
         if email == '287962566@qq.com': email = ''
         index = ''
         auth_type = 'http'
-        
-        if type != 1:
-            import acme_v2
-            acme = acme_v2.acme_v2()
-            index = acme.check_order_exists(csrpath)
-            if index:
-                if index.find('/') == -1:
-                    auth_type = acme._config['orders'][index]['auth_type']
-                type = 1
-        else:
-            crontab_file = 'vhost/cert/crontab.json'
-            tmp = public.readFile(crontab_file)
-            if tmp:
-                crontab_config = json.loads(tmp)
-                if siteName in crontab_config:
-                    if 'dnsapi' in crontab_config[siteName]:
-                        auth_type = 'dns'
+        if status == True:
+            if type != 1:
+                import acme_v2
+                acme = acme_v2.acme_v2()
+                index = acme.check_order_exists(csrpath)
+                if index:
+                    if index.find('/') == -1:
+                        auth_type = acme._config['orders'][index]['auth_type']
+                    type = 1
+            else:
+                crontab_file = 'vhost/cert/crontab.json'
+                tmp = public.readFile(crontab_file)
+                if tmp:
+                    crontab_config = json.loads(tmp)
+                    if siteName in crontab_config:
+                        if 'dnsapi' in crontab_config[siteName]:
+                            auth_type = 'dns'
 
 
         return {'status': status, 'domain': domains, 'key': key, 'csr': csr, 'type': type, 'httpTohttps': toHttps,'cert_data':cert_data,'email':email,"index":index,'auth_type':auth_type}
@@ -1663,20 +1663,20 @@ class panelSite(panelRedirect):
         #apache
         filename = self.setupPath + '/panel/vhost/apache/' + siteName + '.conf'
         mconf = public.readFile(filename)
-        if mconf == False: return public.returnMsg(False,'指定配置文件不存在!')
-        if type == '1': 
-            if(srcDomain == 'all'):
-                conf301 = "\n\t#301-START\n\t<IfModule mod_rewrite.c>\n\t\tRewriteEngine on\n\t\tRewriteRule ^(.*)$ "+toDomain+"$1 [L,R=301]\n\t</IfModule>\n\t#301-END\n"
+        if mconf:
+            if type == '1': 
+                if(srcDomain == 'all'):
+                    conf301 = "\n\t#301-START\n\t<IfModule mod_rewrite.c>\n\t\tRewriteEngine on\n\t\tRewriteRule ^(.*)$ "+toDomain+"$1 [L,R=301]\n\t</IfModule>\n\t#301-END\n"
+                else:
+                    conf301 = "\n\t#301-START\n\t<IfModule mod_rewrite.c>\n\t\tRewriteEngine on\n\t\tRewriteCond %{HTTP_HOST} ^"+srcDomain+" [NC]\n\t\tRewriteRule ^(.*) "+toDomain+"$1 [L,R=301]\n\t</IfModule>\n\t#301-END\n"
+                rep = "combined"
+                mconf = mconf.replace(rep,rep + "\n\t" + conf301)
             else:
-                conf301 = "\n\t#301-START\n\t<IfModule mod_rewrite.c>\n\t\tRewriteEngine on\n\t\tRewriteCond %{HTTP_HOST} ^"+srcDomain+" [NC]\n\t\tRewriteRule ^(.*) "+toDomain+"$1 [L,R=301]\n\t</IfModule>\n\t#301-END\n"
-            rep = "combined"
-            mconf = mconf.replace(rep,rep + "\n\t" + conf301)
-        else:
-            rep = "\n\s+#301-START(.|\n){1,300}#301-END\n*"
-            mconf = re.sub(rep, '\n\n', mconf,1)
-            mconf = re.sub(rep, '\n\n', mconf,1)
-        
-        public.writeFile(filename,mconf)
+                rep = "\n\s+#301-START(.|\n){1,300}#301-END\n*"
+                mconf = re.sub(rep, '\n\n', mconf,1)
+                mconf = re.sub(rep, '\n\n', mconf,1)
+            
+            public.writeFile(filename,mconf)
         
         
         isError = public.checkWebConfig()

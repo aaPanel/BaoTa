@@ -184,7 +184,7 @@
 {% endblock %}
 
 {% block scripts %}
-	<script src="/static/js/crontab.js?date20200106={{g['version']}}"></script>
+	<script src="/static/js/crontab.js?version={{g['version']}}"></script>
 	<script type="text/javascript">
 	    setCookie('serverType',"{{session['webserver']}}");
 		toWeek();

@@ -37,34 +37,34 @@ port=$(cat /www/server/panel/data/port.pl)
 panel_start()
 {
         isStart=`ps aux|grep 'runserver:app'|grep -v grep|awk '{print $2}'`
-		if [ "$isStart" != '' ];then
-			kill -9 $isStart
-		fi
-		isStart=`ps aux|grep 'BT-Panel'|grep -v grep|awk '{print $2}'`
+        if [ "$isStart" != '' ];then
+                kill -9 $isStart
+        fi
+        isStart=`ps aux|grep 'BT-Panel'|grep -v grep|awk '{print $2}'`
         if [ "$isStart" == '' ];then
-				rm -f $pidfile
-				panel_port_check
-				echo -e "Starting Bt-Panel.\c"
-                nohup $panel_path/BT-Panel >> $log_file 2>&1 &
-				isStart=""
-				n=0
-				while [[ "$isStart" == "" ]];
-				do
-					echo -e ".\c"
-					sleep 0.5
-					isStart=$(lsof -n -P -i:$port|grep LISTEN|grep -v grep|awk '{print $2}'|xargs)
-					let n+=1
-					if [ $n -gt 8 ];then
-						break;
-					fi
-				done
-                if [ "$isStart" == '' ];then
-                        echo -e "\033[31mfailed\033[0m"
-                        echo '------------------------------------------------------'
-                        tail -n 20 $log_file
-                        echo '------------------------------------------------------'
-                        echo -e "\033[31mError: BT-Panel service startup failed.\033[0m"
-                fi
+                rm -f $pidfile
+                panel_port_check
+                echo -e "Starting Bt-Panel...\c"
+                $panel_path/BT-Panel
+                # isStart=""
+                # n=0
+                # while [[ "$isStart" == "" ]];
+                # do
+                #         echo -e ".\c"
+                #         sleep 0.5
+                #         isStart=$(lsof -n -P -i:$port|grep LISTEN|grep -v grep|awk '{print $2}'|xargs)
+                #         let n+=1
+                #         if [ $n -gt 8 ];then
+                #                 break;
+                #         fi
+                # done
+                # if [ "$isStart" == '' ];then
+                #         echo -e "\033[31mfailed\033[0m"
+                #         echo '------------------------------------------------------'
+                #         tail -n 20 $log_file
+                #         echo '------------------------------------------------------'
+                #         echo -e "\033[31mError: BT-Panel service startup failed.\033[0m"
+                # fi
                 echo -e "	\033[32mdone\033[0m"
         else
                 echo "Starting Bt-Panel... Bt-Panel (pid $(echo $isStart)) already running"
@@ -73,7 +73,7 @@ panel_start()
         isStart=$(ps aux |grep 'task.py'|grep -v grep|awk '{print $2}')
         if [ "$isStart" == '' ];then
                 echo -e "Starting Bt-Tasks... \c"
-                nohup $pythonV task.py >> /www/server/panel/logs/task.log 2>&1 &
+                $pythonV task.py
                 sleep 0.2
                 isStart=$(ps aux |grep 'task.py'|grep -v grep|awk '{print $2}')
                 if [ "$isStart" == '' ];then
@@ -201,7 +201,7 @@ panel_reload()
 		sleep 0.5
 	fi
 	isStart=$(ps aux|grep 'BT-Panel'|grep -v grep|awk '{print $2}')
-    if [ "$isStart" != '' ];then
+        if [ "$isStart" != '' ];then
     	
 	    arr=`ps aux|grep 'BT-Panel'|grep -v grep|awk '{print $2}'`
 		for p in ${arr[@]}
@@ -211,7 +211,7 @@ panel_reload()
 		rm -f $pidfile
 		panel_port_check
 		echo -e "Reload Bt-Panel.\c";
-        nohup $panel_path/BT-Panel >> $log_file 2>&1 &
+                $panel_path/BT-Panel
 		isStart=""
 		n=0
 		while [[ "$isStart" == "" ]];

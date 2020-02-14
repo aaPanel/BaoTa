@@ -466,8 +466,7 @@ class panelPlugin:
 
     #检查权限
     def check_accept(self,get):
-        import common
-        args = common.dict_obj()
+        args = public.dict_obj()
         args.type = '8'
         p_list = self.get_cloud_list(args)
         for p in p_list['list']:
@@ -482,6 +481,15 @@ class panelPlugin:
                 if not 'endtime' in p: continue
                 if p['endtime'] < 0: return False
                 break
+
+        args.type = '12'
+        p_list = self.get_cloud_list(args)
+        for p in p_list['list']:
+            if p['name'] == get.name:
+                if not 'endtime' in p: continue
+                if p_list['pro'] < 1 and p['endtime'] < 1: return False
+                break
+            
         return True
 
     #取软件列表
@@ -678,8 +686,12 @@ class panelPlugin:
                 softInfo['status'] = True
             elif softInfo['status'] and os.path.exists(pid_file):
                 if not self.pids: self.pids = psutil.pids()
-                if not int(public.readFile(pid_file)) in self.pids:
-                    softInfo['status'] = False
+                try:
+                    if not int(public.readFile(pid_file)) in self.pids:
+                        softInfo['status'] = False
+                except:
+                    if os.path.exists(pid_file): 
+                        os.remove(pid_file)
 
         if softInfo['name'] == 'mysql': softInfo['status'] = self.process_exists('mysqld')
         if softInfo['name'] == 'phpmyadmin': softInfo['status'] = self.get_phpmyadmin_stat()

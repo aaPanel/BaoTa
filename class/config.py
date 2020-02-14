@@ -11,10 +11,9 @@ try:
     import pyotp
 except:
     public.ExecShell("pip install pyotp &")
-
-from BTPanel import session,admin_path_checks
-from flask import request
 try:
+    from BTPanel import session,admin_path_checks
+    from flask import request
     import send_mail
 except:pass
 class config:
@@ -187,6 +186,59 @@ class config:
         self.reload_session()
         return public.returnMsg(True,'USER_USERNAME_SUCCESS')
     
+    #取用户列表
+    def get_users(self,args):
+        data = public.M('users').field('id,username').select()
+        return data
+
+    # 创建新用户
+    def create_user(self,args):
+        if session['uid'] != 1: return public.returnMsg(False,'没有权限!')
+        if len(args.username) < 2: return public.returnMsg(False,'用户名不能少于2位')
+        if len(args.password) < 8: return public.returnMsg(False,'密码不能少于8位')
+        pdata = {
+            "username": args.username.strip(),
+            "password": public.md5(args.password.strip())
+        }
+
+        if(public.M('users').where('username=?',(pdata['username'],)).count()):
+            return public.returnMsg(False,'指定用户名已存在!')
+        
+        if(public.M('users').insert(pdata)):
+            public.WriteLog('用户管理','创建新用户{}'.format(pdata['username']))
+            return public.returnMsg(True,'创建新用户{}成功!'.format(pdata['username']))
+        return public.returnMsg(False,'创建新用户失败!')
+
+    # 删除用户
+    def remove_user(self,args):
+        if session['uid'] != 1: return public.returnMsg(False,'没有权限!')
+        if int(args.id) == 1: return public.returnMsg(False,'不能删除初始默认用户!')
+        username = public.M('users').where('id=?',(args.id,)).getField('username')
+        if not username: return public.returnMsg(False,'指定用户不存在!')
+        if(public.M('users').where('id=?',(args.id,)).delete()):
+            public.WriteLog('用户管理','删除用户[{}]'.format(username))
+            return public.returnMsg(True,'删除用户{}成功!'.format(username))
+        return public.returnMsg(False,'用户删除失败!')
+
+    # 修改用户
+    def modify_user(self,args):
+        if session['uid'] != 1: return public.returnMsg(False,'没有权限!')
+        username = public.M('users').where('id=?',(args.id,)).getField('username')
+        pdata = {}
+        if 'username' in args:
+            if len(args.username) < 2: return public.returnMsg(False,'用户名不能少于2位')
+            pdata['username'] = args.username.strip()
+
+        if 'password' in args:
+            if args.password:
+                if len(args.password) < 8: return public.returnMsg(False,'密码不能少于8位')
+                pdata['password'] = public.md5(args.password.strip())
+
+        if(public.M('users').where('id=?',(args.id,)).update(pdata)):
+            public.WriteLog('用户管理',"编辑用户{}".format(username))
+            return public.returnMsg(True,'修改成功!')
+        return public.returnMsg(False,'没有提交修改!')
+    
     def setPanel(self,get):
         if not public.IsRestart(): return public.returnMsg(False,'EXEC_ERR_TASK')
         isReWeb = False
@@ -246,10 +298,17 @@ class config:
         session['config']['sites_path'] = os.path.join('/',get.sites_path)
         db_backup  = get.backup_path + '/database'
         if not os.path.exists(db_backup):
-            os.makedirs(db_backup,384)
+            try:
+                os.makedirs(db_backup,384)
+            except:
+                public.ExecShell('mkdir -p ' + db_backup)
         site_backup  = get.backup_path + '/site'
         if not os.path.exists(site_backup):
-            os.makedirs(get.backup_path + '/site',384)
+            try:
+                os.makedirs(site_backup,384)
+            except:
+                public.ExecShell('mkdir -p ' + site_backup)
+                
         mhost = public.GetHost()
         if get.domain.strip(): mhost = get.domain
         data = {'uri':request.path,'host':mhost+':'+newPort,'status':True,'isReWeb':isReWeb,'msg':public.getMsg('PANEL_SAVE')}
@@ -489,7 +548,7 @@ class config:
             public.writeFile(filename,get.day)
             public.WriteLog("TYPE_PANEL",'CONTROL_OPEN',(get.day,))
         elif get.type == '0':
-            public.ExecShell("rm -f " + filename)
+            if os.path.exists(filename): os.remove(filename)
             public.WriteLog("TYPE_PANEL", "CONTROL_CLOSE")
         elif get.type == 'del':
             if not public.IsRestart(): return public.returnMsg(False,'EXEC_ERR_TASK')

@@ -21,6 +21,8 @@ from BTPanel import session, request
 
 class files:
     run_path = None
+    download_list = None
+    download_is_rm = None
     # 检查敏感目录
 
     def CheckDir(self, path):
@@ -327,7 +329,6 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                             filePath = get.path + '/' + filePath
                         if not os.path.exists(filePath):
                             continue
-
                     stat = os.stat(filePath)
                     accept = str(oct(stat.st_mode)[-3:])
                     mtime = str(int(stat.st_mtime))
@@ -341,8 +342,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                         dirnames.append(filename+';'+size+';' +
                                         mtime+';'+accept+';'+user+';'+link)
                     else:
-                        filenames.append(
-                            filename+';'+size+';'+mtime+';'+accept+';'+user+';'+link)
+                        filenames.append(filename+';'+size+';'+mtime+';'+accept+';'+user+';'+link+';'+self.get_download_id(filePath))
                     n += 1
                 except:
                     continue
@@ -365,9 +365,8 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                     break
                 if i < page.SHIFT:
                     continue
-
                 r_file = file_info['name'] + ';' + str(file_info['size']) + ';' + str(file_info['mtime']) + ';' + str(
-                    file_info['accept']) + ';' + file_info['user'] + ';' + file_info['link']
+                    file_info['accept']) + ';' + file_info['user'] + ';' + file_info['link']+';' + self.get_download_id(filename)
                 if os.path.isdir(filename):
                     dirnames.append(r_file)
                 else:
@@ -482,12 +481,13 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             user = str(stat.st_uid)
         size = str(stat.st_size)
         link = ''
+        down_url = self.get_download_id(filename)
         if os.path.islink(filename):
             link = ' -> ' + os.readlink(filename)
         tmp_path = (path + '/').replace('//', '/')
         if path and tmp_path != '/':
             filename = filename.replace(tmp_path, '')
-        return filename + ';' + size + ';' + mtime + ';' + accept + ';' + user + ';' + link
+        return filename + ';' + size + ';' + mtime + ';' + accept + ';' + user + ';' + link+';'+ down_url
 
     # 计算文件数量
     def GetFilesCount(self, path, search):
@@ -1687,10 +1687,10 @@ cd %s
         
     #单文件木马扫描
     def file_webshell_check(self,get):
-        if not 'filename' in get: return public.returnMsg(False, '文件不存在!')
+        if not 'filename' in get: return public.returnMsg(True, '文件不存在!')
         import webshell_check
         if webshell_check.webshell_check().upload_file_url(get.filename.strip()):
-            return public.returnMsg(True,'此文件为webshell')
+            return public.returnMsg(False,'警告 %s文件为webshell'%get.filename.strip().split('/')[-1])
         else:
             return public.returnMsg(True, '无风险')
 
@@ -1706,4 +1706,153 @@ cd %s
             task_obj = panelTask.bt_task()
             task_obj.create_task(task_name, 0, exec_shell)
             return public.returnMsg(True, '正在启动木马查杀进程。详细信息会在面板安全日志中')
+
+
+    # 执行git
+    def exec_git(self,get):
+        if get.git_action == 'option':
+            public.ExecShell("nohup {} &> /tmp/panelExec.pl &".format(get.giturl))
+        else:
+            public.ExecShell("nohup git clone {} &> /tmp/panelExec.pl &".format(get.giturl))
+        return public.returnMsg(True,'命令已发送!')
+
+
+    # 执行composer
+    def exec_composer(self,get):
+        composer_bin = '/usr/bin/composer'
+        if not os.path.exists(composer_bin): return public.returnMsg(False,'没有找到可用的composer!')
+        php_bin = self.__get_php_bin()
+        if not php_bin: return public.returnMsg(False,'没有找到可用的PHP版本!')
+        composer_exec_str = '{} {} {} -vvv'.format(php_bin,composer_bin,get.composer_args)
+        public.ExecShell("nohup {} &> /tmp/panelExec.pl &".format(composer_exec_str))
+        return public.returnMsg(True,'命令已发送!')
+
+    #获取下载地址列表
+    def get_download_url_list(self,get):
+        my_table = 'download_token'
+        count = public.M(my_table).count()
+        
+        if not 'p' in get:
+            get.p = 1
+        if not 'collback' in get:
+            get.collback = ''
+        data = public.get_page(count,int(get.p),12, get.collback)
+        data['data'] = public.M(my_table).order('id desc').field('id,filename,token,expire,ps,total,password,addtime').limit(data['shift'] +','+ data['row']).select()
+        return data
+    #获取短列表
+    def get_download_list(self):
+        if self.download_list: return self.download_list
+        my_table = 'download_token'
+        data = public.M(my_table).field('id,filename,expire').select()
+        self.download_list = data
+        return data
+
+    #获取id
+    def get_download_id(self,filename):
+        download_list = self.get_download_list()
+        my_table = 'download_token'
+        m_time = time.time()
+        result = '0'
+        for d in download_list:
+            if filename == d['filename']:
+                result = str(d['id'])
+                break
+
+            #清理过期和无效
+            if self.download_is_rm: continue
+            if not os.path.exists(d['filename']) or m_time > d['expire']:
+                public.M(my_table).where('id=?',(d['id'],)).delete()
+        #标记清理
+        if not self.download_is_rm: 
+            self.download_is_rm = True
+        return result
+
+    #获取指定下载地址
+    def get_download_url_find(self,get):
+        if not 'id' in get: return public.returnMsg(False,'错误的参数!')
+        id = int(get.id)
+        my_table = 'download_token'
+        data = public.M(my_table).where('id=?',(id,)).find()
+        if not data: return public.returnMsg(False,'指定地址不存在!')
+        return data
+
+    #删除下载地址
+    def remove_download_url(self,get):
+        if not 'id' in get: return public.returnMsg(False,'错误的参数!')
+        id = int(get.id)
+        my_table = 'download_token'
+        public.M(my_table).where('id=?',(id,)).delete()
+        return public.returnMsg(True,'删除成功!')
+
+    #修改下载地址
+    def modify_download_url(self,get):
+        if not 'id' in get: return public.returnMsg(False,'错误的参数!')
+        id = int(get.id)
+        my_table = 'download_token'
+        if not public.M(my_table).where('id=?',(id,)).count():
+            return public.returnMsg(False,'指定地址不存在!')
+        pdata = {}
+        if 'expire' in get: pdata['expire'] = get.expire
+        if 'password' in get: pdata['password'] = get.password
+        if 'ps' in get: pdata['ps'] = get.ps
+        public.M(my_table).where('id=?',(id,)).update(pdata)
+        return public.returnMsg(True,'修改成功!')
+
+
+    #生成下载地址
+    def create_download_url(self,get):
+        if not os.path.exists(get.filename):
+            return public.returnMsg(False,'指定文件不存在!')
+        if not os.path.isfile(get.filename):
+            return public.returnMsg(False,'不能为目录生成下载地址!')
+        my_table = 'download_token'
+        mtime = int(time.time())
+        pdata = {
+            "filename": get.filename,               #文件名
+            "token": public.GetRandomString(12),    #12位随机密钥，用于URL
+            "expire": mtime + (int(get.expire) * 3600), #过期时间
+            "ps":get.ps, #备注
+            "total":0,  #下载计数
+            "password":get.password, #提取密码
+            "addtime": mtime #添加时间
+        }
+        #更新 or 插入
+        token = public.M(my_table).where('filename=?',(get.filename,)).getField('token')
+        if token:
+            return public.returnMsg(False,'已经分享过了!')
+            #pdata['token'] = token
+            #del(pdata['total'])
+            #public.M(my_table).where('token=?',(token,)).update(pdata)
+        else:
+            id = public.M(my_table).insert(pdata)
+            pdata['id'] = id
+
+        return public.returnMsg(True,pdata)
+
+
+    #取PHP-CLI执行命令
+    def __get_php_bin(self):
+        php_vs = ["80","74","73","72","71","70","56","55","54","53","52"]
+        #判段兼容的PHP版本是否安装
+        php_path = "/www/server/php/"
+        php_v = None
+        for pv in php_vs:
+            php_bin = php_path + pv + "/bin/php"
+            if os.path.exists(php_bin): 
+                php_v = pv
+                break
+        #如果没安装直接返回False
+        if not php_v: return False
+        #处理PHP-CLI-INI配置文件
+        php_ini = '/tmp/composer_php_cli_'+php_v+'.ini'
+        if not os.path.exists(php_ini):
+            #如果不存在，则从PHP安装目录下复制一份
+            src_php_ini = php_path + php_v + '/etc/php.ini'
+            import shutil
+            shutil.copy(src_php_ini,php_ini)
+            #解除所有禁用函数
+            php_ini_body = public.readFile(php_ini)
+            php_ini_body = re.sub(r"disable_functions\s*=.*","disable_functions = ",php_ini_body)
+            public.writeFile(php_ini,php_ini_body)
+        return php_path + php_v + '/bin/php -c ' + php_ini
 

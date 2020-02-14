@@ -80,7 +80,7 @@ var soft = {
                                 }
                             }
                             if (rdata.apache22 && item.name.indexOf('php-') >= 0 && $.inArray(item.name, phps) == -1) click_opt = ' title="Apache2.2不兼容此版本，如需使用请切换到Apache2.4或Nginx"';
-                            return '<span ' + click_opt + ' ' + sStyle + ' ><img src="/static/img/soft_ico/ico-' + fName + '.png">' + item.title + ' ' + version + '</span>';
+                            return '<span ' + click_opt + ' ' + sStyle + ' ><img '+ (item.type === 10?'style="height:20px;width:22px"':'') +' src="/static/img/soft_ico/ico-' + fName + '.png">' + item.title + ' ' + version + '</span>';
                         }
                     },
                     {
@@ -383,7 +383,7 @@ var soft = {
                     rdata.list[i].min_image += '?t=' + new Date().format("yyyyMMdd");
                 }
                 zbody += '<tr>'
-                    + '<td><img src="' + rdata.list[i].min_image +'">' + rdata.list[i].title + '</td>'
+                    + '<td><img style="width:22px;height:20px" src="' + rdata.list[i].min_image +'">' + rdata.list[i].title + '</td>'
                     + '<td>' + rdata.list[i].version + '</td>'
                     + '<td>' + rdata.list[i].ps + '</td>'
                     + '<td>' + rdata.list[i].php + '</td>'
@@ -701,28 +701,16 @@ var soft = {
             case 'config':
                 var tabCon = $(".soft-man-con").empty();
                 tabCon.append('<p style="color: #666; margin-bottom: 7px">' + lan.bt.edit_ps + '</p>');
-                tabCon.append('<textarea class="bt-input-text" style="height: 320px; line-height:18px;" id="textBody"></textarea>')
+                tabCon.append('<div class="bt-input-text ace_config_editor_scroll" style="height: 320px;min-height:350px;line-height:18px;" id="textBody"></div>')
                 tabCon.append('<button id="OnlineEditFileBtn" class="btn btn-success btn-sm" style="margin-top:10px;">' + lan.public.save + '</button>')
                 tabCon.append(bt.render_help([lan.get('config_edit_ps', [version])]))
 
                 var fileName = bt.soft.get_config_path(version);
                 var loadT = bt.load(lan.soft.get);
-                bt.send('GetFileBody', 'files/GetFileBody', { path: fileName }, function (rdata) {
-                    loadT.close();
-                    $("#textBody").text(rdata.data);
-                    $(".CodeMirror").remove();
-                    var editor = CodeMirror.fromTextArea(document.getElementById("textBody"), {
-                        extraKeys: { "Ctrl-Space": "autocomplete" },
-                        lineNumbers: true,
-                        matchBrackets: true,
-                    });
-                    editor.focus();
-                    $(".CodeMirror-scroll").css({ "height": "350px", "margin": 0, "padding": 0 });
-                    $("#OnlineEditFileBtn").click(function () {
-                        $("#textBody").text(editor.getValue());
-                        bt.soft.save_config(fileName, editor.getValue())
-                    });
-                })
+                var config = bt.aceEditor({el:'textBody',path:fileName});
+                $("#OnlineEditFileBtn").click(function () {
+                    bt.saveEditor(config);
+                });
                 break;
             case 'change_version':
                 var _list = [];
@@ -1479,7 +1467,7 @@ var soft = {
                     con += '<button id="btn_phpinfo" class="btn btn-default btn-sm" >' + lan.soft.phpinfo + '</button>'
                     con += '<div class="php_info_group"><p>基本信息 </p>'
                     con += '<table id="tab_php_status" class="table table-hover table-bordered" style="margin:0;padding:0">';
-                    con += '<tr><td>P版本</td><td>' + php_info.phpinfo.php_version + '</td><td>安装位置</td><td>' + php_info.phpinfo.php_path + '</td></tr>'
+                    con += '<tr><td style="width:70px">PHP版本</td><td>' + php_info.phpinfo.php_version + '</td><td>安装位置</td><td>' + php_info.phpinfo.php_path + '</td></tr>'
                     con += '<tr><td>php.ini</td><td colspan="3">' + php_info.phpinfo.php_ini + '</td></tr>'
                     con += '<tr><td>已加载</td><td colspan="3">' + php_info.phpinfo.modules + '</td></tr>'
                     con += '</table></div>';
@@ -1723,10 +1711,17 @@ var soft = {
                         }
                     }
                     var limits = [], pmList = [];
-                    for (var k in datas) limits.push({ title: k, value: k });
+                    var my_selected = '';
+                    var num_max = Number(rdata.max_children);
+                    for (var k in datas) {
+                        if(datas[k].max_children === num_max){
+                            my_selected = k;
+                        }
+                        limits.push({ title: k, value: k });
+                    }
                     var _form_datas = [
                         {
-                            title: lan.soft.concurrency_type, name: 'limit', value: rdata.max_children, type: 'select', items: limits, callback: function (iKey) {
+                            title: lan.soft.concurrency_type, name: 'limit', value: my_selected, type: 'select', items: limits, callback: function (iKey) {
                                 var item = datas[iKey.val()]
                                 for (var sk in item) $('.' + sk).val(item[sk]);
                             }
@@ -1798,6 +1793,7 @@ var soft = {
                                         <li>【注意】以上为建议配置说明，线上项目复杂多样，请根据实际情况酌情调整</li>\
                                     </ul>')
                     tabCon.append(_c_form);
+
                     
                     bt.render_clicks(clicks);
                 });

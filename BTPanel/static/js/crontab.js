@@ -1,4 +1,4 @@
-var num = 0,_radiox ='mail';
+var num = 0
 //查看任务日志
 function GetLogs(id){
 	layer.msg(lan.public.the_get,{icon:16,time:0,shade: [0.3, '#000']});
@@ -239,7 +239,7 @@ function edit_task_info(id){
 									</div>\
 									<p class="clearfix plan">\
 										<div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">消息通道</div>\
-										<div class="dropdown planBackupTo pull-left mr20 message_start" style="line-height: 34px;"></div>\
+										<div class="dropdown planBackupTo pull-left mr20 edit_message_start" style="line-height: 34px;"></div>\
 									</p>\
 								</div>\
 								<div class="clearfix plan ptb10">\
@@ -381,7 +381,7 @@ function edit_task_info(id){
 						obj.from.where1 = obj.from.minute;
 						obj.from.minute = '';
 					}else if(obj.from.sType == 'webshell'){
-						obj.from.urladdress = $(".message_start input:checked").val()
+						obj.from.urladdress = $(".edit_message_start input:checked").val()
 					}
 					layer.msg('正在保存编辑内容，请稍后...',{icon:16,time:0,shade: [0.3, '#000']});
 					$.post('/crontab?action=modify_crond',obj.from,function(rdata){
@@ -401,25 +401,25 @@ function edit_message_channel(type){
 		var tMess = "";
 		if(res.user_mail.user_name && !res.dingding.dingding){
 			tMess = '<div class="check_alert" style="margin-right:20px;display: inline-block;">\
-				<input type="radio" name="alert" title="邮箱" value="mail" checked="">\
-				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">邮箱</label>\
+				<input id="mail_edit" type="radio" name="alert_edit" title="邮箱" value="mail" checked="">\
+				<label for="mail_edit" style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">邮箱</label>\
 			</div>'
 		}else if(!res.user_mail.user_name && res.dingding.dingding){
 			tMess = '<div class="check_alert" style="display: inline-block;">\
-				<input type="radio" name="alert" title="钉钉" value="dingding" checked="">\
-				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">钉钉</label>\
+				<input id="dingding_edit" type="radio" name="alert_edit" title="钉钉" value="dingding" checked="">\
+				<label for="dingding_edit" style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">钉钉</label>\
 			</div>'
 		}else{
 			tMess ='<div class="check_alert" style="margin-right:20px;display: inline-block;">\
-				<input type="radio" name="alert" title="邮箱" value="mail" '+ (type == 'mail'? 'checked' : '') +'>\
-				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">邮箱</label>\
+				<input id="mail_edit" type="radio" name="alert_edit" title="邮箱" value="mail" '+ (type == 'mail'? 'checked' : '') +'>\
+				<label for="mail_edit" style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">邮箱</label>\
 			</div>\
 			<div class="check_alert" style="display: inline-block;">\
-				<input type="radio" name="alert" title="钉钉" value="dingding" '+ (type == 'dingding'? 'checked' : '') +'>\
-				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">钉钉</label>\
+				<input id="dingding_edit" type="radio" name="alert_edit" title="钉钉" value="dingding" '+ (type == 'dingding'? 'checked' : '') +'>\
+				<label for="dingding_edit" style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">钉钉</label>\
 			</div>'
 		}
-		$(".message_start").html(tMess);
+		$(".edit_message_start").html(tMess);
 	})
 	
 }
@@ -657,7 +657,7 @@ function planAdd(){
 	if(data.indexOf('sType=path') > -1){
 		data = data.replace('&sName=&','&sName='+ encodeURIComponent($('#inputPath').val()) +'&')
 	}else if(data.indexOf('sType=webshell') > -1){
-		data = $("#set-Config").serialize() + '&urladdress=' + _radiox;
+		data = $("#set-Config").serialize() + '&urladdress=' + $(".message_start input:checked").val()
 		data = data.replace('&sName=&','&sName='+ encodeURIComponent($('#filePath').val()) +'&')
 	}
 
@@ -1004,8 +1004,10 @@ function webShell(){
 	var sOpt = "",sOptBody = '';
 	$.post('/crontab?action=GetDataList&type=sites',function(rdata){
 		$(".planname input[name='name']").attr('readonly','true').css({"background-color":"#f6f6f6","color":"#666"});
+		$("#implement").siblings(".controls").html("查杀站点");
 		if(rdata.data.length == 0){
-			layer.msg(lan.public.list_empty,{icon:2})
+			layer.msg(lan.public.list_empty,{icon:2});
+			$("#implement").html("<input type='text' class='bt-input-text' style='width:260px;background-color: rgb(246, 246, 246);height:34px'>");
 			return
 		}
 		for(var i=0;i<rdata.data.length;i++){
@@ -1028,9 +1030,6 @@ function webShell(){
 				$(".planname input").val('木马查杀['+getCookie('path_dir_change')+']');
 				setCookie('default_dir_path',path_dir_change);
 			}
-			$(".check_alert").click(function(){
-				 _radiox = $(this).find("input[name=alert]").val();
-			})
 		},500);
 		sOptBody += '<p class="clearfix plan">\
             <div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">消息通道</div>\
@@ -1038,7 +1037,6 @@ function webShell(){
         </p>';
 		$("#implement").html(sOptBody);
 		message_channel_start();
-		$("#implement").siblings(".controls").html("查杀站点");
 		getselectname();
 		$(".dropdown ul li a").click(function(){
 			var sName = $("#sName").attr("val");
@@ -1055,22 +1053,22 @@ function message_channel_start(){
 			$(".plan-submit").css({"pointer-events":"none","background-color":"#e6e6e6","color":"#333"});
 		}else if(res.user_mail.user_name && !res.dingding.dingding){
 			wBody = '<div class="check_alert" style="margin-right:20px;display: inline-block;">\
-				<input type="radio" name="alert" title="邮箱" value="mail" checked="">\
-				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">邮箱</label>\
+				<input id="mail" type="radio" name="alert" title="邮箱" value="mail" checked="">\
+				<label for="mail" style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">邮箱</label>\
 			</div>'
 		}else if(!res.user_mail.user_name && res.dingding.dingding){
 			wBody = '<div class="check_alert" style="display: inline-block;">\
-				<input type="radio" name="alert" title="钉钉" value="dingding" checked="">\
-				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">钉钉</label>\
+				<input id="dingding" type="radio" name="alert" title="钉钉" value="dingding" checked="">\
+				<label for="dingding" style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">钉钉</label>\
 			</div>'
 		}else{
 			wBody ='<div class="check_alert" style="margin-right:20px;display: inline-block;">\
-				<input type="radio" name="alert" title="邮箱" value="mail" checked="">\
-				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">邮箱</label>\
+				<input id="mail" type="radio" name="alert" title="邮箱" value="mail" checked="">\
+				<label for="mail" style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">邮箱</label>\
 			</div>\
 			<div class="check_alert" style="display: inline-block;">\
-				<input type="radio" name="alert" title="钉钉" value="dingding">\
-				<label style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">钉钉</label>\
+				<input id="dingding" type="radio" name="alert" title="钉钉" value="dingding">\
+				<label for="dingding" style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">钉钉</label>\
 			</div>'
 		}
 		$(".message_start").html(wBody);

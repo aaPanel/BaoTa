@@ -24,6 +24,7 @@ class ajax:
             pass
     def GetNginxStatus(self,get):
         try:
+            if not os.path.exists('/www/server/nginx/sbin/nginx'): return public.returnMsg(False,'未安装nginx')
             process_cpu = {}
             worker = int(public.ExecShell("ps aux|grep nginx|grep 'worker process'|wc -l")[0])-1
             workermen = int(public.ExecShell("ps aux|grep nginx|grep 'worker process'|awk '{memsum+=$6};END {print memsum}'")[0]) / 1024
@@ -70,7 +71,7 @@ class ajax:
             tmp['start time'] = time.strftime('%Y-%m-%d %H:%M:%S',fTime)
             return tmp
         except Exception as ex:
-            public.WriteLog('信息获取',"PHP负载状态获取失败: %s" % ex)
+            public.WriteLog('信息获取',"PHP负载状态获取失败: {}".format(public.get_error_info()))
             return public.returnMsg(False,'负载状态获取失败!')
         
     def CheckStatusConf(self):
@@ -598,10 +599,11 @@ class ajax:
         public.writeFile(p_file,'<?php phpinfo(); ?>')
         phpinfo = public.request_php(get.version,'/phpinfo.php',p_file,'')
         if os.path.exists(p_file): os.remove(p_file)
-        return phpinfo;         
+        return phpinfo.decode();         
     
     #清理日志
     def delClose(self,get):
+        if session['uid'] != 1: return public.returnMsg(False,'没有权限!')
         public.M('logs').where('id>?',(0,)).delete()
         public.WriteLog('TYPE_CONFIG','LOG_CLOSE')
         return public.returnMsg(True,'LOG_CLOSE')
@@ -635,17 +637,6 @@ class ajax:
                 path = session['phpmyadminDir'].split("/")[-1]
                 ip = public.GetHost()
                 session['phpmyadminDir'] = "https://{}:{}/{}".format(ip, port, path)
-
-    # 获取phpmyadmin ssl状态
-    def get_phpmyadmin_ssl(self,get):
-        import re
-        conf_file = self.get_phpmyadmin_conf()
-        conf = public.readFile(conf_file["conf_file"])
-        rep = conf_file["rep"]
-        if conf:
-            port = re.search(rep, conf).group(1)
-            return {"status":True,"port":port}
-        return {"status":False,"port":""}
 
     # 获取phpmyadmin ssl状态
     def get_phpmyadmin_ssl(self,get):

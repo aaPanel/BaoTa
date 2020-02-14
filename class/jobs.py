@@ -22,8 +22,8 @@ def control_init():
 )'''
         sql.execute(csql,())
     if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'sites','%type_id%')).count():
-        public.M('sites').execute("alter TABLE sites add edate integer DEFAULT '0000-00-00'",());
-        public.M('sites').execute("alter TABLE sites add type_id integer DEFAULT 0",());
+        public.M('sites').execute("alter TABLE sites add edate integer DEFAULT '0000-00-00'",())
+        public.M('sites').execute("alter TABLE sites add type_id integer DEFAULT 0",())
 
     sql = db.Sql()
     if not sql.table('sqlite_master').where('type=? AND name=?', ('table', 'site_types')).count():
@@ -34,6 +34,33 @@ def control_init():
 )'''
 
         sql.execute(csql,())
+
+    if not sql.table('sqlite_master').where('type=? AND name=?', ('table', 'download_token')).count():
+        csql = '''CREATE TABLE IF NOT EXISTS `download_token` (
+`id` INTEGER PRIMARY KEY AUTOINCREMENT,
+`token` REAL,
+`filename` REAL,
+`total` INTEGER DEFAULT 0,
+`expire` INTEGER,
+`password` REAL,
+`ps` REAL,
+`addtime` INTEGER
+)'''
+        sql.execute(csql,())
+
+    if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'logs','%username%')).count():
+        public.M('logs').execute("alter TABLE logs add uid integer DEFAULT '1'",())
+        public.M('logs').execute("alter TABLE logs add username TEXT DEFAULT 'system'",())
+
+    if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'crontab','%status%')).count():
+        public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'status' INTEGER DEFAULT 1",())
+        public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'save' INTEGER DEFAULT 3",())
+        public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'backupTo' TEXT DEFAULT off",())
+        public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'sName' TEXT",())
+        public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'sBody' TEXT",())
+        public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'sType' TEXT",())
+        public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'urladdress' TEXT",())
+
 
     filename = '/www/server/nginx/off'
     if os.path.exists(filename): os.remove(filename)

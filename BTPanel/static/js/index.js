@@ -302,6 +302,10 @@ var index = {
                     obj.rate = item.size[3].replace('%', '');
                     obj.free = item.size[2];
                     var arr = [];
+                    arr.push({ title: '<b>基础信息</b>', value: '' })
+                    arr.push({ title: '文件系统', value: item.filesystem })
+                    arr.push({ title: '类型', value: item.type })
+                    arr.push({ title: '挂载点', value: item.path })
                     arr.push({ title: '<b>Inode信息</b>', value: '' })
                     arr.push({ title: '总数', value: item.inodes[0] })
                     arr.push({ title: '已用', value: item.inodes[1] })

@@ -8,7 +8,7 @@
 # +-------------------------------------------------------------------
 import os
 os.chdir("/www/server/panel")
-import public,db,panelSSL,json
+import public,db,json
 
 
 class setPanelLets:
@@ -71,6 +71,7 @@ class setPanelLets:
 
     # 检查证书夹是否存在可用证书
     def __check_cert_dir(self,get):
+        import panelSSL
         pssl = panelSSL.panelSSL()
         gcl = pssl.GetCertList(get)
         for i in gcl:

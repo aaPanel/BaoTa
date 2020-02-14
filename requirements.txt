@@ -1,6 +1,6 @@
 Flask>=1.0.2
 paramiko>=2.6.0
-Werkzeug>=0.15.1
+Werkzeug==0.16.1
 Pillow==5.4.1
 requests>=2.20
 cffi>=1.12.3

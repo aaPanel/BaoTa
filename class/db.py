@@ -8,7 +8,10 @@
 # +-------------------------------------------------------------------
 
 import sqlite3
-import os,re,public,time
+import os,time,sys
+os.chdir('/www/server/panel')
+sys.path.insert(0,'class')
+import public
 
 class Sql():
     #------------------------------
@@ -121,6 +124,7 @@ class Sql():
         return self.select()
 
     def __format_field(self,field):
+        import re
         fields = []
         for key in field:
             s_as = re.search('\s+as\s+',key,flags=re.IGNORECASE)
@@ -182,7 +186,7 @@ class Sql():
             values=""
             for key in keys.split(','):
                 values += "?,"
-            values = values[0:len(values)-1];
+            values = values[0:len(values)-1]
             sql = "INSERT INTO "+self.__DB_TABLE+"("+keys+") "+"VALUES("+values+")"
             result = self.__DB_CONN.execute(sql,self.__to_tuple(param))
             id = result.lastrowid
@@ -302,7 +306,8 @@ class Sql():
     #写锁
     def write_lock(self):
         self.is_lock()
-        public.writeFile(self.__LOCK,"True")
+        open(self.__LOCK,'wb+').close()
+
     #解锁
     def rm_lock(self):
         if os.path.exists(self.__LOCK):
@@ -323,7 +328,6 @@ class Sql():
         #创建数据表
         self.write_lock()
         self.__GetConn()
-        import public
         script = public.readFile('data/' + name + '.sql')
         result = self.__DB_CONN.executescript(script)
         self.__DB_CONN.commit()
@@ -334,7 +338,6 @@ class Sql():
         #执行脚本
         self.write_lock()
         self.__GetConn()
-        import public
         script = public.readFile(filename)
         result = self.__DB_CONN.executescript(script)
         self.__DB_CONN.commit()

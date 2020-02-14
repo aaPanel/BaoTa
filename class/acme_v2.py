@@ -1211,7 +1211,7 @@ fullchain.pem       粘贴到证书输入框
                 msg[1] = json.loads(msg[1])
             else:
                 msg = ex
-                write_log(msg)
+                write_log(public.get_error_info())
             return public.returnMsg(False, msg)
 
     # 申请证书 - api
@@ -1351,7 +1351,7 @@ fullchain.pem       粘贴到证书输入框
                 msg[1] = json.loads(msg[1])
             else:
                 msg = ex
-                write_log(msg)
+                write_log(public.get_error_info())
             return public.returnMsg(False, msg)
 
 

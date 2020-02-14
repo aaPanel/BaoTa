@@ -287,7 +287,8 @@
 				var _tab =  bt.render({
 					table:'#logsBody',
 					columns:[						
-						{ field: 'id', title: "{{data['lan']['LTH1']}}"},	
+						{ field: 'id', title: "编号"},	
+						{ field: 'username', title: "用户"},	
 						{ field: 'type', title: "{{data['lan']['LTH2']}}"},	
 						{ field: 'log', title: "{{data['lan']['LTH3']}}",templet:function(row){
 							return '<span style="display: inline-block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;" title="'+ _this.escapeHTML(row['log']) +'">'+  _this.escapeHTML(row['log']) +'</span>';

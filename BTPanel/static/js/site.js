@@ -1266,19 +1266,22 @@ var site = {
                             var spath = filename;
                             if (obj.val() != lan.site.rewritename) spath = '/www/server/panel/rewrite/' + bt.get_cookie('serverType') + '/' + obj.val() + '.conf';
                             bt.files.get_file_body(spath, function (ret) {
-                                editor.setValue(ret.data);
+                                aceEditor.ACE.setValue(ret.data);
+                                aceEditor.ACE.moveCursorTo(0, 0); 
+                                aceEditor.path = spath;
                             })
                         }
                     }
                 },
-                { items: [{ name: 'config', type: 'textarea', value: rdata.data, widht: '340px', height: '200px' }] },
+                { items: [{ name: 'config', type: 'div', value: rdata.data, widht: '340px', height: '200px' }] },
                 {
                     items: [{
                         name: 'btn_save', text: '保存', type: 'button', callback: function (ldata) {
-                            bt.files.set_file_body(filename, editor.getValue(), 'utf-8', function (ret) {
-                                if (ret.status) site.reload(4)
-                                bt.msg(ret);
-                            })
+                            // bt.files.set_file_body(filename, editor.getValue(), 'utf-8', function (ret) {
+                            //     if (ret.status) site.reload(4)
+                            //     bt.msg(ret);
+                            // })
+                            bt.saveEditor(aceEditor);
                         }
                     },
                     {
@@ -1321,24 +1324,9 @@ var site = {
                 _html.append(bt.render_help(['请选择您的应用，若设置伪静态后，网站无法正常访问，请尝试设置回default', '您可以对伪静态规则进行修改，修改完后保存即可。']));
                 $('#webedit-con').append(_html);
                 bt.render_clicks(clicks);
-
-                $('textarea.config').attr('id', 'config_rewrite');
-                var editor = CodeMirror.fromTextArea(document.getElementById("config_rewrite"), {
-                    extraKeys: { "Ctrl-Space": "autocomplete" },
-                    lineNumbers: true,
-                    matchBrackets: true,
-                });
-
-                $(".CodeMirror-scroll").css({ "height": "340px", "margin": 0, "padding": 0 });
-                $(".soft-man-con .CodeMirror").css({ "height": "342px" });
-                setTimeout(function () {
-                    editor.refresh();
-                }, 250);
-
-                $('select.rewrite').trigger('change')
-
-                
-
+                $('div.config').attr('id', 'config_rewrite').css({'height':'360px','width':'540px'})
+                var aceEditor = bt.aceEditor({el:'config_rewrite',content:rdata.data});
+                $('select.rewrite').trigger('change');
             })
         },
         set_default_index: function (web) {
@@ -1366,37 +1354,16 @@ var site = {
             })
         },
         set_config: function (web) {
-            bt.site.get_site_config(web.name, function (rdata) {
-                if (!rdata.status) {
-                    bt.msg(rdata);
-                    return;
-                }
-                var datas = [
-                    { items: [{ name: 'site_config', type: 'textarea', value: rdata.data, widht: '340px', height: '200px' }] },
-                    {
-                        name: 'btn_config_submit', text: '保存', type: 'button', callback: function (ddata) {
-                            bt.site.set_site_config(web.name, editor.getValue(), rdata.encoding, function (ret) {
-                                if (ret.status) site.reload(6)
-                                bt.msg(ret);
-                            })
-                        }
-                    }
-                ]
-                var robj = $('#webedit-con');
-                for (var i = 0; i < datas.length; i++) {
-                    var _form_data = bt.render_form_line(datas[i]);
-                    robj.append(_form_data.html);
-                    bt.render_clicks(_form_data.clicks);
-                }
-                robj.append(bt.render_help([lan.site.web_config_help]));
-                $('textarea.site_config').attr('id', 'configBody');
-                var editor = CodeMirror.fromTextArea(document.getElementById("configBody"), {
-                    extraKeys: { "Ctrl-Space": "autocomplete" },
-                    lineNumbers: true,
-                    matchBrackets: true,
-                });
-                $(".CodeMirror-scroll").css({ "height": "400px", "margin": 0, "padding": 0 });
-            })
+        	var con = '<p style="color: #666; margin-bottom: 7px">提示：Ctrl+F 搜索关键字，Ctrl+S 保存，Ctrl+H 查找替换</p><div class="bt-input-text ace_config_editor_scroll" style="height: 400px; line-height:18px;" id="siteConfigBody"></div>\
+				<button id="OnlineEditFileBtn" class="btn btn-success btn-sm" style="margin-top:10px;">保存</button>\
+				<ul class="c7 ptb15">\
+					<li>此处为站点主配置文件,若您不了解配置规则,请勿随意修改.</li>\
+				</ul>';
+			$("#webedit-con").html(con);
+			var config = bt.aceEditor({el:'siteConfigBody',path:'/www/server/panel/vhost/'+bt.get_cookie('serverType')+'/'+ web.name +'.conf'})
+    		$("#OnlineEditFileBtn").click(function(e){
+				bt.saveEditor(config);
+			});
         },
         set_ssl: function (web) {
             $('#webedit-con').html("<div id='ssl_tabs'></div><div class=\"tab-con\" style=\"padding:10px 0px;\"></div>");
@@ -1567,7 +1534,7 @@ var site = {
                                     '在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点',
                                     '如果重新申请证书时提示【订单已存在】请登录宝塔官网删除对应SSL订单',
                                 ]
-                                robj.append(bt.render_help(['已为您自动生成Let\'s Encrypt免费证书；', '如需使用其他SSL,请切换其他证书后粘贴您的KEY以及PEM内容，然后保存即可。']));
+                                robj.append(bt.render_help(['已为您自动生成Let\'s Encrypt免费证书；', '如需使用其他SSL,请切换其他证书后粘贴您的KEY以及PEM内容，然后保存即可。','如开启后无法使用HTTPS访问，请检查安全组是否正确放行443端口']));
                                 return;
                             }
                             bt.site.get_site_domains(web.id, function (ddata) {
@@ -1575,11 +1542,13 @@ var site = {
                                     '申请之前，请确保域名已解析，如未解析会导致审核失败',
                                     'Let\'s Encrypt免费证书，有效期3个月，支持多域名。默认会自动续签',
                                     '若您的站点使用了CDN或301重定向会导致续签失败',
-                                    '在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点'
+                                    '在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点',
+                                    '如开启后无法使用HTTPS访问，请检查安全组是否正确放行443端口'
                                 ], [
                                     '在DNS验证中，我们提供了多种自动化DNS-API，并提供了手动模式',
                                     '使用DNS接口申请证书可自动续期，手动模式下证书到期后需重新申请',
-                                    '使用【DnsPod/阿里云DNS】等接口前您需要先在弹出的窗口中设置对应接口的API'
+                                    '使用【DnsPod/阿里云DNS】等接口前您需要先在弹出的窗口中设置对应接口的API',
+                                    '如开启后无法使用HTTPS访问，请检查安全组是否正确放行443端口'
                                 ]]
                                 var datas = [
                                     {
@@ -1803,6 +1772,7 @@ var site = {
                                 '如果浏览器提示证书链不完整,请检查是否正确拼接PEM证书',
                                 'PEM格式证书 = 域名证书.crt + 根证书(root_bundle).crt',
                                 '在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点',
+                                '如开启后无法使用HTTPS访问，请检查安全组是否正确放行443端口'
                             ]
                             robj.append(bt.render_help(helps));
 
@@ -2698,6 +2668,8 @@ var site = {
                 robj.append(_form_data.html);
                 bt.render_clicks(_form_data.clicks);
                 $('textarea[name="site_logs"]').attr('readonly', true);
+                $('textarea[name="site_logs"]').scrollTop(100000000000)
+
             })
         }
     },

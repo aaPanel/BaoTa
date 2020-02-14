@@ -56,14 +56,17 @@ class crontab:
 
     #清理日志
     def __clean_log(self):
-        log_file = '/www/server/cron'
-        if not os.path.exists(log_file): return False
-        for f in os.listdir(log_file):
-            if f[-4:] != '.log': continue
-            filename = log_file + '/' + f
-            if os.path.getsize(filename) < 1048576 /2: continue
-            tmp = public.GetNumLines(filename,100)
-            public.writeFile(filename,tmp)
+        try:
+            log_file = '/www/server/cron'
+            if not os.path.exists(log_file): return False
+            for f in os.listdir(log_file):
+                if f[-4:] != '.log': continue
+                filename = log_file + '/' + f
+                if os.path.getsize(filename) < 1048576 /2: continue
+                tmp = public.GetNumLines(filename,100)
+                public.writeFile(filename,tmp)
+        except:
+            pass
 
     
     #转换大写星期

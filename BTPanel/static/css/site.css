@@ -495,9 +495,15 @@ html {
 	width: 3em;
 	height: 1.8em;
 	position: relative;
-	cursor: pointer
+	cursor: pointer;
 }
 
+.table-hover>tbody>tr:hover .btswitch+.btswitch-btn{
+	z-index: auto;
+}
+.index-item .btswitch-ios+.btswitch-btn{
+	z-index: auto;
+}
 .btswitch+.btswitch-btn:after,
 .btswitch+.btswitch-btn:before {
 	position: relative;
@@ -575,7 +581,7 @@ html {
 .task {
 	position: absolute;
 	right: 6px;
-	top: 14px;
+	top: 15px;
 	height: 20px;
 	width: 20px;
 	line-height: 20px;
@@ -813,15 +819,16 @@ html {
 }
 
 .sidebar-scroll .mypcip {
-	display: block;
+	display: inline-block;
 	padding: 0 10px;
 	position: relative;
 	transition-duration: 500ms;
 	transition-property: background;
 	transition-timing-function: ease;
-	width: 100%;
+	width: 180px;
+	height: 50px;
+	line-height: 50px;
 	cursor: pointer;
-	margin: 1px 0
 }
 
 .sidebar-scroll .mypcip:hover {
@@ -832,10 +839,10 @@ html {
 .sidebar-scroll .mypcip span {
 	background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAQCAYAAAAS7Y8mAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAGPSURBVDiNldQ9ixRBEAbgZ3Zn1fVOuQU/wK9AMDDS1MvuRxj5CwTBP2CiYmYmGBsYGRsaa2qkkSiCgRd4y3ri3XqzbdDV7Lgs7uwLRc90V1dXv29VVymluxiiRoVkNaoYG7wN+9chpTTBBn7jKA5YhYR+JPQEDxYd6rAPeIwDnOgQuMEIz3F8mUMdC9/wqkPAxb1P0Yv/6ziLX/hTy9c6jXPYXSPwBQywF+Mz7GCCSRGMbqK1Ufwbmb4beI9TuNZFqFWoZCH7Mp0XcaX33y3dUDKfmRdD1bM+BYuoWtaEKeIdyqSvg5+RZSWX6Ri3ZUqmRbxjcqnsx3cyF7Utbpmf4YxcapXcWFNcjiSbOk7Yxhu5BocRaGBeoyXYNII32MTJsJ7cvR/D92aN1xFsFA6HYZ/iiiWjTVyVGyrhBz7jXSQxxq3wPahxJ7JuX30sd9IoshviC77KzdSmag+XYm4QNq0tF+0e7sc1SwPs4xFeLPHvt2ibsfwl24rFl/KLV/jdCho2ZC3a+I6HOB9rR38B10ZjDE49T6kAAAAASUVORK5CYII=") no-repeat 0 center;
 	display: inline-block;
-	line-height: 46px;
-	padding-left: 30px;
-	white-space: nowrap;
-    max-width: 146px;
+    padding-left: 30px;
+    white-space: nowrap;
+    min-width: 145px;
+    text-overflow:ellipsis;
     overflow: hidden;
 }
 
@@ -871,7 +878,8 @@ html {
 }
 
 .sidebar-scroll .sidebar-auto .menu {
-	background-color: #353d44
+	background-color: #353d44;
+	margin-top: -3px;
 }
 
 .sidebar-scroll .menu li {
@@ -882,8 +890,9 @@ html {
 .sidebar-scroll .menu li a {
 	font-size: 15px;
 	color: #d6d7d9;
-	display: block;
+	display: inline-block;
 	line-height: 44px;
+	width: 180px;
 	padding-left: 52px;
 	background-repeat: no-repeat;
 	background-size: 16px auto;
@@ -1053,9 +1062,9 @@ html .menu .menu_exit:hover {
 
 .position {
 	background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAKwwAACsMBNCkkqwAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAFZSURBVDiNpdO9a1VBEAXw3zOioIUQEdFGkQdWVtr6D1ikERtRppLU6awUsUkh2CgoBNwhoPhsLESxERR7wcI2XSBNMAHRNFmLbB6Xa64RXFjYOXvmzMfOjmqt/mcd2I+QmUuZOcgbDWWQmTN4iFms4wGu4jC+RMT7wQwy8xBe4FtE3MBXPMdqE5sfLCEzj+Il3kXEE4iIJTzFFbzB9z0FMvMYJphExLPuXUQs4y1eYfmPHmTmbHN+FBGv92zMDm+ulXAzItZHtVaZeRH3sBgRn4ecOyKXcRt3dkuYwyJOZeaJfZyP42TjX1Nrne5SyqSUMu5ho559tpQy2bUP9gL8wHYnzbtYzczTuB8RHzs8/H0Sz+ETbuEDxg3f7pL6AhW/2vknNiNiCxvY6uDT8e2XMINLmbmC89js3I0z8wLOdP36Aht43KIcwULD1+w82/WGT+dk8DP96/oNlqecb6uu8YEAAAAASUVORK5CYII=");
-	background-position: 17px 14px;
+	background-position: 22px 16px;
     background-repeat: no-repeat;
-    background-size: 20px auto;
+    background-size: 16px auto;
     line-height: 50px;
     padding-left: 30px;
 }
@@ -2147,9 +2156,11 @@ html .menu .menu_exit:hover {
 }
 
 .softlist td img {
-	width: 24px;
-	height: 20px;
-	margin-right: 5px
+	max-width: 25px;
+	max-height: 25px;
+	margin-right: 5px;
+	margin-top: -1px;
+	margin-bottom: -1px;
 }
 
 .softlist .glyphicon-folder-open {
@@ -6325,3 +6336,45 @@ select[disabled]{
 .php_info_group:last-child{
 	margin-bottom: 15px;
 }
+
+.ace_config_editor_scroll ::-webkit-scrollbar {
+	/*滚动条整体样式*/
+	width : 10px;  /*高宽分别对应横竖滚动条的尺寸*/
+	height: 1px;
+}
+.ace_config_editor_scroll ::-webkit-scrollbar-thumb {
+	/*滚动条里面小方块*/
+	border-radius: 10px;
+	box-shadow   : inset 0 0 5px rgba(0, 0, 0, 0.2);
+	background   : #999;
+}
+.ace_config_editor_scroll ::-webkit-scrollbar-track {
+	/*滚动条里面轨道*/
+	box-shadow   : inset 0 0 5px rgba(0, 0, 0, 0.2);
+	border-radius: 10px;
+	background   : #ededed;
+	border-radius: 5px;
+}
+/*外链分享 */
+.checkbox_grourd input {
+    margin-right: 2px;
+    height: 16px;
+    width: 16px;
+}
+.checkbox_grourd {
+    height: 30px;
+    line-height: 32px;
+    margin-right: 20px;
+    font-size: 14px;
+	font-weight: initial;
+	color:#666;
+}
+.external_link button{
+	padding: 2px 8px;
+	vertical-align: sub;
+	
+}
+.external_link button .icon{
+	font-size:17px;
+}
+

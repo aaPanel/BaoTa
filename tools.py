@@ -555,7 +555,7 @@ def bt_cli(u_input = 0):
         else:
             print("|-检测到已开启面板自动备份功能,正在关闭...")
             public.writeFile(l_path,'True')
-            print("|-已开关闭面板自动备份功能")
+            print("|-已关闭面板自动备份功能")
     elif u_input == 22:
         os.system('tail -100 /www/server/panel/logs/error.log')
     elif u_input == 23:
@@ -576,7 +576,7 @@ def bt_cli(u_input = 0):
         else:
             print("|-检测到已开启文件副本功能,正在关闭...")
             public.writeFile(l_path,'True')
-            print("|-已开关闭文件副本功能")
+            print("|-已关闭文件副本功能")
 
 
 

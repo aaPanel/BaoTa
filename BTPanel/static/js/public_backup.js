@@ -716,6 +716,13 @@ var bt =
                         var _width = _obj.width ? _obj.width : '330px';
                         _html += "<input name='" + _name + "' " + (_obj.disabled ? 'disabled' : '') + " class='bt-input-text mr5 " + _name + bs + "' " + (_placeholder ? ' placeholder="' + _placeholder + '"' : "") + " type='password' style='width:" + _width + "' value='" + (_obj.value ? _obj.value : '') + "' />";
                         break;
+                    case 'div':
+                    	var _width = _obj.width ? _obj.width : '330px';
+                        var _height = _obj.height ? _obj.height : '100px';
+                        _html += '<div class="bt-input-text ace_config_editor_scroll mr20 ' + _name + bs + '" name="' + _name + '" style="width:' + _width + ';height:' + _height + ';line-height:22px">' + (_obj.value ? _obj.value : '') + '</div>';
+                        if (_placeholder) _html += '<div class="placeholder c9" style="top: 15px; left: 15px; display: block;">' + _placeholder + '</div>';
+                        break;
+                    	break;
                     default:
                         var _width = _obj.width ? _obj.width : '330px';
 
@@ -1001,6 +1008,65 @@ var bt =
             })
 		}
 		return _tab;
+	},
+	// ACE编辑配置文件
+	aceEditor:function(obj){
+		var aEditor = {
+				ACE:ace.edit(obj.el,{
+					theme: "ace/theme/chrome", //主题
+					mode: "ace/mode/"+ (obj.mode || 'nginx'), // 语言类型
+					wrap: true,
+					showInvisibles:false,
+					showPrintMargin: false,
+					showFoldWidgets:false,
+					useSoftTabs:true,
+					tabSize:2,
+					showPrintMargin: false,
+					readOnly:false
+				}),
+				path:obj.path,
+				content:'',
+				saveCallback:obj.saveCallback
+			},_this = this;
+			$('#' + obj.el).css('fontSize','12px');
+			aEditor.ACE.commands.addCommand({
+				name: '保存文件',
+				bindKey: {win: 'Ctrl-S',mac: 'Command-S'},
+				exec: function (editor) {
+					_this.saveEditor(aEditor,aEditor.saveCallback);
+				},
+				readOnly: false // 如果不需要使用只读模式，这里设置false
+			});
+			if(obj.path != undefined){
+				var loadT = layer.msg(lan.soft.get_config,{icon:16,time:0,shade: [0.3, '#000']})
+				bt.send('GetFileBody','files/GetFileBody',{path:obj.path},function(res){
+					layer.close(loadT);
+					if(!res.status){
+						bt.msg(res);
+						return false;
+					}
+					aEditor.ACE.setValue(res.data); //设置配置文件内容
+					aEditor.ACE.moveCursorTo(0, 0); //设置文件光标位置
+					aEditor.ACE.resize();
+				});
+			}else if(obj.content != undefined){
+				aEditor.ACE.setValue(obj.content);
+				aEditor.ACE.moveCursorTo(0, 0); //设置文件光标位置
+				aEditor.ACE.resize();
+			}
+		return aEditor;
+	},
+	// 保存编辑器文件
+	saveEditor:function(ace){
+		if(!ace.saveCallback){
+			var loadT = bt.load(lan.soft.the_save);
+			bt.send('SaveFileBody','files/SaveFileBody',{data:ace.ACE.getValue(),path:ace.path,encoding:'utf-8'},function(rdata){
+				loadT.close();
+				bt.msg(rdata);
+			});
+		}else{
+			ace.saveCallback(ace.ACE.getValue());
+		}
 	}
 };
 
@@ -1203,46 +1269,7 @@ bt.pub = {
 		}
 		var loading = bt.load(lan.bt.read_file);
 		ext = bt.get_file_ext(fileName);
-		doctype = '';
-		switch(ext)
-		{
-			case "html":
-				var mixedMode = {name: "htmlmixed",scriptTypes: [{matches: /\/x-handlebars-template|\/x-mustache/i,mode: null}, {matches: /(text|application)\/(x-)?vb(a|script)/i,mode: "vbscript"}]};
-				doctype = mixedMode;
-				break;
-			case "htm":
-				var mixedMode = {name: "htmlmixed",scriptTypes: [{matches: /\/x-handlebars-template|\/x-mustache/i,mode: null},{matches: /(text|application)\/(x-)?vb(a|script)/i,mode: "vbscript"}]};
-				doctype = mixedMode;
-				break;
-			case "js":
-				doctype = "text/javascript";
-				break;
-			case "json":
-				doctype = "application/ld+json";
-				break;
-			case "css":
-				doctype = "text/css";
-				break;
-			case "php":
-				doctype = "application/x-httpd-php";
-				break;
-			case "tpl":
-				doctype = "application/x-httpd-php";
-				break;
-			case "xml":
-				doctype = "application/xml";
-				break;
-			case "sql":
-				doctype = "text/x-sql";
-				break;
-			case "conf":
-				doctype = "text/x-nginx-conf";
-				break;
-			default:
-				var mixedMode = {name: "htmlmixed",scriptTypes: [{matches: /\/x-handlebars-template|\/x-mustache/i,mode: null}, {matches: /(text|application)\/(x-)?vb(a|script)/i,mode: "vbscript"}]};
-				doctype = mixedMode;
-				break;
-		}		
+		
 		bt.send('GetFileBody','files/GetFileBody','path='+fileName,function(rdata){
 			if(!rdata.status){
 				bt.msg({msg:rdata.msg,icon:5});
@@ -1257,45 +1284,34 @@ bt.pub = {
 				m = rdata.encoding == u[p] ? "selected" : "";
 				n += '<option value="' + u[p] + '" ' + m + ">" + u[p] + "</option>"
 			}
-			var r = bt.open({
+			var aceEditor = {},r = bt.open({
 				type: 1,
 				shift: 5,
 				closeBtn: 1,
-				//maxmin: true,
 				area: ["90%", "90%"],
 				shade:false,
 				title: lan.bt.edit_title+"[" + fileName + "]",
+				btn:[lan.public.save,lan.public.close],
 				content: '<form class="bt-form pd20 pb70"><div class="line"><p style="color:red;margin-bottom:10px">'+lan.bt.edit_ps
 					+'		<select class="bt-input-text" name="encoding" style="width: 74px;position: absolute;top: 31px;right: 19px;height: 22px;z-index: 9999;border-radius: 0;">' 
-					+ n + '</select></p><textarea class="mCustomScrollbar bt-input-text" id="textBody" style="width:100%;margin:0 auto;line-height: 1.8;position: relative;top: 10px;" value="" /></div><div class="bt-form-submit-btn" style="position:absolute; bottom:0; width:100%"><button type="button" class="btn btn-danger btn-sm btn-editor-close">'+lan.public.close+'</button><button id="OnlineEditFileBtn" type="button" class="btn btn-success btn-sm">'+lan.public.save+'</button></div></form>'
-			})
-			$("#textBody").text(rdata.data);
-			var q = $(window).height() * 0.9;
-			$("#textBody").height(q - 160);
-			var t = CodeMirror.fromTextArea(document.getElementById("textBody"), {
-				extraKeys: {
-					"Ctrl-F": "findPersistent",
-					"Ctrl-H": "replaceAll",
-					"Ctrl-S": function() {
-						$("#textBody").text(t.getValue());
-						bt.pub.on_edit_file(2, fileName)
-					}
+					+ n + '</select></p><div class="mCustomScrollbar bt-input-text ace_config_editor_scroll" id="textBody" style="width:100%;margin:0 auto;line-height: 1.8;position: relative;top: 10px;"></div></div></form>',
+				yes:function(layer,index){
+					bt.saveEditor(aceEditor);
 				},
-				mode: doctype,
-				lineNumbers: true,
-				matchBrackets: true,
-				matchtags: true,
-				autoMatchParens: true
-			});
-			t.focus();
-			t.setSize("auto", q - 150);
-			$("#OnlineEditFileBtn").click(function() {
-				$("#textBody").text(t.getValue());
-				bt.pub.on_edit_file(1, fileName);
-			});
-			$(".btn-editor-close").click(function() {
-				r.close();
-			});
+				btn2:function(layer,index){
+					r.close();
+				},
+				success:function(){
+					var q = $(window).height() * 0.9;
+					$("#textBody").height(q - 160);
+					aceEditor = bt.aceEditor({el:'textBody',content:rdata.data,mode:'html',saveCallback:function(val){
+						bt.send('SaveFileBody','files/SaveFileBody',{path:fileName,encoding:$('[name="encoding"] option:selected').val(),data:val},function(rdata){
+							bt.msg(rdata);
+						});
+					}});
+				}
+			})
+
 		})
 	}	
 };
@@ -4029,8 +4045,19 @@ bt.soft = {
 					}
 					layer.close(bt.soft.loadT);	
 					bt.pub.get_task_count();
+					if(rdata.status === true && rdata.msg.indexOf('队列') === -1){
+						bt.confirm({ msg: '更新付费插件[' + name + ']成功，需重启面板后生效，是否立即重启面板?', title: '提示' }, function () {
+                            var loading = bt.load();
+                            bt.system.reload_panel(function (rdata) {
+                            	setTimeout(function () { 
+                            		loading.close();
+                            		window.location.reload(); 
+                            	}, 3000);
+                            });
+                        })
+                        return;
+					}
 					if(soft) soft.get_list();
-					if(rdata.status === true && rdata.msg.indexOf('队列') === -1) rdata.msg = '更新成功!';
 					bt.msg(rdata);	
 				})
 			})
@@ -4120,7 +4147,13 @@ bt.soft = {
 				closeBtn: 2,
 				area: '700px', 
 				title: ''+ title,
-                content: rhtml.replace('"javascript/text"', '"text/javascript"')
+                content: rhtml.replace('"javascript/text"', '"text/javascript"'),
+                success:function(){
+                	if(rhtml.indexOf('CodeMirror') != -1){
+                		loadLink(['/static/codemirror/lib/codemirror.css']);
+                		loadScript(['/static/codemirror/lib/codemirror.js','/static/codemirror/addon/edit/editAll.js','/static/codemirror/mode/modeAll.js','/static/codemirror/addon/dialog/dialog.js','/static/codemirror/addon/search/search.js','/static/codemirror/addon/scroll/annotatescrollbar.js']);
+                	}
+                }
             });
             /*rtmp = rhtml.split('<script type="javascript/text">')
             if (rtmp.length < 2) {

@@ -16,92 +16,96 @@ from BTPanel import session
 
 class panelAuth:
     __product_list_path = 'data/product_list.pl'
-    __product_bay_path = 'data/product_bay.pl';
-    __product_id = '100000011';
+    __product_bay_path = 'data/product_bay.pl'
+    __product_id = '100000011'
     
     def create_serverid(self,get):
         try:
-            userPath = 'data/userInfo.json';
-            if not os.path.exists(userPath): return public.returnMsg(False,'请先登陆宝塔官网用户');
-            tmp = public.readFile(userPath);
+            userPath = 'data/userInfo.json'
+            if not os.path.exists(userPath): return public.returnMsg(False,'请先登陆宝塔官网用户')
+            tmp = public.readFile(userPath)
             if len(tmp) < 2: tmp = '{}'
-            data = json.loads(tmp);
-            if not data: return public.returnMsg(False,'请先登陆宝塔官网用户');
+            data = json.loads(tmp)
+            if not data: return public.returnMsg(False,'请先登陆宝塔官网用户')
             if not 'serverid' in data:
                 s1 = self.get_mac_address() + self.get_hostname()
-                s2 = self.get_cpuname();
-                serverid = public.md5(s1) + public.md5(s2);
-                data['serverid'] = serverid;
-                public.writeFile(userPath,json.dumps(data));
-            return data;
-        except: return public.returnMsg(False,'请先登陆宝塔官网用户');
+                s2 = self.get_cpuname()
+                serverid = public.md5(s1) + public.md5(s2)
+                data['serverid'] = serverid
+                public.writeFile(userPath,json.dumps(data))
+            return data
+        except: return public.returnMsg(False,'请先登陆宝塔官网用户')
 
 
     def create_plugin_other_order(self,get):
         pdata = self.create_serverid(get)
-        pdata['pid'] = get.pid;
+        pdata['pid'] = get.pid
         pdata['cycle'] = get.cycle
         p_url = public.GetConfigValue('home') + '/api/Pluginother/create_order'
         if get.type == '1':
-            pdata['renew'] = 1;
+            pdata['renew'] = 1
             p_url = public.GetConfigValue('home') + '/api/Pluginother/renew_order'
         return json.loads(public.httpPost(p_url,pdata))
 
     def get_order_stat(self,get):
         pdata = self.create_serverid(get)
-        pdata['order_id'] = get.oid;
+        pdata['order_id'] = get.oid
         p_url = public.GetConfigValue('home') + '/api/Pluginother/order_stat'
         if get.type == '1':  p_url = public.GetConfigValue('home') + '/api/Pluginother/re_order_stat'
         return json.loads(public.httpPost(p_url,pdata))
     
     def check_serverid(self,get):
-        if get.serverid != self.create_serverid(get): return False;
-        return True;
+        if get.serverid != self.create_serverid(get): return False
+        return True
     
     def get_plugin_price(self,get):
-        userPath = 'data/userInfo.json';
-        if not 'pluginName' in get: return public.returnMsg(False,'参数错误!');
-        if not os.path.exists(userPath): return public.returnMsg(False,'请先登陆宝塔官网帐号!');
-        params = {}
-        params['pid'] = self.get_plugin_info(get.pluginName)['id'];
-        #params['ajax2'] = '1';
-        data = self.send_cloud('get_product_discount', params)
-        return data;
+        try:
+            userPath = 'data/userInfo.json'
+            if not 'pluginName' in get: return public.returnMsg(False,'参数错误!')
+            if not os.path.exists(userPath): return public.returnMsg(False,'请先登陆宝塔官网帐号!')
+            params = {}
+            params['pid'] = self.get_plugin_info(get.pluginName)['id']
+            #params['ajax2'] = '1';
+            data = self.send_cloud('get_product_discount', params)
+            return data
+        except:
+            del(session['get_product_list'])
+            return public.returnMsg(False,'正在同步信息，请重试!')
     
     def get_plugin_info(self,pluginName):
-        data = self.get_business_plugin(None);
+        data = self.get_business_plugin(None)
         if not data: return None
         for d in data:
-            if d['name'] == pluginName: return d;
-        return None;
+            if d['name'] == pluginName: return d
+        return None
     
     def get_plugin_list(self,get):
         try:
             if not session.get('get_product_bay') or not os.path.exists(self.__product_bay_path):
-                data = self.send_cloud('get_order_list_byuser', {});
-                if data: public.writeFile(self.__product_bay_path,json.dumps(data));
-                session['get_product_bay'] = True;
+                data = self.send_cloud('get_order_list_byuser', {})
+                if data: public.writeFile(self.__product_bay_path,json.dumps(data))
+                session['get_product_bay'] = True
             data = json.loads(public.readFile(self.__product_bay_path))
             return data
         except: return None
     
     def get_buy_code(self,get):
         params = {}
-        params['pid'] = get.pid;
-        params['cycle'] = get.cycle;
-        data = self.send_cloud('create_order', params);
+        params['pid'] = get.pid
+        params['cycle'] = get.cycle
+        data = self.send_cloud('create_order', params)
         if not data: return public.returnMsg(False,'连接服务器失败!')
-        return data;
+        return data
     
     def check_pay_status(self,get):
         params = {}
-        params['id'] = get.id;
-        data = self.send_cloud('check_product_pays', params);
+        params['id'] = get.id
+        data = self.send_cloud('check_product_pays', params)
         if not data: return public.returnMsg(False,'连接服务器失败!')
         if data['status'] == True:
-            self.flush_pay_status(get);
-            if 'get_product_bay' in session: del(session['get_product_bay']);
-        return data;
+            self.flush_pay_status(get)
+            if 'get_product_bay' in session: del(session['get_product_bay'])
+        return data
     
     def flush_pay_status(self,get):
         if 'get_product_bay' in session: del(session['get_product_bay'])
@@ -118,8 +122,8 @@ class panelAuth:
     def get_business_plugin(self,get):
         try:
             if not session.get('get_product_list') or not os.path.exists(self.__product_list_path):
-                data = self.send_cloud('get_product_list', {});
-                if data: public.writeFile(self.__product_list_path,json.dumps(data));
+                data = self.send_cloud('get_product_list', {})
+                if data: public.writeFile(self.__product_list_path,json.dumps(data))
                 session['get_product_list'] = True
             data = json.loads(public.readFile(self.__product_list_path))
             return data
@@ -133,105 +137,106 @@ class panelAuth:
     
     def get_re_order_status_plugin(self,get):
         params = {}
-        params['pid'] = getattr(get,'pid',0);
-        data = self.send_cloud('get_re_order_status', params);
-        if not data: return public.returnMsg(False,'连接服务器失败!');
+        params['pid'] = getattr(get,'pid',0)
+        data = self.send_cloud('get_re_order_status', params)
+        if not data: return public.returnMsg(False,'连接服务器失败!')
         if data['status'] == True:
-            self.flush_pay_status(get);
-            if 'get_product_bay' in session: del(session['get_product_bay']);
-        return data;
+            self.flush_pay_status(get)
+            if 'get_product_bay' in session: del(session['get_product_bay'])
+        return data
     
     def get_voucher_plugin(self,get):
         params = {}
-        params['pid'] = getattr(get,'pid',0);
-        params['status'] = '0';
-        data = self.send_cloud('get_voucher', params);
-        if not data: return [];
-        return data;
+        params['pid'] = getattr(get,'pid',0)
+        params['status'] = '0'
+        
+        data = self.send_cloud('get_voucher', params)
+        if not data: return []
+        return data
     
     def create_order_voucher_plugin(self,get):
         params = {}
-        params['pid'] = getattr(get,'pid',0);
-        params['code'] = getattr(get,'code',0);
-        data = self.send_cloud('create_order_voucher', params);
-        if not data: return public.returnMsg(False,'连接服务器失败!');
+        params['pid'] = getattr(get,'pid',0)
+        params['code'] = getattr(get,'code',0)
+        data = self.send_cloud('create_order_voucher', params)
+        if not data: return public.returnMsg(False,'连接服务器失败!')
         if data['status'] == True:
-            self.flush_pay_status(get);
-            if 'get_product_bay' in session: del(session['get_product_bay']);
-        return data;
+            self.flush_pay_status(get)
+            if 'get_product_bay' in session: del(session['get_product_bay'])
+        return data
     
     
     def send_cloud(self,module,params):
         try:
-            cloudURL = 'http://www.bt.cn/api/Plugin/';
-            userInfo = self.create_serverid(None);
-            params['os'] = 'Linux';
+            cloudURL = 'http://www.bt.cn/api/Plugin/'
+            userInfo = self.create_serverid(None)
+            params['os'] = 'Linux'
             if 'status' in userInfo:
-                params['uid'] = 0;
-                params['serverid'] = '';
+                params['uid'] = 0
+                params['serverid'] = ''
             else:
-                params['uid'] = userInfo['uid'];
-                params['serverid'] = userInfo['serverid'];
-            result = public.httpPost(cloudURL + module,params);
-            result = json.loads(result.strip());
-            if not result: return None;
-            return result;
+                params['uid'] = userInfo['uid']
+                params['serverid'] = userInfo['serverid']
+            result = public.httpPost(cloudURL + module,params)
+            result = json.loads(result.strip())
+            if not result: return None
+            return result
         except: return None
         
     def send_cloud_pro(self,module,params):
         try:
-            cloudURL = 'http://www.bt.cn/api/invite/';
-            userInfo = self.create_serverid(None);
-            params['os'] = 'Linux';
+            cloudURL = 'http://www.bt.cn/api/invite/'
+            userInfo = self.create_serverid(None)
+            params['os'] = 'Linux'
             if 'status' in userInfo:
-                params['uid'] = 0;
-                params['serverid'] = '';
+                params['uid'] = 0
+                params['serverid'] = ''
             else:
-                params['uid'] = userInfo['uid'];
-                params['serverid'] = userInfo['serverid'];
-            result = public.httpPost(cloudURL + module,params);
+                params['uid'] = userInfo['uid']
+                params['serverid'] = userInfo['serverid']
+            result = public.httpPost(cloudURL + module,params)
             
-            result = json.loads(result);
-            if not result: return None;
-            return result;
+            result = json.loads(result)
+            if not result: return None
+            return result
         except: return None
     
     def get_voucher(self,get):
         params = {}
-        params['product_id'] = self.__product_id;
-        params['status'] = '0';
-        data = self.send_cloud_pro('get_voucher', params);
-        return data;
+        params['product_id'] = self.__product_id
+        params['status'] = '0'
+        data = self.send_cloud_pro('get_voucher', params)
+        return data
     
     def get_order_status(self,get):
         params = {}
-        data = self.send_cloud_pro('get_order_status', params);
-        return data;
+        data = self.send_cloud_pro('get_order_status', params)
+        return data
         
     
     def get_product_discount_by(self,get):
         params = {}
-        data = self.send_cloud_pro('get_product_discount_by', params);
-        return data;
+        data = self.send_cloud_pro('get_product_discount_by', params)
+        return data
     
     def get_re_order_status(self,get):
         params = {}
-        data = self.send_cloud_pro('get_re_order_status', params);
-        return data;
+        data = self.send_cloud_pro('get_re_order_status', params)
+        return data
     
     def create_order_voucher(self,get):
         code = getattr(get,'code','1')
         params = {}
-        params['code'] = code;
-        data = self.send_cloud_pro('create_order_voucher', params);
-        return data;
+        params['code'] = code
+        data = self.send_cloud_pro('create_order_voucher', params)
+        return data
     
     def create_order(self,get):
-        cycle = getattr(get,'cycle','1');
+        cycle = getattr(get,'cycle','1')
         params = {}
-        params['cycle'] = cycle;
-        data = self.send_cloud_pro('create_order', params);
-        return data;
+        params['cycle'] = cycle
+        data = self.send_cloud_pro('create_order', params)
+        return data
     
     def get_mac_address(self):
         import uuid
@@ -243,6 +248,6 @@ class panelAuth:
         return socket.getfqdn(socket.gethostname())
     
     def get_cpuname(self):
-        return public.ExecShell("cat /proc/cpuinfo|grep 'model name'|cut -d : -f2")[0].strip();
+        return public.ExecShell("cat /proc/cpuinfo|grep 'model name'|cut -d : -f2")[0].strip()
     
     

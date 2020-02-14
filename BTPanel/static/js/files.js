@@ -494,7 +494,7 @@ function GetFiles(Path, sort) {
                 if (fileMsg != '') {
                     fileMsg = '<span style="margin-left: 30px; color: #999;">' + fileMsg + '</span>';
                 }
-                Body += "<tr class='folderBoxTr' data-path='" + rdata.PATH + "/" + fmp[0] + "' filetype='" + fmp[0] + "'><td><input type='checkbox' name='id' value='" + fmp[0] + "'></td>\
+                Body += "<tr class='folderBoxTr' fileshare='"+ fmp[6] +"' data-path='" + rdata.PATH + "/" + fmp[0] + "' filetype='" + fmp[0] + "'><td><input type='checkbox' name='id' value='" + fmp[0] + "'></td>\
 						<td class='column-name'><span class='ico ico-"+ (GetExtName(fmp[0])) + "'></span><a class='text' title='" + fmp[0] + fmp[5] + "'>" + cnametext + fileMsg + "</a></td>\
 						<td>" + (ToSize(fmp[1])) + "</td>\
 						<td>" + ((fmp[2].length > 11) ? fmp[2] : getLocalTime(fmp[2])) + "</td>\
@@ -573,8 +573,7 @@ function GetFiles(Path, sort) {
             BarTools += ' <button onclick="javascript:BackDir();" class="btn btn-default btn-sm glyphicon glyphicon-arrow-left" title="' + lan.files.return + '"></button>';
         }
         setCookie('Path', rdata.PATH);
-        BarTools += ' <button onclick="javascript:GetFiles(\'' + rdata.PATH + '\');" class="btn btn-default btn-sm glyphicon glyphicon-refresh" title="' + lan.public.fresh + '"></button> <button onclick="web_shell()" title="' + lan.files.shell + '" type="button" class="btn btn-default btn-sm"><em class="ico-cmd"></em></button>';
-
+        BarTools += ' <button onclick="javascript:GetFiles(\'' + rdata.PATH + '\');" class="btn btn-default btn-sm glyphicon glyphicon-refresh" title="' + lan.public.fresh + '"></button> <button onclick="web_shell()" title="' + lan.files.shell + '" type="button" class="btn btn-default btn-sm"><em class="ico-cmd"></em></button><button onclick="get_download_url_list()" type="button" class="btn btn-default btn-sm ml5">分享列表</button>';
 
         // 收藏夹
         var shtml = '<div class="btn-group">\
@@ -671,7 +670,7 @@ function GetFiles(Path, sort) {
             if (e.which == 3) {
                 if (count <= 1) {
                     var a = $(this);
-                    a.contextify(RClick(a.attr("filetype"), a.attr("data-path"), a.find("input").val(), rdata));
+                    a.contextify(RClick(a.attr("filetype"), a.attr("data-path"), a.find("input").val(), rdata,a.attr('fileshare')));
                 }
                 else {
                     RClickAll(e);
@@ -699,7 +698,7 @@ function php_file_webshell(file){
 	var loadT = layer.msg('正在查杀文件中，请稍后...', { icon: 16, time: 0, shade: [0.3, '#000'] });
 	$.post('/files?action=file_webshell_check','filename='+ file,function(rdata){
 		layer.close(loadT);
-        layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+        layer.msg(rdata.msg, { icon: rdata.status ? 1 : 0,time: 0,shade: 0.3,shadeClose:true });
 	})
 }
 function auto_table_width() {
@@ -1642,7 +1641,7 @@ function onAccess() {
         }
     }
 }
-function RClick(type, path, name, file_store) {
+function RClick(type, path, name, file_store,file_share) {
     var displayZip = isZip(type);
     var options = {
         items: [
@@ -1681,6 +1680,10 @@ function RClick(type, path, name, file_store) {
         options.items.push({ text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } });
     }
 
+    if(type !== 'dir'){
+        options.items.push({ text: '外链分享', onclick: function () { create_download_url(name,path,file_share) } });
+    }
+
     options.items.push({
         text: "收藏夹", onclick: function () {
 			var loading = bt.load();
@@ -1696,6 +1699,176 @@ function RClick(type, path, name, file_store) {
     })
     return options;
 }
+
+
+function create_download_url(fileName,path,fileShare) {
+	fileShare = parseInt(fileShare);
+	if(fileShare != 0){
+		$.post('/files?action=get_download_url_find',{id:fileShare},function(rdata){
+    		set_download_url(rdata);
+    	});
+		return false
+	}
+    var layers = layer.open({
+        type: 1,
+        shift: 5,
+        closeBtn: 2,
+        area: '450px',
+        title: '外链分享',
+        btn:['生成外链','取消'],
+        content: '<from class="bt-form" id="outer_url_form" style="padding:30px 15px;display:inline-block">'
+        	+ '<div class="line"><span class="tname">分享名称</span><div class="info-r"><input name="ps" class="bt-input-text mr5" type="text" placeholder="分享名称不能为空" style="width:270px" value="'+ fileName +'"></div></div>'
+            + '<div class="line"><span class="tname">有效期</span><div class="info-r">'
+                +'<label class="checkbox_grourd"><input type="radio" name="expire" value="24" checked><span>&nbsp;1天</span></label>'
+                +'<label class="checkbox_grourd"><input type="radio" name="expire" value="168"><span>&nbsp;7天</span></label>'
+                +'<label class="checkbox_grourd"><input type="radio" name="expire" value="99999999"><span>&nbsp;永久</span></label>'
+            +'</div></div>'
+        	+ '<div class="line"><span class="tname">提取码</span><div class="info-r"><input name="password" class="bt-input-text mr5" placeholder="为空则不设置提取码" type="text" style="width:170px" value=""><button type="button" id="random_paw" class="btn btn-success btn-sm btn-title">随机</button></div></div>'
+            + '</from>',
+        yes:function(indexs,layers){
+        	layer.confirm('是否分享该文件，是否继续？', { title: '确认分享', closeBtn: 2, icon: 3 }, function (index) {
+	        	var ps = $('[name=ps]').val(),expire = $('[name=expire]').val(),password = $('[name=password]').val();
+	        	if(ps === ''){
+	        		layer.msg('分享名称不能为空',{icon:2});
+	        		return false;
+	        	}
+	        	$.post('/files?action=create_download_url',{
+	        		filename:path,
+	        		ps:ps,
+	        		password:password,
+	        		expire:expire
+	        	},function(rdatas){
+        			if(!rdatas.status){
+				    	layer.msg(rdatas.msg,{icon:2});
+				    	return false;
+				    }
+				    layer.close(index);
+				    layer.close(indexs)
+	        		set_download_url(rdatas.msg);
+	        	});
+        	});
+        },
+        success: function (layers, index) {
+            $('#random_paw').click(function(){
+            	$(this).prev().val(bt.get_random(6));
+            });
+        }
+    });
+}
+
+
+function set_download_url(rdata){
+    var download_url = window.location.protocol + '//'+window.location.host + '/down/' + rdata.token;
+    var layers = layer.open({
+        type: 1,
+        shift: 5,
+        closeBtn: 2,
+        area: '550px',
+        title: '外链分享',
+        content: '<div class="bt-form pd20 pb70">'
+	            + '<div class="line"><span class="tname">分享名称</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:365px" value="'+ rdata.ps +'"></div></div>'
+	        	+ '<div class="line external_link"><span class="tname">分享外链</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:280px" value="'+ download_url +'"><button type="button" id="copy_url" data-clipboard-text="'+ download_url +'" class="btn btn-success btn-sm btn-title copy_url" style="margin-right:5px" data-clipboard-target="#copy_url"><i class="iconfont icon-copy" title="复制"></i></button><button type="button" class="btn btn-success QR_code btn-sm btn-title"><i class="iconfont icon-ico" title="显示二维码"></i></button></div></div>'
+	        	+ '<div class="line external_link" style="'+ (rdata.password == ""?"display:none;":"display:block") +'"><span class="tname">提取码</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:280px" value="'+ rdata.password +'"><button type="button" data-clipboard-text="'+ rdata.password +'"  class="btn btn-success copy_paw btn-sm btn-title"><i class="iconfont icon-copy"></i></button></div></div>'
+	        	+ '<div class="line"><span class="tname">过期时间</span><div class="info-r"><span style="line-height:32px; display: block;font-size:14px">'+ bt.format_data(rdata.expire)+'</span></div></div>'
+	        	+ '<div class="bt-form-submit-btn">'
+	            + '<button type="button" class="btn btn-danger btn-sm btn-title layer_close">' + lan.public.close + '</button>'
+	            + '<button type="button" id="down_del" class="btn btn-danger btn-sm btn-title close_down" style="color:#fff;background-color:#c9302c;border-color:#ac2925;" onclick="">关闭分享外链</button>'
+	            + '</div>'
+            + '</div>',
+        success: function (layers, index) {
+        	var copy_url = new ClipboardJS('.copy_url');
+        	var copy_paw = new ClipboardJS('.copy_paw');
+        	copy_url.on('success', function(e) {
+				layer.msg('复制链接成功!',{icon:1});
+			    e.clearSelection();
+			});
+			copy_paw.on('success', function(e) {
+				layer.msg('复制提取码成功!',{icon:1});
+			    e.clearSelection();
+			});
+            $('.layer_close').click(function () {
+                layer.close(index);
+            });
+            $('.QR_code').click(function(){
+            	layer.closeAll('tips');
+            	layer.tips('<div style="height:140px;width:140px;padding:8px 0" id="QR_code"></div>','.QR_code',{
+	            	area:['150px','150px'],
+	            	tips: [1, '#ececec'],
+	            	time:0,
+	            	shade:[0.05, '#000'],
+	            	shadeClose:true,
+	            	success:function(){
+	            		jQuery('#QR_code').qrcode({
+							render: "canvas",
+							text: download_url,
+							height:130,
+							width:130
+						});
+	            	}
+	            });
+            });
+            $('.close_down').click(function(){
+            	del_download_url(rdata.id,index)
+            });
+        }
+    });
+}
+function del_download_url(id,indexs){
+	layer.confirm('是否取消分享该文件，是否继续？', { title: '取消分享', closeBtn: 2, icon: 3 }, function (index) {
+		$.post('/files?action=remove_download_url',{id:id},function(res){
+		    layer.msg(res.msg,{icon:res.status?1:2});
+		    layer.close(indexs);
+		    layer.close(index);
+		    if(indexs === false) get_download_url_list({},true);
+		});
+	});
+}
+
+function get_download_url_list(data,is_refresh){
+	if(data == undefined) data = {p:1}
+	$.post('/files?action=get_download_url_list',{p:data.p},function(res){
+		var _html = '',rdata = res.data;
+		for(var i=0;i<rdata.length;i++){
+			_html += '<tr><td>'+ rdata[i].ps +'</td><td>'+ rdata[i].filename +'</td><td>'+ bt.format_data(rdata[i].expire) +'</td><td style="text-align:right;"><a href="javascript:;" class="btlink info_down" data-index="'+i +'" data-id="'+ rdata[i].id +'">详情</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink del_down" data-id="'+ rdata[i].id +'" data-index="'+i +'">关闭</a></td></tr>';
+		}
+		if(is_refresh){
+			$('.download_url_list').html(_html);
+			$('.download_url_page').html(res.page);
+			return false;
+		}
+	   var layers = layer.open({
+		    type: 1,
+		    shift: 5,
+		    closeBtn: 2,
+		    area: ['850px','580px'],
+		    title: '分享列表',
+		    content:'<div class="divtable mtb10 download_table" style="padding:5px 10px;">\
+		    			<table class="table table-hover" id="download_url">\
+		    				<thead><tr><th>分享名称</th><th>文件地址</th><th>过期时间</th><th style="text-align:right;">操作</th></tr></thead>\
+		    				<tbody class="download_url_list">'+ _html +'</tbody>\
+		    			</table>\
+		    			<div class="page download_url_page">'+ res.page +'</div>\
+		    	</div>', 
+		    success:function(layers,index){
+		    	$('.download_table').on('click','.info_down',function(){
+		    		var indexs = $(this).attr('data-index');
+		    		set_download_url(rdata[indexs]);
+		    	});
+				$('.download_table').on('click','.del_down',function(){
+		    		var id = $(this).attr('data-id');
+		    		del_download_url(id,false);
+		    	});
+		    	$('.download_table .download_url_page').on('click','a',function(e){
+		    		var _href =  $(this).attr('href');
+		    		var page = _href.replace(/\/files\?action=get_download_url_list\?p=/,'')
+		    		get_download_url_list({p:page},true);
+		    		return false;
+		    	});
+		    }
+	   });
+	});
+}
+
 
 
 function RClickAll(e) {
@@ -1793,8 +1966,7 @@ function del_files_store(path, obj) {
     })
 }
 
-function set_file_store(path) {
-
+function set_file_store(path){
     var loading = bt.load();
     bt.send('get_files_store', 'files/get_files_store', {}, function (rRet) {
         loading.close();

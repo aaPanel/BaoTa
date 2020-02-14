@@ -10,7 +10,6 @@ import sys
 import json
 import os
 import time
-import logging
 import re
 import uuid
 import threading
@@ -138,7 +137,8 @@ admin_path_checks = [
                     '/webssh',
                     '/connect_event',
                     '/panel',
-                    '/acme'
+                    '/acme',
+                    '/down'
                     ]
 if admin_path in admin_path_checks: admin_path = '/bt'
 
@@ -209,7 +209,7 @@ def reload_mod():
 def request_check():
     if request.path in ['/service_status']: return
 
-    if not request.path in ['/safe','/hook','/public','/mail_sys']:
+    if not request.path in ['/safe','/hook','/public','/mail_sys','/down']:
         ip_check = public.check_ip_panel()
         if ip_check: return ip_check
         
@@ -225,7 +225,7 @@ def request_check():
             return public.returnJson(False,'INIT_REQUEST_CHECK_LOCAL_ERR'),json_header
 
     if app.config['BASIC_AUTH_OPEN']:
-        if request.path in ['/public','/download','/mail_sys','/hook']: return
+        if request.path in ['/public','/download','/mail_sys','/hook','/down']: return
         auth = request.authorization
         if not comm.get_sk(): return
         if not auth: return send_authenticated()
@@ -257,7 +257,7 @@ def home():
         public.writeFile(licenes,'True')
 
     data = {}
-    data[public.to_string([112, 100])] = get_pd()
+    data[public.to_string([112, 100])],data['pro_end'],data['ltd_end'] = get_pd()
     data['siteCount'] = public.M('sites').count()
     data['ftpCount'] = public.M('ftps').count()
     data['databaseCount'] = public.M('databases').count()
@@ -563,9 +563,9 @@ def files(pdata = None):
         return render_template('files.html',data=data)
     import files
     filesObject = files.files()
-    defs = ('CheckExistsFiles','GetExecLog','GetSearch','ExecShell','GetExecShellMsg',
-            'UploadFile','GetDir','CreateFile','CreateDir','DeleteDir','DeleteFile',
-            'CopyFile','CopyDir','MvFile','GetFileBody','SaveFileBody','Zip','UnZip',
+    defs = ('CheckExistsFiles','GetExecLog','GetSearch','ExecShell','GetExecShellMsg','exec_git','exec_composer','create_download_url',
+            'UploadFile','GetDir','CreateFile','CreateDir','DeleteDir','DeleteFile','get_download_url_list','remove_download_url','modify_download_url',
+            'CopyFile','CopyDir','MvFile','GetFileBody','SaveFileBody','Zip','UnZip','get_download_url_find',
             'SearchFiles','upload','read_history','re_history','auto_save_temp','get_auto_save_body',
             'GetFileAccess','SetFileAccess','GetDirSize','SetBatchData','BatchPaste','install_rar','get_path_size',
             'DownloadFile','GetTaskSpeed','CloseLogs','InstallSoft','UninstallSoft','SaveTmpFile',
@@ -633,8 +633,8 @@ def config(pdata = None):
         if public.is_local(): data['is_local'] = 'checked'
         return render_template( 'config.html',data=data)
     import config
-    defs = ('set_coll_open','get_qrcode_data','check_two_step','set_two_step_auth',
-            'get_key','get_php_session_path','set_php_session_path','get_cert_source',
+    defs = ('set_coll_open','get_qrcode_data','check_two_step','set_two_step_auth','create_user','remove_user','modify_user',
+            'get_key','get_php_session_path','set_php_session_path','get_cert_source','get_users',
             'set_local','set_debug','get_panel_error_logs','clean_panel_error_logs',
             'get_basic_auth_stat','set_basic_auth','get_cli_php_version','get_tmp_token',
             'set_cli_php_version','DelOldSession', 'GetSessionCount', 'SetSessionConf', 
@@ -950,7 +950,7 @@ def panel_safe():
     comm.checkWebType()
     comm.GetOS()
     sys.path.append(pluginPath)
-    import safelogin_main;
+    import safelogin_main
     reload(safelogin_main)
     s = safelogin_main.safelogin_main()
     if not hasattr(s,get.data['action']): return public.returnJson(False,'INIT_FUN_NOT_EXISTS')
@@ -1006,9 +1006,9 @@ def install():
 def check_token(data):
     pluginPath = 'plugin/safelogin/token.pl'
     if not os.path.exists(pluginPath): return False
-    from urllib import unquote;
-    from binascii import unhexlify;
-    from json import loads;
+    from urllib import unquote
+    from binascii import unhexlify
+    from json import loads
         
     result = unquote(unhexlify(data))
     token = public.readFile(pluginPath).strip()
@@ -1059,6 +1059,44 @@ def download():
                      attachment_filename=os.path.basename(filename),
                      cache_timeout=0)
 
+@app.route('/down/<token>',methods=method_all)
+def down(token=None,mdown=None):
+    try:
+        if not token: return abort(404)
+        if len(token) != 12: return abort(404)
+        if not re.match(r"^\w+$",token): return abort(404)
+        find = public.M('download_token').where('token=?',(token,)).find()
+        if not find: return abort(404)
+        if time.time() > int(find['expire']): return abort(404)
+        if not os.path.exists(find['filename']): return abort(404)
+        if find['password']:
+            args = get_input()
+            if 'file_password' in args:
+                if not re.match(r"^\w+$",args.file_password): 
+                    return public.ReturnJson(False,'密码错误!'),json_header
+                if not args.file_password == find['password']:
+                    return public.ReturnJson(False,'密码错误!'),json_header
+            else:
+                pdata = {
+                        "password":True,
+                        "filename":find['filename'].split('/')[-1],
+                        "total":find['total'],
+                        "token":find['token'],
+                        "expire":find['expire']
+                    }
+                return render_template('down.html',data = pdata)
+
+        filename = find['filename']
+        mimetype = "application/octet-stream"
+        extName = filename.split('.')[-1]
+        if extName in ['png','gif','jpeg','jpg']: mimetype = None
+        return send_file(filename,mimetype=mimetype, 
+                        as_attachment=True,
+                        attachment_filename=os.path.basename(filename),
+                        cache_timeout=0)
+    except: return abort(404)
+
+
 @app.route('/cloud',methods=method_get)
 def panel_cloud():
     comReturn = comm.local()
@@ -1108,8 +1146,10 @@ def publicObject(toObject,defs,action=None,get = None):
         
     if hasattr(toObject,'site_path_check'):
         if not toObject.site_path_check(get): return public.ReturnJson(False,'INIT_ACCEPT_NOT'),json_header
-
-    return run_exec().run(toObject,defs,get)
+    p = run_exec()
+    result =  p.run(toObject,defs,get)
+    del p
+    return result
 
 
 
@@ -1132,64 +1172,79 @@ def get_pd():
         tmp1 = None
     if tmp1:
         tmp = tmp1[public.to_string([112,114,111])]
+        ltd = tmp1.get('ltd',-1)
     else:
+        ltd = -1
         tmp4 = cache.get(public.to_string([112, 95, 116, 111, 107, 101, 110]))
         if tmp4:
             tmp_f = public.to_string([47, 116, 109, 112, 47]) + tmp4
             if not os.path.exists(tmp_f): public.writeFile(tmp_f,'-1')
             tmp = public.readFile(tmp_f)
             if tmp: tmp = int(tmp)
-    if tmp == -1:
-        tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 112, 114, 
-                                 111, 45, 103, 114, 97, 121, 34, 32, 111, 110, 99, 108, 105, 99, 
-                                 107, 61, 34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 
-                                 116, 97, 95, 112, 114, 111, 40, 41, 34, 32, 116, 105, 116, 108, 101, 61, 
-                                 34, 28857, 20987, 21319, 32423, 21040, 19987, 19994, 29256, 34, 62, 
-                                 20813, 36153, 29256, 60, 47, 115, 112, 97, 110, 62])
-    elif tmp == -2:
-        tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 
-                                112, 114, 111, 45, 103, 114, 97, 121, 34, 62, 60, 115, 112, 97, 110, 32,
-                                115, 116, 121, 108, 101, 61, 34, 99, 111, 108, 111, 114, 58, 32, 35, 
-                                102, 99, 54, 100, 50, 54, 59, 102, 111, 110, 116, 45, 119, 101, 105, 103, 
-                                104, 116, 58, 32, 98, 111, 108, 100, 59, 109, 97, 114, 103, 105, 110, 45, 
-                                114, 105, 103, 104, 116, 58, 53, 112, 120, 34, 62, 24050, 36807, 26399, 
-                                60, 47, 115, 112, 97, 110, 62, 60, 97, 32, 99, 108, 97, 115, 115, 61, 34, 
-                                98, 116, 108, 105, 110, 107, 34, 32, 111, 110, 99, 108, 105, 99, 107, 61, 
-                                34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 116, 97, 95, 
-                                112, 114, 111, 40, 41, 34, 62, 32493, 36153, 60, 47, 97, 62, 60, 
-                                47, 115, 112, 97, 110, 62])
-    elif tmp >= 0:
-        if tmp == 0:
-            tmp2 = public.to_string([27704,20037,25480,26435])
-            tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 
-                                     112, 114, 111, 34, 62, 123, 48, 125, 60, 115, 112, 97, 110, 32, 115, 116, 
-                                     121, 108, 101, 61, 34, 99, 111, 108, 111, 114, 58, 32, 35, 102, 99, 54, 100, 
-                                     50, 54, 59, 102, 111, 110, 116, 45, 119, 101, 105, 103, 104, 116,
-                                     58, 32, 98, 111, 108, 100, 59, 34, 62, 123, 49, 125, 60, 47, 115, 
-                                     112, 97, 110, 62, 60, 47, 115, 112, 97, 110, 62]).format(
-                                        public.to_string([21040,26399,26102,38388,65306]),tmp2)
-        else:
-            tmp2 = time.strftime(public.to_string([37, 89, 45, 37, 109, 45, 37, 100]),time.localtime(tmp))
-            tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 
-                                     112, 114, 111, 34, 62, 21040, 26399, 26102, 38388, 65306, 60, 115, 112, 
-                                     97, 110, 32, 115, 116, 121, 108, 101, 61, 34, 99, 111, 108, 111, 114, 
-                                     58, 32, 35, 102, 99, 54, 100, 50, 54, 59, 102, 111, 110, 116, 45, 119, 
-                                     101, 105, 103, 104, 116, 58, 32, 98, 111, 108, 100, 59, 109, 97, 114, 
-                                     103, 105, 110, 45, 114, 105, 103, 104, 116, 58, 53, 112, 120, 34, 62, 123, 
-                                     48, 125, 60, 47, 115, 112, 97, 110, 62, 60, 97, 32, 99, 108, 97, 115, 
-                                     115, 61, 34, 98, 116, 108, 105, 110, 107, 34, 32, 111, 110, 99, 108, 105, 99, 
-                                     107, 61, 34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 
-                                     116, 97, 95, 112, 114, 111, 40, 41, 34, 62, 32493, 36153, 60, 47, 97, 62, 60, 
-                                     47, 115, 112, 97, 110, 62]).format(tmp2)
-    else:
-        tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 112, 
-                                 114, 111, 45, 103, 114, 97, 121, 34, 32, 111, 110, 99, 108, 105, 99, 107, 
-                                 61, 34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 116, 97, 
-                                 95, 112, 114, 111, 40, 41, 34, 32, 116, 105, 116, 108, 101, 61, 34, 28857,
-                                 20987, 21319, 32423, 21040, 19987, 19994, 29256, 34, 62, 20813, 36153, 
-                                 29256, 60, 47, 115, 112, 97, 110, 62])
         
-    return tmp3
+    if ltd < 1:
+        if tmp == -1:
+            tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 
+                                    116, 112, 114, 111, 45, 102, 114, 101, 101, 34, 32, 111, 110, 99, 108, 105, 99, 107,
+                                    61, 34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 116, 97, 95, 99,
+                                    111, 109, 109, 101, 114, 99, 105, 97, 108, 95, 118, 105, 101, 119, 40, 41, 34,
+                                    32, 116, 105, 116, 108, 101, 61, 34, 28857, 20987, 21319, 32423, 21040,
+                                        21830, 19994, 29256, 34, 62, 20813, 36153, 29256, 60, 47, 115, 112, 97, 110, 62])
+        elif tmp == -2:
+            tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 
+                                    112, 114, 111, 45, 103, 114, 97, 121, 34, 62, 60, 115, 112, 97, 110, 32,
+                                    115, 116, 121, 108, 101, 61, 34, 99, 111, 108, 111, 114, 58, 32, 35, 
+                                    102, 99, 54, 100, 50, 54, 59, 102, 111, 110, 116, 45, 119, 101, 105, 103, 
+                                    104, 116, 58, 32, 98, 111, 108, 100, 59, 109, 97, 114, 103, 105, 110, 45, 
+                                    114, 105, 103, 104, 116, 58, 53, 112, 120, 34, 62, 24050, 36807, 26399, 
+                                    60, 47, 115, 112, 97, 110, 62, 60, 97, 32, 99, 108, 97, 115, 115, 61, 34, 
+                                    98, 116, 108, 105, 110, 107, 34, 32, 111, 110, 99, 108, 105, 99, 107, 61, 
+                                    34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 116, 97, 95, 
+                                    112, 114, 111, 40, 41, 34, 62, 32493, 36153, 60, 47, 97, 62, 60, 
+                                    47, 115, 112, 97, 110, 62])
+        elif tmp >= 0:
+            if tmp == 0:
+                tmp2 = public.to_string([27704,20037,25480,26435])
+                tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 
+                                        112, 114, 111, 34, 62, 123, 48, 125, 60, 115, 112, 97, 110, 32, 115, 116, 
+                                        121, 108, 101, 61, 34, 99, 111, 108, 111, 114, 58, 32, 35, 102, 99, 54, 100, 
+                                        50, 54, 59, 102, 111, 110, 116, 45, 119, 101, 105, 103, 104, 116,
+                                        58, 32, 98, 111, 108, 100, 59, 34, 62, 123, 49, 125, 60, 47, 115, 
+                                        112, 97, 110, 62, 60, 47, 115, 112, 97, 110, 62]).format(
+                                            public.to_string([21040,26399,26102,38388,65306]),tmp2)
+            else:
+                tmp2 = time.strftime(public.to_string([37, 89, 45, 37, 109, 45, 37, 100]),time.localtime(tmp))
+                tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 
+                                        112, 114, 111, 34, 62, 21040, 26399, 26102, 38388, 65306, 60, 115, 112, 
+                                        97, 110, 32, 115, 116, 121, 108, 101, 61, 34, 99, 111, 108, 111, 114, 
+                                        58, 32, 35, 102, 99, 54, 100, 50, 54, 59, 102, 111, 110, 116, 45, 119, 
+                                        101, 105, 103, 104, 116, 58, 32, 98, 111, 108, 100, 59, 109, 97, 114, 
+                                        103, 105, 110, 45, 114, 105, 103, 104, 116, 58, 53, 112, 120, 34, 62, 123, 
+                                        48, 125, 60, 47, 115, 112, 97, 110, 62, 60, 97, 32, 99, 108, 97, 115, 
+                                        115, 61, 34, 98, 116, 108, 105, 110, 107, 34, 32, 111, 110, 99, 108, 105, 99, 
+                                        107, 61, 34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 
+                                        116, 97, 95, 112, 114, 111, 40, 41, 34, 62, 32493, 36153, 60, 47, 97, 62, 60, 
+                                        47, 115, 112, 97, 110, 62]).format(tmp2)
+        else:
+            tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 112, 
+                                    114, 111, 45, 103, 114, 97, 121, 34, 32, 111, 110, 99, 108, 105, 99, 107, 
+                                    61, 34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 116, 97, 
+                                    95, 112, 114, 111, 40, 41, 34, 32, 116, 105, 116, 108, 101, 61, 34, 28857,
+                                    20987, 21319, 32423, 21040, 19987, 19994, 29256, 34, 62, 20813, 36153, 
+                                    29256, 60, 47, 115, 112, 97, 110, 62])
+    else:
+        tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 108, 116, 
+                                    100, 34, 62, 21040, 26399, 26102, 38388, 65306, 60, 115, 112, 97, 110, 32, 115, 116, 
+                                    121, 108, 101, 61, 34, 99, 111, 108, 111, 114, 58, 32, 35, 102, 99, 54, 100, 50, 
+                                    54, 59, 102, 111, 110, 116, 45, 119, 101, 105, 103, 104, 116, 58, 32, 98, 111, 
+                                    108, 100, 59, 109, 97, 114, 103, 105, 110, 45, 114, 105, 103, 104, 116, 58, 53, 
+                                    112, 120, 34, 62, 123, 125, 60, 47, 115, 112, 97, 110, 62, 60, 97, 32, 99, 108, 
+                                    97, 115, 115, 61, 34, 98, 116, 108, 105, 110, 107, 34, 32, 111, 110, 99, 108, 105, 
+                                    99, 107, 61, 34, 98, 116, 46, 115, 111, 102, 116, 46, 117, 112, 100, 97, 116, 97, 
+                                    95, 108, 116, 100, 40, 41, 34, 62, 32493, 36153, 60, 47, 97, 62, 60, 47, 115, 
+                                    112, 97, 110, 62]).format(time.strftime(public.to_string([37, 89, 45, 37, 109, 45, 37, 100]),time.localtime(ltd)))
+                                    
+    return tmp3,tmp,ltd
 
 
 @app.errorhandler(404)

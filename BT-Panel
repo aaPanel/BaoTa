@@ -7,13 +7,27 @@
 # +-------------------------------------------------------------------
 # | Author: 黄文良 <287962566@qq.com>
 # +-------------------------------------------------------------------
-from gevent import monkey
+from gevent import monkey,__version__ as gevent_version
 monkey.patch_all()
-import os,ssl
+import os,sys,ssl
 os.chdir('/www/server/panel')
-from BTPanel import app,sys
+from BTPanel import app,sys,public
 
 if __name__ == '__main__':
+    pid = os.fork()
+    if pid: sys.exit(0)
+    
+    os.umask(0)
+    os.setsid()
+
+    _pid = os.fork()
+    if _pid:
+        public.writeFile('logs/panel.pid',str(_pid))
+        sys.exit(0)
+
+    sys.stdout.flush()
+    sys.stderr.flush()
+
     f = open('data/port.pl')
     PORT = int(f.read())
     HOST = '0.0.0.0'
@@ -21,35 +35,33 @@ if __name__ == '__main__':
         HOST = "0:0:0:0:0:0:0:0"
     f.close()
 
-    #app.threaded=True
-    #app.jinja_env.auto_reload = True
-
     from  gevent.pywsgi import WSGIServer
     from geventwebsocket.handler import WebSocketHandler
     
+    is_debug = os.path.exists('data/debug.pl')
     keyfile = 'ssl/privateKey.pem'
     certfile = 'ssl/certificate.pem'
     is_ssl = False
     if os.path.exists('data/ssl.pl') and os.path.exists(keyfile) and os.path.exists(certfile):
         is_ssl = True
-    if os.path.exists('data/debug.pl'):
+    
+    if not is_ssl or is_debug:
+        err_f = open('logs/error.log','a+')
+        os.dup2(err_f.fileno(),sys.stderr.fileno())
+        err_f.close()
+
+    if is_debug:
         ssl_context = None
         if is_ssl: ssl_context=(certfile,keyfile)
         app.run(host=HOST,port=PORT,threaded=True,debug=True,ssl_context=ssl_context)
     else:
         if is_ssl:
-            my_ssl = {
-                'certfile': certfile,
-                'keyfile': keyfile,
-                'ciphers': 'ECDHE-RSA-AES128-GCM-SHA256:HIGH:!aNULL:!MD5:!RC4:!DHE',
-                'ssl_version':ssl.OP_NO_SSLv3,
-                'suppress_ragged_eofs':False
-            }
             ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             ssl_context.load_cert_chain(certfile=certfile,keyfile=keyfile)
-            ssl_context.options &= ~ssl.OP_NO_SSLv3
-
+            ssl_context.options |= (ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3)
+            ssl_context.set_ciphers("ECDHE-RSA-AES128-GCM-SHA256:HIGH:!aNULL:!MD5:!RC4:!DHE")
             http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler,ssl_context = ssl_context)
         else:
             http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler)
+
         http_server.serve_forever()

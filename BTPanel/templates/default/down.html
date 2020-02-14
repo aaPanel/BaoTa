@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0,user-scalable=no">
+    <title>提取文件 - {{data.filename}}</title>
+</head>
+<style>
+.btn-success:hover {
+    color: #fff;
+    background-color: #10952a;
+    border-color: #398439;
+}
+
+.btn-success {
+    display: inline-block;
+    padding: 6px 12px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.42857143;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    touch-action: manipulation;
+    cursor: pointer;
+    user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: #fff;
+    background-color: #20a53a;
+    border-color: #20a53a;
+}
+
+.input-text {
+    border: 1px solid #ccc;
+    height: 30px;
+    line-height: 30px;
+    padding-left: 5px;
+    border-radius: 4px;
+    float: left;
+    margin-right: 5px;
+    -webkit-transition: border-color ease-in-out .15s, -webkit-box-shadow ease-in-out .15s;
+    -o-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+}
+
+.div-center {
+    text-align: center;
+    margin: 20% auto;
+    width: 274px;
+}
+
+
+</style>
+<body>
+    <div class="div-center">
+        <p>
+            <img style="float: left; width: 32px;margin-right: 5px;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAEnSAABJ0gGoRYr4AAAAB3RJTUUH5AIEByk1oxl6TgAABYJJREFUWMOdV02IHEUU/l5Vdff87M5mZnZdYxKTVWIwSAwRBQXxLEHBn6sXwaOIePLgRRAvQhQJyTGXxWvEmyIoEvAicbMqxrj+s7vEbGZ2Z2emp+tVPQ+73emZ6Uk2FhT1pmu63lff+96rakKunT9/HiICpRS01tBaAwCcc1ln5onj7ebS95VSuHDhQuaTUuPs2bPY3t7GxsaGDoKgEgTBEABmhrV2aEzt0eeTxjAM41qtZpvNJhYXFwEAJs9Au902J06ceHt+fv50EASilAIAeO+z7py7rT1pPkkStbKy8vXy8vI7RDRIfQ4BMMZMNxqNF0+dOnXSWgsiglIK3nvcTRORsd9EhIsXL84uLS19KCKrYwB2/0REJM45dLtdEBGMMRkAIgIRZXYWx5w9CVAURQiCAADU0Kbzf/LeZ+iVUhlyIoKIgJmHHI46LgJijIFSaiLIDEAaq9RpfsdEhCRJ0Ol0JjorcqC1Rr1ez+ZEJOtjANI0ydOdX/z/0J9/b08MFAHIj2la7hWE1nrM+V0xMBqOSfGfBGCUgTuGgJkLGUhfSF/OPxu18y0v4nQuL3QglxIpgNRJv98fWrhIB0X2JBbyG7hjCJxzSJIE5XJ5yEk+ne5WA3sOgXMOxhjU6/XCWO5FB6PzSikopbMQ5CvrRA3kF0sRe+8LY55/BgDtzTY222304z7YMbTSaDQa2NzahFLKK63wxpuv46MzH+8NQFHMi5qI4MaNf9Hrd1GuljHTqME7jziO8fc/f6GzvTl34uQjz2x3up9M1IBzrtBJqoFRUGEYolqtQimFtbVVWGdx9NhDuHbtF1y9ehXWWpRKZRw8dAD7D9w7fembS+8T0Y8Arrzx5uu3AKTn+yQGlFKIomiMjSiKUCqVICLYaG1g4cgClpeXcXPjJh479TiiMES318Ply9+hPjuDhQePHG612i9rra845+5cB9IWhiGiKJpYXpkZNrEQEaytreL0s8+h2WxmtaBaqeDLr77AofsPwgRm4fdf/6BDhw9KIQDnHFqtFmZmZjIwg8EAW1tbhXpID6s4jhEPYljL6Ha7YGY0Gg0YbVBvNDBVnUa5XAGBarNzTQPAjhWiVAOlUmms9u+k062utc5sUhqWPZzzEAGUMtDaQCkDUhpaGZRKFUxP7YNA+SvJe8749WINaK1RqVQKS2yROIkUyK7BbH2G1jWgKf9g7ccfQGRwvToFgUK/P4C9/ifW+/tQ4+8XTkdnnnj/8+63t03D0TI6ejNKnfNgHZ3fPsAjR+dQmz2M48cbYI7BHMPxKpj7mK7EaO7rw9o1NKeSR3+6Ul1866nSK4UARu90RVlx64ECd39FtRpg4eQLIP4awutwHIO5D8d9ONcDcw+O+2DbRb1RR6d74IH19a0XJ9aBIsfpWTB6PigCdDgDQh+wf0J4HZ5jeI7hON4BscsI2xjMDG32A8B0BiC9u0+6ASulEIbhWBoqZWCDEL4nAAQghZ1DdrwTFHY+RQjYJTkDMDs7i6WlpYCZ1ahzEcnqQJ4FIoLSAag/jXYLyFa9i5Y5O3funG632zVmNqMXkLydaiTr3sN7gRcBhrQjIyMgBQDzHyZBkiQla61O81tEslow6VBSSgFEcN4DRDt7SkfQEO20O0fKINVyHoCP47izsrLy/eLi4nwYhrK7+yHZj5+ESiT+hRZqP08vtJ421cpJONoPp3rwugcvPYh0AcQAEiiy4MRg499VJ4IfKLcwiUhlbm7uvqmpqSMiEonI7T95UuoM5NVnV598+Nh9L0Xl2hyzhWUGOwfLDswOzB5evBAEg4Ht3Li++am1/t0hB8YYYmYDINhlZ08AUipeex7776lj3nmQZYAdYBlwHgLAhwE4CuAA3CTCb2EE/g/P8fp94lge6QAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxOS0xMi0yOFQwOTozMjowNSswMDowMCpUvEMAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTktMDEtMDhUMTc6MTE6MzYrMDA6MDAi0dutAAAAM3RFWHRMaWNlbnNlAGh0dHA6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LzMuMC9W9/ocAAAAIHRFWHRzb2Z0d2FyZQBodHRwczovL2ltYWdlbWFnaWNrLm9yZ7zPHZ0AAAAadEVYdFNvdXJjZQBUYW5nbyBoYXJtLW9uLWljb25zBTECsgAAAEp0RVh0U291cmNlX1VSTABodHRwOi8vZ25vbWUtbG9vay5vcmcvY29udGVudC9zaG93LnBocC9UYW5nbyttaW5lP2NvbnRlbnQ9NzYzMTaO2nU5AAAAGHRFWHRUaHVtYjo6RG9jdW1lbnQ6OlBhZ2VzADGn/7svAAAAGHRFWHRUaHVtYjo6SW1hZ2U6OkhlaWdodAAyNTbpw0QZAAAAF3RFWHRUaHVtYjo6SW1hZ2U6OldpZHRoADI1NnoyFEQAAAAZdEVYdFRodW1iOjpNaW1ldHlwZQBpbWFnZS9wbmc/slZOAAAAF3RFWHRUaHVtYjo6TVRpbWUAMTU0Njk2NzQ5NtYoUhcAAAASdEVYdFRodW1iOjpTaXplADEzODM0Qigd+1sAAABYdEVYdFRodW1iOjpVUkkAZmlsZTovLy9kYXRhL3d3d3Jvb3Qvd3d3LmVhc3lpY29uLm5ldC9jZG4taW1nLmVhc3lpY29uLmNuL2ZpbGVzLzU0LzU0MjMyNS5wbmcFfPQPAAAAAElFTkSuQmCC" />
+            <form action="/down/{{data.token}}" method="POST">
+                <input class="input-text" name="file_password" id="file_password" type="text" placeholder="请输入提取密码" />
+                <button class="btn-success" type="submit" onclick="return submit_pass();">提取</button>
+            </form>
+        </p>
+    </div>
+</body>
+<script type="text/javascript">
+    function submit_pass(){
+        var file_password = document.getElementById("file_password").value;
+        if(file_password.length < 4){
+            alert("密码长度不正确!");
+            return false;
+        }
+        return true;
+    }
+    
+</script>
+</html>

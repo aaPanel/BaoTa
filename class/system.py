@@ -349,7 +349,7 @@ class system:
     
     def GetDiskInfo2(self):
         #取磁盘分区信息
-        temp = public.ExecShell("df -h -P|grep '/'|grep -v tmpfs")[0]
+        temp = public.ExecShell("df -hT -P|grep '/'|grep -v tmpfs")[0]
         tempInodes = public.ExecShell("df -i -P|grep '/'|grep -v tmpfs")[0]
         temp1 = temp.split('\n')
         tempInodes1 = tempInodes.split('\n')
@@ -360,16 +360,19 @@ class system:
             n += 1
             try:
                 inodes = tempInodes1[n-1].split()
-                disk = tmp.split()
-                if len(disk) < 5: continue
-                if disk[1].find('M') != -1: continue
-                if disk[1].find('K') != -1: continue
-                if len(disk[5].split('/')) > 10: continue
-                if disk[5] in cuts: continue
-                if disk[5].find('docker') != -1: continue
+                disk = re.findall(r"^(/.+)\s+([\w]+)\s+([\w\.]+)\s+([\w\.]+)\s+([\w\.]+)\s+([\d%]{2,4})\s+(/.{0,50})$",tmp.strip())
+                if disk: disk = disk[0]
+                if len(disk) < 6: continue
+                if disk[2].find('M') != -1: continue
+                if disk[2].find('K') != -1: continue
+                if len(disk[6].split('/')) > 10: continue
+                if disk[6] in cuts: continue
+                if disk[6].find('docker') != -1: continue
                 arr = {}
-                arr['path'] = disk[5]
-                tmp1 = [disk[1],disk[2],disk[3],disk[4]]
+                arr['filesystem'] = disk[0].strip()
+                arr['type'] = disk[1].strip()
+                arr['path'] = disk[6]
+                tmp1 = [disk[2],disk[3],disk[4],disk[5]]
                 arr['size'] = tmp1
                 arr['inodes'] = [inodes[1],inodes[2],inodes[3],inodes[4]]
                 diskInfo.append(arr)

@@ -22,10 +22,14 @@ class http:
     def get(self,url,timeout = 60,headers = {},verify = False,type = 'python'):
         url = self.quote(url)
         if type == 'python':
-            if sys.version_info[0] == 2:
-                result = self._get_py2(url,timeout,headers,verify)
-            else:
-                result = self._get_py3(url,timeout,headers,verify)
+            try:
+                from requests import get as req_get
+                return req_get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
+            except:
+                if sys.version_info[0] == 2:
+                    result = self._get_py2(url,timeout,headers,verify)
+                else:
+                    result = self._get_py3(url,timeout,headers,verify)
         elif type == 'curl':
             result = self._get_curl(url,timeout,headers,verify)
         elif type == 'php':
@@ -35,10 +39,14 @@ class http:
     def post(self,url,data,timeout = 60,headers = {},verify = False,type = 'python'):
         url = self.quote(url)
         if type == 'python':
-            if sys.version_info[0] == 2:
-                result =  self._post_py2(url,data,timeout,headers,verify)
-            else:
-                result = self._post_py3(url,data,timeout,headers,verify)
+            try:
+                from requests import post as req_post
+                return req_post(url,data,timeout=timeout,headers=headers,verify=verify)
+            except:
+                if sys.version_info[0] == 2:
+                    result =  self._post_py2(url,data,timeout,headers,verify)
+                else:
+                    result = self._post_py3(url,data,timeout,headers,verify)
         elif type == 'curl':
             result = self._post_curl(url,data,timeout,headers,verify)
         elif type == 'php':
@@ -362,6 +370,14 @@ class response:
                 self.headers[tmp[0]] = tmp[1].strip()
         self.headers.raw = '\r\n'.join(raw)
 
+    def close(self):
+        self.text = None
+        self.content = None
+        self.status_code = None
+        self.status = None
+        self.code = None
+        self.headers = None
+
     #取格式化JSON响应
     def json(self):
         try:
@@ -410,11 +426,7 @@ def post(url,data = {},timeout = 60,headers = {},verify = False,s_type = None):
     '''
     p = http()
     try:
-        try:
-            import requests
-            return requests.post(url,data,timeout=timeout,headers=get_headers(headers),verify=verify)
-        except:
-            return p.post(url,data,timeout,get_headers(headers),verify,get_stype(s_type))
+        return p.post(url,data,timeout,get_headers(headers),verify,get_stype(s_type))
     except:
         raise Exception(public.get_error_info())
 
@@ -429,11 +441,7 @@ def get(url,timeout = 60,headers = {},verify = False,s_type = None):
     '''
     p = http()
     try:
-        try:
-            import requests
-            return requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
-        except:
-            return p.get(url,timeout,get_headers(headers),verify,get_stype(s_type))
+        return p.get(url,timeout,get_headers(headers),verify,get_stype(s_type))
     except:
         raise Exception(public.get_error_info())
 

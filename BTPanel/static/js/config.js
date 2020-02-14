@@ -586,23 +586,79 @@ function SavePanelSSL(){
 
 
 function SetDebug() {
-    var status_s = {false:'开启',true:'关闭'}
+    var status_s = {false:'开启',true:'关闭'};
     var debug_stat = $("#panelDebug").prop('checked');
-    bt.confirm({
-		title: status_s[debug_stat] + "开发者模式",
-		msg: "开启开发者模式后面板可能会占用大量内存开销，您真的要"+ status_s[debug_stat]+"开发者模式?",
-		cancel: function () {
+    if(debug_stat){
+    	bt.confirm({
+			title: status_s[debug_stat] + "开发者模式",
+			msg: "您确定要"+ status_s[debug_stat] + "开发者模式吗 ?",
+	    cancel: function () {
 			$("#panelDebug").prop('checked',debug_stat);
-    	}}, function () {
-			var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
+    	}},function () {
+    		var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
 			$.post('/config?action=set_debug', {}, function (rdata) {
 				layer.close(loadT);
 				if (rdata.status) layer.closeAll()
 				layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
 			});
-		},function () {
-		$("#panelDebug").prop('checked',debug_stat);
-	});
+    	},function () {
+			$("#panelDebug").prop('checked',debug_stat);
+    	});
+    	return;
+    }
+    bt.open({
+    	type:'1',
+    	title:status_s[debug_stat] + "开发者模式",
+    	area:'450px',
+    	btn:['确认','取消'],
+    	content:'<div style="padding:20px 30px;">\
+    		<div style="padding-bottom: 10px;">\
+	    		<i class="layui-layer-ico layui-layer-ico3" style="width: 30px;height: 30px;display: inline-block;"></i>\
+	    		<h3 style="display:inline-block;vertical-align:super;margin-left:15px;">警告！此功能普通用户别开启!</h3>\
+    		</div>\
+    		<ul style="font-size: 14px;padding: 15px;line-height:21px;background: #f5f5f5;border-radius: 8px;"><li style="color:red;">仅第三方开发者开发使用，普通用户请勿开启；</li>\
+    			<li>请不要在生产环境开启，这可能增加服务器安全风险；</li>\
+    			<li>开启开发者模式可能会占用大量内存；</li>\
+    		</ul>\
+    		<div class="details" style="margin-top: 11px;font-size: 13px;padding-left: 5px;">\
+    			<input type="checkbox" id="checkDebug" style="width: 16px;height: 16px;">\
+    			<label style="font-weight: 400;margin: 3px 5px 0px;" for="checkDebug">我已了经解详情,并愿意承担风险</label><p></p></div>\
+    	</div>',
+    	yes:function(){
+    		if($('#checkDebug').prop('checked')){
+    			var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
+				$.post('/config?action=set_debug', {}, function (rdata) {
+					layer.close(loadT);
+					if (rdata.status) layer.closeAll()
+					layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+				});
+    		}else{
+    			layer.tips('请勾选我已了解', '#checkDebug', {tips: [1,'#FF5722']});
+    		}
+
+    	},
+    	btn2:function(){
+    		$("#panelDebug").prop('checked',debug_stat);
+    	},
+    	cancel: function () {
+			$("#panelDebug").prop('checked',debug_stat);
+    	}
+    });
+ //   bt.confirm({
+	// 	title: status_s[debug_stat] + "开发者模式",
+	// 	msg: "开启开发者模式后面板可能会占用大量内存开销，您真的要"+ status_s[debug_stat]+"开发者模式?",
+	// 	cancel: function () {
+	// 		$("#panelDebug").prop('checked',debug_stat);
+ //   	}}, function () {
+	// 		var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
+	// 		$.post('/config?action=set_debug', {}, function (rdata) {
+	// 			layer.close(loadT);
+	// 			if (rdata.status) layer.closeAll()
+	// 			layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+	// 		});
+	// 	},function () {
+	// 	$("#panelDebug").prop('checked',debug_stat);
+	// });
 }
 
 function set_local() {
@@ -960,9 +1016,7 @@ function modify_basic_auth() {
     });
 }
 function open_three_channel_auth(){
-	var loadT = layer.msg('正在获取配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-	$.post('/config?action=get_settings',function(rdata){
-		layer.close(loadT);
+	get_channel_settings(function(rdata){
 		var isOpen = rdata.dingding.info.msg.isAtAll == 'True' ? 'checked': '';
 		var isDing = rdata.dingding.info.msg == '无信息'? '': rdata.dingding.info.msg.dingding_url;
 		layer.open({
@@ -984,7 +1038,7 @@ function open_three_channel_auth(){
 	                					<div class="bt-form">\
 	                						<div class="line">\
 	                							<button class="btn btn-success btn-sm" onclick="add_receive_info()">添加收件者</button>\
-	                							<button class="btn btn-default btn-sm" onclick="sender_info_edit(\''+ rdata.user_mail.info.msg.qq_mail +'\',\''+ rdata.user_mail.info.msg.qq_stmp_pwd +'\',\''+ rdata.user_mail.info.msg.hosts +'\')">发送者设置</button>\
+	                							<button class="btn btn-default btn-sm" onclick="sender_info_edit()">发送者设置</button>\
 	                						</div>\
 					                        <div class="line">\
 						                        <div class="divtable">\
@@ -1025,11 +1079,14 @@ function open_three_channel_auth(){
 		get_receive_list();
 	})
 }
-function sender_info_edit(qq_mail,qq_stmp_pwd,hosts){
-	qq_mail = qq_mail == 'undefined' ? '' : qq_mail;
-	qq_stmp_pwd = qq_stmp_pwd == 'undefined'? '' : qq_stmp_pwd;
-	hosts = hosts == 'undefined'? '' : hosts;
-	layer.open({
+function sender_info_edit(){
+	var loadT = layer.msg('正在获取配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+	$.post('/config?action=get_settings',function(rdata){
+		layer.close(loadT);
+		var qq_mail = rdata.user_mail.info.msg.qq_mail == undefined ? '' : rdata.user_mail.info.msg.qq_mail,
+			qq_stmp_pwd = rdata.user_mail.info.msg.qq_stmp_pwd == undefined? '' : rdata.user_mail.info.msg.qq_stmp_pwd,
+			hosts = rdata.user_mail.info.msg.hosts == undefined? '' : rdata.user_mail.info.msg.hosts;
+		layer.open({
 		type: 1,
         area: "460px",
         title: "设置发送者邮箱信息",
@@ -1070,16 +1127,27 @@ function sender_info_edit(qq_mail,qq_stmp_pwd,hosts){
 					return layer.msg('STMP密码不能为空！',{icon:2});
 				}else if(_server == ''){return layer.msg('STMP服务器地址不能为空！',{icon:2})}
 				var loadT = layer.msg('正在生成邮箱通道中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-				layer.close(index)
 				$.post('/config?action=user_mail_send',{email:_email,stmp_pwd:_passW,hosts:_server},function(rdata){
 					layer.close(loadT);
 					layer.msg(rdata.msg,{icon:rdata.status?1:2})
+					if(rdata.status){
+						layer.close(index)
+						get_channel_settings();
+					}
 				})
 			})
 			$(".smtp_closeBtn").click(function(){
 				layer.close(index)
 			})
 		}
+	})
+	})
+}
+function get_channel_settings(callback){
+	var loadT = layer.msg('正在获取配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+	$.post('/config?action=get_settings',function(rdata){
+		layer.close(loadT);
+        if (callback) callback(rdata);
 	})
 }
 function add_receive_info(){
@@ -1165,8 +1233,6 @@ function SetChannelDing(){
 		layer.msg('请输入钉钉url',{icon:2})
 	}
 }
-
-
 
 function show_basic_auth(rdata) {
     layer.open({
