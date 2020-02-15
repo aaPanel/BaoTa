@@ -666,12 +666,15 @@ function GetFiles(Path, sort) {
                 }
             }
         });
-        $(".folderBox,.folderBoxTr").mousedown(function (e) {
+        $(".folderBox,.folderBoxTr").on('mouseup', function (e) {
             var count = totalFile();
             if (e.which == 3) {
                 if (count <= 1) {
                     var a = $(this);
-                    a.contextify(RClick(a.attr("filetype"), a.attr("data-path"), a.find("input").val(), rdata));
+                    var ret = a.contextify(RClick(a.attr("filetype"), a.attr("data-path"), a.find("input").val(), rdata,a.attr('fileshare')));
+                    e.type = 'contextmenu';
+                    ret.triggerHandler(e)
+                    e.stopPropagation();
                 }
                 else {
                     RClickAll(e);
