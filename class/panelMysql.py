@@ -70,7 +70,9 @@ class panelMysql:
         except MySQLdb.Error as e:
             self.__DB_ERR = e
             return False
-              
+
+
+          
     def execute(self,sql):
         #执行SQL语句返回受影响行
         if not self.__Conn(): return self.__DB_ERR
@@ -98,7 +100,8 @@ class panelMysql:
             return data
         except Exception as ex:
             return ex
-    
+        
+     
     #关闭连接        
     def __Close(self):
         self.__DB_CUR.close()

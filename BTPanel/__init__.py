@@ -18,7 +18,12 @@ sys.path.insert(0,'class/')
 import public
 from flask import Flask,current_app,session,render_template,send_file,request,redirect,g,url_for,make_response,render_template_string,abort
 from flask_session import Session
-from werkzeug.contrib.cache import SimpleCache
+
+try:
+    from werkzeug.contrib.cache import SimpleCache
+except:
+    from cachelib import SimpleCache
+
 from werkzeug.wrappers import Response
 from flask_sockets import Sockets
 sys.setrecursionlimit(1000000)
@@ -141,9 +146,6 @@ admin_path_checks = [
                     '/down'
                     ]
 if admin_path in admin_path_checks: admin_path = '/bt'
-
-
-
 
 @app.route('/service_status',methods = method_get)
 def service_status():
@@ -753,8 +755,8 @@ def plugin(pdata = None):
     pluginObject = panelPlugin.panelPlugin()
     defs = ('set_score','get_score','update_zip','input_zip','export_zip','add_index','remove_index','sort_index',
             'install_plugin','uninstall_plugin','get_soft_find','get_index_list','get_soft_list','get_cloud_list',
-            'check_deps','flush_cache','GetCloudWarning','install','unInstall','getPluginList','getPluginInfo',
-            'getPluginStatus','setPluginStatus','a','getCloudPlugin','getConfigHtml','savePluginSort')
+            'check_deps','flush_cache','GetCloudWarning','install','unInstall','getPluginList','getPluginInfo','get_make_args','add_make_args',
+            'getPluginStatus','setPluginStatus','a','getCloudPlugin','getConfigHtml','savePluginSort','del_make_args','set_make_args')
     return publicObject(pluginObject,defs,None,pdata)
 
 

@@ -14,25 +14,37 @@
 panel_path=/www/server/panel
 pidfile=$panel_path/logs/panel.pid
 cd $panel_path
-py26=$(python -V 2>&1|grep '2.6.')
-if [ "$py26" != "" ];then
-	pythonV=python3
-fi
 env_path=$panel_path/pyenv/bin/activate
 if [ -f $env_path ];then
         source $env_path
         pythonV=$panel_path/pyenv/bin/python
+        chmod -R 700 $panel_path/pyenv/bin
 else
         pythonV=/usr/bin/python
 fi
 sed -i "s@^#!.*@#!$pythonV@" $panel_path/BT-Panel
+sed -i "s@^#!.*@#!$pythonV@" $panel_path/BT-Task
 chmod 700 $panel_path/BT-Panel
-log_file=/www/server/panel/logs/error.log
+chmod 700 $panel_path/BT-Task
+log_file=$panel_path/logs/error.log
+task_log_file=$panel_path/logs/task.log
 if [ -f $panel_path/data/ssl.pl ];then
 	log_file=/dev/null
 fi
 
-port=$(cat /www/server/panel/data/port.pl)
+port=$(cat $panel_path/data/port.pl)
+
+get_panel_pids(){
+        isStart=$(ps aux|grep -E '(runserver|BT-Panel)'|grep -v grep|awk '{print $2}'|xargs)
+        pids=$isStart
+        arr=$isStart
+}
+
+get_task_pids(){
+        isStart=$(ps aux|grep -E '(task.py|BT-Task)'|grep -v grep|awk '{print $2}'|xargs)
+        pids=$isStart
+        arr=$isStart    
+}
 
 panel_start()
 {
@@ -40,46 +52,46 @@ panel_start()
         if [ "$isStart" != '' ];then
                 kill -9 $isStart
         fi
-        isStart=`ps aux|grep 'BT-Panel'|grep -v grep|awk '{print $2}'`
+        get_panel_pids
         if [ "$isStart" == '' ];then
                 rm -f $pidfile
                 panel_port_check
                 echo -e "Starting Bt-Panel...\c"
-                $panel_path/BT-Panel
-                # isStart=""
-                # n=0
-                # while [[ "$isStart" == "" ]];
-                # do
-                #         echo -e ".\c"
-                #         sleep 0.5
-                #         isStart=$(lsof -n -P -i:$port|grep LISTEN|grep -v grep|awk '{print $2}'|xargs)
-                #         let n+=1
-                #         if [ $n -gt 8 ];then
-                #                 break;
-                #         fi
-                # done
-                # if [ "$isStart" == '' ];then
-                #         echo -e "\033[31mfailed\033[0m"
-                #         echo '------------------------------------------------------'
-                #         tail -n 20 $log_file
-                #         echo '------------------------------------------------------'
-                #         echo -e "\033[31mError: BT-Panel service startup failed.\033[0m"
-                # fi
+                nohup $panel_path/BT-Panel >> $log_file 2>&1 &
+                isStart=""
+                n=0
+                while [[ "$isStart" == "" ]];
+                do
+                        echo -e ".\c"
+                        sleep 0.5
+                        get_panel_pids
+                        let n+=1
+                        if [ $n -gt 8 ];then
+                                break;
+                        fi
+                done
+                if [ "$isStart" == '' ];then
+                        echo -e "\033[31mfailed\033[0m"
+                        echo '------------------------------------------------------'
+                        tail -n 20 $log_file
+                        echo '------------------------------------------------------'
+                        echo -e "\033[31mError: BT-Panel service startup failed.\033[0m"
+                fi
                 echo -e "	\033[32mdone\033[0m"
         else
                 echo "Starting Bt-Panel... Bt-Panel (pid $(echo $isStart)) already running"
         fi
         
-        isStart=$(ps aux |grep 'task.py'|grep -v grep|awk '{print $2}')
+        get_task_pids
         if [ "$isStart" == '' ];then
                 echo -e "Starting Bt-Tasks... \c"
-                $pythonV task.py
+                nohup $panel_path/BT-Task >> $task_log_file 2>&1 &
                 sleep 0.2
-                isStart=$(ps aux |grep 'task.py'|grep -v grep|awk '{print $2}')
+                get_task_pids
                 if [ "$isStart" == '' ];then
                         echo -e "\033[31mfailed\033[0m"
                         echo '------------------------------------------------------'
-                        tail -n 20 /www/server/panel/logs/task.log
+                        tail -n 20 $task_log_file
                         echo '------------------------------------------------------'
                         echo -e "\033[31mError: BT-Task service startup failed.\033[0m"
                         return;
@@ -94,7 +106,7 @@ panel_port_check()
 {
 	is_process=$(lsof -n -P -i:$port|grep LISTEN|grep -v grep|awk '{print $1}'|sort|uniq|xargs)
 	for pn in ${is_process[@]}
-    do
+        do
           if [ "$pn" = "nginx" ];then
 				/etc/init.d/nginx restart
 		  fi
@@ -141,7 +153,7 @@ panel_port_check()
 					fi
 				done
 		  fi
-    done
+        done
 	
 	is_ports=$(lsof -n -P -i:$port|grep LISTEN|grep -v grep|awk '{print $2}'|xargs)
 	if [ "$is_ports" != '' ];then
@@ -152,40 +164,40 @@ panel_port_check()
 
 panel_stop()
 {
-	echo -e "Stopping Bt-Tasks...\c";
-    pids=$(ps aux | grep 'task.py'|grep -v grep|awk '{print $2}')
-    arr=($pids)
+        echo -e "Stopping Bt-Tasks...\c";
+        get_task_pids
+        arr=($pids)
+        for p in ${arr[@]}
+        do
+                kill -9 $p
+        done
+        echo -e "	\033[32mdone\033[0m"
 
-    for p in ${arr[@]}
-    do
-            kill -9 $p
-    done
-    echo -e "	\033[32mdone\033[0m"
+        echo -e "Stopping Bt-Panel...\c";
 
-    echo -e "Stopping Bt-Panel...\c";
-    arr=`ps aux|grep -E '(runserver|BT-Panel)'|grep -v grep|awk '{print $2}'`
-	for p in ${arr[@]}
-    do
-            kill -9 $p &>/dev/null
-    done
-    
-    if [ -f $pidfile ];then
-    	rm -f $pidfile
-    fi
-    echo -e "	\033[32mdone\033[0m"
+        get_panel_pids
+        for p in ${arr[@]}
+        do
+                kill -9 $p &>/dev/null
+        done
+        
+        if [ -f $pidfile ];then
+                rm -f $pidfile
+        fi
+        echo -e "	\033[32mdone\033[0m"
 }
 
 panel_status()
 {
-        port=$(cat /www/server/panel/data/port.pl)
-        isStart=$(lsof -i:$port|grep LISTEN|grep -v grep|awk '{print $2}'|xargs)
+        port=$(cat $panel_path/data/port.pl)
+        get_panel_pids
         if [ "$isStart" != '' ];then
                 echo -e "\033[32mBt-Panel (pid $(echo $isStart)) already running\033[0m"
         else
                 echo -e "\033[31mBt-Panel not running\033[0m"
         fi
         
-        isStart=$(ps aux |grep 'task.py'|grep -v grep|awk '{print $2}')
+        get_task_pids
         if [ "$isStart" != '' ];then
                 echo -e "\033[32mBt-Task (pid $isStart) already running\033[0m"
         else
@@ -196,29 +208,29 @@ panel_status()
 panel_reload()
 {
 	isStart=$(ps aux|grep 'runserver:app'|grep -v grep|awk '{print $2}')
-    if [ "$isStart" != '' ];then
+        if [ "$isStart" != '' ];then
 		kill -9 $isStart
 		sleep 0.5
 	fi
-	isStart=$(ps aux|grep 'BT-Panel'|grep -v grep|awk '{print $2}')
+	get_panel_pids
         if [ "$isStart" != '' ];then
     	
-	    arr=`ps aux|grep 'BT-Panel'|grep -v grep|awk '{print $2}'`
-		for p in ${arr[@]}
+	    get_panel_pids
+	for p in ${arr[@]}
         do
                 kill -9 $p
         done
 		rm -f $pidfile
 		panel_port_check
 		echo -e "Reload Bt-Panel.\c";
-                $panel_path/BT-Panel
+                nohup $panel_path/BT-Panel >> $log_file 2>&1 &
 		isStart=""
 		n=0
 		while [[ "$isStart" == "" ]];
 		do
 			echo -e ".\c"
 			sleep 0.5
-			isStart=$(lsof -n -P -i:$port|grep LISTEN|grep -v grep|awk '{print $2}'|xargs)
+			get_panel_pids
 			let n+=1
 			if [ $n -gt 8 ];then
 				break;
@@ -279,7 +291,7 @@ case "$1" in
         		error_logs
         		;;
         'panel')
-        		python $panel_path/tools.py cli $2
+        		$pythonV $panel_path/tools.py cli $2
         		;;
         'default')
                 port=$(cat $panel_path/data/port.pl)
@@ -301,7 +313,7 @@ case "$1" in
                 echo -e "\033[32mBT-Panel default info!\033[0m"
                 echo -e "=================================================================="
                 echo  "Bt-Panel-URL: $pool://$address:$port$auth_path"
-                echo -e `python $panel_path/tools.py username`
+                echo -e `$pythonV $panel_path/tools.py username`
                 echo -e "password: $password"
                 echo -e "\033[33mWarning:\033[0m"
                 echo -e "\033[33mIf you cannot access the panel, \033[0m"
@@ -309,8 +321,6 @@ case "$1" in
                 echo -e "=================================================================="
                 ;;
         *)
-                python $panel_path/tools.py cli $1
+                $pythonV $panel_path/tools.py cli $1
         ;;
 esac
-
-

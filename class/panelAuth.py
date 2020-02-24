@@ -149,7 +149,6 @@ class panelAuth:
         params = {}
         params['pid'] = getattr(get,'pid',0)
         params['status'] = '0'
-        
         data = self.send_cloud('get_voucher', params)
         if not data: return []
         return data

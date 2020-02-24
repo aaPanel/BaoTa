@@ -867,7 +867,7 @@ def CheckMyCnf():
     versionFile = '/www/server/mysql/version.pl'
     if not os.path.exists(versionFile): return False
     
-    versions = ['5.1','5.5','5.6','5.7','AliSQL']
+    versions = ['5.1','5.5','5.6','5.7','8.0','AliSQL']
     version = readFile(versionFile)
     for key in versions:
         if key in version:
@@ -974,16 +974,17 @@ MySQL_Opt()
 }
 
 wget -O /etc/my.cnf $Download_Url/install/conf/mysql-%s.conf -T 5
+chmod 644 /etc/my.cnf
 MySQL_Opt
 ''' % (version,)
+    ExecShell(shellStr)
     #判断是否迁移目录
     if os.path.exists('data/datadir.pl'):
         newPath = readFile('data/datadir.pl')
-        mycnf = readFile('/etc/my.cnf')
-        mycnf = mycnf.replace('/www/server/data',newPath)
-        writeFile('/etc/my.cnf',mycnf)
-        
-    ExecShell(shellStr)
+        if os.path.exists(newPath):
+            mycnf = readFile('/etc/my.cnf')
+            mycnf = mycnf.replace('/www/server/data',newPath)
+            writeFile('/etc/my.cnf',mycnf)
     WriteLog('TYPE_SOFE', 'MYSQL_CHECK_ERR')
     return True
 

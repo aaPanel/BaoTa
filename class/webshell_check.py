@@ -137,14 +137,16 @@ class webshell_check:
         ret = []
         data2 = []
         for file in filelist:
-            data = open(file).read()
-            for r in rule:
-                if re.compile(r).findall(data):
-                    result = {}
-                    result[file] = r
-                    ret.append(result)
-                    data = ("%s [!] %s %s  \n" % (time_data, file, r))
-                    data2.append(file)
+            try:
+                data = open(file).read()
+                for r in rule:
+                    if re.compile(r).findall(data):
+                        result = {}
+                        result[file] = r
+                        ret.append(result)
+                        data = ("%s [!] %s %s  \n" % (time_data, file, r))
+                        data2.append(file)
+            except:print('%s文件打开失败！！跳过中'%file)
         return data2
 
     # 上传webshell

@@ -109,8 +109,9 @@ def startTask():
                             ExecShell(value['execstr'])
                         end = int(time.time())
                         sql.table('tasks').where("id=?",(value['id'],)).save('status,end',('1',end))
-                        if(sql.table('tasks').where("status=?",('0')).count() < 1): 
-                            ExecShell('rm -f ' + isTask)
+                        if(sql.table('tasks').where("status=?",('0')).count() < 1):
+                            if os.path.exists(isTask): os.remove(isTask)
+                            #ExecShell('rm -f ' + isTask)
             except:
                 pass
             siteEdate()
@@ -600,9 +601,11 @@ def HttpGet(url,timeout = 6,headers = {}):
         except Exception as ex:
             return str(ex)
 
-if __name__ == "__main__":
+
+def main():
     main_pid = 'logs/task.pid'
-    os.system("kill -9 $(cat {}) &> /dev/null".format(main_pid))
+    if os.path.exists(main_pid):
+        os.system("kill -9 $(cat {}) &> /dev/null".format(main_pid))
     pid = os.fork()
     if pid: sys.exit(0)
     
@@ -616,8 +619,11 @@ if __name__ == "__main__":
 
     sys.stdout.flush()
     sys.stderr.flush()
-
-    err_f = open('logs/task.log','a+')
+    task_log_file='logs/task.log'
+    if not os.path.exists(task_log_file):
+        open(task_log_file,'w+').close()
+        
+    err_f = open(task_log_file,'a+')
     os.dup2(err_f.fileno(),sys.stderr.fileno())
     err_f.close()
     public.ExecShell('rm -rf /www/server/phpinfo/*')
@@ -649,4 +655,7 @@ if __name__ == "__main__":
     p.start()
 
     startTask()
+
+if __name__ == "__main__":
+    main()
 

@@ -18,14 +18,25 @@ var soft = {
         }
         soft.is_install = false;
         bt.soft.get_soft_list(page, type, search, function (rdata) {
+        	console.log(rdata);
             if (rdata.pro >= 0) {
-                $("#updata_pro_info").html('');
-            } else if (rdata.pro === -2) {
-                $("#updata_pro_info").html('<div class="alert alert-success" style="margin-bottom:15px"><strong>专业版已到期，付费插件暂停使用。</strong><button class="btn btn-success btn-xs va0 updata_pro" onclick="bt.soft.updata_pro()" title="立即续费专业版" style="margin-left:8px">立即续费</button>');
-            } else if (rdata.pro === -1) {
-                $("#updata_pro_info").html('<div class="alert alert-success" style="margin-bottom:15px"><strong > 升级专业版，所有插件，免费使用。</strong><button class="btn btn-success btn-xs va0 updata_pro" onclick="bt.soft.updata_pro()" title="立即升级专业版" style="margin-left:8px">立即升级</button>\</div>');
+                $("#updata_pro_info").html('<div class="alert alert-success" style="margin-bottom:15px"><strong>当前为专业版，专业版可以免费使用专业版插件，过期时间：'+ (rdata.pro > 0 ?bt.format_data(rdata.pro, 'yyyy/MM/dd'):'永久授权') +'</strong><button style="margin-left:8px;display:'+ (rdata.pro>0?'inline-block':'none') +';" class="btn btn-success btn-xs va0 updata_pro" onclick="bt.soft.updata_pro()" title="续费专业版">立即续费</button>');
             }
-
+            if (rdata.ltd >= 0) {
+	            $("#updata_pro_info").html('<div class="alert alert-success" style="margin-bottom:15px"><strong>当前为企业版，企业版可以免费使用专业版及企业版插件，过期时间：'+ (rdata.ltd >0 ?bt.format_data(rdata.ltd, 'yyyy/MM/dd'):'永久授权') +'</strong><button style="margin-left:8px;display:'+ (rdata.ltd >0?'inline-block':'none') +';" class="btn btn-success btn-xs va0 updata_pro" onclick="bt.soft.updata_ltd()" title="续费企业版">立即续费</button>');
+            }
+            if (rdata.pro === -2) {
+                $("#updata_pro_info").html('<div class="alert alert-success" style="margin-bottom:15px"><strong>专业版已到期，付费插件暂停使用。</strong><button class="btn btn-success btn-xs va0 updata_pro" onclick="bt.soft.updata_pro()" title="立即续费专业版" style="margin-left:8px">立即续费</button>');
+            }
+            if(rdata.ltd === -2){
+                $("#updata_pro_info").html('<div class="alert alert-success" style="margin-bottom:15px"><strong>企业版已到期，付费插件和企业版插件暂停使用。</strong><button class="btn btn-success btn-xs va0 updata_pro" onclick="bt.soft.updata_ltd()" title="立即续费企业版" style="margin-left:8px">立即续费</button>');
+            }
+            if (rdata.pro === -1 && rdata.ltd === -1) {
+                $("#updata_pro_info").html('<div class="alert alert-success" style="margin-bottom:15px"><strong > 专业版可以免费使用专业版插件，企业版可以免费使用专业版及企业版插件 。</strong><button class="btn btn-success btn-xs va0 updata_pro" onclick="bt.soft.updata_commercial_view()" title="立即升级" style="margin-left:8px">立即升级</button></div>');
+            }
+            // if(type == 12 && rdata.ltd === -1 && rdata.pro >= 0){
+            // 	$("#updata_pro_info").html('<div class="alert alert-success" style="margin-bottom:15px"><strong >企业版可以免费使用专业版及企业版插件。</strong><button class="btn btn-success btn-xs va0 updata_pro" onclick="bt.soft.updata_ltd()" title="立即升级" style="margin-left:8px">立即升级</button></div>');
+            // }
             if (type == 10) {
                 $("#updata_pro_info").html('<div class="alert alert-danger" style="margin-bottom:15px"><strong>安全提醒：第三方插件上架前，宝塔官方进行了安全审计，但可能还存在安全风险，在生产环境使用前请自行甄别 </strong><a class="btn btn-success btn-xs va0" href="https://www.bt.cn/developer/" title="免费入驻" style="margin-left: 8px" target="_blank">免费入驻</a><a class="btn btn-success btn-xs va0" href="https://www.bt.cn/bbs/forum-40-1.html" title="点击获取第三方应用" style="margin-left: 8px" target="_blank">获取第三方应用</a><input type="file" style="display:none;" accept=".zip,.tar.gz" id="update_zip" multiple="multiple"><button class="btn btn-success btn-xs" onclick="soft.update_zip_open()" style="margin-left:8px">导入插件</button></div>')
             } else if (type == 11) {
@@ -126,10 +137,10 @@ var soft = {
                     {
                         field: 'endtime', width: 120, title: '到期时间', templet: function (item) {
                             var endtime = '--';
-                            if (item.pid > 0) {
+                            if (item.pid > 0) {  //判断是否为付费插件
                                 if (item.endtime > 0) {
-                                    if (item.type != 10) {
-                                        endtime = bt.format_data(item.endtime, 'yyyy/MM/dd') + '<a class="btlink" onclick="bt.soft.re_plugin_pay(\'' + item.title + '\',\'' + item.pid + '\',1)"> (续费)</a>';
+                                    if (item.type != 10) { //判断是否为第三方插件
+                                        endtime = bt.format_data(item.endtime, 'yyyy/MM/dd') + '<a class="btlink" onclick="bt.soft.re_plugin_pay(\'' + item.title + '\',\'' + item.pid + '\',1,'+ item.endtime +','+ rdata.pro +','+ rdata.ltd +','+ type +')"> (续费)</a>';
                                     } else {
                                         endtime = bt.format_data(item.endtime, 'yyyy/MM/dd') + '<a class="btlink" onclick="bt.soft.re_plugin_pay_other(\'' + item.title + '\',\'' + item.pid + '\',1,'+item.price+')"> (续费)</a>';
                                     }

@@ -114,6 +114,8 @@ class data:
         where = "id=?"
         retuls = SQL.where(where,(id,)).getField(keyName)
         return retuls
+    
+        
         
     '''
      * 获取数据与分页

@@ -17,8 +17,8 @@ class firewalls:
         if os.path.exists('/usr/sbin/ufw'): self.__isUfw = True
         if self.__isFirewalld:
             try:
-                self.__Obj = firewalld.firewalld();
-                self.GetList();
+                self.__Obj = firewalld.firewalld()
+                self.GetList()
             except:
                 pass
         
@@ -27,16 +27,16 @@ class firewalls:
     def GetList(self):
         try:
             data = {}
-            data['ports'] = self.__Obj.GetAcceptPortList();
+            data['ports'] = self.__Obj.GetAcceptPortList()
             addtime = time.strftime('%Y-%m-%d %X',time.localtime())
             for i in range(len(data['ports'])):
-                tmp = self.CheckDbExists(data['ports'][i]['port']);
+                tmp = self.CheckDbExists(data['ports'][i]['port'])
                 if not tmp: public.M('firewall').add('port,ps,addtime',(data['ports'][i]['port'],'',addtime))
                           
-            data['iplist'] = self.__Obj.GetDropAddressList();
+            data['iplist'] = self.__Obj.GetDropAddressList()
             for i in range(len(data['iplist'])):
                 try:
-                    tmp = self.CheckDbExists(data['iplist'][i]['address']);
+                    tmp = self.CheckDbExists(data['iplist'][i]['address'])
                     if not tmp: public.M('firewall').add('port,ps,addtime',(data['iplist'][i]['address'],'',addtime))
                 except:
                     pass
@@ -45,16 +45,16 @@ class firewalls:
     
     #检查数据库是否存在
     def CheckDbExists(self,port):
-        data = public.M('firewall').field('id,port,ps,addtime').select();
+        data = public.M('firewall').field('id,port,ps,addtime').select()
         for dt in data:
-            if dt['port'] == port: return dt;
-        return False;
+            if dt['port'] == port: return dt
+        return False
         
     #重载防火墙配置
     def FirewallReload(self):
         if self.__isUfw:
             public.ExecShell('/usr/sbin/ufw reload')
-            return;
+            return
         if self.__isFirewalld:
             public.ExecShell('firewall-cmd --reload')
         else:
@@ -78,13 +78,13 @@ class firewalls:
     def AddDropAddress(self,get):
         import time
         import re
-        rep = "^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d{1,2})?$"
-        if not re.search(rep,get.port): return public.returnMsg(False,'FIREWALL_IP_FORMAT');
-        if not public.check_ip(get.port.split('/')[0]): return public.returnMsg(False,'FIREWALL_IP_FORMAT');
+        rep = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d{1,2})?$"
+        if not re.search(rep,get.port): return public.returnMsg(False,'FIREWALL_IP_FORMAT')
+        if not public.check_ip(get.port.split('/')[0]): return public.returnMsg(False,'FIREWALL_IP_FORMAT')
         address = get.port
         if public.M('firewall').where("port=?",(address,)).count() > 0: return public.returnMsg(False,'FIREWALL_IP_EXISTS')
         if self.__isUfw:
-            public.ExecShell('ufw deny from ' + address + ' to any');
+            public.ExecShell('ufw deny from ' + address + ' to any')
         else:
             if self.__isFirewalld:
                 #self.__Obj.AddDropAddress(address)
@@ -104,7 +104,7 @@ class firewalls:
         address = get.port
         id = get.id
         if self.__isUfw:
-            public.ExecShell('ufw delete deny from ' + address + ' to any');
+            public.ExecShell('ufw delete deny from ' + address + ' to any')
         else:
             if self.__isFirewalld:
                 #self.__Obj.DelDropAddress(address)
@@ -115,7 +115,7 @@ class firewalls:
         public.WriteLog("TYPE_FIREWALL",'FIREWALL_ACCEPT_IP',(address,))
         public.M('firewall').where("id=?",(id,)).delete()
         
-        self.FirewallReload();
+        self.FirewallReload()
         return public.returnMsg(True,'DEL_SUCCESS')
     
     
@@ -124,9 +124,9 @@ class firewalls:
         import re
         src_port = get.port
         get.port = get.port.replace('-',':')
-        rep = "^\d{1,5}(:\d{1,5})?$"
+        rep = r"^\d{1,5}(:\d{1,5})?$"
         if not re.search(rep,get.port):
-            return public.returnMsg(False,'PORT_CHECK_RANGE');
+            return public.returnMsg(False,'PORT_CHECK_RANGE')
 
         import time
         port = get.port
@@ -135,12 +135,12 @@ class firewalls:
         if is_exists: return public.returnMsg(False,'端口已经放行过了!')
         notudps = ['80','443','8888','888','39000:40000','21','22']
         if self.__isUfw:
-            public.ExecShell('ufw allow ' + port + '/tcp');
-            if not port in notudps: public.ExecShell('ufw allow ' + port + '/udp');
+            public.ExecShell('ufw allow ' + port + '/tcp')
+            if not port in notudps: public.ExecShell('ufw allow ' + port + '/udp')
         else:
             if self.__isFirewalld:
                 #self.__Obj.AddAcceptPort(port)
-                port = port.replace(':','-');
+                port = port.replace(':','-')
                 public.ExecShell('firewall-cmd --permanent --zone=public --add-port='+port+'/tcp')
                 if not port in notudps: public.ExecShell('firewall-cmd --permanent --zone=public --add-port='+port+'/udp')
             else:
@@ -157,15 +157,15 @@ class firewalls:
     def AddAcceptPortAll(self,port,ps):
         import re
         port = port.replace('-',':')
-        rep = "^\d{1,5}(:\d{1,5})?$"
+        rep = r"^\d{1,5}(:\d{1,5})?$"
         if not re.search(rep,port):
             return False
         if self.__isUfw:
-            public.ExecShell('ufw allow ' + port + '/tcp');
-            public.ExecShell('ufw allow ' + port + '/udp');
+            public.ExecShell('ufw allow ' + port + '/tcp')
+            public.ExecShell('ufw allow ' + port + '/udp')
         else:
             if self.__isFirewalld:
-                port = port.replace(':','-');
+                port = port.replace(':','-')
                 public.ExecShell('firewall-cmd --permanent --zone=public --add-port='+port+'/tcp')
                 public.ExecShell('firewall-cmd --permanent --zone=public --add-port='+port+'/udp')
             else:
@@ -180,8 +180,8 @@ class firewalls:
         try:
             if(port == public.GetHost(True) or port == public.readFile('data/port.pl').strip()): return public.returnMsg(False,'FIREWALL_PORT_PANEL')
             if self.__isUfw:
-                public.ExecShell('ufw delete allow ' + port + '/tcp');
-                public.ExecShell('ufw delete allow ' + port + '/udp');
+                public.ExecShell('ufw delete allow ' + port + '/tcp')
+                public.ExecShell('ufw delete allow ' + port + '/udp')
             else:
                 if self.__isFirewalld:
                     #self.__Obj.DelAcceptPort(port)
@@ -209,8 +209,8 @@ class firewalls:
             act = 'start'
         
         if not os.path.exists('/etc/redhat-release'):
-            public.ExecShell('service ssh ' + act);
-        elif version.find(' 7.') != -1:
+            public.ExecShell('service ssh ' + act)
+        elif version.find(' 7.') != -1 or version.find(' 8.') != -1 or version.find('Fedora') != -1:
             public.ExecShell("systemctl "+act+" sshd.service")
         else:
             public.ExecShell("/etc/init.d/sshd "+act)
@@ -224,13 +224,13 @@ class firewalls:
     #设置ping
     def SetPing(self,get):
         if get.status == '1':
-            get.status = '0';
+            get.status = '0'
         else:
-            get.status = '1';
+            get.status = '1'
         filename = '/etc/sysctl.conf'
         conf = public.readFile(filename)
         if conf.find('net.ipv4.icmp_echo') != -1:
-            rep = u"net\.ipv4\.icmp_echo.*"
+            rep = r"net\.ipv4\.icmp_echo.*"
             conf = re.sub(rep,'net.ipv4.icmp_echo_ignore_all='+get.status,conf)
         else:
             conf += "\nnet.ipv4.icmp_echo_ignore_all="+get.status
@@ -245,23 +245,23 @@ class firewalls:
     #改远程端口
     def SetSshPort(self,get):
         port = get.port
-        if int(port) < 22 or int(port) > 65535: return public.returnMsg(False,'FIREWALL_SSH_PORT_ERR');
-        ports = ['21','25','80','443','8080','888','8888'];
-        if port in ports: return public.returnMsg(False,'请不要使用常用程序的默认端口!');
+        if int(port) < 22 or int(port) > 65535: return public.returnMsg(False,'FIREWALL_SSH_PORT_ERR')
+        ports = ['21','25','80','443','8080','888','8888']
+        if port in ports: return public.returnMsg(False,'请不要使用常用程序的默认端口!')
         file = '/etc/ssh/sshd_config'
         conf = public.readFile(file)
         
-        rep = "#*Port\s+([0-9]+)\s*\n"
+        rep = r"#*Port\s+([0-9]+)\s*\n"
         conf = re.sub(rep, "Port "+port+"\n", conf)
         public.writeFile(file,conf)
         
         if self.__isFirewalld:
             public.ExecShell('firewall-cmd --permanent --zone=public --add-port='+port+'/tcp')
-            public.ExecShell('setenforce 0');
-            public.ExecShell('sed -i "s#SELINUX=enforcing#SELINUX=disabled#" /etc/selinux/config');
+            public.ExecShell('setenforce 0')
+            public.ExecShell('sed -i "s#SELINUX=enforcing#SELINUX=disabled#" /etc/selinux/config')
             public.ExecShell("systemctl restart sshd.service")
         elif self.__isUfw:
-            public.ExecShell('ufw allow ' + port + '/tcp');
+            public.ExecShell('ufw allow ' + port + '/tcp')
             public.ExecShell("service ssh restart")
         else:
             public.ExecShell('iptables -I INPUT -p tcp -m state --state NEW -m tcp --dport '+port+' -j ACCEPT')
@@ -278,22 +278,22 @@ class firewalls:
         file = '/etc/ssh/sshd_config'
         conf = public.readFile(file)
         if not conf: conf = ''
-        rep = "#*Port\s+([0-9]+)\s*\n"
+        rep = r"#*Port\s+([0-9]+)\s*\n"
         tmp1 = re.search(rep,conf)
         port = '22'
         if tmp1:
             port = tmp1.groups(0)[0]
         import system
-        panelsys = system.system();
+        panelsys = system.system()
         
-        version = panelsys.GetSystemVersion();
+        version = panelsys.GetSystemVersion()
         if os.path.exists('/usr/bin/apt-get'):
             if os.path.exists('/etc/init.d/sshd'):
                 status = public.ExecShell("service sshd status | grep -P '(dead|stop)'|grep -v grep")
             else:
                 status = public.ExecShell("service ssh status | grep -P '(dead|stop)'|grep -v grep")
         else:
-            if version.find(' 7.') != -1:
+            if version.find(' 7.') != -1 or version.find(' 8.') != -1 or version.find('Fedora') != -1:
                 status = public.ExecShell("systemctl status sshd.service | grep 'dead'|grep -v grep")
             else:
                 status = public.ExecShell("/etc/init.d/sshd status | grep -e 'stopped' -e '已停'|grep -v grep")
@@ -307,7 +307,7 @@ class firewalls:
         try:
             file = '/etc/sysctl.conf'
             conf = public.readFile(file)
-            rep = "#*net\.ipv4\.icmp_echo_ignore_all\s*=\s*([0-9]+)"
+            rep = r"#*net\.ipv4\.icmp_echo_ignore_all\s*=\s*([0-9]+)"
             tmp = re.search(rep,conf).groups(0)[0]
             if tmp == '1': isPing = False
         except:

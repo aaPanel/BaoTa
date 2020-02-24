@@ -19,7 +19,7 @@
 							<span class="filter-title f14 c4">应用搜索</span>
 							<div class="soft-search">
 								<form target="hid" onsubmit='soft.get_list(1,0,$("#SearchValue").val())'>
-									<input type="text" id="SearchValue" class="ser-text pull-left" placeholder="search" style="width:232px" />
+									<input type="text" id="SearchValue" class="ser-text pull-left" placeholder="支持应用名称、字段模糊搜索" style="width:232px" />
 									<button type="button" class="ser-sub pull-left" onclick='soft.get_list(1,0,$("#SearchValue").val())'></button>
 								</form>
 								<iframe name='hid' id="hid" style="display:none"></iframe>
@@ -31,7 +31,7 @@
                 <div class="divtable pd15 relative">
                     <button class="btn btn-default btn-sm" onclick="soft.flush_cache()" title="从云端更新列表" style="position:absolute;top:-49px;right:15px">更新软件列表</button>
                     <div id="updata_pro_info">
-                        <div class="alert alert-success" style="margin-bottom:15px"><strong>升级专业版，所有插件，免费使用。</strong><button class="btn btn-success btn-xs va0 updata_pro" onclick="bt.soft.updata_pro()" title="立即升级专业版" style="margin-left:8px">立即升级</button></div>
+                        <div class="alert alert-success" style="margin-bottom:15px"><strong>专业版可以免费使用专业版插件，企业版可以免费使用专业版及企业版插件。</strong><button class="btn btn-success btn-xs va0 updata_pro" onclick="bt.soft.updata_pro()" title="立即升级专业版" style="margin-left:8px">立即升级</button></div>
                     </div>
                     <table id="softList" class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"></table>
                     <div id='softPage' class="dataTables_paginate paging_bootstrap page">
@@ -49,7 +49,7 @@
 
 <script type="text/javascript" src="/static/js/jquery.dragsort-0.5.2.min.js"></script>
 <script type="text/javascript" src="/static/laydate/laydate.js?date=20180301"></script>
-<script type="text/javascript" src="/static/js/soft.js?version={{g['version']}}"></script>
+<script type="text/javascript" src="/static/js/soft.js?version_20200217={{g['version']}}"></script>
 <script type="text/javascript" src="/static/ace/ace.js?date={{g.version}}"></script>
 <script type="text/javascript">
     bt.set_cookie('sites_path', "{{session['config']['sites_path']}}");

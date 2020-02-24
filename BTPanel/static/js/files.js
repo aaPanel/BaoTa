@@ -1767,8 +1767,8 @@ function set_download_url(rdata){
         title: '外链分享',
         content: '<div class="bt-form pd20 pb70">'
 	            + '<div class="line"><span class="tname">分享名称</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:365px" value="'+ rdata.ps +'"></div></div>'
-	        	+ '<div class="line external_link"><span class="tname">分享外链</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:280px" value="'+ download_url +'"><button type="button" id="copy_url" data-clipboard-text="'+ download_url +'" class="btn btn-success btn-sm btn-title copy_url" style="margin-right:5px" data-clipboard-target="#copy_url"><i class="iconfont icon-copy" title="复制"></i></button><button type="button" class="btn btn-success QR_code btn-sm btn-title"><i class="iconfont icon-ico" title="显示二维码"></i></button></div></div>'
-	        	+ '<div class="line external_link" style="'+ (rdata.password == ""?"display:none;":"display:block") +'"><span class="tname">提取码</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:280px" value="'+ rdata.password +'"><button type="button" data-clipboard-text="'+ rdata.password +'"  class="btn btn-success copy_paw btn-sm btn-title"><i class="iconfont icon-copy"></i></button></div></div>'
+	        	+ '<div class="line external_link"><span class="tname">分享外链</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:280px" value="'+ download_url +'"><button type="button" id="copy_url" data-clipboard-text="'+ download_url +'" class="btn btn-success btn-sm btn-title copy_url" style="margin-right:5px" data-clipboard-target="#copy_url"><img style="width:16px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABIUlEQVQ4T6XTsSuFURjH8d+3/AFm0x0MyqBEUQaUIqUU3YwWyqgMptud/BlMSt1SBiklg0K3bhmUQTFZDZTxpyOvznt7z3sG7/T2vOf5vM85z3nQPx+KfNuHkhoZ7xXYjNfEwIukXUnvNcg2sJECnoHhugpsnwBN21PAXVgbV/AEjNhuVSFA23YHWLNt4Cc3Bh6BUdtLcbzAgHPbp8BqCngAxjJbOANWUkAPGA8fE8icpD1gOQV0gclMBRfAYgq4BaZtz/YhA5IGgY7tS2AhBdwAM7b3JX1I+iz1G45sXwHzKeAa6P97qZgcEA6v/ZsR3v9aHCmt0P9UBVuShjKz8CYpXPkDYKJ0kaKhWpe0UwOFxDATx5VACFZ0Ivbuga8i8A3NFqQRZ5pz7wAAAABJRU5ErkJggg=="></button><button type="button" class="btn btn-success QR_code btn-sm btn-title"><img  style="width:16px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABUklEQVQ4T6WSIU9DQRCEvwlYLIoEgwEECs3rDyCpobbtL6AKRyggMQ9TJBjUMzgMCeUnIEAREoICFAoEZMk2dy/Xo4KGNZu7nZ2bnT3xz1DsN7MFYCnhe5V0n/Kb2QowL2kY70cEoXAHVEnDG/ABXAJXmVDHVZKqSFAA58AqsAY8AW3A68/AQ7hbBG6BbeDGlaQEh8AucA3suzDgC5gFXHID2At5YxJBNwA6ocFBM8B3OL8DTaCcpMDN2QojxHHdk9Qrx9SeAyf1CMFIJ3DjYqxLOgo192gs4ibSNfrMOaj2yBvMrCnpImYHR4C/vizpIPkX/mpbUtfMepJKMxtKKsyslNTLCZxkBzgFjoE5oCVp08yKvyhwgkGyRl9nX1LDzDz3kzxS8kuBpFYygq8xJ4gjjBMEpz+BF+AxcXLg39XMOpLOciW1gtz9ac71GqdpSrE/8U20EQ3XLHEAAAAASUVORK5CYII="></button></div></div>'
+	        	+ '<div class="line external_link" style="'+ (rdata.password == ""?"display:none;":"display:block") +'"><span class="tname">提取码</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:243px" value="'+ rdata.password +'"><button type="button" data-clipboard-text="链接:'+ download_url +' 提取码:'+ rdata.password +'"  class="btn btn-success copy_paw btn-sm btn-title">复制链接及提取码</button></div></div>'
 	        	+ '<div class="line"><span class="tname">过期时间</span><div class="info-r"><span style="line-height:32px; display: block;font-size:14px">'+ bt.format_data(rdata.expire)+'</span></div></div>'
 	        	+ '<div class="bt-form-submit-btn">'
 	            + '<button type="button" class="btn btn-danger btn-sm btn-title layer_close">' + lan.public.close + '</button>'
@@ -1783,7 +1783,7 @@ function set_download_url(rdata){
 			    e.clearSelection();
 			});
 			copy_paw.on('success', function(e) {
-				layer.msg('复制提取码成功!',{icon:1});
+				layer.msg('复制链接及提取码成功!',{icon:1});
 			    e.clearSelection();
 			});
             $('.layer_close').click(function () {
@@ -1808,25 +1808,30 @@ function set_download_url(rdata){
 	            });
             });
             $('.close_down').click(function(){
-            	del_download_url(rdata.id,index)
+            	del_download_url(rdata.id,false,index)
             });
         }
     });
 }
-function del_download_url(id,indexs){
-	layer.confirm('是否取消分享该文件，是否继续？', { title: '取消分享', closeBtn: 2, icon: 3 }, function (index) {
+function del_download_url(id,is_list,index){
+	layer.confirm('是否取消分享该文件【】，是否继续？', { title: '取消分享', closeBtn: 2, icon: 3 }, function (index) {
 		$.post('/files?action=remove_download_url',{id:id},function(res){
 		    layer.msg(res.msg,{icon:res.status?1:2});
-		    layer.close(indexs);
-		    layer.close(index);
-		    if(indexs === false) get_download_url_list({},true);
+		    if(index) layer.close(index);
+		    if(is_list === false) get_download_url_list({},true);
 		});
 	});
 }
 
 function get_download_url_list(data,is_refresh){
 	if(data == undefined) data = {p:1}
+    var loadT = layer.msg('正在加载分享列表，请稍后...', {
+        icon: 16,
+        time: 0,
+        shade: 0.3
+    });
 	$.post('/files?action=get_download_url_list',{p:data.p},function(res){
+		layer.close(loadT);
 		var _html = '',rdata = res.data;
 		for(var i=0;i<rdata.length;i++){
 			_html += '<tr><td>'+ rdata[i].ps +'</td><td>'+ rdata[i].filename +'</td><td>'+ bt.format_data(rdata[i].expire) +'</td><td style="text-align:right;"><a href="javascript:;" class="btlink info_down" data-index="'+i +'" data-id="'+ rdata[i].id +'">详情</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink del_down" data-id="'+ rdata[i].id +'" data-index="'+i +'">关闭</a></td></tr>';

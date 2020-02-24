@@ -574,6 +574,7 @@ class system:
             #获取datadir路径
             mypath = '/etc/my.cnf'
             if not os.path.exists(mypath): return False
+            public.set_mode(mypath,644)
             mycnf = public.readFile(mypath)
             tmp = re.findall('datadir\s*=\s*(.+)',mycnf)
             if not tmp: return False

@@ -2855,7 +2855,7 @@ location %s
     
     #保存伪静态模板
     def SetRewriteTel(self,get):
-        get.name = get.name.encode('utf-8')
+        if sys.version_info[0] == 2: get.name = get.name.encode('utf-8')
         filename = 'rewrite/' + public.get_webserver() + '/' + get.name + '.conf'
         public.writeFile(filename,get.data)
         return public.returnMsg(True, 'SITE_REWRITE_SAVE')

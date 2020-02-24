@@ -1,3 +1,102 @@
+$(function(){
+    $.fn.extend({
+        fixedThead:function(options){
+            var _that = $(this);
+            var option = {
+                height:400,
+                shadow:true,
+                resize:true,
+            };
+            options = $.extend(option,options);
+            console.time('固定表头渲染时间');
+            if($(this).find('table').length === 0){
+                console.log('table固定标题失败');
+                return false;
+            }
+            var _height = $(this)[0].style.height,_table_config = _height.match(/([0-9]+)([%\w]+)/);
+            if(_table_config === null){
+                _table_config = [null,options.height,'px'];
+            }else{
+                $(this).css({
+                    'boxSizing': 'content-box',
+                    'paddingBottom':$(this).find('thead').height()
+                });
+            }
+            $(this).css({'position':'relative'});
+            var _thead = $(this).find('thead')[0].outerHTML,
+                _tbody = $(this).find('tbody')[0].outerHTML,
+                _thead_div = $('<div class="thead_div"><table class="table table-hover mb0"></table></div>'),
+                _shadow_top = $('<div class="tbody_shadow_top"></div>'),
+                _tbody_div = $('<div class="tbody_div" style="height:'+ _table_config[1] + _table_config[2] +';"><table class="table table-hover mb0" style="margin-top:-'+ $(this).find('thead').height() +'px"></table></div>'),
+                _shadow_bottom = $('<div class="tbody_shadow_bottom"></div>');
+            _thead_div.find('table').append(_thead);
+            _tbody_div.find('table').append(_thead);
+            _tbody_div.find('table').append(_tbody);
+            $(this).html('');
+            $(this).append(_thead_div);
+            $(this).append(_shadow_top);
+            $(this).append(_tbody_div);
+            $(this).append(_shadow_bottom);
+            var _table_width = _that.find('.thead_div table')[0].offsetWidth,
+                _body_width = _that.find('.tbody_div table')[0].offsetWidth,
+                _length = _that.find('tbody tr:eq(0)>td').length;
+            $(this).find('tbody tr:eq(0)>td').each(function(index,item){
+                var _item = _that.find('thead tr:eq(0)>th').eq(index);
+                if(index === (_length-1)){
+                	_item.attr('width',$(item)[0].clientWidth + (_table_width - _body_width));
+                }else{
+                	_item.attr('width',$(item)[0].offsetWidth);
+                }
+            });
+            console.timeEnd('固定表头渲染时间');
+            if(options.resize){
+                $(window).resize(function(){
+            		var _table_width = _that.find('.thead_div table')[0].offsetWidth,
+	                _body_width = _that.find('.tbody_div table')[0].offsetWidth,
+	                _length = _that.find('tbody tr:eq(0)>td').length;
+		            _that.find('tbody tr:eq(0)>td').each(function(index,item){
+		                var _item = _that.find('thead tr:eq(0)>th').eq(index);
+		                if(index === (_length-1)){
+		                	_item.attr('width',$(item)[0].clientWidth + (_table_width - _body_width));
+		                }else{
+		                	_item.attr('width',$(item)[0].offsetWidth);
+		                }
+		            });
+	            });	
+            }
+
+            if(options.shadow){
+                var table_body = $(this).find('.tbody_div')[0];
+                if(_table_config[1] >= table_body.scrollHeight){
+                    $(this).find('.tbody_shadow_top').hide();
+                    $(this).find('.tbody_shadow_bottom').hide();
+                }else{
+                    $(this).find('.tbody_shadow_top').hide();
+                    $(this).find('.tbody_shadow_bottom').show();
+                }
+                $(this).find('.tbody_div').scroll(function(e){
+                    var _scrollTop = $(this)[0].scrollTop,
+                        _scrollHeight  = $(this)[0].scrollHeight,
+                        _clientHeight = $(this)[0].clientHeight,
+                        _shadow_top = _that.find('.tbody_shadow_top'),
+                        _shadow_bottom = _that.find('.tbody_shadow_bottom');
+                    if(_scrollTop == 0){
+                        _shadow_top.hide();
+                        _shadow_bottom.show();
+                    }else if(_scrollTop > 0 && _scrollTop < (_scrollHeight - _clientHeight)){
+                        _shadow_top.show();
+                        _shadow_bottom.show();
+                    }else if(_scrollTop == (_scrollHeight - _clientHeight)){
+                        _shadow_top.show();
+                        _shadow_bottom.hide();
+                    }
+                })
+            }
+        }
+        
+    });
+}(jQuery))
+
 $(document).ready(function() {
 	$(".sub-menu a.sub-menu-a").click(function() {
 		$(this).next(".sub").slideToggle("slow").siblings(".sub:visible").slideUp("slow");

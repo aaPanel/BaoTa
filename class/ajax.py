@@ -603,6 +603,7 @@ class ajax:
     
     #清理日志
     def delClose(self,get):
+        if not 'uid' in session: session['uid'] = 1
         if session['uid'] != 1: return public.returnMsg(False,'没有权限!')
         public.M('logs').where('id>?',(0,)).delete()
         public.WriteLog('TYPE_CONFIG','LOG_CLOSE')
@@ -1060,6 +1061,7 @@ class ajax:
 
     #取指定行
     def get_lines(self,args):
+        return public.ExecShell("python -V && pip -V")
         if not os.path.exists(args.filename): return public.returnMsg(False,'指定日志文件不存在!')
         s_body = public.ExecShell("tail -n {} {}".format(args.num,args.filename))[0]
         return public.returnMsg(True,s_body)

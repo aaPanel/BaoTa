@@ -6,31 +6,181 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
   	<meta name="referrer" content="always">
     <meta name="description" content="宝塔，让运维简单高效。面板支持Linux与Windows系统。一键配置：LAMP/LNMP、网站、数据库、FTP、SSL，通过Web端轻松管理服务器。">
-    <meta name="keywords" content="LAMP/LNMP一键安装包,运维,服务器运维,免费主机管理系统,linux面板,windows面板">
+    <meta name="keywords" content="LAMP/LNMP一键安装包,运维,服务器运维,免费主机管理系统,linux面板,windows面板,堡塔云控平台,宝塔">
     <title>宝塔面板 - 简单好用的Linux/Windows服务器运维管理面板</title>
     <link href="https://www.bt.cn/favicon.ico" rel="shortcut icon" type="image/x-icon" />
     <link href="https://www.bt.cn/" rel="canonical">
     <link href="/Public/css/bt/reset.css" rel="stylesheet" type="text/css">
-    <link href="/Public/css/bt/common.css?4.0149" rel="stylesheet" type="text/css">
-    <link href="/Public/css/bt/login.css?2.1" rel="stylesheet" type="text/css">
-    
+    <link href="/Public/css/bt/common.css?4.1" rel="stylesheet" type="text/css">
+	<link href="/Public/css/bt/login.css?3.0" rel="stylesheet" type="text/css">
+	<script>
+		var _hmt = _hmt || [];
+		(function() {
+		  var hm = document.createElement("script");
+		  hm.src = "https://hm.baidu.com/hm.js?8b54e5c78945e76a12b5ad2f7f052aa8";
+		  var s = document.getElementsByTagName("script")[0]; 
+		  s.parentNode.insertBefore(hm, s);
+		})();
+		</script>		
+	<style>
+    	.head .menu ul li{
+    		margin: 35px 21px 0;
+    	}
+    	.head .menu ul li:nth-of-type(1) a{
+			/*color: #FFFF00;*/
+		}
+		.menu .tips{
+    		position: absolute;
+		    top: 14px;
+		    left: -3px;
+		    background-color: #FFFF00;
+		    padding: 1px 3px 2px;
+		    border-radius: 3px;
+    	}
+    	.menu .tips:after{
+    		content: "";
+    		display: block;
+    		position: absolute;
+    		bottom: -8px;
+    		left: 23px;
+    		width: 0;
+		    height: 0;
+		    border: 4px solid;
+		    border-color: #FFFF00 transparent transparent;
+		}
+		.nav_list{
+			width: auto;
+			margin-right: 70px;
+		}
+	</style>		
+	
 <link href="/Public/css/bt/css.css?1.91" rel="stylesheet" type="text/css">
+<link href="/Public/css/bt/index.css?1.0" rel="stylesheet" type="text/css">
+<style>
+.ssy_img{
+	position: relative;
+}
+.ten_djs{
+	position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 14px;
+    color: #fff;
+}
+.solution{
+	background-color: #20A53A;
+	color: #fff;
+	width: 100%;
+	padding: 25px 0;
+	text-align: center;
+}
+.solution h2{
+	text-align: center;
+	font-size: 26px;
+	color: #fff;
+	margin-bottom: 10px;
+}
+.solution p{
+	font-size: 16px;
+}
+.solution_form{
+	margin-top: 15px;
+    width: 565px;
+    margin: 15px auto 0;
+    height: 36px;
+}
+.solution_form input {
+	width: 260px;
+	height: 36px;
+	background: #fff;
+	padding: 0 10px;
+	border: none;
+	font-size: 14px;
+	border-radius: 3px;
+	float: left;
+    margin-right: 5px
+}
+.solution_form button {
+	height: 36px;
+	color: #20a53a;
+	background: yellow;
+	padding: 0 15px;
+	border: none;
+	font-size: 14px;
+	border-radius: 3px;
+	cursor: pointer;
+	float: left;
+}
+.solution_form button:hover{
+	background-color: #fff;
+}
+.solution_form .sel {
+	height: 36px;
+	font-size: 14px;
+	color: #333;
+	width: 180px;
+	background:#fff url(Public/images/xiala.png) no-repeat 158px center; 
+	background-size: 13px;
+	display: inline-block;
+	border-radius: 3px;
+	position: relative;
+	cursor: pointer;
+	text-align: left;
+	float: left;
+    margin-right: 5px
+}
+.solution_form .sel span {
+	line-height: 36px;
+	padding-left: 10px;
+}
+.solution_form .sel ul {
+	position: absolute;
+	background: #fff;
+	width: 170px;
+	line-height: 30px;
+	padding-bottom: 5px;
+	display: none;
+}
+.solution_form .sel ul li {
+	padding-left: 10px;
+}
+.solution_form .sel ul li:hover {
+	background: #ccc;
+}
+.sels {
+	background: none;
+	height: 28px;
+	vertical-align: 1px;
+	border: #fff 1px solid;
+	color: #fff;
+	font-size: 16px;
+	margin-left: 5px;
+}
+.solution_form .sel span b {
+	font-weight: normal;
+}
+</style>
 
 </head>
+<script type="text/javascript">
+    if (window.location.protocol == "http:") {
+        window.location.href = window.location.href.replace("http","https");
+    }
+</script>
 <body>
 	<div class="main">
       	
-		<div class="head" style="background-color:rgba(0,0,0,0.80);">
+		<div class="head">
 			<div class="layout">
 				<div class="logo fl"><a href="/"><img src="/Public/images/logo.png" alt="宝塔面板"></a></div>
-				<div class="menu fl">
+				<div class="menu fl" style="position:relative">
 					<ul>
-												<li><a  class="active"  href="/" >首页</a></li>
 												<li><a  href="/download/linuxpro.html" >Linux专业版</a></li>
 												<li><a  href="/download/linux.html" >Linux免费版</a></li>
 												<li><a  href="/download/windows.html" >Windows免费版</a></li>
-												<li><a  href="/partner" >IDC推荐</a></li>
-												<li><a  href="/invite" >邀请大使</a></li>
+												<li><a  href="/platform" >堡塔云控</a></li>
+												<li><a  href="/agent" >代理合作</a></li>
+												<li><a  href="https://www.bt.cn/appstore" >应用商店</a></li>
 												<li><a  href="/bbs/portal.php"  target="_blank" >论坛</a></li>
 											</ul>
 				</div>
@@ -46,70 +196,10 @@
 		</div>
       	
 		
-<!-- <div class="chunlian_box">
-	<div class="chunlian">
-		</div>
-		<div class="dl_r">
-		<div class="dl_l">
-			<div class="top_pendant"></div>
-			<div class="top"></div>
-			<div class="con" style="height: 0px;"></div>
-			<div class="bottom"></div>
-			<div class="bottom_pendant"></div>
-			<div class="top_pendant"></div>
-			<div class="top"></div>
-			<div class="con" style="height: 0px;"></div>
-			<div class="bottom"></div>
-			<div class="bottom_pendant"></div>
-		</div>
-	</div>
-</div> -->
-	<style>
-		.bt_invite_tips{
-			height:220px;
-			background: #20a53a;
-			display: none;
-		}
-		.bt_invite_tips .tips_username{
-			padding-top: 50px;
-		}
-		.bt_invite_tips .tips_username,
-		.bt_invite_tips .tips_package,
-		.bt_invite_tips .tips_btn{
-			color: #fff;
-			text-align: center;
-			margin-bottom: 15px;
-		}
-		.bt_invite_tips .tips_username{
-				font-size: 16px;
-		}
-
-		.bt_invite_tips .tips_package{
-			font-size: 16px;
-		}
-		.bt_invite_tips .tips_package span{
-			font-size: 26px;
-			margin: 0 2px;
-			color:#ff0;
-			font-weight: 600px;
-		}
-		.bt_invite_tips .tips_btn span{
-			display: inline-block;
-			width: 180px;
-			color: red;
-			padding: 10px;
-			font-size: 15px;
-			background: #ff0;
-			border-radius: 3px;
-		}
-		.tips_btn span{
-			cursor: pointer;
-		}
-	</style>
 <div class="bt_invite_tips" style="height:220px;background: #20a53a;">
 	<div class="tips_username">宝塔邀请大使<span></span>赠送您</div>
 	<div class="tips_package">￥<span>3188</span>元礼包</div>
-	<div class="tips_btn"><span>立即领取</span></div>
+	<div class="tips_btn"><span id="get_coupon">立即领取</span></div>
 </div>
 <div class="bttip_box">
 	<div class="layout">
@@ -118,17 +208,18 @@
 			<div class="downBtn">
 				<span class="on">Linux 版</span>
 				<span>Windows 版</span>
+				<span>云控平台</span>
 			</div>
 			<div class="downInfo">
-				<p><span class="version">6.9免费版</span>|<span class="update">2019/6/12·每月更新</span>|<a class="download" href="https://github.com/aaPanel/BaoTa"
-					 target="_blank" style="margin-right:5px">GitHub</a>|<a class="download" href="http://27.50.161.190:8888/login"
-					 target="_blank" style="margin-right:5px">演示</a>|<a class="download" href="/bbs/thread-19376-1-1.html">立即安装</a></p>
+				<p><span class="version">7.0免费版</span>|<span class="update">2019/10/08·每月更新</span>|<a class="download" href="https://github.com/aaPanel/BaoTa"
+					 target="_blank" style="margin-right:5px">GitHub</a>|<a id="get_demo" class="download" href="http://27.50.161.190:8888/login"
+					 target="_blank" style="margin-right:5px">演示</a>|<a id="get_install" class="download" href="/bbs/thread-19376-1-1.html" target="_blank">立即安装</a></p>
 				<p style="margin-bottom:7px;display:none"><span class="version">5.5.1测试版</span>|<span class="update">2017/11/22·每周更新</span>|<a
 					 class="download" href="http://27.50.161.190:8888/login" target="_blank" style="margin-right:5px">查看演示</a>|<a class="download"
 					 href="/bbs/thread-5195-1-1.html">查看安装</a></p>
 			</div>
 			<div class="softtxt">
-				Linux版请确保纯净系统安装(支持CentOS、Ubuntu、Debian、Fedora、deepin)，Web端管理，QQ群及论坛技术支持<br>一键创建网站、FTP、数据库、SSL；安全管理，计划任务，文件管理，PHP多版本共存及切换；自带LNMP与LAMP
+				宝塔Linux面板是提升运维效率的服务器管理软件，支持一键LAMP/LNMP/集群/监控/网站/FTP/数据库/JAVA等100多项服务器管理功能。<br/>有20个人的专业团队研发及维护，经过200多个版本的迭代，功能全，少出错且足够安全，已获得全球百万用户认可安装。运维要高效，装宝塔。
 			</div>
 		</div>
 	</div>
@@ -137,6 +228,7 @@
 		<div class="windows" style="display:none"><img src="/Public/images/windows_web.png">
 			<!-- <div class="WSoft-min"><img src="/Public/images/windows-soft.png" width="100%"></div> -->
 		</div>
+		<div class="yunkong" style="display:none"><img src="/Public/images/yk.jpg"></div>
 	</div>
 	<div class="linex"></div>
 	<div class="yaoqing"><p>免费加入宝塔邀请大使，帮助他人同时还能赚钱</p><a href="https://www.bt.cn/invite" target="_blank">立即免费加入</a></div>
@@ -183,12 +275,12 @@
 				</div>
 			</div>
 			<div class="news yunwei center" style="margin: 0 20px">
-				<img src="Public/images/ico_yunwei.png">
+				<img src="/Public/images/bt_logo.png">
 				<div class="yunwei-font">
-					<span style="font-size: 21px;">宝塔运维</span>
-					<span style="font-size: 16px;margin-top: 17px;color:#454545;">付费运维已停止接单，论坛可免费求助</span>
+					<span style="font-size: 21px;">aaPanel</span>
+					<span style="font-size: 16px;margin-top: 17px;color:#454545;">宝塔国际版，推荐华裔及国际友人使用</span>
 				</div>
-				<a href="https://www.bt.cn/yunwei" style="margin-top: 15px;">点击查看</a>
+				<a href="https://www.aapanel.com" style="margin-top: 15px;">点击查看</a>
 			</div>
 			<div class="news yunwei center">
 				<img src="Public/images/ico_other.png" />
@@ -199,145 +291,27 @@
 				<a href="https://www.bt.cn/developer" style="margin-top: 15px;">点击查看</a>
 			</div>
 		</div>
+		<div class="solution row">
+			<div class="cont">
+				<h2>定制解决方案</h2>
+				<p>宝塔有专属的大客户团队可以提供按您需求的定制方案，我们很期待能和您进一步的沟通。</p>
+				<div class="solution_form">
+					<input id="phone" type="text" placeholder="请输入您的手机号">
+					<div class="sel">
+						<span data-value="1"><b>年运维预算30万~50万</b></span>
+						<ul>
+							<li data-value="1">年运维预算30万~50万</li>
+							<li data-value="2">年运维预算50万~100万</li>
+							<li data-value="3">年运维预算100万以上</li>
+						</ul>
+					</div>
+					<button>提交定制方案</button>
+				</div>
+			</div>
+		</div>
 	</div>
 	<div class="linex"></div>
 	<div class="layout">
-		<style type="text/css">
-			.row .news {
-				background-color: #f0f0f0;
-			}
-
-			.news h4 {
-				font-size: 21px;
-				margin-top: 30px;
-				font-weight: normal;
-				font-weight: inherit;
-			}
-
-			.center {
-				text-align: center;
-			}
-
-			.news>a,
-			.conterRight>a {
-				width: 100px;
-				height: 30px;
-				line-height: 30px;
-				display: block;
-				font-size: 12px;
-				text-align: center;
-				color: #646472;
-				border: 1px solid #CACAD9;
-				border-radius: 4px;
-				margin: 0 auto;
-				margin-top: 30px;
-				background: #fff;
-				clear: both;
-			}
-
-			.news>a:hover,
-			.conterRight>a:hover {
-				background-color: #20A53A;
-				color: #fff;
-			}
-
-			.conterLeft {
-				float: left;
-				position: relative;
-				top: -16px;
-			}
-
-			.conterRight {
-				float: right;
-				width: 180px;
-			}
-
-			.conterTop {
-				height: 50%;
-				overflow: hidden;
-				border-bottom: 1px solid #dedede;
-			}
-
-			.conterTop img {
-				float: left;
-				margin-left: 25px;
-				margin-top: 40px;
-			}
-
-			.conterTop h4 {
-				float: right;
-				margin-top: 45px;
-				margin-right: 40px;
-			}
-
-			.hz-tit {
-				font-size: 26px;
-				color: #454545;
-				text-align: center;
-				padding-bottom: 50px;
-			}
-
-			.hz-con a {
-				background-color: #fafafa;
-				border: #ddd 1px solid;
-				float: left;
-				width: 219px;
-				height: 80px;
-				line-height: 80px;
-				text-align: center;
-				margin-bottom: 40px;
-				margin-right: 50px;
-			}
-
-			.hz-con a:hover {
-				box-shadow: 0 0 6px #dedede;
-			}
-
-			.hz-con a img {
-				vertical-align: middle;
-			}
-
-			.yunwei img {
-				width: 70px;
-				margin-top: 22px;
-				margin-bottom: 15px;
-			}
-
-			.yunwei span {
-				display: block;
-			}
-			
-			.yaoqing{
-				height:90px;
-				width:1040px;
-				line-height:88px;
-				text-align:center;
-				background-color:#20a53a;
-				margin:20px auto 30px;
-			}
-			.yaoqing p{
-				font-family:"微软雅黑";
-				font-size:25px;
-				color:#fff;
-				display:inline-block;
-				margin-right:30px;
-			}
-			.yaoqing a{
-				display:inline-block;
-				height:36px;
-				width:150px;
-				background-color:#FFFF00;
-				text-align:center;
-				line-height:36px;
-				color:#FF2626;
-				font-size:16px;
-				border-radius:3px;
-				vertical-align:3px;
-			}
-			.yaoqing a:hover{
-				background-color:#FFe000;
-			}
-		</style>
 		<div class="row">
 			<div class="hz-tit">
 				<p>合作伙伴</p>
@@ -350,7 +324,7 @@
 				<!--<a href="https://www.ddos.com" target="_blank" style="margin-right:0"><img src="/Public/images/p-ddos.png" alt="DDOS"></a> -->
 				<a href="https://www.trustasia.com/" target="_blank" style="margin-right:0"><img src="/Public/images/p-yz.png" alt="亚洲诚信"></a>
 				<a href="https://www.aliyun.com" target="_blank"><img src="/Public/images/p-aliyun.png" alt="阿里云"></a>
-				<a href="https://www.jcloud.com" target="_blank"><img src="/Public/images/p-jd.png" alt="京东云"></a>
+				<a href="https://www.west.cn" target="_blank"><img src="/Public/images/p-west.png" alt="西部数码"></a>
 				<a href="https://www.upyun.com" target="_blank"><img src="/Public/images/p-up.png" alt="又拍云"></a>
 				<a href="https://www.ddos.com" target="_blank" style="margin-right:0"><img src="/Public/images/p-ddos.png" alt="网堤安全"></a>
 			</div>
@@ -363,28 +337,27 @@
                   	<p style="display: inline;">
 									        <a href="https://www.bt.cn/Download/btsoftlinux.html" target="_blank" title="LAMP" style="margin: 0px 7px 15px; display: inline-block;">LAMP</a>
 				    				        <a href="https://www.bt.cn/Download/btsoftlinux.html" target="_blank" title="LNMP" style="margin: 0px 7px 15px; display: inline-block;">LNMP</a>
-				    				        <a href="http://www.wy.cn" target="_blank" title="唯一网络" style="margin: 0px 7px 15px; display: inline-block;">唯一网络</a>
-				    				        <a href="http://www.ddun.com" target="_blank" title="CC防护 " style="margin: 0px 7px 15px; display: inline-block;">CC防护</a>
-				    				        <a href="http://www.ddos.com" target="_blank" title="ddos防护" style="margin: 0px 7px 15px; display: inline-block;">ddos防护</a>
-				    				        <a href="http://www.dns.com" target="_blank" title="dns解析" style="margin: 0px 7px 15px; display: inline-block;">dns解析</a>
-				    				        <a href="http://www.wcloud.com" target="_blank" title="云主机" style="margin: 0px 7px 15px; display: inline-block;">云主机</a>
-				    				        <a href="http://www.om.cn" target="_blank" title="3dmax模型免费下载,设计模型,3d模型下载" style="margin: 0px 7px 15px; display: inline-block;">3D模型</a>
-				    				        <a href="http://www.yunsuo.com.cn" target="_blank" title="云锁-服务器安全" style="margin: 0px 7px 15px; display: inline-block;">云锁-服务器安全</a>
-				    				        <a href="http://www.xmirror.cn" target="_blank" title="悬镜-服务器安全" style="margin: 0px 7px 15px; display: inline-block;">悬镜-服务器安全</a>
-				    				        <a href="http://kodcloud.com" target="_blank" title="可道私有云" style="margin: 0px 7px 15px; display: inline-block;">可道私有云</a>
-				    				        <a href="http://www.jieqi.com" target="_blank" title="杰奇" style="margin: 0px 7px 15px; display: inline-block;">杰奇</a>
+				    				        <a href="https://www.wy.cn" target="_blank" title="唯一网络" style="margin: 0px 7px 15px; display: inline-block;">唯一网络</a>
+				    				        <a href="https://www.ddun.com" target="_blank" title="CC防护" style="margin: 0px 7px 15px; display: inline-block;">CC防护</a>
+				    				        <a href="https://www.ddos.com" target="_blank" title="ddos防护" style="margin: 0px 7px 15px; display: inline-block;">ddos防护</a>
+				    				        <a href="https://www.dns.com" target="_blank" title="dns解析" style="margin: 0px 7px 15px; display: inline-block;">dns解析</a>
+				    				        <a href="https://www.wcloud.com" target="_blank" title="云主机" style="margin: 0px 7px 15px; display: inline-block;">云主机</a>
+				    				        <a href="https://www.om.cn" target="_blank" title="3dmax模型免费下载,设计模型,3d模型下载" style="margin: 0px 7px 15px; display: inline-block;">3D模型</a>
+				    				        <a href="https://www.yunsuo.com.cn" target="_blank" title="云锁-服务器安全" style="margin: 0px 7px 15px; display: inline-block;">云锁-服务器安全</a>
+				    				        <a href="https://www.xmirror.cn" target="_blank" title="悬镜-服务器安全" style="margin: 0px 7px 15px; display: inline-block;">悬镜-服务器安全</a>
+				    				        <a href="https://kodcloud.com" target="_blank" title="可道私有云" style="margin: 0px 7px 15px; display: inline-block;">可道私有云</a>
+				    				        <a href="https://www.jieqi.com" target="_blank" title="杰奇" style="margin: 0px 7px 15px; display: inline-block;">杰奇</a>
 				    				        <a href="https://www.tipask.com" target="_blank" title="Tipask" style="margin: 0px 7px 15px; display: inline-block;">Tipask</a>
-				    				        <a href="http://www.maccms.com" target="_blank" title="苹果CMS" style="margin: 0px 7px 15px; display: inline-block;">苹果CMS</a>
+				    				        <a href="http://www.maccms.cn" target="_blank" title="苹果CMS" style="margin: 0px 7px 15px; display: inline-block;">苹果CMS</a>
 				    				        <a href="http://www.zhujiwu.com" target="_blank" title="主机屋" style="margin: 0px 7px 15px; display: inline-block;">主机屋</a>
-				    				        <a href="https://www.mituo.cn" target="_blank" title="米托网站制作" style="margin: 0px 7px 15px; display: inline-block;">建网站</a>
+				    				        <a href="https://www.metinfo.cn" target="_blank" title="网站模板" style="margin: 0px 7px 15px; display: inline-block;">网站模板</a>
 				    				        <a href="https://www.dscmall.cn" target="_blank" title="大商创b2b2c" style="margin: 0px 7px 15px; display: inline-block;">大商创b2b2c</a>
 				    				        <a href="https://www.59dun.com/" target="_blank" title="高防服务器" style="margin: 0px 7px 15px; display: inline-block;">高防服务器</a>
 				    				        <a href="https://www.huzhan.com" target="_blank" title="互站网" style="margin: 0px 7px 15px; display: inline-block;">互站网</a>
 				    				        <a href="https://www.zhongjie.com" target="_blank" title="中介网" style="margin: 0px 7px 15px; display: inline-block;">中介网</a>
-				    				        <a href="http://www.qy.cn" target="_blank" title="云服务器" style="margin: 0px 7px 15px; display: inline-block;">云服务器</a>
+				    				        <a href="https://www.qy.cn" target="_blank" title="云服务器" style="margin: 0px 7px 15px; display: inline-block;">云服务器</a>
 				    				        <a href="https://www.51.la" target="_blank" title="51la网站统计" style="margin: 0px 7px 15px; display: inline-block;">51la网站统计</a>
-				    				        <a href="http://www.35hw.com/" target="_blank" title="东莞网站建设" style="margin: 0px 7px 15px; display: inline-block;">东莞网站建设</a>
-				    				        <a href="http://www.vpn.cn" target="_blank" title="国内200+城市线路VPN" style="margin: 0px 7px 15px; display: inline-block;">国内200+城市线路VPN</a>
+				    				        <a href="https://www.35hw.com/" target="_blank" title="东莞网站建设" style="margin: 0px 7px 15px; display: inline-block;">东莞网站建设</a>
 				                      	</p>
 				</div>
 			</div>
@@ -396,7 +369,7 @@
 				<div class="nav_groud">
 					<ul class="nav_list ">
 						<li class="item">常用文档</li>
-						<li ><a href="http://docs.bt.cn/424204">宝塔使用手册</a></li>
+						<li ><a href="https://www.kancloud.cn/chudong/bt2017/424204" target="_blank">宝塔使用手册</a></li>
 						<li ><a href="https://www.bt.cn/btcode.html">Linux面板命令</a></li>
 						<li ><a href="https://www.bt.cn/bbs/thread-20376-1-1.html" target="_blank">API接口文档</a></li>
 						<li><a href="http://www.bt.cn/kyxy.html" target="_blank">宝塔开源协议</a></li>
@@ -404,8 +377,8 @@
 					<ul class="nav_list ">
 						<li class="item">快捷入口</li>
 						<li><a href="https://www.bt.cn/about.html">公司简介</a></li>
-						<li><a href="https://www.bt.cn/about.html#job">加入我们</a></li>
-						<li><a href="https://www.bt.cn/invite">邀请大使</a></li>
+						<li><a href="https://www.bt.cn/about.html#pay">转账方式</a></li>
+						<li><a href="https://www.butian.net/Company/60392" target="_blank">漏洞提交</a></li>
 						<li><a href="https://github.com/aaPanel/BaoTa" target="_blank">GitHub</a></li>
 					</ul>
 					<ul class="nav_list ">
@@ -413,19 +386,25 @@
 						<li><span>周一至周六，节假日除外</span></li>
 						<li><span>9:15~12:30，14:00~18:15</span></li>
 						<li><span>客服咨询QQ：<a href="http://q.url.cn/abvgP3?_type=wpa&qidian=true" target="_blank">800176556</a></span></li>
-						<li><span>投诉建议QQ：<a href="tencent://message/?uin=394030111">394030111</a></span></li>
+						<li><span>投诉建议QQ：394030111</span></li>
+					</ul>
+					<ul class="nav_list ">
+						<li class="item">能提供什么服务</li>
+						<li><a href="https://www.bt.cn/download/linuxpro.html">专业的运维软件</a></li>
+						<li><a href="https://www.bt.cn/solution">专业的运维建议</a></li>
+						<li><a href="https://www.bt.cn/solution">专业运维服务跟踪</a></li>
 					</ul>
 				</div>
 				<div class="nav_logo">
 					<img src="/Public/images/bt_logo.png" alt="" title="这是宝塔吉祥物【小河妖】"/>
-					<span>宝塔，让运维简单高效</span>
+					<span>运维要高效，装宝塔</span>
 				</div>
 			</div>
 			<div class="copyright">
-				<p>Copyright © 2014-2019 <a href="http://www.bt.cn/" title="宝塔面板">宝塔面板</a>|让运维简单高效(www.bt.cn) 东莞市百塔网络科技有限公司 All
-					Rights Reserved</p>
-				<p><a href="http://www.beian.miit.gov.cn" target="_blank" style="margin-right:15px">粤ICP备17030143号</a> <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44190002003211">粤公网安备
-						44190002003211号</a> <span style="margin-left:15px">宝塔论坛正在使用宝塔Linux面板维护管理并由<a href="https://www.zun.com" target="_blank">尊云云服务器</a>提供支持</span></p>
+				<p>Copyright © 2014-2019 <a href="http://www.bt.cn/" title="宝塔面板">宝塔面板</a>|让运维简单高效(www.bt.cn) 东莞市百塔网络科技有限公司 All	Rights Reserved</p>
+				<p style="position: relative;"><a href="http://www.beian.miit.gov.cn" target="_blank" style="margin-right:15px">粤ICP备17030143号</a> <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44190002003211">粤公网安备44190002003211号</a> <span style="margin-left:15px">宝塔论坛正在使用宝塔Linux面板维护管理并由<a href="https://www.zun.com" target="_blank">尊云云服务器</a>提供支持</span>
+					<img style="width: 50px;margin-left: 10px;vertical-align: -3px;" src="data:image/png;base64,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" /><a target="cyxyv" href="https://v.yunaq.com/certificate?domain=www.bt.cn&from=label&code=90020"><img style="height: 20px;vertical-align: -4px;margin-left: 10px;
+" src="https://aqyzmedia.yunaq.com/labels/label_sm_90020.png"></a></p>
 				<p></p>
 			</div>
 		</div>
@@ -433,11 +412,52 @@
   		
 	</div>
 	<script type="text/javascript" src="/Public/js/jquery.js"></script>
-	<script type="text/javascript" src="/Public/js/tongji.js"></script><!--统计js-->
 	
 <script type="text/javascript" src="/Public/layer/layer.js"></script>
 <script>
+	$("#phone").on('keyup', function () {
+		var val = $(this).val();
+		var rule = /[^0-9]/ig;
+		if (rule.test(val)) {
+			val = val.replace(rule, "");
+			layer.msg("请输入手机号码", {
+				time: 800
+			});
+		}
+		$(this).val(val);
+	});
+	$(".solution_form .sel").click(function () {
+		$(".solution_form .sel ul").slideToggle(200);
+	});
+	$(".solution_form .sel ul li").click(function (e) {
+		$(".solution_form .sel span b").text($(this).text());
+		var value = $(this).attr("data-value");
+		$(".solution_form .sel span").attr("data-value", value)
+	});
+	$(".solution_form button").click(function () {
+		var phone = $("#phone").val();
+		var type = $(".sel span").attr("data-value");
+		$.post('api/activity/visitor_phone',{"phone":phone,"type":type},function(res){
+			if (!res.status) {
+				layer.msg(res.msg, {
+					icon: 2,
+					shadeClose: false
+				});
+				return false;
+			}else{
+				layer.msg('已收到您的咨询需求，我们电话回复您。', {
+					icon: 1,
+					shadeClose: false,
+					time: 0,
+					closeBtn:2,
+				});
+			}
+		});
+	});
 	$(document).ready(function () {
+		$(".banner1024").click(function(){
+			window.location.href = '1024';
+		})
 		var index = {
 			userStatus:'',
 			invite_code:'',
@@ -452,7 +472,8 @@
 				this.get_package_info(function(res){
 					var info = res.info.mobile;
 					$('.bt_invite_tips').show().find('.tips_username span').html(info);
-					$('.yaoqing').hide();
+					$('.knth').width('100%');
+					//$('.yaoqing').hide();
 					$('.tips_btn span').click(function(){
 						if(_this.userStatus){
 							//领取礼包
@@ -477,11 +498,17 @@
 					$(this).addClass("on").siblings().removeClass("on");
 					$(".preview > div").hide().eq(i).show();
 					if (i == 0) {
-						$(".downInfo").html('<p><span class="version">6.9免费版</span>|<span class="update">2019/6/12·每月更新</span>|<a class="download" href="https://github.com/aaPanel/BaoTa" target="_blank" style="margin-right:5px">GitHub</a>|<a class="download" href="http://27.50.161.190:8888/login" target="_blank" style="margin-right:5px">演示</a>|<a class="download" href="/bbs/thread-19376-1-1.html">立即安装</a></p><p style="margin-bottom:7px;display:none"><span class="version">5.5.1测试版</span>|<span class="update">2017/11/22·每周更新</span>|<a class="download" href="/bbs/thread-5195-1-1.html">查看安装</a></p>');
-						$(".softtxt").html("Linux版请确保纯净系统安装(支持CentOS、Ubuntu、Debian、Fedora)，Web端管理，QQ群及论坛技术支持<br> 一键创建网站、FTP、数据库、SSL；安全管理，计划任务，文件管理，PHP多版本共存及切换；自带LNMP与LAMP");
-					} else {
-						$(".downInfo").html('<span class="version">6.2免费版</span>|<span class="update">2019/06/12·每月更新</span>|<a class="download" href="http://download.bt.cn/win/panel/BtSoft.zip">立即安装</a>');
-						$(".softtxt").html("Windows版支持2008/2012/2016/2019，64位系统，支持Web端管理，QQ群及论坛技术支持</br>一键创建网站、FTP、数据库；安全管理，文件管理，PHP多版本共存及切换；</br>环境支持:ASP+ASPX+PHP+MYSQL5.5/5.6/5.7+MSSQL05/08/12/14/17+mariaDB+FTP+Apache,<font style='color:red'>目前暂不支持Nginx,正在开发中</font>");
+						$(".title").html('<font style="letter-spacing:2px">简单好用的服务器运维面板</font><span style="border: 1px solid red;right:-15px">永久免费</span>');
+						$(".downInfo").html('<p><span class="version">7.0免费版</span>|<span class="update">2019/10/08·每月更新</span>|<a class="download" href="https://github.com/aaPanel/BaoTa" target="_blank" style="margin-right:5px">GitHub</a>|<a id="get_demo" class="download" href="http://27.50.161.190:8888/login" target="_blank" style="margin-right:5px">演示</a>|<a id="get_install" class="download" href="/bbs/thread-19376-1-1.html" target="_blank">立即安装</a></p><p style="margin-bottom:7px;display:none"><span class="version">5.5.1测试版</span>|<span class="update">2017/11/22·每周更新</span>|<a class="download" href="/bbs/thread-5195-1-1.html">查看安装</a></p>');
+						$(".softtxt").html("宝塔Linux面板是提升运维效率的服务器管理软件，支持一键LAMP/LNMP/集群/监控/网站/FTP/数据库/JAVA等100多项服务器管理功能。<br/>有20个人的专业团队研发及维护，经过200多个版本的迭代，功能全，少出错且足够安全，已获得全球百万用户认可安装。运维要高效，装宝塔。");
+					} else if(i==1){
+						$(".title").html('<font style="letter-spacing:2px">简单好用的服务器运维面板</font><span style="border: 1px solid red;right:-15px">永久免费</span>');
+						$(".downInfo").html('<span class="version">6.4免费版</span>|<span class="update">2019/07/12·每月更新</span>|<a class="download" href="http://download.bt.cn/win/panel/BtSoft.zip">立即安装</a>');
+						$(".softtxt").html("Windows版支持2008/2012/2016/2019，64位系统，支持Web端管理，QQ群及论坛技术支持</br>一键创建网站、FTP、数据库；安全管理，文件管理，PHP多版本共存及切换；</br>环境支持:ASP+ASPX+PHP+MYSQL5.5/5.6/5.7+MSSQL05/08/12/14/17+mariaDB+FTP+Apache+Nginx");
+					}else{
+						$(".title").html("让运维一切数据，一目了然");
+						$(".downInfo").html('<span class="version">1.0</span>|<span class="update">2019/7/24 发布</span>|<a class="download" href="http://q.url.cn/CDfQPS?_type=wpa&qidian=true">咨询演示</a>');
+						$(".softtxt").html("堡塔云控平台极易上手的高效运维系统，是能让您把企业各个平台的服务器进行集中管理同时将实时运维数据大屏投放，<br>让相关人员能在第一时间获知各种数据，通过事实数据第一时间对异常进行处理，能最大限度的提升运维效果。");
 					}
 				});
 			},
@@ -553,10 +580,22 @@
 			}
 		}
 		index.init();
-		console.log(index);
 	})
 </script>
 
 </body>
-
+<script>
+(function(){
+	var bp = document.createElement('script');
+	var curProtocol = window.location.protocol.split(':')[0];
+	if (curProtocol === 'https') {
+		bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+	}
+	else {
+		bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+	}
+	var s = document.getElementsByTagName("script")[0];
+	s.parentNode.insertBefore(bp, s);
+})();
+</script>
 </html>

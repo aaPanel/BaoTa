@@ -9,6 +9,7 @@
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
     <link href="/static/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
     <link href="/static/css/site.css?20191127={{g['version']}}" rel="stylesheet" />
+    <link href="/static/codemirror/lib/codemirror.css?20191127={{g['version']}}" rel="stylesheet" />
     <!--[if lte IE 9]>
     	<script src="/static/js/requestAnimationFrame.js"></script>
     <![endif]-->
@@ -91,6 +92,7 @@
     <script src="/static/layer/layer.js?date={{g['version']}}"></script>
     <script src="/static/js/public.js?version={{g['version']}}"></script>
     <script src="/static/js/public_backup.js?version={{g['version']}}"></script>
+    <script src="/static/codemirror/lib/codemirror.js?version={{g['version']}}"></script>
     {% block scripts %}{% endblock %}
     <script type="text/javascript">
 	    if (navigator.appName == "Microsoft Internet Explorer" && parseInt(navigator.appVersion.split(";")[1].replace(/[ ]/g, "").replace("MSIE", "")) < 9) {

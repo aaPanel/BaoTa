@@ -95,6 +95,7 @@ def control_init():
     clean_max_log('/www/server/cron',1024*1024*5,20)
     #check_firewall()
     check_dnsapi()
+    clean_php_log()
 
 
 #检查dnsapi

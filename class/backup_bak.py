@@ -185,7 +185,7 @@ class backup_bak:
         keyText = 'SSLCertificateFile'
         if public.get_webserver() == 'nginx': keyText = 'ssl_certificate';
         status = True
-        if (conf.find(keyText) == -1):
+        if not conf or conf.find(keyText) == -1:
             status = False
             type = -1
         toHttps = self.IsToHttps(siteName)

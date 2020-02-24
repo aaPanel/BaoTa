@@ -169,12 +169,27 @@ class panelPlugin:
             download_url = public.get_url() + '/install/plugin/' + pluginInfo['name'] + '/install.sh'
             toFile = '/tmp/%s.sh' % pluginInfo['name']
             public.downloadFile(download_url,toFile)
+            self.set_pyenv(toFile)
             public.ExecShell('/bin/bash ' + toFile + ' install &> /tmp/panelShell.pl')
             if os.path.exists(pluginInfo['install_checks']):
                 public.WriteLog('TYPE_SETUP','PLUGIN_INSTALL_LIB',(pluginInfo['title'],))
                 if os.path.exists(toFile): os.remove(toFile)
                 return public.returnMsg(True,'PLUGIN_INSTALL_SUCCESS')
             return public.returnMsg(False,'安装失败!')
+
+    #设置Python环境变量
+    def set_pyenv(self,filename):
+        if not os.path.exists(filename): return False
+        env_py = '/www/server/panel/pyenv/bin'
+        if not os.path.exists(env_py): return False
+        temp_file = public.readFile(filename)
+        env_path=['PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin']
+        rep_path=['PATH={}/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin'.format(env_py+":")]
+        for i in range(len(env_path)):
+            temp_file = temp_file.replace(env_path[i],rep_path[i])
+        public.writeFile(filename,temp_file)
+        return True
+        
 
     #异步安装
     def install_async(self,pluginInfo,get):            
@@ -217,11 +232,13 @@ class panelPlugin:
                 download_url = session['download_url'] + '/install/plugin/' + pluginInfo['name'] + '/install.sh'
                 toFile = '/tmp/%s.sh' % pluginInfo['name']
                 public.downloadFile(download_url,toFile)
+                self.set_pyenv(toFile)
                 if os.path.exists(toFile):
                     if os.path.getsize(toFile) > 100:
                         public.ExecShell('/bin/bash ' + toFile + ' uninstall')
             
             if os.path.exists(pluginPath + '/install.sh'):
+                self.set_pyenv(pluginPath + '/install.sh')
                 public.ExecShell('/bin/bash ' + pluginPath + '/install.sh uninstall')
 
             if os.path.exists(pluginPath): public.ExecShell('rm -rf ' + pluginPath)
@@ -487,7 +504,7 @@ class panelPlugin:
         for p in p_list['list']:
             if p['name'] == get.name:
                 if not 'endtime' in p: continue
-                if p_list['pro'] < 1 and p['endtime'] < 1: return False
+                if p_list['ltd'] < 1 and p['endtime'] < 1: return False
                 break
             
         return True
@@ -641,12 +658,15 @@ class panelPlugin:
 
     #检测是否安装
     def check_isinstall(self,sList):
-        if not os.path.exists(self.__index): public.writeFile(self.__index,'[]')
-        indexList = json.loads(public.ReadFile(self.__index))
-        for i in range(len(sList)):
-            sList[i]['index_display'] = sList[i]['name'] in indexList
-            sList[i] = self.check_status(sList[i])
-        return sList
+        try:
+            if not os.path.exists(self.__index): public.writeFile(self.__index,'[]')
+            indexList = json.loads(public.ReadFile(self.__index))
+            for i in range(len(sList)):
+                sList[i]['index_display'] = sList[i]['name'] in indexList
+                sList[i] = self.check_status(sList[i])
+            return sList
+        except:
+            public.writeFile(self.__index,'[]')
 
     #检查软件状态
     def check_status(self,softInfo):
@@ -762,7 +782,12 @@ class panelPlugin:
                 v_tmp = sInfo['name'].split('-')
                 exec_str = exec_args[v_tmp[0]].replace('{VERSION}',v_tmp[1].replace('.',''))
             version = public.ExecShell(exec_str)[0].strip()
-            if version: public.writeFile(vFile1,version)
+            if version: 
+                public.writeFile(vFile1,version)
+            else:
+                vFile4 = sInfo['uninsatll_checks'] + '/version.pl'
+                if os.path.exists(vFile4):
+                    version = public.readFile(vFile4).strip()
 
         if sInfo['name'] == 'mysql':
             vFile3 = sInfo['uninsatll_checks'] + '/version.pl'
@@ -1039,6 +1064,7 @@ class panelPlugin:
             download_url = session['download_url'] + '/install/plugin/' + pluginInfo['name'] + '/install.sh'
             toFile = self.__install_path + '/' + pluginInfo['name'] + '/install.sh'
             public.downloadFile(download_url,toFile)
+            self.set_pyenv(toFile)
             public.ExecShell('/bin/bash ' + toFile + ' install')
             if self.checksSetup(pluginInfo['name'],pluginInfo['checks'],pluginInfo['versions'])[0]['status'] or os.path.exists(self.__install_path + '/' + get.name):
                 public.WriteLog('TYPE_SETUP','PLUGIN_INSTALL_LIB',(pluginInfo['title'],))
@@ -1089,6 +1115,7 @@ class panelPlugin:
             download_url = session['download_url'] + '/install/plugin/' + pluginInfo['name'] + '/install.sh'
             toFile = self.__install_path + '/' + pluginInfo['name'] + '/uninstall.sh'
             public.downloadFile(download_url,toFile)
+            self.set_pyenv(toFile)
             public.ExecShell('/bin/bash ' + toFile + ' uninstall')
             public.ExecShell('rm -rf ' + session['download_url'] + '/install/plugin/' + pluginInfo['name'])
             pluginPath = self.__install_path + '/' + pluginInfo['name']
@@ -1759,6 +1786,7 @@ class panelPlugin:
         if not os.path.exists(plugin_path): os.makedirs(plugin_path)
         public.ExecShell("\cp -a -r " + get.tmp_path + '/* ' + plugin_path + '/')
         public.ExecShell('chmod -R 600 ' + plugin_path)
+        self.set_pyenv(plugin_path + '/install.sh')
         public.ExecShell('cd ' + plugin_path + ' && bash install.sh install &> /tmp/panelShell.pl')
         p_info = public.ReadFile(plugin_path + '/info.json')
         public.ExecShell("rm -rf /www/server/panel/temp/*")
@@ -1781,3 +1809,78 @@ class panelPlugin:
         files.files().Zip(get)
         if not os.path.exists(get.dfile): return public.returnMsg(False,'导出失败,请检查权限!')
         return public.returnMsg(True,get.dfile)
+
+
+    #获取编译参数
+    def get_make_args(self,get):
+        config_path = 'install/' + get.name
+        if not os.path.exists(config_path):
+            os.makedirs(config_path)
+        #读支持的编译参数列表
+        make_args = []
+        for p_name in os.listdir(config_path):
+            path = os.path.join(config_path,p_name)
+            if not os.path.isdir(path): continue
+            make_info = {"name":p_name,"init":"","args":"","ps":""}
+            init_file = os.path.join(path,'init.sh')
+            args_file = os.path.join(path,'args.pl')
+            ps_file = os.path.join(path,'ps.pl')
+            if not os.path.exists(args_file):
+                continue
+            if os.path.exists(init_file):
+                make_info['init'] = public.readFile(init_file)
+            if os.path.exists(ps_file):
+                make_info['ps'] = public.readFile(ps_file)
+            make_info['args'] = public.readFile(args_file)
+            make_args.append(make_info)
+        #读当前配置
+        data = {'args':make_args,'config':''}
+        config_file = config_path + '/config.pl'
+        if os.path.exists(config_file):
+            data['config'] = public.readFile(config_file)
+        return data
+
+    #添加编译参数
+    def add_make_args(self,get):
+        get.args_name = get.args_name.strip()
+        get.name = get.name.strip()
+        get.ps = get.ps.strip()
+        if not re.match(r'^\w+$',get.args_name):
+            return public.returnMsg(False,'名称不合规只能是数字、字母、下划线')
+
+        config_path = os.path.join('install' , get.name , get.args_name)
+        if not os.path.exists(config_path):
+            os.makedirs(config_path,384)
+        
+        init_file = os.path.join(config_path,'init.sh')
+        args_file = os.path.join(config_path,'args.pl')
+        ps_file = os.path.join(config_path,'ps.pl')
+        public.writeFile(init_file,get.init)
+        public.writeFile(args_file,get.args)
+        public.writeFile(ps_file,get.ps)
+
+        public.WriteLog('软件管理','添加自定义编译参数: {}:{}'.format(get.name,get.args_name))
+        return public.returnMsg(True,'添加成功!')
+
+    #删除编译参数
+    def del_make_args(self,get):
+        get.args_name = get.args_name.strip()
+        get.name = get.name.strip()
+        if not re.match(r'^\w+$',get.args_name):
+            return public.returnMsg(False,'名称不合规只能是数字、字母、下划线')
+        config_path = os.path.join('install' , get.name , get.args_name)
+        if not os.path.exists(config_path): 
+            return public.returnMsg(False,'指定自定义编译参数不存在!')
+        public.ExecShell("rm -rf {}".format(config_path))
+        public.WriteLog('软件管理','删除自定义编译参数: {}:{}'.format(get.name,get.args_name))
+        return public.returnMsg(True,'删除成功!')
+        
+
+    #设置当前编译参数
+    def set_make_args(self,get):
+        get.args_names = get.args_names.strip()
+        get.name = get.name.strip()
+        config_file = 'install/' + get.name + '/config.pl'
+        public.writeFile(config_file,get.args_names)
+        public.WriteLog('软件管理','设置软件: {} 的自定义编译参数配置为: {}'.format(get.name,get.args_names))
+        return public.returnMsg(False,'设置成功!')

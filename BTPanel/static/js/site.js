@@ -995,6 +995,7 @@ var site = {
                                     {
                                         items: [{
                                             name: 'btn_save', text: '保存', type: 'button', callback: function (ldata) {
+                                                console.log(ret)
                                                 bt.files.set_file_body(ret.filename, ldata.dir_config, 'utf-8', function (sdata) {
                                                     if (sdata.status) load_form.close();
                                                     bt.msg(sdata);
@@ -1281,6 +1282,7 @@ var site = {
                             //     if (ret.status) site.reload(4)
                             //     bt.msg(ret);
                             // })
+                            aceEditor.path = filename;
                             bt.saveEditor(aceEditor);
                         }
                     },
@@ -1296,7 +1298,7 @@ var site = {
                                     { title: '关闭', name: 'close' },
                                     {
                                         title: '提交', name: 'submit', css: 'btn-success', callback: function (rdata, load, callback) {
-                                            bt.site.set_rewrite_tel(rdata.tempname, editor.getValue(), function (rRet) {
+                                            bt.site.set_rewrite_tel(rdata.tempname, aceEditor.ACE.getValue(), function (rRet) {
                                                 if (rRet.status) {
                                                     load.close();
                                                     site.reload(4)

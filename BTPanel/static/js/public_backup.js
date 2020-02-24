@@ -263,7 +263,6 @@ var bt =
 	select_path:function(id){
 		_this = this;
 		_this.set_cookie("SetName", "");
-		
 		var loadT = bt.open({
 			type: 1,
 			area: "650px",
@@ -1691,8 +1690,6 @@ bt.weixin = {
 		}
 };
 
-
-
 bt.ftp = {	
 	get_list : function(page,search,callback)
 	{
@@ -1872,8 +1869,6 @@ bt.recycle_bin = {
 		})
 	}		
 }
-
-
 
 bt.files = {
 	get_path:function()
@@ -2671,7 +2666,6 @@ bt.crontab = {
 
 }
 
-
 bt.config = 
 {
 	close_panel:function(callback)
@@ -3088,8 +3082,6 @@ bt.control = {
 	}
 }
 
-
-
 bt.firewall = {
 	get_log_list:function(page,search,callback){		
 		if(page == undefined) page = 1
@@ -3483,7 +3475,94 @@ bt.soft = {
 			}
 		}
 	},
-	updata_pro:function(){
+	updata_commercial_view:function(){
+		layer.closeAll();
+		var html = '<div class="business-edition">\
+			<div class="price-compare-item" style="margin-right:20px">\
+				<div class="price-header">专业版</div>\
+				<div class="title-wrap">\
+					<p class="title-info">推荐个人及5人以下团队公司购买</p>\
+				</div>\
+				<div class="title-desc">\
+					<p>包含所有<b>免费版</b>功能和：</p>\
+					<p>宝塔系统加固，网站防篡改程序</p>\
+					<p>网站监控报表，Apache防火墙</p>\
+					<p>Nginx防火墙，宝塔负载均衡</p>\
+					<p>MySQL主从复制，宝塔任务管理器</p>\
+					<p>异常监控推送，微信小程序</p>\
+					<p>宝塔数据同步工具</p>\
+				</div>\
+				<div class="price-wrap">\
+					<div class="month">\
+						<span class="price-unit">￥</span>\
+						<span class="price-value">39.8</span>\
+						<span class="price-ext">/月</span>\
+					</div>\
+					<div class="div-line"></div>\
+					<div class="year">\
+						<span class="price-unit">￥</span>\
+						<span class="price-value">382</span>\
+						<span class="price-ext">/年</span>\
+					</div>\
+				</div>\
+				<button class="btn-price" data-type="pro">立即购买</button>\
+			</div>\
+			<div class="price-compare-item">\
+				<div class="price-header">企业版<san class="recommend-tips"></span></div>\
+				<div class="title-wrap">\
+					<p class="title-info">推荐5人以上或企事业单位购买</p>\
+				</div>\
+				<div class="title-desc">\
+					<p>包含所有<b>专业版</b>功能和：</p>\
+					<p>1、socks5代理服务器</p>\
+					<p>2、多用户管理插件（仅可查看日志）</p>\
+					<p>3、后期还会有10+企业版专用插件</p>\
+					<p>4、官方跟进响应的QQ群（需年付）</p>\
+					<p>5、不定期线上运维培训（需年付）</p>\
+				</div>\
+				<div class="price-wrap">\
+					<div class="month">\
+						<span class="price-unit">￥</span>\
+						<span class="price-value">148</span>\
+						<span class="price-ext">/月</span>\
+					</div>\
+					<div class="div-line"></div>\
+					<div class="year">\
+						<span class="price-unit">￥</span>\
+						<span class="price-value">999</span>\
+						<span class="price-ext">/年</span>\
+					</div>\
+				</div>\
+				<button class="btn-price" data-type="ltd">立即购买</button>\
+			</div>\
+		</div>';
+		layer.open({
+			type: 1 
+			,closeBtn:2
+			,area: ['800px', '640px']
+			,title: '升级付费版，对应版本插件，免费使用 '
+			,shade: 0.6 
+			,anim: 0
+			,content:html,
+			success:function(layero,index){
+				$('.btn-price').click(function(){
+					var _type = $(this).attr('data-type');
+					if(_type == 'pro'){
+						bt.soft.updata_pro();
+						layer.close(index);
+					}else{
+						bt.soft.updata_pro('ltd');
+						layer.close(index);
+					}
+				})
+			}
+		})
+	},
+	updata_ltd:function(){
+		bt.soft.updata_pro('ltd');
+	},
+	updata_pro:function(type){
+		if(!type) type = 'pro'
 		bt.pub.get_user_info(function(rdata){
 			if(!rdata.status)
 			{
@@ -3491,30 +3570,42 @@ bt.soft = {
 					if(rdata.status) bt.soft.updata_pro();
 				})
 				return;
-			}			
+			}
+			var pro_end = bt.get_cookie('pro_end');
+			var ltd_end = bt.get_cookie('ltd_end');
+			var title = '',_item = '';
+			if((pro_end > 0 && ltd_end < 0) || (pro_end == -2 && ltd_end == -1)){
+				title = '专业版续费';
+				_item = 1;
+			}else  if(ltd_end > 0 || ltd_end == -2){
+				title = '企业版续费';
+				_item = 2;
+			}else  if(ltd_end == -1 && pro_end == -1){
+				title = '升级付费版，对应版本插件，免费使用';
+				_item = 3;
+			}
 			var payhtml = '<div class="libPay" style="padding:15px 30px 30px 30px">\
 					<div class="libpay-con">\
 					</div>\
-					<p style="position:absolute;bottom:17px;left:0;width:100%;text-align:center;color:red">注：如需购买多台永久授权，请登录宝塔官网购买。<a class="btlink" href="https://www.bt.cn/download/linuxpro.html#price" target="_blank">去宝塔官网</a></p>\
+					<p  style="display:'+ ((_item == 1 || _item == 3) ?'inline-block':'none')+';position:absolute;bottom:17px;left:0;width:100%;text-align:center;color:red">注：如需购买多台永久授权专业版，请登录宝塔官网购买。<a class="btlink" href="https://www.bt.cn/download/linuxpro.html#price" target="_blank">去宝塔官网</a></p>\
 				</div>';
-		
 			bt.open({
 				type: 1,
-				title: '升级专业版，所有插件，免费使用',
-				area: ['616px','540px'],
+				title:title,
+				area: ['616px','720px'],
 				closeBtn: 2,
 				shadeClose: false,
-				content:payhtml
+				content:payhtml,
+				success:function(){
+					bt.soft.get_product_discount('',0,true,type);
+					$(".pay-btn-group > li").unbind('click').click(function(){
+						$(this).addClass("active").siblings().removeClass("active");
+					});
+				}
 			});
-			setTimeout(function(){
-				bt.soft.get_product_discount('',0);
-				$(".pay-btn-group > li").click(function(){
-					$(this).addClass("active").siblings().removeClass("active");
-				});
-			},100)
 		})
 	},
-	re_plugin_pay:function(pluginName,pid,type){
+	re_plugin_pay:function(pluginName,pid,type,plugin,pro,ltd,tab){
 		bt.pub.get_user_info(function(rdata){
 			if(!rdata.status)
 			{
@@ -3522,17 +3613,29 @@ bt.soft = {
 					if(rdata.status) bt.soft.re_plugin_pay(pluginName,pid,type);
 				})
 				return;
-			}	
+			}
 			var txt = '购买';
 			if(type) txt = '续费';
+			var pro_end = bt.get_cookie('pro_end');
+			var ltd_end = bt.get_cookie('ltd_end');
+			var title = '',_item = '';
+			if((pro_end > 0 && ltd_end < 0) || (pro_end == -2 && ltd_end == -1)){
+				_item = 1;
+			}else  if(ltd_end > 0 || ltd_end == -2){
+				_item = 2;
+			}else  if(ltd_end == -1 && pro_end == -1){
+				_item = 3;
+			}
 			var payhtml = '<div class="libPay" style="padding:15px 30px 30px 30px">\
 					<div class="libPay-item f14 plr15 libPay-select">\
 						<div class="li-tit c3">类型</div>\
 						<div class="li-con c6">\
 							<ul class="li-c-item">\
-								<li class="active"><span class="item-name pull-left">'+pluginName+'</span><span class="item-info f12 pull-right c7">1款插件</span></li>\
-								<li><span class="item-name">升级为专业版</span><span class="item-info f12 pull-right c7">十多款付费插件免费用</span></li>\
+								<li data-type="plugin" data-pluginName="'+ pluginName +'" data-pid="'+ pid +'" class="active"><span class="item-name pull-left">'+ pluginName+'</span><span class="item-info f12 pull-right c7">单款插件</span></li>\
+								'+ ((_item == 1 || _item == 3)?'<li data-type="pro" data-pluginName="" data-pid="0" class="active mb0"><span class="item-name pull-left "><span class="pro-font-icon"></span></span><span class="item-info f12 pull-right c7">推荐个人购买</span></li>':'') +'\
+								'+ ((_item == 2 || _item == 3)?'<li data-type="ltd" data-pluginName="宝塔面板企业版" data-pid="100000032" class="mb0"><span style="display:'+ (_item == 2?'none':'inline-block') +'" class="recommend-pay-icon"></span><span class="item-name pull-left"><span class="ltd-font-icon"></span><img src="" /></span><span class="item-info f12 pull-right c7">推荐企业购买</span></li>':'') +'\
 							</ul>\
+							<div class="pro-tips" >温馨提示：了解专业版和企业版的区别，请点击<a href="javascript:;" onclick="bt.soft.updata_commercial_view();" class="btlink">查看详情</a></div>\
 						</div>\
 					</div>\
 					<div class="libpay-con">\
@@ -3542,29 +3645,41 @@ bt.soft = {
 			layer.open({
 				type: 1,
 				title: txt + pluginName,
-				area: ['616px','680px'],
+				area:['616px','680px'],
 				closeBtn: 2,
 				shadeClose: false,
-				content:payhtml
+				content:payhtml,
+				success:function(){
+					var _type = ''
+					if(ltd > 0){
+						_type = 'ltd';
+					}else if(pro > 0){
+						_type = 'pro';
+					}else if(plugin > 0){
+						_type = 'plugin';
+					}else if(ltd == -2){
+						_type = 'ltd';
+					}else if(pro == -2){
+						_type = 'pro';
+					}else{
+						_type = 'plugin';
+					}
+					if(tab == 12 && ltd == -1){
+						_type = 'plugin';
+					}
+					bt.soft.get_product_discount(pluginName,pid,false,_type);
+					$(".li-c-item li").unbind('click').click(function(){
+						var type = $(this).attr('data-type');
+						pluginName = $(this).attr('data-pluginName');
+						pid = $(this).attr('data-pid');
+						$(this).addClass("active").siblings().removeClass("active");
+						bt.soft.get_product_discount(pluginName,pid,false,type);
+					});
+					$(".pay-btn-group > li").unbind('click').click(function(){
+						$(this).addClass("active").siblings().removeClass("active");
+					});
+				}
 			});
-			setTimeout(function(){
-				bt.soft.get_product_discount(pluginName,pid);
-				$(".li-c-item li").click(function(){
-					var i = $(this).index();
-					$(this).addClass("active").siblings().removeClass("active");
-					if(i==0){
-						bt.soft.get_product_discount(pluginName,pid);
-						$(".pro-info").hide();
-					}
-					else{
-						bt.soft.get_product_discount('',0);
-						$(".pro-info").show();
-					}
-				});
-				$(".pay-btn-group > li").click(function(){
-					$(this).addClass("active").siblings().removeClass("active");
-				});
-			},100)
 		})
     },
 
@@ -3611,7 +3726,7 @@ bt.soft = {
             });
             bt.soft.get_rscode_other(pid, price, 1,type)
             setTimeout(function () {
-                $(".pay-btn-group > li").click(function () {
+                $(".pay-btn-group > li").unbind('click').click(function () {
                     $(this).addClass("active").siblings().removeClass("active");
                 });
             }, 100);
@@ -3682,7 +3797,7 @@ bt.soft = {
 				$(".paymethod-submit button").click(function(){
 					var code = $("#couponlist .pay-btn-group .active").attr("data-code");
 					if(code == undefined){
-						layer.msg("请选择代金券");
+						layer.msg("请选择抵扣劵");
 					}
 					else{						
 						bt.soft.pro.create_order_voucher(pid,code,function(rdata){
@@ -3695,7 +3810,7 @@ bt.soft = {
 				})
 			}
 			else{
-				$("#couponlist").html("<p class='text-center' style='margin-top:70px'>暂无代金券</p>");
+				$("#couponlist").html("<p class='text-center' style='margin-top:70px'>暂无抵扣劵</p>");
 			}
 		})
 	},
@@ -3752,12 +3867,33 @@ bt.soft = {
 			
 		});
 	},
-	get_product_discount:function(pluginName,pid){
+	get_product_discount:function(pluginName,pid,is_pro,type){
 		if(pluginName ==undefined) pluginName='';
 		if(pid==undefined) pid= 0;
+		var pro_end = bt.get_cookie('pro_end');
+		var ltd_end = bt.get_cookie('ltd_end');
+		var title = '',_item = '';
+		if((pro_end > 0 && ltd_end < 0) || (pro_end == -2 && ltd_end == -1)){
+			title = '专业版续费';
+			_item = 1;
+		}else  if(ltd_end > 0 || ltd_end == -2){
+			title = '企业版续费';
+			_item = 2;
+		}else  if(ltd_end == -1 && pro_end == -1){
+			title = '升级付费版';
+			_item = 3;
+		}
 		var con = '<div class="libPay-item f14 plr15">\
-							<div class="li-tit c4">付款方式</div>\
-							<div class="li-con c6" id="Payment"><ul class="pay-btn-group pay-cycle"><li class="pay-cycle-btn active"><span>微信支付</span></li><li class="pay-cycle-btn" onclick="bt.soft.get_voucher_list('+pid+')"><span>代金券</span></li></ul></div>\
+					'+(is_pro?'<div id="cut_ltd" class="libPay-item f14 libPay-select">\
+						<div class="li-tit c3">类型</div><div class="li-con c6">\
+							<ul class="li-c-item">\
+								'+ ((_item == 1 || _item == 3)?'<li data-type="pro" data-pluginName="" data-pid="0" class="active mb0"><span class="item-name pull-left "><span class="pro-font-icon"></span></span><span class="item-info f12 pull-right c7">推荐个人购买</span></li>':'') +'\
+								'+ ((_item == 2 || _item == 3)?'<li data-type="ltd" data-pluginName="宝塔面板企业版" data-pid="100000032" class="mb0"><span style="display:'+ (_item == 2?'none':'inline-block') +'" class="recommend-pay-icon"></span><span class="item-name pull-left"><span class="ltd-font-icon"></span><img src="" /></span><span class="item-info f12 pull-right c7">推荐企业购买</span></li>':'') +'\
+							</div>\
+							<div class="pro-tips" >温馨提示：了解专业版和企业版的区别，请点击<a href="javascript:;" onclick="bt.soft.updata_commercial_view();" class="btlink">查看详情</a></div>\
+						</div> ':'') +'\
+						<div class="li-tit c4" style="clear: both;">付款方式</div>\
+						<div class="li-con c6" id="Payment"><ul class="pay-btn-group pay-cycle"><li class="pay-cycle-btn active"  data-pid=""><span>微信支付</span></li><li class="pay-cycle-btn" data-pid="'+ pid +'"><span>抵扣劵</span></li></ul></div>\
 						</div>\
 						<div class="payment-con">\
 							<div class="pay-weixin">\
@@ -3773,7 +3909,7 @@ bt.soft = {
 							</div>\
 							<div class="pay-coupon" style="display:none">\
 								<div class="libPay-item f14 plr15">\
-									<div class="li-tit c4 ">代金券列表</div>\
+									<div class="li-tit c4 ">抵扣劵列表</div>\
 									<div class="li-con c6" id="couponlist"><div class="btn-group"></div></div>\
 								</div>\
 								<div class="paymethod-submit text-center">\
@@ -3782,7 +3918,27 @@ bt.soft = {
 							</div>\
 						</div>'
 		$(".libpay-con").html("<div class='cloading'>加载中，请稍后</div>");
-		
+		$('.libPay').unbind('click').on('click','#cut_ltd li',function(){
+			var _type = $(this).attr('data-type');
+				pluginName = $(this).attr('data-pluginName');
+				pid = $(this).attr('data-pid');
+			$(this).addClass('active').siblings().removeClass('active');
+			bt.soft.get_product_discount_by_view(pluginName,pid,con,_type);
+		})
+		$('.libPay').on('click','#Payment li',function(){
+			$(this).addClass("active").siblings().removeClass("active");
+			bt.soft.get_voucher_list(pid!=0?pid:null);
+			$(".paymethod-submit button").css({"background-color":"#20a53a","border-color":"#20a53a"});
+		});
+		if(type == 'pro'){
+			pluginName = ''
+		}else if(type == 'ltd'){
+			pluginName = '宝塔面板企业版';
+			pid='100000032'
+		}
+		bt.soft.get_product_discount_by_view(pluginName,pid,con,type);
+	},
+	get_product_discount_by_view:function(pluginName,pid,con,type){
 		bt.soft.pro.get_product_discount_by(pluginName,function(rdata){
 			if(rdata !=null){
 				var coucon = '';
@@ -3799,15 +3955,16 @@ bt.soft = {
 				}
 				$(".libpay-con").html(con);
 				$("#PayCycle").html('<ul class="pay-btn-group">'+coucon+'</ul>');
-				$(".pay-btn-group li").click(function(){
+				$(".pay-btn-group li").unbind('click').click(function(){
 					$(this).addClass("active").siblings().removeClass("active");
 				});
-				$(".pay-cycle li").click(function(){
+				$(".pay-cycle li").unbind('click').click(function(){
 					var i = $(this).index();
 					$(this).addClass("active").siblings().removeClass("active");
 					$(".payment-con > div").eq(i).show().siblings().hide();
 				});
-				$("#PayCycle .pay-btn-group li").eq(0).click();
+				$('[data-type='+ type +']').addClass('active').siblings().removeClass('active');
+				$('#PayCycle .pay-btn-group li:eq(0)').click();
 			}
 		})
 	},
@@ -3840,6 +3997,8 @@ bt.soft = {
         bt.send('get_soft_list', 'plugin/get_soft_list', { p: p, type: type, tojs: 'soft.get_list', force: force, query: search }, function (rdata) {
             if (loading) loading.close();
 			bt.set_cookie('force',0);
+			bt.set_cookie('ltd_end',rdata.ltd);
+			bt.set_cookie('pro_end',rdata.pro);
 			if(callback) callback(rdata);
 		})
 	},
