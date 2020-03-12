@@ -1700,7 +1700,7 @@ cd %s
         path=get.path.strip()
         if os.path.exists(path):
             #启动消息队列
-            exec_shell = 'python /www/server/panel/class/webshell_check.py dir %s mail'%path
+            exec_shell = public.get_python_bin() + ' /www/server/panel/class/webshell_check.py dir %s mail'%path
             task_name = "扫描目录%s 的木马文件"%path
             import panelTask
             task_obj = panelTask.bt_task()

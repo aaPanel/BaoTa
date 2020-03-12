@@ -287,20 +287,20 @@
 				var _tab =  bt.render({
 					table:'#logsBody',
 					columns:[						
-						{ field: 'id', title: "编号"},	
-						{ field: 'username', title: "用户"},	
-						{ field: 'type', title: "{{data['lan']['LTH2']}}"},	
+						{ field: 'id',width:"55", title: "编号"},	
+						{ field: 'username',width:"80", title: "用户"},	
+						{ field: 'type',width:"80", title: "{{data['lan']['LTH2']}}"},	
 						{ field: 'log', title: "{{data['lan']['LTH3']}}",templet:function(row){
-							return '<span style="display: inline-block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;" title="'+ _this.escapeHTML(row['log']) +'">'+  _this.escapeHTML(row['log']) +'</span>';
+							return '<span title="'+ _this.escapeHTML(row['log']) +'">'+  _this.escapeHTML(row['log']) +'</span>';
 						}},		
-						{ field: 'addtime', title: "{{data['lan']['LTH4']}}"}				
+						{ field: 'addtime',width:"145", align:"right" ,title: "{{data['lan']['LTH4']}}"}				
 					],
 					data:rdata.data
 				});
-				$('#logsBody tr td span').width($('.main-content').width()*0.7);
+				/*$('#logsBody tr td span').width($('.main-content').width()*0.7);
 				$(window).resize(function(){
 					$('#logsBody tr td span').width($('.main-content').width()*0.7);
-				});
+				});*/
 			})			
         },
         //查看面板运行日志

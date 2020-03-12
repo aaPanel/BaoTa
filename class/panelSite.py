@@ -2886,7 +2886,7 @@ location %s
         name = ''
         if filename == 'qiniu':
             name = public.M('backup').where(where,(id,)).getField('name')
-            public.ExecShell("python "+self.setupPath + '/panel/script/backup_qiniu.py delete_file ' + name)
+            public.ExecShell(public.get_python_bin() + " "+self.setupPath + '/panel/script/backup_qiniu.py delete_file ' + name)
         
         public.WriteLog('TYPE_SITE', 'SITE_BACKUP_DEL_SUCCESS',(name,filename))
         public.M('backup').where(where,(id,)).delete()
@@ -3426,7 +3426,7 @@ location %s
             import py_compile
             py_compile.compile(self.setupPath + '/panel/class/panelSafe.py')
         get.path = public.M('sites').where('id=?',(get.id,)).getField('path')
-        execstr = "cd " + public.GetConfigValue('setup_path') + "/panel/class && python panelSafe.pyc " + get.path
+        execstr = "cd " + public.GetConfigValue('setup_path') + "/panel/class && "+public.get_python_bin() +" panelSafe.pyc " + get.path
         sql = db.Sql()
         sql.table('tasks').add('id,name,type,status,addtime,execstr',(None,'扫描目录 ['+get.path+']','execshell','0',time.strftime('%Y-%m-%d %H:%M:%S'),execstr))
         public.writeFile(isTask,'True')

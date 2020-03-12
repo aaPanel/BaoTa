@@ -1085,7 +1085,8 @@ function sender_info_edit(){
 		layer.close(loadT);
 		var qq_mail = rdata.user_mail.info.msg.qq_mail == undefined ? '' : rdata.user_mail.info.msg.qq_mail,
 			qq_stmp_pwd = rdata.user_mail.info.msg.qq_stmp_pwd == undefined? '' : rdata.user_mail.info.msg.qq_stmp_pwd,
-			hosts = rdata.user_mail.info.msg.hosts == undefined? '' : rdata.user_mail.info.msg.hosts;
+			hosts = rdata.user_mail.info.msg.hosts == undefined? '' : rdata.user_mail.info.msg.hosts,
+			port = rdata.user_mail.info.msg.port == undefined? '' : rdata.user_mail.info.msg.port
 		layer.open({
 		type: 1,
         area: "460px",
@@ -1112,22 +1113,65 @@ function sender_info_edit(){
                     <input name="channel_email_server" class="bt-input-text mr5" type="text" style="width: 300px" value="'+hosts+'">\
                 </div>\
             </div>\
+            <div class="line">\
+                <span class="tname">端口</span>\
+                <div class="info-r">\
+                    <select class="bt-input-text mr5" id="port_select" style="width:'+(select_port(port)?'300px':'100px')+'"></select>\
+                    <input name="channel_email_port" class="bt-input-text mr5" type="Number" style="display:'+(select_port(port)? 'none':'inline-block')+'; width: 190px" value="'+port+'">\
+                </div>\
+            </div>\
+            <ul class="help-info-text c7">\
+            	<li>推荐使用465端口，协议为SSL/TLS</li>\
+            	<li>25端口为SMTP协议，587端口为STARTTLS协议</li>\
+            </ul>\
             <div class="bt-form-submit-btn">\
 	            <button type="button" class="btn btn-danger btn-sm smtp_closeBtn">关闭</button>\
 	            <button class="btn btn-success btn-sm SetChannelEmail">保存</button></div>\
         	</div>',
         success:function(layers,index){
+        	var _option = '';
+        	if(select_port(port)){
+        		if(port == '465' || port == ''){
+        			_option = '<option value="465" selected="selected">465</option><option value="25">25</option><option value="587">587</option><option value="other">自定义</option>'
+        		}else if(port == '25'){
+        			_option = '<option value="465">465</option><option value="25" selected="selected">25</option><option value="587">587</option><option value="other">自定义</option>'
+        		}else{
+        			_option = '<option value="465">465</option><option value="25">25</option><option value="587" selected="selected">587</option><option value="other">自定义</option>'
+        		}
+        	}else{
+        		_option = '<option value="465">465</option><option value="25">25</option><option value="587" >587</option><option value="other" selected="selected">自定义</option>'
+        	}
+        	console.log(port)
+        	$("#port_select").html(_option)
+        	$("#port_select").change(function(e){
+        		if(e.target.value == 'other'){
+        			$("#port_select").css("width","100px");
+					$('input[name=channel_email_port]').css("display","inline-block");
+        		}else{
+        			$("#port_select").css("width","300px");
+					$('input[name=channel_email_port]').css("display","none");
+        		}
+        	})
 			$(".SetChannelEmail").click(function(){
 				var _email = $('input[name=channel_email_value]').val();
 				var _passW = $('input[name=channel_email_password]').val();
-				var _server = $('input[name=channel_email_server]').val();
+				var _server = $('input[name=channel_email_server]').val(),_port
+				if($('#port_select').val() == 'other'){
+					_port = $('input[name=channel_email_port]').val();
+				}else{
+					_port = $('#port_select').val()
+				}
 				if(_email == ''){
 					return layer.msg('邮箱地址不能为空！',{icon:2});
 				}else if(_passW == ''){
 					return layer.msg('STMP密码不能为空！',{icon:2});
-				}else if(_server == ''){return layer.msg('STMP服务器地址不能为空！',{icon:2})}
+				}else if(_server == ''){
+					return layer.msg('STMP服务器地址不能为空！',{icon:2})
+				}else if(_port == ''){
+					return layer.msg('请输入有效的端口号',{icon:2})
+				}
 				var loadT = layer.msg('正在生成邮箱通道中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-				$.post('/config?action=user_mail_send',{email:_email,stmp_pwd:_passW,hosts:_server},function(rdata){
+				$.post('/config?action=user_mail_send',{email:_email,stmp_pwd:_passW,hosts:_server,port:_port},function(rdata){
 					layer.close(loadT);
 					layer.msg(rdata.msg,{icon:rdata.status?1:2})
 					if(rdata.status){
@@ -1142,6 +1186,20 @@ function sender_info_edit(){
 		}
 	})
 	})
+}
+function select_port(port){
+	switch(port){
+		case '25':
+			return true;
+		case '465':
+			return true;
+		case '587':
+			return true;
+		case '':
+			return true;
+		default:
+			return false
+	}
 }
 function get_channel_settings(callback){
 	var loadT = layer.msg('正在获取配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });

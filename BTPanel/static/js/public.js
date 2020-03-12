@@ -3402,10 +3402,7 @@ var Term = {
         if (!Term.bws || Term.bws.readyState == 3 || Term.bws.readyState == 2) {
             //连接
             ws_url = (window.location.protocol === 'http:' ? 'ws://' : 'wss://') + window.location.host + Term.route;
-            
-            Term.bws = new WebSocket(ws_url);
-
-
+			Term.bws = new WebSocket(ws_url);
             //绑定事件
             Term.bws.addEventListener('message', Term.on_message);
             Term.bws.addEventListener('close', Term.on_close);
@@ -3440,7 +3437,15 @@ var Term = {
 
     //websocket错误事件
     on_error: function (ws_event) {
-        console.log(ws_event)
+		if(ws_event.target.readyState === 3){
+			var msg = '错误: 无法创建WebSocket连接，请在设置页面关闭【开发者模式】';
+			layer.msg(msg,{time:5000})
+			if(Term.state === 3) return
+			Term.term.write(msg)
+			Term.state = 3;
+		}else{
+			console.log(ws_event)
+		}
     },
 
     //关闭连接
@@ -3471,6 +3476,7 @@ var Term = {
         if (Term.bws.readyState === 1) {
             Term.bws.send(data);
         } else {
+			if(Term.state === 3) return;
             if (!num) num = 0;
             if (num < 5) {
                 num++;

@@ -23,7 +23,11 @@ class userlogin:
         post.username = post.username.strip()
         password = public.md5(post.password.strip())
         sql = db.Sql()
-        userInfo = sql.table('users').where("username=?",(post.username,)).field('id,username,password').find()
+        user_list = sql.table('users').field('id,username,password').select()
+        userInfo = None
+        for u_info in user_list:
+            if u_info['username'] == post.username:
+                userInfo = u_info
         if 'code' in session:
             if session['code'] and not 'is_verify_password' in session:
                 if not hasattr(post, 'code'): return public.returnJson(False,'验证码不能为空!'),json_header
@@ -53,11 +57,13 @@ class userlogin:
                 now = int(time.time())
                 public.writeFile("/www/server/panel/data/dont_vcode_ip.txt",json.dumps({"client_ip":public.GetClientIp(),"add_time":now}))
                 self.limit_address('--',v="vcode")
+                self.set_cdn_host(post)
                 return self._set_login_session(userInfo)
 
             acc_client_ip = self.check_two_step_auth()
 
             if not os.path.exists(_key_file) or acc_client_ip:
+                self.set_cdn_host(post)
                 return self._set_login_session(userInfo)
             self.limit_address('-')
             session['is_verify_password'] = True
@@ -96,6 +102,7 @@ class userlogin:
             public.writeFile(save_path,json.dumps(data))
             self.set_request_token()
             self.login_token()
+            self.set_cdn_host(get)
             return redirect('/')
         except:
             return public.returnJson(False,'登录失败,' + public.get_error_info()),json_header
@@ -140,6 +147,17 @@ class userlogin:
     #生成request_token
     def set_request_token(self):
         session['request_token_head'] = public.GetRandomString(48)
+
+    def set_cdn_host(self,get):
+        try:
+            if not 'cdn_url' in get: return True
+            plugin_path = 'plugin/static_cdn'
+            if not os.path.exists(plugin_path): return True
+            cdn_url = public.get_cdn_url()
+            if not cdn_url or cdn_url == get.cdn_url: return True
+            public.set_cdn_url(get.cdn_url)
+        except:
+            return False
 
     #防暴破
     def error_num(self,s = True):

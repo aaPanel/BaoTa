@@ -209,6 +209,7 @@ def reload_mod():
 
 @app.before_request
 def request_check():
+    if not public.path_safe_check(request.path): return abort(404)
     if request.path in ['/service_status']: return
 
     if not request.path in ['/safe','/hook','/public','/mail_sys','/down']:
@@ -324,6 +325,14 @@ def login():
         if result: return result
         data = {}
         data['lan'] = public.GetLan('login')
+        data['hosts'] = '[]'
+        hosts_file = 'plugin/static_cdn/hosts.json'
+        if os.path.exists(hosts_file):
+            data['hosts'] = public.get_cdn_hosts()
+            if type(data['hosts']) == dict:
+                data['hosts'] = '[]'
+            else:
+                data['hosts'] = json.dumps(data['hosts'])
         return render_template(
             'login.html',
             data=data
@@ -396,10 +405,10 @@ def FtpPort():
 
 @app.route('/database',methods=method_all)
 def database(pdata = None):
-    import ajax
     comReturn = comm.local()
     if comReturn: return comReturn
     if request.method == method_get[0] and not pdata:
+        import ajax
         pmd = get_phpmyadmin_dir()
         session['phpmyadminDir'] = False
         if pmd: 
@@ -759,8 +768,6 @@ def plugin(pdata = None):
             'getPluginStatus','setPluginStatus','a','getCloudPlugin','getConfigHtml','savePluginSort','del_make_args','set_make_args')
     return publicObject(pluginObject,defs,None,pdata)
 
-
-
 @app.route('/public',methods=method_all)
 def panel_public():
     get = get_input()
@@ -816,6 +823,8 @@ def send_favicon():
 @app.route('/<name>/<fun>',methods=method_all)
 @app.route('/<name>/<fun>/<path:stype>',methods=method_all)
 def panel_other(name=None,fun = None,stype=None):
+    comReturn = comm.local()
+    if comReturn: return comReturn
     is_accept = False
     if not fun: fun = 'index.html'
     if not stype:
@@ -824,11 +833,7 @@ def panel_other(name=None,fun = None,stype=None):
         if len(tmp) == 1:  tmp.append('')
         stype = tmp[1]
     
-    if not name in ['mail_sys'] or not fun in ['send_mail_http']:
-        comReturn = comm.local()
-        if comReturn: return comReturn
-    else:
-        is_accept = True
+
     if not name: name = 'coll'
     if not public.path_safe_check("%s/%s/%s" % (name,fun,stype)): return abort(404)
     if name.find('./') != -1 or not re.match("^[\w-]+$",name): return abort(404)
@@ -937,34 +942,6 @@ def panel_hook():
     import webhook_main
     session.clear()
     return public.getJson(webhook_main.webhook_main().RunHook(get))
-
-@app.route('/safe',methods=method_all)
-def panel_safe():
-    get = get_input()
-    pluginPath = 'plugin/safelogin'
-    if hasattr(get,'check'):
-        if os.path.exists(pluginPath + '/safelogin_main.py'): return 'True'
-        return 'False'
-    get.data = check_token(get.data)
-    if not get.data: return public.returnJson(False,'INIT_CHECK_ERR')
-    comm.setSession()
-    comm.init()
-    comm.checkWebType()
-    comm.GetOS()
-    sys.path.append(pluginPath)
-    import safelogin_main
-    reload(safelogin_main)
-    s = safelogin_main.safelogin_main()
-    if not hasattr(s,get.data['action']): return public.returnJson(False,'INIT_FUN_NOT_EXISTS')
-    defs = ('GetServerInfo','add_ssh_limit','remove_ssh_limit','get_ssh_limit',
-            'get_login_log','get_panel_limit','add_panel_limit',
-            'remove_panel_limit','close_ssh_limit','close_panel_limit',
-            'get_system_info','get_service_info','get_ssh_errorlogin')
-    if not get.data['action'] in defs: return 'False'
-    result = public.getJson(eval('s.' + get.data['action'] + '(get)'))
-    session.clear()
-    return result
-
 
 @app.route('/install',methods=method_all)
 def install():

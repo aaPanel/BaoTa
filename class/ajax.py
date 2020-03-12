@@ -177,7 +177,7 @@ class ajax:
         conf = get.access_key.strip() + '|' + get.secret_key.strip() + '|' + get.bucket_name.strip() + '|' + get.bucket_domain.strip()
         public.writeFile(filename,conf)
         public.ExecShell("chmod 600 " + filename)
-        result = public.ExecShell("python " + public.GetConfigValue('setup_path') + "/panel/script/backup_"+get.name+".py list")
+        result = public.ExecShell(public.get_python_bin() + " " + public.GetConfigValue('setup_path') + "/panel/script/backup_"+get.name+".py list")
         
         if result[0].find("ERROR:") == -1: 
             public.WriteLog("插件管理", "设置插件["+info['name']+"]AS!")
@@ -217,7 +217,7 @@ class ajax:
     def GetQiniuFileList(self,get):
         try:
             import json             
-            result = public.ExecShell("python " + public.GetConfigValue('setup_path') + "/panel/script/backup_"+get.name+".py list")
+            result = public.ExecShell(public.get_python_bin() + " " + public.GetConfigValue('setup_path') + "/panel/script/backup_"+get.name+".py list")
             return json.loads(result[0])
         except:
             return public.returnMsg(False, '获取列表失败,请检查[AK/SK/存储空间]设是否正确!');
@@ -1061,7 +1061,6 @@ class ajax:
 
     #取指定行
     def get_lines(self,args):
-        return public.ExecShell("python -V && pip -V")
         if not os.path.exists(args.filename): return public.returnMsg(False,'指定日志文件不存在!')
         s_body = public.ExecShell("tail -n {} {}".format(args.num,args.filename))[0]
         return public.returnMsg(True,s_body)

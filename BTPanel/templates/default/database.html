@@ -52,8 +52,8 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="/static/js/bt_upload.js?version={{g['version']}}"></script>
-<script src="/static/js/database.js?date={{g['version']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/bt_upload.js?version={{g['version']}}"></script>
+<script src="{{g.cdn_url}}/js/database.js?date={{g['version']}}"></script>
 <script type="text/javascript">
     bt.set_cookie('backup_path', "{{session['config']['backup_path']}}");
 	
@@ -65,5 +65,5 @@
     {% endif %}		
 	
 </script>
-<script src="/static/js/upload.js?date={{g['version']}}"></script>
+<script src="{{g.cdn_url}}/js/upload.js?date={{g['version']}}"></script>
 {% endblock %}

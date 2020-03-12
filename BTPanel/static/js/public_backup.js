@@ -470,7 +470,7 @@ var bt =
                 
 				if(callback) callback(rdata);
             }).error(function (e, f) {
-                console.log(e,f)
+                //console.log(e,f)
 				if(callback) callback('error');
 			});
 		}
@@ -581,7 +581,7 @@ var bt =
 	check_select:function(){
         setTimeout(function () {
             var num = $('input[type="checkbox"].check:checked').length;
-            console.log(num);
+            //console.log(num);
             if (num == 1) {
                 $('button[batch="true"]').hide();
                 $('button[batch="false"]').show();
@@ -1354,7 +1354,7 @@ bt.index = {
 			var k = layer.open({
 				type: 1,
 				title: lan.bt.install_title,
-				area: ["658px", "428px"],
+				area: ["670px", "440px"],
 				closeBtn: 2,
 				shadeClose: false,
                 content: "<div class='rec-install'><div class='important-title'><p><span class='glyphicon glyphicon-alert' style='color: #f39c12; margin-right: 10px;'></span>" + lan.bt.install_ps + " <a href='javascript:jump()' style='color:#20a53a'>" + lan.bt.install_s + "</a> " + lan.bt.install_s1 + "</p></div><div class='rec-box'><h3>" + lan.bt.install_lnmp + "</h3><div class='rec-box-con'><ul class='rec-list'>" + c + "</ul><p class='fangshi'>" + lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "' style='margin-right:0'>" + lan.bt.install_rpm + "<input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'>" + lan.bt.install_src + "<input type='checkbox'></label></p><div class='onekey'>" + lan.bt.install_key + "</div></div></div><div class='rec-box' style='margin-left:16px'><h3>LAMP</h3><div class='rec-box-con'><ul class='rec-list'>" + g + "</ul><p class='fangshi'>" + lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "' style='margin-right:0'>" + lan.bt.install_rpm + "<input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'>" + lan.bt.install_src + "<input type='checkbox'></label></p><div class='onekey'>一键安装</div></div></div></div>"
@@ -3748,7 +3748,6 @@ bt.soft = {
                 soft.flush_cache();
                 return;
             }
-            console.log(price, cycle)
             $(".sale-price").text((price * cycle).toFixed(2))
             $(".pay-wx").html('');
             $(".pay-wx").qrcode(rdata.msg.code);
@@ -3841,9 +3840,14 @@ bt.soft = {
                         if (rdata.status) {
                             layer.closeAll();
                             clearInterval(bt.soft.pub.wxpayTimeId);
-                            bt.msg({ msg: "插件支付成功！", icon: 16, time: 0, shade: [0.3, "#000"] });
-                            bt.set_cookie('force', 1);
-                            if (soft) soft.flush_cache();
+                            if(pid != 100000032){
+	                            bt.msg({ msg: "插件支付成功！", icon: 16, time: 0, shade: [0.3, "#000"] });
+	                            bt.set_cookie('force', 1);
+	                            if (soft) soft.flush_cache();
+                            }else {
+                            	bt.msg({ msg: "企业版支付成功！", icon: 16, time: 0, shade: [0.3, "#000"] });
+                            	location.reload(true);
+                            }
                             return;
                         }
                     })
@@ -3863,8 +3867,6 @@ bt.soft = {
                     })
                 }, 3000);
             }
-			
-			
 		});
 	},
 	get_product_discount:function(pluginName,pid,is_pro,type){
@@ -4022,7 +4024,208 @@ bt.soft = {
 				if(callback) callback(rdata);
 			})
 		}
-	},	
+	},
+	add_make_args:function(name,init){
+		name = bt.soft.get_name(name);
+		pdata = {
+			name:name,
+			args_name: $("input[name='make_name']").val(),
+			init: init,
+			ps: $("input[name='make_ps']").val(),
+			args: $("input[name='make_args']").val()
+		}
+		if(pdata.args_name.length < 1 || pdata.args.length < 1){
+			layer.msg('自定义模块名称和参数不能为空!');
+			return
+		}
+		loadT = bt.load('正在添加自定义模块...')
+		bt.send('add_make_args','plugin/add_make_args',pdata,function(rdata){
+			loadT.close();
+			bt.msg(rdata);
+			bt.soft.get_make_args(name)
+			if(rdata.status === true) bt.soft.loadOpen.close();
+		})
+	},
+	show_make_args:function(name){
+		name = bt.soft.get_name(name);
+		var _aceEditor = '';
+		bt.soft.loadOpen = bt.open({
+			type: 1,
+			title: '添加自定义选装模块',
+			area: '500px',
+			btn:[lan.public.submit,lan.public.close],
+			content: '<div class="bt-form c6">\
+				<from class="bt-form" id="outer_url_form" style="padding:30px 10px;display:inline-block;">\
+					<div class="line">\
+						<span class="tname">模块名称</span>\
+						<div class="info-r">\
+							<input name="make_name" class="bt-input-text mr5" type="text" placeholder="只能是字母、数字、下划线" style="width:350px" value="">\
+						</div>\
+					</div>\
+					<div class="line">\
+						<span class="tname">模块描述</span>\
+						<div class="info-r">\
+							<input name="make_ps" class="bt-input-text mr5" placeholder="30字以内的描述" type="text" style="width:350px" value="">\
+						</div>\
+					</div>\
+					<div class="line">\
+						<span class="tname">模块参数</span>\
+						<div class="info-r">\
+							<input name="make_args" class="bt-input-text mr5" type="text" placeholder="如：--add-module=/tmp/echo/echo-nginx-module-master" style="width:350px" value="">\
+						</div>\
+					</div>\
+					<div class="line">\
+						<span class="tname">前置脚本</span>\
+						<div class="info-r">\
+							<div id="preposition_shell" class="bt-input-text" style="height:300px;width:350px;font-size:11px;line-height:20px;"></div>\
+						</div>\
+					</div>\
+				</from>\
+			</div>',
+			success:function(layer,index){
+				_aceEditor = ace.edit('preposition_shell',{
+					theme: "ace/theme/chrome", //主题
+					mode: "ace/mode/sh", // 语言类型
+					wrap: true,
+					showInvisibles:false,
+					showPrintMargin: false,
+					showFoldWidgets:false,
+					useSoftTabs:true,
+					tabSize:2,
+					showPrintMargin: false,
+					readOnly:false
+				});
+				_aceEditor.setValue('# 在编译前执行的shell脚本内容，通常为第三方模块的依赖安装和源码下载等前置准备');
+			},
+			yes:function(){
+				bt.soft.add_make_args(name,_aceEditor.getValue());
+			}
+		})
+	},
+	modify_make_args:function(name,args_name){
+		name = bt.soft.get_name(name);
+		var _aceEditor = '';
+		bt.soft.loadOpen = bt.open({
+			type: 1,
+			title: '编辑自定义选装模块['+name+':'+args_name+']',
+			area: '500px',
+			btn:[lan.public.submit,lan.public.close],
+			content: '<div class="bt-form c6">\
+				<from class="bt-form" id="outer_url_form" style="padding:30px 10px;display:inline-block;">\
+					<div class="line">\
+						<span class="tname">模块名称</span>\
+						<div class="info-r">\
+							<input name="make_name" class="bt-input-text mr5" type="text" placeholder="只能是字母、数字、下划线" style="width:350px" value="'+bt.soft.make_data[args_name].name+'">\
+						</div>\
+					</div>\
+					<div class="line">\
+						<span class="tname">模块描述</span>\
+						<div class="info-r">\
+							<input name="make_ps" class="bt-input-text mr5" placeholder="30字以内的描述" type="text" style="width:350px" value="'+bt.soft.make_data[args_name].ps+'">\
+						</div>\
+					</div>\
+					<div class="line">\
+						<span class="tname">模块参数</span>\
+						<div class="info-r">\
+							<input name="make_args" class="bt-input-text mr5" type="text" placeholder="如：--add-module=/tmp/echo/echo-nginx-module-master" style="width:350px" value="'+bt.soft.make_data[args_name].args+'">\
+						</div>\
+					</div>\
+					<div class="line">\
+						<span class="tname">前置脚本</span>\
+						<div class="info-r">\
+							<div id="preposition_shell" class="bt-input-text" style="height:300px;width:350px;font-size:11px;line-height:20px;"></div>\
+						</div>\
+					</div>\
+				</from>\
+			</div>',
+			success:function(layer,index){
+				_aceEditor = ace.edit('preposition_shell',{
+					theme: "ace/theme/chrome", //主题
+					mode: "ace/mode/sh", // 语言类型
+					wrap: true,
+					showInvisibles:false,
+					showPrintMargin: false,
+					showFoldWidgets:false,
+					useSoftTabs:true,
+					tabSize:2,
+					showPrintMargin: false,
+					readOnly:false
+				});
+				_aceEditor.setValue(bt.soft.make_data[args_name].init);
+			},
+			yes:function(){
+				bt.soft.add_make_args(name,_aceEditor.getValue());
+			}
+		})
+	},
+	set_make_args:function(_this,name,args_name){
+		name = bt.soft.get_name(name);
+		if($('.args_'+args_name)[0].checked){
+			bt.soft.make_config.push(args_name)
+		}else{
+			index = bt.soft.make_config.indexOf(args_name)
+			if(index === -1) return;
+			bt.soft.make_config.splice(index,1);
+		}
+		index = bt.soft.make_config.indexOf('')
+		if(index !== -1) bt.soft.make_config.splice(index,1);
+		bt.send('set_make_args','plugin/set_make_args',{name:name,args_names:bt.soft.make_config.join("\n")},function(rdata){
+			if(!rdata.status){
+				bt.msg(rdata)
+			}
+		})
+	},
+	del_make_args:function(name,args_name){
+		name = bt.soft.get_name(name);
+		bt.confirm({msg:'真的要删除['+name+':'+args_name+']模块吗？',title:'删除['+name+':'+args_name+']模块!'},function(){
+			loadT = bt.load('正在删除模块['+args_name+']...')
+			bt.send('del_make_args','plugin/del_make_args',{name:name,args_name:args_name},function(rdata){
+				bt.msg(rdata);
+				bt.soft.get_make_args(name);
+			});
+		});
+	},
+	get_make_args:function(name){
+		name = bt.soft.get_name(name);
+		loadT = bt.load('正在获取可选模块...')
+		bt.send('get_make_args','plugin/get_make_args',{name:name},function(rdata){
+			loadT.close();
+			var module_html = ''; 
+			bt.soft.make_config = rdata.config.split("\n")
+			bt.soft.make_data = {}
+			for(var i=0;i<rdata.args.length;i++){
+				bt.soft.make_data[rdata.args[i].name] = rdata.args[i]
+				var checked_str = (bt.soft.make_config.indexOf(rdata.args[i].name)== -1?'':'checked="checked"')
+				module_html += '<tr>\
+									<td>\
+										<input class="args_'+rdata.args[i].name+'" onclick="bt.soft.set_make_args(this,\''+name+'\',\''+rdata.args[i].name+'\')" type="checkbox" '+checked_str+' />\
+									</td>\
+									<td>'+ rdata.args[i].name +'</td><td>'+ rdata.args[i].ps +'</td>\
+									<td>\
+										<a onclick="bt.soft.modify_make_args(\''+name+'\',\''+rdata.args[i].name+'\')" class="btlink">编辑</a>\
+										| <a onclick="bt.soft.del_make_args(\''+name+'\',\''+rdata.args[i].name+'\')" class="btlink">删除</a>\
+									</td>\
+								</tr>';
+			}
+			$(".modules_list").html(module_html);
+		});
+	},
+	check_make_is: function(name){
+		name = bt.soft.get_name(name);
+		var shows = ["nginx",'apache','mysql','php']
+		for(var i=0;i<shows.length;i++){
+			if(name.indexOf(shows[i]) === 0){
+				return true
+			}
+		}
+		return false
+	},
+	get_name: function(name){
+		if(name.indexOf('php-') === 0){
+			return 'php';
+		}
+		return name
+	},
 	install:function(name){		
 		_this = this;		
         _this.get_soft_find(name, function (rdata) {
@@ -4034,7 +4237,7 @@ bt.soft = {
                         var item = rdata.versions[i];
                         SelectVersion += '<option>' + name + ' ' + item.m_version + '</option>';
                     }
-                    shtml = "<select id='SelectVersion' class='bt-input-text' style='margin-left:30px'>" + SelectVersion + "</select>";
+                    shtml = "<select id='SelectVersion' class='bt-input-text' style='margin-left:10px'>" + SelectVersion + "</select>";
                 }
                 else {
                     shtml = "<span id='SelectVersion'>" + name + "</span>";
@@ -4042,10 +4245,26 @@ bt.soft = {
                 var loadOpen = bt.open({
                     type: 1,
                     title: name + lan.soft.install_title,
-                    area: '350px',
-                    content: "<div class='bt-form pd20 pb70 c6'>\
-						<div class='version line'>"+ lan.soft.install_version + "：" + shtml+"</div>\
-                        <div class='fangshi line'>"+ lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "'>" + lan.bt.install_rpm + "<input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'>" + lan.bt.install_src + "<input type='checkbox'></label></div>\
+                    area: '400px',
+                    content: "<div class='bt-form pd20 c6' style='padding-bottom:50px'>\
+						<div class='version line' style='padding-left:15px'>"+ lan.soft.install_version + "：" + shtml+"</div>\
+						<div class='fangshi line' style='padding-left:15px'>"+ lan.bt.install_type + "：<label data-title='" + lan.bt.install_src_title + "'>" + lan.bt.install_src + "<input type='checkbox'></label><label data-title='" + lan.bt.install_rpm_title + "'>" + lan.bt.install_rpm + "<input type='checkbox' checked></label></div>\
+						<div class='install_modules' style='display: none;'>\
+							<div style='margin-bottom:15px;padding-top:15px;border-top:1px solid #ececec;'><button onclick=\"bt.soft.show_make_args(\'" +name+ "\')\" class='btn btn-success btn-sm'>添加自定义模块</button></div>\
+							<div class='select_modules divtable' style='margin-bottom:20px'>\
+								<table class='table table-hover'>\
+									<thead>\
+										<tr>\
+											<th width='10px'></th>\
+											<th width='80px'>模块名称</th>\
+											<th >模块描述</th>\
+											<th width='80px'>操作</th>\
+										</tr>\
+									</thead>\
+									<tbody class='modules_list'></tbody>\
+								</table>\
+							</div>\
+						</div>\
 						<div class='bt-form-submit-btn'>\
 							<button type='button' class='btn btn-danger btn-sm btn-title' onclick='layer.closeAll()'>"+ lan.public.close + "</button>\
 					        <button type='button' id='bi-btn' class='btn btn-success btn-sm btn-title bi-btn'>"+ lan.public.submit + "</button>\
@@ -4054,7 +4273,18 @@ bt.soft = {
                 })
 
                 $('.fangshi input').click(function () {
-                    $(this).attr('checked', 'checked').parent().siblings().find("input").removeAttr('checked');
+					$(this).attr('checked', 'checked').parent().siblings().find("input").removeAttr('checked');
+					var type = $('.fangshi input:eq(0)').prop("checked") ? '0' : '1';
+					if(type === '1') {
+						$(".install_modules").hide();
+						return;
+					}
+
+					if(bt.soft.check_make_is(name)){
+						$(".install_modules").show();
+						bt.soft.get_make_args(name);
+					}
+					
                 });
 
                 $("#bi-btn").click(function () {
@@ -4062,7 +4292,7 @@ bt.soft = {
                     var info = $("#SelectVersion").val().toLowerCase();
                     name = info.split(" ")[0];
                     version = info.split(" ")[1];
-                    var type = $('.fangshi input:eq(0)').prop("checked") ? '1' : '0';
+                    var type = $('.fangshi input:eq(0)').prop("checked") ? '0' : '1';
                     if (rdata.versions.length > 1) {
                         _this.install_soft(rdata, version, type);
                     } else {
@@ -4204,18 +4434,6 @@ bt.soft = {
 					}
 					layer.close(bt.soft.loadT);	
 					bt.pub.get_task_count();
-					if(rdata.status === true && rdata.msg.indexOf('队列') === -1){
-						bt.confirm({ msg: '更新付费插件[' + name + ']成功，需重启面板后生效，是否立即重启面板?', title: '提示' }, function () {
-                            var loading = bt.load();
-                            bt.system.reload_panel(function (rdata) {
-                            	setTimeout(function () { 
-                            		loading.close();
-                            		window.location.reload(); 
-                            	}, 3000);
-                            });
-                        })
-                        return;
-					}
 					if(soft) soft.get_list();
 					bt.msg(rdata);	
 				})
@@ -5544,6 +5762,3 @@ bt.data = {
 		}
 	}
 }
-
-
-

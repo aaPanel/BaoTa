@@ -10,6 +10,7 @@ import time,public,db,os,sys,json,re
 os.chdir('/www/server/panel')
 
 def control_init():
+    time.sleep(1)
     sql = db.Sql().dbfile('system')
     if not sql.table('sqlite_master').where('type=? AND name=?', ('table', 'load_average')).count():
         csql = '''CREATE TABLE IF NOT EXISTS `load_average` (
@@ -96,7 +97,18 @@ def control_init():
     #check_firewall()
     check_dnsapi()
     clean_php_log()
+    update_py37()
 
+
+#尝试升级到独立环境
+def update_py37():
+    pyenv='/www/server/panel/pyenv/bin/python'
+    pyenv_exists='/www/server/panel/data/pyenv_exists.pl'
+    if os.path.exists(pyenv) or os.path.exists(pyenv_exists): return False
+    download_url = public.get_url()
+    public.ExecShell("nohup curl {}/install/update_panel.sh|bash &>/tmp/panelUpdate.pl &".format(download_url))
+    public.writeFile(pyenv_exists,'True')
+    return True
 
 #检查dnsapi
 def check_dnsapi():
@@ -253,7 +265,7 @@ def set_crond():
         args_obj = public.dict_obj()
         if not cron_id:
             cronPath = public.GetConfigValue('setup_path') + '/cron/' + echo    
-            shell = 'python /www/server/panel/class/panelLets.py renew_lets_ssl'
+            shell = public.get_python_bin() + ' /www/server/panel/class/panelLets.py renew_lets_ssl'
             public.writeFile(cronPath,shell)
             args_obj.id = public.M('crontab').add('name,type,where1,where_hour,where_minute,echo,addtime,status,save,backupTo,sType,sName,sBody,urladdress',("续签Let's Encrypt证书",'day','','0','10',echo,time.strftime('%Y-%m-%d %X',time.localtime()),0,'','localhost','toShell','',shell,''))
             crontab.crontab().set_cron_status(args_obj)

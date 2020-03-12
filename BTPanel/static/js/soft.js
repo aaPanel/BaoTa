@@ -18,7 +18,7 @@ var soft = {
         }
         soft.is_install = false;
         bt.soft.get_soft_list(page, type, search, function (rdata) {
-        	console.log(rdata);
+        	//console.log(rdata);
             if (rdata.pro >= 0) {
                 $("#updata_pro_info").html('<div class="alert alert-success" style="margin-bottom:15px"><strong>当前为专业版，专业版可以免费使用专业版插件，过期时间：'+ (rdata.pro > 0 ?bt.format_data(rdata.pro, 'yyyy/MM/dd'):'永久授权') +'</strong><button style="margin-left:8px;display:'+ (rdata.pro>0?'inline-block':'none') +';" class="btn btn-success btn-xs va0 updata_pro" onclick="bt.soft.updata_pro()" title="续费专业版">立即续费</button>');
             }
@@ -1740,7 +1740,8 @@ var soft = {
                         {
                             title: lan.soft.php_fpm_model, name: 'pm', value: rdata.pm, type: 'select', items: [
                                 { title: lan.bt.static, value: 'static' },
-                                { title: lan.bt.dynamic, value: 'dynamic' }
+                                { title: lan.bt.dynamic, value: 'dynamic' },
+                                { title:'按需', value: 'ondemand' },
                             ], ps: '*' + lan.soft.php_fpm_ps1
                         },
                         { title: 'max_children', name: 'max_children', value: rdata.max_children, type: 'number', width: '80px', ps: '*' + lan.soft.php_fpm_ps2 },
@@ -1796,9 +1797,9 @@ var soft = {
                     _c_form.append('<ul class="help-info-text c7">\
                                         <li>【最大子进程数量】越大，并发能力越强，但max_children最大不要超过5000</li>\
                                         <li>【内存】每个PHP子进程需要20MB左右内存，过大的max_children会导致服务器不稳定</li>\
-                                        <li>【静态模式】下会始终维持设置的子进程数量，对内存开销较大，但并发能力较好</li>\
-                                        <li>【动态模式】下会按设置最大空闲进程数来收回进程，内存开销小，建议小内存机器使用</li>\
-                                        <li>【64GB内存推荐值】max_children<=1000 , start/min_spare=50 , max_spare<=200</li>\
+                                        <li>【静态模式】始终维持设置的子进程数量，对内存开销较大，但并发能力较好</li>\
+                                        <li>【动态模式】按设置最大空闲进程数来收回进程，内存开销小，建议小内存机器使用</li>\
+                                        <li>【按需模式】根据访问需求自动创建进程，内存开销极小，但并发能力略差</li>\
                                         <li>【多PHP版本】若您安装了多个PHP版本，且都在使用，建议适当降低并发配置</li>\
                                         <li>【没有数据库】若没有安装mysql等数据库，建议设置2倍于推荐并发</li>\
                                         <li>【注意】以上为建议配置说明，线上项目复杂多样，请根据实际情况酌情调整</li>\

@@ -2012,8 +2012,8 @@ html .menu .menu_exit:hover {
 
 .fangshi label {
 	font-weight: normal;
-	margin-right: 44px;
-	float: right
+	margin-right: 30px;
+	margin-left: 10px;
 }
 
 .fangshi label input {
@@ -6573,4 +6573,8 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
 	position: absolute;
 	top: -1px;
 	left: -1px;
+}
+
+#logsBody th {
+	min-width: 55px;
 }

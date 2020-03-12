@@ -46,10 +46,10 @@
 
 
 {% block scripts %}
-<script type="text/javascript" src="/static/laydate/laydate.js?date=20180301"></script>
-<script type="text/javascript" src="/static/js/bootstrap-select.min.js"></script>
-<script type="text/javascript" src="/static/js/site.js?version_20200217={{g['version']}}"></script>
-<script type="text/javascript" src="/static/ace/ace.js?date_20200217={{g.version}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js?date=20180301"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/bootstrap-select.min.js"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/site.js?version_20200217={{g['version']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js?date_20200217={{g.version}}"></script>
 <script type="text/javascript">
     bt.set_cookie('sites_path', "{{session['config']['sites_path']}}");
     bt.set_cookie('serverType', "{{session['webserver']}}");

@@ -1619,6 +1619,49 @@ def unicode_decode(data,charset = 'utf8'):
         return result
     except: return data
 
+def import_cdn_plugin():
+    plugin_path = 'plugin/static_cdn'
+    if not os.path.exists(plugin_path): return True
+    try:
+        import static_cdn_main
+    except:
+        sys.path.insert(0,plugin_path)
+        import static_cdn_main
+    
+
+def get_cdn_hosts():
+    if import_cdn_plugin(): return []
+    import static_cdn_main
+    return static_cdn_main.static_cdn_main().get_hosts(None)
+
+def get_cdn_url():
+    try:
+        from BTPanel import cache
+        cdn_url = cache.get('cdn_url')
+        if cdn_url: return cdn_url
+        if import_cdn_plugin(): return False
+        import static_cdn_main
+        cdn_url = static_cdn_main.static_cdn_main().get_url(None)
+        cache.set('cdn_url',cdn_url,3)
+        return cdn_url
+    except:
+        return False
+
+def set_cdn_url(cdn_url):
+    if not cdn_url: return False
+    import_cdn_plugin()
+    get = dict_obj()
+    get.cdn_url = cdn_url
+    import static_cdn_main
+    static_cdn_main.static_cdn_main().set_url(get)
+    return True
+
+def get_python_bin():
+    bin_file = '/www/server/panel/pyenv/bin/python'
+    if os.path.exists(bin_file):
+        return bin_file
+    return '/usr/bin/python'
+
 
 #取通用对象
 class dict_obj:

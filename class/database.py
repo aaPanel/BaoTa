@@ -314,7 +314,7 @@ SetLink
                 result = mysql_obj.query("show databases")
                 isError=self.IsSqlError(result)
                 if  isError != None: 
-                    public.ExecShell("cd /www/server/panel && python tools.py root \"" + password + "\"")
+                    public.ExecShell("cd /www/server/panel && "+public.get_python_bin()+" tools.py root \"" + password + "\"")
                     is_modify = False
             if is_modify:
                 m_version = public.readFile(public.GetConfigValue('setup_path') + '/mysql/version.pl')
@@ -416,7 +416,7 @@ SetLink
             name=''
             if filename == 'qiniu':
                 name = public.M('backup').where(where,(id,)).getField('name')
-                public.ExecShell("python "+public.GetConfigValue('setup_path') + '/panel/script/backup_qiniu.py delete_file ' + name)
+                public.ExecShell(public.get_python_bin() + " "+public.GetConfigValue('setup_path') + '/panel/script/backup_qiniu.py delete_file ' + name)
             
             public.M('backup').where(where,(id,)).delete()
             public.WriteLog("TYPE_DATABASE", 'DATABASE_BACKUP_DEL_SUCCESS',(name,filename))

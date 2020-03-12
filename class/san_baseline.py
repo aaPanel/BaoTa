@@ -1207,7 +1207,7 @@ class san_baseline:
         return aa
 
     def start(self, get):
-        os.system('python /www/server/panel/class/san_baseline.py &')
+        os.system(public.get_python_bin() + ' /www/server/panel/class/san_baseline.py &')
         return public.returnMsg(True, '1')
 
     # 取爆破

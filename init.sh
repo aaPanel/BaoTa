@@ -11,28 +11,38 @@
 # Short-Description: starts bt
 # Description:       starts the bt
 ### END INIT INFO
-panel_path=/www/server/panel
-pidfile=$panel_path/logs/panel.pid
-cd $panel_path
-env_path=$panel_path/pyenv/bin/activate
-if [ -f $env_path ];then
-        source $env_path
-        pythonV=$panel_path/pyenv/bin/python
-        chmod -R 700 $panel_path/pyenv/bin
-else
-        pythonV=/usr/bin/python
-fi
-sed -i "s@^#!.*@#!$pythonV@" $panel_path/BT-Panel
-sed -i "s@^#!.*@#!$pythonV@" $panel_path/BT-Task
-chmod 700 $panel_path/BT-Panel
-chmod 700 $panel_path/BT-Task
-log_file=$panel_path/logs/error.log
-task_log_file=$panel_path/logs/task.log
-if [ -f $panel_path/data/ssl.pl ];then
-	log_file=/dev/null
-fi
+panel_init(){
+        panel_path=/www/server/panel
+        pidfile=$panel_path/logs/panel.pid
+        cd $panel_path
+        env_path=$panel_path/pyenv/bin/activate
+        if [ -f $env_path ];then
+                source $env_path
+                pythonV=$panel_path/pyenv/bin/python
+                chmod -R 700 $panel_path/pyenv/bin
+        else
+                pythonV=/usr/bin/python
+        fi
+        reg="^#\!$pythonV\$"
+        is_sed=$(cat $panel_path/BT-Panel|head -n 1|grep -E $reg)
+        if [ "${is_sed}" = "" ];then
+                sed -i "s@^#!.*@#!$pythonV@" $panel_path/BT-Panel
+        fi
+        is_sed=$(cat $panel_path/BT-Task|head -n 1|grep -E $reg)
+        if [ "${is_sed}" = "" ];then
+                sed -i "s@^#!.*@#!$pythonV@" $panel_path/BT-Task
+        fi
+        chmod 700 $panel_path/BT-Panel
+        chmod 700 $panel_path/BT-Task
+        log_file=$panel_path/logs/error.log
+        task_log_file=$panel_path/logs/task.log
+        if [ -f $panel_path/data/ssl.pl ];then
+                log_file=/dev/null
+        fi
 
-port=$(cat $panel_path/data/port.pl)
+        port=$(cat $panel_path/data/port.pl)
+}
+panel_init
 
 get_panel_pids(){
         isStart=$(ps aux|grep -E '(runserver|BT-Panel)'|grep -v grep|awk '{print $2}'|xargs)

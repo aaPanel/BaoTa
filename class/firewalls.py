@@ -84,7 +84,7 @@ class firewalls:
         address = get.port
         if public.M('firewall').where("port=?",(address,)).count() > 0: return public.returnMsg(False,'FIREWALL_IP_EXISTS')
         if self.__isUfw:
-            public.ExecShell('ufw deny from ' + address + ' to any')
+            public.ExecShell('ufw insert 1 deny from ' + address + ' to any')
         else:
             if self.__isFirewalld:
                 #self.__Obj.AddDropAddress(address)

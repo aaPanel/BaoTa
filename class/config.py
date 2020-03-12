@@ -69,10 +69,10 @@ class config:
 
     # 添加自定义邮箱地址
     def user_mail_send(self, get):
-        if not (hasattr(get, 'email') or hasattr(get, 'stmp_pwd') or hasattr(get, 'hosts')):
+        if not (hasattr(get, 'email') or hasattr(get, 'stmp_pwd') or hasattr(get, 'hosts') or hasattr(get, 'port')):
             return public.returnMsg(False, '请填写完整信息')
         # 自定义邮件
-        self.mail.qq_stmp_insert(get.email.strip(), get.stmp_pwd.strip(), get.hosts.strip())
+        self.mail.qq_stmp_insert(get.email.strip(), get.stmp_pwd.strip(), get.hosts.strip(),get.port.strip())
         # 测试发送
         if self.mail.qq_smtp_send(get.email.strip(), '宝塔告警测试邮件', '宝塔告警测试邮件'):
             if not get.email.strip() in self.__mail_list:
@@ -82,13 +82,14 @@ class config:
         else:
             ret = []
             public.writeFile(self.__mail_config, json.dumps(ret))
-            return public.returnMsg(False, '邮件发送失败,请查看STMP密码是否正确,或者Hosts是否正确')
+            return public.returnMsg(False, '邮件发送失败,请检查信息是否正确,或者更换其他端口进行尝试')
 
     # 查看自定义邮箱配置
     def get_user_mail(self, get):
         qq_mail_info = json.loads(public.ReadFile(self.__mail_config))
         if len(qq_mail_info) == 0:
             return public.returnMsg(False, '无信息')
+        if not 'port' in qq_mail_info:qq_mail_info['port']=465
         return public.returnMsg(True, qq_mail_info)
 
 
@@ -488,7 +489,8 @@ class config:
         min_spare_servers = get.min_spare_servers
         max_spare_servers = get.max_spare_servers
         pm = get.pm
-        
+        if not pm in ['static','dynamic','ondemand']:
+            return public.returnMsg(False,'错误的运行模式!')
         file = public.GetConfigValue('setup_path')+"/php/"+version+"/etc/php-fpm.conf"
         conf = public.readFile(file)
         
@@ -506,6 +508,10 @@ class config:
         
         rep = r"\s*pm\s*=\s*(\w+)\s*"
         conf = re.sub(rep, "\npm = "+pm+"\n", conf)
+        if pm == 'ondemand':
+            if conf.find('listen.backlog = -1') != -1:
+                rep = r"\s*listen\.backlog\s*=\s*([0-9-]+)\s*"
+                conf = re.sub(rep, "\nlisten.backlog = 8192\n", conf)
         
         public.writeFile(file,conf)
         public.phpReload(version)
@@ -1000,12 +1006,12 @@ class config:
 
     def get_token(self,get):
         save_path = '/www/server/panel/config/api.json'
-        if not os.path.exists(save_path): 
+        tmp = public.ReadFile(save_path)
+        if not tmp or not os.path.exists(save_path): 
             data = { "open":False, "token":"", "limit_addr":[] }
             public.WriteFile(save_path,json.dumps(data))
             public.ExecShell("chmod 600 " + save_path)
-        data = json.loads(public.ReadFile(save_path))
-        
+        data = json.loads(tmp)
         if 'token_crypt' in data:
             data['token'] = public.de_crypt(data['token'],data['token_crypt'])
         else:
@@ -1016,7 +1022,12 @@ class config:
     def set_token(self,get):
         if 'request_token' in get: return public.returnMsg(False,'不能通过API接口配置API')
         save_path = '/www/server/panel/config/api.json'
-        data = json.loads(public.ReadFile(save_path))
+        tmp = public.ReadFile(save_path)
+        if not tmp:
+            data = { "open":False, "token":"", "limit_addr":[] }
+            public.WriteFile(save_path,json.dumps(data))
+            public.ExecShell("chmod 600 " + save_path)
+        data = json.loads(tmp)
         if get.t_type == '1':
             token = public.GetRandomString(32)
             data['token'] = public.md5(token)

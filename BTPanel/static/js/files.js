@@ -443,10 +443,7 @@ function GetFiles(Path, sort) {
         for (var i = 0; i < rdata.FILES.length; i++) {
             if (rdata.FILES[i] == null) continue;
             var fmp = rdata.FILES[i].split(";");
-            var displayZip = isZip(fmp[0]);
-            var bodyZip = '';
-            var download = '';
-            var file_webshell = '';
+            var displayZip = isZip(fmp[0]),bodyZip = '',download = '',image_view = '',file_webshell = '';
             var cnametext = fmp[0] + fmp[5];
             fmp[0] = fmp[0].replace(/'/, "\\'");
             if (cnametext.length > 48) {
@@ -463,14 +460,15 @@ function GetFiles(Path, sort) {
             if (displayZip != -1) {
                 bodyZip = "<a class='btlink' href='javascript:;' onclick=\"UnZip('" + rdata.PATH + "/" + fmp[0] + "'," + displayZip + ")\">" + lan.files.file_menu_unzip + "</a> | ";
             }
+            console.log(isText(fmp[0]))
             if (isText(fmp[0])) {
                 bodyZip = "<a class='btlink' href='javascript:;' onclick=\"openEditorView(0,'" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_edit + "</a> | ";
             }
             if (isImage(fmp[0])) {
-                download = "<a class='btlink' href='javascript:;' onclick=\"GetImage('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_img + "</a> | ";
-            } else {
-                download = "<a class='btlink' href='javascript:;' onclick=\"GetFileBytes('" + rdata.PATH + "/" + fmp[0] + "'," + fmp[1] + ")\">" + lan.files.file_menu_down + "</a> | ";
+                image_view = "<a class='btlink' href='javascript:;' onclick=\"GetImage('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_img + "</a> | ";
             }
+            download = "<a class='btlink' href='javascript:;' onclick=\"GetFileBytes('" + rdata.PATH + "/" + fmp[0] + "'," + fmp[1] + ")\">" + lan.files.file_menu_down + "</a> | ";
+            
 
             totalSize += parseInt(fmp[1]);
             if (getCookie("rank") == "a") {
@@ -506,7 +504,7 @@ function GetFiles(Path, sort) {
 						<a class='btlink' href='javascript:;' onclick=\"ReName(0,'" + fmp[0] + "')\">" + lan.files.file_menu_rename + "</a> | \
 						<a class='btlink' href=\"javascript:SetChmod(0,'" + rdata.PATH + "/" + fmp[0] + "');\">" + lan.files.file_menu_auth + "</a> | \
 						<a class='btlink' href=\"javascript:Zip('" + rdata.PATH + "/" + fmp[0] + "');\">" + lan.files.file_menu_zip + "</a> | \
-						"+ bodyZip + download + "\
+						"+ bodyZip + image_view + download + "\
 						<a class='btlink' href='javascript:;' onclick=\"DeleteFile('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_del + "</a>\
 						</span></td></tr>";
             }
@@ -1421,7 +1419,7 @@ function isZip(fileName) {
     return -1;
 }
 function isText(fileName) {
-    var exts = ['rar', 'war', 'zip', 'tar.gz', 'gz', 'iso', 'xsl', 'doc', 'xdoc', 'jpeg', 'jpg', 'png', 'gif', 'bmp', 'tiff', 'exe', 'so', '7z', 'bz', 'bz2'];
+    var exts = ['rar', 'war', 'zip', 'tar.gz', 'gz', 'iso', 'xsl', 'doc', 'xdoc', 'jpeg', 'jpg', 'png', 'gif', 'bmp', 'tiff', 'exe', 'so', '7z', 'bz', 'bz2','ico'];
     return isExts(fileName, exts) ? false : true;
 }
 function isImage(fileName) {
@@ -1721,13 +1719,13 @@ function create_download_url(fileName,path,fileShare) {
             + '<div class="line"><span class="tname">有效期</span><div class="info-r">'
                 +'<label class="checkbox_grourd"><input type="radio" name="expire" value="24" checked><span>&nbsp;1天</span></label>'
                 +'<label class="checkbox_grourd"><input type="radio" name="expire" value="168"><span>&nbsp;7天</span></label>'
-                +'<label class="checkbox_grourd"><input type="radio" name="expire" value="99999999"><span>&nbsp;永久</span></label>'
+                +'<label class="checkbox_grourd"><input type="radio" name="expire" value="1130800"><span>&nbsp;永久</span></label>'
             +'</div></div>'
         	+ '<div class="line"><span class="tname">提取码</span><div class="info-r"><input name="password" class="bt-input-text mr5" placeholder="为空则不设置提取码" type="text" style="width:170px" value=""><button type="button" id="random_paw" class="btn btn-success btn-sm btn-title">随机</button></div></div>'
             + '</from>',
         yes:function(indexs,layers){
         	layer.confirm('是否分享该文件，是否继续？', { title: '确认分享', closeBtn: 2, icon: 3 }, function (index) {
-	        	var ps = $('[name=ps]').val(),expire = $('[name=expire]').val(),password = $('[name=password]').val();
+	        	var ps = $('[name=ps]').val(),expire = $('[name=expire]:checked').val(),password = $('[name=password]').val();
 	        	if(ps === ''){
 	        		layer.msg('分享名称不能为空',{icon:2});
 	        		return false;
@@ -1769,7 +1767,7 @@ function set_download_url(rdata){
 	            + '<div class="line"><span class="tname">分享名称</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:365px" value="'+ rdata.ps +'"></div></div>'
 	        	+ '<div class="line external_link"><span class="tname">分享外链</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:280px" value="'+ download_url +'"><button type="button" id="copy_url" data-clipboard-text="'+ download_url +'" class="btn btn-success btn-sm btn-title copy_url" style="margin-right:5px" data-clipboard-target="#copy_url"><img style="width:16px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABIUlEQVQ4T6XTsSuFURjH8d+3/AFm0x0MyqBEUQaUIqUU3YwWyqgMptud/BlMSt1SBiklg0K3bhmUQTFZDZTxpyOvznt7z3sG7/T2vOf5vM85z3nQPx+KfNuHkhoZ7xXYjNfEwIukXUnvNcg2sJECnoHhugpsnwBN21PAXVgbV/AEjNhuVSFA23YHWLNt4Cc3Bh6BUdtLcbzAgHPbp8BqCngAxjJbOANWUkAPGA8fE8icpD1gOQV0gclMBRfAYgq4BaZtz/YhA5IGgY7tS2AhBdwAM7b3JX1I+iz1G45sXwHzKeAa6P97qZgcEA6v/ZsR3v9aHCmt0P9UBVuShjKz8CYpXPkDYKJ0kaKhWpe0UwOFxDATx5VACFZ0Ivbuga8i8A3NFqQRZ5pz7wAAAABJRU5ErkJggg=="></button><button type="button" class="btn btn-success QR_code btn-sm btn-title"><img  style="width:16px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABUklEQVQ4T6WSIU9DQRCEvwlYLIoEgwEECs3rDyCpobbtL6AKRyggMQ9TJBjUMzgMCeUnIEAREoICFAoEZMk2dy/Xo4KGNZu7nZ2bnT3xz1DsN7MFYCnhe5V0n/Kb2QowL2kY70cEoXAHVEnDG/ABXAJXmVDHVZKqSFAA58AqsAY8AW3A68/AQ7hbBG6BbeDGlaQEh8AucA3suzDgC5gFXHID2At5YxJBNwA6ocFBM8B3OL8DTaCcpMDN2QojxHHdk9Qrx9SeAyf1CMFIJ3DjYqxLOgo192gs4ibSNfrMOaj2yBvMrCnpImYHR4C/vizpIPkX/mpbUtfMepJKMxtKKsyslNTLCZxkBzgFjoE5oCVp08yKvyhwgkGyRl9nX1LDzDz3kzxS8kuBpFYygq8xJ4gjjBMEpz+BF+AxcXLg39XMOpLOciW1gtz9ac71GqdpSrE/8U20EQ3XLHEAAAAASUVORK5CYII="></button></div></div>'
 	        	+ '<div class="line external_link" style="'+ (rdata.password == ""?"display:none;":"display:block") +'"><span class="tname">提取码</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:243px" value="'+ rdata.password +'"><button type="button" data-clipboard-text="链接:'+ download_url +' 提取码:'+ rdata.password +'"  class="btn btn-success copy_paw btn-sm btn-title">复制链接及提取码</button></div></div>'
-	        	+ '<div class="line"><span class="tname">过期时间</span><div class="info-r"><span style="line-height:32px; display: block;font-size:14px">'+ bt.format_data(rdata.expire)+'</span></div></div>'
+	        	+ '<div class="line"><span class="tname">过期时间</span><div class="info-r"><span style="line-height:32px; display: block;font-size:14px">'+((rdata.expire > (new Date('2099-01-01 00:00:00').getTime())/1000)?'<span calss="btlink">永久有效</span>':bt.format_data(rdata.expire))+'</span></div></div>'
 	        	+ '<div class="bt-form-submit-btn">'
 	            + '<button type="button" class="btn btn-danger btn-sm btn-title layer_close">' + lan.public.close + '</button>'
 	            + '<button type="button" id="down_del" class="btn btn-danger btn-sm btn-title close_down" style="color:#fff;background-color:#c9302c;border-color:#ac2925;" onclick="">关闭分享外链</button>'
@@ -1808,22 +1806,24 @@ function set_download_url(rdata){
 	            });
             });
             $('.close_down').click(function(){
-            	del_download_url(rdata.id,false,index)
+            	del_download_url(rdata.id,false,index,rdata.ps)
             });
         }
     });
 }
-function del_download_url(id,is_list,index){
-	layer.confirm('是否取消分享该文件【】，是否继续？', { title: '取消分享', closeBtn: 2, icon: 3 }, function (index) {
+function del_download_url(id,is_list,index,filename){
+	layer.confirm('是否取消分享该文件【'+ filename +'】，是否继续？', { title: '取消分享', closeBtn: 2, icon: 3 }, function (indexs) {
 		$.post('/files?action=remove_download_url',{id:id},function(res){
-		    layer.msg(res.msg,{icon:res.status?1:2});
 		    if(index) layer.close(index);
-		    if(is_list === false) get_download_url_list({},true);
+		    layer.close(indexs)
+		    if(is_list === false) get_download_url_list({},true,function(){
+		    	layer.msg(res.msg,{icon:res.status?1:2});
+		    });
 		});
 	});
 }
 
-function get_download_url_list(data,is_refresh){
+function get_download_url_list(data,is_refresh,callback){
 	if(data == undefined) data = {p:1}
     var loadT = layer.msg('正在加载分享列表，请稍后...', {
         icon: 16,
@@ -1834,11 +1834,13 @@ function get_download_url_list(data,is_refresh){
 		layer.close(loadT);
 		var _html = '',rdata = res.data;
 		for(var i=0;i<rdata.length;i++){
-			_html += '<tr><td>'+ rdata[i].ps +'</td><td>'+ rdata[i].filename +'</td><td>'+ bt.format_data(rdata[i].expire) +'</td><td style="text-align:right;"><a href="javascript:;" class="btlink info_down" data-index="'+i +'" data-id="'+ rdata[i].id +'">详情</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink del_down" data-id="'+ rdata[i].id +'" data-index="'+i +'">关闭</a></td></tr>';
+			_html += '<tr><td>'+ rdata[i].ps +'</td><td>'+ rdata[i].filename +'</td><td>'+ bt.format_data(rdata[i].expire) +'</td><td style="text-align:right;"><a href="javascript:;" class="btlink info_down" data-index="'+i +'" data-id="'+ rdata[i].id +'">详情</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink del_down" data-id="'+ rdata[i].id +'" data-index="'+i +'" data-ps="'+ rdata[i].ps +'">关闭</a></td></tr>';
 		}
+		if(callback) callback();
 		if(is_refresh){
 			$('.download_url_list').html(_html);
 			$('.download_url_page').html(res.page);
+			
 			return false;
 		}
 	   var layers = layer.open({
@@ -1860,8 +1862,8 @@ function get_download_url_list(data,is_refresh){
 		    		set_download_url(rdata[indexs]);
 		    	});
 				$('.download_table').on('click','.del_down',function(){
-		    		var id = $(this).attr('data-id');
-		    		del_download_url(id,false);
+		    		var id = $(this).attr('data-id'),_ps = $(this).attr('data-ps');
+		    		del_download_url(id,false,false,_ps);
 		    	});
 		    	$('.download_table .download_url_page').on('click','a',function(e){
 		    		var _href =  $(this).attr('href');

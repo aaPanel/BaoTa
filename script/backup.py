@@ -32,7 +32,7 @@ class backupTools:
         backup_path = sql.table('config').where("id=?",(1,)).getField('backup_path') + '/site'
         if not os.path.exists(backup_path): public.ExecShell("mkdir -p " + backup_path)
         filename= backup_path + "/Web_" + name + "_" + time.strftime('%Y%m%d_%H%M%S',time.localtime()) + '.tar.gz'
-        public.ExecShell("cd " + os.path.dirname(path) + " && tar "+self.__exclude +" zcvf '" + filename + "' '" + os.path.basename(path) + "' > /dev/null")
+        public.ExecShell("cd " + os.path.dirname(path) + " && tar zcvf '" + filename + "' "+self.__exclude +" '" + os.path.basename(path) + "' > /dev/null")
         
         
         endDate = time.strftime('%Y/%m/%d %X',time.localtime())
@@ -138,7 +138,7 @@ class backupTools:
         backup_path = sql.table('config').where("id=?",(1,)).getField('backup_path') + '/path'
         if not os.path.exists(backup_path): os.makedirs(backup_path)
         filename= backup_path + "/Path_" + name + "_" + time.strftime('%Y%m%d_%H%M%S',time.localtime()) + '.tar.gz'
-        os.system("cd " + os.path.dirname(path) + " && tar " + self.__exclude + " zcvf '" + filename + "' '" + os.path.basename(path) + "' > /dev/null")
+        os.system("cd " + os.path.dirname(path) + " && tar zcvf '" + filename + "' " + self.__exclude + " '" + os.path.basename(path) + "' > /dev/null")
 
         endDate = time.strftime('%Y/%m/%d %X',time.localtime())
         if not os.path.exists(filename):

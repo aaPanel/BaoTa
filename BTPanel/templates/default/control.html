@@ -141,6 +141,6 @@
 
 {% endblock %}
 {% block scripts %}
-	<script src="/static/js/echarts.min.js"></script>
-	<script src="/static/js/control.js?date={{g['version']}}"></script>
+	<script src="{{g.cdn_url}}/js/echarts.min.js"></script>
+	<script src="{{g.cdn_url}}/js/control.js?date={{g['version']}}"></script>
 {% endblock %}

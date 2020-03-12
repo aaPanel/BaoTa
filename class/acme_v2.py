@@ -33,6 +33,11 @@ try:
 except:
     public.ExecShell("pip install pyopenssl")
     import OpenSSL
+try:
+    import dns.resolver
+except:
+    public.ExecShell("pip install dnspython")
+    import dns.resolver
 
 class acme_v2:
     _url = None
@@ -78,6 +83,10 @@ class acme_v2:
             # 尝试从云端获取
             res = requests.get(self._url)
             if not res.status_code in [200, 201]:
+                result = res.json()
+                if "type" in result:
+                    if result['type'] == 'urn:acme:error:serverInternal':
+                        raise Exception('服务因维护而关闭或发生内部错误，查看 <a href="https://letsencrypt.status.io/" target="_blank" class="btlink">https://letsencrypt.status.io/</a> 了解更多详细信息。')
                 raise Exception(res.content)
             s_body = res.json()
             self._apis = {}
@@ -97,16 +106,19 @@ class acme_v2:
 
     # 获取帐户信息
     def get_account_info(self, args):
-        if not 'account' in self._config:
-            return {}
-        k = self._mod_index[self._debug]
-        if not k in self._config['account']:
-            self.get_apis()
-            self.get_kid()
-        account = self._config['account'][k]
-        account['email'] = self._config['email']
-        self.set_crond()
-        return account
+        try:
+            if not 'account' in self._config:
+                return {}
+            k = self._mod_index[self._debug]
+            if not k in self._config['account']:
+                self.get_apis()
+                self.get_kid()
+            account = self._config['account'][k]
+            account['email'] = self._config['email']
+            self.set_crond()
+            return account
+        except Exception as ex:
+            return public.returnMsg(False,str(ex))
 
     # 设置帐户信息
     def set_account_info(self, args):

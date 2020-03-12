@@ -1487,7 +1487,11 @@ var site = {
                     },
                     {
                         title: "Let's Encrypt", callback: function (robj) {
-                            acme.get_account_info(function(let_user){});
+                            acme.get_account_info(function(let_user){
+                                if(let_user.status === false){
+                                    layer.msg(let_user.msg,{icon:2,time:10000});
+                                }
+                            });
                             acme.id = web.id;
                             if (rdata.status && rdata.type == 1) {
                                 var cert_info = '';

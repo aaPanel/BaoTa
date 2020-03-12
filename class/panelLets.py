@@ -326,7 +326,7 @@ class panelLets:
             args_obj = public.dict_obj()
             if not cron_id:
                 cronPath = public.GetConfigValue('setup_path') + '/cron/' + echo
-                shell = 'python %s/panel/class/panelLets.py renew_lets_ssl ' % (self.setupPath)
+                shell = public.get_python_bin() + ' %s/panel/class/panelLets.py renew_lets_ssl ' % (self.setupPath)
                 public.writeFile(cronPath,shell)
                 args_obj.id = public.M('crontab').add('name,type,where1,where_hour,where_minute,echo,addtime,status,save,backupTo,sType,sName,sBody,urladdress',("续签Let's Encrypt证书",'day','','0','10',echo,time.strftime('%Y-%m-%d %X',time.localtime()),0,'','localhost','toShell','',shell,''))
                 crontab.crontab().set_cron_status(args_obj)
@@ -760,4 +760,4 @@ if __name__ == "__main__":
         type = sys.argv[1]
         if type == 'renew_lets_ssl':
             panelLets().renew_lets_ssl()
-            os.system("python /www/server/panel/class/acme_v2.py --renew=1")
+            os.system(public.get_python_bin() + " /www/server/panel/class/acme_v2.py --renew=1")

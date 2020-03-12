@@ -47,10 +47,10 @@
 
 {% block scripts %}
 
-<script type="text/javascript" src="/static/js/jquery.dragsort-0.5.2.min.js"></script>
-<script type="text/javascript" src="/static/laydate/laydate.js?date=20180301"></script>
-<script type="text/javascript" src="/static/js/soft.js?version_20200217={{g['version']}}"></script>
-<script type="text/javascript" src="/static/ace/ace.js?date={{g.version}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js?date=20180301"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js?date={{g.version}}"></script>
 <script type="text/javascript">
     bt.set_cookie('sites_path', "{{session['config']['sites_path']}}");
     bt.set_cookie('serverType', "{{session['webserver']}}");

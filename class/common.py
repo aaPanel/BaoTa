@@ -34,9 +34,18 @@ class panelSetup:
             ua = ua.lower()
             if ua.find('spider') != -1 or ua.find('bot') != -1:
                 return redirect('https://www.baidu.com')
-        g.version = '7.1.1'
+        g.version = '7.2.12'
         g.title = public.GetConfigValue('title')
         g.uri = request.path
+        if not os.path.exists('data/debug.pl'):
+            g.cdn_url = public.get_cdn_url()
+            if not g.cdn_url:
+                g.cdn_url = '/static'
+            else:
+                g.cdn_url = '//' + g.cdn_url + '/' + g.version
+        else:
+            g.cdn_url = '/static'
+
         session['version'] = g.version
         session['title'] = g.title
         return None

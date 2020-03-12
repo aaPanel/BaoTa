@@ -904,7 +904,7 @@ class Dns_com(object):
     def create_dns_record(self, domain_name, domain_dns_value):
         root, _, acme_txt = extract_zone(domain_name)
         print("create_dns_record,", acme_txt, domain_dns_value)
-        result = public.ExecShell('''python /www/server/panel/plugin/dns/dns_main.py add_txt {} {}'''.format(acme_txt + '.' + root, domain_dns_value))
+        result = public.ExecShell('''{} /www/server/panel/plugin/dns/dns_main.py add_txt {} {}'''.format(public.get_python_bin(),acme_txt + '.' + root, domain_dns_value))
         if result[0].strip() == "False":
             sys.exit(json.dumps({"data": "当前绑定的宝塔DNS云解析账户里面不存在这个域名,添加解析失败!"}))
         print("create_dns_record_end")
@@ -912,7 +912,7 @@ class Dns_com(object):
     def delete_dns_record(self, domain_name, domain_dns_value):
         root, _, acme_txt = extract_zone(domain_name)
         print("delete_dns_record start: ", acme_txt, domain_dns_value)
-        public.ExecShell('''python /www/server/panel/plugin/dns/dns_main.py remove_txt {} {}'''.format(acme_txt + '.' + root, domain_dns_value))
+        public.ExecShell('''{} /www/server/panel/plugin/dns/dns_main.py remove_txt {} {}'''.format(public.get_python_bin() ,acme_txt + '.' + root, domain_dns_value))
         print("delete_dns_record_success")
 
 

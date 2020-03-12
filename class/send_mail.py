@@ -65,8 +65,9 @@ class send_mail:
                 public.writeFile(self.__weixin_config, json.dumps(ret))
 
     # QQ邮箱保存账户信息
-    def qq_stmp_insert(self,email,stmp_pwd,hosts):
-        qq_stmp_info={"qq_mail":email.strip(),"qq_stmp_pwd":stmp_pwd.strip(),"hosts":hosts.strip()}
+    def qq_stmp_insert(self,email,stmp_pwd,hosts,port):
+
+        qq_stmp_info={"qq_mail":email.strip(),"qq_stmp_pwd":stmp_pwd.strip(),"hosts":hosts.strip(),"port":port}
         self.__qq_mail_user = qq_stmp_info
         public.writeFile(self.__mail_config, json.dumps(qq_stmp_info))
         return True
@@ -75,12 +76,17 @@ class send_mail:
     def qq_smtp_send(self,email,title,body):
         if 'qq_mail' not in self.__qq_mail_user or 'qq_stmp_pwd' not in self.__qq_mail_user or 'hosts' not in self.__qq_mail_user: return -1
         ret = True
+        if not 'port'  in self.__qq_mail_user:self.__qq_mail_user['port']=465
         try:
+        	
             msg = MIMEText(body, 'html', 'utf-8')
             msg['From'] = formataddr([self.__qq_mail_user['qq_mail'], self.__qq_mail_user['qq_mail']])
             msg['To'] = formataddr([self.__qq_mail_user['qq_mail'], email.strip()])
             msg['Subject'] = title
-            server = smtplib.SMTP_SSL(self.__qq_mail_user['hosts'], 465)
+            if  self.__qq_mail_user['port'] ==465:
+                server = smtplib.SMTP_SSL(self.__qq_mail_user['hosts'], self.__qq_mail_user['port'])
+            else:
+                server = smtplib.SMTP(self.__qq_mail_user['hosts'], self.__qq_mail_user['port'])
             server.login(self.__qq_mail_user['qq_mail'], self.__qq_mail_user['qq_stmp_pwd'])
             server.sendmail(self.__qq_mail_user['qq_mail'], [email.strip(), ], msg.as_string())
             server.quit()
@@ -132,7 +138,6 @@ class send_mail:
                 return public.HttpGet(url)
             except:
                 return public.GetHost()
-
 
     #钉钉保存账户
     def dingding_insert(self,url,atall,user='1'):

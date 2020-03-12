@@ -360,7 +360,7 @@ class system:
             n += 1
             try:
                 inodes = tempInodes1[n-1].split()
-                disk = re.findall(r"^(/.+)\s+([\w]+)\s+([\w\.]+)\s+([\w\.]+)\s+([\w\.]+)\s+([\d%]{2,4})\s+(/.{0,50})$",tmp.strip())
+                disk = re.findall(r"^(.+)\s+([\w]+)\s+([\w\.]+)\s+([\w\.]+)\s+([\w\.]+)\s+([\d%]{2,4})\s+(/.{0,50})$",tmp.strip())
                 if disk: disk = disk[0]
                 if len(disk) < 6: continue
                 if disk[2].find('M') != -1: continue
@@ -368,6 +368,7 @@ class system:
                 if len(disk[6].split('/')) > 10: continue
                 if disk[6] in cuts: continue
                 if disk[6].find('docker') != -1: continue
+                if disk[1].strip() in ['tmpfs']: continue
                 arr = {}
                 arr['filesystem'] = disk[0].strip()
                 arr['type'] = disk[1].strip()

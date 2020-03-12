@@ -1,195 +1,207 @@
-#!/bin/bash
-PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
-export PATH
+#!/usr/bin/python
+#coding: utf-8
+#-----------------------------
+# 宝塔Linux面板网站备份工具
+#-----------------------------
 
-#备份网站
-Backup_Site()
-{
-    #准备必要信息
-	startTime=`date +%s`
-	myDate=`date +"%Y%m%d_%H%M%S"`
-	zipName=${1}_${myDate}.zip
-	backupDir=${backup_path}/site
-	fileName=$backupDir/$zipName
-	tmp=`$Sql_Exec -e "SELECT id,path FROM bt_sites WHERE name='$1'"`;
-	pid=`echo $tmp|awk '{print $3}'`
-	sitePath=`echo $tmp|awk '{print $4}'`
-	
-	if [ "$pid" == '' ];then
-		endDate=`date +"%Y-%m-%d %H:%M:%S"`
-		log="网站[$1]不存在!"
-		echo "★[$endDate] $log"
-		echo '----------------------------------------------------------------------------'
-		exit
-	fi
-	
-	if [ ! -d $backupDir ];then
-		mkdir -p $backupDir
-	fi
-	
-	#取目录名称
-	oldIFS=$IFS
-	IFS=/
-	nameArr=($sitePath)
-	pathName=${nameArr[@]: -1};
-	IFS=$oldIFS
-	
-	#压缩
-	cd $sitePath
-	cd ..
-	zip -r $fileName $pathName > /dev/null
-	
-	if [ ! -f $fileName ];then
-		endDate=`date +"%Y-%m-%d %H:%M:%S"`
-		log="网站[$1]备份失败!"
-		echo "★[$endDate] $log"
-		echo '----------------------------------------------------------------------------'
-		exit
-	fi
-	
-	#记录日志
-	endDate=`date +"%Y-%m-%d %H:%M:%S"`
-	endTime=`date +%s`
-	((outTime=($endTime-$startTime)))
-	
-	log="网站[$1]备份成功,用时[$outTime]秒"
-	$Sql_Exec -e "INSERT INTO  bt_backup(type,name,pid,filename,addtime) VALUES(0,'$zipName',$pid,'$fileName','$endDate')"
-	$Sql_Exec -e "INSERT INTO  bt_logs(type,log,addtime) VALUES('计划任务','$log','$endDate')"
-	echo "★[$endDate] $log"
-	echo "|---保留最新的[$2]份备份"
-	echo "|---文件名:$fileName"
-	
-	#清理多余备份
-	tmp=`$Sql_Exec -e "SELECT COUNT(*) FROM bt_backup WHERE type=0 AND pid=$pid"`;
-	count=`echo $tmp|awk '{print $2}'`
-	((sum=($count-$2)))
-	if [ $sum -gt 0 ];then
-		str=`$Sql_Exec -e "SELECT filename FROM bt_backup WHERE type=0 AND pid=$pid ORDER BY id ASC LIMIT $sum"`
-		str=`echo $str|sed "s#filename##"|sed "s# ##"`
-		oldIFS=$IFS
-		IFS=' '
-		arr=($str)
-		for s in ${arr[@]}
-		do
-			if [ -f $s ];then
-				rm -f $s
-			fi
-			echo "|---已清理过期备份文件：$s"
-			$Sql_Exec -e "DELETE FROM bt_backup WHERE filename='$s'" > /dev/null
-		done
-		IFS=$oldIFS
-	fi
-	
-	echo '----------------------------------------------------------------------------'
-}
+import sys,os
+os.chdir('/www/server/panel')
+sys.path.append("class/")
+if sys.version_info[0] == 2: 
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+import public,db,time
 
-#备份数据库
-Backup_Database()
-{
-	#准备必要信息
-	startTime=`date +%s`
-	mysqlRoot=`echo $select |grep mysql_root|awk '{print $3}'`
-	myDate=`date +"%Y%m%d_%H%M%S"`
-	sqlName=${1}_${myDate}.sql
-	zipName=${1}_${myDate}.zip
-	backupDir=${backup_path}/database
-	tmp=`$Sql_Exec -e "SELECT id FROM bt_databases WHERE name='$1'"`;
-	pid=`echo $tmp|awk '{print $2}'`
-	
-	if [ "$pid" == '' ];then
-		endDate=`date +"%Y-%m-%d %H:%M:%S"`
-		log="数据库[$1]不存在!"
-		echo "★[$endDate] $log"
-		echo '----------------------------------------------------------------------------'
-		exit
-	fi
-	
-	if [ ! -d $backupDir ];then
-		mkdir -p $backupDir
-	fi
-	
-	
-	#sed -i "s###"
-	isWrite=`cat /etc/my.cnf|grep 'user=root'`
-	if [ "${isWrite}" == '' ];then
-		echo -e "\n[mysqldump]\nuser=root\npassword=$mysqlRoot" >> /etc/my.cnf
-	else
-		sed -i "s#password=.*#password=$mysqlRoot#" /etc/my.cnf
-	fi
-	
-	#导出数据库
-	cd $backupDir
-	/www/server/mysql/bin/mysqldump -uroot -p$mysqlRoot -R $1 > $sqlName
-	
-	sed -i "/\[mysqldump\]/d" /etc/my.cnf
-	sed -i "/user=root/d" /etc/my.cnf
-	sed -i "/password=.*/d" /etc/my.cnf
-	sed -i "s/quick/\[mysqldump\]\nquick/" /etc/my.cnf
-	
-	
-	if [ ! -f $sqlName ];then
-		endDate=`date +"%Y-%m-%d %H:%M:%S"`
-		log="数据库[$1]备份失败!"
-		echo "★[$endDate] $log"
-		echo '----------------------------------------------------------------------------'
-		exit
-	fi
-	
-	#压缩
-	zip -r $zipName $sqlName > /dev/null
-	rm -f $sqlName
-	
-	#记录日志
-	endDate=`date +"%Y-%m-%d %H:%M:%S"`
-	endTime=`date +%s`
-	((outTime=($endTime-$startTime)))
-	fileName=$backupDir/$zipName
-	log="数据库[$1]备份成功,用时[$outTime]秒"
-	$Sql_Exec -e "INSERT INTO  bt_backup(type,name,pid,filename,addtime) VALUES(1,'$zipName',$pid,'$fileName','$endDate')" > /dev/null
-	$Sql_Exec -e "INSERT INTO  bt_logs(type,log,addtime) VALUES('计划任务','$log','$endDate')" > /dev/null
-	echo "★[$endDate] $log"
-	echo "|---保留最新的[$2]份备份"
-	echo "|---文件名:$fileName"
-	
-	#清理多余备份
-	tmp=`$Sql_Exec -e "SELECT COUNT(*) FROM bt_backup WHERE type=1 AND pid=$pid"`;
-	count=`echo $tmp|awk '{print $2}'`
-	((sum=($count-$2)))
-	if [ $sum -gt 0 ];then
-		str=`$Sql_Exec -e "SELECT filename FROM bt_backup WHERE type=1 AND pid=$pid ORDER BY id ASC LIMIT $sum"`
-		str=`echo $str|sed "s#filename##"|sed "s# ##"`
-		oldIFS=$IFS
-		IFS=' '
-		arr=($str)
-		for s in ${arr[@]}
-		do
-			if [ -f $s ];then
-				rm -f $s
-			fi
-			echo "|---已清理过期备份文件：$s"
-			$Sql_Exec -e "DELETE FROM bt_backup WHERE filename='$s'" > /dev/null
-		done
-		IFS=$oldIFS
-	fi
-	echo '----------------------------------------------------------------------------'
-}
+class backupTools:
+    __exclude = ""
+
+    def __init__(self):
+        self.get_exclode()
+
+    def backupSite(self,name,count):
+        sql = db.Sql()
+        path = sql.table('sites').where('name=?',(name,)).getField('path')
+        startTime = time.time()
+        if not path:
+            endDate = time.strftime('%Y/%m/%d %X',time.localtime())
+            log = u"网站["+name+"]不存在!"
+            print(u"★["+endDate+"] "+log)
+            print("----------------------------------------------------------------------------")
+            return
+        
+        backup_path = sql.table('config').where("id=?",(1,)).getField('backup_path') + '/site'
+        if not os.path.exists(backup_path): public.ExecShell("mkdir -p " + backup_path)
+        filename= backup_path + "/Web_" + name + "_" + time.strftime('%Y%m%d_%H%M%S',time.localtime()) + '.tar.gz'
+        public.ExecShell("cd " + os.path.dirname(path) + " && tar zcvf '" + filename + "' "+self.__exclude +" '" + os.path.basename(path) + "' > /dev/null")
+        
+        
+        endDate = time.strftime('%Y/%m/%d %X',time.localtime())
+        
+        if not os.path.exists(filename):
+            log = u"网站["+name+u"]备份失败!"
+            print(u"★["+endDate+"] "+log)
+            print(u"----------------------------------------------------------------------------")
+            return
+        
+        outTime = time.time() - startTime
+        pid = sql.table('sites').where('name=?',(name,)).getField('id')
+        sql.table('backup').add('type,name,pid,filename,addtime,size',('0',os.path.basename(filename),pid,filename,endDate,os.path.getsize(filename)))
+        log = u"网站["+name+u"]备份成功,用时["+str(round(outTime,2))+u"]秒"
+        public.WriteLog(u'计划任务',log)
+        print(u"★["+endDate+"] " + log)
+        print(u"|---保留最新的["+count+u"]份备份")
+        print(u"|---文件名:"+filename)
+        if self.__exclude: print(u"|---排除规则: " + self.__exclude)
+        
+        #清理多余备份     
+        backups = sql.table('backup').where('type=? and pid=? and filename!=? and filename!=? and filename!=? and filename!=? and filename!=?',('0',pid,'alioss','txcos','upyun','qiniu','ftp')).field('id,filename').select()
+        
+        num = len(backups) - int(count)
+        if  num > 0:
+            for backup in backups:
+                public.ExecShell("rm -f " + backup['filename'])
+                sql.table('backup').where('id=?',(backup['id'],)).delete()
+                num -= 1
+                print(u"|---已清理过期备份文件：" + backup['filename'])
+                if num < 1: break
+    
+    def backupDatabase(self,name,count):
+        sql = db.Sql()
+        path = sql.table('databases').where('name=?',(name,)).getField('id')
+        startTime = time.time()
+        if not path:
+            endDate = time.strftime('%Y/%m/%d %X',time.localtime())
+            log = u"数据库["+name+u"]不存在!"
+            print(u"★["+endDate+"] "+log)
+            print(u"----------------------------------------------------------------------------")
+            return
+        
+        backup_path = sql.table('config').where("id=?",(1,)).getField('backup_path') + '/database'
+        if not os.path.exists(backup_path): public.ExecShell("mkdir -p " + backup_path)
+        
+        filename = backup_path + "/Db_" + name + "_" + time.strftime('%Y%m%d_%H%M%S',time.localtime())+".sql.gz"
+        
+        import re
+        mysql_root = sql.table('config').where("id=?",(1,)).getField('mysql_root')
+        
+        mycnf = public.readFile('/etc/my.cnf')
+        rep = "\[mysqldump\]\nuser=root"
+        sea = "[mysqldump]\n"
+        subStr = sea + "user=root\npassword=" + mysql_root+"\n"
+        mycnf = mycnf.replace(sea,subStr)
+        if len(mycnf) > 100:
+            public.writeFile('/etc/my.cnf',mycnf)
+        
+        public.ExecShell("/www/server/mysql/bin/mysqldump --default-character-set="+ public.get_database_character(name) +" --force --opt " + name + " | gzip > " + filename)
+        
+        if not os.path.exists(filename):
+            endDate = time.strftime('%Y/%m/%d %X',time.localtime())
+            log = u"数据库["+name+u"]备份失败!"
+            print(u"★["+endDate+"] "+log)
+            print(u"----------------------------------------------------------------------------")
+            return
+        
+        mycnf = public.readFile('/etc/my.cnf')
+        mycnf = mycnf.replace(subStr,sea)
+        if len(mycnf) > 100:
+            public.writeFile('/etc/my.cnf',mycnf)
+        
+        endDate = time.strftime('%Y/%m/%d %X',time.localtime())
+        outTime = time.time() - startTime
+        pid = sql.table('databases').where('name=?',(name,)).getField('id')
+        
+        sql.table('backup').add('type,name,pid,filename,addtime,size',(1,os.path.basename(filename),pid,filename,endDate,os.path.getsize(filename)))
+        log = u"数据库["+name+u"]备份成功,用时["+str(round(outTime,2))+u"]秒"
+        public.WriteLog(u'计划任务',log)
+        print("★["+endDate+"] " + log)
+        print(u"|---保留最新的["+count+u"]份备份")
+        print(u"|---文件名:"+filename)
+        
+        #清理多余备份     
+        backups = sql.table('backup').where('type=? and pid=? and filename!=? and filename!=? and filename!=? and filename!=? and filename!=?',('1',pid,'alioss','txcos','upyun','qiniu','ftp')).field('id,filename').select()
+        
+        num = len(backups) - int(count)
+        if  num > 0:
+            for backup in backups:
+                public.ExecShell("rm -f " + backup['filename'])
+                sql.table('backup').where('id=?',(backup['id'],)).delete()
+                num -= 1
+                print(u"|---已清理过期备份文件：" + backup['filename'])
+                if num < 1: break
+    
+    #备份指定目录
+    def backupPath(self,path,count):
+        sql = db.Sql()
+        startTime = time.time()
+        if path[-1:] == '/': path = path[:-1]
+        name = os.path.basename(path)
+        backup_path = sql.table('config').where("id=?",(1,)).getField('backup_path') + '/path'
+        if not os.path.exists(backup_path): os.makedirs(backup_path)
+        filename= backup_path + "/Path_" + name + "_" + time.strftime('%Y%m%d_%H%M%S',time.localtime()) + '.tar.gz'
+        os.system("cd " + os.path.dirname(path) + " && tar zcvf '" + filename + "' " + self.__exclude + " '" + os.path.basename(path) + "' > /dev/null")
+
+        endDate = time.strftime('%Y/%m/%d %X',time.localtime())
+        if not os.path.exists(filename):
+            log = u"目录["+path+"]备份失败"
+            print(u"★["+endDate+"] "+log)
+            print(u"----------------------------------------------------------------------------")
+            return
+        
+        outTime = time.time() - startTime
+        sql.table('backup').add('type,name,pid,filename,addtime,size',('2',path,'0',filename,endDate,os.path.getsize(filename)))
+        log = u"目录["+path+"]备份成功,用时["+str(round(outTime,2))+"]秒"
+        public.WriteLog(u'计划任务',log)
+        print(u"★["+endDate+"] " + log)
+        print(u"|---保留最新的["+count+u"]份备份")
+        print(u"|---文件名:"+filename)
+        if self.__exclude: print(u"|---排除规则: " + self.__exclude)
+        
+        #清理多余备份     
+        backups = sql.table('backup').where('type=? and pid=? and name=?',('2',0,path)).field('id,filename').select()
+        num = len(backups) - int(count)
+        if  num > 0:
+            for backup in backups:
+                public.ExecShell("rm -f " + backup['filename'])
+                sql.table('backup').where('id=?',(backup['id'],)).delete()
+                num -= 1
+                print(u"|---已清理过期备份文件：" + backup['filename'])
+                if num < 1: break
+        
+    
+    def backupSiteAll(self,save):
+        sites = public.M('sites').field('name').select()
+        for site in sites:
+            self.backupSite(site['name'],save)
+        
+
+    def backupDatabaseAll(self,save):
+        databases = public.M('databases').field('name').select()
+        for database in databases:
+            self.backupDatabase(database['name'],save)
+    
+    def get_exclode(self):
+        tmp_exclude = os.getenv('BT_EXCLUDE')
+        if not tmp_exclude: return ""
+        for ex in tmp_exclude.split(','):
+            self.__exclude += " --exclude=\"" + ex + "\""
+        self.__exclude += " "
+        return self.__exclude
 
 
-#准备基础信息
-action=$1
-name=$2
-num=$3
-dbPwd=`cat /www/wwwroot/default/conf/sql.config.php |grep 'DB_PWD'|awk '{print $3}'|sed "s#'##g"|sed "s#,##g"`
-dbName='bt_default'
-Sql_Exec="/www/server/mysql/bin/mysql -u$dbName -p$dbPwd --default-character-set=utf8 -D $dbName"
-select=`$Sql_Exec -e "SELECT mysql_root,backup_path FROM bt_config WHERE id=1"`
-backup_path=`echo $select |grep backup_path|awk '{print $4}'`
 
-case "${action}" in
-	'site')
-		Backup_Site $name $num
-		;;
-	'database')
-		Backup_Database $name $num
-		;;
-esac
+if __name__ == "__main__":
+    backup = backupTools()
+    type = sys.argv[1]
+    if type == 'site':
+        if sys.argv[2] == 'ALL':
+             backup.backupSiteAll( sys.argv[3])
+        else:
+            backup.backupSite(sys.argv[2], sys.argv[3])
+    elif type == 'path':
+        backup.backupPath(sys.argv[2],sys.argv[3])
+    elif type == 'database':
+        if sys.argv[2] == 'ALL':
+            backup.backupDatabaseAll(sys.argv[3])
+        else:
+            backup.backupDatabase(sys.argv[2], sys.argv[3])
+    

@@ -135,11 +135,11 @@
 
 
 {% block scripts %}
-<script type="text/javascript" src="/static/js/jquery.dragsort-0.5.2.min.js"></script>
-<script type="text/javascript" src="/static/js/echarts.min.js"></script>
-<script type="text/javascript" src="/static/js/index.js?f20200214={{g['version']}}"></script>
-<script type="text/javascript" src="/static/js/soft.js?version_20191219={{g['version']}}"></script>
-<script type="text/javascript" src="/static/ace/ace.js?date={{g.version}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/echarts.min.js"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/index.js?f2={{g['version']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version_20191219={{g['version']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js?date={{g.version}}"></script>
 <script type="text/javascript">
 	$(".btpro span").click(function(e){
         layer.confirm('切换回免费版可通过解绑账号实现', { icon: 3, btn: ['解绑账号'], closeBtn: 2, title: '是否取消授权' }, function () {

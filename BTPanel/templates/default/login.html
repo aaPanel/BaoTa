@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
     <title>{{g.title}}</title>
-    <link rel="stylesheet" type="text/css" href="/static/css/site.css?date={{g.version}}">
     <link rel="stylesheet" type="text/css" href="/static/css/login.css?date={{g.version}}">
 
 </head>
@@ -151,6 +150,35 @@
             margin-top: 15px;
             margin-bottom: 25px;
         }
+        .static-cdn{
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 40px;
+            opacity: 0.8;
+        }
+        .static-cdn .span-tname{
+            background-color: #eee;
+            display: inline-block;
+            height: 22px;
+            line-height: 22px;
+            float: left;
+            padding: 0 5px;
+            border: #ddd 1px solid;
+            color: #777;
+            margin-left: 40px;
+            font-size: 12px;
+        }
+        .static-cdn select {
+            border: 1px solid #ddd;
+            height: 24px;
+            line-height: 22px;
+            padding-left: 5px;
+            margin-left: -1px;
+            color: #777;
+            font-size: 12px;
+        }
+
     </style>
     <div class="main">
         <div class="login">
@@ -171,6 +199,14 @@
                     </div>
                     <div class="login_btn"><input id="login-button" value="{{data['lan']['N11']}}" type="submit"></div>
                     <p class="pwinfo" style="display:none">{{data['lan']['N12']}}</p>
+                    {% if data['hosts'] != '[]' %}
+                    <a class="static-cdn">
+                        <span class="span-tname">加速节点</span>
+                         <select name="cdn_url" id="static_cdn">
+                            <option value="localhost">计算中...</option>
+                        </select>
+                    </a>
+                    {% endif %}
                     <a class="resetpw" href="http://www.bt.cn/bbs/thread-1172-1-1.html" target="_blank">{{data['lan']['N13']}}</a>
                 </form>
             </div>
@@ -184,7 +220,7 @@
                             打开
                             <a href="javascript:;" class="btlink">
                                 宝塔小程序
-                                <div class="weChatSamll"><img src="https://app.bt.cn/static/app.png"><em></em></div>
+                                <div class="weChatSamll"><img src="//app.bt.cn/static/app.png"><em></em></div>
                             </a>
                         </span>
                         <span>扫一扫登录</span>
@@ -200,163 +236,281 @@
             </div>
         </div>
     </div>
-    <script type="text/javascript" src="/static/js/jquery-1.10.2.min.js"></script>
-    <script src="/static/language/zh-cn.js"></script>
-    <script type="text/javascript" src="/static/layer/layer.js"></script>
-    <script type="text/javascript" src="/static/js/jquery.qrcode.min.js"></script>
-    <script type="text/javascript" src="/static/js/Validform_v5.3.2_min.js"></script>
-    <script type="text/javascript" src="/static/js/md5.js"></script>
     <script type="text/javascript">
-        function Wreset() {
-            var w = $(window).width();
-            var yzmw = $(".login .line").width() - 140;
-            if ($(".yzm").is(":visible") && w > 640) {
-                $(".login").css({ "height": "365px", "margin-top": "-230px" });
+        select_host = {
+            hosts: {{data.hosts|safe}},
+            my_hosts : {},
+            bt_version:"{{g.version}}",
+            request:function(url){
+                var s_time = Date.now();
+                var to_url = window.location.protocol + '//' + url + '/test.txt?time=' + s_time
+                http_request = new XMLHttpRequest();
+                http_request.open('GET', to_url, true);
+                http_request.setRequestHeader("Content-type","text/plain");
+                http_request.send();
+                http_request.onreadystatechange = function (e) {
+                    if (e.srcElement.readyState == 4 && e.srcElement.status == 200) {
+                        if(e.srcElement.responseText === 'true'){
+                            var e_time = Date.now();
+                            select_host.my_hosts[url] = e_time - s_time
+                        }
+                    }
+                }
+            },
+            run:function(){
+                for(var i=0;i<select_host.hosts.length;i++){
+                    select_host.request(select_host.hosts[i].url);
+                }
+            },
+            compare:function (prop) {
+                return function (obj1, obj2) {
+                    var val1 = obj1[prop];
+                    var val2 = obj2[prop];
+                    if (!isNaN(Number(val1)) && !isNaN(Number(val2))) {
+                        val1 = Number(val1);
+                        val2 = Number(val2);
+                    }
+                    if (val1 < val2) {
+                        return -1;
+                    } else if (val1 > val2) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }  
+                }
             }
-            else {
-                $(".login").removeAttr("style")
-            }
-            $(".login .yzm .inputtxt").width(yzmw);
         }
-        $(function () {
-            Wreset();
-            var setTime = '';
-            $.get('/public?name=app&fun=login_qrcode', function (res) {
-                if (res.status) {
-                    $('#qrcode').qrcode({
-                        render: "canvas",
-                        width: 150,
-                        height: 150,
-                        text: res.msg
-                    });
-                    $('.entrance').show();
-                }
-            }).error(function (res, textStatus, errorThrown) {
-                if (res.status == 404) {
-                    $('.entrance').hide();
-                }
-            });
-            function controlTime() {
-                $.get('/public?name=app&fun=is_scan_ok', function (res) {
-                    if (res.status) {
-                        layer.msg('扫码成功，请稍后...', { icon: 1 });
-                        clearInterval(setTime);
-                        loginAdmin(res.msg);
-                    }
-                });
-            }
-            function loginAdmin(key) {
-                $.get('/public?name=app&fun=set_login', { secret_key: key }, function (res) {
-                    layer.msg(res.msg, { icon: res.status ? 1 : 2 })
-                    if (res.status) {
-                        layer.msg('正在安全登录中,请稍后...', { time: 0, shade: [0.4, '#fff'], icon: 16 });
-                        setTimeout(function () {
-                            location.href = '/';
-                        }, 1000);
-                    }
-                });
-            }
-            $('.bg_img').click(function (event) {
-                if ($(this).hasClass('pc')) {
-                    $(this).removeClass('pc');
-                    $('.scanCode').hide().prev().show();
-                    clearInterval(setTime);
-                    $('.tips>span>span').html('扫码登录更安全');
-                } else {
-                    $(this).addClass('pc');
-                    $('.account').hide().next().show();
-                    $('.tips>span>span').html('点击账号登录')
-                    setTime = window.setInterval(controlTime, 2000);
-                }
-            });
-        })
-        window.onresize = function () {
-            Wreset();
-        }
-    </script>
-    <script type="text/javascript">
-        $(function () {
-            $(".loginform").Validform({
-                tiptype: function (msg, o, cssctl) {
-                    if (!o.obj.is("form")) {
-                        var objtip = o.obj.siblings(".Validform_checktip");
-                        cssctl(objtip, o.type);
-                        objtip.text(msg);
-                    }
-                }
-            });
-        });
 
-        $('#login-button').click(function () {
-            var username = $("input[name='username']").val();
-            var password = $("input[name='password']").val();
-            var code = $("input[name='code']").val();
-            if (username == '' || password == '') {
-                layer.msg("{{data['lan']['JS1']}}", { icon: 2 });
-                return;
+        select_host.run();
+
+        setTimeout(function(){
+            if(select_host.hosts.length > 0){
+                var my_keys = Object.keys(select_host.my_hosts);
+                var host_data = [];
+                for(var i=0;i<select_host.hosts.length;i++){
+                    if(my_keys.indexOf(select_host.hosts[i].url) == -1) continue;
+                    select_host.hosts[i].speed = select_host.my_hosts[select_host.hosts[i].url];
+                    host_data.push(select_host.hosts[i]);
+                }
+                host_data = host_data.sort(select_host.compare('speed'));
+                var cdn_option = '';
+                for(var i=0;i<host_data.length;i++){
+                    cdn_option += '<option value="'+host_data[i].url+'">'+host_data[i].name + '('+ host_data[i].speed  +'ms)' +'</option>';
+                }
+                
+                document.getElementById('static_cdn').innerHTML = cdn_option;
+
+                var host_url = "";
+                if(host_data.length > 0){
+                    host_url = window.location.protocol + '//' + host_data[0].url;
+                }
+                if(!host_url) select_host.bt_version = "static";
+                if(!host_url){
+                    document.getElementById('static_cdn').innerHTML = '<option value="local">本服务器</option>';
+                }
+
+            }else{
+                host_url = "";
+                select_host.bt_version = "static";
             }
 
-            var data = { username: username, password: md5(md5(password) + '' + '_bt.cn'), code: code }
-            var loadT = layer.msg("{{data['lan']['JS2']}}", { icon: 16, time: 0, shade: [0.3, '#000'] });
-            $.post('/login', data, function (rdata) {
-            	if(rdata == '1'){
-                    layer.close(loadT);
-            		layer.open({
-                        type:1,
-                        title:false,
-                        area: ['350px', '265px'],
-                        content:'<div class="verification_view">\
-                                    <div class="v_title">Google身份认证</div>\
-                                    <div class="v_input"><input type="text" class="v_code" name="v_code" placeholder="请输入动态口令"/></div>\
-                                    <div class="v_btn"><input id="auth_verif_btn" value="验证并登录" type="submit"></div>\
-                                    <div class="v_tips">* 请使用Google身份验证器APP获取验证代码<br><a target="_blank" href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=37437"  class="btlink">无法验证,点击帮助</a></div>\
-                                </div>',
-                        success:function(){
-                            // 点击验证登录
-                            $('[name="v_code"]').keyup(function(e){
-                                if(e.keyCode == 13){
-                                    $('#auth_verif_btn').click();
+
+            function loadJs(urls,i,callback){
+                i++;
+                var script=document.createElement('script');
+                script.type="text/javascript";
+                if(typeof(callback)!="undefined"){
+                    if(script.readyState){
+                        script.onreadystatechange=function(){
+                            if(script.readyState == "loaded" || script.readyState == "complete"){
+                                script.onreadystatechange=null;
+                                if(i==urls.length){
+                                    callback();
+                                }else{
+                                    loadJs(urls,i,callback);
                                 }
+                            }
+                        }
+                    }else{
+                        script.onload=function(){
+                            if(i==urls.length){
+                                callback();
+                            }else{
+                                loadJs(urls,i,callback);
+                            }
+                        }
+                    }
+                }
+                script.src=urls[i-1];
+                document.body.appendChild(script);
+                
+            }
+
+            
+            my_urls = [
+                    host_url+'/'+select_host.bt_version+'/js/jquery-1.10.2.min.js',
+                    host_url+'/'+select_host.bt_version+'/js/Validform_v5.3.2_min.js',
+                    host_url+'/'+select_host.bt_version+'/js/md5.js',
+                    host_url+'/'+select_host.bt_version+'/js/jquery.qrcode.min.js',
+                    host_url+'/'+select_host.bt_version+'/layer/layer.js',
+                    host_url+'/'+select_host.bt_version+'/language/zh-cn.js'
+                ];
+
+            loadJs(my_urls,0,run); 
+        },200);
+
+
+        function run(){
+            function Wreset() {
+                    var w = $(window).width();
+                    var yzmw = $(".login .line").width() - 140;
+                    if ($(".yzm").is(":visible") && w > 640) {
+                        $(".login").css({ "height": "365px", "margin-top": "-230px" });
+                    }
+                    else {
+                        $(".login").removeAttr("style")
+                    }
+                    $(".login .yzm .inputtxt").width(yzmw);
+                }
+                $(function () {
+                    Wreset();
+                    var setTime = '';
+                    $.get('/public?name=app&fun=login_qrcode', function (res) {
+                        if (res.status) {
+                            $('#qrcode').qrcode({
+                                render: "canvas",
+                                width: 150,
+                                height: 150,
+                                text: res.msg
                             });
-                            $('#auth_verif_btn').click(function(e){
-                                data['vcode'] = $('[name="v_code"]').val();
-                                var loadT = layer.msg("{{data['lan']['JS2']}}", { icon: 16, time: 0, shade: [0.3, '#000'] });
-                                $.post('/login', data, function (rdata) {
-                                    layer.close(loadT);
-                                    if(!rdata.status){
-                                        layer.msg(rdata.msg, { icon: 2 });
-                                        return false;
-                                    }
-                                    layer.msg(rdata.msg, { icon: 16, time: 0, shade: [0.3, '#000'] });
-                                    window.location.href = '/';
-                                });
-                            });
+                            $('.entrance').show();
+                        }
+                    }).error(function (res, textStatus, errorThrown) {
+                        if (res.status == 404) {
+                            $('.entrance').hide();
                         }
                     });
-                    return false;
-            	}
-                layer.close(loadT);
-                if (!rdata.status) {
-                    $("#errorStr").html(rdata.msg);
-                    $("input[name='password']").val('');
-                    num = rdata.msg.substring(rdata.msg.indexOf('[') + 1, rdata.msg.indexOf(']'))
-                    if (num < 5) {
-                        $(".yzm").show();
-                        $(".login").css("height", "332px");
-                        $("input[name='code']").val('');
+                    function controlTime() {
+                        $.get('/public?name=app&fun=is_scan_ok', function (res) {
+                            if (res.status) {
+                                layer.msg('扫码成功，请稍后...', { icon: 1 });
+                                clearInterval(setTime);
+                                loginAdmin(res.msg);
+                            }
+                        });
                     }
-                    $(".yzm").show();
+                    function loginAdmin(key) {
+                        $.get('/public?name=app&fun=set_login', { secret_key: key }, function (res) {
+                            layer.msg(res.msg, { icon: res.status ? 1 : 2 })
+                            if (res.status) {
+                                layer.msg('正在安全登录中,请稍后...', { time: 0, shade: [0.4, '#fff'], icon: 16 });
+                                setTimeout(function () {
+                                    location.href = '/';
+                                }, 1000);
+                            }
+                        });
+                    }
+                    $('.bg_img').click(function (event) {
+                        if ($(this).hasClass('pc')) {
+                            $(this).removeClass('pc');
+                            $('.scanCode').hide().prev().show();
+                            clearInterval(setTime);
+                            $('.tips>span>span').html('扫码登录更安全');
+                        } else {
+                            $(this).addClass('pc');
+                            $('.account').hide().next().show();
+                            $('.tips>span>span').html('点击账号登录')
+                            setTime = window.setInterval(controlTime, 2000);
+                        }
+                    });
+                })
+                window.onresize = function () {
                     Wreset();
-                    $(".passcode").click();
-                    layer.msg(rdata.msg, { icon: 2 });
-                    return;
                 }
 
-                layer.msg(rdata.msg, { icon: 16, time: 0, shade: [0.3, '#000'] });
-                window.location.href = '/';
-            });
-        });
 
+                $(function () {
+                    $(".loginform").Validform({
+                        tiptype: function (msg, o, cssctl) {
+                            if (!o.obj.is("form")) {
+                                var objtip = o.obj.siblings(".Validform_checktip");
+                                cssctl(objtip, o.type);
+                                objtip.text(msg);
+                            }
+                        }
+                    });
+                });
+
+                $('#login-button').click(function () {
+                    var username = $("input[name='username']").val();
+                    var password = $("input[name='password']").val();
+                    var code = $("input[name='code']").val();
+                    if (username == '' || password == '') {
+                        layer.msg("{{data['lan']['JS1']}}", { icon: 2 });
+                        return;
+                    }
+
+                    var data = { username: username, password: md5(md5(password) + '' + '_bt.cn'), code: code,cdn_url:$("#static_cdn").val() }
+                    var loadT = layer.msg("{{data['lan']['JS2']}}", { icon: 16, time: 0, shade: [0.3, '#000'] });
+                    $.post('/login', data, function (rdata) {
+                        if(rdata == '1'){
+                            layer.close(loadT);
+                            layer.open({
+                                type:1,
+                                title:false,
+                                area: ['350px', '265px'],
+                                content:'<div class="verification_view">\
+                                            <div class="v_title">Google身份认证</div>\
+                                            <div class="v_input"><input type="text" class="v_code" name="v_code" placeholder="请输入动态口令"/></div>\
+                                            <div class="v_btn"><input id="auth_verif_btn" value="验证并登录" type="submit"></div>\
+                                            <div class="v_tips">* 请使用Google身份验证器APP获取验证代码<br><a target="_blank" href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=37437"  class="btlink">无法验证,点击帮助</a></div>\
+                                        </div>',
+                                success:function(){
+                                    // 点击验证登录
+                                    $('[name="v_code"]').keyup(function(e){
+                                        if(e.keyCode == 13){
+                                            $('#auth_verif_btn').click();
+                                        }
+                                    });
+                                    $('#auth_verif_btn').click(function(e){
+                                        data['vcode'] = $('[name="v_code"]').val();
+                                        var loadT = layer.msg("{{data['lan']['JS2']}}", { icon: 16, time: 0, shade: [0.3, '#000'] });
+                                        $.post('/login', data, function (rdata) {
+                                            layer.close(loadT);
+                                            if(!rdata.status){
+                                                layer.msg(rdata.msg, { icon: 2 });
+                                                return false;
+                                            }
+                                            layer.msg(rdata.msg, { icon: 16, time: 0, shade: [0.3, '#000'] });
+                                            window.location.href = '/';
+                                        });
+                                    });
+                                }
+                            });
+                            return false;
+                        }
+                        layer.close(loadT);
+                        if (!rdata.status) {
+                            $("#errorStr").html(rdata.msg);
+                            $("input[name='password']").val('');
+                            num = rdata.msg.substring(rdata.msg.indexOf('[') + 1, rdata.msg.indexOf(']'))
+                            if (num < 5) {
+                                $(".yzm").show();
+                                $(".login").css("height", "332px");
+                                $("input[name='code']").val('');
+                            }
+                            $(".yzm").show();
+                            Wreset();
+                            $(".passcode").click();
+                            layer.msg(rdata.msg, { icon: 2 });
+                            return;
+                        }
+
+                        layer.msg(rdata.msg, { icon: 16, time: 0, shade: [0.3, '#000'] });
+                        window.location.href = '/';
+                    });
+                });
+        }
     </script>
 </body>
 </html>

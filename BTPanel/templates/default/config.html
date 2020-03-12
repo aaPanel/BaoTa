@@ -285,8 +285,8 @@
 
 {% endblock %}
 {% block scripts %}
-	<script type="text/javascript" src="/static/js/jquery.qrcode.min.js"></script>
-	<script src="/static/js/config.js?version20200116={{g['version']}}"></script>
+	<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.qrcode.min.js"></script>
+	<script src="{{g.cdn_url}}/js/config.js?version20200116={{g['version']}}"></script>
 	<script type="text/javascript">
 		setCookie('serverType',"{{session['webserver']}}");
 	</script>

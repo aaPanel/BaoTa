@@ -336,29 +336,30 @@ class crontab:
         else :
             head="#!/bin/bash\nPATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin\nexport PATH\n"
             log='-access_log'
+            python_bin = public.get_python_bin()
             if public.get_webserver()=='nginx':
                 log='.log'
             if type in ['site','path'] and param['sBody'] != 'undefined' and len(param['sBody']) > 1:
                 exports = param['sBody'].replace("\r\n","\n").replace("\n",",")
                 head += "BT_EXCLUDE=\"" + exports.strip() + "\"\nexport BT_EXCLUDE\n"
             wheres={
-                    'path': head + "python " + public.GetConfigValue('setup_path')+"/panel/script/backup.py path "+param['sName']+" "+str(param['save']),
-                    'site'  :   head + "python " + public.GetConfigValue('setup_path')+"/panel/script/backup.py site "+param['sName']+" "+str(param['save']),
-                    'database': head + "python " + public.GetConfigValue('setup_path')+"/panel/script/backup.py database "+param['sName']+" "+str(param['save']),
-                    'logs'  :   head + "python " + public.GetConfigValue('setup_path')+"/panel/script/logsBackup "+param['sName']+log+" "+str(param['save']),
+                    'path': head + python_bin +" " + public.GetConfigValue('setup_path')+"/panel/script/backup.py path "+param['sName']+" "+str(param['save']),
+                    'site'  :   head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/backup.py site "+param['sName']+" "+str(param['save']),
+                    'database': head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/backup.py database "+param['sName']+" "+str(param['save']),
+                    'logs'  :   head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/logsBackup "+param['sName']+log+" "+str(param['save']),
                     'rememory' : head + "/bin/bash " + public.GetConfigValue('setup_path') + '/panel/script/rememory.sh',
-                    'webshell': head + "python " + public.GetConfigValue('setup_path') + '/panel/class/webshell_check.py site ' + param['sName'] +' ' +param['urladdress']
+                    'webshell': head +python_bin+ " " + public.GetConfigValue('setup_path') + '/panel/class/webshell_check.py site ' + param['sName'] +' ' +param['urladdress']
                     }
             if param['backupTo'] != 'localhost':
                 cfile = public.GetConfigValue('setup_path') + "/panel/plugin/" + param['backupTo'] + "/" + param['backupTo'] + "_main.py";
                 if not os.path.exists(cfile): cfile = public.GetConfigValue('setup_path') + "/panel/script/backup_" + param['backupTo'] + ".py";
                 wheres={
-                    'path': head + "python " + cfile + " path " + param['sName'] + " " + str(param['save']),
-                    'site'  :   head + "python " + cfile + " site " + param['sName'] + " " + str(param['save']),
-                    'database': head + "python " + cfile + " database " + param['sName'] + " " + str(param['save']),
-                    'logs'  :   head + "python " + public.GetConfigValue('setup_path')+"/panel/script/logsBackup "+param['sName']+log+" "+str(param['save']),
+                    'path': head + python_bin+" " + cfile + " path " + param['sName'] + " " + str(param['save']),
+                    'site'  :   head + python_bin+" " + cfile + " site " + param['sName'] + " " + str(param['save']),
+                    'database': head + python_bin+" " + cfile + " database " + param['sName'] + " " + str(param['save']),
+                    'logs'  :   head + python_bin+" " + public.GetConfigValue('setup_path')+"/panel/script/logsBackup "+param['sName']+log+" "+str(param['save']),
                     'rememory' : head + "/bin/bash " + public.GetConfigValue('setup_path') + '/panel/script/rememory.sh',
-                     'webshell': head + "python " + public.GetConfigValue('setup_path') + '/panel/class/webshell_check.py site ' + param['sName'] +' ' +param['urladdress']
+                     'webshell': head + python_bin+" " + public.GetConfigValue('setup_path') + '/panel/class/webshell_check.py site ' + param['sName'] +' ' +param['urladdress']
                     }
                 
             try:

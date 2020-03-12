@@ -1855,7 +1855,7 @@ class panelPlugin:
         init_file = os.path.join(config_path,'init.sh')
         args_file = os.path.join(config_path,'args.pl')
         ps_file = os.path.join(config_path,'ps.pl')
-        public.writeFile(init_file,get.init)
+        public.writeFile(init_file,get.init.replace("\r\n","\n"))
         public.writeFile(args_file,get.args)
         public.writeFile(ps_file,get.ps)
 
@@ -1872,15 +1872,27 @@ class panelPlugin:
         if not os.path.exists(config_path): 
             return public.returnMsg(False,'指定自定义编译参数不存在!')
         public.ExecShell("rm -rf {}".format(config_path))
+        config_file = 'install/' + get.name + '/config.pl'
+        if os.path.exists(config_file):
+            config_data = public.readFile(config_file).split("\n")
+            if get.args_name in config_data:
+                config_data.remove(get.args_name)
+                public.writeFile(config_file,"\n".join(config_data))
         public.WriteLog('软件管理','删除自定义编译参数: {}:{}'.format(get.name,get.args_name))
         return public.returnMsg(True,'删除成功!')
         
 
     #设置当前编译参数
     def set_make_args(self,get):
-        get.args_names = get.args_names.strip()
+        get.args_names = get.args_names.strip().split("\n")
         get.name = get.name.strip()
         config_file = 'install/' + get.name + '/config.pl'
-        public.writeFile(config_file,get.args_names)
-        public.WriteLog('软件管理','设置软件: {} 的自定义编译参数配置为: {}'.format(get.name,get.args_names))
-        return public.returnMsg(False,'设置成功!')
+        config_data = []
+        for args_name in get.args_names:
+            path = 'install/' + get.name + '/' + args_name
+            if not os.path.exists(path): continue
+            if args_name in config_data: continue
+            config_data.append(args_name)
+        public.writeFile(config_file,"\n".join(config_data))
+        public.WriteLog('软件管理','设置软件: {} 的自定义编译参数配置为: {}'.format(get.name,config_data))
+        return public.returnMsg(True,'设置成功!')

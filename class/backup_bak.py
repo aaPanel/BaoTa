@@ -14,6 +14,7 @@ if sys.version_info[0] == 2:
 os.chdir('/www/server/panel')
 sys.path.append("class/")
 import time,hashlib,sys,os,json,requests,re,public,random,string,panelMysql,downloadFile
+python_bin=public.get_python_bin()
 class backup_bak:
     _chek_site_file='/tmp/chekc_site.json'
     _check_database = '/www/server/panel/data/check_database.json'
@@ -242,7 +243,7 @@ class backup_bak:
         if not id:return public.returnMsg(False,'数据库不存在')
         if os.path.exists(self._chek_site_file):
             return public.returnMsg(False, '这个时间段中存在有运行任务,建议更换计划任务的时间备份')
-        public.ExecShell('python /www/server/panel/class/backup_bak.py database %s &'%id)
+        public.ExecShell( python_bin + ' /www/server/panel/class/backup_bak.py database %s &'%id)
         return public.returnMsg(True,'OK')
 
     # backup_database
@@ -256,13 +257,13 @@ class backup_bak:
             return public.returnMsg(False, '这个时间段中存在有运行任务,建议更换计划任务的时间备份')
 
 
-        public.ExecShell('python /www/server/panel/class/backup_bak.py sites %s &' % id)
+        public.ExecShell(python_bin+ ' /www/server/panel/class/backup_bak.py sites %s &' % id)
         return public.returnMsg(True, 'OK')
 
     # backup_path
     def backup_path_data(self, get):
         if not os.path.exists(get.path):return public.returnMsg(False, "目录不存在")
-        public.ExecShell('python /www/server/panel/class/backup_bak.py path %s &' % get.path)
+        public.ExecShell(python_bin+ ' /www/server/panel/class/backup_bak.py path %s &' % get.path)
         return public.returnMsg(True, 'OK')
 
     #检测数据库执行错误
@@ -484,8 +485,8 @@ class backup_bak:
         ret['filename']=filename
         ret['status']=False
         self.set_down_data(ret)
-        print('python /www/server/panel/class/backup_bak.py down  %s %s %s %s %s &'%(get.url,filename,get.type,get.id,get.name))
-        public.ExecShell('python /www/server/panel/class/backup_bak.py down  %s %s %s %s %s &'%(get.url,filename,get.type,get.id,get.name))
+        print(python_bin+ ' /www/server/panel/class/backup_bak.py down  %s %s %s %s %s &'%(get.url,filename,get.type,get.id,get.name))
+        public.ExecShell(python_bin+ ' /www/server/panel/class/backup_bak.py down  %s %s %s %s %s &'%(get.url,filename,get.type,get.id,get.name))
         return True
 
     def down2(self,url,filename,type,id,name):
@@ -524,7 +525,7 @@ class backup_bak:
         if os.path.exists(self._chek_site_file):
             return public.returnMsg(False, '这个时间段中存在有运行任务,建议更换计划任务的时间备份')
 
-        public.ExecShell('python /www/server/panel/class/backup_bak.py sites_ALL 11 &')
+        public.ExecShell(python_bin+ ' /www/server/panel/class/backup_bak.py sites_ALL 11 &')
         return public.returnMsg(True, 'OK')
 
     def set_backup_all(self):
@@ -560,7 +561,7 @@ class backup_bak:
     def backup_date_all(self, get):
         if os.path.exists(self._chek_site_file):
             return public.returnMsg(False, '这个时间段中存在有运行任务,建议更换计划任务的时间备份')
-        public.ExecShell('python /www/server/panel/class/backup_bak.py database_ALL 11 &')
+        public.ExecShell(python_bin+ ' /www/server/panel/class/backup_bak.py database_ALL 11 &')
         return public.returnMsg(True, 'OK')
 
     def backup_all_database(self):
