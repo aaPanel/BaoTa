@@ -172,7 +172,7 @@ class crontab:
         cuonConfig,cronInfo,name = self.GetCrondCycle(cronInfo)
         cronPath=public.GetConfigValue('setup_path')+'/cron'
         cronName=self.GetShell(cronInfo)
-        if type(cronName) == dict: return cronName;
+        if type(cronName) == dict: return cronName
         cuonConfig += ' ' + cronPath+'/'+cronName+' >> '+ cronPath+'/'+cronName+'.log 2>&1'
         wRes = self.WriteShell(cuonConfig)
         if type(wRes) != bool: return False
@@ -185,7 +185,7 @@ class crontab:
         cuonConfig,get,name = self.GetCrondCycle(get)
         cronPath=public.GetConfigValue('setup_path')+'/cron'
         cronName=self.GetShell(get)
-        if type(cronName) == dict: return cronName;
+        if type(cronName) == dict: return cronName
         cuonConfig += ' ' + cronPath+'/'+cronName+' >> '+ cronPath+'/'+cronName+'.log 2>&1'
 
         wRes = self.WriteShell(cuonConfig)
@@ -262,20 +262,21 @@ class crontab:
     def GetDataList(self,get):
         data = {}
         data['data'] = public.M(get['type']).field('name,ps').select()
-        data['orderOpt'] = [];
+        data['orderOpt'] = []
         import json
-        tmp = public.readFile('data/libList.conf');
+        tmp = public.readFile('data/libList.conf')
         libs = json.loads(tmp)
-        import imp;
+        import imp
         for lib in libs:
             try:
-                imp.find_module(lib['module']);
+                if lib['module'] in ['beta','']: continue
+                imp.find_module(lib['module'])
                 tmp = {}
-                tmp['name'] = lib['name'];
+                tmp['name'] = lib['name']
                 tmp['value']= lib['opt']
-                data['orderOpt'].append(tmp);
+                data['orderOpt'].append(tmp)
             except:
-                continue;
+                continue
         return data
     
     #取任务日志
@@ -285,7 +286,7 @@ class crontab:
         logFile = public.GetConfigValue('setup_path')+'/cron/'+echo['echo']+'.log'
         if not os.path.exists(logFile):return public.returnMsg(False, 'CRONTAB_TASKLOG_EMPTY')
         log = public.GetNumLines(logFile,2000)
-        return public.returnMsg(True, log);
+        return public.returnMsg(True, log)
     
     #清理任务日志
     def DelLogs(self,get):
@@ -303,7 +304,7 @@ class crontab:
         try:
             id = get['id']
             find = public.M('crontab').where("id=?",(id,)).field('name,echo').find()
-            if not self.remove_for_crond(find['echo']): return public.returnMsg(False,'无法写入文件，请检查是否开启了系统加固功能!');
+            if not self.remove_for_crond(find['echo']): return public.returnMsg(False,'无法写入文件，请检查是否开启了系统加固功能!')
             cronPath = public.GetConfigValue('setup_path') + '/cron'
             sfile = cronPath + '/' + find['echo']
             if os.path.exists(sfile): os.remove(sfile)
@@ -351,8 +352,8 @@ class crontab:
                     'webshell': head +python_bin+ " " + public.GetConfigValue('setup_path') + '/panel/class/webshell_check.py site ' + param['sName'] +' ' +param['urladdress']
                     }
             if param['backupTo'] != 'localhost':
-                cfile = public.GetConfigValue('setup_path') + "/panel/plugin/" + param['backupTo'] + "/" + param['backupTo'] + "_main.py";
-                if not os.path.exists(cfile): cfile = public.GetConfigValue('setup_path') + "/panel/script/backup_" + param['backupTo'] + ".py";
+                cfile = public.GetConfigValue('setup_path') + "/panel/plugin/" + param['backupTo'] + "/" + param['backupTo'] + "_main.py"
+                if not os.path.exists(cfile): cfile = public.GetConfigValue('setup_path') + "/panel/script/backup_" + param['backupTo'] + ".py"
                 wheres={
                     'path': head + python_bin+" " + cfile + " path " + param['sName'] + " " + str(param['save']),
                     'site'  :   head + python_bin+" " + cfile + " site " + param['sName'] + " " + str(param['save']),
@@ -366,7 +367,7 @@ class crontab:
                 shell=wheres[type]
             except:
                 if type == 'toUrl':
-                    shell = head + "curl -sS --connect-timeout 10 -m 3600 '" + param['urladdress']+"'";
+                    shell = head + "curl -sS --connect-timeout 10 -m 3600 '" + param['urladdress']+"'"
                 else:
                     shell=head+param['sBody'].replace("\r\n","\n")
                     
@@ -377,7 +378,7 @@ echo "★[$endDate] Successful"
 echo "----------------------------------------------------------------------------"
 '''
         cronPath=public.GetConfigValue('setup_path')+'/cron'
-        if not os.path.exists(cronPath): public.ExecShell('mkdir -p ' + cronPath);
+        if not os.path.exists(cronPath): public.ExecShell('mkdir -p ' + cronPath)
         if not 'echo' in param:
             cronName=public.md5(public.md5(str(time.time()) + '_bt'))
         else:
@@ -393,8 +394,8 @@ echo "--------------------------------------------------------------------------
     def CheckScript(self,shell):
         keys = ['shutdown','init 0','mkfs','passwd','chpasswd','--stdin','mkfs.ext','mke2fs']
         for key in keys:
-            shell = shell.replace(key,'[***]');
-        return shell;
+            shell = shell.replace(key,'[***]')
+        return shell
     
     #重载配置
     def CrondReload(self):
@@ -423,10 +424,10 @@ echo "--------------------------------------------------------------------------
     
     #立即执行任务
     def StartTask(self,get):
-        echo = public.M('crontab').where('id=?',(get.id,)).getField('echo');
-        execstr = public.GetConfigValue('setup_path') + '/cron/' + echo;
+        echo = public.M('crontab').where('id=?',(get.id,)).getField('echo')
+        execstr = public.GetConfigValue('setup_path') + '/cron/' + echo
         public.ExecShell('chmod +x ' + execstr)
-        public.ExecShell('nohup ' + execstr + ' >> ' + execstr + '.log 2>&1 &');
+        public.ExecShell('nohup ' + execstr + ' >> ' + execstr + '.log 2>&1 &')
         return public.returnMsg(True,'CRONTAB_TASK_EXEC')
 
     #获取计划任务文件位置

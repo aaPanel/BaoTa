@@ -149,8 +149,11 @@ class DNSPodDns(BaseDns):
             "subdomain": subd,
             "record_type": s_type,
         }
+
         list_dns_response = requests.post(url, data=body, timeout=self.HTTP_TIMEOUT).json()
         for i in range(0, len(list_dns_response["records"])):
+            if list_dns_response["records"][i]['name'] != subd:
+                continue
             rid = list_dns_response["records"][i]["id"]
             urlr = urljoin(self.DNSPOD_API_BASE_URL, "Record.Remove")
             bodyr = {
@@ -532,7 +535,3 @@ class Dns_com(object):
     def delete_dns_record(self, domain_name, domain_dns_value):
         root, _, acme_txt = extract_zone(domain_name)
         self.get_dns_obj().remove_txt(acme_txt + '.' + root)
-
-
-
-

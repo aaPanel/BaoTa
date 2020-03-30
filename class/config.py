@@ -324,7 +324,7 @@ class config:
         if get.admin_path != '/':
             if len(get.admin_path) < 6: return public.returnMsg(False,'安全入口地址长度不能小于6位!')
             if get.admin_path in admin_path_checks: return public.returnMsg(False,'该入口已被面板占用,请使用其它入口!')
-            if not re.match(r"^/[\w\./-_]+$",get.admin_path):  return public.returnMsg(False,'入口地址格式不正确,示例: /my_panel')
+            if not public.path_safe_check(get.admin_path) or get.admin_path[-1] == '.':  return public.returnMsg(False,'入口地址格式不正确,示例: /my_panel')
             if get.admin_path[0] != '/': return public.returnMsg(False,'入口地址格式不正确,示例: /my_panel')
         else:
             get.domain = public.readFile('data/domain.conf')
@@ -1011,6 +1011,7 @@ class config:
             data = { "open":False, "token":"", "limit_addr":[] }
             public.WriteFile(save_path,json.dumps(data))
             public.ExecShell("chmod 600 " + save_path)
+            tmp = public.ReadFile(save_path)
         data = json.loads(tmp)
         if 'token_crypt' in data:
             data['token'] = public.de_crypt(data['token'],data['token_crypt'])

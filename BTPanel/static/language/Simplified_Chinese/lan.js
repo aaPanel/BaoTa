@@ -249,7 +249,7 @@ var lan = {
 		"save_file":"正在保存,请稍候...",
 		"read_file":"正在读取文件,请稍候...",
 		"edit_title":"在线编辑",
-		"edit_ps":"提示：Ctrl+F 搜索关键字，Ctrl+G 查找下一个，Ctrl+S 保存，Ctrl+Shift+R 查找替换!",
+		"edit_ps":"提示：Ctrl+F 搜索关键字，Ctrl+S 保存，Ctrl+H 查找替换!",
 		"stop":"停止",
 		"start":"启动",
 		"restart":"重启",
@@ -334,9 +334,9 @@ var lan = {
 		"install_lnmp":"LNMP(推荐)",
 		"install_type":"安装方式",
 		"install_rpm":"极速安装",
-		"install_rpm_title":"即rpm，安装时间极快（5~10分钟），性能与稳定性略低于编译安装",
+		"install_rpm_title":"即rpm/deb，安装时间极快（5-10分钟），版本与稳定性略低于编译安装，适合快速部署测试",
 		"install_src":"编译安装",
-		"install_src_title":"安装时间长（30分钟到3小时），适合生产环境",
+		"install_src_title":"安装时间长（30分钟到2小时），性能最大化，适合生产环境",
 		"install_key":"一键安装",
 		"install_apache22":"您选择的是Apache2.2,PHP将会以php5_module模式运行!",
 		"install_apache24":"您选择的是Apache2.4,PHP将会以php-fpm模式运行!",
@@ -599,6 +599,7 @@ var lan = {
 		"php_fpm_err5":"配置值不能小于1",
 		"phpinfo":"查看phpinfo()",
 		"get":"正在获取...",
+		"get_config":"正在获取配置文件，请稍后...",
 		"get_list":"正在获取列表...",
 		"the_save":"正在保存数据...",
 		"config_edit":"配置修改",
@@ -753,7 +754,8 @@ var lan = {
 		"mysql_status_ps8":"若不为0,请检查数据表的索引是否合理",
 		"mysql_status_ps9":"若不为0,请检查数据表的索引是否合理",
 		"mysql_status_ps10":"若值过大,增加sort_buffer_size",
-		"mysql_status_ps11":"若值过大,请考虑增加您的数据库性能"
+		"mysql_status_ps11":"若值过大,请考虑增加您的数据库性能",
+		"config_php_tips":"默认已开启Openssl/Curl/Mysql等扩展，详情可点击<a href='javascript:;'  class='btlink return_php_info'>phpinfo</a>查看"
 	},
 	
 	"site":{

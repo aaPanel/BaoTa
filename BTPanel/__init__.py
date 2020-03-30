@@ -18,7 +18,6 @@ sys.path.insert(0,'class/')
 import public
 from flask import Flask,current_app,session,render_template,send_file,request,redirect,g,url_for,make_response,render_template_string,abort
 from flask_session import Session
-
 try:
     from werkzeug.contrib.cache import SimpleCache
 except:
@@ -28,10 +27,10 @@ from werkzeug.wrappers import Response
 from flask_sockets import Sockets
 sys.setrecursionlimit(1000000)
 cache = SimpleCache()
-
+from flask_compress import Compress
 app = Flask(__name__,template_folder="templates/" + public.GetConfigValue('template'))
+Compress(app)
 sockets = Sockets(app)
-
 
 import common
 import db
@@ -206,6 +205,7 @@ def reload_mod():
     result = public.reload_mod(mod_name)
     if result: return public.returnJson(True,result),json_header
     return public.returnJson(False,'INIT_RELOAD_ERR'),json_header
+
 
 @app.before_request
 def request_check():
@@ -579,8 +579,8 @@ def files(pdata = None):
             'CopyFile','CopyDir','MvFile','GetFileBody','SaveFileBody','Zip','UnZip','get_download_url_find',
             'SearchFiles','upload','read_history','re_history','auto_save_temp','get_auto_save_body',
             'GetFileAccess','SetFileAccess','GetDirSize','SetBatchData','BatchPaste','install_rar','get_path_size',
-            'DownloadFile','GetTaskSpeed','CloseLogs','InstallSoft','UninstallSoft','SaveTmpFile',
-            'GetTmpFile','del_files_store','add_files_store','get_files_store','del_files_store_types','add_files_store_types',
+            'DownloadFile','GetTaskSpeed','CloseLogs','InstallSoft','UninstallSoft','SaveTmpFile','get_composer_version','exec_composer','update_composer',
+            'GetTmpFile','del_files_store','add_files_store','get_files_store','del_files_store_types','add_files_store_types','exec_git',
             'RemoveTask','ActionTask','Re_Recycle_bin','Get_Recycle_bin','Del_Recycle_bin','Close_Recycle_bin','Recycle_bin','file_webshell_check','dir_webshell_check'
             )
     return publicObject(filesObject,defs,None,pdata)

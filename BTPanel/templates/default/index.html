@@ -153,6 +153,7 @@
         e.stopPropagation();
 	})
 	setCookie('pro_end',{{data.pro_end}});
-	setCookie('ltd_end',{{data.ltd_end}});
+    setCookie('ltd_end',{{data.ltd_end}});
+    bt.set_cookie('serverType', "{{session['webserver']}}");
 </script>
 {% endblock %}

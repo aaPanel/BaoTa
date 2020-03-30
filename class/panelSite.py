@@ -1511,6 +1511,8 @@ class panelSite(panelRedirect):
         if(public.get_webserver() != 'nginx'): return public.returnMsg(False, 'SITE_NETLIMIT_ERR')
         
         id = get.id
+        if int(get.perserver) < 1 or int(get.perip) < 1 or int(get.perip) < 1:
+            return public.returnMsg(False,'并发限制，IP限制，流量限制必需大于0')
         perserver = 'limit_conn perserver ' + get.perserver + ';'
         perip = 'limit_conn perip ' + get.perip + ';'
         limit_rate = 'limit_rate ' + get.limit_rate + 'k;'

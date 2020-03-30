@@ -718,7 +718,7 @@ var index = {
                                 var body = '<div class="SafeRestartCode pd15" style="line-height:26px"></div>';
                                 $(".bt-window-restart").html(body);
                                 $(".SafeRestartCode").append("<p>" + lan.index.reboot_msg_1 + "</p>");
-                                bt.pub.set_server_status_by("name={{session['webserver']}}&type=stop", function (r1) {
+                                bt.pub.set_server_status_by("name="+bt.get_cookie('serverType')+"&type=stop", function (r1) {
                                     $(".SafeRestartCode p").addClass('c9');
                                     $(".SafeRestartCode").append("<p>" + lan.index.reboot_msg_2 + "...</p>");
                                     bt.pub.set_server_status_by("name=mysqld&type=stop", function (r2) {

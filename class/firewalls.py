@@ -78,9 +78,9 @@ class firewalls:
     def AddDropAddress(self,get):
         import time
         import re
-        rep = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d{1,2})?$"
-        if not re.search(rep,get.port): return public.returnMsg(False,'FIREWALL_IP_FORMAT')
-        if not public.check_ip(get.port.split('/')[0]): return public.returnMsg(False,'FIREWALL_IP_FORMAT')
+        ip_format = get.port.split('/')[0]
+        if not public.check_ip(ip_format): return public.returnMsg(False,'FIREWALL_IP_FORMAT')
+        if ip_format in  ['0.0.0.0','127.0.0.0',"::1"]: return public.returnMsg(False,'请不要花样作死!')
         address = get.port
         if public.M('firewall').where("port=?",(address,)).count() > 0: return public.returnMsg(False,'FIREWALL_IP_EXISTS')
         if self.__isUfw:
@@ -88,8 +88,12 @@ class firewalls:
         else:
             if self.__isFirewalld:
                 #self.__Obj.AddDropAddress(address)
-                public.ExecShell('firewall-cmd --permanent --add-rich-rule=\'rule family=ipv4 source address="'+ address +'" drop\'')
+                if public.is_ipv6(ip_format):
+                    public.ExecShell('firewall-cmd --permanent --add-rich-rule=\'rule family=ipv6 source address="'+ address +'" drop\'')
+                else:
+                    public.ExecShell('firewall-cmd --permanent --add-rich-rule=\'rule family=ipv4 source address="'+ address +'" drop\'')
             else:
+                if public.is_ipv6(ip_format): return public.returnMsg(False,'FIREWALL_IP_FORMAT')
                 public.ExecShell('iptables -I INPUT -s '+address+' -j DROP')
         
         public.WriteLog("TYPE_FIREWALL", 'FIREWALL_DROP_IP',(address,))
@@ -103,12 +107,16 @@ class firewalls:
     def DelDropAddress(self,get):
         address = get.port
         id = get.id
+        ip_format = get.port.split('/')[0]
         if self.__isUfw:
             public.ExecShell('ufw delete deny from ' + address + ' to any')
         else:
             if self.__isFirewalld:
                 #self.__Obj.DelDropAddress(address)
-                public.ExecShell('firewall-cmd --permanent --remove-rich-rule=\'rule family=ipv4 source address="'+ address +'" drop\'')
+                if public.is_ipv6(ip_format):
+                    public.ExecShell('firewall-cmd --permanent --remove-rich-rule=\'rule family=ipv6 source address="'+ address +'" drop\'')
+                else:
+                    public.ExecShell('firewall-cmd --permanent --remove-rich-rule=\'rule family=ipv4 source address="'+ address +'" drop\'')
             else:
                 public.ExecShell('iptables -D INPUT -s '+address+' -j DROP')
         

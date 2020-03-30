@@ -42,7 +42,7 @@ class panelPHP:
     
     #将参数写到文件
     def __write_args(self,args):
-        if os.path.exists(self.__args_tmp): os.remove(args_tmp_file)
+        if os.path.exists(self.__args_tmp): os.remove(self.__args_tmp)
         self.__clean_args_file()
         data = {}
         data['GET'] = request.args.to_dict()
@@ -78,7 +78,7 @@ class panelPHP:
             php_bin = php_path + pv + "/bin/php"
             if os.path.exists(php_bin): 
                 php_v = pv
-                break;
+                break
         #如果没安装直接返回False
         if not php_v: return False
         #处理PHP-CLI-INI配置文件

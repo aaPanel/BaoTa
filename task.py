@@ -436,19 +436,18 @@ def check_panel_ssl():
     try:
         while True:
             lets_info = public.readFile("/www/server/panel/ssl/lets.info")
-            if lets_info:
-                lets_info = loads(lets_info)
-                cert_info_file = "/www/server/panel/vhost/ssl/" + lets_info["domain"] + "/info.json"
-                cert_info = public.readFile(cert_info_file)
-                if cert_info:
-                    cert_info = loads(cert_info)
-                    if setPanelLets.setPanelLets().copy_cert(cert_info):
-                        strTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(time.time())))
-                        public.writeFile("/tmp/panelSSL.pl","{} 面板证书更新成功".format(strTime))
+            if not lets_info:
+                time.sleep(600)
+                continue
+            lets_info = loads(lets_info)
+            if setPanelLets.setPanelLets().check_cert_update(lets_info['domain']):
+                strTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(time.time())))
+                public.writeFile("/tmp/panelSSL.pl","{} Panel certificate updated successfully\n".format(strTime),"a+")
+                public.writeFile('/www/server/panel/data/reload.pl',"1")
             time.sleep(60)
     except:
         e = public.get_error_info()
-        public.writeFile("/tmp/panelSSL.pl", str(e))
+        public.writeFile("/tmp/panelSSL.pl", str(e),"a+")
 
 #监控面板状态
 def panel_status():

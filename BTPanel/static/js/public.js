@@ -5,12 +5,10 @@ $(function(){
             var option = {
                 height:400,
                 shadow:true,
-                resize:true,
+                resize:true
             };
             options = $.extend(option,options);
-            console.time('固定表头渲染时间');
             if($(this).find('table').length === 0){
-                console.log('table固定标题失败');
                 return false;
             }
             var _height = $(this)[0].style.height,_table_config = _height.match(/([0-9]+)([%\w]+)/);
@@ -48,7 +46,6 @@ $(function(){
                 	_item.attr('width',$(item)[0].offsetWidth);
                 }
             });
-            console.timeEnd('固定表头渲染时间');
             if(options.resize){
                 $(window).resize(function(){
             		var _table_width = _that.find('.thead_div table')[0].offsetWidth,
@@ -64,7 +61,6 @@ $(function(){
 		            });
 	            });	
             }
-
             if(options.shadow){
                 var table_body = $(this).find('.tbody_div')[0];
                 if(_table_config[1] >= table_body.scrollHeight){
@@ -103,104 +99,62 @@ $(document).ready(function() {
 	});
 });
 var aceEditor = {
-	layer_view:'',
+	layer_view:'', 
+	aceConfig:{},  //ace配置参数
 	editor: null,
-	supportedModes: {
-		Apache_Conf: ["^htaccess|^htgroups|^htpasswd|^conf|htaccess|htgroups|htpasswd"],
-		BatchFile: ["bat|cmd"],
-		C_Cpp: ["cpp|c|cc|cxx|h|hh|hpp|ino"],
-		CSharp: ["cs"],
-		CSS: ["css"],
-		Dockerfile: ["^Dockerfile"],
-		golang: ["go"],
-		HTML: ["html|htm|xhtml|vue|we|wpy"],
-		Java: ["java"],
-		JavaScript: ["js|jsm|jsx"],
-		'JSON': ["json"],
-		JSP: ["jsp"],
-		LESS: ["less"],
-		Lua: ["lua"],
-		Makefile: ["^Makefile|^GNUmakefile|^makefile|^OCamlMakefile|make"],
-		Markdown: ["md|markdown"],
-		MySQL: ["mysql"],
-		Nginx: ["nginx|conf"],
-		INI: ["ini|conf|cfg|prefs"],
-		ObjectiveC: ["m|mm"],
-		Perl: ["pl|pm"],
-		Perl6: ["p6|pl6|pm6"],
-		pgSQL: ["pgsql"],
-		PHP_Laravel_blade: ["blade.php"],
-		PHP: ["php|inc|phtml|shtml|php3|php4|php5|phps|phpt|aw|ctp|module"],
-		Powershell: ["ps1"],
-		Python: ["py"],
-		R: ["r"],
-		Ruby: ["rb|ru|gemspec|rake|^Guardfile|^Rakefile|^Gemfile"],
-		Rust: ["rs"],
-		SASS: ["sass"],
-		SCSS: ["scss"],
-		SH: ["sh|bash|^.bashrc"],
-		SQL: ["sql"],
-		SQLServer: ["sqlserver"],
-		Swift: ["swift"],
-		Text: ["txt"],
-		Typescript: ["ts|typescript|str"],
-		VBScript: ["vbs|vb"],
-		Verilog: ["v|vh|sv|svh"],
-		XML: ["xml|rdf|rss|wsdl|xslt|atom|mathml|mml|xul|xbl|xaml"],
-		YAML: ["yaml|yml"],
-		Compress:['tar|zip|7z|rar|gz|arj|z'],
-		images:['icon|jpg|jpeg|png|bmp|gif|tif|emf']
-	},
-	nameOverrides: {
-		ObjectiveC: "Objective-C",
-		CSharp: "C#",
-		golang: "Go",
-		C_Cpp: "C and C++",
-		PHP_Laravel_blade: "PHP (Blade Template)",
-		Perl6: "Perl 6",
-	},
 	pathAarry:[],
-	encodingList: ['ASCII','UTF-8', 'GBK', 'GB2312', 'BIG5'],
-	themeList: [
-		'chrome',
-		'monokai'
-	],
-	fontSize:'13px',
-	editorTheme: 'monokai', // 编辑器主题
 	editorLength: 0,
 	isAceView:true,
 	ace_active:'',
 	is_resizing:false,
+	menu_path:'', //当前文件目录根地址
+	refresh_config:{
+		el:{}, // 需要重新获取的元素,为DOM对象
+		path:'',// 需要获取的路径文件信息
+		group:1,// 当前列表层级，用来css固定结构
+		is_empty:true
+	}, //刷新配置参数
 	// 事件编辑器-方法，事件绑定
 	eventEditor: function () {
-		var _this = this;
+		var _this = this,_icon = '<span class="icon"><i class="glyphicon glyphicon-ok" aria-hidden="true"></i></span>';
 		$(window).resize(function(){
-			var _id = $('.ace_conter_menu .active').attr('data-id');
-			if(_id != undefined){
-				aceEditor.editor['ace_editor_'+_id].ace.resize();
-				_this.setEditorView()
-			}
+			if(_this.ace_active != undefined) _this.setEditorView()
+			if( $('.aceEditors .layui-layer-maxmin').length >0){
+            	$('.aceEditors').css({
+                	'top':0,
+                	'left':0,
+                	'width':$(this)[0].innerWidth,
+                	'height':$(this)[0].innerHeight
+                });
+            }
 		})
 		$(document).click(function(e){
 			$('.ace_toolbar_menu').hide();
+			$('.ace_conter_editor .ace_editors').css('fontSize', _this.aceConfig.aceEditor.fontSize + 'px');
 			$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
-		})
+		});
+		$('.ace_toolbar_menu').click(function(e){
+			e.stopPropagation();
+			e.preventDefault();
+		});
 		// 显示工具条
 		$('.ace_header .pull-down').click(function(){
 			if($(this).find('i').hasClass('glyphicon-menu-down')){
-				$('.ace_header').css({'marginTop':'-35px','height':'0'});
-				$(this).css({'top':'35px','height':'40px','line-height':'40px'});
+                $('.ace_header').css({'top':'-35px'});
+                $('.ace_overall').css({'top':'0'});
+                $(this).css({'top':'35px','height':'40px','line-height':'40px'});
 				$(this).find('i').addClass('glyphicon-menu-up').removeClass('glyphicon-menu-down');
 			}else{
-				$('.ace_header').removeAttr('style');
-				$(this).removeAttr('style');
+				$('.ace_header').css({'top':'0'});
+                $('.ace_overall').css({'top':'35px'});
+                $(this).removeAttr('style');
 				$(this).find('i').addClass('glyphicon-menu-down').removeClass('glyphicon-menu-up');
 			}
 			_this.setEditorView();
 		});
 		// 切换TAB视图
 		$('.ace_conter_menu').on('click', '.item', function (e) {
-			var _id = $(this).attr('data-id'),_item = _this.editor['ace_editor_'+_id]
+			var _id = $(this).attr('data-id'),_item = _this.editor[_id]
 			$('.item_tab_'+ _id).addClass('active').siblings().removeClass('active');
 			$('#ace_editor_'+ _id).addClass('active').siblings().removeClass('active');
 			_this.ace_active = _id;
@@ -225,8 +179,7 @@ var aceEditor = {
 		$('.ace_conter_menu').on('click', '.item .icon-tool', function (e) {
 			var file_type = $(this).attr('data-file-state');
 			var file_title = $(this).attr('data-title');
-			var _path = $(this).parent().attr('title');
-			var _id = $(this).parent().attr('data-id');
+			var _id = $(this).parent().parent().attr('data-id');
 			switch (file_type) {
 				// 直接关闭
 				case '0':
@@ -251,20 +204,10 @@ var aceEditor = {
 						success: function (layers, index) {
 							$('.ace-clear-btn .btn').click(function () {
 								var _type = $(this).attr('data-type'),
-								editor_item = _this.editor['ace_editor_'+_id];
+									_item = _this.editor[_id];
 								switch (_type) {
 									case '0': //保存文件
-										_this.saveFileBody({
-											path:_path,
-											data:editor_item.ace.getValue(),
-											encoding:editor_item.encoding
-										},function(res){
-											layer.close(index);
-											_this.removeEditor(editor_item.id);
-											layer.msg(res.msg, {icon: 1});
-											editor_item.fileType = 0;
-											$('.item_tab_' + editor_item.id + ' .icon-tool').attr('data-file-state', '0').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove');
-										});
+										_this.saveFileMethod(_item);
 									break;
 									case '1': //关闭视图
 										layer.close(index);
@@ -279,20 +222,31 @@ var aceEditor = {
 					});
 				break;
 			}
+			$('.ace_toolbar_menu').hide();
+			$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
 			e.stopPropagation();
+			e.preventDefault();
+		});
+		$(window).keyup(function(e){
+			if(e.keyCode === 116 && $('#ace_conter').length == 1){
+				layer.msg('编辑器模式下无法刷新网页，请关闭后重试');
+			}
 		});
 		// 新建编辑器视图
 		$('.ace_editor_add').click(function () {
-			_this.addEditor();
+			_this.addEditorView();
 		});
 		// 底部状态栏功能按钮
 		$('.ace_conter_toolbar .pull-right span').click(function (e) {
-			var _type = $(this).attr('data-type'),_item = _this.editor['ace_editor_'+_this.ace_active],_icon = '<span class="icon"><i class="glyphicon glyphicon-ok" aria-hidden="true"></i></span>';
+			var _type = $(this).attr('data-type'),
+				_item = _this.editor[_this.ace_active];
 			$('.ace_toolbar_menu').show();
 			switch (_type) {
 				case 'cursor':
 					$('.ace_toolbar_menu').hide();
+					$('.ace_header .jumpLine').click();
 				break;
+				
 				case 'history':
 					$('.ace_toolbar_menu').hide();
 					if(_item.historys.length === 0){
@@ -365,7 +319,7 @@ var aceEditor = {
 		});
 		// 设置换行符
 		$('.menu-tabs').on('click','li',function(e){
-			var _val = $(this).attr('data-value'),_item =  _this.editor['ace_editor_'+ _this.ace_active];
+			var _val = $(this).attr('data-value'),_item =  _this.editor[_this.ace_active];
 			if($(this).parent().hasClass('tabsType')){
 				_item.ace.getSession().setUseSoftTabs(_val == 'nbsp');
 				_item.softTabs = _val == 'nbsp';
@@ -375,13 +329,13 @@ var aceEditor = {
 			}
 			$(this).siblings().removeClass('active').find('.icon').remove();
 			$(this).addClass('active').append(_icon);
-			_this.currentStatusBar(_id);
+			_this.currentStatusBar(_item.id);
 			e.stopPropagation();
 			e.preventDefault();
 		});
 		// 设置编码内容
 		$('.menu-encoding').on('click','li',function(e){
-			var _item = _this.editor['ace_editor_'+_this.ace_active],_icon = '<span class="icon"><i class="glyphicon glyphicon-ok" aria-hidden="true"></i></span>';
+			var _item = _this.editor[_this.ace_active];
 			layer.msg('设置文件编码：' + $(this).attr('data-value'));
 			$('.ace_conter_toolbar [data-type="encoding"]').html('编码：<i>'+ $(this).attr('data-value') +'</i>');
 			$(this).addClass('active').append(_icon).siblings().removeClass('active').find('span').remove();
@@ -400,14 +354,17 @@ var aceEditor = {
 		// 清除搜索内容事件
 		$('.menu-files .menu-conter .fa').click(function(){
 			$('.menu-files .menu-input').val('').next().hide();
-			_this.searchRelevance()
+			_this.searchRelevance();
 		});
 		// 顶部状态栏
-		$('.ace_header span').click(function (e) {
-			var type =  $(this).attr('class'),editor_item =  _this.editor['ace_editor_'+ _this.ace_active];
+		$('.ace_header>span').click(function (e) {
+			var type =  $(this).attr('class'),_item =  _this.editor[_this.ace_active];
+			if(_this.ace_active == '' && type != 'helps'){
+				return false;
+			}
 			switch(type){
 				case 'saveFile': //保存当时文件
-					_this.saveFileMethod(editor_item);
+					_this.saveFileMethod(_item);
 				break;
 				case 'saveFileAll': //保存全部
 					var loadT = layer.open({
@@ -438,9 +395,8 @@ var aceEditor = {
 								}
 								_this.saveAllFileBody(_arry,function(){
 									$('.ace_conter_menu>.item').each(function (el,index) {
-										var _id = $(this).attr('data-id');
-										$(this).find('i').attr('data-file-state','0').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove')
-										aceEditor.editor['ace_editor_'+_id].fileType = 0;
+										$(this).find('i').attr('data-file-state','0').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove');
+										_item.fileType = 0;
 									});
 									layer.close(index);
 								});
@@ -449,11 +405,11 @@ var aceEditor = {
 					});
 				break;
 				case 'refreshs': //刷新文件
-					if(editor_item.fileType === 0 ){
-						aceEditor.getFileBody({path:editor_item.path},function(res){
-							editor_item.ace.setValue(res.data);
-							editor_item.fileType = 0;
-							$('.item_tab_' + editor_item.id + ' .icon-tool').attr('data-file-state', '0').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove');
+					if(_item.fileType === 0 ){
+						aceEditor.getFileBody({path:_item.path},function(res){
+							_item.ace.setValue(res.data);
+							_item.fileType = 0;
+							$('.item_tab_' + _item.id + ' .icon-tool').attr('data-file-state', '0').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove');
 							layer.msg('刷新成功',{icon:1});
 						});
 						return false;
@@ -476,11 +432,11 @@ var aceEditor = {
 								layer.close(index);
 							});
 							$('.save-all-btn').click(function(){
-								aceEditor.getFileBody({path:editor_item.path},function(res){
+								aceEditor.getFileBody({path:_item.path},function(res){
 									layer.close(index);
-									editor_item.ace.setValue(res.data);
-									editor_item.fileType == 0;
-									$('.item_tab_' + editor_item.id + ' .icon-tool').attr('data-file-state', '0').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove');
+									_item.ace.setValue(res.data);
+									_item.fileType == 0;
+									$('.item_tab_' + _item.id + ' .icon-tool').attr('data-file-state', '0').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove');
 									layer.msg('刷新成功',{icon:1});
 								});
 							});
@@ -489,17 +445,33 @@ var aceEditor = {
 				break;
 				// 搜索
 				case 'searchs':
-					editor_item.ace.execCommand('find');
+					_item.ace.execCommand('find');
 				break;
 				// 替换
 				case 'replaces':
-					editor_item.ace.execCommand('replace');
+					_item.ace.execCommand('replace');
+				break;
+				// 跳转行
+				case 'jumpLine':
+					$('.ace_toolbar_menu').show().find('.menu-jumpLine').show().siblings().hide();
+					$('.set_jump_line input').val('').focus();
+					$('.set_jump_line .btn-save').unbind('click').click(function(){
+						var _jump_line = $('.set_jump_line input').val();
+						_item.ace.gotoLine(_jump_line);
+					});
+					$('.set_jump_line input').unbind('keypress keydown keyup').on('keypress keydown keyup',function(e){
+						if(e.keyCode == 13 || (e.keyCode >= 48 && e.keyCode <= 57) || (e.keyCode >= 96 && e.keyCode <= 105)){
+							var _jump_line = $('.set_jump_line input').val();
+							if(_jump_line == '' && typeof parseInt(_jump_line) != 'number') return false;
+							_item.ace.gotoLine(_jump_line);
+						}
+					});
 				break;
 				// 字体
 				case 'fontSize':
 					$('.ace_toolbar_menu').show().find('.menu-fontSize').show().siblings().hide();
-					$('.menu-fontSize .menu-conter .set_font_size input').val(_this.fontSize.match(/([0-9]*)px/)[1]);
-					$('.menu-fontSize .menu-conter .set_font_size input').unbind('keyup').keyup(function (e){
+					$('.menu-fontSize .set_font_size input').val(_this.aceConfig.aceEditor.fontSize).focus();
+					$('.menu-fontSize set_font_size input').unbind('keypress onkeydown').on('keypress onkeydown',function (e){
 						var _val = $(this).val();
 						if(_val == ''){
 							$(this).css('border','1px solid red');
@@ -507,9 +479,9 @@ var aceEditor = {
 						}else if(!isNaN(_val)){
 							$(this).removeAttr('style');
 							if(parseInt(_val) > 11 && parseInt(_val) <45){
-								$('.ace_conter_editor .ace_editors').css('fontSize', _val +'px')
+								$('.ace_conter_editor .ace_editors').css('fontSize', _val+'px')
 							}else{
-								$('.ace_conter_editor .ace_editors').css('fontSize', '13px');
+								$('.ace_conter_editor .ace_editors').css('fontSize','13px');
 								$(this).css('border','1px solid red');
 								$(this).next('.tips').text('字体设置范围 12-45');
 							}
@@ -517,157 +489,86 @@ var aceEditor = {
 							$(this).css('border','1px solid red');
 							$(this).next('.tips').text('字体设置范围 12-45');
 						}
-					});
-					$('.menu-fontSize .menu-conter .set_font_size input').unbind('change').change(function (){
-						var _val = $(this).val();
-						$('.ace_conter_editor .ace_editors').css('fontSize',_val+'px')
-					});
-					$('.set_font_size .btn-save').unbind('click').click(function(){
-						var _fontSize = $('.set_font_size input').val(),
-						_theme = JSON.parse(getCookie('aceEditor')).theme,
-						_data = JSON.stringify({"fontSize": _fontSize +"px","theme":_theme});
-						_this.saveFileBody({
-							path:'/www/server/panel/BTPanel/static/ace/editor.config.json',
-							data:_data,
-							encoding:'utf-8'
-						},function(res){
-							if(res.status){
-								_this.fontSize = _fontSize +'px'
-								setCookie('aceEditor',_data);
-								layer.msg('设置成功', {icon: 1});
-								return false;
-							}
-							layer.msg(res.msg, {icon: 2});
-						});
-					});
-					$('.ace_toolbar_menu').unbind('click').click(function(e){
 						e.stopPropagation();
 						e.preventDefault();
 					});
-					$(document).unbind('click').click(function(e){
-						$('.ace_toolbar_menu').hide();
-						$('.ace_conter_editor .ace_editors').css('fontSize', _this.fontSize);
-						$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
+					$('.menu-fontSize .menu-conter .set_font_size input').unbind('change').change(function (){
+						var _val = $(this).val();
+						$('.ace_conter_editor .ace_editors').css('fontSize',_val+'px');
 					});
+					$('.set_font_size .btn-save').unbind('click').click(function(){
+						var _fontSize = $('.set_font_size input').val();
+						_this.aceConfig.aceEditor.fontSize = parseInt(_fontSize);
+						_this.saveAceConfig(_this.aceConfig,function(res){
+							if(res.status){
+								$('.ace_editors').css('fontSize',_fontSize +'px');
+								layer.msg('设置成功', {icon: 1});
+							}
+						});
+					}); 
 				break;
 				//主题
 				case 'themes':
 					$('.ace_toolbar_menu').show().find('.menu-themes').show().siblings().hide();
-					var _html = '',_arry = ['白色主题','黑色主题'],_icon = '<span class="icon"><i class="glyphicon glyphicon-ok" aria-hidden="true"></i></span>';
-					for(var i=0;i<_this.themeList.length;i++){
-						if(_this.themeList[i] != _this.editorTheme){
-							_html += '<li data-value="'+ _this.themeList[i] +'">'+ _this.themeList[i] +'【'+ _arry[i] +'】</li>';
+					var _html = '',_arry = ['白色主题','黑色主题'];
+					for(var i=0;i<_this.aceConfig.themeList.length;i++){
+						if(_this.aceConfig.themeList[i] != _this.aceConfig.aceEditor.editorTheme){
+							_html += '<li data-value="'+ _this.aceConfig.themeList[i] +'">'+ _this.aceConfig.themeList[i] +'【'+ _arry[i] +'】</li>';
 						}else{
-							_html += '<li data-value="'+ _this.themeList[i] +'" class="active">'+ _this.themeList[i] +'【'+ _arry[i] +'】'+ _icon +'</li>';
+							_html += '<li data-value="'+ _this.aceConfig.themeList[i] +'" class="active">'+ _this.aceConfig.themeList[i] +'【'+ _arry[i] +'】'+ _icon +'</li>';
 						}
 					}
 					$('.menu-themes ul').html(_html);
 					$('.menu-themes ul li').click(function(){
 						var _theme = $(this).attr('data-value');
                         $(this).addClass('active').append(_icon).siblings().removeClass('active').find('.icon').remove();
-						var _fontSize = JSON.parse(getCookie('aceEditor')).fontSize.match(/([0-9]*)px/)[1],
-							_data = JSON.stringify({"fontSize": _fontSize +"px","theme":_theme});
-						for(var item in _this.editor){
-							_this.editor[item].ace.setTheme("ace/theme/"+_theme);
-						}
-						_this.saveFileBody({
-							path:'/www/server/panel/BTPanel/static/ace/editor.config.json',
-							data:_data,
-							encoding:'utf-8'
-						},function(res){
-							if(res.status){
-								_this.editorTheme = _theme;
-								$('#ace_conter').removeAttr('class').addClass(_theme);
-								setCookie('aceEditor',_data);
-								layer.msg('设置成功', {icon: 1});
-								return false;
+						_this.aceConfig.aceEditor.editorTheme = _theme;
+						_this.saveAceConfig(_this.aceConfig,function(res){
+							for(var item in _this.editor){
+								_this.editor[item].ace.setTheme("ace/theme/"+_theme);
 							}
-							layer.msg(res.msg, {icon: 2});
+							layer.msg('设置成功', {icon: 1});
 						});
 					});
-					$('.ace_toolbar_menu').unbind('click').click(function(e){
-						e.stopPropagation();
-						e.preventDefault();
-					});
-					$(document).unbind('click').click(function(e){
-						$('#ace_conter').removeAttr('class').addClass(_this.editorTheme);
-						$('.ace_toolbar_menu').hide();
-						$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
+				break;
+				case 'setUp':
+					$('.ace_toolbar_menu').show().find('.menu-setUp').show().siblings().hide();
+					$('.menu-setUp .editor_menu li').each(function(index,el){
+						var _type = _this.aceConfig.aceEditor[$(el).attr('data-type')];
+						if(_type) $(el).addClass('active').append(_icon);
+					})
+					$('.menu-setUp .editor_menu li').unbind('click').click(function(){
+						var _type = $(this).attr('data-type');
+						_this.aceConfig.aceEditor[_type] = !$(this).hasClass('active');
+						if($(this).hasClass('active')){
+							$(this).removeClass('active').find('.icon').remove();
+						}else{
+							$(this).addClass('active').append(_icon);
+						}
+						_this.saveAceConfig(_this.aceConfig,function(res){
+							for(var item in _this.editor){
+								_this.editor[item].ace.setOption(_type,_this.aceConfig.aceEditor[_type]);
+							}
+							layer.msg('设置成功', {icon: 1});
+						});
 					});
 				break;
 				case 'helps':
-					layer.open({
-						type:1,
-						area:'750px',
-						title:'帮助',
-						content:'<div class="helps_conter">\
-							<div class="helps_left">\
-								<div class="helps_item">常用快捷键:</div>\
-								<div class="helps_box">\
-									ctrl+s&nbsp;&nbsp;保存</br>\
-									ctrl+a&nbsp;&nbsp;全选&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+x&nbsp;&nbsp;剪切</br>\
-									ctrl+c&nbsp;&nbsp;复制&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+v&nbsp;&nbsp;粘贴</br>\
-									ctrl+z&nbsp;&nbsp;撤销&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+y&nbsp;&nbsp;反撤销</br>\
-									ctrl+f&nbsp;&nbsp;查找&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+h&nbsp;替换</br>\
-									win+alt+0&nbsp;&nbsp;折叠所有</br>\
-									win+alt+shift+0&nbsp;&nbsp;展开所有</br>\
-									esc&nbsp;&nbsp;[退出搜索,取消自动提示...]</br>\
-									ctrl-shift-s&nbsp;&nbsp;预览</br>\
-									ctrl-shift-e&nbsp;&nbsp;显示&关闭函数\
-								</div>\
-								<div class="helps_item">选择:</div>\
-								<div class="helps_box">\
-									鼠标框选——拖动</br>\
-									shift+home/end/up/left/down/right</br>\
-									shift+pageUp/PageDown&nbsp;&nbsp;上下翻页选中</br>\
-									ctrl+shift+ home/end&nbsp;&nbsp;当前光标到头尾</br>\
-									alt+鼠标拖动&nbsp;&nbsp;块选择</br>\
-									ctrl+alt+g&nbsp;&nbsp;批量选中当前并进入多标签编辑</br>\
-								</div>\
-							</div>\
-							<div class="helps_left">\
-								<div class="helps_item">光标移动:</div>\
-								<div class="helps_box">\
-									home/end/up/left/down/right</br>\
-									ctrl+home/end&nbsp;&nbsp;光标移动到文档首/尾</br>\
-									ctrl+p&nbsp;&nbsp;跳转到匹配的标签</br>\
-									pageUp/PageDown&nbsp;&nbsp;光标上下翻页</br>\
-									alt+left/right&nbsp;&nbsp;光标移动到行首位</br>\
-									shift+left/right&nbsp;&nbsp;光标移动到行首&尾</br>\
-									ctrl+l&nbsp;&nbsp;跳转到指定行</br>\
-									ctrl+alt+up/down&nbsp;&nbsp;上(下)增加光标</br>\
-								</div>\
-								<div class="helps_item">编辑:</div>\
-								<div class="helps_box">\
-									ctrl+/&nbsp;&nbsp;注释&取消注释&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+alt+a&nbsp;&nbsp;左右对齐</br>\
-									table&nbsp;&nbsp;tab对齐&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shift+table&nbsp;&nbsp;整体前移table</br>\
-									delete&nbsp;&nbsp;删除&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctrl+d&nbsp;&nbsp;删除整行</br>\
-									ctrl+delete&nbsp;&nbsp;删除该行右侧单词</br>\
-									ctrl/shift+backspace&nbsp;&nbsp;删除左侧单词</br>\
-									alt+shift+up/down&nbsp;&nbsp;复制行并添加到上(下面)面</br>\
-									alt+delete&nbsp;&nbsp;删除光标右侧内容</br>\
-									alt+up/down&nbsp;&nbsp;当前行和上一行(下一行交换)</br>\
-									ctrl+shift+d&nbsp;&nbsp;复制行并添加到下面</br>\
-									ctrl+delete&nbsp;&nbsp;删除右侧单词</br>\
-									ctrl+shift+u&nbsp;&nbsp;转换成小写</br>\
-									ctrl+u&nbsp;&nbsp;选中内容转换成大写</br>\
-								</div>\
-							</div>\
-						</div>'
-					});
+					if(!$('[data-type=shortcutKeys]').length != 0){
+						_this.addEditorView(1,{title:'快捷键提示',html:aceShortcutKeys.innerHTML});
+					}else{
+						$('[data-type=shortcutKeys]').click();
+					}
 				break;
 			}
+			
 			e.stopPropagation();
 			e.preventDefault();
 		});
-		// 菜单状态
-		$('.ace_toolbar_menu').click(function(e){
-			e.stopPropagation();
-			e.preventDefault();
-		});
+		
 		// 文件目录选择
 		$('.ace_catalogue_list').on('click','.has-children .file_fold',function(e){
-			var _layers = $(this).attr('data-layer'),_type = $(this).find('data-type'),_path=$(this).parent().attr('data-paths'),_menu = $(this).find('.glyphicon'),_group = parseInt($(this).attr('data-group')),_file = $(this).attr('data-file'),_tath = $(this);
+			var _layers = $(this).attr('data-layer'),_type = $(this).find('data-type'),_path = $(this).parent().attr('data-menu-path'),_menu = $(this).find('.glyphicon'),_group = parseInt($(this).attr('data-group')),_file = $(this).attr('data-file'),_tath = $(this);
 			var _active = $('.ace_catalogue_list .has-children .file_fold.edit_file_group');
 			if(_active.length>0 && $(this).attr('data-edit') === undefined){
 				switch(_active.attr('data-edit')){
@@ -683,10 +584,11 @@ var aceEditor = {
 				}
 				layer.closeAll('tips');
 			}
+			$('.ace_toolbar_menu').hide();
+			$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
 			if($(this).hasClass('edit_file_group')) return false;
 			$('.ace_catalogue_list .has-children .file_fold').removeClass('bg');
 			$(this).addClass('bg');
-			$('.ace_catalogue_menu').hide();
 			if($(this).attr('data-file') == 'Dir'){
 				if(_menu.hasClass('glyphicon-menu-right')){
 					_menu.removeClass('glyphicon-menu-right').addClass('glyphicon-menu-down');
@@ -704,15 +606,118 @@ var aceEditor = {
 			e.stopPropagation();
 			e.preventDefault();
 		});
-		// 禁用目录选择
-		$('.ace_catalogue').bind("selectstart",function(){
-			return false;
+		// 禁用目录选择（文件目录）
+		$('.ace_catalogue').bind("selectstart",function(e){
+			var omitformtags = ["input", "textarea"];
+			omitformtags = "|" + omitformtags.join("|") + "|";
+			if (omitformtags.indexOf("|" + e.target.tagName.toLowerCase() + "|") == -1) {
+				return false;
+			}else{
+				return true;
+			}
 		});
-		// 返回目录
-		$('.ace_catalogue_list').on('click','.has-children.upper_level',function(e){
-			var _paths = $(this).attr('data-paths');
+		// 返回目录（文件目录主菜单）
+		$('.ace_dir_tools').on('click','.upper_level',function(){
+			var _paths = $(this).attr('data-menu-path');
 			_this.reader_file_dir_menu({path:_paths,is_empty:true});
 			$('.ace_catalogue_title').html('目录：'+ _paths).attr('title',_paths);
+		});
+		// 新建文件（文件目录主菜单）
+		$('.ace_dir_tools').on('click','.new_folder',function(e){
+			var _paths = $(this).parent().find('.upper_level').attr('data-menu-path');
+			$(this).find('.folder_down_up').show();
+			$(document).click(function(){
+				$('.folder_down_up').hide();
+				$(this).unbind('click');
+				return false;
+			});
+			$('.ace_toolbar_menu').hide();
+			$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
+			e.stopPropagation();
+			e.preventDefault();
+		});
+		// 刷新列表 (文件目录主菜单)
+		$('.ace_dir_tools').on('click','.refresh_dir',function(e){
+			_this.refresh_config = {
+				el:$('.cd-accordion-menu')[0],
+				path:$('.ace_catalogue_title').attr('title'),
+				group:1,
+				is_empty:true
+			}
+			_this.reader_file_dir_menu(_this.refresh_config,function(){
+				layer.msg('刷新成功',{icon:1});
+			});
+		});
+		// 搜索内容 (文件目录主菜单)
+		$('.ace_dir_tools').on('click','.search_file',function(e){
+			if($(this).parent().find('.search_input_view').length == 0){
+				$(this).siblings('div').hide();
+				$(this).css('color','#ec4545').attr({'title':'关闭'}).find('.glyphicon').removeClass('glyphicon-search').addClass('glyphicon-remove').next().text("关闭");
+				$(this).before('<div class="search_input_title">搜索目录文件</div>');
+				$(this).after('<div class="search_input_view">\
+					<form>\
+                        <input type="text" id="search_input_val" class="ser-text pull-left" placeholder="">\
+                        <button type="button" class="ser-sub pull-left"></button>\
+                    </form>\
+                    <div class="search_boxs">\
+                        <input id="search_alls" type="checkbox">\
+                        <label for="search_alls"><span>包含子目录文件</span></label>\
+                    </div>\
+                </div>');
+				$('.ace_catalogue_list').css('top','150px');
+				$('.ace_dir_tools').css('height','110px');
+				$('.cd-accordion-menu').empty();
+			}else{
+				$(this).siblings('div').show();
+				$(this).parent().find('.search_input_view,.search_input_title').remove();
+				$(this).removeAttr('style').attr({'title':'搜索内容'}).find('.glyphicon').removeClass('glyphicon-remove').addClass('glyphicon-search').next().text("搜索");
+				$('.ace_catalogue_list').removeAttr('style')
+				$('.ace_dir_tools').removeAttr('style');
+				_this.refresh_config = {
+					el:$('.cd-accordion-menu')[0],
+					path:$('.ace_catalogue_title').attr('title'),
+					group:1,
+					is_empty:true
+				}
+				_this.reader_file_dir_menu(_this.refresh_config);
+			}
+		});
+		
+		// 搜索文件内容
+		$('.ace_dir_tools').on('click','.search_input_view button',function(e){
+			var path = _this.menu_path,
+				search = $('#search_input_val').val();
+				_this.reader_file_dir_menu({
+					el:$('.cd-accordion-menu')[0],
+					path:path,
+					group:1,
+					search:search,
+					all:$('#search_alls').is(':checked')?'True':'False',
+					is_empty:true
+				})
+		});
+		// 当前根目录操作，新建文件或目录
+		$('.ace_dir_tools').on('click','.folder_down_up li',function(e){
+			var _type = parseInt($(this).attr('data-type'));
+			switch(_type){
+				case 0:
+					_this.newly_file_type_dom($('.cd-accordion-menu'),0,0);
+				break;
+				case 1:
+					_this.newly_file_type_dom($('.cd-accordion-menu'),0,1);
+				break;
+			}
+			_this.refresh_config = {
+				el:$('.cd-accordion-menu')[0],
+				path:$('.ace_catalogue_title').attr('title'),
+				group:1,
+				is_empty:true
+			}
+			$(this).parent().hide();
+			$('.ace_toolbar_menu').hide();
+			$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
+			e.preventDefault();
+			e.stopPropagation();
 		});
 		// 移动编辑器文件目录
 		$('.ace_catalogue_drag_icon .drag_icon_conter').on('mousedown', function (e) {
@@ -720,31 +725,36 @@ var aceEditor = {
 			$('.ace_gutter-layer').css('cursor','col-resize');
 			$('#ace_conter').unbind().on('mousemove',function(ev){
 				var _width = (ev.clientX+1) -_left;
-				if(_width >= 250 && _width <= 400){
-					$('.ace_catalogue').css('width',_width);
-					$('.ace_editor_main').css('marginLeft',_width);
+				if(_width >= 265 && _width <= 450){
+					$('.ace_catalogue').css({'width':_width,'transition':'none'});
+					$('.ace_editor_main').css({'marginLeft':_width,'transition':'none'});
 					$('.ace_catalogue_drag_icon ').css('left',_width);
 					$('.file_fold .newly_file_input').width($('.file_fold .newly_file_input').parent().parent().parent().width() - ($('.file_fold .newly_file_input').parent().parent().attr('data-group') * 15 -5)-20-30-53);
 				}
 			}).on('mouseup', function (ev){
 				$('.ace_gutter-layer').css('cursor','inherit');
+			    $('.ace_catalogue').css('transition','all 500ms');
+                $('.ace_editor_main').css('transition','all 500ms');
 				$(this).unbind('mouseup mousemove');
 			});
 		});
 		// 收藏目录显示和隐藏
-		$('.ace_catalogue_drag_icon .fold_icon_conter').on('click',function (e) {
-			if($('.ace_overall').hasClass('active')){
-				$('.ace_overall').removeClass('active');
-				$('.ace_catalogue').css('left','0');
-				$(this).removeClass('active').attr('title','隐藏文件目录');
-				$('.ace_editor_main').css('marginLeft',$('.ace_catalogue').width());
-			}else{
-				$('.ace_overall').addClass('active');
-				$('.ace_catalogue').css('left','-'+$('.ace_catalogue').width()+'px');
-				$(this).addClass('active').attr('title','显示文件目录');
-				$('.ace_editor_main').css('marginLeft',0);
-			}
-		});
+        $('.ace_catalogue_drag_icon .fold_icon_conter').on('click',function (e) {
+            if($('.ace_overall').hasClass('active')){
+                $('.ace_overall').removeClass('active');
+                $('.ace_catalogue').css('left','0');
+                $(this).removeClass('active').attr('title','隐藏文件目录');
+                $('.ace_editor_main').css('marginLeft',$('.ace_catalogue').width());
+            }else{
+                $('.ace_overall').addClass('active');
+                $('.ace_catalogue').css('left','-'+$('.ace_catalogue').width()+'px');
+                $(this).addClass('active').attr('title','显示文件目录');
+                $('.ace_editor_main').css('marginLeft',0);
+            }
+            setTimeout(function(){
+            	 if(_this.ace_active != '') _this.editor[_this.ace_active].ace.resize();
+            },600);
+        });
 		// 恢复历史文件
 		$('.ace_conter_tips').on('click','a',function(){
 			_this.event_ecovery_file(this);
@@ -752,6 +762,7 @@ var aceEditor = {
 		// 右键菜单
 		$('.ace_catalogue_list').on('mousedown','.has-children .file_fold',function(e){
 			var x = e.clientX,y = e.clientY,_left = $('.aceEditors')[0].offsetLeft,_top = $('.aceEditors')[0].offsetTop,_that = $('.ace_catalogue_list .has-children .file_fold'),_active =$('.ace_catalogue_list .has-children .file_fold.edit_file_group');
+			$('.ace_toolbar_menu').hide();
 			if(e.which === 3){
 				if($(this).hasClass('edit_file_group')) return false;
 				$('.ace_catalogue_menu').css({'display':'block','left':x-_left,'top':y-_top});
@@ -761,62 +772,79 @@ var aceEditor = {
 				_that.removeClass('edit_file_group').removeAttr('data-edit');
 				_that.find('.file_input').siblings().show();
 				_that.find('.file_input').remove();
+				$('.ace_catalogue_menu li').show();
 				if($(this).attr('data-file') == 'Dir'){
-					$('.ace_catalogue_menu li').show();
+					$('.ace_catalogue_menu li:nth-child(6)').hide();
 				}else{
-					$('.ace_catalogue_menu li:eq(0)').hide();
-					$('.ace_catalogue_menu li:eq(1)').hide();
+					$('.ace_catalogue_menu li:nth-child(-n+4)').hide();
 				}
 				$(document).click(function(){
 					$('.ace_catalogue_menu').hide();
 					$(this).unbind('click');
 					return false;
 				});
+				_this.refresh_config = {
+					el:$(this).parent().parent()[0],
+					path:_this.get_file_dir($(this).parent().attr('data-menu-path'),1),
+					group:parseInt($(this).attr('data-group')),
+					is_empty:true
+				}
 			}
 		});
 		// 文件目录右键功能
 		$('.ace_catalogue_menu li').click(function(e){
 			_this.newly_file_type(this);
 		});
+		// 新建、重命名鼠标事件
 		$('.ace_catalogue_list').on('click','.has-children .edit_file_group .glyphicon-ok',function(){
-			var _file_or_dir = $(this).parent().find('input').val(),_path = $('.has-children .file_fold.bg').parent().attr('data-paths'),_type = parseInt($(this).parent().parent().attr('data-edit'));
+			var _file_or_dir = $(this).parent().find('input').val(),
+			_path = $(this).parent().parent().attr('data-group') != '1'?$('.has-children .file_fold.bg').parent().attr('data-menu-path'):_this.menu_path,
+			_type = parseInt($(this).parent().parent().attr('data-edit'));
 			if(_file_or_dir === ''){
 				$(this).prev().css('border','1px solid #f34a4a');
 				layer.tips(_type===0?'文件目录不能为空':(_type===1?'文件名称不能空':'新名称不能为空'),$(this).prev(),{tips: [1,'#f34a4a'],time:0});
 				return false;
-			}else if($(this).prev().attr('data-type') === 0){
+			}else if($(this).prev().attr('data-type') == 0){
 				return false;
 			}
 			switch(_type){
 				case 0: //文件夹
-					_this.event_create_dir({path:_path+'/'+_file_or_dir},this);
+					_this.event_create_dir({ path:_path+'/'+_file_or_dir });
 				break;
 				case 1: //文件
-					_this.event_create_file({path:_path+'/'+_file_or_dir},this);
+					_this.event_create_file({ path:_path+'/'+_file_or_dir });
 				break;
 				case 2: //重命名
-					_this.event_rename_currency({sfile:_path,dfile:_this.get_file_dir(_path,1)+'/'+_file_or_dir},this);
+					_this.event_rename_currency({ sfile:_path,dfile:_this.get_file_dir(_path,1)+'/'+_file_or_dir});
 				break;
 			}
 		});
+		// 新建、重命名键盘事件
 		$('.ace_catalogue_list').on('keyup','.has-children .edit_file_group input',function(e){
-			var _type = $(this).parent().parent().attr('data-edit'),_arry = $('.has-children .file_fold.bg+ul>li [data-file="'+ (_type == 0?'Dir':'Files') +'"]');
-			for(var i=0;i<_arry.length;i++){
-				if($(_arry[i]).find('.file_title span').html() === $(this).val()){
-					$(this).css('border','1px solid #f34a4a');
-					$(this).attr('data-type',0);
-					layer.tips(_type == 0?'文件目录存在同名目录':'文件名称存在同名文件',$(this)[0],{tips: [1,'#f34a4a'],time:0});
-					return false
+			var _type = $(this).parent().parent().attr('data-edit'),
+			_arry = $('.has-children .file_fold.bg+ul>li');
+			if(_arry.length == 0 && $(this).parent().parent().attr('data-group') == 1) _arry = $('.cd-accordion-menu>li')
+			if(_type != 2){
+				for(var i=0;i<_arry.length;i++){
+					if($(_arry[i]).find('.file_title span').html() === $(this).val()){
+						$(this).css('border','1px solid #f34a4a');
+						$(this).attr('data-type',0);
+						layer.tips(_type == 0?'文件目录存在同名目录':'文件名称存在同名文件',$(this)[0],{tips: [1,'#f34a4a'],time:0});
+						return false
+					}
 				}
 			}
 			if(_type == 1 && $(this).val().indexOf('.')) $(this).prev().removeAttr('class').addClass(_this.get_file_suffix($(this).val())+'-icon');
-			$(this).removeAttr('data-type');
+			$(this).attr('data-type',1);
 			$(this).css('border','1px solid #528bff');
 			layer.closeAll('tips');
-			if(e.keyCode === 13) $(this).next().click()
+			if(e.keyCode === 13) $(this).next().click();
+			$('.ace_toolbar_menu').hide();
+			$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
 			e.stopPropagation();
 			e.preventDefault();
 		});
+		// 新建、重命名鼠标点击取消事件
 		$('.ace_catalogue_list').on('click','.has-children .edit_file_group .glyphicon-remove',function(){
 			layer.closeAll('tips');
 			if($(this).parent().parent().attr('data-edit') === '2'){
@@ -831,47 +859,76 @@ var aceEditor = {
 		$('.ace_catalogue_list')[0].oncontextmenu=function(){
 			return false;
 		}
+		$('.ace_conter_menu').dragsort({
+			dragSelector:'.icon_file',
+			itemSelector:'li'
+		});
 		this.setEditorView();
 		this.reader_file_dir_menu();
 	},
 	// 新建文件类型
 	newly_file_type:function(that){
-		var _type = parseInt($(that).attr('data-type')),_file_fold = $('.ace_catalogue .ace_catalogue_list .has-children .file_fold.bg'),_group = parseInt(_file_fold.attr('data-group')),_path = _file_fold.parent().attr('data-paths'),_this = this;
+		var _type = parseInt($(that).attr('data-type')),
+			_active = $('.ace_catalogue .ace_catalogue_list .has-children .file_fold.bg'),
+			_group = parseInt(_active.attr('data-group')),
+			_path = _active.parent().attr('data-menu-path'), //当前文件夹新建
+			_this = this;
 		switch(_type){
-			case 0: //新建文件
-			case 1:
-				if(_file_fold.next().find('li').length === 0){
-					this.reader_file_dir_menu({el:_file_fold.next(),path:_path,group:_group+1},function(res){
-						_this.newly_file_type_dom(_file_fold,_group,_type);
+			case 0: //刷新目录
+				_active.next().empty();
+				_this.reader_file_dir_menu({
+					el:_active.next(),
+					path:_path,
+					group:parseInt(_active.attr('data-group')) + 1,
+					is_empty:true
+				},function(){
+					layer.msg('刷新成功',{icon:1});
+				});
+			break;
+			case 1: //打开文件
+				_this.menu_path = _path;
+				_this.reader_file_dir_menu({
+					el:'.cd-accordion-menu',
+					path:_this.menu_path,
+					group:1,
+					is_empty:true
+				});
+			break;
+			case 2: //新建文件
+			case 3:
+				if(this.get_file_dir(_path,1) != this.menu_path){ //判断当前文件上级是否为显示根目录
+					this.reader_file_dir_menu({el:_active,path:_path,group:_group+1},function(res){
+						_this.newly_file_type_dom(_active,_group,_type);
 					});
 				}else{
-					_this.newly_file_type_dom(_file_fold,_group,_type);
+					_this.newly_file_type_dom(_active,_group,_type);
 				}
 			break;
-			case 2: //文件重命名
-				var _types = _file_fold.attr('data-file');
-				if(_file_fold.hasClass('active')){
+			case 4: //文件重命名
+				var _types = _active.attr('data-file');
+				if(_active.hasClass('active')){
 					layer.msg('该文件已打开，无法修改名称',{icon:0});
 					return false;
 				}
-				_file_fold.attr('data-edit',2);
-				_file_fold.addClass('edit_file_group');
-				_file_fold.find('.file_title').hide();
-				_file_fold.find('.glyphicon').hide();
-				_file_fold.prepend('<span class="file_input"><i class="'+ (_types==='Dir'?'folder':(_this.get_file_suffix(_file_fold.find('.file_title span').html()))) +'-icon"></i><input type="text" class="newly_file_input" value="'+ (_file_fold.find('.file_title span').html()) +'"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>')
+				_active.attr('data-edit',2);
+				_active.addClass('edit_file_group');
+				_active.find('.file_title').hide();
+				_active.find('.glyphicon').hide();
+				_active.prepend('<span class="file_input"><i class="'+ (_types==='Dir'?'folder':(_this.get_file_suffix(_active.find('.file_title span').html()))) +'-icon"></i><input type="text" class="newly_file_input" value="'+ (_active.find('.file_title span').html()) +'"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>')
 				$('.file_fold .newly_file_input').width($('.file_fold .newly_file_input').parent().parent().parent().width() - ($('.file_fold .newly_file_input').parent().parent().attr('data-group') * 15 -5)-20-30-53);
 				$('.file_fold .newly_file_input').focus();
 			break;
-			case 3:
-				var is_files =  _file_fold.attr('data-file') == 'Files'
-				layer.confirm(lan.get(is_files?'recycle_bin_confirm':'recycle_bin_confirm_dir', [_file_fold.find('.file_title span').html()]), { title: is_files?lan.files.del_file:lan.files.del_dir, closeBtn: 2, icon: 3 }, function (index) {
+			case 5:
+				GetFileBytes(_path);
+			break;
+			case 6:
+				var is_files =  _active.attr('data-file') === 'Files'
+				layer.confirm(lan.get(is_files?'recycle_bin_confirm':'recycle_bin_confirm_dir', [_active.find('.file_title span').html()]), { title: is_files?lan.files.del_file:lan.files.del_dir, closeBtn: 2, icon: 3 }, function (index) {
 					_this[is_files?'del_file_req':'del_dir_req']({path:_path},function(res){
 						layer.msg(res.msg,{icon:res.status?1:2});
 						if(res.status){
-							if(_file_fold.attr('data-group') != 1){
-								_file_fold.parent().parent().prev().addClass('bg');
-							}
-							_this.refresh_meun_list('.has-children .file_fold.bg',function(){
+							if(_active.attr('data-group') != 1) _active.parent().parent().prev().addClass('bg')
+							_this.reader_file_dir_menu(_this.refresh_config,function(){
 								layer.msg(res.msg,{icon:1});
 							});
 						}
@@ -880,26 +937,32 @@ var aceEditor = {
 			break;
 		}
 	},
-	
-	newly_file_type_dom:function(_file_fold,_group,_type,_val){
-		var _html = '',_this = this;
-		_file_fold.next().show();
-		_file_fold.find('.glyphicon').removeClass('glyphicon-menu-right').addClass('glyphicon-menu-down');
+	// 新建文件和文件夹
+	newly_file_type_dom:function(_active,_group,_type,_val){
+		var _html = '',_this = this,_nextLength = _active.next(':not(.ace_catalogue_menu)').length;
+		if(_nextLength > 0){
+			_active.next().show();
+			_active.find('.glyphicon').removeClass('glyphicon-menu-right').addClass('glyphicon-menu-down');
+		}
 		_html += '<li class="has-children children_'+ (_group+1) +'"><div class="file_fold edit_file_group group_'+ (_group+1) +'" data-group="'+ (_group+1) +'" data-edit="'+ _type +'"><span class="file_input">';
 		_html += '<i class="'+ (_type == 0?'folder':(_type == 1?'text':(_this.get_file_suffix(_val)))) +'-icon"></i>'
 		_html += '<input type="text" class="newly_file_input" value="'+ (_val != undefined?_val:'') +'">'
 		_html += '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></span></div></li>'
-		_file_fold.next().prepend(_html);
+		if(_nextLength > 0){
+			_active.next().prepend(_html);
+		}else{
+			_active.prepend(_html);
+		}
 		$('.file_fold .newly_file_input').width($('.file_fold .newly_file_input').parent().parent().parent().width() - ($('.file_fold .newly_file_input').parent().parent().attr('data-group') * 15 -5)-20-30-53);
 		$('.newly_file_input').focus();
 	},
 	// 通用重命名事件
-	event_rename_currency:function(obj,that){
+	event_rename_currency:function(obj){
 		var _active = $('.ace_catalogue_list .has-children .file_fold.edit_file_group'),_this = this;
 		this.rename_currency_req({sfile:obj.sfile,dfile:obj.dfile},function(res){
 			layer.msg(res.msg,{icon:res.status?1:2});
 			if(res.status){
-				_this.refresh_meun_list($('.has-children .file_fold.bg').parent().parent().prev()[0],function(){
+				_this.reader_file_dir_menu(_this.refresh_config,function(){
 					layer.msg(res.msg,{icon:1});
 				});
 			}else{
@@ -910,24 +973,24 @@ var aceEditor = {
 		})
 	},
 	// 创建文件目录事件
-	event_create_dir:function(obj,that){
+	event_create_dir:function(obj){
 		var _this = this;
 		this.create_dir_req({path:obj.path},function(res){
 			layer.msg(res.msg,{icon:res.status?1:2});
 			if(res.status){
-				_this.refresh_meun_list('.has-children .file_fold.bg',function(){
+				_this.reader_file_dir_menu(_this.refresh_config,function(){
 					layer.msg(res.msg,{icon:1});
 				});
 			}
 		})
 	},
 	// 创建文件事件
-	event_create_file:function(obj,that){
+	event_create_file:function(obj){
 		var _this = this;
 		this.create_file_req({path:obj.path},function(res){
 			layer.msg(res.msg,{icon:res.status?1:2});
 			if(res.status){
-				_this.refresh_meun_list('.has-children .file_fold.bg',function(res){
+				_this.reader_file_dir_menu(_this.refresh_config,function(){
 					layer.msg(res.msg,{icon:1});
 					_this.openEditorView(obj.path);
 				});
@@ -979,7 +1042,7 @@ var aceEditor = {
 	// 删除目录请求
 	del_dir_req:function(obj,callback){
 		var loadT = layer.msg('正在删除文件目录，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']});
-		$.post("/files?action=DeleteFile",{
+		$.post("/files?action=DeleteDir",{
 			path:obj.path
 		},function(res){
 			layer.close(loadT);
@@ -1004,24 +1067,6 @@ var aceEditor = {
 			filename:obj.filename
 		},function(res){
 			layer.close(loadT);
-			if(callback) callback(res);
-		});
-	},
-	// 刷新菜单列表
-	refresh_meun_list:function(el,callback){
-		var _active = $(el),_paths = _active.parent().attr('data-paths'),_group = parseInt(_active.attr('data-group'))+1,_el = _active.next();
-		_active.next().empty();
-		if(_active.length === 0){
-			_el = $('.cd-accordion-menu');
-			_paths = $('.ace_catalogue_title').attr('title');
-			_group = 1;
-			$('.cd-accordion-menu').empty();
-		}
-		this.reader_file_dir_menu({
-			el:_el,
-			path: _paths,
-			group: _group,
-		},function(res){
 			if(callback) callback(res);
 		});
 	},
@@ -1053,7 +1098,7 @@ var aceEditor = {
 								layer.close(index);
 								layer.msg(res.status?'恢复历史文件成功':'恢复历史文件失败',{icon:res.status?1:2});
 								if(res.status){
-									if(_this.editor['ace_editor_'+_this.ace_active].historys_file){
+									if(_this.editor[_this.ace_active].historys_file){
 										_this.removeEditor(_this.ace_active);
 									}
 									if($('.ace_conter_menu>[title="'+ _path +'"]').length>0){
@@ -1073,6 +1118,7 @@ var aceEditor = {
 	},
 	// 判断是否为历史文件
 	is_file_history:function(_item){
+		if(_item == undefined) return false;
 		if(_item.historys_file){
 			$('.ace_conter_tips').show();
 			$('#ace_editor_'+_item.id).css('bottom','50px');
@@ -1111,7 +1157,9 @@ var aceEditor = {
 		if(obj['showRow'] === undefined) obj['showRow'] = 200;
 		if(obj['sort'] === undefined) obj['sort'] = 'name';
 		if(obj['reverse'] === undefined) obj['reverse'] = 'False';
-		$.post("/files?action=GetDir&tojs=GetFiles",{p:obj.p,showRow:obj.showRow,sort:obj.sort,reverse:obj.reverse,path:obj.path}, function(res) {
+		if(obj['search'] === undefined) obj['search'] = '';
+		if(obj['all'] === undefined) obj['all'] = 'False';
+		$.post("/files?action=GetDir&tojs=GetFiles",{p:obj.p,showRow:obj.showRow,sort:obj.sort,reverse:obj.reverse,path:obj.path,search:obj.search}, function(res) {
 			layer.close(loadT);
 			if(callback) callback(res);
 		});
@@ -1132,13 +1180,16 @@ var aceEditor = {
 		if(obj['group'] === undefined) obj['group'] = 1;
 		if(obj['p'] === undefined) obj['p'] = 1;
 		if(obj['path'] === undefined) obj['path'] = _path;
+		if(obj['search'] === undefined) obj['search'] = '';
 		if(obj['is_empty'] === undefined) obj['is_empty'] = false;
-		this.get_file_dir_list({p:obj.p,path:obj.path},function (res){
+		if(obj['all'] === undefined) obj['all'] = 'False'
+		this.get_file_dir_list({p:obj.p,path:obj.path,search:obj.search,all:obj.all},function (res){
 			var _dir = res.DIR,_files = res.FILES,_dir_dom = '',_files_dom = '',_html ='';
+			_this.menu_path = res.PATH;
 			for(var i=0;i<_dir.length;i++){
 				var _data = _dir[i].split(';');
 				if(_data[0] === '__pycache__') continue;
-				_dir_dom += '<li class="has-children children_'+ obj.group +'" title="'+ (obj.path+'/'+_data[0]) +'" data-paths="'+ (obj.path+'/'+_data[0])+'" data-size="'+ (_data[1]) +'">\
+				_dir_dom += '<li class="has-children children_'+ obj.group +'" title="'+ (obj.path+'/'+_data[0]) +'" data-menu-path="'+ (obj.path+'/'+_data[0])+'" data-size="'+ (_data[1]) +'">\
 					<div class="file_fold group_'+ obj.group +'" data-group="'+ obj.group +'" data-file="Dir">\
 						<span class="glyphicon glyphicon-menu-right"></span>\
 						<span class="file_title"><i class="folder-icon"></i><span>'+ _data[0] +'</span></span>\
@@ -1150,16 +1201,18 @@ var aceEditor = {
 			for(var j=0;j<_files.length;j++){
 				var _data = _files[j].split(';');
 				if(_data[0].indexOf('.pyc') !== -1) continue;
-				_files_dom += '<li class="has-children" title="'+ (obj.path+'/'+_data[0]) +'" data-paths="'+ (obj.path+'/'+_data[0])+'" data-size="'+ (_data[1]) +'" data-suffix="'+ _this.get_file_suffix(_data[0]) +'">\
+				_files_dom += '<li class="has-children" title="'+ (obj.path+'/'+_data[0]) +'" data-menu-path="'+ (obj.path+'/'+_data[0])+'" data-size="'+ (_data[1]) +'" data-suffix="'+ _this.get_file_suffix(_data[0]) +'">\
 					<div class="file_fold  group_'+ obj.group +'" data-group="'+ obj.group +'" data-file="Files">\
 						<span class="file_title"><i class="'+ _this.get_file_suffix(_data[0]) +'-icon"></i><span>'+ _data[0] +'</span></span>\
 					</div>\
 				</li>';
 			}
 			if(res.PATH !== '/' && obj['group'] === 1){
-				_html = '<li class="has-children upper_level" data-paths="'+ _this.get_file_dir(res.PATH,1) +'"><span>返回上级</span></li>'
-				$('.upper_level').attr('data-paths',_this.get_file_dir(res.PATH,1));
+				$('.upper_level').attr('data-menu-path',_this.get_file_dir(res.PATH,1));
 				$('.ace_catalogue_title').html('目录：'+ res.PATH).attr('title',res.PATH);
+				$('.upper_level').html('<i class="glyphicon glyphicon-share-alt" aria-hidden="true"></i>上一级')
+			}else if(res.PATH === '/'){
+				$('.upper_level').html('<i class="glyphicon glyphicon-hdd" aria-hidden="true"></i>根目录')
 			}
 			if(obj.is_empty) $(obj.el).empty();
 			$(obj.el).append(_html+_dir_dom+_files_dom);
@@ -1177,38 +1230,46 @@ var aceEditor = {
 	get_file_suffix:function(fileName){
 		var filenames = fileName.match(/\.([0-9A-z]*)$/);
 		filenames = (filenames == null?'text':filenames[1]);
-		for (var name in this.supportedModes) {
-			var data = this.supportedModes[name],suffixs = data[0].split('|'),filename = name.toLowerCase();
+		for (var name in this.aceConfig.supportedModes) {
+			var data = this.aceConfig.supportedModes[name],suffixs = data[0].split('|'),filename = name.toLowerCase();
 			for (var i = 0; i < suffixs.length; i++) {
 				if (filenames == suffixs[i]) return filename;
 			}
 		}
 		return 'text';
 	},
-	// 设置编辑器视图
-	setEditorView:function () {
-		var page_height = $('.aceEditors').height();
-		var ace_header = $('.ace_header').height();
-		var ace_conter_menu = $('.ace_conter_menu').height();
-		var ace_conter_toolbar = $('.ace_conter_toolbar').height();
-		var _height = page_height - ace_header - ace_conter_menu - ace_conter_toolbar - 42;
-		$('.ace_conter_editor').height(_height);
-	},
+    // 设置编辑器视图
+    setEditorView:function () {
+    	var aceEditorHeight = $('.aceEditors').height(),_this = this;
+    	var autoAceHeight = setInterval(function(){
+    		var page_height = $('.aceEditors').height();
+	        var ace_conter_menu = $('.ace_conter_menu').height();
+	        var ace_conter_toolbar = $('.ace_conter_toolbar').height();
+	        var _height = page_height - ($('.pull-down .glyphicon').hasClass('glyphicon-menu-down')?35:0) - ace_conter_menu - ace_conter_toolbar - 42;
+	        $('.ace_conter_editor').height(_height);
+	        if(aceEditorHeight == $('.aceEditors').height()){
+	        	if(_this.ace_active) _this.editor[_this.ace_active].ace.resize();
+	        	clearInterval(autoAceHeight);
+	        }else {
+	        	aceEditorHeight = $('.aceEditors').height();
+	        }
+    	},200);
+    },
 	// 获取文件编码列表
 	getEncodingList: function (type) {
 		var _option = '';
-		for (var i = 0; i < this.encodingList.length; i++) {
-			var item = this.encodingList[i] == type.toUpperCase();
-			_option += '<li data- data-value="' + this.encodingList[i] + '" ' + (item ? 'class="active"' : '') + '>' + this.encodingList[i] + (item ?'<span class="icon"><i class="glyphicon glyphicon-ok" aria-hidden="true"></i></span>' : '') + '</li>';
+		for (var i = 0; i < this.aceConfig.encodingList.length; i++) {
+			var item = this.aceConfig.encodingList[i] == type.toUpperCase();
+			_option += '<li data- data-value="' + this.aceConfig.encodingList[i] + '" ' + (item ? 'class="active"' : '') + '>' + this.aceConfig.encodingList[i] + (item ?'<span class="icon"><i class="glyphicon glyphicon-ok" aria-hidden="true"></i></span>' : '') + '</li>';
 		}
 		$('.menu-encoding ul').html(_option);
 	},
 	// 获取文件关联列表
 	getRelevanceList: function (fileName) {
 		var _option = '', _top = 0, fileType = this.getFileType(fileName), _set_tops = 0;
-		for (var name in this.supportedModes) {
-			var data = this.supportedModes[name],item = (name == fileType.name);
-			_option += '<li data-height="' + _top + '" data-rule="' + this.supportedModes[name] + '" data-value="' + name + '" ' + (item ? 'class="active"' : '') + '>' + (this.nameOverrides[name] || name) + (item ?'<span class="icon"><i class="glyphicon glyphicon-ok" aria-hidden="true"></i></span>' : '') + '</li>'
+		for (var name in this.aceConfig.supportedModes) {
+			var data = this.aceConfig.supportedModes[name],item = (name == fileType.name);
+			_option += '<li data-height="' + _top + '" data-rule="' + this.aceConfig.supportedModes[name] + '" data-value="' + name + '" ' + (item ? 'class="active"' : '') + '>' + (this.aceConfig.nameOverrides[name] || name) + (item ?'<span class="icon"><i class="glyphicon glyphicon-ok" aria-hidden="true"></i></span>' : '') + '</li>'
 			if (item) _set_tops = _top
 			_top += 35;
 		}
@@ -1249,21 +1310,26 @@ var aceEditor = {
 	},
 	// 更新状态栏
 	currentStatusBar: function(id){
-		var _editor = this.editor['ace_editor_'+id];
-		$('.ace_conter_toolbar [data-type="history"]').html('历史版本：<i>'+ (_editor.historys.length === 0?'无':_editor.historys.length+'份') +'</i>');
-		$('.ace_conter_toolbar [data-type="path"]').html('文件位置：<i title="'+ _editor.path +'">'+ _editor.path +'</i>');
-		$('.ace_conter_toolbar [data-type="tab"]').html(_editor.softTabs?'空格：<i>'+ _editor.tabSize +'</i>':'制表符长度：<i>'+ _editor.tabSize +'</i>');
-		$('.ace_conter_toolbar [data-type="encoding"]').html('编码：<i>'+ _editor.encoding.toUpperCase() +'</i>');
-		$('.ace_conter_toolbar [data-type="lang"]').html('语言：<i>'+ _editor.type +'</i>');
+		var _item = this.editor[id];
+		if(_item == undefined){
+			this.removerStatusBar();
+			return false;
+		}
+		$('.ace_conter_toolbar [data-type="cursor"]').html('行<i class="cursor-row">1</i>,列<i class="cursor-line">0</i>');
+		$('.ace_conter_toolbar [data-type="history"]').html('历史版本：<i>'+ (_item.historys.length === 0?'无':_item.historys.length+'份') +'</i>');
+		$('.ace_conter_toolbar [data-type="path"]').html('文件位置：<i title="'+ _item.path +'">'+ _item.path +'</i>');
+		$('.ace_conter_toolbar [data-type="tab"]').html(_item.softTabs?'空格：<i>'+ _item.tabSize +'</i>':'制表符长度：<i>'+ _item.tabSize +'</i>');
+		$('.ace_conter_toolbar [data-type="encoding"]').html('编码：<i>'+ _item.encoding.toUpperCase() +'</i>');
+		$('.ace_conter_toolbar [data-type="lang"]').html('语言：<i>'+ _item.type +'</i>');
 		$('.ace_conter_toolbar span').attr('data-id',id);
 		$('.file_fold').removeClass('bg');
-		$('[data-paths="'+ (aceEditor.editor['ace_editor_'+ id].path) +'"]').find('.file_fold').addClass('bg');
-		if(_editor.historys_file){
+		$('[data-menu-path="'+ (_item.path) +'"]').find('.file_fold').addClass('bg');
+		if(_item.historys_file){
 			$('.ace_conter_toolbar [data-type="history"]').hide();
 		}else{
 			$('.ace_conter_toolbar [data-type="history"]').show();
 		}
-		_editor.ace.resize();
+		_item.ace.resize();
 	},
 	// 清除状态栏
 	removerStatusBar:function(){
@@ -1278,28 +1344,28 @@ var aceEditor = {
 	creationEditor: function (obj, callabck) {
 		var _this = this;
 		$('#ace_editor_' + obj.id).text(obj.data || '');
-		$('.ace_conter_editor .ace_editors').css('fontSize', _this.fontSize);
+		$('.ace_conter_editor .ace_editors').css('fontSize', _this.fontSize+'px');
 		if(this.editor == null) this.editor = {};
-		this.editor['ace_editor_' + obj.id] = {
+		this.editor[obj.id] = {
 			ace: ace.edit("ace_editor_" + obj.id, {
-				theme: "ace/theme/"+_this.editorTheme, //主题
+				theme: "ace/theme/"+_this.aceConfig.aceEditor.editorTheme, //主题
 				mode: "ace/mode/" + (obj.fileName != undefined ? obj.mode : 'text'), // 语言类型
-				wrap: true,
-				showInvisibles:false,
+				wrap: _this.aceConfig.aceEditor.wrap,
+				showInvisibles:_this.aceConfig.aceEditor.showInvisibles,
 				showPrintMargin: false,
 				enableBasicAutocompletion: true,
-				enableSnippets: true,
-				enableLiveAutocompletion: true,
-				useSoftTabs:false,
-				tabSize:4,
+				enableSnippets: _this.aceConfig.aceEditor.enableSnippets,
+				enableLiveAutocompletion: _this.aceConfig.aceEditor.enableLiveAutocompletion,
+				useSoftTabs:_this.aceConfig.aceEditor.useSoftTabs,
+				tabSize:_this.aceConfig.aceEditor.tabSize,
 				keyboardHandler:'sublime',
 				readOnly:obj.readOnly === undefined?false:obj.readOnly
 			}), //ACE编辑器对象
 			id: obj.id,
-			wrap: true, //是否换行
+			wrap: _this.aceConfig.aceEditor.wrap, //是否换行
 			path:obj.path,
-			tabSize:4,
-			softTabs:false,
+			tabSize:_this.aceConfig.aceEditor.tabSize,
+			softTabs:_this.aceConfig.aceEditor.useSoftTabs,
 			fileName:obj.fileName,
 			enableSnippets: true, //是否代码提示
 			encoding: (obj.encoding != undefined ? obj.encoding : 'utf-8'), //编码类型
@@ -1310,7 +1376,7 @@ var aceEditor = {
 			historys_file:obj.historys_file === undefined?false:obj.historys_file,
 			historys_active:obj.historys_active === ''?false:obj.historys_active
 		};
-		var ACE = this.editor['ace_editor_' + obj.id];
+		var ACE = this.editor[obj.id];
 		ACE.ace.moveCursorTo(0, 0); //设置鼠标焦点
 		ACE.ace.resize(); //设置自适应
 		ACE.ace.commands.addCommand({
@@ -1324,7 +1390,17 @@ var aceEditor = {
 			},
 			readOnly: false // 如果不需要使用只读模式，这里设置false
 		});
-		
+		ACE.ace.commands.addCommand({
+			name: '跳转行',
+			bindKey: {
+				win: 'Ctrl-I',
+				mac: 'Command-I'
+			},
+			exec: function (editor) {
+				$('.ace_header .jumpLine').click();
+			},
+			readOnly: false // 如果不需要使用只读模式，这里设置false
+		})
 		// 获取光标位置
 		ACE.ace.getSession().selection.on('changeCursor', function(e) {
 			var _cursor = ACE.ace.selection.getCursor();
@@ -1341,22 +1417,30 @@ var aceEditor = {
 	},
 	// 保存文件方法
 	saveFileMethod:function(ACE){
+		if($('.item_tab_' + ACE.id + ' .icon-tool').attr('data-file-state') == 0){
+			layer.msg('当前文件未修改，无需保存!');
+			return false;
+		}
+		$('.item_tab_' + ACE.id + ' .icon-tool').attr('title','保存文件中，请稍后..').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-repeat');
+		layer.msg('保存文件中，请稍后<img src="/static/img/ns-loading.gif" style="width:15px;margin-left:5px">',{icon:0});
 		this.saveFileBody({
 			path: ACE.path,
 			data: ACE.ace.getValue(),
 			encoding: ACE.encoding
 		}, function (res) {
-			layer.msg(res.msg, {icon: res.status?1:2});
 			ACE.fileType = 0;
-			$('.item_tab_' + ACE.id + ' .icon-tool').attr('data-file-state','0').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove');
+			$('.item_tab_' + ACE.id + ' .icon-tool').attr('data-file-state','0').removeClass('glyphicon-repeat').addClass('glyphicon-remove');
+		},function(res){
+			ACE.fileType = 1;
+			$('.item_tab_' + ACE.id + ' .icon-tool').attr('data-file-state','1').removeClass('glyphicon-remove').addClass('glyphicon-repeat');
 		});
 	},
 	// 获取文件模型
 	getFileType: function (fileName) {
 		var filenames = fileName.match(/\.([0-9A-z]*)$/);
 		filenames = (filenames == null?'text':filenames[1]);
-		for (var name in this.supportedModes) {
-			var data = this.supportedModes[name],suffixs = data[0].split('|'),filename = name.toLowerCase();
+		for (var name in this.aceConfig.supportedModes) {
+			var data = this.aceConfig.supportedModes[name],suffixs = data[0].split('|'),filename = name.toLowerCase();
 			for (var i = 0; i < suffixs.length; i++) {
 				if (filenames == suffixs[i]){
 					return { name: name,mode: filename };
@@ -1366,41 +1450,50 @@ var aceEditor = {
 		return {name:'Text',mode:'text'};
 	},
 	// 新建编辑器视图-方法
-	addEditor: function () {
+	addEditorView: function (type,conifg) {
+		if(type == undefined) type = 0
 		var _index = this.editorLength,_id = bt.get_random(8);
 		$('.ace_conter_menu .item').removeClass('active');
 		$('.ace_conter_editor .ace_editors').removeClass('active');
-		$('.ace_conter_menu .ace_editor_add').before('<div class="item active item_tab_'+_id+'" data-type="text" data-id="'+_id+'" data-index="'+ _index +'">\
-			<span class="icon_file"><i class="fa fa-code" aria-hidden="true"></i></span>\
-			<span>Untitled-'+_index+'</span>\
-			<i class="fa fa-circle icon-tool" aria-hidden="true" data-file-state="1" data-title="Untitled-'+ _index +'"></i>\
-		</div>');
-		$('.ace_conter_editor').append('<div id="ace_editor_'+_id+'" class="ace_editors active"></div>');
+		$('.ace_conter_menu').append('<li class="item active item_tab_'+_id+'" data-type="shortcutKeys" data-id="'+ _id +'" >\
+			<div class="ace_item_box">\
+				<span class="icon_file"><i class="text-icon"></i></span>\
+				<span>'+ (type?conifg.title:('新建文件-'+ _index)) +'</span>\
+				<i class="glyphicon icon-tool glyphicon-remove" aria-hidden="true" data-file-state="0" data-title="'+ (type?conifg.title:('新建文件-'+ _index)) +'"></i>\
+			</div>\
+		</li>');
 		$('#ace_editor_' + _id).siblings().removeClass('active');
-		this.creationEditor({ id: _id });
-		this.editorLength = this.editorLength + 1;
+		$('.ace_conter_editor').append('<div id="ace_editor_'+_id+'" class="ace_editors active">'+ (type?aceShortcutKeys.innerHTML:'') +'</div>');
+		switch(type){
+			case 0:
+				this.creationEditor({ id: _id });
+				this.editorLength = this.editorLength + 1;
+			break;
+			case 1:
+				this.removerStatusBar();
+				this.editorLength = this.editorLength + 1;
+			break;
+		}
 	},
 	// 删除编辑器视图-方法
 	removeEditor: function (id) {
-		if ($('.item_tab_' + id).next('.item').length == 0) {
-			$('.item_tab_' + id).prev('.item').addClass('active');
-			$('#ace_editor_' + id).prev('.ace_editor').addClass('active');
-			this.ace_active = $('.item_tab_' + id).prev('.item').attr('data-id');
-		} else {
-			$('.item_tab_' + id).next('.item').addClass('active');
-			$('#ace_editor_' + id).next('.ace_editor').addClass('active');
-			this.ace_active = $('.item_tab_' + id).next('.item').attr('data-id');
+		if(id == undefined) id = this.ace_active;
+		if ($('.item_tab_' + id).next().length != 0 && this.editorLength != 1) {
+			$('.item_tab_' + id).next().click();
+		} else if($('.item_tab_' + id).prev.length !=  0 && this.editorLength != 1){
+			$('.item_tab_' + id).prev().click();
 		}
 		$('.item_tab_' + id).remove();
 		$('#ace_editor_' + id).remove();
+		this.editorLength --;
+		if(this.editor[id] == undefined) return false;
 		for(var i=0;i<this.pathAarry.length;i++){
-		    if(this.pathAarry[i] == this.editor['ace_editor_' + id].path){
+		    if(this.pathAarry[i] == this.editor[id].path){
 		        this.pathAarry.splice(i,1);
 		    }
 		}
-		if(!aceEditor.editor['ace_editor_'+ id].historys_file) $('[data-paths="'+ (aceEditor.editor['ace_editor_'+ id].path) +'"]').find('.file_fold').removeClass('active bg');
-		delete this.editor['ace_editor_' + id];
-		this.editorLength --;
+		if(!this.editor[id].historys_file) $('[data-menu-path="'+ (this.editor[id].path) +'"]').find('.file_fold').removeClass('active bg');
+		delete this.editor[id];
 		if(this.editorLength === 0){
 			this.ace_active = '';
 			this.pathAarry = [];
@@ -1408,9 +1501,7 @@ var aceEditor = {
 		}else{
 			this.currentStatusBar(this.ace_active);
 		}
-		if(this.ace_active != ''){
-			this.is_file_history(this.editor['ace_editor_'+this.ace_active]);
-		}
+		if(this.ace_active != '') this.is_file_history(this.editor[this.ace_active]);
 	},
 	// 打开历史文件文件-方法
 	openHistoryEditorView: function (obj,callback) {
@@ -1420,10 +1511,12 @@ var aceEditor = {
 			_this.pathAarry.push(path);
 			$('.ace_conter_menu .item').removeClass('active');
 			$('.ace_conter_editor .ace_editors').removeClass('active');
-			$('.ace_conter_menu .ace_editor_add').before('<div class="item active item_tab_' + _id +'" title="'+ path +'" data-type="'+ _type +'" data-mode="'+ _mode +'" data-id="'+ _id +'" data-index="'+ _index +'" data-fileName="'+ _fileName +'">\
-				<span class="icon_file"><img src="/static/img/ico-history.png"></span><span title="'+ path + ' 历史版本[ '+ bt.format_data(obj.history) +' ]' +'">' + _fileName +'</span>\
-				<i class="glyphicon glyphicon-remove icon-tool" aria-hidden="true" data-file-state="0" data-title="' + _fileName + '"></i>\
-			</div>');
+			$('.ace_conter_menu').append('<li class="item active item_tab_' + _id +'" title="'+ path +'" data-type="'+ _type +'" data-mode="'+ _mode +'" data-id="'+ _id +'" data-fileName="'+ _fileName +'">'+
+				'<div class="ace_item_box">'+
+					'<span class="icon_file"><img src="/static/img/ico-history.png"></span><span title="'+ path + ' 历史版本[ '+ bt.format_data(obj.history) +' ]' +'">' + _fileName +'</span>'+
+					'<i class="glyphicon glyphicon-remove icon-tool" aria-hidden="true" data-file-state="0" data-title="' + _fileName + '"></i>'+
+				'</div>'+
+			'</li>');
 			$('.ace_conter_editor').append('<div id="ace_editor_'+_id +'" class="ace_editors active"></div>');
 			$('[data-paths="'+ path +'"]').find('.file_fold').addClass('active bg');
 			_this.ace_active = _id;
@@ -1445,12 +1538,14 @@ var aceEditor = {
 				    _this.pathAarry.push(path);
 				    $('.ace_conter_menu .item').removeClass('active');
 		    		$('.ace_conter_editor .ace_editors').removeClass('active');
-		    		$('.ace_conter_menu .ace_editor_add').before('<div class="item active item_tab_' + _id +'" title="'+ path +'" data-type="'+ _type +'" data-mode="'+ _mode +'" data-id="'+ _id +'" data-index="'+ _index +'" data-fileName="'+ _fileName +'">\
-		    			<span class="icon_file"><i class="'+ _mode +'-icon"></i></span><span title="'+ path +'">' + _fileName + '</span>\
-		    			<i class="glyphicon glyphicon-remove icon-tool" aria-hidden="true" data-file-state="0" data-title="' + _fileName + '"></i>\
-		    		</div>');
-		    		$('.ace_conter_editor').append('<div id="ace_editor_'+_id +'" class="ace_editors active"></div>');
-					$('[data-paths="'+ path +'"]').find('.file_fold').addClass('active bg');
+		    		$('.ace_conter_menu').append('<li class="item active item_tab_' + _id +'" title="'+ path +'" data-type="'+ _type +'" data-mode="'+ _mode +'" data-id="'+ _id +'" data-fileName="'+ _fileName +'">'+
+		    			'<div class="ace_item_box">'+
+			    			'<span class="icon_file"><i class="'+ _mode +'-icon"></i></span><span title="'+ path +'">' + _fileName + '</span>'+
+			    			'<i class="glyphicon glyphicon-remove icon-tool" aria-hidden="true" data-file-state="0" data-title="' + _fileName + '"></i>'+
+			    		'</div>'+
+		    		'</li>');
+		    		$('.ace_conter_editor').append('<div id="ace_editor_'+_id +'" class="ace_editors active" style="font-size:'+ aceEditor.aceConfig.aceEditor.fontSize +'px"></div>');
+					$('[data-menu-path="'+ path +'"]').find('.file_fold').addClass('active bg');
 					_this.ace_active = _id;
 				    _this.editorLength = _this.editorLength + 1;
 					_this.creationEditor({id: _id,fileName: _fileName,path: path,mode:_mode,encoding: res.encoding,data: res.data,type:_type,historys:res.historys});
@@ -1484,17 +1579,51 @@ var aceEditor = {
 		});
 	},
 	// 保存文件内容-请求
-	saveFileBody: function (obj, callback) {
-		var loadT = layer.msg('正在保存文件内容，请稍后...', {time: 0,icon: 16,shade: [0.3, '#000']});
-		$.post("/files?action=SaveFileBody","data=" + encodeURIComponent(obj.data) + "&path=" + encodeURIComponent(obj.path) + "&encoding=" + obj.encoding.toLowerCase(), function(res) {
+	saveFileBody: function (obj,success,error) {
+		$.ajax({
+			type:'post',
+			url:'/files?action=SaveFileBody',
+			timeout: 7000, //设置保存超时时间
+			data:{
+				data:obj.data,
+				encoding:obj.encoding.toLowerCase(),
+				path:obj.path
+			},
+			complete:function(res,status){
+				if(res.status != 200){
+					if(error) error(res.responseJSON)
+				}else if(res.status == 200){
+					var rdata = res.responseJSON;
+					if(rdata.status){
+						if(success) success(rdata)
+					}else{
+						if(error) error(rdata)
+					}
+					if(!obj.tips) layer.msg(rdata.msg,{icon:rdata.status?1:2});
+				}
+			}
+		});
+	},
+	saveAceConfig:function(data,callback){
+		var loadT = layer.msg('正在设置配置文件，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']}),_this = this;
+		this.saveFileBody({
+			path:'/www/server/panel/BTPanel/static/ace/ace.editor.config.json',
+			data:JSON.stringify(data),
+			encoding:'utf-8',
+			tips:true,
+		},function(rdata){
 			layer.close(loadT);
-			if (callback) callback(res)
+			setCookie('aceConfig',JSON.stringify(data));
+			if(callback) callback(rdata);
 		});
 	},
 	// 获取配置文件
-	getEditorConfig:function(callback) {
-		$.get('/static/ace/editor.config.json?'+ RandomStrPwd(5),function (res){
-			if(callback) callback(res);
+	getAceConfig:function(callback){
+		var loadT = layer.msg('正在获取配置文件，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']}),_this = this;
+		this.getFileBody({path:'/www/server/panel/BTPanel/static/ace/ace.editor.config.json'},function(rdata){
+			layer.close(loadT);
+			setCookie('aceConfig',JSON.stringify(rdata.data));
+			if(callback) callback(JSON.parse(rdata.data));
 		});
 	},
 	// 递归保存文件
@@ -1522,8 +1651,10 @@ var aceEditor = {
 }
 
 function openEditorView(type,path){
-	var paths = path.split('/'),_fileName = paths[paths.length -1], _aceTmplate = document.getElementById("aceTmplate").innerHTML;
-	_aceTmplate = _aceTmplate.replace(/\<\\\/script\>/g,'</script>');
+	var paths = path.split('/'),
+	_fileName = paths[paths.length -1], 
+		_aceTmplate = document.getElementById("aceTmplate").innerHTML;
+		_aceTmplate = _aceTmplate.replace(/\<\\\/script\>/g,'</script>');
 	if(aceEditor.editor !== null){
 		if(aceEditor.isAceView == false){
 			aceEditor.isAceView = true;
@@ -1543,63 +1674,33 @@ function openEditorView(type,path){
 		content: _aceTmplate,
 		success:function(layero,index){
 			function set_edit_file(){
-				// aceEditor.layer_view = index;
 				aceEditor.ace_active = '';
 				aceEditor.eventEditor();
-				$('#ace_conter').addClass(aceEditor.editorTheme);
 				ace.require("/ace/ext/language_tools");
 				ace.config.set("modePath", "/static/ace");
 				ace.config.set("workerPath", "/static/ace");
 				ace.config.set("themePath", "/static/ace");
 				aceEditor.openEditorView(path);
+				$('#ace_conter').addClass(aceEditor.aceConfig.aceEditor.editorTheme);
 				$('.aceEditors .layui-layer-min').click(function (e){
-					aceEditor.isAceView = false;
-					setTimeout(function(){
-						var _id = $('.ace_conter_menu .active').attr('data-id');
-						aceEditor.editor['ace_editor_'+_id].ace.resize();
-					},105);
+					
+					aceEditor.setEditorView();
 				});
 				$('.aceEditors .layui-layer-max').click(function (e){
-					setTimeout(function(){
-						aceEditor.setEditorView();
-						var _id = $('.ace_conter_menu .active').attr('data-id');
-						aceEditor.editor['ace_editor_'+_id].ace.resize();
-					},105);
+					aceEditor.setEditorView();
 				});
 			}
-			if(getCookie('aceEditor') == null){
+			var aceConfig =  getCookie('aceConfig');
+			if(aceConfig == null){
 				// 获取编辑器配置
-				aceEditor.getEditorConfig(function(res){
-					var _rdata = (typeof res == "string")?JSON.parse(res):res;
-					if(typeof res != "string") res = JSON.stringify(res);
-					setCookie('aceEditor',res);
-					aceEditor.fontSize = _rdata.fontSize;
-					aceEditor.editorTheme = _rdata.theme;
-					$('.ace_editors').css('fontSize',_rdata.fontSize);
-					$('#ace_conter').addClass(_rdata.theme);
+				aceEditor.getAceConfig(function(res){
+					aceEditor.aceConfig = res; // 赋值配置参数
 					set_edit_file();
 				});
-            } else {
-                var aceConfig = JSON.parse(getCookie('aceEditor'));
-                if (aceConfig.theme === undefined) {
-                    aceEditor.getEditorConfig(function (res) {
-                        var _rdata = (typeof res == "string") ? JSON.parse(res) : res;
-                        if (typeof res != "string") res = JSON.stringify(res);
-                        setCookie('aceEditor', res);
-                        var aceConfig = JSON.parse(getCookie('aceEditor'));
-                        aceEditor.fontSize = aceConfig.fontSize;
-                        aceEditor.editorTheme = aceConfig.theme;
-                        $('.ace_editors').css('fontSize', aceConfig.fontSize);
-                        $('#ace_conter').addClass(aceConfig.theme);
-                        set_edit_file();
-                    });
-                } else {
-                    aceEditor.fontSize = aceConfig.fontSize;
-                    aceEditor.editorTheme = aceConfig.theme;
-                    $('.ace_editors').css('fontSize', aceConfig.fontSize);
-                    $('#ace_conter').addClass(aceConfig.theme);
-                    set_edit_file();
-                }
+            }else{
+            	aceEditor.aceConfig = JSON.parse(aceConfig);
+            	typeof aceEditor.aceConfig == 'string'?aceEditor.aceConfig = JSON.parse(aceEditor.aceConfig):''
+                set_edit_file();
 			}
 		},
 		cancel:function(){
@@ -1645,7 +1746,7 @@ function openEditorView(type,path){
 											$('.ace_conter_menu>.item').each(function (el,indexx) {
 												var _id = $(this).attr('data-id');
 												$(this).find('i').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-remove').attr('data-file-state','0')
-												aceEditor.editor['ace_editor_'+_id].fileType = 0;
+												aceEditor.editor[_id].fileType = 0;
 											});
 											aceEditor.editor = null;
 											aceEditor.pathAarry = [];
@@ -3354,7 +3455,6 @@ function loadScript(arry,param,callback) {
 		    if (script.readyState) {
 			    (function(i){
 			    	script.onreadystatechange = function () {
-			      		console.log(arry[i]);
 			      		if (script.readyState == "loaded" || script.readyState == "complete") {
 				          script.onreadystatechange = null;
 				          bt['loadScript'].push(arry[i]);
@@ -3438,7 +3538,7 @@ var Term = {
     //websocket错误事件
     on_error: function (ws_event) {
 		if(ws_event.target.readyState === 3){
-			var msg = '错误: 无法创建WebSocket连接，请在设置页面关闭【开发者模式】';
+			var msg = '错误: 无法创建WebSocket连接，请在面板设置页面关闭【开发者模式】';
 			layer.msg(msg,{time:5000})
 			if(Term.state === 3) return
 			Term.term.write(msg)

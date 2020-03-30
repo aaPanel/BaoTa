@@ -59,28 +59,57 @@
 <link rel="stylesheet" href="{{g.cdn_url}}/ace/styles/icons.css">
 <script type="text/tmplate" id="aceTmplate">
     <div id="ace_conter">
-        <div class="ace_header">
-            <span class="saveFile"><i class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></i>保存</span>
-            <span class="saveFileAll"><i class="glyphicon glyphicon-duplicate" aria-hidden="true"></i>全部保存</span>
-            <span class="refreshs"><i class="glyphicon glyphicon-refresh" aria-hidden="true"></i>刷新</span>
-            <span class="searchs"><i class="glyphicon glyphicon-search" aria-hidden="true"></i>搜索</span>
-            <span class="replaces"><i class="glyphicon glyphicon-retweet" aria-hidden="true"></i>替换</span>
-            <span class="fontSize"><i class="glyphicon glyphicon-text-width" aria-hidden="true"></i>字体</span>
-            <span class="themes"><i class="glyphicon glyphicon-magnet" aria-hidden="true"></i>主题</span>
-            <span class="helps"><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i>帮助</span>
-            <div class="pull-down" title="隐藏工具条"><i class="glyphicon glyphicon-menu-down" aria-hidden="true"></i></div>
+        <div class="ace_header" style="top: 0">
+            <span class="saveFile"><i class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></i><span>保存</span></span>
+            <span class="saveFileAll"><i class="glyphicon glyphicon-duplicate" aria-hidden="true"></i><span>全部保存</span></span>
+            <span class="refreshs"><i class="glyphicon glyphicon-refresh" aria-hidden="true"></i><span>刷新</span></span>
+            <span class="searchs"><i class="glyphicon glyphicon-search" aria-hidden="true"></i><span>搜索</span></span>
+            <span class="replaces"><i class="glyphicon glyphicon-retweet" aria-hidden="true"></i><span>替换</span></span>
+            <span class="jumpLine"><i class="glyphicon glyphicon-pushpin" aria-hidden="true"></i><span>跳转行</span></span>
+            <span class="fontSize"><i class="glyphicon glyphicon-text-width" aria-hidden="true"></i><span>字体</span></span>
+            <span class="themes"><i class="glyphicon glyphicon-magnet" aria-hidden="true"></i><span>主题</span></span>
+            <span class="setUp"><i class="glyphicon glyphicon-cog" aria-hidden="true"></i><span>设置</span></span>
+            <span class="helps"><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i><span>快捷键</span></span>
+            <div class="pull-down" title="隐藏工具条" style="top: 0"><i class="glyphicon glyphicon-menu-down" aria-hidden="true"></i></div>
         </div>
-        <div class="ace_overall">
+        <div class="ace_overall" style="top: 35px;">
             <!-- 编辑器目录 -->
-            <div class="ace_catalogue">
+            <div class="ace_catalogue" style="left:0px">
                 <div class="ace_catalogue_title">目录<div class="dir-menu-right"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></div></div>
+            	<div class="ace_dir_tools">
+            		<div class="upper_level"  title="返回上级目录">
+            			<i class="glyphicon glyphicon-share-alt" aria-hidden="true"></i>
+            			<span>上一级</span>
+            		</div>
+            		<div class="search_file" title="搜索内容">
+            			<i class="glyphicon glyphicon-search" aria-hidden="true"></i>
+            			<span>搜索</span>
+            		</div>
+            		<div class="new_folder" title="新建文件/目录">
+            			<i class="glyphicon glyphicon-plus"  aria-hidden="true"></i>
+            			<span>新建</span>
+            			<ul class="folder_down_up">
+            				<li data-type="0"><i class="folder-icon"></i>新建文件夹</li>
+	                    	<li data-type="1"><i class="text-icon"></i>新建文件</li>
+            			</ul>
+            		</div>
+            		<div class="refresh_dir" title="刷新当前目录">
+            			<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+            			<span>刷新</span>
+            		</div>
+            		<span class="ace_editor_main_storey"></span>
+            	</div>
+
                 <div class="ace_catalogue_list">
                     <ul class="cd-accordion-menu"></ul>
-                	<ul class="ace_catalogue_menu">
-	                    <li data-type="0"><i class="folder-icon"></i>新建文件夹</li>
-	                    <li data-type="1"><i class="text-icon"></i>新建文件</li>
-	                    <li data-type="2"><i class="rename-icon img-icon"></i>重命名</li>
-	                    <li data-type="3"><i class="del-icon img-icon"></i>删除</li>
+                    <ul class="ace_catalogue_menu">
+                    	<li data-type="0"><i class="glyphicon glyphicon-refresh" aria-hidden="true"></i><span>刷新目录</span></li>
+                    	<li data-type="1"><i class="glyphicon glyphicon-folder-open" aria-hidden="true"></i><span>打开子目录</span></li>
+	                    <li data-type="2"><i class="folder-icon"></i><span>新建文件夹</span></li>
+	                    <li data-type="3"><i class="text-icon"></i><span>新建文件</span></li>
+	                    <li data-type="4"><i class="rename-icon img-icon"></i><span>重命名</span></li>
+	                    <li data-type="5"><i class="down-icon img-icon"></i><span>下载</span></li>
+	                    <li data-type="6"><i class="del-icon img-icon"></i><span>删除</span></li>
 	                </ul>
                 </div>
                 <div class="ace_catalogue_drag_icon">
@@ -90,10 +119,8 @@
 
             </div>
             <!-- 编辑内容 -->
-            <div class="ace_editor_main">
-                <div class="ace_conter_menu">
-                    <div class="ace_editor_add" style="display:none;"><i class="fa fa-plus-square" aria-hidden="true"></i></div>
-                </div>
+            <div class="ace_editor_main" style="margin-left:265px">
+                <ul class="ace_conter_menu"></ul>
                 <div class="ace_conter_tips"><div class="tips"></div></div>
                 <div class="ace_editor_main_storey"></div>
                 <div class="ace_conter_editor"></div>
@@ -149,6 +176,15 @@
                         </div>
                     </div>
                 </div>
+                <div class="menu-item menu-jumpLine" style="display: none;">
+                    <div class="menu-title">跳转到指定行</div>
+                    <div class="menu-conter">
+                        <div class="set_jump_line">
+                            <input type="number" min="0"/>
+                            <button class="btn-save">跳转</button>
+                        </div>
+                    </div>
+                </div>
                 <div class="menu-item menu-themes" style="display: none;">
                     <div class="menu-title">设置编辑器主题</div>
                     <ul></ul>
@@ -156,6 +192,275 @@
                 <div class="menu-item menu-history" style="display: none;">
                     <div class="menu-title">文件历史版本</div>
                     <ul></ul>
+                </div>
+                <div class="menu-item menu-setUp"  style="display: none;">
+                	<div class="menu-title">编辑器设置【部分设置需要重新打开编辑生效】</div>
+                	<ul class="editor_menu">
+                		<li data-type="wrap">自动换行</li>
+                		<li data-type="enableLiveAutocompletion">代码自动完成</li>
+                		<li data-type="enableSnippets">启用代码段</li>
+                		<li data-type="showInvisibles">显示隐藏字符</li>
+                		<li data-type="showLineNumbers">显示行号</li>
+                		
+                	</ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+<script type="text/tmplate" id="aceShortcutKeys">
+	<div class ="keysUp_left">
+        <div class="keysUp-row">
+            <div class="keysUp-title">常用快捷键</div>
+            <div class="keysUp-content">
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">S</span>
+                    <span class="keysUp-tips">保存文件</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">C</span>
+                    <span class="keysUp-tips">复制内容</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">X</span>
+                    <span class="keysUp-tips">剪切内容</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">V</span>
+                    <span class="keysUp-tips">粘贴内容</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">A</span>
+                    <span class="keysUp-tips">全选内容</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Z</span>
+                    <span class="keysUp-tips">撤销操作</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Y</span>
+                    <span class="keysUp-tips">反撤销操作</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">F</span>
+                    <span class="keysUp-tips">搜索内容</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">H</span>
+                    <span class="keysUp-tips">替换内容</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAACkElEQVQ4T62UTWhTQRDHZ6bhFZpK9CAetEoPocF6MG83jRaqFvHjIgrFQ9WLQkHsyZMWvAkFL978QET0YPVUxUuLFFK/Ynk7W0tAqeIHFFEoQqGGWKt9I6+Y2Mh7iQcX9jT//c3Of2cW4T8vXMmbnp5eNT8/34uIKtgAoESEEXGsubl5MJVKfa2Xvwo4OTm52/f9sahDWusqfZiuSuB53gARDYYJRWQ4k8n0WGsPAMAPpdTo37qJiYnNVUBmvg8AB0MzIx5TSt1m5msA0IeIIyIyS0SffN/fFNiDiLMVYD6fX+84znsAcMKAi4uLTZ2dnd+YeRYA1kZUca4CZOZDAHAvwr/XWuuU53ktRDQT5TEi/jHZGHMVEVsRsSAiz3zfd2KxWKvv+6cR8ZZS6gwznwKASxHAj1rrlsoNc7lcrLu7+2eI0RsaGxs3ptPpvDFmHBF3RgCva637KsBCobBmYWFhLxHtAYCEiIw2NDQ8d133VRlgrR0XkVAgIvYopYaXgcx8EgCuRGQe0lofLceMMSeIKCsiwct+EZG3sVjsoeM4hfb29uIy0BhzAxGPhwGJ6Kzruhestf2lUmmoq6trrta0IDM3IeKUiCTDhEtLS23ZbPYNMwsAzIjIIxGxIvKOiILeawuK1FpfDM6jMWYXIuYispa01nFr7X4RGanRLjuUUk+Wgcw8AACh4wYAd7TWR5g5aJWgZcLWy0QioZLJ5Pcy8DEitohIUPYHRNwOANuCoIj0ZjKZu7WmAwBuaq0r/qPneVs7OjqmVqY2xmwBgN5isXg+Ho+vJqLPNR6iX2t9uRyv+x3VmQ4goozruvzPwEBord0nIod/W7EOER8AwFMiepFOp6uqq3vDWj0XFvsFsp0JRWHn0UYAAAAASUVORK5CYII=" /></span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Alt</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">0</span>
+                    <span class="keysUp-tips">折叠代码</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAACkElEQVQ4T62UTWhTQRDHZ6bhFZpK9CAetEoPocF6MG83jRaqFvHjIgrFQ9WLQkHsyZMWvAkFL978QET0YPVUxUuLFFK/Ynk7W0tAqeIHFFEoQqGGWKt9I6+Y2Mh7iQcX9jT//c3Of2cW4T8vXMmbnp5eNT8/34uIKtgAoESEEXGsubl5MJVKfa2Xvwo4OTm52/f9sahDWusqfZiuSuB53gARDYYJRWQ4k8n0WGsPAMAPpdTo37qJiYnNVUBmvg8AB0MzIx5TSt1m5msA0IeIIyIyS0SffN/fFNiDiLMVYD6fX+84znsAcMKAi4uLTZ2dnd+YeRYA1kZUca4CZOZDAHAvwr/XWuuU53ktRDQT5TEi/jHZGHMVEVsRsSAiz3zfd2KxWKvv+6cR8ZZS6gwznwKASxHAj1rrlsoNc7lcrLu7+2eI0RsaGxs3ptPpvDFmHBF3RgCva637KsBCobBmYWFhLxHtAYCEiIw2NDQ8d133VRlgrR0XkVAgIvYopYaXgcx8EgCuRGQe0lofLceMMSeIKCsiwct+EZG3sVjsoeM4hfb29uIy0BhzAxGPhwGJ6Kzruhestf2lUmmoq6trrta0IDM3IeKUiCTDhEtLS23ZbPYNMwsAzIjIIxGxIvKOiILeawuK1FpfDM6jMWYXIuYispa01nFr7X4RGanRLjuUUk+Wgcw8AACh4wYAd7TWR5g5aJWgZcLWy0QioZLJ5Pcy8DEitohIUPYHRNwOANuCoIj0ZjKZu7WmAwBuaq0r/qPneVs7OjqmVqY2xmwBgN5isXg+Ho+vJqLPNR6iX2t9uRyv+x3VmQ4goozruvzPwEBord0nIod/W7EOER8AwFMiepFOp6uqq3vDWj0XFvsFsp0JRWHn0UYAAAAASUVORK5CYII=" /></span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Alt</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Shift</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">0</span>
+                    <span class="keysUp-tips">展开代码</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Esc</span>
+                    <span class="keysUp-tips">退出搜索、取消自动提示</span>
+                </div>
+            </div>
+        </div>
+        <div class="keysUp-row">
+            <div class="keysUp-title">光标移动</div>
+            <div class="keysUp-content">
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Home</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">End</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">Up</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">Left</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">Down</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">Right</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Home</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">End</span>
+                    <span class="keysUp-tips">光标移动到文档首/尾</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">P</span>
+                    <span class="keysUp-tips">跳转到匹配的标签</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">pageUp</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">pageDown</span>
+                    <span class="keysUp-tips">光标上/下翻页</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Alt</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Left</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">Right</span>
+                    <span class="keysUp-tips">光标移动到行首/尾</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">I</span>
+                    <span class="keysUp-tips">跳转到指定行</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Alt</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Up</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">Down</span>
+                    <span class="keysUp-tips">上/下增加光标</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class ="keysUp_right">
+        <div class="keysUp-row">
+            <div class="keysUp-title">内容选择</div>
+            <div class="keysUp-content">
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">鼠标框选——拖动</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Shift</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Home</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">End</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">Up</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">Left</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">Down</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">Right</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Shift</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">pageUp</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">PageDown</span>
+                    <span class="keysUp-tips">上下翻页选中</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Shift</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Home</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-tips">当前光标至头/尾</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Alt</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">鼠标拖动</span>
+                    <span class="keysUp-tips">块选择</span>
+                </div>
+            </div>
+        </div>
+        <div class="keysUp-row">
+            <div class="keysUp-title">编辑</div>
+            <div class="keysUp-content">
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">/</span>
+                    <span class="keysUp-tips">注释&取消注释</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Tab</span>
+                    <span class="keysUp-tips">对齐</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Shift</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Tab</span>
+                    <span class="keysUp-tips">整体前移</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Delete</span>
+                    <span class="keysUp-tips">删除</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">D</span>
+                    <span class="keysUp-tips">删除整行</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Alt</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Shift</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Up</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">Down</span>
+                    <span class="keysUp-tips">复制行并添加到上一行/下一行</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Alt</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Delete</span>
+                    <span class="keysUp-tips">删除光标右侧内容</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Alt</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Up</span>
+                    <span class="keysUp-symbols">/</span>
+                    <span class="keysUp-btn">Down</span>
+                    <span class="keysUp-tips">当前行和上一行/下一行交换</span>
+                </div>
+                <div class="keysUp-item">
+                    <span class="keysUp-btn">Ctrl</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">Shift</span>
+                    <span class="keysUp-symbol">+</span>
+                    <span class="keysUp-btn">D</span>
+                    <span class="keysUp-tips">复制行并添加到下面</span>
                 </div>
             </div>
         </div>
@@ -170,6 +475,7 @@
 <script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js?date={{g.version}}"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/ace/ext-language_tools.js?date={{g.version}}"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/js/clipboard.min.js"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js"></script>
 <script type="text/javascript">
 	setTimeout(function(){
 		GetDisk();

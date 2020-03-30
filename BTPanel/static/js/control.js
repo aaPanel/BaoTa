@@ -405,7 +405,14 @@ function disk(b, e) {
                 axisPointer: {
                     type: 'cross'
                 },
-                formatter: "时间：{b0}<br />{a0}: {c0} Kb/s<br />{a1}: {c1} Kb/s",
+                formatter:function(config){
+                	var _config = config,_tips = '';
+                	for(var i=0;i<config.length;i++){
+                		_tips +=  '<span style="display: inline-block;width: 10px;height: 10px;margin-rigth:10px;border-radius: 50%;background: '+ config[i].color +';"></span>  '+ config[i].seriesName +'：'+ parseInt(config[i].data).toFixed(2) + 'Kb/s' + ( config.length-1 !== i?'<br />':'')
+                	}
+                	console.log(config);
+                	return "时间："+ _config[0].axisValue +"<br />" + _tips;
+                },
             },
             legend: {
                 data: [lan.control.disk_read_bytes, lan.control.disk_write_bytes]
@@ -515,7 +522,15 @@ $.get('/ajax?action=GetNetWorkIo&start='+b+'&end='+e,function(rdata){
 			trigger: 'axis',
 			axisPointer: {
 				type: 'cross'
-			}
+			},
+			formatter:function(config){
+            	var _config = config,_tips = '';
+            	for(var i=0;i<config.length;i++){
+            		_tips +=  '<span style="display: inline-block;width: 10px;height: 10px;margin-rigth:10px;border-radius: 50%;background: '+ config[i].color +';"></span>  '+ config[i].seriesName +'：'+ parseInt(config[i].data).toFixed(2) + 'Kb/s' + ( config.length-1 !== i?'<br />':'')
+            	}
+            	console.log(config);
+            	return "时间："+ _config[0].axisValue +"<br />" + _tips;
+            }
 		},
 		legend: {
 			data:[lan.index.net_up,lan.index.net_down]

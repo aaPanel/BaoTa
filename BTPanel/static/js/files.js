@@ -413,7 +413,7 @@ function GetFiles(Path, sort) {
             if (getCookie("rank") == "a") {
                 $("#set_list").addClass("active");
                 $("#set_icon").removeClass("active");
-                Body += "<tr class='folderBoxTr' data-path='" + rdata.PATH + "/" + fmp[0] + "' filetype='dir'>\
+                Body += "<tr class='folderBoxTr' data-composer='"+fmp[7]+"' data-path='" + rdata.PATH + "/" + fmp[0] + "' filetype='dir'>\
 						<td><input type='checkbox' name='id' value='"+ fmp[0] + "'></td>\
 						<td class='column-name'><span class='cursor' onclick=\"GetFiles('" + rdata.PATH + "/" + fmp[0] + "')\"><span class='ico ico-folder'></span><a class='text' title='" + fmp[0] + fmp[5] + "'>" + cnametext + fileMsg + "</a></span></td>\
 						<td><a class='btlink "+ (rdata.PATH + '/' + fmp[0]).replace(/[^\w]/g, '-') + "' onclick=\"get_path_size('" + rdata.PATH + "/" + fmp[0] + "')\">点击计算</a></td>\
@@ -668,7 +668,7 @@ function GetFiles(Path, sort) {
             if (e.which == 3) {
                 if (count <= 1) {
                     var a = $(this);
-                    a.contextify(RClick(a.attr("filetype"), a.attr("data-path"), a.find("input").val(), rdata,a.attr('fileshare')));
+                    a.contextify(RClick(a.attr("filetype"), a.attr("data-path"), a.find("input").val(), rdata,a.attr('fileshare'),a.attr('data-composer')));
                 }
                 else {
                     RClickAll(e);
@@ -1639,7 +1639,7 @@ function onAccess() {
         }
     }
 }
-function RClick(type, path, name, file_store,file_share) {
+function RClick(type, path, name, file_store,file_share,data_composer) {
     var displayZip = isZip(type);
     var options = {
         items: [
@@ -1682,6 +1682,10 @@ function RClick(type, path, name, file_store,file_share) {
         options.items.push({ text: '外链分享', onclick: function () { create_download_url(name,path,file_share) } });
     }
 
+    if( type === 'dir' && data_composer === '1'){
+        options.items.push({ text: 'Composer', onclick: function () { exec_composer(name,path) } });
+    }
+
     options.items.push({
         text: "收藏夹", onclick: function () {
 			var loading = bt.load();
@@ -1689,13 +1693,108 @@ function RClick(type, path, name, file_store,file_share) {
                 loading.close();
                 bt.msg(rRet);
                 if (rRet.status) {
-                    console.log(file_store.PATH);
                     GetFiles(file_store.PATH)
                 }
             });
         }
     })
+
+
     return options;
+}
+
+function update_composer(){
+    loadT = bt.load()
+    $.post('/files?action=update_composer',{},function(v_data){
+        loadT.close();
+        bt.msg(v_data);
+    });
+}
+
+
+function exec_composer(fileName,path){
+    $.post('/files?action=get_composer_version',{},function(v_data){
+        if(v_data.status === false){
+            bt.msg(v_data);
+            return;
+        }
+
+        var php_versions = '';
+        for(var i=0;i<v_data.php_versions.length;i++){
+            if(v_data.php_versions[i].version == '00') continue;
+            php_versions += '<option value="'+v_data.php_versions[i].version+'">'+v_data.php_versions[i].name+'</option>';
+        }
+
+        var layers = layer.open({
+            type: 1,
+            shift: 5,
+            closeBtn: 2,
+            area: '450px',
+            title: '在['+path+']目录执行Composer',
+            btn:['执行Composer','取消'],
+            content: '<from class="bt-form" style="padding:30px 15px;display:inline-block">'
+                + '<div class="line"><span class="tname">版本</span><div class="info-r"><input readonly="readonly" style="background-color: #eee;" name="composer_version" class="bt-input-text" value="'+v_data.msg +'" /><a onclick="update_composer();" style="margin-left: 5px;" class="btn btn-default btn-sm">升级Composer<a></div></div>'
+                + '<div class="line"><span class="tname">PHP版本</span><div class="info-r">'
+                    +'<select class="bt-input-text" name="php_version">'
+                        +'<option value="auto">自动选择</option>'
+                        +php_versions
+                    +'</select>'
+                +'</div></div>'
+                + '<div class="line"><span class="tname">执行参数</span><div class="info-r">'
+                    +'<select class="bt-input-text" name="composer_args">'
+                        +'<option value="install">安装：install</option>'
+                        +'<option value="update">更新：update</option>'
+                    +'</select>'
+                +'</div></div>'
+                + '<div class="line"><span class="tname">镜像源</span><div class="info-r">'
+                    +'<select class="bt-input-text" name="repo">'
+                        +'<option value="https://mirrors.aliyun.com/composer/">阿里源：mirrors.aliyun.com</option>'
+                        +'<option value="repos.packagist">官方源：packagist.org</option>'
+                    +'</select>'
+                +'</div></div>'
+                + '</from>',
+            yes:function(indexs,layers){
+                layer.confirm('执行Composer的影响范围取决于该目录下的composer.json配置文件，继续吗？', { title: '确认执行Composer', closeBtn: 2, icon: 3 }, function (index) {
+                    var pdata = {
+                        php_version:$("select[name='php_version']").val(),
+                        composer_args:$("select[name='composer_args']").val(),
+                        repo:$("select[name='repo']").val(),
+                        path:path
+                    }
+                    $.post('/files?action=exec_composer',pdata,function(rdatas){
+                        if(!rdatas.status){
+                            layer.msg(rdatas.msg,{icon:2});
+                            return false;
+                        }
+                        layer.closeAll();
+                        if(rdatas.status === true){
+                            layer.open({
+                                area:"600px",
+                                type: 1,
+                                shift: 5,
+                                closeBtn: 2,
+                                title: '在['+path+']目录执行Composer，执行完后请关闭此窗口',
+                                content:"<pre id='composer-log' style='height: 300px;background-color: #333;color: #fff;margin: 0 0 0;'></pre>"
+                            });
+                            setTimeout(function(){show_composer_log();},200);
+                        }
+                    });
+                });
+            }
+        });
+    });
+}
+
+
+function show_composer_log(){
+    $.post('/ajax?action=get_lines',{filename:'/tmp/panelExec.pl',num:30},function(v_body){
+        var log_obj = $("#composer-log")
+        if(log_obj.length < 1) return;
+        log_obj.html(v_body.msg);
+        var div = document.getElementById('composer-log')
+        div.scrollTop = div.scrollHeight;
+        setTimeout(function(){show_composer_log()},1000)
+    });
 }
 
 

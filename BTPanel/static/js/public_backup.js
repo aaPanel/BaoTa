@@ -1354,16 +1354,53 @@ bt.index = {
 			var k = layer.open({
 				type: 1,
 				title: lan.bt.install_title,
-				area: ["670px", "440px"],
+				area: ["670px", "510px"],
 				closeBtn: 2,
 				shadeClose: false,
-                content: "<div class='rec-install'><div class='important-title'><p><span class='glyphicon glyphicon-alert' style='color: #f39c12; margin-right: 10px;'></span>" + lan.bt.install_ps + " <a href='javascript:jump()' style='color:#20a53a'>" + lan.bt.install_s + "</a> " + lan.bt.install_s1 + "</p></div><div class='rec-box'><h3>" + lan.bt.install_lnmp + "</h3><div class='rec-box-con'><ul class='rec-list'>" + c + "</ul><p class='fangshi'>" + lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "' style='margin-right:0'>" + lan.bt.install_rpm + "<input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'>" + lan.bt.install_src + "<input type='checkbox'></label></p><div class='onekey'>" + lan.bt.install_key + "</div></div></div><div class='rec-box' style='margin-left:16px'><h3>LAMP</h3><div class='rec-box-con'><ul class='rec-list'>" + g + "</ul><p class='fangshi'>" + lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "' style='margin-right:0'>" + lan.bt.install_rpm + "<input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'>" + lan.bt.install_src + "<input type='checkbox'></label></p><div class='onekey'>一键安装</div></div></div></div>"
+                content: "<div class='rec-install'><div class='important-title'><p><span class='glyphicon glyphicon-alert' style='color: #f39c12; margin-right: 10px;'></span>" + lan.bt.install_ps + " <a href='javascript:jump()' style='color:#20a53a'>" + lan.bt.install_s + "</a> " + lan.bt.install_s1 + "</p></div><div class='rec-box'><h3>" + lan.bt.install_lnmp + "</h3><div class='rec-box-con'><ul class='rec-list'>" + c + "</ul><p class='fangshi1'>" + lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "'><span>" + lan.bt.install_rpm + "</span><input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'><span>" + lan.bt.install_src + "</span><input type='checkbox'></label></p><div class='onekey'>" + lan.bt.install_key + "</div></div></div><div class='rec-box' style='margin-left:16px'><h3>LAMP</h3><div class='rec-box-con'><ul class='rec-list'>" + g + "</ul><p class='fangshi1'>" + lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "'><span>" + lan.bt.install_rpm + "</span><input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'><span>" + lan.bt.install_src + "</span><input type='checkbox'></label></p><div class='onekey'>"+lan.bt.install_key +"</div></div></div></div>",
+                success:function(){
+                	form_group.select_all([
+                		'#select_Nginx',
+                		'#select_MySQL',
+                		'#select_Pure-Ftpd',
+                		'#select_PHP',
+                		'#select_phpMyAdmin',
+                		'#apache_select_Apache',
+                		'#apache_select_MySQL',
+                		'#apache_select_Pure-Ftpd',
+                		'#apache_select_PHP',
+                		'#apache_select_phpMyAdmin'
+                	]);
+                	form_group.checkbox();
+                	$('.layui-layer-content').css('overflow','inherit');
+                	$(".fangshi1 .bt_checkbox_group").unbind('click');
+                	$(".fangshi1").on('click','.bt_checkbox_group',function (e) {
+		                if($(this).prev().prop('checked')){
+		                	$(this).prev().removeAttr('checked').parent().siblings().find('input').prop('checked','checked');
+		                	$(this).removeClass('active').parent().siblings().find('.bt_checkbox_group').addClass('active')
+		                }else{
+		                	$(this).prev().attr('checked','checked').parent().siblings().find('input').removeAttr('checked')
+		                	$(this).addClass('active').parent().siblings().find('.bt_checkbox_group').removeClass('active')
+		                }
+		            });
+		            $(".fangshi1").on('click','span',function(){
+		            	$(this).parent().find('.bt_checkbox_group').click();
+		            })
+		            var loadT = '';
+					$('.fangshi1 label').hover(function(){
+						var _title = $(this).attr('data-title'),_that = $(this);
+						loadT = setTimeout(function(){
+							layer.tips(_title,_that[0], {
+							  tips: [1, '#20a53a'], //还可配置颜色
+							  time:0
+							});
+						},500);
+					},function(){
+						clearTimeout(loadT);
+						layer.closeAll('tips');
+					});
+                }
 			});
-
-            $(".fangshi input").click(function () {
-                $(this).attr("checked", "checked").parent().siblings().find("input").removeAttr("checked")
-            });
-
 			$(".sl-s-info").change(function() {
 				var p = $(this).find("option:selected").text();
 				var n = $(this).attr("id");
@@ -1498,7 +1535,7 @@ bt.index = {
 					time: 0,
 					shade: [0.3, "#000"]
 				});
-			
+				
 				install_plugin(q);
 				
 				function install_plugin(q){
@@ -1527,8 +1564,6 @@ bt.index = {
 					task()
 				}, 1000)
 			});
-			//InstallTips();
-			fly("onekey")
 		})
 	}
 }
@@ -4226,11 +4261,15 @@ bt.soft = {
 		}
 		return name
 	},
-	install:function(name){		
-		_this = this;		
+	install:function(name,that){
+		var _this = this;
+		if(bt.soft.is_install){
+			layer.msg('正在安装其他软件，请稍后操作！',{icon:0});
+			return false;
+		}
         _this.get_soft_find(name, function (rdata) {
             var arrs = ['apache', 'nginx', 'mysql'];
-            if ($.inArray(name, arrs) >= 0 || name.indexOf('php-')>=0) {
+            if ($.inArray(name, arrs) >= 0 || name.indexOf('php-')>=0) { 
                 var SelectVersion = '', shtml = name;
                 if (rdata.versions.length > 1) {
                     for (var i = 0; i < rdata.versions.length; i++) {
@@ -4238,8 +4277,7 @@ bt.soft = {
                         SelectVersion += '<option>' + name + ' ' + item.m_version + '</option>';
                     }
                     shtml = "<select id='SelectVersion' class='bt-input-text' style='margin-left:10px'>" + SelectVersion + "</select>";
-                }
-                else {
+                }else {
                     shtml = "<span id='SelectVersion'>" + name + "</span>";
                 }
                 var loadOpen = bt.open({
@@ -4296,13 +4334,12 @@ bt.soft = {
                     if (rdata.versions.length > 1) {
                         _this.install_soft(rdata, version, type);
                     } else {
-                        _this.install_soft(rdata, rdata.versions[0].m_version, type);
+                        _this.install_soft(rdata, rdata.versions[0].m_version, type,that);
                     }
                   
                 });
             }
-			else if (rdata.versions.length > 1)
-			{
+			else if (rdata.versions.length > 1){
 				var SelectVersion = '';
 				for(var i=0; i<rdata.versions.length; i++){
 					var item = rdata.versions[i];
@@ -4325,68 +4362,95 @@ bt.soft = {
 					var info = $("#SelectVersion").val().toLowerCase();
 					name = info.split(" ")[0];
 					version = info.split(" ")[1];				
-					_this.install_soft(rdata,version);
+					_this.install_soft(rdata,version,0,that);
 				});
             }            
 			else{
-				_this.install_soft(rdata,rdata.versions[0].m_version);
+				_this.install_soft(rdata,rdata.versions[0].m_version,0,that);
 			}
 		})	
 	},
+	is_loop_speed:true,
+	is_install:false,
 	//显示进度
 	show_speed: function () {
 		bt.send('get_lines','ajax/get_lines',{ 
 			num: 10, 
-			filename: "/tmp/panelShell.pl" 
+			filename: "/tmp/panelShell.pl"
 		},function(rdata){
 			if ($("#install_show").length < 1) return;
 			if (rdata.status === true) {
 				$("#install_show").text(rdata.msg);
-				$("#install_show").scrollTop(1000000000);
+				$('#install_show').animate({scrollTop:$('#install_show').prop("scrollHeight")}, 400);
 			}
-			setTimeout(function () { bt.soft.show_speed(); }, 1000);
+			if(bt.soft.is_loop_speed){
+				setTimeout(function(){
+					bt.soft.show_speed();
+				},1000)
+			}
 		});
 	},
 	loadT:null,
-	speed_msg:"<pre style='margin-bottom: 0px;height:250px;text-align: left;background-color: #000;color: #fff;white-space: pre-wrap;' id='install_show'>[MSG]</pre>",
-	//显示进度窗口
-	show_speed_window: function(msg,callback){
+		//显示进度窗口
+	show_speed_window: function(config,callback){
+		if(!config.soft) config['soft'] = {type:10}
+		if(config.soft.type == 5){ //使用消息盒子安装
+			if (callback) callback();
+			return false;
+		}else if(config.soft.type == 10 && !config.status){ //第三方安装, 非安装，仅下载安装脚本
+			if (callback) callback();
+			return false;
+		}
+		layer.closeAll();
 		bt.soft.loadT = layer.open({
-			title: false,
+			title: config.title || '正在执行安装脚本，请稍后...',
 			type:1,
-			closeBtn:0,
-			shade: 0.3,
-			area: "500px",
-			offset: "30%",
-			content: bt.soft.speed_msg.replace('[MSG]',msg),
+			closeBtn:false,
+			maxmin:true,
+			shade:false,
+			skin:'install_soft',
+			area:["500px",'300px'],
+			content: "<pre style='width:500px;margin-bottom: 0px;height:100%;border-radius:0px; text-align: left;background-color: #000;color: #fff;white-space: pre-wrap;' id='install_show'>"+ config.msg +"</pre>",
 			success:function(layers,index){
-				setTimeout(function(){
-					bt.soft.show_speed();
-				},1000);
+				$(config.event).removeAttr('onclick').html('正在安装');
+				$('.layui-layer-max').hide();
+				bt.soft.is_loop_speed = true;
+				bt.soft.is_install = true;
+				bt.soft.show_speed();
 				if (callback) callback();
+			},
+			end:function(){
+				bt.soft.is_install = false;
+				bt.soft.is_loop_speed = false;
+			},
+			min:function(){
+				$('.layui-layer-max').show();
+			},
+			restore:function(){
+				$('.layui-layer-max').hide();
 			}
 		});
 	},
-    install_soft: function (item, version, type) { //安装单版本	
+    install_soft: function (item, version, type,that) { //安装单版本	
         if (type == undefined) type = 0;
+        var loadT = '';
 		item.title = bt.replace_all(item.title,'-' + version,'');
-		var msg = item.type!=5?lan.soft.lib_insatll_confirm.replace('{1}',item.title):lan.get('install_confirm',[item.title,version]);
-
-		bt.confirm({msg:msg,title:item.type!=5?lan.soft.lib_install:lan.soft.install_title}, function() {
-			bt.soft.show_speed_window(lan.soft.lib_install_the,function(){
-				bt.send('install_plugin', 'plugin/install_plugin', { sName: item.name, version: version, type: type }, function (rdata) {
-
-					if (rdata.size) {
-						layer.close(bt.soft.loadT);
-						_this.install_other(rdata)
-						return;
-					}
-					layer.close(bt.soft.loadT);		
-					bt.pub.get_task_count();
-					if(soft) soft.get_list();
-					bt.msg(rdata);
+		layer.confirm(item.type!=5?lan.soft.lib_insatll_confirm.replace('{1}',item.title):lan.get('install_confirm',[item.title,version]),{ title:item.type!=5?lan.soft.lib_install:lan.soft.install_title,icon:0,closeBtn:2},function(){
+				layer.closeAll();
+				bt.soft.show_speed_window({title:'正在安装'+ item.title +',请稍后...',msg:lan.soft.lib_install_the,soft:item,event:that},function(){
+					if(item.type == 10) loadT = layer.msg('正在获取第三方软件安装信息，请稍后<img src="/static/img/ing.gif">', { icon: 16, time: 0, shade: [0.3, '#000'] });
+					bt.send('install_plugin', 'plugin/install_plugin', { sName: item.name, version: version, type: type }, function (rdata) {
+						if (rdata.size) {
+							layer.close(loadT);
+							bt.soft.install_other(rdata,status);
+							return;
+						}
+						layer.close(bt.soft.loadT);		
+						bt.pub.get_task_count();
+						if(soft) soft.get_list();
+						bt.msg(rdata);
+					})
 				})
-			})
 		})
     },
     install_other: function (data) {
@@ -4398,8 +4462,9 @@ bt.soft = {
             closeBtn: 2,
             shift: 5,
             shadeClose: false,
+            btn:['确定' + (data.update ? "更新" : "安装"),'取消'],
             content: '<style>\
-                        .install_three_plugin{padding:25px;padding-bottom:70px}\
+                        .install_three_plugin{padding:25px;}\
                         .plugin_user_info p { font-size: 14px;}\
                         .plugin_user_info {padding: 15px 30px;line-height: 26px;background: #f5f6fa;border-radius: 5px;border: 1px solid #efefef;}\
                         .btn-content{text-align: center;margin-top: 25px;}\
@@ -4416,17 +4481,19 @@ bt.soft = {
                         <ul class="help-info-text c7">\
                             '+ (data.update ? "<li>更新过程可能需要几分钟时间，请耐心等候!</li>" : "<li>安装过程可能需要几分钟时间，请耐心等候!</li><li>如果已存在此插件，将被替换!</li>")+'\
                         </ul>\
-                        <div class="bt-form-submit-btn"><button type="button" class="btn btn-sm btn-danger mr5" onclick="layer.closeAll()">取消</button><button type="button" class="btn btn-sm btn-success" onclick="soft.input_zip(\''+ data.name + '\',\'' + data.tmp_path + '\')">确定' + (data.update ? "更新" : "安装")+'</button></div>\
-                    </div>'
+                    </div>',
+            yes:function(index,event){
+            	soft.input_zip(data.name,data.tmp_path,data);
+            }
         });
     },
-    update_soft: function (name,title, version, min_version,update_msg) {
+    update_soft: function (name,title, version, min_version,update_msg,type) {
         var _this = this;
 		var msg = "<li style='color:red;'>建议您在服务器负载闲时进行软件更新.</li>";
 		if(name == 'mysql') msg = "<ul style='color:red;'><li>更新数据库有风险,建议在更新前,先备份您的数据库.</li><li>如果您的是云服务器,强烈建议您在更新前做一个快照.</li><li>建议您在服务器负载闲时进行软件更新.</li></ul>";
         if (update_msg) msg += '<div style="    margin-top: 10px;"><span style="font-size: 14px;font-weight: 900;">本次更新说明: </span><hr style="margin-top: 5px; margin-bottom: 5px;" /><pre>' + update_msg.replace(/(_bt_)/g, "\n") +'</pre><hr style="margin-top: -5px; margin-bottom: -5px;" /></div>';
         bt.show_confirm('更新[' + title + ']', '更新过程可能会导致服务中断,您真的现在就将[' + title + ']更新到[' + version + '.' + min_version + ']吗?', function () {
-			bt.soft.show_speed_window('正在更新到[' + title+'-'+version+'.'+min_version+'],请稍候...',function(){
+			bt.soft.show_speed_window({title:'正在更新到[' + title+'-'+version+'.'+min_version+'],请稍候...',status:true,soft:{type:parseInt(type)}},function(){
 				bt.send('install_plugin', 'plugin/install_plugin', { sName: name, version: version, upgrade: version }, function (rdata) {
 					if (rdata.size) {
 						_this.install_other(rdata)
@@ -5760,5 +5827,76 @@ bt.data = {
 				}
 			]
 		}
+	}
+}
+var form_group = {
+	select_all:function(_arry){
+		for(var j=0;j<_arry.length;j++){
+			this.select(_arry[j]);
+		}
+	},
+    select:function(elem){
+        $(elem).after('<div class="bt_select_group"><div class="bt_select_active"><span class="select_val default">请选择</span><span class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span> </div><ul class="bt_select_ul"></ul></div>');
+		var _html = '',select_el = $(elem),select_group= select_el.next(),select_ul = select_group.find('.bt_select_ul'),select_val = select_group.find('.select_val'),select_icon = select_group.find('.glyphicon');
+		select_el.find('option').each(function(index,el){
+			var active = select_el.val() === $(el).val(),_val = $(el).val(),_name = $(el).text();
+			_html += '<li data-val="'+ _val +'" class="'+ (active?'active':'') +'">'+ _name +'</li>';
+			if(active){
+				select_val.text(_name);
+				_val !== ''?select_val.removeClass('default'):select_val.addClass('default');
+			}
+		});
+		select_el.hide();
+		select_ul.html(_html);
+		$(elem).next('.bt_select_group').find('.select_val').unbind('click').click(function(e){
+			if($('.bt_select_group .bt_select_ul.active').length >=1){
+				$('.bt_select_group').removeAttr('style');
+				$('.bt_select_group').find('.bt_select_ul').removeClass('active fadeInUp animated');
+				$('.bt_select_group').find('.glyphicon').css({'transform':'rotate(0deg)'});
+			}
+			is_show_select_ul(select_ul.hasClass('active'));
+			$(document).click(function(){
+				is_show_select_ul(true);
+				$(this).unbind('click');
+			});
+			e.stopPropagation();
+			e.preventDefault();
+		});
+		$(elem).next('.bt_select_group').find('.bt_select_ul li').unbind('click').click(function(){
+			var _val = $(this).attr('data-val'),_name = $(this).text();
+			$(this).addClass('active').siblings().removeClass('active');
+			_val !== ''?select_val.removeClass('default'):select_val.addClass('default');
+			select_val.text(_name);
+			select_el.val(_val);
+			$(elem).find('option[value="'+ _val +'"]').change();
+			is_show_select_ul(true);
+		});
+		function is_show_select_ul(active){
+			if(active){
+				select_group.removeAttr('style');
+				select_icon.css({'transform':'rotate(0deg)'});
+				select_ul.removeClass('active fadeInUp animated');
+			}else{
+				select_group.css('borderColor','#20a53a');
+				select_icon.css({'transform':'rotate(180deg)'});
+				select_ul.addClass('active fadeInUp animated');
+			}
+		}
+	},
+	checkbox:function(){
+		$('input[type="checkbox"]').each(function(index,el){
+			$(el).hide();
+			$(el).after('<div class="bt_checkbox_group '+ ($(this).prop("checked")?'active':'default') +'"></div>');
+		});
+		$('.bt_checkbox_group').click(function(){
+			$(this).prev().click();
+			if($(this).hasClass('active')){
+				$(this).removeClass('active');
+				$(this).prev().removeAttr('checked');
+			}else{
+				$(this).addClass('active');
+				$(this).prev().attr('checked','checked');
+			}
+		});
 	}
 }

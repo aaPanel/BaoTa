@@ -7,7 +7,10 @@
 # | Author: 黄文良 <287962566@qq.com>
 # +-------------------------------------------------------------------
 import psutil,time,os,public,re,sys
-from BTPanel import session,cache
+try:
+    from BTPanel import session,cache
+except:
+    pass
 class system:
     setupPath = None;
     ssh = None
@@ -605,6 +608,8 @@ class system:
         if get.name == 'mysqld': 
             public.CheckMyCnf()
             self.__check_mysql_path()
+        if get.name.find('webserver') != -1:
+            get.name = public.get_webserver()
         
         if get.name == 'phpmyadmin':
             import ajax

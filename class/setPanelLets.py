@@ -12,7 +12,7 @@ import public,db,json
 
 
 class setPanelLets:
-    __vhost_cert_path = "/www/server/panel/vhost/ssl/"
+    __vhost_cert_path = "/www/server/panel/vhost/cert/"
     __panel_cert_path = "/www/server/panel/ssl/"
     __tmp_key = ""
     __tmp_cert = ""
@@ -36,7 +36,7 @@ class setPanelLets:
     # 检查是否存在站点aapanel主机名站点
     def __check_host_name(self, domain):
         sql = db.Sql()
-        path = sql.table('sites').where('name=?', (domain,)).getField('path')
+        path = sql.table('sites').where('name=?', (domain,)).getField('id')
         return path
 
     # 创建证书使用的站点
@@ -59,24 +59,35 @@ class setPanelLets:
 
     # 申请面板域名证书
     def __create_lets(self,get):
-        import panelSite
-        ps = panelSite.panelSite()
-        get.siteName = get.domain
-        get.updateOf = "1"
+        from acme_v2 import acme_v2
+        site_id = str(public.M('sites').where('name=?',(get.domain,)).getField('id'))
+        get.auth_type = 'http'
+        get.auth_to = site_id
+        get.id = site_id
+        get.auto_wildcard = '0'
         get.domains = json.dumps([get.domain])
-        get.force = "true"
-        psc = ps.CreateLet(get)
-        if "False" in psc.values():
-            return psc
+        cert_info = acme_v2().apply_cert_api(get)
+        get.key = cert_info['private_key']
+        get.csr = cert_info['cert'] + cert_info['root']
+        return self._deploy_cert(get)
+
+    # 部署证书
+    def _deploy_cert(self,get):
+        from panelSite import panelSite
+        return panelSite().SetSSL(get)
 
     # 检查证书夹是否存在可用证书
     def __check_cert_dir(self,get):
-        import panelSSL
+        import panelSSL,time
         pssl = panelSSL.panelSSL()
         gcl = pssl.GetCertList(get)
         for i in gcl:
             if get.domain in i.values():
-                return i
+                time_array = time.strptime(i['notAfter'],"%Y-%m-%d")
+                time_stamp = int(time.mktime(time_array))
+                now = time.time()
+                if time_stamp > int(now):
+                    return i
 
     # 读取可用站点证书
     def __read_site_cert(self,domain_cert):
@@ -114,7 +125,35 @@ class setPanelLets:
         domain = public.readFile("/www/server/panel/data/domain.conf")
         if not domain:
             return False
-        return domain
+        return domain.split('\n')[0]
+
+    # 任务调用，检查面板是否有证书更新
+    def check_cert_update(self,sitename):
+        # 构造对象
+        from collections import namedtuple
+        get = namedtuple("get",['siteName','domain'])
+        get.siteName = sitename
+        get.domain = sitename
+        # 证书文件夹是否存在
+        cert_info = self.__check_cert_dir(get)
+        if cert_info:
+            return self.copy_cert(cert_info)
+        # 如果没有检查cert文件夹
+        else:
+            from panelSite import panelSite
+            p_s = panelSite().GetSSL(get)
+            if 'msg' in p_s:
+                return False
+            if not p_s['cert_data']:
+                return False
+            for i in p_s['cert_data']['dns']:
+                if i == sitename:
+                    cert_info = {'issuer':p_s['cert_data']['issuer'],
+                                 'dns':p_s['cert_data']['dns'],
+                                 'notAfter':p_s['cert_data']['notAfter'],
+                                 'notBefore':p_s['cert_data']['notBefore'],
+                                 'subject':p_s['cert_data']['notBefore']}
+                    return self.copy_cert(cert_info)
 
     # 复制证书
     def copy_cert(self,domain_cert):
@@ -123,12 +162,9 @@ class setPanelLets:
         if not panel_cert_data:
             self.__write_panel_cert()
             return True
-        else:
-            if panel_cert_data["key"] == self.__tmp_key and panel_cert_data["cert"] == self.__tmp_cert:
-                pass
-            else:
-                self.__write_panel_cert()
-                return True
+        if panel_cert_data["key"] != self.__tmp_key and panel_cert_data["cert"] != self.__tmp_cert:
+            self.__write_panel_cert()
+            return True
 
     # 设置lets证书
     def set_lets(self,get):
@@ -153,7 +189,7 @@ class setPanelLets:
             return public.returnMsg(True, '面板lets https设置成功')
         if not create_site:
             create_lets = self.__create_lets(get)
-            if not create_lets:
+            if create_lets['msg']:
                 domain_cert = self.__check_cert_dir(get)
                 self.copy_cert(domain_cert)
                 public.writeFile("/www/server/panel/data/ssl.pl", "True")

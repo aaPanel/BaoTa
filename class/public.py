@@ -655,6 +655,7 @@ def getPanelAddr():
 
 #字节单位转换
 def to_size(size):
+    size = float(size)
     d = ('b','KB','MB','GB','TB')
     s = d[0]
     for b in d:

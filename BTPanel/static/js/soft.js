@@ -246,7 +246,7 @@ var soft = {
                                                 var min_version = item.versions[i]
                                                 var ret = bt.check_version(item.version, min_version.m_version + '.' + min_version.version);
                                                 if (ret > 0) {
-                                                    if (ret == 2) option += '<a class="btlink" onclick="bt.soft.update_soft(\'' + item.name + '\',\'' + item.title + '\',\'' + min_version.m_version + '\',\'' + min_version.version + '\',\'' + min_version.update_msg.replace(/\n/g,"_bt_") + '\')" >更新</a> | ';
+                                                    if (ret == 2) option += '<a class="btlink" onclick="bt.soft.update_soft(\'' + item.name + '\',\'' + item.title + '\',\'' + min_version.m_version + '\',\'' + min_version.version + '\',\'' + min_version.update_msg.replace(/\n/g,"_bt_") + '\',\''+ item.type +'\')" >更新</a> | ';
                                                     break;
                                                 }
                                             }
@@ -254,7 +254,7 @@ var soft = {
                                         else {
                                             var min_version = item.versions[0];
                                             var cloud_version = min_version.m_version + '.' + min_version.version;
-                                            if (item.version != cloud_version) option += '<a class="btlink" onclick="bt.soft.update_soft(\'' + item.name + '\',\'' + item.title + '\',\'' + min_version.m_version + '\',\'' + min_version.version + '\',\'' + min_version.update_msg.replace(/\n/g, "_bt_") + '\')" >更新</a> | ';
+                                            if (item.version != cloud_version) option += '<a class="btlink" onclick="bt.soft.update_soft(\'' + item.name + '\',\'' + item.title + '\',\'' + min_version.m_version + '\',\'' + min_version.version + '\',\'' + min_version.update_msg.replace(/\n/g, "_bt_") + '\',\''+ item.type +'\')" >更新</a> | ';
                                         }
                                         if (item.admin) {
                                             option += '<a class="btlink" onclick="bt.soft.set_lib_config(\'' + item.name + '\',\'' + item.title + '\')">' + lan.soft.setup + '</a> | ';
@@ -284,7 +284,7 @@ var soft = {
                                         option = pay_opt;
                                     }
                                     else {
-                                        option = '<a class="btlink" onclick="bt.soft.install(\'' + item.name + '\')"  >' + lan.soft.install + '</a>';
+                                        option = '<a class="btlink" onclick="bt.soft.install(\'' + item.name + '\',this)"  >' + lan.soft.install + '</a>';
                                     }
                                 }
                             }
@@ -714,8 +714,14 @@ var soft = {
                 tabCon.append('<p style="color: #666; margin-bottom: 7px">' + lan.bt.edit_ps + '</p>');
                 tabCon.append('<div class="bt-input-text ace_config_editor_scroll" style="height: 320px;min-height:350px;line-height:18px;" id="textBody"></div>')
                 tabCon.append('<button id="OnlineEditFileBtn" class="btn btn-success btn-sm" style="margin-top:10px;">' + lan.public.save + '</button>')
-                tabCon.append(bt.render_help([lan.get('config_edit_ps', [version])]))
-
+                var _arry = [lan.get('config_edit_ps', [version])];
+				if (data.name.indexOf('php-') >= 0){
+					_arry.push(lan.soft.config_php_tips);
+				}
+				tabCon.append(bt.render_help(_arry))
+				$('.return_php_info').click(function(){
+					$('.bt-soft-menu p:eq(12)').click();
+				});
                 var fileName = bt.soft.get_config_path(version);
                 var loadT = bt.load(lan.soft.get);
                 var config = bt.aceEditor({el:'textBody',path:fileName});
@@ -2055,8 +2061,8 @@ var soft = {
         });
     },
 
-    input_zip: function (plugin_name, tmp_path) {
-        bt.soft.show_speed_window('正在安装,这可能需要几分钟时间...',function(){
+    input_zip: function (plugin_name,tmp_path,data) {
+        bt.soft.show_speed_window({title:'正在安装第三方插件，可能需要几分钟时间，请耐心等候!',status:true},function(){
             $.post('/plugin?action=input_zip', { plugin_name: plugin_name, tmp_path: tmp_path }, function (rdata) {
                 layer.closeAll()
                 if (rdata.status) {
@@ -2418,9 +2424,9 @@ var score = {
             $('.comment_user_count').text(obj.count);
             $('.comment_num').text((res.total!==0?_average_score:0).toFixed(1));
             $('.comment_partake').text(res.total);
-            $('.comment_rate').text(res.total!==0?((((_split_score[0]+_split_score[1])/res.total).toFixed(2)*100)+'%'):'0%');
+            $('.comment_rate').text(res.total!==0?(((((_split_score[0]+_split_score[1])/res.total).toFixed(2)*100).toFixed(0))+'%'):'0%');
             for(var i=0;i<5;i++){
-                $('.comment_star_group:eq('+ i +')').find('.comment_progress .comment_progress_bgw').css('width',((_split_score[i] / res.total).toFixed(2)*100)+'%')
+                $('.comment_star_group:eq('+ i +')').find('.comment_progress .comment_progress_bgw').css('width',(((_split_score[i] / res.total).toFixed(2)*100).toFixed(0))+'%')
             }
             $('.comment_tab span:eq(1)').find('i').text(_split_score[0]+_split_score[1]);
             $('.comment_tab span:eq(2)').find('i').text(_split_score[2]+_split_score[3]);
