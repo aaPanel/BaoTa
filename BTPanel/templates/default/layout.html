@@ -8,8 +8,8 @@
     <title>{{g.title}}</title>
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
     <link href="{{g.cdn_url}}/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="{{g.cdn_url}}/css/site.css?20191127={{g['version']}}" rel="stylesheet" />
-    <link href="{{g.cdn_url}}/codemirror/lib/codemirror.css?20191127={{g['version']}}" rel="stylesheet" />
+    <link href="{{g.cdn_url}}/css/site.css?20200527={{g['version']}}" rel="stylesheet" />
+    <link href="{{g.cdn_url}}/codemirror/lib/codemirror.css?20200527={{g['version']}}" rel="stylesheet" />
     <!--[if lte IE 9]>
     	<script src="{{g.cdn_url}}/js/requestAnimationFrame.js"></script>
     <![endif]-->
@@ -90,15 +90,50 @@
     <script src="{{g.cdn_url}}/js/bootstrap.min.js"></script>
     <script src="{{g.cdn_url}}/language/{{session['lan']}}/lan.js?date={{g['version']}}"></script>
     <script src="{{g.cdn_url}}/layer/layer.js?date={{g['version']}}"></script>
-    <script src="{{g.cdn_url}}/js/public.js?version={{g['version']}}"></script>
-    <script src="{{g.cdn_url}}/js/public_backup.js?version={{g['version']}}"></script>
+    <script src="{{g.cdn_url}}/js/public.js?version1={{g['version']}}"></script>
+    <script src="{{g.cdn_url}}/js/public_backup.js?version1={{g['version']}}"></script>
     <script src="{{g.cdn_url}}/codemirror/lib/codemirror.js?version={{g['version']}}"></script>
     {% block scripts %}{% endblock %}
     <script type="text/javascript">
-	    if (navigator.appName == "Microsoft Internet Explorer" && parseInt(navigator.appVersion.split(";")[1].replace(/[ ]/g, "").replace("MSIE", "")) < 9) {
-	        $(".main-content").css("margin-top", "50px");
-	        $('.top-tips').show();
-	    }
+	    function IEVersion() {
+            // 取得浏览器的userAgent字符串
+            var userAgent = navigator.userAgent;
+            // 判断是否为小于IE11的浏览器
+            var isLessIE11 = userAgent.indexOf('compatible') > -1 && userAgent.indexOf('MSIE') > -1;
+            // 判断是否为IE的Edge浏览器
+            var isEdge = userAgent.indexOf('Edge') > -1 && !isLessIE11;
+            // 判断是否为IE11浏览器
+            var isIE11 = userAgent.indexOf('Trident') > -1 && userAgent.indexOf('rv:11.0') > -1;
+            if (isLessIE11) {
+                var IEReg = new RegExp('MSIE (\\d+\\.\\d+);');
+                // 正则表达式匹配浏览器的userAgent字符串中MSIE后的数字部分，，这一步不可省略！！！
+                IEReg.test(userAgent);
+                // 取正则表达式中第一个小括号里匹配到的值
+                var IEVersionNum = parseFloat(RegExp['$1']);
+                if (IEVersionNum === 7) {// IE7
+                    return 7
+                } else if (IEVersionNum === 8) {// IE8
+                    return 8
+                } else if (IEVersionNum === 9) {// IE9
+                    return 9
+                } else if (IEVersionNum === 10) { // IE10
+                    
+                    return 10
+                } else {// IE版本<7
+                    return 6
+                }
+            } else if (isEdge) { // edge
+               
+                return 'edge'
+            } else if (isIE11) {// IE11
+                return 11
+            } else {// 不是ie浏览器
+                return -1
+            }
+        }
+        if(IEVersion() != -1 && IEVersion() < 9){
+            window.location.href = '/tips';
+        }
 	    $("#setBox").click(function () {
 	        if ($(this).prop("checked")) {
 	            $("input[name=id]").prop("checked", true);

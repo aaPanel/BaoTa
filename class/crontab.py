@@ -4,7 +4,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2099 宝塔软件(http:#bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 黄文良 <287962566@qq.com>
+# | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 import public,db,os,time,re
 from BTPanel import session,cache
@@ -266,17 +266,14 @@ class crontab:
         import json
         tmp = public.readFile('data/libList.conf')
         libs = json.loads(tmp)
-        import imp
         for lib in libs:
-            try:
-                if lib['module'] in ['beta','']: continue
-                imp.find_module(lib['module'])
-                tmp = {}
-                tmp['name'] = lib['name']
-                tmp['value']= lib['opt']
-                data['orderOpt'].append(tmp)
-            except:
-                continue
+            if not 'opt' in lib: continue
+            filename = 'plugin/{}'.format(lib['opt'])
+            if not os.path.exists(filename): continue
+            tmp = {}
+            tmp['name'] = lib['name']
+            tmp['value']= lib['opt']
+            data['orderOpt'].append(tmp)
         return data
     
     #取任务日志

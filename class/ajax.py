@@ -4,7 +4,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2016 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 黄文良 <287962566@qq.com>
+# | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 from BTPanel import session,request
 import public,os,json,time,apache,psutil
@@ -34,7 +34,7 @@ class ajax:
             time.sleep(0.5)
             #取Nginx负载状态
             self.CheckStatusConf()
-            result = public.ExecShell('/usr/local/curl/bin/curl -Ss http://127.0.0.1/nginx_status')[0]
+            result = public.ExecShell('/usr/local/curl/bin/curl -H "User-Agent: BT-Panel" -Ss http://127.0.0.1/nginx_status')[0]
             tmp = result.split()
             data = {}
             if "request_time" in tmp:
@@ -56,8 +56,7 @@ class ajax:
             data['workercpu'] = round(float(process_cpu["nginx"]),2)
             data['workermen'] = "%s%s" % (int(workermen), "MB")
             return data
-        except Exception as ex: 
-            public.WriteLog('信息获取',"Nginx负载状态获取失败: %s" % ex)
+        except: 
             return public.returnMsg(False,'数据获取失败!')
     
     def GetPHPStatus(self,get):
@@ -70,7 +69,7 @@ class ajax:
             fTime = time.localtime(int(tmp['start time']))
             tmp['start time'] = time.strftime('%Y-%m-%d %H:%M:%S',fTime)
             return tmp
-        except Exception as ex:
+        except:
             public.WriteLog('信息获取',"PHP负载状态获取失败: {}".format(public.get_error_info()))
             return public.returnMsg(False,'负载状态获取失败!')
         
@@ -430,6 +429,17 @@ class ajax:
             return data
         except:
             return public.returnMsg(False,'AJAX_CONN_ERR')
+
+    def get_other_info(self):
+        other = {}
+        other['ds'] = []
+        ds = public.M('domain').field('name').select()
+        for d in ds:
+            other['ds'].append(d['name'])
+        return ','.join(other['ds'])
+
+    
+
     
     def UpdatePanel(self,get):
         try:
@@ -443,7 +453,7 @@ class ajax:
             if 'updateInfo' in session and hasattr(get,'check') == False:
                 updateInfo = session['updateInfo']
             else:
-                logs = ''
+                logs = public.get_debug_log()
                 import psutil,system,sys
                 mem = psutil.virtual_memory()
                 import panelPlugin
@@ -452,6 +462,7 @@ class ajax:
                 mplugin.ROWS = 10000
                 panelsys = system.system()
                 data = {}
+                data['ds'] = '' #self.get_other_info()
                 data['sites'] = str(public.M('sites').count())
                 data['ftps'] = str(public.M('ftps').count())
                 data['databases'] = str(public.M('databases').count())
@@ -510,7 +521,7 @@ class ajax:
             
             public.ExecShell('rm -rf /www/server/phpinfo/*')
             return public.returnMsg(True,updateInfo)
-        except Exception as ex:
+        except:
             return public.returnMsg(False,"CONNECT_ERR")
          
     #检查是否安装任何
@@ -806,14 +817,14 @@ class ajax:
             if get.port in rulePort:
                 return public.returnMsg(False,'AJAX_PHPMYADMIN_PORT_ERR')
             if public.get_webserver() == 'nginx':
-                rep = "listen\s+([0-9]+)\s*;"
+                rep = r"listen\s+([0-9]+)\s*;"
                 oldPort = re.search(rep,conf).groups()[0]
                 conf = re.sub(rep,'listen ' + get.port + ';\n',conf)
             else:
-                rep = "Listen\s+([0-9]+)\s*\n"
+                rep = r"Listen\s+([0-9]+)\s*\n"
                 oldPort = re.search(rep,conf).groups()[0]
                 conf = re.sub(rep,"Listen " + get.port + "\n",conf,1)
-                rep = "VirtualHost\s+\*:[0-9]+"
+                rep = r"VirtualHost\s+\*:[0-9]+"
                 conf = re.sub(rep,"VirtualHost *:" + get.port,conf,1)
             
             if oldPort == get.port: return public.returnMsg(False,'SOFT_PHPVERSION_ERR_PORT')
@@ -1002,15 +1013,29 @@ class ajax:
     
     #取PHP-FPM日志
     def GetFpmLogs(self,get):
-        path = '/www/server/php/' + get.version + '/var/log/php-fpm.log'
-        if not os.path.exists(path): return public.returnMsg(False,'AJAX_LOG_FILR_NOT_EXISTS')
-        return public.returnMsg(True,public.GetNumLines(path,1000))
+        import re
+        fpm_path = '/www/server/php/' + get.version + '/etc/php-fpm.conf'
+        if not os.path.exists(fpm_path): return public.returnMsg(False,'AJAX_LOG_FILR_NOT_EXISTS')
+        fpm_conf = public.readFile(fpm_path)
+        log_tmp = re.findall(r"error_log\s*=\s*(.+)",fpm_conf)
+        if not log_tmp: return public.returnMsg(False,'AJAX_LOG_FILR_NOT_EXISTS')
+        log_file = log_tmp[0].strip()
+        if log_file.find('var/log') == 0:
+            log_file = '/www/server/php/' +get.version + '/'+ log_file
+        return public.returnMsg(True,public.GetNumLines(log_file,1000))
     
     #取PHP慢日志
     def GetFpmSlowLogs(self,get):
-        path = '/www/server/php/' + get.version + '/var/log/slow.log'
-        if not os.path.exists(path): return public.returnMsg(False,'AJAX_LOG_FILR_NOT_EXISTS')
-        return public.returnMsg(True,public.GetNumLines(path,1000))
+        import re
+        fpm_path = '/www/server/php/' + get.version + '/etc/php-fpm.conf'
+        if not os.path.exists(fpm_path): return public.returnMsg(False,'AJAX_LOG_FILR_NOT_EXISTS')
+        fpm_conf = public.readFile(fpm_path)
+        log_tmp = re.findall(r"slowlog\s*=\s*(.+)",fpm_conf)
+        if not log_tmp: return public.returnMsg(False,'AJAX_LOG_FILR_NOT_EXISTS')
+        log_file = log_tmp[0].strip()
+        if log_file.find('var/log') == 0:
+            log_file = '/www/server/php/' +get.version + '/'+ log_file
+        return public.returnMsg(True,public.GetNumLines(log_file,1000))
     
     #取指定日志
     def GetOpeLogs(self,get):

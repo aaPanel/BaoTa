@@ -4,7 +4,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 曹觉心 <314866873@qq.com>
+# | Author: 沐落 <cjx@bt.cn>
 # +-------------------------------------------------------------------
 import os,sys,json,time,re
 setup_path = '/www/server/panel'
@@ -759,5 +759,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         type = sys.argv[1]
         if type == 'renew_lets_ssl':
-            panelLets().renew_lets_ssl()
+            try:
+                panelLets().renew_lets_ssl()
+            except: pass
             os.system(public.get_python_bin() + " /www/server/panel/class/acme_v2.py --renew=1")

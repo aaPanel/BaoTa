@@ -4,7 +4,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2017 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 黄文良 <287962566@qq.com>
+# | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 import public,re,sys,os,nginx,apache,json,time
 try:
@@ -1005,59 +1005,16 @@ class config:
         return pluginInfo
 
     def get_token(self,get):
-        save_path = '/www/server/panel/config/api.json'
-        tmp = public.ReadFile(save_path)
-        if not tmp or not os.path.exists(save_path): 
-            data = { "open":False, "token":"", "limit_addr":[] }
-            public.WriteFile(save_path,json.dumps(data))
-            public.ExecShell("chmod 600 " + save_path)
-            tmp = public.ReadFile(save_path)
-        data = json.loads(tmp)
-        if 'token_crypt' in data:
-            data['token'] = public.de_crypt(data['token'],data['token_crypt'])
-        else:
-            data['token'] = "***********************************"
-        data['limit_addr'] = '\n'.join(data['limit_addr'])
-        return data
+        import panelApi
+        return panelApi.panelApi().get_token(get)
 
     def set_token(self,get):
-        if 'request_token' in get: return public.returnMsg(False,'不能通过API接口配置API')
-        save_path = '/www/server/panel/config/api.json'
-        tmp = public.ReadFile(save_path)
-        if not tmp:
-            data = { "open":False, "token":"", "limit_addr":[] }
-            public.WriteFile(save_path,json.dumps(data))
-            public.ExecShell("chmod 600 " + save_path)
-        data = json.loads(tmp)
-        if get.t_type == '1':
-            token = public.GetRandomString(32)
-            data['token'] = public.md5(token)
-            data['token_crypt'] = public.en_crypt(data['token'],token).decode('utf-8')
-            public.WriteLog('API配置','重新生成API-Token')
-        elif get.t_type == '2':
-            data['open'] = not data['open']
-            stats = {True:'开启',False:'关闭'}
-            public.WriteLog('API配置','%sAPI接口' % stats[data['open']])
-            token = stats[data['open']] + '成功!'
-        elif get.t_type == '3':
-            data['limit_addr'] = get.limit_addr.split('\n')
-            public.WriteLog('API配置','变更IP限制为[%s]' % get.limit_addr)
-            token ='保存成功!'
-
-        public.WriteFile(save_path,json.dumps(data))
-        public.ExecShell("chmod 600 " + save_path)
-        return public.returnMsg(True,token)
-
+        import panelApi
+        return panelApi.panelApi().set_token(get)
 
     def get_tmp_token(self,get):
-        save_path = '/www/server/panel/config/api.json'
-        if not 'request_token' in get: return public.returnMsg(False,'只能通过API接口获取临时密钥')
-        data = json.loads(public.ReadFile(save_path))
-        data['tmp_token'] = public.GetRandomString(64)
-        data['tmp_time'] = time.time()
-        public.WriteFile(save_path,json.dumps(data))
-        return public.returnMsg(True,data['tmp_token'])
-
+        import panelApi
+        return panelApi.panelApi().get_tmp_token(get)
 
     def GetNginxValue(self,get):
         n = nginx.nginx()

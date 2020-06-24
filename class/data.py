@@ -4,11 +4,11 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2016 宝塔软件(http:#bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 黄文良 <287962566@qq.com>
+# | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
-import sys
+import sys,os,re,time
 sys.path.append("class/")
-import db,public,re
+import db,public
 import json
 
 class data:
@@ -43,6 +43,40 @@ class data:
         result = 0
         if temp['local']: result +=2
         return result
+
+    def get_site_ssl_info(self,siteName):
+        s_file = 'vhost/nginx/{}.conf'.format(siteName)
+        is_apache = False
+        if not os.path.exists(s_file):
+            s_file = 'vhost/apache/{}.conf'.format(siteName)
+            is_apache = True
+
+        if not os.path.exists(s_file):
+            return -1
+        
+        s_conf = public.readFile(s_file)
+        if not s_conf: return -1
+        ssl_file = None
+        if is_apache:
+            if s_conf.find('SSLCertificateFile') == -1:
+                return -1
+            s_tmp = re.findall(r"SSLCertificateFile\s+(.+\.pem)",s_conf)
+            if not s_tmp: return -1
+            ssl_file = s_tmp[0]
+        else:
+            if s_conf.find('ssl_certificate') == -1:
+                return -1
+            s_tmp = re.findall(r"ssl_certificate\s+(.+\.pem);",s_conf)
+            if not s_tmp: return -1
+            ssl_file = s_tmp[0]
+        ssl_info = public.get_cert_data(ssl_file)
+        if not ssl_info: return -1
+        ssl_info['endtime'] = int(int(time.mktime(time.strptime(ssl_info['notAfter'], "%Y-%m-%d")) - time.time()) / 86400)
+        return ssl_info
+        #return "{}:{}".format(ssl_info['issuer'],ssl_info['notAfter'])
+        
+
+        
     
     '''
      * 取数据列表
@@ -71,6 +105,7 @@ class data:
                 if table == 'sites':
                     for i in range(len(data['data'])):
                         data['data'][i]['domain'] = SQL.table('domain').where("pid=?",(data['data'][i]['id'],)).count()
+                        data['data'][i]['ssl'] = self.get_site_ssl_info(data['data'][i]['name'])
             elif table == 'firewall':
                 for i in range(len(data['data'])):
                     if data['data'][i]['port'].find(':') != -1 or data['data'][i]['port'].find('.') != -1 or data['data'][i]['port'].find('-') != -1:

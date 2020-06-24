@@ -37,7 +37,7 @@ var index = {
             index.net.table = echarts.init(document.getElementById('NetImg'));
             var obj = {};
             obj.dataZoom = [];
-            obj.unit = lan.index.unit + ':KB/s';
+            obj.unit = lan.index.unit + ':Kb/s';
             obj.tData = index.net.data.aData;
 
             obj.list = [];
@@ -127,15 +127,15 @@ var index = {
         })
 
         _this.get_data_info(function (loadbox, rdata) {
-            loadbox.hover(function () {
+            loadbox.find('.cicle').hover(function () {
                 var _this = $(this);
                 var d = _this.parents('ul').data('data').load;
-                layer.tips('最近1分钟平均负载：' + d.one + '</br>最近5分钟平均负载：' + d.five + '</br>最近15分钟平均负载：' + d.fifteen + '', _this.find('.cicle'), { time: 0, tips: [1, '#999'] });
+                layer.tips('最近1分钟平均负载：' + d.one + '</br>最近5分钟平均负载：' + d.five + '</br>最近15分钟平均负载：' + d.fifteen + '', _this, { time: 0, tips: [1, '#999'] });
             }, function () {
                 layer.closeAll('tips');
             })
 
-            $('.cpubox').hover(function () {
+            $('.cpubox').find('.cicle').hover(function () {
                 var _this = $(this);
                 var d = _this.parents('ul').data('data').cpu;
                 var crs = '';
@@ -145,7 +145,7 @@ var index = {
                     crs += 'CPU-' + i + ": " + d[2][i] + '%' + (n1 % 2 == 0?'</br>':' | ');
                     
                 }
-                layer.tips(d[3] + "</br>" + d[5] + "个物理CPU，" + (d[5] * d[4]) + "个物理核心，" + d[1]+"线程</br>"+ crs, _this.find('.cicle'), { time: 0, tips: [1, '#999'] });
+                layer.tips(d[3] + "</br>" + d[5] + "个物理CPU，" + (d[5] * d[4]) + "个物理核心，" + d[1]+"线程</br>"+ crs, _this, { time: 0, tips: [1, '#999'] });
             }, function () {
                 layer.closeAll('tips');
             });
@@ -344,9 +344,10 @@ var index = {
                     var mask = '';
                     for (var j = 0; j < item.masks.length; j++) mask += item.masks[j].title + ': ' + item.masks[j].value + "<br>";
                     _li.data('mask', mask);
-                    _li.hover(function () {
+                    console.log(_li.find('.cicle'));
+                    _li.find('.cicle').hover(function () {
                         var _this = $(this);
-                        layer.tips(_this.data('mask'), _this.find('.cicle'), { time: 0, tips: [1, '#999'] });
+                        layer.tips(_this.parent().data('mask'), _this, { time: 0, tips: [1, '#999'] });
                     }, function () {
                         layer.closeAll('tips');
                     })

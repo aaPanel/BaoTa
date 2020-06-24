@@ -370,7 +370,7 @@ var database = {
     },
     input_database: function (name) {
         var path = bt.get_cookie('backup_path') + "/database";
-        bt.send('get_files', 'files/GetDir', 'reverse=True&sort=mtime&tojs=GetFiles&p=1&showRow=100&path=' + path, function (rdata) {
+        bt.send('get_files', 'files/GetDir', 'reverse=True&sort=mtime&tojs=GetFiles&p=1&showRow=1000&path=' + path, function (rdata) {
             var data = [];
             for (var i = 0; i < rdata.FILES.length; i++) {
                 if (rdata.FILES[i] == null) continue;

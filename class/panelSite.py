@@ -4,7 +4,7 @@
 #-------------------------------------------------------------------
 # Copyright (c) 2015-2017 宝塔软件(http:#bt.cn) All rights reserved.
 #-------------------------------------------------------------------
-# Author: 黄文良 <287962566@qq.com>
+# Author: hwliang <hwl@bt.cn>
 #-------------------------------------------------------------------
 
 #------------------------------
@@ -87,7 +87,7 @@ class panelSite(panelRedirect):
         filename = self.setupPath+'/apache/conf/httpd.conf'
         if not os.path.exists(filename): return
         allConf = public.readFile(filename)
-        rep = "Listen\s+([0-9]+)\n"
+        rep = r"Listen\s+([0-9]+)\n"
         tmp = re.findall(rep,allConf)
         if not tmp: return False
         for key in tmp:
@@ -226,6 +226,8 @@ class panelSite(panelRedirect):
         urlrewriteFile = urlrewritePath+'/'+self.siteName+'.conf'
         if not os.path.exists(urlrewritePath): os.makedirs(urlrewritePath)
         open(urlrewriteFile,'w+').close()
+        if not os.path.exists(urlrewritePath):
+            public.writeFile(urlrewritePath,'')
         return True
 
     #重新生成nginx配置文件
@@ -617,7 +619,7 @@ class panelSite(panelRedirect):
         if not conf: return
         
         #添加域名
-        rep = "server_name\s*(.*);"
+        rep = r"server_name\s*(.*);"
         tmp = re.search(rep,conf).group()
         domains = tmp.replace(';','').strip().split(' ')
         if not public.inArray(domains,get.domain):
@@ -625,13 +627,13 @@ class panelSite(panelRedirect):
             conf = conf.replace(tmp,newServerName)
         
         #添加端口
-        rep = "listen\s+[\[\]\:]*([0-9]+).*;"
+        rep = r"listen\s+[\[\]\:]*([0-9]+).*;"
         tmp = re.findall(rep,conf)
         if not public.inArray(tmp,get.port):
             listen = re.search(rep,conf).group()
             listen_ipv6 = ''
-            if self.is_ipv6: listen_ipv6 = "\n\tlisten [::]:"+get.port+';'
-            conf = conf.replace(listen,listen + "\n\tlisten "+get.port+';' + listen_ipv6)
+            if self.is_ipv6: listen_ipv6 = "\n\t\tlisten [::]:"+get.port+';'
+            conf = conf.replace(listen,listen + "\n\t\tlisten "+get.port+';' + listen_ipv6)
         #保存配置文件
         public.writeFile(file,conf)
         return True
@@ -651,9 +653,9 @@ class panelSite(panelRedirect):
             
         #添加域名
         if conf.find('<VirtualHost *:'+port+'>') != -1:
-            repV = "<VirtualHost\s+\*\:"+port+">(.|\n)*</VirtualHost>"
+            repV = r"<VirtualHost\s+\*\:"+port+">(.|\n)*</VirtualHost>"
             domainV = re.search(repV,conf).group()
-            rep = "ServerAlias\s*(.*)\n"
+            rep = r"ServerAlias\s*(.*)\n"
             tmp = re.search(rep,domainV).group(0)
             domains = tmp.strip().split(' ')
             if not public.inArray(domains,newDomain):
@@ -662,9 +664,9 @@ class panelSite(panelRedirect):
                 myconf = domainV.replace(tmp,newServerName)
                 conf = re.sub(repV, myconf, conf)
             if conf.find('<VirtualHost *:443>') != -1:
-                repV = "<VirtualHost\s+\*\:443>(.|\n)*</VirtualHost>"
+                repV = r"<VirtualHost\s+\*\:443>(.|\n)*</VirtualHost>"
                 domainV = re.search(repV,conf).group()
-                rep = "ServerAlias\s*(.*)\n"
+                rep = r"ServerAlias\s*(.*)\n"
                 tmp = re.search(rep,domainV).group(0)
                 domains = tmp.strip().split(' ')
                 if not public.inArray(domains,newDomain):
@@ -746,18 +748,18 @@ class panelSite(panelRedirect):
         conf = public.readFile(file)
         if conf:
             #删除域名
-            rep = "server_name\s+(.+);"
+            rep = r"server_name\s+(.+);"
             tmp = re.search(rep,conf).group()
             newServerName = tmp.replace(' '+get['domain']+';',';')
             newServerName = newServerName.replace(' '+get['domain']+' ',' ')
             conf = conf.replace(tmp,newServerName)
             
             #删除端口
-            rep = "listen.*[\s:]+(\d+).*;"
+            rep = r"listen.*[\s:]+(\d+).*;"
             tmp = re.findall(rep,conf)
             port_count = sql.table('domain').where('pid=? AND port=?',(get.id,get.port)).count()
             if public.inArray(tmp,port) == True and  port_count < 2:
-                rep = "\n*\s+listen.*[\s:]+"+port+".*;"
+                rep = r"\n*\s+listen.*[\s:]+"+port+r"\s*;"
                 conf = re.sub(rep,'',conf)
             #保存配置
             public.writeFile(file,conf)
@@ -768,7 +770,7 @@ class panelSite(panelRedirect):
         if conf:
             #删除域名
             try:
-                rep = "\n*<VirtualHost \*\:" + port + ">(.|\n)*</VirtualHost>"
+                rep = r"\n*<VirtualHost \*\:" + port + ">(.|\n)*</VirtualHost>"
                 tmp = re.search(rep, conf).group()
                 
                 rep1 = "ServerAlias\s+(.+)\n"
@@ -1122,7 +1124,7 @@ class panelSite(panelRedirect):
         conf = public.readFile(file)
         if conf:
             ap_proxy = self.get_apache_proxy(conf)
-            if conf.find('SSLCertificateFile') == -1 and conf.find('proxy:unix:/tmp/php-cgi') != -1:
+            if conf.find('SSLCertificateFile') == -1 and conf.find('VirtualHost') != -1:
                 find = public.M('sites').where("name=?", (siteName,)).field('id,path').find()
                 tmp = public.M('domain').where('pid=?', (find['id'],)).field('name').select()
                 domains = ''
@@ -1708,6 +1710,7 @@ class panelSite(panelRedirect):
         dirnames = []
         for filename in os.listdir(path):
             try:
+                json.dumps(filename)
                 filePath = path + '/' + filename
                 if os.path.islink(filePath): continue
                 if os.path.isdir(filePath):
@@ -3303,6 +3306,7 @@ location %s
         if not os.path.exists(sitePath): os.makedirs(sitePath)
         for filename in os.listdir(sitePath):
             try:
+                json.dumps(filename)
                 filePath = sitePath + '/' + filename
                 if os.path.islink(filePath): continue
                 if os.path.isdir(filePath):

@@ -4,7 +4,7 @@
 #-------------------------------------------------------------------
 # Copyright (c) 2015-2019 宝塔软件(http:#bt.cn) All rights reserved.
 #-------------------------------------------------------------------
-# Author: 黄文良 <287962566@qq.com>
+# Author: hwliang <hwl@bt.cn>
 #-------------------------------------------------------------------
 import public,os,sys,json,time,psutil,py_compile,re
 from BTPanel import session,cache
@@ -68,7 +68,9 @@ class panelPlugin:
         for name in mutexs:
             pluginInfo = self.get_soft_find(name)
             if not pluginInfo: continue
-            if pluginInfo['setup'] == True: return False
+            if pluginInfo['setup'] == True:
+                self.mutex_title = pluginInfo['title']
+                return False
         return True
 
     #检查依赖
@@ -82,6 +84,7 @@ class panelPlugin:
                 names = dep.split('|')
                 for name in names:
                     pluginInfo = self.get_soft_find(name)
+                    if not pluginInfo: return True
                     if pluginInfo['setup'] == True:
                         status = True
                         break
@@ -125,7 +128,8 @@ class panelPlugin:
         if os.path.exists(p_node):
             if len(public.readFile(p_node)) < 100: os.remove(p_node)
         if not pluginInfo: return public.returnMsg(False,'指定插件不存在!')
-        if not self.check_mutex(pluginInfo['mutex']): return public.returnMsg(False,'请先卸载[%s]' % pluginInfo['mutex'] )
+        self.mutex_title = pluginInfo['mutex']
+        if not self.check_mutex(pluginInfo['mutex']): return public.returnMsg(False,'请先卸载[%s]' % self.mutex_title )
         if not hasattr(get,'id'):
             if not self.check_dependnet(pluginInfo['dependnet']): return public.returnMsg(False,'依赖以下软件,请先安装[%s]' % pluginInfo['dependnet'])
         if 'version' in get:
@@ -247,7 +251,7 @@ class panelPlugin:
         else:
 
             if pluginInfo['name'] == 'mysql':
-                if public.M('databases').count() > 0: return public.returnMsg(False,"数据库列表非空，为了您的数据安全，请先备份并删除现有数据库<br>强制卸载命令：rm -rf /www/server/mysql")
+                if public.M('databases').count() > 0: return public.returnMsg(False,"数据库列表非空，为了您的数据安全，请先<span style='color:red;'>备份所有数据库数据</span>后删除现有数据库<br>强制卸载命令：rm -rf /www/server/mysql")
             get.type = '0'
             if session['server_os']['x'] != 'RHEL': get.type = '3'
             get.sName = get.sName.lower()
@@ -284,7 +288,7 @@ class panelPlugin:
             cloudUrl = public.GetConfigValue('home') + '/api/panel/get_soft_list_test'
             import panelAuth
             pdata = panelAuth.panelAuth().create_serverid(None)
-            listTmp = public.httpPost(cloudUrl,pdata,10)
+            listTmp = public.httpPost(cloudUrl,pdata,5)
             if not listTmp or len(listTmp) < 200:
                 listTmp = public.readFile(lcoalTmp)
             try:
@@ -293,6 +297,7 @@ class panelPlugin:
             if softList: public.writeFile(lcoalTmp,json.dumps(softList))
             public.ExecShell('rm -f /tmp/bmac_*')
             self.getCloudPHPExt(get)
+            self.expire_msg(softList)
         try:
             public.writeFile("/tmp/" + cache.get('p_token'),str(softList['pro']))
         except:pass
@@ -307,6 +312,7 @@ class panelPlugin:
         if hasattr(get,'query'):
             if get.query:
                 get.query = get.query.lower()
+                public.total_keyword(get.query)
                 tmpList = []
                 for softInfo in softList['list']:
                     if softInfo['name'].lower().find(get.query) != -1 or \
@@ -315,6 +321,83 @@ class panelPlugin:
                         tmpList.append(softInfo)
                 softList['list'] = tmpList
         return softList
+ 
+    #取提醒标记
+    def get_level_msg(self,level,s_time,endtime):
+        '''
+            level 提醒标记
+            s_time 当前时间戳
+            endtime 到期时间戳
+        '''
+        expire_day = (endtime - s_time) / 86400
+        if expire_day < 15 and expire_day > 7:
+            level = level + '15'
+        elif expire_day < 7 and expire_day > 3:
+            level = level + '7'
+        elif expire_day < 3 and expire_day > 0:
+            level = level + '3'
+        return level,expire_day
+
+    #添加到期提醒
+    def add_expire_msg(self,title,level,name,expire_day,pid,endtime):
+        '''
+            title 软件标题
+            level 提醒标记
+            name 软件名称
+            expire_day 剩余天数
+        '''
+        import panelMessage #引用消息提醒模块
+        pm = panelMessage.panelMessage()
+        pm.remove_message_level(level) #删除旧的提醒
+        if expire_day > 15: return False
+        if pm.is_level(level): #是否忽略
+            if level != name: #到期还是即将到期
+                msg_last = '您的【{}】授权还有{}天到期'.format(title,int(expire_day))
+            else:
+                msg_last = '您的【{}】授权已到期'.format(title)
+            pl_msg = 'true'
+            if name in ['pro','ltd']:
+                pl_msg = 'false'
+            renew_msg = '<a class="btlink" onclick="bt.soft.product_pay_view({name:\'%s\',pid:%s,limit:\'%s\',plugin:%s,renew:%s});">立即续费</a>' % (title,pid,name,pl_msg,endtime)
+            pm.create_message(level=level,expire=7,msg="{}，为了不影响您正常使用【{}】功能，请及时续费，{}".format(msg_last,title,renew_msg))
+            return True
+        return False
+        
+    #到期提醒
+    def expire_msg(self,data):
+        '''
+            data 插件列表
+        '''
+        s_time = time.time()
+        is_plugin = True
+        import panelMessage #引用消息提醒模块
+        pm = panelMessage.panelMessage()
+        pm.remove_message_all()
+        
+        #企业版到期提醒
+        if not data['ltd'] in [-1]:
+            level,expire_day = self.get_level_msg('ltd',s_time,data['ltd'])
+            self.add_expire_msg('企业版',level,'ltd',expire_day,100000032,data['ltd'])
+            pm.remove_message_level('pro')
+            return True
+
+        #专业版到期提醒
+        if not data['pro'] in [-1,0]:
+            level,expire_day = self.get_level_msg('pro',s_time,data['pro'])
+            self.add_expire_msg('专业版',level,'pro',expire_day,100000011,data['pro'])
+            is_plugin = False
+        
+        #单独购买的插件到期提醒
+        # for p in data['list']:
+        #     #跳过非企业版或专业版插件
+        #     if not p['type'] in [8,12]: continue
+        #     #已经是专业版的情况下跳过专业版插件
+        #     if not is_plugin and p['type'] == 8: continue
+        #     if not p['endtime'] in [-1,0]:
+        #         level,expire_day = self.get_level_msg(p['name'],s_time,p['endtime'])
+        #         self.add_expire_msg(p['title'],level,p['name'],expire_day,p['pid'],p['endtime'])
+        return True
+
 
     #提交用户评分
     def set_score(self,args):
@@ -361,14 +444,28 @@ class panelPlugin:
         try:
             log_path = 'logs/request'
             if not os.path.exists(log_path): return False
-            limit_num = 7
+            limit_num = 180
             p_logs = sorted(os.listdir(log_path))
             num = len(p_logs) - limit_num
-            if num <= 0: return False
-            for i in range(num):
-                filename = log_path + '/' + p_logs[i]
-                if not os.path.exists(filename): continue
-                os.remove(filename)
+            if num > 0:
+                for i in range(num):
+                    filename = log_path + '/' + p_logs[i]
+                    if not os.path.exists(filename): continue
+                    os.remove(filename)
+
+            today = public.getDate(format='%Y-%m-%d')
+            for fname in os.listdir(log_path):
+                fsplit = fname.split('.')
+                if fsplit[-1] != 'json':
+                    continue
+                if fsplit[0] == today:
+                    continue
+                public.ExecShell("cd {} && gzip {}".format(log_path,fname))
+
+            #清理错误日志
+            public.clean_max_log('/www/server/panel/logs/error.log',10,20)
+            public.clean_max_log('/www/server/panel/logs/socks5.log',10,20)
+            public.clean_max_log('/www/server/panel/logs/oos.log',10,20)
             return True
         except:return False
 
@@ -476,9 +573,13 @@ class panelPlugin:
     #处理分类
     def get_types(self,sList,sType):
         if sType <= 0: return sList
+        if sType != 12:
+            sType = [sType]
+        else:
+            sType = [sType,8]
         newList = []
         for sInfo in sList:
-            if sInfo['type'] == sType: newList.append(sInfo)
+            if sInfo['type'] in sType: newList.append(sInfo)
         return newList
 
     #检查权限
@@ -502,11 +603,11 @@ class panelPlugin:
         args.type = '12'
         p_list = self.get_cloud_list(args)
         for p in p_list['list']:
+            if not p['type'] in [12,'12']: continue
             if p['name'] == get.name:
                 if not 'endtime' in p: continue
                 if p_list['ltd'] < 1 and p['endtime'] < 1: return False
                 break
-            
         return True
 
     #取软件列表
@@ -1428,7 +1529,7 @@ class panelPlugin:
         phpversion = "54"
         if os.path.exists(configFile):
             conf = public.readFile(configFile)
-            rep = "listen\s+([0-9]+)\s*;"
+            rep = r"listen\s+([0-9]+)\s*;"
             rtmp = re.search(rep,conf)
             if rtmp:
                 phpport = rtmp.groups()[0]
@@ -1438,23 +1539,23 @@ class panelPlugin:
             configFile = setupPath + '/nginx/conf/enable-php.conf'
             if not os.path.exists(configFile): public.writeFile(configFile,public.readFile(setupPath + '/nginx/conf/enable-php-54.conf'))
             conf = public.readFile(configFile)
-            rep = "php-cgi-([0-9]+)\.sock"
+            rep = r"php-cgi-([0-9]+)\.sock"
             rtmp = re.search(rep,conf)
             if rtmp:
                 phpversion = rtmp.groups()[0]
             else:
-                rep = "php-cgi.*\.sock"
+                rep = r"php-cgi.*\.sock"
                 public.writeFile(configFile,conf)
                 phpversion = '54'
         
         configFile = setupPath + '/apache/conf/extra/httpd-vhosts.conf'
         if os.path.exists(configFile):
             conf = public.readFile(configFile)
-            rep = "php-cgi-([0-9]+)\.sock"
+            rep = r"php-cgi-([0-9]+)\.sock"
             rtmp = re.search(rep,conf)
             if rtmp:
                 phpversion = rtmp.groups()[0]
-            rep = "Listen\s+([0-9]+)\s*\n"
+            rep = r"Listen\s+([0-9]+)\s*\n"
             rtmp = re.search(rep,conf)
             if rtmp:
                 phpport = rtmp.groups()[0]
@@ -1491,20 +1592,20 @@ class panelPlugin:
         phpfpm = public.readFile(file)
         data = {}
         try:
-            rep = "upload_max_filesize\s*=\s*([0-9]+)M"
+            rep = r"upload_max_filesize\s*=\s*([0-9]+)M"
             tmp = re.search(rep,phpini).groups()
             data['max'] = tmp[0]
         except:
             data['max'] = '50'
         try:
-            rep = "request_terminate_timeout\s*=\s*([0-9]+)\n"
+            rep = r"request_terminate_timeout\s*=\s*([0-9]+)\n"
             tmp = re.search(rep,phpfpm).groups()
             data['maxTime'] = tmp[0]
         except:
             data['maxTime'] = 0
         
         try:
-            rep = u"\n;*\s*cgi\.fix_pathinfo\s*=\s*([0-9]+)\s*\n"
+            rep = r"\n;*\s*cgi\.fix_pathinfo\s*=\s*([0-9]+)\s*\n"
             tmp = re.search(rep,phpini).groups()
             
             if tmp[0] == '1':
@@ -1679,7 +1780,7 @@ class panelPlugin:
             for w in wlist['data']:
                 if data['data'][i]['name'] != w['name']: continue
                 data['data'][i]['ignore_count'] = w['ignore_count']
-                data['data'][i]['ignore_time'] = w['ignore_time'];                         
+                data['data'][i]['ignore_time'] = w['ignore_time']                        
         public.writeFile(wfile,json.dumps(data))
         return data
 
@@ -1712,7 +1813,7 @@ class panelPlugin:
             if not hasattr(pluginObject,get.s): return public.returnMsg(False,'PLUGIN_INPUT_C',(get.s,))
             execStr = 'pluginObject.' + get.s + '(get)'
             return eval(execStr)
-        except Exception as ex:
+        except:
             import traceback
             errorMsg = traceback.format_exc()
             public.submit_error(errorMsg)

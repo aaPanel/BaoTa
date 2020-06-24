@@ -4,7 +4,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 邹浩文 <627622230@qq.com>
+# | Author: zhwen<zhw@bt.cn>
 # +-------------------------------------------------------------------
 import os
 os.chdir("/www/server/panel")
@@ -36,7 +36,7 @@ class setPanelLets:
     # 检查是否存在站点aapanel主机名站点
     def __check_host_name(self, domain):
         sql = db.Sql()
-        path = sql.table('sites').where('name=?', (domain,)).getField('id')
+        path = sql.table('sites').where('name=?', (domain,)).getField('path')
         return path
 
     # 创建证书使用的站点
@@ -91,11 +91,15 @@ class setPanelLets:
 
     # 读取可用站点证书
     def __read_site_cert(self,domain_cert):
-        self.__tmp_key = public.readFile("{path}{domain}/{key}".format(path=self.__vhost_cert_path,domain=domain_cert["subject"],key="privkey.pem"))
-        self.__tmp_cert = public.readFile(
-            "{path}{domain}/{cert}".format(path=self.__vhost_cert_path, domain=domain_cert["subject"],
-                                           cert="fullchain.pem"))
-        public.writeFile("/tmp/2",str(self.__tmp_cert))
+        key_file = "{path}{domain}/{key}".format(path=self.__vhost_cert_path,domain=domain_cert["subject"],key="privkey.pem")
+        cert_file = "{path}{domain}/{cert}".format(path=self.__vhost_cert_path, domain=domain_cert["subject"],
+                                                   cert="fullchain.pem")
+        if not os.path.exists(key_file):
+            key_file = "{path}{domain}/{key}".format(path="/www/server/panel/vhost/ssl/",domain=domain_cert["subject"],key="privkey.pem")
+            cert_file = "{path}{domain}/{cert}".format(path="/www/server/panel/vhost/ssl/", domain=domain_cert["subject"],
+                                           cert="fullchain.pem")
+        self.__tmp_key = public.readFile(key_file)
+        self.__tmp_cert = public.readFile(cert_file)
 
     # 检查面板证书是否存在
     def __check_panel_cert(self):
@@ -152,7 +156,7 @@ class setPanelLets:
                                  'dns':p_s['cert_data']['dns'],
                                  'notAfter':p_s['cert_data']['notAfter'],
                                  'notBefore':p_s['cert_data']['notBefore'],
-                                 'subject':p_s['cert_data']['notBefore']}
+                                 'subject':p_s['cert_data']['subject']}
                     return self.copy_cert(cert_info)
 
     # 复制证书
@@ -189,7 +193,7 @@ class setPanelLets:
             return public.returnMsg(True, '面板lets https设置成功')
         if not create_site:
             create_lets = self.__create_lets(get)
-            if create_lets['msg']:
+            if not create_lets:
                 domain_cert = self.__check_cert_dir(get)
                 self.copy_cert(domain_cert)
                 public.writeFile("/www/server/panel/data/ssl.pl", "True")

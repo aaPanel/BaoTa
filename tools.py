@@ -4,7 +4,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 黄文良 <287962566@qq.com>
+# | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 
 #------------------------------
@@ -373,8 +373,8 @@ def setup_idc():
         tFile = panelPath + '/data/title.pl'
         titleNew = (pInfo['brand'] + u'面板').encode('utf-8')
         if os.path.exists(tFile):
-            title = public.readFile(tFile).strip()
-            if title == '宝塔Linux面板' or title == '': 
+            title = public.GetConfigValue('title')
+            if title == '' or title == '宝塔Linux面板': 
                 public.writeFile(tFile,titleNew)
                 public.SetConfigValue('title',titleNew)
         else:
@@ -489,6 +489,9 @@ def bt_cli(u_input = 0):
         old_port = int(public.readFile('data/port.pl'))
         if old_port == input_port:
             print("|-错误，与面板当前端口一致，无需修改")
+            return
+        if input_port > 65535 or input_port < 1:
+            print("|-错误，可用端口范围在1-65535之间")
             return
 
         is_exists = public.ExecShell("lsof -i:%s|grep LISTEN|grep -v grep" % input_port)

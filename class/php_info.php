@@ -75,6 +75,6 @@ function get_info(){
 	return $data;
 }
 $result = get_info();
-exit(json_encode($result,1));
+exit(json_encode($result));
 
 

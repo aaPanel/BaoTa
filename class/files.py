@@ -5,7 +5,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2016 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 黄文良 <287962566@qq.com>
+# | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 import sys
 import os
@@ -192,6 +192,9 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             args.f_name = args.f_name.encode('utf-8')
             args.f_path = args.f_path.encode('utf-8')
 
+        if args.f_path == '/':
+            return public.returnMsg(False,'不能直接上传文件到系统根目录!')
+
         if args.f_name.find('./') != -1 or args.f_path.find('./') != -1:
             return public.returnMsg(False, '错误的参数')
         if not os.path.exists(args.f_path):
@@ -324,8 +327,11 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                     continue
 
                 try:
+                    
                     if sys.version_info[0] == 2:
                         filename = filename.encode('utf-8')
+                    else:
+                        filename.encode('utf-8')
                     filePath = get.path+'/'+filename
                     link = ''
                     if os.path.islink(filePath):
@@ -346,7 +352,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                     size = str(stat.st_size)
                     if os.path.isdir(filePath):
                         dirnames.append(filename+';'+size+';' +
-                                        mtime+';'+accept+';'+user+';'+link + ';0;' + self.is_composer_json(filePath))
+                                        mtime+';'+accept+';'+user+';'+link + ';' +self.get_download_id(filePath)+';'+ self.is_composer_json(filePath))
                     else:
                         filenames.append(filename+';'+size+';'+mtime+';'+accept+';'+user+';'+link+';'+self.get_download_id(filePath))
                     n += 1
@@ -495,6 +501,27 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             filename = filename.replace(tmp_path, '')
         return filename + ';' + size + ';' + mtime + ';' + accept + ';' + user + ';' + link+';'+ down_url
 
+    #获取指定目录下的所有视频或音频文件
+    def get_videos(self,args):
+        path = args.path.strip()
+        v_data = []
+        if not os.path.exists(path): return v_data
+        import mimetypes
+        for fname in os.listdir(path):
+            try:
+                filename = os.path.join(path,fname)
+                if not os.path.exists(filename): continue
+                if not os.path.isfile(filename): continue
+                v_tmp = {}
+                v_tmp['name'] = fname
+                v_tmp['type'] = mimetypes.guess_type(filename)[0]
+                v_tmp['size'] = os.path.getsize(filename)
+                if not v_tmp['type'].split('/')[0] in ['video']:
+                    continue
+                v_data.append(v_tmp)
+            except:continue
+        return sorted(v_data,key=lambda x:x['name'])
+    
     # 计算文件数量
     def GetFilesCount(self, path, search):
         if os.path.isfile(path):
@@ -778,6 +805,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             public.WriteLog('TYPE_FILE', 'FILE_COPY_SUCCESS',
                             (get.sfile, get.dfile))
             stat = os.stat(get.sfile)
+            os.chmod(get.dfile,stat.st_mode)
             os.chown(get.dfile, stat.st_uid, stat.st_gid)
             return public.returnMsg(True, 'FILE_COPY_SUCCESS')
         except:
@@ -800,6 +828,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         try:
             self.copytree(get.sfile, get.dfile)
             stat = os.stat(get.sfile)
+            os.chmod(get.dfile,stat.st_mode)
             os.chown(get.dfile, stat.st_uid, stat.st_gid)
             public.WriteLog('TYPE_FILE', 'DIR_COPY_SUCCESS',
                             (get.sfile, get.dfile))
@@ -819,6 +848,9 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             return public.returnMsg(False, '不能直接操作回收站目录，请在右上角按【回收站】按钮打开')
         if not os.path.exists(get.sfile):
             return public.returnMsg(False, 'FILE_NOT_EXISTS')
+
+        if get.dfile[-1] == '/':
+            get.dfile = get.dfile[:-1]
 
         if get.dfile == get.sfile:
             return public.returnMsg(False, '无意义操作')
@@ -1320,12 +1352,17 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             shutil.move(sfile, dfile)
         else:
             self.copytree(sfile, dfile)
-            if os.path.exists(sfile):
+            if os.path.exists(sfile) and os.path.exists(dfile):
                 if is_dir:
                     shutil.rmtree(sfile)
                 else:
                     os.remove(sfile)
         return True
+
+
+    #创建软链
+    def create_link(self,args):
+        pass
 
     # 复制目录
     def copytree(self, sfile, dfile):
@@ -1789,8 +1826,6 @@ cd %s
     def create_download_url(self,get):
         if not os.path.exists(get.filename):
             return public.returnMsg(False,'指定文件不存在!')
-        if not os.path.isfile(get.filename):
-            return public.returnMsg(False,'不能为目录生成下载地址!')
         my_table = 'download_token'
         mtime = int(time.time())
         pdata = {
@@ -1799,7 +1834,7 @@ cd %s
             "expire": mtime + (int(get.expire) * 3600), #过期时间
             "ps":get.ps, #备注
             "total":0,  #下载计数
-            "password":get.password, #提取密码
+            "password":str(get.password), #提取密码
             "addtime": mtime #添加时间
         }
         #更新 or 插入

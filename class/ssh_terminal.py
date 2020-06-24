@@ -4,7 +4,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 黄文良 <287962566@qq.com>
+# | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 try:
     import paramiko
@@ -19,7 +19,9 @@ import threading
 sys.path.insert(0, '/www/server/panel/class/')
 import public
 from io import BytesIO, StringIO
-from BTPanel import session
+
+
+
 
 class ssh_terminal:
     __log_type = '宝塔终端'

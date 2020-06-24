@@ -56,13 +56,13 @@
     bt.set_cookie('serverType', "{{session['webserver']}}");
     $(document).ready(function () {
         soft.get_list();
-        setTimeout(function () {
-            soft_td_width_auto();
-        }, 500);
+        // setTimeout(function () {
+        //     soft_td_width_auto();
+        // }, 500);
     });
-    $(window).resize(function () {
-        soft_td_width_auto();
-    });
-
+    // $(window).resize(function () {
+    //     soft_td_width_auto();
+    // });
+    // bt.soft.set_lib_config('php_filter','PHP安全防护模块')
 </script>
 {% endblock %}

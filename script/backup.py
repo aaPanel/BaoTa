@@ -11,182 +11,26 @@ if sys.version_info[0] == 2:
     reload(sys)
     sys.setdefaultencoding('utf-8')
 import public,db,time
+import panelBackup
 
-class backupTools:
-    __exclude = ""
-
-    def __init__(self):
-        self.get_exclode()
-
+class backupTools(panelBackup.backup):
     def backupSite(self,name,count):
-        sql = db.Sql()
-        path = sql.table('sites').where('name=?',(name,)).getField('path')
-        startTime = time.time()
-        if not path:
-            endDate = time.strftime('%Y/%m/%d %X',time.localtime())
-            log = u"网站["+name+"]不存在!"
-            print(u"★["+endDate+"] "+log)
-            print("----------------------------------------------------------------------------")
-            return
-        
-        backup_path = sql.table('config').where("id=?",(1,)).getField('backup_path') + '/site'
-        if not os.path.exists(backup_path): public.ExecShell("mkdir -p " + backup_path)
-        filename= backup_path + "/Web_" + name + "_" + time.strftime('%Y%m%d_%H%M%S',time.localtime()) + '.tar.gz'
-        public.ExecShell("cd " + os.path.dirname(path) + " && tar zcvf '" + filename + "' "+self.__exclude +" '" + os.path.basename(path) + "' > /dev/null")
-        
-        
-        endDate = time.strftime('%Y/%m/%d %X',time.localtime())
-        
-        if not os.path.exists(filename):
-            log = u"网站["+name+u"]备份失败!"
-            print(u"★["+endDate+"] "+log)
-            print(u"----------------------------------------------------------------------------")
-            return
-        
-        outTime = time.time() - startTime
-        pid = sql.table('sites').where('name=?',(name,)).getField('id')
-        sql.table('backup').add('type,name,pid,filename,addtime,size',('0',os.path.basename(filename),pid,filename,endDate,os.path.getsize(filename)))
-        log = u"网站["+name+u"]备份成功,用时["+str(round(outTime,2))+u"]秒"
-        public.WriteLog(u'计划任务',log)
-        print(u"★["+endDate+"] " + log)
-        print(u"|---保留最新的["+count+u"]份备份")
-        print(u"|---文件名:"+filename)
-        if self.__exclude: print(u"|---排除规则: " + self.__exclude)
-        
-        #清理多余备份     
-        backups = sql.table('backup').where('type=? and pid=? and filename!=? and filename!=? and filename!=? and filename!=? and filename!=?',('0',pid,'alioss','txcos','upyun','qiniu','ftp')).field('id,filename').select()
-        
-        num = len(backups) - int(count)
-        if  num > 0:
-            for backup in backups:
-                public.ExecShell("rm -f " + backup['filename'])
-                sql.table('backup').where('id=?',(backup['id'],)).delete()
-                num -= 1
-                print(u"|---已清理过期备份文件：" + backup['filename'])
-                if num < 1: break
+        self.backup_site(name,save=count)
     
     def backupDatabase(self,name,count):
-        sql = db.Sql()
-        path = sql.table('databases').where('name=?',(name,)).getField('id')
-        startTime = time.time()
-        if not path:
-            endDate = time.strftime('%Y/%m/%d %X',time.localtime())
-            log = u"数据库["+name+u"]不存在!"
-            print(u"★["+endDate+"] "+log)
-            print(u"----------------------------------------------------------------------------")
-            return
-        
-        backup_path = sql.table('config').where("id=?",(1,)).getField('backup_path') + '/database'
-        if not os.path.exists(backup_path): public.ExecShell("mkdir -p " + backup_path)
-        
-        filename = backup_path + "/Db_" + name + "_" + time.strftime('%Y%m%d_%H%M%S',time.localtime())+".sql.gz"
-        
-        import re
-        mysql_root = sql.table('config').where("id=?",(1,)).getField('mysql_root')
-        
-        mycnf = public.readFile('/etc/my.cnf')
-        rep = "\[mysqldump\]\nuser=root"
-        sea = "[mysqldump]\n"
-        subStr = sea + "user=root\npassword=" + mysql_root+"\n"
-        mycnf = mycnf.replace(sea,subStr)
-        if len(mycnf) > 100:
-            public.writeFile('/etc/my.cnf',mycnf)
-        
-        public.ExecShell("/www/server/mysql/bin/mysqldump --default-character-set="+ public.get_database_character(name) +" --force --opt " + name + " | gzip > " + filename)
-        
-        if not os.path.exists(filename):
-            endDate = time.strftime('%Y/%m/%d %X',time.localtime())
-            log = u"数据库["+name+u"]备份失败!"
-            print(u"★["+endDate+"] "+log)
-            print(u"----------------------------------------------------------------------------")
-            return
-        
-        mycnf = public.readFile('/etc/my.cnf')
-        mycnf = mycnf.replace(subStr,sea)
-        if len(mycnf) > 100:
-            public.writeFile('/etc/my.cnf',mycnf)
-        
-        endDate = time.strftime('%Y/%m/%d %X',time.localtime())
-        outTime = time.time() - startTime
-        pid = sql.table('databases').where('name=?',(name,)).getField('id')
-        
-        sql.table('backup').add('type,name,pid,filename,addtime,size',(1,os.path.basename(filename),pid,filename,endDate,os.path.getsize(filename)))
-        log = u"数据库["+name+u"]备份成功,用时["+str(round(outTime,2))+u"]秒"
-        public.WriteLog(u'计划任务',log)
-        print("★["+endDate+"] " + log)
-        print(u"|---保留最新的["+count+u"]份备份")
-        print(u"|---文件名:"+filename)
-        
-        #清理多余备份     
-        backups = sql.table('backup').where('type=? and pid=? and filename!=? and filename!=? and filename!=? and filename!=? and filename!=?',('1',pid,'alioss','txcos','upyun','qiniu','ftp')).field('id,filename').select()
-        
-        num = len(backups) - int(count)
-        if  num > 0:
-            for backup in backups:
-                public.ExecShell("rm -f " + backup['filename'])
-                sql.table('backup').where('id=?',(backup['id'],)).delete()
-                num -= 1
-                print(u"|---已清理过期备份文件：" + backup['filename'])
-                if num < 1: break
+        self.backup_database(name,save=count)
     
     #备份指定目录
     def backupPath(self,path,count):
-        sql = db.Sql()
-        startTime = time.time()
-        if path[-1:] == '/': path = path[:-1]
-        name = os.path.basename(path)
-        backup_path = sql.table('config').where("id=?",(1,)).getField('backup_path') + '/path'
-        if not os.path.exists(backup_path): os.makedirs(backup_path)
-        filename= backup_path + "/Path_" + name + "_" + time.strftime('%Y%m%d_%H%M%S',time.localtime()) + '.tar.gz'
-        os.system("cd " + os.path.dirname(path) + " && tar zcvf '" + filename + "' " + self.__exclude + " '" + os.path.basename(path) + "' > /dev/null")
-
-        endDate = time.strftime('%Y/%m/%d %X',time.localtime())
-        if not os.path.exists(filename):
-            log = u"目录["+path+"]备份失败"
-            print(u"★["+endDate+"] "+log)
-            print(u"----------------------------------------------------------------------------")
-            return
-        
-        outTime = time.time() - startTime
-        sql.table('backup').add('type,name,pid,filename,addtime,size',('2',path,'0',filename,endDate,os.path.getsize(filename)))
-        log = u"目录["+path+"]备份成功,用时["+str(round(outTime,2))+"]秒"
-        public.WriteLog(u'计划任务',log)
-        print(u"★["+endDate+"] " + log)
-        print(u"|---保留最新的["+count+u"]份备份")
-        print(u"|---文件名:"+filename)
-        if self.__exclude: print(u"|---排除规则: " + self.__exclude)
-        
-        #清理多余备份     
-        backups = sql.table('backup').where('type=? and pid=? and name=?',('2',0,path)).field('id,filename').select()
-        num = len(backups) - int(count)
-        if  num > 0:
-            for backup in backups:
-                public.ExecShell("rm -f " + backup['filename'])
-                sql.table('backup').where('id=?',(backup['id'],)).delete()
-                num -= 1
-                print(u"|---已清理过期备份文件：" + backup['filename'])
-                if num < 1: break
+        self.backup_path(path,save=count)
         
     
     def backupSiteAll(self,save):
-        sites = public.M('sites').field('name').select()
-        for site in sites:
-            self.backupSite(site['name'],save)
+        self.backup_site_all(save)
         
 
     def backupDatabaseAll(self,save):
-        databases = public.M('databases').field('name').select()
-        for database in databases:
-            self.backupDatabase(database['name'],save)
-    
-    def get_exclode(self):
-        tmp_exclude = os.getenv('BT_EXCLUDE')
-        if not tmp_exclude: return ""
-        for ex in tmp_exclude.split(','):
-            self.__exclude += " --exclude=\"" + ex + "\""
-        self.__exclude += " "
-        return self.__exclude
-
+        self.backup_database_all(save)
 
 
 if __name__ == "__main__":

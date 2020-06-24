@@ -899,16 +899,17 @@ function GetPanelApi() {
                                 <textarea name="api_limit_addr" class="bt-input-text mr5" type="text" style="width: 310px;height:80px;line-height: 20px;padding: 5px 8px;margin-bottom:10px;">'+ rdata.limit_addr +'</textarea>\
                                 <button class="btn btn-success btn-sm" onclick="SetPanelApi(3)">保存</button>\
                             </div>\
-                        </div>\
+						</div>\
                         <ul class="help-info-text c7">\
                             <li>开启API后，必需在IP白名单列表中的IP才能访问面板API接口</li>\
                             <li style="color:red;">如需本机调用面板API密钥，请添加" 127.0.0.1 "和本机IP至IP白名单</li>\
                             <li>API接口文档在这里：<a class="btlink" href="https://www.bt.cn/bbs/thread-20376-1-1.html" target="_blank">https://www.bt.cn/bbs/thread-20376-1-1.html</a></li>\
                         </ul>\
-                    </div>'
-        })
+					</div>'
+		})
     });
 }
+
 function showPawApi(){
 	layer.msg('面板API密钥仅支持一次性显示,请妥善保管。<br>如需显示面板API密钥,请点击重置按钮，重新获取新的API密钥。<br><span style="color:red;">注意事项：重置密钥后，已关联密钥产品，将失效，请重新添加新密钥至产品。</span>',{icon:0,time:0,shadeClose:true,shade:0.1});
 }

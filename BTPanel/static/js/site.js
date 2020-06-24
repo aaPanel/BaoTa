@@ -59,9 +59,28 @@ var site = {
                                 return "<span class='c9 input-edit'  onclick=\"bt.pub.set_data_by_key('sites','ps',this)\">" + item.ps + "</span>";
                             }
                         },
-
                         {
-                            field: 'opt', width: 260, title: '操作', align: 'right', templet: function (item) {
+                            field: 'ssl', title: 'SSL证书', width: 110, templet: function (item) {
+                                var _ssl = '';
+                                if (item.ssl == -1)
+                                {
+                                    _ssl = '<a class="ssl_tips btlink" style="color:orange;">未部署</a>';
+                                }else{
+                                    var ssl_info = "证书品牌: "+item.ssl.issuer+"<br>到期日期: " + item.ssl.notAfter+"<br>申请日期: " + item.ssl.notBefore +"<br>可用域名: " + item.ssl.dns.join("/");
+                                    if(item.ssl.endtime < 0){
+                                        _ssl = '<a class="ssl_tips btlink" style="color:red;" data-tips="'+ssl_info+'">已过期</a>';
+                                    
+                                    }else if(item.ssl.endtime < 20){
+                                        _ssl = '<a class="ssl_tips btlink" style="color:red;" data-tips="'+ssl_info+'">剩余'+(item.ssl.endtime+'天')+'</a>';
+                                    }else{
+                                        _ssl = '<a class="ssl_tips btlink" style="color:green;" data-tips="'+ssl_info+'">剩余'+item.ssl.endtime+'天</a>';
+                                    }
+                                }
+                                return _ssl;
+                            }
+                        },
+                        {
+                            field: 'opt', width: 200, title: '操作', align: 'right', templet: function (item) {
                                 var opt = '';
                                 var _check = ' onclick="site.site_waf(\'' + item.name + '\')"';
 
@@ -74,7 +93,30 @@ var site = {
                     ],
                     data: data
                 })
-
+                var outTime = '';
+                $('.ssl_tips').hover(function(){
+                    var that = this,tips = $(that).attr('data-tips');
+                    if(!tips) return false;
+                    outTime = setTimeout(function(){
+                        layer.tips(tips, $(that), {
+                          tips: [2, '#20a53a'], //还可配置颜色
+                          time:0
+                        });
+                    },500);
+                },function(){
+                    outTime != ''?clearTimeout(outTime):'';
+                    layer.closeAll('tips');
+                })
+                $('.ssl_tips').click(function(){
+                    site.web_edit(this);
+                    var timeVal = setInterval(function(){
+                        var content = $('#webedit-con').html();
+                        if(content != ''){
+                            $('.site-menu p:eq(8)').click();
+                            clearInterval(timeVal);
+                        }
+                    },100);
+                });
                 //设置到期时间
                 $('a.setTimes').each(function () {
                     var _this = $(this);
@@ -962,7 +1004,7 @@ var site = {
                     $('#sub_dir_table td a').click(function () {
                         var item = $(this).parents('tr').data('item');
                         if ($(this).hasClass('del')) {
-                            bt.confirm({ msg: lan.site.s_bin_del }, function () {
+                            bt.confirm({ msg: lan.site.s_bin_del,title:'删除提示'}, function () {
                                 bt.site.del_dirbind(item.id, function (ret) {
                                     if (ret.status) site.reload(1)
                                 })
@@ -1338,7 +1380,7 @@ var site = {
                     items: [
                         { name: 'Dindex', height: '230px', width: '50%', type: 'textarea', value: rdata },
                         {
-                            name: 'btn_submit', text: '添加', type: 'button', callback: function (ddata) {
+                            name: 'btn_submit', text: '保存', type: 'button', callback: function (ddata) {
                                 var Dindex = ddata.Dindex.replace(new RegExp(/(\n)/g), ",");
                                 bt.site.set_index(web.id, Dindex, function (ret) {
                                     if (ret.status) site.reload(5)

@@ -16,12 +16,16 @@ function GetLogs(id){
 			shadeClose:false,
 			closeBtn:2,
 			content:'<div class="setchmod bt-form  pb70">'
-					+'<pre class="crontab-log" style="overflow: auto; border: 0px none; line-height:23px;padding: 15px; margin: 0px; white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0px;font-family: \"微软雅黑\"">'+ (rdata.msg == '' ? '当前日志为空':rdata.msg) +'</pre>'
+					+'<pre class="crontab-log" style="overflow: auto; border: 0px none; line-height:23px;padding: 15px; margin: 0px; white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0px;font-family: \"微软雅黑\""></pre>'
 					+'<div class="bt-form-submit-btn" style="margin-top: 0px;">'
 					+'<button type="button" class="btn btn-danger btn-sm btn-title" style="margin-right:15px;" onclick="CloseLogs('+id+')">'+lan.public.empty+'</button>'
 					+'<button type="button" class="btn btn-success btn-sm btn-title" onclick="layer.closeAll()">'+lan.public.close+'</button>'
 					+'</div>'
-					+'</div>'
+					+'</div>',
+			success:function(){
+				var log_body = rdata.msg == '' ? '当前日志为空':rdata.msg;
+				$(".setchmod pre").text(log_body);
+			}
 		});
 		setTimeout(function(){
 			$("#crontab-log").text(rdata.msg);
@@ -719,6 +723,8 @@ $(".dropdown ul li a").click(function(){
 	var txt = $(this).text();
 	var type = $(this).attr("value");
 	$(this).parents(".dropdown").find("button b").text(txt).attr("val",type);
+	
+	$(".plan-submit").css({"pointer-events":"auto","background-color":"#20a53a","color":"#fff"});
 	switch(type){
 		case 'day':
 			closeOpt();

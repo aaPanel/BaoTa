@@ -601,6 +601,29 @@ def HttpGet(url,timeout = 6,headers = {}):
             return str(ex)
 
 
+#定时任务去检测邮件信息
+def send_mail_time():
+    p_path = '/www/server/panel/plugin/bt_security/'
+    p_reload = p_path + '/reload.pl'
+    if not os.path.exists(p_path):
+        return False
+    sys.path.append(p_path)
+    try:
+        import send_mail_msg
+    except:
+        return False
+    msg=send_mail_msg.webshell_check()
+    while True:
+        try:
+            if os.path.exists(p_reload):
+                public.mod_reload(send_mail_msg)
+                os.remove(p_reload)
+            msg.main()
+            time.sleep(60)
+        except:
+            time.sleep(180)
+            send_mail_time()
+
 def main():
     main_pid = 'logs/task.pid'
     if os.path.exists(main_pid):
@@ -608,7 +631,7 @@ def main():
     pid = os.fork()
     if pid: sys.exit(0)
     
-    os.umask(0)
+    #os.umask(0)
     os.setsid()
 
     _pid = os.fork()
@@ -647,6 +670,11 @@ def main():
     p = threading.Thread(target=check_panel_ssl)
     p.setDaemon(True)
     p.start()
+
+    p = threading.Thread(target=send_mail_time)
+    p.setDaemon(True)
+    p.start()
+
 
     task_obj = panelTask.bt_task()
     p = threading.Thread(target=task_obj.start_task)

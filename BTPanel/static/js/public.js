@@ -2,6 +2,7 @@ $(function(){
     $.fn.extend({
         fixedThead:function(options){
             var _that = $(this);
+            console.log(_that);
             var option = {
                 height:400,
                 shadow:true,
@@ -133,6 +134,9 @@ var aceEditor = {
 			$('.ace_conter_editor .ace_editors').css('fontSize', _this.aceConfig.aceEditor.fontSize + 'px');
 			$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
 		});
+		$('.ace_editor_main').on('click',function(){
+            $('.ace_toolbar_menu').hide();
+        });
 		$('.ace_toolbar_menu').click(function(e){
 			e.stopPropagation();
 			e.preventDefault();
@@ -460,7 +464,7 @@ var aceEditor = {
 						_item.ace.gotoLine(_jump_line);
 					});
 					$('.set_jump_line input').unbind('keypress keydown keyup').on('keypress keydown keyup',function(e){
-						if(e.keyCode == 13 || (e.keyCode >= 48 && e.keyCode <= 57) || (e.keyCode >= 96 && e.keyCode <= 105)){
+						if((e.keyCode >= 48 && e.keyCode <= 57) || (e.keyCode >= 96 && e.keyCode <= 105)){
 							var _jump_line = $('.set_jump_line input').val();
 							if(_jump_line == '' && typeof parseInt(_jump_line) != 'number') return false;
 							_item.ace.gotoLine(_jump_line);
@@ -632,6 +636,7 @@ var aceEditor = {
 				return false;
 			});
 			$('.ace_toolbar_menu').hide();
+			$('.ace_catalogue_menu').hide();
 			$('.ace_toolbar_menu .menu-tabs,.ace_toolbar_menu .menu-encoding,.ace_toolbar_menu .menu-files').hide();
 			e.stopPropagation();
 			e.preventDefault();
@@ -696,14 +701,15 @@ var aceEditor = {
 					is_empty:true
 				})
 		});
+		
 		// 当前根目录操作，新建文件或目录
 		$('.ace_dir_tools').on('click','.folder_down_up li',function(e){
 			var _type = parseInt($(this).attr('data-type'));
 			switch(_type){
-				case 0:
+				case 2:
 					_this.newly_file_type_dom($('.cd-accordion-menu'),0,0);
 				break;
-				case 1:
+				case 3:
 					_this.newly_file_type_dom($('.cd-accordion-menu'),0,1);
 				break;
 			}
@@ -798,8 +804,14 @@ var aceEditor = {
 		// 新建、重命名鼠标事件
 		$('.ace_catalogue_list').on('click','.has-children .edit_file_group .glyphicon-ok',function(){
 			var _file_or_dir = $(this).parent().find('input').val(),
-			_path = $(this).parent().parent().attr('data-group') != '1'?$('.has-children .file_fold.bg').parent().attr('data-menu-path'):_this.menu_path,
+			_file_type = $(this).parent().parent().attr('data-file'),
+			_path = $('.has-children .file_fold.bg').parent().attr('data-menu-path'),
 			_type = parseInt($(this).parent().parent().attr('data-edit'));
+			if($(this).parent().parent().parent().attr('data-menu-path') === undefined && parseInt($(this).parent().parent().attr('data-group')) === 1){
+			    console.log('根目录')
+			    _path = $('.ace_catalogue_title').attr('title');
+			}
+// 			return false;
 			if(_file_or_dir === ''){
 				$(this).prev().css('border','1px solid #f34a4a');
 				layer.tips(_type===0?'文件目录不能为空':(_type===1?'文件名称不能空':'新名称不能为空'),$(this).prev(),{tips: [1,'#f34a4a'],time:0});
@@ -808,10 +820,10 @@ var aceEditor = {
 				return false;
 			}
 			switch(_type){
-				case 0: //文件夹
+				case 0: //新建文件夹
 					_this.event_create_dir({ path:_path+'/'+_file_or_dir });
 				break;
-				case 1: //文件
+				case 1: //新建文件
 					_this.event_create_file({ path:_path+'/'+_file_or_dir });
 				break;
 				case 2: //重命名
@@ -847,7 +859,7 @@ var aceEditor = {
 		// 新建、重命名鼠标点击取消事件
 		$('.ace_catalogue_list').on('click','.has-children .edit_file_group .glyphicon-remove',function(){
 			layer.closeAll('tips');
-			if($(this).parent().parent().attr('data-edit') === '2'){
+			if($(this).parent().parent().parent().attr('data-menu-path')){
 				$(this).parent().parent().removeClass('edit_file_group').removeAttr('data-edit');
 				$(this).parent().siblings().show();
 				$(this).parent().remove();
@@ -866,6 +878,27 @@ var aceEditor = {
 		this.setEditorView();
 		this.reader_file_dir_menu();
 	},
+    // 	设置本地存储，设置类型type：session或local
+	setStorage:function(type,key,val){
+	    if(type != "local" && type != "session")  val = key,key = type,type = 'session';
+	    window[type+'Storage'].setItem(key,val);
+	},
+	//获取指定本地存储，设置类型type：session或local
+	getStorage:function(type,key){
+	    if(type != "local" && type != "session")  key = type,type = 'session';
+	    return window[type+'Storage'].getItem(key);
+	},
+	//删除指定本地存储，设置类型type：session或local
+	removeStorage:function(type,key){
+	    if(type != "local" && type != "session")  key = type,type = 'session';
+	    window[type+'Storage'].removeItem(key);
+	},
+    // 	删除指定类型的所有存储信息
+	clearStorage:function(type){
+	    if(type != "local" && type != "session")  key = type,type = 'session';
+	    window[type+'Storage'].clear();
+	},
+	
 	// 新建文件类型
 	newly_file_type:function(that){
 		var _type = parseInt($(that).attr('data-type')),
@@ -873,6 +906,7 @@ var aceEditor = {
 			_group = parseInt(_active.attr('data-group')),
 			_path = _active.parent().attr('data-menu-path'), //当前文件夹新建
 			_this = this;
+			console.log(_type);
 		switch(_type){
 			case 0: //刷新目录
 				_active.next().empty();
@@ -898,10 +932,10 @@ var aceEditor = {
 			case 3:
 				if(this.get_file_dir(_path,1) != this.menu_path){ //判断当前文件上级是否为显示根目录
 					this.reader_file_dir_menu({el:_active,path:_path,group:_group+1},function(res){
-						_this.newly_file_type_dom(_active,_group,_type);
+						_this.newly_file_type_dom(_active,_group, _type == 2?0:1);
 					});
 				}else{
-					_this.newly_file_type_dom(_active,_group,_type);
+					_this.newly_file_type_dom(_active,_group,_type == 2?0:1);
 				}
 			break;
 			case 4: //文件重命名
@@ -914,7 +948,7 @@ var aceEditor = {
 				_active.addClass('edit_file_group');
 				_active.find('.file_title').hide();
 				_active.find('.glyphicon').hide();
-				_active.prepend('<span class="file_input"><i class="'+ (_types==='Dir'?'folder':(_this.get_file_suffix(_active.find('.file_title span').html()))) +'-icon"></i><input type="text" class="newly_file_input" value="'+ (_active.find('.file_title span').html()) +'"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>')
+				_active.prepend('<span class="file_input"><i class="'+ (_types === 'Dir'?'folder':(_this.get_file_suffix(_active.find('.file_title span').html()))) +'-icon"></i><input type="text" class="newly_file_input" value="'+ (_active.find('.file_title span').html()) +'"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>')
 				$('.file_fold .newly_file_input').width($('.file_fold .newly_file_input').parent().parent().parent().width() - ($('.file_fold .newly_file_input').parent().parent().attr('data-group') * 15 -5)-20-30-53);
 				$('.file_fold .newly_file_input').focus();
 			break;
@@ -945,7 +979,7 @@ var aceEditor = {
 			_active.find('.glyphicon').removeClass('glyphicon-menu-right').addClass('glyphicon-menu-down');
 		}
 		_html += '<li class="has-children children_'+ (_group+1) +'"><div class="file_fold edit_file_group group_'+ (_group+1) +'" data-group="'+ (_group+1) +'" data-edit="'+ _type +'"><span class="file_input">';
-		_html += '<i class="'+ (_type == 0?'folder':(_type == 1?'text':(_this.get_file_suffix(_val)))) +'-icon"></i>'
+		_html += '<i class="'+ (_type == 0?'folder':(_type == 1?'text':(_this.get_file_suffix(_val || '')))) +'-icon"></i>'
 		_html += '<input type="text" class="newly_file_input" value="'+ (_val != undefined?_val:'') +'">'
 		_html += '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></span></div></li>'
 		if(_nextLength > 0){
@@ -953,8 +987,11 @@ var aceEditor = {
 		}else{
 			_active.prepend(_html);
 		}
+		setTimeout(function(){
+		    $('.newly_file_input').focus()
+		},100)
 		$('.file_fold .newly_file_input').width($('.file_fold .newly_file_input').parent().parent().parent().width() - ($('.file_fold .newly_file_input').parent().parent().attr('data-group') * 15 -5)-20-30-53);
-		$('.newly_file_input').focus();
+		return false;
 	},
 	// 通用重命名事件
 	event_rename_currency:function(obj){
@@ -1152,7 +1189,7 @@ var aceEditor = {
 	},
 	// 获取文件列表
 	get_file_dir_list:function(obj,callback){
-		var loadT = layer.msg('正在获取文件内容，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']}),_this = this;
+		var loadT = layer.msg('正在获取文件列表，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']}),_this = this;
 		if(obj['p'] === undefined) obj['p'] = 1;
 		if(obj['showRow'] === undefined) obj['showRow'] = 200;
 		if(obj['sort'] === undefined) obj['sort'] = 'name';
@@ -1405,12 +1442,14 @@ var aceEditor = {
 		ACE.ace.getSession().selection.on('changeCursor', function(e) {
 			var _cursor = ACE.ace.selection.getCursor();
 			$('[data-type="cursor"]').html('行<i class="cursor-row">'+ (_cursor.row + 1) +'</i>,列<i class="cursor-line">'+ _cursor.column +'</i>');
+			$('.ace_toolbar_menu').hide();
 		});
 
 		// 触发修改内容
 		ACE.ace.getSession().on('change', function (editor) {
 			$('.item_tab_' + ACE.id + ' .icon-tool').addClass('glyphicon-exclamation-sign').removeClass('glyphicon-remove').attr('data-file-state', '1');
 			ACE.fileType = 1;
+			$('.ace_toolbar_menu').hide();
 		});
 		this.currentStatusBar(ACE.id);
 		this.is_file_history(ACE);
@@ -1553,7 +1592,7 @@ var aceEditor = {
 				});
 			}
 		});
-
+		$('.ace_toolbar_menu').hide();
 	},
 	// 获取收藏夹列表-方法
 	getFavoriteList: function () {},
@@ -1604,6 +1643,7 @@ var aceEditor = {
 			}
 		});
 	},
+// 	保存ace配置
 	saveAceConfig:function(data,callback){
 		var loadT = layer.msg('正在设置配置文件，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']}),_this = this;
 		this.saveFileBody({
@@ -1613,7 +1653,7 @@ var aceEditor = {
 			tips:true,
 		},function(rdata){
 			layer.close(loadT);
-			setCookie('aceConfig',JSON.stringify(data));
+			_this.setStorage('aceConfig',JSON.stringify(data));
 			if(callback) callback(rdata);
 		});
 	},
@@ -1622,7 +1662,7 @@ var aceEditor = {
 		var loadT = layer.msg('正在获取配置文件，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']}),_this = this;
 		this.getFileBody({path:'/www/server/panel/BTPanel/static/ace/ace.editor.config.json'},function(rdata){
 			layer.close(loadT);
-			setCookie('aceConfig',JSON.stringify(rdata.data));
+			_this.setStorage('aceConfig',JSON.stringify(rdata.data));
 			if(callback) callback(JSON.parse(rdata.data));
 		});
 	},
@@ -1683,14 +1723,13 @@ function openEditorView(type,path){
 				aceEditor.openEditorView(path);
 				$('#ace_conter').addClass(aceEditor.aceConfig.aceEditor.editorTheme);
 				$('.aceEditors .layui-layer-min').click(function (e){
-					
 					aceEditor.setEditorView();
 				});
 				$('.aceEditors .layui-layer-max').click(function (e){
 					aceEditor.setEditorView();
 				});
 			}
-			var aceConfig =  getCookie('aceConfig');
+			var aceConfig =  aceEditor.getStorage('aceConfig');
 			if(aceConfig == null){
 				// 获取编辑器配置
 				aceEditor.getAceConfig(function(res){
@@ -1760,9 +1799,12 @@ function openEditorView(type,path){
 					return false;
 				}
 			}
-			aceEditor.editor = null;
-			aceEditor.pathAarry = [];
-			aceEditor.editorLength = 0;
+		},
+		end:function(){
+		    aceEditor.ace_active = '';
+		    aceEditor.editor = null;
+		    aceEditor.pathAarry = [];
+		    aceEditor.menu_path = '';
 		}
 	});
 }
@@ -3495,7 +3537,8 @@ var Term = {
     route: '/webssh',  //被访问的方法
     term: null,
     term_box: null,
-    ssh_info: null,
+	ssh_info: null,
+	last_body:false,
 
     //连接websocket
     connect: function () {
@@ -3514,12 +3557,15 @@ var Term = {
 
     //服务器消息事件
     on_message: function (ws_event) {
-        result = ws_event.data;
-        if (result === "\r服务器连接失败!\r" || result === "\r用户名或密码错误!\r") {
+		result = ws_event.data;
+        if (result === "\r服务器连接失败!\r" || result == "\r用户名或密码错误!\r") {
             show_ssh_login(result);
             Term.close();
             return;
-        }
+		}
+		if(result.length > 1 && Term.last_body === false){
+			Term.last_body = true;
+		}
         Term.term.write(result);
 
         if (result == '\r\n登出\r\n' || result == '登出\r\n' || result == '\r\nlogout\r\n' || result == 'logout\r\n') {
@@ -3551,15 +3597,28 @@ var Term = {
     //关闭连接
     close: function () {
         Term.bws.close();
-    },
+	},
+	
+	new_terminal:function (){
+		if (Term.bws && Term.bws.readyState != 3 && Term.bws.readyState != 2) {
+			Term.send('new_terminal');	
+			setTimeout(function(){
+				if(Term.last_body === false){
+					Term.new_terminal();
+				}
+			},500);
+		}
+	},
 
     resize: function () {
         var m_width = 100;
         var m_height = 34;
         Term.term.resize(m_width, m_height);
         Term.term.scrollToBottom();
-        Term.term.focus();
-        Term.send('new_terminal');
+		Term.term.focus();
+		setTimeout(function(){
+			Term.new_terminal();
+		},200);
     },
 
     //发送数据
@@ -3598,7 +3657,8 @@ var Term = {
         ],function(){
         	layer.close(loadT);
         	Term.term = new Terminal({ cols: termCols, rows: termRows, screenKeys: true, useStyle: true });
-	        Term.term.setOption('cursorBlink', true);
+			Term.term.setOption('cursorBlink', true);
+			Term.last_body = false;
 	        Term.term_box = layer.open({
 	            type: 1,
 	            title: '宝塔终端',
@@ -3607,7 +3667,7 @@ var Term = {
 	            shadeClose: false,
 	            content: '<link rel="stylesheet" href="/static/build/xterm.min.css" />\
 						<link rel="stylesheet" href="/static/build/addons/fullscreen/fullscreen.min.css" />\
-	            <a class="btlink" onclick="show_ssh_login(1)" style="position: fixed;margin-left: 83px;margin-top: -30px;">[设置]</a>\
+	            <a class="btlink ssh-config" onclick="show_ssh_login(1)" style="position: fixed;margin-left: 83px;margin-top: -30px;">[设置]</a>\
 	            <div class="term-box" style="background-color:#000"><div id="term"></div></div>',
 	            cancel: function () {
 	                Term.term.destroy();
@@ -3712,7 +3772,7 @@ function show_ssh_login(is_config) {
                             <div class="line "><span class="tname">验证方式</span><div class="info-r "><button class="ssh_check_s2" id="pass_check" onclick="pass_check()">密码验证</button><button id="rsa_check" class="ssh_check_s1" onclick="rsa_check()">私钥验证</button></div></div>\
                             <div class="line ssh_passwd"><span class="tname">密码</span><div class="info-r "><input name="ssh_passwd" readonly="readonly" class="bt-input-text mr5" type="password" style="width:330px" value="" autocomplete="off"></div></div>\
                             <div class="line ssh_pkey" style="display:none;"><span class="tname">私钥</span><div class="info-r "><textarea name="ssh_pkey" class="bt-input-text mr5" style="width:330px;height:80px;" ></textarea></div></div>\
-                            <div class="line "><span class="tname"></span><div class="info-r "><input style="margin-top: 1px;width: 16px;" name="ssh_is_save" id="ssh_is_save" class="bt-input-text mr5" type="checkbox" ><label style="position: absolute;margin-left: 5px;" for="ssh_is_save">记住密码，下次使用宝塔终端将自动登录</label></div></div>\
+                            <div class="line "><span class="tname"></span><div class="info-r "><input style="margin-top: -6px;width: 16px;" name="ssh_is_save" id="ssh_is_save" class="bt-input-text mr5" type="checkbox" ><label style="position: absolute;margin-left: 5px;" for="ssh_is_save">记住密码，下次使用宝塔终端将自动登录</label></div></div>\
                             <p style="color: red;margin-top: 10px;text-align: center;">仅支持登录本服务器，如需登录其他服务器，可以使用<a class="btlink" href="https://www.bt.cn/platform" target="_blank">【堡塔云控平台】</a>进行多机管理</p>\
                             <div class="bt-form-submit-btn"><button type="button" class="btn btn-sm btn-danger" onclick="'+ (is_config ? 'layer.close(ssh_login)' :'layer.closeAll()')+'">关闭</button><button type="button" class="btn btn-sm btn-success ssh-login" onclick="send_ssh_info()">'+(is_config?'确定':'登录SSH')+'</button></div></div>';
     ssh_login = layer.open({

@@ -4,7 +4,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 黄文良 <287962566@qq.com>
+# | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 
 import sqlite3
@@ -103,7 +103,7 @@ class Sql():
                     i=0
                     tmp1 = {}
                     for key in fields:
-                        tmp1[key] = row[i]
+                        tmp1[key.strip('`')] = row[i]
                         i += 1
                     tmp.append(tmp1)
                     del(tmp1)
@@ -127,7 +127,7 @@ class Sql():
         import re
         fields = []
         for key in field:
-            s_as = re.search('\s+as\s+',key,flags=re.IGNORECASE)
+            s_as = re.search(r'\s+as\s+',key,flags=re.IGNORECASE)
             if s_as:
                 as_tip = s_as.group()
                 key = key.split(as_tip)[1]
@@ -139,13 +139,13 @@ class Sql():
             tmp_cols = self.query('PRAGMA table_info('+self.__DB_TABLE+')',())
             cols = []
             for col in tmp_cols:
-                if len(col) > 2: cols.append(col[1])
+                if len(col) > 2: cols.append('`' + col[1] + '`')
             if len(cols) > 0: self.__OPT_FIELD = ','.join(cols)
 
     def getField(self,keyName):
         #取回指定字段
         try:
-            result = self.field(keyName).select();
+            result = self.field(keyName).select()
             if len(result) != 0:
                 return result[0][keyName]
             return result

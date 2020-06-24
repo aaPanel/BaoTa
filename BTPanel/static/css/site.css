@@ -2188,6 +2188,7 @@ html .menu .menu_exit:hover {
 	margin-right: 5px;
 	margin-top: -1px;
 	margin-bottom: -1px;
+	image-rendering: -webkit-optimize-contrast;
 }
 
 .softlist .glyphicon-folder-open {
@@ -3854,12 +3855,9 @@ html .menu .menu_exit:hover {
 #tipTools {
 	background: #fff url(/static/img/ico_line.png) repeat-x 0 55px;
 	height: 110px;
+	width: 100%;
 	border-bottom: #ccc 1px solid;
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	z-index: 999;
+	position: relative;
 }
 
 .re-head {
@@ -4187,6 +4185,24 @@ html .menu .menu_exit:hover {
 	width: 16px;
 	height: 14px;
 }
+#pay_product_view{
+	padding: 25px 45px 30px 45px;
+	height: 100%;
+}
+#libPay-content .pay-cycle-btn{
+	width: 90px;
+}
+.libPay-mask{
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	display: none;
+}
 .libPay-item{
 	margin-bottom: 30px;
 }
@@ -4195,6 +4211,10 @@ html .menu .menu_exit:hover {
 }
 .libPay-item .li-tit{
 	margin-bottom: 10px;
+	font-size: 14px;
+}
+.libPay-item .li-c-item li:nth-child(1){
+	margin-left: 0;
 }
 .libPay-item .li-c-item li{
 	font-size: 0;
@@ -4205,8 +4225,9 @@ html .menu .menu_exit:hover {
 	box-sizing: border-box;
 	transition: border-color .1s ease-in,color .1s ease-in;
 	padding: 5px 0;
-	float: left;
+	display: inline-block;
 	position: relative;
+	margin-left: -1px;
 }
 .pro-tips{
 	clear: both;
@@ -4214,6 +4235,8 @@ html .menu .menu_exit:hover {
     font-size: 13px;
     color: #bbb;
 }
+
+
 .libPay-item .li-c-item li:first-child{
 	border-top-left-radius:4px;
 	border-bottom-left-radius:4px;
@@ -4225,10 +4248,13 @@ html .menu .menu_exit:hover {
 .libPay-item .li-c-item li:hover{
 	border: #20a53a 1px solid;
 	color: #20A53A;
+	z-index: 9999;
 }
 .libPay-item .li-c-item li.active,.libPay-item .li-c-item li.active:hover{
 	border: #20a53a 2px solid;
 	color: #20A53A;
+	z-index: 9999;
+	box-sizing: border-box;
 }
 .libPay-item .li-c-item li .item-name{
 	font-size: 14px;
@@ -4238,8 +4264,20 @@ html .menu .menu_exit:hover {
 	text-overflow:ellipsis;
 	white-space: nowrap;
 	text-align: center;
-	margin-bottom: 10px;
+	margin-bottom: 5px;
 	padding-top: 10px;
+}
+.libPay-item .endTime,
+.libPay-item .bindUser{
+	font-size: 14px;
+}
+.libPay-item .endTime span,
+.libPay-item .bindUser span{
+	font-weight: 600;
+	color: #555;
+}
+.libPay-item .endTime{
+	float: right;
 }
 .libPay-item .li-c-item li .item-info{
 	display: block;
@@ -4322,7 +4360,7 @@ html .menu .menu_exit:hover {
     font-style: normal;
 }
 .pay-btn-group .active em{
-	right: -3px;
+	right: -3.5px;
     top: -10px;
 }
 .paymethod{
@@ -4351,7 +4389,7 @@ html .menu .menu_exit:hover {
 	margin-right: 5px;
 }
 .lib-price-name,.price-txt{
-	margin-right: 15px;
+	margin-right: 10px;
 }
 /*input样式*/
 .bt-label{
@@ -4475,6 +4513,7 @@ html .menu .menu_exit:hover {
 .bind-user{
 	background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASBAMAAACk4JNkAAAAA3NCSVQICAjb4U/gAAAAMFBMVEX19fXr6+vg4ODW1tbMzMzCwsK4uLitra2jo6OZmZmPj4+FhYV6enpwcHBmZmb///+wFcT2AAAAEHRSTlP///////////////////8A4CNdGQAAAAlwSFlzAAAOnAAADpwBB5RT3QAAABZ0RVh0Q3JlYXRpb24gVGltZQAwOC8xNi8xOCL5ZhgAAAAcdEVYdFNvZnR3YXJlAEFkb2JlIEZpcmV3b3JrcyBDUzbovLKMAAAAh0lEQVQImWP4//+/2KxiIMnw//+X2+1rCsCsuP7/n26CWB+PA6X04oGsbweBrJ/rgawf64GsbxtQWBDZ+TAdNv5gUxL+s74EmfJpz6mOtWdAYnYTNFZP/vb0P8OHU///f/j/P0+f4duF/yDwaz4Ddz2Y9ekQg448mPV/G4M3hPG/g8ESygoHALeIhpF8DGw6AAAAAElFTkSuQmCC");
 	background-repeat: no-repeat;
+	background-size: contain;
 	padding-left:24px;
 	margin-right:16px;
 }
@@ -4896,11 +4935,16 @@ select[disabled]{
 }
 
 #proxy_list td>span,
-#softList  td>span{
+#softList td>span{
 	display: block;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+#softList tr td:nth-child(3) >span{
+    white-space: inherit;
+    cursor: pointer;
+    min-height: 17px;
 }
 #proxy_config_con .line .info-r,
 #redirect_config_con .line .info-r{
@@ -4915,7 +4959,7 @@ select[disabled]{
 ::-webkit-scrollbar {
 	/*滚动条整体样式*/
 	width : 10px;  /*高宽分别对应横竖滚动条的尺寸*/
-	height: 1px;
+	height: 5px;
 }
 ::-webkit-scrollbar-thumb {
 	/*滚动条里面小方块*/
@@ -4974,11 +5018,29 @@ select[disabled]{
 .search_box{
 	position: absolute;
     right: 65px;
-    top: 12px;
+    top: 10px;
+    height: 28px;
+    line-height: 28px;
+    cursor: pointer;
+}
+.search_box label{
+    margin: 0;
 }
 .search_box input{
-	position: relative;
-	top: 2.5px;
+    position: absolute;
+    right: 64px;
+    top: 4px;
+}
+.search_box label input,
+.search_box label span{
+    vertical-align: inherit;
+    margin: 0;
+}
+.search_box label input{
+    margin-top: -2px;
+}
+.search_box label span{
+    margin-left: 5px;
 }
 .search_box label{
 	color: #666;
@@ -7049,4 +7111,324 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
 .fadeInUp {
 	-webkit-animation-name: fadeInUp;
 	animation-name: fadeInUp
+}
+.diskbox{
+    display: inline-block;
+    overflow: hidden;
+}
+.diskbox>h3{
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+#btvideo{
+    display: inline-block;
+    height: 360px;
+}
+.video-list{
+    display: inline-block;
+    width: 250px;
+    height: 360px;
+    overflow: auto;
+}
+.video-list .video-avt{
+    background-color: #e8e8e8;
+}
+.movie_pay .layui-layer-content{
+    overflow: hidden !important;
+}
+.video-list .video-avt td a,
+.video-list .video-avt td{
+    color: #20a53a;
+}
+.video-list tr td{
+    border-top: 0px;
+    border-bottom: 1px solid #ddd;
+}
+.video-list tr:hover{
+    cursor: pointer;
+}
+#btvideo video{
+    outline: none;
+    padding: 0;
+    display: block;
+    background-color: #000;
+}
+
+.soft_tips_text{
+	font-weight: 700;
+	display: inline-block;
+	font-size: 13px;
+}
+
+.alert-ltd-success{
+	color: #7d7054;
+    background-color:#fbf3de;
+    border-color: #ece8d5;
+}
+.btn-ground{
+	display: inline-block;
+}
+.file_dir_uploads .layui-layer-btn{
+    padding: 0px 15px 15px 0 !important;
+    background: none;
+    border-top: none;
+}
+.file_dir_uploads .layui-layer-btn a{
+    margin-left: 15px;
+}
+.upload_tips_mask{
+	position: absolute;
+	z-index: 999;
+	background-color: #fff;
+	width: 100%;
+	left: 0;
+	top: 0;
+    height: 445px;
+    border: 2px dashed #e0e0e0;
+    text-align: center;
+}
+.upload_file_body{
+	position: relative;
+}
+.upload_file_body.active{
+    height: 445px;
+    border: 2px dashed #e0e0e0;
+    text-align: center;
+}
+.upload_tips_mask span,
+.upload_file_body.active span{
+    font-size: 35px;
+    color: #999;
+    position: absolute;
+    width: 100%;
+    left: 0;
+    top: 50%;
+    margin-top: -40px;
+}
+.dropUpLoadFile{
+    position: relative;
+    overflow: auto;
+    height: 410px;
+    padding-top:0;
+}
+.dropUpLoadFile::-webkit-scrollbar {
+	/*滚动条整体样式*/
+	width : 15px;  /*高宽分别对应横竖滚动条的尺寸*/
+	height: 1px;
+}
+.dropUpLoadFile::-webkit-scrollbar-thumb {
+	/*滚动条里面小方块*/
+	border-radius: 0;
+	box-shadow   : inset 0 0 5px rgba(0, 0, 0, 0.2);
+	background   : #bbb;
+}
+.dropUpLoadFile::-webkit-scrollbar-track {
+	/*滚动条里面轨道*/
+	box-shadow   : inset 0 0 5px rgba(0, 0, 0, 0.2);
+	border-radius: 0;
+	background   : #ededed;
+}
+.dropUpLoadFile li{
+    height: 40px;
+    line-height: 40px;
+    border-bottom: 1px solid #ececec;
+    position: relative;
+}
+.dropUpLoadFileHead{
+    border-bottom: 1px solid #dedede;
+}
+.dropUpLoadFileHead li.fileTitle{
+    border-color: #ccc;
+}
+.upload_btn_groud .file_upload_info{
+    height: 40px;
+    line-height: 40px;
+    font-size: 12px;
+    color: #fff;
+    padding-left: 15px;
+    font-weight: 400;
+    color: #3c763d;
+    background-color: #dff0d8;
+    border: 1px solid #d6e9c6;
+    border-radius: 2px;
+    position: relative;
+}
+.upload_btn_groud .file_upload_info .ico-tips-close{
+    height: 22px;
+    width: 22px;
+    background: #90bb81;
+    display: inline-block;
+    border-radius: 50%;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    margin-top: -11px;
+    cursor: pointer;
+    transition: all 500ms;
+}
+.upload_btn_groud .file_upload_info .ico-tips-close:hover{
+    background: #658859;
+}
+
+
+.upload_btn_groud .file_upload_info .ico-tips-close:after{
+    transform: rotate(45deg);
+}
+.upload_btn_groud .file_upload_info .ico-tips-close:before{
+    transform: rotate(-45deg);
+}
+.upload_btn_groud .file_upload_info .ico-tips-close:after,
+.upload_btn_groud .file_upload_info .ico-tips-close:before{
+    content:'';
+    display: inline-block;
+    height: 12px;
+    width: 2px;
+    background:#ececec;
+    border-radius: 5px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-top: -6px;
+    margin-left: -1px;
+}
+.upload_btn_groud .file_upload_info i{
+    font-style: initial;
+}
+.upload_btn_groud .file_upload_info span{
+    margin-right: 10px;
+    font-size: 13px;
+    display: inline-block;
+    height: 38px;
+    line-height: 38px;
+    margin-right: 0;
+    padding-left: 10px;
+}
+.dropUpLoadFile li .fileItem{
+    position: relative;
+    z-index: 999;
+}
+.dropUpLoadFile li .fileLoading{
+    content: '';
+    width: 0%;
+    height: 40px;
+    background: #6fb9d621;
+    position: absolute;
+    left: 0;
+    top: 0;
+    transition: width 100ms;
+    z-index: 998;
+}
+.dropUpLoadFile li:hover{
+    cursor: pointer;
+}
+.upload_btn_groud .dropdown-menu{
+    width: 100%;
+    min-width: 120%;
+    font-size: 13px;
+}
+
+.upload_btn_groud .btn-group:hover .dropdown-menu{
+    display: block;
+}
+.dropdown-menu:before{
+    content: '';
+    width: 100%;
+    position: absolute;
+    top: -5px;
+    height: 5px;
+}
+.upload_btn_groud{
+    margin-bottom: 5px;    
+    height: 40px;
+    line-height: 40px;
+}
+.upload_btn_groud .dropdown-toggle{
+    border-left-color: #3f51b5;
+}
+.upload_btn_groud .btn-primary{
+        background-color: #4592f0;
+    border-color: #367fa9;
+}
+.dropUpLoadFileHead li.fileTitle span{
+    color: #666;
+    font-size: 13px;
+    display: inline-block;
+    height: 35px;
+    line-height: 35px;
+    margin-right: 0;
+    padding-left: 10px;
+    font-weight: 500;
+}
+.dropUpLoadFileHead li.fileTitle span:nth-child(1){
+    width: 50%;
+    padding-left: 15px;
+}
+.dropUpLoadFileHead li.fileTitle span:nth-child(2){
+    width: 25%;
+}
+.dropUpLoadFileHead li.fileTitle span:nth-child(3){
+    width: 25%;
+}
+.dropUpLoadFile .fileItem > span{
+    color: #666;
+    font-size: 12px;
+    vertical-align: top;
+    padding-left: 10px;
+    height: 40px;
+    line-height: 40px;
+    display: inline-block;
+}
+.dropUpLoadFile li .filename{
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 50%;
+    padding-left: 15px;
+}
+.dropUpLoadFile li .filename .ico {
+    height: 27px;
+    line-height: 27px;
+    background-size: 27px;
+    width: 25px;
+    vertical-align: middle;
+    margin-right: 10px;
+    float: initial;
+    image-rendering: -webkit-optimize-contrast;
+}
+.dropUpLoadFile li .filesize{
+    color: #999;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 25%;
+}
+.dropUpLoadFile li .fileStatus{
+    width: 25%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.dropUpLoadFile li em{
+    font-style: normal;
+    color: #06F;
+    float: right;
+    margin-right: 10px;
+}
+.upload_success{
+    color:#20a53a !important;
+}
+.upload_error{
+    color:#F56C6C !important;
+}
+.upload_primary{
+    color:#409EFF !important;
+}
+.upload_warning{
+    color:#409EFF !important;
+}
+.ssl_tips{
+    
 }

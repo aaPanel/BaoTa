@@ -4,7 +4,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 黄文良 <287962566@qq.com>
+# | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 
 #--------------------------------
@@ -140,9 +140,11 @@ def Md5(strings):
     @strings 要被处理的字符串
     return string(32)
     """
+    if type(strings) == str:
+        strings = strings.encode()
     import hashlib
     m = hashlib.md5()
-    m.update(strings.encode('utf-8'))
+    m.update(strings)
     return m.hexdigest()
 
 def md5(strings):
@@ -237,7 +239,7 @@ def GetJson(data):
     from json import dumps
     if data == bytes: data = data.decode('utf-8')
     try:
-        return dumps(data)
+        return dumps(data,ensure_ascii=False)
     except:
         return dumps(returnMsg(False,"错误的响应: %s" % str(data)))
 
@@ -508,8 +510,8 @@ def GetHost(port = False):
     except:
         host_tmp = "127.0.0.1:8888"
     h = host_tmp.split(':')
-    if port: return h[1]
-    return h[0]
+    if port: return h[-1]
+    return ':'.join(h[0:-1])
 
 def GetClientIp():
     from flask import request
@@ -523,19 +525,43 @@ def phpReload(version):
     else:
         ExecShell('/etc/init.d/php-fpm-'+version+' reload')
 
+def get_timeout(url,timeout=3):
+    try:
+        start = time.time()
+        result = int(httpGet(url,timeout))
+        return result,int((time.time() - start) * 1000 - 500)
+    except: return 0,False
+
 def get_url(timeout = 0.5):
     import json
     try:
         nodeFile = 'data/node.json'
         node_list = json.loads(readFile(nodeFile))
-        mnode = None
+        mnode1 = []
+        mnode2 = []
+        mnode3 = []
         for node in node_list:
-            node['ping'] = get_timeout(node['protocol'] + node['address'] + ':' + node['port'] + '/check.txt')
+            node['net'],node['ping'] = get_timeout(node['protocol'] + node['address'] + ':' + node['port'] + '/net_test',1)
             if not node['ping']: continue
-            if not mnode: mnode = node
-            if node['ping'] < mnode['ping']: mnode = node
-            if mnode['ping'] < 50: break
-        return mnode['protocol'] + mnode['address'] + ':' + mnode['port']
+            if node['ping'] < 100:      #当响应时间<100ms且可用带宽大于1500KB时
+                if node['net'] > 1500:
+                    mnode1.append(node)
+                elif node['net'] > 1000:
+                    mnode3.append(node)
+            else:
+                if node['net'] > 1000:  #当响应时间>=100ms且可用带宽大于1000KB时
+                    mnode2.append(node)
+            if node['ping'] < 100:
+                if node['net'] > 3000: break #有节点可用带宽大于3000时，不再检查其它节点
+        if mnode1: #优选低延迟高带宽
+            mnode = sorted(mnode1,key= lambda  x:x['net'],reverse=True)
+        elif mnode3: #备选低延迟，中等带宽
+            mnode = sorted(mnode3,key= lambda  x:x['net'],reverse=True)
+        else: #终选中等延迟，中等带宽
+            mnode = sorted(mnode2,key= lambda  x:x['ping'],reverse=False)
+        
+        if not mnode: return 'http://download.bt.cn'
+        return mnode[0]['protocol'] + mnode[0]['address'] + ':' + mnode[0]['port']
     except:
         return 'http://download.bt.cn'
 
@@ -566,7 +592,7 @@ def GetNumLines(path,num,p=1):
         if not os.path.exists(path): return ""
         start_line = (p - 1) * num
         count = start_line + num
-        fp = open(path,'rb')
+        fp = open(path,'r')
         buf = ""
         fp.seek(-1, 2)
         if fp.read(1) == "\n": fp.seek(-1, 2)
@@ -623,9 +649,9 @@ def GetNumLines(path,num,p=1):
             return json.loads(result).strip()
         except:
             if pyVersion == 2:
-                result = str(result).decode('utf8',errors='ignore')
+                result = result.decode('utf8',errors='ignore')
             else:
-                result = str(result).encode('utf-8',errors='ignore').decode("utf-8",errors="ignore")
+                result = result.encode('utf-8',errors='ignore').decode("utf-8",errors="ignore")
         return result.strip()
     except: return ""
 
@@ -655,6 +681,7 @@ def getPanelAddr():
 
 #字节单位转换
 def to_size(size):
+    if not size: return '0.00 b'
     size = float(size)
     d = ('b','KB','MB','GB','TB')
     s = d[0]
@@ -844,14 +871,6 @@ def IsRestart():
 def hasPwd(password):
     import crypt;
     return crypt.crypt(password,password)
-
-def get_timeout(url,timeout=3):
-    try:
-        start = time.time()
-        result = httpGet(url,timeout)
-        if result != 'True': return False
-        return int((time.time() - start) * 1000)
-    except: return False
 
 def getDate(format='%Y-%m-%d %X'):
     #取格式时间
@@ -1175,6 +1194,13 @@ def to_string(lites):
             m_str += chr(mu)
     return m_str
 
+#解码
+def to_ord(string):
+    o  = []
+    for s in string:
+        o.append(ord(s))
+    return o
+
 #xss 防御
 def xssencode(text):
     import cgi
@@ -1263,7 +1289,7 @@ def write_request_log(reques = None):
         from flask import request
         log_data = []
         log_data.append(getDate())
-        log_data.append(GetClientIp())
+        log_data.append(GetClientIp() + ':' + str(request.environ.get('REMOTE_PORT')))
         log_data.append(request.method)
         log_data.append(request.full_path)
         log_data.append(request.headers.get('User-Agent'))
@@ -1309,12 +1335,13 @@ def set_own(filename,user,group=None):
     return True
 
 #校验路径安全
-def path_safe_check(path):
-    checks = ['..','./','\\','%','$','^','&','*','~','@','#']
+def path_safe_check(path,force=True):
+    checks = ['..','./','\\','%','$','^','&','*','~','"',"'",';','|','{','}','`']
     for c in checks:
         if path.find(c) != -1: return False
-    rep = r"^[\w\s\.\/-]+$"
-    if not re.match(rep,path): return False
+    if force:
+        rep = r"^[\w\s\.\/-]+$"
+        if not re.match(rep,path): return False
     return True
 
 #取数据库字符集
@@ -1631,9 +1658,12 @@ def import_cdn_plugin():
     
 
 def get_cdn_hosts():
-    if import_cdn_plugin(): return []
-    import static_cdn_main
-    return static_cdn_main.static_cdn_main().get_hosts(None)
+    try:
+        if import_cdn_plugin(): return []
+        import static_cdn_main
+        return static_cdn_main.static_cdn_main().get_hosts(None)
+    except:
+        return []
 
 def get_cdn_url():
     try:
@@ -1663,6 +1693,85 @@ def get_python_bin():
         return bin_file
     return '/usr/bin/python'
 
+def aes_encrypt(data,key):
+    import panelAes
+    if sys.version_info[0] == 2:
+        aes_obj = panelAes.aescrypt_py2(key)
+        return aes_obj.aesencrypt(data)
+    else:
+        aes_obj = panelAes.aescrypt_py3(key)
+        return aes_obj.aesencrypt(data)
+
+def aes_decrypt(data,key):
+    import panelAes
+    if sys.version_info[0] == 2:
+        aes_obj = panelAes.aescrypt_py2(key)
+        return aes_obj.aesdecrypt(data)
+    else:
+        aes_obj = panelAes.aescrypt_py3(key)
+        return aes_obj.aesdecrypt(data)
+
+#清理大日志文件
+def clean_max_log(log_file,max_size = 100,old_line = 100):
+    if not os.path.exists(log_file): return False
+    max_size = 1024 * 1024 * max_size
+    if os.path.getsize(log_file) > max_size:
+        try:
+            old_body = GetNumLines(log_file,old_line)
+            writeFile(log_file,old_body)
+        except:
+            print(get_error_info())
+
+#获取证书哈希
+def get_cert_data(path):
+    import panelSSL
+    get = dict_obj()
+    get.certPath = path
+    data = panelSSL.panelSSL().GetCertName(get)
+    return data
+
+
+def long2ip(ips):
+    '''
+        @name 将整数转换为IP地址
+        @author hwliang<2020-06-11>
+        @param ips string(ip地址整数)
+        @return ipv4
+    '''
+    i1 = int(ips / (2 ** 24))
+    i2 = int((ips - i1 * ( 2 ** 24 )) / ( 2 ** 16 ))
+    i3 = int(((ips - i1 * ( 2 ** 24 )) - i2 * ( 2 ** 16 )) / ( 2 ** 8))
+    i4 = int(((ips - i1 * ( 2 ** 24 )) - i2 * ( 2 ** 16 )) - i3 * ( 2 ** 8))
+    return "{}.{}.{}.{}".format(i1,i2,i3,i4)
+
+def ip2long(ip):
+    '''
+        @name 将IP地址转换为整数
+        @author hwliang<2020-06-11>
+        @param ip string(ipv4)
+        @return long
+    '''
+    ips = ip.split('.')
+    if len(ips) != 4: return 0
+    iplong = 2 ** 24 * int(ips[0]) + 2 ** 16 * int(ips[1])  + 2 ** 8 * int(ips[2])  + int(ips[3])
+    return iplong
+
+#提交关键词
+def submit_keyword(keyword):
+    pdata = {"keyword":keyword}
+    httpPost(GetConfigValue('home') + '/api/panel/total_keyword',pdata)
+
+#统计关键词
+def total_keyword(keyword):
+    import threading
+    p = threading.Thread(target=submit_keyword,args=(keyword,))
+    p.setDaemon(True)
+    p.start()
+
+#获取debug日志
+def get_debug_log():
+    from BTPanel import request
+    return GetClientIp() +':'+ str(request.environ.get('REMOTE_PORT')) + '|' + str(int(time.time())) + '|' + get_error_info()
 
 #取通用对象
 class dict_obj:

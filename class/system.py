@@ -4,7 +4,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2016 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 黄文良 <287962566@qq.com>
+# | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 import psutil,time,os,public,re,sys
 try:
@@ -228,7 +228,10 @@ class system:
         return data
     
     def GetLoadAverage(self,get):
-        c = os.getloadavg()
+        try:
+            c = os.getloadavg()
+        except:
+            c = [0,0,0]
         data = {};
         data['one'] = float(c[0]);
         data['five'] = float(c[1]);
@@ -278,14 +281,13 @@ class system:
         #return public.getMsg('SYS_BOOT_TIME',(str(int(days)),str(int(hours)),str(int(min))))
     
     def GetCpuInfo(self,interval = 1):
-        time.sleep(0.5)
         #取CPU信息
         cpuCount = psutil.cpu_count()
         cpuNum = psutil.cpu_count(logical=False)
         c_tmp = public.readFile('/proc/cpuinfo')
         d_tmp = re.findall("physical id.+",c_tmp)
         cpuW = len(set(d_tmp))
-        used = psutil.cpu_percent(1)
+        used = psutil.cpu_percent(interval)
         used_all = psutil.cpu_percent(percpu=True)
         cpu_name = public.getCpuType() + " * {}".format(cpuW)
         return used,cpuCount,used_all,cpu_name,cpuNum,cpuW
@@ -341,7 +343,7 @@ class system:
         #取磁盘分区信息
         diskIo = psutil.disk_partitions()
         diskInfo = []
-        cuts = ['/mnt/cdrom','/boot','/boot/efi','/dev','/dev/shm','/run/lock','/run','/run/shm','/run/user'];
+        cuts = ['/mnt/cdrom','/boot','/boot/efi','/dev','/dev/shm','/run/lock','/run','/run/shm','/run/user']
         for disk in diskIo:
             if not cuts: continue
             tmp = {}
@@ -352,8 +354,8 @@ class system:
     
     def GetDiskInfo2(self):
         #取磁盘分区信息
-        temp = public.ExecShell("df -hT -P|grep '/'|grep -v tmpfs")[0]
-        tempInodes = public.ExecShell("df -i -P|grep '/'|grep -v tmpfs")[0]
+        temp = public.ExecShell("df -hT -P|grep '/'|grep -v tmpfs|grep -v 'snap/core'|grep -v udev")[0]
+        tempInodes = public.ExecShell("df -i -P|grep '/'|grep -v tmpfs|grep -v 'snap/core'|grep -v udev")[0]
         temp1 = temp.split('\n')
         tempInodes1 = tempInodes.split('\n')
         diskInfo = []
@@ -363,7 +365,7 @@ class system:
             n += 1
             try:
                 inodes = tempInodes1[n-1].split()
-                disk = re.findall(r"^(.+)\s+([\w]+)\s+([\w\.]+)\s+([\w\.]+)\s+([\w\.]+)\s+([\d%]{2,4})\s+(/.{0,50})$",tmp.strip())
+                disk = re.findall(r"^(.+)\s+([\w\.]+)\s+([\w\.]+)\s+([\w\.]+)\s+([\w\.]+)\s+([\d%]{2,4})\s+(/.{0,50})$",tmp.strip())
                 if disk: disk = disk[0]
                 if len(disk) < 6: continue
                 if disk[2].find('M') != -1: continue
@@ -469,13 +471,17 @@ class system:
         cache.set('down',networkIo[1],cache_timeout)
         cache.set('otime', time.time(),cache_timeout)
         if get != False:
-            networkInfo['cpu'] = self.GetCpuInfo()
+            networkInfo['cpu'] = self.GetCpuInfo(0.2)
             networkInfo['load'] = self.GetLoadAverage(get)
             networkInfo['mem'] = self.GetMemInfo(get)
             networkInfo['version'] = session['version']
             networkInfo['disk'] = self.GetDiskInfo2()
 
-
+        networkInfo['title'] = self.GetTitle()
+        networkInfo['time'] = self.GetBootTime()
+        networkInfo['site_total'] = public.M('sites').count()
+        networkInfo['ftp_total'] = public.M('ftps').count()
+        networkInfo['database_total'] = public.M('databases').count()
         return networkInfo
         
     

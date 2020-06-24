@@ -4,7 +4,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 黄文良 <287962566@qq.com>
+# | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 from flask import request, redirect, g
 from BTPanel import session, cache
@@ -34,7 +34,7 @@ class panelSetup:
             ua = ua.lower()
             if ua.find('spider') != -1 or ua.find('bot') != -1:
                 return redirect('https://www.baidu.com')
-        g.version = '7.2.14'
+        g.version = '7.3.0'
         g.title = public.GetConfigValue('title')
         g.uri = request.path
         if not os.path.exists('data/debug.pl'):
@@ -48,6 +48,7 @@ class panelSetup:
 
         session['version'] = g.version
         session['title'] = g.title
+        g.is_aes = False
         return None
 
 
@@ -97,7 +98,6 @@ class panelAdmin(panelSetup):
         return None
 
     # 检查Web服务器类型
-
     def checkWebType(self):
         if os.path.exists(self.setupPath + '/nginx'):
             session['webserver'] = 'nginx'
@@ -157,6 +157,7 @@ class panelAdmin(panelSetup):
                         session.clear()
                         return redirect('/login?dologin=True')
         except:
+            return public.returnMsg(False,public.get_error_info())
             session.clear()
             return redirect('/login')
 
@@ -165,16 +166,45 @@ class panelAdmin(panelSetup):
         save_path = '/www/server/panel/config/api.json'
         if not os.path.exists(save_path):
             return redirect('/login')
-        api_config = json.loads(public.ReadFile(save_path))
+        try:
+            api_config = json.loads(public.ReadFile(save_path))
+        except:
+            os.remove(save_path)
+            return redirect('/login')
+        
         if not api_config['open']:
             return redirect('/login')
         from BTPanel import get_input
         get = get_input()
-        if not 'request_token' in get or not 'request_time' in get:
-            return redirect('/login')
-        client_ip = public.GetClientIp()
-        if not client_ip in api_config['limit_addr']:
-            return public.returnJson(False, 'IP校验失败,您的访问IP为['+client_ip+']')
+        
+
+        if not 'client_bind_token' in get:
+            if not 'request_token' in get or not 'request_time' in get:
+                return redirect('/login')
+            client_ip = public.GetClientIp()
+            if not client_ip in api_config['limit_addr']:
+                return public.returnJson(False, 'IP校验失败,您的访问IP为['+client_ip+']')
+        else:
+            a_file = '/dev/shm/' + get.client_bind_token
+            if not os.path.exists(a_file):
+                import panelApi
+                if not panelApi.panelApi().get_app_find(get.client_bind_token):
+                    return public.returnMsg(False,'未绑定的设备')
+                public.writeFile(a_file,'')
+            
+            if not 'key' in api_config:
+                return public.returnJson(False, '密钥校验失败')
+            if not 'form_data' in get:
+                return public.returnJson(False,'没有找到form_data数据')
+            
+            g.form_data = json.loads(public.aes_decrypt(get.form_data,api_config['key']))
+            
+            get = get_input()
+            if not 'request_token' in get or not 'request_time' in get:
+                return redirect('/login')
+            g.is_aes = True
+            g.aes_key = api_config['key']
+            
         request_token = public.md5(get.request_time + api_config['token'])
         if get.request_token == request_token:
             return False

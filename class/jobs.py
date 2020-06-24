@@ -4,7 +4,7 @@
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: 黄文良 <287962566@qq.com>
+# | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 import time,public,db,os,sys,json,re
 os.chdir('/www/server/panel')
@@ -49,6 +49,18 @@ def control_init():
 )'''
         sql.execute(csql,())
 
+
+    if not sql.table('sqlite_master').where('type=? AND name=?', ('table', 'messages')).count():
+        csql = '''CREATE TABLE IF NOT EXISTS `messages` (
+`id` INTEGER PRIMARY KEY AUTOINCREMENT,
+`level` TEXT,
+`msg` TEXT,
+`state` INTEGER DEFAULT 0,
+`expire` INTEGER,
+`addtime` INTEGER
+)'''
+        sql.execute(csql,())
+
     if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'logs','%username%')).count():
         public.M('logs').execute("alter TABLE logs add uid integer DEFAULT '1'",())
         public.M('logs').execute("alter TABLE logs add username TEXT DEFAULT 'system'",())
@@ -61,6 +73,9 @@ def control_init():
         public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'sBody' TEXT",())
         public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'sType' TEXT",())
         public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'urladdress' TEXT",())
+
+
+    public.M('users').where('email=? or email=?',('287962566@qq.com','amw_287962566@qq.com')).setField('email','test@message.com')
 
 
     filename = '/www/server/nginx/off'
@@ -85,11 +100,12 @@ def control_init():
     public.ExecShell(c)
     p_file = 'class/plugin2.so'
     if os.path.exists(p_file): public.ExecShell("rm -f class/*.so")
-    public.ExecShell("chmod -R  600 /www/server/panel/data;chmod -R  600 /www/server/panel/config;chmod -R  700 /www/server/cron;chmod -R  600 /www/server/cron/*.log;chown -R root:root /www/server/panel/data;chown -R root:root /www/server/panel/config")
+    public.ExecShell("chmod -R  600 /www/server/panel/data;chmod -R  600 /www/server/panel/config;chmod -R  700 /www/server/cron;chmod -R  600 /www/server/cron/*.log;chown -R root:root /www/server/panel/data;chown -R root:root /www/server/panel/config;chown -R root:root /www/server/phpmyadmin;chmod -R 755 /www/server/phpmyadmin")
     #disable_putenv('putenv')
     clean_session()
     #set_crond()
     clean_max_log('/www/server/panel/plugin/rsync/lsyncd.log')
+    clean_max_log('/root/.pm2/pm2.log',1024*1024*20)
     remove_tty1()
     clean_hook_log()
     run_new()
@@ -97,7 +113,7 @@ def control_init():
     #check_firewall()
     check_dnsapi()
     clean_php_log()
-    update_py37()
+    #update_py37()
 
 
 #尝试升级到独立环境

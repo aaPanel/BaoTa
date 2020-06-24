@@ -2,7 +2,7 @@
 {% block content %}
 <div class="main-content">
     <div class="container-fluid" style="padding-bottom:50px">
-        <div class="file-box bgw mtb15" style="position:relative; padding-top:110px">
+        <div class="file-box bgw mtb15">
             <div id="tipTools" class="plr15">
                 <div class="ptb15">
                     <div class="clearfix">
@@ -89,8 +89,8 @@
             			<i class="glyphicon glyphicon-plus"  aria-hidden="true"></i>
             			<span>新建</span>
             			<ul class="folder_down_up">
-            				<li data-type="0"><i class="folder-icon"></i>新建文件夹</li>
-	                    	<li data-type="1"><i class="text-icon"></i>新建文件</li>
+            				<li data-type="2"><i class="folder-icon"></i>新建文件夹</li>
+	                    	<li data-type="3"><i class="text-icon"></i>新建文件</li>
             			</ul>
             		</div>
             		<div class="refresh_dir" title="刷新当前目录">
@@ -468,10 +468,11 @@
 </script>
 {% endblock %}
 {% block scripts %}
-<script src="{{g.cdn_url}}/js/jquery-ui.min.js"></script>
-<script src="{{g.cdn_url}}/js/jquery.contextify.min.js"></script>
-<script src="{{g.cdn_url}}/js/files.js?date20191219={{g.version}}"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/bt_upload.js?version={{g['version']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.contextify.min.js"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/polyfill.js"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/files.js?date20191219={{g.version}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js?date={{g.version}}"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/ace/ext-language_tools.js?date={{g.version}}"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/js/clipboard.min.js"></script>
