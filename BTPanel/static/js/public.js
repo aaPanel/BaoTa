@@ -3311,9 +3311,22 @@ var Term = {
             type: 1,
             title: '宝塔终端',
             area: ['920px', '630px'],
-            closeBtn: 2,
+            //废弃原本的关闭按钮//closeBtn: 2,
+	    maxmin: true,
             shadeClose: false,
             content: '<a class="btlink" onclick="show_ssh_login(1)" style="position: fixed;margin-left: 83px;margin-top: -30px;">[设置]</a><div class="term-box" style="background-color:#000"><div id="term"></div></div>',
+	    /**
+	       宝塔终端最小化
+	     */
+	    min:function(layer){
+		 $('#layui-layer-shade'+Term.term_box).hide();
+	    },
+	    max:function(layer){
+		 $('#layui-layer-shade'+Term.term_box).hide();
+	    },
+	    restore:function(layer){
+		 $('#layui-layer-shade'+Term.term_box).show();
+	    },
             cancel: function () {
                 Term.term.destroy();
 
