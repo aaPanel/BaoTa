@@ -1784,7 +1784,7 @@ server
     access_log %s.log;
     error_log  %s.error.log;
 }
-#BINDING-%s-END''' % (domain,port,listen_ipv6,domain,webdir,version,self.setupPath,siteInfo['name'],public.GetConfigValue('logs_path')+'/'+siteInfo['name'],public.GetConfigValue('logs_path')+'/'+siteInfo['name'],domain)
+#BINDING-%s-END''' % (domain,port,listen_ipv6,domain,webdir,version,self.setupPath,siteInfo['name']+'_'+dirName,public.GetConfigValue('logs_path')+'/'+siteInfo['name'],public.GetConfigValue('logs_path')+'/'+siteInfo['name'],domain)
             
             conf += bindingConf
             shutil.copyfile(filename, self.nginx_conf_bak)
