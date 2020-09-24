@@ -7,12 +7,16 @@
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 import sys,os,re,time
-sys.path.append("class/")
-import db,public
+if not 'class/' in sys.path:
+    sys.path.insert(0,'class/')
+import db,public,panelMysql
 import json
 
 class data:
     __ERROR_COUNT = 0
+    DB_MySQL = None
+    web_server = None
+    setupPath = '/www/server'
     '''
      * 设置备注信息
      * @param String _GET['tab'] 数据库表名
@@ -43,39 +47,128 @@ class data:
         result = 0
         if temp['local']: result +=2
         return result
+    
+    # 转换时间
+    def strf_date(self, sdate):
+        return time.strftime('%Y-%m-%d', time.strptime(sdate, '%Y%m%d%H%M%S'))
+
+    def get_cert_end(self,pem_file):
+        try:
+            import OpenSSL
+            result = {}
+            x509 = OpenSSL.crypto.load_certificate(
+                OpenSSL.crypto.FILETYPE_PEM, public.readFile(pem_file))
+            # 取产品名称
+            issuer = x509.get_issuer()
+            result['issuer'] = ''
+            if hasattr(issuer, 'CN'):
+                result['issuer'] = issuer.CN
+            if not result['issuer']:
+                is_key = [b'0', '0']
+                issue_comp = issuer.get_components()
+                if len(issue_comp) == 1:
+                    is_key = [b'CN', 'CN']
+                for iss in issue_comp:
+                    if iss[0] in is_key:
+                        result['issuer'] = iss[1].decode()
+                        break
+            # 取到期时间
+            result['notAfter'] = self.strf_date(
+                bytes.decode(x509.get_notAfter())[:-1])
+            # 取申请时间
+            result['notBefore'] = self.strf_date(
+                bytes.decode(x509.get_notBefore())[:-1])
+            # 取可选名称
+            result['dns'] = []
+            for i in range(x509.get_extension_count()):
+                s_name = x509.get_extension(i)
+                if s_name.get_short_name() in [b'subjectAltName', 'subjectAltName']:
+                    s_dns = str(s_name).split(',')
+                    for d in s_dns:
+                        result['dns'].append(d.split(':')[1])
+            subject = x509.get_subject().get_components()
+            # 取主要认证名称
+            if len(subject) == 1:
+                result['subject'] = subject[0][1].decode()
+            else:
+                result['subject'] = result['dns'][0]
+            return result
+        except:
+            return public.get_cert_data(pem_file)
+
 
     def get_site_ssl_info(self,siteName):
-        s_file = 'vhost/nginx/{}.conf'.format(siteName)
-        is_apache = False
-        if not os.path.exists(s_file):
-            s_file = 'vhost/apache/{}.conf'.format(siteName)
-            is_apache = True
+        try:
+            s_file = 'vhost/nginx/{}.conf'.format(siteName)
+            is_apache = False
+            if not os.path.exists(s_file):
+                s_file = 'vhost/apache/{}.conf'.format(siteName)
+                is_apache = True
 
-        if not os.path.exists(s_file):
-            return -1
-        
-        s_conf = public.readFile(s_file)
-        if not s_conf: return -1
-        ssl_file = None
-        if is_apache:
-            if s_conf.find('SSLCertificateFile') == -1:
+            if not os.path.exists(s_file):
                 return -1
-            s_tmp = re.findall(r"SSLCertificateFile\s+(.+\.pem)",s_conf)
-            if not s_tmp: return -1
-            ssl_file = s_tmp[0]
-        else:
-            if s_conf.find('ssl_certificate') == -1:
-                return -1
-            s_tmp = re.findall(r"ssl_certificate\s+(.+\.pem);",s_conf)
-            if not s_tmp: return -1
-            ssl_file = s_tmp[0]
-        ssl_info = public.get_cert_data(ssl_file)
-        if not ssl_info: return -1
-        ssl_info['endtime'] = int(int(time.mktime(time.strptime(ssl_info['notAfter'], "%Y-%m-%d")) - time.time()) / 86400)
-        return ssl_info
+            
+            s_conf = public.readFile(s_file)
+            if not s_conf: return -1
+            ssl_file = None
+            if is_apache:
+                if s_conf.find('SSLCertificateFile') == -1:
+                    return -1
+                s_tmp = re.findall(r"SSLCertificateFile\s+(.+\.pem)",s_conf)
+                if not s_tmp: return -1
+                ssl_file = s_tmp[0]
+            else:
+                if s_conf.find('ssl_certificate') == -1:
+                    return -1
+                s_tmp = re.findall(r"ssl_certificate\s+(.+\.pem);",s_conf)
+                if not s_tmp: return -1
+                ssl_file = s_tmp[0]
+            ssl_info = self.get_cert_end(ssl_file)
+            if not ssl_info: return -1
+            ssl_info['endtime'] = int(int(time.mktime(time.strptime(ssl_info['notAfter'], "%Y-%m-%d")) - time.time()) / 86400)
+            return ssl_info
+        except: return -1
         #return "{}:{}".format(ssl_info['issuer'],ssl_info['notAfter'])
         
 
+    def get_php_version(self,siteName):
+        try:
+            
+            if not self.web_server:
+                self.web_server = public.get_webserver()
+
+            conf = public.readFile(self.setupPath + '/panel/vhost/'+self.web_server+'/'+siteName+'.conf')
+            if self.web_server == 'openlitespeed':
+                conf = public.readFile(
+                    self.setupPath + '/panel/vhost/' + self.web_server + '/detail/' + siteName + '.conf')
+            if self.web_server == 'nginx':
+                rep = r"enable-php-([0-9]{2,3})\.conf"
+            elif self.web_server == 'apache':
+                rep = r"php-cgi-([0-9]{2,3})\.sock"
+            else:
+                rep = r"path\s*/usr/local/lsws/lsphp(\d+)/bin/lsphp"
+            tmp = re.search(rep,conf).groups()
+            if tmp[0] == '00':
+                return '静态'
+            
+            return tmp[0][0] + '.' + tmp[0][1]
+        except:
+            return '静态'
+
+    def map_to_list(self,map_obj):
+        try:
+            if type(map_obj) != list and type(map_obj) != str: map_obj = list(map_obj)
+            return map_obj
+        except: return []
+
+    def get_database_size(self,databaseName):
+        try:
+            if not self.DB_MySQL:self.DB_MySQL = panelMysql.panelMysql()
+            db_size = self.map_to_list(self.DB_MySQL.query("select sum(DATA_LENGTH)+sum(INDEX_LENGTH) from information_schema.tables  where table_schema='{}'".format(databaseName)))[0][0]
+            if not db_size: return 0
+            return int(db_size)
+        except:
+            return 0
         
     
     '''
@@ -106,6 +199,7 @@ class data:
                     for i in range(len(data['data'])):
                         data['data'][i]['domain'] = SQL.table('domain').where("pid=?",(data['data'][i]['id'],)).count()
                         data['data'][i]['ssl'] = self.get_site_ssl_info(data['data'][i]['name'])
+                        data['data'][i]['php_version'] = self.get_php_version(data['data'][i]['name'])
             elif table == 'firewall':
                 for i in range(len(data['data'])):
                     if data['data'][i]['port'].find(':') != -1 or data['data'][i]['port'].find('.') != -1 or data['data'][i]['port'].find('-') != -1:
@@ -149,8 +243,6 @@ class data:
         where = "id=?"
         retuls = SQL.where(where,(id,)).getField(keyName)
         return retuls
-    
-        
         
     '''
      * 获取数据与分页

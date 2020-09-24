@@ -30,6 +30,17 @@ class panelApi:
         del(data['key'])
         return data
 
+
+    def login_for_app(self,get):
+        from BTPanel import cache
+        tid = get.tid
+        if(len(tid) != 12): return public.returnMsg(False,'无效的登录密钥')
+        session_id = cache.get(tid)
+        if not session_id: return public.returnMsg(False,'指定密钥不存在，或已过期')
+        if(len(session_id) != 64): return public.returnMsg(False,'无效的登录密钥')
+        cache.set(session_id,'True',120)
+        return public.returnMsg(True,'扫码成功,正在登录!')
+
     def get_api_config(self):
         tmp = public.ReadFile(self.save_path)
         if not tmp or not os.path.exists(self.save_path): 

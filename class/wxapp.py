@@ -8,14 +8,15 @@
 # +-------------------------------------------------------------------
 import os
 import sys
-sys.path.append("class/")
+if not 'class/' in sys.path:
+    sys.path.insert(0,'class/')
 import public
 import db
 import json
 import time
 import binascii 
 import base64
-from BTPanel import session,cache
+from BTPanel import session,cache,request
 
 class ScanLogin(object):
     # 扫码登录面板
@@ -32,15 +33,29 @@ class ScanLogin(object):
                 self.app_path+'login.pl').split(':')
             if time.time() - float(init_time) < 60:
                 return public.returnMsg(True, key)
+        session_id = public.get_session_id()
+        if cache.get(session_id) == 'True':
+            return public.returnMsg(True, '扫码成功')
         return public.returnMsg(False, '')
 
     # 返回二维码地址
     def login_qrcode(self, get):
-        qrcode_str = 'https://app.bt.cn/app.html?&panel_url='+public.getPanelAddr()+'&v=' + public.GetRandomString(3)+'?login';
+        tid = public.GetRandomString(12)
+        qrcode_str = 'https://app.bt.cn/app.html?&panel_url='+public.getPanelAddr()+'&v=' + public.GetRandomString(3)+'?login&tid=' + tid
+        cache.set(tid,public.get_session_id(),360)
+        cache.set(public.get_session_id(),tid,360)
         return public.returnMsg(True, qrcode_str)
-
+    
+    #生成request_token
+    def set_request_token(self):
+        session['request_token_head'] = public.GetRandomString(48)
+    
     # 设置登录状态
     def set_login(self, get):
+        session_id = public.get_session_id()
+        if cache.get(session_id) == 'True':
+            return self.check_app_login(get)
+
         if os.path.exists(self.app_path+"login.pl"):
             data = public.readFile(self.app_path+'login.pl')
             public.ExecShell('rm ' + self.app_path+"login.pl")
@@ -54,9 +69,37 @@ class ScanLogin(object):
                 cache.delete('panelNum')
                 cache.delete('dologin')
                 public.WriteLog('TYPE_LOGIN', 'LOGIN_SUCCESS',
-                                ('微信扫码登录', public.GetClientIp()))
+                                ('微信扫码登录', public.GetClientIp()+ ":" + str(request.environ.get('REMOTE_PORT'))))
+                login_type = 'data/app_login.pl'
+                self.set_request_token()
+                import config
+                config.config().reload_session()
+                public.writeFile(login_type,'True')
                 return public.returnMsg(True, '登录成功')
         return public.returnMsg(False, '登录失败')
+
+
+     #验证APP是否登录成功
+    def check_app_login(self,get):
+        session_id = public.get_session_id()
+        if cache.get(session_id) != 'True':
+            return public.returnMsg(False,'等待APP扫码登录')
+        cache.delete(session_id)
+        userInfo = public.M('users').where("id=?",(1,)).field('id,username').find()
+        session['login'] = True
+        session['username'] = userInfo['username']
+        session['tmp_login'] = True
+        public.WriteLog('TYPE_LOGIN','APP扫码登录，帐号：{},登录IP：{}'.format(userInfo['username'],public.GetClientIp()+ ":" + str(request.environ.get('REMOTE_PORT'))))
+        cache.delete('panelNum')
+        cache.delete('dologin')
+        sess_input_path = 'data/session_last.pl'
+        public.writeFile(sess_input_path,str(int(time.time())))
+        login_type = 'data/app_login.pl'
+        self.set_request_token()
+        import config
+        config.config().reload_session()
+        public.writeFile(login_type,'True')
+        return public.returnMsg(True,'登录成功!')
 
 class SelfModule():
     '''
@@ -155,7 +198,7 @@ class wxapp(SelfModule, ScanLogin):
                     if type(encryption_str) == str:
                         encryption_str = encryption_str.encode()
             if get['sgin'] == public.md5(binascii.hexlify(base64.b64encode(encryption_str))):
-                if get['client_ip'] in ['118.24.150.167', '103.224.251.67', '125.88.182.170', '47.52.194.186', '39.104.53.226','119.147.144.162']:
+                if public.GetClientIp() in ['118.24.150.167', '103.224.251.67', '125.88.182.170', '47.52.194.186', '39.104.53.226','119.147.144.162']:
                     return True
             return public.returnMsg(False, '未授权')
 

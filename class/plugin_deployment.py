@@ -76,7 +76,7 @@ class plugin_deployment:
         if sys.version_info[0] == 2: filename = filename.encode('utf-8')
         if os.path.exists(filename): 
             if os.path.getsize(filename) > 100: return pinfo
-        os.system("wget -O " + filename + ' http://www.bt.cn' + m_uri + " &")
+        public.ExecShell("wget -O " + filename + ' http://www.bt.cn' + m_uri + " &")
         return pinfo
     
     #获取插件列表
@@ -277,11 +277,11 @@ class plugin_deployment:
         
         #设置权限
         self.WriteLogs(json.dumps({'name':'设置权限','total':0,'used':0,'pre':0,'speed':0}));
-        os.system('chmod -R 755 ' + path);
-        os.system('chown -R www.www ' + path);
+        public.ExecShell('chmod -R 755 ' + path);
+        public.ExecShell('chown -R www.www ' + path);
         if pinfo['chmod']:
             for chm in pinfo['chmod']:
-                os.system('chmod -R ' + str(chm['mode']) + ' ' + (path + '/' + chm['path']).replace('//','/'));
+                public.ExecShell('chmod -R ' + str(chm['mode']) + ' ' + (path + '/' + chm['path']).replace('//','/'));
         
         #安装PHP扩展
         self.WriteLogs(json.dumps({'name':'安装必要的PHP扩展','total':0,'used':0,'pre':0,'speed':0}));
@@ -323,8 +323,8 @@ class plugin_deployment:
         #执行额外shell进行依赖安装
         self.WriteLogs(json.dumps({'name':'执行额外SHELL','total':0,'used':0,'pre':0,'speed':0}));
         if os.path.exists(path+'/install.sh'): 
-            os.system('cd '+path+' && bash ' + 'install.sh ' + find['name'] + " &> install.log");
-            os.system('rm -f ' + path+'/install.sh')
+            public.ExecShell('cd '+path+' && bash ' + 'install.sh ' + find['name'] + " &> install.log");
+            public.ExecShell('rm -f ' + path+'/install.sh')
             
         #是否执行Composer
         if os.path.exists(path + '/composer.json'):
@@ -333,13 +333,13 @@ class plugin_deployment:
                 execPHP = '/www/server/php/' + php_version +'/bin/php';
                 if execPHP:
                     if public.get_url().find('125.88'):
-                        os.system('cd ' +path+' && '+execPHP+' /usr/bin/composer config repo.packagist composer https://packagist.phpcomposer.com');
+                        public.ExecShell('cd ' +path+' && '+execPHP+' /usr/bin/composer config repo.packagist composer https://packagist.phpcomposer.com');
                     import panelSite;
                     phpini = '/www/server/php/' + php_version + '/etc/php.ini'
                     phpiniConf = public.readFile(phpini);
                     phpiniConf = phpiniConf.replace('proc_open,proc_get_status,','');
                     public.writeFile(phpini,phpiniConf);
-                    os.system('nohup cd '+path+' && '+execPHP+' /usr/bin/composer install -vvv > /tmp/composer.log 2>&1 &');
+                    public.ExecShell('nohup cd '+path+' && '+execPHP+' /usr/bin/composer install -vvv > /tmp/composer.log 2>&1 &');
         
         #写伪静态
         self.WriteLogs(json.dumps({'name':'设置伪静态','total':0,'used':0,'pre':0,'speed':0}));
@@ -380,8 +380,8 @@ class plugin_deployment:
         if os.path.exists(path+'/import.sql'):
             databaseInfo = public.M('databases').where('pid=?',(find['id'],)).field('username,password').find();
             if databaseInfo:
-                os.system('/www/server/mysql/bin/mysql -u' + databaseInfo['username'] + ' -p' + databaseInfo['password'] + ' ' + databaseInfo['username'] + ' < ' + path + '/import.sql');
-                os.system('rm -f ' + path + '/import.sql');
+                public.ExecShell('/www/server/mysql/bin/mysql -u' + databaseInfo['username'] + ' -p' + databaseInfo['password'] + ' ' + databaseInfo['username'] + ' < ' + path + '/import.sql');
+                public.ExecShell('rm -f ' + path + '/import.sql');
                 siteConfigFile = (path + '/' + pinfo['db_config']).replace('//','/');
                 if os.path.exists(siteConfigFile):
                     siteConfig = public.readFile(siteConfigFile)
@@ -415,7 +415,7 @@ class plugin_deployment:
     def set_temp_file(self,filename,path):
         public.ExecShell("rm -rf " + self.__tmp + '/*')
         self.WriteLogs(json.dumps({'name':'正在解压软件包...','total':0,'used':0,'pre':0,'speed':0}));
-        os.system('unzip -o '+filename+' -d ' + self.__tmp);
+        public.ExecShell('unzip -o '+filename+' -d ' + self.__tmp);
         auto_config = 'auto_install.json'
         p_info = self.__tmp + '/' + auto_config
         p_tmp = self.__tmp
@@ -439,9 +439,9 @@ class plugin_deployment:
                 os.remove(p_info)
                 i_ndex_html = path + '/index.html'
                 if os.path.exists(i_ndex_html): os.remove(i_ndex_html)
-                if not self.copy_to(p_tmp,path): os.system(("\cp -arf " + p_tmp + '/. ' + path + '/').replace('//','/'))
+                if not self.copy_to(p_tmp,path): public.ExecShell(("\cp -arf " + p_tmp + '/. ' + path + '/').replace('//','/'))
             except: pass
-        os.system("rm -rf " + self.__tmp + '/*')
+        public.ExecShell("rm -rf " + self.__tmp + '/*')
         return p_config
 
 

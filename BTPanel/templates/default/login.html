@@ -104,7 +104,7 @@
         }
 
         .list_scan {
-            width: 150px;
+            width: 160px;
             margin: 0 auto;
             margin-top: 15px;
         }
@@ -113,7 +113,7 @@
                 width: 40px;
                 height: 40px;
                 float: left;
-                margin-right: 15px;
+                margin-right: 10px;
             }
 
             .list_scan span {
@@ -139,26 +139,26 @@
                 background-color: #fff;
             }
 
-                .list_scan .weChatSamll img {
-                    width: 100%;
-                }
+            .list_scan .weChatSamll img {
+                width: 100%;
+            }
 
-                .list_scan .weChatSamll em {
-                    position: absolute;
-                    border: 7px solid #ececec;
-                    border-color: #ececec transparent transparent transparent;
-                    width: 0;
-                    height: 0;
-                    right: 87px;
-                    bottom: -14px;
-                    margin-left: -6px;
-                }
+            .list_scan .weChatSamll em {
+                position: absolute;
+                border: 7px solid #ececec;
+                border-color: #ececec transparent transparent transparent;
+                width: 0;
+                height: 0;
+                right: 87px;
+                bottom: -14px;
+                margin-left: -6px;
+            }
 
         .tips {
-            width: 115px;
+            /*width: 115px;*/
             position: absolute;
-            top: 10px;
-            right: 65px;
+            top: 20px;
+            right: 60px;
             color: rgb(32, 165, 58);
             background: #dff0d8;
             padding: 5px 10px;
@@ -166,28 +166,31 @@
             border-radius: 4px;
         }
 
-            .tips em {
-                position: absolute;
-                border: 6px solid #dff0d8;
-                border-color: transparent transparent transparent #dff0d8;
-                width: 0;
-                height: 0;
-                right: -11px;
-                top: 8px;
-                margin-left: -6px;
-            }
-
-            .tips img {
-                height: 16px;
-                width: 16px;
-                vertical-align: middle;
-                margin-top: -1px;
-                margin-right: 4px;
-            }
+        .tips em {
+            position: absolute;
+            border: 6px solid #dff0d8;
+            border-color: transparent transparent transparent #dff0d8;
+            width: 0;
+            height: 0;
+            right: -11px;
+            top: 8px;
+            margin-left: -6px;
+        }
+        .tips span>span{
+            vertical-align: middle;
+        }
+        .tips img {
+            height: 16px;
+            width: 16px;
+            vertical-align: middle;
+            margin-top: -1px;
+            margin-right: 4px;
+        }
 
         .main .login .rlogo {
-            margin-top: 15px;
+            margin-top: 20px;
             margin-bottom: 25px;
+            padding: 0 25px;
         }
         .static-cdn{
             position: absolute;
@@ -217,7 +220,29 @@
             color: #777;
             font-size: 12px;
         }
-
+        .btlink{
+            text-decoration: none;
+            color: #20a53a;
+        }
+        .scan_tips{
+            height: 25px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .scan_tips img{
+            width: 25px;
+            height: 25px;
+            margin-right: 10px;
+            margin-left: -5px;
+        }
+        .scan_tips span{
+            display: inline-block;
+            font-size: 18px;
+            line-height: 25px;
+            vertical-align: top;
+            font-weight: 600;
+            color: #555;
+        }
     </style>
     <div class="main">
         <div class="login">
@@ -250,32 +275,35 @@
                 </form>
             </div>
             <div class="scanCode" style="display: none;">
-                <div class="titles"><span>宝塔小程序扫码登录</span></div>
+                <div class="titles"><span>堡塔APP/小程序扫码登录</span></div>
                 <div class="qrCode" id="qrcode"></div>
                 <div class="scanTip">
                     <div class="list_scan">
-                        <img src="/static/img/sCan.png" />
-                        <span>
-                            打开
-                            <a href="javascript:;" class="btlink">
-                                宝塔小程序
-                                <div class="weChatSamll"><img src="//app.bt.cn/static/app.png"><em></em></div>
-                            </a>
+                        <span>打开<a href="https://www.bt.cn/bbs/thread-47408-1-1.html" target="_blank" class="btlink">堡塔APP</a>或<a href="javascript:;" class="btlink"> 宝塔小程序<div class="weChatSamll"><img src="//app.bt.cn/static/app.png"><em></em></div></a>
                         </span>
-                        <span>扫一扫登录</span>
+                        <div class="scan_tips"> <img src="/static/img/sCan.png" /><span>扫一扫</span></div>
                     </div>
                 </div>
             </div>
             <div class="entrance" style="display: none;">
                 <div class="bg_img"></div>
                 <div class="tips">
-                    <span><img src="/static/img/safety_ico.png"><span>扫码登录更安全</span></span>
+                    <span><img src="/static/img/scan_ico.png"><span>切换扫码登录</span></span>
                     <em></em>
                 </div>
             </div>
         </div>
     </div>
     <script type="text/javascript">
+
+        if(typeof(String.prototype.trim) === "undefined")
+        {
+            String.prototype.trim = function() 
+            {
+                return String(this).replace(/^\s+|\s+$/g, '');
+            };
+        }
+
         select_host = {
             hosts: {{data.hosts|safe}},
             my_hosts : {},
@@ -319,9 +347,7 @@
                 }
             }
         }
-
         select_host.run();
-
         setTimeout(function(){
             if(select_host.hosts.length > 0){
                 var my_keys = Object.keys(select_host.my_hosts);
@@ -384,8 +410,6 @@
                 document.body.appendChild(script);
                 
             }
-
-            
             my_urls = [
                     host_url+'/'+select_host.bt_version+'/js/jquery-1.10.2.min.js',
                     host_url+'/'+select_host.bt_version+'/js/Validform_v5.3.2_min.js',
@@ -397,99 +421,103 @@
 
             loadJs(my_urls,0,run); 
         },200);
-
-
         function run(){
             function Wreset() {
-                    var w = $(window).width();
-                    var yzmw = $(".login .line").width() - 140;
-                    if ($(".yzm").is(":visible") && w > 640) {
-                        $(".login").css({ "height": "365px", "margin-top": "-230px" });
-                    }
-                    else {
-                        $(".login").removeAttr("style")
-                    }
-                    $(".login .yzm .inputtxt").width(yzmw);
+                var w = $(window).width();
+                var yzmw = $(".login .line").width() - 140;
+                if ($(".yzm").is(":visible") && w > 640) {
+                    $(".login").css({ "height": "365px", "margin-top": "-230px" });
                 }
-                $(function () {
-                    Wreset();
-                    var setTime = '';
-                    $.get('/public?name=app&fun=login_qrcode', function (res) {
-                        if (res.status) {
-                            $('#qrcode').qrcode({
-                                render: "canvas",
-                                width: 150,
-                                height: 150,
-                                text: res.msg
-                            });
-                            $('.entrance').show();
-                        }
-                    }).error(function (res, textStatus, errorThrown) {
-                        if (res.status == 404) {
-                            $('.entrance').hide();
-                        }
-                    });
-                    function controlTime() {
-                        $.get('/public?name=app&fun=is_scan_ok', function (res) {
-                            if (res.status) {
-                                layer.msg('扫码成功，请稍后...', { icon: 1 });
-                                clearInterval(setTime);
-                                loginAdmin(res.msg);
-                            }
-                        });
-                    }
-                    function loginAdmin(key) {
-                        $.get('/public?name=app&fun=set_login', { secret_key: key }, function (res) {
-                            layer.msg(res.msg, { icon: res.status ? 1 : 2 })
-                            if (res.status) {
-                                layer.msg('正在安全登录中,请稍后...', { time: 0, shade: [0.4, '#fff'], icon: 16 });
-                                setTimeout(function () {
-                                    location.href = '/';
-                                }, 1000);
-                            }
-                        });
-                    }
-                    $('.bg_img').click(function (event) {
-                        if ($(this).hasClass('pc')) {
-                            $(this).removeClass('pc');
-                            $('.scanCode').hide().prev().show();
-                            clearInterval(setTime);
-                            $('.tips>span>span').html('扫码登录更安全');
-                        } else {
-                            $(this).addClass('pc');
-                            $('.account').hide().next().show();
-                            $('.tips>span>span').html('点击账号登录')
-                            setTime = window.setInterval(controlTime, 2000);
-                        }
-                    });
-                })
-                window.onresize = function () {
-                    Wreset();
+                else {
+                    $(".login").removeAttr("style")
                 }
-
-
-                $(function () {
-                    $(".loginform").Validform({
-                        tiptype: function (msg, o, cssctl) {
-                            if (!o.obj.is("form")) {
-                                var objtip = o.obj.siblings(".Validform_checktip");
-                                cssctl(objtip, o.type);
-                                objtip.text(msg);
-                            }
-                        }
-                    });
+                $(".login .yzm .inputtxt").width(yzmw);
+            }
+            $(function () {
+                Wreset();
+                var setTime = '';
+                $.get('/public?name=app&fun=login_qrcode', function (res) {
+                    if (res.status) {
+                        $('#qrcode').qrcode({
+                            render: "canvas",
+                            width: 150,
+                            height: 150,
+                            background: "#fefefe",
+                            foreground: "#333",
+                            text: res.msg
+                        });
+                        $('.entrance').show();
+                    }
+                }).error(function (res, textStatus, errorThrown) {
+                    if (res.status == 404) {
+                        $('.entrance').hide();
+                    }
                 });
+                function controlTime() {
+                    $.get('/public?name=app&fun=is_scan_ok', function (res) {
+                        if (res.status) {
+                            layer.msg('扫码成功，请稍后...', { icon: 1 });
+                            clearInterval(setTime);
+                            loginAdmin(res.msg);
+                        }
+                    });
+                }
+                function loginAdmin(key) {
+                    $.get('/public?name=app&fun=set_login', { secret_key: key }, function (res) {
+                        layer.msg(res.msg, { icon: res.status ? 1 : 2 })
+                        if (res.status) {
+                            layer.msg('正在安全登录中,请稍后...', { time: 0, shade: [0.4, '#fff'], icon: 16 });
+                            setTimeout(function () {
+                                location.href = '/';
+                            }, 1000);
+                        }
+                    });
+                }
+                $('.bg_img').click(function (event) {
+                    if ($(this).hasClass('pc')) {
+                        $(this).removeClass('pc');
+                        $('.scanCode').hide().prev().show();
+                        clearInterval(setTime);
+                        $('.tips>span').html('<img src="/static/img/scan_ico.png"><span>切换扫码登录</span>');
+                    } else {
+                        $(this).addClass('pc');
+                        $('.account').hide().next().show();
+                        $('.tips>span').html('<img src="/static/img/safety_ico.png"><span>切换账号登录</span>')
+                        setTime = window.setInterval(controlTime, 2000);
+                    }
+                });
+                if("{{data['app_login']}}" == 'True'){
+                    $('.bg_img').addClass('pc');
+                    $('.account').hide().next().show();
+                    $('.tips>span').html('<img src="/static/img/safety_ico.png"><span>切换账号登录</span>')
+                    setTime = window.setInterval(controlTime, 2000);
+                }
+            })
+            window.onresize = function () {
+                Wreset();
+            }
+            $(function () {
+                $(".loginform").Validform({
+                    tiptype: function (msg, o, cssctl) {
+                        if (!o.obj.is("form")) {
+                            var objtip = o.obj.siblings(".Validform_checktip");
+                            cssctl(objtip, o.type);
+                            objtip.text(msg);
+                        }
+                    }
+                });
+            });
+            $('#login-button').click(function () {
+                    var username = $("input[name='username']").val().trim();
+                    var password = $("input[name='password']").val().trim();
+                    var code = $("input[name='code']").val().trim();
 
-                $('#login-button').click(function () {
-                    var username = $("input[name='username']").val();
-                    var password = $("input[name='password']").val();
-                    var code = $("input[name='code']").val();
                     if (username == '' || password == '') {
                         layer.msg("{{data['lan']['JS1']}}", { icon: 2 });
                         return;
                     }
-
-                    var data = { username: username, password: md5(md5(password) + '' + '_bt.cn'), code: code,cdn_url:$("#static_cdn").val() }
+                    
+                    var data = { username: md5(username), password: md5(md5(password) + '' + '_bt.cn'), code: code,cdn_url:$("#static_cdn").val() }
                     var loadT = layer.msg("{{data['lan']['JS2']}}", { icon: 16, time: 0, shade: [0.3, '#000'] });
                     $.post('/login', data, function (rdata) {
                         if(rdata == '1'){
@@ -512,7 +540,7 @@
                                         }
                                     });
                                     $('#auth_verif_btn').click(function(e){
-                                        data['vcode'] = $('[name="v_code"]').val();
+                                        data['vcode'] = $('[name="v_code"]').val().trim();
                                         var loadT = layer.msg("{{data['lan']['JS2']}}", { icon: 16, time: 0, shade: [0.3, '#000'] });
                                         $.post('/login', data, function (rdata) {
                                             layer.close(loadT);

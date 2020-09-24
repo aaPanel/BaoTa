@@ -34,6 +34,7 @@ class database(datatool.datatools):
             
             sql = public.M('databases')
             if sql.where("name=? or username=?",(data_name,username)).count(): return public.returnMsg(False,'DATABASE_NAME_EXISTS')
+            
             address = get['address'].strip()
             user = '是'
             password = data_pwd
@@ -49,6 +50,9 @@ class database(datatool.datatools):
             codeStr=wheres[codeing]
             #添加MYSQL
             mysql_obj = panelMysql.panelMysql()
+            #从MySQL验证是否存在
+            if self.database_exists_for_mysql(mysql_obj,data_name):  return public.returnMsg(False,'指定数据库已在MySQL中存在，请换个名称!')
+
             result = mysql_obj.execute("create database `" + data_name + "` DEFAULT CHARACTER SET " + codeing + " COLLATE " + codeStr)
             isError = self.IsSqlError(result)
             if  isError != None: return isError
@@ -71,6 +75,17 @@ class database(datatool.datatools):
             public.WriteLog("TYPE_DATABASE",'DATABASE_ADD_ERR', (data_name,str(ex)))
             return public.returnMsg(False,'ADD_ERROR')
 
+
+    #判断数据库是否存在—从MySQL
+    def database_exists_for_mysql(self,mysql_obj,dataName):
+        databases_tmp = self.map_to_list(mysql_obj.query('show databases'))
+        if not isinstance(databases_tmp,list):
+            return True
+
+        for i in databases_tmp:
+            if i[0] == dataName: 
+                return True
+        return False
 
     #创建用户
     def __CreateUsers(self,dbname,username,password,address):
@@ -320,9 +335,10 @@ SetLink
                 m_version = public.readFile(public.GetConfigValue('setup_path') + '/mysql/version.pl')
                 
                 if m_version.find('5.7') == 0  or m_version.find('8.0') == 0 or m_version.find('10.4.') != -1:
-                    panelMysql.panelMysql().execute("UPDATE mysql.user SET authentication_string='' WHERE user='root'")
-                    panelMysql.panelMysql().execute("ALTER USER 'root'@'localhost' IDENTIFIED BY '%s'" % password)
-                    panelMysql.panelMysql().execute("ALTER USER 'root'@'127.0.0.1' IDENTIFIED BY '%s'" % password)
+                    accept = self.map_to_list(mysql_obj.query("select Host from mysql.user where User='root'"))
+                    for my_host in accept:
+                        mysql_obj.execute("UPDATE mysql.user SET authentication_string='' WHERE User='root' and Host='{}'".format(my_host[0]))
+                        mysql_obj.execute("ALTER USER `%s`@`%s` IDENTIFIED BY '%s'" % ('root',my_host[0],password))
                 else:
                     result = mysql_obj.execute("update mysql.user set Password=password('" + password + "') where User='root'")
                 mysql_obj.execute("flush privileges")
@@ -499,16 +515,27 @@ SetLink
         return public.returnMsg(True,'DATABASE_SYNC_SUCCESS',(str(n),))
     
     #配置
-    def mypass(self,act,root):
+    def mypass(self,act,password = None):
         conf_file = '/etc/my.cnf'
+        conf_file_bak = '/etc/my.cnf.bak'
+        if os.path.getsize(conf_file) > 2:
+            public.writeFile(conf_file_bak,public.readFile(conf_file))
+            public.set_mode(conf_file_bak,600)
+            public.set_own(conf_file_bak,'mysql')
+        elif os.path.getsize(conf_file_bak) > 2:
+            public.writeFile(conf_file,public.readFile(conf_file_bak))
+            public.set_mode(conf_file,600)
+            public.set_own(conf_file,'mysql')
+        
         public.ExecShell("sed -i '/user=root/d' {}".format(conf_file))
         public.ExecShell("sed -i '/password=/d' {}".format(conf_file))
         if act:
+            password = public.M('config').where('id=?',(1,)).getField('mysql_root')
             mycnf = public.readFile(conf_file)
-            src_dump = "[mysqldump]\n"
-            sub_dump = src_dump + "user=root\npassword=\"{}\"\n".format(root)
             if not mycnf: return False
-            mycnf = mycnf.replace(src_dump,sub_dump)
+            src_dump_re = r"\[mysqldump\][^.]"
+            sub_dump = "[mysqldump]\nuser=root\npassword=\"{}\"\n".format(password)
+            mycnf = re.sub(src_dump_re, sub_dump, mycnf)
             if len(mycnf) > 100: public.writeFile(conf_file,mycnf)
             return True
         return True
@@ -761,13 +788,16 @@ SetLink
         try:
             if data[0] == 1045:
                 return public.returnMsg(False,'MySQL密码错误!')
-        except:pass
-        for d in data:
-            for g in gets:
-                try:
-                    if d[0] == g: result[g] = d[1]
-                except:
-                    pass
+        
+            for d in data:
+                for g in gets:
+                    try:
+                        if d[0] == g: result[g] = d[1]
+                    except:
+                        pass
+        except:
+            return public.returnMsg(False,str(data))
+            
         if not 'Run' in result and result:
             result['Run'] = int(time.time()) - int(result['Uptime'])
         tmp = panelMysql.panelMysql().query('show master status')
@@ -799,8 +829,9 @@ SetLink
     
     #修复表信息
     def ReTable(self,get):
+        m_version = public.readFile(public.GetConfigValue('setup_path') + '/mysql/version.pl')
+        if m_version.find('5.1.')!=-1:return public.returnMsg(False,"不支持mysql5.1!")
         info=self.RepairTable(get)
-
         if info:
             return public.returnMsg(True,"修复完成!")
         else:

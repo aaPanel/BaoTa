@@ -10,7 +10,8 @@
 import sqlite3
 import os,time,sys
 os.chdir('/www/server/panel')
-sys.path.insert(0,'class')
+if not 'class/' in sys.path:
+    sys.path.insert(0,'class/')
 import public
 
 class Sql():
@@ -29,6 +30,12 @@ class Sql():
     
     def __init__(self):
         self.__DB_FILE = 'data/default.db'
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self,exc_type,exc_value,exc_trackback):
+        self.close()
     
     def __GetConn(self): 
         #取数据库对象
@@ -306,7 +313,8 @@ class Sql():
     #写锁
     def write_lock(self):
         self.is_lock()
-        open(self.__LOCK,'wb+').close()
+        with open(self.__LOCK,'wb+') as f:
+            f.close()
 
     #解锁
     def rm_lock(self):

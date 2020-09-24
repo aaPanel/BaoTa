@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="main-content">
+    <a style="display: none;" id="recycle_bin" data="{{data['recycle_bin']}}"></a>
     <div class="container-fluid" style="padding-bottom:50px">
         <div class="file-box bgw mtb15">
             <div id="tipTools" class="plr15">
@@ -181,7 +182,7 @@
                     <div class="menu-conter">
                         <div class="set_jump_line">
                             <input type="number" min="0"/>
-                            <button class="btn-save">跳转</button>
+                            <div class="jump_tips">当前：行&nbsp;<span></span>&nbsp;，列&nbsp;<span></span>&nbsp;，输入行数(介于&nbsp;1&nbsp;-&nbsp;<span></span>&nbsp;之间)</div>
                         </div>
                     </div>
                 </div>
@@ -508,4 +509,3 @@
     });
 </script>
 {% endblock %}
-

@@ -19,7 +19,7 @@
   },
   {
     "protocol": "http://",
-    "address": "125.88.182.172",
+    "address": "180.101.160.68",
     "port": "5880",
     "ping": 500
   },
@@ -39,12 +39,6 @@
     "protocol": "http://",
     "address": "183.235.223.101",
     "port": "3389",
-    "ping": 500
-  },
-  {
-    "protocol": "http://",
-    "address": "119.188.210.21",
-    "port": "5880",
     "ping": 500
   },
   {

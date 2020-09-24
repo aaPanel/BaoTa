@@ -1,0 +1,110 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="main-content">
+    <div class="container-fluid">
+        <div class="safe bgw mtb15 pd15" style="height: 100%;">
+            <link rel="stylesheet" href="/static/css/xterm.css" />
+            <div class="quick_links">
+                <div class="quick_links_title"><span class="glyphicon glyphicon-lock" aria-hidden="true"></span>SSH://</div>
+                <input type="text" class="quick_links_input" placeholder="root@192.168.1.1:21，支持临时终端连接。">
+                <span class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span>
+            </div>
+            <div class="term_box" id="term_box_view">
+                <div class="term_item_tab">
+                    <div class="list"></div>
+                    <span class="addServer" title="添加服务器SSH信息">
+                        <span class="glyphicon glyphicon-plus" aria-hidden="true" ></span>
+                    </span>
+                    <span class="tab_tootls">
+                        <span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span><span>全屏显示</span>
+                        <!-- <span class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span>
+                        <span class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span> -->
+                    </span>
+                </div>
+                <div class="term_content_tab"></div>
+            </div>
+            <div class="term_tootls">
+                <div class="tootls_tab"><span class="active">服务器列表</span><a href="javascript:;" data-type="host" title="添加服务器SSH信息"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></a></div>
+                <ul class="tootls_host_list"></ul>
+                <div class="tootls_tab"><span class="active">常用命令<i>(点击复制命令)</i></span><a href="javascript:;"  data-type="shell" title="添加常用命令"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></a></div>
+                <ul class="tootls_commonly_list"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/html" id="host_form_view">
+    <div class="bt-form bt-form-2x pd20" id="host_form">
+        <input type="text" name="sort" class="hidden" value="<% this.form.sort %>" />
+        <div class="line input_group">
+            <span class="tname">服务器IP</span>
+            <div class="info-r">
+                <input type="text" name="host" class="bt-input-text mr5" style="width:240px" value="<% this.form.host %>" placeholder="输入服务器IP" val="" autocomplete="off" />
+                <input type="text" name="port" class="bt-input-text mr5" style="width:60px" placeholder="端口" value="<% this.form.port %>" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="line">
+            <span class="tname">SSH账号</span>
+            <div class="info-r">
+                <input type="text" name="username" class="bt-input-text mr5" style="width:305px" placeholder="输入SSH账号" value="<% this.form.username %>" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="line">
+            <span class="tname">验证方式</span>
+            <div class="info-r ">
+                <div class="btn-group">
+                    <button type="button" tabindex="-1" class="btn btn-sm auth_type_checkbox  <% !(this.form.password != '' || this.form.pkey == '' && this.form.password == '')?'btn-default':'btn-success' %>" data-ctype="0">密码验证</button>
+                    <button type="button" tabindex="-1" class="btn btn-sm auth_type_checkbox  <% this.form.pkey == ''?'btn-default':'btn-success' %>" data-ctype="1">私钥验证
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="line c_password_view <% (this.form.password != '' || this.form.pkey == '' && this.form.password == '')?'show':'hidden'%>">
+            <span class="tname">密码</span>
+            <div class="info-r">
+                <input type="text" name="password" class="bt-input-text mr5" placeholder="请输入SSH密码" style="width:305px;" value="<% this.form.password %>" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="line c_pkey_view <% this.form.pkey != ''?'show':'hidden'%>">
+            <span class="tname">私钥</span>
+            <div class="info-r">
+                <textarea rows="4" name="pkey" class="bt-input-text mr5" placeholder="请输入SSH私钥" style="width:305px;height: 80px;line-height: 18px;padding-top:10px;"><% this.form.pkey %></textarea>
+            </div>
+        </div>
+        <div class="line ssh_ps_tips">
+            <span class="tname">备注</span>
+            <div class="info-r">
+                <input type="text" name="ps" class="bt-input-text mr5" placeholder="请输入备注,可为空" style="width:305px;" value="<% this.form.ps %>" autocomplete="off"/>
+            </div>
+        </div>
+    </div>
+</script>
+<script type="text/html" id="shell_form_view">
+    <div class="bt-form bt-form-2x pd20" id="host_form">
+        <div class="line">
+            <span class="tname">命令名称</span>
+            <div class="info-r">
+                <input type="text" name="title" class="bt-input-text mr5" style="width:305px" placeholder="请输入常用命令描述，必填项" value="<% this.form.title %>" autocomplete="off"/>
+            </div>
+        </div>
+        <div class="line">
+            <span class="tname">命令内容</span>
+            <div class="info-r">
+                <textarea rows="4" name="shell" class="bt-input-text mr5" placeholder="请输入常用命令信息，必填项" style="width:305px;height: 150px;line-height: 18px;padding-top:10px;"><% this.form.shell %></textarea>
+            </div>
+        </div>
+    </div>
+</script>
+{% endblock %}
+{% block scripts %}
+<script type="text/javascript" src="/static/js/jquery.dragsort-0.5.2.min.js"></script>
+<script type="text/javascript" src="/static/js/clipboard.min.js"></script>
+<script type="text/javascript" src="/static/js/xterm.js"></script>
+<script type="text/javascript" src="/static/js/term.js"></script>
+<script type="text/javascript">
+    if($("#panel_debug").attr("data") == 'True') {
+        layer.msg('当前为开发者模式，不支持宝塔终端，请在【面板设置】页面关闭开发者模式!',{icon:7,shade: [0.3, '#000'],time:0});
+        $(".layui-layer-shade").css("margin-left", "180px");
+    }
+</script>
+{% endblock %}

@@ -10,10 +10,10 @@ var database = {
                 columns: [
                     { field: 'id', type: 'checkbox', width: 30 },
                     {
-                        field: 'name', title: '数据库名', width: '20%'
+                        field: 'name', title: '数据库名', width: 130
                     },
                     {
-                        field: 'username', title: '用户名', sort: function () {
+                        field: 'username', title: '用户名',width: 130, sort: function () {
                             database.get_list();
                         }
                     },
@@ -26,7 +26,7 @@ var database = {
                         }
                     },
                     {
-                        field: 'backup', title: '备份', templet: function (item) {
+                        field: 'backup', width:130, title: '备份', templet: function (item) {
                             var backup = '';
                             var _msg = lan.database.backup_empty;
                             if (item.backup_count > 0) _msg = lan.database.backup_ok;
@@ -48,7 +48,7 @@ var database = {
                         }
                     },
                     {
-                        field: 'opt', width: 260, title: '操作', align: 'right', templet: function (item) {
+                        field: 'opt', width: 280, title: '操作', align: 'right', templet: function (item) {
                             var option = "<a href=\"javascript:;\" class=\"btlink\" onclick=\"bt.database.open_phpmyadmin('" + item.name + "','" + item.username + "','" + item.password + "')\" title=\"数据库管理\">管理</a> | ";
                             option += "<a href=\"javascript:;\" class=\"btlink\" onclick=\"database.rep_tools('" + item.name + "')\" title=\"MySQL优化修复工具\">工具</a> | ";
                             option += "<a href=\"javascript:;\" class=\"btlink\" onclick=\"bt.database.set_data_access('" + item.username + "')\" title=\"设置数据库权限\">权限</a> | ";

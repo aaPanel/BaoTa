@@ -54,6 +54,7 @@
 <script type="text/javascript">
     bt.set_cookie('sites_path', "{{session['config']['sites_path']}}");
     bt.set_cookie('serverType', "{{session['webserver']}}");
+    bt.set_cookie('distribution', "{{session['config']['distribution']}}");
     $(document).ready(function () {
         soft.get_list();
         // setTimeout(function () {

@@ -139,10 +139,10 @@ class safe:
 if __name__=='__main__':
   
     if len(sys.argv)!=2:
-        print '参数错误'
+        print('参数错误')
         exit();
     if os.path.lexists(sys.argv[1]) == False:
-        print "目录不存在"
+        print("目录不存在")
         exit();
     if len(sys.argv) ==2:
         safe().suspect(sys.argv[1]);

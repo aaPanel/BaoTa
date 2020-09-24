@@ -66,7 +66,7 @@ class db extends SQLite3
 		return $data;
 	}
 
-	public function execute(){
+	public function execute($sql){
 		$result = $this->exec($sql);
 		return $result;
 	}

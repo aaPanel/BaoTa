@@ -17,15 +17,16 @@ import public
 import sys
 import os
 import re
-sys.path.insert(0, '/www/server/panel/class')
 os.chdir('/www/server/panel')
-
+if not 'class/' in sys.path:
+    sys.path.insert(0,'class/')
 
 class bt_task:
     __table = 'task_list'
     __task_tips = '/dev/shm/bt_task_now.pl'
     __task_path = '/www/server/panel/tmp/'
     down_log_total_file = '/tmp/download_total.pl'
+    not_web = False
     def __init__(self):
 
         # 创建数据表
@@ -66,7 +67,7 @@ class bt_task:
         data = sql.field('id,name,type,shell,other,status,exectime,endtime,addtime').order(
             'id asc').limit('10').select()
         if type(data) == str:
-            public.WriteLog('任务队列', data)
+            public.WriteLog('任务队列', data,not_web = self.not_web)
             return []
         if not 'num' in get:
             get.num = 15
@@ -315,7 +316,7 @@ class bt_task:
             return public.returnMsg(False, '指定压缩格式不支持!')
 
         self.set_file_accept(dfile)
-        public.WriteLog("TYPE_FILE", 'ZIP_SUCCESS', (sfiles, dfile))
+        #public.WriteLog("TYPE_FILE", 'ZIP_SUCCESS', (sfiles, dfile),not_web = self.not_web)
         return public.returnMsg(True, 'ZIP_SUCCESS')
 
     # 文件解压
@@ -359,7 +360,7 @@ class bt_task:
                 user = pwd.getpwuid(os.stat(dfile).st_uid).pw_name
                 public.ExecShell("chown %s:%s %s" % (user, user, dfile))
 
-        public.WriteLog("TYPE_FILE", 'UNZIP_SUCCESS', (sfile, dfile))
+        #public.WriteLog("TYPE_FILE", 'UNZIP_SUCCESS', (sfile, dfile),not_web = self.not_web)
         return public.returnMsg(True, 'UNZIP_SUCCESS')
 
     # 备份网站
@@ -381,7 +382,7 @@ class bt_task:
 
         sql = public.M('backup').add('type,name,pid,filename,size,addtime',
                                      (0, fileName, find['id'], zipName, 0, public.getDate()))
-        public.WriteLog('TYPE_SITE', 'SITE_BACKUP_SUCCESS', (find['name'],))
+        public.WriteLog('TYPE_SITE', 'SITE_BACKUP_SUCCESS', (find['name'],),not_web = self.not_web)
         return public.returnMsg(True, 'BACKUP_SUCCESS')
 
     # 备份数据库
@@ -408,7 +409,7 @@ class bt_task:
         addTime = time.strftime('%Y-%m-%d %X', time.localtime())
         sql.add('type,name,pid,filename,size,addtime',
                 (1, fileName, id, backupName, 0, addTime))
-        public.WriteLog("TYPE_DATABASE", "DATABASE_BACKUP_SUCCESS", (name,))
+        public.WriteLog("TYPE_DATABASE", "DATABASE_BACKUP_SUCCESS", (name,),not_web = self.not_web)
         return public.returnMsg(True, 'BACKUP_SUCCESS')
 
     # 导入数据库
@@ -457,7 +458,7 @@ class bt_task:
                 'setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " + file)
             self.mypass(False, root)
 
-        public.WriteLog("TYPE_DATABASE", 'DATABASE_INPUT_SUCCESS', (name,))
+        public.WriteLog("TYPE_DATABASE", 'DATABASE_INPUT_SUCCESS', (name,),not_web = self.not_web)
         return public.returnMsg(True, 'DATABASE_INPUT_SUCCESS')
 
     # 配置

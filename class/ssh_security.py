@@ -287,8 +287,8 @@ class ssh_security:
         rec = '\n#?RSAAuthentication\s\w+'
         rec2 = '\n#?PubkeyAuthentication\s\w+'
         file = public.readFile(self.__SSH_CONFIG)
-        file_ssh = re.sub(rec, '\n#RSAAuthentication no', file)
-        file_result = re.sub(rec2, '\n#PubkeyAuthentication no', file_ssh)
+        file_ssh = re.sub(rec, '\nRSAAuthentication no', file)
+        file_result = re.sub(rec2, '\nPubkeyAuthentication no', file_ssh)
         self.wirte(self.__SSH_CONFIG, file_result)
         self.set_password(get)
         self.restart_ssh()

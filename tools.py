@@ -37,7 +37,7 @@ if [ "$m_version" != "" ];then
 else
     m_version=$(cat /www/server/mysql/version.pl|grep -E "(5.7.|8.0.|10.4.)")
     if [ "$m_version" != "" ];then
-        mysql -uroot -e "FLUSH PRIVILEGES;update mysql.user set authentication_string='' where user='root';alter user 'root'@'localhost' identified by '${pwd}';alter user 'root'@'127.0.0.1' identified by '${pwd}';FLUSH PRIVILEGES;";
+        mysql -uroot -e "FLUSH PRIVILEGES;update mysql.user set authentication_string='' where user='root' and (host='127.0.0.1' or host='localhost');alter user 'root'@'localhost' identified by '${pwd}';alter user 'root'@'127.0.0.1' identified by '${pwd}';FLUSH PRIVILEGES;";
     else
         mysql -uroot -e "update mysql.user set authentication_string=password('${pwd}') where user='root';"
     fi
@@ -63,7 +63,7 @@ echo "The root password set ${pwd}  successuful"'''
 def set_panel_pwd(password,ncli = False):
     import db
     sql = db.Sql()
-    result = sql.table('users').where('id=?',(1,)).setField('password',public.md5(password))
+    result = sql.table('users').where('id=?',(1,)).setField('password',public.password_salt(public.md5(password),uid=1))
     username = sql.table('users').where('id=?',(1,)).getField('username')
     if ncli:
         print("|-用户名: " + username)
@@ -155,12 +155,30 @@ history -c
 '''
     os.system(command)
     print('\t\033[1;32m[done]\033[0m')
-    public.writeFile('/www/server/panel/install.pl',"True")
+    
+    
+    print("|-请选择用户初始化方式：")
+    print("="*50)
+    print(" (1) 访问面板页面时显示初始化页面")
+    print(" (2) 首次启动时自动随机生成新帐号密码")
+    print("="*50)
+    p_input = input("请选择初始化方式(default: 1): ")
+    print(p_input)
+    if p_input in [2,'2']:
+        public.writeFile('/www/server/panel/aliyun.pl',"True")
+        s_file = '/www/server/panel/install.pl'
+        if os.path.exists(s_file): os.remove(s_file)
+        public.M('config').where("id=?",('1',)).setField('status',1)
+    else:
+        public.writeFile('/www/server/panel/install.pl',"True")
+        public.M('config').where("id=?",('1',)).setField('status',0)
     port = public.readFile('data/port.pl').strip()
-    public.M('config').where("id=?",('1',)).setField('status',0)
     print('========================================================')
     print('\033[1;32m|-面板封装成功,请不要再登陆面板做任何其它操作!\033[0m')
-    print('\033[1;41m|-面板初始化地址: http://{SERVERIP}:'+port+'/install\033[0m')
+    if not p_input in [2,'2']:
+        print('\033[1;41m|-面板初始化地址: http://{SERVERIP}:'+port+'/install\033[0m')
+    else:
+        print('\033[1;41m|-获取初始帐号密码命令:bt default \033[0m')
 
 #清空正在执行的任务
 def CloseTask():
@@ -338,8 +356,8 @@ def set_panel_username(username = None):
     import db
     sql = db.Sql()
     if username:
-        if len(username) < 5:
-            print("|-错误，用户名长度不能少于5位")
+        if len(username) < 3:
+            print("|-错误，用户名长度不能少于3位")
             return
         if username in ['admin','root']:
             print("|-错误，不能使用过于简单的用户名")
@@ -371,7 +389,7 @@ def setup_idc():
         pInfo['product'] = u'与宝塔联合定制版'
         public.writeFile(pFile,json.dumps(pInfo))
         tFile = panelPath + '/data/title.pl'
-        titleNew = (pInfo['brand'] + u'面板').encode('utf-8')
+        titleNew = pInfo['brand'] + u'面板'
         if os.path.exists(tFile):
             title = public.GetConfigValue('title')
             if title == '' or title == '宝塔Linux面板': 
@@ -449,12 +467,15 @@ def bt_cli(u_input = 0):
             input_pwd = raw_input("请输入新的面板密码：")
         else:
             input_pwd = input("请输入新的面板密码：")
+        if len(input_pwd.strip()) < 5:
+            print("|-错误，密码长度不能小于5位")
+            return
         set_panel_pwd(input_pwd.strip(),True)
     elif u_input == 6:
         if sys.version_info[0] == 2:
-            input_user = raw_input("请输入新的面板用户名(>5位)：")
+            input_user = raw_input("请输入新的面板用户名(>3位)：")
         else:
-            input_user = input("请输入新的面板用户名(>5位)：")
+            input_user = input("请输入新的面板用户名(>3位)：")
         set_panel_username(input_user.strip())
     elif u_input == 7:
         if sys.version_info[0] == 2:
@@ -470,7 +491,7 @@ def bt_cli(u_input = 0):
             return
 
         import re
-        rep = "^[\w@\._]+$"
+        rep = r"^[\w@\._]+$"
         if not re.match(rep, input_mysql):
             print("|-错误，密码中不能包含特殊符号")
             return
@@ -513,8 +534,9 @@ def bt_cli(u_input = 0):
         print("|-已将面板端口修改为：%s" % input_port)
         print("|-若您的服务器提供商是[阿里云][腾讯云][华为云]或其它开启了[安全组]的服务器,请在安全组放行[%s]端口才能访问面板" % input_port)
     elif u_input == 9:
-        sess_file = '/dev/shm/session.db'
-        if os.path.exists(sess_file): os.remove(sess_file)
+        sess_file = '/www/server/panel/data/session'
+        if os.path.exists(sess_file):
+            os.system("rm -f {}/*".format(sess_file))
         os.system("/etc/init.d/bt reload")
     elif u_input == 10:
         os.system("/etc/init.d/bt reload")

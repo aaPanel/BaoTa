@@ -28,51 +28,18 @@ $(".st").hover(function(){
 $(".searcTime .gt").click(function(){
 	$(this).addClass("on").siblings().removeClass("on");
 })
-$(".loadbtn").click(function(){
-	$(this).parents(".searcTime").find("span").removeClass("on");
+
+
+$('.time_range_submit').click(function(){
+    $(this).parents(".searcTime").find("span").removeClass("on");
 	$(this).parents(".searcTime").find(".st").addClass("on");
 	var b = (new Date($(this).parent().find(".btime").val()).getTime())/1000;
 	var e = (new Date($(this).parent().find(".etime").val()).getTime())/1000;
 	b = Math.round(b);
 	e = Math.round(e);
-	getload(b,e)
-})
-$(".cpubtn").click(function(){
-	$(this).parents(".searcTime").find("span").removeClass("on");
-	$(this).parents(".searcTime").find(".st").addClass("on");
-	var b = (new Date($(this).parent().find(".btime").val()).getTime())/1000;
-	var e = (new Date($(this).parent().find(".etime").val()).getTime())/1000;
-	b = Math.round(b);
-	e = Math.round(e);
-	cpu(b,e)
-})
-$(".membtn").click(function(){
-	$(this).parents(".searcTime").find("span").removeClass("on");
-	$(this).parents(".searcTime").find(".st").addClass("on");
-	var b = (new Date($(this).parent().find(".btime").val()).getTime())/1000;
-	var e = (new Date($(this).parent().find(".etime").val()).getTime())/1000;
-	b = Math.round(b);
-	e = Math.round(e);
-	mem(b,e)
-})
-$(".diskbtn").click(function(){
-	$(this).parents(".searcTime").find("span").removeClass("on");
-	$(this).parents(".searcTime").find(".st").addClass("on");
-	var b = (new Date($(this).parent().find(".btime").val()).getTime())/1000;
-	var e = (new Date($(this).parent().find(".etime").val()).getTime())/1000;
-	b = Math.round(b);
-	e = Math.round(e);
-	disk(b,e)
-})
-$(".networkbtn").click(function(){
-	$(this).parents(".searcTime").find("span").removeClass("on");
-	$(this).parents(".searcTime").find(".st").addClass("on");
-	var b = (new Date($(this).parent().find(".btime").val()).getTime())/1000;
-	var e = (new Date($(this).parent().find(".etime").val()).getTime())/1000;
-	b = Math.round(b);
-	e = Math.round(e);
-	network(b,e)
-})
+    console.log(b,e);
+	eval($(this).attr('data-type')+'('+ b +','+ e +')');
+});
 //指定天数
 function Wday(day,name){
 	var now = (new Date().getTime())/1000;
@@ -207,7 +174,7 @@ function getBeforeDate(n){
 //cpu
 function cpu(b,e){
 $.get('/ajax?action=GetCpuIo&start='+b+'&end='+e,function(rdata){
-	var myChartCpu = echarts.init(document.getElementById('cupview'));
+	var myChartCpu = echarts.init(document.getElementById('cpuview'));
 	var xData = [];
 	var yData = [];
 	//var zData = [];
@@ -312,7 +279,10 @@ $.get('/ajax?action=GetCpuIo&start='+b+'&end='+e,function(rdata){
 			axisPointer: {
 				type: 'cross'
 			},
-			formatter: '{b}<br />{a}: {c}%'
+			formatter:function(config){
+			    console.log(config);
+			    return config[0].axisValueLabel +'</br>' + config[0].seriesName+':'+config[0].value.toFixed(2) +'%'
+			}
 		},
 		xAxis: {
 			type: 'category',
@@ -408,7 +378,7 @@ function disk(b, e) {
                 formatter:function(config){
                 	var _config = config,_tips = '';
                 	for(var i=0;i<config.length;i++){
-                		_tips +=  '<span style="display: inline-block;width: 10px;height: 10px;margin-rigth:10px;border-radius: 50%;background: '+ config[i].color +';"></span>  '+ config[i].seriesName +'：'+ parseInt(config[i].data).toFixed(2) + 'Kb/s' + ( config.length-1 !== i?'<br />':'')
+                		_tips +=  '<span style="display: inline-block;width: 10px;height: 10px;margin-rigth:10px;border-radius: 50%;background: '+ config[i].color +';"></span>  '+ config[i].seriesName +'：'+ parseInt(config[i].data).toFixed(2) + 'KB/s' + ( config.length-1 !== i?'<br />':'')
                 	}
                 	console.log(config);
                 	return "时间："+ _config[0].axisValue +"<br />" + _tips;
@@ -526,7 +496,7 @@ $.get('/ajax?action=GetNetWorkIo&start='+b+'&end='+e,function(rdata){
 			formatter:function(config){
             	var _config = config,_tips = '';
             	for(var i=0;i<config.length;i++){
-            		_tips +=  '<span style="display: inline-block;width: 10px;height: 10px;margin-rigth:10px;border-radius: 50%;background: '+ config[i].color +';"></span>  '+ config[i].seriesName +'：'+ parseInt(config[i].data).toFixed(2) + 'Kb/s' + ( config.length-1 !== i?'<br />':'')
+            		_tips +=  '<span style="display: inline-block;width: 10px;height: 10px;margin-rigth:10px;border-radius: 50%;background: '+ config[i].color +';"></span>  '+ config[i].seriesName +'：'+ parseInt(config[i].data).toFixed(2) + 'KB/s' + ( config.length-1 !== i?'<br />':'')
             	}
             	console.log(config);
             	return "时间："+ _config[0].axisValue +"<br />" + _tips;

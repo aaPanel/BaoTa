@@ -13,7 +13,8 @@
 import os, json, sys, time
 
 os.chdir("/www/server/panel")
-sys.path.append("class/")
+if not 'class/' in sys.path:
+    sys.path.insert(0,'class/')
 import public
 
 sys.path.append(".")

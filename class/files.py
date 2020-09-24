@@ -160,7 +160,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
     # 上传文件
     def UploadFile(self, get):
         from werkzeug.utils import secure_filename
-        from flask import request
+        from BTPanel import request
         if sys.version_info[0] == 2:
             get.path = get.path.encode('utf-8')
         if not os.path.exists(get.path):
@@ -209,10 +209,15 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             d_size = os.path.getsize(save_path)
         if d_size != int(args.f_start):
             return d_size
-        upload_files = request.files.getlist("blob")
         f = open(save_path, 'ab')
-        for tmp_f in upload_files:
-            f.write(tmp_f.read())
+        if 'b64_data' in args:
+            import base64
+            b64_data = base64.b64decode(args.b64_data)
+            f.write(b64_data)
+        else:
+            upload_files = request.files.getlist("blob")
+            for tmp_f in upload_files:
+                f.write(tmp_f.read())
         f.close()
         f_size = os.path.getsize(save_path)
         if f_size != int(args.f_size):
@@ -366,17 +371,17 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             if get.reverse == 'False':
                 reverse = False
             for file_info in self.__list_dir(get.path, get.sort, reverse):
-                filename = os.path.join(get.path, file_info['name'])
-                if not os.path.exists(filename):
-                    continue
+                filename = os.path.join(get.path, file_info[0])
                 if search:
-                    if file_info['name'].lower().find(search) == -1:
+                    if file_info[0].lower().find(search) == -1:
                         continue
                 i += 1
                 if n >= page.ROW:
                     break
                 if i < page.SHIFT:
                     continue
+                if not os.path.exists(filename): continue
+                file_info = self.__format_stat(filename, get.path)
                 r_file = file_info['name'] + ';' + str(file_info['size']) + ';' + str(file_info['mtime']) + ';' + str(
                     file_info['accept']) + ';' + file_info['user'] + ';' + file_info['link']+';' + self.get_download_id(filename) + ';' + self.is_composer_json(filename)
                 if os.path.isdir(filename):
@@ -396,34 +401,49 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         return data
 
     def __list_dir(self, path, my_sort='name', reverse=False):
+        '''
+            @name 获取文件列表，并排序
+            @author hwliang<2020-08-01>
+            @param path<string> 路径
+            @param my_sort<string> 排序字段
+            @param reverse<bool> 是否降序
+            @param list
+        '''
         if not os.path.exists(path):
             return []
         py_v = sys.version_info[0]
         tmp_files = []
-        tmp_dirs = []
+    
         for f_name in os.listdir(path):
             try:
                 if py_v == 2:
                     f_name = f_name.encode('utf-8')
-                filename = os.path.join(path, f_name)
-                if not os.path.exists(filename):
-                    continue
-                file_info = self.__format_stat(filename, path)
-                if not file_info:
-                    continue
-                if os.path.isdir(filename):
-                    tmp_dirs.append(file_info)
                 else:
-                    tmp_files.append(file_info)
+                    f_name.encode('utf-8')
+
+                #使用.join拼接效率更高
+                filename = "/".join((path,f_name))
+                sort_key = 1
+                sort_val = None
+                
+                #此处直接做异常处理比先判断文件是否存在更高效
+                if my_sort == 'name':
+                    sort_key = 0
+                elif my_sort == 'size':
+                    sort_val = os.stat(filename).st_size
+                elif my_sort == 'mtime':
+                    sort_val =  os.stat(filename).st_mtime
+                elif my_sort == 'accept':
+                    sort_val = os.stat(filename).st_mode
+                elif my_sort == 'user':
+                    sort_val =  os.stat(filename).st_uid
             except:
                 continue
-        tmp_dirs = sorted(tmp_dirs, key=lambda x: x[my_sort], reverse=reverse)
-        tmp_files = sorted(
-            tmp_files, key=lambda x: x[my_sort], reverse=reverse)
-
-        for f in tmp_files:
-            tmp_dirs.append(f)
-        return tmp_dirs
+            #使用list[tuple]排序效率更高
+            tmp_files.append((f_name,sort_val))
+            
+        tmp_files = sorted(tmp_files, key=lambda x: x[sort_key], reverse=reverse)
+        return tmp_files
 
     def __format_stat(self, filename, path):
         try:
@@ -687,6 +707,10 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             try:
                 tmp = {}
                 fname = rPath + file
+                if sys.version_info[0] == 2:
+                    fname = fname.encode('utf-8')
+                else:
+                    fname.encode('utf-8')
                 tmp1 = file.split('_bt_')
                 tmp2 = tmp1[len(tmp1)-1].split('_t_')
                 tmp['rname'] = file
@@ -914,8 +938,18 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             return public.returnMsg(False, '该文件格式不支持在线编辑!')
         if os.path.getsize(get.path) > 3145928:
             return public.returnMsg(False, u'不能在线编辑大于3MB的文件!')
-        if not os.path.isfile(get.path):
+        if os.path.isdir(get.path):
             return public.returnMsg(False, '这不是一个文件!')
+        
+        #处理my.cnf为空的情况
+        myconf_file = '/etc/my.cnf'
+        if get.path == myconf_file:
+            if os.path.getsize(myconf_file) < 10:
+                mycnf_file_bak = '/etc/my.cnf.bak'
+                if os.path.exists(mycnf_file_bak):
+                    public.writeFile(myconf_file,public.readFile(mycnf_file_bak))
+
+
         fp = open(get.path, 'rb')
         data = {}
         data['status'] = True
@@ -1425,6 +1459,9 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         isTask = '/tmp/panelTask.pl'
         execstr = "cd " + public.GetConfigValue('setup_path') + "/panel/install && /bin/bash install_soft.sh " + \
             get.type + " install " + get.name + " " + get.version
+        if public.get_webserver() == "openlitespeed":
+            execstr = "cd " + public.GetConfigValue('setup_path') + "/panel/install && /bin/bash install_soft.sh " + \
+                      get.type + " install " + get.name + "-ols " + get.version
         sql = db.Sql()
         if hasattr(get, 'id'):
             id = get.id
@@ -1483,8 +1520,20 @@ done
         get.type = '0'
         if session['server_os']['x'] != 'RHEL':
             get.type = '3'
+        if public.get_webserver() == "openlitespeed":
+            default_ext = ["bz2","calendar","sysvmsg","exif","imap","readline","sysvshm","xsl"]
+            if get.version == "73":
+                default_ext.append("opcache")
+            if not os.path.exists("/etc/redhat-release"):
+                default_ext.append("gmp")
+                default_ext.append("opcache")
+            if get.name.lower() in default_ext:
+                return public.returnMsg(False, "这是OpenLiteSpeed的默认扩展不可以卸载")
         execstr = "cd " + public.GetConfigValue('setup_path') + "/panel/install && /bin/bash install_soft.sh " + \
             get.type+" uninstall " + get.name.lower() + " " + get.version.replace('.', '')
+        if public.get_webserver() == "openlitespeed":
+            execstr = "cd " + public.GetConfigValue('setup_path') + "/panel/install && /bin/bash install_soft.sh " + \
+                      get.type + " uninstall " + get.name.lower() + "-ols " + get.version.replace('.', '')
         public.ExecShell(execstr)
         public.WriteLog('TYPE_SETUP', 'PLUGIN_UNINSTALL',
                         (get.name, get.version))
@@ -1837,6 +1886,8 @@ cd %s
             "password":str(get.password), #提取密码
             "addtime": mtime #添加时间
         }
+        if len(pdata['password']) < 4 and len(pdata['password']) > 0:
+            return public.returnMsg(False,'提取密码长度不能小于4位')
         #更新 or 插入
         token = public.M(my_table).where('filename=?',(get.filename,)).getField('token')
         if token:

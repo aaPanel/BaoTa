@@ -83,7 +83,6 @@ class panelRedirect:
                 else:
                     sk.connect((d, 443))
         except:
-            print("目标URL无法访问")
             return public.returnMsg(False, "目标URL无法访问")
     # 计算proxyname md5
     def __calc_md5(self,redirectname):
@@ -155,14 +154,11 @@ class panelRedirect:
             #检测名称是否重复
             if sys.version_info.major < 3:
                 if len(get.redirectname) < 3 or len(get.redirectname) > 15:
-                    print("名称必须大于3小于15个字符串")
                     return public.returnMsg(False, '名称必须大于3小于15个字符串')
             else:
                 if len(get.redirectname.encode("utf-8")) < 3 or len(get.redirectname.encode("utf-8")) > 15:
-                    print("名称必须大于3小于15个字符串")
                     return public.returnMsg(False, '名称必须大于3小于15个字符串')
             if self.__CheckRedirect(get.sitename,get.redirectname):
-                print('指定重定向名称已存在')
                 return public.returnMsg(False, '指定重定向名称已存在')
         #检测是否选择域名
         if get.domainorpath == "domain":
@@ -180,17 +176,14 @@ class panelRedirect:
         #检测域名是否已经存在配置文件
         repeatdomain = self.__CheckRepeatDomain(get,action)
         if repeatdomain:
-            print("重定向域名重复 %s" % (repeatdomain))
             return public.returnMsg(False, '重定向域名重复 %s' % (repeatdomain))
         #检测路径是否有存在配置文件
         repeatpath = self.__CheckRepeatPath(get)
         if repeatpath:
-            print("重定向路径重复 %s" % (repeatpath))
             return public.returnMsg(False, '重定向路径重复 %s' % (repeatpath))
         #检测目标URL格式
         rep = "http(s)?\:\/\/([a-zA-Z0-9][-a-zA-Z0-9]{0,62}\.)+([a-zA-Z0-9][a-zA-Z0-9]{0,62})+.?"
         if not re.match(rep, get.tourl):
-            print("目标URL格式不对")
             return public.returnMsg(False, '目标URL格式不对 %s' + get.tourl)
         #检测目标URL是否可用
         #if self.__CheckRedirectUrl(get):
@@ -201,7 +194,6 @@ class panelRedirect:
             for d in json.loads(get.redirectdomain):
                 tu = self.GetToDomain(get.tourl)
                 if d == tu:
-                    print('域名 "%s" 和目标域名一致请取消选择' % (d))
                     return '域名 "%s" 和目标域名一致请取消选择' % (d)
 
         if get.domainorpath == "path":
@@ -211,7 +203,6 @@ class panelRedirect:
             for d in domains:
                 ad = "%s%s" % (d,get.redirectpath) #站点域名+重定向路径
                 if tu == ad:
-                    print('"%s" ，目标URL和被重定向路径一致请不要花样作死' % (tu))
                     return '"%s" ，目标URL和被重定向路径一致请不要花样作死' % (tu)
     #创建重定向
     def CreateRedirect(self,get):
@@ -235,7 +226,6 @@ class panelRedirect:
         self.SetRedirectApache(get.sitename)
         self.SetRedirect(get)
         public.serviceReload()
-        print("创建成功")
         return public.returnMsg(True, '创建成功')
 
     # 设置重定向
@@ -255,19 +245,20 @@ class panelRedirect:
         rewrite ^%s(.*) %s%s %s;
 """
             rconf = "#REWRITE-START"
+            tourl = get.tourl
+            # if tourl[-1] == "/":
+            #     tourl = tourl[:-1]
             if get.domainorpath == "domain":
                 domains = json.loads(get.redirectdomain)
-                tu = get.tourl
                 holdpath = int(get.holdpath)
                 if holdpath == 1:
                     for sd in domains:
-                        rconf += domainstr % (sd,get.redirecttype,tu,"$request_uri")
+                        rconf += domainstr % (sd,get.redirecttype,tourl,"$request_uri")
                 else:
                     for sd in domains:
-                        rconf += domainstr % (sd,get.redirecttype,tu,"")
+                        rconf += domainstr % (sd,get.redirecttype,tourl,"")
             if get.domainorpath == "path":
                 redirectpath = get.redirectpath
-                tourl = get.tourl
                 if get.redirecttype == "301":
                     redirecttype = "permanent"
                 else:
@@ -306,17 +297,17 @@ class panelRedirect:
                 holdpath = int(get.holdpath)
                 if holdpath == 1:
                     for sd in domains:
-                        rconf += domainstr % ("%",sd,get.tourl,"$1",get.redirecttype)
+                        rconf += domainstr % ("%",sd,tourl,"$1",get.redirecttype)
                 else:
                     for sd in domains:
-                        rconf += domainstr % ("%",sd,get.tourl,"",get.redirecttype)
+                        rconf += domainstr % ("%",sd,tourl,"",get.redirecttype)
 
             if get.domainorpath == "path":
                 holdpath = int(get.holdpath)
                 if holdpath == 1:
-                    rconf += pathstr % (get.redirectpath,get.tourl,"$1",get.redirecttype)
+                    rconf += pathstr % (get.redirectpath,tourl,"$1",get.redirecttype)
                 else:
-                    rconf += pathstr % (get.redirectpath,get.tourl,"",get.redirecttype)
+                    rconf += pathstr % (get.redirectpath,tourl,"",get.redirecttype)
             rconf += "#REWRITE-END"
             apacherconf = rconf
 
@@ -462,6 +453,8 @@ class panelRedirect:
         sitename = get.sitename
         redirectname = get.redirectname
         proxyname_md5 = self.__calc_md5(redirectname)
+        if get.webserver == 'openlitespeed':
+            get.webserver = 'apache'
         get.path = "%s/panel/vhost/%s/redirect/%s/%s_%s.conf" % (self.setupPath, get.webserver, sitename,proxyname_md5,sitename)
         for i in conf:
             if redirectname == i["redirectname"] and sitename == i["sitename"] and i["type"] != 1:

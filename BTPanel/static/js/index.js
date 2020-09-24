@@ -1,8 +1,63 @@
-bt.pub.check_install(function (rdata) {
-    if (rdata === false) bt.index.rec_install();
-})
+
+if (bind_user == 'True') {
+    layer.open({
+        type: 1,
+        title: '绑定宝塔官网账号',
+        area: ['420px', '395px'],
+        closeBtn: 2,
+        shadeClose: false,
+        content: '<div class="libLogin pd20" ><div class="bt-form text-center"><div class="line mb15"><p>恭喜您，宝塔面板已经安装成功。 </p><h3 class="c2 f16 text-center mtb20">绑定宝塔官网账号，即可开始使用<a href="javascript:;" class="bind_ps bt-ico-ask">?</a></h3></div><div class="line"><input class="bt-input-text" name="username2" type="text" placeholder="手机" id="p1"></div><div class="line"><input autocomplete="new-password" class="bt-input-text" type="password" name="password2"  placeholder="密码" id="p2"></div><div class="line" style="margin-top: 15px;"><input class="login-button" value="登录" type="button" ></div><p class="text-right"><a class="btlink" href="https://www.bt.cn/register.html" target="_blank">未有账号，免费注册</a></p></div></div>',
+        success: function () {
+            $('.login-button').click(function () {
+                p1 = $("#p1").val();
+                p2 = $("#p2").val();
+                var loadT = bt.load(lan.config.token_get);
+                bt.send('GetToken', 'ssl/GetToken', "username=" + p1 + "&password=" + p2, function (rdata) {
+                    loadT.close();
+                    bt.msg(rdata);
+                    if (rdata.status) {
+                        window.location.reload();
+                    }
+                })
+            });
+
+            $('.libLogin input[type=password]').keyup(function (e) {
+                if (e.keyCode == 13) {
+                    $('.login-button').click();
+                }
+            });
+
+            var time = '';
+            $('.bind_ps').hover(function () {    
+                var _that = $(this);
+                time = setTimeout(function () {
+                    layer.tips('宝塔面板许多功能都依赖于官网，绑定仅限于为您提供更好的面板服务体验，不涉及您服务器任何敏感信息，请放心使用。', _that, { tips: [1, '#20a53a'], time: 0 })
+                }, 500)
+            }, function () {
+                clearTimeout(time)
+                layer.closeAll('tips');
+            })
+        },
+        cancel: function () {
+            layer.alert('<p>为了您能更好的体验面板功能，请先绑定宝塔账号.</p>', {btn:'我已了解', title:'绑定账号'}, function(index){
+			  layer.close(index);
+			});
+			return false; 
+        }
+    });
+}
+else {
+    bt.pub.check_install(function (rdata) {
+        if (rdata === false) bt.index.rec_install();
+    })
+}
+
+
+
 var interval_stop = false;
 var index = {
+    warning_list:[],
+    warning_num:0,
     interval: {
         limit: 10,
         count: 0,
@@ -91,8 +146,9 @@ var index = {
     },
     get_init: function () {
         var _this = this;
-        setTimeout(function () { _this.get_disk_list(); }, 500)
-        setTimeout(function () { _this.get_server_info(); }, 1000)
+        setTimeout(function () { _this.get_disk_list(); }, 10);
+        setTimeout(function () { _this.get_warning_list(); }, 20);
+        setTimeout(function () { _this.get_server_info(); }, 30);
 
 
         bt.pub.get_user_info(function (rdata) {
@@ -198,13 +254,13 @@ var index = {
                 })
             })
         });
-        setTimeout(function () { _this.interval.start(); }, 1600)
-        setTimeout(function () { index.get_index_list(); }, 1200)
+        setTimeout(function () { _this.interval.start(); }, 40)
+        setTimeout(function () { index.get_index_list(); }, 50)
 
 
         setTimeout(function () {
             _this.net.init();
-        }, 200);
+        }, 60);
 
         setTimeout(function () {
             bt.system.check_update(function (rdata) {
@@ -220,12 +276,11 @@ var index = {
                 }
 
             }, false)
-        }, 1500)
+        }, 70)
     },
     get_data_info: function (callback) {
 
         bt.system.get_net(function (net) {
-
             var pub_arr = [{ val: 100, color: '#dd2f00' }, { val: 90, color: '#ff9900' }, { val: 70, color: '#20a53a' }, { val: 30, color: '#20a53a' }];
             var load_arr = [{ title: '运行堵塞', val: 100, color: '#dd2f00' }, { title: '运行缓慢', val: 90, color: '#ff9900' }, { title: '运行正常', val: 70, color: '#20a53a' }, { title: '运行流畅', val: 30, color: '#20a53a' }];
             var _cpubox = $('.cpubox'), _membox = $('.membox'), _loadbox = $('.loadbox')
@@ -339,12 +394,10 @@ var index = {
                 html += '<h4 class="c9 f15">' + item.title + '</h4>';
                 html += '</li>';
                 var _li = $(html);
-
                 if (item.masks) {
                     var mask = '';
                     for (var j = 0; j < item.masks.length; j++) mask += item.masks[j].title + ': ' + item.masks[j].value + "<br>";
                     _li.data('mask', mask);
-                    console.log(_li.find('.cicle'));
                     _li.find('.cicle').hover(function () {
                         var _this = $(this);
                         layer.tips(_this.parent().data('mask'), _this, { time: 0, tips: [1, '#999'] });
@@ -775,6 +828,220 @@ var index = {
     get_cloud_list: function () {
         $.post('/plugin?action=get_soft_list', { type: 8, p: 1, force: 1, cache: 1 }, function (rdata) {
             console.log("已成功从云端获取软件列表");
+        });
+    },
+    // 获取安全风险列表
+    get_warning_list:function(active,callback){
+        var that = this,obj = {};
+        if(active == true) obj = {force:1}
+        bt.send('get_list','warning/get_list',obj,function(res){
+            if(res.status !== false){
+                that.warning_list = res;
+                that.warning_num = res.risk.length;
+                $('.warning_num').css('color',(that.warning_num > 0?'red':'#20a53a')).html(that.warning_num);
+                $('.warning_scan_ps').html(that.warning_num>0?('本次扫描共检测到风险项<i>'+ that.warning_num +'</i>个,请及时修复！'):'本次扫描检测无风险项，请继续保持！');
+                if(callback) callback(res);
+            }
+        });
+    },
+    /**
+     * @description 获取时间简化缩写
+     * @param {Numbre} dateTimeStamp 需要转换的时间戳
+     * @return {String} 简化后的时间格式
+    */
+    get_simplify_time:function(dateTimeStamp){
+        if(dateTimeStamp === 0) return '刚刚';
+        if(dateTimeStamp.toString().length == 10)  dateTimeStamp = dateTimeStamp * 1000
+        var minute = 1000 * 60,hour = minute * 60,day = hour * 24,halfamonth = day * 15,month = day * 30,now = new Date().getTime(),diffValue = now - dateTimeStamp;  
+        if(diffValue < 0) return  '刚刚';
+        var monthC = diffValue / month,weekC = diffValue / (7 * day),dayC = diffValue / day,hourC = diffValue / hour,minC = diffValue / minute;  
+        if(monthC >= 1) {  
+            result = "" + parseInt(monthC) + "月前";  
+        } else if(weekC >= 1) {  
+            result = "" + parseInt(weekC) + "周前";  
+        } else if(dayC >= 1) {  
+            result = "" + parseInt(dayC) + "天前";  
+        } else if(hourC >= 1) {  
+            result = "" + parseInt(hourC) + "小时前";  
+        } else if(minC >= 1) {  
+            result = "" + parseInt(minC) + "分钟前";  
+        } else{  
+            result = "刚刚";  
+        }     
+        return result;
+    },
+    /**
+     * @description 渲染安全模块视图
+     * @return 无返回值
+    */
+    reader_warning_view:function(){
+        var that = this;
+        function reader_warning_list(data){
+            var html = '',scan_time = '',arry =  [['risk','风险项'],['security','无风险项'],['ignore','已忽略项']],level = [['低危','#e8d544'],['中危','#E6A23C'],['高危','red']]
+            bt.each(arry,function(index,item){
+                var data_item = data[item[0]],data_title = item[1];
+                html += '<li class="module_item '+ item[0] +'">'+
+                        '<div class="module_head">'+
+                            '<span class="module_title">'+ data_title +'</span>'+
+                            '<span class="module_num">'+ data_item.length +'</span>'+
+                            '<span class="module_cut_show">'+ (item[index] == 'risk' && that.warning_num > 0?'<i>点击折叠</i><span class="glyphicon glyphicon-menu-up" aria-hidden="false"></span>':'<i>查看详情</i><span class="glyphicon glyphicon-menu-down" aria-hidden="false"></span>') +'</span>'+
+                        '</div>'+
+                        (function(index,item){
+                            var htmls = '<ul class="module_details_list '+ (item[0] == 'risk' && that.warning_num > 0?'active':'') +'">';
+                            bt.each(data_item,function(indexs,items){
+                                scan_time = items.check_time;
+                                htmls += '<li class="module_details_item">'+
+                                    '<div class="module_details_head">'+
+                                        '<span class="module_details_title">'+ items.ps +'<i>（&nbsp;检测时间：'+ (that.get_simplify_time(items.check_time) || '刚刚') +'，耗时：'+ ( items.taking>1?( items.taking +'秒'):((items.taking * 1000).toFixed(2) +'毫秒')) +'&nbsp;）</i></span>'+
+                                        '<span class="operate_tools">'+ (item[0] != 'security'?('<a href="javascript:;" class="btlink cut_details">详情</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" data-model="'+ items.m_name +'" data-title="'+ items.title +'" '+ (item[0]=='ignore'?'class=\"btlink\"':'') +' data-type="'+item[0]+'">'+ (item[0] != 'ignore'?'忽略':'移除忽略') +'</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" data-model="'+ items.m_name +'" data-title="'+ items.title +'">检测</a>'):'<a href="javascript:;" class="btlink cut_details">详情</a>') +'</span>' +
+                                    '</div>'+
+                                    '<div class="module_details_body">'+
+                                        '<div class="module_details_line">'+
+                                            '<div class="module_details_block"><span class="line_title">检测类型：</span><span class="line_content">'+ items.title +'</span></div>'+
+                                            '<div class="module_details_block"><span class="line_title">风险等级：</span><span class="line_content" style="color:'+ level[items.level-1][1] +'">'+ level[items.level-1][0] +'</span></div>'+
+                                        '</div>'+
+                                        '<div class="module_details_line"><span class="line_title">风险描述：</span><span class="line_content">'+ items.msg +'</span></div>'+
+                                        '<div class="module_details_line"><span class="line_title">'+ (item[0] != 'security'?'解决方案：':'配置建议') +'</span><span class="line_content">'+ 
+                                        (function(){
+                                            var htmlss = '';
+                                            bt.each(items.tips,function(indexss,itemss){
+                                                htmlss +='<i>'+ (indexss+1) +'、'+ itemss  +'</i></br>';
+                                            });
+                                            return htmlss;
+                                        }()) +'</span></div>'+
+                                        (items.help != ''?('<div class="module_details_line"><span class="line_title">帮助文档：</span><span class="line_content"><a href="'+ items.help +'" target="_blank" class="btlink">'+items.help +'</span></div>'):'') +
+                                    '</div>'+
+                                '</li>';
+                            });
+                            htmls += '</ul>';
+                            return htmls;
+                        }(index,item))
+                    +'</li>'
+            });
+            $('.warning_scan_body').html(html);
+            $('.warning_scan_time').html('检测时间：&nbsp;'+ bt.format_data(scan_time));
+        }
+        bt.open({
+            type:'1',
+            title:'安全风险',
+            area:['750px','700px'],
+            skin:'warning_scan_view',
+            content:'<div class="warning_scan_view">'+
+                '<div class="warning_scan_head">'+
+                    '<span class="warning_scan_ps">'+ (that.warning_num>0?('本次扫描共检测到风险项<i>'+ that.warning_num +'</i>个,请及时修复！'):'本次扫描检测无风险项，请继续保持！') +'</span>'+
+                    '<span class="warning_scan_time"></span>'+
+                    '<button class="warning_again_scan">重新检测</button>'+
+                '</div>'+
+                '<ol class="warning_scan_body"></ol>'+
+            '</div>',
+            success:function(){
+                $('.warning_again_scan').click(function(){
+                     var loadT = layer.msg('正在重新检测安全风险，请稍后...',{icon:16});
+                    that.get_warning_list(true,function(){
+                        layer.msg('扫描成功',{icon:1});
+                        reader_warning_list(that.warning_list);
+                    });
+                });
+                $('.warning_scan_body').on('click','.module_item .module_head',function(){
+                    var _parent = $(this).parent(),_parent_index = _parent.index(),_list = $(this).next();
+                    if(parseInt($(this).find('.module_num').text()) > 0){
+                        if(_list.hasClass('active')){
+                            _list.css('height',0);
+                            $(this).find('.module_cut_show i').text('查看详情').next().removeClass('glyphicon-menu-up').addClass('glyphicon-menu-down');
+                            setTimeout(function(){  
+                                _list.removeClass('active').removeAttr('style');
+                            },500);
+                        }else{
+                            $(this).find('.module_cut_show i').text('点击折叠').next().removeClass('glyphicon-menu-down').addClass('glyphicon-menu-up');
+                            _list.addClass('active');
+                            var details_list = _list.parent().siblings().find('.module_details_list');
+                            details_list.removeClass('active');
+                            details_list.prev().find('.module_cut_show i').text('查看详情').next().removeClass('glyphicon-menu-up').addClass('glyphicon-menu-down')
+                        }
+                    }
+                });
+                $('.warning_scan_body').on('click','.operate_tools a',function(){
+                    var index = $(this).index(),data = $(this).data();
+                    switch(index){
+                        case 0:
+                            if($(this).hasClass('active')){
+                                $(this).parents('.module_details_head').next().hide();
+                                $(this).removeClass('active').text('详情');
+                            }else{
+                                var item = $(this).parents('.module_details_item'),indexs = item.index();
+                                $(this).addClass('active').text('折叠');
+                                item.siblings().find('.module_details_body').hide();
+                                item.siblings().find('.operate_tools a:eq(0)').removeClass('active').text('详情');
+                                $(this).parents('.module_details_head').next().show();
+                                $('.module_details_list').scrollTop(indexs * 41);
+                            }
+                        break;
+                        case 1:
+                            if(data.type != 'ignore'){
+                                bt.confirm({title:'忽略风险',msg:'是否忽略【'+ data.title +'】风险,是否继续?'},function(){
+                                    that.warning_set_ignore(data.model,function(res){
+                                        that.get_warning_list(false,function(){
+                                            bt.msg(res)
+                                            reader_warning_list(that.warning_list);
+                                        });
+                                    });
+                                }); 
+                            }else{
+                                that.warning_set_ignore(data.model,function(res){
+                                    that.get_warning_list(false,function(){
+                                        bt.msg(res)
+                                        reader_warning_list(that.warning_list);
+                                        setTimeout(function(){
+                                            $('.module_item.ignore').click();
+                                        },100)
+                                    });
+                                });  
+                            }
+                        break;
+                        case 2:
+                            that.waring_check_find(data.model,function(res){
+                                that.get_warning_list(false,function(){
+                                    bt.msg(res)
+                                    reader_warning_list(that.warning_list);
+                                });
+                            });
+                        break;
+                    }
+                });
+                reader_warning_list(that.warning_list);
+            }
+        })
+    },
+    /**
+     * @description 安全风险指定模块检查
+     * @param {String} model_name 模块名称
+     * @param {Function} callback 成功后的回调
+     * @return 无返回值
+    */
+    waring_check_find:function(model_name,callback){
+        var loadT = layer.msg('正在检测指定模块，请稍后...',{icon:16,time:0});
+        bt.send('check_find','warning/check_find',{m_name:model_name},function(res){
+            bt.msg(res);
+            if(res.status !== false){
+                if(callback) callback(res);
+            }
+        });
+        
+    },
+
+    /**
+     * @description 安全风险指定模块是否忽略
+     * @param {String} model_name 模块名称
+     * @param {Function} callback 成功后的回调
+     * @return 无返回值
+    */
+    warning_set_ignore:function(model_name,callback){
+        var loadT = layer.msg('正在设置模块状态，请稍后...',{icon:16,time:0});
+        bt.send('set_ignore','warning/set_ignore',{m_name:model_name},function(res){
+            bt.msg(res);
+            if(res.status !== false){
+                if(callback) callback(res);
+            }
         });
     }
 }

@@ -12,7 +12,8 @@
 # ------------------------------
 import sys, os
 os.chdir("/www/server/panel")
-sys.path.append('class')
+if not 'class/' in sys.path:
+    sys.path.insert(0,'class/')
 import panelMysql
 import re,json,public
 

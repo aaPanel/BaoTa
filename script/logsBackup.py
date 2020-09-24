@@ -32,7 +32,7 @@ def split_logs(oldFileName,num):
     num=count - num
 
     for i in range(count):
-        if i>num: break;
+        if i>num: break
         os.remove(logs[i])
         print('|---多余日志['+logs[i]+']已删除!')
 
@@ -64,6 +64,6 @@ if __name__ == '__main__':
         split_logs(oldFileName,num)
 
     if is_nginx:
-        os.system("kill -USR1 `cat /www/server/nginx/logs/nginx.pid`");
+        os.system("/etc/init.d/nginx reload")
     else:
-        os.system('/etc/init.d/httpd reload');
+        os.system('/etc/init.d/httpd reload')

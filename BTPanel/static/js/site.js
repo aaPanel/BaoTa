@@ -13,12 +13,12 @@ var site = {
                     columns: [
                         { field: 'id', type: 'checkbox', width: 30 },
                         {
-                            field: 'name', title: '网站名', width: 150, templet: function (item) {
+                            field: 'name', title: '网站名', templet: function (item) {
                                 return '<a class="btlink webtips" onclick="site.web_edit(this)" href="javascript:;">' + item.name + '</a>';
                             }, sort: function () { site.get_list(); }
                         },
                         {
-                            field: 'status', title: '状态', width: 98, templet: function (item) {
+                            field: 'status', title: '状态', width: 80, templet: function (item) {
                                 var _status = '<a href="javascript:;" ';
                                 if (item.status == '1' || item.status == '正常' || item.status == '正在运行') {
                                     _status += ' onclick="bt.site.stop(' + item.id + ',\'' + item.name + '\') " >';
@@ -39,7 +39,7 @@ var site = {
                             }
                         },
                         {
-                            field: 'path', title: '根目录', width: '26%', templet: function (item) {
+                            field: 'path', title: '根目录', templet: function (item) {
                                 var _path = bt.format_path(item.path);
                                 return '<a class="btlink" title="打开目录" href="javascript:openPath(\'' + _path + '\');">' + _path + '</a>';
                             }
@@ -60,7 +60,13 @@ var site = {
                             }
                         },
                         {
-                            field: 'ssl', title: 'SSL证书', width: 110, templet: function (item) {
+                            field: 'php_version',width:60, title: 'PHP', templet: function (item) {
+                                
+                                return  '<a class="phpversion_tips btlink">'+item.php_version+'</a>';
+                            }
+                        },
+                        {
+                            field: 'ssl', title: 'SSL证书', width: 80, templet: function (item) {
                                 var _ssl = '';
                                 if (item.ssl == -1)
                                 {
@@ -80,7 +86,7 @@ var site = {
                             }
                         },
                         {
-                            field: 'opt', width: 200, title: '操作', align: 'right', templet: function (item) {
+                            field: 'opt', width: 150, title: '操作', align: 'right', templet: function (item) {
                                 var opt = '';
                                 var _check = ' onclick="site.site_waf(\'' + item.name + '\')"';
 
@@ -113,6 +119,16 @@ var site = {
                         var content = $('#webedit-con').html();
                         if(content != ''){
                             $('.site-menu p:eq(8)').click();
+                            clearInterval(timeVal);
+                        }
+                    },100);
+                });
+                $('.phpversion_tips').click(function(){
+                    site.web_edit(this);
+                    var timeVal = setInterval(function(){
+                        var content = $('#webedit-con').html();
+                        if(content != ''){
+                            $('.site-menu p:eq(9)').click();
                             clearInterval(timeVal);
                         }
                     },100);
@@ -162,14 +178,18 @@ var site = {
     get_types: function (callback) {
         bt.site.get_type(function (rdata) {
             var optionList = '';
+            var t_val = bt.get_cookie('site_type');
             for (var i = 0; i < rdata.length; i++) {
-                optionList += '<option value="' + rdata[i].id + '">' + rdata[i].name + '</option>'
+                optionList += '<button class="btn btn-'+(t_val == rdata[i].id?'success':'default')+' btn-sm" value="' + rdata[i].id + '">' + rdata[i].name + '</button>'
             }
             if($('.dataTables_paginate').next().hasClass('site_type')) $('.site_type').remove();
-            $('.dataTables_paginate').after('<div class="site_type"><span>站点分类:</span><select class="bt-input-text mr5"  style="width:100px"><option value="-1">全部分类</option>' + optionList + '</select></div>');
-            $('.site_type select').change(function () {
-                var val = $(this).val();
+            $('.dataTables_paginate').after('<div class="site_type"><button class="btn btn-'+(t_val == '-1'?'success':'default')+' btn-sm" value="-1">全部分类</button>' + optionList + '</div>');
+
+            $('.site_type button').click(function () {
+                var val = $(this).attr('value');
                 site.get_list(0, '', val);
+                $(".site_type button").removeClass('btn-success').addClass('btn-default');
+                $(this).addClass('btn-success');
                 bt.set_cookie('site_type', val);
             })
             if(callback) callback(rdata);
@@ -378,7 +398,7 @@ var site = {
         });
     },
     del_site: function (wid, wname) {
-        var thtml = "<div class='options'><label><input type='checkbox' id='delftp' name='ftp'><span>FTP</span></label><label><input type='checkbox' id='deldata' name='data'><span>" + lan.site.database + "</span></label><label><input type='checkbox' id='delpath' name='path'><span>" + lan.site.root_dir + "</span></label></div>";
+        var thtml = "<div class='options'><span class='item'><label><input type='checkbox' id='delftp' name='ftp'><span>FTP</span></label></span><span class='item'><label><input type='checkbox' id='deldata' name='data'><span>" + lan.site.database + "</span></label></span><span class='item'><label><input type='checkbox' id='delpath' name='path'><span>" + lan.site.root_dir + "</span></label></span></div>";
         bt.show_confirm(lan.site.site_del_title + "[" + wname + "]", lan.site.site_del_info, function () {
             var ftp = '', data = '', path = '';
             var data = { id: wid, webname: wname }
@@ -843,7 +863,6 @@ var site = {
                         b_stat = true;
                     }
                 }
-
                 if (site.ssl.my_ssl_msg) {
                     $(".my-renew-ssl").html(s_body);
                 } else {
@@ -857,10 +876,7 @@ var site = {
                     }, 3000);
                     return;
                 }
-                
                 setTimeout(function () { site.ssl.get_renew_stat(); }, 1000);
-                
-
             });
         },
         onekey_ssl: function (partnerOrderId, siteName) {
@@ -869,11 +885,16 @@ var site = {
                 if (rdata.status) site.reload(7);
             })
         },
-        set_ssl_status: function (action, siteName) {
+        set_ssl_status: function (action, siteName, ssl_id) {
             bt.site.set_ssl_status(action, siteName, function (rdata) {
                 bt.msg(rdata);
                 if (rdata.status) {
                     site.reload(7);
+                    if(ssl_id != undefined){
+                        setTimeout(function(){
+                            $('#ssl_tabs span:eq('+ ssl_id +')').click();
+                        },1000)
+                    } 
                     if (action == 'CloseSSLConf') {
                         layer.msg(lan.site.ssl_close_info, { icon: 1, time: 5000 });
                     }
@@ -1027,7 +1048,7 @@ var site = {
                                     for (var i = 0; i < ret.rlist.length; i++) arrs.push({ title: ret.rlist[i], value: ret.rlist[i] });
                                     var datas = [{
                                         name: 'dir_rewrite', type: 'select', width: '130px', items: arrs, callback: function (obj) {
-                                            var spath = '/www/server/panel/rewrite/' + bt.get_cookie('serverType') + '/' + obj.val() + '.conf';
+                                            var spath = '/www/server/panel/rewrite/' + (bt.get_cookie('serverType')=='openlitespeed'?'apache':bt.get_cookie('serverType')) + '/' + obj.val() + '.conf';
                                             bt.files.get_file_body(spath, function (sdata) {
                                                 $('.dir_config').text(sdata.data);
                                             })
@@ -1232,6 +1253,111 @@ var site = {
                 })
         	});
         },
+        ols_cache: function(web) {
+            bt.send('get_ols_static_cache', 'config/get_ols_static_cache', { id: web.id }, function(rdata) {
+                var clicks = [],
+                    newkey = [],
+                    newval = [],
+                    checked = false;
+                Object.keys(rdata).forEach(function(key){
+                //for (let key in rdata) {
+                    newkey.push(key);
+                    newval.push(rdata[key]);
+                });
+                var datas = [{ title: newkey[0], name: newkey[0], width: '30%', value: newval[0] },
+                        { title: newkey[1], name: newkey[1], width: '30%', value: newval[1] },
+                        { title: newkey[2], name: newkey[2], width: '30%', value: newval[2] },
+                        { title: newkey[3], name: newkey[3], width: '30%', value: newval[3] },
+                        {
+                            name: 'static_save',
+                            text: '保存',
+                            type: 'button',
+                            callback: function(ldata) {
+                                var cdata = {},
+                                    loadT = bt.load();
+                                Object.assign(cdata, ldata);
+                                delete cdata.static_save;
+                                delete cdata.maxage;
+                                delete cdata.exclude_file;
+                                delete cdata.private_save;
+                                bt.send('set_ols_static_cache', 'config/set_ols_static_cache', { values: JSON.stringify(cdata), id: web.id }, function(res) {
+                                    loadT.close();
+                                    bt.msg(res)
+                                });
+                            }
+                        },
+                        { title: 'test', name: 'test', width: '30%', value: '11' },
+                        { title: '缓存时间', name: 'maxage', width: '30%', value: '43200' },
+                        { title: '排除文件', name: 'exclude_file', width: '35%', value: 'fdas.php', },
+                        {
+                            name: 'private_save',
+                            text: '保存',
+                            type: 'button',
+                            callback: function(ldata) {
+                                var edata = {},
+                                    loadT = bt.load();
+                                if (checked) {
+                                    edata.id = web.id;
+                                    edata.max_age = parseInt($("input[name='maxage']").val());
+                                    edata.exclude_file = $("textarea[name='exclude_file']").val();
+                                    bt.send('set_ols_private_cache', 'config/set_ols_private_cache', edata, function(res) {
+                                        loadT.close();
+                                        bt.msg(res)
+                                    });
+                                }
+                            }
+                        }
+                    ],
+                    _html = $('<div class="ols"></div>');
+                for (var i = 0; i < datas.length; i++) {
+                    var _form_data = bt.render_form_line(datas[i]);
+                    _html.append(_form_data.html);
+                    clicks = clicks.concat(_form_data.clicks);
+                };
+                $('#webedit-con').append(_html);
+                $("input[name='exclude_file']").parent().removeAttr('class').html('<textarea name="exclude_file" class="bt-input-text mr5 exclude_file" style="width:35%;height: 130px;"></textarea>');
+                $("input[name='test']").parent().parent().html('<div style="padding-left: 29px;border-top: #ccc 1px dashed;margin-top: -7px;"><em style="float: left;color: #555;font-style: normal;line-height: 32px;padding-right: 2px;">私有缓存</em><div style="margin-left: 70px;padding-top: 5px;"><input class="btswitch btswitch-ios" id="ols" type="checkbox"><label class="btswitch-btn" for="ols"></label></div></div>');
+                var private = $("input[name='maxage'],textarea[name='exclude_file'],button[name='private_save']").parent().parent();
+                $("input.bt-input-text").parent().append('<span>秒</span>');
+                $("button[name='static_save']").parent().append(bt.render_help(['默认的静态文件缓存时间是604800秒', '如果要关机，请将其更改为0秒']));
+                $(".ols").append(bt.render_help(['私有缓存只支持PHP页面缓存，默认缓存时间为120秒', '排除文件仅支持以PHP为后缀的文件']));
+                private.hide();
+                var loadT = bt.load();
+                bt.send('get_ols_private_cache_status', 'config/get_ols_private_cache_status', { id: web.id }, function(kdata) {
+                    loadT.close();
+                    checked = kdata;
+                    if (kdata) {
+                        bt.send('get_ols_private_cache', 'config/get_ols_private_cache', { id: web.id }, function(fdata) {
+                            $("input[name='maxage']").val(fdata.maxage);
+                            var ss = fdata.exclude_file.join("&#13;");
+                            $("textarea[name='exclude_file']").html(ss);
+                            $("#ols").attr('checked', true);
+                            private.show();
+                        });
+                    }
+                });
+                $('#ols').on('click', function() {
+                    var loadS = bt.load();
+                    bt.send('switch_ols_private_cache', 'config/switch_ols_private_cache', { id: web.id }, function(res) {
+                        loadS.close();
+                        private.toggle();
+                        checked = private.is(':hidden') ? false : true;
+                        bt.msg(res);
+                        if (checked) {
+                            bt.send('get_ols_private_cache', 'config/get_ols_private_cache', { id: web.id }, function(fdata) {
+                                private.show();
+                                $("input[name='maxage']").val(fdata.maxage);
+                                $("textarea[name='exclude_file']").html(fdata.exclude_file.join("&#13;"));
+                            });
+                        }
+                    });
+                });
+                bt.render_clicks(clicks);
+                $("button[name='private_save']").parent().css("margin-bottom", "-13px");
+                $('.ss-text').css("margin-left", "66px");
+                $('.ols .btn-success').css("margin-left", "100px");
+            })
+        },
         limit_network: function (web) {
             bt.site.get_limitnet(web.id, function (rdata) {
                 var limits = [
@@ -1299,15 +1425,17 @@ var site = {
             var filename = '/www/server/panel/vhost/rewrite/' + web.name + '.conf';
             
             bt.site.get_rewrite_list(web.name, function (rdata) {
+                var arrs = [], webserver = bt.get_cookie('serverType');
                 if (bt.get_cookie('serverType') == 'apache') filename = rdata.sitePath + '/.htaccess';
-                var arrs = [];
+                if (webserver == 'apache' || webserver == 'openlitespeed') filename = rdata.sitePath + '/.htaccess';
+                if (webserver == 'openlitespeed') webserver = 'apache';
                 for (var i = 0; i < rdata.rewrite.length; i++) arrs.push({ title: rdata.rewrite[i], value: rdata.rewrite[i] });
 
                 var datas = [{
                     name: 'rewrite', type: 'select', width: '130px', items: arrs, callback: function (obj) {
                         if (bt.os == 'Linux') {
                             var spath = filename;
-                            if (obj.val() != lan.site.rewritename) spath = '/www/server/panel/rewrite/' + bt.get_cookie('serverType') + '/' + obj.val() + '.conf';
+                            if (obj.val() != lan.site.rewritename) spath = '/www/server/panel/rewrite/' + (webserver == 'openlitespeed'?'apache':webserver) + '/' + obj.val() + '.conf';
                             bt.files.get_file_body(spath, function (ret) {
                                 aceEditor.ACE.setValue(ret.data);
                                 aceEditor.ACE.moveCursorTo(0, 0); 
@@ -1380,7 +1508,7 @@ var site = {
                     items: [
                         { name: 'Dindex', height: '230px', width: '50%', type: 'textarea', value: rdata },
                         {
-                            name: 'btn_submit', text: '保存', type: 'button', callback: function (ddata) {
+                            name: 'btn_submit', text: '添加', type: 'button', callback: function (ddata) {
                                 var Dindex = ddata.Dindex.replace(new RegExp(/(\n)/g), ",");
                                 bt.site.set_index(web.id, Dindex, function (ret) {
                                     if (ret.status) site.reload(5)
@@ -1404,7 +1532,8 @@ var site = {
 					<li>此处为站点主配置文件,若您不了解配置规则,请勿随意修改.</li>\
 				</ul>';
 			$("#webedit-con").html(con);
-			var config = bt.aceEditor({el:'siteConfigBody',path:'/www/server/panel/vhost/'+bt.get_cookie('serverType')+'/'+ web.name +'.conf'})
+			var webserve = bt.get_cookie('serverType'),
+            config = bt.aceEditor({ el: 'siteConfigBody', path: '/www/server/panel/vhost/' + (webserve == 'openlitespeed' ? (webserve + '/detail') : webserve) + '/' + web.name + '.conf' });
     		$("#OnlineEditFileBtn").click(function(e){
 				bt.saveEditor(config);
 			});
@@ -1728,7 +1857,6 @@ var site = {
                                     e.stopPropagation();
                                 })
                                 $("#ymlist li").click(function () {
-
                                     var o = $(this).find("input");
                                     if (o.prop("checked")) {
                                         o.prop("checked", false)
@@ -1769,14 +1897,719 @@ var site = {
                                 bt.render_clicks(_btn_data.clicks);
 
                                 robj.append(bt.render_help(helps[0]));
-                                robj.find('input[type="radio"]:eq(0)').trigger('click')
+                                robj.find('input[type="radio"]:eq(0)').trigger('click');
                             })
                         }
                     },
                     {
-                        title: "其他证书", callback: function (robj) {
+                        title:"商用证书",callback:function(robj){
+                            var deploy_ssl_info = rdata;
+                            var html = '',product_list,userInfo,loadT = bt.load('正在获取商业证书订单列表，请稍后...'),order_list,is_check = true,itemData,activeData,loadY;
+                            bt.send('get_order_list','ssl/get_order_list',{},function(rdata){
+                                loadT.close();
+                                order_list = rdata;
+                                $.each(rdata,function(index,item){
+                                    if(deploy_ssl_info.type == 3  && deploy_ssl_info.oid === item.oid){
+                                        html += '<tr data-index="'+ index +'">'+
+                                        '<td><span>'+ item.domainName.join('、') +'</span></td><td>'+ item.title +'</td><td>'+ (function(){
+                                                    var dayTime = new Date().getTime() / 1000,color = '',endTiems = '';
+                                                    if(item.endDate != ''){
+                                                        item.endDate = parseInt(item.endDate);
+                                                        endTiems = parseInt((item.endDate - dayTime) / 86400);
+                                                        if(endTiems <= 15) color = 'orange';
+                                                        if(endTiems <= 7) color = 'red';
+                                                        if(endTiems < 0) return '<span style="color:red">已过期</span>';
+                                                        return '<span style="'+ color +'">剩余'+ endTiems + '天</span>';
+                                                    }else{
+                                                        return '--';
+                                                    }
+                                                }())
+                                        +'</td><td>订单完成</td><td style="text-align:right">已部署 | <a class="btlink" href="javascript:site.ssl.set_ssl_status(\'CloseSSLConf\',\''+ web.name +'\',2)">关闭</a></td></td>';
+                                    }else if(deploy_ssl_info.type != 3){
+                                        html += '<tr data-index="'+ index +'">'+
+                                            '<td><span>'+ item.domainName.join('、') +'</span></td><td>'+ item.title +'</td><td>'+ (function(){
+                                                    var dayTime = new Date().getTime() / 1000,color = '',endTiems = '';
+                                                    if(item.endDate != ''){
+                                                        item.endDate = parseInt(item.endDate);
+                                                        endTiems = parseInt((item.endDate - dayTime) / 86400);
+                                                        if(endTiems <= 15) color = 'orange';
+                                                        if(endTiems <= 7) color = 'red';
+                                                        if(endTiems < 0) return '<span style="color:red">已过期</span>';
+                                                        return '<span style="'+ color +'">剩余'+ endTiems + '天</span>'
+                                                    }else{
+                                                        return '--';
+                                                    }
+                                                }())
+                                            +'</td><td>'+ (function(){
+                                                        if(item.status === 1){
+                                                            switch(item.orderStatus){
+                                                                case 'COMPLETE':
+                                                                    return '<span style="color:#20a53a;">订单完成</span>';
+                                                                break;
+                                                                case 'PENDING':
+                                                                    return '<span style="color: orange;">申请中</span>';
+                                                                break;
+                                                                case 'CANCELLED':
+                                                                    return '<span style="color: #888;">已取消</span>';
+                                                                break;
+                                                                case 'FAILED':
+                                                                    return '<span style="color:red;">申请失败</span>';
+                                                                break;
+                                                                default:
+                                                                    return '<span style="color: orange;">待验证</span>';
+                                                                break;
+                                                            }
+                                                        }else{
+                                                            switch(item.status){
+                                                                case 0:
+                                                                    return '<span style="color: orange;">未支付</span>';
+                                                                break;
+                                                                case -1:
+                                                                    return '<span style="color: #888;">已取消</span>'
+                                                                break;
+                                                            }
+                                                        }
+                                                    }())
+                                            +'</td><td style="text-align:right;">'+ (function(){
+                                                if(item.status === 1){
+                                                    switch(item.orderStatus){
+                                                        case "COMPLETE": //申请成功
+                                                            return '<a href="javascript:;" data-type="deploy_ssl" class="btlink options_ssl">部署</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="/ssl?action=download_cert&oid='+ item.oid +'" data-type="download_ssl" class="btlink options_ssl">下载</a>'
+                                                        break;
+                                                        case "PENDING": //申请中
+                                                            return '<a href="javascript:;" data-type="verify_order" class="btlink options_ssl">验证</a>';
+                                                        break;
+                                                        case "CANCELLED": // 已取消
+                                                            return '无操作';
+                                                        break;
+                                                        case "FAILED":
+                                                            return '<a href="javascript:;" data-type="info_order" class="btlink options_ssl">详情</a>';
+                                                        break;
+                                                        default:
+                                                            return '<a href="javascript:;" data-type="verify_order" class="btlink options_ssl">验证</a>';
+                                                        break;
+                                                    }
+                                                }
+                                            }()) +'</td>'+
+                                        '</tr>';
+                                    }
+                                });
+                                $('.ssl_order_list tbody').html(html);
+                            });
+                            robj.append('<div class="mtb10">\
+                                <button class="btn btn-success btn-sm btn-title ssl_business_application" type="button">申请证书</button>\
+                                <div class="divtable mtb10 ssl_order_list"  style="max-height: 400px;overflow-y: auto;">\
+                                    <table class="table table-hover" id="ssl_order_list">\
+                                        <thead><tr><th width="120px">域名</th><th  width="220px">证书类型</th><th>到期时间</th><th>状态</th><th style="text-align:right;">操作</th></tr></thead>\
+                                        <tbody></tbody>\
+                                    </table>\
+                                </div>\
+                            </div><ul class="help-info-text c7">\
+                                <li>申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)</li>\
+                                <li>有效期1年，不支持续签，到期后需要重新申请</li>\
+                                <li>在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点</li>\
+                                <li><a style="color:red;">如果您的站点有使用CDN、高防IP、反向代理、301重定向等功能，可能导致验证失败</a></li>\
+                                <li><a style="color:red;">申请www.bt.cn这种以www为二级域名的证书，需绑定并解析顶级域名(bt.cn)，否则将验证失败</a></li>\
+                            </ul>');
+                            bt.fixed_table('ssl_order_list');
+                            /**
+                             * @description 对指定表单元素的内容进行效验
+                             * @param {Object} el jqdom对象
+                             * @param {String} name 表单元素name名称
+                             * @param {*} value 表单元素的值
+                             * @returns 返回当前元素的值
+                             */
+                            function check_ssl_user_info(el,name,value){
+                                el.css('borderColor','#ccc');
+                                var status;
+                                switch(name){
+                                    case 'domains':
+                                        var list = value.split('\n');
+                                        if(value == ''){
+                                            set_info_tips(el,{msg:'域名不能为空！',color:'red'});
+                                            status =  false;
+                                        }
+                                        if(!Array.isArray(list)) list = [list];
+                                        $.each(list,function(index,item){
+                                            if(bt.check_domain(item)){
+                                                switch(activeData.code){
+                                                    case 'comodo-positive-multi-domain':
+                                                        if(list.length >3){
+                                                            set_info_tips(el,{msg:'多域名证书默认支持3个域名,超出数量请重新申请！',color:'red'});
+                                                            status =  false;
+                                                        }else if(list.length == 1){
+                                                            set_info_tips(el,{msg:'当前为多域名证书，需要2个域名或多个域名！',color:'red'});
+                                                            status =  false;
+                                                        }
+                                                    break;
+                                                    case 'comodo-positivessl-wildcard':
+                                                        if(item.indexOf('*') != 0){
+                                                            set_info_tips(el,{msg:'通配符域名格式错误,正确写法‘*.bt.cn’',color:'red'});
+                                                            status = false;
+                                                        }
+                                                    break;
+                                                    case 'comodo-positive-multi-domain-wildcard':
+                                                        if(list.length > 2){
+                                                            set_info_tips(el,{msg:'多域名通配符证书默认支持2个域名,超出数量请重新申请！',color:'red'});
+                                                            status = false;
+                                                        }else if(list.length == 1){
+                                                            set_info_tips(el,{msg:'当前为多域名通配符，需要2个域名或多个域名！',color:'red'});
+                                                            status =  false;
+                                                        }
+                                                        if(item.indexOf('*') != 0){
+                                                            set_info_tips(el,{msg:'通配符域名格式错误,正确写法‘*.bt.cn’',color:'red'});
+                                                            status = false;
+                                                        }
+                                                    break;
+                                                }
+                                            }else{
+                                                set_info_tips(el,{msg:'【 '+ item +' 】'+',域名格式错误',color:'red'});
+                                                status = false;
+                                            }
+                                        });
+                                        value = list;
+                                    break;
+                                    case 'state':
+                                        if(value == ''){
+                                            set_info_tips(el,{msg:'所在省份不能为空！',color:'red'});
+                                            status = false;
+                                        }
+                                    break;
+                                    case 'city':
+                                        if(value == ''){
+                                            set_info_tips(el,{msg:'所在市/县不能为空！',color:'red'});
+                                            status = false;
+                                        }
+                                    break;
+                                    case 'organation':
+                                        if(value == ''){
+                                            set_info_tips(el,{msg:'公司名称不能为空，如为个人申请请输入个人姓名！',color:'red'});
+                                            status = false;
+                                        }
+                                    break;
+                                    case 'name':
+                                        if(value == ''){
+                                            set_info_tips(el,{msg:'用户姓名不能为空！',color:'red'});
+                                            status = false;
+                                        }
+                                    break;
+                                    case 'email':
+                                        if(value == ''){
+                                            set_info_tips(el,{msg:'用户邮箱地址不能为空！',color:'red'});
+                                            status = false;
+                                        }
+                                        if(!bt.check_email(value)){
+                                            set_info_tips(el,{msg:'用户邮箱地址格式错误！',color:'red'});
+                                            status = false;
+                                        }
+                                    break;
+                                    case 'mobile':
+                                        if(value != ''){
+                                            if(!bt.check_phone(value)){
+                                                set_info_tips(el,{msg:'用户手机号码格式错误！',color:'red'});
+                                                status = false;
+                                            }
+                                        }
+                                    break;
+                                    default:
+                                        status = value;
+                                    break;
+                                }
+                                if(typeof status == "boolean" && status === false) return false;
+                                status = value;
+                                return status;
+                            }
+
+                            /**
+                             * @description 设置元素的提示和边框颜色
+                             * @param {Object} el jqdom对象 
+                             * @param {Object} config  = {
+                             *  @param {String} config.msg 提示内容
+                             *  @param {String} config.color 提示颜色
+                             * }
+                            */
+                            function set_info_tips(el,config){
+                                $('html').append($('<span id="width_test">'+ config.msg +'</span>'));
+                                layer.tips(config.msg,el,{tips:[1,config.color],time:3000,area:($('#width_test').width() + 20) +'px'});
+                                el.css('borderColor',config.color);
+                                $('#width_test').remove();
+                            }
+
+                            /**
+                             * @description 验证域名
+                             * @param {Number} oid 域名订单ID
+                             * @returns void
+                             */
+                            function verify_order_veiw(oid,is_success){
+                                var loads = bt.load('正在获取验证结果,请稍后...');
+                                bt.send('get_verify_result','ssl/get_verify_result',{oid:oid},function(res){
+                                	loads.close();
+                                    if(res.status == 'COMPLETE'){
+                                        $('#ssl_tabs span:eq(2)').click();
+                                        return false;
+                                    }
+                                    loadT.close();
+                                    var rdata = res.data;
+                                    var domains = [],type = rdata.dcvList[0].dcvMethod != 'CNAME_CSR_HASH',info = {};
+                                    $.each(rdata.dcvList,function(key,item){
+                                        domains.push(item['domainName']);
+                                    });
+                                    if(type){
+                                        info = {fileName:rdata.DCVfileName,fileContent:rdata.DCVfileContent,filePath:'/.well-known/pki-validation/'};
+                                    }else{
+                                        info = {dnsHost:rdata.DCVdnsHost,dnsType:rdata.DCVdnsType,dnsValue:rdata.DCVdnsValue};
+                                    }
+                                    if(is_success){
+                                    	is_success({type:type,domains:domains,info:info});
+                                    	return false;
+                                    }
+                                    loadT = bt.open({
+                                        type:1,
+                                        title:'验证域名-'+ ( type?'文件验证':'DNS验证' ),
+                                        area:'600px',
+                                        content:reader_domains_cname_check({type:type,domains:domains,info:info}),
+                                        success:function(){
+                                            $('.lib-price-button button').click(function(){
+                                                switch($(this).index()){
+                                                    case 0:
+                                                        loadT.close();
+                                                        verify_order_veiw(itemData.oid);
+                                                    break;
+                                                    case 1:
+                                                        loadT.close();
+                                                    break;
+                                                }
+                                            });
+                                            var clipboard = new ClipboardJS('.parsing_info .parsing_icon');
+                                            clipboard.on('success', function(e){
+                                                bt.msg({status:true,msg:'复制成功'});
+                                                e.clearSelection();
+                                            });
+                                            clipboard.on('error', function(e) {
+                                                bt.msg({status:true,msg:'复制失败，请手动ctrl+c复制！'});
+                                                console.error('Action:', e.action);
+                                                console.error('Trigger:', e.trigger);
+                                            });
+                                            $('.verify_ssl_domain').click(function(){
+                                                verify_order_veiw(oid);
+                                                loadT.close();
+                                            });
+                                            $('.return_ssl_list').click(function(){
+                                                loadT.close();
+                                                $('#ssl_tabs span:eq(2)').click();
+                                            });
+                                        }
+                                    });
+                                });
+                            }
+
+                            /**
+                             * @description 渲染验证模板接口
+                             * @param {Object} data 验证数据
+                             * @returns void
+                             */
+                            function reader_domains_cname_check(data){
+                                var html = '';
+                                if(data.type){
+                                    html = '<div class="lib-ssl-parsing">\
+                                        <div class="parsing_tips">请给以下域名【 <span class="highlight">'+ data.domains.join('、') +'</span> 】添加验证文件，验证信息如下：</div>\
+                                        <div class="parsing_parem"><div class="parsing_title">文件所在位置：</div><div class="parsing_info"><input type="text" name="filePath"  class="parsing_input border" value="'+ data.info.filePath +'" readonly="readonly" /></div></div>\
+                                        <div class="parsing_parem"><div class="parsing_title">文件名：</div><div class="parsing_info"><input type="text" name="fileName" class="parsing_input" value="'+ data.info.fileName +'" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="'+ data.info.fileName +'">复制</span></div></div>\
+                                        <div class="parsing_parem"><div class="parsing_title" style="vertical-align: top;">文件内容：</div><div class="parsing_info"><textarea name="fileValue"  class="parsing_textarea" readonly="readonly">'+ data.info.fileContent +'</textarea><span class="parsing_icon" style="display: block;width: 60px;border-radius: 3px;" data-clipboard-text="'+ data.info.fileContent +'">复制</span></div></div>\
+                                        <div class="parsing_tips">· 关于添加验证文件，请自行百度，和咨询服务器运营商。</div>\
+                                        <div class="parsing_parem" style="padding: 0 100px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
+                                    </div>';
+                                }else{
+                                    html = '<div class="lib-ssl-parsing">\
+                                        <div class="parsing_tips">请给以下域名【 <span class="highlight">'+ data.domains.join('、') +'</span> 】添加‘‘'+ data.info.dnsType +'’’解析，解析参数如下：</div>\
+                                        <div class="parsing_parem"><div class="parsing_title">主机记录：</div><div class="parsing_info"><input type="text" name="host" class="parsing_input" value="'+ data.info.dnsHost +'" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="'+ data.info.dnsHost +'">复制</span></div></div>\
+                                        <div class="parsing_parem"><div class="parsing_title">记录值：</div><div class="parsing_info"><input type="text" name="domains"  class="parsing_input" value="'+ data.info.dnsValue +'" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="'+ data.info.dnsValue +'">复制</span></div></div>\
+                                        <div class="parsing_tips">· 关于如何添加域名解析，请自行百度，和咨询服务器运营商。</div>\
+                                        <div class="parsing_parem" style="padding: 0 100px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
+                                    </div>';
+                                }
+                                return html;
+                            }
+                            
+                            //订单证书操作
+                            $('.ssl_order_list').on('click','.options_ssl',function(){
+                                var type = $(this).data('type'),tr = $(this).parents('tr');
+                                itemData = order_list[tr.data('index')];
+                                switch(type){
+                                    case 'deploy_ssl': // 部署证书
+                                        bt.confirm({
+                                            title:'部署证书',
+                                            msg:'是否部署该证书,是否继续？<br>证书类型：'+ itemData.title +' <br>证书支持域名：'+ itemData.domainName.join('、') +'<br>部署站点名:'+ web.name +''
+                                        },function(){
+                                        	var loads = bt.load('正在部署证书，请稍后...');
+                                            bt.send('set_cert','ssl/set_cert',{oid:itemData.oid,siteName:web.name},function(rdata){
+                                            	loads.close();
+                                                $('#webedit-con').empty();
+                                                site.edit.set_ssl(web);
+                                                site.ssl.reload();
+                                                bt.msg(rdata);
+                                            });
+                                        });
+                                    break;
+                                    case 'verify_order': // 验证订单
+                                        verify_order_veiw(itemData.oid);
+                                    break;
+                                    case 'clear_order': // 取消订单
+                                        bt.confirm({
+                                            title:'取消订单',
+                                            msg:'是否取消该订单，订单域名【'+ itemData.domainName.join('、') +'】，是否继续？'
+                                        },function(){
+                                            var loads = bt.load('正在取消订单，请稍后...');
+                                            bt.send('cancel_cert_order','ssl/cancel_cert_order',{oid:itemData.oid},function(rdata){
+                                            	loads.close();
+                                                if(rdata.status){
+                                                    $('#ssl_tabs span:eq(2)').click();
+                                                    setTimeout(function(){
+                                                        bt.msg(rdata);
+                                                    },2000);
+                                                }
+                                                bt.msg(rdata);
+                                            });
+                                        })
+                                    break;
+                                }
+                            });
+                            
+                            //申请证书
+                            $('.ssl_business_application').click(function(){
+                                var loads = bt.load('正在获取商业证书产品列表，请稍后...');
+                                bt.send('get_product_list','ssl/get_product_list',{},function(res){
+                                    loads.close();
+                                    var list = '',userInfo = res.administrator,timeOut,is_pay_view = null;
+                                    $.each(res.data,function(index,item){
+                                        if(item.state){
+                                            list += '<tr data-index="'+ index +'"><td><input type="radio" name="ssl_radio" /><span>' + item.title +'</span></td><td style="text-align: right;"><span style="color: #FF6232;">'+ item.price +'元/1年</span></td></tr>'
+                                        }
+                                    });
+                                    if(list == '') list = '<div class="ssl_info_item">无证书信息</div>';
+                                    var cert_info = '<div class="bt-form business_ssl_application">\
+                                        <div class="guide_body">\
+                                            <div class="guide_path">\
+                                                <span class="active"><i>1</i><i>选择产品</i></span>\
+                                                <span><i>2</i><i>完善资料</i></span>\
+                                                <span><i>3</i><i>支付订单</i></span>\
+                                                <span><i>4</i><i>完成订单</i></span>\
+                                            </div>\
+                                            <div class="guide_path_progress" data-progress="1" style="margin: 0px 80px;"><span style="width: 0px;"></span><span style="width: 430px;"></span></div>\
+                                        </div>\
+                                        <div class="guide_content" data-guide="1">\
+                                            <div class="line">\
+                                                <span class="tname">证书品牌</span>\
+                                                <div class="info-r">\
+                                                    <div class="ssl-brand-info">\
+                                                        Comodo 是一个领先的SSL证书提供商，保证电子商务数据传输的实时安全，是世界优秀的IT安全服务提供商和SSL证书认证机构之一。\
+                                                    </div>\
+                                                </div>\
+                                            </div>\
+                                            <div class="line">\
+                                                <span class="tname">证书类型</span>\
+                                                <div class="info-r">\
+                                                    <div class="divtable ssl_class_table" >\
+                                                        <table class="table table-hover">\
+                                                            <tbody>'+ list +'</tbody>\
+                                                        </table>\
+                                                    </div>\
+                                                </div>\
+                                            </div>\
+                                            <div class="line">\
+                                                <span class="tname">总计费用</span>\
+                                                <div class="info-r">\
+                                                    <div class="guide_price"></div>\
+                                                </div>\
+                                            </div>\
+                                            <div class="line">\
+                                                <span class="tname"></span>\
+                                                <div class="info-r">\
+                                                    <button class="btn btn-success btn-sm next-plan" data-guide="1">下一步</button>\
+                                                </div>\
+                                            </div>\
+                                        </div>\
+                                        <div class="guide_content ssl_application_info" style="display:none" data-guide="2">\
+                                            <div class="line">\
+                                                <span class="tname">证书信息</span>\
+                                                <div class="info-r ssl-info-line"></div>\
+                                            </div>\
+                                            <div class="line">\
+                                                <span class="tname">域名</span>\
+                                                <div class="info-r domain_list_info" style="margin-bottom:-5px;">\
+                                                </div>\
+                                            </div>\
+                                            <div class="line">\
+                                                <span class="tname">验证方式</span>\
+                                                <div class="info-r ssl_verification">\
+                                                    <label class="mr20"><input type="radio" name="dcvMethod" checked="checked" value="HTTP_CSR_HASH"\><span>文件验证(HTTP)</span></label>\
+                                                    <label class="mr20"><input type="radio" name="dcvMethod" value="HTTPS_CSR_HASH"\><span>文件验证(HTTPS)</span></label>\
+                                                    <label class="mr20"><input type="radio" name="dcvMethod" value="CNAME_CSR_HASH"\><span>DNS验证(CNAME解析)</span></label>\
+                                                </div>\
+                                            </div>\
+                                            <div class="line">\
+                                                <span class="tname">所在地区</span>\
+                                                <div class="info-r ">\
+                                                    <input type="text" class="bt-input-text mr5" name="state" value="'+ (userInfo.state || '') +'"  placeholder="请输入所在省份，必填项" style="width:120px;"/>\
+                                                    <input type="text" class="bt-input-text mr5" name="city"  value="'+ (userInfo.city || '') +'" placeholder="请输入所在市/县，必填项" style="width:120px;margin-left:15px" />\
+                                                </div>\
+                                            </div>\
+                                            <div class="line">\
+                                                <span class="tname">公司名称</span>\
+                                                <div class="info-r ">\
+                                                    <input type="text" class="bt-input-text mr5" name="organation" value="'+ (userInfo.organation || '') +'"  placeholder="请输入公司名称，如为个人申请请输入个人姓名，必填项"/>\
+                                                </div>\
+                                            </div>\
+                                            <div class="line">\
+                                                <span class="tname">姓名</span>\
+                                                <div class="info-r ">\
+                                                    <input type="text" class="bt-input-text mr5" name="name"  value="'+ ((userInfo.lastName + userInfo.firstName) || '') +'" placeholder="请输入姓名，必填项"/>\
+                                                </div>\
+                                            </div>\
+                                            <div class="line">\
+                                                <span class="tname">邮箱</span>\
+                                                <div class="info-r ">\
+                                                    <input type="text" class="bt-input-text mr5" name="email" value="'+ (userInfo.email || '') +'" placeholder="请输入邮箱地址，必填项"/>\
+                                                </div>\
+                                            </div>\
+                                            <div class="line">\
+                                                <span class="tname">手机</span>\
+                                                <div class="info-r ">\
+                                                    <input type="text" class="bt-input-text mr5" name="mobile" value="'+ (userInfo.mobile || '') +'" placeholder="请输入手机号码，若为空，则使用当前绑定手机号"/>\
+                                                </div>\
+                                            </div>\
+                                            <div class="line">\
+                                                <span class="tname">总计费用</span>\
+                                                <div class="info-r">\
+                                                    <div class="guide_price"></div>\
+                                                </div>\
+                                            </div>\
+                                            <div class="line">\
+                                                <span class="tname"></span>\
+                                                <div class="info-r">\
+                                                    <button class="btn btn-default btn-sm prev-plan mr10" data-guide="2">上一步</button>\
+                                                    <button class="btn btn-success btn-sm play-plan" data-guide="2">支付订单</button>\
+                                                </div>\
+                                            </div>\
+                                        </div>\
+                                        <div class="guide_content ssl_applay_info" style="display:none" data-guide="3">\
+                                            <div class="payTitle">微信支付</div>\
+                                            <div class="paymethod">\
+                                                <div class="pay-wx" id="PayQcode"></div>\
+                                            </div>\
+                                            <div class="lib-price-box text-center">\
+                                                <span class="lib-price-name f14"><b>总计</b></span>\
+                                                <span class="price-txt"><b class="sale-price">148.00</b>元</span>\
+                                            </div>\
+                                            <div class="lib-price-detailed">\
+                                                <div class="info"><span class="text-left">商品名称</span><span class="text-right"></span></div>\
+                                                <div class="info"><span class="text-left">下单时间</span><span class="text-right"></span></div>\
+                                            </div>\
+                                            <div class="lib-prompt"><span>微信扫一扫支付</span></div>\
+                                        </div>\
+                                        <div class="guide_content ssl_order_check" style="display:none" data-guide="4">\
+                                            <div class="lib-price-icon"><div class="order_paly_success">支付成功</div></div>\
+                                            <div class="lib-price-detailed" style="margin-bottom:15px;">\
+                                                <div class="info"><span class="text-left">证书类型</span><span class="text-right"></span></div>\
+                                            </div>\
+                                        </div>\
+                                    </div>';
+                                    loadY =  bt.open({
+                                        type:1,
+                                        title:'申请商业证书',
+                                        area:'640px',
+                                        content:cert_info,
+                                        success:function(layers,index){
+                                        	
+                                            $(layers).css('top',($(window).height() - $(layers).height()) / 2 - 42);
+                                            $('.ssl_class_table tbody tr').click(function(){
+                                                var index = $(this).data('index');
+                                                activeData = res.data[index];
+                                                $(this).addClass('active').siblings().removeClass('active');
+                                                $(this).find('input').prop('checked','checked');
+                                                $('.guide_price').html('<span>'+ activeData.price +'</span><span>元/1年</span>');
+                                            }).eq(0).click();
+                                            $('.next-plan').click(function(){
+                                                var guide = parseInt($(this).data('guide')),code = activeData.code,placeholder = '';
+                                                $(layers).css('top',($(window).height() - $(layers).height()) / 2 - 42);
+                                                $('[data-guide='+ (guide + 1) +'].guide_content').show().siblings('.guide_content').hide();
+                                                $('.guide_path span:eq('+ guide +')').addClass('active');
+                                                $('.guide_path_progress span:eq(0)').width(135);
+                                                if(guide == 1) $('.ssl-info-line').html('<span>'+ activeData.title +'</span>');
+                                                if(code.indexOf('multi') > -1){
+                                                    if(code.indexOf('wildcard') > -1){
+                                                        placeholder = '多域名通配符证书，每行一个域名，最高支持2个域名，必填项,例如：\r*.bt.cn\r*.bttest.cn';
+                                                    }else{
+                                                        placeholder = '多域名证书，每行一个域名，最高支持3个域名，必填项,例如：\rwww.bt.cn\rwww.bttest.cn';
+                                                    }
+                                                    $('.domain_list_info').html('<textarea class="bt-input-text mr20 key" name="domains" placeholder="'+ placeholder +'" style="line-height:20px;width:400px;height:80px;padding:8px;"></textarea>');
+                                                }else {
+                                                    if(code.indexOf('wildcard') > -1){
+                                                        placeholder = '请输入需要申请证书的域名（单域名通配符证书），必填项，例如：*.bt.cn';
+                                                    }else{
+                                                        placeholder = '请输入需要申请证书的域名（单域名证书），必填项，例如：www.bt.cn';
+                                                    }
+                                                    $('.domain_list_info').html('<input type="text" class="bt-input-text mr5" name="domains" placeholder="'+ placeholder +'"/>');
+                                                }
+                                            });
+                                            $('.prev-plan').click(function(){
+                                                $(layers).css('top',($(window).height() - $(layers).height()) / 2  - 42);
+                                                var guide = parseInt($(this).data('guide'));
+                                                $('[data-guide='+ (guide - 1) +'].guide_content').show().siblings('.guide_content').hide();
+                                                $('.guide_path span:eq('+ (guide - 1) +')').removeClass('active')
+                                                $('.guide_path_progress span:eq(0)').width(0);
+                                                
+                                            });
+                                            $('.ssl_application_info').on('focus','input[type=text],textarea',function(){
+                                                var placeholder = $(this).attr('placeholder');
+                                                $('html').append($('<span id="width_test">'+ placeholder +'</span>'));
+                                                $(this).attr('data-placeholder',placeholder);
+                                                layer.tips(placeholder,$(this),{tips:[1,'#20a53a'],time:0,area:($('#width_test').width() + 20) +'px'});
+                                                $(this).attr('placeholder','');
+                                                $('#width_test').remove();
+                                            }).on('blur','input[type=text],textarea',function(){
+                                                var name = $(this).attr('name'),val = $(this).val();
+                                                layer.closeAll('tips');
+                                                $(this).attr('placeholder',$(this).attr('data-placeholder'));
+                                                check_ssl_user_info($(this),name,val);
+                                            })
+                                            $('.play-plan').click(function(){
+                                                $(layers).css('top',($(window).height() - $(layers).height()) / 2  - 42);
+                                                var form = {},data = {};
+                                                is_check = true;
+                                                is_pay_view = true;
+                                                $('.ssl_application_info').find('input,textarea').each(function(){
+                                                    var name =  $(this).attr('name'),value = $(this).val(),
+                                                    value = check_ssl_user_info($(this),name,value);
+                                                    if(typeof value === "boolean"){
+                                                        form = false;
+                                                        return false;
+                                                    }
+                                                    form[name] = value;
+                                                });
+                                                if(typeof form == "boolean") return false;
+                                                data = {
+                                                    pid:activeData.pid,
+                                                    years:1,
+                                                    dcvMethod:$('[name="dcvMethod"]:checked').val(),
+                                                    domains:form['domains'],
+                                                    Administrator:{
+                                                        job: userInfo.job || '总务',
+                                                        state: form['state'],
+                                                        city: form['city'],
+                                                        address: form['state']+ form['city'],
+                                                        email:form['email'],
+                                                        mobile:form['mobile'],
+                                                        country:userInfo.country || 'CN',
+                                                        lastName:form['name'],
+                                                        organation:form['organation'],
+                                                        postCode:userInfo.postCode || '523000'
+                                                    }
+                                                }
+                                                /**
+                                                 * @description 支付订单轮询，检测支付状态
+                                                 * @param {Number} oid 订单ID
+                                                 * @return void 
+                                                 */
+                                                function pay_order_check(oid,product_info){
+                                                    if(!is_check) return false;
+                                                    bt.send('get_pay_status','ssl/get_pay_status',{oid:oid},function(rdata){
+                                                        if(rdata === 0){
+                                                            setTimeout(function(){
+                                                                pay_order_check(oid,activeData);
+                                                            },1500)
+                                                        }else{
+                                                            var loadT = bt.load('正在申请证书，请稍后...');
+                                                            bt.send('apply_order','ssl/apply_order',{oid:oid},function(res){
+                                                                loadT.close();
+                                                                $('.guide_path_progress span:eq(0)').width(290);
+                                                                $('.ssl_order_check').show().siblings('.guide_content').hide();
+                                                                $('.guide_path span:eq(3)').addClass('active');
+                                                                $('.ssl_order_check .lib-price-detailed .text-right:eq(0)').text(activeData.title);
+                                                                if(res.status){
+                                                                    verify_order_veiw(oid,function(data){
+                                                                        $('.ssl_order_check').append(reader_domains_cname_check(data));
+                                                                        $('.verify_ssl_domain').click(function(){
+                                                                        	loadY.close();
+                                                                            verify_order_veiw(oid);
+                                                                        });
+                                                                        $('.return_ssl_list').click(function(){
+                                                                            loadY.close();
+                                                                            $('#ssl_tabs span:eq(2)').click();
+                                                                        });
+                                                                    });
+                                                                }
+                                                            });
+                                                        }
+                                                        var clipboard = new ClipboardJS('.parsing_info .parsing_icon');
+                                                        clipboard.on('success', function(e) {
+                                                            bt.msg({status:true,msg:'复制成功'});
+                                                            e.clearSelection();
+                                                        });
+                                                        clipboard.on('error', function(e) {
+                                                            bt.msg({status:true,msg:'复制失败，请手动ctrl+c复制！'});
+                                                            console.error('Action:', e.action);
+                                                            console.error('Trigger:', e.trigger);
+                                                        });
+                                                    });
+                                                }
+                                                var loads = bt.load('正在创建支付订单，请稍后...');
+                                                bt.send('apply_order_pay','ssl/apply_order_pay',{pdata:JSON.stringify(data)},function(rdata){
+                                                    loads.close();
+                                                    if(rdata.status === false){
+                                                        bt.msg(rdata);
+                                                        return false;
+                                                    }
+                                                    $('.guide_path_progress span:eq(0)').width(290);
+                                                    $('.ssl_applay_info').show().siblings('.guide_content').hide();
+                                                    $('.sale-price').text(activeData.price);
+                                                    $('.lib-price-detailed .info:eq(0) span:eq(1)').text(activeData.title);
+                                                    $('.lib-price-detailed .info:eq(1) span:eq(1)').text(bt.format_data(new Date().getTime()));
+                                                    $('.guide_path span:eq(2)').addClass('active');
+                                                    $('#PayQcode').qrcode({
+                                                        render: "canvas",
+                                                        width: 320,
+                                                        height: 320,
+                                                        text:rdata.msg.wxcode
+                                                    });
+                                                    pay_order_check(rdata.msg.oid,activeData);
+                                                });
+                                            });
+                                            $('.business_ssl_application ').on('click','.lib-price-button button',function(){
+                                                switch($(this).index()){
+                                                    case 0:
+                                                        loadY.close();
+                                                        verify_order_veiw(rdata.msg.oid);
+                                                    break;
+                                                    case 1:
+                                                        loadY.close();
+                                                    break;
+                                                }
+                                            });
+                                        },
+                                        cancel:function(indexs, layero){
+                                        	if(is_pay_view){
+                                        		bt.confirm({msg:'当前处于支付状态，支付时请勿强制关闭弹窗，是否关闭弹窗?',title:'提示'},function(index){
+                                        			layer.close(index);
+                                        			layer.close(indexs);
+                                        		});
+                                        		return false;
+                                        	}
+                                        },
+                                        end:function(){
+                                        	is_pay_view = false;
+                                            is_check = false
+                                        }
+                                    });
+                                });
+                            });
+                            return false;
+                        }
+                    },
+                    {
+                        title: "其他证书", callback: function (robj){
                             var cert_info = '';
-                            if (rdata.cert_data['notBefore']) {
+                            if (rdata.cert_data['notBefore']){
                                 cert_info = '<div style="margin-bottom: 10px;" class="alert alert-success">\
                                         <p style="margin-bottom: 9px;"><span style="width: 357px;display: inline-block;">'+ (rdata.status ? '<b>已部署成功：</b>请在证书到期之前更换新的证书' :'<b style="color:red;">当前未部署：</b>请点击【保存】按钮完成此证书的部署')+'</span>\
                                         <span style="margin-left: 20px;display: inline-block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;max-width: 138px;width: 140px;">\
@@ -1843,6 +2676,9 @@ var site = {
                                 case 2:
                                     txt = lan.site.bt_ssl;
                                     break;
+                                case 3:
+                                    txt = 'Comodo Positive';
+                                    break;
                             }
                             $(".tab-con").html("<div class='line mtb15'>" + lan.get('ssl_enable', [txt]) + "</div><div class='line mtb15'><button class='btn btn-success btn-sm' onclick=\"site.ssl.set_ssl_status('CloseSSLConf','" + web.name + "')\">" + lan.site.ssl_close + "</button></div>");
 
@@ -1903,13 +2739,16 @@ var site = {
                         })
                     }
                 })
-                switch (rdata.type) {
+                switch(rdata.type) {
+                     case 0:
+                        $('#ssl_tabs span:eq(3)').trigger('click');
+                        break;
                     case 1:
                         $('#ssl_tabs span:eq(1)').trigger('click');
                         break;
-                    case 0:
+                    case 3:
                         $('#ssl_tabs span:eq(2)').trigger('click');
-                        break;
+                    break;
                     default:
                         $('#ssl_tabs span:eq(0)').trigger('click');
                         break;
@@ -1966,7 +2805,7 @@ var site = {
                         })
                         setTimeout(function () {
 	                        get_session_status();
-	                    }, 500)
+	                    }, 500);
                     })
                 })
             })
@@ -2796,13 +3635,14 @@ var site = {
         var item = $(obj).parents('tr').data('item');
         bt.open({
             type: 1,
-            area: ['700px', '690px'],
+            area: ['780px', '722px'],
             title: lan.site.website_change + '[' + item.name + ']  --  ' + lan.site.addtime + '[' + item.addtime + ']',
             closeBtn: 2,
             shift: 0,
             content: "<div class='bt-form'><div class='bt-w-menu site-menu pull-left' style='height: 100%;'></div><div id='webedit-con' class='bt-w-con webedit-con pd15'></div></div>"
         })
         setTimeout(function () {
+            var webcache = bt.get_cookie('serverType') == 'openlitespeed' ? { title: 'LS-Cache', callback: site.edit.ols_cache } : '';
             var menus = [
                 { title: '域名管理', callback: site.edit.set_domains },
                 { title: '子目录绑定', callback: site.edit.set_dirbind },
@@ -2821,6 +3661,7 @@ var site = {
                 { title: '防盗链', callback: site.edit.set_security },
                 { title: '响应日志', callback: site.edit.get_site_logs }
             ]
+            if (webcache !== '') menus.splice(3, 0, webcache);
             for (var i = 0; i < menus.length; i++) {
                 var men = menus[i];
                 var _p = $('<p>' + men.title + '</p>');

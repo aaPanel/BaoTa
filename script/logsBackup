@@ -64,6 +64,6 @@ if __name__ == '__main__':
         split_logs(oldFileName,num)
 
     if is_nginx:
-        os.system("kill -USR1 `cat /www/server/nginx/logs/nginx.pid`");
+        os.system("/etc/init.d/nginx reload")
     else:
-        os.system('/etc/init.d/httpd reload');
+        os.system('/etc/init.d/httpd reload')

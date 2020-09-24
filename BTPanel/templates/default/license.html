@@ -7,72 +7,92 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>宝塔用户协议</title>
     <style>
-        body {
+            body {
             background: #444;
         }
-
         .main {
-            width: 1000px;
-            margin: 0 auto;
+            width: 900px;
+            margin: 25px auto;
             background: #fff;
-            border-radius: 4px;
-            padding: 20px 60px 0 60px;
+            border-radius: 2px;
+            padding: 25px 55px;
             box-sizing: border-box;
+            display: none;
         }
 
         .title_group h1 {
-            font-size: 1.8em;
+            font-size: 1.6em;
             text-align: center;
             margin-bottom: 0;
             color: #333;
         }
 
         .title_group h3 {
-            font-size: 1.2em;
+            font-size: 1.1em;
             text-align: center;
             color: #777;
             font-weight: 400;
             margin-top: 8px;
+            margin-bottom: 0;
         }
-
+        .title_group h4{
+            font-size: .8em;
+            text-align: center;
+            color: #777;
+            margin-bottom: 25px;
+            margin-top: 8px;
+        }
+        .conter_overflow{
+            position: relative;
+        }
         .conter_tips {
             font-size: 12px;
             color: #444;
-            padding: 20px 35px;
+            padding: 5px 30px;
             border: 1px solid #ececec;
-            border-radius: 7px;
+            overflow: auto;
+            
         }
 
         .conter_tips .row {
-            margin: 3px 0;
+            margin: 15px 0 5px 0;
+            font-size: 15px;
         }
 
         .conter_tips .line {
-            line-height: 14px;
+            line-height: 19px;
             color: #666;
+            font-size: 12.5px;
+            margin-bottom: 3px;
         }
-
+        .conter_tips .line-content{
+            padding-left: 15px;
+        }
         .select_ground {
             display: inline-block;
-            vertical-align: top;
             cursor: pointer;
             margin-left: 10px;
             padding-top: 1px;
+            height: 25px;
+            line-height: 25px;
         }
 
         .conter_select {
             margin-top: 25px;
             padding-left: 10px;
             text-align: center;
+            position: relative;
         }
 
         .select_ground span {
             display: inline-block;
-            height: 30px;
-            width: 30px;
+            height: 22px;
+            width: 22px;
             background-size: 30px;
             transition: all 300ms;
             background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAAA8AXHiAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyhpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNi1jMTQ1IDc5LjE2MzQ5OSwgMjAxOC8wOC8xMy0xNjo0MDoyMiAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIDIwMTkgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6RERFQzQ4RkRDNjNGMTFFOTkxMzRGNjVBQjE0MEU5QUIiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6RERFQzQ4RkVDNjNGMTFFOTkxMzRGNjVBQjE0MEU5QUIiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDpEREVDNDhGQkM2M0YxMUU5OTEzNEY2NUFCMTQwRTlBQiIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDpEREVDNDhGQ0M2M0YxMUU5OTEzNEY2NUFCMTQwRTlBQiIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PkoEK4QAAAY9SURBVHja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');
+            background-size: 22px;
+            vertical-align: text-top;
         }
 
         .select_ground.pitch span {
@@ -90,17 +110,22 @@
             line-height: 30px;
             color: #666;
             font-size: 17px;
+            vertical-align: middle;
         }
 
         .conter_btns {
             text-align: center;
-            padding: 30px 0;
+            padding: 20px 0;
         }
-
+        .conter_btns .btn.disabled{
+            background-color: #cbcbcb;
+            border-color: #cbcbcb;
+            color: #fff;
+        }
         .conter_btns .btn {
             border: none;
             font-size: 1.1em;
-            padding: 0.7em 2.8em;
+            padding: 0.5em 4.6em;
             background-color: #20a53a;
             outline: none;
             color: #fff;
@@ -112,6 +137,90 @@
         .conter_btns .btn:hover {
             background: #1b8a30;
         }
+        .conter_shadow.shadow_top{
+            background: -webkit-linear-gradient(bottom,rgba(255, 255, 255, 0),rgba(220, 220, 220,.5));
+            top: 0;
+        }
+        .conter_shadow.shadow_bottom{
+            background: -webkit-linear-gradient(top,rgba(255, 255, 255, 0),rgba(220, 220, 220, .5));
+            bottom: 0;
+        }
+        .conter_shadow{
+            position: absolute;
+            
+            height: 10px;
+            width: 100%;
+            left: 0;
+        }
+        .hide{
+            display: none !important;
+        }
+        .show{
+            display: block !important;
+        }
+        .select_tips{
+            display: none;
+            position: absolute;
+            line-height: 22px;
+            min-width: 12px;
+            padding: 5px 10px;
+            font-size: 12px;
+            _float: left;
+            border-radius: 2px;
+            box-shadow: 1px 1px 3px rgba(0,0,0,.2);
+            background-color: #000;
+            color: #fff;
+            left: 273px;
+            top: -40px;
+            background: red;
+        }
+        .select_tips:after{
+            content: '';
+            display: inline-block;
+            width: 0;
+            height: 0;
+            border-right: 8px solid transparent;
+            border-left: 8px solid transparent;
+            border-top: 8px solid red;
+            position: absolute;
+            bottom: -8px;
+            left: 10px;
+        }
+        .ubind_click{
+            cursor: pointer;
+        }
+        .conter_read_tips{
+            position: absolute;
+            right: 15px;
+            border: 1px solid #ececec;
+            font-size: 12px;
+            padding: 5px 10px;
+            background: #fff;
+            color: #555;
+        }
+        .conter_read_tips.active{
+            background: #20a53a;
+            color: #fff;
+            border: none;
+        }
+        ::-webkit-scrollbar {
+        	/*滚动条整体样式*/
+        	width : 12px;  /*高宽分别对应横竖滚动条的尺寸*/
+            height: 1px;
+            padding: 2px;
+        }
+        ::-webkit-scrollbar-thumb{
+        	/*滚动条里面小方块*/
+        	border-radius: 1px;
+        	box-shadow : inset 0 0 6px rgba(0, 0, 0, 0.1);
+        	background   : #bbb;
+        }
+        ::-webkit-scrollbar-track{
+            /*滚动条里面轨道*/
+            border-radius: 1px;
+        	box-shadow:inset 0 0 6px rgba(0, 0, 0, 0.1);
+        	background:#ededed;
+        }
     </style>
 </head>
 
@@ -119,96 +228,262 @@
     <div class="main">
         <div class="title_group">
             <h1 class="title">欢迎您使用宝塔面板</h1>
-            <h3 class="subhead_title">首次登录阅读并同意《用户协议》即可进入面板首页</h3>
+            <h3 class="subhead_title">阅读并同意《用户协议》即可进入面板首页</h3>
+            <h4>协议最近更新时间：2020年9月16日</h4>
         </div>
-        <div class="conter_tips">
-            <h5 class="row">宝塔开源许可协议</h5>
-            <div class="line">
-                重要须知：在此特别提醒用户认真阅读、充分理解本协议，用户应认真阅读、充分理解本协议中各条款，包括免除或限制的免责条款以及对用户的权利限制条款。用户需审慎阅读并选择接受或不接受本协议，除非用户接受本协议所有条款，否则用户无权安装或使用本软件及相关服务。用户的安装、使用、登录等行为将视为对本协议的接受，并同意接受本协议各项条款的约束。
+        <div class="conter_overflow">
+            <div class="conter_shadow shadow_top hide"></div>
+            <div class="conter_read_tips">已阅读<span>0%</span></div>
+            <div class="conter_tips">
+                <div class="content-box">
+                    <h5 class="row">用户须知</h5>
+                    <div class="line">
+                        在使用宝塔面板软件之前，请务必仔细阅读本协议，特别是免除或者限制责任的条款、管辖与法律适用的条款，以及关于开通或者使用第三方提供的某项服务的条款。宝塔面板软件的所有或任意部分一经复制、安装或使用，即表示您接受本协议所规定的全部条款及条件。您可与广东堡塔安全技术有限公司（下称“堡塔公司”）直接订立另一书面协议，以补充或取代本协议的全部或任何部分。宝塔面板软件只在遵守本协议各项条款的情况下供许可使用，并且不得出售。
+                        堡塔公司将不时对本协议予以更新，更新内容一经正式发布即成为本协议不可分割的组成部分。在更新内容发布后继续使用本软件及堡塔公司服务即表示您同意新的条款；如果您不同意新的条款，您应当卸载本软件及停止使用堡塔公司服务、关闭您的堡塔公司帐户，如果您是父母或监护人，请帮助您的未成年子女或者被监护人关闭他或她的宝塔面板帐户。
+                        如果您未满18周岁，请在法定监护⼈的陪同下阅读本协议及其他上述协议，并特别注意未成年⼈使用条款。
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h5 class="row">一、软件许可声明</h5>
+                    <div class="line">
+                        <div class="line-title">1.1 许可授权</div>
+                        <div class="line-content">我们只是为您提供使用此软件的许可，并非将此软件所有权出售给您；在您同意所有条款之后，我们将通过许可证授予您拥有在特定设备中使用该软件的权利。许可期限到期或者终止后，在更新许可证之前，您可能无法使用宝塔面板软件。经堡塔公司及宝塔面板同意的方式，您可变更安装和使用宝塔面板的设备。</div>
+                    </div>
+                    <div class="line">
+                        <div class="line-title">1.2 许可证类型</div>
+                        <div class="line-content">(1) 基础版：在许可期限内，堡塔公司免费授予您一项非排他性和不可转让的许可，以使您能够在您拥有或控制的一台或多台支持设备上安装和使用宝塔面板。基础版包含宝塔面板核心功能。</div>
+                        <div class="line-content">(2) 专业版：您通过在堡塔公司官网（https://www.bt.cn）线上购买或与堡塔公司线下磋商购买宝塔面板专业版。除免费授予您一项非排他性和不可转让的基础版许可外，堡塔公司另外授予您一项非排他性和不可转让的专业版插件许可，作为基础版功能性的延伸，您所支付的费用即用于购买专业版插件许可（详见官网内容）。您仅可在许可期限内，根据购买的授权数量在设备上安装和使用专业版。您需要通过连接互联网以激活，更新和验证许可证，如果宝塔面板无法定期验证，该软件可能会在未另行通知的情况下无法继续使用；您同意宝塔面板可随时改变专业版中包含的软件类型（例如相关组件、版本、平台、语言，增加或删除部分插件等等），且不因此类更改对您承担任何责任。</div>
+                        <div class="line-content">(3) 企业版：您通过在堡塔公司官网线上购买或与堡塔公司线下磋商购买宝塔面板企业版。除免费授予您一项非排他性和不可转让的基础版许可外，堡塔公司另外授予您一项非排他性和不可转让的企业版插件许可，作为基础版功能性的延伸，您所支付的费用用于购买企业版插件许可（详见官网内容）。您仅可在许可期限内，根据购买的授权数量在设备上安装和使用企业版。您需要通过连接互联网以激活，更新和验证许可证，如果宝塔面板无法定期验证，该软件可能会在未另行通知的情况下无法继续使用；您同意宝塔面板可随时改变企业版中包含的软件类型（例如相关组件、版本、平台、语言，增加或删除部分插件等等），且不因此类更改对您承担任何责任。</div>
+                        <div class="line-content">(4) 即使您被授予的是基础版或专业版许可证，您仍可通过向堡塔公司购买的方式就宝塔面板提供的部分插件获单独的使用许可授权。该部分授权同样适用本协议条款。</div>
+                    </div>
+                    <div class="line">1.3 除付费插件外，禁止对源代码进行加密和混淆。</div>
+                </div>
+                <div class="content-box">
+                    <h5 class="row">二、宝塔面板的获取、安装、更新和卸载</h5>
+                    <div class="line">2.1 您可直接从官网或者获得堡塔公司授权的第三方处获取宝塔面板。如果您从未经堡塔公司授权的第三方处获取本软件或与本软件名称相同的安装程序，堡塔公司无法保证该软件能够正常使用，并对因此给您造成的损失不承担责任。</div>
+                    <div class="line">2.2 堡塔公司为不同的支持设备开发了本软件的不同版本，您应当根据你设备的实际情况选择或购买合适的版本。</div>
+                    <div class="line">2.3 下载本软件后，您需要按照本软件提示的步骤正确安装。因您在安装过程中未按照提示步骤操作不当造成的损失，堡塔公司不承担责任。</div>
+                    <div class="line">2.4 为了完善用户体验，增强宝塔面板软件的功能及性能，宝塔面板将会不断努力开发新的功能，并为您不定期提供宝塔面板软件更新。</div>
+                    <div class="line">2.5 宝塔面板软件可能会⾃动检测并提醒您安装更新，通过使用宝塔面板软件，您同意堡塔公司有权对宝塔面板软件进行更新，或者对软件的部分功能进行改变或限制。</div>
+                    <div class="line">2.6 宝塔面板软件新版本发布后，旧版本的软件可能无法使用。宝塔面板不保证旧版宝塔面板软件继续可用及相应地为您服务，请您随时核对并下载最新版本。</div>
+                    <div class="line">2.7 如您不再需要使用宝塔面板，可以自行卸载本软件。您已获取的仍在有效期限内的专业版或企业版许可证，不因卸载本软件而发生中止或终止，您为购买许可证所支付的费用，不因卸载本软件而退还。</div>
+                </div>
+                <div class="content-box">
+                    <h5 class="row">三、堡塔账号</h5>
+                    <div class="line">3.1 堡塔账号是指在堡塔官网注册的账号，该账号并非必须，您可以直接下载使用堡塔软件。只有您需要在堡塔官网或堡塔产品上进行充值、消费等操作时，才必须注册。</div>
+                    <div class="line">3.2 您须以真实身份注册开通堡塔账号，并保证所提供的资料信息真实、完整、有效，且保证堡塔公司可以通过您所填写的联系方式与您取得联系。注册堡塔账号后，如果所提供的资料信息有所变更，应当及时更新。因资料信息没有及时变更导致的损失，堡塔公司不承担任何责任。</div>
+                    <div class="line">3.3 您所提供的信息适用于双方往来联系、书面文件送达及争议解决时法律文书送达。因您提供的联系方式和联系信息错误而无法直接送达的自交邮后第7日视为送达。</div>
+                    <div class="line">3.4 您应对您的账号负责，只有您本人可以使用您的堡塔账号，该账号不可转让、不可赠与、不可继承。</div>
+                    <div class="line">3.5 您应妥善保管并正确、安全地使用账号及密码，对使用该账号及密码进行的一切操作负完全的责任。如您发现有他人冒用或盗用您的账户及密码或任何其他未经合法授权之情形时，应立即以有效方式通知堡塔公司，要求堡塔公司暂停相关服务。同时，堡塔公司应对您的请求做出及时响应，您应理解在此之前，堡塔公司对您的账号中已执行的指令及所导致的您的损失不承担任何责任。对于未尽上述保管义务导致账号密码遗失、账号被盗等情形而给您权利造成损害的，您应自行承担一切由此产生的损失。堡塔公司应积极地采取技术与管理等合理措施保障用户账号的安全、有效。</div>
+                </div>
+                <div class="content-box">
+                    <h5 class="row">四、数据信息保护</h5>
+                    <div class="line">4.1 堡塔公司致力于保护您的信息安全，并为此采取合理的预防措施。除法律法规规定的情形和您的许可外，堡塔公司不会向第三方公开、透露您的个人信息。</div>
+                    <div class="line">4.2 在本软件安装和使用过程中，本软件将向堡塔公司发送本软件及安装本软件的支持设备的信息，该信息包括本软件的版本、语言、支持设备的IP地址、硬件配置信息。堡塔公司通常使用该信息以确认您使用本软件的最新版本、允许您下载和安装适用于该支持设备的更新版本，而不会作为用于识别您的个人信息；如果您是注册用户，堡塔公司将使用该信息以确保支持设备与堡塔公司服务的交互，您可通过本软件内的设置限制或在特定情形下限制该交互技术。</div>
+                    <div class="line">4.3 为确保使用符合行业标准内容加密技术来保护您的支持设备与堡塔公司之间的信息传输，堡塔公司可能将使用数字证书。为保护上述传输的安全性，您无法禁用该数字证书。通过使用本软件，您特此同意分享该信息及该交互技术。</div>
+                    <div class="line">4.4 您在使用本软件或使用堡塔公司服务的过程中，可能需要填写一些必要的信息。若国家法律法规或政策有特殊规定的，您需要填写真实的身份信息。若您填写的信息不完整，则无法使用本软件或堡塔公司服务，或者在使用过程中受到限制。</div>
+                    <div class="line">4.5 为创建和支持您的账户、向您提供方便又个性化的服务和活动、以及改进本软件的功能和可用性，堡塔公司有权收集您某些必要的信息并在上述目的范围内使用和处理。</div>
+                    <div class="line">4.6 在法律允许的范围内，堡塔公司可能收集、使用、处理非识别性数据，以改善本软件或堡塔公司服务，更好地满足您的需求。</div>
+                    <div class="line">4.7 宝塔面板在使用过程中不会收集、传输、存储其安装载体中的数据，您需要自行负责您的数据安全与备份。您理解并同意宝塔面板无法提供找回丢失数据等服务。</div>
+                    <div class="line">4.8 您理解并同意本软件的开发是一个持续开发过程，您及其他用户因此而受益。为促进本软件的持续开发，您可以向堡塔公司提供关于使用、改进或应用本软件的建议、文件、材料或其他数据（简称“贡献”）。您充分了解并同意堡塔公司可能在本软件和/或相关产品或服务上使用贡献。除非堡塔公司和您针对任何贡献签署书面文件或本协议另有约定，您授予堡塔公司不可撤销的、永久的、非排他的、世界范围内的、免费的许可，以在开发、示范、展示、许可、修改、复制、分发和出售本软件和/或相关产品和服务时披露、使用和纳入。同时请确保您的反馈不包含您或者第三方的机密和著作权信息。</div>
+                    <div class="line">4.9 您可阅读堡塔公司网站上发布的《隐私声明》进一步了解堡塔公司会如何收集、使用、存储和保护您的个人信息及您享有何种权利。该《隐私政策》可能会不时更新，在上述更新发布后继续使用本软件或堡塔公司服务即表示您同意新的条款。</div>
+                    <div class="line">4.10 如果您未满18周岁，您在使用本软件前须取得法定监护人的书面同意。</div> 
+                </div>
+                <div class="content-box">
+                    <h5 class="row">五、用户使用规范</h5>
+                    <div class="line">
+                        <div class="line-title">5.1 除非法律允许、本协议另有规定或堡塔公司书面许可外，您不得从事下列行为：</div>
+                        <div class="line-content">(1) 出租、出借、分许可、出售、复制、修改或传播本软件，或基于宝塔面板创造衍生作品，或促使或允许他人作上述行为；</div>
+                        <div class="line-content">(2) 修改或删除本软件及其副本或任何第三方软件上关于宝塔面板或第三方的版权声明、商标或其他知识产权声明；</div>
+                        <div class="line-content">(2) 修改或删除本软件及其副本或任何第三方软件上关于宝塔面板或第三方的版权声明、商标或其他知识产权声明；</div>
+                        <div class="line-content">(3) 以任何形式或为任何目的，直接或间接对本软件进行修改、翻译、反向工程、反向汇编、反向编译、转换为其他编程语言或者以其他方式尝试发现本软件的源代码或由本软件产生的内在数据文件，或对本协议项下获取的任何软件或固件进行任何类似操作；</div>
+                        <div class="line-content">(4) 对本软件或者本软件运行过程中释放到任何终端内存中的数据、软件运行过程中客户端与服务器端的交互数据以及本软件运行所必需的系统数据，予以复制、修改、增加、删除、挂接运行或创作任何衍生作品，包括但不限于使用插件、外挂或非经宝塔面板授权的第三方工具/服务接入本软件和相关系统；</div>
+                        <div class="line-content">(5) 通过修改或伪造本软件运行中的指令、数据，增加、删减、变动本软件的功能或运行效果，或者将用于上述用途的软件、方法进行运营或向公众传播，无论这些行为是否为商业目的；</div>
+                        <div class="line-content">(6) 通过非宝塔面板开发、授权的第三方软件、插件、外挂、系统，登录或使用本软件及宝塔面板服务，或制作、发布、传播上述工具；</div>
+                        <div class="line-content">(7) 自行、授权他人或利用第三方软件对本软件及其组件、模块、数据等进行干扰；</div>
+                        <div class="line-content">(8) 任何危害本软件或利用本软件危害计算机网络安全的行为；</div>
+                        <div class="line-content">(9) 以意图规避宝塔面板服务条款、违反相应法律法规的方式或超出正常使用范围而使用本软件；</div>
+                        <div class="line-content">(10) 通过本软件或宝塔面板服务向他人发送、诱导或煽动他人发送大量信息； </div>
+                        <div class="line-content">(12) 其他未经宝塔面板明示授权、许可或违反本协议的行为。</div>
+                    </div>
+                    <div class="line">
+                        <div class="line-title">5.2 在使用本软件和/或宝塔面板服务时，您不得从事下列行为，或为下列行为提供帮助：</div>
+                        <div class="line-content">(1) 上传、储存、发布、传送、传播或使用违反国家法律、危害国家安全统一、社会稳定、公序良俗、社会公德以及侮辱、诽谤、淫秽、暴力的内容；</div>
+                        <div class="line-content">(2) 上传、储存、发布、传送、传播或使用侵害他人名誉权、肖像权、知识产权、商业秘密等合法权利的内容；</div>
+                        <div class="line-content">(3) 上传、储存、发布、传送、传播或使用涉及他人隐私、个人信息或资料的内容；</div>
+                        <div class="line-content">(4) 发布、传送、传播骚扰、广告信息及垃圾信息；</div>
+                        <div class="line-content">(5) 虚构事实、隐瞒真相以误导、欺骗他人；</div>
+                        <div class="line-content">(6) 发布、传送、传播广告信息及垃圾信息；或</div>
+                        <div class="line-content">(7) 从事其他违反法律法规、政策及公序良俗、社会公德等的行为。</div>
+                    </div>
+                    <div class="line">
+                        <div class="line-title">5.3 您在使用卖方产品时不侵犯任何第三方合法权益，不使用本软件上传、储存、发布、传送、传播或使用包含以下内容的信息：</div>
+                        <div class="line-content">(1) 侵害他人名誉权、肖像权、知识产权、商业秘密等合法权利；</div>
+                        <div class="line-content">(2) 侵犯他人隐私、个人信息、个人资料；或</div>
+                        <div class="line-content">(3) 其他侵犯其他用户或第三方合法权益。</div>
+                    </div>
+                    <div class="line">5.4 您应妥善保管登录和使用本软件和服务的信息及密码，不向他人透露，并对您未妥善保管账户信息及密码所受到的损失承担全部责任。</div>
+                </div>
+                <div class="content-box">
+                    <h5 class="row">六、用户行为责任</h5>
+                    <div class="line">6.1 您充分了解并同意，您必须为自己使用本软件及堡塔公司服务的一切行为负责，包括您利用本软件或堡塔公司服务储存、发布、传送、传播的任何内容以及由此产生的任何后果。</div>
+                    <div class="line">6.2 如堡塔公司发现或收到他人举报您有违反本协议或相关法律法规的行为，我们将采取包括但不限于终止授权许可、停止技术支持、向有关部门移交线索、追究法律责任等措施。您同意并确认这是堡塔公司为维护健康良好的网络环境而采取的必要措施，若由于堡塔公司按照前述约定采取措施而对您产生影响或任何损失的，您同意不追究堡塔公司的任何责任或不向堡塔公司主张任何权利。</div>
+                    <div class="line">6.3 您将就任何第三方因您违反上述条款而遭受的所有损害承担责任，同时如堡塔公司因您的违反遭受损失，您也应当赔偿堡塔公司的相关损失。</div>
+                </div>
+                <div class="content-box">
+                    <h5 class="row">七、第三方软件及技术</h5>
+                    <div class="line">7.1 宝塔面板软件可能会使用第三方软件或技术（例如开源的开发框架及公共插件等等），这种使用已获得合法授权。</div>
+                    <div class="line">7.2 宝塔面板为您提供第三方应用购买和下载服务。第三方应用由第三方开发者提供，使用时可能会向您请求权限。您在购买、下载和使用第三方提供的应用之前，建议您详细了解该应用可能会获取的权限和第三方的隐私声明和政策等。</div>
+                    <div class="line">7.3 您同意使用第三方应用时，您将与应用开发者订立合同（下称“第三方协议”）。堡塔公司不是您与第三方应用提供商订立的第三方协议中的一方，因此我们建议您仔细阅读第三方协议及第三方隐私政策。堡塔公司无权也没有义务控制或审查第三方应用提供商所提供产品或服务的内容，对于您在使用此类第三方产品与服务时遭受的权益侵犯，堡塔公司不承担任何责任。堡塔公司不对任何第三方产品或服务的安全性、准确性、稳定性或其他不确定的风险负责，也不为第三方在宝塔面板提供的任何内容、广告、产品、服务或其他信息作出任何形式的背书。若您不遵守第三方协议和/或第三方隐私政策，第三方可能对您采取法律行动。</div>
+                    <div class="line">7.4 通过宝塔面板购买、下载和使用第三方应用与服务导致的任何争议由第三方服务提供商解决，如因第三方服务的中断、暂停、数据泄露或其他问题引起的争议及损害，堡塔公司对此不承担任何责任。堡塔公司不为第三方软件或技术提供任何客户支持。若您需要支持，需联系第三方服务提供商。</div>
+                    <div class="line">7.5 各第三方服务提供商为其产品、服务、内容及所作保证承担全部责任。若出现争议，以第三方服务提供商的产品或服务保证或第三方协议的约定为准。</div>
+                    <div class="line">7.6 您理解并同意，堡塔公司将不定期更新宝塔面板，增强宝塔面板的功能及性能，无法保证您所购买和使用的第三方应用适用于宝塔面板所有版本。如出现第三方应用与宝塔面板不兼容的情形，您需要联系第三方开发者协商解决。</div>
+                    <div class="line">7.7 您也许需要接受第三方开发者的协议和收费才能下载和使用他们的应用。您特此确认并知悉，开发者可以保留调整应用价格的权利，并在您购买相应的应用之前适时告知您。新的价格生效后，您需要接受新调整的价格才能够继续使用应用。如果您不同意应用调整后的价格，您有权停止使用本服务。您将需要根据任何适用的相关法律要求纳税。</div>
+                </div>
+                <div class="content-box">
+                    <h5 class="row">八、免责申明</h5>
+                    <div class="line">8.1 您明确认可并同意，您使用宝塔面板软件需自行承担风险，并承担有关质量满意度、性能、准确性及结果等方面的全部风险。您进一步理解并同意，根据目前行业技术发展水平，尚无法保证完全不发生故障或系统没有漏洞及程序不会出错，并可能因此产生人身或财产损害的风险，您在使用宝塔面板时应采取必要的措施保障安全性，包括但不限于安全防护措施、数据备份措施等。</div>
+                    <div class="line">8.2 堡塔公司向您保证，堡塔公司尽合理商业努力保障卖方产品的正常运行及实质上符合本软件适用的行业标准。</div>
+                    <div class="line">8.3 您理解并同意，如堡塔公司和/或其许可方违反上述保证，我们的责任仅限于为您修补或更换本软件。堡塔公司可能会要求您向堡塔公司或其授权方返还或证明本软件的损坏。</div>
+                    <div class="line">8.4 除本协议第8.3条明确约定外，在法律允许的最大范围内，堡塔公司明确否认任何形式的所有明示或暗示的保证及条件，包括但不限于，适销性、针对特定用途的适用性和无侵权的默示保证和条件。</div>
+                    <div class="line">8.5 安装宝塔面板软件可能影响第三方软件、应用软件或第三方服务的可用性，您在安装、使用宝塔面板的全过程中应自行采取必要的措施以避免对您造成损失，包括但不限于使用环境测试、数据备份等。</div>
+                    <div class="line">
+                        <div class="line-title">8.6 堡塔公司不保证本软件满足您的所有需求、本软件的运行不间断、安全或无错误、或本软件的所有错误均可被纠正。并且，堡塔公司不对因下列情况引起的缺陷或错误负责：</div>
+                        <div class="line-content">(1) 堡塔公司在官网公告之系统停机维护期间；</div>
+                        <div class="line-content">(2) 除堡塔公司以外的一方修改、错误使用或损坏本软件；</div>
+                        <div class="line-content">(3) 您未能安装堡塔公司提供的所有的漏洞修补程序或其他缺陷修复程序；</div>
+                        <div class="line-content">(4) 未根据本协议及本软件指示或要求正确使用本软件；</div>
+                        <div class="line-content">(5) 第三方个人电脑、设备、网络或软件的缺陷或错误，或用户操作失误；</div>
+                        <div class="line-content">(6) 因网络服务特性而特有的情况，包括但不限于基础网络运营商故障、计算机或互联网技术缺陷、互联网覆盖范围限制、计算机病毒、黑客攻击、网络设备或技术提供商的服务延迟或障碍等。</div>
+                    </div>
+                    <div class="line">8.7 堡塔公司不对任何非堡塔公司的产品或服务作出保证及承担责任，包括但不限于第三方软件或硬件、互联网连接或计算机网络。</div>
+                    <div class="line">8.8 互联网传输无法保证100%的安全，您确认具有互联网安全知识，能够自行承担信息传输过程中可能产生的风险。</div>
+                    <div class="line">8.9 堡塔公司不因不可抗力造成的本软件或堡塔公司服务的中断或故障承担责任，不可抗力包括但不限于自然灾害、战争行为、恐怖活动、骚乱、革命、罢工等社会因素、立法变化、政策修改、政府行为及命令、电信部门技术调整等不能预见、不能避免并不能克服的客观情况。</div>
+                    <div class="line">8.10 在任何情况下，堡塔公司不因您使用本软件或堡塔公司服务所引起的、或在任何方面与本软件或堡塔公司服务有关的任何数据或个人或商业信息的丢失或损坏、任何意外的、间接的、特殊的、惩罚性的、或附带的损害或请求（包括但不限于业务利润损失、业务中断、信息泄露、数据丢失、金钱损失、或取得替代产品及服务的费用）承担责任。</div>
+                    <div class="line">8.11 堡塔公司向您免费提供软件许可，作为免费使用本软件的对价，除本协议另有约定外，堡塔公司对本协议项下所有事项不承担责任，不论是合同、侵权或其他责任。本责任限制条款在本协议第8.3条软件保证救济不能完全弥补您的损失时仍然适用。</div>
+                    <div class="line">8.12 您理解并同意，为了向您提供有效的服务，本软件会利用你终端设备的处理器和带宽等资源。本软件使用过程中可能产生数据流量费用，该费用由您承担。</div>
+                </div>
+                <div class="content-box">
+                    <h5 class="row">九、知识产权声明</h5>
+                    <div class="line">9.1 堡塔公司拥有对堡塔公司官网以及本软件的所有权利或合法授权，包括但不限于著作权、商标权、专利权、商业秘密等知识产权，与本软件相关的所有信息内容（包括但不限于文本、图片、音频、视频、图表、标识、版面设计、排版方式、有关数据或电子文档等）及所有衍生作品（包括所有副本和相关资料）均受中国法律法规和相应国际条约的保护。</div>
+                    <div class="line">9.2 在堡塔公司协议有效期内，一方（“接受方”）必须对自另一方（“披露方”）所获知的任何非公开信息（包括但不限于技术信息、商业秘密、堡塔公司协议内容）（统称“保密信息”）严格保密，在未事先取得披露方书面同意的情况下，不得向任何第三方披露。接收方同意应仅为履行本协议之目的使用保密信息，并采取必要合理的措施保护披露方的保密信息，接受方保证其因为工作需要接触保密信息的员工将对保密信息严格保密，且其已与其前述员工签订了相应的保密协议。</div>
+                </div>
+                <div class="content-box">
+                    <h5 class="row">十、开源许可</h5>
+                    <div class="line">
+                        <div class="line-title">10.1 堡塔公司支持行业技术学习、交流与发展，您被允许以自用为目的，对堡塔公司向您公开的源代码实施以下行为：</div>
+                        <div class="line-content">(1) 任意修改源代码；</div>
+                        <div class="line-content">(2) 创造衍生作品。</div>
+                    </div>
+                    <div class="line">
+                        <div class="line-title">10.2 您在实施本协议第10.1条的行为时，应当遵守以下要求：</div>
+                        <div class="line-content">(1) 不得对堡塔公司未公开的源代码实施该行为；</div>
+                        <div class="line-content">(2) 除以自用为目的外，不得以其他目的或形式实施该行为；</div>
+                        <div class="line-content">(3) 不得修改或删除任何关于宝塔面板或第三方的版权声明、商标或其他知识产权声明；</div>
+                        <div class="line-content">(4) 不得以任何目的发表、发行、出租、出借、许可、出售、或传播您修改后的源代码或衍生产品，或变相实施前述行为；</div>
+                        <div class="line-content">(5) 不得以任何方式破坏堡塔公司的授权许可机制（包括但不限于收集源代码后经营与堡塔公司同类型、同性质服务等）</div>
+                        <div class="line-content">(6) 不得利用堡塔面板、修改后的源代码或所创造的衍生作品实施任何违反法律法规，有悖公序良俗，危害网络安全，或者侵犯他人信息、人身或财产安全的行为。</div>
+                    </div>
+                    <div class="line">10.3 您应当对所修改的源代码或所创造的衍生作品的合法性、安全性、准确性、稳定性或其他不确定的风险负责。对于您所修改的源代码或所创造的衍生作品造成您自身或任何第三方损失的，堡塔公司及宝塔面板不承担任何责任，造成堡塔公司损失的，您应当向堡塔公司进行赔偿。</div>
+                </div>
+                <div class="content-box">
+                    <h5 class="row">十一、未成年人使用条款</h5>
+                    <div class="line">11.1 若您未满18周岁，则为未成年人，您应当在监护人的监护、指导下阅读本协议以及使用堡塔面板及相关服务。</div>
+                    <div class="line">11.2 监护人应对未成年人使用宝塔面板及服务时加以监督和引导。</div>
+                </div>
+                <div class="content-box">
+                    <h5 class="row">十二、法律管辖</h5>
+                    <div class="line">12.1 本许可协议受中华人民共和国法律管辖并按该等法律解释，不适用法律冲突规则。如果具有合法管辖权的法院因故裁定本许可协议的任何条款或任何部分不可强制执行，则本许可的其余条款或部分仍具有完整法律效力和作用。</div>
+                    <div class="line">12.2 双方发生争议时，所有因本协议引起的或与本协议有关的任何争议，双方应首先通过友好协商解决；如协商未果，任何一方可提交堡塔公司住所地有管辖权的人民法院解决。</div>
+                </div>
+                <div class="content-box">
+                    <h5 class="row">十三、其他</h5>
+                    <div class="line">13.1 您使用宝塔面板软件即视为您已阅读并同意受本协议的约束。宝塔面板有权在必要时修改本协议条款。您可以在宝塔面板软件的最新版本中查阅相关协议条款。本协议条款变更后，如果您继续使用宝塔面板软件，即视为您已接受修改后的协议。如果您不接受修改后的协议，应当停⽌使用宝塔面板软件。</div>
+                </div>
             </div>
-            <h5 class="row">名词定义：</h5>
-            <div class="line">用户：通过宝塔授权获得宝塔面板及使用宝塔相关服务的自然人、法人及其他组织</div>
-            <div class="line">宝塔：宝塔面板(主体: 东莞市百塔网络科技有限公司)</div>
-            <div class="line">用户许可定义：用户在基于明显的用途说明后主动安装、使用、注册、管理软件，以及同意宝塔提供相关服务所订立的协议</div>
-            <h5 class="row">一、宝塔需遵守的约定</h5>
-            <div class="line">1.1 除付费插件外，确保所有代码用户皆可阅读。</div>
-            <div class="line">1.2 确保用户在完成所有环境部署后，在不依赖宝塔云端支持下也可永久运行。</div>
-            <div class="line">1.3 除付费插件外，禁止对源代码进行加密和混淆。</div>
-            <div class="line">1.4 禁止不经用户许可的情况下以任何方式自动安装加密代码。</div>
-            <div class="line">1.5 禁止不经用户许可的情况下以任何方式收集用户数据。</div>
-            <div class="line">1.6 禁止不经用户许可的情况下以任何方式远程控制用户面板。</div>
-            <div class="line">1.7 禁止在用户面板上插入与宝塔无关的广告。</div>
-            <div class="line">1.8 即日起，禁止将宝塔官方提供的免费功能改为付费功能。</div>
-            <h5 class="row">二、用户需遵守的约定</h5>
-            <div class="line">2.1 以自用为目的，可将宝塔用于盈利或非盈利项目上，且不受任何限制。</div>
-            <div class="line">2.2 以自用为目的，在保留版权标识的前提下可任意修改程序源码，但不得公开发行。</div>
-            <div class="line">2.3 禁止以任何方式破坏宝塔的商业授权机制（包括但不限于收集宝塔源码后经营与宝塔同类型、同性质服务等）。</div>
-            <div class="line">2.4 用户禁止利用宝塔发表、传送、传播、储存违反国家法律、危害国家安全、社会稳定、公序良俗的内容，或任何不当的、侮辱诽谤的、淫秽的、暴力的及任何违反国家法律法规政策的内容。
-            </div>
-            <div class="line">2.5 用户禁止利用宝塔制作、发布、传播用户窃取相关或其他软件及他人专属信息、财产的软件。</div>
-            <h5 class="row">三、API使用约定</h5>
-            <div class="line">3.1 宝塔欢迎并感谢您为该软件开发基于API的各种应用，且可自行免费或收费发布。</div>
-            <div class="line">3.2 用户基于宝塔API机制开发的应用，不得包含有破坏或修改宝塔代码。</div>
-            <h5 class="row">四、无改动发布或集成宝塔</h5>
-            <div class="line">4.1 宝塔欢迎并感谢您将宝塔发布在您的个人网站、企业官网或者其他的第三方网站。</div>
-            <div class="line">4.2 宝塔欢迎并感谢您将宝塔集成在其他系统中一起发布，包括云服务镜像、操作系统发行版等。</div>
-            <div class="line">4.3 用户在发布或者集成宝塔的时候，不得对宝塔源码做任何改动。</div>
-            <h5 class="row">五、知识产权声明</h5>
-            <div class="line">
-                宝塔是由东莞市百塔网络科技有限公司开发，宝塔的知识产权以及与宝塔相关的所有信息内容，包括但不限于：文字、图形、界面设计、版面框架、有关数据均受中华人民共和国相关知识产权法律法规的保护，除涉及第三方授权的内容外，宝塔公司享有上述知识产权。
-            </div>
-            <h5 class="row">六、免责声明</h5>
-            <div class="line">6.1
-                用户出于自愿而使用宝塔，您必须了解使用本软件的风险，宝塔不作任何类型的担保，不论是明示的、默示的，包括但不限于用户在任何情况下因使用或不能使用宝塔所产生的直接、间接、偶然、特殊及后续的损害及风险，百塔公司不承担任何责任。
-            </div>
-            <div class="line">6.2
-                用户清楚互联网软件的特殊性，宝塔与大多数互联网软件一样，受包括但不限于用户原因、网络服务质量、社会环境等因素的影响，可能收到各种安全问题的侵扰，如用户下载安装的其他软件或访问的其他网站中含有“木马”等病毒，威胁到用户的计算机信息和数据的安全，继而影响宝塔的正常使用等，用户应加强信息安全及使用资料的保护，以免遭受损失
-            </div>
-            <div class="line">6.3
-                宝塔界面中“第三方应用”是宝塔获得了第三方合法授权的，如因用户使用第三方软件或技术引发的任何纠纷，由第三方负责解决，宝塔不对第三方软件或技术提供服务，若用户需要获得支持，请与该第三方联系。</div>
-            <div class="line">6.4 用户因使用宝塔违反国家法律法规的，</div>
-            <h5 class="row">七、授权例外</h5>
-            <div class="line">7.1 如果上述条款无法满足您使用该软件的要求，可联系宝塔签署额外的合同以获得更灵活的授权许可。</div>
-            <h5 class="row">八、合同终止</h5>
-            <div class="line">8.1 如果用户违反了本协议的任一条款，本授权协议将自动终止，用户行为损害宝塔或其他任意第三方权利的，宝塔保留通过法律手段追究责任的权利。</div>
-            <h5 class="row">九、其他条款</h5>
-            <div class="line">9.1 本协议约定的任何条款部分或完全无效的，不影响其他条款的效力。</div>
-            <div class="line">9.2
-                协议的解释、效力及纠纷的解决使用中华人民共和国法律，若用户和宝塔发生任何纠纷或争议，首先应当友好协商解决，协商不成的，用户完全同意将该纠纷或争议提交至宝塔所在地即东莞市有管辖权的法院管辖。</div>
-            <div class="line">9.3 本协议宝塔保留一切解释权利</div>
+            <div class="conter_shadow shadow_bottom"></div>
         </div>
+
+        
         <div class="conter_select">
-            <div class="select_ground"><span></span></div>
-            <span>我已同意“《用户协议》”</span>
+            <div class="select_tips">测试内容</div>
+            <label class="ubind_click">
+                <div class="select_ground"><span></span></div>
+                <span>我已阅读并同意“《用户协议》”</span>
+            </label>
         </div>
         <div class="conter_btns">
-            <button class="btn btn_submit" onclick="set_licenes()">进入面板</button>
+            <button class="btn btn_submit disabled" onclick="open_panel()">进入面板</button>
         </div>
     </div>
     <script type="text/javascript">
-        function auto_mian() {
-            var docm_height = document.documentElement.clientHeight,
-                _main = document.getElementsByClassName('main')[0],
-                main_height = _main.clientHeight,
-                main_width = _main.clientWidth;
-            if (main_height < docm_height) {
-                _main.style.cssText = 'position:absolute;top:50%;left:50%;margin:' + '-' + (main_height / 2) +
-                    'px auto auto -' + (main_width / 2) + 'px ';
+        var is_scroll = false,is_checked = false,out_time = null;
+        var ubind_click = document.getElementsByClassName('ubind_click')[0],
+            _select_btn = document.getElementsByClassName('btn_submit')[0];
+        ubind_click.addEventListener('click', function (){
+            if(!is_scroll){
+                set_licenes({msg:'请下拉滚动条并阅读‘《用户协议》’'})
+                return false;
+            }
+            var select_ground = this.getElementsByClassName('select_ground')[0],
+            btn_submit = document.getElementsByClassName('btn_submit')[0];
+            if (hasClass(select_ground,'pitch')) {
+                removeClass(select_ground, 'pitch');
+                addClass(btn_submit,'disabled');
+                is_checked = false;
+            } else {
+                addClass(select_ground,'pitch');
+                removeClass(btn_submit,'disabled');
+                is_checked = true;
+            }
+        },false);
+        document.getElementsByClassName('conter_tips')[0].onscroll = function(e){
+            var conter_shadow = document.getElementsByClassName('conter_shadow'),
+            conter_read_tips = document.getElementsByClassName('conter_read_tips')[0],
+            conter_text = conter_read_tips.getElementsByTagName('span')[0]
+            var scrollHeight = this.scrollHeight - this.clientHeight -10;
+            console.log(this.scrollTop,scrollHeight)
+            if(this.scrollTop === 0){
+                replaceClass(conter_shadow[0],'show','hide');
+                replaceClass(conter_shadow[1],'hide','show');
+            }else if(this.scrollTop > 0 && this.scrollTop < scrollHeight){
+                replaceClass(conter_shadow[0],'hide','show');
+                replaceClass(conter_shadow[1],'hide','show');
+            }else if(this.scrollTop > scrollHeight){
+                replaceClass(conter_shadow[0],'hide','show');
+                replaceClass(conter_shadow[1],'show','hide');
+                is_scroll = true;
+            }
+            if(!is_scroll){
+                conter_text.innerText = Math.round(this.scrollTop / scrollHeight * 100) + '%';
+            }else{
+                addClass(conter_read_tips,'active');
+                conter_read_tips.innerText = '已完成阅读'
             }
         }
-
+        // 主视图自适应
+        function auto_mian(){
+            var win_height = window.innerHeight,
+            main = document.getElementsByClassName('main')[0];
+            conter_tips = main.getElementsByClassName('conter_tips')[0];
+            main.style.cssText = 'display:block;height:'+ (win_height - 50) +'px;'
+            conter_tips.style.height =  (win_height - 380) + 'px'
+        }
+        //判断class是否存在
         function hasClass(elem, cls) {
             cls = cls || '';
             if (cls.replace(/\s/g, '').length == 0) return false;
             return new RegExp(' ' + cls + ' ').test(' ' + elem.className + ' ');
         }
-
+        
+        //添加class
         function addClass(elem, cls) {
             if (!hasClass(elem, cls)) {
                 elem.className = elem.className == '' ? cls : elem.className + ' ' + cls;
             }
         }
-
+        
+        //删除class
         function removeClass(elem, cls) {
             if (hasClass(elem, cls)) {
                 var newClass = ' ' + elem.className.replace(/[\t\r\n]/g, '') + ' ';
@@ -218,34 +493,42 @@
                 elem.className = newClass.replace(/^\s+|\s+$/g, '');
             }
         }
-        window.onresize = function () {
-            auto_mian();
+        
+        //替换class
+        function replaceClass(elem,cls,newCls){
+            removeClass(elem,cls);
+            addClass(elem,newCls);
         }
-        var _select_ground = document.getElementsByClassName('select_ground')[0],
-            _select_btn = document.getElementsByClassName('btn_submit')[0];
-        _select_ground.addEventListener('click', function () {
-            if (hasClass(this, 'pitch')) {
-                removeClass(this, 'pitch');
-            } else {
-                addClass(this, 'pitch');
+        
+        // 打开面板
+        function open_panel(){
+            if(!is_scroll){
+                set_licenes({msg:'请下拉滚动条并阅读‘《用户协议》’'});
+                return false;
             }
-        });
-        _select_ground.getElementsByTagName('span')[0].addEventListener('click', function () {
-            simulateClick(_select_ground);
-        });
-
-
-        function set_licenes() {
-            if (document.getElementsByClassName('pitch').length === 0) {
-                alert("必需同意用户协议才能进入面板")
-                return
+            if(!is_checked){
+                set_licenes({msg:'请勾选已阅读并同意《用户协议》选项'});
+                return false;
             }
             window.location.href = '/?license=True'
         }
-
-
-        auto_mian();
+        // 设置消息提示
+        function set_licenes(config) {
+            var select_tips = document.getElementsByClassName('select_tips')[0];
+            select_tips.innerText = config.msg;
+            select_tips.style.display = 'block';
+            clearTimeout(out_time);
+            out_time = setTimeout(function(){
+                select_tips.style.display = 'none';
+            },config.time || 3000);
+        }
+        
+        window.onresize = function () {
+            auto_mian();
+        }
+        window.onload = function(){
+            auto_mian();
+        }
     </script>
 </body>
-
 </html>

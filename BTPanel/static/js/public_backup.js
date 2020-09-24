@@ -37,6 +37,14 @@ var bt =
 		var check =  bt.check_exts(fileName,exts);
 		return check;
 	},
+	check_email:function(email){
+		var reg = /\w[-\w.+]*@([A-Za-z0-9][-A-Za-z0-9]+\.)+[A-Za-z]{2,14}/;
+		return reg.test(email);
+	},
+	check_phone:function(phone){
+		var reg = /^1(3|4|5|6|7|8|9)\d{9}$/;
+		return reg.test(phone);
+	},
 	check_zip : function(fileName)
 	{
 		var ext = fileName.split('.');
@@ -267,6 +275,7 @@ var bt =
 			return null;
 		}
 	},
+
 	select_path:function(id){
 		_this = this;
 		_this.set_cookie("SetName", "");
@@ -728,7 +737,12 @@ var bt =
                         _html += '<div class="bt-input-text ace_config_editor_scroll mr20 ' + _name + bs + '" name="' + _name + '" style="width:' + _width + ';height:' + _height + ';line-height:22px">' + (_obj.value ? _obj.value : '') + '</div>';
                         if (_placeholder) _html += '<div class="placeholder c9" style="top: 15px; left: 15px; display: block;">' + _placeholder + '</div>';
                         break;
-                    	break;
+                    case 'switch':
+                        _html += '<div style="display: inline-block;vertical-align: middle;">\
+                            <input type="checkbox" id="' + _name + '" ' + (_obj.value==true?'checked':'') + ' class="btswitch btswitch-ios">\
+                            <label class="btswitch-btn" for="' + _name + '" style="margin-top:5px;"></label>\
+                        </div>';
+                        break;
                     default:
                         var _width = _obj.width ? _obj.width : '330px';
 
@@ -742,6 +756,7 @@ var bt =
                     if (_obj.event.callback) clicks.push({ bind: 'icon_' + _name + bs, callback: _obj.event.callback });
                 }
                 if (_obj.ps) _html += " <span class='c9 mt10'>" + _obj.ps + "</span>";
+                if (_obj.ps_help) _html += "<span class='bt-ico-ask "+_obj.name+"_help' tip='"+_obj.ps_help+"'>?</span>";
             }
             if (item.ps) _html += " <span class='c9 mt10'>" + item.ps + "</span>";
         }
@@ -1073,7 +1088,28 @@ var bt =
 		}else{
 			ace.saveCallback(ace.ACE.getValue());
 		}
-	}
+	},
+    /**
+     * @description 遍历数组和对象
+     * @param {Array|Object} obj 遍历数组|对象
+     * @param {Function} fn 遍历对象或数组
+     * @return 当前对象
+     */
+    each: function (obj, fn) {
+        var key, that = this;
+        if (typeof fn !== 'function') return that;
+        obj = obj || [];
+        if (obj.constructor === Object) {
+            for (key in obj) {
+                if (fn.call(obj[key], key, obj[key])) break;
+            }
+        } else {
+            for (key = 0; key < obj.length; key++) {
+                if (fn.call(obj[key], key, obj[key])) break;
+            }
+        }
+        return that;
+    }
 };
 
 
@@ -1088,11 +1124,11 @@ bt.pub = {
     },
     set_data_by_key: function (tab, key, obj) {		
 		var _span = $(obj);
-		var _input = $("<input class='baktext' value='"+_span.text()+"' type='text' placeholder='"+lan.ftp.ps+"' />");
+		var _input = $("<input class='baktext' type='text' placeholder='"+lan.ftp.ps+"' />").val(_span.text())
 		_span.hide().after(_input);
 		_input.focus();
 		_input.blur(function(){
-			var item = $(this).parents('tr').data('item');	
+			var item = $(this).parents('tr').data('item');
 			var _txt = $(this);
 			var data = {table:tab,id:item.id};
 			data[key] = _txt.val()
@@ -1385,19 +1421,25 @@ bt.index = {
                 	]);
                 	form_group.checkbox();
                 	$('.layui-layer-content').css('overflow','inherit');
-                	$(".fangshi1 .bt_checkbox_group").unbind('click');
-                	$(".fangshi1").on('click','.bt_checkbox_group',function (e) {
-		                if($(this).prev().prop('checked')){
-		                	$(this).prev().removeAttr('checked').parent().siblings().find('input').prop('checked','checked');
-		                	$(this).removeClass('active').parent().siblings().find('.bt_checkbox_group').addClass('active')
-		                }else{
-		                	$(this).prev().attr('checked','checked').parent().siblings().find('input').removeAttr('checked')
-		                	$(this).addClass('active').parent().siblings().find('.bt_checkbox_group').removeClass('active')
-		                }
-		            });
-		            $(".fangshi1").on('click','span',function(){
-		            	$(this).parent().find('.bt_checkbox_group').click();
-		            })
+                	
+                	$('.fangshi1 label').click(function(){
+                	    var input = $(this).find('input'),siblings_label = input.parents('label').siblings()
+                	    input.prop('checked','checked').next().addClass('active');
+                	    siblings_label.find('input').removeAttr('checked').next().removeClass('active');
+
+                	})
+            //     	$(".fangshi1").on('click','.bt_checkbox_group',function (e) {
+		          //      if($(this).prev().prop('checked')){
+		          //      	$(this).prev().removeAttr('checked').parent().siblings().find('input').prop('checked','checked');
+		          //      	$(this).removeClass('active').parent().siblings().find('.bt_checkbox_group').addClass('active')
+		          //      }else{
+		          //      	$(this).prev().attr('checked','checked').parent().siblings().find('input').removeAttr('checked')
+		          //      	$(this).addClass('active').parent().siblings().find('.bt_checkbox_group').removeClass('active')
+		          //      }
+		          //  });
+		          //  $(".fangshi1").on('click','span',function(){
+		          //  	$(this).parent().find('.bt_checkbox_group').click();
+		          //  })
 		            var loadT = '';
 					$('.fangshi1 label').hover(function(){
 						var _title = $(this).attr('data-title'),_that = $(this);
@@ -1444,7 +1486,7 @@ bt.index = {
 						n = "4.4";
 						break;
 					default:
-						n = "4.7"
+						n = "4.9"
 				}
 				$("#" + r + "phpMyAdmin option[value='" + n + "']").attr("selected", "selected").siblings().removeAttr("selected");
 				$("#"+q+"phpMyAdmin").attr("data-info", "phpmyadmin " + n)
@@ -3212,7 +3254,7 @@ bt.firewall = {
 				}
 			}
 			action = "AddAcceptPort";
-		}		
+		}
 		
 		if(ps.length < 1){
 			layer.msg(lan.firewall.ps_err,{icon:2});
@@ -4657,6 +4699,9 @@ bt.soft = {
 				case 'redis':
 					fileName = '/www/server/redis/redis.conf';
 					break;
+				case 'openlitespeed':
+                    fileName = '/usr/local/lsws/conf/httpd_config.conf';
+                    break;
 				default:
 					fileName = '/www/server/php/'+name+'/etc/php.ini';
 					break;
@@ -4800,6 +4845,7 @@ bt.database = {
 		setTimeout(function(){ window.location.href = '/soft'; },3000);
 			return;
 		}
+		$("#toPHPMyAdmin").attr('action',$("#toPHPMyAdmin").attr('public-data'))
 		var murl = $("#toPHPMyAdmin").attr('action');
 		$("#pma_username").val(username);
 		$("#pma_password").val(password);
@@ -4807,16 +4853,34 @@ bt.database = {
 		layer.msg(lan.database.phpmyadmin,{icon:16,shade: [0.3, '#000'],time:1000});
 		setTimeout(function(){
 			$("#toPHPMyAdmin").submit();
+			layer.closeAll();
 		},200);
 	},
+	submit_phpmyadmin: function(name,username,password,pub){
+		if(pub === true){
+			$("#toPHPMyAdmin").attr('action',$("#toPHPMyAdmin").attr('public-data'))
+		}else{
+			$("#toPHPMyAdmin").attr('action','/phpmyadmin/index.php')
+		}
+		var murl = $("#toPHPMyAdmin").attr('action');
+		$("#pma_username").val(username);
+		$("#pma_password").val(password);
+		$("#db").val(name);
+		layer.msg(lan.database.phpmyadmin,{icon:16,shade: [0.3, '#000'],time:1000});
+		setTimeout(function(){
+			$("#toPHPMyAdmin").submit();
+			layer.closeAll();
+		},200);
+	},
+
 	input_sql:function(fileName,dataName){
-		bt.confirm({msg:lan.database.input_confirm,title:lan.database.input_title},function(index){
+		bt.show_confirm(lan.database.input_title,'<span style="color:red;font-size:13px;">【'+dataName +'】'+lan.database.input_confirm+'</span>',function(index){
 			var loading = bt.load(lan.database.input_the);
 			bt.send('InputSql','database/InputSql',{file:fileName,name:dataName},function(rdata){
 				loading.close();
 				bt.msg(rdata);
 			})
-		});		
+		});
 	},
 	backup_data:function(id,dataname,callback){
 		var loadT = bt.load(lan.database.backup_the);

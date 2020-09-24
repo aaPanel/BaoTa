@@ -12,22 +12,22 @@ try:
 except:
     pass
 class system:
-    setupPath = None;
+    setupPath = None
     ssh = None
     shell = None
     
     def __init__(self):
-        self.setupPath = public.GetConfigValue('setup_path');
+        self.setupPath = public.GetConfigValue('setup_path')
     
     def GetConcifInfo(self,get=None):
         #取环境配置信息
         if not 'config' in session:
-            session['config'] = public.M('config').where("id=?",('1',)).field('webserver,sites_path,backup_path,status,mysql_root').find();
+            session['config'] = public.M('config').where("id=?",('1',)).field('webserver,sites_path,backup_path,status,mysql_root').find()
         if not 'email' in session['config']:
-            session['config']['email'] = public.M('users').where("id=?",('1',)).getField('email');
+            session['config']['email'] = public.M('users').where("id=?",('1',)).getField('email')
         data = {}
         data = session['config']
-        data['webserver'] = session['config']['webserver']
+        data['webserver'] = public.get_webserver()
         #PHP版本
         phpVersions = ('52','53','54','55','56','70','71','72','73','74')
         
@@ -50,51 +50,72 @@ class system:
         serviceName = 'nginx'
         tmp['setup'] = False
         phpversion = "54"
-        phpport = '888';
-        pstatus = False;
-        pauth = False;
+        phpport = '888'
+        pstatus = False
+        pauth = False
         if os.path.exists(self.setupPath+'/nginx'): 
             data['webserver'] = 'nginx'
             serviceName = 'nginx'
-            tmp['setup'] = os.path.exists(self.setupPath +'/nginx/sbin/nginx');
-            configFile = self.setupPath + '/nginx/conf/nginx.conf';
+            tmp['setup'] = os.path.exists(self.setupPath +'/nginx/sbin/nginx')
+            configFile = self.setupPath + '/nginx/conf/nginx.conf'
             try:
                 if os.path.exists(configFile):
-                    conf = public.readFile(configFile);
-                    rep = "listen\s+([0-9]+)\s*;";
-                    rtmp = re.search(rep,conf);
+                    conf = public.readFile(configFile)
+                    rep = "listen\s+([0-9]+)\s*;"
+                    rtmp = re.search(rep,conf)
                     if rtmp:
-                        phpport = rtmp.groups()[0];
+                        phpport = rtmp.groups()[0]
                     
-                    if conf.find('AUTH_START') != -1: pauth = True;
-                    if conf.find(self.setupPath + '/stop') == -1: pstatus = True;
-                    configFile = self.setupPath + '/nginx/conf/enable-php.conf';
-                    conf = public.readFile(configFile);
-                    rep = "php-cgi-([0-9]+)\.sock";
-                    rtmp = re.search(rep,conf);
+                    if conf.find('AUTH_START') != -1: pauth = True
+                    if conf.find(self.setupPath + '/stop') == -1: pstatus = True
+                    configFile = self.setupPath + '/nginx/conf/enable-php.conf'
+                    conf = public.readFile(configFile)
+                    rep = "php-cgi-([0-9]+)\.sock"
+                    rtmp = re.search(rep,conf)
                     if rtmp:
-                        phpversion = rtmp.groups()[0];
+                        phpversion = rtmp.groups()[0]
             except:
-                pass;
+                pass
             
         elif os.path.exists(self.setupPath+'/apache'):
             data['webserver'] = 'apache'
             serviceName = 'httpd'
-            tmp['setup'] = os.path.exists(self.setupPath +'/apache/bin/httpd');
-            configFile = self.setupPath + '/apache/conf/extra/httpd-vhosts.conf';
+            tmp['setup'] = os.path.exists(self.setupPath +'/apache/bin/httpd')
+            configFile = self.setupPath + '/apache/conf/extra/httpd-vhosts.conf'
             try:
                 if os.path.exists(configFile):
-                    conf = public.readFile(configFile);
-                    rep = "php-cgi-([0-9]+)\.sock";
-                    rtmp = re.search(rep,conf);
+                    conf = public.readFile(configFile)
+                    rep = "php-cgi-([0-9]+)\.sock"
+                    rtmp = re.search(rep,conf)
                     if rtmp:
-                        phpversion = rtmp.groups()[0];
-                    rep = "Listen\s+([0-9]+)\s*\n";
-                    rtmp = re.search(rep,conf);
+                        phpversion = rtmp.groups()[0]
+                    rep = "Listen\s+([0-9]+)\s*\n"
+                    rtmp = re.search(rep,conf)
                     if rtmp:
-                        phpport = rtmp.groups()[0];
-                    if conf.find('AUTH_START') != -1: pauth = True;
-                    if conf.find(self.setupPath + '/stop') == -1: pstatus = True;
+                        phpport = rtmp.groups()[0]
+                    if conf.find('AUTH_START') != -1: pauth = True
+                    if conf.find(self.setupPath + '/stop') == -1: pstatus = True
+            except:
+                pass
+        elif os.path.exists('/usr/local/lsws/bin/lswsctrl'):
+            data['webserver'] = 'openlitespeed'
+            serviceName = 'openlitespeed'
+            tmp['setup'] = os.path.exists(self.setupPath +'/apache/bin/httpd')
+            configFile = '/usr/local/lsws/bin/lswsctrl'
+            try:
+                if os.path.exists(configFile):
+                    conf = public.readFile('/www/server/panel/vhost/openlitespeed/detail/phpmyadmin.conf')
+                    rep = "/usr/local/lsws/lsphp(\d+)/bin/lsphp"
+                    rtmp = re.search(rep,conf)
+                    if rtmp:
+                        phpversion = rtmp.groups()[0]
+                    conf = public.readFile('/www/server/panel/vhost/openlitespeed/listen/888.conf')
+                    rep = "address\s+\*\:(\d+)"
+                    rtmp = re.search(rep,conf)
+                    if rtmp:
+                        phpport = rtmp.groups()[0]
+                    if conf.find('AUTH_START') != -1: pauth = True
+                    if conf.find(self.setupPath + '/stop') == -1: pstatus = True
             except:
                 pass
                 
@@ -460,10 +481,16 @@ class system:
             
         ntime = time.time()
         networkInfo = {}
+        up = cache.get('up')
+        down = cache.get('down')
+        if not up:
+            up = networkIo[0]
+        if not down:
+            down = networkIo[1] 
         networkInfo['upTotal']   = networkIo[0]
         networkInfo['downTotal'] = networkIo[1]
-        networkInfo['up']        = round(float(networkIo[0] -  cache.get("up")) / 1024 / (ntime - otime),2)
-        networkInfo['down']      = round(float(networkIo[1] -  cache.get("down")) / 1024 / (ntime -  otime),2)
+        networkInfo['up']        = round(float(networkIo[0] -  up) / 1024 / (ntime - otime),2)
+        networkInfo['down']      = round(float(networkIo[1] - down) / 1024 / (ntime -  otime),2)
         networkInfo['downPackets'] =networkIo[3]
         networkInfo['upPackets']   =networkIo[2]
             
@@ -622,7 +649,16 @@ class system:
             get.status = 'True'
             ajax.ajax().setPHPMyAdmin(get)
             return public.returnMsg(True,'SYS_EXEC_SUCCESS')
-        
+            
+        if get.name == 'openlitespeed':
+            if get.type == 'stop':
+                public.ExecShell('rm -f /tmp/lshttpd/*.sock* && /usr/local/lsws/bin/lswsctrl stop')
+            elif get.type == 'start':
+                public.ExecShell('rm -f /tmp/lshttpd/*.sock* && /usr/local/lsws/bin/lswsctrl start')
+            else:
+                public.ExecShell('rm -f /tmp/lshttpd/*.sock* && /usr/local/lsws/bin/lswsctrl restart')
+            return public.returnMsg(True,'SYS_EXEC_SUCCESS')
+
         #检查httpd配置文件
         if get.name == 'apache' or get.name == 'httpd':
             get.name = 'httpd'

@@ -10,10 +10,11 @@
 #------------------------------
 # SSL接口
 #------------------------------
-import public,os,sys,binascii,urllib,json,time,datetime
+import public,os,sys,binascii,urllib,json,time,datetime,re
 from BTPanel import cache,session
 class panelSSL:
     __APIURL = 'http://www.bt.cn/api/Auth'
+    __APIURL2 = 'http://www.bt.cn/api/Cert'
     __UPATH = 'data/userInfo.json'
     __userInfo = None
     __PDATA = None
@@ -56,11 +57,16 @@ class panelSSL:
             rtmp = public.httpPost(self.__APIURL+'/GetToken',pdata)
             result = json.loads(rtmp)
             result['data'] = self.En_Code(result['data'])
-            if result['data']: public.writeFile(self.__UPATH,json.dumps(result['data']))
+            if result['data']: 
+                bind = 'data/bind.pl'
+                if os.path.exists(bind): os.remove(bind)
+                public.writeFile(self.__UPATH,json.dumps(result['data']))
             del(result['data'])
             session['focre_cloud'] = True
             return result
         except Exception as ex:
+            bind = 'data/bind.pl'
+            if os.path.exists(bind): os.remove(bind)
             return public.returnMsg(False,'连接服务器失败!<br>' + str(rtmp))
     
     #删除Token
@@ -85,7 +91,225 @@ class panelSSL:
             result['msg'] = public.getMsg('SSL_NOT_BTUSER')
             result['data'] = userTmp
         return result
+    #获取产品列表
+    def get_product_list(self,get):
+        result = self.request('get_product_list')
+        return result
+
+    #获取商业证书订单列表
+    def get_order_list(self,get):
+        result = self.request('get_order_list')
+        return result
+
+    #获指定商业证书订单
+    def get_order_find(self,get):
+        self.__PDATA['data']['oid'] = get.oid
+        result = self.request('get_order_find')
+        return result
+
+    #下载证书
+    def download_cert(self,get):
+        self.__PDATA['data']['oid'] = get.oid
+        result = self.request('download_cert')
+        return result
+
+    #部署指定商业证书
+    def set_cert(self,get):
+        siteName = get.siteName
+        certInfo = self.get_order_find(get)
+        path = '/www/server/panel/vhost/cert/' + siteName
+        if not os.path.exists(path):
+            public.ExecShell('mkdir -p ' + path)
+        csrpath = path+"/fullchain.pem"
+        keypath = path+"/privkey.pem"
+        pidpath = path+"/certOrderId"
+
+        other_file = path + '/partnerOrderId'
+        if os.path.exists(other_file): os.remove(other_file)
+        other_file = path + '/README'
+        if os.path.exists(other_file): os.remove(other_file)
+
+        public.writeFile(keypath,certInfo['privateKey'])
+        public.writeFile(csrpath,certInfo['certificate']+"\n"+certInfo['caCertificate'])
+        public.writeFile(pidpath,get.oid)
+        import panelSite
+        panelSite.panelSite().SetSSLConf(get)
+        public.serviceReload()
+        return public.returnMsg(True,'SET_SUCCESS')
+        
+    #生成商业证书支付订单
+    def apply_order_pay(self,args):
+        self.__PDATA['data'] = json.loads(args.pdata)
+        result = self.request('apply_cert_order')
+        return result
+
+    #检查商业证书支付状态
+    def get_pay_status(self,args):
+        self.__PDATA['data']['oid'] = args.oid
+        result = self.request('get_pay_status')
+        return result
+
+    #提交商业证书订单到CA
+    def apply_order(self,args):
+        self.__PDATA['data']['oid'] = args.oid
+        result = self.request('apply_cert')
+        if result['status'] == True:
+            self.__PDATA['data'] = {}
+            result['verify_info'] = self.get_verify_info(args)
+        return result
+
+    #获取商业证书验证信息
+    def get_verify_info(self,args):
+        self.__PDATA['data']['oid'] = args.oid
+        verify_info = self.request('get_verify_info')
+        is_file_verify = 'fileName' in verify_info
+        verify_info['paths'] = []
+        verify_info['hosts'] = []
+        for domain in verify_info['domains']:
+            if is_file_verify:
+                siteRunPath = self.get_domain_run_path(domain)
+                if not siteRunPath:
+                    if domain[:4] == 'www.': domain = domain[:4]
+                    verify_info['paths'].append(verify_info['path'].replace('example.com',domain))
+                    continue
+                verify_path = siteRunPath + '/.well-known/pki-validation'
+                if not os.path.exists(verify_path):
+                    os.makedirs(verify_path)
+                verify_file = verify_path + '/' + verify_info['fileName']
+                if os.path.exists(verify_file): continue
+                public.writeFile(verify_file,verify_info['content'])
+            else:
+                if domain[:4] == 'www.': domain = domain[:4]
+                verify_info['hosts'].append(verify_info['host'] + '.' + domain)
+        return verify_info
+
+    #处理验证信息
+    def set_verify_info(self,args):
+        verify_info = self.get_verify_info(args)
+        is_file_verify = 'fileName' in verify_info
+        verify_info['paths'] = []
+        verify_info['hosts'] = []
+        for domain in verify_info['domains']:
+            if domain[:2] == '*.': domain = domain[2:]
+            if is_file_verify:
+                siteRunPath = self.get_domain_run_path(domain)
+                if not siteRunPath:
+                    if domain[:4] == 'www.': domain = domain[4:]
+                    verify_info['paths'].append(verify_info['path'].replace('example.com',domain))
+                    continue
+                verify_path = siteRunPath + '/.well-known/pki-validation'
+                if not os.path.exists(verify_path):
+                    os.makedirs(verify_path)
+                verify_file = verify_path + '/' + verify_info['fileName']
+                if os.path.exists(verify_file): continue
+                public.writeFile(verify_file,verify_info['content'])
+            else:
+                if domain[:4] == 'www.': domain = domain[4:]
+                verify_info['hosts'].append(verify_info['host'] + '.' + domain)
+        return verify_info
+
+
+    #获取指定域名的PATH
+    def get_domain_run_path(self,domain):
+        pid = public.M('domain').where('name=?',(domain,)).getField('pid')
+        if not pid: return False
+        return self.get_site_run_path(pid)
+
+
+    def get_site_run_path(self,pid):
+        '''
+            @name 获取网站运行目录
+            @author hwliang<2020-08-05>
+            @param pid(int) 网站标识
+            @return string
+        '''
+        siteInfo = public.M('sites').where('id=?',(pid,)).find()
+        siteName = siteInfo['name']
+        sitePath = siteInfo['path']
+        webserver_type = public.get_webserver()
+        setupPath = '/www/server'
+        path = None
+        if webserver_type == 'nginx':
+            filename = setupPath + '/panel/vhost/nginx/' + siteName + '.conf'
+            if os.path.exists(filename):
+                conf = public.readFile(filename)
+                rep = r'\s*root\s+(.+);'
+                tmp1 = re.search(rep,conf)
+                if tmp1: path = tmp1.groups()[0]
+
+        elif webserver_type == 'apache':
+            filename = setupPath + '/panel/vhost/apache/' + siteName + '.conf'
+            if os.path.exists(filename):
+                conf = public.readFile(filename)
+                rep = r'\s*DocumentRoot\s*"(.+)"\s*\n'
+                tmp1 = re.search(rep,conf)
+                if tmp1: path = tmp1.groups()[0]
+        else:
+            filename = setupPath + '/panel/vhost/openlitespeed/' + siteName + '.conf'
+            if os.path.exists(filename):
+                conf = public.readFile(filename)
+                rep = r"vhRoot\s*(.*)"
+                path = re.search(rep,conf)
+                if not path:
+                    path = None
+                else:
+                    path = path.groups()[0]
+
+        if not path:
+            path = sitePath
+        return path
+        
+    #获取商业证书验证结果
+    def get_verify_result(self,args):
+        self.__PDATA['data']['oid'] = args.oid
+        verify_info = self.request('get_verify_result')
+        if verify_info['status'] in ['COMPLETE',False]: return verify_info
+        is_file_verify = 'CNAME_CSR_HASH' != verify_info['data']['dcvList'][0]['dcvMethod']
+        verify_info['paths'] = []
+        verify_info['hosts'] = []
+        if verify_info['data']['application']['status'] == 'ongoing':
+            return public.returnMsg(False,'订单出现问题，CA正在人工验证，若24小时内依然出现此提示，请联系宝塔')
+        for dinfo in verify_info['data']['dcvList']:
+            is_https = dinfo['dcvMethod'] == 'HTTPS_CSR_HASH'
+            if is_https:
+                is_https = 's'
+            else:
+                is_https = ''
+            domain = dinfo['domainName']
+            if domain[:2] == '*.': domain = domain[2:]
+            if is_file_verify:
+                siteRunPath = self.get_domain_run_path(domain)
+                if not siteRunPath:
+                    if domain[:4] == 'www.': domain = domain[4:]
+                    verify_info['paths'].append('http'+is_https+'://'+ domain +'/.well-known/pki-validation/' + verify_info['data']['DCVfileName'])
+                    continue
+                verify_path = siteRunPath + '/.well-known/pki-validation'
+                if not os.path.exists(verify_path):
+                    os.makedirs(verify_path)
+                verify_file = verify_path + '/' + verify_info['data']['DCVfileName']
+                if os.path.exists(verify_file): continue
+                public.writeFile(verify_file,verify_info['data']['DCVfileContent'])
+            else:
+                if domain[:4] == 'www.': domain = domain[4:]
+                verify_info['hosts'].append(verify_info['data']['DCVdnsHost'] + '.' + domain)
+
+        return verify_info
+
+    #取消订单
+    def cancel_cert_order(self,args):
+        self.__PDATA['data']['oid'] = args.oid
+        result = self.request('cancel_cert_order')
+        return result
     
+    #发送请求
+    def request(self,dname):
+        self.__PDATA['data'] = json.dumps(self.__PDATA['data'])
+        try:
+            result = public.httpPost(self.__APIURL2 + '/' + dname,self.__PDATA)
+            result = json.loads(result)
+        except:
+            pass
+        return result
     #获取订单列表
     def GetOrderList(self,get):
         if hasattr(get,'siteName'):
@@ -256,6 +480,7 @@ class panelSSL:
                 public.ExecShell('rm -f /etc/letsencrypt/renewal/'+ get.siteName + '.conf')
                 public.ExecShell('rm -f /etc/letsencrypt/renewal/'+ get.siteName + '-00*.conf')
                 public.ExecShell('rm -f ' + path + '/README')
+                public.ExecShell('rm -f ' + path + '/certOrderId')
                 
                 public.writeFile(keypath,result['data']['privateKey'])
                 public.writeFile(csrpath,result['data']['cert']+result['data']['certCa'])
@@ -290,6 +515,7 @@ class panelSSL:
             public.ExecShell('rm -f /etc/letsencrypt/renewal/'+ get.siteName + '.conf')
             public.ExecShell('rm -f /etc/letsencrypt/renewal/'+ get.siteName + '-00*.conf')
             public.ExecShell('rm -f ' + path + '/README')
+            if os.path.exists(path + '/certOrderId'): os.remove(path + '/certOrderId')
             
             public.writeFile(keypath,result['privkey'])
             public.writeFile(csrpath,result['fullchain'])

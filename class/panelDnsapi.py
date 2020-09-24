@@ -47,7 +47,8 @@ import logging
 from hashlib import sha1
 
 os.chdir("/www/server/panel")
-sys.path.append("class/")
+if not 'class/' in sys.path:
+    sys.path.insert(0,'class/')
 import public
 caa_value = '0 issue "letsencrypt.org"'
 

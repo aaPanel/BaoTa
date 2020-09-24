@@ -23,7 +23,8 @@ import time
 import os
 import sys
 os.chdir('/www/server/panel')
-sys.path.append('class/')
+if not 'class/' in sys.path:
+    sys.path.insert(0,'class/')
 import http_requests as requests
 requests.DEFAULT_TYPE = 'curl'
 import public
@@ -312,6 +313,7 @@ class acme_v2:
                     res = self.acme_request(self._apis['newOrder'], payload)
             if not res.status_code in [201]:
                 a_auth = res.json()
+                
                 ret_title = self.get_error(str(a_auth))
                 raise StopIteration(
                         "{0} >>>> {1}".format(
@@ -401,8 +403,13 @@ class acme_v2:
             return True
         acme_path = '{}/.well-known/acme-challenge'.format(self._config['orders'][index]['auth_to'])
         write_log("|-验证目录：{}".format(acme_path))
-        if not os.path.exists(acme_path): return True
-        public.ExecShell("rm -f {}/*".format(acme_path))
+        if os.path.exists(acme_path):
+            public.ExecShell("rm -f {}/*".format(acme_path))
+        
+        acme_path = '/www/server/stop/.well-known/acme-challenge'
+        if os.path.exists(acme_path):
+            public.ExecShell("rm -f {}/*".format(acme_path))
+        
 
     # 写验证文件
     def write_auth_file(self, auth_to, token, acme_keyauthorization):
@@ -414,9 +421,19 @@ class acme_v2:
             wellknown_path = '{}/{}'.format(acme_path, token)
             public.writeFile(wellknown_path, acme_keyauthorization)
             public.set_own(wellknown_path, 'www')
+            
+            acme_path = '/www/server/stop/.well-known/acme-challenge'
+            if not os.path.exists(acme_path):
+                os.makedirs(acme_path)
+                public.set_own(acme_path, 'www')
+            wellknown_path = '{}/{}'.format(acme_path,token)
+            public.writeFile(wellknown_path,acme_keyauthorization)
+            public.set_own(wellknown_path, 'www')
             return True
         except:
-            raise Exception("写入验证文件失败: {}".format(public.get_error_info()))
+            err = public.get_error_info()
+            print(err)
+            raise Exception("写入验证文件失败: {}".format(err))
 
     # 解析域名
     def create_dns_record(self, auth_to, domain, dns_value):
@@ -544,6 +561,8 @@ class acme_v2:
             return "域名不属于此DNS服务商，请确保域名填写正确."
         elif error.find('login token ID is invalid') >= 0:
             return 'DNS服务器连接失败，请检查密钥是否正确.'
+        elif error.find('Error getting validation data') != -1:
+            return '数据验证失败，CA无法从验证连接中获到正确的验证码.'
         elif "too many certificates already issued for exact set of domains" in error:
             return '签发失败,该域名%s超出了每周的重复签发次数限制!' % re.findall("exact set of domains: (.+):", error)
         elif "Error creating new account :: too many registrations for this IP" in error:
@@ -574,6 +593,8 @@ class acme_v2:
             return "验证超时,请检查域名是否正确解析，若已正确解析，可能服务器与Let'sEncrypt连接异常，请稍候再重试!"
         elif error.find('Cannot issue for') != -1:
             return "无法为{}颁发证书，不能直接用域名后缀申请通配符证书!".format(re.findall(r'for\s+"(.+)"',error))
+        elif error.find('too many failed authorizations recently'):
+            return '该帐户1小时内失败的订单次数超过5次，请等待1小时再重试!'
         elif error.find("Error creating new order") != -1:
             return "订单创建失败，请稍候重试!"
         elif error.find("Too Many Requests") != -1:
@@ -1256,16 +1277,32 @@ fullchain.pem       粘贴到证书输入框
         import panelSite
         s = panelSite.panelSite()
         if args.auth_type in ['http','tls']:
-            if not 'siteName' in args:
-                args.siteName = public.M('sites').where('id=?',(args.id,)).getField('name')
-            args.sitename = args.siteName
-            if s.GetRedirectList(args): return public.returnMsg(False, 'SITE_SSL_ERR_301')
-            if s.GetProxyList(args): return public.returnMsg(False,'已开启反向代理的站点无法申请SSL!')
-                        
+            try:
+                if not 'siteName' in args:
+                    args.siteName = public.M('sites').where('id=?',(args.id,)).getField('name')
+                args.sitename = args.siteName
+                data = s.GetRedirectList(args)
+                if type(data) == list: 
+                    for x in data:
+                        if x['type']: return public.returnMsg(False, 'SITE_SSL_ERR_301')
+                data = s.GetProxyList(args)
+                if type(data) == list:                    
+                    for x in data:
+                        if x['open']: return public.returnMsg(False,'已开启反向代理的站点无法申请SSL!')
+
+                #判断是否强制HTTPS
+                if s.IsToHttps(args.siteName):
+                    return public.returnMsg(False, '配置强制HTTPS后无法使用【文件验证】的方式申请证书!')
+            except:
+                return False
         else:          
             if args.auth_to.find('Dns_com') != -1:
                 if not os.path.exists('plugin/dns/dns_main.py'):
                     return public.returnMsg(False, '请先到软件商店安装【云解析】，并完成域名NS绑定.')
+        
+        
+
+            
         return False
 
     # DNS手动验证
@@ -1316,10 +1353,9 @@ fullchain.pem       粘贴到证书输入框
                     if 'cert' in self._config['orders'][i]:
                         self._config['orders'][i]['cert_timeout'] = self._config['orders'][i]['cert']['cert_timeout']
                     if not 'cert_timeout' in self._config['orders'][i]:
-                        continue
+                        self._config['orders'][i]['cert_timeout'] = int(time.time())
                     if self._config['orders'][i]['cert_timeout'] > s_time or self._config['orders'][i]['auth_to'] == 'dns':
                         continue
-                    write_log(self._config['orders'][i]['cert_timeout'])
                     order_index.append(i)
 
             if not order_index:
@@ -1334,26 +1370,31 @@ fullchain.pem       粘贴到证书输入框
                 write_log("|-正在续签第 {} 张，域名: {}..".format(n,
                                                         self._config['orders'][index]['domains']))
                 write_log("|-正在创建订单..")
-                index = self.create_order(
-                    self._config['orders'][index]['domains'],
-                    self._config['orders'][index]['auth_type'],
-                    self._config['orders'][index]['auth_to'],
-                    index
-                )
-                write_log("|-正在获取验证信息..")
-                self.get_auths(index)
-                write_log("|-正在验证域名..")
-                self.auth_domain(index)
-                write_log("|-正在发送CSR..")
-                self.remove_dns_record()
-                self.send_csr(index)
-                write_log("|-正在下载证书..")
-                cert = self.download_cert(index)
-                self._config['orders'][index]['renew_time'] = int(time.time())
-                self.save_config()
-                cert['status'] = True
-                cert['msg'] = '续签成功!'
-                write_log("|-续签成功!")
+                try:
+                    index = self.create_order(
+                        self._config['orders'][index]['domains'],
+                        self._config['orders'][index]['auth_type'],
+                        self._config['orders'][index]['auth_to'],
+                        index
+                    )
+                
+                    write_log("|-正在获取验证信息..")
+                    self.get_auths(index)
+                    write_log("|-正在验证域名..")
+                    self.auth_domain(index)
+                    write_log("|-正在发送CSR..")
+                    self.remove_dns_record()
+                    self.send_csr(index)
+                    write_log("|-正在下载证书..")
+                    cert = self.download_cert(index)
+                    self._config['orders'][index]['renew_time'] = int(time.time())
+                    self.save_config()
+                    cert['status'] = True
+                    cert['msg'] = '续签成功!'
+                    write_log("|-续签成功!")
+                except Exception as e:
+                    write_log("|-" + str(e).split('>>>>')[0])
+                write_log("-" * 70)
             return cert
         except Exception as ex:
             self.remove_dns_record()

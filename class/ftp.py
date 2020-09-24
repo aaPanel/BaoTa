@@ -7,7 +7,9 @@
 # | Author: hwliang <hwl@bt.cn>
 #  + -------------------------------------------------------------------
 import public,db,re,os,firewalls
-from BTPanel import session
+try:
+    from BTPanel import session
+except: pass
 class ftp:
     __runPath = None
     

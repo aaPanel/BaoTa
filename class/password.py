@@ -14,7 +14,8 @@ if sys.version_info[0] == 2:
     reload(sys)
     sys.setdefaultencoding('utf-8')
 os.chdir('/www/server/panel')
-sys.path.append("class/")
+if not 'class/' in sys.path:
+    sys.path.insert(0,'class/')
 import re
 import public,data,database,config
 

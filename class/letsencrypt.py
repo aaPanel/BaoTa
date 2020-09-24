@@ -191,7 +191,8 @@ def get_crt(account_key, csr, acme_dir, log=LOGGER, CA=DEFAULT_CA, disable_check
 if __name__ == "__main__":  # 文件验证调用脚本
 
     os.chdir("/www/server/panel")
-    sys.path.append("class/")
+    if not 'class/' in sys.path:
+        sys.path.insert(0,'class/')
     import public
 
     data = json.loads(sys.argv[1])

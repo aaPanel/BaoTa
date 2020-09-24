@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from time import time
+import os,struct
 try:
     import cPickle as pickle
 except ImportError:  # pragma: no cover
@@ -21,6 +22,8 @@ class SimpleCache(BaseCache):
                             specified on :meth:`~BaseCache.set`. A timeout of
                             0 indicates that the cache never expires.
     """
+    __session_key = 'BT_:'
+    __session_basedir = '/www/server/panel/data/session'
 
     def __init__(self, threshold=500, default_timeout=300):
         BaseCache.__init__(self, default_timeout)
@@ -38,6 +41,7 @@ class SimpleCache(BaseCache):
             for key in toremove:
                 self._cache.pop(key, None)
 
+
     def _normalize_timeout(self, timeout):
         timeout = BaseCache._normalize_timeout(self, timeout)
         if timeout > 0:
@@ -46,17 +50,50 @@ class SimpleCache(BaseCache):
 
     def get(self, key):
         try:
-            expires, value = self._cache[key]
+            
+            expires, value = self._cache[key]   
             if expires == 0 or expires > time():
-                return pickle.loads(value)
+                return pickle.loads(value)                        
+
         except (KeyError, pickle.PickleError):
+            try:
+                if key[:4] == self.__session_key:
+                    filename =  '/'.join((self.__session_basedir,self.md5(key)))                    
+                    if not os.path.exists(filename): return None
+
+                    with open(filename, 'rb') as fp:
+                        _val = fp.read()
+                        fp.close()
+      
+                        expires = struct.unpack('f',_val[:4])[0] 
+                        if expires == 0 or expires > time():
+                            value = _val[4:]
+
+                            self._cache[key] = (expires,value)  
+                            return pickle.loads(value)
+            except :pass
             return None
 
     def set(self, key, value, timeout=None):
+        
         expires = self._normalize_timeout(timeout)
         self._prune()
-        self._cache[key] = (expires, pickle.dumps(value,
-                                                  pickle.HIGHEST_PROTOCOL))
+        
+        _val =  pickle.dumps(value, pickle.HIGHEST_PROTOCOL)
+        self._cache[key] = (expires,_val)        
+        try:
+            if key[:4] == self.__session_key:
+                if len(_val) < 1280: return True
+                from BTPanel import session
+                if 'request_token_head' in session:
+                    if not os.path.exists(self.__session_basedir): os.makedirs(self.__session_basedir,384)
+                    expires = struct.pack('f',expires)
+                    filename =  '/'.join((self.__session_basedir,self.md5(key)))                    
+                    fp = open(filename, 'wb+')
+                    fp.write(expires + _val)
+                    fp.close()
+                    os.chmod(filename,384)
+        except :pass
         return True
 
     def add(self, key, value, timeout=None):
@@ -70,7 +107,13 @@ class SimpleCache(BaseCache):
         return True
 
     def delete(self, key):
-        return self._cache.pop(key, None) is not None
+        result = self._cache.pop(key, None) is not None
+        try:
+            if key[:4] == self.__session_key:
+                filename =  '/'.join((self.__session_basedir,self.md5(key))) 
+                if os.path.exists(filename): os.remove(filename)
+        except : pass
+        return result
 
     def has(self, key):
         try:
@@ -78,3 +121,16 @@ class SimpleCache(BaseCache):
             return expires == 0 or expires > time()
         except KeyError:
             return False
+
+    def md5(self,strings):
+        """
+        生成MD5
+        @strings 要被处理的字符串
+        return string(32)
+        """
+        import hashlib
+        m = hashlib.md5()
+ 
+        m.update(strings.encode('utf-8'))
+        return m.hexdigest()
+

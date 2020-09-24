@@ -9,15 +9,9 @@
                     <a href="javascript:bt.pub.bind_btname();" class="btlink">宝塔账户</a>
                 </span>
                 {% if data['pd'].find('免费版') != -1 %}
-                    {% if not data['724'] %}
-                        <span id="bt-fuli" class="bt-dashi">
-                            <a class="btlink ml5" href="https://www.bt.cn/invite" target="_blank">邀请奖励</a>
-                        </span>
-                    {% else %}
-                        <span id="bt-fuli" class="bt-724">
-                            <a class="btlink ml5" href="https://www.bt.cn/724.html" target="_blank">运维节</a>
-                        </span>
-                    {% endif %}
+                    <span id="bt-fuli" class="bt-dashi">
+                        <a class="btlink ml5" href="https://www.bt.cn/invite" target="_blank">邀请奖励</a>
+                    </span>
                 {% endif %}
                 <span class="ico-system">系统:</span><span id="info" style="margin-left:10px;"> {{data['lan']['S2']}}</span>&#12288;&#12288;{{data['lan']['S3']}} <span id="running">{{data['lan']['S4']}}</span>
             </div>
@@ -85,17 +79,21 @@
             <div class="title c6 f16 plr15">概览</div>
             <div class="system-info-con mtb20">
                 <ul class="clearfix text-center">
-                    <li class="sys-li-box col-xs-3 col-sm-3 col-md-3 col-lg-3">
+                    <li class="sys-li-box col-xs-4 col-sm-4 col-md-4 col-lg-3">
                         <p class="name f15 c9">{{data['lan']['N1']}}</p>
                         <div class="val"><a class="btlink" href="/site">{{data['siteCount']}}</a></div>
                     </li>
-                    <li class="sys-li-box col-xs-3 col-sm-3 col-md-3 col-lg-3">
+                    <li class="sys-li-box col-xs-4 col-sm-4 col-md-4 col-lg-3">
                         <p class="name f15 c9">{{data['lan']['N3']}}</p>
                         <div class="val"><a class="btlink" href="/ftp">{{data['ftpCount']}}</a></div>
                     </li>
-                    <li class="sys-li-box col-xs-3 col-sm-3 col-md-3 col-lg-3">
+                    <li class="sys-li-box col-xs-4 col-sm-4 col-md-4 col-lg-3">
                         <p class="name f15 c9">{{data['lan']['N2']}}</p>
                         <div class="val"><a class="btlink" href="/database">{{data['databaseCount']}}</a></div>
+                    </li>
+                    <li class="sys-li-box ccol-xs-4 col-sm-4 col-md-4 col-lg-3">
+                        <p class="name f15 c9">{{data['lan']['N4']}}</p>
+                        <div class="val"><a class="btlink warning_num" href="javascript:;" onclick="index.reader_warning_view()"><img src="/static/layer/skin/default/loading-2.gif" style="width:20px" /><span class="ml5" style="font-size:17px;vertical-align: middle;color:#aaa;">检测中</span></a></div>
                     </li>
                 </ul>
             </div>
@@ -135,6 +133,9 @@
 
 
 {% block scripts %}
+<script type="text/javascript">
+    var bind_user = "{{data['bind']}}"
+</script>
 <script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/js/echarts.min.js"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/js/index.js?f2={{g['version']}}"></script>

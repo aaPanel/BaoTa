@@ -34,7 +34,7 @@ class panelMysql:
                 import MySQLdb
                 if sys.version_info[0] == 2:
                     reload(MySQLdb)
-            except Exception as ex:
+            except:
                 try:
                     import pymysql
                     pymysql.install_as_MySQLdb()
@@ -65,6 +65,25 @@ class panelMysql:
     def connect_network(self,host,port,username,password):
         self.__DB_NET = True
         try:
+            try:
+                if sys.version_info[0] != 2:
+                    try:
+                        import pymysql
+                    except:
+                        public.ExecShell("pip install pymysql")
+                        import pymysql
+                    pymysql.install_as_MySQLdb()
+                import MySQLdb
+                if sys.version_info[0] == 2:
+                    reload(MySQLdb)
+            except:
+                try:
+                    import pymysql
+                    pymysql.install_as_MySQLdb()
+                    import MySQLdb
+                except Exception as e:
+                    self.__DB_ERR = e
+                    return False
             self.__DB_CONN = MySQLdb.connect(host = host,user = username,passwd = password,port = port,charset="utf8",connect_timeout=10)
             self.__DB_CUR  = self.__DB_CONN.cursor()
         except MySQLdb.Error as e:

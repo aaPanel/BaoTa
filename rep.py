@@ -7,16 +7,10 @@
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 
-import IPy
-import json
-filename = 'E:/ip/鸟云.txt'
-ip_txt = open(filename).read().strip()
-ips = ip_txt.split('\n')
-ip_list = []
-for i in ips:
-    ip = IPy.IP(i.strip())
-    ip_list.append([str(ip[0]),str(ip[-1])])
+import os,sys
+os.chdir('/www/server/panel')
+sys.path.insert(0,'class')
+import public
 
-f = open(filename + '.json','w+')
-f.write(json.dumps(ip_list))
-f.close()
+p = public.get_modules('class/safe_warning')
+print(p['sw_site_spath'].check_run())

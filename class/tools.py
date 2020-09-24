@@ -13,7 +13,8 @@
 import sys,os
 panelPath = '/www/server/panel/';
 os.chdir(panelPath)
-sys.path.append(panelPath + "class/")
+if not 'class/' in sys.path:
+    sys.path.insert(0,'class/')
 import public,time,json
 
 #设置MySQL密码

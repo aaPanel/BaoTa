@@ -9,7 +9,8 @@
 import os,sys,json,time,re
 setup_path = '/www/server/panel'
 os.chdir(setup_path)
-sys.path.append("class/")
+if not 'class/' in sys.path:
+    sys.path.insert(0,'class/')
 import http_requests as requests
 import sewer,public
 from OpenSSL import crypto

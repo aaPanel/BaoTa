@@ -7,17 +7,20 @@
 # +-------------------------------------------------------------------
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
-from gevent import monkey,__version__ as gevent_version
+from gevent import monkey
 monkey.patch_all()
 import os,sys,ssl
+if os.path.exists("/www/server/panel/class/BTPanel"):
+    os.system("rm -rf /www/server/panel/class/BTPanel")
 os.chdir('/www/server/panel')
+if not 'class/' in sys.path:
+    sys.path.insert(0,'class/')
 from BTPanel import app,sys,public
 
 if __name__ == '__main__':
     pid = os.fork()
     if pid: sys.exit(0)
     
-    #os.umask(0)
     os.setsid()
 
     _pid = os.fork()
@@ -34,9 +37,6 @@ if __name__ == '__main__':
     if os.path.exists('data/ipv6.pl'):
         HOST = "0:0:0:0:0:0:0:0"
     f.close()
-
-    from  gevent.pywsgi import WSGIServer
-    from geventwebsocket.handler import WebSocketHandler
     
     is_debug = os.path.exists('data/debug.pl')
     keyfile = 'ssl/privateKey.pem'
@@ -50,11 +50,21 @@ if __name__ == '__main__':
         os.dup2(err_f.fileno(),sys.stderr.fileno())
         err_f.close()
 
+    import threading
+    import jobs
+
+    job = threading.Thread(target=jobs.control_init)
+    job.setDaemon(True)
+    job.start()
+
     if is_debug:
         ssl_context = None
         if is_ssl: ssl_context=(certfile,keyfile)
         app.run(host=HOST,port=PORT,threaded=True,debug=True,ssl_context=ssl_context)
     else:
+        from  gevent.pywsgi import WSGIServer
+        from geventwebsocket.handler import WebSocketHandler
+
         if is_ssl:
             ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             ssl_context.load_cert_chain(certfile=certfile,keyfile=keyfile)
@@ -65,3 +75,4 @@ if __name__ == '__main__':
             http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler)
 
         http_server.serve_forever()
+

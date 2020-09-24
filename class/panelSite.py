@@ -11,7 +11,10 @@
 # 网站管理类
 #------------------------------
 import io,re,public,os,sys,shutil,json,hashlib,socket,time
-from BTPanel import session
+try:
+    from BTPanel import session
+except:
+    pass
 from panelRedirect import  panelRedirect
 import site_dir_auth
 class panelSite(panelRedirect):
@@ -93,10 +96,10 @@ class panelSite(panelRedirect):
         for key in tmp:
             if key == port: return False
         
-        listen = "\nListen "+tmp[0]
+        listen = "\nListen "+ tmp[0] + "\n"
         listen_ipv6 = ''
         #if self.is_ipv6: listen_ipv6 = "\nListen [::]:" + port
-        allConf = allConf.replace(listen,listen + "\nListen " + port + listen_ipv6)
+        allConf = allConf.replace(listen,listen + "Listen " + port + listen_ipv6 + "\n")
         public.writeFile(filename, allConf)
         return True
     
@@ -237,7 +240,140 @@ class panelSite(panelRedirect):
         siteInfo['domains'] = public.M('domains').where('pid=?',(siteInfo['id'],)).field('name,port').select()
         siteInfo['binding'] = public.M('binding').where('pid=?',(siteInfo['id'],)).field('domain,path').select()
 
-     
+    # openlitespeed
+    def openlitespeed_add_site(self,get,init_args=None):
+        # 写主配置httpd_config.conf
+        # 操作默认监听配置
+        if not self.sitePath:
+            return public.returnMsg(False,"Not specify parameter [sitePath]")
+        if init_args:
+            self.siteName = init_args['sitename']
+            self.phpVersion = init_args['phpv']
+            self.sitePath = init_args['rundir']
+        conf_dir = self.setupPath+'/panel/vhost/openlitespeed/'
+        if not os.path.exists(conf_dir):
+            os.makedirs(conf_dir)
+        file = conf_dir+self.siteName+'.conf'
+
+        v_h = """
+#VHOST_TYPE BT_SITENAME START
+virtualhost BT_SITENAME {
+vhRoot BT_RUN_PATH
+configFile /www/server/panel/vhost/openlitespeed/detail/BT_SITENAME.conf
+allowSymbolLink 1
+enableScript 1
+restrained 1
+setUIDMode 0
+}
+#VHOST_TYPE BT_SITENAME END
+"""
+        self.old_name = self.siteName
+        if hasattr(get,"dirName"):
+            self.siteName = self.siteName + "_" + get.dirName
+            # sub_dir = self.sitePath + "/" + get.dirName
+            v_h = v_h.replace("VHOST_TYPE","SUBDIR")
+            v_h = v_h.replace("BT_SITENAME", self.siteName)
+            v_h = v_h.replace("BT_RUN_PATH", self.sitePath)
+            # extp_name = self.siteName + "_" + get.dirName
+        else:
+            self.openlitespeed_domain(get)
+            v_h = v_h.replace("VHOST_TYPE", "VHOST")
+            v_h = v_h.replace("BT_SITENAME", self.siteName)
+            v_h = v_h.replace("BT_RUN_PATH", self.sitePath)
+            # extp_name = self.siteName
+        public.writeFile(file,v_h,"a+")
+        # 写vhost
+        conf = '''docRoot                   $VH_ROOT
+vhDomain                  $VH_NAME
+adminEmails               example@example.com
+enableGzip                1
+enableIpGeo               1
+
+index  {
+  useServer               0
+  indexFiles index.php,index.html
+}
+
+errorlog /www/wwwlogs/$VH_NAME_ols.error_log {
+  useServer               0
+  logLevel                ERROR
+  rollingSize             10M
+}
+
+accesslog /www/wwwlogs/$VH_NAME_ols.access_log {
+  useServer               0
+  logFormat               "%v %h %l %u %t "%r" %>s %b"
+  logHeaders              5
+  rollingSize             10M
+  keepDays                10  compressArchive         1
+}
+
+scripthandler  {
+  add                     lsapi:BT_EXTP_NAME php
+}
+
+extprocessor BTSITENAME {
+  type                    lsapi
+  address                 UDS://tmp/lshttpd/BT_EXTP_NAME.sock
+  maxConns                10
+  env                     LSAPI_CHILDREN=10
+  initTimeout             600
+  retryTimeout            0
+  persistConn             1
+  pcKeepAliveTimeout      1
+  respBuffer              0
+  autoStart               1
+  path                    /usr/local/lsws/lsphpBTPHPV/bin/lsphp
+  extUser                 www
+  extGroup                www
+  memSoftLimit            2047M
+  memHardLimit            2047M
+  procSoftLimit           400
+  procHardLimit           500
+}
+
+phpIniOverride  {
+php_admin_value open_basedir "/tmp/:BT_RUN_PATH"
+}
+
+expires {
+    enableExpires           1
+    expiresByType           image/*=A43200,text/css=A43200,application/x-javascript=A43200,application/javascript=A43200,font/*=A43200,application/x-font-ttf=A43200
+}
+
+rewrite  {
+  enable                  1
+  autoLoadHtaccess        1
+  include /www/server/panel/vhost/openlitespeed/proxy/BTSITENAME/urlrewrite/*.conf
+  include /www/server/panel/vhost/apache/redirect/BTSITENAME/*.conf
+  include /www/server/panel/vhost/openlitespeed/redirect/BTSITENAME/*.conf
+}
+include /www/server/panel/vhost/openlitespeed/proxy/BTSITENAME/*.conf
+'''
+        open_base_path = self.sitePath
+        if self.sitePath[-1] != '/':
+            open_base_path = self.sitePath + '/'
+        conf = conf.replace('BT_RUN_PATH',open_base_path)
+        conf = conf.replace('BT_EXTP_NAME',self.siteName)
+        conf = conf.replace('BTPHPV',self.phpVersion)
+        conf = conf.replace('BTSITENAME',self.siteName)
+
+        # 写配置文件
+        conf_dir = self.setupPath + '/panel/vhost/openlitespeed/detail/'
+        if not os.path.exists(conf_dir):
+            os.makedirs(conf_dir)
+        file = conf_dir + self.siteName + '.conf'
+        # if hasattr(get,"dirName"):
+        #     file = conf_dir + self.siteName +'_'+get.dirName+ '.conf'
+        public.writeFile(file, conf)
+
+        # 生成伪静态文件
+        # urlrewritePath = self.setupPath + '/panel/vhost/rewrite'
+        # urlrewriteFile = urlrewritePath + '/' + self.old_name + '.conf'
+        # if not os.path.exists(urlrewritePath): os.makedirs(urlrewritePath)
+        # open(urlrewriteFile, 'w+').close()
+        return True
+
     #添加站点
     def AddSite(self,get):
         self.check_default()
@@ -277,7 +413,7 @@ class panelSite(panelRedirect):
         #表单验证
         if not files.files().CheckDir(self.sitePath) or not self.__check_site_path(self.sitePath): return public.returnMsg(False,'PATH_ERROR')
         if len(self.phpVersion) < 2: return public.returnMsg(False,'SITE_ADD_ERR_PHPEMPTY')
-        reg = "^([\w\-\*]{1,100}\.){1,4}([\w\-]{1,24}|[\w\-]{1,24}\.[\w\-]{1,24})$"
+        reg = r"^([\w\-\*]{1,100}\.){1,4}([\w\-]{1,24}|[\w\-]{1,24}\.[\w\-]{1,24})$"
         if not re.match(reg, self.siteName): return public.returnMsg(False,'SITE_ADD_ERR_DOMAIN')
         if self.siteName.find('*') != -1: return public.returnMsg(False,'SITE_ADD_ERR_DOMAIN_TOW')
         
@@ -310,7 +446,7 @@ class panelSite(panelRedirect):
         self.DelUserInI(self.sitePath)
         userIni = self.sitePath+'/.user.ini'
         if not os.path.exists(userIni):
-            public.writeFile(userIni, 'open_basedir='+self.sitePath+'/:/tmp/:/proc/')
+            public.writeFile(userIni, 'open_basedir='+self.sitePath+'/:/tmp/')
             public.ExecShell('chmod 644 ' + userIni)
             public.ExecShell('chown root:root ' + userIni)
             public.ExecShell('chattr +i '+userIni)
@@ -332,7 +468,8 @@ class panelSite(panelRedirect):
         #写入配置
         result = self.nginxAdd()
         result = self.apacheAdd()
-        
+        result = self.openlitespeed_add_site(get)
+
         #检查处理结果
         if not result: return public.returnMsg(False,'SITE_ADD_ERR_WRITE')
         
@@ -461,7 +598,23 @@ class panelSite(panelRedirect):
         
         confPath = self.setupPath+'/panel/vhost/apache/' + siteName + '.conf'
         if os.path.exists(confPath): os.remove(confPath)
-        
+
+        # 删除openlitespeed配置
+        vhost_file = "/www/server/panel/vhost/openlitespeed/{}.conf".format(siteName)
+        if os.path.exists(vhost_file):
+            public.ExecShell('rm -f {}*'.format(vhost_file))
+        vhost_detail_file = "/www/server/panel/vhost/openlitespeed/detail/{}.conf".format(siteName)
+        if os.path.exists(vhost_detail_file):
+            public.ExecShell('rm -f {}*'.format(vhost_detail_file))
+        vhost_ssl_file = "/www/server/panel/vhost/openlitespeed/detail/ssl/{}.conf".format(siteName)
+        if os.path.exists(vhost_ssl_file):
+            public.ExecShell('rm -f {}*'.format(vhost_ssl_file))
+        vhost_sub_file = "/www/server/panel/vhost/openlitespeed/detail/{}_sub.conf".format(siteName)
+        if os.path.exists(vhost_sub_file):
+            public.ExecShell('rm -f {}*'.format(vhost_sub_file))
+        # 删除openlitespeed监听配置
+        self._del_ols_listen_conf(siteName)
+
         #删除伪静态文件
         filename = confPath+'/rewrite/'+siteName+'.conf'
         if os.path.exists(filename): 
@@ -483,7 +636,7 @@ class panelSite(panelRedirect):
         public.ExecShell("rm -f " + public.GetConfigValue('logs_path') + '/' + siteName + "-*")
         
         #删除备份
-        public.ExecShell("rm -f "+session['config']['backup_path']+'/site/'+siteName+'_*')
+        #public.ExecShell("rm -f "+session['config']['backup_path']+'/site/'+siteName+'_*')
         
         #删除根目录
         if 'path' in get:
@@ -522,7 +675,26 @@ class panelSite(panelRedirect):
                     ftp.ftp().DeleteUser(get)
             
         return public.returnMsg(True,'SITE_DEL_SUCCESS')
-    
+
+    def _del_ols_listen_conf(self,sitename):
+        conf_dir = '/www/server/panel/vhost/openlitespeed/listen/'
+        if not os.path.exists(conf_dir):
+            return False
+        for i in os.listdir(conf_dir):
+            file_name = conf_dir + i
+            if os.path.isdir(file_name):
+                continue
+            conf = public.readFile(file_name)
+            if not conf:
+                continue
+            map_rep = 'map\s+{}.*'.format(sitename)
+            conf = re.sub(map_rep,'',conf)
+            if "map" not in conf:
+                public.ExecShell('rm -f {}*'.format(file_name))
+                continue
+            public.writeFile(file_name,conf)
+
+
     #域名编码转换
     def ToPunycode(self,domain):
         import re
@@ -596,6 +768,7 @@ class panelSite(panelRedirect):
             self.NginxDomain(get)
             try:
                 self.ApacheDomain(get)
+                self.openlitespeed_domain(get)
             except:
                 pass
                         
@@ -611,7 +784,80 @@ class panelSite(panelRedirect):
             sql.table('domain').add('pid,name,port,addtime',(get.id,get.domain,get.port,public.getDate()))
 
         return public.returnMsg(True,'SITE_ADD_DOMAIN')
-    
+
+    # 添加openlitespeed 80端口监听
+    def openlitespeed_set_80_domain(self,get,conf):
+        rep = 'map\s+{}.*'.format(get.webname)
+        domains = get.webname.strip().split(',')
+        if conf:
+            map_tmp = re.search(rep, conf)
+            if map_tmp:
+                map_tmp = map_tmp.group()
+                domains = map_tmp.strip().split(',')
+                if not public.inArray(domains, get.domain):
+                    new_map = '{},{}'.format(conf, get.domain)
+                    conf = re.sub(rep, new_map, conf)
+            else:
+                map_tmp = '\tmap\t{d} {d}\n'.format(d=domains[0])
+                listen_rep = "secure\s*0"
+                conf = re.sub(listen_rep,"secure 0\n"+map_tmp,conf)
+            return conf
+
+        else:
+            rep_default = 'listener\s+Default\{(\n|[\s\w\*\:\#\.\,])*'
+            tmp = re.search(rep_default, conf)
+            # domains = get.webname.strip().split(',')
+            if tmp:
+                tmp = tmp.group()
+                new_map = '\tmap\t{d} {d}\n'.format(d=domains[0])
+                tmp += new_map
+                conf = re.sub(rep_default, tmp, conf)
+                print(conf)
+        return conf
+
+    # openlitespeed写域名配置
+    def openlitespeed_domain(self, get):
+        listen_dir = '/www/server/panel/vhost/openlitespeed/listen/'
+        if not os.path.exists(listen_dir):
+            os.makedirs(listen_dir)
+        listen_file = listen_dir + get.port + ".conf"
+        listen_conf = public.readFile(listen_file)
+        try:
+            get.webname = json.loads(get.webname)
+            get.domain = get.webname['domain']
+            get.webname = get.webname['domain'] + "," + ",".join(get.webname["domainlist"])
+            if get.webname[-1] == ',':
+                get.webname = get.webname[:-1]
+        except:
+            pass
+
+        if listen_conf:
+            # 添加域名
+            rep = 'map\s+{}.*'.format(get.webname)
+            map_tmp = re.search(rep, listen_conf)
+            if map_tmp:
+                map_tmp = map_tmp.group()
+                domains = map_tmp.strip().split(',')
+                if not public.inArray(domains, get.domain):
+                    new_map = '{},{}'.format(map_tmp, get.domain)
+                    listen_conf = re.sub(rep, new_map, listen_conf)
+            else:
+                domains = get.webname.strip().split(',')
+                map_tmp = '\tmap\t{d} {d}\n'.format(d=domains[0])
+                listen_rep = "secure\s*0"
+                listen_conf = re.sub(listen_rep,"secure 0\n"+map_tmp,listen_conf)
+        else:
+            listen_conf = """
+listener Default%s{
+    address *:%s
+    secure 0
+    map %s %s
+}
+""" % (get.port,get.port,get.webname,get.domain)
+        # 保存配置文件
+        public.writeFile(listen_file, listen_conf)
+        return True
+
     #Nginx写域名配置
     def NginxDomain(self,get):
         file = self.setupPath + '/panel/vhost/nginx/'+get.webname+'.conf'
@@ -789,12 +1035,40 @@ class panelSite(panelRedirect):
                 public.writeFile(file,conf)
             except:
                 pass
-        
+
+        # openlitespeed
+        self._del_ols_domain(get)
+
         sql.table('domain').where("id=?",(find['id'],)).delete()
         public.WriteLog('TYPE_SITE', 'DOMAIN_DEL_SUCCESS',(get.webname,get.domain))
         public.serviceReload()
         return public.returnMsg(True,'DEL_SUCCESS')
-    
+
+    #openlitespeed删除域名
+    def _del_ols_domain(self,get):
+        conf_dir = '/www/server/panel/vhost/openlitespeed/listen/'
+        if not os.path.exists(conf_dir):
+            return False
+        for i in os.listdir(conf_dir):
+            file_name = conf_dir + i
+            if os.path.isdir(file_name):
+                continue
+            conf = public.readFile(file_name)
+            map_rep = 'map\s+{}\s+(.*)'.format(get.webname)
+            domains = re.search(map_rep,conf)
+            if domains:
+                domains = domains.group(1).split(',')
+                if get.domain in domains:
+                    domains.remove(get.domain)
+                if len(domains) == 0:
+                    os.remove(file_name)
+                    continue
+                else:
+                    domains = ",".join(domains)
+                    map_c = "map\t{} ".format(get.webname) + domains
+                    conf = re.sub(map_rep,map_c,conf)
+            public.writeFile(file_name,conf)
+
     #检查域名是否解析
     def CheckDomainPing(self,get):
         try:
@@ -842,6 +1116,7 @@ class panelSite(panelRedirect):
         public.serviceReload()
 
         if os.path.exists(path + '/partnerOrderId'): os.remove(path + '/partnerOrderId')
+        if os.path.exists(path + '/certOrderId'): os.remove(path + '/certOrderId')
         p_file = '/etc/letsencrypt/live/' + get.siteName
         if os.path.exists(p_file): shutil.rmtree(p_file)
         public.WriteLog('TYPE_SITE', 'SITE_SSL_SAVE_SUCCESS')
@@ -940,6 +1215,8 @@ class panelSite(panelRedirect):
         result = lets.apple_lest_cert(get)
         if result['status'] and not 'code' in result:       
             get.onkey = 1
+            path = '/www/server/panel/cert/' + get.siteName
+            if os.path.exists(path + '/certOrderId'): os.remove(path + '/certOrderId')
             result = self.SetSSLConf(get)
         return result
 
@@ -1068,7 +1345,70 @@ class panelSite(panelRedirect):
         if proxy:
             return proxy.group()
         return ""
-  
+
+    def _get_site_domains(self,sitename):
+        site_id = public.M('sites').where('name=?', (sitename,)).field('id').find()
+        domains = public.M('domain').where('pid=?',(site_id['id'],)).field('name').select()
+        domains = [d['name'] for d in domains]
+        return domains
+
+    # 设置OLS ssl
+    def set_ols_ssl(self,get,siteName):
+        listen_conf = self.setupPath + '/panel/vhost/openlitespeed/listen/443.conf'
+        conf = public.readFile(listen_conf)
+        ssl_conf = """
+        vhssl {
+          keyFile                 /www/server/panel/vhost/cert/BTDOMAIN/privkey.pem
+          certFile                /www/server/panel/vhost/cert/BTDOMAIN/fullchain.pem
+          certChain               1
+          sslProtocol             24
+          ciphers                 EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH:ECDHE-RSA-AES128-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA128:DHE-RSA-AES128-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA128:ECDHE-RSA-AES128-SHA384:ECDHE-RSA-AES128-SHA128:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES128-SHA:DHE-RSA-AES128-SHA128:DHE-RSA-AES128-SHA128:DHE-RSA-AES128-SHA:DHE-RSA-AES128-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA384:AES128-GCM-SHA128:AES128-SHA128:AES128-SHA128:AES128-SHA:AES128-SHA:DES-CBC3-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4
+          enableECDHE             1
+          renegProtection         1
+          sslSessionCache         1
+          enableSpdy              15
+          enableStapling           1
+          ocspRespMaxAge           86400
+        }
+        """
+        ssl_dir = self.setupPath + '/panel/vhost/openlitespeed/detail/ssl/'
+        if not os.path.exists(ssl_dir):
+            os.makedirs(ssl_dir)
+        ssl_file = ssl_dir + '{}.conf'.format(siteName)
+        if not os.path.exists(ssl_file):
+            ssl_conf = ssl_conf.replace('BTDOMAIN', siteName)
+            public.writeFile(ssl_file, ssl_conf, "a+")
+        include_ssl = '\ninclude {}'.format(ssl_file)
+        detail_file = self.setupPath + '/panel/vhost/openlitespeed/detail/{}.conf'.format(siteName)
+        public.writeFile(detail_file, include_ssl, 'a+')
+        if not conf:
+            conf = """
+listener SSL443 {
+  map                     BTSITENAME BTDOMAIN
+  address                 *:443
+  secure                  1
+  keyFile                 /www/server/panel/vhost/cert/BTSITENAME/privkey.pem
+  certFile                /www/server/panel/vhost/cert/BTSITENAME/fullchain.pem
+  certChain               1
+  sslProtocol             24
+  ciphers                 EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH:ECDHE-RSA-AES128-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA128:DHE-RSA-AES128-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA128:ECDHE-RSA-AES128-SHA384:ECDHE-RSA-AES128-SHA128:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES128-SHA:DHE-RSA-AES128-SHA128:DHE-RSA-AES128-SHA128:DHE-RSA-AES128-SHA:DHE-RSA-AES128-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA384:AES128-GCM-SHA128:AES128-SHA128:AES128-SHA128:AES128-SHA:AES128-SHA:DES-CBC3-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4
+  enableECDHE             1
+  renegProtection         1
+  sslSessionCache         1
+  enableSpdy              15
+  enableStapling           1
+  ocspRespMaxAge           86400
+}
+"""
+
+        else:
+            rep = 'listener\s*SSL443\s*{'
+            map = '\n  map {s} {s}'.format(s=siteName)
+            conf = re.sub(rep, 'listener SSL443 {' + map, conf)
+        domain = ",".join(self._get_site_domains(siteName))
+        conf = conf.replace('BTSITENAME', siteName).replace('BTDOMAIN', domain)
+        public.writeFile(listen_conf, conf)
+
     # 添加SSL配置
     def SetSSLConf(self, get):
         siteName = get.siteName
@@ -1090,10 +1430,11 @@ class panelSite(panelRedirect):
     ssl_certificate    /www/server/panel/vhost/cert/%s/fullchain.pem;
     ssl_certificate_key    /www/server/panel/vhost/cert/%s/privkey.pem;
     ssl_protocols TLSv1.1 TLSv1.2%s;
-    ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:HIGH:!aNULL:!MD5:!RC4:!DHE;
+    ssl_ciphers EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:EECDH+3DES:RSA+3DES:!MD5;
     ssl_prefer_server_ciphers on;
     ssl_session_cache shared:SSL:10m;
     ssl_session_timeout 10m;
+    add_header Strict-Transport-Security "max-age=31536000";
     error_page 497  https://$host$request_uri;
 """ % (get.first_domain, get.first_domain,self.get_tls13())
                 if (conf.find('ssl_certificate') != -1):
@@ -1167,7 +1508,7 @@ class panelSite(panelRedirect):
     SSLEngine On
     SSLCertificateFile /www/server/panel/vhost/cert/%s/fullchain.pem
     SSLCertificateKeyFile /www/server/panel/vhost/cert/%s/privkey.pem
-    SSLCipherSuite EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH
+    SSLCipherSuite EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:EECDH+3DES:RSA+3DES:!MD5
     SSLProtocol All -SSLv2 -SSLv3 -TLSv1
     SSLHonorCipherOrder On
     %s
@@ -1193,6 +1534,8 @@ class panelSite(panelRedirect):
                 shutil.copyfile(file, self.apache_conf_bak)
                 public.writeFile(file, conf)
 
+        # OLS
+        self.set_ols_ssl(get,siteName)
         isError = public.checkWebConfig()
         if (isError != True):
             if os.path.exists(self.nginx_conf_bak): shutil.copyfile(self.nginx_conf_bak, ng_file)
@@ -1254,6 +1597,20 @@ class panelSite(panelRedirect):
     #HTTP_TO_HTTPS_END'''
             conf = re.sub('combined',httpTohttos,conf,1)
             public.writeFile(file,conf)
+        # OLS
+        conf_dir = '{}/panel/vhost/openlitespeed/redirect/{}/'.format(self.setupPath,siteName)
+        if not os.path.exists(conf_dir):
+            os.makedirs(conf_dir)
+        file = conf_dir+'force_https.conf'
+        ols_force_https = '''
+#HTTP_TO_HTTPS_START
+<IfModule mod_rewrite.c>
+    RewriteEngine on
+    RewriteCond %{SERVER_PORT} !^443$
+    RewriteRule (.*) https://%{SERVER_NAME}$1 [L,R=301]
+</IfModule>
+#HTTP_TO_HTTPS_END'''
+        public.writeFile(file,ols_force_https)
         public.serviceReload()
         return public.returnMsg(True,'SET_SUCCESS')
     
@@ -1275,6 +1632,9 @@ class panelSite(panelRedirect):
             rep = "\n\s*#HTTP_TO_HTTPS_START(.|\n){1,300}#HTTP_TO_HTTPS_END"
             conf = re.sub(rep,'',conf)
             public.writeFile(file,conf)
+        # OLS
+        file = '{}/panel/vhost/openlitespeed/redirect/{}/force_https.conf'.format(self.setupPath,siteName)
+        public.ExecShell('rm -f {}*'.format(file))
         public.serviceReload()
         return public.returnMsg(True,'SET_SUCCESS')
     
@@ -1343,6 +1703,20 @@ class panelSite(panelRedirect):
             conf = conf.replace(rep, '')
             public.writeFile(file, conf)
 
+        # OLS
+        ssl_file = self.setupPath + '/panel/vhost/openlitespeed/detail/ssl/{}.conf'.format(siteName)
+        detail_file = self.setupPath + '/panel/vhost/openlitespeed/detail/' + siteName + '.conf'
+        force_https = self.setupPath + '/panel/vhost/openlitespeed/redirect/' + siteName
+        string = 'rm -f {}/force_https.conf*'.format(force_https)
+        public.writeFile("/tmp/2",string)
+        public.ExecShell(string)
+        detail_conf = public.readFile(detail_file)
+        if detail_conf:
+            detail_conf = detail_conf.replace('\ninclude '+ssl_file,'')
+            public.writeFile(detail_file,detail_conf)
+        public.ExecShell('rm -f {}*'.format(ssl_file))
+
+        self._del_ols_443_domain(siteName)
         partnerOrderId = '/www/server/panel/vhost/cert/' + siteName + '/partnerOrderId'
         if os.path.exists(partnerOrderId): public.ExecShell('rm -f ' + partnerOrderId)
         p_file = '/etc/letsencrypt/live/' + siteName + '/partnerOrderId'
@@ -1351,6 +1725,17 @@ class panelSite(panelRedirect):
         public.WriteLog('TYPE_SITE', 'SITE_SSL_CLOSE_SUCCESS', (siteName,))
         public.serviceReload()
         return public.returnMsg(True, 'SITE_SSL_CLOSE_SUCCESS')
+
+    def _del_ols_443_domain(self,sitename):
+        file = "/www/server/panel/vhost/openlitespeed/listen/443.conf"
+        conf = public.readFile(file)
+        if conf:
+            rep = '\n\s*map\s*{}'.format(sitename)
+            conf = re.sub(rep,'',conf)
+            if not "map " in conf:
+                public.ExecShell('rm -f {}*'.format(file))
+                return
+            public.writeFile(file,conf)
 
     # 取SSL状态
     def GetSSL(self, get):
@@ -1361,15 +1746,24 @@ class panelSite(panelRedirect):
         type = 0
         if os.path.exists(path + '/README'):  type = 1
         if os.path.exists(path + '/partnerOrderId'):  type = 2
+        if os.path.exists(path + '/certOrderId'):  type = 3
         csrpath = path + "/fullchain.pem"  # 生成证书路径
         keypath = path + "/privkey.pem"  # 密钥文件路径
         key = public.readFile(keypath)
         csr = public.readFile(csrpath)
         file = self.setupPath + '/panel/vhost/' + public.get_webserver() + '/' + siteName + '.conf'
+        if public.get_webserver() == "openlitespeed":
+            file = self.setupPath + '/panel/vhost/' + public.get_webserver() + '/detail/' + siteName + '.conf'
         conf = public.readFile(file)
         if not conf: return public.returnMsg(False,'指定网站配置文件不存在!')
-        keyText = 'SSLCertificateFile'
-        if public.get_webserver() == 'nginx': keyText = 'ssl_certificate'
+
+        if public.get_webserver() == 'nginx':
+            keyText = 'ssl_certificate'
+        elif public.get_webserver() == 'apache':
+            keyText = 'SSLCertificateFile'
+        else:
+            keyText = 'openlitespeed/detail/ssl'
+
         status = True
         if (conf.find(keyText) == -1):
             status = False
@@ -1405,11 +1799,14 @@ class panelSite(panelRedirect):
                     if siteName in crontab_config:
                         if 'dnsapi' in crontab_config[siteName]:
                             auth_type = 'dns'
-
-
-        return {'status': status, 'domain': domains, 'key': key, 'csr': csr, 'type': type, 'httpTohttps': toHttps,'cert_data':cert_data,'email':email,"index":index,'auth_type':auth_type}
+        
+            if os.path.exists(path + '/certOrderId'):  type = 3
+        oid = -1
+        if type == 3:
+            oid = int(public.readFile(path + '/certOrderId'))
+        return {'status': status,'oid':oid, 'domain': domains, 'key': key, 'csr': csr, 'type': type, 'httpTohttps': toHttps,'cert_data':cert_data,'email':email,"index":index,'auth_type':auth_type}
     
-    
+
     #启动站点
     def SiteStart(self,get):
         id = get.id
@@ -1430,7 +1827,16 @@ class panelSite(panelRedirect):
             conf = conf.replace(Path, sitePath)
             conf = conf.replace("#IncludeOptional", "IncludeOptional")
             public.writeFile(file,conf)
-        
+
+        # OLS
+        file = self.setupPath + '/panel/vhost/openlitespeed/' + get.name + '.conf'
+        conf = public.readFile(file)
+        if conf:
+            rep = 'vhRoot\s*{}'.format(Path)
+            new_content = 'vhRoot {}'.format(sitePath)
+            conf = re.sub(rep, new_content,conf)
+            public.writeFile(file, conf)
+
         public.M('sites').where("id=?",(id,)).setField('status','1')
         public.serviceReload()
         public.WriteLog('TYPE_SITE','SITE_START_SUCCESS',(get.name,))
@@ -1469,6 +1875,15 @@ class panelSite(panelRedirect):
             conf = conf.replace(sitePath,path)
             conf = conf.replace("IncludeOptional", "#IncludeOptional")
             public.writeFile(file,conf)
+        # OLS
+        file = self.setupPath + '/panel/vhost/openlitespeed/' + get.name + '.conf'
+        conf = public.readFile(file)
+        if conf:
+            rep = 'vhRoot\s*{}'.format(sitePath)
+            new_content = 'vhRoot {}'.format(path)
+            conf = re.sub(rep, new_content,conf)
+            public.writeFile(file, conf)
+
         public.M('sites').where("id=?",(id,)).setField('status','0')
         public.serviceReload()
         public.WriteLog('TYPE_SITE','SITE_STOP_SUCCESS',(get.name,))
@@ -1609,9 +2024,23 @@ class panelSite(panelRedirect):
                 tmp = re.search(rep, conf)
                 src = ''
                 if tmp : src = tmp.groups()[0]
-            else:
+            elif public.get_webserver() == 'apache':
                 conf = public.readFile(self.setupPath + '/panel/vhost/apache/' + siteName + '.conf')
                 if conf.find('301-START') == -1:
+                    result['domain'] = domains[:-1]
+                    result['src'] = ""
+                    result['status'] = False
+                    result['url'] = "http://"
+                    return result
+                rep = "RewriteRule\s+.+\s+((http|https)\://.+)\s+\["
+                arr = re.search(rep, conf).groups()[0]
+                rep = "\^((\w+\.)+\w+)\s+\[NC"
+                tmp = re.search(rep, conf)
+                src = ''
+                if tmp : src = tmp.groups()[0]
+            else:
+                conf = public.readFile(self.setupPath + '/panel/vhost/openlitespeed/redirect/{s}/{s}.conf'.format(s=siteName))
+                if not conf:
                     result['domain'] = domains[:-1]
                     result['src'] = ""
                     result['status'] = False
@@ -1682,7 +2111,20 @@ class panelSite(panelRedirect):
             
             public.writeFile(filename,mconf)
         
-        
+        # OLS
+        conf_dir = self.setupPath + '/panel/vhost/openlitespeed/redirect/{}/'.format(siteName)
+        if not os.path.exists(conf_dir):
+            os.makedirs(conf_dir)
+        file = conf_dir+ siteName + '.conf'
+        if type == '1':
+            if (srcDomain == 'all'):
+                conf301 = "#301-START\nRewriteEngine on\nRewriteRule ^(.*)$ " + toDomain + "$1 [L,R=301]#301-END\n"
+            else:
+                conf301 = "#301-START\nRewriteEngine on\nRewriteCond %{HTTP_HOST} ^" + srcDomain + " [NC]\nRewriteRule ^(.*) " + toDomain + "$1 [L,R=301]\n#301-END\n"
+            public.writeFile(file,conf301)
+        else:
+            public.ExecShell('rm -f {}*'.format(file))
+
         isError = public.checkWebConfig()
         if(isError != True):
             return public.returnMsg(False,'ERROR: <br><a style="color:red;">'+isError.replace("\n",'<br>')+'</a>')
@@ -1730,6 +2172,7 @@ class panelSite(panelRedirect):
         tmp = get.domain.split(':')
         domain = tmp[0].lower()
         port = '80'
+        version = ''
         if len(tmp) > 1: port = tmp[1]
         if not hasattr(get,'dirName'): public.returnMsg(False, 'DIR_EMPTY')
         dirName = get.dirName
@@ -1853,7 +2296,20 @@ server
                 public.writeFile(filename,conf)
             except:
                 pass
-        
+        get.webname = siteInfo['name']
+        get.port = port
+        self.phpVersion = version
+        self.siteName = siteInfo['name']
+        self.sitePath = webdir
+        listen_file = self.setupPath+"/panel/vhost/openlitespeed/listen/80.conf"
+        listen_conf = public.readFile(listen_file)
+        if listen_conf:
+            rep = 'secure\s*0'
+            map = '\tmap {}_{} {}'.format(siteInfo['name'],dirName,domain)
+            listen_conf = re.sub(rep,'secure 0\n'+map,listen_conf)
+            public.writeFile(listen_file,listen_conf)
+        self.openlitespeed_add_site(get)
+
         #检查配置是否有误
         isError = public.checkWebConfig()
         if isError != True:
@@ -1887,7 +2343,30 @@ server
             rep = "\s*.+BINDING-" + binding['domain'] + "-START(.|\n)+BINDING-" + binding['domain'] + "-END"
             conf = re.sub(rep, '', conf)
             public.writeFile(filename,conf)
-        
+
+        # openlitespeed
+        filename = self.setupPath + '/panel/vhost/openlitespeed/' + siteName + '.conf'
+        conf = public.readFile(filename)
+        rep = "#SUBDIR\s*{s}_{d}\s*START(\n|.)+#SUBDIR\s*{s}_{d}\s*END".format(s=siteName,d=binding['path'])
+        if conf:
+            conf = re.sub(rep, '', conf)
+            public.writeFile(filename, conf)
+        # 删除域名，前端需要传域名
+        get.webname = siteName
+        get.domain = binding['domain']
+        self._del_ols_domain(get)
+
+        # 清理子域名监听文件
+        listen_file = self.setupPath+"/panel/vhost/openlitespeed/listen/80.conf"
+        listen_conf = public.readFile(listen_file)
+        if listen_conf:
+            map_reg = '\s*map\s*{}_{}.*'.format(siteName,binding['path'])
+            listen_conf = re.sub(map_reg,'',listen_conf)
+            public.writeFile(listen_file,listen_conf)
+        # 清理detail文件
+        detail_file = "{}/panel/vhost/openlitespeed/detail/{}_{}.conf".format(self.setupPath,siteName,binding['path'])
+        public.ExecShell("rm -f {}*".format(detail_file))
+
         public.M('binding').where("id=?",(id,)).delete()
         filename = self.setupPath + '/panel/vhost/rewrite/' + siteName + '_' + binding['path'] + '.conf'
         if os.path.exists(filename): public.ExecShell('rm -rf %s'%filename)
@@ -1895,14 +2374,13 @@ server
         public.WriteLog('TYPE_SITE', 'SITE_BINDING_DEL_SUCCESS',(siteName,binding['path']))
         return public.returnMsg(True,'DEL_SUCCESS')
     
-    #取默认文档
     #取子目录Rewrite
     def GetDirRewrite(self,get):
         id = get.id
         find = public.M('binding').where("id=?",(id,)).field('id,pid,domain,path').find()
         site = public.M('sites').where("id=?",(find['pid'],)).field('id,name,path').find()
         
-        if(public.get_webserver() == 'apache'):
+        if(public.get_webserver() != 'nginx'):
             filename = site['path']+'/'+find['path']+'/.htaccess'
         else:
             filename = self.setupPath + '/panel/vhost/rewrite/'+site['name']+'_'+find['path']+'.conf'
@@ -1924,7 +2402,10 @@ server
             data['status'] = True
             data['data'] = public.readFile(filename)
             data['rlist'] = []
-            for ds in os.listdir('rewrite/' + public.get_webserver()):
+            webserver = public.get_webserver()
+            if webserver == "openlitespeed":
+                webserver = "apache"
+            for ds in os.listdir('rewrite/' + webserver):
                 if ds == 'list.txt': continue
                 data['rlist'].append(ds[0:len(ds)-5])
             data['filename'] = filename
@@ -1935,14 +2416,20 @@ server
         id = get.id
         Name = public.M('sites').where("id=?",(id,)).getField('name')
         file = self.setupPath + '/panel/vhost/'+public.get_webserver()+'/' + Name + '.conf'
+        if public.get_webserver() == 'openlitespeed':
+            file = self.setupPath + '/panel/vhost/' + public.get_webserver() + '/detail/' + Name + '.conf'
         conf = public.readFile(file)
         if conf == False: return public.returnMsg(False,'指定网站配置文件不存在!')
         if public.get_webserver() == 'nginx':
             rep = "\s+index\s+(.+);"
-        else:
+        elif public.get_webserver() == 'apache':
             rep = "DirectoryIndex\s+(.+)\n"
+        else:
+            rep = "indexFiles\s+(.+)\n"
         if re.search(rep,conf):
             tmp = re.search(rep,conf).groups()
+            if public.get_webserver() == 'openlitespeed':
+                return tmp[0]
             return tmp[0].replace(' ',',')
         return public.returnMsg(False,'获取失败,配置文件中不存在默认文档')
     
@@ -1976,7 +2463,18 @@ server
             rep = "DirectoryIndex\s+.+\n"
             conf = re.sub(rep,'DirectoryIndex ' + Index_L + "\n",conf)
             public.writeFile(file,conf)
-        
+
+        #openlitespeed
+        file = self.setupPath + '/panel/vhost/openlitespeed/detail/' + Name + '.conf'
+        conf = public.readFile(file)
+        if conf:
+            rep = "indexFiles\s+.+\n"
+            Index = Index.split(',')
+            Index = [i for i in Index if i]
+            Index = ",".join(Index)
+            conf = re.sub(rep,'indexFiles ' + Index + "\n",conf)
+            public.writeFile(file,conf)
+
         public.serviceReload()
         public.WriteLog('TYPE_SITE', 'SITE_INDEX_SUCCESS',(Name,Index_L))
         return public.returnMsg(True,  'SET_SUCCESS')
@@ -2007,11 +2505,19 @@ server
             rep = "<Directory\s+.+\n"
             conf = re.sub(rep,'<Directory "' + Path + "\">\n",conf)
             public.writeFile(file,conf)
-        
+
+        # OLS
+        file = self.setupPath + '/panel/vhost/openlitespeed/' + Name + '.conf'
+        conf = public.readFile(file)
+        if conf:
+            reg = 'vhRoot.*'
+            conf = re.sub(reg,'vhRoot '+Path,conf)
+            public.writeFile(file,conf)
+
         #创建basedir
         userIni = Path + '/.user.ini'
         if os.path.exists(userIni): public.ExecShell("chattr -i "+userIni)
-        public.writeFile(userIni, 'open_basedir='+Path+'/:/tmp/:/proc/')
+        public.writeFile(userIni, 'open_basedir='+Path+'/:/tmp/')
         public.ExecShell('chmod 644 ' + userIni)
         public.ExecShell('chown root:root ' + userIni)
         public.ExecShell('chattr +i '+userIni)
@@ -2053,10 +2559,15 @@ server
         try:
             siteName = get.siteName
             conf = public.readFile(self.setupPath + '/panel/vhost/'+public.get_webserver()+'/'+siteName+'.conf')
+            if public.get_webserver() == 'openlitespeed':
+                conf = public.readFile(
+                    self.setupPath + '/panel/vhost/' + public.get_webserver() + '/detail/' + siteName + '.conf')
             if public.get_webserver() == 'nginx':
                 rep = "enable-php-([0-9]{2,3})\.conf"
-            else:
+            elif public.get_webserver() == 'apache':
                 rep = "php-cgi-([0-9]{2,3})\.sock"
+            else:
+                rep = "path\s*/usr/local/lsws/lsphp(\d+)/bin/lsphp"
             tmp = re.search(rep,conf).groups()
             data = {}
             data['phpversion'] = tmp[0]
@@ -2090,7 +2601,15 @@ server
                 tmp = re.search(rep,conf).group()
                 conf = conf.replace(tmp,'php-cgi-'+version+'.sock')
                 public.writeFile(file,conf)
-        
+            #OLS
+            file = self.setupPath + '/panel/vhost/openlitespeed/detail/'+siteName+'.conf'
+            conf = public.readFile(file)
+            if conf:
+                rep = 'lsphp\d+'
+                tmp = re.search(rep, conf)
+                if tmp:
+                    conf = conf.replace(tmp.group(), 'lsphp' + version)
+                    public.writeFile(file, conf)
             public.serviceReload()
             public.WriteLog("TYPE_SITE", "SITE_PHPVERSION_SUCCESS",(siteName,version))
             return public.returnMsg(True,'SITE_PHPVERSION_SUCCESS',(siteName,version))
@@ -2143,9 +2662,8 @@ server
         filename = path+runPath+'/.user.ini'
         conf = public.readFile(filename)
         try:
+            self._set_ols_open_basedir(get)
             public.ExecShell("chattr -i " + filename)
-            # if "open_basedir" not in conf:
-            #     return public.returnMsg(True, 'SITE_BASEDIR_CLOSE_SUCCESS')
             if conf and "open_basedir" in conf:
                 rep = "\n*open_basedir.*"
                 conf = re.sub(rep,"",conf)
@@ -2155,23 +2673,42 @@ server
                     public.writeFile(filename,conf)
                     public.ExecShell("chattr +i " + filename)
                 return public.returnMsg(True, 'SITE_BASEDIR_CLOSE_SUCCESS')
-            #
-            # if len(runPath) > 1:
-            #     self.DelUserInI(path + runPath)
-            # else:
-            #     self.DelUserInI(path)
+
             if conf and "session.save_path" in conf:
                 rep = "session.save_path\s*=\s*(.*)"
                 s_path = re.search(rep,conf).groups(1)[0]
-                public.writeFile(filename, conf + '\nopen_basedir={}/:/tmp/:/proc/:{}'.format(path,s_path))
+                public.writeFile(filename, conf + '\nopen_basedir={}/:/tmp/:{}'.format(path,s_path))
             else:
-                public.writeFile(filename,'open_basedir={}/:/tmp/:/proc/'.format(path))
+                public.writeFile(filename,'open_basedir={}/:/tmp/'.format(path))
             public.ExecShell("chattr +i " + filename)
+            public.serviceReload()
             return public.returnMsg(True,'SITE_BASEDIR_OPEN_SUCCESS')
         except Exception as e:
             public.ExecShell("chattr +i " + filename)
-            return e
+            return str(e)
 
+    def _set_ols_open_basedir(self,get):
+        # 设置ols
+        sitename = public.M('sites').where("id=?", (get.id,)).getField('name')
+        # sitename = path.split('/')[-1]
+        f = "/www/server/panel/vhost/openlitespeed/detail/{}.conf".format(sitename)
+        c = public.readFile(f)
+        if not c: return False
+        if f:
+            rep = '\nphp_admin_value\s*open_basedir.*'
+            result = re.search(rep, c)
+            s = 'on'
+            if not result:
+                s = 'off'
+                rep = '\n#php_admin_value\s*open_basedir.*'
+                result = re.search(rep, c)
+            result = result.group()
+            if s == 'on':
+                c = re.sub(rep, '\n#' + result[1:], c)
+            else:
+                result = result.replace('#', '')
+                c = re.sub(rep, result, c)
+            public.writeFile(f, c)
 
        # 读配置
     def __read_config(self, path):
@@ -2247,16 +2784,22 @@ server
 
     # 删除反向代理
     def RemoveProxy(self, get):
-        proxyUrl = self.__read_config(self.__proxyfile)
+        conf = self.__read_config(self.__proxyfile)
         sitename = get.sitename
         proxyname = get.proxyname
-        for i in range(len(proxyUrl)):
-            if proxyUrl[i]["sitename"] == sitename and proxyUrl[i]["proxyname"] == proxyname:
-                proxyname_md5 = self.__calc_md5(proxyUrl[i]["proxyname"])
-                public.ExecShell("rm -f %s/panel/vhost/nginx/proxy/%s/%s_%s.conf" % (self.setupPath,proxyUrl[i]["sitename"],proxyname_md5,proxyUrl[i]["sitename"]))
-                public.ExecShell("rm -f %s/panel/vhost/apache/proxy/%s/%s_%s.conf" % (self.setupPath,proxyUrl[i]["sitename"],proxyname_md5, proxyUrl[i]["sitename"]))
-                del proxyUrl[i]
-                self.__write_config(self.__proxyfile,proxyUrl)
+        for i in range(len(conf)):
+            c_sitename = conf[i]["sitename"]
+            c_proxyname = conf[i]["proxyname"]
+            if c_sitename == sitename and c_proxyname == proxyname:
+                proxyname_md5 = self.__calc_md5(c_proxyname)
+                for w in ["apache","nginx","openlitespeed"]:
+                    p = "{sp}/panel/vhost/{w}/proxy/{s}/{m}_{s}.conf*".format(sp=self.setupPath,w=w,s=c_sitename,m=proxyname_md5)
+
+                    public.ExecShell('rm -f {}'.format(p))
+                p = "{sp}/panel/vhost/openlitespeed/proxy/{s}/urlrewrite/{m}_{s}.conf*".format(sp=self.setupPath,m=proxyname_md5,s=get.sitename)
+                public.ExecShell('rm -f {}'.format(p))
+                del conf[i]
+                self.__write_config(self.__proxyfile,conf)
                 self.SetNginx(get)
                 self.SetApache(get.sitename)
                 public.serviceReload()
@@ -2319,7 +2862,6 @@ server
                     sk.connect((d, 443))
                     print(443)
         except:
-            print("目标URL无法访问")
             return public.returnMsg(False, "目标URL无法访问")
 
     # 基本设置检查
@@ -2330,18 +2872,14 @@ server
         if action == "create":
             if sys.version_info.major < 3:
                 if len(get.proxyname) < 3 or len(get.proxyname) > 15:
-                    print("名称必须大于3小于15个字符串")
                     return public.returnMsg(False, '名称必须大于3小于15个字符串')
             else:
                 if len(get.proxyname.encode("utf-8")) < 3 or len(get.proxyname.encode("utf-8")) > 15:
-                    print("名称必须大于3小于15个字符串")
                     return public.returnMsg(False, '名称必须大于3小于15个字符串')
         if self.__check_even(get,action):
-            print("指定反向代理名称或代理文件夹已存在")
             return public.returnMsg(False, '指定反向代理名称或代理文件夹已存在')
         # 判断代理，只能有全局代理或目录代理
         if self.__check_proxy_even(get,action):
-            print('不能同时设置目录代理和全局代理')
             return public.returnMsg(False, '不能同时设置目录代理和全局代理')
         #判断cachetime类型
         if get.cachetime:
@@ -2356,20 +2894,18 @@ server
         repte = "[\?\=\[\]\)\(\*\&\^\%\$\#\@\!\~\`{\}\>\<\,\',\"]+"
         # 检测代理目录格式
         if re.search(repte,get.proxydir):
-            print("代理目录不能有以下特殊符号 ?,=,[,],),(,*,&,^,%,$,#,@,!,~,`,{,},>,<,\,',\"]")
             return public.returnMsg(False, "代理目录不能有以下特殊符号 ?,=,[,],),(,*,&,^,%,$,#,@,!,~,`,{,},>,<,\,',\"]")
         # 检测发送域名格式
         if get.todomain:
             if not re.search(tod,get.todomain):
                 return public.returnMsg(False, '发送域名格式错误 ' + get.todomain)
-        else:
+        if public.get_webserver() != 'openlitespeed' and not get.todomain:
             get.todomain = "$host"
 
         # 检测目标URL格式
         if not re.match(rep, get.proxysite):
             return public.returnMsg(False, '域名格式错误 ' + get.proxysite)
         if re.search(repte,get.proxysite):
-            print("目标URL不能有以下特殊符号 ?,=,[,],),(,*,&,^,%,$,#,@,!,~,`,{,},>,<,\,',\"]")
             return public.returnMsg(False, "目标URL不能有以下特殊符号 ?,=,[,],),(,*,&,^,%,$,#,@,!,~,`,{,},>,<,\,',\"]" )
         # 检测目标url是否可用
         # if re.match(repd, get.proxysite):
@@ -2381,10 +2917,8 @@ server
             for s in subfilter:
                 if not s["sub1"]:
                     if s["sub2"]:
-                        print("请输入被替换的内容")
                         return public.returnMsg(False, '请输入被替换的内容')
                 elif s["sub1"] == s["sub2"]:
-                    print("替换内容与被替换内容不能一致")
                     return public.returnMsg(False, '替换内容与被替换内容不能一致')
     # 设置Nginx配置
     def SetNginx(self,get):
@@ -2406,7 +2940,7 @@ server
             self.CheckProxy(get)
             ng_conf = public.readFile(ng_file)
             if not p_conf:
-                rep = "#清理缓存规则[\w\s\~\/\(\)\.\*\{\}\;\$\n\#]+.+[\s\w\/\*\.\;]+include enable-php-"
+                rep = "#清理缓存规则[\w\s\~\/\(\)\.\*\{\}\;\$\n\#]+.{1,66}[\s\w\/\*\.\;]+include enable-php-"
                 ng_conf = re.sub(rep, 'include enable-php-', ng_conf)
                 oldconf = '''location ~ .*\\.(gif|jpg|jpeg|png|bmp|swf)$
     {
@@ -2420,7 +2954,8 @@ server
         error_log off;
         access_log /dev/null;
     }'''
-                ng_conf = ng_conf.replace('access_log', oldconf + "\n\taccess_log")
+                if "(gif|jpg|jpeg|png|bmp|swf)$" not in ng_conf:
+                    ng_conf = ng_conf.replace('access_log', oldconf + "\n\taccess_log")
                 public.writeFile(ng_file, ng_conf)
                 return
             sitenamelist = []
@@ -2436,7 +2971,7 @@ server
                     public.writeFile(ng_file,ng_conf)
 
             else:
-                rep =  "#清理缓存规则[\w\s\~\/\(\)\.\*\{\}\;\$\n\#]+.{66,66}\n+[\s\w\/\*\.\;]+include enable-php-"
+                rep = "#清理缓存规则[\w\s\~\/\(\)\.\*\{\}\;\$\n\#]+.{1,66}[\s\w\/\*\.\;]+include enable-php-"
                 ng_conf = re.sub(rep,'include enable-php-',ng_conf)
                 oldconf = '''location ~ .*\\.(gif|jpg|jpeg|png|bmp|swf)$
     {
@@ -2450,7 +2985,8 @@ server
         error_log off;
         access_log /dev/null;
     }'''
-                ng_conf = ng_conf.replace('access_log', oldconf + "\n\taccess_log")
+                if "(gif|jpg|jpeg|png|bmp|swf)$" not in ng_conf:
+                    ng_conf = ng_conf.replace('access_log', oldconf + "\n\taccess_log")
                 public.writeFile(ng_file, ng_conf)
 
     # 设置apache配置
@@ -2480,6 +3016,36 @@ server
                 rep = "\n*#引用反向代理规则，注释后配置的反向代理将无效\n+\s+IncludeOptiona[\s\w\/\.\*]+"
                 ap_conf = re.sub(rep,'', ap_conf)
                 public.writeFile(ap_file, ap_conf)
+
+    # 设置OLS
+    def _set_ols_proxy(self,get):
+        # 添加反代配置
+        proxyname_md5 = self.__calc_md5(get.proxyname)
+        dir_path = "%s/panel/vhost/openlitespeed/proxy/%s/" % (self.setupPath,get.sitename)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        file_path = "{}{}_{}.conf".format(dir_path,proxyname_md5,get.sitename)
+        reverse_proxy_conf = """
+extprocessor %s {
+  type                    proxy
+  address                 %s
+  maxConns                1000
+  pcKeepAliveTimeout      600
+  initTimeout             600
+  retryTimeout            0
+  respBuffer              0
+}
+""" % (get.proxyname,get.proxysite)
+        public.writeFile(file_path,reverse_proxy_conf)
+        # 添加urlrewrite
+        dir_path = "%s/panel/vhost/openlitespeed/proxy/%s/urlrewrite/" % (self.setupPath, get.sitename)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        file_path = "{}{}_{}.conf".format(dir_path,proxyname_md5,get.sitename)
+        reverse_urlrewrite_conf = """
+RewriteRule ^%s(.*)$ http://%s/$1 [P,E=Proxy-Host:%s]
+""" % (get.proxydir,get.proxyname,get.todomain)
+        public.writeFile(file_path,reverse_urlrewrite_conf)
 
     # 检查伪静态、主配置文件是否有location冲突
     def CheckLocation(self,get):
@@ -2526,6 +3092,7 @@ server
         self.__write_config(self.__proxyfile, proxyUrl)
         self.SetNginx(get)
         self.SetApache(get.sitename)
+        self._set_ols_proxy(get)
         status = self.SetProxy(get)
         if not status["status"]:
             return status
@@ -2533,7 +3100,6 @@ server
         get.siteName = get.sitename
         self.SetPHPVersion(get)
         public.serviceReload()
-        print("添加成功")
         return public.returnMsg(True, '添加成功')
 
     # 取代理配置文件
@@ -2566,32 +3132,36 @@ server
     # 修改反向代理
     def ModifyProxy(self, get):
         proxyname_md5 = self.__calc_md5(get.proxyname)
-        ap_conf_file = "%s/panel/vhost/apache/proxy/%s/%s_%s.conf" % (
-        self.setupPath, get.sitename, proxyname_md5, get.sitename)
-        ng_conf_file = "%s/panel/vhost/nginx/proxy/%s/%s_%s.conf" % (
-        self.setupPath, get.sitename, proxyname_md5, get.sitename)
+        ap_conf_file = "{p}/panel/vhost/apache/proxy/{s}/{n}_{s}.conf".format(
+        p=self.setupPath, s=get.sitename, n=proxyname_md5)
+        ng_conf_file = "{p}/panel/vhost/nginx/proxy/{s}/{n}_{s}.conf".format(
+        p=self.setupPath, s=get.sitename, n=proxyname_md5)
+        ols_conf_file = "{p}/panel/vhost/openlitespeed/proxy/{s}/urlrewrite/{n}_{s}.conf".format(
+        p=self.setupPath, s=get.sitename, n=proxyname_md5)
         if self.__CheckStart(get):
             return self.__CheckStart(get)
-        proxyUrl = self.__read_config(self.__proxyfile)
-        for i in range(len(proxyUrl)):
-            if proxyUrl[i]["proxyname"] == get.proxyname and proxyUrl[i]["sitename"] == get.sitename:
+        conf = self.__read_config(self.__proxyfile)
+        for i in range(len(conf)):
+            if conf[i]["proxyname"] == get.proxyname and conf[i]["sitename"] == get.sitename:
                 if int(get.type) != 1:
-                    public.ExecShell("mv %s %s_bak" % (ap_conf_file, ap_conf_file))
-                    public.ExecShell("mv %s %s_bak" % (ng_conf_file, ng_conf_file))
-                    proxyUrl[i]["type"] = int(get.type)
-                    self.__write_config(self.__proxyfile, proxyUrl)
+                    public.ExecShell("mv {f} {f}_bak".format(f=ap_conf_file))
+                    public.ExecShell("mv {f} {f}_bak".format(f=ng_conf_file))
+                    public.ExecShell("mv {f} {f}_bak".format(f=ols_conf_file))
+                    conf[i]["type"] = int(get.type)
+                    self.__write_config(self.__proxyfile, conf)
                     public.serviceReload()
                     return public.returnMsg(True, '修改成功')
                 else:
                     if os.path.exists(ap_conf_file+"_bak"):
-                        public.ExecShell("mv %s_bak %s" % (ap_conf_file, ap_conf_file))
-                        public.ExecShell("mv %s_bak %s" % (ng_conf_file, ng_conf_file))
+                        public.ExecShell("mv {f}_bak {f}".format(f=ap_conf_file))
+                        public.ExecShell("mv {f}_bak {f}".format(f=ng_conf_file))
+                        public.ExecShell("mv {f}_bak {f}".format(f=ols_conf_file))
                     ng_conf = public.readFile(ng_conf_file)
                     # 修改nginx配置
-                    ng_conf = re.sub("location\s+%s" % proxyUrl[i]["proxydir"],"location "+get.proxydir,ng_conf)
-                    ng_conf = re.sub("proxy_pass\s+%s" % proxyUrl[i]["proxysite"],"proxy_pass "+get.proxysite,ng_conf)
-                    ng_conf = re.sub("\sHost\s+%s" % proxyUrl[i]["todomain"]," Host "+get.todomain,ng_conf)
-                    cache_rep = "proxy_cache_valid\s+200\s+304\s+301\s+302\s+\d+m;((\n|.)+expires\s+\d+m;)*"
+                    ng_conf = re.sub("location\s+%s" % conf[i]["proxydir"],"location "+get.proxydir,ng_conf)
+                    ng_conf = re.sub("proxy_pass\s+%s" % conf[i]["proxysite"],"proxy_pass "+get.proxysite,ng_conf)
+                    ng_conf = re.sub("\sHost\s+%s" % conf[i]["todomain"]," Host "+get.todomain,ng_conf)
+                    cache_rep = r"proxy_cache_valid\s+200\s+304\s+301\s+302\s+\d+m;((\n|.)+expires\s+\d+m;)*"
                     if int(get.cache) == 1:
                         if re.search(cache_rep,ng_conf):
                             expires_rep = "\{\n\s+expires\s+12h;"
@@ -2608,20 +3178,20 @@ server
                                 ng_conf = re.sub(cache_rep,'\n\t#Set Nginx Cache\n'+ng_cache,ng_conf)
                             else:
                                 # cache_rep = '#proxy_set_header\s+Connection\s+"upgrade";'
-                                cache_rep = 'proxy_set_header\s+REMOTE-HOST\s+\$remote_addr;'
-                                ng_conf = re.sub(cache_rep, '\n\tproxy_set_header\s+REMOTE-HOST\s+\$remote_addr;\n\t#Set Nginx Cache' + ng_cache,
+                                cache_rep = r"proxy_set_header\s+REMOTE-HOST\s+\$remote_addr;"
+                                ng_conf = re.sub(cache_rep, r"\n\tproxy_set_header\s+REMOTE-HOST\s+\$remote_addr;\n\t#Set Nginx Cache" + ng_cache,
                                                  ng_conf)
                     else:
                         if self.check_annotate(ng_conf):
-                            rep = '\n\s*#Set\s*Nginx\s*Cache(.|\n)*\d+m;'
+                            rep = r'\n\s*#Set\s*Nginx\s*Cache(.|\n)*\d+m;'
                             ng_conf = re.sub(rep, "\n\t#Set Nginx Cache\n\tproxy_ignore_headers Set-Cookie Cache-Control expires;\n\tadd_header Cache-Control no-cache;", ng_conf)
                         else:
-                            rep = '\s+proxy_cache\s+cache_one.*[\n\s\w\_\";\$]+m;'
-                            ng_conf = re.sub(rep, '\n\t#Set Nginx Cache\n\tproxy_ignore_headers Set-Cookie Cache-Control expires;\n\tadd_header Cache-Control no-cache;', ng_conf)
+                            rep = r"\s+proxy_cache\s+cache_one.*[\n\s\w\_\";\$]+m;"
+                            ng_conf = re.sub(rep, r"\n\t#Set Nginx Cache\n\tproxy_ignore_headers Set-Cookie Cache-Control expires;\n\tadd_header Cache-Control no-cache;", ng_conf)
 
                     sub_rep = "sub_filter"
                     subfilter = json.loads(get.subfilter)
-                    if str(proxyUrl[i]["subfilter"]) != str(subfilter):
+                    if str(conf[i]["subfilter"]) != str(subfilter):
                         if re.search(sub_rep, ng_conf):
                             sub_rep = "\s+proxy_set_header\s+Accept-Encoding(.|\n)+off;"
                             ng_conf = re.sub(sub_rep,"",ng_conf)
@@ -2644,21 +3214,39 @@ server
 
                     # 修改apache配置
                     ap_conf = public.readFile(ap_conf_file)
-                    ap_conf = re.sub("ProxyPass\s+%s\s+%s" % (proxyUrl[i]["proxydir"], proxyUrl[i]["proxysite"]),"ProxyPass %s %s" % (get.proxydir,get.proxysite), ap_conf)
-                    ap_conf = re.sub("ProxyPassReverse\s+%s\s+%s" % (proxyUrl[i]["proxydir"], proxyUrl[i]["proxysite"]),
+                    ap_conf = re.sub("ProxyPass\s+%s\s+%s" % (conf[i]["proxydir"], conf[i]["proxysite"]),"ProxyPass %s %s" % (get.proxydir,get.proxysite), ap_conf)
+                    ap_conf = re.sub("ProxyPassReverse\s+%s\s+%s" % (conf[i]["proxydir"], conf[i]["proxysite"]),
                                      "ProxyPassReverse %s %s" % (get.proxydir, get.proxysite), ap_conf)
-                    proxyUrl[i]["proxydir"] = get.proxydir
-                    proxyUrl[i]["proxysite"] = get.proxysite
-                    proxyUrl[i]["todomain"] = get.todomain
-                    proxyUrl[i]["type"] = int(get.type)
-                    proxyUrl[i]["cache"] = int(get.cache)
-                    proxyUrl[i]["subfilter"] = json.loads(get.subfilter)
-                    proxyUrl[i]["advanced"] = int(get.advanced)
-                    proxyUrl[i]["cachetime"] = int(get.cachetime)
+                    # 修改OLS配置
+                    p = "{p}/panel/vhost/openlitespeed/proxy/{s}/{n}_{s}.conf".format(p=self.setupPath,n=proxyname_md5,s=get.sitename)
+                    c = public.readFile(p)
+                    if c:
+                        rep = 'address\s+(.*)'
+                        new_proxysite = 'address\t{}'.format(get.proxysite)
+                        c = re.sub(rep,new_proxysite,c)
+                        public.writeFile(p,c)
+
+                    # p = "{p}/panel/vhost/openlitespeed/proxy/{s}/urlrewrite/{n}_{s}.conf".format(p=self.setupPath,n=proxyname_md5,s=get.sitename)
+                    c = public.readFile(ols_conf_file)
+                    if c:
+                        rep = 'RewriteRule\s*\^{}\(\.\*\)\$\s+http://{}/\$1\s*\[P,E=Proxy-Host:{}\]'.format(conf[i]["proxydir"],get.proxyname,conf[i]["todomain"])
+                        new_content = 'RewriteRule ^{}(.*)$ http://{}/$1 [P,E=Proxy-Host:{}]'.format(get.proxydir,get.proxyname,get.todomain)
+                        print(new_content)
+                        c = re.sub(rep,new_content,c)
+                        public.writeFile(ols_conf_file,c)
+
+                    conf[i]["proxydir"] = get.proxydir
+                    conf[i]["proxysite"] = get.proxysite
+                    conf[i]["todomain"] = get.todomain
+                    conf[i]["type"] = int(get.type)
+                    conf[i]["cache"] = int(get.cache)
+                    conf[i]["subfilter"] = json.loads(get.subfilter)
+                    conf[i]["advanced"] = int(get.advanced)
+                    conf[i]["cachetime"] = int(get.cachetime)
 
                     public.writeFile(ng_conf_file,ng_conf)
                     public.writeFile(ap_conf_file,ap_conf)
-                    self.__write_config(self.__proxyfile, proxyUrl)
+                    self.__write_config(self.__proxyfile, conf)
                     self.SetNginx(get)
                     self.SetApache(get.sitename)
                     # self.SetProxy(get)
@@ -2668,12 +3256,7 @@ server
                     #     public.ExecShell("mv %s %s_bak" % (ap_conf_file, ap_conf_file))
                     #     public.ExecShell("mv %s %s_bak" % (ng_conf_file, ng_conf_file))
                     public.serviceReload()
-                    print("修改成功")
                     return public.returnMsg(True, '修改成功')
-
-
-
-
 
         # 设置反向代理
     def SetProxy(self,get):
@@ -2845,14 +3428,17 @@ location %s
     #取伪静态规则应用列表
     def GetRewriteList(self,get):
         rewriteList = {}
-        if public.get_webserver() == 'apache': 
+        ws = public.get_webserver()
+        if ws == "openlitespeed":
+            ws = "apache"
+        if ws == 'apache':
             get.id = public.M('sites').where("name=?",(get.siteName,)).getField('id')
             runPath = self.GetSiteRunPath(get)
             rewriteList['sitePath'] = public.M('sites').where("name=?",(get.siteName,)).getField('path') + runPath['runPath']
             
         rewriteList['rewrite'] = []
         rewriteList['rewrite'].append('0.'+public.getMsg('SITE_REWRITE_NOW'))
-        for ds in os.listdir('rewrite/' + public.get_webserver()):
+        for ds in os.listdir('rewrite/' + ws):
             if ds == 'list.txt': continue
             rewriteList['rewrite'].append(ds[0:len(ds)-5])
         rewriteList['rewrite'] = sorted(rewriteList['rewrite'])
@@ -3063,17 +3649,47 @@ location %s
             else:
                 conf = conf.replace('access_log  /dev/null','access_log  ' + rep)
             public.writeFile(filename,conf)
-        
+
+        # OLS
+        filename = public.GetConfigValue('setup_path') + '/panel/vhost/openlitespeed/detail/' + get.name + '.conf'
+        conf = public.readFile(filename)
+        if conf:
+            rep = "\nerrorlog(.|\n)*compressArchive\s*1\s*\n}"
+            tmp = re.search(rep,conf)
+            s = 'on'
+            if not tmp:
+                s = 'off'
+                rep = "\n#errorlog(.|\n)*compressArchive\s*1\s*\n#}"
+                tmp = re.search(rep,conf)
+            tmp = tmp.group()
+            result = ''
+            if s == 'on':
+                for l in tmp.strip().splitlines():
+                    result += "\n#"+l
+            else:
+                for l in tmp.splitlines():
+                    result += "\n"+l[1:]
+            conf = re.sub(rep,"\n"+result.strip(),conf)
+            public.writeFile(filename,conf)
+
+
+
         public.serviceReload()
         return public.returnMsg(True, 'SUCCESS')
     
     #取日志状态
     def GetLogsStatus(self,get):
-        filename = public.GetConfigValue('setup_path') + '/panel/vhost/'+public.get_webserver()+'/' + get.name + '.conf'
+        filename = public.GetConfigValue(
+            'setup_path') + '/panel/vhost/' + public.get_webserver() + '/' + get.name + '.conf'
+        if public.get_webserver() == 'openlitespeed':
+            filename = public.GetConfigValue(
+                'setup_path') + '/panel/vhost/' + public.get_webserver() + '/detail/' + get.name + '.conf'
         conf = public.readFile(filename)
         if not conf: return True
         if conf.find('#ErrorLog') != -1: return False
         if conf.find("access_log  /dev/null") != -1: return False
+        if re.search('\n#accesslog',conf):
+            return False
         return True
     
     #取目录加密状态
@@ -3088,7 +3704,9 @@ location %s
             
     #设置目录加密
     def SetHasPwd(self,get):
-        if len(get.username.strip()) == 0 or len(get.password.strip()) == 0: return public.returnMsg(False,'用户名或密码不能为空!')
+        if public.get_webserver() == 'openlitespeed':
+            return public.returnMsg(False,'该功能暂时还不支持OpenLiteSpeed')
+        if len(get.username.strip()) == 0 or len(get.password.strip()) == 0: return public.returnMsg(False,'LOGIN_USER_EMPTY')
 
         if not hasattr(get,'siteName'): 
             get.siteName = public.M('sites').where('id=?',(get.id,)).getField('name')
@@ -3287,14 +3905,22 @@ location %s
                 rep = '\s*root\s+(.+);'
                 tmp1 = re.search(rep,conf)
                 if tmp1: path = tmp1.groups()[0]
-        else:
+        elif public.get_webserver() == 'apache':
             filename = self.setupPath + '/panel/vhost/apache/' + siteName + '.conf'
             if os.path.exists(filename):
                 conf = public.readFile(filename)
                 rep = '\s*DocumentRoot\s*"(.+)"\s*\n'
                 tmp1 = re.search(rep,conf)
                 if tmp1: path = tmp1.groups()[0]
-        
+        else:
+            filename = self.setupPath + '/panel/vhost/openlitespeed/' + siteName + '.conf'
+            if os.path.exists(filename):
+                conf = public.readFile(filename)
+                rep = "vhRoot\s*(.*)"
+                path = re.search(rep,conf)
+                if not path:
+                    return public.returnMsg(False, "Get Site run path false")
+                path = path.groups()[0]
         data = {}
         if sitePath == path: 
             data['runPath'] = '/'
@@ -3339,7 +3965,8 @@ location %s
             path = re.search(rep,conf).groups()[0]
             conf = conf.replace(path,sitePath + get.runPath)
             public.writeFile(filename,conf)
-
+        # 处理OLS
+        self._set_ols_run_path(sitePath,get.runPath,siteName)
         # self.DelUserInI(sitePath)
         # get.path = sitePath;
         # self.SetDirUserINI(get)
@@ -3352,7 +3979,24 @@ location %s
 
         public.serviceReload()
         return public.returnMsg(True,'SET_SUCCESS')
-    
+
+    def _set_ols_run_path(self,site_path,run_path,sitename):
+        ols_conf_file = "{}/panel/vhost/openlitespeed/{}.conf".format(self.setupPath,sitename)
+        ols_conf = public.readFile(ols_conf_file)
+        if not ols_conf:
+            return
+        reg = '#VHOST\s*{s}\s*START(.|\n)+#VHOST\s*{s}\s*END'.format(s=sitename)
+        tmp = re.search(reg,ols_conf)
+        if not tmp:
+            return
+        reg = "vhRoot\s*(.*)"
+        # tmp = re.search(reg,tmp.group())
+        # if not tmp:
+        #     return
+        tmp = "vhRoot "+ site_path + run_path
+        ols_conf = re.sub(reg,tmp,ols_conf)
+        public.writeFile(ols_conf_file,ols_conf)
+
     #设置默认站点
     def SetDefaultSite(self,get):
         import time
@@ -3560,17 +4204,41 @@ location %s
                     rconf = "combined\n    #SECURITY-START 防盗链配置\n    RewriteEngine on\n    RewriteCond %{HTTP_REFERER} !^$ [NC]\n" + domains + "\n    RewriteRule .("+get.fix.strip().replace(',','|')+") /404.html [R=404,NC,L]\n    #SECURITY-END"
                     conf = conf.replace('combined',rconf)
             public.writeFile(file,conf)
+        # OLS
+        cond_dir = '/www/server/panel/vhost/openlitespeed/prevent_hotlink/'
+        if not os.path.exists(cond_dir):
+            os.makedirs(cond_dir)
+        file = cond_dir + get.name + '.conf'
+        if get.status == '1':
+            conf = """
+RewriteCond %{HTTP_REFERER} !^$
+RewriteCond %{HTTP_REFERER} !BTDOMAIN_NAME [NC]
+RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
+"""
+            conf = conf.replace('BTDOMAIN_NAME',get.domains.replace(',',' ')).replace('BTPFILE',get.fix.replace(',','|'))
+        else:
+            conf = """
+RewriteCond %{HTTP_REFERER} !BTDOMAIN_NAME [NC]
+RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
+"""
+            conf = conf.replace('BTDOMAIN_NAME', get.domains.replace(',', ' ')).replace('BTPFILE',get.fix.replace(',', '|'))
+        public.writeFile(file, conf)
+        if get.status == "false":
+            public.ExecShell('rm -f {}'.format(file))
         public.serviceReload()
         return public.returnMsg(True,'SET_SUCCESS')
     
     #取网站日志
     def GetSiteLogs(self,get):
         serverType = public.get_webserver()
-        logPath = '/www/wwwlogs/' + get.siteName + '.log'
-        if serverType != 'nginx': logPath = '/www/wwwlogs/' + get.siteName + '-access_log'
+        if serverType == "nginx":
+            logPath = '/www/wwwlogs/' + get.siteName + '.log'
+        elif serverType == 'apache':
+            logPath = '/www/wwwlogs/' + get.siteName + '-access_log'
+        else:
+            logPath = '/www/wwwlogs/' + get.siteName + '_ols.access_log'
         if not os.path.exists(logPath): return public.returnMsg(False,'日志为空')
         return public.returnMsg(True,public.GetNumLines(logPath,1000))
-
 
     #取网站分类
     def get_site_types(self,get):

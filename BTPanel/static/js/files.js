@@ -3,6 +3,10 @@ var fileDrop = {
     endTime:0,
     uploadLength:0, //上传数量
     splitSize: 1024 * 1024 * 2, //文件上传分片大小
+    splitEndTime: 0,
+    splitStartTime:0,
+    fileSize:0,
+    speedLastTime:0,
     filesList:[], // 文件列表数组
     errorLength:0, //上传失败文件数量
     isUpload:true, //上传状态，是否可以上传
@@ -10,6 +14,7 @@ var fileDrop = {
     isUploadNumber:800,//限制单次上传数量
     uploadAllSize:0, // 上传文件总大小
     uploadedSize:0, // 已上传文件大小
+    updateedSizeLast:0,
     topUploadedSize:0, // 上一次文件上传大小
     uploadExpectTime:0, // 预计上传时间
     initTimer:0, // 初始化计时
@@ -17,10 +22,14 @@ var fileDrop = {
     timerSpeed:0, //速度
     isLayuiDrop:false, //是否是小窗口拖拽
     uploading:false,
+    is_webkit:(function(){
+        if(navigator.userAgent.indexOf('WebKit')>-1) return true;
+        return false;
+    })(),
     init:function(){
         if($('#mask_layer').length == 0) {
-             window.UploadFiles = function(){ fileDrop.dialog_view()};
-            $("body").append($('<div class="mask_layer" id="mask_layer" style="position:fixed;top:0;left:0;right:0;bottom:0; background:rgba(255,255,255,0.6);border:3px #ccc dashed;z-index:99999999;display:none;color:#999;font-size:40px;text-align:center;overflow:hidden;"><span style="position: absolute;top: 50%;left: 50%;margin-left: -200px;margin-top: -40px;">上传文件到当前目录下</span></div>'));
+            window.UploadFiles = function(){ fileDrop.dialog_view()};
+            $("body").append($('<div class="mask_layer" id="mask_layer" style="position:fixed;top:0;left:0;right:0;bottom:0; background:rgba(255,255,255,0.6);border:3px #ccc dashed;z-index:99999999;display:none;color:#999;font-size:40px;text-align:center;overflow:hidden;"><span style="position: absolute;top: 50%;left: 50%;margin-left: -300px;margin-top: -40px;">上传文件到当前目录下'+ (!this.is_webkit?'<i style="font-size:20px;font-style:normal;display:block;margin-top:15px;color:red;">当前浏览器暂不支持拖动上传，推荐使用Chrome浏览器或WebKit内核的浏览。</i>':'') +'</span></div>'));
             this.event_relation(document.querySelector('#container'),document,document.querySelector('#mask_layer'));
         }
     },
@@ -36,8 +45,8 @@ var fileDrop = {
             }
         }
         leave.el.addEventListener("dragleave",(leave.callback != null)?leave.callback:function(e){
-            e.preventDefault();
             if(e.x == 0 && e.y == 0) $('#mask_layer').hide();
+            e.preventDefault();
         },false);
         enter.el.addEventListener("dragenter", (enter.callback != null)?enter.callback:function(e){
             if(e.dataTransfer.items[0].kind == 'string') return false
@@ -48,10 +57,12 @@ var fileDrop = {
         drop.el.addEventListener("dragover",function(e){ e.preventDefault() }, false);
         drop.el.addEventListener("drop",(enter.callback != null)?drop.callback:that.ev_drop, false);
     },
-
-    
     // 事件触发
     ev_drop:function(e){
+        if(!fileDrop.is_webkit){
+            $('#mask_layer').hide();
+            return false;
+        }
         e.preventDefault();
         if(fileDrop.uploading){
         	layer.msg('正在上传文件中，请稍后...');
@@ -68,7 +79,6 @@ var fileDrop = {
             if(fileDrop.filesList[i].is_upload) fileDrop.filesList.splice(-i,1)
         }
         $('#mask_layer').hide();
-
         function update_sync(s){
             s.getFilesAndDirectories().then(function(subFilesAndDirs) {
                 return iterateFilesAndDirs(subFilesAndDirs, s.path);
@@ -87,7 +97,6 @@ var fileDrop = {
                         clearTimeout(time);
                         return false;
                     }
-                    if(/^\.\w*/.test(filesAndDirs[i].name) ||/\/\.\w*/g.test(path)) continue; //排查隐藏文件目录和文件
                     fileDrop.filesList.push({
                         file:filesAndDirs[i],
                         path:bt.get_file_path(path +'/'+ filesAndDirs[i].name).replace('//','/'),
@@ -114,24 +123,6 @@ var fileDrop = {
 		}
         
     },
-    // 获取上传速度
-    get_timer_speed:function(speed){
-        var that = this,num = 0;
-        if(speed == undefined) speed = 1000
-        that.speedInterval = setInterval(function(){
-            if(that.uploadedSize - that.topUploadedSize === 0){
-                that.timerSpeed = that.timerSpeed == 0 ? 0:(parseInt(that.timerSpeed / num));
-                num += 1;
-            }else{
-                that.timerSpeed = that.uploadedSize - that.topUploadedSize;
-                num = 0;
-            }
-            that.topUploadedSize = that.uploadedSize;
-            $('.file_upload_info .uploadSpeed').text(that.to_size(isNaN(that.timerSpeed)?0:that.timerSpeed)+'/s');
-            var estimateTime = that.time(parseInt(((that.uploadAllSize - that.uploadedSize) / that.timerSpeed) * 1000))
-            if(!isNaN(that.timerSpeed)) $('.file_upload_info .uploadEstimate').text(estimateTime.indexOf('NaN') == -1?estimateTime:'0秒');
-        },speed);
-    },
     // 上传视图
     dialog_view:function(config){
         var that = this,html = '';
@@ -146,11 +137,11 @@ var fileDrop = {
                 type: 1,
                 closeBtn: 1,
                 maxmin:true,
-                area: ['640px','605px'],
+                area: ['540px','505px'],
                 btn:['开始上传','取消上传'],
                 title: '上传文件到【'+ bt.get_cookie('Path')  +'】--- 支持断点续传',
                 skin:'file_dir_uploads',
-                content:'<div style="padding:15px 15px 10px 15px;"><div class="upload_btn_groud"><div class="btn-group"><button type="button" class="btn btn-primary btn-sm upload_file_btn">上传文件</button><button type="button" class="btn btn-primary  btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu"><li><a href="#" data-type="file">上传文件</a></li><li><a href="#" data-type="dir">上传目录</a></li></ul></div><div class="file_upload_info" style="display:none;"><span>总进度&nbsp;<i class="uploadProgress"></i>，正在上传&nbsp;<i class="uploadNumber"></i>，</span><span style="display:none">上传失败&nbsp;<i class="uploadError"></i></span><span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span><span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span><i></i></div></div><div class="upload_file_body '+ (html==''?'active':'') +'">'+ (html!=''?('<ul class="dropUpLoadFileHead" style="padding-right:'+ (is_show?'15':'0') +'px"><li class="fileTitle"><span class="filename">文件名</span><span class="filesize">文件大小</span><span class="fileStatus">上传状态</span></li></ul><ul class="dropUpLoadFile list-list">'+ html +'</ul>'):'<span>请将需要上传的文件拖到此处</span>') +'</div></div>',
+                content:'<div style="padding:15px 15px 10px 15px;"><div class="upload_btn_groud"><div class="btn-group"><button type="button" class="btn btn-primary btn-sm upload_file_btn">上传文件</button><button type="button" class="btn btn-primary  btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu"><li><a href="#" data-type="file">上传文件</a></li><li><a href="#" data-type="dir">上传目录</a></li></ul></div><div class="file_upload_info" style="display:none;"><span>总进度&nbsp;<i class="uploadProgress"></i>，正在上传&nbsp;<i class="uploadNumber"></i>，</span><span style="display:none">上传失败&nbsp;<i class="uploadError"></i></span><span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span><span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span><i></i></div></div><div class="upload_file_body '+ (html==''?'active':'') +'">'+ (html!=''?('<ul class="dropUpLoadFileHead" style="padding-right:'+ (is_show?'15':'0') +'px"><li class="fileTitle"><span class="filename">文件名</span><span class="filesize">文件大小</span><span class="fileStatus">上传状态</span></li></ul><ul class="dropUpLoadFile list-list">'+ html +'</ul>'):'<span>请将需要上传的文件拖到此处'+ (!that.is_webkit?'<i style="display: block;font-style: normal;margin-top: 10px;color: red;font-size: 17px;">当前浏览器暂不支持拖动上传，推荐使用Chrome浏览器或WebKit内核的浏览。</i>':'') +'</span>') +'</div></div>',
                 success:function(){
                     $('#mask_layer').hide();
                     $('.file_dir_uploads .layui-layer-max').hide();
@@ -160,7 +151,6 @@ var fileDrop = {
                         $('<input type="file" multiple="true" autocomplete="off" '+ (type == 'dir'?'webkitdirectory=""':'') +' />').change(function(e){
                             var files = e.target.files,arry = [];
                             for(var i=0;i<files.length;i++){
-                                if(/^\.\w*/.test(files[i].name) || /\/\.\w*/g.test(files[i].webkitRelativePath)) continue;
                                 var config = {
                                     file:files[i],
                                     path: bt.get_file_path('/' + files[i].webkitRelativePath).replace('//','/') ,
@@ -213,7 +203,7 @@ var fileDrop = {
                         that.upload_file();
                         that.initTimer = new Date();
                         that.uploading = true;
-                        that.get_timer_speed();
+                        //that.get_timer_speed();
                     }
                 },
                 btn2:function (index, layero){
@@ -355,6 +345,7 @@ var fileDrop = {
     },
     // 上传文件,文件开始字段，文件编号
     upload_file:function(fileStart,index){
+        
         if(fileStart == undefined && this.uploadSuspend.length == 0) fileStart = 0,index = 0;
         if(this.filesList.length === index){
             clearInterval(this.speedInterval);
@@ -363,9 +354,14 @@ var fileDrop = {
             return false;
         }
         var that = this;
+        that.splitEndTime = new Date().getTime()
+        that.get_timer_speed()
+
+        that.splitStartTime = new Date().getTime()
         var item = this.filesList[index],fileEnd = '';
         if(item == undefined) return false;
         fileEnd = Math.min(item.file.size, fileStart + this.splitSize),
+        that.fileSize = fileEnd - fileStart
         form = new FormData();
         if(fileStart == 0){
             that.startTime = new Date();
@@ -392,6 +388,7 @@ var fileDrop = {
                     }else{
                         that.uploadedSize += parseInt(fileEnd - fileStart);  
                     }
+
                     that.upload_file(data,index);
                 }else{
                     if(data.status){
@@ -404,6 +401,7 @@ var fileDrop = {
                         that.errorLength ++;
                     }
                 }
+                
             },
             error:function(e){
                 if(that.filesList[index].req_error === undefined) that.filesList[index].req_error = 1
@@ -415,9 +413,28 @@ var fileDrop = {
                 }
                 that.filesList[index].req_error += 1;
                 that.upload_file(fileStart,index)
+
+                
             }
         });
     }, 
+    // 获取上传速度
+    get_timer_speed:function(speed){
+        var done_time = new Date().getTime()
+        if(done_time - this.speedLastTime > 1000){
+            var that = this,num = 0;
+            if(speed == undefined) speed = 200
+            var s_time = (that.splitEndTime - that.splitStartTime) / 1000;
+            that.timerSpeed = (that.fileSize / s_time).toFixed(2)
+            that.updateedSizeLast = that.uploadedSize
+            if(that.timerSpeed < 2) return;
+
+            $('.file_upload_info .uploadSpeed').text(that.to_size(isNaN(that.timerSpeed)?0:that.timerSpeed)+'/s');
+            var estimateTime = that.time(parseInt(((that.uploadAllSize - that.uploadedSize) / that.timerSpeed) * 1000))
+            if(!isNaN(that.timerSpeed)) $('.file_upload_info .uploadEstimate').text(estimateTime.indexOf('NaN') == -1?estimateTime:'0秒');
+            this.speedLastTime = done_time;
+        }
+    },
     time:function(date){
         var hours = Math.floor(date / (60 * 60 * 1000));
         var minutes = Math.floor(date / (60 * 1000));
@@ -920,7 +937,7 @@ function GetFiles(Path, sort) {
             }
 
             if (isImage(fmp[0])) {
-                image_view = "<a class='btlink' href='javascript:;' onclick=\"GetImage('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_img + "</a> | ";
+                image_view = "<a class='btlink' href='javascript:;' onclick=\"GetImage({path:'" + rdata.PATH + "/" + fmp[0] + "',filename:'"+ fmp[0] +"'})\">" + lan.files.file_menu_img + "</a> | ";
             }
             download = "<a class='btlink' href='javascript:;' onclick=\"GetFileBytes('" + rdata.PATH + "/" + fmp[0] + "'," + fmp[1] + ")\">" + lan.files.file_menu_down + "</a> | ";
             
@@ -1901,17 +1918,214 @@ function isExts(fileName, exts) {
     }
     return false;
 }
-function GetImage(fileName) {
-    var imgUrl = '/download?filename=' + fileName;
-    layer.open({
-        type: 1,
-        closeBtn: 2,
-        title: false,
-        area: '500px',
-        shadeClose: true,
-        content: '<div class="showpicdiv"><img width="100%" src="' + imgUrl + '"></div>'
+function GetImage(data) {
+    console.log(data);
+    var that = this,mask = $('<div class="preview_images_mask">'+
+        '<div class="preview_head">'+
+            '<span class="preview_title">'+ data.filename +'</span>'+
+            '<span class="preview_small hidden" title="缩小显示"><span class="glyphicon glyphicon-resize-small" aria-hidden="true"></span></span>'+
+            '<span class="preview_full" title="最大化显示"><span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span></span>'+
+            '<span class="preview_close" title="关闭图片预览视图"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></span>'+
+        '</div>'+
+        '<div class="preview_body"><img id="preview_images" src="/download?filename='+ data.path +'"></div>'+
+        '<div class="preview_toolbar">'+
+            '<a href="javascript:;" title="左旋转"><span class="glyphicon glyphicon-repeat reverse-repeat" aria-hidden="true"></span></a>'+
+            '<a href="javascript:;" title="右旋转"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span></a>'+
+            '<a href="javascript:;" title="放大视图"><span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span></a>'+
+            '<a href="javascript:;" title="缩小视图"><span class="glyphicon glyphicon-zoom-out" aria-hidden="true"></span></a>'+
+            '<a href="javascript:;" title="重置视图"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></a>'+
+            '<a href="javascript:;" title="图片列表"><span class="glyphicon glyphicon-list" aria-hidden="true"></span></a>'+
+        '</div>'+
+        '<div class="preview_cut_view" style="display:none;">'+
+            '<a href="javascript:;" title="上一张"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></a>'+
+            '<a href="javascript:;" title="下一张"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></a>'+
+        '</div>'+
+    '</div>'),
+    images_config = {natural_width:0,natural_height:0,init_width:0,init_height:0,preview_width:0,preview_height:0,current_width:0,current_height:0,current_left:0,current_top:0,rotate:0,scale:1,images_mouse:false};
+    if($('.preview_images_mask').length > 0){
+        $('#preview_images').attr('src','/download?filename=' + data.path);
+        return false;
+    }
+    $('body').css('overflow','hidden').append(mask);
+    images_config.preview_width = mask[0].clientWidth;
+    images_config.preview_height = mask[0].clientHeight;
+    // 图片预览
+    $('.preview_body img').load(function(){
+        var img = $(this)[0];
+        if(!$(this).attr('data-index')) $(this).attr('data-index',data.images_id);
+        images_config.natural_width = img.naturalWidth;
+        images_config.natural_height = img.naturalHeight;
+        auto_images_size(false);
     });
-    $(".layui-layer").css("top", "30%");
+    //图片头部拖动
+    $('.preview_images_mask .preview_head').on('mousedown',function(e){
+        e = e || window.event; //兼容ie浏览器
+        var drag = $(this).parent();
+        $('body').addClass('select'); //webkit内核和火狐禁止文字被选中
+        document.body.onselectstart = document.body.ondrag = function () { //ie浏览器禁止文字选中
+            return false;
+        }
+        if ($(e.target).hasClass('preview_close')) { //点关闭按钮不能拖拽模态框
+            return;
+        }
+        var diffX = e.clientX - drag.offset().left;
+        var diffY = e.clientY - drag.offset().top;
+        $(document).on('mousemove',function(e){
+            e = e || window.event; //兼容ie浏览器
+            var left = e.clientX - diffX;
+            var top = e.clientY - diffY;
+            if (left < 0) {
+                left = 0;
+            } else if (left > window.innerWidth - drag.width()) {
+                left = window.innerWidth - drag.width();
+            }
+            if (top < 0) {
+                top = 0;
+            } else if (top > window.innerHeight - drag.height()) {
+                top = window.innerHeight - drag.height();
+            }
+            drag.css({
+                left:left,
+                top:top,
+                margin:0
+            });
+        }).on('mouseup',function(){
+            $(this).unbind('mousemove mouseup');
+        });
+    });
+    //图片拖动
+    $('.preview_images_mask #preview_images').on('mousedown',function(e){
+        e = e || window.event;
+        document.body.onselectstart = document.body.ondrag = function(){
+            return false;
+        }
+        var images = $(this);
+        var preview =  $('.preview_images_mask').offset();
+        var diffX = e.clientX - preview.left;
+        var diffY = e.clientY - preview.top;
+        $('.preview_images_mask').on('mousemove',function(e){
+            e = e || window.event
+            var offsetX = e.clientX - preview.left - diffX,
+                offsetY = e.clientY - preview.top - diffY,
+                rotate = Math.abs(images_config.rotate / 90),
+                preview_width = (rotate % 2 == 0?images_config.preview_width:images_config.preview_height),
+                preview_height = (rotate % 2 == 0?images_config.preview_height:images_config.preview_width),
+                left,top;
+            if(images_config.current_width > preview_width){
+                var max_left = preview_width - images_config.current_width;
+                left = images_config.current_left + offsetX;
+                if(left > 0){
+                    left = 0
+                }else if(left < max_left){
+                    left = max_left
+                }
+                images_config.current_left = left;
+            }
+            if(images_config.current_height > preview_height){
+                var max_top = preview_height - images_config.current_height;
+                top = images_config.current_top + offsetY;
+                if(top > 0){
+                    top = 0
+                }else if(top < max_top){
+                    top = max_top
+                }
+                images_config.current_top = top;
+            }
+            if(images_config.current_height > preview_height && images_config.current_top <= 0){
+                if((images_config.current_height - preview_height) <= images_config.current_top){
+                    images_config.current_top -= offsetY
+                }
+            }
+            images.css({'left':images_config.current_left,'top':images_config.current_top});
+        }).on('mouseup',function(){
+            $(this).unbind('mousemove mouseup');
+        }).on('dragstart',function(){
+            e.preventDefault();
+        });
+    }).on('dragstart',function(){
+        return false;
+    });
+    //关闭预览图片
+    $('.preview_close').click(function(e){
+        $('.preview_images_mask').remove();
+    });
+    //图片工具条预览
+    $('.preview_toolbar a').click(function(){
+        var index = $(this).index(),images = $('#preview_images');
+        switch(index){
+            case 0: //左旋转,一次旋转90度
+            case 1: //右旋转,一次旋转90度
+                images_config.rotate = index?(images_config.rotate + 90):(images_config.rotate - 90);
+                auto_images_size();
+            break;
+            case 2:
+            case 3:
+                if(images_config.scale == 3 && index == 2|| images_config.scale == 0.2 && index == 3){
+                    layer.msg((images_config.scale >= 1?'图像放大，已达到最大尺寸。':'图像缩小，已达到最小尺寸。'));
+                    return false;
+                }
+                images_config.scale = (index == 2?Math.round((images_config.scale + 0.4)*10):Math.round((images_config.scale - 0.4)*10))/10;
+                auto_images_size();
+            break;
+            case 4:
+                var scale_offset =  images_config.rotate % 360;
+                if(scale_offset >= 180){
+                    images_config.rotate += (360 - scale_offset);
+                }else{
+                    images_config.rotate -= scale_offset;
+                }
+                images_config.scale = 1;
+                auto_images_size();
+            break;
+        }
+    });
+    // 最大最小化图片
+    $('.preview_full,.preview_small').click(function(){
+        if($(this).hasClass('preview_full')){
+            $(this).addClass('hidden').prev().removeClass('hidden');
+            images_config.preview_width = $(window)[0].innerWidth;
+            images_config.preview_height = $(window)[0].innerHeight;
+            mask.css({width:images_config.preview_width,height:images_config.preview_height ,top:0,left:0,margin:0}).data('type','full');
+            auto_images_size();
+        }else{
+            $(this).addClass('hidden').next().removeClass('hidden');
+            $('.preview_images_mask').removeAttr('style');
+            images_config.preview_width = 750;
+            images_config.preview_height = 650;
+            auto_images_size();
+        }
+    });
+    // 自动图片大小
+    function auto_images_size(transition){
+        var rotate = Math.abs(images_config.rotate / 90),preview_width = (rotate % 2 == 0?images_config.preview_width:images_config.preview_height),preview_height = (rotate % 2 == 0?images_config.preview_height:images_config.preview_width),preview_images = $('#preview_images'),css_config = {};
+        images_config.init_width = images_config.natural_width;
+        images_config.init_height = images_config.natural_height;
+        if(images_config.init_width > preview_width){
+            images_config.init_width = preview_width;
+            images_config.init_height = parseFloat(((preview_width / images_config.natural_width) * images_config.init_height).toFixed(2));
+        }
+        if(images_config.init_height > preview_height){
+            images_config.init_width = parseFloat(((preview_height / images_config.natural_height) * images_config.init_width).toFixed(2));
+            images_config.init_height= preview_height;
+        }
+        images_config.current_width = parseFloat(images_config.init_width * images_config.scale);
+        images_config.current_height  = parseFloat(images_config.init_height * images_config.scale);
+        images_config.current_left = parseFloat(((images_config.preview_width - images_config.current_width) / 2).toFixed(2));
+        images_config.current_top = parseFloat(((images_config.preview_height - images_config.current_height) / 2).toFixed(2));
+        css_config = {
+            'width':images_config.current_width ,
+            'height':images_config.current_height,
+            'top':images_config.current_top,
+            'left':images_config.current_left,
+            'display':'inline',
+            'transform':'rotate('+ images_config.rotate +'deg)',
+            'opacity':1,
+            'transition':'all 400ms',
+        }
+        if(transition === false) delete css_config.transition;
+        preview_images.css(css_config);
+    }
+
 }
 
 function play_file(obj,filename) {
@@ -2158,7 +2372,7 @@ function RClick(type, path, name, file_store,file_share,data_composer) {
         options.items.push({ text: lan.files.file_menu_unzip, onclick: function () { UnZip(path, displayZip) } }, { text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } });
     }
     else if (isImage(type)) {
-        options.items.push({ text: lan.files.file_menu_img, onclick: function () { GetImage(path) } }, { text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } });
+        options.items.push({ text: lan.files.file_menu_img, onclick: function () { GetImage({path:path,filename:name}) } }, { text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } });
     }
     else {
         options.items.push({ text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } });

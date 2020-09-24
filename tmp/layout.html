@@ -1,0 +1,277 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="referer" content="never" />
+    <meta name="renderer" content="webkit">
+    <title>{{g.title}}</title>
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
+    <link href="{{g.cdn_url}}/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="{{g.cdn_url}}/css/site.css?20200527={{g['version']}}" rel="stylesheet" />
+    <link href="{{g.cdn_url}}/codemirror/lib/codemirror.css?20200527={{g['version']}}" rel="stylesheet" />
+    <!--[if lte IE 9]>
+    	<script src="{{g.cdn_url}}/js/requestAnimationFrame.js"></script>
+    <![endif]-->
+    <style>
+		.top-tips {
+			height: 50px;
+			width: 100%;
+			color: red;
+			position: fixed;
+			top: 0;
+			z-index: 999;
+			background-color: white;
+			text-align: center;
+			line-height: 50px;
+			font-size: 20px;
+			border-bottom: 1px solid #f0f0f0;
+			font-weight: bold;
+			display: none;
+		}
+		.contextmenu {
+			position: absolute;
+			width: 120px;
+			background: #FFFFFF;
+			border-radius: 5px;
+			overflow: hidden;
+			z-index: 99999999;
+		}
+		.contextmenu li {
+			border-left: 3px solid transparent;
+			transition: ease 0.3s;
+		}
+		.contextmenu li:hover {
+			background: #707070;
+			border-left: 3px solid #333;
+		}
+		.contextmenu li a {
+			display: block;
+			padding: 5px 10px;
+			color: #000000;
+			text-decoration: none;
+			transition: ease 0.3s;
+			cursor:default;
+		}
+		.contextmenu li:hover a {
+			color: #fff;
+		}
+    </style>
+</head>
+<body>
+    <div class="bt-warp bge6">
+		<div class="top-tips">当前IE浏览器版本过低,部分功能无法展示,请更换至其他浏览器，国产浏览器请使用极速模式！</div>
+		<a style="display:none;" id="panel_debug" data="{{g['debug']}}" data-pyversion="{{g['pyversion']}}"></a>
+        <a style="display:none;" id="request_token_head" token="{{session['request_token_head']}}"></a>
+        <div id="container" class="container-fluid">
+            <div class="sidebar-scroll">
+                <div class="sidebar-auto">
+                    <div id="task" class="task cw" onclick="messagebox()">0</div>
+                    <h3 class="mypcip"><span class="f14 cw">{{session['address']}}</span></h3>
+                    <ul class="menu">
+                        {% for menu in g['menus'] %}
+                            {% if menu['href'] == g.uri %}
+                            <li id="{{menu['id']}}" class="current"> <a class="{{menu['class']}}" href="{{menu['href']}}">{{menu['title']}}</a></li>
+                            {% else %}
+                            <li id="{{menu['id']}}"> <a class="{{menu['class']}}" href="{{menu['href']}}">{{menu['title']}}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <button style="display: none;" id="bt_copys" class="bt_copy" data-clipboard-text=""></button>
+            <a style="display: none;" id="defaultPath">{{session['config']['sites_path']}}</a>
+            {% block content %}{% endblock %}
+            <div class="footer bgw">{{session['brand']}}{{session['product']}} &copy;2014-{{g['yaer']}} 广东堡塔安全技术有限公司 (bt.cn)<a style="margin-left:20px;color:#20a53a;" href="http://www.bt.cn/bbs" target="_blank">求助|建议请上宝塔论坛</a>
+        </div>
+	</div>
+
+	{% if g.cdn_url != '/static' %}
+	<script type="text/javascript">
+		function static_cdn_check(msg,url,line,col,error){
+			if(msg.indexOf('$ is not defined') != -1){
+				var s_url = '/static_cdn/set_state.json';
+				http_request = new XMLHttpRequest();
+                http_request.open('GET', s_url, true);
+                http_request.setRequestHeader("Content-type","application/json");
+				http_request.send();
+                http_request.onreadystatechange = function (e) {
+                    if (e.srcElement.readyState == 4 && e.srcElement.status == 200) {
+                        if(e.srcElement.responseText.indexOf('true') != -1){
+							alert("检测到【面板静态加速】节点故障，已自动关闭加速功能\n若需要继续使用【面板静态加速】功能，请在软件商店尝试手动重新开启\n\n点击确定刷新页面!")
+                            window.location.reload();
+                        }
+                    }
+                }
+			}
+		}
+		window.onerror=static_cdn_check;
+	</script>
+	{% endif %}
+
+	<script src="{{g.cdn_url}}/js/aes.js?version={{g['version']}}"></script>
+    <script src="{{g.cdn_url}}/js/jquery-1.10.2.min.js"></script>
+    <script src="{{g.cdn_url}}/js/bootstrap.min.js"></script>
+    <script src="{{g.cdn_url}}/language/{{session['lan']}}/lan.js?date={{g['version']}}"></script>
+	<script src="{{g.cdn_url}}/layer/layer.js?date={{g['version']}}"></script>
+    <script src="{{g.cdn_url}}/js/public.js?version20200903={{g['version']}}"></script>
+    <script src="{{g.cdn_url}}/js/public_backup.js?version20200903={{g['version']}}"></script>
+	<script src="{{g.cdn_url}}/codemirror/lib/codemirror.js?version={{g['version']}}"></script>
+
+    {% block scripts %}{% endblock %}
+	<script type="text/javascript">
+		
+	    function IEVersion() {
+            // 取得浏览器的userAgent字符串
+            var userAgent = navigator.userAgent;
+            // 判断是否为小于IE11的浏览器
+            var isLessIE11 = userAgent.indexOf('compatible') > -1 && userAgent.indexOf('MSIE') > -1;
+            // 判断是否为IE的Edge浏览器
+            var isEdge = userAgent.indexOf('Edge') > -1 && !isLessIE11;
+            // 判断是否为IE11浏览器
+            var isIE11 = userAgent.indexOf('Trident') > -1 && userAgent.indexOf('rv:11.0') > -1;
+            if (isLessIE11) {
+                var IEReg = new RegExp('MSIE (\\d+\\.\\d+);');
+                // 正则表达式匹配浏览器的userAgent字符串中MSIE后的数字部分，，这一步不可省略！！！
+                IEReg.test(userAgent);
+                // 取正则表达式中第一个小括号里匹配到的值
+                var IEVersionNum = parseFloat(RegExp['$1']);
+                if (IEVersionNum === 7) {// IE7
+                    return 7
+                } else if (IEVersionNum === 8) {// IE8
+                    return 8
+                } else if (IEVersionNum === 9) {// IE9
+                    return 9
+                } else if (IEVersionNum === 10) { // IE10
+                    
+                    return 10
+                } else {// IE版本<7
+                    return 6
+                }
+            } else if (isEdge) { // edge
+               
+                return 'edge'
+            } else if (isIE11) {// IE11
+                return 11
+            } else {// 不是ie浏览器
+                return -1
+            }
+        }
+        if(IEVersion() != -1 && IEVersion() < 9){
+            window.location.href = '/tips';
+        }
+	    $("#setBox").click(function () {
+	        if ($(this).prop("checked")) {
+	            $("input[name=id]").prop("checked", true);
+	        } else {
+	            $("input[name=id]").prop("checked", false);
+	        }
+	    });
+	    setCookie('order', 'id desc');
+	    var is_files_html = false;
+	    var task_open = 0;
+	    var task_close = false;
+	    if ($(".current").attr("id") == 'memuAfiles') {
+	        is_files_html = true;
+	    }
+	    function task_stat(my_init) {
+	        if (!my_init) {
+	            my_init = 0;
+	            if (task_open) return;
+	        }
+	        if (task_close) return;
+	        $.post('/task?action=get_task_lists', { status: -3 }, function (task_list) {
+	            if (task_list.length == 0) {
+	                if (my_init && is_files_html) GetFiles(getCookie('Path'));
+	                if (task_open) {
+	                    layer.close(task_open);
+	                    task_open = false;
+	                }
+	                return;
+	            }
+	
+	            console.log(task_list.length)
+	            var msg_body = '';
+	            var is_add = false;
+	            for (var i = 0; i < task_list.length; i++) {
+	                if (task_list[i]['status'] == -1) {
+	                    if (!task_open || !$(".message-list").attr("class")) {
+	                        show_task();
+	                    }
+	
+	                    if (task_list[i]['type'] == '1') {
+	                        msg_body += '<div class="mw-con">\
+		                                <ul class="waiting-down-list">\
+			                                <li>\
+				                                <div class="down-filse-name"><span class="fname" style="width:80%;" title="正在下载: '+ task_list[i].shell + '">正在下载: ' + task_list[i].shell + '</span><span style="position: absolute;left: 84%;top: 25px;color: #999;">' + task_list[i].log.pre + '%</span><span class="btlink" onclick="remove_task(' + task_list[i].id + ')" style="position: absolute;top: 25px;right: 20px;">取消</span></div>\
+				                                <div class="down-progress"><div class="done-progress" style="width:'+ task_list[i].log.pre + '%"></div></div>\
+				                                <div class="down-info"><span class="total-size"> '+ task_list[i].log.used + '/' + ToSize(task_list[i].log.total) + '</span><span class="speed-size">' + (task_list[i].log.speed == 0 ? '正在连接..' : task_list[i].log.speed) + '/s</span><span style="margin-left: 20px;">预计还要: ' + task_list[i].log.time +'</span></div>\
+			                                </li>\
+	                                        </ul>\
+	                                    </div>'
+	                    } else {
+	                        msg_body += '<div class="mw-title"><span style="max-width: 88%;display: block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">' + task_list[i].name + ': ' + task_list[i].shell + '</span><span class="btlink" onclick="remove_task(' + task_list[i].id + ')"  style="position: absolute;top: 10px;right: 15px;">取消</span></div>\
+	                                    <div class="mw-con codebg">\
+		                                    <code>'+ task_list[i].log +'</code>\
+	                                    </div>'
+	
+	                    }
+	
+	                } else {
+	                    if (!is_add) {
+	                        msg_body += '<div class="mw-title">等待执行任务</div><div class="mw-con"><ul class="waiting-list">';
+	                        is_add = true;
+	                    }
+	                    msg_body += '<li><span class="wt-list-name" style="width: 90%;">' + task_list[i].name + ': ' + task_list[i].shell + '</span><span class="mw-cancel" onclick="remove_task(' + task_list[i].id + ')">X</span></li>';
+	                }
+	            }
+	            if (task_open) {
+	                if (is_add) {
+	                    msg_body += '</ul></div>';
+	                }
+	                $(".message-list").html(msg_body);
+	            }
+	
+	                        
+	            if (my_init > 3) {
+	                if (is_files_html) GetFiles(getCookie('Path'));
+	                my_init = 1;
+	            }
+	            my_init +=1
+	            setTimeout(function () { task_stat(my_init); }, 1000);
+	        });
+	    }
+	    function show_task() {
+	        task_open = layer.open({
+	            type: 1,
+	            title: "实时任务队列",
+	            area: '500px',
+	            closeBtn: 2,
+	            shadeClose: false,
+	            shade: false,
+	            offset: 'auto',
+	            content: '<div style="margin: 10px;" class="message-list"></div>',
+	            cancel: function () {
+	                task_close = true;
+	            }
+	        });
+	    }                
+	    function remove_task(id) {
+	        loadT = layer.msg('正在取消任务...', { time: 0, icon: 16, shade: [0.3, '#000'] });
+	        $.post('/task?action=remove_task', { id: id }, function (rdata) {
+	            layer.close(loadT)
+	            layer.msg(rdata.msg);
+	        });
+	    }
+		loadScript([
+			'{{g.cdn_url}}/laydate/laydate.js',
+			'{{g.cdn_url}}/js/jquery.qrcode.min.js',
+			'{{g.cdn_url}}/js/clipboard.min.js'
+		],function(e){
+			
+		});
+	    task_stat();
+	   
+	</script>
+</body>
+</html>

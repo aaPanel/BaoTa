@@ -59,6 +59,17 @@
                         <label class='btswitch-btn' for='panel_verification'></label>
                     </div>
                 </div>
+                <div class="ss-text pull-left mr50">
+                    <em title="推荐宝塔官方最新的活动和优质软件">活动推荐</em>
+                    <div class='ssh-item'>
+                        <input class='btswitch btswitch-ios' id='show_recommend' type='checkbox' 
+                        {% if data['show_recommend'] %}
+                            checked
+                        {% endif %}
+                        />
+                        <label class='btswitch-btn' for='show_recommend'></label>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="setbox bgw mtb15">
@@ -88,6 +99,8 @@
                     <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT10']}}">{{data['lan']['CT10']}}</span><input name="password_" class="inputtxt bt-input-text disable" type="text" value="******" disabled><span class="modify btn btn-xs btn-success" onclick="setPassword()">{{data['lan']['CY10']}}</span></p>
                     <p class="mtb15"><span class="set-tit text-right" title="{{data['lan']['CT11']}}">{{data['lan']['CT11']}}</span><input name="btusername" class="inputtxt bt-input-text disable" type="text" value="" disabled><span class="modify btn btn-xs btn-success mr5" onclick="bindBTName(2,'b')">{{data['lan']['CY11']}}</span></p>
                     <p class="mtb15 wxapp_p"><span class="set-tit text-right">微信小程序</span><input class="inputtxt bt-input-text disable" type="text" value="{{data['wx']}}" disabled><span class="modify btn btn-xs btn-success mr5" onclick="open_wxapp()">绑定</span></p>
+                    <p class="mtb15"><span class="set-tit text-right">面板菜单栏隐藏</span><input class="inputtxt bt-input-text disable" id="panel_menu_hide" type="text" disabled><span class="modify btn btn-xs btn-success mr5" onclick="set_panel_ground()">设置</span></p>
+                    <p class="mtb15"><span class="set-tit text-right">临时访问授权</span><input class="inputtxt bt-input-text disable" type="text" value="为非管理员临时提供面板访问权限" disabled><span class="modify btn btn-xs btn-success mr5" onclick="get_temp_login_view()">管理</span></p>
                    </form>
                 <div class="bt-submit set-submit">{{data['lan']['C4']}}</div>
             </div>
@@ -281,14 +294,25 @@
 	.download_Qcode .item_down img{
 		width: 120px;
 	}
+    .create_temp_view{
+        padding:15px 20px;
+    }
+    .create_temp_view .line .tname{
+        text-align: left;
+        float: inherit;
+    }
+    .create_temp_view .info-r {
+        margin: 0;
+    }
+
 </style>
 
 {% endblock %}
 {% block scripts %}
 	<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.qrcode.min.js"></script>
 	<script src="{{g.cdn_url}}/js/config.js?version20200116={{g['version']}}"></script>
-	<script type="text/javascript">
-		setCookie('serverType',"{{session['webserver']}}");
+    <script type="text/javascript">
+        setCookie('serverType',"{{session['webserver']}}");
 	</script>
 {% endblock %}
 

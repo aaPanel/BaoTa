@@ -49,31 +49,38 @@
     "sort": 7
   },
   {
+    "title": "终端",
+    "href": "/xterm",
+    "class": "menu_xterm",
+    "id": "memuAxterm",
+    "sort": 8
+  },
+  {
     "title": "计划任务",
     "href": "/crontab",
     "class": "menu_day",
     "id": "memuAcrontab",
-    "sort": 8
+    "sort": 9
   },
   {
     "title": "软件商店",
     "href": "/soft",
     "class": "menu_soft",
     "id": "memuAsoft",
-    "sort": 9
+    "sort": 10
   },
   {
     "title": "面板设置",
     "href": "/config",
     "class": "menu_set",
     "id": "memuAconfig",
-    "sort": 10
+    "sort": 11
   },
   {
     "title": "退出",
     "href": "/login?dologin=True",
     "class": "menu_exit",
     "id": "dologin",
-    "sort": 11
+    "sort": 12
   }
 ]
