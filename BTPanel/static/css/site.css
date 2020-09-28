@@ -2388,19 +2388,26 @@ html .menu .menu_exit:hover {
 }
 
 .changepath .path-con-left dl dt {
-	background: url("../img/ico-computer.png") no-repeat left center;
+	/* background: url("../img/ico-computer.png") no-repeat left center; */
 	height: 30px;
 	line-height: 30px;
-	padding-left: 23px;
+	/* padding-left: 23px; */
 	font-size: 14px;
 	font-weight: normal;
-	margin-left: 10px
+	/* margin-left: 10px */
+}
+.changepath .path-con-left dl dd:hover{
+	background-color: #ececec;
 }
 
 .changepath .path-con-left dl dd {
 	line-height: 30px;
-	padding-left: 12px;
-	cursor: pointer
+	padding-left: 15px;
+	cursor: pointer;
+	width: 128px;
+	overflow: hidden;
+	text-overflow:ellipsis;
+	white-space: nowrap;
 }
 
 .changepath .path-con-left dl dd span {
