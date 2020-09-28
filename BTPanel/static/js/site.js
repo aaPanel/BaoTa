@@ -2661,12 +2661,12 @@ var site = {
                                         <span style="display:inline-block;max-width: 357px;overflow:hidden;text-overflow:ellipsis;vertical-align:-3px;white-space: nowrap;width: 357px;"><b>认证域名：</b> ' + rdata.cert_data.dns.join('、') + '</span>\
                                         <span style="margin-left: 20px;"><b>到期时间：</b> ' + rdata.cert_data.notAfter + '</span></div>'
                             }
-                            robj.append('<div>' + cert_info+'<div><span>密钥(KEY)</span><span style="padding-left:194px">证书(PEM格式)</span></div></div>');
+                            robj.append('<div>' + cert_info+'<div><span style="width: 45%;display: inline-block;margin-right: 20px;">密钥(KEY)</span><span  style="width: 45%;display: inline-block;margin-right: 20px;">证书(PEM格式)</span></div></div>');
                             var datas = [
                                 {
                                     items: [
-                                        { name: 'key', width: '45%', height: '220px', type: 'textarea', value: rdata.key },
-                                        { name: 'csr', width: '45%', height: '220px', type: 'textarea', value: rdata.csr }
+                                        { name: 'key', width: '45%', height: '260px', type: 'textarea', value: rdata.key },
+                                        { name: 'csr', width: '45%', height: '260px', type: 'textarea', value: rdata.csr }
                                     ]
                                 },
                                 {
@@ -2821,7 +2821,9 @@ var site = {
                                 text: '切换', name: 'btn_change_phpversion', type: 'button', callback: function (pdata) {
                                     bt.site.set_phpversion(web.name, pdata.versions, function (ret) {
                                         if (ret.status) site.reload(8)
-                                        bt.msg(ret);
+                                        setTimeout(function(){
+                                            bt.msg(ret);
+                                        },2000);
                                     })
                                 }
                             }
