@@ -382,6 +382,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                     continue
                 if not os.path.exists(filename): continue
                 file_info = self.__format_stat(filename, get.path)
+                if not file_info: continue
                 r_file = file_info['name'] + ';' + str(file_info['size']) + ';' + str(file_info['mtime']) + ';' + str(
                     file_info['accept']) + ';' + file_info['user'] + ';' + file_info['link']+';' + self.get_download_id(filename) + ';' + self.is_composer_json(filename)
                 if os.path.isdir(filename):

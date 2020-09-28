@@ -211,7 +211,7 @@ class panelSSL:
 
     #获取指定域名的PATH
     def get_domain_run_path(self,domain):
-        pid = public.M('domain').where('name=?',(domain,)).getField('pid')
+        pid = public.M('domains').where('name=?',(domain,)).getField('pid')
         if not pid: return False
         return self.get_site_run_path(pid)
 
@@ -259,6 +259,19 @@ class panelSSL:
             path = sitePath
         return path
         
+    #验证URL是否匹配
+    def check_url_txt(self,args):
+
+        url = args.url
+        content = args.content
+        result = public.httpGet(url,10)
+  
+        if result.find('11001') != -1: return -1
+        if result.find('Not Found') != -1:return -2
+        if result.find('timed out') != -1:return -3        
+        if result == content:return 1
+
+        return 0;
     #获取商业证书验证结果
     def get_verify_result(self,args):
         self.__PDATA['data']['oid'] = args.oid
@@ -277,6 +290,7 @@ class panelSSL:
                 is_https = ''
             domain = dinfo['domainName']
             if domain[:2] == '*.': domain = domain[2:]
+            dinfo['domainName'] = domain
             if is_file_verify:
                 siteRunPath = self.get_domain_run_path(domain)
                 if not siteRunPath:
@@ -374,7 +388,7 @@ class panelSSL:
             result = json.loads(result)
         except: return result
         result['data'] = self.En_Code(result['data'])
-        if hasattr(result['data'],'authValue'):
+        if 'authValue' in result['data'].keys():
             public.writeFile(authfile,result['data']['authValue'])
         
         return result
@@ -426,6 +440,8 @@ class panelSSL:
                 return public.returnMsg(False,'SSL_CHECK_WRITE_ERR')
         try:
             result = json.loads(public.httpPost(self.__APIURL + '/Completed',self.__PDATA))
+            if 'data' in result:
+                result['data'] = self.En_Code(result['data'])
         except:
             result = public.returnMsg(True,'检测中..')
         n = 0
@@ -441,7 +457,9 @@ class panelSSL:
                     my_ok = True
                     break
             except: return public.get_error_info()
-        if not my_ok: return result
+        if not my_ok: 
+            
+            return result
         return rRet
     
     #同步指定订单

@@ -1,12 +1,22 @@
-
-if (bind_user == 'True') {
+function show_force_bind(){
     layer.open({
         type: 1,
         title: '绑定宝塔官网账号',
-        area: ['420px', '395px'],
+        area: ['420px', '400px'],
         closeBtn: 2,
         shadeClose: false,
-        content: '<div class="libLogin pd20" ><div class="bt-form text-center"><div class="line mb15"><p>恭喜您，宝塔面板已经安装成功。 </p><h3 class="c2 f16 text-center mtb20">绑定宝塔官网账号，即可开始使用<a href="javascript:;" class="bind_ps bt-ico-ask">?</a></h3></div><div class="line"><input class="bt-input-text" name="username2" type="text" placeholder="手机" id="p1"></div><div class="line"><input autocomplete="new-password" class="bt-input-text" type="password" name="password2"  placeholder="密码" id="p2"></div><div class="line" style="margin-top: 15px;"><input class="login-button" value="登录" type="button" ></div><p class="text-right"><a class="btlink" href="https://www.bt.cn/register.html" target="_blank">未有账号，免费注册</a></p></div></div>',
+        content: '<div class="libLogin pd20">\
+                <div class="bt-form text-center">\
+                    <div class="line mb15">\
+                        <p>恭喜您，宝塔面板已经安装成功。 </p>\
+                        <h3 class="c2 f16 text-center mtb20">绑定宝塔官网账号，即可开始使用<a href="javascript:;" class="bind_ps bt-ico-ask">?</a></h3>\
+                    </div>\
+                    <div class="line"><input class="bt-input-text" name="username2" type="text" placeholder="手机" id="p1"></div>\
+                    <div class="line"><input autocomplete="new-password" class="bt-input-text" type="password" name="password2"  placeholder="密码" id="p2"></div>\
+                    <div class="line" style="margin-top: 15px;"><input class="login-button" value="登录" type="button" ></div>\
+                    <p class="text-right"><a class="btlink" href="https://www.bt.cn/register.html" target="_blank">未有账号，免费注册</a></p>\
+                </div>\
+            </div>',
         success: function () {
             $('.login-button').click(function () {
                 p1 = $("#p1").val();
@@ -39,17 +49,21 @@ if (bind_user == 'True') {
             })
         },
         cancel: function () {
-            layer.alert('<p>为了您能更好的体验面板功能，请先绑定宝塔账号.</p>', {btn:'我已了解', title:'绑定账号'}, function(index){
+            layer.alert('<ul class="help-info-text" style="margin-top:0px;">\
+            <li>为了您能更好的体验面板功能，请先绑定宝塔账号；</li>\
+            <li>绑定帐号没有接管服务器的功能权限，请放心使用；</li>\
+            <li>帐号绑定过程中遇到问题请联系客服处理；</li>\
+            <li>客服QQ：800176556，客服电话：0769-23030556</li>\
+            </ul>', {btn:'我已了解', title:'绑定提醒',area:'500px'}, function(index){
 			  layer.close(index);
 			});
 			return false; 
         }
     });
 }
-else {
-    bt.pub.check_install(function (rdata) {
-        if (rdata === false) bt.index.rec_install();
-    })
+
+if (bind_user == 'True') {
+    show_force_bind();
 }
 
 
@@ -146,41 +160,12 @@ var index = {
     },
     get_init: function () {
         var _this = this;
-        setTimeout(function () { _this.get_disk_list(); }, 10);
-        setTimeout(function () { _this.get_warning_list(); }, 20);
-        setTimeout(function () { _this.get_server_info(); }, 30);
+        // setTimeout(function () { _this.get_disk_list(); }, 10);
 
 
-        bt.pub.get_user_info(function (rdata) {
-            if (rdata.status) {
-                $(".bind-user").html(rdata.data.username);
-                bt.send('check_user_auth', 'ajax/check_user_auth', {}, function (rd) {
-                    if (!rd.status) bt.msg(rd);
-                });
-                bt.weixin.get_user_info(function (rdata) {
-                    if (!rdata.status) {
-                        bt.msg(rdata);
-                        return;
-                    }
-                    if (JSON.stringify(rdata.msg) != '{}') {
-                        var datas = rdata.msg;
-                        for (var key in datas) {
-                            var item = datas[key];
-                            item.nickName
-                            $(".bind-weixin a").text(item.nickName);
-                            break;
-                        }
-                    }
-                });
-
-            }
-            else {
-                $(".bind-weixin a").attr("href", "javascript:;");
-                $(".bind-weixin a").click(function () {
-                    bt.msg({ msg: '请先绑定宝塔账号!', icon: 2 });
-                })
-            }
-        })
+        // bt.pub.get_user_info(function (rdata) {
+            
+        // })
 
         _this.get_data_info(function (loadbox, rdata) {
             loadbox.find('.cicle').hover(function () {
@@ -190,7 +175,6 @@ var index = {
             }, function () {
                 layer.closeAll('tips');
             })
-
             $('.cpubox').find('.cicle').hover(function () {
                 var _this = $(this);
                 var d = _this.parents('ul').data('data').cpu;
@@ -253,14 +237,44 @@ var index = {
                     }
                 })
             })
+            _this.get_server_info(rdata);
+            _this.get_disk_list(rdata.disk);
+            if(rdata.installed === false) bt.index.rec_install();
+            if (rdata.user_info.status) {
+                var rdata_data = rdata.user_info.data;
+                console.log(rdata_data);
+                $(".bind-user").html(rdata_data.username);
+                // bt.send('check_user_auth', 'ajax/check_user_auth', {}, function (rd) {
+                //     if (!rd.status) bt.msg(rd);
+                // });
+                // bt.weixin.get_user_info(function (rdata) {
+                //     if (!rdata.status){
+                //         bt.msg(rdata);
+                //         return;
+                //     }
+                //     if (JSON.stringify(rdata.msg) != '{}') {
+                //         var datas = rdata.msg;
+                //         for (var key in datas) {
+                //             var item = datas[key];
+                //             item.nickName
+                //             $(".bind-weixin a").text(item.nickName);
+                //             break;
+                //         }
+                //     }
+                // });
+            }
+            else {
+                $(".bind-weixin a").attr("href", "javascript:;");
+                $(".bind-weixin a").click(function () {
+                    bt.msg({ msg: '请先绑定宝塔账号!', icon: 2 });
+                })
+            }
         });
-        setTimeout(function () { _this.interval.start(); }, 40)
-        setTimeout(function () { index.get_index_list(); }, 50)
+        setTimeout(function () { _this.interval.start(); }, 400)
+        setTimeout(function () { _this.get_index_list(); }, 500)
+        setTimeout(function () { _this.net.init() }, 600);
+        setTimeout(function () { _this.get_warning_list(); }, 700);
 
-
-        setTimeout(function () {
-            _this.net.init();
-        }, 60);
 
         setTimeout(function () {
             bt.system.check_update(function (rdata) {
@@ -276,10 +290,9 @@ var index = {
                 }
 
             }, false)
-        }, 70)
+        }, 700)
     },
     get_data_info: function (callback) {
-
         bt.system.get_net(function (net) {
             var pub_arr = [{ val: 100, color: '#dd2f00' }, { val: 90, color: '#ff9900' }, { val: 70, color: '#20a53a' }, { val: 30, color: '#20a53a' }];
             var load_arr = [{ title: '运行堵塞', val: 100, color: '#dd2f00' }, { title: '运行缓慢', val: 90, color: '#ff9900' }, { title: '运行正常', val: 70, color: '#20a53a' }, { title: '运行流畅', val: 30, color: '#20a53a' }];
@@ -294,6 +307,8 @@ var index = {
             index.set_val(_loadbox, { usage: _lval, items: load_arr })
             _loadbox.parents('ul').data('data', net);
 
+
+
             //刷新流量
             $("#upSpeed").html(net.up + ' KB');
             $("#downSpeed").html(net.down + ' KB');
@@ -301,52 +316,51 @@ var index = {
             $("#upAll").html(bt.format_size(net.upTotal));
             index.net.add(net.up, net.down);
             if (index.net.table) index.net.table.setOption({ xAxis: { data: index.net.data.aData }, series: [{ name: lan.index.net_up, data: index.net.data.uData }, { name: lan.index.net_down, data: index.net.data.dData }] });
-
             if (callback) callback(_loadbox, net);
         })
     },
-    get_server_info: function () {
-        bt.system.get_total(function (info) {
-            var memFree = info.memTotal - info.memRealUsed;
-            if (memFree < 64) {
-                $("#messageError").show();
-                $("#messageError").append('<p><span class="glyphicon glyphicon-alert" style="color: #ff4040; margin-right: 10px;">' + lan.index.mem_warning + '</span> </p>')
-            }
+    get_server_info: function(info) {
+        // bt.system.get_total(function (info) {
+        var memFree = info.memTotal - info.memRealUsed;
+        if (memFree < 64) {
+            $("#messageError").show();
+            $("#messageError").append('<p><span class="glyphicon glyphicon-alert" style="color: #ff4040; margin-right: 10px;">' + lan.index.mem_warning + '</span> </p>')
+        }
 
-            if (info.isuser > 0) {
-                $("#messageError").show();
-                $("#messageError").append('<p><span class="glyphicon glyphicon-alert" style="color: #ff4040; margin-right: 10px;"></span>' + lan.index.user_warning + '<span class="c7 mr5" title="此安全问题不可忽略，请尽快处理" style="cursor:no-drop"> [不可忽略]</span><a class="btlink" href="javascript:setUserName();"> [立即修改]</a></p>')
-            }
+        if (info.isuser > 0) {
+            $("#messageError").show();
+            $("#messageError").append('<p><span class="glyphicon glyphicon-alert" style="color: #ff4040; margin-right: 10px;"></span>' + lan.index.user_warning + '<span class="c7 mr5" title="此安全问题不可忽略，请尽快处理" style="cursor:no-drop"> [不可忽略]</span><a class="btlink" href="javascript:setUserName();"> [立即修改]</a></p>')
+        }
 
-            if (info.isport === true) {
-                $("#messageError").show();
-                $("#messageError").append('<p><span class="glyphicon glyphicon-alert" style="color: #ff4040; margin-right: 10px;"></span>当前面板使用的是默认端口[8888]，有安全隐患，请到面板设置中修改面板端口!<span class="c7 mr5" title="此安全问题不可忽略，请尽快处理" style="cursor:no-drop"> [不可忽略]</span><a class="btlink" href="/config"> [立即修改]</a></p>')
-            }
-            var _system = info.system;
-            $("#info").html(_system);
-            $("#running").html(info.time);
-            if (_system.indexOf("Windows") != -1) {
-                $(".ico-system").addClass("ico-windows");
-            }
-            else if (_system.indexOf("CentOS") != -1) {
-                $(".ico-system").addClass("ico-centos");
-            }
-            else if (_system.indexOf("Ubuntu") != -1) {
-                $(".ico-system").addClass("ico-ubuntu");
-            }
-            else if (_system.indexOf("Debian") != -1) {
-                $(".ico-system").addClass("ico-debian");
-            }
-            else if (_system.indexOf("Fedora") != -1) {
-                $(".ico-system").addClass("ico-fedora");
-            }
-            else {
-                $(".ico-system").addClass("ico-linux");
-            }
-        })
+        if (info.isport === true) {
+            $("#messageError").show();
+            $("#messageError").append('<p><span class="glyphicon glyphicon-alert" style="color: #ff4040; margin-right: 10px;"></span>当前面板使用的是默认端口[8888]，有安全隐患，请到面板设置中修改面板端口!<span class="c7 mr5" title="此安全问题不可忽略，请尽快处理" style="cursor:no-drop"> [不可忽略]</span><a class="btlink" href="/config"> [立即修改]</a></p>')
+        }
+        var _system = info.system;
+        $("#info").html(_system);
+        $("#running").html(info.time);
+        if (_system.indexOf("Windows") != -1) {
+            $(".ico-system").addClass("ico-windows");
+        }
+        else if (_system.indexOf("CentOS") != -1) {
+            $(".ico-system").addClass("ico-centos");
+        }
+        else if (_system.indexOf("Ubuntu") != -1) {
+            $(".ico-system").addClass("ico-ubuntu");
+        }
+        else if (_system.indexOf("Debian") != -1) {
+            $(".ico-system").addClass("ico-debian");
+        }
+        else if (_system.indexOf("Fedora") != -1) {
+            $(".ico-system").addClass("ico-fedora");
+        }
+        else {
+            $(".ico-system").addClass("ico-linux");
+        }
+        // })
     },
-    get_disk_list: function () {
-        bt.system.get_disk_list(function (rdata) {
+    get_disk_list:function(rdata) {
+        // bt.system.get_disk_list(function (rdata) {
             if (rdata) {
                 var data = { table: '#systemInfoList', items: [] };
                 for (var i = 0; i < rdata.length; i++) {
@@ -376,7 +390,7 @@ var index = {
                 }
                 index.render_disk(data);
             }
-        })
+        // })
     },
     render_disk: function (data) {
         if (data.items.length > 0) {

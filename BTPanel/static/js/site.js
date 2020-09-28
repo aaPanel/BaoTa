@@ -1902,7 +1902,7 @@ var site = {
                         }
                     },
                     {
-                        title:"商用证书",callback:function(robj){
+                        title:"商用证书<i class='ssl_recom_icon'></i>",callback:function(robj){
                             var deploy_ssl_info = rdata;
                             var html = '',product_list,userInfo,loadT = bt.load('正在获取商业证书订单列表，请稍后...'),order_list,is_check = true,itemData,activeData,loadY;
                             bt.send('get_order_list','ssl/get_order_list',{},function(rdata){
@@ -2198,32 +2198,65 @@ var site = {
                                                 loadT.close();
                                                 $('#ssl_tabs span:eq(2)').click();
                                             });
+                                            
+                                            // 重新验证按钮
+                                            $('.domains_table').on('click','.check_url_results',function(){
+                                                var _url = $(this).data('url'), _con = $(this).data('content');
+                                                check_url_txt(_url, _con, this)
+                                             
+			                                })
                                         }
                                     });
                                 });
                             }
 
                             /**
+                             * @description 重新验证
+                             * @param {String} url 验证地址
+                             * @param {String} content 验证内容
+                             * @returns 返回验证状态
+                             */
+                            function check_url_txt(url, content,_this) {
+                                var loads = bt.load('正在获取验证结果,请稍后...');
+                                bt.send('check_url_txt', 'ssl/check_url_txt', { url: url, content: content }, function (res) {
+                                    loads.close();
+                                    var html = '<span style="color:red">失败[' + res +']</span><a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="bt-ico-ask" style="cursor: pointer;">?</a>'
+                                    if (res === '1') {
+                                        html =  '<a class="btlink">通过</a>';
+                                    }
+                                    $(_this).parents('tr').find('td:nth-child(2)').html(html)
+                                })
+                            }
+                            /**
                              * @description 渲染验证模板接口
                              * @param {Object} data 验证数据
                              * @returns void
                              */
-                            function reader_domains_cname_check(data){
+                            function reader_domains_cname_check(data) {
                                 var html = '';
-                                if(data.type){
+                                if (data.type) {
+
+                                    var check_html = '<div class="bt-table domains_table" style="margin-bottom:20px"><div class="divtable"><table class="table table-hover"><thead><tr><th width="250">URL</th><th width="85">验证结果</th><th style="text-align:right;">操作</th></thead>'
+                                    var paths = data.info.paths
+                                    for (var i = 0; i < paths.length; i++) {
+                                        check_html += '<tr><td><span title="' + paths[i].url + '" class="lib-ssl-overflow-span-style">' + paths[i].url + '</span></td><td>' + (paths[i].status == 1 ? '<a class="btlink">通过</a>' : '<span style="color:red">失败[' + paths[i].status+']</span><a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="bt-ico-ask" style="cursor: pointer;">?</a>') + '</td><td style="text-align:right;"><a href="javascript:bt.pub.copy_pass(\''+paths[i].url+'\');" class="btlink">复制</a> | <a href="'+paths[i].url+'" target="_blank" class="btlink">打开</a> | <a data-url="'+paths[i].url+'" data-content="'+data.info.fileContent+'" class="btlink check_url_results">重新验证</a></td>'
+                                    }
+                                    check_html += '</table></div></div>'
+
                                     html = '<div class="lib-ssl-parsing">\
-                                        <div class="parsing_tips">请给以下域名【 <span class="highlight">'+ data.domains.join('、') +'</span> 】添加验证文件，验证信息如下：</div>\
-                                        <div class="parsing_parem"><div class="parsing_title">文件所在位置：</div><div class="parsing_info"><input type="text" name="filePath"  class="parsing_input border" value="'+ data.info.filePath +'" readonly="readonly" /></div></div>\
-                                        <div class="parsing_parem"><div class="parsing_title">文件名：</div><div class="parsing_info"><input type="text" name="fileName" class="parsing_input" value="'+ data.info.fileName +'" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="'+ data.info.fileName +'">复制</span></div></div>\
-                                        <div class="parsing_parem"><div class="parsing_title" style="vertical-align: top;">文件内容：</div><div class="parsing_info"><textarea name="fileValue"  class="parsing_textarea" readonly="readonly">'+ data.info.fileContent +'</textarea><span class="parsing_icon" style="display: block;width: 60px;border-radius: 3px;" data-clipboard-text="'+ data.info.fileContent +'">复制</span></div></div>\
-                                        <div class="parsing_tips">· 关于添加验证文件，请自行百度，和咨询服务器运营商。</div>\
+                                        <div class="parsing_tips">请给以下域名【 <span class="highlight">'+ data.domains.join('、') + '</span> 】添加验证文件，验证信息如下：</div>\
+                                        <div class="parsing_parem"><div class="parsing_title">文件所在位置：</div><div class="parsing_info"><input type="text" name="filePath"  class="parsing_input border" value="'+ data.info.filePath + '" readonly="readonly" /></div></div>\
+                                        <div class="parsing_parem"><div class="parsing_title">文件名：</div><div class="parsing_info"><input type="text" name="fileName" class="parsing_input" value="'+ data.info.fileName + '" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="' + data.info.fileName + '">复制</span></div></div>\
+                                        <div class="parsing_parem"><div class="parsing_title" style="vertical-align: top;">文件内容：</div><div class="parsing_info"><textarea name="fileValue"  class="parsing_textarea" readonly="readonly">'+ data.info.fileContent + '</textarea><span class="parsing_icon" style="display: block;width: 60px;border-radius: 3px;" data-clipboard-text="' + data.info.fileContent + '">复制</span></div></div>'
+                                        + check_html +
+                                        '<div class="parsing_tips" >· SSL添加文件验证方式 ->> <a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="btlink" >查看教程</a></div >\
                                         <div class="parsing_parem" style="padding: 0 100px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
                                     </div>';
-                                }else{
+                                } else {
                                     html = '<div class="lib-ssl-parsing">\
-                                        <div class="parsing_tips">请给以下域名【 <span class="highlight">'+ data.domains.join('、') +'</span> 】添加‘‘'+ data.info.dnsType +'’’解析，解析参数如下：</div>\
-                                        <div class="parsing_parem"><div class="parsing_title">主机记录：</div><div class="parsing_info"><input type="text" name="host" class="parsing_input" value="'+ data.info.dnsHost +'" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="'+ data.info.dnsHost +'">复制</span></div></div>\
-                                        <div class="parsing_parem"><div class="parsing_title">记录值：</div><div class="parsing_info"><input type="text" name="domains"  class="parsing_input" value="'+ data.info.dnsValue +'" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="'+ data.info.dnsValue +'">复制</span></div></div>\
+                                        <div class="parsing_tips">请给以下域名【 <span class="highlight">'+ data.domains.join('、') + '</span> 】添加‘‘' + data.info.dnsType + '’’解析，解析参数如下：</div>\
+                                        <div class="parsing_parem"><div class="parsing_title">主机记录：</div><div class="parsing_info"><input type="text" name="host" class="parsing_input" value="'+ data.info.dnsHost + '" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="' + data.info.dnsHost + '">复制</span></div></div>\
+                                        <div class="parsing_parem"><div class="parsing_title">记录值：</div><div class="parsing_info"><input type="text" name="domains"  class="parsing_input" value="'+ data.info.dnsValue + '" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="' + data.info.dnsValue + '">复制</span></div></div>\
                                         <div class="parsing_tips">· 关于如何添加域名解析，请自行百度，和咨询服务器运营商。</div>\
                                         <div class="parsing_parem" style="padding: 0 100px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
                                     </div>';
@@ -2283,10 +2316,14 @@ var site = {
                                     var list = '',userInfo = res.administrator,timeOut,is_pay_view = null;
                                     $.each(res.data,function(index,item){
                                         if(item.state){
-                                            list += '<tr data-index="'+ index +'"><td><input type="radio" name="ssl_radio" /><span>' + item.title +'</span></td><td style="text-align: right;"><span style="color: #FF6232;">'+ item.price +'元/1年</span></td></tr>'
+                                            list += '<tr data-index="'+index + '"><td><input type="radio" name="ssl_radio" /><span>' + item.title + '</span></td><td style="text-align: right;">'+ (item.discount<1?'<span style="color: #bbbbbb;text-decoration: line-through;margin-right: 15px;" class="mr5">原价:'+ item.src_price.toFixed(2)  +'元/年</span>':'') + '<span style="color: #FF6232;">'+ item.price.toFixed(2) + '元/1年</span></td></tr>'
                                         }
                                     });
                                     if(list == '') list = '<div class="ssl_info_item">无证书信息</div>';
+                                    var arry = [['个人使用',true,true],['企业使用',false,true],['多域名/泛域名/IP证书',false,true],['赔付保障',false,true],['技术支持',false,true]],html ='';
+                                    $.each(arry,function(index,item){
+                                        html+= '<tr><td class="one_title">'+ item[0] +'</td><td class="'+ (item[1]?'yes':'no') +'"></td><td class="'+ (item[2]?'yes':'no') +'"></td></tr>';
+                                    });
                                     var cert_info = '<div class="bt-form business_ssl_application">\
                                         <div class="guide_body">\
                                             <div class="guide_path">\
@@ -2300,10 +2337,17 @@ var site = {
                                         <div class="guide_content" data-guide="1">\
                                             <div class="line">\
                                                 <span class="tname">证书品牌</span>\
-                                                <div class="info-r">\
-                                                    <div class="ssl-brand-info">\
-                                                        Comodo 是一个领先的SSL证书提供商，保证电子商务数据传输的实时安全，是世界优秀的IT安全服务提供商和SSL证书认证机构之一。\
-                                                    </div>\
+                                                <div class="info-r" >\
+                                                    <a href="https://www.racent.com/sectigo-ssl" class="ssl-brand-info" target="_blank">Comodo成立于1998年，SSL证书种类比较全面，性价比高，颁发速度快，PositiveSSL子品牌广受全球中小型网站的青睐，2018年正式更名为Sectigo。</a>\
+                                                </div>\
+                                            </div>\
+                                            <div class="line">\
+                                                <span class="tname">证书对比</span>\
+                                                <div class="info-r" style="min-height: 32px;line-height: 32px;">\
+                                                    <table class="compared_ssl_list">\
+                                                        <thead><tr><th>证书类型</th><th>免费证书</th><th>商用证书</th></tr></thead>\
+                                                        <tbody>'+ html +'</tbody>\
+                                                    </table>\
                                                 </div>\
                                             </div>\
                                             <div class="line">\
@@ -2311,7 +2355,7 @@ var site = {
                                                 <div class="info-r">\
                                                     <div class="divtable ssl_class_table" >\
                                                         <table class="table table-hover">\
-                                                            <tbody>'+ list +'</tbody>\
+                                                            <tbody>'+ list + '</tbody>\
                                                         </table>\
                                                     </div>\
                                                 </div>\
@@ -2427,7 +2471,7 @@ var site = {
                                                 activeData = res.data[index];
                                                 $(this).addClass('active').siblings().removeClass('active');
                                                 $(this).find('input').prop('checked','checked');
-                                                $('.guide_price').html('<span>'+ activeData.price +'</span><span>元/1年</span>');
+                                                $('.guide_price').html('<span>'+ activeData.price.toFixed(2) + '</span><span>元/1年</span><span style="color: #bbbbbb;text-decoration: line-through;margin-left: 15px;" class="mr5">原价:'+ activeData.src_price.toFixed(2) +'元/年</span>');
                                             }).eq(0).click();
                                             $('.next-plan').click(function(){
                                                 var guide = parseInt($(this).data('guide')),code = activeData.code,placeholder = '';
@@ -2562,7 +2606,7 @@ var site = {
                                                     }
                                                     $('.guide_path_progress span:eq(0)').width(290);
                                                     $('.ssl_applay_info').show().siblings('.guide_content').hide();
-                                                    $('.sale-price').text(activeData.price);
+                                                    $('.sale-price').text(activeData.price.toFixed(2));
                                                     $('.lib-price-detailed .info:eq(0) span:eq(1)').text(activeData.title);
                                                     $('.lib-price-detailed .info:eq(1) span:eq(1)').text(bt.format_data(new Date().getTime()));
                                                     $('.guide_path span:eq(2)').addClass('active');

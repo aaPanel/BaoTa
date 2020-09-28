@@ -279,6 +279,9 @@ class system:
     
     def GetSystemVersion(self):
         #取操作系统版本
+        key = 'sys_version'
+        version = cache.get(key)
+        if version: return version
         import public
         version = public.readFile('/etc/redhat-release')
         if not version:
@@ -286,10 +289,15 @@ class system:
         else:
             version = version.replace('release ','').replace('Linux','').replace('(Core)','').strip()
         v_info = sys.version_info
-        return version + '(Py' + str(v_info.major) + '.' + str(v_info.minor) + '.' + str(v_info.micro) + ')'
+        version = version + '(Py' + str(v_info.major) + '.' + str(v_info.minor) + '.' + str(v_info.micro) + ')'
+        cache.set(key,version,600)
+        return version
     
     def GetBootTime(self):
         #取系统启动时间
+        key = 'sys_time'
+        sys_time = cache.get(key)
+        if sys_time: return sys_time
         import public,math
         conf = public.readFile('/proc/uptime').split()
         tStr = float(conf[0])
@@ -298,7 +306,9 @@ class system:
         days = math.floor(hours / 24)
         hours = math.floor(hours - (days * 24))
         min = math.floor(min - (days * 60 * 24) - (hours * 60))
-        return "{}天".format(int(days))
+        sys_time = "{}天".format(int(days))
+        cache.set(key,sys_time,1800)
+        return sys_time
         #return public.getMsg('SYS_BOOT_TIME',(str(int(days)),str(int(hours)),str(int(min))))
     
     def GetCpuInfo(self,interval = 1):
@@ -308,14 +318,23 @@ class system:
         c_tmp = public.readFile('/proc/cpuinfo')
         d_tmp = re.findall("physical id.+",c_tmp)
         cpuW = len(set(d_tmp))
-        used = psutil.cpu_percent(interval)
+        import threading
+        p = threading.Thread(target=self.get_cpu_percent_thead,args=(interval,))
+        p.setDaemon(True)
+        p.start()
+        
+        used = cache.get('cpu_used_all')
+        if not used: used = self.get_cpu_percent_thead(interval)
+
         used_all = psutil.cpu_percent(percpu=True)
         cpu_name = public.getCpuType() + " * {}".format(cpuW)
         return used,cpuCount,used_all,cpu_name,cpuNum,cpuW
 
-
-    def GetCpuInfo_new(self):
-        cpuCount = psutil.cpu_count()
+    def get_cpu_percent_thead(self,interval):
+        used = psutil.cpu_percent(interval)
+        cache.set('cpu_used_all',used,10)
+        return used
+        
 
     def get_cpu_percent(self):
         percent = 0.00
@@ -375,6 +394,9 @@ class system:
     
     def GetDiskInfo2(self):
         #取磁盘分区信息
+        key = 'sys_disk'
+        diskInfo = cache.get(key)
+        if diskInfo: return diskInfo
         temp = public.ExecShell("df -hT -P|grep '/'|grep -v tmpfs|grep -v 'snap/core'|grep -v udev")[0]
         tempInodes = public.ExecShell("df -i -P|grep '/'|grep -v tmpfs|grep -v 'snap/core'|grep -v udev")[0]
         temp1 = temp.split('\n')
@@ -406,6 +428,7 @@ class system:
             except Exception as ex: 
                 public.WriteLog('信息获取',str(ex))
                 continue
+        cache.set(key,diskInfo,360)
         return diskInfo
 
     #清理系统垃圾
@@ -498,7 +521,7 @@ class system:
         cache.set('down',networkIo[1],cache_timeout)
         cache.set('otime', time.time(),cache_timeout)
         if get != False:
-            networkInfo['cpu'] = self.GetCpuInfo(0.2)
+            networkInfo['cpu'] = self.GetCpuInfo(1)
             networkInfo['load'] = self.GetLoadAverage(get)
             networkInfo['mem'] = self.GetMemInfo(get)
             networkInfo['version'] = session['version']
@@ -509,11 +532,25 @@ class system:
         networkInfo['site_total'] = public.M('sites').count()
         networkInfo['ftp_total'] = public.M('ftps').count()
         networkInfo['database_total'] = public.M('databases').count()
+        networkInfo['system'] = self.GetSystemVersion()
+        networkInfo['installed'] = self.CheckInstalled()
+        import panelSSL
+        networkInfo['user_info'] = panelSSL.panelSSL().GetUserInfo(None)
+
         return networkInfo
         
     
     def GetNetWorkApi(self,get=None):
         return self.GetNetWork()
+
+    #检查是否安装任何
+    def CheckInstalled(self):
+        checks = ['nginx','apache','php','pure-ftpd','mysql']
+        import os
+        for name in checks:
+            filename = public.GetConfigValue('root_path') + "/server/" + name
+            if os.path.exists(filename): return True
+        return False
     
     def GetNetWorkOld(self):
         #取网络流量信息

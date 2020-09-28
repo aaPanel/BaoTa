@@ -1529,7 +1529,6 @@ if __name__ == "__main__":
     write_log("=" * 65)
     write_log("|-证书获取成功!")
     write_log("=" * 65)
-    write_log("认证的域名: {}".format(','.join(cert['domains'])))
     write_log("证书到期时间: {}".format(
         public.format_date(times=cert['cert_timeout'])))
     write_log("证书已保存在: {}/".format(cert['save_path']))

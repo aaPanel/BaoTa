@@ -1864,7 +1864,12 @@ listener SSL443 {
         file = self.setupPath + '/panel/vhost/nginx/'+get.name+'.conf'
         conf = public.readFile(file)
         if conf:
-            conf = conf.replace(sitePath,path)
+            src_path = 'root ' + sitePath
+            dst_path = 'root ' + path
+            if conf.find(src_path) != -1:
+                conf = conf.replace(src_path,dst_path)
+            else:
+                conf = conf.replace(sitePath,path)
             conf = conf.replace("include","#include")
             public.writeFile(file,conf)
         
