@@ -1904,7 +1904,7 @@ var site = {
                     {
                         title:"商用证书<i class='ssl_recom_icon'></i>",callback:function(robj){
                             var deploy_ssl_info = rdata;
-                            var html = '',product_list,userInfo,loadT = bt.load('正在获取商业证书订单列表，请稍后...'),order_list,is_check = true,itemData,activeData,loadY;
+                            var html = '',product_list,userInfo,loadT = bt.load('正在获取商用证书订单列表，请稍后...'),order_list,is_check = true,itemData,activeData,loadY;
                             bt.send('get_order_list','ssl/get_order_list',{},function(rdata){
                                 loadT.close();
                                 order_list = rdata;
@@ -2011,7 +2011,7 @@ var site = {
                             <li>在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点</li>\
                             <li><a style="color:red;">如果您的站点有使用CDN、高防IP、反向代理、301重定向等功能，可能导致验证失败</a></li>\
                             <li><a style="color:red;">申请www.bt.cn这种以www为二级域名的证书，需绑定并解析顶级域名(bt.cn)，否则将验证失败</a></li>\
-                            <li><a style="color:red;">商业证书相对于普通证书，具有更高的安全性、赔付保障和支持通配符和多域名等方式。<a class="btlink" target="_blank" href="https://www.racent.com/sectigo-ssl">点击查看</a></a></li>\
+                            <li><a style="color:red;">商用证书相对于普通证书，具有更高的安全性、赔付保障和支持通配符和多域名等方式。<a class="btlink" target="_blank" href="https://www.racent.com/sectigo-ssl">点击查看</a></a></li>\
                         </ul>');
                             bt.fixed_table('ssl_order_list');
                             /**
@@ -2312,7 +2312,7 @@ var site = {
                             
                             //申请证书
                             $('.ssl_business_application').click(function(){
-                                var loads = bt.load('正在获取商业证书产品列表，请稍后...');
+                                var loads = bt.load('正在获取商用证书产品列表，请稍后...');
                                 bt.send('get_product_list','ssl/get_product_list',{},function(res){
                                     loads.close();
                                     var list = '',userInfo = res.administrator,timeOut,is_pay_view = null;
@@ -2352,6 +2352,7 @@ var site = {
                                                     </table>\
                                                 </div>\
                                             </div>\
+                                            <div class="alert alert-success" style="margin-left: 90px;margin-bottom:10px;">宝塔官网BT.CN也是用此品牌证书，性价比高，推荐使用</div>\
                                             <div class="line">\
                                                 <span class="tname">证书类型</span>\
                                                 <div class="info-r">\
@@ -2462,7 +2463,7 @@ var site = {
                                     </div>';
                                     loadY =  bt.open({
                                         type:1,
-                                        title:'申请商业证书',
+                                        title:'申请商用证书',
                                         area:'640px',
                                         content:cert_info,
                                         success:function(layers,index){
