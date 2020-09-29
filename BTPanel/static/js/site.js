@@ -2154,10 +2154,10 @@ var site = {
                                     $.each(rdata.dcvList,function(key,item){
                                         domains.push(item['domainName']);
                                     });
-                                    if(type){
-                                        info = {fileName:rdata.DCVfileName,fileContent:rdata.DCVfileContent,filePath:'/.well-known/pki-validation/'};
-                                    }else{
-                                        info = {dnsHost:rdata.DCVdnsHost,dnsType:rdata.DCVdnsType,dnsValue:rdata.DCVdnsValue};
+                                    if (type) {
+                                        info = { fileName: rdata.DCVfileName, fileContent: rdata.DCVfileContent, filePath: '/.well-known/pki-validation/', paths: res.paths };
+                                    } else {
+                                        info = { dnsHost: rdata.DCVdnsHost, dnsType: rdata.DCVdnsType, dnsValue: rdata.DCVdnsValue, paths: res.paths };
                                     }
                                     if(is_success){
                                     	is_success({type:type,domains:domains,info:info});
@@ -2236,10 +2236,10 @@ var site = {
                                 var html = '';
                                 if (data.type) {
 
-                                    var check_html = '<div class="bt-table domains_table" style="margin-bottom:20px"><div class="divtable"><table class="table table-hover"><thead><tr><th width="250">URL</th><th width="85">验证结果</th><th style="text-align:right;">操作</th></thead>'
+                                    var check_html = '<div class="bt-table domains_table" style="margin-bottom:20px"><div class="divtable"><table class="table table-hover"><thead><tr><th>URL</th><th style="width:85px;">验证结果</th><th style="text-align:right;width:135px;">操作</th></thead>'
                                     var paths = data.info.paths
                                     for (var i = 0; i < paths.length; i++) {
-                                        check_html += '<tr><td><span title="' + paths[i].url + '" class="lib-ssl-overflow-span-style">' + paths[i].url + '</span></td><td>' + (paths[i].status == 1 ? '<a class="btlink">通过</a>' : '<span style="color:red">失败[' + paths[i].status+']</span><a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="bt-ico-ask" style="cursor: pointer;">?</a>') + '</td><td style="text-align:right;"><a href="javascript:bt.pub.copy_pass(\''+paths[i].url+'\');" class="btlink">复制</a> | <a href="'+paths[i].url+'" target="_blank" class="btlink">打开</a> | <a data-url="'+paths[i].url+'" data-content="'+data.info.fileContent+'" class="btlink check_url_results">重新验证</a></td>'
+                                        check_html += '<tr><td><span title="' + paths[i].url + '" class="lib-ssl-overflow-span-style" style="word-break: break-all;">' + paths[i].url + '</span></td><td>' + (paths[i].status == 1 ? '<a class="btlink">通过</a>' : '<span style="color:red">失败[' + paths[i].status+']</span><a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="bt-ico-ask" style="cursor: pointer;">?</a>') + '</td><td style="text-align:right;"><a href="javascript:bt.pub.copy_pass(\''+paths[i].url+'\');" class="btlink">复制</a> | <a href="'+paths[i].url+'" target="_blank" class="btlink">打开</a> | <a data-url="'+paths[i].url+'" data-content="'+data.info.fileContent+'" class="btlink check_url_results">重新验证</a></td>'
                                     }
                                     check_html += '</table></div></div>'
 

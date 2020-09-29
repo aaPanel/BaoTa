@@ -211,7 +211,7 @@ class panelSSL:
 
     #获取指定域名的PATH
     def get_domain_run_path(self,domain):
-        pid = public.M('domains').where('name=?',(domain,)).getField('pid')
+        pid = public.M('domain').where('name=?',(domain,)).getField('pid')
         if not pid: return False
         return self.get_site_run_path(pid)
 
@@ -293,10 +293,18 @@ class panelSSL:
             dinfo['domainName'] = domain
             if is_file_verify:
                 siteRunPath = self.get_domain_run_path(domain)
-                if not siteRunPath:
-                    if domain[:4] == 'www.': domain = domain[4:]
-                    verify_info['paths'].append('http'+is_https+'://'+ domain +'/.well-known/pki-validation/' + verify_info['data']['DCVfileName'])
-                    continue
+                if domain[:4] == 'www.': domain = domain[4:] 
+
+                status = 0
+                url = 'http'+ is_https +'://'+ domain +'/.well-known/pki-validation/' + verify_info['data']['DCVfileName']
+                get = public.dict_obj()
+                get.url = url
+                get.content = verify_info['data']['DCVfileContent']
+                status = self.check_url_txt(get)                
+
+                verify_info['paths'].append({'url':url,'status':status})
+                if not siteRunPath: continue
+
                 verify_path = siteRunPath + '/.well-known/pki-validation'
                 if not os.path.exists(verify_path):
                     os.makedirs(verify_path)

@@ -384,7 +384,10 @@ include /www/server/panel/vhost/openlitespeed/proxy/BTSITENAME/*.conf
         import json,files
 
         get.path = self.__get_site_format_path(get.path)
-        siteMenu = json.loads(get.webname)
+        try:
+            siteMenu = json.loads(get.webname)
+        except:
+            return public.returnMsg(False,'webname参数格式不正确，应该是可被解析的JSON字符串')
         self.siteName     = self.ToPunycode(siteMenu['domain'].strip().split(':')[0]).strip().lower()
         self.sitePath     = self.ToPunycodePath(self.GetPath(get.path.replace(' ',''))).strip()
         self.sitePort     = get.port.strip().replace(' ','')

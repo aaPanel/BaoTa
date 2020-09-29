@@ -57,7 +57,7 @@ app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'BT_:'
 app.config['SESSION_COOKIE_NAME'] = "SESSIONID"
-app.config['PERMANENT_SESSION_LIFETIME'] = 86400
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 30
 Session(app)
 
 
