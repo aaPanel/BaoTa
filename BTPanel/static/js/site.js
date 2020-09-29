@@ -1996,21 +1996,23 @@ var site = {
                                 });
                                 $('.ssl_order_list tbody').html(html);
                             });
-                            robj.append('<div class="mtb10">\
-                                <button class="btn btn-success btn-sm btn-title ssl_business_application" type="button">申请证书</button>\
-                                <div class="divtable mtb10 ssl_order_list"  style="max-height: 400px;overflow-y: auto;">\
-                                    <table class="table table-hover" id="ssl_order_list">\
-                                        <thead><tr><th width="120px">域名</th><th  width="220px">证书类型</th><th>到期时间</th><th>状态</th><th style="text-align:right;">操作</th></tr></thead>\
-                                        <tbody></tbody>\
-                                    </table>\
-                                </div>\
-                            </div><ul class="help-info-text c7">\
-                                <li>申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)</li>\
-                                <li>有效期1年，不支持续签，到期后需要重新申请</li>\
-                                <li>在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点</li>\
-                                <li><a style="color:red;">如果您的站点有使用CDN、高防IP、反向代理、301重定向等功能，可能导致验证失败</a></li>\
-                                <li><a style="color:red;">申请www.bt.cn这种以www为二级域名的证书，需绑定并解析顶级域名(bt.cn)，否则将验证失败</a></li>\
-                            </ul>');
+                            robj.append('<div style="margin-bottom: 10px;" class="alert alert-success">此品牌证书适合生产项目使用，宝塔官网BT.CN也是用这款证书，性价比高，推荐使用</div>\
+                            <div class= "mtb10" >\
+                            <button class="btn btn-success btn-sm btn-title ssl_business_application" type="button">申请证书</button>\
+                            <div class="divtable mtb10 ssl_order_list"  style="height: 340px;overflow-y: auto;">\
+                                <table class="table table-hover" id="ssl_order_list">\
+                                    <thead><tr><th width="120px">域名</th><th  width="220px">证书类型</th><th>到期时间</th><th>状态</th><th style="text-align:right;">操作</th></tr></thead>\
+                                    <tbody></tbody>\
+                                </table>\
+                            </div>\
+                        </div><ul class="help-info-text c7">\
+                            <li>申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)</li>\
+                            <li>有效期1年，不支持续签，到期后需要重新申请</li>\
+                            <li>在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点</li>\
+                            <li><a style="color:red;">如果您的站点有使用CDN、高防IP、反向代理、301重定向等功能，可能导致验证失败</a></li>\
+                            <li><a style="color:red;">申请www.bt.cn这种以www为二级域名的证书，需绑定并解析顶级域名(bt.cn)，否则将验证失败</a></li>\
+                            <li><a style="color:red;">商业证书相对于普通证书，具有更高的安全性、赔付保障和支持通配符和多域名等方式。<a class="btlink" target="_blank" href="https://www.racent.com/sectigo-ssl">点击查看</a></a></li>\
+                        </ul>');
                             bt.fixed_table('ssl_order_list');
                             /**
                              * @description 对指定表单元素的内容进行效验
