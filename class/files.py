@@ -862,7 +862,6 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             return public.returnMsg(False, 'DIR_COPY_ERR')
 
     # 移动文件或目录
-
     def MvFile(self, get):
         if sys.version_info[0] == 2:
             get.sfile = get.sfile.encode('utf-8')
@@ -873,6 +872,9 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             return public.returnMsg(False, '不能直接操作回收站目录，请在右上角按【回收站】按钮打开')
         if not os.path.exists(get.sfile):
             return public.returnMsg(False, 'FILE_NOT_EXISTS')
+
+        if os.path.exists(get.dfile):
+            return public.returnMsg(False,'目标文件名已存在!')
 
         if get.dfile[-1] == '/':
             get.dfile = get.dfile[:-1]
@@ -886,8 +888,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             self.move(get.sfile, get.dfile)
             self.site_path_safe(get)
             if hasattr(get, 'rename'):
-                public.WriteLog(
-                    'TYPE_FILE', '[%s]重命名为[%s]' % (get.sfile, get.dfile))
+                public.WriteLog('TYPE_FILE', '[%s]重命名为[%s]' % (get.sfile, get.dfile))
                 return public.returnMsg(True, '重命名成功!')
             else:
                 public.WriteLog('TYPE_FILE', 'MOVE_SUCCESS',
