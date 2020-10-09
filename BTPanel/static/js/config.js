@@ -1470,13 +1470,13 @@ function reader_temp_list(data,callback){
 			html += '<tr><td>'+ (item.login_addr || '未登录') +'</td><td>'+ (function(){
 				switch(item.state){
 					case 0:
-						return '未登录';
+						return '<a style="color:green;">待使用</a>';
 					break;
 					case 1:
-						return '已登录';
+						return '<a style="color:brown;">已使用</a>';
 					break;
 					case -1:
-						return '已过期';
+						return '<a>已过期</a>';
 					break;
 				}
 			}()) +'</td><td >'+ (item.login_time == 0?'未登录':bt.format_data(item.login_time)) +'</td><td>'+ bt.format_data(item.expire) +'</td><td style="text-align:right;">'+ (function(){

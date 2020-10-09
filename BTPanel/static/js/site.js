@@ -2137,7 +2137,51 @@ var site = {
                                 el.css('borderColor',config.color);
                                 $('#width_test').remove();
                             }
+                            /**
+                             * @description 更换域名验证方式
+                             * @param {Number} oid 域名订单ID
+                             * @returns void
+                             */
+                            function again_verify_veiw(oid, is_success) {
+                                var loads = bt.load('正在获取验证方式,请稍后...');
+                                bt.send('get_verify_result', 'ssl/get_verify_result', { oid: oid }, function (res) {
+                                    loads.close();
+                                    var type = res.data.dcvList[0].dcvMethod 
 
+                                    loadT = bt.open({
+                                        type: 1,
+                                        title: '验证域名-' + (type ? '文件验证' : 'DNS验证'),
+                                        area: '500px',
+                                        btn:['更改','取消'],
+                                        content: '<div class="bt-form pd15">\
+		                                        <div class="line"><span class="tname">验证方式</span>\
+		                                        <div class="info-r"><select class="bt-input-text mr5" name="file_rule" style="width:250px"></select>\
+	                                        	</div>\
+	                                        </div>\
+	                                    <ul class="help-info-text c7"><li>文件验证（HTTP）：确保网站能够通过http正常访问</li><li>文件验证（HTTPS）：确保网站已开启https，并且网站能够通过https正常访问</li><li>DNS验证：需要手动解析DNS记录值</li></ul></div>',
+                                        success: function (layero, index) {
+                                            //'HTTP_CSR_HASH','CNAME_CSR_HASH','HTTPS_CSR_HASH'
+                                            var _option_list = {'文件验证(HTTP)':'HTTP_CSR_HASH','文件验证(HTTPS)':'HTTPS_CSR_HASH','DNS验证(CNAME解析)':'CNAME_CSR_HASH'},
+                                                _option = '';
+                                            
+                                            $.each(_option_list,function(index,item){                                            	
+                                            	_option += '<option value="'+item+'" '+(type == item ? 'selected':'')+'>'+index+'</option>'
+                                            })
+                                            $('select[name=file_rule]').html(_option)
+                                        },
+                                        yes:function(index,layero){
+                                        	var new_type = $('select[name=file_rule]').val();
+                                            if (type == new_type) return layer.msg('重复的验证方式', { icon: 2 })
+                                            var loads = bt.load('正在修改验证方式,请稍后...');
+                                            bt.send('again_verify', 'ssl/again_verify', { oid: oid, dcvMethod: new_type }, function (res) {
+                                                loads.close();
+                                                if (res.status) layer.close(index);
+												layer.msg(res.msg,{icon:res.status?1:2})
+                                            })
+                                        }
+                                    });
+                                })
+                            }
                             /**
                              * @description 验证域名
                              * @param {Number} oid 域名订单ID
@@ -2197,6 +2241,12 @@ var site = {
                                                 verify_order_veiw(oid);
                                                 loadT.close();
                                             });
+                                            
+                                            $('.set_verify_type').click(function () {
+                                                again_verify_veiw(oid);  
+                                                loadT.close();
+                                            });
+                                            
                                             $('.return_ssl_list').click(function(){
                                                 loadT.close();
                                                 $('#ssl_tabs span:eq(2)').click();
@@ -2253,7 +2303,7 @@ var site = {
                                         <div class="parsing_parem"><div class="parsing_title" style="vertical-align: top;">文件内容：</div><div class="parsing_info"><textarea name="fileValue"  class="parsing_textarea" readonly="readonly">'+ data.info.fileContent + '</textarea><span class="parsing_icon" style="display: block;width: 60px;border-radius: 3px;" data-clipboard-text="' + data.info.fileContent + '">复制</span></div></div>'
                                         + check_html +
                                         '<div class="parsing_tips" >· SSL添加文件验证方式 ->> <a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="btlink" >查看教程</a></div >\
-                                        <div class="parsing_parem" style="padding: 0 100px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
+                                        <div class="parsing_parem" style="padding: 0 55px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button><button type="submit" class="btn btn-success set_verify_type">修改验证方式</button></div>\
                                     </div>';
                                 } else {
                                     html = '<div class="lib-ssl-parsing">\
@@ -2261,7 +2311,7 @@ var site = {
                                         <div class="parsing_parem"><div class="parsing_title">主机记录：</div><div class="parsing_info"><input type="text" name="host" class="parsing_input" value="'+ data.info.dnsHost + '" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="' + data.info.dnsHost + '">复制</span></div></div>\
                                         <div class="parsing_parem"><div class="parsing_title">记录值：</div><div class="parsing_info"><input type="text" name="domains"  class="parsing_input" value="'+ data.info.dnsValue + '" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="' + data.info.dnsValue + '">复制</span></div></div>\
                                         <div class="parsing_tips">· 关于如何添加域名解析，请自行百度，和咨询服务器运营商。</div>\
-                                        <div class="parsing_parem" style="padding: 0 100px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
+                                        <div class="parsing_parem" style="padding: 0 55px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button><button type="submit" class="btn btn-success set_verify_type">修改验证方式</button></div>\
                                     </div>';
                                 }
                                 return html;

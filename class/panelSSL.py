@@ -271,7 +271,15 @@ class panelSSL:
         if result.find('timed out') != -1:return -3        
         if result == content:return 1
 
-        return 0;
+        return 0
+
+    #更换验证方式
+    def again_verify(self,args):
+        self.__PDATA['data']['oid'] = args.oid
+        self.__PDATA['data']['dcvMethod'] = args.dcvMethod
+        result = self.request('again_verify')
+        return result 
+    
     #获取商业证书验证结果
     def get_verify_result(self,args):
         self.__PDATA['data']['oid'] = args.oid
@@ -396,9 +404,13 @@ class panelSSL:
             result = json.loads(result)
         except: return result
         result['data'] = self.En_Code(result['data'])
-        if 'authValue' in result['data'].keys():
-            public.writeFile(authfile,result['data']['authValue'])
         
+        try:
+            if 'authValue' in result['data'].keys():
+                public.writeFile(authfile,result['data']['authValue'])
+        except:
+            return result
+            
         return result
     
     #获取运行目录

@@ -709,7 +709,7 @@ def ssl(pdata = None):
     if comReturn: return comReturn
     import panelSSL
     toObject = panelSSL.panelSSL()
-    defs = ('check_url_txt','RemoveCert','renew_lets_ssl','SetCertToSite','GetCertList','SaveCert','GetCert','GetCertName',
+    defs = ('check_url_txt','RemoveCert','renew_lets_ssl','SetCertToSite','GetCertList','SaveCert','GetCert','GetCertName','again_verify',
             'DelToken','GetToken','GetUserInfo','GetOrderList','GetDVSSL','Completed','SyncOrder','download_cert','set_cert','cancel_cert_order',
             'get_order_list','get_order_find','apply_order_pay','get_pay_status','apply_order','get_verify_info','get_verify_result','get_product_list','set_verify_info',
             'GetSSLInfo','downloadCRT','GetSSLProduct','Renew_SSL','Get_Renew_SSL')
