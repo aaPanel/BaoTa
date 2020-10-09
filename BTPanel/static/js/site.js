@@ -2,7 +2,7 @@ var site = {
     get_list: function (page, search, type) {
         if (page == undefined) page = 1;
         if (type == '-1' || type == undefined) {
-            type = $('.site_type select').val();
+            type = bt.get_cookie('site_type');
         }
         if (!search) search = $("#SearchValue").val();
         bt.site.get_list(page, search, type, function (rdata) {
@@ -187,10 +187,11 @@ var site = {
 
             $('.site_type button').click(function () {
                 var val = $(this).attr('value');
-                site.get_list(0, '', val);
+                bt.set_cookie('site_type', val);
+                site.get_list(0,'', val);
                 $(".site_type button").removeClass('btn-success').addClass('btn-default');
                 $(this).addClass('btn-success');
-                bt.set_cookie('site_type', val);
+                
             })
             if(callback) callback(rdata);
         });
@@ -1319,7 +1320,7 @@ var site = {
                 $("input[name='test']").parent().parent().html('<div style="padding-left: 29px;border-top: #ccc 1px dashed;margin-top: -7px;"><em style="float: left;color: #555;font-style: normal;line-height: 32px;padding-right: 2px;">私有缓存</em><div style="margin-left: 70px;padding-top: 5px;"><input class="btswitch btswitch-ios" id="ols" type="checkbox"><label class="btswitch-btn" for="ols"></label></div></div>');
                 var private = $("input[name='maxage'],textarea[name='exclude_file'],button[name='private_save']").parent().parent();
                 $("input.bt-input-text").parent().append('<span>秒</span>');
-                $("button[name='static_save']").parent().append(bt.render_help(['默认的静态文件缓存时间是604800秒', '如果要关机，请将其更改为0秒']));
+                $("button[name='static_save']").parent().append(bt.render_help(['默认的静态文件缓存时间是604800秒', '如果要关闭，请将其更改为0秒']));
                 $(".ols").append(bt.render_help(['私有缓存只支持PHP页面缓存，默认缓存时间为120秒', '排除文件仅支持以PHP为后缀的文件']));
                 private.hide();
                 var loadT = bt.load();

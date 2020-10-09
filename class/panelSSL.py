@@ -265,7 +265,7 @@ class panelSSL:
         url = args.url
         content = args.content
         result = public.httpGet(url,10)
-  
+        if not result: return 0
         if result.find('11001') != -1: return -1
         if result.find('Not Found') != -1:return -2
         if result.find('timed out') != -1:return -3        
