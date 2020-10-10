@@ -382,12 +382,21 @@ class panelSSL:
         else:
             get.siteName = public.M('sites').where('id=?',(get.id,)).getField('name')
         
+        #当申请二级域名为www时，检测主域名是否绑定到同一网站
         if get.domain[:4] == 'www.':
-            if not public.M('domain').where('name=?',(get.domain[4:],)).count():
+            if not public.M('domain').where('name=? AND pid=?',(get.domain[4:],get.id)).count():
                 return public.returnMsg(False,"申请[%s]证书需要验证[%s]请将[%s]绑定并解析到站点!" % (get.domain,get.domain[4:],get.domain[4:]))
 
+        #检测是否开启强制HTTPS
+        if not self.CheckForceHTTPS(get.siteName):
+            return public.returnMsg(False,'当前网站已开启【强制HTTPS】,请先关闭此功能再申请SSL证书!')
+
+        #获取真实网站运行目录
         runPath = self.GetRunPath(get)
         if runPath != False and runPath != '/': get.path +=  runPath
+
+        
+        #提前模拟测试验证文件值是否正确
         authfile = get.path + '/.well-known/pki-validation/fileauth.txt'
         if not self.CheckDomain(get):
             if not os.path.exists(authfile): return public.returnMsg(False,'无法创建['+authfile+']')
@@ -412,6 +421,18 @@ class panelSSL:
             return result
             
         return result
+
+    #检测是否强制HTTPS
+    def CheckForceHTTPS(self,siteName):
+        conf_file = '/www/server/panel/vhost/nginx/{}.conf'.format(siteName)
+        if not os.path.exists(conf_file):
+            return True
+        
+        conf_body = public.readFile(conf_file)
+        if not conf_body: return True
+        if conf_body.find('HTTP_TO_HTTPS_START') != -1:
+            return False
+        return True
     
     #获取运行目录
     def GetRunPath(self,get):
@@ -423,16 +444,25 @@ class panelSSL:
         import panelSite
         result = panelSite.panelSite().GetSiteRunPath(get)
         return result['runPath']
-    
+
+
     #检查域名是否解析
     def CheckDomain(self,get):
         try:
-            epass = public.GetRandomString(32)
+            #创建目录
             spath = get.path + '/.well-known/pki-validation'
             if not os.path.exists(spath): public.ExecShell("mkdir -p '" + spath + "'")
+
+            #生成并写入检测内容
+            epass = public.GetRandomString(32)
             public.writeFile(spath + '/fileauth.txt',epass)
+
+            #检测目标域名访问结果
+            if get.domain[:4] == 'www.':   #申请二级域名为www时检测主域名
+                get.domain = get.domain[4:]
             result = public.httpGet('http://' + get.domain + '/.well-known/pki-validation/fileauth.txt')
             if result == epass: return True
+
             return False
         except:
             return False
