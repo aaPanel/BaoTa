@@ -611,6 +611,7 @@ var aceEditor = {
 			e.stopPropagation();
 			e.preventDefault();
 		});
+		
 		// 禁用目录选择（文件目录）
 		$('.ace_catalogue').bind("selectstart",function(e){
 			var omitformtags = ["input", "textarea"];
@@ -677,7 +678,7 @@ var aceEditor = {
 				$(this).siblings('div').show();
 				$(this).parent().find('.search_input_view,.search_input_title').remove();
 				$(this).removeAttr('style').attr({'title':'搜索内容'}).find('.glyphicon').removeClass('glyphicon-remove').addClass('glyphicon-search').next().text("搜索");
-				$('.ace_catalogue_list').removeAttr('style')
+				$('.ace_catalogue_list').removeAttr('style');
 				$('.ace_dir_tools').removeAttr('style');
 				_this.refresh_config = {
 					el:$('.cd-accordion-menu')[0],
@@ -1416,6 +1417,7 @@ var aceEditor = {
 		};
 		var ACE = this.editor[obj.id];
 		ACE.ace.moveCursorTo(0, 0); //设置鼠标焦点
+		ACE.ace.focus();//设置焦点
 		ACE.ace.resize(); //设置自适应
 		ACE.ace.commands.addCommand({
 			name: '保存文件',
@@ -2058,11 +2060,11 @@ function ChangePath(d) {
 function GetDiskList(b) {
 	var d = "";
 	var a = "";
-	var c = "path=" + b + "&disk=True";
+	var c = "path=" + b + "&disk=True&showRow=500";
 	$.post("/files?action=GetDir", c, function(h) {
 		if(h.DISK != undefined) {
 			for(var f = 0; f < h.DISK.length; f++) {
-				a += "<dd onclick=\"GetDiskList('" + h.DISK[f].path + "')\"><span class='glyphicon glyphicon-hdd'></span>&nbsp;" + h.DISK[f].path + "</dd>"
+				a += "<dd onclick=\"GetDiskList('" + h.DISK[f].path + "')\"><span class='glyphicon glyphicon-hdd'></span>&nbsp;<span>" + h.DISK[f].path + "</span></div></dd>"
 			}
 			$("#changecomlist").html(a)
 		}
@@ -2091,7 +2093,7 @@ function GetDiskList(b) {
 						e = e.substring(0, 10) + "..."
 					}
 				}
-				d += "<tr><td title='" + g[0] + "'><span class='glyphicon glyphicon-file'></span>" + e + "</td><td>" + getLocalTime(g[2]) + "</td><td>" + g[3] + "</td><td>" + g[4] + "</td><td></td></tr>"
+				d += "<tr><td title='" + g[0] + "'><span class='glyphicon glyphicon-file'></span><span>" + e + "</span></td><td>" + getLocalTime(g[2]) + "</td><td>" + g[3] + "</td><td>" + g[4] + "</td><td></td></tr>"
 			}
 		}
 		$(".default").hide();
@@ -3686,7 +3688,7 @@ var Term = {
 		result = ws_event.data;
 		if ((result.indexOf("@127.0.0.1:") != -1 || result.indexOf("@localhost:") != -1) && result.indexOf('Authentication failed') != -1) {
             Term.term.write(result);
-            Term.localhost_login_form(result);
+            Term.localhost_login_form();
             Term.close();
             return;
         }
@@ -3853,7 +3855,7 @@ var Term = {
             Term.term.focus();
         });
     },
-    localhost_login_form:function(result){
+    localhost_login_form:function(){
         var template = '<div class="localhost-form-shade"><div class="localhost-form-view bt-form-2x"><div class="localhost-form-title"><i class="localhost-form_tip"></i><span style="vertical-align: middle;">无法自动认证，请填写本地服务器的登录信息!</span></div>\
         <div class="line input_group">\
             <span class="tname">服务器IP</span>\
@@ -3936,16 +3938,7 @@ var Term = {
                     break;
                 }
             });
-			form.ps = '本地服务器';
-			
-			if(result){
-				if(result.indexOf('@127.0.0.1') != -1){
-					var user = result.split('@')[0].split(',')[1];
-					var port = result.split('1:')[1]
-					$("input[name='username']").val(user);
-					$("input[name='port']").val(port);
-				}
-			}
+            form.ps = '本地服务器';
             var loadT = bt.load('正在添加服务器信息，请稍后...');
             bt.send('create_host','xterm/create_host',form,function(res){
                 loadT.close();
