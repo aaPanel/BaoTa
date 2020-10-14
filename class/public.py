@@ -2080,6 +2080,54 @@ def get_curl_bin():
         if os.path.exists(cb): return cb
     return 'curl'
 
+
+#设置防跨站配置
+def set_open_basedir():
+    open_basedir_path = '/www/server/panel/vhost/open_basedir/nginx'
+    if not os.path.exists(open_basedir_path):
+        os.makedirs(open_basedir_path,384)
+
+    site_list = M('sites').field('id,name,path').select()
+    for site_info in site_list:
+        set_site_open_basedir_nginx(site_info['name'])
+        
+
+#处理指定站点的防跨站配置 for Nginx
+def set_site_open_basedir_nginx(siteName):
+    open_basedir_path = '/www/server/panel/vhost/open_basedir/nginx'
+    if not os.path.exists(open_basedir_path):
+        os.makedirs(open_basedir_path,384)
+    config_file = '/www/server/panel/vhost/nginx/{}.conf'.format(siteName)
+    open_basedir_file = "/".join(
+        (open_basedir_path,'{}.conf'.format(siteName))
+    )
+    if not os.path.exists(config_file): return
+    if not os.path.exists(open_basedir_file):
+        writeFile(open_basedir_file,'')
+    config_body = readFile(config_file)
+    if config_body.find(open_basedir_path) == -1:
+        config_body = config_body.replace("include enable-php","include {};\n\t\tinclude enable-php".format(open_basedir_file))
+        writeFile(config_file,config_body)
+
+    root_path = re.findall(r"root\s+(.+);",config_body)[0]
+    if not root_path: return
+    userini_file = root_path + '/.user.ini'
+    if not os.path.exists(userini_file):
+        writeFile(open_basedir_file,'')
+        return
+    userini_body = readFile(userini_file)
+    if not userini_body: return
+    if userini_body.find('open_basedir') == -1: 
+        writeFile(open_basedir_file,'')
+        return
+    
+    open_basedir_conf = re.findall("open_basedir=(.+)",userini_body)
+    if not open_basedir_conf: return
+    open_basedir_conf = open_basedir_conf[0]
+    open_basedir_body = '''set $bt_safe_dir "open_basedir";
+set $bt_safe_open "{}";'''.format(open_basedir_conf)
+    writeFile(open_basedir_file,open_basedir_body)
+
 #取通用对象
 class dict_obj:
     def __contains__(self, key):

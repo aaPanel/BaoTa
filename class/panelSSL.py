@@ -418,7 +418,10 @@ class panelSSL:
             if 'authValue' in result['data'].keys():
                 public.writeFile(authfile,result['data']['authValue'])
         except:
-            return result
+            try:
+                public.writeFile(authfile,result['data']['authValue'])
+            except:
+                return result
             
         return result
 

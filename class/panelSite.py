@@ -169,60 +169,75 @@ class panelSite(panelRedirect):
         if self.is_ipv6: listen_ipv6 = "\n    listen [::]:%s;" % self.sitePort
 
         conf='''server
-{
-    listen %s;%s
-    server_name %s;
+{{
+    listen {listen_port};{listen_ipv6}
+    server_name {site_name};
     index index.php index.html index.htm default.php default.htm default.html;
-    root %s;
+    root {site_path};
     
-    #SSL-START %s
+    #SSL-START {ssl_start_msg}
     #error_page 404/404.html;
     #SSL-END
     
-    #ERROR-PAGE-START  %s
+    #ERROR-PAGE-START  {err_page_msg}
     #error_page 404 /404.html;
     #error_page 502 /502.html;
     #ERROR-PAGE-END
     
-    #PHP-INFO-START  %s
-    include enable-php-%s.conf;
+    #PHP-INFO-START  {php_info_start}
+    include {setup_path}/panel/vhost/open_basedir/nginx/{site_name}.conf;
+    include enable-php-{php_version}.conf;
     #PHP-INFO-END
     
-    #REWRITE-START %s
-    include %s/panel/vhost/rewrite/%s.conf;
+    #REWRITE-START {rewrite_start_msg}
+    include {setup_path}/panel/vhost/rewrite/{site_name}.conf;
     #REWRITE-END
     
     #禁止访问的文件或目录
     location ~ ^/(\.user.ini|\.htaccess|\.git|\.svn|\.project|LICENSE|README.md)
-    {
+    {{
         return 404;
-    }
+    }}
     
     #一键申请SSL证书验证目录相关设置
-    location ~ \.well-known{
+    location ~ \.well-known{{
         allow all;
-    }
+    }}
     
     location ~ .*\\.(gif|jpg|jpeg|png|bmp|swf)$
-    {
+    {{
         expires      30d;
         error_log off;
         access_log /dev/null;
-    }
+    }}
     
     location ~ .*\\.(js|css)?$
-    {
+    {{
         expires      12h;
         error_log off;
         access_log /dev/null; 
-    }
-    access_log  %s.log;
-    error_log  %s.error.log;
-}''' % (self.sitePort,listen_ipv6,self.siteName,self.sitePath,public.getMsg('NGINX_CONF_MSG1'),public.getMsg('NGINX_CONF_MSG2'),public.getMsg('NGINX_CONF_MSG3'),self.phpVersion,public.getMsg('NGINX_CONF_MSG4'),self.setupPath,self.siteName,public.GetConfigValue('logs_path')+'/'+self.siteName,public.GetConfigValue('logs_path')+'/'+self.siteName)
+    }}
+    access_log  {log_path}/{site_name}.log;
+    error_log  {log_path}/{site_name}.error.log;
+}}'''.format(
+        listen_port=self.sitePort,
+        listen_ipv6=listen_ipv6,
+        site_path=self.sitePath,
+        ssl_start_msg=public.getMsg('NGINX_CONF_MSG1'),
+        err_page_msg=public.getMsg('NGINX_CONF_MSG2'),
+        php_info_start=public.getMsg('NGINX_CONF_MSG3'),
+        php_version=self.phpVersion,
+        setup_path=self.setupPath,
+        rewrite_start_msg = public.getMsg('NGINX_CONF_MSG4'),
+        log_path = public.GetConfigValue('logs_path'),
+        site_name = self.siteName
+    )
         
         #写配置文件
         filename = self.setupPath+'/panel/vhost/nginx/'+self.siteName+'.conf'
         public.writeFile(filename,conf)
+
+
         
         #生成伪静态文件
         urlrewritePath = self.setupPath+'/panel/vhost/rewrite'
@@ -231,6 +246,7 @@ class panelSite(panelRedirect):
         open(urlrewriteFile,'w+').close()
         if not os.path.exists(urlrewritePath):
             public.writeFile(urlrewritePath,'')
+            
         return True
 
     #重新生成nginx配置文件
@@ -453,6 +469,14 @@ include /www/server/panel/vhost/openlitespeed/proxy/BTSITENAME/*.conf
             public.ExecShell('chmod 644 ' + userIni)
             public.ExecShell('chown root:root ' + userIni)
             public.ExecShell('chattr +i '+userIni)
+
+        ngx_open_basedir_path = self.setupPath + '/panel/vhost/open_basedir/nginx'
+        if not os.path.exists(ngx_open_basedir_path):
+            os.makedirs(ngx_open_basedir_path,384)
+        ngx_open_basedir_file = ngx_open_basedir_path + '/{}.conf'.format(self.siteName)
+        ngx_open_basedir_body = '''set $bt_safe_dir "open_basedir";
+set $bt_safe_open "{}/:/tmp/";'''.format(self.sitePath)
+        public.writeFile(ngx_open_basedir_file,ngx_open_basedir_body)
         
         #创建默认文档
         index = self.sitePath+'/index.html'
@@ -2529,6 +2553,7 @@ server
         public.ExecShell('chmod 644 ' + userIni)
         public.ExecShell('chown root:root ' + userIni)
         public.ExecShell('chattr +i '+userIni)
+        public.set_site_open_basedir_nginx(Name)
         
         public.serviceReload()
         public.M("sites").where("id=?",(id,)).setField('path',Path)
@@ -2668,6 +2693,7 @@ server
         path = get.path
         runPath = self.GetRunPath(get)
         filename = path+runPath+'/.user.ini'
+        siteName = public.M('sites').where('path=?',(get.path,)).getField('name')
         conf = public.readFile(filename)
         try:
             self._set_ols_open_basedir(get)
@@ -2680,6 +2706,7 @@ server
                 else:
                     public.writeFile(filename,conf)
                     public.ExecShell("chattr +i " + filename)
+                public.set_site_open_basedir_nginx(siteName)
                 return public.returnMsg(True, 'SITE_BASEDIR_CLOSE_SUCCESS')
 
             if conf and "session.save_path" in conf:
@@ -2689,6 +2716,7 @@ server
             else:
                 public.writeFile(filename,'open_basedir={}/:/tmp/'.format(path))
             public.ExecShell("chattr +i " + filename)
+            public.set_site_open_basedir_nginx(siteName)
             public.serviceReload()
             return public.returnMsg(True,'SITE_BASEDIR_OPEN_SUCCESS')
         except Exception as e:
