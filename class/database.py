@@ -408,7 +408,16 @@ SetLink
         
         fileName = name + '_' + time.strftime('%Y%m%d_%H%M%S',time.localtime()) + '.sql.gz'
         backupName = session['config']['backup_path'] + '/database/' + fileName
-        public.ExecShell("/www/server/mysql/bin/mysqldump --default-character-set="+ public.get_database_character(name) +" --force --opt \"" + name + "\" | gzip > " + backupName)
+
+        try:
+            password = public.M('config').where('id=?',(1,)).getField('mysql_root')
+            os.environ["MYSQL_PWD"] = password
+            public.ExecShell("/www/server/mysql/bin/mysqldump --default-character-set="+ public.get_database_character(name) +" --force --opt \"" + name + "\"  -u root | gzip > " + backupName)
+        except Exception as e:
+            raise
+        finally:
+            os.environ["MYSQL_PWD"] = ""
+
         if not os.path.exists(backupName): return public.returnMsg(False,'BACKUP_ERROR')
         
         self.mypass(False, root)
@@ -472,18 +481,31 @@ SetLink
                     public.ExecShell("cd "  +  backupPath  +  " && gunzip -q " +  '"'+file+'"')
                     isgzip = True
             if not os.path.exists(backupPath + '/' + tmpFile) or tmpFile == '': return public.returnMsg(False, 'FILE_NOT_EXISTS',(tmpFile,))
-            if not self.mypass(True, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
-            public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " +'"'+ backupPath + '/' +tmpFile+'"')
-            if not self.mypass(True, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
+
+            try:
+                password = public.M('config').where('id=?',(1,)).getField('mysql_root')
+                os.environ["MYSQL_PWD"] = password
+                public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " +'"'+ backupPath + '/' +tmpFile+'"')
+            except Exception as e:
+                raise
+            finally:
+                os.environ["MYSQL_PWD"] = ""
+
+            
+
             if isgzip:
                 public.ExecShell('cd ' +backupPath+ ' && gzip ' + file.split('/')[-1][:-3])
             else:
                 public.ExecShell("rm -f " +  backupPath + '/' +tmpFile)
         else:
-            if not self.mypass(True, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
-            public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < "+'"' +  file+'"')
-            if not self.mypass(True, root): return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
-                
+            try:
+                password = public.M('config').where('id=?',(1,)).getField('mysql_root')
+                os.environ["MYSQL_PWD"] = password
+                public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < "+'"' +  file+'"')
+            except Exception as e:
+                raise
+            finally:
+                os.environ["MYSQL_PWD"] = ""
             
         public.WriteLog("TYPE_DATABASE", 'DATABASE_INPUT_SUCCESS',(name,))
         return public.returnMsg(True, 'DATABASE_INPUT_SUCCESS')
