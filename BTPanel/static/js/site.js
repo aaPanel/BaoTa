@@ -1564,7 +1564,12 @@ var site = {
                                                         }
                                                     }
                                                     bt.site.get_dv_ssl(sdata.domains, web.path, function (tdata) {
-                                                        bt.msg(tdata);
+                                                        if(tdata.msg.indexOf('<br>') != -1){
+                                                            layer.msg(tdata.msg,{time:0,shade:0.3,shadeClose:true,area:'550px',icon:2});
+                                                        }else{
+                                                            bt.msg(tdata);
+                                                        }
+                                                        
                                                         if (tdata.status) site.ssl.verify_domain(tdata.data.partnerOrderId, web.name);
                                                     })
                                                 }

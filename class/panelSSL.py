@@ -18,6 +18,7 @@ class panelSSL:
     __UPATH = 'data/userInfo.json'
     __userInfo = None
     __PDATA = None
+    _check_url = None
     #构造方法
     def __init__(self):
         pdata = {}
@@ -399,8 +400,17 @@ class panelSSL:
         #提前模拟测试验证文件值是否正确
         authfile = get.path + '/.well-known/pki-validation/fileauth.txt'
         if not self.CheckDomain(get):
-            if not os.path.exists(authfile): return public.returnMsg(False,'无法创建['+authfile+']')
+            if not os.path.exists(authfile): 
+                return public.returnMsg(False,'无法写入验证文件: {}'.format(authfile))
+            else:
+                msg = '''无法正确访问验证文件<br><a class="btlink" href="{c_url}" target="_blank">{c_url}</a> <br><br>
+                <p></b>可能的原因：</b></p>
+                1、未正确解析，或解析未生效 [请正确解析域名，或等待解析生效后重试]<br>
+                2、检查是否有设置301/302重定向 [请暂时关闭重定向相关配置]<br>
+                3、检查该网站是否设置强制HTTPS [请暂时关闭强制HTTPS功能]<br>'''.format(c_url = self._check_url)
+                return public.returnMsg(False,msg)
         
+        return self.__test
         action = 'GetDVSSL'
         if hasattr(get,'partnerOrderId'):
             self.__PDATA['data']['partnerOrderId'] = get.partnerOrderId
@@ -463,7 +473,11 @@ class panelSSL:
             #检测目标域名访问结果
             if get.domain[:4] == 'www.':   #申请二级域名为www时检测主域名
                 get.domain = get.domain[4:]
-            result = public.httpGet('http://' + get.domain + '/.well-known/pki-validation/fileauth.txt')
+
+            import http_requests
+            self._check_url = 'http://' + get.domain + '/.well-known/pki-validation/fileauth.txt'
+            result = http_requests.get(self._check_url,s_type='curl',timeout=6)
+            self.__test = result
             if result == epass: return True
 
             return False

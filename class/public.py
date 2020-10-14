@@ -2128,6 +2128,14 @@ def set_site_open_basedir_nginx(siteName):
 set $bt_safe_open "{}";'''.format(open_basedir_conf)
     writeFile(open_basedir_file,open_basedir_body)
 
+    fastcgi_file = '/www/server/nginx/conf/fastcgi.conf'
+    if os.path.exists(fastcgi_file):
+        fastcgi_body = readFile(fastcgi_file)
+        if fastcgi_body.find('bt_safe_dir') != -1:
+            return
+        fastcgi_body + "\n"+'fastcgi_param  PHP_ADMIN_VALUE    "$bt_safe_dir=$bt_safe_open";'
+        writeFile(fastcgi_file,fastcgi_body)
+
 #取通用对象
 class dict_obj:
     def __contains__(self, key):
