@@ -614,17 +614,18 @@ set $bt_safe_open "{}/:/tmp/";'''.format(self.sitePath)
                 del redirectconf[i]
         self.__write_config(__redirectfile,redirectconf)
         m_path = self.setupPath+'/panel/vhost/nginx/redirect/'+siteName
-
         if os.path.exists(m_path): public.ExecShell("rm -rf %s" % m_path)
-
         m_path = self.setupPath+'/panel/vhost/apache/redirect/'+siteName
         if os.path.exists(m_path): public.ExecShell("rm -rf %s" % m_path)
+
         #删除配置文件
         confPath = self.setupPath+'/panel/vhost/nginx/'+siteName+'.conf'
         if os.path.exists(confPath): os.remove(confPath)
         
         confPath = self.setupPath+'/panel/vhost/apache/' + siteName + '.conf'
         if os.path.exists(confPath): os.remove(confPath)
+        open_basedir_file = self.setupPath+'/panel/vhost/open_basedir/nginx/'+siteName+'.conf'
+        if os.path.exists(open_basedir_file): os.remove(open_basedir_file)
 
         # 删除openlitespeed配置
         vhost_file = "/www/server/panel/vhost/openlitespeed/{}.conf".format(siteName)
@@ -639,6 +640,7 @@ set $bt_safe_open "{}/:/tmp/";'''.format(self.sitePath)
         vhost_sub_file = "/www/server/panel/vhost/openlitespeed/detail/{}_sub.conf".format(siteName)
         if os.path.exists(vhost_sub_file):
             public.ExecShell('rm -f {}*'.format(vhost_sub_file))
+        
         # 删除openlitespeed监听配置
         self._del_ols_listen_conf(siteName)
 

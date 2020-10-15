@@ -1010,9 +1010,6 @@ def code():
 def down(token=None,fname=None):
     #文件分享对外接口
     try:
-        key = 'down_limit_{}'.format(public.GetClientIp())
-        if cache.get(key): return '访问过于频繁,请稍候重试!'
-        cache.set(key,1,1)
         fname = request.args.get('fname')
         if fname:
             if(len(fname) > 256): return abort(404)

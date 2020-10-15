@@ -2396,7 +2396,7 @@ var site = {
                                             <div class="line">\
                                                 <span class="tname">证书品牌</span>\
                                                 <div class="info-r" >\
-                                                    <a href="https://www.racent.com/sectigo-ssl" class="ssl-brand-info" target="_blank">Comodo成立于1998年，SSL证书种类比较全面，性价比高，颁发速度快，PositiveSSL子品牌广受全球中小型网站的青睐，2018年正式更名为Sectigo。</a>\
+                                                    <a href="https://www.racent.com/sectigo-ssl" class="ssl-brand-info" target="_blank">Sectigo (原Comodo CA)是全球SSL证书市场占有率最高的CA公司，目前将近40%的SSL证书用户选择了Sectigo。由于其产品安全，价格低，受到大量站长的信任和欢迎。</a>\
                                                 </div>\
                                             </div>\
                                             <div class="line">\
@@ -2552,7 +2552,7 @@ var site = {
                                                     }else{
                                                         placeholder = '请输入需要申请证书的域名（单域名证书），必填项，例如：www.bt.cn';
                                                     }
-                                                    $('.domain_list_info').html('<input type="text" class="bt-input-text mr5" name="domains" placeholder="'+ placeholder +'"/>');
+                                                    $('.domain_list_info').html('<input type="text" disabled="true" readonly="readonly" id="apply_site_name" class="bt-input-text mr5" name="domains" placeholder="' + placeholder + '"/><button class="btn btn-success btn-xs" onclick="site.select_site_list(\'apply_site_name\')" style="">选择已有域名</button><button class="btn btn-success btn-xs" onclick="site.select_site_txt(\'apply_site_name\')" style="margin: 5px;">自定义域名</button>');
                                                 }
                                             });
                                             $('.prev-plan').click(function(){
@@ -3734,6 +3734,154 @@ var site = {
             }, 200)
         })
 
+    },
+    
+    select_site_txt: function (box) {
+
+
+        layer.open({
+            type: 1,
+            closeBtn: 2,
+            title: '自定义域名',
+            area: '600px',
+            btn: ['确认', '取消'],
+            content: '<div class="pd20"><div class="line "><span class="tname">自定义域名</span><div class="info-r "><input  name="site_name" placeholder="请输入需要申请证书的域名（单域名证书），必填项，例如：www.bt.cn" class="bt-input-text mr5 ssl_site_name_rc" type="text" style="width:400px" value=""></div></div>\
+            <ul class="help-info-text c7">\
+                    <li> 申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)</li>\
+                    <li>申请www.bt.cn这种以www为二级域名的证书，需绑定并解析顶级域名(bt.cn)，否则将验证失败</li>\
+                    <li>如果您的站点有使用CDN、高防IP、反向代理、301重定向等功能，可能导致验证失败</li>\
+            </ul></div>',
+            success: function () {
+          
+            }, 
+            yes: function (layers, index) {               
+                layer.close(layers);
+                $('#' + box).val($('.ssl_site_name_rc').val())   
+            }
+        })
+    },
+
+    /**
+    * @descripttion: 选择站点
+    * @author: Lifu
+    * @Date: 2020-08-14
+    * @param {String} box 输出时所用ID
+    * @return: 无返回值
+    */
+    select_site_list: function (box) {
+        var _optArray = [], all_site_list = [];
+
+        $.post('/data?action=getData', { tojs: 'site.get_list', table: 'domain', limit: 10000, p: 1, search: '', order: 'id desc', type: -1 }, function (res) {
+
+            var _tbody = '';
+            if (res.data.length > 0)
+            {
+                $.each(res.data, function (index, item) {
+                    
+                    _tbody += '<tr>'
+                        + '<td>'
+                        + '<div class="box-group" style="height:16px">'
+                        + '<div class="bt_checkbox_groups"></div>'
+                        + '</div>'
+                        + '</td>'
+                        + '<td><span class="overflow_style" style="width:210px">' + item['name'] + '</span></td>'
+                 
+                        + '</tr>'
+                    all_site_list.push(item['name'])
+                })
+            } else {
+                _tbody = '<tr><td colspan="3">暂无数据</td></tr>'
+            }
+                       
+            layer.open({
+                type: 1,
+                closeBtn: 2,
+                title: '选择站点',
+                area: '600px',
+                btn: ['确认', '取消'],
+                content: '<div class="pd20 dynamic_head_box"><div class="line"><input type="text" name="serach_site" class="bt-input-text" style="width: 560px;" placeholder="支持字段模糊搜索"></div>\
+                <div class="bt-table dynamic_list_table">\
+                    <div class="divtable" style="height:281px">\
+                        <table class="table table-hover">\
+                            <thead>\
+                                <th width="30">\
+                                    <div class="box-group" style="height:16px">\
+                                        <div class="bt_checkbox_groups" data-key="0"></div>\
+                                    </div>\
+                                </th>\
+                                <th>域名</th>\
+                            </thead>\
+                            <tbody class="dynamic_list">'+ _tbody +'</tbody>\
+                        </table>\
+                    </div>\
+                </div>\
+                <ul class="help-info-text c7">\
+                    <li> 申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)</li>\
+                    <li>申请www.bt.cn这种以www为二级域名的证书，需绑定并解析顶级域名(bt.cn)，否则将验证失败</li>\
+                    <li>如果您的站点有使用CDN、高防IP、反向代理、301重定向等功能，可能导致验证失败</li>\
+                </ul>\
+                </div> ',
+                success: function () {
+                        
+                    // 固定表格头部
+                    if (jQuery.prototype.fixedThead) {
+                        $('.dynamic_list_table .divtable').fixedThead({ resize: false });
+                    } else {
+                        $('.dynamic_list_table .divtable').css({ 'overflow': 'auto' });
+                    }
+                    //检索输入
+                    $('input[name=serach_site]').on('input', function () {
+                        var _serach = $(this).val();
+                        if (_serach.trim() != '') {
+                            $('.dynamic_list tr').each(function () {
+                                var _td = $(this).find('td').eq(1).html()
+                                if (_td.indexOf(_serach) == -1) {
+                                    $(this).hide()
+                                } else {
+                                    $(this).show()
+                                }
+                            })
+                        } else {
+                            $('.dynamic_list tr').show()
+                        }
+                    })
+                  
+                    // 单选设置
+                    $('.dynamic_list').on('click', '.bt_checkbox_groups', function (e) {
+                        var _tr = $(this).parents('tr');
+                        if ($(this).hasClass('active')) {
+                            $(this).removeClass('active');
+                           
+                        } else {
+                            $('.dynamic_list .bt_checkbox_groups').removeClass('active');
+                            $(this).addClass('active');
+                            _optArray = [_tr.find('td').eq(1).text()]
+                        }
+                        e.preventDefault();
+                        e.stopPropagation();
+                    })
+                    // tr点击时
+                    $('.dynamic_list').on('click', 'tr', function (e) {
+                        $(this).find('.bt_checkbox_groups').click()
+                        e.preventDefault();
+                        e.stopPropagation();
+                    })
+                },
+                yes: function (layers, index) {
+                    var _olist = []                    
+                    if (_optArray.length > 0) {
+                        $.each(_optArray, function (index, item) {
+                            if ($.inArray(item, _olist) == -1) {
+                                _olist.push(item)
+                            }
+                        })
+                    }
+                    layer.close(layers);
+                    $('#' + box).val(_olist.join('\n'))
+                    $('textarea[name=lb_site]').focus();
+                }
+            })          
+        })
     },
     web_edit: function (obj) {
         var _this = this;
