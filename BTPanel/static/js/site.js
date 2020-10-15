@@ -2396,7 +2396,7 @@ var site = {
                                             <div class="line">\
                                                 <span class="tname">证书品牌</span>\
                                                 <div class="info-r" >\
-                                                    <a href="https://www.racent.com/sectigo-ssl" class="ssl-brand-info" target="_blank">Sectigo (原Comodo CA)是全球SSL证书市场占有率最高的CA公司，目前将近40%的SSL证书用户选择了Sectigo。由于其产品安全，价格低，受到大量站长的信任和欢迎。</a>\
+                                                    <a href="javascript:;" class="ssl-brand-info">Sectigo (原Comodo CA)是全球SSL证书市场占有率最高的CA公司，目前将近40%的SSL证书用户选择了Sectigo。由于其产品安全，价格低，受到大量站长的信任和欢迎。</a>\
                                                 </div>\
                                             </div>\
                                             <div class="line">\
