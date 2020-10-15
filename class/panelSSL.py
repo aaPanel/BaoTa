@@ -262,16 +262,20 @@ class panelSSL:
         
     #验证URL是否匹配
     def check_url_txt(self,args):
-
         url = args.url
         content = args.content
-        result = public.httpGet(url,10)
-        if not result: return 0
-        if result.find('11001') != -1: return -1
-        if result.find('Not Found') != -1:return -2
-        if result.find('timed out') != -1:return -3        
-        if result == content:return 1
 
+        import http_requests 
+        res = http_requests.get(url,s_type='curl',timeout=6)
+        result = res.text
+        if not result: return 0       
+        
+        if result.find('11001') != -1 or result.find('curl: (6)') != -1: return -1
+        if result.find('curl: (7)') != -1 or res.status_code in [403,401]: return -5
+        if result.find('Not Found') != -1 or result.find('not found') != -1 or res.status_code in [404]:return -2
+        if result.find('timed out') != -1:return -3
+        if result.find('301') != -1 or result.find('302') != -1 or result.find('Redirecting...') != -1 or res.status_code in [301,302]:return -4
+        if result == content:return 1
         return 0
 
     #更换验证方式
@@ -476,7 +480,7 @@ class panelSSL:
 
             import http_requests
             self._check_url = 'http://' + get.domain + '/.well-known/pki-validation/fileauth.txt'
-            result = http_requests.get(self._check_url,s_type='curl',timeout=6)
+            result = http_requests.get(self._check_url,s_type='curl',timeout=6).text
             self.__test = result
             if result == epass: return True
 

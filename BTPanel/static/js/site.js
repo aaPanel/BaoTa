@@ -2207,9 +2207,9 @@ var site = {
                                         domains.push(item['domainName']);
                                     });
                                     if (type) {
-                                        info = { fileName: rdata.DCVfileName, fileContent: rdata.DCVfileContent, filePath: '/.well-known/pki-validation/', paths: res.paths };
+                                        info = { fileName: rdata.DCVfileName, fileContent: rdata.DCVfileContent, filePath: '/.well-known/pki-validation/', paths: res.paths,kfqq:res.kfqq };
                                     } else {
-                                        info = { dnsHost: rdata.DCVdnsHost, dnsType: rdata.DCVdnsType, dnsValue: rdata.DCVdnsValue, paths: res.paths };
+                                        info = { dnsHost: rdata.DCVdnsHost, dnsType: rdata.DCVdnsType, dnsValue: rdata.DCVdnsValue, paths: res.paths,kfqq:res.kfqq };
                                     }
                                     if(is_success){
                                     	is_success({type:type,domains:domains,info:info});
@@ -2307,7 +2307,7 @@ var site = {
                                         <div class="parsing_parem"><div class="parsing_title">文件名：</div><div class="parsing_info"><input type="text" name="fileName" class="parsing_input" value="'+ data.info.fileName + '" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="' + data.info.fileName + '">复制</span></div></div>\
                                         <div class="parsing_parem"><div class="parsing_title" style="vertical-align: top;">文件内容：</div><div class="parsing_info"><textarea name="fileValue"  class="parsing_textarea" readonly="readonly">'+ data.info.fileContent + '</textarea><span class="parsing_icon" style="display: block;width: 60px;border-radius: 3px;" data-clipboard-text="' + data.info.fileContent + '">复制</span></div></div>'
                                         + check_html +
-                                        '<div class="parsing_tips" >· SSL添加文件验证方式 ->> <a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="btlink" >查看教程</a></div >\
+                                        '<div class="parsing_tips" >· SSL添加文件验证方式 ->> <a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="btlink" >查看教程</a><span style="padding-left:60px">专属客服QQ：' + data.info.kfqq +'</span></div >\
                                         <div class="parsing_parem" style="padding: 0 55px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button><button type="submit" class="btn btn-success set_verify_type">修改验证方式</button></div>\
                                     </div>';
                                 } else {
@@ -3736,31 +3736,6 @@ var site = {
 
     },
     
-    select_site_txt: function (box) {
-
-
-        layer.open({
-            type: 1,
-            closeBtn: 2,
-            title: '自定义域名',
-            area: '600px',
-            btn: ['确认', '取消'],
-            content: '<div class="pd20"><div class="line "><span class="tname">自定义域名</span><div class="info-r "><input  name="site_name" placeholder="请输入需要申请证书的域名（单域名证书），必填项，例如：www.bt.cn" class="bt-input-text mr5 ssl_site_name_rc" type="text" style="width:400px" value=""></div></div>\
-            <ul class="help-info-text c7">\
-                    <li> 申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)</li>\
-                    <li>申请www.bt.cn这种以www为二级域名的证书，需绑定并解析顶级域名(bt.cn)，否则将验证失败</li>\
-                    <li>如果您的站点有使用CDN、高防IP、反向代理、301重定向等功能，可能导致验证失败</li>\
-            </ul></div>',
-            success: function () {
-          
-            }, 
-            yes: function (layers, index) {               
-                layer.close(layers);
-                $('#' + box).val($('.ssl_site_name_rc').val())   
-            }
-        })
-    },
-
     /**
     * @descripttion: 选择站点
     * @author: Lifu
@@ -3818,8 +3793,11 @@ var site = {
                 <ul class="help-info-text c7">\
                     <li> 申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)</li>\
                     <li>申请www.bt.cn这种以www为二级域名的证书，需绑定并解析顶级域名(bt.cn)，否则将验证失败</li>\
-                    <li>如果您的站点有使用CDN、高防IP、反向代理、301重定向等功能，可能导致验证失败</li>\
-                </ul>\
+                    <li>SSL证书可选名称赠送规则：</li>\
+                    <li>    1、申请根域名(如：bt.cn),赠送下一级为www的域名(如：www.bt.cn)</li>\
+                    <li>    2、申请当前host为www的域名（如：www.bt.cn）,赠送上一级域名，(如: bt.cn)</li>\
+                    <li>    3、申请其它二级域名，(如：app.bt.cn)，赠送下一级为www的域名 (如：www.app.bt.cn)</li>\
+                </ul >\
                 </div> ',
                 success: function () {
                         
