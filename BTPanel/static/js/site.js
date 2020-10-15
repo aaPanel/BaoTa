@@ -2552,7 +2552,7 @@ var site = {
                                                     }else{
                                                         placeholder = '请输入需要申请证书的域名（单域名证书），必填项，例如：www.bt.cn';
                                                     }
-                                                    $('.domain_list_info').html('<input type="text" disabled="true" readonly="readonly" id="apply_site_name" class="bt-input-text mr5" name="domains" placeholder="' + placeholder + '"/><button class="btn btn-success btn-xs" onclick="site.select_site_list(\'apply_site_name\')" style="">选择已有域名</button><button class="btn btn-success btn-xs" onclick="site.select_site_txt(\'apply_site_name\')" style="margin: 5px;">自定义域名</button>');
+                                                    $('.domain_list_info').html('<input type="text" disabled="true" readonly="readonly" id="apply_site_name" class="bt-input-text mr5" name="domains" placeholder="' + placeholder + '"/><button class="btn btn-success btn-xs" onclick="site.select_site_list(\'apply_site_name\',\'' + code +'\')" style="">选择已有域名</button><button class="btn btn-success btn-xs" onclick="site.select_site_txt(\'apply_site_name\')" style="margin: 5px;">自定义域名</button>');
                                                 }
                                             });
                                             $('.prev-plan').click(function(){
@@ -3735,7 +3735,32 @@ var site = {
         })
 
     },
-    
+    select_site_txt: function (box) {
+        layer.open({
+            type: 1,
+            closeBtn: 2,
+            title: '自定义域名',
+            area: '600px',
+            btn: ['确认', '取消'],
+            content: '<div class="pd20"><div class="line "><span class="tname">自定义域名</span><div class="info-r "><input  name="site_name" placeholder="请输入需要申请证书的域名（单域名证书），必填项，例如：www.bt.cn" class="bt-input-text mr5 ssl_site_name_rc" type="text" style="width:400px" value=""></div></div>\
+            <ul class="help-info-text c7">\
+                    <li> 申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)</li>\
+                    <li>申请www.bt.cn这种以www为二级域名的证书，需绑定并解析顶级域名(bt.cn)，否则将验证失败</li>\
+                    <li>SSL证书可选名称赠送规则：</li>\
+                    <li>    1、申请根域名(如：bt.cn),赠送下一级为www的域名(如：www.bt.cn)</li>\
+                    <li>    2、申请当前host为www的域名（如：www.bt.cn）,赠送上一级域名，(如: bt.cn)</li>\
+                    <li>    3、申请其它二级域名，(如：app.bt.cn)，赠送下一级为www的域名 (如：www.app.bt.cn)</li>\
+                </ul >\
+            </div>',
+            success: function () {
+          
+            }, 
+            yes: function (layers, index) {               
+                layer.close(layers);
+                $('#' + box).val($('.ssl_site_name_rc').val())   
+            }
+        })
+    },
     /**
     * @descripttion: 选择站点
     * @author: Lifu
@@ -3743,17 +3768,16 @@ var site = {
     * @param {String} box 输出时所用ID
     * @return: 无返回值
     */
-    select_site_list: function (box) {
+     select_site_list: function (box,code) {
         var _optArray = [], all_site_list = [];
-
-        $.post('/data?action=getData', { tojs: 'site.get_list', table: 'domain', limit: 10000, p: 1, search: '', order: 'id desc', type: -1 }, function (res) {
+   
+        $.post('/data?action=getData', { tojs: 'site.get_list', table: 'domain', limit: 10000, search: '', p: 1, order: 'id desc', type: -1 }, function (res) {
 
             var _tbody = '';
             if (res.data.length > 0)
             {
-                $.each(res.data, function (index, item) {
-                    
-                    _tbody += '<tr>'
+                $.each(res.data, function (index, item) {                    
+                    _body = '<tr>'
                         + '<td>'
                         + '<div class="box-group" style="height:16px">'
                         + '<div class="bt_checkbox_groups"></div>'
@@ -3762,10 +3786,23 @@ var site = {
                         + '<td><span class="overflow_style" style="width:210px">' + item['name'] + '</span></td>'
                  
                         + '</tr>'
-                    all_site_list.push(item['name'])
+
+                    if (code.indexOf('wildcard') > -1) {
+                        if (item['name'].indexOf('*.') > -1) {
+                            all_site_list.push(item['name'])
+                            _tbody += _body;
+                        }
+                    }
+                    else {
+                        all_site_list.push(item['name'])
+                        _tbody += _body;
+                    }                   
                 })
+                if (all_site_list.length == 0) {
+                    _tbody = '<tr><td colspan="2">暂无数据</td></tr>'
+                }
             } else {
-                _tbody = '<tr><td colspan="3">暂无数据</td></tr>'
+                _tbody = '<tr><td colspan="2">暂无数据</td></tr>'
             }
                        
             layer.open({

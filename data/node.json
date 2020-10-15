@@ -13,12 +13,6 @@
   },
   {
     "protocol": "http://",
-    "address": "120.206.184.160",
-    "port": "5880",
-    "ping": 500
-  },
-  {
-    "protocol": "http://",
     "address": "180.101.160.68",
     "port": "5880",
     "ping": 500
