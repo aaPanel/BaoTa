@@ -414,7 +414,6 @@ class panelSSL:
                 3、检查该网站是否设置强制HTTPS [请暂时关闭强制HTTPS功能]<br>'''.format(c_url = self._check_url)
                 return public.returnMsg(False,msg)
         
-        return self.__test
         action = 'GetDVSSL'
         if hasattr(get,'partnerOrderId'):
             self.__PDATA['data']['partnerOrderId'] = get.partnerOrderId
@@ -479,8 +478,8 @@ class panelSSL:
                 get.domain = get.domain[4:]
 
             import http_requests
-            self._check_url = 'http://' + get.domain + '/.well-known/pki-validation/fileauth.txt'
-            result = http_requests.get(self._check_url,s_type='curl',timeout=6).text
+            self._check_url = 'http://127.0.0.1/.well-known/pki-validation/fileauth.txt'
+            result = http_requests.get(self._check_url,s_type='curl',timeout=6,headers={"host":get.domain}).text
             self.__test = result
             if result == epass: return True
 

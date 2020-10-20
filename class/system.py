@@ -494,32 +494,55 @@ class system:
     
     def GetNetWork(self,get=None):
         cache_timeout = 86400
-        networkIo = psutil.net_io_counters()[:4]
         otime = cache.get("otime")
-        if not otime:
-            otime = time.time()
-            cache.set('up',networkIo[0],cache_timeout)
-            cache.set('down',networkIo[1],cache_timeout)
-            cache.set('otime',otime ,cache_timeout)
-            
         ntime = time.time()
         networkInfo = {}
-        up = cache.get('up')
-        down = cache.get('down')
-        if not up:
-            up = networkIo[0]
-        if not down:
-            down = networkIo[1] 
-        networkInfo['upTotal']   = networkIo[0]
-        networkInfo['downTotal'] = networkIo[1]
-        networkInfo['up']        = round(float(networkIo[0] -  up) / 1024 / (ntime - otime),2)
-        networkInfo['down']      = round(float(networkIo[1] - down) / 1024 / (ntime -  otime),2)
-        networkInfo['downPackets'] =networkIo[3]
-        networkInfo['upPackets']   =networkIo[2]
-            
-        cache.set('up',networkIo[0],cache_timeout)
-        cache.set('down',networkIo[1],cache_timeout)
-        cache.set('otime', time.time(),cache_timeout)
+        networkInfo['network'] = {}
+        networkInfo['upTotal'] = 0
+        networkInfo['downTotal'] = 0
+        networkInfo['up'] = 0
+        networkInfo['down'] = 0
+        networkInfo['downPackets'] = 0
+        networkInfo['upPackets'] = 0
+        networkIo_list = psutil.net_io_counters(pernic = True)
+        for net_key in networkIo_list.keys():
+            networkIo = networkIo_list[net_key][:4]
+            up_key = "{}_up".format(net_key)
+            down_key = "{}_down".format(net_key)
+            otime_key = "otime"
+
+            if not otime:
+                otime = time.time()
+                
+                cache.set(up_key,networkIo[0],cache_timeout)
+                cache.set(down_key,networkIo[1],cache_timeout)
+                cache.set(otime_key,otime ,cache_timeout)
+                
+            networkInfo['network'][net_key] = {}
+            up = cache.get(up_key)
+            down = cache.get(down_key)
+            if not up:
+                up = networkIo[0]
+            if not down:
+                down = networkIo[1] 
+            networkInfo['network'][net_key]['upTotal']   = networkIo[0]
+            networkInfo['network'][net_key]['downTotal'] = networkIo[1]
+            networkInfo['network'][net_key]['up']        = round(float(networkIo[0] -  up) / 1024 / (ntime - otime),2)
+            networkInfo['network'][net_key]['down']      = round(float(networkIo[1] - down) / 1024 / (ntime -  otime),2)
+            networkInfo['network'][net_key]['downPackets'] =networkIo[3]
+            networkInfo['network'][net_key]['upPackets']   =networkIo[2]
+
+            networkInfo['upTotal'] += networkInfo['network'][net_key]['upTotal']
+            networkInfo['downTotal'] += networkInfo['network'][net_key]['downTotal']
+            networkInfo['up'] += networkInfo['network'][net_key]['up']
+            networkInfo['down'] += networkInfo['network'][net_key]['down']
+            networkInfo['downPackets'] += networkInfo['network'][net_key]['downPackets']
+            networkInfo['upPackets'] += networkInfo['network'][net_key]['upPackets']
+                
+            cache.set(up_key,networkIo[0],cache_timeout)
+            cache.set(down_key,networkIo[1],cache_timeout)
+            cache.set(otime_key, time.time(),cache_timeout)
+
         if get != False:
             networkInfo['cpu'] = self.GetCpuInfo(1)
             networkInfo['load'] = self.GetLoadAverage(get)

@@ -67,6 +67,13 @@ if (bind_user == 'True') {
 }
 
 
+$("select[name='network-io']").change(function(){
+    var net_key = $(this).val();
+    if(net_key == 'all') net_key = '';
+    bt.set_cookie('network_io_key',net_key);
+});
+
+
 
 var interval_stop = false;
 var index = {
@@ -305,9 +312,31 @@ var index = {
             var _lval = Math.round((net.load.one / net.load.max) * 100);
             if (_lval > 100) _lval = 100;
             index.set_val(_loadbox, { usage: _lval, items: load_arr })
+            
+            var net_key = bt.get_cookie('network_io_key');
+            if(net_key){
+                console.log(net_key,net.network[net_key])
+                net.up = net.network[net_key].up;
+                net.down = net.network[net_key].down;
+                net.downTotal = net.network[net_key].downTotal;
+                net.upTotal = net.network[net_key].upTotal;
+                net.downPackets = net.network[net_key].downPackets;
+                net.upPackets = net.network[net_key].upPackets;
+                net.downAll = net.network[net_key].downTotal;
+                net.upAll = net.network[net_key].upTotal;
+            }
+
+            var net_option = '<option value="all">全部</option>';
+            $.each(net.network,function(k,v){
+                var act = (k == net_key)?'selected':'';
+                net_option += '<option value="'+k+'" '+act+'>'+k+'</option>';
+            });
+
+            $('select[name="network-io"]').html(net_option);
+
             _loadbox.parents('ul').data('data', net);
-
-
+            
+            
 
             //刷新流量
             $("#upSpeed").html(net.up + ' KB');
