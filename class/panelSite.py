@@ -2727,26 +2727,29 @@ server
 
     def _set_ols_open_basedir(self,get):
         # 设置ols
-        sitename = public.M('sites').where("id=?", (get.id,)).getField('name')
-        # sitename = path.split('/')[-1]
-        f = "/www/server/panel/vhost/openlitespeed/detail/{}.conf".format(sitename)
-        c = public.readFile(f)
-        if not c: return False
-        if f:
-            rep = '\nphp_admin_value\s*open_basedir.*'
-            result = re.search(rep, c)
-            s = 'on'
-            if not result:
-                s = 'off'
-                rep = '\n#php_admin_value\s*open_basedir.*'
+        try:
+            sitename = public.M('sites').where("id=?", (get.id,)).getField('name')
+            # sitename = path.split('/')[-1]
+            f = "/www/server/panel/vhost/openlitespeed/detail/{}.conf".format(sitename)
+            c = public.readFile(f)
+            if not c: return False
+            if f:
+                rep = '\nphp_admin_value\s*open_basedir.*'
                 result = re.search(rep, c)
-            result = result.group()
-            if s == 'on':
-                c = re.sub(rep, '\n#' + result[1:], c)
-            else:
-                result = result.replace('#', '')
-                c = re.sub(rep, result, c)
-            public.writeFile(f, c)
+                s = 'on'
+                if not result:
+                    s = 'off'
+                    rep = '\n#php_admin_value\s*open_basedir.*'
+                    result = re.search(rep, c)
+                result = result.group()
+                if s == 'on':
+                    c = re.sub(rep, '\n#' + result[1:], c)
+                else:
+                    result = result.replace('#', '')
+                    c = re.sub(rep, result, c)
+                public.writeFile(f, c)
+        except:
+            pass
 
        # 读配置
     def __read_config(self, path):

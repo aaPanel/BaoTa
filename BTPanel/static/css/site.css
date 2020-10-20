@@ -8991,11 +8991,10 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
     line-height: 50px;
 }
 
+/* end */
 
-.box-group .bt_checkbox_groups {
-    vertical-align: sub;
-}
-.bt_checkbox_groups {
+/* 商业证书 */
+.dynamic_head_box .bt_checkbox_groups {
     display: inline-block;
     height: 16px;
     width: 16px;
@@ -9006,9 +9005,11 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
     text-align: center;
     line-height: 20px;
     margin: 0;
+    transition: all 200ms;
     vertical-align: top;
 }
-.bt_checkbox_groups.active {
+
+.dynamic_head_box .bt_checkbox_groups.active {
     border: none;
     position: relative;
     top: 1px;
@@ -9018,16 +9019,21 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
     font-weight: 400;
     line-height: 1;
     -webkit-font-smoothing: antialiased;
-    background: #20a53a;
+    background: #5FB878;
     color: #fff;
 }
-.bt_checkbox_groups.active:after {
+
+.dynamic_head_box .bt_checkbox_groups.active:after {
     content: "\e013";
     font-size: 12px;
     transform: scale(.85);
     position: absolute;
     left: 2px;
     top: 2px;
+}
+
+.dynamic_head_box .box-group .bt_checkbox_groups {
+    vertical-align: sub;
 }
 
 /* end */
