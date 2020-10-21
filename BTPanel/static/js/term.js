@@ -691,7 +691,8 @@ var host_trem = {
                             }
                         });
                     }else{
-                        form.new_host = obj.form.host;
+                        form.new_host = form.host;
+                        form.host = obj.form.host;
                         that.modify_host(form,function(res){
                             if(res.status){
                                 layer.close(indexs)

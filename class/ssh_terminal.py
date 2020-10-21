@@ -107,7 +107,21 @@ class ssh_terminal:
                     p_file = BytesIO(self._pkey)
                 else:
                     p_file = StringIO(self._pkey)
-                pkey = paramiko.RSAKey.from_private_key(p_file)
+                
+                try:
+                    pkey = paramiko.RSAKey.from_private_key(p_file)
+                except:
+                    try:
+                        p_file.seek(0) # 重置游标
+                        pkey = paramiko.Ed25519Key.from_private_key(p_file)
+                    except:
+                        try:
+                            p_file.seek(0)
+                            pkey = paramiko.ECDSAKey.from_private_key(p_file)
+                        except:
+                            p_file.seek(0)
+                            pkey = paramiko.DSSKey.from_private_key(p_file)
+
                 self._tp.auth_publickey(username=self._user, key=pkey)
             else:
                 self.debug('正在认证密码')

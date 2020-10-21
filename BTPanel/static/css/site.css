@@ -9037,3 +9037,15 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
 }
 
 /* end */
+
+
+
+/*首页概览网卡选择*/
+select[name="network-io"]{
+    font-size: 13px;
+    height: 24px;
+    line-height: 24px;
+    padding: 2px;
+    border-radius: 0;
+    border-color: #ececec;
+}

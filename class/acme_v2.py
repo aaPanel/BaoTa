@@ -1356,6 +1356,11 @@ fullchain.pem       粘贴到证书输入框
                         self._config['orders'][i]['cert_timeout'] = int(time.time())
                     if self._config['orders'][i]['cert_timeout'] > s_time or self._config['orders'][i]['auth_to'] == 'dns':
                         continue
+
+                    #已删除的网站直接跳过续签
+                    if self._config['orders'][i]['auth_to'].find('|') == -1 and self._config['orders'][i]['auth_to'].find('/') != -1:
+                        if not os.path.exists(self._config['orders'][i]['auth_to']):
+                            continue
                     order_index.append(i)
 
             if not order_index:
