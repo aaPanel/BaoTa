@@ -185,7 +185,6 @@ class panelSite(panelRedirect):
     #ERROR-PAGE-END
     
     #PHP-INFO-START  {php_info_start}
-    include {setup_path}/panel/vhost/open_basedir/nginx/{site_name}.conf;
     include enable-php-{php_version}.conf;
     #PHP-INFO-END
     
@@ -841,7 +840,6 @@ set $bt_safe_open "{}/:/tmp/";'''.format(self.sitePath)
                 new_map = '\tmap\t{d} {d}\n'.format(d=domains[0])
                 tmp += new_map
                 conf = re.sub(rep_default, tmp, conf)
-                print(conf)
         return conf
 
     # openlitespeed写域名配置
@@ -1210,7 +1208,6 @@ listener Default%s{
             else:
                 runPath = ''
             get.site_dir = data['path'] + runPath
-            print(get.site_dir)
             
         else:          
             dns_api_list = self.GetDnsApi(get)
@@ -2890,18 +2887,14 @@ server
             p = re.search(rep, get.proxysite).group(3)
         except:
             p = ""
-        print(d, p)
         try:
             if p:
                 sk.connect((d, int(p)))
-                print (p)
             else:
                 if h == "http":
                     sk.connect((d, 80))
-                    print(80)
                 else:
                     sk.connect((d, 443))
-                    print(443)
         except:
             return public.returnMsg(False, "目标URL无法访问")
 
@@ -3272,7 +3265,6 @@ RewriteRule ^%s(.*)$ http://%s/$1 [P,E=Proxy-Host:%s]
                     if c:
                         rep = 'RewriteRule\s*\^{}\(\.\*\)\$\s+http://{}/\$1\s*\[P,E=Proxy-Host:{}\]'.format(conf[i]["proxydir"],get.proxyname,conf[i]["todomain"])
                         new_content = 'RewriteRule ^{}(.*)$ http://{}/$1 [P,E=Proxy-Host:{}]'.format(get.proxydir,get.proxyname,get.todomain)
-                        print(new_content)
                         c = re.sub(rep,new_content,c)
                         public.writeFile(ols_conf_file,c)
 

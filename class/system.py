@@ -538,7 +538,8 @@ class system:
             networkInfo['down'] += networkInfo['network'][net_key]['down']
             networkInfo['downPackets'] += networkInfo['network'][net_key]['downPackets']
             networkInfo['upPackets'] += networkInfo['network'][net_key]['upPackets']
-                
+
+                            
             cache.set(up_key,networkIo[0],cache_timeout)
             cache.set(down_key,networkIo[1],cache_timeout)
             cache.set(otime_key, time.time(),cache_timeout)
@@ -559,6 +560,8 @@ class system:
         networkInfo['installed'] = self.CheckInstalled()
         import panelSSL
         networkInfo['user_info'] = panelSSL.panelSSL().GetUserInfo(None)
+        networkInfo['up'] = round(float(networkInfo['up']),2)
+        networkInfo['down'] = round(float(networkInfo['down']),2)
 
         return networkInfo
         

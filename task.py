@@ -465,25 +465,25 @@ def panel_status():
                 e_body = public.GetNumLines(log_path,10)
                 if e_body:
                     if e_body.find('PyWSGIServer.do_close') != -1 or e_body.find('Expected GET method:')!=-1 or e_body.find('Invalid HTTP method:') != -1 or e_body.find('table session') != -1:
-                        result = HttpGet(panel_url)
+                        result = public.HttpGet(panel_url)
                         if result != 'True':
                             if e_body.find('table session') != -1:
                                 sess_file = '/dev/shm/session.db'
                                 if os.path.exists(sess_file): os.remove(sess_file)
                             os.system("bash /www/server/panel/init.sh reload &")
                             time.sleep(10)
-                            result = HttpGet(panel_url)
+                            result = public.HttpGet(panel_url)
                             if result == 'True':
                                 public.WriteLog('守护程序','检查到面板服务异常,已自动恢复!',not_web = True)
 
         if n > 18000:
             n = 0
-            result = HttpGet(panel_url)
+            result = public.HttpGet(panel_url)
             if result == 'True':
                 time.sleep(10)
                 continue
             update_panel()
-            result = HttpGet(panel_url)
+            result = public.HttpGet(panel_url)
             if result == 'True':
                 public.WriteLog('守护程序','检查到面板服务异常,已自动恢复!',not_web = True)
                 time.sleep(10)

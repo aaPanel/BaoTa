@@ -874,6 +874,9 @@ function GetFiles(Path, sort) {
             if (fmp[0].indexOf('Recycle_bin') != -1) {
                 fileMsg = 'PS: 回收站目录,勿动!';
             }
+            if (fileMsg == ''){
+                fileMsg = fmp[8];
+            }
             if (fileMsg != '') {
                 fileMsg = '<span style="margin-left: 30px; color: #999;">' + fileMsg + '</span>';
             }
@@ -881,7 +884,7 @@ function GetFiles(Path, sort) {
             if (getCookie("rank") == "a") {
                 $("#set_list").addClass("active");
                 $("#set_icon").removeClass("active");
-                Body += "<tr class='folderBoxTr' fileshare='"+ fmp[6] +"' data-composer='"+fmp[7]+"' data-path='" + rdata.PATH + "/" + fmp[0] + "' filetype='dir'>\
+                Body += "<tr class='folderBoxTr' fileshare='"+ fmp[6] +"' data-composer='"+fmp[7]+"' data-path='" + rdata.PATH + "/" + fmp[0] + "' filetype='dir' data-ps='"+fmp[8]+"'>\
 						<td><input type='checkbox' name='id' value='"+ fmp[0] + "'></td>\
 						<td class='column-name'><span class='cursor' onclick=\"GetFiles('" + rdata.PATH + "/" + fmp[0] + "')\"><span class='ico ico-folder'></span><a class='text' title='" + fmp[0] + fmp[5] + "'>" + cnametext + fileMsg + "</a></span></td>\
 						<td><a class='btlink "+ (rdata.PATH + '/' + fmp[0]).replace(/[^\w]/g, '-') + "' onclick=\"get_path_size('" + rdata.PATH + "/" + fmp[0] + "')\">点击计算</a></td>\
@@ -956,15 +959,20 @@ function GetFiles(Path, sort) {
                         fileMsg = 'PS: 宝塔默认设置的SWAP交换分区文件';
                         break;
                 }
+                
 
                 if (fmp[0].indexOf('.upload.tmp') != -1) {
                     fileMsg = 'PS: 宝塔文件上传临时文件,重新上传从断点续传,可删除';
                 }
 
+                if (fileMsg == ''){
+                    fileMsg = fmp[8];
+                }
+
                 if (fileMsg != '') {
                     fileMsg = '<span style="margin-left: 30px; color: #999;">' + fileMsg + '</span>';
                 }
-                Body += "<tr class='folderBoxTr' fileshare='"+ fmp[6] +"' data-path='" + rdata.PATH + "/" + fmp[0] + "' filetype='" + fmp[0] + "'><td><input type='checkbox' name='id' value='" + fmp[0] + "'></td>\
+                Body += "<tr class='folderBoxTr' fileshare='"+ fmp[6] +"' data-path='" + rdata.PATH + "/" + fmp[0] + "' filetype='" + fmp[0] + "' data-ps='"+fmp[8]+"'><td><input type='checkbox' name='id' value='" + fmp[0] + "'></td>\
 						<td class='column-name'><span class='ico ico-"+ (GetExtName(fmp[0])) + "'></span><a class='text' title='" + fmp[0] + fmp[5] + "'>" + cnametext + fileMsg + "</a></td>\
 						<td>" + (ToSize(fmp[1])) + "</td>\
 						<td>" + ((fmp[2].length > 11) ? fmp[2] : getLocalTime(fmp[2])) + "</td>\
@@ -1129,7 +1137,7 @@ function GetFiles(Path, sort) {
             if (e.which == 3) {
                 if (count <= 1) {
                     var a = $(this);
-                    a.contextify(RClick(a.attr("filetype"), a.attr("data-path"), a.find("input").val(), rdata,a.attr('fileshare'),a.attr('data-composer')));
+                    a.contextify(RClick(a.attr("filetype"), a.attr("data-path"), a.find("input").val(), rdata,a.attr('fileshare'),a.attr('data-composer'),a.attr('data-ps')));
                     $(this).find('input').prop("checked", true);
                     $(this).addClass('ui-selected');
                     $(this).siblings().removeClass('ui-selected').find('input').prop("checked", false);
@@ -2339,7 +2347,7 @@ function onAccess() {
         }
     }
 }
-function RClick(type, path, name, file_store,file_share,data_composer) {
+function RClick(type, path, name, file_store,file_share,data_composer,data_ps) {
     var displayZip = isZip(type);
     var options = {
         items: [
@@ -2381,9 +2389,10 @@ function RClick(type, path, name, file_store,file_share,data_composer) {
     //if(type !== 'dir'){
         options.items.push({ text: '外链分享', onclick: function () { create_download_url(name,path,file_share) } });
     //}
-
+    
+    options.items.push({ text: '备注', onclick: function () { set_files_ps(0,path,data_ps) } });
     if( type === 'dir' && data_composer === '1'){
-        options.items.push({ text: 'Composer', onclick: function () { exec_composer(name,path) } });
+        options.items.push({ text: 'Composer', onclick: function () { exec_composer(path) } });
     }
 
     options.items.push({
@@ -2401,6 +2410,54 @@ function RClick(type, path, name, file_store,file_share,data_composer) {
 
 
     return options;
+}
+
+/**
+ * 设置文件或目录备注
+ * @param {string} path 全路径
+ */
+function set_files_ps(act,path,ps){
+
+    if(act === 1){
+        ps = $('#ps_body').val();
+        ps_type = $('#ps_type').val();
+        $.post('/files?action=set_file_ps',{filename:path,ps_body:ps,ps_type:ps_type},function(rdata){
+            if(rdata.status){
+                layer.closeAll();
+                GetFiles(getCookie('Path'));
+            }
+            bt.msg(rdata);
+            return;
+        })
+    }
+
+    var layers = layer.open({
+        type: 1,
+        shift: 5,
+        closeBtn: 2,
+        area: '320px',
+        title: '设置文件备注',
+        content: '<div class="bt-form pd20 pb70">\
+                <div class="line">\
+                <select id="ps_type" class="bt-input-text"><option value="0">全路径</option><option value="1">文件名</option></select>\
+				<input type="text" class="bt-input-text" name="ps_body" id="ps_body" value="' + ps + '" placeholder="请填写文件备注" style="width:100%" />\
+				</div>\
+				<div class="bt-form-submit-btn">\
+				<button type="button" class="btn btn-danger btn-sm btn-title layers_close">'+ lan.public.close + '</button>\
+				<button type="button" id="set-files-ps" class="btn btn-success btn-sm btn-title" onclick="set_files_ps(1,\'' + path + '\')">' + lan.public.save + '</button>\
+				</div>\
+			</div>',
+        success: function (layers, index) {
+            $('.layers_close').click(function () {
+                layer.close(index);
+            });
+        }
+    });
+    setCookie('layers', layers);
+    $("#ps_body").focus().keyup(function (e) {
+        if (e.keyCode == 13) $("#set-files-ps").click();
+    });
+
 }
 
 function update_composer(){

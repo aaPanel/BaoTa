@@ -559,7 +559,7 @@ def files(pdata = None):
     filesObject = files.files()
     defs = ('CheckExistsFiles','GetExecLog','GetSearch','ExecShell','GetExecShellMsg','exec_git','exec_composer','create_download_url',
             'UploadFile','GetDir','CreateFile','CreateDir','DeleteDir','DeleteFile','get_download_url_list','remove_download_url','modify_download_url',
-            'CopyFile','CopyDir','MvFile','GetFileBody','SaveFileBody','Zip','UnZip','get_download_url_find',
+            'CopyFile','CopyDir','MvFile','GetFileBody','SaveFileBody','Zip','UnZip','get_download_url_find','set_file_ps',
             'SearchFiles','upload','read_history','re_history','auto_save_temp','get_auto_save_body','get_videos',
             'GetFileAccess','SetFileAccess','GetDirSize','SetBatchData','BatchPaste','install_rar','get_path_size',
             'DownloadFile','GetTaskSpeed','CloseLogs','InstallSoft','UninstallSoft','SaveTmpFile','get_composer_version','exec_composer','update_composer',
@@ -615,9 +615,6 @@ def config(pdata = None):
         data['ipv6'] = ''
         sess_out_path = 'data/session_timeout.pl'
         if not os.path.exists(sess_out_path): public.writeFile(sess_out_path,'86400')
-        workers_p = 'data/workers.pl'
-        if not os.path.exists(workers_p): public.writeFile(workers_p,'1')
-        data['workers'] = int(public.readFile(workers_p))
         s_time_tmp = public.readFile(sess_out_path)
         if not s_time_tmp: s_time_tmp = '0'
         data['session_timeout'] = int(s_time_tmp)

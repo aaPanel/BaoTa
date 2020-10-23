@@ -393,13 +393,70 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
 
             data['DIR'] = dirnames
             data['FILES'] = filenames
-
         data['PATH'] = str(get.path)
+        for i in range(len(data['DIR'])):
+            data['DIR'][i] += ';' + self.get_file_ps( os.path.join(data['PATH'] , data['DIR'][i].split(';')[0]))
+        
+        for i in range(len(data['FILES'])):
+            data['FILES'][i] += ';' + self.get_file_ps( os.path.join(data['PATH'] , data['FILES'][i].split(';')[0]))
+        
         data['STORE'] = self.get_files_store(None)
         if hasattr(get, 'disk'):
             import system
             data['DISK'] = system.system().GetDiskInfo()
         return data
+
+
+    def get_file_ps(self,filename):
+        '''
+            @name 获取文件或目录备注
+            @author hwliang<2020-10-22>
+            @param filename<string> 文件或目录全路径
+            @return string
+        '''
+        ps_path = '/www/server/panel/data/files_ps'
+        f_key1 = '/'.join((ps_path,public.md5(filename)))
+        if os.path.exists(f_key1):
+            return public.readFile(f_key1)
+        
+        f_key2 = '/'.join((ps_path,public.md5(os.path.basename(filename))))
+        if os.path.exists(f_key2):
+            return public.readFile(f_key2)
+        return ''
+
+
+    def set_file_ps(self,args):
+        '''
+            @name 设置文件或目录备注
+            @author hwliang<2020-10-22>
+            @param filename<string> 文件或目录全路径
+            @param ps_type<int> 备注类型 0.完整路径 1.文件名称
+            @param ps_body<string> 备注内容
+            @return dict
+        '''
+        filename = args.filename.strip()
+        ps_type = int(args.ps_type)
+        ps_body = args.ps_body
+        ps_path = '/www/server/panel/data/files_ps'
+        if not os.path.exists(ps_path):
+            os.makedirs(ps_path,384)
+        if ps_type == 1:
+            f_name = os.path.basename(filename)
+        else:
+            f_name = filename
+        ps_key = public.md5(f_name)
+
+        f_key = '/'.join((ps_path,ps_key))
+        if ps_body:
+            public.writeFile(f_key,ps_body)
+            public.WriteLog('文件管理','设置文件名[{}],备注为: {}'.format(f_name,ps_body))
+        else:
+            if os.path.exists(f_key):os.remove(f_key)
+            public.WriteLog('文件管理','清除文件备注[{}]'.format(f_name))
+        return public.returnMsg(True,'设置成功')
+
+        
+
 
     def __list_dir(self, path, my_sort='name', reverse=False):
         '''

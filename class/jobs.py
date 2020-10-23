@@ -166,7 +166,7 @@ def control_init():
     #update_py37()
     files_set_mode()
     set_pma_access()
-    public.set_open_basedir()
+    # public.set_open_basedir()
 
 
 #设置文件权限

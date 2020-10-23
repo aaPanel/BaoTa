@@ -334,10 +334,14 @@ SetLink
             if is_modify:
                 m_version = public.readFile(public.GetConfigValue('setup_path') + '/mysql/version.pl')
                 
-                if m_version.find('5.7') == 0  or m_version.find('8.0') == 0 or m_version.find('10.4.') != -1:
+                if m_version.find('5.7') == 0  or m_version.find('8.0') == 0:
                     accept = self.map_to_list(mysql_obj.query("select Host from mysql.user where User='root'"))
                     for my_host in accept:
                         mysql_obj.execute("UPDATE mysql.user SET authentication_string='' WHERE User='root' and Host='{}'".format(my_host[0]))
+                        mysql_obj.execute("ALTER USER `%s`@`%s` IDENTIFIED BY '%s'" % ('root',my_host[0],password))
+                elif m_version.find('10.5.') != -1 or m_version.find('10.4.') != -1:
+                    accept = self.map_to_list(mysql_obj.query("select Host from mysql.user where User='root'"))
+                    for my_host in accept:
                         mysql_obj.execute("ALTER USER `%s`@`%s` IDENTIFIED BY '%s'" % ('root',my_host[0],password))
                 else:
                     result = mysql_obj.execute("update mysql.user set Password=password('" + password + "') where User='root'")
@@ -366,9 +370,14 @@ SetLink
             #修改MYSQL
             mysql_obj = panelMysql.panelMysql()
             m_version = public.readFile(public.GetConfigValue('setup_path') + '/mysql/version.pl')
-            if m_version.find('5.7') == 0  or m_version.find('8.0') == 0 or m_version.find('10.4.') != -1:
+            if m_version.find('5.7') == 0  or m_version.find('8.0') == 0 :
                 accept = self.map_to_list(panelMysql.panelMysql().query("select Host from mysql.user where User='" + name + "' AND Host!='localhost'"))
                 mysql_obj.execute("update mysql.user set authentication_string='' where User='" + username + "'")
+                result = mysql_obj.execute("ALTER USER `%s`@`localhost` IDENTIFIED BY '%s'" % (username,newpassword))
+                for my_host in accept:
+                    mysql_obj.execute("ALTER USER `%s`@`%s` IDENTIFIED BY '%s'" % (username,my_host[0],newpassword))
+            elif m_version.find('10.5.') != -1 or m_version.find('10.4.') != -1:
+                accept = self.map_to_list(panelMysql.panelMysql().query("select Host from mysql.user where User='" + name + "' AND Host!='localhost'"))
                 result = mysql_obj.execute("ALTER USER `%s`@`localhost` IDENTIFIED BY '%s'" % (username,newpassword))
                 for my_host in accept:
                     mysql_obj.execute("ALTER USER `%s`@`%s` IDENTIFIED BY '%s'" % (username,my_host[0],newpassword))

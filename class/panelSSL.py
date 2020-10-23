@@ -11,7 +11,10 @@
 # SSL接口
 #------------------------------
 import public,os,sys,binascii,urllib,json,time,datetime,re
-from BTPanel import cache,session
+try:
+    from BTPanel import cache,session
+except:
+    pass
 class panelSSL:
     __APIURL = 'http://www.bt.cn/api/Auth'
     __APIURL2 = 'http://www.bt.cn/api/Cert'

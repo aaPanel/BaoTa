@@ -2116,6 +2116,7 @@ map "baota_open" $bt_safe_open {
 #处理指定站点的防跨站配置 for Nginx
 def set_site_open_basedir_nginx(siteName):
     try:
+        return
         open_basedir_path = '/www/server/panel/vhost/open_basedir/nginx'
         if not os.path.exists(open_basedir_path):
             os.makedirs(open_basedir_path,384)

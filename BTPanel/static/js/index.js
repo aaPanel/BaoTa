@@ -339,8 +339,8 @@ var index = {
             
 
             //刷新流量
-            $("#upSpeed").html(net.up + ' KB');
-            $("#downSpeed").html(net.down + ' KB');
+            $("#upSpeed").html(net.up.toFixed(2) + ' KB');
+            $("#downSpeed").html(net.down.toFixed(2) + ' KB');
             $("#downAll").html(bt.format_size(net.downTotal));
             $("#upAll").html(bt.format_size(net.upTotal));
             index.net.add(net.up, net.down);
