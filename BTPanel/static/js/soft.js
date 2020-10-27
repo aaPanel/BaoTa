@@ -874,6 +874,7 @@ var soft = {
                         { type: 'set_upload_limit', val: ver, title: lan.soft.php_main2 },
                         { type: 'set_timeout_limit', val: ver, title: lan.soft.php_main3, php53: true },
                         { type: 'config', val: ver, title: lan.soft.php_main4 },
+                        { type: 'fpm_config', val: ver, title: 'FPM配置文件' },
                         { type: 'set_dis_fun', val: ver, title: lan.soft.php_main6 },
                         { type: 'set_fpm_config', val: ver, title: lan.soft.php_main7, apache24: true, php53: true },
                         { type: 'get_php_status', val: ver, title: lan.soft.php_main8, apache24: true, php53: true },
@@ -980,6 +981,23 @@ var soft = {
                     bt.saveEditor(config);
                 });
                 break;
+            case 'fpm_config':
+                    var tabCon = $(".soft-man-con").empty();
+                    tabCon.append('<p style="color: #666; margin-bottom: 7px">' + lan.bt.edit_ps + '</p>');
+                    tabCon.append('<div class="bt-input-text ace_config_editor_scroll" style="height: 320px;min-height:350px;line-height:18px;" id="textBody"></div>')
+                    tabCon.append('<button id="OnlineEditFileBtn" class="btn btn-success btn-sm" style="margin-top:10px;">' + lan.public.save + '</button>')
+                    var _arry = ['此处为PHP-FPM配置文件,若您不了解配置规则，请勿修改!'];
+                    tabCon.append(bt.render_help(_arry))
+                    $('.return_php_info').click(function(){
+                        $('.bt-soft-menu p:eq(12)').click();
+                    });
+                    var fileName = bt.soft.get_config_path(version).replace('php.ini','php-fpm.conf');
+                    var loadT = bt.load(lan.soft.get);
+                    var config = bt.aceEditor({el:'textBody',path:fileName});
+                    $("#OnlineEditFileBtn").click(function () {
+                        bt.saveEditor(config);
+                    });
+                    break;
             case 'change_version':
                 var _list = [];
                 var opt_version = '';
@@ -1995,6 +2013,12 @@ var soft = {
                             }
                         },
                         {
+                            title: '连接方式', name: 'listen', value: rdata.unix, type: 'select', items: [
+                                { title: 'Unix套接字', value: 'unix' },
+                                { title: 'TCP套接字', value: 'tcp' }
+                            ], ps: '* 推荐Unix套接字' 
+                        },
+                        {
                             title: lan.soft.php_fpm_model, name: 'pm', value: rdata.pm, type: 'select', items: [
                                 { title: lan.bt.static, value: 'static' },
                                 { title: lan.bt.dynamic, value: 'dynamic' },
@@ -2057,8 +2081,6 @@ var soft = {
                                         <li>【静态模式】始终维持设置的子进程数量，对内存开销较大，但并发能力较好</li>\
                                         <li>【动态模式】按设置最大空闲进程数来收回进程，内存开销小，建议小内存机器使用</li>\
                                         <li>【按需模式】根据访问需求自动创建进程，内存开销极小，但并发能力略差</li>\
-                                        <li>【多PHP版本】若您安装了多个PHP版本，且都在使用，建议适当降低并发配置</li>\
-                                        <li>【没有数据库】若没有安装mysql等数据库，建议设置2倍于推荐并发</li>\
                                         <li>【注意】以上为建议配置说明，线上项目复杂多样，请根据实际情况酌情调整</li>\
                                     </ul>')
                     tabCon.append(_c_form);
@@ -2527,7 +2549,7 @@ function AddSite(codename,title) {
 					 		<p><span>密码：</span><strong>" + rdata.msg.admin_password + "</strong></p>\
 					 		"
             }
-            sqlData += "<p><span>访问站点：</span><a class='btlink' href='http://" + mainDomain + rdata.msg.success_url + "' target='_blank' rel='noreferrer noopener'>http://" + mainDomain + (rdata.msg.success_url.indexOf('/')== 0?rdata.msg.success_url:'/'+rdata.msg.success_url) + "</a></p>";
+            sqlData += "<p><span>访问站点：</span><a class='btlink' href='http://" + (mainDomain +'/'+ rdata.msg.success_url).replace('//','/') + "' target='_blank' rel='noreferrer noopener'>http://" + (mainDomain +'/'+ rdata.msg.success_url).replace('//','/') + "</a></p>";
 
             layer.open({
                 type: 1,

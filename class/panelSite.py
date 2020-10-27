@@ -124,9 +124,9 @@ class panelSite(panelRedirect):
             phpConfig ='''
     #PHP
     <FilesMatch \\.php$>
-            SetHandler "proxy:unix:/tmp/php-cgi-%s.sock|fcgi://localhost"
+            SetHandler "proxy:%s"
     </FilesMatch>
-    ''' % (self.phpVersion,)
+    ''' % (public.get_php_proxy(self.phpVersion,'apache'),)
             apaOpt = 'Require all granted'
         
         conf='''%s<VirtualHost *:%s>
@@ -960,15 +960,16 @@ listener Default%s{
                 apaOpt = "Order allow,deny\n\t\tAllow from all"
             else:
                 vName = ""
-                rep = "php-cgi-([0-9]{2,3})\.sock"
-                version = re.search(rep,conf).groups()[0]
+                # rep = "php-cgi-([0-9]{2,3})\.sock"
+                # version = re.search(rep,conf).groups()[0]
+                version = public.get_php_version_conf(conf)
                 if len(version) < 2: return public.returnMsg(False,'PHP_GET_ERR')
                 phpConfig ='''
     #PHP
     <FilesMatch \\.php$>
-            SetHandler "proxy:unix:/tmp/php-cgi-%s.sock|fcgi://localhost"
+            SetHandler "proxy:%s"
     </FilesMatch>
-    ''' % (version,)
+    ''' % (public.get_php_proxy(version,'apache'),)
                 apaOpt = 'Require all granted'
             
             newconf='''<VirtualHost *:%s>
@@ -1510,15 +1511,16 @@ listener SSL443 {
                     apaOpt = "Order allow,deny\n\t\tAllow from all"
                 else:
                     vName = ""
-                    rep = r"php-cgi-([0-9]{2,3})\.sock"
-                    version = re.search(rep, conf).groups()[0]
+                    # rep = r"php-cgi-([0-9]{2,3})\.sock"
+                    # version = re.search(rep, conf).groups()[0]
+                    version = public.get_php_version_conf(conf)
                     if len(version) < 2: return public.returnMsg(False, 'PHP_GET_ERR')
                     phpConfig = '''
     #PHP
     <FilesMatch \\.php$>
-            SetHandler "proxy:unix:/tmp/php-cgi-%s.sock|fcgi://localhost"
+            SetHandler "proxy:%s"
     </FilesMatch>
-    ''' % (version,)
+    ''' % (public.get_php_proxy(version,'apache'),)
                     apaOpt = 'Require all granted'
 
                 sslStr = '''%s<VirtualHost *:443>
@@ -1875,7 +1877,7 @@ listener SSL443 {
         id = get.id
         if not os.path.exists(path):
             os.makedirs(path)
-            public.downloadFile('http://download.bt.cn/stop.html',path + '/index.html')
+            public.downloadFile('http://{}/stop.html'.format(public.get_url()),path + '/index.html')
         
         binding = public.M('binding').where('pid=?',(id,)).field('id,pid,domain,path,port,addtime').select()
         for b in binding:
@@ -2283,15 +2285,16 @@ server
                     phpConfig = ""
                     apaOpt = "Order allow,deny\n\t\tAllow from all"
                 else:
-                    rep = "php-cgi-([0-9]{2,3})\.sock"
-                    tmp = re.search(rep,conf).groups()
-                    version = tmp[0]
+                    # rep = "php-cgi-([0-9]{2,3})\.sock"
+                    # tmp = re.search(rep,conf).groups()
+                    # version = tmp[0]
+                    version = public.get_php_version_conf(conf)
                     phpConfig ='''
     #PHP     
     <FilesMatch \\.php>
-        SetHandler "proxy:unix:/tmp/php-cgi-%s.sock|fcgi://localhost"
+        SetHandler "proxy:%s"
     </FilesMatch>
-    ''' % (version,)
+    ''' % (public.get_php_proxy(version,'apache'),)
                     apaOpt = 'Require all granted'
             
                 bindingConf ='''
@@ -2590,19 +2593,8 @@ server
     def GetSitePHPVersion(self,get):
         try:
             siteName = get.siteName
-            conf = public.readFile(self.setupPath + '/panel/vhost/'+public.get_webserver()+'/'+siteName+'.conf')
-            if public.get_webserver() == 'openlitespeed':
-                conf = public.readFile(
-                    self.setupPath + '/panel/vhost/' + public.get_webserver() + '/detail/' + siteName + '.conf')
-            if public.get_webserver() == 'nginx':
-                rep = "enable-php-([0-9]{2,3})\.conf"
-            elif public.get_webserver() == 'apache':
-                rep = "php-cgi-([0-9]{2,3})\.sock"
-            else:
-                rep = "path\s*/usr/local/lsws/lsphp(\d+)/bin/lsphp"
-            tmp = re.search(rep,conf).groups()
             data = {}
-            data['phpversion'] = tmp[0]
+            data['phpversion'] = public.get_site_php_version(siteName)
             data['tomcat'] = conf.find('#TOMCAT-START')
             data['tomcatversion'] = public.readFile(self.setupPath + '/tomcat/version.pl')
             data['nodejs'] = conf.find('#NODE.JS-START')
@@ -2629,9 +2621,9 @@ server
             file = self.setupPath + '/panel/vhost/apache/'+siteName+'.conf'
             conf = public.readFile(file)
             if conf:
-                rep = "php-cgi-([0-9]{2,3})\.sock"
+                rep = "(unix:/tmp/php-cgi-([0-9]{2,3})\.sock\|fcgi://localhost|fcgi://127.0.0.1:\d+)"
                 tmp = re.search(rep,conf).group()
-                conf = conf.replace(tmp,'php-cgi-'+version+'.sock')
+                conf = conf.replace(tmp,public.get_php_proxy(version,'apache'))
                 public.writeFile(file,conf)
             #OLS
             file = self.setupPath + '/panel/vhost/openlitespeed/detail/'+siteName+'.conf'

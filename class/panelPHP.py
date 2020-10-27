@@ -535,6 +535,7 @@ class FPM(object):
             @param content stream(POST数据io对象)
             @return fastcgi-socket
         '''
+        
         fcgi = fcgi_client.FCGIApp(connect=self.fcgi_sock)
         try:
             script_name, query_string = url.split('?')

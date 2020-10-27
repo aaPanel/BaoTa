@@ -359,7 +359,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                         dirnames.append(filename+';'+size+';' +
                                         mtime+';'+accept+';'+user+';'+link + ';' +self.get_download_id(filePath)+';'+ self.is_composer_json(filePath))
                     else:
-                        filenames.append(filename+';'+size+';'+mtime+';'+accept+';'+user+';'+link+';'+self.get_download_id(filePath))
+                        filenames.append(filename+';'+size+';'+mtime+';'+accept+';'+user+';'+link+';'+self.get_download_id(filePath)+';' + self.is_composer_json(filePath))
                     n += 1
                 except:
                     continue

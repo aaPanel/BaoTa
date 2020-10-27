@@ -524,6 +524,9 @@ class config:
         rep = r"\s*pm\s*=\s*(\w+)\s*"
         tmp = re.search(rep, conf).groups()
         data['pm'] = tmp[0]
+        data['unix'] = 'unix'
+        if not isinstance(public.get_fpm_address(version),str):
+            data['unix'] = 'tcp'
         
         return data
 
@@ -559,9 +562,19 @@ class config:
             if conf.find('listen.backlog = -1') != -1:
                 rep = r"\s*listen\.backlog\s*=\s*([0-9-]+)\s*"
                 conf = re.sub(rep, "\nlisten.backlog = 8192\n", conf)
+
+        if get.listen == 'unix':
+            listen = '/tmp/php-cgi-{}.sock'.format(version)
+        else:
+            listen = '127.0.0.1:10{}1'.format(version)
+            
+
+        rep = r'\s*listen\s*=\s*.+\s*'
+        conf = re.sub(rep, "\nlisten = "+listen+"\n", conf)
         
         public.writeFile(file,conf)
         public.phpReload(version)
+        public.sync_php_address(version)
         public.WriteLog("TYPE_PHP",'PHP_CHILDREN', (version,max_children,start_servers,min_spare_servers,max_spare_servers))
         return public.returnMsg(True, 'SET_SUCCESS')
     

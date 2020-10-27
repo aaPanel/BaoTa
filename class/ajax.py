@@ -810,7 +810,7 @@ class ajax:
     
     #PHP
     <FilesMatch \.php$>
-           SetHandler "proxy:unix:/tmp/php-cgi-{}.sock|fcgi://localhost"
+           SetHandler "proxy:{}"
     </FilesMatch>
     
     #DENY FILES
@@ -827,7 +827,7 @@ class ajax:
        Require all granted
        DirectoryIndex index.php index.html index.htm default.php default.html default.htm
     </Directory>
-</VirtualHost>'''.format(v["ext"]["phpversion"])
+</VirtualHost>'''.format(public.get_php_proxy(v["ext"]["phpversion"],'apache'))
             public.writeFile("/www/server/panel/vhost/apache/phpmyadmin.conf", ssl_conf)
         else:
             if os.path.exists("/www/server/panel/vhost/nginx/phpmyadmin.conf"):
@@ -839,7 +839,7 @@ class ajax:
         public.serviceReload()
         return public.returnMsg(True,'开启成功，请手动放行phpmyadmin ssl端口')
 
-    
+
     #设置PHPMyAdmin
     def setPHPMyAdmin(self,get):
         import re
@@ -889,11 +889,11 @@ class ajax:
             if public.get_webserver() == 'nginx':
                 filename = public.GetConfigValue('setup_path') + '/nginx/conf/enable-php.conf'
                 conf = public.readFile(filename)
-                rep = r"php-cgi.*\.sock"
-                conf = re.sub(rep,'php-cgi-' + get.phpversion + '.sock',conf,1)
+                rep = r"(unix:/tmp/php-cgi.*\.sock|127.0.0.1:\d+)"
+                conf = re.sub(rep,public.get_php_proxy(get.phpversion,'nginx'),conf,1)
             elif public.get_webserver() == 'apache':
-                rep = r"php-cgi.*\.sock"
-                conf = re.sub(rep,'php-cgi-' + get.phpversion + '.sock',conf,1)
+                rep = r"(unix:/tmp/php-cgi.*\.sock\|fcgi://localhost|fcgi://127.0.0.1:\d+)"
+                conf = re.sub(rep,public.get_php_proxy(get.phpversion,'apache'),conf,1)
             else:
                 reg = r'/usr/local/lsws/lsphp\d+/bin/lsphp'
                 conf = re.sub(reg,'/usr/local/lsws/lsphp{}/bin/lsphp'.format(get.phpversion),conf)

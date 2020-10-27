@@ -300,7 +300,7 @@ class panelPlugin:
             cloudUrl = public.GetConfigValue('home') + '/api/panel/get_soft_list_test'
             import panelAuth
             pdata = panelAuth.panelAuth().create_serverid(None)
-            listTmp = public.httpPost(cloudUrl,pdata,10)
+            listTmp = public.httpPost(cloudUrl,pdata,6)
             if not listTmp or len(listTmp) < 200:
                 listTmp = public.readFile(lcoalTmp)
             try:
@@ -308,7 +308,7 @@ class panelPlugin:
             except: pass
             if softList: public.writeFile(lcoalTmp,json.dumps(softList))
             public.ExecShell('rm -f /tmp/bmac_*')
-            self.getCloudPHPExt(get)
+            public.run_thread(self.getCloudPHPExt)
             self.expire_msg(softList)
         try:
             public.writeFile("/tmp/" + cache.get('p_token'),str(softList['pro']))
@@ -625,7 +625,6 @@ class panelPlugin:
     #取软件列表
     def get_soft_list(self,get = None):
         softList = self.get_cloud_list(get)
-        
         if not softList: 
             get.force = 1
             softList = self.get_cloud_list(get)
@@ -797,7 +796,6 @@ class panelPlugin:
     def check_status(self,softInfo):
         softInfo['setup'] = os.path.exists(softInfo['install_checks'])
         softInfo['status'] = False
-        
         softInfo['task'] = self.check_setup_task(softInfo['name'])
         
         if softInfo['name'].find('php-') != -1: softInfo['fpm'] = False
@@ -833,7 +831,7 @@ class panelPlugin:
         if softInfo['name'].find('php-') != -1: 
             v2= softInfo['versions'][0]['m_version'].replace('.','')
             softInfo['fpm'] = os.path.exists('/www/server/php/' + v2 + '/sbin/php-fpm')
-            softInfo['status'] = os.path.exists('/tmp/php-cgi-'+v2+'.sock')
+            softInfo['status'] = self.get_php_status(v2)
             pid_file = '/www/server/php/' + v2 + '/var/run/php-fpm.pid'
             if not softInfo['fpm']: 
                 softInfo['status'] = True
@@ -846,7 +844,9 @@ class panelPlugin:
                     if os.path.exists(pid_file): 
                         os.remove(pid_file)
 
-        if softInfo['name'] == 'mysql': softInfo['status'] = self.process_exists('mysqld')
+        if softInfo['name'] == 'mysql':
+            softInfo['status'] = self.process_exists('mysqld')
+            if not softInfo['status']: softInfo['status'] = self.process_exists('mariadbd')
         if softInfo['name'] == 'phpmyadmin': softInfo['status'] = self.get_phpmyadmin_stat()
         if softInfo['name'] == 'openlitespeed':
             if public.ExecShell('ps aux|grep openlitespeed|grep -v "grep"')[0]:
@@ -854,6 +854,26 @@ class panelPlugin:
             else:
                 softInfo['status'] = False
         return softInfo
+
+    def get_php_status(self,phpversion):
+        '''
+            @name 获取指定PHP版本的服务状态
+            @author hwliang<2020-10-23>
+            @param phpversion string PHP版本
+            @return bool
+        '''
+        try:
+            php_status = os.path.exists('/tmp/php-cgi-'+phpversion+'.sock')
+            if php_status: return php_status
+            pid_file = '/www/server/php/{}/var/run/php-fpm.pid'.format(phpversion)
+            if not os.path.exists(pid_file): return False
+            pid = int(public.readFile(pid_file))
+            return os.path.exists('/proc/{}/comm'.format(pid))
+        except:
+            return False
+
+    
+
 
     #取phpmyadmin状态
     def get_phpmyadmin_stat(self):
@@ -1218,7 +1238,7 @@ class panelPlugin:
         
         if pluginInfo['tip'] == 'lib':
             if not os.path.exists(self.__install_path + '/' + pluginInfo['name']): public.ExecShell('mkdir -p ' + self.__install_path + '/' + pluginInfo['name'])
-            if not 'download_url' in session: session['download_url'] = 'http://download.bt.cn'
+            if not 'download_url' in session: session['download_url'] = public.get_url()
             download_url = session['download_url'] + '/install/plugin/' + pluginInfo['name'] + '/install.sh'
             toFile = self.__install_path + '/' + pluginInfo['name'] + '/install.sh'
             public.downloadFile(download_url,toFile)
@@ -1602,9 +1622,14 @@ class panelPlugin:
             if rtmp:
                 phpversion = rtmp.groups()[0]
             else:
-                rep = r"php-cgi.*\.sock"
-                public.writeFile(configFile,conf)
-                phpversion = '54'
+                rep = r'127.0.0.1:10(\d{2,2})1'
+                rtmp = re.findall(rep,conf)
+                if rtmp:
+                    phpversion = rtmp[0]
+                else:
+                    rep = r"php-cgi.*\.sock"
+                    public.writeFile(configFile,conf)
+                    phpversion = '54'
         
         configFile = setupPath + '/apache/conf/extra/httpd-vhosts.conf'
         if os.path.exists(configFile):
@@ -1836,12 +1861,12 @@ class panelPlugin:
         return public.returnMsg(True,'软件列表已更新!')
     
     #获取PHP扩展
-    def getCloudPHPExt(self,get):
+    def getCloudPHPExt(self,get = None):
         import json
         try:
             key = 'php_ext_cache'
             if cache.get(key): return 1
-            surl = 'http://download.bt.cn'
+            surl = public.get_url()
             download_url = surl + '/install/lib/phplib.json'
             tstr = public.httpGet(download_url)
             data = json.loads(tstr)
@@ -1878,7 +1903,7 @@ class panelPlugin:
     #获取警告列表
     def GetCloudWarning(self,get):
         import json
-        if not session.get('download_url'): session['download_url'] = 'http://download.bt.cn'
+        if not session.get('download_url'): session['download_url'] = public.get_url()
         download_url = session['download_url'] + '/install/warning.json'
         tstr = public.httpGet(download_url)
         data = json.loads(tstr)
