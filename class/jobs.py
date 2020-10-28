@@ -167,7 +167,18 @@ def control_init():
     files_set_mode()
     set_pma_access()
     # public.set_open_basedir()
-
+    clear_fastcgi_safe()
+    
+def clear_fastcgi_safe():
+    try:
+        fastcgifile = '/www/server/nginx/conf/fastcgi.conf'
+        if os.path.exists(fastcgifile):
+            conf = public.readFile(fastcgifile)
+            if conf.find('bt_safe_open') != -1:
+                public.ExecShell('sed -i "/bt_safe_open/d" {}'.format(fastcgifile))
+                public.ExecShell('/etc/init.d/nginx reload')
+    except:
+        pass
 
 #设置文件权限
 def files_set_mode():

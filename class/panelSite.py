@@ -756,6 +756,52 @@ set $bt_safe_open "{}/:/tmp/";'''.format(self.sitePath)
         for ph in path.split('/'):
             npath += '/' + self.ToPunycode(ph)
         return npath.replace('//','/')
+
+
+    def export_domains(self,args):
+        '''
+            @name 导出域名列表
+            @author hwliang<2020-10-27>
+            @param args<dict_obj>{
+                siteName: string<网站名称>
+            }
+            @return string
+        '''
+
+        pid = public.M('sites').where('name=?',args.siteName).getField('id')
+        domains = public.M('domain').where('pid=?',pid).field('name,port').select()
+        text_data = []
+        for domain in domains:
+            text_data.append("{}:{}".format(domain['name'], domain['port']))
+        data =  "\n".join(text_data)
+        return public.send_file(data,'{}_domains'.format(args.siteName))
+
+
+    def import_domains(self,args):
+        '''
+            @name 导入域名
+            @author hwliang<2020-10-27>
+            @param args<dict_obj>{
+                siteName: string<网站名称>
+                domains: string<域名列表> 每行一个 格式： 域名:端口
+            }
+            @return string
+        '''
+
+        domains_tmp = args.domains.split("\n")
+        get = public.dict_obj()
+        get.webname = args.siteName
+        get.id = public.M('sites').where('name=?',args.siteName).getField('id')
+        domains = []
+        for domain in domains_tmp:
+            if public.M('domain').where('name=?',domain.split(':')[0]).count():
+                continue
+            domains.append(domain)
+        
+        get.domain = ','.join(domains)
+        return self.AddDomain(get)
+
+
         
     #添加域名
     def AddDomain(self,get):
@@ -2595,13 +2641,13 @@ server
             siteName = get.siteName
             data = {}
             data['phpversion'] = public.get_site_php_version(siteName)
+            conf = public.readFile(self.setupPath + '/panel/vhost/'+public.get_webserver()+'/'+siteName+'.conf')
             data['tomcat'] = conf.find('#TOMCAT-START')
             data['tomcatversion'] = public.readFile(self.setupPath + '/tomcat/version.pl')
-            data['nodejs'] = conf.find('#NODE.JS-START')
             data['nodejsversion'] = public.readFile(self.setupPath + '/node.js/version.pl')
             return data
         except:
-            return public.returnMsg(False,'SITE_PHPVERSION_ERR_A22')
+            return public.returnMsg(False,'SITE_PHPVERSION_ERR_A22,{}'.format(public.get_error_info()))
     
     #设置指定站点的PHP版本
     def SetPHPVersion(self,get):
@@ -4156,12 +4202,17 @@ location %s
                 data['domains'] = ','.join(re.search("valid_referers\s+(.+);\n",tmp).groups()[0].split())
             data['status'] = True
             data['none'] = tmp.find('none blocked') != -1
+            try:
+                data['return_rule'] = re.findall(r'(return|rewrite)\s+.*(\d{3}|(/.+)\s+(break|last));',conf)[0][1].replace('break','').strip()
+            except: data['return_rule'] = '404'
         else:
             data['fix'] = 'jpg,jpeg,gif,png,js,css'
             domains = public.M('domain').where('pid=?',(get.id,)).field('name').select()
             tmp = []
             for domain in domains:
                 tmp.append(domain['name'])
+
+            data['return_rule'] = '404'
             data['domains'] = ','.join(tmp)
             data['status'] = False
             data['none'] = False
@@ -4189,18 +4240,27 @@ location %s
                     conf = re.sub(rep,'',conf)
                     public.WriteLog('网站管理','站点['+get.name+']已关闭防盗链设置!')
                 else:
+                    return_rule = 'return 404'
+                    if 'return_rule' in get:
+                        get.return_rule = get.return_rule.strip()
+                        if get.return_rule in ['404','403','200','301','302','401','201']:
+                            return_rule = 'return {}'.format(get.return_rule)
+                        else:
+                            if get.return_rule[0] != '/':
+                                return public.returnMsg(False,"响应资源应使用URI路径或HTTP状态码，如：/test.png 或 404")
+                            return_rule = 'rewrite /.* {} break'.format(get.return_rule)
                     rconf = '''#SECURITY-START 防盗链配置
     location ~ .*\.(%s)$
     {
         expires      30d;
         access_log /dev/null;
-        valid_referers none blocked %s;
+        valid_referers %s;
         if ($invalid_referer){
-           return 404;
+           %s;
         }
     }
     #SECURITY-END
-    include enable-php-''' % (get.fix.strip().replace(',','|'),get.domains.strip().replace(',',' '))
+    include enable-php-''' % (get.fix.strip().replace(',','|'),get.domains.strip().replace(',',' '),return_rule)
                     conf = re.sub("include\s+enable-php-",rconf,conf)
                     public.WriteLog('网站管理','站点['+get.name+']已开启防盗链!')
             public.writeFile(file,conf)
@@ -4221,12 +4281,22 @@ location %s
                     rep = "#SECURITY-START(\n|.){1,500}#SECURITY-END\n"
                     conf = re.sub(rep,'',conf)
                 else:
+                    return_rule = '/404.html [R=404,NC,L]'
+                    if 'return_rule' in get:
+                        get.return_rule = get.return_rule.strip()
+                        if get.return_rule in ['404','403','200','301','302','401','201']:
+                            return_rule = '/{s}.html [R={s},NC,L]'.format(s=get.return_rule)
+                        else:
+                            if get.return_rule[0] != '/':
+                                return public.returnMsg(False,"响应资源应使用URI路径或HTTP状态码，如：/test.png 或 404")
+                            return_rule = '{}'.format(get.return_rule)
+
                     tmp = "    RewriteCond %{HTTP_REFERER} !{DOMAIN} [NC]"
                     tmps = []
                     for d in get.domains.split(','):
                         tmps.append(tmp.replace('{DOMAIN}',d))
                     domains = "\n".join(tmps)
-                    rconf = "combined\n    #SECURITY-START 防盗链配置\n    RewriteEngine on\n    RewriteCond %{HTTP_REFERER} !^$ [NC]\n" + domains + "\n    RewriteRule .("+get.fix.strip().replace(',','|')+") /404.html [R=404,NC,L]\n    #SECURITY-END"
+                    rconf = "combined\n    #SECURITY-START 防盗链配置\n    RewriteEngine on\n" + domains + "\n    RewriteRule .("+get.fix.strip().replace(',','|')+") "+return_rule+"\n    #SECURITY-END"
                     conf = conf.replace('combined',rconf)
             public.writeFile(file,conf)
         # OLS

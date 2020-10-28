@@ -786,6 +786,12 @@ var bt =
                     var _width = item.width ? item.width : '330px';
                     _html += "<input name='" + _name + "' " + (item.disabled ? 'disabled' : '') + " class='bt-input-text mr5 " + _name + bs + "' " + (_placeholder ? ' placeholder="' + _placeholder + '"' : "") + " type='password' style='width:" + _width + "' value='" + (item.value ? item.value : '') + "' />";
                     break;
+                 case 'textarea':
+                    var _width = item.width ? item.width : '330px';
+                    var _height = item.height ? item.height : '100px';
+                    _html += '<textarea class="bt-input-text mr20 ' + _name + bs + '" name="' + _name + '" style="width:' + _width + ';height:' + _height + ';line-height:22px">' + (item.value ? item.value : '') + '</textarea>';
+                    if (_placeholder) _html += '<div class="placeholder c9" style="top: 15px; left: 15px; display: block;">' + _placeholder + '</div>';
+                    break;
                 default:
                     var _width = item.width ? item.width : '330px';
 
@@ -5261,9 +5267,9 @@ bt.site = {
 			if(callback) callback(rdata);
 		})
 	},
-	set_site_security:function(id,name,fix,domains,status,callback){
+	set_site_security:function(id,name,fix,domains,status,return_rule,callback){
 		var loading = bt.load(lan.site.the_msg);
-		bt.send('SetSecurity','site/SetSecurity',{id:id,name:name,fix:fix,domains:domains,status:status},function(rdata){
+		bt.send('SetSecurity','site/SetSecurity',{id:id,name:name,fix:fix,domains:domains,status:status,return_rule:return_rule},function(rdata){
 			loading.close();
 			if(callback) callback(rdata);
 		})

@@ -3594,14 +3594,14 @@ var site = {
             bt.site.get_site_security(web.id, web.name, function (rdata) {
                 var robj = $('#webedit-con');
                 var datas = [
-                    { title: 'URL后缀', name: 'sec_fix', value: rdata.fix, disabled: rdata.status, width: '360px' },
-                    { title: '许可域名', name: 'sec_domains', value: rdata.domains, disabled: rdata.status, width: '360px' },
-
+                    { title: 'URL后缀', name: 'sec_fix', value: rdata.fix, disabled: rdata.status, width: '300px' },
+                    { title: '许可域名', type:"textarea", name: 'sec_domains', value: rdata.domains.replace(/,/g,"\n"), disabled: rdata.status, width: '300px',height:'210px' },
+                    { title: '响应资源', name: 'return_rule', value: rdata.return_rule, disabled: rdata.status, width: '300px' },
                     {
                         title: ' ', class: 'label-input-group', items: [
                             {
                                 text: '启用防盗链', name: 'status', value: rdata.status, type: 'checkbox', callback: function (sdata) {
-                                    bt.site.set_site_security(web.id, web.name, sdata.sec_fix, sdata.sec_domains, sdata.status, function (ret) {
+                                    bt.site.set_site_security(web.id, web.name, sdata.sec_fix, sdata.sec_domains.split("\n").join(','), sdata.status,sdata.return_rule, function (ret) {
                                         if (ret.status) site.reload(13)
                                         bt.msg(ret);
                                     })
@@ -3609,7 +3609,7 @@ var site = {
                             },
                             {
                                 text: '允许空HTTP_REFERER请求', name: 'none', value: rdata.none, type: 'checkbox', callback: function (sdata) {
-                                    bt.site.set_site_security(web.id, web.name, sdata.sec_fix, sdata.sec_domains, '1', function (ret) {
+                                    bt.site.set_site_security(web.id, web.name, sdata.sec_fix, sdata.sec_domains.split("\n").join(','), '1',sdata.return_rule, function (ret) {
                                         if (ret.status) site.reload(13)
                                         bt.msg(ret);
                                     })
@@ -3623,7 +3623,12 @@ var site = {
                     robj.append(_form_data.html);
                     bt.render_clicks(_form_data.clicks);
                 }
-                var helps = ['默认允许资源被直接访问,即不限制HTTP_REFERER为空的请求', '多个URL后缀与域名请使用逗号(,)隔开,如: png,jpeg,zip,js', '当触发防盗链时,将直接返回404状态']
+                var helps = [
+                    '【URL后缀】一般填写文件后缀，每行一个后缀,如: png', 
+                    '【许可域名】允许作为来路的域名，每行一个域名,如: www.bt.cn',
+                    '【响应资源】可设置404/403等状态码，也可以设置一个有效资源，如：/security.png',
+                    '【允许空HTTP_REFERER请求】是否允许浏览器直接访问，若您的网站访问异常，可尝试开启此功能'
+                ]
                 robj.append(bt.render_help(helps));
             })
         },

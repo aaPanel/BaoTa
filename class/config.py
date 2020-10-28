@@ -1092,6 +1092,7 @@ class config:
         if 'config' in session:
             session['config']['distribution'] = public.get_linux_distribution()
             session['webserver'] = public.get_webserver()
+            session['config']['webserver'] = session['webserver']
             return session['config']
         data = public.M('config').where("id=?",('1',)).field('webserver,sites_path,backup_path,status,mysql_root').find()
         data['webserver'] = public.get_webserver()

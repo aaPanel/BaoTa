@@ -18,7 +18,7 @@ class database(datatool.datatools):
     #添加数据库
     def AddDatabase(self,get):
         try:
-            data_name = get['name'].strip()
+            data_name = get['name'].strip().lower()
             if self.CheckRecycleBin(data_name): return public.returnMsg(False,'数据库['+data_name+']已在回收站，请从回收站恢复!')
             if len(data_name) > 16: return public.returnMsg(False, 'DATABASE_NAME_LEN')
             reg = r"^[\w\.-]+$"

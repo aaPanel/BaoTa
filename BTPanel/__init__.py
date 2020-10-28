@@ -257,6 +257,14 @@ def xterm():
     defs = ('get_host_list','get_host_find','modify_host','create_host','remove_host','set_sort','get_command_list','create_command','get_command_find','modify_command','remove_command')
     return publicObject(ssh_host_admin,defs,None)
 
+
+@sockets.route('/work_order')
+def work_order(ws):
+    comReturn = comm.local()
+    if comReturn: return comReturn
+
+    
+
 #@app.route('/webssh')
 @sockets.route('/webssh')
 def webssh(ws):
@@ -326,7 +334,7 @@ def site(pdata = None):
     siteObject = panelSite.panelSite()
         
     defs = ('get_site_domains','GetRedirectFile','SaveRedirectFile','DeleteRedirect','GetRedirectList','CreateRedirect','ModifyRedirect',
-            'set_dir_auth','delete_dir_auth','get_dir_auth','modify_dir_auth_pass',
+            'set_dir_auth','delete_dir_auth','get_dir_auth','modify_dir_auth_pass','export_domains','import_domains',
             'GetSiteLogs','GetSiteDomains','GetSecurity','SetSecurity','ProxyCache','CloseToHttps','HttpToHttps','SetEdate',
             'SetRewriteTel','GetCheckSafe','CheckSafe','GetDefaultSite','SetDefaultSite','CloseTomcat','SetTomcat','apacheAddPort',
             'AddSite','GetPHPVersion','SetPHPVersion','DeleteSite','AddDomain','DelDomain','GetDirBinding','AddDirBinding','GetDirRewrite',
@@ -1413,8 +1421,11 @@ class run_exec:
                     result =  eval(fun)
                 else:
                     result = eval(fun)
+                    r_type = type(result)
+                    if r_type == Resp: return result
                     result =  public.GetJson(result),json_header
                 break
+        
         if not result:
             result = public.ReturnJson(False,'ARGS_ERR'),json_header
         if g.is_aes:

@@ -2257,6 +2257,7 @@ def get_curl_bin():
 def set_open_basedir():
     try:
         fastcgi_file = '/www/server/nginx/conf/fastcgi.conf'
+        
         if os.path.exists(fastcgi_file):
             fastcgi_body = readFile(fastcgi_file)
             if fastcgi_body.find('bt_safe_dir') == -1:
@@ -2339,6 +2340,43 @@ def run_thread(fun,args = (),daemon=False):
     p.setDaemon(daemon)
     p.start()
     return True
+
+
+def send_file(data,fname='',mimetype = ''):
+    '''
+        @name 以文件流的形式返回
+        @author heliang<2020-10-27>
+        @param data {bytes|string} 文件数据或路径
+        @param mimetype {string} 文件类型
+        @param fname {string} 文件名
+        @return Response
+    '''
+    d_type = type(data)
+    from io import BytesIO,StringIO
+    from flask import send_file as send_to
+    if d_type == bytes:
+        fp = BytesIO(data)
+    else:
+        if len(data) < 128:
+            if os.path.exists(data):
+                fp = data
+                if not fname:
+                    fname = os.path.basename(fname)
+            else:
+                fp = StringIO(data)
+        else:
+            fp = StringIO(data)
+
+    if not mimetype: mimetype = "application/octet-stream"
+    if not fname: fname = 'doan.txt'
+
+    return send_to(fp,
+                    mimetype=mimetype, 
+                    as_attachment=True,
+                    add_etags=True,
+                    conditional=True,
+                    attachment_filename=fname,
+                    cache_timeout=0)
 
 #取通用对象
 class dict_obj:
