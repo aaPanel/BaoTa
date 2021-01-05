@@ -216,10 +216,37 @@ class acme_v2:
 
     # 取根域名和记录值
     def extract_zone(self, domain_name):
-        top_domain_list = ['.ac.cn', '.ah.cn', '.bj.cn', '.com.cn', '.cq.cn', '.fj.cn', '.gd.cn',
-                           '.gov.cn', '.gs.cn', '.gx.cn', '.gz.cn', '.ha.cn', '.hb.cn', '.he.cn',
-                           '.hi.cn', '.hk.cn', '.hl.cn', '.hn.cn', '.jl.cn', '.js.cn', '.jx.cn',
-                           '.ln.cn', '.mo.cn', '.net.cn', '.nm.cn', '.nx.cn', '.org.cn','my.id']
+        top_domain_list = ['.ac.cn', '.ah.cn', '.bj.cn', '.com.cn', '.cq.cn', '.fj.cn', '.gd.cn','.gov.cn', '.gs.cn',
+                           '.gx.cn', '.gz.cn', '.ha.cn', '.hb.cn', '.he.cn','.hi.cn', '.hk.cn', '.hl.cn', '.hn.cn',
+                           '.jl.cn', '.js.cn', '.jx.cn','.ln.cn', '.mo.cn', '.net.cn', '.nm.cn', '.nx.cn', '.org.cn',
+                           '.my.id','.com.ac','.com.ad','.com.ae','.com.af','.com.ag','.com.ai','.com.al','.com.am',
+                           '.com.an','.com.ao','.com.aq','.com.ar','.com.as','.com.as','.com.at','.com.au','.com.aw',
+                           '.com.az','.com.ba','.com.bb','.com.bd','.com.be','.com.bf','.com.bg','.com.bh','.com.bi',
+                           '.com.bj','.com.bm','.com.bn','.com.bo','.com.br','.com.bs','.com.bt','.com.bv','.com.bw',
+                           '.com.by','.com.bz','.com.ca','.com.ca','.com.cc','.com.cd','.com.cf','.com.cg','.com.ch',
+                           '.com.ci','.com.ck','.com.cl','.com.cm','.com.cn','.com.co','.com.cq','.com.cr','.com.cu',
+                           '.com.cv','.com.cx','.com.cy','.com.cz','.com.de','.com.dj','.com.dk','.com.dm','.com.do',
+                           '.com.dz','.com.ec','.com.ee','.com.eg','.com.eh','.com.es','.com.et','.com.eu','.com.ev',
+                           '.com.fi','.com.fj','.com.fk','.com.fm','.com.fo','.com.fr','.com.ga','.com.gb','.com.gd',
+                           '.com.ge','.com.gf','.com.gh','.com.gi','.com.gl','.com.gm','.com.gn','.com.gp','.com.gr',
+                           '.com.gt','.com.gu','.com.gw','.com.gy','.com.hm','.com.hn','.com.hr','.com.ht','.com.hu',
+                           '.com.id','.com.id','.com.ie','.com.il','.com.il','.com.in','.com.io','.com.iq','.com.ir',
+                           '.com.is','.com.it','.com.jm','.com.jo','.com.jp','.com.ke','.com.kg','.com.kh','.com.ki',
+                           '.com.km','.com.kn','.com.kp','.com.kr','.com.kw','.com.ky','.com.kz','.com.la','.com.lb',
+                           '.com.lc','.com.li','.com.lk','.com.lr','.com.ls','.com.lt','.com.lu','.com.lv','.com.ly',
+                           '.com.ma','.com.mc','.com.md','.com.me','.com.mg','.com.mh','.com.ml','.com.mm','.com.mn',
+                           '.com.mo','.com.mp','.com.mq','.com.mr','.com.ms','.com.mt','.com.mv','.com.mw','.com.mx',
+                           '.com.my','.com.mz','.com.na','.com.nc','.com.ne','.com.nf','.com.ng','.com.ni','.com.nl',
+                           '.com.no','.com.np','.com.nr','.com.nr','.com.nt','.com.nu','.com.nz','.com.om','.com.pa',
+                           '.com.pe','.com.pf','.com.pg','.com.ph','.com.pk','.com.pl','.com.pm','.com.pn','.com.pr',
+                           '.com.pt','.com.pw','.com.py','.com.qa','.com.re','.com.ro','.com.rs','.com.ru','.com.rw',
+                           '.com.sa','.com.sb','.com.sc','.com.sd','.com.se','.com.sg','.com.sh','.com.si','.com.sj',
+                           '.com.sk','.com.sl','.com.sm','.com.sn','.com.so','.com.sr','.com.st','.com.su','.com.sy',
+                           '.com.sz','.com.tc','.com.td','.com.tf','.com.tg','.com.th','.com.tj','.com.tk','.com.tl',
+                           '.com.tm','.com.tn','.com.to','.com.tp','.com.tr','.com.tt','.com.tv','.com.tw','.com.tz',
+                           '.com.ua','.com.ug','.com.uk','.com.uk','.com.us','.com.uy','.com.uz','.com.va','.com.vc',
+                           '.com.ve','.com.vg','.com.vn','.com.vu','.com.wf','.com.ws','.com.ye','.com.za','.com.zm',
+                           '.com.zw']
         old_domain_name = domain_name
         top_domain = "."+".".join(domain_name.rsplit('.')[-2:])
         new_top_domain = "." + top_domain.replace(".", "")
@@ -384,6 +411,11 @@ class acme_v2:
 
     # 设置验证信息
     def set_auth_info(self, identifier_auth):
+        
+        #从云端验证
+        if not self.cloud_check_domain(identifier_auth['domain']):
+            self.err = "云端验证失败!"
+        
         # 是否手动验证DNS
         if identifier_auth['auth_to'] == 'dns':
             return None
@@ -396,6 +428,14 @@ class acme_v2:
             # dnsapi验证
             self.create_dns_record(
                 identifier_auth['auth_to'], identifier_auth['domain'], identifier_auth['auth_value'])
+                
+    #从云端验证域名是否可访问
+    def cloud_check_domain(self,domain):
+        try:
+            result = requests.post('https://www.bt.cn/api/panel/check_domain',{"domain":domain}).json()
+            return result['status']
+        except: return False
+        
 
     #清理验证文件
     def claer_auth_file(self,index):
@@ -1282,14 +1322,19 @@ fullchain.pem       粘贴到证书输入框
                     args.siteName = public.M('sites').where('id=?',(args.id,)).getField('name')
                 args.sitename = args.siteName
                 data = s.GetRedirectList(args)
+                # 检查重定向是否开启
                 if type(data) == list: 
                     for x in data:
                         if x['type']: return public.returnMsg(False, 'SITE_SSL_ERR_301')
                 data = s.GetProxyList(args)
+                # 检查反向代理是否开启
                 if type(data) == list:                    
                     for x in data:
-                        if x['open']: return public.returnMsg(False,'已开启反向代理的站点无法申请SSL!')
-
+                        if x['type']: return public.returnMsg(False,'已开启反向代理的站点无法申请SSL!')
+                # 检查旧重定向是否开启
+                data = s.Get301Status(args)
+                if data['status']:
+                    return public.returnMsg(False,'网站已经开启重定向，请关闭后再申请!')
                 #判断是否强制HTTPS
                 if s.IsToHttps(args.siteName):
                     return public.returnMsg(False, '配置强制HTTPS后无法使用【文件验证】的方式申请证书!')

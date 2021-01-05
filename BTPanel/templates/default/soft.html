@@ -42,28 +42,18 @@
         </div>
     </div>
 </div>
-
 {% endblock %}
-
 {% block scripts %}
-
 <script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js?date=20180301"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js?date={{g.version}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js?version={{g['version']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js"></script>
 <script type="text/javascript">
     bt.set_cookie('sites_path', "{{session['config']['sites_path']}}");
     bt.set_cookie('serverType', "{{session['webserver']}}");
     bt.set_cookie('distribution', "{{session['config']['distribution']}}");
     $(document).ready(function () {
         soft.get_list();
-        // setTimeout(function () {
-        //     soft_td_width_auto();
-        // }, 500);
     });
-    // $(window).resize(function () {
-    //     soft_td_width_auto();
-    // });
-    // bt.soft.set_lib_config('php_filter','PHP安全防护模块')
 </script>
 {% endblock %}

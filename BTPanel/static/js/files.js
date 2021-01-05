@@ -1810,7 +1810,15 @@ function Zip(dirName, submits) {
         tmp = path.split('/')
         dirName = path + '/' + tmp[tmp.length - 1]
     }
-
+    
+    var arrs = dirName.split('/');
+    var root_path = '';
+    for (var i = 0; i < arrs.length - 1; i++) {
+        root_path += arrs[i] + '/'
+    }
+    
+    var zipname = root_path + bt.get_random(10) + '.tar.gz';
+    
     var layers = layer.open({
         type: 1,
         shift: 5,
@@ -1821,8 +1829,9 @@ function Zip(dirName, submits) {
             + '<div class="line noborder">'
             + '<input type="text" class="form-control" id="sfile" value="' + param + '" placeholder="" style="display:none" />'
             + '<p style="margin-bottom: 10px;"><span>压缩类型</span><select style="margin-left: 8px;" class="bt-input-text" name="z_type"><option value="tar.gz">tar.gz (推荐)</option><option value="zip">zip (通用格式)</option><option value="rar">rar (WinRAR对中文兼容较好)</option></select></p>'
-            + '<span>' + lan.files.zip_to + '</span><input type="text" class="bt-input-text" id="dfile" value="' + dirName + '.tar.gz" placeholder="' + lan.files.zip_to + '" style="width: 75%; display: inline-block; margin: 0px 10px 0px 20px;" /><span class="glyphicon glyphicon-folder-open cursor" onclick="ChangePath(\'dfile\')"></span>'
+            + '<span>' + lan.files.zip_to + '</span><input type="text" class="bt-input-text" id="dfile" value="' + zipname + '" placeholder="' + lan.files.zip_to + '" style="width: 75%; display: inline-block; margin: 0px 10px 0px 20px;" /><span class="glyphicon glyphicon-folder-open cursor" onclick="ChangePath(\'dfile\')"></span>'
             + '</div>'
+            + '<div class="line"><div class="info-r  ml0 label-input-group ptb10" style="margin-left: 55px;"> <input type="checkbox" checked="checked" class="random_zip_name" id="random_zip_name" name="random_zip_name"><label class="mr20" for="random_zip_name" style="font-weight:normal">随机生成压缩包名</label></div></div>'
             + '<div class="bt-form-submit-btn">'
             + '<button type="button" class="btn btn-danger btn-sm btn-title layer_close">' + lan.public.close + '</button>'
             + '<button type="button" id="ReNameBtn" class="btn btn-success btn-sm btn-title" onclick="Zip(\'' + param + '\',1)">' + lan.files.file_menu_zip + '</button>'
@@ -1838,9 +1847,28 @@ function Zip(dirName, submits) {
     setTimeout(function () {
         $("select[name='z_type']").change(function () {
             var z_type = $(this).val();
-            dirName = dirName.replace("tar.gz", z_type)
-            $("#dfile").val(dirName + '.' + z_type);
+            
+            var _checked = $(this).prop('checked')         
+            if(_checked){
+                zipname = zipname.replace("tar.gz", z_type)
+                $("#dfile").val(zipname);
+            }
+            else{
+                dirName = dirName.replace("tar.gz", z_type)
+                $("#dfile").val(dirName + '.' + z_type); 
+            }
         });
+        
+         $("#random_zip_name").change(function () {
+            var _checked = $(this).prop('checked')               
+            if (_checked){                
+                $("#dfile").val(zipname);
+            }
+            else {
+                var z_type =  $("select[name='z_type']").val();
+                $("#dfile").val(dirName + '.' + z_type); 
+            }
+        })
     }, 100);
 
 }
@@ -2420,8 +2448,8 @@ function set_files_ps(act,path,ps){
 
     if(act === 1){
         ps = $('#ps_body').val();
-        ps_type = $('#ps_type').val();
-        $.post('/files?action=set_file_ps',{filename:path,ps_body:ps,ps_type:ps_type},function(rdata){
+        // ps_type = $('#ps_type').val();
+        $.post('/files?action=set_file_ps',{filename:path,ps_body:ps,ps_type:0},function(rdata){
             if(rdata.status){
                 layer.closeAll();
                 GetFiles(getCookie('Path'));
@@ -2430,17 +2458,17 @@ function set_files_ps(act,path,ps){
             return;
         })
     }
-
+    var arry = path.split('/');
+    // <select id="ps_type" class="bt-input-text"><option value="0">全路径</option><option value="1">文件名</option></select>\
     var layers = layer.open({
         type: 1,
         shift: 5,
         closeBtn: 2,
         area: '320px',
-        title: '设置文件备注',
+        title: '设置[ '+ arry[arry.length-1] +' ]文件备注',
         content: '<div class="bt-form pd20 pb70">\
                 <div class="line">\
-                <select id="ps_type" class="bt-input-text"><option value="0">全路径</option><option value="1">文件名</option></select>\
-				<input type="text" class="bt-input-text" name="ps_body" id="ps_body" value="' + ps + '" placeholder="请填写文件备注" style="width:100%" />\
+				    <input type="text" class="bt-input-text" name="ps_body" id="ps_body" value="' + ps + '" placeholder="请填写文件备注" style="width:100%" />\
 				</div>\
 				<div class="bt-form-submit-btn">\
 				<button type="button" class="btn btn-danger btn-sm btn-title layers_close">'+ lan.public.close + '</button>\
@@ -2451,13 +2479,12 @@ function set_files_ps(act,path,ps){
             $('.layers_close').click(function () {
                 layer.close(index);
             });
+            setCookie('layers', layers);
+            $("#ps_body").focus().keyup(function (e) {
+                if (e.keyCode == 13) $("#set-files-ps").click();
+            });
         }
     });
-    setCookie('layers', layers);
-    $("#ps_body").focus().keyup(function (e) {
-        if (e.keyCode == 13) $("#set-files-ps").click();
-    });
-
 }
 
 function update_composer(){

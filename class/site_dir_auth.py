@@ -64,6 +64,8 @@ class SiteDirAuth:
         '''
         name = get.name
         site_dir = get.site_dir
+        if public.get_webserver() == "openlitespeed":
+            return public.returnMsg(False,"OpenLiteSpeed is currently not supported")
         if not hasattr(get,"password") or not get.password or not hasattr(get,"username") or not get.username:
             return public.returnMsg(False, '请输入账号或密码')
         if not get.site_dir:
@@ -71,8 +73,8 @@ class SiteDirAuth:
         if not get.name:
             return public.returnMsg(False, '请输入名称')
 
-        if site_dir[0] != "/" or site_dir[-1] != "/":
-            return public.returnMsg(False, '目录格式不正确')
+        # if site_dir[0] != "/" or site_dir[-1] != "/":
+        #     return public.returnMsg(False, '目录格式不正确')
         # if site_dir[0] == "/":
         #     site_dir = site_dir[1:]
         #     if site_dir[-1] == "/":
@@ -157,7 +159,7 @@ class SiteDirAuth:
 }''' % (site_dir,auth_file,php_conf)
             else:
             # 设置apache
-                conf = '''<Directory "{site_path}{site_dir}/">
+                conf = '''<Directory "{site_path}{site_dir}">
     #AUTH_START
     AuthType basic
     AuthName "Authorization "
@@ -231,25 +233,27 @@ class SiteDirAuth:
         site_info = self.get_site_info(get.id)
         site_name = site_info["site_name"]
         conf = self._read_conf()
-        if site_name in conf:
-            for i in range(len(conf[site_name])):
-                if name in conf[site_name][i].values():
-                    print(conf[site_name][i])
-                    del(conf[site_name][i])
-                    if not conf[site_name]:
-                        del(conf[site_name])
-                    break
-            public.writeFile(self.conf_file,json.dumps(conf))
-            for i in ["nginx", "apache"]:
-                file_path = "{setup_path}/panel/vhost/{webserver}/dir_auth/{site_name}/{name}.conf".format(webserver=i,
-                                                                                                           setup_path=self.setup_path,
-                                                                                                           site_name=site_name,
-                                                                                                           name=name)
-                os.remove(file_path)
-            if not conf:
-                self.set_conf(site_name,"delete")
+        if site_name not in conf:
+            return public.returnMsg(False,"配置文件中不存在网站名：{}".format(site_name))
+        for i in range(len(conf[site_name])):
+            if name in conf[site_name][i].values():
+                print(conf[site_name][i])
+                del(conf[site_name][i])
+                if not conf[site_name]:
+                    del(conf[site_name])
+                break
+        public.writeFile(self.conf_file,json.dumps(conf))
+        for i in ["nginx", "apache"]:
+            file_path = "{setup_path}/panel/vhost/{webserver}/dir_auth/{site_name}/{name}.conf".format(webserver=i,
+                                                                                                       setup_path=self.setup_path,
+                                                                                                       site_name=site_name,
+                                                                                                       name=name)
+            os.remove(file_path)
+        if not conf:
+            self.set_conf(site_name,"delete")
+        if not hasattr(get,'multiple'):
             public.serviceReload()
-            return public.returnMsg(True,"删除成功")
+        return public.returnMsg(True,"删除成功")
 
     # 修改目录保护密码
     def modify_dir_auth_pass(self,get):

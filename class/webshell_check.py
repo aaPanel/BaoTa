@@ -326,18 +326,6 @@ class webshell_check:
         m.update(s.encode('utf-8'))
         return m.hexdigest()
 
-    def hash(self,hash):
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36 QIHU 360SE',
-            'Authorization': 'token d6a16ecfa4338aef8bb2b96e2c97bdd38e0badd0'
-        }
-        upload_data = {'confirm': '1', 'hash': hash}
-        url = 'https://webshellchop.chaitin.cn/-/internal-api/report'
-        print('发送')
-        upload_res = requests.post(url=url, headers=headers, data=upload_data, timeout=20)
-        print(upload_res.status_code)
-
-
 if __name__ == "__main__":
     public.WriteFile('/www/server/panel/data/webshell_data.json', json.dumps([]))
     type = sys.argv[1]
@@ -350,8 +338,6 @@ if __name__ == "__main__":
     aa = webshell_check()
     print('开始扫描webshell 本次查杀由长亭牧云强力驱动')
     start_time=time.time()
-    if type =='hash':
-        aa.hash(path)
 
     if type == 'dir':
         data = aa.san_dir(path)

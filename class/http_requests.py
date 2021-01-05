@@ -23,6 +23,9 @@ class http:
         url = self.quote(url)
         if type == 'python':
             try:
+                import requests
+                from requests.packages.urllib3.exceptions import InsecureRequestWarning
+                requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
                 from requests import get as req_get
                 return req_get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
             except:
@@ -37,6 +40,9 @@ class http:
         url = self.quote(url)
         if type == 'python':
             try:
+                import requests
+                from requests.packages.urllib3.exceptions import InsecureRequestWarning
+                requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
                 from requests import post as req_post
                 return req_post(url,data,timeout=timeout,headers=headers,verify=verify)
             except:

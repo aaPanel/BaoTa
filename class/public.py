@@ -11,7 +11,8 @@
 # 宝塔公共库
 #--------------------------------
 
-import json,os,sys,time,re,socket,importlib,binascii,base64,io
+import json,os,sys,time,re,socket,importlib,binascii,base64,io,string
+from random import choice
 _LAN_PUBLIC = None
 _LAN_LOG = None
 _LAN_TEMPLATE = None
@@ -385,6 +386,7 @@ def WriteLog(type,logMsg,args=(),not_web = False):
             if 'username' in session:
                 username = session['username']
                 uid = session['uid']
+                if session.get('debug') == 1: return
         except:
             pass
     global _LAN_LOG
@@ -1382,7 +1384,8 @@ def get_path_size(path):
 #写关键请求日志
 def write_request_log(reques = None):
     try:
-        from BTPanel import request,g
+        from BTPanel import request,g,session
+        if session.get('debug') == 1: return
         if request.path in ['/service_status','/favicon.ico','/task','/system','/ajax','/control','/data','/ssl']:
             return False
 
@@ -1821,7 +1824,7 @@ def sub_php_address(conf_file,rep,tsub,php_version):
     if not os.path.exists(conf_file): return False
     conf = readFile(conf_file)
     if not conf: return False
-    if conf.find('#PHP') == -1: return False
+    #if conf.find('#PHP') == -1 and conf.find('pathinfo.conf') == -1: return False
     phpv = get_php_version_conf(conf)
     if phpv != php_version: return False
     tmp = re.search(rep,conf)
@@ -1859,18 +1862,18 @@ def sync_php_address(php_version):
 
     #nginx的PHP配置文件
     nginx_conf_path = '/www/server/nginx/conf'
+    
     if os.path.exists(nginx_conf_path):
-        
         for f_name in os.listdir(nginx_conf_path):
-            if f_name.find('php-enable') != -1:
+            if f_name.find('enable-php') != -1:
                 conf_file = '/'.join((nginx_conf_path,f_name))
                 if sub_php_address(conf_file,ngx_rep,ngx_proxy,php_version):
                     is_write = True
     #nginx的phpmyadmin
-    conf_file = '/www/server/nginx/conf/nginx.conf'
-    if os.path.exists(conf_file):
-        if sub_php_address(conf_file,ngx_rep,ngx_proxy,php_version):
-            is_write = True
+    # conf_file = '/www/server/nginx/conf/nginx.conf'
+    # if os.path.exists(conf_file):
+    #     if sub_php_address(conf_file,ngx_rep,ngx_proxy,php_version):
+    #         is_write = True
     
     #apache的网站配置文件
     apache_conf_path = '/www/server/panel/vhost/apache'
@@ -2225,13 +2228,17 @@ def get_menus():
         @author hwliang<2020-08-31>
         @return list
     '''
+    from BTPanel import session
     data = json.loads(ReadFile('config/menu.json'))
     hide_menu = ReadFile('config/hide_menu.json')
+    debug = session.get('debug')
     if hide_menu:
         hide_menu = json.loads(hide_menu)
         show_menu = []
         for i in range(len(data)):
             if data[i]['id'] in hide_menu: continue
+            if data[i]['id'] == "memuAxterm":
+                if debug: continue
             show_menu.append(data[i])
         data = show_menu
         del(hide_menu)
@@ -2257,7 +2264,7 @@ def get_curl_bin():
 def set_open_basedir():
     try:
         fastcgi_file = '/www/server/nginx/conf/fastcgi.conf'
-        
+
         if os.path.exists(fastcgi_file):
             fastcgi_body = readFile(fastcgi_file)
             if fastcgi_body.find('bt_safe_dir') == -1:
@@ -2329,7 +2336,7 @@ set $bt_safe_open "{}";'''.format(open_basedir_conf)
 def run_thread(fun,args = (),daemon=False):
     '''
         @name 使用线程执行指定方法
-        @author heliang<2020-10-27>
+        @author hwliang<2020-10-27>
         @param fun {def} 函数对像
         @param args {tuple} 参数元组
         @param daemon {bool} 是否守护线程
@@ -2340,6 +2347,26 @@ def run_thread(fun,args = (),daemon=False):
     p.setDaemon(daemon)
     p.start()
     return True
+    
+def check_domain_cloud(domain):
+    run_thread(cloud_check_domain,(domain,))
+    
+def cloud_check_domain(domain):
+    '''
+        @name 从云端验证域名的可访问性,并将结果保存到文件
+        @author hwliang<2020-12-10>
+        @param domain {string} 被验证的域名
+        @return void
+    '''
+    try:
+        check_domain_path = '/www/server/panel/data/check_domain/'
+        if not os.path.exists(check_domain_path):
+            os.makedirs(check_domain_path,384)
+        result = httpPost('https://www.bt.cn/api/panel/check_domain',{"domain":domain})
+        cd_file = check_domain_path + domain +'.pl'
+        writeFile(cd_file,result)
+    except:
+        pass
 
 
 def send_file(data,fname='',mimetype = ''):
@@ -2377,6 +2404,19 @@ def send_file(data,fname='',mimetype = ''):
                     conditional=True,
                     attachment_filename=fname,
                     cache_timeout=0)
+
+def gen_password(length=8,chars=string.ascii_letters+string.digits):
+    return ''.join([choice(chars) for i in range(length)])
+
+def get_ipaddress():
+    '''
+        @name 获取本机IP地址
+        @author hwliang<2020-11-24>
+        @return list
+    '''
+    ipa_tmp = ExecShell("ip a |grep inet|grep -v inet6|grep -v 127.0.0.1|grep -v 'inet 192.168.'|grep -v 'inet 10.'|awk '{print $2}'|sed 's#/[0-9]*##g'")[0].strip()
+    iplist = ipa_tmp.split('\n')
+    return iplist
 
 #取通用对象
 class dict_obj:

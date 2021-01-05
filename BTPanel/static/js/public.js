@@ -3676,7 +3676,7 @@ var Term = {
 		Term.send(JSON.stringify(Term.ssh_info || {}))
 		// Term.term.FitAddon.fit();
 		// Term.resize();
-		var f_path = $("#fileInputPath").val();
+		var f_path = $("#fileInputPath").val() || getCookie('Path');
 		if(f_path){
 			Term.last_cd = "cd " + f_path;
 			Term.send(Term.last_cd  + "\n");
@@ -4142,3 +4142,1790 @@ acme = {
 
 
 // $.post('/files?action=DeleteDir',{path:'/www/server/phpmyadmin/pma'},function(){});
+
+
+
+
+
+
+
+/** workorder js code **/
+
+/**
+* @description 工单反馈
+*/
+function MessageBox(){
+    this.bws = null; //websocket对象
+    this.route ='/workorder_client'; // 访问的方法
+    this.info =null; // 请求数据
+	this.host = window.location.host;
+	this.init();
+
+}
+MessageBox.prototype = {
+	uid_status:false,  //用户状态
+	bt_uid:undefined,		  //当前用户id
+	bt_user:undefined,       //当前用户
+	break_line:false,         //用户异常断开标志
+	chat_status:[],  //状态信息
+	chat_list:[],    //正在进行的对话内容
+	portrait:"/static/img/ico/bt.ico",      //官方头像
+	bt_yh_portrait:"/static/img/btyonghu.png",      //用户头像
+	interface_flag:"feedback",   //页面状态
+	workorder:"",             //当前工单编号
+	ping:0,              //ping执行的线程
+	lastEditRange:0,       //定义最后光标对象
+	admian_unread_messages:[], //管理端未读消息
+	unread_messages:[], //用户端未读消息
+	history_list:[],    //工单历史记录
+    // websocket持久化连接
+    connect:function(work_order2, callback){
+		var that = this;
+		console.log("调用connect")
+		var workorder = that.workorder;
+		if (that.bt_uid && that.bt_user){
+			// 判断当前websocket连接是否存在
+			if(!this.bws || this.bws.readyState == 3 || this.bws.readyState == 2){
+				var location = (window.location.protocol === 'http:' ? 'ws://' : 'wss://') + this.host +this.route +'?uid='+that.bt_uid+'&username='+that.bt_user+'&workorder='+workorder;
+				try{
+					this.bws = new WebSocket(location);
+				}catch(err){
+					console.log("websocket连接异常！")
+				}
+				this.bws.addEventListener('message',function(ev){that.on_message(ev)});
+				this.bws.addEventListener('close',function(ev){that.on_close(ev)});
+				this.bws.addEventListener('error',function(ev){that.on_error(ev)});
+				this.bws.addEventListener('open',function(ev){that.on_open(ev)});
+
+				if(callback) callback(this.bws)
+			}
+		}else{
+			// 提示用户绑定账号
+			console.log("请先绑定官网账号。")
+		}
+
+    },
+    //连接服务器成功
+    on_open:function(ws_event){
+    // this.send(JSON.stringify(this.ssh_info || {}))
+        console.log("webscoket连接成功");
+        console.log(ws_event.data);
+    },
+    //服务器消息事件
+    on_message: function (ws_event){
+		var _this = this;
+		result = ws_event.data;
+		if(_this.workorder==undefined) return;
+        if(!result) return;
+		// 显示消息
+		try{
+			if(result != "pong"){
+				var flag = $('#feedback-box').is(":hidden");
+				var _result = JSON.parse(result);
+				var window_flag = false;
+				if(_this.chat_list != null){
+					for(var w=0;w<_this.chat_list.length;w++){
+						var _chat_list = JSON.parse(_this.chat_list[w]);
+						if(_result.id==_chat_list.id&&_result.type==_chat_list.type){
+							window_flag=true;
+							break;
+						}
+					}
+				}
+				if(window_flag){
+					console.log("数据重复");
+				}else{
+					if (!flag && _this.interface_flag=="chat"){
+						// 显示消息
+						if(_result.type==1&&_result.status==undefined){
+							return true;
+						}else
+						if(_result.type==0&&_result.status==undefined){
+							return true;
+						}
+						_this.chat_show(result);
+						// 存储消息
+						if(_result.type != 3){
+							_this.chat_list.push(result);
+						}
+						//直接进行已读未读
+						if (_result.status == 0&&_result.receiver==_this.bt_user&&_result.from_client != true){
+							if(_result.type ==0||_result.type==1){
+								_this.unread_messages.push(result);
+							}
+						}
+						_this.status_clear(false,true);
+					}else{
+						if(_result.type == 3){
+							_this.admian_unread_messages.push(result);
+						}
+						if(_result.type != 3){
+							_this.chat_list.push(result);
+						}
+						if (_result.status == 0&&_result.receiver==_this.bt_user&&_result.from_client != true){
+							if(_result.type != 3){
+								_this.unread_messages.push(result);
+							}
+						}else
+						if(_result.content=="close"||_result.type==6||_result.type==2){
+							_this.unread_messages.push(result);
+						}
+						// 没有打开聊天窗口，更新红色气泡提示
+						// 检查气泡是否显示
+						var _hidden = $('.chat-number').is(":hidden");
+						if (_hidden){
+							$('.chat-number').show();
+						}
+						// 更新气泡数字
+						try{
+						var num = 0;
+							for(var a=0;a<_this.unread_messages.length;a++){
+								var _message = JSON.parse(_this.unread_messages[a]);
+								if(_message.status==0&&_message.receiver==_this.bt_user&&_message.from_client != true){
+									num = num+1;
+								}else
+								if(_message.type==5||_message.type==6||_message.type==2){
+								    if(_message.content=="close"||_message.status==undefined){
+							        	num = num+1;
+								        _message.status=0
+								    }
+								}
+							}
+							if(num==0){
+								$('.chat-number').hide();
+							}else{
+								$('.chat-number').html(num+"条未读");
+							}
+						}catch(err){
+							console.log("工单消息与关闭冲突！")
+						}
+
+					}
+				}
+
+				//更新我发送的消息已读状态
+				if(_result.type == 3){
+					for(var i=0;i< _this.chat_list.length;i++){
+						var msg = _this.chat_list[i];
+						if (msg.id == _result.id){
+							$('#'+msg.id).html("已读");
+							msg.status = _result.status;
+							break;
+						}
+					}
+				}
+			}
+		}catch(err){
+			console.log("消息格式错误！")
+		}
+    },
+    //websocket关闭事件
+    on_close: function (ws_event) {
+        this.bws = null;
+		console.log("webscoket连接断开");
+		console.log(ws_event)
+    },
+    //websocket错误事件
+    on_error: function (ws_event) {
+        if(ws_event.target.readyState === 3){
+            // var msg = '错误: 无法创建WebSocket连接，请在面板设置页面关闭【开发者模式】';
+            // layer.msg(msg,{time:5000})
+            // if(Term.state === 3) return
+            // Term.term.write(msg)
+            // Term.state = 3;
+        }else{
+            console.log(ws_event)
+        }
+    },
+    //发送数据
+    //@param event 唯一事件名称
+    //@param data 发送的数据
+    //@param callback 服务器返回结果时回调的函数,运行完后将被回收
+    send: function (data, num) {
+        var that = this;
+        //如果没有连接，则尝试连接服务器
+        if (!this.bws || this.bws.readyState == 3 || this.bws.readyState == 2) {
+            this.connect();
+        }
+
+        //判断当前连接状态,如果!=1，则100ms后尝试重新发送
+        if (this.bws.readyState === 1) {
+            this.bws.send(data);
+        } else {
+			if(this.state === 3) return;
+            if (!num) num = 0;
+            if (num < 5) {
+                num++;
+                setTimeout(function () { that.send(data, num++); }, 100)
+            }
+        }
+	},
+	//获取工单记录
+	init_workorder:function(flag,success_callback){
+		var _this = this;
+		// 查找当前正在处理的工单编号
+		$.ajax({
+			url: "/workorder/list",
+			contentType: "application/json",
+			dataType: 'json',
+			success: function(rdata){
+				if(rdata == undefined||rdata.length==0||rdata.status ==false||rdata.error_code!=undefined){
+					return false;
+				}else{
+					_this.history_list = JSON.parse(JSON.stringify(rdata))
+					if(flag){
+						for (var i=0; i< rdata.length; i++){
+							var _rdata = JSON.parse(rdata[i])
+							if (_rdata.status == 1||_rdata.status == 0){
+								_this.workorder = _rdata.workorder;
+								_this.start_connect();
+								break;
+							}
+						}
+					}
+				}
+			}
+		});
+
+	},
+	//开始连接
+	start_connect:function(){
+		var _this = this;
+		if(_this.workorder != undefined && _this.workorder != ""){
+			_this.connect()
+			_this.keepActive()
+		}
+	},
+    //关闭连接
+    close: function () {
+        this.bws.close();
+    },
+	init:function(){
+        var _this = this,
+		body = $('body'), win = $(window)[0];
+		body.append($('<div class="debugs"><span>在线</br>客服</span></div><span class="badge chat-number">0条未读</span>'));
+		body.append($('<div class="feedback-box" id="feedback-box"></div>'));
+		document.write("<script language=javascript src='/static/js/html2canvas.min.js'><\/script>");
+		$('#feedback-box').hide();
+		$('.chat-number').hide();
+		$('.debugs').hide();
+		//头像图片处理
+// 		var portrait_src = "/static/img/ico/bt.ico";
+// 		_this.imageChangBase64(portrait_src, function (base64) {
+// 			_this.portrait = base64;
+// 		},64,64);
+// 		var reply_portrait_src = "/static/img/btyonghu.png";
+// 		_this.imageChangBase64(reply_portrait_src, function (base64) {
+// 			_this.bt_yh_portrait = base64;
+// 		},64,64);
+		//获取用户信息
+		try{
+		    $.ajax({
+    			url: "/workorder/get_user_info",
+    			contentType: "application/json",
+    			dataType: 'json',
+    			success: function(rdata){
+    				if(rdata.status == true&&rdata.uid != undefined){
+    					_this.bt_user = rdata.username,_this.bt_uid = rdata.uid;
+    					_this.uid_status = true;
+    					_this.init_workorder(true,_this.start_connect);
+    				}
+                    $('.debugs').show();
+    			}
+    		});
+		}catch(err){
+		      $('.debugs').show();
+		}
+
+		// 初始化界面
+		// 查找当前正在处理的工单编号
+		// bug按钮点击
+		$('.debugs').on("click", function (e) {
+			if (_this.bt_user != undefined && _this.bt_uid != undefined){
+				var flag = $('#feedback-box').is(":hidden");
+				if(_this.interface_flag=="feedback"){ // 工单提交界面
+					$("#feedback-box").fadeToggle(200);
+					$('.debugs').empty();
+					$('.debugs').append($(flag?'<span class="glyphicon glyphicon-chevron-down"></span>':'<span>在线</br>客服</span>'));
+					$("#feedback-box").empty();
+					if(_this.workorder){
+						_this.animation_change_feedback2(_this.workorder,"feedback",_this.chat_list,true)
+					}else{
+						_this.create_chat_box(undefined,true,"feedback");
+						_this.feedback_chat();
+				// 		var _feedback = localStorage.getItem("feedback");
+				// 		if(_feedback != null||_feedback != undefined){
+				// 		    $(".chat_html").text(_feedback)
+				// 		}
+					}
+					e.stopPropagation();
+				}else
+				if(_this.interface_flag=="history"){
+					$("#feedback-box").fadeToggle(200);
+					_this.history_box(flag,"history");
+				}else
+				if(_this.interface_flag=="chat"){
+					$("#feedback-box").fadeToggle(200);
+					$('.debugs').empty();
+					$('.debugs').append($(flag?'<span class="glyphicon glyphicon-chevron-down"></span>':'<img src="static/img/liaotian.png">'));
+					$('.chat-content').scrollTop($(".chat-content")[0].scrollHeight);
+					//解决隐藏界面得情况下收到已读消息
+					var _admin_message = _this.admian_unread_messages;
+					for(var i=0;i<_admin_message.length;i++){
+						_this.chat_show(_admin_message[i])
+					}
+					_this.status_clear(false)
+				}
+			}else{
+				//绑定宝塔账号
+				_this.bind_btname();
+			}
+		});
+
+		//当页面切换时隐藏聊天界面
+		var hiddenProperty = 'hidden' in document ? 'hidden' :
+		    'webkitHidden' in document ? 'webkitHidden' :
+		    'mozHidden' in document ? 'mozHidden' :
+		    null;
+		var visibilityChangeEvent = hiddenProperty.replace(/hidden/i, 'visibilitychange');
+		var onVisibilityChange = function(){
+		    if (!document[hiddenProperty]) {
+		    }else{
+				if(_this.interface_flag=="chat"){
+					$("#feedback-box").hide(100);
+					$('.debugs').empty();
+					$('.debugs').append($('<img src="static/img/liaotian.png">'));
+				}
+		    }
+		}
+		document.addEventListener(visibilityChangeEvent, onVisibilityChange);
+	},
+	/**
+	* @description 回复系统消息
+	*/
+	feedback_chat:function(){
+		var _this = this;
+		_this.chat_show(JSON.stringify({"id": "feedabck", "workorder": "feedback", "content": "您好，欢迎使用堡塔在线客服系统，我们的工作时间为：周一到周六 上午10:00-下午18:00", "receiver": "admin", "type": 0}));
+		_this.chat_show(JSON.stringify({"id": "feedabck", "workorder": "feedback", "content": "请详细描述您遇到的问题，并附带截图，以便我们能更好的跟进，谢谢。", "receiver": "admin", "type": 0}));
+	},
+	/**
+    * @description 工单历史界面
+	* @param flag  界面标识
+	* @param back  返回位置
+    */
+	history_box:function(flag,back){
+		var _this = this;
+		$('#feedback-box').empty();
+		$('#feedback-box').append($('<div class="history-head">\
+			<button type="button" class="'+(back=="history"?"history-back":"chat-back")+'"><span class="glyphicon glyphicon-chevron-left"></span></button>\
+			<span class="chat-name" style="margin-left:60px;float: none;">工单历史列表</span>\
+			</div>\
+			<div class="history-content">\
+				<div class="divtable mt10">\
+					<table class="table table-hover">\
+						<thead>\
+							<tr>\
+								<th>工单名称</th>\
+								<th width="30%">提交时间</th>\
+								<th style="text-align: right;" width="100">状态</th>\
+							</tr>\
+						</thead>\
+						<tbody id="historyTable"></tbody>\
+					</table>\
+				</div>\
+			</div>'));
+		_this.get_history(back);
+		$('.debugs').empty();
+		$('.debugs').append($(flag?'<span class="glyphicon glyphicon-chevron-down"></span>':'<span>在线</br>客服</span>'));
+		//返回提交界面
+		$(".history-back").on("click", function (e) {
+			_this.interface_flag = "feedback";
+			_this.create_chat_box(undefined,true,"feedback");
+			_this.feedback_chat()
+		});
+		//返回界面
+		$(".chat-back").on("click", function (e) {
+			$('#feedback-box').empty();
+			_this.interface_flag = "chat";
+			_this.animation_change_feedback2(_this.workorder,"feedback",_this.chat_list);
+		});
+	},
+	/**
+	* @description 聊天界面
+	* @param workorder  工单标号
+	* @param flag  界面标识
+	* @param back  返回标识
+	*/
+	create_chat_box:function(workorder,flag,back,callback){
+		var _this = this;
+	    $('#feedback-box').empty();
+		$('#feedback-box').append($('<div class="chat-head">\
+			<button type="button" style="'+(back=="feedback"?"display:none":"")+'" class="history-list-back"><span class="glyphicon glyphicon-chevron-left"></span></button>\
+			<span class="'+(_this.interface_flag=="feedback"?"chat-name":(workorder==_this.workorder?"chat-name":"chat-history"))+'" >'+(_this.interface_flag=="feedback"?"在线客服":(workorder==_this.workorder?"在线客服":"工单历史记录(该工单已关闭)"))+'</span>\
+			<button type="button" class="history-list" title="历史工单" style="'+(_this.interface_flag=="feedback"?"":(workorder==_this.workorder?"":"display:none"))+'"><span>历史工单</span></button>\
+		</div>\
+		<div class="chat-content" style="'+(_this.interface_flag=="feedback"?"":(workorder==_this.workorder?"":"height: 560px;border-radius: 0px 0px 10px 10px;"))+'">\
+			<div class="clear"></div>\
+		</div>\
+		<div class="chat-tool" style="'+(_this.interface_flag=="feedback"?"":(workorder==_this.workorder?"":"display:none"))+'">\
+			<div class="text-tool">\
+				<div class="tool-border">\
+					<input class="tool-input screenshot" type="button" title ="截图使用提示:&#10 1. 截图功能默认是截取整个屏幕，暂不支持选择区域截图。&#10 2. 您可以用黄色按钮高亮凸显某个区域。&#10 3. 您可以用黑色块隐藏隐私信息。" />\
+					<div class="tool-text" style="color:#20a53a"><img  src="/static/img/jietu.png" />截图</div></div>\
+			</div>\
+		</div>\
+		<div class="chat-bottom" style="'+(_this.interface_flag=="feedback"?"":(workorder==_this.workorder?"":"display:none"))+'">\
+			<div class="text-box">\
+				<pre contenteditable="true" id="chat_html" data-backspace class="chat_html"></pre>\
+			</div>\
+			<div class="text-button">\
+				<div class="btn-group" style="float: right;">\
+					<button type="button" class="btn btn-sm btn-success  button-send send-chat" style="background-color: #01B132;outline: none;">发送消息</button>\
+				</div>\
+				<input type="button" class="btn btn-sm btn-danger button-size stop-chat"  style="outline: none;" value="退出会话"></button>\
+			</div>\
+		</div>'));
+		$('.screenshot,.send-chat,.stop-chat,.history-list').unbind();
+		//设置不能输入
+		if(_this.interface_flag=="chat"){
+			if(_this.workorder==undefined){
+				$('.screenshot').attr("disabled",true);
+				$('.text-box pre').attr("contenteditable",false);
+			}else{
+				$('.screenshot').attr("disabled",false);
+				$('.text-box pre').attr("contenteditable",true);
+			}
+		}
+		//发送聊天
+		$(".send-chat").on("click", function (e) {
+			if(_this.interface_flag == "feedback"){
+				_this.add_feedback();
+			}else{
+				if(_this.workorder !=undefined){
+					_this.send_chat(workorder);
+				}
+			}
+			e.stopPropagation();
+		});
+		//停止聊天
+		$(".stop-chat").on("click", function (e) {
+			if(_this.interface_flag == "feedback"){
+				var _flag = $('#feedback-box').is(":hidden");
+				$("#feedback-box").css("display","none");
+				$('.debugs').empty();
+				$('.debugs').append('<span>在线</br>客服</span>');
+			}else{
+				_this.stop_chat(_this.workorder);
+			}
+			e.stopPropagation();
+		});
+		//回车发送
+		$(".chat_html").keydown(function (e) {
+			if(e.ctrlKey==1 && e.keyCode == 13) {
+				e.preventDefault();
+				if(_this.interface_flag == "feedback"){
+					_this.add_feedback();
+				}else{
+					if(_this.workorder !=undefined){
+						_this.send_chat(workorder);
+					}
+				}
+			}
+		});
+		//图片预览
+		$(".chat_html").on("click","img",function (e) {
+		    _this.thumbnail($(this).attr("src"))
+			e.stopPropagation();
+		});
+// 		//设置本地存储
+// 		$(".chat_html").bind('input propertychange', function() {
+// 		    if(_this.interface_flag=="feedback"){
+// 		          localStorage.setItem("feedback",$(this).html());
+// 		    }
+//         });
+		//Ctrl+v
+		 var chat_html = document.getElementById("chat_html");
+        // 编辑框点击事件
+        chat_html.onclick = function() {
+            // 获取选定对象
+            var selection = getSelection()
+            // 设置最后光标对象
+    		try{
+    			 _this.lastEditRange = selection.getRangeAt(0)
+    		}catch(err){
+//    			console.log(err)
+    		}
+        }
+
+        // 编辑框按键弹起事件
+        chat_html.onkeyup = function() {
+            // 获取选定对象
+            var selection = getSelection()
+            // 设置最后光标对象
+            try{
+            	 _this.lastEditRange = selection.getRangeAt(0)
+            }catch(err){
+//            	console.log(err)
+            }
+        }
+	    document.getElementById('chat_html').addEventListener('paste',function(e){
+    		if (e.clipboardData && e.clipboardData.items) {
+            for (var i = 0, len = e.clipboardData.items.length; i < len; i++) {
+                var item = e.clipboardData.items[i];
+                if (item.kind === "string" && item.type==="text/plain") {
+                    e.preventDefault();
+	                item.getAsString(function (str) {
+                        _this.insertContent(document.getElementById("chat_html"), str)
+                    })
+                }
+            }
+        }
+        });
+		//返回列表界面
+		$('.history-list-back').on("click", function (e) {
+			var _flag = $('#feedback-box').is(":hidden");
+			_this.interface_flag = "history";
+			$('#feedback-box').empty();
+			if(back=="history"){
+				_this.history_box(true,"history"); //返回工单界面
+			}else{
+				_this.history_box(true,"chat");  //返回聊天界面
+			}
+			e.stopPropagation();
+		});
+	    //进入历史列表
+		$('.history-list').on("click", function (e) {
+			var _flag = $('#feedback-box').is(":hidden");
+			$('#feedback-box').empty();
+			if(_this.interface_flag=="feedback"){
+				_this.history_box(true,"history");
+			}else{
+				_this.history_box(true,"chat");
+			}
+			_this.interface_flag = "history";
+			e.stopPropagation();
+		});
+		//截图
+		$('.screenshot').on("click", function (e) {
+			$("#feedback-box").hide();
+			$('.debugs').empty();
+			$('.debugs').append($('<img src="static/img/liaotian.png">'));
+			_this.screenshot();
+			e.stopPropagation();
+		});
+		// 显示未读消息
+		if(callback==true){
+			_this.status_clear(true);
+		}else{
+			_this.status_clear(false);
+		}
+	},
+    /**
+    * @description 提交反馈
+    */
+    add_feedback:function(callback){
+		var _this = this,
+		_feedback = $('.chat_html').html();
+		if(_feedback == ""||_feedback==null||_feedback.match(/./g)==null||_feedback.match(/^[ ]*$/)){
+			layer.tips('工单内容不能为空，请重新输入', '.send-chat', {
+				tips: [1, '#e62214'],
+				zIndex:9999999999999 //层优先级
+			});
+            return false;
+		}
+		_this.unread_messages=[];//清除最后的关闭信息
+		_this.chat_list=[]; //创建工单前清除chat_list防止出现数据重复
+		_this.chat_segmentation();
+	},
+	/**
+	* @description 历史信息界面切换
+	* @param workorder  工单编号
+	* @param back  返回位置
+	* @param callback
+	*/
+	animation_change_feedback2:function(workorder,back,messages,callback){
+		var _this = this;
+		_this.interface_flag = "chat";
+		_this.create_chat_box(workorder,true,back,callback);
+		if(callback == undefined){
+			var _result = messages;
+			$.each(_result,function(index,item){
+				_this.chat_show(item);
+			});
+		}
+	},
+    /**
+    * @description 消息切分
+    * @param {String} chat 混合类型信息
+    */
+    chat_segmentation:function(workorder){
+		var _this = this;
+		//去除第一次加载雪花id导致重复
+		if(_this.interface_flag=="chat"){
+			var  _snowflake = new Snowflake(Number(1), Number(1), Number(0));
+		}
+		//信息变量
+		var html = document.getElementById("chat_html");
+		var childs = html.childNodes,text = "";
+		//反馈变量
+		var _feedback = "",image_list = [];
+		reg = new RegExp("data:image/.+;base64");
+		var exists_img = false;
+		for(var i=0;i<childs.length;i++){
+			if (childs[i].nodeName == "IMG") {
+			    exists_img = true;
+				// 发送文本消息 内容为 text
+				if (text != "" && text.trim().length>0){
+					if(_this.interface_flag == "feedback"){
+						_feedback = _feedback+text.trim();
+					}else{
+						var snow_id_text = _snowflake.nextId().toString();
+						_this.send_server(_this,JSON.stringify({"id":snow_id_text,"content":text.trim().replace(/\n/g,"<br>"),"workorder":workorder,"type":0,"from_client":true,"sender":_this.bt_user}));
+					}
+				}
+				// 发送图片消息 childs[i]
+				if (reg.test(childs[i].src) == true){
+					if(_this.interface_flag == "feedback"){
+						image_list.push(childs[i].src)
+						if(i==childs.length-1){
+							_this.feedback_transfer(_feedback,image_list);
+						}
+					}else{
+						var snow_id_img = _snowflake.nextId().toString();
+						_this.send_server(_this,JSON.stringify({"id":snow_id_img,"content":childs[i].src,"workorder":workorder,"type":1,"from_client":true,"sender":_this.bt_user}));
+					}
+				}else{
+					var theImage = new Image(); theImage.src = childs[i].src;
+					_this.imageChangBase64(childs[i].src, function (base64) {
+						if(_this.interface_flag == "feedback"){
+							image_list.push(base64)
+							if(i==childs.length-1){
+								_this.feedback_transfer(_feedback,image_list);
+							}
+						}else{
+							var snow_id_img = _snowflake.nextId().toString();
+							_this.send_server(_this,JSON.stringify({"id":snow_id_img,"content":base64,"workorder":workorder,"type":1,"from_client":true,"sender":_this.bt_user}));
+						}
+					},theImage.width,theImage.height);
+				}
+				// 重置文字消息
+				text = "";
+			} else if (childs[i].nodeName == "BR"){
+				if(text != ""&&text !=null){
+					text = text + "<br>";
+				}
+
+			} else {
+				//(childs[i].nodeName == "#text")
+				text = text + childs[i].textContent;
+			}
+		}
+		if(text != "" && text.trim().length>0){
+			if(_this.interface_flag=="feedback"){
+				_feedback = _feedback+text.trim();
+				_this.feedback_transfer(_feedback,image_list);
+			}else{
+				//发送文本消息
+				var snow_id_text = _snowflake.nextId().toString();
+				_this.send_server(_this,JSON.stringify({"id":snow_id_text,"content":text.trim().replace(/\n/g,"<br>"),"workorder":workorder,"type":0,"from_client":true,"sender":_this.bt_user}));
+			}
+		}else{
+		    if (!exists_img){
+			    layer.tips('不能发送空白信息,请重新输入', '.send-chat', {
+				    tips: [1, '#e62214'],
+				    zIndex:9999999999999 //层优先级add
+			    });
+			    $('.chat_html').empty();
+		    }
+		}
+	},
+
+	send_server:function(that,data){
+        //如果没有连接，则尝试连接服务器
+        if (!that.bws || that.bws.readyState == 3 || that.bws.readyState == 2) {
+            this.connect(null,function(bws){
+				setTimeout(function(){
+					that.bws.send(data);
+				},200);
+			});
+			return;
+        }
+		
+        //判断当前连接状态,如果!=1，则100ms后尝试重新发送
+        if (that.bws.readyState === 1) {
+            that.bws.send(data);
+        }else{
+			layer.msg('与工单服务器的连接已断开，请尝试刷新页面');
+		}
+	},
+
+	/**
+	* @description 消息展示
+	* @param {String} message websocket的返回的聊天信息
+	*/
+	chat_show:function(message,callback){
+		var _this = this,
+		_message = JSON.parse(message);
+		if(_this.interface_flag =="feedback"){
+			if(_message.workorder =="feedback"){
+				$('.chat-content').append('<div class="chat-dialog-box">\
+					<div class="dialog-portrait">\
+						<img src="'+_this.portrait+'" class="dialog-portrait-image" />\
+					</div>\
+					<div class="dialog-triangle"></div>\
+					<div class="chat-dialog-border">\
+						<label>在线客服(系统消息)</label>\
+						<div class="dialog-text">\
+							<pre>'+_message.content+'</pre>\
+						</div>\
+						<label name="chat-dialog-status" id="'+_message.id+'" style="display:none;\
+						margin-top: 5px;">未读</label>\
+					</div>\
+				</div>');
+				$('.chat-content').scrollTop($(".chat-content")[0].scrollHeight);
+			}
+		}
+		if(_this.interface_flag=="chat"){
+			//异常信息
+			if(_message.type==6){
+				$('.chat-content').append('<div class="chat-system"><p>\
+					'+_message.content+'\</p></div>');
+					$('.chat-content').scrollTop($(".chat-content")[0].scrollHeight);
+                	$('.screenshot').attr("disabled",true);
+					$('.text-box pre').attr("contenteditable",false);
+					$('.send-chat').css({"background-color":"#ffffff","color":"#000","border-color":"#ccc"});
+					$('.send-chat').attr("disabled",true);
+					if(_message.workorder == _this.workorder){
+						_this.disconnect();
+					}
+			}
+			//跟进信息
+			if(_message.type =="2"){
+				$('.chat-content').append('<div class="chat-system" id="'+_message.id+'"><p>\
+				您的工单已被跟进</p></div>');
+				$('.chat-content').scrollTop($(".chat-content")[0].scrollHeight);
+			}
+			//已读信息
+			if(_message.type =="3"){
+				$('#'+_message.id).html("已读");
+			}
+			//发送信息
+			if(_message.sender==_this.bt_user&&_message.from_client==true){
+				//图片信息
+				if(_message.type =="1"){
+					$('.chat-content').append('<div class="chat-reply-box">\
+						<div class="reply-portrait"><img src="'+_this.bt_yh_portrait+'" class="reply-portrait-image"  /></div>\
+						<div class="reply-text" style="background-color:#ffffff;margin-top:2px;margin-right:2px;">\
+						<p><img class="demo" onclick="box.thumbnail(\'' + _message.content + '\')" src="'+_message.content+'"/></p></div>\
+						<label name="chat-reply-status" id="'+_message.id+'" style="margin-top: 5px;margin-right: 62px;">'+(_message.status==0?"未读":"已读")+'</label>\
+						</div>');
+						$('.chat-content').scrollTop($(".chat-content")[0].scrollHeight);
+				}else
+				if(_message.type =="0"){
+					//文字信息
+					$('.chat-content').append('<div class="chat-reply-box">\
+					<div class="reply-portrait"><img src="'+_this.bt_yh_portrait+'" class="reply-portrait-image" /></div>\
+					<div class="reply-triangle"></div>\
+					<div class="reply-text"><pre>'+_message.content.replace(/&lt;br&gt;/g,"<br>").replace(/\s/g,"&nbsp;")+'</pre></div>\
+					<label name="chat-reply-status" id="'+_message.id+'" style="margin-top: 5px;margin-right: 62px;">'+(_message.status==0?"未读":"已读")+'</label>\
+					</div>');
+					$('.chat-content').scrollTop($(".chat-content")[0].scrollHeight);
+				}
+				else if(_message.type =="5"){
+					if(_message.content=="close"){
+						$('.chat-content').append('<div class="chat-dialog-box">\
+							<div class="dialog-portrait">\
+								<img src="'+_this.portrait+'" class="dialog-portrait-image" />\
+							</div>\
+							<div class="dialog-triangle"></div>\
+							<div class="chat-dialog-border">\
+								<label>在线客服(系统消息)</label>\
+								<div class="dialog-text">\
+									<pre>您的工单已被客服关闭，如果您的问题没有得到解决，请重新发起工单，感谢您的使用！</pre>\
+								</div>\
+							</div>\
+						</div>');
+						$('.chat-content').scrollTop($(".chat-content")[0].scrollHeight);
+						if(_message.workorder == _this.workorder){
+							_this.disconnect();
+						}
+						_this.interface_flag="feedback";
+					}else{
+						$('.chat-content').append('<div class="chat-system" id="'+_message.id+'"><p>\
+						'+_message.content+'\</p></div>');
+						$('.chat-content').scrollTop($(".chat-content")[0].scrollHeight);
+					}
+				}
+			}else{  //回复消息
+				if(_message.type =="5"){
+					if(_message.content=="close"){
+						$('.chat-content').append('<div class="chat-dialog-box">\
+							<div class="dialog-portrait">\
+								<img src="'+_this.portrait+'"class="dialog-portrait-image" />\
+							</div>\
+							<div class="dialog-triangle"></div>\
+							<div class="chat-dialog-border">\
+								<label>在线客服(系统消息)</label>\
+								<div class="dialog-text">\
+									<pre>您的工单已被客服关闭，如果您的问题没有得到解决，请重新发起工单，感谢您的使用！</pre>\
+								</div>\
+							</div>\
+						</div>');
+						$('.chat-content').scrollTop($(".chat-content")[0].scrollHeight);
+						if(_message.workorder == _this.workorder){
+							_this.disconnect();
+						}
+						_this.interface_flag="feedback";
+					}else{
+						$('.chat-content').append('<div class="chat-system"><p>'+_message.content+'</p></div>');
+						$('.chat-content').scrollTop($(".chat-content")[0].scrollHeight);
+					}
+				}else  //回复消息 图片/文字
+				if(_message.type ==1||_message.type ==0){
+					$('.chat-content').append('<div class="chat-dialog-box">\
+					<div class="dialog-portrait">\
+						<img src="'+_this.portrait+'" class="dialog-portrait-image" />\
+					</div>\
+					<div class="'+(_message.type==0?"dialog-triangle":"")+'"></div>\
+					<div class="chat-dialog-border">\
+						<label style="'+(_message.type==1?"margin-left:16px":"")+'">宝塔客服 '+_message.date+'</label>\
+						<div class="dialog-text" style="'+(_message.type==1?"margin-left:16px;background-color:#ffffff;":"")+'" >\
+							<pre>'+(_message.type==0?_message.content.replace(/&lt;br&gt;/g,"<br>").replace(/\s/g,"&nbsp;"):'<img onclick="box.thumbnail(\'' + _message.content + '\')" src="'+_message.content+'" />')+'</pre>\
+						</div>\
+						<label name="chat-dialog-status" id="'+_message.id+'" style="display:none;\
+						margin-top: 5px;">未读</label>\
+					</div>\
+				</div>');
+				$('.chat-content').scrollTop($(".chat-content")[0].scrollHeight);
+				}
+			}
+		}
+		if(callback) callback(this._message);
+	},
+   /**
+    * @description 工单提交
+	* @param {String} feedback 工单文字信息
+	* @param {String} imageList 工单图片信息
+    */
+	feedback_transfer:function(feedback,imageList){
+	var _this = this;
+		var _length = imageList.length;
+		var imgf,imgs,imgt;
+		//工单提交信息
+		$('.debugs').attr("disabled",true);
+		var contents = [];
+		var  _snowflake = new Snowflake(Number(1), Number(1), Number(0));
+        var mask = '<div class="image-span">\
+					<span>+</span>\
+				</div> '
+		if(_length>=3){
+			imgf = '<img   onclick="box.thumbnail(\'' + imageList[0] + '\')" src='+imageList[0]+'>';
+			imgs = '<img   onclick="box.thumbnail(\'' + imageList[1] + '\')" src='+imageList[1]+'>';
+			imgt = '<img   onclick="box.thumbnail(\'' + imageList[2] + '\')" src='+imageList[2]+'>';
+			$('.feedback-border').css("border",0);
+		}else
+		if(_length==2){
+			imgf = '<img   onclick="box.thumbnail(\'' + imageList[0] + '\')" src='+imageList[0]+'>';
+			imgs = '<img   onclick="box.thumbnail(\'' + imageList[1] + '\')" src='+imageList[1]+'>';
+			imgt = mask;
+		}else
+		if(_length==1){
+			imgf = '<img   onclick="box.thumbnail(\'' + imageList[0] + '\')" src='+imageList[0]+'>';
+			imgs =imgt = mask;
+		}else{
+			imgf=imgs =imgt = mask;
+		}
+		$('body').append($('<div class="feedback-mask"></div>'));
+		$('body').append($('<div class="feedback-border" style="'+(_length>0?"height:360px":"")+'">\
+		            <span class="layui-layer-setwin"><a class="layui-layer-ico layui-layer-close layui-layer-close2 feedback-close-span" ></a></span>\
+		            <div class="feedback-head"><span>工单内容确认</span></div>\
+					<div class="feedback-span"><span>您的问题是:</span></div>\
+			    	<div class="feedback-text-input" style="'+(_length>0?"height:25%":"")+'">\
+						<textarea class="feedback-text">'+feedback+'</textarea>\
+					</div>\
+					<div class="feedback-span"style="margin-top: 10px;"><span>截图信息(仅显示前三张图片):</span></div>\
+					<div class="feedback-text-input ">\
+						<div class="feedback-image-box" id="imgf" style="'+(_length>0?"border:0":"")+'">'+imgf+'</div>\
+						<div class="feedback-image-box" id="imgs" style="'+(_length==0?"display:none":(_length>1?"border:0":""))+'">'+imgs+'</div>\
+						<div class="feedback-image-box" id="imgt" style="margin-right:0px;'+(_length<2?"display:none":(_length>2?"border:0":""))+'">'+imgt+'</div>\
+					</div>\
+					<ul class="mtl0 c7" style="font-size: 12px;color: red;margin: 7px 11px 0px 19px;'+(_length==0?"":"display:none")+'">\
+            		    <li style="list-style:inside disc">为了更好跟进您的工单，请尽可能描述清楚您的问题，并附带截图</li>\
+            	    </ul>\
+					<div class="feedback-bottom">\
+						<button type="button" class="btn btn-sm btn-success feedback-button-group feedback-submit">提交工单</button>\
+						<button type="button" class="btn btn-sm btn-danger feedback-button-group feedback-close" style="right: 97px;">取消</button>\
+					</div>\
+			</div>'));
+			$(".feedback-close,.feedback-submit,.feedback-close-span,.image-span").unbind();
+			$(".feedback-text").focus();
+			$(".feedback-close,.feedback-close-span").on("click", function (e) {
+				$('.feedback-mask').remove();
+				$('.feedback-border').remove();
+				 $(".debugs").unbind("click",_this.showChang);
+				e.stopPropagation();
+			});
+			$(".debugs").on("click",_this.showChang);
+			$(".feedback-submit").on("click", function (e) {
+			    var imgf_flag = $("#imgf").find("img").attr("src")?true:false; imgs_flag = $("#imgs").find("img").attr("src")?true:false; imgt_flag = $("#imgt").find("img").attr("src")?true:false;
+			    if(_length==0){
+			        imgf_flag==true?imageList.push($("#imgf").find("img").attr("src")):"";
+		            imgs_flag==true?imageList.push($("#imgs").find("img").attr("src")):"";
+		            imgt_flag==true?imageList.push($("#imgt").find("img").attr("src")):"";
+			    }else
+			    if(_length==1){
+			       imgs_flag==true?imageList.push($("#imgs").find("img").attr("src")):"";imgt_flag==true?imageList.push($("#imgt").find("img").attr("src")):"";
+			    }else
+			    if(_length==2){
+			       imgt_flag==true?imageList.push($("#imgt").find("img").attr("src")):"";
+			    }
+				var _feedback = $(".feedback-text").val();
+				if(_feedback == ""||_feedback==null||_feedback.match(/./g)==null||_feedback.match(/^[ ]*$/)){
+					layer.tips('工单内容不能为空，请重新输入', '.feedback-submit', {
+						tips: [1, '#e62214'],
+						zIndex:9999999999999 //层优先级
+					});
+					return false;
+				}
+				var snow_id_text = _snowflake.nextId().toString();
+				contents.push({"id":snow_id_text,"type":0,"content":_feedback});
+				for(var i=0;i<imageList.length;i++){
+					var snow_id_img = _snowflake.nextId().toString();
+					contents.push({"id":snow_id_img,"type":1,"content":imageList[i]});
+				}
+				_this.feedback_submit(contents);
+				e.stopPropagation();
+			});
+			$('.image-span').on("click", function (e) {
+			    var  _id = "#"+ $(this).parent().attr("id");
+				$("#feedback-box,.feedback-border,.feedback-mask").hide();
+    			$('.debugs').empty();
+    			$('.debugs').append($('<span>在线</br>客服</span>'));
+    			_this.screenshot(_id);
+    			$(this).parent().css("border",0).next().css("display","inline-block");
+    			$(this).parent().find("img")
+    			e.stopPropagation();
+			});
+	},
+	showChang:function(index){
+        $('.feedback-mask').fadeToggle(100);
+		$('.feedback-border').fadeToggle(100);
+    },
+	/**
+    * @description 查看提交工单
+    * @param {String} contents  工单信息
+    */
+	feedback_submit:function(contents){
+		var _this = this;
+		$.post("/workorder/create",{contents:JSON.stringify(contents),"collect":false},function(rdata){
+			if(rdata.error_code!=undefined&&rdata.status==false){
+				if(rdata.msg==undefined&&rdata.content==undefined){
+					rdata.msg="工单提交错误！";
+				}else
+				if(rdata.msg==undefined){
+					rdata.msg =	rdata.content;
+				}
+				layer.tips(rdata.msg, '.feedback-submit', {
+					tips: [1, '#e62214'],
+					zIndex:9999999999999 //层优先级
+				});
+			}else{
+				if(rdata.workorder!==undefined||rdata.workorder!==null){
+					_this.workorder = rdata.workorder;
+					_this.init_workorder(true)
+					_this.interface_flag="chat";
+					$(".chat_html").empty();
+					$('.feedback-mask').remove();
+					$('.feedback-border').remove();
+				}
+			}
+		});
+	},
+	/**
+    * @description 查看历史工单记录
+    * @param {String} workorder 工单ID
+	* @param {String} status 工单状态
+    */
+   	feedback_history:function(workorder,status,back){
+		var _this = this;
+		$('#feedback-box').empty();
+		// 已关闭工单直接发起ajax请求，地址window.location/workorder/get_message?workorder=?
+		if(status==2){
+		$.ajax({
+			url: "/workorder/get_messages?workorder="+workorder,
+			contentType: "application/json",
+			dataType: 'json',
+			success: function(rdata){
+				if(back=="history"){
+					_this.animation_change_feedback2(workorder,"history",rdata);
+				}else{
+					_this.animation_change_feedback2(workorder,"chat",rdata)
+				}
+
+			}
+		});
+		}else
+		if(status==1||status==0){
+			//未考虑多个工单消息列表存储问题
+		_this.animation_change_feedback2(_this.workorder,"feedback",_this.chat_list);
+		}else{
+
+		}
+	},
+	/**
+    * @description 获取工单历史列表
+	*  @param {String} back 返回位置
+    */
+	get_history:function(back,callback){
+		var _this = this;
+		if(_this.history_list==null) return false;
+		try{
+			var rdata = JSON.parse(JSON.stringify(_this.history_list));
+		}catch(err){
+			console.log("没有历史工单！")
+		}
+		var rdata = JSON.parse(JSON.stringify(_this.history_list));
+		$('#historyTable').empty();
+		// 已关闭工单直接发起ajax请求，地址window.location/workorder/get_message?workorder=?
+		$.each(rdata,function(index,item){
+			if(JSON.parse(item).status !=2){
+				return true;
+			}
+			$('#historyTable').append($(
+				'<tr>\
+				<td style="width: 35%;"><a onclick="box.feedback_history(\'' +JSON.parse(item).workorder+ '\',\''+JSON.parse(item).status+'\',\''+back+'\')"\
+					style="color:#20a53a;cursor: pointer;">\
+					'+ (JSON.parse(item).subject.length>5?JSON.parse(item).subject.slice(0,8)+"...":JSON.parse(item).subject) +'</td>\
+				<td style="width: 45%;">'+ JSON.parse(item).date +'</a></td>\
+				<td style="width: 20%;text-align:right;"><a " \
+				>'+(JSON.parse(item).status==0?"未跟进":(JSON.parse(item).status==1?"处理中":"已关闭"))+'</a></td>\
+			</tr>'
+			));
+		});
+	},
+	/**
+    * @description 绑定宝塔账号
+    */
+	bind_btname : function(callback)
+	{
+	    var _this = this;
+	    $('#feedback-box').hide();
+		$('.debugs').empty();
+		$('.debugs').append($('<span>在线</br>客服</span>'));
+		layer.open({
+			type: 1,
+			title: '绑定宝塔官网账号',
+			area: ['420px','360px'],
+			closeBtn: 2,
+			shadeClose: false,
+			content:'<div class="libLogin pd20" ><div class="bt-form text-center"><div class="line mb15"><h3 class="c2 f16 text-center mtb20">绑定宝塔官网账号</h3></div><div class="line"><input class="bt-input-text" name="username2" type="text" placeholder="手机" id="p1"></div><div class="line"><input autocomplete="new-password" class="bt-input-text" type="password" name="password2"  placeholder="密码" id="p2"></div><div class="line"><input class="login-button" value="登录" type="button" ></div><p class="text-right"><a class="btlink" href="https://www.bt.cn/register.html" target="_blank">未有账号，去注册</a></p></div></div>',
+			success:function(){
+			    $('.login-button').click(function(){
+    				p1 = $("#p1").val();
+    				p2 = $("#p2").val();
+    				var loadT = bt.load(lan.config.token_get);
+    				bt.send('GetToken','ssl/GetToken',"username=" + p1 + "&password=" + p2,function(rdata){
+    					loadT.close();
+    					bt.msg(rdata);
+    					if(rdata.status) {
+    						if(callback){
+    							layer.closeAll();
+    							callback(rdata)
+    						}
+    						else{
+    							window.location.reload();
+    						}
+    						$("input[name='btusername']").val(p1);
+    					}
+    				})
+    			});
+    			$('.libLogin input[type=password]').keyup(function(e){
+    				if(e.keyCode == 13){
+    					$('.login-button').click();
+    				}
+    			});
+			}
+		});
+	},
+	/**
+    * @description 图片转base64
+    * @param {Object} img 图片路径
+    */
+	imageChangBase64:function(url,callback,w,h){
+		if(typeof url === "undefined"){
+			callback();
+			return false;
+		}
+		var canvas = document.createElement("canvas");   //创建canvas DOM元素
+		var ctx = canvas.getContext("2d");
+		var img = new Image,
+		dataURL='';
+		img.crossOrigin = 'Anonymous';
+		img.src = url;
+		//判断是否Safari浏览器
+		var userAgent = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+		if(userAgent) {
+			var canvas= document.createElement("canvas");
+			canvas.width = w;
+			canvas.height = h;
+			var ctx=canvas.getContext("2d");
+			ctx.drawImage(img, 0, 0, w, h);
+			canvas.toBlob = function(blob) {
+			    try{
+			        var url = URL.createObjectURL(blob);
+			    }catch(err){
+			        console.log("格式转换错误")
+			    }
+				callback.call(this, url); //回掉函数获取Base64编码
+				canvas = null;
+			}
+		}else{
+			img.onload = function () {
+				canvas.height = h; //指定画板的高度,自定义
+				canvas.width = w; //指定画板的宽度，自定义
+				ctx.drawImage(img, 0, 0, w, h); //参数可自定义
+				try{
+				    dataURL = canvas.toDataURL("image/");
+				}catch(err){
+				    console.log("格式转换错误")
+				}
+				callback.call(this, dataURL); //回掉函数获取Base64编码
+				canvas = null;
+			};
+		}
+	},
+    /**
+    * @description 点击发送聊天
+    */
+    send_chat:function(workorder,callback){
+        var _this = this;
+		var _chat_html = $('.chat_html').html();
+        if(_chat_html == ''||_chat_html==null||_chat_html=='<br>'||_chat_html.match(/^[ ]*$/)||_chat_html.match(/./g)==null){
+			layer.tips('不能发送空白信息,请重新输入', '.send-chat', {
+				tips: [1, '#e62214'],
+				zIndex:9999999999999 //层优先级add
+			  });
+			$('.chat_html').empty();
+            return false;
+		};
+        _this.chat_segmentation(workorder);
+        $('.chat_html').empty();
+	},
+	/**
+    * @description 判断当前信息已读或未读
+	* @param {boolean} flag 判断当前状态
+	* @param {boolean} show 判断是否只执行已读未读
+    */
+	status_clear:function(flag,show){
+		var _this = this;
+		// 显示未读消息
+		var  _unread_messages = JSON.parse(JSON.stringify(_this.unread_messages));
+		for(var i=0;i<_unread_messages.length;i++){
+			var _message = JSON.parse(_unread_messages[i])
+			if(_message.status==1){
+				continue;
+			}
+			if(_this.bws&&_this.bws.readyState==1){
+				if(_message.type !=5&&_message.type !=6&&_message !=2){
+					_this.send_server(_this,JSON.stringify({"id":_message.id,"type":3,"content":_message.content,"workorder":_message.workorder}));
+				}
+			}
+			// 更新已有消息列表内的消息状态
+			for(var j=0;j<_this.chat_list.length;j++){
+				if (_message.id == _this.chat_list[j].id){
+					_this.chat_list[j].status = 1;
+				}
+				if(!flag){
+				    if(show==undefined){
+			        	_this.chat_show(_unread_messages[i]);
+				        break;
+				    }
+				}
+			}
+			// 去除气泡
+			_message.status = 1;
+			_this.unread_messages[i] = JSON.stringify(_message);
+			try{
+				var num = parseInt($('.chat-number').html())
+
+				if (num-1 == 0){
+					$('.chat-number').hide();
+				}else{
+					$('.chat-number').html(num-1+"条未读");
+				}
+			}catch(err){
+				console.log("气泡数据异常！")
+			}
+		}
+		if(flag){
+			for(var a=0;a<_this.chat_list.length;a++){
+				_this.chat_show(_this.chat_list[a]);
+			}
+		}
+
+	},
+	/**
+    * @description 停止会话
+	* @param {String} workorder 工单编号
+    */
+	stop_chat:function(workorder){
+		var _this = this;
+		layer.confirm('是否结束当前会话', {icon: 2, title:'关闭会话',
+			closeBtn:2,
+			btn: ['确认','取消'],
+			zIndex:999999999 //层优先级
+		},function(index,layers){
+			layer.close(layer.index);
+			var _flag = $('#feedback-box').is(":hidden");
+			_this.interface_flag = "feedback";
+			_this.chat_list = [];
+			_this.init_workorder(false);
+			if(workorder==undefined||workorder==null){
+				$('#feedback-box').empty();
+				_this.create_chat_box(undefined,true,"feedback");
+				_this.feedback_chat();
+				return false;
+			}
+			$.post("workorder/close",{workorder:workorder},function(rdata){
+				if(rdata.status){
+					if(_this.workorder !=undefined){
+						_this.disconnect();
+						if(_this.workorder==undefined){
+							$('#feedback-box').empty();
+							_this.create_chat_box(undefined,true,"feedback");
+							_this.feedback_chat();
+						}
+					}
+					_this.chat_list = [];
+				}else{
+					layer.tips('关闭工单出现错误！', '.stop-chat', {
+						tips: [1, '#e62214'],
+						zIndex:9999999999999 //层优先级
+					});
+					return false;
+				}
+			});
+		});
+	},
+	/**
+    * @description 光标追加位置
+    */
+	insertContent:function(element, str){
+	    var _this =this;
+	     chat_html = element
+        // 编辑框设置焦点
+        chat_html.focus()
+        // 获取选定对象
+        var selection = getSelection()
+        // 判断是否有最后光标对象存在
+        if (_this.lastEditRange) {
+            // 存在最后光标对象，选定对象清除所有光标并添加最后光标还原之前的状态
+            selection.removeAllRanges()
+            selection.addRange(_this.lastEditRange)
+        }
+        // 判断选定对象范围是编辑框还是文本节点
+        if (selection.anchorNode.nodeName != '#text') {
+            // 如果是编辑框范围。则创建表情文本节点进行插入
+            var pasted_text = document.createTextNode(str)
+            if (chat_html.childNodes.length > 0) {
+                // 如果文本框的子元素大于0，则表示有其他元素，则按照位置插入表情节点
+                for (var i = 0; i < chat_html.childNodes.length; i++) {
+                    if (i == selection.anchorOffset) {
+                        chat_html.insertBefore(pasted_text, chat_html .childNodes[i])
+                    }
+                }
+            } else {
+                // 否则直接插入一个表情元素
+                chat_html.appendChild(pasted_text)
+            }
+            // 创建新的光标对象
+            var range = document.createRange()
+            // 光标对象的范围界定为新建的表情节点
+            range.selectNodeContents(pasted_text)
+            // 光标位置定位在表情节点的最大长度
+            range.setStart(pasted_text, pasted_text.length)
+            // 使光标开始和光标结束重叠
+            range.collapse(true)
+            // 清除选定对象的所有光标对象
+            selection.removeAllRanges()
+            // 插入新的光标对象
+            selection.addRange(range)
+        } else {
+            // 如果是文本节点则先获取光标对象
+			try{
+				var range = selection.getRangeAt(0)
+			}catch(err){
+				return false;
+			}
+            // 获取光标对象的范围界定对象，一般就是textNode对象
+            var textNode = range.startContainer;
+            // 获取光标位置
+            var rangeStartOffset = range.startOffset;
+            // 文本节点在光标位置处插入新的表情内容
+            textNode.insertData(rangeStartOffset, str)
+            // 光标移动到到原来的位置加上新内容的长度
+            range.setStart(textNode, rangeStartOffset + str.length)
+            // 光标开始和光标结束重叠
+            range.collapse(true)
+            // 清除选定对象的所有光标对象
+            selection.removeAllRanges()
+            // 插入新的光标对象
+            selection.addRange(range)
+        }
+        // 无论如何都要记录最后光标对象
+		try{
+			 _this.lastEditRange = selection.getRangeAt(0)
+		}catch(err){
+//				console.log(err)
+		}
+	},
+	/**
+    * @description 页面截图
+    */
+	screenshot:function(callback){
+		var _this = this;
+		body = $('body'), win = $(window)[0];
+		body.append('<div id="mask_bgimage" style="width:' + win.innerWidth + 'px;height:' + win.innerHeight + 'px"></div>\
+		<div class="mask_view"></div>\
+		<div class="mask_select_view"></div>\
+		<div class="toolbar" style="right:10px;bottom:10px;">\
+			<span title="移动工具条"><svg xmlns="https://www.w3.org/2000/svg" focusable="false" aria-label="Drag" fill="#BDBDBD" height="56" width="16" viewBox="-2 2 12 12"><circle cx="1.5" cy="1.5" r="1.5"></circle><circle cx="1.5" cy="7.5" r="1.5"></circle><circle cx="1.5" cy="13.5" r="1.5"></circle><circle cx="6.5" cy="1.5" r="1.5"></circle><circle cx="6.5" cy="7.5" r="1.5"></circle><circle cx="6.5" cy="13.5" r="1.5"></circle></svg></span>\
+			<span title="突显问题" class="active">\
+			<svg xmlns="https://www.w3.org/2000/svg" focusable="false" viewBox="0 0 24 24" height="30" width="30" fill="#FDD835"><path d="M3 3h18v18H3z"></path></svg>\
+			<svg xmlns="https://www.w3.org/2000/svg" focusable="false" aria-label=""  viewBox="0 0 24 24" height="30" width="30" fill="#757575"><path d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path></svg>\
+			</span>\
+			<span title="隐藏敏感信息">\
+			<svg xmlns="https://www.w3.org/2000/svg" focusable="false" viewBox="0 0 24 24" height="30" width="30"><path d="M3 3h18v18H3z"></path></svg>\
+			<svg xmlns="https://www.w3.org/2000/svg" focusable="false" aria-label=""  viewBox="0 0 24 24" height="30" width="30" fill="#757575"><path d="M21 17h-2.58l2.51 2.56c-.18.69-.73 1.26-1.41 1.44L17 18.5V21h-2v-6h6v2zM19 7h2v2h-2V7zm2-2h-2V3.08c1.1 0 2 .92 2 1.92zm-6-2h2v2h-2V3zm4 8h2v2h-2v-2zM9 21H7v-2h2v2zM5 9H3V7h2v2zm0-5.92V5H3c0-1 1-1.92 2-1.92zM5 17H3v-2h2v2zM9 5H7V3h2v2zm4 0h-2V3h2v2zm0 16h-2v-2h2v2zm-8-8H3v-2h2v2zm0 8.08C3.9 21.08 3 20 3 19h2v2.08z"></path></svg>\          </span>\
+			<span class = "finish">完成</span>\
+		</div>');
+		html2canvas(body[0], { scrollX: 0, scrollY: 0,useCORS: true}).then(function (canvas) {
+			// canvas.width = win.innerWidth;canvas.height = win.innerHeight;
+			// $(canvas).css({ "width": win.innerWidth, "height": win.innerHeight })
+			var canvas_2d = canvas.getContext("2d");
+			$('#mask_bgimage').css({ "width": win.innerWidth, "height": win.innerHeight }).empty().append(canvas);
+			$('.toolbar,.mask_view').show();
+			$('.toolbar span').click(function () {
+				var index = $(this).index();
+				if (index == 1 || index == 2) {
+					$(this).addClass('active').siblings().removeClass('active');
+				} else if (index == 3) {
+					var arry = [], scroll_top = $('#mask_bgimage').scrollTop();
+					$('.mask_select_view>div').each(function () {
+						var data = $(this).data();
+						if ($(this).hasClass('select_area')) {
+							canvas_2d.strokeStyle = "red"; // 设置矩形笔触颜色
+							canvas_2d.lineJoin = "round";
+							canvas_2d.lineWidth = "2";// 设置矩形笔触宽度
+							canvas_2d.strokeRect(data.left, data.top, data.width, data.height);
+						} else {
+							canvas_2d.fillStyle = "#333";
+							canvas_2d.fillRect(data.left, data.top, data.width, data.height);
+						}
+					});
+					var image = new Image();
+					image.setAttribute("crossOrigin",'Anonymous');
+					var userAgent = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+					if(userAgent){
+						try{
+							canvas.toBlob = function(blob) {
+								var url = URL.createObjectURL(blob);
+								image.src = url;
+							}
+						}catch(err){
+							console.log("操作不安全")
+						}
+					}else{
+						try{
+							image.src = canvas.toDataURL("image/png");
+							var url = image.src;
+							image.setAttribute("onclick",'box.thumbnail(\'' + url + '\')');
+						}catch(err){
+							console.log("操作不安全")
+						}
+					}
+					$("#feedback-box").show();
+					$('.debugs').empty();
+					$('.debugs').append($('<span class="glyphicon glyphicon-chevron-down"></span>'));
+					if(callback != undefined){
+					    $(callback).empty();
+				        $(callback).append(image)
+					    $(".feedback-border,.feedback-mask").show();
+					}else{
+					    $(".chat_html").append(image);
+					}
+				}
+			});
+			$('.toolbar span:eq(0)').on('mousedown', function (e) {
+				e = e || window.event;
+				var toolbar = $('.toolbar'), toolbar_left = toolbar.offset().left, toolbar_top = toolbar.offset().top;
+				$(document).on('mousemove', function (ev) {
+					var win = $(window)[0], win_height = win.innerHeight, win_width = win.innerWidth,
+						offsetX = ev.clientX - e.clientX, offsetY = ev.clientY - e.clientY, config = { right: 'inline', bottom: 'inline' };
+					config.left = toolbar_left + offsetX;
+					config.top = toolbar_top + offsetY;
+					if (config.left <= 0) {
+						config.left = 0;
+					} else if (win_width <= (config.left + toolbar[0].clientWidth)) {
+						config.left = win_width - toolbar[0].clientWidth;
+					}
+					if (config.top <= 0) {
+						config.top = 0;
+					} else if (win_height <= (config.top + toolbar[0].clientHeight)) {
+						config.top = win_height - toolbar[0].clientHeight;
+					}
+					toolbar.css(config);
+				});
+				$(document).on('mouseup', function (ev) {
+					$(this).unbind('mousemove mouseup');
+				});
+				e.stopPropagation();
+				e.preventDefault();
+			});
+			$('.mask_select_view').on('mousedown', function (ev) {
+				var x = ev.clientX, y = ev.clientY, width = 0, height = 0, status = $('.toolbar span.active').index() === 1;
+				select_view = $('<div class="' + (status ? 'select_area' : 'select_ban') + ' show"  style="'+(status ? 'z-index:3;' : 'z-index:9999999;')+'">' + (status ? '<canvas></canvas>' : '') + '</div>');
+				if (status) select_canvas = select_view.find('canvas')[0].getContext('2d');
+				$(this).append(select_view);
+				$(this).on('mousemove', function (ev) {
+					var move_x = ev.clientX, move_y = ev.clientY, left = (x > move_x ? move_x : null || x < move_x ? x : null), top = (y > move_y ? move_y : null || y < move_y ? y : null);
+					width = Math.abs(x - move_x), height = Math.abs(y - move_y);
+					if (width > 10 && height > 10) {
+						select_view.css({ left: left + 'px', top: top + 'px', width: width + 4 + 'px', height: height + 4 +'px' }).data({ left: left, top: top, width: width, height: height });
+						select_view.find('canvas').attr({ width: (width) + 'px', height: (height) + 'px' });
+						if (status) select_canvas.drawImage(canvas, left + 2, top + 2, width, height, 0, 0, width, height); //复制画布内容
+					}
+				});
+				$(this).on('mouseup', function (ev) {
+					var up_x = ev.clientX, up_y = ev.clientY;
+					if (width < 10 && height < 10) select_view.remove();
+					$(this).unbind('mousemove mouseup');
+					select_view.append('<div class="close_area"></div>');
+				});
+				select_view.on('click', '.close_area', function () {
+					$(this).parent().remove();
+				});
+				select_view.on('mousemove', function (ev) {
+					ev.stopPropagation();
+				});
+				ev.stopPropagation();
+				ev.preventDefault();
+			});
+			$(document).keyup(function (ev) {
+				if (ev.keyCode === 27) {
+					$('#mask_bgimage,.mask_view,.mask_select_view,.toolbar').remove();
+					if(callback != undefined){
+					    $(".feedback-border,.feedback-mask").show();
+					}
+				}
+			});
+			$(".finish").on("click", function (e) {
+				$('#mask_bgimage,.mask_view,.mask_select_view,.toolbar').remove();
+				e.stopPropagation();
+			});
+		});
+	},
+	/**
+    * @description 关闭工单关闭线程
+    */
+    disconnect:function(){
+		var _this =this;
+		try{
+			if(_this.bws&&_this.bws.readyState == 1){
+				_this.bws.close();
+			}
+			clearInterval(_this.ping);
+			_this.workorder=undefined;
+		}catch(err){
+			console.log("断开连接异常！");
+			console.log(err);
+		}
+
+	},
+	/**
+    * @description 查看缩略图
+	* @param {String} src 图片地址
+    */
+   	thumbnail:function(src){
+		var that = this
+		, mask = $('<div class="preview_images_mask" style="z-index: 9999999999"><div class="preview_head"><span class="preview_title">截图</span><span class="preview_small hidden" title="缩小显示"><span class="glyphicon glyphicon-resize-small" aria-hidden="true"></span></span><span class="preview_full" title="最大化显示"><span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span></span><span class="preview_close" title="关闭图片预览视图"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></span></div><div class="preview_body"><img id="preview_images" src="' + src + '"></div><div class="preview_toolbar"><a href="javascript:;" title="左旋转"><span class="glyphicon glyphicon-repeat reverse-repeat" aria-hidden="true"></span></a><a href="javascript:;" title="右旋转"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span></a><a href="javascript:;" title="放大视图"><span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span></a><a href="javascript:;" title="缩小视图"><span class="glyphicon glyphicon-zoom-out" aria-hidden="true"></span></a><a href="javascript:;" title="重置视图"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></a><a href="javascript:;" title="图片列表"><span class="glyphicon glyphicon-list" aria-hidden="true"></span></a></div></a></div></div>')
+		, area = [window.innerWidth, window.innerHeight]
+		, images_config = {
+		natural_width: 0,
+		natural_height: 0,
+		init_width: 0,
+		init_height: 0,
+		preview_width: 0,
+		preview_height: 0,
+		current_width: 0,
+		current_height: 0,
+		current_left: 0,
+		current_top: 0,
+		rotate: 0,
+		scale: 1,
+		images_mouse: !1
+	};
+	if ($(".preview_images_mask").length > 0)
+		return $("#preview_images").attr("src",src),
+		!1;
+	function auto_images_size(transition) {
+		var rotate = Math.abs(images_config.rotate / 90)
+			, preview_width = rotate % 2 == 0 ? images_config.preview_width : images_config.preview_height
+			, preview_height = rotate % 2 == 0 ? images_config.preview_height : images_config.preview_width
+			, preview_images = $("#preview_images")
+			, css_config = {};
+		images_config.init_width = images_config.natural_width,
+		images_config.init_height = images_config.natural_height,
+		images_config.init_width > preview_width && (images_config.init_width = preview_width,
+		images_config.init_height = parseFloat((preview_width / images_config.natural_width * images_config.init_height).toFixed(2))),
+		images_config.init_height > preview_height && (images_config.init_width = parseFloat((preview_height / images_config.natural_height * images_config.init_width).toFixed(2)),
+		images_config.init_height = preview_height),
+		images_config.current_width = parseFloat(images_config.init_width * images_config.scale),
+		images_config.current_height = parseFloat(images_config.init_height * images_config.scale),
+		images_config.current_left = parseFloat(((images_config.preview_width - images_config.current_width) / 2).toFixed(2)),
+		images_config.current_top = parseFloat(((images_config.preview_height - images_config.current_height) / 2).toFixed(2)),
+		css_config = {
+			width: images_config.current_width,
+			height: images_config.current_height,
+			top: images_config.current_top,
+			left: images_config.current_left,
+			display: "inline",
+			transform: "rotate(" + images_config.rotate + "deg)",
+			opacity: 1,
+			transition: "all 400ms"
+		},
+		!1 === transition && delete css_config.transition,
+		preview_images.css(css_config)
+	}
+	$("body").css("overflow", "hidden").append(mask),
+	images_config.preview_width = mask[0].clientWidth,
+	images_config.preview_height = mask[0].clientHeight,
+	$(".preview_body img").load((function() {
+		var img = $(this)[0];
+		// $(this).attr("data-index") || $(this).attr("data-index", data.images_id),
+		images_config.natural_width = img.naturalWidth,
+		images_config.natural_height = img.naturalHeight,
+		auto_images_size(!1)
+	}
+	)),
+	$(".preview_images_mask .preview_head").on("mousedown", (function(e) {
+		e = e || window.event;
+		var drag = $(this).parent();
+		if ($("body").addClass("select"),
+		$(this).onselectstart = $(this).ondrag = function() {
+			return !1
+		}
+		,
+		!$(e.target).hasClass("preview_close")) {
+			var diffX = e.clientX - drag.offset().left
+				, diffY = e.clientY - drag.offset().top;
+			$(document).on("mousemove", (function(e) {
+				var left = (e = e || window.event).clientX - diffX
+					, top = e.clientY - diffY;
+				left < 0 ? left = 0 : left > window.innerWidth - drag.width() && (left = window.innerWidth - drag.width()),
+				top < 0 ? top = 0 : top > window.innerHeight - drag.height() && (top = window.innerHeight - drag.height()),
+				drag.css({
+					left: left,
+					top: top,
+					margin: 0
+				})
+			}
+			)).on("mouseup", (function() {
+				$(this).unbind("mousemove mouseup")
+			}
+			))
+		}
+	}
+	)),
+	$(".preview_images_mask #preview_images").on("mousedown", (function(e) {
+		e = e || window.event,
+		$(this).onselectstart =$(this).ondrag = function() {
+			return !1
+		}
+		;
+		var images = $(this)
+			, preview = $(".preview_images_mask").offset()
+			, diffX = e.clientX - preview.left
+			, diffY = e.clientY - preview.top;
+		$(".preview_images_mask").on("mousemove", (function(e) {
+			var offsetX = (e = e || window.event).clientX - preview.left - diffX, offsetY = e.clientY - preview.top - diffY, rotate = Math.abs(images_config.rotate / 90), preview_width = rotate % 2 == 0 ? images_config.preview_width : images_config.preview_height, preview_height = rotate % 2 == 0 ? images_config.preview_height : images_config.preview_width, left, top;
+			if (images_config.current_width > preview_width) {
+				var max_left = preview_width - images_config.current_width;
+				(left = images_config.current_left + offsetX) > 0 ? left = 0 : left < max_left && (left = max_left),
+				images_config.current_left = left
+			}
+			if (images_config.current_height > preview_height) {
+				var max_top = preview_height - images_config.current_height;
+				(top = images_config.current_top + offsetY) > 0 ? top = 0 : top < max_top && (top = max_top),
+				images_config.current_top = top
+			}
+			images_config.current_height > preview_height && images_config.current_top <= 0 && images_config.current_height - preview_height <= images_config.current_top && (images_config.current_top -= offsetY),
+			images.css({
+				left: images_config.current_left,
+				top: images_config.current_top
+			})
+		}
+		)).on("mouseup", (function() {
+			$(this).unbind("mousemove mouseup")
+		}
+		)).on("dragstart", (function() {
+			e.preventDefault()
+		}
+		))
+	}
+	)).on("dragstart", (function() {
+		return !1
+	}
+	)),
+	$(".preview_close").click((function(e) {
+		$(".preview_images_mask").remove()
+	}
+	)),
+	$(".preview_toolbar a").click((function() {
+		var index = $(this).index()
+			, images = $("#preview_images");
+		switch (index) {
+		case 0:
+		case 1:
+			images_config.rotate = index ? images_config.rotate + 90 : images_config.rotate - 90,
+			auto_images_size();
+			break;
+		case 2:
+		case 3:
+			if (3 == images_config.scale && 2 == index || .2 == images_config.scale && 3 == index)
+				return layer.msg(images_config.scale >= 1 ? "图像放大，已达到最大尺寸。" : "图像缩小，已达到最小尺寸。"),
+				!1;
+			images_config.scale = (2 == index ? Math.round(10 * (images_config.scale + .4)) : Math.round(10 * (images_config.scale - .4))) / 10,
+			auto_images_size();
+			break;
+		case 4:
+			var scale_offset = images_config.rotate % 360;
+			scale_offset >= 180 ? images_config.rotate += 360 - scale_offset : images_config.rotate -= scale_offset,
+			images_config.scale = 1,
+			auto_images_size()
+		}
+	}
+	)),
+	$(".preview_full,.preview_small").click((function() {
+		$(this).hasClass("preview_full") ? ($(this).addClass("hidden").prev().removeClass("hidden"),
+		images_config.preview_width = area[0],
+		images_config.preview_height = area[1],
+		mask.css({
+			width: area[0],
+			height: area[1],
+			top: 0,
+			left: 0,
+			margin: 0,
+			zIndex:9999999999
+		}).data("type", "full"),
+		auto_images_size()) : ($(this).addClass("hidden").next().removeClass("hidden"),
+		$(".preview_images_mask").removeAttr("style"),
+		images_config.preview_width = 750,
+		images_config.preview_height = 650,
+		auto_images_size())
+	}
+	)),
+	$(".preview_cut_view a").click((function() {
+		var images_src = ""
+			, preview_images = $("#preview_images")
+			, images_id = parseInt(preview_images.attr("data-index"));
+		$(this).index() ? (images_id = images_id == that.file_images_list.length - 1 ? 0 : images_id + 1,
+		images_src = that.file_images_list[images_id]) : (images_id = 0 === images_id ? that.file_images_list.length - 1 : images_id - 1,
+		images_src = that.file_images_list[images_id]),
+		preview_images.attr("data-index", images_id).attr("src", "/download?filename=" + images_src),
+		$(".preview_title").html(that.get_path_filename(images_src))
+	}
+	))
+	},
+	/**
+    * @description 保持socket生命连接
+	* @param {String} workorder 工单编号
+    */
+    keepActive:function(workorder){
+		var _this = this,
+		interval = 15000,i=0;
+		if (_this.bws==null || _this.bws.readyState == 3 || _this.bws.readyState == 2) {
+			console.log("重新连接");
+			_this.connect(workorder);
+			try{
+				_this.send_server(_this,"ping");
+			}catch(err){
+				console.log("ping-error")
+			}
+		}
+        var _ping = setInterval(function(){
+            try{
+				// _this.send_server(_this,JSON.stringify({"id":workorder,"content":"ping","workorder":workorder,"type":5}));
+				_this.send_server(_this,"ping");
+            } catch(err) {
+				console.log("error.");
+            }
+		}, interval);
+		_this.ping = _ping;
+    }
+}
+
+var Snowflake = /** @class */ (function() {
+	function Snowflake(_workerId, _dataCenterId, _sequence) {
+		this.twepoch = Number(1288834974657);
+		// this.twepoch = 0n;
+		this.workerIdBits = Number(5);
+		this.dataCenterIdBits = Number(5);
+		this.maxWrokerId = Number(-1) ^ (Number(-1) << this.workerIdBits); // 值为：31
+		this.maxDataCenterId = Number(-1) ^ (Number(-1) << this.dataCenterIdBits); // 值为：31
+		this.sequenceBits = Number(12);
+		this.workerIdShift = this.sequenceBits; // 值为：12
+		this.dataCenterIdShift = this.sequenceBits + this.workerIdBits; // 值为：17
+		this.timestampLeftShift = this.sequenceBits + this.workerIdBits + this.dataCenterIdBits; // 值为：22
+		this.sequenceMask = Number(-1) ^ (Number(-1) << this.sequenceBits); // 值为：4095
+		this.lastTimestamp = Number(-1);
+		//设置默认值,从环境变量取
+		this.workerId = Number(1);
+		this.dataCenterId = Number(1);
+		this.sequence = Number(0);
+		// if(this.workerId > this.maxWrokerId || this.workerId < 0) {
+		// 	thrownew Error('_workerId must max than 0 and small than maxWrokerId-[' + this.maxWrokerId + ']');
+		// }
+		// if(this.dataCenterId > this.maxDataCenterId || this.dataCenterId < 0) {
+		// 	thrownew Error('_dataCenterId must max than 0 and small than maxDataCenterId-[' + this.maxDataCenterId + ']');
+		// }
+
+		this.workerId = Number(_workerId);
+		this.dataCenterId = Number(_dataCenterId);
+		this.sequence = Number(_sequence);
+	}
+	Snowflake.prototype.tilNextMillis = function(lastTimestamp) {
+		var timestamp = this.timeGen();
+		while(timestamp <= lastTimestamp) {
+			timestamp = this.timeGen();
+		}
+		return Number(timestamp);
+	};
+	Snowflake.prototype.timeGen = function() {
+		return Number(Date.now());
+	};
+	Snowflake.prototype.nextId = function() {
+		var timestamp = this.timeGen();
+		// if(timestamp < this.lastTimestamp) {
+		// 	thrownew Error('Clock moved backwards. Refusing to generate id for ' +
+		// 		(this.lastTimestamp - timestamp));
+		// }
+		if(this.lastTimestamp === timestamp) {
+			this.sequence = (this.sequence + Number(1)) & this.sequenceMask;
+			if(this.sequence === Number(0)) {
+				timestamp = this.tilNextMillis(this.lastTimestamp);
+			}
+		} else {
+			this.sequence =  Number(0);
+		}
+		this.lastTimestamp = timestamp;
+		return((timestamp - this.twepoch) << this.timestampLeftShift) |
+			(this.dataCenterId << this.dataCenterIdShift) |
+			(this.workerId << this.workerIdShift) |
+			this.sequence;
+	};
+	return Snowflake;
+}());
+/** workorder end **/
+
+

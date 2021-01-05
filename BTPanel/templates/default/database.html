@@ -52,18 +52,16 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{{g.cdn_url}}/js/bt_upload.js?version={{g['version']}}"></script>
-<script src="{{g.cdn_url}}/js/database.js?date={{g['version']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/bt_upload.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/database.js?date={{g['version']}}&repair={{data['js_random']}}"></script>
 <script type="text/javascript">
     bt.set_cookie('backup_path', "{{session['config']['backup_path']}}");
-	
 	{% if not data['isSetup'] %}
 		layer.msg('{{data["lan"]["JS1"]}}<a href="/soft#i" style="color:#20a53a;float: right;">{{data["lan"]["JS2"]}}</a>',{icon:7,shade: [0.3, '#000'],time:0});
         $(".layui-layer-shade").css("margin-left", "180px");
     {% else %}
     	database.get_list();
-    {% endif %}		
-	
+    {% endif %}
 </script>
-<script src="{{g.cdn_url}}/js/upload.js?date={{g['version']}}"></script>
+<!-- <script src="{{g.cdn_url}}/js/upload.js?date={{g['version']}}"></script> -->
 {% endblock %}

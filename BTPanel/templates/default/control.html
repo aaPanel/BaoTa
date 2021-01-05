@@ -110,7 +110,26 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="diskview" style="width:100%; height:330px"></div>
+                        <div style="position: relative;">
+                            <div id="diskview" style="width:100%; height:330px"></div>
+                            <div style="position: absolute;top: 15px;left: 6%;">
+                                单位：<div class="bt-crontab-select-button">
+                                    <div class="bt-select-full only-one disk-unit">
+                                        <div class="select-picker-search">
+                                            <span class="picker-text-list">KB/s</span>
+                                            <span class="down-select-full"></span>
+                                        </div>
+                                        <div class="select-list-item">
+                                            <ul style="width:auto;max-height: auto;">
+                                                <li data-attr="KB/s"><span class="select-name-full">KB/s</span></li>
+                                                <li data-attr="MB/s"><span class="select-name-full">MB/s</span></li>
+                                                <li data-attr="GB/s"><span class="select-name-full">GB/s</span></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -131,16 +150,206 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="network" style="width:100%; height:330px"></div>
+                        <div style="position: relative;">
+                            <div id="network" style="width:100%; height:330px"></div>
+                            <div style="position: absolute;top: 15px;left: 6%;">
+                                单位：<div class="bt-crontab-select-button">
+                                    <div class="bt-select-full only-one network-unit">
+                                        <div class="select-picker-search">
+                                            <span class="picker-text-list">KB/s</span>
+                                            <span class="down-select-full"></span>
+                                        </div>
+                                        <div class="select-list-item">
+                                            <ul style="width:auto;max-height: auto;">
+                                                <li data-attr="KB/s"><span class="select-name-full">KB/s</span></li>
+                                                <li data-attr="MB/s"><span class="select-name-full">MB/s</span></li>
+                                                <li data-attr="GB/s"><span class="select-name-full">GB/s</span></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<style>
+    .bt-crontab-select-button {
+        display: inline-block;
+        position: relative;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 12px;
+        vertical-align: middle;
+    }
 
+    .bt-crontab-select-button .select-picker-search:hover {
+        background: #ebf1f5;
+        cursor: pointer;
+    }
+
+    .bt-crontab-select-button .select-picker-search {
+        height: 25px;
+        line-height: 25px;
+        border: none;
+        outline: none;
+    }
+
+    .bt-crontab-select-button .select-picker-search span {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        display: block;
+    }
+
+    .bt-crontab-select-button .picker-text-list {
+        margin-right: 25px;
+        padding-left: 10px;
+    }
+
+    .bt-crontab-select-button input {
+        padding: 5px 10px;
+        height: 35px;
+        line-height: 35px;
+        border: none;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .bt-crontab-select-button input:focus {
+        outline: none;
+    }
+
+    .bt-crontab-select-button .only-one {
+        position: relative;
+    }
+
+    .bt-crontab-select-button .down-select-full {
+        display: inline-block;
+        width: 0;
+        height: 0;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #777 transparent transparent transparent;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+
+    .bt-crontab-select-button .select-list-item {
+        transition: all 500ms;
+        background: #fff;
+        position: absolute;
+        top: 28px;
+        display: none;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, .2);
+        border-radius: 4px;
+    }
+
+    .bt-crontab-select-button .select-list-item.active {
+        display: block;
+        z-index: 2;
+    }
+
+    .bt-crontab-select-button .select-list-item ul {
+        overflow: auto;
+        border-radius: 4px;
+    }
+
+    .bt-crontab-select-button .select-list-item li:hover {
+        background: #20a53a;
+        color: #fff;
+    }
+
+    .bt-crontab-select-button .only-one .select-list-item li.active {
+        background-color: #20a53a;
+        color: #fff;
+    }
+
+    .bt-crontab-select-button .select-list-item li .select-name-full {
+        white-space: nowrap;
+        padding: 0 23px 0 10px;
+        height: 30px;
+        line-height: 30px;
+        cursor: pointer;
+        display: inline-block;
+    }
+
+    .bt-crontab-select-button .select-check-full {
+        display: inline-block;
+        height: 16px;
+        width: 16px;
+        border-radius: 1px;
+        margin-right: 5px;
+        cursor: pointer;
+        border: 1px solid #c2c2c2;
+        position: relative;
+        line-height: 20px;
+        transition: all 200ms;
+        vertical-align: sub;
+    }
+
+    .bt-crontab-select-button .select-list-item li.active .select-check-full {
+        border: none;
+        position: relative;
+        top: 1px;
+        display: inline-block;
+        font-family: 'Glyphicons Halflings';
+        font-style: normal;
+        font-weight: 400;
+        line-height: 1;
+        -webkit-font-smoothing: antialiased;
+        background: #5FB878;
+        color: #fff;
+    }
+
+    .bt-crontab-select-button .select-list-item li.active .select-check-full:after {
+        content: "\e013";
+        font-size: 12px;
+        transform: scale(.85);
+        position: absolute;
+        left: 2px;
+        top: 2px;
+    }
+</style>
 {% endblock %}
 {% block scripts %}
-	<script src="{{g.cdn_url}}/js/echarts.min.js"></script>
-	<script src="{{g.cdn_url}}/js/control.js?date={{g['version']}}"></script>
+	<script type="text/javascript" src="{{g.cdn_url}}/js/echarts.min.js?version={{g['version']}}"></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/js/control.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+    <script type="text/javascript">
+        if(getCookie('network-unitType') == undefined) {
+            setCookie('network-unitType', "KB/s");
+            setCookie('disk-unitType', "KB/s");
+        }else{
+            $(".network-unit .picker-text-list").text(getCookie('network-unitType'));
+            $(".disk-unit .picker-text-list").text(getCookie('disk-unitType'));
+            $(".network-unit .select-list-item li:contains("+getCookie('network-unitType')+")").addClass("active");
+            $(".disk-unit .select-list-item li:contains("+getCookie('disk-unitType')+")").addClass("active");
+        }
+        $(".bt-crontab-select-button").on('click','.select-picker-search',function(){
+            $(this).next().toggle();
+            if ($(this).parent().hasClass('network-unit')) {
+                $(".disk-unit .select-list-item").hide();
+            }else{
+                $(".network-unit .select-list-item").hide();
+            }
+        });
+        $(".bt-crontab-select-button").on('click','.select-list-item li',function(){
+            var _button = $(this).parents('.bt-crontab-select-button');
+            $(this).addClass('active').siblings().removeClass('active');
+            _button.find('.picker-text-list').text($(this).text());
+            _button.find(".select-list-item").toggle();
+            var cookie_type = $(this).parents('.bgw').find('.searcTime .time_range_submit').attr('data-type');
+            setCookie(cookie_type+'-unitType', $(this).attr('data-attr'));
+            $(this).parents('.bgw').find('.searcTime .gt.on').click();
+        });
+        $(document).click(function(event){
+            var _con = $('.bt-crontab-select-button');  // 设置目标区域
+            if(!_con.is(event.target) && _con.has(event.target).length === 0){ // Mark 1
+               $(".select-list-item").hide();     //淡出消失
+            }
+       });
+    </script>
 {% endblock %}

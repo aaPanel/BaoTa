@@ -99,8 +99,8 @@
 {% block scripts %}
 <script type="text/javascript" src="/static/js/jquery.dragsort-0.5.2.min.js"></script>
 <script type="text/javascript" src="/static/js/clipboard.min.js"></script>
-<script type="text/javascript" src="/static/js/xterm.js"></script>
-<script type="text/javascript" src="/static/js/term.js"></script>
+<script type="text/javascript" src="/static/js/xterm.js?version={{g['version']}}"></script>
+<script type="text/javascript" src="/static/js/term.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
 <script type="text/javascript">
     if($("#panel_debug").attr("data") == 'True') {
         layer.msg('当前为开发者模式，不支持宝塔终端，请在【面板设置】页面关闭开发者模式!',{icon:7,shade: [0.3, '#000'],time:0});

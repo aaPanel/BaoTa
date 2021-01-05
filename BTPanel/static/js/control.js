@@ -37,7 +37,6 @@ $('.time_range_submit').click(function(){
 	var e = (new Date($(this).parent().find(".etime").val()).getTime())/1000;
 	b = Math.round(b);
 	e = Math.round(e);
-    console.log(b,e);
 	eval($(this).attr('data-type')+'('+ b +','+ e +')');
 });
 //指定天数
@@ -280,7 +279,6 @@ $.get('/ajax?action=GetCpuIo&start='+b+'&end='+e,function(rdata){
 				type: 'cross'
 			},
 			formatter:function(config){
-			    console.log(config);
 			    return config[0].axisValueLabel +'</br>' + config[0].seriesName+':'+config[0].value.toFixed(2) +'%'
 			}
 		},
@@ -360,11 +358,24 @@ function disk(b, e) {
         var wData = [];
         var xData = [];
         //var yData = [];
-        //var zData = [];
+		//var zData = [];
+		var unit_size = 1;
+		var _unit = getCookie('disk-unitType');
+		switch (_unit) {
+			case 'MB/s':
+				unit_size = 1024;
+				break;
+			case 'GB/s':
+				unit_size = 1024*1024;
+				break;
+			default:
+				unit_size = 1;
+				break;
+		}
 
         for (var i = 0; i < rdata.length; i++) {
-            rData.push((rdata[i].read_bytes / 1024 / 60).toFixed(3));
-            wData.push((rdata[i].write_bytes / 1024 / 60).toFixed(3));
+            rData.push((rdata[i].read_bytes / 1024 / 60).toFixed(3)/unit_size);
+            wData.push((rdata[i].write_bytes / 1024 / 60).toFixed(3)/unit_size);
             xData.push(rdata[i].addtime);
             //yData.push(rdata[i].read_count);
             //zData.push(rdata[i].write_count);
@@ -378,9 +389,8 @@ function disk(b, e) {
                 formatter:function(config){
                 	var _config = config,_tips = '';
                 	for(var i=0;i<config.length;i++){
-                		_tips +=  '<span style="display: inline-block;width: 10px;height: 10px;margin-rigth:10px;border-radius: 50%;background: '+ config[i].color +';"></span>  '+ config[i].seriesName +'：'+ parseInt(config[i].data).toFixed(2) + 'KB/s' + ( config.length-1 !== i?'<br />':'')
+                		_tips +=  '<span style="display: inline-block;width: 10px;height: 10px;margin-rigth:10px;border-radius: 50%;background: '+ config[i].color +';"></span>  '+ config[i].seriesName +'：'+ config[i].data.toFixed(2) + _unit + ( config.length-1 !== i?'<br />':'')
                 	}
-                	console.log(config);
                 	return "时间："+ _config[0].axisValue +"<br />" + _tips;
                 },
             },
@@ -399,7 +409,7 @@ function disk(b, e) {
             },
             yAxis: {
                 type: 'value',
-                name: lan.index.unit + ':KB/s',
+                //name: lan.index.unit + ':KB/s',
                 boundaryGap: [0, '100%'],
                 splitLine: {
                     lineStyle: {
@@ -477,15 +487,27 @@ $.get('/ajax?action=GetNetWorkIo&start='+b+'&end='+e,function(rdata){
 	var xData = [];
 	var yData = [];
 	var zData = [];
-	
+	var unit_size = 1;
+	var _unit = getCookie('network-unitType');
+	switch (_unit) {
+		case 'MB/s':
+			unit_size = 1024;
+			break;
+		case 'GB/s':
+			unit_size = 1024*1024;
+			break;
+		default:
+			unit_size = 1;
+			break;
+	}
 	for(var i = 0; i < rdata.length; i++){
 		aData.push(rdata[i].total_up);
 		bData.push(rdata[i].total_down);
 		cData.push(rdata[i].down_packets);
 		dData.push(rdata[i].up_packets);
 		xData.push(rdata[i].addtime);
-		yData.push(rdata[i].up);
-		zData.push(rdata[i].down);
+		yData.push(rdata[i].up/unit_size);
+		zData.push(rdata[i].down/unit_size);
 	}
 	option = {
 		tooltip: {
@@ -496,9 +518,8 @@ $.get('/ajax?action=GetNetWorkIo&start='+b+'&end='+e,function(rdata){
 			formatter:function(config){
             	var _config = config,_tips = '';
             	for(var i=0;i<config.length;i++){
-            		_tips +=  '<span style="display: inline-block;width: 10px;height: 10px;margin-rigth:10px;border-radius: 50%;background: '+ config[i].color +';"></span>  '+ config[i].seriesName +'：'+ parseInt(config[i].data).toFixed(2) + 'KB/s' + ( config.length-1 !== i?'<br />':'')
+            		_tips +=  '<span style="display: inline-block;width: 10px;height: 10px;margin-rigth:10px;border-radius: 50%;background: '+ config[i].color +';"></span>  '+ config[i].seriesName +'：'+ config[i].data.toFixed(2) + _unit + ( config.length-1 !== i?'<br />':'')
             	}
-            	console.log(config);
             	return "时间："+ _config[0].axisValue +"<br />" + _tips;
             }
 		},
@@ -517,7 +538,7 @@ $.get('/ajax?action=GetNetWorkIo&start='+b+'&end='+e,function(rdata){
 		},
 		yAxis: {
 			type: 'value',
-			name: lan.index.unit+':KB/s',
+			//name: lan.index.unit+':KB/s',
 			boundaryGap: [0, '100%'],
 			splitLine:{
 				lineStyle:{
@@ -736,7 +757,39 @@ function getload(b,e){
 			trigger: 'axis',
 			axisPointer: {
                 type: 'cross'
-            }
+			},
+			formatter:function(config){
+				var _line = config[0].axisValueLabel,
+				line_color = '';
+				for (var i = 0; i < config.length; i++) {
+					switch (config[i].seriesName) {
+						case '1分钟':
+							line_color = 'rgb(30, 144, 255)';
+							break;
+						case '5分钟':
+							line_color = 'rgb(0, 178, 45)';
+							break;
+						case '15分钟':
+							line_color = 'rgb(147, 38, 255)';
+							break;
+						default:
+							line_color = 'rgb(255, 140, 0)';
+							break;
+					}
+					var color_line = '</br><span style="width: 8px;display: inline-block;height: 8px;background: '+line_color+';border-radius: 100px;margin-right: 7px;"></span>',
+					text_line = config[i].seriesName+': '+config[i].value.toFixed(2) +'%';
+					if (config[i].seriesName == '资源使用率') {
+						if (i == 0) {
+							_line += color_line+text_line+'</br></br>'+config[0].axisValueLabel;
+						} else {
+							_line += '</br></br>'+config[0].axisValueLabel+color_line+text_line+'</br>';
+						}
+					} else {
+						_line += color_line+text_line;
+					}
+				}
+			    return _line;
+			}
 		},
 		legend: {
 			data:['1分钟','5分钟','15分钟'],
@@ -788,7 +841,8 @@ function getload(b,e){
 		],
 		yAxis: [{
 				scale: true,
-				name: '资源使用率%',
+				name: '资源使用率',
+				boundaryGap: [0, '100%'],
 				splitLine: { // y轴网格显示
 					show: true,
 					lineStyle:{
@@ -853,7 +907,7 @@ function getload(b,e){
 		}],
 		series: [
 			{
-				name: '资源使用率%',
+				name: '资源使用率',
 				type: 'line',
 				lineStyle: {
 					normal: {

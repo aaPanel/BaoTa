@@ -884,7 +884,7 @@ class config:
         ols_php_path = '/usr/local/lsws/lsphp{}/etc/php/{}.{}/litespeed/php.ini'.format(get.version, get.version[0],get.version[1])
         if os.path.exists('/etc/redhat-release'):
             ols_php_path = '/usr/local/lsws/lsphp' + get.version + '/etc/php.ini'
-        reload_ols_str = '/usr/local/lsws/bin/lswsctrl reload'
+        reload_ols_str = '/usr/local/lsws/bin/lswsctrl restart'
         for p in [filename,ols_php_path]:
             if not p:
                 continue
@@ -973,6 +973,8 @@ class config:
             if os.path.exists("/etc/redhat-release"):
                 ols_php_os_path = '/usr/local/lsws/lsphp{}/lib64/php/modules/'.format(get.version)
             ols_so_list = os.listdir(ols_php_os_path)
+        else:
+            ols_so_list = []
         for f in [filename,filename_ols]:
             if not f:
                 continue
@@ -1353,8 +1355,9 @@ class config:
         import panelSite
         site_info = public.M('sites').where('id=?', (get.id,)).field('name,path').find()
         session_path = "/www/php_session/{}".format(site_info["name"])
-        if os.path.exists(session_path):
+        if not os.path.exists(session_path):
             os.makedirs(session_path)
+            public.ExecShell('chown www.www {}'.format(session_path))
         run_path = panelSite.panelSite().GetSiteRunPath(get)["runPath"]
         user_ini_file = "{site_path}{run_path}/.user.ini".format(site_path=site_info["path"], run_path=run_path)
         conf = "session.save_path={}/\nsession.save_handler = files".format(session_path)
@@ -1466,6 +1469,14 @@ class config:
             public.writeFile(pfile,'True')
         return public.returnMsg(True,'设置成功!')
 
+    # 是否显示工单
+    def show_workorder(self,get):
+        pfile = 'data/not_workorder.pl'
+        if os.path.exists(pfile):
+            os.remove(pfile)
+        else:
+            public.writeFile(pfile,'True')
+        return public.returnMsg(True,'设置成功!')
 
     # 获取菜单列表
     def get_menu_list(self,get):
@@ -1632,12 +1643,17 @@ class config:
         data = public.M('logs').where('uid=?',(id,)).order('id desc').select()
         return data
 
+    def get_file_deny(self,args):
+        import file_execute_deny
+        p = file_execute_deny.FileExecuteDeny()
+        return p.get_file_deny(args)
 
+    def set_file_deny(self,args):
+        import file_execute_deny
+        p = file_execute_deny.FileExecuteDeny()
+        return p.set_file_deny(args)
 
-
-
-
-
-
-    
-
+    def del_file_deny(self,args):
+        import file_execute_deny
+        p = file_execute_deny.FileExecuteDeny()
+        return p.del_file_deny(args)

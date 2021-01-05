@@ -208,7 +208,7 @@ class panelPlugin:
             if get.version == '1.8': return public.returnMsg(False,'Nginx 1.8.1版本过旧,不再提供支持，请选择其它版本!')
         if get.sName.find('php-') != -1: get.sName = get.sName.split('-')[0]
         ols_execstr = ""
-        if "php" == get.sName and os.path.exists('/usr/local/lsws'):
+        if "php" == get.sName and os.path.exists('/usr/local/lsws/bin/lswsctrl'):
             ols_sName = 'php-ols'
             ols_version = get.version.replace('.','')
             ols_execstr = " &> /tmp/panelExec.log && /bin/bash install_soft.sh {} {} " + ols_sName + " " + ols_version

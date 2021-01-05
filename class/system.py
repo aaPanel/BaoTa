@@ -168,7 +168,7 @@ class system:
         data['pure-ftpd'] = tmp
         data['panel'] = self.GetPanelInfo()
         data['systemdate'] = public.ExecShell('date +"%Y-%m-%d %H:%M:%S %Z %z"')[0].strip();
-        
+        data['show_workorder'] = not os.path.exists('data/not_workorder.pl')
         return data
     
     def GetPanelInfo(self,get=None):
@@ -867,6 +867,7 @@ class system:
     
     #修复面板
     def RepPanel(self,get):
+        public.writeFile('data/js_random.pl','1')
         public.ExecShell("wget -O update.sh " + public.get_url() + "/install/update6.sh && bash update.sh")
         self.ReWeb(None)
         return True

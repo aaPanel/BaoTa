@@ -482,10 +482,9 @@ var soft = {
             }
             var btn_config = {title:null,href:'javascript:;',btn:null,'class':'btn btn-success btn-xs va0 ml15','style':"margin-left:10px;",click:null};
             var set_btn_style = function(res){
-                if(!res.status){
+                if(!res.status || !res){
                     $.extend(btn_config,{title:'立即登录',btn:'立即登录',click:function(){
                         bt.pub.bind_btname(function(){
-                            bt.set_cookie('bt_user_info');
                             window.location.reload();
                         });
                     }});
@@ -519,15 +518,19 @@ var soft = {
                 }
                 $(el).append(tips_info.addClass(_ltd == 1?'alert-ltd-success':'alert-success'));
             }
-            if(!bt.get_cookie('bt_user_info')){
+            var bt_user_info = bt.get_cookie('bt_user_info');
+            if(!bt_user_info){
                 bt.pub.get_user_info(function(res){
-                    bt.set_cookie('bt_user_info',JSON.stringify(res),5*60*1000);
+                    if(!res.status){
+                         set_btn_style(false);
+                        return false;
+                    }
+                    bt.set_cookie('bt_user_info',JSON.stringify(res),300000);
                     set_btn_style(res);
                 });
             }else{
                 set_btn_style(JSON.parse(bt.get_cookie('bt_user_info')));
             }
-            
         }
     },
     render_tips_btn:function(node,arry){
@@ -857,7 +860,7 @@ var soft = {
             if (name == 'mysql') name = 'mysqld';
             var menuing = bt.open({
                 type: 1,
-                area: "640px",
+                area: "650px",
                 title: name + lan.soft.admin,
                 closeBtn: 2,
                 shift: 0,
@@ -884,14 +887,14 @@ var soft = {
                         { type: 'get_phpinfo', val: ver, title: 'phpinfo' }
                     ]
 
-                    var phpSort = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+                    var phpSort = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,12],
                     webcache = bt.get_cookie('serverType') == 'openlitespeed' ? true : false;
                     for (var i = 0; i < phpSort.length; i++) {
                         var item = opt_list[i];
                         if (item) {
                             if (item.os == undefined || item['os'] == bt.os) {
                                 if (name.indexOf("5.2") >= 0 && item.php53) continue;
-                                if (webcache && (item.type=='set_fpm_config' || item.type=='get_php_status')) continue;
+                                if (webcache && (item.type == 'set_fpm_config' || item.type == 'fpm_config' || item.type=='get_php_status')) continue;
                                 var apache24 = item.apache24 ? 'class="apache24"' : '';
                                 menu.append($('<p data-id="' + i + '" ' + apache24 + ' onclick="soft.get_tab_contents(\'' + item.type + '\',this)" >' + item.title + '</p>').data('item', item))
                             }
@@ -973,11 +976,12 @@ var soft = {
 				tabCon.append(bt.render_help(_arry))
 				$('.return_php_info').click(function(){
 					$('.bt-soft-menu p:eq(12)').click();
-				});
-                var fileName = bt.soft.get_config_path(version);
-                var loadT = bt.load(lan.soft.get);
+                });
+                var fileName = bt.soft.get_config_path(version),
+                loadT = bt.load(lan.soft.get);
+                if (data.php_ini) fileName = data.php_ini;
                 var config = bt.aceEditor({el:'textBody',path:fileName});
-                $("#OnlineEditFileBtn").click(function () {
+                $("#OnlineEditFileBtn").click(function(){
                     bt.saveEditor(config);
                 });
                 break;

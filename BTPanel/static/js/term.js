@@ -679,7 +679,7 @@ var host_trem = {
                             break;
                         }
                     });
-                    if(!obj.form.host){
+                    if(!obj.form.sort){
                         delete form.sort;
                         that.create_host(form,function(res){
                             if(res.status){

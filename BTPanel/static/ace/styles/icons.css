@@ -28,6 +28,13 @@
   font-weight: normal;
   font-style: normal;
 }
+@font-face {
+  font-family: iconfont;
+  src: url("../icons/iconfont.woff");
+  font-weight: normal;
+  font-style: normal;
+}
+
 .binary-icon:before {
   font-family: "Octicons Regular";
   font-size: 16px;
@@ -4940,3 +4947,120 @@
   font-family: octicons;
   content: "\f0c9";
 }
+
+
+
+
+/* 文件目录图标 */
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-houtui:before {
+  content: "\e60f";
+}
+
+.icon-search1:before {
+  content: "\e60e";
+}
+
+.icon-lishi:before {
+  content: "\e652";
+}
+
+.icon-shoucang:before {
+  content: "\e648";
+}
+
+.icon-wenjian:before {
+  content: "\e6ab";
+}
+
+.icon-vscode:before {
+  content: "\e609";
+}
+
+.icon-fenxiang:before {
+  content: "\e62a";
+}
+
+.icon-tishi:before {
+  content: "\e63f";
+}
+
+.icon-guanbi:before {
+  content: "\e60c";
+}
+
+.icon-favorites:before {
+  content: "\e66c";
+}
+
+.icon-share1:before {
+  content: "\e607";
+}
+
+.icon-authority:before {
+  content: "\e606";
+}
+
+.icon-dir_kill:before {
+  content: "\e643";
+}
+
+.icon-zhixiang-zuo:before {
+  content: "\e6fd";
+}
+
+.icon-next:before {
+  content: "\e772";
+}
+
+.icon-prev:before {
+  content: "\e7b4";
+}
+
+.icon-lajitong-copy:before {
+  content: "\e605";
+}
+
+.icon-xingxing:before {
+  content: "\e602";
+}
+
+.icon-triangle-right:before {
+  content: "\e601";
+}
+
+.icon-search:before {
+  content: "\e60d";
+}
+
+.icon-arrow-down:before {
+  content: "\e7b2";
+}
+
+.icon-arrow-right:before {
+  content: "\e743";
+}
+
+.icon-arrow-lift:before {
+  content: "\e744";
+}
+
+.icon-terminal:before {
+  content: "\e600";
+}
+
+.icon-iconfont53:before {
+  content: "\e75e";
+}
+
+.icon-xiala:before {
+  content: "\e62e";
+}
+

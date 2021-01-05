@@ -17,7 +17,7 @@ class Page():
     __START         =   '首页'
     __END           =   '尾页'
     __COUNT_START   =   '共'
-    __COUNT_END     =   '条数据'
+    __COUNT_END     =   '条'
     __FO            =   '从'
     __LINE          =   '条'
     __LIST_NUM      =  4

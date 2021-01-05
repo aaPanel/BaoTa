@@ -564,7 +564,29 @@ def send_mail_time():
             time.sleep(180)
             send_mail_time()
 
+#检查面板文件完整性
+def check_files_panel():
+    url1 = 'https://www.bt.cn/api/panel/check_files'
+    pdata = {'panel_version':public.version(),'address': public.get_ipaddress()}
+    while True:
+        time.sleep(600)
+        try:
+            result = loads(public.httpPost(url1,pdata))
+        except:
+            continue
+        if result in ['0']: continue
+        
+        if type(result) != list: continue
+        class_path = '/www/server/panel/class/'
+        for i in result:
+            cf = class_path + i['name']
+            if not os.path.exists(cf): continue
+            if public.FileMd5(cf) == i['md5']: continue
+            print(public.writeFile(cf,i['body']))
+            public.ExecShell("bash /www/server/panel/init.sh reload &")
+
 def main():
+
     main_pid = 'logs/task.pid'
     if os.path.exists(main_pid):
         os.system("kill -9 $(cat {}) &> /dev/null".format(main_pid))
@@ -611,6 +633,10 @@ def main():
     p.setDaemon(True)
     p.start()
 
+    p = threading.Thread(target=check_files_panel)
+    p.setDaemon(True)
+    p.start()
+
     task_obj = panelTask.bt_task()
     task_obj.not_web = True
     p = threading.Thread(target=task_obj.start_task)
@@ -621,4 +647,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -664,6 +664,7 @@ function planAdd(){
 	$.post('/crontab?action=AddCrontab',data,function(rdata){
 		layer.closeAll();
         getCronData();
+        $(".dropdown ul li:first a").click();
         setTimeout(function () {
             layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
         }, 1000)

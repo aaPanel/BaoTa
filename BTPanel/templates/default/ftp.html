@@ -7,166 +7,199 @@
             <div class="position f14 c9 pull-left">
                 <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
             </div>
-            <div class="search pull-right">
-                <form target="hid" onsubmit='ftp.get_list(1,$("#SearchValue").prop("value"))'>
-                    <input type="text" id="SearchValue" class="ser-text pull-left" placeholder="{{data['lan']['SEARCH']}}" />
-                    <button type="button" class="ser-sub pull-left" onclick='ftp.get_list(1,$("#SearchValue").prop("value"))'></button>
-                </form>
-                <iframe name='hid' id="hid" style="display:none"></iframe>
-            </div>
         </div>
         <div class="safe bgw mtb15 pd15">
             <div class="info-title-tips">
-                <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span>{{data['lan']['PS']}} ftp://{{session['address']}}:{{session['port']}}</p>
+                <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span>{{data['lan']['PS']}} <a target="_blank" class="btlink" href=" ftp://{{session['address']}}:{{session['port']}}"> ftp://{{session['address']}}:{{session['port']}}</a></p>
             </div>
-            <button onclick="ftp.add_user()" class="btn btn-success btn-sm" type="button">{{data['lan']['BTN1']}}</button>
-            <button onclick="ftp.set_port()" class="btn btn-default btn-sm" type="button" style="margin-left:5px">{{data['lan']['BTN2']}}</button>
-            <span style="float:right">     
-                <button batch="true" style="float: right;display: none;margin-left:10px;" onclick="ftp.batch_ftp('del');" class="btn btn-default btn-sm">{{data['lan']['BTN3']}}</button>                
-            </span>
-            <div class="divtable mtb10">
-                <div class="tablescroll">
-                    <table id="ftpData" class="table table-hover" style="min-width: 900px;border: 0 none;">                 
-                    </table>
-                </div>
-                <div class="dataTables_paginate paging_bootstrap page">
-                </div>
-            </div>
+			<div id="bt_ftp_table"></div>
         </div>
     </div>
 </div>
 {% endblock %}
 {% block scripts %}
 <script type="text/javascript">
-	var ftp = {
-		get_list:function(page,search){
-            if (page == undefined) page = 1;			
-            if (!search) search = $("#SearchValue").val();
-			bt.ftp.get_list(page,search,function(rdata){
-				$('.dataTables_paginate').html(rdata.page);
-				var _tab =  bt.render({
-					table:'#ftpData',
-					columns:[
-						{ field:'id',type:'checkbox',width:30},
-						{ field: 'name', title: '用户名',width:'20%'},
-						{ field: 'password',width:'15%', title: '密码',templet : function(item){
-							var _html = '<span class="password" data-pw="'+item.password+'">**********</span>';
-							_html += '<span onclick="bt.pub.show_hide_pass(this)" class="glyphicon glyphicon-eye-open cursor pw-ico" style="margin-left:10px"></span>';
-							_html += '<span class="ico-copy cursor btcopy" style="margin-left:10px" title="复制密码" data-pw="'+item.password+'" onclick="bt.pub.copy_pass(\''+item.password+'\')"></span>';
-							return _html;
-						}},
-						{ field: 'status', title: '状态',templet:function(item){
-							var _status = '<a href="javascript:;" title="FTP帐户" ';
-							if(item.status=='1'){
-								_status+=' onclick="ftp.stop_user('+item.id+',\''+item.name+'\') " >';
-								_status+='<span style="color:#5CB85C">已启用 </span><span style="color:#5CB85C" class="glyphicon glyphicon-play"></span>';
-							}
-							else{
-								_status+=' onclick="ftp.start_user('+item.id+',\''+item.name+'\')"';
-									_status+='<span style="color:red">已停用  </span><span style="color:red" class="glyphicon glyphicon-pause"></span>';
-							}
-							return _status;
-						},sort:function(){
-							ftp.get_list();
-						}},
-						{ field: 'path', title: '根目录',templet:function(item){
-							var _path = bt.format_path(item.path);							
-							return '<a class="btlink" title="打开目录" href="javascript:openPath(\''+_path+'\');">'+_path+'</a>';
-						}},
-						{ field: 'ps', title: '备注',templet : function(item){							
-							return "<span class='c9 input-edit' onclick=\"bt.pub.set_data_by_key('ftps','ps',this)\">"+item.ps+ "</span>";
-						}},
-						{ field: 'opt',width:130, title: '操作',align:'right',templet:function(item){
-							var option = "<a href=\"javascript:;\" class=\"btlink\" onclick=\"ftp.set_password("+item.id+",'"+item.name+"','"+item.password+"')\" title=\"修改FTP密码\">改密</a> | ";
-							option += "<a href=\"javascript:;\" class=\"btlink\" onclick=\"ftp.del("+item.id+",'"+item.name+"')\" title=\"删除FTP\">删除</a>";						
-							return option;
-						}},
-					],
-					data:rdata.data
-				})		
-			})			
-		},
-		batch_ftp:function(type,arr,result){
-			if(arr == undefined){
-				arr = [];
-				result = {count:0,error_list:[]};
-				$('input[type="checkbox"].check:checked').each(function(){
-					var _val = $(this).val();						
-					if(!isNaN(_val)) arr.push($(this).parents('tr').data('item'));
-				})	
-				bt.show_confirm(lan.ftp.del_all,"<a style='color:red;'>"+lan.get('del_all_ftp',[arr.length])+"</a>",function(){							
-					bt.closeAll();			
-					ftp.batch_ftp(type,arr,result);
-				});
-				return;
-			}
-			var item = arr[0];
-			switch(type){
-				case 'del':					
-					if(arr.length<1){
-						ftp.get_list();
-						bt.msg({msg:lan.get('del_all_ftp_ok',[result.count]),icon:1,time:5000});						
-						return;
-					}					
-					bt.ftp.del(item.id,item.name,function(rdata){
-						if(rdata.status){
-							result.count+=1;
-						}else{
-							result.error_list.push({name:item.item,err_msg:rdata.msg});
-						}
-						arr.splice(0,1)
-						ftp.batch_ftp(type,arr,result);
-					})
-					break;
-			}
-		},
-		del:function(id,ftp_username){
-			bt.show_confirm(lan.public.del+"["+ftp_username+"]",lan.get('confirm_del',[ftp_username]),function(){
-				bt.ftp.del(id,ftp_username,function(rdata){
-					if(rdata.status) ftp.get_list();
-					bt.msg(rdata);
-				})
-			})
-		},
-		add_user:function(){
-			bt.ftp.add(function(rdata){
-				if(rdata.status) ftp.get_list();	
-			})
-		},
-		set_password:function(id,name,password){
-			var bs = bt.ftp.set_password(function(rdata){
-				if(rdata.status) ftp.get_list();	
-			})
-			$('.id'+bs).val(id);
-			$('.ftp_username'+bs).val(name);
-			$('.new_password'+bs).val(password);
-		},
-		set_port:function(){
-			var bs = bt.ftp.set_port(function(rdata){
-				if(rdata.status) ftp.get_list();	
-			})
-			$('.port'+bs).val('{{session["port"]}}');
-		},
-		stop_user:function(id,username){
-			bt.confirm({msg:lan.ftp.stop_confirm.replace('{1}',username),title:lan.ftp.stop_title},function(index){			
-				bt.ftp.set_status(id,username,0,function(rdata){
-					if(rdata.status) ftp.get_list();
-				})
-			})
-		},
-		start_user:function(id,username){
-			bt.ftp.set_status(id,username,1,function(rdata){
-				if(rdata.status) ftp.get_list();
-			})
-		}
-
-	}
 	bt.set_cookie('sites_path',"{{session['config']['sites_path']}}");
     {% if not data['isSetup'] %}
 		layer.msg('{{data["lan"]["JS1"]}}<a href="/soft" style="color:#20a53a; float: right;">{{data["lan"]["JS2"]}}</a>',{icon:7,time:0,shade: [0.3, '#000']});
         $(".layui-layer-shade").css("margin-left", "180px");
     {% else %}
-    	ftp.get_list();
+		var ftp_table = bt_tools.table({
+			el:'#bt_ftp_table',
+			url:'/data?action=getData',
+			param:{table:'ftps'},
+			minWidth:'1000px',
+			autoHeight:true,
+			default:"FTP列表为空",
+			methods:{
+				/**
+					* @description 设置FTP端口
+					* @param {function} callback 回调函数
+					* @return void
+				*/
+				add_ftp_user:function(callback){
+					var that = this;
+					bt.ftp.add(function(rdata){
+						if(callback) callback(rdata);
+						if(rdata.status) that.$refresh_table_list(true);
+					})
+				},
+				/**
+				 * @description 设置FTP端口
+				 * @param {object} obj 配置对象包含port
+				 * @param {function} callback 回调函数
+				 * @return void
+				*/
+				del_ftp_user:function(obj,callback){
+					var that = this;
+					bt.show_confirm(lan.public.del+"["+ obj.name +"]",lan.get('confirm_del',[obj.name]),function(){
+						bt.ftp.del(obj.id,obj.name,function(rdata){
+							if(callback) callback(rdata);
+							bt.msg(rdata);
+						});
+					});
+				},
+				/**
+				 * @description 设置FTP密码
+				 * @param {object} obj 配置对象包含id、name、password
+				 * @param {function} callback 回调函数
+				 * @return void
+				*/
+				set_ftp_password:function(obj,callback){
+					var that = this,bs = bt.ftp.set_password(function(rdata){
+						if(callback) callback(rdata);
+					});
+					$('.id'+bs).val(obj.id);
+					$('.ftp_username'+bs).val(obj.name);
+					$('.new_password'+bs).val(obj.password);
+				},
+				/**
+				 * @description 设置FTP端口
+				 * @param {object} obj 配置对象包含port
+				 * @param {function} callback 回调函数
+				 * @return void
+				*/
+				set_ftp_port:function(callback){
+					var bs = bt.ftp.set_port(function(rdata){
+						if(callback) callback(rdata);
+						if (rdata.status) {
+							setTimeout(function () {
+								window.location.reload()
+							}, 1000)
+						}	
+					})
+					$('.port'+bs).val('{{session["port"]}}');
+				},
+				/**
+				 * @description 设置ftp状态
+				 * @param {object} obj 配置对象包含id、username、status
+				 * @param {function} callback 回调函数
+				 * @return void
+				*/
+				set_ftp_status:function(obj,callback){
+					if(!parseInt(obj.status)){
+						bt.ftp.set_status(obj.id,obj.name,"1",function(rdata){
+							if(callback) callback(rdata);
+						});
+					}else{
+						bt.confirm({msg:lan.ftp.stop_confirm.replace('{1}',obj.name),title:lan.ftp.stop_title},function(index){			
+							bt.ftp.set_status(obj.id,obj.name,"0",function(rdata){
+								if(callback) callback(rdata);
+							});
+						});
+					}
+				}
+			},
+			column:[
+				{type:'checkbox',width:20},
+				{fid:'name',title:'用户名',type:'text'},
+				{fid:'password',title:'密码',type:'password',copy:true,eye_open:true},
+				{fid:'status',title:'状态',sort:true,width:100,config:{
+					icon:true,list:[['1','已启用','bt_success','glyphicon-play'],['0','已停用','bt_danger','glyphicon-pause']]},type:'status',event:function(row,index,ev,key,that){
+					that.set_ftp_status({id:row.id,status:row.status,name:row.name},function(res){
+						if(res.status) that.$modify_row_data({status:parseInt(row.status)?'0':'1'});
+					});
+				}},
+				{fid:'path',title:'根目录',type:'link',event:function(row,index,ev){
+					openPath(row.path);
+				}},
+				{fid:'ps',title:'备注',type:'input',blur:function(row,index,ev){
+					bt.pub.set_data_ps({id:row.id,table:'ftps',ps:ev.target.value},function(res){
+						bt_tools.msg(res);
+					});
+				},keyup:function(row,index,ev){
+					if(ev.keyCode === 13){
+						$(this).blur();
+					}
+				}},
+				{title:'操作',type:'group',width:170,align:'right',group:[{
+					title:'改密',event:function(row,index,ev,key,that){
+						that.set_ftp_password({id:row.id,name:row.name,password:row.password},function(){
+							if(rdata.status) that.$refresh_table_list(true);
+						});
+					}
+				},{
+					title:'删除',event:function(row,index,ev,key,that){
+						that.del_ftp_user({id:row.id,name:row.name},function(res){
+							if(res.status) that.$refresh_table_list(true);
+						});
+					}
+				}]}
+			],
+			tootls:[{
+				type:'group',
+				positon:['left','top'],
+				list:[
+					{title:'添加FTP',active:true,event:function(ev,that){
+						that.add_ftp_user();
+					}},
+					{title:'修改FTP端口',event:function(ev,that){
+						that.set_ftp_port();
+					}}
+				]
+			},{ // 批量操作
+				type:'batch',
+				positon:['left','bottom'],
+				config:{
+					title:"删除",
+					url:'/ftp?action=DeleteUser',
+					load:true,
+					param:function(row){
+						return {id:row.id,username:row.name};
+					},
+					callback:function(that){
+						bt.confirm({title:'批量删除FTP',msg:'是否批量删除选中的FTP用户，是否继续？',icon:0},function(index){
+							layer.close(index);
+							that.start_batch({},function(list){
+								var html = '';
+								for(var i=0;i<list.length;i++){
+									var item = list[i];
+									html += '<tr><td>'+ item.name +'</td><td><div style="float:right;"><span style="color:'+ (item.request.status?'#20a53a':'red') +'">'+ item.request.msg +'</span></div></td></tr>';
+								}
+								ftp_table.$batch_success_table({title:'批量删除FTP',th:'FTP用户名',html:html});
+								ftp_table.$refresh_table_list(true);
+							});
+						});
+					}
+				}
+			},{
+				type:'search',
+				positon:['right','top'],
+				placeholder:'请输入FTP用户名',
+				searchParam:'search', //搜索请求字段，默认为 search
+				value:'',// 当前内容,默认为空
+			},{ //分页显示
+				type:'page',
+				positon:['right','bottom'], // 默认在右下角
+				pageParam:'p', //分页请求字段,默认为 : p
+				page:1, //当前分页 默认：1
+				numberParam:'limit',　//分页数量请求字段默认为 : limit
+				number:20,　//分页数量默认 : 20条
+				numberList:[10,20,50,100,200], // 分页显示数量列表
+				numberStatus:true, //　是否支持分页数量选择,默认禁用
+				jump:true, //是否支持跳转分页,默认禁用
+			}]
+		});
     {% endif %}	
 </script>
 {% endblock %}

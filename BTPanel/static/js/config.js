@@ -102,8 +102,22 @@ $('#show_recommend').click(function(){
 	},function(){
 		that.prop("checked",status);
 	});
-	
-})
+});
+
+$('#show_workorder').click(function(){
+	var status = !$(this).prop("checked"),that = $(this);
+	layer.confirm(status?'关闭BUG反馈，将无法实时向宝塔技术人员反馈问题？':'开启BUG反馈，实时向宝塔技术人员反馈问题？',{title:status?'关闭活动推荐':'开启活动推荐',closeBtn:2,icon:13,cancel:function(){
+		that.prop("checked",status);
+	}}, function() {
+		$.post('/config?action=show_workorder',function(rdata){
+			layer.msg(rdata.msg,{icon:rdata.status?1:2});
+			window.location.reload();
+		});
+	},function(){
+		that.prop("checked",status);
+	});
+});
+
 $('#panel_verification').click(function(){
 	var _checked = $(this).prop('checked');
 	if(_checked){
@@ -346,7 +360,6 @@ function set_auth_path() {
 
 
 function syncDate() {
-
 	var loadT = layer.msg(lan.config.config_sync,{icon:16,time:0,shade: [0.3, '#000']});
 	$.post('/config?action=syncDate','',function(rdata){
 		layer.close(loadT);
@@ -363,7 +376,7 @@ function Set502(){
 	$.post('/config?action=Set502','',function(rdata){
 		layer.close(loadT);
 		layer.msg(rdata.msg,{icon:rdata.status?1:2});
-	});	
+	});
 }
 
 //绑定修改宝塔账号
@@ -407,6 +420,7 @@ function UnboundBt(){
 		$.get("/ssl?action=DelToken",function(b){
 			layer.msg(b.msg,{icon:b.status? 1:2})
 			$("input[name='btusername']").val('');
+            bt.clear_cookie('bt_user_info');
 		})
 	})
 }

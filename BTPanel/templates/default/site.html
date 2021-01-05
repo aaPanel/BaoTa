@@ -1,74 +1,39 @@
 {% extends "layout.html" %}
 
 {% block content %}
+<link rel="stylesheet" type="text/css" href="https://at.alicdn.com/t/font_1508259_3g6fa6pdt7k.css" />
 <div class="main-content pb55">
     <div class="container-fluid">
         <div class="pos-box bgw mtb15">
             <div class="position f14 c9 pull-left">
                 <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
             </div>
-            <div class="search pull-right">
-                <form target="hid" onsubmit='site.get_list(1,$("#SearchValue").val())'>
-                    <input type="text" id="SearchValue" class="ser-text pull-left" placeholder="{{data['lan']['SEARCH']}}" />
-                    <button type="button" class="ser-sub pull-left" onclick='site.get_list(1,$("#SearchValue").val())'></button>
-                </form>
-                <iframe name='hid' id="hid" style="display:none"></iframe>
-            </div>
         </div>
-        <div class="bgw mtb15 pd15">
+        <div class="site_table_view bgw mtb15 pd15">
             <div class="info-title-tips">
                 <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span> {{data['lan']['PS']}}建站成功后，请在<a class="btlink" href="/crontab">[计划任务]</a>页面添加定时备份任务!</p>
             </div>
-            <button onclick="site.add_site()" class="btn btn-success btn-sm btn-title" type="button">{{data['lan']['BTN1']}}</button>&nbsp;
-            <button onclick="site.set_default_page()" class="btn btn-default btn-sm btn-title" type="button">{{data['lan']['BTN2']}}</button>
-            <button onclick="site.set_default_site()" class="btn btn-default btn-sm btn-title" type="button">{{data['lan']['BTN3']}}</button>
-            <button onclick="site.set_class_type()" class="btn btn-default btn-sm btn-title" type="button">{{data['lan']['BTN5']}}</button>
-            <button onclick="site.get_cli_version()" class="btn btn-default btn-sm btn-title" type="button">PHP命令行版本</button>
-            <span id="allDelete">
-                <button batch="true" style="float: right;display: none;margin-left:10px;" class="btn btn-default btn-sm" onclick="site.batch_site('del');">{{data['lan']['BTN4']}}</button>
-            </span>
-            <div class="move_class">
-                <button batch="false" style="float: right;margin-left:10px;display: none;" class="btn btn-default btn-sm" onclick="site.batch_site('site_type')">移动至</button>
-                <!-- <select class="bt-input-text mr5" name="defaultSite" style="width:100px"><option value="off">默认分类</option></select> -->
-            </div>
-            <div class="divtable mtb10">
-                <div class="tablescroll">
-                    <table id="webBody" class="table table-hover" style="min-width: 900px;border: 0 none;"></table>
-                </div>
-                <div class="dataTables_paginate paging_bootstrap page">
-
-                </div>
-            </div>
+            <div id="bt_site_table"></div>
         </div>
     </div>
 </div>
 {% endblock %}
 
-
 {% block scripts %}
-<script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js?date=20180301"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/bootstrap-select.min.js"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/site.js?version_20200217={{g['version']}}"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js?date_20200217={{g.version}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js?version={{g['version']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/site.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js?version={{g['version']}}" defer></script>
+<!-- 以下文件未来将被剔除 -->
+<script type="text/javascript" src="{{g.cdn_url}}/js/bootstrap-select.min.js" defer></script>
 <script type="text/javascript">
     bt.set_cookie('sites_path', "{{session['config']['sites_path']}}");
     bt.set_cookie('serverType', "{{session['webserver']}}");
-
     {% if not data['isSetup'] %}
-    layer.msg('test', { time: 0, icon: 2 });
-    layer.msg('{{data["lan"]["JS1"]}}<a href="/soft" style="color:#20a53a; float: right;">{{data["lan"]["JS2"]}}</a>', { icon: 7, shade: [0.3, '#000'], time: 0 });
-    $(".layui-layer-shade").css("margin-left", "180px");
+        layer.msg('test', { time: 0, icon: 2 });
+        layer.msg('{{data["lan"]["JS1"]}}<a href="/soft" style="color:#20a53a; float: right;">{{data["lan"]["JS2"]}}</a>', { icon: 7, shade: [0.3, '#000'], time: 0 });
+        $(".layui-layer-shade").css("margin-left", "180px");
     {% else %}
-    site.get_list();
-    site.plugin_firewall();
+        site.plugin_firewall();
     {% endif %}
-    function reverse(array){
-        var reverse_array = [];
-        for(var i = array.length - 1; i >= 0 ; i-- ){
-            reverse_array.push(array[i]);
-        }
-        return reverse_array
-    }
-    
 </script>
 {% endblock %}

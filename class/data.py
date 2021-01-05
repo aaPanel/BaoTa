@@ -333,7 +333,10 @@ class data:
         if not search: return ""
 
         if type(search) == bytes: search = search.encode('utf-8').strip()
-        search = re.search(r"[\w\x80-\xff\.]+",search).group()
+        try:
+            search = re.search(r"[\w\x80-\xff\.]+",search).group()
+        except:
+            return ''
         wheres = {
             'sites'     :   "id='"+search+"' or name like '%"+search+"%' or status like '%"+search+"%' or ps like '%"+search+"%'",
             'ftps'      :   "id='"+search+"' or name like '%"+search+"%' or ps like '%"+search+"%'",

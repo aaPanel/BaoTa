@@ -485,9 +485,10 @@ class panelSSL:
             result = http_requests.get(self._check_url,s_type='curl',timeout=6,headers={"host":get.domain}).text
             self.__test = result
             if result == epass: return True
-
+            self._check_url = self._check_url.replace('127.0.0.1', get.domain)
             return False
         except:
+            self._check_url = self._check_url.replace('127.0.0.1', get.domain)
             return False
     
     #确认域名

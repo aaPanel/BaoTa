@@ -12,7 +12,7 @@
 #------------------------------
 
 import public,time,json,os
-from BTPanel import session
+from BTPanel import session,cache
 
 class panelAuth:
     __product_list_path = 'data/product_list.pl'
@@ -89,15 +89,47 @@ class panelAuth:
             return data
         except: return None
     
-    def get_buy_code(self,get):
+    # def get_buy_code(self,get):
+    #     params = {}
+    #     params['pid'] = get.pid
+    #     params['cycle'] = get.cycle
+    #     data = self.send_cloud('create_order', params)
+    #     if not data: return public.returnMsg(False,'连接服务器失败!')
+    #     return data
+
+    def get_buy_code(self, get):
+        """
+        获取支付二维码
+        """
         params = {}
         params['pid'] = get.pid
         params['cycle'] = get.cycle
+
+        key = '{}_{}_get_buy_code'.format(params['pid'], params['cycle'])
+        data = cache.get(key)
+        if data: return data
+
         data = self.send_cloud('create_order', params)
-        if not data: return public.returnMsg(False,'连接服务器失败!')
+        if not data: return public.returnMsg(False, '连接服务器失败!')
+        cache.set(key, data, 120)
+        cache.set('_buy_code_id'.format(data['data']['oid']), key, 120)
         return data
-    
+
+    # def check_pay_status(self,get):
+    #     params = {}
+    #     params['id'] = get.id
+    #     data = self.send_cloud('check_product_pays', params)
+    #     if not data: return public.returnMsg(False,'连接服务器失败!')
+    #     if data['status'] == True:
+    #         self.flush_pay_status(get)
+    #         if 'get_product_bay' in session: del(session['get_product_bay'])
+    #     return data
+
     def check_pay_status(self,get):
+        """
+        检查制服状态
+        @get.id 支付id
+        """
         params = {}
         params['id'] = get.id
         data = self.send_cloud('check_product_pays', params)
@@ -105,6 +137,12 @@ class panelAuth:
         if data['status'] == True:
             self.flush_pay_status(get)
             if 'get_product_bay' in session: del(session['get_product_bay'])
+
+            buy_oid = '_buy_code_id'.format(params['id'])
+            buy_code_key = cache.get(buy_oid)
+            if buy_code_key:
+                cache.delete(buy_code_key)
+                cache.delete(buy_oid)
         return data
     
     def flush_pay_status(self,get):
