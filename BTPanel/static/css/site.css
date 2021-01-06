@@ -9408,6 +9408,17 @@ select[name="network-io"]{
 	max-height: 200px;
 	overflow: auto;
 }
+.site_class_type.bt_select_updown:hover .bt_select_value span{
+	color: #fff;
+}
+.site_class_type.bt_select_updown:hover .bt_select_value{
+	background-color: #20a53a;
+}
+.bt_select_updown .bt_select_list .divider{
+	border-top:1px solid #ececec;
+	width: 100%;
+	margin: 5px 0;
+}
 .bt_select_list.show+.bt_select_value .glyphicon{
 	transform: rotate(180deg);
 	transition: all 500ms;

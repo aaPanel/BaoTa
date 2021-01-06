@@ -106,7 +106,7 @@ $('#show_recommend').click(function(){
 
 $('#show_workorder').click(function(){
 	var status = !$(this).prop("checked"),that = $(this);
-	layer.confirm(status?'关闭企业版工单，将无法实时向宝塔技术人员反馈问题？':'开启企业版工单，实时向宝塔技术人员反馈问题？',{title:status?'关闭企业版工单':'开启企业版工单',closeBtn:2,icon:13,cancel:function(){
+	layer.confirm(status?'关闭在线客服，将无法实时向宝塔技术人员反馈问题？':'开启BUG反馈，实时向宝塔技术人员反馈问题？',{title:status?'关闭在线客服':'开启在线客服',closeBtn:2,icon:13,cancel:function(){
 		that.prop("checked",status);
 	}}, function() {
 		$.post('/config?action=show_workorder',function(rdata){
@@ -124,7 +124,7 @@ $('#panel_verification').click(function(){
 		layer.open({
 			type: 1,
 			area: ['500px','530px'],
-			title: 'Google身份认证绑定',
+			title: '动态口令设置',
 			closeBtn: 2,
 			shift: 5,
 			shadeClose: false,
@@ -134,26 +134,21 @@ $('#panel_verification').click(function(){
 					<h3>危险！此功能不懂别开启!</h3>\
 					<ul style="width:91%;margin-bottom:10px;margin-top:10px;">\
 						<li style="color:red;">必须要用到且了解此功能才决定自己是否要开启!</li>\
-						<li style="color:red;">如果无法验证，命令行输入"bt 24" 取消谷歌登录认证</li>\
-						<li>请先下载APP，并完成安装和初始化</li>\
+						<li style="color:red;">如果无法验证，命令行输入"bt 24" 取消动态口令认证</li>\
 						<li>开启服务后，请立即绑定，以免出现面板不能访问。</li>\
-						<li>开启后导致面板不能访问，可以点击下面链接了解解决方法。</li>\
+						<li>请先下载宝塔APP或(谷歌认证器)，并完成安装和初始化</li>\
+						<li>基于google Authenticator 开发,如遇到问题请点击<a target="_blank" class="btlink" href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=37437">了解详情</a></li>\
 					</ul>\
 				</div>\
 				<div class="download_Qcode">\
 					<div class="item_down">\
-						<div class="qcode_title">Android 应用下载</div>\
-						<div class="qcode_conter"><img src="/static/img/icon_qcode_android.png" /></div>\
-					</div>\
-					<div class="item_down">\
-						<div class="qcode_title">IOS 应用下载</div>\
-						<div class="qcode_conter"><img src="/static/img/icon_qcode_ios.png" /></div>\
+						<div class="qcode_title">Android/IOS应用 扫码下载</div>\
+						<div class="qcode_conter"><img src="/static/img/bt_app.png" /></div>\
 					</div>\
 				</div>\
 				<div class="details" style="width: 90%;margin-bottom:10px;">\
 					<input type="checkbox" id="check_verification">\
-					<label style="font-weight: 400;margin: 3px 5px 0px;" for="check_verification">我已安装APP和了解详情,并愿意承担风险</label>\
-					<a target="_blank" class="btlink" href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=37437">了解详情</a>\
+					<label style="font-weight: 400;margin: 3px 5px 0px;" for="check_verification">我已安装APP和了解详情,并愿意承担风险！</label>\
 				</div>\
 				<div class="bt-form-submit-btn">\
 					<button type="button" class="btn btn-sm btn-danger close_verify">关闭</button>\
@@ -167,7 +162,7 @@ $('#panel_verification').click(function(){
 						layer.msg('请先勾选同意风险',{icon:0});
 						return false;
 					}
-					var loadT = layer.msg('正在开启Google身份认证，请稍后...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+					var loadT = layer.msg('正在开启动态口令认证，请稍后...', { icon: 16, time: 0, shade: [0.3, '#000'] });
 					set_two_step_auth({act:_checked},function(rdata){
 						layer.close(loadT);
 						if (rdata.status) layer.closeAll();
@@ -188,12 +183,12 @@ $('#panel_verification').click(function(){
 		});
 	}else{
 		bt.confirm({
-			title: 'Google身份认证',
-			msg: '是否关闭Google身份认证，是否继续？',
+			title: '动态口令认证',
+			msg: '是否关闭动态口令认证，是否继续？',
 			cancel: function () {
 				$('#panel_verification').prop('checked',!_checked);
 			}}, function () {
-				var loadT = layer.msg('正在关闭Google身份认证，请稍后...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+				var loadT = layer.msg('正在关闭动态口令认证，请稍后...', { icon: 16, time: 0, shade: [0.3, '#000'] });
 				set_two_step_auth({act:_checked},function(rdata){
 					layer.close(loadT);
 					if (rdata.status) layer.closeAll();
@@ -214,37 +209,26 @@ $('#panel_verification').click(function(){
 $('.open_two_verify_view').click(function(){
 	var _checked = $('#panel_verification').prop('checked');
 	if(!_checked){
-		layer.msg('请先开启Google身份认证服务',{icon:0});
+		layer.msg('请先开启动态口令认证',{icon:0});
 		return false;
 	}
 	layer.open({
         type: 1,
-        area: ['600px','670px'],
-        title: 'Google身份认证绑定',
+        area: '560px',
+        title: '动态口令认证绑定',
         closeBtn: 2,
         shift: 5,
         shadeClose: false,
-        content: '<div class="bt-form pd20" style="padding:20px 35px;">\
-					<div class="verify_title">基于Google Authenticator用户进行登录认证</div>\
+        content: '<div class="bt-form" style="padding:40px 25px; 20px 25px">\
 					<div class="verify_item">\
-						<div class="verify_vice_title">1. 密钥绑定</div>\
-						<div class="verify_conter">\
-							<div class="verify_box">\
-								<div class="verify_box_line">账号：<span class="username"></sapn></div>\
-								<div class="verify_box_line">密钥：<span class="userkey"></sapn></div>\
-								<div class="verify_box_line">类型：<span class="usertype">基于时间</sapn></div>\
-							</div>\
-						</div>\
-					</div>\
-					<div class="verify_item">\
-						<div class="verify_vice_title">2. 扫码绑定 （ 使用Google 身份验证器APP扫码 ）</div>\
+						<div class="verify_vice_title" style="font-weight: 500;font-size:16px;">扫码绑定（使用宝塔面板APP或Google身份验证器APP扫码）</div>\
 						<div class="verify_conter" style="text-align:center;padding-top:10px;">\
 							<div id="verify_qrcode"></div>\
 						</div>\
 					</div>\
 					<div class="verify_tips">\
-						<p>提示：请使用“ Google 身份验证器APP ”绑定,各大软件商店均可下载该APP，支持安卓、IOS系统。<a href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=37437" class="btlink" target="_blank">使用教程</a></p>\
-						<p style="color:red;">开启服务后，请立即使用“Google 身份验证器APP”绑定，以免出现无法登录的情况。</p>\
+						<p>提示：请使用“ 宝塔面板APP或Google身份验证器APP ”绑定,各大软件商店均可下载该APP，支持安卓、IOS系统。<a href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=37437" class="btlink" target="_blank">使用教程</a></p>\
+						<p style="color:red;">开启服务后，请立即使用“宝塔面板APP或Google身份验证器APP”绑定，以免出现无法登录的情况。</p>\
 					</div>\
 				</div>',
 		success:function(e){

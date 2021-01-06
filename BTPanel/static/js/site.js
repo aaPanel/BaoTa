@@ -147,26 +147,7 @@ var site_table = bt_tools.table({
             }},
             {title:'修改默认页',event:function(ev){ site.set_default_page() }},
             {title:'默认站点',event:function(ev){ site.set_default_site() }},
-            {title:'PHP命令行版本',event:function(ev){ site.get_cli_version()}},
-            {title:'分类管理',group:true,init:function(className){
-                bt.site.get_type(function(res){
-                    var html = '',active = bt.get_cookie('site_type');
-                    $.each(res,function(index,item){
-                        html += '<li><a href="javascript:;" data-id="'+ item.id +'">'+ item.name +'</a></li>';
-                    });
-                    html += '<li role="separator" class="divider"></li><li><a href="javascript:;" data-id="type_sets">分类设置</a></li>';
-                    $('.' + className).next().html(html);
-                    $('.' + className).next('ul').on('click','li a',function(){
-                        var id = $(this).data('id');
-                        if(id == 'type_sets'){
-                            site.set_class_type();
-                        }else{
-                            bt.set_cookie('site_type',id);
-                            site_table.$refresh_table_list(true);
-                        }
-                    });
-                });
-            }}
+            {title:'PHP命令行版本',event:function(ev){ site.get_cli_version()}}
         ]
     },{ // 搜索内容
         type:'search',
@@ -336,8 +317,49 @@ var site_table = bt_tools.table({
         jump:true, //是否支持跳转分页,默认禁用
     }]
 });
+$('.tootls_group.tootls_top .pull-left').append('<div class="bt_select_updown site_class_type"><div class="bt_select_value"><span class="bt_select_content">分类:</span><span class="glyphicon glyphicon-triangle-bottom ml5"></span></span></div><ul class="bt_select_list"></ul></div>');
 
+bt.site.get_type(function(res){
+    site.reader_site_type(res);
+});
 var site = {
+    reader_site_type:function(res){
+        var html = '',active = bt.get_cookie('site_type'),select = $('.site_class_type');
+        res.unshift({id: -1, name: "全部分类"});
+        $.each(res,function(index,item){
+            html += '<li class="item '+ (parseInt(active) == item.id?'active':'') +'" data-id="'+ item.id +'">'+ item.name +'</li>';
+        });
+        html += '<li role="separator" class="divider"></li><li class="item" data-id="type_sets">分类设置</li>';
+        select.find('.bt_select_value').on('click',function(ev){
+            var $this = this;
+            $(this).next().show();
+            $(document).one('click',function(){
+                $($this).next().hide();
+                
+            });
+            ev.stopPropagation()
+        });
+
+        select.find('.bt_select_list').unbind('click').on('click','li',function(){
+            var id = $(this).data('id');
+            if(id == 'type_sets'){
+                site.set_class_type();
+            }else{
+                bt.set_cookie('site_type',id);
+                site_table.$refresh_table_list(true);
+                $(this).addClass('active').siblings().removeClass('active');
+                select.find('.bt_select_value .bt_select_content').text('分类: '+$(this).text());
+            }
+            
+        }).empty().html(html);
+        if(!select.find('.bt_select_list li.active').length){
+            console.log(select.find('.bt_select_list li:eq(0)'));
+            select.find('.bt_select_list li:eq(0)').addClass('active');
+            select.find('.bt_select_value .bt_select_content').text('分类: 默认分类');
+        }else{
+            select.find('.bt_select_value .bt_select_content').text('分类: '+select.find('.bt_select_list li.active').text());
+        }
+    },
     get_list: function (page, search, type) {
         if (page == undefined) page = 1;
         if (type == '-1' || type == undefined) {
@@ -1334,6 +1356,7 @@ var site = {
           data: rdata
         });
         $('.layui-layer-page').css({ 'margin-top':'-' + ($('.layui-layer-page').height() / 2) +'px','top':'50%' });
+        site.reader_site_type(rdata);
         if(callback) callback(rdata);
       });
   	},
@@ -2523,7 +2546,7 @@ var site = {
                             });
                             robj.append('<div style="margin-bottom: 10px;" class="alert alert-success">此品牌证书适合生产项目使用，宝塔官网BT.CN也是用这款证书，性价比高，推荐使用</div>\
                             <div class= "mtb10" >\
-                            <button class="btn btn-success btn-sm btn-title ssl_business_application" type="button">申请证书</button>\
+                            <button class="btn btn-success btn-sm btn-title ssl_business_application" type="button">申请证书</button><span class="ml5"><a href="http://q.url.cn/CDfQPS?_type=wpa&amp;qidian=true" target="_blank" class="btlink"><img src="https://pub.idqqimg.com/qconn/wpa/button/button_old_41.gif" style="margin-right:5px;margin-left:3px;vertical-align: -1px;">售前客服: 3007255432</a></span>\
                             <div class="divtable mtb10 ssl_order_list"  style="height: 340px;overflow-y: auto;">\
                                 <table class="table table-hover" id="ssl_order_list">\
                                     <thead><tr><th width="120px">域名</th><th  width="220px">证书类型</th><th>到期时间</th><th>状态</th><th style="text-align:right;">操作</th></tr></thead>\
@@ -3768,7 +3791,7 @@ var site = {
                                             console.log(versions)
                                             versions = versions.slice(0, versions.length - 1) + '.' + versions.slice(-1);
                                             if(versions == '0.0') versions = '静态';
-                                            site_table.$modify_row_data({'php_version':versions});
+                                            site_table.$refresh_table_list(true);
                                             site.reload()
                                         }
                                         setTimeout(function(){
