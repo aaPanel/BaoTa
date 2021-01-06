@@ -14,7 +14,7 @@ import sys, os, json, pwd
 import threading
 import uuid
 
-import websocket
+
 
 try:
     import thread
@@ -25,6 +25,11 @@ sys.path.insert(0, 'class/')
 import public
 import common
 
+try:
+    import websocket
+except:
+    os.system('{} -m pip install websocket-client'.format(public.get_python_bin()))
+    import websocket
 debug = False
 
 SERVER = "https://work.bt.cn"
