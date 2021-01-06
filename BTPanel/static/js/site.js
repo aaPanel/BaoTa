@@ -324,8 +324,8 @@ bt.site.get_type(function(res){
 });
 var site = {
     reader_site_type:function(res){
-        var html = '',active = bt.get_cookie('site_type'),select = $('.site_class_type');
-        res.unshift({id: -1, name: "全部分类"});
+        var html = '',active = bt.get_cookie('site_type') || -1,select = $('.site_class_type');
+        res.unshift({id:-1, name: "全部分类"});
         $.each(res,function(index,item){
             html += '<li class="item '+ (parseInt(active) == item.id?'active':'') +'" data-id="'+ item.id +'">'+ item.name +'</li>';
         });
