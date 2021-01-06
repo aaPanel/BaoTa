@@ -108,7 +108,7 @@ var site_table = bt_tools.table({
     },
     // 表格渲染完成后
     success:function(that){
-        $('.event-edate-'+ that.random).each(function(){
+        $('.event_edate_'+ that.random).each(function(){
             var $this = $(this);
             laydate.render({
                 elem: $this[0] //指定元素
