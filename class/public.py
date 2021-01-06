@@ -2418,6 +2418,66 @@ def get_ipaddress():
     iplist = ipa_tmp.split('\n')
     return iplist
 
+
+def get_root_domain(domain_name):
+			'''
+				@name 根据域名查询根域名和记录值
+				@author cjxin<2020-12-17>
+				@param domain {string} 被验证的根域名
+				@return void
+			'''
+			top_domain_list = ['.ac.cn', '.ah.cn', '.bj.cn', '.com.cn', '.cq.cn', '.fj.cn', '.gd.cn',
+								'.gov.cn', '.gs.cn', '.gx.cn', '.gz.cn', '.ha.cn', '.hb.cn', '.he.cn',
+								'.hi.cn', '.hk.cn', '.hl.cn', '.hn.cn', '.jl.cn', '.js.cn', '.jx.cn',
+								'.ln.cn', '.mo.cn', '.net.cn', '.nm.cn', '.nx.cn', '.org.cn','.cn.com']
+			old_domain_name = domain_name
+			top_domain = "."+".".join(domain_name.rsplit('.')[-2:])
+			new_top_domain = "." + top_domain.replace(".", "")
+			is_tow_top = False
+			if top_domain in top_domain_list:
+				is_tow_top = True
+				domain_name = domain_name[:-len(top_domain)] + new_top_domain
+
+			if domain_name.count(".") > 1:
+				zone, middle, last = domain_name.rsplit(".", 2)
+				if is_tow_top:
+					last = top_domain[1:]
+				root = ".".join([middle, last])
+			else:
+				zone = ""
+				root = old_domain_name
+			return root, zone
+
+def query_dns(domain,dns_type = 'A',is_root = False):
+    '''
+        @name 查询域名DNS解析
+        @author cjxin<2020-12-17>
+        @param domain {string} 被验证的根域名
+        @param dns_type {string} dns记录
+        @param is_root {bool} 是否查询根域名
+        @return void
+    '''
+    try:
+        import dns.resolver
+    except :
+        os.system('{} -m pip install dnspython'.format(get_python_bin()))
+        import dns.resolver
+
+    if is_root: domain,zone = get_root_domain(domain)
+    try:
+        ret = dns.resolver.query(domain, dns_type)           
+        data = []
+        for i in ret.response.answer:            
+            for j in i.items:
+                tmp = {}
+                tmp['flags'] = j.flags
+                tmp['tag'] = j.tag.decode()
+                tmp['value'] = j.value.decode()
+                data.append(tmp)
+        return data
+    except :
+        return False
+
 #取通用对象
 class dict_obj:
     def __contains__(self, key):

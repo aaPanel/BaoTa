@@ -344,10 +344,6 @@ class AliyunDns(object):
     def create_dns_record(self, domain_name, domain_dns_value):
         root, _, acme_txt = extract_zone(domain_name)
         self.add_record(root,'TXT',acme_txt,domain_dns_value)
-        try:
-            self.add_record(root,'CAA','@',caa_value)
-        except:
-            pass
 
 
     def add_record(self,domain,s_type,host,value):
@@ -476,17 +472,6 @@ class CloudxnsDns(object):
         headers = self.get_headers(url, parameter)
         req = requests.post(url=url, headers=headers, data=parameter,verify=False)
         req = req.json()
-
-        data = {
-            "domain_id": int(domain),
-            "host": '@',
-            "value": caa_value,
-            "type": "CAA",
-            "line_id": 1,
-        }
-        parameter = json.dumps(data)
-        headers = self.get_headers(url, parameter)
-        requests.post(url=url, headers=headers, data=parameter,verify=False)
        
         return req
 
@@ -497,10 +482,6 @@ class CloudxnsDns(object):
         headers = self.get_headers(url, )
         req = requests.delete(url=url, headers=headers, verify=False)
         req = req.json()
-
-        url = "https://www.cloudxns.net/api2/record/{}/{}".format(self.get_record_id(root,'CAA'), self.get_domain_id(root))
-        headers = self.get_headers(url, )
-        req = requests.delete(url=url, headers=headers, verify=False)
         return req
 
     def get_record_id(self, domain_name,s_type = 'TXT'):

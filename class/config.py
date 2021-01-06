@@ -890,7 +890,7 @@ class config:
                 continue
             if not os.path.exists(p):
                 continue
-            phpini = public.readFile(filename)
+            phpini = public.readFile(p)
             for g in gets:
                 try:
                     rep = g + r'\s*=\s*(.+)\r?\n'

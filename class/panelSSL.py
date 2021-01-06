@@ -144,8 +144,37 @@ class panelSSL:
     #生成商业证书支付订单
     def apply_order_pay(self,args):
         self.__PDATA['data'] = json.loads(args.pdata)
+        result = self.check_ssl_caa(self.__PDATA['data']['domains'])
+        if result: return result
         result = self.request('apply_cert_order')
         return result
+
+    def check_ssl_caa(self,domains,clist = ['sectigo.com','digicert.com']):
+        '''
+            @name 检查CAA记录是否正确
+            @param domains 域名列表
+            @param clist 正确的记录值关键词
+            @return bool
+        '''
+        try:
+            data = {}
+            for x in domains:
+                root,zone = public.get_root_domain(x)
+                ret = public.query_dns(root,'CAA')
+                if ret: 
+                    slist = []
+                    for x in ret:
+                        if x['value'] in clist: continue
+                        slist.append(x)
+                    if len(slist) > 0: data[root] = slist
+            if data:            
+                result = {}
+                result['status'] = False
+                result['msg'] = 'error:域名的DNS解析中存在CAA记录，请删除后重新申请'
+                result['data'] = json.dumps(data)  
+                return result
+        except : pass
+        return False
 
     #检查商业证书支付状态
     def get_pay_status(self,args):

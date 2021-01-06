@@ -1,4 +1,3459 @@
-var fileDrop = {
+var bt_file = {
+    area: [], // Win视图大小
+    loadT:null, // 加载load对象
+    loadY:null, // 弹窗layer对象，仅二级弹窗
+    vscode:null,
+    file_table_arry:[], // 选中的文件列表
+    timerM: null,      // 定时器
+    is_update_down_list: true,
+    is_recycle:false, // 是否开启回收站
+    is_editor:false, // 是否处于重命名、新建编辑状态
+    file_table:{'file_checkbox': 40,'file_name': 'auto', 'file_type': 100,'file_size': 100,'file_mtime':180,'file_accept':80,'file_user':80,'file_ps':150},
+    file_operating:[], // 文件操作记录，用于前进或后退
+    file_pointer:-1, // 文件操作指针，用于指定前进和后退的路径，的指针位数
+    file_path:'C:/', // 文件目录
+    file_page_num:bt.get_storage('local','showRow') || 100,  //每页个数
+    file_list: [], // 文件列表
+    file_store_list:[], // 文件收藏列表
+    file_store_current: 0, //文件收藏当前分类索引
+    file_images_list:[], // 文件图片列表
+    file_drop: null,   // 拖拽上传
+    file_present_task: null,
+    method_list:{
+        GetFileBody:'获取文件内容', // 获取文件内容
+        DeleteDir:'删除文件目录',
+        DeleteFile:'删除文件',
+        GetDiskInfo:['system','获取磁盘列表'],
+        CheckExistsFiles:'检测同名文件是否存在',
+        GetFileAccess:'获取文件权限信息',
+        SetFileAccess:lan.public.config,
+        DelFileAccess:'正在删除用户',
+        get_path_size:'获取文件目录大小',
+        add_files_store_types:'创建收藏夹分类',
+        get_files_store:'获取收藏夹列表',
+        del_files_store:'取消文件收藏',
+        dir_webshell_check:'目录查杀',
+        get_download_url_list:'获取外链分享列表',
+        get_download_url_find:'获取指定外链分享信息',
+        create_download_url:'创建外链分享',
+        remove_download_url:'取消外链分享',
+        add_files_store:'添加文件收藏',
+        CopyFile:'复制文件',
+        MvFile:'剪切文件',
+        SetBatchData:'执行批量操作',
+        Get_Recycle_bin:'回收站列表',
+    },
+    init:function(){        
+        if (bt.get_cookie('rank') == undefined || bt.get_cookie('rank') == null || bt.get_cookie('rank') == 'a' || bt.get_cookie('rank') == 'b') {
+            bt.set_cookie('rank', 'list');
+        }
+        this.area = [window.innerWidth, window.innerHeight];
+        this.file_path = bt.get_cookie('Path');
+        this.event_bind(); // 事件绑定
+        this.reader_file_list({is_operating:true}); // 渲染文件列表
+        this.render_file_disk_list(); // 渲染文件磁盘列表
+        this.file_drop.init();  // 初始化文件上传
+        this.set_file_table_width(); // 设置表格宽度
+    },
+    // 事件绑定
+    event_bind: function(){
+        var that = this;
+        // 窗口大小限制
+        $(window).resize(function(ev){
+            if($(this)[0].innerHeight != that.area[1]){
+                that.area[1] = $(this)[0].innerHeight;
+                that.set_file_view();
+            }
+            if($(this)[0].innerWidth != that.area[0]){
+                that.area[0] = $(this)[0].innerWidth;
+                that.set_dir_view_resize();             //目录视图
+                that.set_menu_line_view_resize();       //菜单栏视图
+                that.set_file_table_width();            //设置表头宽度
+            }
+        }).keydown(function(e){ // 全局按键事件
+            e = window.event || e;
+            var keyCode = e.keyCode,tagName = e.target.tagName.toLowerCase();
+            console.log(e,'222',typeof $(e.target).attr('data-backspace'));
+            if(!that.is_editor){   //非编辑模式
+                // Ctrl + v   粘贴事件
+                if(e.ctrlKey && keyCode == 86 && tagName != 'input' && tagName != 'textarea'){
+                    that.paste_file_or_dir();
+                }
+                //退格键
+                if(keyCode == 8 && tagName !== 'input' && tagName !== 'textarea' &&  $(e.target).attr('data-backspace')){
+                    $('.file_return_level').click()
+                }
+            }
+        });
+        // 搜索事件绑定
+        $('.search_path_views').on('click','.is_search_children',function(e){
+            var box = $(this).siblings('.file_search_config');
+            if(box.hasClass('hide')){box.removeClass('hide');}else{box.addClass('hide')}
+            box.find('label').unbind('click').click(function(){$(this).siblings('.file_search_checked').click()})
+            box.find('.file_search_checked').unbind('click').click(function(){
+                if($(this).hasClass('active')){
+                    $(this).removeClass('active')
+                }else{
+                    $(this).addClass('active');
+                }
+            })
+            e.stopPropagation();
+        })
+        // 搜索按钮
+        $('.search_path_views').on('click','.path_btn',function(e){
+            var _obj = {path:that.file_path,search:$('.file_search_input').val()},isCheck = $('.file_search_checked').hasClass('active')
+            if(isCheck) _obj['all'] = 'True'
+            that.loadT = bt.load('正在搜索文件中,请稍候...');
+            that.reader_file_list(_obj,function(res){
+                if(!res.msg){
+                    that.loadT.close();
+                }
+            })
+            $('.file_search_config').addClass('hide')
+            e.stopPropagation();
+        })
+        // 搜索框（获取焦点、回车提交）
+        $('.search_path_views .file_search_input').on('focus keyup',function(e){
+            e = e || window.event;
+            var _obj = {path:that.file_path,search:$(this).val()};
+            switch(e.type){
+                case 'focus':
+                    $('.file_search_config').addClass('hide')
+                break;
+                case 'keyup':
+                    var isCheck = $('.file_search_checked').hasClass('active')
+                    if(isCheck) _obj['all'] = 'True'
+                    if(e.keyCode != 13 && e.type == 'keyup') return false;
+                    that.loadT = bt.load('正在搜索文件中,请稍候...');
+                    that.reader_file_list(_obj,function(res){
+                        if(!res.msg){
+                            that.loadT.close();
+                        }
+                    })
+                break;
+            }
+            e.stopPropagation();
+            e.preventDefault();
+        })
+        // 文件路径事件（获取焦点、失去焦点、回车提交）
+        $('.file_path_input .path_input').on('focus blur keyup',function(e){
+            e = e || window.event;
+            var path = $(this).attr('data-path'),_this = $(this);
+            switch(e.type){
+                case 'focus':
+                    $(this).addClass('focus').val(path).prev().hide();
+                break;
+                case 'blur':
+                    $(this).removeClass('focus').val('').prev().show();
+                break;
+                case 'keyup':
+                    if(e.keyCode != 13 && e.type == 'keyup') return false;
+                    if($(this).data('path') != $(this).val()){
+                        that.reader_file_list({path:$(this).val(),is_operating:true},function(res){
+                            if(res.status === false){
+                                _this.val(path);
+                            }else{
+                                _this.val(res.PATH);
+                                _this.blur().prev().show();
+                            }
+                        });
+                    }
+                break;
+            }
+            e.stopPropagation();
+        });
+        // 文件路径点击跳转
+        $('.file_path_input .file_dir_view').on('click','.file_dir',function(){
+            that.reader_file_list({path:$(this).attr('title'),is_operating:true});
+        });
+
+        // 文件操作前进或后退
+        $('.forward_path span').click(function(){
+            var index = $(this).index(),path = '';
+            if(!$(this).hasClass('active')){
+                switch(index){
+                    case 0:
+                        that.file_pointer = that.file_pointer - 1
+                        path = that.file_operating[that.file_pointer];
+                    break;
+                    case 1:
+                        that.file_pointer = that.file_pointer + 1
+                        path = that.file_operating[that.file_pointer];
+                    break;
+                }
+                that.reader_file_list({path:path,is_operating:false});
+            }
+        });
+
+        //展示已隐藏的目录
+        $('.file_path_input .file_dir_view').on('click','.file_dir_omit',function(e){
+            var _this = this,new_down_list = $(this).children('.nav_down_list');
+            $(this).addClass('active');
+            new_down_list.addClass('show');
+            $(document).one('click',function(){
+                $(_this).removeClass('active');
+                new_down_list.removeClass('show');
+                e.stopPropagation();
+            });
+            e.stopPropagation();
+        });
+        //目录获取子级所有文件夹(箭头图标)
+        $('.file_path_input .file_dir_view').on('click','.file_dir_item i',function(e){
+            var children_list = $(this).siblings('.nav_down_list')
+            var _path = $(this).siblings('span').attr('title');
+            children_list.show().parent().siblings().find('.nav_down_list').removeAttr('style');
+            that.render_path_down_list(children_list,_path);
+            
+            $(document).one('click',function(){
+                children_list.removeAttr('style');
+                e.stopPropagation();
+            });
+            e.stopPropagation();
+        })
+        //目录子级文件路径跳转（下拉）
+        $('.file_path_input .file_dir_view').on('click','.file_dir_item .nav_down_list li',function(e){
+            that.reader_file_list({path:$(this).data('path'),is_operating:true});
+        });
+        // 文件上一层
+        $('.file_return_level').click(function(){
+            that.reader_file_list({path:that.retrun_prev_path(that.file_path),is_operating:true});
+        });
+
+        // 文件刷新
+        $('.file_path_refresh').click(function(){
+            that.reader_file_list({path:that.file_path},function(res){
+                if(!res.msg) layer.msg('刷新成功')
+            });
+        });
+
+        // 上传与下载下拉点击
+        $('.file_nav_view .upload_or_download li').on('click',function(e){
+            var type = $(this).data('type')
+            if(type === 'uploadFile'){
+                that.file_drop.dialog_view();
+            }else{
+                that.open_download_view();
+            }
+            e.stopPropagation();
+            e.preventDefault();
+        });
+
+        // 新建文件夹或文件
+        $('.file_nav_view .create_file_or_dir li').on('click',function(e){
+            var type = $(this).data('type'),nav_down_list = $('.create_file_or_dir .nav_down_list');
+            nav_down_list.css({'display':function(){
+                setTimeout(function(){nav_down_list.removeAttr('style')},100)
+                return 'none';
+            }});    
+            if(!that.is_editor){
+                that.is_editor = true;
+                // 首位创建“新建文件夹、文件”
+                $('.file_list_content').prepend('<div class="file_tr createModel active">'+
+                    '<div class="file_td file_checkbox"></div>' +
+                    '<div class="file_td file_name">' +
+                        '<div class="file_ico_type"><i class="file_icon '+ (type == 'newBlankDir'?'file_folder':'') +'"></i></div>' +
+                        (bt.get_cookie('rank') == 'icon'? '<span class="file_title file_'+ (type == 'newBlankDir'? 'dir':'file') +'_status"><textarea name="createArea" onfocus="select()">'+(type == 'newBlankDir'? '新建文件夹':'新建文件')+'</textarea></span>':'<span class="file_title file_'+ (type == 'newBlankDir'? 'dir':'file') +'_status"><input name="createArea" value="'+(type == 'newBlankDir'? '新建文件夹':'新建文件')+'" onfocus="select()"></span>')+
+                    '</div>' +
+                    '</div>'
+                )
+
+                // 输入增高、回车、焦点、失去焦点
+                $((bt.get_cookie('rank') == 'icon'?'textarea':'input')+'[name=createArea]').on('input',function(){
+                    if(bt.get_cookie('rank') == 'icon'){
+                        this.style.height = 'auto';
+                        this.style.height = this.scrollHeight + "px";
+                    }
+                }).keyup(function(e){
+                    if(e.keyCode == 13) $(this).blur();
+                }).blur(function(e){
+                    var _val =  $(this).val().replace(/[\r\n]/g,"");
+                    if(that.match_unqualified_string(_val)) return layer.msg('名称不能含有 /\\:*?"<>|符号',{icon:2})
+                    if(_val == '') _val = (type == 'newBlankDir'? '新建文件夹':'新建文件');
+                    setTimeout(function(){    //延迟处理，防止Li再次触发
+                        that.create_file_req({type:(type == 'newBlankDir' ? 'folder':'file'),path:that.file_path+'/'+_val},function(res){
+                            if(res.status) that.reader_file_list({path:that.file_path});
+                            layer.msg(res.msg,{icon:res.status?1:2});
+                        })
+                        $('.createModel').remove(); // 删除模板
+                        that.is_editor = false;
+                    },300)
+                    e.preventDefault();
+                }).focus();
+            }else{
+                return false;
+            }
+            e.stopPropagation();
+            e.preventDefault();
+        })
+        // 收藏夹列表跳转
+        $('.file_nav_view .favorites_file_path ul').on('click','li',function(e){
+            var _href = $(this).data('path'),_type = $(this).data('type'),nav_down_list = $('.favorites_file_path .nav_down_list');
+            if(_type == 'dir'){
+                that.reader_file_list({path:_href,is_operating:true});
+            }else{
+                var _file = $(this).attr('title').split('.'),_fileT = _file[_file.length -1],_fileE = that.determine_file_type(_fileT);
+                switch(_fileE){
+                    case 'text':
+                        openEditorView(0,_href)
+                    break;
+                    case 'video':
+                        that.open_video_play(_href);
+                    break;
+                    case 'images':
+                        that.open_images_preview({filename:$(this).attr('title'),path:_href});
+                    break;
+                    default:
+                        that.reader_file_list({path:that.retrun_prev_path(_href),is_operating:true});
+                    break;
+                }
+            }
+            //点击隐藏
+            nav_down_list.css({'display':function(){
+                setTimeout(function(){nav_down_list.removeAttr('style')},100)
+                return 'none';
+            }});
+            e.stopPropagation();
+            e.preventDefault();
+        })
+        
+        // 分享列表
+        $('.share_file_list').on('click',function(){
+            that.open_share_view();
+        })
+        // 打开硬盘挂载的目录
+        $('.mount_disk_list').on('click','.nav_btn',function(){
+            var path = $(this).data('menu');
+            that.reader_file_list({path:path,is_operating:true});
+        });
+        // 硬盘磁盘挂载
+        $('.mount_disk_list').on('click','.nav_down_list li',function(){
+            var path = $(this).data('disk'),disk_list = $('.mount_disk_list.thezoom .nav_down_list');
+            disk_list.css({'display':function(){
+                setTimeout(function(){disk_list.removeAttr('style')},100)
+                return 'none';
+            }});   
+            that.reader_file_list({path:path,is_operating:true});
+        });
+
+        // 回收站
+        $('.file_nav_view').on('click','.recycle_bin',function(ev){
+            that.recycle_bin_view();
+            ev.stopPropagation();
+            ev.preventDefault();
+        })
+        // 批量操作
+        $('.file_nav_view .multi').on('click','.nav_btn_group',function(ev){
+            var batch_type = $(this).data('type');
+            that.batch_file_manage(batch_type);
+            ev.stopPropagation();
+            ev.preventDefault();
+        })
+        
+        // 全部粘贴按钮
+        $('.file_nav_view').on('click','.file_all_paste',function(){
+            that.batch_file_paste();
+        })
+
+        // 表头点击事件，触发排序字段和排序方式
+        $('.file_list_header').on('click','.file_name,.file_size,.file_mtime,.file_accept,.file_user', function (e) {
+            var _tid = $(this).attr('data-tid'),
+                _reverse = $(this).find('.icon_sort').hasClass('active'),
+                _active = $(this).hasClass('active');
+            if (!$(this).find('.icon_sort').hasClass('active') && $(this).hasClass('active')) {
+                $(this).find('.icon_sort').addClass('active');
+            }else{
+                $(this).find('.icon_sort').removeClass('active');
+            }
+            $(this).addClass('active').siblings().removeClass('active').find('.icon_sort').removeClass('active').empty();
+            $(this).find('.icon_sort').html('<i class="iconfont icon-xiala"></i>');
+            if (!_active) _reverse = true
+            bt.set_cookie('files_sort', _tid);
+            bt.set_cookie('name_reverse', _reverse ? 'True' : 'False');
+            that.reader_file_list({reverse: _reverse ? 'True' : 'False',sort: _tid});
+            return false;
+        });
+
+        // 设置排序显示
+        $('.file_list_header .file_th').each(function (index, item) {
+            var files_sort = bt.get_cookie('files_sort'),
+                name_reverse = bt.get_cookie('name_reverse');
+            if ($(this).attr('data-tid') === files_sort){
+                $(this).addClass('active').siblings().removeClass('active').find('.icon_sort').removeClass('active').empty();
+                $(this).find('.icon_sort').html('<i class="iconfont icon-xiala"></i>');
+                if (name_reverse === 'False') $(this).find('.icon_sort').addClass('active');
+            }
+        });
+
+        // 全选选中文件
+        $('.file_list_header .file_check').on('click', function (e){
+            var checkbox = parseInt($(this).data('checkbox'));
+            switch(checkbox){
+                case 0:
+                    $(this).addClass('active').removeClass('active_2').data('checkbox',1);
+                    $('.file_list_content .file_tr').addClass('active').removeClass('active_2');
+                    $('.nav_group.multi').removeClass('hide');
+                    that.file_table_arry = that.file_list.slice();
+                break;
+                case 2:
+                    $(this).addClass('active').removeClass('active_2').data('checkbox',1);
+                    $('.file_list_content .file_tr').addClass('active');
+                    $('.nav_group.multi').removeClass('hide');
+                    that.file_table_arry = that.file_list.slice();
+                break;
+                case 1:
+                    $(this).removeClass('active active_2').data('checkbox',0);
+                    $('.file_list_content .file_tr').removeClass('active');
+                    $('.nav_group.multi').addClass('hide');
+                    that.file_table_arry = [];
+                break;
+            }
+            that.calculate_table_active();
+        });
+        // 文件勾选
+        $('.file_list_content').on('click', '.file_checkbox', function (e) { //列表选择
+            var _tr = $(this).parents('.file_tr'),index = _tr.data('index'),filename = _tr.data('filename');
+            if(_tr.hasClass('active')){
+                _tr.removeClass('active');
+                that.remove_check_file(that.file_table_arry,'filename',filename);
+            }else{
+                _tr.addClass('active');
+                _tr.attr('data-filename',that.file_list[index]['filename']);
+                that.file_table_arry.push(that.file_list[index]);
+            }
+            that.calculate_table_active();
+            e.stopPropagation();
+        });
+        
+        // 文件列表滚动条事件
+        $('.file_list_content').scroll(function(e){
+            if($(this).scrollTop() == ($(this)[0].scrollHeight - $(this)[0].clientHeight)){
+                $(this).prev().css('opacity',1);
+                $(this).next().css('opacity',0);
+            }else if($(this).scrollTop() > 0){
+                $(this).prev().css('opacity',1);
+            }else if($(this).scrollTop() == 0){
+                $(this).prev().css('opacity',0);
+                $(this).next().css('opacity',1);
+            }
+        });
+
+        // 选中文件
+        $('.file_table_view .file_list_content').on('click','.file_tr',function(e){
+            $(this).addClass('active').siblings().removeClass('active');
+            that.file_table_arry = [that.file_list[$(this).data('index')]];
+            that.calculate_table_active();
+            e.stopPropagation();
+            e.preventDefault();
+        });
+
+        // 打开文件的分享、收藏状态
+        $('.file_table_view .file_list_content').on('click','.file_name .iconfont',function(e){
+            var file_tr = $(this).parents('.file_tr'),index = file_tr.data('index'),data = that.file_list[index];
+            data['index'] = index 
+            if($(this).hasClass('icon-share1')){that.info_file_share(data);}
+            if($(this).hasClass('icon-favorites')){that.cancel_file_favorites(data);}
+            e.stopPropagation();
+        });
+        // 打开文件夹和文件 --- 双击
+        $('.file_table_view .file_list_content').on('dblclick','.file_tr',function(e){
+            var index = $(this).data('index'),data = that.file_list[index];
+            if($(e.target).hasClass('file_check') || that.is_editor) return false;
+            if(data.type == 'dir'){
+                if(data['filename'] == 'Recycle_bin') return that.recycle_bin_view();
+                that.reader_file_list({path:that.file_path + '/' + data['filename'],is_operating:true});
+            }else{
+                switch(data.open_type){
+                    case 'text':
+                        openEditorView(0,data.path)
+                    break;
+                    case 'video':
+                        that.open_video_play(data);
+                    break;
+                    case 'images':
+                        that.open_images_preview(data);
+                    break;
+                }
+            }
+            e.stopPropagation();
+            e.preventDefault(); 
+        });
+
+        // 文件夹和文件鼠标右键
+        $('.file_list_content').on('contextmenu','.file_tr',function(ev){
+            var _that = this;
+            if(ev.which == 3 && !that.is_editor){
+                if(that.file_table_arry.length > 1){
+                    that.render_files_multi_menu(ev);
+                }else{
+                    that.render_file_groud_menu(ev,this);
+                    $('.content_right_menu').removeAttr('style');
+                    $(this).addClass('active selected').siblings().removeClass('active selected');
+                    $(document).one('click',function(e){
+                        $(_that).removeClass('selected');
+                        $('.selection_right_menu').removeAttr('style');
+                        e.stopPropagation();
+                        e.preventDefault();
+                    });
+                }
+            }else{return true}
+            ev.stopPropagation();
+            ev.preventDefault();
+        });
+
+        // 文件空白区域右键菜单
+        $('.file_list_content').on('contextmenu',function(ev){
+            var content_right_menu = $('.content_right_menu'),content_menu_width = content_right_menu.width(),content_menu_height = content_right_menu.height();
+            if(ev.which == 3 && !that.is_editor){
+                $('.selection_right_menu').removeAttr('style');
+                that.render_file_all_menu(ev,this)
+            }else{return true}
+            ev.stopPropagation();
+            ev.preventDefault();
+        });
+
+        //设置单页显示的数量，默认为100，设置local本地缓存
+        $('.filePage').on('change','.showRow',function(){
+            var val = $(this).val();
+            bt.set_storage('local','showRow',val);
+            that.reader_file_list({showRow:val,p:1,is_operating:false});
+        });
+        
+        // 页码跳转
+        $('.filePage').on('click','div:nth-child(2) a',function(e){
+            var num = $(this).attr('href').match(/p=([0-9]+)$/)[1];
+            that.reader_file_list({path:that.path,p:num})
+            e.stopPropagation();
+            e.preventDefault();
+        })
+
+        // 获取文件夹大小
+        $('.file_list_content').on('click','.folder_size',function(e){
+            var data =  that.file_list[$(this).parents('.file_tr').data('index')],_this = this;
+            that.get_file_size({path:data.path},function(res){
+                $(_this).text(bt.format_size(res.size));
+            });
+            e.stopPropagation();
+            e.preventDefault();
+        });
+        // 获取目录总大小
+        $('.filePage').on('click','#file_all_size',function(e){
+            that.get_dir_size({path:that.file_path})
+        })
+        // 文件区域【鼠标按下】
+        $('.file_list_content').on('mousedown',function(ev){
+            if(
+                $(ev.target).hasClass('file_checkbox') || 
+                $(ev.target).hasClass('file_check') ||
+                ev.target.localName == 'i' ||
+                $(ev.target).hasClass('createModel') ||
+                $(ev.target).hasClass('editr_tr') ||
+                $(ev.target).attr('name') == 'createArea' ||
+                $(ev.target).attr('name') == 'rename_file_input' ||
+                that.is_editor
+            ) return true;
+            console.log();
+            if(ev.which == 3) return false;                 //是否为右键
+            $('.file_list_content').bind('mousewheel', function() {return false;});    //禁止滚轮(鼠标抬起时解绑)
+            var container = $(this),                        //当前选区容器
+                scroll_h = 0,
+                con_t = container.offset().top,             //选区偏移上
+                con_l = container.offset().left             //选区偏移左
+            var startPos = {  //初始位置
+                top: ev.clientY - $(this).offset().top,   
+                left: ev.clientX - $(this).offset().left 
+            };
+            // 鼠标按下后拖动
+            $(document).unbind('mousemove').mousemove(function(ev){
+                // 鼠标按下后移动到的位置
+                var endPos = {  
+                    top:  ev.clientY - con_t > 0 && ev.clientY - con_t < container.height() ? ev.clientY - con_t : (ev.clientY - (con_t+container.height()) > 1 ?container.height():0),   
+                    left: ev.clientX - con_l > 0 && ev.clientX - con_l < container.width() ? ev.clientX - con_l : (ev.clientX - (con_l+container.width()) > 1 ?container.width():0)
+                }; 
+                var fixedPoint = { // 设置定点  
+                    top: endPos.top > startPos.top ? startPos.top : endPos.top,
+                    left: endPos.left > startPos.left ? startPos.left : endPos.left
+                };
+                if(bt.get_cookie('rank') == 'list'){ //在列表模式下减去表头高度
+                    fixedPoint.top = fixedPoint.top + 40
+                }
+                // 拖拽范围的宽高
+                var w = Math.min(Math.abs(endPos.left - startPos.left), con_l + container.width() - fixedPoint.left);  
+                var h = Math.min(Math.abs(endPos.top - startPos.top), con_t + container.height() - fixedPoint.top);
+
+                // 超出选区上时
+                if(ev.clientY - con_t < 0){
+                    var beyond_t = Math.abs(ev.clientY - con_t);
+                    container.scrollTop(container.scrollTop() - beyond_t)
+                    if(container.scrollTop() != 0){
+                        scroll_h += beyond_t
+                    }
+                    h = h+scroll_h
+                }
+                // 超出选区下时
+                if(ev.clientY - (con_t + container.height()) > 1){
+                    var beyond_b = ev.clientY - (con_t + container.height());
+                    container.scrollTop(container.scrollTop() + beyond_b)
+                    if(container[0].scrollHeight - container[0].scrollTop !== container[0].clientHeight){
+                        scroll_h += beyond_b
+                    }
+                    h = h+ scroll_h
+                    fixedPoint.top = fixedPoint.top-scroll_h
+                }
+
+                // 设置拖拽盒子位置
+                that.enter_files_box().show().css({
+                    left: fixedPoint.left+'px',
+                    top: fixedPoint.top+'px',  
+                    width: w+'px',
+                    height: h+'px'
+                });
+                
+                var box_offset_top = that.enter_files_box().offset().top;  
+                var box_offset_left = that.enter_files_box().offset().left;  
+                var box_offset_w = that.enter_files_box().offset().left + that.enter_files_box().width();  
+                var box_offset_h = that.enter_files_box().offset().top + that.enter_files_box().height();
+                $(container).find('.file_tr').each(function(i,item){
+                    var offset_top = $(item).offset().top;
+                    var offset_left = $(item).offset().left;
+                    var offset_h = $(item).offset().top + $(item).height();
+                    var offset_w = $(item).offset().left + $(item).width();
+                    if(bt.get_cookie('rank') == 'icon'){   // 为Icon模式时
+                        if(offset_w >= box_offset_left && offset_left <= box_offset_w && offset_h >= box_offset_top && offset_top <= box_offset_h){
+                            $(item).addClass('active');
+                        }else{
+                            $(item).removeClass('active')
+                        }
+                    }else{// 为List模式时
+                        if (offset_w >= box_offset_left && offset_h >= box_offset_top && offset_top <= box_offset_h ) { 
+                            $(item).addClass('active')
+                        }else{
+                            $(item).removeClass('active')
+                        }
+                    }
+                });
+            })
+            
+            // 鼠标抬起
+            $(document).on('mouseup',function(){
+                var _move_array = [];
+                var box_offset_top = that.enter_files_box().offset().top;  
+                var box_offset_left = that.enter_files_box().offset().left;  
+                var box_offset_w = that.enter_files_box().offset().left + that.enter_files_box().width();  
+                var box_offset_h = that.enter_files_box().offset().top + that.enter_files_box().height();
+                $(container).find('.file_tr').each(function(i,item){
+                    var offset_top = $(item).offset().top;
+                    var offset_left = $(item).offset().left;
+                    var offset_h = $(item).offset().top + $(item).height();
+                    var offset_w = $(item).offset().left + $(item).width();
+
+                    if(bt.get_cookie('rank') == 'icon'){   // 为Icon模式时
+                        if(offset_w >= box_offset_left && offset_left <= box_offset_w && offset_h >= box_offset_top && offset_top <= box_offset_h){
+                            _move_array.push($(item).data('index'))
+                        }
+                    }else{// 为List模式时
+                        if (offset_w >= box_offset_left && offset_h >= box_offset_top && offset_top <= box_offset_h ) { 
+                            _move_array.push($(item).data('index'))
+                        }
+                    }
+                });
+                that.render_file_selected(_move_array);  //渲染数据
+                that.enter_files_box().remove();         //删除盒子
+                $('.file_list_content').unbind('mousewheel');  //解绑滚轮事件
+            })
+            ev.stopPropagation();
+            ev.preventDefault();
+        })
+        // 表头拉伸
+        $('.file_list_header').on('mousedown','.file_width_resize',function(ev){
+            if(ev.which == 3) return false;
+            var th = $(this),Minus_v = $(this).prev().offset().left,_header = $('.file_list_header').innerWidth(),maxlen = 0;
+            maxlen = _header - $('.file_main_title').data
+            $(document).unbind('mousemove').mousemove(function(ev){
+                var thatPos = ev.clientX - Minus_v;
+                that.set_style_width(th.prev().data('tid'),thatPos);
+            })
+            $(document).one('mouseup',th,function(ev){
+                $(document).unbind('mousemove');
+            })
+            ev.stopPropagation();
+            ev.preventDefault();
+        })
+        // 视图调整
+        $('.cut_view_model').on('click',function(){
+            var type = $(this).data('type');
+            $('.file_table_view').addClass(type == 'icon'?'icon_view':'list_view').removeClass(type != 'icon'?'icon_view':'list_view').scrollLeft(0);
+            bt.set_cookie('rank',type);
+            $(this).addClass('active').siblings().removeClass('active');
+            
+            // that.reader_file_list_content(that.file_list);
+            that.set_file_table_width();
+        });
+    },
+    /**
+     * @descripttion: 文件拖拽范围
+     * @author: Lifu
+     * @return: 拖拽元素
+     */
+    enter_files_box:function(){
+        if($('#web_mouseDrag').length == 0){
+            $('<div></div>',{id:'web_mouseDrag', style: [
+                'position:absolute; top:0; left:0;',  
+                'border:1px solid #072246; background-color: #cce8ff;',  
+                'filter:Alpha(Opacity=15); opacity:0.15;',  
+                'overflow:hidden;display:none;z-index:9;'  
+            ].join('')}).appendTo('.file_table_view');
+        }
+        return $('#web_mouseDrag');
+    },
+    /**
+     * @description 清除表格选中数据和样式
+     * @returns void
+     */
+    clear_table_active:function(){
+        this.file_table_arry = [];
+        $('.file_list_header .file_check').removeClass('active active_2');
+        $('.file_list_content .file_tr').removeClass('active');
+    },
+    /**
+     * @description 计算表格中选中
+     * @returns void
+     */
+    calculate_table_active:function(){
+        var that = this,header_check = $('.file_list_header .file_check');
+        //判断数量
+        if(this.file_table_arry.length == 0){
+            header_check.removeClass('active active_2').data('checkbox',0);
+        }else if(this.file_table_arry.length == this.file_list.length){
+            header_check.addClass('active').removeClass('active_2').data('checkbox',1);
+        }else{
+            header_check.addClass('active_2').removeClass('active').data('checkbox',2);
+        }
+        //数量大于0开启键盘事件
+        if(this.file_table_arry.length > 0){
+            $(document).unbind('keydown').on('keydown',function(e){
+                var keyCode = e.keyCode,tagName = e.target.localName.toLowerCase();
+                if(tagName == 'input' || tagName == 'textarea' ) return true;
+                // Ctrl + c   复制事件
+                if(e.ctrlKey && keyCode == 67){
+                    if(that.file_table_arry.length == 1){
+                        that.file_groud_event($.extend(that.file_table_arry[0],{open:'copy'}));
+                    }else if(that.file_table_arry.length > 1){
+                        that.batch_file_manage('copy') //批量
+                    }
+                }
+                // Ctrl + x   剪切事件
+                if(e.ctrlKey && keyCode == 88){
+                    if(that.file_table_arry.length == 1){
+                        that.file_groud_event($.extend(that.file_table_arry[0],{open:'shear'}));
+                    }else if(that.file_table_arry.length > 1){
+                        that.batch_file_manage('shear') //批量
+                    }
+                }
+            })
+            //数量超过一个显示批量操作
+            this.file_table_arry.length > 1 ? $('.nav_group.multi').removeClass('hide') : $('.nav_group.multi').addClass('hide')
+        }else{
+            $('.nav_group.multi').addClass('hide');
+            $(document).unbind('keydown');
+        }
+        $('.selection_right_menu,.file_path_input .file_dir_item .nav_down_list').removeAttr('style');     // 删除右键样式、路径下拉样式
+        that.set_menu_line_view_resize();
+    },
+    /**
+     * @description 设置文件路径视图自动调整
+     * @returns void
+    */
+    set_dir_view_resize:function(){
+        var file_path_input = $('.file_path_input'),file_dir_view = $('.file_path_input .file_dir_view'),_path_width = file_dir_view.attr('data-width'),file_item_hide = null;
+        if(_path_width){
+            parseInt(_path_width);
+        }else{
+            _path_width = file_dir_view.width();
+            file_dir_view.attr('data-width',_path_width);
+        }
+        if(file_dir_view.width() - _path_width < 90){
+            var width = 0;
+            $($('.file_path_input .file_dir_view .file_dir_item').toArray().reverse()).each(function(){
+                var item_width = 0;
+                if(!$(this).attr('data-width')){
+                    $(this).attr('data-width',$(this).width());
+                    item_width = $(this).width();
+                }else{
+                    item_width = parseInt($(this).attr('data-width'));
+                }
+                width += item_width;
+                if((file_path_input.width() - width) <= 90){
+                    $(this).addClass('hide');
+                }else{
+                    $(this).removeClass('hide');
+                }
+            });
+        }
+        var file_item_hide = file_dir_view.children('.file_dir_item.hide').clone(true);
+        if(file_dir_view.children('.file_dir_item.hide').length == 0){
+            file_path_input.removeClass('active').find('.file_dir_omit').addClass('hide');
+        }else{
+            file_item_hide.each(function(){
+                if($(this).find('.glyphicon-hdd').length == 0){
+                    $(this).find('.file_dir').before('<span class="file_dir_icon"></span>');
+                }
+            });
+            file_path_input.addClass('active').find('.file_dir_omit').removeClass('hide');
+            file_path_input.find('.file_dir_omit .nav_down_list').empty().append(file_item_hide);
+            file_path_input.find('.file_dir_omit .nav_down_list .file_dir_item').removeClass('hide');
+        }
+    },
+    /**
+     * @descripttion 设置菜单栏视图自动调整
+     * @return: 无返回值
+     */
+    set_menu_line_view_resize:function(){
+        //menu_width 菜单栏宽度、all_group所有按钮组宽度
+        var menu_width = $('.file_nav_view').width(),disk_list_width = 0,batch_list_width = 0,_width = 0,disk_list = $('.mount_disk_list'),batch_list = $('.nav_group.multi');
+        if(!disk_list.attr('data-width')) disk_list.attr('data-width',disk_list.innerWidth());
+        if(!batch_list.attr('data-width') && batch_list.innerWidth() != 0 && batch_list.innerWidth() != -1){
+            batch_list.attr('data-width',batch_list.innerWidth())
+        }
+        disk_list_width = parseInt(disk_list.attr('data-width'));
+        batch_list_width = parseInt(batch_list.attr('data-width'));
+        $('.file_nav_view>.nav_group').not('.mount_disk_list').each(function(){ 
+            _width += $(this).innerWidth();
+        });
+        _width += $('.menu-header-foot').innerWidth();
+        if(menu_width - _width < (disk_list_width+5)){
+            $('.nav_group.mount_disk_list').addClass('thezoom').find('.disk_title_group_btn').removeClass('hide');
+            
+        }else{
+            $('.nav_group.mount_disk_list,.nav_group.multi').removeClass('thezoom');
+        }
+    },
+    /**
+     * @description 设置文件前进或后退状态
+     * @returns void
+     */
+    set_file_forward:function(){
+        var that = this,forward_path = $('.forward_path span');
+        if(that.file_operating.length == 1){
+            forward_path.addClass('active');
+        }else if(that.file_pointer == that.file_operating.length -1){
+            forward_path.eq(0).removeClass('active');
+            forward_path.eq(1).addClass('active');
+        }else if(that.file_pointer == 0){
+            forward_path.eq(0).addClass('active');
+            forward_path.eq(1).removeClass('active');
+        }else{
+            forward_path.removeClass('active');
+        }
+    },
+    /**
+     * @description 设置文件视图
+     * @returns void
+     */
+    set_file_view:function(){
+        var file_list_content = $('.file_list_content'),height = this.area[1] - $('.file_table_view')[0].offsetTop - 170;
+        $('.file_bodys').height(this.area[1] - 100);
+        if((this.file_list.length * 50) > height){
+            file_list_content.attr('data-height',file_list_content.data('height') || file_list_content.height()).height(height).css('overflow','auto');
+            $('.file_shadow_bottom').css('opacity',1);
+        }else{
+            file_list_content.height(height).css('overflow','auto');
+            $('.file_shadow_top,.file_shadow_bottom').css('opacity',0);
+        }
+    },
+    /**
+     * @description 打开分享列表
+     * @returns void
+     */
+    open_share_view:function(){
+        var that = this
+        layer.open({
+            type: 1,
+		    shift: 5,
+		    closeBtn: 2,
+		    area: ['850px','580px'],
+		    title: '分享列表',
+            content: '<div class="divtable mtb10 download_table" style="padding:5px 10px;">\
+                    <table class="table table-hover" id="download_url">\
+                        <thead><tr><th width="230px">分享名称</th><th width="300px">文件地址</th><th>过期时间</th><th style="text-align:right;width:120px;">操作</th></tr></thead>\
+                        <tbody class="download_url_list"></tbody>\
+                    </table>\
+                    <div class="page download_url_page"></div>\
+            </div>',
+            success:function(){
+                that.render_share_list();
+            }
+        })
+    },
+    /**
+     * @description 渲染分享列表
+     * @param {Number} page 分页
+     * @returns void
+     */
+    render_share_list:function(page){
+        var that = this,_list = ''
+        if(page == undefined) page = {p:1}
+        this.$http('get_download_url_list',{p:page.p},function(res){
+            if(res.data.length > 0){
+                $.each(res.data,function(index,item){
+                    _list += '<tr>'
+                        +'<td><span style="width:230px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;display: inline-block;" title="'+ item.ps +'">'+ item.ps +'</span></td>'
+                        +'<td><span style="width:300px;white-space: nowrap;overflow:hidden;text-overflow: ellipsis;display: inline-block;" title="'+ item.filename +'">'+ item.filename +'</span></td>'
+                        +'<td><span>'+ bt.format_data(item.expire) +'</span></td>'
+                        +'<td style="text-align:right;">'
+                            +'<a href="javascript:;" class="btlink info_down" data-id="'+ item.id +'" data-index="'+index+'">详情</a>&nbsp;|&nbsp;'
+                            +'<a href="javascript:;" class="btlink del_down" data-id="'+ item.id +'" data-index="'+index+'" data-ps="'+ item.ps +'">关闭</a>'
+                        +'</td></tr>'
+                })
+            }else{
+                _list = '<tr><td colspan="4">暂无分享数据</td></tr>'
+            }
+			$('.download_url_list').html(_list);
+            $('.download_url_page').html(res.page);
+            // 详情操作
+            $('.download_table').on('click','.info_down',function(){
+                var indexs = $(this).attr('data-index');
+                that.file_share_view(res.data[indexs],'list');
+            });
+            // 删除操作
+            $('.download_table').on('click','.del_down',function(){
+                var id = $(this).attr('data-id'),_ps = $(this).attr('data-ps');
+                that.remove_download_url({id:id,fileName:_ps},function(res){
+                    if(res.status) that.render_share_list({page:page})
+                    that.loadY.close();
+                    layer.msg(reg.msg,{icon:res.status?1:2})
+                });
+            });
+            // 分页
+            $('.download_table .download_url_page').on('click','a',function(e){
+                var _href =  $(this).attr('href');
+                var p = _href.replace(/\/files\?action=get_download_url_list\?p=/,'')
+                that.render_share_list({page:p},true);
+                return false;
+            });
+        })
+    },
+
+    /**
+     * @description 删除选中数据
+     * @param {Array} arry
+     * @param {*} value 
+     * @return void
+    */
+    remove_check_file:function(arry,key,value){
+        var len = arry.length;
+        while(len--){
+            if(arry[len][key] == value) arry.splice(len,1)
+        }
+    },
+
+    /**
+     * @description 打开文件下载视图
+     * @return void
+    */
+    open_download_view:function(){
+        var that = this;
+        that.reader_form_line({
+            url:'DownloadFile',
+            beforeSend:function(data){
+                return {url:data.url,path:data.path,filename:data.filename};
+            },
+            overall:{width:'310px'},
+            data:[
+                {label:'URL地址:', name:'url', placeholder:'URL地址', value:'http://',eventType:['input','focus'],input:function(){
+                    var value = $(this).val(),url_list = value.split('/');
+                    $('[name="filename"]').val(url_list[url_list.length-1]);
+                }},
+                {label:'下载到:', name:'path', placeholder:'下载到', value:that.file_path},
+                {label:'文件名:', name:'filename', placeholder:'保存文件名', value:'',eventType:'enter',enter:function(){
+                    $('.download_file_view .layui-layer-btn0').click();
+                }}
+            ]
+        },function(form,html){
+            var loadT = bt.open({
+                type:1,
+                title:'下载文件',
+                area: '500px',
+                shadeClose: false,
+                skin:'download_file_view',
+                content:html[0].outerHTML,
+                btn:['确认','关闭'],
+                success:function(){
+                    form.setEvent();
+                },
+                yes:function(indexo,layero){
+                    var ress = form.getVal();
+                    if(!bt.check_url(ress.url)){
+                        layer.msg('请输入有效的url地址..',{icon:2})
+                        return false;
+                    }
+                    form.submitForm(function(res){
+                        that.render_present_task_list();
+                        layer.msg(res.msg,{icon:res.status?1:2})
+                        loadT.close();
+                    });
+                }
+            });
+        });
+    },
+
+    /**
+     * @description 设置样式文件
+     * @param {String} type 表头类型
+     * @param {Number} width 宽度
+     * @return void 
+     */
+    set_style_width: function (type, width) {
+        var _content = bt.get_storage('session','formHeader')||$('#file_list_info').html(),_html = '',_reg = new RegExp("\\.file_" + type + "\\s?\\{width\\s?\\:\\s?(\\w+)\\s\\!important;\\}","g"),_defined_config = {name:150,type:80,size:80,mtime:150,accept:80,user:80,ps:150};
+        _html = _content.replace(_reg, function (match, $1, $2, $3) {
+            return '.file_' + type + '{width:' + ( width < 80?_defined_config[type]+'px':width+'px') +' !important;}'
+        });
+        $('#file_list_info').html(_html);
+        bt.set_storage('session','formHeader',_html)
+        this.set_file_table_width();
+    },
+
+    /**
+     * @description 设置文件表格
+     * @return void
+     */    
+    set_file_table_width: function (){
+        var _css = bt.get_storage('session','formHeader')||$('#file_list_info').html(),_html = '',mainWidth = 0,_reg = new RegExp("\\.file_table_view\\.list_view\\s\\.file_list_content\\s\\.file_tr{width\\:(\\w+);}","g"),_boxReg = new RegExp("\\.file_table_view\\.list_view\\s\\.file_list_content{width\\:(\\w+);}","g"),_header = $('.file_list_header').innerWidth(),boxWidth = $('.file_table_view.list_view').innerWidth(),containerWidth = '';
+
+        $('.file_main_title .file_th').each(function(){mainWidth += $(this).innerWidth();})
+        $('.file_main_title').attr('data-width',mainWidth);  //表头总宽度
+        $('.file_list_header').css('width',(mainWidth+10))
+        containerWidth = (mainWidth+20+'px')
+        if(boxWidth >= (mainWidth+5)){// 【5】为最后一个file_width_resize宽度的一半
+            containerWidth = 'auto'
+            $('.file_list_header').css('width','');
+            $('.file_main_title .file_width_resize:last-child').css('display','block')
+        }
+        _html = _css.replace(_boxReg,'.file_table_view.list_view .file_list_content{width:'+containerWidth+';}').replace(_reg,'.file_table_view.list_view .file_list_content .file_tr{width:'+(mainWidth+2)+'px;}');
+        $('#file_list_info').html(_html)
+    },
+
+    /**
+     * @description 渲染路径列表
+     * @param {Function} callback 回调函数
+     * @return void
+    */
+    render_path_list: function (callback){
+        var that = this,html = '<div class="file_dir_omit hide" title="展开已隐藏的目录"><span></span><i class="iconfont icon-zhixiang-zuo"></i><div class="nav_down_list"></div></div>', path_before = '',dir_list = this.file_path.split("/").splice(1),first_dir = this.file_path.split("/")[0];
+        if(bt.os === 'Windows'){
+            if(dir_list.length == 0) dir_list = [];
+            dir_list.unshift('<span class="glyphicon glyphicon-hdd"></span><span class="ml5">本地磁盘('+ first_dir +')</span>');
+        }else{
+            if(this.file_path == '/') dir_list = [];
+            dir_list.unshift('根目录');
+        }
+        for(var i = 0; i < dir_list.length; i++){
+            path_before += '/' + dir_list[i];
+            if (i == 0) path_before = '/';
+            html += '<div class="file_dir_item">\
+                        <span class="file_dir" title="' + (path_before.replace('//','/')) + '">' + dir_list[i] + '</span>\
+                        <i class="iconfont icon-arrow-right"></i>\
+                        <ul class="nav_down_list">\
+                            <li data-path="*"><span>加载中</span></li>\
+                        </ul>\
+                    </div>';
+        }
+        $('.path_input').val('').attr('data-path',this.file_path);
+        var file_dir_view = $('.file_path_input .file_dir_view');
+        file_dir_view.html(html);
+        file_dir_view.attr('data-width',file_dir_view.width());
+        that.set_dir_view_resize.delay(that,100);
+    },
+
+    /**
+     * @description 渲染路径下拉列表
+     * @param {Object} el Dom选择器
+     * @param {String} path 路径
+     * @param {Function} callback 回调函数
+    */
+    render_path_down_list: function (el, path, callback) {
+        var that = this,_html = '',next_path = $(el).parent().next().find('.file_dir').attr('title');
+        this.get_dir_list({
+            path: path
+        }, function (res) {
+            $.each(that.data_reconstruction(res.DIR),function(index,item){
+                var _path = (path != '/' ? path : '') + '/' + item.filename;
+                _html += '<li data-path="' + _path + '" title="' + _path + '" class="' + (_path === next_path ? 'active' : '') + '"><i class="file_menu_icon newly_file_icon"></i><span>' + item.filename + '</span></li>';
+            });
+            $(el).html(_html);
+        });
+    },
+
+    /**
+     * @description 渲染文件列表
+     * @param {Object} data 参数对象，例如分页、显示数量、排序，不传参数使用默认或继承参数
+     * @param {Function} callback 回调函数
+     * @return void
+    */
+    reader_file_list:function (data, callback){
+        var that = this,select_page_num = '',next_path = '',model = bt.get_cookie('rank'),isPaste = bt.get_storage('session','record_paste_type');
+        if(isPaste != 'null' && isPaste != undefined && isPaste.length == 1){//判断是否显示全部粘贴
+            $('.file_nav_view .file_all_paste').removeClass('hide');  
+        }else{
+            $('.file_nav_view .file_all_paste').addClass('hide'); 
+        } 
+        $('.file_table_view').removeClass('.list_view,.icon_view').addClass(model == 'list'?'list_view':'icon_view');
+        $('.cut_view_model:nth-child('+(model == 'list'?'2':'1')+')').addClass('active').siblings().removeClass('active');
+        // this.loadT = bt.load('正在获取文件列表,请稍候...');
+        this.file_images_list = [];
+        this.get_dir_list(data,function(res){
+            // that.loadT.close();
+            if(res.status === false && res.msg.indexOf('指定目录不存在!') > -1){
+                return that.reader_file_list({path:'/www'})
+            }
+            that.file_list = $.merge(that.data_reconstruction(res.DIR,'DIR') ,that.data_reconstruction(res.FILES));
+            that.file_path = res.PATH;
+            that.is_recycle = res.FILE_RECYCLE;
+            that.file_store_list = res.STORE;
+            bt.set_cookie('Path',res.PATH);
+            that.reader_file_list_content(that.file_list,function(rdata){
+                $('.path_input').attr('data-path',that.file_path);
+                $('.file_nav_view .multi').addClass('hide');
+                $('.selection_right_menu').removeAttr('style');
+                $.each(['100','200','500','1000','2000'],function(index,item){
+                    select_page_num += '<option value="'+ item +'" '+ (item == (bt.get_storage('local','showRow') || that.file_page_num)?'selected':'') +'>'+ item +'</option>';
+                });
+                var page = $(res.PAGE);
+                page.append('<span class="Pcount-item">每页<select class="showRow">'+ select_page_num +'</select>条</span>');
+                $('.filePage').html('<div class="page_num">共'+ rdata.is_dir_num +'个目录，'+ (that.file_list.length - rdata.is_dir_num) +'个文件，文件大小:<a href="javascript:;" class="btlink" id="file_all_size">点击获取</a></div>' + page[0].outerHTML);
+                if(data.is_operating && that.file_operating[that.file_pointer] != res.PATH){
+                    next_path = that.file_operating[that.file_pointer + 1];
+                    if(typeof next_path != "undefined" && next_path != res.PATH) that.file_operating.splice(that.file_pointer+1);
+                    that.file_operating.push(res.PATH);
+                    that.file_pointer = that.file_operating.length - 1;
+                }
+                that.render_path_list(); // 渲染文件路径地址
+                that.set_file_view(); // 设置文件视图
+                that.set_file_forward(); // 设置前进后退状态
+                that.set_file_table_width()  //设置表格头部宽度
+                that.render_favorites_list(); //渲染收藏夹列表
+                if(callback) callback(res);
+            });
+        });
+    },
+    /**
+     * @descripttion 重组数据结构
+     * @param {Number} data  数据
+     * @param {String} type  类型
+     * @return: 返回重组后的数据
+     */
+    data_reconstruction:function(data,type,callback){
+        if(data.length < 1) return [];
+        var _array = [];
+        $.each(data,function(index,item){
+            var itemD = item.split(";"),fileMsg ='',fileN = itemD[0].split('.'),extName = fileN[fileN.length - 1];
+            switch(itemD[0]) {
+                case '.user.ini':
+                    fileMsg = 'PS: PHP用户配置文件(防跨站)!';
+                    break;
+                case '.htaccess':
+                    fileMsg = 'PS: Apache用户配置文件(伪静态)';
+                    break;
+                case 'swap':
+                    fileMsg = 'PS: 宝塔默认设置的SWAP交换分区文件';
+                    break;
+            }
+            if(itemD[0].indexOf('Recycle_bin') != -1) fileMsg = 'PS: 回收站目录,勿动!';
+            if(itemD[0].indexOf('.upload.tmp') != -1) fileMsg = 'PS: 宝塔文件上传临时文件,重新上传从断点续传,可删除';
+            _array.push({
+                caret: itemD[8] == '1'?true:false,             //是否收藏
+                down_id: itemD[9],                             //是否分享 分享id
+                ext: (type == 'DIR'?'':extName),               //文件类型
+                filename: itemD[0],                            //文件名称
+                mtime: itemD[2],                               //时间
+                ps: fileMsg || itemD[10] || '',                //备注
+                size: itemD[1],                                //文件大小
+                type: type == 'DIR'?'dir':'file',              //文件类型
+                user: itemD[3],                                //用户权限
+                root_level:itemD[4]                            //所有者
+            })
+
+        })
+        return _array;
+    },
+    /**
+     * @descripttion 渲染拖拽选中列表
+     * @param {Array} _array 选中的区域
+     * @return: 无返回值
+     */
+    render_file_selected:function(_array){
+        $(document).unbind('mouseup').unbind('mousemove')
+        var that = this,tmp = [];
+        that.clear_table_active()
+        $.each(_array,function(index,item){
+            if(tmp.indexOf(item) == -1){
+                tmp.push(item)
+            }
+        })
+        $.each(tmp,function(ind,items){
+            $('.file_list_content .file_tr').eq(items).addClass('active');
+            that.file_table_arry.push(that.file_list[items]);
+        })
+        that.calculate_table_active();
+    },
+    /** 
+     * @descripttion 渲染收藏夹列表
+     * @return: 无返回值
+     */
+    render_favorites_list:function(){
+        var that = this, html = '';
+        if(this.file_store_list.length > 0){
+            $.each(this.file_store_list,function(index,item){
+                html += '<li title="'+item['name']+'" data-path="'+item['path']+'" data-type="'+item['type']+'">'
+                    +'<i class="'+(item['type'] == 'file'?'file_new_icon':'file_menu_icon create_file_icon')+'"></i>'
+                    +'<span>'+item['name']+'</span>'
+                    +'</li>'
+            })
+            html+='<li data-manage="favorites" onclick="bt_file.set_favorites_manage()"><span class="iconfont icon-shezhi1"></span><span>管理</span></li>'
+            $('.favorites_file_path .nav_down_list').html(html)
+        }
+    },
+    /**
+     * @descripttion 收藏夹目录视图
+     * @return: 无返回值
+     */
+    set_favorites_manage:function(){
+        var that = this;
+        layer.open({
+            type:1,
+            title: "管理收藏夹",
+            area: ['850px','580px'],
+            closeBtn: 2,
+            shift: 5,
+            shadeClose: false,
+            content: "<div class='stroe_tab_list bt-table pd15'>\
+                    <div class='divtable' style='height:420px'>\
+                    <table class='table table-hover'>\
+                        <thead><tr><th>路径</th><th style='text-align:right'>操作</th></tr></thead>\
+                        <tbody class='favorites_body'></tbody>\
+                    </table></div></div>",
+            success: function(layers) {
+                that.render_favorites_type_list();
+                setTimeout(function(){
+                    $(layers).css('top',($(window).height() - $(layers).height()) /2);
+                },50)
+                
+            },
+            cancel:function(){
+                that.reader_file_list({path:that.file_path})
+            }
+        })
+    },
+    /**
+     * @description 渲染收藏夹分类列表
+     * @return void
+    */
+    render_favorites_type_list:function(){
+        var _detail = '';
+        this.$http('get_files_store',function(rdata){
+            if(rdata.length > 0){
+                $.each(rdata,function(ind,item){
+                    _detail += '<tr>'
+                        +'<td><span class="favorites_span" title="'+item['path']+'">'+item['path']+'</span></td>'
+                        +'<td style="text-align:right;">'
+                            +'<a class="btlink" onclick="bt_file.del_favorites(\''+item['path']+'\')">删除</a>'
+                        +'</td>'
+                    +'</tr>'
+                })
+            }else{
+                _detail = '<tr><td colspan="2">暂无收藏</td></tr>'
+            }
+            $('.favorites_body').html(_detail);
+            if(jQuery.prototype.fixedThead){
+                $('.stroe_tab_list .divtable').fixedThead({resize:false});
+            }else{
+                $('.stroe_tab_list .divtable').css({'overflow':'auto'});
+            }
+        })
+    },
+    /**
+     * @description 删除收藏夹
+     * @param {String} path 文件路径
+     * @return void
+    */
+    del_favorites:function(path){
+        var that = this
+        layer.confirm('是否确定删除路径【'+path+'】？', { title: '删除收藏夹', closeBtn: 2, icon: 3 }, function (index) {
+            that.$http('del_files_store',{path:path},function(res){
+                if(res.status){
+                    that.render_favorites_type_list();
+                }
+                layer.msg(res.msg,{icon:res.status?1:2})
+            })
+        })
+    },
+    /**
+     * @description 渲染文件列表内容
+     * @param {Object} data 文件列表数据
+     * @param {Function} callback 回调函数
+     * @return void
+    */
+    reader_file_list_content:function(data,callback){
+        var _html = '',that = this,is_dir_num = 0;
+        $.each(data,function(index,item){
+            var _title = item.filename,only_id = bt.get_random(10);
+            that.file_list[index]['only_id'] = only_id;
+            // if(_title.length > 20) _title = _title.substring(0, 27) + '...';
+            // if(bt.check_chinese(_title) && _title.length > 10) _title = _title.substring(0, 15) + '...'
+            _html += '<div class="file_tr" data-index="'+ index +'" data-filename="'+item.filename+'" '+(bt.get_cookie('rank') == 'icon'?'title="'+lan.files.file_name+':'+item.filename+'&#13;'+lan.files.file_size+':'+bt.format_size(item.size)+'&#13;'+lan.files.file_etime+':'+bt.format_data(item.mtime)+'&#13;'+lan.files.file_auth+':'+item.user+'&#13;'+lan.files.file_own+':'+item.root_level+'"':'')+'>'+
+                '<div class="file_td file_checkbox"><div class="file_check"></div></div>'+
+                '<div class="file_td file_name">'+
+                    '<div class="file_ico_type"><i class="file_icon '+ (item.type == 'dir'?'file_folder':(item.ext == ''?'':'file_'+item.ext)) +'"></i></div>'+
+                    '<span class="file_title file_'+ item.type +'_status" '+(bt.get_cookie('rank') == 'icon'?'':'title="' + that.file_path +'/'+ item.filename + '"')+'><i>'+ item.filename +'</i></span>'+ (item.caret?'<span class="iconfont icon-favorites" style="'+ (item.down_id != 0?'right:30px':'') +'" title="文件已收藏，点击取消"></span>':'') + (item.down_id != 0?'<span class="iconfont icon-share1" title="文件已分享，点击查看信息"></span>':'') +
+                '</div>'+ 
+                '<div class="file_td file_type"><span title="'+ (item.type == 'dir'?'文件夹':that.ext_type_tips(item.ext)) +'">'+ (item.type == 'dir'?'文件夹':that.ext_type_tips(item.ext)) +'</span></div>'+
+                '<div class="file_td file_size"><span>'+ (item.type == 'dir'?'<a class="btlink folder_size" href="javascript:;" data-path="'+ (that.file_path+'/'+item.filename) +'">点击计算</a>':bt.format_size(item.size)) +'</span></div>'+
+                '<div class="file_td file_mtime"><span>' + bt.format_data(item.mtime) + '</span></div>'+
+                '<div class="file_td file_accept"><span>' + item.user + '</span></div>'+
+                '<div class="file_td file_user"><span>' + item.root_level + '</span></div>'+
+                '<div class="file_td file_ps"><span title="'+item.ps+'">' + item.ps + '</span></div>'+
+            '</div>';
+            if(item.type == 'dir') is_dir_num ++;
+            item.path = that.file_path + '/' + item.filename; // 文件路径;
+            item.open_type = that.determine_file_type(item.ext); // 打开类型;
+            if(item.ispreview){
+                that.file_images_list.push(item.path);
+                if(typeof item.images_id) item.images_id = that.file_images_list.length - 1;
+            }
+        });
+        $('.file_list_content').html(_html);
+        if(callback) callback({is_dir_num:is_dir_num})
+        
+        that.clear_table_active(); // 清除表格选中内容
+    },
+
+    /**
+     * @description 渲染文件磁盘列表
+     * @return void
+    */
+    render_file_disk_list:function(){
+        var that = this,html = '',_li = '';
+        that.get_disk_list(function(res){
+            $.each(res,function(index,item){
+                html += '<div class="nav_btn" data-menu="'+ item.path +'">'+
+                    '<span class="glyphicon glyphicon-hdd"></span>'+
+                    '<span>'+(item.path == '/'?'根目录':item.path)+' ('+ item.size[2] +')</span>'+
+                '</div>';
+                _li += '<li data-disk="'+item.path+'"><i class="glyphicon glyphicon-hdd"></i><span>'+(item.path == '/'?'根目录':item.path)+' ('+ item.size[2] +')</span></li>'
+            });
+            $('.mount_disk_list').html('<div class="disk_title_group_btn hide"><span class="disk_title_group">磁盘挂载</span><i class="iconfont icon-xiala"></i><ul class="nav_down_list">'+_li+'</ul></div><div class="file_disk_list">'+html+'</div>');
+            that.set_menu_line_view_resize();
+        });
+    },
+
+    /**
+     * @description 渲染右键鼠标菜单
+     * @param {Object} ev 事件event对象
+     * @param {Object} el 事件对象DOM
+     * @return void
+    */
+    render_file_groud_menu: function (ev,el){
+        var that = this,index = $(el).data('index'),_openTitle = '打开',data = that.file_list[index],config_group = [['open',_openTitle],['split',''],['download','下载'],['share','分享目录/文件'],['cancel_share','取消分享'],['favorites','收藏目录/文件'],['cancel_favorites','取消收藏'],['split',''],['dir_kill','目录查杀'],['authority','权限'],['split',''],['copy','复制'],['shear','剪切'],['rename','重命名'],['del','删除'],['split',''],['compress','创建压缩',[['tar_gz','tar.gz (推荐)'],['zip','zip (通用格式)'],['rar','rar (中文兼容较好)']]],['unzip','解压',[['folad','解压到...']]]],compression = ['zip','rar','gz','war','tgz','bz2'],offsetNum = 0;
+        // 文件类型判断
+        switch(that.determine_file_type(data.ext)){
+            case 'images':
+                _openTitle = '预览';
+            break;
+            case 'video':
+                _openTitle = '播放';
+            break;
+            default:
+                _openTitle = '编辑';
+            break;
+        }
+        config_group[0][1] = (data.type == 'dir'?'打开':_openTitle);
+        if(data.type == 'dir'){ // 判断是否为目录，目录不可下载
+            config_group.splice(2,1);
+            offsetNum ++;
+        }
+        if(data.down_id != 0){ //判断是否分享
+            config_group.splice(3-offsetNum,1);
+            offsetNum ++;
+        }else{
+            config_group.splice(4-offsetNum,1);
+            config_group[3-offsetNum][1] = (data.type == 'dir'?'分享目录':'分享文件');
+            offsetNum ++;
+        }
+        if(data.caret !== false){ // 判断是否收藏
+            config_group.splice((5-offsetNum),1);
+            offsetNum ++;
+        }else{
+            config_group.splice((6-offsetNum),1);
+            config_group[5-offsetNum][1] = (data.type == 'dir'?'收藏目录':'收藏文件');
+            offsetNum ++;
+        }
+        if(data.ext == 'php') config_group[8-offsetNum][1] = '文件查杀';
+        if(data.ext != 'php' && data.type != 'dir'){ // 判断是否为php，非php文件（排除目录）无法扫描
+            config_group.splice((8-offsetNum),1);
+            offsetNum ++;
+        }
+        var num = 0;
+        $.each(compression,function(index,item){
+            if(item == data.ext) num ++;
+        });
+        if(num == 0){
+            config_group.splice((17-offsetNum),1);
+            offsetNum ++;
+        }
+        that.reader_menu_list({el:$('.selection_right_menu'),ev:ev,data:data,list:config_group});
+    },
+
+    /**
+     * @description 渲染右键全局菜单
+     * @param {Object} ev 事件event对象
+     * @param {Object} el 事件对象DOM
+     * @return void
+    */
+    render_file_all_menu:function (ev,el) {
+        var that = this,config_group = [['refresh','刷新'],['split',''],['upload','上传'],['create','新建文件夹/文件',[['create_dir','新建文件夹'],['create_files','新建文件']]],['web_shell','终端'],['split',''],['paste','粘贴']],offsetNum = 0,isPaste = bt.get_storage('session','record_paste_type');
+        if( isPaste == 'null' || isPaste == undefined){
+            config_group.splice(5,2);   
+            offsetNum ++;
+        }
+        that.reader_menu_list({el:$('.selection_right_menu'),ev:ev,data:{},list:config_group});
+    },
+    /**
+     * @descripttion 文件多选时菜单
+     * @param {Object} ev 事件event对象
+     * @return: 无返回值
+     */
+    render_files_multi_menu:function(ev){
+        var that = this,config_group =[['copy','复制'],['shear','剪切'],['authority','权限'],['compress','创建压缩'],['del','删除']],el = $('.selection_right_menu').find('ul'),el_height = el.height(),el_width = el.width(),left = ev.clientX - ((this.area[0] - ev.clientX) < el_width?el_width:0);
+        el.empty();
+        $.each(config_group,function(index,mitem){
+            var $children = null;
+            if(mitem[0] == 'split'){
+                el.append('<li class="separate"></li>');
+            }else{
+                el.append($('<li><i class="file_menu_icon '+ mitem[0] +'_file_icon '+ (function(type){
+                    if(type =='authority') return 'iconfont icon-authority';
+                    return '';
+                }(mitem[0])) +'"></i><span>'+ mitem[1] +'</span></li>').append($children).on('click',{type:mitem[0],data:that.file_table_arry},function(ev){
+                    $('.selection_right_menu').removeAttr('style');
+                    that.batch_file_manage(ev.data.type);
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                }));
+            }
+        });
+        $('.selection_right_menu').css({
+            left: left,
+            top: ev.clientY - ((this.area[1] - ev.clientY) < el_height?el_height:0)
+        }).removeClass('left_menu right_menu').addClass(this.area[0] - (left + el_width) < 230?'left_menu':'right_menu');
+        $(document).one('click',function(e){
+            $(ev.currentTarget).removeClass('selected');
+            $('.selection_right_menu').removeAttr('style');
+            e.stopPropagation();
+            e.preventDefault();
+        });
+    },
+    
+    /**
+    * @description 渲染菜单列表
+    * @param {Object} el 菜单DOM 
+    * @param {Object} config 菜单配置列表和数据
+    * @returns void
+    */
+    reader_menu_list:function(config){
+        var that = this,el = config.el.find('ul'),el_height = el.height(),el_width = el.width(),left = config.ev.clientX - ((this.area[0] - config.ev.clientX) < el_width?el_width:0);
+        el.empty();
+        $.each(config.list,function(index,item){
+            var $children = null,$children_list = null;
+            if(item[0] == 'split'){
+                el.append('<li class="separate"></li>');
+            }else{
+                if(Array.isArray(item[2])){
+                    $children = $('<div class="file_menu_down"><span class="glyphicon glyphicon-triangle-right" aria-hidden="true"></span><ul class="set_group"></ul></div>');
+                    $children_list = $children.find('.set_group');
+                    $.each(item[2],function(indexs,items) {
+                        $children_list.append($('<li><i class="file_menu_icon '+ items[0] +'_file_icon"></i><span>'+ items[1] +'</span></li>').on('click',{type:items[0],data:config.data},function(ev){
+                            that.file_groud_event($.extend(ev.data.data,{
+                                open:ev.data.type,
+                                index:parseInt($(config.ev.currentTarget).data('index')),
+                                element:config.ev.currentTarget,
+                                type_tips:config.data.type == 'dir'?'文件夹':'文件'
+                            }));
+                            config.el.removeAttr('style');
+                            ev.stopPropagation();
+                            ev.preventDefault();
+                        }))
+                    });
+                }
+                el.append($('<li><i class="file_menu_icon '+ item[0] +'_file_icon '+ (function(type){
+                    switch(type){
+                        case 'share':
+                        case 'cancel_share':
+                            return 'iconfont icon-share';
+                        case 'dir_kill':
+                            return 'iconfont icon-dir_kill';
+                        case 'authority':
+                            return 'iconfont icon-authority';
+                    }
+                    return '';
+                }(item[0])) +'"></i><span>'+ item[1] +'</span></li>').append($children).on('click',{type:item[0],data:config.data},function(ev){
+                    that.file_groud_event($.extend(ev.data.data,{
+                        open:ev.data.type,
+                        index:parseInt($(config.ev.currentTarget).data('index')),
+                        element:config.ev.currentTarget,
+                        type_tips:config.data.type == 'dir'?'文件夹':'文件'
+                    }));
+                    // 有子级拉下时不删除样式，其余删除
+                    if(item[0] != 'compress' && item[0] != 'create'){config.el.removeAttr('style');}
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                }));
+            }
+        });
+        config.el.css({
+            left: left,
+            top: config.ev.clientY - ((this.area[1] - config.ev.clientY) < el_height?el_height:0)
+        }).removeClass('left_menu right_menu').addClass(this.area[0] - (left + el_width) < 230?'left_menu':'right_menu');
+        $(document).one('click',function(e){
+            $(config.ev.currentTarget).removeClass('selected');
+            config.el.removeAttr('style');
+            e.stopPropagation();
+            e.preventDefault();
+        });
+    },
+
+    /**
+     * @description 返回后缀类型说明
+     * @param {String} ext 后缀类型
+     * @return {String} 文件类型
+    */
+    ext_type_tips:function(ext){
+        var config = {ai:"Adobe Illustrator格式图形",apk:"安卓安装包",asp:"动态网页文件",bat:"批处理文件",bin:"二进制文件",bas:"BASIC源文件",bak:"备份文件",css:'CSS样式表',cad:"备份文件",cxx:"C++源代码文件",crt:"认证文件",cpp:"C++代码文件",conf:"配置文件",dat:"数据文件",der:"认证文件",doc:"Microsoft Office Word 97-2003 文档",docx:"Microsoft Office Word 2007 文档",exe:"程序应用",gif:"图形文件",go:"Go语言源文件",htm:"超文本文档",html:"超文本文档",ico:"图形文件",java:"Java源文件",access:'数据库文件',jsp:"HTML网页",jpe:"图形文件",jpeg:"图形文件",jpg:"图形文件",JPG:'图形文件',log:"日志文件",link:"快捷方式文件",js:"Javascript源文件",mdb:"Microsoft Access数据库",mp3:"音频文件",ape:'CloudMusic.ape',mp4:"视频文件",avi:'视频文件',mkv:'视频文件',rm:'视频文件',mov:'视频文件',mpeg:'视频文件',mpg:'视频文件',rmvb:'视频文件',webm:'视频文件',wma:'视频文件',wmv:'视频文件',swf:'Shockwave Flash Object',mng:"多映像网络图形",msi:"Windows Installe安装文件包",png:"图形文件",py:"Python源代码",pyc:"Python字节码文件",pdf:"文档格式文件",ppt:"Microsoft Powerpoint 97-2003 幻灯片演示文稿",pptx:"Microsoft Powerpoint2007 幻灯片演示文稿",psd:"Adobe photoshop位图文件",pl:"Perl脚本语言",rar:"RAR压缩文件",reg:"注册表文件",sys:"系统文件",sql:"数据库文件",sh:"Shell脚本文件",txt:"文本格式",vb:"Visual Basic的一种宏语言",xml:"扩展标记语言",xls:"Microsoft Office Excel 97-2003 工作表",xlsx:"Microsoft Office Excel 2007 工作表",gz:"压缩文件",zip:"ZIP压缩文件",z:"","7z":"7Z压缩文件",json:'JSON文本',php:'PHP源文件',mht:'MHTML文档',bmp:'BMP图片文件',webp:'WEBP图片文件',cdr:'CDR文件'};
+        return typeof config[ext] != "undefined"?config[ext]:('未知文件');
+    },
+    
+    /**
+     * @description 文件类型判断，或返回格式类型(不传入type)
+     * @param {String} ext 
+     * @param {String} type
+     * @return {Boolean|Object} 返回类型或类型是否支持
+    */
+    determine_file_type:function(ext,type){
+        var config = {
+            images:['jpg','jpeg','png','bmp','gif','tiff','ico','JPG','webp'],
+            compress:['zip','rar','gz','war','tgz'],
+            video:['mp4','mp3', 'mpeg', 'mpg', 'mov', 'avi', 'webm', 'mkv','mkv','mp3','rmvb','wma','wmv'],
+            ont_text:['iso','xlsx','xls','doc','docx','tiff','exe','so','7z','bz','dmg','apk','pptx','ppt','xlsb','pdf']
+        },returnVal = false;
+        if(type != undefined){
+            if(type == 'text'){
+                $.each(config,function(key,item){
+                    $.each(item,function(index,items){
+                        if(items == ext){
+                            returnVal = true;
+                            return false;
+                        }
+                    })
+                });
+                returnVal = !returnVal
+            }else{
+                if(typeof config[type] == "undefined") return false;
+                $.each(config[type],function(key,item){
+                    if(item == ext){
+                        returnVal = true;
+                        return false;
+                    }
+                });
+            }
+        }else{
+            $.each(config,function(key,item){
+                $.each(item,function(index,items){
+                    if(items == ext){
+                        returnVal = key;
+                        return false;
+                    }
+                })
+            });
+            if(typeof returnVal == "boolean") returnVal = 'text';
+        }
+        return returnVal;
+    },
+
+    /**
+     * @description 右键菜单事件组
+     * @param {Object} data 当前文件或文件夹右键点击的数据和数组下标，以及Dom元素 
+     * @return void 
+    */
+    file_groud_event:function(data){ 
+        var that = this;
+        // console.log(data,'右键')
+        switch(data.open){
+            case 'open': // 打开目录、文件编辑、预览图片、播放视频
+                if(data.type == 'dir'){
+                    this.reader_file_list({path:data.path});
+                }else{
+                    switch(data.open_type){
+                        case 'text':
+                            openEditorView(0,data.path)
+                        break;
+                        case 'video':
+                            this.open_video_play(data);
+                        break;
+                        case 'images':
+                            this.open_images_preview(data);
+                        break;
+                    }
+                }
+            break;
+            case 'download': //下载
+                this.down_file_req(data);
+            break;
+            case 'share': // 添加分享文件
+                this.set_file_share(data);
+            break;
+            case 'cancel_share': // 取消分享文件
+                this.info_file_share(data);
+            break;
+            case 'favorites': //添加收藏夹
+                this.$http('add_files_store',{path:data.path},function(res){
+                    if(res.status){
+                        that.file_list[data.index] = $.extend(that.file_list[data.index],{caret:true});
+                        that.reader_file_list_content(that.file_list);
+                    } 
+                    layer.msg(res.msg,{icon:res.status?1:2})
+                })
+            break;
+            case 'cancel_favorites': //取消收藏
+                this.cancel_file_favorites(data);
+            break;
+            case 'authority': // 权限
+                this.set_file_authority(data);
+            break;
+            case 'dir_kill': //目录查杀
+                this.set_dir_kill(data);
+            break;
+            case 'copy': // 复制内容
+                this.copy_file_or_dir(data);
+            break;
+            case 'shear': // 剪切内容
+                this.cut_file_or_dir(data);
+            break;
+            case 'rename': // 重命名
+                this.rename_file_or_dir(data);
+            break;
+            case 'tar_gz': // 压缩gzip文件
+            case 'rar': // 压缩rar文件
+            case 'zip': // 压缩zip文件
+                this.compress_file_or_dir(data);
+            break;
+            case 'folad':  //解压到...
+                this.unpack_file_to_path(data)
+                break;
+            case 'refresh': // 刷新文件列表
+                $('.file_path_refresh').click();
+            break;
+            case 'upload': //上传文件
+                this.file_drop.dialog_view();
+            break;
+            case 'create_dir': // 新建文件目录
+                $('.file_nav_view .create_file_or_dir li').eq(0).click();
+            break;
+            case 'create_files': // 新建文件列表
+                $('.file_nav_view .create_file_or_dir li').eq(1).click();
+            break;
+            case 'del': //删除
+                this.del_file_or_dir(data);
+            break;
+            case 'paste': //粘贴
+                this.paste_file_or_dir();
+            break;
+            case 'web_shell': // 终端
+                web_shell()
+            break;
+        }
+    },
+    /**
+     * @descripttion 列表批量处理
+     * @param {String} stype 操作
+     * @return: 无返回值
+     */
+    batch_file_manage:function(stype){
+        var that = this,_api = '',_fname = [],_obj = {},_path = $('');
+        $.each(this.file_table_arry,function(index,item){
+            _fname.push(item.filename)
+        })
+        switch(stype){
+            case 'copy':   //复制
+            case 'shear':  //剪切
+                _api = 'SetBatchData';
+                _obj['data'] = JSON.stringify(_fname);
+                _obj['type'] = stype == 'copy'?'1':'2';
+                _obj['path'] = that.file_path;
+                break;
+            case 'del':    //删除
+                _obj['data'] = JSON.stringify(_fname);
+                _obj['type'] = '4';
+                _obj['path'] = that.file_path;
+                return that.batch_file_delect(_obj)
+                break;
+            case 'authority':   //权限
+                _obj['filename'] = '批量';
+                _obj['type'] = '3'
+                _obj['filelist'] = JSON.stringify(_fname);
+                _obj['path'] = that.file_path;
+                return that.set_file_authority(_obj,true)
+                break;
+            case 'compress':    //压缩
+                var arry_f = that.file_path.split('/'),file_title = arry_f[arry_f.length -1];
+                _obj['filename'] = _fname.join(',');
+                _obj['open'] = 'tar_gz'
+                _obj['path'] = that.file_path+'/'+file_title;
+                return that.compress_file_or_dir(_obj,true)
+                break;
+        }
+        // 批量标记
+        that.$http(_api,_obj,function(res){
+            if(res.status){
+                bt.set_storage('session','record_paste_type',stype == 'copy'?'1':'2');
+                that.clear_table_active();
+                $('.nav_group.multi').addClass('hide');
+                $('.file_nav_view .file_all_paste').removeClass('hide'); 
+            }
+            layer.msg(res.msg,{icon:res.status?1:2})
+        });
+    },
+    /**
+     * @descripttion 批量删除
+     * @param {Object} obj.data   需删除的数据
+     * @param {Object} obj.type   批量删除操作
+     * @return: 无返回值
+     */
+    batch_file_delect:function(obj){
+        var that = this;
+        if(this.is_recycle){
+            layer.confirm('确认删除选中内容,删除后将移至回收站，是否继续操作?',{title:'批量删除',closeBtn:2,icon:3},function(){
+                that.$http('SetBatchData',obj,function(res){
+                    if(res.status) that.reader_file_list({path:that.file_path})  
+                    layer.msg(res.msg,{icon:res.status?1:2})
+                });
+            })
+        }else{
+            bt.show_confirm('批量删除','<span><i style="font-size: 15px;font-style: initial;color: red;">当前未开启回收站，批量删除后将无法恢复，是否继续删除?</i></span>',function(){
+                that.$http('SetBatchData',obj,function(res){
+                    if(res.status) that.reader_file_list({path:that.file_path})  
+                    layer.msg(res.msg,{icon:res.status?1:2})
+                });
+            })
+        }
+    },
+    /**
+     * @description 批量文件粘贴
+     * @return void
+    */
+    batch_file_paste:function(){
+        var that = this, _pCookie = bt.get_storage('session','record_paste_type');
+        this.check_exists_files_req({dfile:this.file_path},function(result){
+            if(result.length > 0){
+                var tbody = '';
+                for(var i=0;i<result.length;i++){
+                    tbody += '<tr><td><span class="exists_files_style">'+result[i].filename+'</td><td>'+ToSize(result[i].size)+'</td><td>'+getLocalTime(result[i].mtime)+'</td></tr>';
+                }
+                var mbody = '<div class="divtable"><table class="table table-hover" width="100%" border="0" cellpadding="0" cellspacing="0"><thead><th>文件名</th><th>大小</th><th>最后修改时间</th></thead>\
+                            <tbody>'+tbody+'</tbody>\
+                            </table></div>';
+                SafeMessage('即将覆盖以下文件',mbody,function(){
+                    that.$http('BatchPaste',{type:_pCookie,path:that.file_path},function(rdata){
+                        if(rdata.status){
+                            bt.set_storage('session','record_paste_type',null);
+                            that.reader_file_list({path:that.file_path})
+                        }
+                        layer.msg(rdata.msg,{icon:rdata.status?1:2})
+                    })
+                });
+            }else{
+                that.$http('BatchPaste',{type:_pCookie,path:that.file_path},function(rdata){
+                    if(rdata.status){
+                        bt.set_storage('session','record_paste_type',null);
+                        that.reader_file_list({path:that.file_path})
+                    }
+                    layer.msg(rdata.msg,{icon:rdata.status?1:2})
+                })
+            }
+            
+        })
+    },
+    /**
+     * @description 回收站视图
+     * @return void
+    */
+    recycle_bin_view:function(){
+        var that = this;
+        layer.open({
+            type:1,
+            shift:5,
+            closeBtn: 2,
+            area:['80%','606px'],
+            title: lan.files.recycle_bin_title,
+            content:'<div class="recycle_bin_view">\
+                    <div class="re-head">\
+                    <div style="margin-left: 3px;" class="ss-text">\
+                        <em>'+ lan.files.recycle_bin_on + '</em>\
+                        <div class="ssh-item">\
+                                <input class="btswitch btswitch-ios" id="Set_Recycle_bin" type="checkbox">\
+                                <label class="btswitch-btn" for="Set_Recycle_bin" onclick="bt_file.Set_Recycle_bin()"></label>\
+                        </div>\
+                        <em style="margin-left: 20px;">'+ lan.files.recycle_bin_on_db + '</em>\
+                        <div class="ssh-item">\
+                                <input class="btswitch btswitch-ios" id="Set_Recycle_bin_db" type="checkbox">\
+                                <label class="btswitch-btn" for="Set_Recycle_bin_db" onclick="bt_file.Set_Recycle_bin(1)"></label>\
+                        </div>\
+                    </div>\
+                    <span style="line-height: 32px; margin-left: 30px;">'+ lan.files.recycle_bin_ps + '</span>\
+                    <button style="float: right" class="btn btn-default btn-sm" onclick="bt_file.CloseRecycleBin();">'+ lan.files.recycle_bin_close + '</button>\
+                    </div>\
+                    <div class="re-con">\
+                        <div class="re-con-menu">\
+                            <p class="on" data-type="1">'+lan.files.recycle_bin_type1+'</p>\
+                            <p data-type="2">'+lan.files.recycle_bin_type2+'</p>\
+                            <p data-type="3">'+lan.files.recycle_bin_type3+'</p>\
+                            <p data-type="4">'+lan.files.recycle_bin_type4+'</p>\
+                            <p data-type="5">'+lan.files.recycle_bin_type5+'</p>\
+                            <p data-type="6">'+lan.files.recycle_bin_type6+'</p>\
+                        </div>\
+                        <div class="re-con-con">\
+                            <div style="margin: 15px;" class="divtable">\
+                                <table width="100%" class="table table-hover">\
+                                    <thead>\
+                                        <tr>\
+                                            <th>'+lan.files.recycle_bin_th1+'</th>\
+                                            <th>'+lan.files.recycle_bin_th2+'</th>\
+                                            <th>'+lan.files.recycle_bin_th3+'</th>\
+                                            <th width="150">'+lan.files.recycle_bin_th4+'</th>\
+                                            <th style="text-align: right;" width="110">'+lan.files.recycle_bin_th5+'</th>\
+                                        </tr>\
+                                    </thead>\
+                                    <tbody id="RecycleBody" class="list-list"></tbody>\
+                                </table>\
+                            </div>\
+                        </div>\
+                    </div>\
+                </div>',
+            success:function(){
+                if(window.location.href.indexOf("database") != -1){
+                    $(".re-con-menu p:last-child").addClass("on").siblings().removeClass("on");
+                    that.render_recycle_list(6)
+                }else{
+                    that.render_recycle_list(1)
+                }
+                $(".re-con-menu").on('click','p',function(){
+                    var _type = $(this).data('type');
+                    $(this).addClass("on").siblings().removeClass("on");
+                    that.render_recycle_list(_type);
+                })
+            }
+        })
+    },
+    // 回收站渲染列表
+    render_recycle_list:function(num){
+        var that = this;
+        this.$http('Get_Recycle_bin',function(rdata){
+            var body = '';
+            $('#Set_Recycle_bin').attr('checked',rdata.status);
+            $('#Set_Recycle_bin_db').attr('checked',rdata.status_db);
+            switch (num) {
+                case 1:
+                    for (var i = 0; i < rdata.dirs.length; i++) {
+                        var shortwebname = rdata.dirs[i].name.replace(/'/, "\\'");
+                        var shortpath = rdata.dirs[i].dname;
+                        if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
+                        if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
+                        body += '<tr>\
+                                    <td><span class=\'ico ico-folder\'></span><span class="tname" title="'+ rdata.dirs[i].name + '">' + shortwebname + '</span></td>\
+                                    <td><span title="'+ rdata.dirs[i].dname + '">' + shortpath + '</span></td>\
+                                    <td>'+ ToSize(rdata.dirs[i].size) + '</td>\
+                                    <td>'+ getLocalTime(rdata.dirs[i].time) + '</td>\
+                                    <td style="text-align: right;">\
+                                        <a class="btlink" href="javascript:;" onclick="bt_file.ReRecycleBin(\'' + rdata.dirs[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
+                                        | <a class="btlink" href="javascript:;" onclick="bt_file.DelRecycleBin(\'' + rdata.dirs[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
+                                    </td>\
+                                </tr>';
+                    }
+                    for (var i = 0; i < rdata.files.length; i++) {
+                        if (rdata.files[i].name.indexOf('BTDB_') != -1) {
+                            var shortwebname = rdata.files[i].name.replace(/'/, "\\'");
+                            var shortpath = rdata.files[i].dname;
+                            if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
+                            if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
+                            body += '<tr>\
+                                    <td><span class="ico ico-'+ (that.get_ext_name(rdata.files[i].name)) + '"></span><span class="tname" title="' + rdata.files[i].name + '">' + shortwebname.replace('BTDB_', '') + '</span></td>\
+                                    <td><span title="'+ rdata.files[i].dname + '">mysql://' + shortpath.replace('BTDB_', '') + '</span></td>\
+                                    <td>-</td>\
+                                    <td>'+ getLocalTime(rdata.files[i].time) + '</td>\
+                                    <td style="text-align: right;">\
+                                        <a class="btlink" href="javascript:;" onclick="bt_file.ReRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
+                                        | <a class="btlink" href="javascript:;" onclick="bt_file.DelRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
+                                    </td>\
+                                </tr>'
+
+                            continue;
+                        }
+                        var shortwebname = rdata.files[i].name.replace(/'/, "\\'");
+                        var shortpath = rdata.files[i].dname;
+                        if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
+                        if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
+                        body += '<tr>\
+                                    <td><span class="ico ico-'+ (that.get_ext_name(rdata.files[i].name)) + '"></span><span class="tname" title="' + rdata.files[i].name + '">' + shortwebname + '</span></td>\
+                                    <td><span title="'+ rdata.files[i].dname + '">' + shortpath + '</span></td>\
+                                    <td>'+ ToSize(rdata.files[i].size) + '</td>\
+                                    <td>'+ getLocalTime(rdata.files[i].time) + '</td>\
+                                    <td style="text-align: right;">\
+                                        <a class="btlink" href="javascript:;" onclick="bt_file.ReRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
+                                        | <a class="btlink" href="javascript:;" onclick="bt_file.DelRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
+                                    </td>\
+                                </tr>'
+                    }
+                    $("#RecycleBody").html(body);
+                    return;
+                    break;
+                case 2:
+                    for (var i = 0; i < rdata.dirs.length; i++) {
+                        var shortwebname = rdata.dirs[i].name.replace(/'/, "\\'");
+                        var shortpath = rdata.dirs[i].dname;
+                        if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
+                        if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
+                        body += '<tr>\
+                                    <td><span class=\'ico ico-folder\'></span><span class="tname" title="'+ rdata.dirs[i].name + '">' + shortwebname + '</span></td>\
+                                    <td><span title="'+ rdata.dirs[i].dname + '">' + shortpath + '</span></td>\
+                                    <td>'+ ToSize(rdata.dirs[i].size) + '</td>\
+                                    <td>'+ getLocalTime(rdata.dirs[i].time) + '</td>\
+                                    <td style="text-align: right;">\
+                                        <a class="btlink" href="javascript:;" onclick="bt_file.ReRecycleBin(\'' + rdata.dirs[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
+                                        | <a class="btlink" href="javascript:;" onclick="bt_file.DelRecycleBin(\'' + rdata.dirs[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
+                                    </td>\
+                                </tr>'
+                    }
+                    $("#RecycleBody").html(body);
+                    return;
+                    break;
+                case 3:
+                    for (var i = 0; i < rdata.files.length; i++) {
+                        if (rdata.files[i].name.indexOf('BTDB_') != -1) continue;
+                        var shortwebname = rdata.files[i].name.replace(/'/, "\\'");
+                        var shortpath = rdata.files[i].dname;
+                        if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
+                        if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
+                        body += '<tr>\
+                                    <td><span class="ico ico-'+ (that.get_ext_name(rdata.files[i].name)) + '"></span><span class="tname" title="' + rdata.files[i].name + '">' + shortwebname + '</span></td>\
+                                    <td><span title="'+ rdata.files[i].dname + '">' + shortpath + '</span></td>\
+                                    <td>'+ ToSize(rdata.files[i].size) + '</td>\
+                                    <td>'+ getLocalTime(rdata.files[i].time) + '</td>\
+                                    <td style="text-align: right;">\
+                                        <a class="btlink" href="javascript:;" onclick="bt_file.ReRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
+                                        | <a class="btlink" href="javascript:;" onclick="bt_file.DelRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
+                                    </td>\
+                                </tr>'
+                    }
+                    $("#RecycleBody").html(body);
+                    return;
+                    break;
+                case 4:
+                    for (var i = 0; i < rdata.files.length; i++) {
+                        if (ReisImage(getFileName(rdata.files[i].name))) {
+                            var shortwebname = rdata.files[i].name.replace(/'/, "\\'");
+                            var shortpath = rdata.files[i].dname;
+                            if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
+                            if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
+                            body += '<tr>\
+                                    <td><span class="ico ico-'+ (that.get_ext_name(rdata.files[i].name)) + '"></span><span class="tname" title="' + rdata.files[i].name + '">' + shortwebname + '</span></td>\
+                                    <td><span title="'+ rdata.files[i].dname + '">' + shortpath + '</span></td>\
+                                    <td>'+ ToSize(rdata.files[i].size) + '</td>\
+                                    <td>'+ getLocalTime(rdata.files[i].time) + '</td>\
+                                    <td style="text-align: right;">\
+                                        <a class="btlink" href="javascript:;" onclick="bt_file.ReRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
+                                        | <a class="btlink" href="javascript:;" onclick="bt_file.DelRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
+                                    </td>\
+                                </tr>'
+                        }
+                    }
+                    $("#RecycleBody").html(body);
+                    return;
+                    break;
+                case 5:
+                    for (var i = 0; i < rdata.files.length; i++) {
+                        if (rdata.files[i].name.indexOf('BTDB_') != -1) continue;
+                        if (!(ReisImage(getFileName(rdata.files[i].name)))) {
+                            var shortwebname = rdata.files[i].name.replace(/'/, "\\'");
+                            var shortpath = rdata.files[i].dname;
+                            if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
+                            if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
+                            body += '<tr>\
+                                    <td><span class="ico ico-'+ (that.get_ext_name(rdata.files[i].name)) + '"></span><span class="tname" title="' + rdata.files[i].name + '">' + shortwebname + '</span></td>\
+                                    <td><span title="'+ rdata.files[i].dname + '">' + shortpath + '</span></td>\
+                                    <td>'+ ToSize(rdata.files[i].size) + '</td>\
+                                    <td>'+ getLocalTime(rdata.files[i].time) + '</td>\
+                                    <td style="text-align: right;">\
+                                        <a class="btlink" href="javascript:;" onclick="bt_file.ReRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
+                                        | <a class="btlink" href="javascript:;" onclick="bt_file.DelRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
+                                    </td>\
+                                </tr>'
+                        }
+                    }
+                    $("#RecycleBody").html(body);
+                    return;
+                case 6:
+                    for (var i = 0; i < rdata.files.length; i++) {
+                        if (rdata.files[i].name.indexOf('BTDB_') != -1) {
+                            var shortwebname = rdata.files[i].name.replace(/'/, "\\'");
+                            var shortpath = rdata.files[i].dname;
+                            if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
+                            if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
+                            body += '<tr>\
+                                    <td><span class="ico ico-'+ (that.get_ext_name(rdata.files[i].name)) + '"></span><span class="tname" title="' + rdata.files[i].name + '">' + shortwebname.replace('BTDB_', '') + '</span></td>\
+                                    <td><span title="'+ rdata.files[i].dname + '">mysql://' + shortpath.replace('BTDB_', '') + '</span></td>\
+                                    <td>-</td>\
+                                    <td>'+ getLocalTime(rdata.files[i].time) + '</td>\
+                                    <td style="text-align: right;">\
+                                        <a class="btlink" href="javascript:;" onclick="bt_file.ReRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
+                                        | <a class="btlink" href="javascript:;" onclick="bt_file.DelRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
+                                    </td>\
+                                </tr>'
+                        }
+                    }
+                    $("#RecycleBody").html(body);
+                    return;
+                    break;
+                }
+            function getFileName(name) {
+                var text = name.split(".");
+                var n = text.length - 1;
+                text = text[n];
+                return text;
+            }
+            function ReisImage(fileName) {
+                var exts = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'tiff', 'ico'];
+                for (var i = 0; i < exts.length; i++) {
+                    if (fileName == exts[i]) return true
+                }
+                return false;
+            }
+                    
+            $('#RecycleBody').html(body);
+
+        })
+
+    },
+    // 回收站开关
+    Set_Recycle_bin(db) {
+        var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
+        var that = this,data = {}
+        if (db == 1) {
+            data = { db: db };
+        }
+        $.post('/files?action=Recycle_bin', data, function (rdata) {
+            layer.close(loadT);
+            if(rdata.status){
+                if(db == undefined) that.is_recycle = $('#Set_Recycle_bin').prop('checked');
+            }
+            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 5 });
+        });
+    },
+    // 回收站恢复
+    ReRecycleBin(path, obj) {
+        layer.confirm(lan.files.recycle_bin_re_msg, { title: lan.files.recycle_bin_re_title, closeBtn: 2, icon: 3 }, function () {
+            var loadT = layer.msg(lan.files.recycle_bin_re_the, { icon: 16, time: 0, shade: [0.3, '#000'] });
+            $.post('/files?action=Re_Recycle_bin', 'path=' + encodeURIComponent(path), function (rdata) {
+                layer.close(loadT);
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 5 });
+                $(obj).parents('tr').remove();
+            });
+        });
+    },
+    //回收站删除
+    DelRecycleBin(path, obj) {
+        layer.confirm(lan.files.recycle_bin_del_msg, { title: lan.files.recycle_bin_del_title, closeBtn: 2, icon: 3 }, function () {
+            var loadT = layer.msg(lan.files.recycle_bin_del_the, { icon: 16, time: 0, shade: [0.3, '#000'] });
+            $.post('/files?action=Del_Recycle_bin', 'path=' + encodeURIComponent(path), function (rdata) {
+                layer.close(loadT);
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 5 });
+                $(obj).parents('tr').remove();
+            });
+        });
+    },
+    //清空回收站
+    CloseRecycleBin(){
+        layer.confirm(lan.files.recycle_bin_close_msg, { title: lan.files.recycle_bin_close, closeBtn: 2, icon: 3 }, function () {
+            var loadT = layer.msg("<div class='myspeed'>" + lan.files.recycle_bin_close_the + "</div>", { icon: 16, time: 0, shade: [0.3, '#000'] });
+            setTimeout(function () {
+                getSpeed('.myspeed');
+            }, 1000);
+            $.post('/files?action=Close_Recycle_bin', '', function (rdata) {
+                layer.close(loadT);
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 5 });
+                $("#RecycleBody").html('');
+            });
+        });
+    },
+    /**
+     * @description 打开图片预览
+     * @param {Object} data 当前文件的数据对象
+     * @return void
+    */
+    open_images_preview:function(data){
+        var that = this,mask = $('<div class="preview_images_mask">'+
+            '<div class="preview_head">'+
+                '<span class="preview_title">'+ data.filename +'</span>'+
+                '<span class="preview_small hidden" title="缩小显示"><span class="glyphicon glyphicon-resize-small" aria-hidden="true"></span></span>'+
+                '<span class="preview_full" title="最大化显示"><span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span></span>'+
+                '<span class="preview_close" title="关闭图片预览视图"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></span>'+
+            '</div>'+
+            '<div class="preview_body"><img id="preview_images" src="/download?filename='+ data.path +'"></div>'+
+            '<div class="preview_toolbar">'+
+                '<a href="javascript:;" title="左旋转"><span class="glyphicon glyphicon-repeat reverse-repeat" aria-hidden="true"></span></a>'+
+                '<a href="javascript:;" title="右旋转"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span></a>'+
+                '<a href="javascript:;" title="放大视图"><span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span></a>'+
+                '<a href="javascript:;" title="缩小视图"><span class="glyphicon glyphicon-zoom-out" aria-hidden="true"></span></a>'+
+                '<a href="javascript:;" title="重置视图"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></a>'+
+                '<a href="javascript:;" title="图片列表"><span class="glyphicon glyphicon-list" aria-hidden="true"></span></a>'+
+            '</div>'+
+            '<div class="preview_cut_view">'+
+                '<a href="javascript:;" title="上一张"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></a>'+
+                '<a href="javascript:;" title="下一张"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></a>'+
+            '</div>'+
+        '</div>'),
+        images_config = {natural_width:0,natural_height:0,init_width:0,init_height:0,preview_width:0,preview_height:0,current_width:0,current_height:0,current_left:0,current_top:0,rotate:0,scale:1,images_mouse:false};
+        if($('.preview_images_mask').length > 0){
+            $('#preview_images').attr('src','/download?filename=' + data.path);
+            return false;
+        }
+        $('body').css('overflow','hidden').append(mask);
+        images_config.preview_width = mask[0].clientWidth;
+        images_config.preview_height = mask[0].clientHeight;
+        // 图片预览
+        $('.preview_body img').load(function(){
+            var img = $(this)[0];
+            if(!$(this).attr('data-index')) $(this).attr('data-index',data.images_id);
+            images_config.natural_width = img.naturalWidth;
+            images_config.natural_height = img.naturalHeight;
+            auto_images_size(false);
+        });
+        //图片头部拖动
+        $('.preview_images_mask .preview_head').on('mousedown',function(e){
+            e = e || window.event; //兼容ie浏览器
+            var drag = $(this).parent();
+            $('body').addClass('select'); //webkit内核和火狐禁止文字被选中
+            document.body.onselectstart = document.body.ondrag = function () { //ie浏览器禁止文字选中
+                return false;
+            }
+            if ($(e.target).hasClass('preview_close')) { //点关闭按钮不能拖拽模态框
+                return;
+            }
+            var diffX = e.clientX - drag.offset().left;
+            var diffY = e.clientY - drag.offset().top;
+            $(document).on('mousemove',function(e){
+                e = e || window.event; //兼容ie浏览器
+                var left = e.clientX - diffX;
+                var top = e.clientY - diffY;
+                if (left < 0) {
+                    left = 0;
+                } else if (left > window.innerWidth - drag.width()) {
+                    left = window.innerWidth - drag.width();
+                }
+                if (top < 0) {
+                    top = 0;
+                } else if (top > window.innerHeight - drag.height()) {
+                    top = window.innerHeight - drag.height();
+                }
+                drag.css({
+                    left:left,
+                    top:top,
+                    margin:0
+                });
+            }).on('mouseup',function(){
+                $(this).unbind('mousemove mouseup');
+            });
+        });
+        //图片拖动
+        $('.preview_images_mask #preview_images').on('mousedown',function(e){
+            e = e || window.event;
+            document.body.onselectstart = document.body.ondrag = function(){
+                return false;
+            }
+            var images = $(this);
+            var preview =  $('.preview_images_mask').offset();
+            var diffX = e.clientX - preview.left;
+            var diffY = e.clientY - preview.top;
+            $('.preview_images_mask').on('mousemove',function(e){
+                e = e || window.event
+                var offsetX = e.clientX - preview.left - diffX,
+                    offsetY = e.clientY - preview.top - diffY,
+                    rotate = Math.abs(images_config.rotate / 90),
+                    preview_width = (rotate % 2 == 0?images_config.preview_width:images_config.preview_height),
+                    preview_height = (rotate % 2 == 0?images_config.preview_height:images_config.preview_width),
+                    left,top;
+                if(images_config.current_width > preview_width){
+                    var max_left = preview_width - images_config.current_width;
+                    left = images_config.current_left + offsetX;
+                    if(left > 0){
+                        left = 0
+                    }else if(left < max_left){
+                        left = max_left
+                    }
+                    images_config.current_left = left;
+                }
+                if(images_config.current_height > preview_height){
+                    var max_top = preview_height - images_config.current_height;
+                    top = images_config.current_top + offsetY;
+                    if(top > 0){
+                        top = 0
+                    }else if(top < max_top){
+                        top = max_top
+                    }
+                    images_config.current_top = top;
+                }
+                if(images_config.current_height > preview_height && images_config.current_top <= 0){
+                    if((images_config.current_height - preview_height) <= images_config.current_top){
+                        images_config.current_top -= offsetY
+                    }
+                }
+                images.css({'left':images_config.current_left,'top':images_config.current_top});
+            }).on('mouseup',function(){
+                $(this).unbind('mousemove mouseup');
+            }).on('dragstart',function(){
+                e.preventDefault();
+            });
+        }).on('dragstart',function(){
+            return false;
+        });
+        //关闭预览图片
+        $('.preview_close').click(function(e){
+            $('.preview_images_mask').remove();
+        });
+        //图片工具条预览
+        $('.preview_toolbar a').click(function(){
+            var index = $(this).index(),images = $('#preview_images');
+            switch(index){
+                case 0: //左旋转,一次旋转90度
+                case 1: //右旋转,一次旋转90度
+                    images_config.rotate = index?(images_config.rotate + 90):(images_config.rotate - 90);
+                    auto_images_size();
+                break;
+                case 2:
+                case 3:
+                    if(images_config.scale == 3 && index == 2|| images_config.scale == 0.2 && index == 3){
+                        layer.msg((images_config.scale >= 1?'图像放大，已达到最大尺寸。':'图像缩小，已达到最小尺寸。'));
+                        return false;
+                    }
+                    images_config.scale = (index == 2?Math.round((images_config.scale + 0.4)*10):Math.round((images_config.scale - 0.4)*10))/10;
+                    auto_images_size();
+                break;
+                case 4:
+                    var scale_offset =  images_config.rotate % 360;
+                    if(scale_offset >= 180){
+                        images_config.rotate += (360 - scale_offset);
+                    }else{
+                        images_config.rotate -= scale_offset;
+                    }
+                    images_config.scale = 1;
+                    auto_images_size();
+                break;
+            }
+        });
+        // 最大最小化图片
+        $('.preview_full,.preview_small').click(function(){
+            if($(this).hasClass('preview_full')){
+                $(this).addClass('hidden').prev().removeClass('hidden');
+                images_config.preview_width = that.area[0];
+                images_config.preview_height = that.area[1];
+                mask.css({width:that.area[0],height:that.area[1],top:0,left:0,margin:0}).data('type','full');
+                auto_images_size();
+            }else{
+                $(this).addClass('hidden').next().removeClass('hidden');
+                $('.preview_images_mask').removeAttr('style');
+                images_config.preview_width = 750;
+                images_config.preview_height = 650;
+                auto_images_size();
+            }
+        });
+        // 上一张，下一张
+        $('.preview_cut_view a').click(function(){
+            var images_src = '',preview_images = $('#preview_images'),images_id = parseInt(preview_images.attr('data-index'));
+            if(!$(this).index()){
+                images_id = images_id === 0?(that.file_images_list.length - 1) : images_id - 1;
+                images_src = that.file_images_list[images_id];
+            }else{
+                images_id = (images_id == (that.file_images_list.length - 1))?0:(images_id+1);
+                images_src = that.file_images_list[images_id];
+            }
+            preview_images.attr('data-index',images_id).attr('src','/download?filename='+images_src);
+            $('.preview_title').html(that.get_path_filename(images_src));
+        });
+        // 自动图片大小
+        function auto_images_size(transition){
+            var rotate = Math.abs(images_config.rotate / 90),preview_width = (rotate % 2 == 0?images_config.preview_width:images_config.preview_height),preview_height = (rotate % 2 == 0?images_config.preview_height:images_config.preview_width),preview_images = $('#preview_images'),css_config = {};
+            images_config.init_width = images_config.natural_width;
+            images_config.init_height = images_config.natural_height;
+            if(images_config.init_width > preview_width){
+                images_config.init_width = preview_width;
+                images_config.init_height = parseFloat(((preview_width / images_config.natural_width) * images_config.init_height).toFixed(2));
+            }
+            if(images_config.init_height > preview_height){
+                images_config.init_width = parseFloat(((preview_height / images_config.natural_height) * images_config.init_width).toFixed(2));
+                images_config.init_height= preview_height;
+            }
+            images_config.current_width = parseFloat(images_config.init_width * images_config.scale);
+            images_config.current_height  = parseFloat(images_config.init_height * images_config.scale);
+            images_config.current_left = parseFloat(((images_config.preview_width - images_config.current_width) / 2).toFixed(2));
+            images_config.current_top = parseFloat(((images_config.preview_height - images_config.current_height) / 2).toFixed(2));
+            css_config = {
+                'width':images_config.current_width ,
+                'height':images_config.current_height,
+                'top':images_config.current_top,
+                'left':images_config.current_left,
+                'display':'inline',
+                'transform':'rotate('+ images_config.rotate +'deg)',
+                'opacity':1,
+                'transition':'all 400ms',
+            }
+            if(transition === false) delete css_config.transition;
+            preview_images.css(css_config);
+        }
+    },
+
+    /**
+     * @description 打开视频播放
+     * @param {Object} data 当前文件的数据对象
+     * @return void
+    */
+    open_video_play:function(data){
+        var old_filename = data.path,
+            imgUrl = '/download?filename=' + data.path,
+            p_tmp = data.path.split('/'),
+            path = p_tmp.slice(0, p_tmp.length - 1).join('/')
+        layer.open({
+            type: 1,
+            closeBtn: 2,
+            title: '正在播放[<a class="btvideo-title">' + p_tmp[p_tmp.length-1] + '</a>]',
+            area: ["890px","402px"],
+            shadeClose: false,
+            skin:'movie_pay',
+            content: '<div id="btvideo"><video type="" src="' + imgUrl + '&play=true" data-filename="'+ data.path +'" controls="controls" autoplay="autoplay" width="640" height="360">\
+                        您的浏览器不支持 video 标签。\
+                        </video></div><div class="video-list"></div>',
+            success: function () {
+                $.post('/files?action=get_videos', { path: path }, function (rdata) {
+                    var video_list = '<table class="table table-hover" style=""><thead style="display: none;"><tr><th style="word-break: break-all;word-wrap:break-word;width:165px;">文件名</th><th style="width:65px" style="text-align:right;">大小</th></tr></thead>';
+                    for (var i = 0; i < rdata.length; i++) {
+                        var filename = path + '/' + rdata[i].name
+                        video_list += '<tr class="' + ((filename === old_filename) ? 'video-avt' :'') + '"><td style="word-break: break-all;word-wrap:break-word;width:150px" onclick="play_file(this,\'' + filename + '\')" title="文件: ' + filename + '\n类型: ' + rdata[i].type + '"><a>'
+                            + rdata[i].name + '</a></td><td style="font-size: 8px;text-align:right;width:65px;">' + ToSize(rdata[i].size) + '</td></tr>';
+                    }
+                    video_list += '</table>';
+                    $('.video-list').html(video_list);
+                });
+            }
+        });
+    },
+
+    /**
+     * @description 复制文件和目录
+     * @param {Object} data 当前文件的数据对象
+     * @return void
+    */
+    copy_file_or_dir:function(data){
+        bt.set_storage('session','record_paste',data.path);
+        bt.set_storage('session','record_paste_type','copy');
+        layer.msg('复制成功，请点击粘贴按钮，或Ctrl+V粘贴');
+    },
+    
+    /**
+     * @description 剪切文件和目录
+     * @param {Object} data 当前文件的数据对象
+     * @return void
+    */
+    cut_file_or_dir:function(data){
+        bt.set_storage('session','record_paste',data.path);
+        bt.set_storage('session','record_paste_type','cut');
+        layer.msg('剪切成功，请点击粘贴按钮，或Ctrl+V粘贴');
+    },
+    /**
+     * @descripttion 粘贴文件和目录
+     * @return: 无返回值
+     */
+    paste_file_or_dir:function(){
+        var that = this,_isPaste = bt.get_storage('session','record_paste_type'),_paste = bt.get_storage('session','record_paste'),_filename = [];
+        if(_isPaste != 'null' && _isPaste != undefined){
+            switch(_isPaste){
+                case 'cut':
+                case 'copy':
+                    _filename = _paste.split('/').pop()
+                    this.check_exists_files_req({dfile:this.file_path,filename:_filename},function(result){
+                        if(result.length > 0){
+                            var tbody = '';
+                            for(var i=0;i<result.length;i++){
+                                tbody += '<tr><td><span class="exists_files_style">'+result[i].filename+'</span></td><td>'+ToSize(result[i].size)+'</td><td>'+getLocalTime(result[i].mtime)+'</td></tr>';
+                            }
+                            var mbody = '<div class="divtable"><table class="table table-hover" width="100%" border="0" cellpadding="0" cellspacing="0"><thead><th>文件名</th><th>大小</th><th>最后修改时间</th></thead>\
+                                        <tbody>'+tbody+'</tbody>\
+                                        </table></div>';
+                            SafeMessage('即将覆盖以下文件',mbody,function(){
+                                that.config_paste_to(_paste,_filename);
+                            });
+                        }else{
+                            that.config_paste_to(_paste,_filename);
+                        }
+                    })
+                break;
+                case '1':
+                case '2':
+                    that.batch_file_paste();
+                break;
+            }
+        }
+    },
+    /**
+     * @descripttion 粘贴到
+     * @param {String} path         复制/剪切路径
+     * @param {String} _filename     文件名称
+     * @return: 无返回值
+     */
+    config_paste_to:function(path,_filename){
+        var that = this,_type= bt.get_storage('session','record_paste_type');
+        this.$http(_type == 'copy'?'CopyFile':'MvFile',{sfile:path,dfile:(this.file_path+'/'+_filename)},function(rdata){
+            if(rdata.status){
+                that.reader_file_list({path:that.file_path})
+                bt.set_storage('session','record_paste',null);
+                bt.set_storage('session','record_paste_type',null);
+            }
+            layer.msg(rdata.msg,{icon:rdata.status?1:2})
+        })
+    },
+    /**
+     * @description 重命名文件和目录
+     * @param {Object} data 当前文件的数据对象
+     * @return void
+    */
+    rename_file_or_dir:function(data){
+        var that = this;
+        that.is_editor = true;
+        $('.file_list_content .file_tr:nth-child('+(data.index+1)+')').addClass('editr_tr').find('.file_title').empty().append($((bt.get_cookie('rank') == 'icon'?'<textarea name="rename_file_input" onfocus="this.select()">'+data.filename+'</textarea>':'<input name="rename_file_input" onfocus="this.select()" value="'+data.filename+'">')))
+        if(bt.get_cookie('rank') == 'icon'){
+            $('textarea[name=rename_file_input]').css({'height':$('textarea[name=rename_file_input]')[0].scrollHeight})
+        }
+        $((bt.get_cookie('rank') == 'icon'?'textarea':'input')+'[name=rename_file_input]').on('input',function(){
+            if(bt.get_cookie('rank') == 'icon'){
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + "px";
+            }
+            if(data.type == 'file'){
+                var ext_arry = $(this).val().split('.'),ext = ext_arry[ext_arry.length- 1];
+                $(this).parent().prev().find('.file_icon').removeAttr('class').addClass('file_icon file_'+ ext);
+            }
+        }).keyup(function(e){
+            if(e.keyCode == 13) $(this).blur();
+            e.stopPropagation();
+            e.preventDefault();
+        }).blur(function(){
+            var _val = $(this).val().replace(/[\r\n]/g,""),config = {sfile:data.path,dfile: that.path_resolve(that.file_path,_val)}
+            if(data.filename == _val || _val == ''){
+                $('.file_list_content .file_tr:nth-child('+(data.index+1)+')').removeClass('editr_tr').find('.file_title').empty().append($('<i>'+data.filename+'</i>'));
+                that.is_editor = false;
+                return false;
+            }
+            if(that.match_unqualified_string(_val)) return layer.msg('名称不能含有 /\\:*?"<>|符号',{icon:2});
+            that.rename_file_req(config,function(res){
+                that.reader_file_list({path:that.file_path},function(){layer.msg(res.msg,{icon:res.status?1:2})});
+            });
+            that.is_editor = false;
+        }).focus();
+    },
+
+    /**
+     * @description 设置文件和目录分享
+     * @param {Object} data 当前文件的数据对象
+     * @returns void
+     */
+    set_file_share:function(data){
+        var that = this;
+        this.loadY = bt.open({
+            type: 1,
+            shift: 5,
+            closeBtn: 2,
+            area: '450px',
+            title: '设置分享'+ data.type_tips +'-['+ data.filename +']',
+            btn:['生成外链','取消'],
+            content: '<from class="bt-form" id="outer_url_form" style="padding:30px 15px;display:inline-block">'
+                + '<div class="line"><span class="tname">分享名称</span><div class="info-r"><input name="ps"  class="bt-input-text mr5" type="text" placeholder="分享名称不能为空" style="width:270px" value="'+ data.filename +'"></div></div>'
+                + '<div class="line"><span class="tname">有效期</span><div class="info-r">'
+                    +'<label class="checkbox_grourd"><input type="radio" name="expire" value="24" checked><span>&nbsp;1天</span></label>'
+                    +'<label class="checkbox_grourd"><input type="radio" name="expire" value="168"><span>&nbsp;7天</span></label>'
+                    +'<label class="checkbox_grourd"><input type="radio" name="expire" value="1130800"><span>&nbsp;永久</span></label>'
+                +'</div></div>'
+                + '<div class="line"><span class="tname">提取码</span><div class="info-r"><input name="password" class="bt-input-text mr5" placeholder="为空则不设置提取码" type="text" style="width:220px" value=""><button type="button" id="random_paw" class="btn btn-success btn-sm btn-title">随机</button></div></div>'
+            + '</from>',
+            yes:function(indexs,layers){
+                var ps = $('[name=ps]').val(),expire = $('[name=expire]:checked').val(),password = $('[name=password]').val();
+                if(ps === ''){
+                    layer.msg('分享名称不能为空',{icon:2})
+                    return false;
+                }
+                that.create_download_url({
+                    filename:data.path,
+                    ps:ps,
+                    password:password,
+                    expire:expire
+                },function(res){
+                    if(!res.status){
+                        layer.msg(res.msg,{icon:res.status?1:2})
+                        return false;
+                    }else{
+                        var rdata = res.msg;
+                        that.file_list[data.index] = $.extend(that.file_list[data.index],{down_id:rdata.id,down_info:rdata});
+                        that.loadY.close();
+                        that.info_file_share(data);
+                        that.reader_file_list_content(that.file_list);
+                    }
+                });
+            },
+            success: function (layers, index) {
+                $('#random_paw').click(function(){
+                    $(this).prev().val(bt.get_random(6));
+                });
+            }
+        });
+    },
+
+    /**
+     * @description 分享信息查看
+     * @param {Object} data 当前文件的数据对象
+     * @returns void
+    */
+    info_file_share:function(data){
+        var that = this;
+        if(typeof data.down_info == "undefined"){
+            this.get_download_url_find({id:data.down_id},function(res){
+                that.file_list[data.index] = $.extend(that.file_list[data.index],{down_info:res});
+                that.file_share_view(that.file_list[data.index],'fonticon');
+            })
+            return false;
+        }
+        this.file_share_view(data,'fonticon');
+    },
+    /**
+     * @description 分享信息视图
+     * @param {Object} data 当前文件的数据对象
+     * @param {String} type 区别通过右键打开或是图标点击
+     * @returns void
+    */
+    file_share_view:function(datas,type){
+        var data = datas
+        if(type == 'fonticon'){data = datas.down_info}
+        var that = this,download_url = location.origin + '/down/'+ data.token;
+        this.loadY = bt.open({
+            type: 1,
+            shift: 5,
+            closeBtn: 2,
+            area: '550px',
+            title: '外链分享-['+ data.filename +']',
+            content: '<div class="bt-form pd20 pb70">'
+                    + '<div class="line"><span class="tname">分享名称</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:365px" value="'+ data.ps +'"></div></div>'
+                    + '<div class="line external_link"><span class="tname">分享外链</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:280px" value="'+ download_url +'"><button type="button" id="copy_url" data-clipboard-text="'+ download_url +'" class="btn btn-success btn-sm btn-title copy_url" style="margin-right:5px" data-clipboard-target="#copy_url"><img style="width:16px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABIUlEQVQ4T6XTsSuFURjH8d+3/AFm0x0MyqBEUQaUIqUU3YwWyqgMptud/BlMSt1SBiklg0K3bhmUQTFZDZTxpyOvznt7z3sG7/T2vOf5vM85z3nQPx+KfNuHkhoZ7xXYjNfEwIukXUnvNcg2sJECnoHhugpsnwBN21PAXVgbV/AEjNhuVSFA23YHWLNt4Cc3Bh6BUdtLcbzAgHPbp8BqCngAxjJbOANWUkAPGA8fE8icpD1gOQV0gclMBRfAYgq4BaZtz/YhA5IGgY7tS2AhBdwAM7b3JX1I+iz1G45sXwHzKeAa6P97qZgcEA6v/ZsR3v9aHCmt0P9UBVuShjKz8CYpXPkDYKJ0kaKhWpe0UwOFxDATx5VACFZ0Ivbuga8i8A3NFqQRZ5pz7wAAAABJRU5ErkJggg=="></button><button type="button" class="btn btn-success QR_code btn-sm btn-title"><img  style="width:16px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABUklEQVQ4T6WSIU9DQRCEvwlYLIoEgwEECs3rDyCpobbtL6AKRyggMQ9TJBjUMzgMCeUnIEAREoICFAoEZMk2dy/Xo4KGNZu7nZ2bnT3xz1DsN7MFYCnhe5V0n/Kb2QowL2kY70cEoXAHVEnDG/ABXAJXmVDHVZKqSFAA58AqsAY8AW3A68/AQ7hbBG6BbeDGlaQEh8AucA3suzDgC5gFXHID2At5YxJBNwA6ocFBM8B3OL8DTaCcpMDN2QojxHHdk9Qrx9SeAyf1CMFIJ3DjYqxLOgo192gs4ibSNfrMOaj2yBvMrCnpImYHR4C/vizpIPkX/mpbUtfMepJKMxtKKsyslNTLCZxkBzgFjoE5oCVp08yKvyhwgkGyRl9nX1LDzDz3kzxS8kuBpFYygq8xJ4gjjBMEpz+BF+AxcXLg39XMOpLOciW1gtz9ac71GqdpSrE/8U20EQ3XLHEAAAAASUVORK5CYII="></button></div></div>'
+                    + '<div class="line external_link" style="'+ (data.password == ""?"display:none;":"display:block") +'"><span class="tname">提取码</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:243px" value="'+ data.password +'"><button type="button" data-clipboard-text="链接:'+ download_url +' 提取码:'+ data.password +'"  class="btn btn-success copy_paw btn-sm btn-title">复制链接及提取码</button></div></div>'
+                    + '<div class="line"><span class="tname">过期时间</span><div class="info-r"><span style="line-height:32px; display: block;font-size:14px">'+((data.expire > (new Date('2099-01-01 00:00:00').getTime())/1000)?'<span calss="btlink">永久有效</span>':bt.format_data(data.expire))+'</span></div></div>'
+                    + '<div class="bt-form-submit-btn">'
+                    + '<button type="button" class="btn btn-danger btn-sm btn-title layer_close">' + lan.public.close + '</button>'
+                    + '<button type="button" id="down_del" class="btn btn-danger btn-sm btn-title close_down" style="color:#fff;background-color:#c9302c;border-color:#ac2925;" onclick="">关闭分享外链</button>'
+                    + '</div>'
+                + '</div>',
+            success: function (layers,index) {
+                var copy_url = new ClipboardJS('.copy_url');
+                var copy_paw = new ClipboardJS('.copy_paw');
+                copy_url.on('success', function(e) {
+                    layer.msg('复制链接成功!',{icon:1});
+                    e.clearSelection();
+                });
+                copy_paw.on('success', function(e) {
+                    layer.msg('复制链接及提取码成功!',{icon:1});
+                    e.clearSelection();
+                });
+                $('.layer_close').click(function(){
+                    layer.close(index);
+                });
+                $('.QR_code').click(function(){
+                    layer.closeAll('tips');
+                    layer.tips('<div style="height:140px;width:140px;padding:8px 0" id="QR_code"></div>','.QR_code',{
+                        area:['150px','150px'],
+                        tips: [1, '#ececec'],
+                        time:0,
+                        shade:[0.05, '#000'],
+                        shadeClose:true,
+                        success:function(){
+                            jQuery('#QR_code').qrcode({
+                                render: "canvas",
+                                text: download_url,
+                                height:130,
+                                width:130
+                            });
+                        }
+                    });
+                });
+                $('.close_down').click(function(){
+                    that.remove_download_url({id:data.id,fileName:data.filename},function(res){
+                        that.loadY.close();
+                        if(type == 'fonticon'){
+                            that.file_list[datas.index].down_id = 0;
+                            that.reader_file_list_content(that.file_list);
+                        }
+                        layer.msg(res.msg,{icon:res.status?1:2})
+                    })
+                });
+            }
+        });
+    },
+    /**
+     * @description 删除文件和目录
+     * @param {Object} data 当前文件的数据对象
+     * @return void
+    */
+    del_file_or_dir:function(data){
+        var that = this;
+        if(that.is_recycle){
+            bt.confirm({
+                title:'删除'+ data.type_tips +'[&nbsp;'+ data.filename +'&nbsp;]',
+                msg:'<span>您确定要删除该'+ data.type_tips +'[&nbsp;'+ data.path +'&nbsp;]吗，删除后将移至回收站，是否继续操作?</span>'
+            },function(){
+                that.del_file_req(data,function(res){
+                    that.reader_file_list({path:that.file_path})
+                    layer.msg(res.msg,{icon:res.status?1:2})
+                });
+            });
+        }else{
+            bt.show_confirm('删除'+ data.type_tips +'[&nbsp;'+ data.filename +'&nbsp;]','<i style="font-size: 15px;font-style: initial;color: red;">当前未开启回收站，删除该'+ (data.type == 'dir'?'文件夹':'文件') +'后将无法恢复，是否继续删除？</i></span>',function(){
+                that.del_file_req(data,function(res){
+                    that.reader_file_list({path:that.file_path})
+                    layer.msg(res.msg,{icon:res.status?1:2})
+                });
+            })
+        }
+        
+    },
+
+    /**
+     * @description 取消文件收藏
+     * @param {Object} data 当前文件的数据对象
+     * @param {Object} el 当前元素对象
+     * @returns void
+     */
+    cancel_file_favorites:function(data){
+        var that = this,index = data.index;
+        this.loadY = bt.confirm({title:'取消'+ data['filename'] +'收藏', msg:'是否取消['+ data['path'] + ']的收藏，是否继续？'},function(){
+            that.$http('del_files_store',{path:data.path},function(res){
+                if(res.status){
+                    that.file_list[index].caret = false;
+                    that.reader_file_list_content(that.file_list);
+                }
+                layer.msg(res.msg,{icon:res.status?1:2})
+            })
+        });
+    },
+    
+    /**
+     * @description 设置文件权限 - ok
+     * @param {Object} data 当前文件的数据对象
+     * @param {Boolean} isPatch 是否多选
+     * @returns void
+    */
+    set_file_authority:function(data,isPatch){
+        var that = this;
+        that.get_file_authority({path:data.path},function(rdata){
+            that.loadY = layer.open({
+                type: 1,
+                closeBtn: 2,
+                title: lan.files.set_auth + '[' + data.filename + ']',
+                area: '400px',
+                shadeClose: false,
+                content: '<div class="setchmod bt-form ptb15 pb70">\
+                            <fieldset>\
+                                <legend>'+ lan.files.file_own + '</legend>\
+                                <p><input type="checkbox" id="owner_r" />'+ lan.files.file_read + '</p>\
+                                <p><input type="checkbox" id="owner_w" />'+ lan.files.file_write + '</p>\
+                                <p><input type="checkbox" id="owner_x" />'+ lan.files.file_exec + '</p>\
+                            </fieldset>\
+                            <fieldset>\
+                                <legend>'+ lan.files.file_group + '</legend>\
+                                <p><input type="checkbox" id="group_r" />'+ lan.files.file_read + '</p>\
+                                <p><input type="checkbox" id="group_w" />'+ lan.files.file_write + '</p>\
+                                <p><input type="checkbox" id="group_x" />'+ lan.files.file_exec + '</p>\
+                            </fieldset>\
+                            <fieldset>\
+                                <legend>'+ lan.files.file_public + '</legend>\
+                                <p><input type="checkbox" id="public_r" />'+ lan.files.file_read + '</p>\
+                                <p><input type="checkbox" id="public_w" />'+ lan.files.file_write + '</p>\
+                                <p><input type="checkbox" id="public_x" />'+ lan.files.file_exec + '</p>\
+                            </fieldset>\
+                            <div class="setchmodnum"><input class="bt-input-text" type="text" id="access" maxlength="3" value="'+ rdata.chmod + '">' + lan.files.file_menu_auth + '，\
+                            <span>'+ lan.files.file_own + '\
+                            <select id="chown" class="bt-input-text">\
+                                <option value="www" '+ (rdata.chown == 'www' ? 'selected="selected"' : '') + '>www</option>\
+                                <option value="mysql" '+ (rdata.chown == 'mysql' ? 'selected="selected"' : '') + '>mysql</option>\
+                                <option value="root" '+ (rdata.chown == 'root' ? 'selected="selected"' : '') + '>root</option>\
+                            </select></span>\
+                            <span><input type="checkbox" id="accept_all" checked /><label for="accept_all" style="position: absolute;margin-top: 4px; margin-left: 5px;font-weight: 400;">应用到子目录</label></span>\
+                            </div>\
+                            <div class="bt-form-submit-btn">\
+                                <button type="button" class="btn btn-danger btn-sm btn-title layer_close">'+ lan.public.close + '</button>\
+                                <button type="button" class="btn btn-success btn-sm btn-title set_access_authority">' + lan.public.ok + '</button>\
+                            </div>\
+                        </div>',
+                success: function (index,layers) {
+                    that.edit_access_authority();
+                    $("#access").keyup(function () {
+                        that.edit_access_authority();
+                    });
+                    $("input[type=checkbox]").change(function () {
+                        var idName = ['owner', 'group', 'public'];
+                        var onacc = '';
+                        for (var n = 0; n < idName.length; n++) {
+                            var access = 0;
+                            access += $("#" + idName[n] + "_x").prop('checked') ? 1 : 0;
+                            access += $("#" + idName[n] + "_w").prop('checked') ? 2 : 0;
+                            access += $("#" + idName[n] + "_r").prop('checked') ? 4 : 0;
+                            onacc += access;
+                        }
+                        $("#access").val(onacc);
+                    });
+                    //提交
+                    $('.set_access_authority').click(function(){
+                        var chmod = $("#access").val();
+                        var chown = $("#chown").val();
+                        var all = $("#accept_all").prop("checked") ? 'True' : 'False';
+                        var _form = {}
+                        _form = {
+                            user:chown,
+                            access:chmod,
+                            all:all
+                        }
+                        if(isPatch){
+                            _form['type'] = data.type
+                            _form['path'] = data.path
+                            _form['data'] = data.filelist
+                        }else{
+                            _form['filename'] = data.path
+                        }
+                        that.$http(isPatch?'SetBatchData':'SetFileAccess',_form,function(res){
+                            if (res.status){
+                                layer.close(layers);
+                                that.reader_file_list({path:that.file_path,is_operating:false}
+                            )}
+                            layer.msg(res.msg, { icon: res.status ? 1 : 2 });
+                        })
+                    })
+                    $('.layer_close').click(function () {
+                        layer.close(layers);
+                    })
+                }
+            });
+        });
+    },
+    /**
+     * @description 获取实时任务视图
+     * @returns void
+     */
+    get_present_task_view:function(){
+        this.file_present_task = layer.open({
+            type: 1,
+            title: "实时任务队列",
+            area: '500px',
+            closeBtn: 2,
+            skin:'present_task_list',
+            shadeClose: false,
+            shade: false,
+            offset: 'auto',
+            content: '<div style="margin: 10px;" class="message-list"></div>'
+        })
+    },
+    /**
+     * @description 渲染实时任务列表数据
+     * @returns void
+     */
+    render_present_task_list:function(){
+        var that = this;
+        this.get_task_req({status:-3},function(lists){
+            if(lists.length == 0){
+                layer.close(that.file_present_task)
+                that.file_present_task = null;
+                that.reader_file_list({path:that.file_path,is_operating:false})
+                return
+            }
+            var task_body = '',is_add = false;
+            $.each(lists,function(index,item){
+                if(item.status == -1){
+                    if(!that.file_present_task) that.get_present_task_view();
+                    if(item.type == '1'){
+                        task_body +='<div class="mw-con">\
+                            <ul class="waiting-down-list">\
+                                <li>\
+                                    <div class="down-filse-name"><span class="fname" style="width:80%;" title="正在下载: '+ item.shell + '">正在下载: ' + item.shell + '</span><span style="position: absolute;left: 84%;top: 25px;color: #999;">' + item.log.pre + '%</span><span class="btlink" onclick="bt_file.remove_present_task(' + item.id + ')" style="position: absolute;top: 25px;right: 20px;">取消</span></div>\
+                                    <div class="down-progress"><div class="done-progress" style="width:'+ item.log.pre + '%"></div></div>\
+                                    <div class="down-info"><span class="total-size"> '+ item.log.used + '/' + ToSize(item.log.total) + '</span><span class="speed-size">' + (item.log.speed == 0 ? '正在连接..' : item.log.speed) + '/s</span><span style="margin-left: 20px;">预计还要: ' + item.log.time +'</span></div>\
+                                </li>\
+                            </ul>\
+                            </div>'
+                    }else{
+                        task_body += '<div class="mw-title"><span style="max-width: 88%;display: block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">' + item.name + ': ' + item.shell + '</span><span class="btlink" onclick="bt_file.remove_present_task(' + item.id + ')"  style="position: absolute;top: 10px;right: 15px;">取消</span></div>\
+                        <div class="mw-con codebg">\
+                            <code>'+ item.log +'</code>\
+                        </div>'
+                    }
+                }else{
+                    if (!is_add) {
+                        task_body += '<div class="mw-title">等待执行任务</div><div class="mw-con"><ul class="waiting-list">';
+                        is_add = true;
+                    }
+                    task_body += '<li><span class="wt-list-name" style="width: 90%;">' + item.name + ': ' + item.shell + '</span><span class="mw-cancel" onclick="bt_file.remove_present_task(' + item.id + ')">X</span></li>';
+                }
+            })
+            if(that.file_present_task){
+                if(is_add) task_body+= '</ul></div>'
+                $(".message-list").html(task_body);
+            }
+            setTimeout(function () { that.render_present_task_list(); }, 1000);
+        })
+    },
+    /**
+     * @description 取消实时任务列表
+     * @returns void
+     */
+    remove_present_task:function(id){
+        var that = this;
+        layer.confirm('是否取消上传当前列表的文件，若取消上传，已上传的文件，需用户手动删除，是否继续？',{title:'取消上传文件',icon:0},function(indexs){
+            bt.send('remove_task','task/remove_task',{id:id},function(rdata){
+                layer.msg(rdata.msg,{icon:1})
+                layer.close(that.file_present_task)
+                that.file_present_task = null;
+            })
+            layer.close(indexs);
+        });
+    },
+    /**
+     * @descripttion 设置访问权限
+     * @returns void
+     */
+    edit_access_authority:function(){
+        var access = $("#access").val();
+        var idName = ['owner', 'group', 'public'];
+        for (var n = 0; n < idName.length; n++) {
+            $("#" + idName[n] + "_x").prop('checked', false);
+            $("#" + idName[n] + "_w").prop('checked', false);
+            $("#" + idName[n] + "_r").prop('checked', false);
+        }
+        for (var i = 0; i < access.length; i++) {
+            var onacc = access.substr(i, 1);
+            if (i > idName.length) continue;
+            if (onacc > 7) $("#access").val(access.substr(0, access.length - 1));
+            switch (onacc) {
+                case '1':
+                    $("#" + idName[i] + "_x").prop('checked', true);
+                    break;
+                case '2':
+                    $("#" + idName[i] + "_w").prop('checked', true);
+                    break;
+                case '3':
+                    $("#" + idName[i] + "_x").prop('checked', true);
+                    $("#" + idName[i] + "_w").prop('checked', true);
+                    break;
+                case '4':
+                    $("#" + idName[i] + "_r").prop('checked', true);
+                    break;
+                case '5':
+                    $("#" + idName[i] + "_r").prop('checked', true);
+                    $("#" + idName[i] + "_x").prop('checked', true);
+                    break;
+                case '6':
+                    $("#" + idName[i] + "_r").prop('checked', true);
+                    $("#" + idName[i] + "_w").prop('checked', true);
+                    break;
+                case '7':
+                    $("#" + idName[i] + "_r").prop('checked', true);
+                    $("#" + idName[i] + "_w").prop('checked', true);
+                    $("#" + idName[i] + "_x").prop('checked', true);
+                    break;
+            }
+        }
+    },
+    /**
+     * @description 获取文件权限 - ok
+     * @param {Object} data 当前文件的数据对象
+     * @param {Object} el 当前元素对象
+     * @returns void
+    */
+    get_file_authority:function(data,callback){
+        this.$http('GetFileAccess',{filename:data.path},function(rdata){if(callback) callback(rdata)});
+    },
+    /**
+     * @description 文件夹目录查杀
+     * @param {Object} data 当前文件的数据对象
+     * @returns void
+     */
+    set_dir_kill:function(data){
+        var that = this;
+        layer.confirm('目录查杀将包含子目录中的php文件，是否操作？', { title: '目录查杀['+data['filename']+']', closeBtn: 2, icon: 3 }, function (index) {
+            that.$http('dir_webshell_check',{path:data.path},function(rdata){
+                layer.msg(rdata.msg,{icon:rdata.status?1:2})
+            })
+        })
+    },
+    /**
+     * @description 文件路径合并
+     * @param {String} paths 旧路径
+     * @param {String} param 新路径
+     * @return {String} 新的路径
+    */
+    path_resolve:function(paths, param){
+        var path = '',split = '';
+        if(!Array.isArray(param)) param = [param];
+        paths.replace(/([\/|\/]*)$/,function($1){
+            split = $1;
+            return 'www';
+        });
+        $.each(param,function(index,item){
+            path += '/' + item;
+        });
+        return paths + path;
+    },
+    
+    /**
+     * @descripttion 取扩展名
+     * @return: 返回扩展名
+     */
+    get_ext_name(fileName){
+        var extArr = fileName.split(".");	
+        var exts = ["folder", "folder-unempty", "sql", "c", "cpp", "cs", "flv", "css", "js", "htm", "html", "java", "log", "mht", "php", "url", "xml", "ai", "bmp", "cdr", "gif", "ico", "jpeg", "jpg", "JPG", "png", "psd", "webp", "ape", "avi", "mkv", "mov", "mp3", "mp4", "mpeg", "mpg", "rm", "rmvb", "swf", "wav", "webm", "wma", "wmv", "rtf", "docx", "fdf", "potm", "pptx", "txt", "xlsb", "xlsx", "7z", "cab", "iso", "rar", "zip", "gz", "bt", "file", "apk", "bookfolder", "folder-empty", "fromchromefolder", "documentfolder", "fromphonefolder", "mix", "musicfolder", "picturefolder", "videofolder", "sefolder", "access", "mdb", "accdb", "fla", "doc", "docm", "dotx", "dotm", "dot", "pdf", "ppt", "pptm", "pot", "xls", "csv", "xlsm"];
+        var extLastName = extArr[extArr.length - 1];
+        for(var i=0; i<exts.length; i++){
+            if(exts[i]==extLastName){
+                return exts[i];
+            }
+        }
+        return 'file';
+    },
+
+    /**
+     * @description 获取路径上的文件名称
+     * @param {String} path 路径
+     * @return {String} 文件名称
+     */
+    get_path_filename:function(path){
+        var paths = path.split('/');
+        return paths[paths.length - 1];
+    },
+
+    /**
+     * @description 获取文件权限信息
+     * @param {Object} data 请求传入参数
+     * @param {Function} callback 回调参数
+     * @returns void
+     */
+    get_file_access:function(data,callback){
+        var that = this;
+        this.layerT = bt.load('正在文件权限信息，请稍后...');
+        bt.send('GetFileAccess','files/GetFileAccess',{path:data.path},function(res){
+            that.loadT.close();
+            if(callback) callback();
+        });
+    },
+
+    /**
+     * @description 创建外链下载
+     * @param {Object} data 请求传入参数
+     * @param {Function} callback 回调参数
+     * @returns void
+    */
+    create_download_url:function(data,callback){
+       var that = this;
+        this.layerT = bt.load('正在分享文件，请稍后...');
+        bt.send('create_download_url','files/create_download_url',{filename:data.filename,ps:data.ps,password:data.password,expire:data.expire}, function (res) {
+            that.layerT.close();
+            if (callback) callback(res);
+        });
+    },
+
+     /**
+     * @description 获取外链下载数据
+     * @param {Object} data 请求传入参数
+     * @param {Function} callback 回调参数
+     * @returns void
+    */
+    get_download_url_find:function(data,callback){
+        var that = this;
+        this.layerT = bt.load('正在获取分享文件信息，请稍后...');
+        bt.send('get_download_url_find','files/get_download_url_find',{id:data.id}, function (res) {
+            that.layerT.close();
+            if (callback) callback(res);
+        });
+    },
+
+    /**
+     * @description 删除外链下载
+     * @param {Object} data 请求传入参数
+     * @param {Function} callback 回调参数
+     * @returns void
+    */
+    remove_download_url:function(data,callback){
+        var that = this;
+        layer.confirm('是否取消分享该文件【'+ data.fileName +'】，是否继续？',{ title: '取消分享', closeBtn: 2, icon: 3 }, function () {
+            this.layerT = bt.load('正在取消分享文件，请稍后...');
+            bt.send('remove_download_url','files/remove_download_url',{id:data.id},function(res){
+                if (callback) callback(res);
+            });
+        })
+        
+    },
+
+    /**
+     * @description 获取磁盘列表
+     * @param {Function} callback 回调参数
+     * @returns void
+    */
+    get_disk_list:function(callback){
+        var that = this;
+        this.layerT = bt.load('正在获取磁盘列表，请稍后...');
+        bt.send('GetDiskInfo','system/GetDiskInfo', {}, function (res) {
+            that.layerT.close();
+            if (callback) callback(res);
+        });
+    },
+
+    /**
+     * @description 返回上一层目录地址
+     * @param {String} path 当前路径
+     * @returns 返回上一层地址
+    */
+    retrun_prev_path:function(path){
+        var dir_list = path.split('/');
+        dir_list.splice(dir_list.length - 1);
+        if(dir_list == '') dir_list = ['/']
+        return dir_list.join('/');
+    },
+
+    // 新建文件（文件和文件夹）
+    create_file_req: function (data, callback) {
+        var _req = (data.type === 'folder' ? 'CreateDir' : 'CreateFile')
+        bt.send(_req, 'files/' + _req, {
+            path: data.path
+        }, function (res) {
+            if (callback) callback(res);
+        });
+    },
+
+    // 重命名文件（文件或文件夹）
+    rename_file_req: function (data, callback){
+        bt.send('MvFile', 'files/MvFile', {
+            sfile: data.sfile,
+            dfile: data.dfile,
+            rename: data.rename || true
+        }, function (res) {
+            if (callback) callback(res);
+        });
+    },
+
+    // 剪切文件请求（文件和文件夹）
+    shear_file_req: function (data, callback) {
+        this.rename_file_req({
+            sfile: data.sfile,
+            dfile: data.dfile,
+            rename: false
+        }, function (res) {
+            if (callback) callback(res);
+        });
+    },
+
+    // 检查文件是否存在（复制文件和文件夹前需要调用）
+    check_exists_files_req: function (data, callback) {
+        bt.send('CheckExistsFiles', 'files/CheckExistsFiles', {
+            dfile: data.dfile,
+            filename: data.filename
+        }, function (res) {
+            if (callback) callback(res);
+        });
+    },
+
+    // 复制文件（文件和文件夹）
+    copy_file_req: function (data, callback) {
+        bt.send('CopyFile', 'files/CopyFile', {
+            sfile: data.sfile,
+            dfile: data.dfile
+        }, function (res) {
+            if (callback) callback(res);
+        });
+    },
+
+    // 压缩文件（文件和文件夹）
+    compress_file_req: function (data, callback) {
+        bt.send('Zip', 'files/Zip', {
+            sfile: data.sfile,
+            dfile: data.dfile,
+            z_type: data.z_type,
+            path: data.path
+        }, function (res) {
+            if (callback) callback(res);
+        });
+    },
+
+    // 获取实时任务
+    get_task_req: function (data, callback) {
+        bt.send('get_task_lists', 'task/get_task_lists', {
+            status: data.status
+        }, function (res) {
+            if (callback) callback(res);
+        });
+    },
+
+    // 获取文件权限
+    get_file_access: function () {
+        bt.send('GetFileAccess', 'files/GetFileAccess', {
+            filename: data.filename
+        }, function (res) {
+            if (callback) callback(res);
+        });
+    },
+
+    // 设置文件权限
+    set_file_access: function () {
+        bt.send('SetFileAccess', 'files/SetFileAccess', {
+            filename: data.filename,
+            user: data.user,
+            access: data.access,
+            all: data.all
+        }, function (res) {
+            if (callback) callback(res);
+        });
+    },
+
+    /**
+     * @description 删除文件（文件和文件夹）
+     * @param {Object} data 文件目录参数
+     * @param {Function} callback 回调函数
+     * @return void
+     */
+    del_file_req: function (data, callback) {
+        var _req = (data.type === 'dir' ? 'DeleteDir' : 'DeleteFile')
+        var layerT =  bt.load('正在删除文件，请稍后...');
+        bt.send(_req, 'files/' + _req,{path: data.path}, function (res) {
+            layerT.close();
+            layer.msg(res.msg,{icon:res.status?1:2})
+            if (callback) callback(res);
+        });
+    },
+
+    /**
+     * @description 下载文件
+     * @param {Object} 文件目录参数
+     * @param {Function} callback 回调函数
+     * @return void
+     */
+    down_file_req: function (data, callback) {
+        window.open('/download?filename=' + encodeURIComponent(data.path));
+    },
+
+    /**
+     * @description 获取文件大小（文件夹）
+     * @param {*} data  文件目录参数
+     * @param {Function} callback 回调函数
+     * @return void
+    */
+    get_file_size: function (data, callback){
+        this.$http({tips:'正在获取文件目录大小，请稍后...',method:'get_path_size',data:{path:data.path}},callback);
+    },
+    /**
+     * @description 获取目录大小
+     * @param {*} data  文件目录地址
+     * @return void
+    */
+    get_dir_size:function(data){
+        layer.msg("正在计算，请稍候",{icon:16,time:0,shade: [0.3, '#000']})
+        $.post("/files?action=GetDirSize","path="+data.path,function(rdata){
+            layer.closeAll();
+            $("#file_all_size").text(rdata)
+        })
+    },
+    /**
+     * @description 获取文件目录
+     * @param {*} data  文件目录参数
+     * @param {Function} callback 回调函数
+    */
+    get_dir_list:function(data, callback) {
+        var that = this;
+        bt.send('GetDir','files/GetDir',$.extend({
+            p: 1,
+            showRow:bt.get_storage('local','showRow') || that.file_page_num,
+            path:bt.get_cookie('Path') || data.path,
+            sort:bt.get_cookie('files_sort') || 'type'
+        },data),function(res){if(callback) callback(res)})
+    },
+    /**
+     * @description 文件、文件夹压缩
+     * @param {Object} data  文件目录参数
+     * @param {Boolean} isbatch  是否批量操作
+    */
+    compress_file_or_dir:function(data,isbatch){
+        var that = this;
+        this.reader_form_line({
+            url:'Zip',
+            overall: {width:'310px'},
+            data:[
+                {label:'压缩类型', type:'select', name:'z_type', value:data.open, list:[
+                    ['tar_gz','tar.gz (推荐)'],
+                    ['zip','zip (通用格式)'],
+                    ['rar','rar (WinRAR对中文兼容较好)']
+                ]},
+                {label:'压缩路径', id:'compress_path', name:'dfile', placeholder:'URL地址', value:data.path+'.'+(data.open == 'tar_gz'?'tar.gz':data.open)}
+            ],
+            beforeSend:function(updata){
+                var ind = data.path.lastIndexOf("\/"),_url = data.path.substring(0,ind+1);  // 过滤路径文件名
+                return {sfile:data.filename,dfile:updata.dfile,z_type:(updata.z_type == 'tar_gz'?'tar.gz':updata.z_type),path:_url}
+            }
+        },function(form,html){
+            var loadT = layer.open({
+                type:1,
+                title:'压缩文件',
+                area: '480px',
+                shadeClose: false,
+                closeBtn:2,
+                skin:'compress_file_view',
+                btn:['压缩','关闭'],
+                content: html[0].outerHTML,
+                success:function(){
+                    // 切换压缩格式
+                    $('select[name=z_type]').change(function(){
+                        var _type = $(this).val(),_inputVel = $('input[name=dfile]').val(),path_list = [];
+                        _type == 'tar_gz'? 'tar.gz' : _type
+                        _inputVel = _inputVel.substring(0,_inputVel.lastIndexOf('\/'))
+                        path_list = _inputVel.split('/');
+                        $('input[name=dfile]').val(_inputVel+'/'+(isbatch?path_list[path_list.length -1]:data.filename)+'.'+_type)
+                    })
+                    // 插入选择路径
+                    $('.compress_file_view .line:nth-child(2)').find('.info-r').append('<span class="glyphicon glyphicon-folder-open cursor" style="margin-left: 10px;" onclick="ChangePath(\'compress_path\')"></span>');
+                },
+                yes:function(){
+                    var ress = form.getVal();
+                    if(ress.dfile == '') return layer.msg('请选择有效的地址',{icon:2})
+                    form.submitForm(function(res,datas){
+                        setTimeout(function(){
+                            that.reader_file_list({path:datas.path})
+                        }, 1000); 
+                        if(res == null || res == undefined){
+                            layer.msg(lan.files.zip_ok, { icon: 1 });
+                        }
+                        if(res.status){
+                            that.render_present_task_list();
+                            layer.msg('压缩成功', { icon: 1 });
+                        }
+                        layer.close(loadT)
+                    })
+                }
+            })
+        })
+    },
+    /**
+     * @description 文件、文件夹解压
+     * @param {*} data  文件目录参数
+    */
+    unpack_file_to_path:function(data){
+        var that = this,_type = 'zip',spath = '';
+        spath = data.path.substring(0,data.path.lastIndexOf('\/'))  
+        this.reader_form_line({
+            url: 'UnZip',
+            overall: {width: '310px'},
+            data:[
+                {label:'文件名',name:'z_name',placeholder:'压缩文件名',value:data.path},
+                {label:'解压到',name:'z_path',placeholder:'解压路径',value:spath},
+                {label:'编码',name:'z_code',type:'select',value:'UTF-8',list:[
+                    ['UTF-8','UTF-8'],
+                    ['gb18030','GBK']
+                ]}
+            ],
+            beforeSend:function(updata){
+                return {sfile:updata.z_name,dfile:updata.z_path,type:_type,coding:updata.z_code,password:updata.z_password}
+            }
+        },function(form,html){
+            var loadT = layer.open({
+                type:1,
+                title:'解压文件',
+                area: '480px',
+                shadeClose: false,
+                closeBtn:2,
+                skin:'unpack_file_view',
+                btn:['解压','关闭'],
+                content: html[0].outerHTML,
+                success:function(){
+                    if(data.ext == 'gz') _type = 'tar' //解压格式
+                    if(_type == 'zip') { // 判断是否插入解压密码
+                        $('.unpack_file_view .line:nth-child(2)').append('<div class="line"><span class="tname">解压密码</span><div class="info-r"><input type="text" name="z_password" class="bt-input-text " placeholder="无密码则留空" style="width:310px" value=""></div></div>')
+                    }
+                },
+                yes:function(){
+                    var ress = form.getVal();
+                    if(ress.z_name == '') return layer.msg('请输入文件名路径',{icon:2})
+                    if(ress.z_path == '') return layer.msg('请输入解压地址',{icon:2})
+                    form.submitForm(function(res,datas){
+                        layer.close(loadT)
+                        setTimeout(function(){
+                            that.reader_file_list({path:datas.path})
+                        }, 1000); 
+                        if(res.status){
+                            that.render_present_task_list();
+                        }
+                        layer.msg(res.msg,{icon:res.status?1:2})
+                    })
+                }
+            })
+        })
+    },
+    
+    /**
+     * @description 匹配非法字符
+     * @param {Array} item 配置对象
+     * @return 返回匹配结果
+     */
+    match_unqualified_string:function(item){
+        var containSpecial = RegExp(/[(\ )(\*)(\|)(\\)(\:)(\")(\/)(\<)(\>)(\?)(\)]+/);
+        return containSpecial.test(item)
+    },
+    /**
+     * @description 渲染表单
+     * @param {Array} config 配置对象
+     * @param {Function} callback 回调函数
+     * @return void
+     */
+    reader_form_line:function(config,callback){
+        var that = this,random = bt.get_random(10),html = $('<form id="'+ random +'" class="bt-form pd20"></form>'),data = config,eventList = [],that = this;
+        if(!Array.isArray(config)) data = config.data;
+        $.each(data,function(index,item){
+            var labelWidth = item.labelWidth || config.overall.labelWidth || null,event_random = bt.get_random(10),
+            width = item.labelWidth || config.overall.width || null,
+            form_line = $('<div class="line"><span class="tname" '+ (labelWidth?('width:'+labelWidth):'') +'>'+ (item.label || '') +'</span><div class="info-r"></div></div>'),
+            form_el = $((function(){
+                switch(item.type){
+                    case 'select':
+                        return '<select '+ (item.disabled?'disabled':'') +' '+ (item.readonly?'readonly':'') +' class="bt-input-text mr5 '+ (item.readonly?'readonly-form-input':'') +'" name="'+ item.name +'" '+ (item.eventType?'data-event="'+ event_random +'"':'') +' style="'+ (width?('width:'+width):'') +'">'+ (function(item){
+                            var options_list = '';
+                            $.each(item.list,function(key,items){
+                                if(!Array.isArray(items)){//判断是否为二维数组
+                                    options_list += '<option value="'+ items +'" '+ (item.value === key?'selected':'') +'>'+ items +'</option>'
+                                }else{
+                                    options_list += '<option value="'+ items[0] +'" '+ (item.value === items[0]?'selected':'')  +'>'+ items[1] +'</option>'
+                                }
+                            })
+                            return options_list;
+                        }(item)) +'</select>';
+                    break;
+                    case 'text':
+                    default:
+                        return '<input '+ (item.disabled?'disabled':'') +' '+ (item.readonly?'readonly':'') +' '+ (item.eventType?'data-event="'+ event_random +'"':'') +' type="text" name="'+ item.name +'" '+(item.id?'id="'+item.id+'"':'')+' class="bt-input-text '+ (item.readonly?'readonly-form-input':'') +'" placeholder="'+ (item.placeholder || '') +'" style="'+ (width?('width:'+width):'') +'" value="'+ (item.value || '') +'"/>';
+                    break;
+                }
+            }(item)));
+            if(item.eventType || item.event){
+                if(!Array.isArray(item.eventType)) item.eventType = [item.eventType];
+                $.each(item.eventType,function(index,items){
+                    eventList.push({el:event_random,type:items || 'click',event:item[items] || null});
+                    if(config.el){
+                        var els = $('[data-event="'+ item.el +'"]');
+                        if(item[items]){
+                            if(items == 'enter'){
+                                els.on('keyup',function(e){
+                                    if(e.keyCode == 13) item.event(e)
+                                })
+                            }else{
+                                els.on(item || 'click',item.event);
+                            }
+                        }else{
+                            if(items == 'focus'){
+                                var vals = els.val();
+                                if(vals != ''){
+                                    els.val('').focus().val(vals);
+                                }
+                            }else{
+                                els[items]();
+                            }
+                            
+                        }
+                    }
+                });
+            }
+            form_line.find('.info-r').append(form_el)
+            html.append(form_line);
+        });
+        if(config.el) $(config.el).empty().append(html);
+        if(callback) callback({
+            // 获取内容
+            getVal:function(){
+                return $('#'+random).serializeObject();
+            },
+            // 设置事件，没有设置el参数，需要
+            setEvent:function(){
+                $.each(eventList,function(index,item){
+                    var els = $('[data-event="'+ item.el +'"]');
+                    if(item.event === null){
+                        if(item.type == 'focus'){
+                            var vals = els.val();
+                            if(vals != ''){
+                                els.val('').focus().val(vals);
+                            }
+                        }else{
+                            els[item.type]();
+                        }
+                    }else{
+                        if(item.type == 'enter'){
+                            els.on('keyup',function(e){
+                                if(e.keyCode == 13) item.event(e)
+                            })
+                        }else{
+                            els.on(item.type,item.event);
+                        }
+                    }
+                });
+            },
+            // 提交表单
+            submitForm:function(callback){
+                var data = this.getVal();
+                if(config.beforeSend) data = config.beforeSend(data);
+                that.loadT = bt.load('正在提交表单内容，请稍候...');
+                bt.send(config.url,('files/'+config.url),data,function(rdata){
+                    that.loadT.close();
+                    if(callback) callback(rdata,data)
+                })
+                // bt.http({tips:config.loading || '正在提交表单内容，请稍后...',url:config.url,data:data,success:function(rdata){if(callback) callback(rdata,data)}});
+            }
+        },html);
+    },
+        
+    /**
+     * @description 文件管理请求方法
+     * @param {*} data 
+     * @param {*} data
+     * @param {*} callback
+     */
+    $http:function(data,parem,callback){
+        var that  = this,loadT = '';
+        if(typeof data == "string"){
+            if(typeof parem != "object") callback = parem,parem = {};
+            if(!Array.isArray(that.method_list[data])) that.method_list[data] = ['files',that.method_list[data]];
+            that.$http({method:data,tips:(that.method_list[data][1]?'正在'+ that.method_list[data][1] +'，请稍后...':false),module:that.method_list[data][0],data:parem,msg:true},callback);
+        }else {
+            if(typeof data.tips != 'undefined' && data.tips) loadT = bt.load(data.tips);
+            bt.send(data.method,(data.module || 'files') +'/' + data.method,data.data || {},function(res){
+                if(loadT != '') loadT.close();
+                if(typeof res == "string") res = JSON.parse(res);
+                if(res.status === false && res.msg){
+                    bt.msg(res);
+                    return false;
+                }
+                if(parem) parem(res)
+            });
+        }
+    }
+}
+
+bt_file.file_drop = {
     startTime: 0,
     endTime:0,
     uploadLength:0, //上传数量
@@ -23,12 +3478,12 @@ var fileDrop = {
     isLayuiDrop:false, //是否是小窗口拖拽
     uploading:false,
     is_webkit:(function(){
-        if(navigator.userAgent.indexOf('WebKit')>-1) return true;
+        if(navigator.userAgent.indexOf('WebKit') > -1) return true;
         return false;
     })(),
     init:function(){
         if($('#mask_layer').length == 0) {
-            window.UploadFiles = function(){ fileDrop.dialog_view()};
+            window.UploadFiles = function(){ bt_file.file_drop.dialog_view()};
             $("body").append($('<div class="mask_layer" id="mask_layer" style="position:fixed;top:0;left:0;right:0;bottom:0; background:rgba(255,255,255,0.6);border:3px #ccc dashed;z-index:99999999;display:none;color:#999;font-size:40px;text-align:center;overflow:hidden;"><span style="position: absolute;top: 50%;left: 50%;margin-left: -300px;margin-top: -40px;">上传文件到当前目录下'+ (!this.is_webkit?'<i style="font-size:20px;font-style:normal;display:block;margin-top:15px;color:red;">当前浏览器暂不支持拖动上传，推荐使用Chrome浏览器或WebKit内核的浏览。</i>':'') +'</span></div>'));
             this.event_relation(document.querySelector('#container'),document,document.querySelector('#mask_layer'));
         }
@@ -57,26 +3512,29 @@ var fileDrop = {
         drop.el.addEventListener("dragover",function(e){ e.preventDefault() }, false);
         drop.el.addEventListener("drop",(enter.callback != null)?drop.callback:that.ev_drop, false);
     },
+
+    
     // 事件触发
     ev_drop:function(e){
-        if(!fileDrop.is_webkit){
+        if(e.dataTransfer.items[0].kind == 'string') return false;
+        if(!bt_file.file_drop.is_webkit){
             $('#mask_layer').hide();
             return false;
         }
         e.preventDefault();
-        if(fileDrop.uploading){
+        if(bt_file.file_drop.uploading){
         	layer.msg('正在上传文件中，请稍后...');
         	return false;
         }
         var items = e.dataTransfer.items,time,num = 0;
             loadT = layer.msg('正在获取上传文件信息，请稍后...',{icon:16,time:0,shade:.3});
-        fileDrop.isUpload = true;
+        bt_file.file_drop.isUpload = true;
         if(items && items.length && items[0].webkitGetAsEntry != null) {
             if(items[0].kind != 'file') return false;
         }
-        if(fileDrop.filesList == null) fileDrop.filesList = []
-        for(var i = fileDrop.filesList.length -1; i >= 0 ; i--){
-            if(fileDrop.filesList[i].is_upload) fileDrop.filesList.splice(-i,1)
+        if(bt_file.file_drop.filesList == null) bt_file.file_drop.filesList = []
+        for(var i = bt_file.file_drop.filesList.length -1; i >= 0 ; i--){
+            if(bt_file.file_drop.filesList[i].is_upload) bt_file.file_drop.filesList.splice(-i,1)
         }
         $('#mask_layer').hide();
         function update_sync(s){
@@ -86,31 +3544,32 @@ var fileDrop = {
         }
 
         var iterateFilesAndDirs = function(filesAndDirs, path) {
-            if(!fileDrop.isUpload) return false
+            if(!bt_file.file_drop.isUpload) return false
 			for (var i = 0; i < filesAndDirs.length; i++) {
 				if (typeof(filesAndDirs[i].getFilesAndDirectories) == 'function') {
                     update_sync(filesAndDirs[i])
 				} else {
-				    if(num > fileDrop.isUploadNumber){
-				        fileDrop.isUpload = false;
-                        layer.msg(' '+ fileDrop.isUploadNumber +'份，无法上传,请压缩后上传!。',{icon:2,area:'405px'});
+				    if(num > bt_file.file_drop.isUploadNumber){
+				        bt_file.file_drop.isUpload = false;
+                        layer.msg(' '+ bt_file.file_drop.isUploadNumber +'份，无法上传,请压缩后上传!。',{icon:2,area:'405px'});
+                        bt_file.file_drop.filesList = [];
                         clearTimeout(time);
                         return false;
                     }
-                    fileDrop.filesList.push({
+                    bt_file.file_drop.filesList.push({
                         file:filesAndDirs[i],
                         path:bt.get_file_path(path +'/'+ filesAndDirs[i].name).replace('//','/'),
                         name:filesAndDirs[i].name.replace('//','/'),
-                        icon:GetExtName(filesAndDirs[i].name),
-                        size:fileDrop.to_size(filesAndDirs[i].size),
+                        icon:bt_file.get_ext_name(filesAndDirs[i].name),
+                        size:bt_file.file_drop.to_size(filesAndDirs[i].size),
                         upload:0, //上传状态,未上传：0、上传中：1，已上传：2，上传失败：-1
                         is_upload:false
                     });
-                    fileDrop.uploadAllSize += filesAndDirs[i].size
+                    bt_file.file_drop.uploadAllSize += filesAndDirs[i].size
                     clearTimeout(time);
                     time = setTimeout(function(){
                         layer.close(loadT);
-                        fileDrop.dialog_view();
+                        bt_file.file_drop.dialog_view();
                     },100);
                     num ++;
 				}
@@ -137,11 +3596,11 @@ var fileDrop = {
                 type: 1,
                 closeBtn: 1,
                 maxmin:true,
-                area: ['540px','505px'],
+                area: ['590px','505px'],
                 btn:['开始上传','取消上传'],
                 title: '上传文件到【'+ bt.get_cookie('Path')  +'】--- 支持断点续传',
                 skin:'file_dir_uploads',
-                content:'<div style="padding:15px 15px 10px 15px;"><div class="upload_btn_groud"><div class="btn-group"><button type="button" class="btn btn-primary btn-sm upload_file_btn">上传文件</button><button type="button" class="btn btn-primary  btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu"><li><a href="#" data-type="file">上传文件</a></li><li><a href="#" data-type="dir">上传目录</a></li></ul></div><div class="file_upload_info" style="display:none;"><span>总进度&nbsp;<i class="uploadProgress"></i>，正在上传&nbsp;<i class="uploadNumber"></i>，</span><span style="display:none">上传失败&nbsp;<i class="uploadError"></i></span><span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span><span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span><i></i></div></div><div class="upload_file_body '+ (html==''?'active':'') +'">'+ (html!=''?('<ul class="dropUpLoadFileHead" style="padding-right:'+ (is_show?'15':'0') +'px"><li class="fileTitle"><span class="filename">文件名</span><span class="filesize">文件大小</span><span class="fileStatus">上传状态</span></li></ul><ul class="dropUpLoadFile list-list">'+ html +'</ul>'):'<span>请将需要上传的文件拖到此处'+ (!that.is_webkit?'<i style="display: block;font-style: normal;margin-top: 10px;color: red;font-size: 17px;">当前浏览器暂不支持拖动上传，推荐使用Chrome浏览器或WebKit内核的浏览。</i>':'') +'</span>') +'</div></div>',
+                content:'<div style="padding:15px 15px 10px 15px;"><div class="upload_btn_groud"><div class="btn-group"><button type="button" class="btn btn-primary btn-sm upload_file_btn">上传文件</button><button type="button" class="btn btn-primary  btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu"><li><a href="#" data-type="file">上传文件</a></li><li><a href="#" data-type="dir">上传目录</a></li></ul></div><div class="file_upload_info" style="display:none;"><span>总进度&nbsp;<i class="uploadProgress"></i>,正在上传&nbsp;<i class="uploadNumber"></i>,</span><span style="display:none">上传失败&nbsp;<i class="uploadError"></i></span><span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>,</span><span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span><i></i></div></div><div class="upload_file_body '+ (html==''?'active':'') +'">'+ (html!=''?('<ul class="dropUpLoadFileHead" style="padding-right:'+ (is_show?'15':'0') +'px"><li class="fileTitle"><span class="filename">文件名</span><span class="filesize">文件大小</span><span class="fileStatus">上传状态</span></li></ul><ul class="dropUpLoadFile list-list">'+ html +'</ul>'):'<span>请将需要上传的文件拖到此处'+ (!that.is_webkit?'<i style="display: block;font-style: normal;margin-top: 10px;color: red;font-size: 17px;">当前浏览器暂不支持拖动上传，推荐使用Chrome浏览器或WebKit内核的浏览。</i>':'') +'</span>') +'</div></div>',
                 success:function(){
                     $('#mask_layer').hide();
                     $('.file_dir_uploads .layui-layer-max').hide();
@@ -154,14 +3613,14 @@ var fileDrop = {
                                 var config = {
                                     file:files[i],
                                     path: bt.get_file_path('/' + files[i].webkitRelativePath).replace('//','/') ,
-                                    icon:GetExtName(files[i].name),
+                                    icon:bt_file.get_ext_name(files[i].name),
                                     name:files[i].name.replace('//','/'),
                                     size:that.to_size(files[i].size),
                                     upload:0, //上传状态,未上传：0、上传中：1，已上传：2，上传失败：-1
                                     is_upload:true
                                 }
                                 that.filesList.push(config);
-                                fileDrop.uploadAllSize += files[i].size
+                                bt_file.file_drop.uploadAllSize += files[i].size
                             }
                             that.dialog_view(that.filesList);
                         }).click();
@@ -229,7 +3688,7 @@ var fileDrop = {
                     }
                 },
                 end:function (){
-                    GetFiles(bt.get_cookie('Path'));
+                    // GetFiles(bt.get_cookie('Path'));
                     that.clear_drop_stauts(true);
                 },
                 min:function(){
@@ -283,7 +3742,7 @@ var fileDrop = {
         var item = $('.dropUpLoadFile li:eq('+ index +')'),that = this;
         var file_info = $('.file_upload_info');
         if($('.file_upload_info .uploadProgress').length == 0){
-        	$('.file_upload_info').html('<span>总进度&nbsp;<i class="uploadProgress"></i>，正在上传&nbsp;<i class="uploadNumber"></i>，</span><span style="display:none">上传失败&nbsp;<i class="uploadError"></i></span><span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span><span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span><i></i>');
+        	$('.file_upload_info').html('<span>总进度&nbsp;<i class="uploadProgress"></i>,正在上传&nbsp;<i class="uploadNumber"></i>,</span><span style="display:none">上传失败&nbsp;<i class="uploadError"></i></span><span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>,</span><span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span><i></i>');
         }
         file_info.show().prev().hide().parent().css('paddingRight',0);
         if(that.errorLength > 0) file_info.find('.uploadError').text('('+ that.errorLength +'份)').parent().show();
@@ -314,8 +3773,8 @@ var fileDrop = {
         var time = new Date(),that = this;
         if(!status){
         	try {
-                var s_peed  = fileDrop.to_size(fileDrop.uploadedSize / ((time.getTime() - fileDrop.initTimer.getTime()) / 1000))
-	        	$('.file_upload_info').html('<span>上传成功 '+ this.uploadLength +'个文件，'+ (this.errorLength>0?('上传失败 '+ this.errorLength +'个文件，'):'') +'耗时'+ this.diff_time(this.initTimer,time) + '，平均速度 '+ s_peed +'/s</span>').append($('<i class="ico-tips-close"></i>').click(function(){
+                var s_peed  = bt_file.file_drop.to_size(bt_file.file_drop.uploadedSize / ((time.getTime() - bt_file.file_drop.initTimer.getTime()) / 1000))
+	        	$('.file_upload_info').html('<span>上传成功 '+ this.uploadLength +'个文件,'+ (this.errorLength>0?('上传失败 '+ this.errorLength +'个文件，'):'') +'耗时'+ this.diff_time(this.initTimer,time) + ',平均速度 '+ s_peed +'/s</span>').append($('<i class="ico-tips-close"></i>').click(function(){
 	                $('.file_upload_info').hide().prev().show();
 	            }));
         	} catch (e) {
@@ -323,7 +3782,7 @@ var fileDrop = {
         	}
         }
         $('.layui-layer-btn0').removeAttr('style data-upload').text('开始上传');
-        $.extend(fileDrop,{
+        $.extend(bt_file.file_drop,{
             startTime: 0,
             endTime:0,
             uploadLength:0, //上传数量
@@ -345,12 +3804,11 @@ var fileDrop = {
     },
     // 上传文件,文件开始字段，文件编号
     upload_file:function(fileStart,index){
-        
         if(fileStart == undefined && this.uploadSuspend.length == 0) fileStart = 0,index = 0;
         if(this.filesList.length === index){
             clearInterval(this.speedInterval);
             this.clear_drop_stauts();
-            GetFiles(bt.get_cookie('Path'));
+            bt_file.reader_file_list({path:bt_file.file_path,is_operating:false});
             return false;
         }
         var that = this;
@@ -472,2457 +3930,40 @@ var fileDrop = {
         }
     }
 }
-function IsDiskWidth() {
-    var comlistWidth = $("#comlist").width();
-    var bodyWidth = $(".file-box").width();
-    if (comlistWidth + 530 > bodyWidth) {
-        $("#comlist").css({ "width": bodyWidth - 530 + "px", "height": "34px", "overflow": "auto" });
-    }
-    else {
-        $("#comlist").removeAttr("style"); 
-    } 
-}
-function Recycle_bin(type) {
-    $.post('/files?action=Get_Recycle_bin','',function (rdata) {
-        var body = '';
-        switch (type) {
-            case 1:
-                for (var i = 0; i < rdata.dirs.length; i++) {
-                    var shortwebname = rdata.dirs[i].name.replace(/'/, "\\'");
-                    var shortpath = rdata.dirs[i].dname;
-                    if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
-                    if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
-                    body += '<tr>\
-								<td><span class=\'ico ico-folder\'></span><span class="tname" title="'+ rdata.dirs[i].name + '">' + shortwebname + '</span></td>\
-								<td><span title="'+ rdata.dirs[i].dname + '">' + shortpath + '</span></td>\
-								<td>'+ ToSize(rdata.dirs[i].size) + '</td>\
-								<td>'+ getLocalTime(rdata.dirs[i].time) + '</td>\
-								<td style="text-align: right;">\
-									<a class="btlink" href="javascript:;" onclick="ReRecycleBin(\'' + rdata.dirs[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
-									 | <a class="btlink" href="javascript:;" onclick="DelRecycleBin(\'' + rdata.dirs[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
-								</td>\
-							</tr>';
-                }
-                for (var i = 0; i < rdata.files.length; i++) {
-                    if (rdata.files[i].name.indexOf('BTDB_') != -1) {
-                        var shortwebname = rdata.files[i].name.replace(/'/, "\\'");
-                        var shortpath = rdata.files[i].dname;
-                        if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
-                        if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
-                        body += '<tr>\
-								<td><span class="ico ico-'+ (GetExtName(rdata.files[i].name)) + '"></span><span class="tname" title="' + rdata.files[i].name + '">' + shortwebname.replace('BTDB_', '') + '</span></td>\
-								<td><span title="'+ rdata.files[i].dname + '">mysql://' + shortpath.replace('BTDB_', '') + '</span></td>\
-								<td>-</td>\
-								<td>'+ getLocalTime(rdata.files[i].time) + '</td>\
-								<td style="text-align: right;">\
-									<a class="btlink" href="javascript:;" onclick="ReRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
-									 | <a class="btlink" href="javascript:;" onclick="DelRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
-								</td>\
-							</tr>'
 
-                        continue;
-                    }
-                    var shortwebname = rdata.files[i].name.replace(/'/, "\\'");
-                    var shortpath = rdata.files[i].dname;
-                    if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
-                    if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
-                    body += '<tr>\
-								<td><span class="ico ico-'+ (GetExtName(rdata.files[i].name)) + '"></span><span class="tname" title="' + rdata.files[i].name + '">' + shortwebname + '</span></td>\
-								<td><span title="'+ rdata.files[i].dname + '">' + shortpath + '</span></td>\
-								<td>'+ ToSize(rdata.files[i].size) + '</td>\
-								<td>'+ getLocalTime(rdata.files[i].time) + '</td>\
-								<td style="text-align: right;">\
-									<a class="btlink" href="javascript:;" onclick="ReRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
-									 | <a class="btlink" href="javascript:;" onclick="DelRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
-								</td>\
-							</tr>'
-                }
-                $("#RecycleBody").html(body);
-                return;
-                break;
-            case 2:
-                for (var i = 0; i < rdata.dirs.length; i++) {
-                    var shortwebname = rdata.dirs[i].name.replace(/'/, "\\'");
-                    var shortpath = rdata.dirs[i].dname;
-                    if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
-                    if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
-                    body += '<tr>\
-								<td><span class=\'ico ico-folder\'></span><span class="tname" title="'+ rdata.dirs[i].name + '">' + shortwebname + '</span></td>\
-								<td><span title="'+ rdata.dirs[i].dname + '">' + shortpath + '</span></td>\
-								<td>'+ ToSize(rdata.dirs[i].size) + '</td>\
-								<td>'+ getLocalTime(rdata.dirs[i].time) + '</td>\
-								<td style="text-align: right;">\
-									<a class="btlink" href="javascript:;" onclick="ReRecycleBin(\'' + rdata.dirs[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
-									 | <a class="btlink" href="javascript:;" onclick="DelRecycleBin(\'' + rdata.dirs[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
-								</td>\
-							</tr>'
-                }
-                $("#RecycleBody").html(body);
-                return;
-                break;
-            case 3:
-                for (var i = 0; i < rdata.files.length; i++) {
-                    if (rdata.files[i].name.indexOf('BTDB_') != -1) continue;
-                    var shortwebname = rdata.files[i].name.replace(/'/, "\\'");
-                    var shortpath = rdata.files[i].dname;
-                    if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
-                    if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
-                    body += '<tr>\
-								<td><span class="ico ico-'+ (GetExtName(rdata.files[i].name)) + '"></span><span class="tname" title="' + rdata.files[i].name + '">' + shortwebname + '</span></td>\
-								<td><span title="'+ rdata.files[i].dname + '">' + shortpath + '</span></td>\
-								<td>'+ ToSize(rdata.files[i].size) + '</td>\
-								<td>'+ getLocalTime(rdata.files[i].time) + '</td>\
-								<td style="text-align: right;">\
-									<a class="btlink" href="javascript:;" onclick="ReRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
-									 | <a class="btlink" href="javascript:;" onclick="DelRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
-								</td>\
-							</tr>'
-                }
-                $("#RecycleBody").html(body);
-                return;
-                break;
-            case 4:
-                for (var i = 0; i < rdata.files.length; i++) {
-                    if (ReisImage(getFileName(rdata.files[i].name))) {
-                        var shortwebname = rdata.files[i].name.replace(/'/, "\\'");
-                        var shortpath = rdata.files[i].dname;
-                        if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
-                        if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
-                        body += '<tr>\
-								<td><span class="ico ico-'+ (GetExtName(rdata.files[i].name)) + '"></span><span class="tname" title="' + rdata.files[i].name + '">' + shortwebname + '</span></td>\
-								<td><span title="'+ rdata.files[i].dname + '">' + shortpath + '</span></td>\
-								<td>'+ ToSize(rdata.files[i].size) + '</td>\
-								<td>'+ getLocalTime(rdata.files[i].time) + '</td>\
-								<td style="text-align: right;">\
-									<a class="btlink" href="javascript:;" onclick="ReRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
-									 | <a class="btlink" href="javascript:;" onclick="DelRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
-								</td>\
-							</tr>'
-                    }
-                }
-                $("#RecycleBody").html(body);
-                return;
-                break;
-            case 5:
-                for (var i = 0; i < rdata.files.length; i++) {
-                    if (rdata.files[i].name.indexOf('BTDB_') != -1) continue;
-                    if (!(ReisImage(getFileName(rdata.files[i].name)))) {
-                        var shortwebname = rdata.files[i].name.replace(/'/, "\\'");
-                        var shortpath = rdata.files[i].dname;
-                        if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
-                        if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
-                        body += '<tr>\
-								<td><span class="ico ico-'+ (GetExtName(rdata.files[i].name)) + '"></span><span class="tname" title="' + rdata.files[i].name + '">' + shortwebname + '</span></td>\
-								<td><span title="'+ rdata.files[i].dname + '">' + shortpath + '</span></td>\
-								<td>'+ ToSize(rdata.files[i].size) + '</td>\
-								<td>'+ getLocalTime(rdata.files[i].time) + '</td>\
-								<td style="text-align: right;">\
-									<a class="btlink" href="javascript:;" onclick="ReRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
-									 | <a class="btlink" href="javascript:;" onclick="DelRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
-								</td>\
-							</tr>'
-                    }
-                }
-                $("#RecycleBody").html(body);
-                return;
-            case 6:
-                for (var i = 0; i < rdata.files.length; i++) {
-                    if (rdata.files[i].name.indexOf('BTDB_') != -1) {
-                        var shortwebname = rdata.files[i].name.replace(/'/, "\\'");
-                        var shortpath = rdata.files[i].dname;
-                        if (shortwebname.length > 20) shortwebname = shortwebname.substring(0, 20) + "...";
-                        if (shortpath.length > 20) shortpath = shortpath.substring(0, 20) + "...";
-                        body += '<tr>\
-								<td><span class="ico ico-'+ (GetExtName(rdata.files[i].name)) + '"></span><span class="tname" title="' + rdata.files[i].name + '">' + shortwebname.replace('BTDB_', '') + '</span></td>\
-								<td><span title="'+ rdata.files[i].dname + '">mysql://' + shortpath.replace('BTDB_', '') + '</span></td>\
-								<td>-</td>\
-								<td>'+ getLocalTime(rdata.files[i].time) + '</td>\
-								<td style="text-align: right;">\
-									<a class="btlink" href="javascript:;" onclick="ReRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_re + '</a>\
-									 | <a class="btlink" href="javascript:;" onclick="DelRecycleBin(\'' + rdata.files[i].rname.replace(/'/, "\\'") + '\',this)">' + lan.files.recycle_bin_del + '</a>\
-								</td>\
-							</tr>'
-                    }
-                }
-                $("#RecycleBody").html(body);
-                return;
-                break;
-        }
+bt_file.init();
 
 
-        var tablehtml = '<div class="re-head">\
-				<div style="margin-left: 3px;" class="ss-text">\
-                        <em>'+ lan.files.recycle_bin_on + '</em>\
-                        <div class="ssh-item">\
-                                <input class="btswitch btswitch-ios" id="Set_Recycle_bin" type="checkbox" '+ (rdata.status ? 'checked' : '') + '>\
-                                <label class="btswitch-btn" for="Set_Recycle_bin" onclick="Set_Recycle_bin()"></label>\
-                        </div>\
-                        <em style="margin-left: 20px;">'+ lan.files.recycle_bin_on_db + '</em>\
-                        <div class="ssh-item">\
-                                <input class="btswitch btswitch-ios" id="Set_Recycle_bin_db" type="checkbox" '+ (rdata.status_db ? 'checked' : '') + '>\
-                                <label class="btswitch-btn" for="Set_Recycle_bin_db" onclick="Set_Recycle_bin(1)"></label>\
-                        </div>\
-                </div>\
-				<span style="line-height: 32px; margin-left: 30px;">'+ lan.files.recycle_bin_ps + '</span>\
-                <button style="float: right" class="btn btn-default btn-sm" onclick="CloseRecycleBin();">'+ lan.files.recycle_bin_close + '</button>\
-				</div>\
-				<div class="re-con">\
-					<div class="re-con-menu">\
-						<p class="on" onclick="Recycle_bin(1)">'+ lan.files.recycle_bin_type1 + '</p>\
-						<p onclick="Recycle_bin(2)">'+ lan.files.recycle_bin_type2 + '</p>\
-						<p onclick="Recycle_bin(3)">'+ lan.files.recycle_bin_type3 + '</p>\
-						<p onclick="Recycle_bin(4)">'+ lan.files.recycle_bin_type4 + '</p>\
-						<p onclick="Recycle_bin(5)">'+ lan.files.recycle_bin_type5 + '</p>\
-						<p onclick="Recycle_bin(6)">'+ lan.files.recycle_bin_type6 + '</p>\
-					</div>\
-					<div class="re-con-con">\
-					<div style="margin: 15px;" class="divtable">\
-					<table width="100%" class="table table-hover">\
-						<thead>\
-							<tr>\
-								<th>'+ lan.files.recycle_bin_th1 + '</th>\
-								<th>'+ lan.files.recycle_bin_th2 + '</th>\
-								<th>'+ lan.files.recycle_bin_th3 + '</th>\
-								<th width="150">'+ lan.files.recycle_bin_th4 + '</th>\
-								<th style="text-align: right;" width="110">'+ lan.files.recycle_bin_th5 + '</th>\
-							</tr>\
-						</thead>\
-					<tbody id="RecycleBody" class="list-list">'+ body + '</tbody>\
-			</table></div></div></div>';
-        if (type == "open") {
-            layer.open({
-                type: 1,
-                shift: 5,
-                closeBtn: 2,
-                area: ['80%', '606px'],
-                title: lan.files.recycle_bin_title,
-                content: tablehtml
-            });
 
-            if (window.location.href.indexOf("database") != -1) {
-                Recycle_bin(6);
-                $(".re-con-menu p:last-child").addClass("on").siblings().removeClass("on");
-            } else {
-                Recycle_bin(1);
-            }
-        }
-        $(".re-con-menu p").click(function () {
-            $(this).addClass("on").siblings().removeClass("on");
-        })
-    });
-}
-function getFileName(name) {
-    var text = name.split(".");
-    var n = text.length - 1;
-    text = text[n];
-    return text;
-}
-function ReisImage(fileName) {
-    var exts = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'tiff', 'ico'];
-    for (var i = 0; i < exts.length; i++) {
-        if (fileName == exts[i]) return true
-    }
-    return false;
-}
-function ReRecycleBin(path, obj) {
-    layer.confirm(lan.files.recycle_bin_re_msg, { title: lan.files.recycle_bin_re_title, closeBtn: 2, icon: 3 }, function () {
-        var loadT = layer.msg(lan.files.recycle_bin_re_the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-        $.post('/files?action=Re_Recycle_bin', 'path=' + encodeURIComponent(path), function (rdata) {
-            layer.close(loadT);
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 5 });
-            $(obj).parents('tr').remove();
-        });
-    });
-}
-function DelRecycleBin(path, obj) {
-    layer.confirm(lan.files.recycle_bin_del_msg, { title: lan.files.recycle_bin_del_title, closeBtn: 2, icon: 3 }, function () {
-        var loadT = layer.msg(lan.files.recycle_bin_del_the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-        $.post('/files?action=Del_Recycle_bin', 'path=' + encodeURIComponent(path), function (rdata) {
-            layer.close(loadT);
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 5 });
-            $(obj).parents('tr').remove();
-        });
-    });
-}
-function CloseRecycleBin() {
-    layer.confirm(lan.files.recycle_bin_close_msg, { title: lan.files.recycle_bin_close, closeBtn: 2, icon: 3 }, function () {
-        var loadT = layer.msg("<div class='myspeed'>" + lan.files.recycle_bin_close_the + "</div>", { icon: 16, time: 0, shade: [0.3, '#000'] });
-        setTimeout(function () {
-            getSpeed('.myspeed');
-        }, 1000);
-        $.post('/files?action=Close_Recycle_bin', '', function (rdata) {
-            layer.close(loadT);
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 5 });
-            $("#RecycleBody").html('');
-        });
-    });
-}
-function Set_Recycle_bin(db) {
-    var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-    var data = {}
-    if (db == 1) {
-        data = { db: db };
-    }
-    $.post('/files?action=Recycle_bin', data, function (rdata) {
-        layer.close(loadT);
-        layer.msg(rdata.msg, { icon: rdata.status ? 1 : 5 });
-    });
-}
-function get_path_size(path) {
-    var loadT = layer.msg('正在计算目录大小,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-    $.post('/files?action=get_path_size', { path: path }, function (rdata) {
-        layer.close(loadT);
-        var myclass = '.' + rdata.path.replace(/[^\w]/g, '-');
-        $(myclass).text(ToSize(rdata.size));
-    });
-}
-function path_check(path) {
-    if (path == '/') return path;
-    path = path.replace(/[\/]{2,}/g, '/');
-    path = path.replace(/[\/]+$/g, '');
-    return path;
-}
 
-function GetFiles(Path, sort) {
-    var searchtype = Path;
-    var p = '1';
-    if (!isNaN(Path)) {
-        p = Path;
-        Path = getCookie('Path');
-    }
 
-    Path = path_check(Path);
 
-    var data = {};
-    var search = '';
-    var searchV = $("#SearchValue").val();
-    if (searchV.length > 0 && searchtype == "1") {
-        data['search'] = searchV;
-        if ($("#search_all")[0].checked) {
-            data['all'] = 'True'
+
+Function.prototype.delay = function(that,arry,time){
+    if(!Array.isArray(arry)) time = arry,arry = [];
+    if(typeof time == "undefined") time = 0;
+    setTimeout(this.apply(that,arry),time);
+    return this;
+}
+jQuery.prototype.serializeObject = function () {
+    var a,o,h,i,e;
+    a = this.serializeArray();
+    o={};
+    h=o.hasOwnProperty;
+    for(i=0;i<a.length;i++){
+        e=a[i];
+        if(!h.call(o,e.name)){
+            o[e.name]=e.value;
         }
     }
-
-    var old_scroll_top = 0;
-    if (getCookie('Path') === Path) {
-        old_scroll_top = $(".oldTable").scrollTop();
-    }
-    
-    var sorted = '';
-    var reverse = '';
-    if (!sort) {
-        sort = getCookie('files_sort');
-        reverse = getCookie(sort + '_reverse');
-    } else {
-        reverse = getCookie(sort + '_reverse');
-        if (reverse === 'True') {
-            reverse = 'False';
-        } else {
-            reverse = 'True';
-        }
-    }
-    if (sort) {
-        data['sort'] = sort;
-        data['reverse'] = reverse;
-        setCookie(sort + '_reverse', reverse);
-        setCookie('files_sort', sort);
-    }
-
-
-    var showRow = getCookie('showRow');
-    if (!showRow) showRow = '200';
-    var Body = '';
-    data['path'] = Path;
-
-
-    if (searchV) {
-        var loadT = layer.msg('正在搜索,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-    }
-    var totalSize = 0;
-    $.post('/files?action=GetDir&tojs=GetFiles&p=' + p + '&showRow=' + showRow + search, data, function (rdata) {
-        if (searchV) layer.close(loadT);
-        if (rdata.status === false) {
-            layer.msg(rdata.msg, { icon: 2 });
-            return;
-        }
-
-        var rows = ['10', '50', '100', '200', '500', '1000', '2000'];
-        var rowOption = '';
-        for (var i = 0; i < rows.length; i++) {
-            var rowSelected = '';
-            if (showRow == rows[i]) rowSelected = 'selected';
-            rowOption += '<option value="' + rows[i] + '" ' + rowSelected + '>' + rows[i] + '</option>';
-        }
-
-        $("#filePage").html(rdata.PAGE);
-        $("#filePage div").append("<span class='Pcount-item'>每页<select style='margin-left: 3px;margin-right: 3px;border:#ddd 1px solid' class='showRow'>" + rowOption + "</select>条</span>");
-        $("#filePage .Pcount").css("left", "16px");
-        if (rdata.DIR == null) rdata.DIR = [];
-        for (var i = 0; i < rdata.DIR.length; i++) {
-            var fmp = rdata.DIR[i].split(";");
-            var cnametext = fmp[0] + fmp[5];
-            fmp[0] = fmp[0].replace(/'/, "\\'");
-            if (cnametext.length > 20) {
-                cnametext = cnametext.substring(0, 20) + '...'
-            }
-            if (isChineseChar(cnametext)) {
-                if (cnametext.length > 10) {
-                    cnametext = cnametext.substring(0, 10) + '...'
-                }
-            }
-            var fileMsg = '';
-            if (fmp[0].indexOf('Recycle_bin') != -1) {
-                fileMsg = 'PS: 回收站目录,勿动!';
-            }
-            if (fileMsg == ''){
-                fileMsg = fmp[8];
-            }
-            if (fileMsg != '') {
-                fileMsg = '<span style="margin-left: 30px; color: #999;">' + fileMsg + '</span>';
-            }
-            var timetext = '--';
-            if (getCookie("rank") == "a") {
-                $("#set_list").addClass("active");
-                $("#set_icon").removeClass("active");
-                Body += "<tr class='folderBoxTr' fileshare='"+ fmp[6] +"' data-composer='"+fmp[7]+"' data-path='" + rdata.PATH + "/" + fmp[0] + "' filetype='dir' data-ps='"+fmp[8]+"'>\
-						<td><input type='checkbox' name='id' value='"+ fmp[0] + "'></td>\
-						<td class='column-name'><span class='cursor' onclick=\"GetFiles('" + rdata.PATH + "/" + fmp[0] + "')\"><span class='ico ico-folder'></span><a class='text' title='" + fmp[0] + fmp[5] + "'>" + cnametext + fileMsg + "</a></span></td>\
-						<td><a class='btlink "+ (rdata.PATH + '/' + fmp[0]).replace(/[^\w]/g, '-') + "' onclick=\"get_path_size('" + rdata.PATH + "/" + fmp[0] + "')\">点击计算</a></td>\
-						<td>"+ getLocalTime(fmp[2]) + "</td>\
-						<td>"+ fmp[3] + "</td>\
-						<td>"+ fmp[4] + "</td>\
-						<td class='editmenu'><span>\
-						<a class='btlink' href='javascript:;' onclick=\"webshell_dir('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.dir_menu_webshell + "</a> | \
-						<a class='btlink' href='javascript:;' onclick=\"CopyFile('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_copy + "</a> | \
-						<a class='btlink' href='javascript:;' onclick=\"CutFile('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_mv + "</a> | \
-						<a class='btlink' href=\"javascript:ReName(0,'" + fmp[0] + "');\">" + lan.files.file_menu_rename + "</a> | \
-						<a class='btlink' href=\"javascript:SetChmod(0,'" + rdata.PATH + "/" + fmp[0] + "');\">" + lan.files.file_menu_auth + "</a> | \
-						<a class='btlink' href=\"javascript:Zip('" + rdata.PATH + "/" + fmp[0] + "');\">" + lan.files.file_menu_zip + "</a> | \
-						<a class='btlink' href='javascript:;' onclick=\"DeleteDir('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_del + "</a></span>\
-					</td></tr>";
-            }
-            else {
-                $("#set_icon").addClass("active");
-                $("#set_list").removeClass("active");
-                Body += "<div class='file folderBox menufolder' fileshare='"+ fmp[6] +"' data-path='" + rdata.PATH + "/" + fmp[0] + "' filetype='dir' title='" + lan.files.file_name + "：" + fmp[0] + "&#13;" + lan.files.file_size + "：" + ToSize(fmp[1]) + "&#13;" + lan.files.file_etime + "：" + getLocalTime(fmp[2]) + "&#13;" + lan.files.file_auth + "：" + fmp[3] + "&#13;" + lan.files.file_own + "：" + fmp[4] + "'>\
-						<input type='checkbox' name='id' value='"+ fmp[0] + "'>\
-						<div class='ico ico-folder' ondblclick=\"GetFiles('" + rdata.PATH + "/" + fmp[0] + "')\"></div>\
-						<div class='titleBox' onclick=\"GetFiles('" + rdata.PATH + "/" + fmp[0] + "')\"><span class='tname'>" + fmp[0] + "</span></div>\
-						</div>";
-            }
-        }
-        for (var i = 0; i < rdata.FILES.length; i++) {
-            if (rdata.FILES[i] == null) continue;
-            var fmp = rdata.FILES[i].split(";");
-            var displayZip = isZip(fmp[0]),bodyZip = '',download = '',image_view = '',file_webshell = '';
-            var cnametext = fmp[0] + fmp[5];
-            fmp[0] = fmp[0].replace(/'/, "\\'");
-            if (cnametext.length > 48) {
-                cnametext = cnametext.substring(0, 48) + '...'
-            }
-            if (isChineseChar(cnametext)) {
-                if (cnametext.length > 16) {
-                    cnametext = cnametext.substring(0, 16) + '...'
-                }
-            }
-            if(isPhp(fmp[0])){
-            	file_webshell = "<a class='btlink' href='javascript:;' onclick=\"php_file_webshell('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_webshell + "</a> | ";
-            }
-            if (displayZip != -1) {
-                bodyZip = "<a class='btlink' href='javascript:;' onclick=\"UnZip('" + rdata.PATH + "/" + fmp[0] + "'," + displayZip + ")\">" + lan.files.file_menu_unzip + "</a> | ";
-            }
-            if (isText(fmp[0])) {
-                bodyZip = "<a class='btlink' href='javascript:;' onclick=\"openEditorView(0,'" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_edit + "</a> | ";
-            }
-
-            if (isVideo(fmp[0])) {
-                bodyZip = "<a class='btlink' href='javascript:;' onclick=\"GetPlay('" + rdata.PATH + "/" + fmp[0] + "')\">播放</a> | ";
-            }
-
-            if (isImage(fmp[0])) {
-                image_view = "<a class='btlink' href='javascript:;' onclick=\"GetImage({path:'" + rdata.PATH + "/" + fmp[0] + "',filename:'"+ fmp[0] +"'})\">" + lan.files.file_menu_img + "</a> | ";
-            }
-            download = "<a class='btlink' href='javascript:;' onclick=\"GetFileBytes('" + rdata.PATH + "/" + fmp[0] + "'," + fmp[1] + ")\">" + lan.files.file_menu_down + "</a> | ";
-            
-
-            totalSize += parseInt(fmp[1]);
-            if (getCookie("rank") == "a") {
-                var fileMsg = '';
-                switch (fmp[0]) {
-                    case '.user.ini':
-                        fileMsg = 'PS: PHP用户配置文件(防跨站)!';
-                        break;
-                    case '.htaccess':
-                        fileMsg = 'PS: Apache用户配置文件(伪静态)';
-                        break;
-                    case 'swap':
-                        fileMsg = 'PS: 宝塔默认设置的SWAP交换分区文件';
-                        break;
-                }
-                
-
-                if (fmp[0].indexOf('.upload.tmp') != -1) {
-                    fileMsg = 'PS: 宝塔文件上传临时文件,重新上传从断点续传,可删除';
-                }
-
-                if (fileMsg == ''){
-                    fileMsg = fmp[8];
-                }
-
-                if (fileMsg != '') {
-                    fileMsg = '<span style="margin-left: 30px; color: #999;">' + fileMsg + '</span>';
-                }
-                Body += "<tr class='folderBoxTr' fileshare='"+ fmp[6] +"' data-path='" + rdata.PATH + "/" + fmp[0] + "' filetype='" + fmp[0] + "' data-ps='"+fmp[8]+"'><td><input type='checkbox' name='id' value='" + fmp[0] + "'></td>\
-						<td class='column-name'><span class='ico ico-"+ (GetExtName(fmp[0])) + "'></span><a class='text' title='" + fmp[0] + fmp[5] + "'>" + cnametext + fileMsg + "</a></td>\
-						<td>" + (ToSize(fmp[1])) + "</td>\
-						<td>" + ((fmp[2].length > 11) ? fmp[2] : getLocalTime(fmp[2])) + "</td>\
-						<td>"+ fmp[3] + "</td>\
-						<td>"+ fmp[4] + "</td>\
-						<td class='editmenu'>\
-						<span>"+file_webshell+"<a class='btlink' href='javascript:;' onclick=\"CopyFile('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_copy + "</a> | \
-						<a class='btlink' href='javascript:;' onclick=\"CutFile('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_mv + "</a> | \
-						<a class='btlink' href='javascript:;' onclick=\"ReName(0,'" + fmp[0] + "')\">" + lan.files.file_menu_rename + "</a> | \
-						<a class='btlink' href=\"javascript:SetChmod(0,'" + rdata.PATH + "/" + fmp[0] + "');\">" + lan.files.file_menu_auth + "</a> | \
-						<a class='btlink' href=\"javascript:Zip('" + rdata.PATH + "/" + fmp[0] + "');\">" + lan.files.file_menu_zip + "</a> | \
-						"+ bodyZip + image_view + download + "\
-						<a class='btlink' href='javascript:;' onclick=\"DeleteFile('" + rdata.PATH + "/" + fmp[0] + "')\">" + lan.files.file_menu_del + "</a>\
-						</span></td></tr>";
-            }
-            else {
-                Body += "<div class='file folderBox menufile' fileshare='"+ fmp[6] +"' data-path='" + rdata.PATH + "/" + fmp[0] + "' filetype='" + fmp[0] + "' title='" + lan.files.file_name + "：" + fmp[0] + "&#13;" + lan.files.file_size + "：" + ToSize(fmp[1]) + "&#13;" + lan.files.file_etime + "：" + getLocalTime(fmp[2]) + "&#13;" + lan.files.file_auth + "：" + fmp[3] + "&#13;" + lan.files.file_own + "：" + fmp[4] + "'>\
-						<input type='checkbox' name='id' value='"+ fmp[0] + "'>\
-						<div class='ico ico-"+ (GetExtName(fmp[0])) + "'></div>\
-						<div class='titleBox'><span class='tname'>" + fmp[0] + "</span></div>\
-						</div>";
-            }
-        }
-        var dirInfo = '(' + lan.files.get_size.replace('{1}', rdata.DIR.length + '').replace('{2}', rdata.FILES.length + '') + '<font id="pathSize"><a class="btlink ml5" onClick="GetPathSize()">' + lan.files.get + '</a></font>)';
-        $("#DirInfo").html(dirInfo);
-        if (getCookie("rank") === "a") {
-            var sort_icon = '<span data-id="status" class="glyphicon glyphicon-triangle-' + ((data['reverse'] !== 'False') ? 'bottom' : 'top') + '" style="margin-left:5px;color:#bbb"></span>';
-            var tablehtml = '<div class="newTable"><table width="100%" border="0" cellpadding="0" cellspacing="0" class="table table-hover">\
-                              <thead>\
-                                  <tr>\
-                                      <th width="30"><input type="checkbox" id="setBox" placeholder=""></th>\
-                                      <th><a style="cursor: pointer;" onclick="GetFiles('+ p + ',\'name\')">' + lan.files.file_name + ((data['sort'] === 'name' || !data['sort']) ? sort_icon : '') + '</a></th>\
-                                      <th><a style="cursor: pointer;" onclick="GetFiles('+ p + ',\'size\')">' + lan.files.file_size + ((data['sort'] === 'size') ? sort_icon : '') + '</a></th>\
-                                      <th><a style="cursor: pointer;" onclick="GetFiles('+ p + ',\'mtime\')">' + lan.files.file_etime + ((data['sort'] === 'mtime') ? sort_icon : '') + '</a></th>\
-                                      <th><a style="cursor: pointer;" onclick="GetFiles('+ p + ',\'accept\')">' + lan.files.file_auth + ((data['sort'] === 'accept') ? sort_icon : '') + '</a></th>\
-                                      <th><a style="cursor: pointer;" onclick="GetFiles('+ p + ',\'user\')">' + lan.files.file_own + ((data['sort'] === 'user') ? sort_icon : '') + '</a></th>\
-                                      <th style="text-align: right;" width="330">'+ lan.files.file_act + '</th>\
-									  <th></th>\
-                                  </tr>\
-                              </thead>\
-                              </table>\
-							</div>\
-							<div class="newTableShadow"></div>\
-            				<div class="oldTable" style="overflow: auto;height: 500px;margin-top: -8px;"><table width="100%" border="0" cellpadding="0" cellspacing="0" class="table table-hover">\
-							<thead>\
-								<tr>\
-									<th width="30"><input type="checkbox" id="setBox" placeholder=""></th>\
-									<th><a style="cursor: pointer;" class="btlink" onclick="GetFiles('+ p + ',\'name\')">' + lan.files.file_name + ((data['sort'] === 'name' || !data['sort']) ? sort_icon : '') + '</a></th>\
-									<th><a style="cursor: pointer;" class="btlink" onclick="GetFiles('+ p + ',\'size\')">' + lan.files.file_size + ((data['sort'] === 'size') ? sort_icon : '') + '</a></th>\
-									<th><a style="cursor: pointer;" class="btlink" onclick="GetFiles('+ p + ',\'mtime\')">' + lan.files.file_etime + ((data['sort'] === 'mtime') ? sort_icon : '') + '</a></th>\
-									<th><a style="cursor: pointer;" class="btlink" onclick="GetFiles('+ p + ',\'accept\')">' + lan.files.file_auth + ((data['sort'] === 'accept') ? sort_icon : '') + '</a></th>\
-									<th><a style="cursor: pointer;" class="btlink" onclick="GetFiles('+ p + ',\'user\')">' + lan.files.file_own + ((data['sort'] === 'user') ? sort_icon : '') + '</a></th>\
-									<th style="text-align: right;" width="330">'+ lan.files.file_act + '</th>\
-								</tr>\
-							</thead>\
-							<tbody id="filesBody" class="list-list">'+ Body + '</tbody>\
-						</table></div><div class="oldTableShadow"></div>';
-            $("#fileCon").removeClass("fileList").html(tablehtml);
-            $("#tipTools").width($("#fileCon")[0].clientWidth - 30);
-        }
-        else {
-            $("#fileCon").addClass("fileList").html(Body);
-            $("#tipTools").width($("#fileCon")[0].clientWidth - 30);
-        }
-        $("#DirPathPlace input").val(rdata.PATH);
-        fileDrop.init();
-        var BarTools = '<div class="btn-group">\
-						<button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">\
-						'+ lan.files.new + ' <span class="caret"></span>\
-						</button>\
-						<ul class="dropdown-menu">\
-						<li><a href="javascript:CreateFile(0,\'' + Path + '\');">' + lan.files.new_empty_file + '</a></li>\
-						<li><a href="javascript:CreateDir(0,\'' + Path + '\');">' + lan.files.new_dir + '</a></li>\
-						</ul>\
-						</div>';
-        if (rdata.PATH != '/') {
-            BarTools += ' <button onclick="javascript:BackDir();" class="btn btn-default btn-sm glyphicon glyphicon-arrow-left" title="' + lan.files.return + '"></button>';
-        }
-        setCookie('Path', rdata.PATH);
-        BarTools += ' <button onclick="javascript:GetFiles(\'' + rdata.PATH + '\');" class="btn btn-default btn-sm glyphicon glyphicon-refresh" title="' + lan.public.fresh + '"></button> <button onclick="web_shell()" title="' + lan.files.shell + '" type="button" class="btn btn-default btn-sm"><em class="ico-cmd"></em></button><button onclick="get_download_url_list()" type="button" class="btn btn-default btn-sm ml5">分享列表</button>';
-
-        // 收藏夹
-        var shtml = '<div class="btn-group">\
-						<button style="margin-left: 5px;" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">收藏夹 <span class="caret"></span>\
-						</button>\
-						<ul class="dropdown-menu">'
-
-        for (var i = 0; i < rdata.STORE.length; i++) {
-            shtml += '<li class="file-types" title="'+ rdata.STORE[i].path +'"><div style="width:200px"><span class="ico '+ (rdata.STORE[i].type ==='file'?'ico-file':'ico-folder') +'"></span><a href="javascript:;"  style="display: inline-block;width:150px;overflow: hidden;text-overflow: ellipsis;vertical-align: top;" onclick="'+ (rdata.STORE[i].type ==='file'?'openEditorView(0,\''+ rdata.STORE[i].path +'\')':'GetFiles(\''+ rdata.STORE[i].path +'\')') +'">' + rdata.STORE[i].name + '</a></div>';
-        }
-        shtml += '<li style="text-align: center;"><a href="javascript: ;" onclick="set_file_store(\'' + rdata.PATH + '\')">管理收藏夹</a></li></ul></div>'
-
-        BarTools += shtml;
-        
-        var copyName = getCookie('copyFileName');
-        var cutName = getCookie('cutFileName');
-        var isPaste = (copyName == 'null') ? cutName : copyName;
-        if (isPaste != 'null' && isPaste != undefined) {
-            BarTools += ' <button onclick="javascript:PasteFile(\'' + (GetFileName(isPaste)) + '\');" class="btn btn-default btn-Warning btn-sm">' + lan.files.paste + '</button>';
-        }
-
-        $("#Batch").html('');
-        var BatchTools = '';
-        var isBatch = getCookie('BatchSelected');
-        if (isBatch == 1 || isBatch == '1') {
-            BatchTools += ' <button onclick="javascript:BatchPaste();" class="btn btn-default btn-sm">' + lan.files.paste_all + '</button>';
-        }
-
-        
-        $("#Batch").html(BatchTools);
-        $("#setBox").prop("checked", false);
-
-        $("#BarTools").html(BarTools);
-        $(".oldTable").scrollTop(old_scroll_top);
-        $("input[name=id]").click(function () {
-            if ($(this).prop("checked")) {
-                $(this).prop("checked", true);
-                $(this).parents("tr").addClass("ui-selected");
-            }
-            else {
-                $(this).prop("checked", false);
-                $(this).parents("tr").removeClass("ui-selected");
-            }
-            showSeclect()
-        });
-
-        $("#setBox").click(function () {
-            if ($(this).prop("checked")) {
-                $("input[name=id]").prop("checked", true);
-                $("#filesBody > tr").addClass("ui-selected");
-
-            } else {
-                $("input[name=id]").prop("checked", false);
-                $("#filesBody > tr").removeClass("ui-selected");
-            }
-            showSeclect();
-        });
-
-        $("#filesBody .btlink").click(function (e) {
-            e.stopPropagation();
-        });
-        $("input[name=id]").dblclick(function (e) {
-            e.stopPropagation();
-        });
-        $("#filesBody").bind("contextmenu", function (e) {
-            return false;
-        });
-        bindselect();
-        $("#filesBody").mousedown(function (e) {
-            var count = totalFile();
-            if (e.which == 3) {
-                if (count > 1) {
-                    RClickAll(e);
-                }
-                else {
-                    return
-                }
-            }
-        });
-        $(".folderBox,.folderBoxTr").mousedown(function (e) {
-            var count = totalFile();
-            if (e.which == 3) {
-                if (count <= 1) {
-                    var a = $(this);
-                    a.contextify(RClick(a.attr("filetype"), a.attr("data-path"), a.find("input").val(), rdata,a.attr('fileshare'),a.attr('data-composer'),a.attr('data-ps')));
-                    $(this).find('input').prop("checked", true);
-                    $(this).addClass('ui-selected');
-                    $(this).siblings().removeClass('ui-selected').find('input').prop("checked", false);
-                }
-                else {
-                    RClickAll(e);
-                }
-            }
-        });
-        $(".showRow").change(function () {
-            setCookie('showRow', $(this).val());
-            GetFiles(p);
-        });
-        PathPlaceBtn(rdata.PATH);
-        auto_table_width();
-    });
+    return o;
 }
-function webshell_dir(path){
-    layer.confirm('目录查杀将包含子目录中的php文件，是否操作？', { title: lan.files.dir_menu_webshell, closeBtn: 2, icon: 3 }, function (index) {
-        layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-        $.post('/files?action=dir_webshell_check', 'path=' + path, function (rdata) {
-            layer.close(index);
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-        });
-    });
-}
-function php_file_webshell(file){
-	var loadT = layer.msg('正在查杀文件中，请稍后...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-	$.post('/files?action=file_webshell_check','filename='+ file,function(rdata){
-		layer.close(loadT);
-        layer.msg(rdata.msg, { icon: rdata.status ? 1 : 0,time: 0,shade: 0.3,shadeClose:true });
-	})
-}
-function auto_table_width() {
-    var oldTable = $(window).height() - $('#tipTools')[0].getBoundingClientRect().height - $('#filePage')[0].getBoundingClientRect().height - $('.footer')[0].getBoundingClientRect().height - 115;
-    var oldTable_heigth = $('.oldTable table').height();
-    $('.oldTable thead th').each(function (index, el) {
-        var table_th = $('.oldTable thead th').length;
-        $('.newTable thead th').eq(index).attr('width', el.offsetWidth);
-        if (index == (table_th - 1)) $('.newTable thead th').eq(table_th).attr('width', '10').css('padding', '0');
-    });
-    if (oldTable_heigth > oldTable) {
-        $('.oldTableShadow,.newTableShadow').show();
-        $('.oldTable').css('marginTop', '0')
-    } else {
-        $('.oldTableShadow,.newTableShadow').hide();
-        $('.oldTable').css('marginTop', '0')
-    }
-    $('.oldTable').height(oldTable);
-    $('.oldTable table').css({ 'marginTop': '-40px' })
+// Object.prototype.isEmpty = function(){
+//     for (var i in Object.keys(this)) {
+//         if(this.hasOwnProperty(i)){
+//             return false // 进入循环即不为空
+//         }
+//    }
+//    return true
+// }
 
-}
-
-
-function totalFile() {
-    var el = $("input[name='id']");
-    var len = el.length;
-    var count = 0;
-    for (var i = 0; i < len; i++) {
-        if (el[i].checked == true) {
-            count++;
-        }
-    }
-    return count;
-}
-function bindselect() {
-    $("#filesBody").selectable({
-        autoRefresh: false,
-        filter: "tr,.folderBox",
-        cancel: "a,span,input,.ico-folder",
-        selecting: function (e) {
-            $(".ui-selecting").find("input").prop("checked", true);
-            showSeclect();
-        },
-        selected: function (e) {
-            $(".ui-selectee").find("input").prop("checked", false);
-            $(".ui-selected", this).each(function () {
-                $(this).find("input").prop("checked", true);
-                showSeclect();
-            });
-            $("#contextify-menu").hide();
-        },
-        unselecting: function (e) {
-            $(".ui-selectee").find("input").prop("checked", false);
-            $(".ui-selecting").find("input").prop("checked", true);
-            showSeclect();
-            $("#rmenu").hide()
-        }
-    });
-    $("#filesBody").selectable("refresh");
-    $(".ico-folder").click(function () {
-        $(this).parent().addClass("ui-selected").siblings().removeClass("ui-selected");
-        $(".ui-selectee").find("input").prop("checked", false);
-        $(this).prev("input").prop("checked", true);
-        showSeclect();
-    })
-}
-function showSeclect() {
-    var count = totalFile();
-    var BatchTools = '';
-    if (count > 1) {
-        BatchTools = '<button onclick="javascript:Batch(1);" class="btn btn-default btn-sm">' + lan.files.file_menu_copy + '</button>\
-						  <button onclick="javascript:Batch(2);" class="btn btn-default btn-sm">'+ lan.files.file_menu_mv + '</button>\
-						  <button onclick="javascript:Batch(3);" class="btn btn-default btn-sm">'+ lan.files.file_menu_auth + '</button>\
-						  <button onclick="javascript:Batch(5);" class="btn btn-default btn-sm">'+ lan.files.file_menu_zip + '</button>\
-						  <button onclick="javascript:Batch(4);" class="btn btn-default btn-sm">'+ lan.files.file_menu_del + '</button>'
-        $("#Batch").html(BatchTools);
-    } else {
-        $("#Batch").html(BatchTools);
-    }
-}
-$(window).keyup(function(e){
-    var tagName = e.target.tagName.toLowerCase();
-    if(e.keyCode === 8 && tagName !== 'input' && tagName !== 'textarea'){ //判断当前键值码为space
-        if($('.aceEditors')[0] == undefined || $('.aceEditors .layui-layer-content').height() === 0){
-            BackDir();
-        }
-    }
-    e.stopPropagation();
-});
-
-$("#tipTools").width($(".file-box")[0].clientWidth-30);
-$("#PathPlaceBtn").width($(".file-box").width() - 700);
-$("#DirPathPlace input").width($(".file-box").width() - 700);
-if ($(window).width() < 1160) {
-    $("#PathPlaceBtn").width(290);
-}
-window.onresize = function () {
-    $("#tipTools").width($(".file-box")[0].clientWidth-30);
-    $("#PathPlaceBtn").width($(".file-box").width() - 700);
-    $("#DirPathPlace input").width($(".file-box").width() - 700);
-    if ($(window).width() < 1160) {
-        $("#PathPlaceBtn,#DirPathPlace input").width(290);
-    }
-    PathLeft();
-    IsDiskWidth()
-    auto_table_width();
-}
-function Batch(type, access) {
-    var path = $("#DirPathPlace input").val();
-    var el = document.getElementsByTagName('input');
-    var len = el.length;
-    var data = 'path=' + path + '&type=' + type;
-    var name = 'data';
-    var datas = []
-
-    var oldType = getCookie('BatchPaste');
-
-    for (var i = 0; i < len; i++) {
-        if (el[i].checked == true && el[i].value != 'on') {
-            datas.push(el[i].value)
-        }
-    }
-
-    data += "&data=" + encodeURIComponent(JSON.stringify(datas))
-
-    if (type == 3 && access == undefined) {
-        SetChmod(0, lan.files.all);
-        return;
-    }
-
-    if (type < 3) setCookie('BatchSelected', '1');
-    setCookie('BatchPaste', type);
-
-    if (access == 1) {
-        var access = $("#access").val();
-        var chown = $("#chown").val();
-        var all = $("#accept_all").prop("checked") ? 'True' : 'False';
-        data += '&access=' + access + '&user=' + chown + "&all=" + all;
-        layer.closeAll();
-    }
-    if (type == 4) {
-        AllDeleteFileSub(data, path);
-        setCookie('BatchPaste', oldType);
-        return;
-    }
-
-    if (type == 5) {
-        var names = '';
-        for (var i = 0; i < len; i++) {
-            if (el[i].checked == true && el[i].value != 'on') {
-                names += el[i].value + ',';
-            }
-        }
-        Zip(names);
-        return;
-    }
-    if(type == 6){
-    	webshell_dir()
-    }
-
-    myloadT = layer.msg("<div class='myspeed'>" + lan.public.the + "</div>", { icon: 16, time: 0, shade: [0.3, '#000'] });
-    setTimeout(function () { getSpeed('.myspeed'); }, 1000);
-    $.post('/files?action=SetBatchData', data, function (rdata) {
-        layer.close(myloadT);
-        GetFiles(path);
-        layer.msg(rdata.msg, { icon: 1 });
-    });
-}
-function BatchPaste() {
-    var path = $("#DirPathPlace input").val();
-    var type = getCookie('BatchPaste');
-    var data = 'type=' + type + '&path=' + path;
-
-    $.post('/files?action=CheckExistsFiles', { dfile: path }, function (result) {
-        if (result.length > 0) {
-            var tbody = '';
-            for (var i = 0; i < result.length; i++) {
-                tbody += '<tr><td>' + result[i].filename + '</td><td>' + ToSize(result[i].size) + '</td><td>' + getLocalTime(result[i].mtime) + '</td></tr>';
-            }
-            var mbody = '<div class="divtable" style="height: 395px;overflow: auto;border: #ddd 1px solid;position: relative;"><table class="table table-hover" width="100%" border="0" cellpadding="0" cellspacing="0"><thead><th>文件名</th><th>大小</th><th>最后修改时间</th></thead>\
-						<tbody>'+ tbody + '</tbody>\
-						</table></div>';
-            SafeMessage('即将覆盖以下文件', mbody, function () {
-                BatchPasteTo(data, path);
-            });
-            $(".layui-layer-page").css("width", "500px");
-        } else {
-            BatchPasteTo(data, path);
-        }
-    });
-}
-
-function BatchPasteTo(data, path) {
-    myloadT = layer.msg("<div class='myspeed'>" + lan.public.the + "</div>", { icon: 16, time: 0, shade: [0.3, '#000'] });
-    setTimeout(function () { getSpeed('.myspeed'); }, 1000);
-    $.post('files?action=BatchPaste', data, function (rdata) {
-        layer.close(myloadT);
-        setCookie('BatchSelected', null);
-        GetFiles(path);
-        layer.msg(rdata.msg, { icon: 1 });
-    });
-}
-function GetExtName(fileName) {
-    var extArr = fileName.split(".");
-    var exts = ['folder', 'folder-unempty', 'sql', 'c', 'cpp', 'cs', 'flv', 'css', 'js', 'htm', 'html', 'java', 'log', 'mht', 'php', 'url', 'xml', 'ai', 'bmp', 'cdr', 'gif', 'ico', 'jpeg', 'jpg', 'JPG', 'png', 'psd', 'webp', 'ape', 'avi', 'flv', 'mkv', 'mov', 'mp3', 'mp4', 'mpeg', 'mpg', 'rm', 'rmvb', 'swf', 'wav', 'webm', 'wma', 'wmv', 'rtf', 'docx', 'fdf', 'potm', 'pptx', 'txt', 'xlsb', 'xlsx', '7z', 'cab', 'iso', 'bz2', 'rar', 'zip', 'gz', 'bt', 'file', 'apk', 'bookfolder', 'folder', 'folder-empty', 'folder-unempty', 'fromchromefolder', 'documentfolder', 'fromphonefolder', 'mix', 'musicfolder', 'picturefolder', 'videofolder', 'sefolder', 'access', 'mdb', 'accdb', 'sql', 'c', 'cpp', 'cs', 'js', 'fla', 'flv', 'htm', 'html', 'java', 'log', 'mht', 'php', 'url', 'xml', 'ai', 'bmp', 'cdr', 'gif', 'ico', 'jpeg', 'jpg', 'JPG', 'png', 'psd', 'webp', 'ape', 'avi', 'flv', 'mkv', 'mov', 'mp3', 'mp4', 'mpeg', 'mpg', 'rm', 'rmvb', 'swf', 'wav', 'webm', 'wma', 'wmv', 'doc', 'docm', 'dotx', 'dotm', 'dot', 'rtf', 'docx', 'pdf', 'fdf', 'ppt', 'pptm', 'pot', 'potm', 'pptx', 'txt', 'xls', 'csv', 'xlsm', 'xlsb', 'xlsx', '7z', 'gz', 'cab', 'iso', 'rar', 'zip', 'bt', 'file', 'apk', 'css'];
-    var extLastName = extArr[extArr.length - 1];
-    for (var i = 0; i < exts.length; i++) {
-        if (exts[i] == extLastName) {
-            return exts[i];
-        }
-    }
-    return 'file';
-}
-function ShowEditMenu() {
-    $("#filesBody > tr").hover(function () {
-        $(this).addClass("hover");
-    }, function () {
-        $(this).removeClass("hover");
-    }).click(function () {
-        $(this).addClass("on").siblings().removeClass("on");
-    })
-}
-function GetFileName(fileNameFull) {
-    var pName = fileNameFull.split('/');
-    return pName[pName.length - 1];
-}
-function GetDisk() {
-    var LBody = '';
-    $.get('/system?action=GetDiskInfo', function (rdata) {
-        for (var i = 0; i < rdata.length; i++) {
-            LBody += "<span onclick=\"GetFiles('" + rdata[i].path + "')\"><span class='glyphicon glyphicon-hdd'></span>&nbsp;" + (rdata[i].path == '/' ? lan.files.path_root : rdata[i].path) + "(" + rdata[i].size[2] + ")</span>";
-        }
-        var trash = '<span id="recycle_bin" onclick="Recycle_bin(\'open\')" title="' + lan.files.recycle_bin_title + '" style="position: absolute; border-color: #ccc; right: 77px;"><span class="glyphicon glyphicon-trash"></span>&nbsp;' + lan.files.recycle_bin_title + '</span>';
-        $("#comlist").html(LBody + trash);
-        IsDiskWidth();
-    });
-}
-function BackDir() {
-    var str = $("#DirPathPlace input").val().replace('//', '/');
-    if (str.substr(str.length - 1, 1) == '/') {
-        str = str.substr(0, str.length - 1);
-    }
-    var Path = str.split("/");
-    var back = '/';
-    if (Path.length > 2) {
-        var count = Path.length - 1;
-        for (var i = 0; i < count; i++) {
-            back += Path[i] + '/';
-        }
-        if (back.substr(back.length - 1, 1) == '/') {
-            back = back.substr(0, back.length - 1);
-        }
-        GetFiles(back);
-    } else {
-        back += Path[0];
-        GetFiles(back);
-    }
-    setTimeout('PathPlaceBtn(getCookie("Path"));', 200);
-}
-function CreateFile(type, path) {
-    if (type == 1) {
-        var fileName = $("#newFileName").val();
-        layer.msg(lan.public.the, { icon: 16, time: 10000 });
-        $.post('/files?action=CreateFile', 'path=' + encodeURIComponent(path + '/' + fileName), function (rdata) {
-            layer.close(getCookie('layers'));
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-            if (rdata.status) {
-                GetFiles($("#DirPathPlace input").val());
-                openEditorView(0, path + '/' + fileName);
-            }
-        });
-        return;
-    }
-    var layers = layer.open({
-        type: 1,
-        shift: 5,
-        closeBtn: 2,
-        area: '320px',
-        title: lan.files.new_empty_file,
-        content: '<div class="bt-form pd20 pb70">\
-					<div class="line">\
-					<input type="text" class="bt-input-text" name="Name" id="newFileName" value="" placeholder="'+ lan.files.file_name + '" style="width:100%" />\
-					</div>\
-					<div class="bt-form-submit-btn">\
-					<button type="button" class="btn btn-danger btn-sm layer_close">'+ lan.public.close + '</button>\
-					<button id="CreateFileBtn" type="button" class="btn btn-success btn-sm" onclick="CreateFile(1,\'' + path + '\')">' + lan.files.new + '</button>\
-					</div>\
-				</div>',
-        success: function (layers, index) {
-            $('.layer_close').click(function () {
-                layer.close(index);
-            });
-        }
-    });
-    setCookie('layers', layers);
-    $("#newFileName").focus().keyup(function (e) {
-        if (e.keyCode == 13) $("#CreateFileBtn").click();
-    });
-}
-function CreateDir(type, path) {
-    if (type == 1) {
-        var dirName = $("#newDirName").val();
-        layer.msg(lan.public.the, {
-            icon: 16,
-            time: 10000
-        });
-        $.post('/files?action=CreateDir', 'path=' + encodeURIComponent(path + '/' + dirName), function (rdata) {
-            layer.close(getCookie('layers'));
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-            GetFiles($("#DirPathPlace input").val());
-        });
-        return;
-    }
-    var layers = layer.open({
-        type: 1,
-        shift: 5,
-        closeBtn: 2,
-        area: '320px',
-        title: lan.files.new_dir,
-        content: '<div class="bt-form pd20 pb70">\
-					<div class="line">\
-					<input type="text" class="bt-input-text" name="Name" id="newDirName" value="" placeholder="'+ lan.files.dir_name + '" style="width:100%" />\
-					</div>\
-					<div class="bt-form-submit-btn">\
-					<button type="button" class="btn btn-danger btn-sm btn-title layer_close">'+ lan.public.close + '</button>\
-					<button type="button" id="CreateDirBtn" class="btn btn-success btn-sm btn-title" onclick="CreateDir(1,\'' + path + '\')">' + lan.files.new + '</button>\
-					</div>\
-				</div>',
-        success: function (layers, index) {
-            $('.layer_close').click(function () {
-                layer.close(index);
-            });
-        }
-    });
-    setCookie('layers', layers);
-    $("#newDirName").focus().keyup(function (e) {
-        if (e.keyCode == 13) $("#CreateDirBtn").click();
-    });
-}
-// 删除文件
-function DeleteFile(fileName) {
-    layer.confirm(lan.get('recycle_bin_confirm', [fileName]), { title: lan.files.del_file, closeBtn: 2, icon: 3 }, function (index) {
-        layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-        $.post('/files?action=DeleteFile', 'path=' + encodeURIComponent(fileName), function (rdata) {
-            layer.close(index);
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-            GetFiles($("#DirPathPlace input").val());
-        });
-    });
-}
-function DeleteDir(dirName) {
-    layer.confirm(lan.get('recycle_bin_confirm_dir', [dirName]), { title: lan.files.del_dir, closeBtn: 2, icon: 3 }, function (index) {
-        layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-        $.post('/files?action=DeleteDir', 'path=' + encodeURIComponent(dirName), function (rdata) {
-            layer.close(index);
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-            GetFiles($("#DirPathPlace input").val());
-        });
-    });
-}
-function AllDeleteFileSub(data, path) {
-    layer.confirm(lan.files.del_all_msg, { title: lan.files.del_all_file, closeBtn: 2, icon: 3 }, function (index) {
-        layer.msg("<div class='myspeed'>" + lan.public.the + "</div>", { icon: 16, time: 0, shade: [0.3, '#000'] });
-        setTimeout(function () { getSpeed('.myspeed'); }, 1000);
-        $.post('files?action=SetBatchData', data, function (rdata) {
-            layer.close(index);
-            GetFiles(path);
-            layer.msg(rdata.msg, { icon: 1 });
-        });
-    });
-}
-function ReloadFiles() {
-    setInterval(function () {
-        var path = $("#DirPathPlace input").val();
-        GetFiles(path);
-    }, 3000);
-}
-function DownloadFile(action) {
-    if (action == 1) {
-        var fUrl = $("#mUrl").val();
-        fUrl = encodeURIComponent(fUrl);
-        fpath = $("#dpath").val();
-        fname = encodeURIComponent($("#dfilename").val());
-        if (!fname) {
-            durl = $("#mUrl").val()
-            tmp = durl.split('/')
-            $("#dfilename").val(tmp[tmp.length - 1])
-            fname = encodeURIComponent($("#dfilename").val());
-            if (!fname) {
-                layer.msg('文件名不能为空!');
-                return;
-            }
-        }
-        layer.close(getCookie('layers'))
-        layer.msg(lan.files.down_task, { time: 0, icon: 16, shade: [0.3, '#000'] });
-        $.post('/files?action=DownloadFile', 'path=' + fpath + '&url=' + fUrl + '&filename=' + fname, function (rdata) {
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-            GetFiles(fpath);
-            GetTaskCount();
-            task_stat();
-        });
-        return;
-    }
-    var path = $("#DirPathPlace input").val();
-    var layers = layer.open({
-        type: 1,
-        shift: 5,
-        closeBtn: 2,
-        area: '500px',
-        title: lan.files.down_title,
-        content: '<form class="bt-form pd20 pb70">\
-					<div class="line">\
-					<span class="tname">'+ lan.files.down_url + ':</span><input type="text" class="bt-input-text" name="url" id="mUrl" value="" placeholder="' + lan.files.down_url + '" style="width:330px" />\
-					</div>\
-					<div class="line">\
-					<span class="tname ">'+ lan.files.down_to + ':</span><input type="text" class="bt-input-text" name="path" id="dpath" value="' + path + '" placeholder="' + lan.files.down_to + '" style="width:330px" />\
-					</div>\
-					<div class="line">\
-					<span class="tname">'+ lan.files.file_name + ':</span><input type="text" class="bt-input-text" name="filename" id="dfilename" value="" placeholder="' + lan.files.down_save + '" style="width:330px" />\
-					</div>\
-					<div class="bt-form-submit-btn">\
-					<button type="button" class="btn btn-danger btn-sm layer_close">'+ lan.public.close + '</button>\
-					<button type="button" id="dlok" class="btn btn-success btn-sm dlok" onclick="DownloadFile(1)">'+ lan.public.ok + '</button>\
-					</div>\
-				</form>',
-        success: function (layers, index) {
-            $('.layer_close').click(function () {
-                layer.close(index)
-            });
-        }
-    });
-    setCookie('layers', layers);
-    //fly("dlok");
-    $("#mUrl").change(function () {
-        durl = $(this).val()
-        tmp = durl.split('/')
-        $("#dfilename").val(tmp[tmp.length - 1])
-    });
-}
-function ExecShell(action) {
-    if (action == 1) {
-        var path = $("#DirPathPlace input").val();
-        var exec = encodeURIComponent($("#mExec").val());
-        $.post('/files?action=ExecShell', 'path=' + path + '&shell=' + exec, function (rdata) {
-            if (rdata.status) {
-                $("#mExec").val('');
-                GetShellEcho();
-            }
-            else {
-                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-            }
-
-        });
-        return;
-    }
-    layer.open({
-        type: 1,
-        shift: 5,
-        closeBtn: 2,
-        area: ['70%', '600px'],
-        title: lan.files.shell_title,
-        content: '<div class="bt-form pd15">\
-					<div class="shellcode"><pre id="Result"></pre></div>\
-					<div class="line">\
-					<input type="text" class="bt-input-text" name="exec" id="mExec" value="" placeholder="'+ lan.files.shell_ps + '" onkeydown="if(event.keyCode==13)ExecShell(1);" /><span class="shellbutton btn btn-default btn-sm pull-right" onclick="ExecShell(1)" style="width:10%">' + lan.files.shell_go + '</span>\
-					</div>\
-				</div>'
-    });
-    setTimeout(function () {
-        outTimeGet();
-    }, 1000);
-
-}
-
-var outTime = null;
-function outTimeGet() {
-    outTime = setInterval(function () {
-        if (!$("#mExec").attr('name')) {
-            clearInterval(outTime);
-            return;
-        }
-        GetShellEcho();
-    }, 1000);
-}
-
-function GetShellEcho() {
-    $.post('/files?action=GetExecShellMsg', '', function (rdata) {
-        $("#Result").html(rdata);
-        $(".shellcode").scrollTop($(".shellcode")[0].scrollHeight);
-    });
-}
-function ReName(type, fileName) {
-    if (type == 1) {
-        var path = $("#DirPathPlace input").val();
-        var newFileName = encodeURIComponent(path + '/' + $("#newFileName").val());
-        var oldFileName = encodeURIComponent(path + '/' + fileName);
-        layer.msg(lan.public.the, { icon: 16, time: 10000 });
-        $.post('/files?action=MvFile', 'sfile=' + oldFileName + '&dfile=' + newFileName + '&rename=true', function (rdata) {
-            layer.close(getCookie('layers'));
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-            GetFiles(path);
-        });
-        return;
-    }
-    var layers = layer.open({
-        type: 1,
-        shift: 5,
-        closeBtn: 2,
-        area: '320px',
-        title: lan.files.file_menu_rename,
-        content: '<div class="bt-form pd20 pb70">\
-				<div class="line">\
-				<input type="text" class="bt-input-text" name="Name" id="newFileName" value="' + fileName + '" placeholder="' + lan.files.file_name + '" style="width:100%" />\
-				</div>\
-				<div class="bt-form-submit-btn">\
-				<button type="button" class="btn btn-danger btn-sm btn-title layers_close">'+ lan.public.close + '</button>\
-				<button type="button" id="ReNameBtn" class="btn btn-success btn-sm btn-title" onclick="ReName(1,\'' + fileName.replace(/'/, "\\'") + '\')">' + lan.public.save + '</button>\
-				</div>\
-			</div>',
-        success: function (layers, index) {
-            $('.layers_close').click(function () {
-                layer.close(index);
-            });
-        }
-    });
-    setCookie('layers', layers);
-    $("#newFileName").focus().keyup(function (e) {
-        if (e.keyCode == 13) $("#ReNameBtn").click();
-    });
-}
-function CutFile(fileName) {
-    var path = $("#DirPathPlace input").val();
-    setCookie('cutFileName', fileName);
-    setCookie('copyFileName', null);
-    layer.msg(lan.files.mv_ok, { icon: 1, time: 1000 });
-    GetFiles(path);
-}
-function CopyFile(fileName) {
-    var path = $("#DirPathPlace input").val();
-    setCookie('copyFileName', fileName);
-    setCookie('cutFileName', null);
-    layer.msg(lan.files.copy_ok, { icon: 1, time: 1000 });
-    GetFiles(path);
-}
-function PasteFile(fileName) {
-    var path = $("#DirPathPlace input").val();
-    var copyName = getCookie('copyFileName');
-    var cutName = getCookie('cutFileName');
-    var filename = copyName;
-    if (cutName != 'null' && cutName != undefined) filename = cutName;
-    filename = filename.split('/').pop();
-    $.post('/files?action=CheckExistsFiles', { dfile: path, filename: filename }, function (result) {
-        if (result.length > 0) {
-            var tbody = '';
-            for (var i = 0; i < result.length; i++) {
-                tbody += '<tr><td>' + result[i].filename + '</td><td>' + ToSize(result[i].size) + '</td><td>' + getLocalTime(result[i].mtime) + '</td></tr>';
-            }
-            var mbody = '<div class="divtable"><table class="table table-hover" width="100%" border="0" cellpadding="0" cellspacing="0"><thead><th>文件名</th><th>大小</th><th>最后修改时间</th></thead>\
-						<tbody>'+ tbody + '</tbody>\
-						</table></div>';
-            SafeMessage('即将覆盖以下文件', mbody, function () {
-                PasteTo(path, copyName, cutName, fileName);
-            });
-        } else {
-            PasteTo(path, copyName, cutName, fileName);
-        }
-    });
-}
-
-
-function PasteTo(path, copyName, cutName, fileName) {
-    if (copyName != 'null' && copyName != undefined) {
-        layer.msg(lan.files.copy_the, {
-            icon: 16,
-            time: 0, shade: [0.3, '#000']
-        });
-        $.post('/files?action=CopyFile', 'sfile=' + encodeURIComponent(copyName) + '&dfile=' + encodeURIComponent(path + '/' + fileName), function (rdata) {
-            layer.closeAll();
-            layer.msg(rdata.msg, {
-                icon: rdata.status ? 1 : 2
-            });
-            GetFiles(path);
-        });
-        setCookie('copyFileName', null);
-        setCookie('cutFileName', null);
-        return;
-    }
-
-    if (cutName != 'null' && cutName != undefined) {
-        layer.msg(lan.files.mv_the, {
-            icon: 16,
-            time: 0, shade: [0.3, '#000']
-        });
-        $.post('/files?action=MvFile', 'sfile=' + encodeURIComponent(cutName) + '&dfile=' + encodeURIComponent(path + '/' + fileName), function (rdata) {
-            layer.closeAll();
-            layer.msg(rdata.msg, {
-                icon: rdata.status ? 1 : 2
-            });
-            GetFiles(path);
-        });
-        setCookie('copyFileName', null);
-        setCookie('cutFileName', null);
-    }
-}
-// 压缩文件
-function Zip(dirName, submits) {
-    var path = $("#DirPathPlace input").val();
-    if (submits != undefined) {
-        if (dirName.indexOf(',') == -1) {
-            tmp = $("#sfile").val().split('/');
-            sfile = encodeURIComponent(tmp[tmp.length - 1]);
-        } else {
-            sfile = encodeURIComponent(dirName);
-        }
-        dfile = encodeURIComponent($("#dfile").val());
-        var z_type = $("select[name='z_type']").val();
-        if (!z_type) z_type = 'tar.gz';
-        layer.close(getCookie('layers'));
-        var layers = layer.msg(lan.files.zip_the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-        $.post('/files?action=Zip', 'sfile=' + sfile + '&dfile=' + dfile + '&z_type=' + z_type + '&path=' + encodeURIComponent(path), function (rdata) {
-            layer.close(layers);
-            if (rdata == null || rdata == undefined) {
-                layer.msg(lan.files.zip_ok, { icon: 1 });
-                GetFiles(path)
-                ReloadFiles();
-                return;
-            }
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-            if (rdata.status) {
-                task_stat()
-                GetFiles(path);
-            }
-        });
-        return
-    }
-
-    param = dirName;
-    if (dirName.indexOf(',') != -1) {
-        tmp = path.split('/')
-        dirName = path + '/' + tmp[tmp.length - 1]
-    }
-    
-    var arrs = dirName.split('/');
-    var root_path = '';
-    for (var i = 0; i < arrs.length - 1; i++) {
-        root_path += arrs[i] + '/'
-    }
-    
-    var zipname = root_path + bt.get_random(10) + '.tar.gz';
-    
-    var layers = layer.open({
-        type: 1,
-        shift: 5,
-        closeBtn: 2,
-        area: '650px',
-        title: lan.files.zip_title,
-        content: '<div class="bt-form pd20 pb70">'
-            + '<div class="line noborder">'
-            + '<input type="text" class="form-control" id="sfile" value="' + param + '" placeholder="" style="display:none" />'
-            + '<p style="margin-bottom: 10px;"><span>压缩类型</span><select style="margin-left: 8px;" class="bt-input-text" name="z_type"><option value="tar.gz">tar.gz (推荐)</option><option value="zip">zip (通用格式)</option><option value="rar">rar (WinRAR对中文兼容较好)</option></select></p>'
-            + '<span>' + lan.files.zip_to + '</span><input type="text" class="bt-input-text" id="dfile" value="' + zipname + '" placeholder="' + lan.files.zip_to + '" style="width: 75%; display: inline-block; margin: 0px 10px 0px 20px;" /><span class="glyphicon glyphicon-folder-open cursor" onclick="ChangePath(\'dfile\')"></span>'
-            + '</div>'
-            + '<div class="line"><div class="info-r  ml0 label-input-group ptb10" style="margin-left: 55px;"> <input type="checkbox" checked="checked" class="random_zip_name" id="random_zip_name" name="random_zip_name"><label class="mr20" for="random_zip_name" style="font-weight:normal">随机生成压缩包名</label></div></div>'
-            + '<div class="bt-form-submit-btn">'
-            + '<button type="button" class="btn btn-danger btn-sm btn-title layer_close">' + lan.public.close + '</button>'
-            + '<button type="button" id="ReNameBtn" class="btn btn-success btn-sm btn-title" onclick="Zip(\'' + param + '\',1)">' + lan.files.file_menu_zip + '</button>'
-            + '</div>'
-            + '</div>',
-        success: function (layers, index) {
-            $('.layer_close').click(function () {
-                layer.close(index);
-            });
-        }
-    });
-    setCookie('layers', layers);
-    setTimeout(function () {
-        $("select[name='z_type']").change(function () {
-            var z_type = $(this).val();
-            
-            var _checked = $(this).prop('checked')         
-            if(_checked){
-                zipname = zipname.replace("tar.gz", z_type)
-                $("#dfile").val(zipname);
-            }
-            else{
-                dirName = dirName.replace("tar.gz", z_type)
-                $("#dfile").val(dirName + '.' + z_type); 
-            }
-        });
-        
-         $("#random_zip_name").change(function () {
-            var _checked = $(this).prop('checked')               
-            if (_checked){                
-                $("#dfile").val(zipname);
-            }
-            else {
-                var z_type =  $("select[name='z_type']").val();
-                $("#dfile").val(dirName + '.' + z_type); 
-            }
-        })
-    }, 100);
-
-}
-function UnZip(fileName, type) {
-    var path = $("#DirPathPlace input").val();
-    if (type.length == 3) {
-        var sfile = encodeURIComponent($("#sfile").val());
-        var dfile = encodeURIComponent($("#dfile").val());
-        var password = encodeURIComponent($("#unpass").val());
-        coding = $("select[name='coding']").val();
-        layer.close(getCookie('layers'));
-        layer.msg(lan.files.unzip_the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-        $.post('/files?action=UnZip', 'sfile=' + sfile + '&dfile=' + dfile + '&type=' + type + '&coding=' + coding + '&password=' + password, function (rdata) {
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-            task_stat();
-            GetFiles(path);
-        });
-        return
-    }
-
-    type = (type == 1) ? 'tar' : 'zip'
-    var umpass = '';
-    if (type == 'zip') {
-        umpass = '<div class="line"><span class="tname">' + lan.files.zip_pass_title + '</span><input type="text" class="bt-input-text" id="unpass" value="" placeholder="' + lan.files.zip_pass_msg + '" style="width:330px" /></div>'
-    }
-    var layers = layer.open({
-        type: 1,
-        shift: 5,
-        closeBtn: 2,
-        area: '490px',
-        title: lan.files.unzip_title,
-        content: '<div class="bt-form pd20 pb70">'
-            + '<div class="line unzipdiv">'
-            + '<span class="tname">' + lan.files.unzip_name + '</span><input type="text" class="bt-input-text" id="sfile" value="' + fileName + '" placeholder="' + lan.files.unzip_name_title + '" style="width:330px" /></div>'
-            + '<div class="line"><span class="tname">' + lan.files.unzip_to + '</span><input type="text" class="bt-input-text" id="dfile" value="' + path + '" placeholder="' + lan.files.unzip_to + '" style="width:330px" /></div>' + umpass
-            + '<div class="line"><span class="tname">' + lan.files.unzip_coding + '</span><select class="bt-input-text" name="coding">'
-            + '<option value="UTF-8">UTF-8</option>'
-            + '<option value="gb18030">GBK</option>'
-            + '</select>'
-            + '</div>'
-            + '<div class="bt-form-submit-btn">'
-            + '<button type="button" class="btn btn-danger btn-sm btn-title layer_close">' + lan.public.close + '</button>'
-            + '<button type="button" id="ReNameBtn" class="btn btn-success btn-sm btn-title" onclick="UnZip(\'' + fileName + '\',\'' + type + '\')">' + lan.files.file_menu_unzip + '</button>'
-            + '</div>'
-            + '</div>',
-        success: function (layers, index) {
-            $('.layer_close').click(function () {
-                layer.close(index);
-            });
-        }
-    });
-    setCookie('layers', layers);
-}
-function isZip(fileName) {
-    var ext = fileName.split('.');
-    var extName = ext[ext.length - 1].toLowerCase();
-    if (extName == 'zip' || extName == 'war' || extName == 'rar') return 0;
-    if (extName == 'gz' || extName == 'tgz' || extName == 'bz2') return 1;
-    return -1;
-}
-function isText(fileName) {
-    var exts = ['rar', 'war', 'zip', 'tar.gz', 'gz', 'iso', 'xsl', 'doc', 'xdoc', 'jpeg', 'jpg', 'png', 'gif', 'bmp', 'tiff', 'exe', 'so', '7z', 'bz', 'bz2','ico'];
-    return isExts(fileName, exts) ? false : true;
-}
-function isImage(fileName) {
-    var exts = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'tiff', 'ico'];
-    return isExts(fileName, exts);
-}
-function isVideo(fileName) {
-    var exts = ['mp4', 'mpeg', 'mpg', 'mov', 'avi', 'webm', 'mkv'];
-    return isExts(fileName, exts);
-}
-function isPhp(fileName){
-	var exts = ['php'];
-	return isExts(fileName,exts);
-}
-function isExts(fileName, exts) {
-    var ext = fileName.split('.');
-    if (ext.length < 2) return false;
-    var extName = ext[ext.length - 1].toLowerCase();
-    for (var i = 0; i < exts.length; i++) {
-        if (extName == exts[i]) return true;
-    }
-    return false;
-}
-function GetImage(data) {
-    console.log(data);
-    var that = this,mask = $('<div class="preview_images_mask">'+
-        '<div class="preview_head">'+
-            '<span class="preview_title">'+ data.filename +'</span>'+
-            '<span class="preview_small hidden" title="缩小显示"><span class="glyphicon glyphicon-resize-small" aria-hidden="true"></span></span>'+
-            '<span class="preview_full" title="最大化显示"><span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span></span>'+
-            '<span class="preview_close" title="关闭图片预览视图"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></span>'+
-        '</div>'+
-        '<div class="preview_body"><img id="preview_images" src="/download?filename='+ data.path +'"></div>'+
-        '<div class="preview_toolbar">'+
-            '<a href="javascript:;" title="左旋转"><span class="glyphicon glyphicon-repeat reverse-repeat" aria-hidden="true"></span></a>'+
-            '<a href="javascript:;" title="右旋转"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span></a>'+
-            '<a href="javascript:;" title="放大视图"><span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span></a>'+
-            '<a href="javascript:;" title="缩小视图"><span class="glyphicon glyphicon-zoom-out" aria-hidden="true"></span></a>'+
-            '<a href="javascript:;" title="重置视图"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></a>'+
-            '<a href="javascript:;" title="图片列表"><span class="glyphicon glyphicon-list" aria-hidden="true"></span></a>'+
-        '</div>'+
-        '<div class="preview_cut_view" style="display:none;">'+
-            '<a href="javascript:;" title="上一张"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></a>'+
-            '<a href="javascript:;" title="下一张"><span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span></a>'+
-        '</div>'+
-    '</div>'),
-    images_config = {natural_width:0,natural_height:0,init_width:0,init_height:0,preview_width:0,preview_height:0,current_width:0,current_height:0,current_left:0,current_top:0,rotate:0,scale:1,images_mouse:false};
-    if($('.preview_images_mask').length > 0){
-        $('#preview_images').attr('src','/download?filename=' + data.path);
-        return false;
-    }
-    $('body').css('overflow','hidden').append(mask);
-    images_config.preview_width = mask[0].clientWidth;
-    images_config.preview_height = mask[0].clientHeight;
-    // 图片预览
-    $('.preview_body img').load(function(){
-        var img = $(this)[0];
-        if(!$(this).attr('data-index')) $(this).attr('data-index',data.images_id);
-        images_config.natural_width = img.naturalWidth;
-        images_config.natural_height = img.naturalHeight;
-        auto_images_size(false);
-    });
-    //图片头部拖动
-    $('.preview_images_mask .preview_head').on('mousedown',function(e){
-        e = e || window.event; //兼容ie浏览器
-        var drag = $(this).parent();
-        $('body').addClass('select'); //webkit内核和火狐禁止文字被选中
-        document.body.onselectstart = document.body.ondrag = function () { //ie浏览器禁止文字选中
-            return false;
-        }
-        if ($(e.target).hasClass('preview_close')) { //点关闭按钮不能拖拽模态框
-            return;
-        }
-        var diffX = e.clientX - drag.offset().left;
-        var diffY = e.clientY - drag.offset().top;
-        $(document).on('mousemove',function(e){
-            e = e || window.event; //兼容ie浏览器
-            var left = e.clientX - diffX;
-            var top = e.clientY - diffY;
-            if (left < 0) {
-                left = 0;
-            } else if (left > window.innerWidth - drag.width()) {
-                left = window.innerWidth - drag.width();
-            }
-            if (top < 0) {
-                top = 0;
-            } else if (top > window.innerHeight - drag.height()) {
-                top = window.innerHeight - drag.height();
-            }
-            drag.css({
-                left:left,
-                top:top,
-                margin:0
-            });
-        }).on('mouseup',function(){
-            $(this).unbind('mousemove mouseup');
-        });
-    });
-    //图片拖动
-    $('.preview_images_mask #preview_images').on('mousedown',function(e){
-        e = e || window.event;
-        document.body.onselectstart = document.body.ondrag = function(){
-            return false;
-        }
-        var images = $(this);
-        var preview =  $('.preview_images_mask').offset();
-        var diffX = e.clientX - preview.left;
-        var diffY = e.clientY - preview.top;
-        $('.preview_images_mask').on('mousemove',function(e){
-            e = e || window.event
-            var offsetX = e.clientX - preview.left - diffX,
-                offsetY = e.clientY - preview.top - diffY,
-                rotate = Math.abs(images_config.rotate / 90),
-                preview_width = (rotate % 2 == 0?images_config.preview_width:images_config.preview_height),
-                preview_height = (rotate % 2 == 0?images_config.preview_height:images_config.preview_width),
-                left,top;
-            if(images_config.current_width > preview_width){
-                var max_left = preview_width - images_config.current_width;
-                left = images_config.current_left + offsetX;
-                if(left > 0){
-                    left = 0
-                }else if(left < max_left){
-                    left = max_left
-                }
-                images_config.current_left = left;
-            }
-            if(images_config.current_height > preview_height){
-                var max_top = preview_height - images_config.current_height;
-                top = images_config.current_top + offsetY;
-                if(top > 0){
-                    top = 0
-                }else if(top < max_top){
-                    top = max_top
-                }
-                images_config.current_top = top;
-            }
-            if(images_config.current_height > preview_height && images_config.current_top <= 0){
-                if((images_config.current_height - preview_height) <= images_config.current_top){
-                    images_config.current_top -= offsetY
-                }
-            }
-            images.css({'left':images_config.current_left,'top':images_config.current_top});
-        }).on('mouseup',function(){
-            $(this).unbind('mousemove mouseup');
-        }).on('dragstart',function(){
-            e.preventDefault();
-        });
-    }).on('dragstart',function(){
-        return false;
-    });
-    //关闭预览图片
-    $('.preview_close').click(function(e){
-        $('.preview_images_mask').remove();
-    });
-    //图片工具条预览
-    $('.preview_toolbar a').click(function(){
-        var index = $(this).index(),images = $('#preview_images');
-        switch(index){
-            case 0: //左旋转,一次旋转90度
-            case 1: //右旋转,一次旋转90度
-                images_config.rotate = index?(images_config.rotate + 90):(images_config.rotate - 90);
-                auto_images_size();
-            break;
-            case 2:
-            case 3:
-                if(images_config.scale == 3 && index == 2|| images_config.scale == 0.2 && index == 3){
-                    layer.msg((images_config.scale >= 1?'图像放大，已达到最大尺寸。':'图像缩小，已达到最小尺寸。'));
-                    return false;
-                }
-                images_config.scale = (index == 2?Math.round((images_config.scale + 0.4)*10):Math.round((images_config.scale - 0.4)*10))/10;
-                auto_images_size();
-            break;
-            case 4:
-                var scale_offset =  images_config.rotate % 360;
-                if(scale_offset >= 180){
-                    images_config.rotate += (360 - scale_offset);
-                }else{
-                    images_config.rotate -= scale_offset;
-                }
-                images_config.scale = 1;
-                auto_images_size();
-            break;
-        }
-    });
-    // 最大最小化图片
-    $('.preview_full,.preview_small').click(function(){
-        if($(this).hasClass('preview_full')){
-            $(this).addClass('hidden').prev().removeClass('hidden');
-            images_config.preview_width = $(window)[0].innerWidth;
-            images_config.preview_height = $(window)[0].innerHeight;
-            mask.css({width:images_config.preview_width,height:images_config.preview_height ,top:0,left:0,margin:0}).data('type','full');
-            auto_images_size();
-        }else{
-            $(this).addClass('hidden').next().removeClass('hidden');
-            $('.preview_images_mask').removeAttr('style');
-            images_config.preview_width = 750;
-            images_config.preview_height = 650;
-            auto_images_size();
-        }
-    });
-    // 自动图片大小
-    function auto_images_size(transition){
-        var rotate = Math.abs(images_config.rotate / 90),preview_width = (rotate % 2 == 0?images_config.preview_width:images_config.preview_height),preview_height = (rotate % 2 == 0?images_config.preview_height:images_config.preview_width),preview_images = $('#preview_images'),css_config = {};
-        images_config.init_width = images_config.natural_width;
-        images_config.init_height = images_config.natural_height;
-        if(images_config.init_width > preview_width){
-            images_config.init_width = preview_width;
-            images_config.init_height = parseFloat(((preview_width / images_config.natural_width) * images_config.init_height).toFixed(2));
-        }
-        if(images_config.init_height > preview_height){
-            images_config.init_width = parseFloat(((preview_height / images_config.natural_height) * images_config.init_width).toFixed(2));
-            images_config.init_height= preview_height;
-        }
-        images_config.current_width = parseFloat(images_config.init_width * images_config.scale);
-        images_config.current_height  = parseFloat(images_config.init_height * images_config.scale);
-        images_config.current_left = parseFloat(((images_config.preview_width - images_config.current_width) / 2).toFixed(2));
-        images_config.current_top = parseFloat(((images_config.preview_height - images_config.current_height) / 2).toFixed(2));
-        css_config = {
-            'width':images_config.current_width ,
-            'height':images_config.current_height,
-            'top':images_config.current_top,
-            'left':images_config.current_left,
-            'display':'inline',
-            'transform':'rotate('+ images_config.rotate +'deg)',
-            'opacity':1,
-            'transition':'all 400ms',
-        }
-        if(transition === false) delete css_config.transition;
-        preview_images.css(css_config);
-    }
-
-}
-
-function play_file(obj,filename) {
-    if($('#btvideo video').attr('data-filename')== filename) return false;
-    var imgUrl = '/download?filename=' + filename + '&play=true';
-    var v = '<video src="' + imgUrl +'" controls="controls" data-fileName="'+ filename +'" autoplay="autoplay" width="640" height="360">\
-                    您的浏览器不支持 video 标签。\
-                    </video>'
-    $("#btvideo").html(v);
-    var p_tmp = filename.split('/')
-    $(".btvideo-title").html(p_tmp[p_tmp.length-1]);
-    $(".video-avt").removeClass('video-avt');
-    $(obj).parents('tr').addClass('video-avt');
-}
-function GetPlay(fileName) {
-    var old_filename = fileName;
-    var imgUrl = '/download?filename=' + fileName;
-    var p_tmp = fileName.split('/')
-    var path = p_tmp.slice(0, p_tmp.length - 1).join('/')
-    layer.open({
-        type: 1,
-        closeBtn: 2,
-        // maxmin:true,
-        title: '正在播放[<a class="btvideo-title">' + p_tmp[p_tmp.length-1] + '</a>]',
-        area: ["890px","402px"],
-        shadeClose: false,
-        skin:'movie_pay',
-        content: '<div id="btvideo"><video type="" src="' + imgUrl + '&play=true" data-filename="'+ fileName +'" controls="controls" autoplay="autoplay" width="640" height="360">\
-                    您的浏览器不支持 video 标签。\
-                    </video></div><div class="video-list"></div>',
-        success: function () {
-            $.post('/files?action=get_videos', { path: path }, function (rdata) {
-                var video_list = '<table class="table table-hover" style=""><thead style="display: none;"><tr><th style="word-break: break-all;word-wrap:break-word;width:165px;">文件名</th><th style="width:65px" style="text-align:right;">大小</th></tr></thead>';
-                for (var i = 0; i < rdata.length; i++) {
-                    var filename = path + '/' + rdata[i].name
-                    video_list += '<tr class="' + ((filename === old_filename) ? 'video-avt' :'') + '"><td style="word-break: break-all;word-wrap:break-word;width:150px" onclick="play_file(this,\'' + filename + '\')" title="文件: ' + filename + '\n类型: ' + rdata[i].type + '"><a>'
-                        + rdata[i].name + '</a></td><td style="font-size: 8px;text-align:right;width:65px;">' + ToSize(rdata[i].size) + '</td></tr>';
-                }
-                video_list += '</table>';
-                $('.video-list').html(video_list);
-            });
-        }
-    });
-}
-function GetFileBytes(fileName, fileSize) {
-    window.open('/download?filename=' + encodeURIComponent(fileName));
-}
-function UploadFiles() {
-
-    var path = $("#DirPathPlace input").val() + "/";
-    bt_upload_file.open(path, null, null, function (path) {
-        GetFiles(path);
-    });
-    return;
-
-    /*
-	layer.open({
-		type:1,
-		closeBtn: 2,
-		title:lan.files.up_title,
-		area: ['500px','500px'], 
-		shadeClose:false,
-		content:'<div class="fileUploadDiv"><input type="hidden" id="input-val" value="'+path+'" />\
-				<input type="file" id="file_input"  multiple="true" autocomplete="off" />\
-				<button type="button"  id="opt" autocomplete="off">'+lan.files.up_add+'</button>\
-				<button type="button" id="up" autocomplete="off" >'+lan.files.up_start+'</button>\
-				<span id="totalProgress" style="position: absolute;top: 7px;right: 147px;"></span>\
-				<span style="float:right;margin-top: 9px;">\
-				<font>'+lan.files.up_coding+':</font>\
-				<select id="fileCodeing" >\
-					<option value="byte">'+lan.files.up_bin+'</option>\
-					<option value="utf-8">UTF-8</option>\
-					<option value="gb18030">GB2312</option>\
-				</select>\
-				</span>\
-				<button type="button" id="filesClose" autocomplete="off" onClick="layer.closeAll()" >'+lan.public.close+'</button>\
-				<ul id="up_box"></ul></div>'
-	});
-	UploadStart();*/
-}
-
-// 设置权限
-function SetChmod(action, fileName) {
-    if (action == 1) {
-        var chmod = $("#access").val();
-        var chown = $("#chown").val();
-        var all = $("#accept_all").prop("checked") ? 'True' : 'False';
-        var data = 'filename=' + encodeURIComponent(fileName) + '&user=' + chown + '&access=' + chmod + '&all=' + all;
-        var loadT = layer.msg(lan.public.config, { icon: 16, time: 0, shade: [0.3, '#000'] });
-        $.post('files?action=SetFileAccess', data, function (rdata) {
-            layer.close(loadT);
-            if (rdata.status) layer.close(getCookie('layers'));
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-            var path = $("#DirPathPlace input").val();
-            GetFiles(path)
-        });
-        return;
-    }
-
-    var toExec = fileName == lan.files.all ? 'Batch(3,1)' : 'SetChmod(1,\'' + fileName + '\')';
-
-    $.post('/files?action=GetFileAccess', 'filename=' + encodeURIComponent(fileName), function (rdata) {
-        var layers = layer.open({
-            type: 1,
-            closeBtn: 2,
-            title: lan.files.set_auth + '[' + fileName + ']',
-            area: '400px',
-            shadeClose: false,
-            content: '<div class="setchmod bt-form ptb15 pb70">\
-						<fieldset>\
-							<legend>'+ lan.files.file_own + '</legend>\
-							<p><input type="checkbox" id="owner_r" />'+ lan.files.file_read + '</p>\
-							<p><input type="checkbox" id="owner_w" />'+ lan.files.file_write + '</p>\
-							<p><input type="checkbox" id="owner_x" />'+ lan.files.file_exec + '</p>\
-						</fieldset>\
-						<fieldset>\
-							<legend>'+ lan.files.file_group + '</legend>\
-							<p><input type="checkbox" id="group_r" />'+ lan.files.file_read + '</p>\
-							<p><input type="checkbox" id="group_w" />'+ lan.files.file_write + '</p>\
-							<p><input type="checkbox" id="group_x" />'+ lan.files.file_exec + '</p>\
-						</fieldset>\
-						<fieldset>\
-							<legend>'+ lan.files.file_public + '</legend>\
-							<p><input type="checkbox" id="public_r" />'+ lan.files.file_read + '</p>\
-							<p><input type="checkbox" id="public_w" />'+ lan.files.file_write + '</p>\
-							<p><input type="checkbox" id="public_x" />'+ lan.files.file_exec + '</p>\
-						</fieldset>\
-						<div class="setchmodnum"><input class="bt-input-text" type="text" id="access" maxlength="3" value="'+ rdata.chmod + '">' + lan.files.file_menu_auth + '，\
-						<span>'+ lan.files.file_own + '\
-						<select id="chown" class="bt-input-text">\
-							<option value="www" '+ (rdata.chown == 'www' ? 'selected="selected"' : '') + '>www</option>\
-							<option value="mysql" '+ (rdata.chown == 'mysql' ? 'selected="selected"' : '') + '>mysql</option>\
-							<option value="root" '+ (rdata.chown == 'root' ? 'selected="selected"' : '') + '>root</option>\
-						</select></span>\
-                        <span><input type="checkbox" id="accept_all" checked /><label for="accept_all" style="position: absolute;margin-top: 4px; margin-left: 5px;font-weight: 400;">应用到子目录</label></span>\
-                        </div>\
-						<div class="bt-form-submit-btn">\
-							<button type="button" class="btn btn-danger btn-sm btn-title layer_close">'+ lan.public.close + '</button>\
-					        <button type="button" class="btn btn-success btn-sm btn-title" onclick="'+ toExec + '" >' + lan.public.ok + '</button>\
-				        </div>\
-					</div>',
-            success: function (layers, index) {
-                $('.layer_close').click(function () {
-                    layer.close(index);
-                })
-            }
-        });
-        setCookie('layers', layers);
-
-        onAccess();
-        $("#access").keyup(function () {
-            onAccess();
-        });
-
-        $("input[type=checkbox]").change(function () {
-            var idName = ['owner', 'group', 'public'];
-            var onacc = '';
-            for (var n = 0; n < idName.length; n++) {
-                var access = 0;
-                access += $("#" + idName[n] + "_x").prop('checked') ? 1 : 0;
-                access += $("#" + idName[n] + "_w").prop('checked') ? 2 : 0;
-                access += $("#" + idName[n] + "_r").prop('checked') ? 4 : 0;
-                onacc += access;
-            }
-            $("#access").val(onacc);
-
-        });
-    })
-
-}
-
-function onAccess() {
-    var access = $("#access").val();
-    var idName = ['owner', 'group', 'public'];
-    for (var n = 0; n < idName.length; n++) {
-        $("#" + idName[n] + "_x").prop('checked', false);
-        $("#" + idName[n] + "_w").prop('checked', false);
-        $("#" + idName[n] + "_r").prop('checked', false);
-    }
-    for (var i = 0; i < access.length; i++) {
-        var onacc = access.substr(i, 1);
-        if (i > idName.length) continue;
-        if (onacc > 7) $("#access").val(access.substr(0, access.length - 1));
-        switch (onacc) {
-            case '1':
-                $("#" + idName[i] + "_x").prop('checked', true);
-                break;
-            case '2':
-                $("#" + idName[i] + "_w").prop('checked', true);
-                break;
-            case '3':
-                $("#" + idName[i] + "_x").prop('checked', true);
-                $("#" + idName[i] + "_w").prop('checked', true);
-                break;
-            case '4':
-                $("#" + idName[i] + "_r").prop('checked', true);
-                break;
-            case '5':
-                $("#" + idName[i] + "_r").prop('checked', true);
-                $("#" + idName[i] + "_x").prop('checked', true);
-                break;
-            case '6':
-                $("#" + idName[i] + "_r").prop('checked', true);
-                $("#" + idName[i] + "_w").prop('checked', true);
-                break;
-            case '7':
-                $("#" + idName[i] + "_r").prop('checked', true);
-                $("#" + idName[i] + "_w").prop('checked', true);
-                $("#" + idName[i] + "_x").prop('checked', true);
-                break;
-        }
-    }
-}
-function RClick(type, path, name, file_store,file_share,data_composer,data_ps) {
-    var displayZip = isZip(type);
-    var options = {
-        items: [
-            { text: lan.files.file_menu_copy, onclick: function () { CopyFile(path) } },
-            { text: lan.files.file_menu_mv, onclick: function () { CutFile(path) } },
-            { text: lan.files.file_menu_rename, onclick: function () { ReName(0, name) } },
-            { text: lan.files.file_menu_auth, onclick: function () { SetChmod(0, path) } },
-            { text: lan.files.file_menu_zip, onclick: function () { Zip(path) } }
-
-        ]
-    };
-
-    if (type == "dir") {
-        options.items.push(
-        	{ text: lan.files.file_menu_del, onclick: function () { DeleteDir(path) } },
-        	{ text: lan.files.dir_menu_webshell, onclick: function () { webshell_dir(path) } }
-        );
-    }
-    
-    else if(isPhp(type)){
-    	options.items.push({text: lan.files.file_menu_webshell, onclick: function() {php_file_webshell(path)}},{ text: lan.files.file_menu_edit, onclick: function () { openEditorView(0, path) } }, { text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } })
-    }
-    else if (isVideo(type)) {
-        options.items.push({ text: '播放', onclick: function () { GetPlay(path) } }, { text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } });
-    }
-    else if (isText(type)) {
-        options.items.push({ text: lan.files.file_menu_edit, onclick: function () { openEditorView(0, path) } }, { text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } });
-    }
-    else if (displayZip != -1) {
-        options.items.push({ text: lan.files.file_menu_unzip, onclick: function () { UnZip(path, displayZip) } }, { text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } });
-    }
-    else if (isImage(type)) {
-        options.items.push({ text: lan.files.file_menu_img, onclick: function () { GetImage({path:path,filename:name}) } }, { text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } });
-    }
-    else {
-        options.items.push({ text: lan.files.file_menu_down, onclick: function () { GetFileBytes(path) } }, { text: lan.files.file_menu_del, onclick: function () { DeleteFile(path) } });
-    }
-
-    //if(type !== 'dir'){
-        options.items.push({ text: '外链分享', onclick: function () { create_download_url(name,path,file_share) } });
-    //}
-    
-    options.items.push({ text: '备注', onclick: function () { set_files_ps(0,path,data_ps) } });
-    if( type === 'dir' && data_composer === '1'){
-        options.items.push({ text: 'Composer', onclick: function () { exec_composer(path) } });
-    }
-
-    options.items.push({
-        text: "收藏夹", onclick: function () {
-			var loading = bt.load();
-            bt.send('add_files_store', 'files/add_files_store',{path:path}, function (rRet) {
-                loading.close();
-                bt.msg(rRet);
-                if (rRet.status) {
-                    GetFiles(file_store.PATH)
-                }
-            });
-        }
-    })
-
-
-    return options;
-}
-
-/**
- * 设置文件或目录备注
- * @param {string} path 全路径
- */
-function set_files_ps(act,path,ps){
-
-    if(act === 1){
-        ps = $('#ps_body').val();
-        // ps_type = $('#ps_type').val();
-        $.post('/files?action=set_file_ps',{filename:path,ps_body:ps,ps_type:0},function(rdata){
-            if(rdata.status){
-                layer.closeAll();
-                GetFiles(getCookie('Path'));
-            }
-            bt.msg(rdata);
-            return;
-        })
-    }
-    var arry = path.split('/');
-    // <select id="ps_type" class="bt-input-text"><option value="0">全路径</option><option value="1">文件名</option></select>\
-    var layers = layer.open({
-        type: 1,
-        shift: 5,
-        closeBtn: 2,
-        area: '320px',
-        title: '设置[ '+ arry[arry.length-1] +' ]文件备注',
-        content: '<div class="bt-form pd20 pb70">\
-                <div class="line">\
-				    <input type="text" class="bt-input-text" name="ps_body" id="ps_body" value="' + ps + '" placeholder="请填写文件备注" style="width:100%" />\
-				</div>\
-				<div class="bt-form-submit-btn">\
-				<button type="button" class="btn btn-danger btn-sm btn-title layers_close">'+ lan.public.close + '</button>\
-				<button type="button" id="set-files-ps" class="btn btn-success btn-sm btn-title" onclick="set_files_ps(1,\'' + path + '\')">' + lan.public.save + '</button>\
-				</div>\
-			</div>',
-        success: function (layers, index) {
-            $('.layers_close').click(function () {
-                layer.close(index);
-            });
-            setCookie('layers', layers);
-            $("#ps_body").focus().keyup(function (e) {
-                if (e.keyCode == 13) $("#set-files-ps").click();
-            });
-        }
-    });
-}
-
-function update_composer(){
-    loadT = bt.load()
-    $.post('/files?action=update_composer',{},function(v_data){
-        loadT.close();
-        bt.msg(v_data);
-    });
-}
-
-
-function exec_composer(fileName,path){
-    $.post('/files?action=get_composer_version',{},function(v_data){
-        if(v_data.status === false){
-            bt.msg(v_data);
-            return;
-        }
-
-        var php_versions = '';
-        for(var i=0;i<v_data.php_versions.length;i++){
-            if(v_data.php_versions[i].version == '00') continue;
-            php_versions += '<option value="'+v_data.php_versions[i].version+'">'+v_data.php_versions[i].name+'</option>';
-        }
-
-        var layers = layer.open({
-            type: 1,
-            shift: 5,
-            closeBtn: 2,
-            area: '450px',
-            title: '在['+path+']目录执行Composer',
-            btn:['执行Composer','取消'],
-            content: '<from class="bt-form" style="padding:30px 15px;display:inline-block">'
-                + '<div class="line"><span class="tname">版本</span><div class="info-r"><input readonly="readonly" style="background-color: #eee;" name="composer_version" class="bt-input-text" value="'+v_data.msg +'" /><a onclick="update_composer();" style="margin-left: 5px;" class="btn btn-default btn-sm">升级Composer<a></div></div>'
-                + '<div class="line"><span class="tname">PHP版本</span><div class="info-r">'
-                    +'<select class="bt-input-text" name="php_version">'
-                        +'<option value="auto">自动选择</option>'
-                        +php_versions
-                    +'</select>'
-                +'</div></div>'
-                + '<div class="line"><span class="tname">执行参数</span><div class="info-r">'
-                    +'<select class="bt-input-text" name="composer_args">'
-                        +'<option value="install">安装：install</option>'
-                        +'<option value="update">更新：update</option>'
-                    +'</select>'
-                +'</div></div>'
-                + '<div class="line"><span class="tname">镜像源</span><div class="info-r">'
-                    +'<select class="bt-input-text" name="repo">'
-                        +'<option value="https://mirrors.aliyun.com/composer/">阿里源：mirrors.aliyun.com</option>'
-                        +'<option value="repos.packagist">官方源：packagist.org</option>'
-                    +'</select>'
-                +'</div></div>'
-                + '</from>',
-            yes:function(indexs,layers){
-                layer.confirm('执行Composer的影响范围取决于该目录下的composer.json配置文件，继续吗？', { title: '确认执行Composer', closeBtn: 2, icon: 3 }, function (index) {
-                    var pdata = {
-                        php_version:$("select[name='php_version']").val(),
-                        composer_args:$("select[name='composer_args']").val(),
-                        repo:$("select[name='repo']").val(),
-                        path:path
-                    }
-                    $.post('/files?action=exec_composer',pdata,function(rdatas){
-                        if(!rdatas.status){
-                            layer.msg(rdatas.msg,{icon:2});
-                            return false;
-                        }
-                        layer.closeAll();
-                        if(rdatas.status === true){
-                            layer.open({
-                                area:"600px",
-                                type: 1,
-                                shift: 5,
-                                closeBtn: 2,
-                                title: '在['+path+']目录执行Composer，执行完后请关闭此窗口',
-                                content:"<pre id='composer-log' style='height: 300px;background-color: #333;color: #fff;margin: 0 0 0;'></pre>"
-                            });
-                            setTimeout(function(){show_composer_log();},200);
-                        }
-                    });
-                });
-            }
-        });
-    });
-}
-
-
-function show_composer_log(){
-    $.post('/ajax?action=get_lines',{filename:'/tmp/panelExec.pl',num:30},function(v_body){
-        var log_obj = $("#composer-log")
-        if(log_obj.length < 1) return;
-        log_obj.html(v_body.msg);
-        var div = document.getElementById('composer-log')
-        div.scrollTop = div.scrollHeight;
-        setTimeout(function(){show_composer_log()},1000)
-    });
-}
-
-
-function create_download_url(fileName,path,fileShare) {
-	fileShare = parseInt(fileShare);
-	if(fileShare != 0){
-		$.post('/files?action=get_download_url_find',{id:fileShare},function(rdata){
-    		set_download_url(rdata);
-    	});
-		return false
-	}
-    var layers = layer.open({
-        type: 1,
-        shift: 5,
-        closeBtn: 2,
-        area: '450px',
-        title: '外链分享',
-        btn:['生成外链','取消'],
-        content: '<from class="bt-form" id="outer_url_form" style="padding:30px 15px;display:inline-block">'
-        	+ '<div class="line"><span class="tname">分享名称</span><div class="info-r"><input name="ps" class="bt-input-text mr5" type="text" placeholder="分享名称不能为空" style="width:270px" value="'+ fileName +'"></div></div>'
-            + '<div class="line"><span class="tname">有效期</span><div class="info-r">'
-                +'<label class="checkbox_grourd"><input type="radio" name="expire" value="24" checked><span>&nbsp;1天</span></label>'
-                +'<label class="checkbox_grourd"><input type="radio" name="expire" value="168"><span>&nbsp;7天</span></label>'
-                +'<label class="checkbox_grourd"><input type="radio" name="expire" value="1130800"><span>&nbsp;永久</span></label>'
-            +'</div></div>'
-        	+ '<div class="line"><span class="tname">提取码</span><div class="info-r"><input name="password" class="bt-input-text mr5" placeholder="为空则不设置提取码" type="text" style="width:170px" value=""><button type="button" id="random_paw" class="btn btn-success btn-sm btn-title">随机</button></div></div>'
-            + '</from>',
-        yes:function(indexs,layers){
-        	layer.confirm('是否分享该文件，是否继续？', { title: '确认分享', closeBtn: 2, icon: 3 }, function (index) {
-	        	var ps = $('[name=ps]').val(),expire = $('[name=expire]:checked').val(),password = $('[name=password]').val();
-	        	if(ps === ''){
-	        		layer.msg('分享名称不能为空',{icon:2});
-	        		return false;
-	        	}
-	        	$.post('/files?action=create_download_url',{
-	        		filename:path,
-	        		ps:ps,
-	        		password:password,
-	        		expire:expire
-	        	},function(rdatas){
-        			if(!rdatas.status){
-				    	layer.msg(rdatas.msg,{icon:2});
-				    	return false;
-				    }
-				    layer.close(index);
-				    layer.close(indexs)
-	        		set_download_url(rdatas.msg);
-	        	});
-        	});
-        },
-        success: function (layers, index) {
-            $('#random_paw').click(function(){
-            	$(this).prev().val(bt.get_random(6));
-            });
-        }
-    });
-}
-
-
-function set_download_url(rdata){
-    var download_url = window.location.protocol + '//'+window.location.host + '/down/' + rdata.token;
-    var layers = layer.open({
-        type: 1,
-        shift: 5,
-        closeBtn: 2,
-        area: '550px',
-        title: '外链分享',
-        content: '<div class="bt-form pd20 pb70">'
-	            + '<div class="line"><span class="tname">分享名称</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:365px" value="'+ rdata.ps +'"></div></div>'
-	        	+ '<div class="line external_link"><span class="tname">分享外链</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:280px" value="'+ download_url +'"><button type="button" id="copy_url" data-clipboard-text="'+ download_url +'" class="btn btn-success btn-sm btn-title copy_url" style="margin-right:5px" data-clipboard-target="#copy_url"><img style="width:16px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABIUlEQVQ4T6XTsSuFURjH8d+3/AFm0x0MyqBEUQaUIqUU3YwWyqgMptud/BlMSt1SBiklg0K3bhmUQTFZDZTxpyOvznt7z3sG7/T2vOf5vM85z3nQPx+KfNuHkhoZ7xXYjNfEwIukXUnvNcg2sJECnoHhugpsnwBN21PAXVgbV/AEjNhuVSFA23YHWLNt4Cc3Bh6BUdtLcbzAgHPbp8BqCngAxjJbOANWUkAPGA8fE8icpD1gOQV0gclMBRfAYgq4BaZtz/YhA5IGgY7tS2AhBdwAM7b3JX1I+iz1G45sXwHzKeAa6P97qZgcEA6v/ZsR3v9aHCmt0P9UBVuShjKz8CYpXPkDYKJ0kaKhWpe0UwOFxDATx5VACFZ0Ivbuga8i8A3NFqQRZ5pz7wAAAABJRU5ErkJggg=="></button><button type="button" class="btn btn-success QR_code btn-sm btn-title"><img  style="width:16px" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABUklEQVQ4T6WSIU9DQRCEvwlYLIoEgwEECs3rDyCpobbtL6AKRyggMQ9TJBjUMzgMCeUnIEAREoICFAoEZMk2dy/Xo4KGNZu7nZ2bnT3xz1DsN7MFYCnhe5V0n/Kb2QowL2kY70cEoXAHVEnDG/ABXAJXmVDHVZKqSFAA58AqsAY8AW3A68/AQ7hbBG6BbeDGlaQEh8AucA3suzDgC5gFXHID2At5YxJBNwA6ocFBM8B3OL8DTaCcpMDN2QojxHHdk9Qrx9SeAyf1CMFIJ3DjYqxLOgo192gs4ibSNfrMOaj2yBvMrCnpImYHR4C/vizpIPkX/mpbUtfMepJKMxtKKsyslNTLCZxkBzgFjoE5oCVp08yKvyhwgkGyRl9nX1LDzDz3kzxS8kuBpFYygq8xJ4gjjBMEpz+BF+AxcXLg39XMOpLOciW1gtz9ac71GqdpSrE/8U20EQ3XLHEAAAAASUVORK5CYII="></button></div></div>'
-	        	+ '<div class="line external_link" style="'+ (rdata.password == ""?"display:none;":"display:block") +'"><span class="tname">提取码</span><div class="info-r"><input readonly class="bt-input-text mr5" type="text" style="width:243px" value="'+ rdata.password +'"><button type="button" data-clipboard-text="链接:'+ download_url +' 提取码:'+ rdata.password +'"  class="btn btn-success copy_paw btn-sm btn-title">复制链接及提取码</button></div></div>'
-	        	+ '<div class="line"><span class="tname">过期时间</span><div class="info-r"><span style="line-height:32px; display: block;font-size:14px">'+((rdata.expire > (new Date('2099-01-01 00:00:00').getTime())/1000)?'<span calss="btlink">永久有效</span>':bt.format_data(rdata.expire))+'</span></div></div>'
-	        	+ '<div class="bt-form-submit-btn">'
-	            + '<button type="button" class="btn btn-danger btn-sm btn-title layer_close">' + lan.public.close + '</button>'
-	            + '<button type="button" id="down_del" class="btn btn-danger btn-sm btn-title close_down" style="color:#fff;background-color:#c9302c;border-color:#ac2925;" onclick="">关闭分享外链</button>'
-	            + '</div>'
-            + '</div>',
-        success: function (layers, index) {
-        	var copy_url = new ClipboardJS('.copy_url');
-        	var copy_paw = new ClipboardJS('.copy_paw');
-        	copy_url.on('success', function(e) {
-				layer.msg('复制链接成功!',{icon:1});
-			    e.clearSelection();
-			});
-			copy_paw.on('success', function(e) {
-				layer.msg('复制链接及提取码成功!',{icon:1});
-			    e.clearSelection();
-			});
-            $('.layer_close').click(function () {
-                layer.close(index);
-            });
-            $('.QR_code').click(function(){
-            	layer.closeAll('tips');
-            	layer.tips('<div style="height:140px;width:140px;padding:8px 0" id="QR_code"></div>','.QR_code',{
-	            	area:['150px','150px'],
-	            	tips: [1, '#ececec'],
-	            	time:0,
-	            	shade:[0.05, '#000'],
-	            	shadeClose:true,
-	            	success:function(){
-	            		jQuery('#QR_code').qrcode({
-							render: "canvas",
-							text: download_url,
-							height:130,
-							width:130
-						});
-	            	}
-	            });
-            });
-            $('.close_down').click(function(){
-            	del_download_url(rdata.id,false,index,rdata.ps)
-            });
-        }
-    });
-}
-function del_download_url(id,is_list,index,filename){
-	layer.confirm('是否取消分享该文件【'+ filename +'】，是否继续？', { title: '取消分享', closeBtn: 2, icon: 3 }, function (indexs) {
-		$.post('/files?action=remove_download_url',{id:id},function(res){
-		    if(index) layer.close(index);
-		    layer.close(indexs)
-		    if(is_list === false) get_download_url_list({},true,function(){
-		    	layer.msg(res.msg,{icon:res.status?1:2});
-		    });
-		});
-	});
-}
-
-function get_download_url_list(data,is_refresh,callback){
-	if(data == undefined) data = {p:1}
-    var loadT = layer.msg('正在加载分享列表，请稍后...', {
-        icon: 16,
-        time: 0,
-        shade: 0.3
-    });
-	$.post('/files?action=get_download_url_list',{p:data.p},function(res){
-		layer.close(loadT);
-		var _html = '',rdata = res.data;
-		for(var i=0;i<rdata.length;i++){
-			_html += '<tr><td ><span style="width:230px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;display: inline-block;" title="'+ rdata[i].ps +'">'+ rdata[i].ps +'</span></td><td ><span style="width:300px;white-space: nowrap;overflow:hidden;text-overflow: ellipsis;display: inline-block;" title="'+ rdata[i].filename +'">'+ rdata[i].filename +'</span></td><td><span >'+ bt.format_data(rdata[i].expire) +'</span></td><td style="text-align:right;"><a href="javascript:;" class="btlink info_down" data-index="'+i +'" data-id="'+ rdata[i].id +'">详情</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink del_down" data-id="'+ rdata[i].id +'" data-index="'+i +'" data-ps="'+ rdata[i].ps +'">关闭</a></td></tr>';
-		}
-		if(callback) callback();
-		if(is_refresh){
-			$('.download_url_list').html(_html);
-			$('.download_url_page').html(res.page);
-			
-			return false;
-		}
-	   var layers = layer.open({
-		    type: 1,
-		    shift: 5,
-		    closeBtn: 2,
-		    area: ['850px','580px'],
-		    title: '分享列表',
-		    content:'<div class="divtable mtb10 download_table" style="padding:5px 10px;">\
-		    			<table class="table table-hover" id="download_url">\
-		    				<thead><tr><th width="230px">分享名称</th><th width="300px">文件地址</th><th>过期时间</th><th style="text-align:right;width:120px;">操作</th></tr></thead>\
-		    				<tbody class="download_url_list">'+ _html +'</tbody>\
-		    			</table>\
-		    			<div class="page download_url_page">'+ res.page +'</div>\
-		    	</div>', 
-		    success:function(layers,index){
-		    	$('.download_table').on('click','.info_down',function(){
-		    		var indexs = $(this).attr('data-index');
-		    		set_download_url(rdata[indexs]);
-		    	});
-				$('.download_table').on('click','.del_down',function(){
-		    		var id = $(this).attr('data-id'),_ps = $(this).attr('data-ps');
-		    		del_download_url(id,false,false,_ps);
-		    	});
-		    	$('.download_table .download_url_page').on('click','a',function(e){
-		    		var _href =  $(this).attr('href');
-		    		var page = _href.replace(/\/files\?action=get_download_url_list\?p=/,'')
-		    		get_download_url_list({p:page},true);
-		    		return false;
-		    	});
-		    }
-	   });
-	});
-}
-
-
-
-function RClickAll(e) {
-    var menu = $("#rmenu");
-    var windowWidth = $(window).width(),
-        windowHeight = $(window).height(),
-        menuWidth = menu.outerWidth(),
-        menuHeight = menu.outerHeight(),
-        x = (menuWidth + e.clientX < windowWidth) ? e.clientX : windowWidth - menuWidth,
-        y = (menuHeight + e.clientY < windowHeight) ? e.clientY : windowHeight - menuHeight;
-
-    menu.css('top', y)
-        .css('left', x)
-        .css('position', 'fixed')
-        .css("z-index", "1")
-        .show();
-}
-function GetPathSize() {
-    var path = encodeURIComponent($("#DirPathPlace input").val());
-    layer.msg("正在计算，请稍候", { icon: 16, time: 0, shade: [0.3, '#000'] })
-    $.post("/files?action=GetDirSize", "path=" + path, function (rdata) {
-        layer.closeAll();
-        $("#pathSize").text(rdata)
-    })
-}
-$("body").not(".def-log").click(function () {
-    $("#rmenu").hide()
-});
-$("#DirPathPlace input").keyup(function (e) {
-    if (e.keyCode == 13) {
-        GetFiles($(this).val());
-    }
-});
-function PathPlaceBtn(path) {
-    var html = '';
-    var title = '';
-    path = path.replace('//', '/');
-    var Dpath = path;
-    if (path == '/') {
-        html = '<li><a title="/">' + lan.files.path_root + '</a></li>';
-    }
-    else {
-        Dpath = path.split("/");
-        for (var i = 0; i < Dpath.length; i++) {
-            title += Dpath[i] + '/';
-            Dpath[0] = lan.files.path_root;
-            html += '<li><a title="' + title + '">' + Dpath[i] + '</a></li>';
-        }
-    }
-    html = '<div style="width:1200px;height:26px"><ul>' + html + '</ul></div>';
-    $("#PathPlaceBtn").html(html);
-    $("#PathPlaceBtn ul li a").click(function (e) {
-        var Gopath = $(this).attr("title");
-        if (Gopath.length > 1) {
-            if (Gopath.substr(Gopath.length - 1, Gopath.length) == '/') {
-                Gopath = Gopath.substr(0, Gopath.length - 1);
-            }
-        }
-        GetFiles(Gopath);
-        e.stopPropagation();
-    });
-    PathLeft();
-}
-function PathLeft() {
-    var UlWidth = $("#PathPlaceBtn ul").width();
-    var SpanPathWidth = $("#PathPlaceBtn").width() - 50;
-    var Ml = UlWidth - SpanPathWidth;
-    if (UlWidth > SpanPathWidth) {
-        $("#PathPlaceBtn ul").css("left", -Ml)
-    }
-    else {
-        $("#PathPlaceBtn ul").css("left", 0)
-    }
-}
-
-var store_type_index = 0
-//删除分类或者文件
-function del_files_store(path, obj) {
-    var _item = $(obj).parents('tr').data('item')
-    var action = '', msg = '';
-    var data = {}
-    action = 'del_files_store';
-    data['path'] = _item.path;
-    msg = "是否确定删除路径【" + _item.path + "】?"
-    bt.confirm({ msg: msg, title: '提示' }, function () {
-        var loading = bt.load();
-        bt.send(action, 'files/' + action, data, function (rRet) {
-            loading.close();
-            if (rRet.status) {
-                set_file_store(path)
-                GetFiles(getCookie('Path'))
-            }
-            bt.msg(rRet);
-        })
-    })
-}
-
-function set_file_store(path){
-    var loading = bt.load();
-    bt.send('get_files_store', 'files/get_files_store', {}, function (rRet) {
-        loading.close();
-        if ($('#stroe_tab_list').length <= 0) {
-            bt.open({
-                type: 1,
-                skin: 'demo-class',
-                area: '510px',
-                title: "管理收藏夹",
-                closeBtn: 2,
-                shift: 5,
-                shadeClose: false,
-                content: "<div class='divtable pd15 style='padding-bottom: 0'><table width='100%' id='stroe_tab_list' class='table table-hover'></table><div class='page sitebackup_page'></div></div>",
-                success: function () {
-                    $('#btn_data_store_add').click(function () {
-                        bt.send('add_files_store_types', 'files/add_files_store_types', { file_type: $(".type_name").val() }, function (rRet) {
-                            loading.close();
-
-                            if (rRet.status) {
-                                set_file_store(path)
-                                GetFiles(path)
-                            }
-                            bt.msg(rRet);
-                        })
-                    })
-                    reload_sort_data(path)
-                }
-            });
-        }
-        else {
-            reload_sort_data(path)
-        }
-        function reload_sort_data(path) {
-            var _tab = bt.render({
-                table: '#stroe_tab_list',
-                columns: [
-                    { field: 'path', title: '路径' },
-                    {
-                        field: 'opt', align: 'right', title: '操作', templet: function (item) {
-                            return '<a class="btlink del_file_store" onclick="del_files_store(\'' + path + '\',this)" >删除</a>';
-                        }
-                    },
-                ],
-                data: rRet
-            });
-        }
-    })
-}
-
-
-
-$("#PathPlaceBtn").on("click", function (e) {
-    if ($("#DirPathPlace").is(":hidden")) {
-        $("#DirPathPlace").css("display", "inline");
-        $("#DirPathPlace input").focus();
-        $(this).hide();
-    } else {
-        $("#DirPathPlace").hide();
-        $(this).css("display", "inline");
-    }
-    $(document).one("click", function () {
-        $("#DirPathPlace").hide();
-        $("#PathPlaceBtn").css("display", "inline");
-    });
-    e.stopPropagation();
-});
-$("#DirPathPlace").on("click", function (e) {
-    e.stopPropagation();
-});

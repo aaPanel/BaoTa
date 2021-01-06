@@ -1369,7 +1369,7 @@ def panel_other(name=None, fun=None, stype=None):
             t_body = public.readFile(t_path)
 
             # 处理模板包含
-            rep = '{%\s?include\s"(.+)"\s?%}'
+            rep = r'{%\s?include\s"(.+)"\s?%}'
             includes = re.findall(rep, t_body)
             for i_file in includes:
                 filename = p_path + '/templates/' + i_file
@@ -1737,8 +1737,9 @@ def is_login(result):
 
 
 def is_bind():
-    if os.path.exists(bind_pl):
-        os.remove(bind_pl)
+    pass
+    #if os.path.exists(bind_pl):
+    #    os.remove(bind_pl)
         
 # js随机数模板使用，用于不更新版本号时更新前端文件不需要用户强制刷新浏览器
 def get_js_random():

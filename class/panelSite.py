@@ -3818,6 +3818,8 @@ location %s
         if ws == 'apache':
             get.id = public.M('sites').where("name=?",(get.siteName,)).getField('id')
             runPath = self.GetSiteRunPath(get)
+            if runPath['runPath'].find('/www/server/stop') != -1:
+                runPath['runPath'] = runPath['runPath'].replace('/www/server/stop','')
             rewriteList['sitePath'] = public.M('sites').where("name=?",(get.siteName,)).getField('path') + runPath['runPath']
             
         rewriteList['rewrite'] = []
@@ -3830,8 +3832,11 @@ location %s
     
     #保存伪静态模板
     def SetRewriteTel(self,get):
+        ws = public.get_webserver()
+        if ws == "openlitespeed":
+            ws = "apache"
         if sys.version_info[0] == 2: get.name = get.name.encode('utf-8')
-        filename = 'rewrite/' + public.get_webserver() + '/' + get.name + '.conf'
+        filename = 'rewrite/' + ws + '/' + get.name + '.conf'
         public.writeFile(filename,get.data)
         return public.returnMsg(True, 'SITE_REWRITE_SAVE')
     
@@ -4101,6 +4106,8 @@ location %s
         
         if get.siteName == 'phpmyadmin': 
             get.configFile = self.setupPath + '/nginx/conf/nginx.conf'
+            if os.path.exists(self.setupPath + '/panel/vhost/nginx/phpmyadmin.conf'):
+                get.configFile = self.setupPath + '/panel/vhost/nginx/phpmyadmin.conf'
         else:
             get.configFile = self.setupPath + '/panel/vhost/nginx/' + get.siteName + '.conf'
             
@@ -4120,6 +4127,8 @@ location %s
         
         if get.siteName == 'phpmyadmin': 
             get.configFile = self.setupPath + '/apache/conf/extra/httpd-vhosts.conf'
+            if os.path.exists(self.sitePath + '/panel/vhost/apache/phpmyadmin.conf'):
+                get.configFile = self.setupPath + '/panel/vhost/apache/phpmyadmin.conf'
         else:
             get.configFile = self.setupPath + '/panel/vhost/apache/' + get.siteName + '.conf'
             
@@ -4530,13 +4539,13 @@ location %s
         data = {}
         if type(conf)==bool:return public.returnMsg(False,'读取配置文件失败!')
         if conf.find('SECURITY-START') != -1:
-            rep = "#SECURITY-START(\n|.){1,500}#SECURITY-END"
+            rep = "#SECURITY-START(\n|.)+#SECURITY-END"
             tmp = re.search(rep,conf).group()
             data['fix'] = re.search("\(.+\)\$",tmp).group().replace('(','').replace(')$','').replace('|',',')
             try:
-                data['domains'] = ','.join(re.search("valid_referers\s+none\s+blocked\s+(.+);\n",tmp).groups()[0].split())
+                data['domains'] = ','.join(list(set(re.search("valid_referers\s+none\s+blocked\s+(.+);\n",tmp).groups()[0].split())))
             except:
-                data['domains'] = ','.join(re.search("valid_referers\s+(.+);\n",tmp).groups()[0].split())
+                data['domains'] = ','.join(list(set(re.search("valid_referers\s+(.+);\n",tmp).groups()[0].split())))
             data['status'] = True
             data['none'] = tmp.find('none blocked') != -1
             try:
