@@ -104,6 +104,8 @@ class panelAuth:
         params = {}
         params['pid'] = get.pid
         params['cycle'] = get.cycle
+        if 'source' in get: params['source'] = get.source
+
 
         key = '{}_{}_get_buy_code'.format(params['pid'], params['cycle'])
         data = cache.get(key)
@@ -112,7 +114,7 @@ class panelAuth:
         data = self.send_cloud('create_order', params)
         if not data: return public.returnMsg(False, '连接服务器失败!')
         cache.set(key, data, 120)
-        cache.set('_buy_code_id'.format(data['data']['oid']), key, 120)
+        cache.set('{}_buy_code_id'.format(data['data']['oid']), key, 120)
         return data
 
     # def check_pay_status(self,get):
