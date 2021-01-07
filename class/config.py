@@ -1426,7 +1426,11 @@ class config:
             if not secret_key:
                 return public.returnMsg(False,"生成key或username失败，请检查硬盘空间是否不足或目录无法写入[ {} ]".format(self._setup_path+"/data/"))
             try:
-                data = pyotp.totp.TOTP(secret_key).provisioning_uri(username, issuer_name=local_ip)
+                try:
+                    panel_name = json.loads(public.readFile(self._setup_path+'/config/config.json'))['title']
+                except:
+                    panel_name = '宝塔Linux面板'
+                data = pyotp.totp.TOTP(secret_key).provisioning_uri(username, issuer_name=panel_name+'--'+local_ip)
                 public.writeFile(self._core_fle_path+'/qrcode.txt',str(data))
                 return public.returnMsg(True, "开启成功")
             except Exception as e:
