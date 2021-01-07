@@ -180,7 +180,7 @@ var site_table = bt_tools.table({
                         var html = '';
                         for(var i=0;i<list.length;i++){
                             var item = list[i];
-                            html += '<tr><td>'+ item.name +'</td><td><div style="float:right;"><span style="color:'+ (item.request.status?'#20a53a':'red') +'">'+ item.request.msg +'</span></div></td></tr>';
+                            html += '<tr><td><span>'+ item.name +'</span></td><td><div style="float:right;"><span style="color:'+ (item.request.status?'#20a53a':'red') +'">'+ item.request.msg +'</span></div></td></tr>';
                         }
                         site_table.$batch_success_table({title:'批量备份',th:'站点名称',html:html});
                         site_table.$refresh_table_list(true);
@@ -659,7 +659,7 @@ var site = {
                                         var html = '';
                                         for(var i=0;i<list.length;i++){
                                             var item = list[i];
-                                            html += '<tr><td>'+ item.name +'</td><td><div style="float:right;"><span style="color:'+ (item.request.status?'#20a53a':'red') +'">'+ item.request.msg +'</span></div></td></tr>';
+                                            html += '<tr><td><span class="text-overflow" title="'+ item.name +'">'+ item.name +'</span></td><td><div style="float:right;"><span style="color:'+ (item.request.status?'#20a53a':'red') +'">'+ item.request.msg +'</span></div></td></tr>';
                                         }
                                         backup_table.$batch_success_table({title:'批量删除站点备份',th:'文件名',html:html});
                                         backup_table.$refresh_table_list(true);

@@ -9117,6 +9117,15 @@ select[name="network-io"]{
     display: inline-block
 }
 
+.batch_tabel .text-overflow{
+    display: inline-block;
+    width: 180px;
+    vertical-align: middle;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+
 .bt_table{
     position: relative;
 }
@@ -9407,6 +9416,9 @@ select[name="network-io"]{
 	background-color: #fff;
 	max-height: 200px;
 	overflow: auto;
+}
+.site_class_type.bt_select_updown:hover{
+	border-color:#398439;
 }
 .site_class_type.bt_select_updown:hover .bt_select_value span{
 	color: #fff;
@@ -10353,6 +10365,101 @@ select[name="network-io"]{
 
 
 
+.tab-body .tab-con{
+	overflow: inherit;
+}
+
+
+/* 面板ssl和google验证 */
+.ssl_cert_from .layui-layer-ico{
+	width: 30px;
+    height: 30px;
+    display: inline-block;
+    position: absolute;
+    left: 50px;
+}
+.ssl_cert_from h3{
+	font-weight: bolder;
+	font-size: 18px;
+	margin-left: 75px;
+	display: inline-block;
+	height: 30px;
+  	line-height: 30px;
+}
+
+.ssl_cert_from ul{
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    margin: 0 auto;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    background: #f7f7f7;
+    width: 80%;
+    padding: 15px;
+    list-style-type: inherit;
+}
+
+.ssl_cert_from ul li:nth-child(0){
+	margin-top: 12px;
+	color:red;
+}
+.ssl_cert_from ul li{
+	margin-left: 20px;
+    height: 25px;
+    line-height: 25px;
+}
+.ssl_cert_from>.line{
+	padding-top: 15px;
+    border-top: 1px solid #ececec;
+    width: 81%;
+    margin: 0 auto;
+    margin-top: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ececec;
+}
+.ssl_cert_from>.line .tname{
+	width:105px;
+}
+
+.ssl_cert_from>.line .info-r{
+	margin-left:70px;
+	height:30px;
+	line-height:30px;
+}
+.user_set_info .tit{
+	width: 165px;
+    display: inline-block;
+    text-align: left;
+}
+.user_set_info .btswitch-p{
+	width: 165px;
+    display: inline-block;
+    text-align: left;
+    margin-left: 0px;
+}
+.ssl_cert_from label{
+    font-weight: 400;
+    margin: 3px 5px 0px;
+    vertical-align: top;
+}
+.ssl_cert_from .details{
+	padding-top:10px;
+	width:80%;
+	margin:0 auto;
+}
+.ssl_cert_from .details a{
+	float: right;
+    position: relative;
+    top: 3px;
+}
+
+.ssl_cert_from>.line .line {
+	padding-bottom:0;
+}
+.ssl_cert_from>.line .line .info-r{
+	margin-bottom:0;
+}
+/* end */
 
 
 
@@ -10407,7 +10514,7 @@ select[name="network-io"]{
 */
 .feedback-box{
 	position: fixed;
-	width: 380px;
+	width: 410px;
 	right: 25px;
 	bottom:100px;
 	z-index:99999998;
@@ -10418,7 +10525,7 @@ select[name="network-io"]{
 .feedback-mask{
 	position: fixed;
 	height: 620px;
-	width: 380px;
+	width: 410px;
 	right: 25px;
 	bottom:100px;
 	z-index:999999996;
@@ -10430,7 +10537,7 @@ select[name="network-io"]{
 	position: fixed;
     height: 390px;
     width: 336px;
-    right: 45px;
+    right: 60px;
     bottom: 230px;
     z-index: 999999999;
     border-radius: 2px;
@@ -10548,7 +10655,7 @@ select[name="network-io"]{
     color: #A0A0A0
 }
 .feedback-box-bottom{
-    width: 380px;
+    width: 410px;
     height: 68px;
     margin-top: 60px;
     border-radius: 0px 0px 10px 10px;
@@ -10594,7 +10701,7 @@ select[name="network-io"]{
 * @description 聊天界面
 */
 .chat-head{
-	width: 380px;
+	width: 410px;
 	height: 60px;
 	border-radius:2px 2px 0px 0px;
 	z-index:99999999;
@@ -10654,11 +10761,12 @@ select[name="network-io"]{
 	box-shadow:none;
 }
 .chat-content{
-	width: 380px;
+	width: 410px;
 	height:360px;
 	z-index:99999999;
 	background-color: #FFFFFF;
 	overflow: scroll;
+	overflow-x: hidden;
 	-ms-overflow-style: none;
 	-ms-content-zooming: zoom;
 	scrollbar-width: none; 
@@ -10713,7 +10821,7 @@ select[name="network-io"]{
 }	
 .dialog-portrait{
 	float: left;
-    margin-left: 10px;
+    margin-left: 4px;
     margin-top: 10px;
     width: 36px;
     height: 36px;
@@ -10729,7 +10837,7 @@ select[name="network-io"]{
 .chat-dialog-box label{
 	float: left;
     width: 100%;
-    margin: 8px 0px 0px -4px;
+    margin: 8px 0px 0px -9px;
     font-size: 12px;
     color: #333;
     line-height: 12px;
@@ -10737,7 +10845,7 @@ select[name="network-io"]{
     font-weight: 600;
 }
 .chat-dialog-box .chat-dialog-border{
-	max-width: 80%;
+	max-width: 82%;
 	float: left;
 }
 .dialog-triangle{
@@ -10755,11 +10863,24 @@ select[name="network-io"]{
     transform: rotate(50deg);
     border-width: 12px 12px 0 0;
 }
+.dialog-text-title{
+    margin:15px 15px 15px 15px;
+    color: #ef7f0e;
+    font-size: 13px;
+    border-radius: 3px;
+}
+.dialog-button{
+    width: 100.6%;
+    border-radius:0px 0px 3px 3px ;
+    margin-left: -1px;
+    height: 32px
+}
 .dialog-text{
 	float: left;
 	margin-left: -9px;
-	max-width: 85%;
+	max-width: 90%;
 	background-color: #F4F4F4;
+	border: 1px solid #FFFFFF;
 }	
 .dialog-text p{
     margin: 10px 14px;
@@ -10771,8 +10892,8 @@ select[name="network-io"]{
 .dialog-text pre{
     margin: 10px 14px;
     font-size: 12px;
-    color: #666;
-    line-height: 19px;
+    color: #000;
+    line-height: 20px;
     word-break: break-all;
     border: 0;
     background-color: #F4F4F4;
@@ -10855,7 +10976,7 @@ select[name="network-io"]{
     margin: 10px 12px 10px 12px;
     font-size: 12px;
     color: #333;
-    line-height: 19px;
+    line-height: 20px;
     word-break: break-all;
     border: 0;
     background-color: #9EEA6A;
@@ -10873,7 +10994,7 @@ select[name="network-io"]{
 	clear: both;
 }
 .chat-tool{
-	width: 380px;
+	width: 410px;
 	height:40px;
 	z-index:24647;
 	background-color: #FFFFFF;
@@ -10919,7 +11040,7 @@ select[name="network-io"]{
 	margin-right: 10px;
 }
 .chat-bottom{
-	width: 380px;
+	width: 410px;
 	height:160px;
 	z-index:214647;
 	background-color: #FFFFFF;
@@ -10928,6 +11049,35 @@ select[name="network-io"]{
 .text-box{
 	width: 100%;
 	height: 68%;
+}
+.not-send{
+	color: red;
+    font-size: 18px;
+    float: right;
+    margin-top: 20px;
+    margin-right: 5px;
+    /*cursor: pointer;*/
+}
+@keyframes rotate{
+	0%{
+		transform: rotate(0);
+	  }
+	100%{
+		transform:rotate(360deg);
+	}
+}
+.rotate{
+    transition: 0.5s;
+    animation: rotate 2s linear infinite;  /*开始动画后无限循环，用来控制rotate*/
+}
+.waiting{
+	font-size: 18px;
+    float: right;
+    margin-top: 20px;
+	margin-right: 5px;
+	cursor: pointer;
+	width: 20px;
+	height: 20px;
 }
 .text-box pre{
 	margin: 0px 12px;
@@ -10984,20 +11134,20 @@ select[name="network-io"]{
     text-align: center;
     font-weight: 600;
     font-size: 14px;
-    margin-left: 160px;
+    margin-left: 175px;
     margin-top: 19px;
 }
 .chat-history{
 	text-align: center;
 	font-weight: 600;
 	font-size: 14px;
-	margin-left: 18px;
+	margin-left: 38px;
 }
 /**
 * @description 工单历史列表
 */
 .history-head{
-	width: 380px;
+	width: 410px;
 	height: 60px;
 	border-radius:10px 10px 0px 0px;
 	z-index:99999999;
@@ -11024,7 +11174,7 @@ select[name="network-io"]{
 .history-content{
 	margin-left: 15px;
 	margin-bottom: 20px;
-	width: 350px;
+	width: 380px;
 	height:540px;
 	z-index:99999999;
 	background-color: #FFFFFF;
@@ -11190,98 +11340,3 @@ select[name="network-io"]{
 /** workorder code end */
 
 
-.tab-body .tab-con{
-	overflow: inherit;
-}
-
-
-/* 面板ssl和google验证 */
-.ssl_cert_from .layui-layer-ico{
-	width: 30px;
-    height: 30px;
-    display: inline-block;
-    position: absolute;
-    left: 50px;
-}
-.ssl_cert_from h3{
-	font-weight: bolder;
-	font-size: 18px;
-	margin-left: 75px;
-	display: inline-block;
-	height: 30px;
-  	line-height: 30px;
-}
-
-.ssl_cert_from ul{
-    border: 1px solid #ececec;
-    border-radius: 10px;
-    margin: 0 auto;
-    margin-top: 20px;
-    margin-bottom: 20px;
-    background: #f7f7f7;
-    width: 80%;
-    padding: 15px;
-    list-style-type: inherit;
-}
-
-.ssl_cert_from ul li:nth-child(0){
-	margin-top: 12px;
-	color:red;
-}
-.ssl_cert_from ul li{
-	margin-left: 20px;
-    height: 25px;
-    line-height: 25px;
-}
-.ssl_cert_from>.line{
-	padding-top: 15px;
-    border-top: 1px solid #ececec;
-    width: 81%;
-    margin: 0 auto;
-    margin-top: 15px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #ececec;
-}
-.ssl_cert_from>.line .tname{
-	width:105px;
-}
-
-.ssl_cert_from>.line .info-r{
-	margin-left:70px;
-	height:30px;
-	line-height:30px;
-}
-.user_set_info .tit{
-	width: 165px;
-    display: inline-block;
-    text-align: left;
-}
-.user_set_info .btswitch-p{
-	width: 165px;
-    display: inline-block;
-    text-align: left;
-    margin-left: 0px;
-}
-.ssl_cert_from label{
-    font-weight: 400;
-    margin: 3px 5px 0px;
-    vertical-align: top;
-}
-.ssl_cert_from .details{
-	padding-top:10px;
-	width:80%;
-	margin:0 auto;
-}
-.ssl_cert_from .details a{
-	float: right;
-    position: relative;
-    top: 3px;
-}
-
-.ssl_cert_from>.line .line {
-	padding-bottom:0;
-}
-.ssl_cert_from>.line .line .info-r{
-	margin-bottom:0;
-}
-/* end */

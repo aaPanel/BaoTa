@@ -1824,7 +1824,7 @@ def workorder(action, pdata=None):
     import panelWorkorder
     toObject = panelWorkorder.panelWorkorder()
 
-    defs = ("get_user_info","close", "create", "list", "get_messages")
+    defs = ("get_user_info","close", "create", "list", "get_messages", "allow")
     result = publicObject(toObject, defs, action, pdata)
     return result
 

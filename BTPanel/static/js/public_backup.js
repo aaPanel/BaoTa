@@ -3591,8 +3591,7 @@ bt.soft = {
 					if(callback) callback(rdata);
 					bt.msg(rdata);
 				})
-			}
-			else{
+			}else{
 				bt.send('create_order_voucher','auth/create_order_voucher',{code:code},function(rdata){
 					loading.close();
 					if(callback){ 
@@ -3603,14 +3602,14 @@ bt.soft = {
 				})
 			}
 		},
-		create_order:function(pid,cycle,callback){
-			if(pid){				
-				bt.send('get_buy_code','auth/get_buy_code',{pid:pid,cycle:cycle},function(rdata){
+		create_order:function(config,callback){
+			if(typeof config.pid != 'undefined'){				
+				bt.send('get_buy_code','auth/get_buy_code',config,function(rdata){
 					if(callback) callback(rdata);
 				})
 			}
 			else{
-				bt.send('create_order','auth/create_order',{cycle:cycle},function(rdata){
+				bt.send('create_order','auth/create_order',config,function(rdata){
 					if(callback) callback(rdata);
 				})
 			}
@@ -3749,34 +3748,34 @@ bt.soft = {
             });
 	        return false;
 	    }
-		if(typeof config == "string") config = JSON.parse(config)
-		var config = {
-			name:config.name, // 插件名称
-			pid:config.pid, // 产品ID
-			plugin:config.plugin ||  null,// 是否为插件
-			renew:config.renew || null, // 插件续费周期，如果包含，这代表产品续费
-			active:config.active || '', // 设置默认选中产品
-			type:config.type || '',
-			limit:config.limit
-		},title = '',that = this,endTime = null;
-		config = $.extend(config,{
-			pro: parseInt(bt.get_cookie('pro_end')), // 专业版状态
-			ltd: parseInt(bt.get_cookie('ltd_end')) // 企业版状态
-		});
-		if(config.plugin){ // 条件：当前为插件
-			title = (config.renew == -1?'购买':'续费') + config.name;
-			ndTime = config.renew != -1?config.renew:null
-		}else if(config.pro == -1 && config.ltd == -1){  // 条件：专业版和企业版都没有购买过
-			title = '升级付费版，对应版本插件，免费使用';
-		}else if(config.ltd > 0){  // 条件：企业版续费
-			title = '续费' +(config.name == ''?'宝塔专业版':config.name);
-			endTime = config.ltd;
-		}else if(config.pro > 0 || config.pro == -2){  // 条件：专业版续费
-			title = '续费' + (config.name == ''?'宝塔专业版':config.name);
-			endTime = config.pro;
-		}else if(config.ltd == -2){
-			title = '续费' + (config.name == ''?'宝塔专业版':config.name);
-			endTime = config.ltd;
+		if(typeof config == "string") config = JSON.parse(config);
+		config = $.extend({
+			plugin:null,
+			renew:null,
+			active:'',
+			type:'',
+			pro: parseInt(bt.get_cookie('pro_end')),
+			ltd: parseInt(bt.get_cookie('ltd_end'))}
+			,config);
+		var title = '',that = this,endTime = null;
+		if(!config.is_alone){
+			if(config.plugin){ // 条件：当前为插件
+				title = (config.renew == -1?'购买':'续费') + config.name;
+				ndTime = config.renew != -1?config.renew:null
+			}else if(config.pro == -1 && config.ltd == -1){  // 条件：专业版和企业版都没有购买过
+				title = '升级付费版，对应版本插件，免费使用';
+			}else if(config.ltd > 0){  // 条件：企业版续费
+				title = '续费' +(config.name == ''?'宝塔专业版':config.name);
+				endTime = config.ltd;
+			}else if(config.pro > 0 || config.pro == -2){  // 条件：专业版续费
+				title = '续费' + (config.name == ''?'宝塔专业版':config.name);
+				endTime = config.pro;
+			}else if(config.ltd == -2){
+				title = '续费' + (config.name == ''?'宝塔专业版':config.name);
+				endTime = config.ltd;
+			}
+		}else{
+			title = (config.ltd>0?'续费':'购买')+'宝塔企业版';
 		}
 		bt.open({
 			type:1,
@@ -3826,11 +3825,12 @@ bt.soft = {
 					arry.push({title:'<span class="pro-font-icon"></span>',name:'',pid:'',ps:'推荐个人购买',active:  (((config.type == 8 && !config.plugin) || config.limit == 'pro' || (config.pro > 0 || config.pro == -2)) && config.ltd < 0 && (config.ltd == -2?(config.pro == -2?false:true):true))});
 				}
 			
-				if(((config.ltd > 0 || config.ltd == -2 || config.pro == -2) || (config.ltd == -1 && config.pro == -1) || config.limit == 'ltd') && (config.pro < 0 || (config.pro >= 0 && config.ltd >0))){
+				if((((config.ltd > 0 || config.ltd == -2 || config.pro == -2) || (config.ltd == -1 && config.pro == -1) || config.limit == 'ltd') && (config.pro < 0 || (config.pro >= 0 && config.ltd >0))) || (config.is_alone && config.pid == 100000032)){
 					arry.push({title:'<span class="ltd-font-icon"></span>',name:'宝塔面板企业版',ps:'推荐企业购买',pid:100000032,recommend:true,active:((config.type == 12 && !config.plugin && config.ltd > 0) || config.limit == 'ltd' || (config.renew == config.ltd && config.ltd > 0)? true:false)});
 				}
 				if(config.type == 12 && config.pro >= 0 && config.ltd < 0) $('.pro-tips').html('温馨提示：专业版升级企业版需要手动结算当前专业版授权，<a href="https://www.bt.cn/bbs/thread-50342-1-1.html" target="_blank" class="btlink">《专业版和企业版切换教程》</a>').css('color','red');
 				$('#libPay-type .li-con').append(that.product_pay_swicth('type',arry));
+				if(config.source) bt.set_cookie('pay_source',config.source);
 				that.each(arry,function(index,item){ 
 					if(item.active){
 						that.product_pay_page_refresh($.extend({condition:1},item));
@@ -3839,6 +3839,7 @@ bt.soft = {
 			},
 			end:function(){
 				clearInterval(bt.soft.pub.wxpayTimeId);
+				bt.clear_cookie('pay_source');
 			}
 		});
 	},
@@ -3963,8 +3964,11 @@ bt.soft = {
                     }
                 }else{
                     $('#libPay-pay').html('<div class="cloading">加载中，请稍后...</div>');
-                }
-                that.pro.create_order(config.pid, config.cycle,function (rdata){
+				}
+				var paream = {pid:config.pid,cycle:config.cycle},pay_source = bt.get_cookie('pay_source');
+				if(pay_source) paream.source = bt.get_cookie('pay_source');
+				if(!paream.pid) delete paream.pid;
+                that.pro.create_order(paream,function (rdata){
                     if (rdata.status === false){
                         bt.set_cookie('force', 1);
                         if (soft) soft.flush_cache();
@@ -4098,8 +4102,10 @@ bt.soft = {
 			intervalFun();
 		},2500);
 	},
-	updata_ltd:function(){
-		bt.soft.product_pay_view({name:'宝塔面板企业版',pid:100000032,limit:'ltd'});
+	updata_ltd:function(is_alone){
+		var param = {name:'宝塔面板企业版',pid:100000032,limit:'ltd'};
+		if(is_alone || false) $.extend(param,{source:5,is_alone:true});
+		bt.soft.product_pay_view(param);
 	},	
 	updata_pro:function(){
 		bt.soft.product_pay_view({name:'',pid:'',limit:'pro'});

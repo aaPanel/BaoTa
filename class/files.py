@@ -310,6 +310,8 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         info = {}
         info['count'] = self.GetFilesCount(get.path, search)
         info['row'] = 100
+        if 'disk' in get:
+            if get.disk == 'true': info['row'] = 2000
         if 'share' in get and get.share:
             info['row'] = 5000
         info['p'] = 1

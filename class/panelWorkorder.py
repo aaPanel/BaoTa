@@ -10,11 +10,9 @@
 #  + -------------------------------------------------------------------
 import datetime
 import selectors
-import sys, os, json, pwd
+import sys, os, json
 import threading
 import uuid
-
-
 
 try:
     import thread
@@ -23,21 +21,22 @@ except ImportError:
 
 sys.path.insert(0, 'class/')
 import public
-import common
+import system
+from BTPanel import session
+
 
 try:
     import websocket
-except:
+except ImportError:
     os.system('{} -m pip install websocket-client'.format(public.get_python_bin()))
     import websocket
+
 debug = False
 
 SERVER = "https://work.bt.cn"
 WEBSOCKET_SERVER = "wss://work.bt.cn"
 workorder_clients = {}
 connections = {}
-
-comm = common.panelAdmin()
 
 
 class panelWorkorder:
@@ -55,14 +54,40 @@ class panelWorkorder:
             user_info = json.loads(public.ReadFile(user_data_file))
             return {
                 "uid": user_info["uid"],
-                "username": user_info["username"]
+                "username": user_info["username"],
+                "address": user_info["address"],
+                "serverid": user_info["serverid"],
             }
         except Exception as e:
             pass
         return None
 
+    def allow(self, get):
+        try:
+            user_info = self.find_user_info()
+            args = user_info
+            args["version"] = session["version"]
+            server = SERVER + "/workorder/allow?uid={uid}&username={" \
+                              "username}&version={version}&address={" \
+                              "address}&serverid={serverid}".format(**args)
+            response = public.HttpGet(server, headers=self.get_headers())
+            if response:
+                result = json.loads(response)
+                if result["status"]:
+                    return public.returnMsg(status=True, msg="授权用户。")
+        except:
+            pass
+        return public.returnMsg(status=False, msg="非授权用户。")
+
     def get_error_log(self):
         return "yes"
+
+    def get_panel_info(self):
+        data = {
+            "system": system.system().GetSystemVersion(),
+            "version": session["version"]
+        }
+        return data
 
     def get_headers(self):
         headers = {
@@ -102,10 +127,13 @@ class panelWorkorder:
                 data.update(user_info)
 
                 server = SERVER + "/workorder/close"
-                response = requests.post(server, headers=self.get_headers(),
-                                         data=data)
-                if response.status_code == 200:
-                    return response.json()
+                response = public.HttpPost(server,
+                                           data,
+                                           headers=self.get_headers())
+                # response = requests.post(server, headers=self.get_headers(),
+                #                          data=data)
+                if response:
+                    return jsonify(json.loads(response))
             else:
                 return jsonify({
                     "status": False,
@@ -141,41 +169,57 @@ class panelWorkorder:
 
             uid = user_info['uid']
             user = user_info['username']
+            address = user_info["address"]
+            serverid = user_info["serverid"]
 
             collect = data.collect
-            other = None
-            if collect:
-                other = self.get_error_log()
+            other = {}
+            # if collect:
+            #     other = self.get_error_log()
 
             data = {
                 "contents": contents,
                 "other": other,
+                "panel_info": json.dumps(self.get_panel_info()),
                 "uid": uid,
                 "username": user,
-                "collect": collect
+                "collect": collect,
+                "address": address,
+                "serverid": serverid
             }
 
-            import requests
             server = SERVER + "/workorder/create"
-            response = requests.post(server, headers=self.get_headers(),
-                                     data=data)
-            if response.status_code == 200:
-                return jsonify(response.json())
-            if response.status_code in [500, 502]:
-                return jsonify({
-                    "status": False,
-                    "msg": "网络连接异常。",
-                    "error_code": 10001
-                })
+            response = public.HttpPost(server, data, headers=self.get_headers())
+            if response:
+                return jsonify(json.loads(response))
+            else:
+                if debug:
+                    print("创建工单异常：")
+                    print(response)
+
+            # import requests
+            # server = SERVER + "/workorder/create"
+            # response = requests.post(server, headers=self.get_headers(),
+            #                          data=data)
+            # if response.status_code == 200:
+            #     return jsonify(response.json())
+            # if response.status_code in [500, 502]:
+            #     return jsonify({
+            #         "status": False,
+            #         "msg": "网络连接异常。",
+            #         "error_code": 10001
+            #     })
             # public.WriteLog("wd", response.text)
-        except requests.exceptions.ConnectionError as ce:
-            return jsonify({
-                "status": False,
-                "msg": "网络连接异常。",
-                "error_code": 10001
-            })
+        # except requests.exceptions.ConnectionError as ce:
+        #     return jsonify({
+        #         "status": False,
+        #         "msg": "网络连接异常。",
+        #         "error_code": 10001
+        #     })
         except Exception as e:
-            print(e)
+            if debug:
+                print("创建工单异常：")
+                print(e)
             # public.WriteLog("ws error", str(e))
         return jsonify({
             "status": False,
@@ -193,12 +237,18 @@ class panelWorkorder:
                     "msg": "请先绑定官网账号。"
                 })
 
-            import requests
-            server = SERVER + "/workorder/list"
-            response = requests.get(server, headers=self.get_headers(),
-                                    data=user_info)
-            if response.status_code == 200:
-                return jsonify(response.json())
+            # import requests
+            server = SERVER + \
+                     "/workorder/list?uid={uid}&username={" \
+                     "username}&serverid={serverid}&address={" \
+                     "address}".format(**user_info)
+            # response = requests.get(server, headers=self.get_headers(),
+            #                         data=user_info)
+            # if response.status_code == 200:
+            #     return jsonify(response.json())
+            response = public.HttpGet(server, headers=self.get_headers())
+            if response:
+                return jsonify(json.loads(response))
         except Exception as e:
             pass
         return jsonify({
@@ -212,14 +262,17 @@ class panelWorkorder:
             workorder = data.workorder
 
             from flask import jsonify
-            import requests
-            server_url = SERVER + "/get_messages"
-            response = requests.get(server_url, headers=self.get_headers(),
-                                    data=data)
-            if response.status_code == 200:
-                result = response.json()
-                # if "error_code" not result
-                return jsonify(result)
+            # import requests
+            server_url = SERVER + "/get_messages?workorder={}".format(workorder)
+            # response = requests.get(server_url, headers=self.get_headers(),
+            #                         data=data)
+            # if response.status_code == 200:
+            #     result = response.json()
+            #     # if "error_code" not result
+            #     return jsonify(result)
+            response = public.HttpGet(server_url, headers=self.get_headers())
+            if response:
+                return json.loads(response)
         except Exception as e:
             print(e)
         return jsonify({
@@ -252,9 +305,13 @@ class panelWorkorder:
                         return
                     uid = user_info['uid']
                     user = user_info["username"]
+                    serverid = user_info["serverid"]
+                    address = user_info["address"]
                     ws = websocket.WebSocketApp(
-                        WEBSOCKET_SERVER + "/workorder/client?uid={}&username={}&workorder={}".format(
-                            uid, user, workorder),
+                        WEBSOCKET_SERVER + "/workorder/client?uid={"
+                                           "}&username={}&workorder={"
+                                           "}&serverid={}&address={}"\
+                        .format(uid, user, workorder, serverid, address),
                         on_message=on_message,
                         on_error=on_error,
                         on_close=on_close,
@@ -410,7 +467,7 @@ class panelWorkorder:
                             # 限制ping间隔时间
                             if message == "ping":
                                 last_ping_time = self.ping_record.get(workorder,
-                                                                 None)
+                                                                      None)
                                 now = datetime.datetime.now()
                                 if debug:
                                     print("距离上次ping: {}s".format(
@@ -436,7 +493,7 @@ class panelWorkorder:
                                 print("检查客户端：")
                                 print(self.panel_clients.get(workorder))
                             for key, _ws in self.panel_clients.get(workorder,
-                                                              {}).items():
+                                                                   {}).items():
                                 if key != session_id:
                                     if debug:
                                         print("转发到客户端：{}".format(session_id))
@@ -452,9 +509,11 @@ class panelWorkorder:
                         if debug:
                             print("重试连接websocket客户端。")
                         self.start_workorder_client(workorder_clients,
-                                               workorder, self.ping_interval,
-                                               _on_message, _on_error,
-                                               _on_close, _on_pong, _on_open)
+                                                    workorder,
+                                                    self.ping_interval,
+                                                    _on_message, _on_error,
+                                                    _on_close, _on_pong,
+                                                    _on_open)
                         retry += 1
                     else:
                         break
@@ -489,10 +548,8 @@ class panelWorkorder:
             fileno = ws.handler.socket.fileno()
             epoll.register(ws.handler.socket, selectors.EVENT_READ,
                            read_websocket_data)
-            # public.WriteLog("SESSION_ID", session_id)
             if session_id not in self.panel_clients[workorder].keys():
                 self.panel_clients[workorder][session_id] = ws
-            # public.WriteLog("All Session ID:", str(panel_clients[workorder].keys()))
 
             while True:
                 if not connections[workorder] or retry >= self.max_retry:
@@ -524,11 +581,12 @@ class panelWorkorder:
                             if debug:
                                 print("重试连接。。。")
                             self.start_workorder_client(workorder_clients,
-                                                   workorder, 3, _on_message,
-                                                   _on_error,
-                                                   _on_close,
-                                                   _on_pong,
-                                                   _on_open)
+                                                        workorder, 3,
+                                                        _on_message,
+                                                        _on_error,
+                                                        _on_close,
+                                                        _on_pong,
+                                                        _on_open)
                             retry += 1
                             if debug:
                                 print("Retry count:", retry)

@@ -249,26 +249,8 @@ var index = {
             if(rdata.installed === false) bt.index.rec_install();
             if (rdata.user_info.status) {
                 var rdata_data = rdata.user_info.data;
-                console.log(rdata_data);
+                bt.set_cookie('bt_user_info',JSON.stringify(rdata.user_info));
                 $(".bind-user").html(rdata_data.username);
-                // bt.send('check_user_auth', 'ajax/check_user_auth', {}, function (rd) {
-                //     if (!rd.status) bt.msg(rd);
-                // });
-                // bt.weixin.get_user_info(function (rdata) {
-                //     if (!rdata.status){
-                //         bt.msg(rdata);
-                //         return;
-                //     }
-                //     if (JSON.stringify(rdata.msg) != '{}') {
-                //         var datas = rdata.msg;
-                //         for (var key in datas) {
-                //             var item = datas[key];
-                //             item.nickName
-                //             $(".bind-weixin a").text(item.nickName);
-                //             break;
-                //         }
-                //     }
-                // });
             }
             else {
                 $(".bind-weixin a").attr("href", "javascript:;");
