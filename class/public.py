@@ -2567,7 +2567,25 @@ class get_modules:
 
             setattr(self,mod_name,mod_name)
 
-
+#检查App和小程序的绑定
+def check_app(check='app'):
+    if check=='app':
+        try:
+            if not os.path.exists('/www/server/panel/data/user.json') and os.path.exists('/www/server/panel/config/api.json') and not os.path.exists('/www/server/panel/plugin/app/user.json'):return False
+            wxapp = json.loads(readFile('/www/server/panel/plugin/app/user.json'))
+            app_info = json.loads(readFile('/www/server/panel/data/user.json'))
+            btapp_info = json.loads(readFile('/www/server/panel/config/api.json'))
+            if not app_info and not wxapp and  not btapp_info['open']:return False
+            if not app_info and not wxapp  and not 'apps' in btapp_info:return False
+            if not app_info and not wxapp  and not btapp_info['apps']:return False
+            return True
+        except:
+            return False
+    elif check=='wxapp':
+        if not os.path.exists('/www/server/panel/plugin/app/user.json'):return False
+        app_info = json.loads(readFile('/www/server/panel/plugin/app/user.json'))
+        if not app_info: return False
+        return True
 
 
 

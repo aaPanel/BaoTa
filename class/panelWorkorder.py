@@ -22,6 +22,8 @@ except ImportError:
 sys.path.insert(0, 'class/')
 import public
 import system
+import panelPlugin
+import common
 from BTPanel import session
 
 
@@ -74,7 +76,10 @@ class panelWorkorder:
             if response:
                 result = json.loads(response)
                 if result["status"]:
-                    return public.returnMsg(status=True, msg="授权用户。")
+                    pp = panelPlugin.panelPlugin()
+                    soft_list = pp.get_soft_list(common.dict_obj())
+                    if soft_list["pro"] != -1:
+                        return public.returnMsg(status=True, msg="授权用户。")
         except:
             pass
         return public.returnMsg(status=False, msg="非授权用户。")
@@ -196,26 +201,6 @@ class panelWorkorder:
                 if debug:
                     print("创建工单异常：")
                     print(response)
-
-            # import requests
-            # server = SERVER + "/workorder/create"
-            # response = requests.post(server, headers=self.get_headers(),
-            #                          data=data)
-            # if response.status_code == 200:
-            #     return jsonify(response.json())
-            # if response.status_code in [500, 502]:
-            #     return jsonify({
-            #         "status": False,
-            #         "msg": "网络连接异常。",
-            #         "error_code": 10001
-            #     })
-            # public.WriteLog("wd", response.text)
-        # except requests.exceptions.ConnectionError as ce:
-        #     return jsonify({
-        #         "status": False,
-        #         "msg": "网络连接异常。",
-        #         "error_code": 10001
-        #     })
         except Exception as e:
             if debug:
                 print("创建工单异常：")

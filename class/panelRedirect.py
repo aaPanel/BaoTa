@@ -411,7 +411,7 @@ class panelRedirect:
         conf_path = "%s/panel/vhost/nginx/%s.conf" % (self.setupPath, get.sitename)
         old_conf = public.readFile(conf_path)
         rep = "#301-START\n+[\s\w\:\/\.\;\$\(\)\'\^\~\{\}]+#301-END"
-        url_rep = "return\s(\d+)\s(https?\:\/\/[\w\.]+)\$"
+        url_rep = "return\s(\d+)\s(https?\:\/\/[\w\.]+)"
         host_rep = "\$host\s~\s'\^(.*)'"
         if re.search(rep, old_conf):
             # 构造代理配置

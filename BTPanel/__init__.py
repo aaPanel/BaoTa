@@ -1230,6 +1230,10 @@ def panel_public():
             global admin_check_auth, admin_path, route_path, admin_path_file
             if admin_path != '/bt' and os.path.exists(admin_path_file) and not 'admin_auth' in session:
                 return 'False'
+
+        #验证是否绑定了设备
+        if not get.fun in ['blind']:
+            if not public.check_app('app'):return public.returnMsg(False,'未绑定用户!')
         import wxapp
         pluwx = wxapp.wxapp()
         checks = pluwx._check(get)
@@ -1238,8 +1242,8 @@ def panel_public():
             return public.getJson(checks), json_header
         data = public.getJson(eval('pluwx.' + get.fun + '(get)'))
         return data, json_header
-
     if get.name != 'app': return abort(404)
+    if not public.check_app('wxapp'): return public.returnMsg(False, '未绑定用户!')
     import panelPlugin
     plu = panelPlugin.panelPlugin()
     get.s = '_check'
@@ -1808,6 +1812,7 @@ def check_token(data):
     if not result: return False
     if result['token'] != token: return False
     return result
+
 
 
 # ======================公共方法区域END============================#

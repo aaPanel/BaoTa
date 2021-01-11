@@ -81,6 +81,13 @@ class ScanLogin(object):
 
      #验证APP是否登录成功
     def check_app_login(self,get):
+        #判断是否存在绑定
+        btapp_info = json.loads(public.readFile('/www/server/panel/config/api.json'))
+        if not btapp_info:return public.returnMsg(False,'未绑定')
+        if not btapp_info['open']:return public.returnMsg(False,'未开启API')
+        if not 'apps' in btapp_info:return public.returnMsg(False,'未绑定手机')
+        if not btapp_info['apps']:return public.returnMsg(False,'未绑定手机')
+
         session_id = public.get_session_id()
         if cache.get(session_id) != 'True':
             return public.returnMsg(False,'等待APP扫码登录')
@@ -198,7 +205,7 @@ class wxapp(SelfModule, ScanLogin):
                     if type(encryption_str) == str:
                         encryption_str = encryption_str.encode()
             if get['sgin'] == public.md5(binascii.hexlify(base64.b64encode(encryption_str))):
-                if public.GetClientIp() in ['118.24.150.167', '103.224.251.67', '125.88.182.170', '47.52.194.186', '39.104.53.226','119.147.144.162']:
+                if public.GetClientIp() in [ '47.52.194.186']:
                     return True
             return public.returnMsg(False, '未授权')
 

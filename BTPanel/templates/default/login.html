@@ -426,7 +426,7 @@
                 Wreset();
                 var setTime = '';
                 $.get('/public?name=app&fun=login_qrcode', function (res) {
-                    if (res.status) {
+                    // if (res.status) {
                         $('#qrcode').qrcode({
                             render: "canvas",
                             width: 150,
@@ -436,7 +436,7 @@
                             text: res.msg
                         });
                         $('.entrance').show();
-                    }
+                    // }
                 }).error(function (res, textStatus, errorThrown) {
                     if (res.status == 404) {
                         $('.entrance').hide();
@@ -485,7 +485,31 @@
             window.onresize = function () {
                 Wreset();
             }
-            $(function () {
+            $(function(){
+                // $('.loginform input').blur(function(){
+                //     var $this = $(this),type = $this.attr('name'),validFormTip = $this.next(),val = $this.val();
+                //     switch(type){
+                //         case 'username':
+                //             if(val == ''){
+                //                 $this.addClass('Validform_error');
+                //                 validFormTip.addClass('Validform_wrong').removeClass('Validform_right').text($this.attr('nullmsg'));
+                //             }else if(val.length < 3){
+                //                 $this.addClass('Validform_error');
+                //                 validFormTip.addClass('Validform_wrong').removeClass('Validform_right').text($this.attr('errormsg'));
+                //             }else{
+                //                 $this.removeClass('Validform_error');
+                //                 validFormTip.removeClass('Validform_wrong').addClass('Validform_right').text('');
+                //             }
+                //         break;
+                //         case 'password':
+                //             if(val == ''){
+                //                 $this.addClass('Validform_error');
+                //                 validFormTip.addClass('Validform_wrong').text($this.attr('nullmsg'));
+                //             }
+                //         break;
+                //     }
+                // });
+                // return false;
                 $(".loginform").Validform({
                     tiptype: function (msg, o, cssctl) {
                         if (!o.obj.is("form")) {
