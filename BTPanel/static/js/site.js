@@ -49,6 +49,7 @@ var site_table = bt_tools.table({
             }
         },event:function(row){}}, //模拟点击误删
         {fid:'ps',title:'备注',type:'input',blur:function(row,index,ev,key,that){
+            if(row.ps == ev.target.value) return false;
             bt.pub.set_data_ps({id:row.id,table:'sites',ps:ev.target.value},function(res){
                 bt_tools.msg(res,{is_dynamic:true});
             });
@@ -70,14 +71,18 @@ var site_table = bt_tools.table({
             var _ssl = row.ssl,_info = '',_arry = [['issuer','证书品牌'],['notAfter','到期日期'],['notBefore','申请日期'],['dns','可用域名']];
             try {
                 if(typeof row.ssl.endtime != 'undefined'){
-                    if(row.ssl.endtime < 0) return '<a class="btlink bt_danger" href="javascript:;">未部署</a>';
+                    if(row.ssl.endtime < -7){
+                        return '<a class="btlink bt_warning" href="javascript:;">未部署</a>';
+                    }else if(row.ssl.endtime < 0 && row.ssl.endtime > -7){
+                        return '<a class="btlink bt_danger" href="javascript:;">已过期'+ Math. row.ssl.endtime  +'天</a>';
+                    }
                 }
             } catch (error){}
             for(var i=0;i<_arry.length;i++){
                 var item = _ssl[_arry[i][0]];
                 _info += _arry[i][1]+':'+ item + (_arry.length-1 != i?'\n':'');
             }
-            return row.ssl === -1?'<a class="btlink bt_warning" href="javascript:;">未部署</a>':'<a class="btlink" href="javascript:;" title="'+ _info +'">剩余'+ row.ssl.endtime +'天</a>';
+            return row.ssl === -1?'<a class="btlink bt_warning" href="javascript:;">未部署</a>':'<a class="btlink '+ (row.ssl.endtime < 7?'bt_danger':'') +'" href="javascript:;" title="'+ _info +'">剩余'+ row.ssl.endtime +'天</a>';
         },event:function(row,index,ev,key,that){
             site.web_edit(row);
             setTimeout(function(){
@@ -428,8 +433,7 @@ var site = {
                         {
                             field: 'ssl', title: 'SSL证书', width: 80, templet: function (item) {
                                 var _ssl = '';
-                                if (item.ssl == -1)
-                                {
+                                if (item.ssl == -1){
                                     _ssl = '<a class="ssl_tips btlink" style="color:orange;">未部署</a>';
                                 }else{
                                     var ssl_info = "证书品牌: "+item.ssl.issuer+"<br>到期日期: " + item.ssl.notAfter+"<br>申请日期: " + item.ssl.notBefore +"<br>可用域名: " + item.ssl.dns.join("/");
@@ -2449,7 +2453,7 @@ var site = {
             $('#webedit-con').html("<div id='ssl_tabs'></div><div class=\"tab-con\" style=\"padding:10px 0px;\"></div>");
             bt.site.get_site_ssl(web.name, function (rdata) {
                 var _tabs = [
-                                        {
+{
                         title:"商用证书<i class='ssl_recom_icon'></i>",callback:function(robj){
                             var deploy_ssl_info = rdata;
                             var html = '',product_list,userInfo,loadT = bt.load('正在获取商用证书订单列表，请稍候...'),order_list,is_check = true,itemData,activeData,loadY;
@@ -3754,10 +3758,13 @@ var site = {
                         $('#ssl_tabs span:eq(3)').trigger('click');
                         break;
                     case 1:
+                        $('#ssl_tabs span:eq(2)').trigger('click');
+                        break;
+                    case 2:
                         $('#ssl_tabs span:eq(1)').trigger('click');
                         break;
                     case 3:
-                        $('#ssl_tabs span:eq(2)').trigger('click');
+                        $('#ssl_tabs span:eq(0)').trigger('click');
                     break;
                     default:
                         $('#ssl_tabs span:eq(0)').trigger('click');

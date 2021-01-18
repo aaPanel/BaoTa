@@ -99,6 +99,7 @@
             width: 160px;
             margin: 0 auto;
             margin-top: 15px;
+            text-align: center;
         }
 
             .list_scan > img {
@@ -267,11 +268,11 @@
                 </form>
             </div>
             <div class="scanCode" style="display: none;">
-                <div class="titles"><span>堡塔APP/小程序扫码登录</span></div>
+                <div class="titles"><span>堡塔APP扫码登录</span></div>
                 <div class="qrCode" id="qrcode"></div>
                 <div class="scanTip">
                     <div class="list_scan">
-                        <span>打开<a href="https://www.bt.cn/bbs/thread-47408-1-1.html" target="_blank" class="btlink">堡塔APP</a>或<a href="javascript:;" class="btlink"> 宝塔小程序<div class="weChatSamll"><img src="//app.bt.cn/static/app.png"><em></em></div></a>
+                        <span>打开<a href="https://www.bt.cn/bbs/thread-47408-1-1.html" target="_blank" class="btlink">堡塔APP</a>
                         </span>
                         <div class="scan_tips"> <img src="/static/img/sCan.png" /><span>扫一扫</span></div>
                     </div>
@@ -433,7 +434,7 @@
                             height: 150,
                             background: "#fefefe",
                             foreground: "#333",
-                            text: res.msg
+                            text: res.status?res.msg:'https://www.bt.cn/download/app.html'
                         });
                         $('.entrance').show();
                     // }

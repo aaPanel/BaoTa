@@ -1060,6 +1060,7 @@ def tips():
 @app.route('/get_app_bind_status', methods=method_all)
 def get_app_bind_status(pdata=None):
     # APP绑定状态查询
+    if not public.check_app('app_bind'):return public.returnMsg(False, '未开启API')
     import panelApi
     api_object = panelApi.panelApi()
     return json.dumps(api_object.get_app_bind_status(get_input())), json_header
@@ -1068,6 +1069,7 @@ def get_app_bind_status(pdata=None):
 @app.route('/check_bind', methods=method_all)
 def check_bind(pdata=None):
     # APP绑定查询
+    if not public.check_app('app_bind'):return public.returnMsg(False, '未开启API')
     import panelApi
     api_object = panelApi.panelApi()
     return json.dumps(api_object.check_bind(get_input())), json_header

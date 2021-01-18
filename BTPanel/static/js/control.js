@@ -27,7 +27,7 @@ $(".st").hover(function(){
 
 $(".searcTime .gt").click(function(){
 	$(this).addClass("on").siblings().removeClass("on");
-})
+});
 
 
 $('.time_range_submit').click(function(){
@@ -147,6 +147,7 @@ function ToSizeG(bytes){
 	}
 	return b;
 }
+
 //定义周期时间
 function getBeforeDate(n){
     var n = n;
@@ -170,6 +171,7 @@ function getBeforeDate(n){
     s = year+"/"+(mon<10?('0'+mon):mon)+"/"+(day<10?('0'+day):day);
     return s;
 }
+
 //cpu
 function cpu(b,e){
 $.get('/ajax?action=GetCpuIo&start='+b+'&end='+e,function(rdata){
@@ -353,14 +355,8 @@ $.get('/ajax?action=GetCpuIo&start='+b+'&end='+e,function(rdata){
 //磁盘io
 function disk(b, e) {
     $.get('/ajax?action=GetDiskIo&start=' + b + '&end=' + e, function (rdata) {
-        var myChartDisk = echarts.init(document.getElementById('diskview'));
-        var rData = [];
-        var wData = [];
-        var xData = [];
-        //var yData = [];
-		//var zData = [];
-		var unit_size = 1;
-		var _unit = getCookie('disk-unitType');
+        var diskview = document.getElementById('diskview'),myChartDisk = echarts.init(diskview),rData = [],wData = [],xData = [],unit_size = 1,_unit = getCookie('disk-unitType');
+        $(diskview).next().removeClass('hide').addClass('show');
 		switch (_unit) {
 			case 'MB/s':
 				unit_size = 1024;
@@ -395,6 +391,7 @@ function disk(b, e) {
                 },
             },
             legend: {
+                top:'18px',
                 data: [lan.control.disk_read_bytes, lan.control.disk_write_bytes]
             },
             xAxis: {
@@ -479,16 +476,8 @@ function disk(b, e) {
 //网络Io
 function network(b,e){
 $.get('/ajax?action=GetNetWorkIo&start='+b+'&end='+e,function(rdata){
-	var myChartNetwork = echarts.init(document.getElementById('network'));
-	var aData = [];
-	var bData = [];
-	var cData = [];
-	var dData = [];
-	var xData = [];
-	var yData = [];
-	var zData = [];
-	var unit_size = 1;
-	var _unit = getCookie('network-unitType');
+    var anetwork = document.getElementById('network'),myChartNetwork = echarts.init(anetwork),aData = [],bData = [],cData = [],dData = [],xData = [],yData = [],zData = [],unit_size = 1,_unit = getCookie('network-unitType'),network_io = [{title:'全部',value:'all'}],network_select = $('[name="network-io"]'),network_html = '<option value="">全部</option>',is_network = 0,network_io_key = bt.get_cookie('network_io_key') || '';
+	$(anetwork).next().removeClass('hide').addClass('show');
 	switch (_unit) {
 		case 'MB/s':
 			unit_size = 1024;
@@ -500,14 +489,39 @@ $.get('/ajax?action=GetNetWorkIo&start='+b+'&end='+e,function(rdata){
 			unit_size = 1;
 			break;
 	}
+    network_select.unbind('change').change(function(){
+	    bt.set_cookie('network_io_key',$(this).val());
+	    network(b,e);
+	}).removeClass('hide').addClass('show');
+	
 	for(var i = 0; i < rdata.length; i++){
-		aData.push(rdata[i].total_up);
-		bData.push(rdata[i].total_down);
-		cData.push(rdata[i].down_packets);
-		dData.push(rdata[i].up_packets);
-		xData.push(rdata[i].addtime);
-		yData.push(rdata[i].up/unit_size);
-		zData.push(rdata[i].down/unit_size);
+	    var items = rdata[i];
+	    if(is_network < 1 && typeof items.down_packets === 'object'){
+           	for(var key in items.down_packets){
+	            network_html += '<option value="'+ key +'" '+ (network_io_key === key?'selected':'') +'>'+ key +'</option>';
+	        }
+	        network_select.html(network_html);
+	        is_network ++;
+        }
+	    if(typeof network_io_key != 'undefined' && network_io_key != ''){
+	        if(typeof items.down_packets === 'object'){
+	            zData.push(items.down_packets[network_io_key]/unit_size);
+	        }else{
+	            zData.push(0);
+	        }
+	    }else{
+	        zData.push(items.down/unit_size);
+	    }
+	    if(typeof network_io_key != 'undefined' && network_io_key != ''){
+	        if(typeof items.up_packets === 'object'){
+	            yData.push(items.up_packets[network_io_key]/unit_size);
+	        }else{
+	            yData.push(0);
+	        }
+	    }else{
+	        yData.push(items.up/unit_size);
+	    }
+		xData.push(items.addtime);
 	}
 	option = {
 		tooltip: {
@@ -524,6 +538,7 @@ $.get('/ajax?action=GetNetWorkIo&start='+b+'&end='+e,function(rdata){
             }
 		},
 		legend: {
+		    top:'18px',
 			data:[lan.index.net_up,lan.index.net_down]
 		},
 		xAxis: {

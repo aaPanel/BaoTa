@@ -2075,6 +2075,8 @@ def get_debug_log():
 def get_session_id():
     from BTPanel import request
     session_id =  request.cookies.get('SESSIONID','')
+    if not re.findall(r"^([\w\.-]{64,64})$",session_id):
+        return GetRandomString(64)
     return session_id
 
 #尝试自动恢复面板数据库
@@ -2569,23 +2571,35 @@ class get_modules:
 
 #检查App和小程序的绑定
 def check_app(check='app'):
+    path='/www/server/panel/'
     if check=='app':
         try:
-            if not os.path.exists('/www/server/panel/data/user.json') and os.path.exists('/www/server/panel/config/api.json') and not os.path.exists('/www/server/panel/plugin/app/user.json'):return False
-            wxapp = json.loads(readFile('/www/server/panel/plugin/app/user.json'))
-            app_info = json.loads(readFile('/www/server/panel/data/user.json'))
-            btapp_info = json.loads(readFile('/www/server/panel/config/api.json'))
-            if not app_info and not wxapp and  not btapp_info['open']:return False
-            if not app_info and not wxapp  and not 'apps' in btapp_info:return False
-            if not app_info and not wxapp  and not btapp_info['apps']:return False
-            return True
+            if not os.path.exists(path+'data/user.json') and os.path.exists(path+'config/api.json') and not os.path.exists(path+'plugin/app/user.json'):return False
+            if os.path.exists(path+'plugin/app/user.json'):
+                wxapp = json.loads(readFile(path+'plugin/app/user.json'))
+                if wxapp:return True
+            if os.path.exists(path+'data/user.json'):
+                app_info = json.loads(readFile(path+'data/user.json'))
+                if app_info:return True
+            if os.path.exists(path+'config/api.json'):
+                btapp_info = json.loads(readFile(path+'config/api.json'))
+                if not  btapp_info['open']:return False
+                if not 'apps' in btapp_info:return False
+                if not btapp_info['apps']:return False
+                return True
+            return False
         except:
             return False
+    elif check=='app_bind':
+        if not os.path.exists(path + 'config/api.json'):return False
+        btapp_info = json.loads(readFile(path +'config/api.json'))
+        if not btapp_info: return False
+        if not btapp_info['open']: return False
+        return True
     elif check=='wxapp':
-        if not os.path.exists('/www/server/panel/plugin/app/user.json'):return False
-        app_info = json.loads(readFile('/www/server/panel/plugin/app/user.json'))
+        if not os.path.exists(path+'plugin/app/user.json'):return False
+        app_info = json.loads(readFile(path+'plugin/app/user.json'))
         if not app_info: return False
         return True
-
 
 

@@ -131,7 +131,7 @@ def startTask():
             siteEdate()
             time.sleep(2)
     except Exception as ex:
-        logging.debug(ex)
+        logging.info(ex)
         time.sleep(60)
         startTask()
         
@@ -145,7 +145,7 @@ def siteEdate():
         if oldEdate == mEdate: return False
         os.system(get_python_bin() + " /www/server/panel/script/site_task.py > /dev/null")
     except Exception as ex:
-        logging.debug(ex)
+        logging.info(ex)
         pass
 
 def GetLoadAverage():
@@ -179,7 +179,9 @@ def systemTask():
         
         count = 0
         reloadNum=0
-        network_up = network_down = diskio_1 = diskio_2 = networkInfo = cpuInfo = diskInfo = None
+        diskio_1 = diskio_2 = networkInfo = cpuInfo = diskInfo = None
+        network_up = {}
+        network_down = {}
         while True:
             if not os.path.exists(filename):
                 time.sleep(10)
@@ -210,20 +212,30 @@ def systemTask():
             
             
             #取当前网络Io
-            networkIo = net_io_counters()[:4]
-            if not network_up:
-                network_up   =  networkIo[0]
-                network_down =  networkIo[1]
+            networkIo_list = net_io_counters(pernic = True)
             tmp = {}
-            tmp['upTotal']      = networkIo[0]
-            tmp['downTotal']    = networkIo[1]
-            tmp['up']           = round(float((networkIo[0] - network_up) / 1024),2)
-            tmp['down']         = round(float((networkIo[1] - network_down) / 1024),2)
-            tmp['downPackets']  = networkIo[3]
-            tmp['upPackets']    = networkIo[2]
+            tmp['upTotal'] = 0
+            tmp['downTotal'] = 0
+            tmp['up'] = 0
+            tmp['down'] = 0
+            tmp['downPackets']  = {}
+            tmp['upPackets']    = {}
             
-            network_up   =  networkIo[0]
-            network_down =  networkIo[1]
+            for k in networkIo_list.keys():
+                networkIo = networkIo_list[k][:4]
+                if not k in network_up.keys():
+                    network_up[k]   =  networkIo[0]
+                    network_down[k] =  networkIo[1]
+                
+                tmp['upTotal']      += networkIo[0]
+                tmp['downTotal']    += networkIo[1]
+                tmp['downPackets'][k] = round(float((networkIo[1] - network_down[k]) / 1024)/5,2)
+                tmp['upPackets'][k] = round(float((networkIo[0] - network_up[k]) / 1024)/5,2)
+                tmp['up']           += tmp['upPackets'][k]
+                tmp['down']         += tmp['downPackets'][k]
+
+                network_up[k]   =  networkIo[0]
+                network_down[k] =  networkIo[1]
             
             if not networkInfo: networkInfo = tmp
             if (tmp['up'] + tmp['down']) > (networkInfo['up'] + networkInfo['down']): networkInfo = tmp
@@ -269,8 +281,7 @@ def systemTask():
                     data = (cpuInfo['used'],cpuInfo['mem'],addtime)
                     sql.table('cpuio').add('pro,mem,addtime',data)
                     sql.table('cpuio').where("addtime<?",(deltime,)).delete()
-                    
-                    data = (networkInfo['up'] / 5,networkInfo['down'] / 5,networkInfo['upTotal'],networkInfo['downTotal'],networkInfo['downPackets'],networkInfo['upPackets'],addtime)
+                    data = (networkInfo['up'],networkInfo['down'],networkInfo['upTotal'],networkInfo['downTotal'],dumps(networkInfo['downPackets']),dumps(networkInfo['upPackets']),addtime)
                     sql.table('network').add('up,down,total_up,total_down,down_packets,up_packets,addtime',data)
                     sql.table('network').where("addtime<?",(deltime,)).delete()
                     if os.path.exists('/proc/diskstats') and disk_ios:
@@ -296,12 +307,12 @@ def systemTask():
                     if reloadNum > 1440:
                         reloadNum = 0
                 except Exception as ex:
-                    logging.debug(str(ex))
+                    logging.info(str(ex))
             del(tmp)
             time.sleep(5)
             count +=1
     except Exception as ex:
-        logging.debug(ex)
+        logging.info(ex)
         time.sleep(30)
         systemTask()
             
@@ -356,7 +367,7 @@ def startPHPVersion(version):
         #检查是否正确启动
         if os.path.exists(cgi): return True
     except Exception as ex:
-        logging.debug(ex)
+        logging.info(ex)
         return True
     
     
@@ -380,7 +391,7 @@ def check502Task():
             sess_expire()
             time.sleep(600)
     except Exception as ex:
-        logging.debug(ex)
+        logging.info(ex)
         time.sleep(600)
         check502Task()
 
@@ -407,7 +418,7 @@ def sess_expire():
         del(f_list)
 
     except Exception as ex:
-        logging.debug(str(ex))
+        logging.info(str(ex))
     
     
 
@@ -533,7 +544,7 @@ def HttpGet(url,timeout = 6,headers = {}):
             response = urllib2.urlopen(req,timeout = timeout,)
             return response.read()
         except Exception as ex:
-            logging.debug(str(ex))
+            logging.info(str(ex))
             return str(ex)
     else:
         try:
@@ -544,7 +555,7 @@ def HttpGet(url,timeout = 6,headers = {}):
             if type(result) == bytes: result = result.decode('utf-8')
             return result
         except Exception as ex:
-            logging.debug("URL: {}  => {}".format(url,ex))
+            logging.info("URL: {}  => {}".format(url,ex))
             return str(ex)
 
 
@@ -582,18 +593,16 @@ def check_files_panel():
             cf = class_path + i['name']
             if not os.path.exists(cf): continue
             if public.FileMd5(cf) == i['md5']: continue
-            print(public.writeFile(cf,i['body']))
+            public.writeFile(cf,i['body'])
             public.ExecShell("bash /www/server/panel/init.sh reload &")
 
 def main():
-
     main_pid = 'logs/task.pid'
     if os.path.exists(main_pid):
         os.system("kill -9 $(cat {}) &> /dev/null".format(main_pid))
     pid = os.fork()
     if pid: sys.exit(0)
     
-    #os.umask(0)
     os.setsid()
 
     _pid = os.fork()
@@ -605,7 +614,7 @@ def main():
     sys.stderr.flush()
     task_log_file='logs/task.log'
 
-    logging.basicConfig(level = logging.DEBUG,format = '%(asctime)s [%(levelname)s] at %(lineno)d: %(message)s',datefmt = '%Y-%m-%d(%a)%H:%M:%S',filename = task_log_file,filemode = 'a+')
+    logging.basicConfig(level = logging.INFO,format = '%(asctime)s [%(levelname)s]: %(message)s',datefmt = '%Y-%m-%d %H:%M:%S',filename = task_log_file,filemode = 'a+')
     logging.info('服务已启动')
 
     import threading

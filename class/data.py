@@ -200,6 +200,8 @@ class data:
                         data['data'][i]['domain'] = SQL.table('domain').where("pid=?",(data['data'][i]['id'],)).count()
                         data['data'][i]['ssl'] = self.get_site_ssl_info(data['data'][i]['name'])
                         data['data'][i]['php_version'] = self.get_php_version(data['data'][i]['name'])
+                        if not data['data'][i]['status'] in ['0','1',0,1]:
+                            data['data'][i]['status'] = '1'
             elif table == 'firewall':
                 for i in range(len(data['data'])):
                     if data['data'][i]['port'].find(':') != -1 or data['data'][i]['port'].find('.') != -1 or data['data'][i]['port'].find('-') != -1:

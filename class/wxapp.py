@@ -205,7 +205,7 @@ class wxapp(SelfModule, ScanLogin):
                     if type(encryption_str) == str:
                         encryption_str = encryption_str.encode()
             if get['sgin'] == public.md5(binascii.hexlify(base64.b64encode(encryption_str))):
-                if public.GetClientIp() in [ '47.52.194.186']:
+                if public.GetClientIp() in ['47.52.194.186']:
                     return True
             return public.returnMsg(False, '未授权')
 

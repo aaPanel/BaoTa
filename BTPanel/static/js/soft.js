@@ -1370,6 +1370,10 @@ var soft = {
                 var loadT = bt.load();
                 bt.send('GetNginxStatus', 'ajax/GetNginxStatus', {}, function (rdata) {
                     loadT.close();
+                    if(rdata.status === false){
+                        bt.msg(rdata);
+                        return;
+                    }
                     $(".soft-man-con").html("<div><table id='tab-nginx-status' class='table table-hover table-bordered'> </table></div>");
                     var arrs = []
                     arrs[lan.bt.nginx_active] = rdata.active;
