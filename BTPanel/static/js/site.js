@@ -173,13 +173,15 @@ var site_table = bt_tools.table({
                 confirmVerify:false, //是否提示验证方式
                 paramName:'sites_id', //列表参数名,可以为空
                 paramId:'id', // 需要传入批量的id
-                theadName:'站点名称'
+                theadName:'站点名称',
+                refresh:true
             },{
                 title:"备份站点",
                 url:'/site?action=ToBackup',
                 paramId:'id',
                 load:true,
                 theadName:'站点名称',
+                refresh:true,
                 callback:function(that){ // 手动执行,data参数包含所有选中的站点
                     that.start_batch({},function(list){
                         var html = '';
@@ -197,6 +199,7 @@ var site_table = bt_tools.table({
                 paramName:'sites_id', //列表参数名,可以为空
                 paramId:'id', // 需要传入批量的id
                 theadName:'站点名称',
+                refresh:true,
                 confirm:{
                     title:'批量设置到期时间',
                     content:'<div class="line"><span class="tname">到期时间</span><div class="info-r "><input name="edate" id="site_edate" class="bt-input-text mr5" placeholder="yyyy-MM-dd" type="text"></div></div>',
@@ -238,11 +241,12 @@ var site_table = bt_tools.table({
                 paramName:'sites_id', //列表参数名,可以为空
                 paramId:'id', // 需要传入批量的id
                 theadName:'站点名称',
+                refresh:true,
                 confirm:{
                     title:'批量设置PHP版本',
                     area:'420px',
                     content:'<div class="line"><span class="tname">PHP版本</span><div class="info-r"><select class="bt-input-text mr5 versions" name="versions" style="width:150px"></select></span></div><ul class="help-info-text c7" style="font-size:11px"><li>请根据您的程序需求选择版本</li><li>若非必要,请尽量不要使用PHP5.2,这会降低您的服务器安全性；</li><li>PHP7不支持mysql扩展，默认安装mysqli以及mysql-pdo。</li></ul></div>',
-                    success:function(){
+                    success:function(res,list,that){
                         bt.site.get_all_phpversion(function(res){
                             var html = '';
                             $.each(res,function(index,item){
@@ -260,6 +264,7 @@ var site_table = bt_tools.table({
                 url:'/site?action=set_site_type',
                 paramName:'site_ids', //列表参数名,可以为空
                 paramId:'id', // 需要传入批量的id
+                refresh:true,
                 beforeRequest:function(list){
                     var arry = [];
                     $.each(list,function(index,item){
@@ -298,6 +303,7 @@ var site_table = bt_tools.table({
                 paramName:'sites_id', //列表参数名,可以为空
                 paramId:'id', //需要传入批量的id
                 theadName:'站点名称',
+                refresh:true,
                 confirm:function(config,callback){
                     bt.show_confirm("批量删除站点","是否同时删除选中站点同名的FTP、数据库、根目录", function(){
                         var param = {};
@@ -593,12 +599,12 @@ var site = {
                     default:"["+ config.name +"] 站点备份列表为空",//数据为空时的默认提示
                     column:[
                         {type:'checkbox',class:'',width:20},
-                        {fid:'name',title:'文件名'},
-                        {fid:'size',title:'文件大小',type:'text',template:function(row,index){
+                        {fid:'name',title:'文件名',width:320,fixed:true},
+                        {fid:'size',title:'文件大小',width:80,type:'text',template:function(row,index){
                             return bt.format_size(row.size);
                         }},
-                        {fid:'addtime',title:'备份时间'},
-                        {title:'操作',type:'group',width:150,align:'right',group:[{
+                        {fid:'addtime',width:150,title:'备份时间'},
+                        {title:'操作',type:'group',width:120,align:'right',group:[{
                             title:'下载',
                             template:function(row,index,ev,key,that){
                                 return '<a target="_blank" class="btlink" href="/download?filename=' + row.filename + '&amp;name=' + row.name +'">下载</a>';
@@ -708,8 +714,8 @@ var site = {
                             var array = value.webname.split("\n"),ress = array[0].split(":")[0],
                             oneVal = bt.strim(ress.replace(new RegExp(/([-.])/g), '_')),defaultPath = $('#defaultPath').text(),is_oneVal = ress.length > 0;
                             that.$set_find_value(is_oneVal?{
-                                'ftp_username':'ftp_'+ oneVal,'ftp_password':bt.get_random(16),
-                                'datauser':is_oneVal?('sql_'+ oneVal.substr(0, 16)):'','datapassword':bt.get_random(16),
+                                'ftp_username':oneVal,'ftp_password':bt.get_random(16),
+                                'datauser':is_oneVal?(oneVal.substr(0, 16)):'','datapassword':bt.get_random(16),
                                 'ps':oneVal,
                                 'path':bt.rtrim(defaultPath,'/') + '/'+ ress
                             }:{'ftp_username':'','ftp_password':'','datauser':'','datapassword':'','ps':'','path':bt.rtrim(defaultPath,'/')});
@@ -1790,7 +1796,8 @@ var site = {
                         paramId:'id',
                         paramName:'domains_id',
                         theadName:'域名',
-                        confirmVerify:false //是否提示验证方式
+                        confirmVerify:false, //是否提示验证方式
+                        refresh:true
                     }
                 }]
             });
@@ -1832,9 +1839,9 @@ var site = {
                 },
                 column:[
                     {type:'checkbox',width:20,keepNumber:1},
-                    {fid:'domain',title:'域名',type:'text'},
+                    {fid:'domain',title:'域名',width:150,type:'text'},
                     {fid:'port',title:'端口',width:70,type:'text'},
-                    {fid:'path',title:'子目录',width:70,type:'text'},
+                    {fid:'path',title:'子目录',type:'text'},
                     {title:'操作',width:110,type:'group',align:'right',group:[{
                         title:'伪静态',
                         event:function(row,index,ev,key,that){
@@ -1934,7 +1941,8 @@ var site = {
                         paramId:'id',
                         paramName:'bind_ids',
                         theadName:'域名',
-                        confirmVerify:false //是否提示验证方式
+                        confirmVerify:false, //是否提示验证方式
+                        refresh:true
                     }
                 }]
             });
@@ -2101,7 +2109,8 @@ var site = {
                         paramId:'name',
                         paramName:'names',
                         theadName:'加密访问名称',
-                        confirmVerify:false //是否提示验证方式
+                        confirmVerify:false, //是否提示验证方式
+                        refresh:true
                     }
                 }]
             });
@@ -2453,7 +2462,7 @@ var site = {
             $('#webedit-con').html("<div id='ssl_tabs'></div><div class=\"tab-con\" style=\"padding:10px 0px;\"></div>");
             bt.site.get_site_ssl(web.name, function (rdata) {
                 var _tabs = [
-{
+                                        {
                         title:"商用证书<i class='ssl_recom_icon'></i>",callback:function(robj){
                             var deploy_ssl_info = rdata;
                             var html = '',product_list,userInfo,loadT = bt.load('正在获取商用证书订单列表，请稍候...'),order_list,is_check = true,itemData,activeData,loadY;
@@ -3256,7 +3265,7 @@ var site = {
                         }
                     },
                     {
-                        title: '宝塔SSL', on: true, callback: function (robj) {
+                        title:'宝塔SSL', on: true, callback: function (robj){
                             bt.pub.get_user_info(function (udata) {
                                 if (udata.status) {
                                     bt.site.get_domains(web.id, function (ddata) {
@@ -3370,8 +3379,7 @@ var site = {
                                     }
                                     robj.append(bt.render_help(['宝塔SSL证书为亚洲诚信证书，需要实名认证才能申请使用', '已有宝塔账号请登录绑定', '宝塔SSL申请的是TrustAsia DV SSL CA - G5 原价：1900元/1年，宝塔用户免费！', '一年满期后免费颁发']));
                                 }
-                            })
-
+                            });
                         }
                     },
                     {
@@ -4259,7 +4267,8 @@ var site = {
                         paramId:'redirectname',
                         paramName:'redirectnames',
                         theadName:'重定向名称',
-                        confirmVerify:false // 是否提示验证方式
+                        confirmVerify:false, // 是否提示验证方式
+                        refresh:true
                     }
                 }]
             });
@@ -4548,7 +4557,8 @@ var site = {
                         paramId:'proxyname',
                         paramName:'proxynames',
                         theadName:'反向代理名称',
-                        confirmVerify:false // 是否提示验证方式
+                        confirmVerify:false, // 是否提示验证方式
+                        refresh:true
                     }
                 }]
             });

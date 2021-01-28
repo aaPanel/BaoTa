@@ -1,5 +1,8 @@
 var soft = {
     is_install: false,
+    is_setup:false,
+    is_setup_name:"",
+    refresh_data:[],
     get_list: function (page, type, search) {
         if (page == undefined || page == 'null' || page == 'undefined') page = 0;
         if (type == undefined || type == 'null' || type == 'undefined') type = 0;
@@ -16,7 +19,6 @@ var soft = {
             soft.get_dep_list(1);
             return;
         }
-        soft.is_install = false;
         bt.soft.get_soft_list(page, type, search, function (rdata) {
             soft.set_soft_tips('#updata_pro_info',type);
             var tBody = '';
@@ -42,255 +44,249 @@ var soft = {
             })
             var data = rdata.list.data;
             $('#softPage').html(rdata.list.page);
-            var phps = ['php-5.2', 'php-5.3', 'php-5.4'];
-            var _tab = bt.render({
-                table: '#softList',
-                columns: [
-                    {
-                        field: 'title', title: '软件名称', width: 165, templet: function (item) {
-                            var fName = item.name, version = item.version;
-                            if (bt.contains(item.name, 'php-')) {
-                                fName = 'php';
-                                version = '';
-                            }
-                            var click_opt = ' ', sStyle = '';
-                            if (item.setup) {
-                                sStyle = ' style="cursor:pointer"';
-                                if (item.admin) {
-                                    if (item.endtime >= 0 || item.price == 0) {
-                                        click_opt += 'onclick="bt.soft.set_lib_config(\'' + item.name + '\',\'' + item.title + '\')" ';
-                                    }
+            if(data.length>0){
+                for(var i = 0; i < data.length; i++){
+                    if(data[i].task =='-1'){
+                        soft.is_setup = true;
+                        soft.is_setup_name = data[i].name;
+                        break;
+                    }else{
+                        soft.is_setup = false;
+                        soft.is_install = false;
+                        soft.is_setup_name = "";
+                    }
+                }
+            }
+            if(soft.is_setup==true&&soft.is_setup_name != ""){
+               _this.soft_setup_find();
+            }
+            if(soft.refresh_data.length==0){
+                _this.refresh_table(page, type, search, rdata);
+                soft.refresh_data = data;
+            }else
+            if(JSON.stringify(data) !=JSON.stringify(soft.refresh_data)){
+                _this.refresh_table(page, type, search, rdata);
+                soft.refresh_data = data;
+            }
+           
+            bt.set_cookie('load_page', (page+'').split('not_load')[0])
+            bt.set_cookie('load_type', type)
+            bt.set_cookie('load_search', search)
+            if (soft.is_install&& soft.is_setup==false) {
+                setTimeout(function () {
+                    soft.get_list(bt.get_cookie('load_page') + 'not_load', bt.get_cookie('load_type'), bt.get_cookie('load_search'));
+                }, 3000);
+                soft.is_install = false;
+            }
+            if(rdata.recommend){
+                _this.render_promote_list(rdata.recommend);
+            }
+        })
+    },
+    // 查找正在安装软件的状态
+    soft_setup_find:function(){
+        var _this = this;
+        if(soft.is_setup==true&&soft.is_setup_name != ""){
+            $.post("plugin?action=get_soft_find",{sName:soft.is_setup_name},function(rdata){
+                if(rdata.task=="-1"){
+                    setTimeout(function () {
+                      _this.soft_setup_find();
+                    }, 3000);
+                }else{
+                    soft.is_install=true;
+                    setTimeout(function () {
+                        soft.get_list(bt.get_cookie('load_page') + 'not_load', bt.get_cookie('load_type'), bt.get_cookie('load_search'));
+                    }, 3000);
+                }
+            });
+        }
+    },
+    // 刷新列表
+    refresh_table:function(page, type, search, rdata){
+        var _this = this;
+        var phps = ['php-5.2', 'php-5.3', 'php-5.4'];
+        var data = rdata.list.data;
+        var _tab = bt.render({
+            table: '#softList',
+            columns: [
+                {
+                    field: 'title', title: '软件名称', width: 165, templet: function (item) {
+                        var fName = item.name, version = item.version;
+                        if (bt.contains(item.name, 'php-')) {
+                            fName = 'php';
+                            version = '';
+                        }
+                        var click_opt = ' ', sStyle = '';
+                        if (item.setup) {
+                            sStyle = ' style="cursor:pointer"';
+                            if (item.admin) {
+                                if (item.endtime >= 0 || item.price == 0) {
+                                    click_opt += 'onclick="bt.soft.set_lib_config(\'' + item.name + '\',\'' + item.title + '\')" ';
+                                }
 
-                                }
-                                else {
-                                    click_opt += ' onclick="soft.set_soft_config(\'' + item.name + '\')" ';
-                                }
                             }
-                            var is_php = item.name.indexOf('php-') >= 0,
-                            is_php5 = item.name.indexOf('php-5') >= 0,
-                            webcache = bt.get_cookie('serverType') == 'openlitespeed' ? true : false,
-                            distribution = bt.get_cookie('distribution');
-                            if (webcache && is_php) {
-                                if ((is_php5 || item.name == 'php-7.0')&&distribution=='centos8') {
-                                    click_opt = ' title="Apache2.2不兼容此版本，如需使用请切换到Apache2.4或Nginx"';
-                                }else if (distribution=='centos7'&&item.name == 'php-5.2') {
-                                    click_opt = ' title="Apache2.2不兼容此版本，如需使用请切换到Apache2.4或Nginx"';
-                                }else if (is_php5) {
-                                    click_opt = ' title="Apache2.2不兼容此版本，如需使用请切换到Apache2.4或Nginx"';
-                                }
-                            }else if (rdata.apache22 && item.name.indexOf('php-') >= 0 && $.inArray(item.name, phps) == -1) {
+                            else {
+                                click_opt += ' onclick="soft.set_soft_config(\'' + item.name + '\')" ';
+                            }
+                        }
+                        var is_php = item.name.indexOf('php-') >= 0,
+                        is_php5 = item.name.indexOf('php-5') >= 0,
+                        webcache = bt.get_cookie('serverType') == 'openlitespeed' ? true : false,
+                        distribution = bt.get_cookie('distribution');
+                        if (webcache && is_php) {
+                            if ((is_php5 || item.name == 'php-7.0')&&distribution=='centos8') {
+                                click_opt = ' title="Apache2.2不兼容此版本，如需使用请切换到Apache2.4或Nginx"';
+                            }else if (distribution=='centos7'&&item.name == 'php-5.2') {
+                                click_opt = ' title="Apache2.2不兼容此版本，如需使用请切换到Apache2.4或Nginx"';
+                            }else if (is_php5) {
                                 click_opt = ' title="Apache2.2不兼容此版本，如需使用请切换到Apache2.4或Nginx"';
                             }
-                            return '<span ' + click_opt + ' ' + sStyle + ' ><img '+ (item.type === 10?'style="height:20px;width:22px"':'') +' src="/static/img/soft_ico/ico-' + fName + '.png">' + item.title + ' ' + version + '</span>';
+                        }else if (rdata.apache22 && item.name.indexOf('php-') >= 0 && $.inArray(item.name, phps) == -1) {
+                            click_opt = ' title="Apache2.2不兼容此版本，如需使用请切换到Apache2.4或Nginx"';
                         }
-                    },
-                    {
-                        field: 'price', title: '开发商', width: 92, templet: function (item) {
-                            if(!item.author) return '官方'
-                            return item.author;
-                        }
-                    },
-                    {
-                        field: 'ps', title: '说明', templet: function (item) {
-                            var ps = item.ps;
-                            var is_php = item.name.indexOf('php-') >= 0;
+                        return '<span ' + click_opt + ' ' + sStyle + ' ><img '+ (item.type === 10?'style="height:20px;width:22px"':'') +' src="/static/img/soft_ico/ico-' + fName + '.png">' + item.title + ' ' + version + '</span>';
+                    }
+                },
+                {
+                    field: 'price', title: '开发商', width: 92, templet: function (item) {
+                        if(!item.author) return '官方'
+                        return item.author;
+                    }
+                },
+                {
+                    field: 'ps', title: '说明', templet: function (item) {
+                        var ps = item.ps;
+                        var is_php = item.name.indexOf('php-') >= 0;
 
-                            if (is_php && item.setup) {
-                                if (rdata.apache22 && $.inArray(item.name, phps) >= 0) {
-                                    if (item.fpm) {
-                                        ps += " <span style='color:red;'>(" + lan.soft.apache22 + ")</span>";
-                                    }
-                                }
-                                else if (!rdata.apache22) {
-                                    if (!item.fpm) {
-                                        ps += " <span style='color:red;'>(" + lan.soft.apache24 + ")</span>";
-                                    }
+                        if (is_php && item.setup) {
+                            if (rdata.apache22 && $.inArray(item.name, phps) >= 0) {
+                                if (item.fpm) {
+                                    ps += " <span style='color:red;'>(" + lan.soft.apache22 + ")</span>";
                                 }
                             }
-                            return '<span>' + ps + '</span>';
-                        }
-                    },
-                    {
-                        field: 'price', title: '价格', width: 72, templet: function (item) {
-                            var price = '免费';
-                            if (item.price > 0) {
-                                price = '<span style="color:#fc6d26">￥' + item.price + '</span>';
-                            }
-                            return price;
-                        }
-                    },
-                    (type ==10?{
-                        field: 'sort', width: 60, title: '评分', templet: function (item) {
-                            return item.sort !== undefined?('<a href="javascript:;" onclick="score.open_score_view('+ item.pid +',\''+ item.title +'\','+ item.count +')" class="btlink open_sort_view">' + (item.sort <= 0 || item.sort >5?'无评分':item.sort.toFixed(1))  +'</a>'):'--';
-                        }
-                    }:''),
-                    {
-                        field: 'endtime', width: 120, title: '到期时间', templet: function (item) {
-                            var endtime = '--';
-                            if (item.pid > 0) {  //判断是否为付费插件
-                                if (item.endtime > 0) {
-                                    if (item.type != 10) { //判断是否为第三方插件
-                                        endtime = bt.format_data(item.endtime, 'yyyy/MM/dd') + '<a class="btlink" onclick=\'bt.soft.product_pay_view('+ JSON.stringify({name:item.title,pid:item.pid,type:item.type,plugin:true,renew:item.endtime}) +')\'> (续费)</a>';
-                                    } else {
-                                        endtime = bt.format_data(item.endtime, 'yyyy/MM/dd') + '<a class="btlink" onclick="bt.soft.re_plugin_pay_other(\'' + item.title + '\',\'' + item.pid + '\',1,'+item.price+')"> (续费)</a>';
-                                    }
-                                }
-                                else if (item.endtime === 0) {
-                                    endtime = '永久';
-                                }
-                                else if (item.endtime === -1) {
-                                    endtime = '未开通';
-                                }
-                                else if (item.endtime === -2) {
-                                    if (item.type != 10) {
-                                        endtime = '已到期' + '<a class="btlink" onclick="bt.soft.product_pay_view('+ JSON.stringify({name:item.title,pid:item.pid,type:item.type,plugin:true,renew:item.endtime}) +')"> (续费)</a>';
-                                    }else {
-                                        endtime = '已到期' + '<a class="btlink" onclick="bt.soft.re_plugin_pay_other(\'' + item.title + '\',\'' + item.pid + '\',1,'+item.price+')"> (续费)</a>';
-                                    }
+                            else if (!rdata.apache22) {
+                                if (!item.fpm) {
+                                    ps += " <span style='color:red;'>(" + lan.soft.apache24 + ")</span>";
                                 }
                             }
-                            return endtime;
                         }
-                    },
-                    {
-                        field: 'path', width: 40, title: '位置', templet: function (item) {
-                            var path = '';
-                            if (item.setup) {
-                                path = '<span class="glyphicon glyphicon-folder-open"  onclick="openPath(\'' + item.uninsatll_checks + '\')"></span>';
-                            }
-                            return path;
+                        return '<span>' + ps + '</span>';
+                    }
+                },
+                {
+                    field: 'price', title: '价格', width: 72, templet: function (item) {
+                        var price = '免费';
+                        if (item.price > 0) {
+                            price = '<span style="color:#fc6d26">￥' + item.price + '</span>';
                         }
-                    },
-                    (type !=10?{
-                        field: 'status', width: 40, title: '状态', templet: function (item) {
-                            var status = '';
-                            if (item.setup) {
-                                if(item.name == 'phpmyadmin') item.status = 1;
-                                if (item.status) {
-                                    status = '<span style="color:#20a53a" class="glyphicon glyphicon-play"></span>';
-                                }
-                                else {
-                                    status = '<span style="color:red" class="glyphicon glyphicon-pause"></span>';
-                                }
-                            }
-                            return status;
-                        }
-                    }:''),
-                    {
-                        field: 'index', width: 64, title: '首页显示', templet: function (item) {
-                            var to_index = '';
-                            if (item.setup) {
-                                var checked = '';
-                                if (item.index_display) checked = 'checked';
-                                var item_id = item.name.replace(/\./, "");
-                                to_index = '<div class="index-item"><input class="btswitch btswitch-ios" id="index_' + item_id + '" type="checkbox" ' + checked + '><label class="btswitch-btn" for="index_' + item_id + '" onclick="bt.soft.to_index(\'' + item.name + '\')"></label></div>';
-                            }
-                            return to_index;
-                        }
-                    },
-                    {
-                        field: 'opt', width: 120, title: '操作', align: 'right', templet: function (item) {
-                            var option = '';
-
-                            var pay_opt = '';
-                            if (item.endtime < 0 && item.pid > 0) {
-                                var re_msg = '';
-                                var re_status = 0;
-                                switch (item.endtime) {
-                                    case -1:
-                                        re_msg = '立即购买';
-                                        break;
-                                    case -2:
-                                        re_msg = '立即续费';
-                                        re_status = 1;
-                                        break;
-                                }
-                                if (item.type != 10) {
-                                    pay_opt = '<a class="btlink" onclick=\'bt.soft.product_pay_view('+ JSON.stringify({name:item.title,pid:item.pid,type:item.type,plugin:true,renew:item.endtime}) +')\'>' + re_msg + '</a>';
+                        return price;
+                    }
+                },
+                (type ==10?{
+                    field: 'sort', width: 60, title: '评分', templet: function (item) {
+                        return item.sort !== undefined?('<a href="javascript:;" onclick="score.open_score_view('+ item.pid +',\''+ item.title +'\','+ item.count +')" class="btlink open_sort_view">' + (item.sort <= 0 || item.sort >5?'无评分':item.sort.toFixed(1))  +'</a>'):'--';
+                    }
+                }:''),
+                {
+                    field: 'endtime', width: 120, title: '到期时间', templet: function (item) {
+                        var endtime = '--';
+                        if (item.pid > 0) {  //判断是否为付费插件
+                            if (item.endtime > 0) {
+                                if (item.type != 10) { //判断是否为第三方插件
+                                    endtime = bt.format_data(item.endtime, 'yyyy/MM/dd') + '<a class="btlink" onclick=\'bt.soft.product_pay_view('+ JSON.stringify({name:item.title,pid:item.pid,type:item.type,plugin:true,renew:item.endtime}) +')\'> (续费)</a>';
                                 } else {
-                                    pay_opt = '<a class="btlink" onclick="bt.soft.re_plugin_pay_other(\'' + item.title + '\',\'' + item.pid + '\',' + re_status + ','+item.price+')">' + re_msg + '</a>';
+                                    endtime = bt.format_data(item.endtime, 'yyyy/MM/dd') + '<a class="btlink" onclick="bt.soft.re_plugin_pay_other(\'' + item.title + '\',\'' + item.pid + '\',1,'+item.price+')"> (续费)</a>';
                                 }
-                                
                             }
-                            var is_php = item.name.indexOf('php-') >= 0,
-                            is_php5 = item.name.indexOf('php-5') >= 0,
-                            webcache = bt.get_cookie('serverType') == 'openlitespeed' ? true : false,
-                            distribution = bt.get_cookie('distribution');
-                            if (webcache && is_php) {
-                                if ((is_php5 || item.name == 'php-7.0')&&distribution=='centos8') {
-                                    option = '<span title="Apache2.4不兼容此版本，如需使用请切换到Apache2.2或Nginx">不兼容</span>';
-                                }else if (distribution=='centos7'&&item.name == 'php-5.2') {
-                                    option = '<span title="Apache2.4不兼容此版本，如需使用请切换到Apache2.2或Nginx">不兼容</span>';
-                                }else{
-                                    if (is_php5) {
-                                        option = '<span title="Apache2.4不兼容此版本，如需使用请切换到Apache2.2或Nginx">不兼容</span>';
-                                    }else {
-                                        if (item.setup && item.task == '1') {
-                                            if (pay_opt == '') {
-                                                if (item.versions.length > 1) {
-                                                    for (var i = 0; i < item.versions.length; i++) {
-                                                        var min_version = item.versions[i]
-                                                        var ret = bt.check_version(item.version, min_version.m_version + '.' + min_version.version);
-                                                        if (ret > 0) {
-                                                            if (ret == 2) option += '<a class="btlink" onclick="bt.soft.update_soft(\'' + item.name + '\',\'' + item.title + '\',\'' + min_version.m_version + '\',\'' + min_version.version + '\',\'' + min_version.update_msg.replace(/\n/g,"_bt_") + '\',\''+ item.type +'\')" >更新</a> | ';
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                                else {
-                                                    var min_version = item.versions[0];
-                                                    var cloud_version = min_version.m_version + '.' + min_version.version;
-                                                    if (item.version != cloud_version) option += '<a class="btlink" onclick="bt.soft.update_soft(\'' + item.name + '\',\'' + item.title + '\',\'' + min_version.m_version + '\',\'' + min_version.version + '\',\'' + min_version.update_msg.replace(/\n/g, "_bt_") + '\',\''+ item.type +'\')" >更新</a> | ';
-                                                }
-                                                if (item.admin) {
-                                                    option += '<a class="btlink" onclick="bt.soft.set_lib_config(\'' + item.name + '\',\'' + item.title + '\')">' + lan.soft.setup + '</a> | ';
-                                                }
-                                                else {
-                                                    option += '<a class="btlink" onclick="soft.set_soft_config(\'' + item.name + '\')">' + lan.soft.setup + '</a> | ';
-                                                }
-                                            } else {
-                                                option = pay_opt + ' | ' + option;
-                                            }
-                                            option += '<a class="btlink" onclick="bt.soft.un_install(\'' + item.name + '\')" >' + lan.soft.uninstall + '</a>';
-                                        }
-                                        else if (item.task == '-1') {
-                                            option = '<a class="btlink" onclick="messagebox()"  >正在安装</a>';
-                                            soft.is_install = true;
-                                        }
-                                        else if (item.task == '0') {
-                                            option = '<a class="btlink" onclick="messagebox()"  >等待安装</a>';
-                                            soft.is_install = true;
-                                        }
-                                        else if (item.task == '-2') {
-                                            option = '<a class="btlink" onclick="messagebox()"  >正在更新</a>';
-                                            soft.is_install = true;
-                                        }
-                                        else {
-                                            if (pay_opt) {
-                                                option = pay_opt;
-                                            }
-                                            else {
-                                                option = '<a class="btlink" onclick="bt.soft.install(\'' + item.name + '\',this)"  >' + lan.soft.install + '</a>';
-                                            }
-                                        }
-                                    }
+                            else if (item.endtime === 0) {
+                                endtime = '永久';
+                            }
+                            else if (item.endtime === -1) {
+                                endtime = '未开通';
+                            }
+                            else if (item.endtime === -2) {
+                                if (item.type != 10) {
+                                    endtime = '已到期' + '<a class="btlink" onclick="bt.soft.product_pay_view('+ JSON.stringify({name:item.title,pid:item.pid,type:item.type,plugin:true,renew:item.endtime}) +')"> (续费)</a>';
+                                }else {
+                                    endtime = '已到期' + '<a class="btlink" onclick="bt.soft.re_plugin_pay_other(\'' + item.title + '\',\'' + item.pid + '\',1,'+item.price+')"> (续费)</a>';
                                 }
-                            }else {
-                                if (rdata.apache22 && is_php && $.inArray(item.name, phps) == -1) {
-                                    if (item.setup) {
-                                        option = '<a class="btlink" onclick="bt.soft.un_install(\'' + item.name + '\')" >' + lan.soft.uninstall + '</a>';
-                                    }
-                                    else {
-                                        option = '<span title="Apache2.2不兼容此版本，如需使用请切换到Apache2.4或Nginx">不兼容</span>';
-                                    }
-                                }
-                                else if (rdata.apache24 && item.name == 'php-5.2') {
-                                    if (item.setup) {
-                                        option = '<a class="btlink" onclick="bt.soft.un_install(\'' + item.name + '\')" >' + lan.soft.uninstall + '</a>';
-                                    }
-                                    else {
-                                        option = '<span title="Apache2.4不兼容此版本，如需使用请切换到Apache2.2或Nginx">不兼容</span>';
-                                    }
+                            }
+                        }
+                        return endtime;
+                    }
+                },
+                {
+                    field: 'path', width: 40, title: '位置', templet: function (item) {
+                        var path = '';
+                        if (item.setup) {
+                            path = '<span class="glyphicon glyphicon-folder-open"  onclick="openPath(\'' + item.uninsatll_checks + '\')"></span>';
+                        }
+                        return path;
+                    }
+                },
+                (type !=10?{
+                    field: 'status', width: 40, title: '状态', templet: function (item) {
+                        var status = '';
+                        if (item.setup) {
+                            if(item.name == 'phpmyadmin') item.status = 1;
+                            if (item.status) {
+                                status = '<span style="color:#20a53a" class="glyphicon glyphicon-play"></span>';
+                            }
+                            else {
+                                status = '<span style="color:red" class="glyphicon glyphicon-pause"></span>';
+                            }
+                        }
+                        return status;
+                    }
+                }:''),
+                {
+                    field: 'index', width: 64, title: '首页显示', templet: function (item) {
+                        var to_index = '';
+                        if (item.setup) {
+                            var checked = '';
+                            if (item.index_display) checked = 'checked';
+                            var item_id = item.name.replace(/\./, "");
+                            to_index = '<div class="index-item"><input class="btswitch btswitch-ios" id="index_' + item_id + '" type="checkbox" ' + checked + '><label class="btswitch-btn" for="index_' + item_id + '" onclick="bt.soft.to_index(\'' + item.name + '\')"></label></div>';
+                        }
+                        return to_index;
+                    }
+                },
+                {
+                    field: 'opt', width: 120, title: '操作', align: 'right', templet: function (item) {
+                        var option = '';
+
+                        var pay_opt = '';
+                        if (item.endtime < 0 && item.pid > 0) {
+                            var re_msg = '';
+                            var re_status = 0;
+                            switch (item.endtime) {
+                                case -1:
+                                    re_msg = '立即购买';
+                                    break;
+                                case -2:
+                                    re_msg = '立即续费';
+                                    re_status = 1;
+                                    break;
+                            }
+                            if (item.type != 10) {
+                                pay_opt = '<a class="btlink" onclick=\'bt.soft.product_pay_view('+ JSON.stringify({name:item.title,pid:item.pid,type:item.type,plugin:true,renew:item.endtime}) +')\'>' + re_msg + '</a>';
+                            } else {
+                                pay_opt = '<a class="btlink" onclick="bt.soft.re_plugin_pay_other(\'' + item.title + '\',\'' + item.pid + '\',' + re_status + ','+item.price+')">' + re_msg + '</a>';
+                            }
+                            
+                        }
+                        var is_php = item.name.indexOf('php-') >= 0,
+                        is_php5 = item.name.indexOf('php-5') >= 0,
+                        webcache = bt.get_cookie('serverType') == 'openlitespeed' ? true : false,
+                        distribution = bt.get_cookie('distribution');
+                        if (webcache && is_php) {
+                            if ((is_php5 || item.name == 'php-7.0')&&distribution=='centos8') {
+                                option = '<span title="Apache2.4不兼容此版本，如需使用请切换到Apache2.2或Nginx">不兼容</span>';
+                            }else if (distribution=='centos7'&&item.name == 'php-5.2') {
+                                option = '<span title="Apache2.4不兼容此版本，如需使用请切换到Apache2.2或Nginx">不兼容</span>';
+                            }else{
+                                if (is_php5) {
+                                    option = '<span title="Apache2.4不兼容此版本，如需使用请切换到Apache2.2或Nginx">不兼容</span>';
                                 }else {
                                     if (item.setup && item.task == '1') {
                                         if (pay_opt == '') {
@@ -322,15 +318,12 @@ var soft = {
                                     }
                                     else if (item.task == '-1') {
                                         option = '<a class="btlink" onclick="messagebox()"  >正在安装</a>';
-                                        soft.is_install = true;
                                     }
                                     else if (item.task == '0') {
                                         option = '<a class="btlink" onclick="messagebox()"  >等待安装</a>';
-                                        soft.is_install = true;
                                     }
                                     else if (item.task == '-2') {
                                         option = '<a class="btlink" onclick="messagebox()"  >正在更新</a>';
-                                        soft.is_install = true;
                                     }
                                     else {
                                         if (pay_opt) {
@@ -342,23 +335,78 @@ var soft = {
                                     }
                                 }
                             }
-                            return option;
+                        }else {
+                            if (rdata.apache22 && is_php && $.inArray(item.name, phps) == -1) {
+                                if (item.setup) {
+                                    option = '<a class="btlink" onclick="bt.soft.un_install(\'' + item.name + '\')" >' + lan.soft.uninstall + '</a>';
+                                }
+                                else {
+                                    option = '<span title="Apache2.2不兼容此版本，如需使用请切换到Apache2.4或Nginx">不兼容</span>';
+                                }
+                            }
+                            else if (rdata.apache24 && item.name == 'php-5.2') {
+                                if (item.setup) {
+                                    option = '<a class="btlink" onclick="bt.soft.un_install(\'' + item.name + '\')" >' + lan.soft.uninstall + '</a>';
+                                }
+                                else {
+                                    option = '<span title="Apache2.4不兼容此版本，如需使用请切换到Apache2.2或Nginx">不兼容</span>';
+                                }
+                            }else {
+                                if (item.setup && item.task == '1') {
+                                    if (pay_opt == '') {
+                                        if (item.versions.length > 1) {
+                                            for (var i = 0; i < item.versions.length; i++) {
+                                                var min_version = item.versions[i]
+                                                var ret = bt.check_version(item.version, min_version.m_version + '.' + min_version.version);
+                                                if (ret > 0) {
+                                                    if (ret == 2) option += '<a class="btlink" onclick="bt.soft.update_soft(\'' + item.name + '\',\'' + item.title + '\',\'' + min_version.m_version + '\',\'' + min_version.version + '\',\'' + min_version.update_msg.replace(/\n/g,"_bt_") + '\',\''+ item.type +'\')" >更新</a> | ';
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        else {
+                                            var min_version = item.versions[0];
+                                            var cloud_version = min_version.m_version + '.' + min_version.version;
+                                            if (item.version != cloud_version) option += '<a class="btlink" onclick="bt.soft.update_soft(\'' + item.name + '\',\'' + item.title + '\',\'' + min_version.m_version + '\',\'' + min_version.version + '\',\'' + min_version.update_msg.replace(/\n/g, "_bt_") + '\',\''+ item.type +'\')" >更新</a> | ';
+                                        }
+                                        if (item.admin) {
+                                            option += '<a class="btlink" onclick="bt.soft.set_lib_config(\'' + item.name + '\',\'' + item.title + '\')">' + lan.soft.setup + '</a> | ';
+                                        }
+                                        else {
+                                            option += '<a class="btlink" onclick="soft.set_soft_config(\'' + item.name + '\')">' + lan.soft.setup + '</a> | ';
+                                        }
+                                    } else {
+                                        option = pay_opt + ' | ' + option;
+                                    }
+                                    option += '<a class="btlink" onclick="bt.soft.un_install(\'' + item.name + '\')" >' + lan.soft.uninstall + '</a>';
+                                }
+                                else if (item.task == '-1') {
+                                    option = '<a class="btlink" onclick="messagebox()"  >正在安装</a>';
+                                    soft.is_install = true;
+                                }
+                                else if (item.task == '0') {
+                                    option = '<a class="btlink" onclick="messagebox()"  >等待安装</a>';
+                                    soft.is_install = true;
+                                }
+                                else if (item.task == '-2') {
+                                    option = '<a class="btlink" onclick="messagebox()"  >正在更新</a>';
+                                    soft.is_install = true;
+                                }
+                                else {
+                                    if (pay_opt) {
+                                        option = pay_opt;
+                                    }
+                                    else {
+                                        option = '<a class="btlink" onclick="bt.soft.install(\'' + item.name + '\',this)"  >' + lan.soft.install + '</a>';
+                                    }
+                                }
+                            }
                         }
+                        return option;
                     }
-                ],
-                data: data
-            })
-            bt.set_cookie('load_page', (page+'').split('not_load')[0])
-            bt.set_cookie('load_type', type)
-            bt.set_cookie('load_search', search)
-            if (soft.is_install) {
-                setTimeout(function () {
-                    soft.get_list(bt.get_cookie('load_page') + 'not_load', bt.get_cookie('load_type'), bt.get_cookie('load_search'));
-                }, 3000);
-            }
-            if(rdata.recommend){
-                _this.render_promote_list(rdata.recommend);
-            }
+                }
+            ],
+            data: data
         })
     },
     // 渲染列表
@@ -498,7 +546,7 @@ var soft = {
                             var fun = '';
                             switch(_ltd){
                                 case null:
-                                    fun = bt.soft.updata_commercial_view
+                                    fun = bt.soft.updata_ltd
                                     break;
                                 case 1:
                                     fun = bt.soft.updata_ltd
@@ -2536,7 +2584,14 @@ function AddSite(codename,title) {
 					 		<p><span>用户：</span><strong>" + ret.databaseUser + "</strong></p>\
 					 		<p><span>密码：</span><strong>" + ret.databasePass + "</strong></p>\
 					 		"
+        }else{
+            sqlData = "<p class='p1'>数据库账号资料</p>\
+					 		<p><span>数据库名：</span><strong>数据库创建失败,请检查是否存在同名数据库!</strong></p>\
+					 		<p><span>用户：</span><strong>数据库创建失败,请检查是否存在同名数据库!</strong></p>\
+                             <p><span>密码：</span><strong>数据库创建失败,请检查是否存在同名数据库!</strong></p>\
+                            "
         }
+
         var pdata = 'dname=' + codename + '&site_name=' + mainDomain + '&php_version=' + php_version;
         var loadT = layer.msg('<div class="depSpeed">正在提交 <img src="/static/img/ing.gif"></div>', { icon: 16, time: 0, shade: [0.3, "#000"] });
 

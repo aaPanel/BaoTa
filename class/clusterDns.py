@@ -319,13 +319,3 @@ class dnspod:
             params['domain'] = domain
             params['record_id'] = record_id
             requests.post(urlr, data=params, timeout=self.http_timeout).json()
-
-
-if __name__ == '__main__':
-
-    # p = aliyun('LTAITMESjonZoGdy','PvqEM3G6XLwQaCFfPDEgqVwoBouvWv')
-    # print(p.get_domain_list())
-    domain = 'iisv.cn'
-    p = dnspod('101362','825e1a7c41f74a21d9234f5b708b6819')
-    d = p.get_record_list(domain)
-    print(d['records'])

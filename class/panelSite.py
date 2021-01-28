@@ -940,7 +940,8 @@ set $bt_safe_open "{}/:/tmp/";'''.format(self.sitePath)
             reg = "^([\w\-\*]{1,100}\.){1,4}([\w\-]{1,24}|[\w\-]{1,24}\.[\w\-]{1,24})$"
             if not re.match(reg, get.domain): return public.returnMsg(False,'SITE_ADD_DOMAIN_ERR_FORMAT')
             
-            if len(domain) == 2: get.port = domain[1]
+            if len(domain) == 2:
+                get.port = domain[1]
             if get.port == "": get.port = "80"
 
             if not public.checkPort(get.port): return public.returnMsg(False,'SITE_ADD_DOMAIN_ERR_POER')
@@ -963,10 +964,12 @@ set $bt_safe_open "{}/:/tmp/";'''.format(self.sitePath)
                 if self._check_ols_ssl(get.webname):
                     get.port='443'
                     self.openlitespeed_domain(get)
-                    get.port='80'
+                    get.port = '80'
             except:
                 pass
-                        
+
+            #检查实际端口
+            if len(domain) == 2: get.port = domain[1]
             
             #添加放行端口
             if get.port != '80':
@@ -1645,6 +1648,7 @@ listener SSL443 {
         public.writeFile(listen_conf, conf)
 
     def _get_ap_static_security(self,ap_conf):
+        if not ap_conf: return ''
         ap_static_security = re.search('#SECURITY-START(.|\n)*#SECURITY-END',ap_conf)
         if ap_static_security:
             return ap_static_security.group()

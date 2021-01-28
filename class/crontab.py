@@ -27,6 +27,7 @@ class crontab:
         
         data=[]
         for i in range(len(cront)):
+            tmp = {}
             tmp=cront[i]
             if cront[i]['type']=="day":
                 tmp['type']=public.getMsg('CRONTAB_TODAY')
@@ -50,6 +51,10 @@ class crontab:
             elif cront[i]['type']=="month":
                 tmp['type']=public.getMsg('CRONTAB_MONTH')
                 tmp['cycle']=public.getMsg('CRONTAB_MONTH_CYCLE',(str(cront[i]['where1']),str(cront[i]['where_hour']),str(cront[i]['where_minute'])))
+
+            log_file = '/www/server/cron/{}.log'.format(tmp['echo'])
+            if os.path.exists(log_file):
+                tmp['addtime'] = public.format_date(times=int(os.path.getmtime(log_file)))
             data.append(tmp)
         return data
 
@@ -97,7 +102,6 @@ class crontab:
         if not os.path.exists(filePath):
             public.downloadFile(public.GetConfigValue('home') + '/linux/logsBackup.py',filePath)
         #检查计划任务服务状态
-        
         import system
         sm = system.system()
         if os.path.exists('/etc/init.d/crond'): 
@@ -339,7 +343,7 @@ class crontab:
         else :
             head="#!/bin/bash\nPATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin\nexport PATH\n"
             log='-access_log'
-            python_bin = public.get_python_bin()
+            python_bin = "{} -u".format(public.get_python_bin())
             if public.get_webserver()=='nginx':
                 log='.log'
             if type in ['site','path'] and param['sBody'] != 'undefined' and len(param['sBody']) > 1:

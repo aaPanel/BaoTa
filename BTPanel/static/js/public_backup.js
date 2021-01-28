@@ -434,46 +434,40 @@ var bt =
             }
         }
 	},
-	show_confirm : function(title, msg, fun, error) 
-	{
-		if(error == undefined) {
-			error = ""
+	show_confirm : function(title, msg,callback, error) {
+		var d = Math.round(Math.random() * 9 + 1),c = Math.round(Math.random() * 9 + 1),t = d + " + " + c,e = d + c;
+		function submit(index,layero){
+			var a = $("#vcodeResult"),val= a.val().replace(/ /g, "");
+			if(val == undefined || val == ""){
+				layer.msg(lan.bt.cal_err);
+				return
+			}
+			if(val != a.data('value')) {
+				layer.msg(lan.bt.cal_err);
+				return
+			}
+			layer.close(index);
+			if(callback) callback();
 		}
-		var d = Math.round(Math.random() * 9 + 1);
-		var c = Math.round(Math.random() * 9 + 1);
-		var e = "";
-		e = d + c;
-		sumtext = d + " + " + c;
-		bt.set_cookie("vcodesum", e);
-		var mess = layer.open({
+		layer.open({
 			type: 1,
 			title: title,
 			area: "365px",
 			closeBtn: 2,
 			shadeClose: true,
-			content: "<div class='bt-form webDelete pd20 pb70'><p style='font-size:13px;word-break: break-all;margin-bottom: 5px;'>" + msg + "</p>" + error + "<div class='vcode'>"+lan.bt.cal_msg+"<span class='text'>" + sumtext + "</span>=<input type='number' id='vcodeResult' value=''></div><div class='bt-form-submit-btn'><button type='button' class='btn btn-danger btn-sm bt-cancel'>"+lan.public.cancel+"</button> <button type='button' id='toSubmit' class='btn btn-success btn-sm' >"+lan.public.ok+"</button></div></div>"
+			btn:[lan.public.ok,lan.public.cancel],
+			content: "<div class='bt-form webDelete pd20'>\
+					<p style='font-size:13px;word-break: break-all;margin-bottom: 5px;'>" + msg + "</p>" + (error || '') + "<div class='vcode'>"+ lan.bt.cal_msg +"<span class='text'>" + t + "</span>=<input type='number' id='vcodeResult' data-value='"+ e +"' value=''></div>\
+				</div>",
+			success:function(layero, index){
+				$("#vcodeResult").focus().keyup(function(a) {
+					if(a.keyCode == 13) {
+						submit(index,layero);
+					}
+				});
+			},
+			yes:submit
 		});
-		$("#vcodeResult").focus().keyup(function(a) {
-			if(a.keyCode == 13) {
-				$("#toSubmit").click()
-			}
-		});
-		$(".bt-cancel").click(function(){
-			layer.close(mess);
-		});
-		$("#toSubmit").click(function() {
-			var a = $("#vcodeResult").val().replace(/ /g, "");
-			if(a == undefined || a == "") {
-				layer.msg(lan.bt.cal_err);
-				return
-			}
-			if(a != bt.get_cookie("vcodesum")) {
-				layer.msg(lan.bt.cal_err);
-				return
-			}
-			layer.close(mess);
-			fun();
-		})
 	},
 	to_login:function()
 	{
@@ -532,7 +526,6 @@ var bt =
                 
 				if(callback) callback(rdata);
             }).error(function (e, f) {
-                //console.log(e,f)
 				if(callback) callback('error');
 			});
 		}
@@ -643,7 +636,6 @@ var bt =
 	check_select:function(){
         setTimeout(function () {
             var num = $('input[type="checkbox"].check:checked').length;
-            //console.log(num);
             if (num == 1) {
                 $('button[batch="true"]').hide();
                 $('button[batch="false"]').show();
@@ -1305,10 +1297,10 @@ bt.pub = {
 		layer.open({
 			type: 1,
 			title: '绑定宝塔官网账号',
-			area: ['420px','360px'],
+			area: ['420px','380px'],
 			closeBtn: 2,
 			shadeClose: false,
-			content:'<div class="libLogin pd20" ><div class="bt-form text-center"><div class="line mb15"><h3 class="c2 f16 text-center mtb20">绑定宝塔官网账号</h3></div><div class="line"><input class="bt-input-text" name="username2" type="text" placeholder="手机" id="p1"></div><div class="line"><input autocomplete="new-password" class="bt-input-text" type="password" name="password2"  placeholder="密码" id="p2"></div><div class="line"><input class="login-button" value="登录" type="button" ></div><p class="text-right"><a class="btlink" href="https://www.bt.cn/register.html" target="_blank">未有账号，去注册</a></p></div></div>',
+			content:'<div class="libLogin pd20" ><div class="bt-form text-center"><div class="line mb15"><h3 class="c2 f16 text-center mtb20">绑定宝塔官网账号</h3></div><div class="line"><input class="bt-input-text" name="username2" type="text" placeholder="手机" id="p1"></div><div class="line"><input autocomplete="new-password" class="bt-input-text" type="password" name="password2"  placeholder="密码" id="p2"></div><div class="line"><input class="login-button" value="登录" type="button" ></div><p class="text-right"><a class="btlink" href="https://www.bt.cn/register.html" target="_blank">未有账号，去注册</a></p></div><div style="text-align: center;position: relative;top: 25px;color: #888;">提示:一个账号支持绑定多台宝塔面板</div></div>',
 			success:function(){
 			    $('.login-button').click(function(){
     				var p1 = $("#p1").val(),p2 = $("#p2").val(),loadT = bt.load(lan.config.token_get);
@@ -1473,25 +1465,11 @@ bt.index = {
                 	]);
                 	form_group.checkbox();
                 	$('.layui-layer-content').css('overflow','inherit');
-                	
                 	$('.fangshi1 label').click(function(){
                 	    var input = $(this).find('input'),siblings_label = input.parents('label').siblings()
                 	    input.prop('checked','checked').next().addClass('active');
                 	    siblings_label.find('input').removeAttr('checked').next().removeClass('active');
-
-                	})
-            //     	$(".fangshi1").on('click','.bt_checkbox_group',function (e) {
-		          //      if($(this).prev().prop('checked')){
-		          //      	$(this).prev().removeAttr('checked').parent().siblings().find('input').prop('checked','checked');
-		          //      	$(this).removeClass('active').parent().siblings().find('.bt_checkbox_group').addClass('active')
-		          //      }else{
-		          //      	$(this).prev().attr('checked','checked').parent().siblings().find('input').removeAttr('checked')
-		          //      	$(this).addClass('active').parent().siblings().find('.bt_checkbox_group').removeClass('active')
-		          //      }
-		          //  });
-		          //  $(".fangshi1").on('click','span',function(){
-		          //  	$(this).parent().find('.bt_checkbox_group').click();
-		          //  })
+                	});
 		            var loadT = '';
 					$('.fangshi1 label').hover(function(){
 						var _title = $(this).attr('data-title'),_that = $(this);
@@ -3615,90 +3593,6 @@ bt.soft = {
 			}
 		}
 	},
-	updata_commercial_view:function(){
-		layer.closeAll();
-		var html = '<div class="business-edition">\
-			<div class="price-compare-item" style="margin-right:20px">\
-				<div class="price-header">专业版</div>\
-				<div class="title-wrap">\
-					<p class="title-info">推荐个人及5人以下团队公司购买</p>\
-				</div>\
-				<div class="title-desc">\
-					<p>包含所有<b>免费版</b>功能和：</p>\
-					<p>宝塔系统加固，网站防篡改程序</p>\
-					<p>网站监控报表，Apache防火墙</p>\
-					<p>Nginx防火墙，宝塔负载均衡</p>\
-					<p>MySQL主从复制，宝塔任务管理器</p>\
-					<p>异常监控推送，微信小程序</p>\
-					<p>宝塔数据同步工具</p>\
-				</div>\
-				<div class="price-wrap">\
-					<div class="month">\
-						<span class="price-unit">￥</span>\
-						<span class="price-value">39.8</span>\
-						<span class="price-ext">/月</span>\
-					</div>\
-					<div class="div-line"></div>\
-					<div class="year">\
-						<span class="price-unit">￥</span>\
-						<span class="price-value">382</span>\
-						<span class="price-ext">/年</span>\
-					</div>\
-				</div>\
-				<button class="btn-price" data-type="pro">立即购买</button>\
-			</div>\
-			<div class="price-compare-item">\
-				<div class="price-header">企业版<san class="recommend-tips"></span></div>\
-				<div class="title-wrap">\
-					<p class="title-info">推荐5人以上或企事业单位购买</p>\
-				</div>\
-				<div class="title-desc">\
-					<p>包含所有<b>专业版</b>功能和：</p>\
-					<p>1、提供在线客服工单协助</p>\
-					<p>2、多用户管理插件（仅可查看日志）</p>\
-					<p>3、后期还会有10+企业版专用插件</p>\
-					<p>4、官方跟进响应的QQ群（需年付）</p>\
-					<p>4、官方跟进响应的QQ群（需年付）</p>\
-					<p>5、不定期线上运维培训（需年付）</p>\
-				</div>\
-				<div class="price-wrap">\
-					<div class="month">\
-						<span class="price-unit">￥</span>\
-						<span class="price-value">148</span>\
-						<span class="price-ext">/月</span>\
-					</div>\
-					<div class="div-line"></div>\
-					<div class="year">\
-						<span class="price-unit">￥</span>\
-						<span class="price-value">999</span>\
-						<span class="price-ext">/年</span>\
-					</div>\
-				</div>\
-				<button class="btn-price" data-type="ltd">立即购买</button>\
-			</div>\
-		</div>';
-		layer.open({
-			type: 1 
-			,closeBtn:2
-			,area: ['800px', '640px']
-			,title: '升级付费版，对应版本插件，免费使用 '
-			,shade: 0.6 
-			,anim: 0
-			,content:html,
-			success:function(layero,index){
-				$('.btn-price').click(function(){
-					var _type = $(this).attr('data-type');
-					if(_type == 'pro'){
-						bt.soft.updata_pro();
-						layer.close(index);
-					}else{
-						bt.soft.updata_ltd();
-						layer.close(index);
-					}
-				})
-			}
-		})
-	},
 	get_index_renew:function(){
 	 	bt.soft.get_product_renew(function(res){
             var html = $('<div><div>');
@@ -3711,7 +3605,6 @@ bt.soft = {
                     var data = $(this).parent().data(),that = this;
                     bt.soft.set_product_renew_status({id:data.id,state:0},function(rdata){
                         if(!res.status){
-                            console.log(that);
                             $(that).parent().remove();
                         }
                         bt.msg(rdata);
@@ -3780,7 +3673,7 @@ bt.soft = {
 		bt.open({
 			type:1,
 			title:title,
-			area:['650px','760px'],
+			area:['650px','720px'],
 			shadeClose:false,
 			content:'<div class="libPay plr15" id="pay_product_view">\
 				<div class="libPay-item" style="margin-bottom:20px">\
@@ -3790,7 +3683,7 @@ bt.soft = {
 				<div class="libPay-item" id="libPay-type">\
 					<div class="li-tit c3">类型</div>\
 					<div class="li-con c5"></div>\
-					<div class="pro-tips">温馨提示：了解专业版和企业版的区别，请点击<a href="https://www.bt.cn/download/linux.html#info" target="_blank" class="btlink ml5">查看详情</a>'+ (!(config.ltd == -1 && config.pro == -1)?'、<a href="https://www.bt.cn/bbs/thread-50342-1-1.html" target="_blank" class="btlink ml5">《专业版和企业版切换教程》</a>':'') +'</div>\
+					<div class="pro-tips">'+ (!(config.ltd == -1 && config.pro == -1)?'提示：如需切换专业版或企业版，请查看<a href="https://www.bt.cn/bbs/thread-50342-1-1.html" target="_blank" class="btlink ml5">《专业版和企业版切换教程》</a>':'') +'</div>\
 				</div>\
 				<div class="libPay-item" id="libPay-mode">\
 					<div class="li-tit c4">付款方式</div>\
@@ -3801,7 +3694,7 @@ bt.soft = {
 					<div class="li-con c5"></div>\
 				</div>\
 				<div class="libPay-item" id="libPay-pay"></div>\
-				<div class="libPay-item" id="libPay-tips"><p style="display:inline-block;position:absolute;bottom:17px;left:0;width:100%;text-align:center;color:red">注：如需购买多台永久授权专业版，请登录宝塔官网购买。<a class="btlink" href="https://www.bt.cn/download/linuxpro.html#price" target="_blank">去宝塔官网</a></p></div>\
+				<div class="libPay-item" id="libPay-tips"><p style="display:inline-block;position:absolute;bottom:17px;left:0;width:100%;text-align:center;color:red">所有不在堡塔付款的宝塔产品100%是骗人的，请勿上当。<a class="btlink" href="https://www.bt.cn/bbs/thread-22665-1-1.html" target="_blank">查看详情</a></p></div>\
 				<div class="libPay-mask"></div>\
 			</div>',
 			success:function(indexs,layers){
@@ -3820,20 +3713,20 @@ bt.soft = {
 					 });
 				});
 			    var arry = [];
-				if(config.plugin) arry.push({title:config.name,name:config.name,ps:'单款插件',pid:config.pid,active:((config.pro < 0 && config.ltd < 0) || (config.type == 12 && config.ltd<0)?true:false)});
-				if((((config.pro > 0  || config.pro == -2 || config.ltd < 0) && ((config.ltd > 0 && config.ltd != config.pro) || config.ltd < 0) && config.type != 12) || config.limit == 'pro' || (config.ltd < 0 && config.pro == -1)) && config.type != 12 && ((config.ltd < 0 && config.pro > 0) || (config.ltd < 0 && config.pro < 0))){
-					arry.push({title:'<span class="pro-font-icon"></span>',name:'',pid:'',ps:'推荐个人购买',active:  (((config.type == 8 && !config.plugin) || config.limit == 'pro' || (config.pro > 0 || config.pro == -2)) && config.ltd < 0 && (config.ltd == -2?(config.pro == -2?false:true):true))});
-				}
-			
+				if(config.plugin) arry.push({title:config.name,name:config.name,pid:config.pid,active:((config.pro < 0 && config.ltd < 0) || (config.type == 12 && config.ltd<0)?true:false)});
 				if((((config.ltd > 0 || config.ltd == -2 || config.pro == -2) || (config.ltd == -1 && config.pro == -1) || config.limit == 'ltd') && (config.pro < 0 || (config.pro >= 0 && config.ltd >0))) || (config.is_alone && config.pid == 100000032)){
-					arry.push({title:'<span class="ltd-font-icon"></span>',name:'宝塔面板企业版',ps:'推荐企业购买',pid:100000032,recommend:true,active:((config.type == 12 && !config.plugin && config.ltd > 0) || config.limit == 'ltd' || (config.renew == config.ltd && config.ltd > 0)? true:false)});
+					if(config.is_alone) arry = [];
+					arry.push({title:'<span class="ltd-font-icon"><span class="glyphicon glyphicon-vip"></span><span>企业版</span></span>',ps:'企业版：强烈推荐有一定访问量网站及事业单位使用，提供在线工单服务，更有保障',name:'宝塔面板企业版',pid:100000032,recommend:true,active:config.is_alone?true:(((config.type == 12 && !config.plugin && config.ltd > 0) || config.limit == 'ltd' || (config.renew == config.ltd && config.ltd > 0) ? true : false))});
 				}
-				if(config.type == 12 && config.pro >= 0 && config.ltd < 0) $('.pro-tips').html('温馨提示：专业版升级企业版需要手动结算当前专业版授权，<a href="https://www.bt.cn/bbs/thread-50342-1-1.html" target="_blank" class="btlink">《专业版和企业版切换教程》</a>').css('color','red');
+				if((((config.pro > 0  || config.pro == -2 || config.ltd < 0) && ((config.ltd > 0 && config.ltd != config.pro) || config.ltd < 0) && config.type != 12) || config.limit == 'pro' || (config.ltd < 0 && config.pro == -1)) && config.type != 12 && ((config.ltd < 0 && config.pro > 0) || (config.ltd < 0 && config.pro < 0))){
+					arry.push({title:'<span class="pro-font-icon"><span class="glyphicon glyphicon-vip"></span><span>专业版</span></span>',ps:'专业版：适于学习或未盈利项目使用，无工单服务',name:'',pid:'',active:  (((config.type == 8 && !config.plugin) || config.limit == 'pro' || (config.pro > 0 || config.pro == -2)) && config.ltd < 0 && (config.ltd == -2?(config.pro == -2?false:true):true))});
+				}
 				$('#libPay-type .li-con').append(that.product_pay_swicth('type',arry));
 				if(config.source) bt.set_cookie('pay_source',config.source);
 				that.each(arry,function(index,item){ 
 					if(item.active){
 						that.product_pay_page_refresh($.extend({condition:1},item));
+						$('.pro-tips').html(item.ps || '');
 					}
 				});
 			},
@@ -3887,19 +3780,15 @@ bt.soft = {
                 break;
             case 2:
             case 3:
-                console.log(config)
                 $('#libPay-content .li-tit').text('开通时长');
                 config.pay = condition;
-                if (config.pid == '100000030') {
-                    $('#libPay-tips').show();
-                } else {
-                    $('#libPay-tips').hide();
-                }
                 var loadT = bt.load();
                 bt.soft.get_product_discount_cache(config,function (rdata){
                     loadT.close();
 					var _arry = [],index = $('#libPay-content .pay-cycle-btn.active').index() || 0;
-					if(index < 0) index = 0
+					if(index < 0) index = 0;
+					if(that.pay_id != config.pid) index = 0;
+					that.pay_id = config.pid;
                     try {
                         delete rdata.pid
                     } catch (error) {
@@ -3907,7 +3796,7 @@ bt.soft = {
                     }
                     that.each(rdata, function (key, item) {
                         _arry.push($.extend({ cycle: parseInt(key) }, item));
-                    });
+					});
                     _arry[index].active = true;
                     $('#libPay-content .li-con').empty().append(
                         that.product_pay_swicth('time',{ name: config.name, pid: config.pid, data: _arry})
@@ -3950,7 +3839,8 @@ bt.soft = {
                 break;
             case 5:
                 $('#libPay-content .li-con').css('height', 'auto');
-                $('.libPay-mask').show();
+				$('.libPay-mask').show();
+				$('#libPay-tips').show();
                 if($('#libPay-pay').attr('data-qecode')) {
                     var qcode = $('#libPay-content li').eq(config.dom_index).data('qrcode-url');
                     $('#libPay-pay').find('.sale-price').html((config.price).toFixed(2));
@@ -3969,12 +3859,23 @@ bt.soft = {
 				if(pay_source) paream.source = bt.get_cookie('pay_source');
 				if(!paream.pid) delete paream.pid;
                 that.pro.create_order(paream,function (rdata){
+                    if(typeof rdata.status_code != 'undefined'){
+                        if(rdata.status_code === 'inherit_order'){
+                            layer.closeAll();
+                            bt.send('get_soft_list', 'plugin/get_soft_list', { p:'1',type:'0', force:'1', query:''}, function (rdata) {
+                               window.refresh();
+                            });
+                            bt.msg(rdata);
+                            return false;
+                        }
+                    }
                     if (rdata.status === false){
                         bt.set_cookie('force', 1);
                         if (soft) soft.flush_cache();
                         layer.msg(rdata.msg, { icon: 2 });
                         return;
                     }
+
                     config.pay = parseInt($('#libPay-mode .pay-cycle-btn.active').data('condition'));
                     // 二维码显示界面
                     $('#libPay-pay').empty().append(that.product_pay_swicth((config.pay == 2?'wechat':'alipay'),$.extend({ data: config.pay == 2?rdata.msg:rdata.ali_msg }, config)));
@@ -4005,15 +3906,14 @@ bt.soft = {
             case 'type': // 产品类型（配置参数）
                 _html = $('<ul class="li-c-item"></ul>');
                 this.each(config, function (index, item) {
-                    _html.append($('<li class="pay-cycle-btn ' + (item.active ? 'active' : '') + '">' +
+                    _html.append($('<li class="pay-cycle-btn auto ' + (item.active ? 'active' : '') + '">' +
                         (item.recommend ? '<span class="recommend-pay-icon"></span>' : '') +
                         '<span class="item-name pull-left">' + item.title + '</span>' +
-                        '<span class="item-info f12 pull-right c7">' + item.ps + '</span>' +
                         '</li>').data(item).click(function(ev){
                             var data = $(this).data();
                             if (!$(this).hasClass('active')) that.product_pay_page_refresh($.extend({ condition: 1 }, data));
                             $(this).addClass('active').siblings().removeClass('active');
-
+							$('.pro-tips').html(data.ps)
                         }));
                 });
                 break;
@@ -4707,7 +4607,6 @@ bt.soft = {
 						_this.install_other(rdata)
 						return;
 					}
-					console.log(type);
 					layer.close(bt.soft.loadT);	
 					bt.pub.get_task_count(function(rdata){
 						if(rdata > 0 && item.type === 5) messagebox();
@@ -5538,7 +5437,6 @@ bt.site = {
                     }
 			    }
 			    var bs = bt.render_form(_form,function(rdata){	
-					console.log(rdata);
 				    if(callback) callback(rdata);
 			    });			
 			    $(".placeholder").click(function(){
@@ -6099,16 +5997,22 @@ var form_group = {
 		});
 		select_el.hide();
 		select_ul.html(_html);
-		$(elem).next('.bt_select_group').find('.select_val').unbind('click').click(function(e){
-			if($('.bt_select_group .bt_select_ul.active').length >=1){
-				$('.bt_select_group').removeAttr('style');
-				$('.bt_select_group').find('.bt_select_ul').removeClass('active fadeInUp animated');
-				$('.bt_select_group').find('.glyphicon').css({'transform':'rotate(0deg)'});
+		$(elem).next('.bt_select_group').find('.bt_select_active').unbind('click').click(function(e){
+			if(!$(this).next().hasClass('active')){
+				$(this).parents().find('li').siblings().find('.bt_select_ul.active').each(function(){
+					is_show_slect_parent(this);
+				});
+				$(this).parents('.rec-box').siblings().find('.bt_select_ul.active').each(function(){
+					is_show_slect_parent(this);
+					console.log(this);
+				});
 			}
-			is_show_select_ul(select_ul.hasClass('active'));
-			$(document).click(function(){
+			is_show_select_ul($(this).next().hasClass('active'));
+			$(document).click(function(ev){
 				is_show_select_ul(true);
 				$(this).unbind('click');
+				ev.stopPropagation();
+				ev.preventDefault();
 			});
 			e.stopPropagation();
 			e.preventDefault();
@@ -6122,6 +6026,11 @@ var form_group = {
 			$(elem).find('option[value="'+ _val +'"]').change();
 			is_show_select_ul(true);
 		});
+		function is_show_slect_parent(that){
+			$(that).removeClass('active fadeInUp animated');
+			$(that).prev().find('.glyphicon').removeAttr('style');
+			$(that).parent().removeAttr('style');
+		}
 		function is_show_select_ul(active){
 			if(active){
 				select_group.removeAttr('style');

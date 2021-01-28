@@ -1130,6 +1130,8 @@ class ajax:
         if not os.path.exists('/etc/redhat-release'):
             php_ini = php_path + php_version + '/etc/php/'+args.php_version+'/litespeed/php.ini'
         tmp = public.ExecShell(php_bin + ' /www/server/panel/class/php_info.php')[0]
+        if tmp.find('Warning: JIT is incompatible') != -1:
+            tmp = tmp.strip().split('\n')[-1]
         result = json.loads(tmp)
         result['phpinfo'] = {}
         result['phpinfo']['php_version'] = result['php_version']

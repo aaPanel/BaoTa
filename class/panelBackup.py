@@ -411,7 +411,7 @@ class backup:
         try:
             password = public.M('config').where('id=?',(1,)).getField('mysql_root')
             os.environ["MYSQL_PWD"] = password
-            backup_cmd = "/www/server/mysql/bin/mysqldump --default-character-set="+ character +" --force --hex-blob --opt " + db_name + " -u root" + " 2>"+self._err_log+"| gzip > " + dfile
+            backup_cmd = "/www/server/mysql/bin/mysqldump -E -R --default-character-set="+ character +" --force --hex-blob --opt " + db_name + " -u root" + " 2>"+self._err_log+"| gzip > " + dfile
             public.ExecShell(backup_cmd)
         except Exception as e:
             raise

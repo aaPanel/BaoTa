@@ -955,7 +955,7 @@ var aceEditor = {
 				$('.file_fold .newly_file_input').focus();
 			break;
 			case 5:
-				GetFileBytes(_path);
+				window.open('/download?filename=' + encodeURIComponent(_path));
 			break;
 			case 6:
 				var is_files =  _active.attr('data-file') === 'Files'
@@ -1534,6 +1534,7 @@ var aceEditor = {
 		    }
 		}
 		if(!this.editor[id].historys_file) $('[data-menu-path="'+ (this.editor[id].path) +'"]').find('.file_fold').removeClass('active bg');
+		this.editor[id].ace.destroy();
 		delete this.editor[id];
 		if(this.editorLength === 0){
 			this.ace_active = '';

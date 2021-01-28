@@ -12,14 +12,12 @@ import os
 import time
 import re
 import uuid
-import threading
-import socket
-
-os.chdir('/www/server/panel')
+if not os.name in ['nt']:
+    os.chdir('/www/server/panel')
 if not 'class/' in sys.path:
     sys.path.insert(0, 'class/')
 
-from flask import Flask, session, render_template, send_file, request, redirect, g, make_response, \
+from flask import Config, Flask, session, render_template, send_file, request, redirect, g, make_response, \
     render_template_string, abort, Response as Resp
 from cachelib import SimpleCache
 from werkzeug.wrappers import Response
@@ -31,7 +29,7 @@ cache = SimpleCache()
 import public
 
 # 初始化Flask应用
-app = Flask(__name__, template_folder="templates/" + public.GetConfigValue('template'))
+app = Flask(__name__, template_folder="templates/{}".format(public.GetConfigValue('template')))
 Compress(app)
 sockets = Sockets(app)
 
@@ -64,8 +62,6 @@ app.config['SESSION_COOKIE_NAME'] = "SESSIONID"
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 30
 Session(app)
 
-from datetime import datetime
-import socket
 import common
 
 # 初始化路由
@@ -74,6 +70,7 @@ method_all = ['GET', 'POST']
 method_get = ['GET']
 method_post = ['POST']
 json_header = {'Content-Type': 'application/json; charset=utf-8'}
+text_header = {'Content-Type': 'text/plain; charset=utf-8'}
 cache.set('p_token', 'bmac_' + public.Md5(public.get_mac_address()))
 admin_path_file = 'data/admin_path.pl'
 admin_path = '/'
@@ -168,6 +165,7 @@ def request_check():
                             '/get_app_bind_status']: return
         auth = request.authorization
         if not comm.get_sk(): return
+        if session.get('debug') == 1: return
         if not auth: return send_authenticated()
         tips = '_bt.cn'
         if public.md5(auth.username.strip() + tips) != app.config['BASIC_AUTH_USERNAME'] \
@@ -202,26 +200,6 @@ def notfound(e):
         "Content-Type": "text/html"
     }
     return Response(errorStr, status=404, headers=headers)
-
-
-# @app.errorhandler(500)
-# def internalerror(e):
-#     public.submit_error()
-#     errorStr = public.ReadFile('./BTPanel/templates/' + public.GetConfigValue('template') + '/error.html')
-#     try:
-#         if not app.config['DEBUG']:
-#             errorStr = errorStr.format(public.getMsg('PAGE_ERR_500_TITLE'),
-#                                        public.getMsg('PAGE_ERR_500_H1'),
-#                                        public.getMsg('PAGE_ERR_500_P1'),
-#                                        public.getMsg('NAME'),
-#                                        public.getMsg('PAGE_ERR_HELP'))
-#         else:
-#             errorStr = errorStr.format(public.getMsg('PAGE_ERR_500_TITLE'),
-#                                        str(e),
-#                                        '<pre>'+public.get_error_info() + '</pre>',
-#                                        public.getMsg('INIT_DEBUG_INFO'),public.getMsg('INIT_VERSION_LAST') + public.version())
-#     except IndexError:pass
-#     return errorStr,500
 
 # ===================================Flask HOOK========================#
 
@@ -446,6 +424,73 @@ def message(action=None):
     'get_messages', 'get_message_find', 'create_message', 'status_message', 'remove_message', 'get_messages_all')
     return publicObject(message_object, defs, action, None)
 
+@app.route('/colony/<module>/<action>',methods=method_all)
+def colony_route(module = 'index',action = None):
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    if module in ['os','sys','public']:
+        return public.returnJson(False,'指定模块不存在!'),json_header 
+    act_temp = action.split('.')
+    action = act_temp[0]
+    if len(act_temp) == 1: act_temp.append('json')
+    act_type = act_temp[1].lower()
+    if not act_type in ['json','html','text','txt']:
+        return public.returnJson(False,'不支持的响应格式声明'),json_header
+
+    #URI输入检测
+    if module[:2] == '__' or module[-2:] == '__' or not re.match(r"^\w+$",action):
+        return public.returnJson(False,'错误的模块名称!'),json_header
+    
+    if action[:2] == '__' or action[-2:] == '__' or not re.match(r"^\w+$",action):
+        return public.returnJson(False,'错误的方法名称!'),json_header
+
+    import colony
+
+    #实例化指定模块，并检测模块或方法是否存在
+    if not module in colony.__dict__.keys():
+        return public.returnJson(False,'指定模块不存在!'),json_header
+    obj = eval('colony.{module}.{module}()'.format(module=module))
+    act = getattr(obj,action,None)
+    if act is None:
+        return public.returnJson(False,'指定方法不存在!'),json_header
+    #执行指定方法
+    try:
+        result = act(get_input())
+    except:
+        return public.get_error_info(),text_header
+
+    #响应执行结果
+    result_type = type(result)
+    if result_type in [Response,Resp]:
+        return result
+    try:
+        if act_type == 'json':
+            return public.GetJson(result),json_header
+        elif act_type == 'html':
+            template_name = '{}_{}.html'.format(module,action)
+            template_file = 'BTPanel/templates/colony/{}'.format(template_name)
+            if not os.path.exists(template_file):
+                return public.returnJson(False,'没有找到指定模板文件!'),json_header
+            try:
+                return render_template(template_name,data=result)
+            except:
+                return public.get_error_info(),text_header
+        elif act_type in ['text','txt']:
+            try:
+                if result_type == bytes:
+                    result = result.decode('utf-8')
+                elif result_type in [int,float,list,dict,tuple]:
+                    result = str(result)
+                return result,text_header
+            except:
+                return str(result),text_header
+        else:
+            return public.GetJson(result),json_header
+
+    except:
+        return public.returnJson(False,'错误的响应格式!'),json_header
+
+
 
 @app.route('/api', methods=method_all)
 def api(pdata=None):
@@ -464,11 +509,10 @@ def control(pdata=None):
     # 监控页面
     comReturn = comm.local()
     if comReturn: return comReturn
-    if request.method == method_get[0]:
-        import system
-        data = system.system().GetConcifInfo()
-        data['lan'] = public.GetLan('control')
-        return render_template('control.html', data=data)
+    import system
+    data = system.system().GetConcifInfo()
+    data['lan'] = public.GetLan('control')
+    return render_template('control.html', data=data)
 
 
 @app.route('/firewall', methods=method_all)
@@ -505,23 +549,6 @@ def ssh_security(pdata=None):
             'stop_password', 'get_key', 'return_ip', 'add_return_ip', 'del_return_ip', 'start_jian', 'stop_jian',
             'get_jian', 'get_logs')
     return publicObject(firewallObject, defs, None, pdata)
-
-
-# @app.route('/firewall_new',methods=method_all)
-# def firewall_new(pdata = None):
-#     comReturn = comm.local()
-#     if comReturn: return comReturn
-#     if request.method == method_get[0] and not pdata:
-#         data = {}
-#         data['lan'] = public.GetLan('firewall')
-#         return render_template( 'firewall_new.html',data=data)
-#     import firewall_new
-#     firewallObject = firewall_new.firewalls()
-#     defs = ('GetList','AddDropAddress','DelDropAddress','FirewallReload','SetFirewallStatus',
-#             'AddAcceptPort','DelAcceptPort','SetSshStatus','SetPing','SetSshPort','GetSshInfo',
-#             'AddSpecifiesIp','DelSpecifiesIp'
-#             )
-#     return publicObject(firewallObject,defs,None,pdata)
 
 
 @app.route('/monitor', methods=method_all)
@@ -656,13 +683,12 @@ def soft(pdata=None):
     # 软件商店页面
     comReturn = comm.local()
     if comReturn: return comReturn
-    if request.method == method_get[0] and not pdata:
-        import system
-        data = system.system().GetConcifInfo()
-        data['lan'] = public.GetLan('soft')
-        data['js_random'] = get_js_random()
-        is_bind()
-        return render_template('soft.html', data=data)
+    import system
+    data = system.system().GetConcifInfo()
+    data['lan'] = public.GetLan('soft')
+    data['js_random'] = get_js_random()
+    is_bind()
+    return render_template('soft.html', data=data)
 
 
 @app.route('/config', methods=method_all)

@@ -1430,7 +1430,7 @@ class config:
                     panel_name = json.loads(public.readFile(self._setup_path+'/config/config.json'))['title']
                 except:
                     panel_name = '宝塔Linux面板'
-                data = pyotp.totp.TOTP(secret_key).provisioning_uri(username, issuer_name=panel_name+'--'+local_ip)
+                data = pyotp.totp.TOTP(secret_key).provisioning_uri(username, issuer_name='{}--{}'.format(panel_name,local_ip))
                 public.writeFile(self._core_fle_path+'/qrcode.txt',str(data))
                 return public.returnMsg(True, "开启成功")
             except Exception as e:

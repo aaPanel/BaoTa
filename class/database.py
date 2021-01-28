@@ -421,7 +421,7 @@ SetLink
         try:
             password = public.M('config').where('id=?',(1,)).getField('mysql_root')
             os.environ["MYSQL_PWD"] = password
-            public.ExecShell("/www/server/mysql/bin/mysqldump --default-character-set="+ public.get_database_character(name) +" --force --opt \"" + name + "\"  -u root | gzip > " + backupName)
+            public.ExecShell("/www/server/mysql/bin/mysqldump -R -E --triggers=false --default-character-set="+ public.get_database_character(name) +" --force --opt \"" + name + "\"  -u root | gzip > " + backupName)
         except Exception as e:
             raise
         finally:

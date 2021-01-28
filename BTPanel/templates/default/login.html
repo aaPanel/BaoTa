@@ -42,201 +42,6 @@
     </script>
 </head>
 <body>
-    <style type="text/css">
-        @media screen and (max-width: 640px) {
-            .scanCode {
-                display: none;
-            }
-
-            .account {
-                display: block !important;
-            }
-
-            .bg_img {
-                display: none;
-            }
-        }
-
-        .bg_img {
-            width: 60px;
-            height: 60px;
-            background-image: url('/static/img/qrCode.png');
-            background-size: 120px 120px;
-            background-repeat: no-repeat;
-            background-position: 0 0;
-            position: absolute;
-            top: 5px;
-            right: 5px;
-        }
-
-            .bg_img:hover {
-                background-position: -60px 0;
-                cursor: pointer;
-                /*transition: all 500ms;*/
-            }
-
-            .bg_img.pc {
-                background-position: 0 -60px;
-            }
-
-                .bg_img.pc:hover {
-                    background-position: -60px -60px;
-                }
-
-        .qrCode {
-            text-align: center;
-            padding-top: 20px;
-        }
-
-        .scanCode .titles {
-            font-size: 23px;
-            margin-top: 25px;
-            color: #444;
-            text-align: center;
-        }
-
-        .list_scan {
-            width: 160px;
-            margin: 0 auto;
-            margin-top: 15px;
-            text-align: center;
-        }
-
-            .list_scan > img {
-                width: 40px;
-                height: 40px;
-                float: left;
-                margin-right: 10px;
-            }
-
-            .list_scan span {
-                display: inline-block;
-                font-size: 13px;
-                margin-bottom: 5px;
-            }
-
-            .list_scan a:hover .weChatSamll {
-                display: block;
-            }
-
-            .list_scan .weChatSamll {
-                display: none;
-                width: 150px;
-                height: 150px;
-                position: absolute;
-                border: 1px solid #ececec;
-                border-radius: 5px;
-                bottom: 105px;
-                right: 80px;
-                padding: 20px;
-                background-color: #fff;
-            }
-
-            .list_scan .weChatSamll img {
-                width: 100%;
-            }
-
-            .list_scan .weChatSamll em {
-                position: absolute;
-                border: 7px solid #ececec;
-                border-color: #ececec transparent transparent transparent;
-                width: 0;
-                height: 0;
-                right: 87px;
-                bottom: -14px;
-                margin-left: -6px;
-            }
-
-        .tips {
-            /*width: 115px;*/
-            position: absolute;
-            top: 20px;
-            right: 60px;
-            color: rgb(32, 165, 58);
-            background: #dff0d8;
-            padding: 5px 10px;
-            text-align: center;
-            border-radius: 4px;
-        }
-
-        .tips em {
-            position: absolute;
-            border: 6px solid #dff0d8;
-            border-color: transparent transparent transparent #dff0d8;
-            width: 0;
-            height: 0;
-            right: -11px;
-            top: 8px;
-            margin-left: -6px;
-        }
-        .tips span>span{
-            vertical-align: middle;
-        }
-        .tips img {
-            height: 16px;
-            width: 16px;
-            vertical-align: middle;
-            margin-top: -1px;
-            margin-right: 4px;
-        }
-
-        .main .login .rlogo {
-            margin-top: 20px;
-            margin-bottom: 25px;
-            padding: 0 25px;
-        }
-        .static-cdn{
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            height: 40px;
-            opacity: 0.8;
-        }
-        .static-cdn .span-tname{
-            background-color: #eee;
-            display: inline-block;
-            height: 22px;
-            line-height: 22px;
-            float: left;
-            padding: 0 5px;
-            border: #ddd 1px solid;
-            color: #777;
-            margin-left: 40px;
-            font-size: 12px;
-        }
-        .static-cdn select {
-            border: 1px solid #ddd;
-            height: 24px;
-            line-height: 22px;
-            padding-left: 5px;
-            margin-left: -1px;
-            color: #777;
-            font-size: 12px;
-        }
-        .btlink{
-            text-decoration: none;
-            color: #20a53a;
-        }
-        .scan_tips{
-            height: 25px;
-            margin-top: 10px;
-            text-align: center;
-        }
-        .scan_tips img{
-            width: 25px;
-            height: 25px;
-            margin-right: 10px;
-            margin-left: -5px;
-        }
-        .scan_tips span{
-            display: inline-block;
-            font-size: 18px;
-            line-height: 25px;
-            vertical-align: top;
-            font-weight: 600;
-            color: #555;
-        }
-    </style>
     <div class="main">
         <div class="login">
             <div class="account">
@@ -246,10 +51,10 @@
                     <div class="line"><input class="inputtxt" name="password" value="" datatype="*" nullmsg="{{data['lan']['N4']}}" errormsg="{{data['lan']['N5']}}" placeholder="{{data['lan']['N6']}}" type="password"><div class="Validform_checktip"></div></div>
                     <div style="color: red;position: relative;top: -14px;" id="errorStr"></div>
                     <div class="line yzm" style="top: -5px;
-                        {% if not session['code'] %}
-                            display:none;
-                        {% endif %}
-                    ">
+                            {% if not session['code'] %}
+                                display:none;
+                            {% endif %}
+                        ">
                         <input type="text" class="inputtxt" name="code" nullmsg="{{data['lan']['N7']}}" errormsg="{{data['lan']['N8']}}" datatype="*" placeholder="{{data['lan']['N9']}}">
                         <div class="Validform_checktip"></div>
                         <img width="100" height="40" class="passcode" onClick="this.src=this.src.split('?')[0] + '?'+new Date().getTime()" src="/code" style="border: 1px solid #ccc; float: right;" title="{{data['lan']['N10']}}">
@@ -525,12 +330,10 @@
                     var username = $("input[name='username']").val().trim();
                     var password = $("input[name='password']").val().trim();
                     var code = $("input[name='code']").val().trim();
-
                     if (username == '' || password == '') {
                         layer.msg("{{data['lan']['JS1']}}", { icon: 2 });
                         return;
                     }
-                    
                     var data = { username: md5(username), password: md5(md5(password) + '' + '_bt.cn'), code: code,cdn_url:$("#static_cdn").val() }
                     var loadT = layer.msg("{{data['lan']['JS2']}}", { icon: 16, time: 0, shade: [0.3, '#000'] });
                     $.post('/login', data, function (rdata) {
@@ -539,12 +342,12 @@
                             layer.open({
                                 type:1,
                                 title:false,
-                                area: ['350px', '265px'],
+                                area: ['390px', '280px'],
                                 content:'<div class="verification_view">\
-                                            <div class="v_title">Google身份认证</div>\
+                                            <div class="v_title">动态口令认证</div>\
                                             <div class="v_input"><input type="text" class="v_code" name="v_code" placeholder="请输入动态口令"/></div>\
                                             <div class="v_btn"><input id="auth_verif_btn" value="验证并登录" type="submit"></div>\
-                                            <div class="v_tips">* 请使用Google身份验证器APP获取验证代码<br><a target="_blank" href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=37437"  class="btlink">无法验证,点击帮助</a></div>\
+                                            <div class="v_tips">* 请使用宝塔APP或谷歌认证器获取验证代码<br><a target="_blank" href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=37437"  class="btlink">无法验证,点击帮助</a></div>\
                                         </div>',
                                 success:function(){
                                     // 点击验证登录

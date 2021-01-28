@@ -340,8 +340,10 @@ def ReadFile(filename,mode = 'r'):
                 fp = open(filename, mode,encoding="utf-8")
                 f_body = fp.read()
                 fp.close()
-            except Exception as ex2:
-                return False
+            except:
+                fp = open(filename, mode,encoding="GBK")
+                f_body = fp.read()
+                fp.close()
         else:
             return False
     return f_body
