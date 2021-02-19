@@ -242,8 +242,8 @@ class ssh_client:
         return True
 
     # 执行命令
-    def exec_shell(self, shell_str):
-        result = self._term.exec_command(shell_str)
+    def exec_shell(self, shell_str, get_pty=False):
+        result = self._term.exec_command(shell_str, get_pty=get_pty)
         return result[1].read().decode(), result[2].read().decode()
 
     # 关闭

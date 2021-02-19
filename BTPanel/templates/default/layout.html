@@ -9,7 +9,10 @@
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
 	<link href="{{g.cdn_url}}/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
 	<link href="{{g.cdn_url}}/codemirror/lib/codemirror.css" rel="stylesheet" />
-    <link href="{{g.cdn_url}}/css/site.css?version={{g['version']}}&repair={{data['js_random']}}" rel="stylesheet" />
+	<link href="{{g.cdn_url}}/css/site.css?version={{g['version']}}&repair={{data['js_random']}}" rel="stylesheet" />
+	{% for css_f in g['other_css'] %}
+		<link href="{{css_f}}" rel="stylesheet" />
+	{% endfor %}
     <style>
 		.contextmenu {
 			position: absolute;
@@ -135,6 +138,9 @@
 	<script src="{{g.cdn_url}}/codemirror/lib/codemirror.js" defer></script>
 	<!-- End -->
 	<script type="text/javascript" src="{{g.cdn_url}}/js/tools.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+	{% for js_f in g['other_js'] %}
+		<script type="text/javascript" src="{{js_f}}"></script>
+	{% endfor %}
 	{% block scripts %} {% endblock %}
 	<script type="text/javascript">
 	    $("#setBox").click(function () {

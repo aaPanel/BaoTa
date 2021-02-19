@@ -207,14 +207,14 @@ class panelSite(panelRedirect):
     {{
         expires      30d;
         error_log /dev/null;
-        access_log off;
+        access_log /dev/null;
     }}
     
     location ~ .*\\.(js|css)?$
     {{
         expires      12h;
         error_log /dev/null;
-        access_log off; 
+        access_log /dev/null; 
     }}
     access_log  {log_path}/{site_name}.log;
     error_log  {log_path}/{site_name}.error.log;
@@ -2515,13 +2515,13 @@ server
     {
         expires      30d;
         error_log /dev/null;
-        access_log off; 
+        access_log /dev/null; 
     }
     location ~ .*\\.(js|css)?$
     {
         expires      12h;
         error_log /dev/null;
-        access_log off; 
+        access_log /dev/null; 
     }
     access_log %s.log;
     error_log  %s.error.log;
@@ -3314,13 +3314,13 @@ server
     {
         expires      30d;
         error_log /dev/null;
-        access_log off;
+        access_log /dev/null;
     }
     location ~ .*\\.(js|css)?$
     {
         expires      12h;
         error_log /dev/null;
-        access_log off;
+        access_log /dev/null;
     }'''
                 if "(gif|jpg|jpeg|png|bmp|swf)$" not in ng_conf:
                     ng_conf = ng_conf.replace('access_log', oldconf + "\n\taccess_log")
@@ -3345,13 +3345,13 @@ server
     {
         expires      30d;
         error_log /dev/null;
-        access_log off;
+        access_log /dev/null;
     }
     location ~ .*\\.(js|css)?$
     {
         expires      12h;
         error_log /dev/null;
-        access_log off;
+        access_log /dev/null;
     }'''
                 if "(gif|jpg|jpeg|png|bmp|swf)$" not in ng_conf:
                     ng_conf = ng_conf.replace('access_log', oldconf + "\n\taccess_log")

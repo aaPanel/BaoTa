@@ -7,7 +7,7 @@ date: 2021/1/23 18:07
 """
 
 from colony import mysql
-from colony import dbnode
+from colony.dbnode import dbnode
 import public 
 
 import json
@@ -18,7 +18,8 @@ class dbmanager:
     __nodes = []
 
     def __get_deploy_settings(self):
-        settings = json.loads(public.ReadFile("colony/deploy.conf"))
+        config = public.ReadFile("config/deploy.json")
+        settings = json.loads(config)
         return settings
 
 
@@ -41,21 +42,21 @@ class dbmanager:
 
             db_manager_user = settings["db_manager_user"]
             db_replication_user = settings["db_replication_user"]
+            db_reset_root = settings["db_reset_root"]
 
             master_host_settings['db_manager_user'] = db_manager_user
             master_host_settings['db_replication_user'] = db_replication_user
+            master_host_settings['db_reset_root'] = db_reset_root
             
             secondary_host_settings['db_manager_user'] = db_manager_user
             secondary_host_settings['db_replication_user'] = db_replication_user
+            secondary_host_settings['db_reset_root'] = db_reset_root
 
             node1 = dbnode()
             node1.master_priority = 1
-            node1.deploy(master_host_settings)
+            result = node1.deploy(master_host_settings)
+            return result
             
-            
-
-    def create_db_user(self, username):
-        """创建数据库用户"""
-        pass
+           
 
 

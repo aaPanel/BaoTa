@@ -853,9 +853,9 @@ class system:
                     self.ssh.connect('localhost', public.GetSSHPort())
                 except:
                     return False
-            import firewalls,common
+            import firewalls
             fw = firewalls.firewalls()
-            get = common.dict_obj()
+            get = public.dict_obj()
             get.status = '0'
             fw.SetSshStatus(get)
             self.ssh.connect('127.0.0.1', public.GetSSHPort())

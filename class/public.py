@@ -1549,7 +1549,9 @@ def check_ip_panel():
         iplist = ReadFile(ip_file)
         if iplist:
             iplist = iplist.strip()
-            if not GetClientIp() in iplist.split(','): 
+            client_ip = GetClientIp()
+            if client_ip in ['127.0.0.1','localhost','::1']: return False
+            if not client_ip in iplist.split(','): 
                 errorStr = ReadFile('./BTPanel/templates/' + GetConfigValue('template') + '/error2.html')
                 try:
                     errorStr = errorStr.format(getMsg('PAGE_ERR_TITLE'),getMsg('PAGE_ERR_IP_H1'),getMsg('PAGE_ERR_IP_P1',(GetClientIp(),)),getMsg('PAGE_ERR_IP_P2'),getMsg('PAGE_ERR_IP_P3'),getMsg('NAME'),getMsg('PAGE_ERR_HELP'))
@@ -1562,6 +1564,8 @@ def check_domain_panel():
     tmp = GetHost()
     domain = ReadFile('data/domain.conf')
     if domain:
+        client_ip = GetClientIp()
+        if client_ip in ['127.0.0.1','localhost','::1']: return False
         if tmp.strip().lower() != domain.strip().lower(): 
             errorStr = ReadFile('./BTPanel/templates/' + GetConfigValue('template') + '/error2.html')
             try:
@@ -1823,6 +1827,7 @@ def sub_php_address(conf_file,rep,tsub,php_version):
         @param php_version string 指定PHP版本
         @return bool
     '''
+    if not os.path.isfile(conf_file): return False
     if not os.path.exists(conf_file): return False
     conf = readFile(conf_file)
     if not conf: return False
@@ -2491,6 +2496,98 @@ class dict_obj:
     def __delitem__(self,key): delattr(self,key)
     def __delattr__(self, key): delattr(self,key)
     def get_items(self): return self
+    def get(self,key,default='',format='',limit = []):
+        '''
+            @name 获取指定参数
+            @param key<string> 参数名称，允许在/后面限制参数格式，请参考参数值格式(format)
+            @param default<string> 默认值，默认空字符串
+            @param format<string>  参数值格式(int|str|float|json|xss|path|url|ip|ipv4|ipv6|letter|mail|phone|正则表达式|>1|<1|=1)，默认为空
+            @param limit<list> 限制参数值内容
+            @param return mixed
+        '''
+        if key.find('/') != -1:
+            key,format = key.split('/')
+        result = getattr(self,key,default).strip()
+        if format:
+            if format in ['str','string','s']:
+                result = str(result)
+            elif format in ['int','d']:
+                try:
+                    result = int(result)
+                except:
+                    raise ValueError("参数：{}，要求int类型数据".format(key))
+            elif format in ['float','f']:
+                try:
+                    result = float(result)
+                except:
+                    raise ValueError("参数：{}，要求float类型数据".format(key))
+            elif format in ['json','j']:
+                try:
+                    result = json.loads(result)
+                except:
+                    raise ValueError("参数：{}, 要求JSON字符串".format(key))
+            elif format in ['xss','x']:
+                result = xssencode(result)
+            elif format in ['path','p']:
+                if not path_safe_check(result):
+                    raise ValueError("参数：{}，要求正确的路径格式".format(key))
+                result = result.replace('//','/')
+            elif format in ['url','u']:
+                regex = re.compile(
+                     r'^(?:http|ftp)s?://'
+                     r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'
+                     r'localhost|'
+                     r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
+                     r'(?::\d+)?'
+                     r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+                if not re.match(regex,result):
+                    raise ValueError('参数：{}，要求正确的URL格式'.format(key))
+            elif format in ['ip','ipaddr','i','ipv4','ipv6']:
+                if format is 'ipv4':
+                    if not is_ipv4(result):
+                        raise ValueError('参数：{}，要求正确的ipv4地址'.format(key))
+                elif format is 'ipv6':
+                    if not is_ipv6(result):
+                        raise ValueError('参数：{}，要求正确的ipv6地址'.format(key))
+                else:
+                    if not is_ipv4(result) and not is_ipv6(result):
+                        raise ValueError('参数：{}，要求正确的ipv4/ipv6地址'.format(key))
+            elif format in ['w','letter']:
+                if not re.match(r'^\w+$',result):
+                    raise ValueError('参数：{}，要求只能是英文字母组成'.format(key))
+            elif format in ['email','mail','m']:
+                if not re.match(r"^.+\\@(\\[?)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,3}|[0-9]{1,3})(\\]?)$",result):
+                    raise ValueError("参数：{}，要求正确的邮箱地址格式".format(key))
+            elif format in ['phone','mobile','m']:
+                if not re.match("^[0-9]{11,11}$",result):
+                    raise ValueError("参数：{}，要求手机号码格式".format(key))
+            elif re.match(r"^[<>=]\d+$",result):
+                operator = format[0]
+                length = int(format[1:].strip())
+                result_len = len(result)
+                error_obj = ValueError("参数：{}，要求长度为{}".format(key,format))
+                if operator is '=':
+                    if result_len != length:
+                        raise error_obj
+                elif operator is '>':
+                    if result_len < length:
+                        raise error_obj
+                else:
+                    if result_len > length:
+                        raise error_obj
+            elif format[0] in ['^','(','[','\\','.'] or format[-1] in ['$',')',']','+','}']:
+                if not re.match(format,result):
+                    raise ValueError("指定参数格式不正确, {}:{}".format(key,format))
+            
+        if limit:
+            if not result in limit:
+                raise ValueError("指定参数值范围不正确, {}:{}".format(key,limit))
+        return result
+    
+        
+            
+
+
 
 
 

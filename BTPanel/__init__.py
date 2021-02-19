@@ -144,7 +144,7 @@ def request_check():
         for k in pdata.keys():
             if len(k) > 48: return abort(403)
             if len(pdata[k]) > 256: return abort(403)
-
+    if session.get('debug') == 1: return
     if not request.path in ['/safe', '/hook', '/public', '/mail_sys', '/down']:
         ip_check = public.check_ip_panel()
         if ip_check: return ip_check
@@ -165,7 +165,6 @@ def request_check():
                             '/get_app_bind_status']: return
         auth = request.authorization
         if not comm.get_sk(): return
-        if session.get('debug') == 1: return
         if not auth: return send_authenticated()
         tips = '_bt.cn'
         if public.md5(auth.username.strip() + tips) != app.config['BASIC_AUTH_USERNAME'] \

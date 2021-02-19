@@ -14,6 +14,7 @@ import time
 os.chdir('/www/server/panel')
 sys.path.insert(0, 'class/')
 import public
+from .ssh_client import ssh_client
 
 
 class server(object):
@@ -100,9 +101,11 @@ class server(object):
         if 'pkey' in args: pdata['pkey'] = args.pkey
         pdata['c_type'] = int(args.c_type)
         pdata['host'] = args.host
-        if 'port' in args: pdata['port'] = int(args.port)
+        pdata['port'] = int(args.port) if 'port' in args else 22
         if 'ps' in args: pdata['ps'] = args.ps
         pdata['addtime'] = int(time.time())
+        if not self.check_server_ssh(pdata):
+            return public.returnMsg(False, '服务器ssh连接失败!')
 
         table = public.M('colony_server')
         if table.where('host=?', pdata['host']).count():
@@ -120,8 +123,10 @@ class server(object):
         if 'pkey' in args: pdata['pkey'] = args.pkey
         pdata['c_type'] = int(args.c_type)
         pdata['host'] = args.host
-        if 'port' in args: pdata['port'] = int(args.port)
+        pdata['port'] = int(args.port) if 'port' in args else 22
         if 'ps' in args: pdata['ps'] = args.ps
+        if not self.check_server_ssh(pdata):
+            return public.returnMsg(False, '服务器ssh连接失败!')
 
         public.M('colony_server').where('id=?', args.id).update(pdata)
         return public.returnMsg(True, '编辑成功!')
@@ -132,3 +137,17 @@ class server(object):
         '''
         public.M('colony_server').where('id=?', args.id).delete()
         return public.returnMsg(True, '删除成功!')
+
+    def check_server_ssh(self, server_info):
+        '''
+        测试服务器ssh是否能够连通
+        '''
+        if int(server_info['c_type']) == 0:
+            p = ssh_client(address=server_info['host'], port=server_info['port'], ssh_user=server_info['username'], password=server_info['password'])
+        else:
+            p = ssh_client(address=server_info['host'], port=server_info['port'], ssh_user=server_info['username'], pkey=server_info['pkey'])
+        try:
+            p.connect_ssh()
+            return True
+        except Exception:
+            return False

@@ -300,6 +300,10 @@ class panelPlugin:
             cloudUrl = public.GetConfigValue('home') + '/api/panel/get_soft_list_test'
             import panelAuth
             pdata = panelAuth.panelAuth().create_serverid(None)
+            oem_file = '/www/server/panel/data/o.pl'
+            if os.path.exists(oem_file):
+                pdata['oem'] = public.readFile(oem_file)
+                if pdata['oem']: pdata['oem'] = pdata['oem'].strip()
             listTmp = public.httpPost(cloudUrl,pdata,6)
             if not listTmp or len(listTmp) < 200:
                 listTmp = public.readFile(lcoalTmp)
