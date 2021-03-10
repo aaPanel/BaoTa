@@ -330,7 +330,7 @@ def site(pdata=None):
     'GetRedirectFile', 'SaveRedirectFile', 'DeleteRedirect', 'GetRedirectList', 'CreateRedirect', 'ModifyRedirect',
     'set_dir_auth', 'delete_dir_auth', 'get_dir_auth', 'modify_dir_auth_pass', 'export_domains', 'import_domains',
     'GetSiteLogs', 'GetSiteDomains', 'GetSecurity', 'SetSecurity', 'ProxyCache', 'CloseToHttps', 'HttpToHttps',
-    'SetEdate',
+    'SetEdate','get_site_errlog',
     'SetRewriteTel', 'GetCheckSafe', 'CheckSafe', 'GetDefaultSite', 'SetDefaultSite', 'CloseTomcat', 'SetTomcat',
     'apacheAddPort',
     'AddSite', 'GetPHPVersion', 'SetPHPVersion', 'DeleteSite', 'AddDomain', 'DelDomain', 'GetDirBinding',

@@ -103,7 +103,10 @@ class backup:
                 arr['path'] = disk[6]
                 tmp1 = [disk[2],disk[3],disk[4],disk[5]]
                 arr['size'] = tmp1
-                arr['inodes'] = [inodes[1],inodes[2],inodes[3],inodes[4]]
+                if int(inodes[1]) == 0 and int(inodes[2]) == 0: 
+                    arr['inodes'] = [inodes[1],10000,10000,0]
+                else:
+                    arr['inodes'] = [inodes[1],inodes[2],inodes[3],inodes[4]]
                 diskInfo.append(arr)
             except:
                 continue

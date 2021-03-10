@@ -1030,8 +1030,8 @@ set $bt_safe_open "{}/:/tmp/";'''.format(self.sitePath)
         listen_conf = public.readFile(listen_file)
         try:
             get.webname = json.loads(get.webname)
-            get.domain = get.webname['domain']
-            get.webname = get.webname['domain'] + "," + ",".join(get.webname["domainlist"])
+            get.domain = get.webname['domain'].replace('\r', '')
+            get.webname = get.domain + "," + ",".join(get.webname["domainlist"])
             if get.webname[-1] == ',':
                 get.webname = get.webname[:-1]
         except:
@@ -1049,7 +1049,7 @@ set $bt_safe_open "{}/:/tmp/";'''.format(self.sitePath)
                     listen_conf = re.sub(rep, new_map, listen_conf)
             else:
                 domains = get.webname.strip().split(',')
-                map_tmp = '\tmap\t{d} {d}\n'.format(d=domains[0])
+                map_tmp = '\tmap\t{d} {d}'.format(d=domains[0])
                 listen_rep = "secure\s*0"
                 listen_conf = re.sub(listen_rep,"secure 0\n"+map_tmp,listen_conf)
         else:
@@ -1059,7 +1059,7 @@ listener Default%s{
     secure 0
     map %s %s
 }
-""" % (get.port,get.port,get.webname,get.domain)
+""" % (get.port, get.port, get.domain, get.webname)
         # 保存配置文件
         public.writeFile(listen_file, listen_conf)
         return True
@@ -4131,7 +4131,7 @@ location %s
         
         if get.siteName == 'phpmyadmin': 
             get.configFile = self.setupPath + '/apache/conf/extra/httpd-vhosts.conf'
-            if os.path.exists(self.sitePath + '/panel/vhost/apache/phpmyadmin.conf'):
+            if os.path.exists(self.setupPath + '/panel/vhost/apache/phpmyadmin.conf'):
                 get.configFile = self.setupPath + '/panel/vhost/apache/phpmyadmin.conf'
         else:
             get.configFile = self.setupPath + '/panel/vhost/apache/' + get.siteName + '.conf'
@@ -4682,6 +4682,18 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
             logPath = '/www/wwwlogs/' + get.siteName + '-access_log'
         else:
             logPath = '/www/wwwlogs/' + get.siteName + '_ols.access_log'
+        if not os.path.exists(logPath): return public.returnMsg(False,'日志为空')
+        return public.returnMsg(True,public.GetNumLines(logPath,1000))
+
+    #取网站错误日志
+    def get_site_errlog(self,get):
+        serverType = public.get_webserver()
+        if serverType == "nginx":
+            logPath = '/www/wwwlogs/' + get.siteName + '.error.log'
+        elif serverType == 'apache':
+            logPath = '/www/wwwlogs/' + get.siteName + '-error_log'
+        else:
+            logPath = '/www/wwwlogs/' + get.siteName + '_ols.error_log'
         if not os.path.exists(logPath): return public.returnMsg(False,'日志为空')
         return public.returnMsg(True,public.GetNumLines(logPath,1000))
 

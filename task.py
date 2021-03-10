@@ -596,6 +596,7 @@ def check_files_panel():
             public.writeFile(cf,i['body'])
             public.ExecShell("bash /www/server/panel/init.sh reload &")
 
+
 def main():
     main_pid = 'logs/task.pid'
     if os.path.exists(main_pid):

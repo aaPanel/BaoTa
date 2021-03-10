@@ -24,7 +24,7 @@ class panelSetup:
             if ua.find('spider') != -1 or ua.find('bot') != -1:
                 return redirect('https://www.baidu.com')
         
-        g.version = '7.6.12'
+        g.version = '7.6.14'
         g.title = public.GetConfigValue('title')
         g.uri = request.path
         g.debug = os.path.exists('data/debug.pl')
@@ -52,13 +52,15 @@ class panelSetup:
         g.other_css = []
         g.other_js = []
         if g.o:
-            s_path = 'BTPanel/static/other/js/{}'
-            css_name = "{}.css".format(g.o)
-            css_file = s_path.format(css_name)
-            if os.path.exists(css_file): g.other_css.append('/static/other/css/{}'.format(css_name))
-            js_name = "{}.js".format(g.o)
+            s_path = 'BTPanel/static/other/{}'
+            css_name = "css/{}.css".format(g.o)
+            css_file = s_path.format(css_name)          
+            if os.path.exists(css_file): g.other_css.append('/static/other/{}'.format(css_name))
+            
+            js_name = "js/{}.js".format(g.o)
             js_file = s_path.format(js_name)
-            if os.path.exists(js_file): g.other_js.append('/static/other/js/{}'.format(js_name))
+            if os.path.exists(js_file): g.other_js.append('/static/other/{}'.format(js_name))
+
 
 
 class panelAdmin(panelSetup):

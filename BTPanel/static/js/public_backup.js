@@ -5270,6 +5270,15 @@ bt.site = {
 			if(callback) callback(rdata);
 		})
 	},
+	get_site_error_logs:function(siteName,callback){
+		var loading = bt.load();
+		bt.send('GetSiteLogs','site/get_site_errlog',{siteName:siteName},function(rdata){
+			loading.close();
+			if(rdata.status !== true) rdata.msg = '';
+			if (rdata.msg == '') rdata.msg = '当前没有日志.';
+			if(callback) callback(rdata);
+		})
+	},
 	get_site_ssl:function(siteName,callback){
 		var loadT = bt.load(lan.site.the_msg);
         bt.send('GetSSL', 'site/GetSSL', { siteName: siteName }, function (rdata) {
