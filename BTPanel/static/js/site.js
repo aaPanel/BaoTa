@@ -2359,7 +2359,7 @@ var site = {
                     var _form_data = bt.render_form_line(datas[i]);
                     _html.append(_form_data.html);
                     clicks = clicks.concat(_form_data.clicks);
-                };
+                }
                 $('#webedit-con').append(_html);
                 $("input[name='exclude_file']").parent().removeAttr('class').html('<textarea name="exclude_file" class="bt-input-text mr5 exclude_file" style="width:35%;height: 130px;"></textarea>');
                 $("input[name='test']").parent().parent().html('<div style="padding-left: 29px;border-top: #ccc 1px dashed;margin-top: -7px;"><em style="float: left;color: #555;font-style: normal;line-height: 32px;padding-right: 2px;">私有缓存</em><div style="margin-left: 70px;padding-top: 5px;"><input class="btswitch btswitch-ios" id="ols" type="checkbox"><label class="btswitch-btn" for="ols"></label></div></div>');
@@ -2710,6 +2710,7 @@ var site = {
                                             </table>\
                                         </div>\
                                     </div><ul class="help-info-text c7">\
+                                        <li style="color:red;">注意：请勿将SSL证书用于非法网站，一经发现，吊销证书且不退款</li>\
                                         <li>申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)</li>\
                                         <li>有效期1年，不支持续签，到期后需要重新申请</li>\
                                         <li>在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点</li>\
@@ -3809,12 +3810,12 @@ var site = {
                                             });
                                         });
                                         var helps = [
+                                            '<span style="color:red">注意：请勿将SSL证书用于非法网站，一经发现，吊销证书</span>',
                                             '申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)',
                                             '宝塔SSL申请的是免费版TrustAsia DV SSL CA - G5证书，仅支持单个域名申请',
                                             '有效期1年，不支持续签，到期后需要重新申请',
                                             '建议使用二级域名为www的域名申请证书,此时系统会默认赠送顶级域名为可选名称',
                                             '在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点',
-                                            '99%的用户都可以轻易自助部署，如果您不懂，<a class="btlink" href="https://www.bt.cn/yunwei" target="_blank">宝塔提供证书部署服务50元一次</a>',
                                             '宝塔SSL申请注意事项及教程 <a href="https://www.bt.cn/bbs/thread-33113-1-1.html" target="_blank" class="btlink"> 使用帮助</a>'
                                         ]
                                         robj.append(bt.render_help(helps));
@@ -3936,6 +3937,7 @@ var site = {
                                 }
                                 robj.find('textarea').css('background-color', '#f6f6f6').attr('readonly', true);
                                 var helps = [
+                                    '<span style="color:red">注意：请勿将SSL证书用于非法网站</span>',
                                     '申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)',
                                     '宝塔SSL申请的是免费版TrustAsia DV SSL CA - G5证书，仅支持单个域名申请',
                                     '有效期1年，不支持续签，到期后需要重新申请',
@@ -3948,6 +3950,7 @@ var site = {
                             }
                             bt.site.get_site_domains(web.id, function (ddata) {
                                 var helps = [[
+                                    '<span style="color:red">注意：请勿将SSL证书用于非法网站</span>',
                                     '<span style="color:red;">Let\'s Encrypt因更换根证书，部分老旧设备访问时可能提示不可信，考虑购买<a class="btlink" onclick="$(\'#ssl_tabs span\').eq(0).click();">[商用SSL证书]</a></span>',
                                     '申请之前，请确保域名已解析，如未解析会导致审核失败',
                                     'Let\'s Encrypt免费证书，有效期3个月，支持多域名。默认会自动续签',
@@ -3955,6 +3958,7 @@ var site = {
                                     '在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点',
                                     '如开启后无法使用HTTPS访问，请检查安全组是否正确放行443端口'
                                 ], [
+                                    '<span style="color:red">注意：请勿将SSL证书用于非法网站</span>',
                                     '在DNS验证中，我们提供了多种自动化DNS-API，并提供了手动模式',
                                     '使用DNS接口申请证书可自动续期，手动模式下证书到期后需重新申请',
                                     '使用【DnsPod/阿里云DNS】等接口前您需要先在弹出的窗口中设置对应接口的API',

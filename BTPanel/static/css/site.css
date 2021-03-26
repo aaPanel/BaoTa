@@ -2362,7 +2362,7 @@ html .menu .menu_exit:hover {
 	height: 50px;
 	line-height: 50px;
 	padding-left: 10px;
-	border-bottom: #aaa 1px solid
+	border-bottom: #ececec 1px solid
 }
 
 .changepath .path-top .btn {
@@ -2390,7 +2390,7 @@ html .menu .menu_exit:hover {
 	width: 130px;
 	height: 450px;
 	float: left;
-	border-right: #aaa 1px solid;
+	border-right: #ececec 1px solid;
 	padding-top: 5px
 }
 
@@ -2442,18 +2442,45 @@ html .menu .menu_exit:hover {
 }
 
 .path-con-right .file-list {
-	display: none
+	display: none;
+	height:450px;
 }
 
+.list-list tr:last-child{
+	border-bottom: 1px solid #ececec
+}
+.list-list tr input{
+	border-color: #ddd;
+	margin-top: 6px;
+}
+
+.list-list .bt_open_dir span:nth-child(2){
+	width: 155px;
+    display: inline-block;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: pre;
+	vertical-align: middle;
+}
 .path-con-right .list-list td {
-	padding-left: 10px;
-	cursor: pointer
+	line-height: 22px;
+	cursor: pointer;
+	border-top: 1px solid #ececec;
+	white-space: pre;
+}
+.path-con-right .list-list tr{
+	box-sizing: border-box;
 }
 
 .list-list span.glyphicon {
 	color: #666;
 	margin-right: 10px;
-	font-size: 18px
+	font-size: 16px;
+	vertical-align: middle;
+	top: 1px;
+}
+.list-list span.glyphicon-file{
+	font-size: 18px;
 }
 
 .list-list span.glyphicon-folder-open {
@@ -7761,10 +7788,19 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
 .module_details_title{
     font-weight: 500;
 }
+.module_details_title>span{
+	display: inline-block;
+    max-width: 240px;
+    display: inline-block;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: pre;
+}
 .module_details_title i{
     color: #bbb;
     font-style: initial;
     font-weight: 400;
+	vertical-align: top;
 }
 .module_details_body{
     padding: 10px 15px;
@@ -10581,7 +10617,7 @@ select[name="network-io"]{
 	bottom:25px;
 	background:#20a53a;
 	border-radius:2px;
-	box-shadow:0 0 8px 1px #aeaeae;
+	box-shadow:0 0 5px 2px #00000050;
 	text-align:center;
 	line-height:60px;
 	cursor:pointer;

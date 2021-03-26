@@ -2061,6 +2061,17 @@ def ip2long(ip):
     iplong = 2 ** 24 * int(ips[0]) + 2 ** 16 * int(ips[1])  + 2 ** 8 * int(ips[2])  + int(ips[3])
     return iplong
 
+def is_local_ip(ip):
+    '''
+        @name 判断是否为本地(内网)IP地址
+        @author hwliang<2021-03-26>
+        @param ip string(ipv4)
+        @return bool
+    '''
+    patt = r"^(192\.168|127|10|172\.(16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31))\."
+    if re.match(patt,ip): return True
+    return False
+
 #提交关键词
 def submit_keyword(keyword):
     pdata = {"keyword":keyword}

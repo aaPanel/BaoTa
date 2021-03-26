@@ -320,94 +320,42 @@ var bt =
 	clear_cookie:function(key){
 	  this.set_cookie(key,'',new Date());
 	},
-	select_path:function(id){
+	select_path:function(id,type){
 		_this = this;
 		_this.set_cookie("SetName", "");
 		var loadT = bt.open({
 			type: 1,
 			area: "650px",
-			title: lan.bt.dir,
+			title: type ==='all'?'选择目录和文件':lan.bt.dir,
 			closeBtn: 2,
 			shift: 5,
-			content: "<div class='changepath'><div class='path-top'><button type='button' id='btn_back' class='btn btn-default btn-sm'><span class='glyphicon glyphicon-share-alt'></span> "+lan.public.return+"</button><div class='place' id='PathPlace'>"+lan.bt.path+"：<span></span></div></div><div class='path-con'><div class='path-con-left'><dl><dt id='changecomlist' >"+lan.bt.comp+"</dt></dl></div><div class='path-con-right'><ul class='default' id='computerDefautl'></ul><div class='file-list divtable'><table class='table table-hover' style='border:0 none'><thead><tr class='file-list-head'><th width='40%'>"+lan.bt.filename+"</th><th width='20%'>"+lan.bt.etime+"</th><th width='10%'>"+lan.bt.access+"</th><th width='10%'>"+lan.bt.own+"</th><th width='10%'></th></tr></thead><tbody id='tbody' class='list-list'></tbody></table></div></div></div></div><div class='getfile-btn' style='margin-top:0'><button type='button' class='btn btn-default btn-sm pull-left' onclick='CreateFolder()'>"+lan.bt.adddir+"</button><button type='button' class='btn btn-danger btn-sm mr5' onclick=\"layer.close(getCookie('ChangePath'))\">"+lan.public.close+"</button> <button type='button' id='bt_select' class='btn btn-success btn-sm' >"+lan.bt.path_ok+"</button></div>"
-        });
+			content: "<div class='changepath'><div class='path-top'><button type='button' id='btn_back' class='btn btn-default btn-sm'><span class='glyphicon glyphicon-share-alt'></span> "+lan.public.return+"</button><div class='place' id='PathPlace'>"+lan.bt.path+"：<span></span></div></div><div class='path-con'><div class='path-con-left'><dl><dt id='changecomlist' >"+lan.bt.comp+"</dt></dl></div><div class='path-con-right'><ul class='default' id='computerDefautl'></ul><div class='file-list divtable'><table class='table table-hover' style='border:0 none'><thead><tr class='file-list-head'><th width='5%'></th><th width='38%'>"+lan.bt.filename+"</th><th width='24%'>"+lan.bt.etime+"</th><th width='8%'>"+lan.bt.access+"</th><th width='15%'>"+lan.bt.own+"</th></tr></thead><tbody id='tbody' class='list-list'></tbody></table></div></div></div></div><div class='getfile-btn' style='margin-top:0'><button type='button' class='btn btn-default btn-sm pull-left' onclick='CreateFolder()'>"+lan.bt.adddir+"</button><button type='button' class='btn btn-danger btn-sm mr5' onclick=\"layer.close(getCookie('ChangePath'))\">"+lan.public.close+"</button> <button type='button' id='bt_select' class='btn btn-success btn-sm' >"+lan.bt.path_ok+"</button></div>",
+			success:function(){
+				$('#btn_back').click(function(){
+					var path = $("#PathPlace").find("span").text();			
+					path = bt.rtrim(bt.format_path(path),'/');						
+					var back_path = bt.get_file_path(path);
+					_this.get_file_list(back_path,type);
+				})
+				//选择
+				$('#bt_select').click(function(){						
+					var path = bt.format_path($("#PathPlace").find("span").text());
+					if($('#tbody tr').hasClass('active')){
+						path = $('#tbody tr.active .bt_open_dir').attr('path');
+					}
+					path = bt.rtrim(path, '/');
+					$("#"+id).val(path);
+					$("."+id).val(path);
+					loadT.close();
+				})
+			}
+		});
         _this.set_cookie('ChangePath', loadT.form);
-		setTimeout(function(){			
-			$('#btn_back').click(function(){
-				var path = $("#PathPlace").find("span").text();			
-				path = bt.rtrim(bt.format_path(path),'/');						
-				var back_path = bt.get_file_path(path);
-				get_file_list(back_path);
-			})
-			//选择
-			$('#bt_select').click(function(){						
-				var path = bt.format_path($("#PathPlace").find("span").text());
-                path = bt.rtrim(path, '/');
-				$("#"+id).val(path);
-				$("."+id).val(path);
-				loadT.close();
-			})
-		},100);
 		var paths = $("#" + id).val();
 		if($('#defaultPath').length > 0 && $("#" + id).parents('.tab-body').length > 0){
 			paths = $('#defaultPath').text();
 		}
-		get_file_list(paths);
-		function get_file_list(path)
-        {
-            bt.send('GetDir', 'files/GetDir', { path: path, disk: true }, function (rdata) {
-                var d = '',a='';                
-				if(rdata.DISK != undefined) {
-					for(var f = 0; f < rdata.DISK.length; f++) {
-						a += "<dd class=\"bt_open_dir\" path =\""+rdata.DISK[f].path+"\"><span class='glyphicon glyphicon-hdd'></span>&nbsp;" + rdata.DISK[f].path + "</dd>"
-					}
-					$("#changecomlist").html(a)
-				}
-				for(var f = 0; f < rdata.DIR.length; f++) {
-					var g = rdata.DIR[f].split(";");
-					var e = g[0];
-					if(e.length > 20) {
-						e = e.substring(0, 20) + "..."
-					}
-					if(isChineseChar(e)) {
-						if(e.length > 10) {
-							e = e.substring(0, 10) + "..."
-						}
-					}
-					d += "<tr><td class=\"bt_open_dir\" path =\"" + rdata.PATH + "/" + g[0] + "\"  title='" + g[0] + "'><span class='glyphicon glyphicon-folder-open'></span>" + e + "</td><td>" + bt.format_data(g[2]) + "</td><td>" + g[3] + "</td><td>" + g[4] + "</td><td><span class='delfile-btn' onclick=\"NewDelFile('" + rdata.PATH + "/" + g[0] + "')\">X</span></td></tr>"
-				}
-				
-				if(rdata.FILES != null && rdata.FILES != "") {
-					for(var f = 0; f < rdata.FILES.length; f++) {
-						var g = rdata.FILES[f].split(";");
-						var e = g[0];
-						if(e.length > 20) {
-							e = e.substring(0, 20) + "..."
-						}
-						if(isChineseChar(e)) {
-							if(e.length > 10) {
-								e = e.substring(0, 10) + "..."
-							}
-						}
-						d += "<tr><td title='" + g[0] + "'><span class='glyphicon glyphicon-file'></span>" + e + "</td><td>" + bt.format_data(g[2]) + "</td><td>" + g[3] + "</td><td>" + g[4] + "</td><td></td></tr>"
-					}
-				}
-				
-				$(".default").hide();
-				$(".file-list").show();
-				$("#tbody").html(d);
-				if(rdata.PATH.substr(rdata.PATH.length - 1, 1) != "/") {
-					rdata.PATH += "/"
-				}
-				$("#PathPlace").find("span").html(rdata.PATH);
-				
-				$('.bt_open_dir').click(function(){	
-					get_file_list($(this).attr('path'));
-				})
-			})
-        }
-
-
+		_this.get_file_list(paths,type);
         function ActiveDisk() {
             var a = $("#PathPlace").find("span").text().substring(0, 1);
             switch (a) {
@@ -433,6 +381,70 @@ var bt =
                     $(".path-con-left dd").removeAttr("style")
             }
         }
+	},
+	get_file_list(path,type){
+		var _that = this;
+		bt.send('GetDir', 'files/GetDir', { path: path, disk: true }, function (rdata) {
+			var d = '',a='';                
+			if(rdata.DISK != undefined) {
+				for(var f = 0; f < rdata.DISK.length; f++) {
+					a += "<dd class=\"bt_open_dir\" path =\""+rdata.DISK[f].path+"\"><span class='glyphicon glyphicon-hdd'></span>&nbsp;" + rdata.DISK[f].path + "</dd>"
+				}
+				$("#changecomlist").html(a)
+			}
+			for(var f = 0; f < rdata.DIR.length; f++) {
+				var g = rdata.DIR[f].split(";");
+				var e = g[0];
+				if(e.length > 20) {
+					e = e.substring(0, 20) + "..."
+				}
+				if(isChineseChar(e)){
+					if(e.length > 10){
+						e = e.substring(0, 10) + "..."
+					}
+				}
+				d += "<tr><td><input type=\"checkbox\" /></td><td class=\"bt_open_dir\" path =\"" + rdata.PATH + "/" + g[0] + "\" data-type=\"dir\" title='" + g[0] + "'><span class='glyphicon glyphicon-folder-open'></span><span>" + e + "</span></td><td>" + bt.format_data(g[2]) + "</td><td>" + g[3] + "</td><td>" + g[4] + "</td></tr>"
+			}
+			
+			if(rdata.FILES != null && rdata.FILES != "") {
+				for(var f = 0; f < rdata.FILES.length; f++) {
+					var g = rdata.FILES[f].split(";");
+					var e = g[0];
+					if(e.length > 20) {
+						e = e.substring(0, 20) + "..."
+					}
+					if(isChineseChar(e)) {
+						if(e.length > 10) {
+							e = e.substring(0, 10) + "..."
+						}
+					}
+					d += "<tr><td>"+  (type === 'all'?'<input type=\"checkbox\" />':'') +"<td class=\"bt_open_dir\" title='" + g[0] + "' data-type=\"files\" path =\"" + rdata.PATH + "/" + g[0] + "\"><span class='glyphicon glyphicon-file'></span><span>" + e + "</span></td><td>" + bt.format_data(g[2]) + "</td><td>" + g[3] + "</td><td>" + g[4] + "</td></tr>"
+				}
+			}
+			
+			$(".default").hide();
+			$(".file-list").show();
+			$("#tbody").html(d);
+			if(rdata.PATH.substr(rdata.PATH.length - 1, 1) != "/") {
+				rdata.PATH += "/"
+			}
+			$("#PathPlace").find("span").html(rdata.PATH);
+			$("#tbody tr").click(function() { 
+				if($(this).find('td:eq(0) input').length > 0){
+					if($(this).hasClass('active')){
+						$(this).removeClass('active');
+						$(this).find('td:eq(0) input').prop('checked',false);
+					}else{
+						$(this).find('td:eq(0) input').prop('checked',true);
+						$(this).siblings().find('td:eq(0) input').prop('checked',false);
+						$(this).addClass('active').siblings().removeClass('active');
+					}
+				}
+			});
+			$('.bt_open_dir span').click(function(){	
+				if($(this).parent().data('type') == 'dir')  _that.get_file_list($(this).parent().attr('path'),type);
+			})
+		})
 	},
 	show_confirm : function(title, msg,callback, error) {
 		var d = Math.round(Math.random() * 9 + 1),c = Math.round(Math.random() * 9 + 1),t = d + " + " + c,e = d + c;
@@ -5264,15 +5276,6 @@ bt.site = {
 	get_site_logs:function(siteName,callback){
 		var loading = bt.load();
 		bt.send('GetSiteLogs','site/GetSiteLogs',{siteName:siteName},function(rdata){
-			loading.close();
-			if(rdata.status !== true) rdata.msg = '';
-			if (rdata.msg == '') rdata.msg = '当前没有日志.';
-			if(callback) callback(rdata);
-		})
-	},
-	get_site_error_logs:function(siteName,callback){
-		var loading = bt.load();
-		bt.send('GetSiteLogs','site/get_site_errlog',{siteName:siteName},function(rdata){
 			loading.close();
 			if(rdata.status !== true) rdata.msg = '';
 			if (rdata.msg == '') rdata.msg = '当前没有日志.';

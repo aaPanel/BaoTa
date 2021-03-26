@@ -917,7 +917,7 @@ var index = {
                                 scan_time = items.check_time;
                                 htmls += '<li class="module_details_item">'+
                                     '<div class="module_details_head">'+
-                                        '<span class="module_details_title">'+ items.ps +'<i>（&nbsp;检测时间：'+ (that.get_simplify_time(items.check_time) || '刚刚') +'，耗时：'+ ( items.taking>1?( items.taking +'秒'):((items.taking * 1000).toFixed(2) +'毫秒')) +'&nbsp;，等级：'+                                         (function(level){
+                                        '<span class="module_details_title"><span title="'+ items.ps +'">'+ items.ps +'</span><i>（&nbsp;检测时间：'+ (that.get_simplify_time(items.check_time) || '刚刚') +'，耗时：'+ ( items.taking>1?( items.taking +'秒'):((items.taking * 1000).toFixed(2) +'毫秒')) +'&nbsp;，等级：'+                                         (function(level){
                                             var level_html = '';
                                             switch(level){
                                                 case 3:

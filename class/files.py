@@ -700,6 +700,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         if not 'sfile' in get: return public.returnMsg(False,'参数错误')
         if not os.path.exists(get.sfile): return public.returnMsg(False,'指定文件不存在，无法创建软链!')
         if os.path.exists(get.dfile): return public.returnMsg(False,'指定软链文件名已存在，请使用其它文件名，或先删除!')
+        if get.dfile[0] != '/': return public.returnMsg(False,'指定软链文件名必需包含完整路径(全路径)')
         public.ExecShell("ln -sf {} {}".format(get.sfile,get.dfile))
         if not os.path.exists(get.dfile): return public.returnMsg(False,'软链文件创建失败!')
         public.WriteLog('文件管理','创建软链: {} -> {}'.format(get.dfile,get.sfile))
@@ -2149,6 +2150,7 @@ cd %s
         try:
             bs = str(public.readFile(composer_bin,'rb'))
             result = re.findall(r"const VERSION\s*=\s*.{0,2}'([\d\.]+)",bs)[0]
+            if not result: raise Exception('empty!')
         except:
             php_bin = self.__get_php_bin()
             composer_exec_str = php_bin + ' ' + composer_bin +' --version 2>/dev/null|grep \'Composer version\'|awk \'{print $3}\''

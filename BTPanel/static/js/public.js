@@ -706,13 +706,17 @@ var aceEditor = {
 		
 		// 当前根目录操作，新建文件或目录
 		$('.ace_dir_tools').on('click','.folder_down_up li',function(e){
-			var _type = parseInt($(this).attr('data-type'));
+			var _type = parseInt($(this).attr('data-type')),element = $('.cd-accordion-menu'),group = 0;
+			if($('.file_fold.bg').length > 0 && $('.file_fold.bg').data('file') != 'files'){
+				element = $('.file_fold.bg');
+				group = parseInt($('.file_fold.bg').data('group'));
+			}
 			switch(_type){
 				case 2:
-					_this.newly_file_type_dom($('.cd-accordion-menu'),0,0);
+					_this.newly_file_type_dom(element,group,0);
 				break;
 				case 3:
-					_this.newly_file_type_dom($('.cd-accordion-menu'),0,1);
+					_this.newly_file_type_dom(element,group,1);
 				break;
 			}
 			_this.refresh_config = {
@@ -2154,7 +2158,7 @@ function NewDelFile(c) {
 				icon: 2
 			})
 		}
-		GetDiskList(a)
+		this.get_file_list(a);
 	})
 }
 
