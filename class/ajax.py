@@ -35,8 +35,13 @@ class ajax:
             #取Nginx负载状态
             self.CheckStatusConf()
             result = public.httpGet('http://127.0.0.1/nginx_status')
-            tmp = result.split()
-            if len(tmp) < 15:
+            is_curl = False
+            tmp = []
+            if result:
+                tmp = result.split()
+            if len(tmp) < 15: is_curl = True
+                
+            if is_curl:
                 result = public.ExecShell('curl http://127.0.0.1/nginx_status')[0]
                 tmp = result.split()
             data = {}
@@ -486,9 +491,7 @@ class ajax:
                 data['intrusion'] = 0
                 data['uid'] = self.get_uid()
                 #msg = public.getMsg('PANEL_UPDATE_MSG');
-                data['o'] = ''
-                filename = '/www/server/panel/data/o.pl'
-                if os.path.exists(filename): data['o'] = str(public.readFile(filename))
+                data['o'] = public.get_oem_name()
                 sUrl = public.GetConfigValue('home') + '/api/panel/updateLinux'
                 updateInfo = json.loads(public.httpPost(sUrl,data))
                 if not updateInfo: return public.returnMsg(False,"CONNECT_ERR")

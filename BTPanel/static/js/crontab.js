@@ -96,6 +96,11 @@ function edit_task_info(id){
 		layer.closeAll();
 		var sTypeName = '',sTypeDom = '',cycleName = '',cycleDom = '',weekName = '',weekDom = '',sNameName ='',sNameDom = '',backupsName = '',backupsDom ='';
 		obj = {
+			sBody: {
+				messageChannelBtnText: '',
+				channelInitVal: '',
+				messageChannelDom: ''
+			},
 			from:{
 				id:rdata.id,
 				name: rdata.name,
@@ -110,6 +115,9 @@ function edit_task_info(id){
 				backupTo: rdata.backupTo,
 				save: rdata.save,
 				urladdress: rdata.urladdress,
+				save_local: rdata.save_local,
+				notice: rdata.notice,
+				notice_channel: rdata.notice_channel
 			},
 			sTypeArray:[['toShell','Shell脚本'],['site','备份网站'],['database','备份数据库'],['logs','日志切割'],['path','备份目录'],['rememory','释放内存'],['toUrl','访问URL'],['webshell','木马查杀']],
 			cycleArray:[['day','每天'],['day-n','N天'],['hour','每小时'],['hour-n','N小时'],['minute-n','N分钟'],['week','每星期'],['month','每月']],
@@ -129,6 +137,7 @@ function edit_task_info(id){
 					if(obj.from['week'] == obj['weekArray'][i][0])  weekName  = obj['weekArray'][i][1];
 					weekDom += '<li><a role="menuitem"  href="javascript:;" value="'+ obj['weekArray'][i][0] +'">'+ obj['weekArray'][i][1] +'</a></li>';
 				}
+				
 				if(obj.from.sType == 'site' || obj.from.sType == 'database' || obj.from.sType == 'path' || obj.from.sType == 'logs' || obj.from.sType == 'webshell'){
 					$.post('/crontab?action=GetDataList',{type:obj.from.sType  == 'database'?'databases':'sites'},function(rdata){
 						obj.sNameArray = rdata.data;
@@ -146,11 +155,42 @@ function edit_task_info(id){
 						if(obj.from.sType == 'webshell'){
 							edit_message_channel(obj.from.urladdress)
 						}
-						callback();
 					});
-				}else{
-					callback();
 				}
+				if(obj.from.notice_channel == 'dingding') {
+				    obj.sBody.title = '钉钉'
+				}else if(obj.from.notice_channel == 'mail') {
+				    obj.sBody.title = '邮箱'
+				}else if(obj.from.notice_channel == 'dingding,mail') {
+				    obj.sBody.title = '全部通道'
+				} else {
+				    obj.sBody.title = '无'
+				}
+				if(obj.from.sType == 'site' || obj.from.sType == 'database' || obj.from.sType == 'path') {
+					$.post('/config?action=get_settings',{type: 'sites'},function(rdata){
+						if(rdata.user_mail.user_name && rdata.dingding.dingding) {
+                          obj.sBody.messageChannelBtnText = '全部通道'
+            			  obj.sBody.channelInitVal= 'user_name,dingding'
+                          obj.sBody.messageChannelDom = '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding,mail">全部通道</a></li><li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding">钉钉</a></li><li><a role="menuitem" tabindex="-1" href="javascript:;" value="mail">邮箱</a></li>'
+						} else if(!rdata.user_mail.user_name && !rdata.dingding.dingding){
+						  obj.sBody.messageChannelBtnText = '无'
+						  obj.sBody.channelInitVal= ''
+						  obj.sBody.messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="">无</a></li>'
+						} else if(rdata.dingding.dingding) {
+						  obj.sBody.messageChannelBtnText = '钉钉'
+						  obj.sBody.channelInitVal= 'dingding'
+						  obj.sBody.messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding">钉钉</a></li>'
+						} else if(rdata.user_mail.user_name) {
+						  obj.sBody.messageChannelBtnText = '邮箱'
+						  obj.sBody.channelInitVal= 'mail'
+						  obj.sBody.messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="mail">邮箱</a></li>'
+						}
+						// callback();
+					})
+				}
+				setTimeout(function() {
+					callback();
+				},200)
 			}
 		};
 		obj.create(function(){
@@ -198,7 +238,7 @@ function edit_task_info(id){
 										<div class="plan_hms pull-left mr20 bt-input-text minute_input"><span><input type="number" name="minute" class="minute_create" value="'+ (obj.from.type == 'minute-n' ? obj.from.where1 : obj.from.minute)+'" maxlength="2" max="59" min="0"></span> <span class="name">分</span> </div>\
 									</div>\
 								</div>\
-								<div class="clearfix plan ptb10 site_list" style="display:none">\
+								<div class="clearfix plan ptb10 site_list">\
 									<span class="typename controls c4 pull-left f14 text-right mr20">'+ sTypeName  +'</span>\
 									<div style="line-height:34px"><div class="dropdown pull-left mr20 sName_btn" style="display:'+ (obj.from.sType != "path"?'block;':'none') +'">\
 										<button class="btn btn-default dropdown-toggle" type="button"  data-toggle="dropdown" style="width:auto" disabled="disabled">\
@@ -207,9 +247,9 @@ function edit_task_info(id){
 										</button>\
 										<ul class="dropdown-menu" role="menu" aria-labelledby="sName">'+ sNameDom +'</ul>\
 									</div>\
-									<div class="info-r" style="float: left;margin-right: 25px;display:'+ (obj.from.sType == "path"?'block;':'none') +'">\
-										<input id="inputPath" class="bt-input-text mr5 " type="text" name="path" value="'+ obj.from.sName +'" placeholder="备份目录" style="width:208px;height:33px;" disabled="disabled">\
-									</div>\
+									<div style="line-height:34px">\
+    									<div class="pull-left" style="margin-right:20px;display:'+ (obj.from.sType == "path"?'block;':'none') +'"><input type="text" name="name" class="bt-input-text sName_create" value="'+ obj.from.sName +'" disabled="disabled"></div>\
+    								</div>\
 									<div class="textname pull-left mr20" style="display:'+ (obj.from.sType == "logs"?'none':'block') +';">备份到</div>\
 										<div class="dropdown  pull-left mr20" style="display:'+ (obj.from.sType == "logs"?'none':'block') +';">\
 											<button class="btn btn-default dropdown-toggle backup_btn"  type="button"  data-toggle="dropdown" style="width:auto;">\
@@ -221,6 +261,29 @@ function edit_task_info(id){
 										<div class="textname pull-left mr20">保留最新</div>\
 										<div class="plan_hms pull-left mr20 bt-input-text">\
 											<span><input type="number" name="save" class="save_create" value="'+ obj.from.save +'" maxlength="4" max="100" min="1"></span><span class="name">份</span>\
+										</div>\
+									</div>\
+								</div>\
+								<div class="clearfix plan ptb10 site_list">\
+									<span class="typename controls c4 pull-left f14 text-right mr20" style="display:'+ (obj.from.sType == "logs"?'none':'block') +';">备份提醒</span>\
+									<div style="line-height:34px" ><div class="dropdown pull-left mr20 sName_btn" id="modNotice" style="display:'+ (obj.from.sType == "logs"?'none':'block') +';">\
+										<button class="btn btn-default dropdown-toggle" type="button" id="excode" data-toggle="dropdown" style="width:180px;">\
+											<b val="'+obj.from.notice+'">'+ (obj.from.notice == 1 ? '任务执行失败接收通知' : '不接收任何消息通知') +'</b> <span class="caret"></span>\
+										</button>\
+										<ul class="dropdown-menu" role="menu" aria-labelledby="excode">\
+											<li><a role="menuitem" tabindex="-1" href="javascript:;" value="0">不接收任何消息通知</a></li>\
+											<li><a role="menuitem" tabindex="-1" href="javascript:;" value="1">任务执行失败接收通知</a></li>\
+										</ul>\
+									</div>\
+									<div class="pull-left mr20"  style="display:'+ (obj.from.notice == 1 && obj.from.sType != 'logs' ?'block':'none') +';">消息通道</div>\
+										<div class="dropdown  pull-left mr20"  style="display:'+ (obj.from.notice == 1 ?'block':'none') +';">\
+											<button class="btn btn-default dropdown-toggle"  type="button"  data-toggle="dropdown" style="width:auto;" id="modNotice_channel">\
+												<b val="'+obj.from.notice_channel+'" id="modNotice_channelValue">'+ obj.sBody.title +'</b> <span class="caret"></span>\
+											</button>\
+											<ul class="dropdown-menu" role="menu">'+obj.sBody.messageChannelDom+'</ul>\
+										</div>\
+										<div class="textname pull-left mr20" id="selmodnoticeBox" onclick="modSelSave_local()">\
+											<span style="display:'+ (obj.from.sType == "logs"?'none':'block') +';"><input type="checkbox" value="'+obj.from.save_local+'" '+ (obj.from.save_local == 1 ? 'checked': '') +' style="margin-left: 20px;margin-right: 10px;" id="modSave_local">同时保留本地备份</span>\
 										</div>\
 									</div>\
 								</div>\
@@ -255,6 +318,7 @@ function edit_task_info(id){
 								</div>\
 							</div>'
 			});
+			getselectnoticename();
 			setTimeout(function(){
 				if(obj.from.sType == 'toShell'){
 					$('.site_list').hide();
@@ -293,7 +357,6 @@ function edit_task_info(id){
 				$('.url_create').blur(function () {
 					obj.from.urladdress = $(this).val();
 				});
-	
 				$('[aria-labelledby="cycle"] a').unbind().click(function () {
 					$('.cycle_btn').find('b').attr('val',$(this).attr('value')).html($(this).html());
 					var type = $(this).attr('value');
@@ -378,7 +441,7 @@ function edit_task_info(id){
 				});
 	
 				$('[aria-labelledby="backupTo"] a').unbind().click(function () {
-					$('.backup_btn').find('b').attr('val',$(this).attr('value')).html($(this).html());
+					$('.backup_btn').find('b').attr('val', $(this).attr('value')).html($(this).html());
 					obj.from.backupTo = $(this).attr('value');
 				});
 				$('.plan-submits').unbind().click(function(){
@@ -391,6 +454,9 @@ function edit_task_info(id){
 					}else if(obj.from.sType == 'webshell'){
 						obj.from.urladdress = $(".edit_message_start input:checked").val()
 					}
+					obj.from.save_local = $('#modSave_local').val()
+					obj.from.notice = $("#modNotice").find("button b").attr("val")
+					obj.from.notice_channel = $("#modNotice_channelValue").attr("val")
 					layer.msg('正在保存编辑内容，请稍后...',{icon:16,time:0,shade: [0.3, '#000']});
 					$.post('/crontab?action=modify_crond',obj.from,function(rdata){
 						layer.closeAll();
@@ -631,8 +697,7 @@ function planAdd(){
 		var backupTo = $(".planBackupTo").find("b").attr("val");
 		$("#backupTo").val(backupTo);
 	}
-	
-	
+
 	var sName = $("#sName").attr("val");
 	
 	/*if(sName == 'backupAll'){
@@ -650,7 +715,6 @@ function planAdd(){
 		allAddCrontab(dataList,0,'');
 		return;
 	}*/
-	
 	$("#set-Config input[name='sName']").val(sName);
 	layer.msg(lan.public.the_add,{icon:16,time:0,shade: [0.3, '#000']});
 	var data= $("#set-Config").serialize() + '&sBody='+sBody + '&urladdress=' + urladdress_1;
@@ -660,7 +724,9 @@ function planAdd(){
 		data = $("#set-Config").serialize() + '&urladdress=' + $(".message_start input:checked").val()
 		data = data.replace('&sName=&','&sName='+ encodeURIComponent($('#filePath').val()) +'&')
 	}
-
+	if(data.indexOf('&save_local=') == -1) {
+		data = data + '&save_local='+ $('#save_local').val() +'&notice='+ $("#notice").find("b").attr("val") +'&notice_channel='+ $("#notice_channel").find("b").attr("val") +''
+	}
 	$.post('/crontab?action=AddCrontab',data,function(rdata){
 		layer.closeAll();
         getCronData();
@@ -845,7 +911,7 @@ function toBackup(type){
 					 	<li><a role="menuitem" tabindex="-1" href="javascript:;" value="ALL">'+lan.public.all+'</a></li>\
 					  	'+sOpt+'\
 					  </ul>\
-                    </div>'
+            </div>'
 		}else{
 			$(".planname input[name='name']").val(sMsg+'[/www/wwwroot/]');
 			sOptBody = '<div class="info-r" style="display: inline-block;float: left;margin-right: 25px;"><input id="inputPath" class="bt-input-text mr5" type="text" name="path" value="/www/wwwroot/" placeholder="备份目录" style="width:208px;height:33px;"><span class="glyphicon glyphicon-folder-open cursor" onclick="ChangePath(&quot;inputPath&quot;)"></span></div>'
@@ -888,16 +954,72 @@ function toBackup(type){
 					<span><input type="number" name="save" id="save" value="'+save_num+'" maxlength="4" max="100" min="1"></span>\
 					<span class="name">'+lan.crontab.save_num+'</span>\
 					</div>';
-        if (sType == 'sites' && sMsg !== lan.crontab.backup_log) {
+        if (type == 'sites' || type == 'path' || type == 'databases') {
+          $.post('/config?action=get_settings',data,function(rdata){
+            var messageChannelDom = '', messageChannelBtnText = '', channelInitVal = ''
+            if(rdata.user_mail.user_name && rdata.dingding.dingding) {
+              messageChannelBtnText = '全部通道'
+			  channelInitVal= 'user_name,dingding'
+              messageChannelDom = '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding,mail">全部通道</a></li><li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding">钉钉</a></li><li><a role="menuitem" tabindex="-1" href="javascript:;" value="mail">邮箱</a></li>'
+            } else if(!rdata.user_mail.user_name && !rdata.dingding.dingding){
+              messageChannelBtnText = '无'
+			  channelInitVal= ''
+              messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="">无</a></li>'
+            } else if(rdata.dingding.dingding) {
+              messageChannelBtnText = '钉钉'
+			  channelInitVal= 'dingding'
+              messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding">钉钉</a></li>'
+            } else if(rdata.user_mail.user_name) {
+              messageChannelBtnText = '邮箱'
+			  channelInitVal= 'mail'
+              messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="mail">邮箱</a></li>'
+            }
             sBody += '<p class="clearfix plan">\
-                    <div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">排除规则</div>\
-                    <div class="dropdown planBackupTo pull-left mr20">\
-                        <span><textarea style=" height: 100px;width:300px;line-height:22px;" class="bt-input-text" type="text" name="sBody" id="exclude" placeholder="每行一条规则,目录不能以/结尾，示例：\ndata/config.php\nstatic/upload\n *.log\n"></textarea></span>\
-                    </div>\
-                </p>';
-        }
-		$("#implement").html(sBody);
-		getselectname();
+                <div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">备份提醒</div>\
+                  <div class="dropdown planBackupTo pull-left mr20" style="display:'+ (type === 'logs'?'none':'inline-block') +'"  id="notice">\
+                    <button class="btn btn-default dropdown-toggle" type="button" id="excode" data-toggle="dropdown" style="width:180px;">\
+                      <b val="0">不接收任何消息通知</b> <span class="caret"></span>\
+                    </button>\
+                    <ul class="dropdown-menu" role="menu" aria-labelledby="excode">\
+                      <li><a role="menuitem" tabindex="-1" href="javascript:;" value="0">不接收任何消息通知</a></li>\
+                      <li><a role="menuitem" tabindex="-1" href="javascript:;" value="1">任务执行失败接收通知</a></li>\
+                    </ul>\
+                  </div>\
+                </div>\
+                <div class="textname pull-left mr20" style="font-size: 14px;display:none;" id="messageChannelBox">消息通道</div>\
+                  <div class="dropdown planBackupTo pull-left mr20" style="display:none;" id="notice_channel">\
+                    <button class="btn btn-default dropdown-toggle" type="button" id="excode" data-toggle="dropdown" style="width:auto;">\
+                      <b val="'+channelInitVal+'">'+ messageChannelBtnText +'</b> <span class="caret"></span>\
+                    </button>\
+                    <ul class="dropdown-menu" role="menu" aria-labelledby="excode">\
+                      '+messageChannelDom+'\
+                    </ul>\
+                  </div>\
+                </div>\
+                <a role="menuitem" tabindex="-1" href="javascript:;" onclick="open_three_channel_auth()" value="0" style="color: #20a53a;">设置消息通道</a>\
+				<span  id="selnoticeBox"  onclick="selSave_local()"><input type="checkbox" value="0" style="margin-left: 20px;margin-right: 10px;" id="save_local">同时保留本地备份</span>\
+            </p>';
+            if(type == 'sites' || type == "path") {
+				sBody += '<p class="clearfix plan">\
+              <div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">排除规则</div>\
+              <div class="dropdown planBackupTo pull-left mr20">\
+                  <span><textarea style=" height: 100px;width:300px;line-height:22px;" class="bt-input-text" type="text" name="sBody" id="exclude" placeholder="每行一条规则,目录不能以/结尾，示例：\ndata/config.php\nstatic/upload\n *.log\n"></textarea></span>\
+              </div>\
+            </p>';
+			}
+            $("#implement").html(sBody);
+			getselectnoticename();
+          })
+        } else {
+            $("#implement").html('<div></div>');
+            sBody += '<p class="clearfix plan">\
+              <div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">排除规则</div>\
+              <div class="dropdown planBackupTo pull-left mr20">\
+                  <span><textarea style=" height: 100px;width:300px;line-height:22px;" class="bt-input-text" type="text" name="sBody" id="exclude" placeholder="每行一条规则,目录不能以/结尾，示例：\ndata/config.php\nstatic/upload\n *.log\n"></textarea></span>\
+              </div>\
+            </p>';
+            $("#implement").html(sBody);
+		}
 		$(".dropdown ul li a").click(function(){
 			var sName = $("#sName").attr("val");
 			if(!sName) return;
@@ -908,7 +1030,6 @@ function toBackup(type){
 		}
 	});
 }
-
 
 //下拉菜单名称
 function getselectname(){
@@ -1102,3 +1223,329 @@ function fileupload(){
 	});
 	$("#sFile").click();
 }
+
+// 计划任务2021/3/24新增任务通知新增
+function open_three_channel_auth(){
+	get_channel_settings(function(rdata){
+		var isOpen = rdata.dingding.info.msg.isAtAll == 'True' ? 'checked': '';
+		var isDing = rdata.dingding.info.msg == '无信息'? '': rdata.dingding.info.msg.dingding_url;
+		layer.open({
+			type: 1,
+	        area: "600px",
+	        title: "设置消息通道",
+	        closeBtn: 2,
+	        shift: 5,
+	        shadeClose: false,
+	        content: '<div class="bt-form">\
+	        			<div class="bt-w-main">\
+					        <div class="bt-w-menu">\
+					            <p class="bgw">邮箱</p>\
+					            <p>钉钉</p>\
+					        </div>\
+					        <div class="bt-w-con pd15">\
+					            <div class="plugin_body">\
+	                				<div class="conter_box active" >\
+	                					<div class="bt-form">\
+	                						<div class="line">\
+	                							<button class="btn btn-success btn-sm" onclick="add_receive_info()">添加收件者</button>\
+	                							<button class="btn btn-default btn-sm" onclick="sender_info_edit()">发送者设置</button>\
+	                						</div>\
+					                        <div class="line">\
+						                        <div class="divtable">\
+						                        	<table class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"><thead><tr><th>邮箱</th><th width="80px">操作</th></tr></thead></table>\
+						                        	<table class="table table-hover"><tbody id="receive_table"></tbody></table>\
+						                        </div>\
+					                        </div>\
+				                        </div>\
+	                				</div>\
+	                				<div class="conter_box" style="display:none">\
+		                				<div class="bt-form">\
+		                					<div class="line">\
+												<span class="tname">通知全体</span>\
+												<div class="info-r" style="height:28px; margin-left:100px">\
+													<input class="btswitch btswitch-ios" id="panel_alert_all" type="checkbox" '+ isOpen+'>\
+													<label style="position: relative;top: 5px;" class="btswitch-btn" for="panel_alert_all"></label>\
+												</div>\
+											</div>\
+						        			<div class="line">\
+					                            <span class="tname">钉钉URL</span>\
+					                            <div class="info-r">\
+					                                <textarea name="channel_dingding_value" class="bt-input-text mr5" type="text" style="width: 300px; height:90px; line-height:20px">'+isDing+'</textarea>\
+					                            </div>\
+					                            <button class="btn btn-success btn-sm" onclick="SetChannelDing()" style="margin: 10px 0 0 100px;">保存</button>\
+					                        </div>\
+				                        </div>\
+		            				</div>\
+	                			</div>\
+	                		</div>\
+                		</div>\
+                	  </div>'
+		})
+		$(".bt-w-menu p").click(function () {
+            var index = $(this).index();
+            $(this).addClass('bgw').siblings().removeClass('bgw');
+            $('.conter_box').eq(index).show().siblings().hide();
+        });
+		get_receive_list();
+	})
+}
+function add_receive_info(){
+	layer.open({
+		type: 1,
+        area: "400px",
+        title: "添加收件者邮箱",
+        closeBtn: 2,
+        shift: 5,
+        shadeClose: false,
+        content: '<div class="bt-form pd20 pb70">\
+	        <div class="line">\
+	            <span class="tname">收件人邮箱</span>\
+	            <div class="info-r">\
+	                <input name="creater_email_value" class="bt-input-text mr5" type="text" style="width: 240px" value="">\
+	            </div>\
+	        </div>\
+	        <div class="bt-form-submit-btn">\
+	            <button type="button" class="btn btn-danger btn-sm smtp_closeBtn">关闭</button>\
+	            <button class="btn btn-success btn-sm CreaterReceive">创建</button>\
+	        </div>\
+	        </div>',
+        success:function(layers,index){
+        	$(".CreaterReceive").click(function(){
+        		var _receive = $('input[name=creater_email_value]').val(),_that = this;
+				if(_receive != ''){
+					var loadT = layer.msg('正在创建收件人列表中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+					layer.close(index)
+					$.post('/config?action=add_mail_address',{email:_receive},function(rdata){
+						layer.close(loadT);
+						// 刷新收件列表
+						get_receive_list();
+						layer.msg(rdata.msg,{icon:rdata.status?1:2});
+					})
+				}else{
+					layer.msg('收件人邮箱不能为空！',{icon:2});
+				}
+        	})
+        	
+			$(".smtp_closeBtn").click(function(){
+				layer.close(index)
+			})
+		}
+	})
+}
+
+function sender_info_edit(){
+	var loadT = layer.msg('正在获取配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+	$.post('/config?action=get_settings',function(rdata){
+		layer.close(loadT);
+		var qq_mail = rdata.user_mail.info.msg.qq_mail == undefined ? '' : rdata.user_mail.info.msg.qq_mail,
+			qq_stmp_pwd = rdata.user_mail.info.msg.qq_stmp_pwd == undefined? '' : rdata.user_mail.info.msg.qq_stmp_pwd,
+			hosts = rdata.user_mail.info.msg.hosts == undefined? '' : rdata.user_mail.info.msg.hosts,
+			port = rdata.user_mail.info.msg.port == undefined? '' : rdata.user_mail.info.msg.port
+		layer.open({
+		type: 1,
+        area: "460px",
+        title: "设置发送者邮箱信息",
+        closeBtn: 2,
+        shift: 5,
+        shadeClose: false,
+        content: '<div class="bt-form pd20 pb70">\
+        	<div class="line">\
+                <span class="tname">发送人邮箱</span>\
+                <div class="info-r">\
+                    <input name="channel_email_value" class="bt-input-text mr5" type="text" style="width: 300px" value="'+qq_mail+'">\
+                </div>\
+            </div>\
+            <div class="line">\
+                <span class="tname">smtp密码</span>\
+                <div class="info-r">\
+                    <input name="channel_email_password" class="bt-input-text mr5" type="password" style="width: 300px" value="'+qq_stmp_pwd+'">\
+                </div>\
+            </div>\
+            <div class="line">\
+                <span class="tname">smtp服务器</span>\
+                <div class="info-r">\
+                    <input name="channel_email_server" class="bt-input-text mr5" type="text" style="width: 300px" value="'+hosts+'">\
+                </div>\
+            </div>\
+            <div class="line">\
+                <span class="tname">端口</span>\
+                <div class="info-r">\
+                    <select class="bt-input-text mr5" id="port_select" style="width:'+(select_port(port)?'300px':'100px')+'"></select>\
+                    <input name="channel_email_port" class="bt-input-text mr5" type="Number" style="display:'+(select_port(port)? 'none':'inline-block')+'; width: 190px" value="'+port+'">\
+                </div>\
+            </div>\
+            <ul class="help-info-text c7">\
+            	<li>推荐使用465端口，协议为SSL/TLS</li>\
+            	<li>25端口为SMTP协议，587端口为STARTTLS协议</li>\
+            </ul>\
+            <div class="bt-form-submit-btn">\
+	            <button type="button" class="btn btn-danger btn-sm smtp_closeBtn">关闭</button>\
+	            <button class="btn btn-success btn-sm SetChannelEmail">保存</button></div>\
+        	</div>',
+        success:function(layers,index){
+        	var _option = '';
+        	if(select_port(port)){
+        		if(port == '465' || port == ''){
+        			_option = '<option value="465" selected="selected">465</option><option value="25">25</option><option value="587">587</option><option value="other">自定义</option>'
+        		}else if(port == '25'){
+        			_option = '<option value="465">465</option><option value="25" selected="selected">25</option><option value="587">587</option><option value="other">自定义</option>'
+        		}else{
+        			_option = '<option value="465">465</option><option value="25">25</option><option value="587" selected="selected">587</option><option value="other">自定义</option>'
+        		}
+        	}else{
+        		_option = '<option value="465">465</option><option value="25">25</option><option value="587" >587</option><option value="other" selected="selected">自定义</option>'
+        	}
+        	console.log(port)
+        	$("#port_select").html(_option)
+        	$("#port_select").change(function(e){
+        		if(e.target.value == 'other'){
+        			$("#port_select").css("width","100px");
+					$('input[name=channel_email_port]').css("display","inline-block");
+        		}else{
+        			$("#port_select").css("width","300px");
+					$('input[name=channel_email_port]').css("display","none");
+        		}
+        	})
+			$(".SetChannelEmail").click(function(){
+				var _email = $('input[name=channel_email_value]').val();
+				var _passW = $('input[name=channel_email_password]').val();
+				var _server = $('input[name=channel_email_server]').val(),_port
+				if($('#port_select').val() == 'other'){
+					_port = $('input[name=channel_email_port]').val();
+				}else{
+					_port = $('#port_select').val()
+				}
+				if(_email == ''){
+					return layer.msg('邮箱地址不能为空！',{icon:2});
+				}else if(_passW == ''){
+					return layer.msg('STMP密码不能为空！',{icon:2});
+				}else if(_server == ''){
+					return layer.msg('STMP服务器地址不能为空！',{icon:2})
+				}else if(_port == ''){
+					return layer.msg('请输入有效的端口号',{icon:2})
+				}
+				var loadT = layer.msg('正在生成邮箱通道中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+				$.post('/config?action=user_mail_send',{email:_email,stmp_pwd:_passW,hosts:_server,port:_port},function(rdata){
+					layer.close(loadT);
+					layer.msg(rdata.msg,{icon:rdata.status?1:2})
+					if(rdata.status){
+						layer.close(index)
+						get_channel_settings();
+					}
+				})
+			})
+			$(".smtp_closeBtn").click(function(){
+				layer.close(index)
+			})
+		}
+	})
+	})
+}
+
+function get_channel_settings(callback){
+	var loadT = layer.msg('正在获取配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+	$.post('/config?action=get_settings',function(rdata){
+		layer.close(loadT);
+        if (callback) callback(rdata);
+	})
+}
+
+function get_receive_list(){
+	$.post('/config?action=get_settings',function(rdata){
+		var _html = '',_list = rdata.user_mail.mail_list;
+		if(_list.length > 0){
+			for(var i= 0; i<_list.length;i++){
+				_html += '<tr>\
+					<td>'+ _list[i] +'</td>\
+					<td width="80px"><a onclick="del_email(\''+ _list[i] + '\')" href="javascript:;" style="color:#20a53a">删除</a></td>\
+					</tr>'
+			}
+		}else{
+			_html = '<tr>没有数据</tr>'
+		}
+		$('#receive_table').html(_html);
+	})
+	
+}
+
+function del_email(mail){
+	var loadT = layer.msg('正在删除【'+mail+'】中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] }),_this = this;
+	$.post('/config?action=del_mail_list',{email:mail},function(rdata){
+		layer.close(loadT);
+		layer.msg(rdata.msg,{icon:rdata.status?1:2})
+		_this.get_receive_list()
+	})
+}
+
+// 设置钉钉
+function SetChannelDing(){
+	var _url = $('textarea[name=channel_dingding_value]').val();
+	var _all = $('#panel_alert_all').prop("checked");
+	if(_url != ''){
+		var loadT = layer.msg('正在生成钉钉通道中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+		$.post('/config?action=set_dingding',{url:_url,atall:_all == true? 'True':'False'},function(rdata){
+			layer.close(loadT);
+			layer.msg(rdata.msg,{icon:rdata.status?1:2})
+		})
+	}else{
+		layer.msg('请输入钉钉url',{icon:2})
+	}
+}
+
+function selSave_local() {
+	if($('#save_local').val() == '0') {
+		$('#save_local').val(1)
+		$('#save_local').prop('checked', true)	
+	} else {
+		$('#save_local').val(0)
+		$('#save_local').removeAttr('checked')
+	}
+}
+function modSelSave_local() {
+	if($('#modSave_local').val() == '0') {
+		$('#modSave_local').val(1)
+		$('#modSave_local').prop('checked', true)	
+	} else {
+		$('#modSave_local').val(0)
+		$('#modSave_local').removeAttr('checked')
+	}
+}
+
+//下拉菜单名称
+function getselectnoticename(){
+	$(".dropdown ul li a").click(function(){
+		var txt = $(this).text();
+		var type = $(this).attr("value");
+		$(this).parents(".dropdown").find("button b").text(txt).attr("val",type);
+		if($("#modNotice").find("button b").attr("val") == '0') {
+			$('#modNotice').nextAll().hide()
+			$('#selmodnoticeBox').show()
+		} else {
+			$('#modNotice').nextAll().show()
+		}
+		if($("#notice").find("button b").attr("val") == '0') {
+			$('#messageChannelBox').hide()
+			$('#notice_channel').hide()
+		}else {
+			$('#messageChannelBox').show()
+			$('#notice_channel').show()
+		}
+	});
+}
+
+function select_port(port){
+	switch(port){
+		case '25':
+			return true;
+		case '465':
+			return true;
+		case '587':
+			return true;
+		case '':
+			return true;
+		default:
+			return false
+	}
+}
+
+// --计划任务2021/3/24新增任务通知新增结束

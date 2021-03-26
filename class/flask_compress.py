@@ -2,7 +2,7 @@ import sys
 from gzip import GzipFile
 from io import BytesIO
 
-from flask import request, current_app
+from flask import request, current_app,session,Response
 
 
 if sys.version_info[:2] == (2, 6):
@@ -78,7 +78,7 @@ class Compress(object):
     def after_request(self, response):
         app = self.app or current_app
         accept_encoding = request.headers.get('Accept-Encoding', '')
-
+        response.headers['Server'] = 'nginx'
         if (response.mimetype not in app.config['COMPRESS_MIMETYPES'] or
             'gzip' not in accept_encoding.lower() or
             not 200 <= response.status_code < 300 or

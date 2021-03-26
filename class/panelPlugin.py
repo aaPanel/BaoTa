@@ -298,12 +298,7 @@ class panelPlugin:
         if not softList or focre > 0:
             self.clean_panel_log()
             cloudUrl = public.GetConfigValue('home') + '/api/panel/get_soft_list_test'
-            import panelAuth
-            pdata = panelAuth.panelAuth().create_serverid(None)
-            oem_file = '/www/server/panel/data/o.pl'
-            if os.path.exists(oem_file):
-                pdata['oem'] = public.readFile(oem_file)
-                if pdata['oem']: pdata['oem'] = pdata['oem'].strip()
+            pdata = public.get_pdata()
             listTmp = public.httpPost(cloudUrl,pdata,6)
             if not listTmp or len(listTmp) < 200:
                 listTmp = public.readFile(lcoalTmp)
@@ -336,6 +331,9 @@ class panelPlugin:
                         softInfo['ps'].lower().find(get.query) != -1: 
                         tmpList.append(softInfo)
                 softList['list'] = tmpList
+
+        if not softList['list']: 
+            if os.path.exists(lcoalTmp): os.remove(lcoalTmp)
         return softList
  
     #取提醒标记
@@ -2030,6 +2028,13 @@ class panelPlugin:
         p_info = public.ReadFile(plugin_path + '/info.json')
         public.ExecShell("rm -rf /www/server/panel/temp/*")
         if p_info:
+            #----- 增加图标复制 hwliang<2021-03-23> -----#
+            icon_sfile = plugin_path + '/icon.png'
+            icon_dfile = '/www/server/panel/BTPanel/static/img/soft_ico/ico-{}.png'.format(get.plugin_name)
+            if os.path.exists(plugin_path + '/icon.png'):
+                import shutil
+                shutil.copyfile(icon_sfile,icon_dfile)
+            #----- 增加图标复制 END -----#
             public.WriteLog('软件管理','安装第三方插件[%s]' % json.loads(p_info)['title'])
             return public.returnMsg(True,'安装成功!')
         public.ExecShell("rm -rf " + plugin_path)

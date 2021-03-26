@@ -155,6 +155,10 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             text2 = html.escape(str_convert, quote=True)
         else:
             text2 = cgi.escape(str_convert, quote=True)
+
+        reps = {'&amp;':'&'}
+        for rep in reps.keys():
+            if text2.find(rep) != -1: text2 = text2.replace(rep,reps[rep])
         return text2
 
     # 上传文件
@@ -180,6 +184,20 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                         (filename, get['path']))
         return public.returnMsg(True, 'FILE_UPLOAD_SUCCESS')
 
+    def f_name_check(self,filename):
+        '''
+            @name 文件名检测2
+            @author hwliang<2021-03-16>
+            @param filename<string> 文件名
+            @return bool
+        '''
+        f_strs = [';','&','<','>']
+        for fs in f_strs:
+            if filename.find(fs) != -1:
+                return False
+        return True
+
+
     # 上传文件2
     def upload(self, args):
         if not 'f_name' in args:
@@ -191,6 +209,9 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         if sys.version_info[0] == 2:
             args.f_name = args.f_name.encode('utf-8')
             args.f_path = args.f_path.encode('utf-8')
+
+        
+        if not self.f_name_check(args.f_name): return public.returnMsg(False,'文件名中不能包含特殊字符!')
 
         if args.f_path == '/':
             return public.returnMsg(False,'不能直接上传文件到系统根目录!')
@@ -664,6 +685,28 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         except:
             return public.returnMsg(False, 'FILE_CREATE_ERR')
 
+    #创建软链
+    def CreateLink(self,get):
+        '''
+            @name 创建软链接
+            @author hwliang<2021-03-23>
+            @param get<dict_obj{
+                sfile<string> 源文件
+                dfile<string> 软链文件名
+            }>
+            @return dict
+        '''
+
+        if not 'sfile' in get: return public.returnMsg(False,'参数错误')
+        if not os.path.exists(get.sfile): return public.returnMsg(False,'指定文件不存在，无法创建软链!')
+        if os.path.exists(get.dfile): return public.returnMsg(False,'指定软链文件名已存在，请使用其它文件名，或先删除!')
+        public.ExecShell("ln -sf {} {}".format(get.sfile,get.dfile))
+        if not os.path.exists(get.dfile): return public.returnMsg(False,'软链文件创建失败!')
+        public.WriteLog('文件管理','创建软链: {} -> {}'.format(get.dfile,get.sfile))
+        return public.returnMsg(True,'软链文件创建成功!')
+        
+
+
     # 创建目录
     def CreateDir(self, get):
         if sys.version_info[0] == 2:
@@ -822,6 +865,9 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                     data['files'].append(tmp)
             except:
                 continue
+
+        data['dirs'] = sorted(data['dirs'],key = lambda x: x['time'],reverse=True)
+        data['files'] = sorted(data['files'],key = lambda x: x['time'],reverse=True)
         return data
 
     # 彻底删除
@@ -2002,7 +2048,7 @@ cd %s
 
     #取PHP-CLI执行命令
     def __get_php_bin(self,php_version=None):
-        php_vs = ["80","74","73","72","71","70","56","55","54","53","52"]
+        php_vs = ["80","74","73","72","71","70","56","55","54","53"]
         if php_version:
             if php_version != 'auto':
                 if not php_version in php_vs: return False
@@ -2022,7 +2068,7 @@ cd %s
         #如果没安装直接返回False
         if not php_v: return False
         #处理PHP-CLI-INI配置文件
-        php_ini = '/tmp/composer_php_cli_'+php_v+'.ini'
+        php_ini = '/www/server/panel/tmp/composer_php_cli_'+php_v+'.ini'
         if not os.path.exists(php_ini):
             #如果不存在，则从PHP安装目录下复制一份
             src_php_ini = php_path + php_v + '/etc/php.ini'
@@ -2069,16 +2115,29 @@ cd %s
             return public.returnMsg(False,'没有找到可用的PHP版本，或指定PHP版本未安装!')
         if not os.path.exists(get.path + '/composer.json'): 
             return public.returnMsg(False,'指定目录中没有找到composer.json配置文件!')
+        log_file = '/tmp/composer.log'
+        user = ''
+        if 'user' in get:
+            user = 'sudo -u {} '.format(get.user)
+            if not os.path.exists('/usr/bin/sudo'):
+                if os.path.exists('/usr/bin/apt'):
+                    public.ExecShell("apt install sudo -y > {}".format(log_file))
+                else:
+                    public.ExecShell("yum install sudo -y > {}".format(log_file))
+            public.ExecShell("mkdir -p /home/www && chown -R www:www /home/www")
+
         #设置指定源
         if 'repo' in get:
             if get.repo != 'repos.packagist':
-                public.ExecShell('{} {} config -g repo.packagist composer {}'.format(php_bin,composer_bin,get.repo))
+                public.ExecShell('{}{} {} config -g repo.packagist composer {}'.format(user,php_bin,composer_bin,get.repo))
             else:
-                public.ExecShell('{} {} config -g --unset repos.packagist'.format(php_bin,composer_bin))
+                public.ExecShell('{}{} {} config -g --unset repos.packagist'.format(user,php_bin,composer_bin))
         #执行composer命令
         composer_exec_str = '{} {} {} -vvv'.format(php_bin,composer_bin,get.composer_args)
-        public.ExecShell("cd {} && nohup {} &> /tmp/panelExec.pl &".format(get.path,composer_exec_str))
-        public.WriteLog('Composer',composer_exec_str)
+        
+        if os.path.exists(log_file): os.remove(log_file)
+        public.ExecShell("cd {} && {}nohup {} &> {} && echo 'BT-Exec-Completed' >> {}  && rm -rf /home/www &".format(get.path,user,composer_exec_str,log_file,log_file))
+        public.WriteLog('Composer',"在目录：{}，执行composer {}".format(get.path,get.composer_args))
         return public.returnMsg(True,'命令已发送!')
 
     # 取composer版本
@@ -2094,9 +2153,17 @@ cd %s
             php_bin = self.__get_php_bin()
             composer_exec_str = php_bin + ' ' + composer_bin +' --version 2>/dev/null|grep \'Composer version\'|awk \'{print $3}\''
             result = public.ExecShell(composer_exec_str)[0].strip()
+
         data = public.returnMsg(True,result)
-        import panelSite
-        data['php_versions'] = panelSite.panelSite().GetPHPVersion(get)
+        if 'path' in get:
+            import panelSite
+            data['php_versions'] = panelSite.panelSite().GetPHPVersion(get)
+            data['comp_json'] = True
+            data['comp_lock'] = False
+            if not os.path.exists(get.path + '/composer.json'): 
+                data['comp_json'] = '指定目录中没有找到composer.json配置文件!'
+            if os.path.exists(get.path + '/composer.lock'): 
+                data['comp_lock'] = '指定目录中存在composer.lock文件,请删除后再执行!'
         return data
 
     # 升级composer版本
@@ -2107,9 +2174,9 @@ cd %s
         php_bin = self.__get_php_bin()
 
         #设置指定源
-        if 'repo' in get:
-            if get.repo:
-                public.ExecShell('{} {} config -g repo.packagist composer {}'.format(php_bin,composer_bin,get.repo))
+        # if 'repo' in get:
+        #     if get.repo:
+        #         public.ExecShell('{} {} config -g repo.packagist composer {}'.format(php_bin,composer_bin,get.repo))
 
         version1 = self.get_composer_version(get)['msg']
         composer_exec_str = '{} {} self-update -vvv'.format(php_bin,composer_bin)

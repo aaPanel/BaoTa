@@ -35,7 +35,7 @@ class send_to_user:
     def inser_send_msg(self,name,send_type,msg,type,inser_time):
         inser_time=self.dtchg(inser_time)
         if not inser_time:return False
-        if public.M('send_msg').where('naem=? and send_type=? and type=? and inser_time=?',(name,send_type,type,inser_time)).count():return False
+        if public.M('send_msg').where('name=? and send_type=? and type=? and inser_time=?',(name,send_type,type,inser_time)).count():return False
         data={"name":name,"send_type":send_type,"msg":msg,"is_send":False,"type":type,"inser_time":inser_time}
         return  public.M('send_msg').insert(data)
 
@@ -132,7 +132,7 @@ class send_to_user:
                     continue
     def send(self,title,body):
         tongdao = self.mail.get_settings()
-        return self.mail.qq_smtp_send(str(tongdao['user_mail']['info']['qq_mail']), title=title, body=body)
+        return self.mail.qq_smtp_send(tongdao['user_mail']['mail_list'], title=title, body=body)
     def send_dingding(self,count):
        return self.mail.dingding_send(count)
 
@@ -176,3 +176,4 @@ class send_to_user:
             self.send_msg()
         except:
             pass
+        

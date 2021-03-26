@@ -328,6 +328,7 @@ class system:
 
         used_all = psutil.cpu_percent(percpu=True)
         cpu_name = public.getCpuType() + " * {}".format(cpuW)
+        if cpuNum * cpuW > cpuCount: cpuNum = cpuW
         return used,cpuCount,used_all,cpu_name,cpuNum,cpuW
 
     def get_cpu_percent_thead(self,interval):
@@ -393,6 +394,7 @@ class system:
         return diskInfo
     
     def GetDiskInfo2(self):
+        
         #取磁盘分区信息
         key = 'sys_disk'
         diskInfo = cache.get(key)
@@ -408,7 +410,7 @@ class system:
             n += 1
             try:
                 inodes = tempInodes1[n-1].split()
-                disk = re.findall(r"^(.+)\s+([\w\.]+)\s+([\w\.]+)\s+([\w\.]+)\s+([\w\.]+)\s+([\d%]{2,4})\s+(/.{0,50})$",tmp.strip())
+                disk = re.findall(r"^(.+)\s+([\w\.]+)\s+([\w\.]+)\s+([\w\.]+)\s+([\w\.]+)\s+([\d%]{2,4})\s+(/.{0,100})$",tmp.strip())
                 if disk: disk = disk[0]
                 if len(disk) < 6: continue
                 if disk[2].find('M') != -1: continue
@@ -420,7 +422,7 @@ class system:
                 arr = {}
                 arr['filesystem'] = disk[0].strip()
                 arr['type'] = disk[1].strip()
-                arr['path'] = disk[6]
+                arr['path'] = disk[6].replace('/usr/local/lighthouse/softwares/btpanel','/www')
                 tmp1 = [disk[2],disk[3],disk[4],disk[5]]
                 arr['size'] = tmp1
                 arr['inodes'] = [inodes[1],inodes[2],inodes[3],inodes[4]]

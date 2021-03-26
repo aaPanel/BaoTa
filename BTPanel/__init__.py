@@ -644,7 +644,7 @@ def files(pdata=None):
             'UploadFile', 'GetDir', 'CreateFile', 'CreateDir', 'DeleteDir', 'DeleteFile', 'get_download_url_list',
             'remove_download_url', 'modify_download_url',
             'CopyFile', 'CopyDir', 'MvFile', 'GetFileBody', 'SaveFileBody', 'Zip', 'UnZip', 'get_download_url_find',
-            'set_file_ps',
+            'set_file_ps','CreateLink',
             'SearchFiles', 'upload', 'read_history', 're_history', 'auto_save_temp', 'get_auto_save_body', 'get_videos',
             'GetFileAccess', 'SetFileAccess', 'GetDirSize', 'SetBatchData', 'BatchPaste', 'install_rar',
             'get_path_size',
@@ -816,9 +816,9 @@ def ssl(pdata=None):
     import panelSSL
     toObject = panelSSL.panelSSL()
     defs = ('check_url_txt', 'RemoveCert', 'renew_lets_ssl', 'SetCertToSite', 'GetCertList', 'SaveCert', 'GetCert',
-            'GetCertName', 'again_verify',
+            'GetCertName', 'again_verify','cancel_cert_order','get_cert_admin','apply_order_ca',
             'DelToken', 'GetToken', 'GetUserInfo', 'GetOrderList', 'GetDVSSL', 'Completed', 'SyncOrder',
-            'download_cert', 'set_cert', 'cancel_cert_order',
+            'download_cert', 'set_cert', 'cancel_cert_order','ApplyDVSSL','apply_cert_order_pay',
             'get_order_list', 'get_order_find', 'apply_order_pay', 'get_pay_status', 'apply_order', 'get_verify_info',
             'get_verify_result', 'get_product_list', 'set_verify_info',
             'GetSSLInfo', 'downloadCRT', 'GetSSLProduct', 'Renew_SSL', 'Get_Renew_SSL')
@@ -973,7 +973,7 @@ def login():
     if admin_path != '/bt' and os.path.exists(admin_path_file) and not 'admin_auth' in session:
         is_auth_path = True
     num_key = public.md5(public.GetClientIp() + '_auth_path')
-    if not public.get_error_num(num_key, 20): return '连续20次安全入口验证失败，禁止1小时'
+    #if not public.get_error_num(num_key, 20): return '连续20次安全入口验证失败，禁止1小时'
     # 登录输入验证
     if request.method == method_post[0]:
         v_list = ['username', 'password', 'code', 'vcode', 'cdn_url']
@@ -1035,7 +1035,8 @@ def login():
                 referer_path = referer_tmp[-2]
             if route_path != '/' + referer_path:
                 public.set_error_num(num_key)
-                # return abort(404)
+                # return make_response('',101,headers = {})
+                # return '',101
                 data = {}
                 data['lan'] = public.getLan('close')
                 return render_template('autherr.html', data=data)

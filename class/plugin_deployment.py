@@ -104,11 +104,7 @@ class plugin_deployment:
             jsonFile = self.__setupPath + '/deployment_list.json'
             if not 'package' in session or not os.path.exists(jsonFile) or hasattr(get,'force'):
                 downloadUrl = 'http://www.bt.cn/api/panel/get_deplist'
-                oem_file = '/www/server/panel/data/o.pl'
-                pdata = {}
-                if os.path.exists(oem_file):
-                    pdata['oem'] = public.readFile(oem_file)
-                    if pdata['oem']: pdata['oem'] = pdata['oem'].strip()
+                pdata = public.get_pdata()
                 tmp = json.loads(public.httpPost(downloadUrl,pdata,3))
                 if not tmp: return public.returnMsg(False,'从云端获取失败!')
                 public.writeFile(jsonFile,json.dumps(tmp))

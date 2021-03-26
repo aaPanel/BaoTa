@@ -24,7 +24,7 @@ class panelSetup:
             if ua.find('spider') != -1 or ua.find('bot') != -1:
                 return redirect('https://www.baidu.com')
         
-        g.version = '7.6.14'
+        g.version = '7.6.17'
         g.title = public.GetConfigValue('title')
         g.uri = request.path
         g.debug = os.path.exists('data/debug.pl')

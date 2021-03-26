@@ -18,7 +18,7 @@ import os,sys,re,public
 _title = '网站日志检测'
 _version = 1.0                              # 版本
 _ps = "检测所有网站日志保存周期是否合规"          # 描述
-_level = 2                                  # 风险级别： 1.提示(低)  2.警告(中)  3.危险(高)
+_level = 1                                  # 风险级别： 1.提示(低)  2.警告(中)  3.危险(高)
 _date = '2020-08-04'                        # 最后更新时间
 _ignore = os.path.exists("data/warning/ignore/sw_site_logs.pl")
 _tips = [

@@ -95,9 +95,12 @@ class panelSSL:
             result['msg'] = public.getMsg('SSL_NOT_BTUSER')
             result['data'] = userTmp
         return result
+    
     #获取产品列表
     def get_product_list(self,get):
-        result = self.request('get_product_list')
+        p_type = 'dv'
+        if 'p_type' in get: p_type = get.p_type
+        result = self.request('get_product_list?p_type={}'.format(p_type))
         return result
 
     #获取商业证书订单列表
@@ -366,6 +369,99 @@ class panelSSL:
     def cancel_cert_order(self,args):
         self.__PDATA['data']['oid'] = args.oid
         result = self.request('cancel_cert_order')
+        return result
+
+
+    #生成商业证书支付订单
+    def apply_cert_order_pay(self,args):        
+        pdata = json.loads(args.pdata)        
+        self.__PDATA['data'] = pdata
+        result = self.request('apply_cert_order_pay')
+        return result
+
+    #获取证书管理员信息
+    def get_cert_admin(self,get): 
+        result = self.request('get_cert_admin')
+        return result
+
+    
+    def ApplyDVSSL(self,get):        
+
+        """
+        申请证书
+        """
+        if not 'orgName' in get: return public.returnMsg(False,'确实必要参数 orgName')
+        if not 'orgPhone' in get: return public.returnMsg(False,'确实必要参数 orgPhone')
+        if not 'orgPostalCode' in get: return public.returnMsg(False,'确实必要参数 orgPostalCode')
+        if not 'orgRegion' in get: return public.returnMsg(False,'确实必要参数 orgRegion')
+        if not 'orgCity' in get: return public.returnMsg(False,'确实必要参数 orgCity')
+        if not 'orgAddress' in get: return public.returnMsg(False,'确实必要参数 orgAddress')
+        if not 'orgDivision' in get: return public.returnMsg(False,'确实必要参数 orgDivision')
+            
+        get.id = public.M('domain').where('name=?',(get.domain,)).getField('pid');
+        if hasattr(get,'siteName'):
+            get.path = public.M('sites').where('id=?',(get.id,)).getField('path');
+        else:
+            get.siteName = public.M('sites').where('id=?',(get.id,)).getField('name');               
+
+        #当申请二级域名为www时，检测主域名是否绑定到同一网站
+        if get.domain[:4] == 'www.':
+            if not public.M('domain').where('name=? AND pid=?',(get.domain[4:],get.id)).count():
+                return public.returnMsg(False,"申请[%s]证书需要验证[%s]请将[%s]绑定并解析到站点!" % (get.domain,get.domain[4:],get.domain[4:]))
+                   
+
+        runPath = self.GetRunPath(get);
+
+        if runPath != False and runPath != '/': get.path +=  runPath;
+        authfile = get.path + '/.well-known/pki-validation/fileauth.txt';
+        if not self.CheckDomain(get):
+            if not os.path.exists(authfile): 
+                return public.returnMsg(False,'无法写入验证文件: {}'.format(authfile))
+            else:
+                msg = '''无法正确访问验证文件<br><a class="btlink" href="{c_url}" target="_blank">{c_url}</a> <br><br>
+                <p></b>可能的原因：</b></p>
+                1、未正确解析，或解析未生效 [请正确解析域名，或等待解析生效后重试]<br>
+                2、检查是否有设置301/302重定向 [请暂时关闭重定向相关配置]<br>
+                3、检查该网站是否已部署HTTPS并设置强制HTTPS [请暂时关闭强制HTTPS功能]<br>'''.format(c_url = self._check_url)
+                return public.returnMsg(False,msg)
+            
+        action = 'ApplyDVSSL';
+        if hasattr(get,'partnerOrderId'):
+            self.__PDATA['data']['partnerOrderId'] = get.partnerOrderId;
+            action = 'ReDVSSL';
+        
+        self.__PDATA['data']['domain'] = get.domain;
+        self.__PDATA['data']['orgPhone'] = get.orgPhone
+        self.__PDATA['data']['orgPostalCode'] = get.orgPostalCode
+        self.__PDATA['data']['orgRegion'] = get.orgRegion
+        self.__PDATA['data']['orgCity'] = get.orgCity
+        self.__PDATA['data']['orgAddress'] = get.orgAddress
+        self.__PDATA['data']['orgDivision'] = get.orgDivision
+        self.__PDATA['data']['orgName'] = get.orgName
+        self.__PDATA['data'] = self.De_Code(self.__PDATA['data']);
+        result = public.httpPost(self.__APIURL + '/' + action,self.__PDATA)
+        try:
+            result = json.loads(result);
+        except: return result;
+        result['data'] = self.En_Code(result['data']);
+      
+        if 'authValue' in result['data']:            
+            public.writeFile(authfile,result['data']['authValue']);
+        return result;
+
+    #完善资料CA(先支付接口)
+    def apply_order_ca(self,args):
+
+        pdata = json.loads(args.pdata)  
+        result = self.check_ssl_caa(pdata['domains'])
+        if result:  return result
+
+        self.__PDATA['data'] = pdata
+        result = self.request('apply_cert_ca')
+        if result['status'] == True:
+            self.__PDATA['data'] = {}
+            args['oid'] = pdata['oid']
+            result['verify_info'] = self.get_verify_info(args)
         return result
     
     #发送请求

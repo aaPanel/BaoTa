@@ -2427,6 +2427,30 @@ def get_ipaddress():
     iplist = ipa_tmp.split('\n')
     return iplist
 
+def get_oem_name():
+    '''
+        @name 获取OEM名称
+        @author hwliang<2021-03-24>
+        @return string
+    '''
+    oem = ''
+    oem_file = '/www/server/panel/data/o.pl'
+    if os.path.exists(oem_file):
+        oem = readFile(oem_file)
+        if oem: oem = oem.strip()
+    return oem
+
+def get_pdata():
+    '''
+        @name 构造POST基础参数
+        @author hwliang<2021-03-24>
+        @return dict
+    '''
+    import panelAuth
+    pdata = panelAuth.panelAuth().create_serverid(None)
+    pdata['oem'] = get_oem_name()
+    return pdata
+
 
 def get_root_domain(domain_name):
 			'''

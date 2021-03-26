@@ -10,6 +10,7 @@ import public,db,os,time,re
 from BTPanel import session,cache
 class crontab:
     field = 'id,name,type,where1,where_hour,where_minute,echo,addtime,status,save,backupTo,sName,sBody,sType,urladdress'
+    field += ",save_local,notice,notice_channel"
     #取计划任务列表
     def GetCrontab(self,get):
         self.checkBackup()
@@ -23,8 +24,10 @@ class crontab:
             public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'sBody' TEXT",())
             public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'sType' TEXT",())
             public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'urladdress' TEXT",())
+            public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'save_local' INTEGER DEFAULT 0",())
+            public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'notice' INTEGER DEFAULT 0",())
+            public.M('crontab').execute("ALTER TABLE 'crontab' ADD 'notice_channel' TEXT DEFAULT ''",())
             cront = public.M('crontab').order("id desc").field(self.field).select()
-        
         data=[]
         for i in range(len(cront)):
             tmp = {}
@@ -148,9 +151,17 @@ class crontab:
         cronInfo['backupTo'] = get['backupTo']
         cronInfo['sBody'] = get['sBody']
         cronInfo['urladdress'] = get['urladdress']
-        public.M('crontab').where('id=?',(id,)).save('name,type,where1,where_hour,where_minute,save,backupTo,sBody,urladdress',
-                                                     (get['name'],get['type'],get['where1'],get['hour'],get['minute'],get['save'],get['backupTo'],get['sBody'],get['urladdress']))
-        
+        columns = 'name,type,where1,where_hour,where_minute,save,backupTo,sBody,urladdress'
+        values = (get['name'],get['type'],get['where1'],get['hour'],
+                  get['minute'],get['save'],get['backupTo'],get['sBody']
+                  ,get['urladdress'])
+        if 'save_local' in get:
+            columns += ",save_local, notice, notice_channel"
+            values = (get['name'],get['type'],get['where1'],get['hour'],
+                      get['minute'],get['save'],get['backupTo'],get['sBody'],
+                      get['urladdress'],get['save_local'],get["notice"],
+                      get["notice_channel"])
+        public.M('crontab').where('id=?',(id,)).save(columns,values)
         self.remove_for_crond(cronInfo['echo'])
         self.sync_to_crond(cronInfo)
         public.WriteLog('计划任务','修改计划任务['+cronInfo['name']+']成功')
@@ -162,8 +173,6 @@ class crontab:
         id = int(get.id)
         data = public.M('crontab').where('id=?',(id,)).field(self.field).find()
         return data
-
-
 
     #同步到crond
     def sync_to_crond(self,cronInfo):
@@ -195,10 +204,19 @@ class crontab:
         wRes = self.WriteShell(cuonConfig)
         if type(wRes) != bool: return wRes
         self.CrondReload()
-        addData=public.M('crontab').add(
-            'name,type,where1,where_hour,where_minute,echo,addtime,status,save,backupTo,sType,sName,sBody,urladdress',
-            (get['name'],get['type'],get['where1'],get['hour'],get['minute'],cronName,time.strftime('%Y-%m-%d %X',time.localtime()),1,get['save'],get['backupTo'],get['sType'],get['sName'],get['sBody'],get['urladdress'])
-            )
+        columns = 'name,type,where1,where_hour,where_minute,echo,addtime,\
+                  status,save,backupTo,sType,sName,sBody,urladdress'
+        values = (get['name'],get['type'],get['where1'],get['hour'],
+        get['minute'],cronName,time.strftime('%Y-%m-%d %X',time.localtime()),
+        1,get['save'],get['backupTo'],get['sType'],get['sName'],get['sBody'],
+        get['urladdress'])
+        if "save_local" in get:
+            columns += ",save_local,notice,notice_channel"
+            values = (get['name'],get['type'],get['where1'],get['hour'],
+        get['minute'],cronName,time.strftime('%Y-%m-%d %X',time.localtime()),
+        1,get['save'],get['backupTo'],get['sType'],get['sName'],get['sBody'],
+        get['urladdress'], get["save_local"], get['notice'], get['notice_channel'])
+        addData=public.M('crontab').add(columns,values)
         if addData>0:
             result = public.returnMsg(True,'ADD_SUCCESS')
             result['id'] = addData
@@ -338,6 +356,10 @@ class crontab:
     def GetShell(self,param):
         #try:
         type=param['sType']
+        if not 'echo' in param:
+            cronName=public.md5(public.md5(str(time.time()) + '_bt'))
+        else:
+            cronName = param['echo']
         if type=='toFile':
             shell=param.sFile
         else :
@@ -349,10 +371,11 @@ class crontab:
             if type in ['site','path'] and param['sBody'] != 'undefined' and len(param['sBody']) > 1:
                 exports = param['sBody'].replace("\r\n","\n").replace("\n",",")
                 head += "BT_EXCLUDE=\"" + exports.strip() + "\"\nexport BT_EXCLUDE\n"
+            attach_param = " " + cronName 
             wheres={
-                    'path': head + python_bin +" " + public.GetConfigValue('setup_path')+"/panel/script/backup.py path "+param['sName']+" "+str(param['save']),
-                    'site'  :   head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/backup.py site "+param['sName']+" "+str(param['save']),
-                    'database': head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/backup.py database "+param['sName']+" "+str(param['save']),
+                    'path': head + python_bin +" " + public.GetConfigValue('setup_path')+"/panel/script/backup.py path "+param['sName']+" "+str(param['save'])+attach_param,
+                    'site'  :   head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/backup.py site "+param['sName']+" "+str(param['save'])+attach_param,
+                    'database': head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/backup.py database "+param['sName']+" "+str(param['save']+attach_param),
                     'logs'  :   head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/logsBackup "+param['sName']+" "+str(param['save']),
                     'rememory' : head + "/bin/bash " + public.GetConfigValue('setup_path') + '/panel/script/rememory.sh',
                     'webshell': head +python_bin+ " " + public.GetConfigValue('setup_path') + '/panel/class/webshell_check.py site ' + param['sName'] +' ' +param['urladdress']
@@ -361,9 +384,9 @@ class crontab:
                 cfile = public.GetConfigValue('setup_path') + "/panel/plugin/" + param['backupTo'] + "/" + param['backupTo'] + "_main.py"
                 if not os.path.exists(cfile): cfile = public.GetConfigValue('setup_path') + "/panel/script/backup_" + param['backupTo'] + ".py"
                 wheres={
-                    'path': head + python_bin+" " + cfile + " path " + param['sName'] + " " + str(param['save']),
-                    'site'  :   head + python_bin+" " + cfile + " site " + param['sName'] + " " + str(param['save']),
-                    'database': head + python_bin+" " + cfile + " database " + param['sName'] + " " + str(param['save']),
+                    'path': head + python_bin+" " + cfile + " path " + param['sName'] + " " + str(param['save']+attach_param),
+                    'site'  :   head + python_bin+" " + cfile + " site " + param['sName'] + " " + str(param['save']+attach_param),
+                    'database': head + python_bin+" " + cfile + " database " + param['sName'] + " " + str(param['save']+attach_param),
                     'logs'  :   head + python_bin+" " + public.GetConfigValue('setup_path')+"/panel/script/logsBackup "+param['sName']+" "+str(param['save']),
                     'rememory' : head + "/bin/bash " + public.GetConfigValue('setup_path') + '/panel/script/rememory.sh',
                      'webshell': head + python_bin+" " + public.GetConfigValue('setup_path') + '/panel/class/webshell_check.py site ' + param['sName'] +' ' +param['urladdress']
@@ -385,10 +408,6 @@ echo "--------------------------------------------------------------------------
 '''
         cronPath=public.GetConfigValue('setup_path')+'/cron'
         if not os.path.exists(cronPath): public.ExecShell('mkdir -p ' + cronPath)
-        if not 'echo' in param:
-            cronName=public.md5(public.md5(str(time.time()) + '_bt'))
-        else:
-            cronName = param['echo']
         file = cronPath+'/' + cronName
         public.writeFile(file,self.CheckScript(shell))
         public.ExecShell('chmod 750 ' + file)

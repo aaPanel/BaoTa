@@ -917,7 +917,21 @@ var index = {
                                 scan_time = items.check_time;
                                 htmls += '<li class="module_details_item">'+
                                     '<div class="module_details_head">'+
-                                        '<span class="module_details_title">'+ items.ps +'<i>（&nbsp;检测时间：'+ (that.get_simplify_time(items.check_time) || '刚刚') +'，耗时：'+ ( items.taking>1?( items.taking +'秒'):((items.taking * 1000).toFixed(2) +'毫秒')) +'&nbsp;）</i></span>'+
+                                        '<span class="module_details_title">'+ items.ps +'<i>（&nbsp;检测时间：'+ (that.get_simplify_time(items.check_time) || '刚刚') +'，耗时：'+ ( items.taking>1?( items.taking +'秒'):((items.taking * 1000).toFixed(2) +'毫秒')) +'&nbsp;，等级：'+                                         (function(level){
+                                            var level_html = '';
+                                            switch(level){
+                                                case 3:
+                                                    level_html += '<span style="color:red">高危</span>';
+                                                break;
+                                                case 2:
+                                                    level_html += '<span style="color:#E6A23C">中危</span>';
+                                                break;
+                                                case 1:
+                                                    level_html += '<span style="color:#e8d544">低危</span>';
+                                                break;
+                                            }
+                                            return level_html;
+                                        }(items.level))+'）</i></span>'+
                                         '<span class="operate_tools">'+ (item[0] != 'security'?('<a href="javascript:;" class="btlink cut_details">详情</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" data-model="'+ items.m_name +'" data-title="'+ items.title +'" '+ (item[0]=='ignore'?'class=\"btlink\"':'') +' data-type="'+item[0]+'">'+ (item[0] != 'ignore'?'忽略':'移除忽略') +'</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" data-model="'+ items.m_name +'" data-title="'+ items.title +'">检测</a>'):'<a href="javascript:;" class="btlink cut_details">详情</a>') +'</span>' +
                                     '</div>'+
                                     '<div class="module_details_body">'+

@@ -55,4 +55,3 @@ def check_run():
         return True,'无风险'
 
     return False,'当前MySQL端口: {}，可被任意服务器访问，这可能导致MySQL被暴力破解，存在安全隐患'.format(port_tmp[0])
-    

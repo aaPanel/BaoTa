@@ -18,7 +18,7 @@ import os,sys,re,public
 _title = 'ICMP检测'
 _version = 1.0                              # 版本
 _ps = "检测是否禁止ICMP协议访问服务器(禁Ping)"              # 描述
-_level = 1                                  # 风险级别： 1.提示(低)  2.警告(中)  3.危险(高)
+_level = 0                                  # 风险级别： 1.提示(低)  2.警告(中)  3.危险(高)
 _date = '2020-08-05'                        # 最后更新时间
 _ignore = os.path.exists("data/warning/ignore/sw_ping.pl")
 _tips = [
