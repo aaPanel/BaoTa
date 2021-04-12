@@ -75,6 +75,7 @@ class ScanLogin(object):
                 import config
                 config.config().reload_session()
                 public.writeFile(login_type,'True')
+                public.login_send_body("微信小程序",userInfo['username'],public.GetClientIp(),str(request.environ.get('REMOTE_PORT')))
                 return public.returnMsg(True, '登录成功')
         return public.returnMsg(False, '登录失败')
 
@@ -106,6 +107,7 @@ class ScanLogin(object):
         import config
         config.config().reload_session()
         public.writeFile(login_type,'True')
+        public.login_send_body("堡塔APP",userInfo['username'],public.GetClientIp(),str(request.environ.get('REMOTE_PORT')))
         return public.returnMsg(True,'登录成功!')
 
 class SelfModule():

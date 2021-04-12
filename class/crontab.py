@@ -375,7 +375,7 @@ class crontab:
             wheres={
                     'path': head + python_bin +" " + public.GetConfigValue('setup_path')+"/panel/script/backup.py path "+param['sName']+" "+str(param['save'])+attach_param,
                     'site'  :   head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/backup.py site "+param['sName']+" "+str(param['save'])+attach_param,
-                    'database': head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/backup.py database "+param['sName']+" "+str(param['save']+attach_param),
+                    'database': head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/backup.py database "+param['sName']+" "+str(param['save'])+attach_param,
                     'logs'  :   head +python_bin+ " " + public.GetConfigValue('setup_path')+"/panel/script/logsBackup "+param['sName']+" "+str(param['save']),
                     'rememory' : head + "/bin/bash " + public.GetConfigValue('setup_path') + '/panel/script/rememory.sh',
                     'webshell': head +python_bin+ " " + public.GetConfigValue('setup_path') + '/panel/class/webshell_check.py site ' + param['sName'] +' ' +param['urladdress']
@@ -384,9 +384,9 @@ class crontab:
                 cfile = public.GetConfigValue('setup_path') + "/panel/plugin/" + param['backupTo'] + "/" + param['backupTo'] + "_main.py"
                 if not os.path.exists(cfile): cfile = public.GetConfigValue('setup_path') + "/panel/script/backup_" + param['backupTo'] + ".py"
                 wheres={
-                    'path': head + python_bin+" " + cfile + " path " + param['sName'] + " " + str(param['save']+attach_param),
-                    'site'  :   head + python_bin+" " + cfile + " site " + param['sName'] + " " + str(param['save']+attach_param),
-                    'database': head + python_bin+" " + cfile + " database " + param['sName'] + " " + str(param['save']+attach_param),
+                    'path': head + python_bin+" " + cfile + " path " + param['sName'] + " " + str(param['save'])+attach_param,
+                    'site'  :   head + python_bin+" " + cfile + " site " + param['sName'] + " " + str(param['save'])+attach_param,
+                    'database': head + python_bin+" " + cfile + " database " + param['sName'] + " " + str(param['save'])+attach_param,
                     'logs'  :   head + python_bin+" " + public.GetConfigValue('setup_path')+"/panel/script/logsBackup "+param['sName']+" "+str(param['save']),
                     'rememory' : head + "/bin/bash " + public.GetConfigValue('setup_path') + '/panel/script/rememory.sh',
                      'webshell': head + python_bin+" " + public.GetConfigValue('setup_path') + '/panel/class/webshell_check.py site ' + param['sName'] +' ' +param['urladdress']

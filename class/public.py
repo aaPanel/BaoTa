@@ -2030,8 +2030,7 @@ def get_linux_distribution():
     if os.path.exists(redhat_file):
         try:
             tmp = readFile(redhat_file).split()[3][0]
-            if int(tmp) > 7:
-                distribution = 'centos8'
+            distribution = 'centos{}'.format(tmp)
         except:
             distribution = 'centos7'
     return distribution
@@ -2736,4 +2735,109 @@ def check_app(check='app'):
         if not app_info: return False
         return True
 
+#宝塔钉钉 or 微信告警
+def send_dingding(body,is_logs=False,is_type="堡塔登录提醒"):
+    if is_logs:
+        try:
+            import send_mail
+            send_mail22 = send_mail.send_mail()
+            tongdao = send_mail22.get_settings()
+            if not tongdao['dingding']['info']: return false
+            tongdao = send_mail22.get_settings()
+            if is_logs:
+                WriteLog2(is_type,body)
+            return send_mail22.dingding_send(body)
+        except:
+            return False
+    else:
+        import send_mail
+        send_mail22 = send_mail.send_mail()
+        tongdao = send_mail22.get_settings()
+        if not tongdao['dingding']['info']: return false
+        tongdao = send_mail22.get_settings()
+        return send_mail22.dingding_send(body)
 
+#获取服务器IP
+def get_ip():
+    if os.path.exists('/www/server/panel/data/iplist.txt'):
+        data=ReadFile('/www/server/panel/data/iplist.txt')
+        return data.strip()
+    else:return '127.0.0.1'
+
+#获取服务器内网Ip
+def get_local_ip():
+    try:
+        ret=ExecShell("ip addr | grep -E -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | grep -E -v \"^127\.|^255\.|^0\.\" | head -n 1")
+        local_ip=ret[0].strip()
+        return local_ip
+    except:return '127.0.0.1'
+
+def create_logs():
+    import db
+    sql = db.Sql()
+    if not sql.table('sqlite_master').where('type=? AND name=?', ('table', 'logs2')).count():
+        csql = '''CREATE TABLE `logs2` (
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `type` TEXT,
+  `log` TEXT,
+  `addtime` TEXT
+, uid integer DEFAULT '1', username TEXT DEFAULT 'system')'''
+        sql.execute(csql, ())
+
+def WriteLog2(type,logMsg,args=(),not_web = False):
+    import db
+    create_logs()
+    username = 'system'
+    uid = 1
+    tmp_msg = ''
+    sql = db.Sql()
+    mDate = time.strftime('%Y-%m-%d %X',time.localtime())
+    data = (uid,username,type,logMsg + tmp_msg,mDate)
+    result = sql.table('logs2').add('uid,username,type,log,addtime',data)
+
+def check_ip_white(path,ip):
+
+    if os.path.exists(path):
+        try:
+            path_json=json.loads(ReadFile(path))
+        except:
+            WriteFile(path,'[]')
+            return False
+        if ip in path_json:return True
+        else:return False
+    else:
+        return False
+
+#登陆告警
+def login_send_body(is_type,username,login_ip,port):
+    if os.path.exists("/www/server/panel/data/login_send_mail.pl"):
+        if check_ip_white('/www/server/panel/data/send_login_white.json',login_ip):return False
+        send_mail("堡塔登录提醒","堡塔登录提醒：您的服务器"+get_ip()+"通过"+is_type+"登录成功，账号："+username+"，登录IP："+login_ip+":"+port+"，登录时间："+time.strftime('%Y-%m-%d %X',time.localtime()), True)
+    if os.path.exists("/www/server/panel/data/login_send_dingding.pl"):
+        if check_ip_white('/www/server/panel/data/send_login_white.json',login_ip):return False
+        send_dingding("堡塔登录提醒：您的服务器"+get_ip()+"通过"+is_type+"登录成功，账号："+username+"，登录IP："+login_ip+":"+port+"，登录时间："+time.strftime('%Y-%m-%d %X',time.localtime()), True)
+
+#普通模式下调用发送消息【设置登陆告警后的设置】
+#title= 发送的title
+#body= 发送的body
+#is_logs= 是否记录日志
+#is_type=发送告警的类型
+def send_to_body(title,body,is_logs=False,is_type="堡塔邮件告警"):
+    if os.path.exists("/www/server/panel/data/login_send_mail.pl"):
+        if is_logs:
+            send_mail(title, body,True,is_type)
+        send_mail(title,body)
+    if os.path.exists("/www/server/panel/data/login_send_dingding.pl"):
+        if is_logs:
+            send_dingding(body,True,is_type)
+        send_dingding(body)
+
+#普通发送消息
+#send_type= ["mail","dingding"]
+#title =发送的头
+#body= 发送消息的内容
+def send_body_words(send_type,title,body):
+    if send_type=='mail':
+        send_mail(title,body)
+    if send_type=='dingding':
+        send_dingding(body)

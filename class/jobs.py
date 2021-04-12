@@ -164,11 +164,11 @@ def control_init():
     #check_firewall()
     check_dnsapi()
     clean_php_log()
-    #update_py37()
     files_set_mode()
     set_pma_access()
     # public.set_open_basedir()
     clear_fastcgi_safe()
+    update_py37()
     
     
 

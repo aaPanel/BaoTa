@@ -51,7 +51,7 @@
   "PHP_TIMEOUT": "设置PHP-{1}最大脚本超时时间为[{2}秒]!",
   "PHP_CHILDREN": "设置PHP-{1}并发设置,max_children={2},start_servers={3},min_spare_servers={4},max_spare_servers={5}",
   "DATE_SUCCESS": "同步服务器时间成功!",
-  "CONTROL_CLOSE": "监控记录已清空!",
+  "CONTROL_CLEAR": "监控记录已清空!",
   "CONTROL_OPEN": "开启监控服务,记录保存[{1}]天!",
   "CONTROL_CLOSE": "监控服务已关闭!",
   "CRONTAB_DEL": "删除计划任务[{1}]成功!",

@@ -253,6 +253,9 @@ def work_order(ws):
     if comReturn: return comReturn
 
 
+
+
+
 @sockets.route('/webssh')
 def webssh(ws):
     # 宝塔终端连接
@@ -301,7 +304,6 @@ def webssh(ws):
         ws.close()
     return 'False'
 
-
 @app.route('/site', methods=method_all)
 def site(pdata=None):
     # 网站管理
@@ -316,7 +318,7 @@ def site(pdata=None):
         data['js_random'] = get_js_random()
         if os.path.exists(public.GetConfigValue('setup_path') + '/nginx') == False \
                 and os.path.exists(public.GetConfigValue('setup_path') + '/apache') == False \
-                and os.path.exists('/usr/local/lsws') == False:
+                and os.path.exists('/usr/local/lsws/bin/lswsctrl') == False:
             data['isSetup'] = False
         is_bind()
         return render_template('site.html', data=data)
@@ -747,7 +749,7 @@ def config(pdata=None):
     'getFpmConfig', 'setFpmConfig', 'setPHPMaxTime', 'syncDate', 'setPHPDisable', 'SetControl',
     'ClosePanel', 'AutoUpdatePanel', 'SetPanelLock', 'return_mail_list', 'del_mail_list', 'add_mail_address',
     'user_mail_send', 'get_user_mail', 'set_dingding', 'get_dingding', 'get_settings', 'user_stmp_mail_send',
-    'user_dingding_send'
+    'user_dingding_send','get_login_send','set_login_send','clear_login_send','get_login_log','login_ipwhite'
     )
     return publicObject(config.config(), defs, None, pdata)
 
@@ -1317,6 +1319,8 @@ def panel_other(name=None, fun=None, stype=None):
     if name != "mail_sys" or fun != "send_mail_http.json":
         comReturn = comm.local()
         if comReturn: return comReturn
+        if 'request_token' in session and 'login' in session:
+            if not check_csrf(): return public.ReturnJson(False, 'INIT_CSRF_ERR'), json_header
         args = None
     else:
         args = get_input()
@@ -1370,6 +1374,8 @@ def panel_other(name=None, fun=None, stype=None):
                 pass
             plu = eval('plugin_main.' + name + '_main()')
             if not hasattr(plu, fun):
+                if name == 'btwaf' and fun == 'index':
+                    return  render_template('error3.html',data={}) 
                 return public.returnJson(False, 'PLUGIN_NOT_FUN'), json_header
 
         # 执行插件方法
@@ -1388,7 +1394,8 @@ def panel_other(name=None, fun=None, stype=None):
             data = panelPHP.panelPHP(name).exec_php_script(args)
 
         r_type = type(data)
-        if r_type == Response: return data
+        if r_type == Response:
+            return data
 
         # 处理响应
         if stype == 'json':  # 响应JSON

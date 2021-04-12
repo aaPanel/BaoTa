@@ -754,8 +754,19 @@ set $bt_safe_open "{}/:/tmp/";'''.format(self.sitePath)
         if os.path.exists(vhost_sub_file):
             public.ExecShell('rm -f {}*'.format(vhost_sub_file))
         
+        vhost_redirect_file = "/www/server/panel/vhost/openlitespeed/redirect/{}".format(siteName)
+        if os.path.exists(vhost_redirect_file):
+            public.ExecShell('rm -rf {}*'.format(vhost_redirect_file))
+        vhost_proxy_file = "/www/server/panel/vhost/openlitespeed/proxy/{}".format(siteName)
+        if os.path.exists(vhost_proxy_file):
+            public.ExecShell('rm -rf {}*'.format(vhost_proxy_file))
+
+
         # 删除openlitespeed监听配置
         self._del_ols_listen_conf(siteName)
+
+
+
 
         #删除伪静态文件
         # filename = confPath+'/rewrite/'+siteName+'.conf'
@@ -1059,7 +1070,7 @@ listener Default%s{
     secure 0
     map %s %s
 }
-""" % (get.port, get.port, get.domain, get.webname)
+""" % (get.port, get.port, get.webname, get.domain)
         # 保存配置文件
         public.writeFile(listen_file, listen_conf)
         return True
@@ -2447,6 +2458,10 @@ listener SSL443 {
         for filename in os.listdir(path):
             try:
                 json.dumps(filename)
+                if sys.version_info[0] == 2:
+                    filename = filename.encode('utf-8')
+                else:
+                    filename.encode('utf-8')
                 filePath = path + '/' + filename
                 if os.path.islink(filePath): continue
                 if os.path.isdir(filePath):
@@ -3535,7 +3550,10 @@ RewriteRule ^%s(.*)$ http://%s/$1 [P,E=Proxy-Host:%s]
                     ng_conf = re.sub("proxy_pass\s+%s" % conf[i]["proxysite"],"proxy_pass "+get.proxysite,ng_conf)
                     ng_conf = re.sub("location\s+\~\*\s+\\\.\(php.*\n\{\s*proxy_pass\s+%s.*" % (php_pass_proxy),
                                      "location ~* \.(php|jsp|cgi|asp|aspx)$\n{\n\tproxy_pass %s;" % php_pass_proxy,ng_conf)
-                    ng_conf = re.sub("\sHost\s+%s" % conf[i]["todomain"]," Host "+get.todomain,ng_conf)
+                    ng_conf = re.sub("location\s+\~\*\s+\\\.\(gif.*\n\{\s*proxy_pass\s+%s.*" % (php_pass_proxy),
+                                     "location ~* \.(gif|png|jpg|css|js|woff|woff2)$\n{\n\tproxy_pass %s;" % php_pass_proxy,ng_conf)
+
+                    ng_conf = re.sub("\sHost\s+%s" % '\\' + conf[i]["todomain"]," Host "+get.todomain,ng_conf)
                     cache_rep = r"proxy_cache_valid\s+200\s+304\s+301\s+302\s+\d+m;((\n|.)+expires\s+\d+m;)*"
                     if int(get.cache) == 1:
                         if re.search(cache_rep,ng_conf):
@@ -3661,13 +3679,14 @@ RewriteRule ^%s(.*)$ http://%s/$1 [P,E=Proxy-Host:%s]
         # proxysite1 = re.search(rep,get.proxysite).group(1)
         ng_proxy = '''
 #PROXY-START%s
-location  ~* \.(php|jsp|cgi|asp|aspx)$
+location  ~* \.(gif|png|jpg|css|js|woff|woff2)$
 {
     proxy_pass %s;
     proxy_set_header Host %s;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header REMOTE-HOST $remote_addr;
+    expires 12h;
 }
 location %s
 {
@@ -3682,7 +3701,6 @@ location %s
     #Set Nginx Cache
     %s
     %s
-    expires 12h;
 }
 
 #PROXY-END%s'''
@@ -4330,7 +4348,12 @@ location %s
         for filename in os.listdir(sitePath):
             try:
                 json.dumps(filename)
+                if sys.version_info[0] == 2:
+                    filename = filename.encode('utf-8')
+                else:
+                    filename.encode('utf-8')
                 filePath = sitePath + '/' + filename
+                if not os.path.exists(filePath): continue
                 if os.path.islink(filePath): continue
                 if os.path.isdir(filePath):
                     dirnames.append('/' + filename)

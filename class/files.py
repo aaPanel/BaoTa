@@ -2052,7 +2052,7 @@ cd %s
         php_vs = ["80","74","73","72","71","70","56","55","54","53"]
         if php_version:
             if php_version != 'auto':
-                if not php_version in php_vs: return False
+                if not php_version in php_vs: return ''
             else:
                 php_version = None
         
@@ -2067,7 +2067,7 @@ cd %s
                 php_v = pv
                 break
         #如果没安装直接返回False
-        if not php_v: return False
+        if not php_v: return ''
         #处理PHP-CLI-INI配置文件
         php_ini = '/www/server/panel/tmp/composer_php_cli_'+php_v+'.ini'
         if not os.path.exists(php_ini):
@@ -2093,8 +2093,12 @@ cd %s
     # 安装composer
     def get_composer_bin(self):
         composer_bin = '/usr/bin/composer'
+        download_addr = 'wget -O {} {}/install/src/composer.phper -T 5'.format(composer_bin,public.get_url())
         if not os.path.exists(composer_bin): 
-            public.ExecShell('wget -O {} {}/install/src/composer.phper -T 5'.format(composer_bin,public.get_url()))
+            public.ExecShell(download_addr)
+        elif os.path.getsize(composer_bin) < 100:
+            public.ExecShell(download_addr)
+        
         public.ExecShell('chmod +x {}'.format(composer_bin))
         if not os.path.exists(composer_bin): 
             return False
@@ -2130,11 +2134,11 @@ cd %s
         #设置指定源
         if 'repo' in get:
             if get.repo != 'repos.packagist':
-                public.ExecShell('{}{} {} config -g repo.packagist composer {}'.format(user,php_bin,composer_bin,get.repo))
+                public.ExecShell('export COMPOSER_HOME=/tmp && {}{} {} config -g repo.packagist composer {}'.format(user,php_bin,composer_bin,get.repo))
             else:
-                public.ExecShell('{}{} {} config -g --unset repos.packagist'.format(user,php_bin,composer_bin))
+                public.ExecShell('export COMPOSER_HOME=/tmp && {}{} {} config -g --unset repos.packagist'.format(user,php_bin,composer_bin))
         #执行composer命令
-        composer_exec_str = '{} {} {} -vvv'.format(php_bin,composer_bin,get.composer_args)
+        composer_exec_str = 'export COMPOSER_HOME=/tmp && {} {} {} -vvv'.format(php_bin,composer_bin,get.composer_args)
         
         if os.path.exists(log_file): os.remove(log_file)
         public.ExecShell("cd {} && {}nohup {} &> {} && echo 'BT-Exec-Completed' >> {}  && rm -rf /home/www &".format(get.path,user,composer_exec_str,log_file,log_file))
@@ -2153,7 +2157,8 @@ cd %s
             if not result: raise Exception('empty!')
         except:
             php_bin = self.__get_php_bin()
-            composer_exec_str = php_bin + ' ' + composer_bin +' --version 2>/dev/null|grep \'Composer version\'|awk \'{print $3}\''
+            if not php_bin:  return public.returnMsg(False,'没有找到可用的PHP版本!')
+            composer_exec_str = 'export COMPOSER_HOME=/tmp && ' + php_bin + ' ' + composer_bin +' --version 2>/dev/null|grep \'Composer version\'|awk \'{print $3}\''
             result = public.ExecShell(composer_exec_str)[0].strip()
 
         data = public.returnMsg(True,result)
@@ -2174,15 +2179,15 @@ cd %s
         if not composer_bin: 
             return public.returnMsg(False,'没有找到可用的composer!')
         php_bin = self.__get_php_bin()
-
+        if not php_bin:  return public.returnMsg(False,'没有找到可用的PHP版本!')
         #设置指定源
         # if 'repo' in get:
         #     if get.repo:
         #         public.ExecShell('{} {} config -g repo.packagist composer {}'.format(php_bin,composer_bin,get.repo))
 
         version1 = self.get_composer_version(get)['msg']
-        composer_exec_str = '{} {} self-update -vvv'.format(php_bin,composer_bin)
-        public.ExecShell(composer_exec_str)[0]
+        composer_exec_str = 'export COMPOSER_HOME=/tmp && {} {} self-update -vvv'.format(php_bin,composer_bin)
+        public.ExecShell(composer_exec_str)
         version2 = self.get_composer_version(get)['msg']
         if version1 == version2:
             msg = "当前已经是最新版本，无需升级!"
@@ -2190,6 +2195,5 @@ cd %s
             msg = "升级composer从{}到{}".format(version1,version2)
             public.WriteLog('Composer',msg)
         return public.returnMsg(True,msg)
-
         
 

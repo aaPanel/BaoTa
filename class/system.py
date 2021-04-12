@@ -328,7 +328,7 @@ class system:
 
         used_all = psutil.cpu_percent(percpu=True)
         cpu_name = public.getCpuType() + " * {}".format(cpuW)
-        if cpuNum * cpuW > cpuCount: cpuNum = cpuW
+        
         return used,cpuCount,used_all,cpu_name,cpuNum,cpuW
 
     def get_cpu_percent_thead(self,interval):

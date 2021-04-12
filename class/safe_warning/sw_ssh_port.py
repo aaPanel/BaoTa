@@ -13,7 +13,7 @@
 # -------------------------------------------------------------------
 
 
-import os,sys,re,public
+import os,sys,re,public,json
 
 _title = 'SSH端口安全'
 _version = 1.0                              # 版本
@@ -72,6 +72,15 @@ def check_run():
             status = public.ExecShell("systemctl status sshd.service | grep 'dead'|grep -v grep")
         else:
             status = public.ExecShell("/etc/init.d/sshd status | grep -e 'stopped' -e '已停'|grep -v grep")
+            
+    fail2ban_file = '/www/server/panel/plugin/fail2ban/config.json'
+    if os.path.exists(fail2ban_file):
+        try:
+            fail2ban_config = json.loads(public.readFile(fail2ban_file))
+            if 'sshd' in fail2ban_config.keys():
+                if fail2ban_config['sshd']['act'] == 'true':
+                    return True,'已开启Fail2ban防爆破'
+        except: pass
         
     if len(status[0]) > 3:
         status = False
@@ -83,7 +92,7 @@ def check_run():
     if port != '22':
         return True,'已修改默认SSH端口'
     
-    result = public.check_port_stat(int(port),public.GetClientIp())
+    result = public.check_port_stat(int(port),public.GetLocalIp())
     if result == 0:
         return True,'无风险'
     

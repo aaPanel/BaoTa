@@ -1,6 +1,54 @@
 {% extends "layout.html" %}
 
 {% block content %}
+<style>
+    .chart-box{
+        display: flex;
+        flex-direction: row;
+        padding: 20px 0;
+    }
+    
+    .rank{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 16.5%;
+        color: #999;
+        line-height: 30px;
+        font-size: 15px;
+        font-weight: 500;
+    }
+    .rank .titles{
+        display: none;
+    }
+    .chart-li{
+        width: 105px;
+        height: 105px;
+        position: relative;
+    }
+    .chart-li canvas{
+        cursor: pointer;
+    }
+    .mem_mask{
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        background: rgba(220,220,220,.1);
+        border-radius: 50%;
+        cursor: pointer;
+    }
+    .mem_mask .men_inside_mask{
+        position: absolute;
+        left: 7px;
+        top: 7px;
+        bottom: 7px;
+        right: 7px;
+        background: rgba(255,255,255,0.8);
+        border-radius: 50%; 
+    }
+</style>
 <div class="main-content">
     <div class="container-fluid" style="padding-bottom: 66px;">
 		<div class="index-pos-box bgw mtb15">
@@ -31,46 +79,23 @@
             </div>
             <div class="server-circle">
                 <ul class="row" id="systemInfoList">
-                    <li class="col-xs-6 col-sm-3 col-md-3 col-lg-2 mtb20 circle-box text-center loadbox">
-                        <h3 class="c9 f15">负载状态<a href="https://www.bt.cn/bbs/thread-11402-1-1.html" target="_blank" class="bt-ico-ask" style="cursor: pointer;">?</a></h3>
-                        <div class="cicle">
-                            <div class="bar bar-left">
-                                <div class="bar-left-an bar-an"></div>
-                            </div>
-                            <div class="bar bar-right">
-                                <div class="bar-right-an bar-an"></div>
-                            </div>
-                            <div class="occupy"><span>0</span>%</div>
+                    <li class="rank col-xs-6 col-sm-3 col-md-3 col-lg-2 mtb20 circle-box text-center">
+                        <div class="titles">
+                            <span>负载状态</span>
+                            <a href="https://www.bt.cn/bbs/thread-11402-1-1.html" target="_blank" class="bt-ico-ask" style="cursor: pointer;">?</a>
                         </div>
-                        <h4 class="c9 f15">{{data['lan']['S2']}}</h4>
+                        <div id="loadChart" class="chart-li"></div>
+                        <div id="load"></div>
                     </li>
-                    <li class="col-xs-6 col-sm-3 col-md-3 col-lg-2 mtb20 circle-box text-center cpubox">
-                        <h3 class="c9 f15">{{data['lan']['P1']}}</h3>
-                        <div class="cicle">
-                            <div class="bar bar-left">
-                                <div class="bar-left-an bar-an"></div>
-                            </div>
-                            <div class="bar bar-right">
-                                <div class="bar-right-an bar-an"></div>
-                            </div>
-                            <div class="occupy"><span>0</span>%</div>
-                        </div>
-                        <h4 class="c9 f15">{{data['lan']['S2']}}</h4>
+                    <li class="rank col-xs-6 col-sm-3 col-md-3 col-lg-2 mtb20 circle-box text-center">
+                        <div class="titles">CPU使用率</div>
+                        <div id="cpuChart" class="chart-li"></div>
+                        <div id="cpu"></div>
                     </li>
-                    <li class="col-xs-6 col-sm-3 col-md-3 col-lg-2 mtb20 circle-box text-center membox">
-                        <h3 class="c9 f15">{{data['lan']['P2']}}</h3>
-                        <div class="cicle mem-release">
-                            <div class="bar bar-left">
-                                <div class="bar-left-an bar-an"></div>
-                            </div>
-                            <div class="bar bar-right">
-                                <div class="bar-right-an bar-an"></div>
-                            </div>
-                            <div class="occupy"><span>0</span>%</div>
-                            <div class="mem-re-min"></div>
-                            <div class="mem-re-con" title="$data['lan']['P3']"></div>
-                        </div>
-                        <h4 class="c9 f15">{{data['lan']['S2']}}</h4>
+                    <li class="rank col-xs-6 col-sm-3 col-md-3 col-lg-2 mtb20 circle-box text-center">
+                        <div class="titles">内存使用率</div>
+                        <div id="memChart" class="chart-li"></div>
+                        <div id="mem"></div>
                     </li>
                 </ul>
             </div>
@@ -132,11 +157,11 @@
 <script type="text/javascript">
     var bind_user = "{{data['bind']}}"
 </script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/echarts.min.js"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/echarts.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/js/index.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js" defer></script>
+<script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js?version={{g['version']}}&repair={{data['js_random']}}" defer></script>
 <script type="text/javascript">
     $(".btpro span").click(function(e){
         layer.confirm('切换回免费版可通过解绑账号实现', { icon: 3, btn: ['解绑账号'], closeBtn: 2, title: '是否取消授权' }, function () {

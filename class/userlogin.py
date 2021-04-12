@@ -46,6 +46,8 @@ class userlogin:
                 num = self.limit_address('+')
                 return public.returnJson(False,'LOGIN_USER_ERR',(str(num),)),json_header
             _key_file = "/www/server/panel/data/two_step_auth.txt"
+            #登陆告警
+            public.login_send_body("账号密码",userInfo['username'],public.GetClientIp(),str(request.environ.get('REMOTE_PORT')))
             if hasattr(post,'vcode'):
                 if self.limit_address('?',v="vcode") < 1: return public.returnJson(False,'您多次验证失败，禁止10分钟'),json_header
                 import pyotp
@@ -161,6 +163,7 @@ class userlogin:
             self.set_request_token()
             self.login_token()
             self.set_cdn_host(get)
+            public.login_send_body("临时授权",userInfo['username'],public.GetClientIp(),str(request.environ.get('REMOTE_PORT')))
             return redirect('/')
         except:
             return '登录失败，登录过程发生错误'

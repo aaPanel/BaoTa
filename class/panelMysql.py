@@ -22,7 +22,13 @@ class panelMysql:
     def __Conn(self):
         if self.__DB_NET: return True
         try:
-            socket = '/tmp/mysql.sock'
+            myconf = public.readFile('/etc/my.cnf')
+            socket_re = re.search(r"socket\s*=\s*(.+)",myconf)
+            if socket_re:
+                socket = socket_re.groups()[0]
+            else:
+                socket = '/tmp/mysql.sock'
+
             try:
                 if sys.version_info[0] != 2:
                     try:
@@ -43,7 +49,7 @@ class panelMysql:
                     self.__DB_ERR = e
                     return False
             try:
-                myconf = public.readFile('/etc/my.cnf')
+                
                 rep = r"port\s*=\s*([0-9]+)"
                 self.__DB_PORT = int(re.search(rep,myconf).groups()[0])
             except:

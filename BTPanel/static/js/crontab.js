@@ -1020,7 +1020,7 @@ function toBackup(type){
             </p>';
             $("#implement").html(sBody);
 		}
-		$(".dropdown ul li a").click(function(){
+		$("#implement").on('click','.dropdown ul li a',function(ev){
 			var sName = $("#sName").attr("val");
 			if(!sName) return;
 			$(".planname input[name='name']").val(sMsg+'['+sName+']');
