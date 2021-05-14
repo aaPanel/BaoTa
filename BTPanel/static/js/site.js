@@ -841,8 +841,8 @@ var site = {
                     name: 'webname', //当前表单的name
                     style: { 'width': '440px', 'height': '100px', 'line-height': '22px' },
                     tips: { //使用hover的方式显示提示
-                        text: '如需填写多个域名，请换行填写，每行一个域名，默认为80端口<br>泛解析添加方法 *.domain.com<br>如另加端口格式为 www.domain.com:88',
-                        style: { top: '15px', left: '15px' },
+                      text: '如需填写多个域名，请换行填写，每行一个域名，默认为80端口<br>泛解析添加方法 *.domain.com<br>如另加端口格式为 www.domain.com:88',
+                      style: { top: '15px', left: '15px' },
                     },
                     input: function(value, form, that, config, ev) { //键盘事件
                         var array = value.webname.split("\n"),
@@ -880,7 +880,7 @@ var site = {
                             console.log(ev)
                         }
                     },
-                    value: '/www/wwwroot',
+                    value: bt.get_cookie('sites_path')?bt.get_cookie('sites_path'):'/www/wwwroot',
                     placeholder: '请选择文件目录'
                 }
             }, {
@@ -2859,6 +2859,7 @@ var site = {
             bt.site.get_site_ssl(web.name, function(rdata) {
                 var _tabs = [{
                         title: "商用证书<i class='ssl_recom_icon'></i>",
+                        on: true,
                         callback: function(robj) {
                             bt.pub.get_user_info(function(udata) {
                                 if (udata.status) {
@@ -3995,7 +3996,7 @@ var site = {
                     },
                     {
                         title: '宝塔SSL',
-                        on: true,
+                        
                         callback: function(robj) {
                             bt.pub.get_user_info(function(udata) {
                                 if (udata.status) {
@@ -5621,28 +5622,37 @@ var site = {
             })
         },
         get_site_logs: function(web) {
-            bt.site.get_site_logs(web.name, function(rdata) {
-                var robj = $('#webedit-con');
-                var logs = { class: 'bt-logs', items: [{ name: 'site_logs', height: '600px', value: rdata.msg, width: '100%', type: 'textarea' }] };
-                var _form_data = bt.render_form_line(logs);
+          $('#webedit-con').append('<div id="tabLogs" class="tab-nav"></div><div class="tab-con" style="padding:10px 0px;"></div>')
+          var _tab = [{
+            title: "响应日志",
+            on: true,
+            callback:function(robj){
+              console.log(robj)
+              bt.site.get_site_logs(web.name, function(rdata) {
+                var logs = { class: 'bt-logs', items: [{ name: 'site_logs', height: '570px', value: rdata.msg, width: '100%', type: 'textarea' }]},
+                _form_data = bt.render_form_line(logs);
                 robj.append(_form_data.html);
                 bt.render_clicks(_form_data.clicks);
-                $('textarea[name="site_logs"]').attr('readonly', true);
+                $('textarea[name="site_logs"]').attr('readonly', true)
                 $('textarea[name="site_logs"]').scrollTop(100000000000)
-
-            })
-        },
-        get_site_error_logs: function(web) {
-            bt.site.get_site_error_logs(web.name, function(rdata) {
-                var robj = $('#webedit-con');
-                var logs = { class: 'bt-logs', items: [{ name: 'site_logs', height: '600px', value: rdata.msg, width: '100%', type: 'textarea' }] };
-                var _form_data = bt.render_form_line(logs);
+              })
+            }
+          },{
+            title: "错误日志",
+            callback:function(robj){
+              console.log(robj)
+              bt.site.get_site_error_logs(web.name, function(rdata){
+                var logs = { class: 'bt-logs', items: [{ name: 'site_logs', height: '570px', value: rdata.msg, width: '100%', type: 'textarea' }]},
+                _form_data = bt.render_form_line(logs);
                 robj.append(_form_data.html);
                 bt.render_clicks(_form_data.clicks);
-                $('textarea[name="site_logs"]').attr('readonly', true);
+                $('textarea[name="site_logs"]').attr('readonly', true)
                 $('textarea[name="site_logs"]').scrollTop(100000000000)
-
-            })
+              })
+            }
+          }]
+          bt.render_tab('tabLogs',_tab);
+          $('#tabLogs span:eq(0)').click();
         }
     },
     create_let: function(ddata, callback) {
@@ -5906,8 +5916,8 @@ var site = {
                 { title: '重定向', callback: site.edit.set_301 },
                 { title: '反向代理', callback: site.edit.set_proxy },
                 { title: '防盗链', callback: site.edit.set_security },
-                { title: '响应日志', callback: site.edit.get_site_logs },
-                { title: '错误日志', callback: site.edit.get_site_error_logs }
+                { title: '网站日志', callback: site.edit.get_site_logs },
+                // { title: '错误日志', callback: site.edit.get_site_error_logs }
             ]
             if (webcache !== '') menus.splice(3, 0, webcache);
             for (var i = 0; i < menus.length; i++) {

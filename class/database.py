@@ -22,9 +22,11 @@ class database(datatool.datatools):
             if self.CheckRecycleBin(data_name): return public.returnMsg(False,'数据库['+data_name+']已在回收站，请从回收站恢复!')
             if len(data_name) > 16: return public.returnMsg(False, 'DATABASE_NAME_LEN')
             reg = r"^[\w\.-]+$"
-            if not re.match(reg, data_name): return public.returnMsg(False,'DATABASE_NAME_ERR_T')
-            if not hasattr(get,'db_user'): get.db_user = data_name
             username = get.db_user.strip()
+            if not re.match(reg, data_name): return public.returnMsg(False,'DATABASE_NAME_ERR_T')
+            if not re.match(reg, username): return public.returnMsg(False,'数据库名称不合法!')
+            if not hasattr(get,'db_user'): get.db_user = data_name
+            
             checks = ['root','mysql','test','sys','panel_logs']
             if username in checks or len(username) < 1: return public.returnMsg(False,'数据库用户名不合法!')
             if data_name in checks or len(data_name) < 1: return public.returnMsg(False,'数据库名称不合法!')
@@ -677,7 +679,10 @@ SetLink
     #修改数据库目录
     def SetDataDir(self,get):
         if get.datadir[-1] == '/': get.datadir = get.datadir[0:-1]
+        if len(get.datadir) > 32: return public.returnMsg(False,'数据目录长度不能超过32位')
+        if not re.search(r"^[0-9A-Za-z_/\\]$+",get.datadir): return public.returnMsg(False,'数据库路径中不能包含特殊符号')
         if not os.path.exists(get.datadir): public.ExecShell('mkdir -p ' + get.datadir)
+
         mysqlInfo = self.GetMySQLInfo(get)
         if mysqlInfo['datadir'] == get.datadir: return public.returnMsg(False,'DATABASE_MOVE_RE')
         

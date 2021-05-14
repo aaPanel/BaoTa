@@ -67,11 +67,29 @@ if (bind_user == 'True') {
 }
 
 
-$("select[name='network-io']").change(function(){
-    var net_key = $(this).val();
-    if(net_key == 'all') net_key = '';
-    bt.set_cookie('network_io_key',net_key);
+$("select[name='network-io'],select[name='disk-io']").change(function(){
+    var key = $(this).val(),type = $(this).attr('name')
+    if(type == 'network-io'){
+      if(key == 'all') key = '';
+      bt.set_cookie('network_io_key',key);
+    }else{
+      bt.set_cookie('disk_io_key',key);
+    }
 });
+$('.tabs-nav span').click(function () { 
+  var indexs = $(this).index();
+  $(this).addClass('active').siblings().removeClass('active')
+  $('.tabs-content .tabs-item:eq('+ indexs +')').addClass('tabs-active').siblings().removeClass('tabs-active')
+  $('.tabs-down select:eq('+ indexs +')').removeClass('hide').siblings().addClass('hide')
+  switch(indexs){
+    case 0:
+      index.net.table.resize();
+    break;
+    case 1:
+      index.iostat.table.resize();
+    break;
+  }
+})
 
 
 
@@ -137,9 +155,16 @@ var index = {
             index.net.table = echarts.init(document.getElementById('NetImg'));
             var obj = {};
             obj.dataZoom = [];
-            obj.unit = lan.index.unit + ':Kb/s';
+            obj.unit = lan.index.unit + ':KB/s';
             obj.tData = index.net.data.aData;
-
+            obj.formatter = function(config){
+              var _config = config,_tips = '';
+              for(var i=0;i < config.length;i++){
+                if(typeof config[i].data == "undefined") return false
+                _tips +=  '<span style="display: inline-block;width: 10px;height: 10px;margin-rigth:10px;border-radius: 50%;background: '+ config[i].color +';"></span>  '+ config[i].seriesName +'：'+ (parseFloat(config[i].data)).toFixed(2) + ' KB/s' + ( config.length-1 !== i?'<br />':'')
+              }
+              return "时间："+ _config[0].axisValue +"<br />" + _tips;
+            }
             obj.list = [];
             obj.list.push({ name: lan.index.net_up, data: index.net.data.uData, circle: 'circle', itemStyle: { normal: { color: '#f7b851' } }, areaStyle: { normal: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(255, 140, 0,1)' }, { offset: 1, color: 'rgba(255, 140, 0,.4' }], false) } }, lineStyle: { normal: { width: 1, color: '#f7b851' } } });
             obj.list.push({ name: lan.index.net_down, data: index.net.data.dData, circle: 'circle', itemStyle: { normal: { color: '#52a9ff' } }, areaStyle: { normal: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(30, 144, 255,1)' }, { offset: 1, color: 'rgba(30, 144, 255,.4)' }], false) } }, lineStyle: { normal: { width: 1, color: '#52a9ff' } } });
@@ -162,12 +187,82 @@ var index = {
             _net.data.aData.push(d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds());
         }
     },
+    iostat: {
+      table: null,
+      data: {
+          uData: [],
+          dData: [],
+          aData: [],
+          tipsData:[]
+      },
+      init: function () {
+          //流量图表
+          index.iostat.table = echarts.init(document.getElementById('IoStat'));
+          var obj = {};
+          obj.dataZoom = [];
+          obj.unit = lan.index.unit + ':MB/s';
+          obj.tData = index.iostat.data.aData;
+          obj.formatter = function(config){
+            var _config = config,_tips = "时间："+ _config[0].axisValue +"<br />",options =  {
+              read_bytes:  '读取字节数',
+              read_count:  '读取次数 ',
+              read_merged_count: '合并读取次数',
+              read_time: '读取延迟',
+              write_bytes:  '写入字节数',
+              write_count:  '写入次数',
+              write_merged_count: '合并写入次数',
+              write_time: '写入延迟',
+            },data = index.iostat.data.tipsData[config[0].dataIndex],list = ['read_count','write_count','read_merged_count','write_merged_count','read_time','write_time',]
+            for(var i=0;i < config.length;i++){
+              if(typeof config[i].data == "undefined") return false
+              _tips +=  '<span style="display: inline-block;width: 10px;height: 10px;border-radius: 50%;background: '+ config[i].color +';"></span>&nbsp;&nbsp;<span>'+ config[i].seriesName +'：'+ (parseFloat(config[i].data)).toFixed(2) + ' MB/s' + '</span><br />'
+            }
+            $.each(list,function(index,item){
+              _tips += '<span style="display: inline-block;width: 10px;height: 10px;"></span>&nbsp;&nbsp;<span style="'+ (item.indexOf('time') > -1?('color:'+ ((data[item] > 100 && data[item] < 1000)?'#ff9900':(data[item] >= 1000?'red':'#20a53a'))):'') +'">'+  options[item] +'：' +   data[item]  + (item.indexOf('time') > -1 ?' ms':' 次/秒')  +  '</span><br />'
+            })
+            return _tips;
+          }
+          obj.list = [];
+          obj.list.push({ name: '读取字节数', data: index.iostat.data.uData, circle: 'circle', itemStyle: { normal: { color: '#FF4683' } }, areaStyle: { normal: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(255,70,131,1)' }, { offset: 1, color: 'rgba(255,70,131,.4' }], false) } }, lineStyle: { normal: { width: 1, color: '#FF4683' } } });
+          obj.list.push({ name: '写入字节数', data: index.iostat.data.dData, circle: 'circle', itemStyle: { normal: { color: '#6CC0CF' } }, areaStyle: { normal: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(108,192,207,1)' }, { offset: 1, color: 'rgba(108,192,207,.4)' }], false) } }, lineStyle: { normal: { width: 1, color: '#6CC0CF' } } });
+          option = bt.control.format_option(obj)
+          index.iostat.table.setOption(option);
+          window.addEventListener("resize", function () {
+            index.iostat.table.resize();
+          });
+      },
+      add: function (read, write,data) {
+        var _disk = this;
+        var limit = 8;
+        var d = new Date()
+        if (_disk.data.uData.length >= limit) _disk.data.uData.splice(0, 1);
+        if (_disk.data.dData.length >= limit) _disk.data.dData.splice(0, 1);
+        if (_disk.data.aData.length >= limit) _disk.data.aData.splice(0, 1);
+        if (_disk.data.tipsData.length >= limit) _disk.data.tipsData.splice(0, 1);
+        _disk.data.uData.push(read);
+        _disk.data.dData.push(write);
+        _disk.data.tipsData.push(data);
+        _disk.data.aData.push(d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds());
+      }
+    },
     get_init: function () {
         var _this = this;
         _this.reander_system_info(function(rdata){
             // 负载悬浮事件
             $('#loadChart').hover(function () {
-                layer.tips('最近1分钟平均负载：' + rdata.load.one + '</br>最近5分钟平均负载：' + rdata.load.five + '</br>最近15分钟平均负载：' + rdata.load.fifteen + '', this, { time: 0, tips: [1, '#999'] });
+              var arry = [
+                ['最近1分钟平均负载',rdata.load.one],
+                ['最近5分钟平均负载',rdata.load.five],
+                ['最近15分钟平均负载',rdata.load.fifteen]
+              ],tips = '';
+              $.each(arry || [],function (index,item){ 
+                tips += item[0]+'：'+ item[1] +'</br>';
+              })
+              $.each(rdata.cpu_times || {},function (key,item){ 
+                tips += key +'：'+ item +'</br>';
+              })
+              // '最近1分钟平均负载：' + rdata.load.one + '</br>最近5分钟平均负载：' + rdata.load.five + '</br>最近15分钟平均负载：' + rdata.load.fifteen + ''
+              layer.tips(tips, this, { time: 0, tips: [1, '#999'] });
             }, function(){
                 layer.closeAll('tips');
             })
@@ -272,8 +367,10 @@ var index = {
                 })
             }
         })
+        $('')
         setTimeout(function () { _this.get_index_list() },400)
         setTimeout(function () { _this.net.init() }, 500);
+        setTimeout(function () { _this.iostat.init() }, 500);
         setTimeout(function () { _this.get_warning_list()}, 600);
         setTimeout(function () { _this.interval.start()},700);
         setTimeout(function () {
@@ -390,7 +487,7 @@ var index = {
             }
             $('.rank .titles').show()
             
-                        var net_key = bt.get_cookie('network_io_key');
+            var net_key = bt.get_cookie('network_io_key');
             if(net_key){
                 res.up = res.network[net_key].up;
                 res.down = res.network[net_key].down;
@@ -408,13 +505,33 @@ var index = {
             });
     
             $('select[name="network-io"]').html(net_option);
+        
+            
             //刷新流量
             $("#upSpeed").html(res.up.toFixed(2) + ' KB');
             $("#downSpeed").html(res.down.toFixed(2) + ' KB');
             $("#downAll").html(bt.format_size(res.downTotal));
             $("#upAll").html(bt.format_size(res.upTotal));
             index.net.add(res.up, res.down);
+
+
+            var disk_key = bt.get_cookie('disk_io_key') || 'ALL', disk_io_data = res.iostat[disk_key || 'ALL'],mb = 1048576,ioTime = disk_io_data.write_time>disk_io_data.read_time?disk_io_data.write_time:disk_io_data.read_time
+            $('#readBytes').html(bt.format_size(disk_io_data.read_bytes))
+            $('#writeBytes').html(bt.format_size(disk_io_data.write_bytes))
+            $('#diskIops').html((disk_io_data.read_count + disk_io_data.write_count) +' 次')
+            $('#diskTime').html(ioTime +' ms').css({'color':ioTime > 100 && ioTime < 1000?'#ff9900':ioTime >= 1000?'red':'#20a53a'})
+
+            index.iostat.add((disk_io_data.read_bytes / mb).toFixed(2), (disk_io_data.write_bytes / mb).toFixed(2),disk_io_data);
+
+            
+            var disk_option = '';
+            $.each(res.iostat,function(k,v){
+                disk_option += '<option value="'+k+'" '+ (k == disk_key?'selected':'') +'>'+ (k == 'ALL'?'全部':k) +'</option>';
+            });
+            $('select[name="disk-io"]').html(disk_option);
+
             if (index.net.table) index.net.table.setOption({ xAxis: { data: index.net.data.aData }, series: [{ name: lan.index.net_up, data: index.net.data.uData }, { name: lan.index.net_down, data: index.net.data.dData }] });
+            if (index.iostat.table) index.iostat.table.setOption({ xAxis: { data: index.iostat.data.aData }, series: [{ name: '读取字节数', data: index.iostat.data.uData }, { name: '写入字节数', data: index.iostat.data.dData }] });
             if(callback) callback(res)
         });
     },
@@ -789,7 +906,6 @@ var index = {
             }
             settime($('#notice'));
             $('#notice').click(function () {
-                console.log($(this).prop('checked'))
                 if ($(this).prop('checked')) {
                     $('.btn_update_panel_beta').removeAttr('disabled');
                 } else {
@@ -934,7 +1050,7 @@ var index = {
     },
     get_cloud_list: function () {
         $.post('/plugin?action=get_soft_list', { type: 8, p: 1, force: 1, cache: 1 }, function (rdata) {
-            console.log("已成功从云端获取软件列表");
+          console.log("已成功从云端获取软件列表");
         });
     },
     // 获取安全风险列表

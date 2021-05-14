@@ -46,24 +46,30 @@ def HttpGet(url,timeout = 6,headers = {}):
         @return string
     """
     if is_local(): return False
-    home = 'www.bt.cn'
-    host_home = 'data/home_host.pl'
-    old_url = url
-    if url.find(home) != -1:
-        if os.path.exists(host_home): 
-            headers['host'] = home
-            url = url.replace(home,readFile(host_home))
-    
+    # home = 'www.bt.cn'
+    # host_home = 'data/home_host.pl'
+    # old_url = url
+    # if url.find(home) != -1:
+    #     if os.path.exists(host_home): 
+    #         headers['host'] = home
+    #         url = url.replace(home,readFile(host_home))
+    rep_home_host()
     import http_requests
     res = http_requests.get(url,timeout=timeout,headers = headers)
     if res.status_code == 0:
-        if old_url.find(home) != -1: return http_get_home(old_url,timeout,res.text)
+        # if old_url.find(home) != -1: return http_get_home(old_url,timeout,res.text)
         if headers: return False
         s_body = res.text
         return s_body
     s_body = res.text
     del res
     return s_body
+
+def rep_home_host():
+    hosts_file = "data/home_host.pl"
+    if os.path.exists(hosts_file):
+        ExecShell('sed -i "/www.bt.cn/d" /etc/hosts')
+        os.remove(hosts_file)
 
 def http_get_home(url,timeout,ex):
     """
@@ -118,18 +124,18 @@ def HttpPost(url,data,timeout = 6,headers = {}):
         return string
     """
     if is_local(): return False
-    home = 'www.bt.cn'
-    host_home = 'data/home_host.pl'
-    old_url = url
-    if url.find(home) != -1:
-        if os.path.exists(host_home): 
-            headers['host'] = home
-            url = url.replace(home,readFile(host_home))
-
+    # home = 'www.bt.cn'
+    # host_home = 'data/home_host.pl'
+    # old_url = url
+    # if url.find(home) != -1:
+    #     if os.path.exists(host_home): 
+    #         headers['host'] = home
+    #         url = url.replace(home,readFile(host_home))
+    rep_home_host()
     import http_requests
     res = http_requests.post(url,data=data,timeout=timeout,headers = headers)
     if res.status_code == 0:
-        if old_url.find(home) != -1: return http_post_home(old_url,data,timeout,res.text)
+        # if old_url.find(home) != -1: return http_post_home(old_url,data,timeout,res.text)
         if headers: return False
         s_body = res.text
         return s_body
@@ -1595,15 +1601,16 @@ def auto_backup_panel():
         shutil.copytree(panel_paeh + '/data',backup_path + '/data')
         shutil.copytree(panel_paeh + '/config',backup_path + '/config')
         shutil.copytree(panel_paeh + '/vhost',backup_path + '/vhost')
-        ExecShell("chmod -R 600 {path};chown -R root.root {path}".format(paht=b_path))
+        ExecShell("chmod -R 600 {path};chown -R root.root {path}".format(path=b_path))
         time_now = time.time() - (86400 * 15)
         for f in os.listdir(b_path):
-            try:
-                if time.mktime(time.strptime(f, "%Y-%m-%d")) < time_now: 
-                    path = b_path + '/' + f
-                    if os.path.exists(path): shutil.rmtree(path)
-            except: continue
-    except:pass
+            if time.mktime(time.strptime(f, "%Y-%m-%d")) < time_now: 
+                path = b_path + '/' + f
+                if os.path.exists(path): shutil.rmtree(path)
+    except:
+        pass
+            
+    
 
 
 #检查端口状态
@@ -2258,7 +2265,11 @@ def get_menus():
             if data[i]['id'] in hide_menu: continue
             if data[i]['id'] == "memuAxterm":
                 if debug: continue
+            if data[i]['id'] == "memu_btwaf": 
+                if not os.path.exists('plugin/btwaf/btwaf_main.py'): continue
             show_menu.append(data[i])
+
+
         data = show_menu
         del(hide_menu)
         del(show_menu)
@@ -2735,6 +2746,39 @@ def check_app(check='app'):
         if not app_info: return False
         return True
 
+#宝塔邮件报警
+def send_mail(title,body,is_logs=False,is_type="堡塔登录提醒"):
+    if is_logs:
+        try:
+            import send_mail
+            send_mail22 = send_mail.send_mail()
+            tongdao = send_mail22.get_settings()
+            if tongdao['user_mail']['mail_list']==0:return false
+            if not tongdao['user_mail']['info']: return false
+            if len(tongdao['user_mail']['mail_list'])==1:
+                send_mail=tongdao['user_mail']['mail_list'][0]
+                send_mail22.qq_smtp_send(send_mail, title=title, body=body)
+            else:
+                send_mail22.qq_smtp_send(tongdao['user_mail']['mail_list'], title=title, body=body)
+            if is_logs:
+                WriteLog2(is_type, body)
+        except:
+            return False
+    else:
+        try:
+            import send_mail
+            send_mail22 = send_mail.send_mail()
+            tongdao = send_mail22.get_settings()
+            if tongdao['user_mail']['mail_list'] == 0: return false
+            if not tongdao['user_mail']['info']: return false
+            if len(tongdao['user_mail']['mail_list']) == 1:
+                send_mail = tongdao['user_mail']['mail_list'][0]
+                return send_mail22.qq_smtp_send(send_mail, title=title, body=body)
+            else:
+                return send_mail22.qq_smtp_send(tongdao['user_mail']['mail_list'], title=title, body=body)
+        except:
+            return False
+
 #宝塔钉钉 or 微信告警
 def send_dingding(body,is_logs=False,is_type="堡塔登录提醒"):
     if is_logs:
@@ -2750,12 +2794,14 @@ def send_dingding(body,is_logs=False,is_type="堡塔登录提醒"):
         except:
             return False
     else:
-        import send_mail
-        send_mail22 = send_mail.send_mail()
-        tongdao = send_mail22.get_settings()
-        if not tongdao['dingding']['info']: return false
-        tongdao = send_mail22.get_settings()
-        return send_mail22.dingding_send(body)
+        try:
+            import send_mail
+            send_mail22 = send_mail.send_mail()
+            tongdao = send_mail22.get_settings()
+            if not tongdao['dingding']['info']: return false
+            tongdao = send_mail22.get_settings()
+            return send_mail22.dingding_send(body)
+        except:return False
 
 #获取服务器IP
 def get_ip():
@@ -2796,7 +2842,6 @@ def WriteLog2(type,logMsg,args=(),not_web = False):
     result = sql.table('logs2').add('uid,username,type,log,addtime',data)
 
 def check_ip_white(path,ip):
-
     if os.path.exists(path):
         try:
             path_json=json.loads(ReadFile(path))
@@ -2838,6 +2883,15 @@ def send_to_body(title,body,is_logs=False,is_type="堡塔邮件告警"):
 #body= 发送消息的内容
 def send_body_words(send_type,title,body):
     if send_type=='mail':
-        send_mail(title,body)
+        return send_mail(title,body)
     if send_type=='dingding':
-        send_dingding(body)
+        return  send_dingding(body)
+
+def return_is_send_info():
+    import send_mail
+    send_mail22 = send_mail.send_mail()
+    tongdao = send_mail22.get_settings()
+    ret={}
+    ret['mail']=tongdao['user_mail']['user_name']
+    ret['dingding']=tongdao['dingding']['dingding']
+    return ret

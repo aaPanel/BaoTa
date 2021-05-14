@@ -1,0 +1,7 @@
+LICENCE.txt
+dicttoxml.py
+setup.py
+dicttoxml.egg-info/PKG-INFO
+dicttoxml.egg-info/SOURCES.txt
+dicttoxml.egg-info/dependency_links.txt
+dicttoxml.egg-info/top_level.txt

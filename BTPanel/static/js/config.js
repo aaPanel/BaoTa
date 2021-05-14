@@ -1054,9 +1054,11 @@ function modify_basic_auth() {
     });
 }
 function set_panel_report(){
+    var  loadB =  bt.load('正在打开告警设置!')
     get_three_channel(function(res){
         if(!res.user_mail.user_name && !res.dingding.dingding ) return layer.msg('请在消息通道中设置一个通道',{icon:2})
         get_login_send(function(rdata){
+            loadB.close()
             layer.open({
     			type: 1,
     	        area:['750px', '603px'],
@@ -1076,13 +1078,13 @@ function set_panel_report(){
     	                					<div class="bt-form" style="height:500px">\
     	                						<div class="line">\
     	                						    <span class="set-tit" style="display:inline-block;vertical-align: top;margin: 3px;color:#666" title="通知邮箱">通知邮箱</span>\
-                    							    <div class="mail" style="display:inline-block;margin:0px 10px 0px 0px">\
-                                                        <input class="btswitch btswitch-ios" name="server_input" id="mail" type="checkbox" '+(!rdata.status?"":(rdata.msg.mail?"checked":""))+' >\
+                    							    <div class="mail"  name="server_input" style="display:inline-block;margin:0px 10px 0px 0px">\
+                                                        <input class="btswitch btswitch-ios" id="mail" type="checkbox" '+(!rdata.status?"":(rdata.msg.mail?"checked":""))+' >\
                                                          <label class="btswitch-btn" for="mail"></label>\
                                                     </div>\
                                                     <span class="set-tit" style="display:inline-block;vertical-align: top;margin: 3px;color:#666" title="通知钉钉">通知钉钉</span>\
-                                                    <div class="dingding" style="display:inline-block;margin:0px 10px 0px 0px">\
-                                                        <input class="btswitch btswitch-ios" name="server_input" id="dingding" type="checkbox" '+(!rdata.status?"":(rdata.msg.dingding?"checked":""))+' >\
+                                                    <div class="dingding" name="server_input" style="display:inline-block;margin:0px 10px 0px 0px">\
+                                                        <input class="btswitch btswitch-ios"  id="dingding" type="checkbox" '+(!rdata.status?"":(rdata.msg.dingding?"checked":""))+' >\
                                                         <label class="btswitch-btn" for="dingding"></label>\
                                                     </div>\
     	                						</div>\
@@ -1133,7 +1135,7 @@ function set_panel_report(){
                         $('.conter_box').eq(index).show().siblings().hide();
                     });
         		    //设置告警
-        		    $('[name="server_input"]').on('click',function(){
+        		    $('[name="server_input"] input,[name="server_input"] label').on('click',function(){
         		        var _type = $(this).attr('id'),_checked = $(this).prop('checked'),that = $(this);
         		        if(_type == 'mail'&& !res.user_mail.user_name ){ that.prop('checked',false); return  layer.msg('未设置邮件通道,请在消息通道中设置',{icon:2})}
         		        if(_type == 'dingding'&& !res.dingding.dingding ){that.prop('checked',false);  return  layer.msg('未设置钉钉通道,请在消息通道中设置',{icon:2})}
@@ -1143,10 +1145,8 @@ function set_panel_report(){
         		            clear_login_send({type:_type},function(res){layer.msg(res.msg,{icon:res.status?1:2});})
         		        }
         		        get_login_send(function(res){
-        		            if(res.status){
-        		                $('#mail').prop('checked',res.msg.mail)
-        		                $('#dingding').prop('checked',res.msg.dingding)
-        		            } 
+    		                $('#mail').prop('checked',res.msg.mail)
+    		                $('#dingding').prop('checked',res.msg.dingding)
         		        })
         		    });
         		    //添加

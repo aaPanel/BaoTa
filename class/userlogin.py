@@ -123,11 +123,13 @@ class userlogin:
 
     def request_temp(self,get):
         try:
+            if len(get.__dict__.keys()) > 2: return '存在无意义参数!'
             if not hasattr(get,'tmp_token'): return '错误的参数!'
             if len(get.tmp_token) != 48: return '错误的参数!'
             if not re.match(r"^\w+$",get.tmp_token):return '错误的参数!'
             skey = public.GetClientIp() + '_temp_login'
             if not public.get_error_num(skey,10): return '连续10次验证失败，禁止1小时'
+            
             s_time = int(time.time())
             data = public.M('temp_login').where('state=? and expire>?',(0,s_time)).field('id,token,salt,expire').find()
             if not data:

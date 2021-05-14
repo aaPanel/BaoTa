@@ -148,7 +148,7 @@ class FileExecuteDeny:
         else:
             new = '''
     #BEGIN_DENY_{n}
-        <Directory ~ "{d}.*\.(s)$">
+        <Directory ~ "{d}.*\.({s})$">
           Order allow,deny
           Deny from all
         </Directory>

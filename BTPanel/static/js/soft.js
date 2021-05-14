@@ -60,14 +60,16 @@ var soft = {
             if(soft.is_setup==true&&soft.is_setup_name != ""){
                _this.soft_setup_find();
             }
-            if(soft.refresh_data.length==0){
-                _this.refresh_table(page, type, search, rdata);
-                soft.refresh_data = data;
-            }else
-            if(JSON.stringify(data) !=JSON.stringify(soft.refresh_data)){
-                _this.refresh_table(page, type, search, rdata);
-                soft.refresh_data = data;
-            }
+            // if(soft.refresh_data.length==0){
+                
+            // }else
+            // if(JSON.stringify(data) !=JSON.stringify(soft.refresh_data)){
+            //     _this.refresh_table(page, type, search, rdata);
+            //     soft.refresh_data = data;
+            // }
+
+            _this.refresh_table(page, type, search, rdata);
+            soft.refresh_data = data;
            
             bt.set_cookie('load_page', (page+'').split('not_load')[0])
             bt.set_cookie('load_type', type)

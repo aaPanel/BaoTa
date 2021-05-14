@@ -305,7 +305,8 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         if get.path == '':
             get.path = '/www'
         if not os.path.exists(get.path):
-            return public.ReturnMsg(False, '指定目录不存在!')
+            get.path = '/www/wwwroot'
+            #return public.ReturnMsg(False, '指定目录不存在!')
         if get.path == '/www/Recycle_bin':
             return public.returnMsg(False, '此为回收站目录，请在右上角按【回收站】按钮打开')
         if not os.path.isdir(get.path):
@@ -1538,11 +1539,6 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                     os.remove(sfile)
         return True
 
-
-    #创建软链
-    def create_link(self,args):
-        pass
-
     # 复制目录
     def copytree(self, sfile, dfile):
         if sfile == dfile:
@@ -1550,6 +1546,8 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         if not os.path.exists(dfile):
             os.makedirs(dfile)
         for f_name in os.listdir(sfile):
+            if not f_name.strip(): continue
+            if f_name.find('./') != -1: continue
             src_filename = (sfile + '/' + f_name).replace('//', '/')
             dst_filename = (dfile + '/' + f_name).replace('//', '/')
             mode_info = public.get_mode_and_user(src_filename)
@@ -2138,10 +2136,9 @@ cd %s
             else:
                 public.ExecShell('export COMPOSER_HOME=/tmp && {}{} {} config -g --unset repos.packagist'.format(user,php_bin,composer_bin))
         #执行composer命令
-        composer_exec_str = 'export COMPOSER_HOME=/tmp && {} {} {} -vvv'.format(php_bin,composer_bin,get.composer_args)
-        
+        composer_exec_str = '{} {} {} -vvv'.format(php_bin,composer_bin,get.composer_args)
         if os.path.exists(log_file): os.remove(log_file)
-        public.ExecShell("cd {} && {}nohup {} &> {} && echo 'BT-Exec-Completed' >> {}  && rm -rf /home/www &".format(get.path,user,composer_exec_str,log_file,log_file))
+        public.ExecShell("cd {} && export COMPOSER_HOME=/tmp && {} nohup {} &> {} && echo 'BT-Exec-Completed' >> {}  && rm -rf /home/www &".format(get.path,user,composer_exec_str,log_file,log_file))
         public.WriteLog('Composer',"在目录：{}，执行composer {}".format(get.path,get.composer_args))
         return public.returnMsg(True,'命令已发送!')
 
@@ -2195,5 +2192,110 @@ cd %s
             msg = "升级composer从{}到{}".format(version1,version2)
             public.WriteLog('Composer',msg)
         return public.returnMsg(True,msg)
-        
+
+    # 计算文件HASH
+    def get_file_hash(self,args=None,filename=None):
+        if not filename: filename = args.filename
+        import hashlib
+        md5_obj = hashlib.md5()
+        sha1_obj = hashlib.sha1()
+        f = open(filename,'rb')
+        while True:
+            b = f.read(8096)
+            if not b :
+                break
+            md5_obj.update(b)
+            sha1_obj.update(b)
+        f.close()
+        return {'md5':md5_obj.hexdigest(),'sha1':sha1_obj.hexdigest()}
+
+
+    # 取历史副本
+    def get_history_info(self, filename):
+        try:
+            save_path = ('/www/backup/file_history/' +
+                         filename).replace('//', '/')
+            if not os.path.exists(save_path):
+                return []
+            result = []
+            for f in  sorted(os.listdir(save_path)):
+                f_name = (save_path + '/' + f).replace('//', '/')
+                pdata = {}
+                pdata['md5'] = public.FileMd5(f_name)
+                f_stat = os.stat(f_name)
+                pdata['st_mtime'] = int(f)
+                pdata['st_size'] = f_stat.st_size
+                pdata['history_file'] = f_name
+                result.append(pdata)
+            return result
+        except:
+            return []
+
+    #获取文件扩展名
+    def get_file_ext(self,filename):
+        ss_exts = ['tar.gz','tar.bz2','tar.bz']
+        for s in ss_exts:
+            e_len = len(s)
+            f_len = len(filename)
+            if f_len < e_len: continue
+            if filename[-e_len:] == s:
+                return s
+        if filename.find('.') == -1: return ''
+        return filename.split('.')[-1]
+
+
+    # 取所属用户或组
+    def get_mode_user(self,uid):
+        import pwd
+        try:
+            return pwd.getpwuid(uid).pw_name
+        except:
+            return uid
+
+
+    # 取指定文件属性
+    def get_file_attribute(self,args):
+        filename = args.filename.strip()
+        if not os.path.exists(filename):
+            return public.returnMsg(False,'指定文件不存在!')
+        attribute = {}
+        attribute['name'] = os.path.basename(filename)
+        attribute['path'] = os.path.dirname(filename)
+        f_stat = os.stat(filename)
+        attribute['st_atime'] = int(f_stat.st_atime)   # 最后访问时间
+        attribute['st_mtime'] = int(f_stat.st_mtime)   # 最后修改时间
+        attribute['st_ctime'] = int(f_stat.st_ctime)   # 元数据修改时间/权限或数据者变更时间
+        attribute['st_size'] = f_stat.st_size          # 文件大小(bytes)
+        attribute['st_gid'] = f_stat.st_gid            # 用户组id
+        attribute['st_uid'] = f_stat.st_uid            # 用户id
+        attribute['st_nlink'] = f_stat.st_nlink        #  inode 的链接数
+        attribute['st_ino'] = f_stat.st_ino            #  inode 的节点号
+        attribute['st_mode'] = f_stat.st_mode          #  inode 保护模式
+        attribute['st_dev'] = f_stat.st_dev            #  inode 驻留设备
+        attribute['user'] = self.get_mode_user(f_stat.st_uid)   # 所属用户
+        attribute['group'] = self.get_mode_user(f_stat.st_gid)  # 所属组
+        attribute['mode'] = str(oct(f_stat.st_mode)[-3:])         # 文件权限号
+        attribute['md5'] = '大于100M或目录不计算'                        # 文件MD5
+        attribute['sha1'] = '大于100M或目录不计算'                       # 文件sha1
+        attribute['is_dir'] = os.path.isdir(filename)   # 是否为目录
+        attribute['is_link'] = os.path.islink(filename)  # 是否为链接文件
+        if attribute['is_link']:
+            attribute['st_type'] = '链接文件'
+        elif attribute['is_dir']:
+            attribute['st_type'] = '文件夹'
+        else:
+             attribute['st_type'] = self.get_file_ext(filename)
+        attribute['history'] = []
+        if f_stat.st_size < 104857600 and not attribute['is_dir']:
+            hash_info = self.get_file_hash(filename=filename)
+            attribute['md5'] = hash_info['md5']     
+            attribute['sha1'] = hash_info['sha1']
+            attribute['history'] = self.get_history_info(filename) # 历史文件
+        return attribute
+
+
+
+
+
+
 

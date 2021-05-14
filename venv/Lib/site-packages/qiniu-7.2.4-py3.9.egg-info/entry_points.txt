@@ -1,0 +1,3 @@
+[console_scripts]
+qiniupy = qiniu.main:main
+

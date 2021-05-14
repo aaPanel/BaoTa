@@ -1,0 +1,5 @@
+requests!=2.9.0
+crcmod>=1.7
+pycryptodome>=3.4.7
+aliyun-python-sdk-kms>=2.4.1
+aliyun-python-sdk-core-v3>=2.5.5

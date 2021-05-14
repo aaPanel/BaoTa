@@ -1,112 +1,73 @@
-{% extends "layout.html" %} {% block content %}
+{% extends "layout.html" %}
+{% block content %}
 <link rel="stylesheet" href="{{g.cdn_url}}/ace/styles/icons.css">
 <link rel="stylesheet" type="text/css" href="{{g.cdn_url}}/css/files_style.min.css">
-<style id="file_list_info">
-    .file_checkbox {
-        width: 40px !important;
-    }
-    
-    .file_name {
-        width: 300px !important;
-    }
-    
-    .file_ps {
-        width: 200px !important;
-    }
-    
-    .file_size {
-        width: 100px !important;
-    }
-    
-    .file_mtime {
-        width: 180px !important;
-    }
-    
-    .file_user {
-        width: 80px !important;
-    }
-    
-    .file_accept {
-        width: 80px !important;
-    }
-    
-    .file_operation {
-        width: 220px !important;
-    }
-    
-    .file_table_view.list_view .file_list_content .file_tr {
-        width: auto;
-    }
-    
-    .file_table_view.list_view .file_list_content {
-        width: auto;
-    }
-</style>
+<style id="file_list_info">.file_checkbox{width:40px !important;}.file_name{width:300px !important;}.file_ps{width:200px !important;}.file_size{width:100px !important;}.file_mtime{width:180px !important;}.file_user{width:80px !important;}.file_accept{width:80px !important;}.file_operation{width:220px !important;}.file_table_view.list_view .file_list_content .file_tr{width:auto;}.file_table_view.list_view .file_list_content{width:auto;}</style>
 <div class="main-content">
     <a style="display: none;" id="recycle_bin" data="{{data['recycle_bin']}}"></a>
-    <div class="bt_file_updated">
-        <div class="updated_icon">
-            <div class="btn download">
-                <div class="cloud">
-                    <div class="file"></div>
-                </div>
-            </div>
-        </div>S
-        <div class="updated_title">松开鼠标即可上传文件或文件夹</div>
-    </div>
-    <!-- aceEditors -->
-    <div class="file_bodys">
-        <div class="file_path_views">
+	<div class="bt_file_updated">
+		<div class="updated_icon">
+			<div class="btn download">
+				<div class="cloud">
+					<div class="file"></div>
+				</div>
+			</div>
+		</div>S
+		<div class="updated_title">松开鼠标即可上传文件或文件夹</div>
+	</div>
+	<!-- aceEditors -->
+	<div class="file_bodys">
+		<div class="file_path_views">
             <div class="file_path_upper" title="上一层">
                 <span class="glyphicon glyphicon-arrow-left"></span>
                 <!-- <span>上一层</span> -->
             </div>
-            <div class="file_path_input">
-                <div class="file_path_shadow"></div>
-                <div class="file_dir_view"></div>
-                <input type="text" data-path="/www/wwwroot" data-backspace class="path_input" id="fileInputPath" />
-            </div>
-            <div class="file_path_refresh" title="刷新列表"><i class="icon-file icon-file-refresh"></i></div>
-            <div class="search_path_views">
+			<div class="file_path_input">
+				<div class="file_path_shadow"></div>
+				<div class="file_dir_view"></div>
+				<input type="text" data-path="/www/wwwroot" data-backspace class="path_input" id="fileInputPath"/>
+			</div>
+			<div class="file_path_refresh" title="刷新列表"><i class="icon-file icon-file-refresh"></i></div>
+			<div class="search_path_views">
                 <input type="text" placeholder="搜索文件/目录" class="file_search_input">
                 <button type="submit" class="path_btn"><i class="iconfont icon-search"></i></button>
                 <div class="file_search_config">
                     <div id="search_all" class="file_search_checked"></div>
                     <label for="search_all">包含子目录</label>
                 </div>
-            </div>
-        </div>
-        <div class="file_nav_view">
+			</div>
+		</div>
+		<div class="file_nav_view">
             <div class="nav_group">
-                <div class="nav_btn upload_file">
-                    <span class="nav_btn_title">上传</span>
-                </div>
+				<div class="nav_btn upload_file">
+					<span class="nav_btn_title">上传</span>
+				</div>
+			</div>
+            <div class="nav_group">
+				<div class="nav_btn upload_download">
+					<span class="nav_btn_title">远程下载</span>
+				</div>
+			</div>
+			<div class="nav_group">
+				<div class="nav_btn create_file_or_dir">
+					<span class="nav_btn_title">新建</span><i class="iconfont icon-xiala"></i>
+					<ul class="nav_down_list" data-menu="newFileType">
+						<li data-type="newBlankDir"><i class="file_menu_icon create_file_icon"></i><span>新建目录</span></li>
+						<li data-type="newBlankFile"><i class="file_new_icon"></i><span>新建空白文件</span></li>
+						<li data-type="newBlankFile"><i class="file_new_icon soft_link_file_icon"></i><span>软链接文件</span></li>
+					</ul>
+				</div>
+			</div>
+			<div class="nav_group">
+				<div class="nav_btn favorites_file_path">
+					<span class="nav_btn_title" data-menu="favorites">收藏夹</span><i class="iconfont icon-xiala"></i>
+					<ul class="nav_down_list"></ul>
+				</div>
             </div>
             <div class="nav_group">
-                <div class="nav_btn upload_download">
-                    <span class="nav_btn_title">远程下载</span>
-                </div>
-            </div>
-            <div class="nav_group">
-                <div class="nav_btn create_file_or_dir">
-                    <span class="nav_btn_title">新建</span><i class="iconfont icon-xiala"></i>
-                    <ul class="nav_down_list" data-menu="newFileType">
-                        <li data-type="newBlankDir"><i class="file_menu_icon create_file_icon"></i><span>新建目录</span></li>
-                        <li data-type="newBlankFile"><i class="file_new_icon"></i><span>新建空白文件</span></li>
-                        <li data-type="newBlankFile"><i class="file_new_icon soft_link_file_icon"></i><span>软链接文件</span></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="nav_group">
-                <div class="nav_btn favorites_file_path">
-                    <span class="nav_btn_title" data-menu="favorites">收藏夹</span><i class="iconfont icon-xiala"></i>
-                    <ul class="nav_down_list"></ul>
-                </div>
-            </div>
-            <div class="nav_group">
-                <div class="nav_btn share_file_list">
-                    <span class="nav_btn_title">分享列表</span>
-                </div>
+				<div class="nav_btn share_file_list">
+					<span class="nav_btn_title">分享列表</span>
+				</div>
             </div>
             <div class="nav_group ">
                 <div class="nav_btn terminal_view">
@@ -116,18 +77,23 @@
             </div>
             <!-- 挂载磁盘列表 -->
             <div class="nav_group mount_disk_list"></div>
-            <div class="float_r menu-header-foot">
+			<div class="float_r menu-header-foot">
                 <div class="file_menu_tips"><span class="glyphicon glyphicon-info-sign"></span><span>文件操作可使用右键</span></div>
                 <div class="nav_group multi hide">
                     <div class="batch_multi_title">
                         <span>批量操作</span>
                         <i class="iconfont icon-xiala"></i>
                         <div class="batch_group_list">
-                            <div class="nav_btn_group" data-type="copy"><i class="file_menu_icon copy_file_icon"></i><span class="nav_btn_title">复制</span></div>
-                            <div class="nav_btn_group" data-type="shear"><i class="file_menu_icon shear_file_icon"></i><span class="nav_btn_title">剪切</span></div>
-                            <div class="nav_btn_group" data-type="compress"><i class="file_menu_icon compress_file_icon"></i><span class="nav_btn_title">压缩</span></div>
-                            <div class="nav_btn_group" data-type="authority"><i class="file_menu_icon power_file_icon"></i><span class="nav_btn_title">权限</span></div>
-                            <div class="nav_btn_group" data-type="del"><i class="file_menu_icon del_file_icon"></i><span class="nav_btn_title">删除</span></div>
+                            <div class="nav_btn_group" data-type="copy"><i class="file_menu_icon copy_file_icon"></i><span
+                                class="nav_btn_title">复制</span></div>
+                            <div class="nav_btn_group" data-type="shear"><i class="file_menu_icon shear_file_icon"></i><span
+                                    class="nav_btn_title">剪切</span></div>
+                            <div class="nav_btn_group" data-type="compress"><i class="file_menu_icon compress_file_icon"></i><span
+                                    class="nav_btn_title">压缩</span></div>
+                            <div class="nav_btn_group" data-type="authority"><i class="file_menu_icon power_file_icon"></i><span
+                                    class="nav_btn_title">权限</span></div>
+                            <div class="nav_btn_group" data-type="del"><i class="file_menu_icon del_file_icon"></i><span
+                                    class="nav_btn_title">删除</span></div>
                             <div class="nav_btn_group hide" style="padding-left:10px;border-left: 1px solid #cfcfcf;margin-left: -1px;">
                                 <span class="nav_btn_title">更多</span><i class="iconfont icon-xiala"></i>
                                 <ul class="nav_down_list">
@@ -146,17 +112,17 @@
                         <i class="file_menu_icon paste_file_icon"></i><span class="nav_btn_title">粘贴</span>
                     </div>
                 </div>
-                <div class="nav_group recycle_bin">
-                    <div class="nav_btn"><span class="glyphicon glyphicon-trash"></span><span class="nav_btn_title">回收站</span></div>
-                </div>
-                <div class="nav_group btn-group btn-group-sm">
+				<div class="nav_group recycle_bin">
+					<div class="nav_btn"><span class="glyphicon glyphicon-trash"></span><span class="nav_btn_title">回收站</span></div>
+				</div>
+				<div class="nav_group btn-group btn-group-sm">
                     <div class="btn btn-default cut_view_model" data-type="icon"><i class="glyphicon glyphicon-th"></i></div>
                     <div class="btn btn-default cut_view_model" data-type="list"><i class="glyphicon glyphicon-th-list"></i></div>
-                </div>
-            </div>
-        </div>
-        <div class="file_table_view">
-            <div class="file_list_header">
+				</div>
+			</div>
+		</div>
+		<div class="file_table_view">
+			<div class="file_list_header">
                 <div class="file_main_title">
                     <div class="file_checkbox file_th">
                         <div class="file_check" data-type="all" data-checkbox="0"></div>
@@ -200,7 +166,7 @@
             <div class="file_list_shadow file_shadow_top" style="opacity: 0;"></div>
             <div class="file_list_content"></div>
             <div class="file_list_shadow file_shadow_bottom" style="opacity: 0;"></div>
-            <div class="onselectstart"></div>
+			<div class="onselectstart"></div>
         </div>
         <div class="file_right_menu file_menu_list">
             <ul class="set_group">
@@ -215,7 +181,8 @@
                 <li class="separate"></li>
                 <li data-id="rename_file"><i class="file_menu_icon rename_file_icon"></i><span>重命名</span></li>
                 <li data-id="power_file"><i class="file_menu_icon power_file_icon"></i><span>权限</span></li>
-                <li data-id="decompression_file"><i class="file_menu_icon decompression_file_icon"></i><span>解压</span></li>
+                <li data-id="decompression_file"><i
+                        class="file_menu_icon decompression_file_icon"></i><span>解压</span></li>
                 <li data-id="compress_file">
                     <i class="file_menu_icon compress_file_icon"></i><span>创建压缩</span>
                     <div class="file_menu_down">
@@ -265,31 +232,31 @@
     </div>
 </div>
 <script type="text/template" id="upload_file_template">
-    <div class="upload_or_download_view">
-        <div class="upload_or_download_content active" data-type="upload">
-            <div class="upload_btn_groud">
-                <div class="btn-group">
-                    <button type="button" class="btn btn-primary btn-sm upload_file_btn">上传文件</button>
-                    <button type="button" class="btn btn-primary  btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+	<div class="upload_or_download_view">
+		<div class="upload_or_download_content active" data-type="upload">
+			<div class="upload_btn_groud">
+				<div class="btn-group">
+					<button type="button" class="btn btn-primary btn-sm upload_file_btn">上传文件</button>
+					<button type="button" class="btn btn-primary  btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 						<span class="caret"></span>
 						<span class="sr-only">Toggle Dropdown</span>
 					</button>
-                    <ul class="dropdown-menu">
-                        <li><a href="#" data-type="file">上传文件</a></li>
-                        <li><a href="#" data-type="dir">上传目录</a></li>
-                    </ul>
-                </div>
-                <div class="file_upload_info" style="display:none;">
-                    <span>总进度&nbsp;<i class="uploadProgress"></i>，正在上传&nbsp;<i class="uploadNumber"></i>，</span>
-                    <span style="display:none">上传失败&nbsp;<i class="uploadError"></i></span>
-                    <span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span>
-                    <span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span><i></i>
-                </div>
-            </div>
-            <div class="upload_file_body active"><span>请将需要上传的文件拖到此处</span></div>
-            <div class="upload_btn_group"><button type="button" class="btn btn-danger btn-sm upload_file_clear">取消上传</button><button type="button" class="btn btn-success btn-sm upload_file_submit">开始上传</button></div>
-        </div>
-    </div>
+					<ul class="dropdown-menu">
+						<li><a href="#" data-type="file">上传文件</a></li>
+						<li><a href="#" data-type="dir">上传目录</a></li>
+					</ul>
+				</div>
+				<div class="file_upload_info" style="display:none;">
+					<span>总进度&nbsp;<i class="uploadProgress"></i>，正在上传&nbsp;<i class="uploadNumber"></i>，</span>
+					<span style="display:none">上传失败&nbsp;<i class="uploadError"></i></span>
+					<span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span>
+					<span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span><i></i>
+				</div>
+			</div>
+			<div class="upload_file_body active"><span>请将需要上传的文件拖到此处</span></div>
+			<div class="upload_btn_group"><button type="button" class="btn btn-danger btn-sm upload_file_clear">取消上传</button><button type="button" class="btn btn-success btn-sm upload_file_submit">开始上传</button></div>
+		</div>
+	</div>
 </script>
 <script type="text/template" id="aceTmplate">
     <div id="ace_conter">
@@ -309,43 +276,41 @@
         <div class="ace_overall" style="top: 35px;">
             <!-- 编辑器目录 -->
             <div class="ace_catalogue" style="left:0px">
-                <div class="ace_catalogue_title">目录
-                    <div class="dir-menu-right"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></div>
-                </div>
-                <div class="ace_dir_tools">
-                    <div class="upper_level" title="返回上级目录">
-                        <i class="glyphicon glyphicon-share-alt" aria-hidden="true"></i>
-                        <span>上一级</span>
-                    </div>
-                    <div class="search_file" title="搜索内容">
-                        <i class="glyphicon glyphicon-search" aria-hidden="true"></i>
-                        <span>搜索</span>
-                    </div>
-                    <div class="new_folder" title="新建文件/目录">
-                        <i class="glyphicon glyphicon-plus" aria-hidden="true"></i>
-                        <span>新建</span>
-                        <ul class="folder_down_up">
-                            <li data-type="2"><i class="folder-icon"></i>新建文件夹</li>
-                            <li data-type="3"><i class="text-icon"></i>新建文件</li>
-                        </ul>
-                    </div>
-                    <div class="refresh_dir" title="刷新当前目录">
-                        <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
-                        <span>刷新</span>
-                    </div>
-                    <span class="ace_editor_main_storey"></span>
-                </div>
+                <div class="ace_catalogue_title">目录<div class="dir-menu-right"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></div></div>
+            	<div class="ace_dir_tools">
+            		<div class="upper_level"  title="返回上级目录">
+            			<i class="glyphicon glyphicon-share-alt" aria-hidden="true"></i>
+            			<span>上一级</span>
+            		</div>
+            		<div class="search_file" title="搜索内容">
+            			<i class="glyphicon glyphicon-search" aria-hidden="true"></i>
+            			<span>搜索</span>
+            		</div>
+            		<div class="new_folder" title="新建文件/目录">
+            			<i class="glyphicon glyphicon-plus"  aria-hidden="true"></i>
+            			<span>新建</span>
+            			<ul class="folder_down_up">
+            				<li data-type="2"><i class="folder-icon"></i>新建文件夹</li>
+	                    	<li data-type="3"><i class="text-icon"></i>新建文件</li>
+            			</ul>
+            		</div>
+            		<div class="refresh_dir" title="刷新当前目录">
+            			<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+            			<span>刷新</span>
+            		</div>
+            		<span class="ace_editor_main_storey"></span>
+            	</div>
                 <div class="ace_catalogue_list">
                     <ul class="cd-accordion-menu"></ul>
                     <ul class="ace_catalogue_menu">
-                        <li data-type="0"><i class="glyphicon glyphicon-refresh" aria-hidden="true"></i><span>刷新目录</span></li>
-                        <li data-type="1"><i class="glyphicon glyphicon-folder-open" aria-hidden="true"></i><span>打开子目录</span></li>
-                        <li data-type="2"><i class="folder-icon"></i><span>新建文件夹</span></li>
-                        <li data-type="3"><i class="text-icon"></i><span>新建文件</span></li>
-                        <li data-type="4"><i class="rename-icon img-icon"></i><span>重命名</span></li>
-                        <li data-type="5"><i class="down-icon img-icon"></i><span>下载</span></li>
-                        <li data-type="6"><i class="del-icon img-icon"></i><span>删除</span></li>
-                    </ul>
+                    	<li data-type="0"><i class="glyphicon glyphicon-refresh" aria-hidden="true"></i><span>刷新目录</span></li>
+                    	<li data-type="1"><i class="glyphicon glyphicon-folder-open" aria-hidden="true"></i><span>打开子目录</span></li>
+	                    <li data-type="2"><i class="folder-icon"></i><span>新建文件夹</span></li>
+	                    <li data-type="3"><i class="text-icon"></i><span>新建文件</span></li>
+	                    <li data-type="4"><i class="rename-icon img-icon"></i><span>重命名</span></li>
+	                    <li data-type="5"><i class="down-icon img-icon"></i><span>下载</span></li>
+	                    <li data-type="6"><i class="del-icon img-icon"></i><span>删除</span></li>
+	                </ul>
                 </div>
                 <div class="ace_catalogue_drag_icon">
                     <div class="drag_icon_conter"></div>
@@ -356,9 +321,7 @@
             <!-- 编辑内容 -->
             <div class="ace_editor_main" style="margin-left:265px">
                 <ul class="ace_conter_menu"></ul>
-                <div class="ace_conter_tips">
-                    <div class="tips"></div>
-                </div>
+                <div class="ace_conter_tips"><div class="tips"></div></div>
                 <div class="ace_editor_main_storey"></div>
                 <div class="ace_conter_editor"></div>
                 <div class="ace_conter_toolbar">
@@ -397,8 +360,8 @@
                 </div>
                 <div class="menu-item menu-files" style="display: none;">
                     <div class="menu-conter">
-                        <input type="text" class="menu-input" placeholder="输入语言模式">
-                        <i class="fa fa-close" aria-hidden="true"></i>
+                    	<input type="text" class="menu-input" placeholder="输入语言模式">
+                    	<i class="fa fa-close" aria-hidden="true"></i>
                     </div>
                     <div class="menu-title">设置文件语言关联</div>
                     <ul></ul>
@@ -407,7 +370,7 @@
                     <div class="menu-title">设置编辑器字体大小</div>
                     <div class="menu-conter">
                         <div class="set_font_size">
-                            <input type="number" min="12" max="45" />
+                            <input type="number" min="12" max="45"/>
                             <span class="tips error">字体设置范围 12-45</span>
                             <button class="btn-save">保存</button>
                         </div>
@@ -417,7 +380,7 @@
                     <div class="menu-title">跳转到指定行</div>
                     <div class="menu-conter">
                         <div class="set_jump_line">
-                            <input type="number" min="0" />
+                            <input type="number" min="0"/>
                             <div class="jump_tips">当前：行&nbsp;<span></span>&nbsp;，列&nbsp;<span></span>&nbsp;，输入行数(介于&nbsp;1&nbsp;-&nbsp;<span></span>&nbsp;之间)</div>
                         </div>
                     </div>
@@ -430,23 +393,23 @@
                     <div class="menu-title">文件历史版本</div>
                     <ul></ul>
                 </div>
-                <div class="menu-item menu-setUp" style="display: none;">
-                    <div class="menu-title">编辑器设置【部分设置需要重新打开编辑生效】</div>
-                    <ul class="editor_menu">
-                        <li data-type="wrap">自动换行</li>
-                        <li data-type="enableLiveAutocompletion">代码自动完成</li>
-                        <li data-type="enableSnippets">启用代码段</li>
-                        <li data-type="showInvisibles">显示隐藏字符</li>
-                        <li data-type="showLineNumbers">显示行号</li>
-
-                    </ul>
+                <div class="menu-item menu-setUp"  style="display: none;">
+                	<div class="menu-title">编辑器设置【部分设置需要重新打开编辑生效】</div>
+                	<ul class="editor_menu">
+                		<li data-type="wrap">自动换行</li>
+                		<li data-type="enableLiveAutocompletion">代码自动完成</li>
+                		<li data-type="enableSnippets">启用代码段</li>
+                		<li data-type="showInvisibles">显示隐藏字符</li>
+                		<li data-type="showLineNumbers">显示行号</li>
+                		
+                	</ul>
                 </div>
             </div>
         </div>
     </div>
 </script>
 <script type="text/template" id="aceShortcutKeys">
-    <div class="keysUp_left">
+	<div class ="keysUp_left">
         <div class="keysUp-row">
             <div class="keysUp-title">常用快捷键</div>
             <div class="keysUp-content">
@@ -591,7 +554,7 @@
             </div>
         </div>
     </div>
-    <div class="keysUp_right">
+    <div class ="keysUp_right">
         <div class="keysUp-row">
             <div class="keysUp-title">内容选择</div>
             <div class="keysUp-content">
@@ -703,14 +666,15 @@
         </div>
     </div>
 </script>
-{% endblock %} {% block scripts %}
-<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js?version={{g['version']}}&repair={{data['js_random']}}" defer></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.qrcode.min.js?version={{g['version']}}&repair={{data['js_random']}}" defer></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/public.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/public_backup.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/clipboard.min.js?version={{g['version']}}&repair={{data['js_random']}}" defer></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/polyfill.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js?version={{g['version']}}&repair={{data['js_random']}}" defer></script>
-<script type="text/javascript" src="{{g.cdn_url}}/ace/ext-language_tools.js?version={{g['version']}}&repair={{data['js_random']}}" defer></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/files.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+{% endblock %}
+{% block scripts %}
+    <script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js" defer></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/js/jquery.qrcode.min.js" defer></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/js/public.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/js/public_backup.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/js/clipboard.min.js" defer></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/js/polyfill.js"></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js" defer></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/ace/ext-language_tools.js" defer></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/js/files.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
 {% endblock %}

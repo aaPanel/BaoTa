@@ -1118,6 +1118,7 @@ var aceEditor = {
 		var _path = $(that).attr('data-path'),_history = new Number($(that).attr('data-history')),_this =this;
 		var loadT = layer.open({
 			type: 1,
+      closeBtn:2,
 			area: ['400px', '180px'],
 			title: '恢复历史文件',
 			content: '<div class="ace-clear-form">\
@@ -1141,13 +1142,17 @@ var aceEditor = {
 								layer.close(index);
 								layer.msg(res.status?'恢复历史文件成功':'恢复历史文件失败',{icon:res.status?1:2});
 								if(res.status){
-									if(_this.editor[_this.ace_active].historys_file){
-										_this.removeEditor(_this.ace_active);
-									}
-									if($('.ace_conter_menu>[title="'+ _path +'"]').length>0){
-										$('.ace_header .refreshs').click();
-										layer.close(_this.layer_view);
-									}
+                  try {
+                    if(_this.editor[_this.ace_active].historys_file){
+                      _this.removeEditor(_this.ace_active);
+                    }
+                    if($('.ace_conter_menu>[title="'+ _path +'"]').length>0){
+                      $('.ace_header .refreshs').click();
+                      layer.close(_this.layer_view);
+                    }
+                  } catch (error) {
+                    console.log(error)
+                  }
 								}
 							});
 						break;
@@ -1373,6 +1378,7 @@ var aceEditor = {
 			$('.ace_conter_toolbar [data-type="history"]').show();
 		}
 		_item.ace.resize();
+    _item.ace.textInput.focus()
 	},
 	// 清除状态栏
 	removerStatusBar:function(){

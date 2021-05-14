@@ -31,6 +31,7 @@ function get_info(){
 	$data['0db']['PDO-MySQL'] = in_array('pdo_mysql',$data['modules']);
 	$data['0db']['SqlServer'] =in_array('mssql',$data['modules']);
 	$data['0db']['PDO-SqlServer'] = in_array('pdo_mssql',$data['modules']);
+	if(!$data['0db']['PDO-SqlServer']) $data['0db']['PDO-SqlServer'] = in_array('pdo_sqlsrv',$data['modules']);
 	$data['0db']['Sqlite3'] = in_array('sqlite3',$data['modules']);
 	$data['0db']['PDO-Sqlite'] = in_array('pdo_sqlite',$data['modules']);
 	$data['0db']['PgSQL'] = get_extension_funcs('pg_query')?true:false;

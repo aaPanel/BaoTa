@@ -548,7 +548,7 @@ def ssh_security(pdata=None):
     firewallObject = ssh_security.ssh_security()
     defs = ('san_ssh_security', 'set_password', 'set_sshkey', 'stop_key', 'get_config',
             'stop_password', 'get_key', 'return_ip', 'add_return_ip', 'del_return_ip', 'start_jian', 'stop_jian',
-            'get_jian', 'get_logs')
+            'get_jian', 'get_logs','set_root','stop_root')
     return publicObject(firewallObject, defs, None, pdata)
 
 
@@ -649,7 +649,7 @@ def files(pdata=None):
             'set_file_ps','CreateLink',
             'SearchFiles', 'upload', 'read_history', 're_history', 'auto_save_temp', 'get_auto_save_body', 'get_videos',
             'GetFileAccess', 'SetFileAccess', 'GetDirSize', 'SetBatchData', 'BatchPaste', 'install_rar',
-            'get_path_size',
+            'get_path_size','get_file_attribute','get_file_hash',
             'DownloadFile', 'GetTaskSpeed', 'CloseLogs', 'InstallSoft', 'UninstallSoft', 'SaveTmpFile',
             'get_composer_version', 'exec_composer', 'update_composer',
             'GetTmpFile', 'del_files_store', 'add_files_store', 'get_files_store', 'del_files_store_types',
@@ -1319,8 +1319,10 @@ def panel_other(name=None, fun=None, stype=None):
     if name != "mail_sys" or fun != "send_mail_http.json":
         comReturn = comm.local()
         if comReturn: return comReturn
-        if 'request_token' in session and 'login' in session:
-            if not check_csrf(): return public.ReturnJson(False, 'INIT_CSRF_ERR'), json_header
+        if fun:
+            if fun.find('.json') != -1:
+                if 'request_token' in session and 'login' in session:
+                    if not check_csrf(): return public.ReturnJson(False, 'INIT_CSRF_ERR'), json_header
         args = None
     else:
         args = get_input()
@@ -1341,7 +1343,10 @@ def panel_other(name=None, fun=None, stype=None):
     if name.find('./') != -1 or not re.match(r"^[\w-]+$", name): return abort(404)
     if not name: return public.returnJson(False, 'PLUGIN_INPUT_ERR'), json_header
     p_path = os.path.join('/www/server/panel/plugin/', name)
-    if not os.path.exists(p_path): return abort(404)
+    if not os.path.exists(p_path): 
+        if name == 'btwaf' and fun == 'index':
+            return  render_template('error3.html',data={}) 
+        return abort(404)
 
     # 是否响插件应静态文件
     if fun == 'static':

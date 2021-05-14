@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+    <head>
+        <title>iniparse</title>
+        <style type="text/css" title="stylesheet"> @import "style.css"; </style>
+        <link rel="SHORTCUT ICON" href="http://www.python.org/pics/pyfav.gif" />
+    </head>
+
+    <body>
+        <div id="title">
+            <h1 style="font-family: monospace">iniparse</h1>
+            <p>Better INI parser for Python</p>
+        </div>
+
+        <div class="box">
+            <div class="boxtitle">Introduction</div>
+
+            <div class="boxitem">
+            <p><code>iniparse</code> is a INI parser for
+            <a href="http://www.python.org/">Python</a>
+            which is:</p>
+
+            <ul>
+
+            <li><b>Compatible with <code>
+            <a href="http://docs.python.org/lib/module-ConfigParser.html">ConfigParser</a></code></b>:
+            Backward compatible implementations of <code>ConfigParser</code>,
+            <code>RawConfigParser</code>, and <code>SafeConfigParser</code>
+            are included that are API-compatible with the Python standard
+            library.</li>
+
+            <li><b>Preserves structure of INI files</b>: Order of sections &amp;
+            options, indentation, comments, and blank lines are preserved as far
+            as possible when data is updated.</li>
+
+            <li><b>More convenient</b>: Values can be accessed using dotted
+            notation (<code>cfg.user.name</code>), or using container syntax
+            (<code>cfg['user']['name']</code>).</li>
+
+            <li><b>Extensible</b>: It is possible to add other configuration
+            formats, and to convert between different formats (as long as the
+            data models are compatible).</li>
+
+            </ul>
+
+            <p>It is very useful for config files that are updated both by users
+            and by programs, since it is very disorienting for a user to have
+            her config file completely rearranged whenever a program changes it.
+            iniparse also allows making the order of entries in a config file
+            significant, which is desirable in applications like image
+            galleries.</p>
+
+            <p><b>Website</b>: <a href="http://code.google.com/p/iniparse/"
+            >http://code.google.com/p/iniparse/</a></p>
+
+            </div>
+        </div>
+
+        <div class="box">
+            <div class="boxtitle">Examples</div>
+
+            <div class="boxitem">
+            <b>New API:</b>
+            <ul>
+            <li>Open an INI file:
+<pre>
+&gt;&gt;&gt; from iniparse import INIConfig
+&gt;&gt;&gt; cfg = INIConfig(file('options.ini'))
+</pre>
+            </li>
+            <li>Access/Modify data:
+<pre>
+&gt;&gt;&gt; print cfg.playlist.expand_playlist
+True
+&gt;&gt;&gt; print cfg.ui.width
+150
+&gt;&gt;&gt; cfg.ui.width = 200
+&gt;&gt;&gt; print cfg['ui']['width']
+200
+</pre>
+            </li>
+            <li>Print data:
+<pre>
+&gt;&gt;&gt; print cfg
+[playlist]
+expand_playlist = True
+
+[ui]
+display_clock = True
+display_qlength = True
+width = 200
+</pre>
+            </li>
+            </ul>
+
+            <b>Backward Compatible API:</b>
+            <ul>
+            <li>The entire ConfigParser API is supported. This is just a brief
+            example:
+<pre>
+&gt;&gt;&gt; from iniparse import ConfigParser
+&gt;&gt;&gt; cfgpr = ConfigParser()
+&gt;&gt;&gt; cfgpr.read('options.ini')
+&gt;&gt;&gt; print cfgpr.get('ui', 'width')
+150
+&gt;&gt;&gt; cfgpr.set('ui', 'width', 175)
+</pre>
+            </li>
+            <li>The new API can also be accessed via backward-compatible objects:
+<pre>
+&gt;&gt;&gt; print cfgpr.data.playlist.expand_playlist
+True
+&gt;&gt;&gt; cfgpr.data.ui.width = 200
+&gt;&gt;&gt; print cfgpr.data.ui.width
+200
+</pre>
+            </li>
+            </ul>
+
+            <b>A non-INI example:</b>
+            <ul>
+            <li>A simple dotted format is also implemented:
+<pre>
+&gt;&gt;&gt; from iniparse import BasicConfig
+&gt;&gt;&gt; n = BasicConfig()
+&gt;&gt;&gt; n.x = 7
+&gt;&gt;&gt; n.name.first = 'paramjit'
+&gt;&gt;&gt; n.name.last = 'oberoi'
+&gt;&gt;&gt; print n.x
+7
+&gt;&gt;&gt; print n.name.first
+'paramjit'
+&gt;&gt;&gt; print n
+name.first = paramjit
+name.last = oberoi
+x = 7
+</pre>
+            </li>
+            <li>Convert to INI:
+<pre>
+&gt;&gt;&gt; from iniparse import INIConfig
+&gt;&gt;&gt; i = INIConfig()
+&gt;&gt;&gt; del n.x               # since INI doesn't support top-level values
+&gt;&gt;&gt; i.import_config(n)
+&gt;&gt;&gt; print i
+[name]
+first = paramjit
+last = oberoi
+</pre>
+            </li>
+            </ul>
+
+            </div>
+
+            <!-- div class="boxitem">
+            <p>For more information, see the automatically generated
+            <a href="iniparse.html">API documentation</a>.</p>
+            </div -->
+
+        </div>
+        <div id="footer">
+            <p>
+                Updated on 15 July 2007
+            </p>
+        </div>
+    </body>
+</html>

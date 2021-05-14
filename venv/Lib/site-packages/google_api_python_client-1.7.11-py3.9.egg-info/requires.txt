@@ -1,0 +1,5 @@
+httplib2<1dev,>=0.9.2
+google-auth>=1.4.1
+google-auth-httplib2>=0.0.3
+six<2dev,>=1.6.1
+uritemplate<4dev,>=3.0.0

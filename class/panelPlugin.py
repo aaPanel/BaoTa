@@ -386,30 +386,23 @@ class panelPlugin:
         is_plugin = True
         import panelMessage #引用消息提醒模块
         pm = panelMessage.panelMessage()
-        pm.remove_message_all()
-        
         #企业版到期提醒
-        if not data['ltd'] in [-1]:
-            level,expire_day = self.get_level_msg('ltd',s_time,data['ltd'])
-            self.add_expire_msg('企业版',level,'ltd',expire_day,100000032,data['ltd'])
-            pm.remove_message_level('pro')
-            return True
+        if not data['ltd'] in [-1] :   
+
+            if data['pro'] < 0 or  (data['pro'] - s_time) / 86400 < 15 :                        
+                level,expire_day = self.get_level_msg('ltd',s_time,data['ltd'])
+                print(level,expire_day)
+                self.add_expire_msg('企业版',level,'ltd',expire_day,100000046,data['ltd'])
+                pm.remove_message_level('pro')
+                return True
 
         #专业版到期提醒
         if not data['pro'] in [-1,0]:
             level,expire_day = self.get_level_msg('pro',s_time,data['pro'])
-            self.add_expire_msg('专业版',level,'pro',expire_day,100000011,data['pro'])
+            self.add_expire_msg('专业版',level,'pro',expire_day,100000030,data['pro'])
+            pm.remove_message_level('ltd')
             is_plugin = False
         
-        #单独购买的插件到期提醒
-        # for p in data['list']:
-        #     #跳过非企业版或专业版插件
-        #     if not p['type'] in [8,12]: continue
-        #     #已经是专业版的情况下跳过专业版插件
-        #     if not is_plugin and p['type'] == 8: continue
-        #     if not p['endtime'] in [-1,0]:
-        #         level,expire_day = self.get_level_msg(p['name'],s_time,p['endtime'])
-        #         self.add_expire_msg(p['title'],level,p['name'],expire_day,p['pid'],p['endtime'])
         return True
 
 

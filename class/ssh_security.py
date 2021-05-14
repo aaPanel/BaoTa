@@ -26,14 +26,14 @@ class ssh_security:
             self.__ip_data = json.loads(public.ReadFile(self.__ClIENT_IP))
         except:
             self.__ip_data=[]
-            
-        
+
+
     def return_python(self):
         if os.path.exists('/www/server/panel/pyenv/bin/python'):return '/www/server/panel/pyenv/bin/python'
         if os.path.exists('/usr/bin/python'):return '/usr/bin/python'
         if os.path.exists('/usr/bin/python3'):return '/usr/bin/python3'
         return 'python'
-    
+
     def return_bashrc(self):
         if os.path.exists('/root/.bashrc'):return '/root/.bashrc'
         if os.path.exists('/etc/bashrc'):return '/etc/bashrc'
@@ -41,7 +41,7 @@ class ssh_security:
         fd = open('/root/.bashrc', mode="w", encoding="utf-8")
         fd.close()
         return '/root/.bashrc'
-        
+
 
     def check_files(self):
         try:
@@ -324,6 +324,9 @@ class ssh_security:
         rec = '\n#?RSAAuthentication\s\w+'
         pubkey = '\n#?PubkeyAuthentication\s\w+'
         ssh_password = '\nPasswordAuthentication\s\w+'
+        #是否运行root登录
+        root_is_login='\n#?PermitRootLogin\s\w+'
+
         ret = re.findall(ssh_password, file)
         if not ret:
             result['password'] = 'no'
@@ -348,7 +351,47 @@ class ssh_security:
                 result['rsa_auth'] = 'no'
             else:
                 result['rsa_auth'] = 'yes'
+
+        is_root=re.findall(root_is_login, file)
+        if not is_root:
+            result['root_is_login'] = 'no'
+        else:
+            if is_root[-1].split()[-1] == 'no':
+                result['root_is_login'] = 'no'
+            else:
+                result['root_is_login'] = 'yes'
         return result
+
+
+    def set_root(self, get):
+        '''
+        开启密码登陆
+        get: 无需传递参数
+        '''
+        ssh_password = '\n#?PermitRootLogin\s\w+'
+        file = public.readFile(self.__SSH_CONFIG)
+        if len(re.findall(ssh_password, file)) == 0:
+            file_result = file + '\nPermitRootLogin yes'
+        else:
+            file_result = re.sub(ssh_password, '\nPermitRootLogin yes', file)
+        self.wirte(self.__SSH_CONFIG, file_result)
+        self.restart_ssh()
+        return public.returnMsg(True, '开启成功')
+
+    def stop_root(self, get):
+        '''
+        开启密码登陆
+        get: 无需传递参数
+        '''
+        ssh_password = '\n#?PermitRootLogin\s\w+'
+        file = public.readFile(self.__SSH_CONFIG)
+        if len(re.findall(ssh_password, file)) == 0:
+            file_result = file + '\nPermitRootLogin no'
+        else:
+            file_result = re.sub(ssh_password, '\nPermitRootLogin no', file)
+        self.wirte(self.__SSH_CONFIG, file_result)
+        self.restart_ssh()
+        return public.returnMsg(True, '关闭成功')
 
     def stop_password(self, get):
         '''

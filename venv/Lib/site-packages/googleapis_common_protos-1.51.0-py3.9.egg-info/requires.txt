@@ -1,0 +1,4 @@
+protobuf>=3.6.0
+
+[grpc]
+grpcio>=1.0.0

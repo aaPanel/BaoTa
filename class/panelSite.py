@@ -1520,7 +1520,9 @@ listener Default%s{
                 if apis[i]['data'][j]['value']: is_write = True
         if is_write: public.writeFile('./config/dns_api.json',json.dumps(apis))
         result = []
-        for i in apis: result.insert(0,i)
+        for i in apis: 
+            if i['name'] == 'Dns_com': continue
+            result.insert(0,i)
         return result
 
     #设置DNS-API

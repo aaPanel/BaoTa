@@ -42,10 +42,12 @@ class ScanLogin(object):
     def login_qrcode(self, get):
         tid = public.GetRandomString(12)
         qrcode_str = 'https://app.bt.cn/app.html?&panel_url='+public.getPanelAddr()+'&v=' + public.GetRandomString(3)+'?login&tid=' + tid
+        data = public.get_session_id() + ':' + str(time.time())
+        public.writeFile(self.app_path + "app_login_check.pl", data)
         cache.set(tid,public.get_session_id(),360)
         cache.set(public.get_session_id(),tid,360)
         return public.returnMsg(True, qrcode_str)
-    
+
     #生成request_token
     def set_request_token(self):
         session['request_token_head'] = public.GetRandomString(48)
@@ -88,27 +90,34 @@ class ScanLogin(object):
         if not btapp_info['open']:return public.returnMsg(False,'未开启API')
         if not 'apps' in btapp_info:return public.returnMsg(False,'未绑定手机')
         if not btapp_info['apps']:return public.returnMsg(False,'未绑定手机')
-
-        session_id = public.get_session_id()
-        if cache.get(session_id) != 'True':
-            return public.returnMsg(False,'等待APP扫码登录')
-        cache.delete(session_id)
-        userInfo = public.M('users').where("id=?",(1,)).field('id,username').find()
-        session['login'] = True
-        session['username'] = userInfo['username']
-        session['tmp_login'] = True
-        public.WriteLog('TYPE_LOGIN','APP扫码登录，帐号：{},登录IP：{}'.format(userInfo['username'],public.GetClientIp()+ ":" + str(request.environ.get('REMOTE_PORT'))))
-        cache.delete('panelNum')
-        cache.delete('dologin')
-        sess_input_path = 'data/session_last.pl'
-        public.writeFile(sess_input_path,str(int(time.time())))
-        login_type = 'data/app_login.pl'
-        self.set_request_token()
-        import config
-        config.config().reload_session()
-        public.writeFile(login_type,'True')
-        public.login_send_body("堡塔APP",userInfo['username'],public.GetClientIp(),str(request.environ.get('REMOTE_PORT')))
-        return public.returnMsg(True,'登录成功!')
+        try:
+            session_id=public.get_session_id()
+            if not os.path.exists(self.app_path+'app_login_check.pl'):return public.returnMsg(False,'等待APP扫码登录1')
+            data = public.readFile(self.app_path+'app_login_check.pl')
+            public.ExecShell('rm ' + self.app_path+"app_login_check.pl")
+            secret_key, init_time = data.split(':')
+            if len(session_id)!=64:return public.returnMsg(False,'等待APP扫码登录2')
+            if time.time() - float(init_time) < 180 and session_id != secret_key:
+                return public.returnMsg(False,'等待APP扫码登录')
+            cache.delete(session_id)
+            userInfo = public.M('users').where("id=?",(1,)).field('id,username').find()
+            session['login'] = True
+            session['username'] = userInfo['username']
+            session['tmp_login'] = True
+            public.WriteLog('TYPE_LOGIN','APP扫码登录，帐号：{},登录IP：{}'.format(userInfo['username'],public.GetClientIp()+ ":" + str(request.environ.get('REMOTE_PORT'))))
+            cache.delete('panelNum')
+            cache.delete('dologin')
+            sess_input_path = 'data/session_last.pl'
+            public.writeFile(sess_input_path,str(int(time.time())))
+            login_type = 'data/app_login.pl'
+            self.set_request_token()
+            import config
+            config.config().reload_session()
+            public.writeFile(login_type,'True')
+            public.login_send_body("堡塔APP",userInfo['username'],public.GetClientIp(),str(request.environ.get('REMOTE_PORT')))
+            return public.returnMsg(True,'登录成功!')
+        except:
+            return public.returnMsg(False, '登录失败')
 
 class SelfModule():
     '''

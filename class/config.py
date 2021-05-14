@@ -1664,6 +1664,8 @@ class config:
     #查看告警
     def get_login_send(self,get):
         result={}
+        import time
+        time.sleep(0.5)
         if os.path.exists('/www/server/panel/data/login_send_mail.pl'):
             result['mail']=True
         else:

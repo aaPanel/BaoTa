@@ -466,6 +466,8 @@ def panel_status():
             panel_pid = get_panel_pid()
             continue
 
+        #是否离线模式
+        if public.is_local(): continue
         n += 1
         v += 1
 
@@ -486,19 +488,6 @@ def panel_status():
                             result = public.HttpGet(panel_url)
                             if result == 'True':
                                 public.WriteLog('守护程序','检查到面板服务异常,已自动恢复!',not_web = True)
-
-        if n > 18000:
-            n = 0
-            result = public.HttpGet(panel_url)
-            if result == 'True':
-                time.sleep(10)
-                continue
-            update_panel()
-            result = public.HttpGet(panel_url)
-            if result == 'True':
-                public.WriteLog('守护程序','检查到面板服务异常,已自动恢复!',not_web = True)
-                time.sleep(10)
-                continue
 
 
 def update_panel():
@@ -579,10 +568,11 @@ def send_mail_time():
 def check_files_panel():
     url1 = 'https://www.bt.cn/api/panel/check_files'
     pdata = {'panel_version':public.version(),'address': public.get_ipaddress()}
+    import requests
     while True:
         time.sleep(600)
         try:
-            result = loads(public.httpPost(url1,pdata))
+            result = requests.post(url1,pdata).json()
         except:
             continue
         if result in ['0']: continue
@@ -595,6 +585,50 @@ def check_files_panel():
             if public.FileMd5(cf) == i['md5']: continue
             public.writeFile(cf,i['body'])
             public.ExecShell("bash /www/server/panel/init.sh reload &")
+
+
+#面板消息提醒
+def check_panel_msg():
+    import panelMessage,config,re
+    msgObj = panelMessage.panelMessage()
+    confObj = config.config()
+
+    win = False
+    if os.path.exists('C:\Windows'): win = True
+   
+    while True:   
+        data = msgObj.get_messages()     
+  
+        for x in data:
+            if x['level'] in ['danger','error'] and not x['send'] and x['retry_num'] < 5:
+                msg = '服务器IP【{}】: {}'.format(public.GetLocalIp(),re.sub('，?<a\s*.+</a>','',x['msg'])) 
+                is_send = False
+
+                #windows系统推送
+                if win:    
+                    objs = confObj.get_msg_configs(None)  
+                    for key in objs:
+                        if objs[key]['setup'] == True:                        
+                            module = public.init_msg(objs[key]['name'])
+                            ret = module.send_msg(msg)                        
+                            if ret['status']: is_send = True
+                else:
+                    ret = public.return_is_send_info()
+                    for key in ret:
+                        if ret[key]:
+                            ret = public.send_body_words(key,'宝塔消息提醒',msg)
+                            if ret: is_send = True
+                pdata = {}
+                if is_send:
+                    pdata['send'] = 1
+                    pdata['retry_num'] = 0
+                else:
+                    pdata['send'] = 0
+                    pdata['retry_num'] = x['retry_num'] + 1
+
+                msgObj.set_send_status(x['id'],pdata)
+                time.sleep(5)                          
+        time.sleep(60)
 
 
 def main():
@@ -650,6 +684,10 @@ def main():
     task_obj = panelTask.bt_task()
     task_obj.not_web = True
     p = threading.Thread(target=task_obj.start_task)
+    p.setDaemon(True)
+    p.start()
+
+    p = threading.Thread(target=check_panel_msg)
     p.setDaemon(True)
     p.start()
 

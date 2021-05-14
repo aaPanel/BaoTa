@@ -137,26 +137,6 @@ function edit_task_info(id){
 					if(obj.from['week'] == obj['weekArray'][i][0])  weekName  = obj['weekArray'][i][1];
 					weekDom += '<li><a role="menuitem"  href="javascript:;" value="'+ obj['weekArray'][i][0] +'">'+ obj['weekArray'][i][1] +'</a></li>';
 				}
-				
-				if(obj.from.sType == 'site' || obj.from.sType == 'database' || obj.from.sType == 'path' || obj.from.sType == 'logs' || obj.from.sType == 'webshell'){
-					$.post('/crontab?action=GetDataList',{type:obj.from.sType  == 'database'?'databases':'sites'},function(rdata){
-						obj.sNameArray = rdata.data;
-						obj.sNameArray.unshift({name:'ALL',ps:'所有'});
-						obj.backupsArray = rdata.orderOpt;
-						obj.backupsArray.unshift({name:'服务器磁盘',value:'localhost'});
-						for(var i = 0; i <obj['sNameArray'].length; i++){
-							if(obj.from['sName'] == obj['sNameArray'][i]['name'])  sNameName  = obj['sNameArray'][i]['ps'];
-							sNameDom += '<li><a role="menuitem"  href="javascript:;" value="'+ obj['sNameArray'][i]['name'] +'">'+ obj['sNameArray'][i]['ps'] +'</a></li>';
-						}
-						for(var i = 0; i <obj['backupsArray'].length; i++){
-							if(obj.from['backupTo'] == obj['backupsArray'][i]['value'])  backupsName  = obj['backupsArray'][i]['name'];
-							backupsDom += '<li><a role="menuitem"  href="javascript:;" value="'+ obj['backupsArray'][i]['value'] +'">'+ obj['backupsArray'][i]['name'] +'</a></li>';
-						}
-						if(obj.from.sType == 'webshell'){
-							edit_message_channel(obj.from.urladdress)
-						}
-					});
-				}
 				if(obj.from.notice_channel == 'dingding') {
 				    obj.sBody.title = '钉钉'
 				}else if(obj.from.notice_channel == 'mail') {
@@ -165,28 +145,6 @@ function edit_task_info(id){
 				    obj.sBody.title = '全部通道'
 				} else {
 				    obj.sBody.title = '无'
-				}
-				if(obj.from.sType == 'site' || obj.from.sType == 'database' || obj.from.sType == 'path') {
-					$.post('/config?action=get_settings',{type: 'sites'},function(rdata){
-						if(rdata.user_mail.user_name && rdata.dingding.dingding) {
-                          obj.sBody.messageChannelBtnText = '全部通道'
-            			  obj.sBody.channelInitVal= 'user_name,dingding'
-                          obj.sBody.messageChannelDom = '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding,mail">全部通道</a></li><li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding">钉钉</a></li><li><a role="menuitem" tabindex="-1" href="javascript:;" value="mail">邮箱</a></li>'
-						} else if(!rdata.user_mail.user_name && !rdata.dingding.dingding){
-						  obj.sBody.messageChannelBtnText = '无'
-						  obj.sBody.channelInitVal= ''
-						  obj.sBody.messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="">无</a></li>'
-						} else if(rdata.dingding.dingding) {
-						  obj.sBody.messageChannelBtnText = '钉钉'
-						  obj.sBody.channelInitVal= 'dingding'
-						  obj.sBody.messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding">钉钉</a></li>'
-						} else if(rdata.user_mail.user_name) {
-						  obj.sBody.messageChannelBtnText = '邮箱'
-						  obj.sBody.channelInitVal= 'mail'
-						  obj.sBody.messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="mail">邮箱</a></li>'
-						}
-						// callback();
-					})
 				}
 				setTimeout(function() {
 					callback();
@@ -242,10 +200,10 @@ function edit_task_info(id){
 									<span class="typename controls c4 pull-left f14 text-right mr20">'+ sTypeName  +'</span>\
 									<div style="line-height:34px"><div class="dropdown pull-left mr20 sName_btn" style="display:'+ (obj.from.sType != "path"?'block;':'none') +'">\
 										<button class="btn btn-default dropdown-toggle" type="button"  data-toggle="dropdown" style="width:auto" disabled="disabled">\
-											<b id="sName" val="'+ obj.from.sName +'">'+ sNameName +'</b>\
+											<b id="sNameEdit1" val="'+ obj.from.sName +'"></b>\
 											<span class="caret"></span>\
 										</button>\
-										<ul class="dropdown-menu" role="menu" aria-labelledby="sName">'+ sNameDom +'</ul>\
+										<ul class="dropdown-menu" role="menu" aria-labelledby="sNameEdit1">'+ sNameDom +'</ul>\
 									</div>\
 									<div style="line-height:34px">\
     									<div class="pull-left" style="margin-right:20px;display:'+ (obj.from.sType == "path"?'block;':'none') +'"><input type="text" name="name" class="bt-input-text sName_create" value="'+ obj.from.sName +'" disabled="disabled"></div>\
@@ -275,15 +233,15 @@ function edit_task_info(id){
 											<li><a role="menuitem" tabindex="-1" href="javascript:;" value="1">任务执行失败接收通知</a></li>\
 										</ul>\
 									</div>\
-									<div class="pull-left mr20"  style="display:'+ (obj.from.notice == 1 && obj.from.sType != 'logs' ?'block':'none') +';">消息通道</div>\
-										<div class="dropdown  pull-left mr20"  style="display:'+ (obj.from.notice == 1 ?'block':'none') +';">\
+									<div class="pull-left mr20"  style="display:'+ (obj.from.notice == 1 && obj.from.sType != 'logs' ?'block':'none') +';" >消息通道</div>\
+										<div class="dropdown  pull-left mr20"  style="display:'+ (obj.from.notice == 1 ?'block':'none') +';" id="messageChannel">\
 											<button class="btn btn-default dropdown-toggle"  type="button"  data-toggle="dropdown" style="width:auto;" id="modNotice_channel">\
-												<b val="'+obj.from.notice_channel+'" id="modNotice_channelValue">'+ obj.sBody.title +'</b> <span class="caret"></span>\
+												<b val="'+ obj.from.notice_channel +'" id="modNotice_channelValue">'+ obj.sBody.title +'</b> <span class="caret"></span>\
 											</button>\
-											<ul class="dropdown-menu" role="menu">'+obj.sBody.messageChannelDom+'</ul>\
+											<ul class="dropdown-menu" role="menu"></ul>\
 										</div>\
-										<div class="textname pull-left mr20" id="selmodnoticeBox" onclick="modSelSave_local()">\
-											<span style="display:'+ (obj.from.sType == "logs"?'none':'block') +';"><input type="checkbox" value="'+obj.from.save_local+'" '+ (obj.from.save_local == 1 ? 'checked': '') +' style="margin-left: 20px;margin-right: 10px;" id="modSave_local">同时保留本地备份</span>\
+										<div class="textname pull-left mr20" id="selmodnoticeBox" onclick="modSelSave_local()" style="display:'+ (obj.from.backupTo == 'localhost' ? 'none' : 'block') +';">\
+											<span style="display:'+ (obj.from.sType == "logs"?'none':'block') +';"><input type="checkbox" value="'+obj.from.save_local+'" '+ (obj.from.save_local == 1 ? 'checked': '') +' style="margin-left: 20px;margin-right: 10px;" id="modSave_local">同时保留本地备份（和云存储保留份数一致）</span>\
 										</div>\
 									</div>\
 								</div>\
@@ -303,10 +261,10 @@ function edit_task_info(id){
 									<span class="typename controls c4 pull-left f14 text-right mr20">查杀站点</span>\
 									<div class="dropdown pull-left mr20 sName_btn">\
 										<button class="btn btn-default dropdown-toggle" type="button"  data-toggle="dropdown" style="width:auto" disabled="disabled">\
-											<b id="sName" val="'+ obj.from.sName +'">'+ sNameName +'</b>\
+											<b id="sNameEdit2" val="'+ obj.from.sName +'"></b>\
 											<span class="caret"></span>\
 										</button>\
-										<ul class="dropdown-menu" role="menu" aria-labelledby="sName">'+ sNameDom +'</ul>\
+										<ul class="dropdown-menu" role="menu" aria-labelledby="sNameEdit2">'+ sNameDom +'</ul>\
 									</div>\
 									<p class="clearfix plan">\
 										<div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">消息通道</div>\
@@ -316,7 +274,52 @@ function edit_task_info(id){
 								<div class="clearfix plan ptb10">\
 									<div class="bt-submit plan-submits " style="margin-left: 141px;">保存编辑</div>\
 								</div>\
-							</div>'
+							</div>',
+        success:function(){
+          if(obj.from.sType == 'site' || obj.from.sType == 'database' || obj.from.sType == 'path' || obj.from.sType == 'logs' || obj.from.sType == 'webshell'){
+            $.post('/crontab?action=GetDataList',{type:obj.from.sType  == 'database'?'databases':'sites'},function(rdata){
+              obj.sNameArray = rdata.data;
+              obj.sNameArray.unshift({name:'ALL',ps:'所有'});
+              obj.backupsArray = rdata.orderOpt;
+              obj.backupsArray.unshift({name:'服务器磁盘',value:'localhost'});
+              for(var i = 0; i <obj['sNameArray'].length; i++){
+                if(obj.from['sName'] == obj['sNameArray'][i]['name'])  sNameName  = obj['sNameArray'][i]['ps'];
+                sNameDom += '<li><a role="menuitem"  href="javascript:;" value="'+ obj['sNameArray'][i]['name'] +'">'+ obj['sNameArray'][i]['ps'] +'</a></li>';
+              }
+              for(var i = 0; i <obj['backupsArray'].length; i++){
+                if(obj.from['backupTo'] == obj['backupsArray'][i]['value'])  backupsName  = obj['backupsArray'][i]['name'];
+                backupsDom += '<li><a role="menuitem"  href="javascript:;" value="'+ obj['backupsArray'][i]['value'] +'">'+ obj['backupsArray'][i]['name'] +'</a></li>';
+              }
+              console.log(sNameName)
+              $('#sNameEdit1,#sNameEdit2').html(sNameName)
+              $('.backup_btn b').html(backupsName)
+              $('.backup_btn+.dropdown-menu').html(backupsDom)
+              if(obj.from.sType == 'webshell'){
+                edit_message_channel(obj.from.urladdress)
+              }
+            });
+          }
+          if(obj.from.sType == 'site' || obj.from.sType == 'database' || obj.from.sType == 'path') {
+            $.post('/config?action=get_settings',{type: 'sites'},function(rdata){
+              var messageChannelDom = ''
+              if(rdata.user_mail.user_name && rdata.dingding.dingding) {
+                messageChannelDom = '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding,mail">全部通道</a></li><li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding">钉钉</a></li><li><a role="menuitem" tabindex="-1" href="javascript:;" value="mail">邮箱</a></li>'
+              } else if(!rdata.user_mail.user_name && !rdata.dingding.dingding){
+                messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="">无</a></li>'
+              } else if(rdata.dingding.dingding) {
+                messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding">钉钉</a></li>'
+              } else if(rdata.user_mail.user_name) {
+                messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="mail">邮箱</a></li>'
+              }
+              $('#messageChannel .dropdown-menu').html(messageChannelDom)
+              
+            })
+            $('#messageChannel .dropdown-menu').on('click','li',function(){
+              $('#modNotice_channelValue').attr('val',$(this).find('a').attr('value'))
+              $('#modNotice_channelValue').html($(this).find('a').text())
+            })
+          }
+        }
 			});
 			getselectnoticename();
 			setTimeout(function(){
@@ -443,6 +446,11 @@ function edit_task_info(id){
 				$('[aria-labelledby="backupTo"] a').unbind().click(function () {
 					$('.backup_btn').find('b').attr('val', $(this).attr('value')).html($(this).html());
 					obj.from.backupTo = $(this).attr('value');
+					if(obj.from.backupTo == 'localhost') {
+						$('#selmodnoticeBox').hide()
+					} else {
+						$('#selmodnoticeBox').show()
+					}
 				});
 				$('.plan-submits').unbind().click(function(){
 					if(obj.from.type == 'hour-n'){
@@ -941,7 +949,7 @@ function toBackup(type){
 			$('#logs_tips').remove();
 		}
 		var sBody = sOptBody + '<div class="textname pull-left mr20" style="display:'+ (type === 'logs'?'none':'inline-block') +'">'+lan.crontab.backup_to+'</div>\
-					<div class="dropdown planBackupTo pull-left mr20" style="display:'+ (type === 'logs'?'none':'inline-block') +'">\
+					<div class="dropdown planBackupTo pull-left mr20" style="display:'+ (type === 'logs'?'none':'inline-block') +'" id="saveAddServerDiskToLocal">\
 					  <button class="btn btn-default dropdown-toggle" type="button" id="excode" data-toggle="dropdown" style="width:auto;">\
 						<b val="localhost">'+lan.crontab.disk+'</b> <span class="caret"></span>\
 					  </button>\
@@ -997,7 +1005,7 @@ function toBackup(type){
                   </div>\
                 </div>\
                 <a role="menuitem" tabindex="-1" href="javascript:;" onclick="open_three_channel_auth()" value="0" style="color: #20a53a;">设置消息通道</a>\
-				<span  id="selnoticeBox"  onclick="selSave_local()"><input type="checkbox" value="0" style="margin-left: 20px;margin-right: 10px;" id="save_local">同时保留本地备份</span>\
+				<span  id="selnoticeBox"  onclick="selSave_local()" style="display:none;"><input type="checkbox" value="0" style="margin-left: 20px;margin-right: 10px;" id="save_local">同时保留本地备份（和云存储保留份数一致）</span>\
             </p>';
             if(type == 'sites' || type == "path") {
 				sBody += '<p class="clearfix plan">\
@@ -1531,6 +1539,14 @@ function getselectnoticename(){
 			$('#notice_channel').show()
 		}
 	});
+	$("#saveAddServerDiskToLocal ul li a").click(function(){
+		var txt = $(this).text();
+		if(txt == '服务器磁盘') {
+			$('#selnoticeBox').hide()
+		} else {
+			$('#selnoticeBox').show()
+		}
+	});
 }
 
 function select_port(port){
@@ -1548,4 +1564,4 @@ function select_port(port){
 	}
 }
 
-// --计划任务2021/3/24新增任务通知新增结束
+// --计划任务2021/4/21新增任务通知新增结束

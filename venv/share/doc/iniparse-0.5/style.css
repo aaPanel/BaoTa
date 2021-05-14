@@ -1,0 +1,123 @@
+/* All colors are at the beginning */
+/* Colors are based on a "My Yahoo" theme */
+
+body, #title, #title A:link, #title A:visited, #title a:hover
+{
+    color: black;
+    background: #a0b8c8;
+}
+
+.box {
+    color: black;
+    background: #ffffcc;
+}
+
+.boxtitle {
+    color: black;
+    background: #dcdcdc;
+}
+
+#menu {
+    color: black;
+    background: #dcdcdc;
+}
+
+/* Colors finished; now for the layout */
+
+body {
+    margin-left: 10%;
+    margin-right: 10%;
+    font-family: sans-serif;
+    font-size: 0.8em;
+}
+
+#title {
+    text-align: center;
+}
+
+#title h1 {
+    margin-bottom: .3em;
+    padding-bottom: .2em;
+    font-size: 1.8em;
+    letter-spacing: .2em;
+    border-bottom: 1px solid;
+}
+
+#title p {
+    letter-spacing: .2em;
+    margin-top: .1em;
+    margin-bottom: .1em;
+}
+
+#title A:link, #title A:visited {
+    text-decoration: none;
+}
+     
+#title A:hover {
+    text-decoration: underline;
+}
+
+#menu {
+    margin-top: 2em;
+    padding: 0.3em;
+    text-align: center;
+    font-weight: bold;
+    border: 1px solid;
+}
+
+#footer {
+    margin-top: 1em;
+    padding-right: 0.2em;
+    padding-left: 0.2em;
+    font-style: italic;
+    text-align: center;
+}
+
+#footer p {
+    margin: 0.5em;
+}
+
+.box {
+    margin-top: 2em;
+    padding: 0em;
+    border: 1px solid;
+}
+
+.boxtitle {
+    margin: 0;
+    padding-bottom: 0.1em;
+    padding-top: 0.2em;
+    text-align: center;
+    font-size: 1.3em;
+    font-weight: bold;
+    border-bottom: 1px solid;
+}
+
+.boxitem {
+    margin: 1em;
+}
+
+ul {
+    margin-top: 0.2em;
+    margin-bottom: 0;
+}
+
+li {
+    margin-bottom: 0.1em;
+}
+
+.leftfloat {
+    width: 50%;
+    float: left;
+}
+
+.rightfloat {
+    width: 50%;
+    float: right;
+}
+
+.clear {
+    clear: both;
+    width: 0;
+    height: 0;
+}
