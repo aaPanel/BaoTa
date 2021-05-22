@@ -19,6 +19,8 @@ elif grep -Eqi "Raspbian" /etc/issue || grep -Eq "Raspbian" /etc/*-release; then
 	OSNAME='Raspbian'
 elif grep -Eqi "Deepin" /etc/issue || grep -Eq "Deepin" /etc/*-release; then
 	OSNAME='Deepin'
+elif grep -Eqi "Arch Linux" /etc/issue; then
+  OSNAME='ArchLinux'
 else
 	OSNAME='unknow'
 fi

@@ -66,6 +66,8 @@ GetCpuStat(){
 GetPackManager(){
 	if [ -f "/usr/bin/yum" ] && [ -f "/etc/yum.conf" ]; then
 		PM="yum"
+  elif [ -f "/usr/bin/pacman" ] && [ -f "/etc/pacman.conf" ]; then
+    PM="pacman"
 	elif [ -f "/usr/bin/apt-get" ] && [ -f "/usr/bin/dpkg" ]; then
 		PM="apt-get"		
 	fi
