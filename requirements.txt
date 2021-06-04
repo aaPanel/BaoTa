@@ -84,6 +84,6 @@ supervisor==4.1.0
 upyun==2.5.4
 uritemplate==3.0.1
 urlgrabber==4.1.0
-urllib3==1.25.8
+urllib3==1.26.5
 websocket-client==0.57.0
 Werkzeug==1.0.0
