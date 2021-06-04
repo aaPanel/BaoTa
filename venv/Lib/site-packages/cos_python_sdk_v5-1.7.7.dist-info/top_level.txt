@@ -1,1 +1,0 @@
-qcloud_cos
