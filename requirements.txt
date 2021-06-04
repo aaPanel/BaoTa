@@ -57,7 +57,7 @@ pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycparser==2.19
 pycryptodome==3.9.6
-Pygments==2.5.2
+Pygments==2.7.4
 pyinotify==0.9.6
 pymongo==3.10.1
 PyMySQL==0.9.3
