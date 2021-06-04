@@ -1323,7 +1323,6 @@ def send_favicon():
 @app.route('/service_status', methods=method_get)
 def service_status():
     # 检查面板当前状态
-    return str(request.environ)
     try:
         if not 'login' in session: session.clear()
     except:
