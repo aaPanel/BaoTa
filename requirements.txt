@@ -69,7 +69,7 @@ PySocks==1.7.1
 pytz==2019.3
 pyudev==0.22.0
 pyxattr==0.7.1
-PyYAML==5.3
+PyYAML==5.4
 qiniu==7.2.4
 qrcode==6.1
 redis==3.4.1
