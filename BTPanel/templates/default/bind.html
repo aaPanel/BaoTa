@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+  .libLogin{
+    width: 400px !important;
+  }
+  .libLogin input{
+    height: 40px !important;
+    line-height: 40px !important; 
+    border-radius: 2px;
+    width: 100% !important;
+    font-size: 14px;
+  }
+  .libLogin input[type="text"],
+  .libLogin input[type="password"]{
+    padding-left: 10px;
+  }
+</style>
+<div class="main-content pb55" style="min-height: 525px;">
+    <div class="container-fluid">
+        <div class="site_table_view bgw mtb15 pd15">
+          <div style="padding: 40px;text-align: center;vertical-align: middle;">
+            <div class="info-title-tips">
+              <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span>宝塔面板许多功能都依赖于官网，绑定仅限于为您提供更好的面板服务体验，不涉及您服务器任何敏感信息，请放心使用。</p>
+          </div>
+            <p style="font-size: 18px;margin-top: 38px;">绑定宝塔帐号</p>
+            <div class="libLogin pd20">
+              <div class="bt-form text-center">
+                <div class="line"><input class="bt-input-text" name="username2" type="text" placeholder="手机"
+                    id="p1"></div>
+                <div class="line"><input autocomplete="new-password" class="bt-input-text" type="password"
+                    name="password2" placeholder="密码" id="p2"></div>
+                <div class="line" style="margin-top: 15px;"><input class="login-button" value="登录" type="button"></div>
+                <p class="text-right"><a class="btlink" href="https://www.bt.cn/register.html"
+                    target="_blank">未有账号，免费注册</a></p>
+              </div>
+              <ul class="help-info-text" style="text-align: left;">
+                <li>为了您能更好的体验面板功能，请先绑定宝塔账号；</li>
+                <li>绑定帐号没有接管服务器的功能权限，请放心使用；</li>
+                <li>帐号绑定过程中遇到问题请联系客服处理；</li>
+                <li>客服QQ：800176556，客服电话：0769-23030556</li>
+                </ul>
+            </div>
+          </div>
+        </div>
+    </div>
+</div>{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+  $('.login-button').click(function () {
+      p1 = $("#p1").val();
+      p2 = $("#p2").val();
+      var loadT = bt.load(lan.config.token_get);
+      bt.send('GetToken', 'ssl/GetToken', "username=" + p1 + "&password=" + p2, function (rdata) {
+          loadT.close();
+          bt.msg(rdata);
+          if (rdata.status) window.location.href = "/"
+      })
+  });
+
+  $('.libLogin input[type=password]').keyup(function (e) {
+      if (e.keyCode == 13) {
+          $('.login-button').click();
+      }
+  });
+
+  var time = '';
+  $('.bind_ps').hover(function () {    
+      var _that = $(this);
+      time = setTimeout(function () {
+          layer.tips('宝塔面板许多功能都依赖于官网，绑定仅限于为您提供更好的面板服务体验，不涉及您服务器任何敏感信息，请放心使用。', _that, { tips: [1, '#20a53a'], time: 0 })
+      }, 500)
+  }, function () {
+      clearTimeout(time)
+      layer.closeAll('tips');
+  })
+</script>
+{% endblock %}

@@ -485,8 +485,10 @@
             $.post('/ssh_security?action=get_config', {}, function (res) {
                 var paw = res.password == 'yes'?true:false;
                 var key = (res.pubkey == 'yes' && res.rsa_auth == 'yes') ? true : false;
+                var root = res.root_is_login == 'yes' ? true : false;
                 $('#ssh_paw').prop('checked',paw);
                 $('#ssh_key').prop('checked',key);
+                $('#set_root').prop('checked',root);
                 if(key){
                     $.post('/ssh_security?action=get_key', {}, function (res) {
                         if(res.status){

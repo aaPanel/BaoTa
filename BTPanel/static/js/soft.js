@@ -80,9 +80,9 @@ var soft = {
                 }, 3000);
                 soft.is_install = false;
             }
-            if(rdata.recommend){
-                _this.render_promote_list(rdata.recommend);
-            }
+            // if(rdata.recommend){
+            //     _this.render_promote_list(rdata.recommend);
+            // }
         })
     },
     // 查找正在安装软件的状态
@@ -488,100 +488,118 @@ var soft = {
         }
     },
     set_soft_tips:function(el,type){
-        var tips_info = $('<div class="alert" style="margin-bottom:15px"><div class="soft_tips_text"></div><div class="btn-ground" style="display:inline-block;"></div></div>'), explain = tips_info.find('.soft_tips_text'), btn_ground = tips_info.find('.btn-ground');
-        $(el).empty();
-        type = parseInt(type);
-        if(type != 11) $(el).next('.onekey-menu-sub').remove();
-        if(type == 10){
-            explain.text('安全提醒：第三方插件上架前，宝塔官方进行了安全审计，但可能还存在安全风险，在生产环境使用前请自行甄别');
-            btn_ground = soft.render_tips_btn(btn_ground,[
-                {title:'免费入驻',href:'https://www.bt.cn/developer/',rel:'noreferrer noopener',target:'_blank',btn:'免费入驻',class:'btn btn-success btn-xs va0',style:"margin-left:10px;"},
-                {title:'点击获取第三方应用',rel:'noreferrer noopener',href:'https://www.bt.cn/bbs/forum-40-1.html',target:'_blank',btn:'获取第三方应用',class:'btn btn-success btn-xs va0 ml15',style:"margin-left:10px;"},
-                {title:'导入插件',href:'javascript:;',btn:'导入插件','class':'btn btn-success btn-xs va0 ml15','style':"margin-left:10px;",click:function(e){
-                    var input = $('<input type="file" style="display:none;" accept=".zip,.tar.gz" id="update_zip" multiple="multiple">').change(function (e) {
-                        var files =$(this)[0].files;
-                        if (files.length == 0) return;
-                        soft.update_zip(files[0]);
-                    }).click();
-                }}
-            ]);
-            $(el).append(tips_info.addClass('alert-danger'));
-        }else if(type == 11){
-            explain.text('宝塔一键部署已上线，诚邀全球优秀项目入驻(限项目官方) ');
-            btn_ground = soft.render_tips_btn(btn_ground,[
-                {title:'免费入驻',href:'https://www.bt.cn/bbs/thread-33063-1-1.html',rel:'noreferrer noopener',target:'_blank',btn:'免费入驻',class:'btn btn-success btn-xs va0',style:"margin-left:10px;"},
-                {title:'导入项目',href:'javascript:;',rel:'noreferrer noopener',btn:'导入项目',class:'btn btn-success btn-xs va0',style:"margin-left:10px;",click:soft.input_package}
-            ]);
-            $(el).append(tips_info.addClass('alert-info'));
-        }else{
-            var ltd = parseInt(bt.get_cookie('ltd_end')),pro = parseInt(bt.get_cookie('pro_end')),todayDate = parseInt(new Date().getTime()/1000),_ltd = null;
-            if((ltd > 0 && (ltd == pro || pro < 0)) || (ltd < 0 && pro >= 0) || (ltd > 0 && pro >= 0)){
-                _ltd = ((ltd > 0 && (ltd == pro || pro < 0)) || (ltd > 0 && pro >= 0))?1:0;
-                explain.html('当前为'+ (_ltd?'企业版':'专业版') +'，'+ (_ltd?'企业版':'专业版') +'可以免费使用'+ (_ltd?'专业版及企业版插件':'专业版插件') + (!(pro == 0 && ltd < 0)?('，过期时间：'+ (bt.format_data((_ltd?ltd:pro),'yyyy/MM/dd') ) +''+((((_ltd?ltd:pro) - todayDate) <= 15*24*60*60)?('，<span style="color:red">距离过期仅剩'+ Math.round(((_ltd?ltd:pro) - todayDate) / (24*60*60)) +'天</span>'):'')):'，过期时间：<span style="color: #fc6d26;font-weight: bold;">永久授权</span>'));
-            }else if(ltd == -1 && pro == -1){
-                explain.html('专业版可以免费使用专业版插件，企业版可以免费使用专业版及企业版插件。');
-            }else if(pro == 0 && ltd < 0){
-                _ltd = 2;
-                explain.html('当前为专业版，专业版可以免费使用专业版插件，过期时间：永久授权。'+(type == 12?'&nbsp;&nbsp;<span style="color:#af8e48">升级企业版，企业可以免费试用企业版插件及专业版插件。</span>':''));
-                if(type == 12){
-                    btn_ground  = soft.render_tips_btn(btn_ground,{title:'立即升级',href:'javascript:;',btn:'立即升级','class':'btn btn-success btn-xs va0 ml15','style':"margin-left:10px;",click:bt.soft.updata_ltd});
+        bt.send('get_plugin_remarks','auth/get_plugin_remarks',{},function(pro_info){
+            var pro_introduce = '<div class="pro_introduce">';
+            $.each(pro_info.list,function(index,item){
+                pro_introduce += '<div style="display:inline-block;height:30px;line-height:30px;margin-right: 30px;">\
+                    <span class="glyphicon glyphicon-ok"></span>\
+                    <span>'+ item +'</span>\
+                </div>'
+                })
+            pro_introduce+='</div>'
+            var tips_info = $('<div class="alert" style="margin-bottom:15px"><div class="soft_tips_text"></div><div class="btn-ground" style="display:inline-block;"></div></div>'), explain = tips_info.find('.soft_tips_text'), btn_ground = tips_info.find('.btn-ground');
+            $(el).empty();
+            type = parseInt(type);
+            if(type != 11) $(el).next('.onekey-menu-sub').remove();
+            if(type == 10){
+                explain.text('安全提醒：第三方插件上架前，宝塔官方进行了安全审计，但可能还存在安全风险，在生产环境使用前请自行甄别');
+                btn_ground = soft.render_tips_btn(btn_ground,[
+                    {title:'免费入驻',href:'https://www.bt.cn/developer/',rel:'noreferrer noopener',target:'_blank',btn:'免费入驻',class:'btn btn-success btn-xs va0',style:"margin-left:10px;"},
+                    {title:'点击获取第三方应用',rel:'noreferrer noopener',href:'https://www.bt.cn/bbs/forum-40-1.html',target:'_blank',btn:'获取第三方应用',class:'btn btn-success btn-xs va0 ml15',style:"margin-left:10px;"},
+                    {title:'导入插件',href:'javascript:;',btn:'导入插件','class':'btn btn-success btn-xs va0 ml15','style':"margin-left:10px;",click:function(e){
+                        var input = $('<input type="file" style="display:none;" accept=".zip,.tar.gz" id="update_zip" multiple="multiple">').change(function (e) {
+                            var files =$(this)[0].files;
+                            if (files.length == 0) return;
+                            soft.update_zip(files[0]);
+                        }).click();
+                    }}
+                ]);
+                $(el).append(tips_info.addClass('alert-danger'));
+            }else if(type == 11){
+                explain.text('宝塔一键部署已上线，诚邀全球优秀项目入驻(限项目官方) ');
+                btn_ground = soft.render_tips_btn(btn_ground,[
+                    {title:'免费入驻',href:'https://www.bt.cn/bbs/thread-33063-1-1.html',rel:'noreferrer noopener',target:'_blank',btn:'免费入驻',class:'btn btn-success btn-xs va0',style:"margin-left:10px;"},
+                    {title:'导入项目',href:'javascript:;',rel:'noreferrer noopener',btn:'导入项目',class:'btn btn-success btn-xs va0',style:"margin-left:10px;",click:soft.input_package}
+                ]);
+                $(el).append(tips_info.addClass('alert-info'));
+            }else{
+                var ltd = parseInt(bt.get_cookie('ltd_end')),pro = parseInt(bt.get_cookie('pro_end')),todayDate = parseInt(new Date().getTime()/1000),_ltd = null;
+                if((ltd > 0 && (ltd == pro || pro < 0)) || (ltd < 0 && pro >= 0) || (ltd > 0 && pro >= 0)){
+                    _ltd = ((ltd > 0 && (ltd == pro || pro < 0)) || (ltd > 0 && pro >= 0))?1:0;
+                    explain.html('当前为'+ (_ltd?'企业版':'专业版') +'，'+ (_ltd?'企业版':'专业版') +'可以免费使用'+ (_ltd?'专业版及企业版插件':'专业版插件') + (!(pro == 0 && ltd < 0)?('，过期时间：'+ (bt.format_data((_ltd?ltd:pro),'yyyy/MM/dd') ) +''+((((_ltd?ltd:pro) - todayDate) <= 15*24*60*60)?('，<span style="color:red">距离过期仅剩'+ Math.round(((_ltd?ltd:pro) - todayDate) / (24*60*60)) +'天</span>'):'')):'，过期时间：<span style="color: #fc6d26;font-weight: bold;">永久授权</span>'));
+                }else if(ltd == -1 && pro == -1){
+                    explain.html('<div class="pro_introduce_content"><div class="pro_ic_title" style="line-height: 40px;font-weight: 700">企业版：'+pro_introduce+'</div>');
+                    $(el).append(tips_info.addClass('showprofun'));
+                    // if(type == 12){
+
+                    //     $('#soft_recom_list').hide();
+                    // }else{
+                    //     explain.html('专业版可以免费使用专业版插件，企业版可以免费使用专业版及企业版插件。');
+                    // }
+                }else if(pro == 0 && ltd < 0){
+                    _ltd = 2;
+                    explain.html('当前为专业版，专业版可以免费使用专业版插件，过期时间：永久授权。'+(type == 12?'&nbsp;&nbsp;<span style="color:#af8e48">升级企业版，企业可以免费试用企业版插件及专业版插件。</span>':''));
+                    if(type == 12){
+                        btn_ground  = soft.render_tips_btn(btn_ground,{title:'立即升级',href:'javascript:;',btn:'立即升级','class':'btn btn-success btn-xs va0 ml15','style':"margin-left:10px;",click:bt.soft.updata_ltd});
+                    }
+                }else if(ltd == -2 || pro == -2){
+                    _ltd = (ltd == -2)?1:0;
+                    explain.html('当前为'+ (_ltd?'企业版':'专业版') +'，'+ (_ltd?'企业版':'专业版') +'可以免费使用'+ (_ltd?'专业版及企业版插件':'专业版插件') +'，<span style="color:red">'+ (_ltd?'企业版':'专业版') +'已过期</span>');
                 }
-            }else if(ltd == -2 || pro == -2){
-                _ltd = (ltd == -2)?1:0;
-                explain.html('当前为'+ (_ltd?'企业版':'专业版') +'，'+ (_ltd?'企业版':'专业版') +'可以免费使用'+ (_ltd?'专业版及企业版插件':'专业版插件') +'，<span style="color:red">'+ (_ltd?'企业版':'专业版') +'已过期</span>');
-            }
-            var btn_config = {title:null,href:'javascript:;',btn:null,'class':'btn btn-success btn-xs va0 ml15','style':"margin-left:10px;",click:null};
-            var set_btn_style = function(res){
-                if(!res.status || !res){
-                    $.extend(btn_config,{title:'立即登录',btn:'立即登录',click:function(){
-                        bt.pub.bind_btname(function(){
-                            window.location.reload();
-                        });
-                    }});
-                }else{
-                    if(type == 12 && (ltd < 0 && pro >=0)){
-                        explain.html('企业版可以免费使用专业版及企业版插件，了解专业版和企业版的区别，请点击<a href="https://www.bt.cn/download/linux.html" target="_blank" class="btlink ml5">查看详情</a>。<a href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=50342&page=1&extra=#pid179211" target="_blank" class="btlink ml5">《专业版升级企业版教程》</a>');
-                        $(el).append(tips_info.addClass('alert-ltd-success'));
-                        return false;
+                var btn_config = {title:null,href:'javascript:;',btn:null,'class':'btn btn-success btn-xs va0 ml15','style':"margin-left:10px;",click:null};
+                var set_btn_style = function(res){
+                    if(!res.status || !res){
+                        $.extend(btn_config,{title:'立即登录',btn:'立即登录',click:function(){
+                            bt.pub.bind_btname(function(){
+                                window.location.reload();
+                            });
+                        }});
                     }else{
-                        if(_ltd != 2){
-                            var fun = '';
-                            switch(_ltd){
-                                case null:
-                                    fun = bt.soft.updata_ltd
-                                    break;
-                                case 1:
-                                    fun = bt.soft.updata_ltd
-                                    break;
-                                case 0:
-                                    fun = bt.soft.updata_pro
-                                    break;
+                        if(type == 12 && (ltd < 0 && pro >=0)){
+                            explain.html('企业版可以免费使用专业版及企业版插件，了解专业版和企业版的区别，请点击<a href="https://www.bt.cn/download/linux.html" target="_blank" class="btlink ml5">查看详情</a>。<a href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=50342&page=1&extra=#pid179211" target="_blank" class="btlink ml5">《专业版升级企业版教程》</a>');
+                            $(el).append(tips_info.addClass('alert-ltd-success'));
+                            return false;
+                        }else{
+                            if(_ltd != 2){
+                                var fun = '';
+                                switch(_ltd){
+                                    case null:
+                                        fun = bt.soft.updata_ltd
+                                        break;
+                                    case 1:
+                                        fun = bt.soft.updata_ltd
+                                        break;
+                                    case 0:
+                                        fun = bt.soft.updata_pro
+                                        break;
+                                }
+                                $.extend(btn_config,{title:_ltd == null?'立即购买':'立即续费',btn:_ltd == null?'立即购买':'立即续费',click:fun})
                             }
-                            $.extend(btn_config,{title:_ltd == null?'立即购买':'立即续费',btn:_ltd == null?'立即购买':'立即续费',click:fun})
                         }
                     }
-                }
-                if(_ltd != 2){
-                    if(!(pro == 0 && ltd < 0)){
-                        btn_ground  = soft.render_tips_btn(btn_ground,btn_config);
+                    if(_ltd != 2){
+                        if(!(pro == 0 && ltd < 0)){
+                            btn_ground  = soft.render_tips_btn(btn_ground,btn_config);
+                        }
                     }
+                    $(el).append(tips_info.addClass(_ltd == 1?'alert-ltd-success':'alert-success'));
+                    tips_info.append('<span class="ml5"><a href="'+pro_info.kf+'" target="_blank" class="btlink"><img src="https://pub.idqqimg.com/qconn/wpa/button/button_old_41.gif" style="margin-right:5px;margin-left:3px;vertical-align: -1px;">售前客服: '+pro_info.kfqq+'</a></span>')
                 }
-                $(el).append(tips_info.addClass(_ltd == 1?'alert-ltd-success':'alert-success'));
+                var bt_user_info = bt.get_cookie('bt_user_info');
+                if(!bt_user_info){
+                    bt.pub.get_user_info(function(res){
+                        if(!res.status){
+                             set_btn_style(false);
+                            return false;
+                        }
+                        bt.set_cookie('bt_user_info',JSON.stringify(res),300000);
+                        set_btn_style(res);
+                    });
+                }else{
+                    set_btn_style(JSON.parse(bt.get_cookie('bt_user_info')));
+                }
             }
-            var bt_user_info = bt.get_cookie('bt_user_info');
-            if(!bt_user_info){
-                bt.pub.get_user_info(function(res){
-                    if(!res.status){
-                         set_btn_style(false);
-                        return false;
-                    }
-                    bt.set_cookie('bt_user_info',JSON.stringify(res),300000);
-                    set_btn_style(res);
-                });
-            }else{
-                set_btn_style(JSON.parse(bt.get_cookie('bt_user_info')));
-            }
-        }
+        });
     },
     render_tips_btn:function(node,arry){
         if(!Array.isArray(arry)) arry = [arry]
@@ -2076,6 +2094,8 @@ var soft = {
                                 { title: 'TCP套接字', value: 'tcp' }
                             ], ps: '* 推荐Unix套接字' 
                         },
+                        { title: '连接信息', name: 'bind_port', value: rdata.bind + (rdata.port?':' + rdata.port:''), type: 'text', width: '150px', ps: '绑定IP:监听端口或Uinx套接字地址' },
+                        { title: 'IP白名单', name: 'allowed', value: rdata.allowed, type: 'text', width: '150px', ps: '允许访问PHP的IP，多个请用逗号隔开' },
                         {
                             title: lan.soft.php_fpm_model, name: 'pm', value: rdata.pm, type: 'select', items: [
                                 { title: lan.bt.static, value: 'static' },
@@ -2133,17 +2153,17 @@ var soft = {
                         _c_form.append(_form.html)
                         clicks = clicks.concat(_form.clicks);
                     }
-                    _c_form.append('<ul class="help-info-text c7">\
+                    _c_form.append('<ul class="help-info-text c7" style="margin-top: 0px;">\
                                         <li>【最大子进程数量】越大，并发能力越强，但max_children最大不要超过5000</li>\
                                         <li>【内存】每个PHP子进程需要20MB左右内存，过大的max_children会导致服务器不稳定</li>\
                                         <li>【静态模式】始终维持设置的子进程数量，对内存开销较大，但并发能力较好</li>\
                                         <li>【动态模式】按设置最大空闲进程数来收回进程，内存开销小，建议小内存机器使用</li>\
                                         <li>【按需模式】根据访问需求自动创建进程，内存开销极小，但并发能力略差</li>\
-                                        <li>【注意】以上为建议配置说明，线上项目复杂多样，请根据实际情况酌情调整</li>\
+                                        <li>【外网访问】若需外网访问，连接方式为TCP套接字，并将[连接信息-绑定IP]改为0.0.0.0</li>\
+                                        <li>【外网访问】配置正确的IP白名单，在防火墙/安全组放行监听端口，有安全风险，需谨慎</li>\
                                     </ul>')
                     tabCon.append(_c_form);
-
-                    
+                    $(".line").css('padding','0px 0');
                     bt.render_clicks(clicks);
                 });
                 break;

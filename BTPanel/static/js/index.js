@@ -465,7 +465,6 @@ var index = {
     	    var diskList = res.disk;
     	    var diskJson = [];
     		for (var i = 0; i < diskList.length; i++) {
-    		    
     			var ratio = diskList[i].size[3];
     			ratio = parseFloat(ratio.substring(0, ratio.lastIndexOf("%")));
     			var diskInfo = _this.chart_color_active(ratio)

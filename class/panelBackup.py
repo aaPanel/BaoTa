@@ -75,6 +75,15 @@ class backup:
             self._error_msg += "\n"
         self._error_msg += msg
 
+    #取排除列表用于计算排除目录大小
+    def get_exclude_list(self, exclude=[]):
+        if not exclude:
+            tmp_exclude = os.getenv('BT_EXCLUDE')
+            if tmp_exclude:
+                exclude = tmp_exclude.split(',')
+        if not exclude: return []
+        return exclude
+        
     #构造排除
     def get_exclude(self,exclude = []):
         if not exclude:
@@ -270,9 +279,10 @@ class backup:
         if not os.path.exists(dpath):
             os.makedirs(dpath,384)
         
-        p_size = public.get_path_size(spath)
         self.get_exclude(exclude)
         exclude_config = self._exclude
+        exclude_list = self.get_exclude_list(exclude)
+        p_size = public.get_path_size(spath, exclude=exclude_list)
         if not self._exclude:
             exclude_config = "未设置"
         

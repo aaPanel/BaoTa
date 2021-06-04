@@ -164,7 +164,7 @@ class webshell_check:
     #get_url
     def get_check_url(self):
         try:
-            ret=requests.get('http://www.bt.cn/checkWebShell.php').json()
+            ret=requests.get(public.GetConfigValue('home') + '/checkWebShell.php').json()
             if ret['status']:
                 return ret['url']
             return False
@@ -288,7 +288,7 @@ class webshell_check:
             return False
 
     def send_baota2(self, filename):
-        cloudUrl = 'http://www.bt.cn/api/panel/btwaf_submit'
+        cloudUrl = public.GetConfigValue('home') + '/api/panel/btwaf_submit'
         pdata = {'codetxt': self.ReadFile(filename), 'md5': self.read_file_md5(filename), 'type': '0',
                  'host_ip': public.GetLocalIp(), 'size': os.path.getsize(filename)}
         ret = public.httpPost(cloudUrl, pdata)
@@ -296,7 +296,7 @@ class webshell_check:
 
     def send_baota(self, filename):
         if not os.path.exists(filename): return False
-        cloudUrl = 'http://www.bt.cn/api/panel/btwaf_submit'
+        cloudUrl = public.GetConfigValue('home') + '/api/panel/btwaf_submit'
         pdata = {'codetxt': self.ReadFile(filename), 'md5': self.read_file_md5(filename), 'type': '0',
                  'host_ip': public.GetLocalIp(), 'size': os.path.getsize(filename)}
         ret = public.httpPost(cloudUrl, pdata)
@@ -309,7 +309,7 @@ class webshell_check:
 
     def check_webshell(self, filename):
         if not os.path.exists(filename): return False
-        cloudUrl = 'http://www.bt.cn/api/panel/btwaf_check_file'
+        cloudUrl = public.GetConfigValue('home') + '/api/panel/btwaf_check_file'
         pdata = {'md5': self.read_file_md5(filename), 'size': os.path.getsize(filename)}
         ret = public.httpPost(cloudUrl, pdata)
         if ret == '0':

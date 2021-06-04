@@ -240,7 +240,7 @@ RewriteRule (.*\.php)?$ - [E=Cache-Control:private]
 
     def _get_siteconf_info(self):
         siteinfo = self._get_need_create_site()
-        phpv_reg = r'enable-php-(\d+)\.conf'
+        phpv_reg = r'enable-php-(\w+)\.conf'
         rundir_reg = r'root\s+(.*);'
         for s in siteinfo:
             path = '/www/server/panel/vhost/nginx/{}.conf'.format(s['sitename'])

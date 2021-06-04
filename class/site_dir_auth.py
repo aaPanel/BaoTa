@@ -124,9 +124,9 @@ class SiteDirAuth:
         try:
             conf = public.readFile(self.setup_path + '/panel/vhost/'+public.get_webserver()+'/'+siteName+'.conf');
             if public.get_webserver() == 'nginx':
-                rep = "enable-php-([0-9]{2,3})\.conf"
+                rep = "enable-php-(\w{2,5})\.conf"
             else:
-                rep = "php-cgi-([0-9]{2,3})\.sock"
+                rep = "php-cgi-(\w{2,5})\.sock"
             tmp = re.search(rep,conf).groups()
             if tmp:
                 return tmp[0]
@@ -140,12 +140,33 @@ class SiteDirAuth:
         site_info = public.M('sites').where('id=?', (id,)).field('name,path').find()
         return {"site_name":site_info["name"],"site_path":site_info["path"]}
 
+    def change_dir_auth_file_nginx_phpver(self,site_name,phpv,auth_name):
+        file_path = "{setup_path}/panel/vhost/nginx/dir_auth/{site_name}/{auth_name}.conf".format(
+            setup_path=self.setup_path,site_name=site_name,auth_name=auth_name)
+        conf = public.readFile(file_path)
+        if not conf:
+            return False
+
+        if phpv == 'other':
+            php_conf = "include /www/server/panel/vhost/other_php/{}/enable-php-other.conf;".format(site_name)
+        else:
+            php_conf = 'include enable-php-{}.conf;'.format(phpv)
+
+        rep = r"include\s+(enable-php-\w+|/www/server/panel/vhost/other_php/{}/enable-php-other)\.conf;".format(site_name)
+        conf = re.sub(rep,php_conf,conf)
+        
+        public.writeFile(file_path,conf)
+
     # 设置独立认证文件
     def set_dir_auth_file(self,site_path,site_name,name,username,site_dir,auth_file):
         php_ver = self.get_site_php_version(site_name)
         php_conf = ""
         if php_ver:
-            php_conf = "include enable-php-{}.conf;".format(php_ver)
+            if php_ver == 'other':
+                php_conf = "include /www/server/panel/vhost/other_php/{}/enable-php-{}.conf;".format(site_name,php_ver)
+            else:
+                php_conf = "include enable-php-{}.conf;".format(php_ver)
+
         for i in ["nginx","apache"]:
             file_path = "{setup_path}/panel/vhost/{webserver}/dir_auth/{site_name}"
             if i == "nginx":
@@ -279,11 +300,15 @@ class SiteDirAuth:
     def get_dir_auth(self,get):
         '''
         get.id
+        get.sitename
         :param get:
         :return:
         '''
-        site_info = self.get_site_info(get.id)
-        site_name = site_info["site_name"]
+        if not hasattr(get, 'siteName'):
+            site_info = self.get_site_info(get.id)
+            site_name = site_info["site_name"]
+        else:
+            site_name = get.siteName
         conf = self._read_conf()
         if site_name in conf:
             return {site_name:conf[site_name]}

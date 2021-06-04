@@ -22,7 +22,7 @@ _level = 2                                  # 风险级别： 1.提示(低)  2.�
 _date = '2020-08-05'                        # 最后更新时间
 _ignore = os.path.exists("data/warning/ignore/sw_files_recycle_bin.pl")
 _tips = [
-    "在【文件】页面，【收回站】 - 中开启【文件回收站】功能"
+    "在【文件】页面，【回收站】 - 中开启【文件回收站】功能"
     ]
 
 _help = ''

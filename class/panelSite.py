@@ -477,6 +477,8 @@ include /www/server/panel/vhost/openlitespeed/proxy/BTSITENAME/*.conf
         import json,files
 
         get.path = self.__get_site_format_path(get.path)
+        
+        if not public.check_site_path(get.path): return public.returnMsg(False,'请不要将网站根目录设置到系统关键目录中')
         try:
             siteMenu = json.loads(get.webname)
         except:
@@ -2503,7 +2505,7 @@ listener SSL443 {
         if conf:
             listen_ipv6 = ''
             if self.is_ipv6: listen_ipv6 = "\n    listen [::]:%s;" % port
-            rep = "enable-php-([0-9]{2,3})\.conf"
+            rep = "enable-php-(\w{2,5})\.conf"
             tmp = re.search(rep,conf).groups()
             version = tmp[0]
             bindingConf ='''
@@ -2824,6 +2826,7 @@ server
         
         import files
         if not files.files().CheckDir(Path) or not self.__check_site_path(Path): return public.returnMsg(False,  "PATH_ERROR")
+        if not public.check_site_path(Path): return public.returnMsg(False,'请不要将网站根目录设置到系统关键目录中')
         
         SiteFind = public.M("sites").where("id=?",(id,)).field('path,name').find()
         if SiteFind["path"] == Path: return public.returnMsg(False,  "SITE_PATH_ERR_RE")
@@ -2867,27 +2870,35 @@ server
     
     #取当前可用PHP版本
     def GetPHPVersion(self,get):
-        phpVersions = ('00','52','53','54','55','56','70','71','72','73','74','80')
+        phpVersions = ('00','other','52','53','54','55','56','70','71','72','73','74','80')
         httpdVersion = ""
         filename = self.setupPath+'/apache/version.pl'
         if os.path.exists(filename): httpdVersion = public.readFile(filename).strip()
         
         if httpdVersion == '2.2': phpVersions = ('00','52','53','54')
-        if httpdVersion == '2.4': phpVersions = ('00','53','54','55','56','70','71','72','73','74','80')
+        if httpdVersion == '2.4': phpVersions = ('00','other','53','54','55','56','70','71','72','73','74','80')
         if os.path.exists('/www/server/nginx/sbin/nginx'):
             cfile = '/www/server/nginx/conf/enable-php-00.conf'
             if not os.path.exists(cfile): public.writeFile(cfile,'')
         
+        s_type = getattr(get,'s_type',0)
         data = []
         for val in phpVersions:
             tmp = {}
             checkPath = self.setupPath+'/php/'+val+'/bin/php'
-            if val == '00': checkPath = '/etc/init.d/bt'
+            if val in ['00','other']: checkPath = '/etc/init.d/bt'
             if httpdVersion == '2.2': checkPath = self.setupPath+'/php/'+val+'/libphp5.so'
             if os.path.exists(checkPath):
                 tmp['version'] = val
                 tmp['name'] = 'PHP-'+val
-                if val == '00': tmp['name'] = '纯静态'
+                if val == '00': 
+                    tmp['name'] = '纯静态'
+
+                if val == 'other': 
+                    if s_type:
+                        tmp['name'] = '自定义'
+                    else:
+                        continue
                 data.append(tmp)
         return data
     
@@ -2902,6 +2913,12 @@ server
             data['tomcat'] = conf.find('#TOMCAT-START')
             data['tomcatversion'] = public.readFile(self.setupPath + '/tomcat/version.pl')
             data['nodejsversion'] = public.readFile(self.setupPath + '/node.js/version.pl')
+            data['php_other'] = ''
+            if data['phpversion'] == 'other':
+                other_file = '/www/server/panel/vhost/other_php/{}/enable-php-other.conf'.format(siteName)
+                if os.path.exists(other_file):
+                    conf = public.readFile(other_file)
+                    data['php_other'] = re.findall(r"fastcgi_pass\s+(.+);",conf)[0]
             return data
         except:
             return public.returnMsg(False,'SITE_PHPVERSION_ERR_A22,{}'.format(public.get_error_info()))
@@ -2939,38 +2956,96 @@ server
     def SetPHPVersion(self,get,multiple=None):
         siteName = get.siteName
         version = get.version
+        if version == 'other' and not public.get_webserver() in ['nginx','tengine']:
+            return public.returnMsg(False,'自定义PHP配置只支持Nginx')
         try:
             #nginx
             file = self.setupPath + '/panel/vhost/nginx/'+siteName+'.conf'
             conf = public.readFile(file)
             if conf:
-                rep = "enable-php-([0-9]{2,3})\.conf"
-                tmp = re.search(rep,conf).group()
-                conf = conf.replace(tmp,'enable-php-'+version+'.conf')
+                other_path = '/www/server/panel/vhost/other_php/{}'.format(siteName)
+                if not os.path.exists(other_path): os.makedirs(other_path)
+                other_rep = "{}/enable-php-other.conf".format(other_path)
+
+
+                if version == 'other':
+                    dst = other_rep
+                    get.other = get.other.strip()   
+
+                    if not get.other:
+                        return public.returnMsg(False,'自定义版本时PHP连接配置不能为空!')
+
+                    if not re.match(r"^(\d+\.\d+\.\d+\.\d+:\d+|unix:[\w/\.-]+)$",get.other):
+                        return public.returnMsg(False,'PHP连接配置格式不正确，请参考示例!')
+                    
+                    other_tmp = get.other.split(':')
+                    if other_tmp[0] == 'unix':
+                        if not os.path.exists(other_tmp[1]):
+                            return public.returnMsg(False,'指定unix套接字[{}]不存在，请核实!'.format(other_tmp[1]))
+                    else:
+                        if not public.check_tcp(other_tmp[0],int(other_tmp[1])):
+                            return public.returnMsg(False,'无法连接[{}],请排查本机是否可连接目标服务器'.format(get.other))
+
+                    other_conf = '''location ~ [^/]\.php(/|$)
+{{
+    try_files $uri =404;
+    fastcgi_pass  {};
+    fastcgi_index index.php;
+    include fastcgi.conf;
+    include pathinfo.conf;
+}}'''.format(get.other)
+                    public.writeFile(other_rep,other_conf)
+                    conf = conf.replace(other_rep,dst)
+                    rep = "include\s+enable-php-(\w{2,5})\.conf"
+                    tmp = re.search(rep,conf)
+                    if tmp: conf = conf.replace(tmp.group(),'include ' + dst)
+                else:
+                    dst = 'enable-php-'+version+'.conf'
+                    conf = conf.replace(other_rep,dst)
+                    rep = "enable-php-(\w{2,5})\.conf"
+                    tmp = re.search(rep,conf)
+                    if tmp: conf = conf.replace(tmp.group(),dst)
+
                 public.writeFile(file,conf)
+                try:
+                    import site_dir_auth
+                    site_dir_auth_module = site_dir_auth.SiteDirAuth()
+                    auth_list = site_dir_auth_module.get_dir_auth(get)
+                    if auth_list:
+                        for i in auth_list[siteName]:
+                            auth_name = i['name']
+                            auth_file = "{setup_path}/panel/vhost/nginx/dir_auth/{site_name}/{auth_name}.conf".format(
+                                            setup_path=self.setupPath,site_name=siteName,auth_name = auth_name)
+                            if os.path.exists(auth_file):
+                                site_dir_auth_module.change_dir_auth_file_nginx_phpver(siteName,version,auth_name)
+                except:
+                    pass
         
             #apache
             file = self.setupPath + '/panel/vhost/apache/'+siteName+'.conf'
             conf = public.readFile(file)
-            if conf:
-                rep = "(unix:/tmp/php-cgi-([0-9]{2,3})\.sock\|fcgi://localhost|fcgi://127.0.0.1:\d+)"
+            if conf and version != 'other':
+                rep = "(unix:/tmp/php-cgi-(\w{2,5})\.sock\|fcgi://localhost|fcgi://127.0.0.1:\d+)"
                 tmp = re.search(rep,conf).group()
                 conf = conf.replace(tmp,public.get_php_proxy(version,'apache'))
                 public.writeFile(file,conf)
             #OLS
-            file = self.setupPath + '/panel/vhost/openlitespeed/detail/'+siteName+'.conf'
-            conf = public.readFile(file)
-            if conf:
-                rep = 'lsphp\d+'
-                tmp = re.search(rep, conf)
-                if tmp:
-                    conf = conf.replace(tmp.group(), 'lsphp' + version)
-                    public.writeFile(file, conf)
+            if version != 'other':
+                file = self.setupPath + '/panel/vhost/openlitespeed/detail/'+siteName+'.conf'
+                conf = public.readFile(file)
+                if conf:
+                    rep = 'lsphp\d+'
+                    tmp = re.search(rep, conf)
+                    if tmp:
+                        conf = conf.replace(tmp.group(), 'lsphp' + version)
+                        public.writeFile(file, conf)
             if not multiple:
                 public.serviceReload()
             public.WriteLog("TYPE_SITE", "SITE_PHPVERSION_SUCCESS",(siteName,version))
             return public.returnMsg(True,'SITE_PHPVERSION_SUCCESS',(siteName,version))
-        except: return public.returnMsg(False,'设置失败，没有在网站配置文件中找到enable-php-xx相关配置项!')
+        except: 
+            return public.get_error_info()
+            return public.returnMsg(False,'设置失败，没有在网站配置文件中找到enable-php-xx相关配置项!')
 
     
     #是否开启目录防御

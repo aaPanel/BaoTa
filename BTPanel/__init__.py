@@ -121,7 +121,8 @@ admin_path_checks = [
     '/api',
     '/tips',
     '/message',
-    '/warning'
+    '/warning',
+    '/bind'
 ]
 if admin_path in admin_path_checks: admin_path = '/bt'
 
@@ -145,6 +146,18 @@ def request_check():
             if len(k) > 48: return abort(403)
             if len(pdata[k]) > 256: return abort(403)
     if session.get('debug') == 1: return
+
+    if app.config['BASIC_AUTH_OPEN']:
+        if request.path in ['/public', '/download', '/mail_sys', '/hook', '/down', '/check_bind',
+                            '/get_app_bind_status']: return
+        auth = request.authorization
+        if not comm.get_sk(): return
+        if not auth: return send_authenticated()
+        tips = '_bt.cn'
+        if public.md5(auth.username.strip() + tips) != app.config['BASIC_AUTH_USERNAME'] \
+                or public.md5(auth.password.strip() + tips) != app.config['BASIC_AUTH_PASSWORD']:
+            return send_authenticated()
+    
     if not request.path in ['/safe', '/hook', '/public', '/mail_sys', '/down']:
         ip_check = public.check_ip_panel()
         if ip_check: return ip_check
@@ -160,16 +173,13 @@ def request_check():
         if request.args.get('action') in not_networks:
             return public.returnJson(False, 'INIT_REQUEST_CHECK_LOCAL_ERR'), json_header
 
-    if app.config['BASIC_AUTH_OPEN']:
-        if request.path in ['/public', '/download', '/mail_sys', '/hook', '/down', '/check_bind',
-                            '/get_app_bind_status']: return
-        auth = request.authorization
-        if not comm.get_sk(): return
-        if not auth: return send_authenticated()
-        tips = '_bt.cn'
-        if public.md5(auth.username.strip() + tips) != app.config['BASIC_AUTH_USERNAME'] \
-                or public.md5(auth.password.strip() + tips) != app.config['BASIC_AUTH_PASSWORD']:
-            return send_authenticated()
+    if request.path in ['/','/site','/ftp','/database','/soft','/control','/firewall','/files','/xterm','/crontab','/config']:
+        licenes = 'data/licenes.pl'
+        if request.path in ['/'] and not os.path.exists(licenes):
+            return
+            
+        if not public.is_bind():
+            return redirect('/bind',302)
 
 
 # Flask 请求结束勾子
@@ -247,14 +257,20 @@ def xterm():
     return publicObject(ssh_host_admin, defs, None)
 
 
+@app.route('/bind', methods=method_get)
+def bind():
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    if public.is_bind(): return redirect('/',302)
+    data = {}
+    g.title = '请先绑定宝塔帐号'
+    return render_template('bind.html', data=data)
+
+
 @sockets.route('/work_order')
 def work_order(ws):
     comReturn = comm.local()
     if comReturn: return comReturn
-
-
-
-
 
 @sockets.route('/webssh')
 def webssh(ws):
@@ -885,7 +901,7 @@ def auth(pdata=None):
     if comReturn: return comReturn
     import panelAuth
     toObject = panelAuth.panelAuth()
-    defs = ('get_re_order_status_plugin', 'create_plugin_other_order', 'get_order_stat',
+    defs = ('get_plugin_remarks','get_re_order_status_plugin', 'create_plugin_other_order', 'get_order_stat',
             'get_voucher_plugin', 'create_order_voucher_plugin', 'get_product_discount_by',
             'get_re_order_status', 'create_order_voucher', 'create_order', 'get_order_status',
             'get_voucher', 'flush_pay_status', 'create_serverid', 'check_serverid',
@@ -960,6 +976,7 @@ def panel_cloud():
 
 
 route_path = os.path.join(admin_path, '')
+if not route_path: route_path = '/'
 if route_path[-1] == '/': route_path = route_path[:-1]
 if route_path[0] != '/': route_path = '/' + route_path
 
@@ -1157,11 +1174,14 @@ def down(token=None, fname=None):
             args = get_input()
             if 'file_password' in args:
                 if not re.match(r"^\w+$", args.file_password):
-                    return public.ReturnJson(False, '密码错误!'), json_header
+                    return public.ReturnJson(False, '密码错误-1!'), json_header
                 if re.match(r"^\d+$", args.file_password):
-                    args.file_password += '.0'
+                    args.file_password = str(int(args.file_password))
+                    args.file_password += ".0"
+                    
+
                 if args.file_password != str(find['password']):
-                    return public.ReturnJson(False, '密码错误!'), json_header
+                    return public.ReturnJson(False, '密码错误-2!'), json_header
                 session[token] = 1
                 session['down'] = True
             else:
@@ -1303,6 +1323,7 @@ def send_favicon():
 @app.route('/service_status', methods=method_get)
 def service_status():
     # 检查面板当前状态
+    return str(request.environ)
     try:
         if not 'login' in session: session.clear()
     except:

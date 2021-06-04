@@ -291,26 +291,32 @@ class firewalls:
         port = '22'
         if tmp1:
             port = tmp1.groups(0)[0]
-        import system
-        panelsys = system.system()
-        
-        version = panelsys.GetSystemVersion()
-        if os.path.exists('/usr/bin/apt-get'):
-            if os.path.exists('/etc/init.d/sshd'):
-                status = public.ExecShell("service sshd status | grep -P '(dead|stop)'|grep -v grep")
-            else:
-                status = public.ExecShell("service ssh status | grep -P '(dead|stop)'|grep -v grep")
+
+        pid_file = '/run/sshd.pid'
+        if os.path.exists(pid_file):
+            pid = int(public.readFile(pid_file))
+            status = public.pid_exists(pid)
         else:
-            if version.find(' 7.') != -1 or version.find(' 8.') != -1 or version.find('Fedora') != -1:
-                status = public.ExecShell("systemctl status sshd.service | grep 'dead'|grep -v grep")
-            else:
-                status = public.ExecShell("/etc/init.d/sshd status | grep -e 'stopped' -e '已停'|grep -v grep")
+            import system
+            panelsys = system.system()
             
-#       return status;
-        if len(status[0]) > 3:
-            status = False
-        else:
-            status = True
+            version = panelsys.GetSystemVersion()
+            if os.path.exists('/usr/bin/apt-get'):
+                if os.path.exists('/etc/init.d/sshd'):
+                    status = public.ExecShell("service sshd status | grep -P '(dead|stop)'|grep -v grep")
+                else:
+                    status = public.ExecShell("service ssh status | grep -P '(dead|stop)'|grep -v grep")
+            else:
+                if version.find(' 7.') != -1 or version.find(' 8.') != -1 or version.find('Fedora') != -1:
+                    status = public.ExecShell("systemctl status sshd.service | grep 'dead'|grep -v grep")
+                else:
+                    status = public.ExecShell("/etc/init.d/sshd status | grep -e 'stopped' -e '已停'|grep -v grep")
+            
+    #       return status;
+            if len(status[0]) > 3:
+                status = False
+            else:
+                status = True
         isPing = True
         try:
             file = '/etc/sysctl.conf'

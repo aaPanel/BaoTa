@@ -1380,6 +1380,8 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
     def CloseLogs(self, get):
         get.path = public.GetConfigValue('root_path')
         public.ExecShell('rm -f '+public.GetConfigValue('logs_path')+'/*')
+        public.ExecShell('rm -rf '+public.GetConfigValue('logs_path')+'/history_backups/*')
+        public.ExecShell('rm -f '+public.GetConfigValue('logs_path')+'/pm2/*.log')
         if public.get_webserver() == 'nginx':
             public.ExecShell(
                 'kill -USR1 `cat '+public.GetConfigValue('setup_path')+'/nginx/logs/nginx.pid`')
@@ -1471,7 +1473,21 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             return public.returnMsg(False, '操作失败,请重新操作')
         myfiles = json.loads(session['selected']['data'])
         l = len(myfiles)
+        
         if get.type == '1':
+
+            for key in myfiles:
+                if sys.version_info[0] == 2:
+                    sfile = session['selected']['path'] + \
+                        '/' + key.encode('utf-8')
+                    dfile = get.path + '/' + key.encode('utf-8')
+                else:
+                    sfile = session['selected']['path'] + '/' + key
+                    dfile = get.path + '/' + key
+
+                if dfile.find(sfile) == 0:
+                    return public.returnMsg(False,'错误的复制逻辑，从{}复制到{}有包含关系，存在无限循环复制风险!'.format(sfile,dfile))
+
             for key in myfiles:
                 i += 1
                 public.writeSpeed(key, i, l)
@@ -2008,7 +2024,13 @@ cd %s
             return public.returnMsg(False,'指定地址不存在!')
         pdata = {}
         if 'expire' in get: pdata['expire'] = get.expire
-        if 'password' in get: pdata['password'] = get.password
+        if 'password' in get:
+            pdata['password'] = get.password
+            if len(pdata['password']) < 4 and len(pdata['password']) > 0:
+                return public.returnMsg(False,'提取密码长度不能小于4位')
+            if not re.match('^\w+$',pdata['password']):
+                return public.returnMsg(False,'提取密码中不能带有特殊符号')
+        
         if 'ps' in get: pdata['ps'] = get.ps
         public.M(my_table).where('id=?',(id,)).update(pdata)
         return public.returnMsg(True,'修改成功!')
@@ -2031,6 +2053,9 @@ cd %s
         }
         if len(pdata['password']) < 4 and len(pdata['password']) > 0:
             return public.returnMsg(False,'提取密码长度不能小于4位')
+
+        if not re.match('^\w+$',pdata['password']):
+            return public.returnMsg(False,'提取密码中不能带有特殊符号')
         #更新 or 插入
         token = public.M(my_table).where('filename=?',(get.filename,)).getField('token')
         if token:
@@ -2116,8 +2141,11 @@ cd %s
         php_bin = self.__get_php_bin(php_version)
         if not php_bin: 
             return public.returnMsg(False,'没有找到可用的PHP版本，或指定PHP版本未安装!')
-        if not os.path.exists(get.path + '/composer.json'): 
-            return public.returnMsg(False,'指定目录中没有找到composer.json配置文件!')
+        get.composer_cmd = get.composer_cmd.strip()
+        if get.composer_cmd == '':
+            if not os.path.exists(get.path + '/composer.json'): 
+                return public.returnMsg(False,'指定目录中没有找到composer.json配置文件!')
+        
         log_file = '/tmp/composer.log'
         user = ''
         if 'user' in get:
@@ -2136,7 +2164,15 @@ cd %s
             else:
                 public.ExecShell('export COMPOSER_HOME=/tmp && {}{} {} config -g --unset repos.packagist'.format(user,php_bin,composer_bin))
         #执行composer命令
-        composer_exec_str = '{} {} {} -vvv'.format(php_bin,composer_bin,get.composer_args)
+        if not get.composer_cmd:
+            composer_exec_str = '{} {} {} -vvv'.format(php_bin,composer_bin,get.composer_args)
+        else:
+            if get.composer_cmd.find('composer ') == 0 or get.composer_cmd.find('/usr/bin/composer ') == 0:
+                composer_cmd = get.composer_cmd.replace('composer ','').replace('/usr/bin/composer ','')
+                composer_exec_str = '{} {} {} -vvv'.format(php_bin,composer_bin,composer_cmd)
+            else:
+                composer_exec_str = '{} {} {} {} -vvv'.format(php_bin,composer_bin,get.composer_args,get.composer_cmd)
+
         if os.path.exists(log_file): os.remove(log_file)
         public.ExecShell("cd {} && export COMPOSER_HOME=/tmp && {} nohup {} &> {} && echo 'BT-Exec-Completed' >> {}  && rm -rf /home/www &".format(get.path,user,composer_exec_str,log_file,log_file))
         public.WriteLog('Composer',"在目录：{}，执行composer {}".format(get.path,get.composer_args))

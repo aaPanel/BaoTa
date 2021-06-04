@@ -16,8 +16,8 @@ try:
 except:
     pass
 class panelSSL:
-    __APIURL = 'http://www.bt.cn/api/Auth'
-    __APIURL2 = 'http://www.bt.cn/api/Cert'
+    __APIURL = public.GetConfigValue('home') + '/api/Auth'
+    __APIURL2 = public.GetConfigValue('home') + '/api/Cert'
     __UPATH = 'data/userInfo.json'
     __userInfo = None
     __PDATA = None
@@ -62,15 +62,15 @@ class panelSSL:
             result = json.loads(rtmp)
             result['data'] = self.En_Code(result['data'])
             if result['data']: 
-                bind = 'data/bind.pl'
-                if os.path.exists(bind): os.remove(bind)
+                # bind = 'data/bind.pl'
+                # if os.path.exists(bind): os.remove(bind)
                 public.writeFile(self.__UPATH,json.dumps(result['data']))
             del(result['data'])
             session['focre_cloud'] = True
             return result
         except Exception as ex:
-            bind = 'data/bind.pl'
-            if os.path.exists(bind): os.remove(bind)
+            # bind = 'data/bind.pl'
+            # if os.path.exists(bind): os.remove(bind)
             return public.returnMsg(False,'连接服务器失败!<br>' + str(rtmp))
     
     #删除Token
@@ -467,6 +467,7 @@ class panelSSL:
     #发送请求
     def request(self,dname):
         self.__PDATA['data'] = json.dumps(self.__PDATA['data'])
+        result= public.returnMsg(False,'请求失败,请稍候重试!')
         try:
             result = public.httpPost(self.__APIURL2 + '/' + dname,self.__PDATA)
             result = json.loads(result)

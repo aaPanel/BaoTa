@@ -10,7 +10,6 @@
 #--------------------------------
 # 宝塔公共库
 #--------------------------------
-
 import json,os,sys,time,re,socket,importlib,binascii,base64,io,string
 from random import choice
 _LAN_PUBLIC = None
@@ -46,18 +45,10 @@ def HttpGet(url,timeout = 6,headers = {}):
         @return string
     """
     if is_local(): return False
-    # home = 'www.bt.cn'
-    # host_home = 'data/home_host.pl'
-    # old_url = url
-    # if url.find(home) != -1:
-    #     if os.path.exists(host_home): 
-    #         headers['host'] = home
-    #         url = url.replace(home,readFile(host_home))
     rep_home_host()
     import http_requests
     res = http_requests.get(url,timeout=timeout,headers = headers)
     if res.status_code == 0:
-        # if old_url.find(home) != -1: return http_get_home(old_url,timeout,res.text)
         if headers: return False
         s_body = res.text
         return s_body
@@ -124,53 +115,15 @@ def HttpPost(url,data,timeout = 6,headers = {}):
         return string
     """
     if is_local(): return False
-    # home = 'www.bt.cn'
-    # host_home = 'data/home_host.pl'
-    # old_url = url
-    # if url.find(home) != -1:
-    #     if os.path.exists(host_home): 
-    #         headers['host'] = home
-    #         url = url.replace(home,readFile(host_home))
     rep_home_host()
     import http_requests
     res = http_requests.post(url,data=data,timeout=timeout,headers = headers)
     if res.status_code == 0:
-        # if old_url.find(home) != -1: return http_post_home(old_url,data,timeout,res.text)
         if headers: return False
         s_body = res.text
         return s_body
     s_body = res.text
     return s_body
-            
-
-def http_post_home(url,data,timeout,ex):
-    """
-        @name POST方式使用优选节点访问官网
-        @author hwliang<hwl@bt.cn>
-        @param url(string) 当前官网URL地址
-        @param data(dict) POST数据
-        @param timeout(int) 用于测试超时时间
-        @param ex(string) 上一次错误的响应内容
-        @return string 响应内容
-
-        如果已经是优选节点，将直接返回ex
-    """
-    try:
-        home = 'www.bt.cn'
-        if url.find(home) == -1: return ex
-        hosts_file = "config/hosts.json"
-        if not os.path.exists(hosts_file): return ex
-        hosts = json.loads(readFile(hosts_file))
-        headers = {"host":home}
-        for host in hosts:
-            new_url = url.replace(home,host)
-            res = HttpPost(new_url,data,timeout,headers)
-            if res: 
-                writeFile("data/home_host.pl",host)
-                set_home_host(host)
-                return res
-        return ex
-    except: return ex
 
 def httpPost(url,data,timeout=6):
     """
@@ -221,7 +174,6 @@ def FileMd5(filename):
         my_hash.update(b)
     f.close()
     return my_hash.hexdigest()
-
 
 def GetRandomString(length):
     """
@@ -428,7 +380,9 @@ def GetConfigValue(key):
     取配置值
     '''
     config = GetConfig()
-    if not key in config.keys(): return None
+    if not key in config.keys(): 
+        if key == 'download': return 'https://download.bt.cn'
+        return None
     return config[key]
 
 def SetConfigValue(key,value):
@@ -614,6 +568,8 @@ def phpReload(version):
         ExecShell('/etc/init.d/httpd reload')
     else:
         ExecShell('/etc/init.d/php-fpm-'+version+' reload')
+        ExecShell("/etc/init.d/php-fpm-{} start".format(version))
+
 
 def get_timeout(url,timeout=3):
     try:
@@ -623,6 +579,8 @@ def get_timeout(url,timeout=3):
     except: return 0,False
 
 def get_url(timeout = 0.5):
+    return 'https://download.bt.cn'
+
     import json
     try:
         pkey = 'node_url'
@@ -870,7 +828,7 @@ def submit_error(err_msg = None):
         pdata['os'] = system.system().GetSystemVersion()
         pdata['py_version'] = sys.version
         pdata['install_date'] = int(os.stat('/www/server/panel/class/common.py').st_mtime)
-        httpPost("http://www.bt.cn/api/panel/s_error",pdata,timeout=3)
+        httpPost(GetConfigValue('home') + "/api/panel/s_error",pdata,timeout=3)
     except:
         pass
 
@@ -1259,6 +1217,22 @@ def get_uuid():
     import uuid
     return uuid.UUID(int=uuid.getnode()).hex[-12:]
 
+#取计算机名
+def get_hostname():
+    import socket
+    return socket.gethostname()
+
+
+#取mysql datadir
+def get_datadir():
+    mycnf_file = '/etc/my.cnf'
+    if not os.path.exists(mycnf_file): return ''
+    mycnf = readFile(mycnf_file)
+    import re
+    tmp = re.findall(r"datadir\s*=\s*(.+)",mycnf)
+    if not tmp: return ''
+    return tmp[0]
+
 
 #进程是否存在
 def process_exists(pname,exe = None,cmdline = None):
@@ -1279,6 +1253,12 @@ def process_exists(pname,exe = None,cmdline = None):
             except:pass
         return False
     except: return True
+
+#pid是否存在
+def pid_exists(pid):
+    if os.path.exists('/proc/{}/exe'.format(pid)):
+        return True
+    return False
 
 
 #重启面板
@@ -1369,25 +1349,71 @@ def get_page(count,p=1,rows=12,callback='',result='1,2,3,4,5,8'):
 # 取面板版本
 def version():
     try:
-        from BTPanel import g
-        return g.version
-    except:
         comm = ReadFile('/www/server/panel/class/common.py')
         return re.search("g\.version\s*=\s*'(\d+\.\d+\.\d+)'",comm).groups()[0]
+    except:
+        return get_panel_version()
 
+def get_panel_version():
+    comm = ReadFile('/www/server/panel/class/common.py')
+    s_key = 'g.version = '
+    s_len = len(s_key)
+    s_leff = comm.find(s_key) + s_len
+    version = comm[s_leff:s_leff+6].strip().strip("'")
+    return version
 
 #取文件或目录大小
-def get_path_size(path):
+def get_path_size(path, exclude=[]):
+    """根据排除目录获取路径的总大小
+    
+    :path 目标路径
+    :exclude 排除路径单个字符串或者多个列表。匹配路径是基于path的相对路径,规则是
+        tar命令的--exclude规则的子集。
+    """
+    import fnmatch
     if not os.path.exists(path): return 0
     if not os.path.isdir(path): return os.path.getsize(path)
-    size_total = 0
-    for nf in os.walk(path):
-        for f in nf[2]:
-            filename = nf[0] + '/' + f
+    if type(exclude) != type([]):
+        exclude = [exclude]
+
+    path = path[0:-1] if path[-1] == "/" else path
+    path = os.path.normcase(path)
+    # print("path:"+ path)
+    # print("exclude:"+ str(exclude))
+    _exclude = exclude[0:]
+    for i, e in enumerate(_exclude):
+        if not e.startswith(path):
+            exclude.append(os.path.join(path, e))
+
+    # print(exclude)
+    total_size = 0
+    count = 0
+    for root, dirs, files in os.walk(path, topdown=True):
+        # filter path
+        for exc in exclude:
+            for d in dirs:
+                sub_dir = os.path.normcase(root+os.path.sep+d)
+                if fnmatch.fnmatch(sub_dir, exc) or d==exc:
+                    # print("排除目录:"+sub_dir)
+                    dirs.remove(d)
+        count += 1
+        for f in files:
+            to_exclude = False
+            count += 1
+            filename = os.path.normcase(root+os.path.sep+f)
             if not os.path.exists(filename): continue
             if os.path.islink(filename): continue
-            size_total += os.path.getsize(filename)
-    return size_total
+            # filter file
+            norm_filename = os.path.normcase(filename)
+            for fexc in exclude:
+                if fnmatch.fnmatch(norm_filename, fexc) or fexc==f:
+                    to_exclude = True
+                    # print("排除文件:"+norm_filename)
+                    break
+            if to_exclude: 
+                continue
+            total_size += os.path.getsize(filename)
+    return total_size
 
 #写关键请求日志
 def write_request_log(reques = None):
@@ -1548,22 +1574,54 @@ def de_crypt(key,strings):
         return strings
 
 
+#获取IP限制列表
+def get_limit_ip():
+    iplong_list = []
+    ip_file = 'data/limitip.conf'
+    if not os.path.exists(ip_file): return iplong_list
+
+    from BTPanel import cache
+    ikey = 'limit_ip'
+    iplong_list = cache.get(ikey)
+    if iplong_list: return iplong_list
+
+    iplong_list = []
+    iplist = ReadFile(ip_file)
+    if not iplist:return iplong_list
+    iplist = iplist.strip()
+    for limit_ip in iplist.split(','):
+        if not limit_ip: continue
+        limit_ip = limit_ip.split('-')
+        iplong = {}
+        iplong['min'] = ip2long(limit_ip[0])
+        if len(limit_ip) > 1:
+            iplong['max'] = ip2long(limit_ip[1])
+        else:
+            iplong['max'] = iplong['min']
+        iplong_list.append(iplong)
+
+    cache.set(ikey,iplong_list,3600)
+    return iplong_list
+
+
+
+
 #检查IP白名单
 def check_ip_panel():
-    ip_file = 'data/limitip.conf'
-    if os.path.exists(ip_file):
-        iplist = ReadFile(ip_file)
-        if iplist:
-            iplist = iplist.strip()
-            client_ip = GetClientIp()
-            if client_ip in ['127.0.0.1','localhost','::1']: return False
-            if not client_ip in iplist.split(','): 
-                errorStr = ReadFile('./BTPanel/templates/' + GetConfigValue('template') + '/error2.html')
-                try:
-                    errorStr = errorStr.format(getMsg('PAGE_ERR_TITLE'),getMsg('PAGE_ERR_IP_H1'),getMsg('PAGE_ERR_IP_P1',(GetClientIp(),)),getMsg('PAGE_ERR_IP_P2'),getMsg('PAGE_ERR_IP_P3'),getMsg('NAME'),getMsg('PAGE_ERR_HELP'))
-                except IndexError:pass
-                return errorStr
-    return False
+    iplong_list = get_limit_ip()
+    if not iplong_list: return False
+    client_ip = GetClientIp()
+    if client_ip in ['127.0.0.1','localhost','::1']: return False
+    client_ip_long = ip2long(client_ip)
+    for limit_ip in iplong_list:
+        if client_ip_long >= limit_ip['min'] and client_ip_long <= limit_ip['max']:
+            return False
+    
+    errorStr = ReadFile('./BTPanel/templates/' + GetConfigValue('template') + '/error2.html')
+    try:
+        errorStr = errorStr.format(getMsg('PAGE_ERR_TITLE'),getMsg('PAGE_ERR_IP_H1'),getMsg('PAGE_ERR_IP_P1',(GetClientIp(),)),getMsg('PAGE_ERR_IP_P2'),getMsg('PAGE_ERR_IP_P3'),getMsg('NAME'),getMsg('PAGE_ERR_HELP'))
+    except IndexError:pass
+    return errorStr
 
 #检查面板域名
 def check_domain_panel():
@@ -1640,7 +1698,7 @@ def sync_date():
         if os.path.exists(tip_file):
             if s_time - int(readFile(tip_file)) < 60: return False
             os.remove(tip_file)
-        time_str = HttpGet('http://www.bt.cn/api/index/get_time')
+        time_str = HttpGet(GetConfigValue('home') + '/api/index/get_time')
         new_time = int(time_str)
         time_arr = time.localtime(new_time)
         date_str = time.strftime("%Y-%m-%d %H:%M:%S", time_arr)
@@ -1739,7 +1797,7 @@ def request_php(version,uri,document_root,method='GET',pdata=b''):
     return result
 
 
-def get_fpm_address(php_version):
+def get_fpm_address(php_version,bind=False):
     '''
         @name 获取FPM请求地址
         @author hwliang<2020-10-23>
@@ -1755,7 +1813,10 @@ def get_fpm_address(php_version):
         if tmp[0].find('sock') != -1: return fpm_address
         if tmp[0].find(':') != -1:
             listen_tmp = tmp[0].split(':')
-            fpm_address = ('127.0.0.1',int(listen_tmp[1]))
+            if bind:
+                fpm_address = (listen_tmp[0],int(listen_tmp[1]))
+            else:
+                fpm_address = ('127.0.0.1',int(listen_tmp[1]))
         else:
             fpm_address = ('127.0.0.1',int(tmp[0]))
         return fpm_address
@@ -1792,7 +1853,7 @@ def get_php_version_conf(conf):
     '''
     if not conf: return '00'
     if conf.find('enable-php-') != -1:
-        rep = r"enable-php-([0-9]{2,3})\.conf"
+        rep = r"enable-php-(\w{2,5})\.conf"
         tmp = re.findall(rep,conf)
         if not tmp: return '00'
     elif conf.find('/usr/local/lsws/lsphp') != -1:
@@ -1822,6 +1883,25 @@ def get_site_php_version(siteName):
     if web_server == 'openlitespeed':
         conf = readFile('/www/server/panel/vhost/' + web_server + '/detail/' + siteName + '.conf')
     return get_php_version_conf(conf)
+
+
+def check_tcp(ip,port):
+    '''
+        @name 使用TCP的方式检测指定IP:端口是否能连接
+        @author hwliang<2021-06-01>
+        @param ip<string> IP地址
+        @param port<int> 端口
+        @return bool
+    '''
+    import socket
+    try:
+        s = socket.socket()
+        s.settimeout(5)
+        s.connect((ip.strip(),int(port)))
+        s.close()
+    except:
+        return False
+    return True
 
 
 def sub_php_address(conf_file,rep,tsub,php_version):
@@ -2392,11 +2472,30 @@ def cloud_check_domain(domain):
         check_domain_path = '/www/server/panel/data/check_domain/'
         if not os.path.exists(check_domain_path):
             os.makedirs(check_domain_path,384)
-        result = httpPost('https://www.bt.cn/api/panel/check_domain',{"domain":domain})
+        pdata = get_user_info()
+        pdata['domain'] = domain
+        result = httpPost('https://www.bt.cn/api/panel/check_domain',pdata)
         cd_file = check_domain_path + domain +'.pl'
         writeFile(cd_file,result)
     except:
         pass
+
+
+def get_user_info():
+    user_file = '/www/server/panel/data/userInfo.json'
+    if not os.path.exists(user_file): return {}
+    userInfo = {}
+    try:
+        userTmp = json.loads(readFile(user_file))
+        userInfo['uid'] = userTmp['uid']
+        userInfo['username'] = userTmp['username']
+        userInfo['serverid'] = userTmp['serverid']
+    except: pass
+    return userInfo
+
+def is_bind():
+    if not os.path.exists('data/bind.pl'): return True
+    return not not get_user_info()
 
 
 def send_file(data,fname='',mimetype = ''):
@@ -2895,3 +2994,22 @@ def return_is_send_info():
     ret['mail']=tongdao['user_mail']['user_name']
     ret['dingding']=tongdao['dingding']['dingding']
     return ret
+
+
+def check_site_path(site_path):
+    '''
+        @name 检查网站根目录是否为系统关键目录
+        @author hwliang<2021-05-31>
+        @param site_path<string> 网站根目录全路径
+        @return bool
+    '''
+    site_path = site_path.strip()
+    if site_path[-1] == '/': site_path = site_path[:-1]
+    if site_path in ['/www','/usr','/','/dev','/home','/media','/mnt','/opt','/tmp','/var']:
+        return False
+
+    site_path += '/'
+    error_paths = ['/www/Recycle_bin/','/www/backup/','/www/php_session/','/www/wwwlogs/','/www/server/','/etc/','/usr/','/var/','/boot/','/proc/','/sys/','/tmp/','/root/','/lib/','/bin/','/sbin/','/run/','/share/','/lib64/','/lib32/','/srv/']
+    for ep in error_paths:
+        if site_path.find(ep) == 0: return False
+    return True

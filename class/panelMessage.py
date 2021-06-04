@@ -12,7 +12,11 @@
 # +-------------------------------------------------------------------
 import os,sys,time
 import public,json
-from BTPanel import cache
+if os.environ.get('BT_TASK') != '1':
+    from BTPanel import cache
+else:
+    import cachelib
+    cache = cachelib.SimpleCache()
 
 class panelMessage:
     os = 'linux'
@@ -21,6 +25,7 @@ class panelMessage:
         if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'messages','%retry_num%')).count():
             public.M('messages').execute("alter TABLE messages add send integer DEFAULT 0",())
             public.M('messages').execute("alter TABLE messages add retry_num integer DEFAULT 0",())
+        pass
 
 
     def set_send_status(self, id, data):
@@ -42,21 +47,20 @@ class panelMessage:
     获取官网推送消息，一小时获取一次
     """
     def get_cloud_messages(self,args):
-        return {}
         ret = cache.get('get_cloud_messages')
         if ret: return public.returnMsg(True,'同步成功1!')
-
         data = {}        
         data['version'] = public.version()
         data['os'] = self.os
-        sUrl = public.GetConfigValue('home') + '/api/wpanel/get_messages';
-        
-        info = json.loads(public.httpPost(sUrl,data));
-        print(info)
+        sUrl = public.GetConfigValue('home') + '/api/wpanel/get_messages'
+        import http_requests
+        http_requests.DEFAULT_TYPE = 'src'
+        info = http_requests.post(sUrl,data).json()
+        # info = json.loads(public.httpPost(sUrl,data))
         for x in info:          
             count = public.M('messages').where('level=? and msg=?',(x['level'],x['msg'],)).count()
             if count: continue
-                
+            
             pdata = {
                 "level":x['level'],
                 "msg":x['msg'],

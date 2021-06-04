@@ -5534,10 +5534,11 @@ select[disabled]{
 	cursor: pointer;
 }
 .ace_conter_menu {
-	height: 40px;
+	height: 55px;
 	position: relative;
-	background: #383838;
+	background: #292929;
 	overflow: auto;
+	display: flex;
 }
 
 .ace_editor {
@@ -5545,7 +5546,7 @@ select[disabled]{
 }
 .ace_editors {
 	position: absolute;
-	top: 40px;
+	top: 55px;
 	right: 0;
 	bottom: 35px;
 	left: 0px;
@@ -5832,11 +5833,61 @@ select[disabled]{
 
 .ace_conter_menu>li{
 	float: left;
-	max-width: 300px;
-	height: 40px;
-	display: inline-block;
-	position: relative;
+    max-width: 300px;
+    height: 40px;
+    display: block;
+    position: relative;
 }
+
+/* 文件标签右键菜单 */
+.file-tag-box{
+    z-index: 100000;
+    padding: 5px 0;
+    width: 150px;
+    border: 1px solid #ececec;
+    position: fixed;
+    background: #fff;
+    border-radius: 2px;
+}
+
+.file-tag-box li{
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    width: 150px;
+    height: 30px;
+    font-size: 13px;
+    line-height: 30px;
+    padding-left: 35px;
+    box-sizing: border-box;
+    position: relative;
+    color: #555;
+    left: -1px;
+    cursor: pointer;
+}
+
+.file-tag-box li:hover{
+	background: #d4d6db;
+	cursor: pointer;
+}
+
+/*滚动条样式*/
+.ace_conter_menu::-webkit-scrollbar {
+    width: 4px;
+}
+
+.ace_conter_menu::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+    background: rgba(255,255,255,0.5);
+}
+
+.ace_conter_menu::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+    border-radius: 0;
+    background: rgba(255,255,255,0.2);
+}
+
 .ace_conter_menu .item:hover {
 	background: #313131;
 }
@@ -5847,15 +5898,15 @@ select[disabled]{
 	color: #fff;
 	background: #222;
 }
-/* .ace_conter_menu .active.item:before{
+.ace_conter_menu .active.item:before{
 	content: '';
     display: inline-block;
     width: 100%;
-    height: 1px;
+    height: 2px;
     background: #20a53a;
     position: absolute;
     bottom: 0;
-} */
+} 
 .ace_conter_menu .item.active .icon-tool {
 	display: block;
 }
@@ -6064,6 +6115,35 @@ select[disabled]{
 .menu-setUp .menu-conter{
 	padding-top: 15px;
 }
+
+.setUp{
+    position: relative;
+}
+
+.red-poins{
+    position: absolute;
+    width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background-color: red;
+	top: 20%;
+    right: 9%;
+}
+
+.editor_menu{
+    position: relative;
+}
+
+.red-history{
+    position: absolute;
+    width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background-color: red;
+	top: 73%;
+    right: 6.5%;
+}
+
 .ace_toolbar_menu .menu-titles{
 	display: inline-block;
 	font-size: 13px;
@@ -7290,11 +7370,29 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
     background-color: #000;
 }
 
-.soft_tips_text{
-	font-weight: 700;
-	display: inline-block;
-	font-size: 13px;
+/* 专业版优势 */
+.soft_tips_text {
+    /* font-weight: 700; */
+    display: inline-block;
+    font-size: 14px;
 }
+.showprofun .soft_tips_text{
+    display:block;
+}
+.alert.showprofun .btn-ground{
+    margin-left: 45px;
+    margin-top: 10px;
+}
+.soft_tips_text .pro_introduce{
+    display: inline-block;
+}
+.soft_tips_text .pro_ic_title .glyphicon{
+    color: #ff8d00;
+}
+.soft_tips_text .pro_ic_title div span:nth-child(2){
+    font-weight: initial;
+}
+/* 专业版优势 end*/
 
 .alert-ltd-success{
 	color: #7d7054;
@@ -12317,4 +12415,7 @@ select[name="disk-io"]{
     padding-left: 15px;
 }
 
-
+/*禁用拖拉*/
+textarea{
+    resize: none;
+}

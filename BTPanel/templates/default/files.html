@@ -230,6 +230,12 @@
         </div>
         <div class="filePage pagination page"></div>
     </div>
+    <ul class="file-tag-box" id="fileTag" style="display: none;">
+	    <li data-type="1"><span>关闭其它标签</span></li>
+	    <li data-type="2"><span>关闭右侧标签</span></li>
+	    <li data-type="3"><span>关闭所有标签</span></li>
+	    <!--<li data-type="4"><i class="rename-icon img-icon"></i><span>打开文件所在目录</span></li>-->
+    </ul>
 </div>
 <script type="text/template" id="upload_file_template">
 	<div class="upload_or_download_view">
@@ -269,7 +275,7 @@
             <span class="jumpLine"><i class="glyphicon glyphicon-pushpin" aria-hidden="true"></i><span>跳转行</span></span>
             <span class="fontSize"><i class="glyphicon glyphicon-text-width" aria-hidden="true"></i><span>字体</span></span>
             <span class="themes"><i class="glyphicon glyphicon-magnet" aria-hidden="true"></i><span>主题</span></span>
-            <span class="setUp"><i class="glyphicon glyphicon-cog" aria-hidden="true"></i><span>设置</span></span>
+            <span class="setUp"><i class="glyphicon glyphicon-cog" aria-hidden="true"></i><span>设置</span><div class="red-poins" style="display: none;"></div></span>
             <span class="helps"><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i><span>快捷键</span></span>
             <div class="pull-down" title="隐藏工具条" style="top: 0"><i class="glyphicon glyphicon-menu-down" aria-hidden="true"></i></div>
         </div>
@@ -400,8 +406,9 @@
                 		<li data-type="enableLiveAutocompletion">代码自动完成</li>
                 		<li data-type="enableSnippets">启用代码段</li>
                 		<li data-type="showInvisibles">显示隐藏字符</li>
+                		<li id="showHistory" data-type="showHistory">打开编辑器时，是否显示上次关闭的文件</li>
                 		<li data-type="showLineNumbers">显示行号</li>
-                		
+                		<div class="red-history" style="display: none;"></div>
                 	</ul>
                 </div>
             </div>

@@ -121,53 +121,68 @@ class system:
                 
                 
         tmp['type'] = data['webserver']
-        tmp['version'] = public.readFile(self.setupPath + '/'+data['webserver']+'/version.pl');
+        tmp['version'] = public.readFile(self.setupPath + '/'+data['webserver']+'/version.pl')
         tmp['status'] = False
-        result = public.ExecShell('/etc/init.d/' + serviceName + ' status')
-        if result[0].find('running') != -1: tmp['status'] = True
+        if tmp['version']: tmp['version'] = tmp['version'].strip()
+        try:
+            if serviceName == 'nginx':
+                pid_file = self.setupPath + '/nginx/logs/nginx.pid'
+            elif serviceName in ['httpd','apache']:
+                pid_file = self.setupPath + '/apache/logs/httpd.pid'
+            elif serviceName in ['openlitespeed']:
+                pid_file = '/run/openlitespeed.pid'
+            if os.path.exists(pid_file):
+                pid = int(public.readFile(pid_file))
+                tmp['status'] = public.pid_exists(pid)
+            else:
+                tmp['status'] = False
+        except:
+            result = public.ExecShell('/etc/init.d/' + serviceName + ' status')
+            if result[0].find('running') != -1: tmp['status'] = True
+
         data['web'] = tmp
         
         tmp = {}
-        vfile = self.setupPath + '/phpmyadmin/version.pl';
-        tmp['version'] = public.readFile(vfile);
+        vfile = self.setupPath + '/phpmyadmin/version.pl'
+        tmp['version'] = public.readFile(vfile)
         if tmp['version']: tmp['version'] = tmp['version'].strip()
-        tmp['setup'] = os.path.exists(vfile);
-        tmp['status'] = pstatus;
-        tmp['phpversion'] = phpversion.strip();
-        tmp['port'] = phpport;
-        tmp['auth'] = pauth;
-        data['phpmyadmin'] = tmp;
+        tmp['setup'] = os.path.exists(vfile)
+        tmp['status'] = pstatus
+        tmp['phpversion'] = phpversion.strip()
+        tmp['port'] = phpport
+        tmp['auth'] = pauth
+        data['phpmyadmin'] = tmp
         
         tmp = {}
-        tmp['setup'] = os.path.exists('/etc/init.d/tomcat');
+        tmp['setup'] = os.path.exists('/etc/init.d/tomcat')
         tmp['status'] = tmp['setup']
         #if public.ExecShell('ps -aux|grep tomcat|grep -v grep')[0] == "": tmp['status'] = False
-        tmp['version'] = public.readFile(self.setupPath + '/tomcat/version.pl');
-        data['tomcat'] = tmp;
+        tmp['version'] = public.readFile(self.setupPath + '/tomcat/version.pl')
+        data['tomcat'] = tmp
         
         tmp = {}
-        tmp['setup'] = os.path.exists(self.setupPath +'/mysql/bin/mysql');
-        tmp['version'] = public.readFile(self.setupPath + '/mysql/version.pl');
+        tmp['setup'] = os.path.exists(self.setupPath +'/mysql/bin/mysql')
+        tmp['version'] = public.readFile(self.setupPath + '/mysql/version.pl')
         tmp['status'] = os.path.exists('/tmp/mysql.sock')
         data['mysql'] = tmp
         
         tmp = {}
-        tmp['setup'] = os.path.exists(self.setupPath +'/redis/runtest');
-        tmp['status'] = os.path.exists('/var/run/redis_6379.pid');
-        data['redis'] = tmp;
+        tmp['setup'] = os.path.exists(self.setupPath +'/redis/runtest')
+        tmp['status'] = os.path.exists('/var/run/redis_6379.pid')
+        data['redis'] = tmp
         
         tmp = {}
-        tmp['setup'] = os.path.exists('/usr/local/memcached/bin/memcached');
-        tmp['status'] = os.path.exists('/var/run/memcached.pid');
-        data['memcached'] = tmp;
+        tmp['setup'] = os.path.exists('/usr/local/memcached/bin/memcached')
+        tmp['status'] = os.path.exists('/var/run/memcached.pid')
+        data['memcached'] = tmp
         
         tmp = {}
-        tmp['setup'] = os.path.exists(self.setupPath +'/pure-ftpd/bin/pure-pw');
-        tmp['version'] = public.readFile(self.setupPath + '/pure-ftpd/version.pl');
+        tmp['setup'] = os.path.exists(self.setupPath +'/pure-ftpd/bin/pure-pw')
+        tmp['version'] = public.readFile(self.setupPath + '/pure-ftpd/version.pl')
         tmp['status'] = os.path.exists('/var/run/pure-ftpd.pid')
         data['pure-ftpd'] = tmp
         data['panel'] = self.GetPanelInfo()
-        data['systemdate'] = public.ExecShell('date +"%Y-%m-%d %H:%M:%S %Z %z"')[0].strip();
+        data['systemdate'] = public.format_date("%Y-%m-%d %H:%M:%S %Z %z") #public.ExecShell('date +"%Y-%m-%d %H:%M:%S %Z %z"')[0].strip()
         data['show_workorder'] = not os.path.exists('data/not_workorder.pl')
         return data
     
@@ -177,15 +192,15 @@ class system:
         try:
             port = public.GetHost(True)
         except:
-            port = '8888';
+            port = '8888'
         domain = ''
         if os.path.exists('data/domain.conf'):
-           domain = public.readFile('data/domain.conf');
+           domain = public.readFile('data/domain.conf')
         
         autoUpdate = ''
-        if os.path.exists('data/autoUpdate.pl'): autoUpdate = 'checked';
+        if os.path.exists('data/autoUpdate.pl'): autoUpdate = 'checked'
         limitip = ''
-        if os.path.exists('data/limitip.conf'): limitip = public.readFile('data/limitip.conf');
+        if os.path.exists('data/limitip.conf'): limitip = public.readFile('data/limitip.conf')
         admin_path = '/'
         if os.path.exists('data/admin_path.pl'): admin_path = public.readFile('data/admin_path.pl').strip()
         
@@ -194,8 +209,8 @@ class system:
         #    if os.path.isdir('templates/' + template): templates.append(template);
         template = public.GetConfigValue('template')
         
-        check502 = '';
-        if os.path.exists('data/502Task.pl'): check502 = 'checked';
+        check502 = ''
+        if os.path.exists('data/502Task.pl'): check502 = 'checked'
         return {'port':port,'address':address,'domain':domain,'auto':autoUpdate,'502':check502,'limitip':limitip,'templates':templates,'template':template,'admin_path':admin_path}
     
     def GetPHPConfig(self,version):
@@ -430,7 +445,7 @@ class system:
             except Exception as ex: 
                 public.WriteLog('信息获取',str(ex))
                 continue
-        cache.set(key,diskInfo,60)
+        cache.set(key,diskInfo,10)
         return diskInfo
 
 

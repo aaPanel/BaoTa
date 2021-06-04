@@ -349,7 +349,6 @@ class ssh_terminal:
             @return bool
         '''
         self.is_running(rep)
-        return False
         if rep and not self._rep_ssh_config:
             return False
 

@@ -209,7 +209,7 @@ class panelAuth:
     
     def send_cloud(self,module,params):
         try:
-            cloudURL = 'http://www.bt.cn/api/Plugin/'
+            cloudURL = public.GetConfigValue('home') + '/api/Plugin/'
             userInfo = self.create_serverid(None)
             params['os'] = 'Linux'
             if 'status' in userInfo:
@@ -226,7 +226,7 @@ class panelAuth:
         
     def send_cloud_pro(self,module,params):
         try:
-            cloudURL = 'http://www.bt.cn/api/invite/'
+            cloudURL = public.GetConfigValue('home') + '/api/invite/'
             userInfo = self.create_serverid(None)
             params['os'] = 'Linux'
             if 'status' in userInfo:
@@ -291,4 +291,31 @@ class panelAuth:
     def get_cpuname(self):
         return public.ExecShell("cat /proc/cpuinfo|grep 'model name'|cut -d : -f2")[0].strip()
     
+    
+    def get_plugin_remarks(self,get):
+        ikey = 'plugin_remarks'
+        if ikey in session:
+            return session.get(ikey)
+        data = self.send_cloud_wpanel('get_plugin_remarks',{})
+        if not data: return public.returnMsg(False,'连接服务器失败!')
+        session[ikey] = data
+        return data
+
+    def send_cloud_wpanel(self,module,params):
+        try:
+            cloudURL = public.GetConfigValue('home') + '/api/panel/'
+            userInfo = self.create_serverid(None)
+            if 'status' in userInfo:
+                params['uid'] = 0
+                params['serverid'] = ''
+            else:
+                params['uid'] = userInfo['uid']
+                params['serverid'] = userInfo['serverid']
+            params['os'] = 'Linux'
+            result = public.httpPost(cloudURL + module,params)
+            
+            result = json.loads(result)
+            if not result: return None
+            return result
+        except: return None
     

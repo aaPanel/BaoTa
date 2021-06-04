@@ -1897,11 +1897,16 @@ var site = {
         comp_confirm: 0,
         comp_showlog: 0,
         exec_composer: function() {
-            site.edit.comp_confirm = layer.confirm('执行Composer的影响范围取决于该目录下的composer.json配置文件，继续吗？', { title: '确认执行Composer', closeBtn: 2, icon: 3 }, function(index) {
+            var title_msg = '执行Composer的影响范围取决于该目录下的composer.json配置文件，继续吗？';
+            if($("select[name='composer_args']").val()){
+                title_msg = '即将执行设定的composer命令，继续吗？';
+            }
+            site.edit.comp_confirm = layer.confirm(title_msg, { title: '确认执行Composer', closeBtn: 2, icon: 3 }, function(index) {
                 layer.close(site.edit.comp_confirm);
                 var pdata = {
                     php_version: $("select[name='php_version']").val(),
                     composer_args: $("select[name='composer_args']").val(),
+                    composer_cmd: $("input[name='composer_cmd']").val(),
                     repo: $("select[name='repo']").val(),
                     path: $("input[name='composer_path']").val(),
                     user: $("select[name='composer_user']").val()
@@ -1957,27 +1962,33 @@ var site = {
                 }
 
                 var com_body = '<from class="bt-form" style="padding:30px 0;display:inline-block;width: 630px;">' +
-                    '<div class="line"><span style="width: 105px;" class="tname">Composer版本</span><div class="info-r"><input readonly="readonly" style="background-color: #eee;width:180px;" name="composer_version" class="bt-input-text" value="' + (v_data.msg?v_data.msg:'未安装Composer') + '" /><button onclick="site.edit.update_composer();" style="margin-left: 5px;" class="btn btn-default btn-sm">'+(v_data.msg?'升级Composer':'安装Composer')+'</button></div></div>' +
+                    '<div class="line"><span style="width: 105px;" class="tname">Composer版本</span><div class="info-r"><input readonly="readonly" style="background-color: #eee;width:275px;" name="composer_version" class="bt-input-text" value="' + (v_data.msg?v_data.msg:'未安装Composer') + '" /><button onclick="site.edit.update_composer();" style="margin-left: 5px;" class="btn btn-default btn-sm">'+(v_data.msg?'升级Composer':'安装Composer')+'</button></div></div>' +
                     '<div class="line"><span style="width: 105px;" class="tname">PHP版本</span><div class="info-r">' +
-                    '<select class="bt-input-text" name="php_version" style="width:180px;">' +
+                    '<select class="bt-input-text" name="php_version" style="width:275px;">' +
                     '<option value="auto">自动选择</option>' +
                     php_versions +
                     '</select>' +
                     '</div></div>' +
                     '<div class="line"><span style="width: 105px;" class="tname">执行参数</span><div class="info-r">' +
-                    '<select class="bt-input-text" name="composer_args" style="width:180px;">' +
-                    '<option value="install">安装：install</option>' +
-                    '<option value="update">更新：update</option>' +
+                    '<select class="bt-input-text" name="composer_args" style="width:275px;">' +
+                    '<option value="install">install</option>' +
+                    '<option value="update">update</option>' +
+                    '<option value="create-project">create-project</option>' +
+                    '<option value="require">require</option>' +
+                    '<option value="other">自定义命令</option>' +
                     '</select>' +
                     '</div></div>' +
+                    '<div class="line"><span style="width: 105px;" class="tname">补充命令</span><div class="info-r">' +
+                    '<input style="width:275px;" class="bt-input-text" id="composer_cmd" name="composer_cmd"  placeholder="输入要操作的应用名称或完整Composer命令" type="text" value="" />' +
+                    '</div></div>' +
                     '<div class="line"><span style="width: 105px;" class="tname">镜像源</span><div class="info-r">' +
-                    '<select class="bt-input-text" name="repo" style="width:180px;">' +
+                    '<select class="bt-input-text" name="repo" style="width:275px;">' +
                     '<option value="https://mirrors.aliyun.com/composer/">阿里源(mirrors.aliyun.com)</option>' +
                     '<option value="repos.packagist">官方源(packagist.org)</option>' +
                     '</select>' +
                     '</div></div>' +
                     '<div class="line"><span style="width: 105px;" class="tname">执行用户</span><div class="info-r">' +
-                    '<select class="bt-input-text" name="composer_user" style="width:180px;">' +
+                    '<select class="bt-input-text" name="composer_user" style="width:275px;">' +
                     '<option value="www">www(推荐)</option>' +
                     '<option value="root">root(不建议)</option>' +
                     '</select>' +
@@ -1988,12 +1999,13 @@ var site = {
                     '<div class="line"><span style="width: 105px;height: 25px;" class="tname"> </span><span class="composer-msg" style="color:red;">' + msg + '</span></div>' +
                     '<div class="line" style="clear:both"><span style="width: 105px;" class="tname"> </span><div class="info-r"><button class="btn btn-success btn-sm" onclick="site.edit.exec_composer()">执行</button></div></div>' +
                     '</from>' +
-                    '<ul class="help-info-text c7" style="margin-top: 40px;">' +
+                    '<ul class="help-info-text c7" style="margin-top: 0px;">' +
                     '<li>Composer是PHP主流依赖包管理器，若您的项目使用Composer管理依赖包，可在此处对依赖进行升级或安装</li>' +
-                    '<li>执行目录：默认为当前网站根目录，请确保执行目录中包含composer.json配置文件</li>' +
+                    '<li>执行目录：默认为当前网站根目录</li>' +
                     '<li>执行用户：默认为www用户，除非您的网站以root权限运行，否则不建议使用root用户执行composer</li>' +
                     '<li>镜像源：提供【阿里源】和【官方源】，建议国内服务器使用【阿里源】，海外服务器使用【官方源】</li>' +
-                    '<li>执行参数：安装:install (安装依赖包) 或 更新:update (升级依赖包) , 请按需选用</li>' +
+                    '<li>执行参数：按需选择执行参数,可配合补充命令使用</li>' +
+                    '<li>补充命令：若此处为空，则按composer.json中的配置执行，此处支持填写完整composer命令</li>' +
                     '<li>PHP版本：用于执行composer的PHP版本，无特殊要求，默认即可，如安装出错，可尝试选择其它PHP版本</li>' +
                     '<li>Composer版本：当前安装的Composer版本，可点击右侧的【升级Composer】将Composer升级到最新稳定版</li>' +
                     '</ul>'
@@ -4684,24 +4696,39 @@ var site = {
                     }
                     var data = {
                         items: [
-                            { title: 'PHP版本', name: 'versions', value: sdata.phpversion, type: 'select', items: versions },
+                            {
+                                title: 'PHP版本', 
+                                name: 'versions', 
+                                value: sdata.phpversion, 
+                                type: 'select', 
+                                items: versions ,
+                                ps:'<input class="bt-input-text other-version" style="margin-right: 10px;width:300px;color: #000;" type="text" value="'+sdata.php_other+'" placeholder="连接配置，如：1.1.1.1:9001或unix:/tmp/php.sock" />'
+                            },
                             {
                                 text: '切换',
                                 name: 'btn_change_phpversion',
                                 type: 'button',
                                 callback: function(pdata) {
-                                    bt.site.set_phpversion(web.name, pdata.versions, function(ret) {
+                                    var other = $('.other-version').val();
+                                    if(pdata.versions == 'other' && other == ''){
+                                        layer.msg('自定义PHP版本时，PHP连接配置不能为空');
+                                        $('.other-version').focus();
+                                        return;
+                                    }
+                                    bt.site.set_phpversion(web.name, pdata.versions, other, function(ret) {
                                         if (ret.status) {
                                             var versions = $('[name="versions"]').val();
-                                            console.log(versions)
                                             versions = versions.slice(0, versions.length - 1) + '.' + versions.slice(-1);
                                             if (versions == '0.0') versions = '静态';
                                             site_table.$refresh_table_list(true);
                                             site.reload()
-                                        }
-                                        setTimeout(function() {
+                                            setTimeout(function() {
+                                                bt.msg(ret);
+                                            }, 1000);
+                                        }else{
                                             bt.msg(ret);
-                                        }, 2000);
+                                        }
+                                        
                                     })
                                 }
                             }
@@ -4709,11 +4736,28 @@ var site = {
                     }
                     var _form_data = bt.render_form_line(data);
                     var _html = $(_form_data.html);
-                    _html.append(bt.render_help(['请根据您的程序需求选择版本', '若非必要,请尽量不要使用PHP5.2,这会降低您的服务器安全性；', 'PHP7不支持mysql扩展，默认安装mysqli以及mysql-pdo。']));
+                    _html.append(bt.render_help(['请根据您的程序需求选择版本', '若非必要,请尽量不要使用PHP5.2,这会降低您的服务器安全性；', 'PHP7不支持mysql扩展，默认安装mysqli以及mysql-pdo。',"【自定义】可自定义PHP连接信息，选择此项需填写可用的PHP连接配置","【自定义】当前仅支持nginx，可配合[宝塔负载均衡 - 重构版]插件的TCP负载功能实现PHP负载集群","【PHP连接配置】支持TCP或Unix配置，示例：192.168.1.25:9001 或 unix:/tmp/php8.sock"]));
                     $('#webedit-con').append(_html);
                     bt.render_clicks(_form_data.clicks);
-                    $('#webedit-con').append('<div class="user_pw_tit" style="margin-top: 2px;padding-top: 11px;border-top: #ccc 1px dashed;"><span class="tit">session隔离</span><span class="btswitch-p"style="display: inline-flex;"><input class="btswitch btswitch-ios" id="session_switch" type="checkbox"><label class="btswitch-btn session-btn" for="session_switch" ></label></span></div><div class="user_pw" style="margin-top: 10px; display: block;"></div>' +
-                        bt.render_help(['开启后将会把session文件存放到独立文件夹独立文件夹，不与其他站点公用存储位置', '若您在PHP配置中将session保存到memcache/redis等缓存器时，请不要开启此选项']));
+                    if(sdata.phpversion != 'other'){
+                        $('#webedit-con').append('<div class="user_pw_tit" style="margin-top: 2px;padding-top: 11px;border-top: #ccc 1px dashed;"><span class="tit">session隔离</span><span class="btswitch-p"style="display: inline-flex;"><input class="btswitch btswitch-ios" id="session_switch" type="checkbox"><label class="btswitch-btn session-btn" for="session_switch" ></label></span></div><div class="user_pw" style="margin-top: 10px; display: block;"></div>' +
+                        bt.render_help(['开启后将会把session文件存放到独立文件夹，不与其他站点公用存储位置', '若您在PHP配置中将session保存到memcache/redis等缓存器时，请不要开启此选项']));
+                    }
+                    if(sdata.phpversion != 'other'){
+                        $('.other-version').hide();
+                    }
+                    setTimeout(function(){
+                        $('select[name="versions"]').change(function(){
+                            var phpversion = $(this).val();
+                            console.log(phpversion);
+                            if(phpversion == 'other'){
+                                $('.other-version').show();
+                            }else{
+                                $('.other-version').hide();
+                            }
+                        });
+                    },500);
+                    
 
                     function get_session_status() {
                         var loading = bt.load('正在获取session状态请稍候');

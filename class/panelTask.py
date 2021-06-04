@@ -215,6 +215,8 @@ class bt_task:
             except:
                 print(public.get_error_info())
 
+
+
     # 取任务执行日志
     def get_task_log(self, id, task_type, num=5):
         log_file = self.__task_path + str(id) + '.log'

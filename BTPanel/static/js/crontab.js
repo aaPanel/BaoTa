@@ -360,7 +360,7 @@ function edit_task_info(id){
 				$('.url_create').blur(function () {
 					obj.from.urladdress = $(this).val();
 				});
-				$('[aria-labelledby="cycle"] a').unbind().click(function () {
+				$('.layer-create-content [aria-labelledby="cycle"] a').unbind().click(function () {
 					$('.cycle_btn').find('b').attr('val',$(this).attr('value')).html($(this).html());
 					var type = $(this).attr('value');
 					switch(type){
@@ -438,12 +438,12 @@ function edit_task_info(id){
 					obj.from.type = $(this).attr('value');
 				});
 	
-				$('[aria-labelledby="week"] a').unbind().click(function () {
+				$('.layer-create-content [aria-labelledby="week"] a').unbind().click(function () {
 					$('.week_btn').find('b').attr('val',$(this).attr('value')).html($(this).html());
 					obj.from.week = $(this).attr('value');
 				});
 	
-				$('[aria-labelledby="backupTo"] a').unbind().click(function () {
+				$('.layer-create-content [aria-labelledby="backupTo"] a').unbind().click(function () {
 					$('.backup_btn').find('b').attr('val', $(this).attr('value')).html($(this).html());
 					obj.from.backupTo = $(this).attr('value');
 					if(obj.from.backupTo == 'localhost') {
@@ -1027,6 +1027,7 @@ function toBackup(type){
               </div>\
             </p>';
             $("#implement").html(sBody);
+            getselectname();
 		}
 		$("#implement").on('click','.dropdown ul li a',function(ev){
 			var sName = $("#sName").attr("val");

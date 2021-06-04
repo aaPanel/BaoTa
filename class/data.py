@@ -38,7 +38,7 @@ class data:
         temp['local'] = True
         try:
             s = socket.socket()
-            s.settimeout(0.15)
+            s.settimeout(0.01)
             s.connect((localIP,port))
             s.close()
         except:
@@ -142,14 +142,16 @@ class data:
                 conf = public.readFile(
                     self.setupPath + '/panel/vhost/' + self.web_server + '/detail/' + siteName + '.conf')
             if self.web_server == 'nginx':
-                rep = r"enable-php-([0-9]{2,3})\.conf"
+                rep = r"enable-php-(\w{2,5})\.conf"
             elif self.web_server == 'apache':
-                rep = r"php-cgi-([0-9]{2,3})\.sock"
+                rep = r"php-cgi-(\w{2,5})\.sock"
             else:
                 rep = r"path\s*/usr/local/lsws/lsphp(\d+)/bin/lsphp"
             tmp = re.search(rep,conf).groups()
             if tmp[0] == '00':
                 return '静态'
+            if tmp[0] == 'other':
+                return '其它'
             
             return tmp[0][0] + '.' + tmp[0][1]
         except:

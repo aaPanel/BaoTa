@@ -625,7 +625,7 @@ class ajax:
         import json
         try:
             if 'php_ext' in session: return True
-            if not session.get('download_url'): session['download_url'] = 'http://download.bt.cn'
+            if not session.get('download_url'): session['download_url'] = public.GetConfigValue('download')
             download_url = session['download_url'] + '/install/lib/phplib.json'
             tstr = public.httpGet(download_url)
             data = json.loads(tstr)

@@ -3102,6 +3102,7 @@ bt.control = {
                 },
                 formatter: obj.formatter
             },
+            grid:obj.grid || {},
             xAxis: {
                 type: 'category',
                 boundaryGap: false,
@@ -3116,6 +3117,7 @@ bt.control = {
                 type: 'value',
                 name: obj.unit,
                 boundaryGap: [0, '100%'],
+                splitNumber: obj.splitNumber,
                 min: 0,
                 splitLine: {
                     lineStyle: {
@@ -5087,9 +5089,9 @@ bt.site = {
             })
         }
     },
-    set_phpversion: function(siteName, version, callback) {
+    set_phpversion: function(siteName, version, other, callback) {
         var loading = bt.load();
-        bt.send('SetPHPVersion', 'site/SetPHPVersion', { siteName: siteName, version: version }, function(rdata) {
+        bt.send('SetPHPVersion', 'site/SetPHPVersion', { siteName: siteName, version: version,other:other }, function(rdata) {
             loading.close();
             if (callback) callback(rdata);
         })
@@ -5443,7 +5445,7 @@ bt.site = {
         })
     },
     get_all_phpversion: function(callback) {
-        bt.send('GetPHPVersion', 'site/GetPHPVersion', {}, function(rdata) {
+        bt.send('GetPHPVersion', 'site/GetPHPVersion', {s_type:1}, function(rdata) {
             if (callback) callback(rdata);
         })
     },

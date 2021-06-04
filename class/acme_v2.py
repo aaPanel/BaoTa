@@ -898,9 +898,10 @@ fullchain.pem       粘贴到证书输入框
         return p12.export()
 
     # 拆分根证书
-    def split_ca_data(self, cert):
-        datas = cert.split('-----END CERTIFICATE-----')
-        return {"cert": datas[0] + "-----END CERTIFICATE-----\n", "root": datas[1] + '-----END CERTIFICATE-----\n'}
+    def split_ca_data(self,cert):
+        sp_key = '-----END CERTIFICATE-----\n'
+        datas = cert.split(sp_key)
+        return {"cert": datas[0] + sp_key, "root": sp_key.join(datas[1:])}
 
     # 构造可选名称
     def get_alt_names(self, index):

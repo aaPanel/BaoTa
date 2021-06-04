@@ -12,7 +12,7 @@ try:
 except:
     public.ExecShell("pip install pyotp &")
 try:
-    from BTPanel import session,admin_path_checks,g,request
+    from BTPanel import session,admin_path_checks,g,request,cache
     import send_mail
 except:pass
 class config:
@@ -320,7 +320,10 @@ class config:
             public.SetConfigValue('title',get.webname)
 
         limitip = public.readFile('data/limitip.conf')
-        if get.limitip != limitip: public.writeFile('data/limitip.conf',get.limitip)
+        if get.limitip != limitip: 
+            public.writeFile('data/limitip.conf',get.limitip)
+            cache.set('limit_ip',[])
+
         
         public.writeFile('data/domain.conf',get.domain.strip())
         public.writeFile('data/iplist.txt',get.address)
@@ -363,7 +366,7 @@ class config:
             if not get.domain: get.domain = ''
             get.limitip = public.readFile('data/limitip.conf')
             if not get.limitip: get.limitip = ''
-            if not get.domain.strip() and not get.limitip.strip(): return public.returnMsg(False,'警告，关闭安全入口等于直接暴露你的后台地址在外网，十分危险，至少开启以下一种安全方式才能关闭：<a style="color:red;"><br>1、绑定访问域名<br>2、绑定授权IP</a>')
+            if not get.domain.strip() and not get.limitip.strip() and not os.path.exists('config/basic_auth.json'): return public.returnMsg(False,'警告，关闭安全入口等于直接暴露你的后台地址在外网，十分危险，至少开启以下一种安全方式才能关闭：<a style="color:red;"><br>1、绑定访问域名<br>2、绑定授权IP <br> 3.开启BasicAuth认证</a>')
 
         admin_path_file = 'data/admin_path.pl'
         admin_path = '/'
@@ -524,9 +527,21 @@ class config:
         rep = r"\s*pm\s*=\s*(\w+)\s*"
         tmp = re.search(rep, conf).groups()
         data['pm'] = tmp[0]
+
+        rep = r"\s*listen.allowed_clients\s*=\s*([\w\.,/]+)\s*"
+        tmp = re.search(rep, conf).groups()
+        data['allowed'] = tmp[0]
+
+
         data['unix'] = 'unix'
-        if not isinstance(public.get_fpm_address(version),str):
+        data['port'] = ''
+        data['bind'] = '/tmp/php-cgi-{}.sock'.format(version)
+        
+        fpm_address = public.get_fpm_address(version,True)
+        if not isinstance(fpm_address,str):
             data['unix'] = 'tcp'
+            data['port'] = fpm_address[1]
+            data['bind'] = fpm_address[0]
         
         return data
 
@@ -566,12 +581,24 @@ class config:
         if get.listen == 'unix':
             listen = '/tmp/php-cgi-{}.sock'.format(version)
         else:
-            listen = '127.0.0.1:10{}1'.format(version)
+            default_listen = '127.0.0.1:10{}1'.format(version)
+            if 'bind_port' in get:
+                if get.bind_port.find('sock') != -1:
+                    listen = default_listen
+                else:
+                    listen = get.bind_port
+            else:
+                listen = default_listen
             
 
         rep = r'\s*listen\s*=\s*.+\s*'
         conf = re.sub(rep, "\nlisten = "+listen+"\n", conf)
-        
+
+        if 'allowed' in get:
+            if not get.allowed: get.allowed = '127.0.0.1'
+            rep = r"\s*listen.allowed_clients\s*=\s*([\w\.,/]+)\s*"
+            conf = re.sub(rep, "\nlisten.allowed_clients = "+get.allowed+"\n", conf)
+
         public.writeFile(file,conf)
         public.phpReload(version)
         public.sync_php_address(version)
@@ -1665,7 +1692,7 @@ class config:
     def get_login_send(self,get):
         result={}
         import time
-        time.sleep(0.5)
+        time.sleep(0.01)
         if os.path.exists('/www/server/panel/data/login_send_mail.pl'):
             result['mail']=True
         else:
