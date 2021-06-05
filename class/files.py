@@ -2053,8 +2053,8 @@ cd %s
         }
         if len(pdata['password']) < 4 and len(pdata['password']) > 0:
             return public.returnMsg(False,'提取密码长度不能小于4位')
-
-        if not re.match('^\w+$',pdata['password']):
+        
+        if not re.match('^\w+$',pdata['password']) and pdata['password']:
             return public.returnMsg(False,'提取密码中不能带有特殊符号')
         #更新 or 插入
         token = public.M(my_table).where('filename=?',(get.filename,)).getField('token')
@@ -2313,6 +2313,7 @@ cd %s
         attribute['mode'] = str(oct(f_stat.st_mode)[-3:])         # 文件权限号
         attribute['md5'] = '大于100M或目录不计算'                        # 文件MD5
         attribute['sha1'] = '大于100M或目录不计算'                       # 文件sha1
+        attribute['lsattr'] = public.ExecShell('lsattr {}'.format(filename))[0].split(' ')[0]
         attribute['is_dir'] = os.path.isdir(filename)   # 是否为目录
         attribute['is_link'] = os.path.islink(filename)  # 是否为链接文件
         if attribute['is_link']:

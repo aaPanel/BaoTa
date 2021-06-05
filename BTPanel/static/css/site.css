@@ -5534,11 +5534,10 @@ select[disabled]{
 	cursor: pointer;
 }
 .ace_conter_menu {
-	height: 55px;
+	height: 40px;
 	position: relative;
 	background: #292929;
 	overflow: auto;
-	display: flex;
 }
 
 .ace_editor {
@@ -5546,7 +5545,7 @@ select[disabled]{
 }
 .ace_editors {
 	position: absolute;
-	top: 55px;
+	top: 40px;
 	right: 0;
 	bottom: 35px;
 	left: 0px;
