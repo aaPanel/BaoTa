@@ -2572,6 +2572,21 @@ def get_pdata():
     return pdata
 
 
+# 名称输入系列化
+def xssdecode(text):
+    cs = {"&quot":'"',"&#x27":"'"}
+    for c in cs.keys():
+        text = text.replace(c,cs[c])
+
+    str_convert = text
+    if sys.version_info[0] == 3:
+        import html
+        text2 = html.unescape(str_convert)
+    else:
+        text2 = cgi.unescape(str_convert)
+    return text2
+
+
 def get_root_domain(domain_name):
 			'''
 				@name 根据域名查询根域名和记录值

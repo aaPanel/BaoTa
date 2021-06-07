@@ -1190,6 +1190,7 @@ def down(token=None, fname=None):
                     "src_path": find['filename'],
                     "password": True,
                     "filename": find['filename'].split('/')[-1],
+                    "ps": find['ps'],
                     "total": find['total'],
                     "token": find['token'],
                     "expire": public.format_date(times=find['expire'])
@@ -1536,6 +1537,7 @@ def get_dir_down(filename, token, find):
 
         pdata = files.files().GetDir(args)
         pdata['token'] = token
+        pdata['ps'] = find['ps']
         pdata['src_path'] = find['filename']
         pdata['to_path'] = to_path
         if find['expire'] < (time.time() + (86400 * 365 * 10)):
@@ -1643,10 +1645,17 @@ def publicObject(toObject, defs, action=None, get=None):
         if get.path.find('./') != -1: return public.ReturnJson(False, 'INIT_PATH_NOT_SAFE'), json_header
         if get.path.find('->') != -1:
             get.path = get.path.split('->')[0].strip()
+        get.path = public.xssdecode(get.path)
+    if hasattr(get, 'filename'):
+        get.filename = public.xssdecode(get.filename)
+
     if hasattr(get, 'sfile'):
         get.sfile = get.sfile.replace('//', '/').replace('\\', '/')
+        get.sfile = public.xssdecode(get.sfile)
     if hasattr(get, 'dfile'):
         get.dfile = get.dfile.replace('//', '/').replace('\\', '/')
+        get.dfile = public.xssdecode(get.dfile)
+    
 
     if hasattr(toObject, 'site_path_check'):
         if not toObject.site_path_check(get): return public.ReturnJson(False, 'INIT_ACCEPT_NOT'), json_header

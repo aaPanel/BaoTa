@@ -18,10 +18,10 @@ import time
 
 class panelSetup:
     def init(self):
-        ua = request.headers.get('User-Agent','')
-        if ua:
-            ua = ua.lower()
-            if ua.find('spider') != -1 or ua.find('bot') != -1:
+        g.ua = request.headers.get('User-Agent','')
+        if g.ua:
+            ua = g.ua.lower()
+            if ua.find('spider') != -1 or g.ua.find('bot') != -1:
                 return redirect('https://www.baidu.com')
         
         g.version = '7.6.0'
@@ -158,6 +158,10 @@ class panelAdmin(panelSetup):
                     if not os.path.exists(s_file):
                         session.clear()
                         return redirect('/login')
+
+                if g.ua != session.get('login_user_agent',g.ua):
+                    session.clear()
+                    return redirect('/login')
                 
             if api_check:
                 try:

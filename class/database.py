@@ -680,7 +680,7 @@ SetLink
     def SetDataDir(self,get):
         if get.datadir[-1] == '/': get.datadir = get.datadir[0:-1]
         if len(get.datadir) > 32: return public.returnMsg(False,'数据目录长度不能超过32位')
-        if not re.search(r"^[0-9A-Za-z_/\\]$+",get.datadir): return public.returnMsg(False,'数据库路径中不能包含特殊符号')
+        if not re.search(r"^[0-9A-Za-z_/\\]+$",get.datadir): return public.returnMsg(False,'数据库路径中不能包含特殊符号')
         if not os.path.exists(get.datadir): public.ExecShell('mkdir -p ' + get.datadir)
 
         mysqlInfo = self.GetMySQLInfo(get)

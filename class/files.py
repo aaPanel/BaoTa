@@ -161,6 +161,20 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             if text2.find(rep) != -1: text2 = text2.replace(rep,reps[rep])
         return text2
 
+    # 名称输入系列化
+    def xssdecode(self,text):
+        cs = {"&quot":'"',"&#x27":"'"}
+        for c in cs.keys():
+            text = text.replace(c,cs[c])
+
+        str_convert = text
+        if sys.version_info[0] == 3:
+            import html
+            text2 = html.unescape(str_convert)
+        else:
+            text2 = cgi.unescape(str_convert)
+        return text2
+
     # 上传文件
     def UploadFile(self, get):
         from werkzeug.utils import secure_filename
@@ -295,6 +309,13 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             return str(result)
         return '0'
 
+
+    def __filename_flater(self,filename):
+        ms = {";":""}
+        for m in ms.keys():
+            filename = filename.replace(m,ms[m])
+        return filename
+
     # 取文件/目录列表
     def GetDir(self, get):
         if not hasattr(get, 'path'):
@@ -304,6 +325,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             get.path = get.path.encode('utf-8')
         if get.path == '':
             get.path = '/www'
+        get.path = self.xssdecode(get.path)
         if not os.path.exists(get.path):
             get.path = '/www/wwwroot'
             #return public.ReturnMsg(False, '指定目录不存在!')
@@ -400,11 +422,11 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                     # 判断文件是否已经被收藏
                     favorite = self.__check_favorite(filePath,data['STORE'])
                     if os.path.isdir(filePath):
-                        dirnames.append(filename+';'+size+';' + mtime+';'+accept+';'+user+';'+link + ';' +
+                        dirnames.append(self.__filename_flater(filename)+';'+size+';' + mtime+';'+accept+';'+user+';'+link + ';' +
                                         self.get_download_id(filePath)+';'+ self.is_composer_json(filePath)+';'
                                         +favorite+';'+self.__check_share(filePath))
                     else:
-                        filenames.append(filename+';'+size+';'+mtime+';'+accept+';'+user+';'+link+';'
+                        filenames.append(self.__filename_flater(filename)+';'+size+';'+mtime+';'+accept+';'+user+';'+link+';'
                                          +self.get_download_id(filePath)+';' + self.is_composer_json(filePath)+';'
                                          +favorite+';'+self.__check_share(filePath))
                     n += 1
@@ -431,7 +453,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                 file_info = self.__format_stat(filename, get.path)
                 if not file_info: continue
                 favorite = self.__check_favorite(filename, data['STORE'])
-                r_file = file_info['name'] + ';' + str(file_info['size']) + ';' + str(file_info['mtime']) + ';' + str(
+                r_file = self.__filename_flater(file_info['name']) + ';' + str(file_info['size']) + ';' + str(file_info['mtime']) + ';' + str(
                     file_info['accept']) + ';' + file_info['user'] + ';' + file_info['link']+';'\
                          + self.get_download_id(filename) + ';' + self.is_composer_json(filename)+';'\
                          + favorite+';'+self.__check_share(filename)
@@ -1076,10 +1098,13 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
     def GetFileBody(self, get):
         if sys.version_info[0] == 2:
             get.path = get.path.encode('utf-8')
+
+        get.path = self.xssdecode(get.path)
         if not os.path.exists(get.path):
             if get.path.find('rewrite') == -1:
                 return public.returnMsg(False, 'FILE_NOT_EXISTS', (get.path,))
             public.writeFile(get.path, '')
+
         if self.__get_ext(get.path) in ['gz', 'zip', 'rar', 'exe', 'db', 'pdf', 'doc', 'xls', 'docx', 'xlsx', 'ppt', 'pptx', '7z', 'bz2', 'png', 'gif', 'jpg', 'jpeg', 'bmp', 'icon', 'ico', 'pyc', 'class', 'so', 'pyd']:
             return public.returnMsg(False, '该文件格式不支持在线编辑!')
         if os.path.getsize(get.path) > 3145928:

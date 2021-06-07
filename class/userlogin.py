@@ -280,6 +280,7 @@ class userlogin:
             session['login'] = True
             session['username'] = userInfo['username']
             session['uid'] = userInfo['id']
+            session['login_user_agent'] = request.headers.get('User-Agent','')
             public.WriteLog('TYPE_LOGIN','LOGIN_SUCCESS',(userInfo['username'],public.GetClientIp()+ ":" + str(request.environ.get('REMOTE_PORT'))))
             self.limit_address('-')
             cache.delete('panelNum')
