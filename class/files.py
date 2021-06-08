@@ -163,17 +163,20 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
 
     # 名称输入系列化
     def xssdecode(self,text):
-        cs = {"&quot":'"',"&#x27":"'"}
-        for c in cs.keys():
-            text = text.replace(c,cs[c])
+        try:
+            cs = {"&quot":'"',"&#x27":"'"}
+            for c in cs.keys():
+                text = text.replace(c,cs[c])
 
-        str_convert = text
-        if sys.version_info[0] == 3:
-            import html
-            text2 = html.unescape(str_convert)
-        else:
-            text2 = cgi.unescape(str_convert)
-        return text2
+            str_convert = text
+            if sys.version_info[0] == 3:
+                import html
+                text2 = html.unescape(str_convert)
+            else:
+                text2 = cgi.unescape(str_convert)
+            return text2
+        except:
+            return text
 
     # 上传文件
     def UploadFile(self, get):

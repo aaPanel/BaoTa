@@ -797,12 +797,10 @@ def getSpeed():
 
 def downloadFile(url,filename):
     try:
-        if sys.version_info[0] == 2:
-            import urllib
-            urllib.urlretrieve(url,filename=filename ,reporthook= downloadHook)
-        else:
-            import urllib.request
-            urllib.request.urlretrieve(url,filename=filename ,reporthook= downloadHook)
+        import requests
+        res = requests.get(url,verify=False)
+        with open(filename,"wb") as f:
+            f.write(res.content)
     except:
         return False
     
@@ -2574,17 +2572,20 @@ def get_pdata():
 
 # 名称输入系列化
 def xssdecode(text):
-    cs = {"&quot":'"',"&#x27":"'"}
-    for c in cs.keys():
-        text = text.replace(c,cs[c])
+    try:
+        cs = {"&quot":'"',"&#x27":"'"}
+        for c in cs.keys():
+            text = text.replace(c,cs[c])
 
-    str_convert = text
-    if sys.version_info[0] == 3:
-        import html
-        text2 = html.unescape(str_convert)
-    else:
-        text2 = cgi.unescape(str_convert)
-    return text2
+        str_convert = text
+        if sys.version_info[0] == 3:
+            import html
+            text2 = html.unescape(str_convert)
+        else:
+            text2 = cgi.unescape(str_convert)
+        return text2
+    except:
+        return text
 
 
 def get_root_domain(domain_name):
