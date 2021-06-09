@@ -158,8 +158,8 @@ class panelAdmin(panelSetup):
                     if not os.path.exists(s_file):
                         session.clear()
                         return redirect('/login')
-
-                if g.ua != session.get('login_user_agent',g.ua):
+                ua_md5 = public.md5(g.ua)
+                if ua_md5 != session.get('login_user_agent',ua_md5):
                     session.clear()
                     return redirect('/login')
                 
