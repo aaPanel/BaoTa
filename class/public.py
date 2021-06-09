@@ -307,6 +307,13 @@ def ReadFile(filename,mode = 'r'):
     return f_body
 
 def readFile(filename,mode='r'):
+    '''
+        @name 读取指定文件数据
+        @author hwliang<2021-06-09>
+        @param filename<string> 文件名
+        @param mode<string> 文件打开模式，默认r
+        @return string or bytes or False 如果返回False则说明读取失败
+    '''
     return ReadFile(filename,mode)
 
 def WriteFile(filename,s_body,mode='w+'):
@@ -331,6 +338,14 @@ def WriteFile(filename,s_body,mode='w+'):
             return False
 
 def writeFile(filename,s_body,mode='w+'):
+    '''
+        @name 写入到指定文件
+        @author hwliang<2021-06-09>
+        @param filename<string> 文件名
+        @param s_boey<string/bytes> 被写入的内容，字节或字符串
+        @param mode<string> 文件打开模式，默认w+
+        @return bool
+    '''
     return WriteFile(filename,s_body,mode)
 
 def WriteLog(type,logMsg,args=(),not_web = False):
@@ -2880,8 +2895,8 @@ def send_mail(title,body,is_logs=False,is_type="堡塔登录提醒"):
             import send_mail
             send_mail22 = send_mail.send_mail()
             tongdao = send_mail22.get_settings()
-            if tongdao['user_mail']['mail_list']==0:return false
-            if not tongdao['user_mail']['info']: return false
+            if tongdao['user_mail']['mail_list']==0:return False
+            if not tongdao['user_mail']['info']: return False
             if len(tongdao['user_mail']['mail_list'])==1:
                 send_mail=tongdao['user_mail']['mail_list'][0]
                 send_mail22.qq_smtp_send(send_mail, title=title, body=body)
@@ -2896,8 +2911,8 @@ def send_mail(title,body,is_logs=False,is_type="堡塔登录提醒"):
             import send_mail
             send_mail22 = send_mail.send_mail()
             tongdao = send_mail22.get_settings()
-            if tongdao['user_mail']['mail_list'] == 0: return false
-            if not tongdao['user_mail']['info']: return false
+            if tongdao['user_mail']['mail_list'] == 0: return False
+            if not tongdao['user_mail']['info']: return False
             if len(tongdao['user_mail']['mail_list']) == 1:
                 send_mail = tongdao['user_mail']['mail_list'][0]
                 return send_mail22.qq_smtp_send(send_mail, title=title, body=body)
@@ -2913,7 +2928,7 @@ def send_dingding(body,is_logs=False,is_type="堡塔登录提醒"):
             import send_mail
             send_mail22 = send_mail.send_mail()
             tongdao = send_mail22.get_settings()
-            if not tongdao['dingding']['info']: return false
+            if not tongdao['dingding']['info']: return False
             tongdao = send_mail22.get_settings()
             if is_logs:
                 WriteLog2(is_type,body)
@@ -2925,7 +2940,7 @@ def send_dingding(body,is_logs=False,is_type="堡塔登录提醒"):
             import send_mail
             send_mail22 = send_mail.send_mail()
             tongdao = send_mail22.get_settings()
-            if not tongdao['dingding']['info']: return false
+            if not tongdao['dingding']['info']: return False
             tongdao = send_mail22.get_settings()
             return send_mail22.dingding_send(body)
         except:return False
