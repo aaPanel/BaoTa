@@ -1974,7 +1974,9 @@ html .menu .menu_btwaf:hover{
 }
 
 .plan .dropdown-menu {
-	min-width: 100px
+	min-width: 100px;
+    max-height: 450px;
+    overflow: auto;
 }
 
 .dropdown-menu>li>a {

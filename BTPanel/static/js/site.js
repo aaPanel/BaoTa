@@ -452,7 +452,7 @@ var site = {
 
         }).empty().html(html);
         if (!select.find('.bt_select_list li.active').length) {
-            console.log(select.find('.bt_select_list li:eq(0)'));
+            // console.log(select.find('.bt_select_list li:eq(0)'));
             select.find('.bt_select_list li:eq(0)').addClass('active');
             select.find('.bt_select_value .bt_select_content').text('分类: 默认分类');
         } else {
@@ -2046,7 +2046,7 @@ var site = {
             }).css({ 'width': '340px', 'heigth': '100px', 'left': '0px', 'top': '0px', 'padding-top': '10px', 'padding-left': '15px' })
             $('.newdomain').focus(function() {
                 placeholder.hide();
-                console.log(placeholder)
+                // console.log(placeholder)
                 loadT = layer.tips(placeholder.html(), $(this), { tips: [1, '#20a53a'], time: 0, area: $(this).width() });
             }).blur(function() {
                 if ($(this).val().length == 0) placeholder.show();
@@ -2223,7 +2223,6 @@ var site = {
                                                             text: '保存',
                                                             type: 'button',
                                                             callback: function(ldata) {
-                                                                console.log(ret)
                                                                 bt.files.set_file_body(ret.filename, ldata.dir_config, 'utf-8', function(sdata) {
                                                                     if (sdata.status) load_form.close();
                                                                     bt.msg(sdata);
@@ -2996,7 +2995,7 @@ var site = {
                                         <div class="divtable mtb10 ssl_order_list"  style="height: 290px;overflow-y: auto;">\
                                             <table class="table table-hover" id="ssl_order_list">\
                                                 <thead><tr><th width="120px">域名</th><th  width="220px">证书类型</th><th>到期时间</th><th>状态</th><th style="text-align:right;">操作</th></tr></thead>\
-                                                <tbody><tr><td colspan="5" style="text-align:center"><img src="/static/layer/skin/default/loading-2.gif" style="width:15px;vertical-align: middle;"><span class="ml5" style="vertical-align: middle;">正在获取证书列表，请稍后...</span></td></tr></tbody>\
+                                                <tbody><tr><td colspan="5" style="text-align:center"><img src="/static/layer/skin/default/loading-2.gif" style="width:15px;vertical-align: middle;"><span class="ml5" style="vertical-align: middle;">正在获取证书列表，请稍候...</span></td></tr></tbody>\
                                             </table>\
                                         </div>\
                                     </div><ul class="help-info-text c7">\
@@ -3034,7 +3033,7 @@ var site = {
                                                         if (config.code.indexOf('multi') > -1) index = 0;
                                                         if (config.code.indexOf('wildcard') > -1) index = 1;
                                                         if (config.code.indexOf('wildcard') > -1 && config.code.indexOf('multi') > -1) index = 2;
-                                                        console.log(index,arguments)
+                                                        // console.log(index,arguments)
                                                         switch (index) {
                                                             case 0:
                                                                 if (list.length > config.limit) {
@@ -3279,7 +3278,7 @@ var site = {
                                         bt.send('check_url_txt', 'ssl/check_url_txt', { url: url, content: content }, function(res) {
                                             loads.close();
                                             var html = '<span style="color:red">失败[' + res + ']</span><a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="bt-ico-ask" style="cursor: pointer;">?</a>'
-                                            if (res === '1') {
+                                            if (res === 1) {
                                                 html = '<a class="btlink">通过</a>';
                                             }
                                             $(_this).parents('tr').find('td:nth-child(2)').html(html)
@@ -3514,12 +3513,12 @@ var site = {
                                                     $(this).prev().click();
                                                 });
                                                 $('.business_pay').click(function() {
-                                                    var loadT = bt.load('正在生成支付订单，请稍后...'),
+                                                    var loadT = bt.load('正在生成支付订单，请稍候...'),
                                                         data = product_current,
                                                         num = 0;
                                                     if (typeof data.current_num == "undefined") data.current_num = data.num;
                                                     if (data.add_price !== 0) num = parseInt(data.current_num - data.num);
-
+                                                    add_domain_number = data.current_num;
                                                     bt.send('apply_cert_order_pay', 'ssl/apply_cert_order_pay', {
                                                         pdata: JSON.stringify({
                                                             pid: data.pid,
@@ -3532,7 +3531,6 @@ var site = {
                                                             is_check = true;
                                                             $('.bt_progress_content .bt_progress_item:eq(1)').addClass('active');
                                                             $('.ssl_applay_info').addClass('active').siblings().removeClass('active');
-                                                            console.log(data)
                                                             reader_applay_qcode($.extend({ name: data.title + (install_service ? '(包含人工服务)' : ''), price: (data.price + (install_service ? data.install_price : 0) + (((typeof data.current_num == "undefined" ? 0 : data.current_num) - data.num) * data.add_price)).toFixed(2), time: bt.format_data(new Date().getTime()) }, res.msg), function(info) {
                                                                 check_applay_status(function(rdata) {
                                                                     $('.bt_progress_content .bt_progress_item:eq(2)').addClass('active');
@@ -3639,7 +3637,6 @@ var site = {
                                                 $('.business_type .ssl_type_item:eq(0)').click();
 
                                                 function reader_product_info(data) {
-                                                    add_domain_number = data.current_num;
                                                     $('.business_original_price span').html(data.src_price);
                                                     $('.domain_number_input').val(data.current_num || data.num).attr('min', data.num);
                                                     $('.business_artificial .business_artificial_label span').html(data.install_price + '元/次');
@@ -3668,7 +3665,7 @@ var site = {
 
                                                 function reader_product_list(data, callback) {
                                                     var html = '';
-                                                    $('.business_class_list').html('<div class="business_class_loading">正在获取证书列表，请稍后...</div>')
+                                                    $('.business_class_list').html('<div class="business_class_loading">正在获取证书列表，请稍候...</div>')
                                                     bt.send('get_product_list', 'ssl/get_product_list', data, function(res) {
                                                         user_info = res.administrator;
                                                         product_list = res.data;
@@ -3731,7 +3728,7 @@ var site = {
                                     }
                                     // 确认证书信息
                                     function confirm_certificate_info(config) {
-                                      var userLoad =  bt.load('正在获取用户信息，请稍后...');
+                                      var userLoad =  bt.load('正在获取用户信息，请稍候...');
                                         bt.send('get_cert_admin', 'ssl/get_cert_admin', {}, function(res) {
                                           userLoad.close();
                                             var html = '';
@@ -3850,7 +3847,6 @@ var site = {
                                                         var data = {},
                                                             form = $('.perfect_ssl_info').serializeObject(),
                                                             loadT = null;
-                                                        console.log(config);
                                                         $('.perfect_ssl_info').find('input,textarea').each(function() {
                                                             var name = $(this).attr('name'),
                                                                 value = $(this).val(),
@@ -3873,7 +3869,7 @@ var site = {
                                                         req();
 
                                                         function req() {
-                                                            var loadT = bt.load('正在提交证书资料，请稍后...');
+                                                            var loadT = bt.load('正在提交证书资料，请稍候...');
                                                             bt.send('apply_order_ca', 'ssl/apply_order_ca', {
                                                                 pdata: JSON.stringify({
                                                                     pid: config.pid,
@@ -3895,7 +3891,13 @@ var site = {
                                                                     }
                                                                 })
                                                             }, function(res) {
-                                                                loadT.close();
+                                                                if (res.status) {
+                                                                    $('#ssl_tabs span.on').click();
+                                                                    verify_order_veiw(config.oid);
+                                                                    loadT.close();
+                                                                    layer.close(index);
+                                                                    return false;
+                                                                }
                                                                 if (typeof res.msg == "object") {
                                                                     for (var key in res.msg.errors) {
                                                                         if (Object.hasOwnProperty.call(res.msg.errors, key)) {
@@ -3906,11 +3908,7 @@ var site = {
                                                                 } else {
                                                                     bt.msg(res);
                                                                 }
-                                                                if (res.status) {
-                                                                    layer.close(index);
-                                                                    verify_order_veiw(config.oid);
-                                                                    $('#ssl_tabs span.on').click();
-                                                                }
+                                                                loadT.close();
                                                             });
                                                         }
                                                     });
@@ -4128,7 +4126,7 @@ var site = {
                                                                 return;
                                                             }
                                                         }
-                                                        var loadT = bt.load('正在提交证书资料，请稍后...');
+                                                        var loadT = bt.load('正在提交证书资料，请稍候...');
                                                         bt.send('ApplyDVSSL', 'ssl/ApplyDVSSL', $.extend(form, { path: web.path }), function(tdata) {
                                                             loadT.close();
                                                             if (tdata.msg.indexOf('<br>') != -1) {
@@ -4749,7 +4747,7 @@ var site = {
                     setTimeout(function(){
                         $('select[name="versions"]').change(function(){
                             var phpversion = $(this).val();
-                            console.log(phpversion);
+                            // console.log(phpversion);
                             if(phpversion == 'other'){
                                 $('.other-version').show();
                             }else{
@@ -5671,7 +5669,7 @@ var site = {
             title: "响应日志",
             on: true,
             callback:function(robj){
-              console.log(robj)
+            //   console.log(robj)
               bt.site.get_site_logs(web.name, function(rdata) {
                 var logs = { class: 'bt-logs', items: [{ name: 'site_logs', height: '570px', value: rdata.msg, width: '100%', type: 'textarea' }]},
                 _form_data = bt.render_form_line(logs);
@@ -5684,7 +5682,7 @@ var site = {
           },{
             title: "错误日志",
             callback:function(robj){
-              console.log(robj)
+            //   console.log(robj)
               bt.site.get_site_error_logs(web.name, function(rdata){
                 var logs = { class: 'bt-logs', items: [{ name: 'site_logs', height: '570px', value: rdata.msg, width: '100%', type: 'textarea' }]},
                 _form_data = bt.render_form_line(logs);

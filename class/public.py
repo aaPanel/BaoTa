@@ -803,10 +803,22 @@ def downloadFile(url,filename):
             f.write(res.content)
     except:
         return False
-    
-def downloadHook(count, blockSize, totalSize):
-    speed = {'total':totalSize,'block':blockSize,'count':count}
-    #print('%02d%%'%(100.0 * count * blockSize / totalSize))
+
+def exists_args(args,get):
+    '''
+        @name 检查参数是否存在
+        @author hwliang<2021-06-08>
+        @param args<list or str> 参数列表 允许是列表或字符串
+        @param get<dict_obj> 参数对像
+        @return bool 都存在返回True，否则抛出KeyError异常
+    '''
+    if type(args) == str:
+        args = args.split(',')
+    for arg in args:
+        if not arg in get:
+            raise KeyError('缺少必要参数: {}'.format(arg))
+    return True
+
 
 def get_error_info():
     import traceback
