@@ -283,14 +283,7 @@ class firewalls:
     
     #取SSH信息
     def GetSshInfo(self,get):
-        file = '/etc/ssh/sshd_config'
-        conf = public.readFile(file)
-        if not conf: conf = ''
-        rep = r"#*Port\s+([0-9]+)\s*\n"
-        tmp1 = re.search(rep,conf)
-        port = '22'
-        if tmp1:
-            port = tmp1.groups(0)[0]
+        port = public.get_ssh_port()
 
         pid_file = '/run/sshd.pid'
         if os.path.exists(pid_file):

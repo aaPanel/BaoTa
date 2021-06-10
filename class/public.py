@@ -2306,11 +2306,14 @@ def get_ssh_port():
     s_file = '/etc/ssh/sshd_config'
     conf = readFile(s_file)
     if not conf: conf = ''
-    rep = r"#*Port\s+([0-9]+)\s*\n"
-    tmp1 = re.search(rep,conf)
+    port_all = re.findall(r".*Port\s+[0-9]+",conf)
     ssh_port = 22
-    if tmp1:
-        ssh_port = int(tmp1.groups(0)[0])
+    for p in port_all:
+        rep = r"^\s*Port\s+([0-9]+)\s*"
+        tmp1 = re.findall(rep,p)
+        if tmp1:
+            ssh_port = int(tmp1[0])
+
     return ssh_port
 
 def set_error_num(key,empty = False,expire=3600):
