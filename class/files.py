@@ -488,6 +488,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             @param filename<string> 文件或目录全路径
             @return string
         '''
+        
         ps_path = '/www/server/panel/data/files_ps'
         f_key1 = '/'.join((ps_path,public.md5(filename)))
         if os.path.exists(f_key1):
@@ -496,6 +497,30 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         f_key2 = '/'.join((ps_path,public.md5(os.path.basename(filename))))
         if os.path.exists(f_key2):
             return public.readFile(f_key2)
+
+        pss = {
+            '/www/server/data':'此为MySQL数据库默认数据目录，请勿删除!',
+            '/www/server/mysql':'MySQL程序目录',
+            '/www/server/redis':'Redis程序目录',
+            '/www/server/mongodb':'MongoDB程序目录',
+            '/www/server/nvm':'PM2/NVM/NPM程序目录',
+            '/www/server/pass':'网站BasicAuth认证密码存储目录',
+            '/www/server/speed':'网站加速数据目录',
+            '/www/server/docker':'Docker插件程序与数据目录',
+            '/www/server/total':'网站监控报表数据目录',
+            '/www/server/btwaf':'WAF防火墙数据目录',
+            '/www/server/pure-ftpd':'ftp程序目录',
+            '/www/server/phpmyadmin':'phpMyAdmin程序目录',
+            '/www/server/rar':'rar扩展库目录，删除后将失去对RAR压缩文件的支持',
+            '/www/server/stop':'网站停用页面目录,请勿删除!',
+            '/www/server/nginx':'Nginx程序目录',
+            '/www/server/apache':'Apache程序目录',
+            '/www/server/cron':'计划任务脚本与日志目录',
+            '/www/server/php':'PHP目录，所有PHP版本的解释器都在此目录下',
+            '/www/server/tomcat':'Tomcat程序目录',
+            '/www/php_session':'PHP-SESSION隔离目录'
+        }
+        if filename in pss:  return pss[filename]
         return ''
 
 

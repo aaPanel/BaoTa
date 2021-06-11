@@ -3072,7 +3072,7 @@ def check_site_path(site_path):
         @param site_path<string> 网站根目录全路径
         @return bool
     '''
-    whites = ['/www/server/tomout/','/www/server/stop','/www/server/phpmyadmin']
+    whites = ['/www/server/tomcat','/www/server/stop','/www/server/phpmyadmin']
     for w in whites:
         if site_path.find(w) == 0: return True
     a,error_paths = get_sys_path()
