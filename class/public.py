@@ -817,7 +817,7 @@ def downloadFile(url,filename):
         with open(filename,"wb") as f:
             f.write(res.content)
     except:
-        return False
+        ExecShell("wget -O {} {}".format(filename,url))
 
 def exists_args(args,get):
     '''
