@@ -483,7 +483,7 @@ def serviceReload():
     return ServiceReload()
 
 
-def ExecShell(cmdstring, cwd=None, timeout=None, shell=True):
+def ExecShell(cmdstring, timeout=None, shell=True):
     a = ''
     e = ''
     import subprocess,tempfile
@@ -493,7 +493,19 @@ def ExecShell(cmdstring, cwd=None, timeout=None, shell=True):
         succ_f = tempfile.SpooledTemporaryFile(max_size=4096,mode='wb+',suffix='_succ',prefix='btex_' + rx ,dir='/dev/shm')
         err_f = tempfile.SpooledTemporaryFile(max_size=4096,mode='wb+',suffix='_err',prefix='btex_' + rx ,dir='/dev/shm')
         sub = subprocess.Popen(cmdstring, close_fds=True, shell=shell,bufsize=128,stdout=succ_f,stderr=err_f)
-        sub.wait()
+        if timeout:
+            s = 0
+            d = 0.01
+            while sub.poll() is None:
+                time.sleep(d)
+                s += d
+                if s >= timeout:
+                    if not err_f.closed: err_f.close()
+                    if not succ_f.closed: succ_f.close()
+                    return 'Timed out'
+        else:
+            sub.wait()
+
         err_f.seek(0)
         succ_f.seek(0)
         a = succ_f.read()
@@ -501,7 +513,7 @@ def ExecShell(cmdstring, cwd=None, timeout=None, shell=True):
         if not err_f.closed: err_f.close()
         if not succ_f.closed: succ_f.close()
     except:
-        print(get_error_info())
+        return '',get_error_info()
     try:
         #编码修正
         if type(a) == bytes: a = a.decode('utf-8')
@@ -3042,6 +3054,17 @@ def return_is_send_info():
     return ret
 
 
+def get_sys_path():
+    '''
+        @name 关键目录
+        @author hwliang<2021-06-11>
+        @return tuple
+    '''
+    a = ['/www','/usr','/','/dev','/home','/media','/mnt','/opt','/tmp','/var']
+    c = ['/www/Recycle_bin/','/www/backup/','/www/php_session/','/www/wwwlogs/','/www/server/','/etc/','/usr/','/var/','/boot/','/proc/','/sys/','/tmp/','/root/','/lib/','/bin/','/sbin/','/run/','/lib64/','/lib32/','/srv/']
+    return a,c
+
+
 def check_site_path(site_path):
     '''
         @name 检查网站根目录是否为系统关键目录
@@ -3049,13 +3072,12 @@ def check_site_path(site_path):
         @param site_path<string> 网站根目录全路径
         @return bool
     '''
+    a,error_paths = get_sys_path()
     site_path = site_path.strip()
     if site_path[-1] == '/': site_path = site_path[:-1]
-    if site_path in ['/www','/usr','/','/dev','/home','/media','/mnt','/opt','/tmp','/var']:
+    if site_path in a:
         return False
-
     site_path += '/'
-    error_paths = ['/www/Recycle_bin/','/www/backup/','/www/php_session/','/www/wwwlogs/','/www/server/','/etc/','/usr/','/var/','/boot/','/proc/','/sys/','/tmp/','/root/','/lib/','/bin/','/sbin/','/run/','/lib64/','/lib32/','/srv/']
     for ep in error_paths:
         if site_path.find(ep) == 0: return False
     return True

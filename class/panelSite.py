@@ -478,7 +478,9 @@ include /www/server/panel/vhost/openlitespeed/proxy/BTSITENAME/*.conf
 
         get.path = self.__get_site_format_path(get.path)
         
-        if not public.check_site_path(get.path): return public.returnMsg(False,'请不要将网站根目录设置到系统关键目录中')
+        if not public.check_site_path(get.path): 
+            a,c = public.get_sys_path()
+            return public.returnMsg(False,'请不要将网站根目录设置到以下关键目录中: <br>{}'.format("<br>".join(a+c)))
         try:
             siteMenu = json.loads(get.webname)
         except:
@@ -514,7 +516,7 @@ include /www/server/panel/vhost/openlitespeed/proxy/BTSITENAME/*.conf
         #if siteMenu['count']:
         #    domain            = get.domain.replace(' ','')
         #表单验证
-        if not files.files().CheckDir(self.sitePath) or not self.__check_site_path(self.sitePath): return public.returnMsg(False,'PATH_ERROR')
+        if not self.__check_site_path(self.sitePath): return public.returnMsg(False,'PATH_ERROR')
         if len(self.phpVersion) < 2: return public.returnMsg(False,'SITE_ADD_ERR_PHPEMPTY')
         reg = r"^([\w\-\*]{1,100}\.){1,4}([\w\-]{1,24}|[\w\-]{1,24}\.[\w\-]{1,24})$"
         if not re.match(reg, self.siteName): return public.returnMsg(False,'SITE_ADD_ERR_DOMAIN')
@@ -2824,9 +2826,10 @@ server
         Path = self.GetPath(get.path)
         if Path == "" or id == '0': return public.returnMsg(False,  "DIR_EMPTY")
         
-        import files
-        if not files.files().CheckDir(Path) or not self.__check_site_path(Path): return public.returnMsg(False,  "PATH_ERROR")
-        if not public.check_site_path(Path): return public.returnMsg(False,'请不要将网站根目录设置到系统关键目录中')
+        if not self.__check_site_path(Path): return public.returnMsg(False,  "PATH_ERROR")
+        if not public.check_site_path(Path):
+            a,c = public.get_sys_path()
+            return public.returnMsg(False,'请不要将网站根目录设置到以下关键目录中: <br>{}'.format("<br>".join(a+c)))
         
         SiteFind = public.M("sites").where("id=?",(id,)).field('path,name').find()
         if SiteFind["path"] == Path: return public.returnMsg(False,  "SITE_PATH_ERR_RE")

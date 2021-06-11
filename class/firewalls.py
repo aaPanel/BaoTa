@@ -305,7 +305,6 @@ class firewalls:
                 else:
                     status = public.ExecShell("/etc/init.d/sshd status | grep -e 'stopped' -e '已停'|grep -v grep")
             
-    #       return status;
             if len(status[0]) > 3:
                 status = False
             else:
