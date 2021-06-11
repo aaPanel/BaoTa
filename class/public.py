@@ -3055,7 +3055,7 @@ def check_site_path(site_path):
         return False
 
     site_path += '/'
-    error_paths = ['/www/Recycle_bin/','/www/backup/','/www/php_session/','/www/wwwlogs/','/www/server/','/etc/','/usr/','/var/','/boot/','/proc/','/sys/','/tmp/','/root/','/lib/','/bin/','/sbin/','/run/','/share/','/lib64/','/lib32/','/srv/']
+    error_paths = ['/www/Recycle_bin/','/www/backup/','/www/php_session/','/www/wwwlogs/','/www/server/','/etc/','/usr/','/var/','/boot/','/proc/','/sys/','/tmp/','/root/','/lib/','/bin/','/sbin/','/run/','/lib64/','/lib32/','/srv/']
     for ep in error_paths:
         if site_path.find(ep) == 0: return False
     return True
