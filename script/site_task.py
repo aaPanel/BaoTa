@@ -130,25 +130,25 @@ def logs_analysis():
 
 
 
-# oldEdate = public.readFile('data/edate.pl')
-# if not oldEdate: oldEdate = '0000-00-00'
-# mEdate = time.strftime('%Y-%m-%d',time.localtime())
-# edateSites = public.M('sites').where('edate>? AND edate<? AND (status=? OR status=?)',('0000-00-00',mEdate,1,u'正在运行')).field('id,name').select()
-# import panelSite
-# siteObject = panelSite.panelSite()
-# for site in edateSites:
-#     get = public.dict_obj()
-#     get.id = site['id']
-#     get.name = site['name']
-#     siteObject.SiteStop(get)
+oldEdate = public.readFile('data/edate.pl')
+if not oldEdate: oldEdate = '0000-00-00'
+mEdate = time.strftime('%Y-%m-%d',time.localtime())
+edateSites = public.M('sites').where('edate>? AND edate<? AND (status=? OR status=?)',('0000-00-00',mEdate,1,u'正在运行')).field('id,name').select()
+import panelSite
+siteObject = panelSite.panelSite()
+for site in edateSites:
+    get = public.dict_obj()
+    get.id = site['id']
+    get.name = site['name']
+    siteObject.SiteStop(get)
     
-#     bind_ftp = public.M('ftps').where('pid=?',get.id).find()
-#     if bind_ftp:
-#         get = public.dict_obj()
-#         get.id = bind_ftp['id']
-#         get.username = bind_ftp['name']
-#         get.status = '0'
-#         SetStatus(get)
-# oldEdate = mEdate
-# public.writeFile('/www/server/panel/data/edate.pl',mEdate)
+    bind_ftp = public.M('ftps').where('pid=?',get.id).find()
+    if bind_ftp:
+        get = public.dict_obj()
+        get.id = bind_ftp['id']
+        get.username = bind_ftp['name']
+        get.status = '0'
+        SetStatus(get)
+oldEdate = mEdate
+public.writeFile('/www/server/panel/data/edate.pl',mEdate)
 logs_analysis()
