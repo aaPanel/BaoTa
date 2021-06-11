@@ -1007,7 +1007,8 @@ class panelPlugin:
                 pid_file = "{}/{}.pid".format(datadir,public.get_hostname())
                 if os.path.exists(pid_file):
                     pid = int(public.readFile(pid_file))
-                    return public.pid_exists(pid)
+                    status = public.pid_exists(pid)
+                    if status: return status
 
         if pname in ['php-fpm'] and exe:
             pid_file = exe.replace('sbin/php-fpm','/var/run/php-fpm.pid')
