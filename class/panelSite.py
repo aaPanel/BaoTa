@@ -1586,11 +1586,20 @@ listener Default%s{
     #获取TLS1.3标记
     def get_tls13(self):
         nginx_bin = '/www/server/nginx/sbin/nginx'
-        nginx_v = public.ExecShell(nginx_bin + ' -V 2>&1|grep version:')[0]
-        nginx_v = re.search('nginx/1\.1(5|6|7|8|9).\d',nginx_v)
-        openssl_v = public.ExecShell(nginx_bin + ' -V 2>&1|grep OpenSSL')[0].find('OpenSSL 1.1.') != -1
-        if nginx_v and openssl_v:
-            return ' TLSv1.3'
+        nginx_v = public.ExecShell(nginx_bin + ' -V 2>&1')[0]
+        nginx_v_re = re.findall("nginx/(\d\.\d+).+OpenSSL\s+(\d\.\d+)",nginx_v,re.DOTALL)
+        if nginx_v_re:
+            if nginx_v_re[0][0] in ['1.8','1.9','1.7','1.6','1.5','1.4']:
+                return ''
+            if float(nginx_v_re[0][0]) >= 1.15 and float(nginx_v_re[0][-1]) >= 1.1:
+                return ' TLSv1.3'
+        else:
+            _v = re.search('nginx/1\.1(5|6|7|8|9).\d',nginx_v)
+            if not _v: 
+                _v = re.search('nginx/1\.2\d\.\d',nginx_v)
+            openssl_v = public.ExecShell(nginx_bin + ' -V 2>&1|grep OpenSSL')[0].find('OpenSSL 1.1.') != -1
+            if _v and openssl_v:
+                return ' TLSv1.3'
         return ''
   
     # 获取apache反向代理
