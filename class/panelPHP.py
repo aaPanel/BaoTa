@@ -61,15 +61,8 @@ class panelPHP:
         data = {}
         data['GET'] = request.args.to_dict()
         data['POST'] = {}
-        x_token = request.headers.get('x-http-token')
-        if x_token:
-            aes_pwd = x_token[:8] + x_token[40:48]
         for key in request.form.keys():
             data['POST'][key] = str(request.form.get(key,''))
-            if x_token:
-                if len(data['POST'][key]) > 5:
-                    if data['POST'][key][:6] == 'BT-CRT':
-                        data['POST'][key] = public.aes_decrypt(data['POST'][key][6:],aes_pwd)
         data['POST']['client_ip'] = public.GetClientIp()
         data = json.dumps(data)
         public.writeFile(self.__args_tmp,data)

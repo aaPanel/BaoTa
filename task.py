@@ -632,7 +632,7 @@ def check_panel_msg():
     python_bin = get_python_bin()
     while True:
         os.system('{} /www/server/panel/script/check_msg.py &'.format(python_bin))
-        time.sleep(600)
+        time.sleep(3600)
 
 
 def main():
