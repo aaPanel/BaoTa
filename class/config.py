@@ -131,7 +131,7 @@ class config:
     def set_dingding(self, get):
         if not (hasattr(get, 'url') or hasattr(get, 'atall')):
             return public.returnMsg(False, '请填写完整信息')
-        if get.atall:
+        if get.atall=='True' or  get.atall=='1':
             get.atall = 'True'
         else: get.atall = 'False'
         self.mail.dingding_insert(get.url.strip(), get.atall)

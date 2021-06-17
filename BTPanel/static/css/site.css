@@ -12415,6 +12415,13 @@ select[name="disk-io"]{
 .ssl_help_info{
     padding-left: 15px;
 }
+#config_server_table .table>tbody>tr>td, 
+#config_server_table .table>tbody>tr>th, 
+#config_server_table .table>thead>tr>td, 
+#config_server_table .table>thead>tr>th{
+    padding: 10px 8px;
+    line-height: 22px;
+}
 
 /*禁用拖拉*/
 textarea{
