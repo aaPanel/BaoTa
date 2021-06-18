@@ -829,7 +829,7 @@ def downloadFile(url,filename):
         with open(filename,"wb") as f:
             f.write(res.content)
     except:
-        ExecShell("wget -O {} {}".format(filename,url))
+        ExecShell("wget -O {} {} --no-check-certificate".format(filename,url))
 
 def exists_args(args,get):
     '''
