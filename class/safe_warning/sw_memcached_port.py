@@ -47,4 +47,3 @@ def check_run():
         return True,'无风险'
     
     return False,'当前Memcached端口：{}, 允许任意客户端访问，这可能导致数据泄露'.format(tmp[0])
-    

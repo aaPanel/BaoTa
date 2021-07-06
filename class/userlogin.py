@@ -46,6 +46,8 @@ class userlogin:
                 num = self.limit_address('+')
                 return public.returnJson(False,'LOGIN_USER_ERR',(str(num),)),json_header
             _key_file = "/www/server/panel/data/two_step_auth.txt"
+            #登陆告警
+            public.login_send_body("账号密码",userInfo['username'],public.GetClientIp(),str(request.environ.get('REMOTE_PORT')))
             if hasattr(post,'vcode'):
                 if self.limit_address('?',v="vcode") < 1: return public.returnJson(False,'您多次验证失败，禁止10分钟'),json_header
                 import pyotp
@@ -121,11 +123,13 @@ class userlogin:
 
     def request_temp(self,get):
         try:
+            if len(get.__dict__.keys()) > 2: return '存在无意义参数!'
             if not hasattr(get,'tmp_token'): return '错误的参数!'
             if len(get.tmp_token) != 48: return '错误的参数!'
             if not re.match(r"^\w+$",get.tmp_token):return '错误的参数!'
             skey = public.GetClientIp() + '_temp_login'
             if not public.get_error_num(skey,10): return '连续10次验证失败，禁止1小时'
+            
             s_time = int(time.time())
             data = public.M('temp_login').where('state=? and expire>?',(0,s_time)).field('id,token,salt,expire').find()
             if not data:
@@ -161,6 +165,7 @@ class userlogin:
             self.set_request_token()
             self.login_token()
             self.set_cdn_host(get)
+            public.login_send_body("临时授权",userInfo['username'],public.GetClientIp(),str(request.environ.get('REMOTE_PORT')))
             return redirect('/')
         except:
             return '登录失败，登录过程发生错误'
@@ -275,6 +280,7 @@ class userlogin:
             session['login'] = True
             session['username'] = userInfo['username']
             session['uid'] = userInfo['id']
+            session['login_user_agent'] = public.md5(request.headers.get('User-Agent',''))
             public.WriteLog('TYPE_LOGIN','LOGIN_SUCCESS',(userInfo['username'],public.GetClientIp()+ ":" + str(request.environ.get('REMOTE_PORT'))))
             self.limit_address('-')
             cache.delete('panelNum')

@@ -92,7 +92,7 @@ class vieCode:
         '''画干扰线'''
         if not self.__inCurve:
             return
-        x = y = 0;
+        x = y = 0
         
         #计算曲线系数
         a = random.uniform(1, self.__heigth / 2)
@@ -118,13 +118,13 @@ class vieCode:
     def __printString(self):
         '''打印验证码字符串'''
         font = ImageFont.truetype(self.__fontPatn, self.__fontSize)
-        x = 0;
+        x = 0
         #打印字符到画板
         for i in range(self.__length):
             #设置字体随机颜色
             color = (random.randint(30, 150), random.randint(30, 150), random.randint(30, 150))
             #计算座标
-            x = random.uniform(self.__fontSize*i*0.95,self.__fontSize*i*1.1);
-            y = self.__fontSize * random.uniform(0.3,0.5);
+            x = random.uniform(self.__fontSize*i*0.95,self.__fontSize*i*1.1)
+            y = self.__fontSize * random.uniform(0.3,0.5)
             #打印字符
             self.__draw.text((x, y),self.__code[i], font=font, fill=color)

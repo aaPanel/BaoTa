@@ -8,6 +8,7 @@
 # +-------------------------------------------------------------------
 from BTPanel import session, cache , request, redirect, g
 from datetime import datetime
+from public import dict_obj
 import os
 import public
 import json
@@ -15,26 +16,15 @@ import sys
 import time
 
 
-class dict_obj:
-    def __contains__(self, key):
-        return getattr(self, key, None)
-
-    def __setitem__(self, key, value): setattr(self, key, value)
-    def __getitem__(self, key): return getattr(self, key, None)
-    def __delitem__(self, key): delattr(self, key)
-    def __delattr__(self, key): delattr(self, key)
-    def get_items(self): return self
-
-
 class panelSetup:
     def init(self):
-        ua = request.headers.get('User-Agent','')
-        if ua:
-            ua = ua.lower()
-            if ua.find('spider') != -1 or ua.find('bot') != -1:
+        g.ua = request.headers.get('User-Agent','')
+        if g.ua:
+            ua = g.ua.lower()
+            if ua.find('spider') != -1 or g.ua.find('bot') != -1:
                 return redirect('https://www.baidu.com')
         
-        g.version = '7.5.32'
+        g.version = '7.6.0'
         g.title = public.GetConfigValue('title')
         g.uri = request.path
         g.debug = os.path.exists('data/debug.pl')
@@ -51,20 +41,26 @@ class panelSetup:
             else:
                 g.cdn_url = '/static'
             session['title'] = g.title
-            dirPath = '/www/server/phpmyadmin/pma'
-            if os.path.exists(dirPath):
-                public.ExecShell("rm -rf {}".format(dirPath))
-            
-            dirPath = '/www/server/adminer'
-            if os.path.exists(dirPath):
-                public.ExecShell("rm -rf {}".format(dirPath))
-            
-            dirPath = '/www/server/panel/adminer'
-            if os.path.exists(dirPath):
-                public.ExecShell("rm -rf {}".format(dirPath))
             
         g.is_aes = False
+        self.other_import()
         return None
+
+
+    def other_import(self):
+        g.o = public.readFile('data/o.pl')
+        g.other_css = []
+        g.other_js = []
+        if g.o:
+            s_path = 'BTPanel/static/other/{}'
+            css_name = "css/{}.css".format(g.o)
+            css_file = s_path.format(css_name)          
+            if os.path.exists(css_file): g.other_css.append('/static/other/{}'.format(css_name))
+            
+            js_name = "js/{}.js".format(g.o)
+            js_file = s_path.format(js_name)
+            if os.path.exists(js_file): g.other_js.append('/static/other/{}'.format(js_name))
+
 
 
 class panelAdmin(panelSetup):
@@ -100,7 +96,7 @@ class panelAdmin(panelSetup):
             session['brand'] = public.GetConfigValue('brand')
             session['product'] = public.GetConfigValue('product')
             session['rootPath'] = '/www'
-            session['download_url'] = 'http://download.bt.cn'
+            session['download_url'] = public.GetConfigValue('download')
             session['setupPath'] = session['rootPath'] + '/server'
             session['logsPath'] = '/www/wwwlogs'
             session['yaer'] = datetime.now().year
@@ -109,7 +105,7 @@ class panelAdmin(panelSetup):
         if not 'lan' in session:
             session['lan'] = public.GetLanguage()
         if not 'home' in session:
-            session['home'] = 'http://www.bt.cn'
+            session['home'] = public.GetConfigValue('home')
         return False
 
     # 检查Web服务器类型
@@ -162,6 +158,10 @@ class panelAdmin(panelSetup):
                     if not os.path.exists(s_file):
                         session.clear()
                         return redirect('/login')
+                ua_md5 = public.md5(g.ua)
+                if ua_md5 != session.get('login_user_agent',ua_md5):
+                    session.clear()
+                    return redirect('/login')
                 
             if api_check:
                 try:
@@ -280,15 +280,29 @@ class panelAdmin(panelSetup):
     def GetOS(self):
         if not 'server_os' in session:
             tmp = {}
-            if os.path.exists('/etc/redhat-release'):
+            issue_file = '/etc/issue'
+            redhat_release = '/etc/redhat-release'
+            if os.path.exists(redhat_release):
                 tmp['x'] = 'RHEL'
-                tmp['osname'] = public.ReadFile(
-                    '/etc/redhat-release').split()[0]
+                tmp['osname'] = self.get_osname(redhat_release)
             elif os.path.exists('/usr/bin/yum'):
                 tmp['x'] = 'RHEL'
-                tmp['osname'] = public.ReadFile('/etc/issue').split()[0]
-            elif os.path.exists('/etc/issue'):
+                tmp['osname'] = self.get_osname(issue_file)
+            elif os.path.exists(issue_file):
                 tmp['x'] = 'Debian'
-                tmp['osname'] = public.ReadFile('/etc/issue').split()[0]
+                tmp['osname'] = self.get_osname(issue_file)
             session['server_os'] = tmp
         return False
+
+
+    def get_osname(self,i_file):
+        '''
+            @name 从指定文件中获取系统名称
+            @author hwliang<2021-04-07>
+            @param i_file<string> 指定文件全路径
+            @return string
+        '''
+        if not os.path.exists(i_file): return ''
+        issue_str = public.ReadFile(i_file).strip()
+        if issue_str: return issue_str.split()[0]
+        return ''

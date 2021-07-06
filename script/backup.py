@@ -32,13 +32,29 @@ class backupTools(panelBackup.backup):
     def backupDatabaseAll(self,save):
         self.backup_database_all(save)
 
+def get_function_args(func):
+    import sys
+    if sys.version_info[0] == 3:
+        import inspect
+        return inspect.getfullargspec(func).args
+    else:
+        return func.__code__.co_varnames
 
 if __name__ == "__main__":
-    backup = backupTools()
+    cls_args = get_function_args(backupTools.__init__)
+    if "cron_info" in cls_args and len(sys.argv) == 5:
+        cron_name = sys.argv[4]
+        cron_info = {
+            "echo": cron_name
+        }
+        backup = backupTools(cron_info=cron_info)
+    else:
+        backup = backupTools()
+        
     type = sys.argv[1]
     if type == 'site':
         if sys.argv[2] == 'ALL':
-             backup.backupSiteAll( sys.argv[3])
+             backup.backupSiteAll(sys.argv[3])
         else:
             backup.backupSite(sys.argv[2], sys.argv[3])
     elif type == 'path':

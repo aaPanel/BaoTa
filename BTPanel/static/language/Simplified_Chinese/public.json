@@ -141,6 +141,7 @@
   "PHP_TIMEOUT_ERR": "请填写30-86400间的值!",
   "DATE_SUCCESS": "同步服务器时间成功!",
   "CONTROL_CLOSE": "监控服务已关闭!",
+  "CONTROL_CLEAR": "监控记录已清空!",
   "CONTROL_ERR": "保存天数不合法!",
   "PANEL_CLOSE": "面板已关闭!",
   "PANEL_SSL_CLOSE": "SSL已关闭，请使用http协议访问面板!",

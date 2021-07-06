@@ -28,7 +28,7 @@ var database = {
                     {
                         field: 'backup', width:130, title: '备份', templet: function (item) {
                             var backup = '';
-                            var _msg = lan.database.backup_empty;
+                            var _msg = '<span style="color:red;">' + lan.database.backup_empty + '</span>';
                             if (item.backup_count > 0) _msg = lan.database.backup_ok;
                             backup = "<a href='javascript:;' class='btlink' onclick=\"database.database_detail('" + item.id + "','" + item.name + "')\">" + _msg + "</a> | "
                             backup += "<a class='btlink' href=\"javascript:database.input_database('" + item.name + "');\" title='" + lan.database.input_title + "'>" + lan.database.input + "</a>";

@@ -12,7 +12,7 @@
 					<div class="file"></div>
 				</div>
 			</div>
-		</div>
+		</div>S
 		<div class="updated_title">松开鼠标即可上传文件或文件夹</div>
 	</div>
 	<!-- aceEditors -->
@@ -22,10 +22,6 @@
                 <span class="glyphicon glyphicon-arrow-left"></span>
                 <!-- <span>上一层</span> -->
             </div>
-			<!-- <div class="forward_path">
-				<span class="active" title="后退"><i class="icon-file icon-file-back"></i></span>
-				<span class="active" title="前进"><i class="icon-file icon-file-forward"></i></span>
-			</div> -->
 			<div class="file_path_input">
 				<div class="file_path_shadow"></div>
 				<div class="file_dir_view"></div>
@@ -58,6 +54,7 @@
 					<ul class="nav_down_list" data-menu="newFileType">
 						<li data-type="newBlankDir"><i class="file_menu_icon create_file_icon"></i><span>新建目录</span></li>
 						<li data-type="newBlankFile"><i class="file_new_icon"></i><span>新建空白文件</span></li>
+						<li data-type="newBlankFile"><i class="file_new_icon soft_link_file_icon"></i><span>软链接文件</span></li>
 					</ul>
 				</div>
 			</div>
@@ -81,6 +78,7 @@
             <!-- 挂载磁盘列表 -->
             <div class="nav_group mount_disk_list"></div>
 			<div class="float_r menu-header-foot">
+                <div class="file_menu_tips"><span class="glyphicon glyphicon-info-sign"></span><span>文件操作可使用右键</span></div>
                 <div class="nav_group multi hide">
                     <div class="batch_multi_title">
                         <span>批量操作</span>
@@ -271,7 +269,7 @@
             <span class="jumpLine"><i class="glyphicon glyphicon-pushpin" aria-hidden="true"></i><span>跳转行</span></span>
             <span class="fontSize"><i class="glyphicon glyphicon-text-width" aria-hidden="true"></i><span>字体</span></span>
             <span class="themes"><i class="glyphicon glyphicon-magnet" aria-hidden="true"></i><span>主题</span></span>
-            <span class="setUp"><i class="glyphicon glyphicon-cog" aria-hidden="true"></i><span>设置</span></span>
+            <span class="setUp"><i class="glyphicon glyphicon-cog" aria-hidden="true"></i><span>设置</span><div class="red-poins" style="display: none;"></div></span>
             <span class="helps"><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i><span>快捷键</span></span>
             <div class="pull-down" title="隐藏工具条" style="top: 0"><i class="glyphicon glyphicon-menu-down" aria-hidden="true"></i></div>
         </div>
@@ -403,7 +401,6 @@
                 		<li data-type="enableSnippets">启用代码段</li>
                 		<li data-type="showInvisibles">显示隐藏字符</li>
                 		<li data-type="showLineNumbers">显示行号</li>
-                		
                 	</ul>
                 </div>
             </div>

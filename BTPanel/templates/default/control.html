@@ -112,7 +112,7 @@
                         </div>
                         <div style="position: relative;">
                             <div id="diskview" style="width:100%; height:330px"></div>
-                            <div style="position: absolute;top: 15px;left: 6%;">
+                            <div style="position: absolute;top: 15px;left: 6%;" class="hide">
                                 单位：<div class="bt-crontab-select-button">
                                     <div class="bt-select-full only-one disk-unit">
                                         <div class="select-picker-search">
@@ -137,7 +137,7 @@
                 <div class="pl7">
                     <div class="bgw pb15">
                         <div class="title c6 plr15 mb15">
-                            <h3 class="c-tit f16">{{data['lan']['T4']}}</h3>
+                            <h3 class="c-tit f16"><span class="mr5" style="vertical-align: middle;">{{data['lan']['T4']}}:</span><select class="bt-input-text hide" style="vertical-align: middle;font-size:13px;" name="network-io" ><option value="all">全部</option></select></h3>
                             <div class="searcTime pull-right">
                                 <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="Wday(1,'network')">{{data['lan']['D1']}}</span><span class="gt on" onclick="Wday(0,'network')">{{data['lan']['D2']}}</span><span class="gt" onclick="Wday(7,'network')">{{data['lan']['D3']}}</span><span class="gt" onclick="Wday(30,'network')">{{data['lan']['D4']}}</span>
                                 <div class="ss">
@@ -152,7 +152,7 @@
                         </div>
                         <div style="position: relative;">
                             <div id="network" style="width:100%; height:330px"></div>
-                            <div style="position: absolute;top: 15px;left: 6%;">
+                            <div style="position: absolute;top: 15px;left: 6%;" class="hide">
                                 单位：<div class="bt-crontab-select-button">
                                     <div class="bt-select-full only-one network-unit">
                                         <div class="select-picker-search">
@@ -169,6 +169,7 @@
                                     </div>
                                 </div>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -181,7 +182,7 @@
         display: inline-block;
         position: relative;
         border: 1px solid #ccc;
-        border-radius: 4px;
+        border-radius: 2px;
         font-size: 12px;
         vertical-align: middle;
     }
@@ -246,6 +247,7 @@
         display: none;
         box-shadow: 0 1px 5px rgba(0, 0, 0, .2);
         border-radius: 4px;
+        z-index: 9999;
     }
 
     .bt-crontab-select-button .select-list-item.active {

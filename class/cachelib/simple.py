@@ -50,11 +50,9 @@ class SimpleCache(BaseCache):
 
     def get(self, key):
         try:
-            
             expires, value = self._cache[key]   
             if expires == 0 or expires > time():
-                return pickle.loads(value)                        
-
+                return pickle.loads(value)
         except (KeyError, pickle.PickleError):
             try:
                 if key[:4] == self.__session_key:
@@ -64,7 +62,6 @@ class SimpleCache(BaseCache):
                     with open(filename, 'rb') as fp:
                         _val = fp.read()
                         fp.close()
-      
                         expires = struct.unpack('f',_val[:4])[0] 
                         if expires == 0 or expires > time():
                             value = _val[4:]

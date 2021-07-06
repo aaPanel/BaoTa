@@ -17,12 +17,13 @@ import os,sys,re,public
 _title = '面板密码是否安全'
 _version = 1.0                              # 版本
 _ps = "检测面板帐号密码是否安全"              # 描述
-_level = 3                                  # 风险级别： 1.提示(低)  2.警告(中)  3.危险(高)
+_level = 0                                  # 风险级别： 1.提示(低)  2.警告(中)  3.危险(高)
 _date = '2020-08-04'                        # 最后更新时间
 _ignore = os.path.exists("data/warning/ignore/sw_panel_pass.pl")
 _tips = [
     "请到【设置】页面修改面板帐号密码",
-    "注意：请不要使用过于简单的帐号密码，以免造成安全隐患"
+    "注意：请不要使用过于简单的帐号密码，以免造成安全隐患",
+    "推荐使用高安全强度的密码：分别包含数字、大小写、特殊字符混合，且长度不少于7位。",
     ]
 _help = ''
 
@@ -1095,6 +1096,9 @@ winner
             p1 = password_salt(public.md5(lp),uid=1)
             if p1 == find['password']:
                 return False,'当前面板密码过于简单，存在安全隐患'
+
+    if not is_strong_password(find["password"]):
+        return False, '当前面板密码过于简单，存在安全隐患'
     return True,'无风险'
 
 salt = None
@@ -1111,5 +1115,41 @@ def password_salt(password,username=None,uid=None):
     global salt
     if not salt:
         salt = public.M('users').where('id=?',(uid,)).getField('salt')
+        if salt:
+            salt = salt[0]
+        else:
+            salt = ""
     return public.md5(public.md5(password+'_bt.cn')+salt)
-    
+
+
+def is_strong_password(password):
+    """判断密码复杂度是否安全
+
+    非弱口令标准：长度大于等于7，分别包含数字、小写、大写、特殊字符。
+    @password: 密码文本
+    @return: True/False
+    @author: linxiao<2020-9-19>
+    """
+
+    if len(password) < 7:
+        return False
+
+    import re
+    digit_reg = "[0-9]"  # 匹配数字 +1
+    lower_case_letters_reg = "[a-z]"  # 匹配小写字母 +1
+    upper_case_letters_reg = "[A-Z]"  # 匹配大写字母 +1
+    special_characters_reg = r"((?=[\x21-\x7e]+)[^A-Za-z0-9])"  # 匹配特殊字符 +1
+
+    regs = [digit_reg,
+            lower_case_letters_reg,
+            upper_case_letters_reg,
+            special_characters_reg]
+
+    grade = 0
+    for reg in regs:
+        if re.search(reg, password):
+            grade += 1
+
+    if grade == 4 or (grade == 3 and len(password) >= 9):
+        return True
+    return False

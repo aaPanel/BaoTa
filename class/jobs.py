@@ -164,17 +164,57 @@ def control_init():
     #check_firewall()
     check_dnsapi()
     clean_php_log()
-    #update_py37()
     files_set_mode()
     set_pma_access()
     # public.set_open_basedir()
     clear_fastcgi_safe()
-    
-    
+    update_py37()
+    run_script()
+
+def write_run_script_log(_log,rn='\n'):
+    _log_file = '/www/server/panel/logs/run_script.log'
+    public.writeFile(_log_file,_log + rn,'a+')
 
 
-
+def run_script():
+    run_tip = '/dev/shm/bt.pl'
+    if os.path.exists(run_tip): return
+    public.writeFile(run_tip,str(time.time()))
+    uptime = int(public.readFile('/proc/uptime').split()[0])
+    if uptime > 1800: return
+    run_config ='/www/server/panel/data/run_config'
+    script_logs = '/www/server/panel/logs/script_logs'
+    if not os.path.exists(run_config):
+        os.makedirs(run_config,384)
+    if not os.path.exists(script_logs):
+        os.makedirs(script_logs,384)
     
+    for sname in os.listdir(run_config):
+        script_conf_file = '{}/{}'.format(run_config,sname)
+        if not os.path.exists(script_conf_file): continue
+        script_info = json.loads(public.readFile(script_conf_file))
+        exec_log_file = '{}/{}'.format(script_logs,sname)
+
+        if not os.path.exists(script_info['script_file']) \
+            or script_info['script_file'].find('/www/server/panel/plugin/') != 0 \
+                or not re.match('^\w+$',script_info['script_file']): 
+            os.remove(script_conf_file)
+            if os.path.exists(exec_log_file): os.remove(exec_log_file)
+            continue
+
+
+        if script_info['script_type'] == 'python':
+            _bin = public.get_python_bin()
+        elif script_info['script_type'] == 'bash':
+            _bin = '/usr/bin/bash'
+            if not os.path.exists(_bin): _bin = 'bash'
+        
+        exec_script = 'nohup {} {} &> {} &'.format(_bin,script_info['script_file'],exec_log_file)
+        public.ExecShell(exec_script)
+        script_info['last_time'] = time.time()
+        public.writeFile(script_conf_file,json.dumps(script_info))
+
+
 def clear_fastcgi_safe():
     try:
         fastcgifile = '/www/server/nginx/conf/fastcgi.conf'

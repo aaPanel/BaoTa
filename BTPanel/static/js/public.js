@@ -2,7 +2,6 @@ $(function(){
     $.fn.extend({
         fixedThead:function(options){
             var _that = $(this);
-            console.log(_that);
             var option = {
                 height:400,
                 shadow:true,
@@ -92,6 +91,7 @@ $(function(){
         }
         
     });
+    
 }(jQuery))
 
 $(document).ready(function() {
@@ -706,13 +706,17 @@ var aceEditor = {
 		
 		// 当前根目录操作，新建文件或目录
 		$('.ace_dir_tools').on('click','.folder_down_up li',function(e){
-			var _type = parseInt($(this).attr('data-type'));
+			var _type = parseInt($(this).attr('data-type')),element = $('.cd-accordion-menu'),group = 0;
+			if($('.file_fold.bg').length > 0 && $('.file_fold.bg').data('file') != 'files'){
+				element = $('.file_fold.bg');
+				group = parseInt($('.file_fold.bg').data('group'));
+			}
 			switch(_type){
 				case 2:
-					_this.newly_file_type_dom($('.cd-accordion-menu'),0,0);
+					_this.newly_file_type_dom(element,group,0);
 				break;
 				case 3:
-					_this.newly_file_type_dom($('.cd-accordion-menu'),0,1);
+					_this.newly_file_type_dom(element,group,1);
 				break;
 			}
 			_this.refresh_config = {
@@ -955,7 +959,7 @@ var aceEditor = {
 				$('.file_fold .newly_file_input').focus();
 			break;
 			case 5:
-				GetFileBytes(_path);
+				window.open('/download?filename=' + encodeURIComponent(_path));
 			break;
 			case 6:
 				var is_files =  _active.attr('data-file') === 'Files'
@@ -1534,6 +1538,7 @@ var aceEditor = {
 		    }
 		}
 		if(!this.editor[id].historys_file) $('[data-menu-path="'+ (this.editor[id].path) +'"]').find('.file_fold').removeClass('active bg');
+		this.editor[id].ace.destroy();
 		delete this.editor[id];
 		if(this.editorLength === 0){
 			this.ace_active = '';
@@ -2153,7 +2158,7 @@ function NewDelFile(c) {
 				icon: 2
 			})
 		}
-		GetDiskList(a)
+		this.get_file_list(a);
 	})
 }
 
@@ -4180,7 +4185,6 @@ MessageBox.prototype = {
     // websocket持久化连接
     connect:function(work_order2, callback){
 		var that = this;
-		console.log("调用connect")
 		var workorder = that.workorder;
 		if (that.bt_uid && that.bt_user){
 			// 判断当前websocket连接是否存在
@@ -4189,7 +4193,7 @@ MessageBox.prototype = {
 				try{
 					this.bws = new WebSocket(location);
 				}catch(err){
-					console.log("websocket连接异常！")
+					// console.log("websocket连接异常！")
 				}
 				this.bws.addEventListener('message',function(ev){that.on_message(ev)});
 				this.bws.addEventListener('close',function(ev){that.on_close(ev)});
@@ -4200,15 +4204,14 @@ MessageBox.prototype = {
 			}
 		}else{
 			// 提示用户绑定账号
-			console.log("请先绑定官网账号。")
+			// console.log("请先绑定官网账号。")
 		}
 
     },
     //连接服务器成功
     on_open:function(ws_event){
     // this.send(JSON.stringify(this.ssh_info || {}))
-        console.log("webscoket连接成功");
-        console.log(ws_event.data);
+        // console.log(ws_event.data);
     },
     //服务器消息事件
     on_message: function (ws_event){
@@ -4232,7 +4235,7 @@ MessageBox.prototype = {
 					}
 				}
 				if(window_flag){
-					console.log("数据重复");
+					// console.log("数据重复");
 				}else{
 					if (!flag && _this.interface_flag=="chat"){
 						// 显示消息
@@ -4296,7 +4299,7 @@ MessageBox.prototype = {
 								$('.chat-number').html(num+"条未读");
 							}
 						}catch(err){
-							console.log("工单消息与关闭冲突！")
+							// console.log("工单消息与关闭冲突！")
 						}
 
 					}
@@ -4315,15 +4318,13 @@ MessageBox.prototype = {
 				}
 			}
 		}catch(err){
-		    console.log(err)
-			console.log("消息格式错误！")
+			// console.log("消息格式错误！")
 		}
     },
     //websocket关闭事件
     on_close: function (ws_event) {
         this.bws = null;
-		console.log("webscoket连接断开");
-		console.log(ws_event)
+		// console.log("webscoket连接断开");
     },
     //websocket错误事件
     on_error: function (ws_event) {
@@ -4334,7 +4335,7 @@ MessageBox.prototype = {
             // Term.term.write(msg)
             // Term.state = 3;
         }else{
-            console.log(ws_event)
+            // console.log(ws_event)
         }
     },
     //发送数据
@@ -4913,7 +4914,7 @@ MessageBox.prototype = {
 				try{
 					type==3?_this.send_server(_this, JSON.stringify({"id":id, "type":3,"content":content,"workorder":workorder})):_this.send_server(_this, JSON.stringify({"id":snow_id, "type":type, "content":content,"workorder":workorder,"from_client":true,"sender":_this.bt_user}));
 				}catch(err){
-					console.log("消息发送失败")
+					// console.log("消息发送失败")
 				}
 			}
 		}
@@ -5285,7 +5286,6 @@ MessageBox.prototype = {
 		try{
 			var rdata = JSON.parse(JSON.stringify(_this.history_list));
 		}catch(err){
-			console.log("没有历史工单！")
 		}
 		var rdata = JSON.parse(JSON.stringify(_this.history_list));
 		$('#historyTable').empty();
@@ -5377,7 +5377,6 @@ MessageBox.prototype = {
 			    try{
 			        var url = URL.createObjectURL(blob);
 			    }catch(err){
-			        console.log("格式转换错误")
 			    }
 				callback.call(this, url); //回掉函数获取Base64编码
 				canvas = null;
@@ -5390,7 +5389,7 @@ MessageBox.prototype = {
 				try{
 				    dataURL = canvas.toDataURL("image/");
 				}catch(err){
-				    console.log("格式转换错误")
+				    // console.log("格式转换错误")
 				}
 				callback.call(this, dataURL); //回掉函数获取Base64编码
 				canvas = null;
@@ -5457,7 +5456,6 @@ MessageBox.prototype = {
 					$('.chat-number').html(num-1+"条未读");
 				}
 			}catch(err){
-				console.log("气泡数据异常！")
 			}
 		}
 		if(flag){
@@ -5644,7 +5642,7 @@ MessageBox.prototype = {
 						  //      }
         //                     });
 						}catch(err){
-							console.log("操作1不安全:"+err)
+							console.log("操作1不安全")
 						}
 					}else{
 						try{
@@ -5749,8 +5747,7 @@ MessageBox.prototype = {
 			clearInterval(_this.ping);
 			_this.workorder=undefined;
 		}catch(err){
-			console.log("断开连接异常！");
-			console.log(err);
+			// console.log("断开连接异常！");
 		}
 
 	},
@@ -5957,12 +5954,11 @@ MessageBox.prototype = {
 		var _this = this,
 		interval = 15000,i=0;
 		if (_this.bws==null || _this.bws.readyState == 3 || _this.bws.readyState == 2) {
-			console.log("重新连接");
 			_this.connect(workorder);
 			try{
 				_this.send_server(_this, "ping");
 			}catch(err){
-				console.log("ping-error")
+				// console.log("ping-error")
 			}
 		}
         var _ping = setInterval(function(){
@@ -5970,7 +5966,7 @@ MessageBox.prototype = {
 				// _this.bws.send(JSON.stringify({"id":workorder,"content":"ping","workorder":workorder,"type":5}));
 				_this.send_server(_this, "ping");
             } catch(err) {
-				console.log("error.");
+				// console.log("error.");
             }
 		}, interval);
 		_this.ping = _ping;
@@ -6039,6 +6035,8 @@ var Snowflake = /** @class */ (function() {
 	return Snowflake;
 }());
 /** workorder end **/
+
+
 
 
 

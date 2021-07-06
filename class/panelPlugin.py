@@ -20,6 +20,7 @@ class panelPlugin:
     __link = 'config/link.json'
     __product_list = None
     __plugin_list = None
+    __exists_names = {}
     pids = None
     ROWS = 15
     
@@ -164,7 +165,7 @@ class panelPlugin:
             if not os.path.exists(tmp_path): os.makedirs(tmp_path,mode=384)
             public.ExecShell("rm -rf " + tmp_path + '/*')
             toFile = tmp_path + '/' + pluginInfo['name'] + '.zip'
-            public.downloadFile('http://www.bt.cn/api/Pluginother/get_file?fname=' + pluginInfo['versions'][0]['download'],toFile)
+            public.downloadFile('https://www.bt.cn/api/Pluginother/get_file?fname=' + pluginInfo['versions'][0]['download'],toFile)
             if public.FileMd5(toFile) != pluginInfo['versions'][0]['md5']: return public.returnMsg(False,'文件Hash校验失败,停止安装!')
             update = False
             if os.path.exists(pluginInfo['install_checks']): update =pluginInfo['versions'][0]['version_msg']
@@ -298,8 +299,7 @@ class panelPlugin:
         if not softList or focre > 0:
             self.clean_panel_log()
             cloudUrl = public.GetConfigValue('home') + '/api/panel/get_soft_list_test'
-            import panelAuth
-            pdata = panelAuth.panelAuth().create_serverid(None)
+            pdata = public.get_pdata()
             listTmp = public.httpPost(cloudUrl,pdata,6)
             if not listTmp or len(listTmp) < 200:
                 listTmp = public.readFile(lcoalTmp)
@@ -332,6 +332,9 @@ class panelPlugin:
                         softInfo['ps'].lower().find(get.query) != -1: 
                         tmpList.append(softInfo)
                 softList['list'] = tmpList
+
+        if not softList['list']: 
+            if os.path.exists(lcoalTmp): os.remove(lcoalTmp)
         return softList
  
     #取提醒标记
@@ -384,30 +387,23 @@ class panelPlugin:
         is_plugin = True
         import panelMessage #引用消息提醒模块
         pm = panelMessage.panelMessage()
-        pm.remove_message_all()
-        
         #企业版到期提醒
-        if not data['ltd'] in [-1]:
-            level,expire_day = self.get_level_msg('ltd',s_time,data['ltd'])
-            self.add_expire_msg('企业版',level,'ltd',expire_day,100000032,data['ltd'])
-            pm.remove_message_level('pro')
-            return True
+        if not data['ltd'] in [-1] :   
+
+            if data['pro'] < 0 or  (data['pro'] - s_time) / 86400 < 15 :                        
+                level,expire_day = self.get_level_msg('ltd',s_time,data['ltd'])
+                print(level,expire_day)
+                self.add_expire_msg('企业版',level,'ltd',expire_day,100000046,data['ltd'])
+                pm.remove_message_level('pro')
+                return True
 
         #专业版到期提醒
         if not data['pro'] in [-1,0]:
             level,expire_day = self.get_level_msg('pro',s_time,data['pro'])
-            self.add_expire_msg('专业版',level,'pro',expire_day,100000011,data['pro'])
+            self.add_expire_msg('专业版',level,'pro',expire_day,100000030,data['pro'])
+            pm.remove_message_level('ltd')
             is_plugin = False
         
-        #单独购买的插件到期提醒
-        # for p in data['list']:
-        #     #跳过非企业版或专业版插件
-        #     if not p['type'] in [8,12]: continue
-        #     #已经是专业版的情况下跳过专业版插件
-        #     if not is_plugin and p['type'] == 8: continue
-        #     if not p['endtime'] in [-1,0]:
-        #         level,expire_day = self.get_level_msg(p['name'],s_time,p['endtime'])
-        #         self.add_expire_msg(p['title'],level,p['name'],expire_day,p['pid'],p['endtime'])
         return True
 
 
@@ -836,10 +832,8 @@ class panelPlugin:
             if not softInfo['fpm']: 
                 softInfo['status'] = True
             elif softInfo['status'] and os.path.exists(pid_file):
-                if not self.pids: self.pids = psutil.pids()
                 try:
-                    if not int(public.readFile(pid_file)) in self.pids:
-                        softInfo['status'] = False
+                    softInfo['status'] = public.pid_exists(int(public.readFile(pid_file)))
                 except:
                     if os.path.exists(pid_file): 
                         os.remove(pid_file)
@@ -849,10 +843,10 @@ class panelPlugin:
             if not softInfo['status']: softInfo['status'] = self.process_exists('mariadbd')
         if softInfo['name'] == 'phpmyadmin': softInfo['status'] = self.get_phpmyadmin_stat()
         if softInfo['name'] == 'openlitespeed':
-            if public.ExecShell('ps aux|grep openlitespeed|grep -v "grep"')[0]:
-                softInfo['status'] = True
-            else:
-                softInfo['status'] = False
+            pid_file = '/run/openlitespeed.pid'
+            if os.path.exists(pid_file):
+                pid = int(public.readFile(pid_file))
+                softInfo['status'] = public.pid_exists(pid)
         return softInfo
 
     def get_php_status(self,phpversion):
@@ -1006,8 +1000,23 @@ class panelPlugin:
 
 
     #进程是否存在
-    def process_exists(self,pname,exe = None):
-        if not self.pids: self.pids = psutil.pids() #self.get_pids() #
+    def process_exists(self,pname,exe = None):        
+        if pname in ['mysqld','mariadbd']:
+            datadir = public.get_datadir()
+            if datadir:
+                pid_file = "{}/{}.pid".format(datadir,public.get_hostname())
+                if os.path.exists(pid_file):
+                    pid = int(public.readFile(pid_file))
+                    status = public.pid_exists(pid)
+                    if status: return status
+
+        if pname in ['php-fpm'] and exe:
+            pid_file = exe.replace('sbin/php-fpm','/var/run/php-fpm.pid')
+            if os.path.exists(pid_file):
+                pid = int(public.readFile(pid_file))
+                return public.pid_exists(pid)
+        
+        if not self.pids: self.pids = psutil.pids()
         for pid in self.pids:
             try:
                 l = '/proc/%s/exe' % pid
@@ -1028,7 +1037,8 @@ class panelPlugin:
                     if not exe:
                         return True
                     else:
-                        if p_exe == exe: return True
+                        if p_exe == exe:
+                            return True
             except: continue
         return False
 
@@ -1813,7 +1823,7 @@ class panelPlugin:
     def getCloudPlugin(self,get):
         if session.get('getCloudPlugin') and get != None: return public.returnMsg(True,'您的插件列表已经是最新版本-1!')
         import json
-        if not session.get('download_url'): session['download_url'] = 'http://download.bt.cn'
+        if not session.get('download_url'): session['download_url'] = 'https://download.bt.cn'
         
         #获取列表
         try:
@@ -2026,6 +2036,13 @@ class panelPlugin:
         p_info = public.ReadFile(plugin_path + '/info.json')
         public.ExecShell("rm -rf /www/server/panel/temp/*")
         if p_info:
+            #----- 增加图标复制 hwliang<2021-03-23> -----#
+            icon_sfile = plugin_path + '/icon.png'
+            icon_dfile = '/www/server/panel/BTPanel/static/img/soft_ico/ico-{}.png'.format(get.plugin_name)
+            if os.path.exists(plugin_path + '/icon.png'):
+                import shutil
+                shutil.copyfile(icon_sfile,icon_dfile)
+            #----- 增加图标复制 END -----#
             public.WriteLog('软件管理','安装第三方插件[%s]' % json.loads(p_info)['title'])
             return public.returnMsg(True,'安装成功!')
         public.ExecShell("rm -rf " + plugin_path)

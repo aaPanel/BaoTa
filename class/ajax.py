@@ -18,8 +18,8 @@ class ajax:
         try:
             pp = psutil.Process(i)
             if pp.name() not in process_cpu.keys():
-                process_cpu[pp.name()] = float(pp.cpu_percent(interval=0.1))
-            process_cpu[pp.name()] += float(pp.cpu_percent(interval=0.1))
+                process_cpu[pp.name()] = float(pp.cpu_percent(interval=0.01))
+            process_cpu[pp.name()] += float(pp.cpu_percent(interval=0.01))
         except:
             pass
     def GetNginxStatus(self,get):
@@ -35,7 +35,15 @@ class ajax:
             #取Nginx负载状态
             self.CheckStatusConf()
             result = public.httpGet('http://127.0.0.1/nginx_status')
-            tmp = result.split()
+            is_curl = False
+            tmp = []
+            if result:
+                tmp = result.split()
+            if len(tmp) < 15: is_curl = True
+                
+            if is_curl:
+                result = public.ExecShell('curl http://127.0.0.1/nginx_status')[0]
+                tmp = result.split()
             data = {}
             if "request_time" in tmp:
                 data['accepts']  = tmp[8]
@@ -58,7 +66,7 @@ class ajax:
             return data
         except Exception as ex: 
             public.WriteLog('信息获取',"Nginx负载状态获取失败: %s" % ex)
-            return public.returnMsg(False,'数据获取失败!')
+            return public.returnMsg(False,'数据获取失败,检查nginx状态是否正常!')
     
     def GetPHPStatus(self,get):
         #取指定PHP版本的负载状态
@@ -311,7 +319,7 @@ class ajax:
     def GetNetWorkIo(self,get):
         #取指定时间段的网络Io
         data =  public.M('network').dbfile('system').where("addtime>=? AND addtime<=?",(get.start,get.end)).field('id,up,down,total_up,total_down,down_packets,up_packets,addtime').order('id asc').select()
-        return self.ToAddtime(data)
+        return self.ToAddtime(data,None)
     
     def GetDiskIo(self,get):
         #取指定时间段的磁盘Io
@@ -343,7 +351,10 @@ class ajax:
             for i in range(length):
                 data[i]['addtime'] = time.strftime('%m/%d %H:%M',time.localtime(float(data[i]['addtime'])))
                 if tomem and data[i]['mem'] > 100: data[i]['mem'] = data[i]['mem'] / mPre
-            
+                if tomem in [None]:
+                    if type(data[i]['down_packets']) == str:
+                        data[i]['down_packets'] = json.loads(data[i]['down_packets'])
+                        data[i]['up_packets'] = json.loads(data[i]['up_packets'])
             return data
         else:
             count = 0
@@ -354,6 +365,10 @@ class ajax:
                     continue
                 value['addtime'] = time.strftime('%m/%d %H:%M',time.localtime(float(value['addtime'])))
                 if tomem and value['mem'] > 100: value['mem'] = value['mem'] / mPre
+                if tomem in [None]:
+                    if type(value['down_packets']) == str:
+                        value['down_packets'] = json.loads(value['down_packets'])
+                        value['up_packets'] = json.loads(value['up_packets'])
                 tmp.append(value)
                 count = 0
             return tmp
@@ -476,9 +491,7 @@ class ajax:
                 data['intrusion'] = 0
                 data['uid'] = self.get_uid()
                 #msg = public.getMsg('PANEL_UPDATE_MSG');
-                data['o'] = ''
-                filename = '/www/server/panel/data/o.pl'
-                if os.path.exists(filename): data['o'] = str(public.readFile(filename))
+                data['o'] = public.get_oem_name()
                 sUrl = public.GetConfigValue('home') + '/api/panel/updateLinux'
                 updateInfo = json.loads(public.httpPost(sUrl,data))
                 if not updateInfo: return public.returnMsg(False,"CONNECT_ERR")
@@ -612,7 +625,7 @@ class ajax:
         import json
         try:
             if 'php_ext' in session: return True
-            if not session.get('download_url'): session['download_url'] = 'http://download.bt.cn'
+            if not session.get('download_url'): session['download_url'] = public.GetConfigValue('download')
             download_url = session['download_url'] + '/install/lib/phplib.json'
             tstr = public.httpGet(download_url)
             data = json.loads(tstr)
@@ -1120,6 +1133,8 @@ class ajax:
         if not os.path.exists('/etc/redhat-release'):
             php_ini = php_path + php_version + '/etc/php/'+args.php_version+'/litespeed/php.ini'
         tmp = public.ExecShell(php_bin + ' /www/server/panel/class/php_info.php')[0]
+        if tmp.find('Warning: JIT is incompatible') != -1:
+            tmp = tmp.strip().split('\n')[-1]
         result = json.loads(tmp)
         result['phpinfo'] = {}
         result['phpinfo']['php_version'] = result['php_version']

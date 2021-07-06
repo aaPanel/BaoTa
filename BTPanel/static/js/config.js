@@ -254,6 +254,9 @@ $('.open_two_verify_view').click(function(){
 	});
 	get_three_channel(function(res){
 		$('#channel_auth').val(!res.user_mail.user_name && !res.dingding.dingding ? '邮箱未设置 | 钉钉未设置':(res.user_mail.user_name? '邮箱已设置':(res.dingding.dingding? '钉钉已设置': '')))
+		get_login_send(function(rdata){
+    	    $('#panel_report').val(!rdata.status ? '邮箱未设置 | 钉钉未设置':(rdata.msg.mail? '邮箱已设置':(rdata.msg.dingding? '钉钉已设置': '')))
+    	});
 	});
 })()
 
@@ -262,7 +265,34 @@ function get_three_channel(callback){
 		if(callback) callback(res);
 	});
 }
-
+function get_login_send(callback){
+    $.post('/config?action=get_login_send',function(res){
+		if(callback) callback(res);
+	});
+}
+function get_login_log(obj,callback){
+    $.post('/config?action=get_login_log',obj,function(res){
+		if(callback) callback(res);
+	});
+}
+function set_login_send(obj,callback){
+    if(obj.type == undefined) return false;
+    $.post('/config?action=set_login_send',{'type':obj.type},function(res){
+		if(callback) callback(res);
+	});
+}
+function clear_login_send(obj,callback){
+    if(obj.type == undefined) return false;
+    $.post('/config?action=clear_login_send',{'type':obj.type},function(res){
+		if(callback) callback(res);
+	});
+}
+function login_ipwhite(obj,callback){
+    if(obj.type == undefined) return false;
+    $.post('/config?action=login_ipwhite',obj,function(res){
+		if(callback) callback(res);
+	});
+}
 function check_two_step(callback){
 	$.post('/config?action=check_two_step',function(res){
 		if(callback) callback(res);
@@ -493,7 +523,7 @@ function setPanelSSL(){
                         }
                     },
                   {
-                  	html:'<div class="details"><input type="checkbox" id="checkSSL" /><label style="font-weight: 400;margin: 3px 5px 0px;" for="checkSSL">'+lan.config.ssl_open_ps_4+'</label><a target="_blank" class="btlink" href="https://www.bt.cn/bbs">'+lan.config.ssl_open_ps_5+'</a></p></div>'
+                  	html:'<div class="details"><input type="checkbox" id="checkSSL" /><label style="font-weight: 400;margin: 3px 5px 0px;" for="checkSSL">'+lan.config.ssl_open_ps_4+'</label><a target="_blank" class="btlink" href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=4689">'+lan.config.ssl_open_ps_5+'</a></p></div>'
                   }
                   
                 ],
@@ -1022,6 +1052,176 @@ function modify_basic_auth() {
             
         }
     });
+}
+function set_panel_report(){
+    var  loadB =  bt.load('正在打开告警设置!')
+    get_three_channel(function(res){
+        if(!res.user_mail.user_name && !res.dingding.dingding ) return layer.msg('请在消息通道中设置一个通道',{icon:2})
+        get_login_send(function(rdata){
+            loadB.close()
+            layer.open({
+    			type: 1,
+    	        area:['750px', '603px'],
+    	        title: "登录告警",
+    	        closeBtn: 2,
+    	        shift: 5,
+    	        shadeClose: false,
+    	        content: '<div class="bt-form">\
+    	        			<div class="bt-w-main">\
+    					        <div class="bt-w-menu">\
+    					            <p class="bgw">服务状态</p>\
+    					            <p>IP白名单</p>\
+    					        </div>\
+    					        <div class="bt-w-con pd15">\
+    					            <div class="plugin_body">\
+    	                				<div class="conter_box active" >\
+    	                					<div class="bt-form" style="height:500px">\
+    	                						<div class="line">\
+    	                						    <span class="set-tit" style="display:inline-block;vertical-align: top;margin: 3px;color:#666" title="通知邮箱">通知邮箱</span>\
+                    							    <div class="mail"  name="server_input" style="display:inline-block;margin:0px 10px 0px 0px">\
+                                                        <input class="btswitch btswitch-ios" id="mail" type="checkbox" '+(!rdata.status?"":(rdata.msg.mail?"checked":""))+' >\
+                                                         <label class="btswitch-btn" for="mail"></label>\
+                                                    </div>\
+                                                    <span class="set-tit" style="display:inline-block;vertical-align: top;margin: 3px;color:#666" title="通知钉钉">通知钉钉</span>\
+                                                    <div class="dingding" name="server_input" style="display:inline-block;margin:0px 10px 0px 0px">\
+                                                        <input class="btswitch btswitch-ios"  id="dingding" type="checkbox" '+(!rdata.status?"":(rdata.msg.dingding?"checked":""))+' >\
+                                                        <label class="btswitch-btn" for="dingding"></label>\
+                                                    </div>\
+    	                						</div>\
+    					                        <div class="line" style="max-height:400px;height:auto;overflow:auto">\
+    						                        <div class="divtable">\
+    						                        	<table class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"><thead><tr><th width="75%">详情</th><th width="25%" style="text-align:right">时间</th></tr></thead>\
+    						                        	 <tbody id="server_table"></tbody>\
+    						                        	</table>\
+    						                        </div>\
+    					                        </div>\
+    					                        <div class="page" id="server_table_page"></div>\
+    				                        </div>\
+    				                        <ul class="mtl0 c7" style="font-size: 13px;position:absolute;bottom:0;padding-right: 40px;">\
+                                    		   <li style="list-style:inside disc">邮箱通道和钉钉通道只能同时开启一个</li>\
+                                        	</ul>\
+    	                				</div>\
+    	                				<div class="conter_box" style="display:none;height:500px">\
+    		                				<div class="bt-form">\
+    	                				    	<div class="line" style="display:inline-block">\
+                                                    <input name="ip_write" class="bt-input-text mr5" type="text" style="width: 220px;height:35px" placeholder="请输入IP">\
+                                                    <button class="btn btn-success btn-sm add_ip_write" style="height:35px;padding: 4px 15px">添加</button>\
+    	                				    	</div>\
+    	                				    	<div class="line" style="float:right">\
+    	                							<button class="btn btn-default btn-sm clear_all" style="height:35px;padding: 4px 15px;text-align:right">清空全部</button>\
+        	                					</div>\
+        	                					 <div class="line" style="max-height:400px;height:auto;overflow:auto">\
+    						                        <div class="divtable">\
+    						                        	<table class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"><thead><tr><th width="60%">IP</th><th width="40%" style="text-align:right">操作</th></tr></thead>\
+    						                        	 <tbody id="ip_write_table"></tbody>\
+    						                        	</table>\
+    						                        </div>\
+    					                        </div>\
+    				                        </div>\
+    				                          <ul class="mtl0 c7" style="font-size: 13px;position:absolute;bottom:0;padding-right: 40px;">\
+                                    		   <li style="list-style:inside disc">只允许设置ipv4白名单</li>\
+                                        	</ul>\
+    		            				</div>\
+    	                			</div>\
+    	                		</div>\
+                    		</div>\
+                    	  </div>',
+        		success:function(index,layers){
+        		    get_log_table();
+        		    get_ip_write_table()
+        		    $(".bt-w-menu p").click(function () {
+                        var index = $(this).index();
+                        $(this).addClass('bgw').siblings().removeClass('bgw');
+                        $('.conter_box').eq(index).show().siblings().hide();
+                    });
+        		    //设置告警
+        		    $('[name="server_input"] input,[name="server_input"] label').on('click',function(){
+        		        var _type = $(this).attr('id'),_checked = $(this).prop('checked'),that = $(this);
+        		        if(_type == 'mail'&& !res.user_mail.user_name ){ that.prop('checked',false); return  layer.msg('未设置邮件通道,请在消息通道中设置',{icon:2})}
+        		        if(_type == 'dingding'&& !res.dingding.dingding ){that.prop('checked',false);  return  layer.msg('未设置钉钉通道,请在消息通道中设置',{icon:2})}
+        		        if(_checked){
+        		            set_login_send({type:_type},function(res){layer.msg(res.msg,{icon:res.status?1:2});})
+        		        }else{
+        		            clear_login_send({type:_type},function(res){layer.msg(res.msg,{icon:res.status?1:2});})
+        		        }
+        		        get_login_send(function(res){
+    		                $('#mail').prop('checked',res.msg.mail)
+    		                $('#dingding').prop('checked',res.msg.dingding)
+        		        })
+        		    });
+        		    //添加
+        		    $('.add_ip_write').on('click',function(){
+        		        var _ip = $('[name="ip_write"]').val();
+        		        if(['',undefined].includes(_ip)) return layer.msg('请输入正确的ip',{icon:2})
+        		        login_ipwhite({ip:_ip,type:'add'},function(res){
+        		            layer.msg(res.msg,{icon:res.status?1:2});
+        		           if(res.status) get_ip_write_table()
+        		        })
+        		    })
+        		    //删除ip白名单
+        		    $('#ip_write_table').on('click','.del_ip_write',function(){
+        		        var _ip = $(this).parents('tr').data().data;
+        		        login_ipwhite({ip:_ip,type:'del'},function(res){
+        		            layer.msg(res.msg,{icon:res.status?1:2});
+        		            if(res.status) get_ip_write_table()
+        		        })
+        		    });
+        		    //清空全部
+        		    $('.clear_all').on('click',function(){
+        		        login_ipwhite({type:'clear'},function(res){
+        		            layer.msg(res.msg,{icon:res.status?1:2});
+        		            if(res.status) get_ip_write_table()
+        		        })
+        		    })
+        		    //分页操作
+        		    $('#server_table_page').on('click','a',function(e){
+        		        e.stopPropagation();
+                        e.preventDefault();
+        		        var _p = $(this).attr('href').match(/p=([0-9]*)/)[1];
+        		        get_log_table({p:_p});
+        		    })
+        		},
+        		cancel:function(){
+            	   	get_three_channel(function(res){
+                		$('#channel_auth').val(!res.user_mail.user_name && !res.dingding.dingding ? '邮箱未设置 | 钉钉未设置':(res.user_mail.user_name? '邮箱已设置':(res.dingding.dingding? '钉钉已设置': '')))
+                		get_login_send(function(rdata){
+                    	    $('#panel_report').val(!rdata.status ? '邮箱未设置 | 钉钉未设置':(rdata.msg.mail? '邮箱已设置':(rdata.msg.dingding? '钉钉已设置': '')))
+                    	});
+                	});
+        		}
+    		})
+        })
+    })
+}
+function get_log_table(obj){
+    if(obj === undefined) obj = {p:1}
+    var loadT = bt.load('正在获取日志列表')
+    get_login_log(obj,function(res){
+        loadT.close()
+        $('#server_table').empty()
+        $.each(res.data,function(index,item){
+            $('#server_table').append($('<tr>\
+                <td>'+ item.log +'</td>\
+                <td style="text-align:right">'+ item.addtime +'</td>\
+                </tr>').data({data:item,index:index}))
+        });
+        $('#server_table_page').html(res.page)
+    });
+}
+function get_ip_write_table(){
+    $('#ip_write_table').empty()
+    var loadY = bt.load('正在获取ip列表')
+    login_ipwhite({type:'get'},function(res){
+        loadY.close()
+        $.each(res.msg,function(index,item){
+            $('#ip_write_table').append($('<tr>\
+                <td>'+ item +'</td>\
+                <td style="text-align:right">\
+                    <a href="javascript:;" class="btlink del_ip_write" >删除</a>\
+                </td>\
+                </tr>').data({data:item,index:index}))
+        });
+    })
 }
 function open_three_channel_auth(){
 	get_channel_settings(function(rdata){

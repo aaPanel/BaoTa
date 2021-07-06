@@ -34,6 +34,11 @@ class http:
             result = self._get_curl(url,timeout,headers,verify)
         elif type == 'php':
             result = self._get_php(url,timeout,headers,verify)
+        elif type == 'src':
+            if sys.version_info[0] == 2:
+                result = self._get_py2(url,timeout,headers,verify)
+            else:
+                result = self._get_py3(url,timeout,headers,verify)
         return result
 
     def post(self,url,data,timeout = 60,headers = {},verify = False,type = 'python'):
@@ -51,6 +56,11 @@ class http:
             result = self._post_curl(url,data,timeout,headers,verify)
         elif type == 'php':
             result = self._post_php(url,data,timeout,headers,verify)
+        elif type == 'src':
+            if sys.version_info[0] == 2:
+                result = self._post_py2(url,data,timeout,headers,verify)
+            else:
+                result = self._post_py3(url,data,timeout,headers,verify)
         return result
 
     #POST请求 Python2

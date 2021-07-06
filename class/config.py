@@ -12,7 +12,7 @@ try:
 except:
     public.ExecShell("pip install pyotp &")
 try:
-    from BTPanel import session,admin_path_checks,g,request
+    from BTPanel import session,admin_path_checks,g,request,cache
     import send_mail
 except:pass
 class config:
@@ -320,7 +320,10 @@ class config:
             public.SetConfigValue('title',get.webname)
 
         limitip = public.readFile('data/limitip.conf')
-        if get.limitip != limitip: public.writeFile('data/limitip.conf',get.limitip)
+        if get.limitip != limitip: 
+            public.writeFile('data/limitip.conf',get.limitip)
+            cache.set('limit_ip',[])
+
         
         public.writeFile('data/domain.conf',get.domain.strip())
         public.writeFile('data/iplist.txt',get.address)
@@ -363,7 +366,7 @@ class config:
             if not get.domain: get.domain = ''
             get.limitip = public.readFile('data/limitip.conf')
             if not get.limitip: get.limitip = ''
-            if not get.domain.strip() and not get.limitip.strip(): return public.returnMsg(False,'警告，关闭安全入口等于直接暴露你的后台地址在外网，十分危险，至少开启以下一种安全方式才能关闭：<a style="color:red;"><br>1、绑定访问域名<br>2、绑定授权IP</a>')
+            if not get.domain.strip() and not get.limitip.strip() and not os.path.exists('config/basic_auth.json'): return public.returnMsg(False,'警告，关闭安全入口等于直接暴露你的后台地址在外网，十分危险，至少开启以下一种安全方式才能关闭：<a style="color:red;"><br>1、绑定访问域名<br>2、绑定授权IP <br> 3.开启BasicAuth认证</a>')
 
         admin_path_file = 'data/admin_path.pl'
         admin_path = '/'
@@ -524,9 +527,21 @@ class config:
         rep = r"\s*pm\s*=\s*(\w+)\s*"
         tmp = re.search(rep, conf).groups()
         data['pm'] = tmp[0]
+
+        rep = r"\s*listen.allowed_clients\s*=\s*([\w\.,/]+)\s*"
+        tmp = re.search(rep, conf).groups()
+        data['allowed'] = tmp[0]
+
+
         data['unix'] = 'unix'
-        if not isinstance(public.get_fpm_address(version),str):
+        data['port'] = ''
+        data['bind'] = '/tmp/php-cgi-{}.sock'.format(version)
+        
+        fpm_address = public.get_fpm_address(version,True)
+        if not isinstance(fpm_address,str):
             data['unix'] = 'tcp'
+            data['port'] = fpm_address[1]
+            data['bind'] = fpm_address[0]
         
         return data
 
@@ -566,12 +581,24 @@ class config:
         if get.listen == 'unix':
             listen = '/tmp/php-cgi-{}.sock'.format(version)
         else:
-            listen = '127.0.0.1:10{}1'.format(version)
+            default_listen = '127.0.0.1:10{}1'.format(version)
+            if 'bind_port' in get:
+                if get.bind_port.find('sock') != -1:
+                    listen = default_listen
+                else:
+                    listen = get.bind_port
+            else:
+                listen = default_listen
             
 
         rep = r'\s*listen\s*=\s*.+\s*'
         conf = re.sub(rep, "\nlisten = "+listen+"\n", conf)
-        
+
+        if 'allowed' in get:
+            if not get.allowed: get.allowed = '127.0.0.1'
+            rep = r"\s*listen.allowed_clients\s*=\s*([\w\.,/]+)\s*"
+            conf = re.sub(rep, "\nlisten.allowed_clients = "+get.allowed+"\n", conf)
+
         public.writeFile(file,conf)
         public.phpReload(version)
         public.sync_php_address(version)
@@ -622,8 +649,8 @@ class config:
             import db
             sql = db.Sql()
             sql.dbfile('system').create('system')
-            public.WriteLog("TYPE_PANEL", "CONTROL_CLOSE")
-            return public.returnMsg(True,"CONTROL_CLOSE")
+            public.WriteLog("TYPE_PANEL", "CONTROL_CLEAR")
+            return public.returnMsg(True,"CONTROL_CLEAR")
             
         else:
             data = {}
@@ -1426,7 +1453,11 @@ class config:
             if not secret_key:
                 return public.returnMsg(False,"生成key或username失败，请检查硬盘空间是否不足或目录无法写入[ {} ]".format(self._setup_path+"/data/"))
             try:
-                data = pyotp.totp.TOTP(secret_key).provisioning_uri(username, issuer_name=local_ip)
+                try:
+                    panel_name = json.loads(public.readFile(self._setup_path+'/config/config.json'))['title']
+                except:
+                    panel_name = '宝塔Linux面板'
+                data = pyotp.totp.TOTP(secret_key).provisioning_uri(username, issuer_name='{}--{}'.format(panel_name,local_ip))
                 public.writeFile(self._core_fle_path+'/qrcode.txt',str(data))
                 return public.returnMsg(True, "开启成功")
             except Exception as e:
@@ -1657,3 +1688,130 @@ class config:
         import file_execute_deny
         p = file_execute_deny.FileExecuteDeny()
         return p.del_file_deny(args)
+    #查看告警
+    def get_login_send(self,get):
+        result={}
+        import time
+        time.sleep(0.01)
+        if os.path.exists('/www/server/panel/data/login_send_mail.pl'):
+            result['mail']=True
+        else:
+            result['mail']=False
+        if os.path.exists('/www/server/panel/data/login_send_dingding.pl'):
+            result['dingding']=True
+        else:
+            result['dingding']=False
+        if result['mail'] or result['dingding']:
+            return public.returnMsg(True, result)
+        return public.returnMsg(False, result)
+
+    #设置告警
+    def set_login_send(self,get):
+        type=get.type.strip()
+        if type=='mail':
+            if not os.path.exists("/www/server/panel/data/login_send_mail.pl"):
+                os.mknod("/www/server/panel/data/login_send_mail.pl")
+            if os.path.exists("/www/server/panel/data/login_send_dingding.pl"):
+                os.remove("/www/server/panel/data/login_send_dingding.pl")
+            return public.returnMsg(True, '设置成功')
+        elif type=='dingding':
+            if not os.path.exists("/www/server/panel/data/login_send_dingding.pl"):
+                os.mknod("/www/server/panel/data/login_send_dingding.pl")
+            if os.path.exists("/www/server/panel/data/login_send_mail.pl"):
+                os.remove("/www/server/panel/data/login_send_mail.pl")
+            return public.returnMsg(True, '设置成功')
+        else:
+            return public.returnMsg(False,'不支持该发送类型')
+
+    #取消告警
+    def clear_login_send(self,get):
+        type = get.type.strip()
+        if type == 'mail':
+            if os.path.exists("/www/server/panel/data/login_send_mail.pl"):
+                os.remove("/www/server/panel/data/login_send_mail.pl")
+            return public.returnMsg(True, '取消成功')
+        elif type == 'dingding':
+            if os.path.exists("/www/server/panel/data/login_send_dingding.pl"):
+                os.remove("/www/server/panel/data/login_send_dingding.pl")
+            return public.returnMsg(True, '取消成功')
+        else:
+            return public.returnMsg(False, '不支持该发送类型')
+
+
+    #告警日志
+    def get_login_log(self,get):
+        public.create_logs()
+        import page
+        page = page.Page()
+        count = public.M('logs2').where('type=?', (u'堡塔登录提醒',)).field('log,addtime').count()
+        limit = 7
+        info = {}
+        info['count'] = count
+        info['row'] = limit
+        info['p'] = 1
+        if hasattr(get, 'p'):
+            info['p'] = int(get['p'])
+        info['uri'] = get
+        info['return_js'] = ''
+        if hasattr(get, 'tojs'):
+            info['return_js'] = get.tojs
+        data = {}
+        # 获取分页数据
+        data['page'] = page.GetPage(info, '1,2,3,4,5,8')
+        data['data'] = public.M('logs2').where('type=?', (u'堡塔登录提醒',)).field('log,addtime').order('id desc').limit(
+            str(page.SHIFT) + ',' + str(page.ROW)).field('log,addtime').select()
+        return data
+
+    #白名单设置
+    def login_ipwhite(self,get):
+        type=get.type
+        if type=='get':
+            return self.get_login_ipwhite(get)
+        if type=='add':
+            return self.add_login_ipwhite(get)
+        if type=='del':
+            return self.del_login_ipwhite(get)
+        if type=='clear':
+            return self.clear_login_ipwhite(get)
+
+    #查看IP白名单
+    def get_login_ipwhite(self,get):
+        try:
+            path='/www/server/panel/data/send_login_white.json'
+            ip_white=json.loads(public.ReadFile('/www/server/panel/data/send_login_white.json'))
+            if not  ip_white:return public.returnMsg(True, [])
+            return public.returnMsg(True, ip_white)
+        except:
+            public.WriteFile(path, '[]')
+            return public.returnMsg(True, [])
+
+    def add_login_ipwhite(self,get):
+        ip=get.ip.strip()
+        try:
+            path = '/www/server/panel/data/send_login_white.json'
+            ip_white = json.loads(public.ReadFile('/www/server/panel/data/send_login_white.json'))
+            if not ip in ip_white:
+                ip_white.append(ip)
+                public.WriteFile(path, json.dumps(ip_white))
+            return public.returnMsg(True, "添加成功")
+        except:
+            public.WriteFile(path, json.dumps([ip]))
+            return public.returnMsg(True, "添加成功")
+
+    def del_login_ipwhite(self,get):
+        ip = get.ip.strip()
+        try:
+            path = '/www/server/panel/data/send_login_white.json'
+            ip_white = json.loads(public.ReadFile('/www/server/panel/data/send_login_white.json'))
+            if  ip in ip_white:
+                ip_white.remove(ip)
+                public.WriteFile(path, json.dumps(ip_white))
+            return public.returnMsg(True, "删除成功")
+        except:
+            public.WriteFile(path, json.dumps([]))
+            return public.returnMsg(True, "删除成功")
+
+    def clear_login_ipwhite(self,get):
+        path = '/www/server/panel/data/send_login_white.json'
+        public.WriteFile(path, json.dumps([]))
+        return public.returnMsg(True, "清空成功")

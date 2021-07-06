@@ -42,45 +42,52 @@
     "sort": 6
   },
   {
+    "title": "防火墙",
+    "href": "/btwaf/index",
+    "class": "menu_btwaf",
+    "id": "memu_btwaf",
+    "sort": 7
+  },
+  {
     "title": "文件",
     "href": "/files",
     "class": "menu_folder",
     "id": "memuAfiles",
-    "sort": 7
+    "sort": 8
   },
   {
     "title": "终端",
     "href": "/xterm",
     "class": "menu_xterm",
     "id": "memuAxterm",
-    "sort": 8
+    "sort": 9
   },
   {
     "title": "计划任务",
     "href": "/crontab",
     "class": "menu_day",
     "id": "memuAcrontab",
-    "sort": 9
+    "sort": 10
   },
   {
     "title": "软件商店",
     "href": "/soft",
     "class": "menu_soft",
     "id": "memuAsoft",
-    "sort": 10
+    "sort": 11
   },
   {
     "title": "面板设置",
     "href": "/config",
     "class": "menu_set",
     "id": "memuAconfig",
-    "sort": 11
+    "sort": 12
   },
   {
     "title": "退出",
     "href": "/login?dologin=True",
     "class": "menu_exit",
     "id": "dologin",
-    "sort": 12
+    "sort": 13
   }
 ]

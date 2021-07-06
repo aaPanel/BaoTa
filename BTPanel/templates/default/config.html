@@ -123,13 +123,17 @@
                             name="channel_auth" class="inputtxt bt-input-text disable" type="text" value=""
                             disabled><span class="modify btn btn-xs btn-success channel_auth"
                             onclick="open_three_channel_auth()">设置</span></p>
+                    <p class="mtb15"><span class="set-tit text-right" title="登录告警">登录告警</span><input id="panel_report"
+                            name="panel_report" class="inputtxt bt-input-text disable" type="text" value=""
+                            disabled><span class="modify btn btn-xs btn-success panel_report"
+                            onclick="set_panel_report()">设置</span></p>   
                     <p class="mtb15"><span class="set-tit text-right"
                             title="{{data['lan']['CT3']}}">{{data['lan']['CT3']}}</span><input name="domain"
                             class="inputtxt bt-input-text" type="text" value="{{data['panel']['domain']}}"><span
                             class="set-info c7">{{data['lan']['CY3']}}</span></p>
                     <p class="mtb15"><span class="set-tit text-right"
                             title="{{data['lan']['CT4']}}">{{data['lan']['CT4']}}</span><input name="limitip"
-                            class="inputtxt bt-input-text" type="text" value="{{data['panel']['limitip']}}"><span
+                            class="inputtxt bt-input-text" type="text" value="{{data['panel']['limitip']}}" placeholder="示例: 1.1.1.1,2.2.2.1-2.2.2.2"><span
                             class="set-info c7">{{data['lan']['CY4']}}</span></p>
                     <p class="mtb15"><span class="set-tit text-right"
                             title="{{data['lan']['CT5']}}">{{data['lan']['CT5']}}</span><input name="sites_path"

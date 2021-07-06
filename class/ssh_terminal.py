@@ -92,7 +92,6 @@ class ssh_terminal:
 
         try:
             self._tp.start_client()
-            self.debug(self._pkey)
             if not self._pass and not self._pkey:
                 self.set_sshd_config(True)
                 return public.returnMsg(False,'密码或私钥不能都为空: {}:{}'.format(self._host,self._port))
@@ -350,7 +349,6 @@ class ssh_terminal:
             @return bool
         '''
         self.is_running(rep)
-        return False
         if rep and not self._rep_ssh_config:
             return False
 
@@ -592,7 +590,8 @@ class ssh_terminal:
         try:
             if self._ssh:
                 self._ssh.close()
-                #self._ssh = None
+            if self._tp:  # 关闭宿主服务
+                self._tp.close()
             if not self._ws.closed:
                 self._ws.close()
         except:

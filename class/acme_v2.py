@@ -432,7 +432,7 @@ class acme_v2:
     #从云端验证域名是否可访问
     def cloud_check_domain(self,domain):
         try:
-            result = requests.post('https://www.bt.cn/api/panel/check_domain',{"domain":domain}).json()
+            result = requests.post('https://www.bt.cn/api/panel/check_domain',{"domain":domain,"ssl":1}).json()
             return result['status']
         except: return False
         
@@ -898,9 +898,10 @@ fullchain.pem       粘贴到证书输入框
         return p12.export()
 
     # 拆分根证书
-    def split_ca_data(self, cert):
-        datas = cert.split('-----END CERTIFICATE-----')
-        return {"cert": datas[0] + "-----END CERTIFICATE-----\n", "root": datas[1] + '-----END CERTIFICATE-----\n'}
+    def split_ca_data(self,cert):
+        sp_key = '-----END CERTIFICATE-----\n'
+        datas = cert.split(sp_key)
+        return {"cert": datas[0] + sp_key, "root": sp_key.join(datas[1:])}
 
     # 构造可选名称
     def get_alt_names(self, index):
@@ -1365,7 +1366,7 @@ fullchain.pem       粘贴到证书输入框
             args_obj = public.dict_obj()
             if not cron_id:
                 cronPath = public.GetConfigValue('setup_path') + '/cron/' + echo
-                shell = '{} /www/server/panel/class/acme_v2.py --renew=1'.format(sys.executable)
+                shell = '{} -u /www/server/panel/class/acme_v2.py --renew=1'.format(sys.executable)
                 public.writeFile(cronPath,shell)
                 args_obj.id = public.M('crontab').add('name,type,where1,where_hour,where_minute,echo,addtime,status,save,backupTo,sType,sName,sBody,urladdress',("续签Let's Encrypt证书",'day','','0','10',echo,time.strftime('%Y-%m-%d %X',time.localtime()),0,'','localhost','toShell','',shell,''))
                 crontab.crontab().set_cron_status(args_obj)
@@ -1378,6 +1379,32 @@ fullchain.pem       粘贴到证书输入框
                         args_obj.id = cron_id
                         crontab.crontab().set_cron_status(args_obj)
         except:pass
+
+
+    # 获取当前正在使用此证书的网站目录
+    def get_ssl_used_site(self,save_path):
+        pkey_file =  '{}/privkey.pem'.format(save_path)
+        pkey = public.readFile(pkey_file)
+        if not pkey: return False
+        cert_paths = 'vhost/cert'
+        import panelSite
+        args = public.dict_obj()
+        args.siteName = ''
+        for c_name in os.listdir(cert_paths):
+            skey_file = '{}/{}/privkey.pem'.format(cert_paths,c_name)
+            skey = public.readFile(skey_file)
+            if not skey: continue
+            if skey == pkey:
+                args.siteName = c_name
+                run_path = panelSite.panelSite().GetRunPath(args)
+                if not run_path: continue
+                sitePath = public.M('sites').where('name=?',c_name).getField('path')
+                if not sitePath: continue
+                to_path = "{}/{}".format(sitePath,run_path)
+                return to_path
+        return False
+
+
 
     # 续签证书
     def renew_cert(self, index):
@@ -1405,7 +1432,9 @@ fullchain.pem       粘贴到证书输入框
                     #已删除的网站直接跳过续签
                     if self._config['orders'][i]['auth_to'].find('|') == -1 and self._config['orders'][i]['auth_to'].find('/') != -1:
                         if not os.path.exists(self._config['orders'][i]['auth_to']):
-                            continue
+                            auth_to = self.get_ssl_used_site(self._config['orders'][i]['save_path'])
+                            if not auth_to: continue
+                            self._config['orders'][i]['auth_to'] = auth_to
                     order_index.append(i)
 
             if not order_index:

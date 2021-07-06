@@ -256,25 +256,21 @@
                 shadeClose: false,
                 content:'<div class="bt-form">\
                 <div class="bt-w-main">\
-                    <div class="bt-w-menu"><p class="bgw">风险提醒</p><p>密钥管理</p><p>登录报警</p><p>登录日志</p></div>\
+                    <div class="bt-w-menu"><p class="bgw">密钥管理</p><p>登录告警</p><p>登录日志</p></div>\
                     <div class="bt-w-con pd15 divtable">\
                         <div class="bt-box">\
-                            <div class="divtable mtb15 ssh_list_switch">\
-                                <table class="table table-hover">\
-                                    <thead><tr><th>风险名称</th><th>加固建议</th><th style="text-align: right;">操作</th></tr></thead>\
-                                </table>\
-                                <table class="table table-hover"><thead></thead><tbody id="ssh_scanning"></tbody></table>\
-                            </div>\
-                        </div>\
-                        <div class="bt-box" style="display: none;">\
                             <div class="bt-form">\
                                 <div class="line">\
                                     <span class="tname">SSH密码登录</span>\
                                     <div class="info-r c4">\
                                         <input class="btswitch btswitch-ios" id="ssh_paw" type="checkbox"><label class="btswitch-btn" for="ssh_paw" title="SSH密码登录"style="display: inline-block;"></label>\
-                                        <div style="margin-left:40px;display: inline-block;"><span class="tname">SSH密钥登录</span>\
+                                        <div style="margin-left:20px;display: inline-block;"><span class="tname">SSH密钥登录</span>\
                                             <input class="btswitch btswitch-ios" id="ssh_key" type="checkbox">\
-                                            <label class="btswitch-btn" for="ssh_key" title="SSH密钥登录"style="margin: 5px 0 0 100px;"></label>\
+                                            <label class="btswitch-btn" for="ssh_key" title="SSH密钥登录"style="margin: 5px 0 0 90px;"></label>\
+                                        </div>\
+                                         <div style="margin-left:20px;display: inline-block;"><span class="tname" style="width:120px;">是否允许root登录</span>\
+                                            <input class="btswitch btswitch-ios" id="set_root" type="checkbox">\
+                                            <label class="btswitch-btn" for="set_root" title="允许root登录"style="margin: 5px 0 0 110px;"></label>\
                                         </div>\
                                     </div>\
                                 </div>\
@@ -291,8 +287,8 @@
                             </div>\
                         </div>\
                         <div class="bt-box" style="display: none;">\
-                            <button class="btn btn-success btn-sm add_white_ip" type="button">添加</button>\
-                            <div class="pull-right ssl_login_config_view"><span>监控root用户登陆</span><input class="btswitch btswitch-ios" id="ssh_root_login" type="checkbox"><label class="btswitch-btn" for="ssh_root_login" title="监控root用户登陆"></label></div>\
+                            <button class="btn btn-success btn-sm add_white_ip pull-right" type="button">添加</button>\
+                            <div class=" ssl_login_config_view"><span>登录告警</span><input class="btswitch btswitch-ios" id="ssh_root_login" type="checkbox"><label class="btswitch-btn" for="ssh_root_login" title="监控root用户登陆"></label></div>\
                             <div class="divtable mtb15">\
                                 <table id="ssh_ip_white_table" class="table table-hover" style="min-width: 500px;"></table>\
                             </div>\
@@ -306,7 +302,7 @@
                     </div>\
                 </div></div>',
                 success:function(layers,index){
-                    firewall.ssh_list_view();
+                    firewall.get_ssh_config();
                     //导航事件
                     $(".bt-w-menu p").click(function(){
                         var index = $(this).index();
@@ -314,15 +310,12 @@
                         $('.bt-w-con .bt-box').eq(index).show().siblings().hide();
                         switch(index){
                             case 0:
-                                firewall.ssh_list_view();
-                                break;
-                            case 1:
                                 firewall.get_ssh_config();
                                 break;
-                            case 2:
+                            case 1:
                                 firewall.get_white_ip();
                                 break;
-                            case 3:
+                            case 2:
                                 firewall.get_logs_view({p:1});
                                 break;
                         }
@@ -334,6 +327,19 @@
                     // 下载
                     $('.btn-download-sshkey').click(function(){
                         window.open('/download?filename=/root/.ssh/id_rsa')
+                    })
+                     // 允许root登录
+                    $('#set_root').click(function(){
+                        var _check = $(this).prop('checked')
+                        if(_check){
+                            $.post('/ssh_security?action=set_root',function(res){
+                                layer.msg(res.msg,{icon:res.status?1:2})
+                            })
+                        }else{
+                            $.post('/ssh_security?action=stop_root',function(res){
+                                layer.msg(res.msg,{icon:res.status?1:2})
+                            })
+                        }
                     })
                     // 添加ip白名单
                     $(".add_white_ip").click(function(){
@@ -417,26 +423,6 @@
                 }
             })
         },
-        // 风险提醒
-        ssh_list_view:function(){
-            var that = this;
-            $.post('/ssh_security?action=san_ssh_security',function(res){
-                that.ssl_scanning_list = res.result;
-                var _tbody = ''
-                if(res.result.length > 1){
-                    for(var i =0; i<res.result.length; i++){
-                        _tbody += '<tr>\
-                            <td><span title="'+res.result[i].name+'" style="width:95px" class="overflow_hide_style">'+res.result[i].name+'</span></td>\
-                            <td><span title="'+res.result[i].Suggestions+'" style="width:300px" class="overflow_hide_style">'+res.result[i].Suggestions+'</span></td>\
-                            <td style="text-align:right"><a href="javascript:;" class="btlink" onclick="firewall.ssh_scanning_detail('+i+')">详情</a></td>\
-                        </tr>'
-                    }
-                }else{
-                    _tbody='<tr><td colspan="3" style="text-align:center">没有数据</td></tr>'
-                }
-                $('#ssh_scanning').html(_tbody)
-            })
-        },
         // 详情视图
         ssh_scanning_detail:function(index){
             var item = this.ssl_scanning_list[index];
@@ -499,8 +485,10 @@
             $.post('/ssh_security?action=get_config', {}, function (res) {
                 var paw = res.password == 'yes'?true:false;
                 var key = (res.pubkey == 'yes' && res.rsa_auth == 'yes') ? true : false;
+                var root = res.root_is_login == 'yes' ? true : false;
                 $('#ssh_paw').prop('checked',paw);
                 $('#ssh_key').prop('checked',key);
+                $('#set_root').prop('checked',root);
                 if(key){
                     $.post('/ssh_security?action=get_key', {}, function (res) {
                         if(res.status){
