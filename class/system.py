@@ -121,68 +121,53 @@ class system:
                 
                 
         tmp['type'] = data['webserver']
-        tmp['version'] = public.readFile(self.setupPath + '/'+data['webserver']+'/version.pl')
+        tmp['version'] = public.readFile(self.setupPath + '/'+data['webserver']+'/version.pl');
         tmp['status'] = False
-        if tmp['version']: tmp['version'] = tmp['version'].strip()
-        try:
-            if serviceName == 'nginx':
-                pid_file = self.setupPath + '/nginx/logs/nginx.pid'
-            elif serviceName in ['httpd','apache']:
-                pid_file = self.setupPath + '/apache/logs/httpd.pid'
-            elif serviceName in ['openlitespeed']:
-                pid_file = '/run/openlitespeed.pid'
-            if os.path.exists(pid_file):
-                pid = int(public.readFile(pid_file))
-                tmp['status'] = public.pid_exists(pid)
-            else:
-                tmp['status'] = False
-        except:
-            result = public.ExecShell('/etc/init.d/' + serviceName + ' status')
-            if result[0].find('running') != -1: tmp['status'] = True
-
+        result = public.ExecShell('/etc/init.d/' + serviceName + ' status')
+        if result[0].find('running') != -1: tmp['status'] = True
         data['web'] = tmp
         
         tmp = {}
-        vfile = self.setupPath + '/phpmyadmin/version.pl'
-        tmp['version'] = public.readFile(vfile)
+        vfile = self.setupPath + '/phpmyadmin/version.pl';
+        tmp['version'] = public.readFile(vfile);
         if tmp['version']: tmp['version'] = tmp['version'].strip()
-        tmp['setup'] = os.path.exists(vfile)
-        tmp['status'] = pstatus
-        tmp['phpversion'] = phpversion.strip()
-        tmp['port'] = phpport
-        tmp['auth'] = pauth
-        data['phpmyadmin'] = tmp
+        tmp['setup'] = os.path.exists(vfile);
+        tmp['status'] = pstatus;
+        tmp['phpversion'] = phpversion.strip();
+        tmp['port'] = phpport;
+        tmp['auth'] = pauth;
+        data['phpmyadmin'] = tmp;
         
         tmp = {}
-        tmp['setup'] = os.path.exists('/etc/init.d/tomcat')
+        tmp['setup'] = os.path.exists('/etc/init.d/tomcat');
         tmp['status'] = tmp['setup']
         #if public.ExecShell('ps -aux|grep tomcat|grep -v grep')[0] == "": tmp['status'] = False
-        tmp['version'] = public.readFile(self.setupPath + '/tomcat/version.pl')
-        data['tomcat'] = tmp
+        tmp['version'] = public.readFile(self.setupPath + '/tomcat/version.pl');
+        data['tomcat'] = tmp;
         
         tmp = {}
-        tmp['setup'] = os.path.exists(self.setupPath +'/mysql/bin/mysql')
-        tmp['version'] = public.readFile(self.setupPath + '/mysql/version.pl')
+        tmp['setup'] = os.path.exists(self.setupPath +'/mysql/bin/mysql');
+        tmp['version'] = public.readFile(self.setupPath + '/mysql/version.pl');
         tmp['status'] = os.path.exists('/tmp/mysql.sock')
         data['mysql'] = tmp
         
         tmp = {}
-        tmp['setup'] = os.path.exists(self.setupPath +'/redis/runtest')
-        tmp['status'] = os.path.exists('/var/run/redis_6379.pid')
-        data['redis'] = tmp
+        tmp['setup'] = os.path.exists(self.setupPath +'/redis/runtest');
+        tmp['status'] = os.path.exists('/var/run/redis_6379.pid');
+        data['redis'] = tmp;
         
         tmp = {}
-        tmp['setup'] = os.path.exists('/usr/local/memcached/bin/memcached')
-        tmp['status'] = os.path.exists('/var/run/memcached.pid')
-        data['memcached'] = tmp
+        tmp['setup'] = os.path.exists('/usr/local/memcached/bin/memcached');
+        tmp['status'] = os.path.exists('/var/run/memcached.pid');
+        data['memcached'] = tmp;
         
         tmp = {}
-        tmp['setup'] = os.path.exists(self.setupPath +'/pure-ftpd/bin/pure-pw')
-        tmp['version'] = public.readFile(self.setupPath + '/pure-ftpd/version.pl')
+        tmp['setup'] = os.path.exists(self.setupPath +'/pure-ftpd/bin/pure-pw');
+        tmp['version'] = public.readFile(self.setupPath + '/pure-ftpd/version.pl');
         tmp['status'] = os.path.exists('/var/run/pure-ftpd.pid')
         data['pure-ftpd'] = tmp
         data['panel'] = self.GetPanelInfo()
-        data['systemdate'] = public.format_date("%Y-%m-%d %H:%M:%S %Z %z") #public.ExecShell('date +"%Y-%m-%d %H:%M:%S %Z %z"')[0].strip()
+        data['systemdate'] = public.ExecShell('date +"%Y-%m-%d %H:%M:%S %Z %z"')[0].strip();
         data['show_workorder'] = not os.path.exists('data/not_workorder.pl')
         return data
     
@@ -192,15 +177,15 @@ class system:
         try:
             port = public.GetHost(True)
         except:
-            port = '8888'
+            port = '8888';
         domain = ''
         if os.path.exists('data/domain.conf'):
-           domain = public.readFile('data/domain.conf')
+           domain = public.readFile('data/domain.conf');
         
         autoUpdate = ''
-        if os.path.exists('data/autoUpdate.pl'): autoUpdate = 'checked'
+        if os.path.exists('data/autoUpdate.pl'): autoUpdate = 'checked';
         limitip = ''
-        if os.path.exists('data/limitip.conf'): limitip = public.readFile('data/limitip.conf')
+        if os.path.exists('data/limitip.conf'): limitip = public.readFile('data/limitip.conf');
         admin_path = '/'
         if os.path.exists('data/admin_path.pl'): admin_path = public.readFile('data/admin_path.pl').strip()
         
@@ -209,8 +194,8 @@ class system:
         #    if os.path.isdir('templates/' + template): templates.append(template);
         template = public.GetConfigValue('template')
         
-        check502 = ''
-        if os.path.exists('data/502Task.pl'): check502 = 'checked'
+        check502 = '';
+        if os.path.exists('data/502Task.pl'): check502 = 'checked';
         return {'port':port,'address':address,'domain':domain,'auto':autoUpdate,'502':check502,'limitip':limitip,'templates':templates,'template':template,'admin_path':admin_path}
     
     def GetPHPConfig(self,version):
@@ -389,9 +374,13 @@ class system:
     
     def GetMemInfo(self,get=None):
         #取内存信息
+        skey = 'memInfo'
+        memInfo = cache.get(skey)
+        if memInfo: return memInfo
         mem = psutil.virtual_memory()
         memInfo = {'memTotal':int(mem.total/1024/1024),'memFree':int(mem.free/1024/1024),'memBuffers':int(mem.buffers/1024/1024),'memCached':int(mem.cached/1024/1024)}
         memInfo['memRealUsed'] = memInfo['memTotal'] - memInfo['memFree'] - memInfo['memBuffers'] - memInfo['memCached']
+        cache.set(skey,memInfo,60)
         return memInfo
     
     def GetDiskInfo(self,get=None):
@@ -445,7 +434,7 @@ class system:
             except Exception as ex: 
                 public.WriteLog('信息获取',str(ex))
                 continue
-        cache.set(key,diskInfo,10)
+        cache.set(key,diskInfo,10000)
         return diskInfo
 
 
@@ -642,7 +631,9 @@ class system:
 
 
     def get_cpu_times(self):
-        data = {}
+        skey = 'cpu_times'
+        data = cache.get(skey)
+        if data:return data
         try:
             cpu_times_p  = psutil.cpu_times_percent()
             data['user'] = cpu_times_p.user
@@ -667,6 +658,7 @@ class system:
                 data['总进程数'] += 1
             
         except: pass
+        cache.set(skey,data,60)
         return data
 
 
@@ -937,39 +929,11 @@ class system:
         return self.GetMemInfo()
     
     #重启面板     
-    def ReWeb(self,get):
-        #s = time.time()
-        #if not self.shell: self.connect_ssh()
-        #self.shell.send("nohup /etc/init.d/bt restart && sleep 1 && /etc/init.d/bt start > /dev/null &\n")
-        #public.ExecShell("nohup sleep 2 && /etc/init.d/bt restart 2>&1 >/dev/null &")
-        
+    def ReWeb(self,get):        
         public.ExecShell("/etc/init.d/bt start")
         public.writeFile('data/restart.pl','True')
         return public.returnMsg(True,'面板已重启')
 
-    def connect_ssh(self):
-        import paramiko
-        self.ssh = paramiko.SSHClient()
-        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        try:
-            self.ssh.connect('127.0.0.1', public.GetSSHPort())
-        except:
-            if public.GetSSHStatus():
-                try:
-                    self.ssh.connect('localhost', public.GetSSHPort())
-                except:
-                    return False
-            import firewalls
-            fw = firewalls.firewalls()
-            get = public.dict_obj()
-            get.status = '0'
-            fw.SetSshStatus(get)
-            self.ssh.connect('127.0.0.1', public.GetSSHPort())
-            get.status = '1'
-            fw.SetSshStatus(get)
-        self.shell = self.ssh.invoke_shell(term='xterm', width=100, height=29)
-        self.shell.setblocking(0)
-        return True
     
     #修复面板
     def RepPanel(self,get):
@@ -983,9 +947,4 @@ class system:
         public.ExecShell("wget -O update.sh " + public.get_url() + "/install/update6.sh && bash update.sh")
         self.ReWeb(None)
         return True
-        
-        
-        
-        
-        
         

@@ -7092,18 +7092,19 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
 .pro-font-icon{
 	color: #ffa904;
 }
+
 .pro-font-icon span,
 .ltd-font-icon span{
-    font-size: 15px;
-    vertical-align: middle;
-    height: 14px;
-    line-height: 14px;
+  font-size: 15px;
+  vertical-align: baseline;
+  height: 14px;
+  line-height: 14px;
+  cursor: pointer;
 }
 .pro-font-icon span:first-child,
 .ltd-font-icon span:first-child{
 	margin-right: 3px;
-	font-size: 16px;
-	top: -2px;
+	font-size: 15px;
 }
 .ltd-font-icon{
 	color: #9b7e48;
@@ -7380,10 +7381,10 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
 .showprofun .soft_tips_text{
     display:block;
 }
-.alert.showprofun .btn-ground{
-    margin-left: 45px;
-    margin-top: 10px;
-}
+/*.alert.showprofun .btn-ground{*/
+/*    margin-left: 45px;*/
+/*    margin-top: 10px;*/
+/*}*/
 .soft_tips_text .pro_introduce{
     display: inline-block;
 }
@@ -9706,6 +9707,9 @@ select[name="disk-io"]{
 	padding:0 10px;
 	width: 100%;
 	position: relative;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 .bt_select_updown .bt_select_list{
 	display: none;
@@ -9746,6 +9750,9 @@ select[name="disk-io"]{
 	line-height: 28px;
 	color: #333;
 	padding:0 10px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 .bt_select_updown .bt_select_list .item.disabled{
 	opacity: .65;
@@ -9799,7 +9806,10 @@ select[name="disk-io"]{
     opacity: .65;
     cursor: no-drop;
     box-shadow: none;
-    
+}
+.bt_select_updown.bt-disabled{
+	background-color: rgb(246, 246, 246);
+	color: rgb(102, 102, 102);
 }
 .bt_table_select_group .bt_selects{
     display: none;
@@ -12427,3 +12437,566 @@ select[name="disk-io"]{
 textarea{
     resize: none;
 }
+
+/*插件下载进度*/
+.soft_download_speed .layui-layer-content{
+  padding: 0 !important;
+}
+.soft_download_speed .waiting-down-list .done-progress{
+  height: 5px;
+}
+.soft_download_speed .waiting-down-list li .down-progress{
+  height: 5px;
+}
+
+/*end*/
+
+
+/* 专业版优势 */
+.soft_tips_text {
+  /* font-weight: 700; */
+  display: inline-block;
+  font-size: 14px;
+}
+
+.alert.showprofun {
+  margin-bottom: 15px;
+  position: relative;
+  height: 85px;
+  background: #F8FDF6;
+  border-color: #EAF1F2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.alert.showprofun.ltd {
+  background-color: rgba(251,243,222,.5);
+  border-color: rgba(236,232,213,.5);
+}
+.showprofun.ltd .soft_tips_text .pro_ic_title .advantage{
+  color: #7d7054;
+}
+
+.showprofun .soft_tips_text{
+    display:inline-block;
+    color:#333;
+    position: absolute;
+    left: 170px;
+    font-size:12px;
+}
+.showprofun .soft_tips_text .pro_ic_title{
+    font-size: 17px;
+    margin-bottom: 7px;
+}
+.showprofun .soft_tips_text .pro_ic_title span a{
+    margin-left: 20px;
+    font-size: 12px;
+    /*color: #333;*/
+}
+/*.showprofun .soft_tips_text .pro_ic_title span a:hover{*/
+/*    color: #20a53a;*/
+/*}*/
+.showprofun .soft_tips_text .pro_ic_title .advantage{
+  font-weight: 600;
+  color: #666;
+  font-size: 14px;
+}
+.showprofun .soft_tips_text .pro_ic_title .renew_info{
+  margin-left:15px;
+  font-size: 13px;
+}
+.showprofun .soft_tips_text .pro_ic_title .renew_info span{
+  color: #3c763d;
+  font-weight: 600;
+}
+.alert.showprofun .btn-ground a{
+    margin:10px 0 0 0;
+    width: 110px;
+    height: 35px;
+    font-size: 13px;
+    line-height: 32px;
+}
+.showprofun .soft_tips_text .pro_introduce{
+    display: inline-block;
+}
+.showprofun .soft_tips_text .pro_introduce .item{
+  display:inline-block;
+  height:30px;
+  line-height:30px;
+  margin-right: 30px;
+}
+.showprofun .soft_tips_text .pro_introduce .glyphicon{
+  color: #20a53a;
+  font-size:12px;
+  margin-right: 5px;
+}
+.showprofun .soft_tips_text .pro_introduce span{
+  color: #888;
+}
+/*.showprofun:hover .close_recommend{*/
+/*  background: #ff4444;*/
+/*  color: #fff;*/
+/*  opacity: 1;*/
+/*  display: inline-block !important;*/
+/*}*/
+.showprofun .close_recommend{
+  position: absolute;
+  right: 0;
+  background: #fdf9ee;
+  padding: 5px;
+  top: 0;
+  line-height: 12px;
+  color: #555;
+  cursor: pointer;
+  border-top-right-radius: 2px;
+}
+.soft_tips_text .pro_ic_title div span:nth-child(2){
+    font-weight: initial;
+}
+.soft_tips_text .pro_ic_title .btlink{
+  color: #0f9228 !important;
+}
+.commonly_software{
+  height: 28px;
+  line-height: 28px;
+  margin-bottom: 15px;
+  color:#666;
+}
+.commonly_software .commonly_software_title{
+  display: inline-block;
+  padding-left: 5px;
+  padding-right: 15px;
+}
+
+.commonly_software .commonly_software_list{
+  display: inline-block;
+
+}
+.commonly_software .commonly_software_list .item{
+  display: inline-block;
+  margin-right: 10px;
+  padding: 0 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 500ms;
+  position: relative;
+}
+.commonly_software .commonly_software_list .item:hover{
+  color: #20A53A;
+  background-color: #f5f5f5;
+}
+.commonly_software .commonly_software_list .item img{
+  max-width: 22px;
+  margin-right: 5px;
+  image-rendering: -webkit-optimize-contrast;
+  vertical-align: middle;
+  margin-top: -2.5px;
+}
+
+.commonly_software .commonly_software_list .item span{
+  display: inline-block;
+  font-size: 12px;
+  color:#666;
+}
+.pro_introduce_content .item{
+  position: relative;
+}
+.pro_introduce_content .item .success_icon{
+    position: absolute;
+    display: block;
+    left: 0;
+    top: 50%;
+    margin-top: -8px;
+    width: 6px;
+    height: 12px;
+    border: solid #20a532;
+    border-width: 0 1.5px 1.5px 0;
+    transform: rotate(45deg);
+}
+.pro_introduce_content .item span:nth-child(2){
+  padding-left: 14px;
+}
+
+/* 专业版优势 end*/
+
+/* New 支付界面 */
+.libPay-view .layui-layer-setwin{
+    z-index:999;
+}
+.libPay-menu {
+    background: #F9F9F9;
+    cursor: pointer;
+    font-size:0;
+}
+.libPay-menu .libPay-menu-type.active {
+    background: #fff;
+    z-index:99;
+}
+.libPay-menu .libPay-menu-type {
+    height: 75px;
+    display: inline-block;
+    width: 435px;
+    text-align: center;
+    font-size: 12px;
+    position: relative;
+}
+.libPay-menu.is_plugin .libPay-menu-type{
+	width: 290px;
+}
+.libPay-menu .libPay-menu-type:last-child{
+    width: 129px;
+}
+.libPay-menu-type p:first-child {
+    font-size: 16px;
+    font-weight: bold;
+    padding-top: 20px;
+}
+.libPay-menu-type p:last-child {
+    margin-top: 7px;
+    color: #A5A5A5;
+}
+.libPay-menu.is_plugin .libPay-menu-type:nth-child(3)::before,
+.libPay-menu .libPay-menu-type:first-child::before,
+.libPay-menu .libPay-menu-type:last-child::before{
+    content: "";
+    border-right:1px solid #ddd;
+    height: 60%;
+    position: absolute;
+    right: -1px;
+    top: 20%;
+}
+.libPay-menu .libPay-menu-type:last-child::before,
+.libPay-menu.is_plugin .libPay-menu-type:nth-child(3)::before{
+    border-left:1px solid #ddd;
+    border-right: none;
+    left: -1px;
+}
+.libPay-menu .libPay-menu-type.active:nth-child(3)::before,
+.libPay-menu .libPay-menu-type.active:first-child::before,
+.libPay-menu .libPay-menu-type.active:last-child::before{
+    border:none;
+}
+.libPay-menu .libPay-menu-type.lib_pro .glyphicon{
+    color: #ffa904;
+}
+.libPay-menu .libPay-menu-type.lib_ltd .glyphicon{
+    color: #9b7e48;
+}
+
+.libPay-line-item.proT li:first-child {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+.libPay-line-item.proT li:last-child{
+	border-top-right-radius:4px;
+	border-bottom-right-radius:4px;
+}
+.libPay-line-item li.active, .libPay-line-item li.active:hover {
+    border: #20a53a 2px solid;
+    color: #20A53A;
+    z-index: 9999;
+    box-sizing: border-box;
+}
+.libPay-line-item.proT li.active .item-name {
+    padding: 9px 29px;
+}
+.libPay-line-item.proT li .item-name {
+    font-size: 14px;
+    vertical-align: middle;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    padding-top: 5px;
+    padding: 10px 30px;
+}
+.libPay-line-item.proS .pro-introduce{
+    width: 170px;
+    height: 35px;
+    line-height: 35px;
+    display: inline-block;
+}
+.libPay-line-item.proS {
+    font-size: 14px;
+    margin: 0 0 25px 5px;
+}
+.libPay-line-item.proS .glyphicon {
+    color: #ff8d00;
+    margin-right: 5px;
+}
+.libPay-line-item.proS span:nth-child(2){
+  color:#666;
+}
+.libPay-content-box .libPay-layer-item{display: none;}
+.libPay-content-box .libPay-layer-item.aShow{display: block;}
+.libPay-content-box .libPay-layer-item .voucher-tit{
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+.libPay-line-item.prokf{
+    margin: 15px 0;
+    color: #666;
+    display: inline-block;
+}
+.libPay-line-item.prokf label{
+    margin: 0;
+}
+.libPay-line-item.prokf label i{
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    vertical-align: top;
+    border-radius: 1px;
+    position: relative;
+    border-radius: 2px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.libPay-line-item.prokf label i.active{
+    background-color: #20a53a;
+    border-color: #20a53a;
+}
+.libPay-line-item.prokf label i::after {
+    content: '';
+    position: absolute;
+    display: block;
+    left: 50%;
+    top: 50%;
+    margin-left: -2.5px;
+    margin-top: -6px;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+.libPay-line-item.prokf input{
+    display: none;
+}
+#libPay-qcode-box {
+    margin-bottom: 25px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    font-size: 0;
+    position: relative;
+}
+#pay_product_view .libVoucher-loading,
+#libPay-qcode-box .libPay-loading {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 999;
+    display: none;
+    background: #fff;
+    text-align: center;
+    font-size: 12px;
+    padding-top: 50px;
+}
+.libVoucher-loading p,
+.libPay-loading p {
+    margin-top: 15px;
+}
+
+#pay_product_view .libVoucher-loading {
+    display: block;
+    padding-top: 100px;
+    top: 125px;
+    height: 350px;
+    z-index:99999
+}
+#pay_product_view {
+    position: relative;
+}
+.libPay-qcode-left, .libPay-qcode-right {
+    display: inline-block;
+    vertical-align: top;
+    font-size: 12px;
+}
+.libPay-qcode-right div{
+    display: inline-block;
+    vertical-align: top;
+
+}
+.libPay-qcode-left .pay-type-btn.active {
+    border-right: 1px solid #fff;
+    z-index: 12;
+    position: relative;
+}
+#libPay-qcode-box .pay-radio-type {
+    width: 150px;
+}
+#libPay-qcode-box .pay-type-label{
+    height: 45px;
+    line-height: 45px;
+    padding-left: 15px;
+    display: block;
+    margin: 0;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+#libPay-qcode-box .pay-radio-ati{
+    background-color:#fff;
+    border:1px solid #2bc849;
+    border-radius:100%;
+    display:inline-block;
+    height:14px;
+    margin-right:8px;
+    margin-top:-1px;
+    vertical-align:middle;
+    width:14px;
+    line-height:1
+}
+.pay-type-btn.active .pay-radio-ati:after{
+    background-color:#2bc849;
+    border-radius:100%;
+    content:"";
+    display:inline-block;
+    height:8px;
+    margin:2px;
+    width:8px
+}
+#libPay-qcode-box .pay-radio-tit{
+    font-weight: 500;
+}
+.libPay-line-item .pay-pro-cycle{
+    white-space: pre;
+}
+.libPay-line-item.proP li.pay-cycle-btns.active {
+    color: #333;
+    border: #20a53a 2px solid;
+    background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAMAAADzapwJAAAAA3NCSVQICAjb4U/gAAAAclBMVEX///8fpTofpTogpTogpTogpTrw+fLt+O/i8+be8uLb8d/T7djP7NXR7NbE58u548G34sCr3bWU1KGT05+FzpN+y413yIZ0x4RxxoJwxYFnwnliv3RWu2pUumhMt2FGtVxDs1k6sFE4r1Avq0cjpjwgpTpRW86VAAAAJnRSTlMAEXd3iO7//////////////////////////////////////////0c8mUAAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAWdEVYdENyZWF0aW9uIFRpbWUAMDUvMjkvMThc7W1eAAAAHHRFWHRTb2Z0d2FyZQBBZG9iZSBGaXJld29ya3MgQ1M26LyyjAAAAHhJREFUGJVtzskSgkAMBFB2AUcR2QTcEPr/fxFmmFiW0znk8CrVac9jE1CNYqoAV8JaXTbq8K7/bBVcwRVcwRVcwbRTIDqcWrjaJ3cJ0VrdjDaHh2Sb2/F43XadPuWlTfjkJersLU2+ufNFnSdb0P/5thQv6R2CzQo9Oh+AlBF9bAAAAABJRU5ErkJggg==") no-repeat right bottom;
+}
+.libPay-line-item.proP li.pay-cycle-btns {
+    display: inline-block;
+    width: 220px;
+    margin-right: 10px;
+    text-align: center;
+    border-radius: 4px;
+    padding: 20px;
+    font-style: normal;
+    border: 1px solid #eee;
+    position: relative;
+    cursor: pointer;
+}
+.libPay-line-item.proP li.pay-cycle-btns:last-child{
+	margin: 0;
+}
+.libPay-line-item.proP .pay-head-price {
+    padding-bottom: 5px;
+    border-bottom: 1px dashed #ccc;
+}
+.libPay-line-item.proP .pay-foo-price {
+    color: #333;
+    margin-top: 10px;
+}
+.libPay-line-item.proP .libPrice {
+    display: inline-block;
+    color: #ff7300;
+    font-size: 14px;
+    font-weight: bold;
+}
+.libPay-line-item.proP .libPrice i{
+    font-size: 18px;
+    font-style: normal;
+    font-weight: bold;
+}
+.libPay-line-item.proP .pay-head-price p {
+    text-decoration: line-through;
+    color: #aaa;
+}
+.libPay-line-item.proP .pay-cycle-btns em {
+    position: absolute;
+    left: -5px;
+    top: -15px;
+    background: #ff7300;
+    border-radius: 2px;
+    font-size: 15px;
+    color: #fff;
+    transform: scale(.9, .8);
+    font-style: normal;
+    padding: 5px;
+}
+.libPay-line-item.proP .pay-cycle-btns.active em{
+    left: -6px;
+}
+.libPay-qcode-right {
+    border-left: 1px solid #eee;
+    margin-left: -1px;
+    padding: 20px 0 20px 35px;
+    position: relative;
+}
+.libPay-qcode-right .pay-wx canvas {
+  width: 155px;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+.libPay-qcode-right .libPaycode-foo-txt {
+    margin-left: 30px;
+    margin-top: 35px;
+}
+.libPay-qcode-right .libPaycode-foo-txt p{
+    font-size: 14px;
+}
+.libPay-qcode-right .libPaycode-foo-txt span {
+    font-size: 24px;
+    font-style: normal;
+    font-weight: bold;
+    display: inline-block;
+    color: #ff7300;
+    margin:10px 0;
+}
+.libPay-qcode-right .libPaycode-foo-txt .libPaycode-pro-cylce{
+    display: block;
+}
+.libPay-qcode-right .libPaycode-pro-price {
+    display: inline-block;
+    font-size: 12px;
+    text-decoration: line-through;
+    color:#666
+}
+.libPay-footer-tips p {
+    display: inline-block;
+    color: #666;
+    margin-right: 50px;
+}
+.libPay-qcode-right .payqcode-box {
+    position: absolute;
+    top: 85px;
+    left: 100px;
+    background-color: #fff;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+}
+.libPay-qcode-right .payqcode-box span{
+    position: absolute;
+    top: 4px;
+    left: 4px;
+}
+.libVoucher-type .pay-cycle-btn {
+  border-radius: 5px;
+  padding: 1px 21px;
+  margin-right: 8px;
+  margin-bottom: 5px;
+  line-height: 40px;
+}
+.libVoucher-type .pay-cycle-btn.active{
+  border:#20a53a 2px solid;
+  padding: 0 20px;
+}
+.libPay-layer-item .libVoucher-list{
+    max-height: 197px;
+    min-height: 197px;
+    overflow: auto;
+}
+
+/* New 支付界面 end */
+

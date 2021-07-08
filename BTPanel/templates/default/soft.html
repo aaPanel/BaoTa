@@ -2,59 +2,60 @@
 
 {% block content %}
 <div class="main-content">
-    <div class="container-fluid" style="padding-bottom:54px">
-        <div class="pos-box bgw mtb15">
-            <div class="position f14 c9 pull-left">
-                <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
-            </div>
-            <div class="search pull-right">
-                
-            </div>
-        </div>
-        <div class="softbox bgw mtb15">
-            <div class="softlist">
+	<div class="container-fluid" style="padding-bottom:54px">
+		<div class="pos-box bgw mtb15">
+			<div class="position f14 c9 pull-left">
+				<a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
+			</div>
+			<div class="search pull-right"></div>
+		</div>
+		<div class="softbox bgw mtb15">
+			<div class="softlist">
 				<div class="soft-filter pd15">
 					<div class="row soft-filter-box">
 						<div class="col-md-12">
 							<span class="filter-title f14 c4">应用搜索</span>
 							<div class="soft-search">
 								<form target="hid" onsubmit='soft.get_list(1,0,$("#SearchValue").val())'>
-									<input type="text" id="SearchValue" class="ser-text pull-left" placeholder="支持应用名称、字段模糊搜索" style="width:232px" />
-									<button type="button" class="ser-sub pull-left" onclick='soft.get_list(1,0,$("#SearchValue").val())'></button>
+									<input type="text" id="SearchValue" class="ser-text pull-left" placeholder="支持应用名称、字段模糊搜索"
+												 style="width:232px"/>
+									<button type="button" class="ser-sub pull-left"
+													onclick='soft.get_list(1,0,$("#SearchValue").val())'></button>
 								</form>
 								<iframe name='hid' id="hid" style="display:none"></iframe>
 							</div>
 						</div>
 					</div>
-					<div class="row soft-filter-box"><div class="col-md-12"><span class="filter-title f14 c4">应用分类</span><div class="menu-sub softtype"></div></div></div>
+					<div class="row soft-filter-box">
+						<div class="col-md-12"><span class="filter-title f14 c4">应用分类</span>
+							<div class="menu-sub softtype"></div>
+						</div>
+					</div>
 				</div>
-                <div class="divtable pd15 relative">
-                    <button class="btn btn-default btn-sm" onclick="soft.flush_cache()" title="从云端更新列表" style="position:absolute;top:-49px;right:15px">更新软件列表</button>
-                    <div id="updata_pro_info">
-                        <div class="alert alert-success" style="margin-bottom:15px"><strong>专业版可以免费使用专业版插件，企业版可以免费使用专业版及企业版插件。</strong><button class="btn btn-success btn-xs va0 updata_pro" onclick="bt.soft.updata_pro()" title="立即升级专业版" style="margin-left:8px">立即升级</button></div>
-                    </div>
-                    <table id="softList" class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"></table>
-                    <div id='softPage' class="dataTables_paginate paging_bootstrap page">
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+				<div class="divtable pd15 relative">
+					<button class="btn btn-default btn-sm" onclick="soft.flush_cache()" title="从云端更新列表" style="position:absolute;top:-49px;right:15px">更新软件列表 </button>
+					<div id="updata_pro_info"></div>
+					<div id="commonly_software" class="commonly_software"><div class="commonly_software_title">最近使用入口</div><div class="commonly_software_list"></div></div>
+					<table id="softList" class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"></table>
+					<div id='softPage' class="dataTables_paginate paging_bootstrap page"></div>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>
 {% endblock %}
 {% block scripts %}
 <script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js?version={{g['version']}}"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/editor/ace.js"></script>
 <script type="text/javascript">
-    bt.set_cookie('sites_path', "{{session['config']['sites_path']}}");
-    bt.set_cookie('serverType', "{{session['webserver']}}");
-    bt.set_cookie('distribution', "{{session['config']['distribution']}}");
-    $(document).ready(function () {
-        soft.get_list();
-        //bt.soft.set_lib_config('load_balance','宝塔负载均衡-重构版') //开发测试插件
-    }); 
+	bt.set_cookie('sites_path', "{{session['config']['sites_path']}}");
+	bt.set_cookie('serverType', "{{session['webserver']}}");
+	bt.set_cookie('distribution', "{{session['config']['distribution']}}");
+	$(document).ready(function () {
+		soft.get_list();
+		soft.render_soft_recommend() // 渲染常用软件列表
+	});
 </script>
 {% endblock %}

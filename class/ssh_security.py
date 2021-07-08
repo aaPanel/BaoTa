@@ -368,7 +368,7 @@ class ssh_security:
         开启密码登陆
         get: 无需传递参数
         '''
-        ssh_password = '\n#?PermitRootLogin\s\w+'
+        ssh_password = '\nPermitRootLogin\s\w+'
         file = public.readFile(self.__SSH_CONFIG)
         if len(re.findall(ssh_password, file)) == 0:
             file_result = file + '\nPermitRootLogin yes'
@@ -383,7 +383,7 @@ class ssh_security:
         开启密码登陆
         get: 无需传递参数
         '''
-        ssh_password = '\n#?PermitRootLogin\s\w+'
+        ssh_password = '\nPermitRootLogin\s\w+'
         file = public.readFile(self.__SSH_CONFIG)
         if len(re.findall(ssh_password, file)) == 0:
             file_result = file + '\nPermitRootLogin no'

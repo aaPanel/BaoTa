@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
-<link rel="stylesheet" href="{{g.cdn_url}}/ace/styles/icons.css">
+<link rel="stylesheet" href="{{g.cdn_url}}/editor/styles/icons.css">
 <link rel="stylesheet" type="text/css" href="{{g.cdn_url}}/css/files_style.min.css">
 <style id="file_list_info">.file_checkbox{width:40px !important;}.file_name{width:300px !important;}.file_ps{width:200px !important;}.file_size{width:100px !important;}.file_mtime{width:180px !important;}.file_user{width:80px !important;}.file_accept{width:80px !important;}.file_operation{width:220px !important;}.file_table_view.list_view .file_list_content .file_tr{width:auto;}.file_table_view.list_view .file_list_content{width:auto;}</style>
 <div class="main-content">
@@ -673,7 +673,7 @@
     <script type="text/javascript" src="{{g.cdn_url}}/js/public_backup.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
     <script type="text/javascript" src="{{g.cdn_url}}/js/clipboard.min.js" defer></script>
     <script type="text/javascript" src="{{g.cdn_url}}/js/polyfill.js"></script>
-    <script type="text/javascript" src="{{g.cdn_url}}/ace/ace.js" defer></script>
-    <script type="text/javascript" src="{{g.cdn_url}}/ace/ext-language_tools.js" defer></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/editor/ace.js" defer></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/editor/ext-language_tools.js" defer></script>
     <script type="text/javascript" src="{{g.cdn_url}}/js/files.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
 {% endblock %}

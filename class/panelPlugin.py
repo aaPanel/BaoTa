@@ -2,12 +2,13 @@
 #-------------------------------------------------------------------
 # 宝塔Linux面板
 #-------------------------------------------------------------------
-# Copyright (c) 2015-2019 宝塔软件(http:#bt.cn) All rights reserved.
+# Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 #-------------------------------------------------------------------
 # Author: hwliang <hwl@bt.cn>
 #-------------------------------------------------------------------
-import public,os,sys,json,time,psutil,py_compile,re
-from BTPanel import session,cache
+import public,os,sys,json,time,psutil,re,shutil,requests
+from BTPanel import plugin, session,cache,send_file
+from pluginAuth import Plugin
 if sys.version_info[0] == 3: from importlib import reload
 class mget: pass
 class panelPlugin:
@@ -21,11 +22,566 @@ class panelPlugin:
     __product_list = None
     __plugin_list = None
     __exists_names = {}
+    __plugin_s_list = []
+    __panel_path = '/www/server/panel'
+    __plugin_info = None
+    __plugin_name = None
+    __plugin_object = None
+    __plugin_list = None  
+    __panel_path = '/www/server/panel'
+    __plugin_path = __panel_path + '/plugin/'
+    __plugin_save_file = __panel_path + '/data/plugin_bin.pl'
+    __api_root_url = 'https://api.bt.cn'    
+    __api_url = __api_root_url+ '/panel/get_plugin_list'
+    __download_url = __api_root_url + '/down/download_plugin'
+    __download_d_main_url = __api_root_url + '/down/download_plugin_main'
+    __tmp_path = __panel_path + '/temp/'
+    __plugin_timeout = 3600
+    __is_php = False
+    __install_opt = 'i'
+    __pid = 0
+    __sub_rules = []
+    __dict__ = None
+    __replace_rule = []
+
     pids = None
     ROWS = 15
     
     def __init__(self):
-        self.__install_path = 'plugin'
+        self.__install_path = '/www/server/panel/plugin'
+        self.__replace_rule = public.get_plugin_replace_rules()
+
+
+    
+
+    def input_package(self,get):
+        '''
+            @name 导入插件包到面板
+            @author hwliang<2021-06-23>
+            @param filename<string> 解包后的文件路径
+            @param plugin_name<string> 插件名称
+            @param install_opt<string> 安装选项 i.安装 r.修复 u.升级 默认: i
+            @return dict
+        '''
+        return self.__input_plugin(get.tmp_path,get.plugin_name,get.install_opt)
+
+
+
+    def __install_plugin(self,upgrade_plugin_name,upgrade_version = None):
+        '''
+            @name 安装指定插件
+            @author hwliang<2021-06-21>
+            @param upgrade_plugin_name<string> 插件名称
+            @param upgrade_version<string> 插件版本 版本号.指定版本号 / tls.最新正式版 / beta.最新测试版
+            @return dict
+        '''
+        self.__plugin_name = upgrade_plugin_name
+        plugin_info = self.__get_plugin_find(upgrade_plugin_name)
+        if not plugin_info:
+            raise public.PanelError('指定插件不存在,无法安装!')
+        if not plugin_info['versions']:
+            raise public.PanelError('指定插件当前未发布版本信息,请稍候再安装!')
+        if not upgrade_version:
+            upgrade_version =  '{}.{}'.format(plugin_info['versions'][0]['m_version'], plugin_info['versions'][0]['version'])
+        filename = self.__download_plugin(upgrade_plugin_name,upgrade_version)
+        return self.__unpackup_plugin(filename)
+
+    def __repair_plugin(self,upgrade_plugin_name,upgrade_version = None):
+        '''
+            @name 修复指定插件
+            @author hwliang<2021-06-21>
+            @param upgrade_plugin_name<string> 插件名称
+            @param upgrade_version<string> 插件版本 版本号.指定版本号 / tls.最新正式版 / beta.最新测试版
+            @return dict
+        '''
+        self.__install_opt = 'r'
+        return self.__install_plugin(upgrade_plugin_name,upgrade_version)
+
+    def __upgrade_plugin(self,upgrade_plugin_name,upgrade_version = None):
+        '''
+            @name 升级到指定版本
+            @author hwliang<2021-06-21>
+            @param upgrade_plugin_name<string> 插件名称
+            @param upgrade_version<string> 插件版本 版本号.指定版本号 / tls.最新正式版 / beta.最新测试版
+            @return dict
+        '''
+        self.__install_opt = 'u'
+        return self.__install_plugin(upgrade_plugin_name,upgrade_version)
+
+    
+    def __check_dependnet(self,upgrade_plugin_name):
+        '''
+            @name 检查指定插件的依赖安装情况
+            @author hwliang<2021-06-21>
+            @param upgrade_plugin_name<string> 插件名称
+            @return dict
+        '''
+        plugin_info = self.__get_plugin_find(upgrade_plugin_name)
+        if not plugin_info: return {}
+        if not plugin_info['dependnet']: return {}
+        deployment_list = {}
+        for dependnet_plu_name in plugin_info['dependnet'].split(','):
+            p_info = self.__get_plugin_find(dependnet_plu_name)
+            if not p_info: continue
+            deployment_list[dependnet_plu_name] = os.path.exists(p_info['install_checks'])
+        return deployment_list
+
+    def __get_plugin_info(self,upgrade_plugin_name):
+        '''
+            @name 获取插件信息
+            @author hwliang<2021-06-15>
+            @param upgrade_plugin_name<string> 插件名称
+            @return dict
+        '''
+        plugin_info_file = '{}/{}/info.json'.format(self.__plugin_path,upgrade_plugin_name)
+        if not os.path.exists(plugin_info_file): return {}
+        info_body = self.__read_file(plugin_info_file)
+        if not info_body: return {}
+        plugin_info = json.loads(info_body)
+        return plugin_info
+
+    def __get_update_msg(self,upgrade_plugin_name,upgrade_version):
+        '''
+            @name 检查指定插件版本更新日志
+            @author hwliang<2021-06-21>
+            @param upgrade_plugin_name<string> 插件名称
+            @param upgrade_version<string> 插件版本
+            @return string
+        '''
+        plugin_update_msg = ''
+        plugin_info = self.__get_plugin_find(upgrade_plugin_name)
+        if not plugin_info: return plugin_update_msg
+        for _version_info in plugin_info['versions']:
+            l_version = '{}.{}'.format(_version_info['m_version'],_version_info['version'])
+            if l_version == upgrade_version:
+                plugin_update_msg = _version_info['update_msg']
+                break
+        return plugin_update_msg
+
+    def __get_plugin_upgrades(self,upgrade_plugin_name):
+        '''
+            @name 检查指定插件最近10条更新日志
+            @author hwliang<2021-06-21>
+            @param upgrade_plugin_name<string> 插件名称
+            @return list
+        '''
+        plugin_info = self.__get_plugin_find(upgrade_plugin_name)
+        if not plugin_info: return []
+        
+        try:
+            upgrade_list = public.httpPost(self.__api_root_url + '/down/get_update_msg',{'soft_id':plugin_info['id']})
+            return json.loads(upgrade_list)
+        except:
+            return []
+
+    
+    def __set_pyenv(self,filename):
+        '''
+            @name 设置安全脚本的Python环境变量
+            @param filename<string> 安装脚本文件名
+            @return bool
+        '''
+        if not os.path.exists(filename): return False
+        env_py = self.__panel_path + '/pyenv/bin'
+        if not os.path.exists(env_py): return False
+        temp_file = public.readFile(filename)
+        env_path=['PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin']
+        rep_path=['PATH={}/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin'.format(env_py+":")]
+        for index_key in range(len(env_path)):
+            temp_file = temp_file.replace(env_path[index_key],rep_path[index_key])
+        public.writeFile(filename,temp_file)
+        return True
+
+    
+    def __copy_path(self,src_path,dst_path,input_not_substituted = []):
+        '''
+            @name 复制文件夹
+            @author hwliang<2021-06-24>
+            @param src_path<string> 源路径
+            @param dst_path<string> 目标路径
+            @param input_not_substituted<list> 不复盖规则
+            @return bool
+        '''
+        if not os.path.exists(src_path):
+            raise public.PanelError('指定源目录不存在:{}'.format(src_path))
+        
+        if not os.path.exists(dst_path):
+            os.makedirs(dst_path,384)
+        
+        for tmp_list_name in os.listdir(src_path):
+            tmp_src_path = os.path.join(src_path,tmp_list_name)
+            tmp_dst_path = os.path.join(dst_path,tmp_list_name)
+            
+            # 目标文件存在，且被不覆盖规则匹配，则跳过此文件
+            if os.path.exists(tmp_dst_path):
+                if self.__sub_check(tmp_src_path,input_not_substituted):
+                    continue
+            # 递归目录
+            if os.path.isdir(tmp_src_path):
+                self.__copy_path(tmp_src_path,tmp_dst_path,input_not_substituted)
+                continue
+            
+            # 复制文件
+            shutil.copyfile(tmp_src_path,tmp_dst_path)
+            self.__replace_check(tmp_dst_path)
+
+        return True
+
+    
+    def __replace_check(self,filename):
+        '''
+            @name 检查文件内容是否需要替换
+            @author hwliang<2021-06-28>
+            @param filename<string> 文件全路径
+            @return void
+        '''
+        # 检查前置替换关系
+        rkey = 'replace_files'
+        if not rkey in self.__plugin_info: return
+        if not self.__plugin_info[rkey]: return
+        if not self.__replace_rule: return
+
+        # 指定文件名是否需要替换
+        p_file_name = os.path.basename(filename)
+        if not p_file_name in self.__plugin_info[rkey]: return
+
+        # 开始替换文件内容
+        f_body = public.readFile(filename)
+        is_write = False
+        for temp_i_rule in self.__replace_rule:
+            if f_body.find(temp_i_rule['find']) == -1: continue
+            f_body = f_body.replace(temp_i_rule['find'],temp_i_rule['replace'])
+            is_write = True
+
+        # 是否需要写入数据
+        if is_write: public.writeFile(filename,f_body)
+
+    
+    def __sub_check(self,filename,input_not_substituted):
+        '''
+            @name 不覆盖规则检查
+            @author hwliang<2021-06-24>
+            @param filename<string> 文件或文件夹名称
+            @param input_not_substituted<list> 不复盖规则
+            @return bool
+        '''
+        is_file = os.path.isfile(filename)
+        # 不匹配全路径
+        f_i_name = os.path.basename(filename)
+        for temp_i_rule in self.__format_sub_rule(input_not_substituted):
+            if temp_i_rule['fd'] == 'd' and is_file: continue
+            if temp_i_rule['fd'] == 'f' and not is_file: continue
+            
+            # 完全匹配？
+            if temp_i_rule['type'] == 'find':
+                if f_i_name == temp_i_rule['rule']:
+                    return True
+            # 正则表达式？
+            elif temp_i_rule['type'] == 're':
+                if temp_i_rule['rule'].search(f_i_name):
+                    return True
+        return False
+
+    
+    def __format_sub_rule(self,input_not_substituted):
+        '''
+            @name 解析覆盖规则
+            @author hwliang<2021-06-24>
+            @param input_not_substituted<list> 不复盖规则
+            @return list
+        '''
+        if self.__sub_rules:
+            return self.__sub_rules
+        self.__sub_rules = []
+        for item_sub_rule in input_not_substituted:
+            temp_i_rule = {}
+            f_sub_2 = item_sub_rule[-2:]
+            _type_fd = '' if f_sub_2[0] != '|' else f_sub_2[1]
+            temp_i_rule['fd'] = _type_fd
+            if item_sub_rule[:3] == 're|':
+                temp_i_rule['type'] = 're'
+                if _type_fd:
+                    item_re_string = item_sub_rule[3:-2]
+                else:
+                    item_re_string = item_sub_rule[3:]
+                temp_i_rule['rule'] = re.compile(item_re_string)
+            else:
+                temp_i_rule['type'] = 'find'
+                if _type_fd:
+                    temp_i_rule['rule'] = item_sub_rule[:-2]
+                else:
+                    temp_i_rule['rule'] = item_sub_rule
+            self.__sub_rules.append(temp_i_rule)
+        
+        return self.__sub_rules
+    
+    def __read_file(self,filename,open_mode = 'r'):
+        '''
+            @name 读取指定文件
+            @author hwliang<2021-06-16>
+            @param filename<string> 文件名
+            @param mode<string> 打开模式, 默认: r
+            @return bytes or string
+        '''
+        f_object = open(filename,mode=open_mode)
+        file_body = f_object.read()
+        f_object.close()
+        return file_body
+
+    def __input_plugin(self,filename,input_plugin_name,input_install_opt = 'i'):
+        '''
+            @name 导入插件包到面板
+            @author hwliang<2021-06-21>
+            @param filename<string> 解包后的文件路径
+            @param input_plugin_name<string> 插件名称
+            @param input_install_opt<string> 安装选项 i.安装 r.修复 u.升级 默认: i
+            @return dict
+        '''
+        opts = {'i':'安装','u':'更新','r':'修复'}
+        i_opts = {'i':'install.sh install','u':'upgrade.sh','r':'repair.sh'}
+        
+        if not os.path.exists(filename): return public.returnMsg(False,'临时文件不存在,请重新上传!')
+        plugin_path_panel = self.__plugin_path + input_plugin_name
+        if input_install_opt == 'r' and os.path.exists(filename + '/' + i_opts[input_install_opt]):
+            i_opts[input_install_opt] = 'install.sh install'
+        if input_install_opt == 'u' and os.path.exists(filename + '/' + i_opts[input_install_opt]):
+            i_opts[input_install_opt] = 'install.sh install'
+        if not os.path.exists(plugin_path_panel): os.makedirs(plugin_path_panel)
+        p_info = public.ReadFile(filename + '/info.json')
+        if  not p_info: raise public.PanelError(filename)
+        p_info = json.loads(p_info)
+        if not 'not_substituted' in p_info: p_info['not_substituted'] = []
+        self.__plugin_info = p_info
+        self.__copy_path(filename,plugin_path_panel,p_info['not_substituted'])
+        self.__set_pyenv(plugin_path_panel + '/install.sh')
+        public.ExecShell('cd ' + plugin_path_panel + ' && bash {} &> /tmp/panelShell.pl'.format(i_opts[input_install_opt]))
+        
+
+        # 清理临时文件
+        if os.path.exists(filename): shutil.rmtree(filename)
+
+        if p_info:
+            # 复制图标
+            icon_sfile = plugin_path_panel + '/icon.png'
+            icon_dfile = self.__panel_path + '/BTPanel/static/img/soft_ico/ico-{}.png'.format(input_plugin_name)
+            if os.path.exists(plugin_path_panel + '/icon.png'):
+                shutil.copyfile(icon_sfile,icon_dfile)
+            public.WriteLog('软件管理','{}插件[{}]'.format(opts[input_install_opt],p_info['title']))
+            return public.returnMsg(True,'{}成功!'.format(opts[input_install_opt]))
+        
+        # 安装失败清理安装文件？
+        if os.path.exists(plugin_path_panel): shutil.rmtree(plugin_path_panel)
+        return public.returnMsg(False,'{}失败!'.format(opts[input_install_opt]))
+
+    
+    def __unpackup_plugin(self,tmp_file):
+        '''
+            @name 解包插件包
+            @author hwliang<2021-06-21>
+            @param tmp_file<string> 下载好的保存路径，从self.download_plugin方法中获取
+            @return dict
+        '''
+        s_tmp_path = self.__tmp_path
+        if not os.path.exists(s_tmp_path): 
+            os.makedirs(s_tmp_path,mode=384)
+
+        if tmp_file: 
+            if not os.path.exists(tmp_file): return public.returnMsg(False,'文件下载失败!')
+            import panelTask as plu_panelTask
+            plu_panelTask.bt_task()._unzip(tmp_file,s_tmp_path,'','/dev/null')
+            os.remove(tmp_file)
+
+        s_tmp_path = os.path.join(s_tmp_path,self.__plugin_name)
+        p_info = os.path.join(s_tmp_path,'info.json')
+        if not os.path.exists(p_info):
+            d_path = None
+            for plugin_df in os.walk(s_tmp_path):
+                if len(plugin_df[2]) < 3: continue
+                if not 'info.json' in plugin_df[2]: continue
+                if not 'install.sh' in plugin_df[2]: continue
+                if not os.path.exists(plugin_df[0] + '/info.json'): continue
+                d_path = plugin_df[0]
+            if d_path: 
+                s_tmp_path = d_path
+                p_info = s_tmp_path + '/info.json'
+        try:
+            try:
+                plugin_data_info = json.loads(public.ReadFile(p_info))
+            except:
+                plugin_data_info = json.loads(self.__read_file(p_info))
+            
+            plugin_data_info['size'] = public.get_path_size(s_tmp_path)
+            if not 'author' in plugin_data_info: plugin_data_info['author'] = '宝塔'
+            if not 'home' in plugin_data_info: plugin_data_info['home'] = 'https://www.bt.cn'
+
+            p_info_file = self.__plugin_path + plugin_data_info['name'] + '/info.json'
+            plugin_data_info['old_version'] = '0'
+            plugin_data_info['tmp_path'] = s_tmp_path
+            if os.path.exists(p_info_file):
+                try:
+                    old_info = json.loads(public.ReadFile(p_info_file))
+                    plugin_data_info['old_version'] = old_info['versions']
+                except:pass
+        except:
+            public.ExecShell("rm -rf " + s_tmp_path + '/*')
+            return public.get_error_object(plugin_name=self.__plugin_name)
+        plugin_data_info['install_opt'] = self.__install_opt
+        plugin_data_info['dependnet'] = self.__check_dependnet(plugin_data_info['name'])
+        plugin_data_info['update_msg'] = self.__get_update_msg(plugin_data_info['name'],plugin_data_info['versions'])
+        not_check = self.not_cpu_or_bit(plugin_data_info)
+        if not_check: 
+            if os.path.exists(s_tmp_path): shutil.rmtree(s_tmp_path)
+            return not_check
+        return plugin_data_info
+
+    def not_cpu_or_bit(self,plugin_data_info):
+        '''
+            @name 检测是否为不支持的平台和系统位数
+            @author hwliang<2021-07-07>
+            @param plugin_data_info<dict> 插件信息数据
+            @return dict or None
+        '''
+        if 'not_os_bit' in plugin_data_info:
+            if public.get_sysbit() == int(plugin_data_info['not_os_bit']):
+                return public.returnMsg(False,'该应用不支持{}位系统'.format(plugin_data_info['not_os_bit']))
+        if 'not_cpu_type' in plugin_data_info:
+            if not plugin_data_info['not_cpu_type']: return None
+            machine = os.uname().machine
+            for c_type in plugin_data_info['not_cpu_type']:
+                c_type = c_type.lower()
+                if c_type in ['arm','aarch64','aarch']:
+                    if machine in ['aarch64','aarch']:
+                        return public.returnMsg(False,'该应用不支持{}平台'.format(c_type))
+                elif c_type in ['mips','mips64','mips64el']:
+                    if c_type.find('mips') != -1:
+                        return public.returnMsg(False,'该应用不支持{}平台'.format(c_type))
+                elif c_type in ['x86','x86-64']:
+                    if c_type in ['x86','x86-64']:
+                        return public.returnMsg(False,'该应用不支持{}平台'.format(c_type))
+        return None
+    
+    
+    def __download_plugin(self,upgrade_plugin_name,upgrade_version):
+        '''
+            @name 下载插件包
+            @author hwliang<2021-06-21>
+            @param upgrade_plugin_name<string> 插件名称
+            @param upgrade_version<string> 插件版本
+            @return string 保存路径
+        '''
+        pkey = '{}_pre'.format(upgrade_plugin_name)
+        pdata = public.get_user_info()
+        pdata['name'] = upgrade_plugin_name
+        pdata['version'] = upgrade_version
+        pdata['os'] = 'Linux'
+        filename = '{}/{}.zip'.format(self.__tmp_path,upgrade_plugin_name)
+        if not os.path.exists(self.__tmp_path): os.makedirs(self.__tmp_path,384)
+        if not cache.get(pkey):
+            download_res = requests.post(self.__download_url,pdata,timeout=30,stream=True)
+            try:
+                headers_total_size = int(download_res.headers['File-size'])
+            except:
+                raise public.PanelError(download_res.text)
+            res_down_size = 0
+            res_chunk_size = 8192
+            last_time = time.time()
+            with open(filename,'wb+') as with_res_f:
+                for download_chunk in download_res.iter_content(chunk_size=res_chunk_size):
+                    if download_chunk: 
+                        with_res_f.write(download_chunk)
+                        speed_last_size = len(download_chunk)
+                        res_down_size += speed_last_size
+                        res_start_time = time.time()
+                        res_timeout = (res_start_time - last_time)
+                        res_sec_speed = int(res_down_size / res_timeout)
+                        pre_text = '{}/{}/{}'.format(res_down_size,headers_total_size,res_sec_speed)
+                        cache.set(pkey,pre_text,3600)
+                with_res_f.close()
+            if cache.get(pkey): cache.delete(pkey)
+            if public.FileMd5(filename) != download_res.headers['Content-md5']:
+                raise public.PanelError('插件安装包HASH校验失败')
+        else:
+            while True:
+                time.sleep(1)
+                if not cache.get(pkey): break
+            return ''
+        return filename
+
+
+    def __get_plugin_find(self,upgrade_plugin_name = None):
+        '''
+            @name 获取指定软件信息
+            @author hwliang<2021-06-15>
+            @param upgrade_plugin_name<string> 插件名称
+            @return dict
+        '''
+        if not self.__plugin_object: self.__plugin_object = Plugin(False)
+        if not self.__plugin_list: self.__plugin_list = self.__plugin_object.get_plugin_list()
+
+        for p_data_info in self.__plugin_list['list']:
+            if p_data_info['name'] == upgrade_plugin_name:
+                upgrade_plugin_name = p_data_info['name']
+                return p_data_info
+        
+        # 如果不在插件列表中
+        return self.__get_plugin_info(upgrade_plugin_name)
+
+    
+    def __download_main(self,upgrade_plugin_name,upgrade_version):
+        '''
+            @name 下载插件主程序文件
+            @author hwliang<2021-06-25>
+            @param upgrade_plugin_name<string> 插件名称
+            @param upgrade_version<string> 插件版本
+            @return void
+        '''
+        pdata = public.get_user_info()
+        pdata['name'] = upgrade_plugin_name
+        pdata['version'] = upgrade_version
+        pdata['os'] = 'Linux'
+        download_res = requests.post(self.__download_d_main_url,pdata,timeout=30)
+        filename = '{}/{}.py'.format(self.__tmp_path,upgrade_plugin_name)
+        with open(filename,'wb+') as save_script_f:
+            save_script_f.write(download_res.content)
+            save_script_f.close()
+        if public.md5(download_res.content) != download_res.headers['Content-md5']:
+            raise public.PanelError('插件安装包HASH校验失败')
+        dst_file = '{plugin_path}/{plugin_name}/{plugin_name}_main.py'.format(plugin_path=self.__plugin_path,plugin_name = upgrade_plugin_name)
+        shutil.copyfile(filename,dst_file)
+        if os.path.exists(filename): os.remove(filename)
+        public.WriteLog('软件管理',"检测到插件[{}]程序文件异常，已尝试自动修复!".format(self.__get_plugin_info(upgrade_plugin_name)['title']))
+
+    def __get_download_speed(self,upgrade_plugin_name):
+        '''
+            @name 取插件下载进度
+            @author hwliang<2021-06-21>
+            @param upgrade_plugin_name<string> 插件名称
+            @return dict
+        '''
+        pkey = '{}_pre'.format(upgrade_plugin_name)
+        pre_text = cache.get(pkey)
+        if not pre_text:
+            return public.returnMsg(False,'指定进度信息不存在!')
+        result = { "status": True }
+        pre_tmp = pre_text.split('/')
+        result['down_size'],result['total_size'] = (int(pre_tmp[0]),int(pre_tmp[1]))
+        result['down_pre'] = round(result['down_size'] / result['total_size'] * 100,1)
+        result['sec_speed'] = int(float(pre_tmp[2]))
+        result['need_time'] = int((result['total_size'] - result['down_size']) / result['sec_speed'])
+        return result
+
+    def close_install(self,get):
+        '''
+            @name 取消指定插件安装过程
+            @author hwliang<2021-07-07>
+            @param plugin_name<string> 插件名称
+            @return void
+        '''
+        plugin_name = get.plugin_name.strip()
+        tmp_path = '{}/{}'.format(self.__tmp_path,plugin_name)
+        if os.path.exists(tmp_path): shutil.rmtree(tmp_path)
+        return public.returnMsg(False,'安装过程已取消!')
+
 
     #检查依赖
     def check_deps(self,get):
@@ -65,6 +621,7 @@ class panelPlugin:
 
     #检查互斥
     def check_mutex(self,mutex):
+        if mutex == -1: return True
         mutexs = mutex.split(',')
         for name in mutexs:
             pluginInfo = self.get_soft_find(name)
@@ -157,6 +714,9 @@ class panelPlugin:
                     public.httpPost(public.GetConfigValue('home') + '/api/panel/plugin_total',{"pid":pluginInfo['id'],'p_name':pluginInfo['name']},3)
         except:pass
         return result
+
+
+
     
     #同步安装
     def install_sync(self,pluginInfo,get):
@@ -171,16 +731,49 @@ class panelPlugin:
             if os.path.exists(pluginInfo['install_checks']): update =pluginInfo['versions'][0]['version_msg']
             return self.update_zip(None,toFile,update)
         else:
-            download_url = public.get_url() + '/install/plugin/' + pluginInfo['name'] + '/install.sh'
-            toFile = '/tmp/%s.sh' % pluginInfo['name']
-            public.downloadFile(download_url,toFile)
-            self.set_pyenv(toFile)
-            public.ExecShell('/bin/bash ' + toFile + ' install &> /tmp/panelShell.pl')
-            if os.path.exists(pluginInfo['install_checks']):
-                public.WriteLog('TYPE_SETUP','PLUGIN_INSTALL_LIB',(pluginInfo['title'],))
-                if os.path.exists(toFile): os.remove(toFile)
-                return public.returnMsg(True,'PLUGIN_INSTALL_SUCCESS')
-            return public.returnMsg(False,'安装失败!')
+            # download_url = public.get_url() + '/install/plugin/' + pluginInfo['name'] + '/install.sh'
+            # toFile = '/tmp/%s.sh' % pluginInfo['name']
+            # public.downloadFile(download_url,toFile)
+            # self.set_pyenv(toFile)
+            # public.ExecShell('/bin/bash ' + toFile + ' install &> /tmp/panelShell.pl')
+            # if os.path.exists(pluginInfo['install_checks']):
+            #     public.WriteLog('TYPE_SETUP','PLUGIN_INSTALL_LIB',(pluginInfo['title'],))
+            #     if os.path.exists(toFile): os.remove(toFile)
+            #     return public.returnMsg(True,'PLUGIN_INSTALL_SUCCESS')
+            # return public.returnMsg(False,'安装失败!')
+            if hasattr(get,'min_version'):
+                get.version += '.' + get.min_version
+
+            return self.__install_plugin(pluginInfo['name'], get.version)
+
+
+    # 修复插件
+    def repair_plugin(self,get):
+        '''
+            @name 修复指定插件
+            @param plugin_name<string> 插件名称
+            @param version<string> 版本号
+            @param min_version<string> 子版本号
+            @return mixed
+        '''
+        if hasattr(get,'min_version'):
+                get.version += '.' + get.min_version
+        return self.__repair_plugin(get.plugin_name, get.version)
+
+
+    # 更新插件
+    def upgrade_plugin(self,get):
+        '''
+            @name 更新指定插件/切换到指定版本
+            @param plugin_name<string> 插件名称
+            @param version<string> 版本号
+            @param min_version<string> 子版本号
+            @return mixed
+        '''
+        if hasattr(get,'min_version'):
+            get.version += '.' + get.min_version
+        return self.__upgrade_plugin(get.plugin_name, get.version)
+    
 
     #设置Python环境变量
     def set_pyenv(self,filename):
@@ -194,6 +787,17 @@ class panelPlugin:
             temp_file = temp_file.replace(env_path[i],rep_path[i])
         public.writeFile(filename,temp_file)
         return True
+
+
+    def get_download_speed(self,get):
+        '''
+            @name 获取插件下载进度
+            @author hwliang<2021-06-25>
+            @param plugin_name<string> 插件名称
+            @return dict
+        '''
+        result = self.__get_download_speed(get.plugin_name)
+        return result
         
 
     #异步安装
@@ -242,7 +846,9 @@ class panelPlugin:
         if not pluginInfo: return public.returnMsg(False,'指定插件不存在!')
         if pluginInfo['type'] != 5:
             pluginPath = self.__install_path + '/' + pluginInfo['name']
-            if pluginInfo['type'] != 6:
+            installSh = pluginPath + '/install.sh'
+            uninstallSh = pluginPath + '/uninstall.sh'
+            if pluginInfo['type'] != 6 and not os.path.exists(installSh) and not os.path.exists(uninstallSh):
                 download_url = session['download_url'] + '/install/plugin/' + pluginInfo['name'] + '/install.sh'
                 toFile = '/tmp/%s.sh' % pluginInfo['name']
                 public.downloadFile(download_url,toFile)
@@ -251,15 +857,17 @@ class panelPlugin:
                     if os.path.getsize(toFile) > 100:
                         public.ExecShell('/bin/bash ' + toFile + ' uninstall')
             
-            if os.path.exists(pluginPath + '/install.sh'):
-                self.set_pyenv(pluginPath + '/install.sh')
-                public.ExecShell('/bin/bash ' + pluginPath + '/install.sh uninstall')
+            if os.path.exists(uninstallSh):
+                self.set_pyenv(uninstallSh)
+                public.ExecShell('/bin/bash {} uninstall'.format(uninstallSh))
+            elif os.path.exists(installSh):
+                self.set_pyenv(installSh)
+                public.ExecShell('/bin/bash {} uninstall'.format(installSh))
 
             if os.path.exists(pluginPath): public.ExecShell('rm -rf ' + pluginPath)
             public.WriteLog('TYPE_SETUP','PLUGIN_UNINSTALL_SOFT',(pluginInfo['title'],))
             return public.returnMsg(True,'PLUGIN_UNINSTALL')
         else:
-
             if pluginInfo['name'] == 'mysql':
                 if public.M('databases').count() > 0: return public.returnMsg(False,"数据库列表非空，为了您的数据安全，请先<span style='color:red;'>备份所有数据库数据</span>后删除现有数据库<br>强制卸载命令：rm -rf /www/server/mysql")
             get.type = '0'
@@ -272,47 +880,30 @@ class panelPlugin:
             public.WriteLog('TYPE_SETUP','PLUGIN_UNINSTALL',(get.sName,get.version))
             return public.returnMsg(True,"PLUGIN_UNINSTALL")
 
+
+    def __is_bind_user(self):
+        '''
+            @name 检测是否绑定用户
+            @author hwliang<2021-06-23>
+            @return bool
+        '''
+
+        user_info_file = self.__panel_path + '/data/userInfo.json'
+        if not os.path.exists(user_info_file):
+            raise public.PanelError('请先绑定宝塔帐号!')
+        return True
+
     #从云端取列表
     def get_cloud_list(self,get=None):
-        lcoalTmp = 'data/plugin.json'
-        softList = None
-        listTmp = public.readFile(lcoalTmp)
-        try:
-            if listTmp: softList = json.loads(listTmp)
-        except:
-            if os.path.exists(lcoalTmp): os.remove(lcoalTmp)
-
-        if 'init' in get:
-            if softList: return softList
-
-        focre  = 0
-        if hasattr(get,'force'): focre = int(get.force)
-        if 'focre_cloud' in session:
-            if session['focre_cloud']:
-                focre = 1
-                session['focre_cloud'] = False
-
-        if not 'init_cloud' in session:
-                focre = 1
-                session['init_cloud'] = True
-        
-        if not softList or focre > 0:
-            self.clean_panel_log()
-            cloudUrl = public.GetConfigValue('home') + '/api/panel/get_soft_list_test'
-            pdata = public.get_pdata()
-            listTmp = public.httpPost(cloudUrl,pdata,6)
-            if not listTmp or len(listTmp) < 200:
-                listTmp = public.readFile(lcoalTmp)
-            try:
-                softList = json.loads(listTmp)
-            except: pass
-            if softList: public.writeFile(lcoalTmp,json.dumps(softList))
-            public.ExecShell('rm -f /tmp/bmac_*')
-            public.run_thread(self.getCloudPHPExt)
-            self.expire_msg(softList)
-        try:
-            public.writeFile("/tmp/" + cache.get('p_token'),str(softList['pro']))
-        except:pass
+        force  = False
+        if hasattr(get,'force'): 
+            if int(get.force) is 1: force = True
+        self.__is_bind_user()
+        skey = 'TNaMJdG3mDHKRS6Y'
+        softList = cache.get(skey)
+        if not softList or force:
+            softList = Plugin(False).get_plugin_list(force)
+            cache.set(skey,softList,3600)
         sType = 0
         try:
             if hasattr(get,'type'): sType = int(get['type'])
@@ -333,9 +924,9 @@ class panelPlugin:
                         tmpList.append(softInfo)
                 softList['list'] = tmpList
 
-        if not softList['list']: 
-            if os.path.exists(lcoalTmp): os.remove(lcoalTmp)
         return softList
+
+
  
     #取提醒标记
     def get_level_msg(self,level,s_time,endtime):
@@ -581,10 +1172,11 @@ class panelPlugin:
     #处理分类
     def get_types(self,sList,sType):
         if sType <= 0: return sList
-        if sType != 12:
-            sType = [sType]
-        else:
-            sType = [sType,8]
+        sType = [sType]
+        # if sType != 12:
+        #     sType = [sType]
+        # else:
+        #     sType = [sType,8]
         newList = []
         for sInfo in sList:
             if sInfo['type'] in sType: newList.append(sInfo)
@@ -630,6 +1222,7 @@ class panelPlugin:
         if not 'type' in get: get.type = '0'
         if get.type == '-1':
             soft_list_tmp = []
+            
             softList['list'] = self.check_isinstall(softList['list'])
             for val in softList['list']:
                 if val['setup']: soft_list_tmp.append(val)
@@ -778,21 +1371,20 @@ class panelPlugin:
 
     #检测是否安装
     def check_isinstall(self,sList):
-        try:
-            if not os.path.exists(self.__index): public.writeFile(self.__index,'[]')
-            indexList = json.loads(public.ReadFile(self.__index))
-            for i in range(len(sList)):
-                sList[i]['index_display'] = sList[i]['name'] in indexList
-                sList[i] = self.check_status(sList[i])
-            return sList
-        except:
-            public.writeFile(self.__index,'[]')
+        if not os.path.exists(self.__index): public.writeFile(self.__index,'[]')
+        indexList = json.loads(public.ReadFile(self.__index))
+        for i in range(len(sList)):
+            sList[i]['index_display'] = sList[i]['name'] in indexList
+            sList[i] = self.check_status(sList[i])
+        return sList
+
 
     #检查软件状态
     def check_status(self,softInfo):
         softInfo['setup'] = os.path.exists(softInfo['install_checks'])
         softInfo['status'] = False
         softInfo['task'] = self.check_setup_task(softInfo['name'])
+        softInfo['is_beta'] = self.is_beta_plugin(softInfo['name'])
         
         if softInfo['name'].find('php-') != -1: softInfo['fpm'] = False
         if softInfo['setup']:
@@ -802,7 +1394,7 @@ class panelPlugin:
             softInfo['versions'] = self.tips_version(softInfo['versions'],softInfo['version'])
             softInfo['admin'] = os.path.exists('/www/server/panel/plugin/' + softInfo['name'])
             
-            if len(softInfo['s_version']) > 3:
+            if 's_version' in softInfo and len(softInfo['s_version']) > 3:
                 pNames = softInfo['s_version'].split(',')
                 for pName in pNames:
                     if len(softInfo['manager_version']) > 5:
@@ -884,14 +1476,16 @@ class panelPlugin:
 
     #获取指定软件信息
     def get_soft_find(self,get = None):
-        softList = self.get_cloud_list(get)['list']
-        softList = self.set_coexist(softList)
+        if not self.__plugin_s_list:
+            softList = self.get_cloud_list(get)['list']
+            self.__plugin_s_list = self.set_coexist(softList)
+            
         try:
             sName = get['sName']
         except:
             sName = get
 
-        for softInfo in softList:
+        for softInfo in self.__plugin_s_list:
 
             if softInfo['name'] == sName: 
                 if sName == 'phpmyadmin':
@@ -912,6 +1506,20 @@ class panelPlugin:
                 return self.check_status(softInfo)
         return False
 
+    def is_beta_plugin(self,plugin_name):
+        '''
+            @name 判断当前安装的插件是否为测试版
+            @author hwliang<2021-06-24>
+            @param plugin_name<string> 插件名称
+            @return bool
+        '''
+        info_file = self.__install_path + '/' + plugin_name +  '/info.json'
+        if not os.path.exists(info_file): return False
+        try:
+            plugin_info = json.loads(public.readFile(info_file))
+            return plugin_info.get('beta',False)
+        except:
+            return False
 
     #获取版本信息
     def get_version_info(self,sInfo):
@@ -1297,18 +1905,20 @@ class panelPlugin:
         if not pluginInfo:
             import json
             pluginInfo = json.loads(public.readFile(self.__install_path + '/' + get.name + '/info.json'))
-        
         if pluginInfo['tip'] == 'lib':
             if not os.path.exists(self.__install_path+ '/' + pluginInfo['name']): public.ExecShell('mkdir -p ' + self.__install_path + '/' + pluginInfo['name'])
             download_url = session['download_url'] + '/install/plugin/' + pluginInfo['name'] + '/install.sh'
             toFile = self.__install_path + '/' + pluginInfo['name'] + '/uninstall.sh'
-            public.downloadFile(download_url,toFile)
-            self.set_pyenv(toFile)
-            public.ExecShell('/bin/bash ' + toFile + ' uninstall')
-            public.ExecShell('rm -rf ' + session['download_url'] + '/install/plugin/' + pluginInfo['name'])
-            pluginPath = self.__install_path + '/' + pluginInfo['name']
+            install_sh = self.__install_path + '/' + pluginInfo['name'] + '/install.sh'
+            if not os.path.exists(toFile) and not os.path.exists(install_sh):
+                public.downloadFile(download_url,toFile)
+                self.set_pyenv(toFile)
             
-            if os.path.exists(pluginPath + '/install.sh'):
+            pluginPath = self.__install_path + '/' + pluginInfo['name']
+
+            if os.path.exists(toFile):
+                public.ExecShell('/bin/bash {} uninstall'.format(toFile))
+            elif os.path.exists(pluginPath + '/install.sh'):
                 public.ExecShell('/bin/bash ' + pluginPath + '/install.sh uninstall')
                 
             if os.path.exists(pluginPath):
@@ -1756,8 +2366,92 @@ class panelPlugin:
     def getConfigHtml(self,get):
         filename = self.__install_path + '/' + get.name + '/index.html'
         if not os.path.exists(filename): return public.returnMsg(False,'PLUGIN_GET_HTML')
-        srcBody = public.readFile(filename,'r')
-        return srcBody
+        mimetype = 'text/html'
+        cache_time = 0 if public.is_debug() else 86400
+        self.plugin_open_total(get.name)
+        return send_file(filename,
+                    mimetype = mimetype, 
+                    as_attachment = True,
+                    add_etags = True,
+                    conditional = True,
+                    cache_timeout = cache_time)
+
+    
+    def creatab_open_total_table(self,sql):
+        '''
+            @name 创建插件打开统计表
+            @author hwliang<2021-06-26>
+            @param sql<db.Sql> 数据库对像
+            @return void
+        '''
+        if not sql.table('sqlite_master').where('type=? AND name=?', ('table', 'open_total')).count():
+            csql = '''CREATE TABLE IF NOT EXISTS `open_total` (
+`id` INTEGER PRIMARY KEY AUTOINCREMENT,
+`plugin_name` REAL,
+`num` INTEGER
+)'''
+            sql.execute(csql,())
+
+
+    def plugin_open_total(self,plugin_name):
+        '''
+            @name 插件打开统计
+            @author hwliang<2021-06-26>
+            @param plugin_name<string> 插件名称
+            @return void
+        '''
+        import db
+        sql = db.Sql().dbfile('plugin_total')
+        self.creatab_open_total_table(sql)
+        pdata = {
+            "plugin_name":plugin_name,
+            "num":1
+            }
+        
+        num = sql.table('open_total').where('plugin_name=?',plugin_name).getField('num')
+        if not num:
+            sql.table('open_total').insert(pdata)
+        else:
+            sql.table('open_total').where('plugin_name=?',plugin_name).setField('num',num+1)
+
+    def get_usually_plugin(self,get):
+        '''
+            @name 获取常用插件
+            @author hwliang<2021-06-26>
+            @param get<obj_dict>
+            @return list
+        '''
+        import db
+        sql = db.Sql().dbfile('plugin_total')
+        self.creatab_open_total_table(sql)
+        plugin_list =  sql.table('open_total').order('num desc').limit(10).select()
+        usually_list = []
+        for p in plugin_list:
+            plugin_info = self.get_soft_find(p['plugin_name'])
+            if plugin_info: 
+                if plugin_info['setup']:
+                    usually_list.append(plugin_info)
+            if len(usually_list) >= 5: break
+        return usually_list
+
+
+    def get_plugin_upgrades(self,get):
+        '''
+            @name 获取指定插件的近期更新历史
+            @author hwliang<2021-06-30>
+            @param get<obj_dict>{
+                plugin_name: string 插件名称
+            }
+            @return list
+        '''
+        plugin_name = get.plugin_name
+        if getattr(get,'show',0):
+            plugin_info = self.__get_plugin_find(plugin_name)
+            if plugin_info and 'versions' in plugin_info:
+                return plugin_info['versions']
+            return []
+        else:
+            return self.__get_plugin_upgrades(plugin_name)
     
     #取插件信息
     def getPluginInfo(self,get):
@@ -1940,28 +2634,11 @@ class panelPlugin:
     def a(self,get):
         if not hasattr(get,'name'): return public.returnMsg(False,'PLUGIN_INPUT_A')
         try:
-            if not public.path_safe_check("%s/%s" % (get.name,get.s)): return public.returnMsg(False,'PLUGIN_INPUT_C')
-            path = self.__install_path + '/' + get.name
-            if not os.path.exists(path + '/'+get.name+'_main.py'): 
-                if os.path.exists(path+'/index.php'):
-                    import panelPHP
-                    return panelPHP.panelPHP(get.name).exec_php_script(get)
-                return public.returnMsg(False,'PLUGIN_INPUT_B')
-            if not self.check_accept(get):return public.returnMsg(False,public.to_string([24744, 26410, 36141, 20080, 91, 37, 115, 93, 25110, 25480, 26435, 24050, 21040, 26399, 33]) % (self.get_title_byname(get),))
-            public.package_path_append(path)
-            plugin_main = __import__(get.name+'_main')
-            try:
-                reload(plugin_main)
-            except: pass
-            pluginObject = eval('plugin_main.' + get.name + '_main()')
-            if not hasattr(pluginObject,get.s): return public.returnMsg(False,'PLUGIN_INPUT_C',(get.s,))
-            execStr = 'pluginObject.' + get.s + '(get)'
-            return eval(execStr)
+            p = Plugin(get.name)
+            if not p.isdef(get.s): return public.returnMsg(False,'PLUGIN_INPUT_C',(get.s,))
+            return p.exec_fun(get)
         except:
-            import traceback
-            errorMsg = traceback.format_exc()
-            public.submit_error(errorMsg)
-            return public.returnMsg(False,'抱歉，出错了：<br> %s ' % errorMsg.replace('\n','<br>'))
+            return public.get_error_object(None,plugin_name=get.name)
 
     
     #上传插件包
@@ -2047,7 +2724,8 @@ class panelPlugin:
             return public.returnMsg(True,'安装成功!')
         public.ExecShell("rm -rf " + plugin_path)
         return public.returnMsg(False,'安装失败!')
-        
+
+       
 
     #导出插件包
     def export_zip(self,get):

@@ -11,7 +11,7 @@
 # AUTH验证接口
 #------------------------------
 
-import public,time,json,os
+import public,time,json,os,re
 from BTPanel import session,cache
 
 class panelAuth:
@@ -28,14 +28,26 @@ class panelAuth:
             data = json.loads(tmp)
             if not data: return public.returnMsg(False,'请先登陆宝塔官网用户')
             if not 'serverid' in data:
-                s1 = self.get_mac_address() + self.get_hostname()
-                s2 = self.get_cpuname()
-                serverid = public.md5(s1) + public.md5(s2)
-                data['serverid'] = serverid
+                data['serverid'] = self.get_serverid()
                 public.writeFile(userPath,json.dumps(data))
             return data
         except: return public.returnMsg(False,'请先登陆宝塔官网用户')
 
+    def get_serverid(self,force = False):
+        '''
+            @name 重新生成serverid
+            @author hwliang<2021-06-22>
+            @return string
+        '''
+        serverid_file = 'data/sid.pl'
+        if os.path.exists(serverid_file) and not force:
+            serverid = public.readFile(serverid_file)
+            if re.match("^\w{64}$",serverid): return serverid
+        s1 = self.get_mac_address() + self.get_hostname()
+        s2 = self.get_cpuname()
+        serverid = public.md5(s1) + public.md5(s2)
+        public.writeFile(serverid_file,serverid)
+        return serverid
 
     def create_plugin_other_order(self,get):
         pdata = self.create_serverid(get)

@@ -1,1568 +1,1276 @@
-var num = 0
-//查看任务日志
-function GetLogs(id){
-	layer.msg(lan.public.the_get,{icon:16,time:0,shade: [0.3, '#000']});
-	var data='&id='+id
-	$.post('/crontab?action=GetLogs',data,function(rdata){
-		layer.closeAll();
-		if(!rdata.status) {
-			layer.msg(rdata.msg,{icon:2});
-			return;
-		};
-		layer.open({
-			type:1,
-			title:lan.crontab.task_log_title,
-			area: ['700px','490px'], 
-			shadeClose:false,
-			closeBtn:2,
-			content:'<div class="setchmod bt-form  pb70">'
-					+'<pre class="crontab-log" style="overflow: auto; border: 0px none; line-height:23px;padding: 15px; margin: 0px; white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0px;font-family: \"微软雅黑\""></pre>'
-					+'<div class="bt-form-submit-btn" style="margin-top: 0px;">'
-					+'<button type="button" class="btn btn-danger btn-sm btn-title" style="margin-right:15px;" onclick="CloseLogs('+id+')">'+lan.public.empty+'</button>'
-					+'<button type="button" class="btn btn-success btn-sm btn-title" onclick="layer.closeAll()">'+lan.public.close+'</button>'
-					+'</div>'
-					+'</div>',
-			success:function(){
-				var log_body = rdata.msg == '' ? '当前日志为空':rdata.msg;
-				$(".setchmod pre").text(log_body);
+var crontab = {
+	typeTips: {site: '备份网站', database: '备份数据库', logs: '切割日志', path: '备份目录', webshell: '查杀站点'},
+	crontabForm:{name: '',type: '',where1: '',hour: '',minute: '',week: '',sType: '',sBody: '',sName: '',backupTo: '',save: '',sBody: '',urladdress:'',save_local: '',notice: '',notice_channel: ''},
+	backupList: [],
+	editForm:false,
+	crontabFormConfig: [{
+		label: '任务类型',
+		group: {
+			type: 'select',
+			name: 'sType',
+			width: '140px',
+			value:'toShell',
+			list: [
+				{title: 'Shell脚本', value: 'toShell'},
+				{title: '备份网站', value: 'site'},
+				{title: '备份数据库', value: 'database'},
+				{title: '日志切割', value: 'logs'},
+				{title: '备份目录', value: 'path'},
+				{title: '木马查杀', value: 'webshell'},
+				{title: '同步时间', value: 'syncTime'},
+				{title: '释放内存', value: 'rememory'},
+				{title: '访问URL', value: 'toUrl'}
+			],
+			unit: '<span style="margin-top: 9px; display: inline-block;"><i style="color: red;font-style: initial;font-size: 12px;margin-right: 5px">*</i>任务类型包含以下部分：Shell脚本、备份网站、备份数据库、日志切割、释放内存、访问URL、备份目录、木马查杀、同步时间</span>',
+			change: function (formData, element, that) {
+				var config = crontab.crontabsType(crontab.crontabFormConfig.concatObject(),formData,that)
+				that.$again_render_form(config)
 			}
-		});
-		setTimeout(function(){
-			$("#crontab-log").text(rdata.msg);
-			var div = document.getElementsByClassName('crontab-log')[0]
-			div.scrollTop  = div.scrollHeight;
-		},200)
-	});
-}
-
-function getCronData(){
-	var laid=layer.msg(lan.public.the,{icon:16,time:0,shade: [0.3, '#000']});
-	$.post('/crontab?action=GetCrontab',"",function(rdata){
-		layer.close(laid);
-		var cbody="";
-		if(rdata == []){
-			layer.close(laid);
-			cbody="<tr><td colspan='6'>"+lan.crontab.task_empty+"</td></tr>"
 		}
-		else{
-			$.post('/crontab?action=GetDataList',{type:'sites'},function(res){
-				layer.close(laid);
-                for (var i = 0; i < rdata.length; i++){                  
-					var s_status = '<span class="btOpen" onclick="set_task_status('+rdata[i].id+',0)" style="color:rgb(92, 184, 92);cursor:pointer" title="停用该计划任务">正常<span  class="glyphicon glyphicon-play"></span></span> ';
-					var optName = '';
-					if(rdata[i].status!=1) s_status = '<span onclick="set_task_status('+rdata[i].id+',1)"  class="btClose" style="color:red;cursor:pointer" title="启用该计划任务">停用<span style="color:rgb(255, 0, 0);" class="glyphicon glyphicon-pause"></span></span> ';
-					
-					for(var j = 0; j < res.orderOpt.length;j++){
-						if(rdata[i].backupTo == res.orderOpt[j].value){
-							optName = res.orderOpt[j].name;
-						}else if(rdata[i].backupTo == ''){
-							optName = ''
-						}
+	},{
+		label: '任务名称',
+		group: {
+			type: 'text',
+			name: 'name',
+			width: '300px',
+			placeholder: '请输入计划任务名称'
+		}
+	},{
+		label: '执行周期',
+		group: [{
+			type: 'select',
+			name: 'type',
+			width: '90px',
+			value: 'week',
+			list: [
+				{title: '每天', value: 'day'},
+				{title: 'N天', value: 'day-n'},
+				{title: '每小时', value: 'hour'},
+				{title: 'N小时', value: 'hour-n'},
+				{title: 'N分钟', value: 'minute-n'},
+				{title: '每星期', value: 'week'},
+				{title: '每月', value: 'month'}
+			],
+			change: function (formData, element, that) {
+				crontab.crontabType(that.config.form,formData)
+				that.$replace_render_content(2)
+			}
+		}, {
+			type: 'select',
+			name: 'week',
+			width: '90px',
+			value:'1',
+			list: [
+				{title: '周一', value: '1'},
+				{title: '周二', value: '2'},
+				{title: '周三', value: '3'},
+				{title: '周四', value: '4'},
+				{title: '周五', value: '5'},
+				{title: '周六', value: '6'},
+				{title: '周日', value: '0'}
+			]
+		}, {
+			type: 'number',
+			display: false,
+			name: 'where1',
+			'class': 'group',
+			width: '70px',
+			value: '3',
+			unit: '日',
+			min:1,
+			max:31
+		}, {
+			type: 'number',
+			name: 'hour',
+			'class': 'group',
+			width: '70px',
+			value: '1',
+			unit: '小时',
+			min:0,
+			max:23
+		}, {
+			type: 'number',
+			name: 'minute',
+			'class': 'group',
+			width: '70px',
+			min:0,
+			max:59,
+			value: '30',
+			unit: '分钟'
+		}]
+	}, {
+		label: '备份网站',
+		display: false,
+		group: [{
+			type: 'select',
+			name: 'sName',
+			width: '150px',
+			placeholder: '无站点数据',
+			list: {
+				url: '/crontab?action=GetDataList',
+				data: {type: 'sites'},
+				dataFilter: function (res) {
+					var arry = [{title: '所有', value: 'ALL'}];
+					for (var i = 0; i < res.data.length; i++) {
+						var item = res.data[i]
+						arry.push({title: item.name + ' [ ' + item.ps + ' ]', value: item.name});
 					}
-					
-					if(rdata[i].backupTo == 'localhost'){
-						optName = '本地磁盘';
+					if (arry.length === 1) arry = []
+					return arry;
+				},
+				success: function (res, that, config) {
+					var arry = [{title: '服务器磁盘', value: 'localhost'}], nameForm = that.config.form[1],
+						value = res.data[0] ? res.data[0].name : '', typeVal = that.config.form[0].group.value
+					for (var i = 0; i < res.orderOpt.length; i++) {
+						var item = res.orderOpt[i]
+						arry.push({title: item.name, value: item.value})
 					}
-					
-					var arrs = ['site','database','path'];
-                    if ($.inArray(rdata[i].sType, arrs) == -1) optName = "--";
-					cbody += "<tr>\
-						<td><input type='checkbox' onclick='checkSelect();' title='"+rdata[i].name+"' name='id' value='"+rdata[i].id+"'></td>\
-						<td>"+rdata[i].name+"</td>\
-						<td>"+s_status+"</td>\
-						<td>"+rdata[i].type+"</td>\
-						<td>"+rdata[i].cycle+"</td>\
-						<td>"+(rdata[i].save?rdata[i].save+'份':'-')+"</td>\
-						<td>"+optName+"</td>\
-						<td>"+rdata[i].addtime+"</td>\
-						<td>\
-							<a href=\"javascript:StartTask("+rdata[i].id+");\" class='btlink'>"+lan.public.exec+"</a> | \
-							<a href=\"javascript:edit_task_info('"+rdata[i].id +"');\" class='btlink'>"+lan.files.file_menu_edit+"</a> | \
-							<a href=\"javascript:GetLogs("+rdata[i].id+");\" class='btlink'>"+lan.public.log+"</a> | \
-							<a href=\"javascript:planDel("+rdata[i].id+" ,'"+rdata[i].name.replace('\\','\\\\').replace("'","\\'").replace('"','')+"');\" class='btlink'>"+lan.public.del+"</a>\
-						</td>\
-					</tr>"
+					$.extend(config.group[2], {disabled: false, list: arry})
+					nameForm.group.value = that.data.name || (crontab.typeTips[that.config.form[0].group.value] + (value ? '[ ' + (typeVal === 'logs' ? '所有' : value) + ' ]' : ''))
+					config.group[0].value = (typeVal === 'logs' ? 'ALL' : value)
+					that.$local_refresh('backupTo', config.group[2])
+					that.$local_refresh('name', nameForm.group)
+					if (value === '') that.$local_refresh('submitForm', $.extend(that.config.form[8].group, {disabled: true}))
 				}
-				$('#cronbody').html(cbody);
-			});
-		}
-	});
-}
-// 编辑计划任务
-function edit_task_info(id){
-	// var obj = {};
-	layer.msg(lan.public.the_get,{icon:16,time:0,shade: [0.3, '#000']});
-	$.post('/crontab?action=get_crond_find',{id:id},function(rdata){
-		layer.closeAll();
-		var sTypeName = '',sTypeDom = '',cycleName = '',cycleDom = '',weekName = '',weekDom = '',sNameName ='',sNameDom = '',backupsName = '',backupsDom ='';
-		obj = {
-			sBody: {
-				messageChannelBtnText: '',
-				channelInitVal: '',
-				messageChannelDom: ''
 			},
-			from:{
-				id:rdata.id,
-				name: rdata.name,
-				type: rdata.type,
-				where1: rdata.where1,
-				hour: rdata.where_hour,
-				minute: rdata.where_minute,
-				week: rdata.where1,
-				sType: rdata.sType,
-                sBody: rdata.sBody == 'undefined' ? '' : rdata.sBody,
-				sName: rdata.sName,
-				backupTo: rdata.backupTo,
-				save: rdata.save,
-				urladdress: rdata.urladdress,
-				save_local: rdata.save_local,
-				notice: rdata.notice,
-				notice_channel: rdata.notice_channel
+			change: function (formData, element, that) {
+				var nameForm = that.config.form[1]
+				nameForm.group.value = crontab.typeTips[formData.sType] + '[ ' + (formData.sName === 'ALL' ? '所有' : formData.sName) + ' ]'
+				that.$local_refresh('name', nameForm.group)
+			}
+		}, {
+			type: 'text',
+			width: '200px',
+			name: 'path',
+			display: false,
+			icon: {
+				type: 'glyphicon-folder-open',
+				event: function (formData, element, that) {
+					$("#bt_select").one('click', function () {
+						that.config.form[1].group.value = '备份目录[' + element['path'].val() + ']'
+						that.$local_refresh('name', that.config.form[1].group)
+					})
+				}
 			},
-			sTypeArray:[['toShell','Shell脚本'],['site','备份网站'],['database','备份数据库'],['logs','日志切割'],['path','备份目录'],['rememory','释放内存'],['toUrl','访问URL'],['webshell','木马查杀']],
-			cycleArray:[['day','每天'],['day-n','N天'],['hour','每小时'],['hour-n','N小时'],['minute-n','N分钟'],['week','每星期'],['month','每月']],
-			weekArray:[[1,'周一'],[2,'周二'],[3,'周三'],[4,'周四'],[5,'周五'],[6,'周六'],[0,'周日']],
-			sNameArray:[],
-			backupsArray:[],
-			create:function(callback){
-				for(var i = 0; i <obj['sTypeArray'].length; i++){
-					if(obj.from['sType'] == obj['sTypeArray'][i][0])  sTypeName  = obj['sTypeArray'][i][1];
-					sTypeDom += '<li><a role="menuitem"  href="javascript:;" value="'+ obj['sTypeArray'][i][0] +'">'+ obj['sTypeArray'][i][1] +'</a></li>';
-				}
-				for(var i = 0; i <obj['cycleArray'].length; i++){
-					if(obj.from['type'] == obj['cycleArray'][i][0])  cycleName  = obj['cycleArray'][i][1];
-					cycleDom += '<li><a role="menuitem"  href="javascript:;" value="'+ obj['cycleArray'][i][0] +'">'+ obj['cycleArray'][i][1] +'</a></li>';
-				}
-				for(var i = 0; i <obj['weekArray'].length; i++){
-					if(obj.from['week'] == obj['weekArray'][i][0])  weekName  = obj['weekArray'][i][1];
-					weekDom += '<li><a role="menuitem"  href="javascript:;" value="'+ obj['weekArray'][i][0] +'">'+ obj['weekArray'][i][1] +'</a></li>';
-				}
-				if(obj.from.notice_channel == 'dingding') {
-				    obj.sBody.title = '钉钉'
-				}else if(obj.from.notice_channel == 'mail') {
-				    obj.sBody.title = '邮箱'
-				}else if(obj.from.notice_channel == 'dingding,mail') {
-				    obj.sBody.title = '全部通道'
-				} else {
-				    obj.sBody.title = '无'
-				}
-				setTimeout(function() {
-					callback();
-				},200)
+			value: bt.get_cookie('sites_path') ? bt.get_cookie('sites_path') : '/www/wwwroot',
+			placeholder: '请选择文件目录'
+		}, {
+			type: 'select',
+			name: 'backupTo',
+			label: '备份到',
+			width: '150px',
+			placeholder: '无存储信息',
+			disabled: true,
+			value:'localhost',
+			list: [],
+			change:function(formData, element, that){
+				that.config.form[3].group[2].value = formData.backupTo;
+				that.config.form[3].group[4].display = formData.backupTo !== "localhost"?true:false;
+				that.$replace_render_content(3)
 			}
-		};
-		obj.create(function(){
-			layer.open({
-				type:1,
-				title:'编辑计划任务-['+rdata.name+']',
-				area: '850px', 
-				skin:'layer-create-content',
-				shadeClose:false,
-				closeBtn:2,
-				content:'<div class="setting-con ptb20">\
-								<div class="clearfix plan ptb10">\
-									<span class="typename c4 pull-left f14 text-right mr20">任务类型</span>\
-									<div class="dropdown stype_list pull-left mr20">\
-										<button class="btn btn-default dropdown-toggle" type="button" id="excode" data-toggle="dropdown" style="width:auto" disabled="disabled">\
-											<b val="'+ obj.from.sType +'">'+ sTypeName +'</b>\
-											<span class="caret"></span>\
-										</button>\
-										<ul class="dropdown-menu" role="menu" aria-labelledby="sType">'+ sTypeDom +'</ul>\
-									</div>\
-								</div>\
-								<div class="clearfix plan ptb10">\
-									<span class="typename c4 pull-left f14 text-right mr20">任务名称</span>\
-									<div class="planname pull-left"><input type="text" name="name" class="bt-input-text sName_create" value="'+ obj.from.name +'"></div>\
-								</div>\
-								<div class="clearfix plan ptb10">\
-									<span class="typename c4 pull-left f14 text-right mr20">执行周期</span>\
-									<div class="dropdown  pull-left mr20">\
-										<button class="btn btn-default dropdown-toggle cycle_btn" type="button" data-toggle="dropdown" style="width:94px">\
-											<b val="'+ obj.from.type +'">'+ cycleName +'</b>\
-											<span class="caret"></span>\
-										</button>\
-										<ul class="dropdown-menu" role="menu" aria-labelledby="cycle">'+ cycleDom +'</ul>\
-									</div>\
-									<div class="pull-left optional_week">\
-										<div class="dropdown week_btn pull-left mr20" style="display:'+ (obj.from.type == "week"  ?'block;':'none') +'">\
-											<button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" >\
-												<b val="'+ obj.from.week +'">'+ weekName +'</b> \
-												<span class="caret"></span>\
-											</button>\
-											<ul class="dropdown-menu" role="menu" aria-labelledby="week">'+ weekDom +'</ul>\
-										</div>\
-										<div class="plan_hms pull-left mr20 bt-input-text where1_input" style="display:'+ (obj.from.type == "day-n" || obj.from.type == 'month' ?'block;':'none') +'"><span><input type="number" name="where1" class="where1_create" value="'+obj.from.where1 +'" maxlength="2" max="23" min="0"></span> <span class="name">日</span> </div>\
-										<div class="plan_hms pull-left mr20 bt-input-text hour_input" style="display:'+ (obj.from.type == "day" || obj.from.type == 'day-n' || obj.from.type == 'hour-n' || obj.from.type == 'week' || obj.from.type == 'month'?'block;':'none') +'"><span><input type="number" name="hour" class="hour_create" value="'+ ( obj.from.type == 'hour-n' ? obj.from.where1 : obj.from.hour ) +'" maxlength="2" max="23" min="0"></span> <span class="name">时</span> </div>\
-										<div class="plan_hms pull-left mr20 bt-input-text minute_input"><span><input type="number" name="minute" class="minute_create" value="'+ (obj.from.type == 'minute-n' ? obj.from.where1 : obj.from.minute)+'" maxlength="2" max="59" min="0"></span> <span class="name">分</span> </div>\
-									</div>\
-								</div>\
-								<div class="clearfix plan ptb10 site_list">\
-									<span class="typename controls c4 pull-left f14 text-right mr20">'+ sTypeName  +'</span>\
-									<div style="line-height:34px"><div class="dropdown pull-left mr20 sName_btn" style="display:'+ (obj.from.sType != "path"?'block;':'none') +'">\
-										<button class="btn btn-default dropdown-toggle" type="button"  data-toggle="dropdown" style="width:auto" disabled="disabled">\
-											<b id="sNameEdit1" val="'+ obj.from.sName +'"></b>\
-											<span class="caret"></span>\
-										</button>\
-										<ul class="dropdown-menu" role="menu" aria-labelledby="sNameEdit1">'+ sNameDom +'</ul>\
-									</div>\
-									<div style="line-height:34px">\
-    									<div class="pull-left" style="margin-right:20px;display:'+ (obj.from.sType == "path"?'block;':'none') +'"><input type="text" name="name" class="bt-input-text sName_create" value="'+ obj.from.sName +'" disabled="disabled"></div>\
-    								</div>\
-									<div class="textname pull-left mr20" style="display:'+ (obj.from.sType == "logs"?'none':'block') +';">备份到</div>\
-										<div class="dropdown  pull-left mr20" style="display:'+ (obj.from.sType == "logs"?'none':'block') +';">\
-											<button class="btn btn-default dropdown-toggle backup_btn"  type="button"  data-toggle="dropdown" style="width:auto;">\
-												<b val="'+ obj.from.backupTo +'">'+ backupsName +'</b>\
-												<span class="caret"></span>\
-											</button>\
-											<ul class="dropdown-menu" role="menu" aria-labelledby="backupTo">'+ backupsDom +'</ul>\
-										</div>\
-										<div class="textname pull-left mr20">保留最新</div>\
-										<div class="plan_hms pull-left mr20 bt-input-text">\
-											<span><input type="number" name="save" class="save_create" value="'+ obj.from.save +'" maxlength="4" max="100" min="1"></span><span class="name">份</span>\
-										</div>\
-									</div>\
-								</div>\
-								<div class="clearfix plan ptb10 site_list">\
-									<span class="typename controls c4 pull-left f14 text-right mr20" style="display:'+ (obj.from.sType == "logs"?'none':'block') +';">备份提醒</span>\
-									<div style="line-height:34px" ><div class="dropdown pull-left mr20 sName_btn" id="modNotice" style="display:'+ (obj.from.sType == "logs"?'none':'block') +';">\
-										<button class="btn btn-default dropdown-toggle" type="button" id="excode" data-toggle="dropdown" style="width:180px;">\
-											<b val="'+obj.from.notice+'">'+ (obj.from.notice == 1 ? '任务执行失败接收通知' : '不接收任何消息通知') +'</b> <span class="caret"></span>\
-										</button>\
-										<ul class="dropdown-menu" role="menu" aria-labelledby="excode">\
-											<li><a role="menuitem" tabindex="-1" href="javascript:;" value="0">不接收任何消息通知</a></li>\
-											<li><a role="menuitem" tabindex="-1" href="javascript:;" value="1">任务执行失败接收通知</a></li>\
-										</ul>\
-									</div>\
-									<div class="pull-left mr20"  style="display:'+ (obj.from.notice == 1 && obj.from.sType != 'logs' ?'block':'none') +';" >消息通道</div>\
-										<div class="dropdown  pull-left mr20"  style="display:'+ (obj.from.notice == 1 ?'block':'none') +';" id="messageChannel">\
-											<button class="btn btn-default dropdown-toggle"  type="button"  data-toggle="dropdown" style="width:auto;" id="modNotice_channel">\
-												<b val="'+ obj.from.notice_channel +'" id="modNotice_channelValue">'+ obj.sBody.title +'</b> <span class="caret"></span>\
-											</button>\
-											<ul class="dropdown-menu" role="menu"></ul>\
-										</div>\
-										<div class="textname pull-left mr20" id="selmodnoticeBox" onclick="modSelSave_local()" style="display:'+ (obj.from.backupTo == 'localhost' ? 'none' : 'block') +';">\
-											<span style="display:'+ (obj.from.sType == "logs"?'none':'block') +';"><input type="checkbox" value="'+obj.from.save_local+'" '+ (obj.from.save_local == 1 ? 'checked': '') +' style="margin-left: 20px;margin-right: 10px;" id="modSave_local">同时保留本地备份（和云存储保留份数一致）</span>\
-										</div>\
-									</div>\
-								</div>\
-								<div class="clearfix plan ptb10"  style="display:'+ ((obj.from.sType == "toShell" || obj.from.sType == 'site' || obj.from.sType == 'path')?'block;':'none') +'">\
-									<span class="typename controls c4 pull-left f14 text-right mr20">'+ (obj.from.sType == "toShell" ?'脚本内容':'排除规则')+'</span>\
-									<div style="line-height:22px"><textarea style="line-height:22px" class="txtsjs bt-input-text sBody_create" name="sBody">'+ obj.from.sBody +'</textarea></div>\
-								</div>\
-								<div class="clearfix plan ptb10" style="display:'+ (obj.from.sType == "rememory"?'block;':'none') +'">\
-									<span class="typename controls c4 pull-left f14 text-right mr20">提示</span>\
-									<div style="line-height:34px">释放PHP、MYSQL、PURE-FTPD、APACHE、NGINX的内存占用,建议在每天半夜执行!</div>\
-								</div>\
-								<div class="clearfix plan ptb10" style="display:'+ (obj.from.sType == "toUrl"?'block;':'none') +'">\
-									<span class="typename controls c4 pull-left f14 text-right mr20">URL地址</span>\
-									<div style="line-height:34px"><input type="text" style="width:400px; height:34px" class="bt-input-text url_create" name="urladdress"  placeholder="URL地址" value="'+ obj.from.urladdress +'"></div>\
-								</div>\
-								<div class="clearfix plan ptb10" style="display:'+ (obj.from.sType == "webshell"?'block;':'none') +'">\
-									<span class="typename controls c4 pull-left f14 text-right mr20">查杀站点</span>\
-									<div class="dropdown pull-left mr20 sName_btn">\
-										<button class="btn btn-default dropdown-toggle" type="button"  data-toggle="dropdown" style="width:auto" disabled="disabled">\
-											<b id="sNameEdit2" val="'+ obj.from.sName +'"></b>\
-											<span class="caret"></span>\
-										</button>\
-										<ul class="dropdown-menu" role="menu" aria-labelledby="sNameEdit2">'+ sNameDom +'</ul>\
-									</div>\
-									<p class="clearfix plan">\
-										<div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">消息通道</div>\
-										<div class="dropdown planBackupTo pull-left mr20 edit_message_start" style="line-height: 34px;"></div>\
-									</p>\
-								</div>\
-								<div class="clearfix plan ptb10">\
-									<div class="bt-submit plan-submits " style="margin-left: 141px;">保存编辑</div>\
-								</div>\
-							</div>',
-        success:function(){
-          if(obj.from.sType == 'site' || obj.from.sType == 'database' || obj.from.sType == 'path' || obj.from.sType == 'logs' || obj.from.sType == 'webshell'){
-            $.post('/crontab?action=GetDataList',{type:obj.from.sType  == 'database'?'databases':'sites'},function(rdata){
-              obj.sNameArray = rdata.data;
-              obj.sNameArray.unshift({name:'ALL',ps:'所有'});
-              obj.backupsArray = rdata.orderOpt;
-              obj.backupsArray.unshift({name:'服务器磁盘',value:'localhost'});
-              for(var i = 0; i <obj['sNameArray'].length; i++){
-                if(obj.from['sName'] == obj['sNameArray'][i]['name'])  sNameName  = obj['sNameArray'][i]['ps'];
-                sNameDom += '<li><a role="menuitem"  href="javascript:;" value="'+ obj['sNameArray'][i]['name'] +'">'+ obj['sNameArray'][i]['ps'] +'</a></li>';
-              }
-              for(var i = 0; i <obj['backupsArray'].length; i++){
-                if(obj.from['backupTo'] == obj['backupsArray'][i]['value'])  backupsName  = obj['backupsArray'][i]['name'];
-                backupsDom += '<li><a role="menuitem"  href="javascript:;" value="'+ obj['backupsArray'][i]['value'] +'">'+ obj['backupsArray'][i]['name'] +'</a></li>';
-              }
-              console.log(sNameName)
-              $('#sNameEdit1,#sNameEdit2').html(sNameName)
-              $('.backup_btn b').html(backupsName)
-              $('.backup_btn+.dropdown-menu').html(backupsDom)
-              if(obj.from.sType == 'webshell'){
-                edit_message_channel(obj.from.urladdress)
-              }
-            });
-          }
-          if(obj.from.sType == 'site' || obj.from.sType == 'database' || obj.from.sType == 'path') {
-            $.post('/config?action=get_settings',{type: 'sites'},function(rdata){
-              var messageChannelDom = ''
-              if(rdata.user_mail.user_name && rdata.dingding.dingding) {
-                messageChannelDom = '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding,mail">全部通道</a></li><li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding">钉钉</a></li><li><a role="menuitem" tabindex="-1" href="javascript:;" value="mail">邮箱</a></li>'
-              } else if(!rdata.user_mail.user_name && !rdata.dingding.dingding){
-                messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="">无</a></li>'
-              } else if(rdata.dingding.dingding) {
-                messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding">钉钉</a></li>'
-              } else if(rdata.user_mail.user_name) {
-                messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="mail">邮箱</a></li>'
-              }
-              $('#messageChannel .dropdown-menu').html(messageChannelDom)
-              
-            })
-            $('#messageChannel .dropdown-menu').on('click','li',function(){
-              $('#modNotice_channelValue').attr('val',$(this).find('a').attr('value'))
-              $('#modNotice_channelValue').html($(this).find('a').text())
-            })
-          }
-        }
-			});
-			getselectnoticename();
-			setTimeout(function(){
-				if(obj.from.sType == 'toShell'){
-					$('.site_list').hide();
-				}else if(obj.from.sType == 'rememory'){
-					$('.site_list').hide();
-				}else if( obj.from.sType == 'toUrl'){
-					$('.site_list').hide();
-				}else if( obj.from.sType == 'webshell'){
-					$('.site_list').hide();
-				}else{
-					$('.site_list').show();
-				}
 
-				$('.sName_create').blur(function () {
-					obj.from.name = $(this).val();
-				});
-				$('.where1_create').blur(function () {
-					obj.from.where1 = $(this).val();
-				});
-	
-				$('.hour_create').blur(function () {
-					obj.from.hour = $(this).val();
-				});
-	
-				$('.minute_create').blur(function () {
-					obj.from.minute = $(this).val();
-				});
-	
-				$('.save_create').blur(function () {
-					obj.from.save = $(this).val();
-				});
-	
-				$('.sBody_create').blur(function () {
-					obj.from.sBody = $(this).val();
-				});
-				$('.url_create').blur(function () {
-					obj.from.urladdress = $(this).val();
-				});
-				$('.layer-create-content [aria-labelledby="cycle"] a').unbind().click(function () {
-					$('.cycle_btn').find('b').attr('val',$(this).attr('value')).html($(this).html());
-					var type = $(this).attr('value');
-					switch(type){
-						case 'day':
-							$('.week_btn').hide();
-							$('.where1_input').hide();
-							$('.hour_input').show().find('input').val('1');
-							$('.minute_input').show().find('input').val('30');
-							obj.from.week = '';
-							obj.from.type = '';
-							obj.from.hour = 1;
-							obj.from.minute = 30;
-						break;
-						case 'day-n':
-							$('.week_btn').hide();
-							$('.where1_input').show().find('input').val('1');
-							$('.hour_input').show().find('input').val('1');
-							$('.minute_input').show().find('input').val('30');
-							obj.from.week = '';
-							obj.from.where1 = 1;
-							obj.from.hour = 1;
-							obj.from.minute = 30;
-						break;
-						case 'hour':
-							$('.week_btn').hide();
-							$('.where1_input').hide();
-							$('.hour_input').hide();
-							$('.minute_input').show().find('input').val('30');
-							obj.from.week = '';
-							obj.from.where1 = '';
-							obj.from.hour = '';
-							obj.from.minute = 30;
-						break;
-						case 'hour-n':
-							$('.week_btn').hide();
-							$('.where1_input').hide();
-							$('.hour_input').show().find('input').val('1');
-							$('.minute_input').show().find('input').val('30');
-							obj.from.week = '';
-							obj.from.where1 = '';
-							obj.from.hour = 1;
-							obj.from.minute = 30;
-						break;
-						case 'minute-n':
-							$('.week_btn').hide();
-							$('.where1_input').hide();
-							$('.hour_input').hide();
-							$('.minute_input').show();
-							obj.from.week = '';
-							obj.from.where1 = '';
-							obj.from.hour = '';
-							obj.from.minute = 30;
-						break;
-						case 'week':
-							$('.week_btn').show();
-							$('.where1_input').hide();
-							$('.hour_input').show();
-							$('.minute_input').show();
-							obj.from.week = 1;
-							obj.from.where1 = '';
-							obj.from.hour = 1;
-							obj.from.minute = 30;
-						break;
-						case 'month':
-							$('.week_btn').hide();
-							$('.where1_input').show();
-							$('.hour_input').show();
-							$('.minute_input').show();
-							obj.from.week = '';
-							obj.from.where1 = 1;
-							obj.from.hour = 1;
-							obj.from.minute = 30;
-						break;
-					}
-					obj.from.type = $(this).attr('value');
-				});
-	
-				$('.layer-create-content [aria-labelledby="week"] a').unbind().click(function () {
-					$('.week_btn').find('b').attr('val',$(this).attr('value')).html($(this).html());
-					obj.from.week = $(this).attr('value');
-				});
-	
-				$('.layer-create-content [aria-labelledby="backupTo"] a').unbind().click(function () {
-					$('.backup_btn').find('b').attr('val', $(this).attr('value')).html($(this).html());
-					obj.from.backupTo = $(this).attr('value');
-					if(obj.from.backupTo == 'localhost') {
-						$('#selmodnoticeBox').hide()
-					} else {
-						$('#selmodnoticeBox').show()
-					}
-				});
-				$('.plan-submits').unbind().click(function(){
-					if(obj.from.type == 'hour-n'){
-						obj.from.where1 = obj.from.hour;
-						obj.from.hour = '';
-					}else if(obj.from.type == 'minute-n'){
-						obj.from.where1 = obj.from.minute;
-						obj.from.minute = '';
-					}else if(obj.from.sType == 'webshell'){
-						obj.from.urladdress = $(".edit_message_start input:checked").val()
-					}
-					obj.from.save_local = $('#modSave_local').val()
-					obj.from.notice = $("#modNotice").find("button b").attr("val")
-					obj.from.notice_channel = $("#modNotice_channelValue").attr("val")
-					layer.msg('正在保存编辑内容，请稍后...',{icon:16,time:0,shade: [0.3, '#000']});
-					$.post('/crontab?action=modify_crond',obj.from,function(rdata){
-						layer.closeAll();
-						getCronData();
-						layer.msg(rdata.msg,{icon:rdata.status?1:2});
-					});
-				});
-			},100);
-		});
-	});
+		}, {
+			label: '保留最新',
+			type: 'number',
+			name: 'save',
+			'class': 'group',
+			width: '70px',
+			value: '3',
+			unit: '份'
 
-}
-// 修改木马查杀  消息通道
-function edit_message_channel(type){
-	$.post('/config?action=get_settings',function(res){
-		var tMess = "";
-		if(res.user_mail.user_name){
-		    tMess = '<div class="check_alert" style="margin-right:20px;display: inline-block;">\
-				<input id="mail_edit" type="radio" name="alert_edit" title="邮箱" value="mail" '+ (type == 'mail'? 'checked' : '') +'>\
-				<label for="mail_edit" style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">邮箱</label>\
-			</div>'
-		}
-		if(res.dingding.dingding){
-		    tMess += '<div class="check_alert" style="display: inline-block;">\
-				<input id="dingding_edit" type="radio" name="alert_edit" title="钉钉" value="dingding" '+ (type == 'dingding'? 'checked' : '') +'>\
-				<label for="dingding_edit" style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">钉钉</label>\
-			</div>'
-		}
-		$(".edit_message_start").html(tMess);
-	})
-	
-}
-
-// 设置计划任务状态
-function set_task_status(id,status){
-	var confirm = layer.confirm(status == '0'?'计划任务暂停后将无法继续运行，您真的要停用这个计划任务吗？':'该计划任务已停用，是否要启用这个计划任务', {title:'提示',icon:3,closeBtn:2},function(index) {
-		if (index > 0) {
-			var loadT = layer.msg('正在设置状态，请稍后...',{icon:16,time:0,shade: [0.3, '#000']});
-			$.post('/crontab?action=set_cron_status',{id:id},function(rdata){
-				layer.closeAll();
-				layer.close(confirm);
-				layer.msg(rdata.data,{icon:rdata.status?1:2});
-				if(rdata.status) getCronData();
-			});
-		}
-	});
-}
-
-//执行任务脚本
-function StartTask(id){
-	layer.msg(lan.public.the,{icon:16,time:0,shade: [0.3, '#000']});
-	var data='id='+id;
-	$.post('/crontab?action=StartTask',data,function(rdata){
-		layer.closeAll();
-		layer.msg(rdata.msg,{icon:rdata.status?1:2});
-	});
-}
-
-
-//清空日志
-function CloseLogs(id){
-	layer.msg(lan.public.the,{icon:16,time:0,shade: [0.3, '#000']});
-	var data='id='+id;
-	$.post('/crontab?action=DelLogs',data,function(rdata){
-		layer.closeAll();
-		layer.msg(rdata.msg,{icon:rdata.status?1:2});
-	});
-}
-
-
-//删除
-function planDel(id,name){
-	SafeMessage(lan.get('del',[name]),lan.crontab.del_task,function(){
-			layer.msg(lan.public.the,{icon:16,time:0,shade: [0.3, '#000']});
-			var data='id='+id;
-			$.post('/crontab?action=DelCrontab',data,function(rdata){
-				layer.closeAll();
-                getCronData();
-                setTimeout(function () { layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });},1000)
-			});
-	});
-}
-
-
-//批量删除
-function allDeleteCron(){
-	var checkList = $("input[name=id]");
-	var dataList = new Array();
-	for(var i=0;i<checkList.length;i++){
-		if(!checkList[i].checked) continue;
-		var tmp = new Object();
-		tmp.name = checkList[i].title;
-		tmp.id = checkList[i].value;
-		dataList.push(tmp);
-	}
-	SafeMessage(lan.crontab.del_task_all_title,"<a style='color:red;'>"+lan.get('del_all_task',[dataList.length])+"</a>",function(){
-		layer.closeAll();
-		syncDeleteCron(dataList,0,'');
-	});
-}
-
-//模拟同步开始批量删除数据库
-function syncDeleteCron(dataList,successCount,errorMsg){
-	if(dataList.length < 1) {
-		layer.msg(lan.get('del_all_task_ok',[successCount]),{icon:1});
-		return;
-	}
-	var loadT = layer.msg(lan.get('del_all_task_the',[dataList[0].name]),{icon:16,time:0,shade: [0.3, '#000']});
-	$.ajax({
-			type:'POST',
-			url:'/crontab?action=DelCrontab',
-			data:'id='+dataList[0].id+'&name='+dataList[0].name,
-			async: true,
-			success:function(frdata){
-				layer.close(loadT);
-				if(frdata.status){
-					successCount++;
-					$("input[title='"+dataList[0].name+"']").parents("tr").remove();
-				}else{
-					if(!errorMsg){
-						errorMsg = '<br><p>'+lan.crontab.del_task_err+'</p>';
-					}
-					errorMsg += '<li>'+dataList[0].name+' -> '+frdata.msg+'</li>'
-				}
-				
-				dataList.splice(0,1);
-				syncDeleteCron(dataList,successCount,errorMsg);
+		},{
+			type: 'checkbox',
+			name: 'save_local',
+			display: false,
+			style:{"margin-top":"7px"},
+			value:'0',
+			title:'同时保留本地备份（和云存储保留份数一致）',
+			event: function (formData, element, that) {
+				that.config.form[3].group[4].value = !formData.save_local?'0':'1';
 			}
-	});
-}
-
-	
-function IsURL(str_url){
-	var strRegex = '^(https|http|ftp|rtsp|mms)?://.+';
-	var re=new RegExp(strRegex);
-	if (re.test(str_url)){
-		return (true);
-	}else{
-		return (false);
-	}
-}
-
-
-//提交
-function planAdd(){
-	var name = $(".planname input[name='name']").val();
-	if(name == ''){
-		$(".planname input[name='name']").focus();
-		layer.msg(lan.crontab.add_task_empty,{icon:2});
-		return;
-	}
-	$("#set-Config input[name='name']").val(name);
-	
-	var type = $(".plancycle").find("b").attr("val");
-	$("#set-Config input[name='type']").val(type);
-	
-	var where1 = $("#ptime input[name='where1']").val();
-	var is1;
-	var is2 = 1;
-	switch(type){
-		case 'day-n':
-			is1=31;
-			break;
-		case 'hour-n':
-			is1=23;
-			break;
-		case 'minute-n':
-			is1=59;
-			break;
-		case 'month':
-			is1=31;
-			break;
-		
-	}
-	
-	if(where1 > is1 || where1 < is2){
-		$("#ptime input[name='where1']").focus();
-		layer.msg(lan.public.input_err,{icon:2});
-		return;
-	}
-	
-	$("#set-Config input[name='where1']").val(where1);
-	
-	var hour = $("#ptime input[name='hour']").val();
-	if(hour > 23 || hour < 0){
-		$("#ptime input[name='hour']").focus();
-		layer.msg(lan.crontab.input_hour_err,{icon:2});
-		return;
-	}
-	$("#set-Config input[name='hour']").val(hour);
-	var minute = $("#ptime input[name='minute']").val();
-	if(minute > 59 || minute < 0){
-		$("#ptime input[name='minute']").focus();
-		layer.msg(lan.crontab.input_minute_err,{icon:2});
-		return;
-	}
-	$("#set-Config input[name='minute']").val(minute);
-	
-	var save = $("#save").val();
-	
-	if(save < 0){
-		layer.msg(lan.crontab.input_number_err,{icon:2});
-		return;
-	}
-	
-	$("#set-Config input[name='save']").val(save);
-	
-	
-	$("#set-Config input[name='week']").val($(".planweek").find("b").attr("val"));
-	var sType = $(".planjs").find("b").attr("val");
-	var sBody = encodeURIComponent($("#implement textarea[name='sBody']").val());
-	
-	if(sType == 'toFile'){
-		if($("#viewfile").val() == ''){
-			layer.msg(lan.crontab.input_file_err,{icon:2});
-			return;
-		}
-	}else{
-        if (sBody == '' && sType == 'toShell'){
-			$("#implement textarea[name='sBody']").focus();
-			layer.msg(lan.crontab.input_script_err,{icon:2});
-			return;
-		}
-	}
-	var urladdress_1 = $("#urladdress_1").val();
-	if(sType == 'toUrl'){
-		if(!IsURL(urladdress_1)){
-			layer.msg(lan.crontab.input_url_err,{icon:2});
-			$("implement textarea[name='urladdress_1']").focus();
-			return;
-		}
-	}
-	urladdress_1 = encodeURIComponent(urladdress_1);
-	$("#set-Config input[name='sType']").val(sType);
-	$("#set-Config textarea[name='sBody']").val(decodeURIComponent(sBody));
-	
-	if(sType == 'site' || sType == 'database' || sType == 'path'){
-		var backupTo = $(".planBackupTo").find("b").attr("val");
-		$("#backupTo").val(backupTo);
-	}
-
-	var sName = $("#sName").attr("val");
-	
-	/*if(sName == 'backupAll'){
-		var alist = $("ul[aria-labelledby='backdata'] li a");
-		var dataList = new Array();
-		for(var i=1;i<alist.length;i++){
-			var tmp = alist[i].getAttribute('value');
-			dataList.push(tmp);
-		}
-		if(dataList.length < 1){
-			layer.msg(lan.crontab.input_empty_err,{icon:5});
-			return;
-		}
-		
-		allAddCrontab(dataList,0,'');
-		return;
-	}*/
-	$("#set-Config input[name='sName']").val(sName);
-	layer.msg(lan.public.the_add,{icon:16,time:0,shade: [0.3, '#000']});
-	var data= $("#set-Config").serialize() + '&sBody='+sBody + '&urladdress=' + urladdress_1;
-	if(data.indexOf('sType=path') > -1){
-		data = data.replace('&sName=&','&sName='+ encodeURIComponent($('#inputPath').val()) +'&')
-	}else if(data.indexOf('sType=webshell') > -1){
-		data = $("#set-Config").serialize() + '&urladdress=' + $(".message_start input:checked").val()
-		data = data.replace('&sName=&','&sName='+ encodeURIComponent($('#filePath').val()) +'&')
-	}
-	if(data.indexOf('&save_local=') == -1) {
-		data = data + '&save_local='+ $('#save_local').val() +'&notice='+ $("#notice").find("b").attr("val") +'&notice_channel='+ $("#notice_channel").find("b").attr("val") +''
-	}
-	$.post('/crontab?action=AddCrontab',data,function(rdata){
-		layer.closeAll();
-        getCronData();
-        $(".dropdown ul li:first a").click();
-        setTimeout(function () {
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-        }, 1000)
-	});
-}
-
-//批量添加任务
-function allAddCrontab(dataList,successCount,errorMsg){
-	if(dataList.length < 1) {
-		layer.msg(lan.get('add_all_task_ok',[successCount]),{icon:1});
-		return;
-	}
-	var loadT = layer.msg(lan.get('add',[dataList[0]]),{icon:16,time:0,shade: [0.3, '#000']});
-	var sType = $(".planjs").find("b").attr("val");
-	var minute = parseInt($("#set-Config input[name='minute']").val());
-	var hour = parseInt($("#set-Config input[name='hour']").val());
-	var sTitle = (sType == 'site')?lan.crontab.backup_site:lan.crontab.backup_database;
-	if(sType == 'logs') sTitle = lan.crontab.backup_log;
-	minute += 5;
-	if(hour !== '' && minute > 59){
-		if(hour >= 23) hour = 0;
-		$("#set-Config input[name='hour']").val(hour+1);
-		minute = 5;
-	}
-	$("#set-Config input[name='minute']").val(minute);
-	$("#set-Config input[name='name']").val(sTitle + '['+dataList[0]+']');
-	$("#set-Config input[name='sName']").val(dataList[0]);
-	var pdata = $("#set-Config").serialize() + '&sBody=&urladdress_1=';
-	$.ajax({
-			type:'POST',
-			url:'/crontab?action=AddCrontab',
-			data:pdata,
-			async: true,
-			success:function(frdata){
-				layer.close(loadT);
-				if(frdata.status){
-					successCount++;
-					getCronData();
-				}else{
-					if(!errorMsg){
-						errorMsg = '<br><p>'+lan.crontab.backup_all_err+'</p>';
-					}
-					errorMsg += '<li>'+dataList[0]+' -> '+frdata.msg+'</li>'
-				}
-				
-				dataList.splice(0,1);
-				allAddCrontab(dataList,successCount,errorMsg);
+		}]
+	}, {
+		label: '备份提醒',
+		display: false,
+		group: [{
+			type: 'select',
+			name: 'notice',
+			value:0,
+			list: [
+				{title: '不接收任何消息通知', value: 0},
+				{title: '任务执行失败接收通知', value: 1}
+			],
+			change: function (formData, element, that) {
+				var notice_channel_form = that.config.form[4], notice = parseInt(formData.notice)
+				notice_channel_form.group[1].display = !!notice
+				notice_channel_form.group[0].value = notice
+				that.$replace_render_content(4)
 			}
-	});
-}
-
-$(".dropdown ul li a").click(function(){
-	var txt = $(this).text();
-	var type = $(this).attr("value");
-	$(this).parents(".dropdown").find("button b").text(txt).attr("val",type);
-	$('#logs_tips').remove();
-	$(".plan-submit").css({"pointer-events":"auto","background-color":"#20a53a","color":"#fff"});
-	switch(type){
-		case 'day':
-			closeOpt();
-			toHour();
-			toMinute();
-			break;
-		case 'day-n':
-			closeOpt();
-			toWhere1(lan.crontab.day);
-			toHour();
-			toMinute();
-			break;
-		case 'hour':
-			closeOpt();
-			toMinute();
-			break;
-		case 'hour-n':
-			closeOpt();
-			toWhere1(lan.crontab.hour);
-			toMinute();
-			break;
-		case 'minute-n':
-			closeOpt();
-			toWhere1(lan.crontab.minute);
-			break;
-		case 'week':
-			closeOpt();
-			toWeek();
-			toHour();
-			toMinute();
-			break;
-		case 'month':
-			closeOpt();
-			toWhere1(lan.crontab.sun);
-			toHour();
-			toMinute();
-			break;
-		case 'toFile':
-			toFile();
-			break;
-		case 'toShell':
-			toShell();
-			$(".controls").html(lan.crontab.sbody);
-			break;
-		case 'path':
-			toBackup('path');
-			$(".controls").html('备份目录');
-			break;
-		case 'rememory':
-			rememory();
-			$(".controls").html(lan.public.msg);
-			break;
-		case 'site':
-			toBackup('sites');
-			$(".controls").html(lan.crontab.backup_site);
-			break;
-		case 'database':
-			toBackup('databases');
-			$(".controls").html(lan.crontab.backup_database);
-			break;
-		case 'logs':
-			toBackup('logs');
-			$(".controls").html(lan.crontab.log_site);
-			break;
-		case 'toUrl':
-			toUrl();
-			$(".controls").html(lan.crontab.url_address);
-			break;
-		case 'webshell':
-			webShell();
-			break;
-	}
-})
-
-
-//备份
-function toBackup(type){
-	var sMsg = "";
-	switch(type){
-		case 'sites':
-			sMsg = lan.crontab.backup_site;
-			sType = "sites";
-			break;
-		case 'databases':
-			sMsg = lan.crontab.backup_database;
-			sType = "databases";
-			break;
-		case 'logs':
-			sMsg = lan.crontab.backup_log;
-			sType = "sites";
-			break;
-		case 'path':
-			sMsg = '备份目录';
-			sType = "sites";
-			break;
-	}
-	var data='type='+sType
-	$.post('/crontab?action=GetDataList',data,function(rdata){
-		$(".planname input[name='name']").attr('readonly','true').css({"background-color":"#f6f6f6","color":"#666"});
-		if(type != 'path'){
-			var sOpt = "",sOptBody = '';
-			if(rdata.data.length == 0){
-				layer.msg(lan.public.list_empty,{icon:2})
-				return
-			}
-			for(var i=0;i<rdata.data.length;i++){
-				if(type === 'logs'){
-					$(".planname input[name='name']").val(sMsg+'[ALL]');
-				}else{
-					if(i ==0){
-						$(".planname input[name='name']").val(sMsg+'['+rdata.data[i].name+']');
+		}, {
+			label: '消息通道',
+			type: 'select',
+			name: 'notice_channel',
+			display: false,
+			width: '100px',
+			placeholder: '未配置消息通道',
+			list: {
+				url: '/config?action=get_settings',
+				dataFilter: function (res,that) {
+					var arry = crontab.objectEmailOrDingding.getChannelSwitch(res,that.config.form[0].group.value);
+					that.config.form[4].group[1].value = arry.length > 0?arry[0].value:''
+					return arry
+				},
+				success: function (res, that, config,list) {
+					if(list.length === 0){
+						that.config.form[8].group.disabled = true
+						that.$local_refresh('submitForm', that.config.form[8].group)
 					}
 				}
-				sOpt += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="'+rdata.data[i].name+'">'+rdata.data[i].name+'['+rdata.data[i].ps+']</a></li>';			
-			}	
-			sOptBody ='<div class="dropdown pull-left mr20">\
-					  <button class="btn btn-default dropdown-toggle" type="button" id="backdata" data-toggle="dropdown" style="width:auto">\
-						<b id="sName" val="'+ (type === 'logs'?'ALL':rdata.data[0].name) +'">'+ (type === 'logs'?'所有':(rdata.data[0].name +'['+rdata.data[0].ps+']')) +'</b> <span class="caret"></span>\
-					  </button>\
-					  <ul class="dropdown-menu" role="menu" aria-labelledby="backdata">\
-					 	<li><a role="menuitem" tabindex="-1" href="javascript:;" value="ALL">'+lan.public.all+'</a></li>\
-					  	'+sOpt+'\
-					  </ul>\
-            </div>'
-		}else{
-			$(".planname input[name='name']").val(sMsg+'[/www/wwwroot/]');
-			sOptBody = '<div class="info-r" style="display: inline-block;float: left;margin-right: 25px;"><input id="inputPath" class="bt-input-text mr5" type="text" name="path" value="/www/wwwroot/" placeholder="备份目录" style="width:208px;height:33px;"><span class="glyphicon glyphicon-folder-open cursor" onclick="ChangePath(&quot;inputPath&quot;)"></span></div>'
-			setCookie('default_dir_path','/www/wwwroot/');
-			setCookie('path_dir_change','/www/wwwroot/');
-			setInterval(function(){
-				if(getCookie('path_dir_change') != getCookie('default_dir_path')){
-					var  path_dir_change = getCookie('path_dir_change')
-					$(".planname input").val('备份目录['+getCookie('path_dir_change')+']');
-					setCookie('default_dir_path',path_dir_change);
-				}
-			},500);
-		}		
-		var orderOpt = ''
-		for (var i=0;i<rdata.orderOpt.length;i++){
-			orderOpt += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="'+rdata.orderOpt[i].value+'">'+rdata.orderOpt[i].name+'</a></li>'
-		}
-		var save_num = 3;
-		if(type === 'logs'){
-			$('#cycle b').attr('val','day').text('每天');
-			$('.planweek').hide();
-			$('[name="hour"]').val(0);
-			$('[name="minute"]').val(1);
-			$('#implement').parent().after('<div class="clearfix plan" id="logs_tips"><span class="typename controls c4 pull-left f14 text-right mr20">提示</span><div style="line-height:34px">根据网络安全法第二十一条规定，网络日志应留存不少于六个月。</div></div>')
-			save_num = 180;
-		}else{
-			$('#logs_tips').remove();
-		}
-		var sBody = sOptBody + '<div class="textname pull-left mr20" style="display:'+ (type === 'logs'?'none':'inline-block') +'">'+lan.crontab.backup_to+'</div>\
-					<div class="dropdown planBackupTo pull-left mr20" style="display:'+ (type === 'logs'?'none':'inline-block') +'" id="saveAddServerDiskToLocal">\
-					  <button class="btn btn-default dropdown-toggle" type="button" id="excode" data-toggle="dropdown" style="width:auto;">\
-						<b val="localhost">'+lan.crontab.disk+'</b> <span class="caret"></span>\
-					  </button>\
-					  <ul class="dropdown-menu" role="menu" aria-labelledby="excode">\
-						<li><a role="menuitem" tabindex="-1" href="javascript:;" value="localhost">'+lan.crontab.disk+'</a></li>\
-						'+ orderOpt +'\
-					  </ul>\
-					</div>\
-					<div class="textname pull-left mr20">'+lan.crontab.save_new+'</div><div class="plan_hms pull-left mr20 bt-input-text">\
-					<span><input type="number" name="save" id="save" value="'+save_num+'" maxlength="4" max="100" min="1"></span>\
-					<span class="name">'+lan.crontab.save_num+'</span>\
-					</div>';
-        if (type == 'sites' || type == 'path' || type == 'databases') {
-          $.post('/config?action=get_settings',data,function(rdata){
-            var messageChannelDom = '', messageChannelBtnText = '', channelInitVal = ''
-            if(rdata.user_mail.user_name && rdata.dingding.dingding) {
-              messageChannelBtnText = '全部通道'
-			  channelInitVal= 'user_name,dingding'
-              messageChannelDom = '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding,mail">全部通道</a></li><li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding">钉钉</a></li><li><a role="menuitem" tabindex="-1" href="javascript:;" value="mail">邮箱</a></li>'
-            } else if(!rdata.user_mail.user_name && !rdata.dingding.dingding){
-              messageChannelBtnText = '无'
-			  channelInitVal= ''
-              messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="">无</a></li>'
-            } else if(rdata.dingding.dingding) {
-              messageChannelBtnText = '钉钉'
-			  channelInitVal= 'dingding'
-              messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="dingding">钉钉</a></li>'
-            } else if(rdata.user_mail.user_name) {
-              messageChannelBtnText = '邮箱'
-			  channelInitVal= 'mail'
-              messageChannelDom += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="mail">邮箱</a></li>'
-            }
-            sBody += '<p class="clearfix plan">\
-                <div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">备份提醒</div>\
-                  <div class="dropdown planBackupTo pull-left mr20" style="display:'+ (type === 'logs'?'none':'inline-block') +'"  id="notice">\
-                    <button class="btn btn-default dropdown-toggle" type="button" id="excode" data-toggle="dropdown" style="width:180px;">\
-                      <b val="0">不接收任何消息通知</b> <span class="caret"></span>\
-                    </button>\
-                    <ul class="dropdown-menu" role="menu" aria-labelledby="excode">\
-                      <li><a role="menuitem" tabindex="-1" href="javascript:;" value="0">不接收任何消息通知</a></li>\
-                      <li><a role="menuitem" tabindex="-1" href="javascript:;" value="1">任务执行失败接收通知</a></li>\
-                    </ul>\
-                  </div>\
-                </div>\
-                <div class="textname pull-left mr20" style="font-size: 14px;display:none;" id="messageChannelBox">消息通道</div>\
-                  <div class="dropdown planBackupTo pull-left mr20" style="display:none;" id="notice_channel">\
-                    <button class="btn btn-default dropdown-toggle" type="button" id="excode" data-toggle="dropdown" style="width:auto;">\
-                      <b val="'+channelInitVal+'">'+ messageChannelBtnText +'</b> <span class="caret"></span>\
-                    </button>\
-                    <ul class="dropdown-menu" role="menu" aria-labelledby="excode">\
-                      '+messageChannelDom+'\
-                    </ul>\
-                  </div>\
-                </div>\
-                <a role="menuitem" tabindex="-1" href="javascript:;" onclick="open_three_channel_auth()" value="0" style="color: #20a53a;">设置消息通道</a>\
-				<span  id="selnoticeBox"  onclick="selSave_local()" style="display:none;"><input type="checkbox" value="0" style="margin-left: 20px;margin-right: 10px;" id="save_local">同时保留本地备份（和云存储保留份数一致）</span>\
-            </p>';
-            if(type == 'sites' || type == "path") {
-				sBody += '<p class="clearfix plan">\
-              <div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">排除规则</div>\
-              <div class="dropdown planBackupTo pull-left mr20">\
-                  <span><textarea style=" height: 100px;width:300px;line-height:22px;" class="bt-input-text" type="text" name="sBody" id="exclude" placeholder="每行一条规则,目录不能以/结尾，示例：\ndata/config.php\nstatic/upload\n *.log\n"></textarea></span>\
-              </div>\
-            </p>';
 			}
-            $("#implement").html(sBody);
-			getselectnoticename();
-          })
-        } else {
-            $("#implement").html('<div></div>');
-            sBody += '<p class="clearfix plan">\
-              <div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">排除规则</div>\
-              <div class="dropdown planBackupTo pull-left mr20">\
-                  <span><textarea style=" height: 100px;width:300px;line-height:22px;" class="bt-input-text" type="text" name="sBody" id="exclude" placeholder="每行一条规则,目录不能以/结尾，示例：\ndata/config.php\nstatic/upload\n *.log\n"></textarea></span>\
-              </div>\
-            </p>';
-            $("#implement").html(sBody);
-            getselectname();
-		}
-		$("#implement").on('click','.dropdown ul li a',function(ev){
-			var sName = $("#sName").attr("val");
-			if(!sName) return;
-			$(".planname input[name='name']").val(sMsg+'['+sName+']');
-		});
-		if(type == "path"){
-			$('.planname input').attr('readonly',false).removeAttr('style');
-		}
-	});
-}
-
-//下拉菜单名称
-function getselectname(){
-	$(".dropdown ul li a").click(function(){
-		var txt = $(this).text();
-		var type = $(this).attr("value");
-		$(this).parents(".dropdown").find("button b").text(txt).attr("val",type);
-	});
-}
-//清理
-function closeOpt(){
-	$("#ptime").html('');
-}
-//星期
-function toWeek(){
-	var mBody = '<div class="dropdown planweek pull-left mr20">\
-					  <button class="btn btn-default dropdown-toggle" type="button" id="excode" data-toggle="dropdown">\
-						<b val="1">'+lan.crontab.TZZ1+'</b> <span class="caret"></span>\
-					  </button>\
-					  <ul class="dropdown-menu" role="menu" aria-labelledby="excode">\
-						<li><a role="menuitem" tabindex="-1" href="javascript:;" value="1">'+lan.crontab.TZZ1+'</a></li>\
-						<li><a role="menuitem" tabindex="-1" href="javascript:;" value="2">'+lan.crontab.TZZ2+'</a></li>\
-						<li><a role="menuitem" tabindex="-1" href="javascript:;" value="3">'+lan.crontab.TZZ3+'</a></li>\
-						<li><a role="menuitem" tabindex="-1" href="javascript:;" value="4">'+lan.crontab.TZZ4+'</a></li>\
-						<li><a role="menuitem" tabindex="-1" href="javascript:;" value="5">'+lan.crontab.TZZ5+'</a></li>\
-						<li><a role="menuitem" tabindex="-1" href="javascript:;" value="6">'+lan.crontab.TZZ6+'</a></li>\
-						<li><a role="menuitem" tabindex="-1" href="javascript:;" value="0">'+lan.crontab.TZZ7+'</a></li>\
-					  </ul>\
-					</div>';
-	$("#ptime").html(mBody);
-	getselectname()
-}
-//指定1
-function toWhere1(ix){
-	var mBody ='<div class="plan_hms pull-left mr20 bt-input-text">\
-					<span><input type="number" name="where1" value="3" maxlength="2" max="31" min="0"></span>\
-					<span class="name">'+ix+'</span>\
-					</div>';
-	$("#ptime").append(mBody);
-}
-//小时
-function toHour(){
-	var mBody = '<div class="plan_hms pull-left mr20 bt-input-text">\
-					<span><input type="number" name="hour" value="1" maxlength="2" max="23" min="0"></span>\
-					<span class="name">'+lan.crontab.hour+'</span>\
-					</div>';
-	$("#ptime").append(mBody);
-}
-
-//分钟
-function toMinute(){
-	var mBody = '<div class="plan_hms pull-left mr20 bt-input-text">\
-					<span><input type="number" name="minute" value="30" maxlength="2" max="59" min="0"></span>\
-					<span class="name">'+lan.crontab.minute+'</span>\
-					</div>';
-	$("#ptime").append(mBody);
-	
-}
-
-//从文件
-function toFile(){
-	var tBody = '<input type="text" value="" name="file" id="viewfile" onclick="fileupload()" readonly="true">\
-				<button class="btn btn-default" onclick="fileupload()">'+lan.public.upload+'</button>';
-	$("#implement").html(tBody);
-	$(".planname input[name='name']").removeAttr('readonly style').val("");
-}
-
-//从脚本
-function toShell(){
-	var shell_body = '';
-	var shell_name = '';
-	if($("b[val='toShell']").text() === '同步时间'){
-		shell_name = '定期同步服务器时间';
-		shell_body = 'echo "|-正在尝试从0.pool.bt.cn同步时间..";\n\
-ntpdate -u 0.pool.bt.cn\n\
-if [ $? = 1 ];then\n\
-	echo "|-正在尝试从1.pool.bt.cn同步时间..";\n\
-	ntpdate -u 1.pool.bt.cn\n\
-fi\n\
-if [ $? = 1 ];then\n\
-	echo "|-正在尝试从0.asia.pool.ntp.org同步时间..";\n\
-	ntpdate -u 0.asia.pool.ntp.org\n\
-fi\n\
-if [ $? = 1 ];then\n\
-	echo "|-正在尝试从www.bt.cn同步时间..";\n\
-	getBtTime=$(curl -sS --connect-timeout 3 -m 60 http://www.bt.cn/api/index/get_time)\n\
-	if [ "${getBtTime}" ];then	\n\
-		date -s "$(date -d @$getBtTime +"%Y-%m-%d %H:%M:%S")"\n\
-	fi\n\
-fi\n\
-echo "|-正在尝试将当前系统时间写入硬件..";\n\
-hwclock -w\n\
-date\n\
-echo "|-时间同步完成!";'
-	}
-	var tBody = "<textarea class='txtsjs bt-input-text' name='sBody' style='margin: 0px; width: 445px; height: 90px;line-height: 16px;'>"+shell_body+"</textarea>";
-	$("#implement").html(tBody);
-	$(".planname input[name='name']").removeAttr('readonly style').val(shell_name);
-}
-
-function toPath() {
-
-}
-//木马查杀
-function webShell(){
-	var sOpt = '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="ALL">所有</a></li>',sOptBody = '';
-	$.post('/crontab?action=GetDataList&type=sites',function(rdata){
-		$(".planname input[name='name']").attr('readonly','true').css({"background-color":"#f6f6f6","color":"#666"});
-		$("#implement").siblings(".controls").html("查杀站点");
-		if(rdata.data.length == 0){
-			layer.msg(lan.public.list_empty,{icon:2});
-			$("#implement").html("<input type='text' class='bt-input-text' style='width:260px;background-color: rgb(246, 246, 246);height:34px'>");
-			return
-		}
-		for(var i=0;i<rdata.data.length;i++){
-			if(i==0){// 默认获取第一个值
-				$(".planname input[name='name']").val("木马查杀"+'['+rdata.data[i].name+']');
-			}
-			sOpt += '<li><a role="menuitem" tabindex="-1" href="javascript:;" value="'+rdata.data[i].name+'">'+rdata.data[i].name+'['+rdata.data[i].ps+']</a></li>';			
-		}	
-		sOptBody ='<div class="dropdown pull-left mr20">\
-				  <button class="btn btn-default dropdown-toggle" type="button" id="backdata" data-toggle="dropdown" style="width:auto">\
-					<b id="sName" val="'+rdata.data[0].name+'">'+rdata.data[0].name+'['+rdata.data[0].ps+']</b> <span class="caret"></span>\
-				  </button>\
-				  <ul class="dropdown-menu" role="menu" aria-labelledby="backdata">'+sOpt+'</ul>\
-				  <span class="planSign"><i>*</i>本次查杀由长亭牧云强力驱动</span>\
-                </div>'
-// 		setCookie('default_dir_path','/www/wwwroot/');
-// 		setCookie('path_dir_change','/www/wwwroot/');
-// 		setInterval(function(){
-// 			if(getCookie('path_dir_change') != getCookie('default_dir_path')){
-// 				var  path_dir_change = getCookie('path_dir_change')
-// 				$(".planname input").val('木马查杀['+getCookie('path_dir_change')+']');
-// 				setCookie('default_dir_path',path_dir_change);
-// 			}
-// 		},500);
-		sOptBody += '<p class="clearfix plan">\
-            <div class="textname pull-left mr20" style="margin-left: 63px; font-size: 14px;">消息通道</div>\
-            <div class="dropdown planBackupTo pull-left mr20 message_start"></div>\
-        </p>';
-		$("#implement").html(sOptBody);
-		message_channel_start();
-		getselectname();
-		$(".dropdown ul li a").click(function(){
-			var sName = $("#sName").attr("val");
-			if(!sName) return;
-			$(".planname input[name='name']").val("木马查杀"+'['+sName+']');
-		});	
-	})
-}
-function message_channel_start(){
-	$.post('/config?action=get_settings',function(res){
-		var wBody = "",s_mail = res.user_mail.user_name,s_ding =res.dingding.dingding
-		if(!s_mail && !s_ding){
-			$(".plan-submit").css({"pointer-events":"none","background-color":"#e6e6e6","color":"#333"});
-			return $(".message_start").html('<span style="color:red;">未设置消息通道，请前往面板设置添加消息通道配置<a href="https://www.bt.cn/bbs/thread-42312-1-1.html" target="_blank" class="bt-ico-ask" style="cursor: pointer;">?</a></span>');
-		}
-		if(s_mail){
-		    wBody = '<div class="check_alert" style="margin-right:20px;display: inline-block;">\
-				<input id="mail" type="radio" name="alert" title="邮箱" value="mail" '+(s_ding?'checked':(s_mail ?'checked':''))+'>\
-				<label for="mail" style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">邮箱</label>\
-			</div>'
-		}
-		if(s_ding){
-		    wBody += '<div class="check_alert" style="display: inline-block;">\
-				<input id="dingding" type="radio" name="alert" title="钉钉" value="dingding" '+(s_mail?'':'checked')+'>\
-				<label for="dingding" style="font-weight: normal;font-size: 14px;margin-left: 6px;display: inline;">钉钉</label>\
-			</div>'
-		}
-		$(".message_start").html(wBody);
-	})
-}
-//从url
-function toUrl(){
-	var tBody = "<input type='text' style='width:400px; height:34px' class='bt-input-text' name='urladdress_1' id='urladdress_1' placeholder='"+lan.crontab.url_address+"' value='http://' />";
-	$("#implement").html(tBody);
-	$(".planname input[name='name']").removeAttr('readonly style').val("");
-}
-
-//释放内存
-function rememory(){
-	$(".planname input[name='name']").removeAttr('readonly style').val("");
-	$(".planname input[name='name']").val(lan.crontab.mem);
-	$("#implement").html(lan.crontab.mem_ps);
-	return;
-}
-//上传
-function fileupload(){
-	$("#sFile").change(function(){
-		$("#viewfile").val($("#sFile").val());
-	});
-	$("#sFile").click();
-}
-
-// 计划任务2021/3/24新增任务通知新增
-function open_three_channel_auth(){
-	get_channel_settings(function(rdata){
-		var isOpen = rdata.dingding.info.msg.isAtAll == 'True' ? 'checked': '';
-		var isDing = rdata.dingding.info.msg == '无信息'? '': rdata.dingding.info.msg.dingding_url;
-		layer.open({
-			type: 1,
-	        area: "600px",
-	        title: "设置消息通道",
-	        closeBtn: 2,
-	        shift: 5,
-	        shadeClose: false,
-	        content: '<div class="bt-form">\
-	        			<div class="bt-w-main">\
-					        <div class="bt-w-menu">\
-					            <p class="bgw">邮箱</p>\
-					            <p>钉钉</p>\
-					        </div>\
-					        <div class="bt-w-con pd15">\
-					            <div class="plugin_body">\
-	                				<div class="conter_box active" >\
-	                					<div class="bt-form">\
-	                						<div class="line">\
-	                							<button class="btn btn-success btn-sm" onclick="add_receive_info()">添加收件者</button>\
-	                							<button class="btn btn-default btn-sm" onclick="sender_info_edit()">发送者设置</button>\
-	                						</div>\
-					                        <div class="line">\
-						                        <div class="divtable">\
-						                        	<table class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"><thead><tr><th>邮箱</th><th width="80px">操作</th></tr></thead></table>\
-						                        	<table class="table table-hover"><tbody id="receive_table"></tbody></table>\
-						                        </div>\
-					                        </div>\
-				                        </div>\
-	                				</div>\
-	                				<div class="conter_box" style="display:none">\
-		                				<div class="bt-form">\
-		                					<div class="line">\
+		}, {
+			type: 'link',
+			'class': 'mr5',
+			title: '设置消息通道',
+			event: function (formData, element, that) {
+				layer.open({
+					type: 1,
+					area: "600px",
+					title: "设置消息通道",
+					skin: 'layer-alarm-channel',
+					closeBtn: 2,
+					shift: 5,
+					shadeClose: false,
+					content: '<div class="bt-form">\
+							<div class="bt-w-main">\
+								<div class="bt-w-menu">\
+									<p class="bgw">邮箱</p>\
+									<p>钉钉</p>\
+								</div>\
+								<div class="bt-w-con pd15">\
+									<div class="conter_box active"><div class="email_alarm"></div></div>\
+									<div class="conter_box" style="display:none">\
+										<div class="bt-form">\
+											<div class="line">\
 												<span class="tname">通知全体</span>\
 												<div class="info-r" style="height:28px; margin-left:100px">\
-													<input class="btswitch btswitch-ios" id="panel_alert_all" type="checkbox" '+ isOpen+'>\
+													<input class="btswitch btswitch-ios" id="panel_alert_all" type="checkbox">\
 													<label style="position: relative;top: 5px;" class="btswitch-btn" for="panel_alert_all"></label>\
 												</div>\
 											</div>\
-						        			<div class="line">\
-					                            <span class="tname">钉钉URL</span>\
-					                            <div class="info-r">\
-					                                <textarea name="channel_dingding_value" class="bt-input-text mr5" type="text" style="width: 300px; height:90px; line-height:20px">'+isDing+'</textarea>\
-					                            </div>\
-					                            <button class="btn btn-success btn-sm" onclick="SetChannelDing()" style="margin: 10px 0 0 100px;">保存</button>\
-					                        </div>\
-				                        </div>\
-		            				</div>\
-	                			</div>\
-	                		</div>\
-                		</div>\
-                	  </div>'
-		})
-		$(".bt-w-menu p").click(function () {
-            var index = $(this).index();
-            $(this).addClass('bgw').siblings().removeClass('bgw');
-            $('.conter_box').eq(index).show().siblings().hide();
-        });
-		get_receive_list();
-	})
-}
-function add_receive_info(){
-	layer.open({
-		type: 1,
-        area: "400px",
-        title: "添加收件者邮箱",
-        closeBtn: 2,
-        shift: 5,
-        shadeClose: false,
-        content: '<div class="bt-form pd20 pb70">\
-	        <div class="line">\
-	            <span class="tname">收件人邮箱</span>\
-	            <div class="info-r">\
-	                <input name="creater_email_value" class="bt-input-text mr5" type="text" style="width: 240px" value="">\
-	            </div>\
-	        </div>\
-	        <div class="bt-form-submit-btn">\
-	            <button type="button" class="btn btn-danger btn-sm smtp_closeBtn">关闭</button>\
-	            <button class="btn btn-success btn-sm CreaterReceive">创建</button>\
-	        </div>\
-	        </div>',
-        success:function(layers,index){
-        	$(".CreaterReceive").click(function(){
-        		var _receive = $('input[name=creater_email_value]').val(),_that = this;
-				if(_receive != ''){
-					var loadT = layer.msg('正在创建收件人列表中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-					layer.close(index)
-					$.post('/config?action=add_mail_address',{email:_receive},function(rdata){
-						layer.close(loadT);
-						// 刷新收件列表
-						get_receive_list();
-						layer.msg(rdata.msg,{icon:rdata.status?1:2});
-					})
-				}else{
-					layer.msg('收件人邮箱不能为空！',{icon:2});
-				}
-        	})
-        	
-			$(".smtp_closeBtn").click(function(){
-				layer.close(index)
-			})
-		}
-	})
-}
+											<div class="line">\
+												<span class="tname">钉钉URL</span>\
+												<div class="info-r">\
+													<textarea name="channel_dingding_value" class="bt-input-text mr5" type="text" style="width: 300px; height:90px; line-height:20px" placeholder="请输入钉钉URL"></textarea>\
+												</div>\
+												<div class="dingding_btn">\
+													<button class="btn btn-success btn-sm save_channel_ding" style="margin: 10px 0 0 100px;">保存</button>\
+												</div>\
+											</div>\
+										</div>\
+										<ul class="help-info-text c7" style="margin-top: 170px;">\
+											<li style="list-style:inside disc">支持钉钉/企业微信\
+												<a class="btlink" href="https://www.bt.cn/bbs/thread-71298-1-1.html" target="_blank">《如何获取URL》</a>\
+											</li></ul>\
+									</div>\
+								</div>\
+							</div></div>',
+					success:function(){
+						$(".bt-w-menu p").click(function () {
+							var index = $(this).index();
+							$(this).addClass('bgw').siblings().removeClass('bgw');
+							$('.conter_box').eq(index).show().siblings().hide();
+						});
+						$('.save_channel_ding').click(function(){
+							var _url = $('textarea[name=channel_dingding_value]').val(),
+								_all = $('#panel_alert_all').prop("checked");
+							bt_tools.send({
+								url: '/config?action=set_dingding',
+								data: {url:_url,atall:_all == true? 'True':'False'}
+							}, function (res) {
+								if(res.status){
+									crontab.objectEmailOrDingding.renderChannelSelete(that)
+								}
+								bt.msg(res)
+							}, '生成钉钉通道');
+						})
 
-function sender_info_edit(){
-	var loadT = layer.msg('正在获取配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-	$.post('/config?action=get_settings',function(rdata){
-		layer.close(loadT);
-		var qq_mail = rdata.user_mail.info.msg.qq_mail == undefined ? '' : rdata.user_mail.info.msg.qq_mail,
-			qq_stmp_pwd = rdata.user_mail.info.msg.qq_stmp_pwd == undefined? '' : rdata.user_mail.info.msg.qq_stmp_pwd,
-			hosts = rdata.user_mail.info.msg.hosts == undefined? '' : rdata.user_mail.info.msg.hosts,
-			port = rdata.user_mail.info.msg.port == undefined? '' : rdata.user_mail.info.msg.port
-		layer.open({
-		type: 1,
-        area: "460px",
-        title: "设置发送者邮箱信息",
-        closeBtn: 2,
-        shift: 5,
-        shadeClose: false,
-        content: '<div class="bt-form pd20 pb70">\
-        	<div class="line">\
-                <span class="tname">发送人邮箱</span>\
-                <div class="info-r">\
-                    <input name="channel_email_value" class="bt-input-text mr5" type="text" style="width: 300px" value="'+qq_mail+'">\
-                </div>\
-            </div>\
-            <div class="line">\
-                <span class="tname">smtp密码</span>\
-                <div class="info-r">\
-                    <input name="channel_email_password" class="bt-input-text mr5" type="password" style="width: 300px" value="'+qq_stmp_pwd+'">\
-                </div>\
-            </div>\
-            <div class="line">\
-                <span class="tname">smtp服务器</span>\
-                <div class="info-r">\
-                    <input name="channel_email_server" class="bt-input-text mr5" type="text" style="width: 300px" value="'+hosts+'">\
-                </div>\
-            </div>\
-            <div class="line">\
-                <span class="tname">端口</span>\
-                <div class="info-r">\
-                    <select class="bt-input-text mr5" id="port_select" style="width:'+(select_port(port)?'300px':'100px')+'"></select>\
-                    <input name="channel_email_port" class="bt-input-text mr5" type="Number" style="display:'+(select_port(port)? 'none':'inline-block')+'; width: 190px" value="'+port+'">\
-                </div>\
-            </div>\
-            <ul class="help-info-text c7">\
-            	<li>推荐使用465端口，协议为SSL/TLS</li>\
-            	<li>25端口为SMTP协议，587端口为STARTTLS协议</li>\
-            </ul>\
-            <div class="bt-form-submit-btn">\
-	            <button type="button" class="btn btn-danger btn-sm smtp_closeBtn">关闭</button>\
-	            <button class="btn btn-success btn-sm SetChannelEmail">保存</button></div>\
-        	</div>',
-        success:function(layers,index){
-        	var _option = '';
-        	if(select_port(port)){
-        		if(port == '465' || port == ''){
-        			_option = '<option value="465" selected="selected">465</option><option value="25">25</option><option value="587">587</option><option value="other">自定义</option>'
-        		}else if(port == '25'){
-        			_option = '<option value="465">465</option><option value="25" selected="selected">25</option><option value="587">587</option><option value="other">自定义</option>'
-        		}else{
-        			_option = '<option value="465">465</option><option value="25">25</option><option value="587" selected="selected">587</option><option value="other">自定义</option>'
-        		}
-        	}else{
-        		_option = '<option value="465">465</option><option value="25">25</option><option value="587" >587</option><option value="other" selected="selected">自定义</option>'
-        	}
-        	console.log(port)
-        	$("#port_select").html(_option)
-        	$("#port_select").change(function(e){
-        		if(e.target.value == 'other'){
-        			$("#port_select").css("width","100px");
-					$('input[name=channel_email_port]').css("display","inline-block");
-        		}else{
-        			$("#port_select").css("width","300px");
-					$('input[name=channel_email_port]').css("display","none");
-        		}
-        	})
-			$(".SetChannelEmail").click(function(){
-				var _email = $('input[name=channel_email_value]').val();
-				var _passW = $('input[name=channel_email_password]').val();
-				var _server = $('input[name=channel_email_server]').val(),_port
-				if($('#port_select').val() == 'other'){
-					_port = $('input[name=channel_email_port]').val();
-				}else{
-					_port = $('#port_select').val()
-				}
-				if(_email == ''){
-					return layer.msg('邮箱地址不能为空！',{icon:2});
-				}else if(_passW == ''){
-					return layer.msg('STMP密码不能为空！',{icon:2});
-				}else if(_server == ''){
-					return layer.msg('STMP服务器地址不能为空！',{icon:2})
-				}else if(_port == ''){
-					return layer.msg('请输入有效的端口号',{icon:2})
-				}
-				var loadT = layer.msg('正在生成邮箱通道中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-				$.post('/config?action=user_mail_send',{email:_email,stmp_pwd:_passW,hosts:_server,port:_port},function(rdata){
-					layer.close(loadT);
-					layer.msg(rdata.msg,{icon:rdata.status?1:2})
-					if(rdata.status){
-						layer.close(index)
-						get_channel_settings();
+						crontab.objectEmailOrDingding.renderEmailList(that);
 					}
 				})
-			})
-			$(".smtp_closeBtn").click(function(){
-				layer.close(index)
-			})
-		}
-	})
-	})
-}
-
-function get_channel_settings(callback){
-	var loadT = layer.msg('正在获取配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-	$.post('/config?action=get_settings',function(rdata){
-		layer.close(loadT);
-        if (callback) callback(rdata);
-	})
-}
-
-function get_receive_list(){
-	$.post('/config?action=get_settings',function(rdata){
-		var _html = '',_list = rdata.user_mail.mail_list;
-		if(_list.length > 0){
-			for(var i= 0; i<_list.length;i++){
-				_html += '<tr>\
-					<td>'+ _list[i] +'</td>\
-					<td width="80px"><a onclick="del_email(\''+ _list[i] + '\')" href="javascript:;" style="color:#20a53a">删除</a></td>\
-					</tr>'
 			}
-		}else{
-			_html = '<tr>没有数据</tr>'
+		}]
+	}, {
+		label: '脚本内容',
+		group: {
+			type: 'textarea',
+			name: 'sBody',
+			style: {
+				'width': '500px',
+				'min-width':'500px',
+				'min-height': '130px',
+				'line-height': '22px',
+				'padding-top': '10px',
+				'resize': 'both',
+				'max-width': '600px',
+				'max-height': '160px'
+			},
+			placeholder: '请输入脚本内容'
 		}
-		$('#receive_table').html(_html);
-	})
-	
-}
+	}, {
+		label: 'URL地址',
+		display: false,
+		group: {
+			type: 'text',
+			width: '500px',
+			name: 'urladdress',
+			value: 'http://'
+		}
+	}, {
+		label: '提示',
+		display: false,
+		group: {
+			type: 'help',
+			name: 'webshellTips',
+			style: {'margin-top': '6px'},
+			list: ['释放PHP、MYSQL、PURE-FTPD、APACHE、NGINX的内存占用,建议在每天半夜执行!']
+		}
+	}, {
+		label: '',
+		group: {
+			type: 'button',
+			size: '',
+			name: 'submitForm',
+			title: '添加任务',
+			event: function (formData,element,that) {
+				formData['save_local'] = that.config.form[3].group[4].value;
+				that.submit(formData)
+			}
+		}
+	}],
+	/**
+	 * @description 计划任务类型解构调整
+	 * @param {}
+	 * @param {}
+	 * @param {}
+	 */
+	crontabsType:function (config,formData,that){
+		switch (formData.sType) {
+			case 'toShell':
+				break;
+			case 'database':
+				config[3].group[0].placeholder = '无数据库数据'
+				config[3].group[0].list.data.type = 'databases'
+				config[5].display = false
+			case 'logs':
+				if (formData.sType === 'logs') {
+					config[2].group[0].value = 'day'
+					config[2].group[1].display = false
+					config[3].group[2].display = false
+					config[3].group[3].value = 180
+				}
+			case 'path':
+				if (formData.sType === 'path') {
+					config[1].group.value = '备份目录[' + config[3].group[1].value + ']'
+					config[2].group[0].value = 'day'
+					config[2].group[1].display = false
+					config[3].group[0].display = false
+					config[3].group[1].display = true
+					config[3].group[2].disabled = false
+					config[3].group[2].list = {
+						url: '/crontab?action=GetDataList',
+						data: {type: 'sites'},
+						dataFilter: function (res) {
+							var arry = [{title: '服务器磁盘', value: 'localhost'}]
+							for (var i = 0; i < res.orderOpt.length; i++) {
+								var item = res.orderOpt[i]
+								arry.push({title: item.name, value: item.value})
+							}
+							crontab.backupList = res
+							return arry;
+						}
+					}
+				}
+			case 'webshell':
+				if (formData.sType === 'webshell') {
+					config[3].group[0].unit = '<span style="margin-top: 9px; display: inline-block;">*本次查杀由长亭牧云强力驱动</span>'
+					config[3].group[2].display = false
+					config[3].group[3].display = false
+					config[4].display = true
+					config[4].label = '消息通道'
+					config[4].group[0].display = false
+					delete config[4].group[1].label
+					config[4].group[1].display = true
+					config[5].display = false
+				}
+			case 'site':
+				config[3].label = crontab.typeTips[formData.sType]
+				if (formData.sType !== 'path') config[1].group.disabled = true // 禁用任务名称，不允许修改
+				config[3].display = true // 显示备份网站操作模块
+				if (formData.sType === 'database' || formData.sType === 'site' || formData.sType === 'path') config[4].display = true
+				config[5].label = '排除规则'
+				config[5].group.placeholder = '每行一条规则,目录不能以/结尾，示例：\ndata/config.php\nstatic/upload\n *.log\n'
+				break;
+			case 'syncTime':
+				config[1].group.value = '定期同步服务器时间'
+				config[5].group.value = 'echo "|-正在尝试从0.pool.bt.cn同步时间..";\n' +
+					'ntpdate -u 0.pool.bt.cn\n' +
+					'if [ $? = 1 ];then\n' +
+					'\techo "|-正在尝试从1.pool.bt.cn同步时间..";\n' +
+					'\tntpdate -u 1.pool.bt.cn\n' +
+					'fi\n' +
+					'if [ $? = 1 ];then\n' +
+					'\techo "|-正在尝试从0.asia.pool.ntp.org同步时间..";\n' +
+					'\tntpdate -u 0.asia.pool.ntp.org\n' +
+					'fi\n' +
+					'if [ $? = 1 ];then\n' +
+					'\techo "|-正在尝试从www.bt.cn同步时间..";\n' +
+					'\tgetBtTime=$(curl -sS --connect-timeout 3 -m 60 http://www.bt.cn/api/index/get_time)\n' +
+					'\tif [ "${getBtTime}" ];then\t\n' +
+					'\t\tdate -s "$(date -d @$getBtTime +"%Y-%m-%d %H:%M:%S")"\n' +
+					'\tfi\n' +
+					'fi\n' +
+					'echo "|-正在尝试将当前系统时间写入硬件..";\n' +
+					'hwclock -w\n' +
+					'date\n' +
+					'echo "|-时间同步完成!";'
+				break;
+			case 'rememory':
+				config[1].group.value = '释放内存'
+				config[5].display = false
+				config[7].display = true
+				break;
+			case 'toUrl':
+				config[5].display = false
+				config[6].display = true
+				break;
+		}
+		config[0].group.value = formData.sType
+		return config
+	},
 
-function del_email(mail){
-	var loadT = layer.msg('正在删除【'+mail+'】中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] }),_this = this;
-	$.post('/config?action=del_mail_list',{email:mail},function(rdata){
-		layer.close(loadT);
-		layer.msg(rdata.msg,{icon:rdata.status?1:2})
-		_this.get_receive_list()
-	})
-}
+	/**
+	 * @description 计划任务类型解构调整
+	 */
+	crontabType:function (config,formData){
+		var formConfig = config[2];
+		switch (formData.type) {
+			case 'day-n':
+			case 'month':
+			case 'day':
+				formConfig.group[1].display = false
+				$.extend(formConfig.group[2], {
+					display: formData.type !== 'day',
+					unit: formData.type === 'day-n' ? '天' : '日'
+				})
+				formConfig.group[3].display = true
+				break;
+			case 'hour-n':
+			case 'hour':
+			case 'minute-n':
+				formConfig.group[1].display = false
+				formConfig.group[2].display = false
+				formConfig.group[3].display = formData.type === 'hour-n'
+				formConfig.group[4].value = formData.type === 'minute-n' ? 3 : 30
+				break;
+			case 'week':
+				formConfig.group[1].display = true
+				formConfig.group[2].display = false
+				formConfig.group[3].display = true
+				formConfig.group[4].value = 30
+				break;
+		}
+		formConfig.group[0].value = formData.type
+		return config
+	},
+	/**
+	 * @description 添加计划任务表单
+	 */
+	addCrontabForm:function(){
+		var _that = this
+		return bt_tools.form({
+			el:'#crontabForm',
+			'class': 'crontab_form',
+			form: crontab.crontabFormConfig.concatObject(),
+			submit:function (formData){
+				var form = $.extend(true,{},_that.crontabForm)
+				$.extend(form, formData)
+				if (form.name === '') {
+					bt.msg({status: false, msg: '计划任务名称不能为空！'})
+					return false
+				}
+				if($('input[name=where1]').length > 0){
+					if($('input[name=where1]').val() > 31 || $('input[name=where1]').val() < 1 || $('input[name=where1]').val() == ''){
+						$('input[name=where1]').focus();
+						layer.msg('请输入正确的周期范围[1-31]',{icon:2});
+						return false;
+					}
+				}
+				if($('input[name=hour]').length > 0){
+					if($('input[name=hour]').val() > 23 || $('input[name=hour]').val() < 0 || $('input[name=hour]').val() == ''){
+						$('input[name=hour]').focus();
+						layer.msg('请输入正确的周期范围[0-23]',{icon:2});
+						return false;
+					}
+				}
+				if($('input[name=minute]').length > 0){
+					if($('input[name=minute]').val() > 59 || $('input[name=minute]').val() < 0 || $('input[name=minute]').val() == ''){
+						$('input[name=minute]').focus();
+						layer.msg('请输入正确的周期范围[0-59]',{icon:2});
+						return false;
+					}
+				}
 
-// 设置钉钉
-function SetChannelDing(){
-	var _url = $('textarea[name=channel_dingding_value]').val();
-	var _all = $('#panel_alert_all').prop("checked");
-	if(_url != ''){
-		var loadT = layer.msg('正在生成钉钉通道中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-		$.post('/config?action=set_dingding',{url:_url,atall:_all == true? 'True':'False'},function(rdata){
-			layer.close(loadT);
-			layer.msg(rdata.msg,{icon:rdata.status?1:2})
+				switch (form.sType) {
+					case 'syncTime':
+						if (form.sType === 'syncTime') form.sType = 'toShell'
+					case 'toShell':
+						if (form.sBody === '') {
+							bt.msg({status: false, msg: '脚本内容不能为空！'})
+							return false
+						}
+						break;
+					case 'path':
+						form.sName = form.path
+						delete form.path
+						if(form.sName === ''){
+							bt.msg({status: false, msg: '备份目录不能为空！'})
+							return false
+						}
+						break;
+					case 'toUrl':
+						if(!bt.check_url(form.urladdress)){
+							layer.msg(lan.crontab.input_url_err,{icon:2});
+							$('#crontabForm input[name=urladdress]').focus();
+							return false;
+						}
+						break;
+				}
+				bt_tools.send({
+					url: '/crontab?action=AddCrontab',
+					data: form
+				}, function (res) {
+					_that.addCrontabForm.data = {}
+					_that.addCrontabForm.$again_render_form(_that.crontabFormConfig)
+					_that.crontabTabel.$refresh_table_list(true)
+					bt_tools.msg(res)
+				}, '添加计划任务');
+			}
 		})
-	}else{
-		layer.msg('请输入钉钉url',{icon:2})
-	}
-}
+	},
+	/**
+	 * @description 获取计划任务存储列表
+	 * @param {function} callback 回调函数
+	 */
+	getDataList:function (callback){
+		bt_tools.send({
+			url: '/crontab?action=GetDataList',
+			data: {type: 'sites'}
+		}, function (res) {
+			var arry = [{title: '服务器磁盘', value: 'localhost'}];
+			for (var i = 0; i < res.orderOpt.length; i++) {
+				var item = res.orderOpt[i]
+				arry.push({title: item.name, value: item.value})
+			}
+			crontab.backupList = arry
+			if (callback) callback(res)
+		}, '获取存储配置');
+	},
+	/**
+	 * @description 删除计划任务
+	 * @param {object} param 参数对象
+	 * @param {function} callback 回调函数
+	 */
+	delCrontab:function (param,callback){
+		bt_tools.send({
+			url: '/crontab?action=DelCrontab',
+			data: {id: param.id}
+		}, function (res) {
+			bt.msg(res)
+			if(res.status && callback) callback(res)
+		}, '删除计划任务');
+	},
+	/**
+	 * @description 执行计划任务
+	 * @param {object} param 参数对象
+	 * @param {function} callback 回调函数
+	 */
+	startCrontabTask:function (param,callback){
+		bt_tools.send({
+			url: '/crontab?action=StartTask',
+			data: {id: param.id}
+		}, function (res) {
+			bt.msg(res)
+			if(res.status && callback) callback(res)
+		}, '执行计划任务');
+	},
+	/**
+	 * @description 获取计划任务执行日志
+	 * @param {object} param 参数对象
+	 * @param {function} callback 回调函数
+	 */
+	getCrontabLogs:function (param,callback){
+		bt_tools.send({
+			url: '/crontab?action=GetLogs',
+			data: {id: param.id}
+		}, function (res) {
+			if(res.status){
+				if (callback) callback(res)
+			}else{
+				bt.msg(res)
+			}
+		}, '获取执行日志');
+	},
+	/**
+	 * @description 获取计划任务执行日志
+	 * @param {object} param 参数对象
+	 * @param {function} callback 回调函数
+	 */
+	clearCrontabLogs:function (param,callback){
+		bt_tools.send({
+			url: '/crontab?action=DelLogs',
+			data: {id: param.id}
+		}, function (res) {
+			bt.msg(res)
+			if(res.status && callback) callback(res)
+		}, '清空执行日志');
+	},
+	/**
+	 * @description 获取计划任务执行状态
+	 * @param {object} param 参数对象
+	 * @param {function} callback 回调函数
+	 */
+	setCrontabStatus:function (param,callback){
+		bt_tools.send({
+			url: '/crontab?action=set_cron_status',
+			data: {id: param.id}
+		}, function (res) {
+			bt.msg(res)
+			if(res.status && callback) callback(res)
+		}, '设置任务状态');
+	},
+	/**
+	 * @description 计划任务表格
+	 */
+	crontabTabel:function(){
+		var _that = this
+		return bt_tools.table({
+			el: '#crontabTabel',
+			url: '/crontab?action=GetCrontab',
+			minWidth: '1000px',
+			autoHeight: true,
+			'default': "计划任务列表为空", //数据为空时的默认提示
+			height:300,
+			dataFilter: function (res) {
+				return {data: res};
+			},
+			column: [
+				{type: 'checkbox', 'class': '', width: 20},
+				{
+					fid: 'name',
+					title: "任务名称"
+				},
+				{
+					fid: 'status',
+					title: "状态",
+					width: 80,
+					config: {
+						icon: true,
+						list: [
+							[1, '正常', 'bt_success', 'glyphicon-play'],
+							[0, '停用', 'bt_danger', 'glyphicon-pause']
+						]
+					},
+					type: 'status',
+					event: function (row, index, ev, key, that) {
+						bt.confirm({
+							title:'设置计划任务状态',
+							msg:parseInt(row.status)?'计划任务暂停后将无法继续运行，您真的要停用这个计划任务吗？':'该计划任务已停用，是否要启用这个计划任务'
+						},function (){
+							_that.setCrontabStatus(row,function (){
+								that.$refresh_table_list(true)
+							})
+						})
+					}
+				},
+				{
+					fid: 'type',
+					title: "周期",
+					width: 120
+				}, {
+					fid: 'cycle',
+					title: "执行时机"
+				}, {
+					fid: 'save',
+					title: "保存数量",
+					template: function (row) {
+						return '<span>' + (row.save > 0 ? +row.save + '份' : '-') + '</span>'
+					}
+				}, {
+					fid: 'backupTo',
+					title: "备份到",
+					width: 120,
+					template: function (row, index) {
+						for (var i = 0; i < _that.backupList.length; i++) {
+							var item = _that.backupList[i]
+							if (item.value === row.backupTo) return '<span>' + item.title + '</span>'
+						}
+						return '<span>--</span>'
+					}
+				}, {
+					fid: 'addtime',
+					title: '上次执行时间',
+				},
+				{
+					title: "操作",
 
-function selSave_local() {
-	if($('#save_local').val() == '0') {
-		$('#save_local').val(1)
-		$('#save_local').prop('checked', true)	
-	} else {
-		$('#save_local').val(0)
-		$('#save_local').removeAttr('checked')
-	}
-}
-function modSelSave_local() {
-	if($('#modSave_local').val() == '0') {
-		$('#modSave_local').val(1)
-		$('#modSave_local').prop('checked', true)	
-	} else {
-		$('#modSave_local').val(0)
-		$('#modSave_local').removeAttr('checked')
-	}
-}
+					type: 'group',
+					align: 'right',
+					group: [{
+						title: '执行',
+						event: function (row, index, ev, key, that) {
+							_that.startCrontabTask(row,function (){
+								that.$refresh_table_list(true);
+							})
+						}
+					}, {
+						title: '编辑',
+						event: function (row, index, ev, key, that) {
+							layer.open({
+								type: 1,
+								title: '编辑计划任务-[' + row.name + ']',
+								area: '850px',
+								skin: 'layer-create-content',
+								shadeClose: false,
+								closeBtn: 2,
+								content: '<div class="ptb20" id="editCrontabForm" style="min-height: 400px"></div>',
+								success: function (layers,indexs) {
+									bt_tools.send({
+										url: '/crontab?action=get_crond_find',
+										data: {id:row.id}
+									}, function (rdata) {
+										var formConfig = crontab.crontabFormConfig.concatObject(),
+											form = $.extend(true,{},_that.crontabForm),
+											cycle = {};
+										for (var keys in form) {
+											if (form.hasOwnProperty.call(form, keys)) {
+												form[keys] = typeof rdata[keys] === "undefined"?'':rdata[keys]
+											}
+										}
+										// console.log(rdata.type,rdata,form,formConfig);
+										switch(rdata.type){
+											case 'day':
+												cycle = {where1:'',hour:rdata.where_hour,minute:rdata.where_minute}
+												break;
+											case 'day-n':
+												cycle = {where1:rdata.where1,hour:rdata.where_hour,minute:rdata.where_minute}
+												break;
+											case 'hour':
+												cycle = {where1:rdata.where1,hour:rdata.where_hour,minute:rdata.where_minute}
+												break;
+											case 'hour-n':
+												cycle = {where1:'',hour:rdata.where1,minute:rdata.where_minute}
+												break;
+											case 'minute-n':
+												cycle = {where1:'',hour:'',minute:rdata.where_minute}
+												break;
+											case 'week':
+												formConfig[2].group[1].value = rdata.where1
+												cycle = {where1:'',week:rdata.where1,hour:rdata.where_hour,minute:rdata.where_minute}
+												break;
+											case 'month':
+												cycle = {where1:rdata.where1,where:'',hour:rdata.where_hour,minute:rdata.where_minute}
+												break;
+										}
+										formConfig[3].group[2].value = rdata.backupTo;
+										formConfig[3].group[4].display = rdata.backupTo != 'localhost';
+										formConfig[3].group[4].value = rdata.save_local;
+										formConfig[4].group[0].value = rdata.notice;
+										formConfig[4].group[1].display = !!rdata.notice;
+										if(formConfig[4].group[1].display){
+											bt_tools.send({
+												url: '/config?action=get_settings'
+											},function(res){
+												var select = _that.objectEmailOrDingding.getChannelSwitch(res,rdata.sType),first = '';
+												select = $.extend(true,{},formConfig[4].group[1],{display:true,label:'',disabled:false,list:select})
+												formConfig[4].group[1] = select;
+												if(select.length >0 ) first = select[0].value
+												formConfig[4].group[1].value = rdata.notice_channel === ''?first:rdata.notice_channel;
+											})
+										}
+										$.extend(form,cycle,{id:rdata.id})
 
-//下拉菜单名称
-function getselectnoticename(){
-	$(".dropdown ul li a").click(function(){
-		var txt = $(this).text();
-		var type = $(this).attr("value");
-		$(this).parents(".dropdown").find("button b").text(txt).attr("val",type);
-		if($("#modNotice").find("button b").attr("val") == '0') {
-			$('#modNotice').nextAll().hide()
-			$('#selmodnoticeBox').show()
-		} else {
-			$('#modNotice').nextAll().show()
+										crontab.crontabType(formConfig,form)
+										crontab.crontabsType(formConfig,form)
+										switch (rdata.sType){
+											case 'path':
+												form.path = rdata.sName
+												break
+										}
+										formConfig[0].group.disabled = true
+										formConfig[1].group.disabled = false
+										formConfig[3].group[0].disabled = true
+										formConfig[8].group.title = '保存编辑'
+										form.name = form.name.replace(/\[(.*)]/,'[ '+ form.sName +' ]')
+										delete formConfig[0].group.unit
+										bt_tools.form({
+											el: '#editCrontabForm',
+											'class': 'crontab_form',
+											form: formConfig,
+											data:form,
+											submit: function (formData) {
+												var submitForm = $.extend(true,{},_that.crontabForm,formData,{id:rdata.id,sType:rdata.sType})
+												if (submitForm.name === '') {
+													bt.msg({status: false, msg: '计划任务名称不能为空！'})
+													return false
+												}
+												switch (submitForm.sType) {
+													case 'syncTime':
+														if (submitForm.sType === 'syncTime') submitForm.sType = 'toShell'
+													case 'toShell':
+														if (submitForm.sBody === '') {
+															bt.msg({status: false, msg: '脚本内容不能为空！'})
+															return false
+														}
+														break;
+													case 'path':
+														submitForm.sName = submitForm.path
+														delete submitForm.path
+														if(submitForm.sName === ''){
+															bt.msg({status: false, msg: '备份目录不能为空！'})
+															return false
+														}
+														break;
+													case 'toUrl':
+														if(!bt.check_url(submitForm.urladdress)){
+															layer.msg(lan.crontab.input_url_err,{icon:2});
+															$('#editCrontabForm input[name=urladdress]').focus();
+															return false;
+														}
+														break;
+												}
+												switch (submitForm.type){
+													case 'hour-n':
+														submitForm.where1 = submitForm.hour
+														submitForm.hour = ''
+														break;
+													case 'minute-n':
+														submitForm.where1 = submitForm.minute
+														submitForm.minute = ''
+														break;
+												}
+
+												bt_tools.send({
+													url: '/crontab?action=modify_crond',
+													data: submitForm
+												}, function (res) {
+													bt_tools.msg(res)
+													layer.close(indexs)
+													_that.crontabTabel.$refresh_table_list(true);
+												}, '编辑计划任务')
+											}
+										})
+									}, '获取计划配置信息')
+								}
+							})
+						}
+					}, {
+						title: '日志',
+						event: function (row, index, ev, key, that) {
+							_that.getCrontabLogs(row,function(rdata){
+								layer.open({
+									type:1,
+									title:lan.crontab.task_log_title,
+									area: ['700px','490px'],
+									shadeClose:false,
+									closeBtn:2,
+									content:'<div class="setchmod bt-form  pb70">\
+											<pre class="crontab-log" style="overflow: auto; border: 0 none; line-height:23px;padding: 15px; margin: 0;white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0;"></pre>\
+												<div class="bt-form-submit-btn" style="margin-top: 0">\
+												<button type="button" class="btn btn-danger btn-sm btn-title" id="clearLogs" style="margin-right:15px;">'+ lan['public']['empty'] +'</button>\
+												<button type="button" class="btn btn-success btn-sm btn-title" onclick="layer.closeAll()">'+ lan['public']['close'] +'</button>\
+											</div>\
+										</div>',
+									success:function(){
+										var log_body = rdata.msg === '' ? '当前日志为空':rdata.msg,setchmod = $(".setchmod pre"),crontab_log = $('.crontab-log')[0]
+										setchmod.text(log_body);
+										crontab_log.scrollTop = crontab_log.scrollHeight;
+										$('#clearLogs').on('click',function (){
+											_that.clearCrontabLogs(row,function(){
+												setchmod.text('')
+											})
+										})
+									}
+								})
+							})
+						}
+					}, {
+						title: '删除',
+						event: function (row, index, ev, key, that) {
+							bt.confirm({
+								title:'删除计划任务',
+								msg:'您确定要删除计划任务【'+ row.name +'】，是否继续？'
+							},function (){
+								_that.delCrontab(row,function(){
+									that.$refresh_table_list(true);
+								})
+							})
+						}
+					}]
+				}
+			],
+			// 渲染完成
+			tootls: [{ // 批量操作
+				type: 'batch', //batch_btn
+				positon: ['left', 'bottom'],
+				placeholder: '请选择批量操作',
+				buttonValue: '批量操作',
+				disabledSelectValue: '请选择需要批量操作的计划任务!',
+				selectList: [{
+					title: "执行任务",
+					url: '/crontab?action=StartTask',
+					load: true,
+					param: function (row) {
+						return {id: row.id}
+					},
+					callback: function (that) { // 手动执行,data参数包含所有选中的站点
+						bt.confirm({
+							title:'批量执行任务',
+							msg:'您确定要批量执行选中的计划任务吗，是否继续？'
+						},function (){
+							var param = {};
+							that.start_batch(param, function (list) {
+								var html = '';
+								for (var i = 0; i < list.length; i++) {
+									var item = list[i];
+									html += '<tr><td>' + item.name + '</td><td><div style="float:right;"><span style="color:' + (item.request.status ? '#20a53a' : 'red') + '">' + item.request.msg + '</span></div></td></tr>';
+								}
+								_that.crontabTabel.$batch_success_table({
+									title: '批量执行',
+									th: '任务名称',
+									html: html
+								});
+								_that.crontabTabel.$refresh_table_list(true);
+							});
+						})
+					}
+				}, {
+					title: "删除任务",
+					url: '/crontab?action=DelCrontab',
+					load: true,
+					param: function (row) {
+						return {id: row.id}
+					},
+					callback: function (that) { // 手动执行,data参数包含所有选中的站点
+						bt.show_confirm("批量删除计划任务", "<span style='color:red'>同时删除选中的计划任务，是否继续？</span>", function () {
+							var param = {};
+							that.start_batch(param, function (list) {
+								var html = '';
+								for (var i = 0; i < list.length; i++) {
+									var item = list[i];
+									html += '<tr><td>' + item.name + '</td><td><div style="float:right;"><span style="color:' + (item.request.status ? '#20a53a' : 'red') + '">' + item.request.msg + '</span></div></td></tr>';
+								}
+								_that.crontabTabel.$batch_success_table({
+									title: '批量删除',
+									th: '任务名称',
+									html: html
+								});
+								_that.crontabTabel.$refresh_table_list(true);
+							});
+						});
+					}
+				}],
+			}]
+		})
+	},
+	/**
+	 * @descripttion 邮箱钉钉方法集合
+	 */
+	objectEmailOrDingding:{
+		//渲染邮箱列表
+		renderEmailList:function(configs){
+			var channel_table = bt_tools.table({
+				el: ".email_alarm",
+				load: true,
+				url: "/config?action=get_settings",
+				'default': "收件者列表为空", //数据为空时的默认提示
+				height: "275",
+				dataFilter: function(res,that) {
+					that.EmailObj = res;
+					var dingALL = res.dingding.info.msg['isAtAll'] == 'True' ? true:false,
+						dingURL = res.dingding.info.msg == '无信息'? '': res.dingding.info.msg.dingding_url,
+						arryD = [];
+					$('#panel_alert_all').attr('checked',dingALL);
+					$('textarea[name=channel_dingding_value]').val(dingURL);
+					if(res.dingding.dingding){
+						$('.delding').remove();
+						var _Bremove = $('<button class="btn btn-default btn-sm delding">清除设置</button>').click(function(){
+							bt_tools.send({
+								url: '/config?action=set_empty',
+								data: {type:'dingding'}
+							}, function (res) {
+								if(res.status){
+									channel_table.$refresh_table_list(true);
+								}
+								bt.msg(res)
+							}, '清除设置');
+						})
+						$('.dingding_btn').append(_Bremove)
+					}
+					$.each(res.user_mail.mail_list,function(index,item){
+						arryD.push({title:'mail',value:item})
+					})
+					return {
+						data: arryD
+					};
+				},
+				column: [{
+					title: "收件者邮箱",
+					fid:'value',
+					width: 300
+				},{
+					title: "操作",
+					type: "group",
+					align: 'right',
+					width: 70,
+					group: [{
+						title: "删除",
+						event: function(row, index, ev, key, that) {
+							bt_tools.send({
+								url: '/config?action=del_mail_list',
+								data: {email:row.value}
+							}, function (res) {
+								if(res.status){
+									channel_table.$refresh_table_list(true);
+								}
+								bt.msg(res)
+							}, '删除收件者【'+row+'】');
+						}
+					}]
+				}],
+				tootls: [{
+					type: "group",
+					positon: ["left", "top"],
+					list: [{
+						title: "添加收件者",
+						active: true,
+						event: function(ev,that) {
+							bt_tools.open({
+								type:1,
+								title:'添加收件者邮箱',
+								area: '400px',
+								btn: ['创建', '关闭'],
+								content:{
+									'class': "pd20",
+									form:[{
+										label:"收件者邮箱",
+										group: [{
+											name:"email",
+											type:"text",
+											value:'',
+											width:"240px"
+										}]
+									}]
+								},
+								yes:function(formD,indexs,layers){
+									if (formD.email === '') {
+										bt_tools.msg('邮箱地址不能为空!', 2);
+										return false;
+									}
+									bt_tools.send({
+										url: '/config?action=add_mail_address',
+										data: formD
+									}, function (res) {
+										if(res.status){
+											layer.close(indexs);
+											channel_table.$refresh_table_list(true);
+										}
+										bt.msg(res)
+									}, '创建收件人列表');
+								}
+							})
+						}
+					},{
+						title: "发送者设置",
+						event: function(ev,that) {
+							var EmailInfo = that.EmailObj.user_mail.info.msg,
+								E_EMAIL = EmailInfo.qq_mail == undefined?'':EmailInfo.qq_mail,
+								E_STMP_PW = EmailInfo.qq_stmp_pwd == undefined?'':EmailInfo.qq_stmp_pwd,
+								E_HOSTS = EmailInfo.hosts == undefined?'':EmailInfo.hosts,
+								E_PORT = EmailInfo.port == undefined?'':EmailInfo.port;
+							if(E_PORT == '') E_PORT = 465
+							var isOtherPort = $.inArray(parseInt(E_PORT),[25,465,587]) >= 0,_btn = ['保存', '关闭']
+							if(that.EmailObj.user_mail.user_name)_btn = ['保存', '关闭', '清除设置']
+							bt_tools.open({
+								type:1,
+								title:'设置发送者邮箱信息',
+								area: ['470px','410px'],
+								skin:'channel_config_view',
+								btn: _btn,
+								content: {
+									'class': "pd20",
+									form:[{
+										label: "发送人邮箱",
+										group: [{
+											name:"email",
+											type:"text",
+											value:E_EMAIL,
+											width:"300px"
+										}]
+									},{
+										label: "SMTP密码",
+										group: [{
+											name:"stmp_pwd",
+											type:"password",
+											value:E_STMP_PW,
+											width:"300px"
+										}]
+									},{
+										label: "SMTP服务器",
+										group: [{
+											name:"hosts",
+											type:"text",
+											value:E_HOSTS,
+											width:"300px"
+										}]
+									},{
+										label: "端口",
+										'class': "port_selected",
+										group: [{
+											type: "select",
+											name: "port",
+											width:isOtherPort?"300px":"100px",
+											value:isOtherPort?parseInt(E_PORT):"diy",
+											style:isOtherPort?{}:{'margin-top':'-7px'},
+											list:[
+												{ value:25, title:25 },
+												{ value:465, title:465 },
+												{ value:578, title:578 },
+												{ value:"diy", title:"自定义" }
+											],
+											change:function(value, form, that, config, ev){
+												var isDIY = value.port === 'diy'? true: false;
+												that.config.form[3].group[0].width = isDIY?'100px':'300px';
+												that.config.form[3].group[0].style = isDIY?{'margin-top':'-7px'}:{};
+												that.config.form[3].group[1].hide = isDIY?false:true;
+												config.value = value.port === 'diy'?'diy':parseInt(value.port);
+												that.$replace_render_content(config.find_index)
+											}
+										},{
+											name:"port_diy",
+											hide: isOtherPort?true:false,
+											type:"text",
+											value:E_PORT,
+											width:"190px"
+										}]
+									},{
+										group:{
+											type:"help",
+											style:{'margin-top':'35px'},
+											list:[
+												"推荐使用465端口，协议为SSL/TLS",
+												"25端口为SMTP协议，587端口为STARTTLS协议"
+											]
+										}
+									}]
+								},
+								yes:function(formD,indexs,layers){
+									if (formD.email === '') {
+										bt_tools.msg('邮箱地址不能为空!', 2);
+										return false;
+									}
+									if (formD.stmp_pwd === '') {
+										bt_tools.msg('SMTP密码不能为空!', 2);
+										return false;
+									}
+									if (formD.hosts === '') {
+										bt_tools.msg('SMTP服务器地址不能为空!', 2);
+										return false;
+									}
+									if(formD.port === 'diy'){
+										if(formD.port_diy === ''){
+											bt_tools.msg('请输入有效的端口!', 2);
+											return false;
+										}
+										formD.port = formD.port_diy
+									}
+									delete formD.port_diy
+									bt_tools.send({
+										url: '/config?action=user_mail_send',
+										data: formD
+									}, function (res) {
+										if(res.status){
+											layer.close(indexs);
+											crontab.objectEmailOrDingding.renderChannelSelete(configs);
+											channel_table.$refresh_table_list(true);
+										}
+										bt.msg(res)
+									}, '生成邮箱通道');
+								},
+								btn3:function(index, layero){
+									bt_tools.send({
+										url: '/config?action=set_empty',
+										data: {type:'mail'}
+									}, function (res) {
+										if(res.status){
+											channel_table.$refresh_table_list(true);
+										}
+										bt.msg(res)
+									}, '清除设置');
+								}
+							})
+						}
+					}]
+				}]
+			})
+		},
+		//渲染消息通道下拉
+		renderChannelSelete:function(that){
+			var _this = this;
+			bt_tools.send({
+				url: '/config?action=get_settings'
+			},function(sett){
+				var select = _this.getChannelSwitch(sett,that.config.form[0].group.value);
+				select = $.extend(true,{},that.config.form[4].group[1],{display:true,label:'',disabled:false,list:select})
+				that.config.form[8].group.disabled = false
+				that.$local_refresh("notice_channel",select)
+				that.$local_refresh('submitForm', that.config.form[8].group)
+			})
+		},
+		//获取通道状态
+		getChannelSwitch:function(data,type) {
+			var config = {dingding: '钉钉', user_mail: '邮箱'}, arry = [{title: '全部通道', value: ''}], info = [];
+			console.log(data,type)
+			for (var resKey in data) {
+				if (data.hasOwnProperty(resKey)) {
+					var value = resKey === 'user_mail' ? 'mail' : resKey, item = data[resKey]
+					if (!item['dingding'] && !item['user_name']) continue
+					info.push(value)
+					arry.push({title: config[resKey], value: value})
+				}
+			}
+			arry[0].value = info.join(',');
+			if (type === 'webshell') arry.shift();
+			if (arry.length === (type === 'webshell' ? 0 : 1)) return []
+			console.log(arry)
+			return arry
 		}
-		if($("#notice").find("button b").attr("val") == '0') {
-			$('#messageChannelBox').hide()
-			$('#notice_channel').hide()
-		}else {
-			$('#messageChannelBox').show()
-			$('#notice_channel').show()
+	},
+	/**
+	 * @description 初始化
+	 */
+	init:function (){
+		var that = this;
+		this.addCrontabForm = this.addCrontabForm()
+		this.getDataList(function (){
+			that.crontabTabel = that.crontabTabel()
+		})
+		function resizeTable(){
+			var height = window.innerHeight - 690,table = $('#crontabTabel .divtable');
+			table.css({maxHeight: height < 400?'400px':(height + 'px')})
 		}
-	});
-	$("#saveAddServerDiskToLocal ul li a").click(function(){
-		var txt = $(this).text();
-		if(txt == '服务器磁盘') {
-			$('#selnoticeBox').hide()
-		} else {
-			$('#selnoticeBox').show()
-		}
-	});
-}
-
-function select_port(port){
-	switch(port){
-		case '25':
-			return true;
-		case '465':
-			return true;
-		case '587':
-			return true;
-		case '':
-			return true;
-		default:
-			return false
+		$(window).on('resize',resizeTable)
+		setTimeout(function(){
+			resizeTable()
+		},500)
 	}
 }
-
-// --计划任务2021/4/21新增任务通知新增结束

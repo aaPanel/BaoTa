@@ -210,6 +210,30 @@ def notfound(e):
     }
     return Response(errorStr, status=404, headers=headers)
 
+
+# Flask 500页面勾子
+@app.errorhandler(500)
+def notfound(e):
+    ss = '''404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+During handling of the above exception, another exception occurred:'''
+    error_info = public.get_error_info().strip().split(ss)[-1].strip()
+    request_info = '''REQUEST_DATE: {request_date}
+ REMOTE_ADDR: {remote_addr}
+ REQUEST_URI: {method} {full_path}
+REQUEST_FORM: {request_form}
+  USER_AGENT: {user_agent}'''.format(
+    request_date = public.getDate(),
+    remote_addr = public.GetClientIp(),
+    method = request.method,
+    full_path = request.full_path,
+    request_form = request.form.to_dict(),
+    user_agent = request.headers.get('User-Agent')
+)
+
+    result = public.readFile('/www/server/panel/BTPanel/templates/default/panel_error.html').format(error_title=error_info.split("\n")[-1],request_info = request_info,error_msg=error_info)
+    return Resp(result,500)
+
 # ===================================Flask HOOK========================#
 
 
@@ -765,7 +789,7 @@ def config(pdata=None):
     'getFpmConfig', 'setFpmConfig', 'setPHPMaxTime', 'syncDate', 'setPHPDisable', 'SetControl',
     'ClosePanel', 'AutoUpdatePanel', 'SetPanelLock', 'return_mail_list', 'del_mail_list', 'add_mail_address',
     'user_mail_send', 'get_user_mail', 'set_dingding', 'get_dingding', 'get_settings', 'user_stmp_mail_send',
-    'user_dingding_send','get_login_send','set_login_send','clear_login_send','get_login_log','login_ipwhite'
+    'user_dingding_send','get_login_send','set_login_send','set_empty','clear_login_send','get_login_log','login_ipwhite'
     )
     return publicObject(config.config(), defs, None, pdata)
 
@@ -874,8 +898,8 @@ def plugin(pdata=None):
     defs = (
     'set_score', 'get_score', 'update_zip', 'input_zip', 'export_zip', 'add_index', 'remove_index', 'sort_index',
     'install_plugin', 'uninstall_plugin', 'get_soft_find', 'get_index_list', 'get_soft_list', 'get_cloud_list',
-    'check_deps', 'flush_cache', 'GetCloudWarning', 'install', 'unInstall', 'getPluginList', 'getPluginInfo',
-    'get_make_args', 'add_make_args',
+    'check_deps', 'flush_cache', 'GetCloudWarning', 'install', 'unInstall', 'getPluginList', 'getPluginInfo','repair_plugin','upgrade_plugin',
+    'get_make_args', 'add_make_args','input_package','export_zip','get_download_speed','get_usually_plugin','get_plugin_upgrades','close_install',
     'getPluginStatus', 'setPluginStatus', 'a', 'getCloudPlugin', 'getConfigHtml', 'savePluginSort', 'del_make_args',
     'set_make_args')
     return publicObject(pluginObject, defs, None, pdata)
@@ -1324,6 +1348,7 @@ def send_favicon():
 @app.route('/service_status', methods=method_get)
 def service_status():
     # 检查面板当前状态
+    return str(sys.modules)
     try:
         if not 'login' in session: session.clear()
     except:
@@ -1386,38 +1411,48 @@ def panel_other(name=None, fun=None, stype=None):
 
     # 初始化插件对象
     try:
-        is_php = os.path.exists(p_path + '/index.php')
-        if not is_php:
-            public.package_path_append(p_path)
-            plugin_main = __import__(name + '_main')
-            try:
-                if sys.version_info[0] == 2:
-                    reload(plugin_main)
-                else:
-                    from imp import reload
-                    reload(plugin_main)
-            except:
-                pass
-            plu = eval('plugin_main.' + name + '_main()')
-            if not hasattr(plu, fun):
-                if name == 'btwaf' and fun == 'index':
-                    return  render_template('error3.html',data={}) 
-                return public.returnJson(False, 'PLUGIN_NOT_FUN'), json_header
+        # is_php = os.path.exists(p_path + '/index.php')
+        # if not is_php:
+        #     public.package_path_append(p_path)
+        #     plugin_main = __import__(name + '_main')
+        #     try:
+        #         if sys.version_info[0] == 2:
+        #             reload(plugin_main)
+        #         else:
+        #             from imp import reload
+        #             reload(plugin_main)
+        #     except:
+        #         pass
+        #     plu = eval('plugin_main.' + name + '_main()')
+        #     if not hasattr(plu, fun):
+        #         if name == 'btwaf' and fun == 'index':
+        #             return  render_template('error3.html',data={}) 
+        #         return public.returnJson(False, 'PLUGIN_NOT_FUN'), json_header
 
-        # 执行插件方法
-        if not is_php:
-            if is_accept:
-                checks = plu._check(args)
-                if type(checks) != bool or not checks:
-                    return public.getJson(checks), json_header
-            data = eval('plu.' + fun + '(args)')
-        else:
-            comReturn = comm.local()
-            if comReturn: return comReturn
-            import panelPHP
+        # # 执行插件方法
+        # if not is_php:
+        #     if is_accept:
+        #         checks = plu._check(args)
+        #         if type(checks) != bool or not checks:
+        #             return public.getJson(checks), json_header
+        #     data = eval('plu.' + fun + '(args)')
+        # else:
+        #     comReturn = comm.local()
+        #     if comReturn: return comReturn
+        #     import panelPHP
+        #     args.s = fun
+        #     args.name = name
+        #     data = panelPHP.panelPHP(name).exec_php_script(args)
+
+        from pluginAuth import Plugin
+        try:
             args.s = fun
             args.name = name
-            data = panelPHP.panelPHP(name).exec_php_script(args)
+            p = Plugin(name)
+            if not p.isdef(fun): return public.returnMsg(False,'PLUGIN_INPUT_C',(fun,))
+            data =  p.exec_fun(args)
+        except:
+            return public.get_error_object(None,plugin_name=name)
 
         r_type = type(data)
         if r_type == Response:
@@ -1592,30 +1627,15 @@ class run_exec:
     # 模块访问对像
     def run(self, toObject, defs, get):
         result = None
-        for key in defs:
-            if key == get.action:
-                fun = 'toObject.' + key + '(get)'
-                if hasattr(get, 'html') or hasattr(get, 's_module'):
-                    result = eval(fun)
-                else:
-                    result = eval(fun)
-                    r_type = type(result)
-                    if r_type == Resp: return result
-                    result = public.GetJson(result), json_header
-                break
+        if not get.action in defs:  return public.ReturnJson(False, 'ARGS_ERR'), json_header
+        result = getattr(toObject,get.action)(get)
+        if not hasattr(get, 'html') and  not hasattr(get, 's_module'):
+            r_type = type(result)
+            if r_type == Resp: return result
+            result = public.GetJson(result), json_header
 
-        if not result:
-            result = public.ReturnJson(False, 'ARGS_ERR'), json_header
         if g.is_aes:
             result = public.aes_encrypt(result[0], g.aes_key), json_header
-        else:
-            # if os.path.exists('pyenv/bin/python') and sys.version_info[0] == 3:
-            #     if not os.path.exists('data/debug.pl'):
-            #         x_token = request.headers.get('x-http-token')
-            #         if x_token:
-            #             aes_pwd = x_token[:8] + x_token[40:48]
-            #             result = "BT-CRT"+public.aes_encrypt(result[0],aes_pwd),{'Content-Type':'text/plain; charset=utf-8'}
-            pass
         return result
 
 
@@ -1829,17 +1849,9 @@ def get_input():
     for key in request.args.keys():
         data[key] = str(request.args.get(key, ''))
     try:
-        # x_token = request.headers.get('x-http-token')
-        # if x_token:
-        #     aes_pwd = x_token[:8] + x_token[40:48]
-
         for key in request.form.keys():
             if key in exludes: continue
             data[key] = str(request.form.get(key, ''))
-            # if x_token:
-            #     if len(data[key]) > 5:
-            #         if data[key][:6] == 'BT-CRT':
-            #             data[key] = public.aes_decrypt(data[key][6:],aes_pwd)
     except:
         try:
             post = request.form.to_dict()

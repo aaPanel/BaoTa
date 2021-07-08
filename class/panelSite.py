@@ -3642,7 +3642,11 @@ RewriteRule ^%s(.*)$ http://%s/$1 [P,E=Proxy-Host:%s]
                     ng_conf = re.sub("location\s+\~\*\s+\\\.\(gif.*\n\{\s*proxy_pass\s+%s.*" % (php_pass_proxy),
                                      "location ~* \.(gif|png|jpg|css|js|woff|woff2)$\n{\n\tproxy_pass %s;" % php_pass_proxy,ng_conf)
 
-                    ng_conf = re.sub("\sHost\s+%s" % '\\' + conf[i]["todomain"]," Host "+get.todomain,ng_conf)
+                    backslash = ""
+                    if "Host $host" in ng_conf:
+                        backslash = "\\"
+
+                    ng_conf = re.sub("\sHost\s+%s" % backslash + conf[i]["todomain"], " Host " + get.todomain, ng_conf)
                     cache_rep = r"proxy_cache_valid\s+200\s+304\s+301\s+302\s+\d+m;((\n|.)+expires\s+\d+m;)*"
                     if int(get.cache) == 1:
                         if re.search(cache_rep,ng_conf):

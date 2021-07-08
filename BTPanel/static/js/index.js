@@ -748,7 +748,7 @@ var index = {
                 var loading = bt.open({
                     type: 1,
                     title: '[Linux' + (rdata.msg.is_beta == 1 ? '测试版' : '正式版') + ']-更新版本',
-                    area: '520px',
+                    area: '580px',
                     shadeClose: false,
                     skin: 'layui-layer-dialog',
                     closeBtn: 2,
@@ -791,7 +791,7 @@ var index = {
                 var loading = bt.open({
                     type: 1,
                     title: '[Linux' + (is_beta === 1 ? '测试版' : '正式版') + ']-版本更新',
-                    area: '520px',
+                    area: '580px',
                     shadeClose: false,
                     skin: 'layui-layer-dialog',
                     closeBtn: 2,

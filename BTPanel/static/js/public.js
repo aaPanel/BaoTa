@@ -1652,7 +1652,7 @@ var aceEditor = {
 	saveAceConfig:function(data,callback){
 		var loadT = layer.msg('正在设置配置文件，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']}),_this = this;
 		this.saveFileBody({
-			path:'/www/server/panel/BTPanel/static/ace/ace.editor.config.json',
+			path:'/www/server/panel/BTPanel/static/editor/ace.editor.config.json',
 			data:JSON.stringify(data),
 			encoding:'utf-8',
 			tips:true,
@@ -1665,7 +1665,7 @@ var aceEditor = {
 	// 获取配置文件
 	getAceConfig:function(callback){
 		var loadT = layer.msg('正在获取配置文件，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']}),_this = this;
-		this.getFileBody({path:'/www/server/panel/BTPanel/static/ace/ace.editor.config.json'},function(rdata){
+		this.getFileBody({path:'/www/server/panel/BTPanel/static/editor/ace.editor.config.json'},function(rdata){
 			layer.close(loadT);
 			_this.setStorage('aceConfig',JSON.stringify(rdata.data));
 			if(callback) callback(JSON.parse(rdata.data));
@@ -1722,9 +1722,9 @@ function openEditorView(type,path){
 				aceEditor.ace_active = '';
 				aceEditor.eventEditor();
 				ace.require("/ace/ext/language_tools");
-				ace.config.set("modePath", "/static/ace");
-				ace.config.set("workerPath", "/static/ace");
-				ace.config.set("themePath", "/static/ace");
+				ace.config.set("modePath", "/static/editor");
+				ace.config.set("workerPath", "/static/editor");
+				ace.config.set("themePath", "/static/editor");
 				aceEditor.openEditorView(path);
 				$('#ace_conter').addClass(aceEditor.aceConfig.aceEditor.editorTheme);
 				$('.aceEditors .layui-layer-min').click(function (e){
@@ -1915,7 +1915,60 @@ function ajaxSetup() {
 
     if (my_headers) {
 		$.ajaxSetup({ 
-			headers: my_headers
+			headers: my_headers,
+			error: function(jqXHR, textStatus, errorThrown) {
+				if(!jqXHR.responseText) return;
+				if(typeof(String.prototype.trim) === "undefined"){
+					String.prototype.trim = function() 
+					{
+						return String(this).replace(/^\s+|\s+$/g, '');
+					};
+				}
+				
+				error_key = 'We need to make sure this has a favicon so that the debugger does';
+				error_find = jqXHR.responseText.indexOf(error_key)
+				if(jqXHR.status == 500 && (jqXHR.responseText.indexOf('运行时发生错误') != -1 || error_find != -1)){
+					if(jqXHR.responseText.indexOf('请先绑定宝塔帐号!') != -1){
+						bt.pub.bind_btname(function(){
+							window.location.reload();
+						});
+						return;
+					}
+					if(error_find != -1){
+						var error_body = jqXHR.responseText.split('<!--')[2].replace('-->','')
+						var tmp = error_body.split('During handling of the above exception, another exception occurred:')
+						error_body = tmp[tmp.length-1];
+						var error_msg = '<div>\
+						<h3 style="margin-bottom: 10px;">出错了，面板运行时发生错误！</h3>\
+						<pre style="height:635px;word-wrap: break-word;white-space: pre-wrap;margin: 0 0 0px">'+error_body.trim()+'</pre>\
+						<ul class="help-info-text">\
+							<li style="list-style: none;"><b>很抱歉，面板运行时意外发生错误，请尝试按以下顺序尝试解除此错误：</b></li>\
+							<li style="list-style: none;">1、在[首页]右上角点击修复面板，并退出面板重新登录。</li>\
+							<li style="list-style: none;">2、如上述尝试未能解除此错误，请截图此窗口到宝塔论坛发贴寻求帮助, 论坛地址：<a class="btlink" href="https://www.bt.cn/bbs" target="_blank">https://www.bt.cn/bbs</a></li>\
+						</ul>\
+					</div>'
+
+					}else{
+						var error_msg = jqXHR.responseText;
+					}
+					$(".layui-layer-padding").parents('.layer-anim').remove();
+					$(".layui-layer-shade").remove();
+					setTimeout(function(){
+						layer.open({
+							title: false,
+							content: error_msg,
+							closeBtn:2,
+							area: ["1200px","800px"],
+							btn:false,
+							shadeClose:false,
+							shade:0.3,
+							success:function(){
+								$('pre').scrollTop(100000000000)
+							}
+						});
+					},100)
+				}
+			}
 			// dataFilter: ajax_decrypt,
 			// beforeSend: ajax_encrypt
 		});

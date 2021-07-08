@@ -82,8 +82,9 @@ class Sql():
     
     def limit(self,limit):
         #LIMIT条件
-        if len(limit):
-            self.__OPT_LIMIT = " LIMIT "+limit
+
+        if limit:
+            self.__OPT_LIMIT = " LIMIT {}".format(limit)
         return self
     
     

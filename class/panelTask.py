@@ -531,6 +531,7 @@ class bt_task:
             return True
 
         import platform
+
         os_bit = ''
         if platform.machine() == 'x86_64':
             os_bit = '-x64'

@@ -114,6 +114,9 @@ class apache:
     def GetApacheValue(self):
         apachedefaultcontent = public.readFile(self.apachedefaultfile)
         apachempmcontent = public.readFile(self.apachempmfile)
+        if not "mpm_event_module" in apachempmcontent:
+            return public.returnMsg(False,"没有找到 mpm_event_module 配置或 /www/server/apache/conf/extra/httpd-mpm.conf 配置为空")
+        apachempmcontent = re.search("\<IfModule mpm_event_module\>(\n|.)+?\</IfModule\>",apachempmcontent).group()
         ps = ["秒，请求超时时间","保持连接","秒，连接超时时间","单次连接最大请求数"]
         gets = ["Timeout","KeepAlive","KeepAliveTimeout","MaxKeepAliveRequests"]
         if public.get_webserver() == 'apache':
@@ -136,8 +139,8 @@ class apache:
             conflist.append(kv)
             n += 1
 
-        ps = ["启动时默认进程数","最大进程数","最大连接数，0为无限大","最大并发进程数"]
-        gets = ["StartServers","MaxSpareServers","MaxConnectionsPerChild","MaxRequestWorkers"]
+        ps = ["启动时默认进程数","最大空闲线程数","可用于处理请求峰值的最小空闲线程数","每个子进程创建的线程数","将同时处理的最大连接数","限制单个子服务在生命周期内处理的连接数"]
+        gets = ["StartServers","MaxSpareThreads","MinSpareThreads","ThreadsPerChild","MaxRequestWorkers","MaxConnectionsPerChild"]
         n = 0
         for i in gets:
             rep = "(%s)\s+(\w+)" % i
@@ -158,6 +161,8 @@ class apache:
     def SetApacheValue(self,get):
         apachedefaultcontent = public.readFile(self.apachedefaultfile)
         apachempmcontent = public.readFile(self.apachempmfile)
+        if not "mpm_event_module" in apachempmcontent:
+            return public.returnMsg(False,"没有找到 mpm_event_module 配置或 /www/server/apache/conf/extra/httpd-mpm.conf 配置为空")
         conflist = []
         getdict = get.__dict__
         for i in getdict.keys():
@@ -184,7 +189,7 @@ class apache:
                 apachedefaultcontent = re.sub(rep,newconf,apachedefaultcontent)
             elif re.search(rep,apachempmcontent):
                 newconf = "%s\t\t\t%s" % (c["name"], c["value"])
-                apachempmcontent = re.sub(rep, newconf , apachempmcontent,count = 1)
+                apachempmcontent = re.sub(rep, newconf , apachempmcontent)
         public.writeFile(self.apachedefaultfile,apachedefaultcontent)
         public.writeFile(self.apachempmfile, apachempmcontent)
         isError = public.checkWebConfig()

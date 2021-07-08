@@ -1,20 +1,20 @@
 var bt = {
     os: 'Linux',
     check_ip: function(ip) //验证ip
-        {
-            var reg = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/;
-            return reg.test(ip);
-        },
+    {
+        var reg = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/;
+        return reg.test(ip);
+    },
     check_ips: function(ips) //验证ip段
-        {
-            var reg = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d{1,2})?$/;
-            return reg.test(ip);
-        },
+    {
+        var reg = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d{1,2})?$/;
+        return reg.test(ip);
+    },
     check_url: function(url) //验证url
-        {
-            var reg = /^((https|http|ftp|rtsp|mms)?:\/\/)[^\s]+/;
-            return reg.test(url);
-        },
+    {
+        var reg = /^((https|http|ftp|rtsp|mms)?:\/\/)[^\s]+/;
+        return reg.test(url);
+    },
     check_port: function(port) {
         var reg = /^([1-9]|[1-9]\d|[1-9]\d{2}|[1-9]\d{3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5])$/;
         return reg.test(port);
@@ -24,16 +24,16 @@ var bt = {
         return reg.test(str);
     },
     check_domain: function(domain) //验证域名
-        {
-            var reg = /^([\w\u4e00-\u9fa5\-\*]{1,100}\.){1,4}([\w\u4e00-\u9fa5\-]{1,24}|[\w\u4e00-\u9fa5\-]{1,24}\.[\w\u4e00-\u9fa5\-]{1,24})$/;
-            return reg.test(bt.strim(domain));
-        },
+    {
+        var reg = /^([\w\u4e00-\u9fa5\-\*]{1,100}\.){1,4}([\w\u4e00-\u9fa5\-]{1,24}|[\w\u4e00-\u9fa5\-]{1,24}\.[\w\u4e00-\u9fa5\-]{1,24})$/;
+        return reg.test(bt.strim(domain));
+    },
     check_img: function(fileName) //验证是否图片
-        {
-            var exts = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'tiff', 'ico'];
-            var check = bt.check_exts(fileName, exts);
-            return check;
-        },
+    {
+        var exts = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'tiff', 'ico'];
+        var check = bt.check_exts(fileName, exts);
+        return check;
+    },
     check_email: function(email) {
         var reg = /\w[-\w.+]*@([A-Za-z0-9][-A-Za-z0-9]+\.)+[A-Za-z]{2,14}/;
         return reg.test(email);
@@ -139,43 +139,43 @@ var bt = {
         return false;
     },
     format_size: function(bytes, is_unit, fixed, end_unit) //字节转换，到指定单位结束 is_unit：是否显示单位  fixed：小数点位置 end_unit：结束单位
-        {
-            if (bytes == undefined) return 0;
+    {
+        if (bytes == undefined) return 0;
 
-            if (is_unit == undefined) is_unit = true;
-            if (fixed == undefined) fixed = 2;
-            if (end_unit == undefined) end_unit = '';
+        if (is_unit == undefined) is_unit = true;
+        if (fixed == undefined) fixed = 2;
+        if (end_unit == undefined) end_unit = '';
 
-            if (typeof bytes == 'string') bytes = parseInt(bytes);
-            var unit = [' B', ' KB', ' MB', ' GB', 'TB'];
-            var c = 1024;
-            for (var i = 0; i < unit.length; i++) {
-                var cUnit = unit[i];
-                if (end_unit) {
-                    if (cUnit.trim() == end_unit.trim()) {
-                        var val = i == 0 ? bytes : fixed == 0 ? bytes : bytes.toFixed(fixed)
-                        if (is_unit) {
-                            return val + cUnit;
-                        } else {
-                            val = parseFloat(val);
-                            return val;
-                        }
-                    }
-                } else {
-                    if (bytes < c) {
-                        var val = i == 0 ? bytes : fixed == 0 ? bytes : bytes.toFixed(fixed)
-                        if (is_unit) {
-                            return val + cUnit;
-                        } else {
-                            val = parseFloat(val);
-                            return val;
-                        }
+        if (typeof bytes == 'string') bytes = parseInt(bytes);
+        var unit = [' B', ' KB', ' MB', ' GB', 'TB'];
+        var c = 1024;
+        for (var i = 0; i < unit.length; i++) {
+            var cUnit = unit[i];
+            if (end_unit) {
+                if (cUnit.trim() == end_unit.trim()) {
+                    var val = i == 0 ? bytes : fixed == 0 ? bytes : bytes.toFixed(fixed)
+                    if (is_unit) {
+                        return val + cUnit;
+                    } else {
+                        val = parseFloat(val);
+                        return val;
                     }
                 }
-
-                bytes /= c;
+            } else {
+                if (bytes < c) {
+                    var val = i == 0 ? bytes : fixed == 0 ? bytes : bytes.toFixed(fixed)
+                    if (is_unit) {
+                        return val + cUnit;
+                    } else {
+                        val = parseFloat(val);
+                        return val;
+                    }
+                }
             }
-        },
+
+            bytes /= c;
+        }
+    },
     format_data: function(tm, format) {
         if (format == undefined) format = "yyyy/MM/dd hh:mm:ss";
         tm = tm.toString();
@@ -226,12 +226,12 @@ var bt = {
         }
     },
     get_random_num: function(min, max) //生成随机数
-        {
-            var range = max - min;
-            var rand = Math.random();
-            var num = min + Math.round(rand * range); //四舍五入
-            return num;
-        },
+    {
+        var range = max - min;
+        var rand = Math.random();
+        var num = min + Math.round(rand * range); //四舍五入
+        return num;
+    },
     /**
      * @description 设置本地存储，local和session
      * @param {String} type 存储类型，可以为空，默认为session类型。
@@ -313,12 +313,12 @@ var bt = {
             content: "<div class='changepath'><div class='path-top'><button type='button' id='btn_back' class='btn btn-default btn-sm'><span class='glyphicon glyphicon-share-alt'></span> " + lan.public.return+"</button><div class='place' id='PathPlace'>" + lan.bt.path + "：<span></span></div></div><div class='path-con'><div class='path-con-left'><dl><dt id='changecomlist' >" + lan.bt.comp + "</dt></dl></div><div class='path-con-right'><ul class='default' id='computerDefautl'></ul><div class='file-list divtable'><table class='table table-hover' style='border:0 none'><thead><tr class='file-list-head'><th width='5%'></th><th width='38%'>" + lan.bt.filename + "</th><th width='24%'>" + lan.bt.etime + "</th><th width='8%'>" + lan.bt.access + "</th><th width='15%'>" + lan.bt.own + "</th></tr></thead><tbody id='tbody' class='list-list'></tbody></table></div></div></div></div><div class='getfile-btn' style='margin-top:0'><button type='button' class='btn btn-default btn-sm pull-left' onclick='CreateFolder()'>" + lan.bt.adddir + "</button><button type='button' class='btn btn-danger btn-sm mr5' onclick=\"layer.close(getCookie('ChangePath'))\">" + lan.public.close + "</button> <button type='button' id='bt_select' class='btn btn-success btn-sm' >" + lan.bt.path_ok + "</button></div>",
             success: function() {
                 $('#btn_back').click(function() {
-                        var path = $("#PathPlace").find("span").text();
-                        path = bt.rtrim(bt.format_path(path), '/');
-                        var back_path = bt.get_file_path(path);
-                        _this.get_file_list(back_path, type);
-                    })
-                    //选择
+                    var path = $("#PathPlace").find("span").text();
+                    path = bt.rtrim(bt.format_path(path), '/');
+                    var back_path = bt.get_file_path(path);
+                    _this.get_file_list(back_path, type);
+                })
+                //选择
                 $('#bt_select').click(function() {
                     var path = bt.format_path($("#PathPlace").find("span").text());
                     if ($('#tbody tr').hasClass('active')) {
@@ -424,9 +424,9 @@ var bt = {
                     }
                 }
             });
-			$('#changecomlist dd').click(function(){
-				_that.get_file_list($(this).attr('path'), type);
-			});
+            $('#changecomlist dd').click(function(){
+                _that.get_file_list($(this).attr('path'), type);
+            });
             $('.bt_open_dir span').click(function() {
                 if ($(this).parent().data('type') == 'dir') _that.get_file_list($(this).parent().attr('path'), type);
             })
@@ -952,108 +952,108 @@ var bt = {
         }
     },
     render: function(obj) //columns 行
-        {
-            if (obj.columns) {
-                var checks = {};
-                $(obj.table).html('');
-                var thead = '<thead><tr>';
-                for (var h = 0; h < obj.columns.length; h++) {
-                    var item = obj.columns[h];
-                    if (item) {
-                        thead += '<th';
-                        if (item.width) thead += ' width="' + item.width + '" ';
-                        if (item.align || item.sort) {
-                            thead += ' style="';
-                            if (item.align) thead += 'text-align:' + item.align + ';';
-                            if (item.sort) thead += item.sort ? 'cursor: pointer;' : '';
-                            thead += '"';
-                        }
-                        if (item.type == 'checkbox') {
-                            thead += '><input  class="check"  onclick="bt.check_select();" type="checkbox">';
-                        } else {
-                            thead += '>' + item.title;
-                        }
-                        if (item.sort) {
-                            checks[item.field] = item.sort;
-                            thead += ' <span data-id="' + item.field + '" class="glyphicon glyphicon-triangle-top" style="margin-left:5px;color:#bbb"></span>';
-                        }
-                        if (item.help) thead += '<a href="' + item.help + '" class="bt-ico-ask" target="_blank" title="点击查看说明">?</a>';
-
-                        thead += '</th>';
+    {
+        if (obj.columns) {
+            var checks = {};
+            $(obj.table).html('');
+            var thead = '<thead><tr>';
+            for (var h = 0; h < obj.columns.length; h++) {
+                var item = obj.columns[h];
+                if (item) {
+                    thead += '<th';
+                    if (item.width) thead += ' width="' + item.width + '" ';
+                    if (item.align || item.sort) {
+                        thead += ' style="';
+                        if (item.align) thead += 'text-align:' + item.align + ';';
+                        if (item.sort) thead += item.sort ? 'cursor: pointer;' : '';
+                        thead += '"';
                     }
+                    if (item.type == 'checkbox') {
+                        thead += '><input  class="check"  onclick="bt.check_select();" type="checkbox">';
+                    } else {
+                        thead += '>' + item.title;
+                    }
+                    if (item.sort) {
+                        checks[item.field] = item.sort;
+                        thead += ' <span data-id="' + item.field + '" class="glyphicon glyphicon-triangle-top" style="margin-left:5px;color:#bbb"></span>';
+                    }
+                    if (item.help) thead += '<a href="' + item.help + '" class="bt-ico-ask" target="_blank" title="点击查看说明">?</a>';
+
+                    thead += '</th>';
                 }
-                thead += '</tr></thead>';
-                var _tab = $(obj.table).append(thead);
-                if (obj.data.length > 0) {
-                    for (var i = 0; i < obj.data.length; i++) {
-                        var val = obj.data[i];
-                        var tr = $('<tr></tr>');
-                        for (var h = 0; h < obj.columns.length; h++) {
-                            var item = obj.columns[h];
-                            if (item) {
-                                var _val = val[item.field];
-                                if (typeof _val == 'string') _val = _val.replace(/\\/g, '');
-                                if (item.hasOwnProperty('templet')) _val = item.templet(val);
-                                if (item.type == 'checkbox') _val = '<input value=' + val[item.field] + '  class="check" onclick="bt.check_select();" type="checkbox">';
-                                var td = '<td ';
-                                if (item.align) {
-                                    td += 'style="';
-                                    if (item.align) td += 'text-align:' + item.align;
-                                    td += '"';
-                                }
-                                if (item.index) td += 'data-index="' + i + '" '
-                                td += '>';
-                                tr.append(td + _val + '</td>');
-                                tr.data('item', val);
-                                _tab.append(tr);
-                            }
-                        }
-                    }
-                } else {
-                    _tab.append("<tr><td colspan='" + obj.columns.length + "'>" + lan.bt.no_data + "</td></tr>");
-                }
-                $(obj.table).find('.check').click(function() {
-                    var checked = $(this).prop('checked');
-                    if ($(this).parent().prop('tagName') == 'TH') {
-                        $('.check').prop('checked', checked ? 'checked' : '');
-                    }
-                })
-                var asc = 'glyphicon-triangle-top';
-                var desc = 'glyphicon-triangle-bottom';
-
-                var orderby = bt.get_cookie('order');
-                if (orderby != undefined) {
-                    var arrys = orderby.split(' ')
-                    if (arrys.length == 2) {
-                        if (arrys[1] == 'asc') {
-                            $(obj.table).find('th span[data-id="' + arrys[0] + '"]').removeClass(desc).addClass(asc);
-                        } else {
-                            $(obj.table).find('th span[data-id="' + arrys[0] + '"]').removeClass(asc).addClass(desc);
-                        }
-                    }
-                }
-
-                $(obj.table).find('th').data('checks', checks).click(function() {
-                    var _th = $(this);
-                    var _checks = _th.data('checks');
-                    var _span = _th.find('span');
-                    if (_span.length > 0) {
-                        var or = _span.attr('data-id');
-                        if (_span.hasClass(asc)) {
-                            bt.set_cookie('order', or + ' desc');
-                            $(obj.table).find('th span[data-id="' + or + '"]').removeClass(asc).addClass(desc);
-                            _checks[or]();
-
-                        } else if (_span.hasClass(desc)) {
-                            bt.set_cookie('order', or + ' asc');
-                            $(obj.table).find('th span[data-id="' + arrys[0] + '"]').removeClass(desc).addClass(asc);
-                            _checks[or]();
-                        }
-                    }
-                })
             }
-            return _tab;
-        },
+            thead += '</tr></thead>';
+            var _tab = $(obj.table).append(thead);
+            if (obj.data.length > 0) {
+                for (var i = 0; i < obj.data.length; i++) {
+                    var val = obj.data[i];
+                    var tr = $('<tr></tr>');
+                    for (var h = 0; h < obj.columns.length; h++) {
+                        var item = obj.columns[h];
+                        if (item) {
+                            var _val = val[item.field];
+                            if (typeof _val == 'string') _val = _val.replace(/\\/g, '');
+                            if (item.hasOwnProperty('templet')) _val = item.templet(val);
+                            if (item.type == 'checkbox') _val = '<input value=' + val[item.field] + '  class="check" onclick="bt.check_select();" type="checkbox">';
+                            var td = '<td ';
+                            if (item.align) {
+                                td += 'style="';
+                                if (item.align) td += 'text-align:' + item.align;
+                                td += '"';
+                            }
+                            if (item.index) td += 'data-index="' + i + '" '
+                            td += '>';
+                            tr.append(td + _val + '</td>');
+                            tr.data('item', val);
+                            _tab.append(tr);
+                        }
+                    }
+                }
+            } else {
+                _tab.append("<tr><td colspan='" + obj.columns.length + "'>" + lan.bt.no_data + "</td></tr>");
+            }
+            $(obj.table).find('.check').click(function() {
+                var checked = $(this).prop('checked');
+                if ($(this).parent().prop('tagName') == 'TH') {
+                    $('.check').prop('checked', checked ? 'checked' : '');
+                }
+            })
+            var asc = 'glyphicon-triangle-top';
+            var desc = 'glyphicon-triangle-bottom';
+
+            var orderby = bt.get_cookie('order');
+            if (orderby != undefined) {
+                var arrys = orderby.split(' ')
+                if (arrys.length == 2) {
+                    if (arrys[1] == 'asc') {
+                        $(obj.table).find('th span[data-id="' + arrys[0] + '"]').removeClass(desc).addClass(asc);
+                    } else {
+                        $(obj.table).find('th span[data-id="' + arrys[0] + '"]').removeClass(asc).addClass(desc);
+                    }
+                }
+            }
+
+            $(obj.table).find('th').data('checks', checks).click(function() {
+                var _th = $(this);
+                var _checks = _th.data('checks');
+                var _span = _th.find('span');
+                if (_span.length > 0) {
+                    var or = _span.attr('data-id');
+                    if (_span.hasClass(asc)) {
+                        bt.set_cookie('order', or + ' desc');
+                        $(obj.table).find('th span[data-id="' + or + '"]').removeClass(asc).addClass(desc);
+                        _checks[or]();
+
+                    } else if (_span.hasClass(desc)) {
+                        bt.set_cookie('order', or + ' asc');
+                        $(obj.table).find('th span[data-id="' + arrys[0] + '"]').removeClass(desc).addClass(asc);
+                        _checks[or]();
+                    }
+                }
+            })
+        }
+        return _tab;
+    },
     // ACE编辑配置文件
     aceEditor: function(obj) {
         var aEditor = {
@@ -1545,7 +1545,6 @@ bt.index = {
 
             function a(n) {
                 memSize = bt.get_cookie("memSize");
-                console.log(memSize)
                 max = 64;
                 msg = "64M";
                 switch (n) {
@@ -1985,103 +1984,103 @@ bt.recycle_bin = {
 }
 
 bt.files = {
-        get_path: function() {
-            path = path = bt.get_cookie('Path');
-            if (!path) {
-                bt.msg({ msg: lan.get('lack_param', ['response']) });
+    get_path: function() {
+        path = path = bt.get_cookie('Path');
+        if (!path) {
+            bt.msg({ msg: lan.get('lack_param', ['response']) });
 
-            }
-        },
-        get_files: function(Path, searchV, callback) {
-            var searchtype = Path;
-            if (isNaN(Path)) {
-                var p = '1';
-            } else {
-                var p = Path;
-                Path = bt.get_cookie('Path');
-            }
-            var search = '';
-            if (searchV.length > 1 && searchtype == "1") {
-                search = "&search=" + searchV;
-            }
-            var showRow = bt.get_cookie('showRow');
-            if (!showRow) showRow = '500';
-            var totalSize = 0;
-            var loadT = bt.load(lan.public.the);
-            bt.send('get_files', 'files/GetDir', 'tojs=GetFiles&p=' + p + '&showRow=' + showRow + search + '&path=' + Path, function(rdata) {
-                loadT.close();
-                //bt.set_cookie('Path',rdata.PATH);
-                if (callback) callback(rdata);
-            })
-        },
-        get_recycle_bin: function(type, callback) {
-            loading = bt.load(lan.public.the);
-            bt.send('Get_Recycle_bin', 'files/Get_Recycle_bin', {}, function(rdata) {
-                loading.close();
-                if (callback) callback(rdata);
-            })
-        },
-        re_recycle_bin: function(path, callback) {
-            bt.confirm({ msg: lan.files.recycle_bin_re_msg, title: lan.files.recycle_bin_re_title }, function() {
-                var loadT = bt.load(lan.files.recycle_bin_re_the);
-                bt.send('Re_Recycle_bin', 'files/Re_Recycle_bin', 'path=' + path, function(rdata) {
-                    loadT.close();
-                    bt.msg(rdata);
-                    if (callback) callback(rdata);
-                })
-            });
-        },
-        del_recycle_bin: function(path, callback) {
-            bt.confirm({ msg: lan.files.recycle_bin_del_msg, title: lan.files.recycle_bin_del_title }, function() {
-                var loadT = bt.load(lan.files.recycle_bin_del_the);
-                bt.send('Re_Recycle_bin', 'files/Del_Recycle_bin', 'path=' + path, function(rdata) {
-                    loadT.close();
-                    bt.msg(rdata);
-                    if (callback) callback(rdata);
-                })
-            });
-        },
-        clear_recycle_bin: function(callback) {
-            bt.confirm({ msg: lan.files.recycle_bin_close_msg, title: lan.files.recycle_bin_close }, function() {
-                var loadT = bt.load("<div class='myspeed'>" + lan.files.recycle_bin_close_the + "</div>");
-                bt.send('Re_Recycle_bin', 'files/Close_Recycle_bin', {}, function(rdata) {
-                    loadT.close();
-                    bt.msg(rdata);
-                    if (callback) callback(rdata);
-                })
-            });
-        },
-        set_recycle_bin: function(db) {
-            var loadT = bt.load(lan.public.the);
-            var data = {};
-            if (db) data = { db: db }
-            bt.send('Recycle_bin', 'files/Recycle_bin', data, function(rdata) {
+        }
+    },
+    get_files: function(Path, searchV, callback) {
+        var searchtype = Path;
+        if (isNaN(Path)) {
+            var p = '1';
+        } else {
+            var p = Path;
+            Path = bt.get_cookie('Path');
+        }
+        var search = '';
+        if (searchV.length > 1 && searchtype == "1") {
+            search = "&search=" + searchV;
+        }
+        var showRow = bt.get_cookie('showRow');
+        if (!showRow) showRow = '500';
+        var totalSize = 0;
+        var loadT = bt.load(lan.public.the);
+        bt.send('get_files', 'files/GetDir', 'tojs=GetFiles&p=' + p + '&showRow=' + showRow + search + '&path=' + Path, function(rdata) {
+            loadT.close();
+            //bt.set_cookie('Path',rdata.PATH);
+            if (callback) callback(rdata);
+        })
+    },
+    get_recycle_bin: function(type, callback) {
+        loading = bt.load(lan.public.the);
+        bt.send('Get_Recycle_bin', 'files/Get_Recycle_bin', {}, function(rdata) {
+            loading.close();
+            if (callback) callback(rdata);
+        })
+    },
+    re_recycle_bin: function(path, callback) {
+        bt.confirm({ msg: lan.files.recycle_bin_re_msg, title: lan.files.recycle_bin_re_title }, function() {
+            var loadT = bt.load(lan.files.recycle_bin_re_the);
+            bt.send('Re_Recycle_bin', 'files/Re_Recycle_bin', 'path=' + path, function(rdata) {
                 loadT.close();
                 bt.msg(rdata);
+                if (callback) callback(rdata);
             })
-        },
-        rename: function(fileName, type, callback) {
-            if (type == undefined) type = 0;
-            _this = this;
-            path = _this.get_path();
-            if (type) {
-                var newFileName = path + '/' + $("#newFileName").val();
-                var oldFileName = path + '/' + fileName;
-                var loading = bt.load(lan.public.the);
-                bt.send('MvFile', 'files/MvFile', 'sfile=' + oldFileName + '&dfile=' + newFileName, function(rdata) {
-                    loading.close();
-                    bt.msg(rdata);
-                    if (callback) callback(rdata);
-                });
-                return;
-            }
-            bt.open({
-                type: 1,
-                shift: 5,
-                closeBtn: 2,
-                area: '320px',
-                title: lan.files.file_menu_rename,
-                content: '<div class="bt-form pd20 pb70">\
+        });
+    },
+    del_recycle_bin: function(path, callback) {
+        bt.confirm({ msg: lan.files.recycle_bin_del_msg, title: lan.files.recycle_bin_del_title }, function() {
+            var loadT = bt.load(lan.files.recycle_bin_del_the);
+            bt.send('Re_Recycle_bin', 'files/Del_Recycle_bin', 'path=' + path, function(rdata) {
+                loadT.close();
+                bt.msg(rdata);
+                if (callback) callback(rdata);
+            })
+        });
+    },
+    clear_recycle_bin: function(callback) {
+        bt.confirm({ msg: lan.files.recycle_bin_close_msg, title: lan.files.recycle_bin_close }, function() {
+            var loadT = bt.load("<div class='myspeed'>" + lan.files.recycle_bin_close_the + "</div>");
+            bt.send('Re_Recycle_bin', 'files/Close_Recycle_bin', {}, function(rdata) {
+                loadT.close();
+                bt.msg(rdata);
+                if (callback) callback(rdata);
+            })
+        });
+    },
+    set_recycle_bin: function(db) {
+        var loadT = bt.load(lan.public.the);
+        var data = {};
+        if (db) data = { db: db }
+        bt.send('Recycle_bin', 'files/Recycle_bin', data, function(rdata) {
+            loadT.close();
+            bt.msg(rdata);
+        })
+    },
+    rename: function(fileName, type, callback) {
+        if (type == undefined) type = 0;
+        _this = this;
+        path = _this.get_path();
+        if (type) {
+            var newFileName = path + '/' + $("#newFileName").val();
+            var oldFileName = path + '/' + fileName;
+            var loading = bt.load(lan.public.the);
+            bt.send('MvFile', 'files/MvFile', 'sfile=' + oldFileName + '&dfile=' + newFileName, function(rdata) {
+                loading.close();
+                bt.msg(rdata);
+                if (callback) callback(rdata);
+            });
+            return;
+        }
+        bt.open({
+            type: 1,
+            shift: 5,
+            closeBtn: 2,
+            area: '320px',
+            title: lan.files.file_menu_rename,
+            content: '<div class="bt-form pd20 pb70">\
 						<div class="line">\
 						<input type="text" class="bt-input-text" name="Name" id="newFileName" value="' + fileName + '" placeholder="' + lan.files.file_name + '" style="width:100%" />\
 						</div>\
@@ -2090,253 +2089,253 @@ bt.files = {
 						<button type="button" id="ReNameBtn" class="btn btn-success btn-sm btn-title">' + lan.public.save + '</button>\
 						</div>\
 					</div>'
+        });
+        setTimeout(function() {
+            $("#ReNameBtn").click(function() {
+                _this.rename(fileName, 1, callback);
+            })
+            $("#newFileName").focus().keyup(function(e) {
+                if (e.keyCode == 13) $("#ReNameBtn").click();
             });
-            setTimeout(function() {
-                $("#ReNameBtn").click(function() {
-                    _this.rename(fileName, 1, callback);
-                })
-                $("#newFileName").focus().keyup(function(e) {
-                    if (e.keyCode == 13) $("#ReNameBtn").click();
-                });
-            }, 100)
+        }, 100)
 
-        },
-        get_file_body: function(path, callback) {
-            bt.send('GetFileBody', 'files/GetFileBody', 'path=' + path, function(rdata) {
-                if (callback) callback(rdata);
-            })
-        },
-        set_file_body: function(path, data, encoding, callback) {
-            var loading = bt.load(lan.site.saving_txt);
-            bt.send('SaveFileBody', 'files/SaveFileBody', { path: path, data: data, encoding: encoding }, function(rdata) {
-                loading.close();
-                if (callback) callback(rdata);
-            })
-        },
-        del_file: function(path, callback) {
-            bt.confirm({ msg: lan.get('recycle_bin_confirm', [fileName]), title: lan.files.del_file }, function() {
-                loading = bt.load(lan.public.the);
-                bt.send('del_file', 'files/DeleteFile', 'path=' + path, function(rdata) {
-                    loading.close();
-                    bt.msg(rdata);
-                    if (callback) callback(rdata);
-                })
-            })
-        },
-        del_dir: function(path, callback) {
-            bt.confirm({ msg: lan.get('recycle_bin_confirm_dir', [fileName]), title: lan.files.del_file }, function() {
-                loading = bt.load(lan.public.the);
-                bt.send('DeleteDir', 'files/DeleteDir', 'path=' + path, function(rdata) {
-                    loading.close();
-                    bt.msg(rdata);
-                    if (callback) callback(rdata);
-                })
-            })
-        },
-        cut_file: function(fileName, callback) //裁剪
-            {
-                bt.set_cookie('cutFileName', fileName);
-                bt.set_cookie('copyFileName', null);
-                bt.msg({ msg: lan.files.mv_ok, icon: 1, time: 1 })
-                if (callback) callback(rdata);
-            },
-        copy_file: function(fileName, callback) {
-            bt.set_cookie('cutFileName', null);
-            bt.set_cookie('copyFileName', fileName);
-            bt.msg({ msg: lan.files.copy_ok, icon: 1, time: 1 })
+    },
+    get_file_body: function(path, callback) {
+        bt.send('GetFileBody', 'files/GetFileBody', 'path=' + path, function(rdata) {
             if (callback) callback(rdata);
-        },
-        paste_file: function(fileName, callback) //粘贴
-            {
-                _this = this;
-                path = _this.get_path();
-                var copyName = bt.get_cookie('copyFileName');
-                var cutName = bt.get_cookie('cutFileName');
-                var filename = copyName;
-                if (cutName != 'null' && cutName != undefined) filename = cutName;
-                filename = filename.split('/').pop();
+        })
+    },
+    set_file_body: function(path, data, encoding, callback) {
+        var loading = bt.load(lan.site.saving_txt);
+        bt.send('SaveFileBody', 'files/SaveFileBody', { path: path, data: data, encoding: encoding }, function(rdata) {
+            loading.close();
+            if (callback) callback(rdata);
+        })
+    },
+    del_file: function(path, callback) {
+        bt.confirm({ msg: lan.get('recycle_bin_confirm', [fileName]), title: lan.files.del_file }, function() {
+            loading = bt.load(lan.public.the);
+            bt.send('del_file', 'files/DeleteFile', 'path=' + path, function(rdata) {
+                loading.close();
+                bt.msg(rdata);
+                if (callback) callback(rdata);
+            })
+        })
+    },
+    del_dir: function(path, callback) {
+        bt.confirm({ msg: lan.get('recycle_bin_confirm_dir', [fileName]), title: lan.files.del_file }, function() {
+            loading = bt.load(lan.public.the);
+            bt.send('DeleteDir', 'files/DeleteDir', 'path=' + path, function(rdata) {
+                loading.close();
+                bt.msg(rdata);
+                if (callback) callback(rdata);
+            })
+        })
+    },
+    cut_file: function(fileName, callback) //裁剪
+    {
+        bt.set_cookie('cutFileName', fileName);
+        bt.set_cookie('copyFileName', null);
+        bt.msg({ msg: lan.files.mv_ok, icon: 1, time: 1 })
+        if (callback) callback(rdata);
+    },
+    copy_file: function(fileName, callback) {
+        bt.set_cookie('cutFileName', null);
+        bt.set_cookie('copyFileName', fileName);
+        bt.msg({ msg: lan.files.copy_ok, icon: 1, time: 1 })
+        if (callback) callback(rdata);
+    },
+    paste_file: function(fileName, callback) //粘贴
+    {
+        _this = this;
+        path = _this.get_path();
+        var copyName = bt.get_cookie('copyFileName');
+        var cutName = bt.get_cookie('cutFileName');
+        var filename = copyName;
+        if (cutName != 'null' && cutName != undefined) filename = cutName;
+        filename = filename.split('/').pop();
 
-                bt.send('CheckExistsFiles', 'files/CheckExistsFiles', { dfile: path, filename: filename }, function(rdata) {
-                    if (rdata.length > 0) {
-                        var tbody = '';
-                        for (var i = 0; i < rdata.length; i++) {
-                            tbody += '<tr><td>' + rdata[i].filename + '</td><td>' + bt.format_size(rdata[i].size) + '</td><td>' + bt.format_data(rdata[i].mtime) + '</td></tr>';
-                        }
-                        var mbody = '<div class="divtable"><table class="table table-hover" width="100%" border="0" cellpadding="0" cellspacing="0"><thead><th>' + lan.bt.filename + '</th><th>' + lan.bt.file_size + '</th><th>' + lan.bt.etime + '</th></thead>\
+        bt.send('CheckExistsFiles', 'files/CheckExistsFiles', { dfile: path, filename: filename }, function(rdata) {
+            if (rdata.length > 0) {
+                var tbody = '';
+                for (var i = 0; i < rdata.length; i++) {
+                    tbody += '<tr><td>' + rdata[i].filename + '</td><td>' + bt.format_size(rdata[i].size) + '</td><td>' + bt.format_data(rdata[i].mtime) + '</td></tr>';
+                }
+                var mbody = '<div class="divtable"><table class="table table-hover" width="100%" border="0" cellpadding="0" cellspacing="0"><thead><th>' + lan.bt.filename + '</th><th>' + lan.bt.file_size + '</th><th>' + lan.bt.etime + '</th></thead>\
 							<tbody>' + tbody + '</tbody>\
 							</table></div>';
-                        bt.show_confirm(bt.files.file_conver_msg, mbody, function() {
-                            _this.paste_to(path, copyName, cutName, fileName, callback);
-                        })
-                    } else {
-                        _this.paste_to(path, copyName, cutName, fileName, callback);
-                    }
+                bt.show_confirm(bt.files.file_conver_msg, mbody, function() {
+                    _this.paste_to(path, copyName, cutName, fileName, callback);
                 })
-            },
-        paste_to: function(path, copyName, cutName, fileName, callback) {
-            if (copyName != 'null' && copyName != undefined) {
-                var loading = bt.msg({ msg: lan.files.copy_the, icon: 16 });
-                bt.send('CopyFile', 'files/CopyFile', 'sfile=' + copyName + '&dfile=' + path + '/' + fileName, function(rdata) {
-                    loading.close();
-                    bt.msg(rdata);
-                    if (callback) callback(rdata);
-                })
-                bt.set_cookie('copyFileName', null);
-                bt.set_cookie('cutFileName', null);
-                return;
+            } else {
+                _this.paste_to(path, copyName, cutName, fileName, callback);
             }
+        })
+    },
+    paste_to: function(path, copyName, cutName, fileName, callback) {
+        if (copyName != 'null' && copyName != undefined) {
+            var loading = bt.msg({ msg: lan.files.copy_the, icon: 16 });
+            bt.send('CopyFile', 'files/CopyFile', 'sfile=' + copyName + '&dfile=' + path + '/' + fileName, function(rdata) {
+                loading.close();
+                bt.msg(rdata);
+                if (callback) callback(rdata);
+            })
+            bt.set_cookie('copyFileName', null);
+            bt.set_cookie('cutFileName', null);
+            return;
+        }
 
-            if (cutName != 'null' && cutName != undefined) {
-                var loading = bt.msg({ msg: lan.files.copy_the, icon: 16 });
-                bt.send('MvFile', 'files/MvFile', 'sfile=' + copyName + '&dfile=' + path + '/' + fileName, function(rdata) {
-                    loading.close();
-                    bt.msg(rdata);
-                    if (callback) callback(rdata);
-                });
-                bt.set_cookie('copyFileName', null);
-                bt.set_cookie('cutFileName', null);
-
-            }
-        },
-        zip: function(dirName, submits, callback) {
-            _this = this;
-            if (submits != undefined) {
-                if (dirName.indexOf(',') == -1) {
-                    tmp = $("#sfile").val().split('/');
-                    sfile = tmp[tmp.length - 1];
-                } else {
-                    sfile = dirName;
-                }
-                dfile = $("#dfile").val();
-                layer.closeAll();
-                var loading = bt.load(lan.files.zip_the);
-                bt.send('Zip', 'files/Zip', 'sfile=' + sfile + '&dfile=' + dfile + '&type=tar&path=' + path, function(rdata) {
-                    loading.close();
-                    if (rdata == null || rdata == undefined) {
-                        bt.msg({ msg: lan.files.zip_ok, icon: 1 })
-                        if (callback) callback(rdata);
-                        return;
-                    }
-                    bt.msg(rdata);
-                    if (rdata.status)
-                        if (callback) callback(rdata);
-                });
-                return;
-            }
-            var ext = '.zip';
-            if (bt.os == 'Linux') ext = '.tar.gz';
-
-            param = dirName;
-            if (dirName.indexOf(',') != -1) {
-                tmp = path.split('/')
-                dirName = path + '/' + tmp[tmp.length - 1]
-            }
-            bt.open({
-                type: 1,
-                shift: 5,
-                closeBtn: 2,
-                area: '650px',
-                title: lan.files.zip_title,
-                content: '<div class="bt-form pd20 pb70">' +
-                    '<div class="line noborder">' +
-                    '<input type="text" class="form-control" id="sfile" value="' + param + '" placeholder="" style="display:none" />' +
-                    '<span>' + lan.files.zip_to + '</span><input type="text" class="bt-input-text" id="dfile" value="' + dirName + ext + '" placeholder="' + lan.files.zip_to + '" style="width: 75%; display: inline-block; margin: 0px 10px 0px 20px;" /><span class="glyphicon glyphicon-folder-open cursor" onclick="ChangePath(\'dfile\')"></span>' +
-                    '</div>' +
-                    '<div class="bt-form-submit-btn">' +
-                    '<button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">' + lan.public.close + '</button>' +
-                    '<button type="button" id="ReNameBtn" class="btn btn-success btn-sm btn-title"' + lan.files.file_menu_zip + '</button>' +
-                    '</div>' +
-                    '</div>'
+        if (cutName != 'null' && cutName != undefined) {
+            var loading = bt.msg({ msg: lan.files.copy_the, icon: 16 });
+            bt.send('MvFile', 'files/MvFile', 'sfile=' + copyName + '&dfile=' + path + '/' + fileName, function(rdata) {
+                loading.close();
+                bt.msg(rdata);
+                if (callback) callback(rdata);
             });
+            bt.set_cookie('copyFileName', null);
+            bt.set_cookie('cutFileName', null);
 
-            setTimeout(function() {
-                $("#dfile").change(function() {
-                    var dfile = bt.rtrim($(this).val(), '/');
-                    if (bt.check_zip(dfile) === -1) {
-                        dfile += ext;
-                        $(this).val(dfile)
-                    }
-                });
-                $("#ReNameBtn").click(function() {
-                    _this.zip(param, 1, callback);
-                })
-            }, 100);
-        },
-        un_zip: function(fileName, type, callback) // type: zip|tar
-            {
-                _this = this;
-                if (type.length == 3) {
-                    var sfile = encodeURIComponent($("#sfile").val());
-                    var dfile = encodeURIComponent($("#dfile").val());
-                    var password = encodeURIComponent($("#unpass").val());
-                    coding = $("select[name='coding']").val();
-                    layer.closeAll();
-                    var loading = bt.load(lan.files.unzip_the);
-                    bt.send('UnZip', 'files/UnZip', 'sfile=' + sfile + '&dfile=' + dfile + '&type=' + type + '&coding=' + coding + '&password=' + password, function(rdata) {
-                        loading.close();
-                        bt.msg(rdata);
-                        if (callback) callback(rdata);
-                    });
-                    return
+        }
+    },
+    zip: function(dirName, submits, callback) {
+        _this = this;
+        if (submits != undefined) {
+            if (dirName.indexOf(',') == -1) {
+                tmp = $("#sfile").val().split('/');
+                sfile = tmp[tmp.length - 1];
+            } else {
+                sfile = dirName;
+            }
+            dfile = $("#dfile").val();
+            layer.closeAll();
+            var loading = bt.load(lan.files.zip_the);
+            bt.send('Zip', 'files/Zip', 'sfile=' + sfile + '&dfile=' + dfile + '&type=tar&path=' + path, function(rdata) {
+                loading.close();
+                if (rdata == null || rdata == undefined) {
+                    bt.msg({ msg: lan.files.zip_ok, icon: 1 })
+                    if (callback) callback(rdata);
+                    return;
                 }
-                var path = bt.get_file_path(fileName);
-                type = (type == 1) ? 'tar' : 'zip'
-                var umpass = '';
-                if (type == 'zip') {
-                    umpass = '<div class="line"><span class="tname">' + lan.files.zip_pass_title + '</span><input type="text" class="bt-input-text" id="unpass" value="" placeholder="' + lan.files.zip_pass_msg + '" style="width:330px" /></div>'
-                }
-                bt.open({
-                    type: 1,
-                    shift: 5,
-                    closeBtn: 2,
-                    area: '490px',
-                    title: lan.files.unzip_title,
-                    content: '<div class="bt-form pd20 pb70">' +
-                        '<div class="line unzipdiv">' +
-                        '<span class="tname">' + lan.files.unzip_name + '</span><input type="text" class="bt-input-text" id="sfile" value="' + fileName + '" placeholder="' + lan.files.unzip_name_title + '" style="width:330px" /></div>' +
-                        '<div class="line"><span class="tname">' + lan.files.unzip_to + '</span><input type="text" class="bt-input-text" id="dfile" value="' + path + '" placeholder="' + lan.files.unzip_to + '" style="width:330px" /></div>' + umpass +
-                        '<div class="line"><span class="tname">' + lan.files.unzip_coding + '</span><select class="bt-input-text" name="coding">' +
-                        '<option value="UTF-8">UTF-8</option>' +
-                        '<option value="gb18030">GBK</option>' +
-                        '</select>' +
-                        '</div>' +
-                        '<div class="bt-form-submit-btn">' +
-                        '<button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">' + lan.public.close + '</button>' +
-                        '<button type="button" id="ReNameBtn" class="btn btn-success btn-sm btn-title" >' + lan.files.file_menu_unzip + '</button>' +
-                        '</div>' +
-                        '</div>'
-                });
-                setTimeout(function() {
-
-                    $("#ReNameBtn").click(function() {
-                        _this.un_zip(fileName, type, callback);
-                    })
-                }, 100);
-            },
-        show_img: function(fileName) {
-            var imgUrl = '/download?filename=' + fileName;
-            bt.open({
-                type: 1,
-                closeBtn: 2,
-                title: false,
-                area: '500px',
-                shadeClose: true,
-                content: '<div class="showpicdiv"><img width="100%" src="' + imgUrl + '"></div>'
+                bt.msg(rdata);
+                if (rdata.status)
+                    if (callback) callback(rdata);
             });
-            $(".layui-layer").css("top", "30%");
-        },
-        get_files_bytes: function(fileName, fileSize) {
-            window.open('/download?filename=' + encodeURIComponent(fileName));
-        },
-        upload_files: function() {
-            path = this.get_path();
-            bt.open({
-                type: 1,
-                closeBtn: 2,
-                title: lan.files.up_title,
-                area: ['500px', '500px'],
-                shadeClose: false,
-                content: '<div class="fileUploadDiv"><input type="hidden" id="input-val" value="' + path + '" />\
+            return;
+        }
+        var ext = '.zip';
+        if (bt.os == 'Linux') ext = '.tar.gz';
+
+        param = dirName;
+        if (dirName.indexOf(',') != -1) {
+            tmp = path.split('/')
+            dirName = path + '/' + tmp[tmp.length - 1]
+        }
+        bt.open({
+            type: 1,
+            shift: 5,
+            closeBtn: 2,
+            area: '650px',
+            title: lan.files.zip_title,
+            content: '<div class="bt-form pd20 pb70">' +
+                '<div class="line noborder">' +
+                '<input type="text" class="form-control" id="sfile" value="' + param + '" placeholder="" style="display:none" />' +
+                '<span>' + lan.files.zip_to + '</span><input type="text" class="bt-input-text" id="dfile" value="' + dirName + ext + '" placeholder="' + lan.files.zip_to + '" style="width: 75%; display: inline-block; margin: 0px 10px 0px 20px;" /><span class="glyphicon glyphicon-folder-open cursor" onclick="ChangePath(\'dfile\')"></span>' +
+                '</div>' +
+                '<div class="bt-form-submit-btn">' +
+                '<button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">' + lan.public.close + '</button>' +
+                '<button type="button" id="ReNameBtn" class="btn btn-success btn-sm btn-title"' + lan.files.file_menu_zip + '</button>' +
+                '</div>' +
+                '</div>'
+        });
+
+        setTimeout(function() {
+            $("#dfile").change(function() {
+                var dfile = bt.rtrim($(this).val(), '/');
+                if (bt.check_zip(dfile) === -1) {
+                    dfile += ext;
+                    $(this).val(dfile)
+                }
+            });
+            $("#ReNameBtn").click(function() {
+                _this.zip(param, 1, callback);
+            })
+        }, 100);
+    },
+    un_zip: function(fileName, type, callback) // type: zip|tar
+    {
+        _this = this;
+        if (type.length == 3) {
+            var sfile = encodeURIComponent($("#sfile").val());
+            var dfile = encodeURIComponent($("#dfile").val());
+            var password = encodeURIComponent($("#unpass").val());
+            coding = $("select[name='coding']").val();
+            layer.closeAll();
+            var loading = bt.load(lan.files.unzip_the);
+            bt.send('UnZip', 'files/UnZip', 'sfile=' + sfile + '&dfile=' + dfile + '&type=' + type + '&coding=' + coding + '&password=' + password, function(rdata) {
+                loading.close();
+                bt.msg(rdata);
+                if (callback) callback(rdata);
+            });
+            return
+        }
+        var path = bt.get_file_path(fileName);
+        type = (type == 1) ? 'tar' : 'zip'
+        var umpass = '';
+        if (type == 'zip') {
+            umpass = '<div class="line"><span class="tname">' + lan.files.zip_pass_title + '</span><input type="text" class="bt-input-text" id="unpass" value="" placeholder="' + lan.files.zip_pass_msg + '" style="width:330px" /></div>'
+        }
+        bt.open({
+            type: 1,
+            shift: 5,
+            closeBtn: 2,
+            area: '490px',
+            title: lan.files.unzip_title,
+            content: '<div class="bt-form pd20 pb70">' +
+                '<div class="line unzipdiv">' +
+                '<span class="tname">' + lan.files.unzip_name + '</span><input type="text" class="bt-input-text" id="sfile" value="' + fileName + '" placeholder="' + lan.files.unzip_name_title + '" style="width:330px" /></div>' +
+                '<div class="line"><span class="tname">' + lan.files.unzip_to + '</span><input type="text" class="bt-input-text" id="dfile" value="' + path + '" placeholder="' + lan.files.unzip_to + '" style="width:330px" /></div>' + umpass +
+                '<div class="line"><span class="tname">' + lan.files.unzip_coding + '</span><select class="bt-input-text" name="coding">' +
+                '<option value="UTF-8">UTF-8</option>' +
+                '<option value="gb18030">GBK</option>' +
+                '</select>' +
+                '</div>' +
+                '<div class="bt-form-submit-btn">' +
+                '<button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">' + lan.public.close + '</button>' +
+                '<button type="button" id="ReNameBtn" class="btn btn-success btn-sm btn-title" >' + lan.files.file_menu_unzip + '</button>' +
+                '</div>' +
+                '</div>'
+        });
+        setTimeout(function() {
+
+            $("#ReNameBtn").click(function() {
+                _this.un_zip(fileName, type, callback);
+            })
+        }, 100);
+    },
+    show_img: function(fileName) {
+        var imgUrl = '/download?filename=' + fileName;
+        bt.open({
+            type: 1,
+            closeBtn: 2,
+            title: false,
+            area: '500px',
+            shadeClose: true,
+            content: '<div class="showpicdiv"><img width="100%" src="' + imgUrl + '"></div>'
+        });
+        $(".layui-layer").css("top", "30%");
+    },
+    get_files_bytes: function(fileName, fileSize) {
+        window.open('/download?filename=' + encodeURIComponent(fileName));
+    },
+    upload_files: function() {
+        path = this.get_path();
+        bt.open({
+            type: 1,
+            closeBtn: 2,
+            title: lan.files.up_title,
+            area: ['500px', '500px'],
+            shadeClose: false,
+            content: '<div class="fileUploadDiv"><input type="hidden" id="input-val" value="' + path + '" />\
 					<input type="file" id="file_input"  multiple="true" autocomplete="off" />\
 					<button type="button"  id="opt" autocomplete="off">' + lan.files.up_add + '</button>\
 					<button type="button" id="up" autocomplete="off" >' + lan.files.up_start + '</button>\
@@ -2351,35 +2350,35 @@ bt.files = {
 					</span>\
 					<button type="button" id="filesClose" autocomplete="off" onClick="layer.closeAll()" >' + lan.public.close + '</button>\
 					<ul id="up_box"></ul></div>'
+        });
+        UploadStart();
+    },
+    set_chmod: function(action, fileName, callback) {
+        _this = this;
+        if (action == 1) {
+            var chmod = $("#access").val();
+            var chown = $("#chown").val();
+            var data = 'filename=' + fileName + '&user=' + chown + '&access=' + chmod;
+            var loadT = bt.load(lan.public.config);
+            bt.send('SetFileAccess', 'files/SetFileAccess', data, function(rdata) {
+                loadT.close();
+                if (rdata.status) layer.closeAll();
+                bt.msg(rdata);
+                if (callback) callback(rdata);
             });
-            UploadStart();
-        },
-        set_chmod: function(action, fileName, callback) {
-            _this = this;
-            if (action == 1) {
-                var chmod = $("#access").val();
-                var chown = $("#chown").val();
-                var data = 'filename=' + fileName + '&user=' + chown + '&access=' + chmod;
-                var loadT = bt.load(lan.public.config);
-                bt.send('SetFileAccess', 'files/SetFileAccess', data, function(rdata) {
-                    loadT.close();
-                    if (rdata.status) layer.closeAll();
-                    bt.msg(rdata);
-                    if (callback) callback(rdata);
-                });
-                return;
-            }
+            return;
+        }
 
-            var toExec = fileName == lan.files.all ? 'Batch(3,1)' : '_this.set_chmod(1,\'' + fileName + '\',callback)';
+        var toExec = fileName == lan.files.all ? 'Batch(3,1)' : '_this.set_chmod(1,\'' + fileName + '\',callback)';
 
-            bt.send('GetFileAccess', 'files/GetFileAccess', 'filename=' + fileName, function(rdata) {
-                if (bt.os == 'Linux') {
-                    bt.open({
-                        type: 1,
-                        title: lan.files.set_auth + '[' + fileName + ']',
-                        area: '400px',
-                        shadeClose: false,
-                        content: '<div class="setchmod bt-form ptb15 pb70">\
+        bt.send('GetFileAccess', 'files/GetFileAccess', 'filename=' + fileName, function(rdata) {
+            if (bt.os == 'Linux') {
+                bt.open({
+                    type: 1,
+                    title: lan.files.set_auth + '[' + fileName + ']',
+                    area: '400px',
+                    shadeClose: false,
+                    content: '<div class="setchmod bt-form ptb15 pb70">\
 								<fieldset>\
 									<legend>' + lan.files.file_own + '</legend>\
 									<p><input type="checkbox" id="owner_r" />' + lan.files.file_read + '</p>\
@@ -2410,187 +2409,187 @@ bt.files = {
 							        <button type="button" class="btn btn-success btn-sm btn-title" onclick="' + toExec + '" >' + lan.public.ok + '</button>\
 						        </div>\
 							</div>'
+                });
+
+                settimeout(function() {
+                    _this.on_linux_access();
+                    $("#access").keyup(function() {
+                        _this.on_linux_access();
                     });
 
-                    settimeout(function() {
-                        _this.on_linux_access();
-                        $("#access").keyup(function() {
-                            _this.on_linux_access();
-                        });
+                    $("input[type=checkbox]").change(function() {
+                        var idName = ['owner', 'group', 'public'];
+                        var onacc = '';
+                        for (var n = 0; n < idName.length; n++) {
+                            var access = 0;
+                            access += $("#" + idName[n] + "_x").prop('checked') ? 1 : 0;
+                            access += $("#" + idName[n] + "_w").prop('checked') ? 2 : 0;
+                            access += $("#" + idName[n] + "_r").prop('checked') ? 4 : 0;
+                            onacc += access;
+                        }
+                        $("#access").val(onacc);
+                    });
+                }, 100)
+            }
+        })
+    },
+    on_linux_access: function() {
+        var access = $("#access").val();
+        var idName = ['owner', 'group', 'public'];
+        for (var n = 0; n < idName.length; n++) {
+            $("#" + idName[n] + "_x").prop('checked', false);
+            $("#" + idName[n] + "_w").prop('checked', false);
+            $("#" + idName[n] + "_r").prop('checked', false);
+        }
+        for (var i = 0; i < access.length; i++) {
+            var onacc = access.substr(i, 1);
+            if (i > idName.length) continue;
+            if (onacc > 7) $("#access").val(access.substr(0, access.length - 1));
+            switch (onacc) {
+                case '1':
+                    $("#" + idName[i] + "_x").prop('checked', true);
+                    break;
+                case '2':
+                    $("#" + idName[i] + "_w").prop('checked', true);
+                    break;
+                case '3':
+                    $("#" + idName[i] + "_x").prop('checked', true);
+                    $("#" + idName[i] + "_w").prop('checked', true);
+                    break;
+                case '4':
+                    $("#" + idName[i] + "_r").prop('checked', true);
+                    break;
+                case '5':
+                    $("#" + idName[i] + "_r").prop('checked', true);
+                    $("#" + idName[i] + "_x").prop('checked', true);
+                    break;
+                case '6':
+                    $("#" + idName[i] + "_r").prop('checked', true);
+                    $("#" + idName[i] + "_w").prop('checked', true);
+                    break;
+                case '7':
+                    $("#" + idName[i] + "_r").prop('checked', true);
+                    $("#" + idName[i] + "_w").prop('checked', true);
+                    $("#" + idName[i] + "_x").prop('checked', true);
+                    break;
+            }
+        }
+    },
+    on_win_access: function() {
 
-                        $("input[type=checkbox]").change(function() {
-                            var idName = ['owner', 'group', 'public'];
-                            var onacc = '';
-                            for (var n = 0; n < idName.length; n++) {
-                                var access = 0;
-                                access += $("#" + idName[n] + "_x").prop('checked') ? 1 : 0;
-                                access += $("#" + idName[n] + "_w").prop('checked') ? 2 : 0;
-                                access += $("#" + idName[n] + "_r").prop('checked') ? 4 : 0;
-                                onacc += access;
-                            }
-                            $("#access").val(onacc);
-                        });
-                    }, 100)
-                }
-            })
-        },
-        on_linux_access: function() {
+    },
+    get_right_click: function(type, path, name) {
+        _this = this;
+        var displayZip = bt.check_zip(type);
+        var options = {
+            items: [
+                { text: lan.files.file_menu_copy, onclick: function() { _this.copy_file(path) } },
+                { text: lan.files.file_menu_mv, onclick: function() { _this.cut_file(path) } },
+                { text: lan.files.file_menu_rename, onclick: function() { _this.rename(path, name) } },
+                { text: lan.files.file_menu_auth, onclick: function() { _this.set_chmod(0, path) } },
+                { text: lan.files.file_menu_zip, onclick: function() { _this.zip(path) } }
+
+            ]
+        };
+        if (type == "dir") {
+            options.items.push({ text: lan.files.file_menu_del, onclick: function() { _this.del_dir(path) } });
+        } else if (isText(type)) {
+            options.items.push({ text: lan.files.file_menu_edit, onclick: function() { bt.on_edit_file(0, path) } }, { text: lan.files.file_menu_down, onclick: function() { _this.get_files_bytes(path) } }, { text: lan.files.file_menu_del, onclick: function() { _this.del_file(path) } });
+        } else if (displayZip != -1) {
+            options.items.push({ text: lan.files.file_menu_unzip, onclick: function() { _this.un_zip(path, displayZip) } }, { text: lan.files.file_menu_down, onclick: function() { _this.get_files_bytes(path) } }, { text: lan.files.file_menu_del, onclick: function() { _this.del_file(path) } });
+        } else if (isImage(type)) {
+            options.items.push({ text: lan.files.file_menu_img, onclick: function() { _this.show_img(path) } }, { text: lan.files.file_menu_down, onclick: function() { _this.get_files_bytes(path) } }, { text: lan.files.file_menu_del, onclick: function() { _this.del_file(path) } });
+        } else {
+            options.items.push({ text: lan.files.file_menu_down, onclick: function() { _this.get_files_bytes(path) } }, { text: lan.files.file_menu_del, onclick: function() { _this.del_file(path) } });
+        }
+        return options;
+    },
+    get_dir_size: function(path, callback) {
+        if (!path) path = this.get_path();
+        var loading = bt.load(lan.public.the);
+        bt.send('GetDirSize', 'files/GetDirSize', { path: path }, function(rdata) {
+            loading.close();
+            if (callback) callback(rdata);
+        })
+    },
+    batch: function(type, access, callback) {
+        _this = this;
+
+        var el = document.getElementsByTagName('input');
+        var len = el.length;
+        var data = 'path=' + path + '&type=' + type;
+        var name = 'data';
+
+        var oldType = bt.get_cookie('BatchPaste');
+
+        for (var i = 0; i < len; i++) {
+            if (el[i].checked == true && el[i].value != 'on') {
+                data += '&' + name + '=' + el[i].value;
+            }
+        }
+
+        if (type == 3 && access == undefined) {
+            _this.set_chmod(0, lan.files.all);
+            return;
+        }
+
+        if (type < 3) bt.set_cookie('BatchSelected', '1');
+        bt.set_cookie('BatchPaste', type);
+
+        if (access == 1) {
             var access = $("#access").val();
-            var idName = ['owner', 'group', 'public'];
-            for (var n = 0; n < idName.length; n++) {
-                $("#" + idName[n] + "_x").prop('checked', false);
-                $("#" + idName[n] + "_w").prop('checked', false);
-                $("#" + idName[n] + "_r").prop('checked', false);
-            }
-            for (var i = 0; i < access.length; i++) {
-                var onacc = access.substr(i, 1);
-                if (i > idName.length) continue;
-                if (onacc > 7) $("#access").val(access.substr(0, access.length - 1));
-                switch (onacc) {
-                    case '1':
-                        $("#" + idName[i] + "_x").prop('checked', true);
-                        break;
-                    case '2':
-                        $("#" + idName[i] + "_w").prop('checked', true);
-                        break;
-                    case '3':
-                        $("#" + idName[i] + "_x").prop('checked', true);
-                        $("#" + idName[i] + "_w").prop('checked', true);
-                        break;
-                    case '4':
-                        $("#" + idName[i] + "_r").prop('checked', true);
-                        break;
-                    case '5':
-                        $("#" + idName[i] + "_r").prop('checked', true);
-                        $("#" + idName[i] + "_x").prop('checked', true);
-                        break;
-                    case '6':
-                        $("#" + idName[i] + "_r").prop('checked', true);
-                        $("#" + idName[i] + "_w").prop('checked', true);
-                        break;
-                    case '7':
-                        $("#" + idName[i] + "_r").prop('checked', true);
-                        $("#" + idName[i] + "_w").prop('checked', true);
-                        $("#" + idName[i] + "_x").prop('checked', true);
-                        break;
-                }
-            }
-        },
-        on_win_access: function() {
+            var chown = $("#chown").val();
+            data += '&access=' + access + '&user=' + chown;
+            layer.closeAll();
+        }
+        if (type == 4) {
+            AllDeleteFileSub(data, path);
+            bt.set_cookie('BatchPaste', oldType);
+            return;
+        }
 
-        },
-        get_right_click: function(type, path, name) {
-            _this = this;
-            var displayZip = bt.check_zip(type);
-            var options = {
-                items: [
-                    { text: lan.files.file_menu_copy, onclick: function() { _this.copy_file(path) } },
-                    { text: lan.files.file_menu_mv, onclick: function() { _this.cut_file(path) } },
-                    { text: lan.files.file_menu_rename, onclick: function() { _this.rename(path, name) } },
-                    { text: lan.files.file_menu_auth, onclick: function() { _this.set_chmod(0, path) } },
-                    { text: lan.files.file_menu_zip, onclick: function() { _this.zip(path) } }
-
-                ]
-            };
-            if (type == "dir") {
-                options.items.push({ text: lan.files.file_menu_del, onclick: function() { _this.del_dir(path) } });
-            } else if (isText(type)) {
-                options.items.push({ text: lan.files.file_menu_edit, onclick: function() { bt.on_edit_file(0, path) } }, { text: lan.files.file_menu_down, onclick: function() { _this.get_files_bytes(path) } }, { text: lan.files.file_menu_del, onclick: function() { _this.del_file(path) } });
-            } else if (displayZip != -1) {
-                options.items.push({ text: lan.files.file_menu_unzip, onclick: function() { _this.un_zip(path, displayZip) } }, { text: lan.files.file_menu_down, onclick: function() { _this.get_files_bytes(path) } }, { text: lan.files.file_menu_del, onclick: function() { _this.del_file(path) } });
-            } else if (isImage(type)) {
-                options.items.push({ text: lan.files.file_menu_img, onclick: function() { _this.show_img(path) } }, { text: lan.files.file_menu_down, onclick: function() { _this.get_files_bytes(path) } }, { text: lan.files.file_menu_del, onclick: function() { _this.del_file(path) } });
-            } else {
-                options.items.push({ text: lan.files.file_menu_down, onclick: function() { _this.get_files_bytes(path) } }, { text: lan.files.file_menu_del, onclick: function() { _this.del_file(path) } });
-            }
-            return options;
-        },
-        get_dir_size: function(path, callback) {
-            if (!path) path = this.get_path();
-            var loading = bt.load(lan.public.the);
-            bt.send('GetDirSize', 'files/GetDirSize', { path: path }, function(rdata) {
-                loading.close();
-                if (callback) callback(rdata);
-            })
-        },
-        batch: function(type, access, callback) {
-            _this = this;
-
-            var el = document.getElementsByTagName('input');
-            var len = el.length;
-            var data = 'path=' + path + '&type=' + type;
-            var name = 'data';
-
-            var oldType = bt.get_cookie('BatchPaste');
-
+        if (type == 5) {
+            var names = '';
             for (var i = 0; i < len; i++) {
                 if (el[i].checked == true && el[i].value != 'on') {
-                    data += '&' + name + '=' + el[i].value;
+                    names += el[i].value + ',';
                 }
             }
+            _this.zip(names);
+            return;
+        }
 
-            if (type == 3 && access == undefined) {
-                _this.set_chmod(0, lan.files.all);
-                return;
-            }
-
-            if (type < 3) bt.set_cookie('BatchSelected', '1');
-            bt.set_cookie('BatchPaste', type);
-
-            if (access == 1) {
-                var access = $("#access").val();
-                var chown = $("#chown").val();
-                data += '&access=' + access + '&user=' + chown;
-                layer.closeAll();
-            }
-            if (type == 4) {
-                AllDeleteFileSub(data, path);
-                bt.set_cookie('BatchPaste', oldType);
-                return;
-            }
-
-            if (type == 5) {
-                var names = '';
-                for (var i = 0; i < len; i++) {
-                    if (el[i].checked == true && el[i].value != 'on') {
-                        names += el[i].value + ',';
-                    }
-                }
-                _this.zip(names);
-                return;
-            }
-
-            myloadT = bt.load("<div class='myspeed'>" + lan.public.the + "</div>");
-            setTimeout(function() { getSpeed('.myspeed'); }, 1000);
-            bt.send('SetBatchData', 'files/SetBatchData', data, function(rdata) {
-                myloadT.close();
+        myloadT = bt.load("<div class='myspeed'>" + lan.public.the + "</div>");
+        setTimeout(function() { getSpeed('.myspeed'); }, 1000);
+        bt.send('SetBatchData', 'files/SetBatchData', data, function(rdata) {
+            myloadT.close();
+            bt.msg(rdata);
+            if (callback) callback(rdata);
+        })
+    },
+    download_file: function(action, callback) {
+        path = bt.get_cookie('Path');
+        if (action == 1) {
+            var fUrl = $("#mUrl").val();
+            fUrl = fUrl;
+            fpath = $("#dpath").val();
+            fname = $("#dfilename").val();
+            layer.closeAll();
+            loading = bt.load(lan.files.down_task);
+            bt.send('DownloadFile', 'files/DownloadFile', 'path=' + fpath + '&url=' + fUrl + '&filename=' + fname, function(rdata) {
+                loading.close();
                 bt.msg(rdata);
                 if (callback) callback(rdata);
-            })
-        },
-        download_file: function(action, callback) {
-            path = bt.get_cookie('Path');
-            if (action == 1) {
-                var fUrl = $("#mUrl").val();
-                fUrl = fUrl;
-                fpath = $("#dpath").val();
-                fname = $("#dfilename").val();
-                layer.closeAll();
-                loading = bt.load(lan.files.down_task);
-                bt.send('DownloadFile', 'files/DownloadFile', 'path=' + fpath + '&url=' + fUrl + '&filename=' + fname, function(rdata) {
-                    loading.close();
-                    bt.msg(rdata);
-                    if (callback) callback(rdata);
-                });
-                return;
-            }
-            layer.open({
-                type: 1,
-                shift: 5,
-                closeBtn: 2,
-                area: '500px',
-                title: lan.files.down_title,
-                content: '<form class="bt-form pd20 pb70">\
+            });
+            return;
+        }
+        layer.open({
+            type: 1,
+            shift: 5,
+            closeBtn: 2,
+            area: '500px',
+            title: lan.files.down_title,
+            content: '<form class="bt-form pd20 pb70">\
 						<div class="line">\
 						<span class="tname">' + lan.files.down_url + ':</span><input type="text" class="bt-input-text" name="url" id="mUrl" value="" placeholder="' + lan.files.down_url + '" style="width:330px" />\
 						</div>\
@@ -2605,16 +2604,16 @@ bt.files = {
 						<button type="button" id="dlok" class="btn btn-success btn-sm dlok" onclick="DownloadFile(1)">' + lan.public.ok + '</button>\
 						</div>\
 					</form>'
-            });
-            fly("dlok");
-            $("#mUrl").keyup(function() {
-                durl = $(this).val()
-                tmp = durl.split('/')
-                $("#dfilename").val(tmp[tmp.length - 1])
-            });
-        }
+        });
+        fly("dlok");
+        $("#mUrl").keyup(function() {
+            durl = $(this).val()
+            tmp = durl.split('/')
+            $("#dfilename").val(tmp[tmp.length - 1])
+        });
     }
-    // 任务管理器
+}
+// 任务管理器
 bt.crontab = {
     // 执行计划任务请求
     start_task_send: function(id, name) {
@@ -3613,108 +3612,349 @@ bt.soft = {
     },
     // 产品支付视图(配置参数)
     product_pay_view: function(config) {
-        if (!bt.get_cookie('bt_user_info')) {
+        var bt_user_info = bt.get_cookie('bt_user_info'),ltd_end = bt.get_cookie('ltd_end'),pro_end = bt.get_cookie('pro_end');
+        // 判断登录
+        if (!bt_user_info) {
             bt.pub.bind_btname(function() {
                 window.location.reload();
             });
             return false;
         }
-        if (typeof config == "string") config = JSON.parse(config);
-        config = $.extend({
-            plugin: null,
-            renew: null,
-            active: '',
-            type: '',
-            pro: parseInt(bt.get_cookie('pro_end')),
-            ltd: parseInt(bt.get_cookie('ltd_end'))
-        }, config);
-        var title = '',
-            that = this,
-            endTime = null;
-        if (!config.is_alone) {
-            if (config.plugin) { // 条件：当前为插件
-                title = (config.renew == -1 ? '购买' : '续费') + config.name;
-                ndTime = config.renew != -1 ? config.renew : null
-            } else if (config.pro == -1 && config.ltd == -1) { // 条件：专业版和企业版都没有购买过
-                title = '升级付费版，对应版本插件，免费使用';
-            } else if (config.ltd > 0) { // 条件：企业版续费
-                title = '续费' + (config.name == '' ? '宝塔专业版' : config.name);
-                endTime = config.ltd;
-            } else if (config.pro > 0 || config.pro == -2) { // 条件：专业版续费
-                title = '续费' + (config.name == '' ? '宝塔专业版' : config.name);
-                endTime = config.pro;
-            } else if (config.ltd == -2) {
-                title = '续费' + (config.name == '' ? '宝塔专业版' : config.name);
-                endTime = config.ltd;
-            }
-        } else {
-            title = (config.ltd > 0 ? '续费' : '购买') + '宝塔企业版';
+        if(pro_end === '0' && (config.limit === 'pro' || config.limit === 'ltd')) {
+            bt.msg({ msg: '您当前【专业版】为永久授权，请通过官网解绑后重新操作 <a href="https://www.bt.cn/bbs/thread-50342-1-1.html" target="_blank" class="btlink ml5">《立即前往》</a>', icon: 7, time: 0, shade: [0.3, "#000"] })
+            return false
         }
+        if(config.ps !== undefined) config.ps = config.ps.replace(/#1/g,'<').replace(/#2/g,'>').replace(/#3/g,'"').replace(/#4/g,'\'')
+        var that = this;
         bt.open({
             type: 1,
-            title: title,
-            area: ['650px', '720px'],
+            title: false,
+            skin: 'libPay-view',
+            area: ['1000px','630px'],
             shadeClose: false,
-            content: '<div class="libPay plr15" id="pay_product_view">\
-				<div class="libPay-item" style="margin-bottom:20px">\
-					<span class="bindUser">绑定用户：<span></span></span>\
-					<span class="endTime">过期时间：<span></span></span>\
-				</div>\
-				<div class="libPay-item" id="libPay-type">\
-					<div class="li-tit c3">类型</div>\
-					<div class="li-con c5"></div>\
-					<div class="pro-tips">' + (!(config.ltd == -1 && config.pro == -1) ? '提示：如需切换专业版或企业版，请查看<a href="https://www.bt.cn/bbs/thread-50342-1-1.html" target="_blank" class="btlink ml5">《专业版和企业版切换教程》</a>' : '') + '</div>\
-				</div>\
-				<div class="libPay-item" id="libPay-mode">\
-					<div class="li-tit c4">付款方式</div>\
-					<div class="li-con c5"></div>\
-				</div>\
-				<div class="libPay-item" id="libPay-content">\
-					<div class="li-tit c4">开通时长</div>\
-					<div class="li-con c5"></div>\
-				</div>\
-				<div class="libPay-item" id="libPay-pay"></div>\
-				<div class="libPay-item" id="libPay-tips"><p style="display:inline-block;position:absolute;bottom:17px;left:0;width:100%;text-align:center;color:red">所有不在堡塔付款的宝塔产品100%是骗人的，请勿上当。<a class="btlink" href="https://www.bt.cn/bbs/thread-22665-1-1.html" target="_blank">查看详情</a></p></div>\
-				<div class="libPay-mask"></div>\
-			</div>',
+            content: '<div class="libPay-content-box">\
+                <div class="libPay-menu '+(config.plugin?'is_plugin':'')+'">\
+                    '+(config.plugin?'<div class="libPay-menu-type lib_plugin"><p>'+config.name+'</p><p>'+config.name+'</p></div>':'')+'\
+                    <div class="libPay-menu-type lib_pro" >\
+                        <p><span class="recommend-pay-icon"></span><span class="glyphicon glyphicon-vip"></span><span style="margin-left:8px">'+ bt.os +'专业版</span></p>\
+                        <p>适用于个人站长、小微企业等个人用户</p>\
+                    </div>\
+                    <div class="libPay-menu-type lib_ltd" >\
+                        <p><span class="glyphicon glyphicon-vip"></span><span style="margin-left:8px">'+ bt.os +'企业版</span></p>\
+                        <p>适用于电商、教育、医疗、事业单位等企业用户</p>\
+                    </div>\
+                    <div class="libPay-menu-type lib_ver" >\
+                        <p><span></span><span style="margin-left:8px">抵扣卷</span></p>\
+                        <p>抵扣卷授权</p>\
+                    </div>\
+                </div>\
+                <div id="pay_product_view">\
+                    <div class="libVoucher-loading"><p><img src="/static/layer/skin/default/loading-2.gif"></p><p>正在获取数据，请稍候...</p></div>\
+                    <div class="libPay-layer-item">\
+                        <div class="libPay-line-item proS" id="libPay-theme-tips">\
+                            <p>企业版特权:</p>\
+                        </div>\
+                        <div class="libPay-line-item proP" id="libPay-theme-price"><ul class="pay-pro-cycle"></ul></div>\
+                        <div class="libPay-line-item prokf hide">\
+                            <label>\
+                                <i class="libPay-kf-consul"></i>\
+                                <input type="checkbox" class="libPay-kf-input">\
+                            </label>\
+                            <span>是否需要客服电话联系，工作时间 9：30-18：00</span>\
+                        </div>\
+                        <div class="libPay-line-item mtb20" id="libPay-qcode-box">\
+                            <div class="libPay-qcode-left">\
+                                <div class="pay-radio-type" >\
+                                    <div class="pay-type-btn active" data-condition="2" >\
+                                        <label class="pay-type-label"> <span class="pay-radio-ati"></span><span class="pay-radio-tit">微信扫码支付</span></label>\
+                                    </div>\
+                                    <div class="pay-type-btn" data-condition="3">\
+                                        <label class="pay-type-label"><span class="pay-radio-ati"></span><span class="pay-radio-tit">支付宝扫码支付</span></label>\
+                                    </div>\
+                                </div>\
+                            </div>\
+                            <div class="libPay-qcode-right">\
+                                <div class="libPay-loading"><p><img src="/static/layer/skin/default/loading-2.gif"></p><p>正在生成订单,请稍候...</p></div>\
+                                <div class= "libPaycode-box">\
+                                    <div class="pay-wx" style="height:155px;width: 155px" id="PayQcode" ></div>\
+                                    <div class="payqcode-box" >\
+                                        <span class="wx-pay-ico mr5 wechat"></span>\
+                                    </div>\
+                                    <div class="libPaycode-foo-txt" >\
+                                        <p> 订单总价:</p> <span class="libPayTotal">---</span> /<lable class="libPayCycle">--年</lable>\
+                                        <div class= "libPaycode-pro-cylce">低至--元/天 </div>\
+                                    </div>\
+                                </div >\
+                            </div>\
+                        </div>\
+                        <div class="libPay-footer-tips"><p>温馨提醒：所有不在堡塔付款的宝塔产品100%是骗人的，请勿上当。<a class="btlink" href="https://www.bt.cn/bbs/thread-22665-1-1.html" target="_blank">查看详情</a></p><p>支付异常请联系客服QQ：<a class="btlink" href="https://wpa1.qq.com/OUMbED4a?_type=wpa&qidian=true" target="_blank">3007255432</a></p></div>\
+                    </div>\
+                    <div class="libPay-layer-item">\
+                        <p class="voucher-tit">产品类型</p>\
+                        <div class="libVoucher-type"><ul class="li-c-item"></ul></div>\
+                        <p class="voucher-tit" style="margin-top: 20px;">抵扣券列表</p>\
+                        <div class="libVoucher-list"><ul class="pay-btn-group"></ul></div>\
+                        <div class="libPay-voucher-submit" style="margin:33px 0">\
+                            <div class="paymethod-submit text-center" >\
+                                <button class="btn btn-success btn-sm f16 disabled" style="width: 200px; height: 40px;">暂无抵扣劵，请先购买</button>\
+                            </div>\
+                        </div>\
+                    </div>\
+                </div>\
+            </div>',
             success: function(indexs, layers) {
-                var bt_user_info = bt.get_cookie('bt_user_info');
-                if (!bt_user_info) {
-                    bt.pub.get_user_info(function(res) {
-                        $('.bindUser span').html(res.data.username + '<a href="javascript:;" class="btlink ml5">更换</a>');
+                var loadT = bt.load('正在获取产品推荐信息，请稍后...');
+                bt.send('get_plugin_remarks','auth/get_plugin_remarks',{},function(res){
+                    loadT.close()
+                    //初始化
+                    that.pay_loading.init('start')
+                    that.pay_loading.init('end')
+                    // 防止浏览器过低
+                    $('.libPay-view .layui-layer-content').removeAttr('style')
+                    //客服电话咨询
+                    $('.libPay-line-item.prokf').click(function(ev){
+                        if($(this).find('i').hasClass('active')){
+                            $(this).find('i').removeClass('active');
+                            $(this).find('input').prop('checked',false)
+                        }else{
+                            $(this).find('i').addClass('active');
+                            $(this).find('input').prop('checked',true)
+                        }
+                        ev.preventDefault();
+                    })
+                    var arry = [{ title: '专业版', name: '宝塔面板专业版', pid: 100000011, type: 'pro', rlist: res.pro_list},{ title: '企业版', name: '宝塔面板企业版', pid: 100000032, type: 'ltd', rlist: res.list }]
+                    if(config.plugin) arry.unshift({name:config.name, pid:config.pid, type:'plugin',typeid:config.type,ps:config.ps})
+                    $('.libPay-menu .libPay-menu-type').each(function(index){
+                        $(this).data(arry[index])
+                    })
+                    $(".libPay-menu .libPay-menu-type").click(function () {
+                        var _item = $(this).data();
+                        that.get_product_change($(this).index(),_item.type)
+                    })
+
+                    //100000000表示获取所有抵扣卷
+                    bt.soft.pro.get_voucher(100000000, function (rdata) {
+                        var tab_list = $(".libPay-menu .libPay-menu-type"),item = arry[rdata.length > 0?(tab_list.length - 1):0]
+                        $(".libVoucher-loading").hide()
+                        tab_list.last().data( {type:'ver',data:rdata})
+                        if (rdata.length > 0) {
+                            that.get_product_change(tab_list.length - 1,'ver')
+                        }else {
+                            that.get_product_change(0,item.type)
+                        }
                     });
-                } else {
-                    $('.bindUser span').html(JSON.parse(bt_user_info).data.username + '<a href="javascript:;" class="btlink ml5">更换</a>');
-                }
-                endTime != null ? $('.endTime span').html(endTime > parseInt(new Date().getTime() / 1000) ? bt.format_data(endTime) : '<i style="color:red;font-style:inherit">已过期</i>') : $('.endTime').hide();
-                $('.bindUser').on('click', 'a', function() {
-                    bt.pub.bind_btname(function() {
-                        bt.soft.product_pay_view(config);
-                    });
-                });
-                var arry = [];
-                if (config.plugin) arry.push({ title: config.name, name: config.name, pid: config.pid, active: ((config.pro < 0 && config.ltd < 0) || (config.type == 12 && config.ltd < 0) ? true : false) });
-                if ((((config.ltd > 0 || config.ltd == -2 || config.pro == -2) || (config.ltd == -1 && config.pro == -1) || config.limit == 'ltd') && (config.pro < 0 || (config.pro >= 0 && config.ltd > 0))) || (config.is_alone && config.pid == 100000032)) {
-                    if (config.is_alone) arry = [];
-                    arry.push({ title: '<span class="ltd-font-icon"><span class="glyphicon glyphicon-vip"></span><span>企业版</span></span>', ps: '企业版：强烈推荐有一定访问量网站及事业单位使用，提供在线工单服务，更有保障', name: '宝塔面板企业版', pid: 100000032, recommend: true, active: config.is_alone ? true : (((config.type == 12 && !config.plugin && config.ltd > 0) || config.limit == 'ltd' || (config.renew == config.ltd && config.ltd > 0) ? true : false)) });
-                }
-                if ((((config.pro > 0 || config.pro == -2 || config.ltd < 0) && ((config.ltd > 0 && config.ltd != config.pro) || config.ltd < 0) && config.type != 12) || config.limit == 'pro' || (config.ltd < 0 && config.pro == -1)) && config.type != 12 && ((config.ltd < 0 && config.pro > 0) || (config.ltd < 0 && config.pro < 0))) {
-                    arry.push({ title: '<span class="pro-font-icon"><span class="glyphicon glyphicon-vip"></span><span>专业版</span></span>', ps: '专业版：适于学习或未盈利项目使用，无工单服务', name: '', pid: '', active: (((config.type == 8 && !config.plugin) || config.limit == 'pro' || (config.pro > 0 || config.pro == -2)) && config.ltd < 0 && (config.ltd == -2 ? (config.pro == -2 ? false : true) : true)) });
-                }
-                $('#libPay-type .li-con').append(that.product_pay_swicth('type', arry));
-                if (config.source) bt.set_cookie('pay_source', config.source);
-                that.each(arry, function(index, item) {
-                    if (item.active) {
-                        that.product_pay_page_refresh($.extend({ condition: 1 }, item));
-                        $('.pro-tips').html(item.ps || '');
-                    }
-                });
+                })
             },
             end: function() {
                 clearInterval(bt.soft.pub.wxpayTimeId);
                 bt.clear_cookie('pay_source');
             }
         });
+    },
+    //获取付款周期
+    get_product_change: function (idx,btype) {
+        var that = this,_pro_end = bt.get_cookie('pro_end'), _ltd_end = bt.get_cookie('ltd_end')
+        if (_pro_end > 0 && btype === 'ltd') {
+            layer.msg('您当前【专业版】未到期，请通过官网解绑后重新操作 <a href="https://www.bt.cn/bbs/thread-50342-1-1.html" target="_blank" class="btlink ml5">《立即前往》</a>',{icon: 7, time: 0, shade: [0.3, "#000"],closeBtn:2,shadeClose:true})
+            return
+        }
+        else if (_ltd_end > 0 && btype === 'pro') {
+            layer.msg('您当前【企业版】未到期，请通过官网解绑后重新操作 <a href="https://www.bt.cn/bbs/thread-50342-1-1.html" target="_blank" class="btlink ml5">《立即前往》</a>',{icon: 7, time: 0, shade: [0.3, "#000"],closeBtn:2,shadeClose:true})
+            return;
+        }
+        clearInterval(bt.soft.pub.wxpayTimeId);
+        $('.libPay-layer-item').eq(btype === 'ver' ? 1 : 0).addClass('aShow').siblings().removeClass('aShow');
+        var _obj = $('.libPay-menu .libPay-menu-type').eq(idx)
+        _obj.addClass('active').siblings().removeClass('active');
+        var _data = _obj.data()
+        if (btype !== 'ver'){
+            var _html = '<p>' + _data.title + '特权</p>';
+            if(btype !== 'plugin'){
+                $.each(_data['rlist'], function (index, item) {
+                    _html += '<div class="pro-introduce"><span class="glyphicon glyphicon-ok"></span><span>' + item + '</span></div>';
+                })
+            }else{
+                _html = '<p>插件说明</p><div style="height:70px;padding-top: 15px">'+_data.ps+'</div>'
+            }
+            $('#libPay-theme-tips').empty().append(_html)
+
+            that.get_product_discount_cache(_data, function (rdata) {
+                var _ul = $("#libPay-theme-price ul").empty(),num = 0,html = '';
+                for (var keys in rdata) {
+                    var item = rdata[keys];
+                    if (typeof item === 'object') {
+                        num ++;
+                        if(num > 4 ) break
+                        item['cycle'] = keys
+                        var _li = $('<li class="pay-cycle-btns" data-type="'+ keys +'"><div class="pay-head-price"><span><div class="libPrice"><i>' + item.price + '</i>元</div>/' + that.pro.conver_unit(item.cycle + '') + '</span><p>原价:' + item.sprice + '元</p></div><div class="pay-foo-price">低至' + (item.price / ((item.cycle / 12) * 365)).toFixed(2) + '元/天</div>' + (item.tip ? '<em>' + item.tip + '</em>' : '') + '</li>')
+                        _li.data('data', item).click(function () {
+                            that.create_pay_code($(this).index())
+                        })
+                        _ul.append(_li)
+                    }
+                }
+                // if(num >= 4) $('#libPay-theme-price .pay-cycle-btns').css('width',((910  - ((num - 1) * 10)) / num) + 'px')
+                that.create_pay_code(0)
+            })
+        }
+        else {
+            _data = _obj.data().data;
+            if (_data === undefined || _data.length <= 0) {
+                $(".libPay-layer-item.aShow p").hide()
+                return
+            }
+            $(".libPay-layer-item.aShow p").show()
+            var _arry = {}
+            this.each(_data, function (index, item) {
+                if (!_arry.hasOwnProperty(item.product_id)) {
+                    _arry[item.product_id] = { name: item.name, product_id: item.product_id, list: [], active: false }
+                }
+                _arry[item.product_id]['list'].push(item)
+            })
+            //抵扣卷分类
+            var _ul = $('.libVoucher-type ul').empty()
+            $.each(_arry, function (index, oitem) {
+                var p_html = '<span><span>' + oitem.name + '</span></span>'
+                if ($.inArray(oitem.product_id, [100000030, 100000011]) >= 0) {
+                    p_html = '<span class="pro-font-icon"><span class="glyphicon glyphicon-vip" style="margin-right:5px"></span><span>' + oitem.name + '</span></span>'
+                }
+                else if ($.inArray(oitem.product_id, [100000046,100000032]) >= 0) {
+                    p_html = '<span class="ltd-font-icon"><span class="glyphicon glyphicon-vip" style="margin-right:5px"></span><span>' + oitem.name + '</span></span>'
+                }
+
+                var _li = $('<li class="pay-cycle-btn auto" data-id="' + oitem.product_id + '" >' + p_html + '</li>').data(oitem).click(function (ev) {
+                    $(this).addClass('active').siblings().removeClass('active');
+
+                    //抵扣卷列表
+                    var _vlist = $('.libVoucher-list ul').empty()
+                    var v_data = $(this).data()
+                    $.each(v_data.list, function (index, item) {
+                        var _v_li = $('<li class="pay-cycle-btn ' + (index == 0 ?"active":"") +'"><span>' + (item.unit == 'month' && item.cycle == 999 ? '永久' : (item.cycle + that.pro.conver_unit(item.unit))) + '</span></li>').data(item).click(function () {
+                            $(this).addClass('active').siblings().removeClass('active');
+                        })
+                        _vlist.append(_v_li);
+                    })
+                    var sub_btn = $('.libPay-voucher-submit button');
+                    if (v_data.list.length > 0) {
+                        //抵扣卷续费
+                        sub_btn.removeClass('disabled').text('提交').unbind('click').click(function () {
+                            var s_data = $('.libVoucher-list li.active').data();
+                            if (!s_data) {
+                                layer.msg('无可用优惠券');
+                                return false;
+                            }
+                            var _pro_end = bt.get_cookie('pro_end'), _ltd_end = bt.get_cookie('ltd_end')
+                            if (_pro_end >= 0 && s_data.product_id != 100000011) {
+                                bt.msg({ msg: '您当前【专业版】未到期，请通过官网解绑后重新操作 <a href="https://www.bt.cn/bbs/thread-50342-1-1.html" target="_blank" class="btlink ml5">《立即前往》</a>', icon: 7, time: 0, shade: [0.3, "#000"] })
+                                return
+                            }
+                            else if (_ltd_end > 0 && s_data.product_id != 100000032) {
+                                bt.msg({ msg: '您当前【企业版】未到期，请通过官网解绑后重新操作 <a href="https://www.bt.cn/bbs/thread-50342-1-1.html" target="_blank" class="btlink ml5">《立即前往》</a>', icon: 7, time: 0, shade: [0.3, "#000"] })
+                                return
+                            }
+                            bt.soft.pro.create_order_voucher(s_data.product_id, s_data.code, function (rdata) {
+                                layer.closeAll();
+                                bt.set_cookie('force', 1);
+                                if (soft) soft.flush_cache();
+                                bt.msg(rdata);
+                            });
+                        })
+                    }
+                    else {
+                        sub_btn.addClass('disabled').text('暂无抵扣劵，请先购买').unbind('click')
+                    }
+                })
+                //企业版、专业版靠前
+                if ($.inArray(oitem.product_id, [100000011, 100000032]) >= 0) {
+                    _ul.prepend(_li);
+                }
+                else {
+                    _ul.append(_li);
+                }
+            })
+
+            //判断企业版、专业版未到期的产品
+            if (_ltd_end > 0) {
+                var ltd = _ul.find('li[data-id=100000032]');
+                if(ltd.length) ltd.trigger('click')
+            }
+            else if (_pro_end > 0) {
+                var pro = _ul.find('li[data-id=100000011]')
+                if(pro.length) pro.trigger('click')
+            }
+            else {
+                _ul.find('li').eq(0).trigger('click')
+            }
+        }
+    },
+    //生成支付二维码
+    create_pay_code: function (idx) {
+        var _obj = $('.pay-cycle-btns').eq(idx).addClass('active').siblings().removeClass('active');
+        var that = this, _product = $('.libPay-menu-type.active').data(), _cycle = $(".pay-cycle-btns.active").data('data');
+
+        $(".libPay-loading").show();
+        that.pay_loading.set('start')
+
+        that.pro.create_order({pid:_product.pid,cycle:_cycle.cycle}, function (rdata) {
+            var start = that.pay_loading.get('start')
+            var end = that.pay_loading.set('end')
+            if (end < start) return
+
+            $(".libPay-loading").hide()
+            if (rdata.status === false) {
+                layer.closeAll();
+                bt.set_cookie('force', 1);
+                if (soft) soft.flush_cache();
+                bt.msg({ msg: rdata.msg, icon: 2, time: 0, shade: [0.3, "#000"] })
+                return;
+            }
+            $(".pay-radio-type").data('data', rdata)
+            $(".libPay-content-box .pay-type-btn").unbind('click').click(function () {
+                that.show_pay_code($(this).index())
+            })
+            that.show_pay_code($(".pay-type-btn.active").index())
+            that.product_pay_monitor({ pid: rdata.data.pid, wxoid: rdata.data.wxoid, name: _product.name });
+        });
+    },
+    show_pay_code: function (idx) {
+        var _data = $(".pay-radio-type").data('data'), _cycle = $(".pay-cycle-btns.active").data('data'), _obj = $(".libPay-content-box .pay-type-btn").eq(idx)
+
+        $('.libPaycode-foo-txt .libPayTotal').text('¥' + _cycle.price)
+        $(".libPayCycle").text(this.pro.conver_unit(_cycle.cycle))
+        $('.libPaycode-pro-cylce').text('低至' + (_cycle.price / (_cycle.cycle / 12 * 365)).toFixed(2) + "元 / 天")
+
+        switch (idx) {
+            //微信支付
+            case 0:
+                $('#PayQcode').empty().qrcode(_data.msg);
+                $(".payqcode-box span").removeClass('alipay').addClass('wechat')
+                break;
+            //支付宝支付
+            case 1:
+                $('#PayQcode').empty().qrcode(_data.ali_msg);
+                $(".payqcode-box span").removeClass('wechat').addClass('alipay')
+                break;
+        }
+        _obj.addClass('active').siblings().removeClass('active');
+    },
+    pay_loading: {
+        set: function (type) {
+            var count = $(".libPay-loading").data(type)
+            if (count) {
+                count += 1
+            }
+            else {
+                count = 1
+            }
+            $(".libPay-loading").data(type, count)
+            return count
+        },
+        get: function (type) {
+            return $(".libPay-loading").data(type)
+        },
+        init: function (type) {
+            $(".libPay-loading").data(type, 0)
+        }
     },
     product_cache: {}, //产品周期缓存
     order_cache: {},
@@ -3733,221 +3973,6 @@ bt.soft = {
                 if (callback) callback(rdata);
             });
         }
-    },
-    // 产品页面刷新
-    product_pay_page_refresh: function(config) {
-        var condition = config.condition,
-            that = this;
-        switch (condition) {
-            case 1:
-                var loadT = bt.load();
-                bt.soft.pro.get_voucher(config.pid, function(rdata) {
-                    loadT.close();
-                    var _arry = [{ title: '微信支付', condition: 2 }, { title: '支付宝支付', condition: 3 }, { title: '抵扣劵', condition: 4 }];
-                    if (rdata == null) rdata = [];
-                    _arry[rdata.length > 0 ? '2' : '0'].active = true;
-                    $('#libPay-mode .li-con').empty().append(
-                        that.product_pay_swicth('payment', {
-                            name: config.name,
-                            pid: config.pid,
-                            data: _arry,
-                            voucher_data: rdata
-                        })
-                    );
-                    config.condition = (rdata.length > 0 ? 4 : 2)
-                    if (rdata.length > 0) config.voucher_data = rdata;
-                    that.product_pay_page_refresh(config);
-                });
-                break;
-            case 2:
-            case 3:
-                $('#libPay-content .li-tit').text('开通时长');
-                config.pay = condition;
-                var loadT = bt.load();
-                bt.soft.get_product_discount_cache(config, function(rdata) {
-                    loadT.close();
-                    var _arry = [],
-                        index = $('#libPay-content .pay-cycle-btn.active').index() || 0;
-                    if (index < 0) index = 0;
-                    if (that.pay_id != config.pid) index = 0;
-                    that.pay_id = config.pid;
-                    try {
-                        delete rdata.pid
-                    } catch (error) {
-                        console.log(rdata.pid);
-                    }
-                    that.each(rdata, function(key, item) {
-                        _arry.push($.extend({ cycle: parseInt(key) }, item));
-                    });
-                    _arry[index].active = true;
-                    $('#libPay-content .li-con').empty().append(
-                        that.product_pay_swicth('time', { name: config.name, pid: config.pid, data: _arry })
-                    );
-                    config.condition = 5;
-                    config = $.extend(config, _arry[index]);
-                    that.product_pay_page_refresh(config);
-                });
-                break;
-            case 4:
-                clearInterval(bt.soft.pub.wxpayTimeId);
-                $('#libPay-content .li-tit').text('抵扣劵列表');
-                $('#libPay-pay').removeAttr('data-qecode');
-                $('#libPay-tips').hide();
-
-                function callback(rdata) {
-                    if (rdata == null) rdata = [];
-                    if (rdata.length == 0) {
-                        $('#libPay-content .li-con').empty()
-                        that.product_pay_page_refresh({ condition: 6, pid: '', code: false });
-                        return false;
-                    }
-                    rdata[0].active = true;
-                    $('#libPay-content .li-con').empty().append(
-                        that.product_pay_swicth('voucher', {
-                            name: config.name,
-                            pid: config.pid,
-                            data: rdata
-                        })
-                    );
-                    config.condition = 6;
-                    that.product_pay_page_refresh($.extend(config, rdata[0]));
-                }
-                if (config.voucher_data) {
-                    callback(config.voucher_data);
-                } else {
-                    bt.soft.pro.get_voucher(config.pid, function(rdata) {
-                        callback(rdata);
-                    });
-                }
-                break;
-            case 5:
-                $('#libPay-content .li-con').css('height', 'auto');
-                $('.libPay-mask').show();
-                $('#libPay-tips').show();
-                if ($('#libPay-pay').attr('data-qecode')) {
-                    var qcode = $('#libPay-content li').eq(config.dom_index).data('qrcode-url');
-                    $('#libPay-pay').find('.sale-price').html((config.price).toFixed(2));
-                    $('#libPay-pay').find('.cost-price').css('display', (config.sprice > config.price ? 'inline-block' : 'none')).html((config.sprice).toFixed(2) + '元');
-                    $('#libPay-pay').find('#PayQcode').html('<div class="loading">加载中，请稍后...</div>');
-                    if (qcode) {
-                        $('#libPay-pay').find('#PayQcode').empty().qrcode(qcode);
-                        that.product_pay_monitor({ pid: config.pid, name: config.name });
-                        $('.libPay-mask').hide();
-                        return false;
-                    }
-                } else {
-                    $('#libPay-pay').html('<div class="cloading">加载中，请稍后...</div>');
-                }
-                var paream = { pid: config.pid, cycle: config.cycle },
-                    pay_source = bt.get_cookie('pay_source');
-                if (pay_source) paream.source = bt.get_cookie('pay_source');
-                if (!paream.pid) delete paream.pid;
-                that.pro.create_order(paream, function(rdata) {
-                    if (typeof rdata.status_code != 'undefined') {
-                        if (rdata.status_code === 'inherit_order') {
-                            layer.closeAll();
-                            bt.send('get_soft_list', 'plugin/get_soft_list', { p: '1', type: '0', force: '1', query: '' }, function(rdata) {
-                                window.refresh();
-                            });
-                            bt.msg(rdata);
-                            return false;
-                        }
-                    }
-                    if (rdata.status === false) {
-                        bt.set_cookie('force', 1);
-                        if (soft) soft.flush_cache();
-                        layer.msg(rdata.msg, { icon: 2 });
-                        return;
-                    }
-
-                    config.pay = parseInt($('#libPay-mode .pay-cycle-btn.active').data('condition'));
-                    // 二维码显示界面
-                    $('#libPay-pay').empty().append(that.product_pay_swicth((config.pay == 2 ? 'wechat' : 'alipay'), $.extend({ data: config.pay == 2 ? rdata.msg : rdata.ali_msg }, config)));
-                });
-                break;
-            case 6:
-                var _html = $('<div class="paymethod-submit text-center"></div>'),
-                    _button = $('<button class="btn btn-success btn-sm f16 ' + (config.code ? '' : 'disabled') + '" style="width: 200px; height: 40px;">' + (config.code ? '提交' : '暂无抵扣劵') + '</button>');
-                _button.click(function(ev) {
-                    if (!config.code) {
-                        layer.msg('无可用优惠券');
-                        return false;
-                    }
-                    bt.soft.pro.create_order_voucher(config.pid, config.code, function(rdata) {
-                        layer.closeAll();
-                        bt.set_cookie('force', 1);
-                        if (soft) soft.flush_cache();
-                        bt.msg(rdata);
-                    });
-                });
-                $('#libPay-pay').empty().append(_html.append(_button));
-                break;
-        }
-    },
-    // 产品购买，渲染方法
-    product_pay_swicth: function(type, config) {
-        var _html = '',
-            that = this;
-        switch (type) {
-            case 'type': // 产品类型（配置参数）
-                _html = $('<ul class="li-c-item"></ul>');
-                this.each(config, function(index, item) {
-                    _html.append($('<li class="pay-cycle-btn auto ' + (item.active ? 'active' : '') + '">' +
-                        (item.recommend ? '<span class="recommend-pay-icon"></span>' : '') +
-                        '<span class="item-name pull-left">' + item.title + '</span>' +
-                        '</li>').data(item).click(function(ev) {
-                        var data = $(this).data();
-                        if (!$(this).hasClass('active')) that.product_pay_page_refresh($.extend({ condition: 1 }, data));
-                        $(this).addClass('active').siblings().removeClass('active');
-                        $('.pro-tips').html(data.ps)
-                    }));
-                });
-                break;
-            case 'payment': // 产品付款方式
-                _html = $('<ul class="pay-btn-group"></ul>');
-                this.each(config.data, function(index, item) {
-                    _html.append($('<li class="pay-cycle-btn ' + (item.active ? 'active' : '') + '" data-condition="' + item.condition + '"><span>' + item.title + '</span></li>').data($.extend({ pid: config.pid, name: config.name }, item)).click(function(ev) {
-                        var data = $(this).data();
-                        if (!$(this).hasClass('active')) that.product_pay_page_refresh($.extend({ condition: $(this).attr('data-condition') }, data));
-                        $(this).addClass('active').siblings().removeClass('active');
-                    }));
-                });
-                break;
-            case 'time': // 产品开通时长（配置参数）
-                _html = $('<ul class="pay-btn-group"></ul>');
-                this.each(config.data, function(index, item) {
-                    _html.append($('<li class="pay-cycle-btn ' + (item.active ? 'active' : '') + '"><span>' + that.pro.conver_unit(item.cycle + '') + '</span>' + (item.discount != 1 ? '<em>' + (item.discount * 10).toFixed(1) + '折</em>' : '') + '</li>').data($.extend({ pid: config.pid, dom_index: index }, item)).click(function(ev) {
-                        var data = $(this).data();
-                        if (!$(this).hasClass('active')) that.product_pay_page_refresh($.extend({ condition: 5 }, data));
-                        $(this).addClass('active').siblings().removeClass('active');
-                    }));
-                });
-                break;
-            case 'voucher': // 产品抵扣卷（配置参数）
-                _html = $('<ul class="pay-btn-group"></ul>');
-                this.each(config.data, function(index, item) {
-                    _html.append($('<li class="pay-cycle-btn ' + (item.active ? 'active' : '') + '"><span>' + (item.unit == 'month' && item.cycle == 999 ? '永久' : (item.cycle + that.pro.conver_unit(item.unit))) + '</span></li>').data($.extend({ pid: config.pid }, item)).click(function(ev) {
-                        var data = $(this).data();
-                        $(this).addClass('active').siblings().removeClass('active');
-                        that.product_pay_page_refresh($.extend({ condition: 6 }, data));
-                    }));
-                });
-                break;
-            case 'wechat':
-            case 'alipay':
-                _html = $('<div class="lib-price-box text-center">' +
-                    '<span class="lib-price-name f14"><b>总计</b></span>' +
-                    '<span class="price-txt"><b class="sale-price">' + (config.price).toFixed(2) + '</b>元</span>' +
-                    '<s class="cost-price" style="display: ' + (config.sprice > config.price ? 'inline-block' : 'none') + ';">' + (config.sprice).toFixed(2) + '元</s></div>' +
-                    '<div class="lib-price-box text-center">' +
-                    '<div class="paymethod"><div class="pay-wx" id="PayQcode"></div>' +
-                    '<div class="pay-wx-info f16 text-center"><span class="wx-pay-ico mr5 ' + type + '"></span><span>' + (type == 'wechat' ? '微信' : '支付宝') + '扫码支付</span></div></div></div>');
-                $(_html).find('#PayQcode').qrcode(config.data);
-                $('.libPay-mask').hide();
-                that.product_pay_monitor({ pid: config.pid, name: config.name });
-                break;
-        }
-        return _html;
     },
     // 支付状态监听
     product_pay_monitor: function(config) {
@@ -3990,11 +4015,13 @@ bt.soft = {
             intervalFun();
         }, 2500);
     },
+
     updata_ltd: function(is_alone) {
         var param = { name: '宝塔面板企业版', pid: 100000032, limit: 'ltd' };
         if (is_alone || false) $.extend(param, { source: 5, is_alone: true });
         bt.soft.product_pay_view(param);
     },
+
     updata_pro: function() {
         bt.soft.product_pay_view({ name: '', pid: '', limit: 'pro' });
     },
@@ -4436,34 +4463,91 @@ bt.soft = {
                 var SelectVersion = '';
                 for (var i = 0; i < rdata.versions.length; i++) {
                     var item = rdata.versions[i];
-                    SelectVersion += '<option>' + name + ' ' + item.m_version + '</option>';
+                    var beta = item.beta == 1?' Beta':' Stable';
+                    SelectVersion += '<option  data-m_version="'+ item.m_version +'" data-version="'+ item.version +'">' + item.m_version + '.' + item.version + beta +  '</option>';
                 }
-                var loadOpen = bt.open({
+                bt.open({
                     type: 1,
-                    title: name + lan.soft.install_title,
+                    title: '【' + rdata.title + '】' + lan.soft.install_title,
                     area: '350px',
-                    content: "<div class='bt-form pd20 pb70 c6'>\
-						<div class='version line'>" + lan.soft.install_version + "：<select id='SelectVersion' class='bt-input-text' style='margin-left:30px'>" + SelectVersion + "</select></div>\
-                        <div class='bt-form-submit-btn'>\
-							<button type='button' class='btn btn-danger btn-sm btn-title' onclick='layer.closeAll()'>" + lan.public.close + "</button>\
-					        <button type='button' id='bi-btn' class='btn btn-success btn-sm btn-title bi-btn'>" + lan.public.submit + "</button>\
-				        </div>\
-				    </div>"
+                    btn:['安装','取消'],
+                    content: "<div class='bt-form pd20 c6'>\
+						<div class='version line'>" + lan.soft.install_version + "：<select id='SelectVersion' class='bt-input-text' style='margin-left:30px;width:200px;'>" + SelectVersion + "</select></div>\
+				    </div>",
+                    yes:function(indexs,layers){
+                        var data = $("#SelectVersion").find('option:checked').data()
+                        _this.install_soft(rdata, data.m_version,data.version, 0, that);
+                    }
                 })
-                $("#bi-btn").click(function() {
-                    loadOpen.close();
-                    var info = $("#SelectVersion").val().toLowerCase();
-                    name = info.split(" ")[0];
-                    version = info.split(" ")[1];
-                    _this.install_soft(rdata, version, 0, that);
-                });
             } else {
-                _this.install_soft(rdata, rdata.versions[0].m_version, 0, that);
+                _this.install_soft(rdata, rdata.versions[0].m_version,rdata.versions[0].version, 0, that);
             }
         })
     },
     is_loop_speed: true,
     is_install: false,
+
+    /**
+     * @description 监听下载进度
+     * @param {object} param 参数
+     * @param {function} callback 回调函数
+     * @param {string} type 判断是否为第一次
+     */
+    monitor_soft_download_speed:function(param,callback,type){
+        var that = this
+        if(!type){
+            layer.open({
+                type: 1,
+                title:false,
+                area: '450px',
+                btn: false,
+                closeBtn: 0,
+                skin: 'soft_download_speed',
+                content: '<div class="message-list" style="padding: 12px 15px;">' +
+                    '<div class="mw-con">' +
+                    '<ul class="waiting-down-list">' +
+                    '<li>' +
+                    '<div class="down-filse-name">' +
+                    '<span class="fname" style="width:80%;" title="">正在下载' + param.name +' '+ param.version + '.' +param.min_version +'，请稍后...</span>' +
+                    '<span style="width: 20%;display: inline-block;vertical-align: top;text-align: right;" data-name="down_pre">0%</span></div>' +
+                    '<div class="down-progress">' +
+                    '<div class="done-progress" data-name="progress" style="width:0%"></div></div>' +
+                    '<div class="down-info"><span class="total-size" data-name="size">0 KB/0 KB</span><span  class="speed-size" data-name="speed">26.7K/s</span><span style="margin-left: 20px;" data-name="time">预计还要: -- 秒</span></div>' +
+                    '</li>' +
+                    '</ul>' +
+                    '</div>' +
+                    '</div>',
+                success: function (layero,index) {
+                    that.monitor_soft_download_speed(param, callback, true)
+                }
+            })
+        }else{
+            that.get_soft_download_speed(param, function (res) {
+                if($('.soft_download_speed').length === 0) return false
+                if(res.down_pre){
+                    $('[data-name="down_pre"]').text(res.down_pre +' %')
+                    $('[data-name="size"]').text(bt.format_size(res.down_size) +' / '+ bt.format_size(res.total_size))
+                    $('[data-name="speed"]').text(bt.format_size(res.sec_speed)+'/s')
+                    $('[data-name="time"]').text('预计还要:' + res.need_time + '秒')
+                    $('[data-name="progress"]').css({'width': res.down_pre + '%'})
+                }
+                setTimeout(function () {
+                    that.monitor_soft_download_speed(param, callback,true)
+                }, 1000)
+            })
+        }
+
+
+    },
+    /**
+     * @description 获取软件下载进度
+     * @param {function} callback 回调函数
+     */
+    get_soft_download_speed:function(param,callback){
+        bt.send('get_download_speed','plugin/get_download_speed',{plugin_name:param.plugin_name},(res)=>{
+            if(callback) callback(res)
+        })
+    },
     //显示进度
     show_speed: function() {
         bt.send('get_lines', 'ajax/get_lines', {
@@ -4523,30 +4607,320 @@ bt.soft = {
             }
         });
     },
-    install_soft: function(item, version, type, that) { //安装单版本
+    install_soft: function(item, version,min_version, type, that) { //安装单版本
         if (type == undefined) type = 0;
         var loadT = '';
         item.title = bt.replace_all(item.title, '-' + version, '');
         layer.confirm(item.type != 5 ? lan.soft.lib_insatll_confirm.replace('{1}', item.title) : lan.get('install_confirm', [item.title, version]), { title: item.type != 5 ? lan.soft.lib_install : lan.soft.install_title, icon: 0, closeBtn: 2 }, function() {
             layer.closeAll();
-            bt.soft.show_speed_window({ title: '正在安装' + item.title + ',请稍后...', msg: lan.soft.lib_install_the, soft: item, event: that }, function() {
-                if (item.type == 10) loadT = layer.msg('正在获取第三方软件安装信息，请稍后<img src="/static/img/ing.gif">', { icon: 16, time: 0, shade: [0.3, '#000'] });
-                bt.send('install_plugin', 'plugin/install_plugin', { sName: item.name, version: version, type: type }, function(rdata) {
-                    if (rdata.size) {
-                        layer.close(loadT);
-                        bt.soft.install_other(rdata, status);
-                        return;
-                    }
-                    layer.close(bt.soft.loadT);
-                    bt.pub.get_task_count(function(rdata) {
-                        if (rdata > 0 && item.type === 5) messagebox();
-                    });
-                    if (typeof soft != "undefined") soft.get_list();
-                    bt.msg(rdata);
-                })
+            // bt.soft.show_speed_window({ title: '正在安装' + item.title + ',请稍后...', msg: lan.soft.lib_install_the, soft: item, event: that }, function() {
+            if (item.type == 10) loadT = layer.msg('正在获取插件安装信息，请稍后<img src="/static/img/ing.gif">', { icon: 16, time: 0, shade: [0.3, '#000'] });
+            bt.send('install_plugin', 'plugin/install_plugin', { sName: item.name, version: version,min_version:min_version, type: type }, function(rdata) {
+                layer.close($('.soft_download_speed').attr('times'))
+                if (rdata.install_opt){
+                    bt.soft.show_plugin_info(rdata);
+                    return
+                }
+                if (rdata.size) {
+                    layer.close(loadT);
+                    bt.soft.install_other(rdata, status);
+                    return;
+                }
+                layer.close(bt.soft.loadT);
+                bt.pub.get_task_count(function(rdata) {
+                    if (rdata > 0 && item.type === 5) messagebox();
+                });
+                if (typeof soft != "undefined") soft.get_list();
+                bt.msg(rdata);
             })
+
+            bt.soft.monitor_soft_download_speed({plugin_name:item.name,name:item.title,version:version,min_version:min_version})
+            // })
         })
     },
+    /**
+     * 安装插件过程 - 1 显示插件安装信息
+     * @author hwliang<2021-06-23>
+     * @param {object} data
+     * @return void
+     */
+    show_plugin_info: function(data,is_beta){
+        var loadT = null,title = ''
+        if(typeof is_beta === "undefined") is_beta = false
+        layer.closeAll();
+        switch (data.install_opt){
+            case 'i':
+                title = '安装'
+                if(data.update) title = '更新'
+                break;
+            case 'u':
+                title = '更新'
+                break;
+            case 'r':
+                title = '修复'
+                break;
+        }
+        var loadT = bt.load('正在获取插件版本信息，请稍后...');
+        if(data === 'error') return false;
+        bt.send('get_plugin_upgrades','plugin/get_plugin_upgrades',{plugin_name:data.name,show:1},function(rdata) {
+            loadT.close()
+            var info = {};
+            if(is_beta){
+                var last_info = rdata[rdata.length - 1]
+                info = (last_info.beta?last_info:{})
+            }else{
+                info = rdata[0]
+            }
+            layer.open({
+                type: 1,
+                area: "520px",
+                title: "[ " + data.title + " ]" + title + '插件',
+                closeBtn: 2,
+                shift: 5,
+                shadeClose: false,
+                zIndex: 1989101,
+                btn: [title + '插件', '取消'],
+                content: '<style>\
+                        .install-three-plugin{padding:30px 45px;}\
+                        .install-header-title{text-align:center;}\
+                        .install-header-title .install-icon{background: url("/static/layer/skin/default/icon.png") no-repeat;height: 30px;width: 30px;display: inline-block;vertical-align: middle;}\
+                        .install-header-title .install-tips{display: inline-block;height: 30px;line-height: 30px;font-size: 17px;vertical-align: middle;padding-left: 10px;color: #333;}\
+                        .install-header-title .install-tips span{display: inline-block;max-width: 155px;text-overflow: ellipsis;white-space: pre;overflow: hidden;vertical-align: bottom;}\
+                        .plugin-title{height: 40px;line-height: 20px;padding:10px;color: #444;margin: 5px 0;}\
+                        .plugin-title .item {display: inline-block;margin-right: 25px;font-size: 13px;font-weight: 600;}\
+                        .plugin-title .item:nth-child(1){float:left}\
+                        .plugin-title .item:nth-child(2){float:right;margin-right: 0;}\
+                        .plugin-user-info .plugin-info-title{color: #666;font-weight: 600;font-size: 12px;margin-bottom: 5px}\
+                        .plugin-user-info .plugin-info-content{font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;color: #888;padding: 0;background: transparent;border: none;font-size: 12.5px;margin-bottom: 10px;line-height: 20px}\
+                        .historicVersion{display: inline-block;width: 100%;text-align: center;color: #20a53a;height: 30px;line-height: 20px;margin-top: 15px;padding: 5px 0;border-top: 1px solid #ececec;cursor: pointer;}\
+                        .plugin-user-info {padding: 20px 20px 0 20px;line-height: 25px;background: #f5f6fa;border-radius: 2px;border: 1px solid #efefef;font-size: 12.4px;}\
+                        .btn-content{text-align: center;margin-top: 25px;}\
+                        .checkbox-btn{cursor: pointer}\
+                        .install-plugin{width: 240px;height: 38px;margin-top:10px;}\
+                        .item_list{margin-left:150px;border-left:5px solid #e1e1e1;position:relative;padding:5px 0 0 2px}\
+                        .item_list:first-child .index_acive::before{content: "";display: inline-block;position: absolute;top: -22px;left: 5px;height: 22px;width: 5px;background: #fff;z-index: 998}\
+                        .index_title{border-bottom:1px solid #ececec;margin-bottom:5px;font-size:12px;color:#20a53a;padding: 7px 0 5px 15px;margin-top:7px;margin-left:5px;}\
+                        .index_conter{line-height:25px;font-size:12px;min-height:40px;padding-left:20px;color:#888}\
+                        .index_date{position:absolute;left:-140px;top:20px;font-size:12px;color:#333}\
+                        .index_acive{width:15px;height:15px;background-color:#20a53a;display:block;border-radius:50%;position:absolute;left:-10px;top:21px;z-index: 999}\
+                        .index_acive::after{position:relative;display:block;content:"";height:5px;width:5px;display:block;border-radius:50%;background-color:#fff;top:5px;left:5px}\
+                        .bt-form-conter> span{text-align: center;width: 100%;display: inline-block;padding: 15px;font-size: 16px;}\
+                    </style>\
+                    <div class="bt-form c7 install-three-plugin">\
+                        <div class="install-header-title"><span class="install-icon"></span><span class="install-tips">' + title + '【<span title="' + data.title + '">' + data.title + '</span>】插件，是否继续？</span></div>\
+                        <div class="plugin-title"><div class="item"><span>最新版本：</span><span style="color:#20A53a;">' + data.title + 'v' + info.m_version +'.'+ info.version  + '</span></div><div class="item"><span>文件大小：</span><span>' + bt.format_size(data.size, true) + '</span></div></div>\
+                        <div class="plugin-user-info">\
+                           <div class="plugin-info-title">插件详情：</div>\
+                           <div class="plugin-info-content">' + data.ps + '</div>\
+                           <div class="plugin-info-title">更新内容( V' + info.m_version +'.'+ info.version + ' )：</div>\
+                           <pre class="plugin-info-content" style="margin-bottom: 0">' + (info.update_msg || '无') + '</pre>\
+                           <div class="historicVersion"><span  class="mr5">历史版本</span><span class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span></div>\
+                        </div>\
+                        <div class="divtable bt_table mtb20 ">\
+                            <table class="table table-hover ' + (JSON.stringify(data.dependnet) === '{}' ? 'hide' : '') + '">\
+                                <thead><tr><th>依赖软件</th><th>安装状态</th><th style="text-align: right;">操作</th></tr></thead>\
+                                <tbody>' +
+                    (function () {
+                        var html = '';
+                        for (var dataKey in data.dependnet) {
+                            var item = data.dependnet[dataKey]
+                            html += '<tr><td>' + dataKey + '</td><td>' + (item ? '<span style="color:#20a532"><span class="glyphicon glyphicon-ok mr5"></span><span>已安装</span></span>' : '<span style="color:#FF9C00"><span class="glyphicon glyphicon-remove mr5"></span><span>未安装</span></span>') + '</td><td style="text-align: right;">' + (item ? '--' : '<a href="javascript:;" class="btlink">立即安装</a>') + '</td><tr>'
+                        }
+                        return html;
+                    }())
+                    + '</tbody></table>' + (false ? ('<div style="margin: 15px 5px">' + '<div class="checkbox-btn"><i class="cust—checkbox cursor-pointer checkbox-btn-safety mr10"></i><span style="font-weight: 500;color:red">当前操作存在安全风险，请点击进行二次确认后，继续操作？</span></div></div>') : '') + '</div>\
+                    <ul class="help-info-text c7">\
+                        <li >插件来源【' + data.author + '】，网址 <a href="' + data.home + '" target="_blank" class="btlink" style="text-decoration: revert;">' + data.home + '</a></li>\
+                        <li>如果已存在此插件，文件将被替换！</li>\
+                        <li style="color:red" class="' + (JSON.stringify(data.dependnet) === '{}' ? 'hide' : '') + '">请手动按照插件依赖环境，如果未安装，将无法正常使用该插件</li>\
+                        <li style="color:red" class="' + ((data.update) && data.name === 'mysql' ? '' : 'hide') + '">更新数据库有风险,建议在更新前,先备份您的数据库！</li>\
+                        <li style="color:red" class="' + (!data.update ? 'hide' : '') + '">更新过程可能会导致服务中断,请须知</li>\
+                        <li style="color:red" class="' + (!data.update ? 'hide' : '') + '">建议您在服务器负载闲时进行软件更新</li></li>\
+                        <li class="' + (data.update ? 'hide' : '') + '">安装过程可能需要几分钟时间，请耐心等候!</li>\
+                    </ul>\
+                </div>',
+                success: function (layers, indexs) {
+                    $('.historicVersion').on('click', function () {
+                        bt.send('get_plugin_upgrades', 'plugin/get_plugin_upgrades', {plugin_name: data.name}, function (res) {
+                            layer.open({
+                                type: 1,
+                                area: ["520px", '400px'],
+                                title: (data.title + " -更新日志"),
+                                closeBtn: 2,
+                                shift: 5,
+                                shadeClose: false,
+                                zIndex: 1989101,
+                                content: '<div class="bt-form-conter pd20">' +
+                                    '<div class="item_box" style="height:315px;overflow: auto;">' +
+                                    (function () {
+                                        var html = '';
+                                        for (var i = 0; i < res.length; i++) {
+                                            var item = res[i];
+                                            html += '<div class="item_list">' +
+                                                '<span class="index_acive"></span>' +
+                                                '<div class="index_date">' + bt.format_data(item.update_time) + '</div>' +
+                                                '<div class="index_title">' + data.title + item.m_version + '.' + item.version + '- ' + (item.beta ? '测试版' : '正式版') + '</div>' +
+                                                '<div class="index_conter">' + (item.update_msg.replace(/\n/g,'</br>') || '无') + '</div>' +
+                                                '</div>'
+                                        }
+                                        return html
+                                    }())
+                                    + '</div>' +
+                                    '</div>'
+                            })
+                        })
+                    })
+                    console.log(data)
+                },
+                yes: function (indexs) {
+                    if (data.author !== '宝塔' || data.update) {
+                        bt.show_confirm('安全验证', '<span style="color:red">' + (data.author !== '宝塔' ? '更新过程可能会导致服务中断,是否继续升级？<br>建议您在服务器负载闲时进行软件更新' : '安装第三方插件存在一定的安全风险，是否继续安装？') + '</span>', function () {
+                            bt.soft.input_package(data.name, data.tmp_path, data);
+                        })
+                        return false
+                    }
+                    bt.soft.input_package(data.name, data.tmp_path, data);
+                },
+                end:function(){
+                    bt.send('close_install','plugin/close_install',{plugin_name: data.name},function(rdata){
+                        console.log(rdata)
+                    })
+                }
+            });
+        });
+        if(data.force_message !== '' && typeof data.force_message != "undefined"){
+            layer.open({
+                type:1,
+                area:'400px',
+                title:'提示内容',
+                closeBtn: false,
+                shift: 5,
+                btn:['确认','取消'],
+                content:'<div class="bt-form webDelete pd20">' +
+                    '<p style="font-size:13px;word-break: break-all;margin-bottom: 15px;padding:5px;"><span style="color:red;font-size:14px;">'+ data.force_message +'</span></p>' +
+                    '<div class="vcode" style="padding: 4px 50px;height: auto;line-height: 40px;">计算结果：<span class="text"></span>=<input type="number" id="vsResult" value="" style="height: 30px;padding-left: 10px;width: 60px;border: 1px solid #888;border-radius: 2px;outline: none;"></div>' +
+                    '</div>',
+                success:function(layers,indexs){
+                    var num1 = bt.get_random_num(1,9),num2 = bt.get_random_num(1,9),vsResult = $('#vsResult');
+                    if(num1 === num2) num2 = num1 + 1
+                    $('.vcode .text').text(num1 + ' + ' + num2);
+                    vsResult.data('value',num1 + num2);
+                    vsResult.on('keyup',function(event){
+                        if (event.keyCode === 13) {
+                            var data = $(this).data()
+                            if (parseInt($(this).val()) !== data.value) {
+                                layer.msg('计算结果错误，请重新计算！', {icon: 2})
+                            } else {
+                                layer.close(indexs)
+                            }
+                        }
+                    })
+                },
+                yes:function(indexs){
+                    var $vcode = $('#vsResult'),data = $vcode.data()
+                    if(parseInt($vcode.val()) !== data.value){
+                        layer.msg('计算结果错误，请重新计算！',{icon:2})
+                    }else{
+                        layer.close(indexs)
+                    }
+                },
+                btn2:function(indexs){
+                    layer.closeAll()
+                }
+            })
+        }
+    },
+
+    /**
+     * @description 插件管理
+     */
+    plugin_toolbox_info:function(name,title,version,is_beta){
+        var loadT = bt.load('获取插件信息，请稍后...')
+        console.log(name)
+        if(!name) return;
+        bt.send('get_plugin_upgrades','plugin/get_plugin_upgrades',{plugin_name:name,show:1},function(rdata){
+            loadT.close()
+            var info = {},beta = {},tls = {};
+            var last_info = rdata[rdata.length - 1]
+            beta = (last_info.beta?last_info:{});
+            tls = rdata[0];
+            info = is_beta?beta:tls;
+            if(!info){
+                var versions = version.split[0]
+                info = {beta: 2,m_version:version.split[0],update_msg:0,update_time: 0,version:version.split[1]}
+            }
+            console.log()
+            layer.open({
+                type: 1,
+                area: "500px",
+                title: title + "v"+ version +"-修复插件",
+                closeBtn: 2,
+                shift: 5,
+                shadeClose: false,
+                btn: false,
+                content: '<style>' +
+                    '.plugin_toolbox{padding: 35px;}'+
+                    '.plugin_toolbox .alert i{font-style: normal;font-weight: 600;color: red;padding:0 2px;}'+
+                    '.cut_plugin_version{background: #f5f6fa;border-radius: 4px;padding: 20px;margin-bottom: 15px;height: 200px;width: 100%;border: 1px solid #efefef;}'+
+                    '.plugin_title_info{font-weight: 600;height: 25px;}'+
+                    '.plugin_title_info span{color:#666;font-size: 13px;}'+
+                    '.plugin_title_info>span:nth-child(1) span{color:#20a53a;}'+
+                    '.plugin_title_info>span:nth-child(1){font-weight: 600;float: left;}'+
+                    '.plugin_title_info span:nth-child(2){font-weight: 600;float: right;}'+
+                    '.plugin_content_info{font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;color: #888;clear: both;padding: 0;font-size: 13px;color: #555;border: 0;background: none;margin-top: 15px;}'+
+                    '.plugin_content_info{margin: 0 auto;height: 140px;line-height:24px}'+
+                    '.cutPlugin{height: 38px;width:180px;}'+
+                    '</style>' +
+                    '<div class="plugin_toolbox">' +
+                    '<div class="alert alert-success" role="alert"><span>提示：如果当前插件<i>出现异常错误</i>或<i>无法使用</i>，请尝试点击</span><button class="btn btn-success btn-xs ml5 repairPlugin">修复插件</button></div>' +
+                    (JSON.stringify(beta) === '{}' || is_beta?'':'<div class="cut_plugin_version "><div class="plugin_title_info '+ (info.beta === 2?'hide':'') +'"><span>最新'+ (!is_beta?'测试版':'正式版') +'：<span>'+  title + 'v' + info.m_version +'.'+ info.version +'</span></span><span>更新时间：'+ bt.format_data(info.update_time,'yyyy-MM-dd') +'</span></div><pre class="plugin_content_info">'+ (info.beta === 2?'无版本信息':info.update_msg) +'</pre></div>'+
+                        '<div class="text-center"><button class="btn btn-success btn-xs '+ (info.beta === 2?'hide':'') +' cutPlugin">切换'+ (!is_beta?'测试版':'正式版') +'</button></div>')+
+                    '</div>',
+                success:function(layers,indexs){
+                    console.log(info)
+                    $('.repairPlugin').click(function(){
+                        var loadT = bt.load('正在修复插件，请稍后...'),versions = version.split('.')
+                        bt.send('repair_plugin','plugin/repair_plugin',{version:info.m_version,min_version:info.version,plugin_name:name},function(res){
+                            layer.close(indexs)
+                            loadT.close()
+                            bt.soft.show_plugin_info(res,is_beta)
+                        })
+                    })
+                    $('.cutPlugin').click(function(){
+                        var loadT = bt.load('正在切换'+ (!is_beta?'测试版':'正式版') +'，请稍后...')
+                        info = !is_beta?beta:tls
+                        bt.send('upgrade_plugin','plugin/upgrade_plugin',{version:info.m_version,min_version:info.version,plugin_name:name},function(res){
+                            layer.close(indexs)
+                            loadT.close()
+                            bt.soft.show_plugin_info(res,!is_beta)
+                        })
+                    })
+                }
+            });
+        })
+    },
+
+
+    /**
+     * 安装插件过程 - 2 导入到面板
+     * @author hwliang<2021-06-23>
+     * @param {string} plugin_name 插件名称
+     * @param {string} tmp_path  临时路径
+     * @param {object} data 插件信息
+     * @return void
+     */
+    input_package:function(plugin_name,tmp_path,data){
+        bt.soft.show_speed_window({title:'正在安装【'+data.title+'】，可能需要几分钟时间，请耐心等候!',status:true},function(){
+            $.post('/plugin?action=input_package', { plugin_name: plugin_name, tmp_path: tmp_path,install_opt: data.install_opt }, function (rdata) {
+                layer.closeAll()
+                if (rdata.status) {
+                    soft.get_list();
+                }
+                setTimeout(function () { layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 }) }, 1000);
+            });
+        });
+    },
+
     install_other: function(data) {
         layer.closeAll();
         var loadT = layer.open({
@@ -4560,7 +4934,7 @@ bt.soft = {
             content: '<style>\
                         .install_three_plugin{padding:25px;}\
                         .plugin_user_info p { font-size: 14px;}\
-                        .plugin_user_info {padding: 15px 30px;line-height: 26px;background: #f5f6fa;border-radius: 5px;border: 1px solid #efefef;}\
+                        .plugin_user_info {padding: 25px;line-height: 26px;background: #f5f6fa;border-radius: 5px;border: 1px solid #efefef;}\
                         .btn-content{text-align: center;margin-top: 25px;}\
                     </style>\
                     <div class="bt-form c7  install_three_plugin pb70">\
@@ -4583,25 +4957,43 @@ bt.soft = {
     },
     update_soft: function(name, title, version, min_version, update_msg, type) {
         var _this = this;
+        if(type !== 5){
+            _this.update_soft_request(name,version,min_version,version)
+            return false;
+        }
         var msg = "<li style='color:red;'>建议您在服务器负载闲时进行软件更新.</li>";
-        if (name == 'mysql') msg = "<ul style='color:red;'><li>更新数据库有风险,建议在更新前,先备份您的数据库.</li><li>如果您的是云服务器,强烈建议您在更新前做一个快照.</li><li>建议您在服务器负载闲时进行软件更新.</li></ul>";
+        if (name === 'mysql') msg = "<ul style='color:red;'><li>更新数据库有风险,建议在更新前,先备份您的数据库.</li><li>如果您的是云服务器,强烈建议您在更新前做一个快照.</li><li>建议您在服务器负载闲时进行软件更新.</li></ul>";
         if (update_msg) msg += '<div style="    margin-top: 10px;"><span style="font-size: 14px;font-weight: 900;">本次更新说明: </span><hr style="margin-top: 5px; margin-bottom: 5px;" /><pre>' + update_msg.replace(/(_bt_)/g, "\n") + '</pre><hr style="margin-top: -5px; margin-bottom: -5px;" /></div>';
         bt.show_confirm('更新[' + title + ']', '更新过程可能会导致服务中断,您真的现在就将[' + title + ']更新到[' + version + '.' + min_version + ']吗?', function() {
             bt.soft.show_speed_window({ title: '正在更新到[' + title + '-' + version + '.' + min_version + '],请稍候...', status: true, soft: { type: parseInt(type) } }, function() {
-                bt.send('install_plugin', 'plugin/install_plugin', { sName: name, version: version, upgrade: version }, function(rdata) {
-                    if (rdata.size) {
-                        _this.install_other(rdata)
-                        return;
-                    }
-                    layer.close(bt.soft.loadT);
-                    bt.pub.get_task_count(function(rdata) {
-                        if (rdata > 0 && item.type === 5) messagebox();
-                    });
-                    if (typeof soft != "undefined") soft.get_list();
-                    bt.msg(rdata);
-                })
+                _this.update_soft_request(name,version,min_version)
             })
         }, msg);
+    },
+    /**
+     * @description 更新插件请求
+     * @param {string} name 插件名称
+     * @param {number} version 插件版本
+     * @param {number} min_version 插件子版本
+     */
+    update_soft_request:function(name,version,min_version){
+        var _this = this;
+        bt.send('install_plugin', 'plugin/install_plugin', { sName: name, version: version,min_version:min_version, upgrade: version }, function(rdata) {
+            if (rdata.install_opt){
+                _this.show_plugin_info($.extend(true,{},rdata,{update:true}));
+                return
+            }
+            if (rdata.size) {
+                _this.install_other(rdata);
+                return;
+            }
+            layer.close(bt.soft.loadT);
+            bt.pub.get_task_count(function(rdata) {
+                if (rdata > 0 && item.type === 5) messagebox();
+            });
+            if (typeof soft != "undefined") soft.get_list();
+            bt.msg(rdata);
+        })
     },
     un_install: function(name) {
         var _this = this;
@@ -4615,7 +5007,7 @@ bt.soft = {
                 }
             }
             var title = bt.replace_all(item.title, '-' + version, '');
-            bt.confirm({ msg: lan.soft.uninstall_confirm.replace('{1}', title).replace('{2}', version), title: lan.soft.uninstall, icon: 3, closeBtn: 2 }, function() {
+            bt.confirm({ msg: lan.soft.uninstall_confirm.replace('{1}', title).replace('{2}', item.version), title: lan.soft.uninstall, icon: 3, closeBtn: 2 }, function() {
                 var loadT = bt.load(lan.soft.lib_uninstall_the);
                 bt.send('uninstall_plugin', 'plugin/uninstall_plugin', { sName: name, version: version }, function(rdata) {
                     loadT.close();
@@ -4670,46 +5062,51 @@ bt.soft = {
         }
         return fileName
     },
-    set_lib_config: function(name, title) {
+    set_lib_config: function(name, title,version) {
         var loadT = bt.load(lan.soft.menu_temp);
-        bt.send('getConfigHtml', 'plugin/getConfigHtml', { name: name }, function(rhtml) {
-            loadT.close();
-            if (rhtml.status === false) {
-                if (name == "phpguard") {
-                    layer.msg(lan.soft.menu_phpsafe, { icon: 1 })
-                } else {
-                    layer.msg(rhtml.msg, { icon: 2 });
-                }
-                return;
-            }
-            bt.open({
-                type: 1,
-                shift: 5,
-                offset: '20%',
-                closeBtn: 2,
-                area: '700px',
-                title: '' + title,
-                content: rhtml.replace('"javascript/text"', '"text/javascript"'),
-                success: function() {
-                    if (rhtml.indexOf('CodeMirror') != -1) {
-                        loadLink(['/static/codemirror/lib/codemirror.css']);
-                        loadScript(['/static/codemirror/lib/codemirror.js', '/static/codemirror/addon/edit/editAll.js', '/static/codemirror/mode/modeAll.js', '/static/codemirror/addon/dialog/dialog.js', '/static/codemirror/addon/search/search.js', '/static/codemirror/addon/scroll/annotatescrollbar.js']);
+        $.ajax({
+            url: '/plugin?action=getConfigHtml',
+            data: {name: name,version:version},
+            type: 'get',
+            success: function(rhtml) {
+                loadT.close();
+                if (rhtml.status === false) {
+                    if (name == "phpguard") {
+                        layer.msg(lan.soft.menu_phpsafe, { icon: 1 })
+                    } else {
+                        layer.msg(rhtml.msg, { icon: 2 });
                     }
+                    return;
                 }
-            });
-            /*rtmp = rhtml.split('<script type="javascript/text">')
-            if (rtmp.length < 2) {
-                rtmp = rhtml.split('<script type="text/javascript">')
+                bt.open({
+                    type: 1,
+                    shift: 5,
+                    offset: '20%',
+                    closeBtn: 2,
+                    area: '700px',
+                    title: '' + title,
+                    content: rhtml.replace('"javascript/text"', '"text/javascript"'),
+                    success: function() {
+                        if (rhtml.indexOf('CodeMirror') != -1) {
+                            loadLink(['/static/codemirror/lib/codemirror.css']);
+                            loadScript(['/static/codemirror/lib/codemirror.js', '/static/codemirror/addon/edit/editAll.js', '/static/codemirror/mode/modeAll.js', '/static/codemirror/addon/dialog/dialog.js', '/static/codemirror/addon/search/search.js', '/static/codemirror/addon/scroll/annotatescrollbar.js']);
+                        }
+                    }
+                });
+                /*rtmp = rhtml.split('<script type="javascript/text">')
+                if (rtmp.length < 2) {
+                    rtmp = rhtml.split('<script type="text/javascript">')
+                }
+                rcode = rtmp[1].replace('</script>','');
+                setTimeout(function(){
+                    if(!!(window.attachEvent && !window.opera)){
+                        execScript(rcode);
+                    }else{
+                        window.eval(rcode);
+                    }
+                },200)*/
             }
-            rcode = rtmp[1].replace('</script>','');
-			setTimeout(function(){
-				if(!!(window.attachEvent && !window.opera)){ 
-                    execScript(rcode); 
-				}else{
-                    window.eval(rcode);
-				}
-			},200)*/
-        });
+        })
     },
     save_config: function(fileName, data) {
         var encoding = 'utf-8';
@@ -5666,29 +6063,29 @@ bt.data = {
             title: lan.database.add_title,
             area: '530px',
             list: [{
-                    title: '数据库名',
-                    items: [{
-                            name: 'name',
-                            placeholder: '新的数据库名称',
-                            type: 'text',
-                            width: '65%',
-                            callback: function(obj) {
-                                $('input[name="db_user"]').val(obj.val());
-                            }
-                        },
-                        {
-                            name: 'codeing',
-                            type: 'select',
-                            width: '27%',
-                            items: [
-                                { title: 'utf-8', value: 'utf8' },
-                                { title: 'utf8mb4', value: 'utf8mb4' },
-                                { title: 'gbk', value: 'gbk' },
-                                { title: 'big5', value: 'big5' },
-                            ]
-                        }
-                    ]
+                title: '数据库名',
+                items: [{
+                    name: 'name',
+                    placeholder: '新的数据库名称',
+                    type: 'text',
+                    width: '65%',
+                    callback: function(obj) {
+                        $('input[name="db_user"]').val(obj.val());
+                    }
                 },
+                    {
+                        name: 'codeing',
+                        type: 'select',
+                        width: '27%',
+                        items: [
+                            { title: 'utf-8', value: 'utf8' },
+                            { title: 'utf8mb4', value: 'utf8mb4' },
+                            { title: 'gbk', value: 'gbk' },
+                            { title: 'big5', value: 'big5' },
+                        ]
+                    }
+                ]
+            },
                 { title: '用户名', name: 'db_user', placeholder: '数据库用户', width: '65%' },
                 bt.form.item.password,
                 {
@@ -5782,39 +6179,39 @@ bt.data = {
             title: lan.site.site_add,
             area: '640px',
             list: [{
-                    title: '域名',
-                    name: 'webname',
-                    items: [{
-                        type: 'textarea',
-                        width: '458px',
-                        callback: function(obj) {
-                            var array = obj.val().split("\n");
-                            var ress = array[0].split(":")[0];
-                            var res = bt.strim(ress.replace(new RegExp(/([-.])/g), '_'));
-                            var ftp_user = res;
-                            var data_user = res;
-                            if (!isNaN(res.substr(0, 1))) {
-                                ftp_user = 'ftp_' + ftp_user;
-                                data_user = 'sql_' + data_user;
-                            }
-                            if (data_user.length > 16) data_user = data_user.substr(0, 16)
-                            obj.data('ftp', ftp_user);
-                            obj.data('database', data_user);
+                title: '域名',
+                name: 'webname',
+                items: [{
+                    type: 'textarea',
+                    width: '458px',
+                    callback: function(obj) {
+                        var array = obj.val().split("\n");
+                        var ress = array[0].split(":")[0];
+                        var res = bt.strim(ress.replace(new RegExp(/([-.])/g), '_'));
+                        var ftp_user = res;
+                        var data_user = res;
+                        if (!isNaN(res.substr(0, 1))) {
+                            ftp_user = 'ftp_' + ftp_user;
+                            data_user = 'sql_' + data_user;
+                        }
+                        if (data_user.length > 16) data_user = data_user.substr(0, 16)
+                        obj.data('ftp', ftp_user);
+                        obj.data('database', data_user);
 
-                            $('.ftp_username').val(ftp_user);
-                            $('.datauser').val(data_user);
+                        $('.ftp_username').val(ftp_user);
+                        $('.datauser').val(data_user);
 
-                            var _form = obj.parents('div.bt-form');
-                            var _path_obj = _form.find('input[name="path"]');
-                            var path = _path_obj.val();
-                            var defaultPath = $('#defaultPath').text();
-                            var dPath = bt.rtrim(defaultPath, '/');
-                            if (path.substr(0, dPath.length) == dPath) _path_obj.val(dPath + '/' + ress);
-                            _form.find('input[name="ps"]').val(ress);
-                        },
-                        placeholder: '每行填写一个域名，默认为80端口<br>泛解析添加方法 *.domain.com<br>如另加端口格式为 www.domain.com:88'
-                    }]
-                },
+                        var _form = obj.parents('div.bt-form');
+                        var _path_obj = _form.find('input[name="path"]');
+                        var path = _path_obj.val();
+                        var defaultPath = $('#defaultPath').text();
+                        var dPath = bt.rtrim(defaultPath, '/');
+                        if (path.substr(0, dPath.length) == dPath) _path_obj.val(dPath + '/' + ress);
+                        _form.find('input[name="ps"]').val(ress);
+                    },
+                    placeholder: '每行填写一个域名，默认为80端口<br>泛解析添加方法 *.domain.com<br>如另加端口格式为 www.domain.com:88'
+                }]
+            },
                 { title: '备注', name: 'ps', placeholder: '网站备注' },
                 {
                     title: '根目录',
@@ -5856,37 +6253,37 @@ bt.data = {
                 {
                     title: '数据库',
                     items: [{
-                            name: 'sql',
-                            type: 'select',
-                            items: [
-                                { value: 'false', title: '不创建' },
-                                { value: 'MySQL', title: 'MySQL' },
-                                { value: 'SQLServer', title: 'SQLServer' }
-                            ],
-                            callback: function(obj) {
-                                var subid = obj.attr('name') + '_subid';
-                                $('#' + subid).remove();
-                                if (obj.val() != 'false') {
-                                    if (bt.os == 'Linux' && obj.val() == 'SQLServer') {
-                                        obj.val('false');
-                                        bt.msg({ msg: 'Linux暂不支持SQLServer!', icon: 2 });
-                                        return;
-                                    }
-                                    var _bs = obj.parents('div.bt-form').attr('data-id');
-                                    var data_user = $('textarea[name="webname"]').data('database');
-                                    var item = {
-                                        title: '数据库设置',
-                                        items: [
-                                            { name: 'datauser', title: '用户名', width: '173px', value: data_user },
-                                            { name: 'datapassword', title: '密码', width: '173px', value: bt.get_random(16) }
-                                        ],
-                                        ps: '创建站点的同时，为站点创建一个对应的数据库帐户，方便不同站点使用不同数据库。'
-                                    }
-                                    var _tr = bt.render_form_line(item)
-                                    obj.parents('div.line').append('<div class="line" id=' + subid + '>' + _tr.html + '</div>');
+                        name: 'sql',
+                        type: 'select',
+                        items: [
+                            { value: 'false', title: '不创建' },
+                            { value: 'MySQL', title: 'MySQL' },
+                            { value: 'SQLServer', title: 'SQLServer' }
+                        ],
+                        callback: function(obj) {
+                            var subid = obj.attr('name') + '_subid';
+                            $('#' + subid).remove();
+                            if (obj.val() != 'false') {
+                                if (bt.os == 'Linux' && obj.val() == 'SQLServer') {
+                                    obj.val('false');
+                                    bt.msg({ msg: 'Linux暂不支持SQLServer!', icon: 2 });
+                                    return;
                                 }
+                                var _bs = obj.parents('div.bt-form').attr('data-id');
+                                var data_user = $('textarea[name="webname"]').data('database');
+                                var item = {
+                                    title: '数据库设置',
+                                    items: [
+                                        { name: 'datauser', title: '用户名', width: '173px', value: data_user },
+                                        { name: 'datapassword', title: '密码', width: '173px', value: bt.get_random(16) }
+                                    ],
+                                    ps: '创建站点的同时，为站点创建一个对应的数据库帐户，方便不同站点使用不同数据库。'
+                                }
+                                var _tr = bt.render_form_line(item)
+                                obj.parents('div.line').append('<div class="line" id=' + subid + '>' + _tr.html + '</div>');
                             }
-                        },
+                        }
+                    },
                         {
                             name: 'codeing',
                             type: 'select',
@@ -5989,16 +6386,16 @@ bt.data = {
             title: lan.ftp.add_title,
             area: '530px',
             list: [{
-                    title: '用户名',
-                    name: 'ftp_username',
-                    callback: function(obj) {
-                        var defaultPath = $('#defaultPath').text();
-                        var wootPath = bt.rtrim(defaultPath, '/');
-                        if (bt.contains($('input[name="path"]').val(), wootPath)) {
-                            $('input[name="path"]').val(wootPath + '/' + obj.val())
-                        }
+                title: '用户名',
+                name: 'ftp_username',
+                callback: function(obj) {
+                    var defaultPath = $('#defaultPath').text();
+                    var wootPath = bt.rtrim(defaultPath, '/');
+                    if (bt.contains($('input[name="path"]').val(), wootPath)) {
+                        $('input[name="path"]').val(wootPath + '/' + obj.val())
                     }
-                },
+                }
+            },
                 {
                     title: '密码',
                     name: 'ftp_password',

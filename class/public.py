@@ -825,6 +825,8 @@ def getSpeed():
 def downloadFile(url,filename):
     try:
         import requests
+        from requests.packages.urllib3.exceptions import InsecureRequestWarning
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
         res = requests.get(url,verify=False)
         with open(filename,"wb") as f:
             f.write(res.content)
@@ -851,6 +853,80 @@ def get_error_info():
     import traceback
     errorMsg = traceback.format_exc()
     return errorMsg
+
+
+def get_plugin_replace_rules():
+    '''
+        @name 获取插件文件内容替换规则
+        @author hwliang<2021-06-28>
+        @return list
+    '''
+    return [
+        {
+            "find":"[PATH]",
+            "replace": "[PATH]"
+        }
+    ]
+
+
+def get_plugin_title(plugin_name):
+    '''
+        @name 获取插件标题
+        @author hwliang<2021-06-24>
+        @param plugin_name<string> 插件名称
+        @return string
+    '''
+
+    info_file = '/www/server/panel/plugin/{}/info.json'.format(plugin_name)
+    try:
+        return json.loads(readFile(info_file))['title']
+    except:
+        return plugin_name
+
+
+def get_error_object(plugin_title = None,plugin_name = None):
+    '''
+        @name 获取格式化错误响应对像
+        @author hwliang<2021-06-21>
+        @return Resp
+    '''
+    if not plugin_title: plugin_title = get_plugin_title(plugin_name)
+    try:
+        from BTPanel import request,Resp
+        is_cli = False
+    except:
+        is_cli = True
+
+    if is_cli:
+        raise get_error_info()
+    ss = '''404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+
+During handling of the above exception, another exception occurred:'''
+    error_info = get_error_info().strip().split(ss)[-1].strip()
+    request_info = '''REQUEST_DATE: {request_date}
+ REMOTE_ADDR: {remote_addr}
+ REQUEST_URI: {method} {full_path}
+REQUEST_FORM: {request_form}
+  USER_AGENT: {user_agent}'''.format(
+    request_date = getDate(),
+    remote_addr = GetClientIp(),
+    method = request.method,
+    full_path = request.full_path,
+    request_form = request.form.to_dict(),
+    user_agent = request.headers.get('User-Agent')
+)
+
+    result =readFile('/www/server/panel/BTPanel/templates/default/plugin_error.html').format(
+        plugin_name=plugin_title,
+        request_info=request_info,
+        error_title=error_info.split("\n")[-1],
+        error_msg=error_info
+        )
+    return Resp(result,500)
+
+
+
+
 
 def submit_error(err_msg = None):
     try:
@@ -1409,7 +1485,7 @@ def get_path_size(path, exclude=[]):
     """
     import fnmatch
     if not os.path.exists(path): return 0
-    if not os.path.isdir(path): return os.path.getsize(path)
+    if os.path.isfile(path): return os.path.getsize(path)
     if type(exclude) != type([]):
         exclude = [exclude]
 
@@ -1420,7 +1496,13 @@ def get_path_size(path, exclude=[]):
     _exclude = exclude[0:]
     for i, e in enumerate(_exclude):
         if not e.startswith(path):
-            exclude.append(os.path.join(path, e))
+            basename = os.path.basename(path)
+            if not e.startswith(basename):
+                exclude.append(os.path.join(path, e))
+            else:
+                new_exc = e.replace(basename+"/", "")
+                new_exc = os.path.join(path, new_exc)
+                exclude.append(new_exc)
 
     # print(exclude)
     total_size = 0
@@ -3084,3 +3166,135 @@ def check_site_path(site_path):
     for ep in error_paths:
         if site_path.find(ep) == 0: return False
     return True
+
+def is_debug():
+    return os.path.exists('/www/server/panel/data/debug.pl')
+
+
+class PanelError(Exception):
+    '''
+        @name 宝塔通用异常对像
+        @author hwliang<2021-06-25>
+    '''
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return ("面板运行时发生错误: {}".format(repr(self.value)))
+
+
+def get_plugin_find(upgrade_plugin_name = None):
+    '''
+        @name 获取指定软件信息
+        @author hwliang<2021-06-15>
+        @param upgrade_plugin_name<string> 插件名称
+        @return dict
+    '''
+    from pluginAuth import Plugin
+    
+    plugin_list_data = Plugin(False).get_plugin_list()
+
+    for p_data_info in plugin_list_data['list']:
+        if p_data_info['name'] == upgrade_plugin_name: 
+            upgrade_plugin_name = p_data_info['name']
+            return p_data_info
+
+
+def get_plugin_info(upgrade_plugin_name):
+    '''
+        @name 获取插件信息
+        @author hwliang<2021-06-15>
+        @param upgrade_plugin_name<string> 插件名称
+        @return dict
+    '''
+    plugin_path = '/www/server/panel/plugin'
+    plugin_info_file = '{}/{}/info.json'.format(plugin_path,upgrade_plugin_name)
+    if not os.path.exists(plugin_info_file): return {}
+    info_body = readFile(plugin_info_file)
+    if not info_body: return {}
+    plugin_info = json.loads(info_body)
+    return plugin_info
+
+def download_main(upgrade_plugin_name,upgrade_version):
+    '''
+        @name 下载插件主程序文件
+        @author hwliang<2021-06-25>
+        @param upgrade_plugin_name<string> 插件名称
+        @param upgrade_version<string> 插件版本
+        @return void
+    '''
+    import requests,shutil
+    plugin_path = '/www/server/panel/plugin'
+    tmp_path = '/www/server/panel/temp'
+    download_d_main_url = 'https://www.bt.cn/down/download_plugin_main'
+    pdata = get_user_info()
+    pdata['name'] = upgrade_plugin_name
+    pdata['version'] = upgrade_version
+    pdata['os'] = 'Linux'
+    download_res = requests.post(download_d_main_url,pdata,timeout=30)
+    filename = '{}/{}.py'.format(tmp_path,upgrade_plugin_name)
+    with open(filename,'wb+') as save_script_f:
+        save_script_f.write(download_res.content)
+        save_script_f.close()
+    if md5(download_res.content) != download_res.headers['Content-md5']:
+        raise PanelError('插件安装包HASH校验失败')
+    dst_file = '{plugin_path}/{plugin_name}/{plugin_name}_main.py'.format(plugin_path=plugin_path,plugin_name = upgrade_plugin_name)
+    shutil.copyfile(filename,dst_file)
+    if os.path.exists(filename): os.remove(filename)
+    WriteLog('软件管理',"检测到插件[{}]程序文件异常，已尝试自动修复!".format(get_plugin_info(upgrade_plugin_name)['title']))
+
+
+def get_plugin_bin(plugin_save_file,plugin_timeout):
+    list_body = None
+    s_time = time.time()
+    m_time = os.stat(plugin_save_file).st_mtime
+    if s_time - m_time < plugin_timeout:
+        list_body = readFile(plugin_save_file,'rb')
+    return list_body
+
+
+def get_plugin_main_object(plugin_name,sys_path):
+    os_file = sys_path + '/' + plugin_name + '_main.so'
+    php_file = sys_path + '/index.php'
+    is_php = False
+    if os.path.exists(os_file): # 是否为编译后的so文件
+        plugin_obj = __import__(plugin_name + '_main')
+    elif os.path.exists(php_file): # 是否为PHP代码
+        import panelPHP
+        is_php = True
+        plugin_obj = panelPHP.panelPHP(plugin_name)
+    
+    return plugin_obj,is_php
+
+
+def get_plugin_script(plugin_name,plugin_path):
+    # 优先运行py文件
+    plugin_file = '{plugin_path}/{name}/{name}_main.py'.format(plugin_path =plugin_path, name=plugin_name)
+    if not os.path.exists(plugin_file): return '',True
+    plugin_body = readFile(plugin_file,'rb')
+
+    if plugin_body.find(b'import') != -1:
+        return plugin_body,True
+
+    # 无py文件再运行so
+    plugin_file_so = '{plugin_path}/{name}/{name}_main.so'.format(plugin_path =plugin_path, name=plugin_name)
+    if os.path.exists(plugin_file_so): return '',True
+
+    return plugin_body,False
+
+def re_download_main(plugin_name,plugin_path):
+    plugin_file = '{plugin_path}{name}/{name}_main.py'.format(plugin_path =plugin_path, name=plugin_name)
+    version = get_plugin_info(plugin_name)['versions']
+    download_main(plugin_name,version)
+    plugin_body = readFile(plugin_file,'rb')
+    return plugin_body
+
+
+def get_sysbit():
+    '''
+        @name 获取操作系统位数
+        @author hwliang<2021-07-07>
+        @return int 32 or 64
+    '''
+    import struct
+    return struct.calcsize('P') * 8

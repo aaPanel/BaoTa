@@ -90,6 +90,18 @@ class config:
             return public.returnMsg(False, '无信息')
         if not 'port' in qq_mail_info:qq_mail_info['port']=465
         return public.returnMsg(True, qq_mail_info)
+        
+    #清空数据
+    def set_empty(self,get):
+        type=get.type.strip()
+        if type=='dingding':
+            ret = []
+            public.writeFile(self.__dingding_config, json.dumps(ret))
+            return public.returnMsg(True, '清空成功')
+        else:
+            ret = []
+            public.writeFile(self.__mail_config, json.dumps(ret))
+            return public.returnMsg(True, '清空成功')
 
 
     # 用户自定义邮件发送

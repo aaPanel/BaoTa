@@ -10,6 +10,7 @@
 #------------------------------
 # SSL接口
 #------------------------------
+from panelAuth import panelAuth
 import public,os,sys,binascii,urllib,json,time,datetime,re
 try:
     from BTPanel import cache,session
@@ -55,6 +56,7 @@ class panelSSL:
         data = {}
         data['username'] = get.username
         data['password'] = public.md5(get.password)
+        data['serverid'] = panelAuth().get_serverid()
         pdata = {}
         pdata['data'] = self.De_Code(data)
         try:
@@ -62,20 +64,21 @@ class panelSSL:
             result = json.loads(rtmp)
             result['data'] = self.En_Code(result['data'])
             if result['data']: 
-                # bind = 'data/bind.pl'
-                # if os.path.exists(bind): os.remove(bind)
+                result['data']['serverid'] = data['serverid']
                 public.writeFile(self.__UPATH,json.dumps(result['data']))
+                from pluginAuth import Plugin
+                Plugin(False).get_plugin_list(True)
             del(result['data'])
             session['focre_cloud'] = True
             return result
         except Exception as ex:
             # bind = 'data/bind.pl'
             # if os.path.exists(bind): os.remove(bind)
-            return public.returnMsg(False,'连接服务器失败!<br>' + str(rtmp))
+            return public.returnMsg(False,'连接服务器失败!<br>' + str(ex))
     
     #删除Token
     def DelToken(self,get):
-        public.ExecShell("rm -f " + self.__UPATH)
+        if os.path.exists(self.__UPATH): os.remove(self.__UPATH)
         session['focre_cloud'] = True
         return public.returnMsg(True,"SSL_BTUSER_UN")
     

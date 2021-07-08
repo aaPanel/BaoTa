@@ -1,3 +1,4 @@
+
 function modify_port_val(port){
 	layer.open({
 		type: 1,
@@ -401,11 +402,11 @@ function Set502(){
 function bindBTName(a,type){
 	var titleName = lan.config.config_user_binding;
 	if(type == "b"){
-		btn = "<button type='button' class='btn btn-success btn-sm' onclick=\"bindBTName(1,'b')\">"+lan.config.binding+"</button>";
+		btn = "<button type='button' class='btn btn-success btn-sm bind-btn' onclick=\"bindBTName(1,'b')\">"+lan.config.binding+"</button>";
 	}
 	else{
 		titleName = lan.config.config_user_edit;
-		btn = "<button type='button' class='btn btn-success btn-sm' onclick=\"bindBTName(1,'c')\">"+lan.public.edit+"</button>";
+		btn = "<button type='button' class='btn btn-success btn-sm bind-btn' onclick=\"bindBTName(1,'c')\">"+lan.public.edit+"</button>";
 	}
 	if(a == 1) {
 		p1 = $("#p1").val();
@@ -428,7 +429,14 @@ function bindBTName(a,type){
 		closeBtn: 2,
 		shift: 5,
 		shadeClose: false,
-		content: "<div class='bt-form pd20 pb70'><div class='line'><span class='tname'>"+lan.public.user+"</span><div class='info-r'><input class='bt-input-text' type='text' name='username' id='p1' value='' placeholder='"+lan.config.user_bt+"' style='width:100%'/></div></div><div class='line'><span class='tname'>"+lan.public.pass+"</span><div class='info-r'><input class='bt-input-text' type='password' name='password' id='p2' value='' placeholder='"+lan.config.pass_bt+"' style='width:100%'/></div></div><div class='bt-form-submit-btn'><button type='button' class='btn btn-danger btn-sm' onclick=\"layer.closeAll()\">"+lan.public.cancel+"</button> "+btn+"</div></div>"
+		content: "<div class='bt-form pd20 pb70'><div class='line'><span class='tname'>"+lan.public.user+"</span><div class='info-r'><input class='bt-input-text' type='text' name='username' id='p1' value='' placeholder='"+lan.config.user_bt+"' style='width:100%'/></div></div><div class='line'><span class='tname'>"+lan.public.pass+"</span><div class='info-r'><input class='bt-input-text' type='password' name='password' id='p2' value='' placeholder='"+lan.config.pass_bt+"' style='width:100%'/></div></div><div class='bt-form-submit-btn'><button type='button' class='btn btn-danger btn-sm' onclick=\"layer.closeAll()\">"+lan.public.cancel+"</button> "+btn+"</div></div>",
+		success:function(){
+			$("input[name='password']").keyup(function(e){
+				if(e.keyCode ==13){
+					$(".bind-btn").click();
+				}
+			})
+		}
 	})
 }
 //解除绑定宝塔账号
@@ -1243,53 +1251,73 @@ function open_three_channel_auth(){
 			type: 1,
 	        area: "600px",
 	        title: "设置消息通道",
+	        skin:"layer-channel-auth",
 	        closeBtn: 2,
 	        shift: 5,
 	        shadeClose: false,
 	        content: '<div class="bt-form">\
-	        			<div class="bt-w-main">\
-					        <div class="bt-w-menu">\
-					            <p class="bgw">邮箱</p>\
-					            <p>钉钉</p>\
-					        </div>\
-					        <div class="bt-w-con pd15">\
-					            <div class="plugin_body">\
-	                				<div class="conter_box active" >\
-	                					<div class="bt-form">\
-	                						<div class="line">\
-	                							<button class="btn btn-success btn-sm" onclick="add_receive_info()">添加收件者</button>\
-	                							<button class="btn btn-default btn-sm" onclick="sender_info_edit()">发送者设置</button>\
-	                						</div>\
-					                        <div class="line">\
-						                        <div class="divtable">\
-						                        	<table class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"><thead><tr><th>邮箱</th><th width="80px">操作</th></tr></thead></table>\
-						                        	<table class="table table-hover"><tbody id="receive_table"></tbody></table>\
-						                        </div>\
-					                        </div>\
-				                        </div>\
-	                				</div>\
-	                				<div class="conter_box" style="display:none">\
-		                				<div class="bt-form">\
-		                					<div class="line">\
-												<span class="tname">通知全体</span>\
-												<div class="info-r" style="height:28px; margin-left:100px">\
-													<input class="btswitch btswitch-ios" id="panel_alert_all" type="checkbox" '+ isOpen+'>\
-													<label style="position: relative;top: 5px;" class="btswitch-btn" for="panel_alert_all"></label>\
-												</div>\
-											</div>\
-						        			<div class="line">\
-					                            <span class="tname">钉钉URL</span>\
-					                            <div class="info-r">\
-					                                <textarea name="channel_dingding_value" class="bt-input-text mr5" type="text" style="width: 300px; height:90px; line-height:20px">'+isDing+'</textarea>\
-					                            </div>\
-					                            <button class="btn btn-success btn-sm" onclick="SetChannelDing()" style="margin: 10px 0 0 100px;">保存</button>\
-					                        </div>\
-				                        </div>\
-		            				</div>\
-	                			</div>\
-	                		</div>\
-                		</div>\
-                	  </div>'
+				<div class="bt-w-main">\
+					<div class="bt-w-menu">\
+						<p class="bgw">邮箱</p>\
+						<p>钉钉</p>\
+					</div>\
+					<div class="bt-w-con pd15">\
+						<div class="plugin_body">\
+							<div class="conter_box active" >\
+								<div class="bt-form">\
+									<div class="line">\
+										<button class="btn btn-success btn-sm" onclick="add_receive_info()">添加收件者</button>\
+										<button class="btn btn-default btn-sm" onclick="sender_info_edit()">发送者设置</button>\
+									</div>\
+									<div class="line">\
+										<div class="divtable">\
+											<table class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"><thead><tr><th>邮箱</th><th width="80px">操作</th></tr></thead></table>\
+											<table class="table table-hover"><tbody id="receive_table"></tbody></table>\
+										</div>\
+									</div>\
+								</div>\
+							</div>\
+							<div class="conter_box" style="display:none">\
+								<div class="bt-form">\
+									<div class="line">\
+										<span class="tname">通知全体</span>\
+										<div class="info-r" style="height:28px; margin-left:100px">\
+											<input class="btswitch btswitch-ios" id="panel_alert_all" type="checkbox" '+ isOpen+'>\
+											<label style="position: relative;top: 5px;" class="btswitch-btn" for="panel_alert_all"></label>\
+										</div>\
+									</div>\
+									<div class="line">\
+										<span class="tname">钉钉URL</span>\
+										<div class="info-r">\
+											<textarea name="channel_dingding_value" class="bt-input-text mr5" type="text" style="width: 300px; height:90px; line-height:20px">'+isDing+'</textarea>\
+										</div>\
+										<button class="btn btn-success btn-sm" onclick="SetChannelDing()" style="margin: 10px 0 0 100px;">保存</button>\
+										'+(isDing != ''?'<button class="btn btn-default btn-sm delding">清除设置</button>':'')+'\
+									</div>\
+								</div>\
+								<ul class="help-info-text c7" style="margin-top: 170px;">\
+									<li>当前支持钉钉、企业微信URL</li>\
+									<li style="list-style:inside disc"><a class="btlink" href="https://www.bt.cn/bbs/thread-71298-1-1.html" target="_blank">《如何设置消息通道》</a></li>\
+								</ul>\
+							</div>\
+						</div>\
+					</div>\
+				</div>\
+				</div>',
+			success:function(){
+				$('.layer-channel-auth .bt-w-main').css('height','450px');
+				$('.delding').click(function(){
+					var loadTs = layer.msg('正在清除设置中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+					$.post('/config?action=set_empty',{type:'dingding'},function(rdata){
+						layer.close(loadTs);
+						layer.msg(rdata.msg,{icon:rdata.status?1:2})
+						if(rdata.status){
+							$('textarea[name=channel_dingding_value]').val('');
+							$('.delding').hide()
+						}
+					})
+				})
+			}
 		})
 		$(".bt-w-menu p").click(function () {
             var index = $(this).index();
@@ -1345,6 +1373,7 @@ function sender_info_edit(){
             	<li>25端口为SMTP协议，587端口为STARTTLS协议</li>\
             </ul>\
             <div class="bt-form-submit-btn">\
+				'+(qq_mail != ''?'<button type="button" class="btn btn-default btn-sm pull-left set_empty">清除设置</button>':'')+'\
 	            <button type="button" class="btn btn-danger btn-sm smtp_closeBtn">关闭</button>\
 	            <button class="btn btn-success btn-sm SetChannelEmail">保存</button></div>\
         	</div>',
@@ -1361,7 +1390,6 @@ function sender_info_edit(){
         	}else{
         		_option = '<option value="465">465</option><option value="25">25</option><option value="587" >587</option><option value="other" selected="selected">自定义</option>'
         	}
-        	console.log(port)
         	$("#port_select").html(_option)
         	$("#port_select").change(function(e){
         		if(e.target.value == 'other'){
@@ -1403,6 +1431,16 @@ function sender_info_edit(){
 			$(".smtp_closeBtn").click(function(){
 				layer.close(index)
 			})
+			$('.set_empty').click(function(){
+				var loadTs = layer.msg('正在清除设置中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+				$.post('/config?action=set_empty',{type:'mail'},function(rdata){
+					layer.close(loadTs);
+					layer.msg(rdata.msg,{icon:rdata.status?1:2})
+					if(rdata.status){
+						layer.close(index)
+					}
+				})
+			})
 		}
 	})
 	})
@@ -1438,21 +1476,21 @@ function add_receive_info(){
         shadeClose: false,
         content: '<div class="bt-form pd20 pb70">\
 	        <div class="line">\
-	            <span class="tname">收件人邮箱</span>\
+	            <span class="tname">收件者邮箱</span>\
 	            <div class="info-r">\
 	                <input name="creater_email_value" class="bt-input-text mr5" type="text" style="width: 240px" value="">\
 	            </div>\
 	        </div>\
 	        <div class="bt-form-submit-btn">\
 	            <button type="button" class="btn btn-danger btn-sm smtp_closeBtn">关闭</button>\
-	            <button class="btn btn-success btn-sm CreaterReceive">创建</button>\
+	            <button class="btn btn-success btn-sm CreaterReceive">添加</button>\
 	        </div>\
 	        </div>',
         success:function(layers,index){
         	$(".CreaterReceive").click(function(){
         		var _receive = $('input[name=creater_email_value]').val(),_that = this;
 				if(_receive != ''){
-					var loadT = layer.msg('正在创建收件人列表中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+					var loadT = layer.msg('正在创建收件者列表中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
 					layer.close(index)
 					$.post('/config?action=add_mail_address',{email:_receive},function(rdata){
 						layer.close(loadT);
@@ -1461,7 +1499,7 @@ function add_receive_info(){
 						layer.msg(rdata.msg,{icon:rdata.status?1:2});
 					})
 				}else{
-					layer.msg('收件人邮箱不能为空！',{icon:2});
+					layer.msg('收件者邮箱不能为空！',{icon:2});
 				}
         	})
         	
@@ -1478,11 +1516,11 @@ function get_receive_list(){
 			for(var i= 0; i<_list.length;i++){
 				_html += '<tr>\
 					<td>'+ _list[i] +'</td>\
-					<td width="80px"><a onclick="del_email(\''+ _list[i] + '\')" href="javascript:;" style="color:#20a53a">删除</a></td>\
+					<td width="80px" style="text-align:right;"><a onclick="del_email(\''+ _list[i] + '\')" href="javascript:;" style="color:#20a53a">删除</a></td>\
 					</tr>'
 			}
 		}else{
-			_html = '<tr>没有数据</tr>'
+			_html = '<tr><td colspan="2">暂无数据</td></tr>'
 		}
 		$('#receive_table').html(_html);
 	})

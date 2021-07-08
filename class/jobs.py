@@ -137,6 +137,7 @@ def control_init():
     public.ExecShell("chmod -R  600 /www/server/panel/data;chmod -R  600 /www/server/panel/config;chmod -R  700 /www/server/cron;chmod -R  600 /www/server/cron/*.log;chown -R root:root /www/server/panel/data;chown -R root:root /www/server/panel/config;chown -R root:root /www/server/phpmyadmin;chmod -R 755 /www/server/phpmyadmin")
     if os.path.exists("/www/server/mysql"):
         public.ExecShell("chown mysql:mysql /etc/my.cnf;chmod 600 /etc/my.cnf")
+    public.ExecShell("rm -rf /www/server/panel/temp/*")
     stop_path = '/www/server/stop'
     if not os.path.exists(stop_path):
         os.makedirs(stop_path)
@@ -150,6 +151,7 @@ def control_init():
         public.ExecShell("rm -rf /www/server/panel/adminer")
     if os.path.exists('/dev/shm/session.db'):
         os.remove('/dev/shm/session.db')
+    
     #disable_putenv('putenv')
     #clean_session()
     #set_crond()

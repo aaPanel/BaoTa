@@ -597,9 +597,11 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             except:
                 continue
             #使用list[tuple]排序效率更高
+            # if f_name and sort_val:
             tmp_files.append((f_name,sort_val))
-            
-        tmp_files = sorted(tmp_files, key=lambda x: x[sort_key], reverse=reverse)
+        try:
+            tmp_files = sorted(tmp_files, key=lambda x: x[sort_key], reverse=reverse)
+        except:pass
         return tmp_files
 
     def __format_stat(self, filename, path):
@@ -1356,6 +1358,11 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
     def Zip(self, get):
         if not 'z_type' in get:
             get.z_type = 'rar'
+
+        if get.z_type == 'rar':
+            if os.uname().machine == 'aarch64':
+                return public.returnMsg(False,'RAR组件不支持aarch64平台')
+        
         import panelTask
         task_obj = panelTask.bt_task()
         task_obj.create_task('压缩文件', 3, get.path, json.dumps(
