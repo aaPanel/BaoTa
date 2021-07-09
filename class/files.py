@@ -2348,12 +2348,34 @@ cd %s
         except:
             return uid
 
+    # 取lsattr
+    def get_lsattr(self,filename):
+        if os.path.isfile(filename):
+            return public.ExecShell('lsattr {}'.format(filename))[0].split(' ')[0]
+        else:
+            s_name = os.path.basename(filename)
+            s_path = os.path.dirname(filename)
+
+            try:
+                res = public.ExecShell('lsattr {}'.format(s_path))[0].strip()
+                for s in res.split('\n'):
+                    if not s: continue
+                    lsattr_info = s.split()
+                    if not lsattr_info: continue
+                    if filename == lsattr_info[1]:
+                        return lsattr_info[0]
+            except: 
+                raise public.PanelError(lsattr_info)
+                
+        return '--------------e----'
+
 
     # 取指定文件属性
     def get_file_attribute(self,args):
         filename = args.filename.strip()
         if not os.path.exists(filename):
             return public.returnMsg(False,'指定文件不存在!')
+            
         attribute = {}
         attribute['name'] = os.path.basename(filename)
         attribute['path'] = os.path.dirname(filename)
@@ -2373,7 +2395,7 @@ cd %s
         attribute['mode'] = str(oct(f_stat.st_mode)[-3:])         # 文件权限号
         attribute['md5'] = '大于100M或目录不计算'                        # 文件MD5
         attribute['sha1'] = '大于100M或目录不计算'                       # 文件sha1
-        attribute['lsattr'] = public.ExecShell('lsattr {}'.format(filename))[0].split(' ')[0]
+        attribute['lsattr'] = self.get_lsattr(filename)
         attribute['is_dir'] = os.path.isdir(filename)   # 是否为目录
         attribute['is_link'] = os.path.islink(filename)  # 是否为链接文件
         if attribute['is_link']:

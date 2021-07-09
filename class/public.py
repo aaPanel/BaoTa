@@ -822,14 +822,18 @@ def getSpeed():
         writeFile('/tmp/panelSpeed.pl',data)
     return json.loads(data)
 
+def get_requests_headers():
+    return {"Content-type":"application/x-www-form-urlencoded","User-Agent":"BT-Panel"}
+
 def downloadFile(url,filename):
     try:
         import requests
         from requests.packages.urllib3.exceptions import InsecureRequestWarning
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-        res = requests.get(url,verify=False)
+        res = requests.get(url,headers=get_requests_headers(),timeout=30,stream=True)
         with open(filename,"wb") as f:
-            f.write(res.content)
+            for _chunk in res.iter_content(chunk_size=8192):
+                f.write(_chunk)
     except:
         ExecShell("wget -O {} {} --no-check-certificate".format(filename,url))
 
@@ -2612,6 +2616,8 @@ def get_user_info():
         userInfo['uid'] = userTmp['uid']
         userInfo['username'] = userTmp['username']
         userInfo['serverid'] = userTmp['serverid']
+        userInfo['oem'] =  get_oem_name()
+        userInfo['o'] = userInfo['oem']
     except: pass
     return userInfo
 
@@ -3231,7 +3237,7 @@ def download_main(upgrade_plugin_name,upgrade_version):
     pdata['name'] = upgrade_plugin_name
     pdata['version'] = upgrade_version
     pdata['os'] = 'Linux'
-    download_res = requests.post(download_d_main_url,pdata,timeout=30)
+    download_res = requests.post(download_d_main_url,pdata,timeout=30,headers=get_requests_headers())
     filename = '{}/{}.py'.format(tmp_path,upgrade_plugin_name)
     with open(filename,'wb+') as save_script_f:
         save_script_f.write(download_res.content)

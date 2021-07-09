@@ -477,7 +477,7 @@ class panelPlugin:
         filename = '{}/{}.zip'.format(self.__tmp_path,upgrade_plugin_name)
         if not os.path.exists(self.__tmp_path): os.makedirs(self.__tmp_path,384)
         if not cache.get(pkey):
-            download_res = requests.post(self.__download_url,pdata,timeout=30,stream=True)
+            download_res = requests.post(self.__download_url,pdata,headers=public.get_requests_headers(),timeout=30,stream=True)
             try:
                 headers_total_size = int(download_res.headers['File-size'])
             except:
