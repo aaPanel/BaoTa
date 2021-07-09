@@ -63,6 +63,30 @@ class http:
                 result = self._post_py3(url,data,timeout,headers,verify)
         return result
 
+
+    def download_file(self,url,filename,data = None,timeout = 1800,speed_file='/dev/shm/download_speed.pl'):
+        '''
+            @name 下载文件
+            @author hwliang<2021-07-08>
+            @param url<string> 下载地址
+            @param filename<string> 保存路径
+            @param data<dict> POST参数，不传则使用GET方法，否则使用POST方法
+            @param timeout<int> 超时时间,默认1800秒
+            @param speed_file<string> 
+        '''
+        import requests
+        from requests.packages.urllib3.exceptions import InsecureRequestWarning
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+        headers = public.get_requests_headers()
+        if data is None:
+            res = requests.get(url,headers=headers,timeout=timeout,stream=True)
+        else:
+            res = requests.post(url,data,headers=headers,timeout=timeout,stream=True)
+        with open(filename,"wb") as f:
+            for _chunk in res.iter_content(chunk_size=8192):
+                f.write(_chunk)
+
+
     #POST请求 Python2
     def _post_py2(self,url,data,timeout,headers,verify):
         import urllib2
