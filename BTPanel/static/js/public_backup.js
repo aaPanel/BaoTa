@@ -4611,7 +4611,6 @@ bt.soft = {
         });
     },
     install_soft: function(item, version,min_version, type, that) { //安装单版本
-        console.log(arguments)
         if (type == undefined) type = 0;
         var loadT = '';
         item.title = bt.replace_all(item.title, '-' + version, '');
@@ -4637,7 +4636,6 @@ bt.soft = {
                 if (typeof soft != "undefined") soft.get_list();
                 bt.msg(rdata);
             })
-
             bt.soft.monitor_soft_download_speed({plugin_name:item.name,name:item.title,version:version,min_version:min_version})
             // })
         })
@@ -4774,10 +4772,8 @@ bt.soft = {
                             })
                         })
                     })
-                    console.log(data)
                 },
                 yes: function (indexs) {
-                    console.log(data.author)
                     if (data.author !== '宝塔' || data.update) {
                         bt.show_confirm('安全验证', '<span style="color:red">' + (data.author !== '宝塔' ? '更新过程可能会导致服务中断,是否继续升级？<br>建议您在服务器负载闲时进行软件更新' : '安装第三方插件存在一定的安全风险，是否继续安装？') + '</span>', function () {
                             bt.soft.input_package(data.name, data.tmp_path, data);
@@ -4841,7 +4837,6 @@ bt.soft = {
      */
     plugin_toolbox_info:function(name,title,version,is_beta){
         var loadT = bt.load('获取插件信息，请稍后...')
-        console.log(name)
         if(!name) return;
         bt.send('get_plugin_upgrades','plugin/get_plugin_upgrades',{plugin_name:name,show:1},function(rdata){
             loadT.close()
@@ -4854,7 +4849,6 @@ bt.soft = {
                 var versions = version.split[0]
                 info = {beta: 2,m_version:version.split[0],update_msg:0,update_time: 0,version:version.split[1]}
             }
-            console.log()
             layer.open({
                 type: 1,
                 area: "500px",
@@ -4882,21 +4876,19 @@ bt.soft = {
                         '<div class="text-center"><button class="btn btn-success btn-xs '+ (info.beta === 2?'hide':'') +' cutPlugin">切换'+ (!is_beta?'测试版':'正式版') +'</button></div>')+
                     '</div>',
                 success:function(layers,indexs){
-                    console.log(info)
                     $('.repairPlugin').click(function(){
-                        var loadT = bt.load('正在修复插件，请稍后...'),versions = version.split('.')
+                        layer.closeAll()
+                        bt.soft.monitor_soft_download_speed({plugin_name:name,name:title,version:info.m_version,min_version:info.version})
                         bt.send('repair_plugin','plugin/repair_plugin',{version:info.m_version,min_version:info.version,plugin_name:name},function(res){
                             layer.close(indexs)
-                            loadT.close()
                             bt.soft.show_plugin_info(res,is_beta)
                         })
                     })
                     $('.cutPlugin').click(function(){
-                        var loadT = bt.load('正在切换'+ (!is_beta?'测试版':'正式版') +'，请稍后...')
                         info = !is_beta?beta:tls
+                        bt.soft.monitor_soft_download_speed({plugin_name:name,name:title,version:info.m_version,min_version:info.version})
                         bt.send('upgrade_plugin','plugin/upgrade_plugin',{version:info.m_version,min_version:info.version,plugin_name:name},function(res){
                             layer.close(indexs)
-                            loadT.close()
                             bt.soft.show_plugin_info(res,!is_beta)
                         })
                     })
@@ -4963,7 +4955,7 @@ bt.soft = {
     update_soft: function(name, title, version, min_version, update_msg, type) {
         var _this = this;
         if(type !== 5){
-            _this.update_soft_request(name,version,min_version,version)
+            _this.update_soft_request(name,version,min_version,title)
             return false;
         }
         var msg = "<li style='color:red;'>建议您在服务器负载闲时进行软件更新.</li>";
@@ -4971,7 +4963,7 @@ bt.soft = {
         if (update_msg) msg += '<div style="    margin-top: 10px;"><span style="font-size: 14px;font-weight: 900;">本次更新说明: </span><hr style="margin-top: 5px; margin-bottom: 5px;" /><pre>' + update_msg.replace(/(_bt_)/g, "\n") + '</pre><hr style="margin-top: -5px; margin-bottom: -5px;" /></div>';
         bt.show_confirm('更新[' + title + ']', '更新过程可能会导致服务中断,您真的现在就将[' + title + ']更新到[' + version + '.' + min_version + ']吗?', function() {
             bt.soft.show_speed_window({ title: '正在更新到[' + title + '-' + version + '.' + min_version + '],请稍候...', status: true, soft: { type: parseInt(type) } }, function() {
-                _this.update_soft_request(name,version,min_version)
+                _this.update_soft_request(name,version,min_version,title)
             })
         }, msg);
     },
@@ -4983,6 +4975,7 @@ bt.soft = {
      */
     update_soft_request:function(name,version,min_version){
         var _this = this;
+        bt.soft.monitor_soft_download_speed({plugin_name:name,name:title,version:version,min_version:min_version})
         bt.send('install_plugin', 'plugin/install_plugin', { sName: name, version: version,min_version:min_version, upgrade: version }, function(rdata) {
             if (rdata.install_opt){
                 _this.show_plugin_info($.extend(true,{},rdata,{update:true}));
@@ -6529,7 +6522,6 @@ var form_group = {
                 });
                 $(this).parents('.rec-box').siblings().find('.bt_select_ul.active').each(function() {
                     is_show_slect_parent(this);
-                    console.log(this);
                 });
             }
             is_show_select_ul($(this).next().hasClass('active'));
