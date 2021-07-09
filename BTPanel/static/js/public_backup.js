@@ -483,6 +483,7 @@ var bt = {
         })
     },
     send: function(response, module, data, callback, sType) {
+
         if (sType == undefined) sType = 1;
 
         module = module.replace('panel_data', 'data');
@@ -3636,11 +3637,11 @@ bt.soft = {
                 <div class="libPay-menu '+(config.plugin?'is_plugin':'')+'">\
                     '+(config.plugin?'<div class="libPay-menu-type lib_plugin"><p>'+config.name+'</p><p>'+config.name+'</p></div>':'')+'\
                     <div class="libPay-menu-type lib_pro" >\
-                        <p><span class="recommend-pay-icon"></span><span class="glyphicon glyphicon-vip"></span><span style="margin-left:8px">'+ bt.os +'专业版</span></p>\
+                        <p><span class="glyphicon glyphicon-vip"></span><span style="margin-left:8px">'+ bt.os +'专业版</span></p>\
                         <p>适用于个人站长、小微企业等个人用户</p>\
                     </div>\
                     <div class="libPay-menu-type lib_ltd" >\
-                        <p><span class="glyphicon glyphicon-vip"></span><span style="margin-left:8px">'+ bt.os +'企业版</span></p>\
+                        <p><span class="recommend-pay-icon"></span><span class="glyphicon glyphicon-vip"></span><span style="margin-left:8px">'+ bt.os +'企业版</span></p>\
                         <p>适用于电商、教育、医疗、事业单位等企业用户</p>\
                     </div>\
                     <div class="libPay-menu-type lib_ver" >\
@@ -4453,9 +4454,10 @@ bt.soft = {
                         version = info.split(" ")[1];
                         var type = $('.fangshi input:eq(0)').prop("checked") ? '0' : '1';
                         if (rdata.versions.length > 1) {
-                            _this.install_soft(rdata, version, type);
+                            _this.install_soft(rdata, version,type);
                         } else {
-                            _this.install_soft(rdata, rdata.versions[0].m_version, type, that);
+                            var versions = rdata.versions[0];
+                            _this.install_soft(rdata, versions.m_version,versions.version, type, that);
                         }
                     }
                 });
@@ -4480,7 +4482,8 @@ bt.soft = {
                     }
                 })
             } else {
-                _this.install_soft(rdata, rdata.versions[0].m_version,rdata.versions[0].version, 0, that);
+                var version = rdata.versions[0];
+                _this.install_soft(rdata, version.m_version,version.version, 0, that);
             }
         })
     },
@@ -4608,6 +4611,7 @@ bt.soft = {
         });
     },
     install_soft: function(item, version,min_version, type, that) { //安装单版本
+        console.log(arguments)
         if (type == undefined) type = 0;
         var loadT = '';
         item.title = bt.replace_all(item.title, '-' + version, '');
@@ -4773,6 +4777,7 @@ bt.soft = {
                     console.log(data)
                 },
                 yes: function (indexs) {
+                    console.log(data.author)
                     if (data.author !== '宝塔' || data.update) {
                         bt.show_confirm('安全验证', '<span style="color:red">' + (data.author !== '宝塔' ? '更新过程可能会导致服务中断,是否继续升级？<br>建议您在服务器负载闲时进行软件更新' : '安装第三方插件存在一定的安全风险，是否继续安装？') + '</span>', function () {
                             bt.soft.input_package(data.name, data.tmp_path, data);

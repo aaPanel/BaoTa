@@ -61,10 +61,10 @@ var soft = {
                 }
             }
             if(soft.is_setup==true&&soft.is_setup_name != ""){
-               _this.soft_setup_find();
+                _this.soft_setup_find();
             }
             // if(soft.refresh_data.length==0){
-                
+
             // }else
             // if(JSON.stringify(data) !=JSON.stringify(soft.refresh_data)){
             //     _this.refresh_table(page, type, search, rdata);
@@ -73,7 +73,7 @@ var soft = {
 
             _this.refresh_table(page, type, search, rdata);
             soft.refresh_data = data;
-           
+
             bt.set_cookie('load_page', (page+'').split('not_load')[0])
             bt.set_cookie('load_type', type)
             bt.set_cookie('load_search', search)
@@ -95,7 +95,7 @@ var soft = {
             $.post("plugin?action=get_soft_find",{sName:soft.is_setup_name},function(rdata){
                 if(rdata.task=="-1"){
                     setTimeout(function () {
-                      _this.soft_setup_find();
+                        _this.soft_setup_find();
                     }, 3000);
                 }else{
                     soft.is_install=true;
@@ -134,9 +134,9 @@ var soft = {
                             }
                         }
                         var is_php = item.name.indexOf('php-') >= 0,
-                        is_php5 = item.name.indexOf('php-5') >= 0,
-                        webcache = bt.get_cookie('serverType') == 'openlitespeed' ? true : false,
-                        distribution = bt.get_cookie('distribution');
+                            is_php5 = item.name.indexOf('php-5') >= 0,
+                            webcache = bt.get_cookie('serverType') == 'openlitespeed' ? true : false,
+                            distribution = bt.get_cookie('distribution');
                         if (webcache && is_php) {
                             if ((is_php5 || item.name == 'php-7.0')&&distribution=='centos8') {
                                 click_opt = ' title="Apache2.2不兼容此版本，如需使用请切换到Apache2.4或Nginx"';
@@ -228,7 +228,7 @@ var soft = {
                         return path;
                     }
                 },
-                (type !== 10?{
+                (type !=10?{
                     field: 'status', width: 40, title: '状态', templet: function (item) {
                         var status = '';
                         if (item.setup) {
@@ -270,17 +270,17 @@ var soft = {
                                     re_status = 1;
                                     break;
                             }
-                            if (item.type !== 10) {
+                            if (item.type != 10) {
                                 pay_opt = '<a class="btlink" onclick=\'bt.soft.product_pay_view('+ JSON.stringify({name:item.title,pid:item.pid,type:item.type,plugin:true,renew:item.endtime,ps:ps}) +')\'>' + re_msg + '</a>';
                             } else {
                                 pay_opt = '<a class="btlink" onclick="bt.soft.re_plugin_pay_other(\'' + item.title + '\',\'' + item.pid + '\',' + re_status + ','+item.price+')">' + re_msg + '</a>';
                             }
+
                         }
-                        console.log(item.pid)
                         var is_php = item.name.indexOf('php-') >= 0,
-                        is_php5 = item.name.indexOf('php-5') >= 0,
-                        webcache = bt.get_cookie('serverType') == 'openlitespeed' ? true : false,
-                        distribution = bt.get_cookie('distribution');
+                            is_php5 = item.name.indexOf('php-5') >= 0,
+                            webcache = bt.get_cookie('serverType') == 'openlitespeed' ? true : false,
+                            distribution = bt.get_cookie('distribution');
                         if (webcache && is_php) {
                             if ((is_php5 || item.name == 'php-7.0')&&distribution=='centos8') {
                                 option = '<span title="Apache2.4不兼容此版本，如需使用请切换到Apache2.2或Nginx">不兼容</span>';
@@ -359,7 +359,7 @@ var soft = {
                                         //是否存在多个版本
                                         if (item.versions.length > 1) {
                                             //如果是插件
-                                            if(item.admin === true){  
+                                            if(item.admin === true){
 
                                                 //正式版最新
                                                 var min_version = item.versions[0];
@@ -373,7 +373,7 @@ var soft = {
                                                     //如果有测试版，则在版本列表中的最后一行，注意：只显示最新的一个测试版本
                                                     var beta_vs = item.versions[item.versions.length -1];
                                                     // 判断是否存在测试版
-                                                    if (beta_vs.beta === 1){ 
+                                                    if (beta_vs.beta === 1){
                                                         var beta_version = beta_vs.m_version + '.' + beta_vs.version;
                                                         //当前安装的是测试版，且当前应用有测试版本可用，如果需要更新，此时使用最新测试版
                                                         up_version =  beta_vs;
@@ -384,10 +384,10 @@ var soft = {
                                                     }
                                                 }
                                                 //------------------ 测试版处理结束 ----------------//
-                                                
+
                                                 if (is_update) option += '<a class="btlink" onclick="bt.soft.update_soft(\'' + item.name + '\',\'' + item.title + '\',\'' + up_version.m_version + '\',\'' + up_version.version + '\',\'' + up_version.update_msg.replace(/\n/g, "_bt_") + '\',\''+ item.type +'\')" >更新</a> | ';
-                                            
-                                            //不是插件
+
+                                                //不是插件
                                             }else{
 
                                                 for (var i = 0; i < item.versions.length; i++) {
@@ -411,21 +411,21 @@ var soft = {
                                         else {
                                             option += '<a class="btlink" onclick="soft.set_soft_config(\'' + item.name + '\')">' + lan.soft.setup + '</a> | ';
                                         }
-                                        if(item.type !== 5 && item.type !== 10) option += '<a href="javascript:;" class="btlink" onclick="bt.soft.plugin_toolbox_info(\'' + item.name + '\',\'' + item.title + '\',\''+ item.version +'\','+ item.is_beta +')">修复</a> | ';
+                                        if(item.type !== 5) option += '<a href="javascript:;" class="btlink" onclick="bt.soft.plugin_toolbox_info(\'' + item.name + '\',\'' + item.title + '\',\''+ item.version +'\','+ item.is_beta +')">修复</a> | ';
                                     } else {
                                         option = pay_opt + ' | ' + option;
                                     }
                                     option += '<a class="btlink" onclick="bt.soft.un_install(\'' + item.name + '\')" >' + lan.soft.uninstall + '</a>';
                                 }
-                                else if (item.task === '-1') {
+                                else if (item.task == '-1') {
                                     option = '<a class="btlink" onclick="messagebox()"  >正在安装</a>';
                                     soft.is_install = true;
                                 }
-                                else if (item.task === '0') {
+                                else if (item.task == '0') {
                                     option = '<a class="btlink" onclick="messagebox()"  >等待安装</a>';
                                     soft.is_install = true;
                                 }
-                                else if (item.task === '-2') {
+                                else if (item.task == '-2') {
                                     option = '<a class="btlink" onclick="messagebox()"  >正在更新</a>';
                                     soft.is_install = true;
                                 }
@@ -454,9 +454,9 @@ var soft = {
      * @return {array} {tls:是否存在正式版,beta:是否存在测试版,version:可用的版本号}
      */
     get_plugin_version:function(versions,version_type){
-        var result = { 
-            tls:1, 
-            beta:0, 
+        var result = {
+            tls:1,
+            beta:0,
             version: versions[0].m_version + '.' + versions[0].version
         };
 
@@ -468,7 +468,7 @@ var soft = {
         v_len = versions.length;
         if(v_len == 1) return result;
 
-        
+
         if(version_type == 'tls'){
             return result;
         }
@@ -515,25 +515,25 @@ var soft = {
                         }
                         html += '<div class="recom_item_box">' +
                             '<div class="recom_item_left">' +
-                                '<div class="recom_item_images"><img src="/static/img/'+(find.type == 'onekey'?'dep_ico':'soft_ico')+'/ico-'+ item.name +'.png" /></div>' +
-                                '<div class="recom_item_pay"><a href="javascript:;" class="btlink" style="color:'+(item.setup?'#20a53a':'#666')+'">'+ (item.setup?'已安装':'未安装') +'</a></div>'+
+                            '<div class="recom_item_images"><img src="/static/img/'+(find.type == 'onekey'?'dep_ico':'soft_ico')+'/ico-'+ item.name +'.png" /></div>' +
+                            '<div class="recom_item_pay"><a href="javascript:;" class="btlink" style="color:'+(item.setup?'#20a53a':'#666')+'">'+ (item.setup?'已安装':'未安装') +'</a></div>'+
                             '</div>' +
                             '<div class="recom_item_right">' +
-                                '<div class="recom_item_title">' +
-                                    '<div class="recom_item_text">'+ item.title + '&nbsp;v'+ item.version +'</div>' +
-                                    '<div class="recom_item_price">￥<span>'+ item.price +'</span>/月</div>' +
-                                '</div>' +
-                                '<div class="recom_item_info" title="'+ item.ps +'">'+ item.ps +'</div>'+
-                                '<div class="recom_item_btn">'+ thtml +'</div>'+
+                            '<div class="recom_item_title">' +
+                            '<div class="recom_item_text">'+ item.title + '&nbsp;v'+ item.version +'</div>' +
+                            '<div class="recom_item_price">￥<span>'+ item.price +'</span>/月</div>' +
                             '</div>' +
-                        '</div>'
+                            '<div class="recom_item_info" title="'+ item.ps +'">'+ item.ps +'</div>'+
+                            '<div class="recom_item_btn">'+ thtml +'</div>'+
+                            '</div>' +
+                            '</div>'
                     }
                     return html;
                 })(),
             });
         }
     },
-    
+
     /**
      * @description 设置软件信息
      * @param {object} rdata 软件列表请求数据
@@ -541,7 +541,7 @@ var soft = {
      */
     set_soft_tips:function(rdata,type){
         type = parseInt(type);
-        var remarks = rdata.remarks,tips_info = $('<div class="alert" style="margin-bottom:15px"><div class="soft_tips_text"></div><div class="btn-ground" style="display:inline-block;"></div><div class="close_recommend hide"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span><span>关闭推荐</span></div></div>'), explain = tips_info.find('.soft_tips_text'), btn_ground = tips_info.find('.btn-ground'),el = '#updata_pro_info'
+        var remarks = rdata.remarks,tips_info = $('<div class="alert ltd" style="margin-bottom:15px"><div class="soft_tips_text"></div><div class="btn-ground" style="display:inline-block;"></div><div class="close_recommend hide"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span><span>关闭推荐</span></div></div>'), explain = tips_info.find('.soft_tips_text'), btn_ground = tips_info.find('.btn-ground'),el = '#updata_pro_info'
         $(el).empty();
         if(type !== 11) $(el).next('.onekey-menu-sub').remove();
         if(type === 10){
@@ -550,12 +550,12 @@ var soft = {
                 {title:'免费入驻',href:'https://www.bt.cn/developer/',rel:'noreferrer noopener',target:'_blank',btn:'免费入驻',class:'btn btn-success btn-xs va0',style:"margin-left:10px;"},
                 {title:'点击获取第三方应用',rel:'noreferrer noopener',href:'https://www.bt.cn/bbs/forum-40-1.html',target:'_blank',btn:'获取第三方应用',class:'btn btn-success btn-xs va0 ml15',style:"margin-left:10px;"},
                 {title:'导入插件',href:'javascript:;',btn:'导入插件','class':'btn btn-success btn-xs va0 ml15','style':"margin-left:10px;",click:function(e){
-                    var input = $('<input type="file" style="display:none;" accept=".zip,.tar.gz" id="update_zip" multiple="multiple">').change(function (e) {
-                        var files =$(this)[0].files;
-                        if (files.length === 0) return;
-                        soft.update_zip(files[0]);
-                    }).click();
-                }}
+                        var input = $('<input type="file" style="display:none;" accept=".zip,.tar.gz" id="update_zip" multiple="multiple">').change(function (e) {
+                            var files =$(this)[0].files;
+                            if (files.length === 0) return;
+                            soft.update_zip(files[0]);
+                        }).click();
+                    }}
             ]);
             $(el).append(tips_info.addClass('alert-danger'));
         }else if(type === 11){
@@ -566,25 +566,23 @@ var soft = {
             ]);
             $(el).append(tips_info.addClass('alert-info'));
         }else{
-            if(bt.get_cookie('productPurchase') != null){
-                return false
-            }
+            if(bt.get_cookie('productPurchase') != null) return false
             var pro_introduce = '<div class="pro_introduce">',
-                genre = (rdata.ltd < 0 && rdata.pro >= 0 || rdata.ltd >= 0 && rdata.pro >= 0 || rdata.ltd < 0 && rdata.pro < 0),
+                genre = (rdata.ltd < 0 && rdata.pro >= 0 || rdata.ltd >= 0 && rdata.pro >= 0),
                 is_buy = (type === 8 || type === 12)?(type === 8?rdata.pro >= 0:rdata.ltd > 0):(rdata.ltd > 0 || rdata.pro >= 0),
                 advantage_list = []
             if(type === 8 || type === 12) genre = (type === 8)
-            if(rdata.ltd > 0) genre = false
-            advantage_list = genre?remarks.pro_list:remarks.list;
-            $.each(advantage_list,function(index,item){
-              pro_introduce += '<div class="item"><span class="success_icon"></span><span>'+ item +'</span></div>'
-            })
-            pro_introduce += '</div>'
+            if(rdata.ltd < 0 && rdata.pro < 0 && type !== 8) genre = false
             if(rdata.ltd > 0){
                 genre = false
                 is_buy = true
             }
-            if(type === 12 || rdata.ltd > 0) tips_info.addClass('ltd')
+            if((type === 8 && rdata.ltd < 0) || (rdata.pro >= 0 && type != 12)) tips_info.removeClass('ltd')
+            advantage_list = genre?remarks.pro_list:remarks.list;
+            $.each(advantage_list,function(index,item){
+                pro_introduce += '<div class="item"><span class="success_icon"></span><span>'+ item +'</span></div>'
+            })
+            pro_introduce += '</div>'
             // 显示优势介绍
             explain.html('<div class="pro_introduce_content"><div class="pro_ic_title"><span class="advantage">'+ bt.os + (genre?'专业版':'企业版') + '优势 </span><span class="renew_info">' +
                 '<span>'+ (is_buy?('过期时间：'+ (function(){
@@ -616,7 +614,7 @@ var soft = {
      * @description 设置软件信息
      * @param {object} rdata 软件列表请求数据
      * @param {string} type 列表类型
-    */
+     */
     render_soft_recommend:function (){
         bt.send('get_usually_plugin','plugin/get_usually_plugin',{},function(res){
             var html = '';
@@ -982,7 +980,7 @@ var soft = {
                     ]
 
                     var phpSort = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,12],
-                    webcache = bt.get_cookie('serverType') == 'openlitespeed' ? true : false;
+                        webcache = bt.get_cookie('serverType') == 'openlitespeed' ? true : false;
                     for (var i = 0; i < phpSort.length; i++) {
                         var item = opt_list[i];
                         if (item) {
@@ -1064,15 +1062,15 @@ var soft = {
                 tabCon.append('<div class="bt-input-text ace_config_editor_scroll" style="height: 320px;min-height:350px;line-height:18px;" id="textBody"></div>')
                 tabCon.append('<button id="OnlineEditFileBtn" class="btn btn-success btn-sm" style="margin-top:10px;">' + lan.public.save + '</button>')
                 var _arry = [lan.get('config_edit_ps', [version])];
-				if (data.name.indexOf('php-') >= 0){
-					_arry.push(lan.soft.config_php_tips);
-				}
-				tabCon.append(bt.render_help(_arry))
-				$('.return_php_info').click(function(){
-					$('.bt-soft-menu p:eq(12)').click();
+                if (data.name.indexOf('php-') >= 0){
+                    _arry.push(lan.soft.config_php_tips);
+                }
+                tabCon.append(bt.render_help(_arry))
+                $('.return_php_info').click(function(){
+                    $('.bt-soft-menu p:eq(12)').click();
                 });
                 var fileName = bt.soft.get_config_path(version),
-                loadT = bt.load(lan.soft.get);
+                    loadT = bt.load(lan.soft.get);
                 if (data.php_ini) fileName = data.php_ini;
                 var config = bt.aceEditor({el:'textBody',path:fileName});
                 $("#OnlineEditFileBtn").click(function(){
@@ -1080,22 +1078,22 @@ var soft = {
                 });
                 break;
             case 'fpm_config':
-                    var tabCon = $(".soft-man-con").empty();
-                    tabCon.append('<p style="color: #666; margin-bottom: 7px">' + lan.bt.edit_ps + '</p>');
-                    tabCon.append('<div class="bt-input-text ace_config_editor_scroll" style="height: 320px;min-height:350px;line-height:18px;" id="textBody"></div>')
-                    tabCon.append('<button id="OnlineEditFileBtn" class="btn btn-success btn-sm" style="margin-top:10px;">' + lan.public.save + '</button>')
-                    var _arry = ['此处为PHP-FPM配置文件,若您不了解配置规则，请勿修改!'];
-                    tabCon.append(bt.render_help(_arry))
-                    $('.return_php_info').click(function(){
-                        $('.bt-soft-menu p:eq(12)').click();
-                    });
-                    var fileName = bt.soft.get_config_path(version).replace('php.ini','php-fpm.conf');
-                    var loadT = bt.load(lan.soft.get);
-                    var config = bt.aceEditor({el:'textBody',path:fileName});
-                    $("#OnlineEditFileBtn").click(function () {
-                        bt.saveEditor(config);
-                    });
-                    break;
+                var tabCon = $(".soft-man-con").empty();
+                tabCon.append('<p style="color: #666; margin-bottom: 7px">' + lan.bt.edit_ps + '</p>');
+                tabCon.append('<div class="bt-input-text ace_config_editor_scroll" style="height: 320px;min-height:350px;line-height:18px;" id="textBody"></div>')
+                tabCon.append('<button id="OnlineEditFileBtn" class="btn btn-success btn-sm" style="margin-top:10px;">' + lan.public.save + '</button>')
+                var _arry = ['此处为PHP-FPM配置文件,若您不了解配置规则，请勿修改!'];
+                tabCon.append(bt.render_help(_arry))
+                $('.return_php_info').click(function(){
+                    $('.bt-soft-menu p:eq(12)').click();
+                });
+                var fileName = bt.soft.get_config_path(version).replace('php.ini','php-fpm.conf');
+                var loadT = bt.load(lan.soft.get);
+                var config = bt.aceEditor({el:'textBody',path:fileName});
+                $("#OnlineEditFileBtn").click(function () {
+                    bt.saveEditor(config);
+                });
+                break;
             case 'change_version':
                 var _list = [];
                 var opt_version = '';
@@ -1172,10 +1170,10 @@ var soft = {
                 bt.send('GetRunStatus', 'database/GetRunStatus', {}, function (rdata) {
                     var cache_size = ((parseInt(rdata.Qcache_hits) / (parseInt(rdata.Qcache_hits) + parseInt(rdata.Qcache_inserts))) * 100).toFixed(2) + '%';
                     if (cache_size == 'NaN%') cache_size = 'OFF';
-					var title10 = ((1 - rdata.Threads_created / rdata.Connections) * 100).toFixed(2);
-					var title11 = ((1 - rdata.Key_reads / rdata.Key_read_requests) * 100).toFixed(2);
-					var title12 = ((1 - rdata.Innodb_buffer_pool_reads / rdata.Innodb_buffer_pool_read_requests) * 100).toFixed(2);
-					var title14 = ((rdata.Created_tmp_disk_tables / rdata.Created_tmp_tables) * 100).toFixed(2);
+                    var title10 = ((1 - rdata.Threads_created / rdata.Connections) * 100).toFixed(2);
+                    var title11 = ((1 - rdata.Key_reads / rdata.Key_read_requests) * 100).toFixed(2);
+                    var title12 = ((1 - rdata.Innodb_buffer_pool_reads / rdata.Innodb_buffer_pool_read_requests) * 100).toFixed(2);
+                    var title14 = ((rdata.Created_tmp_disk_tables / rdata.Created_tmp_tables) * 100).toFixed(2);
                     var Con = '<div class="divtable"><table class="table table-hover table-bordered" style="width: 490px;margin-bottom:10px;background-color:#fafafa">\
 								<tbody>\
 									<tr><th>'+ lan.soft.mysql_status_title1 + '</th><td>' + getLocalTime(rdata.Run) + '</td><th>' + lan.soft.mysql_status_title5 + '</th><td>' + parseInt(rdata.Questions / rdata.Uptime) + '</td></tr>\
@@ -1482,7 +1480,7 @@ var soft = {
                     arrs[lan.bt.nginx_workermen] = rdata.workermen;
                     bt.render_table("tab-nginx-status", arrs);
                 })
-            break;
+                break;
             case 'apache_status':
                 var loadT = bt.load();
                 bt.send('GetApacheStatus', 'ajax/GetApacheStatus', {}, function (rdata) {
@@ -1500,7 +1498,7 @@ var soft = {
                     arrs[lan.bt.apache_busyworkers] = rdata.BusyWorkers;
                     bt.render_table("tab-Apache-status", arrs);
                 })
-            break;
+                break;
             case 'nginx_set':
                 var loadT = bt.load();
                 bt.send('GetNginxValue', 'config/GetNginxValue', {}, function (rdata) {
@@ -1514,17 +1512,17 @@ var soft = {
                         }else{
                             form_datas.push({title: rdata[i].name,type: 'number', name: rdata[i].name,width: '60px',value: rdata[i].value,ps: rdata[i].ps,text:''})
                         }
-                            
+
                     }
                     form_datas.push({
                         items: [{
                             text: lan.public.save, type: 'button', name: 'bt_nginx_save', callback: function (item) {
-                                    delete item['bt_nginx_save']
-                                    bt.send('SetNginxValue','config/SetNginxValue',item, function (rdata) {
-                                        layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-                                    });
-                                }
+                                delete item['bt_nginx_save']
+                                bt.send('SetNginxValue','config/SetNginxValue',item, function (rdata) {
+                                    layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+                                });
                             }
+                        }
                         ]
                     })
                     $(".soft-man-con").empty().append('<div class="set_nginx_config"></div>');
@@ -1532,7 +1530,7 @@ var soft = {
                         bt.render_form_line(form_datas[i], '', $(".soft-man-con .set_nginx_config"));
                     }
                 });
-            break;
+                break;
             case 'apache_set':
                 var loadT = bt.load();
                 bt.send('GetNginxValue', 'config/GetApacheValue', {}, function (rdata) {
@@ -1544,17 +1542,17 @@ var soft = {
                         }else{
                             form_datas.push({title: rdata[i].name,type: 'number', name: rdata[i].name,width: '60px',value: rdata[i].value,ps: rdata[i].ps,text:''})
                         }
-                            
+
                     }
                     form_datas.push({
                         items: [{
                             text: lan.public.save, type: 'button', name: 'bt_apache_save', callback: function (item) {
-                                    delete item['bt_apache_save'];
-                                    bt.send('SetApacheValue','config/SetApacheValue',item, function (rdata) {
-                                        layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-                                    });
-                                }
+                                delete item['bt_apache_save'];
+                                bt.send('SetApacheValue','config/SetApacheValue',item, function (rdata) {
+                                    layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+                                });
                             }
+                        }
                         ]
                     })
                     $(".soft-man-con").empty().append('<div class="set_Apache_config"></div>');
@@ -1562,7 +1560,7 @@ var soft = {
                         bt.render_form_line(form_datas[i], '', $(".soft-man-con .set_Apache_config"));
                     }
                 });
-            break;
+                break;
             case 'memcached_status':
             case 'memcached_set':
                 var loadT = bt.load(lan.public.get_the);
@@ -1687,21 +1685,21 @@ var soft = {
                                     <p><button class="btn btn-success btn-sm phpmyadmin_safe_save" >'+ lan.public.save + '</button></p>\
                                 </div>\
                                 <ul class="help-info-text c7"><li>'+ lan.soft.pma_ps + '</li></ul>';
-				
+
                 $(".soft-man-con").html(con);
                 if (sdata.ext.port) {
                     $(".user_pw").show();
                 }
-                
-            	function get_phpmyadmin_ssl(){
-            		var loading = bt.load('正在获取SSL状态，请稍后...');
-					bt.send('get_phpmyadmin_ssl','ajax/get_phpmyadmin_ssl',{},function(tdata){
-						loading.close();
-						$('#ssl_safe_checkbox').prop("checked",tdata.status);
-						$('#sslport').val(tdata.port)
-					})
-				}
-				get_phpmyadmin_ssl()
+
+            function get_phpmyadmin_ssl(){
+                var loading = bt.load('正在获取SSL状态，请稍后...');
+                bt.send('get_phpmyadmin_ssl','ajax/get_phpmyadmin_ssl',{},function(tdata){
+                    loading.close();
+                    $('#ssl_safe_checkbox').prop("checked",tdata.status);
+                    $('#sslport').val(tdata.port)
+                })
+            }
+                get_phpmyadmin_ssl()
                 $('.phpmyadmin_port').click(function () {
                     var pmport = $("#pmport").val();
                     var loadT = bt.load(lan.public.the);
@@ -1711,28 +1709,28 @@ var soft = {
                     })
                 })
                 $('.ssl_safe_label').click(function (){
-                	var stat = $('#ssl_safe_checkbox').prop("checked");
-                	bt.send('set_phpmyadmin_ssl','ajax/set_phpmyadmin_ssl',{v: !stat? 1:0},function(rdata){
-                		bt.msg(rdata)
-                	})
-                	setTimeout(function () {
+                    var stat = $('#ssl_safe_checkbox').prop("checked");
+                    bt.send('set_phpmyadmin_ssl','ajax/set_phpmyadmin_ssl',{v: !stat? 1:0},function(rdata){
+                        bt.msg(rdata)
+                    })
+                    setTimeout(function () {
                         get_phpmyadmin_ssl();
                     }, 500)
-                	
+
                 })
                 $('.ssl_port_button').click(function (){
-                	var sslPort = $('#sslport').val();
-                	if (!bt.check_port(sslPort)) {
+                    var sslPort = $('#sslport').val();
+                    if (!bt.check_port(sslPort)) {
                         layer.msg(lan.firewall.port_err, { icon: 2 });
                         return;
                     }
                     var loadTo = bt.load(lan.public.the);
-                	if(sslPort > 0){
-                		bt.send('change_phpmyadmin_ssl_port','ajax/change_phpmyadmin_ssl_port',{port: sslPort},function(rdata) {
-                			loadTo.close();
-                        	bt.msg(rdata);
-                		})
-                	}
+                    if(sslPort > 0){
+                        bt.send('change_phpmyadmin_ssl_port','ajax/change_phpmyadmin_ssl_port',{port: sslPort},function(rdata) {
+                            loadTo.close();
+                            bt.msg(rdata);
+                        })
+                    }
                 })
                 $('.phpmyadmin_safe').click(function () {
                     var stat = $("#phpmyadminsafe").prop("checked");
@@ -1747,36 +1745,36 @@ var soft = {
                     set_phpmyadmin('get');
                 })
 
-                function set_phpmyadmin(msg) {
-                    var type = 'password';
-                    if (msg == 'close') {
-                        bt.confirm({ msg: lan.soft.pma_pass_close }, function () {
-                            var loading = bt.load(lan.public.the);
-                            bt.send('setPHPMyAdmin', 'ajax/setPHPMyAdmin', { password: msg, siteName: 'phpmyadmin' }, function (rdata) {
-                                loading.close();
-                                bt.msg(rdata);
-                            })
+            function set_phpmyadmin(msg) {
+                var type = 'password';
+                if (msg == 'close') {
+                    bt.confirm({ msg: lan.soft.pma_pass_close }, function () {
+                        var loading = bt.load(lan.public.the);
+                        bt.send('setPHPMyAdmin', 'ajax/setPHPMyAdmin', { password: msg, siteName: 'phpmyadmin' }, function (rdata) {
+                            loading.close();
+                            bt.msg(rdata);
                         })
-                        return;
-                    } else {
-                        username = $("#username_get").val()
-                        password_1 = $("#password_get_1").val()
-                        password_2 = $("#password_get_2").val()
-                        if (username.length < 1 || password_1.length < 1) {
-                            bt.msg({ msg: lan.soft.pma_pass_empty, icon: 2 })
-                            return;
-                        }
-                        if (password_1 != password_2) {
-                            bt.msg({ msg: lan.soft.pass_err_re, icon: 2 })
-                            return;
-                        }
-                    }
-                    var loading = bt.load(lan.public.the);
-                    bt.send('setPHPMyAdmin', 'ajax/setPHPMyAdmin', { password: password_1, username: username, siteName: 'phpmyadmin' }, function (rdata) {
-                        loading.close();
-                        bt.msg(rdata);
                     })
+                    return;
+                } else {
+                    username = $("#username_get").val()
+                    password_1 = $("#password_get_1").val()
+                    password_2 = $("#password_get_2").val()
+                    if (username.length < 1 || password_1.length < 1) {
+                        bt.msg({ msg: lan.soft.pma_pass_empty, icon: 2 })
+                        return;
+                    }
+                    if (password_1 != password_2) {
+                        bt.msg({ msg: lan.soft.pass_err_re, icon: 2 })
+                        return;
+                    }
                 }
+                var loading = bt.load(lan.public.the);
+                bt.send('setPHPMyAdmin', 'ajax/setPHPMyAdmin', { password: password_1, username: username, siteName: 'phpmyadmin' }, function (rdata) {
+                    loading.close();
+                    bt.msg(rdata);
+                })
+            }
                 break;
             case 'set_php_config':
 
@@ -1786,7 +1784,7 @@ var soft = {
                     if (divObj) scrollTopNum = divObj.scrollTop;
 
                     $(".soft-man-con").empty().append('<div class="divtable" id="phpextdiv" style="margin-right:10px;height: 420px; overflow: auto; margin-right: 0px;"><table id="tab_phpext" class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"></div></div>');
-                    
+
                     var list = [];
                     for (var i = 0; i < rdata.libs.length; i++) {
                         if (rdata.libs[i].versions.indexOf(version) == -1) continue;
@@ -1821,7 +1819,7 @@ var soft = {
                     })
                     var helps = ['Redis扩展仅支持一个PHP版本安装使用，若在其它PHP版本已安装redis扩展，请勿再装', '请按实际需求安装扩展,不要安装不必要的PHP扩展,这会影响PHP执行效率,甚至出现异常', 'opcache/xcache/apc等脚本缓存扩展,请只安装其中1个,否则可能导致您的站点程序异常']
                     $(".soft-man-con").append(bt.render_help(helps));
-                    
+
                     var divObj = document.getElementById('phpextdiv');
                     if (divObj) divObj.scrollTop = scrollTopNum;
                     $('a').click(function () {
@@ -1898,7 +1896,7 @@ var soft = {
                     })
                 });
 
-                
+
                 break;
             case 'config_edit':
                 bt.soft.php.get_php_config(version, function (rdata) {
@@ -1930,17 +1928,17 @@ var soft = {
                                 soft.get_tab_contents(key, obj);
                             }
                         },
-                        {
-                            name: 'btn_save', text: lan.public.save, type: 'button', callback: function (ldata) {
-                                var loadT = bt.load();
-                                ldata['version'] = version;
-                                bt.send('SetPHPConf', 'config/SetPHPConf', ldata, function (rdata) {
-                                    loadT.close();
-                                    soft.get_tab_contents(key, obj);
-                                    bt.msg(rdata)
-                                });
-                            }
-                        }]
+                            {
+                                name: 'btn_save', text: lan.public.save, type: 'button', callback: function (ldata) {
+                                    var loadT = bt.load();
+                                    ldata['version'] = version;
+                                    bt.send('SetPHPConf', 'config/SetPHPConf', ldata, function (rdata) {
+                                        loadT.close();
+                                        soft.get_tab_contents(key, obj);
+                                        bt.msg(rdata)
+                                    });
+                                }
+                            }]
                     }
                     var _form_data = bt.render_form_line(datas);
                     $('.conf_p').append(_form_data.html)
@@ -2055,7 +2053,7 @@ var soft = {
                     })
                     tabCon.append(bt.render_help([lan.soft.fun_ps2, lan.soft.fun_ps3]));
 
-                    
+
                 })
                 break;
             case 'set_fpm_config':
@@ -2118,7 +2116,7 @@ var soft = {
                             title: '连接方式', name: 'listen', value: rdata.unix, type: 'select', items: [
                                 { title: 'Unix套接字', value: 'unix' },
                                 { title: 'TCP套接字', value: 'tcp' }
-                            ], ps: '* 推荐Unix套接字' 
+                            ], ps: '* 推荐Unix套接字'
                         },
                         { title: '连接信息', name: 'bind_port', value: rdata.bind + (rdata.port?':' + rdata.port:''), type: 'text', width: '150px', ps: '绑定IP:监听端口或Uinx套接字地址' },
                         { title: 'IP白名单', name: 'allowed', value: rdata.allowed, type: 'text', width: '150px', ps: '允许访问PHP的IP，多个请用逗号隔开' },
@@ -2215,49 +2213,49 @@ var soft = {
                     bt.render_table('tab_php_status', arr);
                 })
                 break;
-              case 'get_php_session':
-				bt.soft.php.get_php_session(version,function(res){
+            case 'get_php_session':
+                bt.soft.php.get_php_session(version,function(res){
                     $(".soft-man-con").html('<div class="conf_p">'+
                         '<div class="line ">'+
-                            '<span class="tname">存储模式</span>'+
-                            '<div class="info-r ">'+
-                                '<select class="bt-input-text mr5 change_select_session" name="save_handler" style="width:160px">'+
-                                    '<option value="files" '+ (res.save_handler == 'files'?'selected':'') +'>files</option>'+
-                                    (version != '52'?'<option value="redis" '+ (res.save_handler == 'redis'?'selected':'') +'>redis</option>':'') +
-                                    (version != '73'?'<option value="memcache" '+ (res.save_handler == 'memcache'?'selected':'') +'>memcache</option>':'')+
-                                    '<option value="memcached" '+ (res.save_handler == 'memcached'?'selected':'') +'>memcached</option>'+
-                                '</select>'+
-                            '</div>'+
+                        '<span class="tname">存储模式</span>'+
+                        '<div class="info-r ">'+
+                        '<select class="bt-input-text mr5 change_select_session" name="save_handler" style="width:160px">'+
+                        '<option value="files" '+ (res.save_handler == 'files'?'selected':'') +'>files</option>'+
+                        (version != '52'?'<option value="redis" '+ (res.save_handler == 'redis'?'selected':'') +'>redis</option>':'') +
+                        (version != '73'?'<option value="memcache" '+ (res.save_handler == 'memcache'?'selected':'') +'>memcache</option>':'')+
+                        '<option value="memcached" '+ (res.save_handler == 'memcached'?'selected':'') +'>memcached</option>'+
+                        '</select>'+
+                        '</div>'+
                         '</div>'+
                         '<div class="line">'+
-                            '<span class="tname">IP地址</span>'+
-                            '<div class="info-r ">'+
-                                '<input name="ip" class="bt-input-text mr5" type="text" style="width:160px" value="'+ res.save_path +'">'+
-                            '</div>'+
+                        '<span class="tname">IP地址</span>'+
+                        '<div class="info-r ">'+
+                        '<input name="ip" class="bt-input-text mr5" type="text" style="width:160px" value="'+ res.save_path +'">'+
+                        '</div>'+
                         '</div>'+
                         '<div class="line">'+
-                            '<span class="tname">端口</span>'+
-                            '<div class="info-r ">'+
-                                '<input name="port" class="bt-input-text mr5" type="text" style="width:160px" value="'+ res.port +'">'+
-                            '</div>'+
+                        '<span class="tname">端口</span>'+
+                        '<div class="info-r ">'+
+                        '<input name="port" class="bt-input-text mr5" type="text" style="width:160px" value="'+ res.port +'">'+
                         '</div>'+
-                       '<div class="line">'+
-                            '<span class="tname">密码</span>'+
-                            '<div class="info-r ">'+
-                                '<input name="passwd" class="bt-input-text mr5" placeholder="如果没有密码留空" type="text" style="width:160px" value="'+ res.passwd +'">'+
-                            '</div>'+
                         '</div>'+
                         '<div class="line">'+
-                            '<button name="btn_save" class="btn btn-success btn-sm mr5 ml5 btn_conf_save" style="margin-left: 110px;">保存</button>'+
+                        '<span class="tname">密码</span>'+
+                        '<div class="info-r ">'+
+                        '<input name="passwd" class="bt-input-text mr5" placeholder="如果没有密码留空" type="text" style="width:160px" value="'+ res.passwd +'">'+
+                        '</div>'+
+                        '</div>'+
+                        '<div class="line">'+
+                        '<button name="btn_save" class="btn btn-success btn-sm mr5 ml5 btn_conf_save" style="margin-left: 110px;">保存</button>'+
                         '</div>'+
                         '<ul class="help-info-text c7">'+
-                            '<li>若你的站点并发比较高，使用Redis，Memcache能有效提升PHP并发能力</li>'+
-                            '<li>若调整Session模式后，网站访问异常，请切换回原来的模式</li>'+
-                            '<li>切换Session模式会使在线的用户会话丢失，请在流量小的时候切换</li>'+
+                        '<li>若你的站点并发比较高，使用Redis，Memcache能有效提升PHP并发能力</li>'+
+                        '<li>若调整Session模式后，网站访问异常，请切换回原来的模式</li>'+
+                        '<li>切换Session模式会使在线的用户会话丢失，请在流量小的时候切换</li>'+
                         '</ul>'+
                         '<div class="session_clear" style="border-top: #ccc 1px dashed;padding-top: 15px;margin-top: 15px;">'+
                         '<div class="clear_title" style="padding-bottom:15px;">清理Session文件</div><div class="clear_conter"></div></div>'+
-                    '</div>');
+                        '</div>');
                     if(res.save_handler == 'files'){
                         bt.soft.php.get_session_count(function(res){
                             $('.clear_conter').html('<div class="session_clear_list"><div class="line"><span>总Session文件数量</span><span>'+ res.total +'</span></div><div class="line"><span>可清理的Session文件数量</span><span>'+ res.oldfile +'</span></div></div><button class="btn btn-success btn-sm clear_session_file">清理session文件</button>')
@@ -2283,15 +2281,15 @@ var soft = {
                             case 'redis':
                                 $('[name="ip"]').val('127.0.0.1');
                                 $('[name="port"]').val('6379');
-                            break;
+                                break;
                             case 'memcache':
                                 $('[name="ip"]').val('127.0.0.1');
                                 $('[name="port"]').val('11211');
-                            break;
+                                break;
                             case 'memcached':
                                 $('[name="ip"]').val('127.0.0.1');
                                 $('[name="port"]').val('11211');
-                            break;
+                                break;
                         }
                     });
                     $('.btn_conf_save').click(function(){
@@ -2304,7 +2302,7 @@ var soft = {
                         },function(res){
                             layer.msg(res.msg,{icon:res.status?1:2});
                             setTimeout(function(){
-                              $('.bt-soft-menu p:eq(9)').click();
+                                $('.bt-soft-menu p:eq(9)').click();
                             },2000);
                         })
                     });
@@ -2314,26 +2312,26 @@ var soft = {
                                 $('[name="ip"]').attr('disabled','disabled').val('');
                                 $('[name="port"]').attr('disabled','disabled').val('');
                                 $('[name="passwd"]').attr('disabled','disabled').val('');
-                            break;
+                                break;
                             case 'redis':
                                 $('[name="ip"]').attr('disabled',false);
                                 $('[name="port"]').attr('disabled',false);
                                 $('[name="passwd"]').attr('disabled',false);
-                            break;
+                                break;
                             case 'memcache':
                                 $('[name="ip"]').attr('disabled',false);
                                 $('[name="port"]').attr('disabled',false);
                                 $('[name="passwd"]').attr('disabled','disabled').val('');
-                            break;
+                                break;
                             case 'memcached':
                                 $('[name="ip"]').attr('disabled',false);
                                 $('[name="port"]').attr('disabled',false);
                                 $('[name="passwd"]').attr('disabled','disabled').val('');
-                            break;
+                                break;
                         }
                     }
                 });
-			break
+                break
             case 'get_fpm_logs':
                 bt.soft.php.get_fpm_logs(version, function (logs) {
                     var phpCon = '<textarea readonly="" style="margin: 0px;width: 500px;height: 520px;background-color: #333;color:#fff; padding:0 5px" id="error_log">' + logs.msg + '</textarea>';
@@ -2374,82 +2372,82 @@ var soft = {
                 })
                 break;
             case 'openliMa_set':
-                    var loadT = bt.load();
-                    $.post('config?action=get_ols_value', function(rdata) {
-                        loadT.close();
-                        var _mlist_data='',
+                var loadT = bt.load();
+                $.post('config?action=get_ols_value', function(rdata) {
+                    loadT.close();
+                    var _mlist_data='',
                         tips_i = 0,
                         help_tips=['#为静态和动态响应启用GZIP/Brotli压缩.',
-                        '#指定应用于动态内容的GZIP压缩级别。范围从1（最低）到9（最高）.',
-                        '',
-                        '#指定服务器可以接受的最大并发连接数.<br>\
-                        #这包括纯TCP连接和SSL连接',
-                        '#指定服务器将接受的最大并发SSL连接数<br>\
-                        #因为总的并发SSL和非SSL连接不能超过“Max connections”指定的限制,<br>\
-                        #允许的并发SSL连接的实际数目必须低于此限制.',
-                        '#指定在处理一个请求期间允许的最大连接空闲时间（秒）',
-                        '#指定可通过保持活动（持久）会话服务的最大请求数'];
-                        for (var i in rdata) {
-                            var mlist = {title: '',items: []},list = {};
-                            list.name = i;
-                            list.width = '130px';
-                            list.value = rdata[i];
-                            list.type = i=='enableGzipCompress'?'switch':'input';
-                            list.ps_help = help_tips[tips_i];
-                            mlist.items.push(list);
-                            mlist.title = i;
-                            _mlist_data += bt.render_form_line(mlist).html;
-                            tips_i++;
-                        }
-                        var tabCon = $(".soft-man-con").empty();
-                        tabCon.append('<div class="openlite_set">' + _mlist_data + '</div></div>');
-                        var datas = {
-                            title: ' ',
-                            class: 'openlite_button',
-                            items: [{
-                                    name: 'btn_fresh',
-                                    text: lan.public.fresh,
-                                    type: 'button',
-                                    callback: function(ldata) {
-                                        soft.get_tab_contents(key, obj);
-                                    }
-                                },
-                                {
-                                    name: 'btn_save',
-                                    text: lan.public.save,
-                                    type: 'button',
-                                    width: '62px',
-                                    callback: function(ldata) {
-                                        var datal = {},
+                            '#指定应用于动态内容的GZIP压缩级别。范围从1（最低）到9（最高）.',
+                            '',
+                            '#指定服务器可以接受的最大并发连接数.<br>\
+                            #这包括纯TCP连接和SSL连接',
+                            '#指定服务器将接受的最大并发SSL连接数<br>\
+                            #因为总的并发SSL和非SSL连接不能超过“Max connections”指定的限制,<br>\
+                            #允许的并发SSL连接的实际数目必须低于此限制.',
+                            '#指定在处理一个请求期间允许的最大连接空闲时间（秒）',
+                            '#指定可通过保持活动（持久）会话服务的最大请求数'];
+                    for (var i in rdata) {
+                        var mlist = {title: '',items: []},list = {};
+                        list.name = i;
+                        list.width = '130px';
+                        list.value = rdata[i];
+                        list.type = i=='enableGzipCompress'?'switch':'input';
+                        list.ps_help = help_tips[tips_i];
+                        mlist.items.push(list);
+                        mlist.title = i;
+                        _mlist_data += bt.render_form_line(mlist).html;
+                        tips_i++;
+                    }
+                    var tabCon = $(".soft-man-con").empty();
+                    tabCon.append('<div class="openlite_set">' + _mlist_data + '</div></div>');
+                    var datas = {
+                        title: ' ',
+                        class: 'openlite_button',
+                        items: [{
+                            name: 'btn_fresh',
+                            text: lan.public.fresh,
+                            type: 'button',
+                            callback: function(ldata) {
+                                soft.get_tab_contents(key, obj);
+                            }
+                        },
+                            {
+                                name: 'btn_save',
+                                text: lan.public.save,
+                                type: 'button',
+                                width: '62px',
+                                callback: function(ldata) {
+                                    var datal = {},
                                         loadP = bt.load();
-                                        delete ldata.btn_fresh;
-                                        delete ldata.btn_save;
-                                        ldata['enableGzipCompress']=$("#enableGzipCompress").prop('checked')?1:0;
-                                        ldata = JSON.stringify(ldata);
-                                        datal = { array: ldata };
-                                        bt.send('set_ols_value', 'config/set_ols_value', datal, function(res) {
-                                            loadP.close();
-                                            soft.get_tab_contents(key, obj);
-                                            bt.msg(res);
-                                        });
-                                    }
+                                    delete ldata.btn_fresh;
+                                    delete ldata.btn_save;
+                                    ldata['enableGzipCompress']=$("#enableGzipCompress").prop('checked')?1:0;
+                                    ldata = JSON.stringify(ldata);
+                                    datal = { array: ldata };
+                                    bt.send('set_ols_value', 'config/set_ols_value', datal, function(res) {
+                                        loadP.close();
+                                        soft.get_tab_contents(key, obj);
+                                        bt.msg(res);
+                                    });
                                 }
-                            ]
-                        }
-                        var _form_data = bt.render_form_line(datas);
-                        $('.openlite_set').append(_form_data.html);
-                        bt.render_clicks(_form_data.clicks);
-                        $(".openlite_set .tname").css('width','150px');
-                        $('.enableGzipCompress_help').css('margin-left','104px');
-                        $(".openlite_set").on("mouseenter", ".bt-ico-ask", function () {
-                            var idd = $(this).attr('class').split(" ")[1], tip = $(this).attr('tip');
-                            layer.tips(tip, '.' + idd + '', { tips: [1, '#d4d4d4'], time: 0, area: '300px'});
-                        });
-                        $(".openlite_set").on("mouseleave", ".bt-ico-ask", function () {
-                            layer.closeAll('tips');
-                        });
+                            }
+                        ]
+                    }
+                    var _form_data = bt.render_form_line(datas);
+                    $('.openlite_set').append(_form_data.html);
+                    bt.render_clicks(_form_data.clicks);
+                    $(".openlite_set .tname").css('width','150px');
+                    $('.enableGzipCompress_help').css('margin-left','104px');
+                    $(".openlite_set").on("mouseenter", ".bt-ico-ask", function () {
+                        var idd = $(this).attr('class').split(" ")[1], tip = $(this).attr('tip');
+                        layer.tips(tip, '.' + idd + '', { tips: [1, '#d4d4d4'], time: 0, area: '300px'});
                     });
-                    break;
+                    $(".openlite_set").on("mouseleave", ".bt-ico-ask", function () {
+                        layer.closeAll('tips');
+                    });
+                });
+                break;
         }
     },
     update_zip: function (file) {
@@ -2730,7 +2728,7 @@ function onekeyCodeSite(codename, versions,title,enable_functions) {
         }
         var default_path = bt.get_cookie('sites_path');
         if (!default_path) default_path = '/www/wwwroot';
-        
+
 
         var con = '<form class="bt-form pd20 pb70" id="addweb">\
 					<div class="line"><span class="tname">域名</span>\
@@ -2880,7 +2878,7 @@ var score = {
             $('.comment_tab span:eq(1)').find('i').text(_split_score[0]+_split_score[1]);
             $('.comment_tab span:eq(2)').find('i').text(_split_score[2]+_split_score[3]);
             $('.comment_tab span:eq(3)').find('i').text(_split_score[4]);
-            
+
             for (var j = 0; j < _data.length; j++){
                 _html += '<div class="comment_box" data-index="'+ ((config.p == 1?'':config.p-1)+(j+'')) +'">\
                     <div class="comment_box_title">\
@@ -3049,11 +3047,11 @@ var score = {
                     //     $('.score_icon_group_tips').html('选择以上图标选择评分等级1-5');
                     //     $('.score_icon_group').attr('data-icon',0)
                     // }else{
-                        // $(this).addClass('active').nextAll().removeClass('active');
-                        // $(this).prevAll().addClass('active');
-                        // $('.score_icon_group').attr('data-icon',$(this).prevAll().length +1)
-                        // var _title =  $(this).attr('title');
-                        // $('.score_icon_group_tips').text(_title);
+                    // $(this).addClass('active').nextAll().removeClass('active');
+                    // $(this).prevAll().addClass('active');
+                    // $('.score_icon_group').attr('data-icon',$(this).prevAll().length +1)
+                    // var _title =  $(this).attr('title');
+                    // $('.score_icon_group_tips').text(_title);
                     // }
                 });
                 $('.score_icon_group span').click(function(){
@@ -3244,19 +3242,19 @@ function escapeHTML(val) {
     val = "" + val;
     return val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, '&quot;').replace(/'/g, "‘").replace(/\(/g, "&#40;").replace(/\&#60;/g, "&lt;").replace(/\&#62;/g, "&gt;").replace(/`/g, "&#96;").replace(/=/g, "＝");
 }
-function getLength(val) {  
-    var str = new String(val);  
-    var bytesCount = 0;  
-    for (var i = 0 ,n = str.length; i < n; i++) {  
-        var c = str.charCodeAt(i);  
-        if ((c >= 0x0001 && c <= 0x007e) || (0xff60<=c && c<=0xff9f)) {  
-            bytesCount += 1;  
-        } else {  
-            bytesCount += 2;  
-        }  
-    }  
-    return bytesCount;  
-} 
+function getLength(val) {
+    var str = new String(val);
+    var bytesCount = 0;
+    for (var i = 0 ,n = str.length; i < n; i++) {
+        var c = str.charCodeAt(i);
+        if ((c >= 0x0001 && c <= 0x007e) || (0xff60<=c && c<=0xff9f)) {
+            bytesCount += 1;
+        } else {
+            bytesCount += 2;
+        }
+    }
+    return bytesCount;
+}
 function reBytesStr(str, len) {
     if ((!str && typeof(str) != 'undefined')) {return '';}
     var num = 0;
