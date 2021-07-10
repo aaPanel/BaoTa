@@ -4955,7 +4955,7 @@ bt.soft = {
     update_soft: function(name, title, version, min_version, update_msg, type) {
         var _this = this;
         if(type !== 5){
-            _this.update_soft_request(name,version,min_version,title)
+            _this.update_soft_request(name,title,version,min_version)
             return false;
         }
         var msg = "<li style='color:red;'>建议您在服务器负载闲时进行软件更新.</li>";
@@ -4963,7 +4963,7 @@ bt.soft = {
         if (update_msg) msg += '<div style="    margin-top: 10px;"><span style="font-size: 14px;font-weight: 900;">本次更新说明: </span><hr style="margin-top: 5px; margin-bottom: 5px;" /><pre>' + update_msg.replace(/(_bt_)/g, "\n") + '</pre><hr style="margin-top: -5px; margin-bottom: -5px;" /></div>';
         bt.show_confirm('更新[' + title + ']', '更新过程可能会导致服务中断,您真的现在就将[' + title + ']更新到[' + version + '.' + min_version + ']吗?', function() {
             bt.soft.show_speed_window({ title: '正在更新到[' + title + '-' + version + '.' + min_version + '],请稍候...', status: true, soft: { type: parseInt(type) } }, function() {
-                _this.update_soft_request(name,version,min_version,title)
+                _this.update_soft_request(name,title,version,min_version)
             })
         }, msg);
     },
@@ -4973,7 +4973,7 @@ bt.soft = {
      * @param {number} version 插件版本
      * @param {number} min_version 插件子版本
      */
-    update_soft_request:function(name,version,min_version){
+    update_soft_request:function(name,title,version,min_version){
         var _this = this;
         bt.soft.monitor_soft_download_speed({plugin_name:name,name:title,version:version,min_version:min_version})
         bt.send('install_plugin', 'plugin/install_plugin', { sName: name, version: version,min_version:min_version, upgrade: version }, function(rdata) {

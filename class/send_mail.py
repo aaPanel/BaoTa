@@ -200,18 +200,27 @@ class send_mail:
     # 钉钉机器人
     def dingding_send(self, content):
         if 'dingding_url' not in self.__dingding_info or 'isAtAll' not in self.__dingding_info or 'user' not in self.__dingding_info: return -1
-        data = {
-            "msgtype": "text",
-            "text": {
-                "content": content
-            },
-            "at": {
-                "atMobiles": [
-                    self.__dingding_info['user']
-                ],
-                "isAtAll": self.__dingding_info['isAtAll']
+        if 'weixin.qq.com' in self.__dingding_info['dingding_url']:
+            data = {
+                "msgtype": "markdown",
+                "markdown": {
+                        "content": content
+                }
             }
-        }
+        else:
+            data = {
+                "msgtype": "markdown",
+                "markdown": {
+                    "title": "服务器通知",
+                    "text": content
+                },
+                "at": {
+                    "atMobiles": [
+                        self.__dingding_info['user']
+                    ],
+                    "isAtAll": self.__dingding_info['isAtAll']
+                }
+            }
         headers = {'Content-Type': 'application/json'}
         try:
             x = requests.post(url=self.__dingding_info['dingding_url'], data=json.dumps(data), headers=headers,

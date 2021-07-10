@@ -434,7 +434,7 @@ class system:
             except Exception as ex: 
                 public.WriteLog('信息获取',str(ex))
                 continue
-        cache.set(key,diskInfo,10000)
+        cache.set(key,diskInfo,10)
         return diskInfo
 
 
