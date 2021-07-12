@@ -635,6 +635,7 @@ class system:
         data = cache.get(skey)
         if data:return data
         try:
+            data = {}
             cpu_times_p  = psutil.cpu_times_percent()
             data['user'] = cpu_times_p.user
             data['nice'] = cpu_times_p.nice
@@ -656,9 +657,9 @@ class system:
                 except:
                     continue
                 data['总进程数'] += 1
-            
-        except: pass
-        cache.set(skey,data,60)
+                
+            cache.set(skey,data,60)
+        except: return None
         return data
 
 

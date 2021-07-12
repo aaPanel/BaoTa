@@ -2687,7 +2687,7 @@ function AddSite(codename,title) {
 }
 
 function GetSpeed() {
-    if (!$('.depSpeed')) return;
+    if (!$('.depSpeed').length) return;
     $.get('/deployment?action=GetSpeed', function (speed) {
         if (speed.status === false) return;
         if (speed.name == '下载文件') {
