@@ -449,15 +449,16 @@ class panelPlugin:
             machine = os.uname().machine
             for c_type in plugin_data_info['not_cpu_type']:
                 c_type = c_type.lower()
+                result = public.returnMsg(False,'该应用不支持{}平台,{}'.format(c_type,machine))
                 if c_type in ['arm','aarch64','aarch']:
                     if machine in ['aarch64','aarch']:
-                        return public.returnMsg(False,'该应用不支持{}平台'.format(c_type))
+                        return result
                 elif c_type in ['mips','mips64','mips64el']:
-                    if c_type.find('mips') != -1:
-                        return public.returnMsg(False,'该应用不支持{}平台'.format(c_type))
+                    if machine.find('mips') != -1:
+                        return result
                 elif c_type in ['x86','x86-64']:
-                    if c_type in ['x86','x86-64']:
-                        return public.returnMsg(False,'该应用不支持{}平台'.format(c_type))
+                    if machine in ['x86','x86-64']:
+                        return result
         return None
     
     

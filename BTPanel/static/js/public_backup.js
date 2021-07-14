@@ -208,7 +208,7 @@ var bt = {
     },
     get_random: function(len) {
         len = len || 32;
-        var $chars = 'AaBbCcDdEeFfGHhiJjKkLMmNnPpRSrTsWtXwYxZyz2345678'; // 默认去掉了容易混淆的字符oOLl,9gq,Vv,Uu,I1  
+        var $chars = 'AaBbCcDdEeFfGHhiJjKkLMmNnPpRSrTsWtXwYxZyz2345678'; // 默认去掉了容易混淆的字符oOLl,9gq,Vv,Uu,I1
         var maxPos = $chars.length;
         var pwd = '';
         for (i = 0; i < len; i++) {
@@ -4775,7 +4775,7 @@ bt.soft = {
                 },
                 yes: function (indexs) {
                     if (data.author !== '宝塔' || data.update) {
-                        bt.show_confirm('安全验证', '<span style="color:red">' + (data.author !== '宝塔' ? '更新过程可能会导致服务中断,是否继续升级？<br>建议您在服务器负载闲时进行软件更新' : '安装第三方插件存在一定的安全风险，是否继续安装？') + '</span>', function () {
+                        bt.show_confirm('安全验证', '<span style="color:red">' + (data.author === '宝塔' ? '更新过程可能会导致服务中断,是否继续升级？<br>建议您在服务器负载闲时进行软件更新。' : '安装第三方插件存在一定的安全风险，是否继续安装？') + '</span>', function () {
                             bt.soft.input_package(data.name, data.tmp_path, data);
                         })
                         return false
@@ -4954,7 +4954,7 @@ bt.soft = {
     },
     update_soft: function(name, title, version, min_version, update_msg, type) {
         var _this = this;
-        if(type !== 5){
+        if(parseInt(type) !== 5){
             _this.update_soft_request(name,title,version,min_version)
             return false;
         }
@@ -4974,8 +4974,8 @@ bt.soft = {
      * @param {number} min_version 插件子版本
      */
     update_soft_request:function(name,title,version,min_version){
-        var _this = this;
-        bt.soft.monitor_soft_download_speed({plugin_name:name,name:title,version:version,min_version:min_version})
+        var _this = this,type = bt.get_cookie('softType')
+        if(type !== '5') bt.soft.monitor_soft_download_speed({plugin_name:name,name:title,version:version,min_version:min_version})
         bt.send('install_plugin', 'plugin/install_plugin', { sName: name, version: version,min_version:min_version, upgrade: version }, function(rdata) {
             if (rdata.install_opt){
                 _this.show_plugin_info($.extend(true,{},rdata,{update:true}));
@@ -4987,7 +4987,7 @@ bt.soft = {
             }
             layer.close(bt.soft.loadT);
             bt.pub.get_task_count(function(rdata) {
-                if (rdata > 0 && item.type === 5) messagebox();
+                if (rdata > 0 && type === '5') messagebox();
             });
             if (typeof soft != "undefined") soft.get_list();
             bt.msg(rdata);
