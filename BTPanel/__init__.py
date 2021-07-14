@@ -218,6 +218,9 @@ def notfound(e):
 
 During handling of the above exception, another exception occurred:'''
     error_info = public.get_error_info().strip().split(ss)[-1].strip()
+    if error_info.find("`GLIBC_2.14'") != -1:
+        public.downloadFile('https://download.bt.cn/auth/libAuth_gcc_4.4.7.so','/www/server/panel/class/libAuth.x86-64.so')
+        error_info += "\n已尝试自动修复此问题，请刷新页面重试!"
     request_info = '''REQUEST_DATE: {request_date}
  REMOTE_ADDR: {remote_addr}
  REQUEST_URI: {method} {full_path}
