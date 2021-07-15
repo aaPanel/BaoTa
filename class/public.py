@@ -3444,6 +3444,14 @@ def return_error(error_msg,status_code = -1,data = []):
 
 
 def return_status_code(status_code,format_body,data = []):
+    '''
+        @name 按状态码返回
+        @author hwliang<2021-07-15>
+        @param status_code<int> 状态码
+        @param format_body<string> 错误内容
+        @param data<mixed> 响应数据
+        @return dict
+    '''
     error_msg = get_config_value('status_code',str(status_code))
     if not error_msg: raise PanelError('指定状态码不存在!')
     return return_data(error_msg[0],data,status_code,error_msg[1].format(format_body))

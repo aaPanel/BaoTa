@@ -13000,3 +13000,24 @@ textarea{
 
 /* New 支付界面 end */
 
+/*删除数据库弹窗样式*/
+.promptDelete p {
+    font-size: 14px;
+}
+
+.promptDelete .confirm-info-box {
+    position: relative;
+    margin-top: 15px;
+}
+
+.promptDelete input {
+    width: 300px;
+    height: 30px;
+}
+
+.promptDelete .placeholder {
+    left: 7px;
+    top: 2px;
+}
+
+/*删除数据库弹窗样式 end*/

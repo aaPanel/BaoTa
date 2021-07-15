@@ -261,7 +261,7 @@ var database = {
         }
     },
     del_database: function (id, name) {
-        bt.show_confirm(lan.get('del', [name]), lan.get('confirm_del', [name]), function () {
+        bt.prompt_confirm('删除数据库', '您正在删除数据库【' + name + '】，继续吗?', function () {
             bt.database.del_database({ id: id, name: name }, function (rdata) {
                 if (rdata.status) database.get_list();
                 bt.msg(rdata);

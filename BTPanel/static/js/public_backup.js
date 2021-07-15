@@ -432,6 +432,52 @@ var bt = {
             })
         })
     },
+    prompt_confirm: function (title, msg, callback) {
+        layer.open({
+            type: 1,
+            title: title,
+            area: "350px",
+            closeBtn: 2,
+            btn: ['确认', '取消'],
+            content: "<div class='bt-form promptDelete pd20'>\
+            	<p>" + msg + "</p>\
+            	<div class='confirm-info-box'>\
+            		<input onpaste='return false;' id='prompt_input_box' type='text' value=''>\
+            		<div class='placeholder c9 prompt_input_tips' >如果确认操作，请手动输入‘<font style='color: red'>" + title + "</font>’</div>\
+                    <div style='margin-top:5px;display: none;' class='prompt_input_ps'>验证码错误，请手动输入‘<font style='color: red'>" + title + "</font>’</div></div>\
+            	</div>",
+            success: function () {
+                var black_txt_ = $('#prompt_input_box')
+
+                $('.placeholder').click(function () { $(this).hide().siblings('input').focus() })
+                black_txt_.focus(function () {
+                    $('.prompt_input_tips.placeholder').hide()
+                })
+                black_txt_.blur(function () {
+                    black_txt_.val() == '' ? $('.prompt_input_tips.placeholder').show() : $('.prompt_input_tips.placeholder').hide()
+                });
+                black_txt_.keyup(function () {
+                    if (black_txt_.val() == '') {
+                        $('.prompt_input_tips.placeholder').show();
+                        $('.prompt_input_ps').hide();
+                    }
+                    else {
+                        $('.prompt_input_tips.placeholder').hide();
+                    }
+                })
+            },
+            yes: function (layers, index) {
+                var result = bt.replace_all($("#prompt_input_box").val(), ' ', '')
+                if (result == title) {
+                    layer.close(layers)
+                    if (callback) callback()
+                }
+                else {
+                    $('.prompt_input_ps').show();
+                }
+            }
+        });
+    },
     show_confirm: function(title, msg, callback, error) {
         var d = Math.round(Math.random() * 9 + 1),
             c = Math.round(Math.random() * 9 + 1),
