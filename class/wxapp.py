@@ -58,27 +58,27 @@ class ScanLogin(object):
         if cache.get(session_id) == 'True':
             return self.check_app_login(get)
 
-        if os.path.exists(self.app_path+"login.pl"):
-            data = public.readFile(self.app_path+'login.pl')
-            public.ExecShell('rm ' + self.app_path+"login.pl")
-            secret_key, init_time = data.split(':')
-            if time.time() - float(init_time) < 60 and get['secret_key'] == secret_key:
-                sql = db.Sql()
-                userInfo = sql.table('users').where(
-                    "id=?", (1,)).field('id,username,password').find()
-                session['login'] = True
-                session['username'] = userInfo['username']
-                cache.delete('panelNum')
-                cache.delete('dologin')
-                public.WriteLog('TYPE_LOGIN', 'LOGIN_SUCCESS',
-                                ('微信扫码登录', public.GetClientIp()+ ":" + str(request.environ.get('REMOTE_PORT'))))
-                login_type = 'data/app_login.pl'
-                self.set_request_token()
-                import config
-                config.config().reload_session()
-                public.writeFile(login_type,'True')
-                public.login_send_body("微信小程序",userInfo['username'],public.GetClientIp(),str(request.environ.get('REMOTE_PORT')))
-                return public.returnMsg(True, '登录成功')
+        # if os.path.exists(self.app_path+"login.pl"):
+        #     data = public.readFile(self.app_path+'login.pl')
+        #     public.ExecShell('rm ' + self.app_path+"login.pl")
+        #     secret_key, init_time = data.split(':')
+        #     if time.time() - float(init_time) < 60 and get['secret_key'] == secret_key:
+        #         sql = db.Sql()
+        #         userInfo = sql.table('users').where(
+        #             "id=?", (1,)).field('id,username,password').find()
+        #         session['login'] = True
+        #         session['username'] = userInfo['username']
+        #         cache.delete('panelNum')
+        #         cache.delete('dologin')
+        #         public.WriteLog('TYPE_LOGIN', 'LOGIN_SUCCESS',
+        #                         ('微信扫码登录', public.GetClientIp()+ ":" + str(request.environ.get('REMOTE_PORT'))))
+        #         login_type = 'data/app_login.pl'
+        #         self.set_request_token()
+        #         import config
+        #         config.config().reload_session()
+        #         public.writeFile(login_type,'True')
+        #         public.login_send_body("微信小程序",userInfo['username'],public.GetClientIp(),str(request.environ.get('REMOTE_PORT')))
+        #         return public.returnMsg(True, '登录成功')
         return public.returnMsg(False, '登录失败')
 
 
@@ -208,17 +208,17 @@ class wxapp(SelfModule, ScanLogin):
             elif get['panel_token'] != password:
                 return public.returnMsg(False, '秘钥不正确')
             return True
-        else:
-            # 是否在白名单ip    sgin 是否正确
-            if hasattr(get, 'uid') and hasattr(get, 'sgin') and hasattr(get, 'fun') and get['uid'] in self.user_info.keys():
-                encryption_str = self.user_info[get['uid']]['token']+get['fun']+get['uid']
-                if sys.version_info[0] == 3:
-                    if type(encryption_str) == str:
-                        encryption_str = encryption_str.encode()
-            if get['sgin'] == public.md5(binascii.hexlify(base64.b64encode(encryption_str))):
-                if public.GetClientIp() in ['47.52.194.186']:
-                    return True
-            return public.returnMsg(False, '未授权')
+        # else:
+        #     # 是否在白名单ip    sgin 是否正确
+        #     if hasattr(get, 'uid') and hasattr(get, 'sgin') and hasattr(get, 'fun') and get['uid'] in self.user_info.keys():
+        #         encryption_str = self.user_info[get['uid']]['token']+get['fun']+get['uid']
+        #         if sys.version_info[0] == 3:
+        #             if type(encryption_str) == str:
+        #                 encryption_str = encryption_str.encode()
+        #     if get['sgin'] == public.md5(binascii.hexlify(base64.b64encode(encryption_str))):
+        #         if public.GetClientIp() in ['47.52.194.186']:
+        #             return public.returnMsg(False, '未授权')
+        return public.returnMsg(False, '未授权')
 
     # 用户绑定
     def blind(self, get):

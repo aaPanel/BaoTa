@@ -669,6 +669,17 @@ def abnormal(pdata=None):
             )
     return publicObject(dataObject, defs, None, pdata)
 
+@app.route('/project/<action>', methods=method_all)
+def project(action):
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    from panelProjectController import ProjectController
+    project_obj = ProjectController()
+    defs = ('get_parser_list','get_parser_versions','model')
+    get = get_input()
+    get.action = action
+    return publicObject(project_obj,defs,None,get)
+
 
 @app.route('/files', methods=method_all)
 def files(pdata=None):

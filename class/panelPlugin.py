@@ -337,6 +337,12 @@ class panelPlugin:
             @param input_install_opt<string> 安装选项 i.安装 r.修复 u.升级 默认: i
             @return dict
         '''
+
+        if public.is_debug():
+            mod_key = input_plugin_name + '_main'
+            if mod_key in sys.modules:
+                return public.returnMsg(False,'当前插件正在被使用，请重启面板后重试')
+
         opts = {'i':'安装','u':'更新','r':'修复'}
         i_opts = {'i':'install.sh install','u':'upgrade.sh','r':'repair.sh'}
         

@@ -2786,6 +2786,8 @@ class dict_obj:
     def __delitem__(self,key): delattr(self,key)
     def __delattr__(self, key): delattr(self,key)
     def get_items(self): return self
+    def exists(self,keys):
+        return exists_args(keys,self)
     def get(self,key,default='',format='',limit = []):
         '''
             @name 获取指定参数
@@ -2848,7 +2850,7 @@ class dict_obj:
             elif format in ['email','mail','m']:
                 if not re.match(r"^.+\\@(\\[?)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,3}|[0-9]{1,3})(\\]?)$",result):
                     raise ValueError("参数：{}，要求正确的邮箱地址格式".format(key))
-            elif format in ['phone','mobile','m']:
+            elif format in ['phone','mobile','p']:
                 if not re.match("^[0-9]{11,11}$",result):
                     raise ValueError("参数：{}，要求手机号码格式".format(key))
             elif re.match(r"^[<>=]\d+$",result):
@@ -3233,7 +3235,7 @@ def download_main(upgrade_plugin_name,upgrade_version):
     import requests,shutil
     plugin_path = '/www/server/panel/plugin'
     tmp_path = '/www/server/panel/temp'
-    download_d_main_url = 'https://www.bt.cn/down/download_plugin_main'
+    download_d_main_url = 'https://api.bt.cn/down/download_plugin_main'
     pdata = get_user_info()
     pdata['name'] = upgrade_plugin_name
     pdata['version'] = upgrade_version
@@ -3305,3 +3307,158 @@ def get_sysbit():
     '''
     import struct
     return struct.calcsize('P') * 8
+
+
+def get_panel_path():
+    '''
+        @name 取面板根目录
+        @author hwliang<2021-07-14>
+        @return string
+    '''
+    return '/www/server/panel'
+
+def get_plugin_path(plugin_name = None):
+    '''
+        @name 取指定插件目录
+        @author hwliang<2021-07-14>
+        @param plugin_name<string> 插件名称 不传则返回插件根目录
+        @return string
+    '''
+
+    root_path = "{}/plugin".format(get_panel_path())
+    if not plugin_name: return root_path
+    return "{}/{}".format(root_path,plugin_name)
+
+def get_class_path():
+    '''
+        @name 取类库所在路径
+        @author hwliang<2021-07-14>
+        @return string
+    '''
+    return "{}/class".format(get_panel_path())
+
+
+def read_config(config_name,ext_name = 'json'):
+    '''
+        @name 读取指定配置文件
+        @author hwliang<2021-07-14>
+        @param config_name<string> 配置文件名称(不含扩展名)
+        @param ext_name<string> 配置文件扩展名，默认为json
+        @return string 如果发生错误，将抛出PanelError异常
+    '''
+    config_file = "{}/config/{}.{}".format(get_panel_path(),config_name,ext_name)
+    if not os.path.exists(config_file):
+        raise PanelError('指定配置文件{} 不存在'.format(config_name))
+    
+    config_str = readFile(config_file)
+    if ext_name == 'json':
+        try:
+            config_body = json.loads(config_str)
+        except Exception as ex:
+            raise PanelError('配置文件不是标准的可解析JSON内容!\n{}'.format(ex))
+        return config_body
+    return config_str
+
+def save_config(config_name,config_body,ext_name = 'json'):
+    '''
+        @name 保存配置文件
+        @author hwliang<2021-07-14>
+        @param config_name<string> 配置文件名称(不含扩展名)
+        @param config_body<mixed> 被保存的内容, ext_name为json，请传入可解析为json的参数类型，如list,dict,int,str等
+        @param ext_name<string> 配置文件扩展名，默认为json
+        @return string 如果发生错误，将抛出PanelError异常
+    '''
+
+    config_file = "{}/config/{}.{}".format(get_panel_path(),config_name,ext_name)
+    if ext_name == 'json':
+        try:
+            config_body = json.dumps(config_body)
+        except Exception as ex:
+            raise PanelError('配置内容无法被转换为json格式!\n{}'.format(ex))
+    
+    return writeFile(config_file,config_body)
+
+def get_config_value(config_name,key,default='',ext_name='json'):
+    '''
+        @name 获取指定配置文件的指定配置项
+        @author hwliang<2021-07-14>
+        @param config_name<string> 配置文件名称(不含扩展名)
+        @param key<string> 配置项
+        @param default<mixed> 获不存在则返回的默认值，默认为空字符串
+        @param ext_name<string> 配置文件扩展名，默认为json
+        @return mixed 如果发生错误，将抛出PanelError异常
+    '''
+    config_data = read_config(config_name,ext_name)
+    return config_data.get(key,default)
+
+def set_config_value(config_name,key,value,ext_name='json'):
+    '''
+        @name 设置指定配置文件的指定配置项
+        @author hwliang<2021-07-14>
+        @param config_name<string> 配置文件名称(不含扩展名)
+        @param key<string> 配置项
+        @param value<mixed> 配置值
+        @param ext_name<string> 配置文件扩展名，默认为json
+        @return mixed  如果发生错误，将抛出PanelError异常
+    '''
+    config_data = read_config(config_name,ext_name)
+    config_data[key] = value
+    return save_config(config_name,config_data,ext_name)
+
+
+def return_data(status,data,status_code=None,error_msg = None):
+    '''
+        @name 格式化响应内容
+        @author hwliang<2021-07-14>
+        @param status<bool> 状态
+        @param data<mixed> 响应数据
+        @param status_code<int> 状态码
+        @param error_msg<string> 错误消息内容
+        @return dict
+
+    '''
+    if status_code is None:
+        status_code = 1 if status else 0
+    if error_msg is None:
+        error_msg = '' if status else '未知错误'
+    
+    result = {
+                'status':status,
+                "status_code":status_code,
+                'error_msg':str(error_msg),
+                'data':data
+            }
+    return result
+
+
+def return_error(error_msg,status_code = -1,data = []):
+    '''
+        @name 格式化错误响应内容
+        @author hwliang<2021-07-15>
+        @param error_msg<string> 错误消息
+        @param status_code<int> 状态码，默认为-1
+        @param data<mixed> 响应数据
+        @return dict
+    '''
+    return return_data(False,data,status_code,str(error_msg))
+
+
+def return_status_code(status_code,format_body,data = []):
+    error_msg = get_config_value('status_code',str(status_code))
+    if not error_msg: raise PanelError('指定状态码不存在!')
+    return return_data(error_msg[0],data,status_code,error_msg[1].format(format_body))
+
+
+def to_dict_obj(data):
+    '''
+        @name 将dict转换为dict_obj
+        @author hwliang<2021-07-15>
+        @param data<dict> 要被转换的数据
+        @return dict_obj
+    '''
+    if not isinstance(data,dict):
+        raise PanelError('错误的数据类型，只支持将dict转换为dict_obj')
+    pdata = dict_obj()
+    for key in data.keys():
+        pdata[key] = data[key]
+    return pdata
