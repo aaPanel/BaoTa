@@ -9,9 +9,11 @@
 import sys
 import json
 import os
+import threading
 import time
 import re
 import uuid
+
 if not os.name in ['nt']:
     os.chdir('/www/server/panel')
 if not 'class/' in sys.path:
@@ -32,7 +34,10 @@ import public
 app = Flask(__name__, template_folder="templates/{}".format(public.GetConfigValue('template')))
 Compress(app)
 sockets = Sockets(app)
-
+# 注册HOOK
+hooks = {}
+if not hooks:
+    public.check_hooks()
 # import db
 dns_client = None
 app.config['DEBUG'] = os.path.exists('data/debug.pl')
@@ -134,7 +139,7 @@ if admin_path in admin_path_checks: admin_path = '/bt'
 def request_check():
     g.request_time = time.time()
     # 路由和URI长度过滤
-    if len(request.path) > 128: return abort(403)
+    if len(request.path) > 256: return abort(403)
     if len(request.url) > 1024: return abort(403)
 
     if request.path in ['/service_status']: return
@@ -668,6 +673,52 @@ def abnormal(pdata=None):
             'php_cpu', 'CPU', 'Memory', 'disk', 'not_root_user', 'start'
             )
     return publicObject(dataObject, defs, None, pdata)
+
+@sockets.route('/sock_shell')
+def sock_shell(ws):
+    '''
+        @name 执行指定命令，实时输出命令执行结果
+        @author hwliang<2021-07-19>
+        @return void
+
+        示例：
+            p = new WebSocket('ws://192.168.1.247:8888/sock_shell')
+            p.send('ping www.bt.cn -c 100')
+    '''
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    import subprocess
+    cmdstring = ws.receive()
+    p = subprocess.Popen(cmdstring, close_fds=True, shell=True,bufsize=4096,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    skey = public.md5(cmdstring)
+    cache.set(skey,p.pid,43200)
+    while p.poll() is None:
+        ws.send(p.stdout.read(1).decode())
+    ws.send(p.stdout.read().decode())
+    cache.delete(skey)
+
+
+@app.route('/close_sock_shell',methods=method_all)
+def close_sock_shell():
+    '''
+        @name 关闭指定命令
+        @author hwliang<2021-07-19>
+        @param cmdstring<string> 完整命令行
+        @return dict
+        示例：
+            $.post('/close_sock_shell',{cmdstring:'ping www.bt.cn -c 100'})
+    '''
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    args = get_input()
+    cmdstring = args.cmdstring.strip()
+    skey = public.md5(cmdstring)
+    pid = cache.get(skey)
+    if not pid: return json.dumps(public.return_data(False,[],error_msg='指定sock已终止!')),json_header
+    os.kill(pid,9)
+    return json.dumps(public.return_data(True,'操作成功!')),json_header
+
+
 
 @app.route('/project/<action>', methods=method_all)
 def project(action):
@@ -1939,3 +1990,73 @@ def workorder_client(ws):
     toObject.client(ws, get)
 
 # workorder end
+
+
+# def ws_send(ws,action):
+#     while True:
+#         ws.send(action.receive())
+
+# def ws_recv(ws,action):
+#     while True:
+#         action.send(ws.recv())
+
+# @app.route('/vscode',methods=method_all)
+# @app.route('/vscode/<path:action>',methods=method_all)
+# def vscode(action = None):
+
+#     comReturn = comm.local()
+#     if comReturn: return comReturn
+#     uri = request.full_path[7:]
+#     action = request.environ.get("wsgi.websocket")
+#     public.writeFile('/tmp/11.log',"{} => {}\n".format(uri,str(action)),'a+')
+#     req_headers = {}
+#     for k in request.headers.keys():
+#         # if k == 'Cookie': continue
+#         if k == 'Host':
+#             req_headers[k] = '127.0.0.1:8080'
+#         else:
+#             req_headers[k] = request.headers[k]
+#     if action:
+#         from websocket import create_connection
+#         ws = create_connection("ws://127.0.0.1:8080/{}".format(uri),header=req_headers)
+#         p1 = threading.Thread(target=ws_send,args = (ws,action))
+#         p2 = threading.Thread(target=ws_send,args = (ws,action))
+#         p1.start()
+#         p2.start()
+
+#         p1.join()
+#         p2.join()
+#         return
+
+
+#     # return str(req_headers)
+#     import requests as p
+    
+#     url = 'http://127.0.0.1:8080{}'.format(uri)
+#     # if url.find('workbench.js') != -1: return url
+#     if request.method == 'GET':
+#         res = p.get(url,headers=req_headers)
+#     else:
+#         res = p.post('http://127.0.0.1:8080{}'.format(uri),request.form.to_dict(),headers=req_headers)
+#     result = res.text
+#     if uri in ['/login']:
+#         result = res.text
+#     else:
+#         result = res.text.replace('/static/','/vscode/static/')
+
+#     res_headers = {}
+#     for k in res.headers.keys():
+#         if k in ['Content-Encoding','Transfer-Encoding']: continue
+#         res_headers[k] = res.headers[k]
+    
+#     # return res.cookies.get_dict()
+#     # return str(res.headers.items())
+    
+#     return Resp(result,status=res.status_code,headers=res_headers)
+
+
+
+# def vscode_sock(ws):
+#     comReturn = comm.local()
+#     if comReturn: return comReturn
+#     ws.send('OK')

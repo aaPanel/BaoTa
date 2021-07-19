@@ -285,9 +285,12 @@ class MemcachedSessionInterface(SessionInterface):
             session_id = self._get_signer(app).sign(want_bytes(session.sid))
         else:
             session_id = session.sid
-        response.set_cookie(app.session_cookie_name, session_id,
+        from BTPanel import request
+        if not request.cookies.get(app.session_cookie_name):
+            response.set_cookie(app.session_cookie_name, session_id,
                             expires=expires, httponly=httponly,
                             domain=domain, path=path, secure=secure)
+            
 
 
 class FileSystemSessionInterface(SessionInterface):

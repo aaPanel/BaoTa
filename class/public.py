@@ -3470,3 +3470,83 @@ def to_dict_obj(data):
     for key in data.keys():
         pdata[key] = data[key]
     return pdata
+
+def get_sctipt_object(filename):
+    '''
+        @name 从脚本文件获取对像
+        @author hwliang<2021-07-19>
+        @param filename<string> 文件名
+        @return object
+    '''
+    from types import ModuleType
+    _obj = sys.modules.setdefault(filename, ModuleType(filename))
+    _code = readFile(filename)
+    _code_object = compile(_code,filename, 'exec')
+    _obj.__file__ = filename
+    _obj.__package__ = ''
+    exec(_code_object, _obj.__dict__)
+    return _obj
+
+def check_hooks():
+    '''
+        @name 自动注册HOOK
+        @author hwliang<2021-07-19>
+        @return void
+    '''
+    hooks_path = '{}/hooks'.format(get_panel_path())
+    if not os.path.exists(hooks_path):
+        return
+    for hook_name in os.listdir(hooks_path):
+        if hook_name[-3:] != '.py': continue
+        filename = os.path.join(hooks_path,hook_name)
+        _obj = get_sctipt_object(filename)
+        _main = getattr(_obj,'main',None)
+        if not _main: continue
+        _main()
+
+def register_hook(hook_index,hook_def):
+    '''
+        @name 注册HOOK
+        @author hwliang<2021-07-15>
+        @param hook_index<string> HOOK位置
+        @param hook_def<def> HOOK函数对像
+        @return void
+    '''
+    from BTPanel import hooks
+    hook_keys = hooks.keys()
+    if not hook_index in hook_keys:
+        hooks[hook_index] = []
+    if not hook_def in hooks[hook_index]:
+        hooks[hook_index].append(hook_def)
+
+def exec_hook(hook_index,data):
+    '''
+        @name 执行HOOk
+        @author hwliang<2021-07-15>
+        @param hook_index<string> HOOK索引位置，格式限制：^\w+$
+        @param data<mixed> 运行数据
+        @return mixed
+    '''
+    
+    from BTPanel import hooks
+    hook_keys = hooks.keys()
+    if not hook_index in hook_keys:
+        return data
+
+    for hook_def in hook_keys[hook_index]:
+        data = hook_def(data)
+    return data
+
+def get_hook_index(mod_name,def_name):
+    '''
+        @name 获取HOOK位置
+        @author hwliang<2021-07-19>
+        @param mod_name<string> 模块名称
+        @param def_name<string> 方法名称
+        @return tuple
+    '''
+    mod_name = mod_name.upper()
+    def_name = def_name.upper()
+    last_index = '{}_{}_LAST'.format(mod_name,def_name)
+    end_index = '{}_{}_END'.format(mod_name,def_name)
+    return last_index,end_index

@@ -12,12 +12,13 @@
 #------------------------------
 import os,sys,public,json,re
 
+from numpy import isin
+
 class ProjectController:
 
 
     def __init__(self):
         pass
-
     
 
     def get_parser_list(self,args):
@@ -137,4 +138,28 @@ class ProjectController:
         # 方法是否存在
         if not def_object:
             return public.return_status_code(1004,def_name)
-        return def_object(pdata)
+
+        # 前置HOOK
+        hook_index = '{}_{}_LAST'.format(mod_name.upper(),def_name.upper())
+        hook_result = public.exec_hook(hook_index,pdata)
+        if isinstance(hook_result,public.dict_obj):
+            pdata = hook_result # 桥接
+        elif isinstance(hook_result,dict):
+            return hook_result # 响应具体错误信息
+        elif isinstance(hook_result,bool):
+            if not hook_result: # 直接中断操作
+                return public.return_data(False,{},error_msg='前置HOOK中断操作')
+
+        # 调用处理方法
+        result = def_object(pdata)
+
+        # 后置HOOK
+        hook_index = '{}_{}_END'.format(mod_name.upper(),def_name.upper())
+        hook_data = public.to_dict_obj({
+            'args': pdata,
+            'result': result
+        })
+        hook_result = hook_result = public.exec_hook(hook_index,hook_data)
+        if isinstance(hook_result,dict):
+            result = hook_result['result']
+        return result
