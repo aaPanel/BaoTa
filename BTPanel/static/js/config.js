@@ -107,7 +107,7 @@ $('#show_recommend').click(function(){
 
 $('#show_workorder').click(function(){
 	var status = !$(this).prop("checked"),that = $(this);
-	layer.confirm(status?'关闭在线客服，将无法实时向宝塔技术人员反馈问题？':'开启BUG反馈，实时向宝塔技术人员反馈问题？',{title:status?'关闭在线客服':'开启在线客服',closeBtn:2,icon:13,cancel:function(){
+	layer.confirm(status?'关闭在线客服，将无法实时向宝塔技术人员反馈问题？':'开启在线客服，实时向宝塔技术人员反馈问题？',{title:status?'关闭在线客服':'开启在线客服',closeBtn:2,icon:13,cancel:function(){
 		that.prop("checked",status);
 	}}, function() {
 		$.post('/config?action=show_workorder',function(rdata){

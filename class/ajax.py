@@ -349,12 +349,14 @@ class ajax:
         if length > 10000: he = 15
         if he == 1:
             for i in range(length):
-                data[i]['addtime'] = time.strftime('%m/%d %H:%M',time.localtime(float(data[i]['addtime'])))
-                if tomem and data[i]['mem'] > 100: data[i]['mem'] = data[i]['mem'] / mPre
-                if tomem in [None]:
-                    if type(data[i]['down_packets']) == str:
-                        data[i]['down_packets'] = json.loads(data[i]['down_packets'])
-                        data[i]['up_packets'] = json.loads(data[i]['up_packets'])
+                try:
+                    data[i]['addtime'] = time.strftime('%m/%d %H:%M',time.localtime(float(data[i]['addtime'])))
+                    if tomem and data[i]['mem'] > 100: data[i]['mem'] = data[i]['mem'] / mPre
+                    if tomem in [None]:
+                        if type(data[i]['down_packets']) == str:
+                            data[i]['down_packets'] = json.loads(data[i]['down_packets'])
+                            data[i]['up_packets'] = json.loads(data[i]['up_packets'])
+                except: continue
             return data
         else:
             count = 0
@@ -363,14 +365,16 @@ class ajax:
                 if count < he: 
                     count += 1
                     continue
-                value['addtime'] = time.strftime('%m/%d %H:%M',time.localtime(float(value['addtime'])))
-                if tomem and value['mem'] > 100: value['mem'] = value['mem'] / mPre
-                if tomem in [None]:
-                    if type(value['down_packets']) == str:
-                        value['down_packets'] = json.loads(value['down_packets'])
-                        value['up_packets'] = json.loads(value['up_packets'])
-                tmp.append(value)
-                count = 0
+                try:
+                    value['addtime'] = time.strftime('%m/%d %H:%M',time.localtime(float(value['addtime'])))
+                    if tomem and value['mem'] > 100: value['mem'] = value['mem'] / mPre
+                    if tomem in [None]:
+                        if type(value['down_packets']) == str:
+                            value['down_packets'] = json.loads(value['down_packets'])
+                            value['up_packets'] = json.loads(value['up_packets'])
+                    tmp.append(value)
+                    count = 0
+                except: continue
             return tmp
         
     def GetInstalleds(self,softlist):

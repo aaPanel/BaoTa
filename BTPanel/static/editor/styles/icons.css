@@ -34,7 +34,14 @@
   font-weight: normal;
   font-style: normal;
 }
-
+.default-icon:before {
+  color: #cccccc;
+  content: '\f011';
+  font-family: octicons;
+  top:-1px;
+  font-size:15px;
+  position: relative;
+}
 .binary-icon:before {
   font-family: "Octicons Regular";
   font-size: 16px;
@@ -147,12 +154,6 @@
   top: 1px;
   content: "\f0b2";
   font-size: 15px;
-}
-.text-icon:before {
-  font-family: "Octicons Regular";
-  font-size: 16px;
-  top: 1px;
-  content: "\f011";
 }
 .zip-icon:before {
   font-family: "Octicons Regular";
@@ -1732,13 +1733,6 @@
   content: "\2624";
   top: 2px;
   font-size: 16px;
-}
-.default-icon:before {
-  font-family: file-icons;
-  font-size: 15px;
-  content: "\1f5cc";
-  top: 2px;
-  font-size: 14px;
 }
 .delphi-icon:before {
   font-family: file-icons;

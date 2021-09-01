@@ -37,8 +37,16 @@ def control_init():
 )'''
         sql.execute(csql,())
     if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'sites','%type_id%')).count():
-        public.M('sites').execute("alter TABLE sites add edate integer DEFAULT '0000-00-00'",())
         public.M('sites').execute("alter TABLE sites add type_id integer DEFAULT 0",())
+
+    if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'sites','%edate%')).count():
+        public.M('sites').execute("alter TABLE sites add edate integer DEFAULT '0000-00-00'",())
+
+    if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'sites','%project_type%')).count():
+        public.M('sites').execute("alter TABLE sites add project_type STRING DEFAULT 'PHP'",())
+
+    if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'sites','%project_config%')).count():
+        public.M('sites').execute("alter TABLE sites add project_config STRING DEFAULT '{}'",())
 
     sql = db.Sql()
     if not sql.table('sqlite_master').where('type=? AND name=?', ('table', 'site_types')).count():
@@ -138,6 +146,8 @@ def control_init():
     if os.path.exists("/www/server/mysql"):
         public.ExecShell("chown mysql:mysql /etc/my.cnf;chmod 600 /etc/my.cnf")
     public.ExecShell("rm -rf /www/server/panel/temp/*")
+    if not public.is_debug():
+        public.ExecShell("rm -f /www/server/panel/class/pluginAuth.py")
     stop_path = '/www/server/stop'
     if not os.path.exists(stop_path):
         os.makedirs(stop_path)
@@ -179,6 +189,7 @@ def write_run_script_log(_log,rn='\n'):
 
 
 def run_script():
+    os.system("{} {}/script/run_script.py".format(public.get_python_bin(),public.get_panel_path()))
     run_tip = '/dev/shm/bt.pl'
     if os.path.exists(run_tip): return
     public.writeFile(run_tip,str(time.time()))

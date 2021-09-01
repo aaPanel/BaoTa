@@ -278,27 +278,29 @@ class plugin_deployment:
         self.WriteLogs({'name':'设置权限','total':0,'used':0,'pre':0,'speed':0})
         public.ExecShell('chmod -R 755 ' + path)
         public.ExecShell('chown -R www.www ' + path)
-        if pinfo['chmod']:
-            for chm in pinfo['chmod']:
-                public.ExecShell('chmod -R ' + str(chm['mode']) + ' ' + (path + '/' + chm['path']).replace('//','/'))
-        
+        if 'chmod' in pinfo:
+            if pinfo['chmod']:
+                for chm in pinfo['chmod']:
+                    public.ExecShell('chmod -R ' + str(chm['mode']) + ' ' + (path + '/' + chm['path']).replace('//','/'))
+            
         #安装PHP扩展
         self.WriteLogs({'name':'安装必要的PHP扩展','total':0,'used':0,'pre':0,'speed':0})
-        import files
-        mfile = files.files()
-        if type(pinfo['php_ext']) != list : pinfo['php_ext'] = pinfo['php_ext'].strip().split(',')
-        for ext in pinfo['php_ext']:
-            if ext == 'pathinfo': 
-                import config
-                con = config.config()
-                get.version = php_version
-                get.type = 'on'
-                con.setPathInfo(get)
-            else:
-                get.name = ext
-                get.version = php_version
-                get.type = '1'
-                mfile.InstallSoft(get)
+        if 'php_ext' in pinfo:
+            import files
+            mfile = files.files()
+            if type(pinfo['php_ext']) != list : pinfo['php_ext'] = pinfo['php_ext'].strip().split(',')
+            for ext in pinfo['php_ext']:
+                if ext == 'pathinfo': 
+                    import config
+                    con = config.config()
+                    get.version = php_version
+                    get.type = 'on'
+                    con.setPathInfo(get)
+                else:
+                    get.name = ext
+                    get.version = php_version
+                    get.type = '1'
+                    mfile.InstallSoft(get)
                 
         #解禁PHP函数
         if 'enable_functions' in pinfo:
@@ -366,13 +368,14 @@ class plugin_deployment:
         
         #设置运行目录
         self.WriteLogs({'name':'设置运行目录','total':0,'used':0,'pre':0,'speed':0})
-        if pinfo['run_path'] != '/':
-            import panelSite;
-            siteObj = panelSite.panelSite()
-            mobj = obj()
-            mobj.id = find['id']
-            mobj.runPath = pinfo['run_path']
-            siteObj.SetSiteRunPath(mobj)
+        if 'run_path' in pinfo:
+            if pinfo['run_path'] != '/':
+                import panelSite;
+                siteObj = panelSite.panelSite()
+                mobj = obj()
+                mobj.id = find['id']
+                mobj.runPath = pinfo['run_path']
+                siteObj.SetSiteRunPath(mobj)
             
         #导入数据
         self.WriteLogs({'name':'导入数据库','total':0,'used':0,'pre':0,'speed':0})
@@ -391,18 +394,18 @@ class plugin_deployment:
 
         #清理文件和目录
         self.WriteLogs({'name':'清理多余的文件','total':0,'used':0,'pre':0,'speed':0})
-        if type(pinfo['remove_file']) == str : pinfo['remove_file'] = pinfo['remove_file'].strip().split(',')
-        print(pinfo['remove_file'])
-        for f_path in pinfo['remove_file']:
-            if not f_path: continue
-            filename = (path + '/' + f_path).replace('//','/')
-            if os.path.exists(filename):
-                if not os.path.isdir(filename):
-                    if f_path.find('.user.ini') != -1:
-                        public.ExecShell("chattr -i " + filename)
-                    os.remove(filename)
-                else:
-                    public.ExecShell("rm -rf " + filename)
+        if 'remove_file' in pinfo:
+            if type(pinfo['remove_file']) == str : pinfo['remove_file'] = pinfo['remove_file'].strip().split(',')
+            for f_path in pinfo['remove_file']:
+                if not f_path: continue
+                filename = (path + '/' + f_path).replace('//','/')
+                if os.path.exists(filename):
+                    if not os.path.isdir(filename):
+                        if f_path.find('.user.ini') != -1:
+                            public.ExecShell("chattr -i " + filename)
+                        os.remove(filename)
+                    else:
+                        public.ExecShell("rm -rf " + filename)
                 
         public.serviceReload()
         if id: self.depTotal(id)

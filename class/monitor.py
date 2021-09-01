@@ -5,6 +5,7 @@
 # | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
 # | Author: 王张杰 <750755014@qq.com>
+# | Maintainer: linxiao
 # +-------------------------------------------------------------------
 
 import os
@@ -12,6 +13,7 @@ import json
 import time
 import datetime
 import re
+import sqlite3
 
 import public
 
@@ -38,8 +40,45 @@ class Monitor:
     def _get_site_list(self):
         sites = public.M('sites').where('status=?', (1,)).field('name').get()
         return sites
-
+    
     def _statuscode_distribute_site(self, site_name):
+        
+        try:
+            day_401 = 0
+            day_500 = 0
+            day_502 = 0
+            day_503 = 0
+            conn = None
+            ts = None
+            start_date, end_date = self.get_time_interval(time.localtime())
+            select_sql = "select time/100 as time1, sum(status_401), sum(status_500), sum(status_502), sum(status_503) from request_stat where time between {} and {}"\
+            .format(start_date, end_date)
+    
+            db_path = os.path.join("/www/server/total/", "logs/{}/logs.db".format(site_name))
+            if os.path.isfile(db_path):
+                conn = sqlite3.connect(db_path)
+                ts = conn.cursor()
+                ts.execute(select_sql)
+                results = ts.fetchall()
+                
+                if type(results) == list:
+                    for result in results:
+                        time_key = str(result[0])
+                        day_401 = result[1]
+                        day_500 = result[2]
+                        day_502 = result[3]
+                        day_503 = result[4]
+        except:
+            pass
+        finally:
+            if ts:
+                ts.close()
+            if conn:
+                conn.close()
+                
+        return day_401, day_500, day_502, day_503
+        
+    def _statuscode_distribute_site_old(self, site_name):
         today = time.strftime('%Y-%m-%d', time.localtime())
         path = '/www/server/total/total/' + site_name + '/request/' + today + '.json'
 
@@ -52,10 +91,10 @@ class Monitor:
 
             for c in spdata.values():
                 for d in c:
-                    if '401' == d: day_401 += c['401']
-                    if '500' == d: day_500 += c['500']
-                    if '502' == d: day_502 += c['502']
-                    if '503' == d: day_503 += c['503']
+                    if '401' == d: day_401 += c['401'] or 0
+                    if '500' == d: day_500 += c['500'] or 0
+                    if '502' == d: day_502 += c['502'] or 0
+                    if '503' == d: day_503 += c['503'] or 0
 
         return day_401, day_500, day_502, day_503
 
@@ -66,6 +105,10 @@ class Monitor:
         for site in sites:
             site_name = site['name']
             day_401, day_500, day_502, day_503 = self._statuscode_distribute_site(site_name)
+            day_401 = day_401 or 0
+            day_500 = day_500 or 0
+            day_502 = day_502 or 0
+            day_503 = day_503 or 0
             count_401 += day_401
             count_500 += day_500
             count_502 += day_502
@@ -176,9 +219,46 @@ class Monitor:
         statuscode_distribute = self._statuscode_distribute(args)
         data.update(statuscode_distribute)
         return data
-
-    # 获取蜘蛛数量分布
+        
     def get_spider(self, args):
+        request_data = {}
+        sites = public.M('sites').field('name').order("addtime").select();
+        for site_info in sites:
+            ts = None
+            conn = None
+            try:
+                site_name = site_info["name"]
+                start_date, end_date = self.get_time_interval(time.localtime())
+                select_sql = "select time, spider from request_stat where time between {} and {}"\
+                .format(start_date, end_date)
+                
+                db_path = os.path.join("/www/server/total/", "logs/{}/logs.db".format(site_name))
+                if not os.path.isfile(db_path): continue
+                conn = sqlite3.connect(db_path)
+                ts = conn.cursor()
+                ts.execute(select_sql)
+                results = ts.fetchall()
+                
+                if type(results) == list:
+                    for result in results:
+                        time_key = str(result[0])
+                        hour = time_key[len(time_key)-2:]
+                        value = result[1]
+                        if hour not in request_data:
+                            request_data[hour] = value
+                        else:
+                            request_data[hour] += value
+            except:
+                pass
+            finally:
+                if ts:
+                    ts.close()
+                if conn:
+                    conn.close()
+        return request_data
+        
+    # 获取蜘蛛数量分布
+    def get_spider_old(self, args):
         today = time.strftime('%Y-%m-%d', time.localtime())
         sites = self._get_site_list()
 
@@ -209,9 +289,54 @@ class Monitor:
             up_flow = round(sum([item['up'] for item in data]) / 5, 2)
 
         return {'load_five': load_five, 'cpu_count': cpu_count, 'up_flow': up_flow}
-
-    # 取每小时的请求数
+    
+    def get_time_interval(self, local_time):
+        start = None
+        end = None
+        time_key_format = "%Y%m%d00"
+        start = int(time.strftime(time_key_format, local_time))
+        time_key_format = "%Y%m%d23"
+        end = int(time.strftime(time_key_format, local_time))
+        return start, end
+        
     def get_request_count_by_hour(self, args):
+        # 获取站点每小时的请求数据
+        request_data = {}
+        import sqlite3
+        sites = public.M('sites').field('name').order("addtime").select();
+        for site_info in sites:
+            ts = None
+            conn = None
+            try:
+                site_name = site_info["name"]
+                start_date, end_date = self.get_time_interval(time.localtime())
+                select_sql = "select time, req from request_stat where time between {} and {}"\
+                .format(start_date, end_date)
+                db_path = os.path.join("/www/server/total/", "logs/{}/logs.db".format(site_name))
+                if not os.path.isfile(db_path): continue
+                conn = sqlite3.connect(db_path)
+                ts = conn.cursor()
+                ts.execute(select_sql)
+                results = ts.fetchall()
+                if type(results) == list:
+                    for result in results:
+                        time_key = str(result[0])
+                        hour = time_key[len(time_key)-2:]
+                        value = result[1]
+                        if hour not in request_data:
+                            request_data[hour] = value
+                        else:
+                            request_data[hour] += value
+            except: pass
+            finally:
+                if ts:
+                    ts.close()
+                if conn:
+                    conn.close()
+        return request_data
+    
+    # 取每小时的请求数
+    def get_request_count_by_hour_old(self, args):
         today = time.strftime('%Y-%m-%d', time.localtime())
 
         request_data = {}

@@ -328,6 +328,11 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             get.path = get.path.encode('utf-8')
         if get.path == '':
             get.path = '/www'
+
+        # 转换包含~的路径
+        if get.path.find('~') != -1:
+            get.path = os.path.expanduser(get.path)
+
         get.path = self.xssdecode(get.path)
         if not os.path.exists(get.path):
             get.path = '/www/wwwroot'
@@ -336,9 +341,11 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             return public.returnMsg(False, '此为回收站目录，请在右上角按【回收站】按钮打开')
         if not os.path.isdir(get.path):
             get.path = os.path.dirname(get.path)
+        
 
         if not os.path.isdir(get.path):
             return public.returnMsg(False, '这不是一个目录!')
+            
 
         import pwd
         dirnames = []
@@ -392,6 +399,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                 if search:
                     if filename.lower().find(search) == -1:
                         continue
+
                 i += 1
                 if n >= page.ROW:
                     break
@@ -556,6 +564,13 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
 
         
 
+    def check_file_sort(self,sort):
+        """
+        @校验排序字段
+        """    
+        slist = ['name','size','mtime','accept','user']
+        if sort in slist: return sort
+        return 'name'
 
     def __list_dir(self, path, my_sort='name', reverse=False):
         '''
@@ -570,7 +585,8 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             return []
         py_v = sys.version_info[0]
         tmp_files = []
-    
+        
+        
         for f_name in os.listdir(path):
             try:
                 if py_v == 2:
@@ -2412,9 +2428,21 @@ cd %s
             attribute['history'] = self.get_history_info(filename) # 历史文件
         return attribute
 
+    def files_search(self,args):
+        import panelSearch
+        adad=panelSearch.panelSearch()
+        return adad.get_search(args)
 
 
+    def files_replace(self,args):
+        import panelSearch
+        adad=panelSearch.panelSearch()
+        return adad.get_replace(args)
 
+    def get_replace_logs(self,args):
+        import panelSearch
+        adad=panelSearch.panelSearch()
+        return adad.get_replace_logs(args)
 
 
 

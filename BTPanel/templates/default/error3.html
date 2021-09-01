@@ -4,8 +4,13 @@
     <div class="container-fluid">
         <div class="site_table_view bgw mtb15 pd15">
             <div style="padding: 40px;background: #f8f8f8;text-align: center;vertical-align: middle;">
-                <h1 style="font-size: 37px;">抱歉，需要满足以下条件才能使用</h1>
-                <p style="font-size: 20px;margin-top: 38px;color: red;">请将Nginx防火墙版本升级到8.8.4以上</p>
+                {% if 'error_msg' in data %}
+                    <h1 style="font-size: 37px;">抱歉，无法访问</h1>
+                    <p style="font-size: 20px;margin-top: 38px;color: red;">错误信息：{{data['error_msg']}}</p>
+                {% else %}
+                    <h1 style="font-size: 37px;">抱歉，需要满足以下条件才能使用</h1>
+                    <p style="font-size: 20px;margin-top: 38px;color: red;">请将Nginx防火墙版本升级到8.8.4以上</p>
+                {% endif %}
             </div>
         </div>
     </div>

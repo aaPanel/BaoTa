@@ -179,7 +179,8 @@ class config:
         userInfo = public.M('users').where("id=?",(1,)).field('username,password').find()
         token = public.Md5(userInfo['username'] + '/' + userInfo['password'])
         public.writeFile('/www/server/panel/data/login_token.pl',token)
-
+        skey = 'login_token'
+        cache.set(skey,token)
         sess_path = 'data/sess_files'
         if not os.path.exists(sess_path):
             os.makedirs(sess_path,384)

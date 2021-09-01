@@ -66,8 +66,7 @@ class panelSSL:
             if result['data']: 
                 result['data']['serverid'] = data['serverid']
                 public.writeFile(self.__UPATH,json.dumps(result['data']))
-                from pluginAuth import Plugin
-                Plugin(False).get_plugin_list(True)
+                public.flush_plugin_list()
             del(result['data'])
             session['focre_cloud'] = True
             return result
@@ -741,7 +740,7 @@ class panelSSL:
             public.writeFile(keypath,result['privkey'])
             public.writeFile(csrpath,result['fullchain'])
             import panelSite
-            panelSite.panelSite().SetSSLConf(get)
+            return panelSite.panelSite().SetSSLConf(get)
             public.serviceReload()
             return public.returnMsg(True,'SET_SUCCESS')
         except Exception as ex:

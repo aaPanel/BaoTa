@@ -10,7 +10,7 @@
 #------------------------------
 # 数据库管理类
 #------------------------------
-import public,db,re,time,os,sys,panelMysql
+import public,db,re,time,os,sys,panelMysql,json
 from BTPanel import session
 import datatool
 class database(datatool.datatools):
@@ -888,3 +888,55 @@ SetLink
             return public.returnMsg(True,"更改成功")
         else:
             return public.returnMsg(False,"更改失败")
+            
+    def get_average_num(self,slist):
+        """
+        @获取平均值
+        """
+        count = len(slist)      
+        limit_size = 1 * 1024 * 1024        
+        if count <= 0: return limit_size
+
+        if len(slist) > 1:            
+            slist = sorted(slist)
+            limit_size =int((slist[0] + slist[-1])/2 * 0.85)
+        return limit_size 
+
+    def get_database_size(self,get):
+        """
+        获取数据库大小
+        """
+        result = {}
+        tables = public.get_database_size()                
+        data = public.M('databases').field('id,pid,name,ps,addtime').select()
+        public.print_log(data)
+        for x in data:
+            name = x['name']
+            x['total'] = 0
+            x['backup_count'] = public.M('backup').where("pid=? AND type=?",(x['id'],'1')).count()
+            if name in tables: x['total'] = tables[name]
+            
+            result[name] = x        
+        return result
+
+    def check_del_data(self,get):
+        """
+        @删除数据库前置检测
+        """
+        ids = json.loads(get.ids)
+        slist = {};result = [];db_list_size = []        
+        db_data = self.get_database_size(None)
+        for key in db_data:
+            data = db_data[key]
+            if not data['id'] in ids: continue
+
+            db_addtime = public.to_date(times = data['addtime'])     
+            data['score'] = int(time.time() - db_addtime) + data['total']                
+            data['st_time'] = db_addtime
+
+            if data['total'] > 0 : db_list_size.append(data['total'])
+            result.append(data)
+
+        slist['data'] = sorted(result,key= lambda  x:x['score'],reverse=True)
+        slist['db_size'] = self.get_average_num(db_list_size)
+        return slist

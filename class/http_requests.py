@@ -14,22 +14,31 @@ import os,sys,re
 import ssl
 import public
 import json
+import socket
+import requests
+import requests.packages.urllib3.util.connection as urllib3_conn
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 class http:
-    def __init__(self):
-        pass
-
     def get(self,url,timeout = 60,headers = {},verify = False,type = 'python'):
         url = self.quote(url)
         if type == 'python':
+            old_family = urllib3_conn.allowed_gai_family
             try:
-                import requests
-                from requests.packages.urllib3.exceptions import InsecureRequestWarning
-                requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-                from requests import get as req_get
-                return req_get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
+                # 默认使用IPv4
+                urllib3_conn.allowed_gai_family = lambda: socket.AF_INE
+                return requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
             except:
-                result = self._get_curl(url,timeout,headers,verify)
+                try:
+                    # IPV6？
+                    urllib3_conn.allowed_gai_family = lambda: socket.AF_INET6
+                    return requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
+                except:
+                    # 使用CURL
+                    result = self._get_curl(url,timeout,headers,verify)
+            urllib3_conn.allowed_gai_family = old_family
+
         elif type == 'curl':
             result = self._get_curl(url,timeout,headers,verify)
         elif type == 'php':
@@ -44,14 +53,20 @@ class http:
     def post(self,url,data,timeout = 60,headers = {},verify = False,type = 'python'):
         url = self.quote(url)
         if type == 'python':
+            old_family = urllib3_conn.allowed_gai_family
             try:
-                import requests
-                from requests.packages.urllib3.exceptions import InsecureRequestWarning
-                requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-                from requests import post as req_post
-                return req_post(url,data,timeout=timeout,headers=headers,verify=verify)
+                urllib3_conn.allowed_gai_family = lambda: socket.AF_INET
+                return requests.post(url,data,timeout=timeout,headers=headers,verify=verify)
             except:
-                result = self._post_curl(url,data,timeout,headers,verify)
+                try:
+                    # IPV6？
+                    urllib3_conn.allowed_gai_family = lambda: socket.AF_INET6
+                    return requests.post(url,data,timeout=timeout,headers=headers,verify=verify)
+                except:
+                    # 使用CURL
+                    result = self._post_curl(url,data,timeout,headers,verify)
+            urllib3_conn.allowed_gai_family = old_family
+        
         elif type == 'curl':
             result = self._post_curl(url,data,timeout,headers,verify)
         elif type == 'php':
@@ -299,7 +314,7 @@ exit($header."\r\n\r\n".json_encode($body));
 
     #取CURL路径
     def _curl_bin(self):
-        c_bin = ['/usr/local/curl2/bin/curl','/usr/local/curl/bin/curl','/usr/bin/curl']
+        c_bin = ['/usr/local/curl2/bin/curl','/usr/local/curl/bin/curl','/usr/local/bin/curl','/usr/bin/curl']
         for cb in c_bin:
             if os.path.exists(cb): return cb
         return 'curl'
@@ -420,7 +435,7 @@ class response:
             return self.text
 
 DEFAULT_HEADERS = {"Content-type":"application/x-www-form-urlencoded","User-Agent":"BT-Panel"}
-s_types = ['python','php','curl']
+s_types = ['python','php','curl','src']
 DEFAULT_TYPE = 'python'
 __version__ = 1.0
 

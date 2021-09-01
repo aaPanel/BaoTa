@@ -757,7 +757,8 @@ fullchain.pem       粘贴到证书输入框
     # 替换服务器上的同域名同品牌证书
     def sub_all_cert(self, key_file, pem_file):
         cert_init = self.get_cert_init(pem_file)  # 获取新证书的基本信息
-        paths = ['vhost/cert', 'vhost/ssl']
+        paths = ['/www/server/panel/vhost/cert', '/www/server/panel/vhost/ssl','/www/server/panel']
+        is_panel = False
         for path in paths:
             if not os.path.exists(path):
                 continue
@@ -768,7 +769,12 @@ fullchain.pem       粘贴到证书输入框
                 to_info = to_path + '/info.json'
                 # 判断目标证书是否存在
                 if not os.path.exists(to_pem_file):
-                    continue
+                    if not p_name in ['ssl']: continue
+                    to_pem_file = to_path + '/certificate.pem'
+                    to_key_file = to_path + '/privateKey.pem'
+                    if not os.path.exists(to_pem_file):
+                        continue
+                    is_panel = True
                 # 获取目标证书的基本信息
                 to_cert_init = self.get_cert_init(to_pem_file)
                 # 判断证书品牌是否一致
@@ -797,6 +803,7 @@ fullchain.pem       粘贴到证书输入框
                     "|-检测到{}下的证书与本次申请的证书重叠，且到期时间较早，已替换为新证书!".format(to_path))
         # 重载web服务
         public.serviceReload()
+        if is_panel: public.restart_panel()
 
     # 检查指定证书是否在订单列表
     def check_order_exists(self, pem_file):
@@ -1435,8 +1442,22 @@ fullchain.pem       粘贴到证书输入框
                             auth_to = self.get_ssl_used_site(self._config['orders'][i]['save_path'])
                             if not auth_to: continue
                             self._config['orders'][i]['auth_to'] = auth_to
-                    order_index.append(i)
 
+                    # 是否到了允许重试的时间
+                    if 'next_retry_time' in self._config['orders'][i]:
+                        timeout = self._config['orders'][i]['next_retry_time'] - int(time.time())
+                        if timeout > 0: 
+                            write_log('|-本次跳过域名:{}，因第上次续签失败，还需要等待{}小时后再重试'.format(self._config['orders'][index]['domains'],int(timeout / 60 / 60)))
+                            continue
+                    
+                    # 是否到了最大重试次数
+                    if 'retry_count' in self._config['orders'][i]:
+                        if self._config['orders'][i]['retry_count'] >= 3: 
+                            write_log('|-本次跳过域名:{}，因连续3次续签失败，不再续签此证书'.format(self._config['orders'][index]['domains']))
+                            continue
+
+                    # 加入到续签订单
+                    order_index.append(i)
             if not order_index:
                 write_log("|-没有找到30天内到期的SSL证书!")
                 return
@@ -1467,11 +1488,27 @@ fullchain.pem       粘贴到证书输入框
                     write_log("|-正在下载证书..")
                     cert = self.download_cert(index)
                     self._config['orders'][index]['renew_time'] = int(time.time())
+
+                    # 清理失败重试记录
+                    self._config['orders'][index]['retry_count'] = 0
+                    self._config['orders'][index]['next_retry_time'] = 0
+
+                    # 保存证书配置
                     self.save_config()
                     cert['status'] = True
                     cert['msg'] = '续签成功!'
                     write_log("|-续签成功!")
                 except Exception as e:
+                    if str(e).find('请稍候重试') == -1: # 受其它证书影响和连接CA失败的的不记录重试次数
+                        # 设置下次重试时间
+                        self._config['orders'][index]['next_retry_time'] = int(time.time() + (86400 * 2))
+                        # 记录重试次数
+                        if not 'retry_count' in self._config['orders'][index].keys():
+                            self._config['orders'][index]['retry_count'] = 1
+                        self._config['orders'][index]['retry_count'] += 1
+                        # 保存证书配置
+                        self.save_config()
+
                     write_log("|-" + str(e).split('>>>>')[0])
                 write_log("-" * 70)
             return cert

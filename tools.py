@@ -438,7 +438,7 @@ def bt_cli(u_input = 0):
         print("(7) 强制修改MySQL密码      (14) 查看面板默认信息")
         print("(22) 显示面板错误日志      (15) 清理系统垃圾")
         print("(23) 关闭BasicAuth认证     (16) 修复面板(检查错误并更新面板文件到最新版)")
-        print("(24) 关闭谷歌认证          (17) 设置日志切割是否压缩")
+        print("(24) 关闭动态口令认证          (17) 设置日志切割是否压缩")
         print("(25) 设置是否保存文件历史副本  (18) 设置是否自动备份面板")
         print("(0) 取消")
         print(raw_tip)
@@ -447,6 +447,9 @@ def bt_cli(u_input = 0):
             if sys.version_info[0] == 3: u_input = int(u_input)
         except: u_input = 0
     try:
+        if u_input in ['log','logs','error','err','tail','debug','info']:
+            os.system("tail -f {}".format(public.get_panel_log_file()))
+            return
         if u_input[:6] in ['instal','update']:
             print("提示：命令传参示例（编译安装php7.4）：bt install/0/php/7.4")
             print(sys.argv)
@@ -486,6 +489,9 @@ def bt_cli(u_input = 0):
             print(raw_tip)
             os.system("bash /www/server/panel/install/install_soft.sh {} {} {} {}".format(install_input,install_args[0],install_soft,install_version))
             exit()
+
+        print("不支持的指令")
+        exit()
     except: pass
 
 
@@ -674,8 +680,11 @@ if __name__ == "__main__":
         update_to6()
     elif type == "cli":
         clinum = 0
-        if len(sys.argv) > 2: 
-            clinum = int(sys.argv[2]) if sys.argv[2][:6] not in ['instal','update'] else sys.argv[2]
+        try:
+            if len(sys.argv) > 2: 
+                clinum = int(sys.argv[2]) if sys.argv[2][:6] not in ['instal','update'] else sys.argv[2]
+        except:
+            clinum = sys.argv[2]
         bt_cli(clinum)
     else:
         print('ERROR: Parameter error')

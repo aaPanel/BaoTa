@@ -294,6 +294,13 @@ class data:
                     where = type_where
                 else:
                     where += " and " + type_where
+        if get.table == 'sites':
+            if where:
+                where = "({}) AND project_type='PHP'".format(where)
+            else:
+                where = "project_type='PHP'"
+
+            
         
         field = self.GetField(get.table)
         #实例化数据库对象

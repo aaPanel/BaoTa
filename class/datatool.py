@@ -58,7 +58,7 @@ class datatools:
                     ret2 = {}
                     ret2['type']=table[0][1]
                     data_size = table[0][6]
-                    ret2['rows_count'] = table[0][4]
+                    ret2['rows_count'] = self.DB_MySQL.query("select count(*) from `{}`.`{}`".format(db_name,i[0]))[0][0] #table[0][4]  实时获取行数 @authow hwliang<2021-08-05> 修改
                     ret2['collation'] = table[0][14]
                     ret2['data_size'] = self.ToSize(int(data_size))
                     ret2['table_name'] = i[0]

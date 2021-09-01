@@ -373,6 +373,11 @@ class panelPlugin:
             if os.path.exists(plugin_path_panel + '/icon.png'):
                 shutil.copyfile(icon_sfile,icon_dfile)
             public.WriteLog('软件管理','{}插件[{}]'.format(opts[input_install_opt],p_info['title']))
+
+            # 标记一次重新加载插件
+            reload_file = os.path.join(self.__panel_path,'data/{}.pl'.format(input_plugin_name))
+            public.writeFile(reload_file,'')
+
             return public.returnMsg(True,'{}成功!'.format(opts[input_install_opt]))
         
         # 安装失败清理安装文件？
@@ -841,6 +846,8 @@ class panelPlugin:
         execstr = "cd /www/server/panel/install && /bin/bash install_soft.sh {} {} {} {} {}".format(get.type,mtype,get.sName,get.version,ols_execstr)
         if get.sName == "phpmyadmin":
             execstr += "&> /tmp/panelExec.log && sleep 1 && /usr/local/lsws/bin/lswsctrl restart"
+        
+        # execstr += " && echo '>>命令执行完成!'"
         public.M('tasks').add('id,name,type,status,addtime,execstr',(None, mmsg + '['+get.sName+'-'+get.version+']','execshell','0',time.strftime('%Y-%m-%d %H:%M:%S'),execstr))
         cache.delete('install_task')
         public.writeFile('/tmp/panelTask.pl','True')
@@ -1358,22 +1365,26 @@ class panelPlugin:
     def set_coexist(self,sList):
         softList = []
         for sInfo in sList:
-            if sInfo['version_coexist'] == 1:
-                for versionA in sInfo['versions']:
-                    sTmp = sInfo.copy()
-                    v = versionA['m_version'].replace('.','')
-                    sTmp['title'] = sTmp['title']+'-'+versionA['m_version']
-                    sTmp['name'] = sTmp['name']+'-'+versionA['m_version']
-                    sTmp['version'] = sTmp['version'].replace('{VERSION}',v)
-                    sTmp['manager_version'] = sTmp['manager_version'].replace('{VERSION}',v)
-                    sTmp['install_checks'] = sTmp['install_checks'].replace('{VERSION}',v)
-                    sTmp['uninsatll_checks'] = sTmp['uninsatll_checks'].replace('{VERSION}',v)
-                    sTmp['s_version'] = sTmp['s_version'].replace('{VERSION}',v)
-                    sTmp['versions'] = []
-                    sTmp['versions'].append(versionA)
-                    softList.append(sTmp)
-            else:
-                softList.append(sInfo)
+            try:
+                if sInfo['version_coexist'] == 1 and 'versions' in sInfo:
+                    for versionA in sInfo['versions']:
+                        try:
+                            sTmp = sInfo.copy()
+                            v = versionA['m_version'].replace('.','')
+                            sTmp['title'] = sTmp['title']+'-'+versionA['m_version']
+                            sTmp['name'] = sTmp['name']+'-'+versionA['m_version']
+                            sTmp['version'] = sTmp['version'].replace('{VERSION}',v)
+                            sTmp['manager_version'] = sTmp['manager_version'].replace('{VERSION}',v)
+                            sTmp['install_checks'] = sTmp['install_checks'].replace('{VERSION}',v)
+                            sTmp['uninsatll_checks'] = sTmp['uninsatll_checks'].replace('{VERSION}',v)
+                            sTmp['s_version'] = sTmp['s_version'].replace('{VERSION}',v)
+                            sTmp['versions'] = []
+                            sTmp['versions'].append(versionA)
+                            softList.append(sTmp)
+                        except: continue
+                else:
+                    softList.append(sInfo)
+            except: continue
         return softList
 
     #检测是否安装
@@ -1420,8 +1431,8 @@ class panelPlugin:
                 if softInfo['id'] != 10000:
                     self.get_icon(softInfo['name'],softInfo['min_image'])
             else:
-                if softInfo['id'] != 10000:
-                    self.get_icon(softInfo['name'])
+                # if softInfo['id'] != 10000:
+                self.get_icon(softInfo['name'])
         
         if softInfo['name'].find('php-') != -1: 
             v2= softInfo['versions'][0]['m_version'].replace('.','')
@@ -1782,7 +1793,6 @@ class panelPlugin:
     def download_icon(self,name,iconFile,downFile):
         srcIcon =  'plugin/' + name + '/icon.png'
         skey = name+'_icon'
-        #public.writeFile('/tmp/11.txt',name+'\n','a+')
         if cache.get(skey): return None
         if os.path.exists(srcIcon):
             public.ExecShell(r"\cp  -a -r " + srcIcon + " " + iconFile)

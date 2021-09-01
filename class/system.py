@@ -282,14 +282,7 @@ class system:
         key = 'sys_version'
         version = cache.get(key)
         if version: return version
-        import public
-        version = public.readFile('/etc/redhat-release')
-        if not version:
-            version = public.readFile('/etc/issue').strip().split("\n")[0].replace('\\n','').replace('\l','').strip()
-        else:
-            version = version.replace('release ','').replace('Linux','').replace('(Core)','').strip()
-        v_info = sys.version_info
-        version = version + '(Py' + str(v_info.major) + '.' + str(v_info.minor) + '.' + str(v_info.micro) + ')'
+        version = public.get_os_version()
         cache.set(key,version,600)
         return version
     

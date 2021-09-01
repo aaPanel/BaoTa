@@ -354,6 +354,7 @@ var crontab = {
 	 * @param {}
 	 */
 	crontabsType:function (config,formData,that){
+		config[4].group[1].name = 'notice_channel'
 		switch (formData.sType) {
 			case 'toShell':
 				break;
@@ -392,11 +393,13 @@ var crontab = {
 				}
 			case 'webshell':
 				if (formData.sType === 'webshell') {
-					config[3].group[0].unit = '<span style="margin-top: 9px; display: inline-block;">*本次查杀由长亭牧云强力驱动</span>'
+					config[3].group[0].unit = '<span style="margin-top: 9px; display: inline-block;">*本次查杀由长亭牧云强力驱动</span>';
 					config[3].group[2].display = false
 					config[3].group[3].display = false
+					config[3].group[4].display = false
 					config[4].display = true
 					config[4].label = '消息通道'
+					config[4].group[1].name = 'urladdress'
 					config[4].group[0].display = false
 					delete config[4].group[1].label
 					config[4].group[1].display = true
@@ -712,7 +715,10 @@ var crontab = {
 					template: function (row, index) {
 						for (var i = 0; i < _that.backupList.length; i++) {
 							var item = _that.backupList[i]
-							if (item.value === row.backupTo) return '<span>' + item.title + '</span>'
+							if (item.value === row.backupTo){
+								if(row.sType === 'toShell') return '<span>--</span>';
+								return '<span>' + item.title + '</span>'
+							}
 						}
 						return '<span>--</span>'
 					}

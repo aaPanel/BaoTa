@@ -218,6 +218,15 @@ class backup:
                 if self._is_save_local:
                     _not_save_local = False
 
+                    pdata = {
+                        'type': '2',
+                        'name': spath,
+                        'pid': 0,
+                        'filename': dfile,
+                        'addtime': public.format_date(),
+                        'size': os.path.getsize(dfile)
+                    }
+                    public.M('backup').insert(pdata)
             if _not_save_local:
                 if os.path.exists(dfile):
                     os.remove(dfile)
@@ -381,6 +390,16 @@ class backup:
             else:
                 if self._is_save_local:
                     _not_save_local = False
+
+                    pdata = {
+                        'type': 0,
+                        'name': fname,
+                        'pid': pid,
+                        'filename': dfile,
+                        'addtime': public.format_date(),
+                        'size': os.path.getsize(dfile)
+                    }
+                    public.M('backup').insert(pdata)
 
             if _not_save_local:
                 if os.path.exists(dfile):
@@ -590,6 +609,16 @@ class backup:
             else:
                 if self._is_save_local:
                     _not_save_local = False
+
+                    pdata = {
+                        'type': '1',
+                        'name': fname,
+                        'pid': pid,
+                        'filename': dfile,
+                        'addtime': public.format_date(),
+                        'size': os.path.getsize(dfile)
+                    }
+                    public.M('backup').insert(pdata)
 
             if _not_save_local:
                 if os.path.exists(dfile):

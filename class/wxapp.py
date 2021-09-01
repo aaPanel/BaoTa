@@ -107,8 +107,7 @@ class ScanLogin(object):
             public.WriteLog('TYPE_LOGIN','APP扫码登录，帐号：{},登录IP：{}'.format(userInfo['username'],public.GetClientIp()+ ":" + str(request.environ.get('REMOTE_PORT'))))
             cache.delete('panelNum')
             cache.delete('dologin')
-            sess_input_path = 'data/session_last.pl'
-            public.writeFile(sess_input_path,str(int(time.time())))
+            session['session_timeout'] = time.time() + public.get_session_timeout()
             login_type = 'data/app_login.pl'
             self.set_request_token()
             import config

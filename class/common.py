@@ -18,13 +18,16 @@ import time
 
 class panelSetup:
     def init(self):
+        panel_path = public.get_panel_path()
+        if os.getcwd() != panel_path: os.chdir(panel_path)
+
         g.ua = request.headers.get('User-Agent','')
         if g.ua:
             ua = g.ua.lower()
             if ua.find('spider') != -1 or g.ua.find('bot') != -1:
                 return redirect('https://www.baidu.com')
         
-        g.version = '7.8.11'
+        g.version = '7.8.17'
         g.title = public.GetConfigValue('title')
         g.uri = request.path
         g.debug = os.path.exists('data/debug.pl')
@@ -42,6 +45,11 @@ class panelSetup:
                 g.cdn_url = '/static'
             session['title'] = g.title
             
+        g.recycle_bin_open = 0
+        if os.path.exists("data/recycle_bin.pl"): g.recycle_bin_open = 1
+        
+        g.recycle_bin_db_open = 0
+        if os.path.exists("data/recycle_bin_db.pl"): g.recycle_bin_db_open = 1
         g.is_aes = False
         self.other_import()
         return None
@@ -164,38 +172,26 @@ class panelAdmin(panelSetup):
                     return redirect('/login')
                 
             if api_check:
-                try:
-                    sess_out_path = 'data/session_timeout.pl'
-                    sess_input_path = 'data/session_last.pl'
-                    if not os.path.exists(sess_out_path):
-                        public.writeFile(sess_out_path, '86400')
-                    if not os.path.exists(sess_input_path):
-                        public.writeFile(
-                            sess_input_path, str(int(time.time())))
-                    session_timeout = int(public.readFile(sess_out_path))
-                    session_last = int(public.readFile(sess_input_path))
-                    if time.time() - session_last > session_timeout:
-                        os.remove(sess_input_path)
-                        session['login'] = False
-                        cache.set('dologin', True)
-                        session.clear()
-                        return redirect('/login')
-                    public.writeFile(sess_input_path, str(int(time.time())))
-                except:
-                    pass
-
-            filename = '/www/server/panel/data/login_token.pl'
-            if os.path.exists(filename):
-                token = public.readFile(filename).strip()
-                if 'login_token' in session:
-                    if session['login_token'] != token:
-                        session.clear()
-                        return redirect('/login?dologin=True&go=1')
+                now_time = time.time()
+                session_timeout = session.get('session_timeout',0)
+                if session_timeout < now_time and session_timeout != 0:
+                    session.clear()
+                    return redirect('/login?dologin=True&go=0')
+        
+            login_token = session.get('login_token','')
+            if login_token:
+                if login_token != public.get_login_token_auth():
+                    session.clear()
+                    return redirect('/login?dologin=True&go=1')
+            
             if api_check:
                 filename = 'data/sess_files/' + public.get_sess_key()
                 if not os.path.exists(filename):
                     session.clear()
                     return redirect('/login?dologin=True&go=2')
+
+            # 标记新的会话过期时间
+            session['session_timeout'] = time.time() + public.get_session_timeout()
         except:
             session.clear()
             return redirect('/login')

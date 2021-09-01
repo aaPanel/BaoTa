@@ -706,11 +706,21 @@ var aceEditor = {
 		
 		// 当前根目录操作，新建文件或目录
 		$('.ace_dir_tools').on('click','.folder_down_up li',function(e){
-			var _type = parseInt($(this).attr('data-type')),element = $('.cd-accordion-menu'),group = 0;
-			if($('.file_fold.bg').length > 0 && $('.file_fold.bg').data('file') != 'files'){
+			var _type = parseInt($(this).attr('data-type')),element = $('.cd-accordion-menu'),group = 0,type = 'Dir';
+			if($('.file_fold.bg').length > 0 && $('.file_fold.bg').data('file') !== 'files'){
 				element = $('.file_fold.bg');
-				group = parseInt($('.file_fold.bg').data('group'));
+				group = parseInt(element.data('group'));
+				type = element.data('file');
+				if(type === 'Files' && group !== 0){
+					if(group === 1){
+						element = element.parent().parent()
+					}else{
+						element = element.parent().parent().prev()
+					}
+					group = group - 1;
+				}
 			}
+			console.log(element)
 			switch(_type){
 				case 2:
 					_this.newly_file_type_dom(element,group,0);
@@ -1917,7 +1927,15 @@ function ajaxSetup() {
 		$.ajaxSetup({ 
 			headers: my_headers,
 			error: function(jqXHR, textStatus, errorThrown) {
+
 				if(!jqXHR.responseText) return;
+				//会话失效时自动跳转到登录页面
+				if (typeof (jqXHR.responseText) == 'string') {
+					if ((jqXHR.responseText.indexOf('/static/favicon.ico') != -1 && jqXHR.responseText.indexOf('/static/img/qrCode.png') != -1) || jqXHR.responseText.indexOf('<!DOCTYPE html>') === 0) {
+						window.location.href = "/login"
+						return
+					}
+				}
 				if(typeof(String.prototype.trim) === "undefined"){
 					String.prototype.trim = function() 
 					{
@@ -1929,6 +1947,7 @@ function ajaxSetup() {
 				error_find = jqXHR.responseText.indexOf(error_key)
 				if(jqXHR.status == 500 && (jqXHR.responseText.indexOf('运行时发生错误') != -1 || error_find != -1)){
 					if(jqXHR.responseText.indexOf('请先绑定宝塔帐号!') != -1){
+						if($('.libLogin').length > 0  || $('.radio_account_view').length > 0) return false;
 						bt.pub.bind_btname(function(){
 							window.location.reload();
 						});
@@ -2831,51 +2850,14 @@ function ActionTask() {
 	})
 }
 
-function RemoveTask(b) {
-	var a = layer.msg(lan.public.the_del, {
-		icon: 16,
-		time: 0,
-		shade: [0.3, "#000"]
-	});
-	$.post("/files?action=RemoveTask", "id=" + b, function(c) {
-		layer.close(a);
-		layer.msg(c.msg, {
-			icon: c.status ? 1 : 5
-		});
-	}).error(function(){
-		layer.msg(lan.bt.task_close,{icon:1});
-	});
-}
-
-function GetTaskList(a) {
-	a = a == undefined ? 1 : a;
-	$.post("/data?action=getData", "tojs=GetTaskList&table=tasks&limit=10&p=" + a, function(g) {
-		var e = "";
-		var b = "";
-		var c = "";
-		var f = false;
-		for(var d = 0; d < g.data.length; d++) {
-			switch(g.data[d].status) {
-				case "-1":
-					f = true;
-					if(g.data[d].type != "download") {
-						b = "<li><span class='titlename'>" + g.data[d].name + "</span><span class='state'>"+lan.bt.task_install +" <img src='/static/img/ing.gif' /> | <a href=\"javascript:RemoveTask(" + g.data[d].id + ")\">"+lan.public.close+"</a></span><span class='opencmd'></span><pre class='cmd'></pre></li>"
-					} else {
-						b = "<li><div class='line-progress' style='width:0%'></div><span class='titlename'>" + g.data[d].name + "<a id='speed' style='margin-left:130px;'>0.0M/12.5M</a></span><span class='com-progress'>0%</span><span class='state'>"+lan.bt.task_downloading+" <img src='/static/img/ing.gif'> | <a href=\"javascript:RemoveTask(" + g.data[d].id + ")\">"+lan.public.close+"</a></span></li>"
-					}
-					break;
-				case "0":
-					c += "<li><span class='titlename'>" + g.data[d].name + "</span><span class='state'>"+lan.bt.task_sleep+"</span> | <a href=\"javascript:RemoveTask(" + g.data[d].id + ")\">"+lan.public.del+"</a></li>";
-					break;
-				case "1":
-					e += "<li><span class='titlename'>" + g.data[d].name + "</span><span class='state'>" + g.data[d].addtime + "  "+lan.bt.task_ok+"  "+ lan.bt.time + (g.data[d].end - g.data[d].start) + lan.bt.s+"</span></li>"
-			}
-		}
-		$("#srunning").html(b + c);
-		$("#sbody").html(e);
-		return f
+function RemoveTask(id) {
+	var loadT = bt.load(lan.public.the_del);
+	bt.send('RemoveTask','files/RemoveTask',{id:id},function(res){
+		bt.msg(res)
+		reader_realtime_tasks()
 	})
 }
+
 
 function GetTaskCount() {
     $.post("/ajax?action=GetTaskCount", "", function (a) {
@@ -3351,8 +3333,72 @@ function getSpeed(sele){
 		},1000);
 	});
 }
+
+
+/**
+ * @description 任务盒子
+ *
+ */
+function messagebox(){
+	layer.open({
+		type: 1,
+		title: lan.bt.task_title,
+		area: "680px",
+		closeBtn: 2,
+		shadeClose: false,
+		content: '<div class="bt-form">' +
+			'<div class="bt-w-main">' +
+				'<div class="bt-w-menu">' +
+					'<p class="bgw">'+ lan.bt.task_list +' (<span id="taskNum">0</span>)</p>' +
+					'<p>'+ lan.bt.task_msg +' (<span id="taskCompleteNum">0</span>)</p>' +
+					'<p>执行日志</p>' +
+				'</div>' +
+				'<div class="bt-w-con pd15">' +
+					'<div class="bt-w-item active" id="command_install_list"><ul class="cmdlist"></ul></div>'+
+					'<div class="bt-w-item" id="messageContent"></div>'+
+					'<div class="bt-w-item"><pre id="execLog" class="command_output_pre" style="height: 530px;"></pre></div>'+
+				'</div>' +
+			'</div>' +
+		'</div>',
+		success: function(layers,indexs){
+			$(layers).find('.bt-w-menu p').on('click',function(){
+				var index = $(this).index()
+				$(this).addClass('bgw').siblings().removeClass('bgw');
+				$(layers).find('.bt-w-con .bt-w-item:eq('+ index +')').addClass('active').siblings().removeClass('active');
+				switch (index) {
+					case 0:
+						reader_realtime_tasks()
+						break;
+					case 1:
+						reader_message_list()
+						break;
+					case 2:
+						var loadT = bt.load('正在获取执行日志，请稍后...')
+						bt.send('GetExecLog','files/GetExecLog',{},function(res){
+							loadT.close();
+							var exec_log = $('#execLog');
+							console.log(exec_log)
+							exec_log.html(res)
+							exec_log[0].scrollTop = exec_log[0].scrollHeight
+						})
+						break;
+				}
+			})
+			reader_realtime_tasks()
+			setTimeout(function(){
+				reader_realtime_tasks()
+			},1000)
+			reader_message_list()
+		}
+	});
+}
+
+
+
+
+
 //消息盒子
-function messagebox() {
+function message_box() {
 	layer.open({
 		type: 1,
 		title: lan.bt.task_title,
@@ -3378,39 +3424,38 @@ function messagebox() {
 	tasklist();
 }
 
-//取执行日志
-function execLog(){
-	$.post('/files?action=GetExecLog',{},function(logs){
-		var lbody = '<textarea readonly="" style="margin: 0px;width: 500px;height: 520px;background-color: #333;color:#fff; padding:0 5px" id="exec_log">'+logs+'</textarea>';
-		$(".taskcon").html(lbody);
-		var ob = document.getElementById('exec_log');
-		ob.scrollTop = ob.scrollHeight;
-	});
+
+
+function get_message_data(page,callback){
+	if(typeof page === "function") callback = page,page = 1;
+	var loadT = bt.load('正在获取消息列表，请稍后...');
+	bt.send("getData","data/getData",{
+		tojs:'reader_message_list',
+		table:'tasks',
+		result:'2,4,6,8',
+		limit:'11',
+		search:'1',
+		p:page
+	},function(res){
+		loadT.close();
+		if(callback) callback(res);
+	})
 }
 
-function get_msg_data(a,fun) {
-    a = a == undefined ? 1 : a;
-    $.post("/data?action=getData", "tojs=remind&table=tasks&result=2,4,6,8&limit=10&search=1&p=" + a, function (g) {
-        fun(g)
-    })
-}
-
-
-function remind(a) {
-    get_msg_data(a, function (g) {
-        var e = "";
-        var f = false;
-        var task_count = 0;
-        for (var d = 0; d < g.data.length; d++) {
-            if (g.data[d].status != '1') {
-                task_count++;
-                continue;
-            }
-            e += '<tr><td><input type="checkbox"></td><td><div class="titlename c3">' + g.data[d].name + '</span><span class="rs-status">【' + lan.bt.task_ok + '】<span><span class="rs-time">' + lan.bt.time + (g.data[d].end - g.data[d].start) + lan.bt.s + '</span></div></td><td class="text-right c3">' + g.data[d].addtime + '</td></tr>'
-        }
-        var con = '<div class="divtable"><table class="table table-hover">\
-					<thead><tr><th width="20"><input id="Rs-checkAll" type="checkbox" onclick="RscheckSelect()"></th><th>'+ lan.bt.task_name + '</th><th class="text-right">' + lan.bt.task_time + '</th></tr></thead>\
-					<tbody id="remind">'+ e + '</tbody>\
+function reader_message_list(page){
+	get_message_data(page,function(res){
+		var html = "",f = false,task_count = 0;
+		for (var i = 0; i < res.data.length; i++) {
+			var item  = res.data[i];
+			if (item.status !== '1') {
+				task_count ++;
+				continue;
+			}
+			html += '<tr><td><div class="titlename c3">' + item.name + '</span><span class="rs-status">【' + lan.bt.task_ok + '】<span><span class="rs-time">' + lan.bt.time + (item.end - item.start) + lan.bt.s + '</span></div></td><td class="text-right c3">' + item.addtime + '</td></tr>'
+		}
+		var con = '<div class="divtable"><table class="table table-hover">\
+					<thead><tr><th>'+ lan.bt.task_name + '</th><th class="text-right">' + lan.bt.task_time + '</th></tr></thead>\
+						<tbody id="remind">'+ html + '</tbody>\
 					</table></div>\
 					<div class="mtb15" style="height:32px">\
 						<div class="pull-left buttongroup" style="display:none;"><button class="btn btn-default btn-sm mr5 rs-del" disabled="disabled">'+ lan.public.del + '</button><button class="btn btn-default btn-sm mr5 rs-read" disabled="disabled">' + lan.bt.task_tip_read + '</button><button class="btn btn-default btn-sm">' + lan.bt.task_tip_all + '</button></div>\
@@ -3418,148 +3463,94 @@ function remind(a) {
 					</div>';
 
 
-        var msg_count = g.page.match(/\'Pcount\'>.+<\/span>/)[0].replace(/[^0-9]/ig, "");
-        $(".msg_count").text(parseInt(msg_count) - task_count);
-        $(".taskcon").html(con);
-        $("#taskPage").html(g.page);
-        $("#Rs-checkAll").click(function () {
-            if ($(this).prop("checked")) {
-                $("#remind").find("input").prop("checked", true)
-            }
-            else {
-                $("#remind").find("input").prop("checked", false)
-            }
-        });
-    })
-
-}
-
-function GetReloads() {
-	var a = 0;
-    var mm = $("#taskList").html()
-    if (mm == undefined || mm.indexOf(lan.bt.task_list) == -1 ) {
-		clearInterval(speed);
-		a = 0;
-		speed = null;
-		return
-	}
-	if(speed) return;
-	speed = setInterval(function() {
-        var mm = $("#taskList").html()
-        if (mm == undefined || mm.indexOf(lan.bt.task_list) == -1) {
-			clearInterval(speed);
-			speed = null;
-			a = 0;
-			return
-		}
-		a++;
-        $.post("/files?action=GetTaskSpeed", "", function (h) {
-            if (h.task == undefined) {
-                $(".cmdlist").html(lan.bt.task_not_list);
-                return
-            }
-
-            if (h.status === false) {
-                clearInterval(speed);
-                speed = null;
-                a = 0;
-                return
-            }
-            
-			var b = "";
-			var d = "";
-			$("#task").text(h.task.length);
-			$(".task_count").text(h.task.length);
-			var loading = 'data:image/gif;base64,R0lGODlhDgACAIAAAHNzcwAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQFDgABACwAAAAAAgACAAACAoRRACH5BAUOAAEALAQAAAACAAIAAAIChFEAIfkEBQ4AAQAsCAAAAAIAAgAAAgKEUQAh+QQJDgABACwAAAAADgACAAACBoyPBpu9BQA7';
-			for(var g = 0; g < h.task.length; g++) {
-				if(h.task[g].status === "-1") {
-					if(h.task[g].type !== "download") {
-						var c = "";
-						var f = h.msg.split("\n");
-						for(var e = 0; e < f.length; e++) {
-							c += f[e] + "<br>"
-						}
-						if(h.task[g].name.indexOf("扫描") !== -1) {
-							b = "<li><span class='titlename'>" + h.task[g].name + "</span><span class='state'>"+ lan.bt.task_scan +" <img src='"+ loading +"'/> | <a href=\"javascript:RemoveTask(" + h.task[g].id + ")\">"+lan.public.close+"</a></span><span class='opencmd'></span><div class='cmd'>" + c + "</div></li>"
-						} else {
-							b = "<li><span class='titlename'>" + h.task[g].name + "</span><span class='state'>"+ lan.bt.task_install +" <img src='"+ loading +"' /> | <a href=\"javascript:RemoveTask(" + h.task[g].id + ")\">"+lan.public.close+"</a></span><div class='cmd'>" + c + "</div></li>"
-						}
-					} else {
-						b = "<li><div class='line-progress' style='width:" + h.msg.pre + "%'></div><span class='titlename'>" + h.task[g].name + "<a style='margin-left:130px;'>" + (ToSize(h.msg.used) + "/" + ToSize(h.msg.total)) + "</a></span><span class='com-progress'>" + h.msg.pre + "%</span><span class='state'>"+lan.bt.task_downloading+" <img src='/static/img/ing.gif'> | <a href=\"javascript:RemoveTask(" + h.task[g].id + ")\">"+lan.public.close+"</a></span></li>"
-					}
-				} else {
-					d += "<li><span class='titlename'>" + h.task[g].name + "</span><span class='state'>"+lan.bt.task_sleep+" | <a style='color:green' href=\"javascript:RemoveTask(" + h.task[g].id + ')">'+lan.public.del+'</a></span></li>'
-				}
-			}
-			$(".cmdlist").html(b + d);
-			$(".cmd").html(c);
-			try{
-				if($(".cmd")[0].scrollHeight) $(".cmd").scrollTop($(".cmd")[0].scrollHeight);
-			}catch(e){
-				return;
-			}
-		}).error(function(){});
-	}, 1000);
-}
-
-//检查选中项
-function RscheckSelect(){
-	setTimeout(function(){
-		var checkList = $("#remind").find("input");
-		var count = 0;
-		for(var i=0;i<checkList.length;i++){
-			if(checkList[i].checked) count++;
-		}
-		if(count > 0){
-			$(".buttongroup .btn").removeAttr("disabled");
-		}else{
-			$(".rs-del,.rs-read").attr("disabled","disabled");
-		}
-	},5);
-}
-
-
-function tasklist(a){
-	var con='<ul class="cmdlist"></ul><span style="position:  fixed;bottom: 13px;">若任务长时间未执行，请尝试在首页点【重启面板】来重置任务队列</span>';
-	$(".taskcon").html(con);
-	a = a == undefined ? 1 : a;
-	$.post("/data?action=getData", "tojs=GetTaskList&table=tasks&limit=10&p=" + a, function(g) {
-		var e = "";
-		var b = "";
-		var c = "";
-		var f = false;
-		var task_count =0;
-		for(var d = 0; d < g.data.length; d++) {
-			switch(g.data[d].status) {
-				case "-1":
-					f = true;
-					if(g.data[d].type != "download") {
-						b = "<li><span class='titlename'>" + g.data[d].name + "</span><span class='state pull-right c6'>"+lan.bt.task_install+" <img src='/static/img/ing.gif'> | <a class='btlink' href=\"javascript:RemoveTask(" + g.data[d].id + ")\">"+lan.public.close+"</a></span><span class='opencmd'></span><pre class='cmd'></pre></li>"
-					} else {
-						b = "<li><div class='line-progress' style='width:0%'></div><span class='titlename'>" + g.data[d].name + "<a id='speed' style='margin-left:130px;'>0.0M/12.5M</a></span><span class='com-progress'>0%</span><span class='state'>"+lan.bt.task_downloading+" <img src='/static/img/ing.gif'> | <a href=\"javascript:RemoveTask(" + g.data[d].id + ")\">"+lan.public.close+"</a></span></li>"
-					}
-					task_count++;
-					break;
-				case "0":
-					c += "<li><span class='titlename'>" + g.data[d].name + "</span><span class='state pull-right c6'>"+lan.bt.task_sleep+"</span> | <a href=\"javascript:RemoveTask(" + g.data[d].id + ")\" class='btlink'>"+lan.public.del+"</a></li>";
-					task_count++;
-					break;
-			}
-		}
-		
-		
-		$(".task_count").text(task_count);
-		
-		get_msg_data(1, function (d) {
-            var msg_count = d.page.match(/\'Pcount\'>.+<\/span>/)[0].replace(/[^0-9]/ig, "");
-            $(".msg_count").text(parseInt(msg_count));
-        })
-
-		$(".cmdlist").html(b + c);
-		GetReloads();
-		return f
+		var msg_count = res.page.match(/\'Pcount\'>.+<\/span>/)[0].replace(/[^0-9]/ig, "");
+		$("#taskCompleteNum").text(parseInt(msg_count) - task_count);
+		$("#messageContent").html(con);
+		$("#taskPage").html(res.page);
 	})
 }
+
+
+function get_realtime_tasks(callback){
+	bt.send('GetTaskSpeed','files/GetTaskSpeed',{},function(res){
+		if(callback) callback(res)
+	})
+}
+
+var initTime = null,messageBoxWssock = null;
+
+function reader_realtime_tasks(refresh){
+	get_realtime_tasks(function(res){
+		var command_install_list = $('#command_install_list'),
+			loading = 'data:image/gif;base64,R0lGODlhDgACAIAAAHNzcwAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQFDgABACwAAAAAAgACAAACAoRRACH5BAUOAAEALAQAAAACAAIAAAIChFEAIfkEBQ4AAQAsCAAAAAIAAgAAAgKEUQAh+QQJDgABACwAAAAADgACAAACBoyPBpu9BQA7',
+			html = '',
+			message = res.msg,
+			task = res.task;
+		$('#taskNum').html(typeof res.task === "undefined"?0:res.task.length);
+		if(typeof res.task === "undefined"){
+			html = '<div style="padding:5px;">当前没有任务！</div><div style="position: fixed;bottom: 15px;">若任务长时间未执行，请尝试在首页点【重启面板】来重置任务队列</div>'
+			command_install_list.html(html)
+		}else{
+			var shell = '', message_split = message.split("\n");
+			for(var j = 0; j < message_split.length; j++) {
+				shell += message_split[j] + "</br>";
+			}
+			if(command_install_list.find('li').length){
+				if(command_install_list.find('li').length > res.task.length) command_install_list.find('li:eq(0)').remove();
+				if(task[0].status !== '0' && !command_install_list.find('pre').length) command_install_list.find('li:eq(0)').append('<pre class=\'cmd command_output_pre\'>' + shell +'</pre>')
+				messageBoxWssock.el = command_install_list.find('pre');
+			}else{
+				for (var i = 0; i < task.length; i++) {
+					var item = task[i], task_html = '', del_task = '<a style="color:green" onclick="RemoveTask(' + item.id + ')" href="javascript:;">'+ lan.public.del +'</a>',loading_img = "<img src='"+ loading +"'/>";
+					if(item.status === '-1' && item.type === 'download'){
+						task_html = "<div class='line-progress' style='width:" + message.pre + "%'></div><span class='titlename'>" + item.name + "<a style='margin-left:130px;'>" + (ToSize(message.used) + "/" + ToSize(message.total)) + "</a></span><span class='com-progress'>" + message.pre + "%</span><span class='state'>"+ lan.bt.task_downloading +" "+ loading_img +" | "+ del_task +"</span>";
+					}else{
+						task_html += '<span class="titlename">' + item.name + '</span>';
+						task_html += '<span class="state">';
+						if(item.status !== "-1"){
+							task_html += lan.bt.task_sleep + ' | ' + del_task;
+						}else{
+							var is_scan = item.name.indexOf("扫描") !== -1;
+							task_html += (is_scan?lan.bt.task_scan:lan.bt.task_install) + ' ' + loading_img + ' | ' + del_task;
+						}
+						task_html += "</span>";
+						if(item.type !== "download" && item.status === "-1"){
+							task_html += '<pre class=\'cmd command_output_pre\'>' + shell +'</pre>'
+						}
+					}
+					html += "<li>"+ task_html +"</li>";
+				}
+				command_install_list.find('ul').append(html);
+			}
+			if(task[0].status === '0'){
+				setTimeout(function(){
+					reader_realtime_tasks(true)
+				},100)
+			}
+			if(command_install_list.find('pre').length){
+				var pre = command_install_list.find('pre')
+				pre.scrollTop(pre[0].scrollHeight)
+			}
+			if(!refresh){
+				messageBoxWssock = bt_tools.command_line_output({
+					el:'#command_install_list .command_output_pre',
+					area:['100%','200px'],
+					shell:'tail -n 100 -f /tmp/panelExec.log',
+					message:function(res){
+							if(res.indexOf('|-Successify --- 命令已执行! ---') > -1){
+								setTimeout(function(){
+									reader_realtime_tasks(true)
+									reader_message_list()
+								},100)
+							}
+						}
+					}
+				);
+			}
+		}
+	})
+}
+
 
 //检查登陆状态
 function check_login(){
@@ -3678,6 +3669,10 @@ function is_file_existence(name,type){
 	for(var i=0;i<arry.length;i++){
 		if(arry[i] === name) return false
 	}
+
+	for (var arryKey in arry) {
+		var item = arry[arryKey]
+	}
 	return true
 }
 var Term = {
@@ -3732,7 +3727,9 @@ var Term = {
 	
 	//连接服务器成功
 	on_open:function(ws_event){
-		Term.send(JSON.stringify(Term.ssh_info || {}))
+		var http_token = $("#request_token_head").attr('token');
+		Term.send(JSON.stringify({'x-http-token':http_token}))
+		if(JSON.stringify(Term.ssh_info) !== "{}") Term.send(JSON.stringify(Term.ssh_info))
 		// Term.term.FitAddon.fit();
 		// Term.resize();
 		var f_path = $("#fileInputPath").val() || getCookie('Path');
@@ -3834,10 +3831,6 @@ var Term = {
         }
     },
     run: function (ssh_info) {
-		if($("#panel_debug").attr("data") == 'True') {
-			layer.msg('当前为开发者模式，不支持宝塔终端，请在【面板设置】页面关闭开发者模式!',{icon:2,time:5000});
-			return;
-		}
         var loadT = layer.msg('正在加载终端所需文件，请稍后...', { icon: 16, time: 0, shade: 0.3 });
         loadScript([
         	"/static/js/xterm.js"
@@ -4236,6 +4229,7 @@ MessageBox.prototype = {
 	fail_send_list:[],   //发送失败列表
 	waiting_list:[],        //等待消息
 	bt_allow:false,            //是否为授权用户
+	socketToken:null,
     // websocket持久化连接
     connect:function(work_order2, callback){
 		var that = this;
@@ -4264,6 +4258,11 @@ MessageBox.prototype = {
     },
     //连接服务器成功
     on_open:function(ws_event){
+			if(!this.socketToken){
+				var _token = document.getElementById('request_token_head').getAttribute('token');
+				this.socketToken = {'x-http-token':_token}
+			}
+			this.bws.send(JSON.stringify(this.socketToken))
     // this.send(JSON.stringify(this.ssh_info || {}))
         // console.log(ws_event.data);
     },

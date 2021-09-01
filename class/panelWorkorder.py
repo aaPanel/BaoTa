@@ -235,13 +235,13 @@ class panelWorkorder:
         try:
             from flask import jsonify
             data = get
-            debug_path = 'data/debug.pl'
-            if os.path.exists(debug_path):
-                return jsonify({
-                    "status": False,
-                    "msg": "暂不支持在开发者模式提交工单！",
-                    "error_code": 10004
-                })
+            # debug_path = 'data/debug.pl'
+            # if os.path.exists(debug_path):
+            #     return jsonify({
+            #         "status": False,
+            #         "msg": "暂不支持在开发者模式提交工单！",
+            #         "error_code": 10004
+            #     })
             contents = data.contents
             user_info = self.find_user_info()
             if not user_info:

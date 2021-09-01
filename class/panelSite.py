@@ -29,7 +29,7 @@ class panelSite(panelRedirect):
     is_ipv6 = False
 
     def __init__(self):
-        self.setupPath = '/www/server'
+        self.setupPath = public.get_setup_path()
         path = self.setupPath + '/panel/vhost/nginx'
         if not os.path.exists(path): public.ExecShell("mkdir -p " + path + " && chmod -R 644 " + path)
         path = self.setupPath + '/panel/vhost/apache'
@@ -40,7 +40,7 @@ class panelSite(panelRedirect):
         if not os.path.exists(path + '/index.html'):
             public.ExecShell('mkdir -p ' + path)
             public.ExecShell('wget -O ' + path + '/index.html '+public.get_url()+'/stop.html &')
-        self.__proxyfile = '/www/server/panel/data/proxyfile.json'
+        self.__proxyfile = '{}/data/proxyfile.json'.format(public.get_panel_path())
         self.OldConfigFile()
         if os.path.exists(self.nginx_conf_bak): os.remove(self.nginx_conf_bak)
         if os.path.exists(self.apache_conf_bak): os.remove(self.apache_conf_bak)
@@ -79,6 +79,7 @@ class panelSite(panelRedirect):
     
     #添加apache端口
     def apacheAddPort(self,port):
+        port = str(port)
         filename = self.setupPath+'/apache/conf/extra/httpd-ssl.conf'
         if os.path.exists(filename):
             ssl_conf = public.readFile(filename)
@@ -1687,6 +1688,10 @@ listener SSL443 {
 
         # Nginx配置
         file = self.setupPath + '/panel/vhost/nginx/' + siteName + '.conf'
+
+        # Node项目
+        if not os.path.exists(file):  file = self.setupPath + '/panel/vhost/nginx/node_' + siteName + '.conf'
+
         ng_file = file
         conf = public.readFile(file)
 
@@ -1713,6 +1718,7 @@ listener SSL443 {
                     return public.returnMsg(True, 'SITE_SSL_OPEN_SUCCESS')
 
                 conf = conf.replace('#error_page 404/404.html;', sslStr)
+
                 # 添加端口
                 rep = "listen.*[\s:]+(\d+).*;"
                 tmp = re.findall(rep, conf)
@@ -1729,10 +1735,12 @@ listener SSL443 {
                     if self.is_ipv6: listen_ipv6 = ";\n\tlisten [::]:443 ssl"+http2+default_site+";"
                     conf = conf.replace(listen,listen + "\n\tlisten 443 ssl"+http2 + default_site + listen_ipv6)
                 shutil.copyfile(file, self.nginx_conf_bak)
+                
                 public.writeFile(file, conf)
 
         # Apache配置
         file = self.setupPath + '/panel/vhost/apache/' + siteName + '.conf'
+        if not os.path.exists(file): file = self.setupPath + '/panel/vhost/apache/node_' + siteName + '.conf'
         conf = public.readFile(file)
         ap_static_security = self._get_ap_static_security(conf)
         if conf:
@@ -1847,6 +1855,8 @@ listener SSL443 {
         siteName = get.siteName
         #Nginx配置
         file = self.setupPath + '/panel/vhost/nginx/'+siteName+'.conf'
+        if not os.path.exists(file):
+            file = self.setupPath + '/panel/vhost/nginx/node_'+siteName+'.conf'
         conf = public.readFile(file)
         if conf:
             if conf.find('ssl_certificate') == -1: return public.returnMsg(False,'当前未开启SSL')
@@ -1860,6 +1870,8 @@ listener SSL443 {
             public.writeFile(file,conf)
         
         file = self.setupPath + '/panel/vhost/apache/'+siteName+'.conf'
+        if not os.path.exists(file):
+            file = self.setupPath + '/panel/vhost/apache/node_'+siteName+'.conf'
         conf = public.readFile(file)
         if conf:
             httpTohttos = '''combined
@@ -1916,6 +1928,9 @@ listener SSL443 {
     #是否跳转到https
     def IsToHttps(self,siteName):
         file = self.setupPath + '/panel/vhost/nginx/'+siteName+'.conf'
+        if not os.path.exists(file):
+            file = self.setupPath + '/panel/vhost/nginx/node_'+siteName+'.conf'
+            if not os.path.exists(file): return False
         conf = public.readFile(file)
         if conf:
             if conf.find('HTTP_TO_HTTPS_START') != -1: return True
@@ -1927,6 +1942,8 @@ listener SSL443 {
         siteName = get.siteName
 
         file = self.setupPath + '/panel/vhost/nginx/' + siteName + '.conf'
+        if not os.path.exists(file):
+            file = self.setupPath + '/panel/vhost/nginx/node_' + siteName + '.conf'
         conf = public.readFile(file)
         if conf:
             rep = "\n\s*#HTTP_TO_HTTPS_START(.|\n){1,300}#HTTP_TO_HTTPS_END"
@@ -1968,6 +1985,8 @@ listener SSL443 {
             public.writeFile(file, conf)
 
         file = self.setupPath + '/panel/vhost/apache/' + siteName + '.conf'
+        if not os.path.exists(file):
+            file = self.setupPath + '/panel/vhost/apache/node_' + siteName + '.conf'
         conf = public.readFile(file)
         if conf:
             rep = "\n<VirtualHost \*\:443>(.|\n)*<\/VirtualHost>"
@@ -2025,7 +2044,11 @@ listener SSL443 {
         keypath = path + "/privkey.pem"  # 密钥文件路径
         key = public.readFile(keypath)
         csr = public.readFile(csrpath)
+
         file = self.setupPath + '/panel/vhost/' + public.get_webserver() + '/' + siteName + '.conf'
+
+        # 是否为node项目
+        if not os.path.exists(file): file = self.setupPath + '/panel/vhost/' + public.get_webserver() + '/node_' + siteName + '.conf'
         if public.get_webserver() == "openlitespeed":
             file = self.setupPath + '/panel/vhost/' + public.get_webserver() + '/detail/' + siteName + '.conf'
         conf = public.readFile(file)
@@ -3369,8 +3392,8 @@ server
             return public.returnMsg(False, "代理目录不能有以下特殊符号 ?,=,[,],),(,*,&,^,%,$,#,@,!,~,`,{,},>,<,\,',\"]")
         # 检测发送域名格式
         if get.todomain:
-            if not re.search(tod,get.todomain):
-                return public.returnMsg(False, '发送域名格式错误 ' + get.todomain)
+            if re.search("[\}\{\#\;\"\']+",get.todomain):
+                return public.returnMsg(False, '发送域名格式错误:'+get.todomain+'<br>不能存在以下特殊字符【 }  { # ; \" \' 】 ')
         if public.get_webserver() != 'openlitespeed' and not get.todomain:
             get.todomain = "$host"
 
@@ -3926,6 +3949,8 @@ location %s
     
     #取伪静态规则应用列表
     def GetRewriteList(self,get):
+        if get.siteName.find('node_') == 0:
+            get.siteName = get.siteName.replace('node_', '')
         rewriteList = {}
         ws = public.get_webserver()
         if ws == "openlitespeed":
@@ -4166,15 +4191,16 @@ location %s
                 rep = "\n#errorlog(.|\n)*compressArchive\s*1\s*\n#}"
                 tmp = re.search(rep,conf)
             tmp = tmp.group()
-            result = ''
-            if s == 'on':
-                for l in tmp.strip().splitlines():
-                    result += "\n#"+l
-            else:
-                for l in tmp.splitlines():
-                    result += "\n"+l[1:]
-            conf = re.sub(rep,"\n"+result.strip(),conf)
-            public.writeFile(filename,conf)
+            if tmp: 
+                result = ''
+                if s == 'on':
+                    for l in tmp.strip().splitlines():
+                        result += "\n#"+l
+                else:
+                    for l in tmp.splitlines():
+                        result += "\n"+l[1:]
+                conf = re.sub(rep,"\n"+result.strip(),conf)
+                public.writeFile(filename,conf)
 
 
 
@@ -4405,6 +4431,7 @@ location %s
     def GetSiteRunPath(self,get):
         siteName = public.M('sites').where('id=?',(get.id,)).getField('name')
         sitePath = public.M('sites').where('id=?',(get.id,)).getField('path')
+        if not siteName: return {"runPath":"/",'dirs':[]}
         path = sitePath
         if public.get_webserver() == 'nginx':
             filename = self.setupPath + '/panel/vhost/nginx/' + siteName + '.conf'
@@ -4901,3 +4928,95 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
     def modify_dir_auth_pass(self,get):
         sd = site_dir_auth.SiteDirAuth()
         return sd.modify_dir_auth_pass(get)
+        
+    def _check_path_total(self,path, limit):
+        """
+        根据路径获取文件/目录大小
+        @path 文件或者目录路径
+        return int 
+        """
+       
+        if not os.path.exists(path): return 0;
+        if not os.path.isdir(path): return os.path.getsize(path)
+        size_total = 0
+        for nf in os.walk(path):
+            for f in nf[2]:
+                filename = nf[0] + '/' + f
+                if not os.path.exists(filename): continue;
+                if os.path.islink(filename): continue;
+                size_total += os.path.getsize(filename)
+                if size_total >= limit: return limit                    
+        return size_total
+  
+    def get_average_num(self,slist):
+        """
+        @获取平均值
+        """
+        count = len(slist)      
+        limit_size = 1 * 1024 * 1024        
+        if count <= 0: return limit_size
+        print(slist)
+        if len(slist) > 1:            
+            slist = sorted(slist)
+            limit_size =int((slist[0] + slist[-1])/2 * 0.85)
+        return limit_size  
+
+
+    def check_del_data(self,get):
+        """
+        @删除前置检测
+        @ids = [1,2,3]
+        """
+        ids = json.loads(get['ids'])
+        slist = {}
+        result = []
+
+        import database
+        db_data = database.database().get_database_size(None)
+
+        limit_size = 50 * 1024 * 1024
+        f_list_size = [];db_list_size = []
+        for id in ids:
+            data = public.M('sites').where("id=?",(id,)).field('id,name,path,addtime').find();
+            if not data: continue            
+
+            addtime = public.to_date(times = data['addtime'])
+            
+            data['st_time'] = addtime
+            data['limit'] = False
+            data['backup_count'] = public.M('backup').where("pid=? AND type=?",(data['id'],'0')).count()
+            f_size = self._check_path_total(data['path'],limit_size)
+            data['total'] = f_size;
+            data['score'] = 0
+
+            #目录太小不计分
+            if f_size > 0:
+                f_list_size.append(f_size)
+                
+                # 10k 目录不参与排序
+                if f_size > 10 * 1024: data['score'] = int(time.time() - addtime) + f_size
+
+            if data['total'] >= limit_size: data['limit'] = True
+            data['database'] = False
+
+            find = public.M('databases').field('id,pid,name,ps,addtime').where('pid=?',(data['id'],)).find()
+            if find: 
+                db_addtime = public.to_date(times = find['addtime'])     
+
+                data['database'] = db_data[find['name']]
+                data['database']['st_time'] = db_addtime
+                
+                db_score = 0;
+                db_size = data['database']['total']                                  
+       
+                if db_size > 0: 
+                    db_list_size.append(db_size)
+                    if db_size > 50 * 1024: db_score += int(time.time() - db_addtime) + db_size
+
+                data['score'] += db_score
+            result.append(data)
+
+        slist['data'] = sorted(result,key= lambda  x:x['score'],reverse=True)
+        slist['file_size'] = self.get_average_num(f_list_size)  
+        slist['db_size'] = self.get_average_num(db_list_size)
+        return slist

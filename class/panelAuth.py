@@ -49,6 +49,28 @@ class panelAuth:
         public.writeFile(serverid_file,serverid)
         return serverid
 
+    def get_wx_order_status(self,get):
+        """
+        检查制服状态
+        @get.wxoid 支付id
+        """
+        params = {}
+        params['wxoid'] = get.wxoid
+        if 'kf' in get: params['kf'] = get.kf
+            
+        data = self.send_cloud('check_order_pay_status', params)
+        if not data: return public.returnMsg(False,'连接服务器失败!')
+        if data['status'] == True:
+            self.flush_pay_status(get)
+            if 'get_product_bay' in session: del(session['get_product_bay'])
+
+            buy_oid = '_buy_code_id'.format(params['wxoid'])
+            buy_code_key = cache.get(buy_oid)
+            if buy_code_key:
+                cache.delete(buy_code_key)
+                cache.delete(buy_oid)
+        return data
+
     def create_plugin_other_order(self,get):
         pdata = self.create_serverid(get)
         pdata['pid'] = get.pid
@@ -312,7 +334,14 @@ class panelAuth:
         if not data: return public.returnMsg(False,'连接服务器失败!')
         session[ikey] = data
         return data
-
+    
+    def set_user_adviser(self,get):
+        params = {}
+        params['status'] = get.status
+        data = self.send_cloud_wpanel('set_user_adviser',params)
+        if not data: return public.returnMsg(False,'连接服务器失败!');
+        return data
+        
     def send_cloud_wpanel(self,module,params):
         try:
             cloudURL = public.GetConfigValue('home') + '/api/panel/'

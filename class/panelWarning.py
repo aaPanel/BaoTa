@@ -53,7 +53,11 @@ class panelWarning:
                 not_force = m_info['ignore']
 
             if os.path.exists(result_file) and not_force:
-                m_info['status'],m_info['msg'],m_info['check_time'],m_info['taking'] = json.loads(public.readFile(result_file))
+                try:
+                    m_info['status'],m_info['msg'],m_info['check_time'],m_info['taking'] = json.loads(public.readFile(result_file))
+                except:
+                    if os.path.exists(result_file): os.remove(result_file)
+                    continue
             else:
                 try:
                     s_time = time.time()

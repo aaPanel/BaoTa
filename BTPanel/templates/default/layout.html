@@ -43,7 +43,8 @@
 		}
 	</style>
 	<script type="text/javascript">
-		var ie_version = (function() {
+      var recycle_bin_db_open = !!{{g['recycle_bin_db_open']}},recycle_bin_open = !!{{g['recycle_bin_open']}}
+      var ie_version = (function() {
             var userAgent = navigator.userAgent,
             	isLessIE11 = userAgent.indexOf('compatible') > -1 && userAgent.indexOf('MSIE') > -1,
 				isEdge = userAgent.indexOf('Edge') > -1 && !isLessIE11,
@@ -71,7 +72,7 @@
                 return -1
             }
         }());
-        if(ie_version != -1 && ie_version < 9){
+        if(ie_version != -1 && ie_version < 10 && ie_version != 'edge'){
             window.location.href = '/tips';
         }
 	</script>
@@ -143,6 +144,7 @@
 	{% endfor %}
 	{% block scripts %} {% endblock %}
 	<script type="text/javascript">
+        var recycle_bin_db_open = !!{{g['recycle_bin_db_open']}},recycle_bin_open = !!{{g['recycle_bin_open']}}
 	    $("#setBox").click(function () {
 	        if ($(this).prop("checked")) {
 	            $("input[name=id]").prop("checked", true);

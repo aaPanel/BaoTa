@@ -289,6 +289,7 @@ class crontab:
         data['orderOpt'] = []
         import json
         tmp = public.readFile('data/libList.conf')
+        if not tmp: return data
         libs = json.loads(tmp)
         for lib in libs:
             if not 'opt' in lib: continue

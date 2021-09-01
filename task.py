@@ -113,7 +113,7 @@ def ExecShell(cmdstring, cwd=None, timeout=None, shell=True):
 
 # 任务队列
 def startTask():
-    global isTask
+    global isTask,logPath
     try:
         while True:
             try:
@@ -311,19 +311,13 @@ def systemTask():
                     data = (cpuInfo['used'], cpuInfo['mem'], addtime)
                     sql.table('cpuio').add('pro,mem,addtime', data)
                     sql.table('cpuio').where("addtime<?", (deltime,)).delete()
-                    data = (networkInfo['up'], networkInfo['down'], networkInfo['upTotal'], networkInfo['downTotal'], dumps(
-                        networkInfo['downPackets']), dumps(networkInfo['upPackets']), addtime)
-                    sql.table('network').add(
-                        'up,down,total_up,total_down,down_packets,up_packets,addtime', data)
-                    sql.table('network').where(
-                        "addtime<?", (deltime,)).delete()
+                    data = (networkInfo['up'], networkInfo['down'], networkInfo['upTotal'], networkInfo['downTotal'], dumps(networkInfo['downPackets']), dumps(networkInfo['upPackets']), addtime)
+                    sql.table('network').add('up,down,total_up,total_down,down_packets,up_packets,addtime', data)
+                    sql.table('network').where("addtime<?", (deltime,)).delete()
                     if os.path.exists('/proc/diskstats') and disk_ios:
-                        data = (diskInfo['read_count'], diskInfo['write_count'], diskInfo['read_bytes'],
-                                diskInfo['write_bytes'], diskInfo['read_time'], diskInfo['write_time'], addtime)
-                        sql.table('diskio').add(
-                            'read_count,write_count,read_bytes,write_bytes,read_time,write_time,addtime', data)
-                        sql.table('diskio').where(
-                            "addtime<?", (deltime,)).delete()
+                        data = (diskInfo['read_count'], diskInfo['write_count'], diskInfo['read_bytes'],diskInfo['write_bytes'], diskInfo['read_time'], diskInfo['write_time'], addtime)
+                        sql.table('diskio').add('read_count,write_count,read_bytes,write_bytes,read_time,write_time,addtime', data)
+                        sql.table('diskio').where("addtime<?", (deltime,)).delete()
 
                     # LoadAverage
                     load_average = GetLoadAverage()
@@ -331,8 +325,8 @@ def systemTask():
                         (load_average['one'] / load_average['max']) * 100, 2)
                     if lpro > 100:
                         lpro = 100
-                    sql.table('load_average').add('pro,one,five,fifteen,addtime', (
-                        lpro, load_average['one'], load_average['five'], load_average['fifteen'], addtime))
+                    sql.table('load_average').add('pro,one,five,fifteen,addtime', (lpro, load_average['one'], load_average['five'], load_average['fifteen'], addtime))
+                    sql.table('load_average').where("addtime<?", (deltime,)).delete()
                     sql.close()
 
                     lpro = None

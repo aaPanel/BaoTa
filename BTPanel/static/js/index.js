@@ -95,6 +95,51 @@ $('.tabs-nav span').click(function () {
 
 var interval_stop = false;
 var index = {
+    // 顾问服务弹窗
+    consultancy_services:function(show) {
+        var consultancy_cookies = bt.get_cookie('consultancy_cookies');
+        if(consultancy_cookies) return false;
+        if(show !== 0) return false;
+        layer.open({
+            type:1,
+            title:'免费顾问服务',
+            closeBtn:false,
+            area:['600px','470px'],
+            btn:['接受顾问服务','放弃顾问服务'],
+            content:'<div style="padding: 30px 35px;">\
+                <div style="text-align: center;margin-bottom: 20px;font-size: 20px;height: 40px;line-height: 40px;">\
+                <span style="vertical-align: middle;margin-left: 10px;font-size:21px;">感恩您使用宝塔，我们为您提供专属客服服务</span></div>\
+                <div style="font-size: 14px;line-height: 27px;padding: 20px;border: 1px solid #ececec;border-radius: 5px;background: #fcfcfc;color: #555;text-indent:2em;">\
+                    <div style="text-indent: 2em;margin-bottom: 10px;">我们提供给您<span style="font-weight: bold;">【免费的顾问服务】</span>，确保您在使用宝塔面板过程中遇到紧急或者棘手的问题能第一时间找到专人协助您处理，我们期待与您沟通。</div>\
+                    <div style="text-indent: 2em;margin-bottom: 10px;">如果您点<span style="font-weight: bold;">【接受顾问服务】</span>，您无需再做什么，我们会有专人致电联系您并加您为好友，让您可以在有疑问的时候能第一时间联系到专员。</div>\
+                    <div style="text-indent: 2em;margin-bottom: 10px;">同时您也可以<span style="font-weight: bold;">【放弃顾问服务】</span>，在遇到问题的时候可以在我们官网论坛发言，我们也有论坛值守人员协助您处理。</div></div>\
+                </div>',
+            yes:function(indexs,layero){
+                bt.send('set_user_adviser','auth/set_user_adviser ',{status:1},function(res){
+                    bt.set_cookie('consultancy_cookies','1');
+                    layer.close(indexs);
+                    bt.msg(res)
+                })
+            },
+            btn2:function(indexs,layero){
+                layer.confirm('是否放弃免费顾问服务，放弃后在遇到问题的时候可以在我们官网论坛发言，我们也有论坛值守人员协助您处理。', {
+                    title:'提示',
+                    area:'400px',
+                    btn: ['确认', '取消'],
+                    icon: 0,
+                    closeBtn:2,
+                    yes: function () {
+                        bt.send('set_user_adviser','auth/set_user_adviser ',{status:0},function(res){
+                            bt.set_cookie('consultancy_cookies','1');
+                            layer.close(indexs);
+                            bt.msg(res)
+                        })
+                    }
+                })
+                return false
+            }
+        })
+    },
     warning_list:[],
     warning_num:0,
     series_option:{},// 配置项
@@ -276,7 +321,7 @@ var index = {
             			cpuText += 'CPU-' + i + '：' + cpuUse + '%&nbsp;|&nbsp;'
             		} else {
             			cpuText += 'CPU-' + i + '：' + cpuUse + '%'
-            			cpuText += `\n`
+            			cpuText += '\n'
             		}
             	}
                 
@@ -367,7 +412,6 @@ var index = {
                 })
             }
         })
-        $('')
         setTimeout(function () { _this.get_index_list() },400)
         setTimeout(function () { _this.net.init() }, 500);
         setTimeout(function () { _this.iostat.init() }, 500);
@@ -375,6 +419,7 @@ var index = {
         setTimeout(function () { _this.interval.start()},700);
         setTimeout(function () {
             bt.system.check_update(function (rdata) {
+                index.consultancy_services(rdata.msg.adviser);
                 if (rdata.status !== false) {
                     $('#toUpdate a').html('更新<i style="display: inline-block; color: red; font-size: 40px;position: absolute;top: -35px; font-style: normal; right: -8px;">.</i>');
                     $('#toUpdate a').css("position", "relative");
@@ -791,7 +836,7 @@ var index = {
                 var loading = bt.open({
                     type: 1,
                     title: '[Linux' + (is_beta === 1 ? '测试版' : '正式版') + ']-版本更新',
-                    area: '580px',
+                    area: '58 0px',
                     shadeClose: false,
                     skin: 'layui-layer-dialog',
                     closeBtn: 2,
@@ -1282,4 +1327,5 @@ var index = {
     }
 }
 index.get_init();
+index.consultancy_services()
 //setTimeout(function () { index.get_cloud_list() }, 800);

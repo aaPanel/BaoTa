@@ -1,67 +1,354 @@
-
 var database = {
-    get_list: function (page, search) {
-        if (page == undefined) page = 1;
-        if (!search) search = $("#SearchValue").val();
-        bt.database.get_list(page, search, function (rdata) {
-            $('#databasePage').html(rdata.page);
-            var _tab = bt.render({
-                table: '#DataBody',
-                columns: [
-                    { field: 'id', type: 'checkbox', width: 30 },
-                    {
-                        field: 'name', title: '数据库名', width: 130
+    database_table_view:function(serach){
+        $('#bt_database_table').empty();
+        var database_table = bt_tools.table({
+            el: '#bt_database_table',
+            url: '/data?action=getData',
+            param: {
+                table: 'databases',
+                serach:serach|| ''
+            }, //参数
+            minWidth: '1000px',
+            autoHeight: true,
+            default: "数据库列表为空", // 数据为空时的默认提示
+            column:[
+                {type: 'checkbox',width: 20},
+                {fid: 'name',title: '数据库名',type:'text'},
+                {fid: 'username',title: '用户名',type:'text',sort:true},
+                {fid:'password',
+                    title:'密码',
+                    type:'password',
+                    copy:true,
+                    eye_open:true,
+                    template: function (row) {
+                        if(row.password === '') return '<span class="c9 cursor" onclick="database.set_data_pass(\''+ row.id + '\',\''+ row.username +'\',\''+ row.password +'\')">无法获取密码，请点击<span style="color:red">改密</span>重置密码!</span>'
+                        return true
+                    }
+                },
+                {
+                    fid:'backup',
+                    title: '备份',
+                    width: 130,
+                    template: function (row) {
+                        var backup = '点击备份',
+                            _class = "bt_warning";
+                        if (row.backup_count > 0) backup = lan.database.backup_ok, _class = "bt_success";
+                        return '<span><a href="javascript:;" class="btlink ' + _class + '" onclick="database.database_detail('+ row.id+',\''+row.name+'\')">' + backup + (row.backup_count > 0 ? ('(' + row.backup_count + ')') : '') + '</a> | ' +
+                            '<a href="javascript:database.input_database(\''+row.name+'\')" class="btlink">'+lan.database.input+'</a></span>';
+                    }
+                },
+                {
+                    fid: 'ps',
+                    title: '备注',
+                    type: 'input',
+                    blur: function (row, index, ev) {
+                        bt.pub.set_data_ps({
+                            id: row.id,
+                            table: 'databases',
+                            ps: ev.target.value
+                        }, function (res) {
+                            layer.msg(res.msg, (res.status ? {} : {
+                                icon: 2
+                            }));
+                        });
                     },
-                    {
-                        field: 'username', title: '用户名',width: 130, sort: function () {
-                            database.get_list();
+                    keyup: function (row, index, ev) {
+                        if (ev.keyCode === 13) {
+                            $(this).blur();
+                        }
+                    }
+                },
+                {
+                    type: 'group',
+                    title: '操作',
+                    width: 220,
+                    align: 'right',
+                    group: [{
+                        title: '管理',
+                        tips:'数据库管理',
+                        event: function(row) {
+                            bt.database.open_phpmyadmin(row.name,row.username,row.password);
+                        }
+                    },{
+                        title: '权限',
+                        tips:'设置数据库权限',
+                        event: function(row) {
+                            bt.database.set_data_access(row.username);
+                        }
+                    },{
+                        title:'工具',
+                        tips:'MySQL优化修复工具',
+                        event: function(row){
+                            database.rep_tools(row.name);
+                        }
+                    },{
+                        title:'改密',
+                        tips:'修改数据库密码',
+                        event: function(row){
+                            database.set_data_pass(row.id,row.username,row.password);
+                        }
+                    },{
+                        title:'删除',
+                        tips:'删除数据库',
+                        event: function(row){
+                            database.del_database(row.id,row.name,function(res){
+                                if(res.status) database_table.$refresh_table_list(true);
+                                layer.msg(res.msg,{icon:res.status?1:2})
+                            });
+                        }
+                    }]
+                }
+            ],
+            sortParam: function (data) {
+                return {
+                    'order': data.name + ' ' + data.sort
+                };
+            },
+            tootls: [{ // 按钮组
+                type: 'group',
+                positon: ['left', 'top'],
+                list: [{
+                    title: '添加数据库',
+                    active: true,
+                    event: function () {
+                        bt.database.add_database(function (res){
+                            if(res.status) database_table.$refresh_table_list(true);
+                        })
+                    }
+                },{
+                    title: 'root密码',
+                    event: function () {
+                        bt.database.set_root('root')
+                    }
+                },{
+                    title: 'phpMyAdmin',
+                    event: function () {
+                        bt.database.open_phpmyadmin('','root', bt.config.mysql_root)
+                    }
+                },{
+                    title: '同步所有',
+                    style:{'margin-left':'30px'},
+                    event: function () {
+                        database.sync_to_database({type:0,data:[]},function(res){
+                            if(res.status) database_table.$refresh_table_list(true);
+                        })
+                    }
+                },{
+                    title: '从服务器获取',
+                    event: function () {
+                        bt.database.sync_database(function (rdata) {
+                            if (rdata.status) database_table.$refresh_table_list(true);
+                        })
+                    }
+                },{
+                    title: '回收站',
+                    style:{
+                        'position':'absolute',
+                        'right':'0'
+                    },
+                    icon:'trash',
+                    event: function () {
+                        bt.recycle_bin.open_recycle_bin(6)
+                    }
+                }]
+            },{
+                type: 'batch', //batch_btn
+                positon: ['left', 'bottom'],
+                placeholder: '请选择批量操作',
+                buttonValue: '批量操作',
+                disabledSelectValue: '请选择需要批量操作的数据库!',
+                selectList: [{
+                    title:'同步选中',
+                    url:'/database?action=SyncToDatabases&type=1',
+                    paramName: 'ids', //列表参数名,可以为空
+                    paramId: 'id', // 需要传入批量的id
+                    th:'数据库名称',
+                    beforeRequest: function(list) {
+                        var arry = [];
+                        $.each(list, function (index, item) {
+                            arry.push(item.id);
+                        });
+                        return JSON.stringify(arry)
+                    },
+                    success: function (res, list, that) {
+                        layer.closeAll();
+                        var html = '';
+                        $.each(list, function (index, item) {
+                            html += '<tr><td>' + item.name + '</td><td><div style="float:right;"><span style="color:' + (res.status ? '#20a53a' : 'red') + '">' + res.msg + '</span></div></td></tr>';
+                        });
+                        that.$batch_success_table({
+                            title: '批量同步选中',
+                            th: '数据库名称',
+                            html: html
+                        });
+                    }
+                },{
+                    title: "删除数据库",
+                    url: '/database?action=DeleteDatabase',
+                    load: true,
+                    param: function (row) {
+                        return {
+                            id: row.id,
+                            name: row.name
                         }
                     },
-                    {
-                        field: 'password', width: '15%', title: '密码', templet: function (item) {
-                            var _html = '<span class="password" data-pw="' + item.password + '">**********</span>';
-                            _html += '<span onclick="bt.pub.show_hide_pass(this)" class="glyphicon glyphicon-eye-open cursor pw-ico" style="margin-left:10px"></span>';
-                            _html += '<span class="ico-copy cursor btcopy" style="margin-left:10px" title="复制密码" data-pw="' + item.password + '" onclick="bt.pub.copy_pass(\'' + item.password + '\')"></span>';
-                            return _html;
+                    callback: function (that) { // 手动执行,data参数包含所有选中的站点
+                        var ids = [];
+                        for (var i = 0; i < that.check_list.length; i++) {
+                            ids.push(that.check_list[i].id);
                         }
-                    },
-                    {
-                        field: 'backup', width:130, title: '备份', templet: function (item) {
-                            var backup = '';
-                            var _msg = '<span style="color:red;">' + lan.database.backup_empty + '</span>';
-                            if (item.backup_count > 0) _msg = lan.database.backup_ok;
-                            backup = "<a href='javascript:;' class='btlink' onclick=\"database.database_detail('" + item.id + "','" + item.name + "')\">" + _msg + "</a> | "
-                            backup += "<a class='btlink' href=\"javascript:database.input_database('" + item.name + "');\" title='" + lan.database.input_title + "'>" + lan.database.input + "</a>";
-                            return backup;
-                        }
-                    },
-                    {
-                        field: 'ps', title: '备注', templet: function (item) {
-                            var _ps = "<span class='c9 input-edit' onclick=\"bt.pub.set_data_by_key('databases','ps',this)\" >"
-                            if (item.password) {
-                                _ps += item.ps
-                            } else {
-                                _ps += '无法获取到密码，请通过<span style="color:red">改密</span>按钮设置密码!';
+                        database.del_database(ids,function(param){
+                            that.start_batch(param, function (list) {
+                                layer.closeAll()
+                                var html = '';
+                                for (var i = 0; i < list.length; i++) {
+                                    var item = list[i];
+                                    html += '<tr><td>' + item.name + '</td><td><div style="float:right;"><span style="color:' + (item.request.status ? '#20a53a' : 'red') + '">' + item.request.msg + '</span></div></td></tr>';
+                                }
+                                database_table.$batch_success_table({
+                                    title: '批量删除',
+                                    th: '数据库名称',
+                                    html: html
+                                });
+                                database_table.$refresh_table_list(true);
+                            });
+                        })
+                    }
+                }]
+            }, { //分页显示
+                type: 'page',
+                positon: ['right', 'bottom'], // 默认在右下角
+                pageParam: 'p', //分页请求字段,默认为 : p
+                page: 1, //当前分页 默认：1
+                numberParam: 'limit', //分页数量请求字段默认为 : limit
+                number: 20, //分页数量默认 : 20条
+                numberList: [10, 20, 50, 100, 200], // 分页显示数量列表
+                numberStatus: true, //　是否支持分页数量选择,默认禁用
+                jump: true, //是否支持跳转分页,默认禁用
+            }]
+        });
+    },
+    // 同步所有
+    sync_to_database: function (obj,callback) {
+        bt.database.sync_to_database({ type: obj.type, ids: JSON.stringify(obj.data) }, function (rdata) {
+            if (callback) callback(rdata);
+        });
+    },
+    // 同步数据库
+    database_detail: function (id, dataname, page) {
+        if (page == undefined) page = '1';
+        var loadT = bt.load(lan.public.the_get);
+        bt.pub.get_data('table=backup&search=' + id + '&limit=5&type=1&tojs=database.database_detail&p=' + page, function (frdata) {
+            loadT.close();
+            frdata.page = frdata.page.replace(/'/g, '"').replace(/database.database_detail\(/g, "database.database_detail(" + id + ",'" + dataname + "',");
+            if ($('#DataBackupList').length <= 0) {
+                bt.open({
+                    type: 1,
+                    skin: 'demo-class',
+                    area: '700px',
+                    title: lan.database.backup_title,
+                    closeBtn: 2,
+                    shift: 5,
+                    shadeClose: false,
+                    content: "<div class='divtable pd15 style='padding-bottom: 0'><button id='btn_data_backup' class='btn btn-success btn-sm' type='button' style='margin-bottom:10px'>" + lan.database.backup + "</button><table width='100%' id='DataBackupList' class='table table-hover'></table><div class='page databackup_page'></div></div>"
+                });
+            }
+            setTimeout(function () {
+                $('.databackup_page').html(frdata.page);
+                bt.render({
+                    table: '#DataBackupList',
+                    columns: [
+                        { field: 'name', title: '文件名称' , templet: function (item) {
+                                var _arry = item.name.split('/');
+                                return _arry[_arry.length-1];
+                            }},
+                        {
+                            field: 'size', title: '文件大小', templet: function (item) {
+                                return bt.format_size(item.size);
                             }
-                            _ps += "</span>";
-                            return _ps;
-                        }
-                    },
-                    {
-                        field: 'opt', width: 280, title: '操作', align: 'right', templet: function (item) {
-                            var option = "<a href=\"javascript:;\" class=\"btlink\" onclick=\"bt.database.open_phpmyadmin('" + item.name + "','" + item.username + "','" + item.password + "')\" title=\"数据库管理\">管理</a> | ";
-                            option += "<a href=\"javascript:;\" class=\"btlink\" onclick=\"database.rep_tools('" + item.name + "')\" title=\"MySQL优化修复工具\">工具</a> | ";
-                            option += "<a href=\"javascript:;\" class=\"btlink\" onclick=\"bt.database.set_data_access('" + item.username + "')\" title=\"设置数据库权限\">权限</a> | ";
-                            option += "<a href=\"javascript:;\" class=\"btlink\" onclick=\"database.set_data_pass(" + item.id + ",'" + item.username + "','" + item.password + "')\" title=\"修改数据库密码\">改密</a> | ";
-                            option += "<a href=\"javascript:;\" class=\"btlink\" onclick=\"database.del_database(" + item.id + ",'" + item.name + "')\" title=\"删除数据库\">删除</a>";
-                            return option;
-                        }
-                    },
-                ],
-                data: rdata.data
-            })
+                        },
+                        { field: 'addtime', title: '备份时间' },
+                        {
+                            field: 'opt', title: '操作', align: 'right', templet: function (item) {
+                                var _opt = '<a class="btlink" herf="javascrpit:;" onclick="bt.database.input_sql(\'' + item.filename + '\',\'' + dataname + '\')">恢复</a> | ';
+                                _opt += '<a class="btlink" href="/download?filename=' + item.filename + '&amp;name=' + item.name + '" target="_blank">下载</a> | ';
+                                _opt += '<a class="btlink" herf="javascrpit:;" onclick="bt.database.del_backup(\'' + item.id + '\',\'' + id + '\',\'' + dataname + '\')">删除</a>'
+                                return _opt;
+                            }
+                        },
+                    ],
+                    data: frdata.data
+                });
+                $('#btn_data_backup').unbind('click').click(function () {
+                    bt.database.backup_data(id, dataname, function (rdata) {
+                        if (rdata.status) database.database_detail(id, dataname);
+                    })
+                })
+            }, 100)
+        });
+    },
+    // 备份导入》本地导入
+    upload_files: function (name) {
+        var path = bt.get_cookie('backup_path') + "/database/";
+        bt_upload_file.open(path, '.sql,.zip,.bak', lan.database.input_up_type, function () {
+            database.input_database(name);
+        });
+    },
+    // 备份导入
+    input_database: function (name) {
+        var path = bt.get_cookie('backup_path') + "/database";
+        bt.files.get_files(path, '', function (rdata) {
+            var data = [];
+            for (var i = 0; i < rdata.FILES.length; i++) {
+                if (rdata.FILES[i] == null) continue;
+                var fmp = rdata.FILES[i].split(";");
+                var ext = bt.get_file_ext(fmp[0]);
+                if (ext != 'sql' && ext != 'zip' && ext != 'gz' && ext != 'tgz' && ext != 'bak') continue;
+                data.push({ name: fmp[0], size: fmp[1], etime: fmp[2], })
+            }
+            if ($('#DataInputList').length <= 0) {
+                bt.open({
+                    type: 1,
+                    skin: 'demo-class',
+                    area: ["600px", "500px"],
+                    title: lan.database.input_title_file,
+                    closeBtn: 2,
+                    shift: 5,
+                    shadeClose: false,
+                    content: '<div class="pd15"><button class="btn btn-default btn-sm" onclick="database.upload_files(\'' + name + '\')">' + lan.database.input_local_up + '</button><div class="divtable mtb15" style="max-height:300px; overflow:auto">'
+                        + '<table id="DataInputList" class="table table-hover"></table>'
+                        + '</div>'
+                        + bt.render_help([lan.database.input_ps1, lan.database.input_ps2, (bt.os != 'Linux' ? lan.database.input_ps3.replace(/\/www.*\/database/, path) : lan.database.input_ps3)])
+                        + '</div>'
+                });
+            }
+            setTimeout(function () {
+                bt.render({
+                    table: '#DataInputList',
+                    columns: [
+                        { field: 'name', title: lan.files.file_name },
+                        {
+                            field: 'etime', title: lan.files.file_etime, templet: function (item) {
+                                return bt.format_data(item.etime);
+                            }
+                        },
+                        {
+                            field: 'size', title: lan.files.file_size, templet: function (item) {
+                                return bt.format_size(item.size)
+                            }
+                        },
+                        {
+                            field: 'opt', title: '操作', align: 'right', templet: function (item) {
+                                return '<a class="btlink" herf="javascrpit:;" onclick="bt.database.input_sql(\'' + bt.rtrim(rdata.PATH, '/') + "/" + item.name + '\',\'' + name + '\')">导入</a>  ';;
+                            }
+                        },
+                    ],
+                    data: data
+                });
+            }, 100)
         })
     },
+    // 工具
     rep_tools: function (db_name, res) {
         var loadT = layer.msg('正在获取数据,请稍候...', { icon: 16, time: 0 });
         bt.send('GetInfo', 'database/GetInfo', { db_name: db_name }, function (rdata) {
@@ -148,7 +435,6 @@ var database = {
     },
     selected_tools: function (my_obj, db_name) {
         var is_checked = false
-
         if (my_obj) is_checked = my_obj.checked;
         var db_tools = $("input[value^='dbtools_']");
         var n = 0;
@@ -168,8 +454,9 @@ var database = {
         var loadT = layer.msg('已送修复指令,请稍候...', { icon: 16, time: 0 });
         bt.send('ReTable', 'database/ReTable', { db_name: db_name, tables: JSON.stringify(dbs) }, function (rdata) {
             layer.close(loadT)
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+
             database.rep_tools(db_name, true);
+            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
         });
     },
     op_database: function (db_name, tables) {
@@ -177,8 +464,9 @@ var database = {
         var loadT = layer.msg('已送优化指令,请稍候...', { icon: 16, time: 0 });
         bt.send('OpTable', 'database/OpTable', { db_name: db_name, tables: JSON.stringify(dbs) }, function (rdata) {
             layer.close(loadT)
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+
             database.rep_tools(db_name, true);
+            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
         });
     },
     to_database_type: function (db_name, tables, type) {
@@ -186,8 +474,9 @@ var database = {
         var loadT = layer.msg('已送引擎转换指令,请稍候...', { icon: 16, time: 0, shade: [0.3, "#000"] });
         bt.send('AlTable', 'database/AlTable', { db_name: db_name, tables: JSON.stringify(dbs), table_type: type }, function (rdata) {
             layer.close(loadT);
-            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+
             database.rep_tools(db_name, true);
+            layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
         });
     },
     rep_checkeds: function (tables) {
@@ -207,228 +496,137 @@ var database = {
         }
         return dbs;
     },
-    sync_to_database: function (type) {
-        var data = [];
-        $('input[type="checkbox"].check:checked').each(function () {
-            if (!isNaN($(this).val())) data.push($(this).val());
-        });
-        bt.database.sync_to_database({ type: type, ids: JSON.stringify(data) }, function (rdata) {
-            if (rdata.status) database.get_list();
-        });
-    },
-    sync_database: function () {
-        bt.database.sync_database(function (rdata) {
-            if (rdata.status) database.get_list();
-        })
-    },
-    add_database: function () {
-        bt.database.add_database(function (rdata) {
-            if (rdata.status) database.get_list();
-        })
-    },
-    batch_database: function (type, arr, result) {
-        if (arr == undefined) {
-            arr = [];
-            result = { count: 0, error_list: [] };
-            $('input[type="checkbox"].check:checked').each(function () {
-                var _val = $(this).val();
-                if (!isNaN(_val)) arr.push($(this).parents('tr').data('item'));
-            })
-            bt.show_confirm(lan.database.del_all_title, "<a style='color:red;'>" + lan.get('del_all_database', [arr.length]) + "</a>", function () {
-                bt.closeAll();
-                database.batch_database(type, arr, result);
-            });
-            return;
-        }
-        var item = arr[0];
-        switch (type) {
-            case 'del':
-                if (arr.length < 1) {
-                    database.get_list();
-                    bt.msg({ msg: lan.get('del_all_database_ok', [result.count]), icon: 1, time: 5000 });
-                    return;
-                }
-                bt.database.del_database({ id: item.id, name: item.name }, function (rdata) {
-                    if (rdata.status) {
-                        result.count += 1;
-                    } else {
-                        result.error_list.push({ name: item.item, err_msg: rdata.msg });
-                    }
-                    arr.splice(0, 1)
-                    database.batch_database(type, arr, result);
-                })
-                break;
-        }
-    },
-    del_database: function (id, name) {
-        bt.prompt_confirm('删除数据库', '您正在删除数据库【' + name + '】，继续吗?', function () {
-            bt.database.del_database({ id: id, name: name }, function (rdata) {
-                if (rdata.status) database.get_list();
-                bt.msg(rdata);
-            })
-        });
-    },
+    // 改密
     set_data_pass: function (id, username, password) {
         var bs = bt.database.set_data_pass(function (rdata) {
-            if (rdata.status) database.get_list();
+            if (rdata.status) database_table.$refresh_table_list(true);
             bt.msg(rdata);
         })
         $('.name' + bs).val(username);
         $('.id' + bs).val(id);
         $('.password' + bs).val(password);
     },
-    database_detail: function (id, dataname, page) {
-        if (page == undefined) page = '1';
-        var loadT = bt.load(lan.public.the_get);
-        bt.pub.get_data('table=backup&search=' + id + '&limit=5&type=1&tojs=database.database_detail&p=' + page, function (frdata) {
-            loadT.close();
-            var ftpdown = '';
-            var body = '';
-            var port;
-            frdata.page = frdata.page.replace(/'/g, '"').replace(/database.database_detail\(/g, "database.database_detail(" + id + ",'" + dataname + "',");
-            if ($('#DataBackupList').length <= 0) {
-                bt.open({
-                    type: 1,
-                    skin: 'demo-class',
-                    area: '700px',
-                    title: lan.database.backup_title,
-                    closeBtn: 2,
-                    shift: 5,
-                    shadeClose: false,
-                    content: "<div class='divtable pd15 style='padding-bottom: 0'><button id='btn_data_backup' class='btn btn-success btn-sm' type='button' style='margin-bottom:10px'>" + lan.database.backup + "</button><table width='100%' id='DataBackupList' class='table table-hover'></table><div class='page databackup_page'></div></div>"
-                });
-            }
-            setTimeout(function () {
-                $('.databackup_page').html(frdata.page);
-                var _tab = bt.render({
-                    table: '#DataBackupList',
-                    columns: [
-                        { field: 'name', title: '文件名称' },
-                        {
-                            field: 'size', title: '文件大小', templet: function (item) {
-                                return bt.format_size(item.size);
+    // 删除
+    del_database: function (wid, dbname, callback) {
+        var rendom = bt.get_random_code(),num1 = rendom['num1'],num2 = rendom['num2'],title = '';
+        title = typeof dbname === "function" ?'批量删除数据库':'删除数据库 [ '+ dbname +' ]';
+        layer.open({
+            type:1,
+            title:title,
+            icon:0,
+            skin:'delete_site_layer',
+            area: "530px",
+            closeBtn: 2,
+            shadeClose: true,
+            content:"<div class=\'bt-form webDelete pd30\' id=\'site_delete_form\'>" +
+                "<i class=\'layui-layer-ico layui-layer-ico0\'></i>" +
+                "<div class=\'f13 check_title\' style=\'margin-bottom: 20px;\'>是否确认【删除数据库】，删除后可能会影响业务使用！</div>" +
+                "<div style=\'color:red;margin:18px 0 18px 18px;font-size:14px;font-weight: bold;\'>注意：数据无价，请谨慎操作！！！"+(!recycle_bin_db_open?'<br>风险操作：当前数据库回收站未开启，删除数据库将永久消失！':'')+"</div>" +
+                "<div class=\'vcode\'>" + lan.bt.cal_msg + "<span class=\'text\'>"+ num1 +" + "+ num2 +"</span>=<input type=\'number\' id=\'vcodeResult\' value=\'\'></div>" +
+                "</div>",
+            btn:[lan.public.ok,lan.public.cancel],
+            yes:function(indexs){
+                var vcodeResult = $('#vcodeResult'),data = {id: wid,name: dbname};
+                if(vcodeResult.val() === ''){
+                    layer.tips('计算结果不能为空', vcodeResult, {tips: [1, 'red'],time:3000})
+                    vcodeResult.focus()
+                    return false;
+                }else if(parseInt(vcodeResult.val()) !== (num1 + num2)){
+                    layer.tips('计算结果不正确', vcodeResult, {tips: [1, 'red'],time:3000})
+                    vcodeResult.focus()
+                    return false;
+                }
+                if(typeof dbname === "function"){
+                    delete data.id;
+                    delete data.name;
+                }
+                layer.close(indexs)
+                var arrs = wid instanceof Array ? wid : [wid]
+                var ids = JSON.stringify(arrs), countDown = 9;
+                if (arrs.length == 1) countDown = 4
+                title = typeof dbname === "function" ?'二次验证信息，批量删除数据库':'二次验证信息，删除数据库 [ ' + dbname + ' ]';
+                var loadT = bt.load('正在检测数据库数据信息，请稍后...')
+                bt.send('check_del_data', 'database/check_del_data', {ids: ids}, function (res) {
+                    loadT.close()
+                    layer.open({
+                        type:1,
+                        title:title,
+                        closeBtn: 2,
+                        skin: 'verify_site_layer_info active',
+                        area: '740px',
+                        content: '<div class="check_delete_site_main pd30">' +
+                            '<i class="layui-layer-ico layui-layer-ico0"></i>' +
+                            '<div class="check_layer_title">堡塔温馨提示您，请冷静几秒钟，确认以下要删除的数据。</div>' +
+                            '<div class="check_layer_content">' +
+                            '<div class="check_layer_item">' +
+                            '<div class="check_layer_site"></div>' +
+                            '<div class="check_layer_database"></div>' +
+                            '</div>' +
+                            '</div>' +
+                            '<div class="check_layer_error ' + (recycle_bin_db_open ? 'hide' : '') + '"><span class="glyphicon glyphicon-info-sign"></span>风险事项：当前未开启数据库回收站功能，删除数据库后，数据库将永久消失！</div>' +
+                            '<div class="check_layer_message">请仔细阅读以上要删除信息，防止数据库被误删，确认删除还有 <span style="color:red;font-weight: bold;">' + countDown + '</span> 秒可以操作。</div>' +
+                            '</div>',
+                        btn: ['确认删除(' + countDown + '秒后继续操作)', '取消删除'],
+                        success: function (layers) {
+                            var html = '', rdata = res.data;
+                            var filterData = rdata.filter(function(el){
+                                return  ids.indexOf(el.id) != -1
+                            })
+                            for (var i = 0; i < filterData.length; i++) {
+                                var item = filterData[i], newTime = parseInt(new Date().getTime() / 1000),
+                                    t_icon = '<span class="glyphicon glyphicon-info-sign" style="color: red;width:15px;height: 15px;;vertical-align: middle;"></span>';
+
+                                database_html = (function(item){
+                                    var is_time_rule = (newTime - item.st_time) > (86400 * 30)  && (item.total > 1024 * 10),
+                                        is_database_rule = res.db_size <= item.total,
+                                        database_time = bt.format_data(item.st_time, 'yyyy-MM-dd'),
+                                        database_size = bt.format_size(item.total);
+
+                                    var f_size = '<i ' + (is_database_rule ? 'class="warning"' : '') + ' style = "vertical-align: middle;" > ' + database_size + '</i> ' + (is_database_rule ? t_icon : '');
+                                    var t_size = '注意：此数据库较大，可能为重要数据，请谨慎操作.\n数据库：' + database_size;
+                                    if(item.total < 2048) t_size = '注意事项：当前数据库不为空，可能为重要数据，请谨慎操作.\n数据库：' + database_size;
+                                    if(item.total === 0) t_size = '';
+                                    return '<div class="check_layer_database">' +
+                                        '<span title="数据库：' + item.name + '">数据库：' + item.name + '</span>' +
+                                        '<span title="' + t_size+'">大小：' + f_size +'</span>' +
+                                        '<span title="' + (is_time_rule && item.total != 0 ? '重要：此数据库创建时间较早，可能为重要数据，请谨慎操作.' : '') + '时间：' + database_time+'">创建时间：<i ' + (is_time_rule && item.total != 0 ? 'class="warning"' : '') + '>' + database_time + '</i></span>' +
+                                        '</div>'
+                                }(item))
+                                if(database_html !== '') html += '<div class="check_layer_item">' + database_html +'</div>';
                             }
+                            if(html === '') html = '<div style="text-align: center;width: 100%;height: 100%;line-height: 300px;font-size: 15px;">无数据</div>'
+                            $('.check_layer_content').html(html)
+                            var interVal = setInterval(function () {
+                                countDown--;
+                                $(layers).find('.layui-layer-btn0').text('确认删除(' + countDown + '秒后继续操作)')
+                                $(layers).find('.check_layer_message span').text(countDown)
+                            }, 1000);
+                            setTimeout(function () {
+                                $(layers).find('.layui-layer-btn0').text('确认删除');
+                                $(layers).find('.check_layer_message').html('<span style="color:red">注意：请仔细阅读以上要删除信息，防止数据库被误删</span>')
+                                $(layers).removeClass('active');
+                                clearInterval(interVal)
+                            }, countDown * 1000)
                         },
-                        { field: 'addtime', title: '备份时间' },
-                        {
-                            field: 'opt', title: '操作', align: 'right', templet: function (item) {
-                                var _opt = '<a class="btlink" herf="javascrpit:;" onclick="bt.database.input_sql(\'' + item.filename + '\',\'' + dataname + '\')">恢复</a> | ';
-                                _opt += '<a class="btlink" href="/download?filename=' + item.filename + '&amp;name=' + item.name + '" target="_blank">下载</a> | ';
-                                _opt += '<a class="btlink" herf="javascrpit:;" onclick="bt.database.del_backup(\'' + item.id + '\',\'' + id + '\',\'' + dataname + '\')">删除</a>'
-                                return _opt;
+                        yes:function(indes,layers){
+                            if($(layers).hasClass('active')){
+                                layer.tips('请确认信息，稍后在尝试，还剩'+ countDown +'秒', $(layers).find('.layui-layer-btn0') , {tips: [1, 'red'],time:3000})
+                                return;
                             }
-                        },
-                    ],
-                    data: frdata.data
-                });
-                $('#btn_data_backup').unbind('click').click(function () {
-                    bt.database.backup_data(id, dataname, function (rdata) {
-                        if (rdata.status) database.database_detail(id, dataname);
+                            if(typeof dbname === "function"){
+                                dbname(data)
+                            }else{
+                                bt.database.del_database(data, function (rdata) {
+                                    layer.closeAll()
+                                    if (callback) callback(rdata);
+                                    bt.msg(rdata);
+                                })
+                            }
+                        }
                     })
                 })
-            }, 100)
-        });
-    },
-    upload_files: function (name) {
-        var path = bt.get_cookie('backup_path') + "/database/";
-        bt_upload_file.open(path, '.sql,.gz,.tar.gz,.zip', lan.database.input_up_type, function () {
-            database.input_database(name);
-        });
-
-        /*
-        var index = layer.open({
-            type: 1,
-            closeBtn: 2,
-            title: lan.files.up_title + ' --- <span style="color:red;">' + lan.database.input_up_type + '</span>',
-            area: ['500px', '500px'],
-            shadeClose: false,
-            content: '<div class="fileUploadDiv"><input type="hidden" id="input-val" value="' + path + '" />\
-						<input type="file" id="file_input"  multiple="true" autocomplete="off" />\
-						<button type="button"  id="opt" autocomplete="off">'+ lan.files.up_add + '</button>\
-						<button type="button" id="up" autocomplete="off" >'+ lan.files.up_start + '</button>\
-						<span id="totalProgress" style="position: absolute;top: 7px;right: 147px;"></span>\
-						<span style="float:right;margin-top: 9px;">\
-						<font>'+ lan.files.up_coding + ':</font>\
-						<select id="fileCodeing" >\
-							<option value="byte">'+ lan.files.up_bin + '</option>\
-							<option value="utf-8">UTF-8</option>\
-							<option value="gb18030">GB2312</option>\
-						</select>\
-						</span>\
-						<button type="button" id="filesClose" autocomplete="off">'+ lan.public.close + '</button>\
-						<ul id="up_box"></ul></div>'
-            , end: function () {
-                database.input_database(name);
             }
-        });
-        $("#filesClose").click(function () {
-            layer.close(index);
-            database.input_database(name);
-        });
-        UploadStart(true);
-        */
-    },
-    input_database: function (name) {
-        var path = bt.get_cookie('backup_path') + "/database";
-        bt.send('get_files', 'files/GetDir', 'reverse=True&sort=mtime&tojs=GetFiles&p=1&showRow=1000&path=' + path, function (rdata) {
-            var data = [];
-            for (var i = 0; i < rdata.FILES.length; i++) {
-                if (rdata.FILES[i] == null) continue;
-                var fmp = rdata.FILES[i].split(";");
-                var ext = bt.get_file_ext(fmp[0]);
-                if (ext != 'sql' && ext != 'zip' && ext != 'gz' && ext != 'tgz') continue;
-                data.push({ name: fmp[0], size: fmp[1], etime: fmp[2], })
-            }
-            if ($('#DataInputList').length <= 0) {
-                bt.open({
-                    type: 1,
-                    skin: 'demo-class',
-                    area: '600px',
-                    title: lan.database.input_title_file+'['+name+']',
-                    closeBtn: 2,
-                    shift: 5,
-                    shadeClose: false,
-                    content: '<div class="pd15"><button class="btn btn-default btn-sm" onclick="database.upload_files(\'' + name + '\')">' + lan.database.input_local_up + '</button><div class="divtable mtb15" style="max-height:300px; overflow:auto">'
-                        + '<table id="DataInputList" class="table table-hover"></table>'
-                        + '</div>'
-                        + bt.render_help([lan.database.input_ps1, lan.database.input_ps2, (bt.os != 'Linux' ? lan.database.input_ps3.replace(/\/www.*\/database/, path) : lan.database.input_ps3)])
-                        + '</div>'
-                });
-            }
-            setTimeout(function () {
-                var _tab = bt.render({
-                    table: '#DataInputList',
-                    columns: [
-                        { field: 'name', title: lan.files.file_name },
-                        {
-                            field: 'etime', title: lan.files.file_etime, templet: function (item) {
-                                return bt.format_data(item.etime);
-                            }
-                        },
-                        {
-                            field: 'size', title: lan.files.file_size, templet: function (item) {
-                                return bt.format_size(item.size)
-                            }
-                        },
-                        {
-                            field: 'opt', title: '操作', align: 'right', templet: function (item) {
-                                return '<a class="btlink" herf="javascrpit:;" onclick="bt.database.input_sql(\'' + bt.rtrim(rdata.PATH, '/') + "/" + item.name + '\',\'' + name + '\')">导入</a>  | <a class="btlink" onclick="database.remove_input_file(\'' + bt.rtrim(rdata.PATH, '/') + "/" + item.name + '\',\'' + name + '\')">删除</a>';
-                            }
-                        },
-                    ],
-                    data: data
-                });
-            }, 100)
         })
     },
-    remove_input_file: function (fileName,name) {
-        layer.confirm(lan.get('recycle_bin_confirm', [fileName]), { title: lan.files.del_file, closeBtn: 2, icon: 3 }, function (index) {
-            layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-            $.post('/files?action=DeleteFile', 'path=' + encodeURIComponent(fileName), function (rdata) {
-                layer.close(index);
-                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-                database.input_database(name);
-            });
-        });
-    }
 }
+database.database_table_view();

@@ -10,14 +10,79 @@
 from gevent import monkey
 monkey.patch_all()
 import os,sys,ssl
-if os.path.exists("/www/server/panel/class/BTPanel"):
-    os.system("rm -rf /www/server/panel/class/BTPanel")
-os.chdir('/www/server/panel')
+_PATH = '/www/server/panel'
+os.chdir(_PATH)
 if not 'class/' in sys.path:
     sys.path.insert(0,'class/')
 from BTPanel import app,sys,public
+is_debug = os.path.exists('data/debug.pl')
+
+if is_debug:
+    import pyinotify,time,logging,re
+    logging.basicConfig(level=logging.DEBUG,format="[%(asctime)s][%(levelname)s] - %(message)s")
+    logger = logging.getLogger()
+
+    class PanelEventHandler(pyinotify.ProcessEvent):
+        _exts = ['py','html','BT-Panel','so']
+        _explude_patts = [
+            re.compile('{}/plugin/.+'.format(_PATH)),
+            re.compile('{}/(tmp|temp)/.+'.format(_PATH))
+        ]
+        _lsat_time = 0
+        
+
+        def is_ext(self,filename):
+            fname = os.path.basename(filename)
+            result = fname.split('.')[-1] in self._exts
+            if not result: return False
+            for e in self._explude_patts:
+                if e.match(filename): return False
+            return True
+
+        def panel_reload(self,filename,in_type):
+            stime = time.time()
+            if stime - self._lsat_time < 2:
+                return
+            self._lsat_time = stime
+            logger.debug('检测到文件: {} -> {}'.format(filename,in_type))
+            
+            fname = os.path.basename(filename)
+            if fname in ['task.py','BT-Task']:
+                logger.debug('正在后台任务...')
+                public.ExecShell("{} {}/BT-Task".format(public.get_python_bin(),_PATH))
+                logger.debug('后台任务已启动!')
+            else:
+                logger.debug('正在重启面板...')
+                public.ExecShell("bash {}/init.sh reload &>/dev/null &".format(_PATH))
+
+        def process_IN_CREATE(self, event):
+            if not self.is_ext(event.pathname): return
+            self.panel_reload(event.pathname,'[创建]')
+
+        def process_IN_DELETE(self,event):
+            if not self.is_ext(event.pathname): return
+            self.panel_reload(event.pathname,'[删除]')
+        
+        def process_IN_MODIFY(self,event):
+
+            if not self.is_ext(event.pathname): return
+            self.panel_reload(event.pathname,'[修改]')
+
+    def debug_event():
+        logger.debug('以debug模式启动面板')
+        logger.debug('监听端口：0.0.0.0:{}'.format(public.readFile('data/port.pl')))
+
+        event = PanelEventHandler()
+        watchManager = pyinotify.WatchManager()
+        mode = pyinotify.IN_CREATE | pyinotify.IN_DELETE | pyinotify.IN_MODIFY
+        watchManager.add_watch(_PATH, mode, auto_add=True, rec=True)
+        notifier = pyinotify.Notifier(watchManager, event)
+        notifier.loop()
 
 if __name__ == '__main__':
+    pid_file = "{}/logs/panel.pid".format(_PATH)
+    if os.path.exists(pid_file):
+        public.ExecShell("kill -9 {}".format(public.readFile(pid_file)))
     pid = os.fork()
     if pid: sys.exit(0)
     
@@ -25,7 +90,7 @@ if __name__ == '__main__':
 
     _pid = os.fork()
     if _pid:
-        public.writeFile('logs/panel.pid',str(_pid))
+        public.writeFile(pid_file,str(_pid))
         sys.exit(0)
 
     sys.stdout.flush()
@@ -38,7 +103,7 @@ if __name__ == '__main__':
         HOST = "0:0:0:0:0:0:0:0"
     f.close()
     
-    is_debug = os.path.exists('data/debug.pl')
+    
     keyfile = 'ssl/privateKey.pem'
     certfile = 'ssl/certificate.pem'
     is_ssl = False
@@ -57,26 +122,29 @@ if __name__ == '__main__':
     job.setDaemon(True)
     job.start()
 
-    if is_debug:
-        ssl_context = None
-        if is_ssl: ssl_context=(certfile,keyfile)
-        app.run(host=HOST,port=PORT,threaded=True,debug=True,ssl_context=ssl_context)
+
+    if is_ssl:
+        ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        ssl_context.load_cert_chain(certfile=certfile,keyfile=keyfile)
+        ssl_context.options = (ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1)
+        ssl_context.set_ciphers("ECDHE-RSA-AES128-GCM-SHA256:HIGH:!aNULL:!MD5:!RC4:!DHE")
+
+
+    from  gevent.pywsgi import WSGIServer
+    from geventwebsocket.handler import WebSocketHandler
+
+    if is_ssl:
+        http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler,ssl_context = ssl_context)
     else:
-        if is_ssl:
-            ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-            ssl_context.load_cert_chain(certfile=certfile,keyfile=keyfile)
-            ssl_context.options = (ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1)
-            ssl_context.set_ciphers("ECDHE-RSA-AES128-GCM-SHA256:HIGH:!aNULL:!MD5:!RC4:!DHE")
+        http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler)
 
+    if is_debug:
+        try:
+            dev = threading.Thread(target=debug_event)
+            dev.setDaemon(True)
+            dev.start()
+        except:
+            pass
 
-        from  gevent.pywsgi import WSGIServer
-        from geventwebsocket.handler import WebSocketHandler
-
-        if is_ssl:
-            http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler,ssl_context = ssl_context)
-        else:
-            http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler)
-
-        http_server.serve_forever()
-            
+    http_server.serve_forever()
 

@@ -62,14 +62,14 @@
                         <label class='btswitch-btn' for='panel_verification'></label>
                     </div>
                 </div>
-                <div class="ss-text pull-left mr50">
-                    <em title="推荐宝塔官方最新的活动和优质软件">活动推荐</em>
-                    <div class='ssh-item'>
-                        <input class='btswitch btswitch-ios' id='show_recommend' type='checkbox'
-                            {% if data['show_recommend'] %} checked {% endif %} />
-                        <label class='btswitch-btn' for='show_recommend'></label>
-                    </div>
-                </div>
+<!--                <div class="ss-text pull-left mr50">-->
+<!--                    <em title="推荐宝塔官方最新的活动和优质软件">活动推荐</em>-->
+<!--                    <div class='ssh-item'>-->
+<!--                        <input class='btswitch btswitch-ios' id='show_recommend' type='checkbox'-->
+<!--                            {% if data['show_recommend'] %} checked {% endif %} />-->
+<!--                        <label class='btswitch-btn' for='show_recommend'></label>-->
+<!--                    </div>-->
+<!--                </div>-->
                 <div class="ss-text pull-left mr50">
                     <em title="提供更为便捷的问题反馈渠道">在线客服</em>
                     <div class='ssh-item'>
@@ -167,9 +167,6 @@
                             class="inputtxt bt-input-text disable" type="text" value="" disabled><span
                             class="modify btn btn-xs btn-success mr5"
                             onclick="bindBTName(2,'b')">{{data['lan']['CY11']}}</span></p>
-                    <p class="mtb15 wxapp_p"><span class="set-tit text-right">微信小程序</span><input
-                            class="inputtxt bt-input-text disable" type="text" value="{{data['wx']}}" disabled><span
-                            class="modify btn btn-xs btn-success mr5" onclick="open_wxapp()">绑定</span></p>
                     <p class="mtb15"><span class="set-tit text-right">面板菜单栏隐藏</span><input
                             class="inputtxt bt-input-text disable" id="panel_menu_hide" type="text" disabled><span
                             class="modify btn btn-xs btn-success mr5" onclick="set_panel_ground()">设置</span></p>

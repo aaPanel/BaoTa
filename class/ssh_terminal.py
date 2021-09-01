@@ -45,6 +45,8 @@ class ssh_terminal:
     _tp = None
     _old_conf = None
     _debug_file = 'logs/terminal.log'
+    _s_code = None
+    _last_num = 0
 
     def connect(self):
         '''
@@ -123,8 +125,16 @@ class ssh_terminal:
 
                 self._tp.auth_publickey(username=self._user, key=pkey)
             else:
-                self.debug('正在认证密码')
-                self._tp.auth_password(username=self._user, password=self._pass)
+                try:
+                    self._tp.auth_none(self._user)
+                except Exception as e:
+                    e = str(e)
+                    if e.find('keyboard-interactive') >= 0:
+                        self._auth_interactive()
+                    else:
+                        self.debug('正在认证密码')
+                        self._tp.auth_password(username=self._user, password=self._pass)
+                # self._tp.auth_password(username=self._user, password=self._pass)
         except Exception as e:
             if self._old_conf:
                 s_file = '/www/server/panel/config/t_info.json'
@@ -132,6 +142,11 @@ class ssh_terminal:
             self.set_sshd_config(True)
             self._tp.close()
             e = str(e)
+            if e.find('websocket error!') != -1:
+                return returnMsg(True,'连接成功')
+            if e.find('Authentication timeout') != -1:
+                self.debug("认证超时{}".format(e))
+                return returnMsg(False,'认证超时,请按回车重试!{}'.format(e))
             if e.find('Authentication failed') != -1:
                 self.debug('认证失败{}'.format(e))
                 return returnMsg(False,'帐号或密码错误: {}'.format(e + "," + self._user + "@" + self._host + ":" +str(self._port)))
@@ -166,6 +181,41 @@ class ssh_terminal:
         self.set_sshd_config(True)
         self.debug('通道已构建')
         return returnMsg(True,'连接成功')
+
+
+    def _auth_interactive(self):
+        self.debug('正在二次认证 Verification Code')
+        
+        self.brk = False
+        def handler(title, instructions, prompt_list):
+            if not self._ws:  raise public.PanelError('websocket error!')
+            if instructions:
+                self._ws.send(instructions)
+            if title:
+                self._ws.send(title)
+            resp = []
+            for pr in prompt_list:
+                if str(pr[0]).strip() == "Password:":
+                    resp.append(self._pass)
+                elif str(pr[0]).strip() == "Verification code:":
+                    #获取前段传入的验证码
+                    self._ws.send("Verification code# ")
+                    self._s_code = True
+                    code = ""
+                    while True:
+                        data = self._ws.receive()
+                        if data.find('"resize":1') != -1:
+                            self.resize(data)
+                            continue
+                        self._ws.send(data)
+                        if data in ["\n","\r"]: break
+                        code += data
+                    resp.append(code)
+                    self._ws.send("\n")
+            self._s_code = None
+            return tuple(resp)
+        self._tp.auth_interactive(self._user, handler)
+
 
 
     def get_login_user(self):
@@ -491,8 +541,12 @@ class ssh_terminal:
         '''
         try:
             while not self._ws.closed:
+                if self._s_code:
+                    time.sleep(0.1)
+                    continue
                 client_data = self._ws.receive()
                 if not client_data: continue
+                if client_data is '{}': continue
                 if len(client_data) > 10:
                     if client_data.find('{"host":"') != -1:
                         continue
@@ -528,7 +582,7 @@ class ssh_terminal:
         #处理TAB补登
         if self._last_cmd_tip == 1:
             if not recv_data.startswith('\r\n'):
-                self._last_cmd += recv_data.replace('\u0007','').strip()
+                self._last_cmd += recv_data.replace('\u0007','').replace("\x07","").strip()
             self._last_cmd_tip = 0
 
         #上下切换命令
@@ -552,19 +606,33 @@ class ssh_terminal:
         if send_data in ["\x1b[A","\x1b[B"]:
             self._last_cmd_tip = 2
             return
+
+        #左移光标
+        if send_data in ["\x1b[C"]:
+            self._last_num -= 1
+            return
+        
+        # 右移光标
+        if send_data in ["\x1b[D"]:
+            self._last_num += 1
+            return
         
         #退格
         if send_data == "\x7f":
             self._last_cmd = self._last_cmd[:-1]
             return
 
+        
         #过滤特殊符号
-        if send_data in ["\x1b[C","\x1b[D","\x1b[K","\x07","\x08","\x03","\x01","\x02","\x04","\x05","\x06","\u0007"]:
+        if send_data in ["\x1b[C","\x1b[D","\x1b[K","\x07","\x08","\x03","\x01","\x02","\x04","\x05","\x06","\x1bOB","\x1bOA","\x1b[8P","\x1b","\x1b[4P","\x1b[6P","\x1b[5P"]:
             return
         
         #Tab补全处理
-        if send_data == '\t':
+        if send_data == "\t":
             self._last_cmd_tip = 1
+            return
+        
+        if str(send_data).find("\x1b") != -1:
             return
 
         if send_data[-1] in ['\r','\n']:
@@ -573,12 +641,15 @@ class ssh_terminal:
             public.writeFile(his_file, json.dumps(his_shell) + "\n","a+")
             self._last_cmd = ""
 
-            #超过5M则保留最新的200行
-            if os.stat(his_file).st_size > 5242880:
-                his_tmp = public.GetNumLines(his_file,200)
+            #超过50M则保留最新的20000行
+            if os.stat(his_file).st_size > 52428800:
+                his_tmp = public.GetNumLines(his_file,20000)
                 public.writeFile(his_file, his_tmp)
         else:
-            self._last_cmd += send_data
+            if self._last_num >= 0:
+                self._last_cmd += send_data
+            else:
+                self._last_cmd.insert(len(self._last_cmd) + self._last_num, send_data)
     
 
     def close(self):
@@ -612,8 +683,11 @@ class ssh_terminal:
             self._pkey = ssh_info['pkey']
         if 'password' in ssh_info: 
             self._pass = ssh_info['password']
-        
-        result = self.connect()
+        try:
+            result = self.connect()
+        except Exception as ex:
+            if str(ex).find("NoneType") == -1:
+                raise public.PanelError(ex)
         return result
 
 
@@ -641,6 +715,7 @@ class ssh_terminal:
             @return void
         '''
         msg = "{} - {}:{} => {} \n".format(public.format_date(),self._host,self._port,msg)
+        self.history_send(msg)
         public.writeFile(self._debug_file,msg,'a+')
 
     def run(self,web_socket, ssh_info=None):
