@@ -6,9 +6,7 @@ $('#cutMode span').on('click',function(){
     switch(index){
         case 0:
             $('#bt_site_table').empty();
-            if(!isSetup){
-                $('.site_table_view .mask_layer').removeClass('hide').find('.prompt_description').html('未安装Web服务器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nginx\')">安装Nginx</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'apache\')">安装Apache</a>');
-            }
+            if(!isSetup) $('.site_table_view .mask_layer').removeClass('hide').find('.prompt_description').html('未安装Web服务器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nginx\')">安装Nginx</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'apache\')">安装Apache</a>');
             site.php_table_view();
             site.get_types();
             break;
@@ -22,9 +20,6 @@ $('#cutMode span').on('click',function(){
     }
     bt.set_cookie('site_tab_status',index==0?'php':'nodejs')
 })
-
-
-
 
 
 var site = {
@@ -6008,6 +6003,7 @@ var site = {
                                 var status;
                                 switch (name) {
                                     case 'domains':
+                                        value = bt.strim(value).replace(/\n*$/,'')
                                         var list = value.split('\n');
                                         if (value == '') {
                                             set_info_tips(el, { msg: '域名不能为空！', color: 'red' });
@@ -6849,14 +6845,56 @@ var site = {
                                                 if (typeof config.limit == "undefined") config.limit = config.num
                                                 if (form.domains.length < config.limit) {
                                                     bt.confirm({ title: '提示', msg: '检测到当前证书支持' + config.limit + '个域名可以继续添加域名，是否忽略继续提交？' }, function() {
-                                                        req();
+                                                        req(true);
                                                     });
                                                     return false;
                                                 }
-                                                req();
-
-                                                function req() {
-                                                    var loadT = bt.load('正在提交证书资料，请稍候...');
+                                                req(true);
+                                                function req(verify) {
+                                                    if (is_ovev && verify){
+                                                        bt.open({
+                                                            title:'OV或EV证书企业信息二次确认',
+                                                            area:['600px'],
+                                                            btn:['继续提交','取消'],
+                                                            content:'<div class="bt_form certificate_confirm" style="font-size: 12px;padding-left: 25px">' +
+                                                                '<div class="line">' +
+                                                                '<span class="tname">公司名称</span>' +
+                                                                '<div class="info-r"><input type="text" class="bt-input-text mr5" name="organation" value="'+ form.organation +'" style="width:380px;"/></div>' +
+                                                                '<div style="padding:0 0 5px 100px;color:#777">*确保与企查查获取的名称一致，否则认证失败需要重走流程。<a href="javascript:;" class="checkInfo btlink">点击查询</a></div>'+
+                                                                '</div>'+
+                                                                '<div class="line">' +
+                                                                '<span class="tname">公司详细地址</span>' +
+                                                                '<div class="info-r"><input type="text" class="bt-input-text mr5" name="address"  value="'+ form.address +'" style="width:380px;"/></div>' +
+                                                                '<div style="padding:0 0 0 100px;color:#777">*确保与企查查获取的地址一致，否则认证失败需要重走流程。</div>'+
+                                                                '</div>'+
+                                                                '<ul class="help-info-text c7 ssl_help_info">' +
+                                                                '<li>商用OV/EV证书申请流程：</li>'+
+                                                                '<li>1、完成邮箱认证，根据CA发送的邮件完善邮件内容(中文回复“确认”即可)</li>'+
+                                                                '<li style="color:red">2、填写完整的【公司名】和【公司详细地址】，并且企查查等平台能查询到企业信息</li>'+
+                                                                '<li>3、EV证书需要在认证平台留下的电话能接听CA的认证电话（周一到周五 7:00 - 15:00），电话号码归属地来自美国，请留意接听。</li>' +
+                                                                '<li>支持认证平台包括企查查、爱企查、百度地图、114best，其中任意一个</li>' +
+                                                                '</ul>'+
+                                                                '</div>',
+                                                            yes:function(){
+                                                                req(false)
+                                                            },
+                                                            success:function(){
+                                                                $('.certificate_confirm [name="organation"]').change(function(){
+                                                                    $('.perfect_ssl_info [name="organation"]').val($(this).val())
+                                                                    form.organation = $(this).val();
+                                                                })
+                                                                $('.certificate_confirm [name="address"]').change(function(){
+                                                                    $('.perfect_ssl_info [name="address"]').val($(this).val())
+                                                                    form.address = $(this).val();
+                                                                })
+                                                                $('.checkInfo').on('click',function(e){
+                                                                    window.open('https://www.qcc.com/web/search?key='+ $('.certificate_confirm [name="organation"]').val());
+                                                                })
+                                                            }
+                                                        })
+                                                        return false;
+                                                    }
+                                                    var loadT = bt.load('正在提交证书资料，请稍后...');
                                                     bt.send('apply_order_ca', 'ssl/apply_order_ca', {
                                                         pdata: JSON.stringify({
                                                             pid: config.pid,
@@ -6877,25 +6915,26 @@ var site = {
                                                                 lastName: form.name
                                                             }
                                                         })
-                                                    }, function(res) {
-                                                        if (res.status) {
-                                                            $('#ssl_tabs span.on').click();
-                                                            verify_order_veiw(config.oid);
-                                                            loadT.close();
-                                                            layer.close(index);
-                                                            return false;
-                                                        }
+                                                    }, function (res) {
+                                                        loadT.close();
                                                         if (typeof res.msg == "object") {
                                                             for (var key in res.msg.errors) {
                                                                 if (Object.hasOwnProperty.call(res.msg.errors, key)) {
                                                                     var element = res.msg.errors[key];
-                                                                    bt.msg({ status: false, msg: element });
+                                                                    bt.msg({
+                                                                        status: false,
+                                                                        msg: element
+                                                                    });
                                                                 }
                                                             }
                                                         } else {
                                                             bt.msg(res);
                                                         }
-                                                        loadT.close();
+                                                        if (res.status) {
+                                                            layer.close(index);
+                                                            verify_order_veiw(config.oid);
+                                                            $('#ssl_tabs span.on').click();
+                                                        }
                                                     });
                                                 }
                                             });
