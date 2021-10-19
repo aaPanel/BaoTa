@@ -1,13 +1,12 @@
-
-function modify_port_val(port){
-	layer.open({
-		type: 1,
-		area: '400px',
-		title: '修改端口',
-		closeBtn:2,
-		shadeClose: false,
-		btn:['确认','取消'],
-		content: '<div class="bt-form pd20 pd70" style="padding:20px 35px;">\
+function modify_port_val(port) {
+  layer.open({
+    type: 1,
+    area: '400px',
+    title: '修改端口',
+    closeBtn: 2,
+    shadeClose: false,
+    btn: ['确认', '取消'],
+    content: '<div class="bt-form pd20 pd70" style="padding:20px 35px;">\
 				<ul style="margin-bottom:10px;color:red;width: 100%;background: #f7f7f7;padding: 10px;border-radius: 5px;font-size: 12px;">\
 					<li style="color:red;font-size:13px;">1、有安全组的服务器请提前在安全组放行新端口</li>\
 					<li style="color:red;font-size:13px;">2、如果修改端口导致面板无法访问，请在SSH命令行通过bt命令改回原来的端口</li>\
@@ -15,7 +14,7 @@ function modify_port_val(port){
 				<div class="line">\
 	                <span class="tname" style="width: 70px;">面板端口</span>\
 	                <div class="info-r" style="margin-left:70px">\
-	                    <input name="portss" class="bt-input-text mr5" type="text" style="width:200px" value="'+ port +'">\
+	                    <input name="portss" class="bt-input-text mr5" type="text" style="width:200px" value="' + port + '">\
 	                </div>\
                 </div>\
                 <div class="details" style="margin-top:5px;padding-left: 3px;">\
@@ -23,113 +22,153 @@ function modify_port_val(port){
 					<label style="font-weight: 400;margin: 3px 5px 0px;" for="check_port">我已了解</label>,<a target="_blank" class="btlink" href="https://www.bt.cn/bbs/thread-40037-1-1.html">如何放行端口？</a>\
 				</div>\
 			</div>',
-		yes:function(index,layero){
-			var check_port = $('#check_port').prop('checked'),_tips = '';
-			if(!check_port){
-				_tips = layer.tips('请勾选我已了解', '#check_port', {tips:[1,'#ff0000'],time:5000});
-				return false;
-			}
-			layer.close(_tips);
-			$('#banport').val($('[name="portss"]').val());
-			var _data = $("#set-Config").serializeObject();
-			_data['port'] = $('[name="portss"]').val();
-			var loadT = layer.msg(lan.config.config_save,{icon:16,time:0,shade: [0.3, '#000']});
-			$.post('/config?action=setPanel',_data,function(rdata){
-				layer.close(loadT);
-				layer.msg(rdata.msg,{icon:rdata.status?1:2});
-				if(rdata.status){
-					layer.close(index);
-					setTimeout(function(){
-						window.location.href = ((window.location.protocol.indexOf('https') != -1)?'https://':'http://') + rdata.host + window.location.pathname;
-					},4000);
-				}
-			});
-		},
-		success:function(){
-			$('#check_port').click(function(){
-				layer.closeAll('tips');
-			});
-		}
-	});
+    yes: function (index, layero) {
+      var check_port = $('#check_port').prop('checked'),
+        _tips = '';
+      if (!check_port) {
+        _tips = layer.tips('请勾选我已了解', '#check_port', {
+          tips: [1, '#ff0000'],
+          time: 5000
+        });
+        return false;
+      }
+      layer.close(_tips);
+      $('#banport').val($('[name="portss"]').val());
+      var _data = $("#set-Config").serializeObject();
+      _data['port'] = $('[name="portss"]').val();
+      var loadT = layer.msg(lan.config.config_save, {
+        icon: 16,
+        time: 0,
+        shade: [0.3, '#000']
+      });
+      $.post('/config?action=setPanel', _data, function (rdata) {
+        layer.close(loadT);
+        layer.msg(rdata.msg, {
+          icon: rdata.status ? 1 : 2
+        });
+        if (rdata.status) {
+          layer.close(index);
+          setTimeout(function () {
+            window.location.href = ((window.location.protocol.indexOf('https') != -1) ? 'https://' : 'http://') + rdata.host + window.location.pathname;
+          }, 4000);
+        }
+      });
+    },
+    success: function () {
+      $('#check_port').click(function () {
+        layer.closeAll('tips');
+      });
+    }
+  });
 }
-$.fn.serializeObject = function(){   
-   var o = {};   
-   var a = this.serializeArray();   
-   $.each(a, function() {   
-       if (o[this.name]) {   
-           if (!o[this.name].push) {   
-               o[this.name] = [o[this.name]];   
-           }   
-           o[this.name].push(this.value || '');   
-       } else {   
-           o[this.name] = this.value || '';   
-       }   
-   });   
-   return o;   
+$.fn.serializeObject = function () {
+  var o = {};
+  var a = this.serializeArray();
+  $.each(a, function () {
+    if (o[this.name]) {
+      if (!o[this.name].push) {
+        o[this.name] = [o[this.name]];
+      }
+      o[this.name].push(this.value || '');
+    } else {
+      o[this.name] = this.value || '';
+    }
+  });
+  return o;
 };
 
 
 //关闭面板
-function ClosePanel(){
-	layer.confirm(lan.config.close_panel_msg,{title:lan.config.close_panel_title,closeBtn:2,icon:13,cancel:function(){
-		$("#closePl").prop("checked",false);
-	}}, function() {
-		$.post('/config?action=ClosePanel','',function(rdata){
-			layer.msg(rdata.msg,{icon:rdata.status?1:2});
-			setTimeout(function(){window.location.reload();},1000);
-		});
-	},function(){
-		$("#closePl").prop("checked",false);
-	});
+function ClosePanel() {
+  layer.confirm(lan.config.close_panel_msg, {
+    title: lan.config.close_panel_title,
+    closeBtn: 2,
+    icon: 13,
+    cancel: function () {
+      $("#closePl").prop("checked", false);
+    }
+  }, function () {
+    $.post('/config?action=ClosePanel', '', function (rdata) {
+      layer.msg(rdata.msg, {
+        icon: rdata.status ? 1 : 2
+      });
+      setTimeout(function () {
+        window.location.reload();
+      }, 1000);
+    });
+  }, function () {
+    $("#closePl").prop("checked", false);
+  });
 }
 
 //设置自动更新
-function SetPanelAutoUpload(){
-	loadT = layer.msg(lan.public.config,{icon:16,time:0});
-	$.post('/config?action=AutoUpdatePanel','',function(rdata){ 
-		layer.close(loadT);
-		layer.msg(rdata.msg,{icon:rdata.status?1:2});
-	});
+function SetPanelAutoUpload() {
+  loadT = layer.msg(lan.public.config, {
+    icon: 16,
+    time: 0
+  });
+  $.post('/config?action=AutoUpdatePanel', '', function (rdata) {
+    layer.close(loadT);
+    layer.msg(rdata.msg, {
+      icon: rdata.status ? 1 : 2
+    });
+  });
 }
 
-$('#show_recommend').click(function(){
-	var status = !$(this).prop("checked"),that = $(this);
-	layer.confirm(status?'关闭活动推荐，将无法接受到宝塔官方推荐的活动内容？':'开启活动推荐，定期获取宝塔官方推荐的的活动内容！',{title:status?'关闭活动推荐':'开启活动推荐',closeBtn:2,icon:13,cancel:function(){
-		that.prop("checked",status);
-	}}, function() {
-		$.post('/config?action=show_recommend',function(rdata){
-			layer.msg(rdata.msg,{icon:rdata.status?1:2});
-		});
-	},function(){
-		that.prop("checked",status);
-	});
+$('#show_recommend').click(function () {
+  var status = !$(this).prop("checked"),
+    that = $(this);
+  layer.confirm(status ? '关闭活动推荐，将无法接受到宝塔官方推荐的活动内容？' : '开启活动推荐，定期获取宝塔官方推荐的的活动内容！', {
+    title: status ? '关闭活动推荐' : '开启活动推荐',
+    closeBtn: 2,
+    icon: 13,
+    cancel: function () {
+      that.prop("checked", status);
+    }
+  }, function () {
+    $.post('/config?action=show_recommend', function (rdata) {
+      layer.msg(rdata.msg, {
+        icon: rdata.status ? 1 : 2
+      });
+    });
+  }, function () {
+    that.prop("checked", status);
+  });
 });
 
-$('#show_workorder').click(function(){
-	var status = !$(this).prop("checked"),that = $(this);
-	layer.confirm(status?'关闭在线客服，将无法实时向宝塔技术人员反馈问题？':'开启在线客服，实时向宝塔技术人员反馈问题？',{title:status?'关闭在线客服':'开启在线客服',closeBtn:2,icon:13,cancel:function(){
-		that.prop("checked",status);
-	}}, function() {
-		$.post('/config?action=show_workorder',function(rdata){
-			layer.msg(rdata.msg,{icon:rdata.status?1:2});
-			window.location.reload();
-		});
-	},function(){
-		that.prop("checked",status);
-	});
+$('#show_workorder').click(function () {
+  var status = !$(this).prop("checked"),
+    that = $(this);
+  layer.confirm(status ? '关闭在线客服，将无法实时向宝塔技术人员反馈问题？' : '开启在线客服，实时向宝塔技术人员反馈问题？', {
+    title: status ? '关闭在线客服' : '开启在线客服',
+    closeBtn: 2,
+    icon: 13,
+    cancel: function () {
+      that.prop("checked", status);
+    }
+  }, function () {
+    $.post('/config?action=show_workorder', function (rdata) {
+      layer.msg(rdata.msg, {
+        icon: rdata.status ? 1 : 2
+      });
+      window.location.reload();
+    });
+  }, function () {
+    that.prop("checked", status);
+  });
 });
 
-$('#panel_verification').click(function(){
-	var _checked = $(this).prop('checked');
-	if(_checked){
-		layer.open({
-			type: 1,
-			area: ['500px','530px'],
-			title: '动态口令设置',
-			closeBtn: 2,
-			shift: 5,
-			shadeClose: false,
-			content: '<div class="bt-form pd20 pd70 ssl_cert_from" style="padding:20px 35px;">\
+$('#panel_verification').click(function () {
+  var _checked = $(this).prop('checked');
+  if (_checked) {
+    layer.open({
+      type: 1,
+      area: ['500px', '530px'],
+      title: '动态口令设置',
+      closeBtn: 2,
+      shift: 5,
+      shadeClose: false,
+      content: '<div class="bt-form pd20 pd70 ssl_cert_from" style="padding:20px 35px;">\
 				<div class="">\
 					<i class="layui-layer-ico layui-layer-ico3"></i>\
 					<h3>危险！此功能不懂别开启!</h3>\
@@ -156,71 +195,93 @@ $('#panel_verification').click(function(){
 					<button type="button" class="btn btn-sm btn-success submit_verify">确认</button>\
 				</div>\
 			</div>',
-			success:function(layers,index){
-				$('.submit_verify').click(function(e){
-					var check_verification = $('#check_verification').prop('checked');
-					if(!check_verification){
-						layer.msg('请先勾选同意风险',{icon:0});
-						return false;
-					}
-					var loadT = layer.msg('正在开启动态口令认证，请稍后...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-					set_two_step_auth({act:_checked},function(rdata){
-						layer.close(loadT);
-						if (rdata.status) layer.closeAll();
-						layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-						if(rdata.status && _checked){
-							$('.open_two_verify_view').click();
-						}
-					});
-				});
-				$('.close_verify').click(function(){
-					layer.closeAll();
-					$('#panel_verification').prop('checked',!_checked);
-				});
-			},cancel:function () {
-				layer.closeAll();
-				$('#panel_verification').prop('checked',!_checked);
-			}
-		});
-	}else{
-		bt.confirm({
-			title: '动态口令认证',
-			msg: '是否关闭动态口令认证，是否继续？',
-			cancel: function () {
-				$('#panel_verification').prop('checked',!_checked);
-			}}, function () {
-				var loadT = layer.msg('正在关闭动态口令认证，请稍后...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-				set_two_step_auth({act:_checked},function(rdata){
-					layer.close(loadT);
-					if (rdata.status) layer.closeAll();
-					layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-					if(rdata.status && _checked){
-						$('.open_two_verify_view').click();
-					}
-				});
-			},function () {
-				$('#panel_verification').prop('checked',!_checked);
-		   });
-	}
-	
-	// console.log(_data);
-	
+      success: function (layers, index) {
+        $('.submit_verify').click(function (e) {
+          var check_verification = $('#check_verification').prop('checked');
+          if (!check_verification) {
+            layer.msg('请先勾选同意风险', {
+              icon: 0
+            });
+            return false;
+          }
+          var loadT = layer.msg('正在开启动态口令认证，请稍后...', {
+            icon: 16,
+            time: 0,
+            shade: [0.3, '#000']
+          });
+          set_two_step_auth({
+            act: _checked
+          }, function (rdata) {
+            layer.close(loadT);
+            if (rdata.status) layer.closeAll();
+            layer.msg(rdata.msg, {
+              icon: rdata.status ? 1 : 2
+            });
+            if (rdata.status && _checked) {
+              $('.open_two_verify_view').click();
+            }
+          });
+        });
+        $('.close_verify').click(function () {
+          layer.closeAll();
+          $('#panel_verification').prop('checked', !_checked);
+        });
+      },
+      cancel: function () {
+        layer.closeAll();
+        $('#panel_verification').prop('checked', !_checked);
+      }
+    });
+  } else {
+    bt.confirm({
+      title: '动态口令认证',
+      msg: '是否关闭动态口令认证，是否继续？',
+      cancel: function () {
+        $('#panel_verification').prop('checked', !_checked);
+      }
+    }, function () {
+      var loadT = layer.msg('正在关闭动态口令认证，请稍后...', {
+        icon: 16,
+        time: 0,
+        shade: [0.3, '#000']
+      });
+      set_two_step_auth({
+        act: _checked
+      }, function (rdata) {
+        layer.close(loadT);
+        if (rdata.status) layer.closeAll();
+        layer.msg(rdata.msg, {
+          icon: rdata.status ? 1 : 2
+        });
+        if (rdata.status && _checked) {
+          $('.open_two_verify_view').click();
+        }
+      });
+    }, function () {
+      $('#panel_verification').prop('checked', !_checked);
+    });
+  }
+
+  // console.log(_data);
+
 });
 
-$('.open_two_verify_view').click(function(){
-	var _checked = $('#panel_verification').prop('checked');
-	if(!_checked){
-		layer.msg('请先开启动态口令认证',{icon:0});
-		return false;
-	}
-	layer.open({
-        type: 1,
-        area: '560px',
-        title: '动态口令认证绑定',
-        closeBtn: 2,
-        shift: 5,
-        shadeClose: false,
-        content: '<div class="bt-form" style="padding:40px 25px; 20px 25px">\
+$('.open_two_verify_view').click(function () {
+  var _checked = $('#panel_verification').prop('checked');
+  if (!_checked) {
+    layer.msg('请先开启动态口令认证', {
+      icon: 0
+    });
+    return false;
+  }
+  layer.open({
+    type: 1,
+    area: '560px',
+    title: '动态口令认证绑定',
+    closeBtn: 2,
+    shift: 5,
+    shadeClose: false,
+    content: '<div class="bt-form" style="padding:40px 25px; 20px 25px">\
 					<div class="verify_item">\
 						<div class="verify_vice_title" style="font-weight: 500;font-size:16px;">扫码绑定（使用宝塔面板APP或Google身份验证器APP扫码）</div>\
 						<div class="verify_conter" style="text-align:center;padding-top:10px;">\
@@ -232,371 +293,733 @@ $('.open_two_verify_view').click(function(){
 						<p style="color:red;">开启服务后，请立即使用“宝塔面板APP或Google身份验证器APP”绑定，以免出现无法登录的情况。</p>\
 					</div>\
 				</div>',
-		success:function(e){
-			get_two_verify(function(res){
-				$('.verify_box_line .username').html(res.username);
-				$('.verify_box_line .userkey').html(res.key);
-			});
-			get_qrcode_data(function(res){
-				jQuery('#verify_qrcode').qrcode({
-					render: "canvas",
-					text: res,
-					height:150,
-					width:150
-				});
-			});
-		}
-    });
+    success: function (e) {
+      get_two_verify(function (res) {
+        $('.verify_box_line .username').html(res.username);
+        $('.verify_box_line .userkey').html(res.key);
+      });
+      get_qrcode_data(function (res) {
+        jQuery('#verify_qrcode').qrcode({
+          render: "canvas",
+          text: res,
+          height: 150,
+          width: 150
+        });
+      });
+    }
+  });
 });
+
+$('#soft-tabs').on('click', 'span', function () {
+  var index = $(this).index();
+  $(this).addClass('on').siblings().removeClass('on');
+  $(this).parent().next().find('.tab-con-block:eq(' + index + ')').removeClass('hide').siblings().addClass('hide');
+})
+
+
+$('.password_verification_btn').on('click', function () {
+  var data = $(this).prev().data(),
+    text = '<span style="color:red;">密码必须满足密码长度大于8位且大写字母、小写字母、数字、特殊字符至少3项组合</span>';
+  bt.confirm({
+    title: data.password_safe ? '关闭密码复杂度验证' : '开启密码复杂度验证',
+    msg: data.password_safe ? ('<p>关闭密码复杂度验证后，密码将不再判断以下密码复杂度规则：' + text + '，安全风险将会提升，是否继续！！！</p>') : ('开启密码复杂度验证后，将会对密码进行复杂度判断，规则：' + text + '，是否继续！')
+  }, function (indexs) {
+    set_password_safe(function (rdata) {
+      bt.msg(rdata)
+      if (rdata.status) get_password_config()
+      layer.close(indexs)
+    })
+  })
+});
+$('.password_overdue_btn').on('click', function () {
+  var data = $(this).prev().data();
+  bt.open({
+    title: '设置密码过期时间',
+    area: '400px',
+    content: '<div class="bt-form">\
+      <div class="line">\
+        <span class="tname" style="width: 120px;">密码过期时间</span>\
+        <div class="info-r" style="margin-left:120px">\
+          <input name="expire" class="bt-input-text mr5" type="text" style="width:80px" value="' + data.expire + '">\
+          <span>天</span>\
+        </div>\
+      </div>\
+      <ul class="help-info-text c7"><li>面板密码过期时间设置，过期后需要重新设置密码</li></ul>\
+      </div > ',
+    btn: ['保存', '取消'],
+    yes: function (indexs) {
+      var expire = $('[name="expire"]').val();
+      if (expire === '') {
+        bt.msg({
+          status: false,
+          msg: '密码过期时间不能为空！'
+        })
+        return false
+      }
+      set_password_expire({
+        expire: expire
+      }, function (rdata) {
+        if (rdata.status) get_password_config()
+        bt.msg(rdata)
+      })
+    }
+  })
+})
+$('[name="domain"]').on('input', function () {
+  $('[name="domain"]').val($(this).val())
+})
+
+/**
+ * @description 获取配置
+ * @param {function} callback  回调函数
+ */
+function get_password_config(callback) {
+  bt.send('get_password_config', 'config/get_password_config', {}, function (res) {
+    $('[name="password_verification"]').val(res.password_safe ? '已开启' : '已关闭').data(res)
+    $('[name="password_overdue"]').val(bt.format_data(res.expire_time, 'yyyy/MM/dd') + '( 剩余' + res.expire_day + '天过期 )').data(res);
+    if (callback) callback(res)
+  })
+}
+
+
+get_password_config()
+
+/**
+ * @description 设置密码过期时间
+ * @param {object} param 设置参数  
+ * @param {function} callback 回调函数
+ */
+function set_password_expire(param, callback) {
+  bt.send('set_password_expire', 'config/set_password_expire', param, function (res) {
+    if (callback) callback(res)
+  })
+}
+
+/**
+ * @description 设置密码复杂度
+ * @param {function} callback 回调函数
+ */
+function set_password_safe(callback) {
+  bt.send('set_password_safe', 'config/set_password_safe', {}, function (res) {
+    if (callback) callback(res)
+  })
+}
+
+
 
 var three_channel_status = {};
 (function () {
-    check_two_step(function (res) {
-        $('#panel_verification').prop('checked', res.status);
-    });
-    get_three_channel(function (res) {
-        three_channel_status = res;
-        $('#channel_auth').val(!res.user_mail.user_name && !res.dingding.dingding ? '邮箱未设置 | 钉钉未设置' : (res.user_mail.user_name ? '邮箱已设置' : (res.dingding.dingding ? '钉钉已设置' : '')))
-    });
-    get_login_send(function (rdata) {
-        $('#panel_report').val(!rdata.status ? '邮箱未设置 | 钉钉未设置' : (rdata.msg.mail ? '邮箱已设置' : (rdata.msg.dingding ? '钉钉已设置' : '')))
-        localStorage.setItem('warning', rdata);
-    });
+  check_two_step(function (res) {
+    $('#panel_verification').prop('checked', res.status);
+  });
+  get_three_channel(function (res) {
+    three_channel_status = res;
+    $('#channel_auth').val(!res.user_mail.user_name && !res.dingding.dingding ? '邮箱未设置 | 钉钉未设置' : (res.user_mail.user_name ? '邮箱已设置' : (res.dingding.dingding ? '钉钉已设置' : '')))
+  });
+  get_login_send(function (rdata) {
+    $('#panel_report').val(!rdata.status ? '邮箱未设置 | 钉钉未设置' : (rdata.msg.mail ? '邮箱已设置' : (rdata.msg.dingding ? '钉钉已设置' : '')))
+    localStorage.setItem('warning', rdata);
+  });
 })()
 
 
-function get_three_channel(callback){
-	$.post('/config?action=get_settings',function(res){
-		if(callback) callback(res);
-	});
-}
-function get_login_send(callback){
-    $.post('/config?action=get_login_send',function(res){
-		if(callback) callback(res);
-	});
-}
-function get_login_log(obj,callback){
-    $.post('/config?action=get_login_log',obj,function(res){
-		if(callback) callback(res);
-	});
-}
-function set_login_send(obj,callback){
-    if(obj.type == undefined) return false;
-    $.post('/config?action=set_login_send',{'type':obj.type},function(res){
-		if(callback) callback(res);
-	});
-}
-function clear_login_send(obj,callback){
-    if(obj.type == undefined) return false;
-    $.post('/config?action=clear_login_send',{'type':obj.type},function(res){
-		if(callback) callback(res);
-	});
-}
-function login_ipwhite(obj,callback){
-    if(obj.type == undefined) return false;
-    $.post('/config?action=login_ipwhite',obj,function(res){
-		if(callback) callback(res);
-	});
-}
-function check_two_step(callback){
-	$.post('/config?action=check_two_step',function(res){
-		if(callback) callback(res);
-	});
-}
-function get_qrcode_data(callback){
-	$.post('/config?action=get_qrcode_data',function(res){
-		if(callback) callback(res);
-	});
-}
-function get_two_verify(callback){
-	$.post('/config?action=get_key',function(res){
-		if(callback) callback(res);
-	});
-}
-function set_two_step_auth(obj,callback){
-	$.post('/config?action=set_two_step_auth',{act:obj.act?1:0},function(res){
-		if(callback) callback(res);
-	});
+function get_three_channel(callback) {
+  $.post('/config?action=get_settings', function (res) {
+    if (callback) callback(res);
+  });
 }
 
-$(".set-submit").click(function(){
-	var data = $("#set-Config").serialize();
-	layer.msg(lan.config.config_save,{icon:16,time:0,shade: [0.3, '#000']});
-	$.post('/config?action=setPanel',data,function(rdata){
-		layer.closeAll();
-		layer.msg(rdata.msg,{icon:rdata.status?1:2});
-		if(rdata.status){
-			setTimeout(function(){
-				window.location.href = ((window.location.protocol.indexOf('https') != -1)?'https://':'http://') + rdata.host + window.location.pathname;
-			},1500);
-		}
-	});
-	
+function get_login_send(callback) {
+  $.post('/config?action=get_login_send', function (res) {
+    if (callback) callback(res);
+  });
+}
+
+function get_login_log(obj, callback) {
+  $.post('/config?action=get_login_log', obj, function (res) {
+    if (callback) callback(res);
+  });
+}
+
+function set_login_send(obj, callback) {
+  if (obj.type == undefined) return false;
+  $.post('/config?action=set_login_send', {
+    'type': obj.type
+  }, function (res) {
+    if (callback) callback(res);
+  });
+}
+
+function clear_login_send(obj, callback) {
+  if (obj.type == undefined) return false;
+  $.post('/config?action=clear_login_send', {
+    'type': obj.type
+  }, function (res) {
+    if (callback) callback(res);
+  });
+}
+
+function login_ipwhite(obj, callback) {
+  if (obj.type == undefined) return false;
+  $.post('/config?action=login_ipwhite', obj, function (res) {
+    if (callback) callback(res);
+  });
+}
+
+function check_two_step(callback) {
+  $.post('/config?action=check_two_step', function (res) {
+    if (callback) callback(res);
+  });
+}
+
+function get_qrcode_data(callback) {
+  $.post('/config?action=get_qrcode_data', function (res) {
+    if (callback) callback(res);
+  });
+}
+
+function get_two_verify(callback) {
+  $.post('/config?action=get_key', function (res) {
+    if (callback) callback(res);
+  });
+}
+
+function set_two_step_auth(obj, callback) {
+  $.post('/config?action=set_two_step_auth', {
+    act: obj.act ? 1 : 0
+  }, function (res) {
+    if (callback) callback(res);
+  });
+}
+
+$(".set-submit").click(function () {
+  var data = $("#set-Config").serialize();
+  layer.msg(lan.config.config_save, {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  $.post('/config?action=setPanel', data, function (rdata) {
+    layer.closeAll();
+    layer.msg(rdata.msg, {
+      icon: rdata.status ? 1 : 2
+    });
+    if (rdata.status) {
+      setTimeout(function () {
+        window.location.href = ((window.location.protocol.indexOf('https') != -1) ? 'https://' : 'http://') + rdata.host + window.location.pathname;
+      }, 1500);
+    }
+  });
+
 });
 
 
 function modify_auth_path() {
-    var auth_path = $("#admin_path").val();
-    btn = "<button type='button' class='btn btn-success btn-sm' onclick=\"bindBTName(1,'b')\">确定</button>";
-    layer.open({
-        type: 1,
-        area: "500px",
-        title: "修改安全入口",
-        closeBtn: 2,
-        shift: 5,
-        shadeClose: false,
-        content: '<div class="bt-form bt-form pd20 pb70">\
+  var auth_path = $("#admin_path").val();
+  btn = "<button type='button' class='btn btn-success btn-sm' onclick=\"bindBTName(1,'b')\">确定</button>";
+  layer.open({
+    type: 1,
+    area: "500px",
+    title: "修改安全入口",
+    closeBtn: 2,
+    shift: 5,
+    shadeClose: false,
+    content: '<div class="bt-form bt-form pd20 pb70">\
                     <div class="line ">\
                         <span class="tname">入口地址</span>\
                         <div class="info-r">\
-                            <input name="auth_path_set" class="bt-input-text mr5" type="text" style="width: 311px" value="'+ auth_path+'">\
+                            <input name="auth_path_set" class="bt-input-text mr5" type="text" style="width: 311px" value="' + auth_path + '">\
                         </div></div>\
                         <div class="bt-form-submit-btn">\
                             <button type="button" class= "btn btn-sm btn-danger" onclick="layer.closeAll()"> 关闭</button>\
                             <button type="button" class="btn btn-sm btn-success" onclick="set_auth_path()">提交</button>\
                     </div></div>'
-    })
+  })
 
 
-    
-    
+
+
 
 }
 
 function set_auth_path() {
-    var auth_path = $("input[name='auth_path_set']").val();
-    var loadT = layer.msg(lan.config.config_save, { icon: 16, time: 0, shade: [0.3, '#000'] });
-    $.post('/config?action=set_admin_path', { admin_path: auth_path }, function (rdata) {
-        layer.close(loadT);
-        if (rdata.status) {
-            layer.closeAll();
-            $("#admin_path").val(auth_path);
-        }
+  var auth_path = $("input[name='auth_path_set']").val();
+  var loadT = layer.msg(lan.config.config_save, {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  $.post('/config?action=set_admin_path', {
+    admin_path: auth_path
+  }, function (rdata) {
+    layer.close(loadT);
+    if (rdata.status) {
+      layer.closeAll();
+      $("#admin_path").val(auth_path);
+    }
 
-        setTimeout(function () { layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 }); }, 200);
-    });
+    setTimeout(function () {
+      layer.msg(rdata.msg, {
+        icon: rdata.status ? 1 : 2
+      });
+    }, 200);
+  });
 }
 
 
 function syncDate() {
-	var loadT = layer.msg(lan.config.config_sync,{icon:16,time:0,shade: [0.3, '#000']});
-	$.post('/config?action=syncDate','',function(rdata){
-		layer.close(loadT);
-		layer.msg(rdata.msg,{icon:1});
-		setTimeout(function(){
-				window.location.reload();
-			},1500);
-	});
+  var loadT = layer.msg(lan.config.config_sync, {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  $.post('/config?action=syncDate', '', function (rdata) {
+    layer.close(loadT);
+    layer.msg(rdata.msg, {
+      icon: 1
+    });
+    setTimeout(function () {
+      window.location.reload();
+    }, 1500);
+  });
 }
 
 //PHP守护程序
-function Set502(){
-	var loadT = layer.msg(lan.public.the,{icon:16,time:0,shade: [0.3, '#000']});
-	$.post('/config?action=Set502','',function(rdata){
-		layer.close(loadT);
-		layer.msg(rdata.msg,{icon:rdata.status?1:2});
-	});
+function Set502() {
+  var loadT = layer.msg(lan.public.the, {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  $.post('/config?action=Set502', '', function (rdata) {
+    layer.close(loadT);
+    layer.msg(rdata.msg, {
+      icon: rdata.status ? 1 : 2
+    });
+  });
 }
 
 //绑定修改宝塔账号
-function bindBTName(a,type){
-	var titleName = lan.config.config_user_binding;
-	if(type == "b"){
-		btn = "<button type='button' class='btn btn-success btn-sm bind-btn' onclick=\"bindBTName(1,'b')\">"+lan.config.binding+"</button>";
-	}
-	else{
-		titleName = lan.config.config_user_edit;
-		btn = "<button type='button' class='btn btn-success btn-sm bind-btn' onclick=\"bindBTName(1,'c')\">"+lan.public.edit+"</button>";
-	}
-	if(a == 1) {
-		p1 = $("#p1").val();
-		p2 = $("#p2").val();
-		var loadT = layer.msg(lan.config.token_get,{icon:16,time:0,shade: [0.3, '#000']});
-		$.post(" /ssl?action=GetToken", "username=" + p1 + "&password=" + p2, function(b){
-			layer.close(loadT);
-			layer.msg(b.msg, {icon: b.status?1:2});
-			if(b.status) {
-				window.location.reload();
-				$("input[name='btusername']").val(p1);
-			}
-		});
-		return
-	}
-	layer.open({
-		type: 1,
-		area: "290px",
-		title: titleName,
-		closeBtn: 2,
-		shift: 5,
-		shadeClose: false,
-		content: "<div class='bt-form pd20 pb70'><div class='line'><span class='tname'>"+lan.public.user+"</span><div class='info-r'><input class='bt-input-text' type='text' name='username' id='p1' value='' placeholder='"+lan.config.user_bt+"' style='width:100%'/></div></div><div class='line'><span class='tname'>"+lan.public.pass+"</span><div class='info-r'><input class='bt-input-text' type='password' name='password' id='p2' value='' placeholder='"+lan.config.pass_bt+"' style='width:100%'/></div></div><div class='bt-form-submit-btn'><button type='button' class='btn btn-danger btn-sm' onclick=\"layer.closeAll()\">"+lan.public.cancel+"</button> "+btn+"</div></div>",
-		success:function(){
-			$("input[name='password']").keyup(function(e){
-				if(e.keyCode ==13){
-					$(".bind-btn").click();
-				}
-			})
-		}
-	})
+function bindBTName(a, type) {
+  var titleName = lan.config.config_user_binding;
+  if (type == "b") {
+    btn = "<button type='button' class='btn btn-success btn-sm bind-btn' onclick=\"bindBTName(1,'b')\">" + lan.config.binding + "</button>";
+  } else {
+    titleName = lan.config.config_user_edit;
+    btn = "<button type='button' class='btn btn-success btn-sm bind-btn' onclick=\"bindBTName(1,'c')\">" + lan.public.edit + "</button>";
+  }
+  if (a == 1) {
+    p1 = $("#p1").val();
+    p2 = $("#p2").val();
+    var loadT = layer.msg(lan.config.token_get, {
+      icon: 16,
+      time: 0,
+      shade: [0.3, '#000']
+    });
+    $.post(" /ssl?action=GetToken", "username=" + p1 + "&password=" + p2, function (b) {
+      layer.close(loadT);
+      layer.msg(b.msg, {
+        icon: b.status ? 1 : 2
+      });
+      if (b.status) {
+        window.location.reload();
+        $("input[name='btusername']").val(p1);
+      }
+    });
+    return
+  }
+  layer.open({
+    type: 1,
+    area: "290px",
+    title: titleName,
+    closeBtn: 2,
+    shift: 5,
+    shadeClose: false,
+    content: "<div class='bt-form pd20 pb70'><div class='line'><span class='tname'>" + lan.public.user + "</span><div class='info-r'><input class='bt-input-text' type='text' name='username' id='p1' value='' placeholder='" + lan.config.user_bt + "' style='width:100%'/></div></div><div class='line'><span class='tname'>" + lan.public.pass + "</span><div class='info-r'><input class='bt-input-text' type='password' name='password' id='p2' value='' placeholder='" + lan.config.pass_bt + "' style='width:100%'/></div></div><div class='bt-form-submit-btn'><button type='button' class='btn btn-danger btn-sm' onclick=\"layer.closeAll()\">" + lan.public.cancel + "</button> " + btn + "</div></div>",
+    success: function () {
+      $("input[name='password']").keyup(function (e) {
+        if (e.keyCode == 13) {
+          $(".bind-btn").click();
+        }
+      })
+    }
+  })
 }
 //解除绑定宝塔账号
-function UnboundBt(){
-	var name = $("input[name='btusername']").val();
-	layer.confirm(lan.config.binding_un_msg,{closeBtn:2,icon:3,title:lan.config.binding_un},function(){
-		$.get("/ssl?action=DelToken",function(b){
-			layer.msg(b.msg,{icon:b.status? 1:2})
-			$("input[name='btusername']").val('');
-            bt.clear_cookie('bt_user_info');
-		})
-	})
+function UnboundBt() {
+  var name = $("input[name='btusername']").val();
+  layer.confirm(lan.config.binding_un_msg, {
+    closeBtn: 2,
+    icon: 3,
+    title: lan.config.binding_un
+  }, function () {
+    $.get("/ssl?action=DelToken", function (b) {
+      layer.msg(b.msg, {
+        icon: b.status ? 1 : 2
+      })
+      $("input[name='btusername']").val('');
+      bt.clear_cookie('bt_user_info');
+    })
+  })
 }
 
-//设置API
-function apiSetup(){
-	var loadT = layer.msg(lan.config.token_get,{icon:16,time:0,shade: [0.3, '#000']});
-	$.get('/api?action=GetToken',function(rdata){
-		layer.close(loadT);
-		
-	});
-}
-
-
-//设置模板
-function setTemplate(){
-	var template = $("select[name='template']").val();
-	var loadT = layer.msg(lan.public.the,{icon:16,time:0,shade: [0.3, '#000']});
-	$.post('/config?action=SetTemplates','templates='+template,function(rdata){
-		layer.close(loadT);
-		layer.msg(rdata.msg,{icon:rdata.status?1:5});
-		if(rdata.status === true){
-			$.get('/system?action=ReWeb',function(){});
-			setTimeout(function(){
-				window.location.reload();
-			},3000);
-		}
-	});
-}
-
-//设置面板SSL
-function setPanelSSL(){
-	var status = $("#panelSSL").prop("checked");
-	var loadT = layer.msg(lan.config.ssl_msg,{icon:16,time:0,shade: [0.3, '#000']});
-	if(status){
-		var confirm = layer.confirm('是否关闭面板SSL证书', {title:'提示',btn: ['确定','取消'],icon:0,closeBtn:2}, function() {
-            bt.send('SetPanelSSL', 'config/SetPanelSSL', {}, function (rdata) {
+/**
+ * 访问设备验证
+ */
+function SetPanelVerify() {
+    var status = $("#panel_verify").prop('checked');
+    if (status) {
+        layer.confirm('您确定要关闭访问设备验证吗？', { 
+            title: '关闭访问设备验证', 
+            closeBtn: 2, 
+            icon: 3, 
+            cancel: function () {
+    		    $("#panel_verify").prop('checked', true);
+    	    }
+        }, function () {
+    		var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
+            $.post('/config?action=set_ssl_verify', {
+                status: 0
+            }, function (rdata) {
                 layer.close(loadT);
                 if (rdata.status) {
-                	layer.msg(rdata.msg,{icon:1});
-                    $.get('/system?action=ReWeb', function () {
-                    });
-                    setTimeout(function () {
-                        window.location.href = ((window.location.protocol.indexOf('https') != -1) ? 'http://' : 'https://') + window.location.host + window.location.pathname;
-                    }, 1500);
+                    $.get('/system?action=ReWeb', function () {});
+                    layer.closeAll();
                 }
-                else {
-                    layer.msg(res.rdata,{icon:2});
-                }
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
             });
-            return;
-        })
-	}
-	else {
-        bt.send('get_cert_source', 'config/get_cert_source', {}, function (rdata) {
+    	}, function(){
+    		$("#panel_verify").prop('checked', true);
+    	});
+    } else {
+        var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
+        $.post('/config?action=get_ssl_verify', '', function (rdata) {
             layer.close(loadT);
-            var sdata = rdata;
+            var checked = status;
             var _data = {
-                title: '面板SSL',
-                area: '530px',
-				class:'ssl_cert_from',
+                title: '开启访问设备验证',
+                area: '730px',
+                class: 'ssl_cert_from',
                 list: [
-                  {
-                  		html:'<div><i class="layui-layer-ico layui-layer-ico3"></i><h3>'+lan.config.ssl_open_ps+'</h3><ul><li style="color:red;">'+lan.config.ssl_open_ps_1+'</li><li>'+lan.config.ssl_open_ps_2+'</li><li>'+lan.config.ssl_open_ps_3+'</li></ul></div>'
-                  },
                     {
-                        title: '类型',
-                        name: 'cert_type',
-                        type: 'select',
-                        width: '200px',
-                        value: sdata.cert_type,
-                        items: [{value: '1', title: '自签证书'}, {value: '2', title: 'Let\'s Encrypt'}],
-                        callback: function (obj) {
-                            var subid = obj.attr('name') + '_subid';
-                            $('#' + subid).remove();
-                            if (obj.val() == '2') {
-                                var _tr = bt.render_form_line({
-                                    title: '管理员邮箱',
-                                    name: 'email',
-									width: '250px',
-                                    placeholder: '管理员邮箱',
-                                    value: sdata.email
-                                });
-                                obj.parents('div.line').append('<div class="line" id=' + subid + '>' + _tr.html + '</div>');
-                            }
-                        }
+                        html: '\
+                            <div style="position: relative; width: 90%; margin: 0 auto;">\
+                            	<i class="layui-layer-ico layui-layer-ico3" style="left: 0;"></i>\
+                            	<h3 style="margin-left: 45px;">注意，此功能不懂别开启!</h3>\
+                            	<ul style="width: 100%;">\
+                            		<li style="color:red;">必须要用到且了解此功能才决定自己是否要开启!</li>\
+                                    <li>开启后电脑需要安装此证书，否则将无法访问，属于【极高安全级别】的限制，类似银行账号U盘密钥登录</li>\
+                                    <li>注销列表(crl)和证书(cert)可通过企业版插件[堡塔限制访问型证书->双向认证->服务器证书]获取</li>\
+                                    <li>开启之前请先下载好对应的[客户端证书]，否则将无法访问面板</li>\
+                                    <li>开启访问设备验证后，未授权的用户访问将会出现400错误</li>\
+                            		<li>开启后导致面板不能访问，命令行：bt 29 关闭访问设备验证</li>\
+                            	</ul>\
+                            </div>\
+                        '
                     },
-                  {
-                  	html:'<div class="details"><input type="checkbox" id="checkSSL" /><label style="font-weight: 400;margin: 3px 5px 0px;" for="checkSSL">'+lan.config.ssl_open_ps_4+'</label><a target="_blank" class="btlink" href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=4689">'+lan.config.ssl_open_ps_5+'</a></p></div>'
-                  }
-                  
+                    {
+                        html: '\
+                            <div class="line" style="width: 90%;">\
+                                <div class="myKeyCon">\
+                                    <div class="ssl-con-key pull-left ca_show">注销列表(crl)<br>\
+                                        <textarea id="ca_crl" class="bt-input-text">' + rdata.crl + '</textarea>\
+                                    </div>\
+                                    <div class="ssl-con-key pull-right ca_show">证书(cert)<br>\
+                                        <textarea id="ca_cert" class="bt-input-text">' + rdata.ca + '</textarea>\
+                                    </div>\
+                                    <div class="clear"></div>\
+                                </div>\
+                            </div>\
+                        '
+                    },
+                    {
+                        html: '\
+                            <div class="details" style="width: 90%;">\
+                                <input type="checkbox" id="check_ssl_verify" />\
+                                <label style="font-weight: 400; margin: 3px 5px 0px;" for="check_ssl_verify">' + lan.config.ssl_open_ps_4 + '</label>\
+                                <a target="_blank" class="btlink" href="#">' + lan.config.ssl_open_ps_5 + '</a>\
+                                </p>\
+                            </div>\
+                        '
+                    }
                 ],
                 btns: [
                     {
-                        title: '关闭', name: 'close', callback: function (rdata, load, callback) {
+                        title: '关闭', 
+                        name: 'close', 
+                        callback: function (rdata, load, callback) {
                             load.close();
-                            $("#panelSSL").prop("checked", false);
+                            $("#panel_verify").prop('checked', false);
                         }
                     },
                     {
-                        title: '提交', name: 'submit', css: 'btn-success', callback: function (rdata, load, callback) {                                                    	
-                          	if(!$('#checkSSL').is(':checked')){
-                            	bt.msg({status:false,msg:'请先确认风险！'})
-                              	return;
-                            }                          
-                        	var confirm = layer.confirm('是否开启面板SSL证书', {title:'提示',btn: ['确定','取消'],icon:0,closeBtn:2}, function() {
-                            var loading = bt.load();
-                            bt.send('SetPanelSSL', 'config/SetPanelSSL', rdata, function (rdata) {
-                                loading.close()
-                                if (rdata.status) {
-                                	layer.msg(rdata.msg,{icon:1});
-                                    $.get('/system?action=ReWeb', function () {
-                                    });
-                                    setTimeout(function () {
-                                        window.location.href = ((window.location.protocol.indexOf('https') != -1) ? 'http://' : 'https://') + window.location.host + window.location.pathname;
-                                    }, 1500);
-                                }
-                                else {
-                                    layer.msg(rdata.msg,{icon:2});
-                                }
-                            })
-							});
+                        title: '确定', 
+                        name: 'submit', 
+                        css: 'btn-success', 
+                        callback: function (rdata, load, callback) {
+                            if (!$('#check_ssl_verify').is(':checked')) {
+                                return bt.msg({ status: false, msg: '请先确认风险！' });
+                            }
+                            var ca = $('#ca_cert').val();
+                            var crl = $('#ca_crl').val();
+                            if (crl == '') {
+                                return layer.msg('注销列表不能为空！', { icon: 2 });
+                            }
+                            if (ca == '') {
+                                return layer.msg('证书不能为空！', { icon: 2 });
+                            }
+                            var confirm = layer.confirm('是否开启访问设备验证', { title: '提示', btn: ['确定', '取消'], icon: 0, closeBtn: 2 }, function () {
+                                var loading = bt.load();
+                                $.post('/config?action=set_ssl_verify', {
+                                    ca: ca,
+                                    crl: crl,
+                                    status: 1
+                                }, function (rdata) {
+                                    loading.close();
+                                    if (rdata.status) {
+                                        checked = true;
+                                        $.get('/system?action=ReWeb', function () {});
+                                        load.close();
+                                    }
+                                    layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+                                });
+                            });
                         }
-
                     }
                 ],
                 end: function () {
-                    $("#panelSSL").prop("checked", false);
+                    $("#panel_verify").prop('checked', checked);
                 }
             };
-
             var _bs = bt.render_form(_data);
-            setTimeout(function () {
-                $('.cert_type' + _bs).trigger('change')
-            }, 200);
         });
     }
 }
 
-function GetPanelSSL(){
-	var loadT = layer.msg('正在获取证书信息...',{icon:16,time:0,shade: [0.3, '#000']});
-	$.post('/config?action=GetPanelSSL',{},function(cert){
+/**
+ * 打开访问设备验证
+ */
+function GetPanelVerify () {
+	var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
+    $.post('/config?action=get_ssl_verify', '', function (rdata) {
 		layer.close(loadT);
 		var certBody = '<div class="tab-con">\
 			<div class="myKeyCon ptb15">\
+				<div class="ssl-con-key pull-left">注销列表(crl)<br>\
+					<textarea id="ca_crl" class="bt-input-text">'+rdata.crl+'</textarea>\
+				</div>\
+				<div class="ssl-con-key pull-right">证书(cert)<br>\
+					<textarea id="ca_cert" class="bt-input-text">'+rdata.ca+'</textarea>\
+				</div>\
+				<div class="ssl-btn pull-left mtb15" style="width:100%">\
+					<button class="btn btn-success btn-sm" onclick="SavePanelVerify(' + (rdata.status ? 1 : 0) + ')">保存</button>\
+				</div>\
+			</div>\
+			<ul class="help-info-text c7 pull-left">\
+				<li>粘贴您的注销列表(crl)以及证书(cert)，然后保存即可<a href="#" class="btlink" target="_blank">[帮助]</a>。</li>\
+			</ul>\
+		</div>'
+		layer.open({
+			type: 1,
+			area: "600px",
+			title: '自定义证书',
+			closeBtn: 2,
+			shift: 5,
+			shadeClose: false,
+			content:certBody
+		});
+	});
+}
+
+//设置API
+function apiSetup() {
+  var loadT = layer.msg(lan.config.token_get, {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  $.get('/api?action=GetToken', function (rdata) {
+    layer.close(loadT);
+
+  });
+}
+
+
+//设置模板
+function setTemplate() {
+  var template = $("select[name='template']").val();
+  var loadT = layer.msg(lan.public.the, {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  $.post('/config?action=SetTemplates', 'templates=' + template, function (rdata) {
+    layer.close(loadT);
+    layer.msg(rdata.msg, {
+      icon: rdata.status ? 1 : 5
+    });
+    if (rdata.status === true) {
+      $.get('/system?action=ReWeb', function () {});
+      setTimeout(function () {
+        window.location.reload();
+      }, 3000);
+    }
+  });
+}
+
+//设置面板SSL
+function setPanelSSL() {
+  var status = $("#panelSSL").prop("checked");
+  var loadT = layer.msg(lan.config.ssl_msg, {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  if (status) {
+    var confirm = layer.confirm('是否关闭面板SSL证书', {
+      title: '提示',
+      btn: ['确定', '取消'],
+      icon: 0,
+      closeBtn: 2
+    }, function () {
+      bt.send('SetPanelSSL', 'config/SetPanelSSL', {}, function (rdata) {
+        layer.close(loadT);
+        if (rdata.status) {
+          layer.msg(rdata.msg, {
+            icon: 1
+          });
+          $.get('/system?action=ReWeb', function () {});
+          setTimeout(function () {
+            window.location.href = ((window.location.protocol.indexOf('https') != -1) ? 'http://' : 'https://') + window.location.host + window.location.pathname;
+          }, 1500);
+        } else {
+          layer.msg(res.rdata, {
+            icon: 2
+          });
+        }
+      });
+      return;
+    })
+  } else {
+    bt.send('get_cert_source', 'config/get_cert_source', {}, function (rdata) {
+      layer.close(loadT);
+      var sdata = rdata;
+      var _data = {
+        title: '面板SSL',
+        area: '530px',
+        class: 'ssl_cert_from',
+        list: [{
+            html: '<div><i class="layui-layer-ico layui-layer-ico3"></i><h3>' + lan.config.ssl_open_ps + '</h3><ul><li style="color:red;">' + lan.config.ssl_open_ps_1 + '</li><li>' + lan.config.ssl_open_ps_2 + '</li><li>' + lan.config.ssl_open_ps_3 + '</li></ul></div>'
+          },
+          {
+            title: '类型',
+            name: 'cert_type',
+            type: 'select',
+            width: '200px',
+            value: sdata.cert_type,
+            items: [{
+              value: '1',
+              title: '自签证书'
+            }, {
+              value: '2',
+              title: 'Let\'s Encrypt'
+            }],
+            callback: function (obj) {
+              var subid = obj.attr('name') + '_subid';
+              $('#' + subid).remove();
+              if (obj.val() == '2') {
+                var _tr = bt.render_form_line({
+                  title: '管理员邮箱',
+                  name: 'email',
+                  width: '250px',
+                  placeholder: '管理员邮箱',
+                  value: sdata.email
+                });
+                obj.parents('div.line').append('<div class="line" id=' + subid + '>' + _tr.html + '</div>');
+              }
+            }
+          },
+          {
+            html: '<div class="details"><input type="checkbox" id="checkSSL" /><label style="font-weight: 400;margin: 3px 5px 0px;" for="checkSSL">' + lan.config.ssl_open_ps_4 + '</label><a target="_blank" class="btlink" href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=4689">' + lan.config.ssl_open_ps_5 + '</a></p></div>'
+          }
+
+        ],
+        btns: [{
+            title: '关闭',
+            name: 'close',
+            callback: function (rdata, load, callback) {
+              load.close();
+              $("#panelSSL").prop("checked", false);
+            }
+          },
+          {
+            title: '提交',
+            name: 'submit',
+            css: 'btn-success',
+            callback: function (rdata, load, callback) {
+              if (!$('#checkSSL').is(':checked')) {
+                bt.msg({
+                  status: false,
+                  msg: '请先确认风险！'
+                })
+                return;
+              }
+              var confirm = layer.confirm('是否开启面板SSL证书', {
+                title: '提示',
+                btn: ['确定', '取消'],
+                icon: 0,
+                closeBtn: 2
+              }, function () {
+                var loading = bt.load();
+                bt.send('SetPanelSSL', 'config/SetPanelSSL', rdata, function (rdata) {
+                  loading.close()
+                  if (rdata.status) {
+                    layer.msg(rdata.msg, {
+                      icon: 1
+                    });
+                    $.get('/system?action=ReWeb', function () {});
+                    setTimeout(function () {
+                      window.location.href = ((window.location.protocol.indexOf('https') != -1) ? 'http://' : 'https://') + window.location.host + window.location.pathname;
+                    }, 1500);
+                  } else {
+                    layer.msg(rdata.msg, {
+                      icon: 2
+                    });
+                  }
+                })
+              });
+            }
+
+          }
+        ],
+        end: function () {
+          $("#panelSSL").prop("checked", false);
+        }
+      };
+
+      var _bs = bt.render_form(_data);
+      setTimeout(function () {
+        $('.cert_type' + _bs).trigger('change')
+      }, 200);
+    });
+  }
+}
+
+function GetPanelSSL() {
+  var loadT = layer.msg('正在获取证书信息...', {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  $.post('/config?action=GetPanelSSL', {}, function (cert) {
+    layer.close(loadT);
+    var certBody = '<div class="tab-con">\
+			<div class="myKeyCon ptb15">\
 				<div class="ssl-con-key pull-left mr20">密钥(KEY)<br>\
-					<textarea id="key" class="bt-input-text">'+cert.privateKey+'</textarea>\
+					<textarea id="key" class="bt-input-text">' + cert.privateKey + '</textarea>\
 				</div>\
 				<div class="ssl-con-key pull-left">证书(PEM格式)<br>\
-					<textarea id="csr" class="bt-input-text">'+cert.certPem+'</textarea>\
+					<textarea id="csr" class="bt-input-text">' + cert.certPem + '</textarea>\
 				</div>\
 				<div class="ssl-btn pull-left mtb15" style="width:100%">\
 					<button class="btn btn-success btn-sm" onclick="SavePanelSSL()">保存</button>\
@@ -607,61 +1030,77 @@ function GetPanelSSL(){
 				<li>如果浏览器提示证书链不完整,请检查是否正确拼接PEM证书</li><li>PEM格式证书 = 域名证书.crt + 根证书(root_bundle).crt</li>\
 			</ul>\
 		</div>'
-		layer.open({
-			type: 1,
-			area: "600px",
-			title: '自定义面板证书',
-			closeBtn: 2,
-			shift: 5,
-			shadeClose: false,
-			content:certBody
-		});
-	});
+    layer.open({
+      type: 1,
+      area: "600px",
+      title: '自定义面板证书',
+      closeBtn: 2,
+      shift: 5,
+      shadeClose: false,
+      content: certBody
+    });
+  });
 }
 
-function SavePanelSSL(){
-	var data = {
-		privateKey:$("#key").val(),
-		certPem:$("#csr").val()
-	}
-	var loadT = layer.msg(lan.config.ssl_msg,{icon:16,time:0,shade: [0.3, '#000']});
-	$.post('/config?action=SavePanelSSL',data,function(rdata){
-		layer.close(loadT);
-		if(rdata.status){
-			layer.closeAll();
-		}
-		layer.msg(rdata.msg,{icon:rdata.status?1:2});
-	});
+function SavePanelSSL() {
+  var data = {
+    privateKey: $("#key").val(),
+    certPem: $("#csr").val()
+  }
+  var loadT = layer.msg(lan.config.ssl_msg, {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  $.post('/config?action=SavePanelSSL', data, function (rdata) {
+    layer.close(loadT);
+    if (rdata.status) {
+      layer.closeAll();
+    }
+    layer.msg(rdata.msg, {
+      icon: rdata.status ? 1 : 2
+    });
+  });
 }
 
 
 function SetDebug() {
-    var status_s = {false:'开启',true:'关闭'};
-    var debug_stat = $("#panelDebug").prop('checked');
-    if(debug_stat){
-    	bt.confirm({
-			title: status_s[debug_stat] + "开发者模式",
-			msg: "您确定要"+ status_s[debug_stat] + "开发者模式吗 ?",
-	    cancel: function () {
-			$("#panelDebug").prop('checked',debug_stat);
-    	}},function () {
-    		var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-			$.post('/config?action=set_debug', {}, function (rdata) {
-				layer.close(loadT);
-				if (rdata.status) layer.closeAll()
-				layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-			});
-    	},function () {
-			$("#panelDebug").prop('checked',debug_stat);
-    	});
-    	return;
-    }
-    bt.open({
-    	type:'1',
-    	title:status_s[debug_stat] + "开发者模式",
-    	area:'450px',
-    	btn:['确认','取消'],
-    	content:'<div style="padding:20px 30px;">\
+  var status_s = {
+    false: '开启',
+    true: '关闭'
+  };
+  var debug_stat = $("#panelDebug").prop('checked');
+  if (debug_stat) {
+    bt.confirm({
+      title: status_s[debug_stat] + "开发者模式",
+      msg: "您确定要" + status_s[debug_stat] + "开发者模式吗 ?",
+      cancel: function () {
+        $("#panelDebug").prop('checked', debug_stat);
+      }
+    }, function () {
+      var loadT = layer.msg(lan.public.the, {
+        icon: 16,
+        time: 0,
+        shade: [0.3, '#000']
+      });
+      $.post('/config?action=set_debug', {}, function (rdata) {
+        layer.close(loadT);
+        if (rdata.status) layer.closeAll()
+        layer.msg(rdata.msg, {
+          icon: rdata.status ? 1 : 2
+        });
+      });
+    }, function () {
+      $("#panelDebug").prop('checked', debug_stat);
+    });
+    return;
+  }
+  bt.open({
+    type: '1',
+    title: status_s[debug_stat] + "开发者模式",
+    area: '450px',
+    btn: ['确认', '取消'],
+    content: '<div style="padding:20px 30px;">\
     		<div style="padding-bottom: 10px;">\
 	    		<i class="layui-layer-ico layui-layer-ico3" style="width: 30px;height: 30px;display: inline-block;"></i>\
 	    		<h3 style="display:inline-block;vertical-align:super;margin-left:15px;">警告！此功能普通用户别开启!</h3>\
@@ -674,192 +1113,227 @@ function SetDebug() {
     			<input type="checkbox" id="checkDebug" style="width: 16px;height: 16px;">\
     			<label style="font-weight: 400;margin: 3px 5px 0px;" for="checkDebug">我已了经解详情,并愿意承担风险</label><p></p></div>\
     	</div>',
-    	yes:function(){
-    		if($('#checkDebug').prop('checked')){
-    			var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-				$.post('/config?action=set_debug', {}, function (rdata) {
-					layer.close(loadT);
-					if (rdata.status) layer.closeAll()
-					layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-				});
-    		}else{
-    			layer.tips('请勾选我已了解', '#checkDebug', {tips: [1,'#FF5722']});
-    		}
+    yes: function () {
+      if ($('#checkDebug').prop('checked')) {
+        var loadT = layer.msg(lan.public.the, {
+          icon: 16,
+          time: 0,
+          shade: [0.3, '#000']
+        });
+        $.post('/config?action=set_debug', {}, function (rdata) {
+          layer.close(loadT);
+          if (rdata.status) layer.closeAll()
+          layer.msg(rdata.msg, {
+            icon: rdata.status ? 1 : 2
+          });
+        });
+      } else {
+        layer.tips('请勾选我已了解', '#checkDebug', {
+          tips: [1, '#FF5722']
+        });
+      }
 
-    	},
-    	btn2:function(){
-    		$("#panelDebug").prop('checked',debug_stat);
-    	},
-    	cancel: function () {
-			$("#panelDebug").prop('checked',debug_stat);
-    	}
-    });
- //   bt.confirm({
-	// 	title: status_s[debug_stat] + "开发者模式",
-	// 	msg: "开启开发者模式后面板可能会占用大量内存开销，您真的要"+ status_s[debug_stat]+"开发者模式?",
-	// 	cancel: function () {
-	// 		$("#panelDebug").prop('checked',debug_stat);
- //   	}}, function () {
-	// 		var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-	// 		$.post('/config?action=set_debug', {}, function (rdata) {
-	// 			layer.close(loadT);
-	// 			if (rdata.status) layer.closeAll()
-	// 			layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-	// 		});
-	// 	},function () {
-	// 	$("#panelDebug").prop('checked',debug_stat);
-	// });
+    },
+    btn2: function () {
+      $("#panelDebug").prop('checked', debug_stat);
+    },
+    cancel: function () {
+      $("#panelDebug").prop('checked', debug_stat);
+    }
+  });
+  //   bt.confirm({
+  // 	title: status_s[debug_stat] + "开发者模式",
+  // 	msg: "开启开发者模式后面板可能会占用大量内存开销，您真的要"+ status_s[debug_stat]+"开发者模式?",
+  // 	cancel: function () {
+  // 		$("#panelDebug").prop('checked',debug_stat);
+  //   	}}, function () {
+  // 		var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
+  // 		$.post('/config?action=set_debug', {}, function (rdata) {
+  // 			layer.close(loadT);
+  // 			if (rdata.status) layer.closeAll()
+  // 			layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+  // 		});
+  // 	},function () {
+  // 	$("#panelDebug").prop('checked',debug_stat);
+  // });
 }
 
 function set_local() {
-    var status_s = { false: '开启', true: '关闭' }
-    var debug_stat = $("#panelLocal").prop('checked');
-    bt.confirm({
-		title: status_s[debug_stat] + "离线模式",
-		msg: "您真的要"+ status_s[debug_stat] + "离线模式 ?",
-	    cancel: function () {
-			$("#panelLocal").prop('checked',debug_stat);
-    	}}, function () {
-        	var loadT = layer.msg(lan.public.the, { icon: 16, time: 0, shade: [0.3, '#000'] });
-			$.post('/config?action=set_local', {}, function (rdata) {
-				layer.close(loadT);
-				if (rdata.status) layer.closeAll();
-				layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-			});
-        },function () {
-		$("#panelLocal").prop('checked',debug_stat);
+  var status_s = {
+    false: '开启',
+    true: '关闭'
+  }
+  var debug_stat = $("#panelLocal").prop('checked');
+  bt.confirm({
+    title: status_s[debug_stat] + "离线模式",
+    msg: "您真的要" + status_s[debug_stat] + "离线模式 ?",
+    cancel: function () {
+      $("#panelLocal").prop('checked', debug_stat);
+    }
+  }, function () {
+    var loadT = layer.msg(lan.public.the, {
+      icon: 16,
+      time: 0,
+      shade: [0.3, '#000']
     });
+    $.post('/config?action=set_local', {}, function (rdata) {
+      layer.close(loadT);
+      if (rdata.status) layer.closeAll();
+      layer.msg(rdata.msg, {
+        icon: rdata.status ? 1 : 2
+      });
+    });
+  }, function () {
+    $("#panelLocal").prop('checked', debug_stat);
+  });
 }
 
 
-if(window.location.protocol.indexOf('https') != -1){
-	$("#panelSSL").attr('checked',true);
+if (window.location.protocol.indexOf('https') != -1) {
+  $("#panelSSL").attr('checked', true);
 }
 
 var weChat = {
-		settiming:'',
-		relHeight:500,
-		relWidth:500,
-		userLength:'',
-		init:function(){
-			var _this = this;
-			$('.layui-layer-page').css('display', 'none');
-			$('.layui-layer-page').width(_this.relWidth);
-			$('.layui-layer-page').height(_this.relHeight);
-			$('.bt-w-menu').height((_this.relWidth - 1) - $('.layui-layer-title').height());
-			var width = $(document).width();
-			var height = $(document).height();
-			var boxwidth =  (width / 2) - (_this.relWidth / 2);
-			var boxheight =  (height / 2) - (_this.relHeight / 2);
-			$('.layui-layer-page').css({
-				'left':boxwidth +'px',
-				'top':boxheight+'px'
-			});
-			$('.boxConter,.layui-layer-page').css('display', 'block');
-			$('.layui-layer-close').click(function(event) {
-				window.clearInterval(_this.settiming);
-			});
-			this.getUserDetails();
-			$('.iconCode').hide();
-			$('.personalDetails').show();
-		},
-		// 获取二维码
-		getQRCode:function(){
-			var _this = this;
-			var qrLoading = layer.msg('正在获取二维码,请稍后...',{time:0,shade: [0.4,'#fff'],icon:16});
-			$.get('/wxapp?action=blind_qrcode', function(res) {
-				layer.close(qrLoading);
-				if (res.status){
-                	$('#QRcode').empty();
-					$('#QRcode').qrcode({
-					    render: "canvas", //也可以替换为table
-					    width: 200,
-					    height: 200,
-					    text:res.msg
-					});
-					// $('.QRcode img').attr('src', res.msg);
-					_this.settiming =  setInterval(function(){
-						_this.verifyBdinding();
-					},2000);
-				}else{
-					layer.msg('无法获取二维码，请稍后重试',{icon:2});
-				}
-			});
-		},
-		// 获取用户信息
-		getUserDetails:function(type){
-			var _this = this;
-			var conter = '';
-			$.get('/wxapp?action=get_user_info',function(res){
-				clearInterval(_this.settiming);
-				if (!res.status){
-					layer.msg(res.msg,{icon:2,time:3000});
-					$('.iconCode').hide();
-					return false;
-				}
-				if (JSON.stringify(res.msg) =='{}'){
-					if (type){
-						layer.msg('当前绑定列表为空,请先绑定然后重试',{icon:2});
-					}else{
-						_this.getQRCode();
-					}
-					$('.iconCode').show();
-					$('.personalDetails').hide();
-					return false;
-				}
-				$('.iconCode').hide();
-				$('.personalDetails').show();
-				var datas = res.msg;
-				for(var item in datas){
-					conter += '<li class="item">\
-								<div class="head_img"><img src="'+datas[item].avatarUrl+'" title="用户头像" /></div>\
-								<div class="nick_name"><span>昵称:</span><span class="nick"></span>'+datas[item].nickName+'</div>\
+  settiming: '',
+  relHeight: 500,
+  relWidth: 500,
+  userLength: '',
+  init: function () {
+    var _this = this;
+    $('.layui-layer-page').css('display', 'none');
+    $('.layui-layer-page').width(_this.relWidth);
+    $('.layui-layer-page').height(_this.relHeight);
+    $('.bt-w-menu').height((_this.relWidth - 1) - $('.layui-layer-title').height());
+    var width = $(document).width();
+    var height = $(document).height();
+    var boxwidth = (width / 2) - (_this.relWidth / 2);
+    var boxheight = (height / 2) - (_this.relHeight / 2);
+    $('.layui-layer-page').css({
+      'left': boxwidth + 'px',
+      'top': boxheight + 'px'
+    });
+    $('.boxConter,.layui-layer-page').css('display', 'block');
+    $('.layui-layer-close').click(function (event) {
+      window.clearInterval(_this.settiming);
+    });
+    this.getUserDetails();
+    $('.iconCode').hide();
+    $('.personalDetails').show();
+  },
+  // 获取二维码
+  getQRCode: function () {
+    var _this = this;
+    var qrLoading = layer.msg('正在获取二维码,请稍后...', {
+      time: 0,
+      shade: [0.4, '#fff'],
+      icon: 16
+    });
+    $.get('/wxapp?action=blind_qrcode', function (res) {
+      layer.close(qrLoading);
+      if (res.status) {
+        $('#QRcode').empty();
+        $('#QRcode').qrcode({
+          render: "canvas", //也可以替换为table
+          width: 200,
+          height: 200,
+          text: res.msg
+        });
+        // $('.QRcode img').attr('src', res.msg);
+        _this.settiming = setInterval(function () {
+          _this.verifyBdinding();
+        }, 2000);
+      } else {
+        layer.msg('无法获取二维码，请稍后重试', {
+          icon: 2
+        });
+      }
+    });
+  },
+  // 获取用户信息
+  getUserDetails: function (type) {
+    var _this = this;
+    var conter = '';
+    $.get('/wxapp?action=get_user_info', function (res) {
+      clearInterval(_this.settiming);
+      if (!res.status) {
+        layer.msg(res.msg, {
+          icon: 2,
+          time: 3000
+        });
+        $('.iconCode').hide();
+        return false;
+      }
+      if (JSON.stringify(res.msg) == '{}') {
+        if (type) {
+          layer.msg('当前绑定列表为空,请先绑定然后重试', {
+            icon: 2
+          });
+        } else {
+          _this.getQRCode();
+        }
+        $('.iconCode').show();
+        $('.personalDetails').hide();
+        return false;
+      }
+      $('.iconCode').hide();
+      $('.personalDetails').show();
+      var datas = res.msg;
+      for (var item in datas) {
+        conter += '<li class="item">\
+								<div class="head_img"><img src="' + datas[item].avatarUrl + '" title="用户头像" /></div>\
+								<div class="nick_name"><span>昵称:</span><span class="nick"></span>' + datas[item].nickName + '</div>\
 								<div class="cancelBind">\
-									<a href="javascript:;" class="btlink" title="取消当前微信小程序的绑定" onclick="weChat.cancelBdinding('+ item +')">取消绑定</a>\
+									<a href="javascript:;" class="btlink" title="取消当前微信小程序的绑定" onclick="weChat.cancelBdinding(' + item + ')">取消绑定</a>\
 								</div>\
 							</li>'
-				}
-				conter += '<li class="item addweChat" style="height:45px;"><a href="javascript:;" class="btlink" onclick="weChat.addweChatView()"><span class="glyphicon glyphicon-plus"></span>添加绑定账号</a></li>'
-				$('.userList').empty().append(conter);
-			});
-		},
-		// 添加绑定视图
-		addweChatView:function(){
-			$('.iconCode').show();
-			$('.personalDetails').hide();
-			this.getQRCode();
-		},
-		// 取消当前绑定
-		cancelBdinding:function(uid){
-			var _this = this;
-			var bdinding = layer.confirm('您确定要取消当前绑定吗？',{
-				btn:['确认','取消'],
-				icon:3,
-				title:'取消绑定'
-			},function(){
-				$.get('/wxapp?action=blind_del',{uid:uid}, function(res) {
-					layer.msg(res.msg,{icon:res.status?1:2});
-					_this.getUserDetails();
-				});
-			},function(){
-				layer.close(bdinding);
-			});
-		},
-		// 监听是否绑定
-		verifyBdinding:function(){
-			var _this = this;
-			$.get('/wxapp?action=blind_result',function(res){
-				if(res){
-					layer.msg('绑定成功',{icon:1});
-					clearInterval(_this.settiming);
-					_this.getUserDetails();
-				}
-			});
-		},
-	}
-	
-function open_wxapp(){
-	var rhtml = '<div class="boxConter" style="display: none">\
+      }
+      conter += '<li class="item addweChat" style="height:45px;"><a href="javascript:;" class="btlink" onclick="weChat.addweChatView()"><span class="glyphicon glyphicon-plus"></span>添加绑定账号</a></li>'
+      $('.userList').empty().append(conter);
+    });
+  },
+  // 添加绑定视图
+  addweChatView: function () {
+    $('.iconCode').show();
+    $('.personalDetails').hide();
+    this.getQRCode();
+  },
+  // 取消当前绑定
+  cancelBdinding: function (uid) {
+    var _this = this;
+    var bdinding = layer.confirm('您确定要取消当前绑定吗？', {
+      btn: ['确认', '取消'],
+      icon: 3,
+      title: '取消绑定'
+    }, function () {
+      $.get('/wxapp?action=blind_del', {
+        uid: uid
+      }, function (res) {
+        layer.msg(res.msg, {
+          icon: res.status ? 1 : 2
+        });
+        _this.getUserDetails();
+      });
+    }, function () {
+      layer.close(bdinding);
+    });
+  },
+  // 监听是否绑定
+  verifyBdinding: function () {
+    var _this = this;
+    $.get('/wxapp?action=blind_result', function (res) {
+      if (res) {
+        layer.msg('绑定成功', {
+          icon: 1
+        });
+        clearInterval(_this.settiming);
+        _this.getUserDetails();
+      }
+    });
+  },
+}
+
+function open_wxapp() {
+  var rhtml = '<div class="boxConter" style="display: none">\
 					<div class="iconCode" >\
 						<div class="box-conter">\
 							<div id="QRcode"></div>\
@@ -876,76 +1350,85 @@ function open_wxapp(){
 						<ul class="userList"></ul>\
 					</div>\
 				</div>'
-	
-	layer.open({
-		type: 1,
-		title: "绑定微信",
-		area: '500px',
-		closeBtn: 2,
-		shadeClose: false,
-		content:rhtml
-	});
-	
-	weChat.init();
+
+  layer.open({
+    type: 1,
+    title: "绑定微信",
+    area: '500px',
+    closeBtn: 2,
+    shadeClose: false,
+    content: rhtml
+  });
+
+  weChat.init();
 }
 
 $(function () {
 
-    $.get("/ssl?action=GetUserInfo", function (b) {
-        if (b.status) {
-            $("input[name='btusername']").val(b.data.username);
-            $("input[name='btusername']").next().text(lan.public.edit).attr("onclick", "bindBTName(2,'c')").css({ "margin-left": "-82px" });
-            $("input[name='btusername']").next().after('<span class="btn btn-xs btn-success" onclick="UnboundBt()" style="vertical-align: 0px;">' + lan.config.binding_un + '</span>');
-        }
-        else {
-            $("input[name='btusername']").next().text(lan.config.binding).attr("onclick", "bindBTName(2,'b')").removeAttr("style");
+  $.get("/ssl?action=GetUserInfo", function (b) {
+    if (b.status) {
+      $("input[name='btusername']").val(b.data.username);
+      $("input[name='btusername']").next().text(lan.public.edit).attr("onclick", "bindBTName(2,'c')").css({
+        "margin-left": "-82px"
+      });
+      $("input[name='btusername']").next().after('<span class="btn btn-xs btn-success" onclick="UnboundBt()" style="vertical-align: 0px;">' + lan.config.binding_un + '</span>');
+    } else {
+      $("input[name='btusername']").next().text(lan.config.binding).attr("onclick", "bindBTName(2,'b')").removeAttr("style");
 
-        }
-        bt_init();
-    });
+    }
+    bt_init();
+  });
+  
+  $.post("/config?action=get_ssl_verify", '', function (rdata) {
+    $('#panel_verify').prop('checked', rdata.status);
+  });
 })
 
 function bt_init() {
-    var btName = $("input[name='btusername']").val();
-    if (!btName) {
-        $('.wxapp_p .inputtxt').val("未绑定宝塔账号");
-        $('.wxapp_p .modify').attr("onclick", "");
-    }
+  var btName = $("input[name='btusername']").val();
+  if (!btName) {
+    $('.wxapp_p .inputtxt').val("未绑定宝塔账号");
+    $('.wxapp_p .modify').attr("onclick", "");
+  }
 }
 
 
 
 function GetPanelApi() {
-    var loadT = layer.msg('正在获取API接口信息...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-    $.post('/config?action=get_token', {}, function (rdata) {
-        layer.close(loadT);
-        isOpen = rdata.open ? 'checked' : '';
-        layer.open({
-            type: 1,
-            area: "500px",
-            title: "配置面板API",
-            closeBtn: 2,
-            shift: 5,
-            shadeClose: false,
-			content: ' <div class="bt-form bt-form" style="padding:15px 25px">\
+  var loadT = layer.msg('正在获取API接口信息...', {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  $.post('/config?action=get_token', {}, function (rdata) {
+    layer.close(loadT);
+    isOpen = rdata.open ? 'checked' : '';
+    layer.open({
+      type: 1,
+      area: "500px",
+      title: "配置面板API",
+      closeBtn: 2,
+      shift: 5,
+      shadeClose: false,
+      content: ' <div class="bt-form bt-form" style="padding:15px 25px">\
 						<div class="line">\
 							<span class="tname">API接口</span>\
 							<div class="info-r" style="height:28px;">\
-								<input class="btswitch btswitch-ios" id="panelApi_s" type="checkbox" '+ isOpen+'>\
+								<input class="btswitch btswitch-ios" id="panelApi_s" type="checkbox" ' + isOpen + '>\
 								<label style="position: relative;top: 5px;" class="btswitch-btn" for="panelApi_s" onclick="SetPanelApi(2,0)"></label>\
 							</div>\
 						</div>\
                         <div class="line">\
                             <span class="tname">接口密钥</span>\
                             <div class="info-r">\
-                                <input readonly="readonly" name="panel_token_value" class="bt-input-text mr5 disable" type="text" style="width: 310px" value="'+rdata.token+'" disable>\
+                                <input readonly="readonly" name="panel_token_value" class="bt-input-text mr5 disable" type="text" style="width: 310px" value="' + rdata.token + '" disable>\
 								<button class="btn btn-xs btn-success btn-sm" style="margin-left: -48px;" onclick="SetPanelApi(1)">重置</button>\
                             </div>\
                         </div>\
                         <div class="line ">\
                             <span class="tname" style="overflow: initial;height:20px;line-height:20px;">IP白名单</br>(每行1个)</span>\
                             <div class="info-r">\
-                                <textarea name="api_limit_addr" class="bt-input-text mr5" type="text" style="width: 310px;height:80px;line-height: 20px;padding: 5px 8px;margin-bottom:10px;">'+ rdata.limit_addr +'</textarea>\
+                                <textarea name="api_limit_addr" class="bt-input-text mr5" type="text" style="width: 310px;height:80px;line-height: 20px;padding: 5px 8px;margin-bottom:10px;">' + rdata.limit_addr + '</textarea>\
                                 <button class="btn btn-success btn-sm" onclick="SetPanelApi(3)">保存</button>\
                             </div>\
 						</div>\
@@ -955,130 +1438,173 @@ function GetPanelApi() {
                             <li>API接口文档在这里：<a class="btlink" href="https://www.bt.cn/bbs/thread-20376-1-1.html" target="_blank">https://www.bt.cn/bbs/thread-20376-1-1.html</a></li>\
                         </ul>\
 					</div>'
-		})
-    });
+    })
+  });
 }
 
-function showPawApi(){
-	layer.msg('面板API密钥仅支持一次性显示,请妥善保管。<br>如需显示面板API密钥,请点击重置按钮，重新获取新的API密钥。<br><span style="color:red;">注意事项：重置密钥后，已关联密钥产品，将失效，请重新添加新密钥至产品。</span>',{icon:0,time:0,shadeClose:true,shade:0.1});
+function showPawApi() {
+  layer.msg('面板API密钥仅支持一次性显示,请妥善保管。<br>如需显示面板API密钥,请点击重置按钮，重新获取新的API密钥。<br><span style="color:red;">注意事项：重置密钥后，已关联密钥产品，将失效，请重新添加新密钥至产品。</span>', {
+    icon: 0,
+    time: 0,
+    shadeClose: true,
+    shade: 0.1
+  });
 }
 
 
-function SetPanelApi(t_type,index) {
-    var pdata = {}
-    pdata['t_type'] = t_type
-    if (t_type == 3) {
-        pdata['limit_addr'] = $("textarea[name='api_limit_addr']").val()
-    }
-    if(t_type == 1){
-    	var bdinding = layer.confirm('您确定要重置当前密钥吗？<br><span style="color:red;">重置密钥后，已关联密钥产品，将失效，请重新添加新密钥至产品。</span>',{
-			btn:['确认','取消'],
-			icon:3,
-			closeBtn: 2,
-			title:'重置密钥'
-		},function(){
-		    var loadT = layer.msg('正在提交...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-		    set_token_req(pdata,function(rdata){
-	    		if (rdata.status) {
-	                $("input[name='panel_token_value']").val(rdata.msg);
-	                layer.msg('接口密钥已生成，重置密钥后，已关联密钥产品，将失效，请重新添加新密钥至产品。', { icon: 1, time: 0, shade: 0.3, shadeClose:true,closeBtn:2});
-	            }else{
-	            	layer.msg(rdata.msg, { icon: 2});
-	            }
-	            return false;
-		    });
-		});
-		return false
-    }
-    set_token_req(pdata,function(rdata){
-    	layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
-        if (rdata.msg == '开启成功!') {
-            if(t_type == 2 && index != '0') GetPanelApi();
+function SetPanelApi(t_type, index) {
+  var pdata = {}
+  pdata['t_type'] = t_type
+  if (t_type == 3) {
+    pdata['limit_addr'] = $("textarea[name='api_limit_addr']").val()
+  }
+  if (t_type == 1) {
+    var bdinding = layer.confirm('您确定要重置当前密钥吗？<br><span style="color:red;">重置密钥后，已关联密钥产品，将失效，请重新添加新密钥至产品。</span>', {
+      btn: ['确认', '取消'],
+      icon: 3,
+      closeBtn: 2,
+      title: '重置密钥'
+    }, function () {
+      var loadT = layer.msg('正在提交...', {
+        icon: 16,
+        time: 0,
+        shade: [0.3, '#000']
+      });
+      set_token_req(pdata, function (rdata) {
+        if (rdata.status) {
+          $("input[name='panel_token_value']").val(rdata.msg);
+          layer.msg('接口密钥已生成，重置密钥后，已关联密钥产品，将失效，请重新添加新密钥至产品。', {
+            icon: 1,
+            time: 0,
+            shade: 0.3,
+            shadeClose: true,
+            closeBtn: 2
+          });
+        } else {
+          layer.msg(rdata.msg, {
+            icon: 2
+          });
         }
+        return false;
+      });
     });
+    return false
+  }
+  set_token_req(pdata, function (rdata) {
+    layer.msg(rdata.msg, {
+      icon: rdata.status ? 1 : 2
+    });
+    if (rdata.msg == '开启成功!') {
+      if (t_type == 2 && index != '0') GetPanelApi();
+    }
+  });
 }
 
-function set_token_req(pdata,callback){
-	$.post('/config?action=set_token', pdata, function (rdata) {
-		if(callback) callback(rdata);
-	});
+function set_token_req(pdata, callback) {
+  $.post('/config?action=set_token', pdata, function (rdata) {
+    if (callback) callback(rdata);
+  });
 }
 
 
 
 function SetIPv6() {
-    var loadT = layer.msg('正在配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-    $.post('/config?action=set_ipv6_status', {}, function (rdata) {
-        layer.close(loadT);
-        bt.msg(rdata);
-    });
+  var loadT = layer.msg('正在配置,请稍候...', {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  $.post('/config?action=set_ipv6_status', {}, function (rdata) {
+    layer.close(loadT);
+    bt.msg(rdata);
+  });
 }
 
 
 function modify_basic_auth_to() {
-    var pdata = {
-        open: $("select[name='open']").val(),
-        basic_user: $("input[name='basic_user']").val(),
-        basic_pwd: $("input[name='basic_pwd']").val()
+  var pdata = {
+    open: $("select[name='open']").val(),
+    basic_user: $("input[name='basic_user']").val(),
+    basic_pwd: $("input[name='basic_pwd']").val()
+  }
+  var loadT = layer.msg('正在配置BasicAuth服务，请稍候...', {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  $.post('/config?action=set_basic_auth', pdata, function (rdata) {
+    layer.close(loadT);
+    if (rdata.status) {
+      layer.closeAll();
+      setTimeout(function () {
+        window.location.reload();
+      }, 3000);
     }
-    var loadT = layer.msg('正在配置BasicAuth服务，请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-    $.post('/config?action=set_basic_auth', pdata, function (rdata) {
-        layer.close(loadT);
-        if (rdata.status) {
-            layer.closeAll();
-            setTimeout(function () { window.location.reload(); }, 3000);
-        }
-        layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+    layer.msg(rdata.msg, {
+      icon: rdata.status ? 1 : 2
     });
+  });
 
 }
 
 function modify_basic_auth() {
-    var loadT = layer.msg('正在获取配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-    $.post('/config?action=get_basic_auth_stat', {}, function (rdata) {
-        layer.closeAll();
-        if (rdata.open) {
-            show_basic_auth(rdata);
-        } else {
-            m_html = '<div><i class="layui-layer-ico layui-layer-ico3"></i>'
-                + '<h3 style="margin-left: 40px;margin - bottom:10px;"> 危险！此功能不懂别开启!</h3>'
-                + '<ul style="border: 1px solid #ececec;border-radius: 10px; margin: 0px auto;margin-top: 20px;margin-bottom: 20px;background: #f7f7f7; width: 100 %;padding: 33px;list-style-type: inherit;">'
-                + '<li style="color:red;">必须要用到且了解此功能才决定自己是否要开启!</li>'
-                + '<li>开启后，以任何方式访问面板，将先要求输入BasicAuth用户名和密码</li>'
-                + '<li>开启后，能有效防止面板被扫描发现，但并不能代替面板本身的帐号密码</li>'
-                + '<li>请牢记BasicAuth密码，一但忘记将无法访问面板</li>'
-                + '<li>如忘记密码，可在SSH通过bt命令来关闭BasicAuth验证</li>'
-                + '</ul></div>'
-                + '<div class="details">'
-                + '<input type="checkbox" id="check_basic"><label style="font-weight: 400;margin: 3px 5px 0px;" for="check_basic">我已经了解详情,并愿意承担风险</label>'
-                + '<a target="_blank" class="btlink" href="https://www.bt.cn/bbs/thread-34374-1-1.html">什么是BasicAuth认证？</a><p></p></div>'
-            var loadT = layer.confirm(m_html, { title: "风险提醒", area: "600px" }, function () {
-                if (!$("#check_basic").prop("checked")) {
-                    layer.msg("请仔细阅读注意事项，并勾选同意承担风险!");
-                    setTimeout(function () { modify_basic_auth();},3000)
-                    return;
-                }
-                layer.close(loadT)
-                show_basic_auth(rdata);
-            });
-            
+  var loadT = layer.msg('正在获取配置,请稍候...', {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  $.post('/config?action=get_basic_auth_stat', {}, function (rdata) {
+    layer.closeAll();
+    if (rdata.open) {
+      show_basic_auth(rdata);
+    } else {
+      m_html = '<div><i class="layui-layer-ico layui-layer-ico3"></i>' +
+        '<h3 style="margin-left: 40px;margin - bottom:10px;"> 危险！此功能不懂别开启!</h3>' +
+        '<ul style="border: 1px solid #ececec;border-radius: 10px; margin: 0px auto;margin-top: 20px;margin-bottom: 20px;background: #f7f7f7; width: 100 %;padding: 33px;list-style-type: inherit;">' +
+        '<li style="color:red;">必须要用到且了解此功能才决定自己是否要开启!</li>' +
+        '<li>开启后，以任何方式访问面板，将先要求输入BasicAuth用户名和密码</li>' +
+        '<li>开启后，能有效防止面板被扫描发现，但并不能代替面板本身的帐号密码</li>' +
+        '<li>请牢记BasicAuth密码，一但忘记将无法访问面板</li>' +
+        '<li>如忘记密码，可在SSH通过bt命令来关闭BasicAuth验证</li>' +
+        '</ul></div>' +
+        '<div class="details">' +
+        '<input type="checkbox" id="check_basic"><label style="font-weight: 400;margin: 3px 5px 0px;" for="check_basic">我已经了解详情,并愿意承担风险</label>' +
+        '<a target="_blank" class="btlink" href="https://www.bt.cn/bbs/thread-34374-1-1.html">什么是BasicAuth认证？</a><p></p></div>'
+      var loadT = layer.confirm(m_html, {
+        title: "风险提醒",
+        area: "600px"
+      }, function () {
+        if (!$("#check_basic").prop("checked")) {
+          layer.msg("请仔细阅读注意事项，并勾选同意承担风险!");
+          setTimeout(function () {
+            modify_basic_auth();
+          }, 3000)
+          return;
         }
-    });
+        layer.close(loadT)
+        show_basic_auth(rdata);
+      });
+
+    }
+  });
 }
-function set_panel_report () {
-    var loadB = bt.load('正在打开告警设置!')
-    var res = three_channel_status;
-    if (!res.user_mail.user_name && !res.dingding.dingding) return layer.msg('请在消息通道中设置一个通道', { icon: 2 })
-    get_login_send(function (rdata) {
-        loadB.close()
-        layer.open({
-            type: 1,
-            area: ['1010px', '540px'],
-            title: "登录告警",
-            closeBtn: 2,
-            shift: 5,
-            shadeClose: false,
-            content: '<div class="bt-form">\
+
+function set_panel_report() {
+  var loadB = bt.load('正在打开告警设置!')
+  var res = three_channel_status;
+  if (!res.user_mail.user_name && !res.dingding.dingding) return layer.msg('请在消息通道中设置一个通道', {
+    icon: 2
+  })
+  get_login_send(function (rdata) {
+    loadB.close()
+    layer.open({
+      type: 1,
+      area: ['1010px', '540px'],
+      title: "登录告警",
+      closeBtn: 2,
+      shift: 5,
+      shadeClose: false,
+      content: '<div class="bt-form">\
 	        			<div class="bt-w-main" style="height:498px">\
 					        <div class="bt-w-menu">\
 					            <p class="bgw">服务状态</p>\
@@ -1091,12 +1617,12 @@ function set_panel_report () {
 	                						<div class="line">\
 	                						    <span class="set-tit" style="display:inline-block;vertical-align: top;margin: 3px;color:#666" title="通知邮箱">通知邮箱</span>\
                 							    <div class="mail"  name="server_input" style="display:inline-block;margin:0px 10px 0px 0px">\
-                                                    <input class="btswitch btswitch-ios" id="mail" type="checkbox" '+ (!rdata.status ? "" : (rdata.msg.mail ? "checked" : "")) + ' >\
+                                                    <input class="btswitch btswitch-ios" id="mail" type="checkbox" ' + (!rdata.status ? "" : (rdata.msg.mail ? "checked" : "")) + ' >\
                                                      <label class="btswitch-btn" for="mail"></label>\
                                                 </div>\
                                                 <span class="set-tit" style="display:inline-block;vertical-align: top;margin: 3px;color:#666" title="通知钉钉">通知钉钉</span>\
                                                 <div class="dingding" name="server_input" style="display:inline-block;margin:0px 10px 0px 0px">\
-                                                    <input class="btswitch btswitch-ios"  id="dingding" type="checkbox" '+ (!rdata.status ? "" : (rdata.msg.dingding ? "checked" : "")) + ' >\
+                                                    <input class="btswitch btswitch-ios"  id="dingding" type="checkbox" ' + (!rdata.status ? "" : (rdata.msg.dingding ? "checked" : "")) + ' >\
                                                     <label class="btswitch-btn" for="dingding"></label>\
                                                 </div>\
 	                						</div>\
@@ -1138,124 +1664,190 @@ function set_panel_report () {
 	                		</div>\
                 		</div>\
                 	  </div>',
-            success: function (index, layers) {
-                get_log_table();
-                $(".bt-w-menu p").click(function () {
-                    var index = $(this).index();
-                    $(this).addClass('bgw').siblings().removeClass('bgw');
-                    switch (index) {
-                        case 0:
-                            get_log_table();
-                            break;
-                        case 1:
-                            get_ip_write_table()
-                            break;
-                    }
-                    $('.conter_box').eq(index).show().siblings().hide();
-                });
-                //设置告警
-                $('[name="server_input"] input,[name="server_input"] label').on('click', function () {
-                    var _type = $(this).attr('id'), _checked = $(this).prop('checked'), that = $(this);
-                    if (_type == 'mail' && !res.user_mail.user_name) { that.prop('checked', false); return layer.msg('未设置邮件通道,请在消息通道中设置', { icon: 2 }) }
-                    if (_type == 'dingding' && !res.dingding.dingding) { that.prop('checked', false); return layer.msg('未设置钉钉通道,请在消息通道中设置', { icon: 2 }) }
-                    if (_checked) {
-                        set_login_send({ type: _type }, function (res) { layer.msg(res.msg, { icon: res.status ? 1 : 2 }); })
-                        //  if(that.siblings().prop('checked')) that.siblings().prop('checked',false)
-                    } else {
-                        clear_login_send({ type: _type }, function (res) { layer.msg(res.msg, { icon: res.status ? 1 : 2 }); })
-                    }
-                    get_login_send(function (res) {
-                        $('#mail').prop('checked', res.msg.mail)
-                        $('#dingding').prop('checked', res.msg.dingding)
-                    })
-                });
-                //添加
-                $('.add_ip_write').on('click', function () {
-                    var _ip = $('[name="ip_write"]').val();
-                    if (!bt.check_ip(_ip)) return layer.msg('请输入正确的ip', { icon: 2 })
-                    login_ipwhite({ ip: _ip, type: 'add' }, function (res) {
-                        layer.msg(res.msg, { icon: res.status ? 1 : 2 });
-                        if (res.status) get_ip_write_table()
-                        $('[name="ip_write"]').val("")
-                    })
-                })
-                //删除ip白名单
-                $('#ip_write_table').on('click', '.del_ip_write', function () {
-                    var _ip = $(this).parents('tr').data().data;
-                    layer.confirm('是否删除【' + _ip + '】', { title: '提示', btn: ['确定', '取消'], icon: 0, closeBtn: 2 }, function () {
-                        login_ipwhite({ ip: _ip, type: 'del' }, function (res) {
-                            layer.msg(res.msg, { icon: res.status ? 1 : 2 });
-                            if (res.status) get_ip_write_table()
-                        })
-                    })
-                });
-                //清空全部
-                $('.clear_all').on('click', function () {
-                    layer.confirm('是否清空所有白名单IP', { title: '提示', btn: ['确定', '取消'], icon: 0, closeBtn: 2 }, function () {
-                        login_ipwhite({ type: 'clear' }, function (res) {
-                            layer.msg(res.msg, { icon: res.status ? 1 : 2 });
-                            if (res.status) get_ip_write_table()
-                        })
-                    })
-
-                })
-                //分页操作
-                $('#server_table_page').on('click', 'a', function (e) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    var _p = $(this).attr('href').match(/p=([0-9]*)/)[1];
-                    get_log_table({ p: _p });
-                })
-            },
-            cancel: function () {
-                var mail = $('#mail').prop('checked'), dingding = $('#dingding').prop('checked');
-                $('#panel_report').val((!mail && !dingding) ? '邮箱未设置 | 钉钉未设置' : (mail ? '邮箱已设置' : (dingding ? '钉钉已设置' : '')))
-            }
-        })
-    })
-}
-function get_log_table(obj){
-    if(obj === undefined) obj = {p:1}
-    var loadT = bt.load('正在获取日志列表')
-    get_login_log(obj,function(res){
-        loadT.close()
-        $('#server_table').empty()
-        $.each(res.data,function(index,item){
-            $('#server_table').append($('<tr>\
-                <td title="'+item.log+'">'+ (item.log.length>105?(item.log.substring(0,105)+'...'):item.log)+'</td>\
-                </tr>').data({data:item,index:index}))
+      success: function (index, layers) {
+        get_log_table();
+        $(".bt-w-menu p").click(function () {
+          var index = $(this).index();
+          $(this).addClass('bgw').siblings().removeClass('bgw');
+          switch (index) {
+            case 0:
+              get_log_table();
+              break;
+            case 1:
+              get_ip_write_table()
+              break;
+          }
+          $('.conter_box').eq(index).show().siblings().hide();
         });
-        $('#server_table_page').html(res.page)
-    });
+        //设置告警
+        $('[name="server_input"] input,[name="server_input"] label').on('click', function () {
+          var _type = $(this).attr('id'),
+            _checked = $(this).prop('checked'),
+            that = $(this);
+          if (_type == 'mail' && !res.user_mail.user_name) {
+            that.prop('checked', false);
+            return layer.msg('未设置邮件通道,请在消息通道中设置', {
+              icon: 2
+            })
+          }
+          if (_type == 'dingding' && !res.dingding.dingding) {
+            that.prop('checked', false);
+            return layer.msg('未设置钉钉通道,请在消息通道中设置', {
+              icon: 2
+            })
+          }
+          if (_checked) {
+            set_login_send({
+              type: _type
+            }, function (res) {
+              layer.msg(res.msg, {
+                icon: res.status ? 1 : 2
+              });
+            })
+            //  if(that.siblings().prop('checked')) that.siblings().prop('checked',false)
+          } else {
+            clear_login_send({
+              type: _type
+            }, function (res) {
+              layer.msg(res.msg, {
+                icon: res.status ? 1 : 2
+              });
+            })
+          }
+          get_login_send(function (res) {
+            $('#mail').prop('checked', res.msg.mail)
+            $('#dingding').prop('checked', res.msg.dingding)
+          })
+        });
+        //添加
+        $('.add_ip_write').on('click', function () {
+          var _ip = $('[name="ip_write"]').val();
+          if (!bt.check_ip(_ip)) return layer.msg('请输入正确的ip', {
+            icon: 2
+          })
+          login_ipwhite({
+            ip: _ip,
+            type: 'add'
+          }, function (res) {
+            layer.msg(res.msg, {
+              icon: res.status ? 1 : 2
+            });
+            if (res.status) get_ip_write_table()
+            $('[name="ip_write"]').val("")
+          })
+        })
+        //删除ip白名单
+        $('#ip_write_table').on('click', '.del_ip_write', function () {
+          var _ip = $(this).parents('tr').data().data;
+          layer.confirm('是否删除【' + _ip + '】', {
+            title: '提示',
+            btn: ['确定', '取消'],
+            icon: 0,
+            closeBtn: 2
+          }, function () {
+            login_ipwhite({
+              ip: _ip,
+              type: 'del'
+            }, function (res) {
+              layer.msg(res.msg, {
+                icon: res.status ? 1 : 2
+              });
+              if (res.status) get_ip_write_table()
+            })
+          })
+        });
+        //清空全部
+        $('.clear_all').on('click', function () {
+          layer.confirm('是否清空所有白名单IP', {
+            title: '提示',
+            btn: ['确定', '取消'],
+            icon: 0,
+            closeBtn: 2
+          }, function () {
+            login_ipwhite({
+              type: 'clear'
+            }, function (res) {
+              layer.msg(res.msg, {
+                icon: res.status ? 1 : 2
+              });
+              if (res.status) get_ip_write_table()
+            })
+          })
+
+        })
+        //分页操作
+        $('#server_table_page').on('click', 'a', function (e) {
+          e.stopPropagation();
+          e.preventDefault();
+          var _p = $(this).attr('href').match(/p=([0-9]*)/)[1];
+          get_log_table({
+            p: _p
+          });
+        })
+      },
+      cancel: function () {
+        var mail = $('#mail').prop('checked'),
+          dingding = $('#dingding').prop('checked');
+        $('#panel_report').val((!mail && !dingding) ? '邮箱未设置 | 钉钉未设置' : (mail ? '邮箱已设置' : (dingding ? '钉钉已设置' : '')))
+      }
+    })
+  })
 }
-function get_ip_write_table(){
-    $('#ip_write_table').empty()
-    var loadY = bt.load('正在获取ip列表')
-    login_ipwhite({type:'get'},function(res){
-        loadY.close()
-        $.each(res.msg,function(index,item){
-            $('#ip_write_table').append($('<tr>\
-                <td>'+ item +'</td>\
+
+function get_log_table(obj) {
+  if (obj === undefined) obj = {
+    p: 1
+  }
+  var loadT = bt.load('正在获取日志列表')
+  get_login_log(obj, function (res) {
+    loadT.close()
+    $('#server_table').empty()
+    $.each(res.data, function (index, item) {
+      $('#server_table').append($('<tr>\
+                <td title="' + item.log + '">' + (item.log.length > 105 ? (item.log.substring(0, 105) + '...') : item.log) + '</td>\
+                </tr>').data({
+        data: item,
+        index: index
+      }))
+    });
+    $('#server_table_page').html(res.page)
+  });
+}
+
+function get_ip_write_table() {
+  $('#ip_write_table').empty()
+  var loadY = bt.load('正在获取ip列表')
+  login_ipwhite({
+    type: 'get'
+  }, function (res) {
+    loadY.close()
+    $.each(res.msg, function (index, item) {
+      $('#ip_write_table').append($('<tr>\
+                <td>' + item + '</td>\
                 <td style="text-align:right">\
                     <a href="javascript:;" class="btlink del_ip_write" >删除</a>\
                 </td>\
-                </tr>').data({data:item,index:index}))
-        });
-    })
+                </tr>').data({
+        data: item,
+        index: index
+      }))
+    });
+  })
 }
-function open_three_channel_auth(){
-	get_channel_settings(function(rdata){
-		var isOpen = rdata.dingding.info.msg.isAtAll == 'True' ? 'checked': '';
-		var isDing = rdata.dingding.info.msg == '无信息'? '': rdata.dingding.info.msg.dingding_url;
-		layer.open({
-			type: 1,
-	        area: "600px",
-	        title: "设置消息通道",
-	        skin:"layer-channel-auth",
-	        closeBtn: 2,
-	        shift: 5,
-	        shadeClose: false,
-	        content: '<div class="bt-form">\
+
+function open_three_channel_auth() {
+  get_channel_settings(function (rdata) {
+    var isOpen = rdata.dingding.info.msg.isAtAll == 'True' ? 'checked' : '';
+    var isDing = rdata.dingding.info.msg == '无信息' ? '' : rdata.dingding.info.msg.dingding_url;
+    layer.open({
+      type: 1,
+      area: "600px",
+      title: "设置消息通道",
+      skin: "layer-channel-auth",
+      closeBtn: 2,
+      shift: 5,
+      shadeClose: false,
+      content: '<div class="bt-form">\
 				<div class="bt-w-main">\
 					<div class="bt-w-menu">\
 						<p class="bgw">邮箱</p>\
@@ -1282,17 +1874,17 @@ function open_three_channel_auth(){
 									<div class="line">\
 										<span class="tname">通知全体</span>\
 										<div class="info-r" style="height:28px; margin-left:100px">\
-											<input class="btswitch btswitch-ios" id="panel_alert_all" type="checkbox" '+ isOpen+'>\
+											<input class="btswitch btswitch-ios" id="panel_alert_all" type="checkbox" ' + isOpen + '>\
 											<label style="position: relative;top: 5px;" class="btswitch-btn" for="panel_alert_all"></label>\
 										</div>\
 									</div>\
 									<div class="line">\
 										<span class="tname">钉钉URL</span>\
 										<div class="info-r">\
-											<textarea name="channel_dingding_value" class="bt-input-text mr5" type="text" style="width: 300px; height:90px; line-height:20px">'+isDing+'</textarea>\
+											<textarea name="channel_dingding_value" class="bt-input-text mr5" type="text" style="width: 300px; height:90px; line-height:20px">' + isDing + '</textarea>\
 										</div>\
 										<button class="btn btn-success btn-sm" onclick="SetChannelDing()" style="margin: 10px 0 0 100px;">保存</button>\
-										'+(isDing != ''?'<button class="btn btn-default btn-sm delding">清除设置</button>':'')+'\
+										' + (isDing != '' ? '<button class="btn btn-default btn-sm delding">清除设置</button>' : '') + '\
 									</div>\
 								</div>\
 								<ul class="help-info-text c7" style="margin-top: 170px;">\
@@ -1304,68 +1896,81 @@ function open_three_channel_auth(){
 					</div>\
 				</div>\
 				</div>',
-			success:function(){
-				$('.layer-channel-auth .bt-w-main').css('height','450px');
-				$('.delding').click(function(){
-					var loadTs = layer.msg('正在清除设置中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-					$.post('/config?action=set_empty',{type:'dingding'},function(rdata){
-						layer.close(loadTs);
-						layer.msg(rdata.msg,{icon:rdata.status?1:2})
-						if(rdata.status){
-							$('textarea[name=channel_dingding_value]').val('');
-							$('.delding').hide()
-						}
-					})
-				})
-			}
-		})
-		$(".bt-w-menu p").click(function () {
-            var index = $(this).index();
-            $(this).addClass('bgw').siblings().removeClass('bgw');
-            $('.conter_box').eq(index).show().siblings().hide();
-        });
-		get_receive_list();
-	})
+      success: function () {
+        $('.layer-channel-auth .bt-w-main').css('height', '450px');
+        $('.delding').click(function () {
+          var loadTs = layer.msg('正在清除设置中,请稍候...', {
+            icon: 16,
+            time: 0,
+            shade: [0.3, '#000']
+          });
+          $.post('/config?action=set_empty', {
+            type: 'dingding'
+          }, function (rdata) {
+            layer.close(loadTs);
+            layer.msg(rdata.msg, {
+              icon: rdata.status ? 1 : 2
+            })
+            if (rdata.status) {
+              $('textarea[name=channel_dingding_value]').val('');
+              $('.delding').hide()
+            }
+          })
+        })
+      }
+    })
+    $(".bt-w-menu p").click(function () {
+      var index = $(this).index();
+      $(this).addClass('bgw').siblings().removeClass('bgw');
+      $('.conter_box').eq(index).show().siblings().hide();
+    });
+    get_receive_list();
+  })
 }
-function sender_info_edit(){
-	var loadT = layer.msg('正在获取配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-	$.post('/config?action=get_settings',function(rdata){
-		layer.close(loadT);
-		var qq_mail = rdata.user_mail.info.msg.qq_mail == undefined ? '' : rdata.user_mail.info.msg.qq_mail,
-			qq_stmp_pwd = rdata.user_mail.info.msg.qq_stmp_pwd == undefined? '' : rdata.user_mail.info.msg.qq_stmp_pwd,
-			hosts = rdata.user_mail.info.msg.hosts == undefined? '' : rdata.user_mail.info.msg.hosts,
-			port = rdata.user_mail.info.msg.port == undefined? '' : rdata.user_mail.info.msg.port
-		layer.open({
-		type: 1,
-        area: "460px",
-        title: "设置发送者邮箱信息",
-        closeBtn: 2,
-        shift: 5,
-        shadeClose: false,
-        content: '<div class="bt-form pd20 pb70">\
+
+function sender_info_edit() {
+  var loadT = layer.msg('正在获取配置,请稍候...', {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  $.post('/config?action=get_settings', function (rdata) {
+    layer.close(loadT);
+    var qq_mail = rdata.user_mail.info.msg.qq_mail == undefined ? '' : rdata.user_mail.info.msg.qq_mail,
+      qq_stmp_pwd = rdata.user_mail.info.msg.qq_stmp_pwd == undefined ? '' : rdata.user_mail.info.msg.qq_stmp_pwd,
+      hosts = rdata.user_mail.info.msg.hosts == undefined ? '' : rdata.user_mail.info.msg.hosts,
+      port = rdata.user_mail.info.msg.port == undefined ? '' : rdata.user_mail.info.msg.port
+    layer.open({
+      type: 1,
+      area: "460px",
+      title: "设置发送者邮箱信息",
+      closeBtn: 2,
+      shift: 5,
+      shadeClose: false,
+      content: '<div class="bt-form pd20 pb70">\
         	<div class="line">\
                 <span class="tname">发送人邮箱</span>\
                 <div class="info-r">\
-                    <input name="channel_email_value" class="bt-input-text mr5" type="text" style="width: 300px" value="'+qq_mail+'">\
+                    <input name="channel_email_value" class="bt-input-text mr5" type="text" style="width: 300px" value="' + qq_mail + '">\
                 </div>\
             </div>\
             <div class="line">\
                 <span class="tname">smtp密码</span>\
                 <div class="info-r">\
-                    <input name="channel_email_password" class="bt-input-text mr5" type="password" style="width: 300px" value="'+qq_stmp_pwd+'">\
+                    <input name="channel_email_password" class="bt-input-text mr5" type="password" style="width: 300px" value="' + qq_stmp_pwd + '">\
                 </div>\
             </div>\
             <div class="line">\
                 <span class="tname">smtp服务器</span>\
                 <div class="info-r">\
-                    <input name="channel_email_server" class="bt-input-text mr5" type="text" style="width: 300px" value="'+hosts+'">\
+                    <input name="channel_email_server" class="bt-input-text mr5" type="text" style="width: 300px" value="' + hosts + '">\
                 </div>\
             </div>\
             <div class="line">\
                 <span class="tname">端口</span>\
                 <div class="info-r">\
-                    <select class="bt-input-text mr5" id="port_select" style="width:'+(select_port(port)?'300px':'100px')+'"></select>\
-                    <input name="channel_email_port" class="bt-input-text mr5" type="Number" style="display:'+(select_port(port)? 'none':'inline-block')+'; width: 190px" value="'+port+'">\
+                    <select class="bt-input-text mr5" id="port_select" style="width:' + (select_port(port) ? '300px' : '100px') + '"></select>\
+                    <input name="channel_email_port" class="bt-input-text mr5" type="Number" style="display:' + (select_port(port) ? 'none' : 'inline-block') + '; width: 190px" value="' + port + '">\
                 </div>\
             </div>\
             <ul class="help-info-text c7">\
@@ -1373,108 +1978,143 @@ function sender_info_edit(){
             	<li>25端口为SMTP协议，587端口为STARTTLS协议</li>\
             </ul>\
             <div class="bt-form-submit-btn">\
-				'+(qq_mail != ''?'<button type="button" class="btn btn-default btn-sm pull-left set_empty">清除设置</button>':'')+'\
+				' + (qq_mail != '' ? '<button type="button" class="btn btn-default btn-sm pull-left set_empty">清除设置</button>' : '') + '\
 	            <button type="button" class="btn btn-danger btn-sm smtp_closeBtn">关闭</button>\
 	            <button class="btn btn-success btn-sm SetChannelEmail">保存</button></div>\
         	</div>',
-        success:function(layers,index){
-        	var _option = '';
-        	if(select_port(port)){
-        		if(port == '465' || port == ''){
-        			_option = '<option value="465" selected="selected">465</option><option value="25">25</option><option value="587">587</option><option value="other">自定义</option>'
-        		}else if(port == '25'){
-        			_option = '<option value="465">465</option><option value="25" selected="selected">25</option><option value="587">587</option><option value="other">自定义</option>'
-        		}else{
-        			_option = '<option value="465">465</option><option value="25">25</option><option value="587" selected="selected">587</option><option value="other">自定义</option>'
-        		}
-        	}else{
-        		_option = '<option value="465">465</option><option value="25">25</option><option value="587" >587</option><option value="other" selected="selected">自定义</option>'
-        	}
-        	$("#port_select").html(_option)
-        	$("#port_select").change(function(e){
-        		if(e.target.value == 'other'){
-        			$("#port_select").css("width","100px");
-					$('input[name=channel_email_port]').css("display","inline-block");
-        		}else{
-        			$("#port_select").css("width","300px");
-					$('input[name=channel_email_port]').css("display","none");
-        		}
-        	})
-			$(".SetChannelEmail").click(function(){
-				var _email = $('input[name=channel_email_value]').val();
-				var _passW = $('input[name=channel_email_password]').val();
-				var _server = $('input[name=channel_email_server]').val(),_port
-				if($('#port_select').val() == 'other'){
-					_port = $('input[name=channel_email_port]').val();
-				}else{
-					_port = $('#port_select').val()
-				}
-				if(_email == ''){
-					return layer.msg('邮箱地址不能为空！',{icon:2});
-				}else if(_passW == ''){
-					return layer.msg('STMP密码不能为空！',{icon:2});
-				}else if(_server == ''){
-					return layer.msg('STMP服务器地址不能为空！',{icon:2})
-				}else if(_port == ''){
-					return layer.msg('请输入有效的端口号',{icon:2})
-				}
-				var loadT = layer.msg('正在生成邮箱通道中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-				$.post('/config?action=user_mail_send',{email:_email,stmp_pwd:_passW,hosts:_server,port:_port},function(rdata){
-					layer.close(loadT);
-					layer.msg(rdata.msg,{icon:rdata.status?1:2})
-					if(rdata.status){
-						layer.close(index)
-						get_channel_settings();
-					}
-				})
-			})
-			$(".smtp_closeBtn").click(function(){
-				layer.close(index)
-			})
-			$('.set_empty').click(function(){
-				var loadTs = layer.msg('正在清除设置中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-				$.post('/config?action=set_empty',{type:'mail'},function(rdata){
-					layer.close(loadTs);
-					layer.msg(rdata.msg,{icon:rdata.status?1:2})
-					if(rdata.status){
-						layer.close(index)
-					}
-				})
-			})
-		}
-	})
-	})
+      success: function (layers, index) {
+        var _option = '';
+        if (select_port(port)) {
+          if (port == '465' || port == '') {
+            _option = '<option value="465" selected="selected">465</option><option value="25">25</option><option value="587">587</option><option value="other">自定义</option>'
+          } else if (port == '25') {
+            _option = '<option value="465">465</option><option value="25" selected="selected">25</option><option value="587">587</option><option value="other">自定义</option>'
+          } else {
+            _option = '<option value="465">465</option><option value="25">25</option><option value="587" selected="selected">587</option><option value="other">自定义</option>'
+          }
+        } else {
+          _option = '<option value="465">465</option><option value="25">25</option><option value="587" >587</option><option value="other" selected="selected">自定义</option>'
+        }
+        $("#port_select").html(_option)
+        $("#port_select").change(function (e) {
+          if (e.target.value == 'other') {
+            $("#port_select").css("width", "100px");
+            $('input[name=channel_email_port]').css("display", "inline-block");
+          } else {
+            $("#port_select").css("width", "300px");
+            $('input[name=channel_email_port]').css("display", "none");
+          }
+        })
+        $(".SetChannelEmail").click(function () {
+          var _email = $('input[name=channel_email_value]').val();
+          var _passW = $('input[name=channel_email_password]').val();
+          var _server = $('input[name=channel_email_server]').val(),
+            _port
+          if ($('#port_select').val() == 'other') {
+            _port = $('input[name=channel_email_port]').val();
+          } else {
+            _port = $('#port_select').val()
+          }
+          if (_email == '') {
+            return layer.msg('邮箱地址不能为空！', {
+              icon: 2
+            });
+          } else if (_passW == '') {
+            return layer.msg('STMP密码不能为空！', {
+              icon: 2
+            });
+          } else if (_server == '') {
+            return layer.msg('STMP服务器地址不能为空！', {
+              icon: 2
+            })
+          } else if (_port == '') {
+            return layer.msg('请输入有效的端口号', {
+              icon: 2
+            })
+          }
+          var loadT = layer.msg('正在生成邮箱通道中,请稍候...', {
+            icon: 16,
+            time: 0,
+            shade: [0.3, '#000']
+          });
+          $.post('/config?action=user_mail_send', {
+            email: _email,
+            stmp_pwd: _passW,
+            hosts: _server,
+            port: _port
+          }, function (rdata) {
+            layer.close(loadT);
+            layer.msg(rdata.msg, {
+              icon: rdata.status ? 1 : 2
+            })
+            if (rdata.status) {
+              layer.close(index)
+              get_channel_settings();
+            }
+          })
+        })
+        $(".smtp_closeBtn").click(function () {
+          layer.close(index)
+        })
+        $('.set_empty').click(function () {
+          var loadTs = layer.msg('正在清除设置中,请稍候...', {
+            icon: 16,
+            time: 0,
+            shade: [0.3, '#000']
+          });
+          $.post('/config?action=set_empty', {
+            type: 'mail'
+          }, function (rdata) {
+            layer.close(loadTs);
+            layer.msg(rdata.msg, {
+              icon: rdata.status ? 1 : 2
+            })
+            if (rdata.status) {
+              layer.close(index)
+            }
+          })
+        })
+      }
+    })
+  })
 }
-function select_port(port){
-	switch(port){
-		case '25':
-			return true;
-		case '465':
-			return true;
-		case '587':
-			return true;
-		case '':
-			return true;
-		default:
-			return false
-	}
+
+function select_port(port) {
+  switch (port) {
+    case '25':
+      return true;
+    case '465':
+      return true;
+    case '587':
+      return true;
+    case '':
+      return true;
+    default:
+      return false
+  }
 }
-function get_channel_settings(callback){
-	var loadT = layer.msg('正在获取配置,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-	$.post('/config?action=get_settings',function(rdata){
-		layer.close(loadT);
-        if (callback) callback(rdata);
-	})
+
+function get_channel_settings(callback) {
+  var loadT = layer.msg('正在获取配置,请稍候...', {
+    icon: 16,
+    time: 0,
+    shade: [0.3, '#000']
+  });
+  $.post('/config?action=get_settings', function (rdata) {
+    layer.close(loadT);
+    if (callback) callback(rdata);
+  })
 }
-function add_receive_info(){
-	layer.open({
-		type: 1,
-        area: "400px",
-        title: "添加收件者邮箱",
-        closeBtn: 2,
-        shift: 5,
-        shadeClose: false,
-        content: '<div class="bt-form pd20 pb70">\
+
+function add_receive_info() {
+  layer.open({
+    type: 1,
+    area: "400px",
+    title: "添加收件者邮箱",
+    closeBtn: 2,
+    shift: 5,
+    shadeClose: false,
+    content: '<div class="bt-form pd20 pb70">\
 	        <div class="line">\
 	            <span class="tname">收件者邮箱</span>\
 	            <div class="info-r">\
@@ -1486,98 +2126,131 @@ function add_receive_info(){
 	            <button class="btn btn-success btn-sm CreaterReceive">添加</button>\
 	        </div>\
 	        </div>',
-        success:function(layers,index){
-        	$(".CreaterReceive").click(function(){
-        		var _receive = $('input[name=creater_email_value]').val(),_that = this;
-				if(_receive != ''){
-					var loadT = layer.msg('正在创建收件者列表中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-					layer.close(index)
-					$.post('/config?action=add_mail_address',{email:_receive},function(rdata){
-						layer.close(loadT);
-						// 刷新收件列表
-						get_receive_list();
-						layer.msg(rdata.msg,{icon:rdata.status?1:2});
-					})
-				}else{
-					layer.msg('收件者邮箱不能为空！',{icon:2});
-				}
-        	})
-        	
-			$(".smtp_closeBtn").click(function(){
-				layer.close(index)
-			})
-		}
-	})
-}
-function get_receive_list(){
-	$.post('/config?action=get_settings',function(rdata){
-		var _html = '',_list = rdata.user_mail.mail_list;
-		if(_list.length > 0){
-			for(var i= 0; i<_list.length;i++){
-				_html += '<tr>\
-					<td>'+ _list[i] +'</td>\
-					<td width="80px" style="text-align:right;"><a onclick="del_email(\''+ _list[i] + '\')" href="javascript:;" style="color:#20a53a">删除</a></td>\
-					</tr>'
-			}
-		}else{
-			_html = '<tr><td colspan="2">暂无数据</td></tr>'
-		}
-		$('#receive_table').html(_html);
-	})
-	
+    success: function (layers, index) {
+      $(".CreaterReceive").click(function () {
+        var _receive = $('input[name=creater_email_value]').val(),
+          _that = this;
+        if (_receive != '') {
+          var loadT = layer.msg('正在创建收件者列表中,请稍候...', {
+            icon: 16,
+            time: 0,
+            shade: [0.3, '#000']
+          });
+          layer.close(index)
+          $.post('/config?action=add_mail_address', {
+            email: _receive
+          }, function (rdata) {
+            layer.close(loadT);
+            // 刷新收件列表
+            get_receive_list();
+            layer.msg(rdata.msg, {
+              icon: rdata.status ? 1 : 2
+            });
+          })
+        } else {
+          layer.msg('收件者邮箱不能为空！', {
+            icon: 2
+          });
+        }
+      })
+
+      $(".smtp_closeBtn").click(function () {
+        layer.close(index)
+      })
+    }
+  })
 }
 
-function del_email(mail){
-	var loadT = layer.msg('正在删除【'+mail+'】中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] }),_this = this;
-	$.post('/config?action=del_mail_list',{email:mail},function(rdata){
-		layer.close(loadT);
-		layer.msg(rdata.msg,{icon:rdata.status?1:2})
-		_this.get_receive_list()
-	})
+function get_receive_list() {
+  $.post('/config?action=get_settings', function (rdata) {
+    var _html = '',
+      _list = rdata.user_mail.mail_list;
+    if (_list.length > 0) {
+      for (var i = 0; i < _list.length; i++) {
+        _html += '<tr>\
+					<td>' + _list[i] + '</td>\
+					<td width="80px" style="text-align:right;"><a onclick="del_email(\'' + _list[i] + '\')" href="javascript:;" style="color:#20a53a">删除</a></td>\
+					</tr>'
+      }
+    } else {
+      _html = '<tr><td colspan="2">暂无数据</td></tr>'
+    }
+    $('#receive_table').html(_html);
+  })
+
+}
+
+function del_email(mail) {
+  var loadT = layer.msg('正在删除【' + mail + '】中,请稍候...', {
+      icon: 16,
+      time: 0,
+      shade: [0.3, '#000']
+    }),
+    _this = this;
+  $.post('/config?action=del_mail_list', {
+    email: mail
+  }, function (rdata) {
+    layer.close(loadT);
+    layer.msg(rdata.msg, {
+      icon: rdata.status ? 1 : 2
+    })
+    _this.get_receive_list()
+  })
 }
 // 设置钉钉
-function SetChannelDing(){
-	var _url = $('textarea[name=channel_dingding_value]').val();
-	var _all = $('#panel_alert_all').prop("checked");
-	if(_url != ''){
-		var loadT = layer.msg('正在生成钉钉通道中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-		$.post('/config?action=set_dingding',{url:_url,atall:_all == true? 1:0},function(rdata){
-			layer.close(loadT);
-			layer.msg(rdata.msg,{icon:rdata.status?1:2})
-		})
-	}else{
-		layer.msg('请输入钉钉url',{icon:2})
-	}
+function SetChannelDing() {
+  var _url = $('textarea[name=channel_dingding_value]').val();
+  var _all = $('#panel_alert_all').prop("checked");
+  if (_url != '') {
+    var loadT = layer.msg('正在生成钉钉通道中,请稍候...', {
+      icon: 16,
+      time: 0,
+      shade: [0.3, '#000']
+    });
+    $.post('/config?action=set_dingding', {
+      url: _url,
+      atall: _all == true ? 1 : 0
+    }, function (rdata) {
+      layer.close(loadT);
+      layer.msg(rdata.msg, {
+        icon: rdata.status ? 1 : 2
+      })
+    })
+  } else {
+    layer.msg('请输入钉钉url', {
+      icon: 2
+    })
+  }
 }
 
 function show_basic_auth(rdata) {
-    layer.open({
-        type: 1,
-        area: "500px",
-        title: "配置BasicAuth认证",
-        closeBtn: 2,
-        shift: 5,
-        shadeClose: false,
-        content: ' <div class="bt-form bt-form" style="padding:15px 25px">\
+  layer.open({
+    type: 1,
+    area: "500px",
+    title: "配置BasicAuth认证",
+    closeBtn: 2,
+    shift: 5,
+    shadeClose: false,
+    content: ' <div class="bt-form bt-form" style="padding:15px 25px">\
 						<div class="line">\
 							<span class="tname">服务状态</span>\
 							<div class="info-r" style="height:28px;">\
 								<select class="bt-input-text" name="open">\
-                                    <option value="True" '+ (rdata.open ? 'selected' : '') + '>开启</option>\
-                                    <option value="False" '+ (rdata.open ? '' : 'selected') + '>关闭</option>\
+                                    <option value="True" ' + (rdata.open ? 'selected' : '') + '>开启</option>\
+                                    <option value="False" ' + (rdata.open ? '' : 'selected') + '>关闭</option>\
                                 </select>\
 							</div>\
 						</div>\
                         <div class="line">\
                             <span class="tname">用户名</span>\
                             <div class="info-r">\
-                                <input name="basic_user" class="bt-input-text mr5" type="text" style="width: 310px" value="" placeholder="'+ (rdata.basic_user ? '不修改请留空' : '请设置用户名') + '">\
+                                <input name="basic_user" class="bt-input-text mr5" type="text" style="width: 310px" value="" placeholder="' + (rdata.basic_user ? '不修改请留空' : '请设置用户名') + '">\
                             </div>\
                         </div>\
                         <div class="line">\
                             <span class="tname">密码</span>\
                             <div class="info-r">\
-                                <input name="basic_pwd" class="bt-input-text mr5" type="text" style="width: 310px" value="" placeholder="'+ (rdata.basic_pwd ? '不修改请留空' : '请设置密码') + '">\
+                                <input name="basic_pwd" class="bt-input-text mr5" type="text" style="width: 310px" value="" placeholder="' + (rdata.basic_pwd ? '不修改请留空' : '请设置密码') + '">\
                             </div>\
                         </div>\
                         <span><button class="btn btn-success btn-sm" style="    margin-left: 340px;" onclick="modify_basic_auth_to()">保存配置</button></span>\
@@ -1587,62 +2260,67 @@ function show_basic_auth(rdata) {
                             <li>开启后，能有效防止面板被扫描发现，但并不能代替面板本身的帐号密码</li>\
                         </ul>\
                     </div>'
-    })
+  })
 }
 
-function get_panel_hide_list(){
-	var loadT = bt.load('正在获取面板菜单栏目，请稍后..'),arry = [];
-	$.post('/config?action=get_menu_list',function(rdata){
-		loadT.close();
-		$.each(rdata,function(index,item){
-			if(!item.show) arry.push(item.title)
-		});
-		$('#panel_menu_hide').val(arry.length > 0?arry.join('、'):'无隐藏栏目');
-	});
+function get_panel_hide_list() {
+  var loadT = bt.load('正在获取面板菜单栏目，请稍后..'),
+    arry = [];
+  $.post('/config?action=get_menu_list', function (rdata) {
+    loadT.close();
+    $.each(rdata, function (index, item) {
+      if (!item.show) arry.push(item.title)
+    });
+    $('#panel_menu_hide').val(arry.length > 0 ? arry.join('、') : '无隐藏栏目');
+  });
 
 }
 
 get_panel_hide_list();
 
 // 设置面板菜单显示功能
-function set_panel_ground(){
-	var loadT = bt.load('正在获取面板菜单栏目，请稍后..');
-	$.post('/config?action=get_menu_list',function(rdata){
-		var html = '',arry = ["dologin","memuAconfig","memuAsoft","memuA"],is_option = '';
-		loadT.close();
-		$.each(rdata,function(index,item){
-			is_option = '<div class="index-item" style="float:right;"><input class="btswitch btswitch-ios" id="'+ item.id +'0000" name="'+ item.id +'" type="checkbox" '+ (item.show?'checked':'') +'><label class="btswitch-btn" for="'+ item.id +'0000"></label></div>'
-			
-			if(item.id == 'dologin' || item.id == 'memuAconfig' || item.id == 'memuAsoft' || item.id == 'memuA') is_option = '不可操作';
-			html += '<tr><td>'+ item.title +'</td><td><div style="float:right;">'+ is_option +'</div></td></tr>';
-		});
-		layer.open({
-			type:1,
-			title:'设置面板菜单栏目管理',
-			area:['350px','530px'],
-			shadeClose:false,
-			closeBtn:2,
-			content:'<div class="divtable softlist" id="panel_menu_tab" style="padding: 20px 15px;"><table class="table table-hover"><thead><tr><th>菜单栏目</th><th style="text-align:right;width:120px;">是否显示</th></tr></thead><tbody>'+ html +'</tbody></table></div>',
-			success:function(){
-				$('#panel_menu_tab input').click(function(){
-					var arry = [];
-					$(this).parents('tr').siblings().each(function(index,el){
-						if($(this).find('input').length >0 && !$(this).find('input').prop('checked')){
-							arry.push($(this).find('input').attr('name'));
-						}
-					});
-					if(!$(this).prop('checked')){
-						arry.push($(this).attr('name'));
-					}
-					var loadT = bt.load('正在设置面板菜单栏目显示状态，请稍后..');
-					$.post('/config?action=set_hide_menu_list',{hide_list:JSON.stringify(arry)},function(rdata){
-						loadT.close();
-						if(!rdata.status) bt.msg(rdata);
-					});
-				});
-			}
-		});
-	});
+function set_panel_ground() {
+  var loadT = bt.load('正在获取面板菜单栏目，请稍后..');
+  $.post('/config?action=get_menu_list', function (rdata) {
+    var html = '',
+      arry = ["dologin", "memuAconfig", "memuAsoft", "memuA"],
+      is_option = '';
+    loadT.close();
+    $.each(rdata, function (index, item) {
+      is_option = '<div class="index-item" style="float:right;"><input class="btswitch btswitch-ios" id="' + item.id + '0000" name="' + item.id + '" type="checkbox" ' + (item.show ? 'checked' : '') + '><label class="btswitch-btn" for="' + item.id + '0000"></label></div>'
+
+      if (item.id == 'dologin' || item.id == 'memuAconfig' || item.id == 'memuAsoft' || item.id == 'memuA') is_option = '不可操作';
+      html += '<tr><td>' + item.title + '</td><td><div style="float:right;">' + is_option + '</div></td></tr>';
+    });
+    layer.open({
+      type: 1,
+      title: '设置面板菜单栏目管理',
+      area: ['350px', '530px'],
+      shadeClose: false,
+      closeBtn: 2,
+      content: '<div class="divtable softlist" id="panel_menu_tab" style="padding: 20px 15px;"><table class="table table-hover"><thead><tr><th>菜单栏目</th><th style="text-align:right;width:120px;">是否显示</th></tr></thead><tbody>' + html + '</tbody></table></div>',
+      success: function () {
+        $('#panel_menu_tab input').click(function () {
+          var arry = [];
+          $(this).parents('tr').siblings().each(function (index, el) {
+            if ($(this).find('input').length > 0 && !$(this).find('input').prop('checked')) {
+              arry.push($(this).find('input').attr('name'));
+            }
+          });
+          if (!$(this).prop('checked')) {
+            arry.push($(this).attr('name'));
+          }
+          var loadT = bt.load('正在设置面板菜单栏目显示状态，请稍后..');
+          $.post('/config?action=set_hide_menu_list', {
+            hide_list: JSON.stringify(arry)
+          }, function (rdata) {
+            loadT.close();
+            if (!rdata.status) bt.msg(rdata);
+          });
+        });
+      }
+    });
+  });
 }
 
 
@@ -1651,17 +2329,17 @@ function set_panel_ground(){
  * @param {Function} callback 回调函数列表
  * @returns void
  */
-function get_temp_login(data,callback){
-	var loadT = bt.load('获取临时授权列表，请稍后...');
-	bt.send('get_temp_login','config/get_temp_login',data,function(res){
-		if(res.status === false){
-			layer.closeAll();
-			bt.msg(res);
-			return false;
-		}
-		loadT.close();
-		if(callback) callback(res)
-	});
+function get_temp_login(data, callback) {
+  var loadT = bt.load('获取临时授权列表，请稍后...');
+  bt.send('get_temp_login', 'config/get_temp_login', data, function (res) {
+    if (res.status === false) {
+      layer.closeAll();
+      bt.msg(res);
+      return false;
+    }
+    loadT.close();
+    if (callback) callback(res)
+  });
 }
 
 /**
@@ -1669,12 +2347,12 @@ function get_temp_login(data,callback){
  * @param {Function} callback 回调函数列表
  * @returns void
  */
-function set_temp_login(callback){
-	var loadT = bt.load('正在设置临时链接，请稍后...');
-	bt.send('set_temp_login','config/set_temp_login',{},function(res){
-		loadT.close();
-		if(callback) callback(res)
-	});
+function set_temp_login(callback) {
+  var loadT = bt.load('正在设置临时链接，请稍后...');
+  bt.send('set_temp_login', 'config/set_temp_login', {}, function (res) {
+    loadT.close();
+    if (callback) callback(res)
+  });
 }
 
 /**
@@ -1682,26 +2360,30 @@ function set_temp_login(callback){
  * @param {Object} data 传入参数，id
  * @param {Function} callback 回调函数列表
  * @returns void
-*/
-function remove_temp_login(data,callback){
-	var loadT = bt.load('正在删除临时授权记录，请稍后...');
-	bt.send('remove_temp_login','config/remove_temp_login',{id:data.id},function(res){
-		loadT.close();
-		if(callback) callback(res)
-	});
+ */
+function remove_temp_login(data, callback) {
+  var loadT = bt.load('正在删除临时授权记录，请稍后...');
+  bt.send('remove_temp_login', 'config/remove_temp_login', {
+    id: data.id
+  }, function (res) {
+    loadT.close();
+    if (callback) callback(res)
+  });
 }
 /**
  * @description 强制用户登出
  * @param {Object} data 传入参数，id
  * @param {Function} callback 回调函数列表
  * @returns void
-*/
-function clear_temp_login(data,callback){
-	var loadT = bt.load('正在强制用户登出，请稍后...');
-	bt.send('clear_temp_login','config/clear_temp_login',{id:data.id},function(res){
-		loadT.close();
-		if(callback) callback(res)
-	});
+ */
+function clear_temp_login(data, callback) {
+  var loadT = bt.load('正在强制用户登出，请稍后...');
+  bt.send('clear_temp_login', 'config/clear_temp_login', {
+    id: data.id
+  }, function (res) {
+    loadT.close();
+    if (callback) callback(res)
+  });
 }
 
 /**
@@ -1709,38 +2391,40 @@ function clear_temp_login(data,callback){
  * @param {Object} data 传入参数，id
  * @param {Function} callback 回调函数列表
  * @returns void
-*/
-function reader_temp_list(data,callback){
-	if(typeof data == 'function') callback = data,data = {p:1};
-	get_temp_login(data,function(rdata){
-		var html = '';
-		$.each(rdata.data,function(index,item){
-			html += '<tr><td>'+ (item.login_addr || '未登录') +'</td><td>'+ (function(){
-				switch(item.state){
-					case 0:
-						return '<a style="color:green;">待使用</a>';
-					break;
-					case 1:
-						return '<a style="color:brown;">已使用</a>';
-					break;
-					case -1:
-						return '<a>已过期</a>';
-					break;
-				}
-			}()) +'</td><td >'+ (item.login_time == 0?'未登录':bt.format_data(item.login_time)) +'</td><td>'+ bt.format_data(item.expire) +'</td><td style="text-align:right;">'+ (function(){
-				if(item.state != 1){
-					return '<a href="javascript:;" class="btlink remove_temp_login" data-ip="'+ item.login_addr +'" data-id="'+ item.id +'">删除</a>';
-				}
-				if(item.online_state){
-					return '<a href="javascript:;" class="btlink clear_temp_login" style="color:red" data-ip="'+ item.login_addr +'" data-id="'+ item.id +'">强制登出</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink logs_temp_login" data-ip="'+ item.login_addr +'" data-id="'+ item.id +'">操作日志</a>';
-				}
-				return '<a href="javascript:;" class="btlink logs_temp_login" data-ip="'+ item.login_addr +'" data-id="'+ item.id +'">操作日志</a>';
-			}()) +'</td></tr>';
-		});
-		$('#temp_login_view_tbody').html(html);
-		$('.temp_login_view_page').html(rdata.page);
-		if(callback) callback()
-	});
+ */
+function reader_temp_list(data, callback) {
+  if (typeof data == 'function') callback = data, data = {
+    p: 1
+  };
+  get_temp_login(data, function (rdata) {
+    var html = '';
+    $.each(rdata.data, function (index, item) {
+      html += '<tr><td>' + (item.login_addr || '未登录') + '</td><td>' + (function () {
+        switch (item.state) {
+          case 0:
+            return '<a style="color:green;">待使用</a>';
+            break;
+          case 1:
+            return '<a style="color:brown;">已使用</a>';
+            break;
+          case -1:
+            return '<a>已过期</a>';
+            break;
+        }
+      }()) + '</td><td >' + (item.login_time == 0 ? '未登录' : bt.format_data(item.login_time)) + '</td><td>' + bt.format_data(item.expire) + '</td><td style="text-align:right;">' + (function () {
+        if (item.state != 1) {
+          return '<a href="javascript:;" class="btlink remove_temp_login" data-ip="' + item.login_addr + '" data-id="' + item.id + '">删除</a>';
+        }
+        if (item.online_state) {
+          return '<a href="javascript:;" class="btlink clear_temp_login" style="color:red" data-ip="' + item.login_addr + '" data-id="' + item.id + '">强制登出</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink logs_temp_login" data-ip="' + item.login_addr + '" data-id="' + item.id + '">操作日志</a>';
+        }
+        return '<a href="javascript:;" class="btlink logs_temp_login" data-ip="' + item.login_addr + '" data-id="' + item.id + '">操作日志</a>';
+      }()) + '</td></tr>';
+    });
+    $('#temp_login_view_tbody').html(html);
+    $('.temp_login_view_page').html(rdata.page);
+    if (callback) callback()
+  });
 }
 
 
@@ -1751,13 +2435,15 @@ function reader_temp_list(data,callback){
  * @param {Object} data 传入参数，id
  * @param {Function} callback 回调函数列表
  * @returns void
-*/
-function get_temp_login_logs(data,callback){
-	var loadT = bt.load('正在获取操作日志，请稍后...');
-	bt.send('clear_temp_login','config/get_temp_login_logs',{id:data.id},function(res){
-		loadT.close();
-		if(callback) callback(res)
-	});
+ */
+function get_temp_login_logs(data, callback) {
+  var loadT = bt.load('正在获取操作日志，请稍后...');
+  bt.send('clear_temp_login', 'config/get_temp_login_logs', {
+    id: data.id
+  }, function (res) {
+    loadT.close();
+    if (callback) callback(res)
+  });
 }
 
 /**
@@ -1765,15 +2451,18 @@ function get_temp_login_logs(data,callback){
  * @param {Object} data 传入参数，id
  * @param {Function} callback 回调函数列表
  * @returns void
-*/
-function reader_temp_login_logs(data,callback){
-	get_temp_login_logs(data,function(res){
-		var html = '';
-		$.each(res,function(index,item){
-			html += '<tr><td>'+ item.type +'</td><td>'+ item.addtime +'</td><td><span title="'+ item.log +'" style="white-space: pre;">'+ item.log +'</span></td></tr>';
-		});
-		if(callback) callback({tbody:html,data:res});
-	})
+ */
+function reader_temp_login_logs(data, callback) {
+  get_temp_login_logs(data, function (res) {
+    var html = '';
+    $.each(res, function (index, item) {
+      html += '<tr><td>' + item.type + '</td><td>' + item.addtime + '</td><td><span title="' + item.log + '" style="white-space: pre;">' + item.log + '</span></td></tr>';
+    });
+    if (callback) callback({
+      tbody: html,
+      data: res
+    });
+  })
 }
 
 
@@ -1783,142 +2472,159 @@ function reader_temp_login_logs(data,callback){
  * @description 设置临时链接
  * @param {Function} callback 回调函数列表
  * @returns void
-*/
-function get_temp_login_view(){
-	layer.open({
-		type: 1,
-        area:["700px",'600px'],
-        title: "临时授权管理",
-        closeBtn: 2,
-        shift: 5,
-		shadeClose: false,
-		content:'<div class="login_view_table pd15">'+
-			'<button class="btn btn-success btn-sm va0 create_temp_login" >创建临时授权</button>'+
-			'<div class="divtable mt10">'+
-				'<table class="table table-hover">'+
-					'<thead><tr><th>登录IP</th><th>状态</th><th>登录时间</th><th>过期时间</th><th style="text-align:right;">操作</th></tr></thead>'+
-					'<tbody id="temp_login_view_tbody"></tbody>'+
-				'</table>'+
-				'<div class="temp_login_view_page page"></div>'+
-			'</div>'+
-		'</div>',
-		success:function(){
-			reader_temp_list();
-			// 创建临时授权
-			$('.create_temp_login').click(function(){
-				bt.confirm({title:'风险提示',msg:'<span style="color:red">注意1：滥用临时授权可能导致安全风险。</br>注意2：请勿在公共场合发布临时授权连接</span></br>即将创建临时授权连接，继续吗？'},function(){
-					layer.open({
-						type: 1,
-						area:'570px',
-						title: "创建临时授权",
-						closeBtn: 2,
-						shift: 5,
-						shadeClose: false,
-						content:'<div class="bt-form create_temp_view">'+
-							'<div class="line"><span class="tname">临时授权地址</span><div class="info-r ml0"><textarea id="temp_link" class="bt-input-text mr20" style="margin: 0px;width: 500px;height: 50px;line-height: 19px;"></textarea></div></div>'+
-							'<div class="line"><button type="submit" class="btn btn-success btn-sm btn-copy-temp-link" data-clipboard-text="">复制地址</button></div>'+
-							'<ul class="help-info-text c7"><li>临时授权生成后1小时内使用有效，为一次性授权，使用后立即失效</li><li>使用临时授权登录面板后1小时内拥有面板所有权限，请勿在公共场合发布临时授权连接</li><li>授权连接信息仅在此处显示一次，若在使用前忘记，请重新生成</li></ul>'+
-						'</div>',
-						success:function(){
-							set_temp_login(function(res){
-								if(res.status){
-									var temp_link = location.origin+ '/login?tmp_token=' + res.token;
-									$('#temp_link').val(temp_link);
-									$('.btn-copy-temp-link').attr('data-clipboard-text',temp_link);
-								}
-							});
-							var clipboard = new ClipboardJS('.btn');
-							clipboard.on('success', function(e) {
-								bt.msg({status:true,msg:'复制成功！'});
-								e.clearSelection();
-							});
-							clipboard.on('error', function(e) {
-								bt.msg({status:false,msg:'复制失败，请手动复制地址'});
-							});
-						},
-						end:function(){
-							reader_temp_list();
-						}
-					});
-				});
-			});
-			// 操作日志
-			$('#temp_login_view_tbody').on('click','.logs_temp_login',function(){
-				var id = $(this).data('id'),ip = $(this).data('ip');
-				layer.open({
-					type: 1,
-					area:['700px','550px'],
-					title:'查看操作日志['+ ip +']',
-					closeBtn: 2,
-					shift: 5,
-					shadeClose: false,
-					content:'<div class="pd15">'+
-						'<button class="btn btn-default btn-sm va0 refresh_login_logs">刷新日志</button>'+
-						'<div class="divtable mt10 tablescroll" style="max-height: 420px;overflow-y: auto;border:none">'+
-							'<table class="table table-hover" id="logs_login_view_table">'+
-								'<thead><tr><th width="90px">操作类型</th><th width="140px">操作时间</th><th>日志</th></tr></thead>'+
-								'<tbody ></tbody>'+
-							'</table>'+
-						'</div>'+
-					'</div>',
-					success:function(){
-						reader_temp_login_logs({id:id},function(data){
-							$('#logs_login_view_table tbody').html(data.tbody);
-						});
-						$('.refresh_login_logs').click(function(){
-							reader_temp_login_logs({id:id},function(data){
-								$('#logs_login_view_table tbody').html(data.tbody);
-							});
-						});
-						bt.fixed_table('logs_login_view_table');
-					}
-				});
-			});
+ */
+function get_temp_login_view() {
+  layer.open({
+    type: 1,
+    area: ["700px", '600px'],
+    title: "临时授权管理",
+    closeBtn: 2,
+    shift: 5,
+    shadeClose: false,
+    content: '<div class="login_view_table pd15">' +
+      '<button class="btn btn-success btn-sm va0 create_temp_login" >创建临时授权</button>' +
+      '<div class="divtable mt10">' +
+      '<table class="table table-hover">' +
+      '<thead><tr><th>登录IP</th><th>状态</th><th>登录时间</th><th>过期时间</th><th style="text-align:right;">操作</th></tr></thead>' +
+      '<tbody id="temp_login_view_tbody"></tbody>' +
+      '</table>' +
+      '<div class="temp_login_view_page page"></div>' +
+      '</div>' +
+      '</div>',
+    success: function () {
+      reader_temp_list();
+      // 创建临时授权
+      $('.create_temp_login').click(function () {
+        bt.confirm({
+          title: '风险提示',
+          msg: '<span style="color:red">注意1：滥用临时授权可能导致安全风险。</br>注意2：请勿在公共场合发布临时授权连接</span></br>即将创建临时授权连接，继续吗？'
+        }, function () {
+          layer.open({
+            type: 1,
+            area: '570px',
+            title: "创建临时授权",
+            closeBtn: 2,
+            shift: 5,
+            shadeClose: false,
+            content: '<div class="bt-form create_temp_view">' +
+              '<div class="line"><span class="tname">临时授权地址</span><div class="info-r ml0"><textarea id="temp_link" class="bt-input-text mr20" style="margin: 0px;width: 500px;height: 50px;line-height: 19px;"></textarea></div></div>' +
+              '<div class="line"><button type="submit" class="btn btn-success btn-sm btn-copy-temp-link" data-clipboard-text="">复制地址</button></div>' +
+              '<ul class="help-info-text c7"><li>临时授权生成后1小时内使用有效，为一次性授权，使用后立即失效</li><li>使用临时授权登录面板后1小时内拥有面板所有权限，请勿在公共场合发布临时授权连接</li><li>授权连接信息仅在此处显示一次，若在使用前忘记，请重新生成</li></ul>' +
+              '</div>',
+            success: function () {
+              set_temp_login(function (res) {
+                if (res.status) {
+                  var temp_link = location.origin + '/login?tmp_token=' + res.token;
+                  $('#temp_link').val(temp_link);
+                  $('.btn-copy-temp-link').attr('data-clipboard-text', temp_link);
+                }
+              });
+              var clipboard = new ClipboardJS('.btn');
+              clipboard.on('success', function (e) {
+                bt.msg({
+                  status: true,
+                  msg: '复制成功！'
+                });
+                e.clearSelection();
+              });
+              clipboard.on('error', function (e) {
+                bt.msg({
+                  status: false,
+                  msg: '复制失败，请手动复制地址'
+                });
+              });
+            },
+            end: function () {
+              reader_temp_list();
+            }
+          });
+        });
+      });
+      // 操作日志
+      $('#temp_login_view_tbody').on('click', '.logs_temp_login', function () {
+        var id = $(this).data('id'),
+          ip = $(this).data('ip');
+        layer.open({
+          type: 1,
+          area: ['700px', '550px'],
+          title: '查看操作日志[' + ip + ']',
+          closeBtn: 2,
+          shift: 5,
+          shadeClose: false,
+          content: '<div class="pd15">' +
+            '<button class="btn btn-default btn-sm va0 refresh_login_logs">刷新日志</button>' +
+            '<div class="divtable mt10 tablescroll" style="max-height: 420px;overflow-y: auto;border:none">' +
+            '<table class="table table-hover" id="logs_login_view_table">' +
+            '<thead><tr><th width="90px">操作类型</th><th width="140px">操作时间</th><th>日志</th></tr></thead>' +
+            '<tbody ></tbody>' +
+            '</table>' +
+            '</div>' +
+            '</div>',
+          success: function () {
+            reader_temp_login_logs({
+              id: id
+            }, function (data) {
+              $('#logs_login_view_table tbody').html(data.tbody);
+            });
+            $('.refresh_login_logs').click(function () {
+              reader_temp_login_logs({
+                id: id
+              }, function (data) {
+                $('#logs_login_view_table tbody').html(data.tbody);
+              });
+            });
+            bt.fixed_table('logs_login_view_table');
+          }
+        });
+      });
 
-			
 
-			//删除授权记录，仅未使用的授权记录
-			$('#temp_login_view_tbody').on('click','.remove_temp_login',function(){
-				var id = $(this).data('id');
-				bt.confirm({
-					title:'删除未使用授权',
-					msg:'是否删除未使用授权记录，是否继续？'
-				},function(){
-					remove_temp_login({id:id},function(res){
-						reader_temp_list(function(){
-							bt.msg(res);
-						})
-					})
-				})
-			});
-			//强制下线，强制登录的用户下线
-			$('#temp_login_view_tbody').on('click','.clear_temp_login',function(){
-				var id = $(this).data('id'),ip= $(this).data('ip');
-				bt.confirm({
-					title:'强制登出[ '+ ip +' ]',
-					msg:'是否强制登出[ '+ ip +' ]，是否继续？'
-				},function(){
-					clear_temp_login({id:id},function(res){
-						reader_temp_list(function(){
-							bt.msg(res);
-						});
-					});
-				})
-			});
-			// 分页操作
-			$('.temp_login_view_page').on('click','a',function(ev){
-				var href = $(this).attr('href'),reg = /([0-9]*)$/,page = reg.exec(href)[0];
-				reader_temp_list({p:page});
-				ev.stopPropagation();
-				ev.preventDefault();
-			});
-		}
-	});
+
+      //删除授权记录，仅未使用的授权记录
+      $('#temp_login_view_tbody').on('click', '.remove_temp_login', function () {
+        var id = $(this).data('id');
+        bt.confirm({
+          title: '删除未使用授权',
+          msg: '是否删除未使用授权记录，是否继续？'
+        }, function () {
+          remove_temp_login({
+            id: id
+          }, function (res) {
+            reader_temp_list(function () {
+              bt.msg(res);
+            })
+          })
+        })
+      });
+      //强制下线，强制登录的用户下线
+      $('#temp_login_view_tbody').on('click', '.clear_temp_login', function () {
+        var id = $(this).data('id'),
+          ip = $(this).data('ip');
+        bt.confirm({
+          title: '强制登出[ ' + ip + ' ]',
+          msg: '是否强制登出[ ' + ip + ' ]，是否继续？'
+        }, function () {
+          clear_temp_login({
+            id: id
+          }, function (res) {
+            reader_temp_list(function () {
+              bt.msg(res);
+            });
+          });
+        })
+      });
+      // 分页操作
+      $('.temp_login_view_page').on('click', 'a', function (ev) {
+        var href = $(this).attr('href'),
+          reg = /([0-9]*)$/,
+          page = reg.exec(href)[0];
+        reader_temp_list({
+          p: page
+        });
+        ev.stopPropagation();
+        ev.preventDefault();
+      });
+    }
+  });
 
 }
-
-
-
-
-
-

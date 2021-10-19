@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/www/server/panel/pyenv/bin/python
 #coding: utf-8
 # +-------------------------------------------------------------------
 # | 宝塔Linux面板 
@@ -128,7 +128,17 @@ if __name__ == '__main__':
         ssl_context.load_cert_chain(certfile=certfile,keyfile=keyfile)
         ssl_context.options = (ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1)
         ssl_context.set_ciphers("ECDHE-RSA-AES128-GCM-SHA256:HIGH:!aNULL:!MD5:!RC4:!DHE")
-
+        is_ssl_verify = os.path.exists('/www/server/panel/data/ssl_verify_data.pl')
+        if is_ssl_verify:
+            crlfile = '/www/server/panel/ssl/crl.pem'
+            rootcafile = '/www/server/panel/ssl/ca.pem'
+            #注销列表
+            # ssl_context.load_verify_locations(crlfile)
+            # ssl_context.verify_flags |= ssl.VERIFY_CRL_CHECK_CHAIN
+            #加载证书
+            ssl_context.load_verify_locations(rootcafile)
+            ssl_context.verify_mode = ssl.CERT_REQUIRED
+            ssl_context.set_default_verify_paths()
 
     from  gevent.pywsgi import WSGIServer
     from geventwebsocket.handler import WebSocketHandler
@@ -147,4 +157,5 @@ if __name__ == '__main__':
             pass
 
     http_server.serve_forever()
+            
 

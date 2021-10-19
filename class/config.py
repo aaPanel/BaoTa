@@ -1980,18 +1980,16 @@ class config:
         """
         设置双向认证
         """
-        sslConf = 'data/ssl_verify.pl'
+        sslConf = 'data/ssl_verify_data.pl'
         status = int(get.status)
         if status:
             if not os.path.exists('data/ssl.pl'): return public.returnMsg(False,'需要先开启面板SSL功能!')                
             public.writeFile(sslConf,'True')
         else:
             if os.path.exists(sslConf): os.remove(sslConf)
-
-        if 'crl' in get and 'ca' in get:            
+        if 'crl' in get and 'ca' in get:
             crl = 'ssl/crl.pem'
             ca = 'ssl/ca.pem'
-        
             if get.crl:
                 public.writeFile(crl,get.crl.strip())
             if get.ca:
@@ -2002,17 +2000,18 @@ class config:
             if not status:msg = '关闭'
             return public.returnMsg(True,'面板双向认证{}成功!'.format(msg))
 
-    def get_ssl_verify(self,get):
+    def get_ssl_verify(self, get):
         """
         获取双向认证
         """
-        result = {'status':False,'ca':'','crl':''}
-        sslConf = 'data/ssl_verify.pl'
+        result = {'status': False, 'ca': '', 'crl': ''}
+        sslConf = 'data/ssl_verify_data.pl'
         if os.path.exists(sslConf): result['status'] = True
-        
+
         ca = 'ssl/ca.pem'
         crl = 'ssl/crl.pem'
-        if os.path.exists(crl): 
+        if os.path.exists(crl):
             result['crl'] = public.readFile(crl)
-        if os.path.exists(crl): 
-            result['ca']
+        if os.path.exists(crl):
+            result['ca'] = public.readFile(ca)
+        return result
