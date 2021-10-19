@@ -41,7 +41,7 @@ iniparse==0.5
 ipaddress==1.0.23
 IPy==1.0
 itsdangerous==1.1.0
-Jinja2==2.11.1
+Jinja2==2.11.3
 jmespath==0.9.4
 kitchen==1.2.6
 MarkupSafe==1.1.1
