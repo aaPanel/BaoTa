@@ -12,7 +12,7 @@ configobj==5.0.6
 configparser==4.0.2
 cos-python-sdk-v5==1.7.7
 crcmod==1.7
-cryptography==2.8
+cryptography==3.3.2
 Cython==0.29.15
 decorator==4.4.1
 dicttoxml==1.7.4
@@ -35,13 +35,13 @@ google-cloud-storage==1.26.0
 google-resumable-media==0.5.0
 googleapis-common-protos==1.51.0
 greenlet==0.4.15
-httplib2==0.17.0
+httplib2==0.19.0
 idna==2.8
 iniparse==0.5
 ipaddress==1.0.23
 IPy==1.0
 itsdangerous==1.1.0
-Jinja2==2.11.1
+Jinja2==2.11.3
 jmespath==0.9.4
 kitchen==1.2.6
 MarkupSafe==1.1.1
