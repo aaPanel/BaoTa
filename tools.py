@@ -595,7 +595,7 @@ def bt_cli(u_input = 0):
         auth_file = 'data/admin_path.pl'
         if os.path.exists(auth_file): os.remove(auth_file)
         os.system("/etc/init.d/bt reload")
-        print("|-已取消入口限制")
+        print("|-已取消入口限制,请在URL地址中增加/login访问面板")
     elif u_input == 12:
         auth_file = 'data/domain.conf'
         if os.path.exists(auth_file): os.remove(auth_file)

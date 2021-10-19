@@ -213,14 +213,156 @@ class config:
             except:
                 pass
 
+    def get_password_safe_file(self):
+        '''
+            @name 获取密码复杂度配置文件
+            @auther hwliang<2021-10-18>
+            @return string
+        '''
+        return public.get_panel_path() + '/data/check_password_safe.pl'
+
+    def check_password_safe(self,password):
+        '''
+            @name 密码复杂度验证
+            @auther hwliang<2021-10-18>
+            @param password(string) 密码
+            @return bool
+        '''
+        # 是否检测密码复杂度
+        is_check_file = self.get_password_safe_file()
+        if not os.path.exists(is_check_file): return True
+
+        # 密码长度验证
+        if len(password) < 8: return False
+
+        num = 0
+        # 密码是否包含数字
+        if re.search(r'[0-9]+',password): num += 1
+        # 密码是否包含小写字母
+        if re.search(r'[a-z]+',password): num += 1
+        # 密码是否包含大写字母
+        if re.search(r'[A-Z]+',password): num += 1
+        # 密码是否包含特殊字符
+        if re.search(r'[^\w\s]+',password): num += 1
+        # 密码是否包含以上任意3种组合
+        if num < 3: return False
+        return True
+
+    def set_password_safe(self,get):
+        '''
+            @name 设置密码复杂度
+            @auther hwliang<2021-10-18>
+            @param get(string) 参数
+            @return dict
+        '''
+        is_check_file = self.get_password_safe_file()
+        if os.path.exists(is_check_file):
+            os.remove(is_check_file)
+            public.WriteLog('TYPE_PANEL','关闭密码复杂度验证')
+            return public.returnMsg(True,'已关闭密码复杂度验证')
+        else:
+            public.writeFile(is_check_file,'True')
+            public.WriteLog('TYPE_PANEL','开启密码复杂度验证')
+            return public.returnMsg(True,'已开启密码复杂度验证')
+
+    def get_password_safe(self,get):
+        '''
+            @name 获取密码复杂度
+            @auther hwliang<2021-10-18>
+            @param get(string) 参数
+            @return bool
+        '''
+        is_check_file = self.get_password_safe_file()
+        return os.path.exists(is_check_file)
+
+
+    def get_password_expire_file(self):
+        '''
+            @name 获取密码过期配置文件
+            @auther hwliang<2021-10-18>
+            @return string
+        '''
+        return public.get_panel_path() + '/data/password_expire.pl'
+
+
+    def set_password_expire(self,get):
+        '''
+            @name 设置密码过期时间
+            @auther hwliang<2021-10-18>
+            @param get<dict_obj>{
+                expire: int<密码过期时间> 单位:天,
+            }
+            @return dict
+        '''
+        expire = int(get.expire)
+        min_expire = 10
+        max_expire = 365 * 5
+        if expire < min_expire: return public.returnMsg(False,'密码过期时间不能小于{}天'.format(min_expire))
+        if expire > max_expire: return public.returnMsg(False,'密码过期时间不能大于{}天'.format(max_expire))
+
+        public.writeFile(self.get_password_expire_file(),str(expire))
+        public.WriteLog('TYPE_PANEL','设置密码过期时间为：[{}]天'.format(expire))
+        return public.returnMsg(True,'已设置密码过期时间为：[{}]天'.format(expire))
+
+    def get_password_config(self,get=None):
+        '''
+            @name 获取密码配置
+            @auther hwliang<2021-10-18>
+            @param get<dict_obj> 参数
+            @return dict{expire:int,expire_time:int,password_safe:bool}
+        '''
+        expire_file = self.get_password_expire_file()
+        expire = 0
+        expire_time=0
+        if os.path.exists(expire_file): 
+            expire = public.readFile(expire_file)
+            try:
+                expire = int(expire)
+            except:
+                expire = 0
+
+            # 检查密码过期时间文件是否存在
+            expire_time_file = public.get_panel_path() + '/data/password_expire_time.pl'
+            if not os.path.exists(expire_time_file) and expire > 0:
+                public.writeFile(expire_time_file,str(int(time.time()) + (expire * 86400)))
+            
+            expire_time = public.readFile(expire_time_file)
+            if expire_time: 
+                expire_time = int(expire_time)
+            else:
+                expire_time = 0
+            
+        data = {}
+        data['expire'] = expire
+        data['expire_time'] = expire_time
+        data['password_safe'] = self.get_password_safe(get)
+        data['ps'] = '当前未开启密码过期配置，为了您的面板安全，请考虑开启!'
+        if data['expire_time']:
+            data['expire_day'] = int((expire_time - time.time()) / 86400)
+            if data['expire_day'] < 10:
+                if data['expire_day'] <= 0:
+                    data['ps'] = '您的密码已经过期，为防止下次无法登录，请立即修改密码!'
+                else:
+                    data['ps'] = "您的面板密码还有 <span style='color:red;'>{}</span> 天就过期了，为了不影响您正常登录，请尽快修改密码!".format(data['expire_day'])
+            else:
+                data['ps'] = "您的面板密码离过期时间还有 <span style='color:green;'>{}</span> 天!".format(data['expire_day'])
+        return data
 
     
     def setPassword(self,get):
         if get.password1 != get.password2: return public.returnMsg(False,'USER_PASSWORD_CHECK')
         if len(get.password1) < 5: return public.returnMsg(False,'USER_PASSWORD_LEN')
+        if not self.check_password_safe(get.password1): return public.returnMsg(False,'密码复杂度验证失败，要求：长度大于8位，数字、大写字母、小写字母、特殊字符最少3项组合')
         public.M('users').where("username=?",(session['username'],)).setField('password',public.password_salt(public.md5(get.password1.strip()),username=session['username']))
         public.WriteLog('TYPE_PANEL','USER_PASSWORD_SUCCESS',(session['username'],))
         self.reload_session()
+
+        # 密码过期时间
+        expire_time_file = public.get_panel_path() + '/data/password_expire_time.pl'
+        if os.path.exists(expire_time_file): os.remove(expire_time_file)
+        self.get_password_config(None)
+        if session.get('password_expire',False):
+            session['password_expire'] = False
         return public.returnMsg(True,'USER_PASSWORD_SUCCESS')
     
     def setUsername(self,get):
@@ -287,6 +429,9 @@ class config:
     
     def setPanel(self,get):
         if not public.IsRestart(): return public.returnMsg(False,'EXEC_ERR_TASK')
+        if 'limitip' in get:
+            if get.limitip.find('/') != -1:
+                return public.returnMsg(False,'授权IP格式不正确,不支持子网段写法')
         isReWeb = False
         sess_out_path = 'data/session_timeout.pl'
         if 'session_timeout' in get:
@@ -329,8 +474,8 @@ class config:
             isReWeb = True
         
         if get.webname != session['title']: 
-            session['title'] = get.webname
-            public.SetConfigValue('title',get.webname)
+            session['title'] = public.xssencode(get.webname)
+            public.SetConfigValue('title',public.xssencode(get.webname))
 
         limitip = public.readFile('data/limitip.conf')
         if get.limitip != limitip: 
@@ -750,6 +895,7 @@ class config:
             sslConf = '/www/server/panel/data/ssl.pl'
             if os.path.exists(sslConf):
                 public.ExecShell('rm -f ' + sslConf)
+                g.rm_ssl = True
                 return public.returnMsg(True,'PANEL_SSL_CLOSE')
             else:
                 public.ExecShell('pip install cffi')
@@ -1828,3 +1974,45 @@ class config:
         path = '/www/server/panel/data/send_login_white.json'
         public.WriteFile(path, json.dumps([]))
         return public.returnMsg(True, "清空成功")
+        
+        
+    def set_ssl_verify(self,get):
+        """
+        设置双向认证
+        """
+        sslConf = 'data/ssl_verify.pl'
+        status = int(get.status)
+        if status:
+            if not os.path.exists('data/ssl.pl'): return public.returnMsg(False,'需要先开启面板SSL功能!')                
+            public.writeFile(sslConf,'True')
+        else:
+            if os.path.exists(sslConf): os.remove(sslConf)
+
+        if 'crl' in get and 'ca' in get:            
+            crl = 'ssl/crl.pem'
+            ca = 'ssl/ca.pem'
+        
+            if get.crl:
+                public.writeFile(crl,get.crl.strip())
+            if get.ca:
+                public.writeFile(ca,get.ca.strip())
+            return public.returnMsg(True,'面板双向认证证书已保存!')
+        else:
+            msg = '开启'
+            if not status:msg = '关闭'
+            return public.returnMsg(True,'面板双向认证{}成功!'.format(msg))
+
+    def get_ssl_verify(self,get):
+        """
+        获取双向认证
+        """
+        result = {'status':False,'ca':'','crl':''}
+        sslConf = 'data/ssl_verify.pl'
+        if os.path.exists(sslConf): result['status'] = True
+        
+        ca = 'ssl/ca.pem'
+        crl = 'ssl/crl.pem'
+        if os.path.exists(crl): 
+            result['crl'] = public.readFile(crl)
+        if os.path.exists(crl): 
+            result['ca']

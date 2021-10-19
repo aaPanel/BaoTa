@@ -67,6 +67,8 @@ class setPanelLets:
         get.auto_wildcard = '0'
         get.domains = json.dumps([get.domain])
         cert_info = acme_v2().apply_cert_api(get)
+        if 'private_key' not in cert_info:
+            return public.returnMsg(False, "申请证书失败,请尝试在网站列表内手动为面板域名申请SSL证书后再到此开启SSL！")
         get.key = cert_info['private_key']
         get.csr = cert_info['cert'] + cert_info['root']
         return self._deploy_cert(get)
@@ -82,18 +84,36 @@ class setPanelLets:
         pssl = panelSSL.panelSSL()
         gcl = pssl.GetCertList(get)
         for i in gcl:
-            if get.domain in i.values():
-                time_array = time.strptime(i['notAfter'],"%Y-%m-%d")
-                time_stamp = int(time.mktime(time_array))
+            if get.domain in i['dns'] or get.domain == i['subject']:
+                try:
+                    time_stamp = int(i['notAfter'])
+                except:
+                    time_array = time.strptime(i['notAfter'],"%Y-%m-%d")
+                    time_stamp = int(time.mktime(time_array))
                 now = time.time()
                 if time_stamp > int(now):
                     return i
+            for d in i['dns']:
+                d = d.split('.')
+                if '*' in d and d[1:] == get.domain.split('.')[1:]:
+                    try:
+                        time_stamp = int(i['notAfter'])
+                    except:
+                        time_array = time.strptime(i['notAfter'], "%Y-%m-%d")
+                        time_stamp = int(time.mktime(time_array))
+                    now = time.time()
+                    if time_stamp > int(now):
+                        return i
 
     # 读取可用站点证书
     def __read_site_cert(self,domain_cert):
-        key_file = "{path}{domain}/{key}".format(path=self.__vhost_cert_path,domain=domain_cert["subject"],key="privkey.pem")
-        cert_file = "{path}{domain}/{cert}".format(path=self.__vhost_cert_path, domain=domain_cert["subject"],
+        try:
+            key_file = "{path}{domain}/{key}".format(path=self.__vhost_cert_path,domain=domain_cert["subject"],key="privkey.pem")
+            cert_file = "{path}{domain}/{cert}".format(path=self.__vhost_cert_path, domain=domain_cert["subject"],
                                                    cert="fullchain.pem")
+        except:
+            key_file = "/www/server/panel/{}/privkey.pem".format(domain_cert['save_path'])
+            cert_file  = "/www/server/panel/{}/fullchain.pem".format(domain_cert['save_path'])
         if not os.path.exists(key_file):
             key_file = "{path}{domain}/{key}".format(path="/www/server/panel/vhost/ssl/",domain=domain_cert["subject"],key="privkey.pem")
             cert_file = "{path}{domain}/{cert}".format(path="/www/server/panel/vhost/ssl/", domain=domain_cert["subject"],
@@ -193,7 +213,7 @@ class setPanelLets:
             return public.returnMsg(True, '面板lets https设置成功')
         if not create_site:
             create_lets = self.__create_lets(get)
-            if not create_lets:
+            if create_lets['msg']:
                 domain_cert = self.__check_cert_dir(get)
                 self.copy_cert(domain_cert)
                 public.writeFile("/www/server/panel/data/ssl.pl", "True")
@@ -201,6 +221,6 @@ class setPanelLets:
                 self.__save_cert_source(domain, get.email)
                 return  public.returnMsg(True, '面板lets https设置成功')
             else:
-                return create_lets
+                return public.returnMsg(False, create_lets)
         else:
-            return create_site
+            return public.returnMsg(False, create_site)

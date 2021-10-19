@@ -1605,7 +1605,7 @@ var aceEditor = {
 					_this.ace_active = _id;
 				    _this.editorLength = _this.editorLength + 1;
 					_this.creationEditor({id: _id,fileName: _fileName,path: path,mode:_mode,encoding: res.encoding,data: res.data,type:_type,historys:res.historys});
-					if(callback) callback(res);
+					if(callback) callback(res,_this.editor[_this.ace_active]);
 				});
 			}
 		});
@@ -1705,7 +1705,7 @@ var aceEditor = {
 	}
 }
 
-function openEditorView(type,path){
+function openEditorView(type,path,callback){
 	var paths = path.split('/'),
 	_fileName = paths[paths.length -1], 
 		_aceTmplate = document.getElementById("aceTmplate").innerHTML;
@@ -1735,7 +1735,7 @@ function openEditorView(type,path){
 				ace.config.set("modePath", "/static/editor");
 				ace.config.set("workerPath", "/static/editor");
 				ace.config.set("themePath", "/static/editor");
-				aceEditor.openEditorView(path);
+				aceEditor.openEditorView(path,callback);
 				$('#ace_conter').addClass(aceEditor.aceConfig.aceEditor.editorTheme);
 				$('.aceEditors .layui-layer-min').click(function (e){
 					aceEditor.setEditorView();
@@ -1999,11 +1999,16 @@ function RandomStrPwd(b) {
 	b = b || 32;
 	var c = "AaBbCcDdEeFfGHhiJjKkLMmNnPpRSrTsWtXwYxZyz2345678";
 	var a = c.length;
-	var d = "";
-	for(i = 0; i < b; i++) {
-		d += c.charAt(Math.floor(Math.random() * a))
+	while(true){
+		var d = "";
+		for(i = 0; i < b; i++) {
+			d += c.charAt(Math.floor(Math.random() * a))
+		}
+
+		if(/^(?:(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]))/.test(d)){
+			return d;
+		}
 	}
-	return d
 }
 
 function repeatPwd(a) {
@@ -2298,7 +2303,9 @@ function setCookie(a, c) {
 	var b = 30;
 	var d = new Date();
 	d.setTime(d.getTime() + b * 24 * 60 * 60 * 1000);
-	document.cookie = a + "=" + escape(c) + ";expires=" + d.toGMTString()
+	var is_https = window.location.protocol == 'https:'
+	var samesite = ';Secure; Path=/; SameSite=None'
+	document.cookie = a + "=" + escape(c) + ";expires=" + d.toGMTString() + (is_https?samesite:'')
 }
 
 function getCookie(b) {
@@ -2771,8 +2778,9 @@ function setPassword(a) {
 }
 
 
-function randPwd(){
-	var pwd = RandomStrPwd(12);
+function randPwd(len){
+	if(len == undefined) len = 12;
+	var pwd = RandomStrPwd(len);
 	$("#p1").val(pwd);
 	$("#p2").val(pwd);
 	layer.msg(lan.bt.pass_rep_ps,{time:2000})

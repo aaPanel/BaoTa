@@ -799,27 +799,88 @@ class panelSSL:
         return data
     
     #获取证书名称
-    def GetCertName(self,get):            
-        try:
-            openssl = '/usr/local/openssl/bin/openssl'
-            if not os.path.exists(openssl): openssl = 'openssl'
-            result = public.ExecShell(openssl + " x509 -in "+get.certPath+" -noout -subject -enddate -startdate -issuer")
-            tmp = result[0].split("\n")
-            data = {}
-            data['subject'] = tmp[0].split('=')[-1]
-            data['notAfter'] = self.strfToTime(tmp[1].split('=')[1])
-            data['notBefore'] = self.strfToTime(tmp[2].split('=')[1])
-            if tmp[3].find('O=') == -1:
-                data['issuer'] = tmp[3].split('CN=')[-1]
-            else:
-                data['issuer'] = tmp[3].split('O=')[-1].split(',')[0]
-            if data['issuer'].find('/') != -1: data['issuer'] = data['issuer'].split('/')[0]
-            result = public.ExecShell(openssl + " x509 -in "+get.certPath+" -noout -text|grep DNS")
-            data['dns'] = result[0].replace('DNS:','').replace(' ','').strip().split(',')
-            return data
-        except:
-            print(public.get_error_info())
+    def GetCertName(self,get):  
+        return self.get_cert_init(get.certPath)
+        # try:
+        #     openssl = '/usr/local/openssl/bin/openssl'
+        #     if not os.path.exists(openssl): openssl = 'openssl'
+        #     result = public.ExecShell(openssl + " x509 -in "+get.certPath+" -noout -subject -enddate -startdate -issuer")
+        #     tmp = result[0].split("\n")
+        #     data = {}
+        #     data['subject'] = tmp[0].split('=')[-1]
+        #     data['notAfter'] = self.strfToTime(tmp[1].split('=')[1])
+        #     data['notBefore'] = self.strfToTime(tmp[2].split('=')[1])
+        #     if tmp[3].find('O=') == -1:
+        #         data['issuer'] = tmp[3].split('CN=')[-1]
+        #     else:
+        #         data['issuer'] = tmp[3].split('O=')[-1].split(',')[0]
+        #     if data['issuer'].find('/') != -1: data['issuer'] = data['issuer'].split('/')[0]
+        #     result = public.ExecShell(openssl + " x509 -in "+get.certPath+" -noout -text|grep DNS")
+        #     data['dns'] = result[0].replace('DNS:','').replace(' ','').strip().split(',')
+        #     return data
+        # except:
+        #     print(public.get_error_info())
+        #     return None
+
+
+    # 获取指定证书基本信息
+    def get_cert_init(self, pem_file):
+        if not os.path.exists(pem_file):
             return None
+        try:
+            import OpenSSL
+            result = {}
+            x509 = OpenSSL.crypto.load_certificate(
+                OpenSSL.crypto.FILETYPE_PEM, public.readFile(pem_file))
+            # 取产品名称
+            issuer = x509.get_issuer()
+            result['issuer'] = ''
+            if hasattr(issuer, 'CN'):
+                result['issuer'] = issuer.CN
+            if not result['issuer']:
+                is_key = [b'0', '0']
+                issue_comp = issuer.get_components()
+                if len(issue_comp) == 1:
+                    is_key = [b'CN', 'CN']
+                for iss in issue_comp:
+                    if iss[0] in is_key:
+                        result['issuer'] = iss[1].decode()
+                        break
+            # 取到期时间
+            result['notAfter'] = self.strf_date(
+                bytes.decode(x509.get_notAfter())[:-1])
+            # 取申请时间
+            result['notBefore'] = self.strf_date(
+                bytes.decode(x509.get_notBefore())[:-1])
+            # 取可选名称
+            result['dns'] = []
+            for i in range(x509.get_extension_count()):
+                s_name = x509.get_extension(i)
+                if s_name.get_short_name() in [b'subjectAltName', 'subjectAltName']:
+                    s_dns = str(s_name).split(',')
+                    for d in s_dns:
+                        result['dns'].append(d.split(':')[1])
+            subject = x509.get_subject().get_components()
+            # 取主要认证名称
+            if len(subject) == 1:
+                result['subject'] = subject[0][1].decode()
+            else:
+                if not result['dns']:
+                    for sub in subject:
+                        if sub[0] == b'CN':
+                            result['subject'] = sub[1].decode()
+                            break
+                    result['dns'].append(result['subject'])
+                else:
+                    result['subject'] = result['dns'][0]
+            return result
+        except: 
+            return None
+    
+
+    # 转换时间
+    def strf_date(self, sdate):
+        return time.strftime('%Y-%m-%d', time.strptime(sdate, '%Y%m%d%H%M%S'))
     
     #转换时间
     def strfToTime(self,sdate):
@@ -888,4 +949,21 @@ class panelSSL:
                 result['sucess_list'].append(siteName)
             else:
                 result['err_list'].append({"siteName":siteName,"msg":ret['msg']})
+        return result
+
+
+    def renew_cert_order(self,args):
+        '''
+            @name 续签商用证书
+            @author cjx
+            @version 1.0
+        '''
+        pdata = json.loads(args.pdata)        
+        self.__PDATA['data'] = pdata
+
+        result = self.request('renew_cert_order')
+        if result['status'] == True:
+            self.__PDATA['data'] = {}
+            args['oid'] = result['oid']
+            result['verify_info'] = self.get_verify_info(args)
         return result

@@ -27,7 +27,7 @@ class panelSetup:
             if ua.find('spider') != -1 or g.ua.find('bot') != -1:
                 return redirect('https://www.baidu.com')
         
-        g.version = '7.8.17'
+        g.version = '7.8.21'
         g.title = public.GetConfigValue('title')
         g.uri = request.path
         g.debug = os.path.exists('data/debug.pl')
@@ -62,7 +62,7 @@ class panelSetup:
         if g.o:
             s_path = 'BTPanel/static/other/{}'
             css_name = "css/{}.css".format(g.o)
-            css_file = s_path.format(css_name)          
+            css_file = s_path.format(css_name)
             if os.path.exists(css_file): g.other_css.append('/static/other/{}'.format(css_name))
             
             js_name = "js/{}.js".format(g.o)
@@ -149,7 +149,7 @@ class panelAdmin(panelSetup):
             if not 'login' in session:
                 api_check = self.get_sk()
                 if api_check:
-                    session.clear()
+                    # session.clear()
                     return api_check
                 g.api_request = True
             else:
@@ -184,15 +184,16 @@ class panelAdmin(panelSetup):
                     session.clear()
                     return redirect('/login?dologin=True&go=1')
             
-            if api_check:
-                filename = 'data/sess_files/' + public.get_sess_key()
-                if not os.path.exists(filename):
-                    session.clear()
-                    return redirect('/login?dologin=True&go=2')
+            # if api_check:
+            #     filename = 'data/sess_files/' + public.get_sess_key()
+            #     if not os.path.exists(filename):
+            #         session.clear()
+            #         return redirect('/login?dologin=True&go=2')
 
             # 标记新的会话过期时间
             session['session_timeout'] = time.time() + public.get_session_timeout()
         except:
+            public.WriteLog('登录检查', public.get_error_info())
             session.clear()
             return redirect('/login')
 
@@ -200,23 +201,23 @@ class panelAdmin(panelSetup):
     def get_sk(self):
         save_path = '/www/server/panel/config/api.json'
         if not os.path.exists(save_path):
-            return redirect('/login')
+            return redirect('/login') #public.error_404('/login')
 
         
         try:
             api_config = json.loads(public.ReadFile(save_path))
         except:
             os.remove(save_path)
-            return redirect('/login')
+            return  redirect('/login') #public.error_404('/login')
         
         if not api_config['open']:
-            return redirect('/login')
+            return  redirect('/login') #public.error_404('/login')
         from BTPanel import get_input
         get = get_input()
         client_ip = public.GetClientIp()
         if not 'client_bind_token' in get:
             if not 'request_token' in get or not 'request_time' in get:
-                return redirect('/login')
+                return  redirect('/login') # public.error_404('/login')
             
             num_key = client_ip + '_api'
             if not public.get_error_num(num_key,20):
@@ -249,7 +250,7 @@ class panelAdmin(panelSetup):
             
             get = get_input()
             if not 'request_token' in get or not 'request_time' in get:
-                return redirect('/login')
+                return  redirect('/login') #public.error_404('/login')
             g.is_aes = True
             g.aes_key = api_config['key']
         

@@ -183,7 +183,7 @@
   "DATABASE_ERR_CONNECT": "数据库连接失败,请检查数据库服务是否启动!",
   "DATABASE_ERR_PASS": "数据库管理密码错误!",
   "DATABASE_ERR_NOT_EXISTS": "数据库用户不存在!",
-  "DATABASE_ERR_MYSQLDB": "MySQLdb组件缺失! <br>进入SSH命令行输入： pip install mysql-python",
+  "DATABASE_ERR_MYSQLDB": "MySQLdb组件缺失! <br>进入SSH命令行输入： btpip install mysql-python",
   "DATABASE_ROOT_SUCCESS": "数据库root密码修改成功!",
   "DATABASE_PASS_ERR_NOT_EXISTS": "修改失败,数据库用户不存在!",
   "DATABASE_PASS_SUCCESS": "修改数据库[{1}]密码成功!",

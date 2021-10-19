@@ -158,8 +158,7 @@ def startTask():
 def siteEdate():
     global oldEdate
     try:
-        if not oldEdate:
-            oldEdate = ReadFile('/www/server/panel/data/edate.pl')
+        oldEdate = ReadFile('/www/server/panel/data/edate.pl')
         if not oldEdate:
             oldEdate = '0000-00-00'
         mEdate = time.strftime('%Y-%m-%d', time.localtime())
@@ -206,6 +205,7 @@ def systemTask():
         diskio_1 = diskio_2 = networkInfo = cpuInfo = diskInfo = None
         network_up = {}
         network_down = {}
+        process_object = process_task()
         while True:
             if not os.path.exists(filename):
                 time.sleep(10)
@@ -300,8 +300,6 @@ def systemTask():
                 logging.info(public.get_error_info())
                 disk_ios = False
 
-            # print diskInfo
-
             if count >= 12:
                 try:
                     sql = db.Sql().dbfile('system')
@@ -328,7 +326,7 @@ def systemTask():
                     sql.table('load_average').add('pro,one,five,fifteen,addtime', (lpro, load_average['one'], load_average['five'], load_average['fifteen'], addtime))
                     sql.table('load_average').where("addtime<?", (deltime,)).delete()
                     sql.close()
-
+                    
                     lpro = None
                     load_average = None
                     cpuInfo = None
@@ -339,6 +337,7 @@ def systemTask():
                     reloadNum += 1
                     if reloadNum > 1440:
                         reloadNum = 0
+                    process_object.get_monitor_list()
                 except Exception as ex:
                     logging.info(str(ex))
             del(tmp)
@@ -627,6 +626,161 @@ def check_panel_msg():
     while True:
         os.system('{} /www/server/panel/script/check_msg.py &'.format(python_bin))
         time.sleep(3600)
+
+
+class process_task:
+
+    __pids = []
+    __last_times = {}
+    __last_dates = {}
+    __cpu_count = cpu_count()
+    __sql = None
+
+    def __init__(self):
+        self.__sql = db.Sql().dbfile('system')
+        csql = '''CREATE TABLE IF NOT EXISTS `process_tops` (
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `process_list` REAL,
+  `addtime` INTEGER
+)'''
+        self.__sql.execute(csql, ())
+        csql = '''CREATE TABLE IF NOT EXISTS `process_high_percent` (
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `name` REAL,
+  `pid`  REAL,
+  `cmdline` REAL,
+  `cpu_percent` FLOAT,
+  `memory` FLOAT,
+  `cpu_time_total` INTEGER,
+  `addtime` INTEGER
+)'''
+        self.__sql.execute(csql, ())
+        self.__sql.close()
+
+    def get_pids(self):
+        '''
+            @name 获取pid列表
+            @author hwliang<2021-09-04>
+            @return None
+        '''
+        self.__pids = pids()
+
+    def get_cpu_percent(self,pid,cpu_time_total):
+        '''
+            @name 获取pid的cpu占用率
+            @author hwliang<2021-09-04>
+            @param pid 进程id
+            @param cpu_time_total 进程总cpu时间
+            @return 占用cpu百分比
+        '''
+        stime = time.time()
+        if pid in self.__last_times:
+            old_time = self.__last_times[pid]
+        else:
+            self.__last_times[pid] = cpu_time_total
+            self.__last_dates[pid] = stime
+            return 0
+
+        cpu_percent = round(100.00 * float(cpu_time_total - old_time) / (stime - self.__last_dates[pid]) / self.__cpu_count,2)
+        return cpu_percent
+
+    def read_file(self,filename):
+        f = open(filename,'rb')
+        result = f.read()
+        f.close()
+        return result.decode().replace("\u0000"," ").strip()
+
+    def get_monitor_list(self):
+        '''
+            @name 获取监控列表
+            @author hwliang<2021-09-04>
+            @return list
+        '''
+        self.get_pids()
+        monitor_list = {}
+        cpu_src_limit = 30
+        cpu_pre_limit = 80 / self.__cpu_count
+        
+        addtime = int(time.time())
+        for pid in self.__pids:
+            try:
+                process_proc_comm = '/proc/{}/comm'.format(pid)
+                process_proc_cmdline = '/proc/{}/cmdline'.format(pid)
+                if pid < 100: continue
+                p = Process(pid)
+
+                cpu_times = p.cpu_times()
+                cpu_time_total = int(sum(cpu_times))
+                pname = self.read_file(process_proc_comm)
+                cmdline = self.read_file(process_proc_cmdline)
+                rss = p.memory_info().rss
+                cpu_percent = self.get_cpu_percent(pid,cpu_time_total)
+                pid = str(pid)
+                ppid = str(p.ppid())
+                if ppid in monitor_list:
+                    monitor_list[ppid]['pid'].append(pid)
+                    monitor_list[ppid]['cpu_time_total'] += cpu_time_total
+                    monitor_list[ppid]['memory'] += rss
+                    monitor_list[ppid]['cpu_percent'] += cpu_percent
+                else:
+                    if pname == 'php-fpm':
+                        if cmdline.find('/www/server/php/') != -1:
+                            pname += '(' + '.'.join(cmdline.split('/')[-3]) + ')'
+                    elif pname in ['mysqld','mysqld_safe']:
+                        pname = 'mysqld,mysql_safe(MySQL)'
+                    elif pname in ['BT-Task','BT-Panel']:
+                        continue
+                    
+                    monitor_list[pid] = {
+                        'pid':[pid],
+                        'name':pname,
+                        'cmdline': cmdline,
+                        'memory': rss, 
+                        'cpu_time_total': cpu_time_total,
+                        'cpu_percent': cpu_percent
+                    }
+
+            except:
+                continue
+
+        process_info_list = []
+        cpu_high_list = []
+        for i in monitor_list:
+            pid_count = len(monitor_list[i]['pid'])
+            monitor_list[i]['pid'] = ','.join(monitor_list[i]['pid'])
+            process_info_list.append(monitor_list[i])
+
+            # 记录CPU占用超过 cpu_pre_limit 的进程
+            if pid_count > 1:
+                if monitor_list[i]['cpu_percent'] >= cpu_src_limit:
+                    cpu_high_list.append(monitor_list[i])
+            else:
+                if monitor_list[i]['cpu_percent'] >= cpu_pre_limit:
+                    cpu_high_list.append(monitor_list[i])
+            
+
+        self.__sql = db.Sql().dbfile('system')        
+        process_info_list = sorted(process_info_list,key=lambda x:x['cpu_time_total'],reverse=True)
+        self.__sql.table('process_tops').insert({"process_list": dumps(process_info_list[:10]),'addtime':addtime})
+
+        if cpu_high_list:
+            for cpu_high in cpu_high_list:
+                self.__sql.table('process_high_percent').addAll(
+                    'pid,name,cmdline,memory,cpu_time_total,cpu_percent,addtime',
+                    (
+                        cpu_high['pid'],
+                        cpu_high['name'],
+                        cpu_high['cmdline'],
+                        cpu_high['memory'],
+                        cpu_high['cpu_time_total'],
+                        cpu_high['cpu_percent'],
+                        addtime
+                    )
+                )
+            self.__sql.commit()
+
+        self.__sql.close()
+
 
 
 def main():

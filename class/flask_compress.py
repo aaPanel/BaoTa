@@ -1,8 +1,8 @@
-import sys
+import sys,os
 from gzip import GzipFile
 from io import BytesIO
 
-from flask import request, current_app,session,Response
+from flask import request, current_app,session,Response,g
 
 
 if sys.version_info[:2] == (2, 6):
@@ -75,10 +75,37 @@ class Compress(object):
                 app.config['COMPRESS_MIMETYPES']):
             app.after_request(self.after_request)
 
+
     def after_request(self, response):
         app = self.app or current_app
         accept_encoding = request.headers.get('Accept-Encoding', '')
         response.headers['Server'] = 'nginx'
+        response.headers['Connection'] = 'keep-alive'
+
+        if 'dologin' in g and app.config['SSL']:
+            try:
+                for k,v in request.cookies.items():
+                    response.set_cookie(k,'',expires='Thu, 01-Jan-1970 00:00:00 GMT',path='/')
+            except:
+                pass          
+
+        if 'rm_ssl' in g:
+            import public
+            try:
+                for k,v in request.cookies.items():
+                    response.set_cookie(k,'',expires='Thu, 01-Jan-1970 00:00:00 GMT',path='/')
+            except:
+                pass
+            session_name = app.config['SESSION_COOKIE_NAME']
+            session_id = public.get_session_id()
+            response.set_cookie(session_name,'',expires='Thu, 01-Jan-1970 00:00:00 GMT',path='/')
+            response.set_cookie(session_name, session_id, path='/', max_age=86400 * 30,httponly=True)
+
+            request_token = request.cookies.get('request_token','')
+            if request_token:
+                response.set_cookie('request_token',request_token,path='/',max_age=86400 * 30)
+        
+        
         if (response.mimetype not in app.config['COMPRESS_MIMETYPES'] or
             'gzip' not in accept_encoding.lower() or
             not 200 <= response.status_code < 300 or

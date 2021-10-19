@@ -133,8 +133,12 @@ class panelSearch:
                         if not re.search(text, content): return False
                         content = re.sub(text, rtext, content)
             else:
-                if content.find(text) == -1: return False
-                content = content.replace(text, rtext)
+                if iscase:
+                    if not re.search(text, content, flags=re.I): return False
+                    content = re.sub(text, rtext, content, flags=re.I)
+                else:
+                    if content.find(text) == -1: return False
+                    content = content.replace(text, rtext)
             if is_backup and back_zip:
                 bf = files.strip('/')
                 back_zip.write(files, bf)
@@ -162,7 +166,10 @@ class panelSearch:
                         elif not iscase and not re.search(text, line):
                             continue
                     else:
-                        if line.find(text) == -1: continue
+                        if iscase:
+                            if not re.search(text, line, flags=re.I): continue
+                        else:
+                            if line.find(text) == -1: continue
                     if noword:
                         return files
                     resutl[i]=line

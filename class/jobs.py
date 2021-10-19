@@ -6,7 +6,7 @@
 # +-------------------------------------------------------------------
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
-import time,public,db,os,sys,json,re
+import time,public,db,os,sys,json,re,shutil
 os.chdir('/www/server/panel')
 
 def control_init():
@@ -182,6 +182,68 @@ def control_init():
     clear_fastcgi_safe()
     update_py37()
     run_script()
+    set_php_cli_env()
+
+
+def set_php_cli_env():
+    '''
+        @name 设置php-cli环境变量
+        @author hwliang<2021-09-07>
+        @return void
+    '''
+    php_path = '/www/server/php'
+    bashrc = '/root/.bashrc'
+    if not os.path.exists(php_path): return
+    if not os.path.exists(bashrc): return
+    # 清理所有别名
+    public.ExecShell('sed -i "/alias php/d" {}'.format(bashrc))
+    bashrc_body = public.readFile(bashrc)
+    if not bashrc_body: return
+
+    # 设置默认环境变量版本别名
+    env_php_bin = '/usr/bin/php'
+    if os.path.exists(env_php_bin):
+        if os.path.islink(env_php_bin):
+            env_bin_version = os.readlink(env_php_bin).split('/')[-3]
+            php_cli_ini = "{}/{}/etc/php-cli.ini".format(php_path,env_bin_version)
+            bashrc_body += "alias php='php -c {}'\n".format(php_cli_ini)
+
+    
+    # 设置所有已安装的PHP版本环境变量和别名
+    php_versions_list = ['52','53','54','55','56','70','71','72','73','74','80','81','82','83','84','90','91']
+    for php_version in php_versions_list:
+        php_ini = "{}/{}/etc/php.ini".format(php_path,php_version)
+        php_cli_ini = "{}/{}/etc/php-cli.ini".format(php_path,php_version)
+        env_php_bin = "/usr/bin/php{}".format(php_version)
+        php_bin = "{}/{}/bin/php".format(php_path,php_version)
+        php_ize = '/usr/bin/php{}-phpize'.format(php_version)
+        php_ize_src = "{}/{}/bin/phpize".format(php_path,php_version)
+        php_fpm = '/usr/bin/php{}-php-fpm'.format(php_version)
+        php_fpm_src = "{}/{}/sbin/php-fpm".format(php_path,php_version)
+        php_pecl = '/usr/bin/php{}-pecl'.format(php_version)
+        php_pecl_src = "{}/{}/bin/pecl".format(php_path,php_version)
+        php_pear = '/usr/bin/php{}-pear'.format(php_version)
+        php_pear_src = "{}/{}/bin/pear".format(php_path,php_version)
+
+        if os.path.exists(php_bin):
+            # 设置每个版本的环境变量
+            if not os.path.exists(env_php_bin): os.symlink(php_bin,env_php_bin)
+            if not os.path.exists(php_ize) and os.path.exists(php_ize_src): os.symlink(php_ize_src,php_ize)
+            if not os.path.exists(php_fpm) and os.path.exists(php_fpm_src): os.symlink(php_fpm_src,php_fpm)
+            if not os.path.exists(php_pecl) and os.path.exists(php_pecl_src): os.symlink(php_pecl_src,php_pecl)
+            if not os.path.exists(php_pear) and os.path.exists(php_pear_src): os.symlink(php_pear_src,php_pear)
+            public.ExecShell("\cp -f {} {}".format(php_ini,php_cli_ini)) # 每次复制新的php.ini到php-cli.ini
+            public.ExecShell('sed -i "/disable_functions/d" {}'.format(php_cli_ini)) # 清理禁用函数
+            bashrc_body += "alias php{}='php{} -c {}'\n".format(php_version,php_version,php_cli_ini) # 设置别名
+        else:
+            # 清理已卸载的环境变量
+            if os.path.exists(env_php_bin): os.remove(env_php_bin)
+            if os.path.exists(php_ize): os.remove(php_ize)
+            if os.path.exists(php_fpm): os.remove(php_fpm)
+            if os.path.exists(php_pecl): os.remove(php_pecl)
+            if os.path.exists(php_pear): os.remove(php_pear)
+    public.writeFile(bashrc,bashrc_body)
+
 
 def write_run_script_log(_log,rn='\n'):
     _log_file = '/www/server/panel/logs/run_script.log'

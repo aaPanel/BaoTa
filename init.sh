@@ -309,16 +309,21 @@ case "$1" in
                 if [ -f $panel_path/data/domain.conf ];then
                 	address=$(cat $panel_path/data/domain.conf)
                 fi
+                auth_path=/login
                 if [ -f $panel_path/data/admin_path.pl ];then
                 	auth_path=$(cat $panel_path/data/admin_path.pl)
                 fi
                 if [ "$address" = "" ];then
                 	address=$(curl -sS --connect-timeout 10 -m 60 https://www.bt.cn/Api/getIpAddress)
                 fi
-				pool=http
-				if [ -f $panel_path/data/ssl.pl ];then
-					pool=https
-				fi
+                pool=http
+                if [ -f $panel_path/data/ssl.pl ];then
+                        pool=https
+                fi
+                if [ "$auth_path" == "/" ];then
+                        auth_path=/login
+                fi
+
                 echo -e "=================================================================="
                 echo -e "\033[32mBT-Panel default info!\033[0m"
                 echo -e "=================================================================="

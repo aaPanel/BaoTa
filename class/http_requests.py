@@ -27,7 +27,7 @@ class http:
             old_family = urllib3_conn.allowed_gai_family
             try:
                 # 默认使用IPv4
-                urllib3_conn.allowed_gai_family = lambda: socket.AF_INE
+                urllib3_conn.allowed_gai_family = lambda: socket.AF_INET
                 return requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
             except:
                 try:

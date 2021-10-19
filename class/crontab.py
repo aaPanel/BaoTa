@@ -120,6 +120,7 @@ class crontab:
     def set_cron_status(self,get):
         id = get['id']
         cronInfo = public.M('crontab').where('id=?',(id,)).field(self.field).find()
+        status_msg = ['停用','启用']
         status = 1
         if cronInfo['status'] == status:
             status = 0
@@ -129,7 +130,7 @@ class crontab:
             self.sync_to_crond(cronInfo)
         
         public.M('crontab').where('id=?',(id,)).setField('status',status)
-        public.WriteLog('计划任务','修改计划任务['+cronInfo['name']+']状态为['+str(status)+']')
+        public.WriteLog('计划任务','修改计划任务['+cronInfo['name']+']状态为['+status_msg[status]+']')
         return public.returnMsg(True,'设置成功')
 
     #修改计划任务
@@ -206,13 +207,13 @@ class crontab:
         self.CrondReload()
         columns = 'name,type,where1,where_hour,where_minute,echo,addtime,\
                   status,save,backupTo,sType,sName,sBody,urladdress'
-        values = (get['name'],get['type'],get['where1'],get['hour'],
+        values = (public.xssencode(get['name']),get['type'],get['where1'],get['hour'],
         get['minute'],cronName,time.strftime('%Y-%m-%d %X',time.localtime()),
         1,get['save'],get['backupTo'],get['sType'],get['sName'],get['sBody'],
         get['urladdress'])
         if "save_local" in get:
             columns += ",save_local,notice,notice_channel"
-            values = (get['name'],get['type'],get['where1'],get['hour'],
+            values = (public.xssencode(get['name']),get['type'],get['where1'],get['hour'],
         get['minute'],cronName,time.strftime('%Y-%m-%d %X',time.localtime()),
         1,get['save'],get['backupTo'],get['sType'],get['sName'],get['sBody'],
         get['urladdress'], get["save_local"], get['notice'], get['notice_channel'])

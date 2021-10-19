@@ -269,7 +269,20 @@ SetLink
             panelMysql.panelMysql().execute("drop user '" + username + "'@'" + us[0] + "'")
         panelMysql.panelMysql().execute("flush privileges")
         rPath = '/www/Recycle_bin/'
-        public.writeFile(rPath + 'BTDB_' + name +'_t_' + str(time.time()),json.dumps(data))
+        data['rmtime'] = int(time.time())
+        rm_path = '{}/BTDB_{}_t_{}'.format(rPath,name,data['rmtime'])
+        if os.path.exists(rm_path): rm_path += '.1'
+        rm_config_file = '{}/config.json'.format(rm_path)
+        datadir = public.get_datadir()
+        db_path = '{}/{}'.format(datadir,name)
+        if not os.path.exists(db_path):
+            return public.returnMsg(False,'指安数据库数据不存在!')
+        
+        public.ExecShell("mv -f {} {}".format(db_path,rm_path))
+        if not os.path.exists(rm_path):
+            return public.returnMsg(False,'移动数据库数据到回收站失败!')
+        public.writeFile(rm_config_file,json.dumps(data))
+        # public.writeFile(rPath + 'BTDB_' + name +'_t_' + str(time.time()),json.dumps(data))
         public.M('databases').where("name=?",(name,)).delete()
         public.WriteLog("TYPE_DATABASE", 'DATABASE_DEL_SUCCESS',(name,))
         return public.returnMsg(True,'RECYCLE_BIN_DB')
@@ -277,39 +290,66 @@ SetLink
     #永久删除数据库
     def DeleteTo(self,filename):
         import json
-        data = json.loads(public.readFile(filename))
-        if public.M('databases').where("name=?",( data['name'],)).count():
+        if os.path.isfile(filename):
+            data = json.loads(public.readFile(filename))
+            if public.M('databases').where("name=?",( data['name'],)).count():
+                os.remove(filename)
+                return public.returnMsg(True,'DEL_SUCCESS')
+            result = panelMysql.panelMysql().execute("drop database `" + data['name'] + "`")
+            isError=self.IsSqlError(result)
+            if  isError != None: return isError
+            panelMysql.panelMysql().execute("drop user '" + data['username'] + "'@'localhost'")
+            users = panelMysql.panelMysql().query("select Host from mysql.user where User='" + data['username'] + "' AND Host!='localhost'")
+            for us in users:
+                panelMysql.panelMysql().execute("drop user '" + data['username'] + "'@'" + us[0] + "'")
+            panelMysql.panelMysql().execute("flush privileges")
             os.remove(filename)
-            return public.returnMsg(True,'DEL_SUCCESS')
-        result = panelMysql.panelMysql().execute("drop database `" + data['name'] + "`")
-        isError=self.IsSqlError(result)
-        if  isError != None: return isError
-        panelMysql.panelMysql().execute("drop user '" + data['username'] + "'@'localhost'")
-        users = panelMysql.panelMysql().query("select Host from mysql.user where User='" + data['username'] + "' AND Host!='localhost'")
-        for us in users:
-            panelMysql.panelMysql().execute("drop user '" + data['username'] + "'@'" + us[0] + "'")
-        panelMysql.panelMysql().execute("flush privileges")
-        os.remove(filename)
-        public.WriteLog("TYPE_DATABASE", 'DATABASE_DEL_SUCCESS',(data['name'],))
+        else:
+            import shutil
+            if os.path.exists(filename): 
+                data = json.loads(public.readFile(filename + '/config.json'))
+                shutil.rmtree(filename)
+        try:
+            public.WriteLog("TYPE_DATABASE", 'DATABASE_DEL_SUCCESS',(data['name'],))
+        except:
+            pass
         return public.returnMsg(True,'DEL_SUCCESS')
     
     #恢复数据库
     def RecycleDB(self,filename):
         import json
-        data = json.loads(public.readFile(filename))
+        _isdir = False
+        if os.path.isfile(filename):
+            data = json.loads(public.readFile(filename))
+        else:
+            re_config_file = filename + '/config.json'
+            data = json.loads(public.readFile(re_config_file))
+            db_path = "{}/{}".format(public.get_datadir(),data['name'])
+            if os.path.exists(db_path):
+                return public.returnMsg(False,'当前数据库中存在同名数据库，为保证数据安全，停止恢复!')
+            _isdir = True
+        
         if public.M('databases').where("name=?",( data['name'],)).count():
-            os.remove(filename)
+            if not _isdir: os.remove(filename)
             return public.returnMsg(True,'RECYCLEDB')
 
+
+        if not _isdir:
+            os.remove(filename)
+        else:
+            public.ExecShell('mv -f {} {}'.format(filename,db_path))
+            if not os.path.exists(db_path):
+                return public.returnMsg(False,'数据恢复失败!')
+            db_config_file = "{}/config.json".format(db_path)
+            if os.path.exists(db_config_file): os.remove(db_config_file)
+
+            # 设置文件权限
+            public.ExecShell("chown -R mysql:mysql {}".format(db_path))
+            public.ExecShell("chmod -R 660 {}".format(db_path))
+            public.ExecShell("chmod  700 {}".format(db_path))
+
         self.__CreateUsers(data['name'],data['username'],data['password'],data['accept'])
-        #result = panelMysql.panelMysql().execute("grant all privileges on `" + data['name'] + "`.* to '" + data['username'] + "'@'localhost' identified by '" + data['password'] + "'")
-        #isError=self.IsSqlError(result)
-        #if isError != None: return isError
-        #panelMysql.panelMysql().execute("grant all privileges on `" + data['name'] + "`.* to '" + data['username'] + "'@'" + data['accept'] + "' identified by '" + data['password'] + "'")
-        #panelMysql.panelMysql().execute("flush privileges")
-        
         public.M('databases').add('id,pid,name,username,password,accept,ps,addtime',(data['id'],data['pid'],data['name'],data['username'],data['password'],data['accept'],data['ps'],data['addtime']))
-        os.remove(filename)
         return public.returnMsg(True,"RECYCLEDB")
     
     #设置ROOT密码
@@ -483,31 +523,41 @@ SetLink
             tmpFile = tmpFile.replace('.sql.' + ext, '.sql')
             tmpFile = tmpFile.replace('.' + ext, '.sql')
             tmpFile = tmpFile.replace('tar.', '')
+            # 面板默认备份路径
             backupPath = session['config']['backup_path'] + '/database'
+            input_path = os.path.join(backupPath, tmpFile)
+            # 备份文件的路径
+            input_path2 = os.path.join(os.path.dirname(file), tmpFile)
             if ext == 'zip':
                 public.ExecShell("cd "  +  backupPath  +  " && unzip " + '"'+file+'"')
             else:
                 public.ExecShell("cd "  +  backupPath  +  " && tar zxf " +  '"'+file+'"')
-                if not os.path.exists(backupPath  +  "/"  +  tmpFile): 
-                    public.ExecShell("cd "  +  backupPath  +  " && gunzip -q " +  '"'+file+'"')
-                    isgzip = True
-            if not os.path.exists(backupPath + '/' + tmpFile) or tmpFile == '': return public.returnMsg(False, 'FILE_NOT_EXISTS',(tmpFile,))
+                if not os.path.exists(input_path):
+                    # 兼容从备份文件所在目录恢复
+                    if not os.path.exists(input_path2):
+                        public.ExecShell("cd "  +  backupPath  +  " && gunzip -q " +  '"'+file+'"')
+                        isgzip = True
+                    else:
+                        input_path = input_path2
+            if not os.path.exists(input_path) or tmpFile == '':
+                if tmpFile and os.path.isfile(input_path2):
+                    input_path = input_path2
+                else:
+                    return public.returnMsg(False, 'FILE_NOT_EXISTS',(tmpFile,))
 
             try:
                 password = public.M('config').where('id=?',(1,)).getField('mysql_root')
                 os.environ["MYSQL_PWD"] = password
-                public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " +'"'+ backupPath + '/' +tmpFile+'"')
+                public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " +'"'+ input_path +'"')
             except Exception as e:
                 raise
             finally:
                 os.environ["MYSQL_PWD"] = ""
 
-            
-
             if isgzip:
-                public.ExecShell('cd ' +backupPath+ ' && gzip ' + file.split('/')[-1][:-3])
+                public.ExecShell('cd ' +os.path.dirname(input_path)+ ' && gzip ' + file.split('/')[-1][:-3])
             else:
-                public.ExecShell("rm -f " +  backupPath + '/' +tmpFile)
+                public.ExecShell("rm -f " +  input_path)
         else:
             try:
                 password = public.M('config').where('id=?',(1,)).getField('mysql_root')
@@ -621,7 +671,12 @@ SetLink
             ps = public.getMsg('INPUT_PS')
             if value[0] == 'test':
                     ps = public.getMsg('DATABASE_TEST')
+            
+            # XSS过虑
+            if not re.match("^[\w+\.-]+$",value[0]): continue
+            
             addTime = time.strftime('%Y-%m-%d %X',time.localtime())
+
             if sql.table('databases').add('name,username,password,accept,ps,addtime',(value[0],value[0],'',host,ps,addTime)): n +=1
         
         return public.returnMsg(True,'DATABASE_GET_SUCCESS',(str(n),))

@@ -590,7 +590,7 @@ set $bt_safe_open "{}/:/tmp/";'''.format(self.sitePath)
         if not result: return public.returnMsg(False,'SITE_ADD_ERR_WRITE')
         
         
-        ps = get.ps
+        ps = public.xssencode(get.ps)
         #添加放行端口
         if self.sitePort != '80':
             import firewalls
@@ -1691,6 +1691,7 @@ listener SSL443 {
 
         # Node项目
         if not os.path.exists(file):  file = self.setupPath + '/panel/vhost/nginx/node_' + siteName + '.conf'
+        if not os.path.exists(file):  file = self.setupPath + '/panel/vhost/nginx/java_' + siteName + '.conf'
 
         ng_file = file
         conf = public.readFile(file)
@@ -1857,6 +1858,8 @@ listener SSL443 {
         file = self.setupPath + '/panel/vhost/nginx/'+siteName+'.conf'
         if not os.path.exists(file):
             file = self.setupPath + '/panel/vhost/nginx/node_'+siteName+'.conf'
+        if not os.path.exists(file):
+            file = self.setupPath + '/panel/vhost/nginx/java_'+siteName+'.conf'
         conf = public.readFile(file)
         if conf:
             if conf.find('ssl_certificate') == -1: return public.returnMsg(False,'当前未开启SSL')
@@ -1931,6 +1934,9 @@ listener SSL443 {
         if not os.path.exists(file):
             file = self.setupPath + '/panel/vhost/nginx/node_'+siteName+'.conf'
             if not os.path.exists(file): return False
+        if not os.path.exists(file):
+            file = self.setupPath + '/panel/vhost/nginx/java_'+siteName+'.conf'
+            if not os.path.exists(file): return False
         conf = public.readFile(file)
         if conf:
             if conf.find('HTTP_TO_HTTPS_START') != -1: return True
@@ -1944,6 +1950,8 @@ listener SSL443 {
         file = self.setupPath + '/panel/vhost/nginx/' + siteName + '.conf'
         if not os.path.exists(file):
             file = self.setupPath + '/panel/vhost/nginx/node_' + siteName + '.conf'
+        if not os.path.exists(file):
+            file = self.setupPath + '/panel/vhost/nginx/java_' + siteName + '.conf'
         conf = public.readFile(file)
         if conf:
             rep = "\n\s*#HTTP_TO_HTTPS_START(.|\n){1,300}#HTTP_TO_HTTPS_END"
@@ -2049,6 +2057,9 @@ listener SSL443 {
 
         # 是否为node项目
         if not os.path.exists(file): file = self.setupPath + '/panel/vhost/' + public.get_webserver() + '/node_' + siteName + '.conf'
+        
+        if not os.path.exists(file): file = self.setupPath + '/panel/vhost/' + public.get_webserver() + '/java_' + siteName + '.conf'
+
         if public.get_webserver() == "openlitespeed":
             file = self.setupPath + '/panel/vhost/' + public.get_webserver() + '/detail/' + siteName + '.conf'
         conf = public.readFile(file)
@@ -3624,7 +3635,15 @@ RewriteRule ^%s(.*)$ http://%s/$1 [P,E=Proxy-Host:%s]
         rep = "\n\s*#Set\s*Nginx\s*Cache"
         if re.search(rep,data):
             return True
-                                                                             
+
+    def old_proxy_conf(self,conf,ng_conf_file,get):
+        rep = 'location\s*\~\*.*gif\|png\|jpg\|css\|js\|woff\|woff2\)\$'
+        if not re.search(rep,conf):
+            return conf
+        self.RemoveProxy(get)
+        self.CreateProxy(get)
+        return public.readFile(ng_conf_file)
+
     # 修改反向代理
     def ModifyProxy(self, get):
         proxyname_md5 = self.__calc_md5(get.proxyname)
@@ -3637,6 +3656,8 @@ RewriteRule ^%s(.*)$ http://%s/$1 [P,E=Proxy-Host:%s]
         if self.__CheckStart(get):
             return self.__CheckStart(get)
         conf = self.__read_config(self.__proxyfile)
+        random_string = public.GetRandomString(8)
+
         for i in range(len(conf)):
             if conf[i]["proxyname"] == get.proxyname and conf[i]["sitename"] == get.sitename:
                 if int(get.type) != 1:
@@ -3653,6 +3674,7 @@ RewriteRule ^%s(.*)$ http://%s/$1 [P,E=Proxy-Host:%s]
                         public.ExecShell("mv {f}_bak {f}".format(f=ng_conf_file))
                         public.ExecShell("mv {f}_bak {f}".format(f=ols_conf_file))
                     ng_conf = public.readFile(ng_conf_file)
+                    ng_conf = self.old_proxy_conf(ng_conf, ng_conf_file, get)
                     # 修改nginx配置
                     # 如果代理URL后缀带有URI则删除URI，正则匹配不支持proxypass处带有uri
                     php_pass_proxy = get.proxysite
@@ -3677,26 +3699,53 @@ RewriteRule ^%s(.*)$ http://%s/$1 [P,E=Proxy-Host:%s]
                             ng_conf = re.sub(expires_rep, "{",ng_conf)
                             ng_conf = re.sub(cache_rep, "proxy_cache_valid 200 304 301 302 {0}m;".format(get.cachetime), ng_conf)
                         else:
+    #                         ng_cache = """
+    # proxy_ignore_headers Set-Cookie Cache-Control expires;
+    # proxy_cache cache_one;
+    # proxy_cache_key $host$uri$is_args$args;
+    # proxy_cache_valid 200 304 301 302 %sm;""" % (get.cachetime)
                             ng_cache = """
+    if ( $uri ~* "\.(gif|png|jpg|css|js|woff|woff2)$" )
+    {
+        expires 12h;
+    }
     proxy_ignore_headers Set-Cookie Cache-Control expires;
     proxy_cache cache_one;
     proxy_cache_key $host$uri$is_args$args;
     proxy_cache_valid 200 304 301 302 %sm;""" % (get.cachetime)
                             if self.check_annotate(ng_conf):
-                                cache_rep = '\n\s*#Set\s*Nginx\s*Cache(.|\n)*no-cache;'
-                                ng_conf = re.sub(cache_rep,'\n\t#Set Nginx Cache\n'+ng_cache,ng_conf)
+                                cache_rep = '\n\s*#Set\s*Nginx\s*Cache(.|\n)*no-cache;\s*\n*\s*\}'
+                                ng_conf = re.sub(cache_rep, '\n\t#Set Nginx Cache\n' + ng_cache, ng_conf)
                             else:
                                 # cache_rep = '#proxy_set_header\s+Connection\s+"upgrade";'
                                 cache_rep = r"proxy_set_header\s+REMOTE-HOST\s+\$remote_addr;"
                                 ng_conf = re.sub(cache_rep, r"\n\tproxy_set_header\s+REMOTE-HOST\s+\$remote_addr;\n\t#Set Nginx Cache" + ng_cache,
                                                  ng_conf)
                     else:
+                        no_cache = """
+    #Set Nginx Cache
+    set $static_file%s 0;
+    if ( $uri ~* "\.(gif|png|jpg|css|js|woff|woff2)$" )
+    {
+        set $static_file%s 1;
+        expires 12h;
+        }
+    if ( $static_file%s = 0 )
+    {
+    add_header Cache-Control no-cache;
+    }""" % (random_string, random_string, random_string)
                         if self.check_annotate(ng_conf):
                             rep = r'\n\s*#Set\s*Nginx\s*Cache(.|\n)*\d+m;'
-                            ng_conf = re.sub(rep, "\n\t#Set Nginx Cache\n\tproxy_ignore_headers Set-Cookie Cache-Control expires;\n\tadd_header Cache-Control no-cache;", ng_conf)
+                            # ng_conf = re.sub(rep,
+                            #                  "\n\t#Set Nginx Cache\n\tproxy_ignore_headers Set-Cookie Cache-Control expires;\n\tadd_header Cache-Control no-cache;",
+                            #                  ng_conf)
+                            ng_conf = re.sub(rep,no_cache,ng_conf)
                         else:
                             rep = r"\s+proxy_cache\s+cache_one.*[\n\s\w\_\";\$]+m;"
-                            ng_conf = re.sub(rep, r"\n\t#Set Nginx Cache\n\tproxy_ignore_headers Set-Cookie Cache-Control expires;\n\tadd_header Cache-Control no-cache;", ng_conf)
+                            # ng_conf = re.sub(rep,
+                            #                  r"\n\t#Set Nginx Cache\n\tproxy_ignore_headers Set-Cookie Cache-Control expires;\n\tadd_header Cache-Control no-cache;",
+                            #                  ng_conf)
+                            ng_conf = re.sub(rep,no_cache,ng_conf)
 
                     sub_rep = "sub_filter"
                     subfilter = json.loads(get.subfilter)
@@ -3778,33 +3827,42 @@ RewriteRule ^%s(.*)$ http://%s/$1 [P,E=Proxy-Host:%s]
         type = int(get.type)
         cache = int(get.cache)
         cachetime = int(get.cachetime)
+        proxysite = get.proxysite
+        proxydir = get.proxydir
         ng_file = self.setupPath + "/panel/vhost/nginx/" + sitename + ".conf"
         ap_file = self.setupPath + "/panel/vhost/apache/" + sitename + ".conf"
         p_conf = self.__read_config(self.__proxyfile)
+        random_string = public.GetRandomString(8)
         # 配置Nginx
         # 构造清理缓存连接
 
-
         # 构造缓存配置
         ng_cache = """
+    if ( $uri ~* "\.(gif|png|jpg|css|js|woff|woff2)$" )
+    {
+    	expires 12h;
+    }
     proxy_ignore_headers Set-Cookie Cache-Control expires;
     proxy_cache cache_one;
     proxy_cache_key $host$uri$is_args$args;
     proxy_cache_valid 200 304 301 302 %sm;""" % (cachetime)
+        no_cache = """
+    set $static_file%s 0;
+    if ( $uri ~* "\.(gif|png|jpg|css|js|woff|woff2)$" )
+    {
+    	set $static_file%s 1;
+    	expires 12h;
+        }
+    if ( $static_file%s = 0 )
+    {
+    add_header Cache-Control no-cache;
+    }""" % (random_string,random_string,random_string)
         # rep = "(https?://[\w\.]+)"
         # proxysite1 = re.search(rep,get.proxysite).group(1)
         ng_proxy = '''
 #PROXY-START%s
-location  ~* \.(gif|png|jpg|css|js|woff|woff2)$
-{
-    proxy_pass %s;
-    proxy_set_header Host %s;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header REMOTE-HOST $remote_addr;
-    expires 12h;
-}
-location %s
+
+location ^~ %s
 {
     proxy_pass %s;
     proxy_set_header Host %s;
@@ -3848,23 +3906,27 @@ location %s
             ng_sub_filter = ''
         # 构造反向代理
         # 如果代理URL后缀带有URI则删除URI，正则匹配不支持proxypass处带有uri
-        php_pass_proxy = get.proxysite
-        if get.proxysite[-1] == '/' or get.proxysite.count('/') > 2 or '?' in get.proxysite:
-            php_pass_proxy = re.search('(https?\:\/\/[\w\.]+)',get.proxysite).group(0)
+        # php_pass_proxy = get.proxysite
+        # if get.proxysite[-1] == '/' or get.proxysite.count('/') > 2 or '?' in get.proxysite:
+        #     php_pass_proxy = re.search('(https?\:\/\/[\w\.]+)', get.proxysite).group(0)
         if advanced == 1:
+            if proxydir[-1] != '/':
+                proxydir = '{}/'.format(proxydir)
+            if proxysite[-1] != '/':
+                proxysite = '{}/'.format(proxysite)
             if type == 1 and cache == 1:
                 ng_proxy_cache += ng_proxy % (
-                    get.proxydir, php_pass_proxy ,get.todomain,get.proxydir,get.proxysite,get.todomain ,ng_sub_filter, ng_cache ,get.proxydir)
+                    proxydir, proxydir,proxysite,get.todomain ,ng_sub_filter, ng_cache ,get.proxydir)
             if type == 1 and cache == 0:
                 ng_proxy_cache += ng_proxy % (
-                    get.proxydir,php_pass_proxy ,get.todomain, get.proxydir,get.proxysite,get.todomain ,ng_sub_filter,'\tadd_header Cache-Control no-cache;' ,get.proxydir)
+                    get.proxydir, get.proxydir,proxysite,get.todomain ,ng_sub_filter,no_cache,get.proxydir)
         else:
             if type == 1 and cache == 1:
                 ng_proxy_cache += ng_proxy % (
-                    get.proxydir, php_pass_proxy ,get.todomain, get.proxydir,get.proxysite,get.todomain ,ng_sub_filter, ng_cache, get.proxydir)
+                    get.proxydir, get.proxydir,get.proxysite,get.todomain ,ng_sub_filter, ng_cache, get.proxydir)
             if type == 1 and cache == 0:
                 ng_proxy_cache += ng_proxy % (
-                    get.proxydir, php_pass_proxy ,get.todomain,get.proxydir,get.proxysite,get.todomain ,ng_sub_filter, '\tadd_header Cache-Control no-cache;', get.proxydir)
+                    get.proxydir, get.proxydir,get.proxysite,get.todomain ,ng_sub_filter, no_cache, get.proxydir)
         public.writeFile(ng_proxyfile, ng_proxy_cache)
 
 

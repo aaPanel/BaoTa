@@ -1,20 +1,27 @@
 {% extends "layout.html" %}
 
 {% block content %}
+<!--suppress SpellCheckingInspection, CheckEmptyScriptTag -->
 <div class="main-content pb55">
     <div class="container-fluid">
         <div class="pos-box bgw mtb15">
             <div class="position f14 c9 pull-left">
-                <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
+                <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span
+                    class="plr10 c4">{{data['lan']['H2']}}</span>
             </div>
         </div>
         <div class="site_table_view bgw mtb15 pd15">
             <div class="info-title-tips">
-                <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span> {{data['lan']['PS']}}建站成功后，请在<a class="btlink" href="/crontab">[计划任务]</a>页面添加定时备份任务!</p>
+                <p><span class="glyphicon glyphicon-alert"
+                         style="color: #f39c12; margin-right: 10px;"></span>{{data['lan']['PS']}}建站成功后，请在<a
+                        class="btlink"
+                        href="/crontab">[计划任务]</a>页面添加定时备份任务!</p>
             </div>
             <div class="tab-nav" id="cutMode">
-                <span class="on">PHP项目</span>
-                <span >Node项目</span>
+                <span class="on" data-type="php">PHP项目</span>
+                <span data-type="nodejs">Node项目</span>
+                <span data-type="java">JAVA项目</span>
+<!--                <span data-type="go">Go项目</span>-->
             </div>
             <div class="tab-con" style="padding:10px 0;overflow: inherit;">
                 <div class="tab-con-block">
@@ -22,26 +29,272 @@
                 </div>
                 <div class="tab-con-block ">
                     <div id="bt_node_table"></div>
+                    <div class="mask_layer hide">
+                        <div class="prompt_description node-model"></div>
+                    </div>
                 </div>
-                <div class="mask_layer hide"><div class="prompt_description"></div></div>
+                <div class="tab-con-block">
+                    <div id="bt_java_table" class="bt_table" v-cloak>
+                        <div class="tootls_group tootls_top">
+                            <div class="pull-left">
+                                <bt-button type="success" class="mr5" title="添加JAVA项目" @click="add_java_project"></bt-button>
+                                <bt-button title="JDK管理"  class="mr5" @click="jdk_manage_view"></bt-button>
+                                <bt-button title="Tomcat管理"  class="mr5" @click="tomcat_manage_view"></bt-button>
+                                <bt-link class="mlr15" title="JAVA项目教程" href="https://www.bt.cn/bbs/thread-76217-1-1.html" target="_blank"></bt-link>
+                            </div>
+                            <div class="pull-right">
+                                <!--                                <bt-text class="bt_search" v-model="serachValue" width="230px" placeholder="请输入项目名称" icon="search" @keyup.enter="search_project_info" @icon-event="search_project_info">-->
+                                <div class="bt_search">
+                                    <input type="text" class="search_input" v-model="serachValue" placeholder="请输入项目名称"
+                                           @keyup.enter="search_project_info"/>
+                                    <span class="glyphicon glyphicon-search" @click="search_project_info"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <bt-table :data="projectList"
+                                  data-key="id"
+                                  min-width="1000px"
+                                  class="mt10"
+                                  :page="pageInfo.page"
+                                  :page-limit="pageInfo.limit"
+                                  :page-total="pageInfo.tools"
+                                  @cut-pages="get_project_list"
+                        >
+                            <!--                            <bt-table-column type="checkbox" width="20px"></bt-table-column>-->
+                            <bt-table-column title="项目名称" width="120px" v-slot="scope">
+                                <template v-if="scope.$row.is_file_ok || typeof scope.$row.is_file_ok === 'undefined'">
+                                    <bt-link :title="scope.$row.name" :tips="scope.$row.name"  @click="project_settings_view(scope.$row)"/>
+                                </template>
+                                <template v-else>${ scope.$row.name }</template>
+                            </bt-table-column>
+                            <bt-table-column title="服务状态" width="90px" v-slot="scope">
+                                <template v-if="scope.$row.is_file_ok || typeof scope.$row.is_file_ok === 'undefined'">
+                                    <bt-link :title="scope.$row.run ? '运行中' : '未启动'"
+                                             :status="scope.$row.run"
+                                             :icon="scope.$row.run?'play':'pause'"
+                                             @click="switch_operation_state(scope.$row)"></bt-link>
+                                </template>
+                                <template v-else>已停止</template>
+                            </bt-table-column>
+                            <bt-table-column title="项目类型" width="150px">
+                                <template v-slot="scope">
+                                    ${ get_project_type(scope.$row) }
+                                </template>
+                            </bt-table-column>
+                            <bt-table-column title="端口" width="100px" v-slot="scope">
+                                <template v-if="scope.$row.is_file_ok || typeof scope.$row.is_file_ok === 'undefined'">
+                                    ${ get_listen_info(scope.$row) }
+                                </template>
+                                <template v-else>--</template>
+                            </bt-table-column>
+                            <bt-table-column title="CPU"  width="80px" v-slot="scope">
+                                <template v-if="scope.$row.is_file_ok || typeof scope.$row.is_file_ok === 'undefined'">
+                                    ${ get_cpu_info(scope.$row) }
+                                </template>
+                                <template v-else>--</template>
+                            </bt-table-column>
+                            <bt-table-column title="内存" width="100px" v-slot="scope">
+                                <template v-if="scope.$row.is_file_ok || typeof scope.$row.is_file_ok === 'undefined'">
+                                    ${ get_memory_info(scope.$row) }
+                                </template>
+                                <template v-else>${ get_memory_info(scope.$row) }</template>
+                            </bt-table-column>
+                            <bt-table-column title="根目录" min-width="80px" v-slot="scope">
+                                <bt-link :title="scope.$row.path" @click="open_file_path(scope.$row.path)" :tips="scope.$row.path" />
+                            </bt-table-column>
+                            <bt-table-column title="备注" min-width="80px" v-slot="scope">
+                                <template v-if="scope.$row.is_file_ok || typeof scope.$row.is_file_ok === 'undefined'">
+                                    <bt-text cust-class="table-input" :block="true" v-model="scope.$row.ps" width="100%" placeholder="点击编辑内容，按回车或失去焦点自动保存"/>
+                                </template>
+                                <template v-else>当前项目域名不在配置文件中，请尝试修复项目</template>
+                            </bt-table-column>
+                            <bt-table-column title="SSL证书" width="80px" v-slot="scope">
+                                <template v-if="scope.$row.is_file_ok || typeof scope.$row.is_file_ok === 'undefined'">
+                                    <bt-link v-if="scope.$row.ssl === -1" :status="2"  title="未部署" tips="点击部署证书" @click="cut_project_tabs('ssl',scope.$row)"></bt-link>
+                                    <bt-link v-else-if="scope.$row.ssl.endtime" :status="(scope.$row.ssl.endtime<7?0:1)" :title="(scope.$row.ssl.endtime>0?('剩余'+ scope.$row.ssl.endtime +'天'):'已过期')" :tips="get_ssl_info(scope.$row)" @click="cut_project_tabs('ssl',scope.$row)"></bt-link>
+                                </template>
+                                <template v-else>--</template>
+                            </bt-table-column>
+                            <bt-table-column title="操作" width="120px" align="right" v-slot="scope">
+                                <template v-if="scope.$row.is_file_ok || typeof scope.$row.is_file_ok === 'undefined'">
+                                    <bt-link title="设置" @click="project_settings_view(scope.$row)"></bt-link> &nbsp;&nbsp;|&nbsp;&nbsp;
+                                    <bt-link title="删除" @click="delete_project_find(scope.$row)"></bt-link>
+                                </template>
+                                <template v-else>
+                                    <bt-link title="修复" @click="repair_project_find(scope.$row)"></bt-link> &nbsp;&nbsp;|&nbsp;&nbsp;
+                                    <bt-link title="删除" @click="delete_project_find(scope.$row)"></bt-link>
+                                </template>
+                            </bt-table-column>
+                        </bt-table>
+
+                        <!-- 添加JAVA对象 -->
+                        <bt-layer title="添加JAVA项目" v-model="addJavaView" area="620px" @close="close_add_java_project">
+                            <bt-java-form :config="{form:projectFormInfo,jdkList:jdkList,tomcatList:tomcatList}"></bt-java-form>
+                            <div class="bt-form-submit-btn">
+                                <bt-button type="danger" title="关闭" @click.native="addJavaView = false"></bt-button>
+                                <bt-button type="success" title="提交" @click.native="submit_form_info"></bt-button>
+                            </div>
+                        </bt-layer>
+
+                        <!-- JAVA管理 -->
+                        <bt-layer title="JDK管理" v-model="jdkManageView" :area="['480px','400px']" @close="jdkPathValue = ''">
+                            <bt-text width="300px" v-model="jdkPathValue" class-name="mr10" placeholder="请输入自定义JDK地址，或选择JDK路径"
+                                     icon="folder-open" @icon-event="select_path('add_load_jdk')"></bt-text>
+                            <bt-button type="success" title="添加JDK" class-name="mlr15 mr0"
+                                       @click="add_jdk_info"></bt-button>
+                            <div class="divtable mt10">
+                                <table class="table table-hover">
+                                    <thead>
+                                    <tr>
+                                        <th>JDK地址</th>
+                                        <th style="text-align:right;width:80px;">操作</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr v-for="(item,index) in jdkInfo" :key="index">
+                                        <td><span>${item[1]}</span></td>
+                                        <td style="text-align:right;">
+                                            <template v-if="item[0] === '自定义JDK'">
+                                                <bt-link title="删除" @click.native="delete_jdk_info(item,index)"/>
+                                            </template>
+                                            <template v-else>
+                                                <span>不可操作</span>
+                                            </template>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </bt-layer>
+
+                        <!-- Tomcat管理 -->
+                        <bt-layer title="Tomcat版本管理"  v-model="tomcatManageView" area="600px">
+                            <div class="box_item" v-for="(item,key) in tomcatInfo">
+                                <div class="box_title">${key}</div>
+                                <template v-if="item.status">
+                                    <div class="block">
+                                        <div class="status">
+                                            <div class="btn_item_block">
+                                                <span>当前状态：<bt-link :title="item.info.status?'运行中':'已停止'"
+                                                                    :status="item.info.status"
+                                                                    :icon="item.info.status?'play':'pause'"
+                                                                    @click="set_tomcat_service(item.version,item.info.status?'stop':'start')"/></span>
+                                            </div>
+                                            <div class="btn_item_block">
+                                                <span>端口：</span>
+                                                <span>${item.info.port}<bt-link title="更改"
+                                                                                @click="open_tomcat_port_view(item.version,item.info.port)"
+                                                                                class="ml5"/></span>
+                                            </div>
+                                            <div class="btn_item_block">
+                                                <span>JDK路径：</span>
+                                                <span>${item.info.jdk_path}</span>
+<!--                                                <bt-link title="更改"-->
+<!--                                                         @click="open_tomcat_jdk_view(item.tomcat_start,item.info.jdk_path)"-->
+<!--                                                         class="ml5"/>-->
+                                            </div>
+                                        </div>
+                                        <bt-button @click="set_tomcat_service(item.version)" title="启动"
+                                                   v-if="!item.info.status"></bt-button>
+                                        <bt-button @click="set_tomcat_service(item.version,'stop')" title="停止"
+                                                   v-if="item.info.status"></bt-button>
+                                        <bt-button @click="set_tomcat_service(item.version,'restart')"
+                                                   title="重载配置"></bt-button>
+                                        <bt-button style="margin-left: 15px" type="danger"
+                                                   @click="install_tomcat_version(item.version,'uninstall')"
+                                                   title="卸载"></bt-button>
+                                    </div>
+                                </template>
+                                <template v-else>
+                                    <div class="block"><span style="margin-right: 15px">当前版本未安装，点击安装后操作</span>
+                                        <bt-button size="xs" title="点击安装"
+                                                   @click="install_tomcat_version(item.version)"></bt-button>
+                                    </div>
+                                </template>
+                            </div>
+                        </bt-layer>
+
+                        <!-- 修改Tomcat端口 -->
+                        <bt-layer :title="'修改Tomcat'+ tomcatVersion + '-端口'" v-model="modifyTomcatPort" area="400px" >
+                            <div class="bt-form">
+                                <bt-line label="端口" label-width="80px">
+                                    <bt-text width="250px" v-model="tomcatPort" placeholder="请输入需要修改端口号，不可为空"/>
+                                </bt-line>
+                            </div>
+                            <div class="bt-form-submit-btn">
+                                <bt-button type="danger" title="关闭" @click.native="modifyTomcatPort = false"></bt-button>
+                                <bt-button type="success" title="提交" @click.native="modify_tomcat_port"></bt-button>
+                            </div>
+                        </bt-layer>
+
+                        <!--修改Tomcat JDk -->
+                        <bt-layer :title="'修改Tomcat' + tomcatVersion + '-JDK版本'" v-model="modifyTomcatJdk" area="400px">
+                            <div class="bt-form">
+                                <bt-line label="JDK地址" label-width="80px">
+                                    <bt-text width="230px" v-model="tomcatJdk" placeholder="请输入需要修改JDK路径，不可为空" icon="folder-open"
+                                             @icon-event="select_path('tomcat_jsk_path')"/>
+                                </bt-line>
+                            </div>
+                            <div class="bt-form-submit-btn">
+                                <bt-button type="danger" title="关闭" @click.native="modifyTomcatJdk = false"></bt-button>
+                                <bt-button type="success" title="提交" @click.native="modify_tomcat_jdk"></bt-button>
+                            </div>
+                        </bt-layer>
+
+                        <!-- 设置界面 -->
+                        <bt-layer :title="'JAVA项目管理-[ '+ projectInfo.name +' ]，添加时间['+ projectInfo.addtime +']'"
+                                  v-model="projectSettings"
+                                  :area="['780px','722px']"
+                                  class-name="pd0"
+                                  @close="close_project_settings" >
+                            <bt-tabs v-model="project_settings_model" :data="projectInfo" @change="cut_project_settings_model" :tab-refresh="true">
+                                <bt-tabs-pane label="项目信息" name="projectInformation" component="bt-java-form" :refresh="true" :config="{form:projectFormInfo,jdkList:jdkList,tomcatList:tomcatList}"></bt-tabs-pane>
+                                <bt-tabs-pane label="域名管理" name="domainManagement" component="bt-site-domain" :refresh="true"></bt-tabs-pane>
+                                <bt-tabs-pane label="外网映射" name="networkMapping" component="bt-site-network-mapping" :refresh="true"></bt-tabs-pane>
+                                <bt-tabs-pane label="伪静态" name="pseudoStatic"></bt-tabs-pane>
+                                <bt-tabs-pane label="配置文件" name="configurationFile"></bt-tabs-pane>
+                                <bt-tabs-pane label="Tomcat配置" name="tomcatConfig" v-if="projectInfo.project_config.java_type === 'neizhi' || projectInfo.project_config.java_type === 'duli'">
+                                    <p style="color: #666; margin-bottom: 7px">提示：Ctrl+F 搜索关键字，Ctrl+S 保存，Ctrl+H 查找替换</p>
+                                    <div class="bt-input-text ace_config_editor_scroll " id="tomcatConfig" style="height: 450px;line-height: 18px;font-size: 12px;"></div>
+                                    <bt-button type="success" title="保存配置" @click="save_tomcat_config" class="mt10"></bt-button>
+                                    <bt-help :list="[['此处为Tomcat配置文件,若您不了解配置规则,请勿随意修改']]" style="padding: 0"></bt-help>
+                                </bt-tabs-pane>
+                                <bt-tabs-pane label="SSL" name="ssl"></bt-tabs-pane>
+                                <bt-tabs-pane label="服务状态" name="serviceStatus" component="bt-site-service-status" :refresh="true"></bt-tabs-pane>
+                                <bt-tabs-pane label="负载状态" name="loadState"></bt-tabs-pane>
+                                <bt-tabs-pane label="项目日志" name="projectLog" component="bt-site-logs" :refresh="true"></bt-tabs-pane>
+                                <bt-tabs-pane label="网站日志" name="siteLog"></bt-tabs-pane>
+                                <bt-tabs-pane class="mask_module" :public="defalutTabView">
+                                    <div class="node_mask_module_text" v-if="project_settings_model !== 'loadState'">请开启<a href="javascript:;" class="btlink mapExtranet" @click="cut_project_tabs('networkMapping')"> 外网映射 </a>后查看</div>
+                                    <div class="node_mask_module_text" v-else>请<a href="javascript:;" class="btlink mapExtranet" @click="cut_project_tabs('serviceStatus')">启动项目服务</a>后查看</div>
+                                </bt-tabs-pane>
+                            </bt-tabs>
+                        </bt-layer>
+                        <div :class="{mask_layer:true,hide:!initialization}">
+                            <div class="prompt_description java-model"> <span>当前为未<a href="javascript:;" class="btlink" @click="jdk_manage_view">添加JDK</a>和<a href="javascript:;" class="btlink" @click="tomcat_manage_view">安装Tomcat</a></span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-con-block">
+                    <div id="bt_go_table"></div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
-
 {% block scripts %}
 <script type="text/javascript">
-  bt.set_cookie('sites_path', "{{session['config']['sites_path']}}");
-  bt.set_cookie('serverType', "{{session['webserver']}}");
-  var isSetup = "{{data['isSetup']}}" === 'True'?true:false
+	bt.set_cookie('sites_path', "{{session['config']['sites_path']}}");
+	bt.set_cookie('serverType', "{{session['webserver']}}");
+	var isSetup = "{{data['isSetup']}}" === 'True' ? true : false
 </script>
 <script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js?version={{g['version']}}"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/js/site.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/editor/ace.js?version={{g['version']}}" defer></script>
-<!-- 以下文件未来将被剔除 -->
-<script type="text/javascript" src="{{g.cdn_url}}/js/bootstrap-select.min.js" defer></script>
+<script type="text/javascript" src="{{g.cdn_url}}/editor/ace.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/bootstrap-select.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
 <script type="text/javascript">
-  if(isSetup) site.plugin_firewall()
+	if (isSetup) site.plugin_firewall()
 </script>
 {% endblock %}

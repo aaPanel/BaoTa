@@ -87,11 +87,11 @@ class bt_task:
     # 创建任务
     def create_task(self, task_name, task_type, task_shell, other=''):
         self.clean_log()
-        public.M(self.__table).add('name,type,shell,other,addtime,status',
+        task_id = public.M(self.__table).add('name,type,shell,other,addtime,status',
                                    (task_name, task_type, task_shell, other, int(time.time()), 0))
         public.WriteFile(self.__task_tips, 'True')
         public.ExecShell("/etc/init.d/bt start")
-        return True
+        return task_id
 
     # 修改任务
     def modify_task(self, id, key, value):
@@ -215,7 +215,19 @@ class bt_task:
             except:
                 print(public.get_error_info())
 
-
+    # 前端通过任务ID取某一个任务的日志
+    def get_task_log_by_id(self, get):
+        task_id = get.id
+        task_type = get.task_type
+        log_data = {}
+        if "num" in get:
+            num = int(get.num)
+            log_data = self.get_task_log(task_id, task_type, num)
+        else:
+            log_data = self.get_task_log(task_id, task_type)
+        task_obj = self.get_task_find(task_id)
+        log_data["status"] = task_obj["status"]
+        return log_data
 
     # 取任务执行日志
     def get_task_log(self, id, task_type, num=5):

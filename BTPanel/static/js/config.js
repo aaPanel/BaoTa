@@ -228,7 +228,7 @@ $('.open_two_verify_view').click(function(){
 						</div>\
 					</div>\
 					<div class="verify_tips">\
-						<p>提示：请使用“ 宝塔面板APP或Google身份验证器APP ”绑定,各大软件商店均可下载该APP，支持安卓、IOS系统。<a href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=37437" class="btlink" target="_blank">使用教程</a></p>\
+						<p>提示：请使用“ 宝塔面板APP或Google身份验证器APP ”绑定,各大软件商店均可下载该APP，支持安卓、IOS系统。<a href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=37437" ref="noreferrer" class="btlink" target="_blank">使用教程</a></p>\
 						<p style="color:red;">开启服务后，请立即使用“宝塔面板APP或Google身份验证器APP”绑定，以免出现无法登录的情况。</p>\
 					</div>\
 				</div>',
@@ -603,7 +603,7 @@ function GetPanelSSL(){
 				</div>\
 			</div>\
 			<ul class="help-info-text c7 pull-left">\
-				<li>粘贴您的*.key以及*.pem内容，然后保存即可<a href="http://www.bt.cn/bbs/thread-704-1-1.html" class="btlink" target="_blank">[帮助]</a>。</li>\
+				<li>粘贴您的*.key以及*.pem内容，然后保存即可<a href="http://www.bt.cn/bbs/thread-704-1-1.html" ref="noreferrer" class="btlink" target="_blank">[帮助]</a>。</li>\
 				<li>如果浏览器提示证书链不完整,请检查是否正确拼接PEM证书</li><li>PEM格式证书 = 域名证书.crt + 根证书(root_bundle).crt</li>\
 			</ul>\
 		</div>'

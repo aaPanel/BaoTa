@@ -333,6 +333,37 @@ class ajax:
     def get_load_average(self,get):
         data = public.M('load_average').dbfile('system').where("addtime>=? AND addtime<=?",(get.start,get.end)).field('id,pro,one,five,fifteen,addtime').order('id asc').select()
         return self.ToAddtime(data)
+
+
+    def get_process_tops(self,get):
+        '''
+            @name 获取进程开销排行
+            @author hwliang<2021-09-07>
+            @param get<dict_obj>{
+                start: int<开始时间>
+                end: int<结束时间>
+            }
+            @return list
+        '''
+        data = public.M('process_tops').dbfile('system').where("addtime>=? AND addtime<=?",(get.start,get.end)).field('id,process_list,addtime').order('id asc').select()
+        return self.ToAddtime(data)
+
+    
+    def get_process_cpu_high(self,get):
+        '''
+            @name 获取CPU占用高的进程列表
+            @author hwliang<2021-09-07>
+            @param get<dict_obj>{
+                start: int<开始时间>
+                end: int<结束时间>
+            }
+            @return list
+        '''
+        data = public.M('process_high_percent').dbfile('system').where("addtime>=? AND addtime<=?",(get.start,get.end)).field('id,name,pid,cmdline,cpu_percent,memory,cpu_time_total,addtime').order('id asc').select()
+        return self.ToAddtime(data)
+
+
+
     
     
     def ToAddtime(self,data,tomem = False):
@@ -351,6 +382,8 @@ class ajax:
             for i in range(length):
                 try:
                     data[i]['addtime'] = time.strftime('%m/%d %H:%M',time.localtime(float(data[i]['addtime'])))
+                    if 'process_list' in data[i]:
+                        data[i]['process_list'] = json.loads(data[i]['process_list'])
                     if tomem and data[i]['mem'] > 100: data[i]['mem'] = data[i]['mem'] / mPre
                     if tomem in [None]:
                         if type(data[i]['down_packets']) == str:
@@ -503,10 +536,11 @@ class ajax:
                 session['updateInfo'] = updateInfo
                 
             #检查是否需要升级
-            if updateInfo['is_beta'] == 1:
-                if updateInfo['beta']['version'] ==session['version']: return public.returnMsg(False,updateInfo)
-            else:
-                if updateInfo['version'] ==session['version']: return public.returnMsg(False,updateInfo)
+            if not hasattr(get,'toUpdate'):
+                if updateInfo['is_beta'] == 1:
+                    if updateInfo['beta']['version'] == session['version']: return public.returnMsg(False,updateInfo)
+                else:
+                    if updateInfo['version'] == session['version']: return public.returnMsg(False,updateInfo)
             
             
             #是否执行升级程序 
@@ -519,11 +553,10 @@ class ajax:
                 public.downloadFile(updateInfo['downUrl'],'panel.zip')
                 if os.path.getsize('panel.zip') < 1048576: return public.returnMsg(False,"PANEL_UPDATE_ERR_DOWN")
                 public.ExecShell('unzip -o panel.zip -d ' + setupPath + '/')
-                import compileall
                 if os.path.exists('/www/server/panel/runserver.py'): public.ExecShell('rm -f /www/server/panel/*.pyc')
                 if os.path.exists('/www/server/panel/class/common.py'): public.ExecShell('rm -f /www/server/panel/class/*.pyc')
                 
-                if os.path.exists('panel.zip'):os.remove("panel.zip")
+                if os.path.exists('panel.zip'): os.remove("panel.zip")
                 session['version'] = updateInfo['version']
                 if 'getCloudPlugin' in session: del(session['getCloudPlugin'])
                 if updateInfo['is_beta'] == 1: self.to_beta()
@@ -542,7 +575,6 @@ class ajax:
             return public.returnMsg(True,updateInfo)
         except Exception as ex:
             return public.get_error_info()
-            return public.returnMsg(False,"CONNECT_ERR")
          
     #检查是否安装任何
     def CheckInstalled(self,get):
@@ -806,7 +838,6 @@ class ajax:
             import panelPlugin
             get.sName = "phpmyadmin"
             v = panelPlugin.panelPlugin().get_soft_find(get)
-            public.writeFile("/tmp/2",str(v["ext"]["phpversion"]))
             # apache配置
             ssl_conf = '''Listen 887
 <VirtualHost *:887>

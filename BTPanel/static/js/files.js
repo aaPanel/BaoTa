@@ -504,6 +504,7 @@ var bt_file = {
                     num = 0;
                 if (speed == undefined) speed = 200
                 var s_time = (that.splitEndTime - that.splitStartTime) / 1000;
+                console.log(s_time)
                 that.timerSpeed = (that.fileSize / s_time).toFixed(2)
                 that.updateedSizeLast = that.uploadedSize
                 if (that.timerSpeed < 2) return;
@@ -1302,6 +1303,7 @@ var bt_file = {
             item.type_tips = item.type == 'file' ? '文件' : '目录';
             that.file_groud_event(item);
         });
+        // 文件搜索
         $('.replace_content').on('click', function() {
             that.replace_content_view()
         })
@@ -2145,7 +2147,7 @@ var bt_file = {
           index = $(el).data('index'),
           _openTitle = '打开',
           data = that.file_list[index],
-          compression = ['zip', 'rar', 'gz', 'war', 'tgz', 'bz2'],
+          compression = ['zip', 'rar', 'gz', 'war', 'tgz', 'bz2','7z'],
           offsetNum = 0,
           config = {
             open:_openTitle,
@@ -2383,7 +2385,7 @@ var bt_file = {
     determine_file_type: function(ext, type) {
         var config = {
                 images: ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'tiff', 'ico', 'JPG', 'webp'],
-                compress: ['zip', 'rar', 'gz', 'war', 'tgz'],
+                compress: ['zip', 'rar', 'gz', 'war', 'tgz','7z'],
                 video: ['mp4', 'mp3', 'mpeg', 'mpg', 'mov', 'avi', 'webm', 'mkv', 'mkv', 'mp3', 'rmvb', 'wma', 'wmv'],
                 ont_text: ['iso', 'xlsx', 'xls', 'doc', 'docx', 'tiff', 'exe', 'so', '7z', 'bz', 'dmg', 'apk', 'pptx', 'ppt', 'xlsb', 'pdf']
             },
@@ -2491,6 +2493,7 @@ var bt_file = {
             case 'tar_gz': // 压缩gzip文件
             case 'rar': // 压缩rar文件
             case 'zip': // 压缩zip文件
+            case '7z': // 压缩zip文件
                 this.compress_file_or_dir(data);
                 break;
             case 'unzip':
@@ -2648,288 +2651,217 @@ var bt_file = {
     },
 
     /**
-     * @description 文件内容替换
+     * @description 文件内容搜索替换
      * @return void
      */
     replace_content_view: function() {
         layer.open({
-            title:  '文件内容替换',
-            type:1,
-            skin:'replace_content_view',
-            area:['795px','482px'],
-            closeBtn:2,
-            content:'<div class="replace_content_view">\
-                <div class="tab-nav mlr20">\
-                    <span class="on">查找</span><span>替换</span>\
-                </div>\
-                <div id="check_content" class="bt-form" style="height: 330px;padding: 20px 20px 0;">\
-                    <div class="line">\
-                        <span class="tname">查找</span>\
-                        <div class="info-r">\
-                            <input name="checkContentValue" id="checkContentValue" class="bt-input-text mr5" type="text" placeholder="请输入查找的文件内容，可点击右侧图标选择筛查方式" style="width:390px">\
-                            <div class="file_search_config">\
-                                <input type="checkbox" class="file_search_checked" id="outInfoOption" name="outInfoOption">\
-                                <label class="laberText" for="outInfoOption">输出行信息</label>\
-                            </div>\
-                            <button class="btn btn-default btn-sm" onclick="bt_file.searchContent()" style="width: 75px;background-color: #10952a;color: #fff;">查找</button>\
-                        </div>\
-                    </div>\
-                    <div class="line">\
-                        <span class="tname">文件类型</span>\
-                        <div class="info-r">\
-                            <input name="checkFileExtsType" id="checkFileExtsType" class="bt-input-text mr5" type="text" value="php,html" style="width:390px">\
-                        </div>\
-                    </div>\
-                    <div class="line seniorOption" style="display: none;">\
-                        <span class="tname"></span>\
-                        <div class="info-r">\
-                            <div class="checkbox_config">\
-                                <input type="checkbox" class="file_search_checked" id="regularMatch" name="regularMatch">\
-                                <label class="laberText" for="regularMatch">正则模式</label>\
-                            </div>\
-                            <div class="checkbox_config">\
-                                <input type="checkbox" class="file_search_checked" id="allMatch" name="allMatch">\
-                                <label class="laberText" for="allMatch">全词匹配</label>\
-                            </div>\
-                            <div class="checkbox_config">\
-                                <input type="checkbox" class="file_search_checked" id="distinguishCase" name="distinguishCase">\
-                                <label class="laberText" for="distinguishCase">不区分大小写</label>\
-                            </div>\
-                        </div>\
-                    </div>\
-                    <div class="line">\
-                        <span class="tname">目录</span>\
-                        <div class="info-r">\
-                            <input class="bt-input-text mr5" type="text" style="width:390px" id="checkContentPath">\
-                            <div class="file_search_config">\
-                                <input type="checkbox" class="file_search_checked" id="checkHasChild" name="checkHasChild">\
-                                <label class="laberText" for="checkHasChild">包含子目录</label>\
-                            </div>\
-                            <span class="glyphicon cursor mr5 glyphicon-folder-open" onclick="bt.select_path(\'checkContentPath\')"></span>\
-                        </div>\
-                    </div>\
-                    <div class="line">\
-                        <span class="tname"></span>\
-                        <div class="info-r">\
-                            <button class="btn btn-default btn-sm seniorOptionBtn" style="width: 75px;" id="seniorOptionBtn" data="false">高级选项</button>\
-                        </div>\
-                    </div>\
-                    <div class="line fileOutContent"></div>\
-                </div>\
-                <div id="replace_content" class="bt-form pd20" style="height: 300px;display:none;">\
-                    <div class="line">\
-                        <span class="tname">查找</span>\
-                        <div class="info-r">\
-                            <input id="replaceContentValue" class="bt-input-text mr5" type="text" placeholder="请输入查找的文件内容，可点击右侧图标选择筛查方式" style="width:390px">\
-                            <div class="file_search_config">\
-                                <input type="checkbox" class="file_search_checked" id="outInfoOptionRe" name="outInfoOptionRe">\
-                                <label class="laberText" for="outInfoOptionRe">输出行信息</label>\
-                            </div>\
-                            <button class="btn btn-default btn-sm" onclick="bt_file.searchReplaceContent()" style="width: 75px;background-color: #10952a;color: #fff;">查找</button>\
-                        </div>\
-                    </div>\
-                    <div class="line">\
-                        <span class="tname">文件类型</span>\
-                        <div class="info-r">\
-                            <input name="replaceFileExtsType" id="replaceFileExtsType" class="bt-input-text mr5" type="text" value="php,html" style="width:390px">\
-                        </div>\
-                    </div>\
-                    <div class="line seniorOptionRe" style="display: none;">\
-                        <span class="tname"></span>\
-                        <div class="info-r">\
-                            <div class="checkbox_config">\
-                                <input type="checkbox" class="file_search_checked" id="regularMatchRe" name="regularMatchRe">\
-                                <label class="laberText" for="regularMatchRe">正则模式</label>\
-                            </div>\
-                            <div class="checkbox_config">\
-                                <input type="checkbox" class="file_search_checked" id="allMatchRe" name="allMatchRe">\
-                                <label class="laberText" for="allMatchRe">全词匹配</label>\
-                            </div>\
-                            <div class="checkbox_config">\
-                                <input type="checkbox" class="file_search_checked" id="distinguishCaseRe" name="distinguishCaseRe">\
-                                <label class="laberText" for="distinguishCaseRe">不区分大小写</label>\
-                            </div>\
-                        </div>\
-                    </div>\
-                    <div class="line">\
-                        <span class="tname">替换</span>\
-                        <div class="info-r">\
-                            <input id="replaceFileValue" class="bt-input-text mr5" type="text" placeholder="请输入替换的内容" style="width:390px">\
-                            <button class="btn btn-default btn-sm" style="width: 75px;background-color: #10952a;color: #fff;" onclick="bt_file.replaceContentFn()">替换</button>\
-                        </div>\
-                    </div>\
-                    <div class="line">\
-                        <span class="tname"></span>\
-                        <div class="info-r" style="height:17px;">\
-                            <span style="color: red;">替换内容可能导致程序无法正常运行，请确保替换内容正确，如果替换出错，请查看<a style="color:green;">备份文件</a></span>\
-                        </div>\
-                    </div>\
-                    <div class="line">\
-                        <span class="tname">目录</span>\
-                        <div class="info-r">\
-                            <input class="bt-input-text mr5" type="text" style="width:390px" id="replaceContentPath">\
-                            <div class="file_search_config">\
-                                <input type="checkbox" class="file_search_checked" id="replaceHasChild" name="replaceHasChild">\
-                                <label class="laberText" for="replaceHasChild">包含子目录</label>\
-                            </div>\
-                            <span class="glyphicon cursor mr5 glyphicon-folder-open" onclick="bt.select_path(\'replaceContentPath\')"></span>\
-                        </div>\
-                    </div>\
-                    <div class="line">\
-                        <span class="tname"></span>\
-                        <div class="info-r">\
-                            <button class="btn btn-default btn-sm seniorOptionReplaceBtn" style="width: 75px;" id="seniorOptionReplaceBtn" data="false">高级选项</button>\
-                            <button class="btn btn-default btn-sm" style="width: 75px;" onclick="bt_file.replaceContentLog()">操作日志</button>\
-                        </div>\
-                    </div>\
-                    <div class="line reFileOutContent"></div>\
-                </div>\
-            </div>',
+            title: '文件内容查找',
+            type: 1,
+            skin: 'replace_content_view',
+            area: '700px',
+            zIndex:19900,
+            closeBtn: 2,
+            content: '<div class="replace_content_box" style="padding:20px 40px">' +
+                '<div class="replace_content_line">' +
+                    '<span class="tname">查找</span>' +
+                    '<div class="info-r">' +
+                    '<input class="bt-input-text" id="replaceContentValue" AUTOCOMPLETE="off" type="text" placeholder="请输入查找的文件内容" style="width:486px">' +
+                    '<i class="history_search iconfont icon-xiala"></i>'+
+                    '<button class="normalBtnStyle checkBtn" onClick="bt_file.searchReplaceContent()" style="vertical-align: top; ">查找</button>' +
+                    '<ul class="history_search_list hide"></ul>'+
+                    '</div>' +
+                '</div>' +
+                '<div class="replace_content_line">' +
+                    '<span class="tname">类型</span>' +
+                    '<div class="info-r">' +
+                    '<input name="replaceFileExtsType" id="replaceFileExtsType" class="bt-input-text" placeholder="例：php,html" type="text" value="html,php" style="width:570px">' +
+                    '</div>' +
+                '</div>' +
+                '<div class="replace_content_line" style="margin-bottom: 10px;">' +
+                    '<span class="tname">目录</span>' +
+                    '<div class="info-r">' +
+                        '<input class="bt-input-text" value="'+bt_file.file_path+'" type="text" style="width:570px" id="replaceContentPath">' +
+                        '<div class="file_path_switch replaceHasChild">' +
+                        '<i class="file_find_checkbox"></i>'+
+                        '<span class="laberText">包含子目录</span>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="replace_content_line">' +
+                    '<span class="tname">模式</span>' +
+                    '<div class="info-r matchModel">' +
+                        '<div>' +
+                            '<div class="checkbox_config normalModel">' +
+                            '<i class="file_find_radio active"></i>'+
+                            '<span class="laberText">普通</span>' +
+                            '</div>' +
+                            '<div class="checkbox_config regularMatchRe">' +
+                            '<i class="file_find_radio"></i>'+
+                            '<span class="laberText">正则</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div>' +
+                            '<div class="checkbox_config allMatchRe hide_option">' +
+                            '<i class="file_find_checkbox"></i>'+
+                            '<span class="laberText">全词匹配</span>' +
+                            '</div>' +
+                            '<div class="checkbox_config distinguishCaseRe">' +
+                            '<i class="file_find_checkbox"></i>'+
+                            '<span class="laberText">不区分大小写</span>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="line match_container">'+
+                    '<div class="header">'+
+                    '<div class="tips-title matchRresult"></div>'+
+                    '</div>'+
+                    '<div class="main matchContent_main"><div style="color: #bcbcbc; font-size: 16px; text-align: center;line-height: 35px;">键入查找内容以在文件中查询</br><span style="font-size:14px">尝试查找选项能让范围缩小</span></div></div>'+
+                '</div>'+
+                '<span class="glyphicon cursor mr5 glyphicon-folder-open" onClick="bt.select_path(\'replaceContentPath\')"></span>' +
+            '</div>',
             success:function(){
-            }
-        });
-        $(".replace_content_view").on('click', '.tab-nav span', function() {
-            var index = $(this).index();
-            $(this).addClass('on').siblings().removeClass('on');
-            if (index == 0) {
-                $("#check_content").show();
-                $("#replace_content").hide();
-            } else {
-                $("#replace_content").show();
-                $("#check_content").hide();
-            }
-        });
-        $('#seniorOptionBtn').on('click', function() {
-            var temp = $(this).attr('data')
-            $(this).attr('data', temp == 'false' ? 'true':'false')
-            if(temp == 'false') {
-                $('.seniorOption').show()
-                $('.seniorOptionBtn').css({
-                    'background-color': '#10952a',
-                    'color': '#fff',
-                    'border-color': '#398439'
-                })
-            } else {
-                $('.seniorOption').hide()
-                $('.seniorOptionBtn').css({
-                    'background-color': '#fff',
-                    'color': '#555',
-                    'border-color': '#ccc'
-                })
-            }
-        })
-        $('#seniorOptionReplaceBtn').on('click', function() {
-            var temp = $(this).attr('data')
-            $(this).attr('data', temp == 'false' ? 'true':'false')
-            if(temp == 'false') {
-                $('.seniorOptionRe').show()
-                $('.seniorOptionReplaceBtn').css({
-                    'background-color': '#10952a',
-                    'color': '#fff',
-                    'border-color': '#398439'
-                })
-            } else {
-                $('.seniorOptionRe').hide()
-                $('.seniorOptionReplaceBtn').css({
-                    'background-color': '#fff',
-                    'color': '#555',
-                    'border-color': '#ccc'
-                })
-            }
-        })
-    },
-    //text 搜索内容
-    searchContent: function() {
-        var data = {
-            text: $('#checkContentValue').val(),
-            exts: $("#checkFileExtsType").val(),    //参数例子 php,html
-            path: $('#checkContentPath').val(),                             //路径
-            is_subdir: !$('#checkHasChild').prop('checked') ? '0' : '1',    //不包含子目录 1 包含子目录
-            mode: !$('#regularMatch').prop('checked') ? '0' : '1',          //为普通模式 1 为正则模式
-            isword: !$('#allMatch').prop('checked') ? '0' : '1',            //全词匹配 0 默认
-            iscase: !$('#distinguishCase').prop('checked') ? '0' : '1',     //不区分大小写 0 默认
-            noword: !$('#outInfoOption').prop('checked') ? '0' : '1'        //不输出行信息 0 默认
-        }
-        this.$http('files_search',data,function(res) {
-            if(res.error) {
-                layer.msg(res.error, { icon: 2 })
-            } else {
-                if($('#outInfoOption').prop('checked') == true) {
-                    var html = ''
-                    for(var i = 0; i < res.length; i++) {
-                        html += '<div>'+ i + '：' + res[i] +'</div>'
+                //单选、复选框按钮事件
+                $('.checkbox_config,.file_path_switch').click(function(e){
+                    if(e.target.localName == 'i' || e.target.localName == 'span'){
+                        var is_radio = $(this).find('i').hasClass('file_find_radio'),i_box = $(this).find('i');
+                        if(is_radio){//是否单选
+                            i_box.addClass('active').parent('div').siblings().find('i').removeClass('active');
+                            if($(this).find('.laberText').text() == '普通'){
+                                $('.hide_option').removeClass('hide')
+                            }else{  //正则模式下取消全词匹配
+                                $('.hide_option').addClass('hide').find('i').removeClass('active')
+                            }
+                        }else{//是否复选
+                            if(i_box.hasClass('active')){
+                                i_box.removeClass('active')
+                            }else{
+                                i_box.addClass('active')
+                            }
+                        }
                     }
-                    $('.fileOutContent').html(html)
-                }
+                })
+                // 历史输入
+                $('.history_search').click(function(e){
+                    var list = JSON.parse(bt.get_cookie('file_search_list')),h_html = '';
+                    if($.type(list) === 'undefined' || list == null){
+                        h_html = '<span style=" padding: 5px 10px; ">暂无记录</span>';
+                        $('.history_search_list').html(h_html).removeClass('hide');
+                    }else{
+                        $('.history_search_list').empty();
+                        $.each(list,function(index,item){
+                            $('.history_search_list').append($('<li></li>').attr('data-key',item).text(item)).removeClass('hide')
+                        })
+                    }
+                    $(document).one('click', function() {
+                        $('.history_search_list').addClass('hide');
+                        e.stopPropagation();
+                    });
+                    e.stopPropagation();
+                })
+                //选择历史输入
+                $('.history_search_list').on('click','li',function(){
+                    $('#replaceContentValue').val($(this).data('key'));
+                    $('.history_search_list').addClass('hide');
+                })
             }
         })
     },
-    //text 替换搜索内容
+    /**
+     * @description 文件内容搜索結果
+     * @returns void
+     */
     searchReplaceContent: function() {
-        var data = {
-            text: $('#replaceContentValue').val(),
-            exts: $("#replaceFileExtsType").val(),     //参数例子 php,html
-            path: $('#replaceContentPath').val(),     //路径
-            is_subdir: !$('#replaceHasChild').prop('checked') ? '0' : '1',    //不包含子目录 1 包含子目录
-            mode: !$('#regularMatchRe').prop('checked') ? '0' : '1',          //为普通模式 1 为正则模式
-            isword: !$('#allMatchRe').prop('checked') ? '0' : '1',            //全词匹配 0 默认
-            iscase: !$('#distinguishCaseRe').prop('checked') ? '0' : '1',     //不区分大小写 0 默认
-            noword: !$('#outInfoOptionRe').prop('checked') ? '0' : '1'        //不输出行信息 0 默认
-        }
-        this.$http('files_search',data,function(res) {
-            if(res.error) {
-                layer.msg(res.error, { icon: 2 })
-            } else {
-                if($('#outInfoOptionRe').prop('checked') == true) {
-                    var html = ''
-                    for(var i = 0; i < res.length; i++) {
-                        html += '<div>'+ i + '：' + res[i] +'</div>'
-                    }
-                    $('.reFileOutContent').html(html)
-                }
+        var that = this,
+            file_num = 0,    //文件数量
+            match_num = 0,   //文件内查询到的数量
+            match_file_html = '',
+            data = {
+                text: $('#replaceContentValue').val(),
+                exts: $("#replaceFileExtsType").val() || 'html,php',
+                path: $('#replaceContentPath').val(),     //路径
+                is_subdir: !$('.replaceHasChild').find('i').hasClass('active') ? '0' : '1',    //0不包含子目录 1 包含子目录
+                mode: !$('.regularMatchRe').find('i').hasClass('active') ? '0' : '1',          //为普通模式 1 为正则模式
+                isword: !$('.allMatchRe').find('i').hasClass('active') ? '0' : '1',            //全词匹配 0 默认
+                iscase: !$('.distinguishCaseRe').find('i').hasClass('active') ? '0' : '1',     //不区分大小写 0 默认
+                noword: '0'        //不输出行信息 0 默认
             }
-        })
-    },
-    //text 文件内容替换
-    replaceContentFn: function() {
-        var data = {
-            text: $('#replaceContentValue').val(),
-            is_subdir: !$('#replaceHasChild').prop('checked') ? '0' : '1',    //不包含子目录 1 包含子目录
-            rtext: $('#replaceFileValue').val(),                              //替换内容
-            exts: $("#replaceFileExtsType").val(),                            //参数例子 php,html
-            path: $('#replaceContentPath').val(),                             //路径
-            mode: !$('#regularMatchRe').prop('checked') ? '0' : '1',          //为普通模式 1 为正则模式
-            isword: !$('#allMatchRe').prop('checked') ? '0' : '1',            //全词匹配 0 默认
-            iscase: !$('#distinguishCaseRe').prop('checked') ? '0' : '1',     //不区分大小写 0 默认
-            noword: !$('#outInfoOptionRe').prop('checked') ? '0' : '1'        //不输出行信息 0 默认
-        }
-        this.$http('files_replace', data,function(res) {
-
-        })
-    },
-    //text 文件内容操作日志
-    replaceContentLog: function() {
-        this.$http('get_replace_logs', {},function(res) {
-            layer.open({
-                type:1,
-                title: '文件内容替换日志',
-                area: ['700px','490px'],
-                shadeClose:false,
-                closeBtn:2,
-                content:'<div class="setchmod bt-form  pb70">\
-                        <pre class="crontab-log" style="overflow: auto; border: 0 none; line-height:23px;padding: 15px; margin: 0;white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0;"></pre>\
-                            <div class="bt-form-submit-btn" style="margin-top: 0">\
-                            <button type="button" class="btn btn-danger btn-sm btn-title" id="clearLogs" style="margin-right:15px;">'+ lan['public']['empty'] +'</button>\
-                            <button type="button" class="btn btn-success btn-sm btn-title" onclick="layer.closeAll()">'+ lan['public']['close'] +'</button>\
-                        </div>\
-                    </div>',
-                success:function(){
-                    var log_body = res.msg.data === '' ? '当前日志为空': res.msg.data, res = $(".setchmod pre"),crontab_log = $('.crontab-log')[0]
-                    setchmod.text(log_body);
-                    crontab_log.scrollTop = crontab_log.scrollHeight;
+        this.$http('files_search',data,function(res) {
+            var reg = new RegExp("("+that.escodeChange(data.text)+")");
+            if(res.error) return layer.msg(res.error, {icon: 2});
+            if (data.text.indexOf('\n') < 0 && data.text != '') that.setSearchHistoryList(data.text);   //设置搜索历史列表
+            if($.isEmptyObject(res)){
+                $('.replace_content_view .matchContent_main').html('<div style=" color: #bcbcbc; font-size: 16px; text-align: center; ">沒有搜索到任何数据</div>')
+                $('.matchRresult').html('')
+                return
+            }
+            $.each(res,function(fileName,item){
+                file_num++;
+                var contentNum = Object.keys(item).length
+                match_file_html+='<div class="match_content_item" data-file="'+fileName+'">'+
+                        '<div class="match_content_title">'+
+                            '<span class="match_result_file_title" title="'+fileName+'&nbsp;&nbsp;(匹配'+contentNum+'次)"><i class="glyphicon glyphicon-triangle-bottom"></i>'+fileName+'&nbsp;&nbsp;(匹配'+contentNum+'次)</span>'+
+                            '<a class="btlink pull-right editFile" data-filename="'+fileName+'">编辑</a>'+
+                        '</div>'+
+                        '<div class="match_result_file_content matchShow">'
+                $.each(item,function(index,lineItem){
+                    match_num++
+                    var html = $('<div></div>').text(lineItem.trim()).html().replace(reg,'<i style="font-weight: bold">'+ $('<div></div>').text(data.text).html() +'</i>')
+                    match_file_html += '<div class="match_result_detail"><span style="font-weight: bold">行'+index+'</span>:&nbsp;&nbsp;&nbsp;&nbsp;'+html+'</div>';
+                })
+                match_file_html+= '</div></div>'
+            })
+            $('.matchRresult').html('查找结果：在<span style="font-weight: bold;">'+ file_num +'</span>个文件中有<span style="color: #20a53a;">'+ match_num +'</span>个匹配项')
+            $('.matchContent_main').html(match_file_html);
+            // 隐藏显示内容
+            $('.matchContent_main .match_result_file_title').click(function(e){
+                var parent_box = $(this).parents('.match_content_item'),
+                    is_icon_top = $(this).find('i').hasClass('glyphicon-triangle-top')   //是否图标向上（未打开）
+                if(is_icon_top){
+                    parent_box.find('.match_result_file_content').addClass('matchShow')
+                    $(this).find('i').removeClass('glyphicon-triangle-top').addClass('glyphicon-triangle-bottom')
+                }else{
+                    $(this).find('i').removeClass('glyphicon-triangle-bottom').addClass('glyphicon-triangle-top')
+                    parent_box.find('.match_result_file_content').removeClass('matchShow')
                 }
+                e.stopPropagation()
+            })
+            //编辑跳转
+            $('.editFile').click(function(){
+                openEditorView(0,$(this).data('filename'),function(val,aceEitor){
+                    aceEitor.ace.find(data.text)
+                    aceEitor.ace.execCommand('find')
+                })
             })
         })
+    },
+    /**
+     * @description 设置搜索历史列表
+     * @param {String} text 查找的文本
+     * @returns void
+     */
+    setSearchHistoryList:function(text){
+        var h_cookie = JSON.parse(bt.get_cookie('file_search_list'));
+        if($.type(h_cookie) === 'undefined' || h_cookie == null){
+            bt.set_cookie('file_search_list', JSON.stringify([text]))
+        }else{
+            if($.inArray(text,h_cookie) != -1) return true;   //如果已在列表中则跳过
+            h_cookie.unshift(text)   //数组首位添加查找内容
+            if(h_cookie.length > 7) h_cookie.pop()   //超过7位时删除最后一条搜索记录
+            bt.set_cookie('file_search_list', JSON.stringify(h_cookie))
+        }
+    },
+    /**
+     * @description 转义查找输入的内容特殊字符
+     * @param {String} e 查找的内容
+     * @returns 返回转义结果
+     */
+    escodeChange:function(e){
+        if(/(\+|\-|\$|\||\!|\(|\)|\{|\}|\[|\]|\^|\”|\~|\*|\?|\:|\\)/g.test(e)){
+            e = e.replace(/(\+|\-|\$|\||\!|\(|\)|\{|\}|\[|\]|\^|\”|\~|\*|\?|\:|\\)/g,'\\$1').replace(/&/g, "&amp;").replace(/\>/g, "&gt;").replace(/\</g, "&lt;");
+        }
+        return e
     },
     /**
      * @description 回收站视图

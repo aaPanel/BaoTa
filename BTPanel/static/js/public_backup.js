@@ -10,6 +10,18 @@ var bt = {
     var reg = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d{1,2})?$/;
     return reg.test(ip);
   },
+  // 验证域名列表
+  check_domain_list:function(domainInfo){
+    var domainList = domainInfo.trim().replace(' ','').split("\n");
+    for (var i = 0; i < domainList.length; i++){
+      var item = domainList[i];
+      if(!bt.check_domain(item)){
+        bt.msg({status:false,msg:'第+'+ (i+1) +'行[ '+ item +' ]域名格式错误'});
+        return false;
+      }
+    }
+    return domainList;
+  },
   check_url: function (url) //验证url
   {
     var reg = /^((https|http|ftp|rtsp|mms)?:\/\/)[^\s]+/;
@@ -38,6 +50,7 @@ var bt = {
     var reg = /\w[-\w.+]*@([A-Za-z0-9][-A-Za-z0-9]+\.)+[A-Za-z]{2,14}/;
     return reg.test(email);
   },
+  
   check_phone: function (phone) {
     var reg = /^1(3|4|5|6|7|8|9)\d{9}$/;
     return reg.test(phone);
@@ -81,6 +94,11 @@ var bt = {
       }
     }
     return 1; //版本正常
+  },
+  // url合成
+  url_merge:function(url){
+    var origin = window.location.origin;
+    return (cdn_url !== '/static'?cdn_url:origin + cdn_url) + url +'?version='+panel_version + '&repair=' + update_code
   },
   replace_all: function (str, old_data, new_data) {
     var reg_str = "/(" + old_data + "+)/g"
@@ -305,7 +323,9 @@ var bt = {
       exp.setTime(exp.getTime() + Days * 24 * 60 * 60 * 1000);
       time = exp.toGMTString();
     }
-    document.cookie = key + "=" + escape(val) + ";expires=" + time;
+    var is_https = window.location.protocol == 'https:'
+    var samesite = ';Secure; Path=/; SameSite=None'
+    document.cookie = key + "=" + escape(val) + ";expires=" + time + (is_https?samesite:'');
   },
   get_cookie: function (key) {
     var arr, reg = new RegExp("(^| )" + key + "=([^;]*)(;|$)");
@@ -996,13 +1016,13 @@ var bt = {
         case 'TEXTAREA':
         case 'INPUT':
         case 'BUTTON':
-
           if (btn.prop("tagName") == 'BUTTON' || btn.attr("type") == 'checkbox') {
             btn.click(function () {
+
               var _obj = $(this).data('item');
               var load = $(this).data('load');
               var _callback = $(this).data('callback');
-              var parent = $(this).parents('.bt-form');
+              var parent = $(this).parents('.bt-form').length === 0?$(this).parents('.bt-w-con'):$(this).parents('.bt-form');
 
               if (_obj.callback) {
 
@@ -1018,6 +1038,7 @@ var bt = {
                     }
                   }
                 })
+                console.log(data)
                 _obj.callback(data, load, function (rdata) {
                   if (_callback) _callback(rdata);
                 });
@@ -2046,6 +2067,17 @@ bt.recycle_bin = {
               }
             }
           }
+          for (var i = 0; i < rdata.dirs.length; i++) {
+            if (type == 6 && bt.contains(rdata.dirs[i].name, 'BTDB_')) {
+              data.push(rdata.dirs[i]);
+            } else {
+              if (type == 4 && bt.check_img(rdata.dirs[i].name)) {
+                data.push(rdata.dirs[i]);
+              } else if (type == 5 && !bt.check_img(rdata.dirs[i].name)) {
+                data.push(rdata.dirs[i]);
+              }
+            }
+          }
           break;
         default:
           data = rdata.dirs.concat(rdata.files);
@@ -2190,7 +2222,7 @@ bt.files = {
 
     }
   },
-  get_files: function (Path, searchV, callback) {
+  get_files: function (Path, searchV, callback,sort) {
     var searchtype = Path;
     if (isNaN(Path)) {
       var p = '1';
@@ -2202,11 +2234,13 @@ bt.files = {
     if (searchV.length > 1 && searchtype == "1") {
       search = "&search=" + searchV;
     }
+    sort_str = ''
+    if(sort) sort_str = '&sort=' + sort + "&reverse=True";
     var showRow = bt.get_cookie('showRow');
     if (!showRow) showRow = '500';
     var totalSize = 0;
     var loadT = bt.load(lan['public'].the);
-    bt.send('get_files', 'files/GetDir', 'tojs=GetFiles&p=' + p + '&showRow=' + showRow + search + '&path=' + Path, function (rdata) {
+    bt.send('get_files', 'files/GetDir', 'tojs=GetFiles&p=' + p + '&showRow=' + showRow + search + '&path=' + Path + sort_str, function (rdata) {
       loadT.close();
       //bt.set_cookie('Path',rdata.PATH);
       if (callback) callback(rdata);
@@ -2322,7 +2356,7 @@ bt.files = {
   },
   del_file: function (path, callback) {
     bt.confirm({
-      msg: lan.get('recycle_bin_confirm', [fileName]),
+      msg: lan.get('recycle_bin_confirm', [path]),
       title: lan.files.del_file
     }, function () {
       loading = bt.load(lan['public'].the);
@@ -2335,7 +2369,7 @@ bt.files = {
   },
   del_dir: function (path, callback) {
     bt.confirm({
-      msg: lan.get('recycle_bin_confirm_dir', [fileName]),
+      msg: lan.get('recycle_bin_confirm_dir', [path]),
       title: lan.files.del_file
     }, function () {
       loading = bt.load(lan['public'].the);
@@ -4002,6 +4036,14 @@ bt.soft = {
         if (callback) callback(rdata);
       })
     },
+    get_wx_order_status: function (wxoid, callback) {
+      bt.send('get_wx_order_status', 'auth/get_wx_order_status', {
+        wxoid: wxoid,
+        kf: ($('.libPay-kf-input').prop('checked') ? 1 : 0)
+      }, function (rdata) {
+        if (callback) callback(rdata);
+      })
+    },
     get_re_order_status: function (callback) {
       bt.send('get_re_order_status', 'auth/get_re_order_status', {}, function (rdata) {
         if (callback) callback(rdata);
@@ -4215,6 +4257,7 @@ bt.soft = {
           that.pay_loading.init('end')
           // 防止浏览器过低
           $('.libPay-view .layui-layer-content').removeAttr('style')
+          $('.libPay-view .layui-layer-page,.libPay-view .layui-layer-content').height(650);
           //客服电话咨询
           $('.libPay-line-item.prokf').click(function (ev) {
             if ($(this).find('i').hasClass('active')) {
@@ -4549,8 +4592,8 @@ bt.soft = {
     clearInterval(bt.soft.pub.wxpayTimeId);
 
     function intervalFun() {
-      if (config.pid) {
-        that.pro.get_plugin_coupon(config.pid, callback);
+      if (config.wxoid) {
+        that.pro.get_wx_order_status(config.wxoid, callback);
       } else {
         that.pro.get_re_order_status(callback);
       }
@@ -5154,6 +5197,17 @@ bt.soft = {
       num: 10,
       filename: "/tmp/panelShell.pl"
     }, function (rdata) {
+      var msg_lines = rdata.msg.trim().split("\n")
+      if(msg_lines[msg_lines.length -1] === 'Successify'){
+        layer.closeAll();
+        if(soft){
+          soft.get_list();
+          setTimeout(function () {
+            bt.msg({status:true,msg:'安装成功！'});
+          }, 500)
+        }
+        return false;
+      }
       if ($("#install_show").length < 1) return;
       if (rdata.status === true) {
         $("#install_show").text(rdata.msg);
@@ -5449,7 +5503,14 @@ bt.soft = {
           }
           bt.soft.input_package(data.name, data.tmp_path, data);
         },
-        end: function () {
+        btn2:function(){
+          bt.send('close_install', 'plugin/close_install', {
+            plugin_name: data.name
+          }, function (rdata) {
+            console.log(rdata)
+          })
+        },
+        cancel:function(){
           bt.send('close_install', 'plugin/close_install', {
             plugin_name: data.name
           }, function (rdata) {
@@ -5843,7 +5904,7 @@ bt.soft = {
           offset: '20%',
           closeBtn: 2,
           area: '700px',
-          title: '' + title,
+          title: '<img style="width: 24px;margin-right: 5px;margin-left: -10px;margin-top: -3px;" src="/static/img/soft_ico/ico-'+name+'.png" />' + title,
           content: rhtml.replace('"javascript/text"', '"text/javascript"'),
           success: function () {
             if (rhtml.indexOf('CodeMirror') != -1) {
@@ -6710,6 +6771,7 @@ bt.site = {
     if (data.path) {
       //iis导入证书
     } else {
+      console.log(data)
       var loadT = bt.load(lan.site.saving_txt);
       bt.send('SetSSL', 'site/SetSSL', {
         type: 1,
@@ -7763,5 +7825,94 @@ var form_group = {
         $(this).prev().attr('checked', 'checked');
       }
     });
+  },
+}
+
+var dynamic = {
+  loadList:[],
+  fileFunList:{},
+  load:false,
+  callback:null,
+  
+  // 初始化执行
+  execution:function(){
+    for (let i = 0; i < this.loadList.length; i++) {
+      let fileName = this.loadList[i];
+      if(fileName in this.fileFunList) this.fileFunList[fileName]()
+    }
+  },
+  
+  /**
+   * @description 动态加载js,css文件
+   * @param url {string|array} 文件路径或文件数组
+   * @param fn {function|undefined} 回调函数
+   */
+  require:function (url,fn,config){
+    var urlList = url,total = 0,num = 0,that = this;
+    if(!Array.isArray(url)) urlList = [url];
+    total = urlList.length;
+    this.load = true;
+    this.fileFunList = {};
+    function createElement(url){
+      let element = null;
+      if(url.indexOf('.js') > -1){
+        element = document.createElement('script')
+        element.type = 'text/javascript'
+        element.src = bt.url_merge('/vue/' + url)
+      }else if(url.indexOf('.css') > -1){
+        element = document.createElement('link')
+        element.rel = 'stylesheet'
+        element.href = bt.url_merge('/vue/' + url)
+      }
+      return element
+    }
+    for (var i = 0; i < urlList.length; i++) {
+      var item = urlList[i],dirArray = item.split('/'),filName = dirArray[dirArray.length -1].split('.')[0]
+      if(this.loadList.indexOf(filName) > -1) break;
+      this.loadList.push(filName);
+      (function(url){
+        let element = createElement(url);
+        if(element.readyState){
+          element.onreadystatechange = function(ev){
+            if( element.readyState === 'loaded' || element.readyState === 'complete' ){
+              element.onreadystatechange = null
+              num ++;
+              if(total === num){
+                that.execution()
+                if(fn){
+                  fn.call(that)
+                }
+                that.load = false;
+              }
+            }
+          };
+        }else{
+          element.onload = function(ev){
+            that.loadList[filName] = that.fn
+            num ++;
+            if(total === num){
+              that.execution()
+              if(fn){
+                fn.call(that)
+              }
+              that.load = false;
+            }
+          }
+        }
+        document.getElementsByTagName('head')[0].appendChild(element);
+      }(item))
+    }
+  },
+  /**
+   * @default 执行延迟文件内容执行
+   * @param fileName {string} 文件名称，不要加文件后缀
+   * @param callback {function} 回调行数
+   */
+  delay:function delay(fileName,callback){
+    if(!this.load){
+      callback()
+      return false
+    }
+    this.fileFunList[fileName] = callback
   }
 }

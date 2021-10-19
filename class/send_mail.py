@@ -131,9 +131,9 @@ class send_mail:
                 msg['To']=formataddr(email)
             msg['Subject'] = title
             if int(self.__qq_mail_user['port']) == 465:
-                server = smtplib.SMTP_SSL(str(self.__qq_mail_user['hosts']), str(self.__qq_mail_user['port']))
+                server = smtplib.SMTP_SSL(str(self.__qq_mail_user['hosts']), str(self.__qq_mail_user['port']),timeout=5)
             else:
-                server = smtplib.SMTP(str(self.__qq_mail_user['hosts']), str(self.__qq_mail_user['port']))
+                server = smtplib.SMTP(str(self.__qq_mail_user['hosts']), str(self.__qq_mail_user['port']),timeout=5)
             server.login(self.__qq_mail_user['qq_mail'], self.__qq_mail_user['qq_stmp_pwd'])
             if type(email)==str:
                 server.sendmail(self.__qq_mail_user['qq_mail'], [email.strip()], msg.as_string())

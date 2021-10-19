@@ -868,7 +868,7 @@ export PATH
             panel_path = self._panel_path,
             log_path = public.get_logs_path(),
             url = 'http://127.0.0.1:{}'.format(project_find['project_config']['port']),
-            host = '127.0.0.1',
+            host = '$host',
             listen_ports = listen_ports,
             ssl_config = ssl_config
         )

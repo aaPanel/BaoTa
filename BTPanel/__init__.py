@@ -42,6 +42,7 @@ if not hooks:
 # import db
 dns_client = None
 app.config['DEBUG'] = os.path.exists('data/debug.pl')
+app.config['SSL'] = os.path.exists('data/ssl.pl')
 
 # 设置BasicAuth
 basic_auth_conf = 'config/basic_auth.json'
@@ -66,6 +67,13 @@ app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'BT_:'
 app.config['SESSION_COOKIE_NAME'] = public.md5(app.secret_key)
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 30
+if app.config['SSL']:
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['SESSION_COOKIE_SECURE'] = True
+else:
+    app.config['SESSION_COOKIE_SAMESITE'] = None
+
+    
 Session(app)
 
 import common
@@ -185,6 +193,10 @@ def request_check():
             
         if not public.is_bind():
             return redirect('/bind',302)
+        
+        if not request.path in ['/config']:
+            if session.get('password_expire',False):
+                return redirect('/modify_password',302)
 
 
 # Flask 请求结束勾子
@@ -207,13 +219,29 @@ def error_404(e):
 <head><title>404 Not Found</title></head>
 <body>
 <center><h1>404 Not Found</h1></center>
-<hr><center>server</center>
+<hr><center>nginx</center>
 </body>
 </html>'''
     headers = {
         "Content-Type": "text/html"
     }
     return Response(errorStr, status=404, headers=headers)
+
+
+# Flask 403页面勾子
+@app.errorhandler(403)
+def error_403(e):
+    errorStr = '''<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<center><h1>403 Forbidden</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>'''
+    headers = {
+        "Content-Type": "text/html"
+    }
+    return Response(errorStr, status=403, headers=headers)
 
 
 # Flask 500页面勾子
@@ -299,6 +327,15 @@ def bind():
     g.title = '请先绑定宝塔帐号'
     return render_template('bind.html', data=data)
 
+
+@app.route('/modify_password', methods=method_get)
+def modify_password():
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    # if not session.get('password_expire',False): return redirect('/',302)
+    data = {}
+    g.title = '密码已过期，请修改!'
+    return render_template('modify_password.html', data=data)
 
 
 
@@ -761,7 +798,8 @@ def config(pdata=None):
     'getFpmConfig', 'setFpmConfig', 'setPHPMaxTime', 'syncDate', 'setPHPDisable', 'SetControl',
     'ClosePanel', 'AutoUpdatePanel', 'SetPanelLock', 'return_mail_list', 'del_mail_list', 'add_mail_address',
     'user_mail_send', 'get_user_mail', 'set_dingding', 'get_dingding', 'get_settings', 'user_stmp_mail_send',
-    'user_dingding_send','get_login_send','set_login_send','set_empty','clear_login_send','get_login_log','login_ipwhite'
+    'user_dingding_send','get_login_send','set_login_send','set_empty','clear_login_send','get_login_log','login_ipwhite',
+    'set_ssl_verify','get_ssl_verify','get_password_config','set_password_expire','set_password_safe'
     )
     return publicObject(config.config(), defs, None, pdata)
 
@@ -777,7 +815,7 @@ def ajax(pdata=None):
             'check_user_auth', 'to_not_beta', 'get_beta_logs', 'apple_beta', 'GetApacheStatus', 'GetCloudHtml',
             'get_load_average', 'GetOpeLogs', 'GetFpmLogs', 'GetFpmSlowLogs', 'SetMemcachedCache', 'GetMemcachedStatus',
             'GetRedisStatus', 'GetWarning', 'SetWarning', 'CheckLogin', 'GetSpeed', 'GetAd', 'phpSort', 'ToPunycode',
-            'GetBetaStatus', 'SetBeta', 'setPHPMyAdmin', 'delClose', 'KillProcess', 'GetPHPInfo', 'GetQiniuFileList',
+            'GetBetaStatus', 'SetBeta', 'setPHPMyAdmin', 'delClose', 'KillProcess', 'GetPHPInfo', 'GetQiniuFileList','get_process_tops','get_process_cpu_high',
             'UninstallLib', 'InstallLib', 'SetQiniuAS', 'GetQiniuAS', 'GetLibList', 'GetProcessList', 'GetNetWorkList',
             'GetNginxStatus', 'GetPHPStatus', 'GetTaskCount', 'GetSoftList', 'GetNetWorkIo', 'GetDiskIo', 'GetCpuIo',
             'CheckInstalled', 'UpdatePanel', 'GetInstalled', 'GetPHPConfig', 'SetPHPConfig')
@@ -834,7 +872,7 @@ def ssl(pdata=None):
             'DelToken', 'GetToken', 'GetUserInfo', 'GetOrderList', 'GetDVSSL', 'Completed', 'SyncOrder',
             'download_cert', 'set_cert', 'cancel_cert_order','ApplyDVSSL','apply_cert_order_pay',
             'get_order_list', 'get_order_find', 'apply_order_pay', 'get_pay_status', 'apply_order', 'get_verify_info',
-            'get_verify_result', 'get_product_list', 'set_verify_info',
+            'get_verify_result', 'get_product_list', 'set_verify_info','renew_cert_order',
             'GetSSLInfo', 'downloadCRT', 'GetSSLProduct', 'Renew_SSL', 'Get_Renew_SSL')
     get = get_input()
 
@@ -855,7 +893,7 @@ def task(pdata=None):
     if comReturn: return comReturn
     import panelTask
     toObject = panelTask.bt_task()
-    defs = ('get_task_lists', 'remove_task', 'get_task_find')
+    defs = ('get_task_lists', 'remove_task', 'get_task_find', "get_task_log_by_id")
     result = publicObject(toObject, defs, None, pdata)
     return result
 
@@ -937,7 +975,7 @@ def download():
                          cache_timeout=0)
 
 
-@app.route('/cloud', methods=method_get)
+@app.route('/cloud', methods=method_all)
 def panel_cloud():
     # 从对像存储下载备份文件接口
     comReturn = comm.local()
@@ -962,6 +1000,35 @@ def panel_cloud():
         if download_url.find("ftp") != 0: download_url = "ftp://" + download_url
     else:
         if download_url.find('http') != 0: download_url = 'http://' + download_url
+    
+    if "toserver" in get and get.toserver=="true":
+        download_dir = "/tmp/"
+        if "download_dir" in get:
+            download_dir = get.download_dir
+        local_file = os.path.join(download_dir, get.name)
+        
+        input_from_local = False
+        if "input_from_local" in get:
+            input_from_local = True if get.input_from_local == "true" else False
+        
+        if input_from_local:
+            if os.path.isfile(local_file):
+                return {
+                    "status": True,
+                    "msg": "文件已存在，将优先从本地恢复。",
+                    "task_id": -1,
+                    "local_file": local_file
+                }
+        from panelTask import bt_task
+        task_obj = bt_task()
+        task_id = task_obj.create_task('下载文件', 1, download_url, local_file)
+        return {
+            "status": True,
+            "msg": "下载任务创建成功。",
+            "local_file": local_file,
+            "task_id": task_id
+        }
+    
     return redirect(download_url)
 
 
@@ -1037,6 +1104,7 @@ def login():
                     os.remove(sess_file)
                 except:
                     pass
+            g.dologin = True
             return redirect(login_path)
 
     if is_auth_path:
@@ -1048,6 +1116,7 @@ def login():
                 referer_path = referer_tmp[-2]
             if route_path != '/' + referer_path:
                 return render_template('autherr.html')
+                # return error_403(None)
 
     session['admin_auth'] = True
     comReturn = common.panelSetup().init()
@@ -1059,7 +1128,8 @@ def login():
 
     if request.method == method_get[0]:
         result = userlogin.userlogin().request_get(get)
-        if result: return result
+        if result:             
+            return result
         data = {}
         data['lan'] = public.GetLan('login')
         data['hosts'] = '[]'
@@ -1222,16 +1292,10 @@ def down(token=None, fname=None):
 
 @app.route('/public', methods=method_all)
 def panel_public():
-    # 小程序控制接口
     get = get_input()
-    try:
-        import panelWaf
-        panelWaf_data = panelWaf.panelWaf()
-        if panelWaf_data.is_sql(get.__dict__): return 'ERROR'
-        if panelWaf_data.is_xss(get.__dict__): return 'ERROR'
-    except:
-        pass
-    
+    if len("{}".format(get.__dict__)) > 1024 * 32:
+        return 'ERROR'
+
     #获取ping测试
     if 'get_ping' in get:
         try:
@@ -1245,35 +1309,21 @@ def panel_public():
             return public.getJson(result),json_header
         except:
             return public.returnJson(False,public.get_error_info())
-
-    if len("{}".format(get.__dict__)) > 1024 * 32:
-        return 'ERROR'
-
+    
     get.client_ip = public.GetClientIp()
     num_key = get.client_ip + '_wxapp'
     if not public.get_error_num(num_key, 10):
         return public.returnMsg(False, '连续10次认证失败，禁止1小时')
     if not hasattr(get, 'name'): get.name = ''
-    if not hasattr(get, 'fun'): return abort(404)
-    if not public.path_safe_check("%s/%s" % (get.name, get.fun)): return abort(404)
-    if get.fun in ['scan_login', 'login_qrcode', 'set_login', 'is_scan_ok', 'blind', 'static']:
-        if get.fun == 'static':
-            if not 'filename' in get: return abort(404)
-            if not public.path_safe_check("%s" % (get.filename)): return abort(404)
-            s_file = '/www/server/panel/BTPanel/static/' + get.filename
-            if s_file.find('..') != -1 or s_file.find('./') != -1: return abort(404)
-            if not os.path.exists(s_file): return abort(404)
-            return send_file(s_file, conditional=True, add_etags=True)
-
+    if not hasattr(get, 'fun'): return abort(403)
+    if not public.path_safe_check("%s/%s" % (get.name, get.fun)): return abort(403)
+    if get.fun in ['login_qrcode', 'is_scan_ok','set_login']:
         # 检查是否验证过安全入口
-        if get.fun in ['login_qrcode', 'is_scan_ok']:
-            global admin_check_auth, admin_path, route_path, admin_path_file
-            if admin_path != '/bt' and os.path.exists(admin_path_file) and not 'admin_auth' in session:
-                return 'False'
-
+        global admin_check_auth, admin_path, route_path, admin_path_file
+        if admin_path != '/bt' and os.path.exists(admin_path_file) and not 'admin_auth' in session:
+            return abort(403)
         #验证是否绑定了设备
-        if not get.fun in ['blind']:
-            if not public.check_app('app'):return public.returnMsg(False,'未绑定用户!')
+        if not public.check_app('app'):return public.returnMsg(False,'未绑定用户!')
         import wxapp
         pluwx = wxapp.wxapp()
         checks = pluwx._check(get)
@@ -1282,42 +1332,28 @@ def panel_public():
             return public.getJson(checks), json_header
         data = public.getJson(eval('pluwx.' + get.fun + '(get)'))
         return data, json_header
-    if get.name != 'app': return abort(404)
-    if not public.check_app('wxapp'): return public.returnMsg(False, '未绑定用户!')
-    import panelPlugin
-    plu = panelPlugin.panelPlugin()
-    get.s = '_check'
-    checks = plu.a(get)
-    if type(checks) != bool or not checks:
-        public.set_error_num(num_key)
-        return public.getJson(checks), json_header
-    get.s = get.fun
-    comm.setSession()
-    comm.init()
-    comm.checkWebType()
-    comm.GetOS()
-    result = plu.a(get)
-    # session.clear()
-    public.set_error_num(num_key, True)
-    return public.getJson(result), json_header
+    else:
+        return abort(404)
 
 
 @app.route('/favicon.ico', methods=method_get)
 def send_favicon():
     # 图标
+    comReturn = comm.local()
+    if comReturn: return abort(404)
     s_file = '/www/server/panel/BTPanel/static/favicon.ico'
     if not os.path.exists(s_file): return abort(404)
     return send_file(s_file, conditional=True, add_etags=True)
 
 
-@app.route('/service_status', methods=method_get)
-def service_status():
-    # 检查面板当前状态
-    try:
-        if not 'login' in session: session.clear()
-    except:
-        pass
-    return 'True'
+# @app.route('/service_status', methods=method_get)
+# def service_status():
+#     # 检查面板当前状态
+#     try:
+#         if not 'login' in session: session.clear()
+#     except:
+#         pass
+#     return 'True'
 
 
 @app.route('/coll', methods=method_all)
@@ -1825,7 +1861,16 @@ def is_login(result):
             result = make_response(result)
             request_token = public.GetRandomString(48)
             session['request_token'] = request_token
-            result.set_cookie('request_token', request_token, max_age=86400 * 30)
+            samesite = app.config['SESSION_COOKIE_SAMESITE']
+            secure = app.config['SESSION_COOKIE_SECURE']
+            if app.config['SSL'] and request.full_path.find('/login?tmp_token=') == 0:
+                samesite = 'None'
+                secure = True
+            result.set_cookie('request_token', request_token, 
+            max_age=86400 * 30,
+            samesite= samesite,
+            secure=secure
+            )
     return result
 
 

@@ -377,7 +377,8 @@ class panelPlugin:
             # 标记一次重新加载插件
             reload_file = os.path.join(self.__panel_path,'data/{}.pl'.format(input_plugin_name))
             public.writeFile(reload_file,'')
-
+            pluginInfo = self.__get_plugin_find(input_plugin_name)
+            public.httpPost(public.GetConfigValue('home') + '/api/panel/plugin_total',{"pid":pluginInfo['id'],'p_name':input_plugin_name},3)
             return public.returnMsg(True,'{}成功!'.format(opts[input_install_opt]))
         
         # 安装失败清理安装文件？
@@ -918,6 +919,7 @@ class panelPlugin:
         if not softList or force:
             softList = Plugin(False).get_plugin_list(force)
             cache.set(skey,softList,3600)
+            self.clean_panel_log()
         sType = 0
         try:
             if hasattr(get,'type'): sType = int(get['type'])
@@ -1239,7 +1241,8 @@ class panelPlugin:
             
             softList['list'] = self.check_isinstall(softList['list'])
             for val in softList['list']:
-                if val['setup']: soft_list_tmp.append(val)
+                if 'setup' in val:
+                    if val['setup']: soft_list_tmp.append(val)
             softList['list'] = soft_list_tmp
             softList['list'] = self.get_page(softList['list'],get)
         else:

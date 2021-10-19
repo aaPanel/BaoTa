@@ -1,7 +1,8 @@
+var backupListAll = [],siteListAll = [],databaseListAll = [];
+
 var crontab = {
 	typeTips: {site: '备份网站', database: '备份数据库', logs: '切割日志', path: '备份目录', webshell: '查杀站点'},
 	crontabForm:{name: '',type: '',where1: '',hour: '',minute: '',week: '',sType: '',sBody: '',sName: '',backupTo: '',save: '',sBody: '',urladdress:'',save_local: '',notice: '',notice_channel: ''},
-	backupList: [],
 	editForm:false,
 	crontabFormConfig: [{
 		label: '任务类型',
@@ -23,8 +24,14 @@ var crontab = {
 			],
 			unit: '<span style="margin-top: 9px; display: inline-block;"><i style="color: red;font-style: initial;font-size: 12px;margin-right: 5px">*</i>任务类型包含以下部分：Shell脚本、备份网站、备份数据库、日志切割、释放内存、访问URL、备份目录、木马查杀、同步时间</span>',
 			change: function (formData, element, that) {
-				var config = crontab.crontabsType(crontab.crontabFormConfig.concatObject(),formData,that)
+			    that.data.type = 'week'   //默认类型为每星期
+				var config = crontab.crontabsType(arryCopy(crontab.crontabFormConfig),formData,that)
 				that.$again_render_form(config)
+				var arry = ['site','database','logs','webshell'];
+				if(arry.indexOf(formData.sType) > -1){
+				    $('[data-name="sName"] li:eq(1)').click()
+		            that.$replace_render_content(3)
+				}
 			}
 		}
 	},{
@@ -106,33 +113,7 @@ var crontab = {
 			name: 'sName',
 			width: '150px',
 			placeholder: '无站点数据',
-			list: {
-				url: '/crontab?action=GetDataList',
-				data: {type: 'sites'},
-				dataFilter: function (res) {
-					var arry = [{title: '所有', value: 'ALL'}];
-					for (var i = 0; i < res.data.length; i++) {
-						var item = res.data[i]
-						arry.push({title: item.name + ' [ ' + item.ps + ' ]', value: item.name});
-					}
-					if (arry.length === 1) arry = []
-					return arry;
-				},
-				success: function (res, that, config) {
-					var arry = [{title: '服务器磁盘', value: 'localhost'}], nameForm = that.config.form[1],
-						value = res.data[0] ? res.data[0].name : '', typeVal = that.config.form[0].group.value
-					for (var i = 0; i < res.orderOpt.length; i++) {
-						var item = res.orderOpt[i]
-						arry.push({title: item.name, value: item.value})
-					}
-					$.extend(config.group[2], {disabled: false, list: arry})
-					nameForm.group.value = that.data.name || (crontab.typeTips[that.config.form[0].group.value] + (value ? '[ ' + (typeVal === 'logs' ? '所有' : value) + ' ]' : ''))
-					config.group[0].value = (typeVal === 'logs' ? 'ALL' : value)
-					that.$local_refresh('backupTo', config.group[2])
-					that.$local_refresh('name', nameForm.group)
-					if (value === '') that.$local_refresh('submitForm', $.extend(that.config.form[8].group, {disabled: true}))
-				}
-			},
+			list: siteListAll,
 			change: function (formData, element, that) {
 				var nameForm = that.config.form[1]
 				nameForm.group.value = crontab.typeTips[formData.sType] + '[ ' + (formData.sName === 'ALL' ? '所有' : formData.sName) + ' ]'
@@ -160,11 +141,11 @@ var crontab = {
 			label: '备份到',
 			width: '150px',
 			placeholder: '无存储信息',
-			disabled: true,
 			value:'localhost',
-			list: [],
+			list: backupListAll,
 			change:function(formData, element, that){
 				that.config.form[3].group[2].value = formData.backupTo;
+				that.config.form[3].group[3].value = formData.save;
 				that.config.form[3].group[4].display = formData.backupTo !== "localhost"?true:false;
 				that.$replace_render_content(3)
 			}
@@ -183,7 +164,7 @@ var crontab = {
 			name: 'save_local',
 			display: false,
 			style:{"margin-top":"7px"},
-			value:'0',
+			value:1,
 			title:'同时保留本地备份（和云存储保留份数一致）',
 			event: function (formData, element, that) {
 				that.config.form[3].group[4].value = !formData.save_local?'0':'1';
@@ -310,9 +291,7 @@ var crontab = {
 				'min-height': '130px',
 				'line-height': '22px',
 				'padding-top': '10px',
-				'resize': 'both',
-				'max-width': '600px',
-				'max-height': '160px'
+				'resize': 'both'
 			},
 			placeholder: '请输入脚本内容'
 		}
@@ -342,7 +321,7 @@ var crontab = {
 			name: 'submitForm',
 			title: '添加任务',
 			event: function (formData,element,that) {
-				formData['save_local'] = that.config.form[3].group[4].value;
+				formData['save_local'] = that.config.form[3].group[4].value.toString();
 				that.submit(formData)
 			}
 		}
@@ -354,14 +333,15 @@ var crontab = {
 	 * @param {}
 	 */
 	crontabsType:function (config,formData,that){
-		config[4].group[1].name = 'notice_channel'
+		config[4].group[1].name = 'notice_channel';
+		config[3].group[2].list = backupListAll;
+		config[2].group[0].value = 'week';
 		switch (formData.sType) {
 			case 'toShell':
 				break;
 			case 'database':
-				config[3].group[0].placeholder = '无数据库数据'
-				config[3].group[0].list.data.type = 'databases'
-				config[5].display = false
+				config[3].group[0].placeholder = '无数据库数据';
+				config[5].display = false;
 			case 'logs':
 				if (formData.sType === 'logs') {
 					config[2].group[0].value = 'day'
@@ -377,19 +357,7 @@ var crontab = {
 					config[3].group[0].display = false
 					config[3].group[1].display = true
 					config[3].group[2].disabled = false
-					config[3].group[2].list = {
-						url: '/crontab?action=GetDataList',
-						data: {type: 'sites'},
-						dataFilter: function (res) {
-							var arry = [{title: '服务器磁盘', value: 'localhost'}]
-							for (var i = 0; i < res.orderOpt.length; i++) {
-								var item = res.orderOpt[i]
-								arry.push({title: item.name, value: item.value})
-							}
-							crontab.backupList = res
-							return arry;
-						}
-					}
+					config[3].group[2].list = backupListAll
 				}
 			case 'webshell':
 				if (formData.sType === 'webshell') {
@@ -406,6 +374,7 @@ var crontab = {
 					config[5].display = false
 				}
 			case 'site':
+			    config[3].group[0].list = siteListAll;
 				config[3].label = crontab.typeTips[formData.sType]
 				if (formData.sType !== 'path') config[1].group.disabled = true // 禁用任务名称，不允许修改
 				config[3].display = true // 显示备份网站操作模块
@@ -447,6 +416,7 @@ var crontab = {
 				config[6].display = true
 				break;
 		}
+		if(formData.sType === 'database') config[3].group[0].list = databaseListAll;
 		config[0].group.value = formData.sType
 		return config
 	},
@@ -493,36 +463,41 @@ var crontab = {
 		return bt_tools.form({
 			el:'#crontabForm',
 			'class': 'crontab_form',
-			form: crontab.crontabFormConfig.concatObject(),
+			form: arryCopy(crontab.crontabFormConfig),
 			submit:function (formData){
-				var form = $.extend(true,{},_that.crontabForm)
+				var form = $.extend(true,{},_that.crontabForm),_where1 = $('input[name=where1]'),_hour = $('input[name=hour]'),_minute = $('input[name=minute]');
 				$.extend(form, formData)
 				if (form.name === '') {
 					bt.msg({status: false, msg: '计划任务名称不能为空！'})
 					return false
 				}
-				if($('input[name=where1]').length > 0){
-					if($('input[name=where1]').val() > 31 || $('input[name=where1]').val() < 1 || $('input[name=where1]').val() == ''){
-						$('input[name=where1]').focus();
+				if(_where1.length > 0){
+					if(_where1.val() > 31 || _where1.val() < 1 || _where1.val() == ''){
+						_where1.focus();
 						layer.msg('请输入正确的周期范围[1-31]',{icon:2});
 						return false;
 					}
 				}
-				if($('input[name=hour]').length > 0){
-					if($('input[name=hour]').val() > 23 || $('input[name=hour]').val() < 0 || $('input[name=hour]').val() == ''){
-						$('input[name=hour]').focus();
+				if(_hour.length > 0){
+					if(_hour.val() > 23 || _hour.val() < 0 || _hour.val() == ''){
+						_hour.focus();
 						layer.msg('请输入正确的周期范围[0-23]',{icon:2});
 						return false;
 					}
 				}
-				if($('input[name=minute]').length > 0){
-					if($('input[name=minute]').val() > 59 || $('input[name=minute]').val() < 0 || $('input[name=minute]').val() == ''){
-						$('input[name=minute]').focus();
+				if(_minute.length > 0){
+					if(_minute.val() > 59 || _minute.val() < 0 || _minute.val() == ''){
+						_minute.focus();
 						layer.msg('请输入正确的周期范围[0-59]',{icon:2});
 						return false;
 					}
 				}
-
+				switch(form.type){
+					case "minute-n":
+						form.where1 = form.minute
+						form.minute = '';
+						break;
+				}
 				switch (form.sType) {
 					case 'syncTime':
 						if (form.sType === 'syncTime') form.sType = 'toShell'
@@ -564,17 +539,29 @@ var crontab = {
 	 * @description 获取计划任务存储列表
 	 * @param {function} callback 回调函数
 	 */
-	getDataList:function (callback){
+	getDataList:function (type,callback){
+	    if($.type(type) === 'function') callback = type,type = 'sites'
 		bt_tools.send({
 			url: '/crontab?action=GetDataList',
-			data: {type: 'sites'}
+			data: {type:type}
 		}, function (res) {
-			var arry = [{title: '服务器磁盘', value: 'localhost'}];
+			var backupList = [{title: '服务器磁盘', value: 'localhost'}];
 			for (var i = 0; i < res.orderOpt.length; i++) {
 				var item = res.orderOpt[i]
-				arry.push({title: item.name, value: item.value})
+				backupList.push({title: item.name, value: item.value})
 			}
-			crontab.backupList = arry
+			backupListAll = backupList
+            var siteList = [{title: '所有', value: 'ALL'}];
+            for (var i = 0; i < res.data.length; i++) {
+                var item = res.data[i]
+                siteList.push({title: item.name + ' [ ' + item.ps + ' ]', value: item.name});
+            }
+            if (siteList.length === 1) siteList = []
+            if(type === 'sites'){
+                siteListAll = siteList
+            }else{
+                databaseListAll = siteList
+            }
 			if (callback) callback(res)
 		}, '获取存储配置');
 	},
@@ -713,8 +700,8 @@ var crontab = {
 					title: "备份到",
 					width: 120,
 					template: function (row, index) {
-						for (var i = 0; i < _that.backupList.length; i++) {
-							var item = _that.backupList[i]
+						for (var i = 0; i < backupListAll.length; i++) {
+							var item = backupListAll[i]
 							if (item.value === row.backupTo){
 								if(row.sType === 'toShell') return '<span>--</span>';
 								return '<span>' + item.title + '</span>'
@@ -754,7 +741,7 @@ var crontab = {
 										url: '/crontab?action=get_crond_find',
 										data: {id:row.id}
 									}, function (rdata) {
-										var formConfig = crontab.crontabFormConfig.concatObject(),
+										var formConfig = arryCopy(crontab.crontabFormConfig),
 											form = $.extend(true,{},_that.crontabForm),
 											cycle = {};
 										for (var keys in form) {
@@ -777,7 +764,7 @@ var crontab = {
 												cycle = {where1:'',hour:rdata.where1,minute:rdata.where_minute}
 												break;
 											case 'minute-n':
-												cycle = {where1:'',hour:'',minute:rdata.where_minute}
+												cycle = {where1:'',hour:'',minute:rdata.where1}
 												break;
 											case 'week':
 												formConfig[2].group[1].value = rdata.where1
@@ -813,11 +800,12 @@ var crontab = {
 												break
 										}
 										formConfig[0].group.disabled = true
-										formConfig[1].group.disabled = false
+										formConfig[1].group.disabled = true
 										formConfig[3].group[0].disabled = true
 										formConfig[8].group.title = '保存编辑'
 										form.name = form.name.replace(/\[(.*)]/,'[ '+ form.sName +' ]')
 										delete formConfig[0].group.unit
+										
 										bt_tools.form({
 											el: '#editCrontabForm',
 											'class': 'crontab_form',
@@ -873,6 +861,9 @@ var crontab = {
 													layer.close(indexs)
 													_that.crontabTabel.$refresh_table_list(true);
 												}, '编辑计划任务')
+											},
+											success:function(){
+											    console.log('ddd')
 											}
 										})
 									}, '获取计划配置信息')
@@ -1266,9 +1257,10 @@ var crontab = {
 	 */
 	init:function (){
 		var that = this;
-		this.addCrontabForm = this.addCrontabForm()
 		this.getDataList(function (){
+		    that.addCrontabForm = that.addCrontabForm()
 			that.crontabTabel = that.crontabTabel()
+			that.getDataList('databases');
 		})
 		function resizeTable(){
 			var height = window.innerHeight - 690,table = $('#crontabTabel .divtable');

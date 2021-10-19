@@ -350,36 +350,36 @@ def writeFile(filename,s_body,mode='w+'):
 
 def WriteLog(type,logMsg,args=(),not_web = False):
     #写日志
-    #try:
-    import time,db,json
-    username = 'system'
-    uid = 1
-    tmp_msg = ''
-    if not not_web:
-        try:
-            from BTPanel import session
-            if 'username' in session:
-                username = session['username']
-                uid = session['uid']
-                if session.get('debug') == 1: return
-        except:
-            pass
-    global _LAN_LOG
-    if not _LAN_LOG:
-        _LAN_LOG = json.loads(ReadFile('BTPanel/static/language/' + GetLanguage() + '/log.json'))
-    keys = _LAN_LOG.keys()
-    if logMsg in keys:
-        logMsg = _LAN_LOG[logMsg]
-        for i in range(len(args)):
-            rep = '{'+str(i+1)+'}'
-            logMsg = logMsg.replace(rep,args[i])
-    if type in keys: type = _LAN_LOG[type]
-    sql = db.Sql()
-    mDate = time.strftime('%Y-%m-%d %X',time.localtime())
-    data = (uid,username,type,logMsg + tmp_msg,mDate)
-    result = sql.table('logs').add('uid,username,type,log,addtime',data)
-    #except:
-        #pass
+    try:
+        import time,db,json
+        username = 'system'
+        uid = 1
+        tmp_msg = ''
+        if not not_web:
+            try:
+                from BTPanel import session
+                if 'username' in session:
+                    username = session['username']
+                    uid = session['uid']
+                    if session.get('debug') == 1: return
+            except:
+                pass
+        global _LAN_LOG
+        if not _LAN_LOG:
+            _LAN_LOG = json.loads(ReadFile('BTPanel/static/language/' + GetLanguage() + '/log.json'))
+        keys = _LAN_LOG.keys()
+        if logMsg in keys:
+            logMsg = _LAN_LOG[logMsg]
+            for i in range(len(args)):
+                rep = '{'+str(i+1)+'}'
+                logMsg = logMsg.replace(rep,args[i])
+        if type in keys: type = _LAN_LOG[type]
+        sql = db.Sql()
+        mDate = time.strftime('%Y-%m-%d %X',time.localtime())
+        data = (uid,username,type,logMsg + tmp_msg,mDate)
+        result = sql.table('logs').add('uid,username,type,log,addtime',data)
+    except:
+        pass
 
 def GetLanguage():
     '''
@@ -868,10 +868,14 @@ def downloadFile(url,filename):
         import requests
         from requests.packages.urllib3.exceptions import InsecureRequestWarning
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+        import requests.packages.urllib3.util.connection as urllib3_conn
+        old_family = urllib3_conn.allowed_gai_family
+        urllib3_conn.allowed_gai_family = lambda: socket.AF_INET
         res = requests.get(url,headers=get_requests_headers(),timeout=30,stream=True)
         with open(filename,"wb") as f:
             for _chunk in res.iter_content(chunk_size=8192):
                 f.write(_chunk)
+        urllib3_conn.allowed_gai_family = old_family
     except:
         ExecShell("wget -O {} {} --no-check-certificate".format(filename,url))
 
@@ -1463,7 +1467,10 @@ def xssencode(text):
     str_convert = ''.join(ret)
     text2=cgi.escape(str_convert, quote=True)
     return text2
-
+#xss 防御
+def xssencode2(text):
+    text2=cgi.escape(text, quote=True)
+    return text2
 # 取缓存
 def cache_get(key):
     from BTPanel import cache
@@ -1535,7 +1542,10 @@ def get_os_version():
     else:
         version = version.replace('release ','').replace('Linux','').replace('(Core)','').strip()
     v_info = sys.version_info
-    version = "{} {}(Py{}.{}.{})".format(version,os.uname().machine,v_info.major,v_info.minor,v_info.micro)
+    try:
+        version = "{} {}(Py{}.{}.{})".format(version,os.uname().machine,v_info.major,v_info.minor,v_info.micro)
+    except:
+        version = "{} (Py{}.{}.{})".format(version,v_info.major,v_info.minor,v_info.micro)
     return version
 
 #取文件或目录大小
@@ -1706,7 +1716,7 @@ def get_database_size():
     data = {}
     try:
         import panelMysql
-        tables = panelMysql.panelMysql().query("select table_schema, sum(DATA_LENGTH) as data from information_schema.TABLES group by table_schema")    
+        tables = panelMysql.panelMysql().query("select table_schema, (sum(DATA_LENGTH)+sum(INDEX_LENGTH)) as data from information_schema.TABLES group by table_schema")
         if type(tables) == list: 
             for x in tables:
                 if len(x) < 2:continue
@@ -1785,30 +1795,32 @@ def de_crypt(key,strings):
 #获取IP限制列表
 def get_limit_ip():
     iplong_list = []
-    ip_file = 'data/limitip.conf'
-    if not os.path.exists(ip_file): return iplong_list
+    try:
+        ip_file = 'data/limitip.conf'
+        if not os.path.exists(ip_file): return iplong_list
 
-    from BTPanel import cache
-    ikey = 'limit_ip'
-    iplong_list = cache.get(ikey)
-    if iplong_list: return iplong_list
+        from BTPanel import cache
+        ikey = 'limit_ip'
+        iplong_list = cache.get(ikey)
+        if iplong_list: return iplong_list
 
-    iplong_list = []
-    iplist = ReadFile(ip_file)
-    if not iplist:return iplong_list
-    iplist = iplist.strip()
-    for limit_ip in iplist.split(','):
-        if not limit_ip: continue
-        limit_ip = limit_ip.split('-')
-        iplong = {}
-        iplong['min'] = ip2long(limit_ip[0])
-        if len(limit_ip) > 1:
-            iplong['max'] = ip2long(limit_ip[1])
-        else:
-            iplong['max'] = iplong['min']
-        iplong_list.append(iplong)
+        iplong_list = []
+        iplist = ReadFile(ip_file)
+        if not iplist:return iplong_list
+        iplist = iplist.strip()
+        for limit_ip in iplist.split(','):
+            if not limit_ip: continue
+            limit_ip = limit_ip.split('-')
+            iplong = {}
+            iplong['min'] = ip2long(limit_ip[0])
+            if len(limit_ip) > 1:
+                iplong['max'] = ip2long(limit_ip[1])
+            else:
+                iplong['max'] = iplong['min']
+            iplong_list.append(iplong)
 
-    cache.set(ikey,iplong_list,3600)
+        cache.set(ikey,iplong_list,3600)
+    except:pass
     return iplong_list
 
 
@@ -3756,7 +3768,10 @@ def get_session_timeout():
     session_timeout = 86400
     if not os.path.exists(sess_out_path):
         return session_timeout
-    session_timeout = int(readFile(sess_out_path))
+    try:
+        session_timeout = int(readFile(sess_out_path))
+    except:
+        session_timeout = 86400
     cache.set(skey,session_timeout,3600)
     return session_timeout
 
@@ -3847,3 +3862,54 @@ def is_apache_nginx():
     '''
     setup_path = get_setup_path()
     return os.path.exists(setup_path + '/apache') or os.path.exists(setup_path + '/nginx')
+
+def error_403(e):
+    from BTPanel import Response
+    errorStr = '''<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<center><h1>403 Forbidden</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>'''
+    headers = {
+        "Content-Type": "text/html"
+    }
+    return Response(errorStr, status=403, headers=headers)
+
+def error_404(e):
+    from BTPanel import Response
+    errorStr = '''<html>
+<head><title>404 Not Found</title></head>
+<body>
+<center><h1>404 Not Found</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>'''
+    headers = {
+        "Content-Type": "text/html"
+    }
+    return Response(errorStr, status=404, headers=headers)
+
+
+def get_password_config():
+    '''
+        @name 获取密码安全配置
+        @author hwliang<2021-10-18>
+        @return int
+    '''
+    import config
+    return config.config().get_password_config(None)
+
+
+def password_expire_check():
+    '''
+        @name 密码过期检查
+        @author hwliang<2021-10-18>
+        @return bool
+    '''
+    p_config = get_password_config()
+    if p_config['expire'] == 0: return True
+    if time.time() > p_config['expire_time']: return False
+    return True
+
