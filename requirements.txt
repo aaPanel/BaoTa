@@ -12,7 +12,7 @@ configobj==5.0.6
 configparser==4.0.2
 cos-python-sdk-v5==1.7.7
 crcmod==1.7
-cryptography==2.8
+cryptography==3.3.2
 Cython==0.29.15
 decorator==4.4.1
 dicttoxml==1.7.4
