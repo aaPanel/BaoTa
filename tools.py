@@ -506,6 +506,7 @@ def bt_cli(u_input = 0):
     print(raw_tip)
     if u_input == 29:
         os.system("rm -rf /www/server/panel/data/ssl_verify_data.pl")
+        os.system("/etc/init.d/bt restart")
         print("|-已关闭访问设备验证")
     if u_input == 1:
         os.system("/etc/init.d/bt restart")
