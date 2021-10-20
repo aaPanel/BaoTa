@@ -295,6 +295,12 @@ class config:
             @return dict
         '''
         expire = int(get.expire)
+        expire_file = self.get_password_expire_file()
+        if expire <= 0:
+            if os.path.exists(expire_file):
+                os.remove(expire_file)
+            public.WriteLog('TYPE_PANEL','关闭密码过期验证')
+            return public.returnMsg(True,'已关闭密码过期验证')
         min_expire = 10
         max_expire = 365 * 5
         if expire < min_expire: return public.returnMsg(False,'密码过期时间不能小于{}天'.format(min_expire))

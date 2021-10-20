@@ -340,11 +340,14 @@ $('.password_overdue_btn').on('click', function () {
       <div class="line">\
         <span class="tname" style="width: 120px;">密码过期时间</span>\
         <div class="info-r" style="margin-left:120px">\
-          <input name="expire" class="bt-input-text mr5" type="text" style="width:80px" value="' + data.expire + '">\
+          <input name="expire" class="bt-input-text mr5" type="text" style="width:100px" value="' + data.expire + '">\
           <span>天</span>\
         </div>\
       </div>\
-      <ul class="help-info-text c7"><li>面板密码过期时间设置，过期后需要重新设置密码</li></ul>\
+      <ul class="help-info-text c7">\
+        <li>面板密码过期时间设置，过期后需要重新设置密码</li>\
+        <li>密码过期时间为:0天，则关闭密码过期时间功能</li>\
+      </ul>\
       </div > ',
     btn: ['保存', '取消'],
     yes: function (indexs) {
@@ -376,7 +379,7 @@ $('[name="domain"]').on('input', function () {
 function get_password_config(callback) {
   bt.send('get_password_config', 'config/get_password_config', {}, function (res) {
     $('[name="password_verification"]').val(res.password_safe ? '已开启' : '已关闭').data(res)
-    $('[name="password_overdue"]').val(bt.format_data(res.expire_time, 'yyyy/MM/dd') + '( 剩余' + res.expire_day + '天过期 )').data(res);
+    $('[name="password_overdue"]').val(res.expire == 0 ?'未配置':(bt.format_data(res.expire_time, 'yyyy/MM/dd') + '( 剩余' + res.expire_day + '天过期 )')).data(res);
     if (callback) callback(res)
   })
 }
