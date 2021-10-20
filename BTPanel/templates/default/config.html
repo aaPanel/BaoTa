@@ -61,6 +61,7 @@
             <label class='btswitch-btn' for='panel_verification'></label>
           </div>
         </div>
+        
         <!--                <div class="ss-text pull-left mr50">-->
         <!--                    <em title="推荐宝塔官方最新的活动和优质软件">活动推荐</em>-->
         <!--                    <div class='ssh-item'>-->
@@ -78,20 +79,15 @@
           </div>
         </div>
         <div class="ss-text pull-left mr50">
-            <em class="btlink" style="color: #20a53a;" onclick="GetPanelVerify()" title="开启后电脑需要安装此证书，否则将无法访问，属于极高安全级别的访问限制方式，类似银行账号U盘密钥登录.">访问设备验证</em>
-            <div class='ssh-item'>
-                <input class='btswitch btswitch-ios' id='panel_verify' type='checkbox' />
-                <label class='btswitch-btn' for='panel_verify' onclick="SetPanelVerify()"></label>
-            </div>
+          <em class="btlink" style="color: #20a53a;" onclick="GetPanelVerify()" title="开启后电脑需要安装此证书，否则将无法访问，属于极高安全级别的访问限制方式，类似银行账号U盘密钥登录.">访问设备验证</em>
+          <div class='ssh-item'>
+              <input class='btswitch btswitch-ios' id='panel_verify' type='checkbox' />
+              <label class='btswitch-btn' for='panel_verify' onclick="SetPanelVerify()"></label>
+          </div>
         </div>
       </div>
     </div>
-    <div class="setbox bgw mtb15 ptb20">
-      <!-- <div class="title c6 plr15">
-                <h3 class="f16">{{data['lan']['C1']}}</h3>
-                <button class="btn btn-default btn-sm" style="float: right;margin-top: 10px;display: none;"
-                    onclick="apiSetup()">{{data['lan']['C2']}}</button>
-            </div> -->
+    <div class="setbox bgw mtb15 " style="padding: 20px 10px;">
       <div class="info-title-tips" style="margin: 0 15px 0px;">
         <p><span class="glyphicon glyphicon-alert"
             style="color: #f39c12; margin-right: 10px;"></span>{{data['lan']['C3']}}</p>
@@ -245,6 +241,9 @@
     </div>
   </div>
   <style>
+    .bt-warp{
+      overflow-x: hidden;
+    }
     .boxConter {
       height: 458px;
       position: relative;

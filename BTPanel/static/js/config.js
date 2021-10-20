@@ -926,7 +926,30 @@ function setPanelSSL() {
             }],
             callback: function (obj) {
               var subid = obj.attr('name') + '_subid';
+              var keyid = obj.attr('name') + '_keyid';
               $('#' + subid).remove();
+              $('#' + keyid).remove();
+              // 自签证书
+              if (obj.val() == '1') {
+                  var loadT = layer.msg('正在获取证书信息...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+                  $.post('/config?action=GetPanelSSL', {}, function (cert) {
+                      layer.close(loadT);
+                      obj.parents('div.line').after('\
+                          <div class="myKeyCon" id="' + keyid + '">\
+                              <div class="ssl-con-key pull-left mr20">密钥(KEY)<br>\
+                                  <textarea id="key" class="bt-input-text">'+ cert.privateKey + '</textarea>\
+                              </div>\
+                              <div class="ssl-con-key pull-right">证书(PEM格式)<br>\
+                                  <textarea id="csr" class="bt-input-text">' + cert.certPem + '</textarea>\
+                              </div>\
+                              <div class="clear"></div>\
+                          </div>\
+                      ');
+                      obj.parents('div.ssl_cert_set_form').css({
+                          'height': '640px'
+                      })
+                  });
+              }
               if (obj.val() == '2') {
                 var _tr = bt.render_form_line({
                   title: '管理员邮箱',

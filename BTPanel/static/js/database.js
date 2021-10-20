@@ -60,9 +60,7 @@ var database = {
               table: 'databases',
               ps: ev.target.value
             }, function (res) {
-              layer.msg(res.msg, (res.status ? {} : {
-                icon: 2
-              }));
+              layer.msg(res.msg, {icon:res.status?1:2});
             });
           },
           keyup: function (row, index, ev) {
@@ -270,7 +268,9 @@ var database = {
       txcos: '腾讯COS',
       upyun: '又拍云',
       gcloud_storage: '谷歌云',
-      gdrive: '谷歌网盘'
+      gdrive: '谷歌网盘',
+      bos: '百度云',
+      obs: '华为云'
     };
     bt.pub.get_data('table=backup&search=' + id + '&limit=5&type=1&tojs=database.database_detail&p=' + page, function (frdata) {
       loadT.close();

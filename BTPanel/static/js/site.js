@@ -5498,10 +5498,18 @@ var site = {
                                 value: rdata.status,
                                 type: 'checkbox',
                                 callback: function(sdata) {
-                                    bt.site.set_site_security(web.id, web.name, sdata.sec_fix, sdata.sec_domains.split("\n").join(','), sdata.status, sdata.return_rule, function(ret) {
-                                        if (ret.status) site.reload(13)
-                                        bt.msg(ret);
+                                  if (sdata.sec_domains === '') {
+                                    $('#status').attr('checked', false)
+                                    bt.msg({
+                                      status: false,
+                                      msg: '许可域名不能为空！'
                                     })
+                                    return false;
+                                  }
+                                  bt.site.set_site_security(web.id, web.name, sdata.sec_fix, sdata.sec_domains.split("\n").join(','), sdata.status, sdata.return_rule, function(ret) {
+                                      if (ret.status) site.reload(13)
+                                      bt.msg(ret);
+                                  })
                                 }
                             },
                             {

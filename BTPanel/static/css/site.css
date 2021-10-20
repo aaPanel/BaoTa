@@ -8355,7 +8355,7 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
 	position: relative;
 }
 .term_tootls{
-	width:250px;
+	width:290px;
 	position: absolute;
 	right: 15px;
 	top: 15px;
@@ -8377,6 +8377,15 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
 	right:0;
 	color: #ececec;
 	background-color: #c7c7c71a;
+}
+.term_tootls .tab-con {
+  position: absolute;
+  top: 42px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0;
+  overflow: hidden;
 }
 .term_tootls .tootls_tab a:hover{
 	background-color: #8282824d;
@@ -8450,7 +8459,7 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
 	border: 1px solid #ececec;
 	overflow-y: auto;
 }
-.tootls_host_list{
+.tootls_host_list,.tootls_commonly_list{
 	/* min-height: 300px; */
 	overflow:auto;
 	/* margin-bottom: 10px; */

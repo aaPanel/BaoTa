@@ -134,7 +134,7 @@
 				}},
 				{title:'操作',type:'group',width:170,align:'right',group:[{
 					title:'改密',event:function(row,index,ev,key,that){
-						that.set_ftp_password({id:row.id,name:row.name,password:row.password},function(){
+						that.set_ftp_password({id:row.id,name:row.name,password:row.password},function(rdata){
 							if(rdata.status) that.$refresh_table_list(true);
 						});
 					}
