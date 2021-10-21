@@ -3069,13 +3069,7 @@ def check_app(check='app'):
     path=get_panel_path() + '/'
     if check=='app':
         try:
-            if not os.path.exists(path+'data/user.json') and os.path.exists(path+'config/api.json') and not os.path.exists(path+'plugin/app/user.json'):return False
-            if os.path.exists(path+'plugin/app/user.json'):
-                wxapp = json.loads(readFile(path+'plugin/app/user.json'))
-                if wxapp:return True
-            if os.path.exists(path+'data/user.json'):
-                app_info = json.loads(readFile(path+'data/user.json'))
-                if app_info:return True
+            if not os.path.exists(path+'config/api.json'):return False
             if os.path.exists(path+'config/api.json'):
                 btapp_info = json.loads(readFile(path+'config/api.json'))
                 if not  btapp_info['open']:return False
