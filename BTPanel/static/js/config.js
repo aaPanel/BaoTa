@@ -713,9 +713,9 @@ function SetPanelVerify() {
                             		<li style="color:red;">必须要用到且了解此功能才决定自己是否要开启!</li>\
                                     <li>开启后电脑需要安装此证书，否则将无法访问，属于【极高安全级别】的限制，类似银行账号U盘密钥登录</li>\
                                     <li>注销列表(crl)和证书(cert)可通过企业版插件[堡塔限制访问型证书->双向认证->服务器证书]获取</li>\
-                                    <li>开启之前请先下载好对应的[客户端证书]，否则将无法访问面板</li>\
-                                    <li>开启访问设备验证后，未授权的用户访问将会出现400错误</li>\
-                            		<li>开启后导致面板不能访问，命令行：bt 29 关闭访问设备验证</li>\
+                                    <li style="color:red;font-weight: bold;">开启之前请先下载好对应的【客户端证书】，否则将无法访问面板</li>\
+                                    <li>开启访问设备认证后，未授权的用户访问将会出现400错误</li>\
+                            		<li>开启后导致面板不能访问，命令行：bt 29 关闭访问设备认证</li>\
                             	</ul>\
                             </div>\
                         '
@@ -740,7 +740,7 @@ function SetPanelVerify() {
                             <div class="details" style="width: 90%;">\
                                 <input type="checkbox" id="check_ssl_verify" />\
                                 <label style="font-weight: 400; margin: 3px 5px 0px;" for="check_ssl_verify">' + lan.config.ssl_open_ps_4 + '</label>\
-                                <a target="_blank" class="btlink" href="#">' + lan.config.ssl_open_ps_5 + '</a>\
+                                <a target="_blank" class="btlink" href="https://www.bt.cn/bbs/thread-77863-1-1.html">' + lan.config.ssl_open_ps_5 + '</a>\
                                 </p>\
                             </div>\
                         '
@@ -771,7 +771,7 @@ function SetPanelVerify() {
                             if (ca == '') {
                                 return layer.msg('证书不能为空！', { icon: 2 });
                             }
-                            var confirm = layer.confirm('是否开启访问设备验证', { title: '提示', btn: ['确定', '取消'], icon: 0, closeBtn: 2 }, function () {
+                            var confirm = layer.confirm('请先确保已下载【客户端证书】，否则开启访问设备验证后，面板将无法访问，是否继续开启？', { title: '提示', btn: ['确定', '取消'], icon: 0, closeBtn: 2 }, function () {
                                 var loading = bt.load();
                                 $.post('/config?action=set_ssl_verify', {
                                     ca: ca,
@@ -831,6 +831,31 @@ function GetPanelVerify () {
 			shadeClose: false,
 			content:certBody
 		});
+	});
+}
+
+function SavePanelVerify(status) {
+    var crl = $("#ca_crl").val();
+    var ca = $("#ca_cert").val();
+    if (crl == '') {
+        return layer.msg('注销列表不能为空！', { icon: 2 });
+    }
+    if (ca == '') {
+        return layer.msg('证书不能为空！', { icon: 2 });
+    }
+    var data = {
+		ca: ca,
+		crl: crl,
+		status: status
+	}
+	var loadT = layer.msg('正在保存证书...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+	$.post('/config?action=set_ssl_verify', data, function (rdata) {
+		layer.close(loadT);
+		if (rdata.status) {
+		    $.get('/system?action=ReWeb', function () {});
+			layer.closeAll();
+		}
+		layer.msg(rdata.msg,{icon: rdata.status ? 1 : 2 });
 	});
 }
 
