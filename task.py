@@ -551,7 +551,9 @@ def get_panel_pid():
     return None
 
 
-def HttpGet(url, timeout=6, headers={}):
+def HttpGet(url, timeout=6, headers=None):
+    if not headers:
+        headers = {}
     if sys.version_info[0] == 2:
         try:
             import urllib2
