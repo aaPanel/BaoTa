@@ -3,181 +3,369 @@
 {% block content %}
 <div class="main-content">
     <div class="container-fluid" style="padding-bottom: 50px;">
-        <div class="pos-box bgw mtb15">
-            <div class="position f14 c9 pull-left">
-                <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
+        <div class="pos-box bgw mtb15 plr15">
+            <div class="control-nav">
+                <div class="control-item active" name="control">系统监控</div>
+                <div class="control-item" name="daily">面板日报</div>
             </div>
         </div>
-        <div class="safe container-fluid  bgw mtb15 pd15" style="overflow: hidden;">
-            <div class="mr50 pull-left">
-                <div class="ss-text pull-left">
-                    <em>{{data['lan']['C1']}}</em>
-                    <div class='ssh-item' id="openJK">
-                    </div>
-                </div>
-            </div>
-            <div class="mr50 pull-left">
-                <div class="ss-text pull-left">
-                    <em>{{data['lan']['C2']}}</em>
-                    <input class="bt-input-text" id="saveDay" value="" type="number">
-                </div>
-                <div class="ss-text pull-left" style="margin-left:10px">
-                    <button class="btn btn-default btn-sm" type="button" onclick="SetControl(true);">{{data['lan']['C3']}}</button>
-                </div>
-            </div>
-            <div class="mr50 pull-left" style="padding-left:50px; border-left:#ccc 1px solid; margin-right:0">
-                <button class="btn btn-default btn-sm" type="button" onclick="CloseControl()">{{data['lan']['C4']}}</button>
-            </div>
-        </div>
-        <div class="control">
-            <div class="col-xs-12 col-sm-12 col-md-12 pull-left pd0 view0">
-                <div class="mb15">
-                    <div class="bgw pb15">
-                        <div class="title c6 plr15 mb15">
-                            <h3 class="c-tit f16">平均负载</h3>
-                            <div class="searcTime pull-right">
-                                <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="Wday(1,'getload')">{{data['lan']['D1']}}</span><span class="gt on" onclick="Wday(0,'getload')">{{data['lan']['D2']}}</span><span class="gt" onclick="Wday(7,'getload')">{{data['lan']['D3']}}</span><span class="gt" onclick="Wday(30,'getload')">{{data['lan']['D4']}}</span>
-                                <div class="ss">
-                                    <span class="st">{{data['lan']['S2']}}</span>
-                                    <div class="time">
-                                        <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
-                                        <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
-                                        <div class="sbtn time_range_submit" data-type="getload">{{data['lan']['G3']}}</div>
-                                    </div>
-                                </div>
+        <div class="control-content">
+            <div class="control-item-block">
+                <div class="safe container-fluid  bgw mtb15 pd15" style="overflow: hidden;">
+                    <div class="mr50 pull-left">
+                        <div class="ss-text pull-left">
+                            <em>{{data['lan']['C1']}}</em>
+                            <div class='ssh-item' id="openJK">
                             </div>
                         </div>
-                        <div id="getloadview" style="width:100%; height:330px"></div>
+                    </div>
+                    <div class="mr50 pull-left">
+                        <div class="ss-text pull-left">
+                            <em>{{data['lan']['C2']}}</em>
+                            <input class="bt-input-text" id="saveDay" value="" type="number">
+                        </div>
+                        <div class="ss-text pull-left" style="margin-left:10px">
+                            <button class="btn btn-default btn-sm" type="button" onclick="controlObj.conTrolView.SetControl(true);">{{data['lan']['C3']}}</button>
+                        </div>
+                    </div>
+                    <div class="mr50 pull-left" style="padding-left:50px; border-left:#ccc 1px solid; margin-right:0">
+                        <button class="btn btn-default btn-sm" type="button" onclick="controlObj.conTrolView.CloseControl()">{{data['lan']['C4']}}</button>
                     </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view1">
-                <div class="pr8">
-                    <div class="bgw pb15">
-                        <div class="title c6 plr15">
-                            <h3 class="c-tit f16">{{data['lan']['T1']}}</h3>
-                            <div class="searcTime pull-right">
-                                <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="Wday(1,'cpu')">{{data['lan']['D1']}}</span><span class="gt on" onclick="Wday(0,'cpu')">{{data['lan']['D2']}}</span><span class="gt" onclick="Wday(7,'cpu')">{{data['lan']['D3']}}</span><span class="gt" onclick="Wday(30,'cpu')">{{data['lan']['D4']}}</span>
-                                <div class="ss">
-                                    <span class="st">{{data['lan']['S2']}}</span>
-                                    <div class="time">
-                                        <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
-                                        <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
-                                        <div class="sbtn time_range_submit" data-type="cpu">{{data['lan']['G3']}}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="cpuview" style="width:100%; height:330px"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view2">
-                <div class="pl7">
-                    <div class="bgw pb15">
-                        <div class="title c6 plr15">
-                            <h3 class="c-tit f16">{{data['lan']['T2']}}</h3>
-                            <div class="searcTime pull-right">
-                                <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="Wday(1,'mem')">{{data['lan']['D1']}}</span><span class="gt on" onclick="Wday(0,'mem')">{{data['lan']['D2']}}</span><span class="gt" onclick="Wday(7,'mem')">{{data['lan']['D3']}}</span><span class="gt" onclick="Wday(30,'mem')">{{data['lan']['D4']}}</span>
-                                <div class="ss">
-                                    <span class="st">{{data['lan']['S2']}}</span>
-                                    <div class="time">
-                                        <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
-                                        <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
-                                        <div class="sbtn time_range_submit" data-type="mem">{{data['lan']['G3']}}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="memview" style="width:100%; height:330px"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view1">
-                <div class="pr8">
-                    <div class="bgw pb15">
-                        <div class="title c6 plr15 mb15">
-                            <h3 class="c-tit f16">{{data['lan']['T3']}}</h3>
-                            <div class="searcTime pull-right">
-                                <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="Wday(1,'disk')">{{data['lan']['D1']}}</span><span class="gt on" onclick="Wday(0,'disk')">{{data['lan']['D2']}}</span><span class="gt" onclick="Wday(7,'disk')">{{data['lan']['D3']}}</span><span class="gt" onclick="Wday(30,'disk')">{{data['lan']['D4']}}</span>
-                                <div class="ss">
-                                    <span class="st">{{data['lan']['S2']}}</span>
-                                    <div class="time">
-                                        <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
-                                        <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
-                                        <div class="sbtn time_range_submit" data-type="disk">{{data['lan']['G3']}}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="position: relative;">
-                            <div id="diskview" style="width:100%; height:330px"></div>
-                            <div style="position: absolute;top: 15px;left: 6%;" class="hide">
-                                单位：<div class="bt-crontab-select-button">
-                                    <div class="bt-select-full only-one disk-unit">
-                                        <div class="select-picker-search">
-                                            <span class="picker-text-list">KB/s</span>
-                                            <span class="down-select-full"></span>
-                                        </div>
-                                        <div class="select-list-item">
-                                            <ul style="width:auto;max-height: auto;">
-                                                <li data-attr="KB/s"><span class="select-name-full">KB/s</span></li>
-                                                <li data-attr="MB/s"><span class="select-name-full">MB/s</span></li>
-                                                <li data-attr="GB/s"><span class="select-name-full">GB/s</span></li>
-                                            </ul>
+                <div class="control">
+                    <div class="col-xs-12 col-sm-12 col-md-12 pull-left pd0 view0">
+                        <div class="mb15">
+                            <div class="bgw pb15">
+                                <div class="title c6 plr15 mb15">
+                                    <h3 class="c-tit f16">平均负载</h3>
+                                    <div class="searcTime pull-right">
+                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'getload')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'getload')">{{data['lan']['D2']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(7,'getload')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'getload')">{{data['lan']['D4']}}</span>
+                                        <div class="ss">
+                                            <span class="st">{{data['lan']['S2']}}</span>
+                                            <div class="time">
+                                                <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
+                                                <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
+                                                <div class="sbtn time_range_submit" data-type="getload">{{data['lan']['G3']}}</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                                <div id="getloadview" style="width:100%; height:330px"></div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view2">
-                <div class="pl7">
-                    <div class="bgw pb15">
-                        <div class="title c6 plr15 mb15">
-                            <h3 class="c-tit f16"><span class="mr5" style="vertical-align: middle;">{{data['lan']['T4']}}:</span><select class="bt-input-text hide" style="vertical-align: middle;font-size:13px;" name="network-io" ><option value="all">全部</option></select></h3>
-                            <div class="searcTime pull-right">
-                                <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="Wday(1,'network')">{{data['lan']['D1']}}</span><span class="gt on" onclick="Wday(0,'network')">{{data['lan']['D2']}}</span><span class="gt" onclick="Wday(7,'network')">{{data['lan']['D3']}}</span><span class="gt" onclick="Wday(30,'network')">{{data['lan']['D4']}}</span>
-                                <div class="ss">
-                                    <span class="st">{{data['lan']['S2']}}</span>
-                                    <div class="time">
-                                        <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
-                                        <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
-                                        <div class="sbtn time_range_submit" data-type="network">{{data['lan']['G3']}}</div>
+                    <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view1">
+                        <div class="pr8">
+                            <div class="bgw pb15">
+                                <div class="title c6 plr15">
+                                    <h3 class="c-tit f16">{{data['lan']['T1']}}</h3>
+                                    <div class="searcTime pull-right">
+                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'cpu')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'cpu')">{{data['lan']['D2']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(7,'cpu')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'cpu')">{{data['lan']['D4']}}</span>
+                                        <div class="ss">
+                                            <span class="st">{{data['lan']['S2']}}</span>
+                                            <div class="time">
+                                                <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
+                                                <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
+                                                <div class="sbtn time_range_submit" data-type="cpu">{{data['lan']['G3']}}</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+                                <div id="cpuview" style="width:100%; height:330px"></div>
                             </div>
                         </div>
-                        <div style="position: relative;">
-                            <div id="network" style="width:100%; height:330px"></div>
-                            <div style="position: absolute;top: 15px;left: 6%;" class="hide">
-                                单位：<div class="bt-crontab-select-button">
-                                    <div class="bt-select-full only-one network-unit">
-                                        <div class="select-picker-search">
-                                            <span class="picker-text-list">KB/s</span>
-                                            <span class="down-select-full"></span>
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view2">
+                        <div class="pl7">
+                            <div class="bgw pb15">
+                                <div class="title c6 plr15">
+                                    <h3 class="c-tit f16">{{data['lan']['T2']}}</h3>
+                                    <div class="searcTime pull-right">
+                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'mem')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'mem')">{{data['lan']['D2']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(7,'mem')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'mem')">{{data['lan']['D4']}}</span>
+                                        <div class="ss">
+                                            <span class="st">{{data['lan']['S2']}}</span>
+                                            <div class="time">
+                                                <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
+                                                <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
+                                                <div class="sbtn time_range_submit" data-type="mem">{{data['lan']['G3']}}</div>
+                                            </div>
                                         </div>
-                                        <div class="select-list-item">
-                                            <ul style="width:auto;max-height: auto;">
-                                                <li data-attr="KB/s"><span class="select-name-full">KB/s</span></li>
-                                                <li data-attr="MB/s"><span class="select-name-full">MB/s</span></li>
-                                                <li data-attr="GB/s"><span class="select-name-full">GB/s</span></li>
-                                            </ul>
+                                    </div>
+                                </div>
+                                <div id="memview" style="width:100%; height:330px"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view1">
+                        <div class="pr8">
+                            <div class="bgw pb15">
+                                <div class="title c6 plr15 mb15">
+                                    <h3 class="c-tit f16">{{data['lan']['T3']}}</h3>
+                                    <div class="searcTime pull-right">
+                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'disk')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'disk')">{{data['lan']['D2']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(7,'disk')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'disk')">{{data['lan']['D4']}}</span>
+                                        <div class="ss">
+                                            <span class="st">{{data['lan']['S2']}}</span>
+                                            <div class="time">
+                                                <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
+                                                <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
+                                                <div class="sbtn time_range_submit" data-type="disk">{{data['lan']['G3']}}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="position: relative;">
+                                    <div id="diskview" style="width:100%; height:330px"></div>
+                                    <div style="position: absolute;top: 15px;left: 6%;" class="hide">
+                                        单位：<div class="bt-crontab-select-button">
+                                            <div class="bt-select-full only-one disk-unit">
+                                                <div class="select-picker-search">
+                                                    <span class="picker-text-list">KB/s</span>
+                                                    <span class="down-select-full"></span>
+                                                </div>
+                                                <div class="select-list-item">
+                                                    <ul style="width:auto;max-height: auto;">
+                                                        <li data-attr="KB/s"><span class="select-name-full">KB/s</span></li>
+                                                        <li data-attr="MB/s"><span class="select-name-full">MB/s</span></li>
+                                                        <li data-attr="GB/s"><span class="select-name-full">GB/s</span></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view2">
+                        <div class="pl7">
+                            <div class="bgw pb15">
+                                <div class="title c6 plr15 mb15">
+                                    <h3 class="c-tit f16"><span class="mr5" style="vertical-align: middle;">{{data['lan']['T4']}}:</span><select class="bt-input-text hide" style="vertical-align: middle;font-size:13px;" name="network-io" ><option value="all">全部</option></select></h3>
+                                    <div class="searcTime pull-right">
+                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'network')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'network')">{{data['lan']['D2']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(7,'network')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'network')">{{data['lan']['D4']}}</span>
+                                        <div class="ss">
+                                            <span class="st">{{data['lan']['S2']}}</span>
+                                            <div class="time">
+                                                <span class="bt">{{data['lan']['G1']}}<input class="btime" type="text" value="2017/1/10 00:00:00"></span>
+                                                <span class="et">{{data['lan']['G2']}}<input class="etime" type="text" value="2017/1/13 00:00:00"></span>
+                                                <div class="sbtn time_range_submit" data-type="network">{{data['lan']['G3']}}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="position: relative;">
+                                    <div id="network" style="width:100%; height:330px"></div>
+                                    <div style="position: absolute;top: 15px;left: 6%;" class="hide">
+                                        单位：<div class="bt-crontab-select-button">
+                                            <div class="bt-select-full only-one network-unit">
+                                                <div class="select-picker-search">
+                                                    <span class="picker-text-list">KB/s</span>
+                                                    <span class="down-select-full"></span>
+                                                </div>
+                                                <div class="select-list-item">
+                                                    <ul style="width:auto;max-height: auto;">
+                                                        <li data-attr="KB/s"><span class="select-name-full">KB/s</span></li>
+                                                        <li data-attr="MB/s"><span class="select-name-full">MB/s</span></li>
+                                                        <li data-attr="GB/s"><span class="select-name-full">GB/s</span></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="control-item-block hide">
+                <div class="mtb15 pd15 bgw daily-view"></div>
             </div>
         </div>
     </div>
 </div>
 <style>
+    /* 日报 */
+    .daily-view .divtable{position: initial;}
+    .daily_time_select {
+        float: left;
+        font-size: 14px;
+    }
+    .daily_time_select>span {
+        display: inline-block;
+        height: 40px;
+        line-height: 40px;
+    }
+    .daily_time_select .daily_time_box{
+        position: relative;
+        display: inline-block;
+        height: 30px;
+        border: 1px solid #e6e6e6;
+        border-radius: 2px;
+        font-size: 13px;
+        line-height: 30px;
+        margin-left:8px;
+    }
+    .daily_time_select .daily_box_text:after {
+        content: '';
+        position: absolute;
+        top: 0.8pc;
+        right: 5pt;
+        display: block;
+        width: 0;
+        height: 0;
+        border-color: #c2c2c2 transparent transparent;
+        border-style: solid;
+        border-width: 6px 6px 0;
+        transition: transform .5s;
+    }
+    .daily_time_select .daily_time_box.active:after {
+        transform: rotate(180deg);
+    }
+    .daily_time_box .daily_box_text{
+        padding: 5px 35px 5px 15px;
+        cursor: pointer;
+    }
+    .daily_time_box .daily_select_list {
+        position: absolute;
+        top: 32px;
+        right: -1px;
+        left: -1px;
+        z-index: 899;
+        display: none;
+        box-sizing: border-box;
+        padding: 5px 0;
+        border: 1px solid #d2d2d2;
+        border-radius: 2px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgb(0 0 0 / 12%);
+        max-height: 300px;
+        overflow: auto;
+    }
+    .daily_time_box.active .daily_select_list {
+        display: block;
+    }
+    .daily_time_box .daily_select_list li{
+        cursor: pointer;
+        padding-left: 12px;
+    }
+    .daily_time_box .daily_select_list li.active,
+    .daily_time_box .daily_select_list li:hover{
+        background-color: #f2f2f2;
+    }
+    .daily-table .daily-title{
+        font-weight:bold; 
+        background: #f7f7f7;
+    }
+    .daily-table tr td {
+        border-right: 1px solid #ddd;
+    }
+    .daily-view{
+        position: relative;
+    }
+    .daily_details_mask{
+        position: absolute;
+        box-shadow: 5px 5px 12px rgb(0 0 0 / 15%);
+    }
+    .daily_details_mask::after{
+        content: '^';
+        position: absolute;
+        color: #cdcdcd;
+        font-size: 14px;
+        top: -9px;
+        left: 5px;
+    }
+    .daily-view .daily-head{
+        width: 730px;
+        margin: 0 auto 30px;
+        font-size: 14px;
+    }
+    .daily-head ul {
+        overflow: hidden;
+    }
+    .daily-head ul.report_results li{
+        width: 340px;
+        height: 25px;
+        line-height: 25px;
+        list-style-type: disc;
+        float: left;
+        margin-left: 20px;
+        font-weight: 600;
+    }
+    .daily-head ul.textRed{
+        color:red;
+    }
+    .daily_select_list i,
+    .daily-table td>i {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 3px;
+    }
+    .daily-table .overflow_hide {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline-block;
+        vertical-align: middle;
+    }
+        /* 日报介绍 */
+        .daily-thumbnail{
+            width: 830px;
+            margin:100px auto;
+        }
+        .thumbnail-box{
+            display: inline-block;
+            width: 400px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .thumbnail-box.shadow_mask::after{
+            content: '点击预览';
+            background: #000;
+            opacity: 0.2;
+            color: #fff;
+            position: absolute;
+            left: 0;
+            width: 400px;
+            height: 363px;
+            font-size: 18px;
+            vertical-align: bottom;
+            line-height: 500px;
+        }
+        .thumbnail-introduce{
+            display: inline-block;
+            vertical-align: top;
+            margin: 100px 0 0 80px;
+        }
+        .thumbnail-introduce span{
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .thumbnail-introduce ul{
+            font-size: 16px;
+            line-height: 30px;
+            margin: 20px 0 20px 20px;
+            list-style: square;
+        }
+        /* 日报介绍 end */
+    /* 日报 end */
+    .control-item {
+        display: inline-block;
+        padding: 0 25px;
+        font-size: 15px;
+        height: 50px;
+        line-height: 50px;
+        cursor: pointer;
+    }
+    .control-item.active {
+        color: #20a53a;
+        font-weight: 500;
+        border-bottom: #20a53a 2px solid;
+    }
     .bt-crontab-select-button {
         display: inline-block;
         position: relative;
@@ -319,39 +507,61 @@
 {% endblock %}
 {% block scripts %}
 	<script type="text/javascript" src="{{g.cdn_url}}/js/echarts.min.js?version={{g['version']}}"></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
     <script type="text/javascript" src="{{g.cdn_url}}/js/control.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
     <script type="text/javascript">
-        if(getCookie('network-unitType') == undefined) {
-            setCookie('network-unitType', "KB/s");
-            setCookie('disk-unitType', "KB/s");
-        }else{
-            $(".network-unit .picker-text-list").text(getCookie('network-unitType'));
-            $(".disk-unit .picker-text-list").text(getCookie('disk-unitType'));
-            $(".network-unit .select-list-item li:contains("+getCookie('network-unitType')+")").addClass("active");
-            $(".disk-unit .select-list-item li:contains("+getCookie('disk-unitType')+")").addClass("active");
+        // 导航事件
+        $('.control-nav').on('click','.control-item',function(){
+            if(!$(this).hasClass('active')){
+                $(this).addClass('active').siblings().removeClass('active');
+                $(this).parents('.container-fluid').find('.control-content .control-item-block').eq($(this).index()).removeClass('hide').siblings().addClass('hide');
+                bt.set_cookie('controlType',$(this).index() == 0 ?'control':'daily')
+            }
+            hanleControlType($(this).index())
+        })
+        var thatC = this;
+        function hanleControlType(index){
+            switch(index){
+                case 0:  //监控
+                    if(getCookie('network-unitType') == undefined) {
+                        setCookie('network-unitType', "KB/s");
+                        setCookie('disk-unitType', "KB/s");
+                    }else{
+                        $(".network-unit .picker-text-list").text(getCookie('network-unitType'));
+                        $(".disk-unit .picker-text-list").text(getCookie('disk-unitType'));
+                        $(".network-unit .select-list-item li:contains("+getCookie('network-unitType')+")").addClass("active");
+                        $(".disk-unit .select-list-item li:contains("+getCookie('disk-unitType')+")").addClass("active");
+                    }
+                    $(".bt-crontab-select-button").on('click','.select-picker-search',function(){
+                        $(this).next().toggle();
+                        if ($(this).parent().hasClass('network-unit')) {
+                            $(".disk-unit .select-list-item").hide();
+                        }else{
+                            $(".network-unit .select-list-item").hide();
+                        }
+                    });
+                    $(".bt-crontab-select-button").on('click','.select-list-item li',function(){
+                        var _button = $(this).parents('.bt-crontab-select-button');
+                        $(this).addClass('active').siblings().removeClass('active');
+                        _button.find('.picker-text-list').text($(this).text());
+                        _button.find(".select-list-item").toggle();
+                        var cookie_type = $(this).parents('.bgw').find('.searcTime .time_range_submit').attr('data-type');
+                        setCookie(cookie_type+'-unitType', $(this).attr('data-attr'));
+                        $(this).parents('.bgw').find('.searcTime .gt.on').click();
+                    });
+                    $(document).click(function(event){
+                        var _con = $('.bt-crontab-select-button');  // 设置目标区域
+                        if(!_con.is(event.target) && _con.has(event.target).length === 0){ // Mark 1
+                           $(".select-list-item").hide();     //淡出消失
+                        }
+                    });
+                    thatC.controlObj.conTrolView.init();
+                    
+                    break;
+                case 1:    //日报
+                    thatC.controlObj.dailyView();
+            }
         }
-        $(".bt-crontab-select-button").on('click','.select-picker-search',function(){
-            $(this).next().toggle();
-            if ($(this).parent().hasClass('network-unit')) {
-                $(".disk-unit .select-list-item").hide();
-            }else{
-                $(".network-unit .select-list-item").hide();
-            }
-        });
-        $(".bt-crontab-select-button").on('click','.select-list-item li',function(){
-            var _button = $(this).parents('.bt-crontab-select-button');
-            $(this).addClass('active').siblings().removeClass('active');
-            _button.find('.picker-text-list').text($(this).text());
-            _button.find(".select-list-item").toggle();
-            var cookie_type = $(this).parents('.bgw').find('.searcTime .time_range_submit').attr('data-type');
-            setCookie(cookie_type+'-unitType', $(this).attr('data-attr'));
-            $(this).parents('.bgw').find('.searcTime .gt.on').click();
-        });
-        $(document).click(function(event){
-            var _con = $('.bt-crontab-select-button');  // 设置目标区域
-            if(!_con.is(event.target) && _con.has(event.target).length === 0){ // Mark 1
-               $(".select-list-item").hide();     //淡出消失
-            }
-       });
+        $('.control-nav .control-item[name="'+ (bt.get_cookie('controlType') || 'control') +'"]').trigger('click')
     </script>
 {% endblock %}

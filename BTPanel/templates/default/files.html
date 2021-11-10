@@ -6,16 +6,6 @@
 <style id="file_list_info">.file_checkbox{width:40px !important;}.file_name{width:300px !important;}.file_ps{width:200px !important;}.file_size{width:100px !important;}.file_mtime{width:180px !important;}.file_user{width:80px !important;}.file_accept{width:80px !important;}.file_operation{width:220px !important;}.file_table_view.list_view .file_list_content .file_tr{width:auto;}.file_table_view.list_view .file_list_content{width:auto;}</style>
 <div class="main-content">
     <a style="display: none;" id="recycle_bin" data="{{data['recycle_bin']}}"></a>
-	<div class="bt_file_updated">
-		<div class="updated_icon">
-			<div class="btn download">
-				<div class="cloud">
-					<div class="file"></div>
-				</div>
-			</div>
-		</div>S
-		<div class="updated_title">松开鼠标即可上传文件或文件夹</div>
-	</div>
 	<!-- aceEditors -->
 	<div class="file_bodys">
 		<div class="file_path_views">
@@ -688,4 +678,6 @@
     <script type="text/javascript" src="{{g.cdn_url}}/js/xterm.js" defer></script>
     <!--<script type="text/javascript" src="{{g.cdn_url}}/js/files.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>-->
     <script type="text/javascript" src="{{g.cdn_url}}/js/files.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+    <script type="text/javascript"
+  src="{{g.cdn_url}}/js/upload-drog.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
 {% endblock %}

@@ -40,7 +40,7 @@ var bt_tools = {
                 if (this.config.tootls) {
                     this.$reader_tootls(this.config.tootls);
                 } else {
-                    if ($(_that.config.el + '.divtable').length === 0) $(_that.config.el).append('<div class="divtable mtb10" style="height:'+ (this.config.height || 'auto') +'"></div>');
+                    if ($(_that.config.el + '.divtable').length === 0) $(_that.config.el).append('<div class="divtable mtb10" style="max-height:'+ (this.config.height || 'auto') +'"></div>');
                 }
                 this.$reader_content();
                 if (_that.config.url !== undefined){
@@ -2213,17 +2213,29 @@ var bt_tools = {
 // 1
             },
 
+            htmlEncodeByRegExp:function (str){
+              if(str.length == 0) return "";
+              return str.replace(/&/g,"&amp;")
+              .replace(/</g,"&lt;")
+              .replace(/>/g,"&gt;")
+              .replace(/ /g,"&nbsp;")
+              .replace(/\'/g,"&#39;")
+              .replace(/\"/g,"&quot;");
+            },
+
             /**
              * @description 刷新Pre数据
              * @param {object} data 需要插入的数据
             */
             refresh_data:function(data){
-                this.fragment.push(data)
+              let rdata = this.htmlEncodeByRegExp(data);
+                this.fragment.push(rdata)
                 if(this.fragment.length >= 300){
                     this.fragment.splice(0,150)
                     this.el.html(this.fragment.join(''))
                 }else{
-                    this.el.append(data)
+                  console.log(data)
+                  this.el.append(rdata)
                 }
                 this.el.scrollTop(this.el[0].scrollHeight)
             },

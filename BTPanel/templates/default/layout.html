@@ -79,19 +79,16 @@
     if (ie_version != -1 && ie_version < 10 && ie_version != 'edge') {
       window.location.href = '/tips';
     }
-    document.onload = function(){
-      console.log(ie_version)
-      if(ie_version != -1 && ( ie_version >= 10 || ie_version === 'edge')){
-        var title = document.createElement('div');
-        title.setAttribute('class', 'content')
-        title.setAttribute('style','height: 50px;position: absolute;top: 0;left: 0;right: 0;line-height: 50px;z-index: 9999999;background: #0000009e;text-align: center;color: #ff922e;font-size: 19px;font-weight: 600;')
-        title.innerHTML = '<span>当前浏览器可能存在视图不兼容的情况，推荐使用Chrome/FireFox/国产浏览器急速模式访问</span><span class="compatibility_tips" style="position: absolute;right: 15px;top: 10px;font-size: 14px;display: inline-block; height: 30px;line-height: 28px;padding: 0 12px;font-weight: 500;color: #ffffff; border-radius: 4px;cursor: pointer;border: 2px solid #ffffff;font-weight: 500;">关闭提示</span>'
-        title.querySelector('.compatibility_tips').addEventListener('click',function(res){
-            var parentNode = this.parentElement;
-            parentNode.parentElement.removeChild(parentNode)
-        })
-        document.querySelector('body').before(title)
-      }
+    if(ie_version != -1 && ( ie_version >= 10 || ie_version === 'edge')){
+      var title = document.createElement('div');
+      title.setAttribute('class', 'content')
+      title.setAttribute('style','height: 50px;position: absolute;top: 0;left: 0;right: 0;line-height: 50px;z-index: 9999999;background: rgba(0,0,0,.5);text-align: center;color: #ff922e;font-size: 19px;font-weight: 600;')
+      title.innerHTML = '<span>当前浏览器可能存在视图不兼容的情况，推荐使用Chrome/FireFox/国产浏览器急速模式访问</span><span class="compatibility_tips" style="position: absolute;right: 15px;top: 10px;font-size: 14px;display: inline-block; height: 30px;line-height: 28px;padding: 0 12px;font-weight: 500;color: #ffffff; border-radius: 4px;cursor: pointer;border: 2px solid #ffffff;font-weight: 500;">关闭提示</span>'
+      title.querySelector('.compatibility_tips').addEventListener('click',function(res){
+          var parentNode = this.parentElement;
+          parentNode.parentElement.removeChild(parentNode)
+      })
+      document.querySelector('html').appendChild(title)
     }
   </script>
 </head>
@@ -147,8 +144,8 @@
     </script>
     {% endif %}
     <script type="text/javascript">
-      var recycle_bin_db_open = "{{g['recycle_bin_db_open']}}" === "true",
-        recycle_bin_open = "{{g['recycle_bin_open']}}" === "true",
+      var recycle_bin_db_open = "{{g['recycle_bin_db_open']}}" === "1",
+        recycle_bin_open = "{{g['recycle_bin_open']}}" === "1",
         update_code = "{{data['js_random']}}",
         panel_version = "{{g['version']}}",
         cdn_url = "{{g.cdn_url}}";
@@ -169,8 +166,8 @@
 
     <script src="{{g.cdn_url}}/codemirror/lib/codemirror.js" defer></script>
     <!-- End -->
-    <script type="text/javascript"
-      src="{{g.cdn_url}}/js/tools.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+    <script type="text/javascript"  src="{{g.cdn_url}}/js/tools.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+    <script type="text/javascript"  src="{{g.cdn_url}}/js/statistics.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
     {% for js_f in g['other_js'] %}
     <script type="text/javascript" src="{{js_f}}"></script>
     {% endfor %}

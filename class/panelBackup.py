@@ -158,7 +158,7 @@ class backup:
         if not os.path.exists(spath):
             error_msg = '指定目录{}不存在!'.format(spath)
             self.echo_error(error_msg)
-            self.send_failture_notification(error_msg)
+            self.send_failture_notification(error_msg, target=spath)
             return False
 
         if spath[-1] == '/':
@@ -172,7 +172,7 @@ class backup:
         if not self.backup_path_to(spath,dfile,exclude):
             if self._error_msg:
                 error_msg = self._error_msg
-            self.send_failture_notification(error_msg)
+            self.send_failture_notification(error_msg, target=spath)
             return False
 
         if self._cloud:
@@ -190,7 +190,7 @@ class backup:
                     os.remove(dfile)
 
                 remark = "备份到" + self._cloud._title
-                self.send_failture_notification(error_msg, remark=remark)
+                self.send_failture_notification(error_msg, target=spath, remark=remark)
                 return False
             
         filename = dfile
@@ -242,9 +242,9 @@ class backup:
                 
         self.delete_old(backups,save,'path')
         self.echo_end()
+        self.save_backup_status(True, target=spath)
         return dfile
 
-    
     #清理过期备份文件
     def delete_old(self,backups,save,data_type = None):
         if type(backups) == str:
@@ -345,7 +345,7 @@ class backup:
         if not self.backup_path_to(spath,dfile,exclude,siteName=siteName):
             if self._error_msg:
                 error_msg = self._error_msg
-            self.send_failture_notification(error_msg)
+            self.send_failture_notification(error_msg, target=siteName)
             return False
         
         if self._cloud:
@@ -363,7 +363,7 @@ class backup:
                     os.remove(dfile)
 
                 remark = "备份到" + self._cloud._title
-                self.send_failture_notification(error_msg, remark=remark)
+                self.send_failture_notification(error_msg, target=siteName, remark=remark)
                 return False
 
         filename = dfile
@@ -430,6 +430,7 @@ class backup:
             if not result:
                 failture_count += 1
             results.append((database['name'], result, self._error_msg,))
+            self.save_backup_status(result, target=database['name'], msg=self._error_msg)
 
         if failture_count > 0:
             self.send_all_failture_notification("database", results)
@@ -447,6 +448,7 @@ class backup:
             if not result:
                 failture_count += 1
             results.append((site['name'], result, self._error_msg,))
+            self.save_backup_status(result, target=site['name'], msg=self._error_msg)
         
         if failture_count > 0:
             self.send_all_failture_notification("site", results)
@@ -507,13 +509,13 @@ class backup:
         except:
             error_msg = "数据库连接异常，请检查root用户权限或者数据库配置参数是否正确。"
             self.echo_error(error_msg)
-            self.send_failture_notification(error_msg)
+            self.send_failture_notification(error_msg, target=db_name)
             return False
         
         if p_size == None:
             error_msg = '指定数据库 `{}` 没有任何数据!'.format(db_name)
             self.echo_error(error_msg)
-            self.send_failture_notification(error_msg)
+            self.send_failture_notification(error_msg, target=db_name)
             return False
 
         character = public.get_database_character(db_name)
@@ -527,13 +529,13 @@ class backup:
             if disk_free < p_size:
                 error_msg = "目标分区可用的磁盘空间小于{},无法完成备份，请增加磁盘容量，或在设置页面更改默认备份目录!".format(public.to_size(p_size))
                 self.echo_error(error_msg)
-                self.send_failture_notification(error_msg)
+                self.send_failture_notification(error_msg, target=db_name)
                 return False
 
             if disk_inode < self._inode_min:
                 error_msg = "目标分区可用的Inode小于{},无法完成备份，请增加磁盘容量，或在设置页面更改默认备份目录!".format(self._inode_min)
                 self.echo_error(error_msg)
-                self.send_failture_notification(error_msg)
+                self.send_failture_notification(error_msg, target=db_name)
                 return False
         
         stime = time.time()
@@ -556,7 +558,7 @@ class backup:
         if gz_size < 400:
             error_msg = "数据库导出失败!"
             self.echo_error(error_msg)
-            self.send_failture_notification(error_msg)
+            self.send_failture_notification(error_msg, target=db_name)
             self.echo_info(public.readFile(self._err_log))
             return False
         self.echo_info("数据库备份完成，耗时{:.2f}秒，压缩包大小：{}".format(time.time() - stime,public.to_size(gz_size)))
@@ -576,7 +578,7 @@ class backup:
                     os.remove(dfile)
 
                 remark = "备份到" + self._cloud._title
-                self.send_failture_notification(error_msg, remark=remark)
+                self.send_failture_notification(error_msg, target=db_name, remark=remark)
                 return False
 
         filename = dfile
@@ -636,6 +638,7 @@ class backup:
         
         self.delete_old(backups,save,'database')
         self.echo_end()
+        self.save_backup_status(True, target=db_name)
         return dfile
 
     def generate_success_title(self, task_name):
@@ -698,13 +701,13 @@ class backup:
         """ 通过计划任务名称查找计划任务配置参数 """
         try:
             cron_info  = public.M('crontab').where('echo=?',(cron_name,))\
-            .field('name,save_local,notice,notice_channel').find()
+            .field('name,save_local,notice,notice_channel,id').find()
             return cron_info
         except Exception as e:
             pass
         return {}
 
-    def send_failture_notification(self, error_msg, remark=""):
+    def send_failture_notification(self, error_msg, target="", remark=""):
         """发送任务失败消息
         
         :error_msg 错误信息
@@ -719,6 +722,8 @@ class backup:
         save_local = cron_info["save_local"]
         notice = cron_info["notice"]
         notice_channel = cron_info["notice_channel"]
+
+        self.save_backup_status(False, target, msg=error_msg)
         if notice == 0 or not notice_channel:
             return
 
@@ -827,5 +832,16 @@ class backup:
         except Exception as e:
             print(e)
         return False
-
+    def save_backup_status(self, status, target="", msg=""):
+        """保存备份的状态"""
+        try:
+            if not self.cron_info:
+                return
+            print("cron info:")
+            print(self.cron_info)
+            cron_id = self.cron_info["id"]
+            sql = public.M("system").dbfile("system").table("backup_status")
+            sql.add("id,target,status,msg,addtime", (cron_id, target, status, msg, time.time(),))
+        except Exception as e:
+            print("保存备份状态异常: {}.".format(e))
     

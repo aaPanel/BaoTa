@@ -8,7 +8,7 @@
                 <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
             </div>
             <div class="search pull-right">
-                <form target="hid" onsubmit='database.database_table_view($("#SearchValue").val())'>
+                <form target="hid" onsubmit='return false'>
                     <input type="text" id="SearchValue" class="ser-text pull-left" placeholder="{{data['lan']['SEARCH']}}" />
                     <button type="button" class="ser-sub pull-left" onclick='database.database_table_view($("#SearchValue").val())'></button>
                 </form>

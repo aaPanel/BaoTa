@@ -52,7 +52,7 @@
       p1 = $("#p1").val();
       p2 = $("#p2").val();
       var loadT = bt.load(lan.config.token_get);
-      bt.send('GetToken', 'ssl/GetToken', "username=" + p1 + "&password=" + p2, function (rdata) {
+      bt.send('GetToken', 'ssl/GetToken', {username:p1 ,password:p2}, function (rdata) {
           loadT.close();
           bt.msg(rdata);
           if (rdata.status) window.location.href = "/"

@@ -1096,7 +1096,12 @@ export PATH
         plugin_name = None
         for pid_name in os.listdir(self._node_pid_path):
             pid_file = '{}/{}'.format(self._node_pid_path,pid_name)
-            s_pid = int(public.readFile(pid_file))
+            #s_pid = int(public.readFile(pid_file))
+            data = public.readFile(pid_file)
+            if isinstance(data,str) and data:
+                s_pid = int(data)
+            else:
+                return []
             if pid == s_pid:
                 plugin_name = pid_name[:-4]
                 break
@@ -1245,7 +1250,10 @@ echo $! > {pid_file}
             return public.return_error('启动失败<pre>{}</pre>'.format(p))
 
         # 获取PID
-        pid = int(public.readFile(pid_file))
+        try:
+            pid = int(public.readFile(pid_file))
+        except:
+            return public.return_error('启动失败<br>{}'.format(public.GetNumLines(log_file,20)))
         pids = self.get_project_pids(pid=pid)
         if not pids: 
             if os.path.exists(pid_file): os.remove(pid_file)
@@ -1265,8 +1273,12 @@ echo $! > {pid_file}
         '''
         pid_file = "{}/{}.pid".format(self._node_pid_path,get.project_name)
         if not os.path.exists(pid_file): return public.return_error('项目未启动')
-        pid = int(public.readFile(pid_file))
-        pids = self.get_project_pids(pid=pid)
+        data = public.readFile(pid_file)
+        if isinstance(data,str) and data:
+            pid = int(data)
+            pids = self.get_project_pids(pid=pid)
+        else:
+            return  public.return_error('项目未启动')
         if not pids: return public.return_error('项目未启动')
         self.kill_pids(pids=pids)
         if os.path.exists(pid_file): os.remove(pid_file)
@@ -1314,8 +1326,12 @@ echo $! > {pid_file}
         load_info = {}
         pid_file = "{}/{}.pid".format(self._node_pid_path,project_name)
         if not os.path.exists(pid_file): return load_info
-        pid = int(public.readFile(pid_file))
-        pids = self.get_project_pids(pid=pid)
+        data = public.readFile(pid_file)
+        if isinstance(data,str) and data:
+            pid = int(data)
+            pids = self.get_project_pids(pid=pid)
+        else:
+            return load_info
         if not pids: return load_info
         for i in pids:
             process_info = self.get_process_info_by_pid(i)
@@ -1514,8 +1530,12 @@ echo $! > {pid_file}
         if get: project_name = get.project_name.strip()
         pid_file = "{}/{}.pid".format(self._node_pid_path,project_name)
         if not os.path.exists(pid_file): return False
-        pid = int(public.readFile(pid_file))
-        pids = self.get_project_pids(pid=pid)
+        data=public.readFile(pid_file)
+        if isinstance(data,str) and data:
+            pid = int(data)
+            pids = self.get_project_pids(pid=pid)
+        else:
+            return False
         if not pids: return False
         return True
 

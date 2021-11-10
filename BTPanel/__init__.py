@@ -136,7 +136,8 @@ admin_path_checks = [
     '/tips',
     '/message',
     '/warning',
-    '/bind'
+    '/bind',
+    '/daily'
 ]
 if admin_path in admin_path_checks: admin_path = '/bt'
 
@@ -702,7 +703,7 @@ def files(pdata=None):
             'DownloadFile', 'GetTaskSpeed', 'CloseLogs', 'InstallSoft', 'UninstallSoft', 'SaveTmpFile',
             'get_composer_version', 'exec_composer', 'update_composer',
             'GetTmpFile', 'del_files_store', 'add_files_store', 'get_files_store', 'del_files_store_types',
-            'add_files_store_types', 'exec_git',
+            'add_files_store_types', 'exec_git','upload_file_exists',
             'RemoveTask', 'ActionTask', 'Re_Recycle_bin', 'Get_Recycle_bin', 'Del_Recycle_bin', 'Close_Recycle_bin',
             'Recycle_bin', 'file_webshell_check', 'dir_webshell_check','files_search','files_replace','get_replace_logs'
             )
@@ -799,7 +800,8 @@ def config(pdata=None):
     'ClosePanel', 'AutoUpdatePanel', 'SetPanelLock', 'return_mail_list', 'del_mail_list', 'add_mail_address',
     'user_mail_send', 'get_user_mail', 'set_dingding', 'get_dingding', 'get_settings', 'user_stmp_mail_send',
     'user_dingding_send','get_login_send','set_login_send','set_empty','clear_login_send','get_login_log','login_ipwhite',
-    'set_ssl_verify','get_ssl_verify','get_password_config','set_password_expire','set_password_safe'
+    'set_ssl_verify','get_ssl_verify','get_password_config','set_password_expire','set_password_safe',
+    'set_click_logs'
     )
     return publicObject(config.config(), defs, None, pdata)
 
@@ -1141,9 +1143,7 @@ def login():
             else:
                 data['hosts'] = json.dumps(data['hosts'])
         data['app_login'] = os.path.exists('data/app_login.pl')
-        return render_template(
-            'login.html',
-            data=data)
+        return render_template('login.html',data=data)
 
 
 @app.route('/close', methods=method_get)
@@ -1295,6 +1295,23 @@ def panel_public():
     get = get_input()
     if len("{}".format(get.__dict__)) > 1024 * 32:
         return 'ERROR'
+
+
+    
+    #获取ping测试
+    if 'get_ping' in get:
+        try:
+            import panelPing
+            p = panelPing.Test()
+            get = p.check(get)
+            if not get: return 'ERROR'
+            result = getattr(p,get['act'])(get)
+            result_type = type(result)
+            if str(result_type).find('Response') != -1: return result
+            return public.getJson(result),json_header
+        except:
+            return public.returnJson(False,public.get_error_info())
+            
     get.client_ip = public.GetClientIp()
     num_key = get.client_ip + '_wxapp'
     if not public.get_error_num(num_key, 10):
@@ -1302,7 +1319,15 @@ def panel_public():
     if not hasattr(get, 'name'): get.name = ''
     if not hasattr(get, 'fun'): return abort(403)
     if not public.path_safe_check("%s/%s" % (get.name, get.fun)): return abort(403)
-    if get.fun in ['login_qrcode', 'is_scan_ok','set_login']:
+    if get.fun in ['login_qrcode', 'is_scan_ok','set_login','static']:
+        if get.fun == 'static':
+            if not 'filename' in get: return abort(404)
+            if not public.path_safe_check("%s" % (get.filename)): return abort(404)
+            if not re.match(r'^[\w\./_-]+$',get.filename): return abort(404)
+            s_file = '/www/server/panel/BTPanel/static/' + get.filename
+            if s_file.find('..') != -1 or s_file.find('./') != -1: return abort(404)
+            if not os.path.exists(s_file): return abort(404)
+            return send_file(s_file, conditional=True, add_etags=True)
         # 检查是否验证过安全入口
         global admin_check_auth, admin_path, route_path, admin_path_file
         if admin_path != '/bt' and os.path.exists(admin_path_file) and not 'admin_auth' in session:
@@ -1719,7 +1744,7 @@ def get_pd():
     try:
         import panelPlugin
         get = public.dict_obj()
-        get.init = 1
+        # get.init = 1
         tmp1 = panelPlugin.panelPlugin().get_cloud_list(get)
     except:
         tmp1 = None
@@ -2267,3 +2292,17 @@ def webssh(ws):
 
 
 # ---------------------    websocket END    -------------------------- #
+
+@app.route("/daily", methods=method_all)
+def daily():
+    """面板日报数据"""
+
+    comReturn = comm.local()
+    if comReturn: return comReturn
+
+    import panelDaily
+    toObject = panelDaily.panelDaily()
+
+    defs = ("get_app_usage", "get_daily_data", "get_daily_list")
+    result = publicObject(toObject, defs)
+    return result

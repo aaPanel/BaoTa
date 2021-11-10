@@ -304,23 +304,26 @@ class Sql():
 
     #是否有锁
     def is_lock(self):
-        n = 0
-        while os.path.exists(self.__LOCK):
-            n+=1
-            if n > 100:
-                self.rm_lock()
-                break
-            time.sleep(0.01)
+        return
+        # n = 0
+        # while os.path.exists(self.__LOCK):
+        #     n+=1
+        #     if n > 100:
+        #         self.rm_lock()
+        #         break
+        #     time.sleep(0.01)
     #写锁
     def write_lock(self):
-        self.is_lock()
-        with open(self.__LOCK,'wb+') as f:
-            f.close()
+        return
+        # self.is_lock()
+        # with open(self.__LOCK,'wb+') as f:
+        #     f.close()
 
     #解锁
     def rm_lock(self):
-        if os.path.exists(self.__LOCK):
-            os.remove(self.__LOCK)
+        return
+        # if os.path.exists(self.__LOCK):
+        #     os.remove(self.__LOCK)
     
     def query(self,sql,param = ()):
         #执行SQL语句返回数据集

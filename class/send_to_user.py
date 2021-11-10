@@ -109,7 +109,6 @@ class send_to_user:
     def read_thread(self):
         if not public.M('send_settings').count():return False
         send_data=public.M('send_settings').field('id,name,type,path,send_type,inser_time,last_time,time_frame').select()
-        print(send_data)
         for i in send_data:
             if (int(time.time())-int(i['last_time']))<int(i['time_frame']):continue
             if i['type']=='json':
@@ -118,23 +117,21 @@ class send_to_user:
                     if not read_file:continue
                     if not read_file[0]:continue
                     for i2 in read_file:
-                        self.inser_send_msg(i['name'],i['send_type'],self.get_ip()+'服务器存在问题-->'+i2[1]+',触发告警时间:'+self.dtchg(int(time.time())),'json',i2[0])
+                        self.inser_send_msg(i['name'],i['send_type'],self.get_ip()+"服务器触发告警信息为: "+i2[1]+',触发告警时间:'+self.dtchg(int(time.time())),'json',i2[0])
                     public.writeFile(i['path'], '')
                     public.M('send_settings').where("id=?", (i['id'],)).update({"last_time": int(time.time())})
-                continue
             if i['type']=='file':
                 if os.path.exists(i['path']):
-                    self.inser_send_msg(i['name'], i['send_type'], '堡塔'+i['name']+'提醒您服务器'+self.get_ip()+'存在异常,详情请登陆面板查看'+i['name']+',触发告警时间:'+self.dtchg(int(time.time())), 'file', int(time.time()))
-                    public.M('send_settings').where("id=?", (i['id'],)).update({"last_time": int(time.time())})
-                    os.system('rm -rf %s'%i['path'])
-                    if os.path.exists(i['path']):os.system('rm -rf %s'%i['path'])
-                else:
-                    continue
-    def send(self,title,body):
-        tongdao = self.mail.get_settings()
-        return self.mail.qq_smtp_send(tongdao['user_mail']['mail_list'], title=title, body=body)
-    def send_dingding(self,count):
-       return self.mail.dingding_send(count)
+                    try:
+                        f=open(i['path'],'r')
+                        for i2 in f:
+                            i2 =i2.strip()
+                            if i2:
+                                self.inser_send_msg(i['name'], i['send_type'],self.get_ip()+"服务器触发告警信息为: "+i2+',触发告警时间:'+self.dtchg(int(time.time())), 'file', int(time.time()))
+                        os.remove(i['path'])
+                        public.M('send_settings').where("id=?", (i['id'],)).update({"last_time": int(time.time())})
+                    except:
+                        os.remove(i['path'])
 
     def __write_log(self,name, msg):
         public.WriteLog(name+'告警', msg)
@@ -146,34 +143,17 @@ class send_to_user:
         count=1
         for i in send_msg:
             if count>=4:break
-            settings=self.mail.get_settings()
             if i['send_type']=='mail':
-                if not settings['user_mail']['user_name']:continue
-                if i['name']=='Nginx防火墙' or i['name'] == 'Apache防火墙':
-                    if self.send(i['name'] + '提醒您' + self.get_ip() + '服务器正在遭受攻击', i['msg']):
-                        self.__write_log(i['name'], i['msg'])
-                        public.M('send_msg').where("id=?", (i['id'],)).update({"is_send": True})
-                else:
-                    if self.send(i['name']+'提醒您'+self.get_ip()+'服务器存在风险', i['msg']):
-                        self.__write_log(i['name'],i['msg'])
-                        public.M('send_msg').where("id=?", (i['id'],)).update({"is_send":True})
+                if public.send_mail(i['name'], i['msg']):
+                    self.__write_log(i['name'], i['msg'])
+                    public.M('send_msg').where("id=?", (i['id'],)).update({"is_send":True})
             if i['send_type']=='dingding':
-                if not settings['dingding']['dingding']: continue
-                if i['name'] == 'Nginx防火墙' or i['name'] == 'Apache防火墙':
-                    if self.send(i['name'] + '提醒您' + self.get_ip() + '服务器正在遭受攻击', i['msg']):
-                        self.__write_log(i['name'], i['msg'])
-                        public.M('send_msg').where("id=?", (i['id'],)).update({"is_send": True})
-                else:
-                    if self.send_dingding(i['msg']):
-                        self.__write_log(i['name'], i['msg'])
-                        public.M('send_msg').where("id=?", (i['id'],)).update({"is_send": True})
+                if public.send_dingding(i['msg']):
+                    self.__write_log(i['name'], i['msg'])
+                    public.M('send_msg').where("id=?", (i['id'],)).update({"is_send": True})
             count += 1
         public.M('send_msg').where("is_send=?", (True,)).delete()
 
     def main(self):
-        try:
-            self.read_thread()
-            self.send_msg()
-        except:
-            pass
-        
+        self.read_thread()
+        self.send_msg()

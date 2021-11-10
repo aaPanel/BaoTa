@@ -214,6 +214,37 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                 return False
         return True
 
+    # 上传前检查文件是否存在
+    def upload_file_exists(self,args):
+        '''
+            @name 上传前检查文件是否存在
+            @author hwliang<2021-11-3>
+            @param filename<string> 文件名
+            @return dict
+        '''
+        filename = args.filename.strip()
+        if not os.path.exists(filename):
+            return public.returnMsg(False,'指定文件不存在')
+        file_info = {}
+        _stat = os.stat(filename)
+        file_info['size'] = _stat.st_size
+        file_info['mtime'] = int(_stat.st_mtime)
+        file_info['isfile'] = os.path.isfile(filename)
+        return public.returnMsg(True,file_info)
+
+
+    def get_real_len(self,string):
+        '''
+            @name 获取含中文的字符串字精确长度
+            @author hwliang<2021-11-3>
+            @param string<str>
+            @return int
+        '''
+        real_len = len(string)
+        for s in string:
+            if '\u2E80' <= s <= '\uFE4F':
+                real_len += 1
+        return real_len
 
     # 上传文件2
     def upload(self, args):
@@ -226,9 +257,12 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         if sys.version_info[0] == 2:
             args.f_name = args.f_name.encode('utf-8')
             args.f_path = args.f_path.encode('utf-8')
+        try:
+            if self.get_real_len(args.f_name) > 128: return public.returnMsg(False,'文件名长度超过128个字节')
+        except:
+            pass
+        if not self.f_name_check(args.f_name): return public.returnMsg(False,'文件名中包含特殊字符!')
 
-        
-        if not self.f_name_check(args.f_name): return public.returnMsg(False,'文件名中不能包含特殊字符!')
 
         if args.f_path == '/':
             return public.returnMsg(False,'不能直接上传文件到系统根目录!')
@@ -247,16 +281,21 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             d_size = os.path.getsize(save_path)
         if d_size != int(args.f_start):
             return d_size
-        f = open(save_path, 'ab')
-        if 'b64_data' in args:
-            import base64
-            b64_data = base64.b64decode(args.b64_data)
-            f.write(b64_data)
-        else:
-            upload_files = request.files.getlist("blob")
-            for tmp_f in upload_files:
-                f.write(tmp_f.read())
-        f.close()
+        try:
+            f = open(save_path, 'ab')
+            if 'b64_data' in args:
+                import base64
+                b64_data = base64.b64decode(args.b64_data)
+                f.write(b64_data)
+            else:
+                upload_files = request.files.getlist("blob")
+                for tmp_f in upload_files:
+                    f.write(tmp_f.read())
+            f.close()
+        except Exception as ex:
+            ex = str(ex)
+            if ex.find('No space left on device') != -1:
+                return public.returnMsg(False, '磁盘空间不足')
         f_size = os.path.getsize(save_path)
         if f_size != int(args.f_size):
             return f_size

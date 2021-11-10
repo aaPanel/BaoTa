@@ -41,7 +41,26 @@ def get_python_bin():
         return bin_file
     python_bin = bin_file2
     return bin_file2
-
+def WriteFile(filename,s_body,mode='w+'):
+    """
+    写入文件内容
+    @filename 文件名
+    @s_body 欲写入的内容
+    return bool 若文件不存在则尝试自动创建
+    """
+    try:
+        fp = open(filename, mode)
+        fp.write(s_body)
+        fp.close()
+        return True
+    except:
+        try:
+            fp = open(filename, mode,encoding="utf-8")
+            fp.write(s_body)
+            fp.close()
+            return True
+        except:
+            return False
 
 def ReadFile(filename, mode='r'):
     """
@@ -158,14 +177,17 @@ def startTask():
 def siteEdate():
     global oldEdate
     try:
-        oldEdate = ReadFile('/www/server/panel/data/edate.pl')
+        if not oldEdate:
+            oldEdate = ReadFile('/www/server/panel/data/edate.pl')
         if not oldEdate:
             oldEdate = '0000-00-00'
         mEdate = time.strftime('%Y-%m-%d', time.localtime())
-        if oldEdate == mEdate:
-            return False
+        
         os.system(get_python_bin() +
                   " /www/server/panel/script/site_task.py > /dev/null")
+                  
+        if oldEdate == mEdate:
+            return False
     except Exception as ex:
         logging.info(ex)
         pass
@@ -206,6 +228,12 @@ def systemTask():
         network_up = {}
         network_down = {}
         process_object = process_task()
+        try:
+            from panelDaily import panelDaily
+            panelDaily().check_databases()
+        except Exception as e:
+            logging.info(e)
+
         while True:
             if not os.path.exists(filename):
                 time.sleep(10)
@@ -338,6 +366,41 @@ def systemTask():
                     if reloadNum > 1440:
                         reloadNum = 0
                     process_object.get_monitor_list()
+                    
+                    # 日报数据收集
+                    if os.path.exists("/www/server/panel/data/start_daily.pl"):
+                        try:
+                            from panelDaily import panelDaily
+                            pd = panelDaily()
+                            t_now = time.localtime()
+                            yesterday  = time.localtime(time.mktime((
+                                t_now.tm_year, t_now.tm_mon, t_now.tm_mday-1, 
+                                0,0,0,0,0,0
+                            )))
+                            yes_time_key = pd.get_time_key(yesterday)
+                            con = ReadFile("/www/server/panel/data/store_app_usage.pl")
+                            # logging.info(str(con))
+                            store = False
+                            if con:
+                                if con != str(yes_time_key):
+                                    store = True
+                            else:
+                                store = True
+    
+                            if store:
+                                date_str = str(yes_time_key)
+                                daily_data = pd.get_daily_data_local(date_str)
+                                if "status" in daily_data.keys():
+                                    if daily_data["status"]:
+                                        score = daily_data["score"]
+                                        if public.M("system").dbfile("system").table("daily").where("time_key=?", (yes_time_key,)).count() == 0:
+                                            public.M("system").dbfile("system").table("daily").add("time_key,evaluate,addtime", (yes_time_key, score, time.time()))
+                                        pd.store_app_usage(yes_time_key)
+                                        WriteFile("/www/server/panel/data/store_app_usage.pl", str(yes_time_key), "w")
+                                    # logging.info("更新应用存储信息:"+str(yes_time_key))
+                                    pd.check_server()
+                        except Exception as e:
+                            logging.info("存储应用空间信息错误:"+str(e)) 
                 except Exception as ex:
                     logging.info(str(ex))
             del(tmp)
@@ -577,16 +640,9 @@ def HttpGet(url, timeout=6, headers={}):
 
 # 定时任务去检测邮件信息
 def send_mail_time():
-    p_path = '/www/server/panel/data/'
-    p_reload = p_path + '/send_to_user.pl'
-    if not os.path.exists(p_path):
-        return
     while True:
         try:
-            if os.path.exists(p_reload):
-                os.system(get_python_bin() +
-                          " /www/server/panel/script/mail_task.py > /dev/null")
-                os.remove(p_reload)
+            os.system(get_python_bin()+" /www/server/panel/script/mail_task.py > /dev/null")
             time.sleep(60)
         except:
             time.sleep(180)

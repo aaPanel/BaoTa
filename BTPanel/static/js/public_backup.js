@@ -1431,7 +1431,10 @@ bt.pub = {
   },
   login_btname: function (username, password, callback) {
     var loadT = bt.load(lan.config.token_get);
-    bt.send('GetToken', 'ssl/GetToken', "username=" + username + "&password=" + password, function (rdata) {
+    bt.send('GetToken', 'ssl/GetToken', {
+      username: username,
+      password: password
+    }, function (rdata) {
       loadT.close();
       bt.msg(rdata);
       if (rdata.status) {
@@ -1452,7 +1455,10 @@ bt.pub = {
           var p1 = $("#p1").val(),
             p2 = $("#p2").val(),
             loadT = bt.load(lan.config.token_get);
-          bt.send('GetToken', 'ssl/GetToken', "username=" + p1 + "&password=" + p2, function (rdata) {
+          bt.send('GetToken', 'ssl/GetToken', {
+            username: p1,
+            password: p2
+          }, function (rdata) {
             loadT.close();
             bt.msg(rdata);
             if (rdata.status) {
@@ -2206,7 +2212,10 @@ bt.recycle_bin = {
   re_recycle_bin: function (path, type) {
     var _this = this;
     bt.files.re_recycle_bin(path, function (rdata) {
-      if (rdata.status) _this.open_recycle_bin(type);
+      if (rdata.status) {
+        _this.open_recycle_bin(type);
+        if (database) database.database_table_view();
+      }
       bt.msg(rdata);
     })
   }
@@ -2267,7 +2276,7 @@ bt.files = {
     });
   },
   del_recycle_bin: function (obj, callback) {
-    bt.prompt_confirm(lan.files.recycle_bin_del_title, '您确定要删除文件['+ obj.name +']吗，该操作将<span style="color:red;">永久删除改文件</span>，是否继续操作？', function () {
+    bt.prompt_confirm(lan.files.recycle_bin_del_title, '您确定要删除文件['+ obj.name +']吗，该操作将<span style="color:red;">永久删除该文件</span>，是否继续操作？', function () {
       var loadT = bt.load(lan.files.recycle_bin_del_the);
       bt.send('Re_Recycle_bin', 'files/Del_Recycle_bin', 'path=' + obj.path, function (rdata) {
         loadT.close();
@@ -3761,20 +3770,17 @@ bt.firewall = {
     })
   },
   clear_logs: function (callback) {
-    bt.confirm({
-      msg: lan.firewall.close_log_msg,
-      title: lan.firewall.close_log
-    }, function () {
+    bt.show_confirm(lan.firewall.close_log, lan.firewall.close_log_msg, function () {
       var loadT = bt.load(lan.firewall.close_the);
       bt.send('delClose', 'ajax/delClose', {}, function (rdata) {
         loadT.close();
         if (callback) {
           callback(rdata);
         } else {
-          bt.msg(rdata)
+          bt.msg(rdata);
         }
-      })
-    })
+      });
+    });
   }
 }
 
@@ -4178,7 +4184,7 @@ bt.soft = {
       skin: 'libPay-view',
       area: ['1000px', '650px'],
       shadeClose: false,
-      content: '<div class="libPay-content-box">\
+      content: '<div class="libPay-content-box '+(config.source?'sourceTips':'')+'">\
                 <div class="libPay-menu ' + (config.plugin ? 'is_plugin' : '') + '">\
                     ' + (config.plugin ? '<div class="libPay-menu-type lib_plugin"><p>' + config.name + '</p><p>' + config.name + '</p></div>' : '') + '\
                     <div class="libPay-menu-type lib_pro" >\
@@ -4457,8 +4463,22 @@ bt.soft = {
   create_pay_code: function (idx) {
     var _obj = $('.pay-cycle-btns').eq(idx).addClass('active').siblings().removeClass('active');
     var that = this,
-      _product = $('.libPay-menu-type.active').data(),
-      _cycle = $(".pay-cycle-btns.active").data('data');
+        _product = $('.libPay-menu-type.active').data(),
+        _cycle = $(".pay-cycle-btns.active").data('data'),
+        _source = 0,
+        _locahostURL = window.location.pathname;
+    switch(_locahostURL){
+        case '/':
+            _source = 21
+            break;
+        case '/control':
+            _source = 22
+            break;
+        case '/soft':
+            _source = 24;
+            if($('.libPay-content-box').hasClass('sourceTips')) _source = 23;
+            break;
+    };
 
     $(".wx-pay-ico").hide()
     $(".libPay-loading").show();
@@ -4470,13 +4490,19 @@ bt.soft = {
 
     that.pro.create_order({
       pid: _product.pid,
-      cycle: _cycle.cycle
+      cycle: _cycle.cycle,
+      source:_source
     }, function (rdata) {
       var start = that.pay_loading.get('start')
       var end = that.pay_loading.set('end')
       if (end < start) return
-
+      
       $(".libPay-loading").hide()
+        var active_idx = $('.pay-cycle-btns.active').index()
+        if (idx != active_idx) {
+            that.create_pay_code(active_idx)
+            return
+        }
       if (rdata.status === false) {
         
         bt.set_cookie('force', 1);
@@ -4608,6 +4634,7 @@ bt.soft = {
     var param = {
       name: '宝塔面板企业版',
       pid: 100000032,
+      source:5,
       limit: 'ltd'
     };
     if (is_alone || false) $.extend(param, {
@@ -4621,6 +4648,7 @@ bt.soft = {
     bt.soft.product_pay_view({
       name: '',
       pid: '',
+      source:5,
       limit: 'pro'
     });
   },
@@ -6104,7 +6132,10 @@ bt.database = {
       }, function(rdata) {
         loadT.close();
         if (rdata.status) {
-          if (database) database.database_detail(dataId, dataName);
+          if (database) {
+            database.database_detail(dataId, dataName);
+            database.database_table_view();
+          }
         }
         bt.msg(rdata);
       });
@@ -7836,8 +7867,8 @@ var dynamic = {
   
   // 初始化执行
   execution:function(){
-    for (let i = 0; i < this.loadList.length; i++) {
-      let fileName = this.loadList[i];
+    for (var i = 0; i < this.loadList.length; i++) {
+      var fileName = this.loadList[i];
       if(fileName in this.fileFunList) this.fileFunList[fileName]()
     }
   },
@@ -7854,7 +7885,7 @@ var dynamic = {
     this.load = true;
     this.fileFunList = {};
     function createElement(url){
-      let element = null;
+      var element = null;
       if(url.indexOf('.js') > -1){
         element = document.createElement('script')
         element.type = 'text/javascript'
@@ -7871,7 +7902,7 @@ var dynamic = {
       if(this.loadList.indexOf(filName) > -1) break;
       this.loadList.push(filName);
       (function(url){
-        let element = createElement(url);
+        var element = createElement(url);
         if(element.readyState){
           element.onreadystatechange = function(ev){
             if( element.readyState === 'loaded' || element.readyState === 'complete' ){

@@ -1,5 +1,17 @@
 var database = {
-  database_table_view: function (serach) {
+  database_table: null,
+  init: function () {
+    this.event();
+    this.database_table_view();
+  },
+  event: function () {
+    $('#SearchValue').keydown(function (e) {
+      if (e.keyCode == 13) {
+        $(this).next().click();
+      }
+    });
+  },
+  database_table_view: function (search) {
     var that = this;
     $('#bt_database_table').empty();
     this.database_table = bt_tools.table({
@@ -7,7 +19,7 @@ var database = {
       url: '/data?action=getData',
       param: {
         table: 'databases',
-        serach: serach || ''
+        search: search || ''
       }, //参数
       minWidth: '1000px',
       autoHeight: true,
@@ -210,13 +222,13 @@ var database = {
               name: row.name
             }
           },
-          callback: function (that) { // 手动执行,data参数包含所有选中的站点
+          callback: function (config) { // 手动执行,data参数包含所有选中的站点
             var ids = [];
-            for (var i = 0; i < that.check_list.length; i++) {
-              ids.push(that.check_list[i].id);
+            for (var i = 0; i < config.check_list.length; i++) {
+              ids.push(config.check_list[i].id);
             }
             database.del_database(ids, function (param) {
-              that.start_batch(param, function (list) {
+              config.start_batch(param, function (list) {
                 layer.closeAll()
                 var html = '';
                 for (var i = 0; i < list.length; i++) {
@@ -342,7 +354,10 @@ var database = {
         });
         $('#btn_data_backup').unbind('click').click(function () {
           bt.database.backup_data(id, dataname, function (rdata) {
-            if (rdata.status) database.database_detail(id, dataname);
+            if (rdata.status) {
+                database.database_detail(id, dataname);
+                database.database_table_view();
+            }
           })
         })
         // 操作》恢复
@@ -928,6 +943,7 @@ var database = {
               }, countDown * 1000)
             },
             yes: function (indes, layers) {
+              console.log(1);
               if ($(layers).hasClass('active')) {
                 layer.tips('请确认信息，稍后在尝试，还剩' + countDown + '秒', $(layers).find('.layui-layer-btn0'), {
                   tips: [1, 'red'],
@@ -951,4 +967,4 @@ var database = {
     })
   },
 }
-database.database_table_view();
+database.init();

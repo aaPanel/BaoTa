@@ -342,9 +342,12 @@ class panelSSL:
             if domain[:2] == '*.': domain = domain[2:]
             dinfo['domainName'] = domain
             if is_file_verify:
-                siteRunPath = self.get_domain_run_path(domain)
-                if domain[:4] == 'www.': domain = domain[4:] 
-
+                #判断是否是Springboot 项目
+                if public.M('sites').where('id=?',(public.M('domain').where('name=?',(dinfo['domainName'])).getField('pid'),)).getField('project_type') == 'Java':
+                    siteRunPath='/www/wwwroot/java_node_ssl'
+                else:
+                    siteRunPath = self.get_domain_run_path(domain)
+                if domain[:4] == 'www.': domain = domain[4:]
                 status = 0
                 url = 'http'+ is_https +'://'+ domain +'/.well-known/pki-validation/' + verify_info['data']['DCVfileName']
                 get = public.dict_obj()
@@ -367,6 +370,7 @@ class panelSSL:
 
         return verify_info
 
+
     #取消订单
     def cancel_cert_order(self,args):
         self.__PDATA['data']['oid'] = args.oid
@@ -386,7 +390,6 @@ class panelSSL:
         result = self.request('get_cert_admin')
         return result
 
-    
     def ApplyDVSSL(self,get):        
 
         """
@@ -410,10 +413,16 @@ class panelSSL:
         if get.domain[:4] == 'www.':
             if not public.M('domain').where('name=? AND pid=?',(get.domain[4:],get.id)).count():
                 return public.returnMsg(False,"申请[%s]证书需要验证[%s]请将[%s]绑定并解析到站点!" % (get.domain,get.domain[4:],get.domain[4:]))
-                   
-
-        runPath = self.GetRunPath(get);
-
+        #判断是否是Java项目
+        if public.M('sites').where('id=?',(get.id,)).getField('project_type') == 'Java':
+            get.path='/www/wwwroot/java_node_ssl/'
+            runPath=''
+        #判断是否是Node项目
+        elif public.M('sites').where('id=?',(get.id,)).getField('project_type') == 'Node':
+            get.path=public.M('sites').where('id=?',(get.id,)).getField('path')
+            runPath=''
+        else:
+            runPath = self.GetRunPath(get)
         if runPath != False and runPath != '/': get.path +=  runPath;
         authfile = get.path + '/.well-known/pki-validation/fileauth.txt';
         if not self.CheckDomain(get):
@@ -625,7 +634,10 @@ class panelSSL:
         self.__PDATA['data'] = self.De_Code(self.__PDATA['data'])
         if hasattr(get,'siteName'):
             get.path = public.M('sites').where('name=?',(get.siteName,)).getField('path')
-            runPath = self.GetRunPath(get)
+            if public.M('sites').where('id=?',(public.M('domain').where('name=?',(get.siteName)).getField('pid'),)).getField('project_type') == 'Java':
+                runPath='/www/wwwroot/java_node_ssl'
+            else:
+                runPath = self.GetRunPath(get)
             if runPath != False and runPath != '/': get.path +=  runPath
             tmp = public.httpPost(self.__APIURL + '/SyncOrder',self.__PDATA)
             try:
@@ -635,7 +647,11 @@ class panelSSL:
 
             sslInfo['data'] = self.En_Code(sslInfo['data'])
             try:
-                spath = get.path + '/.well-known/pki-validation'
+                
+                if public.M('sites').where('id=?',(public.M('domain').where('name=?',(get.siteName)).getField('pid'),)).getField('project_type') == 'Java':
+                    spath = '/www/wwwroot/java_node_ssl/.well-known/pki-validation'
+                else:
+                    spath = get.path + '/.well-known/pki-validation'
                 if not os.path.exists(spath): public.ExecShell("mkdir -p '" + spath + "'")
                 public.writeFile(spath + '/fileauth.txt',sslInfo['data']['authValue'])
             except:

@@ -33,8 +33,6 @@ $('#cutMode span').on('click', function () {
     bt.set_cookie('site_model',type)
 });
 
-
-
 var site = {
     node:{
         /**
@@ -1527,9 +1525,6 @@ var site = {
             }]
         });
     },
-
-
-
     php_table_view:function(){
         $('#bt_site_table').empty();
         var site_table = bt_tools.table({
@@ -2255,7 +2250,6 @@ var site = {
             if (obj) $(obj).prop('checked', false)
         })
     },
-
     /**
      * @description 备份站点视图
      * @param {object} config  配置参数
@@ -2383,7 +2377,6 @@ var site = {
             }
         });
     },
-
     /**
      * @description 添加站点
      * @param {object} config  配置参数
@@ -2884,9 +2877,7 @@ var site = {
                 shadeClose: false,
                 content: body
             });
-
         });
-
     },
     set_cli_version: function() {
         var php_version = $("select[name='php_version']").val();
@@ -2934,6 +2925,7 @@ var site = {
                 })
             },
             yes:function(indexs){
+                console.log(1);
                 var vcodeResult = $('#vcodeResult'),data = {id: wid,webname: wname};
                 $('#site_delete_form input[type=checkbox]').each(function(index,item){
                     if($(item).is(':checked')) data[$(item).attr('name')] = 1
@@ -3446,62 +3438,70 @@ var site = {
                         closeBtn: 2,
                         shift: 5,
                         shadeClose: false,
-                        content: "<div class='divtable pd15 div_txt_jx'>\
-                                    <p class='mb15' >请按以下列表做TXT解析:</p>\
-                                    <table id='dns_txt_jx' class='table table-hover'></table>\
-                                    <div class='text-right mt10'>\
-                                        <button class='btn btn-success btn-sm btn_check_txt' >验证</button>\
-                                    </div>\
-                                    </div>"
-                    });
-
-                    //手动验证事件
-                    $('.btn_check_txt').click(function() {
-                        acme.auth_domain(res.index, function(res1) {
-                            layer.close(acme.loadT);
-                            if (res1.status === true) {
-                                b_load.close()
-                                site.ssl.set_cert(siteName, res1)
-                            } else {
-                                site.ssl.show_error(res1, auth_type);
+                        content: '\
+                            <div class="pd15 div_txt_jx">\
+                                <p class="mb15">请按以下列表做TXT解析:</p>\
+                                <div class="divtable" style="max-height: 308px; overflow: auto; border: 1px solid #ddd;">\
+                                    <table id="dns_txt_jx" class="table table-hover" style="border: none;"></table>\
+                                </div>\
+                                <div class="text-right mt10">\
+                                    <button class="btn btn-success btn-sm btn_check_txt">验证</button>\
+                                </div>\
+                            </div>\
+                        ',
+                        success: function (layero) {
+                            // 显示手动验证信息
+                            var data = [];
+                            acme_txt = '_acme-challenge.'
+                            for (var j = 0; j < res.auths.length; j++) {
+                                data.push({
+                                    name: acme_txt + res.auths[j].domain.replace('*.', ''),
+                                    type: "TXT",
+                                    txt: res.auths[j].auth_value,
+                                    force: "是"
+                                });
+                                data.push({
+                                    name: res.auths[j].domain.replace('*.', ''),
+                                    type: "CAA",
+                                    txt: '0 issue "letsencrypt.org"',
+                                    force: "否"
+                                });
                             }
-                        })
-
-                    });
-
-                    //显示手动验证信息
-                    setTimeout(function() {
-                        var data = [];
-                        acme_txt = '_acme-challenge.'
-                        for (var j = 0; j < res.auths.length; j++) {
-                            data.push({
-                                name: acme_txt + res.auths[j].domain.replace('*.', ''),
-                                type: "TXT",
-                                txt: res.auths[j].auth_value,
-                                force: "是"
+                            bt.render({
+                                table: '#dns_txt_jx',
+                                columns: [
+                                    { field: 'name', width: '220px', title: '解析域名' },
+                                    { field: 'txt', title: '记录值' },
+                                    { field: 'type', title: '类型' },
+                                    { field: 'force', title: '必需' }
+                                ],
+                                data: data
                             });
-                            data.push({
-                                name: res.auths[j].domain.replace('*.', ''),
-                                type: "CAA",
-                                txt: '0 issue "letsencrypt.org"',
-                                force: "否"
+                            bt.fixed_table('dns_txt_jx');
+                            $('.div_txt_jx').append(bt.render_help([
+                                '解析域名需要一定时间来生效,完成所以上所有解析操作后,请等待1分钟后再点击验证按钮',
+                                '可通过CMD命令来手动验证域名解析是否生效: nslookup -q=txt ' + acme_txt + res.auths[0].domain.replace('*.', ''),
+                                '若您使用的是宝塔云解析插件,阿里云DNS,DnsPod作为DNS,可使用DNS接口自动解析'
+                            ]));
+                            
+                            var top = ($(window).height() - layero.height()) / 2;
+                            layero.css({
+                                top: top + 'px'
+                            });
+                            
+                            // 手动验证事件
+                            $('.btn_check_txt').click(function() {
+                                acme.auth_domain(res.index, function(res1) {
+                                    layer.close(acme.loadT);
+                                    if (res1.status === true) {
+                                        b_load.close()
+                                        site.ssl.set_cert(siteName, res1)
+                                    } else {
+                                        site.ssl.show_error(res1, auth_type);
+                                    }
+                                });
                             });
                         }
-                        bt.render({
-                            table: '#dns_txt_jx',
-                            columns: [
-                                { field: 'name', width: '220px', title: '解析域名' },
-                                { field: 'txt', title: '记录值' },
-                                { field: 'type', title: '类型' },
-                                { field: 'force', title: '必需' }
-                            ],
-                            data: data
-                        })
-                        $('.div_txt_jx').append(bt.render_help([
-                            '解析域名需要一定时间来生效,完成所以上所有解析操作后,请等待1分钟后再点击验证按钮',
-                            '可通过CMD命令来手动验证域名解析是否生效: nslookup -q=txt ' + acme_txt + res.auths[0].domain.replace('*.', ''),
-                            '若您使用的是宝塔云解析插件,阿里云DNS,DnsPod作为DNS,可使用DNS接口自动解析'
-                        ]));
                     });
                     return;
                 }
@@ -3925,7 +3925,7 @@ var site = {
                                                         width: '130px',
                                                         items: arrs,
                                                         callback: function(obj) {
-                                                            get_rewrite_file(obj.val());
+                                                            get_rewrite_file(obj.val(), 'sub_dir');
                                                         }
                                                     },
                                                     { items: [{ name: 'dir_config', type: 'textarea', value: ret.data, width: '470px', height: '260px' }] },
@@ -4122,11 +4122,11 @@ var site = {
         },
         set_dirguard: function(web) {
             $('#webedit-con').html('<div id="set_dirguard"></div>');
-            var tab = '<div class="tab-nav mlr20">\
+            var tab = '<div class="tab-nav mb15">\
                     <span class="on">加密访问</span><span class="">禁止访问</span>\
                     </div>\
-                    <div id="dir_dirguard" class="pd20"></div>\
-                    <div id="php_dirguard" class="pd20" style="display:none;"></div>';
+                    <div id="dir_dirguard"></div>\
+                    <div id="php_dirguard" style="display:none;"></div>';
             $("#set_dirguard").html(tab)
             bt_tools.table({
                 el: '#dir_dirguard',
@@ -4409,7 +4409,9 @@ var site = {
                             items: limits,
                             callback: function(obj) {
                                 var data = limits.filter(function(p) { return p.value === parseInt(obj.val()); })[0]
-                                for (var key in data.items) $('input[name="' + key + '"]').val(data.items[key]);
+                                for (var key in data.items) {
+                                    $('input[name="' + key + '"]').val(data.items[key]);
+                                }
                             }
                         }]
                     },
@@ -4452,7 +4454,6 @@ var site = {
                 if (webserver == 'apache' || webserver == 'openlitespeed') filename = rdata.sitePath + '/.htaccess';
                 if (webserver == 'openlitespeed') webserver = 'apache';
                 for (var i = 0; i < rdata.rewrite.length; i++) arrs.push({ title: rdata.rewrite[i], value: rdata.rewrite[i] });
-
                 var datas = [{
                         name: 'rewrite',
                         type: 'select',
@@ -4503,13 +4504,34 @@ var site = {
                                                 name: 'submit',
                                                 css: 'btn-success',
                                                 callback: function(rdata, load, callback) {
-                                                    bt.site.set_rewrite_tel(rdata.tempname, aceEditor.ACE.getValue(), function(rRet) {
-                                                        if (rRet.status) {
-                                                            load.close();
-                                                            site.reload(4)
+                                                    var name = rdata.tempname;
+                                                    var isSameName = false;
+                                                    for (var i = 0; i < arrs.length; i++) {
+                                                        if (arrs[i].value == name) {
+                                                            isSameName = true;
+                                                            break;
                                                         }
-                                                        bt.msg(rRet);
-                                                    })
+                                                    }
+                                                    var save_to = function () {
+                                                        bt.site.set_rewrite_tel(name, aceEditor.ACE.getValue(), function(rRet) {
+                                                            if (rRet.status) {
+                                                                load.close();
+                                                                site.reload(4)
+                                                            }
+                                                            bt.msg(rRet);
+                                                        });
+                                                    };
+                                                    if (isSameName) {
+                                                        bt.confirm({
+                                                            icon: 0,
+                                                            title: '提示',
+                                                            msg: '【' + name + '】已存在，是否要替换？'
+                                                        }, function () {
+                                                            save_to();
+                                                        });
+                                                    } else {
+                                                        save_to();
+                                                    }
                                                 }
                                             }
                                         ]
@@ -4610,7 +4632,7 @@ var site = {
                                 callback: function(pdata) {
                                     var other = $('.other-version').val();
                                     if(pdata.versions == 'other' && other == ''){
-                                        layer.msg('自定义PHP版本时，PHP连接配置不能为空');
+                                        layer.msg('自定义PHP版本时，PHP连接配置不能为空', { icon: 2 });
                                         $('.other-version').focus();
                                         return;
                                     }
@@ -4620,14 +4642,13 @@ var site = {
                                             versions = versions.slice(0, versions.length - 1) + '.' + versions.slice(-1);
                                             if (versions == '0.0') versions = '静态';
                                             site.php_table_view();
-                                            site.reload()
+                                            site.reload();
                                             setTimeout(function() {
                                                 bt.msg(ret);
                                             }, 1000);
                                         }else{
                                             bt.msg(ret);
                                         }
-                                        
                                     })
                                 }
                             }
@@ -4699,10 +4720,97 @@ var site = {
                 '不保留URI参数：http://b.com/1.html ---> http://a.com'
             ];
             bt.site.get_domains(id, function(rdata) {
-                var domain_html = ''
+                var table_data = site.edit.redirect_table.data;
+                var flag = true;
+                var domain_html = '';
+                var select_list = [];
                 for (var i = 0; i < rdata.length; i++) {
-                    domain_html += '<option value="' + rdata[i].name + '">' + rdata[i].name + '</option>';
+                    flag = true;
+                    for (var j = 0; j < table_data.length; j++) {
+                        var con1 = site.edit.get_list_equal(table_data[j].redirectdomain, rdata[i].name);
+                        var con2 = !site.edit.get_list_equal(obj.redirectdomain, rdata[i].name);
+                        if (con1 && con2) {
+                            flag = false;
+                            break;
+                        }
+                    }
+                    if (flag) {
+                        select_list.push(rdata[i]);
+                        var selected = site.edit.get_list_equal(obj.redirectdomain, rdata[i].name);
+                        domain_html += '<li data-index="' + i + '"' + (selected ? 'class="selected"' : '') + '><a><span class="text">' + rdata[i].name + '</span><span class="glyphicon glyphicon-ok check-mark"></span></a></li>';
+                    }
                 }
+                var content = '\
+                    <form id="form_redirect" class="divtable pd20" style="padding-bottom:80px;">\
+                        <div class="line" style="overflow: hidden; height: 40px;">\
+                            <span class="tname">开启重定向</span>\
+                            <div class="info-r ml0 mt5">\
+                                <input class="btswitch btswitch-ios" id="type" type="checkbox" name="type"' + (obj.type == 1 ? ' checked' : '') + '/>\
+                                <label class="btswitch-btn phpmyadmin-btn" for="type" style="float: left;"></label>\
+                                <div style="display: inline-block; ">\
+                                    <span class="tname" style="margin-left: 10px; position: relative; top: -5px;">保留URI参数</span>\
+                                    <input class="btswitch btswitch-ios" id="holdpath" type="checkbox" name="holdpath"' + (obj.holdpath == 1 ? ' checked' : '') + '/>\
+                                    <label class="btswitch-btn phpmyadmin-btn" for="holdpath" style="float: left;"></label>\
+                                </div>\
+                            </div>\
+                        </div>\
+                        <div class="line" style="clear: both; display: none;">\
+                            <span class="tname">重定向名称</span>\
+                            <div class="info-r ml0">\
+                                <input type="text" name="redirectname" class="bt-input-text mr5" ' + (types ? '' : 'disabled="disabled"') + 'style="width: 300px;" value="' + obj.redirectname + '">\
+                            </div>\
+                        </div>\
+                        <div class="line" style="clear: both;">\
+                            <span class="tname">重定向类型</span>\
+                            <div class="info-r ml0">\
+                                <select class="bt-input-text mr5" name="domainorpath" style="width: 100px;">\
+                                    <option value="domain"' + (obj.domainorpath == 'domain' ? ' selected' : '') + '>域名</option>\
+                                    <option value="path"' + (obj.domainorpath == 'path' ? ' selected' : '') + '>路径</option>\
+                                </select>\
+                                <span class="mlr15">重定向方式</span>\
+                                <select class="bt-input-text ml10" name="redirecttype" style="width: 100px;">\
+                                    <option value="301"' + (obj.redirecttype == '301' ? ' selected' : '') + '>301</option>\
+                                    <option value="302"' + (obj.redirecttype == '302' ? ' selected' : '') + '>302</option>\
+                                </select>\
+                            </div>\
+                        </div>\
+                        <div class="line redirectdomain" style="display: ' + (obj.domainorpath == 'domain' ? 'block' : 'none') + '">\
+                            <span class="tname">重定向域名</span>\
+                            <div class="info-r ml0">\
+                                <div class="btn-group bootstrap-select show-tick mr5 redirect_domain" style="float: left">\
+                                    <button type="button" class="btn dropdown-toggle btn-default" style="height: 32px; line-height: 18px; font-size: 12px">\
+                                        <span class="filter-option pull-left"></span>\
+                                        <span class="bs-caret"><span class="caret"></span></span>\
+                                    </button>\
+                                    <div class="dropdown-menu open">\
+                                        <div class="bs-actionsbox">\
+                                            <div class="btn-group btn-group-sm btn-block">\
+                                                <button type="button" class="actions-btn bs-select-all btn btn-default">全选</button>\
+                                                <button type="button" class="actions-btn bs-deselect-all btn btn-default">取消全选</button>\
+                                            </div>\
+                                        </div>\
+                                        <div class="dropdown-menu inner">' + domain_html + '</div>\
+                                    </div>\
+                                </div>\
+                                <span class="tname" style="width: 90px;">目标URL</span>\
+                                <input class="bt-input-text mr5" name="tourl" type="text" style="width: 200px;" value="' + obj.tourl + '">\
+                            </div>\
+                        </div>\
+                        <div class="line redirectpath" style="display: ' + (obj.domainorpath == 'path' ? 'block' : 'none') + '">\
+                            <span class="tname">重定向路径</span>\
+                            <div class="info-r ml0">\
+                                <input class="bt-input-text mr5" name="redirectpath" type="text" style="width: 200px; float: left; margin-right: 0;" value="' + obj.redirectpath + '">\
+                                <span class="tname" style="width: 90px;">目标URL</span>\
+                                <input class="bt-input-text mr5" name="tourl" type="text" style="width: 200px;" value="' + obj.tourl + '">\
+                            </div>\
+                        </div>\
+                        <ul class="help-info-text c7">' + bt.render_help(helps) + '</ul>\
+                        <div class="bt-form-submit-btn">\
+                            <button type="button" class="btn btn-sm btn-danger btn-colse-prosy">关闭</button>\
+                            <button type="button" class="btn btn-sm btn-success btn-submit-redirect">' + (types ? " 提交" : "保存") + '</button>\
+                        </div>\
+                    </form>\
+                ';
                 var form_redirect = bt.open({
                     type: 1,
                     skin: 'demo-class',
@@ -4711,61 +4819,76 @@ var site = {
                     closeBtn: 2,
                     shift: 5,
                     shadeClose: false,
-                    content: "<form id='form_redirect' class='divtable pd20' style='padding-bottom: 60px'>" +
-                        "<div class='line' style='overflow:hidden;height: 40px;'>" +
-                        "<span class='tname' style='position: relative;top: -5px;'>开启重定向</span>" +
-                        "<div class='info-r  ml0 mt5' >" +
-                        "<input class='btswitch btswitch-ios' id='type' type='checkbox' name='type' " + (obj.type == 1 ? 'checked="checked"' : '') + " /><label class='btswitch-btn phpmyadmin-btn' for='type' style='float:left'></label>" +
-                        "<div style='display: inline-block;'>" +
-                        "<span class='tname' style='margin-left:10px;position: relative;top: -5px;'>保留URI参数</span>" +
-                        "<input class='btswitch btswitch-ios' id='holdpath' type='checkbox' name='holdpath' " + (obj.holdpath == 1 ? 'checked="checked"' : '') + " /><label class='btswitch-btn phpmyadmin-btn' for='holdpath' style='float:left'></label>" +
-                        "</div>" +
-                        "</div>" +
-                        "</div>" +
-                        "<div class='line' style='clear:both;display:none;'>" +
-                        "<span class='tname'>重定向名称</span>" +
-                        "<div class='info-r  ml0'><input name='redirectname' class='bt-input-text mr5' " + (types ? '' : 'disabled="disabled"') + " type='text' style='width:300px' value='" + obj.redirectname + "'></div>" +
-                        "</div>" +
-                        "<div class='line' style='clear:both;'>" +
-                        "<span class='tname'>重定向类型</span>" +
-                        "<div class='info-r  ml0'>" +
-                        "<select class='bt-input-text mr5' name='domainorpath' style='width:100px'><option value='domain' " + (obj.domainorpath == 'domain' ? 'selected ="selected"' : "") + ">域名</option><option value='path'  " + (obj.domainorpath == 'path' ? 'selected ="selected"' : "") + ">路径</option></select>" +
-                        "<span class='mlr15'>重定向方式</span>" +
-                        "<select class='bt-input-text ml10' name='redirecttype' style='width:100px'><option value='301' " + (obj.redirecttype == '301' ? 'selected ="selected"' : "") + " >301</option><option value='302' " + (obj.redirecttype == '302' ? 'selected ="selected"' : "") + ">302</option></select></div>" +
-                        "</div>" +
-                        "<div class='line redirectdomain' style='display:" + (obj.domainorpath == 'domain' ? 'block' : 'none') + "'>" +
-                        "<span class='tname'>重定向域名</span>" +
-                        "<div class='info-r  ml0'>" +
-                        "<select id='usertype' name='redirectdomain' data-actions-box='true' class='selectpicker show-tick form-control' multiple data-live-search='false'>" + domain_html + "</select>" +
-                        "<span class='tname' style='width:90px'>目标URL</span>" +
-                        "<input  name='tourl' class='bt-input-text mr5' type='text' style='width:200px' value='" + obj.tourl + "'>" +
-                        "</div>" +
-                        "</div>" +
-                        "<div class='line redirectpath' style='display:" + (obj.domainorpath == 'path' ? 'block' : 'none') + "'>" +
-                        "<span class='tname'>重定向路径</span>" +
-                        "<div class='info-r  ml0'>" +
-                        "<input  name='redirectpath' class='bt-input-text mr5' type='text' style='width:200px;float: left;margin-right:0' value='" + obj.redirectpath + "'>" +
-                        "<span class='tname' style='width:90px'>目标URL</span>" +
-                        "<input  name='tourl1' class='bt-input-text mr5' type='text' style='width:200px' value='" + obj.tourl + "'>" +
-                        "</div>" +
-                        "</div>" +
-                        "<ul class='help-info-text c7'>" + bt.render_help(helps) + '</ul>' +
-                        "<div class='bt-form-submit-btn'><button type='button' class='btn btn-sm btn-danger btn-colse-prosy'>关闭</button><button type='button' class='btn btn-sm btn-success btn-submit-redirect'>" + (types ? " 提交" : "保存") + "</button></div>" +
-                        "</form>"
+                    content: content
                 });
                 setTimeout(function() {
-                    $('.selectpicker').selectpicker({
-                        'noneSelectedText': '请选择域名...',
-                        'selectAllText': '全选',
-                        'deselectAllText': '取消全选'
+                    var redirectdomain = obj.redirectdomain;
+                    var show_domain_name = function () {
+                        var text = '';
+                        if (redirectdomain.length > 0) {
+                            text = [];
+                            for (var i = 0; i < redirectdomain.length; i++) {
+                                text.push(redirectdomain[i]);
+                            }
+                            text = text.join(', ');
+                        } else {
+                            text = '请选择站点...';
+                        }
+                        $('.redirect_domain .btn .filter-option').text(text);
+                    };
+                    show_domain_name();
+                    $('.redirect_domain .btn').click(function (e) {
+                        var $parent = $(this).parent();
+                        $parent.toggleClass('open');
+                        $(document).one('click', function () {
+                            $parent.removeClass('open');
+                        });
+                        e.stopPropagation();
                     });
-                    $('.selectpicker').selectpicker('val', obj.redirectdomain);
+                    // 单选
+                    $('.redirect_domain .dropdown-menu li').click(function (e) {
+                        var $this = $(this);
+                        var index = $this.attr('data-index');
+                        var name = select_list[index].name;
+                        $this.toggleClass('selected');
+                        if ($this.hasClass('selected')) {
+                            redirectdomain.push(name);
+                        } else {
+                            var remove_index = -1;
+                            for (var i = 0; i < redirectdomain.length; i++) {
+                                if (redirectdomain[i] == name) {
+                                    remove_index = i;
+                                    break;
+                                }
+                            }
+                            if (remove_index != -1) {
+                                redirectdomain.splice(remove_index, 1);
+                            }
+                        }
+                        show_domain_name();
+                        e.stopPropagation();
+                    });
+                    // 全选
+                    $('.redirect_domain .bs-select-all').click(function () {
+                        redirectdomain = [];
+                        for (var i = 0 ; i < select_list.length; i++) {
+                            redirectdomain.push(select_list[i].name);
+                        }
+                        $('.redirect_domain .dropdown-menu li').addClass('selected');
+                        show_domain_name();
+                    });
+                    // 取消全选
+                    $('.redirect_domain .bs-deselect-all').click(function () {
+                        redirectdomain = [];
+                        $('.redirect_domain .dropdown-menu li').removeClass('selected');
+                        show_domain_name();
+                    });
                     $('#form_redirect').parent().css('overflow', 'inherit');
                     $('[name="domainorpath"]').change(function() {
                         if ($(this).val() == 'path') {
                             $('.redirectpath').show();
                             $('.redirectdomain').hide();
-                            $('.selectpicker').selectpicker('val', []);
+                            $('.redirect_domain .bs-deselect-all').click();
                         } else {
                             $('.redirectpath').hide();
                             $('.redirectdomain').show();
@@ -4782,8 +4905,8 @@ var site = {
                         var redirecttype = $('[name="redirecttype"]').val();
                         var domainorpath = $('[name="domainorpath"]').val();
                         var redirectpath = $('[name="redirectpath"]').val();
-                        var redirectdomain = JSON.stringify($('.selectpicker').val() || []);
                         var tourl = $(domainorpath == 'path' ? '[name="tourl1"]' : '[name="tourl"]').val();
+                        var redirectdomain_val = JSON.stringify(redirectdomain);
                         if (!types) {
                             bt.site.modify_redirect({
                                 type: type,
@@ -4793,7 +4916,7 @@ var site = {
                                 redirecttype: redirecttype,
                                 domainorpath: domainorpath,
                                 redirectpath: redirectpath,
-                                redirectdomain: redirectdomain,
+                                redirectdomain: redirectdomain_val,
                                 tourl: tourl
                             }, function(rdata) {
                                 if (rdata.status) {
@@ -4811,7 +4934,7 @@ var site = {
                                 redirecttype: redirecttype,
                                 domainorpath: domainorpath,
                                 redirectpath: redirectpath,
-                                redirectdomain: redirectdomain,
+                                redirectdomain: redirectdomain_val,
                                 tourl: tourl
                             }, function(rdata) {
                                 if (rdata.status) {
@@ -4825,6 +4948,16 @@ var site = {
                 }, 100);
             });
 
+        },
+        get_list_equal: function (list, name) {
+            var result = false;
+            for (var i = 0; i < list.length; i++) {
+                if (list[i] == name) {
+                    result = true;
+                    break;
+                }
+            }
+            return result;
         },
         template_Dir: function(id, type, obj) {
             if (type) {
@@ -4987,7 +5120,7 @@ var site = {
         },
         set_301: function(web) {
             $('#webedit-con').html('<div id="redirect_list"></div>');
-            bt_tools.table({
+            site.edit.redirect_table = bt_tools.table({
                 el: '#redirect_list',
                 url: '/site?action=GetRedirectList',
                 param: { sitename: web.name },
@@ -5122,6 +5255,7 @@ var site = {
                             title: '删除',
                             event: function(row, index, ev, key, that) {
                                 bt.site.remove_redirect(web.name, row.redirectname, function(rdata) {
+                                    bt.msg(rdata);
                                     if (rdata.status) that.$delete_table_row(index);
                                 });
                             }
@@ -6009,6 +6143,7 @@ var site = {
                                             </table>\
                                         </div>\
                                     </div><ul class="help-info-text c7">\
+                                        <li style="color:red;">证书支持购买多年，只能一年签发一次（有效期一年），需在到期前30天内续签(续签暂不需要验证域名)</li>\
                                         <li style="color:red;">注意：请勿将SSL证书用于非法网站，一经发现，吊销证书且不退款</li>\
                                         <li>申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)</li>\
                                         <li>有效期1年，不支持续签，到期后需要重新申请</li>\
@@ -6826,18 +6961,18 @@ var site = {
                                                     <div class="line">\
                                                         <span class="tname">验证方式</span>\
                                                         <div class="info-r">\
-                                                            <label title="如网站未开启301、302、强制HTTPS、反向代理功能." class="mr20">\
-                                                                <input type="radio" name="dcvMethod" checked="checked" value="HTTP_CSR_HASH">\
-                                                                <span>文件验证(HTTP)</span>\
-                                                            </label>\
-                                                            <label title="如网站开启【强制HTTPS】，请选【HTTPS验证】" class="mr20">\
-                                                                <input type="radio" name="dcvMethod" value="HTTPS_CSR_HASH">\
-                                                                <span>文件验证(HTTPS)</span>\
-                                                            </label>\
-                                                            <label title="如网站还未备案完成，可选【DNS验证】." class="mr20">\
-                                                                <input type="radio" name="dcvMethod" value="CNAME_CSR_HASH">\
-                                                                <span>DNS验证(CNAME解析)</span>\
-                                                            </label>\
+                                                          <label title="如网站还未备案完成，可选【DNS验证】." class="mr20">\
+                                                            <input type="radio" name="dcvMethod" checked="checked" value="CNAME_CSR_HASH">\
+                                                            <span>DNS验证(CNAME解析)</span>\
+                                                          </label>\
+                                                          <label title="如网站未开启301、302、强制HTTPS、反向代理功能." class="mr20">\
+                                                              <input type="radio" name="dcvMethod" value="HTTP_CSR_HASH">\
+                                                              <span>文件验证(HTTP)</span>\
+                                                          </label>\
+                                                          <label title="如网站开启【强制HTTPS】，请选【HTTPS验证】" class="mr20">\
+                                                              <input type="radio" name="dcvMethod" value="HTTPS_CSR_HASH">\
+                                                              <span>文件验证(HTTPS)</span>\
+                                                          </label>\
                                                         </div>\
                                                     </div>\
                                                     <div class="line">\
@@ -7564,26 +7699,60 @@ var site = {
                                 bt.render_clicks(_form_data.clicks);
                             }
                             var _ul = $('<ul id="ymlist" class="domain-ul-list"></ul>');
+                            _ul.append('<li class="checked_all" style="cursor: pointer;"><input class="checkbox-text" type="checkbox">全选</li>');
                             for (var i = 0; i < ddata.domains.length; i++) {
                                 if (ddata.domains[i].binding === true) continue
-                                _ul.append('<li style="cursor: pointer;"><input class="checkbox-text" type="checkbox" value="' + ddata.domains[i].name + '">' + ddata.domains[i].name + '</li>');
+                                _ul.append('<li class="checked_default" style="cursor: pointer;"><input class="checkbox-text" type="checkbox" value="' + ddata.domains[i].name + '">' + ddata.domains[i].name + '</li>');
                             }
                             var _line = $("<div class='line mtb10'></div>");
                             _line.append('<span class="tname text-center">域名</span>');
                             _line.append(_ul);
                             robj.append(_line);
                             robj.find('input[type="radio"]').parent().addClass('label-input-group ptb10');
-                            $("#ymlist li input").click(function(e) {
+                            // 判断是否全选
+                            var getSelectAll = function () {
+                                var count = 0;
+                                var total = 0;
+                                $('#ymlist .checked_default').each(function () {
+                                    var checked = $(this).find('input').prop('checked');
+                                    checked && count++;
+                                    total++;
+                                });
+                                $('#ymlist .checked_all').find('input').prop('checked', count == total);
+                            };
+                            // 设置选中框
+                            var setCheckedDefault = function (checked) {
+                                $('#ymlist .checked_default').each(function () {
+                                    $(this).find('input').prop('checked', checked);
+                                });
+                            }
+                            // 点击选择框
+                            $('#ymlist li').click(function () {
+                                var o = $(this).find('input');
+                                var checked = o.prop('checked');
+                                checked = !checked;
+                                o.prop('checked', checked);
+                            });
+                            // 阻止冒泡事件
+                            $('#ymlist li input').click(function (e) {
                                 e.stopPropagation();
-                            })
-                            $("#ymlist li").click(function() {
-                                var o = $(this).find("input");
-                                if (o.prop("checked")) {
-                                    o.prop("checked", false)
-                                } else {
-                                    o.prop("checked", true);
-                                }
-                            })
+                            });
+                            // 点击默认选中框
+                            $('#ymlist .checked_default').click(function (e) {
+                                getSelectAll();
+                            });
+                            $('#ymlist .checked_default input').click(function (e) {
+                                getSelectAll();
+                            });
+                            // 点击全选
+                            $('#ymlist .checked_all').click(function (e) {
+                                var checked = $(this).find('input').prop('checked');
+                                setCheckedDefault(checked);
+                            });
+                            $('#ymlist .checked_all input').click(function (e) {
+                                var checked = $(this).prop('checked');
+                                setCheckedDefault(checked);
+                            });
                             var _btn_data = bt.render_form_line({
                                 title: ' ',
                                 text: '申请',
@@ -7591,7 +7760,7 @@ var site = {
                                 type: 'button',
                                 callback: function(ldata) {
                                     ldata['domains'] = [];
-                                    $('#ymlist input[type="checkbox"]:checked').each(function() {
+                                    $('#ymlist .checked_default input[type="checkbox"]:checked').each(function() {
                                         ldata['domains'].push($(this).val())
                                     })
 

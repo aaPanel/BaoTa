@@ -662,7 +662,7 @@ var aceEditor = {
 				$(this).css('color','#ec4545').attr({'title':'关闭'}).find('.glyphicon').removeClass('glyphicon-search').addClass('glyphicon-remove').next().text("关闭");
 				$(this).before('<div class="search_input_title">搜索目录文件</div>');
 				$(this).after('<div class="search_input_view">\
-					<form>\
+					<form onsubmit="return false;">\
                         <input type="text" id="search_input_val" class="ser-text pull-left" placeholder="">\
                         <button type="button" class="ser-sub pull-left"></button>\
                     </form>\
@@ -688,6 +688,12 @@ var aceEditor = {
 				}
 				_this.reader_file_dir_menu(_this.refresh_config);
 			}
+		});
+		
+		$('.ace_dir_tools').on('keydown', '#search_input_val', function(e){
+		    if (e.keyCode == 13) {
+		        $(this).next().click();
+		    }
 		});
 		
 		// 搜索文件内容
@@ -1212,7 +1218,9 @@ var aceEditor = {
 		if(obj['reverse'] === undefined) obj['reverse'] = 'False';
 		if(obj['search'] === undefined) obj['search'] = '';
 		if(obj['all'] === undefined) obj['all'] = 'False';
-		$.post("/files?action=GetDir&tojs=GetFiles",{p:obj.p,showRow:obj.showRow,sort:obj.sort,reverse:obj.reverse,path:obj.path,search:obj.search}, function(res) {
+		var data = {p:obj.p,showRow:obj.showRow,sort:obj.sort,reverse:obj.reverse,path:obj.path,search:obj.search};
+        if (obj['all'] === 'True') data['all'] = obj['all'];
+		$.post("/files?action=GetDir&tojs=GetFiles", data, function(res) {
 			layer.close(loadT);
 			if(callback) callback(res);
 		});
@@ -1727,7 +1735,41 @@ function openEditorView(type,path,callback){
 		skin:'aceEditors',
 		zIndex:19999,
 		content: _aceTmplate,
+		full: function (layero, index) {
+            layero.css({
+                'width': '100%',
+                'height': '100%'
+            });
+        },
+        restore: function (layero, index) {
+            layero.css({
+                'width': '80%',
+                'height': '80%'
+            });
+            var windowWidth = $(window).width();
+            var windowHeight = $(window).height();
+            var layerWidth = layero.width();
+            var layerHeight = layero.height();
+            layero.css({
+                'top': ((windowHeight - layerHeight) / 2) + 'px',
+                'left': ((windowWidth - layerWidth) / 2) + 'px'
+            });
+            var titleHeight = layero.find('.layui-layer-title').height();
+            layero.find('.layui-layer-content').css({
+                'height': (layerHeight - titleHeight) + 'px'
+            });
+        },
 		success:function(layero,index){
+		    $(window).resize(function () {
+                if ($('.layui-layer.aceEditors').length == 0) return;
+                setTimeout(function () {
+                    var height = layero.height();
+                    var titleHeight = layero.find('.layui-layer-title').height();
+                    layero.find('.layui-layer-content').css({
+                        'height': (height - titleHeight) + 'px'
+                    });
+                }, 100);
+            });
 			function set_edit_file(){
 				aceEditor.ace_active = '';
 				aceEditor.eventEditor();
@@ -2708,7 +2750,7 @@ $("#dologin").click(function() {
 	layer.confirm(lan.bt.loginout, {icon:3,
 		closeBtn: 2
 	}, function() {
-		window.location.href = "/login?dologin=True"
+		window.location.href = "/login?dologin=True";
 	});
 	return false
 });
@@ -2756,8 +2798,11 @@ function setPassword(a) {
 			if(b.status) {
 				layer.closeAll();
 				layer.msg(b.msg, {
-					icon: 1
-				})
+					icon: 1,
+                    time: 1000
+				}, function () {
+                    window.location.href = '/login?dologin=True';
+                })
 			} else {
 				layer.msg(b.msg, {
 					icon: 2
@@ -2815,8 +2860,11 @@ function setUserName(a) {
 			if(b.status) {
 				layer.closeAll();
 				layer.msg(b.msg, {
-					icon: 1
-				});
+					icon: 1,
+                    time: 1000
+				}, function () {
+                    window.location.href = '/login?dologin=True';
+                });
 				$("input[name='username_']").val(p1)
 			} else {
 				layer.msg(b.msg, {
@@ -5388,7 +5436,7 @@ MessageBox.prototype = {
     				p1 = $("#p1").val();
     				p2 = $("#p2").val();
     				var loadT = bt.load(lan.config.token_get);
-    				bt.send('GetToken','ssl/GetToken',"username=" + p1 + "&password=" + p2,function(rdata){
+    				bt.send('GetToken','ssl/GetToken',{username:p1,password:p2},function(rdata){
     					loadT.close();
     					bt.msg(rdata);
     					if(rdata.status) {

@@ -3126,6 +3126,10 @@ html .menu .menu_btwaf:hover{
 	z-index: 99999
 }
 
+.list-list .ico-file {
+	background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAOVJREFUeNpi/P//P8NAAhZkzrVr1zyB1FwglqSiHSZAfBZZQEtLC7sDQJZLSUlJcnNzU8Xm27dvg6jVQByqqqp6FpsaJjS+JCcnJ8O/f/+ogkFATk5uJ8gRQMcYE+MAqgN2dvYMeXn5g0DmGmyOYKJHQmNjY0tQUFA4gc0RLLS0mI+PD5YOQCACSp8BYka6OEBUVJRBXFwcW8KkTwiAACwx4gJMDAMMRh0w6oBRB4w6YNQBow4YdcCoA0YdMOgc8Pzbt280swxq9gt8reKU58+fgzqnEjRyw1MgTkMWYBzo7jlAgAEAzk5sMbucHicAAAAASUVORK5CYII=")
+}
+
 .list-list .ico-folder {
 	background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAMpJREFUeNpi/P//P8NAAiaGAQYD7gAWdIFPpxIoMS8ZiOcQqfY5SD0LFT1jAsRTuaU0GZjZuAgq/vPto+S3V3fmUssBokC8llNEjp2ZFWjk/1+Eg56TE0RJsgCD3BPImAvikGs7IzMLAxuvKAMrNz9ZaWAul5iKJAsXPwUBAMzK//9AaDIcIAkODiKCbbQcGHXAqANGHTDqgFEHjDpg1AGjDqCVA57/+f6Z7hZD7XwBahOmfHv1ANQqlqCzG54CcRrjaOd0oB0AEGAAscwsxMSUtNsAAAAASUVORK5CYII=")
 }
@@ -3376,9 +3380,6 @@ html .menu .menu_btwaf:hover{
 	background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAbxJREFUeNpi/P//P8NAAhZkzrVr1+yBVBcQm1HRDkMgvoAsoKWlhd0BQLBCAgh4eXmpYvPt27dB1GogDkV3BAwwofEluLm5Gf79+0cVDALy8vK7oI4wIMYBVAdsbGxZQEccweUIJnokNKAjEhQUFM5hcwQLLS3m4+ODpQMQCIPS54GYkS4OEBUVZRAXF8eWMOkTAiAAS4xElQO4QPmJORhivKycDO6yJgymYupY5WGg0yKFcgfgMqjm1AKwA5DlQI4hZCnVcsHvf38ojiK6ZEOqRAG+eKaLA7DFKzUcNeBRQJEDWJlY6BMFzIxMWIPbSkKLYgcwIreIgA2S/8rKyjQN8rt374IaJIzDIw2MOoDqBdGEFzsYGF7Q3tJZeFrFDFzM7DS1/Nvfn7iz4cPPL/8zQWOl99wqhmKjMLgcMh+dDQLIatHFkdUD28sM8rzi2LNh6+mlKBaAaBjGZTm6xTCAy0EwO8hOhDCHobNhlsD4+BxHlANgBsAwNoPRLYGpRfc10UVx4YGpf/4w/GMGlf20AH///wOmeqa//Q7ZLFhzgQqHeMPtHy8agSmVJi7gYmL7B7IDZwgMBAAIMABhJOYNvD7xMgAAAABJRU5ErkJggg==")
 }
 
-.list-list .ico-file {
-	background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAOVJREFUeNpi/P//P8NAAhZkzrVr1zyB1FwglqSiHSZAfBZZQEtLC7sDQJZLSUlJcnNzU8Xm27dvg6jVQByqqqp6FpsaJjS+JCcnJ8O/f/+ogkFATk5uJ8gRQMcYE+MAqgN2dvYMeXn5g0DmGmyOYKJHQmNjY0tQUFA4gc0RLLS0mI+PD5YOQCACSp8BYka6OEBUVJRBXFwcW8KkTwiAACwx4gJMDAMMRh0w6oBRB4w6YNQBow4YdcCoA0YdMOgc8Pzbt280swxq9gt8reKU58+fgzqnEjRyw1MgTkMWYBzo7jlAgAEAzk5sMbucHicAAAAASUVORK5CYII=")
-}
 
 .list-list .ico-apk {
 	background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAhlJREFUeNpi/P//P8NAAhZkzrVr1zyB1FwglqSiHSZAfBZZQEtLC7sDQJZLSUlJcnNzU8Xm27dvg6jVQByqqqp6FpsaJjS+JCcnJ8O/f/+ogkFATk5uJ8gRQMcYE+MAqgN2dvYMeXn5g0DmGmyOINkBa68sYfj55yeG+JEHexnOPD2OVQ8bG1uCgoLCCWyOYCHVARK8Ugzbb61n+PrrM8Pzz08g8cYrw/Dq6wuGZONcFLV8fHywdAACEVD6DBAzku2AH39+MFx7dRFF7OGHe2D67LMTDI5KHnBxUVFRBnFxcWwJk7wouP32OsPJx4fB7FjDdLg4jH380UGwGmSALWGS7YDTT47C2YvPz8TKPvX4CPkFESEQpZ9C25IQG+g90gimi23qGdoOVBJlaJVDO4o+ihzwE5joyAHE6qN5QURxFLCzcJBXAhKpj6ADCMUhpfoGPApIcoAsvwJBNTL88rQrB2AlHiw7grIbNj7NQmBAcgExKZzcnAICjMiNUmCb8L+ysjJNfXz37l1Qm5BxcEbBogeTGRge0N7SDq3puBMhCysLTlzm1YjBh2FsatDVgzDVc0Hf7mYwLnKtRREH8UHiVMuGMAPRLcKnlurZEJvlMDFiLSTLAeg+QuZjsxgWUiRHAQcz1z9qdVaxRRfIbA5mzn84C6L5h6fVP/x2p+7H3+80KR84mbn+ynEpNyfaZjVidcBAAIAAAwAW1gmCSUCdXAAAAABJRU5ErkJggg==")
@@ -4025,7 +4026,7 @@ html .menu .menu_btwaf:hover{
 
 .re-con {
 	float: left;
-	height: 567px;
+	height: 500px;
 	width: 100%
 }
 
@@ -4046,9 +4047,14 @@ html .menu .menu_btwaf:hover{
 .re-con-menu p.on {
 	background-color: #fff
 }
-
+.recycle_bin_view .re-con{
+  height: 567px;
+}
+.recycle_bin_view .re-con-con{
+  height: 516px;
+}
 .re-con-con {
-	height: 567px;
+	height: 486px;
 	margin-left: 120px;
 }
 
@@ -7463,7 +7469,7 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
 	position: relative;
 }
 .upload_file_body.active{
-    height: 420px;
+    height: 440px;
     border: 2px dashed #e0e0e0;
     text-align: center;
 }
@@ -7477,40 +7483,92 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
     top: 50%;
     margin-top: -40px;
 }
-.dropUpLoadFile{
-    position: relative;
-    overflow: auto;
-    height: 310px;
-    padding-top:0;
+
+.flex {
+  display: flex;
 }
+
+
+.upload_file_gourp {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 15px;
+}
+
+.upload_file_gourp button {
+  font-weight: bold;
+}
+
+.upload_file_gourp button:nth-child(1) {
+  border-color: #cbcbcb;
+  background-color: #cbcbcb;
+  color: #fff;
+}
+
+.upload_file_gourp button:nth-child(1):hover {
+  background-color: #c9302c;
+  border-color: transparent;
+}
+
+
+.dropUpLoadFile {
+  position: relative;
+  overflow: auto;
+  height: 405px;
+  padding-top: 0;
+}
+
 .dropUpLoadFile::-webkit-scrollbar {
-	/*滚动条整体样式*/
-	width : 15px;  /*高宽分别对应横竖滚动条的尺寸*/
-	height: 10px;
+  /*滚动条整体样式*/
+  width: 15px;
+  /*高宽分别对应横竖滚动条的尺寸*/
+  height: 10px;
 }
+
 .dropUpLoadFile::-webkit-scrollbar-thumb {
-	/*滚动条里面小方块*/
-	border-radius: 0;
-	box-shadow   : inset 0 0 5px rgba(0, 0, 0, 0.2);
-	background   : #bbb;
+  /*滚动条里面小方块*/
+  border-radius: 0;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+  background: #bbb;
 }
+
 .dropUpLoadFile::-webkit-scrollbar-track {
-	/*滚动条里面轨道*/
-	box-shadow   : inset 0 0 5px rgba(0, 0, 0, 0.2);
-	border-radius: 0;
-	background   : #ededed;
+  /*滚动条里面轨道*/
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+  border-radius: 0;
+  background: #ededed;
 }
-.dropUpLoadFile li{
-    height: 40px;
-    line-height: 40px;
-    border-bottom: 1px solid #ececec;
-    position: relative;
+
+.dropUpLoadFile li {
+  height: 45px;
+  line-height: 45px;
+  border-bottom: 1px solid #ececec;
+  position: relative;
 }
-.dropUpLoadFileHead{
-    border-bottom: 1px solid #dedede;
+.dropUpLoadFile li:hover {
+  background-color: #f5f5f5;
 }
-.dropUpLoadFileHead li.fileTitle{
-    border-color: #ccc;
+/* .dropUpLoadFile li:hover .cancel-btn{ */
+  /* display: inline-block; */
+/* } */
+.dropUpLoadFile li .cancel-btn{
+  position: absolute;
+  right: 15px;
+  display:none;
+}
+.dropUpLoadFile li .cancel-btn .glyphicon{
+  font-size: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
+  color: #20a53a;
+}
+
+.dropUpLoadFileHead {
+  border-bottom: 1px solid #dedede;
+}
+
+.dropUpLoadFileHead li.fileTitle {
+  border-color: #ccc;
 }
 .upload_btn_groud .file_upload_info{
     height: 40px;
@@ -7577,13 +7635,12 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
 	vertical-align: top;
 }
 .dropUpLoadFile li .fileItem{
-    position: relative;
-    z-index: 999;
+    display: flex;
 }
 .dropUpLoadFile li .fileLoading{
     content: '';
     width: 0%;
-    height: 40px;
+    height: 45px;
     background: #6fb9d621;
     position: absolute;
     left: 0;
@@ -7622,72 +7679,91 @@ background:url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODIiIGhlaWdodD0iODIiIHh
         background-color: #4592f0;
     border-color: #367fa9;
 }
-.dropUpLoadFileHead li.fileTitle span{
-    color: #666;
-    font-size: 13px;
-    display: inline-block;
-    height: 35px;
-    line-height: 35px;
-    margin-right: 0;
-    padding-left: 10px;
-    font-weight: 500;
+.dropUpLoadFileHead li.fileTitle {
+  display: flex;
 }
-.dropUpLoadFileHead li.fileTitle span:nth-child(1){
-    width: 50%;
-    padding-left: 15px;
+
+.dropUpLoadFileHead li.fileTitle span {
+  color: #666;
+  font-size: 13px;
+  display: inline-block;
+  height: 35px;
+  line-height: 35px;
+  margin-right: 0;
+  padding-left: 10px;
+  font-weight: 500;
 }
-.dropUpLoadFileHead li.fileTitle span:nth-child(2){
-    width: 25%;
+
+.dropUpLoadFileHead li.fileTitle span:nth-child(1) {
+  flex: 2;
+  padding-left: 15px;
 }
-.dropUpLoadFileHead li.fileTitle span:nth-child(3){
-    width: 25%;
+
+.dropUpLoadFileHead li.fileTitle span:nth-child(2) {
+  flex: .5;
 }
-.dropUpLoadFile .fileItem > span{
-    color: #666;
-    font-size: 12px;
-    vertical-align: top;
-    padding-left: 10px;
-    height: 40px;
-    line-height: 40px;
-    display: inline-block;
+
+.dropUpLoadFileHead li.fileTitle span:nth-child(3) {
+  flex: 1;
 }
-.dropUpLoadFile li .filename{
-    display: inline-block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    width: 50%;
-    padding-left: 15px;
+
+.dropUpLoadFile .fileItem>span {
+  color: #666;
+  font-size: 12px;
+  vertical-align: top;
+  padding-left: 10px;
+  height: 45px;
+  line-height: 45px;
+  display: flex;
+  align-items: center;
 }
+
+.dropUpLoadFile li .filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 2;
+  padding-left: 15px;
+}
+
+.dropUpLoadFile li .filename span {
+  width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .dropUpLoadFile li .filename .ico {
-    height: 27px;
-    line-height: 27px;
-    background-size: 27px;
-    width: 25px;
-    vertical-align: middle;
-    margin-right: 10px;
-    float: initial;
-    image-rendering: -webkit-optimize-contrast;
+  height: 27px;
+  background-size: 27px;
+  width: 26px;
+  vertical-align: middle;
+  margin-right: 10px;
+  image-rendering: -webkit-optimize-contrast;
+  display: inline-block;
 }
-.dropUpLoadFile li .filesize{
-    color: #999;
-    display: inline-block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    width: 25%;
+
+.dropUpLoadFile li .filesize {
+  color: #999;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: .5;
 }
-.dropUpLoadFile li .fileStatus{
-    width: 25%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+
+.dropUpLoadFile li .fileStatus {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.dropUpLoadFile li em{
-    font-style: normal;
-    color: #06F;
-    float: right;
-    margin-right: 10px;
+
+.dropUpLoadFile li em {
+  font-style: normal;
+  color: #06F;
+  float: right;
+  margin-right: 10px;
 }
 .upload_success{
     color:#20a53a !important;
@@ -9836,6 +9912,9 @@ span.unit{
 	background-color: #fff;
 	max-height: 200px;
 	overflow: auto;
+}
+.bt_select_list {
+    min-width: 110px;
 }
 .site_class_type.bt_select_updown:hover{
 	border-color:#398439;

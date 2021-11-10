@@ -2021,3 +2021,24 @@ class config:
         if os.path.exists(crl):
             result['ca'] = public.readFile(ca)
         return result
+    
+    def set_click_logs(self,get):
+
+        path = '{}/logs/click'.format(public.get_panel_path())
+        if not os.path.exists(path): os.makedirs(path)
+        
+        file = "{}/{}.json".format(path,public.format_date(format = "%Y-%m-%d"))
+        try:
+            ndata = json.loads(get['ndata'])          
+        except :ndata = {}
+
+        try:
+            data = json.loads(public.readFile(file))
+        except : data = {}
+
+        for x in ndata:            
+            if not x in data: data[x] = 0      
+            data[x] += ndata[x]
+     
+        public.writeFile(file,json.dumps(data))
+        return data

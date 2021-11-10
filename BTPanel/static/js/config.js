@@ -314,7 +314,11 @@ $('#soft-tabs').on('click', 'span', function () {
   var index = $(this).index();
   $(this).addClass('on').siblings().removeClass('on');
   $(this).parent().next().find('.tab-con-block:eq(' + index + ')').removeClass('hide').siblings().addClass('hide');
+  bt.set_cookie('configTab',index)
 })
+
+var tabIndex = bt.get_cookie('configTab') || 0;
+$('#soft-tabs span:eq('+ tabIndex +')').click()
 
 
 $('.password_verification_btn').on('click', function () {
@@ -370,6 +374,9 @@ $('.password_overdue_btn').on('click', function () {
 })
 $('[name="domain"]').on('input', function () {
   $('[name="domain"]').val($(this).val())
+})
+$('[name="limitip"]').on('input', function () {
+  $('[name="limitip"]').val($(this).val())
 })
 
 /**
@@ -619,14 +626,18 @@ function bindBTName(a, type) {
       time: 0,
       shade: [0.3, '#000']
     });
-    $.post(" /ssl?action=GetToken", "username=" + p1 + "&password=" + p2, function (b) {
+    $.post(" /ssl?action=GetToken", {username : p1,password:p2}, function (b) {
       layer.close(loadT);
       layer.msg(b.msg, {
         icon: b.status ? 1 : 2
       });
       if (b.status) {
-        window.location.reload();
-        $("input[name='btusername']").val(p1);
+          $("input[name='btusername']").val(p1);
+          setTimeout(function () {
+            $.get('/system?action=ReWeb');
+            // window.location.reload();
+            window.location.href = '/login?dologin=True';
+          }, 1000);
       }
     });
     return
@@ -713,9 +724,9 @@ function SetPanelVerify() {
                             		<li style="color:red;">必须要用到且了解此功能才决定自己是否要开启!</li>\
                                     <li>开启后电脑需要安装此证书，否则将无法访问，属于【极高安全级别】的限制，类似银行账号U盘密钥登录</li>\
                                     <li>注销列表(crl)和证书(cert)可通过企业版插件[堡塔限制访问型证书->双向认证->服务器证书]获取</li>\
-                                    <li style="color:red;font-weight: bold;">开启之前请先下载好对应的【客户端证书】，否则将无法访问面板</li>\
-                                    <li>开启访问设备认证后，未授权的用户访问将会出现400错误</li>\
-                            		<li>开启后导致面板不能访问，命令行：bt 29 关闭访问设备认证</li>\
+                                    <li>开启之前请先下载好对应的[客户端证书]，否则将无法访问面板</li>\
+                                    <li>开启访问设备验证后，未授权的用户访问将会出现400错误</li>\
+                            		<li>开启后导致面板不能访问，命令行：bt 29 关闭访问设备验证</li>\
                             	</ul>\
                             </div>\
                         '
@@ -725,10 +736,10 @@ function SetPanelVerify() {
                             <div class="line" style="width: 90%;">\
                                 <div class="myKeyCon">\
                                     <div class="ssl-con-key pull-left ca_show">注销列表(crl)<br>\
-                                        <textarea id="ca_crl" class="bt-input-text">' + rdata.crl + '</textarea>\
+                                        <textarea id="ca_crl" class="bt-input-text">' + (rdata && rdata.crl ? rdata.crl : '') + '</textarea>\
                                     </div>\
                                     <div class="ssl-con-key pull-right ca_show">证书(cert)<br>\
-                                        <textarea id="ca_cert" class="bt-input-text">' + rdata.ca + '</textarea>\
+                                        <textarea id="ca_cert" class="bt-input-text">' + (rdata && rdata.ca ? rdata.ca : '') + '</textarea>\
                                     </div>\
                                     <div class="clear"></div>\
                                 </div>\
@@ -771,7 +782,7 @@ function SetPanelVerify() {
                             if (ca == '') {
                                 return layer.msg('证书不能为空！', { icon: 2 });
                             }
-                            var confirm = layer.confirm('请先确保已下载【客户端证书】，否则开启访问设备验证后，面板将无法访问，是否继续开启？', { title: '提示', btn: ['确定', '取消'], icon: 0, closeBtn: 2 }, function () {
+                            var confirm = layer.confirm('是否开启访问设备验证', { title: '提示', btn: ['确定', '取消'], icon: 0, closeBtn: 2 }, function () {
                                 var loading = bt.load();
                                 $.post('/config?action=set_ssl_verify', {
                                     ca: ca,
@@ -809,10 +820,10 @@ function GetPanelVerify () {
 		var certBody = '<div class="tab-con">\
 			<div class="myKeyCon ptb15">\
 				<div class="ssl-con-key pull-left">注销列表(crl)<br>\
-					<textarea id="ca_crl" class="bt-input-text">'+rdata.crl+'</textarea>\
+					<textarea id="ca_crl" class="bt-input-text">' + (rdata && rdata.crl ? rdata.crl : '') + '</textarea>\
 				</div>\
 				<div class="ssl-con-key pull-right">证书(cert)<br>\
-					<textarea id="ca_cert" class="bt-input-text">'+rdata.ca+'</textarea>\
+					<textarea id="ca_cert" class="bt-input-text">' + (rdata && rdata.ca ? rdata.ca : '') + '</textarea>\
 				</div>\
 				<div class="ssl-btn pull-left mtb15" style="width:100%">\
 					<button class="btn btn-success btn-sm" onclick="SavePanelVerify(' + (rdata.status ? 1 : 0) + ')">保存</button>\
@@ -831,31 +842,6 @@ function GetPanelVerify () {
 			shadeClose: false,
 			content:certBody
 		});
-	});
-}
-
-function SavePanelVerify(status) {
-    var crl = $("#ca_crl").val();
-    var ca = $("#ca_cert").val();
-    if (crl == '') {
-        return layer.msg('注销列表不能为空！', { icon: 2 });
-    }
-    if (ca == '') {
-        return layer.msg('证书不能为空！', { icon: 2 });
-    }
-    var data = {
-		ca: ca,
-		crl: crl,
-		status: status
-	}
-	var loadT = layer.msg('正在保存证书...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-	$.post('/config?action=set_ssl_verify', data, function (rdata) {
-		layer.close(loadT);
-		if (rdata.status) {
-		    $.get('/system?action=ReWeb', function () {});
-			layer.closeAll();
-		}
-		layer.msg(rdata.msg,{icon: rdata.status ? 1 : 2 });
 	});
 }
 
@@ -934,68 +920,116 @@ function setPanelSSL() {
       var sdata = rdata;
       var _data = {
         title: '面板SSL',
-        area: '530px',
+        area: '600px',
         class: 'ssl_cert_from',
-        list: [{
-            html: '<div><i class="layui-layer-ico layui-layer-ico3"></i><h3>' + lan.config.ssl_open_ps + '</h3><ul><li style="color:red;">' + lan.config.ssl_open_ps_1 + '</li><li>' + lan.config.ssl_open_ps_2 + '</li><li>' + lan.config.ssl_open_ps_3 + '</li></ul></div>'
+        list: [
+          {
+            html: '\
+              <div>\
+                <i class="layui-layer-ico layui-layer-ico3"></i>\
+                <h3>'+ lan.config.ssl_open_ps + '</h3>\
+                <ul style="width: 90%; margin-bottom: 15px;">\
+                  <li style="color:red;">'+ lan.config.ssl_open_ps_1 + '</li>\
+                  <li>'+ lan.config.ssl_open_ps_2 + '</li>\
+                  <li>' + lan.config.ssl_open_ps_3 + '</li>\
+                </ul>\
+              </div>\
+            '
           },
           {
             title: '类型',
             name: 'cert_type',
             type: 'select',
-            width: '200px',
+            width: '260px',
             value: sdata.cert_type,
-            items: [{
-              value: '1',
-              title: '自签证书'
-            }, {
-              value: '2',
-              title: 'Let\'s Encrypt'
-            }],
+            items: [
+              { value: '1', title: '自签证书' },
+              { value: '2', title: 'Let\'s Encrypt' }
+            ],
             callback: function (obj) {
               var subid = obj.attr('name') + '_subid';
               var keyid = obj.attr('name') + '_keyid';
+              var height = 640;
               $('#' + subid).remove();
               $('#' + keyid).remove();
               // 自签证书
               if (obj.val() == '1') {
-                  var loadT = layer.msg('正在获取证书信息...', { icon: 16, time: 0, shade: [0.3, '#000'] });
-                  $.post('/config?action=GetPanelSSL', {}, function (cert) {
-                      layer.close(loadT);
-                      obj.parents('div.line').after('\
-                          <div class="myKeyCon" id="' + keyid + '">\
-                              <div class="ssl-con-key pull-left mr20">密钥(KEY)<br>\
-                                  <textarea id="key" class="bt-input-text">'+ cert.privateKey + '</textarea>\
-                              </div>\
-                              <div class="ssl-con-key pull-right">证书(PEM格式)<br>\
-                                  <textarea id="csr" class="bt-input-text">' + cert.certPem + '</textarea>\
-                              </div>\
-                              <div class="clear"></div>\
+                var loadT = layer.msg('正在获取证书信息...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+                $.post('/config?action=GetPanelSSL', {}, function (cert) {
+                  layer.close(loadT);
+                  obj.parents('div.line').append('\
+                      <div class="myKeyCon" id="' + keyid + '" style="margin: 0 auto; padding: 16px 0 0;">\
+                          <div class="ssl-con-key pull-left">密钥(KEY)<br>\
+                              <textarea id="key" class="bt-input-text">'+ cert.privateKey + '</textarea>\
                           </div>\
-                      ');
-                      obj.parents('div.ssl_cert_set_form').css({
-                          'height': '640px'
-                      })
+                          <div class="ssl-con-key pull-right">证书(PEM格式)<br>\
+                              <textarea id="csr" class="bt-input-text">' + cert.certPem + '</textarea>\
+                          </div>\
+                          <div class="clear"></div>\
+                      </div>\
+                  ');
+                  obj.parents('div.ssl_cert_from').css({
+                    'height': '640px'
                   });
+                });
               }
               if (obj.val() == '2') {
                 var _tr = bt.render_form_line({
-                  title: '管理员邮箱',
+                  title: '邮箱',
                   name: 'email',
-                  width: '250px',
+                  width: '260px',
                   placeholder: '管理员邮箱',
                   value: sdata.email
                 });
+                height = 400;
                 obj.parents('div.line').append('<div class="line" id=' + subid + '>' + _tr.html + '</div>');
+                obj.parents('div.ssl_cert_from').css({
+                  'height': '400px'
+                });
               }
+              $('.ssl_cert_from .line').css({
+                'width': '90%',
+                'padding': 0,
+                'padding-top': '14px',
+                'border-bottom': 'none'
+              });
+              $('.ssl_cert_from>.line').css({
+                'border-top': '1px solid #ececec',
+                'margin': '0 auto',
+                'margin-top': '15px'
+              });
+              $('.ssl_cert_from>.line>.line').css({
+                'margin-top': '0',
+                'padding-top': '0'
+              });
+              $('.ssl_cert_from .line .tname').css({
+                'width': 'auto',
+                'text-align': 'left'
+              });
+              $('.ssl_cert_from .line .info-r').css({
+                'margin-left': 0,
+                'margin-bottom': 0
+              });
+              var layer_box = $('.ssl_cert_from').parents('.layui-layer');
+              var window_height = window.innerHeight;
+              var top = (window_height - height) / 2;
+              layer_box.css({
+                'top': top + 'px'
+              });
             }
           },
           {
-            html: '<div class="details"><input type="checkbox" id="checkSSL" /><label style="font-weight: 400;margin: 3px 5px 0px;" for="checkSSL">' + lan.config.ssl_open_ps_4 + '</label><a target="_blank" class="btlink" href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=4689">' + lan.config.ssl_open_ps_5 + '</a></p></div>'
+            html: '\
+              <div class="details" style="width: 90%; padding-top: 14px;">\
+                <input type="checkbox" id="checkSSL" />\
+                <label style="font-weight: 400; margin: 3px 5px 0px;" for="checkSSL">' + lan.config.ssl_open_ps_4 + '</label>\
+                <a target="_blank" class="btlink" href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=4689">' + lan.config.ssl_open_ps_5 + '</a>\
+              </div>\
+            '
           }
-
         ],
-        btns: [{
+        btns: [
+          {
             title: '关闭',
             name: 'close',
             callback: function (rdata, load, callback) {
@@ -1015,45 +1049,57 @@ function setPanelSSL() {
                 })
                 return;
               }
-              var confirm = layer.confirm('是否开启面板SSL证书', {
+              layer.confirm('是否开启面板SSL证书', {
                 title: '提示',
                 btn: ['确定', '取消'],
                 icon: 0,
                 closeBtn: 2
               }, function () {
                 var loading = bt.load();
-                bt.send('SetPanelSSL', 'config/SetPanelSSL', rdata, function (rdata) {
-                  loading.close()
-                  if (rdata.status) {
-                    layer.msg(rdata.msg, {
-                      icon: 1
-                    });
-                    $.get('/system?action=ReWeb', function () {});
-                    setTimeout(function () {
-                      window.location.href = ((window.location.protocol.indexOf('https') != -1) ? 'http://' : 'https://') + window.location.host + window.location.pathname;
-                    }, 1500);
-                  } else {
-                    layer.msg(rdata.msg, {
-                      icon: 2
-                    });
-                  }
-                })
+                var type = $('select[name="cert_type"]').val();
+                if (type == '1') {
+                  SavePanelSSL({
+                      loading: false,
+                      callback: function (res) {
+                        SetPanelSSL(rdata, function (res) {
+                          loading.close();
+                        });
+                      }
+                  });
+                } else {
+                  SetPanelSSL(rdata, function (rdata) {
+                    loading.close();
+                  });
+                }
               });
             }
-
           }
         ],
         end: function () {
           $("#panelSSL").prop("checked", false);
         }
       };
-
       var _bs = bt.render_form(_data);
       setTimeout(function () {
         $('.cert_type' + _bs).trigger('change')
       }, 200);
     });
   }
+}
+
+// 设置证书
+function SetPanelSSL (rdata, callback) {
+  bt.send('SetPanelSSL', 'config/SetPanelSSL', rdata, function (rdata) {
+    if (callback) callback(rdata);
+    if (rdata.status) {
+      $.get('/system?action=ReWeb');
+      layer.msg(rdata.msg, { icon: 1, time: 1500 }, function () {
+        window.location.href = ((window.location.protocol.indexOf('https') != -1) ? 'http://' : 'https://') + window.location.host + window.location.pathname;
+      });
+    } else {
+      layer.msg(rdata.msg, { icon: 2 });
+    }
+  });
 }
 
 function GetPanelSSL() {
@@ -1093,27 +1139,32 @@ function GetPanelSSL() {
   });
 }
 
-function SavePanelSSL() {
+// 保存证书
+function SavePanelSSL (option) {
+  option = option || {
+    loading: true
+  };
   var data = {
     privateKey: $("#key").val(),
     certPem: $("#csr").val()
   }
-  var loadT = layer.msg(lan.config.ssl_msg, {
-    icon: 16,
-    time: 0,
-    shade: [0.3, '#000']
-  });
+  if (option.loading) {
+    var loadT = layer.msg(lan.config.ssl_msg, { icon: 16, time: 0, shade: [0.3, '#000'] });
+  }
   $.post('/config?action=SavePanelSSL', data, function (rdata) {
-    layer.close(loadT);
+    if (option.loading) layer.close(loadT);
     if (rdata.status) {
-      layer.closeAll();
+      if (option.callback) {
+        option.callback(rdata);
+      } else {
+        layer.closeAll();
+        layer.msg(rdata.msg, { icon: 1 });
+      }
+    } else {
+      layer.msg(rdata.msg, { icon: 2 });
     }
-    layer.msg(rdata.msg, {
-      icon: rdata.status ? 1 : 2
-    });
   });
 }
-
 
 function SetDebug() {
   var status_s = {

@@ -64,493 +64,7 @@ var bt_file = {
         SetBatchData: '执行批量操作',
         BatchPaste: '粘贴中'
     },
-    file_drop: {
-        f_path: null,
-        startTime: 0,
-        endTime: 0,
-        uploadLength: 0, //上传数量
-        splitSize: 1024 * 1024 * 2, //文件上传分片大小
-        splitEndTime: 0,
-        splitStartTime: 0,
-        fileSize: 0,
-        speedLastTime: 0,
-        filesList: [], // 文件列表数组
-        errorLength: 0, //上传失败文件数量
-        isUpload: true, //上传状态，是否可以上传
-        uploadSuspend: [], //上传暂停参数
-        isUploadNumber: 800, //限制单次上传数量
-        uploadAllSize: 0, // 上传文件总大小
-        uploadedSize: 0, // 已上传文件大小
-        updateedSizeLast: 0,
-        topUploadedSize: 0, // 上一次文件上传大小
-        uploadExpectTime: 0, // 预计上传时间
-        initTimer: 0, // 初始化计时
-        speedInterval: null, //平局速度定时器
-        timerSpeed: 0, //速度
-        isLayuiDrop: false, //是否是小窗口拖拽
-        uploading: false,
-        is_webkit: (function() {
-            if (navigator.userAgent.indexOf('WebKit') > -1) return true;
-            return false;
-        })(),
-        init: function() {
-            if ($('#mask_layer').length == 0) {
-                window.UploadFiles = function() { bt_file.file_drop.dialog_view() };
-                $("body").append($('<div class="mask_layer" id="mask_layer" style="position:fixed;top:0;left:0;right:0;bottom:0; background:rgba(255,255,255,0.6);border:3px #ccc dashed;z-index:99999999;display:none;color:#999;font-size:40px;text-align:center;overflow:hidden;"><span style="position: absolute;top: 50%;left: 50%;margin-left: -300px;margin-top: -40px;">' + (!this.is_webkit ? '<i style="font-size:20px;font-style:normal;display:block;margin-top:15px;color:red;">当前浏览器暂不支持拖动上传，推荐使用Chrome浏览器或WebKit内核的浏览器。</i>' : '上传文件到当前目录下') + '</span></div>'));
-                this.event_relation(document.querySelector('#container'), document, document.querySelector('#mask_layer'));
-            }
-        },
-        // 事件关联 (进入，离开，放下)
-        event_relation: function(enter, leave, drop) {
-            var that = this,
-                obj = Object.keys(arguments);
-            for (var item in arguments) {
-                if (typeof arguments[item] == "object" && typeof arguments[item].nodeType != 'undefined') {
-                    arguments[item] = {
-                        el: arguments[item],
-                        callback: null
-                    }
-                }
-            }
-            leave.el.addEventListener("dragleave", (leave.callback != null) ? leave.callback : function(e) {
-                if (e.x == 0 && e.y == 0) $('#mask_layer').hide();
-                e.preventDefault();
-            }, false);
-            enter.el.addEventListener("dragenter", (enter.callback != null) ? enter.callback : function(e) {
-                if (e.dataTransfer.items[0].kind == 'string') return false
-                $('#mask_layer').show();
-                that.isLayuiDrop = false;
-                e.preventDefault();
-            }, false);
-            drop.el.addEventListener("dragover", function(e) { e.preventDefault() }, false);
-            drop.el.addEventListener("drop", (enter.callback != null) ? drop.callback : that.ev_drop, false);
-        },
 
-
-        // 事件触发
-        ev_drop: function(e) {
-            if (e.dataTransfer.items[0].kind == 'string') return false;
-            if (!bt_file.file_drop.is_webkit) {
-                $('#mask_layer').hide();
-                return false;
-            }
-            e.preventDefault();
-            if (bt_file.file_drop.uploading) {
-                layer.msg('正在上传文件中，请稍候...');
-                return false;
-            }
-            var items = e.dataTransfer.items,
-                time, num = 0;
-            loadT = layer.msg('正在获取上传文件信息，请稍候...', { icon: 16, time: 0, shade: .3 });
-            bt_file.file_drop.isUpload = true;
-            if (items && items.length && items[0].webkitGetAsEntry != null) {
-                if (items[0].kind != 'file') return false;
-            }
-            if (bt_file.file_drop.filesList == null) bt_file.file_drop.filesList = []
-            for (var i = bt_file.file_drop.filesList.length - 1; i >= 0; i--) {
-                if (bt_file.file_drop.filesList[i].is_upload) bt_file.file_drop.filesList.splice(-i, 1)
-            }
-            $('#mask_layer').hide();
-
-            function update_sync(s) {
-                s.getFilesAndDirectories().then(function(subFilesAndDirs) {
-                    return iterateFilesAndDirs(subFilesAndDirs, s.path);
-                });
-            }
-            var iterateFilesAndDirs = function(filesAndDirs, path) {
-                if (!bt_file.file_drop.isUpload) return false
-                for (var i = 0; i < filesAndDirs.length; i++) {
-                    if (typeof(filesAndDirs[i].getFilesAndDirectories) == 'function') {
-                        update_sync(filesAndDirs[i])
-                    } else {
-                        if (num > bt_file.file_drop.isUploadNumber) {
-                            bt_file.file_drop.isUpload = false;
-                            layer.msg(' ' + bt_file.file_drop.isUploadNumber + '份，无法上传,请压缩后上传!。', { icon: 2, area: '405px' });
-                            bt_file.file_drop.filesList = [];
-                            clearTimeout(time);
-                            return false;
-                        }
-                        bt_file.file_drop.filesList.push({
-                            file: filesAndDirs[i],
-                            path: bt.get_file_path(path + '/' + filesAndDirs[i].name).replace('//', '/'),
-                            name: filesAndDirs[i].name.replace('//', '/'),
-                            icon: bt_file.get_ext_name(filesAndDirs[i].name),
-                            size: bt_file.file_drop.to_size(filesAndDirs[i].size),
-                            upload: 0, //上传状态,未上传：0、上传中：1，已上传：2，上传失败：-1
-                            is_upload: false
-                        });
-                        bt_file.file_drop.uploadAllSize += filesAndDirs[i].size
-                        clearTimeout(time);
-                        time = setTimeout(function() {
-                            layer.close(loadT);
-                            bt_file.file_drop.dialog_view();
-                        }, 100);
-                        num++;
-                    }
-                }
-            }
-            if ('getFilesAndDirectories' in e.dataTransfer) {
-                e.dataTransfer.getFilesAndDirectories().then(function(filesAndDirs) {
-                    return iterateFilesAndDirs(filesAndDirs, '/');
-                });
-            }
-
-        },
-        // 上传视图
-        dialog_view: function(config) {
-            var that = this,
-                html = '';
-            this.f_path = bt_file.file_path;
-            if (!$('.file_dir_uploads').length > 0) {
-                if (that.filesList == null) that.filesList = []
-                for (var i = 0; i < that.filesList.length; i++) {
-                    var item = that.filesList[i];
-                    html += '<li><div class="fileItem"><span class="filename" title="文件路径:' + (item.path + '/' + item.name).replace('//', '/') + '&#10;文件类型:' + item.file.type + '&#10;文件大小:' + item.size + '"><i class="ico ico-' + item.icon + '"></i>' + (item.path + '/' + item.name).replace('//', '/') + '</span><span class="filesize">' + item.size + '</span><span class="fileStatus">' + that.is_upload_status(item.upload) + '</span></div><div class="fileLoading"></div></li>';
-                }
-                var is_show = that.filesList.length > 11;
-                layer.open({
-                    type: 1,
-                    closeBtn: 1,
-                    maxmin: true,
-                    area: ['650px', '605px'],
-                    btn: ['开始上传', '取消上传'],
-                    title: '上传文件到【' + bt.get_cookie('Path') + '】--- 支持断点续传',
-                    skin: 'file_dir_uploads',
-                    content: '<div style="padding:15px 15px 10px 15px;"><div class="upload_btn_groud"><div class="btn-group"><button type="button" class="btn btn-primary btn-sm upload_file_btn">上传文件</button><button type="button" class="btn btn-primary  btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu"><li><a href="#" data-type="file">上传文件</a></li><li><a href="#" data-type="dir">上传目录</a></li></ul></div><div class="file_upload_info" style="display:none;"><span>总进度&nbsp;<i class="uploadProgress"></i>,正在上传&nbsp;<i class="uploadNumber"></i>,</span><span style="display:none">上传失败&nbsp;<i class="uploadError"></i></span><span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>,</span><span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span><i></i></div></div><div class="upload_file_body ' + (html == '' ? 'active' : '') + '">' + (html != '' ? ('<ul class="dropUpLoadFileHead" style="padding-right:' + (is_show ? '15' : '0') + 'px"><li class="fileTitle"><span class="filename">文件名</span><span class="filesize">文件大小</span><span class="fileStatus">上传状态</span></li></ul><ul class="dropUpLoadFile list-list">' + html + '</ul>') : '<span>' + (!that.is_webkit ? '<i style="display: block;font-style: normal;margin-top: 10px;color: red;font-size: 17px;">当前浏览器暂不支持拖动上传，推荐使用Chrome浏览器或WebKit内核的浏览器。</i>' : '请将需要上传的文件拖到此处') + '</span>') + '</div></div>',
-                    success: function() {
-                        $('#mask_layer').hide();
-                        $('.file_dir_uploads .layui-layer-max').hide();
-                        $('.upload_btn_groud .upload_file_btn').click(function() { $('.upload_btn_groud .dropdown-menu [data-type=file]').click() });
-                        $('.upload_btn_groud .dropdown-menu a').click(function() {
-                            var type = $(this).attr('data-type');
-                            $('<input type="file" multiple="true" autocomplete="off" ' + (type == 'dir' ? 'webkitdirectory=""' : '') + ' />').change(function(e) {
-                                var files = e.target.files,
-                                    arry = [];
-                                for (var i = 0; i < files.length; i++) {
-                                    var config = {
-                                        file: files[i],
-                                        path: bt.get_file_path('/' + files[i].webkitRelativePath).replace('//', '/'),
-                                        icon: bt_file.get_ext_name(files[i].name),
-                                        name: files[i].name.replace('//', '/'),
-                                        size: that.to_size(files[i].size),
-                                        upload: 0, //上传状态,未上传：0、上传中：1，已上传：2，上传失败：-1
-                                        is_upload: true
-                                    }
-                                    that.filesList.push(config);
-                                    bt_file.file_drop.uploadAllSize += files[i].size
-                                }
-                                that.dialog_view(that.filesList);
-                            }).click();
-                        });
-                        var el = '';
-                        that.event_relation({
-                            el: $('.upload_file_body')[0],
-                            callback: function(e) {
-                                if ($(this).hasClass('active')) {
-                                    $(this).css('borderColor', '#4592f0').find('span').css('color', '#4592f0');
-                                }
-                            }
-                        }, {
-                            el: $('.upload_file_body')[0],
-                            callback: function(e) {
-                                if ($(this).hasClass('active')) {
-                                    $(this).removeAttr('style').find('span').removeAttr('style');
-                                }
-                            }
-                        }, {
-                            el: $('.upload_file_body')[0],
-                            callback: function(e) {
-                                var active = $('.upload_file_body');
-                                if (active.hasClass('active')) {
-                                    active.removeAttr('style').find('span').removeAttr('style');
-                                }
-                                that.ev_drop(e);
-                                that.isLayuiDrop = true;
-                            }
-                        });
-                    },
-                    yes: function(index, layero) {
-                        if (!that.uploading) {
-                            if (that.filesList.length == 0) {
-                                layer.msg('请选择上传文件', { icon: 0 });
-                                return false;
-                            }
-                            $('.layui-layer-btn0').css({ 'cursor': 'no-drop', 'background': '#5c9e69' }).attr('data-upload', 'true').text('上传中');
-                            that.upload_file();
-                            that.initTimer = new Date();
-                            that.uploading = true;
-                            //that.get_timer_speed();
-                        }
-                    },
-                    btn2: function(index, layero) {
-                        if (that.uploading) {
-                            layer.confirm('是否取消上传当前列表的文件，若取消上传，已上传的文件，需用户手动删除，是否继续？', { title: '取消上传文件', icon: 0 }, function(indexs) {
-                                layer.close(index);
-                                layer.close(indexs);
-                            });
-                            return false;
-                        } else {
-                            layer.close(index);
-                        }
-                    },
-                    cancel: function(index, layero) {
-                        if (that.uploading) {
-                            layer.confirm('是否取消上传当前列表的文件，若取消上传，已上传的文件，需用户手动删除，是否继续？', { title: '取消上传文件', icon: 0 }, function(indexs) {
-                                layer.close(index);
-                                layer.close(indexs);
-                            });
-                            return false;
-                        } else {
-                            layer.close(index);
-                        }
-                    },
-                    end: function() {
-                        // GetFiles(bt.get_cookie('Path'));
-                        that.clear_drop_stauts(true);
-                    },
-                    min: function() {
-                        $('.file_dir_uploads .layui-layer-max').show();
-                        $('#layui-layer-shade' + $('.file_dir_uploads').attr('times')).fadeOut();
-                    },
-                    restore: function() {
-                        $('.file_dir_uploads .layui-layer-max').hide();
-                        $('#layui-layer-shade' + $('.file_dir_uploads').attr('times')).fadeIn();
-                    }
-                });
-            } else {
-                if (config == undefined && !that.isLayuiDrop) return false;
-                if (that.isLayuiDrop) config = that.filesList;
-                $('.upload_file_body').html('<ul class="dropUpLoadFileHead" style="padding-right:' + (config.length > 11 ? '15' : '0') + 'px"><li class="fileTitle"><span class="filename">文件名</span><span class="filesize">文件大小</span><span class="fileStatus">上传状态</span></li></ul><ul class="dropUpLoadFile list-list"></ul>').removeClass('active');
-                if (Array.isArray(config)) {
-                    for (var i = 0; i < config.length; i++) {
-                        var item = config[i];
-                        html += '<li><div class="fileItem"><span class="filename" title="文件路径:' + item.path + '/' + item.name + '&#10;文件类型:' + item.file.type + '&#10;文件大小:' + item.size + '"><i class="ico ico-' + item.icon + '"></i>' + (item.path + '/' + item.name).replace('//', '/') + '</span><span class="filesize">' + item.size + '</span><span class="fileStatus">' + that.is_upload_status(item.upload) + '</span></div><div class="fileLoading"></div></li>';
-                    }
-                    $('.dropUpLoadFile').append(html);
-                } else {
-                    $('.dropUpLoadFile').append('<li><div class="fileItem"><span class="filename" title="文件路径:' + (config.path + '/' + config.name).replace('//', '/') + '&#10;文件类型:' + config.type + '&#10;文件大小:' + config.size + '"><i class="ico ico-' + config.icon + '"></i>' + (config.path + '/' + config.name).replace('//', '/') + '</span><span class="filesize">' + config.size + '</span><span class="fileStatus">' + that.is_upload_status(config.upload) + '</span></div><div class="fileLoading"></div></li>');
-                }
-
-            }
-        },
-        // 上传单文件状态
-        is_upload_status: function(status, val) {
-            if (val === undefined) val = ''
-            switch (status) {
-                case -1:
-                    return '<span class="upload_info upload_error" title="上传失败' + (val != '' ? ',' + val : '') + '">上传失败' + (val != '' ? ',' + val : '') + '</span>';
-                    break;
-                case 0:
-                    return '<span class="upload_info upload_primary">等待上传</span>';
-                    break;
-                case 1:
-                    return '<span class="upload_info upload_success">上传成功</span>';
-                    break;
-                case 2:
-                    return '<span class="upload_info upload_warning">上传中' + val + '</span>';
-                    break;
-                case 3:
-                    return '<span class="upload_info upload_success">已暂停</span>';
-                    break;
-            }
-        },
-        // 设置上传实时反馈视图
-        set_upload_view: function(index, config) {
-            var item = $('.dropUpLoadFile li:eq(' + index + ')'),
-                that = this;
-            var file_info = $('.file_upload_info');
-            if ($('.file_upload_info .uploadProgress').length == 0) {
-                $('.file_upload_info').html('<span>总进度&nbsp;<i class="uploadProgress"></i>,正在上传&nbsp;<i class="uploadNumber"></i>,</span><span style="display:none">上传失败&nbsp;<i class="uploadError"></i></span><span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>,</span><span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span><i></i>');
-            }
-            file_info.show().prev().hide().parent().css('paddingRight', 0);
-            if (that.errorLength > 0) file_info.find('.uploadError').text('(' + that.errorLength + '份)').parent().show();
-            file_info.find('.uploadNumber').html('(' + that.uploadLength + '/' + that.filesList.length + ')');
-            file_info.find('.uploadProgress').html(((that.uploadedSize / that.uploadAllSize) * 100).toFixed(2) + '%');
-            if (config.upload === 1 || config.upload === -1) {
-                that.filesList[index].is_upload = true;
-                that.uploadLength += 1;
-                item.find('.fileLoading').css({ 'width': '100%', 'opacity': '.5', 'background': config.upload == -1 ? '#ffadad' : '#20a53a21' });
-                item.find('.filesize').text(config.size);
-                item.find('.fileStatus').html(that.is_upload_status(config.upload, (config.upload === 1 ? ('(耗时:' + that.diff_time(that.startTime, that.endTime) + ')') : config.errorMsg)));
-                item.find('.fileLoading').fadeOut(500, function() {
-                    $(this).remove();
-                    var uploadHeight = $('.dropUpLoadFile');
-                    if (uploadHeight.length == 0) return false;
-                    if (uploadHeight[0].scrollHeight > uploadHeight.height()) {
-                        uploadHeight.scrollTop(uploadHeight.scrollTop() + 40);
-                    }
-                });
-            } else {
-                item.find('.fileLoading').css('width', config.percent);
-                item.find('.filesize').text(config.upload_size + '/' + config.size);
-                item.find('.fileStatus').html(that.is_upload_status(config.upload, '(' + config.percent + ')'));
-            }
-        },
-        // 清除上传状态
-        clear_drop_stauts: function(status) {
-            var time = new Date(),
-                that = this;
-            if (!status) {
-                try {
-                    var s_peed = bt_file.file_drop.to_size(bt_file.file_drop.uploadedSize / ((time.getTime() - bt_file.file_drop.initTimer.getTime()) / 1000))
-                    $('.file_upload_info').html('<span>上传成功 ' + this.uploadLength + '个文件,' + (this.errorLength > 0 ? ('上传失败 ' + this.errorLength + '个文件，') : '') + '耗时' + this.diff_time(this.initTimer, time) + ',平均速度 ' + s_peed + '/s</span>').append($('<i class="ico-tips-close"></i>').click(function() {
-                        $('.file_upload_info').hide().prev().show();
-                    }));
-                } catch (e) {
-
-                }
-            }
-            $('.layui-layer-btn0').removeAttr('style data-upload').text('开始上传');
-            $.extend(bt_file.file_drop, {
-                startTime: 0,
-                endTime: 0,
-                uploadLength: 0, //上传数量
-                splitSize: 1024 * 1024 * 2, //文件上传分片大小
-                filesList: [], // 文件列表数组
-                errorLength: 0, //上传失败文件数量
-                isUpload: false, //上传状态，是否可以上传
-                isUploadNumber: 800, //限制单次上传数量
-                uploadAllSize: 0, // 上传文件总大小
-                uploadedSize: 0, // 已上传文件大小
-                topUploadedSize: 0, // 上一次文件上传大小
-                uploadExpectTime: 0, // 预计上传时间
-                initTimer: 0, // 初始化计时
-                speedInterval: null, //平局速度定时器
-                timerSpeed: 0, //速度
-                uploading: false
-            });
-            clearInterval(that.speedInterval);
-        },
-        // 上传文件,文件开始字段，文件编号
-        upload_file: function(fileStart, index) {
-            if (fileStart == undefined && this.uploadSuspend.length == 0) fileStart = 0, index = 0;
-            if (this.filesList.length === index) {
-                clearInterval(this.speedInterval);
-                this.clear_drop_stauts();
-                bt_file.reader_file_list({ path: bt_file.file_path, is_operating: false });
-                return false;
-            }
-            var that = this;
-            that.splitEndTime = new Date().getTime()
-            that.get_timer_speed()
-
-            that.splitStartTime = new Date().getTime()
-            var item = this.filesList[index],
-                fileEnd = '';
-            if (item == undefined) return false;
-            fileEnd = Math.min(item.file.size, fileStart + this.splitSize),
-                that.fileSize = fileEnd - fileStart
-            form = new FormData();
-            if (fileStart == 0) {
-                that.startTime = new Date();
-                item = $.extend(item, { percent: '0%', upload: 2, upload_size: '0B' });
-            }
-            form.append("f_path", this.f_path + item.path);
-            form.append("f_name", item.name);
-            form.append("f_size", item.file.size);
-            form.append("f_start", fileStart);
-            form.append("blob", item.file.slice(fileStart, fileEnd));
-            that.set_upload_view(index, item);
-            $.ajax({
-                url: '/files?action=upload',
-                type: "POST",
-                data: form,
-                async: true,
-                processData: false,
-                contentType: false,
-                success: function(data) {
-                    if (typeof(data) === "number") {
-                        that.set_upload_view(index, $.extend(item, { percent: (((data / item.file.size) * 100).toFixed(2) + '%'), upload: 2, upload_size: that.to_size(data) }));
-                        if (fileEnd != data) {
-                            that.uploadedSize += data;
-                        } else {
-                            that.uploadedSize += parseInt(fileEnd - fileStart);
-                        }
-
-                        that.upload_file(data, index);
-                    } else {
-                        if (data.status) {
-                            that.endTime = new Date();
-                            that.uploadedSize += parseInt(fileEnd - fileStart);
-                            that.set_upload_view(index, $.extend(item, { upload: 1, upload_size: item.size }));
-                            that.upload_file(0, index += 1);
-                        } else {
-                            that.set_upload_view(index, $.extend(item, { upload: -1, errorMsg: data.msg }));
-                            that.errorLength++;
-                        }
-                    }
-
-                },
-                error: function(e) {
-                    if (that.filesList[index].req_error === undefined) that.filesList[index].req_error = 1
-                    if (that.filesList[index].req_error > 2) {
-                        that.set_upload_view(index, $.extend(that.filesList[index], { upload: -1, errorMsg: e.statusText == 'error' ? '网络中断' : e.statusText }));
-                        that.errorLength++;
-                        that.upload_file(fileStart, index += 1)
-                        return false;
-                    }
-                    that.filesList[index].req_error += 1;
-                    that.upload_file(fileStart, index)
-
-
-                }
-            });
-        },
-        // 获取上传速度
-        get_timer_speed: function(speed) {
-            var done_time = new Date().getTime()
-            if (done_time - this.speedLastTime > 1000) {
-                var that = this,
-                    num = 0;
-                if (speed == undefined) speed = 200
-                var s_time = (that.splitEndTime - that.splitStartTime) / 1000;
-                console.log(s_time)
-                that.timerSpeed = (that.fileSize / s_time).toFixed(2)
-                that.updateedSizeLast = that.uploadedSize
-                if (that.timerSpeed < 2) return;
-
-                $('.file_upload_info .uploadSpeed').text(that.to_size(isNaN(that.timerSpeed) ? 0 : that.timerSpeed) + '/s');
-                var estimateTime = that.time(parseInt(((that.uploadAllSize - that.uploadedSize) / that.timerSpeed) * 1000))
-                if (!isNaN(that.timerSpeed)) $('.file_upload_info .uploadEstimate').text(estimateTime.indexOf('NaN') == -1 ? estimateTime : '0秒');
-                this.speedLastTime = done_time;
-            }
-        },
-        time: function(date) {
-            var hours = Math.floor(date / (60 * 60 * 1000));
-            var minutes = Math.floor(date / (60 * 1000));
-            var seconds = parseInt((date % (60 * 1000)) / 1000);
-            var result = seconds + '秒';
-            if (minutes > 0) {
-                result = minutes + "分钟" + seconds + '秒';
-            }
-            if (hours > 0) {
-                result = hours + '小时' + Math.floor((date - (hours * (60 * 60 * 1000))) / (60 * 1000)) + "分钟";
-            }
-            return result
-        },
-        diff_time: function(start_date, end_date) {
-            var diff = end_date.getTime() - start_date.getTime();
-            var minutes = Math.floor(diff / (60 * 1000));
-            var leave3 = diff % (60 * 1000);
-            var seconds = leave3 / 1000
-            var result = seconds.toFixed(minutes > 0 ? 0 : 2) + '秒';
-            if (minutes > 0) {
-                result = minutes + "分" + seconds.toFixed(0) + '秒'
-            }
-            return result
-        },
-        to_size: function(a) {
-            var d = [" B", " KB", " MB", " GB", " TB", " PB"];
-            var e = 1024;
-            for (var b = 0; b < d.length; b += 1) {
-                if (a < e) {
-                    var num = (b === 0 ? a : a.toFixed(2)) + d[b];
-                    return (!isNaN((b === 0 ? a : a.toFixed(2))) && typeof num != 'undefined') ? num : '0B';
-                }
-                a /= e
-            }
-        }
-    },
     init: function() {
         if (bt.get_cookie('rank') == undefined || bt.get_cookie('rank') == null || bt.get_cookie('rank') == 'a' || bt.get_cookie('rank') == 'b') {
             bt.set_cookie('rank', 'list');
@@ -560,7 +74,7 @@ var bt_file = {
         this.event_bind(); // 事件绑定
         this.reader_file_list({ is_operating: true }); // 渲染文件列表
         this.render_file_disk_list(); // 渲染文件磁盘列表
-        this.file_drop.init(); // 初始化文件上传
+        
         this.set_file_table_width(); // 设置表格宽度
     },
     // 事件绑定
@@ -594,13 +108,13 @@ var bt_file = {
             }
         });
         $('.search_path_views').find('.file_search_checked').unbind('click').click(function() {
-                if ($(this).hasClass('active')) {
-                    $(this).removeClass('active')
-                } else {
-                    $(this).addClass('active');
-                }
-            })
-            // 搜索按钮
+            if ($(this).hasClass('active')) {
+                $(this).removeClass('active')
+            } else {
+                $(this).addClass('active');
+            }
+        })
+        // 搜索按钮
         $('.search_path_views').on('click', '.path_btn', function(e) {
             var _obj = { path: that.file_path, search: $('.file_search_input').val() };
             if ($('#search_all').hasClass('active')) _obj['all'] = 'True'
@@ -730,7 +244,7 @@ var bt_file = {
 
         // 上传
         $('.upload_file').on('click', function(e) {
-            that.file_drop.dialog_view();
+            uploadFiles.upload_layer()
         });
         // 下载
         $('.upload_download').on('click', function(e) {
@@ -1308,6 +822,11 @@ var bt_file = {
             that.replace_content_view()
         })
     },
+    
+    // 上传文件
+    file_drop:function(){
+        uploadFiles.upload_layer()
+    },
     /**
      * @descripttion: 文件拖拽范围
      * @author: Lifu
@@ -1640,7 +1159,7 @@ var bt_file = {
                     value: '',
                     eventType: 'enter',
                     enter: function() {
-                        $('.download_file_view .layui-layer-btn0').click();
+                      $('.download_file_view .layui-layer-btn0').click();
                     }
                 }
             ]
@@ -1659,8 +1178,12 @@ var bt_file = {
                 yes: function(indexo, layero) {
                     var ress = form.getVal();
                     if (!bt.check_url(ress.url)) {
-                        layer.msg('请输入有效的url地址..', { icon: 2 })
-                        return false;
+                      layer.msg('请输入有效的url地址', { icon: 2 })
+                      return false;
+                    }
+                    if(ress.filename == '') {
+                      layer.msg('请输入文件名', { icon: 2 })
+                      return false;
                     }
                     form.submitForm(function(res) {
                         that.render_present_task_list();
@@ -3110,7 +2633,7 @@ var bt_file = {
     },
     //回收站删除
     DelRecycleBin: function(row,callback) {
-      bt.prompt_confirm(lan.files.recycle_bin_del_title, '您确定要删除文件['+ row.name +']吗，该操作将<span style="color:red;">永久删除改文件</span>，是否继续操作？', function () {
+      bt.prompt_confirm(lan.files.recycle_bin_del_title, '您确定要删除文件['+ row.name +']吗，该操作将<span style="color:red;">永久删除该文件</span>，是否继续操作？', function () {
           var loadT = layer.msg(lan.files.recycle_bin_del_the, { icon: 16, time: 0, shade: [0.3, '#000'] });
             $.post('/files?action=Del_Recycle_bin', 'path=' + encodeURIComponent(row.rname), function(rdata) {
                 layer.close(loadT);

@@ -4013,17 +4013,29 @@ location ^~ %s
     def GetRewriteList(self,get):
         if get.siteName.find('node_') == 0:
             get.siteName = get.siteName.replace('node_', '')
+        if get.siteName.find('java_') == 0:
+            get.siteName = get.siteName.replace('java_', '')
         rewriteList = {}
         ws = public.get_webserver()
         if ws == "openlitespeed":
             ws = "apache"
         if ws == 'apache':
-            get.id = public.M('sites').where("name=?",(get.siteName,)).getField('id')
-            runPath = self.GetSiteRunPath(get)
-            if runPath['runPath'].find('/www/server/stop') != -1:
-                runPath['runPath'] = runPath['runPath'].replace('/www/server/stop','')
-            rewriteList['sitePath'] = public.M('sites').where("name=?",(get.siteName,)).getField('path') + runPath['runPath']
-            
+            Java_data=self.get_project_find(get.siteName)
+            if not Java_data:
+                get.id = public.M('sites').where("name=?",(get.siteName,)).getField('id')
+                runPath = self.GetSiteRunPath(get)
+                if runPath['runPath'].find('/www/server/stop') != -1:
+                    runPath['runPath'] = runPath['runPath'].replace('/www/server/stop','')
+                rewriteList['sitePath'] = public.M('sites').where("name=?",(get.siteName,)).getField('path') + runPath['runPath']
+            if Java_data:
+                if Java_data['project_config']['java_type'] == 'springboot':
+                    rewriteList['sitePath']=Java_data['project_config']['jar_path']
+                else:
+                    get.id = public.M('sites').where("name=?",(get.siteName,)).getField('id')
+                    runPath = self.GetSiteRunPath(get)
+                    if runPath['runPath'].find('/www/server/stop') != -1:
+                        runPath['runPath'] = runPath['runPath'].replace('/www/server/stop','')
+                    rewriteList['sitePath'] = public.M('sites').where("name=?",(get.siteName,)).getField('path') + runPath['runPath']
         rewriteList['rewrite'] = []
         rewriteList['rewrite'].append('0.'+public.getMsg('SITE_REWRITE_NOW'))
         for ds in os.listdir('rewrite/' + ws):

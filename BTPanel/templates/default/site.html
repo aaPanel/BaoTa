@@ -288,6 +288,7 @@
 <script type="text/javascript">
 	bt.set_cookie('sites_path', "{{session['config']['sites_path']}}");
 	bt.set_cookie('serverType', "{{session['webserver']}}");
+  console.log("{{session['webserver']}}")
 	var isSetup = "{{data['isSetup']}}" === 'True' ? true : false
 </script>
 <script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js?version={{g['version']}}"></script>
