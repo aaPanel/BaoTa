@@ -1602,6 +1602,7 @@ var bt_file = {
                     return _openTitle;
                 }(item))
             that.file_list[index]['only_id'] = only_id;
+            // console.log(item.down_id);
             _html += '<div class="file_tr" data-index="' + index + '" data-filename="' + item.filename + '" ' + (bt.get_cookie('rank') == 'icon' ? 'title="' + path + '&#13;' + lan.files.file_size + ':' + bt.format_size(item.size) + '&#13;' + lan.files.file_etime + ':' + bt.format_data(item.mtime) + '&#13;' + lan.files.file_auth + ':' + item.user + '&#13;' + lan.files.file_own + ':' + item.root_level + '"' : '') + '>' +
                 '<div class="file_td file_checkbox"><div class="file_check"></div></div>' +
                 '<div class="file_td file_name">' +
@@ -2027,7 +2028,7 @@ var bt_file = {
                 $('.file_path_refresh').click();
                 break;
             case 'upload': //上传文件
-                this.file_drop.dialog_view();
+                uploadFiles.upload_layer();
                 break;
             case 'soft_link': //软链接创建
                 this.set_soft_link();
@@ -2471,36 +2472,36 @@ var bt_file = {
                                 files.push($.extend(item,{type:'files'}));
                             }
                         }
-                    break;
+                        break;
                     case 1:
                         for (var i = 0; i < res.dirs.length; i++){
                             var item = res.dirs[i];
                             files.push($.extend(item,{type:'folder'}));
                         }
 
-                    break;
+                        break;
                     case 2:
                         for (var j = 0; j < res.files.length; j++){
                             var item = res.files[j],ext_list =  item.dname.split('.') ,ext = that.determine_file_type(ext_list[ext_list.length - 1]);
                             if(item.name.indexOf('BTDB') == -1) files.push($.extend(item,{type:ext}));
                         }
-                    break;
+                        break;
                     case 3:
                         for (var j = 0; j < res.files.length; j++){
                             var item = res.files[j],ext_list =  item.dname.split('.') ,ext = that.determine_file_type(ext_list[ext_list.length - 1]);
                             if(ext == 'images') files.push($.extend(item,{type:ext}));
                         }
 
-                    break;
+                        break;
                     case 4:
                         for (var j = 0; j < res.files.length; j++){
                             var item = res.files[j],ext_list =  item.dname.split('.') ,ext = that.determine_file_type(ext_list[ext_list.length - 1]);
                             if(ext != 'images' && ext != 'compress' && ext != 'video' && item.name.indexOf('BTDB') == -1) files.push($.extend(item,{type:ext}));
                         }
-                    break;
+                        break;
                     case 5:
-                        for (var j = 0; j < res.files.length; j++){
-                            var item = res.files[j];
+                        for (var j = 0; j < res.dirs.length; j++){
+                            var item = res.dirs[j];
                             if(item.name.indexOf('BTDB_') > -1){
                                 item.dname = item.dname.replace('BTDB_','');
                                 item.name = item.name.replace('BTDB_','');
@@ -2510,7 +2511,7 @@ var bt_file = {
                         // for (var filesKey in files) {
                         //     if(files.hasOwnProperty(filesKey))
                         // }
-                    break;
+                        break;
                 }
                 $('#Set_Recycle_bin').attr('checked', res.status);
                 $('#Set_Recycle_bin_db').attr('checked', res.status_db);
@@ -3162,8 +3163,12 @@ var bt_file = {
      */
     config_paste_to: function(path, _filename) {
         var that = this,
+            dfile = this.file_path + '/' + _filename,
             _type = bt.get_cookie('record_paste_type');
-        this.$http(_type == 'copy' ? 'CopyFile' : 'MvFile', { sfile: path, dfile: (this.file_path + '/' + _filename) }, function(rdata) {
+        if (path == dfile) {
+            return layer.msg('错误的复制逻辑，从' + path + '复制到' + dfile + '有包含关系，存在无限循环复制风险!', { icon: 2 });
+        }
+        this.$http(_type == 'copy' ? 'CopyFile' : 'MvFile', { sfile: path, dfile: dfile }, function(rdata) {
             if (rdata.status) {
                 bt.set_cookie('record_paste', null);
                 bt.set_cookie('record_paste_type', null);
@@ -4297,6 +4302,7 @@ var bt_file = {
         if (typeof data == "string") {
             if (typeof parem != "object") callback = parem, parem = {};
             if (!Array.isArray(that.method_list[data])) that.method_list[data] = ['files', that.method_list[data]];
+            // console.log(that.method_list[data])
             that.$http({ method: data, tips: (that.method_list[data][1] ? '正在' + that.method_list[data][1] + '，请稍候...' : false), module: that.method_list[data][0], data: parem, msg: true }, callback);
         } else {
             if (typeof data.tips != 'undefined' && data.tips) loadT = bt.load(data.tips);

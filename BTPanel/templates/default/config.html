@@ -117,7 +117,7 @@
                   class="set-info c7">秒, 若用户在<a
                     style="color:red;">{{data['session_timeout']}}</a>秒内没有任何操作，将自动退出面板</span>
               </p>
-              <p class="mtb15"><span class="set-tit text-right" title="管理入口路径">安全入口</span><input id="admin_path"
+              <p class="mtb15"><span class="set-tit text-right" title="管理入口路径">安全入口</span><input
                   name="admin_path" class="inputtxt bt-input-text disable" type="text"
                   value="{{data['panel']['admin_path']}}" disabled><span class="modify btn btn-xs btn-success"
                   onclick="modify_auth_path()">{{data['lan']['CY10']}}</span><span
@@ -183,7 +183,7 @@
               <p class="mtb15"><span class="set-tit text-right"
                   title="{{data['lan']['CT11']}}">{{data['lan']['CT11']}}</span><input name="btusername"
                   class="inputtxt bt-input-text disable" type="text" value="" disabled><span
-                  class="modify btn btn-xs btn-success mr5" onclick="bindBTName(2,'b')">{{data['lan']['CY11']}}</span>
+                  class="modify btn btn-xs btn-success mr5" onclick="bt.pub.bind_btname()">{{data['lan']['CY11']}}</span>
               </p>
               <p class="mtb15"><span class="set-tit text-right">面板菜单栏隐藏</span><input
                   class="inputtxt bt-input-text disable" id="panel_menu_hide" type="text" disabled><span
@@ -198,7 +198,7 @@
         <div class="tab-con-block hide">
           <div class="setting-con pd5">
             <form id="set-Config">
-              <p class="mtb15"><span class="set-tit text-right" title="管理入口路径">安全入口</span><input id="admin_path"
+              <p class="mtb15"><span class="set-tit text-right" title="管理入口路径">安全入口</span><input
                   name="admin_path" class="inputtxt bt-input-text disable" type="text"
                   value="{{data['panel']['admin_path']}}" disabled><span class="modify btn btn-xs btn-success"
                   onclick="modify_auth_path()">{{data['lan']['CY10']}}</span><span

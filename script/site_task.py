@@ -127,36 +127,6 @@ def logs_analysis():
         }
 
         print(public.HttpPost('https://www.bt.cn/api/panel/model_total',pdata))
-    
-    panelPath = '/www/server/panel'
-    logs_path = '{}/logs/click'.format(panelPath)
-    logs_tips = logs_path + '/tips'
-    if not os.path.exists(logs_tips): os.makedirs(logs_tips)        
-
-    for fname in os.listdir(logs_path):
-        if fname in ['tips']:continue
-        tip_file = '{}/tips/{}.pl'.format(logs_path,day_date)
-        if os.path.exists(tip_file): continue
-        
-        day_date = fname.split('.')[0]
-        if public.format_date().find(day_date) >= 0: continue
-        
-        data_list = []
-        try:                       
-            rlist = json.loads(public.readFile(logs_path + '/' + fname))
-        except :
-            print(public.get_error_info())
-            rlist = []
-
-        for key in rlist:
-            try:
-                data_list.append({ 'client_type' :'pc','os':'linux','mod_name':key,'day_count':rlist[key] })
-            except :pass            
-        pdata = {'data_list': json.dumps(data_list),'day_date':day_date }
- 
-        ret = public.HttpPost('https://www.bt.cn/api/wpanel/model_click',pdata)
-        print(ret)
-        public.writeFile(tip_file,'')
 
 
 

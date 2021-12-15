@@ -597,8 +597,9 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             public.writeFile(f_key,ps_body)
             public.WriteLog('文件管理','设置文件名[{}],备注为: {}'.format(f_name,ps_body))
         else:
-            if os.path.exists(f_key):os.remove(f_key)
-            public.WriteLog('文件管理','清除文件备注[{}]'.format(f_name))
+            if os.path.exists(f_key):
+                os.remove(f_key)
+                public.WriteLog('文件管理','清除文件备注[{}]'.format(f_name))
         return public.returnMsg(True,'设置成功')
 
         
@@ -859,12 +860,14 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             if os.path.exists('data/recycle_bin.pl') and session.get('debug') != 1:
                 if self.Mv_Recycle_bin(get):
                     self.site_path_safe(get)
+                    self.remove_file_ps(get)
                     return public.returnMsg(True, 'DIR_MOVE_RECYCLE_BIN')
 
             import shutil
             shutil.rmtree(get.path)
             self.site_path_safe(get)
             public.WriteLog('TYPE_FILE', 'DIR_DEL_SUCCESS', (get.path,))
+            self.remove_file_ps(get)
             return public.returnMsg(True, 'DIR_DEL_SUCCESS')
         except:
             return public.returnMsg(False, 'DIR_DEL_ERR')
@@ -891,13 +894,25 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             if os.path.exists('data/recycle_bin.pl') and session.get('debug') != 1:
                 if self.Mv_Recycle_bin(get):
                     self.site_path_safe(get)
+                    self.remove_file_ps(get)
                     return public.returnMsg(True, 'FILE_MOVE_RECYCLE_BIN')
             os.remove(get.path)
             self.site_path_safe(get)
             public.WriteLog('TYPE_FILE', 'FILE_DEL_SUCCESS', (get.path,))
+            self.remove_file_ps(get)
             return public.returnMsg(True, 'FILE_DEL_SUCCESS')
         except:
             return public.returnMsg(False, 'FILE_DEL_ERR')
+
+
+    def remove_file_ps(self,get):
+        '''
+            @name 删除文件或目录的备注信息
+        '''
+        get.filename = get.path
+        get.ps_body = ''
+        get.ps_type = '0'
+        self.set_file_ps(get)
 
     # 移动到回收站
     def Mv_Recycle_bin(self, get):
@@ -1541,6 +1556,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             get.data = json.loads(get.data)
             l = len(get.data)
             i = 0
+            args = public.dict_obj()
             for key in get.data:
                 try:
                     if sys.version_info[0] == 2:
@@ -1569,6 +1585,8 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                             self.Mv_Recycle_bin(get)
                         else:
                             os.remove(filename)
+                    args.path = filename
+                    self.remove_file_ps(args)
                 except:
                     continue
                 public.writeSpeed(None, 0, 0)
@@ -2189,7 +2207,7 @@ cd %s
 
     #取PHP-CLI执行命令
     def __get_php_bin(self,php_version=None):
-        php_vs = ["80","74","73","72","71","70","56","55","54","53"]
+        php_vs = ["82","81","80","74","73","72","71","70","56","55","54","53"]
         if php_version:
             if php_version != 'auto':
                 if not php_version in php_vs: return ''

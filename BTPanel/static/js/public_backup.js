@@ -11,12 +11,12 @@ var bt = {
     return reg.test(ip);
   },
   // 验证域名列表
-  check_domain_list:function(domainInfo){
-    var domainList = domainInfo.trim().replace(' ','').split("\n");
-    for (var i = 0; i < domainList.length; i++){
+  check_domain_list: function (domainInfo) {
+    var domainList = domainInfo.trim().replace(' ', '').split("\n");
+    for (var i = 0; i < domainList.length; i++) {
       var item = domainList[i];
-      if(!bt.check_domain(item)){
-        bt.msg({status:false,msg:'第+'+ (i+1) +'行[ '+ item +' ]域名格式错误'});
+      if (!bt.check_domain(item)) {
+        bt.msg({ status: false, msg: '第+' + (i + 1) + '行[ ' + item + ' ]域名格式错误' });
         return false;
       }
     }
@@ -50,7 +50,7 @@ var bt = {
     var reg = /\w[-\w.+]*@([A-Za-z0-9][-A-Za-z0-9]+\.)+[A-Za-z]{2,14}/;
     return reg.test(email);
   },
-  
+
   check_phone: function (phone) {
     var reg = /^1(3|4|5|6|7|8|9)\d{9}$/;
     return reg.test(phone);
@@ -96,9 +96,9 @@ var bt = {
     return 1; //版本正常
   },
   // url合成
-  url_merge:function(url){
+  url_merge: function (url) {
     var origin = window.location.origin;
-    return (cdn_url !== '/static'?cdn_url:origin + cdn_url) + url +'?version='+panel_version + '&repair=' + update_code
+    return (cdn_url !== '/static' ? cdn_url : origin + cdn_url) + url + '?version=' + panel_version + '&repair=' + update_code
   },
   replace_all: function (str, old_data, new_data) {
     var reg_str = "/(" + old_data + "+)/g"
@@ -325,7 +325,7 @@ var bt = {
     }
     var is_https = window.location.protocol == 'https:'
     var samesite = ';Secure; Path=/; SameSite=None'
-    document.cookie = key + "=" + escape(val) + ";expires=" + time + (is_https?samesite:'');
+    document.cookie = key + "=" + escape(val) + ";expires=" + time + (is_https ? samesite : '');
   },
   get_cookie: function (key) {
     var arr, reg = new RegExp("(^| )" + key + "=([^;]*)(;|$)");
@@ -345,29 +345,29 @@ var bt = {
    * @param type {string || function} 选择方式，文件或目录
    * @param success {function} 成功后的回调
    */
-  select_path: function (id, type, success,default_path) {
+  select_path: function (id, type, success, default_path) {
     var _this = this;
     _this.set_cookie("SetName", "");
-    if(typeof type !== 'string') success = type,type = 'dir';
+    if (typeof type !== 'string') success = type, type = 'dir';
     var loadT = bt.open({
       type: 1,
       area: "650px",
-      title: type === 'all' ? '选择目录和文件' :type === 'file'?lan.bt.file:lan.bt.dir,
+      title: type === 'all' ? '选择目录和文件' : type === 'file' ? lan.bt.file : lan.bt.dir,
       closeBtn: 2,
       shift: 5,
-      content: "<div class='changepath'><div class='path-top'><button type='button' id='btn_back' class='btn btn-default btn-sm'><span class='glyphicon glyphicon-share-alt'></span> " + lan['public']['return']+"</button><div class='place' id='PathPlace'>" + lan.bt.path + "：<span></span></div></div><div class='path-con'><div class='path-con-left'><dl><dt id='changecomlist' >" + lan.bt.comp + "</dt></dl></div><div class='path-con-right'><ul class='default' id='computerDefautl'></ul><div class='file-list divtable'><table class='table table-hover' style='border:0 none'><thead><tr class='file-list-head'><th width='5%'></th><th width='38%'>" + lan.bt.filename + "</th><th width='24%'>" + lan.bt.etime + "</th><th width='8%'>" + lan.bt.access + "</th><th width='15%'>" + lan.bt.own + "</th></tr></thead><tbody id='tbody' class='list-list'></tbody></table></div></div></div></div><div class='getfile-btn' style='margin-top:0'><button type='button' class='btn btn-default btn-sm pull-left' onclick='CreateFolder()'>" + lan.bt.adddir + "</button><button type='button' class='btn btn-danger btn-sm mr5' onclick=\"layer.close(getCookie('ChangePath'))\">" + lan['public'].close + "</button> <button type='button' id='bt_select' class='btn btn-success btn-sm' >" + lan.bt.path_ok + "</button></div>",
+      content: "<div class='changepath'><div class='path-top'><button type='button' id='btn_back' class='btn btn-default btn-sm'><span class='glyphicon glyphicon-share-alt'></span> " + lan['public']['return'] + "</button><div class='place' id='PathPlace'>" + lan.bt.path + "：<span></span></div></div><div class='path-con'><div class='path-con-left'><dl><dt id='changecomlist' >" + lan.bt.comp + "</dt></dl></div><div class='path-con-right'><ul class='default' id='computerDefautl'></ul><div class='file-list divtable'><table class='table table-hover' style='border:0 none'><thead><tr class='file-list-head'><th width='5%'></th><th width='38%'>" + lan.bt.filename + "</th><th width='24%'>" + lan.bt.etime + "</th><th width='8%'>" + lan.bt.access + "</th><th width='15%'>" + lan.bt.own + "</th></tr></thead><tbody id='tbody' class='list-list'></tbody></table></div></div></div></div><div class='getfile-btn' style='margin-top:0'><button type='button' class='btn btn-default btn-sm pull-left' onclick='CreateFolder()'>" + lan.bt.adddir + "</button><button type='button' class='btn btn-danger btn-sm mr5' onclick=\"layer.close(getCookie('ChangePath'))\">" + lan['public'].close + "</button> <button type='button' id='bt_select' class='btn btn-success btn-sm' >" + lan.bt.path_ok + "</button></div>",
       success: function () {
-        $('#btn_back').on('click',function () {
+        $('#btn_back').on('click', function () {
           var path = $("#PathPlace").find("span").text();
           path = bt.rtrim(bt.format_path(path), '/');
           var back_path = bt.get_file_path(path);
           _this.get_file_list(back_path, type);
         })
         //选择
-        $('#bt_select').on('click',function () {
+        $('#bt_select').on('click', function () {
           var path = bt.format_path($("#PathPlace").find("span").text());
-          if(type === 'file' && !$('#tbody tr.active').length){
-            layer.msg('请选择文件后继续操作！',{icon:0})
+          if (type === 'file' && !$('#tbody tr.active').length) {
+            layer.msg('请选择文件后继续操作！', { icon: 0 })
             return false;
           }
           if ($('#tbody tr').hasClass('active')) {
@@ -376,14 +376,14 @@ var bt = {
           path = bt.rtrim(path, '/');
           $("#" + id).val(path).change();
           $("." + id).val(path).change();
-          if(typeof success === "function") success(path)
+          if (typeof success === "function") success(path)
           loadT.close();
         })
-        var element = $("#" + id),paths = element.val(),defaultPath = $('#defaultPath');
+        var element = $("#" + id), paths = element.val(), defaultPath = $('#defaultPath');
         if (defaultPath.length > 0 && element.parents('.tab-body').length > 0) {
           paths = defaultPath.text();
         }
-        if(default_path){
+        if (default_path) {
           paths = default_path;
         }
         _this.get_file_list(paths, type);
@@ -515,7 +515,7 @@ var bt = {
       t = d + " + " + c,
       e = d + c;
 
-    function submit(index, layero) {
+    function submit (index, layero) {
       var a = $("#vcodeResult"),
         val = a.val().replace(/ /g, "");
       if (val == undefined || val == "") {
@@ -675,7 +675,7 @@ var bt = {
       scrollbar: true,
       shade: 0.3,
       icon: 3,
-      cancel: (config.cancel ? config.cancel : function () {})
+      cancel: (config.cancel ? config.cancel : function () { })
     };
     layer.confirm(config.msg, btnObj, function (index) {
       if (callback) callback(index);
@@ -746,7 +746,7 @@ var bt = {
   render_table: function (obj, arr, append) { //渲染表单表格
     var html = '';
     for (var key in arr) {
-      if(arr.hasOwnProperty(key)){
+      if (arr.hasOwnProperty(key)) {
         html += '<tr><th>' + key + '</th>'
         if (typeof arr[key] != 'object') {
           html += '<td>' + arr[key] + '</td>';
@@ -1022,7 +1022,7 @@ var bt = {
               var _obj = $(this).data('item');
               var load = $(this).data('load');
               var _callback = $(this).data('callback');
-              var parent = $(this).parents('.bt-form').length === 0?$(this).parents('.bt-w-con'):$(this).parents('.bt-form');
+              var parent = $(this).parents('.bt-form').length === 0 ? $(this).parents('.bt-w-con') : $(this).parents('.bt-form');
 
               if (_obj.callback) {
 
@@ -1169,22 +1169,22 @@ var bt = {
   // ACE编辑配置文件
   aceEditor: function (obj) {
     var aEditor = {
-        ACE: ace.edit(obj.el, {
-          theme: "ace/theme/chrome", //主题
-          mode: "ace/mode/" + (obj.mode || 'nginx'), // 语言类型
-          wrap: true,
-          showInvisibles: false,
-          showPrintMargin: false,
-          showFoldWidgets: false,
-          useSoftTabs: true,
-          tabSize: 2,
-          showPrintMargin: false,
-          readOnly: false
-        }),
-        path: obj.path,
-        content: '',
-        saveCallback: obj.saveCallback
-      },
+      ACE: ace.edit(obj.el, {
+        theme: "ace/theme/chrome", //主题
+        mode: "ace/mode/" + (obj.mode || 'nginx'), // 语言类型
+        wrap: true,
+        showInvisibles: false,
+        showPrintMargin: false,
+        showFoldWidgets: false,
+        useSoftTabs: true,
+        tabSize: 2,
+        showPrintMargin: false,
+        readOnly: false
+      }),
+      path: obj.path,
+      content: '',
+      saveCallback: obj.saveCallback
+    },
       _this = this;
     $('#' + obj.el).css('fontSize', '12px');
     aEditor.ACE.commands.addCommand({
@@ -1266,30 +1266,28 @@ var bt = {
    * @param {Numbre} dateTimeStamp 需要转换的时间戳
    * @return {String} 简化后的时间格式
    */
-  get_simplify_time:function(dateTimeStamp){
-    if(dateTimeStamp === 0) return '刚刚';
-    if(dateTimeStamp.toString().length === 10)  dateTimeStamp = dateTimeStamp * 1000
-    var minute = 1000 * 60,hour = minute * 60,day = hour * 24, month = day * 30,now = new Date().getTime(),diffValue = now - dateTimeStamp;
-    if(diffValue < 0) return  '刚刚';
-    var monthC = diffValue / month,weekC = diffValue / (7 * day),dayC = diffValue / day,hourC = diffValue / hour,minC = diffValue / minute, result = '';
-    if(monthC >= 1) {
+  get_simplify_time: function (dateTimeStamp) {
+    if (dateTimeStamp === 0) return '刚刚';
+    if (dateTimeStamp.toString().length === 10) dateTimeStamp = dateTimeStamp * 1000
+    var minute = 1000 * 60, hour = minute * 60, day = hour * 24, month = day * 30, now = new Date().getTime(), diffValue = now - dateTimeStamp;
+    if (diffValue < 0) return '刚刚';
+    var monthC = diffValue / month, weekC = diffValue / (7 * day), dayC = diffValue / day, hourC = diffValue / hour, minC = diffValue / minute, result = '';
+    if (monthC >= 1) {
       result = "" + parseInt(monthC) + "月前";
-    } else if(weekC >= 1) {
+    } else if (weekC >= 1) {
       result = "" + parseInt(weekC) + "周前";
-    } else if(dayC >= 1) {
+    } else if (dayC >= 1) {
       result = "" + parseInt(dayC) + "天前";
-    } else if(hourC >= 1) {
+    } else if (hourC >= 1) {
       result = "" + parseInt(hourC) + "小时前";
-    } else if(minC >= 1) {
+    } else if (minC >= 1) {
       result = "" + parseInt(minC) + "分钟前";
-    } else{
+    } else {
       result = "刚刚";
     }
     return result;
   }
 };
-
-
 
 bt.pub = {
   get_data: function (data, callback, hide) {
@@ -1443,49 +1441,7 @@ bt.pub = {
     })
   },
   bind_btname: function (callback) {
-    layer.open({
-      type: 1,
-      title: '绑定宝塔官网账号',
-      area: ['420px', '380px'],
-      closeBtn: 2,
-      shadeClose: false,
-      content: '<div class="libLogin pd20" ><div class="bt-form text-center"><div class="line mb15"><h3 class="c2 f16 text-center mtb20">绑定宝塔官网账号</h3></div><div class="line"><input class="bt-input-text" name="username2" type="text" placeholder="手机" id="p1"></div><div class="line"><input autocomplete="new-password" class="bt-input-text" type="password" name="password2"  placeholder="密码" id="p2"></div><div class="line"><input class="login-button" value="登录" type="button" ></div><p class="text-right"><a class="btlink" href="https://www.bt.cn/register.html" target="_blank">未有账号，去注册</a></p></div><div style="text-align: center;position: relative;top: 25px;color: #888;">提示:一个账号支持绑定多台宝塔面板</div></div>',
-      success: function () {
-        $('.login-button').click(function () {
-          var p1 = $("#p1").val(),
-            p2 = $("#p2").val(),
-            loadT = bt.load(lan.config.token_get);
-          bt.send('GetToken', 'ssl/GetToken', {
-            username: p1,
-            password: p2
-          }, function (rdata) {
-            loadT.close();
-            bt.msg(rdata);
-            if (rdata.status) {
-              var username = p1 = p1.substring(0, 3) + '****' + p1.substring(7, 11);
-              bt.set_cookie('bt_user_info', JSON.stringify({
-                data: {
-                  username: username
-                }
-              }));
-              $('.bind-user').text(username);
-              if (callback) {
-                layer.closeAll();
-                callback(rdata)
-              } else {
-                window.location.reload();
-              }
-              $("input[name='btusername']").val(p1);
-            }
-          });
-        });
-        $('.libLogin input[type=password]').keyup(function (e) {
-          if (e.keyCode == 13) {
-            $('.login-button').click();
-          }
-        });
-      }
-    });
+    new BindAccount().bindUserView(1);
   },
   unbind_bt: function () {
     var name = $("input[name='btusername']").val();
@@ -1675,7 +1631,7 @@ bt.index = {
         j(n, "select_", "data_")
       });
 
-      function j(p, r, q) {
+      function j (p, r, q) {
         var n = "4.4";
         switch (p) {
           case "5.2":
@@ -1734,7 +1690,7 @@ bt.index = {
         }
       });
 
-      function a(n) {
+      function a (n) {
         memSize = bt.get_cookie("memSize");
         max = 64;
         msg = "64M";
@@ -1801,7 +1757,7 @@ bt.index = {
 
         install_plugin(q);
 
-        function install_plugin(q) {
+        function install_plugin (q) {
           if (!q[0]) return;
           p = q[0].split(" ")[0].toLowerCase();
           x = q[0].split(" ")[1];
@@ -2125,29 +2081,29 @@ bt.recycle_bin = {
 
       setTimeout(function () {
         var menus = [{
-            title: lan.files.recycle_bin_type1,
-            click: 'bt.recycle_bin.open_recycle_bin(1)'
-          },
-          {
-            title: lan.files.recycle_bin_type2,
-            click: 'bt.recycle_bin.open_recycle_bin(2)'
-          },
-          {
-            title: lan.files.recycle_bin_type3,
-            click: 'bt.recycle_bin.open_recycle_bin(3)'
-          },
-          {
-            title: lan.files.recycle_bin_type4,
-            click: 'bt.recycle_bin.open_recycle_bin(4)'
-          },
-          {
-            title: lan.files.recycle_bin_type5,
-            click: 'bt.recycle_bin.open_recycle_bin(5)'
-          },
-          {
-            title: lan.files.recycle_bin_type6,
-            click: 'bt.recycle_bin.open_recycle_bin(6)'
-          }
+          title: lan.files.recycle_bin_type1,
+          click: 'bt.recycle_bin.open_recycle_bin(1)'
+        },
+        {
+          title: lan.files.recycle_bin_type2,
+          click: 'bt.recycle_bin.open_recycle_bin(2)'
+        },
+        {
+          title: lan.files.recycle_bin_type3,
+          click: 'bt.recycle_bin.open_recycle_bin(3)'
+        },
+        {
+          title: lan.files.recycle_bin_type4,
+          click: 'bt.recycle_bin.open_recycle_bin(4)'
+        },
+        {
+          title: lan.files.recycle_bin_type5,
+          click: 'bt.recycle_bin.open_recycle_bin(5)'
+        },
+        {
+          title: lan.files.recycle_bin_type6,
+          click: 'bt.recycle_bin.open_recycle_bin(6)'
+        }
         ];
         var m_html = '';
         for (var i = 0; i < menus.length; i++) {
@@ -2158,37 +2114,37 @@ bt.recycle_bin = {
         var _tab = bt.render({
           table: '#tab_recycle_bin',
           columns: [{
-              field: 'name',
-              title: lan.files.recycle_bin_th1
-            },
-            {
-              field: 'dname',
-              title: lan.files.recycle_bin_th2
-            },
-            {
-              field: 'size',
-              title: lan.files.recycle_bin_th3,
-              templet: function (item) {
-                return bt.format_size(item.size)
-              }
-            },
-            {
-              field: 'time',
-              title: lan.files.recycle_bin_th4,
-              templet: function (item) {
-                return bt.format_data(item.time);
-              }
-            },
-            {
-              field: 'opt',
-              title: lan.files.recycle_bin_th5,
-              align: 'right',
-              templet: function (item) {
-                var opt = '<a class="btlink" href="javascript:;" onclick="bt.recycle_bin.re_recycle_bin(\'' + item.rname + '\',' + type + ')">恢复</a> | ';
-                opt += '<a class="btlink" href="javascript:;" onclick="bt.recycle_bin.del_recycle_bin(\'' + item.rname + '\',' + type + ',\''+item.name+'\')">永久删除</a>';
-                return opt;
-              }
-            },
+            field: 'name',
+            title: lan.files.recycle_bin_th1
+          },
+          {
+            field: 'dname',
+            title: lan.files.recycle_bin_th2
+          },
+          {
+            field: 'size',
+            title: lan.files.recycle_bin_th3,
+            templet: function (item) {
+              return bt.format_size(item.size)
+            }
+          },
+          {
+            field: 'time',
+            title: lan.files.recycle_bin_th4,
+            templet: function (item) {
+              return bt.format_data(item.time);
+            }
+          },
+          {
+            field: 'opt',
+            title: lan.files.recycle_bin_th5,
+            align: 'right',
+            templet: function (item) {
+              var opt = '<a class="btlink" href="javascript:;" onclick="bt.recycle_bin.re_recycle_bin(\'' + item.rname + '\',' + type + ')">恢复</a> | ';
+              opt += '<a class="btlink" href="javascript:;" onclick="bt.recycle_bin.del_recycle_bin(\'' + item.rname + '\',' + type + ',\'' + item.name + '\')">永久删除</a>';
+              return opt;
+            }
+          },
           ],
           data: data
         });
@@ -2204,7 +2160,7 @@ bt.recycle_bin = {
   },
   del_recycle_bin: function (path, type, name) {
     var _this = this;
-    bt.files.del_recycle_bin({path:path,name:name}, function (rdata) {
+    bt.files.del_recycle_bin({ path: path, name: name }, function (rdata) {
       if (rdata.status) _this.open_recycle_bin(type);
       bt.msg(rdata);
     })
@@ -2231,7 +2187,7 @@ bt.files = {
 
     }
   },
-  get_files: function (Path, searchV, callback,sort) {
+  get_files: function (Path, searchV, callback, sort) {
     var searchtype = Path;
     if (isNaN(Path)) {
       var p = '1';
@@ -2244,7 +2200,7 @@ bt.files = {
       search = "&search=" + searchV;
     }
     sort_str = ''
-    if(sort) sort_str = '&sort=' + sort + "&reverse=True";
+    if (sort) sort_str = '&sort=' + sort + "&reverse=True";
     var showRow = bt.get_cookie('showRow');
     if (!showRow) showRow = '500';
     var totalSize = 0;
@@ -2276,7 +2232,7 @@ bt.files = {
     });
   },
   del_recycle_bin: function (obj, callback) {
-    bt.prompt_confirm(lan.files.recycle_bin_del_title, '您确定要删除文件['+ obj.name +']吗，该操作将<span style="color:red;">永久删除该文件</span>，是否继续操作？', function () {
+    bt.prompt_confirm(lan.files.recycle_bin_del_title, '您确定要删除文件[' + obj.name + ']吗，该操作将<span style="color:red;">永久删除该文件</span>，是否继续操作？', function () {
       var loadT = bt.load(lan.files.recycle_bin_del_the);
       bt.send('Re_Recycle_bin', 'files/Del_Recycle_bin', 'path=' + obj.path, function (rdata) {
         loadT.close();
@@ -2760,35 +2716,35 @@ bt.files = {
     var displayZip = bt.check_zip(type);
     var options = {
       items: [{
-          text: lan.files.file_menu_copy,
-          onclick: function () {
-            _this.copy_file(path)
-          }
-        },
-        {
-          text: lan.files.file_menu_mv,
-          onclick: function () {
-            _this.cut_file(path)
-          }
-        },
-        {
-          text: lan.files.file_menu_rename,
-          onclick: function () {
-            _this.rename(path, name)
-          }
-        },
-        {
-          text: lan.files.file_menu_auth,
-          onclick: function () {
-            _this.set_chmod(0, path)
-          }
-        },
-        {
-          text: lan.files.file_menu_zip,
-          onclick: function () {
-            _this.zip(path)
-          }
+        text: lan.files.file_menu_copy,
+        onclick: function () {
+          _this.copy_file(path)
         }
+      },
+      {
+        text: lan.files.file_menu_mv,
+        onclick: function () {
+          _this.cut_file(path)
+        }
+      },
+      {
+        text: lan.files.file_menu_rename,
+        onclick: function () {
+          _this.rename(path, name)
+        }
+      },
+      {
+        text: lan.files.file_menu_auth,
+        onclick: function () {
+          _this.set_chmod(0, path)
+        }
+      },
+      {
+        text: lan.files.file_menu_zip,
+        onclick: function () {
+          _this.zip(path)
+        }
+      }
 
       ]
     };
@@ -4178,13 +4134,15 @@ bt.soft = {
     }
     if (config.ps !== undefined) config.ps = config.ps.replace(/#1/g, '<').replace(/#2/g, '>').replace(/#3/g, '"').replace(/#4/g, '\'')
     var that = this;
+    var user_info = JSON.parse(bt_user_info);
+    var username = user_info.data.username;
     bt.open({
       type: 1,
       title: false,
       skin: 'libPay-view',
       area: ['1000px', '650px'],
       shadeClose: false,
-      content: '<div class="libPay-content-box '+(config.source?'sourceTips':'')+'">\
+      content: '<div class="libPay-content-box ' + (config.source ? 'sourceTips' : '') + '">\
                 <div class="libPay-menu ' + (config.plugin ? 'is_plugin' : '') + '">\
                     ' + (config.plugin ? '<div class="libPay-menu-type lib_plugin"><p>' + config.name + '</p><p>' + config.name + '</p></div>' : '') + '\
                     <div class="libPay-menu-type lib_pro" >\
@@ -4233,13 +4191,21 @@ bt.soft = {
                                         <span class="wx-pay-ico mr5 wechat"></span>\
                                     </div>\
                                     <div class="libPaycode-foo-txt" >\
+                                        <div class="userinfo">\
+                                            <div class="info_label">当前账号：</div>\
+                                            <div class="info_value">' + username + '</div>\
+                                            <a class="btlink" onclick="bt.pub.bind_btname()" href="javascript:;">切换账号</a>\
+                                        </div>\
                                         <p> 订单总价:</p> <span class="libPayTotal">---</span> /<lable class="libPayCycle">--年</lable>\
                                         <div class= "libPaycode-pro-cylce">低至--元/天 </div>\
                                     </div>\
                                 </div >\
                             </div>\
                         </div>\
-                        <div class="libPay-footer-tips"><p>温馨提醒：所有不在堡塔付款的宝塔产品100%是骗人的，请勿上当。<a class="btlink" href="https://www.bt.cn/bbs/thread-22665-1-1.html" target="_blank">查看详情</a></p><p>支付异常请联系客服QQ：<a class="btlink" href="https://wpa1.qq.com/OUMbED4a?_type=wpa&qidian=true" target="_blank">3007255432</a></p></div>\
+                        <ul class="libPay-footer-tips">\
+                            <li>所有不在堡塔付款的宝塔产品100%是骗人的，请勿上当。<a class="btlink" href="https://www.bt.cn/bbs/thread-22665-1-1.html" target="_blank">查看详情</a></p>\
+                            <li>如果购买后未立即到账，请耐心等待5分钟后重新登录面板，如遇到支付异常请联系客服QQ：<a class="btlink" href="https://wpa1.qq.com/OUMbED4a?_type=wpa&qidian=true" target="_blank">3007255432</a></p>\
+                        </ul>\
                     </div>\
                     <div class="libPay-layer-item">\
                         <p class="voucher-tit">产品类型</p>\
@@ -4306,7 +4272,7 @@ bt.soft = {
           //100000000表示获取所有抵扣券
           bt.soft.pro.get_voucher(100000000, function (rdata) {
             var tab_list = $(".libPay-menu .libPay-menu-type"),
-                item = arry[rdata.length > 0 ? (tab_list.length - 1) : 0],is_coupon = false;
+              item = arry[rdata.length > 0 ? (tab_list.length - 1) : 0], is_coupon = false;
             $(".libVoucher-loading").hide()
             tab_list.last().data({
               type: 'ver',
@@ -4318,10 +4284,10 @@ bt.soft = {
                 break;
               }
             }
-            if(!is_coupon){
-              if(config.limit === 'ltd') tab_list.eq(1).click()
-              if(config.limit === 'pro' || config.plugin) tab_list.eq(0).click()
-            }else{
+            if (!is_coupon) {
+              if (config.limit === 'ltd') tab_list.eq(1).click()
+              if (config.limit === 'pro' || config.plugin) tab_list.eq(0).click()
+            } else {
               that.get_product_change(tab_list.length - 1, 'ver')
             }
           });
@@ -4338,7 +4304,7 @@ bt.soft = {
     var that = this,
       _pro_end = bt.get_cookie('pro_end'),
       _ltd_end = bt.get_cookie('ltd_end')
-    
+
     clearInterval(bt.soft.pub.wxpayTimeId);
     $('.libPay-layer-item').eq(btype === 'ver' ? 1 : 0).addClass('aShow').siblings().removeClass('aShow');
     var _obj = $('.libPay-menu .libPay-menu-type').eq(idx)
@@ -4427,7 +4393,7 @@ bt.soft = {
               }
               var _pro_end = bt.get_cookie('pro_end'),
                 _ltd_end = bt.get_cookie('ltd_end')
-          
+
               bt.soft.pro.create_order_voucher(s_data.product_id, s_data.code, function (rdata) {
                 layer.closeAll();
                 bt.set_cookie('force', 1);
@@ -4463,21 +4429,24 @@ bt.soft = {
   create_pay_code: function (idx) {
     var _obj = $('.pay-cycle-btns').eq(idx).addClass('active').siblings().removeClass('active');
     var that = this,
-        _product = $('.libPay-menu-type.active').data(),
-        _cycle = $(".pay-cycle-btns.active").data('data'),
-        _source = 0,
-        _locahostURL = window.location.pathname;
-    switch(_locahostURL){
-        case '/':
-            _source = 21
-            break;
-        case '/control':
-            _source = 22
-            break;
-        case '/soft':
-            _source = 24;
-            if($('.libPay-content-box').hasClass('sourceTips')) _source = 23;
-            break;
+      _product = $('.libPay-menu-type.active').data(),
+      _cycle = $(".pay-cycle-btns.active").data('data'),
+      _source = 0,
+      _locahostURL = window.location.pathname;
+    switch (_locahostURL) {
+      case '/':
+        _source = 21
+        break;
+      case '/control':
+        _source = 22
+        break;
+      case '/soft':
+        _source = 24;
+        if ($('.libPay-content-box').hasClass('sourceTips')) _source = 23;
+        break;
+      case '/btwaf/index':
+        _source = 25
+        break;
     };
 
     $(".wx-pay-ico").hide()
@@ -4491,23 +4460,23 @@ bt.soft = {
     that.pro.create_order({
       pid: _product.pid,
       cycle: _cycle.cycle,
-      source:_source
+      source: _source
     }, function (rdata) {
       var start = that.pay_loading.get('start')
       var end = that.pay_loading.set('end')
       if (end < start) return
-      
+
       $(".libPay-loading").hide()
-        var active_idx = $('.pay-cycle-btns.active').index()
-        if (idx != active_idx) {
-            that.create_pay_code(active_idx)
-            return
-        }
+      var active_idx = $('.pay-cycle-btns.active').index()
+      if (idx != active_idx) {
+        that.create_pay_code(active_idx)
+        return
+      }
       if (rdata.status === false) {
-        
+
         bt.set_cookie('force', 1);
         if (soft) soft.flush_cache();
-        layer.msg(rdata.msg, { icon: 2 });     
+        layer.msg(rdata.msg, { icon: 2 });
         return;
       }
       $(".wx-pay-ico").show()
@@ -4515,7 +4484,14 @@ bt.soft = {
       $(".libPay-content-box .pay-type-btn").unbind('click').click(function () {
         that.show_pay_code($(this).index())
       })
-      that.show_pay_code($(".pay-type-btn.active").index())
+      // that.show_pay_code($(".pay-type-btn.active").index())
+      if (rdata.pay_type === 1) {
+        $('.libPay-content-box .pay-type-btn').eq(0).click();
+      } else if (rdata.pay_type === 2) {
+        $('.libPay-content-box .pay-type-btn').eq(1).click();
+      } else {
+        that.show_pay_code($(".pay-type-btn.active").index());
+      }
       that.product_pay_monitor({
         pid: rdata.data.pid,
         wxoid: rdata.data.wxoid,
@@ -4538,7 +4514,7 @@ bt.soft = {
         $('#PayQcode').empty().qrcode(_data.msg);
         $(".payqcode-box span").removeClass('alipay').addClass('wechat')
         break;
-        //支付宝支付
+      //支付宝支付
       case 1:
         $('#PayQcode').empty().qrcode(_data.ali_msg);
         $(".payqcode-box span").removeClass('wechat').addClass('alipay')
@@ -4588,7 +4564,7 @@ bt.soft = {
   product_pay_monitor: function (config) {
     var that = this;
 
-    function callback(rdata) {
+    function callback (rdata) {
       if (rdata.status) {
         clearInterval(bt.soft.pub.wxpayTimeId);
         layer.closeAll();
@@ -4617,7 +4593,7 @@ bt.soft = {
     }
     clearInterval(bt.soft.pub.wxpayTimeId);
 
-    function intervalFun() {
+    function intervalFun () {
       if (config.wxoid) {
         that.pro.get_wx_order_status(config.wxoid, callback);
       } else {
@@ -4634,7 +4610,7 @@ bt.soft = {
     var param = {
       name: '宝塔面板企业版',
       pid: 100000032,
-      source:5,
+      source: 5,
       limit: 'ltd'
     };
     if (is_alone || false) $.extend(param, {
@@ -4648,7 +4624,7 @@ bt.soft = {
     bt.soft.product_pay_view({
       name: '',
       pid: '',
-      source:5,
+      source: 5,
       limit: 'pro'
     });
   },
@@ -5055,19 +5031,19 @@ bt.soft = {
   install: function (name, that) {
     var _this = this;
     if (bt.soft.is_install) {
-      layer.msg('正在安装其他软件，请稍后操作！', {icon: 0});
+      layer.msg('正在安装其他软件，请稍后操作！', { icon: 0 });
       return false;
     }
     _this.get_soft_find(name, function (rdata) {
-      var arrs = ['apache', 'nginx', 'mysql'],html = '';
+      var arrs = ['apache', 'nginx', 'mysql'], html = '';
       if ($.inArray(name, arrs) >= 0 || name.indexOf('php-') >= 0) {
         var select = '';
-        if(rdata.versions.length > 1){
-          $.each(rdata.versions,function(index,item){
-            select += '<option data-index="'+ index +'">'+ name + item.m_version +'</option>';
+        if (rdata.versions.length > 1) {
+          $.each(rdata.versions, function (index, item) {
+            select += '<option data-index="' + index + '">' + name + item.m_version + '</option>';
           })
           html += '<select id="SelectVersion" class="bt-input-text ml10" style="margin-left:10px">' + select + '</select>'
-        }else{
+        } else {
           html += '<span id="SelectVersion">' + rdata.name + rdata.versions[0].m_version + '</span>'
         }
         var loadOpen = bt.open({
@@ -5109,17 +5085,17 @@ bt.soft = {
               }
             });
           },
-          yes: function (indexs,layers) {
+          yes: function (indexs, layers) {
             loadOpen.close();
             layer.close(indexs)
             rdata['install_type'] = parseInt($('[name="installType"]:checked').val())
             if (rdata.versions.length > 1) {
               var index = $("#SelectVersion option:selected").attr('data-index')
               rdata['install_version'] = rdata.versions[index]
-              _this.install_soft(rdata,that);
+              _this.install_soft(rdata, that);
             } else {
               rdata['install_version'] = rdata.versions[0]
-              _this.install_soft(rdata,that);
+              _this.install_soft(rdata, that);
             }
           }
         });
@@ -5128,7 +5104,7 @@ bt.soft = {
         for (var i = 0; i < rdata.versions.length; i++) {
           var item = rdata.versions[i];
           var beta = item.beta === 1 ? ' Beta' : ' Stable';
-          SelectVersion += '<option  data-index="'+ i +'">' + item.m_version + '.' + item.version + beta + '</option>';
+          SelectVersion += '<option  data-index="' + i + '">' + item.m_version + '.' + item.version + beta + '</option>';
         }
         bt.open({
           type: 1,
@@ -5142,12 +5118,12 @@ bt.soft = {
             var index = $("#SelectVersion option:selected").attr('data-index')
             layer.close(indexs)
             rdata['install_version'] = rdata.versions[index]
-            _this.install_soft(rdata,that);
+            _this.install_soft(rdata, that);
           }
         })
       } else {
         rdata['install_version'] = rdata.versions[0]
-        _this.install_soft(rdata,that);
+        _this.install_soft(rdata, that);
       }
     })
   },
@@ -5215,7 +5191,7 @@ bt.soft = {
   get_soft_download_speed: function (param, callback) {
     bt.send('get_download_speed', 'plugin/get_download_speed', {
       plugin_name: param.plugin_name
-    }, function(res) {
+    }, function (res) {
       if (callback) callback(res);
     })
   },
@@ -5226,12 +5202,12 @@ bt.soft = {
       filename: "/tmp/panelShell.pl"
     }, function (rdata) {
       var msg_lines = rdata.msg.trim().split("\n")
-      if(msg_lines[msg_lines.length -1] === 'Successify'){
+      if (msg_lines[msg_lines.length - 1] === 'Successify') {
         layer.closeAll();
-        if(soft){
+        if (soft) {
           soft.get_list();
           setTimeout(function () {
-            bt.msg({status:true,msg:'安装成功！'});
+            bt.msg({ status: true, msg: '安装成功！' });
           }, 500)
         }
         return false;
@@ -5302,32 +5278,32 @@ bt.soft = {
    * @param type
    * @param that
    */
-  install_soft: function (item,that) { //安装单版本
-    
-    if(!item.install_version){
-      if(typeof(that) == 'string'){
+  install_soft: function (item, that) { //安装单版本
+
+    if (!item.install_version) {
+      if (typeof (that) == 'string') {
         item.install_version = {
           m_version: that,
           version: ''
         }
-      }else{
-        layer.msg('没有找到要安装的版本号!',{icon:2,time:5000});
+      } else {
+        layer.msg('没有找到要安装的版本号!', { icon: 2, time: 5000 });
         return
       }
     }
     var that = this,
-        install_info = item.install_version,
-        version = install_info.m_version,
-        min_version = install_info.version;
+      install_info = item.install_version,
+      version = install_info.m_version,
+      min_version = install_info.version;
     layer.closeAll()
     item.title = bt.replace_all(item.title, '-' + version, '');
-    if(item.type === 10 || (item.type === 5 && item.versions.length < 2)){
-      layer.confirm(item.type !== 5 ? lan.soft.lib_insatll_confirm.replace('{1}', item.title) : lan.get('install_confirm', [item.title, version]),{closeBtn:2}, function(){
+    if (item.type === 10 || (item.type === 5 && item.versions.length < 2)) {
+      layer.confirm(item.type !== 5 ? lan.soft.lib_insatll_confirm.replace('{1}', item.title) : lan.get('install_confirm', [item.title, version]), { closeBtn: 2 }, function () {
         that.get_install_plugin(item);
       })
-    }else{
+    } else {
       that.get_install_plugin(item);
-      if(item.type !== 5){
+      if (item.type !== 5) {
         bt.soft.monitor_soft_download_speed({
           plugin_name: item.name,
           name: item.title,
@@ -5343,7 +5319,7 @@ bt.soft = {
    * @param
    */
 
-  get_install_plugin:function(item){
+  get_install_plugin: function (item) {
     var plugin_info = bt.load('正在获取插件安装信息，请稍后<img src="/static/img/ing.gif" />');
     bt.send('install_plugin', 'plugin/install_plugin', {
       sName: item.name,
@@ -5364,11 +5340,11 @@ bt.soft = {
         if (rdata > 0 && item.type === 5) messagebox();
       });
       if (typeof soft != "undefined") soft.get_list();
-      if(!rdata.status) layer.closeAll()
-      if(rdata.msg.indexOf('依赖以下软件,请先安装') > -1){
-        layer.msg(rdata.msg.replace(/.*\[([A-z]*)].*/,function(){
-          return '依赖以下软件,请先安装['+ arguments[1] +']，<a href="javascript:;" onclick="bt.soft.install(\''+ arguments[1] +'\',this)" class="btlink">点击安装软件</a>'
-        }),{icon:0,time:0,closeBtn:2,shade:.3})
+      if (!rdata.status) layer.closeAll()
+      if (rdata.msg.indexOf('依赖以下软件,请先安装') > -1) {
+        layer.msg(rdata.msg.replace(/.*\[([A-z]*)].*/, function () {
+          return '依赖以下软件,请先安装[' + arguments[1] + ']，<a href="javascript:;" onclick="bt.soft.install(\'' + arguments[1] + '\',this)" class="btlink">点击安装软件</a>'
+        }), { icon: 0, time: 0, closeBtn: 2, shade: .3 })
         return false;
       }
       bt.msg(rdata);
@@ -5384,7 +5360,7 @@ bt.soft = {
   show_plugin_info: function (data, is_beta) {
     layer.closeAll();
     var loadT = null,
-        title = ''
+      title = ''
     if (typeof is_beta === "undefined") is_beta = false
 
     switch (data.install_opt) {
@@ -5413,10 +5389,10 @@ bt.soft = {
       } else {
         info = rdata[0]
       }
-      if(data.install_opt === 'i'){
-        $.each(rdata,function(index,item){
+      if (data.install_opt === 'i') {
+        $.each(rdata, function (index, item) {
           var version = item.m_version + '.' + item.version;
-          if(version === data.versions)  info = item
+          if (version === data.versions) info = item
         })
       }
       console.log(info)
@@ -5469,15 +5445,15 @@ bt.soft = {
                             <table class="table table-hover ' + (JSON.stringify(data.dependnet) === '{}' ? 'hide' : '') + '">\
                                 <thead><tr><th>依赖软件</th><th>安装状态</th><th style="text-align: right;">操作</th></tr></thead>\
                                 <tbody>' +
-            (function () {
-              var html = '';
-              for (var dataKey in data.dependnet) {
-                var item = data.dependnet[dataKey]
-                html += '<tr><td>' + dataKey + '</td><td>' + (item ? '<span style="color:#20a532"><span class="glyphicon glyphicon-ok mr5"></span><span>已安装</span></span>' : '<span style="color:#FF9C00"><span class="glyphicon glyphicon-remove mr5"></span><span>未安装</span></span>') + '</td><td style="text-align: right;">' + (item ? '--' : '<a href="javascript:;" class="btlink">立即安装</a>') + '</td><tr>'
-              }
-              return html;
-            }()) +
-            '</tbody></table>' + (false ? ('<div style="margin: 15px 5px">' + '<div class="checkbox-btn"><i class="cust—checkbox cursor-pointer checkbox-btn-safety mr10"></i><span style="font-weight: 500;color:red">当前操作存在安全风险，请点击进行二次确认后，继续操作？</span></div></div>') : '') + '</div>\
+          (function () {
+            var html = '';
+            for (var dataKey in data.dependnet) {
+              var item = data.dependnet[dataKey]
+              html += '<tr><td>' + dataKey + '</td><td>' + (item ? '<span style="color:#20a532"><span class="glyphicon glyphicon-ok mr5"></span><span>已安装</span></span>' : '<span style="color:#FF9C00"><span class="glyphicon glyphicon-remove mr5"></span><span>未安装</span></span>') + '</td><td style="text-align: right;">' + (item ? '--' : '<a href="javascript:;" class="btlink">立即安装</a>') + '</td><tr>'
+            }
+            return html;
+          }()) +
+          '</tbody></table>' + (false ? ('<div style="margin: 15px 5px">' + '<div class="checkbox-btn"><i class="cust—checkbox cursor-pointer checkbox-btn-safety mr10"></i><span style="font-weight: 500;color:red">当前操作存在安全风险，请点击进行二次确认后，继续操作？</span></div></div>') : '') + '</div>\
                     <ul class="help-info-text c7">\
                         <li >插件来源【' + data.author + '】，网址 <a href="' + data.home + '" target="_blank" class="btlink" style="text-decoration: revert;">' + data.home + '</a></li>\
                         <li>如果已存在此插件，文件将被替换！</li>\
@@ -5502,22 +5478,22 @@ bt.soft = {
                 shadeClose: false,
                 zIndex: 1989101,
                 content: '<div class="bt-form-conter pd20">' +
-                    '<div class="item_box" style="height:315px;overflow: auto;">' +
-                    (function () {
-                      var html = '';
-                      for (var i = 0; i < res.length; i++) {
-                        var item = res[i];
-                        html += '<div class="item_list">' +
-                            '<span class="index_acive"></span>' +
-                            '<div class="index_date">' + bt.format_data(item.update_time) + '</div>' +
-                            '<div class="index_title">' + data.title + item.m_version + '.' + item.version + '- ' + (item.beta ? '测试版' : '正式版') + '</div>' +
-                            '<div class="index_conter">' + (item.update_msg.replace(/\n/g, '</br>') || '无') + '</div>' +
-                            '</div>'
-                      }
-                      return html
-                    }()) +
-                    '</div>' +
-                    '</div>'
+                  '<div class="item_box" style="height:315px;overflow: auto;">' +
+                  (function () {
+                    var html = '';
+                    for (var i = 0; i < res.length; i++) {
+                      var item = res[i];
+                      html += '<div class="item_list">' +
+                        '<span class="index_acive"></span>' +
+                        '<div class="index_date">' + bt.format_data(item.update_time) + '</div>' +
+                        '<div class="index_title">' + data.title + item.m_version + '.' + item.version + '- ' + (item.beta ? '测试版' : '正式版') + '</div>' +
+                        '<div class="index_conter">' + (item.update_msg.replace(/\n/g, '</br>') || '无') + '</div>' +
+                        '</div>'
+                    }
+                    return html
+                  }()) +
+                  '</div>' +
+                  '</div>'
               })
             })
           })
@@ -5531,14 +5507,14 @@ bt.soft = {
           }
           bt.soft.input_package(data.name, data.tmp_path, data);
         },
-        btn2:function(){
+        btn2: function () {
           bt.send('close_install', 'plugin/close_install', {
             plugin_name: data.name
           }, function (rdata) {
             console.log(rdata)
           })
         },
-        cancel:function(){
+        cancel: function () {
           bt.send('close_install', 'plugin/close_install', {
             plugin_name: data.name
           }, function (rdata) {
@@ -5556,13 +5532,13 @@ bt.soft = {
         shift: 5,
         btn: ['确认', '取消'],
         content: '<div class="bt-form webDelete pd20">' +
-            '<p style="font-size:13px;word-break: break-all;margin-bottom: 15px;padding:5px;"><span style="color:red;font-size:14px;">' + data.force_message + '</span></p>' +
-            '<div class="vcode" style="padding: 4px 50px;height: auto;line-height: 40px;">计算结果：<span class="text"></span>=<input type="number" id="vsResult" value="" style="height: 30px;padding-left: 10px;width: 60px;border: 1px solid #888;border-radius: 2px;outline: none;"></div>' +
-            '</div>',
+          '<p style="font-size:13px;word-break: break-all;margin-bottom: 15px;padding:5px;"><span style="color:red;font-size:14px;">' + data.force_message + '</span></p>' +
+          '<div class="vcode" style="padding: 4px 50px;height: auto;line-height: 40px;">计算结果：<span class="text"></span>=<input type="number" id="vsResult" value="" style="height: 30px;padding-left: 10px;width: 60px;border: 1px solid #888;border-radius: 2px;outline: none;"></div>' +
+          '</div>',
         success: function (layers, indexs) {
           var num1 = bt.get_random_num(1, 9),
-              num2 = bt.get_random_num(1, 9),
-              vsResult = $('#vsResult');
+            num2 = bt.get_random_num(1, 9),
+            vsResult = $('#vsResult');
           if (num1 === num2) num2 = num1 + 1
           $('.vcode .text').text(num1 + ' + ' + num2);
           vsResult.data('value', num1 + num2);
@@ -5581,7 +5557,7 @@ bt.soft = {
         },
         yes: function (indexs) {
           var $vcode = $('#vsResult'),
-              data = $vcode.data()
+            data = $vcode.data()
           if (parseInt($vcode.val()) !== data.value) {
             layer.msg('计算结果错误，请重新计算！', {
               icon: 2
@@ -5712,12 +5688,12 @@ bt.soft = {
       }, function (rdata) {
         layer.closeAll()
         if (rdata.status) {
-          if(typeof soft !== "undefined"){
+          if (typeof soft !== "undefined") {
             soft.get_list();
-          }else{
-            setTimeout(function(){
+          } else {
+            setTimeout(function () {
               window.refresh()
-            },2000)
+            }, 2000)
           }
         }
         setTimeout(function () {
@@ -5773,7 +5749,7 @@ bt.soft = {
     if (name === 'mysql') msg = "<ul style='color:red;'><li>更新数据库有风险,建议在更新前,先备份您的数据库.</li><li>如果您的是云服务器,强烈建议您在更新前做一个快照.</li><li>建议您在服务器负载闲时进行软件更新.</li></ul>";
     if (update_msg) msg += '<div style="    margin-top: 10px;"><span style="font-size: 14px;font-weight: 900;">本次更新说明: </span><hr style="margin-top: 5px; margin-bottom: 5px;" /><pre>' + update_msg.replace(/(_bt_)/g, "\n") + '</pre><hr style="margin-top: -5px; margin-bottom: -5px;" /></div>';
     bt.show_confirm('更新[' + title + ']', '更新过程可能会导致服务中断,您真的现在就将[' + title + ']更新到[' + version + '.' + min_version + ']吗?', function () {
-      
+
       bt.soft.show_speed_window({
         title: '正在更新到[' + title + '-' + version + '.' + min_version + '],请稍候...',
         status: true,
@@ -5781,7 +5757,7 @@ bt.soft = {
           type: parseInt(type)
         }
       }, function () {
-        bt.set_cookie('softType',type)
+        bt.set_cookie('softType', type)
         _this.update_soft_request(name, title, version, min_version)
       })
     }, msg);
@@ -5932,7 +5908,7 @@ bt.soft = {
           offset: '20%',
           closeBtn: 2,
           area: '700px',
-          title: '<img style="width: 24px;margin-right: 5px;margin-left: -10px;margin-top: -3px;" src="/static/img/soft_ico/ico-'+name+'.png" />' + title,
+          title: '<img style="width: 24px;margin-right: 5px;margin-left: -10px;margin-top: -3px;" src="/static/img/soft_ico/ico-' + name + '.png" />' + title,
           content: rhtml.replace('"javascript/text"', '"text/javascript"'),
           success: function () {
             if (rhtml.indexOf('CodeMirror') != -1) {
@@ -5963,7 +5939,7 @@ bt.soft = {
       data: data,
       path: fileName,
       encoding: encoding
-    }, function(rdata) {
+    }, function (rdata) {
       loadT.close();
       bt.msg(rdata);
     })
@@ -6129,7 +6105,7 @@ bt.database = {
       var loadT = bt.load();
       bt.send('DelBackup', 'database/DelBackup', {
         id: id
-      }, function(rdata) {
+      }, function (rdata) {
         loadT.close();
         if (rdata.status) {
           if (database) {
@@ -7111,17 +7087,17 @@ bt.form = {
         type: 'select',
         width: '100px',
         items: [{
-            title: '本地服务器',
-            value: '127.0.0.1'
-          },
-          {
-            title: '所有人(不安全)',
-            value: '%'
-          },
-          {
-            title: '指定IP',
-            value: 'ip'
-          }
+          title: '本地服务器',
+          value: '127.0.0.1'
+        },
+        {
+          title: '所有人(不安全)',
+          value: '%'
+        },
+        {
+          title: '指定IP',
+          value: 'ip'
+        }
         ],
         callback: function (obj) {
           var subid = obj.attr('name') + '_subid';
@@ -7168,7 +7144,7 @@ bt.data = {
             }
           }
         }]
-      }, ],
+      },],
       btns: [
         bt.form.btn.close(),
         bt.form.btn.submit('提交', function (rdata, load) {
@@ -7185,63 +7161,63 @@ bt.data = {
       title: lan.database.add_title,
       area: '530px',
       list: [{
-          title: '数据库名',
-          items: [{
-              name: 'name',
-              placeholder: '新的数据库名称',
-              type: 'text',
-              width: '65%',
-              callback: function (obj) {
-                $('input[name="db_user"]').val(obj.val());
-              }
-            },
-            {
-              name: 'codeing',
-              type: 'select',
-              width: '27%',
-              items: [{
-                  title: 'utf-8',
-                  value: 'utf8'
-                },
-                {
-                  title: 'utf8mb4',
-                  value: 'utf8mb4'
-                },
-                {
-                  title: 'gbk',
-                  value: 'gbk'
-                },
-                {
-                  title: 'big5',
-                  value: 'big5'
-                },
-              ]
-            }
-          ]
+        title: '数据库名',
+        items: [{
+          name: 'name',
+          placeholder: '新的数据库名称',
+          type: 'text',
+          width: '65%',
+          callback: function (obj) {
+            $('input[name="db_user"]').val(obj.val());
+          }
         },
         {
-          title: '用户名',
-          name: 'db_user',
-          placeholder: '数据库用户',
-          width: '65%'
-        },
-        bt.form.item.password,
-        {
-          title: '类型',
-          name: 'dtype',
+          name: 'codeing',
           type: 'select',
-          disabled: (bt.contains(bt.get_cookie('serverType'), 'nginx') || bt.contains(bt.get_cookie('serverType'), 'apache') ? true : false),
+          width: '27%',
           items: [{
-              title: 'MySQL',
-              value: 'MySQL'
-            },
-            {
-              title: 'SQLServer',
-              value: 'SQLServer'
-            }
+            title: 'utf-8',
+            value: 'utf8'
+          },
+          {
+            title: 'utf8mb4',
+            value: 'utf8mb4'
+          },
+          {
+            title: 'gbk',
+            value: 'gbk'
+          },
+          {
+            title: 'big5',
+            value: 'big5'
+          },
           ]
+        }
+        ]
+      },
+      {
+        title: '用户名',
+        name: 'db_user',
+        placeholder: '数据库用户',
+        width: '65%'
+      },
+      bt.form.item.password,
+      {
+        title: '类型',
+        name: 'dtype',
+        type: 'select',
+        disabled: (bt.contains(bt.get_cookie('serverType'), 'nginx') || bt.contains(bt.get_cookie('serverType'), 'apache') ? true : false),
+        items: [{
+          title: 'MySQL',
+          value: 'MySQL'
         },
-        bt.form.item.data_access
+        {
+          title: 'SQLServer',
+          value: 'SQLServer'
+        }
+        ]
+      },
+      bt.form.item.data_access
       ],
       btns: [
         bt.form.btn.close(),
@@ -7262,11 +7238,11 @@ bt.data = {
       title: '设置数据库权限',
       area: '480px',
       list: [{
-          title: 'name',
-          name: 'name',
-          hide: true
-        },
-        bt.form.item.data_access
+        title: 'name',
+        name: 'name',
+        hide: true
+      },
+      bt.form.item.data_access
       ],
       btns: [
         bt.form.btn.close(),
@@ -7291,47 +7267,47 @@ bt.data = {
       title: '修改数据库密码',
       area: '530px',
       list: [{
-          title: 'id',
-          name: 'id',
-          hide: true
-        },
-        {
-          title: '用户名',
-          name: 'name',
-          disabled: true
-        },
-        {
-          title: '密码',
-          name: 'password',
-          items: [{
-            type: 'text',
-            event: {
-              css: 'glyphicon-repeat',
-              callback: function (obj) {
-                bt.refresh_pwd(16, obj);
-              }
+        title: 'id',
+        name: 'id',
+        hide: true
+      },
+      {
+        title: '用户名',
+        name: 'name',
+        disabled: true
+      },
+      {
+        title: '密码',
+        name: 'password',
+        items: [{
+          type: 'text',
+          event: {
+            css: 'glyphicon-repeat',
+            callback: function (obj) {
+              bt.refresh_pwd(16, obj);
             }
-          }]
-        },
+          }
+        }]
+      },
       ],
       btns: [{
-          title: '关闭',
-          name: 'close'
-        },
-        {
-          title: '提交',
-          name: 'submit',
-          css: 'btn-success',
-          callback: function (rdata, load, callback) {
-            var loading = bt.load();
-            bt.send('ResDatabasePassword', 'database/ResDatabasePassword', rdata, function (rRet) {
-              loading.close();
-              bt.msg(rRet);
-              if (rRet.status) load.close();
-              if (callback) callback(rRet);
-            })
-          }
+        title: '关闭',
+        name: 'close'
+      },
+      {
+        title: '提交',
+        name: 'submit',
+        css: 'btn-success',
+        callback: function (rdata, load, callback) {
+          var loading = bt.load();
+          bt.send('ResDatabasePassword', 'database/ResDatabasePassword', rdata, function (rRet) {
+            loading.close();
+            bt.msg(rRet);
+            if (rRet.status) load.close();
+            if (callback) callback(rRet);
+          })
         }
+      }
       ]
     }
   },
@@ -7340,278 +7316,278 @@ bt.data = {
       title: lan.site.site_add,
       area: '640px',
       list: [{
-          title: '域名',
-          name: 'webname',
-          items: [{
-            type: 'textarea',
-            width: '458px',
+        title: '域名',
+        name: 'webname',
+        items: [{
+          type: 'textarea',
+          width: '458px',
+          callback: function (obj) {
+            var array = obj.val().split("\n");
+            var ress = array[0].split(":")[0];
+            var res = bt.strim(ress.replace(new RegExp(/([-.])/g), '_'));
+            var ftp_user = res;
+            var data_user = res;
+            if (!isNaN(res.substr(0, 1))) {
+              ftp_user = 'ftp_' + ftp_user;
+              data_user = 'sql_' + data_user;
+            }
+            if (data_user.length > 16) data_user = data_user.substr(0, 16)
+            obj.data('ftp', ftp_user);
+            obj.data('database', data_user);
+
+            $('.ftp_username').val(ftp_user);
+            $('.datauser').val(data_user);
+
+            var _form = obj.parents('div.bt-form');
+            var _path_obj = _form.find('input[name="path"]');
+            var path = _path_obj.val();
+            var defaultPath = $('#defaultPath').text();
+            var dPath = bt.rtrim(defaultPath, '/');
+            if (path.substr(0, dPath.length) == dPath) _path_obj.val(dPath + '/' + ress);
+            _form.find('input[name="ps"]').val(ress);
+          },
+          placeholder: '每行填写一个域名，默认为80端口<br>泛解析添加方法 *.domain.com<br>如另加端口格式为 www.domain.com:88'
+        }]
+      },
+      {
+        title: '备注',
+        name: 'ps',
+        placeholder: '网站备注'
+      },
+      {
+        title: '根目录',
+        name: 'path',
+        items: [{
+          type: 'text',
+          width: '330px',
+          event: {
+            css: 'glyphicon-folder-open',
             callback: function (obj) {
-              var array = obj.val().split("\n");
-              var ress = array[0].split(":")[0];
-              var res = bt.strim(ress.replace(new RegExp(/([-.])/g), '_'));
-              var ftp_user = res;
-              var data_user = res;
-              if (!isNaN(res.substr(0, 1))) {
-                ftp_user = 'ftp_' + ftp_user;
-                data_user = 'sql_' + data_user;
-              }
-              if (data_user.length > 16) data_user = data_user.substr(0, 16)
-              obj.data('ftp', ftp_user);
-              obj.data('database', data_user);
-
-              $('.ftp_username').val(ftp_user);
-              $('.datauser').val(data_user);
-
-              var _form = obj.parents('div.bt-form');
-              var _path_obj = _form.find('input[name="path"]');
-              var path = _path_obj.val();
-              var defaultPath = $('#defaultPath').text();
-              var dPath = bt.rtrim(defaultPath, '/');
-              if (path.substr(0, dPath.length) == dPath) _path_obj.val(dPath + '/' + ress);
-              _form.find('input[name="ps"]').val(ress);
-            },
-            placeholder: '每行填写一个域名，默认为80端口<br>泛解析添加方法 *.domain.com<br>如另加端口格式为 www.domain.com:88'
-          }]
-        },
-        {
-          title: '备注',
-          name: 'ps',
-          placeholder: '网站备注'
-        },
-        {
-          title: '根目录',
-          name: 'path',
-          items: [{
-            type: 'text',
-            width: '330px',
-            event: {
-              css: 'glyphicon-folder-open',
-              callback: function (obj) {
-                bt.select_path(obj);
-              }
+              bt.select_path(obj);
             }
-          }]
-        },
-        {
-          title: 'FTP',
-          items: [{
-            name: 'ftp',
-            type: 'select',
-            items: [{
-                value: 'false',
-                title: '不创建'
-              },
-              {
-                value: 'true',
-                title: '创建'
-              }
-            ],
-            callback: function (obj) {
-              var subid = obj.attr('name') + '_subid';
-              $('#' + subid).remove();
-              if (obj.val() == 'true') {
-                var _bs = obj.parents('div.bt-form').attr('data-id');
-                var ftp_user = $('textarea[name="webname"]').data('ftp');
-                var item = {
-                  title: 'FTP设置',
-                  items: [{
-                      name: 'ftp_username',
-                      title: '用户名',
-                      width: '173px',
-                      value: ftp_user
-                    },
-                    {
-                      name: 'ftp_password',
-                      title: '密码',
-                      width: '173px',
-                      value: bt.get_random(16)
-                    }
-                  ],
-                  ps: '创建站点的同时，为站点创建一个对应FTP帐户，并且FTP目录指向站点所在目录。'
-                }
-                var _tr = bt.render_form_line(item)
-
-                obj.parents('div.line').append('<div class="line" id=' + subid + '>' + _tr.html + '</div>');
-              }
-            }
-          }]
-        },
-        {
-          title: '数据库',
-          items: [{
-              name: 'sql',
-              type: 'select',
-              items: [{
-                  value: 'false',
-                  title: '不创建'
-                },
-                {
-                  value: 'MySQL',
-                  title: 'MySQL'
-                },
-                {
-                  value: 'SQLServer',
-                  title: 'SQLServer'
-                }
-              ],
-              callback: function (obj) {
-                var subid = obj.attr('name') + '_subid';
-                $('#' + subid).remove();
-                if (obj.val() != 'false') {
-                  if (bt.os == 'Linux' && obj.val() == 'SQLServer') {
-                    obj.val('false');
-                    bt.msg({
-                      msg: 'Linux暂不支持SQLServer!',
-                      icon: 2
-                    });
-                    return;
-                  }
-                  var _bs = obj.parents('div.bt-form').attr('data-id');
-                  var data_user = $('textarea[name="webname"]').data('database');
-                  var item = {
-                    title: '数据库设置',
-                    items: [{
-                        name: 'datauser',
-                        title: '用户名',
-                        width: '173px',
-                        value: data_user
-                      },
-                      {
-                        name: 'datapassword',
-                        title: '密码',
-                        width: '173px',
-                        value: bt.get_random(16)
-                      }
-                    ],
-                    ps: '创建站点的同时，为站点创建一个对应的数据库帐户，方便不同站点使用不同数据库。'
-                  }
-                  var _tr = bt.render_form_line(item)
-                  obj.parents('div.line').append('<div class="line" id=' + subid + '>' + _tr.html + '</div>');
-                }
-              }
-            },
-            {
-              name: 'codeing',
-              type: 'select',
-              items: [{
-                  value: 'utf8',
-                  title: 'utf-8'
-                },
-                {
-                  value: 'utf8mb4',
-                  title: 'utf8mb4'
-                },
-                {
-                  value: 'gbk',
-                  title: 'gbk'
-                },
-                {
-                  value: 'big5',
-                  title: 'big5'
-                }
-              ]
-            }
-          ]
-        },
-        {
-          title: '程序类型',
+          }
+        }]
+      },
+      {
+        title: 'FTP',
+        items: [{
+          name: 'ftp',
           type: 'select',
-          name: 'type',
-          disabled: (bt.contains(bt.get_cookie('serverType'), 'IIS') ? false : true),
           items: [{
-              value: 'PHP',
-              title: 'PHP'
-            },
-            {
-              value: 'Asp',
-              title: 'Asp'
-            },
-            {
-              value: 'Aspx',
-              title: 'Aspx'
-            },
+            value: 'false',
+            title: '不创建'
+          },
+          {
+            value: 'true',
+            title: '创建'
+          }
           ],
           callback: function (obj) {
-            if (obj.val() == 'Asp' || obj.val() == 'Aspx') {
-              obj.parents('div.line').next().hide();
-            } else {
-              obj.parents('div.line').next().show();
+            var subid = obj.attr('name') + '_subid';
+            $('#' + subid).remove();
+            if (obj.val() == 'true') {
+              var _bs = obj.parents('div.bt-form').attr('data-id');
+              var ftp_user = $('textarea[name="webname"]').data('ftp');
+              var item = {
+                title: 'FTP设置',
+                items: [{
+                  name: 'ftp_username',
+                  title: '用户名',
+                  width: '173px',
+                  value: ftp_user
+                },
+                {
+                  name: 'ftp_password',
+                  title: '密码',
+                  width: '173px',
+                  value: bt.get_random(16)
+                }
+                ],
+                ps: '创建站点的同时，为站点创建一个对应FTP帐户，并且FTP目录指向站点所在目录。'
+              }
+              var _tr = bt.render_form_line(item)
+
+              obj.parents('div.line').append('<div class="line" id=' + subid + '>' + _tr.html + '</div>');
             }
           }
-        },
-        {
-          title: 'PHP版本',
-          name: 'version',
+        }]
+      },
+      {
+        title: '数据库',
+        items: [{
+          name: 'sql',
           type: 'select',
           items: [{
-            value: '00',
-            title: '纯静态'
-          }]
-        }, {
-          title: '网站分类',
-          name: 'type_id',
-          type: 'select',
-          items: [
-
-          ]
-        }
-      ],
-      btns: [{
-          title: '关闭',
-          name: 'close'
+            value: 'false',
+            title: '不创建'
+          },
+          {
+            value: 'MySQL',
+            title: 'MySQL'
+          },
+          {
+            value: 'SQLServer',
+            title: 'SQLServer'
+          }
+          ],
+          callback: function (obj) {
+            var subid = obj.attr('name') + '_subid';
+            $('#' + subid).remove();
+            if (obj.val() != 'false') {
+              if (bt.os == 'Linux' && obj.val() == 'SQLServer') {
+                obj.val('false');
+                bt.msg({
+                  msg: 'Linux暂不支持SQLServer!',
+                  icon: 2
+                });
+                return;
+              }
+              var _bs = obj.parents('div.bt-form').attr('data-id');
+              var data_user = $('textarea[name="webname"]').data('database');
+              var item = {
+                title: '数据库设置',
+                items: [{
+                  name: 'datauser',
+                  title: '用户名',
+                  width: '173px',
+                  value: data_user
+                },
+                {
+                  name: 'datapassword',
+                  title: '密码',
+                  width: '173px',
+                  value: bt.get_random(16)
+                }
+                ],
+                ps: '创建站点的同时，为站点创建一个对应的数据库帐户，方便不同站点使用不同数据库。'
+              }
+              var _tr = bt.render_form_line(item)
+              obj.parents('div.line').append('<div class="line" id=' + subid + '>' + _tr.html + '</div>');
+            }
+          }
         },
         {
-          title: '提交',
-          name: 'submit',
-          css: 'btn-success',
-          callback: function (rdata, load, callback) {
-            var loading = bt.load();
-            if (!rdata.webname) {
-              bt.msg({
-                msg: '主域名格式不正确',
-                icon: 2
-              });
-              return;
-            }
-            var webname = bt.replace_all(rdata.webname, 'http:\\/\\/', '');
-            webname = bt.replace_all(webname, 'https:\\/\\/', '');
-            var arrs = webname.split('\n');
-            var list = [];
-            var domain_name, port;
-            for (var i = 0; i < arrs.length; i++) {
-              if (arrs[i]) {
-                var temp = arrs[i].split(':');
-                var item = {};
-                item['name'] = temp[0]
-                item['port'] = temp.length > 1 ? temp[1] : 80;
-                if (!bt.check_domain(item.name)) {
-                  bt.msg({
-                    msg: lan.site.domain_err_txt,
-                    icon: 2
-                  })
-                  return;
-                }
-                if (i > 0) {
-                  list.push(arrs[i]);
-                } else {
-                  domain_name = item.name;
-                  port = item.port;
-                }
-              }
-            }
-            var domain = {};
-            domain['domain'] = domain_name;
-            domain['domainlist'] = list;
-            domain['count'] = list.length;
-            rdata.webname = JSON.stringify(domain);
-            rdata.port = port;
-            bt.send('AddSite', 'site/AddSite', rdata, function (rRet) {
-              loading.close();
-              if (rRet.siteStatus) load.close();
-              if (callback) callback(rRet);
-            })
+          name: 'codeing',
+          type: 'select',
+          items: [{
+            value: 'utf8',
+            title: 'utf-8'
+          },
+          {
+            value: 'utf8mb4',
+            title: 'utf8mb4'
+          },
+          {
+            value: 'gbk',
+            title: 'gbk'
+          },
+          {
+            value: 'big5',
+            title: 'big5'
+          }
+          ]
+        }
+        ]
+      },
+      {
+        title: '程序类型',
+        type: 'select',
+        name: 'type',
+        disabled: (bt.contains(bt.get_cookie('serverType'), 'IIS') ? false : true),
+        items: [{
+          value: 'PHP',
+          title: 'PHP'
+        },
+        {
+          value: 'Asp',
+          title: 'Asp'
+        },
+        {
+          value: 'Aspx',
+          title: 'Aspx'
+        },
+        ],
+        callback: function (obj) {
+          if (obj.val() == 'Asp' || obj.val() == 'Aspx') {
+            obj.parents('div.line').next().hide();
+          } else {
+            obj.parents('div.line').next().show();
           }
         }
+      },
+      {
+        title: 'PHP版本',
+        name: 'version',
+        type: 'select',
+        items: [{
+          value: '00',
+          title: '纯静态'
+        }]
+      }, {
+        title: '网站分类',
+        name: 'type_id',
+        type: 'select',
+        items: [
+
+        ]
+      }
+      ],
+      btns: [{
+        title: '关闭',
+        name: 'close'
+      },
+      {
+        title: '提交',
+        name: 'submit',
+        css: 'btn-success',
+        callback: function (rdata, load, callback) {
+          var loading = bt.load();
+          if (!rdata.webname) {
+            bt.msg({
+              msg: '主域名格式不正确',
+              icon: 2
+            });
+            return;
+          }
+          var webname = bt.replace_all(rdata.webname, 'http:\\/\\/', '');
+          webname = bt.replace_all(webname, 'https:\\/\\/', '');
+          var arrs = webname.split('\n');
+          var list = [];
+          var domain_name, port;
+          for (var i = 0; i < arrs.length; i++) {
+            if (arrs[i]) {
+              var temp = arrs[i].split(':');
+              var item = {};
+              item['name'] = temp[0]
+              item['port'] = temp.length > 1 ? temp[1] : 80;
+              if (!bt.check_domain(item.name)) {
+                bt.msg({
+                  msg: lan.site.domain_err_txt,
+                  icon: 2
+                })
+                return;
+              }
+              if (i > 0) {
+                list.push(arrs[i]);
+              } else {
+                domain_name = item.name;
+                port = item.port;
+              }
+            }
+          }
+          var domain = {};
+          domain['domain'] = domain_name;
+          domain['domainlist'] = list;
+          domain['count'] = list.length;
+          rdata.webname = JSON.stringify(domain);
+          rdata.port = port;
+          bt.send('AddSite', 'site/AddSite', rdata, function (rRet) {
+            loading.close();
+            if (rRet.siteStatus) load.close();
+            if (callback) callback(rRet);
+          })
+        }
+      }
       ]
     }
   },
@@ -7620,64 +7596,64 @@ bt.data = {
       title: lan.ftp.add_title,
       area: '530px',
       list: [{
-          title: '用户名',
-          name: 'ftp_username',
-          callback: function (obj) {
-            var defaultPath = $('#defaultPath').text();
-            var wootPath = bt.rtrim(defaultPath, '/');
-            if (bt.contains($('input[name="path"]').val(), wootPath)) {
-              $('input[name="path"]').val(wootPath + '/' + obj.val())
+        title: '用户名',
+        name: 'ftp_username',
+        callback: function (obj) {
+          var defaultPath = $('#defaultPath').text();
+          var wootPath = bt.rtrim(defaultPath, '/');
+          if (bt.contains($('input[name="path"]').val(), wootPath)) {
+            $('input[name="path"]').val(wootPath + '/' + obj.val())
+          }
+        }
+      },
+      {
+        title: '密码',
+        name: 'ftp_password',
+        items: [{
+          type: 'text',
+          width: '330px',
+          value: bt.get_random(16),
+          event: {
+            css: 'glyphicon-repeat',
+            callback: function (obj) {
+              bt.refresh_pwd(16, obj);
             }
           }
-        },
-        {
-          title: '密码',
-          name: 'ftp_password',
-          items: [{
-            type: 'text',
-            width: '330px',
-            value: bt.get_random(16),
-            event: {
-              css: 'glyphicon-repeat',
-              callback: function (obj) {
-                bt.refresh_pwd(16, obj);
-              }
+        }]
+      },
+      {
+        title: '根目录',
+        name: 'path',
+        items: [{
+          type: 'text',
+          event: {
+            css: 'glyphicon-folder-open',
+            callback: function (obj) {
+              bt.select_path(obj);
             }
-          }]
-        },
-        {
-          title: '根目录',
-          name: 'path',
-          items: [{
-            type: 'text',
-            event: {
-              css: 'glyphicon-folder-open',
-              callback: function (obj) {
-                bt.select_path(obj);
-              }
-            }
-          }]
-        }
+          }
+        }]
+      }
       ],
       btns: [{
-          title: '关闭',
-          name: 'close'
-        },
-        {
-          title: '提交',
-          name: 'submit',
-          css: 'btn-success',
-          callback: function (rdata, load, callback) {
-            var loading = bt.load();
-            if (!rdata.ps) rdata.ps = rdata.ftp_username;
-            bt.send('AddUser', 'ftp/AddUser', rdata, function (rRet) {
-              loading.close();
-              if (rRet.status) load.close();
-              if (callback) callback(rRet);
-              bt.msg(rRet);
-            })
-          }
+        title: '关闭',
+        name: 'close'
+      },
+      {
+        title: '提交',
+        name: 'submit',
+        css: 'btn-success',
+        callback: function (rdata, load, callback) {
+          var loading = bt.load();
+          if (!rdata.ps) rdata.ps = rdata.ftp_username;
+          bt.send('AddUser', 'ftp/AddUser', rdata, function (rRet) {
+            loading.close();
+            if (rRet.status) load.close();
+            if (callback) callback(rRet);
+            bt.msg(rRet);
+          })
         }
+      }
       ]
     },
     set_port: {
@@ -7690,75 +7666,75 @@ bt.data = {
         width: '250px'
       }],
       btns: [{
-          title: '关闭',
-          name: 'close'
-        },
-        {
-          title: '提交',
-          name: 'submit',
-          css: 'btn-success',
-          callback: function (rdata, load, callback) {
-            var loading = bt.load();
-            bt.send('setPort', 'ftp/setPort', rdata, function (rRet) {
-              loading.close();
-              if (rRet.status) load.close();
-              if (callback) callback(rRet);
-              bt.msg(rRet);
-            })
-          }
+        title: '关闭',
+        name: 'close'
+      },
+      {
+        title: '提交',
+        name: 'submit',
+        css: 'btn-success',
+        callback: function (rdata, load, callback) {
+          var loading = bt.load();
+          bt.send('setPort', 'ftp/setPort', rdata, function (rRet) {
+            loading.close();
+            if (rRet.status) load.close();
+            if (callback) callback(rRet);
+            bt.msg(rRet);
+          })
         }
+      }
       ]
     },
     set_password: {
       title: lan.ftp.pass_title,
       area: '530px',
       list: [{
-          title: 'id',
-          name: 'id',
-          hide: true
-        },
-        {
-          title: '用户名',
-          name: 'ftp_username',
-          disabled: true
-        },
-        {
-          title: '密码',
-          name: 'new_password',
-          items: [{
-            type: 'text',
-            event: {
-              css: 'glyphicon-repeat',
-              callback: function (obj) {
-                bt.refresh_pwd(16, obj);
-              }
+        title: 'id',
+        name: 'id',
+        hide: true
+      },
+      {
+        title: '用户名',
+        name: 'ftp_username',
+        disabled: true
+      },
+      {
+        title: '密码',
+        name: 'new_password',
+        items: [{
+          type: 'text',
+          event: {
+            css: 'glyphicon-repeat',
+            callback: function (obj) {
+              bt.refresh_pwd(16, obj);
             }
-          }]
-        },
+          }
+        }]
+      },
       ],
       btns: [{
-          title: '关闭',
-          name: 'close'
-        },
-        {
-          title: '提交',
-          name: 'submit',
-          css: 'btn-success',
-          callback: function (rdata, load, callback) {
-            bt.confirm({
-              msg: lan.ftp.pass_confirm,
-              title: lan.ftp.stop_title
-            }, function () {
-              var loading = bt.load();
-              bt.send('SetUserPassword', 'ftp/SetUserPassword', rdata, function (rRet) {
-                loading.close();
-                if (rRet.status) load.close();
-                if (callback) callback(rRet);
-                bt.msg(rRet);
-              })
+        title: '关闭',
+        name: 'close'
+      },
+      {
+        title: '提交',
+        name: 'submit',
+        css: 'btn-success',
+        callback: function (rdata, load, callback) {
+          bt.confirm({
+            msg: lan.ftp.pass_confirm,
+            title: lan.ftp.stop_title
+          }, function () {
+            var loading = bt.load();
+            bt.send('SetUserPassword', 'ftp/SetUserPassword', rdata, function (rRet) {
+              loading.close();
+              if (rRet.status) load.close();
+              if (callback) callback(rRet);
+              bt.msg(rRet);
             })
-          }
+          })
         }
+      }
       ]
     }
   }
@@ -7777,6 +7753,13 @@ var form_group = {
       select_ul = select_group.find('.bt_select_ul'),
       select_val = select_group.find('.select_val'),
       select_icon = select_group.find('.glyphicon');
+      php_data = {
+        '4.0': [ '5.2', '5.3', '5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3', '7.4' ],
+        '4.4': [ '5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3' ],
+        '4.9': [ '5.6', '7.0', '7.1', '7.2', '7.3', '7.4', '8.0' ],
+        '5.0': [ '7.2', '7.3', '7.4', '8.0' ],
+        '5.1': [ '7.2', '7.3', '7.4', '8.0' ]
+      };
     select_el.find('option').each(function (index, el) {
       var active = select_el.val() === $(el).val(),
         _val = $(el).val(),
@@ -7808,7 +7791,8 @@ var form_group = {
       e.stopPropagation();
       e.preventDefault();
     });
-    $(elem).next('.bt_select_group').find('.bt_select_ul li').unbind('click').click(function () {
+    
+    $(elem).next('.bt_select_group').on('click', '.bt_select_ul li', function () {
       var _val = $(this).attr('data-val'),
         _name = $(this).text();
       $(this).addClass('active').siblings().removeClass('active');
@@ -7816,16 +7800,46 @@ var form_group = {
       select_val.text(_name);
       select_el.val(_val);
       $(elem).find('option[value="' + _val + '"]').change();
+      // console.log($(elem).find('option[value="' + _val + '"]').val(), elem.replace('#select_', ''));
       is_show_select_ul(true);
+      // 根据php版本筛选phpMyAdmin
+      var is_php = elem.indexOf('select_PHP') !== -1;
+      if (is_php) {
+        var php_my_admin_data = [];
+        for (var key in php_data) {
+          for (var i = 0; i < php_data[key].length; i++) {
+            if (php_data[key][i] === _val) {
+              php_my_admin_data.push(key);
+              break;
+            }
+          }
+        }
+        var _select_html = '',
+            _ul_html = '',
+            $select_ul;
+        $.each(php_my_admin_data, function (index, item) {
+          _select_html += '<option value="' + item + '">phpMyAdmin ' + item + '</option>';
+          _ul_html += '<li data-val="' + item + '" class="">phpMyAdmin ' + item + '</li>';
+        });
+        if (elem.indexOf('apache') !== -1) {
+          $('#apache_select_phpMyAdmin').html(_select_html);
+          $select_ul = $('#apache_select_phpMyAdmin').next().find('.bt_select_ul');
+        } else {
+          $('#select_phpMyAdmin').html(_select_html);
+          $select_ul = $('#select_phpMyAdmin').next().find('.bt_select_ul');
+        }
+        $select_ul.html(_ul_html);
+        if (_ul_html) $select_ul.find('li').eq(0).click();
+      }
     });
 
-    function is_show_slect_parent(that) {
+    function is_show_slect_parent (that) {
       $(that).removeClass('active fadeInUp animated');
       $(that).prev().find('.glyphicon').removeAttr('style');
       $(that).parent().removeAttr('style');
     }
 
-    function is_show_select_ul(active) {
+    function is_show_select_ul (active) {
       if (active) {
         select_group.removeAttr('style');
         select_icon.css({
@@ -7860,37 +7874,37 @@ var form_group = {
 }
 
 var dynamic = {
-  loadList:[],
-  fileFunList:{},
-  load:false,
-  callback:null,
-  
+  loadList: [],
+  fileFunList: {},
+  load: false,
+  callback: null,
+
   // 初始化执行
-  execution:function(){
+  execution: function () {
     for (var i = 0; i < this.loadList.length; i++) {
       var fileName = this.loadList[i];
-      if(fileName in this.fileFunList) this.fileFunList[fileName]()
+      if (fileName in this.fileFunList) this.fileFunList[fileName]()
     }
   },
-  
+
   /**
    * @description 动态加载js,css文件
    * @param url {string|array} 文件路径或文件数组
    * @param fn {function|undefined} 回调函数
    */
-  require:function (url,fn,config){
-    var urlList = url,total = 0,num = 0,that = this;
-    if(!Array.isArray(url)) urlList = [url];
+  require: function (url, fn, config) {
+    var urlList = url, total = 0, num = 0, that = this;
+    if (!Array.isArray(url)) urlList = [url];
     total = urlList.length;
     this.load = true;
     this.fileFunList = {};
-    function createElement(url){
+    function createElement (url) {
       var element = null;
-      if(url.indexOf('.js') > -1){
+      if (url.indexOf('.js') > -1) {
         element = document.createElement('script')
         element.type = 'text/javascript'
         element.src = bt.url_merge('/vue/' + url)
-      }else if(url.indexOf('.css') > -1){
+      } else if (url.indexOf('.css') > -1) {
         element = document.createElement('link')
         element.rel = 'stylesheet'
         element.href = bt.url_merge('/vue/' + url)
@@ -7898,32 +7912,32 @@ var dynamic = {
       return element
     }
     for (var i = 0; i < urlList.length; i++) {
-      var item = urlList[i],dirArray = item.split('/'),filName = dirArray[dirArray.length -1].split('.')[0]
-      if(this.loadList.indexOf(filName) > -1) break;
+      var item = urlList[i], dirArray = item.split('/'), filName = dirArray[dirArray.length - 1].split('.')[0]
+      if (this.loadList.indexOf(filName) > -1) break;
       this.loadList.push(filName);
-      (function(url){
+      (function (url) {
         var element = createElement(url);
-        if(element.readyState){
-          element.onreadystatechange = function(ev){
-            if( element.readyState === 'loaded' || element.readyState === 'complete' ){
+        if (element.readyState) {
+          element.onreadystatechange = function (ev) {
+            if (element.readyState === 'loaded' || element.readyState === 'complete') {
               element.onreadystatechange = null
-              num ++;
-              if(total === num){
+              num++;
+              if (total === num) {
                 that.execution()
-                if(fn){
+                if (fn) {
                   fn.call(that)
                 }
                 that.load = false;
               }
             }
           };
-        }else{
-          element.onload = function(ev){
+        } else {
+          element.onload = function (ev) {
             that.loadList[filName] = that.fn
-            num ++;
-            if(total === num){
+            num++;
+            if (total === num) {
               that.execution()
-              if(fn){
+              if (fn) {
                 fn.call(that)
               }
               that.load = false;
@@ -7939,8 +7953,8 @@ var dynamic = {
    * @param fileName {string} 文件名称，不要加文件后缀
    * @param callback {function} 回调行数
    */
-  delay:function delay(fileName,callback){
-    if(!this.load){
+  delay: function delay (fileName, callback) {
+    if (!this.load) {
       callback()
       return false
     }

@@ -6,7 +6,7 @@
  * @Autor: chudong
  * @Date: 2021-10-11 15:54:00
  * @LastEditors: chudong
- * @LastEditTime: 2021-11-04 17:11:29
+ * @LastEditTime: 2021-11-04 17:12:51
  */
 function UploadFile() {
   this.init = false; // 是否初始化
@@ -168,6 +168,7 @@ UploadFile.prototype = {
    * @description 文件拖拽悬浮状态
    */
   file_drag_hover: function file_drag_hover(event) {
+    if (event.dataTransfer.items[0].kind == 'string') return false;
     is_show(this.uploadElement, !(event.type === 'dragleave' || event.type === 'drop'));
     event.preventDefault();
     event.stopPropagation();
@@ -177,19 +178,20 @@ UploadFile.prototype = {
   /**
    * @description 上传弹窗
    */
-  upload_layer: function upload_layer(list) {
+  upload_layer: function (list) {
     var _this2 = this;
 
     if (typeof list === 'undefined') list = [];
     if (this.layer) return false;
     var layerMax = null,
-        layerShade = null;
+        layerShade = null,
+        uploadPath = bt.get_cookie('Path');
     this.layer = layer.open({
         type: 1,
         closeBtn: 1,
         maxmin: true,
         area: ['650px', '605px'],
-        title: '上传文件到【' + this.uploadPath + '】--- 支持断点续传',
+        title: '上传文件到【' + uploadPath + '】--- 支持断点续传',
         skin: 'file_dir_uploads',
         content: '<div class="flex pd15" style="flex-direction: column;-webkit-user-select:none;-moz-user-select:none;">\n                  <div class="upload_btn_groud">\n                    <div class="btn-group">\n                      <button type="button" class="btn btn-primary btn-sm upload_file_btn">上传文件</button>\n                      <button type="button" class="btn btn-primary  btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">\n                        <span class="caret"></span><span class="sr-only">Toggle Dropdown</span>\n                      </button>\n                      <ul class="dropdown-menu">\n                        <li><a href="#" data-type="file">上传文件</a></li>\n                        <li><a href="#" data-type="dir">上传目录</a></li>\n                      </ul>\n                    </div>\n                  <div class="pull-right"><button class="btn btn-sm btn-default empty-record">清空列表</button></div>\n                  <div class="file_upload_info hide">\n                    <span>总进度&nbsp;<i class="uploadProgress"></i>，正在上传&nbsp;<i class="uploadNumber"></i>,</span>\n                    <span class="hide">上传失败&nbsp;<i class="uploadError"></i></span>\n                    <span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span>\n                    <span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span>\n                    <i></i>\n                  </div>\n                </div>\n                <div class="upload_file_body ' + (list.length > 0 ? '' : 'active') + '">' + (list.length > 0 ? uploadListhtml : '<span>请将需要上传的文件拖到此处</span>') + '</div>\n              </div>\n              <div class="upload_file_gourp">\n                <button class="btn btn-defalut btn-sm cancelUpload" style="margin-right:15px">取消上传</button>\n                <button class="btn btn-success btn-sm startUpload">开始上传</button>\n              </div>',
         success: function success(layers, indexs) {
@@ -212,19 +214,24 @@ UploadFile.prototype = {
         });
         
         _this2.bind('.empty-record', function (ev) {
-          layer.confirm('是否清空上传列表，是否继续？', {
-            title: '清空列表',
-            icon: 0
-          }, function (indexs) {
-            var Li = _this2.queryElAll('.dropUpLoadFile li'),
-                dropUpLoadFile = _this2.queryEl('.dropUpLoadFile');
-            for (var i = 0; i < Li.length; i++) {
-              dropUpLoadFile.removeChild(Li[i]);
-            }
-            _this2.init_data();
-            _this2.queryEl('.dropUpLoadFileHead').removeAttribute('style');
-            layer.close(indexs);
-          });
+          var $li = _this2.queryElAll('.dropUpLoadFile li');
+          if ($li.length <= 0) {
+            layer.msg('请上传文件！', { icon: 0 });
+          } else {
+            layer.confirm('是否清空上传列表，是否继续？', {
+              title: '清空列表',
+              icon: 0
+            }, function (indexs) {
+              var dropUpLoadFile = _this2.queryEl('.dropUpLoadFile');
+              for (var i = 0; i < $li.length; i++) {
+                dropUpLoadFile.removeChild($li[i]);
+              }
+              _this2.init_data();
+              var $head = _this2.queryEl('.dropUpLoadFileHead');
+              if ($head) $head.removeAttribute('style');
+              layer.close(indexs);
+            });
+          }
         });
         
         function create_upload_input() {
@@ -234,12 +241,11 @@ UploadFile.prototype = {
           uploadFileInput.setAttribute('multiple', 'multiple');
           uploadFileInput.style.display = 'none';
           uploadFileInput.classList.add('upload_file_input');
-          
           uploadBtnGroud.appendChild(uploadFileInput);
           _this2.bind(uploadFileInput, 'change', function (ev) {
             _this2.isUpload = true;
             var files = ev.target.files;
-            console.log(files)
+            // console.log(files)
             for (var i = 0; i < files.length; i++) {
               if (!_this2.file_upload_limit(files[i])) return false;
             }
@@ -295,17 +301,101 @@ UploadFile.prototype = {
     return new Date().getTime();
   },
 
+  /**
+   * @description 上传前检查文件是否存在
+   */
+  upload_file_exists: function (config) {
+    var _this = this;
+    var filename = config.path + config.name;
+    var files = this.uploaded_files;
+    if (!files) {
+      this.uploaded_files = [];
+      files = [];
+    }
+    var data = {
+      filename: filename
+    };
+    // 判断是否上传过该文件名
+    var isUploaded = false;
+    for (var i = 0; i < files.length; i++) {
+      if (files[i] == config.name) {
+        isUploaded = true;
+        break;
+      }
+    }
+    // 上传过就直接跳过
+    if (isUploaded) {
+      config.success();
+      return;
+    }
+    this.uploaded_files.push(config.name);
+    bt.send('upload_file_exists', 'files/upload_file_exists', data, function (res) {
+      if (res.status) {
+        var is_open = _this.is_open_cover_layer;
+        if (is_open === 0) { 
+          bt.open({
+            type: 1,
+            area: '400px',
+            title: '上传文件到【' + config.path.substr(0, config.path.length - 1) + '】',
+            btn: ['确定', '跳过'],
+            content: '\
+              <div class="warning_layer_box">\
+                <div class="warning_layer_head">\
+                  <i class="layui-layer-ico layui-layer-ico3"></i>\
+                  <div class="cont">检测到有同命名文件【' + config.name + '】，是否覆盖？</div>\
+                </div>\
+                <div class="details">\
+                  <div class="left">\
+                    <input type="checkbox" id="all_operation" />\
+                    <label for="all_operation">为之后文件冲突执行此操作</label>\
+                  </div>\
+                </div>\
+              </div>\
+            ',
+            cancel: function () {
+              config.error();
+            },
+            yes: function (index) {
+              var checked = $('#all_operation').is(':checked');
+              if (checked) {
+                _this.is_open_cover_layer = 1;
+              }
+              config.success();
+              layer.close(index);
+            },
+            btn2: function (index) {
+              var checked = $('#all_operation').is(':checked');
+              if (checked) {
+                _this.is_open_cover_layer = 2;
+              }
+              config.error();
+              layer.close(index);
+            }
+          });
+        } else if (is_open === 1) {
+          config.success();
+        } else {
+          config.error();
+        }
+      } else {
+        config.success();
+      }
+    });
+  },
 
   /**
    * @description 上传文件
    */
-  upload_file: function upload_file(fileStart, index) {
+  upload_file: function (fileStart, index) {
     var _this3 = this;
     this.uploadPath = bt.get_cookie('Path');
+    
     // 开始上传
     if (fileStart == undefined && this.uploadList.length == 0) {
       fileStart = 0, index = 0;
+      this.is_open_cover_layer = 0;
       this.uploadStatus = 2;
+      this.uploaded_files = []; // 上传过的文件
       this.uploadTime.startTime = this.get_time_real(); // 设置上传开始时间
       this.queryEl('.upload_file_gourp').classList.add('hide');
     }
@@ -319,112 +409,128 @@ UploadFile.prototype = {
       bt_file.reader_file_list({path:this.uploadPath})
       return false;
     }
-    // 设置切割文件时间段
-    var uploadedSize = this.uploadInfo.uploadedSize;
-    this.uploadInterval = setInterval(function () {
-      if (_this3.uploadCycleSize.length === 4) _this3.uploadCycleSize.splice(0, 1);
-      _this3.uploadCycleSize.push(_this3.uploadInfo.uploadedSize - uploadedSize);
-    }, 1000);
-
-    // 渲染上传时间和上传进度
-    this.uploadInfo.endTime = this.get_time_real();
-    this.reander_timer_speed();
-    this.uploadInfo.startTime = this.get_time_real();
-
-    // 获取上传速度
-    var speed = this.get_update_speed(),
-        // 获取上传速度
-    limitSize = this.uploadLimitSize;
-    // 判断速度是否操作阈值，超过阀值后，采用倍速的方案，最大只能支持4，8MB
-    var maxDouble = Math.floor(speed / this.uploadLimitSize);
-    if (maxDouble) limitSize = (maxDouble > 4 ? 4 : maxDouble) * limitSize;
 
     // 创建文件对象和切割文件
     var item = this.fileList[index],
-        fileEnd = '';
+    fileEnd = '';
     if (item == undefined) return false;
-    fileEnd = Math.min(item.file.size, fileStart + limitSize);
-    this.uploadInfo.fileSize = fileEnd - fileStart;
-
-    // 实时反馈
-    if (fileStart == 0) {
-      this.uploadInfo.startTime = this.get_time_real();
-      item = $.extend(item, {
-        percent: '0%',
-        upload: 2,
-        upload_size: '0B'
-      });
-    }
-    this.set_upload_view(index, item);
-
-    var form = new FormData();
+    
+    // 检测文件是否存在
     var f_path = this.uploadPath + item.path + '/';
-    form.append("f_path",f_path.replace(/\/\//g,'/'));
-    form.append("f_name", item.name);
-    form.append("f_size", item.file.size);
-    form.append("f_start", fileStart);
-    form.append("blob", item.file.slice(fileStart, fileEnd));
-
-    // 发送请求
-    $.ajax({
-      url: '/files?action=upload',
-      type: "POST",
-      data: form,
-      async: true,
-      processData: false,
-      contentType: false,
-      success: function success(rdata) {
-        // 判断是否为数字
-        if (typeof rdata === "number") {
-          _this3.set_upload_view(index, $.extend(item, {
-            percent: (rdata / item.file.size * 100).toFixed(2) + '%',
-            upload: 2,
-            upload_size: bt.format_size(rdata)
-          }));
-
-          // 判断是否为文件结束，已上传文件大小
-          if (fileEnd != rdata) {
-            _this3.uploadInfo.uploadedSize += rdata;
-          } else {
-            _this3.uploadInfo.uploadedSize += parseInt(fileEnd - fileStart);
-          }
-
-          // 继续上传文件
-          _this3.upload_file(rdata, index);
-        } else {
-          // 请求状态，判断文件是否上传成功
-          if (rdata.status) {
-            _this3.uploadInfo.endTime = _this3.get_time_real();
-            _this3.uploadInfo.uploadedSize += parseInt(fileEnd - fileStart);
-            _this3.set_upload_view(index, $.extend(item, {
-              upload: 1,
-              upload_size: item.size
-            }));
-
-            _this3.upload_file(0, ++index);
-          } else {
-            _this3.set_upload_view(index, $.extend(item, {
-              upload: -1,
-              errorMsg: rdata.msg
-            }));
-            _this3.uploadError ++;
-          }
-        }
-        // 实时更新文件上传状态
+    f_path = f_path.replace(/\/\//g,'/');
+    this.upload_file_exists({
+      name: item.name,
+      path: f_path,
+      error: function () {
+        $('.dropUpLoadFile li').eq(index).find('.fileStatus .upload_info').html('文件已存在');
+        _this3.upload_file(0, ++index);
       },
-      error: function(e) {
-        if (_this3.fileList[index].req_error === undefined) _this3.fileList[index].req_error = 1;
-        if (_this3.fileList[index].req_error > 2) {
-          _this3.set_upload_view(index, $.extend(_this3.fileList[index], {
-            upload: -1,
-            errorMsg: e.statusText == 'error' ? '网络中断' : e.statusText
-          }));
-          _this3.uploadError++;
-          _this3.upload_file(fileStart, index += 1);
-          return false;
+      success: function () {
+        // 设置切割文件时间段
+        var uploadedSize = _this3.uploadInfo.uploadedSize;
+        _this3.uploadInterval = setInterval(function () {
+          if (_this3.uploadCycleSize.length === 4) _this3.uploadCycleSize.splice(0, 1);
+          _this3.uploadCycleSize.push(_this3.uploadInfo.uploadedSize - uploadedSize);
+        }, 1000);
+
+        // 渲染上传时间和上传进度
+        _this3.uploadInfo.endTime = _this3.get_time_real();
+        _this3.reander_timer_speed();
+        _this3.uploadInfo.startTime = _this3.get_time_real();
+
+        // 获取上传速度
+        var speed = _this3.get_update_speed(),
+        // 获取上传速度
+        limitSize = _this3.uploadLimitSize;
+        // 判断速度是否操作阈值，超过阀值后，采用倍速的方案，最大只能支持4，8MB
+        var maxDouble = Math.floor(speed / _this3.uploadLimitSize);
+        if (maxDouble) limitSize = (maxDouble > 4 ? 4 : maxDouble) * limitSize;
+
+        // 实时反馈
+        if (fileStart == 0) {
+          _this3.uploadInfo.startTime = _this3.get_time_real();
+          item = $.extend(item, {
+            percent: '0%',
+            upload: 2,
+            upload_size: '0B'
+          });
         }
-        _this3.fileList[index].req_error += 1;
-        _this3.upload_file(fileStart, index);
+        _this3.set_upload_view(index, item);
+
+        fileEnd = Math.min(item.file.size, fileStart + limitSize);
+        _this3.uploadInfo.fileSize = fileEnd - fileStart;
+
+        var form = new FormData();
+        form.append("f_path", f_path);
+        form.append("f_name", item.name);
+        form.append("f_size", item.file.size);
+        form.append("f_start", fileStart);
+        form.append("blob", item.file.slice(fileStart, fileEnd));
+
+        // 发送请求
+        $.ajax({
+          url: '/files?action=upload',
+          type: "POST",
+          data: form,
+          async: true,
+          processData: false,
+          contentType: false,
+          success: function success(rdata) {
+            // 判断是否为数字
+            if (typeof rdata === "number") {
+              _this3.set_upload_view(index, $.extend(item, {
+                percent: (rdata / item.file.size * 100).toFixed(2) + '%',
+                upload: 2,
+                upload_size: bt.format_size(rdata)
+              }));
+
+              // 判断是否为文件结束，已上传文件大小
+              if (fileEnd != rdata) {
+                _this3.uploadInfo.uploadedSize += rdata;
+              } else {
+                _this3.uploadInfo.uploadedSize += parseInt(fileEnd - fileStart);
+              }
+
+              // console.log(rdata, index);
+
+              // 继续上传文件
+              _this3.upload_file(rdata, index);
+            } else {
+              // 请求状态，判断文件是否上传成功
+              if (rdata.status) {
+                _this3.uploadInfo.endTime = _this3.get_time_real();
+                _this3.uploadInfo.uploadedSize += parseInt(fileEnd - fileStart);
+                _this3.set_upload_view(index, $.extend(item, {
+                  upload: 1,
+                  upload_size: item.size
+                }));
+
+                _this3.upload_file(0, ++index);
+              } else {
+                _this3.set_upload_view(index, $.extend(item, {
+                  upload: -1,
+                  errorMsg: rdata.msg
+                }));
+                _this3.uploadError ++;
+              }
+            }
+            // 实时更新文件上传状态
+          },
+          error: function(e) {
+            if (_this3.fileList[index].req_error === undefined) _this3.fileList[index].req_error = 1;
+            if (_this3.fileList[index].req_error > 2) {
+              _this3.set_upload_view(index, $.extend(_this3.fileList[index], {
+                upload: -1,
+                errorMsg: e.statusText == 'error' ? '网络中断' : e.statusText
+              }));
+              _this3.uploadError++;
+              _this3.upload_file(fileStart, index += 1);
+              return false;
+            }
+            _this3.fileList[index].req_error += 1;
+            _this3.upload_file(fileStart, index);
+          }
+        });
       }
     });
   },
@@ -642,7 +748,7 @@ UploadFile.prototype = {
    * @param {Object} e 文件对象
    */
   file_upload_limit: function file_upload_limit(e, path) {
-    console.log(path,e);
+    // console.log(path,e);
     var extName = e.name.split('.');
     path = path || e.webkitRelativePath
     var paths = path.split('/');

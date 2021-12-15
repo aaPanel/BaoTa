@@ -2156,7 +2156,7 @@ def sync_all_address():
         @author hwliang<2020-10-24>
         @return void
     '''
-    php_versions = ['52','53','54','55','56','70','71','72','73','74','75','80','81']
+    php_versions = ['52','53','54','55','56','70','71','72','73','74','75','80','81',"82","81"]
     for phpv in php_versions:
         sync_php_address(phpv)
 
@@ -3907,3 +3907,28 @@ def password_expire_check():
     if time.time() > p_config['expire_time']: return False
     return True
 
+def stop_status_mvore():
+    flag=False
+    try:
+        nginx_path='/www/server/panel/vhost/nginx/btwaf.conf'
+        if os.path.exists(nginx_path):
+            public.ExecShell('mv  %s %s.bak'%(nginx_path,nginx_path))
+            flag=True
+        nginx_path='/www/server/panel/vhost/nginx/free_waf.conf'
+        if os.path.exists(nginx_path):
+            public.ExecShell('mv  %s %s.bak'%(nginx_path,nginx_path))
+            flag=True
+        apache_path='/www/server/panel/vhost/apache/btwaf.conf'
+        if os.path.exists(apache_path):
+            public.ExecShell('chattr -i %s && mv %s %s.bak'%(apache_path,apache_path,apache_path))
+            flag=True
+        if flag:
+            serviceReload()
+    except:
+        pass
+    
+def is_error_path():
+    if os.path.exists("/www/server/panel/data/error_pl.pl"):
+        stop_status_mvore()
+        return True
+    return False

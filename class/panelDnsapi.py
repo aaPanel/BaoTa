@@ -97,7 +97,7 @@ class BaseDns(object):
 
 class DNSPodDns(BaseDns):
     dns_provider_name = "dnspod"
-
+    _type = 0 # 0:lest 1：锐成
     def __init__(self, DNSPOD_ID, DNSPOD_API_KEY, DNSPOD_API_BASE_URL="https://dnsapi.cn/"):
         self.DNSPOD_ID = DNSPOD_ID
         self.DNSPOD_API_KEY = DNSPOD_API_KEY
@@ -113,7 +113,10 @@ class DNSPodDns(BaseDns):
 
     def create_dns_record(self, domain_name, domain_dns_value):
         domain_name,_,subd = extract_zone(domain_name)
-        self.add_record(domain_name,subd,domain_dns_value,'TXT')
+        if self._type == 1:            
+            self.add_record(domain_name,subd.replace('_acme-challenge.',''),domain_dns_value,'CNAME')
+        else:
+            self.add_record(domain_name,subd,domain_dns_value,'TXT')
 
        
 
@@ -178,7 +181,7 @@ class DNSPodDns(BaseDns):
 
 class CloudFlareDns(BaseDns):
     dns_provider_name = "cloudflare"
-
+    _type = 0 # 0:lest 1：锐成
     def __init__(
         self,
         CLOUDFLARE_EMAIL,
@@ -264,6 +267,12 @@ class CloudFlareDns(BaseDns):
             "name": "_acme-challenge" + "." + domain_name + ".",
             "content": "{0}".format(domain_dns_value),
         }
+        
+        if self._type == 1:
+            body['type'] = 'CNAME'
+            root, _, acme_txt = extract_zone(domain_name)           
+            body['name'] = acme_txt.replace('_acme-challenge.','')
+            
         create_cloudflare_dns_record_response = requests.post(
             url, headers=headers, json=body, timeout=self.HTTP_TIMEOUT
         )
@@ -310,6 +319,7 @@ class CloudFlareDns(BaseDns):
 
 
 class AliyunDns(object):
+    _type = 0 # 0:lest 1：锐成
     def __init__(self, key, secret, ):
         self.key = str(key).strip()
         self.secret = str(secret).strip()
@@ -343,7 +353,14 @@ class AliyunDns(object):
 
     def create_dns_record(self, domain_name, domain_dns_value):
         root, _, acme_txt = extract_zone(domain_name)
-        self.add_record(root,'TXT',acme_txt,domain_dns_value)
+        if self._type == 1:      
+            acme_txt = acme_txt.replace('_acme-challenge.','')
+            self.add_record(root,'CNAME',acme_txt,domain_dns_value)
+        else:
+            try:
+                self.add_record(root,'CAA','@',caa_value)
+            except: pass
+            self.add_record(root,'TXT',acme_txt,domain_dns_value)
 
 
     def add_record(self,domain,s_type,host,value):
@@ -495,7 +512,7 @@ class CloudxnsDns(object):
         return False
 
 class Dns_com(object):
-
+    _type = 0 # 0:lest 1：锐成
     def __init__(self, key, secret, ):
         pass
     
@@ -509,7 +526,13 @@ class Dns_com(object):
 
     def create_dns_record(self, domain_name, domain_dns_value):
         root, _, acme_txt = extract_zone(domain_name)
-        result = self.get_dns_obj().add_txt(acme_txt + '.' + root,domain_dns_value)
+ 
+        if self._type == 1:
+            acme_txt = acme_txt.replace('_acme-challenge.','')
+            result = self.add_record(acme_txt + '.' + root,domain_dns_value)    
+        else:
+            result = self.get_dns_obj().add_txt(acme_txt + '.' + root,domain_dns_value)
+        
         if result == "False":
             raise ValueError('[DNS]当前绑定的宝塔DNS云解析账户里面不存在这个域名[{}],添加解析失败!'.format((acme_txt + '.' + root,domain_dns_value)))
         time.sleep(5)

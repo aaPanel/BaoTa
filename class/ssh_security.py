@@ -298,21 +298,66 @@ class ssh_security:
         else:
             return public.returnMsg(False, '开启失败')
 
+        # 取SSH信息
+
+    def GetSshInfo(self):
+        port = public.get_ssh_port()
+
+        pid_file = '/run/sshd.pid'
+        if os.path.exists(pid_file):
+            pid = int(public.readFile(pid_file))
+            status = public.pid_exists(pid)
+        else:
+            import system
+            panelsys = system.system()
+            version = panelsys.GetSystemVersion()
+            if os.path.exists('/usr/bin/apt-get'):
+                if os.path.exists('/etc/init.d/sshd'):
+                    status = public.ExecShell("service sshd status | grep -P '(dead|stop)'|grep -v grep")
+                else:
+                    status = public.ExecShell("service ssh status | grep -P '(dead|stop)'|grep -v grep")
+            else:
+                if version.find(' 7.') != -1 or version.find(' 8.') != -1 or version.find('Fedora') != -1:
+                    status = public.ExecShell("systemctl status sshd.service | grep 'dead'|grep -v grep")
+                else:
+                    status = public.ExecShell("/etc/init.d/sshd status | grep -e 'stopped' -e '已停'|grep -v grep")
+
+            #       return status;
+            if len(status[0]) > 3:
+                status = False
+            else:
+                status = True
+        return status
+
+
     def stop_key(self, get):
         '''
         关闭key
         无需参数传递
         '''
-        file = ['/root/.ssh/id_rsa.pub', '/root/.ssh/id_rsa', '/root/.ssh/authorized_keys']
-        rec = '\n#?RSAAuthentication\s\w+'
-        rec2 = '\n#?PubkeyAuthentication\s\w+'
-        file = public.readFile(self.__SSH_CONFIG)
-        file_ssh = re.sub(rec, '\nRSAAuthentication no', file)
-        file_result = re.sub(rec2, '\nPubkeyAuthentication no', file_ssh)
-        self.wirte(self.__SSH_CONFIG, file_result)
-        self.set_password(get)
-        self.restart_ssh()
-        return public.returnMsg(True, '关闭成功')
+        is_ssh_status=self.GetSshInfo()
+        if is_ssh_status:
+            file = ['/root/.ssh/id_rsa.pub', '/root/.ssh/id_rsa', '/root/.ssh/authorized_keys']
+            rec = '\n#?RSAAuthentication\s\w+'
+            rec2 = '\n#?PubkeyAuthentication\s\w+'
+            file = public.readFile(self.__SSH_CONFIG)
+            file_ssh = re.sub(rec, '\nRSAAuthentication no', file)
+            file_result = re.sub(rec2, '\nPubkeyAuthentication no', file_ssh)
+            self.wirte(self.__SSH_CONFIG, file_result)
+            self.set_password(get)
+            self.restart_ssh()
+            return public.returnMsg(True, '关闭成功')
+        else:
+            file = ['/root/.ssh/id_rsa.pub', '/root/.ssh/id_rsa', '/root/.ssh/authorized_keys']
+            rec = '\n#?RSAAuthentication\s\w+'
+            rec2 = '\n#?PubkeyAuthentication\s\w+'
+            file = public.readFile(self.__SSH_CONFIG)
+            file_ssh = re.sub(rec, '\nRSAAuthentication no', file)
+            file_result = re.sub(rec2, '\nPubkeyAuthentication no', file_ssh)
+            self.wirte(self.__SSH_CONFIG, file_result)
+            #self.set_password(get)
+            return public.returnMsg(True, '关闭成功')
+
 
     def get_config(self, get):
         '''

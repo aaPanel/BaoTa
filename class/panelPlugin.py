@@ -35,11 +35,15 @@ class panelPlugin:
     __api_url = __api_root_url+ '/panel/get_plugin_list'
     __download_url = __api_root_url + '/down/download_plugin'
     __download_d_main_url = __api_root_url + '/down/download_plugin_main'
+    _check_url=__api_root_url+'/panel/get_soft_list_status'
     __tmp_path = __panel_path + '/temp/'
+    _unbinding_url=__api_root_url+'/panel/get_unbinding'
     __plugin_timeout = 3600
     __is_php = False
     __install_opt = 'i'
     __pid = 0
+    __path_error=__panel_path+'/data/error_pl.pl'
+    __error_html='/www/server/panel/BTPanel/templates/default/block_error.html'
     __sub_rules = []
     __dict__ = None
     __replace_rule = []
@@ -739,7 +743,11 @@ class panelPlugin:
             public.ExecShell("rm -rf " + tmp_path + '/*')
             toFile = tmp_path + '/' + pluginInfo['name'] + '.zip'
             public.downloadFile('https://www.bt.cn/api/Pluginother/get_file?fname=' + pluginInfo['versions'][0]['download'],toFile)
-            if public.FileMd5(toFile) != pluginInfo['versions'][0]['md5']: return public.returnMsg(False,'文件Hash校验失败,停止安装!')
+            if public.FileMd5(toFile) != pluginInfo['versions'][0]['md5']: 
+                try:
+                    return json.loads(public.readFile(toFile))
+                except :                    
+                    return public.returnMsg(False,'文件Hash校验失败,停止安装!')
             update = False
             if os.path.exists(pluginInfo['install_checks']): update =pluginInfo['versions'][0]['version_msg']
             return self.update_zip(None,toFile,update)
@@ -1233,7 +1241,7 @@ class panelPlugin:
             get.force = 1
             softList = self.get_cloud_list(get)
             if not softList: return public.returnMsg(False,'软件列表获取失败(401)!')
-        
+        self.get_cloud_list_status(get)
         softList['list'] = self.set_coexist(softList['list'])
         if not 'type' in get: get.type = '0'
         if get.type == '-1':
@@ -1271,6 +1279,8 @@ class panelPlugin:
     #取首页软件列表
     def get_index_list(self,get=None):
         softList = self.get_cloud_list(get)['list']
+        self.get_cloud_list_status(get)
+        self.is_verify_unbinding(get)
         if not softList: 
             get.force = 1
             softList = self.get_cloud_list(get)['list']
@@ -2846,3 +2856,76 @@ class panelPlugin:
         public.writeFile(config_file,"\n".join(config_data))
         public.WriteLog('软件管理','设置软件: {} 的自定义编译参数配置为: {}'.format(get.name,config_data))
         return public.returnMsg(True,'设置成功!')
+       
+    def get_mac_address(self):
+        import uuid
+        mac=uuid.UUID(int = uuid.getnode()).hex[-12:]
+        return ":".join([mac[e:e+2] for e in range(0,11,2)])
+        
+    def get_cloud_list_status(self,get):
+        try:
+            pdata = public.get_user_info()
+            pdata['mac'] = self.get_mac_address()
+            list_body = public.HttpPost(self._check_url,pdata)
+            if not list_body: return False
+            list_body=json.loads(list_body)
+            if not list_body['status']:
+                public.writeFile(self.__path_error,"error")
+                msg='''{% extends "layout.html" %}
+{% block content %}
+<div class="main-content pb55" style="min-height: 525px;">
+    <div class="container-fluid">
+        <div class="site_table_view bgw mtb15 pd15 text-center">
+            <div style="padding:50px">
+                <h1 class="h3"></h1>
+                '''
+                msg+=list_body['title']+list_body['body']
+                msg+='''              
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{% endblock %}'''
+                public.writeFile(self.__error_html,msg)
+                return '3'
+            else:
+                if os.path.exists(self.__path_error):os.remove(self.__path_error)
+                if os.path.exists(self.__error_html):os.remove(self.__error_html)
+                return '2'
+        except:
+            if os.path.exists(self.__path_error):os.remove(self.__path_error)
+            if os.path.exists(self.__error_html):os.remove(self.__error_html)
+            return '1'
+    def get_user_info(self):
+        user_file = '{}/data/userInfo.json'.format(public.get_panel_path())
+        if not os.path.exists(user_file): return {}
+        userInfo = {}
+        try:
+            userTmp = json.loads(public.readFile(user_file))
+            if not 'serverid' in userTmp or len(userTmp['serverid']) != 64:
+                import panelAuth
+                userTmp = panelAuth.panelAuth().create_serverid(None)
+            userInfo['uid'] = userTmp['uid']
+            userInfo['username'] = userTmp['username']
+            userInfo['secret_key']=userTmp['secret_key']
+            userInfo['access_key']=userTmp['access_key']
+            return userInfo
+        except: pass
+        return False
+
+    def is_verify_unbinding(self,get):
+        try:
+            path='{}/data/userInfo.json'.format(public.get_panel_path())
+            pdata = self.get_user_info()
+            if not pdata: return 'None'
+            list_body = public.HttpPost(self._unbinding_url,pdata)
+            if not list_body: return False
+            list_body=json.loads(list_body)
+            if not list_body['status']:
+                if os.path.exists(path):os.remove(path)
+                return False
+            return True
+        except:
+            pass

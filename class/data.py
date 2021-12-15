@@ -286,19 +286,16 @@ class data:
                         where += " or id=" + str(pid)
                     else:
                         where += "id=" + str(pid)
-
-        if get.table == 'sites' and hasattr(get,'type'):
-            if get.type != '-1':
-                type_where = "type_id=%s" % get.type
-                if where == '': 
-                    where = type_where
-                else:
-                    where += " and " + type_where
+                
         if get.table == 'sites':
             if where:
                 where = "({}) AND project_type='PHP'".format(where)
             else:
                 where = "project_type='PHP'"
+
+            if hasattr(get,'type'):
+                if get.type != '-1':
+                    where += " AND type_id={}".format(get.type)
 
             
         
@@ -349,7 +346,7 @@ class data:
         except:
             return ''
         wheres = {
-            'sites'     :   "id='"+search+"' or name like '%"+search+"%' or status like '%"+search+"%' or ps like '%"+search+"%'",
+            'sites'     :   "id='"+search+"' or name like '%"+search+"%' or ps like '%"+search+"%'",
             'ftps'      :   "id='"+search+"' or name like '%"+search+"%' or ps like '%"+search+"%'",
             'databases' :   "id='"+search+"' or name like '%"+search+"%' or ps like '%"+search+"%'",
             'logs'      :   "uid='"+search+"' or username='"+search+"' or type like '%"+search+"%' or log like '%"+search+"%' or addtime like '%"+search+"%'",

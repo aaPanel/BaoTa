@@ -219,6 +219,10 @@ class panelSSL:
             else:
                 if domain[:4] == 'www.': domain = domain[:4]
                 verify_info['hosts'].append(verify_info['host'] + '.' + domain)
+                if 'auth_to' in args:   
+                    root,zone = public.get_root_domain(domain)
+                    res = self.create_dns_record(args['auth_to'],verify_info['host'] + '.' + root,verify_info['value'])
+                    print(res)
         return verify_info
 
     #处理验证信息
@@ -227,12 +231,13 @@ class panelSSL:
         is_file_verify = 'fileName' in verify_info
         verify_info['paths'] = []
         verify_info['hosts'] = []
+        print(verify_info)
         for domain in verify_info['domains']:
             if domain[:2] == '*.': domain = domain[2:]
             if is_file_verify:
                 siteRunPath = self.get_domain_run_path(domain)
                 if not siteRunPath:
-                    if domain[:4] == 'www.': domain = domain[4:]
+                    #if domain[:4] == 'www.': domain = domain[4:]
                     verify_info['paths'].append(verify_info['path'].replace('example.com',domain))
                     continue
                 verify_path = siteRunPath + '/.well-known/pki-validation'
@@ -242,8 +247,12 @@ class panelSSL:
                 if os.path.exists(verify_file): continue
                 public.writeFile(verify_file,verify_info['content'])
             else:
-                if domain[:4] == 'www.': domain = domain[4:]
+                #if domain[:4] == 'www.': domain = domain[4:]
                 verify_info['hosts'].append(verify_info['host'] + '.' + domain)
+                
+                if 'auth_to' in args:       
+                    root,zone = public.get_root_domain(domain)
+                    self.create_dns_record(args['auth_to'],verify_info['host'] + '.' + root,verify_info['value'])
         return verify_info
 
 
@@ -347,7 +356,7 @@ class panelSSL:
                     siteRunPath='/www/wwwroot/java_node_ssl'
                 else:
                     siteRunPath = self.get_domain_run_path(domain)
-                if domain[:4] == 'www.': domain = domain[4:]
+                #if domain[:4] == 'www.': domain = domain[4:]
                 status = 0
                 url = 'http'+ is_https +'://'+ domain +'/.well-known/pki-validation/' + verify_info['data']['DCVfileName']
                 get = public.dict_obj()
@@ -365,7 +374,9 @@ class panelSSL:
                 if os.path.exists(verify_file): continue
                 public.writeFile(verify_file,verify_info['data']['DCVfileContent'])
             else:
-                if domain[:4] == 'www.': domain = domain[4:]
+                #if domain[:4] == 'www.': domain = domain[4:]
+                domain,subb = public.get_root_domain(domain)
+                dinfo['domainName'] = domain
                 verify_info['hosts'].append(verify_info['data']['DCVdnsHost'] + '.' + domain)
 
         return verify_info
@@ -472,6 +483,8 @@ class panelSSL:
         if result['status'] == True:
             self.__PDATA['data'] = {}
             args['oid'] = pdata['oid']
+            if 'auth_to' in pdata:                
+                args['auth_to'] = pdata['auth_to']
             result['verify_info'] = self.get_verify_info(args)
         return result
     
@@ -983,3 +996,109 @@ class panelSSL:
             args['oid'] = result['oid']
             result['verify_info'] = self.get_verify_info(args)
         return result
+
+
+    def GetAuthToken(self,get):
+        """
+        登录官网获取Token
+        @get.username 官网手机号
+        @get.password 官网账号密码
+        """
+        rtmp = ""
+        data = {}
+        data['username'] = get.username;
+        data['password'] = public.md5(get.password);        
+        data['serverid'] = panelAuth().get_serverid()
+
+        if 'code' in get: data['code'] = get.code;
+        if 'token' in get: data['token'] = get.token;
+
+        pdata = {}
+        pdata['data'] = self.De_Code(data);
+        try:
+            rtmp = public.httpPost(self.__APIURL+'/GetAuthToken',pdata) 
+            result = json.loads(rtmp);           
+            result['data'] = self.En_Code(result['data']);
+            if not result['status']: return result
+
+            if result['data']: 
+                result['data']['serverid'] = data['serverid']
+                public.writeFile(self.__UPATH,json.dumps(result['data']));
+                if os.path.exists('data/bind_path.pl'): os.remove('data/bind_path.pl')
+                public.flush_plugin_list()
+            del(result['data']);
+            session['focre_cloud'] = True       
+            return result;
+        except Exception as ex:
+            print(rtmp)
+            return public.returnMsg(False,'连接服务器失败!<br>' + rtmp)
+
+    def GetBindCode(self,get):
+        """
+        获取验证码
+        """
+        rtmp = ""
+        data = {}
+        data['username'] = get.username
+        data['token'] = get.token;
+        pdata = {}
+        pdata['data'] = self.De_Code(data);
+        try:
+            rtmp = public.httpPost(self.__APIURL+'/GetBindCode',pdata)  
+            result = json.loads(rtmp);           
+            return result;
+        except Exception as ex:
+            return public.returnMsg(False,'连接服务器失败!<br>' + rtmp)
+            
+            
+    # 解析DNSAPI信息
+    def get_dnsapi(self, auth_to):
+        tmp = auth_to.split('|')
+        dns_name = tmp[0]
+        key = "None"
+        secret = "None"
+        if len(tmp) < 3:          
+            dnsapi_config = json.loads(public.readFile('{}/config/dns_api.json'.format(public.get_panel_path())))               
+            for dc in dnsapi_config:              
+                if dc['name'] != dns_name:
+                    continue
+                if not dc['data']:
+                    continue
+                key = dc['data'][0]['value']
+                secret = dc['data'][1]['value']
+        else:
+            key = tmp[1]
+            secret = tmp[2]
+        return dns_name, key, secret
+
+    #获取dnsapi对象
+    def get_dns_class(self,auth_to):
+        try:
+            import panelDnsapi
+            dns_name, key, secret = self.get_dnsapi(auth_to)     
+            dns_class = getattr(panelDnsapi, dns_name)(key, secret)
+            dns_class._type = 1
+            return dns_class
+        except :
+            return None
+        
+    # 解析域名
+    def create_dns_record(self, auth_to, domain, dns_value):
+        # 如果为手动解析
+        if auth_to == 'dns': 
+            return None
+        dns_class = self.get_dns_class(auth_to)
+        if not dns_class: 
+            return public.returnMsg(False,"操作失败，请检查密钥是否正确.")
+            
+        #申请钱删除caa记录
+        root,zone = public.get_root_domain(domain)
+        try:
+            dns_class.remove_record(public.de_punycode(root),'@','CAA')   
+        except :pass        
+        try:
+            dns_class.create_dns_record(public.de_punycode(domain), dns_value) 
+            return public.returnMsg(True,'添加成功')
+        except :
+            return public.returnMsg(False,public.get_error_info())
+

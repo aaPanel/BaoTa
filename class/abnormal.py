@@ -71,7 +71,7 @@ class abnormal():
         ret = []
         if not os.path.exists('/www/server/php'): return ret
         for i in os.listdir('/www/server/php'):
-            php_list=['52','53','54','55','56','70','71','72','73','74']
+            php_list=['52','53','54','55','56','70','71','72','73','74',"82","81"]
             if not i in php_list:continue
             if os.path.isdir('/www/server/php/' + i):
                 ret.append(i)

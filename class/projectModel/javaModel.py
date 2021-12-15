@@ -816,13 +816,24 @@ class main(projectBase):
             host='{}'.format(project_find['project_config']['project_name'])
         else:
             host='$Host'
+        # api_url='/' if not 'api_url' in project_find['project_config'] else project_find['project_config']['api_url'] 
+        # site_path=project_find['path'] if not 'static_path' in project_find['project_config'] else project_find['project_config']['static_path']
+        # host_url = host if not 'host_url' in project_find['project_config'] else project_find['project_config']['host_url']
+        if 'host_url' in project_find['project_config']:
+            if project_find['project_config']['host_url']:
+                url2=project_find['project_config']['host_url']
+            else:
+                url2='http://127.0.0.1:{}'.format(project_find['project_config']['port'])
+        else:
+            url2='http://127.0.0.1:{}'.format(project_find['project_config']['port'])
         config_body = config_body.format(
-            site_path = project_find['path'],
+            api_url = '/' if not 'api_url' in project_find['project_config'] else project_find['project_config']['api_url'] ,
+            site_path =project_find['path'] if not 'static_path' in project_find['project_config'] else project_find['project_config']['static_path'],
             domains = ' '.join(domains),
             project_name = project_name,
             panel_path = self._panel_path,
             log_path = public.get_logs_path(),
-            url = 'http://127.0.0.1:{}'.format(project_find['project_config']['port']),
+            url = url2,
             host = host,
             listen_ports = listen_ports,
             ssl_config = ssl_config
@@ -837,6 +848,7 @@ class main(projectBase):
         rewrite_file = "{panel_path}/vhost/rewrite/java_{project_name}.conf".format(panel_path = self._panel_path,project_name = project_name)
         if not os.path.exists(rewrite_file): public.writeFile(rewrite_file,'# 请将伪静态规则或自定义NGINX配置填写到此处\n')
         public.writeFile(config_file,config_body)
+
         return True
 
     def exists_apache_ssl(self,project_name):
@@ -2202,6 +2214,14 @@ class main(projectBase):
         if sock: return False
         return public.check_tcp('127.0.0.1',port)
 
+
+    def get_host_url(self,get):
+        if 'port' in get:
+            port = get['port']
+            return 'http://127.0.0.1:'.format(port)
+        else:
+            return 'http://127.0.0.1:6611'
+
     def create_spring_boot_project(self,get):
         '''
         @name 创建Spring_boot项目
@@ -2234,8 +2254,27 @@ class main(projectBase):
         # if not 'auth' in get: return public.returnMsg(False, "请输入是否开机自启动")
         if not 'project_cmd' in get: return public.returnMsg(False, "请输入你的项目启动命令")
         if not 'project_ps' in get: return public.returnMsg(False, "请输入你的项目启动命令")
+        if not 'is_separation' in get:get.is_separation=0
+        if get.is_separation:
+            if public.get_webserver() == 'apache':
+                return public.returnMsg(False, "前后端分离不支持Apache")
+            get.is_separation=1
+        ##静态资源目录
+        if not 'static_path' in get: 
+            get.static_path = '/www/wwwroot/'+get.project_name.split('/')[0]
+        if not 'api_url' in get:
+             get.api_url = '/'
+        else:
+            if get.api_url[-1] == '/':
+                get.api_url = get.api_url[:-1]
         if not hasattr(get,'auth'):
             get.auth='0'
+        if get.is_separation:
+            if not 'host_url' in get:
+                return public.returnMsg(False, "请输入你需要的后端地址")
+            else:
+                if get.host_url[-1] == '/':
+                    get.host_url = get.host_url[:-1]
         if 'domains' in get:
             domains = get.domains
             if len(domains)>=1:
@@ -2271,6 +2310,8 @@ class main(projectBase):
         if not os.path.exists(project_jar): return public.returnMsg(False,'请输入正确的jar包路径')
         #获取jar的根目录
         project_path = os.path.dirname(project_jar)
+        if not get.is_separation:
+            get.host_url=False
         pdata = {
             'name': get.project_name,
             'path': get.project_jar,
@@ -2293,7 +2334,11 @@ class main(projectBase):
                     'jar_path':project_path,
                     'pids':self._springboot_pid_path+'/'+get.project_name.strip()+'.pid',
                     'logs':self._springboot_logs_path+'/'+get.project_name.strip()+'.log',
-                    'scripts':self._springboot_run_scripts+'/'+get.project_name.strip()+'.sh'
+                    'scripts':self._springboot_run_scripts+'/'+get.project_name.strip()+'.sh',
+                    'is_separation':get.is_separation,
+                    'static_path':get.static_path,
+                    'api_url':get.api_url,
+                    'host_url':get.host_url,
                 }
             ),
             'addtime': public.getDate()

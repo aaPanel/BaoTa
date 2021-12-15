@@ -749,6 +749,7 @@ var crontab = {
 												form[keys] = typeof rdata[keys] === "undefined"?'':rdata[keys]
 											}
 										}
+										
 										// console.log(rdata.type,rdata,form,formConfig);
 										switch(rdata.type){
 											case 'day':
@@ -797,6 +798,8 @@ var crontab = {
 										switch (rdata.sType){
 											case 'path':
 												form.path = rdata.sName
+												formConfig[3].group[1].disabled = true
+												delete formConfig[3].group[1].icon
 												break
 										}
 										formConfig[0].group.disabled = true

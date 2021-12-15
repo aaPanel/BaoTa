@@ -1,20 +1,158 @@
 {% extends "layout.html" %}
 {% block content %}
+<style>
+  .control-item {
+    display: inline-block;
+    padding: 0 25px;
+    font-size: 15px;
+    height: 50px;
+    line-height: 50px;
+    cursor: pointer;
+  }
+  .control-item.active {
+    color: #20a53a;
+    font-weight: 500;
+    border-bottom: #20a53a 2px solid;
+  }
+  .daily-thumbnail{
+    width: 950px;
+    height: 350px;
+    margin:100px auto;
+  }
+  .thumbnail-box{
+    display: inline-block;
+    width: 460px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    display: inline-block;
+    padding: 5px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    box-shadow: 1px 1px 30px rgb(0 0 0 / 10%);
+  }
+
+  .thumbnail-box::before{
+    content: '点击预览';
+    display: none;
+    background: #000;
+    opacity: 0.2;
+    color: #fff;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 460px;
+    height: 350px;
+    line-height: 350px;
+    font-size: 18px;
+    vertical-align: bottom;
+    border-radius: 4px;
+    transition: all 1s;
+  }
+
+  .thumbnail-box:hover::before{
+    display: inline-block;
+  }
+
+  .thumbnail-introduce{
+    display: inline-block;
+    vertical-align: top;
+    margin-left: 100px;
+    margin-top: 70px;
+  }
+  .thumbnail-introduce span{
+    font-size: 20px;
+    font-weight: bold;
+  }
+  .thumbnail-introduce ul{
+    font-size: 16px;
+    line-height: 30px;
+    margin: 20px 0 20px 20px;
+    list-style: square;
+  }
+  .pluginTipsGg{
+    background-image: url(/static/img/btwaf-nginx.png);
+    width: 450px;
+    height: 340px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 4px;
+    
+  }
+</style>
 <div class="main-content pb55" style="min-height: 525px;">
     <div class="container-fluid">
-        <div class="site_table_view bgw mtb15 pd15">
-            <div style="padding: 40px;background: #f8f8f8;text-align: center;vertical-align: middle;">
-                {% if 'error_msg' in data %}
-                    <h1 style="font-size: 37px;">抱歉，无法访问</h1>
-                    <p style="font-size: 20px;margin-top: 38px;color: red;">错误信息：{{data['error_msg']}}</p>
-                {% else %}
-                    <h1 style="font-size: 37px;">抱歉，需要满足以下条件才能使用</h1>
-                    <p style="font-size: 20px;margin-top: 38px;color: red;">请将Nginx防火墙版本升级到8.8.4以上</p>
-                {% endif %}
+        {% if 'error_msg' in data %}
+          <div class="pos-box bgw mtb15 plr15">
+            <div class="control-nav">
+              <div class="control-item active" name="control">概览</div>
             </div>
-        </div>
+          </div>
+          <div class="mtb15 pd15 bgw daily-view">
+            <div class="info-title-tips">
+              <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span>提示：此页面可在面板设置中关闭</p>
+            </div>
+            <div class="daily-thumbnail">
+              <div class="thumbnail-box"><div class="pluginTipsGg"></div></div>
+              <div class="thumbnail-introduce">
+                <span>Nginx防火墙功能介绍：</span>
+                <ul>
+                  <li>仅支持Nginx</li>
+                  <li>CC防御</li>
+                  <li>拦截SQL注入、xss、一句话木马等常见渗透功能</li>
+                </ul>
+                <div class="daily-product-buy">
+                  <a title="购买专业/企业版" href="javascript:;" class="btn btn-success va0 ml15 payPlugin">立即购买</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="pos-box bgw mtb15 plr15">
+            <div class="control-nav">
+              <div class="control-item active" name="control">概览</div>
+            </div>
+          </div>
+          <div class="mtb15 pd15 bgw daily-view">
+            <div class="daily-thumbnail">
+              <div class="thumbnail-box"><div class="pluginTipsGg"></div></div>
+              <div class="thumbnail-introduce">
+                <span>Nginx防火墙功能介绍：</span>
+                <ul>
+                  <li>仅支持Nginx</li>
+                  <li>CC防御</li>
+                  <li>拦截SQL注入、xss、一句话木马等常见渗透功能</li>
+                </ul>
+                <div class="daily-product-buy">
+                  <a title="购买专业/企业版" href="javascript:;" class="btn btn-success va0 ml15 payPlugin">立即购买</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
 {% block scripts %}
+  <script type="text/javascript">
+    $('.payPlugin').on('click',function(){
+      bt.soft.get_soft_find('btwaf',function(rdata){
+        bt.soft.product_pay_view({"name":rdata.title,"pid":rdata.pid,"type":rdata.type,"plugin":true,"ps":rdata.ps});
+        setTimeout(function(){
+          $('.lib_ltd').click();
+        },500);
+      });
+    })
+    $('.thumbnail-box').on('click',function(){
+      layer.open({
+        title:false,
+        btn:false,
+        shadeClose:true,
+        closeBtn: 2,
+        area:['950px','725px'],
+        content:'<div class="pd10"><img src="/static/img/btwaf-nginx.png" style="width:100%"/></div>'
+      })
+    })
+  </script>
 {% endblock %}

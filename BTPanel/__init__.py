@@ -14,6 +14,7 @@ import threading
 import time
 import re
 import uuid
+import psutil
 panel_path = '/www/server/panel'
 if not os.name in ['nt']:
     os.chdir(panel_path)
@@ -57,7 +58,7 @@ if os.path.exists(basic_auth_conf):
         pass
 
 # 初始化SESSION服务
-app.secret_key = uuid.UUID(int=uuid.getnode()).hex[-12:]
+app.secret_key = public.md5(str(os.uname()) + str(psutil.boot_time())) # uuid.UUID(int=uuid.getnode()).hex[-12:]
 local_ip = None
 my_terms = {}
 app.config['SESSION_MEMCACHED'] = SimpleCache(1000,86400)
@@ -194,7 +195,8 @@ def request_check():
             
         if not public.is_bind():
             return redirect('/bind',302)
-        
+        if public.is_error_path():
+            return redirect('/error',302)
         if not request.path in ['/config']:
             if session.get('password_expire',False):
                 return redirect('/modify_password',302)
@@ -328,6 +330,13 @@ def bind():
     g.title = '请先绑定宝塔帐号'
     return render_template('bind.html', data=data)
 
+@app.route('/error', methods=method_get)
+def error():
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    data = {}
+    g.title = '服务器错误!!!!'
+    return render_template('block_error.html', data=data)
 
 @app.route('/modify_password', methods=method_get)
 def modify_password():
@@ -785,7 +794,7 @@ def config(pdata=None):
     'get_ols_private_cache_status', 'get_ols_value', 'set_ols_value', 'get_ols_private_cache', 'get_ols_static_cache',
     'set_ols_static_cache', 'switch_ols_private_cache', 'set_ols_private_cache',
     'set_coll_open', 'get_qrcode_data', 'check_two_step', 'set_two_step_auth', 'create_user', 'remove_user',
-    'modify_user',
+    'modify_user','set_click_logs',
     'get_key', 'get_php_session_path', 'set_php_session_path', 'get_cert_source', 'get_users',
     'set_local', 'set_debug', 'get_panel_error_logs', 'clean_panel_error_logs', 'get_menu_list', 'set_hide_menu_list',
     'get_basic_auth_stat', 'set_basic_auth', 'get_cli_php_version', 'get_tmp_token', 'get_temp_login', 'set_temp_login',
@@ -800,8 +809,7 @@ def config(pdata=None):
     'ClosePanel', 'AutoUpdatePanel', 'SetPanelLock', 'return_mail_list', 'del_mail_list', 'add_mail_address',
     'user_mail_send', 'get_user_mail', 'set_dingding', 'get_dingding', 'get_settings', 'user_stmp_mail_send',
     'user_dingding_send','get_login_send','set_login_send','set_empty','clear_login_send','get_login_log','login_ipwhite',
-    'set_ssl_verify','get_ssl_verify','get_password_config','set_password_expire','set_password_safe',
-    'set_click_logs'
+    'set_ssl_verify','get_ssl_verify','get_password_config','set_password_expire','set_password_safe'
     )
     return publicObject(config.config(), defs, None, pdata)
 
@@ -875,7 +883,7 @@ def ssl(pdata=None):
             'download_cert', 'set_cert', 'cancel_cert_order','ApplyDVSSL','apply_cert_order_pay',
             'get_order_list', 'get_order_find', 'apply_order_pay', 'get_pay_status', 'apply_order', 'get_verify_info',
             'get_verify_result', 'get_product_list', 'set_verify_info','renew_cert_order',
-            'GetSSLInfo', 'downloadCRT', 'GetSSLProduct', 'Renew_SSL', 'Get_Renew_SSL')
+            'GetSSLInfo', 'downloadCRT', 'GetSSLProduct', 'Renew_SSL', 'Get_Renew_SSL','GetAuthToken','GetBindCode')
     get = get_input()
 
     if get.action == 'download_cert':
@@ -913,7 +921,7 @@ def plugin(pdata=None):
     'check_deps', 'flush_cache', 'GetCloudWarning', 'install', 'unInstall', 'getPluginList', 'getPluginInfo','repair_plugin','upgrade_plugin',
     'get_make_args', 'add_make_args','input_package','export_zip','get_download_speed','get_usually_plugin','get_plugin_upgrades','close_install',
     'getPluginStatus', 'setPluginStatus', 'a', 'getCloudPlugin', 'getConfigHtml', 'savePluginSort', 'del_make_args',
-    'set_make_args')
+    'set_make_args','get_cloud_list_status','is_verify_unbinding')
     return publicObject(pluginObject, defs, None, pdata)
 
 
@@ -1117,6 +1125,7 @@ def login():
             if referer_path == '':
                 referer_path = referer_tmp[-2]
             if route_path != '/' + referer_path:
+                g.auth_error = True
                 return render_template('autherr.html')
                 # return error_403(None)
 
@@ -1187,7 +1196,7 @@ def code():
     try:
         import vilidate, time
     except:
-        public.ExecShell("pip install Pillow==5.4.1 -I")
+        public.ExecShell("pip install Pillow -I")
         return "Pillow not install!"
     code_time = cache.get('codeOut')
     if code_time: return u'Error: Don\'t request validation codes frequently'
@@ -1282,9 +1291,10 @@ def down(token=None, fname=None):
             mimetype = "application/octet-stream"
             extName = filename.split('.')[-1]
             if extName in ['png', 'gif', 'jpeg', 'jpg']: mimetype = None
+            b_name = os.path.basename(filename)
             return send_file(filename, mimetype=mimetype,
                              as_attachment=True,
-                             attachment_filename=os.path.basename(filename),
+                             attachment_filename=b_name,
                              cache_timeout=0)
     except:
         return abort(404)
@@ -1295,23 +1305,6 @@ def panel_public():
     get = get_input()
     if len("{}".format(get.__dict__)) > 1024 * 32:
         return 'ERROR'
-
-
-    
-    #获取ping测试
-    if 'get_ping' in get:
-        try:
-            import panelPing
-            p = panelPing.Test()
-            get = p.check(get)
-            if not get: return 'ERROR'
-            result = getattr(p,get['act'])(get)
-            result_type = type(result)
-            if str(result_type).find('Response') != -1: return result
-            return public.getJson(result),json_header
-        except:
-            return public.returnJson(False,public.get_error_info())
-            
     get.client_ip = public.GetClientIp()
     num_key = get.client_ip + '_wxapp'
     if not public.get_error_num(num_key, 10):
@@ -1364,6 +1357,14 @@ def send_favicon():
 #     except:
 #         pass
 #     return 'True'
+@app.route('/btwaf_error', methods=method_get)
+def btwaf_error():
+    # 图标
+    p_path = os.path.join('/www/server/panel/plugin/', "btwaf")
+    if not os.path.exists(p_path): 
+        if name == 'btwaf' and fun == 'index':
+            return  render_template('error3.html',data={}) 
+    return  render_template('error3.html',data={})
 
 
 @app.route('/coll', methods=method_all)
@@ -1372,6 +1373,8 @@ def send_favicon():
 @app.route('/<name>/<fun>/<path:stype>', methods=method_all)
 def panel_other(name=None, fun=None, stype=None):
     # 插件接口
+    if public.is_error_path():
+        return redirect('/error',302)
     if name != "mail_sys" or fun != "send_mail_http.json":
         comReturn = comm.local()
         if comReturn: return comReturn

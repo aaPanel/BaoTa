@@ -4,34 +4,36 @@
 <!--suppress SpellCheckingInspection, CheckEmptyScriptTag -->
 <div class="main-content pb55">
     <div class="container-fluid">
-        <div class="pos-box bgw mtb15">
+        <!-- <div class="pos-box bgw mtb15">
             <div class="position f14 c9 pull-left">
                 <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span
                     class="plr10 c4">{{data['lan']['H2']}}</span>
             </div>
+        </div> -->
+        <div class="pos-box bgw mtb15 plr15">
+            <div class="tab-list" id="cutMode">
+                <div class="tabs-item active" data-type="php">PHP项目</div>
+                <div class="tabs-item" data-type="java">JAVA项目</div>
+                <div class="tabs-item" data-type="nodejs">Node项目</div>
+                <!-- <div class="control-item" data-type="go">Go项目</div> -->
+            </div>
         </div>
         <div class="site_table_view bgw mtb15 pd15">
-            <div class="info-title-tips">
+            <!-- <div class="info-title-tips">
                 <p><span class="glyphicon glyphicon-alert"
                          style="color: #f39c12; margin-right: 10px;"></span>{{data['lan']['PS']}}建站成功后，请在<a
                         class="btlink"
                         href="/crontab">[计划任务]</a>页面添加定时备份任务!</p>
-            </div>
-            <div class="tab-nav" id="cutMode">
+            </div> -->
+            <!-- <div class="tab-nav" id="cutMode">
                 <span class="on" data-type="php">PHP项目</span>
                 <span data-type="nodejs">Node项目</span>
                 <span data-type="java">JAVA项目</span>
-<!--                <span data-type="go">Go项目</span>-->
-            </div>
-            <div class="tab-con" style="padding:10px 0;overflow: inherit;">
+                <span data-type="go">Go项目</span>
+            </div> -->
+            <div class="tab-con" style="padding: 0;overflow: inherit;">
                 <div class="tab-con-block">
                     <div id="bt_site_table"></div>
-                </div>
-                <div class="tab-con-block ">
-                    <div id="bt_node_table"></div>
-                    <div class="mask_layer hide">
-                        <div class="prompt_description node-model"></div>
-                    </div>
                 </div>
                 <div class="tab-con-block">
                     <div id="bt_java_table" class="bt_table" v-cloak>
@@ -129,8 +131,12 @@
                         </bt-table>
 
                         <!-- 添加JAVA对象 -->
-                        <bt-layer title="添加JAVA项目" v-model="addJavaView" area="620px" @close="close_add_java_project">
-                            <bt-java-form :config="{form:projectFormInfo,jdkList:jdkList,tomcatList:tomcatList}"></bt-java-form>
+                        <bt-layer title="添加JAVA项目" v-model="addJavaView" :area="['620px', '680px']" @close="close_add_java_project">
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding-bottom: 49px;">
+                                <div style="height: 100%; padding: 30px 30px 20px; overflow: auto;">
+                                    <bt-java-form :config="{form:projectFormInfo,jdkList:jdkList,tomcatList:tomcatList}"></bt-java-form>
+                                </div>
+                            </div>
                             <div class="bt-form-submit-btn">
                                 <bt-button type="danger" title="关闭" @click.native="addJavaView = false"></bt-button>
                                 <bt-button type="success" title="提交" @click.native="submit_form_info"></bt-button>
@@ -276,6 +282,12 @@
                         </div>
                     </div>
                 </div>
+                <div class="tab-con-block ">
+                    <div id="bt_node_table"></div>
+                    <div class="mask_layer hide">
+                        <div class="prompt_description node-model"></div>
+                    </div>
+                </div>
                 <div class="tab-con-block">
                     <div id="bt_go_table"></div>
                 </div>
@@ -294,7 +306,7 @@
 <script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js?version={{g['version']}}"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/js/site.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/editor/ace.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/bootstrap-select.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+<!-- <script type="text/javascript" src="{{g.cdn_url}}/js/bootstrap-select.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script> -->
 <script type="text/javascript">
 	if (isSetup) site.plugin_firewall()
 </script>

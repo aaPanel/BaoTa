@@ -286,7 +286,9 @@ class MemcachedSessionInterface(SessionInterface):
             session_id = self._get_signer(app).sign(want_bytes(session.sid))
         else:
             session_id = session.sid
-        from BTPanel import request
+        from BTPanel import request,g
+        if 'auth_error' in g: return
+        if request.path == '/': return
         if response.status_code not in [200,302]: return
         if not request.cookies.get(app.session_cookie_name):
             if request.full_path.find('/login?tmp_token=') == 0: 

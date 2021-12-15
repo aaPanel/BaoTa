@@ -1466,13 +1466,13 @@ fullchain.pem       粘贴到证书输入框
                     if 'next_retry_time' in self._config['orders'][i]:
                         timeout = self._config['orders'][i]['next_retry_time'] - int(time.time())
                         if timeout > 0: 
-                            write_log('|-本次跳过域名:{}，因第上次续签失败，还需要等待{}小时后再重试'.format(self._config['orders'][index]['domains'],int(timeout / 60 / 60)))
+                            write_log('|-本次跳过域名:{}，因第上次续签失败，还需要等待{}小时后再重试'.format(self._config['orders'][i]['domains'],int(timeout / 60 / 60)))
                             continue
                     
                     # 是否到了最大重试次数
                     if 'retry_count' in self._config['orders'][i]:
                         if self._config['orders'][i]['retry_count'] >= 3: 
-                            write_log('|-本次跳过域名:{}，因连续3次续签失败，不再续签此证书'.format(self._config['orders'][index]['domains']))
+                            write_log('|-本次跳过域名:{}，因连续3次续签失败，不再续签此证书'.format(self._config['orders'][i]['domains']))
                             continue
 
                     # 加入到续签订单

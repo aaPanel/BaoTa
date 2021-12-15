@@ -182,12 +182,10 @@ def siteEdate():
         if not oldEdate:
             oldEdate = '0000-00-00'
         mEdate = time.strftime('%Y-%m-%d', time.localtime())
-        
-        os.system(get_python_bin() +
-                  " /www/server/panel/script/site_task.py > /dev/null")
-                  
         if oldEdate == mEdate:
             return False
+        os.system(get_python_bin() +
+                  " /www/server/panel/script/site_task.py > /dev/null")
     except Exception as ex:
         logging.info(ex)
         pass
@@ -642,11 +640,22 @@ def HttpGet(url, timeout=6, headers={}):
 def send_mail_time():
     while True:
         try:
-            os.system(get_python_bin()+" /www/server/panel/script/mail_task.py > /dev/null")
-            time.sleep(60)
-        except:
+            os.system(get_python_bin() +" /www/server/panel/script/mail_task.py > /dev/null")
             time.sleep(180)
+        except:
+            time.sleep(360)
             send_mail_time()
+
+#5个小时更新一次更新软件列表
+def update_software_list():
+    while True:
+        try:
+            import panelPlugin
+            panelPlugin.panelPlugin().get_cloud_list_status(None)
+            time.sleep(18000)
+        except:
+            time.sleep(1800)
+            update_software_list()
 
 # 检查面板文件完整性
 def check_files_panel():
@@ -882,7 +891,11 @@ def main():
     p = threading.Thread(target=check_panel_ssl)
     p.setDaemon(True)
     p.start()
-
+    
+    p = threading.Thread(target=update_software_list)
+    p.setDaemon(True)
+    p.start()
+    
     p = threading.Thread(target=send_mail_time)
     p.setDaemon(True)
     p.start()
