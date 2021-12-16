@@ -289,7 +289,7 @@ class MemcachedSessionInterface(SessionInterface):
         from BTPanel import request,g
         if 'auth_error' in g: return
         if request.path == '/': return
-        if response.status_code not in [200,302]: return
+        if response.status_code not in [200,308]: return
         if not request.cookies.get(app.session_cookie_name):
             if request.full_path.find('/login?tmp_token=') == 0: 
                 samesite = 'None'

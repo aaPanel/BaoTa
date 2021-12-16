@@ -298,7 +298,7 @@ exit($header."\r\n\r\n".json_encode($body));
 
     #取可用的PHP版本
     def _get_php_version(self):
-        php_versions = ['52','53','54','55','56','70','71','72','73','74','80',"82","81"]
+        php_versions = public.get_php_versions()
         php_path = '/www/server/php/{}/sbin/php-fpm'
         php_sock = '/tmp/php-cgi-{}.sock'
         for pv in php_versions:

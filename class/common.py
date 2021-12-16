@@ -201,23 +201,23 @@ class panelAdmin(panelSetup):
     def get_sk(self):
         save_path = '/www/server/panel/config/api.json'
         if not os.path.exists(save_path):
-            return redirect('/login') #public.error_404('/login')
+            return public.error_404('/login')
 
         
         try:
             api_config = json.loads(public.ReadFile(save_path))
         except:
             os.remove(save_path)
-            return  redirect('/login') #public.error_404('/login')
+            return  public.error_404('/login')
         
         if not api_config['open']:
-            return  redirect('/login') #public.error_404('/login')
+            return  public.error_404('/login')
         from BTPanel import get_input
         get = get_input()
         client_ip = public.GetClientIp()
         if not 'client_bind_token' in get:
             if not 'request_token' in get or not 'request_time' in get:
-                return  redirect('/login') # public.error_404('/login')
+                return  public.error_404('/login')
             
             num_key = client_ip + '_api'
             if not public.get_error_num(num_key,20):
@@ -250,7 +250,7 @@ class panelAdmin(panelSetup):
             
             get = get_input()
             if not 'request_token' in get or not 'request_time' in get:
-                return  redirect('/login') #public.error_404('/login')
+                return  public.error_404('/login')
             g.is_aes = True
             g.aes_key = api_config['key']
         

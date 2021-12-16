@@ -1126,8 +1126,8 @@ def login():
                 referer_path = referer_tmp[-2]
             if route_path != '/' + referer_path:
                 g.auth_error = True
-                return render_template('autherr.html')
-                # return error_403(None)
+                # return render_template('autherr.html')
+                return error_404(None)
 
     session['admin_auth'] = True
     comReturn = common.panelSetup().init()

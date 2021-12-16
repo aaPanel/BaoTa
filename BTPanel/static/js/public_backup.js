@@ -4456,6 +4456,7 @@ bt.soft = {
     $('.libPaycode-foo-txt .libPayTotal').text('---')
     $('.libPaycode-pro-cylce').text('低至--元 / 天')
     that.pay_loading.set('start')
+    $(".pay-radio-type").data('data', 0)
 
     that.pro.create_order({
       pid: _product.pid,
@@ -4503,7 +4504,9 @@ bt.soft = {
     var _data = $(".pay-radio-type").data('data'),
       _cycle = $(".pay-cycle-btns.active").data('data'),
       _obj = $(".libPay-content-box .pay-type-btn").eq(idx)
-
+    
+    if (!_data) return
+    
     $('.libPaycode-foo-txt .libPayTotal').text('¥' + _cycle.price)
     $(".libPayCycle").text(this.pro.conver_unit(_cycle.cycle))
     $('.libPaycode-pro-cylce').text('低至' + (_cycle.price / (_cycle.cycle / 12 * 365)).toFixed(2) + "元 / 天")
@@ -4545,10 +4548,16 @@ bt.soft = {
   // 获取产品周期 ，并进行对象缓存
   get_product_discount_cache: function (config, callback) {
     var that = this;
-    if (typeof this.product_cache[config.pid] != "undefined") {
-      if (callback) callback(this.product_cache[config.pid]);
-    } else {
-      bt.soft.pro.get_product_discount_by(config.name, function (rdata) {
+    // if (typeof this.product_cache[config.pid] != "undefined") {
+    //   if (callback) callback(this.product_cache[config.pid]);
+    // } else {
+    $(".libVoucher-loading").show()
+    that.pay_loading.set('start_price')
+    
+    bt.soft.pro.get_product_discount_by(config.name, function (rdata) {
+        if (that.pay_loading.set('end_price') == that.pay_loading.get('start_price')) {
+            $(".libVoucher-loading").hide()
+        }
         if (typeof rdata.status === "boolean") {
           if (!rdata.status) return false;
         }
@@ -4557,8 +4566,8 @@ bt.soft = {
           delete that.product_cache[config.pid]
         }, 60000);
         if (callback) callback(rdata);
-      });
-    }
+    });
+    // }
   },
   // 支付状态监听
   product_pay_monitor: function (config) {

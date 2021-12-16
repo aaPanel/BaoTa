@@ -2921,13 +2921,17 @@ server
     
     #取当前可用PHP版本
     def GetPHPVersion(self,get):
-        phpVersions = ('00','other','52','53','54','55','56','70','71','72','73','74','80',"82","81")
+        
+        phpVersions = public.get_php_versions()
+        phpVersions.insert(0,'other')
+        phpVersions.insert(0,'00')
         httpdVersion = ""
         filename = self.setupPath+'/apache/version.pl'
         if os.path.exists(filename): httpdVersion = public.readFile(filename).strip()
         
         if httpdVersion == '2.2': phpVersions = ('00','52','53','54')
-        if httpdVersion == '2.4': phpVersions = ('00','other','53','54','55','56','70','71','72','73','74','80',"82","81")
+        if httpdVersion == '2.4': 
+            if '52' in phpVersions: phpVersions.remove('52')
         if os.path.exists('/www/server/nginx/sbin/nginx'):
             cfile = '/www/server/nginx/conf/enable-php-00.conf'
             if not os.path.exists(cfile): public.writeFile(cfile,'')
@@ -4967,7 +4971,7 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
     def modify_site_type_name(self,get):
         get.name = get.name.strip()
         if not get.name: return public.returnMsg(False,"分类名称不能为空")
-        if len(get.name) > 18: return public.returnMsg(False,"分类名称长度不能超过6个汉字或18位字母")
+        if len(get.name) > 16: return public.returnMsg(False,"分类名称长度不能超过16位")
         type_sql = public.M('site_types')
         if type_sql.where('id=?',(get.id,)).count()==0: return public.returnMsg(False,"指定分类不存在!")
         type_sql.where('id=?',(get.id,)).setField('name',get.name)

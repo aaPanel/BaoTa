@@ -516,7 +516,7 @@ class panelPlugin:
                 with_res_f.close()
             if cache.get(pkey): cache.delete(pkey)
             if public.FileMd5(filename) != download_res.headers['Content-md5']:
-                raise public.PanelError('插件安装包HASH校验失败')
+                raise public.PanelError('软件包下载失败，请重试')
         else:
             while True:
                 time.sleep(1)
@@ -934,6 +934,14 @@ class panelPlugin:
             if hasattr(get,'query'): 
                 if get.query: sType = 0
         except:pass
+
+        
+        if type(softList)!=dict:
+            softList = Plugin(False).get_plugin_list(False)
+            if type(softList)!=dict:
+                softList={"list":[]}
+                return softList
+
         softList['list'] = self.get_local_plugin(softList['list'])
         softList['list'] = self.get_types(softList['list'],sType)
         if hasattr(get,'query'):

@@ -29,7 +29,7 @@ class system:
         data = session['config']
         data['webserver'] = public.get_webserver()
         #PHP版本
-        phpVersions = ('52','53','54','55','56','70','71','72','73','74',"82","81")
+        phpVersions = public.get_php_versions()
         
         data['php'] = []
         

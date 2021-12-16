@@ -86,7 +86,7 @@ class panelPHP:
              php_vs = json.loads(public.readFile(php_v_file).replace('.',''))
         else:
             #否则兼容所有版本
-            php_vs = ["82","81","80","74","73","72","71","70","56","55","54","53","52"]
+            php_vs = public.get_php_versions(True)
         #判段兼容的PHP版本是否安装
         php_path = "/www/server/php/"
         php_v = None
@@ -119,7 +119,7 @@ class panelPHP:
             else:
                 php_vs = sorted(php_version,reverse=True)
         else:
-            php_vs = ["82","81","80","74","73","72","71","70","56","55","54","53","52"]
+            php_vs = public.get_php_versions(True)
         php_path = "/www/server/php/"
         php_v = None
         for pv in php_vs:

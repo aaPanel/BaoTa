@@ -93,7 +93,7 @@ class safe:
     
     def checkPHPINI(self):
         setupPath = '/www/server';
-        phps = ['52','53','54','55','56','70','71']
+        phps = public.get_php_versions()
         rep = "disable_functions\s*=\s*(.+)\n"
         defs = ['passthru','exec','system','chroot','chgrp','chown','shell_exec','popen','ini_alter','ini_restore','dl','openlog','syslog','readlink','symlink','popepassthru']
         data = []

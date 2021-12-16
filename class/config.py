@@ -61,7 +61,7 @@ class config:
         emailformat = re.compile(r'[a-zA-Z0-9.-_+%]+@[a-zA-Z0-9]+\.[a-zA-Z0-9]+')
         if not emailformat.search(get.email): return public.returnMsg(False, '请输入正确的邮箱')
         # 测试发送邮件
-        if get.email.strip() in self.__mail_list: return public.returnMsg(True, '邮箱已经存在')
+        if get.email.strip() in self.__mail_list: return public.returnMsg(False, '邮箱已经存在')
         self.__mail_list.append(get.email.strip())
         public.writeFile(self.__mail_list_data, json.dumps(self.__mail_list))
         return public.returnMsg(True, '添加成功')

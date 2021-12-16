@@ -2156,7 +2156,7 @@ def sync_all_address():
         @author hwliang<2020-10-24>
         @return void
     '''
-    php_versions = ['52','53','54','55','56','70','71','72','73','74','75','80','81',"82","81"]
+    php_versions = get_php_versions()
     for phpv in php_versions:
         sync_php_address(phpv)
 
@@ -3912,15 +3912,15 @@ def stop_status_mvore():
     try:
         nginx_path='/www/server/panel/vhost/nginx/btwaf.conf'
         if os.path.exists(nginx_path):
-            public.ExecShell('mv  %s %s.bak'%(nginx_path,nginx_path))
+            ExecShell('mv  %s %s.bak'%(nginx_path,nginx_path))
             flag=True
         nginx_path='/www/server/panel/vhost/nginx/free_waf.conf'
         if os.path.exists(nginx_path):
-            public.ExecShell('mv  %s %s.bak'%(nginx_path,nginx_path))
+            ExecShell('mv  %s %s.bak'%(nginx_path,nginx_path))
             flag=True
         apache_path='/www/server/panel/vhost/apache/btwaf.conf'
         if os.path.exists(apache_path):
-            public.ExecShell('chattr -i %s && mv %s %s.bak'%(apache_path,apache_path,apache_path))
+            ExecShell('chattr -i %s && mv %s %s.bak'%(apache_path,apache_path,apache_path))
             flag=True
         if flag:
             serviceReload()
@@ -3932,3 +3932,16 @@ def is_error_path():
         stop_status_mvore()
         return True
     return False
+
+def get_php_versions(reverse=False):
+    '''
+        @name 取PHP版本列表
+        @param reverse<bool> 是否降序
+    '''
+    _file = get_panel_path() + '/config/php_versions.json'
+    if os.path.exists(_file):
+        version_list  = json.loads(readFile(_file))
+    else:
+        version_list = ['52','53','54','55','56','70','71','72','73','74','80','81','82','83','84']
+
+    return sorted(version_list,reverse=reverse)

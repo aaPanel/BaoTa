@@ -183,6 +183,7 @@ def control_init():
     update_py37()
     run_script()
     set_php_cli_env()
+    check_enable_php()
 
 
 def set_php_cli_env():
@@ -210,7 +211,7 @@ def set_php_cli_env():
 
     
     # 设置所有已安装的PHP版本环境变量和别名
-    php_versions_list = ['52','53','54','55','56','70','71','72','73','74','80','81','82','83','84','90','91']
+    php_versions_list = public.get_php_versions()
     for php_version in php_versions_list:
         php_ini = "{}/{}/etc/php.ini".format(php_path,php_version)
         php_cli_ini = "{}/{}/etc/php-cli.ini".format(php_path,php_version)
@@ -243,6 +244,31 @@ def set_php_cli_env():
             if os.path.exists(php_pecl): os.remove(php_pecl)
             if os.path.exists(php_pear): os.remove(php_pear)
     public.writeFile(bashrc,bashrc_body)
+
+
+def check_enable_php():
+    '''
+        @name 检查nginx下的php配置文件
+    '''
+    php_versions = public.get_php_versions()
+    ngx_php_conf = public.get_setup_path() + '/nginx/conf/enable-php-00.conf'
+    public.writeFile(ngx_php_conf,'')
+    for php_v in php_versions:
+        ngx_php_conf = public.get_setup_path() + '/nginx/conf/enable-php-{}.conf'.format(php_v)
+        print(ngx_php_conf)
+        if os.path.exists(ngx_php_conf): continue
+        enable_conf = '''
+    location ~ [^/]\.php(/|$)
+	{{
+		try_files $uri =404;
+		fastcgi_pass  unix:/tmp/php-cgi-{}.sock;
+		fastcgi_index index.php;
+		include fastcgi.conf;
+		include pathinfo.conf;
+	}}
+    '''.format(php_v)
+        public.writeFile(ngx_php_conf,enable_conf)
+    
 
 
 def write_run_script_log(_log,rn='\n'):
@@ -553,7 +579,7 @@ def disable_putenv(fun_name):
     try:
         is_set_disable = '/www/server/panel/data/disable_%s' % fun_name 
         if os.path.exists(is_set_disable): return True
-        php_vs = ('52','53','54','55','56','70','71','72','73','74')
+        php_vs = public.get_php_versions()
         php_ini = "/www/server/php/{0}/etc/php.ini"
         rep = "disable_functions\s*=\s*.*"
         for pv in php_vs:

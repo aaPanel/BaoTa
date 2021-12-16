@@ -2207,7 +2207,7 @@ cd %s
 
     #取PHP-CLI执行命令
     def __get_php_bin(self,php_version=None):
-        php_vs = ["82","81","80","74","73","72","71","70","56","55","54","53"]
+        php_vs = public.get_php_versions(True)
         if php_version:
             if php_version != 'auto':
                 if not php_version in php_vs: return ''
