@@ -776,6 +776,7 @@ def config(pdata=None):
         if c_obj.get_ipv6_listen(None): data['ipv6'] = 'checked'
         if c_obj.get_token(None)['open']: data['api'] = 'checked'
         data['basic_auth'] = c_obj.get_basic_auth_stat(None)
+        data['status_code'] = c_obj.get_not_auth_status()
         data['basic_auth']['value'] = public.getMsg('CLOSED')
         if data['basic_auth']['open']: data['basic_auth']['value'] = public.getMsg('OPENED')
         data['debug'] = ''
@@ -801,7 +802,7 @@ def config(pdata=None):
     'remove_temp_login', 'clear_temp_login', 'get_temp_login_logs',
     'set_cli_php_version', 'DelOldSession', 'GetSessionCount', 'SetSessionConf', 'show_recommend', 'show_workorder',
     'GetSessionConf', 'get_ipv6_listen', 'set_ipv6_status', 'GetApacheValue', 'SetApacheValue',
-    'GetNginxValue', 'SetNginxValue', 'get_token', 'set_token', 'set_admin_path', 'is_pro',
+    'GetNginxValue', 'SetNginxValue', 'get_token', 'set_token', 'set_admin_path', 'is_pro','set_not_auth_status',
     'get_php_config', 'get_config', 'SavePanelSSL', 'GetPanelSSL', 'GetPHPConf', 'SetPHPConf',
     'GetPanelList', 'AddPanelInfo', 'SetPanelInfo', 'DelPanelInfo', 'ClickPanelInfo', 'SetPanelSSL',
     'SetTemplates', 'Set502', 'setPassword', 'setUsername', 'setPanel', 'setPathInfo', 'setPHPMaxSize',
@@ -1127,7 +1128,7 @@ def login():
             if route_path != '/' + referer_path:
                 g.auth_error = True
                 # return render_template('autherr.html')
-                return error_404(None)
+                return public.error_not_login(None)
 
     session['admin_auth'] = True
     comReturn = common.panelSetup().init()

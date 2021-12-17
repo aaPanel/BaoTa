@@ -12,6 +12,8 @@
 #--------------------------------
 import json,os,sys,time,re,socket,importlib,binascii,base64,io,string
 from random import choice
+
+from werkzeug.utils import redirect
 _LAN_PUBLIC = None
 _LAN_LOG = None
 _LAN_TEMPLATE = None
@@ -3856,6 +3858,30 @@ def is_apache_nginx():
     '''
     setup_path = get_setup_path()
     return os.path.exists(setup_path + '/apache') or os.path.exists(setup_path + '/nginx')
+
+
+def error_not_login(e = None):
+    '''
+        @name 未登录时且未输入正确的安全入口时的响应
+        @author hwliang<2021-12-16>
+        @return Response
+    '''
+    from BTPanel import Response,render_template,redirect
+    
+
+    try:
+        abort_code = read_config('abort')
+        
+        if not abort_code in [None,1,0]:
+            if abort_code == 404: return error_404(e)
+            if abort_code == 403: return error_403(e)
+            return Response(status=abort_code)
+    except:
+        pass
+
+    if e in ['/login']:
+        return redirect(e)
+    return render_template('autherr.html')
 
 def error_403(e):
     from BTPanel import Response

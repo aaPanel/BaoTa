@@ -2026,3 +2026,38 @@ class config:
         if os.path.exists(crl):
             result['ca'] = public.readFile(ca)
         return result
+
+
+    def set_not_auth_status(self,get):
+        '''
+            @name 设置未认证时的响应状态
+            @author hwliang<2021-12-16>
+            @param status_code<int> 状态码
+            @return dict
+        '''
+        if not 'status_code' in get:
+            return public.returnMsg(False,'参数错误!')
+        
+        if re.match("^\d+$", get.status_code):
+            status_code = int(get.status_code)
+            if status_code != 0:
+                if status_code < 100 or status_code > 999:
+                    return public.returnMsg(False,'状态码范围错误!')
+        else:
+            return public.returnMsg(False,'状态码范围错误!')
+        
+        public.save_config('abort',get.status_code)
+        public.WriteLog('面板设置','将未授权响应状态码设置为:'.format(get.status_code))
+        return public.returnMsg(True,'设置成功!')
+
+    def get_not_auth_status(self):
+        '''
+            @name 获取未认证时的响应状态
+            @author hwliang<2021-12-16>
+            @return int
+        '''
+        try:
+            status_code = int(public.read_config('abort'))
+            return status_code
+        except:
+            return 0
