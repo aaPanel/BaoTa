@@ -592,9 +592,9 @@ class config:
             if not os.path.exists(p):
                 continue
             conf = public.readFile(p)
-            rep = r"\nupload_max_filesize\s*=\s*[0-9]+M"
+            rep = r"\nupload_max_filesize\s*=\s*[0-9]+M?m?"
             conf = re.sub(rep,r'\nupload_max_filesize = '+max+'M',conf)
-            rep = r"\npost_max_size\s*=\s*[0-9]+M"
+            rep = r"\npost_max_size\s*=\s*[0-9]+M?m?"
             conf = re.sub(rep,r'\npost_max_size = '+max+'M',conf)
             public.writeFile(p,conf)
 
@@ -602,7 +602,7 @@ class config:
             #设置Nginx
             path = public.GetConfigValue('setup_path')+'/nginx/conf/nginx.conf'
             conf = public.readFile(path)
-            rep = r"client_max_body_size\s+([0-9]+)m"
+            rep = r"client_max_body_size\s+([0-9]+)m?M?"
             tmp = re.search(rep,conf).groups()
             if int(tmp[0]) < int(max):
                 conf = re.sub(rep,'client_max_body_size '+max+'m',conf)
