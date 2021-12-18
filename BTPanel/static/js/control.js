@@ -430,8 +430,8 @@ var controlObj = {
         var is_gt_MB = false;
         var is_gt_GB = false;
         for (var i = 0; i < rdata.length; i++) {
-          var read = (rdata[i].read_bytes / 1024 / 60).toFixed(3);
-          var write = (rdata[i].write_bytes / 1024 / 60).toFixed(3);
+          var read = (rdata[i].read_bytes / 1024).toFixed(3);
+          var write = (rdata[i].write_bytes / 1024).toFixed(3);
           // rData.push(read / unit_size);
           // wData.push(write / unit_size);
           // xData.push(rdata[i].addtime);

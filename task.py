@@ -222,6 +222,7 @@ def systemTask():
 
         count = 0
         reloadNum = 0
+        disk_wr = 0
         diskio_1 = diskio_2 = networkInfo = cpuInfo = diskInfo = None
         network_up = {}
         network_down = {}
@@ -296,31 +297,29 @@ def systemTask():
             try:
                 if os.path.exists('/proc/diskstats'):
                     diskio_2 = disk_io_counters()
+
                     if not diskio_1:
                         diskio_1 = diskio_2
                     tmp = {}
-                    tmp['read_count'] = diskio_2.read_count - \
-                        diskio_1.read_count
-                    tmp['write_count'] = diskio_2.write_count - \
-                        diskio_1.write_count
-                    tmp['read_bytes'] = diskio_2.read_bytes - \
-                        diskio_1.read_bytes
-                    tmp['write_bytes'] = diskio_2.write_bytes - \
-                        diskio_1.write_bytes
-                    tmp['read_time'] = diskio_2.read_time - diskio_1.read_time
-                    tmp['write_time'] = diskio_2.write_time - \
-                        diskio_1.write_time
+                    tmp['read_count'] = int((diskio_2.read_count - diskio_1.read_count) / 5)
+                    tmp['write_count'] = int((diskio_2.write_count - diskio_1.write_count) / 5)
+                    tmp['read_bytes'] = int((diskio_2.read_bytes - diskio_1.read_bytes) / 5)
+                    tmp['write_bytes'] = int((diskio_2.write_bytes -  diskio_1.write_bytes) / 5)
+                    tmp['read_time'] = int((diskio_2.read_time - diskio_1.read_time) / 5)
+                    tmp['write_time'] = int((diskio_2.write_time - diskio_1.write_time) / 5)
 
                     if not diskInfo:
                         diskInfo = tmp
-                    else:
-                        diskInfo['read_count'] += tmp['read_count']
-                        diskInfo['write_count'] += tmp['write_count']
-                        diskInfo['read_bytes'] += tmp['read_bytes']
-                        diskInfo['write_bytes'] += tmp['write_bytes']
-                        diskInfo['read_time'] += tmp['read_time']
-                        diskInfo['write_time'] += tmp['write_time']
+                    
+                    if (tmp['read_bytes'] + tmp['write_bytes']) > (diskInfo['read_bytes'] + diskInfo['write_bytes']):
+                        diskInfo['read_count'] = tmp['read_count']
+                        diskInfo['write_count'] = tmp['write_count']
+                        diskInfo['read_bytes'] = tmp['read_bytes']
+                        diskInfo['write_bytes'] = tmp['write_bytes']
+                        diskInfo['read_time'] = tmp['read_time']
+                        diskInfo['write_time'] = tmp['write_time']
 
+                    # logging.info(['read: ',tmp['read_bytes'] / 1024 / 1024,'write: ',tmp['write_bytes'] / 1024 / 1024])
                     diskio_1 = diskio_2
             except:
                 logging.info(public.get_error_info())
@@ -338,6 +337,7 @@ def systemTask():
                     data = (networkInfo['up'], networkInfo['down'], networkInfo['upTotal'], networkInfo['downTotal'], dumps(networkInfo['downPackets']), dumps(networkInfo['upPackets']), addtime)
                     sql.table('network').add('up,down,total_up,total_down,down_packets,up_packets,addtime', data)
                     sql.table('network').where("addtime<?", (deltime,)).delete()
+                    # logging.info(diskInfo)
                     if os.path.exists('/proc/diskstats') and disk_ios:
                         data = (diskInfo['read_count'], diskInfo['write_count'], diskInfo['read_bytes'],diskInfo['write_bytes'], diskInfo['read_time'], diskInfo['write_time'], addtime)
                         sql.table('diskio').add('read_count,write_count,read_bytes,write_bytes,read_time,write_time,addtime', data)
@@ -428,7 +428,7 @@ def GetMemUsed():
 
 def check502():
     try:
-        phpversions = ['53', '54', '55', '56','70', '71', '72', '73', '74', '80']
+        phpversions = public.get_php_versions()
         for version in phpversions:
             php_path = '/www/server/php/' + version + '/sbin/php-fpm'
             if not os.path.exists(php_path):

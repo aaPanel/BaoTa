@@ -150,8 +150,8 @@ if admin_path in admin_path_checks: admin_path = '/bt'
 def request_check():
     g.request_time = time.time()
     # 路由和URI长度过滤
-    if len(request.path) > 256: return abort(403)
-    if len(request.url) > 1024: return abort(403)
+    if len(request.path) > 256: return abort(404)
+    if len(request.url) > 1024: return abort(404)
 
     if request.path in ['/service_status']: return
 
@@ -159,8 +159,8 @@ def request_check():
     if request.path in ['/login', '/safe', '/hook', '/public', '/down', '/get_app_bind_status', '/check_bind']:
         pdata = request.form.to_dict()
         for k in pdata.keys():
-            if len(k) > 48: return abort(403)
-            if len(pdata[k]) > 256: return abort(403)
+            if len(k) > 48: return abort(404)
+            if len(pdata[k]) > 256: return abort(404)
     if session.get('debug') == 1: return
 
     if app.config['BASIC_AUTH_OPEN']:
@@ -1311,8 +1311,8 @@ def panel_public():
     if not public.get_error_num(num_key, 10):
         return public.returnMsg(False, '连续10次认证失败，禁止1小时')
     if not hasattr(get, 'name'): get.name = ''
-    if not hasattr(get, 'fun'): return abort(403)
-    if not public.path_safe_check("%s/%s" % (get.name, get.fun)): return abort(403)
+    if not hasattr(get, 'fun'): return abort(404)
+    if not public.path_safe_check("%s/%s" % (get.name, get.fun)): return abort(404)
     if get.fun in ['login_qrcode', 'is_scan_ok','set_login','static']:
         if get.fun == 'static':
             if not 'filename' in get: return abort(404)
@@ -1325,7 +1325,7 @@ def panel_public():
         # 检查是否验证过安全入口
         global admin_check_auth, admin_path, route_path, admin_path_file
         if admin_path != '/bt' and os.path.exists(admin_path_file) and not 'admin_auth' in session:
-            return abort(403)
+            return abort(404)
         #验证是否绑定了设备
         if not public.check_app('app'):return public.returnMsg(False,'未绑定用户!')
         import wxapp
@@ -1361,9 +1361,12 @@ def send_favicon():
 @app.route('/btwaf_error', methods=method_get)
 def btwaf_error():
     # 图标
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    get=get_input()
     p_path = os.path.join('/www/server/panel/plugin/', "btwaf")
     if not os.path.exists(p_path): 
-        if name == 'btwaf' and fun == 'index':
+        if get.name == 'btwaf' and get.fun == 'index':
             return  render_template('error3.html',data={}) 
     return  render_template('error3.html',data={})
 
