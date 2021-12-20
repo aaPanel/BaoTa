@@ -973,6 +973,8 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                 tmp2 = tmp1[len(tmp1)-1].split('_t_')
                 tmp['rname'] = file
                 tmp['dname'] = file.replace('_bt_', '/').split('_t_')[0]
+                if tmp['dname'].find('@') != -1:
+                    tmp['dname'] = "BTDB_" + tmp['dname'][5:].replace('@',"\\u").encode().decode("unicode_escape")
                 tmp['name'] = tmp2[0]
                 tmp['time'] = int(float(tmp2[1]))
                 if os.path.islink(fname):
@@ -1591,8 +1593,12 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                     continue
                 public.writeSpeed(None, 0, 0)
             self.site_path_safe(get)
-            public.WriteLog('TYPE_FILE', 'FILE_ALL_DEL')
-            return public.returnMsg(True, 'FILE_ALL_DEL')
+            if not isRecyle:
+                public.WriteLog('TYPE_FILE', 'FILE_ALL_DEL')
+                return public.returnMsg(True, 'FILE_ALL_DEL')
+            else:
+                public.WriteLog('TYPE_FILE', '已批量将{}个文件或目录移动到回收站'.format(i))
+                return public.returnMsg(True, '已批量将{}个文件或目录移动到回收站'.format(i))
 
     # 批量粘贴
     def BatchPaste(self, get):
