@@ -3472,7 +3472,7 @@ server
         access_log /dev/null;
     }'''
                 if "(gif|jpg|jpeg|png|bmp|swf)$" not in ng_conf:
-                    ng_conf = ng_conf.replace('access_log', oldconf + "\n\taccess_log")
+                    ng_conf = ng_conf.replace('access_log /www', oldconf + "\n\taccess_log /www")
                 public.writeFile(ng_file, ng_conf)
                 return
             sitenamelist = []
@@ -3491,7 +3491,7 @@ server
                 # rep = "#清理缓存规则[\w\s\~\/\(\)\.\*\{\}\;\$\n\#]+.{1,66}[\s\w\/\*\.\;]+include enable-php-"
                 rep = "#清理缓存规则[\w\s\~\/\(\)\.\*\{\}\;\$\n\#]+.*\n.*"
                 # ng_conf = re.sub(rep,'include enable-php-',ng_conf)
-                ng_conf = re.sub(rep,'include enable-php-',ng_conf)
+                ng_conf = re.sub(rep,'',ng_conf)
                 oldconf = '''location ~ .*\\.(gif|jpg|jpeg|png|bmp|swf)$
     {
         expires      30d;
@@ -3505,7 +3505,7 @@ server
         access_log /dev/null;
     }'''
                 if "(gif|jpg|jpeg|png|bmp|swf)$" not in ng_conf:
-                    ng_conf = ng_conf.replace('access_log', oldconf + "\n\taccess_log")
+                    ng_conf = ng_conf.replace('access_log /www', oldconf + "\n\taccess_log /www")
                 public.writeFile(ng_file, ng_conf)
 
     # 设置apache配置
