@@ -257,6 +257,16 @@ SetLink
         except Exception as ex:
             public.WriteLog("TYPE_DATABASE",'DATABASE_DEL_ERR',(get.name , str(ex)))
             return public.returnMsg(False,'DEL_ERROR')
+
+
+    def db_name_to_unicode(self,name):
+        '''
+            @name 中文数据库名转换为Unicode编码
+            @author hwliang<2021-12-20>
+            @param name<string> 数据库名
+            @return name<string> Unicode编码的数据库名
+        '''
+        return name.encode("unicode_escape").replace(b"\\u",b"@").decode()
     
     #删除数据库到回收站  
     def DeleteToRecycleBin(self,name):
@@ -270,11 +280,13 @@ SetLink
         panelMysql.panelMysql().execute("flush privileges")
         rPath = '/www/Recycle_bin/'
         data['rmtime'] = int(time.time())
-        rm_path = '{}/BTDB_{}_t_{}'.format(rPath,name,data['rmtime'])
+        u_name = self.db_name_to_unicode(name)
+        rm_path = '{}/BTDB_{}_t_{}'.format(rPath,u_name,data['rmtime'])
         if os.path.exists(rm_path): rm_path += '.1'
         rm_config_file = '{}/config.json'.format(rm_path)
         datadir = public.get_datadir()
-        db_path = '{}/{}'.format(datadir,name)
+
+        db_path = '{}/{}'.format(datadir,u_name)
         if not os.path.exists(db_path):
             return public.returnMsg(False,'指安数据库数据不存在!')
         
@@ -324,7 +336,8 @@ SetLink
         else:
             re_config_file = filename + '/config.json'
             data = json.loads(public.readFile(re_config_file))
-            db_path = "{}/{}".format(public.get_datadir(),data['name'])
+            u_name = self.db_name_to_unicode(data['name'])
+            db_path = "{}/{}".format(public.get_datadir(),u_name)
             if os.path.exists(db_path):
                 return public.returnMsg(False,'当前数据库中存在同名数据库，为保证数据安全，停止恢复!')
             _isdir = True
@@ -332,7 +345,7 @@ SetLink
         if public.M('databases').where("name=?",( data['name'],)).count():
             if not _isdir: os.remove(filename)
             return public.returnMsg(True,'RECYCLEDB')
-
+        
 
         if not _isdir:
             os.remove(filename)
@@ -703,7 +716,8 @@ SetLink
     def SetDatabaseAccess(self,get):
         name = get['name']
         db_name = public.M('databases').where('username=?',(name,)).getField('name')
-        access = get['access']
+        access = get['access'].strip()
+        if access in ['']: return public.returnMsg(False,'IP地址不能为空!')
         password = public.M('databases').where("username=?",(name,)).getField('password')
         mysql_obj = panelMysql.panelMysql()
         result = mysql_obj.query("show databases")
