@@ -2480,7 +2480,7 @@ cd %s
         attribute['is_dir'] = os.path.isdir(filename)   # 是否为目录
         attribute['is_link'] = os.path.islink(filename)  # 是否为链接文件
         if attribute['is_link']:
-            attribute['st_type'] = '链接文件'
+            attribute['st_type'] = '链接文件'   
         elif attribute['is_dir']:
             attribute['st_type'] = '文件夹'
         else:
