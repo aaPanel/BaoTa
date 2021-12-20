@@ -2504,4 +2504,7 @@ cd %s
         return adad.get_replace_logs(args)
 
 
-
+    # 历史文件
+    def get_files_info_less(self,args):
+        pass
+    
