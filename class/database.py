@@ -19,10 +19,13 @@ class database(datatool.datatools):
     def AddDatabase(self,get):
         try:
             data_name = get['name'].strip().lower()
+            if not data_name: return public.returnMsg(False,'数据库名称不能为空')
+
             if self.CheckRecycleBin(data_name): return public.returnMsg(False,'数据库['+data_name+']已在回收站，请从回收站恢复!')
             if len(data_name) > 16: return public.returnMsg(False, 'DATABASE_NAME_LEN')
             reg = r"^[\w\.-]+$"
             username = get.db_user.strip()
+            if not username: return public.returnMsg(False,'数据库用户名不能为空')
             if not re.match(reg, data_name): return public.returnMsg(False,'DATABASE_NAME_ERR_T')
             if not re.match(reg, username): return public.returnMsg(False,'数据库名称不合法!')
             if not hasattr(get,'db_user'): get.db_user = data_name
@@ -32,12 +35,14 @@ class database(datatool.datatools):
             if data_name in checks or len(data_name) < 1: return public.returnMsg(False,'数据库名称不合法!')
             data_pwd = get['password']
             if len(data_pwd)<1:
-                data_pwd = public.md5(str(time.time()))[0:8]
+                data_pwd = public.md5(str(time.time()))[0:16]
             
             sql = public.M('databases')
             if sql.where("name=? or username=?",(data_name,username)).count(): return public.returnMsg(False,'DATABASE_NAME_EXISTS')
             
             address = get['address'].strip()
+            if address in ['','ip']: return public.returnMsg(False,'访问权限为【指定IP】时，需要填写IP地址!')
+
             user = '是'
             password = data_pwd
             
