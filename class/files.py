@@ -1252,6 +1252,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                 get.path = get.filename
             data['historys'] = self.get_history(get.path)
             data['auto_save'] = self.get_auto_save(get.path)
+            data['st_mtime'] = str(int(os.stat(get.path).st_mtime))
             return data
         except Exception as ex:
             return public.returnMsg(False, u'文件编码不被兼容，无法正确读取文件!' + str(ex))
@@ -1272,6 +1273,10 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                 if get.data.find('#error_page 404/404.html;') == -1:
                     return public.returnMsg(False,'配置文件保存失败：<p style="color:red;">请勿修改SSL相关配置中注释的404规则</p><p>要修改404配置，找到以下配置位置：</p><pre>#ERROR-PAGE-START  错误页配置</pre>')
 
+        if 'st_mtime' in get:
+            st_mtime = str(int(os.stat(get.path).st_mtime))
+            if st_mtime != get['st_mtime']: return public.returnMsg(False,'保存失败，{}文件已发生改变，请刷新内容后重新修改.'.format(get.path))
+        
         his_path = '/www/backup/file_history/'
         if get.path.find(his_path) != -1:
             return public.returnMsg(False, '不能直接修改历史副本!')
