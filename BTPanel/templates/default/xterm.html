@@ -3,7 +3,7 @@
 {% block content %}
 <div class="main-content">
     <div class="container-fluid">
-        <div class="safe bgw mtb15 pd15" style="height: 100%;">
+        <div class="safe bgw mtb15 pd15 radius4" style="height: 100%;">
             <link rel="stylesheet" href="/static/css/xterm.css" />
             <div class="quick_links">
                 <div class="quick_links_title"><span class="glyphicon glyphicon-lock" aria-hidden="true"></span>SSH://</div>
@@ -117,8 +117,10 @@
 </script>
 {% endblock %}
 {% block scripts %}
+{{ super() }} 
 <script type="text/javascript" src="/static/js/jquery.dragsort-0.5.2.min.js"></script>
 <script type="text/javascript" src="/static/js/clipboard.min.js"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/vue/polyfill.min.js"></script>
 <script type="text/javascript" src="/static/js/xterm.js?version={{g['version']}}"></script>
 <script type="text/javascript" src="/static/js/term.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
 <script type="text/javascript">

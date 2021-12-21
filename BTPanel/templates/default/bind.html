@@ -29,6 +29,7 @@
   </div>
 {% endblock %}
 {% block scripts %}
+{{ super() }} 
 <script type="text/javascript">
   new BindAccount().init();
 </script>

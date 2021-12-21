@@ -8,7 +8,7 @@
  * @LastEditors: chudong
  * @LastEditTime: 2021-11-04 17:12:51
  */
-function UploadFile() {
+function UploadFile () {
   this.init = false; // 是否初始化
   this.compatible = true; // 是否兼容当前系统，默认全部兼容
   this.uploadElement = null; // 更新视图
@@ -25,7 +25,7 @@ function UploadFile() {
 var uploadListhtml = '<ul class="dropUpLoadFileHead " style="padding-right:17px;"><li class="fileTitle"><span class="filename">文件名</span><span class="filesize">文件大小</span><span class="fileStatus">上传状态</span></li></ul><ul class="dropUpLoadFile list-list"></ul>';
 
 // 是否显示内容
-function is_show(el, show) {
+function is_show (el, show) {
   el.style.display = show ? 'block' : 'none';
 }
 
@@ -33,7 +33,7 @@ UploadFile.prototype = {
   /**
    * @description 创建节点
   */
-  createEl: function createEl(name) {
+  createEl: function createEl (name) {
     return document.createElement(name);
   },
 
@@ -41,14 +41,15 @@ UploadFile.prototype = {
   /**
    * @description 获取节点
   */
-  queryEl: function queryEl(el) {
+  queryEl: function queryEl (el) {
+    4
     return document.querySelector(el);
   },
 
   /**
    * @description 获取所有节点
   */
-  queryElAll: function queryElAll(el) {
+  queryElAll: function queryElAll (el) {
     return document.querySelectorAll(el);
   },
 
@@ -56,7 +57,7 @@ UploadFile.prototype = {
   /**
    * @description 绑定事件
   */
-  bind: function bind(el, type, fn) {
+  bind: function bind (el, type, fn) {
     if (typeof el === 'string') el = this.queryElAll(el);
     if (typeof el.length !== 'number') el = [el];
     if (typeof type === "function") fn = type, type = "click";
@@ -75,7 +76,7 @@ UploadFile.prototype = {
   /**
    * @description 初始化数据
   */
-  init_data: function init_data() {
+  init_data: function init_data () {
 
     this.uploadStatus = 0; // 上传状态 0:等待上传  1:上传成功  2:上传中
     this.uploadLimitSize = 1024 * 1024 * 2; // 上传限制字节
@@ -114,7 +115,7 @@ UploadFile.prototype = {
   /**
    * @description 视图初始化
    */
-  initialize_view: function initialize_view() {
+  initialize_view: function initialize_view () {
     var title = this.createEl('span');
     this.uploadElement = this.createEl('div');
     this.uploadElement.setAttribute('style', 'position:fixed;top:0;left:0;right:0;bottom:0; background:rgba(255,255,255,0.6);border:3px #ccc dashed;z-index:99999999;color:#999;font-size:40px;text-align:center;overflow:hidden;');
@@ -130,7 +131,7 @@ UploadFile.prototype = {
   /**
    * @description 绑定事件
    */
-  event_bind: function event_bind() {
+  event_bind: function event_bind () {
     var _this = this;
 
     // 进入目标
@@ -167,7 +168,7 @@ UploadFile.prototype = {
   /**
    * @description 文件拖拽悬浮状态
    */
-  file_drag_hover: function file_drag_hover(event) {
+  file_drag_hover: function file_drag_hover (event) {
     if (event.dataTransfer.items[0].kind == 'string') return false;
     is_show(this.uploadElement, !(event.type === 'dragleave' || event.type === 'drop'));
     event.preventDefault();
@@ -184,24 +185,24 @@ UploadFile.prototype = {
     if (typeof list === 'undefined') list = [];
     if (this.layer) return false;
     var layerMax = null,
-        layerShade = null,
-        uploadPath = bt.get_cookie('Path');
+      layerShade = null,
+      uploadPath = bt.get_cookie('Path');
     this.layer = layer.open({
-        type: 1,
-        closeBtn: 1,
-        maxmin: true,
-        area: ['650px', '605px'],
-        title: '上传文件到【' + uploadPath + '】--- 支持断点续传',
-        skin: 'file_dir_uploads',
-        content: '<div class="flex pd15" style="flex-direction: column;-webkit-user-select:none;-moz-user-select:none;">\n                  <div class="upload_btn_groud">\n                    <div class="btn-group">\n                      <button type="button" class="btn btn-primary btn-sm upload_file_btn">上传文件</button>\n                      <button type="button" class="btn btn-primary  btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">\n                        <span class="caret"></span><span class="sr-only">Toggle Dropdown</span>\n                      </button>\n                      <ul class="dropdown-menu">\n                        <li><a href="#" data-type="file">上传文件</a></li>\n                        <li><a href="#" data-type="dir">上传目录</a></li>\n                      </ul>\n                    </div>\n                  <div class="pull-right"><button class="btn btn-sm btn-default empty-record">清空列表</button></div>\n                  <div class="file_upload_info hide">\n                    <span>总进度&nbsp;<i class="uploadProgress"></i>，正在上传&nbsp;<i class="uploadNumber"></i>,</span>\n                    <span class="hide">上传失败&nbsp;<i class="uploadError"></i></span>\n                    <span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span>\n                    <span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span>\n                    <i></i>\n                  </div>\n                </div>\n                <div class="upload_file_body ' + (list.length > 0 ? '' : 'active') + '">' + (list.length > 0 ? uploadListhtml : '<span>请将需要上传的文件拖到此处</span>') + '</div>\n              </div>\n              <div class="upload_file_gourp">\n                <button class="btn btn-defalut btn-sm cancelUpload" style="margin-right:15px">取消上传</button>\n                <button class="btn btn-success btn-sm startUpload">开始上传</button>\n              </div>',
-        success: function success(layers, indexs) {
+      type: 1,
+      closeBtn: 1,
+      maxmin: true,
+      area: ['650px', '605px'],
+      title: '上传文件到【' + uploadPath + '】--- 支持断点续传',
+      skin: 'file_dir_uploads',
+      content: '<div class="flex pd15" style="flex-direction: column;-webkit-user-select:none;-moz-user-select:none;">\n                  <div class="upload_btn_groud">\n                    <div class="btn-group">\n                      <button type="button" class="btn btn-primary btn-sm upload_file_btn">上传文件</button>\n                      <button type="button" class="btn btn-primary  btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">\n                        <span class="caret"></span><span class="sr-only">Toggle Dropdown</span>\n                      </button>\n                      <ul class="dropdown-menu">\n                        <li><a href="#" data-type="file">上传文件</a></li>\n                        <li><a href="#" data-type="dir">上传目录</a></li>\n                      </ul>\n                    </div>\n                  <div class="pull-right"><button class="btn btn-sm btn-default empty-record">清空列表</button></div>\n                  <div class="file_upload_info hide">\n                    <span>总进度&nbsp;<i class="uploadProgress"></i>，正在上传&nbsp;<i class="uploadNumber"></i>,</span>\n                    <span class="hide">上传失败&nbsp;<i class="uploadError"></i></span>\n                    <span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span>\n                    <span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span>\n                    <i></i>\n                  </div>\n                </div>\n                <div class="upload_file_body ' + (list.length > 0 ? '' : 'active') + '">' + (list.length > 0 ? uploadListhtml : '<span>请将需要上传的文件拖到此处</span>') + '</div>\n              </div>\n              <div class="upload_file_gourp">\n                <button class="btn btn-defalut btn-sm cancelUpload" style="margin-right:15px">取消上传</button>\n                <button class="btn btn-success btn-sm startUpload">开始上传</button>\n              </div>',
+      success: function success (layers, indexs) {
         layerMax = _this2.queryEl('.file_dir_uploads').querySelector('.layui-layer-max');
         layerShade = document.querySelector('.layui-layer-shade');
         layerMax.style.display = 'none';
         var cancelUpload = _this2.queryEl('.cancelUpload'),
-            startUpload = _this2.queryEl('.startUpload'),
-            uploadFileBtn = _this2.queryEl('.upload_file_btn'),
-            dropdownItem = _this2.queryElAll('.dropdown-menu li');
+          startUpload = _this2.queryEl('.startUpload'),
+          uploadFileBtn = _this2.queryEl('.upload_file_btn'),
+          dropdownItem = _this2.queryElAll('.dropdown-menu li');
         // 下拉选项
         _this2.bind(dropdownItem, function (ev) {
           var type = ev.target.dataset.type;
@@ -212,7 +213,7 @@ UploadFile.prototype = {
           }
           _this2.queryEl('.upload_file_input').click();
         });
-        
+
         _this2.bind('.empty-record', function (ev) {
           var $li = _this2.queryElAll('.dropUpLoadFile li');
           if ($li.length <= 0) {
@@ -233,10 +234,10 @@ UploadFile.prototype = {
             });
           }
         });
-        
-        function create_upload_input() {
+
+        function create_upload_input () {
           // 选择文件或文件夹
-          let uploadFileInput = _this2.createEl('input'),uploadBtnGroud = _this2.queryEl('.upload_btn_groud');
+          var uploadFileInput = _this2.createEl('input'), uploadBtnGroud = _this2.queryEl('.upload_btn_groud');
           uploadFileInput.setAttribute('type', 'file');
           uploadFileInput.setAttribute('multiple', 'multiple');
           uploadFileInput.style.display = 'none';
@@ -256,39 +257,38 @@ UploadFile.prototype = {
         }
         create_upload_input();
 
-        
+
         // 点击上传文件按钮
         _this2.bind(uploadFileBtn, function (ev) {
           _this2.queryEl('.upload_file_input').click();
         });
-        
+
         // 关闭文件视图
         _this2.bind(cancelUpload, function (ev) {
           _this2.cancel_upload(ev);
         });
         // 开始上传
         _this2.bind(startUpload, function () {
-          if(_this2.fileList.length === 0){
+          if (_this2.fileList.length === 0) {
             layer.msg('请选择需要上传的文件')
             return false
           }
           _this2.upload_file();
         });
-        },
-        min: function() {
-            layerMax.style.display = '';
-            layerShade.style.display = 'none';
-        },
-        restore: function() {
-            layerMax.style.display = 'none';
-            layerShade.style.display = '';
-        },
-        cancel:function(){
-            _this2.cancel_upload();
-            return false
-        },
-      end: function() {
-        
+      },
+      min: function () {
+        layerMax.style.display = '';
+        layerShade.style.display = 'none';
+      },
+      restore: function () {
+        layerMax.style.display = 'none';
+        layerShade.style.display = '';
+      },
+      cancel: function () {
+        _this2.cancel_upload()
+      },
+      end: function () {
+        _this2.init_data()
       }
     });
   },
@@ -297,7 +297,7 @@ UploadFile.prototype = {
   /**
    * @description 获取实时时间
    */
-  get_time_real: function get_time_real() {
+  get_time_real: function get_time_real () {
     return new Date().getTime();
   },
 
@@ -332,7 +332,7 @@ UploadFile.prototype = {
     bt.send('upload_file_exists', 'files/upload_file_exists', data, function (res) {
       if (res.status) {
         var is_open = _this.is_open_cover_layer;
-        if (is_open === 0) { 
+        if (is_open === 0) {
           bt.open({
             type: 1,
             area: '400px',
@@ -389,7 +389,7 @@ UploadFile.prototype = {
   upload_file: function (fileStart, index) {
     var _this3 = this;
     this.uploadPath = bt.get_cookie('Path');
-    
+
     // 开始上传
     if (fileStart == undefined && this.uploadList.length == 0) {
       fileStart = 0, index = 0;
@@ -406,18 +406,18 @@ UploadFile.prototype = {
       this.uploadTime.endTime = this.get_time_real(); // 设置上传开始时间
       this.set_upload_view();
       this.init_data();
-      bt_file.reader_file_list({path:this.uploadPath})
+      bt_file.reader_file_list({ path: this.uploadPath })
       return false;
     }
 
     // 创建文件对象和切割文件
     var item = this.fileList[index],
-    fileEnd = '';
+      fileEnd = '';
     if (item == undefined) return false;
-    
+
     // 检测文件是否存在
     var f_path = this.uploadPath + item.path + '/';
-    f_path = f_path.replace(/\/\//g,'/');
+    f_path = f_path.replace(/\/\//g, '/');
     this.upload_file_exists({
       name: item.name,
       path: f_path,
@@ -440,8 +440,8 @@ UploadFile.prototype = {
 
         // 获取上传速度
         var speed = _this3.get_update_speed(),
-        // 获取上传速度
-        limitSize = _this3.uploadLimitSize;
+          // 获取上传速度
+          limitSize = _this3.uploadLimitSize;
         // 判断速度是否操作阈值，超过阀值后，采用倍速的方案，最大只能支持4，8MB
         var maxDouble = Math.floor(speed / _this3.uploadLimitSize);
         if (maxDouble) limitSize = (maxDouble > 4 ? 4 : maxDouble) * limitSize;
@@ -475,7 +475,7 @@ UploadFile.prototype = {
           async: true,
           processData: false,
           contentType: false,
-          success: function success(rdata) {
+          success: function success (rdata) {
             // 判断是否为数字
             if (typeof rdata === "number") {
               _this3.set_upload_view(index, $.extend(item, {
@@ -504,19 +504,18 @@ UploadFile.prototype = {
                   upload: 1,
                   upload_size: item.size
                 }));
-
-                _this3.upload_file(0, ++index);
               } else {
                 _this3.set_upload_view(index, $.extend(item, {
                   upload: -1,
                   errorMsg: rdata.msg
                 }));
-                _this3.uploadError ++;
+                _this3.uploadError++;
               }
+              _this3.upload_file(0, ++index);
             }
             // 实时更新文件上传状态
           },
-          error: function(e) {
+          error: function (e) {
             if (_this3.fileList[index].req_error === undefined) _this3.fileList[index].req_error = 1;
             if (_this3.fileList[index].req_error > 2) {
               _this3.set_upload_view(index, $.extend(_this3.fileList[index], {
@@ -539,11 +538,11 @@ UploadFile.prototype = {
   /**
    * @description 设置上传视图
    */
-  set_upload_view: function set_upload_view(index, config) {
+  set_upload_view: function set_upload_view (index, config) {
     if (typeof index === 'undefined') {
       var file_upload_info = this.queryEl('.file_upload_info'),
-          time = this.get_time_real(),
-          s_peed = this.to_size(this.uploadInfo.uploadedSize / ((time - this.uploadTime.startTime) / 1000));
+        time = this.get_time_real(),
+        s_peed = this.to_size(this.uploadInfo.uploadedSize / ((time - this.uploadTime.startTime) / 1000));
       file_upload_info.innerHTML = '<span>上传成功 ' + this.uploadList.length + '个文件,' + (this.uploadError ? '上传失败' + this.uploadError + '个文件，' : '') + '耗时' + this.diff_time(this.uploadTime.startTime, time) + ',平均速度 ' + s_peed + '/s</span><i class="ico-tips-close"></i>';
       this.bind(file_upload_info.querySelector('.ico-tips-close'), function (ev) {
         var parent = this.parentNode.parentNode;
@@ -554,39 +553,39 @@ UploadFile.prototype = {
       return false;
     }
     try {
-        var item = document.querySelectorAll('.dropUpLoadFile li')[index];
-        var file_info = this.queryEl('.file_upload_info');
-    
-        if (file_info.querySelectorAll('.uploadProgress').length === 0) {
-          file_info.innerHTML = '<span>\n      总进度&nbsp;<i class="uploadProgress"></i>，\n      正在上传&nbsp;<i class="uploadNumber"></i>，</span>\n      <span style="display:none">上传失败&nbsp;<i class="uploadError"></i></span><span>\n      上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span><span>\n      预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span><i></i>';
-        }
-    
-        var file_info_parent = file_info.parentElement;
-        file_info_parent.querySelector('.btn-group').classList.add('hide');
-        file_info_parent.querySelector('.file_upload_info').classList.remove('hide');
-    
-        var file_info_error = file_info.querySelector('.uploadError');
-        file_info_error.innerText = '(' + this.uploadError + '份)';
-        if (this.uploadError > 0) file_info_error.parentElement.style.display = 'block';
-    
-        if (config.upload === 1 || config.upload === -1) {
-          this.fileList[index].is_upload = true;
-          this.uploadList.push(this.fileList[index]);
-          item.querySelector('.fileLoading').setAttribute('style', 'width:100%;opacity:.5;background:' + (config.upload == -1 ? '#ffadad' : '#20a53a21'));
-          item.querySelector('.filesize').innerText = config.size;
-          item.querySelector('.fileStatus').innerHTML = this.is_upload_status(config.upload, config.upload === 1 ? '(耗时:' + this.diff_time(this.uploadTime.startTime, this.uploadTime.endTime) + ')' : config.errorMsg);
-          var dropUpLoadFile = this.queryEl('.dropUpLoadFile');
-          dropUpLoadFile.scrollTop += 45;
-        } else {
-          item.querySelector('.fileLoading').setAttribute('style', 'width:' + config.percent);
-          item.querySelector('.filesize').innerText = config.upload_size + '/' + config.size;
-          item.querySelector('.fileStatus').innerHTML = this.is_upload_status(config.upload, '(' + config.percent + ')');
-        }
-    
-        file_info.querySelector('.uploadNumber').innerText = '(' + this.uploadList.length + '/' + this.fileList.length + ')';
-        file_info.querySelector('.uploadProgress').innerText = (this.uploadInfo.uploadedSize / this.fileTotalSize * 100).toFixed(2) + '%';
+      var item = document.querySelectorAll('.dropUpLoadFile li')[index];
+      var file_info = this.queryEl('.file_upload_info');
+
+      if (file_info.querySelectorAll('.uploadProgress').length === 0) {
+        file_info.innerHTML = '<span>\n      总进度&nbsp;<i class="uploadProgress"></i>，\n      正在上传&nbsp;<i class="uploadNumber"></i>，</span>\n      <span style="display:none">上传失败&nbsp;<i class="uploadError"></i></span><span>\n      上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span><span>\n      预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span><i></i>';
+      }
+
+      var file_info_parent = file_info.parentElement;
+      file_info_parent.querySelector('.btn-group').classList.add('hide');
+      file_info_parent.querySelector('.file_upload_info').classList.remove('hide');
+
+      var file_info_error = file_info.querySelector('.uploadError');
+      file_info_error.innerText = '(' + this.uploadError + '份)';
+      if (this.uploadError > 0) file_info_error.parentElement.style.display = 'block';
+
+      if (config.upload === 1 || config.upload === -1) {
+        this.fileList[index].is_upload = true;
+        this.uploadList.push(this.fileList[index]);
+        item.querySelector('.fileLoading').setAttribute('style', 'width:100%;opacity:.5;background:' + (config.upload == -1 ? '#ffadad' : '#20a53a21'));
+        item.querySelector('.filesize').innerText = config.size;
+        item.querySelector('.fileStatus').innerHTML = this.is_upload_status(config.upload, config.upload === 1 ? '(耗时:' + this.diff_time(this.uploadTime.startTime, this.uploadTime.endTime) + ')' : config.errorMsg);
+        var dropUpLoadFile = this.queryEl('.dropUpLoadFile');
+        dropUpLoadFile.scrollTop += 45;
+      } else {
+        item.querySelector('.fileLoading').setAttribute('style', 'width:' + config.percent);
+        item.querySelector('.filesize').innerText = config.upload_size + '/' + config.size;
+        item.querySelector('.fileStatus').innerHTML = this.is_upload_status(config.upload, '(' + config.percent + ')');
+      }
+
+      file_info.querySelector('.uploadNumber').innerText = '(' + this.uploadList.length + '/' + this.fileList.length + ')';
+      file_info.querySelector('.uploadProgress').innerText = (this.uploadInfo.uploadedSize / this.fileTotalSize * 100).toFixed(2) + '%';
     } catch (e) {
-        console.log(e)
+      console.log(e)
     }
 
   },
@@ -598,7 +597,7 @@ UploadFile.prototype = {
    * @param {*} val 
    * @returns 
    */
-  is_upload_status: function is_upload_status(status, val) {
+  is_upload_status: function is_upload_status (status, val) {
     if (val === undefined) val = '';
     switch (status) {
       case -1:
@@ -617,7 +616,7 @@ UploadFile.prototype = {
   /**
    * @description 取10秒内上传平均值
    */
-  get_update_speed: function get_update_speed() {
+  get_update_speed: function get_update_speed () {
     var sum = 0;
     for (var i = 0; i < this.uploadCycleSize.length; i++) {
       sum += this.uploadCycleSize[i];
@@ -628,7 +627,7 @@ UploadFile.prototype = {
 
 
   // 渲染上传速度
-  reander_timer_speed: function reander_timer_speed() {
+  reander_timer_speed: function reander_timer_speed () {
     var done_time = new Date().getTime();
     if (done_time - this.speedLastTime > 1000) {
       var s_time = (this.uploadInfo.endTime - this.uploadInfo.startTime) / 1000;
@@ -640,7 +639,7 @@ UploadFile.prototype = {
       this.speedLastTime = done_time;
     }
   },
-  to_size: function to_size(a) {
+  to_size: function to_size (a) {
     var d = [" B", " KB", " MB", " GB", " TB", " PB"];
     var e = 1024;
     for (var b = 0; b < d.length; b += 1) {
@@ -651,7 +650,7 @@ UploadFile.prototype = {
       a /= e;
     }
   },
-  time: function time(date) {
+  time: function time (date) {
     var hours = Math.floor(date / (60 * 60 * 1000));
     var minutes = Math.floor(date / (60 * 1000));
     var seconds = parseInt(date % (60 * 1000) / 1000);
@@ -664,14 +663,14 @@ UploadFile.prototype = {
     }
     return result;
   },
-  diff_time: function diff_time(start_date, end_date) {
+  diff_time: function diff_time (start_date, end_date) {
     if (typeof start_date !== "number") start_date = start_date.getTime();
     if (typeof end_date !== "number") end_date = end_date.getTime();
     var diff = end_date - start_date,
-        minutes = Math.floor(diff / (60 * 1000)),
-        leave3 = diff % (60 * 1000),
-        seconds = leave3 / 1000,
-        result = seconds.toFixed(minutes > 0 ? 0 : 2) + '秒';
+      minutes = Math.floor(diff / (60 * 1000)),
+      leave3 = diff % (60 * 1000),
+      seconds = leave3 / 1000,
+      result = seconds.toFixed(minutes > 0 ? 0 : 2) + '秒';
     if (minutes > 0) {
       result = minutes + "分" + seconds.toFixed(0) + '秒';
     }
@@ -681,7 +680,7 @@ UploadFile.prototype = {
   /**
    * @description 取消上传
    */
-  cancel_upload: function cancel_upload() {
+  cancel_upload: function cancel_upload () {
     var _this4 = this;
     if (this.uploadStatus === 2) {
       layer.confirm('是否取消上传当前列表的文件，若取消上传，已上传的文件，需用户手动删除，是否继续？', {
@@ -702,7 +701,7 @@ UploadFile.prototype = {
   /**
    * @description 关闭上传弹窗
    */
-  cancel_upload_layer: function cancel_upload_layer() {
+  cancel_upload_layer: function cancel_upload_layer () {
     layer.close(this.layer);
     this.layer = false;
     this.init_data();
@@ -713,12 +712,12 @@ UploadFile.prototype = {
    * @description 渲染列表
    * 
    */
-  render_file_list: function render_file_list(list) {
+  render_file_list: function render_file_list (list) {
     var _this5 = this;
     var html = '';
     for (var i = 0; i < list.length; i++) {
-      var item = list[i],name = ((item.path || '/') +'/'+ item.name).replace(/\/\//g, '/');
-      html += '<li><div class="fileItem"><span class="filename" title="文件名:' + item.name + '\r文件类型:' + item.file.type + '\r文件大小:' + item.size+ '\r文件路径:' + name + '"><i class="ico ico-' + item.type + ' ico-file"></i><span>' + name  + '</span></span>\n        <span class="filesize" title="'+ item.size +'">' + item.size + '</span>\n        <span class="fileStatus"><span class="upload_info upload_primary">等待上传</span><a class="btlink cancel-btn"><span class="glyphicon glyphicon-remove" title="取消上传"></span></a></span>\n        <div class="fileLoading"></div>\n      </div></li>';
+      var item = list[i], name = ((item.path || '/') + '/' + item.name).replace(/\/\//g, '/');
+      html += '<li><div class="fileItem"><span class="filename" title="文件名:' + item.name + '\r文件类型:' + item.file.type + '\r文件大小:' + item.size + '\r文件路径:' + name + '"><i class="ico ico-' + item.type + ' ico-file"></i><span>' + name + '</span></span>\n        <span class="filesize" title="' + item.size + '">' + item.size + '</span>\n        <span class="fileStatus"><span class="upload_info upload_primary">等待上传</span><a class="btlink cancel-btn"><span class="glyphicon glyphicon-remove" title="取消上传"></span></a></span>\n        <div class="fileLoading"></div>\n      </div></li>';
       this.uploadInfo.fileSize += item.file.size;
     }
     var upload_file_body = this.queryEl('.upload_file_body');
@@ -747,19 +746,20 @@ UploadFile.prototype = {
    * @description 文件上传限制
    * @param {Object} e 文件对象
    */
-  file_upload_limit: function file_upload_limit(e, path) {
+  file_upload_limit: function file_upload_limit (e, path) {
     // console.log(path,e);
     var extName = e.name.split('.');
     path = path || e.webkitRelativePath
     var paths = path.split('/');
-    path = ('/' + paths.slice(0, paths.length - 1).join('/')).replace('//','/');
+    path = ('/' + paths.slice(0, paths.length - 1).join('/')).replace('//', '/');
     this.fileList.push({
       file: e,
       path: path,
       name: e.name,
       size: bt.format_size(e.size),
       type: extName.length > 1 ? extName[extName.length - 1] : 'txt',
-      status: 0 });
+      status: 0
+    });
     this.fileTotalNumber++;
     this.fileTotalSize += e.size;
     if (this.fileTotalNumber >= this.limit.number) {
@@ -778,7 +778,7 @@ UploadFile.prototype = {
    * @description 文件夹文件内容递归
    * @param {object} item 文件对象 
    */
-  traverse_file_tree: function traverse_file_tree(item) {
+  traverse_file_tree: function traverse_file_tree (item) {
     var _this6 = this;
 
     var path = item.fullPath || '';
@@ -805,11 +805,11 @@ UploadFile.prototype = {
           _this6.traverse_file_tree(e);
         });
       });
-      setTimeout(function(){
-        if(_this6.fileList.length === 0){
+      setTimeout(function () {
+        if (_this6.fileList.length === 0) {
           layer.msg('拖拽上传文件夹内容为空')
         }
-      },500)
+      }, 500)
     }
   },
 
@@ -818,7 +818,7 @@ UploadFile.prototype = {
    * @description 文件选择处理程序
    * @param {object} ev 事件
    */
-  file_select_handler: function file_select_handler(ev) {
+  file_select_handler: function file_select_handler (ev) {
     var _this7 = this;
     this.file_drag_hover(ev);
     this.load = bt.load('正在获取文件信息，请稍后...');

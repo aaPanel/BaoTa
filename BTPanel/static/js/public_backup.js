@@ -16,7 +16,7 @@ var bt = {
     for (var i = 0; i < domainList.length; i++) {
       var item = domainList[i];
       if (!bt.check_domain(item)) {
-        bt.msg({ status: false, msg: '第+' + (i + 1) + '行[ ' + item + ' ]域名格式错误' });
+        bt.msg({ status: false, msg: '第' + (i + 1) + '行【' + item + '】域名格式错误' });
         return false;
       }
     }
@@ -1038,7 +1038,7 @@ var bt = {
                     }
                   }
                 })
-                console.log(data)
+                // console.log(data)
                 _obj.callback(data, load, function (rdata) {
                   if (_callback) _callback(rdata);
                 });
@@ -3574,6 +3574,12 @@ bt.control = {
         symbol: 'circle',
         data: item.data
       }
+
+      // LinearGradient在ie上是存在问题的
+      if (ie_version >= 10) {
+        series.areaStyle = {};
+      }
+
       option.series.push(series);
     }
     return option;
@@ -6787,7 +6793,7 @@ bt.site = {
     if (data.path) {
       //iis导入证书
     } else {
-      console.log(data)
+      // console.log(data)
       var loadT = bt.load(lan.site.saving_txt);
       bt.send('SetSSL', 'site/SetSSL', {
         type: 1,

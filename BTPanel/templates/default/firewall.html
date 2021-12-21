@@ -74,18 +74,18 @@
 <div class="main-content">
     <div class="container-fluid" style="padding-bottom: 50px;">
         <div class="pos-box bgw mtb15">
-            <div class="position f14 c9 pull-left">
-                <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
-            </div>
-            <div class="search pull-right">
-                <form target="hid" onsubmit='firewall.get_log_list(1,$("#SearchValue").prop("value"))'>
-                    <input type="text" id="SearchValue" class="ser-text pull-left" placeholder="{{data['lan']['SEARCH']}}" />
-                    <button type="button" class="ser-sub pull-left" onclick='firewall.get_log_list(1,$("#SearchValue").prop("value"))'></button>
-                </form>
-                <iframe name='hid' id="hid" style="display:none"></iframe>
-            </div>
+          <div class="tab-list">
+              <div class="tabs-item active">{{data['lan']['H2']}}</div>
+	            <div class="search pull-right">
+	                <form target="hid" onsubmit='firewall.get_log_list(1,$("#SearchValue").prop("value"))'>
+	                    <input type="text" id="SearchValue" class="ser-text pull-left" placeholder="{{data['lan']['SEARCH']}}" />
+	                    <button type="button" class="ser-sub pull-left" onclick='firewall.get_log_list(1,$("#SearchValue").prop("value"))'></button>
+	                </form>
+	                <iframe name='hid' id="hid" style="display:none"></iframe>
+	            </div>
+          </div>
         </div>
-        <div class="safe container-fluid bgw mtb15 pd15">
+        <div class="safe container-fluid bgw mtb15 pd15 radius4">
             <div class="mr50 pull-left">
                 <form>
                     <div class="ss-text pull-left">
@@ -119,7 +119,7 @@
                 <button class="btn btn-default btn-sm" onclick="firewall.clear_logs_files();">{{data['lan']['BTN5']}}</button>
             </div>
         </div>
-        <div class="white-black-ip bgw mtb15">
+        <div class="white-black-ip bgw mtb15 radius4">
             <div class="black-ip">
                 <div class="def-log">
                     <div class="title c6 plr15">
@@ -144,7 +144,7 @@
                 </div>
             </div>
         </div>
-        <div class="white-black-ip bgw mtb15">
+        <div class="white-black-ip bgw mtb15 radius4">
             <div class="black-ip">
                 <div class="def-log">
                     <div class="title c6 plr15">
@@ -167,547 +167,546 @@
     </div>
 </div>
 {% endblock %}
-
 {% block scripts %}
-<script type="text/javascript">
-	
-	var firewall = {
-        ssl_scanning_list: [], //扫描列表		
-		get_init:function(){			
-			firewall.flush_init();
-			firewall.get_list();
-			firewall.get_log_list();
-			firewall.get_logs_size();			
-			$('.sshswitch').click(function(){
-				var status = $("#sshswitch").prop("checked")==true?1:0;
-				bt.firewall.set_mstsc_status(status,function(rdata){
-					if(rdata===-1){
-						if(status){
-							$("#sshswitch").prop("checked","checked")
-						}else{
-							$("#sshswitch").removeAttr('checked');
-						}
-					}else{						
-						bt.msg(rdata);
-						firewall.flush_init();
-					}
-				})
-			})
-			$('.noping').click(function(){
-				var status = $("#noping").prop("checked")==true?1:0;
-				bt.firewall.ping(status,function(rdata){
-					if(rdata===-1){
-						if(status){
-							$("#noping").prop("checked","checked")
-						}else{
-							$("#noping").removeAttr('checked');
-						}
-					}else{						
-						bt.msg(rdata);
-						firewall.flush_init();
-					}
-				})
-			})			
-			$("#firewalldType").change(function(){
-				var type = $(this).val();
-				var w = '120px';
-				var p = lan.firewall.port;
-				var t = lan.firewall.accept;
-				var m = lan.firewall.port_ps;
-				if(type == 'address'){
-					w = '150px';
-					p = lan.firewall.ip;
-					t = lan.firewall.drop;
-					m = lan.firewall.ip_ps;
-				}
-				$("#AcceptPort").css("width",w);
-				$("#AcceptPort").attr('placeholder',p);
-				$("#toAccept").html(t);
-				$("#f-ps").html(m);			
-			});
-		},
-		flush_init:function(){
-			bt.firewall.get_ssh_info(function(rdata){				
-				if(!rdata.status){
-					$("#mstscSubmit").attr('disabled','disabled')
-					$("#mstscPort").attr('disabled','disabled')
-					$('#sshswitch').removeAttr('checked');
-				}
-				else{
-					$("#mstscSubmit").removeAttr('disabled')
-					$("#mstscPort").removeAttr('disabled')
-					$('#sshswitch').attr('checked','checked');
-				}
-				if(rdata.ping){
-					$('#noping').removeAttr('checked');
-				}else{
-					$('#noping').attr('checked','checked');
-				}
-				$("#mstscPort").val(rdata.port);
-			})
-		},
-        open_sshsafe_config_view:function(){
-            var _this = this;
-            layer.open({
-                type: 1,
-                title: "SSH安全管理",
-                area: '640px',
-                closeBtn: 2,
-                shadeClose: false,
-                content:'<div class="bt-form">\
-                <div class="bt-w-main">\
-                    <div class="bt-w-menu"><p class="bgw">密钥管理</p><p>登录告警</p><p>登录日志</p></div>\
-                    <div class="bt-w-con pd15 divtable">\
-                        <div class="bt-box">\
-                            <div class="bt-form">\
-                                <div class="line">\
-                                    <span class="tname">SSH密码登录</span>\
-                                    <div class="info-r c4">\
-                                        <input class="btswitch btswitch-ios" id="ssh_paw" type="checkbox"><label class="btswitch-btn" for="ssh_paw" title="SSH密码登录"style="display: inline-block;"></label>\
-                                        <div style="margin-left:20px;display: inline-block;"><span class="tname">SSH密钥登录</span>\
-                                            <input class="btswitch btswitch-ios" id="ssh_key" type="checkbox">\
-                                            <label class="btswitch-btn" for="ssh_key" title="SSH密钥登录"style="margin: 5px 0 0 90px;"></label>\
-                                        </div>\
-                                         <div style="margin-left:20px;display: inline-block;"><span class="tname" style="width:120px;">是否允许root登录</span>\
-                                            <input class="btswitch btswitch-ios" id="set_root" type="checkbox">\
-                                            <label class="btswitch-btn" for="set_root" title="允许root登录"style="margin: 5px 0 0 110px;"></label>\
-                                        </div>\
-                                    </div>\
-                                </div>\
-                                <div class="line">\
-                                    <span class="tname">SSH密钥</span>\
-                                    <div class="info-r c4">\
-                                        <textarea id="ssh_text_key" class="bt-input-text mr20" style="height:180px;width:330px"></textarea>\
-                                    </div>\
-                                </div>\
-                                <div style="margin-left:100px" class="btn-sshkey-group">\
-                                    <button type="button" class="btn btn-success btn-sm btn-copy-sshkey">复制</button>\
-                                    <button type="button" class="btn btn-success btn-sm btn-download-sshkey">下载</button>\
-                                </div>\
-                            </div>\
-                        </div>\
-                        <div class="bt-box" style="display: none;">\
-                            <button class="btn btn-success btn-sm add_white_ip pull-right" type="button">添加</button>\
-                            <div class=" ssl_login_config_view"><span>登录告警</span><input class="btswitch btswitch-ios" id="ssh_root_login" type="checkbox"><label class="btswitch-btn" for="ssh_root_login" title="监控root用户登陆"></label></div>\
-                            <div class="divtable mtb15">\
-                                <table id="ssh_ip_white_table" class="table table-hover" style="min-width: 500px;"></table>\
-                            </div>\
-                        </div>\
-                        <div class="bt-box" style="display: none;">\
-                            <table id="ssh_logs_table" class="table table-hover" style="min-width: 500px;"></table>\
-                            <div class="page">\
-                                <div id="ssh_logs"></div>\
-                            </div>\
-                        </div>\
-                    </div>\
-                </div></div>',
-                success:function(layers,index){
-                    firewall.get_ssh_config();
-                    //导航事件
-                    $(".bt-w-menu p").click(function(){
-                        var index = $(this).index();
-                        $(this).addClass("bgw").siblings().removeClass("bgw");
-                        $('.bt-w-con .bt-box').eq(index).show().siblings().hide();
-                        switch(index){
-                            case 0:
-                                firewall.get_ssh_config();
-                                break;
-                            case 1:
-                                firewall.get_white_ip();
-                                break;
-                            case 2:
-                                firewall.get_logs_view({p:1});
-                                break;
-                        }
-                    });
-                    // 复制按钮
-                    $('.btn-copy-sshkey').click(function(){
-                        bt.pub.copy_pass($('#ssh_text_key').val());
-                    })
-                    // 下载
-                    $('.btn-download-sshkey').click(function(){
-                        window.open('/download?filename=/root/.ssh/id_rsa')
-                    })
-                     // 允许root登录
-                    $('#set_root').click(function(){
-                        var _check = $(this).prop('checked')
-                        if(_check){
-                            $.post('/ssh_security?action=set_root',function(res){
-                                layer.msg(res.msg,{icon:res.status?1:2})
-                            })
-                        }else{
-                            $.post('/ssh_security?action=stop_root',function(res){
-                                layer.msg(res.msg,{icon:res.status?1:2})
-                            })
-                        }
-                    })
-                    // 添加ip白名单
-                    $(".add_white_ip").click(function(){
-                        layer.open({
-                            type: 1,
-                            title: "添加检测IP白名单",
-                            area: '340px',
-                            closeBtn: 2,
-                            shadeClose: false,
-					        btn:['确认','取消'],
-                            content: '<div class="bt-form pd20">\
-                            			<div class="line">\
-                                        	<span class="tname">IP地址</span>\
-                                            <div class="info-r">\
-                                                <input name="ip_white" placeholder="请输入正确的IP地址" class="bt-input-text mr5" type="text">\
-                                            </div>\
-                                        </div>\
-                                    </div>',
-                            yes:function(index,layers){
-                                var ip_white = $('[name="ip_white"]').val();
-                                if (ip_white == '') {
-                                    layer.msg('IP地址不能为空!', {icon: 2});
-                                    return false;
-                                }else if(!bt.check_ip(ip_white)){
-                                    layer.msg('IP地址格式错误，请输入正确的IP地址!', {icon: 2})
-                                    return false;
-                                }
-                                $.post('/ssh_security?action=add_return_ip', {ip:ip_white}, function (res) {
-                                    layer.msg(res.msg,{icon:res.status?1:2})
-                                    if(res.status){
-                                        layer.close(index);
-                                        firewall.get_white_ip();
-                                    }
-                                })
-                            }
-                        })
-                    })
-                    // 密码开关
-                    $('#ssh_paw').change(function(){
-                        var start = $('#ssh_paw').prop("checked");
-                        if(start){
-                            $.post('/ssh_security?action=set_password', {}, function (res) {layer.msg(res.msg,{icon:res.status?1:2})})
-                        }else{
-                            $.post('/ssh_security?action=stop_password', {}, function (res) {layer.msg(res.msg,{icon:res.status?1:2})})
-                        }
-                    })
-                    // 密钥开关
-                    $('#ssh_key').change(function(){
-                        var start = $('#ssh_key').prop("checked");
-                        if(start){
-                            firewall.set_template_sshkey();
-                        }else{
-                            $.post('/ssh_security?action=stop_key', {}, function (res) {
-                                layer.msg(res.msg,{icon:res.status?1:2})
-                                firewall.get_ssh_config();
-                            })
-                        }
-                    });
-                    // root监控开关
-                    $('#ssh_root_login').change(function(){
-                        var start = $('#ssh_root_login').prop("checked");
-                        if(start){
-                            $.post('/config?action=get_settings',function(res){
-                                if(res['user_mail']['user_name']){
-                                    $.post('/ssh_security?action=start_jian', {}, function (res) {layer.msg(res.msg,{icon:res.status?1:2})})
-                                }else{
-                                    layer.msg('请前往面板设置-->消息通道，设置发送者邮箱',{icon:2,time:10000})
-                                    $('#ssh_root_login').attr("checked",false);
-                                }
-                            })
-                        }else{
-                            $.post('/ssh_security?action=stop_jian', {}, function (res) {layer.msg(res.msg,{icon:res.status?1:2})})
-                        }
-                    })
-                    $('#ssh_logs').on('click','a',function(e){
-                        var page = $(this).attr('href').replace('/ssh_security?action=get_logs?p=','');
-                        firewall.get_logs_view({p:page});
-                        e.preventDefault();
-                        e.stopPropagation();
-                    });
+  {{ super() }} 
+  <script type="text/javascript">
+    var firewall = {
+          ssl_scanning_list: [], //扫描列表		
+      get_init:function(){			
+        firewall.flush_init();
+        firewall.get_list();
+        firewall.get_log_list();
+        firewall.get_logs_size();			
+        $('.sshswitch').click(function(){
+          var status = $("#sshswitch").prop("checked")==true?1:0;
+          bt.firewall.set_mstsc_status(status,function(rdata){
+            if(rdata===-1){
+              if(status){
+                $("#sshswitch").prop("checked","checked")
+              }else{
+                $("#sshswitch").removeAttr('checked');
+              }
+            }else{						
+              bt.msg(rdata);
+              firewall.flush_init();
+            }
+          })
+        })
+        $('.noping').click(function(){
+          var status = $("#noping").prop("checked")==true?1:0;
+          bt.firewall.ping(status,function(rdata){
+            if(rdata===-1){
+              if(status){
+                $("#noping").prop("checked","checked")
+              }else{
+                $("#noping").removeAttr('checked');
+              }
+            }else{						
+              bt.msg(rdata);
+              firewall.flush_init();
+            }
+          })
+        })			
+        $("#firewalldType").change(function(){
+          var type = $(this).val();
+          var w = '120px';
+          var p = lan.firewall.port;
+          var t = lan.firewall.accept;
+          var m = lan.firewall.port_ps;
+          if(type == 'address'){
+            w = '150px';
+            p = lan.firewall.ip;
+            t = lan.firewall.drop;
+            m = lan.firewall.ip_ps;
+          }
+          $("#AcceptPort").css("width",w);
+          $("#AcceptPort").attr('placeholder',p);
+          $("#toAccept").html(t);
+          $("#f-ps").html(m);			
+        });
+      },
+      flush_init:function(){
+        bt.firewall.get_ssh_info(function(rdata){				
+          if(!rdata.status){
+            $("#mstscSubmit").attr('disabled','disabled')
+            $("#mstscPort").attr('disabled','disabled')
+            $('#sshswitch').removeAttr('checked');
+          }
+          else{
+            $("#mstscSubmit").removeAttr('disabled')
+            $("#mstscPort").removeAttr('disabled')
+            $('#sshswitch').attr('checked','checked');
+          }
+          if(rdata.ping){
+            $('#noping').removeAttr('checked');
+          }else{
+            $('#noping').attr('checked','checked');
+          }
+          $("#mstscPort").val(rdata.port);
+        })
+      },
+          open_sshsafe_config_view:function(){
+              var _this = this;
+              layer.open({
+                  type: 1,
+                  title: "SSH安全管理",
+                  area: '640px',
+                  closeBtn: 2,
+                  shadeClose: false,
+                  content:'<div class="bt-form">\
+                  <div class="bt-w-main">\
+                      <div class="bt-w-menu"><p class="bgw">密钥管理</p><p>登录告警</p><p>登录日志</p></div>\
+                      <div class="bt-w-con pd15 divtable">\
+                          <div class="bt-box">\
+                              <div class="bt-form">\
+                                  <div class="line">\
+                                      <span class="tname">SSH密码登录</span>\
+                                      <div class="info-r c4">\
+                                          <input class="btswitch btswitch-ios" id="ssh_paw" type="checkbox"><label class="btswitch-btn" for="ssh_paw" title="SSH密码登录"style="display: inline-block;"></label>\
+                                          <div style="margin-left:20px;display: inline-block;"><span class="tname">SSH密钥登录</span>\
+                                              <input class="btswitch btswitch-ios" id="ssh_key" type="checkbox">\
+                                              <label class="btswitch-btn" for="ssh_key" title="SSH密钥登录"style="margin: 5px 0 0 90px;"></label>\
+                                          </div>\
+                                          <div style="margin-left:20px;display: inline-block;"><span class="tname" style="width:120px;">是否允许root登录</span>\
+                                              <input class="btswitch btswitch-ios" id="set_root" type="checkbox">\
+                                              <label class="btswitch-btn" for="set_root" title="允许root登录"style="margin: 5px 0 0 110px;"></label>\
+                                          </div>\
+                                      </div>\
+                                  </div>\
+                                  <div class="line">\
+                                      <span class="tname">SSH密钥</span>\
+                                      <div class="info-r c4">\
+                                          <textarea id="ssh_text_key" class="bt-input-text mr20" style="height:180px;width:330px"></textarea>\
+                                      </div>\
+                                  </div>\
+                                  <div style="margin-left:100px" class="btn-sshkey-group">\
+                                      <button type="button" class="btn btn-success btn-sm btn-copy-sshkey">复制</button>\
+                                      <button type="button" class="btn btn-success btn-sm btn-download-sshkey">下载</button>\
+                                  </div>\
+                              </div>\
+                          </div>\
+                          <div class="bt-box" style="display: none;">\
+                              <button class="btn btn-success btn-sm add_white_ip pull-right" type="button">添加</button>\
+                              <div class=" ssl_login_config_view"><span>登录告警</span><input class="btswitch btswitch-ios" id="ssh_root_login" type="checkbox"><label class="btswitch-btn" for="ssh_root_login" title="监控root用户登陆"></label></div>\
+                              <div class="divtable mtb15">\
+                                  <table id="ssh_ip_white_table" class="table table-hover" style="min-width: 500px;"></table>\
+                              </div>\
+                          </div>\
+                          <div class="bt-box" style="display: none;">\
+                              <table id="ssh_logs_table" class="table table-hover" style="min-width: 500px;"></table>\
+                              <div class="page">\
+                                  <div id="ssh_logs"></div>\
+                              </div>\
+                          </div>\
+                      </div>\
+                  </div></div>',
+                  success:function(layers,index){
+                      firewall.get_ssh_config();
+                      //导航事件
+                      $(".bt-w-menu p").click(function(){
+                          var index = $(this).index();
+                          $(this).addClass("bgw").siblings().removeClass("bgw");
+                          $('.bt-w-con .bt-box').eq(index).show().siblings().hide();
+                          switch(index){
+                              case 0:
+                                  firewall.get_ssh_config();
+                                  break;
+                              case 1:
+                                  firewall.get_white_ip();
+                                  break;
+                              case 2:
+                                  firewall.get_logs_view({p:1});
+                                  break;
+                          }
+                      });
+                      // 复制按钮
+                      $('.btn-copy-sshkey').click(function(){
+                          bt.pub.copy_pass($('#ssh_text_key').val());
+                      })
+                      // 下载
+                      $('.btn-download-sshkey').click(function(){
+                          window.open('/download?filename=/root/.ssh/id_rsa')
+                      })
+                      // 允许root登录
+                      $('#set_root').click(function(){
+                          var _check = $(this).prop('checked')
+                          if(_check){
+                              $.post('/ssh_security?action=set_root',function(res){
+                                  layer.msg(res.msg,{icon:res.status?1:2})
+                              })
+                          }else{
+                              $.post('/ssh_security?action=stop_root',function(res){
+                                  layer.msg(res.msg,{icon:res.status?1:2})
+                              })
+                          }
+                      })
+                      // 添加ip白名单
+                      $(".add_white_ip").click(function(){
+                          layer.open({
+                              type: 1,
+                              title: "添加检测IP白名单",
+                              area: '340px',
+                              closeBtn: 2,
+                              shadeClose: false,
+                    btn:['确认','取消'],
+                              content: '<div class="bt-form pd20">\
+                                    <div class="line">\
+                                            <span class="tname">IP地址</span>\
+                                              <div class="info-r">\
+                                                  <input name="ip_white" placeholder="请输入正确的IP地址" class="bt-input-text mr5" type="text">\
+                                              </div>\
+                                          </div>\
+                                      </div>',
+                              yes:function(index,layers){
+                                  var ip_white = $('[name="ip_white"]').val();
+                                  if (ip_white == '') {
+                                      layer.msg('IP地址不能为空!', {icon: 2});
+                                      return false;
+                                  }else if(!bt.check_ip(ip_white)){
+                                      layer.msg('IP地址格式错误，请输入正确的IP地址!', {icon: 2})
+                                      return false;
+                                  }
+                                  $.post('/ssh_security?action=add_return_ip', {ip:ip_white}, function (res) {
+                                      layer.msg(res.msg,{icon:res.status?1:2})
+                                      if(res.status){
+                                          layer.close(index);
+                                          firewall.get_white_ip();
+                                      }
+                                  })
+                              }
+                          })
+                      })
+                      // 密码开关
+                      $('#ssh_paw').change(function(){
+                          var start = $('#ssh_paw').prop("checked");
+                          if(start){
+                              $.post('/ssh_security?action=set_password', {}, function (res) {layer.msg(res.msg,{icon:res.status?1:2})})
+                          }else{
+                              $.post('/ssh_security?action=stop_password', {}, function (res) {layer.msg(res.msg,{icon:res.status?1:2})})
+                          }
+                      })
+                      // 密钥开关
+                      $('#ssh_key').change(function(){
+                          var start = $('#ssh_key').prop("checked");
+                          if(start){
+                              firewall.set_template_sshkey();
+                          }else{
+                              $.post('/ssh_security?action=stop_key', {}, function (res) {
+                                  layer.msg(res.msg,{icon:res.status?1:2})
+                                  firewall.get_ssh_config();
+                              })
+                          }
+                      });
+                      // root监控开关
+                      $('#ssh_root_login').change(function(){
+                          var start = $('#ssh_root_login').prop("checked");
+                          if(start){
+                              $.post('/config?action=get_settings',function(res){
+                                  if(res['user_mail']['user_name']){
+                                      $.post('/ssh_security?action=start_jian', {}, function (res) {layer.msg(res.msg,{icon:res.status?1:2})})
+                                  }else{
+                                      layer.msg('请前往面板设置-->消息通道，设置发送者邮箱',{icon:2,time:10000})
+                                      $('#ssh_root_login').attr("checked",false);
+                                  }
+                              })
+                          }else{
+                              $.post('/ssh_security?action=stop_jian', {}, function (res) {layer.msg(res.msg,{icon:res.status?1:2})})
+                          }
+                      })
+                      $('#ssh_logs').on('click','a',function(e){
+                          var page = $(this).attr('href').replace('/ssh_security?action=get_logs?p=','');
+                          firewall.get_logs_view({p:page});
+                          e.preventDefault();
+                          e.stopPropagation();
+                      });
+                  }
+              })
+          },
+          // 详情视图
+          ssh_scanning_detail:function(index){
+              var item = this.ssl_scanning_list[index];
+              layer.open({
+                  type: 1,
+                  title:'查看详情【 '+ item.name  +' 】',
+                  area: '500px',
+                  closeBtn:2,
+                  btn: ['确定'],
+                  content:'<div class="detail security_detail">\
+                      <div class="detail_block">\
+                          <div class="detail_title">风险名称</div>\
+                          <div class="detail_conter"><span style="color:red">'+item.name+'</span></div>\
+                      </div>\
+                      <div class="detail_block">\
+                          <div class="detail_title">加固建议</div>\
+                          <div class="detail_conter">\
+                          <span>'+(item.Suggestions || item.ps || '')+'</span>'+(item.repair != item.Suggestions? '<pre class="layui-code">'+item.repair+'</pre>': '')+''+(item.list != undefined ? '<pre class="layui-code">'+item.list+'</pre>' : '')+'\
+                          </div>\
+                      </div>\
+                      <div class="detail_tips">操作时建议做好记录和备份</div>\
+                      </div>',
+                  yes:function(index, layero){
+                      layer.close(index);
+                  }
+              })
+          },
+          // 安全扫描详情
+          ssh_scanning_move:function(num){
+              console.log(num)
+          },
+          set_template_sshkey:function(){
+              var _this = this;
+              var loadT = layer.open({
+                  title:'开启SSH密钥登录',
+                  area:'250px',
+                  type:1,
+                  closeBtn: 2,
+                  content:'<div class="bt-form bt-form pd20 pb70">'+
+                              '<div class="line "><span class="tname">SSH密码登录</span><div class="info-r "><select class="bt-input-text mr5 ssh_select_login" style="width:70px"><option value="yes">开启</option><option value="no">关闭</option></select></div></div>'+
+                              '<div class="line "><span class="tname">密钥加密方式</span><div class="info-r "><select class="bt-input-text mr5 ssh_select_encryption" style="width:70px"><option value="rsa">rsa</option><option value="dsa">dsa</option></select></div></div>'+
+                              '<div class="bt-form-submit-btn"><button type="button" class="btn btn-sm btn-danger close_ssh_key">关闭</button><button type="button" class="btn btn-sm btn-success submit_ssh_key">提交</button></div>'+
+                          '</div>'
+              });
+              $('.close_ssh_key').click(function(){
+                  layer.close(loadT);
+              });
+              $('.submit_ssh_key').click(function(){
+                  var ssh_select_login = $('.ssh_select_login').val();
+                  var ssh_select_encryption = $('.ssh_select_encryption').val();
+                  $.post('/ssh_security?action=set_sshkey', {ssh:ssh_select_login,type:ssh_select_encryption}, function (res) {
+                      layer.msg(res.msg,{icon:res.status?1:2})
+                      _this.get_ssh_config();
+                      layer.close(loadT);
+                  })
+              });
+          },
+          // 获取SSH密钥状态
+          get_ssh_config:function(){
+              $.post('/ssh_security?action=get_config', {}, function (res) {
+                  var paw = res.password == 'yes'?true:false;
+                  var key = (res.pubkey == 'yes' && res.rsa_auth == 'yes') ? true : false;
+                  var root = res.root_is_login == 'yes' ? true : false;
+                  $('#ssh_paw').prop('checked',paw);
+                  $('#ssh_key').prop('checked',key);
+                  $('#set_root').prop('checked',root);
+                  if(key){
+                      $.post('/ssh_security?action=get_key', {}, function (res) {
+                          if(res.status){
+                              $('#ssh_text_key').val(res.msg).removeAttr('disabled');
+                              $('.btn-sshkey-group').show();
+                          }else{
+                              layer.msg(res.msg,{icon:2});
+                          }
+                      });
+                  }else{
+                      $('.btn-sshkey-group').hide();
+                      $('#ssh_text_key').val('').attr('disabled','disabled')
+                  }
+                  
+              })
+          },
+          // 获取ip地址白名单列表、root用户登录状态
+          get_white_ip:function(){
+              // 监控状态
+              $.post('/ssh_security?action=get_jian', {}, function (res) {
+                  $('#ssh_root_login').prop("checked",res.status)
+              })
+              $.post('/ssh_security?action=return_ip',{}, function(res){
+                  var _tab =  bt.render({
+                      table:'#ssh_ip_white_table',
+                      columns:[						
+                          { title: "IP地址",templet:function(item){
+                              return item;
+                          }},
+                          { field: 'opt',align:'right',width:50, title: "操作",templet:function(item){
+                              return '<a href="javascript:;" class="btlink" onclick="firewall.remove_ip_white(\''+item+'\')">删除</a>';
+                          }}
+                      ],
+                      data:res.msg
+                  })
+              })	
+          },
+          // 删除ip白名单
+          remove_ip_white:function(obj){
+              $.post('/ssh_security?action=del_return_ip', {ip:obj}, function (res) {
+                  layer.msg(res.msg,{icon:res.status?1:2})
+                  if(res.status){
+                      firewall.get_white_ip();
+                  }
+              })
+          },
+          // 登录日志
+          get_logs_view:function(obj){
+              $.post('/ssh_security?action=get_logs',{p:obj.p}, function(res){
+                  $("#ssh_logs").html(res.page)
+                  var _tab =  bt.render({
+                      table:'#ssh_logs_table',
+                      columns:[						    
+                          { title: "详情",templet:function(item){
+                              return '<span title="'+item.log+'" class="overflow_hide_style" style="width:330px">'+item.log+'</span>';
+                          }},
+                          { field: '操作时间',align:'right',width:140, title: "操作",templet:function(item){
+                              return item.addtime
+                          }}
+                      ],
+                      data:res.data
+                  })
+              })	
+          },
+      get_logs_size:function(){
+        bt.firewall.get_logs_size(function(rdata){
+          $("#logSize").text(rdata);
+        })
+      },
+      clear_logs_files:function(){
+          console.log(1);
+          bt.show_confirm('', '', function () {
+              console.log(1);
+              bt.firewall.clear_logs_files(function(rdata){
+              $("#logSize").text(rdata);						
+              bt.msg({msg:lan.firewall.empty,icon:1});
+            })
+          })
+      },
+      add_accept_port:function(){
+        var type = $("#firewalldType").val();
+        var port = $("#AcceptPort").val();
+        var ps = $("#Ps").val();
+        bt.firewall.add_accept_port(type,port,ps,function(rdata){
+          if(rdata.status){
+            firewall.get_list();
+            $("#AcceptPort").val('');
+            $("#Ps").val('');
+          }
+          bt.msg(rdata);
+        })
+          },
+          remove_accept_port: function (id,port) {
+              bt.firewall.del_accept_port(id, port, function (rdata) {
+                  if (rdata.status) {
+                      firewall.get_list();
+                  }
+                  bt.msg(rdata);
+              })
+          },
+      get_list:function(page,search){
+              if (page == undefined) page = 1;	
+              if (!search) search = $("#SearchValue").val();
+              bt.firewall.get_list(page, search, function (rdata) {
+                  $('.firewallBody').html(rdata.page);
+                  var ports_ps = { "3306": "MySQL服务默认端口", "888": "phpMyAdmin默认端口", "22": "SSH远程服务", "20": "FTP主动模式数据端口", "21": "FTP协议默认端口", "39000-40000": "FTP被动模端口范围", "30000-40000": "FTP被动模端口范围","11211":"Memcached服务端口","873":"rsync数据同步服务","8888":"宝塔Linux面板默认端口"}
+          var _tab =  bt.render({
+            table:'#firewallBody',
+            columns:[						
+              { field: 'id', title: "{{data['lan']['TH1']}}"},	
+              { field: 'port', title: "{{data['lan']['TH2']}}",templet:function(item){
+                var _ps = lan.firewall.accept_port;
+                if(bt.contains(item.port,'.')){
+                  _ps = lan.firewall.drop_ip;
                 }
-            })
-        },
-        // 详情视图
-        ssh_scanning_detail:function(index){
-            var item = this.ssl_scanning_list[index];
-            layer.open({
-                type: 1,
-                title:'查看详情【 '+ item.name  +' 】',
-                area: '500px',
-                closeBtn:2,
-                btn: ['确定'],
-                content:'<div class="detail security_detail">\
-                    <div class="detail_block">\
-                        <div class="detail_title">风险名称</div>\
-                        <div class="detail_conter"><span style="color:red">'+item.name+'</span></div>\
-                    </div>\
-                    <div class="detail_block">\
-                        <div class="detail_title">加固建议</div>\
-                        <div class="detail_conter">\
-                        <span>'+(item.Suggestions || item.ps || '')+'</span>'+(item.repair != item.Suggestions? '<pre class="layui-code">'+item.repair+'</pre>': '')+''+(item.list != undefined ? '<pre class="layui-code">'+item.list+'</pre>' : '')+'\
-                        </div>\
-                    </div>\
-                    <div class="detail_tips">操作时建议做好记录和备份</div>\
-                    </div>',
-                yes:function(index, layero){
-                    layer.close(index);
+                _ps += ':['+item.port+']'
+                return _ps;
+              }},
+              { field: 'status', title: "{{data['lan']['TH3']}}",templet:function(item){
+                var status = '';
+                switch(item.status){
+                  case 0:
+                    status = lan.firewall.status_not;
+                    break;
+                  case 1:
+                    status = lan.firewall.status_net;
+                    break;
+                  default:
+                    status = lan.firewall.status_ok;
+                    break;
                 }
-            })
-        },
-        // 安全扫描详情
-        ssh_scanning_move:function(num){
-            console.log(num)
-        },
-        set_template_sshkey:function(){
-            var _this = this;
-            var loadT = layer.open({
-                title:'开启SSH密钥登录',
-                area:'250px',
-                type:1,
-                closeBtn: 2,
-                content:'<div class="bt-form bt-form pd20 pb70">'+
-                            '<div class="line "><span class="tname">SSH密码登录</span><div class="info-r "><select class="bt-input-text mr5 ssh_select_login" style="width:70px"><option value="yes">开启</option><option value="no">关闭</option></select></div></div>'+
-                            '<div class="line "><span class="tname">密钥加密方式</span><div class="info-r "><select class="bt-input-text mr5 ssh_select_encryption" style="width:70px"><option value="rsa">rsa</option><option value="dsa">dsa</option></select></div></div>'+
-                            '<div class="bt-form-submit-btn"><button type="button" class="btn btn-sm btn-danger close_ssh_key">关闭</button><button type="button" class="btn btn-sm btn-success submit_ssh_key">提交</button></div>'+
-                        '</div>'
-            });
-            $('.close_ssh_key').click(function(){
-                layer.close(loadT);
-            });
-            $('.submit_ssh_key').click(function(){
-                var ssh_select_login = $('.ssh_select_login').val();
-                var ssh_select_encryption = $('.ssh_select_encryption').val();
-                $.post('/ssh_security?action=set_sshkey', {ssh:ssh_select_login,type:ssh_select_encryption}, function (res) {
-                    layer.msg(res.msg,{icon:res.status?1:2})
-                    _this.get_ssh_config();
-                    layer.close(loadT);
-                })
-            });
-        },
-        // 获取SSH密钥状态
-        get_ssh_config:function(){
-            $.post('/ssh_security?action=get_config', {}, function (res) {
-                var paw = res.password == 'yes'?true:false;
-                var key = (res.pubkey == 'yes' && res.rsa_auth == 'yes') ? true : false;
-                var root = res.root_is_login == 'yes' ? true : false;
-                $('#ssh_paw').prop('checked',paw);
-                $('#ssh_key').prop('checked',key);
-                $('#set_root').prop('checked',root);
-                if(key){
-                    $.post('/ssh_security?action=get_key', {}, function (res) {
-                        if(res.status){
-                            $('#ssh_text_key').val(res.msg).removeAttr('disabled');
-                            $('.btn-sshkey-group').show();
-                        }else{
-                            layer.msg(res.msg,{icon:2});
-                        }
-                    });
-                }else{
-                    $('.btn-sshkey-group').hide();
-                    $('#ssh_text_key').val('').attr('disabled','disabled')
-                }
-                
-            })
-        },
-        // 获取ip地址白名单列表、root用户登录状态
-        get_white_ip:function(){
-            // 监控状态
-            $.post('/ssh_security?action=get_jian', {}, function (res) {
-                $('#ssh_root_login').prop("checked",res.status)
-            })
-            $.post('/ssh_security?action=return_ip',{}, function(res){
-                var _tab =  bt.render({
-                    table:'#ssh_ip_white_table',
-                    columns:[						
-                        { title: "IP地址",templet:function(item){
-                            return item;
-                        }},
-                        { field: 'opt',align:'right',width:50, title: "操作",templet:function(item){
-                            return '<a href="javascript:;" class="btlink" onclick="firewall.remove_ip_white(\''+item+'\')">删除</a>';
-                        }}
-                    ],
-                    data:res.msg
-                })
-            })	
-        },
-        // 删除ip白名单
-        remove_ip_white:function(obj){
-            $.post('/ssh_security?action=del_return_ip', {ip:obj}, function (res) {
-                layer.msg(res.msg,{icon:res.status?1:2})
-                if(res.status){
-                    firewall.get_white_ip();
-                }
-            })
-        },
-        // 登录日志
-        get_logs_view:function(obj){
-            $.post('/ssh_security?action=get_logs',{p:obj.p}, function(res){
-                $("#ssh_logs").html(res.page)
-                var _tab =  bt.render({
-                    table:'#ssh_logs_table',
-                    columns:[						    
-                        { title: "详情",templet:function(item){
-                            return '<span title="'+item.log+'" class="overflow_hide_style" style="width:330px">'+item.log+'</span>';
-                        }},
-                        { field: '操作时间',align:'right',width:140, title: "操作",templet:function(item){
-                            return item.addtime
-                        }}
-                    ],
-                    data:res.data
-                })
-            })	
-        },
-		get_logs_size:function(){
-			bt.firewall.get_logs_size(function(rdata){
-				$("#logSize").text(rdata);
-			})
-		},
-		clear_logs_files:function(){
-		    console.log(1);
-		    bt.show_confirm('', '', function () {
-		        console.log(1);
-		        bt.firewall.clear_logs_files(function(rdata){
-    				$("#logSize").text(rdata);						
-    				bt.msg({msg:lan.firewall.empty,icon:1});
-    			})
-		    })
-		},
-		add_accept_port:function(){
-			var type = $("#firewalldType").val();
-			var port = $("#AcceptPort").val();
-			var ps = $("#Ps").val();
-			bt.firewall.add_accept_port(type,port,ps,function(rdata){
-				if(rdata.status){
-					firewall.get_list();
-					$("#AcceptPort").val('');
-					$("#Ps").val('');
-				}
-				bt.msg(rdata);
-			})
-        },
-        remove_accept_port: function (id,port) {
-            bt.firewall.del_accept_port(id, port, function (rdata) {
-                if (rdata.status) {
-                    firewall.get_list();
-                }
-                bt.msg(rdata);
-            })
-        },
-		get_list:function(page,search){
-            if (page == undefined) page = 1;	
-            if (!search) search = $("#SearchValue").val();
-            bt.firewall.get_list(page, search, function (rdata) {
-                $('.firewallBody').html(rdata.page);
-                var ports_ps = { "3306": "MySQL服务默认端口", "888": "phpMyAdmin默认端口", "22": "SSH远程服务", "20": "FTP主动模式数据端口", "21": "FTP协议默认端口", "39000-40000": "FTP被动模端口范围", "30000-40000": "FTP被动模端口范围","11211":"Memcached服务端口","873":"rsync数据同步服务","8888":"宝塔Linux面板默认端口"}
-				var _tab =  bt.render({
-					table:'#firewallBody',
-					columns:[						
-						{ field: 'id', title: "{{data['lan']['TH1']}}"},	
-						{ field: 'port', title: "{{data['lan']['TH2']}}",templet:function(item){
-							var _ps = lan.firewall.accept_port;
-							if(bt.contains(item.port,'.')){
-								_ps = lan.firewall.drop_ip;
-							}
-							_ps += ':['+item.port+']'
-							return _ps;
-						}},
-						{ field: 'status', title: "{{data['lan']['TH3']}}",templet:function(item){
-							var status = '';
-							switch(item.status){
-								case 0:
-									status = lan.firewall.status_not;
-									break;
-								case 1:
-									status = lan.firewall.status_net;
-									break;
-								default:
-									status = lan.firewall.status_ok;
-									break;
-							}
-							return status;
-						},help:'https://www.bt.cn/bbs/thread-4708-1-1.html'},
-                        { field: 'addtime', title: "{{data['lan']['TH4']}}"},
-                        { field: 'ps', title: "{{data['lan']['TH5']}}", templet: function (item) {
-                            if (item.port in ports_ps) return ports_ps[item.port];
-                            return item.ps;
-                         }},	
-						{ field: 'opt',align:'right',width:50, title: "{{data['lan']['TH6']}}",templet:function(item){
-							return '<a href="javascript:;" class="btlink" onclick="firewall.remove_accept_port('+item.id+',\''+item.port+'\')">删除</a>';
-						}}
-					],
-					data:rdata.data
-				})		
-			})	
-		},
-		escapeHTML:function (a) {
-			a = "" + a;
-			return a.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, '&quot;').replace(/'/g, "‘").replace(/\(/g, "&#40;").replace(/\&#60;/g, "&lt;").replace(/\&#62;/g, "&gt;").replace(/`/g, "&#96;").replace(/=/g, "＝");
-		},
-		get_log_list:function(page,search){
-            if (page == undefined) page = 1;
-            if (search == undefined) search = $("#SearchValue").val();
-			var _this = this;
-			bt.firewall.get_log_list(page,search,function(rdata){
-				$('.logsBody').html(rdata.page);
-				var _tab =  bt.render({
-					table:'#logsBody',
-					columns:[						
-						{ field: 'id',width:"55", title: "编号"},	
-						{ field: 'username',width:"80", title: "用户",templet:function(row){
-                            return (row.username == 'system')?'系统日志':row.username;
-                        }},	
-						{ field: 'type',width:"80", title: "{{data['lan']['LTH2']}}"},	
-						{ field: 'log', title: "{{data['lan']['LTH3']}}",templet:function(row){
-							return '<span title="'+ _this.escapeHTML(row['log']) +'">'+  _this.escapeHTML(row['log']) +'</span>';
-						}},		
-						{ field: 'addtime',width:"145", align:"right" ,title: "{{data['lan']['LTH4']}}"}				
-					],
-					data:rdata.data
-				});
-				/*$('#logsBody tr td span').width($('.main-content').width()*0.7);
-				$(window).resize(function(){
-					$('#logsBody tr td span').width($('.main-content').width()*0.7);
-				});*/
-			})			
-        },
-        //查看面板运行日志
-        get_panel_error_logs: function () {
-            layer.msg(lan.public.the_get, { icon: 16, time: 0, shade: [0.3, '#000'] });
-            $.post('/config?action=get_panel_error_logs', {}, function (rdata) {
-                layer.closeAll();
-                if (!rdata.status) {
-                    layer.msg(rdata.msg, { icon: 2 });
-                    return;
-                };
-                layer.open({
-                    type: 1,
-                    title: '面板运行日志',
-                    area: ['700px', '490px'],
-                    shadeClose: false,
-                    closeBtn: 2,
-                    content: '<div class="setchmod bt-form  pb70">'
-                        + '<pre class="crontab-log" style="overflow: auto; border: 0px none; line-height:23px;padding: 15px; margin: 0px; white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0px;font-family: \"微软雅黑\"">' + (rdata.msg == '' ? '当前日志为空' : rdata.msg) + '</pre>'
-                        + '<div class="bt-form-submit-btn" style="margin-top: 0px;">'
-                        + '<button type="button" class="btn btn-danger btn-sm btn-title" style="margin-right:15px;" onclick="firewall.clean_panel_error_logs()">' + lan.public.empty + '</button>'
-                        + '<button type="button" class="btn btn-success btn-sm btn-title" onclick="layer.closeAll()">' + lan.public.close + '</button>'
-                        + '</div>'
-                        + '</div>'
-                });
-                setTimeout(function () {
-                    $("#crontab-log").text(rdata.msg);
-                    var div = document.getElementsByClassName('crontab-log')[0]
-                    div.scrollTop = div.scrollHeight;
-                }, 200)
-            }).error(function () {
-                layer.closeAll();
-                layer.msg('无法取回日志信息!', { icon: 2 });
-            });
-        },
-        //清空面板错误日志
-        clean_panel_error_logs:function() {
-            layer.msg(lan.public.the_get, { icon: 16, time: 0, shade: [0.3, '#000'] });
-            $.post('/config?action=clean_panel_error_logs', {}, function (rdata) {
-                layer.closeAll();
-                layer.msg(rdata.msg, { icon: 1 });
-            });
-        }
-	}
-	firewall.get_init();
-</script>
+                return status;
+              },help:'https://www.bt.cn/bbs/thread-4708-1-1.html'},
+                          { field: 'addtime', title: "{{data['lan']['TH4']}}"},
+                          { field: 'ps', title: "{{data['lan']['TH5']}}", templet: function (item) {
+                              if (item.port in ports_ps) return ports_ps[item.port];
+                              return item.ps;
+                          }},	
+              { field: 'opt',align:'right',width:50, title: "{{data['lan']['TH6']}}",templet:function(item){
+                return '<a href="javascript:;" class="btlink" onclick="firewall.remove_accept_port('+item.id+',\''+item.port+'\')">删除</a>';
+              }}
+            ],
+            data:rdata.data
+          })		
+        })	
+      },
+      escapeHTML:function (a) {
+        a = "" + a;
+        return a.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, '&quot;').replace(/'/g, "‘").replace(/\(/g, "&#40;").replace(/\&#60;/g, "&lt;").replace(/\&#62;/g, "&gt;").replace(/`/g, "&#96;").replace(/=/g, "＝");
+      },
+      get_log_list:function(page,search){
+              if (page == undefined) page = 1;
+              if (search == undefined) search = $("#SearchValue").val();
+        var _this = this;
+        bt.firewall.get_log_list(page,search,function(rdata){
+          $('.logsBody').html(rdata.page);
+          var _tab =  bt.render({
+            table:'#logsBody',
+            columns:[						
+              { field: 'id',width:"55", title: "编号"},	
+              { field: 'username',width:"80", title: "用户",templet:function(row){
+                              return (row.username == 'system')?'系统日志':row.username;
+                          }},	
+              { field: 'type',width:"80", title: "{{data['lan']['LTH2']}}"},	
+              { field: 'log', title: "{{data['lan']['LTH3']}}",templet:function(row){
+                return '<span title="'+ _this.escapeHTML(row['log']) +'">'+  _this.escapeHTML(row['log']) +'</span>';
+              }},		
+              { field: 'addtime',width:"145", align:"right" ,title: "{{data['lan']['LTH4']}}"}				
+            ],
+            data:rdata.data
+          });
+          /*$('#logsBody tr td span').width($('.main-content').width()*0.7);
+          $(window).resize(function(){
+            $('#logsBody tr td span').width($('.main-content').width()*0.7);
+          });*/
+        })			
+          },
+          //查看面板运行日志
+          get_panel_error_logs: function () {
+              layer.msg(lan.public.the_get, { icon: 16, time: 0, shade: [0.3, '#000'] });
+              $.post('/config?action=get_panel_error_logs', {}, function (rdata) {
+                  layer.closeAll();
+                  if (!rdata.status) {
+                      layer.msg(rdata.msg, { icon: 2 });
+                      return;
+                  };
+                  layer.open({
+                      type: 1,
+                      title: '面板运行日志',
+                      area: ['700px', '490px'],
+                      shadeClose: false,
+                      closeBtn: 2,
+                      content: '<div class="setchmod bt-form  pb70">'
+                          + '<pre class="crontab-log" style="overflow: auto; border: 0px none; line-height:23px;padding: 15px; margin: 0px; white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0px;font-family: \"微软雅黑\"">' + (rdata.msg == '' ? '当前日志为空' : rdata.msg) + '</pre>'
+                          + '<div class="bt-form-submit-btn" style="margin-top: 0px;">'
+                          + '<button type="button" class="btn btn-danger btn-sm btn-title" style="margin-right:15px;" onclick="firewall.clean_panel_error_logs()">' + lan.public.empty + '</button>'
+                          + '<button type="button" class="btn btn-success btn-sm btn-title" onclick="layer.closeAll()">' + lan.public.close + '</button>'
+                          + '</div>'
+                          + '</div>'
+                  });
+                  setTimeout(function () {
+                      $("#crontab-log").text(rdata.msg);
+                      var div = document.getElementsByClassName('crontab-log')[0]
+                      div.scrollTop = div.scrollHeight;
+                  }, 200)
+              }).error(function () {
+                  layer.closeAll();
+                  layer.msg('无法取回日志信息!', { icon: 2 });
+              });
+          },
+          //清空面板错误日志
+          clean_panel_error_logs:function() {
+              layer.msg(lan.public.the_get, { icon: 16, time: 0, shade: [0.3, '#000'] });
+              $.post('/config?action=clean_panel_error_logs', {}, function (rdata) {
+                  layer.closeAll();
+                  layer.msg(rdata.msg, { icon: 1 });
+              });
+          }
+    }
+    firewall.get_init();
+  </script>
 {% endblock %}

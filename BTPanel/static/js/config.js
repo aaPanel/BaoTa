@@ -1683,7 +1683,7 @@ function set_panel_report () {
 					                        </div>\
 					                        <div class="page" id="server_table_page"></div>\
 				                        </div>\
-				                        <ul class="mtl0 c7" style="font-size: 13px;position:absolute;bottom:0;padding-right: 40px;">\
+				                        <ul class="mtl0 c7" style="font-size: 13px;position:absolute;left:15px;bottom:15px;padding-right: 40px;">\
                                 		   <li style="list-style:inside disc">邮箱通道和钉钉通道只能同时开启一个</li>\
                                     	</ul>\
 	                				</div>\
@@ -1704,7 +1704,7 @@ function set_panel_report () {
 						                        </div>\
 					                        </div>\
 				                        </div>\
-				                          <ul class="mtl0 c7" style="font-size: 13px;position:absolute;bottom:0;padding-right: 40px;">\
+				                          <ul class="mtl0 c7" style="font-size: 13px;position:absolute;left:15px;bottom:15px;padding-right: 40px;">\
                                 		   <li style="list-style:inside disc">只允许设置ipv4白名单</li>\
                                     	</ul>\
 		            				</div>\
@@ -1932,7 +1932,7 @@ function open_three_channel_auth () {
 									</div>\
 									<div class="line">\
 										<div class="divtable">\
-											<table class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"><thead><tr><th>邮箱</th><th width="80px">操作</th></tr></thead></table>\
+											<table class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"><thead><tr><th>邮箱</th><th class="text-right" width="80px">操作</th></tr></thead></table>\
 											<table class="table table-hover"><tbody id="receive_table"></tbody></table>\
 										</div>\
 									</div>\
@@ -2242,7 +2242,7 @@ function get_receive_list () {
 					</tr>'
       }
     } else {
-      _html = '<tr><td colspan="2">暂无数据</td></tr>'
+      _html = '<tr><td class="text-center" colspan="2">暂无数据</td></tr>';
     }
     $('#receive_table').html(_html);
   })
@@ -2250,21 +2250,26 @@ function get_receive_list () {
 }
 
 function del_email (mail) {
-  var loadT = layer.msg('正在删除【' + mail + '】中,请稍候...', {
-    icon: 16,
-    time: 0,
-    shade: [0.3, '#000']
-  }),
-    _this = this;
-  $.post('/config?action=del_mail_list', {
-    email: mail
-  }, function (rdata) {
-    layer.close(loadT);
-    layer.msg(rdata.msg, {
-      icon: rdata.status ? 1 : 2
-    })
-    _this.get_receive_list()
-  })
+  bt.confirm({
+    title: '删除邮箱【' + mail + '】',
+    msg: '您真的要删除这个邮箱吗？'
+  }, function () {
+    var loadT = layer.msg('正在删除【' + mail + '】中,请稍候...', {
+      icon: 16,
+      time: 0,
+      shade: [0.3, '#000']
+    }),
+      _this = this;
+    $.post('/config?action=del_mail_list', {
+      email: mail
+    }, function (rdata) {
+      layer.close(loadT);
+      layer.msg(rdata.msg, {
+        icon: rdata.status ? 1 : 2
+      })
+      _this.get_receive_list()
+    });
+  });
 }
 // 设置钉钉
 function SetChannelDing () {

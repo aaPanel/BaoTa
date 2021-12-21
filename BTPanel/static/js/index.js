@@ -420,7 +420,7 @@ var index = {
       // 动态添加磁盘，并赋值disk_view
       if (_this.chart_view.disk == undefined) {
         for (var i = 0; i < res.disk.length; i++) {
-          var diskHtml = "<li class='rank col-xs-6 col-sm-3 col-md-3 col-lg-2 mtb20 circle-box text-center'><div id='diskName" + i + "'></div><div class='chart-li' id='diskChart" + i + "'></div><div id='disk" + i + "'></div></li>";
+          var diskHtml = "<li class='rank col-xs-6 col-sm-3 col-md-3 col-lg-2 mtb20 circle-box text-center'><div id='diskName" + i + "' class='diskName'></div><div class='chart-li' id='diskChart" + i + "'></div><div id='disk" + i + "'></div></li>";
           $("#systemInfoList").append(diskHtml);
           _this.disk_view.push(echarts.init(document.querySelector("#diskChart" + i)));
         }
@@ -605,7 +605,7 @@ var index = {
       this.series_option.series[0].detail.color = this.chart_json.disk[i].color
       this.chart_view.disk[i].setOption(this.series_option, true)
       $("#disk" + i).text(this.chart_result.disk[i].size[1] + " / " + this.chart_result.disk[i].size[0])
-      $("#diskName" + i).text(this.chart_result.disk[i].path)
+      $("#diskName" + i).text(this.chart_result.disk[i].path).attr('title', this.chart_result.disk[i].path)
     }
   },
   /**

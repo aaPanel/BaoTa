@@ -4,6 +4,38 @@ var controlObj = {
   conTrolView: {
     init: function () {
       var that = this;
+      var networkType = bt.get_cookie('network-unitType')
+      if (!networkType) {
+        bt.set_cookie('network-unitType', 'KB/s')
+        networkType = 'KB/s'
+      }
+      var diskType = bt.get_cookie('disk-unitType')
+      if (!diskType) {
+        bt.set_cookie('disk-unitType', 'MB/s')
+        diskType = 'MB/s'
+      }
+
+      $(".network-unit .picker-text-list").text(networkType);
+      $(".disk-unit .picker-text-list").text(diskType);
+      $(".network-unit .select-list-item li:contains(" + networkType + ")").addClass("active");
+      $(".disk-unit .select-list-item :contains(" + diskType + ")").addClass("active");
+      $(".bt-crontab-select-button").on('click', '.select-picker-search', function () {
+        $(this).next().toggle();
+        if ($(this).parent().hasClass('network-unit')) {
+          $(".disk-unit .select-list-item").hide();
+        } else {
+          $(".network-unit .select-list-item").hide();
+        }
+      });
+      $(".bt-crontab-select-button").on('click', '.select-list-item li', function () {
+        var _button = $(this).parents('.bt-crontab-select-button');
+        $(this).addClass('active').siblings().removeClass('active');
+        _button.find('.picker-text-list').text($(this).text());
+        _button.find(".select-list-item").toggle();
+        var cookie_type = $(this).parents('.bgw').find('.searcTime .time_range_submit').attr('data-type');
+        setCookie(cookie_type + '-unitType', $(this).attr('data-attr'));
+        $(this).parents('.bgw').find('.searcTime .gt.on').click();
+      });
       // 默认显示7天周期图表
       setTimeout(function () {
         that.Wday(0, 'getload');
@@ -273,6 +305,7 @@ var controlObj = {
     * @param {*} rdata 
     */
     set_data: function (data, startTime, endTime) {
+      if (data.length <= 0) return;
       var time;
       if ((endTime - startTime) >= 24 * 3600 - 1) {
         var min = data[0];
@@ -305,20 +338,21 @@ var controlObj = {
         var xData = [];
         var yData = [];
         //var zData = [];
-
-        for (var i = 0; i < rdata.length; i++) {
-          // xData.push(rdata[i].addtime);
-          // yData.push(rdata[i].pro);
-          // zData.push(rdata[i].mem);
-          yData.push([rdata[i].addtime, rdata[i].pro]);
+        if (rdata.length > 0) {
+          for (var i = 0; i < rdata.length; i++) {
+            // xData.push(rdata[i].addtime);
+            // yData.push(rdata[i].pro);
+            // zData.push(rdata[i].mem);
+            yData.push([rdata[i].addtime, rdata[i].pro]);
+          }
+          var startTime = rdata[0].addtime / 1000;
+          var endTime = rdata[rdata.length - 1].addtime / 1000;
+          var option = that.get_cpu_option(startTime, endTime, yData);
+          myChartCpu.setOption(option);
+          window.addEventListener("resize", function () {
+            myChartCpu.resize();
+          });
         }
-        var startTime = rdata[0].addtime / 1000;
-        var endTime = rdata[rdata.length - 1].addtime / 1000;
-        var option = that.get_cpu_option(startTime, endTime, yData);
-        myChartCpu.setOption(option);
-        window.addEventListener("resize", function () {
-          myChartCpu.resize();
-        });
       });
     },
 
@@ -361,20 +395,21 @@ var controlObj = {
         var xData = [];
         //var yData = [];
         var zData = [];
-
-        for (var i = 0; i < rdata.length; i++) {
-          // xData.push(rdata[i].addtime);
-          // yData.push(rdata[i].pro);
-          // zData.push(rdata[i].mem);
-          zData.push([rdata[i].addtime, rdata[i].mem]);
+        if (rdata.length > 0) {
+          for (var i = 0; i < rdata.length; i++) {
+            // xData.push(rdata[i].addtime);
+            // yData.push(rdata[i].pro);
+            // zData.push(rdata[i].mem);
+            zData.push([rdata[i].addtime, rdata[i].mem]);
+          }
+          var startTime = rdata[0].addtime / 1000;
+          var endTime = rdata[rdata.length - 1].addtime / 1000;
+          option = that.get_mem_option(startTime, endTime, zData);
+          myChartMen.setOption(option);
+          window.addEventListener("resize", function () {
+            myChartMen.resize();
+          });
         }
-        var startTime = rdata[0].addtime / 1000;
-        var endTime = rdata[rdata.length - 1].addtime / 1000;
-        option = that.get_mem_option(startTime, endTime, zData);
-        myChartMen.setOption(option);
-        window.addEventListener("resize", function () {
-          myChartMen.resize();
-        });
       })
     },
 
@@ -464,13 +499,15 @@ var controlObj = {
         } else {
           $('#diskview').next().find('.select-list-item li').eq(1).show();
         }
-        var startTime = rdata[0].addtime / 1000;
-        var endTime = rdata[rdata.length - 1].addtime / 1000;
-        var option = that.get_disk_option(_unit, startTime, endTime, rData, wData);
-        myChartDisk.setOption(option);
-        window.addEventListener("resize", function () {
-          myChartDisk.resize();
-        });
+        if (rdata.length > 0) {
+          var startTime = rdata[0].addtime / 1000;
+          var endTime = rdata[rdata.length - 1].addtime / 1000;
+          var option = that.get_disk_option(_unit, startTime, endTime, rData, wData);
+          myChartDisk.setOption(option);
+          window.addEventListener("resize", function () {
+            myChartDisk.resize();
+          });
+        }
       })
     },
 
@@ -602,13 +639,15 @@ var controlObj = {
         } else {
           $('#network').next().find('.select-list-item li').eq(1).show();
         }
-        var startTime = rdata[0].addtime / 1000;
-        var endTime = rdata[rdata.length - 1].addtime / 1000;
-        var option = that.get_network_option(_unit, startTime, endTime, yData, zData);
-        myChartNetwork.setOption(option);
-        window.addEventListener("resize", function () {
-          myChartNetwork.resize();
-        });
+        if (rdata.length > 0) {
+          var startTime = rdata[0].addtime / 1000;
+          var endTime = rdata[rdata.length - 1].addtime / 1000;
+          var option = that.get_network_option(_unit, startTime, endTime, yData, zData);
+          myChartNetwork.setOption(option);
+          window.addEventListener("resize", function () {
+            myChartNetwork.resize();
+          });
+        }
       })
     },
 
@@ -814,13 +853,15 @@ var controlObj = {
           aData.push([rdata[i].addtime, rdata[i].five]);
           bData.push([rdata[i].addtime, rdata[i].fifteen]);
         }
-        var startTime = rdata[0].addtime / 1000;
-        var endTime = rdata[rdata.length - 1].addtime / 1000;
-        var option = that.get_load_option(startTime, endTime, yData, zData, aData, bData);
-        myChartgetload.setOption(option);
-        window.addEventListener("resize", function () {
-          myChartgetload.resize();
-        })
+        if (rdata.length > 0) {
+          var startTime = rdata[0].addtime / 1000;
+          var endTime = rdata[rdata.length - 1].addtime / 1000;
+          var option = that.get_load_option(startTime, endTime, yData, zData, aData, bData);
+          myChartgetload.setOption(option);
+          window.addEventListener("resize", function () {
+            myChartgetload.resize();
+          });
+        }
       })
     },
 
@@ -927,6 +968,8 @@ var controlObj = {
           scale: true,
           name: '资源使用率',
           boundaryGap: [0, '100%'],
+          min: 0,
+          max: 100,
           // y轴网格显示
           splitLine: {
             show: true,

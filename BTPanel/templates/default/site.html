@@ -10,7 +10,7 @@
                     class="plr10 c4">{{data['lan']['H2']}}</span>
             </div>
         </div> -->
-        <div class="pos-box bgw mtb15 plr15">
+    <div class="pos-box bgw mtb15">
             <div class="tab-list" id="cutMode">
                 <div class="tabs-item active" data-type="php">PHP项目</div>
                 <div class="tabs-item" data-type="java">JAVA项目</div>
@@ -18,7 +18,7 @@
                 <!-- <div class="control-item" data-type="go">Go项目</div> -->
             </div>
         </div>
-        <div class="site_table_view bgw mtb15 pd15">
+    <div class="site_table_view bgw mtb15 pd15 tab-view-box">
             <!-- <div class="info-title-tips">
                 <p><span class="glyphicon glyphicon-alert"
                          style="color: #f39c12; margin-right: 10px;"></span>{{data['lan']['PS']}}建站成功后，请在<a
@@ -297,6 +297,7 @@
 </div>
 {% endblock %}
 {% block scripts %}
+{{ super() }} 
 <script type="text/javascript">
 	bt.set_cookie('sites_path', "{{session['config']['sites_path']}}");
 	bt.set_cookie('serverType', "{{session['webserver']}}");

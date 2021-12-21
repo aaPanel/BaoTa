@@ -12,13 +12,17 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 16.5%;
     color: #999;
     line-height: 30px;
     font-size: 15px;
     font-weight: 500;
   }
-
+  .rank .diskName {
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .chart-li{
     width: 105px;
     height: 105px;
@@ -70,7 +74,7 @@
 </style>
 <div class="main-content">
     <div class="container-fluid" style="padding-bottom: 66px;">
-		<div class="index-pos-box bgw mtb15">
+		<div class="index-pos-box bgw mtb15 radius4">
             <div class="position f12 c6 pull-left" style="background:none;padding-left:15px">
                 <span class="bind-user c4">
                     <a href="javascript:bt.pub.bind_btname();" class="btlink">宝塔账户</a>
@@ -92,7 +96,7 @@
         <div class="danger-tips">
             <div class="important-title" id="messageError" style="display: none; margin-top:15px"></div>
         </div>
-        <div class="server bgw mtb15">
+    <div class="server bgw mtb15 radius4">
             <div class="title c6 f16 plr15">
                 <h3 class="c6 f16 pull-left">状态</h3>
             </div>
@@ -125,23 +129,23 @@
                 </ul>
             </div>
         </div>
-        <div class="system-info bgw clearfix mtb15">
+    <div class="system-info bgw clearfix mtb15 radius4">
             <div class="title c6 f16 plr15">概览</div>
             <div class="system-info-con mtb20">
                 <ul class="clearfix text-center">
-                    <li class="sys-li-box col-xs-4 col-sm-4 col-md-4 col-lg-3">
+                <li class="sys-li-box col-xs-4 col-sm-4 col-md-4 col-lg-3 radius2">
                         <p class="name f15 c9">{{data['lan']['N1']}}</p>
                         <div class="val"><a class="btlink" href="/site">{{data['siteCount']}}</a></div>
                     </li>
-                    <li class="sys-li-box col-xs-4 col-sm-4 col-md-4 col-lg-3">
+                <li class="sys-li-box col-xs-4 col-sm-4 col-md-4 col-lg-3 radius2">
                         <p class="name f15 c9">{{data['lan']['N3']}}</p>
                         <div class="val"><a class="btlink" href="/ftp">{{data['ftpCount']}}</a></div>
                     </li>
-                    <li class="sys-li-box col-xs-4 col-sm-4 col-md-4 col-lg-3">
+                <li class="sys-li-box col-xs-4 col-sm-4 col-md-4 col-lg-3 radius2">
                         <p class="name f15 c9">{{data['lan']['N2']}}</p>
                         <div class="val"><a class="btlink" href="/database">{{data['databaseCount']}}</a></div>
                     </li>
-                    <li class="sys-li-box ccol-xs-4 col-sm-4 col-md-4 col-lg-3">
+                <li class="sys-li-box ccol-xs-4 col-sm-4 col-md-4 col-lg-3 radius2">
                         <p class="name f15 c9">{{data['lan']['N4']}}</p>
                         <div class="val"><a class="btlink warning_num" href="javascript:;" onclick="index.reader_warning_view()"><img src="/static/layer/skin/default/loading-2.gif" style="width:20px" /><span class="ml5" style="font-size:17px;vertical-align: middle;color:#aaa;">检测中</span></a></div>
                     </li>
@@ -150,7 +154,7 @@
         </div>
         <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0">
             <div class="pr8">
-                <div class="bgw">
+            <div class="bgw radius4">
                     <div class="title c6 f16 plr15">{{data['lan']['P4']}}</div>
                     <div class="setting-con" style="padding:0; height:442px; margin-right: -4px; overflow: hidden;">
                         <div class="container-fluid soft-man">
@@ -163,7 +167,7 @@
         </div>
         <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0">
             <div class="pl7">
-                <div class="bgw" style="height:283.5px">
+            <div class="bgw radius4" style="height:283.5px">
                     <div class="title c6 f16 plr15 tabs-nav">
                       <span class="active">流量</span>
                       <span>磁盘IO</span>
@@ -173,7 +177,7 @@
                       </div>
                     </div>
                     <div class="tabs-content">
-                      <div class="tabs-active tabs-item">
+                  <div class="tabs-active radius4 tabs-item">
                         <div class="bw-info">
                           <div class="col-sm-6 col-md-3"><p class="c9"><span class="ico-up"></span>上行</p><a id="upSpeed">{{data['lan']['S2']}}</a></div>
                           <div class="col-sm-6 col-md-3"><p class="c9"><span class="ico-down"></span>下行</p><a id="downSpeed">{{data['lan']['S2']}}</a></div>
@@ -182,7 +186,7 @@
                         </div>
                         <div id="NetImg" style="width:100%;height: 370px;"></div>
                       </div>
-                      <div class="tabs-item">
+                  <div class="tabs-item radius4">
                         <div class="bw-info">
                           <div class="col-sm-6 col-md-3"><p class="c9"><span class="ico-read"></span>读取</p><a id="readBytes">{{data['lan']['S2']}}</a></div>
                           <div class="col-sm-6 col-md-3"><p class="c9"><span class="ico-write"></span>写入</p><a id="writeBytes">{{data['lan']['S2']}}</a></div>
@@ -207,29 +211,30 @@
 </div>
 {% endblock %}
 {% block scripts %}
-<script type="text/javascript">
-    var bind_user = "{{data['bind']}}"
-</script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/echarts.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/index.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-<script type="text/javascript" src="{{g.cdn_url}}/editor/ace.js?version={{g['version']}}&repair={{data['js_random']}}" defer></script>
-<script type="text/javascript">
-    $(".btpro span").click(function(e){
-        layer.confirm('切换回免费版可通过解绑账号实现', { icon: 3, btn: ['解绑账号'], closeBtn: 2, title: '是否取消授权' }, function () {
-            $.post('/ssl?action=DelToken', {}, function (rdata) {
-                layer.msg(rdata.msg);
-                setTimeout(function () {
-                    window.location.reload();
-                },2000);
-            });
-        });
-        e.stopPropagation();
-	});
-    setCookie('pro_end',{{data.pro_end}});
-    setCookie('ltd_end',{{data.ltd_end}});
-    setCookie('serverType', "{{session['webserver']}}");
-    bt.soft.get_index_renew();
-</script>
+  {{ super() }} 
+  <script type="text/javascript">
+      var bind_user = "{{data['bind']}}"
+  </script>
+  <script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+  <script type="text/javascript" src="{{g.cdn_url}}/js/echarts.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+  <script type="text/javascript" src="{{g.cdn_url}}/js/index.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+  <script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+  <script type="text/javascript" src="{{g.cdn_url}}/editor/ace.js?version={{g['version']}}&repair={{data['js_random']}}" defer></script>
+  <script type="text/javascript">
+      $(".btpro span").click(function(e){
+          layer.confirm('切换回免费版可通过解绑账号实现', { icon: 3, btn: ['解绑账号'], closeBtn: 2, title: '是否取消授权' }, function () {
+              $.post('/ssl?action=DelToken', {}, function (rdata) {
+                  layer.msg(rdata.msg);
+                  setTimeout(function () {
+                      window.location.reload();
+                  },2000);
+              });
+          });
+          e.stopPropagation();
+    });
+      setCookie('pro_end',{{data.pro_end}});
+      setCookie('ltd_end',{{data.ltd_end}});
+      setCookie('serverType', "{{session['webserver']}}");
+      bt.soft.get_index_renew();
+  </script>
 {% endblock %}

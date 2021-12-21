@@ -129,223 +129,224 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript">
-	
-	var firewall = {		
-		get_init:function(){			
-			firewall.flush_init();
-			firewall.get_list();
-			firewall.get_log_list();
-			firewall.get_logs_size();			
-			$('.sshswitch').click(function(){
-				var status = $("#sshswitch").prop("checked")==true?1:0;
-				bt.firewall.set_mstsc_status(status,function(rdata){
-					if(rdata===-1){
-						if(status){
-							$("#sshswitch").prop("checked","checked")
-						}else{
-							$("#sshswitch").removeAttr('checked');
-						}
-					}else{						
-						bt.msg(rdata);
-						firewall.flush_init();
-					}
-				})
-			})
-			$('.noping').click(function(){
-				var status = $("#noping").prop("checked")==true?1:0;
-				bt.firewall.ping(status,function(rdata){
-					if(rdata===-1){
-						if(status){
-							$("#noping").prop("checked","checked")
-						}else{
-							$("#noping").removeAttr('checked');
-						}
-					}else{						
-						bt.msg(rdata);
-						firewall.flush_init();
-					}
-				})
-			})			
-			$("#firewalldType").change(function(){
-				var type = $(this).val();
-				var w = '120px';
-				var p = lan.firewall.port;
-				var t = lan.firewall.accept;
-                var m = lan.firewall.port_ps;
-                $("#AcceptAddress").hide();
-                if (type == 'address') {
-                    w = '150px';
-                    p = lan.firewall.ip;
-                    t = lan.firewall.drop;
-                    m = lan.firewall.ip_ps;
-                } else if (type === 'ip_port') {
-                    $("#AcceptAddress").show();
-                    m = '说明: 只允许指定IP访问某端口，如: 只允许192.168.0.1访问8080端口';
-                }
-				$("#AcceptPort").css("width",w);
-				$("#AcceptPort").attr('placeholder',p);
-				$("#toAccept").html(t);
-				$("#f-ps").html(m);			
-			});
-		},
-		flush_init:function(){
-			bt.firewall.get_ssh_info(function(rdata){				
-				if(!rdata.status){
-					$("#mstscSubmit").attr('disabled','disabled')
-					$("#mstscPort").attr('disabled','disabled')
-					$('#sshswitch').removeAttr('checked');
-				}
-				else{
-					$("#mstscSubmit").removeAttr('disabled')
-					$("#mstscPort").removeAttr('disabled')
-					$('#sshswitch').attr('checked','checked');
-				}
-				if(rdata.ping){
-					$('#noping').removeAttr('checked');
-				}else{
-					$('#noping').attr('checked','checked');
-				}
-				$("#mstscPort").val(rdata.port);
-			})
-		},
-		get_logs_size:function(){
-			bt.firewall.get_logs_size(function(rdata){
-				$("#logSize").text(rdata);
-			})
-		},
-		clear_logs_files:function(){
-			bt.firewall.clear_logs_files(function(rdata){
-				$("#logSize").text(rdata);						
-				bt.msg({msg:lan.firewall.empty,icon:1});
-			})
-		},
-		add_accept_port:function(){
-			var type = $("#firewalldType").val();
-			var port = $("#AcceptPort").val();
-			var ps = $("#Ps").val();
-			bt.firewall.add_accept_port(type,port,ps,function(rdata){
-				if(rdata.status){
-					firewall.get_list();
-					$("#AcceptPort").val('');
-					$("#Ps").val('');
-				}
-				bt.msg(rdata);
-			})
-        },
-        remove_accept_port: function (id,port) {
-            bt.firewall.del_accept_port(id, port, function (rdata) {
-                if (rdata.status) {
-                    firewall.get_list();
-                }
-                bt.msg(rdata);
-            })
-        },
-		get_list:function(page,search){
-			if(page==undefined) page=1;			
-            $.post('/firewall_new?action=GetList', { p: page, search: search,collback:'firewall.get_list' }, function (rdata) {
+  {{ super() }} 
+  <script type="text/javascript">
+    
+    var firewall = {		
+      get_init:function(){			
+        firewall.flush_init();
+        firewall.get_list();
+        firewall.get_log_list();
+        firewall.get_logs_size();			
+        $('.sshswitch').click(function(){
+          var status = $("#sshswitch").prop("checked")==true?1:0;
+          bt.firewall.set_mstsc_status(status,function(rdata){
+            if(rdata===-1){
+              if(status){
+                $("#sshswitch").prop("checked","checked")
+              }else{
+                $("#sshswitch").removeAttr('checked');
+              }
+            }else{						
+              bt.msg(rdata);
+              firewall.flush_init();
+            }
+          })
+        })
+        $('.noping').click(function(){
+          var status = $("#noping").prop("checked")==true?1:0;
+          bt.firewall.ping(status,function(rdata){
+            if(rdata===-1){
+              if(status){
+                $("#noping").prop("checked","checked")
+              }else{
+                $("#noping").removeAttr('checked');
+              }
+            }else{						
+              bt.msg(rdata);
+              firewall.flush_init();
+            }
+          })
+        })			
+        $("#firewalldType").change(function(){
+          var type = $(this).val();
+          var w = '120px';
+          var p = lan.firewall.port;
+          var t = lan.firewall.accept;
+                  var m = lan.firewall.port_ps;
+                  $("#AcceptAddress").hide();
+                  if (type == 'address') {
+                      w = '150px';
+                      p = lan.firewall.ip;
+                      t = lan.firewall.drop;
+                      m = lan.firewall.ip_ps;
+                  } else if (type === 'ip_port') {
+                      $("#AcceptAddress").show();
+                      m = '说明: 只允许指定IP访问某端口，如: 只允许192.168.0.1访问8080端口';
+                  }
+          $("#AcceptPort").css("width",w);
+          $("#AcceptPort").attr('placeholder',p);
+          $("#toAccept").html(t);
+          $("#f-ps").html(m);			
+        });
+      },
+      flush_init:function(){
+        bt.firewall.get_ssh_info(function(rdata){				
+          if(!rdata.status){
+            $("#mstscSubmit").attr('disabled','disabled')
+            $("#mstscPort").attr('disabled','disabled')
+            $('#sshswitch').removeAttr('checked');
+          }
+          else{
+            $("#mstscSubmit").removeAttr('disabled')
+            $("#mstscPort").removeAttr('disabled')
+            $('#sshswitch').attr('checked','checked');
+          }
+          if(rdata.ping){
+            $('#noping').removeAttr('checked');
+          }else{
+            $('#noping').attr('checked','checked');
+          }
+          $("#mstscPort").val(rdata.port);
+        })
+      },
+      get_logs_size:function(){
+        bt.firewall.get_logs_size(function(rdata){
+          $("#logSize").text(rdata);
+        })
+      },
+      clear_logs_files:function(){
+        bt.firewall.clear_logs_files(function(rdata){
+          $("#logSize").text(rdata);						
+          bt.msg({msg:lan.firewall.empty,icon:1});
+        })
+      },
+      add_accept_port:function(){
+        var type = $("#firewalldType").val();
+        var port = $("#AcceptPort").val();
+        var ps = $("#Ps").val();
+        bt.firewall.add_accept_port(type,port,ps,function(rdata){
+          if(rdata.status){
+            firewall.get_list();
+            $("#AcceptPort").val('');
+            $("#Ps").val('');
+          }
+          bt.msg(rdata);
+        })
+          },
+          remove_accept_port: function (id,port) {
+              bt.firewall.del_accept_port(id, port, function (rdata) {
+                  if (rdata.status) {
+                      firewall.get_list();
+                  }
+                  bt.msg(rdata);
+              })
+          },
+      get_list:function(page,search){
+        if(page==undefined) page=1;			
+              $.post('/firewall_new?action=GetList', { p: page, search: search,collback:'firewall.get_list' }, function (rdata) {
 
-                $('.firewallBody').html(rdata.page);
-                var ports_ps = { "3306": "MySQL服务默认端口", "888": "phpMyAdmin默认端口", "22": "SSH远程服务", "20": "FTP主动模式数据端口", "21": "FTP协议默认端口", "39000-40000": "FTP被动模端口范围", "30000-40000": "FTP被动模端口范围","11211":"Memcached服务端口","873":"rsync数据同步服务","8888":"宝塔Linux面板默认端口"}
-				var _tab =  bt.render({
-					table:'#firewallBody',
-					columns:[						
-						{ field: 'id', title: "{{data['lan']['TH1']}}"},	
-						{ field: 'port', title: "{{data['lan']['TH2']}}",templet:function(item){
-							var _ps = lan.firewall.accept_port;
-							if(bt.contains(item.port,'.')){
-								_ps = lan.firewall.drop_ip;
-							}
-							_ps += ':['+item.port+']'
-							return _ps;
-						}},
-						{ field: 'status', title: "{{data['lan']['TH3']}}",templet:function(item){
-							var status = '';
-							switch(item.status){
-								case 0:
-									status = lan.firewall.status_not;
-									break;
-								case 1:
-									status = lan.firewall.status_net;
-									break;
-								default:
-									status = lan.firewall.status_ok;
-									break;
-							}
-							return status;
-						},help:'https://www.bt.cn/bbs/thread-4708-1-1.html'},
-                        { field: 'addtime', title: "{{data['lan']['TH4']}}"},
-                        { field: 'ps', title: "{{data['lan']['TH5']}}", templet: function (item) {
-                            if (item.port in ports_ps) return ports_ps[item.port];
-                            return item.ps;
-                         }},	
-						{ field: 'opt',align:'right',width:50, title: "{{data['lan']['TH6']}}",templet:function(item){
-							return '<a href="javascript:;" class="btlink" onclick="firewall.remove_accept_port('+item.id+',\''+item.port+'\')">删除</a>';
-						}}
-					],
-					data:rdata.data
-				})		
-			})	
-		},
-		get_log_list:function(page,search){
-            if (page == undefined) page = 1;
-            if (search == undefined) search = $("#SearchValue").val();
-			bt.firewall.get_log_list(page,search,function(rdata){
-				$('.logsBody').html(rdata.page);
-				var _tab =  bt.render({
-					table:'#logsBody',
-					columns:[						
-						{ field: 'id', title: "{{data['lan']['LTH1']}}"},	
-						{ field: 'type', title: "{{data['lan']['LTH2']}}"},	
-						{ field: 'log', title: "{{data['lan']['LTH3']}}"},		
-						{ field: 'addtime', title: "{{data['lan']['LTH4']}}"}				
-					],
-					data:rdata.data
-				})		
-			})			
-        },
-        //查看面板运行日志
-        get_panel_error_logs: function () {
-            layer.msg(lan.public.the_get, { icon: 16, time: 0, shade: [0.3, '#000'] });
-            $.post('/config?action=get_panel_error_logs', {}, function (rdata) {
-                layer.closeAll();
-                if (!rdata.status) {
-                    layer.msg(rdata.msg, { icon: 2 });
-                    return;
-                };
-                layer.open({
-                    type: 1,
-                    title: '面板运行日志',
-                    area: ['700px', '490px'],
-                    shadeClose: false,
-                    closeBtn: 2,
-                    content: '<div class="setchmod bt-form  pb70">'
-                        + '<pre class="crontab-log" style="overflow: auto; border: 0px none; line-height:23px;padding: 15px; margin: 0px; white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0px;font-family: \"微软雅黑\"">' + (rdata.msg == '' ? '当前日志为空' : rdata.msg) + '</pre>'
-                        + '<div class="bt-form-submit-btn" style="margin-top: 0px;">'
-                        + '<button type="button" class="btn btn-danger btn-sm btn-title" style="margin-right:15px;" onclick="firewall.clean_panel_error_logs()">' + lan.public.empty + '</button>'
-                        + '<button type="button" class="btn btn-success btn-sm btn-title" onclick="layer.closeAll()">' + lan.public.close + '</button>'
-                        + '</div>'
-                        + '</div>'
-                });
-                setTimeout(function () {
-                    $("#crontab-log").text(rdata.msg);
-                    var div = document.getElementsByClassName('crontab-log')[0]
-                    div.scrollTop = div.scrollHeight;
-                }, 200)
-            }).error(function () {
-                layer.closeAll();
-                layer.msg('无法取回日志信息!', { icon: 2 });
-            });
-        },
-        //清空面板错误日志
-        clean_panel_error_logs:function() {
-            layer.msg(lan.public.the_get, { icon: 16, time: 0, shade: [0.3, '#000'] });
-            $.post('/config?action=clean_panel_error_logs', {}, function (rdata) {
-                layer.closeAll();
-                layer.msg(rdata.msg, { icon: 1 });
-            });
-        }
-	}
-	firewall.get_init();
-</script>
+                  $('.firewallBody').html(rdata.page);
+                  var ports_ps = { "3306": "MySQL服务默认端口", "888": "phpMyAdmin默认端口", "22": "SSH远程服务", "20": "FTP主动模式数据端口", "21": "FTP协议默认端口", "39000-40000": "FTP被动模端口范围", "30000-40000": "FTP被动模端口范围","11211":"Memcached服务端口","873":"rsync数据同步服务","8888":"宝塔Linux面板默认端口"}
+          var _tab =  bt.render({
+            table:'#firewallBody',
+            columns:[						
+              { field: 'id', title: "{{data['lan']['TH1']}}"},	
+              { field: 'port', title: "{{data['lan']['TH2']}}",templet:function(item){
+                var _ps = lan.firewall.accept_port;
+                if(bt.contains(item.port,'.')){
+                  _ps = lan.firewall.drop_ip;
+                }
+                _ps += ':['+item.port+']'
+                return _ps;
+              }},
+              { field: 'status', title: "{{data['lan']['TH3']}}",templet:function(item){
+                var status = '';
+                switch(item.status){
+                  case 0:
+                    status = lan.firewall.status_not;
+                    break;
+                  case 1:
+                    status = lan.firewall.status_net;
+                    break;
+                  default:
+                    status = lan.firewall.status_ok;
+                    break;
+                }
+                return status;
+              },help:'https://www.bt.cn/bbs/thread-4708-1-1.html'},
+                          { field: 'addtime', title: "{{data['lan']['TH4']}}"},
+                          { field: 'ps', title: "{{data['lan']['TH5']}}", templet: function (item) {
+                              if (item.port in ports_ps) return ports_ps[item.port];
+                              return item.ps;
+                          }},	
+              { field: 'opt',align:'right',width:50, title: "{{data['lan']['TH6']}}",templet:function(item){
+                return '<a href="javascript:;" class="btlink" onclick="firewall.remove_accept_port('+item.id+',\''+item.port+'\')">删除</a>';
+              }}
+            ],
+            data:rdata.data
+          })		
+        })	
+      },
+      get_log_list:function(page,search){
+              if (page == undefined) page = 1;
+              if (search == undefined) search = $("#SearchValue").val();
+        bt.firewall.get_log_list(page,search,function(rdata){
+          $('.logsBody').html(rdata.page);
+          var _tab =  bt.render({
+            table:'#logsBody',
+            columns:[						
+              { field: 'id', title: "{{data['lan']['LTH1']}}"},	
+              { field: 'type', title: "{{data['lan']['LTH2']}}"},	
+              { field: 'log', title: "{{data['lan']['LTH3']}}"},		
+              { field: 'addtime', title: "{{data['lan']['LTH4']}}"}				
+            ],
+            data:rdata.data
+          })		
+        })			
+          },
+          //查看面板运行日志
+          get_panel_error_logs: function () {
+              layer.msg(lan.public.the_get, { icon: 16, time: 0, shade: [0.3, '#000'] });
+              $.post('/config?action=get_panel_error_logs', {}, function (rdata) {
+                  layer.closeAll();
+                  if (!rdata.status) {
+                      layer.msg(rdata.msg, { icon: 2 });
+                      return;
+                  };
+                  layer.open({
+                      type: 1,
+                      title: '面板运行日志',
+                      area: ['700px', '490px'],
+                      shadeClose: false,
+                      closeBtn: 2,
+                      content: '<div class="setchmod bt-form  pb70">'
+                          + '<pre class="crontab-log" style="overflow: auto; border: 0px none; line-height:23px;padding: 15px; margin: 0px; white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0px;font-family: \"微软雅黑\"">' + (rdata.msg == '' ? '当前日志为空' : rdata.msg) + '</pre>'
+                          + '<div class="bt-form-submit-btn" style="margin-top: 0px;">'
+                          + '<button type="button" class="btn btn-danger btn-sm btn-title" style="margin-right:15px;" onclick="firewall.clean_panel_error_logs()">' + lan.public.empty + '</button>'
+                          + '<button type="button" class="btn btn-success btn-sm btn-title" onclick="layer.closeAll()">' + lan.public.close + '</button>'
+                          + '</div>'
+                          + '</div>'
+                  });
+                  setTimeout(function () {
+                      $("#crontab-log").text(rdata.msg);
+                      var div = document.getElementsByClassName('crontab-log')[0]
+                      div.scrollTop = div.scrollHeight;
+                  }, 200)
+              }).error(function () {
+                  layer.closeAll();
+                  layer.msg('无法取回日志信息!', { icon: 2 });
+              });
+          },
+          //清空面板错误日志
+          clean_panel_error_logs:function() {
+              layer.msg(lan.public.the_get, { icon: 16, time: 0, shade: [0.3, '#000'] });
+              $.post('/config?action=clean_panel_error_logs', {}, function (rdata) {
+                  layer.closeAll();
+                  layer.msg(rdata.msg, { icon: 1 });
+              });
+          }
+    }
+    firewall.get_init();
+  </script>
 {% endblock %}

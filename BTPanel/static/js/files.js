@@ -1185,6 +1185,11 @@ var bt_file = {
                       layer.msg('请输入文件名', { icon: 2 })
                       return false;
                     }
+                    var _val = ress.filename.replace(/[\r\n]/g, "");
+                    if (that.match_unqualified_string(_val)) {
+                        layer.msg('名称不能含有 /\\:*?"<>|符号', { icon: 2 });
+                        return false;
+                    }
                     form.submitForm(function(res) {
                         that.render_present_task_list();
                         layer.msg(res.msg, { icon: res.status ? 1 : 2 })
@@ -1354,8 +1359,8 @@ var bt_file = {
                 var page = $(res.PAGE);
                 page.append('<span class="Pcount-item">每页<select class="showRow">' + select_page_num + '</select>条</span>');
                 $('.filePage').html('<div class="page_num">共' + rdata.is_dir_num + '个目录，' + (that.file_list.length - rdata.is_dir_num) + '个文件，文件大小:<a href="javascript:;" class="btlink" id="file_all_size">计算</a></div>' + page[0].outerHTML);
-                if(data.is_operating) data.is_operating = false;
-                if(data.is_operating && that.file_operating[that.file_pointer] != res.PATH) {
+                // if(data.is_operating) data.is_operating = false;
+                if(data && data.is_operating && that.file_operating[that.file_pointer] != res.PATH) {
                     next_path = that.file_operating[that.file_pointer + 1];
                     if (typeof next_path != "undefined" && next_path != res.PATH) that.file_operating.splice(that.file_pointer + 1);
                     that.file_operating.push(res.PATH);
@@ -3425,32 +3430,56 @@ var bt_file = {
             content:{
                 'class':'pd20',
                 formLabelWidth:'110px',
-                form:[{
-                    label:'文件夹或目录',
-                    group:{
-                        type:'text',
-                        name:'sfile',
-                        width:'280px',
-                        placeholder:'请选择需要创建的软链的文件夹和文件',
-                        icon:{type:'glyphicon-folder-open',event:function(ev){},select:'all'},
-                        value:'',
-                        input:function(ev){
-                            console.log(arguments);
+                form:[
+                    {
+                        label: "名称",
+                        group: {
+                            type: "text",
+                            name: "name",
+                            width: "280px",
+                            placeholder: "请输入软链接名称",
+                            value: ""
+                        }
+                    },
+                    {
+                        label:'链接到',
+                        group:{
+                            type:'text',
+                            name:'sfile',
+                            width:'280px',
+                            placeholder:'请选择需要创建的软链的文件夹和文件',
+                            icon:{type:'glyphicon-folder-open',event:function(ev){},select:'all'},
+                            value:'',
+                            input:function(ev){
+                                console.log(arguments);
+                            }
+                        }
+                    },
+                    {
+                        label:'',
+                        group:{
+                            type:'help',
+                            style:{'margin-top':'0'},
+                            'class':'none-list-style',
+                            list:['提示：请选择需要创建的软链的文件夹和文件']
                         }
                     }
-                },{
-                    label:'',
-                    group:{
-                        type:'help',
-                        style:{'margin-top':'0'},
-                        'class':'none-list-style',
-                        list:['提示：请选择需要创建的软链的文件夹和文件']
+                ]
+            },
+            init: function () {
+                var e = null, t = setInterval(function() {
+                    if ($('input[name="sfile"]').length < 1 && clearInterval(t),e != $('input[name="sfile"]').val()){
+                        e = $('input[name="sfile"]').val();
+                        var i = e.split("/");
+                        i.length > 1 && $('[name="name"]').val(i[i.length - 1])
                     }
-                }]
+                }, 100)
             },
             yes:function(data,indexs,layero){
-                var sfile = data.sfile,dirList = sfile.split('/');
-                data = $.extend(data,{dfile:that.file_path + '/' + dirList[dirList.length -1]})
+                data = $.extend(data, {dfile: that.file_path + "/" + data.name});
+                delete data.name;
+                // var sfile = data.sfile,dirList = sfile.split('/');
+                // data = $.extend(data,{dfile:that.file_path + '/' + dirList[dirList.length -1]})
                 bt_tools.send('files/CreateLink',data,function(res) {
                     if(res.status){
                         layer.close(indexs);
