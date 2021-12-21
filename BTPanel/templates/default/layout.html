@@ -90,6 +90,9 @@
       })
       document.querySelector('html').appendChild(title)
     }
+    if (!window.location.origin) {
+      window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+    }
   </script>
 </head>
 
@@ -150,11 +153,10 @@
         panel_version = "{{g['version']}}",
         cdn_url = "{{g.cdn_url}}";
     </script>
+    {% block scripts %}
     <script src="{{g.cdn_url}}/js/jquery-2.2.4.min.js"></script>
     <script src="{{g.cdn_url}}/layer/layer.js?version={{g['version']}}"></script>
-    <script
-      src="{{g.cdn_url}}/language/{{session['lan']}}/lan.js?version={{g['version']}}&repair={{data['js_random']}}">
-    </script>
+      <script src="{{g.cdn_url}}/language/{{session['lan']}}/lan.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
     <script src="{{g.cdn_url}}/js/clipboard.min.js" defer></script>
     <script src="{{g.cdn_url}}/laydate/laydate.js" defer></script>
     <script src="{{g.cdn_url}}/js/jquery.qrcode.min.js" defer></script>
@@ -166,13 +168,13 @@
 
     <script src="{{g.cdn_url}}/codemirror/lib/codemirror.js" defer></script>
     <!-- End -->
-    <script type="text/javascript"
-      src="{{g.cdn_url}}/js/tools.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/js/tools.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
     {% for js_f in g['other_js'] %}
     <script type="text/javascript" src="{{js_f}}"></script>
     {% endfor %}
-    {% block scripts %} {% endblock %}
     <script type="text/javascript">
+        bt.set_cookie('order', 'id desc');
+        bt.set_cookie('serverType', "{{session['webserver']}}");
       $("#setBox").click(function () {
         if ($(this).prop("checked")) {
           $("input[name=id]").prop("checked", true);
@@ -180,7 +182,6 @@
           $("input[name=id]").prop("checked", false);
         }
       });
-      setCookie('order', 'id desc');
       var is_files_html = false;
       var task_open = 0;
       var task_close = false;
@@ -305,6 +306,7 @@
         var box = new MessageBox(); 
       {%endif %}
     </script>
+    {% endblock %}
   </div>
 </body>
 

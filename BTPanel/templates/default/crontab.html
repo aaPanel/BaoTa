@@ -4,18 +4,18 @@
 <div class="main-content">
     <div class="container-fluid" style="padding-bottom:54px">
         <div class="pos-box bgw mtb15">
-            <div class="position f14 c9 pull-left">
-                <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
-            </div>
+          <div class="tab-list">
+              <div class="tabs-item active">{{data['lan']['H2']}}</div>
+          </div>
         </div>
-        <div class="setbox bgw mtb15">
+        <div class="setbox bgw mtb15 radius4">
             <div class="title c6 plr15">
                 <h3 class="f16">{{data['lan']['H3']}}</h3>
             </div>
             <div class="setting-con ptb20" id="crontabForm" style="min-height:350px"></div>
         </div>
 
-        <div class="setbox bgw mtb15">
+        <div class="setbox bgw mtb15 radius4">
             <div class="title c6 plr15">
                 <h3 class="f16">{{data['lan']['H4']}}</h3>
             </div>
@@ -162,9 +162,10 @@
 </style>
 {% endblock %}
 {% block scripts %}
-<script src="{{g.cdn_url}}/js/crontab.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-<script type="text/javascript">
-    crontab.init()
-    setCookie('serverType',"{{session['webserver']}}");
-</script>
+  {{ super() }} 
+  <script src="{{g.cdn_url}}/js/crontab.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+  <script type="text/javascript">
+      crontab.init()
+      setCookie('serverType',"{{session['webserver']}}");
+  </script>
 {% endblock %}

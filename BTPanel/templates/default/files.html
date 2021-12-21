@@ -7,7 +7,7 @@
 <div class="main-content">
     <a style="display: none;" id="recycle_bin" data="{{data['recycle_bin']}}"></a>
 	<!-- aceEditors -->
-	<div class="file_bodys">
+	<div class="file_bodys radius4">
 		<div class="file_path_views">
             <div class="file_path_upper" title="上一层">
                 <span class="glyphicon glyphicon-arrow-left"></span>
@@ -667,6 +667,7 @@
 </script>
 {% endblock %}
 {% block scripts %}
+  {{ super() }} 
     <script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js" defer></script>
     <script type="text/javascript" src="{{g.cdn_url}}/js/jquery.qrcode.min.js" defer></script>
     <script type="text/javascript" src="{{g.cdn_url}}/js/public.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
@@ -675,9 +676,9 @@
     <script type="text/javascript" src="{{g.cdn_url}}/js/polyfill.js"></script>
     <script type="text/javascript" src="{{g.cdn_url}}/editor/ace.js" defer></script>
     <script type="text/javascript" src="{{g.cdn_url}}/editor/ext-language_tools.js" defer></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/vue/polyfill.min.js" defer></script>
     <script type="text/javascript" src="{{g.cdn_url}}/js/xterm.js" defer></script>
     <!--<script type="text/javascript" src="{{g.cdn_url}}/js/files.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>-->
     <script type="text/javascript" src="{{g.cdn_url}}/js/files.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-    <script type="text/javascript"
-  src="{{g.cdn_url}}/js/upload-drog.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+    <script type="text/javascript" src="{{g.cdn_url}}/js/upload-drog.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
 {% endblock %}

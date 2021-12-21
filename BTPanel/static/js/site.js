@@ -13,6 +13,7 @@ $('#cutMode .tabs-item').on('click', function () {
       break;
     case 'nodejs':
       $('#bt_node_table').empty();
+      $('.site_class_type').remove()
       $.get('/plugin?action=getConfigHtml', {
         name: "nodejs"
       }, function (res) {
@@ -31,7 +32,7 @@ $('#cutMode .tabs-item').on('click', function () {
       }
       break;
   }
-  bt.set_cookie('site_model', type)
+  bt.set_cookie('site_model', type);
 });
 
 var site = {
@@ -441,7 +442,13 @@ var site = {
      * @param callback {function} 回调行数
      */
     remove_node_project_domain: function (param, callback) {
-      this.http({ project_remove_domain: '删除Node项目域名' }, param, callback)
+      var that = this;
+      bt.confirm({
+        title: '删除域名【' + param.domain.split(':')[0] + '】',
+        msg: '您真的要从站点中删除这个域名吗？'
+      }, function () {
+        that.http({ project_remove_domain: '删除Node项目域名' }, param, callback)
+      });
     },
 
     /**
@@ -1326,7 +1333,7 @@ var site = {
         {
           fid: 'pid',
           title: 'PID',
-          width: 180,
+          width: 170,
           type: 'text',
           template: function (row) {
             if ($.isEmptyObject(row['load_info'])) return '<span>-</span>'
@@ -1341,6 +1348,7 @@ var site = {
         },
         {
           title: 'CPU',
+          width: 60,
           type: 'text',
           template: function (row) {
             if ($.isEmptyObject(row['load_info'])) return '<span>-</span>'
@@ -1353,6 +1361,7 @@ var site = {
         },
         {
           title: '内存',
+          width: 80,
           type: 'text',
           template: function (row) {
             if ($.isEmptyObject(row['load_info'])) return '<span>-</span>'
@@ -1389,6 +1398,7 @@ var site = {
         },
         {
           fid: 'node_version',
+          width: 90,
           title: 'Node版本',
           type: 'text',
           template: function (row) {
@@ -1431,7 +1441,7 @@ var site = {
         }, {
           title: '操作',
           type: 'group',
-          width: 150,
+          width: 100,
           align: 'right',
           group: [{
             title: '设置',
@@ -1970,20 +1980,26 @@ var site = {
         jump: true, //是否支持跳转分页,默认禁用
       }]
     });
-    $('.tootls_group.tootls_top .pull-left').append('<div class="bt_select_updown site_class_type" style="vertical-align: bottom;"><div class="bt_select_value"><span class="bt_select_content">分类:</span><span class="glyphicon glyphicon-triangle-bottom ml5"></span></span></div><ul class="bt_select_list"></ul></div>');
-    bt.site.get_type(function (res) {
-      site.reader_site_type(res, site_table);
-    });
+    this.site_table = site_table;
+    this.init_site_type();
     // return site_table;
   },
-  reader_site_type: function (res, config) {
+  init_site_type: function () {
+    $('#php_cate_select').remove();
+    $('.tootls_group.tootls_top .pull-left').append('<div id="php_cate_select" class="bt_select_updown site_class_type" style="vertical-align: bottom;"><div class="bt_select_value"><span class="bt_select_content">分类:</span><span class="glyphicon glyphicon-triangle-bottom ml5"></span></span></div><ul class="bt_select_list"></ul></div>');
+    bt.site.get_type(function (res) {
+      site.reader_site_type(res);
+    });
+  },
+  reader_site_type: function (res) {
     var html = '',
       active = bt.get_cookie('site_type') || -1,
-      select = $('.site_class_type');
+      select = $('#php_cate_select');
+      config = this.site_table;
     if (select.find('.bt_select_list li').length > 1) return false
     res.unshift({ id: -1, name: "全部分类" });
     $.each(res, function (index, item) {
-      html += '<li class="item ' + (parseInt(active) == item.id ? 'active' : '') + '" data-id="' + item.id + '">' + item.name + '</li>';
+      html += '<li class="item ' + (parseInt(active) == item.id ? 'active' : '') + '" data-id="' + item.id + '" title="' + item.name + '">' + item.name + '</li>';
     });
     html += '<li role="separator" class="divider"></li><li class="item" data-id="type_sets">分类设置</li>';
     select.find('.bt_select_value').on('click', function (ev) {
@@ -3142,6 +3158,7 @@ var site = {
               if (ldata.status) {
                 $('[name="type_name"]').val('');
                 site.get_class_type();
+                site.init_site_type();
               }
               bt.msg(ldata);
             })
@@ -3171,7 +3188,11 @@ var site = {
               bt.site.del_type(item.id, function (ret) {
                 if (ret.status) {
                   site.get_class_type();
-                  bt.set_cookie('site_type', '-1');
+                  site.init_site_type();
+                  var active = bt.get_cookie('site_type') || -1;
+                  if (active == item.id) {
+                    bt.set_cookie('site_type', -1);
+                  }
                 }
                 bt.msg(ret);
               })
@@ -3198,6 +3219,7 @@ var site = {
                       if (edata.status) {
                         load.close();
                         site.get_class_type();
+                        site.init_site_type();
                       }
                       bt.msg(edata);
                     })
@@ -3857,7 +3879,14 @@ var site = {
         },
         column: [
           { type: 'checkbox', width: 20, keepNumber: 1 },
-          { fid: 'domain', title: '域名', width: 150, type: 'text' },
+          {
+            fid: 'domain',
+            title: '域名',
+            width: 150,
+            template: function (row) {
+              return '<a class="btlink" href="http://' + row.domain + ':' + row.port + '" target="_blank" title="' + row.domain + '">' + row.domain + '</a>';
+            }
+          },
           { fid: 'port', title: '端口', width: 70, type: 'text' },
           { fid: 'path', title: '子目录', type: 'text' },
           {
@@ -4556,8 +4585,8 @@ var site = {
     set_default_index: function (web) {
       bt.site.get_index(web.id, function (rdata) {
         if (typeof rdata == 'object' && rdata.status === false) {
-            bt.msg(rdata);
-            return;
+          bt.msg(rdata);
+          return;
         }
         rdata = rdata.replace(new RegExp(/(,)/g), "\n");
         var data = {
@@ -5001,6 +5030,18 @@ var site = {
         guardData['site_dir'] = $('input[name="dir_sitedir"]').val();
         guardData['username'] = $('input[name="dir_username"]').val();
         guardData['password'] = $('input[name="dir_password"]').val();
+        if (guardData['name'] == "") {
+          return layer.msg('名称不能为空', { icon: 2 });
+        }
+        if (guardData['site_dir'] == "") {
+          return layer.msg('加密访问不能为空', { icon: 2 });
+        }
+        if (guardData['username'] == "") {
+          return layer.msg('用户名不能为空', { icon: 2 });
+        }
+        if (guardData['password'] == "") {
+          return layer.msg('密码不能为空', { icon: 2 });
+        }
         if (type) {
           bt.site.create_dir_guard(guardData, function (rdata) {
             if (rdata.status) {
@@ -5615,8 +5656,8 @@ var site = {
     set_security: function (web) {
       bt.site.get_site_security(web.id, web.name, function (rdata) {
         if (typeof rdata == 'object' && rdata.status === false && rdata.msg) {
-            bt.msg(rdata);
-            return;
+          bt.msg(rdata);
+          return;
         }
         var robj = $('#webedit-con');
         var datas = [
@@ -5628,19 +5669,19 @@ var site = {
             class: 'label-input-group',
             items: [{
               text: '启用防盗链',
-              name: 'status',
+              name: 'door_status',
               value: rdata.status,
               type: 'checkbox',
               callback: function (sdata) {
                 if (sdata.sec_domains === '') {
-                  $('#status').attr('checked', false)
+                  $('#door_status').prop('checked', false)
                   bt.msg({
                     status: false,
                     msg: '许可域名不能为空！'
-                  })
+                  });
                   return false;
                 }
-                bt.site.set_site_security(web.id, web.name, sdata.sec_fix, sdata.sec_domains.split("\n").join(','), sdata.status, sdata.return_rule, function (ret) {
+                bt.site.set_site_security(web.id, web.name, sdata.sec_fix, sdata.sec_domains.split("\n").join(','), sdata.door_status, sdata.return_rule, function (ret) {
                   if (ret.status) site.reload(13)
                   bt.msg(ret);
                 })
@@ -7043,84 +7084,84 @@ var site = {
                     // 添加dns接口
                     add_dns_interface: function () {
                       bt.site.get_dns_api(function (api) {
-                          var arrs_list = [],
-                              arr_obj = {};
-                          for (var x = 0; x < api.length; x++) {
-                            arrs_list.push({
-                              title: api[x].title,
-                              value: api[x].name
-                            });
-                            arr_obj[api[x].name] = api[x];
-                          }
-                          var data = {
-                            title: '选择DNS接口',
-                            class: 'dns_interface_line',
-                            items: [{
-                              name: 'dns_interface_select',
-                              width: '120px',
-                              type: 'select',
-                              items: arrs_list,
-                              callback: function (obj) {
-                                var _val = obj.val();
-                                $('.set_dns_config').remove();
-                                var _val_obj = arr_obj[_val];
-                                var _form = {
-                                  title: '',
-                                  area: '550px',
-                                  list: [],
-                                  btns: [{
-                                      title: '关闭',
-                                      name: 'close'
-                                  }]
-                                };
-                                var helps = [];
-                                if (_val_obj.data !== false) {
-                                  _form.title = '设置【' + _val_obj.title + '】接口';
-                                  helps.push(_val_obj.help);
-                                  var is_hide = true;
-                                  for (var i = 0; i < _val_obj.data.length; i++) {
-                                    _form.list.push({
-                                      title: _val_obj.data[i].name,
-                                      name: _val_obj.data[i].key,
-                                      value: _val_obj.data[i].value
-                                    })
-                                    if (!_val_obj.data[i].value) is_hide = false;
-                                  }
-                                  _form.btns.push({
-                                    title: '保存',
-                                    css: 'btn-success',
-                                    name: 'btn_submit_save',
-                                    callback: function (ldata, load) {
-                                      bt.site.set_dns_api({
-                                        pdata: JSON.stringify(ldata)
-                                      }, function (ret) {
-                                        if (ret.status) {
-                                          load.close();
-                                          robj.find('input[type="radio"]:eq(0)').trigger('click')
-                                          robj.find('input[type="radio"]:eq(1)').trigger('click')
-                                        }
-                                        bt.msg(ret);
-                                      })
-                                    }
+                        var arrs_list = [],
+                          arr_obj = {};
+                        for (var x = 0; x < api.length; x++) {
+                          arrs_list.push({
+                            title: api[x].title,
+                            value: api[x].name
+                          });
+                          arr_obj[api[x].name] = api[x];
+                        }
+                        var data = {
+                          title: '选择DNS接口',
+                          class: 'dns_interface_line',
+                          items: [{
+                            name: 'dns_interface_select',
+                            width: '120px',
+                            type: 'select',
+                            items: arrs_list,
+                            callback: function (obj) {
+                              var _val = obj.val();
+                              $('.set_dns_config').remove();
+                              var _val_obj = arr_obj[_val];
+                              var _form = {
+                                title: '',
+                                area: '550px',
+                                list: [],
+                                btns: [{
+                                  title: '关闭',
+                                  name: 'close'
+                                }]
+                              };
+                              var helps = [];
+                              if (_val_obj.data !== false) {
+                                _form.title = '设置【' + _val_obj.title + '】接口';
+                                helps.push(_val_obj.help);
+                                var is_hide = true;
+                                for (var i = 0; i < _val_obj.data.length; i++) {
+                                  _form.list.push({
+                                    title: _val_obj.data[i].name,
+                                    name: _val_obj.data[i].key,
+                                    value: _val_obj.data[i].value
                                   })
-                                  if (is_hide) {
-                                    obj.after('<button class="btn btn-default btn-sm mr5 set_dns_config">设置</button>');
-                                    $('.set_dns_config').click(function () {
-                                      var _bs = bt.render_form(_form);
-                                      $('div[data-id="form' + _bs + '"]').append(bt.render_help(helps));
-                                    });
-                                  } else {
+                                  if (!_val_obj.data[i].value) is_hide = false;
+                                }
+                                _form.btns.push({
+                                  title: '保存',
+                                  css: 'btn-success',
+                                  name: 'btn_submit_save',
+                                  callback: function (ldata, load) {
+                                    bt.site.set_dns_api({
+                                      pdata: JSON.stringify(ldata)
+                                    }, function (ret) {
+                                      if (ret.status) {
+                                        load.close();
+                                        robj.find('input[type="radio"]:eq(0)').trigger('click')
+                                        robj.find('input[type="radio"]:eq(1)').trigger('click')
+                                      }
+                                      bt.msg(ret);
+                                    })
+                                  }
+                                })
+                                if (is_hide) {
+                                  obj.after('<button class="btn btn-default btn-sm mr5 set_dns_config">设置</button>');
+                                  $('.set_dns_config').click(function () {
                                     var _bs = bt.render_form(_form);
                                     $('div[data-id="form' + _bs + '"]').append(bt.render_help(helps));
-                                  }
+                                  });
+                                } else {
+                                  var _bs = bt.render_form(_form);
+                                  $('div[data-id="form' + _bs + '"]').append(bt.render_help(helps));
                                 }
                               }
-                            }]
-                          };
-                          var form_line_html = bt.render_form_line(data);
-                          $('.check_model_line.line').after(form_line_html.html);
-                          $('[name="dns_interface_select"] option[value="dns"]').prop('selected', 'selected');
-                          bt.render_clicks(form_line_html.clicks);
+                            }
+                          }]
+                        };
+                        var form_line_html = bt.render_form_line(data);
+                        $('.check_model_line.line').after(form_line_html.html);
+                        $('[name="dns_interface_select"] option[value="dns"]').prop('selected', 'selected');
+                        bt.render_clicks(form_line_html.clicks);
                       });
                     },
                     // 移除dns接口

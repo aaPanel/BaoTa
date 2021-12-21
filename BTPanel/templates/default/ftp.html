@@ -2,23 +2,25 @@
 
 {% block content %}
 <div class="main-content pb55">
-    <div class="container-fluid">
-        <div class="pos-box bgw mtb15">
-            <div class="position f14 c9 pull-left">
-                <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
-            </div>
-        </div>
-        <div class="safe bgw mtb15 pd15">
-            <div class="info-title-tips">
-                <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span>{{data['lan']['PS']}} <a target="_blank" class="btlink" href=" ftp://{{session['address']}}:{{session['port']}}"> ftp://{{session['address']}}:{{session['port']}}</a></p>
-            </div>
-			<div id="bt_ftp_table"></div>
-        </div>
+  <div class="container-fluid">
+    <div class="pos-box bgw mtb15">
+      <div class="tab-list">
+        <div class="tabs-item active">{{data['lan']['H2']}}</div>
+      </div>
     </div>
+    <div class="safe bgw mtb15 pd15 tab-view-box">
+      <div class="info-title-tips">
+          <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span>{{data['lan']['PS']}} <a target="_blank" class="btlink" href=" ftp://{{session['address']}}:{{session['port']}}"> ftp://{{session['address']}}:{{session['port']}}</a></p>
+      </div>
+      <div id="bt_ftp_table"></div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 {% block scripts %}
+	{{ super() }} 
 <script type="text/javascript">
+
 	bt.set_cookie('sites_path',"{{session['config']['sites_path']}}");
     {% if not data['isSetup'] %}
 		layer.msg('{{data["lan"]["JS1"]}}<a href="/soft" style="color:#20a53a; float: right;">{{data["lan"]["JS2"]}}</a>',{icon:7,time:0,shade: [0.3, '#000']});

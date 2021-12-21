@@ -2,16 +2,16 @@
 
 {% block content %}
 <div class="main-content">
-    <div class="container-fluid" style="padding-bottom: 50px;">
-        <div class="pos-box bgw mtb15 plr15">
-            <div class="control-nav">
-                <div class="control-item active" name="control">系统监控</div>
-                <div class="control-item" name="daily">面板日报</div>
+    <div class="container-fluid">
+        <div class="pos-box bgw mtb15">
+            <div class="tab-list" id="tabs-cut">
+                <div class="tabs-item active" data-name="control">系统监控</div>
+                <div class="tabs-item" data-name="daily">面板日报</div>
             </div>
         </div>
         <div class="control-content">
             <div class="control-item-block">
-                <div class="safe container-fluid  bgw mtb15 pd15" style="overflow: hidden;">
+                <div class="safe container-fluid radius4 bgw mb15 pd15" style="overflow: hidden;">
                     <div class="mr50 pull-left">
                         <div class="ss-text pull-left">
                             <em>{{data['lan']['C1']}}</em>
@@ -35,11 +35,12 @@
                 <div class="control">
                     <div class="col-xs-12 col-sm-12 col-md-12 pull-left pd0 view0">
                         <div class="mb15">
-                            <div class="bgw pb15">
+                            <div class="bgw pb15 radius4">
                                 <div class="title c6 plr15 mb15">
                                     <h3 class="c-tit f16">平均负载</h3>
                                     <div class="searcTime pull-right">
-                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'getload')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'getload')">{{data['lan']['D2']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(7,'getload')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'getload')">{{data['lan']['D4']}}</span>
+                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'getload')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'getload')">{{data['lan']['D2']}}</span>
+                                        <span class="gt" onclick="controlObj.conTrolView.Wday(7,'getload')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'getload')">{{data['lan']['D4']}}</span>
                                         <div class="ss">
                                             <span class="st">{{data['lan']['S2']}}</span>
                                             <div class="time">
@@ -56,11 +57,12 @@
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view1">
                         <div class="pr8">
-                            <div class="bgw pb15">
+                            <div class="bgw pb15 radius4">
                                 <div class="title c6 plr15">
                                     <h3 class="c-tit f16">{{data['lan']['T1']}}</h3>
                                     <div class="searcTime pull-right">
-                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'cpu')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'cpu')">{{data['lan']['D2']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(7,'cpu')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'cpu')">{{data['lan']['D4']}}</span>
+                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'cpu')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'cpu')">{{data['lan']['D2']}}</span>
+                                        <span class="gt" onclick="controlObj.conTrolView.Wday(7,'cpu')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'cpu')">{{data['lan']['D4']}}</span>
                                         <div class="ss">
                                             <span class="st">{{data['lan']['S2']}}</span>
                                             <div class="time">
@@ -77,11 +79,12 @@
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view2">
                         <div class="pl7">
-                            <div class="bgw pb15">
+                            <div class="bgw pb15 radius4">
                                 <div class="title c6 plr15">
                                     <h3 class="c-tit f16">{{data['lan']['T2']}}</h3>
                                     <div class="searcTime pull-right">
-                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'mem')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'mem')">{{data['lan']['D2']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(7,'mem')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'mem')">{{data['lan']['D4']}}</span>
+                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'mem')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'mem')">{{data['lan']['D2']}}</span>
+                                        <span class="gt" onclick="controlObj.conTrolView.Wday(7,'mem')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'mem')">{{data['lan']['D4']}}</span>
                                         <div class="ss">
                                             <span class="st">{{data['lan']['S2']}}</span>
                                             <div class="time">
@@ -98,11 +101,12 @@
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view1">
                         <div class="pr8">
-                            <div class="bgw pb15">
+                            <div class="bgw pb15 radius4">
                                 <div class="title c6 plr15 mb15">
                                     <h3 class="c-tit f16">{{data['lan']['T3']}}</h3>
                                     <div class="searcTime pull-right">
-                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'disk')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'disk')">{{data['lan']['D2']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(7,'disk')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'disk')">{{data['lan']['D4']}}</span>
+                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'disk')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'disk')">{{data['lan']['D2']}}</span>
+                                        <span class="gt" onclick="controlObj.conTrolView.Wday(7,'disk')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'disk')">{{data['lan']['D4']}}</span>
                                         <div class="ss">
                                             <span class="st">{{data['lan']['S2']}}</span>
                                             <div class="time">
@@ -116,7 +120,8 @@
                                 <div style="position: relative;">
                                     <div id="diskview" style="width:100%; height:330px"></div>
                                     <div style="position: absolute;top: 15px;left: 6%;" class="hide">
-                                        单位：<div class="bt-crontab-select-button">
+                                        单位：
+                                        <div class="bt-crontab-select-button">
                                             <div class="bt-select-full only-one disk-unit">
                                                 <div class="select-picker-search">
                                                     <span class="picker-text-list">KB/s</span>
@@ -138,11 +143,12 @@
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view2">
                         <div class="pl7">
-                            <div class="bgw pb15">
+                            <div class="bgw pb15 radius4">
                                 <div class="title c6 plr15 mb15">
                                     <h3 class="c-tit f16"><span class="mr5" style="vertical-align: middle;">{{data['lan']['T4']}}:</span><select class="bt-input-text hide" style="vertical-align: middle;font-size:13px;" name="network-io" ><option value="all">全部</option></select></h3>
                                     <div class="searcTime pull-right">
-                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'network')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'network')">{{data['lan']['D2']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(7,'network')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'network')">{{data['lan']['D4']}}</span>
+                                        <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'network')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'network')">{{data['lan']['D2']}}</span>
+                                        <span class="gt" onclick="controlObj.conTrolView.Wday(7,'network')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'network')">{{data['lan']['D4']}}</span>
                                         <div class="ss">
                                             <span class="st">{{data['lan']['S2']}}</span>
                                             <div class="time">
@@ -156,7 +162,8 @@
                                 <div style="position: relative;">
                                     <div id="network" style="width:100%; height:330px"></div>
                                     <div style="position: absolute;top: 15px;left: 6%;" class="hide">
-                                        单位：<div class="bt-crontab-select-button">
+                                        单位：
+                                        <div class="bt-crontab-select-button">
                                             <div class="bt-select-full only-one network-unit">
                                                 <div class="select-picker-search">
                                                     <span class="picker-text-list">KB/s</span>
@@ -178,15 +185,17 @@
                     </div>
                 </div>
             </div>
-            <div class="control-item-block hide">
-                <div class="mtb15 pd15 bgw daily-view"></div>
+            <div class="control-item-block" style="display: none;">
+                <div class="mtb15 pd15 bgw daily-view radius4"></div>
             </div>
         </div>
     </div>
 </div>
 <style>
     /* 日报 */
-    .daily-view .divtable{position: initial;}
+    .daily-view .divtable {
+        position: initial;
+    }
     .daily_time_select {
         float: left;
         font-size: 14px;
@@ -503,65 +512,40 @@
         left: 2px;
         top: 2px;
     }
+
+    /* .control-content{
+      position: relative;
+    }
+
+    .control-item-block{
+      position: absolute;
+      left: 0;
+      right: 0;
+      z-index: 1;
+    } */
 </style>
-{% endblock %}
+{% endblock %} 
 {% block scripts %}
+  {{ super() }} 
 	<script type="text/javascript" src="{{g.cdn_url}}/js/echarts.min.js?version={{g['version']}}"></script>
-    <script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-    <script type="text/javascript" src="{{g.cdn_url}}/js/control.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-    <script type="text/javascript">
-        // 导航事件
-        $('.control-nav').on('click','.control-item',function(){
-            if(!$(this).hasClass('active')){
-                $(this).addClass('active').siblings().removeClass('active');
-                $(this).parents('.container-fluid').find('.control-content .control-item-block').eq($(this).index()).removeClass('hide').siblings().addClass('hide');
-                bt.set_cookie('controlType',$(this).index() == 0 ?'control':'daily')
-            }
-            hanleControlType($(this).index())
-        })
-        var thatC = this;
-        function hanleControlType(index){
-            switch(index){
-                case 0:  //监控
-                    if(getCookie('network-unitType') == undefined) {
-                        setCookie('network-unitType', "KB/s");
-                        setCookie('disk-unitType', "KB/s");
-                    }else{
-                        $(".network-unit .picker-text-list").text(getCookie('network-unitType'));
-                        $(".disk-unit .picker-text-list").text(getCookie('disk-unitType'));
-                        $(".network-unit .select-list-item li:contains("+getCookie('network-unitType')+")").addClass("active");
-                        $(".disk-unit .select-list-item li:contains("+getCookie('disk-unitType')+")").addClass("active");
-                    }
-                    $(".bt-crontab-select-button").on('click','.select-picker-search',function(){
-                        $(this).next().toggle();
-                        if ($(this).parent().hasClass('network-unit')) {
-                            $(".disk-unit .select-list-item").hide();
-                        }else{
-                            $(".network-unit .select-list-item").hide();
-                        }
-                    });
-                    $(".bt-crontab-select-button").on('click','.select-list-item li',function(){
-                        var _button = $(this).parents('.bt-crontab-select-button');
-                        $(this).addClass('active').siblings().removeClass('active');
-                        _button.find('.picker-text-list').text($(this).text());
-                        _button.find(".select-list-item").toggle();
-                        var cookie_type = $(this).parents('.bgw').find('.searcTime .time_range_submit').attr('data-type');
-                        setCookie(cookie_type+'-unitType', $(this).attr('data-attr'));
-                        $(this).parents('.bgw').find('.searcTime .gt.on').click();
-                    });
-                    $(document).click(function(event){
-                        var _con = $('.bt-crontab-select-button');  // 设置目标区域
-                        if(!_con.is(event.target) && _con.has(event.target).length === 0){ // Mark 1
-                           $(".select-list-item").hide();     //淡出消失
-                        }
-                    });
-                    thatC.controlObj.conTrolView.init();
-                    
-                    break;
-                case 1:    //日报
-                    thatC.controlObj.dailyView();
-            }
+  <script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+  <script type="text/javascript" src="{{g.cdn_url}}/js/control.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+  <script type="text/javascript">
+    var tabsCut = $('#tabs-cut'),controlType = bt.get_cookie('controlType') || 'control';
+    tabsCut.on('click', '.tabs-item', function() {
+        var name = $(this).data('name'),index = $(this).index();
+        bt.set_cookie('controlType', name)
+        $(this).addClass('active').siblings().removeClass('active');
+        $('.control-content .control-item-block').eq(index).show().siblings().hide()
+        switch (name) {
+          case 'control':
+            controlObj.conTrolView.init();
+          break;
+          case 'daily':
+            controlObj.dailyView();
+          break;
         }
-        $('.control-nav .control-item[name="'+ (bt.get_cookie('controlType') || 'control') +'"]').trigger('click')
-    </script>
+    })
+    controlObj.conTrolView.init()
+  </script>
 {% endblock %}
