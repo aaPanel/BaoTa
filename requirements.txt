@@ -51,7 +51,7 @@ oss2==2.15.0
 paramiko==2.8.1
 peewee==3.13.1
 Pillow==8.4.0
-protobuf==3.11.3
+protobuf==3.19.1
 psutil==5.8.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
