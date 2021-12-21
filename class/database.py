@@ -107,8 +107,10 @@ class database(datatool.datatools):
     #检查是否在回收站
     def CheckRecycleBin(self,name):
         try:
+            u_name = self.db_name_to_unicode(name)
             for n in os.listdir('/www/Recycle_bin'):
                 if n.find('BTDB_'+name+'_t_') != -1: return True
+                if n.find('BTDB_'+u_name+'_t_') != -1: return True
             return False
         except:
             return False
