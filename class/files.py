@@ -1266,6 +1266,12 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             if get.path.find('.htaccess') == -1:
                 return public.returnMsg(False, 'FILE_NOT_EXISTS')
 
+        nginx_conf_path = public.get_vhost_path() + '/nginx/'
+        if get.path.find(nginx_conf_path) != -1:
+            if get.data.find('#SSL-START') != -1 and get.data.find('#SSL-END') != -1:
+                if get.data.find('#error_page 404/404.html;') == -1:
+                    return public.returnMsg(False,'配置文件保存失败：<p style="color:red;">请勿修改SSL相关配置中注释的404规则</p><p>要修改404配置，找到以下配置位置：</p><pre>#ERROR-PAGE-START  错误页配置</pre>')
+
         his_path = '/www/backup/file_history/'
         if get.path.find(his_path) != -1:
             return public.returnMsg(False, '不能直接修改历史副本!')
@@ -2480,7 +2486,7 @@ cd %s
         attribute['is_dir'] = os.path.isdir(filename)   # 是否为目录
         attribute['is_link'] = os.path.islink(filename)  # 是否为链接文件
         if attribute['is_link']:
-            attribute['st_type'] = '链接文件'   
+            attribute['st_type'] = '链接文件'
         elif attribute['is_dir']:
             attribute['st_type'] = '文件夹'
         else:
@@ -2510,7 +2516,4 @@ cd %s
         return adad.get_replace_logs(args)
 
 
-    # 历史文件
-    def get_files_info_less(self,args):
-        pass
-    
+
