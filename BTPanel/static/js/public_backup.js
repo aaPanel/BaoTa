@@ -5061,7 +5061,7 @@ bt.soft = {
           })
           html += '<select id="SelectVersion" class="bt-input-text ml10" style="margin-left:10px">' + select + '</select>'
         } else {
-          html += '<span id="SelectVersion">' + rdata.name + rdata.versions[0].m_version + '</span>'
+          html += '<span id="SelectVersion">' + rdata.name + (rdata.name.indexOf('php-') > -1 ? '' : rdata.versions[0].m_version) + '</span>'
         }
         var loadOpen = bt.open({
           type: 1,
