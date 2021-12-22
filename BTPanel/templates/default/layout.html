@@ -152,6 +152,36 @@
         update_code = "{{data['js_random']}}",
         panel_version = "{{g['version']}}",
         cdn_url = "{{g.cdn_url}}";
+
+      if(location.pathname.indexOf('/btwaf') > -1){
+        function loadJS( url, callback ){
+          var script = document.createElement('script'),
+          fn = callback || function(){};
+          script.type = 'text/javascript';
+          if(script.readyState){
+            script.onreadystatechange = function(){
+              if( script.readyState == 'loaded' || script.readyState == 'complete' ){
+                script.onreadystatechange = null;
+                fn();
+              }
+            };
+          }else{
+            //其他浏览器
+            script.onload = function(){
+              fn();
+            };
+          }
+          script.src = url;
+          document.getElementsByTagName('head')[0].appendChild(script);
+        }
+        loadJS('{{g.cdn_url}}/js/jquery-2.2.4.min.js')
+        loadJS("{{g.cdn_url}}/layer/layer.js?version={{g['version']}}")
+        loadJS("{{g.cdn_url}}/language/{{session['lan']}}/lan.js?version={{g['version']}}&repair={{data['js_random']}}")
+        loadJS("{{g.cdn_url}}/language/{{session['lan']}}/lan.js?version={{g['version']}}&repair={{data['js_random']}}")
+        loadJS("{{g.cdn_url}}/js/public.js?version={{g['version']}}&repair={{data['js_random']}}")
+        loadJS("{{g.cdn_url}}/js/public_backup.js?version={{g['version']}}&repair={{data['js_random']}}")
+        loadJS("{{g.cdn_url}}/js/tools.js?version={{g['version']}}&repair={{data['js_random']}}")
+      }
     </script>
     {% block scripts %}
     <script src="{{g.cdn_url}}/js/jquery-2.2.4.min.js"></script>
