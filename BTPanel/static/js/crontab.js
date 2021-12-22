@@ -374,8 +374,8 @@ var crontab = {
           if (that) {
             config[2].group[0].value = 'day'
             config[2].group[1].display = false
-            config[2].group[3].value = '0'
-            config[2].group[4].value = '1'
+            config[2].group[3].value = '2'
+            config[2].group[4].value = '30'
           }
         }
       case 'logs':
