@@ -370,7 +370,7 @@ var crontab = {
       case 'database':
         config[3].group[0].placeholder = '无数据库数据';
         config[5].display = false;
-        if (formData.sType === 'logs') {
+        if (formData.sType === 'database') {
           if (that) {
             config[2].group[0].value = 'day'
             config[2].group[1].display = false
