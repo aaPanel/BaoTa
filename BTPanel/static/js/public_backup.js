@@ -4268,10 +4268,10 @@ bt.soft = {
             ps: config.ps
           })
           $('.libPay-menu .libPay-menu-type').each(function (index) {
-            $(this).data(arry[index])
+            $(this).data('data', arry[index])
           })
           $(".libPay-menu .libPay-menu-type").click(function () {
-            var _item = $(this).data();
+            var _item = $(this).data('data');
             that.get_product_change($(this).index(), _item.type)
           })
 
@@ -4280,7 +4280,7 @@ bt.soft = {
             var tab_list = $(".libPay-menu .libPay-menu-type"),
               item = arry[rdata.length > 0 ? (tab_list.length - 1) : 0], is_coupon = false;
             $(".libVoucher-loading").hide()
-            tab_list.last().data({
+            tab_list.last().data('data', {
               type: 'ver',
               data: rdata
             })
@@ -4315,7 +4315,7 @@ bt.soft = {
     $('.libPay-layer-item').eq(btype === 'ver' ? 1 : 0).addClass('aShow').siblings().removeClass('aShow');
     var _obj = $('.libPay-menu .libPay-menu-type').eq(idx)
     _obj.addClass('active').siblings().removeClass('active');
-    var _data = _obj.data()
+    var _data = _obj.data('data')
     if (btype !== 'ver') {
       var _html = '<p>' + _data.title + '特权</p>';
       if (btype !== 'plugin') {
@@ -4348,14 +4348,14 @@ bt.soft = {
         that.create_pay_code(0)
       })
     } else {
-      _data = _obj.data().data;
-      if (_data === undefined || _data.length <= 0) {
+      var _voucherList = _data.data;
+      if (_voucherList === undefined || _voucherList.length <= 0) {
         $(".libPay-layer-item.aShow p").hide()
         return
       }
       $(".libPay-layer-item.aShow p").show()
       var _arry = {}
-      this.each(_data, function (index, item) {
+      this.each(_voucherList, function (index, item) {
         if (!_arry.hasOwnProperty(item.product_id)) {
           _arry[item.product_id] = {
             name: item.name,
@@ -4433,9 +4433,9 @@ bt.soft = {
   },
   //生成支付二维码
   create_pay_code: function (idx) {
-    var _obj = $('.pay-cycle-btns').eq(idx).addClass('active').siblings().removeClass('active');
+    $('.pay-cycle-btns').eq(idx).addClass('active').siblings().removeClass('active');
     var that = this,
-      _product = $('.libPay-menu-type.active').data(),
+      _product = $('.libPay-menu-type.active').data('data'),
       _cycle = $(".pay-cycle-btns.active").data('data'),
       _source = 0,
       _locahostURL = window.location.pathname;
@@ -4474,8 +4474,10 @@ bt.soft = {
       if (end < start) return
 
       $(".libPay-loading").hide()
-      var active_idx = $('.pay-cycle-btns.active').index()
-      if (idx != active_idx) {
+      var active_idx = $('.pay-cycle-btns.active').index(), active_product = $('.libPay-menu-type.active').data('data');
+
+      //判断创建订单完成后，前端选择的产品和周期是否发生改变
+      if ((idx != active_idx || _product.pid != active_product.pid) && active_product.type != 'ver') {
         that.create_pay_code(active_idx)
         return
       }
@@ -4510,9 +4512,9 @@ bt.soft = {
     var _data = $(".pay-radio-type").data('data'),
       _cycle = $(".pay-cycle-btns.active").data('data'),
       _obj = $(".libPay-content-box .pay-type-btn").eq(idx)
-    
+
     if (!_data) return
-    
+
     $('.libPaycode-foo-txt .libPayTotal').text('¥' + _cycle.price)
     $(".libPayCycle").text(this.pro.conver_unit(_cycle.cycle))
     $('.libPaycode-pro-cylce').text('低至' + (_cycle.price / (_cycle.cycle / 12 * 365)).toFixed(2) + "元 / 天")
@@ -4559,19 +4561,19 @@ bt.soft = {
     // } else {
     $(".libVoucher-loading").show()
     that.pay_loading.set('start_price')
-    
+
     bt.soft.pro.get_product_discount_by(config.name, function (rdata) {
-        if (that.pay_loading.set('end_price') == that.pay_loading.get('start_price')) {
-            $(".libVoucher-loading").hide()
-        }
-        if (typeof rdata.status === "boolean") {
-          if (!rdata.status) return false;
-        }
-        that.product_cache[config.pid] = rdata;
-        setTimeout(function () {
-          delete that.product_cache[config.pid]
-        }, 60000);
-        if (callback) callback(rdata);
+      if (that.pay_loading.set('end_price') == that.pay_loading.get('start_price')) {
+        $(".libVoucher-loading").hide()
+      }
+      if (typeof rdata.status === "boolean") {
+        if (!rdata.status) return false;
+      }
+      that.product_cache[config.pid] = rdata;
+      setTimeout(function () {
+        delete that.product_cache[config.pid]
+      }, 60000);
+      if (callback) callback(rdata);
     });
     // }
   },
@@ -7768,13 +7770,13 @@ var form_group = {
       select_ul = select_group.find('.bt_select_ul'),
       select_val = select_group.find('.select_val'),
       select_icon = select_group.find('.glyphicon');
-      php_data = {
-        '4.0': [ '5.2', '5.3', '5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3', '7.4' ],
-        '4.4': [ '5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3' ],
-        '4.9': [ '5.6', '7.0', '7.1', '7.2', '7.3', '7.4', '8.0' ],
-        '5.0': [ '7.2', '7.3', '7.4', '8.0' ],
-        '5.1': [ '7.2', '7.3', '7.4', '8.0' ]
-      };
+    php_data = {
+      '4.0': ['5.2', '5.3', '5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3', '7.4'],
+      '4.4': ['5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3'],
+      '4.9': ['5.6', '7.0', '7.1', '7.2', '7.3', '7.4', '8.0'],
+      '5.0': ['7.2', '7.3', '7.4', '8.0'],
+      '5.1': ['7.2', '7.3', '7.4', '8.0']
+    };
     select_el.find('option').each(function (index, el) {
       var active = select_el.val() === $(el).val(),
         _val = $(el).val(),
@@ -7806,7 +7808,7 @@ var form_group = {
       e.stopPropagation();
       e.preventDefault();
     });
-    
+
     $(elem).next('.bt_select_group').on('click', '.bt_select_ul li', function () {
       var _val = $(this).attr('data-val'),
         _name = $(this).text();
@@ -7830,8 +7832,8 @@ var form_group = {
           }
         }
         var _select_html = '',
-            _ul_html = '',
-            $select_ul;
+          _ul_html = '',
+          $select_ul;
         $.each(php_my_admin_data, function (index, item) {
           _select_html += '<option value="' + item + '">phpMyAdmin ' + item + '</option>';
           _ul_html += '<li data-val="' + item + '" class="">phpMyAdmin ' + item + '</li>';
