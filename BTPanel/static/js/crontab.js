@@ -48,8 +48,8 @@ var crontab = {
         if (arry.indexOf(formData.sType) > -1) {
           that.$replace_render_content(3)
           setTimeout(function (){
-            $('[data-name="sName"] li:eq(1)').click()
-          },200)
+            $('[data-name="sName"] li:eq(0)').click()
+          },100)
         }
       }
     }
@@ -372,7 +372,7 @@ var crontab = {
         config[5].display = false;
       case 'logs':
         if (formData.sType === 'logs') {
-          config[2].group[0].value = 'day'
+          // config[2].group[0].value = 'day'
           config[2].group[1].display = false
           config[2].group[3].value = '0'
           config[2].group[4].value = '1'
@@ -485,9 +485,10 @@ var crontab = {
         break;
 
     }
-    formConfig.group[3].value = parseInt(formData.hour).toString()
-    formConfig.group[4].value = parseInt(formData.minute).toString()
+    formConfig.group[3].value = formData.hour?parseInt(formData.hour).toString():1
+    formConfig.group[4].value = formData.minute?parseInt(formData.minute).toString():30
     formConfig.group[0].value = formData.type
+    console.log(formConfig.group[0].value)
     return config
   },
   /**
@@ -819,8 +820,6 @@ var crontab = {
                         cycle = {where1: rdata.where1, where: '', hour: rdata.where_hour, minute: rdata.where_minute}
                         break;
                     }
-                    console.log(cycle, '+++')
-
                     formConfig[3].group[2].value = rdata.backupTo;
                     formConfig[3].group[4].display = rdata.backupTo != 'localhost';
                     formConfig[3].group[4].value = rdata.save_local;
