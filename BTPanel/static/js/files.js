@@ -2674,7 +2674,7 @@ var bt_file = {
           type: 1,
           closeBtn: 2,
           title: '[ ' + data.filename +' ] - '+ (data.is_dir?'文件夹':'文件') +'属性',
-          area: ["580px", "500px"],
+          area: ["580px", "520px"],
           shadeClose: false,
           // btn:['确认','取消'],
           content:'<div class="bt-property-setting pd15">\
