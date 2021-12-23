@@ -3386,11 +3386,11 @@ server
             return public.returnMsg(False, '配置文件出错请先排查配置')
         if action == "create":
             if sys.version_info.major < 3:
-                if len(get.proxyname) < 3 or len(get.proxyname) > 15:
-                    return public.returnMsg(False, '名称必须大于3小于15个字符串')
+                if len(get.proxyname) < 3 or len(get.proxyname) > 40:
+                    return public.returnMsg(False, '名称必须大于3小于40个字符串')
             else:
-                if len(get.proxyname.encode("utf-8")) < 3 or len(get.proxyname.encode("utf-8")) > 15:
-                    return public.returnMsg(False, '名称必须大于3小于15个字符串')
+                if len(get.proxyname.encode("utf-8")) < 3 or len(get.proxyname.encode("utf-8")) > 40:
+                    return public.returnMsg(False, '名称必须大于3小于40个字符串')
         if self.__check_even(get,action):
             return public.returnMsg(False, '指定反向代理名称或代理文件夹已存在')
         # 判断代理，只能有全局代理或目录代理
