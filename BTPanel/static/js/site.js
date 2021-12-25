@@ -2760,7 +2760,7 @@ var site = {
                   case 0: //参数一:域名
                     var domainList = items.split(",");
                     for (var z = 0; z < domainList.length; z++) {
-                      var domain_info = domainList[z],
+                      var domain_info = domainList[z].trim(),
                         _domain = domain_info.split(":");
                       if (!bt.check_domain(_domain[0])) {
                         bt_tools.msg('第' + line + '行,域名格式错误【' + domain_info + '】', 2);
