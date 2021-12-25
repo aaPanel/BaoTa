@@ -153,7 +153,8 @@ var soft = {
             }
             var is_php = item.name.indexOf('php-') >= 0,
               is_php5 = item.name.indexOf('php-5') >= 0,
-              webcache = bt.get_cookie('serverType') == 'openlitespeed' ? true : false,
+              webTypeCache = bt.get_cookie('serverType'),
+              webcache = webTypeCache == 'openlitespeed' ? true : false,
               distribution = bt.get_cookie('distribution');
             if (webcache && is_php) {
               if ((is_php5 || item.name == 'php-7.0') && distribution == 'centos8') {
@@ -165,6 +166,8 @@ var soft = {
               }
             } else if (rdata.apache22 && item.name.indexOf('php-') >= 0 && $.inArray(item.name, phps) == -1) {
               click_opt = ' title="Apache2.2不兼容此版本，如需使用请切换到Apache2.4或Nginx"';
+            } else if(webTypeCache == 'ols' && distribution.indexOf('centos') == -1 && item.name.indexOf('php-8.1') >= 0){
+              click_opt = ' title="不兼容此版本"';
             }
             return '<span ' + click_opt + ' ' + sStyle + ' ><img ' + (item.type === 10 ? 'style="height:20px;width:22px"' : '') + ' src="/static/img/soft_ico/ico-' + fName + '.png">' + item.title + ' ' + version + (item.is_beta ? '-<span style="color:#FC6D26">[测试版]</span>' : '') + '</span>';
           }
@@ -343,7 +346,8 @@ var soft = {
             }
             var is_php = item.name.indexOf('php-') >= 0,
               is_php5 = item.name.indexOf('php-5') >= 0,
-              webcache = bt.get_cookie('serverType') == 'openlitespeed' ? true : false,
+              webTypeCache = bt.get_cookie('serverType'),
+              webcache = webTypeCache == 'openlitespeed' ? true : false,
               distribution = bt.get_cookie('distribution');
             if (webcache && is_php) {
               if ((is_php5 || item.name == 'php-7.0') && distribution == 'centos8') {
@@ -395,6 +399,8 @@ var soft = {
                   }
                 }
               }
+            } else if(webTypeCache == 'ols' && distribution.indexOf('centos') == -1 && item.name.indexOf('php-8.1') >= 0){
+              option = '<span title="不兼容此版本">不兼容</span>';
             } else {
               if (rdata.apache22 && is_php && $.inArray(item.name, phps) == -1) {
                 if (item.setup) {
@@ -2533,6 +2539,7 @@ var soft = {
         break;
       case 'config_edit':
         bt.soft.php.get_php_config(version, function (rdata) {
+          if(rdata.msg && !rdata.status) return layer.msg(rdata.msg,{icon: 0,time: 0,shade: [0.3, '#000'],shadeClose:true})
           var mlist = '';
           for (var i = 0; i < rdata.length; i++) {
             var w = '70'
