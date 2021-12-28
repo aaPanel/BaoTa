@@ -2720,6 +2720,7 @@ def get_user_info():
             import panelAuth
             userTmp = panelAuth.panelAuth().create_serverid(None)
         userInfo['uid'] = userTmp['uid']
+        userInfo['access_key'] = userTmp['access_key']
         userInfo['username'] = userTmp['username']
         userInfo['serverid'] = userTmp['serverid']
         userInfo['oem'] =  get_oem_name()
