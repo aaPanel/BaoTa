@@ -154,12 +154,15 @@
         cdn_url = "{{g.cdn_url}}";
     </script>
     {% if request.path == '/btwaf/index' %}
-      <script src="{{g.cdn_url}}/js/jquery-2.2.4.min.js"></script>
-      <script src="{{g.cdn_url}}/layer/layer.js?version={{g['version']}}"></script>
-      <script src="{{g.cdn_url}}/language/{{session['lan']}}/lan.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-      <script src="{{g.cdn_url}}/js/public.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-      <script src="{{g.cdn_url}}/js/public_backup.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-      <script type="text/javascript" src="{{g.cdn_url}}/js/tools.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+	  <script type="text/javascript" src="{{g.cdn_url}}/js/jquery-2.2.4.min.js"></script>
+	  <script type="text/javascript" src="{{g.cdn_url}}/layer/layer.js?version={{g['version']}}"></script>
+	  <script type="text/javascript" src="{{g.cdn_url}}/language/{{session['lan']}}/lan.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+	  <script type="text/javascript" src="{{g.cdn_url}}/js/clipboard.min.js" defer></script>
+	  <script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js" defer></script>
+	  <script type="text/javascript" src="{{g.cdn_url}}/js/jquery.qrcode.min.js" defer></script>
+	  <script type="text/javascript" src="{{g.cdn_url}}/js/public.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+	  <script type="text/javascript" src="{{g.cdn_url}}/js/public_backup.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+	  <script type="text/javascript" src="{{g.cdn_url}}/js/tools.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
     {% endif %}
 
     {% block scripts %}
