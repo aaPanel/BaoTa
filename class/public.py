@@ -12,8 +12,6 @@
 #--------------------------------
 import json,os,sys,time,re,socket,importlib,binascii,base64,io,string
 from random import choice
-
-from werkzeug.utils import redirect
 _LAN_PUBLIC = None
 _LAN_LOG = None
 _LAN_TEMPLATE = None
@@ -870,14 +868,14 @@ def downloadFile(url,filename):
         import requests
         from requests.packages.urllib3.exceptions import InsecureRequestWarning
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-        import requests.packages.urllib3.util.connection as urllib3_conn
-        old_family = urllib3_conn.allowed_gai_family
-        urllib3_conn.allowed_gai_family = lambda: socket.AF_INET
+        # import requests.packages.urllib3.util.connection as urllib3_conn
+        # old_family = urllib3_conn.allowed_gai_family
+        # urllib3_conn.allowed_gai_family = lambda: socket.AF_INET
         res = requests.get(url,headers=get_requests_headers(),timeout=30,stream=True)
         with open(filename,"wb") as f:
             for _chunk in res.iter_content(chunk_size=8192):
                 f.write(_chunk)
-        urllib3_conn.allowed_gai_family = old_family
+        # urllib3_conn.allowed_gai_family = old_family
     except:
         ExecShell("wget -O {} {} --no-check-certificate".format(filename,url))
 
@@ -1471,6 +1469,7 @@ def xssencode(text):
     return text2
 #xss 防御
 def xssencode2(text):
+    import cgi
     text2=cgi.escape(text, quote=True)
     return text2
 # 取缓存
@@ -3859,7 +3858,6 @@ def is_apache_nginx():
     setup_path = get_setup_path()
     return os.path.exists(setup_path + '/apache') or os.path.exists(setup_path + '/nginx')
 
-
 def error_not_login(e = None):
     '''
         @name 未登录时且未输入正确的安全入口时的响应
@@ -3962,7 +3960,9 @@ def is_error_path():
 def get_php_versions(reverse=False):
     '''
         @name 取PHP版本列表
+        @author hwliang<2021-12-16>
         @param reverse<bool> 是否降序
+        @return list
     '''
     _file = get_panel_path() + '/config/php_versions.json'
     if os.path.exists(_file):
