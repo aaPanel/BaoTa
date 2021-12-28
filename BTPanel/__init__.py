@@ -1108,6 +1108,7 @@ def login():
                 s_file = 'data/session/{}'.format(session['tmp_login_id'])
                 if os.path.exists(s_file):
                     os.remove(s_file)
+            del(session['request_token_head'])
             session.clear()
             sess_file = 'data/sess_files/' + public.get_sess_key()
             if os.path.exists(sess_file):
@@ -1115,6 +1116,8 @@ def login():
                     os.remove(sess_file)
                 except:
                     pass
+            sess_tmp_file = public.get_full_session_file()
+            if os.path.exists(sess_tmp_file): os.remove(sess_tmp_file)
             g.dologin = True
             return redirect(login_path)
 
@@ -1318,7 +1321,7 @@ def panel_public():
             if not 'filename' in get: return abort(404)
             if not public.path_safe_check("%s" % (get.filename)): return abort(404)
             if not re.match(r'^[\w\./_-]+$',get.filename): return abort(404)
-            s_file = public.get_panel_path() + '/BTPanel/static/' + get.filename
+            s_file = '/www/server/panel/BTPanel/static/' + get.filename
             if s_file.find('..') != -1 or s_file.find('./') != -1: return abort(404)
             if not os.path.exists(s_file): return abort(404)
             return send_file(s_file, conditional=True, add_etags=True)
@@ -1345,7 +1348,7 @@ def send_favicon():
     # 图标
     comReturn = comm.local()
     if comReturn: return abort(404)
-    s_file = public.get_panel_path() + '/BTPanel/static/favicon.ico'
+    s_file = '/www/server/panel/BTPanel/static/favicon.ico'
     if not os.path.exists(s_file): return abort(404)
     return send_file(s_file, conditional=True, add_etags=True)
 
@@ -1364,7 +1367,7 @@ def btwaf_error():
     comReturn = comm.local()
     if comReturn: return comReturn
     get=get_input()
-    p_path = public.get_plugin_path('btwaf')
+    p_path = os.path.join('/www/server/panel/plugin/', "btwaf")
     if not os.path.exists(p_path): 
         if get.name == 'btwaf' and get.fun == 'index':
             return  render_template('error3.html',data={})
@@ -1404,7 +1407,7 @@ def panel_other(name=None, fun=None, stype=None):
     if not public.path_safe_check("%s/%s/%s" % (name, fun, stype)): return abort(404)
     if name.find('./') != -1 or not re.match(r"^[\w-]+$", name): return abort(404)
     if not name: return public.returnJson(False, 'PLUGIN_INPUT_ERR'), json_header
-    p_path = public.get_plugin_path(name)
+    p_path = os.path.join('/www/server/panel/plugin/', name)
     if not os.path.exists(p_path): 
         if name == 'btwaf' and fun == 'index':
             return  render_template('error3.html',data={}) 

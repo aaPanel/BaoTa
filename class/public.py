@@ -3971,3 +3971,14 @@ def get_php_versions(reverse=False):
         version_list = ['52','53','54','55','56','70','71','72','73','74','80','81','82','83','84']
 
     return sorted(version_list,reverse=reverse)
+
+def get_full_session_file():
+    '''
+        @name 获取临时SESSION文件
+        @author hwliang<2021-12-28>
+        @return string
+    '''
+    from BTPanel import app
+    full_session_key = app.config['SESSION_KEY_PREFIX'] + get_session_id()
+    sess_path = get_panel_path() + '/data/session/'
+    return sess_path + '/' + md5(full_session_key)
