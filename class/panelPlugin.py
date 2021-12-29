@@ -1653,15 +1653,21 @@ class panelPlugin:
             if datadir:
                 pid_file = "{}/{}.pid".format(datadir,public.get_hostname())
                 if os.path.exists(pid_file):
-                    pid = int(public.readFile(pid_file))
-                    status = public.pid_exists(pid)
-                    if status: return status
+                    try:
+                        pid = int(public.readFile(pid_file))
+                        status = public.pid_exists(pid)
+                        if status: return status
+                    except:
+                        return False
 
         if pname in ['php-fpm'] and exe:
             pid_file = exe.replace('sbin/php-fpm','/var/run/php-fpm.pid')
             if os.path.exists(pid_file):
-                pid = int(public.readFile(pid_file))
-                return public.pid_exists(pid)
+                try:
+                    pid = int(public.readFile(pid_file))
+                    return public.pid_exists(pid)
+                except:
+                    return False
         
         if not self.pids: self.pids = psutil.pids()
         for pid in self.pids:

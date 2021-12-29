@@ -252,6 +252,8 @@ class panelAuth:
             else:
                 params['uid'] = userInfo['uid']
                 params['serverid'] = userInfo['serverid']
+                params['access_key'] = userInfo['access_key']
+
             result = public.httpPost(cloudURL + module,params)
             result = json.loads(result.strip())
             if not result: return None
@@ -269,6 +271,7 @@ class panelAuth:
             else:
                 params['uid'] = userInfo['uid']
                 params['serverid'] = userInfo['serverid']
+                params['access_key'] = userInfo['access_key']
             result = public.httpPost(cloudURL + module,params)
             
             result = json.loads(result)

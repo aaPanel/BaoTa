@@ -207,13 +207,13 @@ class crontab:
         self.CrondReload()
         columns = 'name,type,where1,where_hour,where_minute,echo,addtime,\
                   status,save,backupTo,sType,sName,sBody,urladdress'
-        values = (public.xssencode(get['name']),get['type'],get['where1'],get['hour'],
+        values = (public.xssencode2(get['name']),get['type'],get['where1'],get['hour'],
         get['minute'],cronName,time.strftime('%Y-%m-%d %X',time.localtime()),
         1,get['save'],get['backupTo'],get['sType'],get['sName'],get['sBody'],
         get['urladdress'])
         if "save_local" in get:
             columns += ",save_local,notice,notice_channel"
-            values = (public.xssencode(get['name']),get['type'],get['where1'],get['hour'],
+            values = (public.xssencode2(get['name']),get['type'],get['where1'],get['hour'],
         get['minute'],cronName,time.strftime('%Y-%m-%d %X',time.localtime()),
         1,get['save'],get['backupTo'],get['sType'],get['sName'],get['sBody'],
         get['urladdress'], get["save_local"], get['notice'], get['notice_channel'])

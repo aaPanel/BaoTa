@@ -2,24 +2,7 @@ var backupListAll = [], siteListAll = [], databaseListAll = [];
 
 var crontab = {
   typeTips: { site: '备份网站', database: '备份数据库', logs: '切割日志', path: '备份目录', webshell: '查杀站点' },
-  crontabForm: {
-    name: '',
-    type: '',
-    where1: '',
-    hour: '',
-    minute: '',
-    week: '',
-    sType: '',
-    sBody: '',
-    sName: '',
-    backupTo: '',
-    save: '',
-    sBody: '',
-    urladdress: '',
-    save_local: '',
-    notice: '',
-    notice_channel: ''
-  },
+  crontabForm: { name: '', type: '', where1: '', hour: '', minute: '', week: '', sType: '', sBody: '', sName: '', backupTo: '', save: '', sBody: '', urladdress: '', save_local: '', notice: '', notice_channel: '' },
   editForm: false,
   crontabFormConfig: [{
     label: '任务类型',
@@ -164,9 +147,17 @@ var crontab = {
         that.config.form[3].group[2].value = formData.backupTo;
         that.config.form[3].group[3].value = formData.save;
         that.config.form[3].group[4].display = formData.backupTo !== "localhost" ? true : false;
+        switch(formData.sType){
+          case 'site':
+          case 'database':
+            that.config.form[3].group[0].value = formData.sName
+            break;
+          case 'path':
+            that.config.form[3].group[1].value = formData.path
+            break;
+        }
         that.$replace_render_content(3)
       }
-
     }, {
       label: '保留最新',
       type: 'number',
@@ -174,7 +165,6 @@ var crontab = {
       'class': 'group',
       width: '70px',
       value: '3',
-      min: 1,
       unit: '份'
 
     }, {
@@ -358,9 +348,9 @@ var crontab = {
    * @description 计划任务类型解构调整
    * @param {}
    * @param {}
-   * @param {}
+   * @param {Add} 是否是添加
    */
-  crontabsType: function (config, formData, that) {
+  crontabsType: function (config, formData, Add) {
     config[4].group[1].name = 'notice_channel';
     config[3].group[2].list = backupListAll;
     // config[2].group[0].value = 'week';
@@ -370,35 +360,32 @@ var crontab = {
       case 'database':
         config[3].group[0].placeholder = '无数据库数据';
         config[5].display = false;
-        if (formData.sType === 'database') {
-          if (that) {
-            config[2].group[0].value = 'day'
-            config[2].group[1].display = false
-            config[2].group[3].value = '2'
-            config[2].group[4].value = '30'
-          }
+        if (Add) {
+          config[2].group[0].value = 'day'
+          config[2].group[1].display = false
+          config[2].group[3].value = '2'
+          config[2].group[4].value = '30'
         }
       case 'logs':
         if (formData.sType === 'logs') {
-          if (that) {
-            config[2].group[0].value = 'day'
-            config[2].group[1].display = false
+          if(Add){
             config[2].group[3].value = '0'
             config[2].group[4].value = '1'
-            config[3].group[2].display = false
-            config[3].group[3].value = 180
+            config[2].group[0].value = 'day'
           }
+          config[2].group[1].display = false
+          config[3].group[2].display = false
+          config[3].group[3].value = 180
         }
       case 'path':
         if (formData.sType === 'path') {
           config[1].group.value = '备份目录[' + config[3].group[1].value + ']'
-          if (that) {
+          if(Add) {
             config[2].group[0].value = 'day'
             config[2].group[1].display = false
-            config[3].group[0].display = false
-            config[3].group[1].display = true
-            config[3].group[2].disabled = false
           }
+          config[3].group[0].display = false
+          config[3].group[1].display = true
           config[3].group[2].list = backupListAll
         }
       case 'webshell':
@@ -459,7 +446,7 @@ var crontab = {
         break;
     }
     if (formData.sType === 'database') config[3].group[0].list = databaseListAll;
-    if (that && (formData.sType === 'database' || formData.sType === 'logs' || formData.sType === 'site')) {
+    if (Add && (formData.sType === 'database' || formData.sType === 'logs' || formData.sType === 'site')) {
       config[3].group[0].value = 'ALL';
     }
     config[0].group.value = formData.sType
@@ -495,6 +482,7 @@ var crontab = {
         formConfig.group[2].display = false
         formConfig.group[3].display = true
         break;
+
     }
     var num = formData.sType == 'logs' ? 0 : 1;
     var hour = formData.hour ? formData.hour : num;
@@ -514,8 +502,7 @@ var crontab = {
       'class': 'crontab_form',
       form: arryCopy(crontab.crontabFormConfig),
       submit: function (formData) {
-        var form = $.extend(true, {}, _that.crontabForm), _where1 = $('input[name=where1]'),
-          _hour = $('input[name=hour]'), _minute = $('input[name=minute]');
+        var form = $.extend(true, {}, _that.crontabForm), _where1 = $('input[name=where1]'), _hour = $('input[name=hour]'), _minute = $('input[name=minute]');
         $.extend(form, formData)
         if (form.name === '') {
           bt.msg({ status: false, msg: '计划任务名称不能为空！' })
@@ -546,7 +533,12 @@ var crontab = {
           case "minute-n":
             form.where1 = form.minute
             form.minute = '';
+            if(form.where1 < 1) return bt.msg({ status: false, msg: '分钟不能小于1！' })
             break;
+          case "hour-n":
+            if(form.minute <= 0 && form.hour <= 0) return bt.msg({ status: false, msg: '小时、分钟不能同时小于1！' })
+            break;
+          // 天/日默认最小为1
         }
         switch (form.sType) {
           case 'syncTime':
@@ -573,13 +565,9 @@ var crontab = {
             }
             break;
         }
-        if (form.sType == "site" || form.sType == "database" || form.sType == "path") {
-          if (form.save == '') {
-            bt.msg({ status: false, msg: '保留最新不能为空！' });
-            return false;
-          }
-          if (Number(form.save) < 1) {
-            return false;
+        if (form.sType == "site" || form.sType == "database" || form.sType == "path" || form.sType == "logs") {
+          if (Number(form.save) < 1 || form.save == '') {
+            return bt.msg({status: false, msg: '保留最新不能小于1！'});
           }
         }
         bt_tools.send({
@@ -808,7 +796,8 @@ var crontab = {
                         form[keys] = typeof rdata[keys] === "undefined" ? '' : rdata[keys]
                       }
                     }
-
+                    crontab.crontabType(formConfig, form)
+                    crontab.crontabsType(formConfig, form)
                     switch (rdata.type) {
                       case 'day':
                         cycle = { where1: '', hour: rdata.where_hour, minute: rdata.where_minute }
@@ -833,8 +822,9 @@ var crontab = {
                         cycle = { where1: rdata.where1, where: '', hour: rdata.where_hour, minute: rdata.where_minute }
                         break;
                     }
+
                     formConfig[3].group[2].value = rdata.backupTo;
-                    formConfig[3].group[4].display = rdata.backupTo != 'localhost';
+                    formConfig[3].group[4].display = (rdata.backupTo != "" && rdata.backupTo != 'localhost');
                     formConfig[3].group[4].value = rdata.save_local;
                     formConfig[4].group[0].value = rdata.notice;
                     formConfig[4].group[1].display = rdata.sType == 'webshell' ? true : !!rdata.notice;    //单独判断是否为木马查杀
@@ -844,25 +834,28 @@ var crontab = {
                     }
                     $.extend(form, cycle, { id: rdata.id })
 
-                    crontab.crontabType(formConfig, form)
-                    crontab.crontabsType(formConfig, form)
+
 
                     switch (rdata.sType) {
+                      case 'logs':
                       case 'path':
                         form.path = rdata.sName
                         formConfig[3].group[1].disabled = true
-                        delete formConfig[3].group[1].icon
                         break
                     }
                     formConfig[0].group.disabled = true
                     formConfig[1].group.disabled = true
                     formConfig[3].group[0].disabled = true
                     formConfig[8].group.title = '保存编辑'
-                    if (form.sName == 'ALL') {
-                      form.name = form.name.replace(/\[(.*)]/, '[ 所有 ]');
-                    } else {
-                      form.name = form.name.replace(/\[(.*)]/, '[ ' + form.sName + ' ]');
+                    var screen = ['site','database','logs','path','webshell']
+                    if(screen.indexOf(form.sType) > -1){
+                      if (form.sName === 'ALL') {
+                        form.name = form.name.replace(/\[(.*)]/, '[ 所有 ]');
+                      } else {
+                        form.name = form.name.replace(/\[(.*)]/, '[ ' + form.sName + ' ]');
+                      }
                     }
+
                     delete formConfig[0].group.unit
 
                     bt_tools.form({
@@ -905,46 +898,37 @@ var crontab = {
                             break;
                         }
 
-                        var hour = parseInt(submitForm.hour), minute = parseInt(submitForm.minute),
-                          week = submitForm.week, where1 = parseInt(submitForm.where1),
-                          where = parseInt(submitForm.where)
+                        var hour = parseInt(submitForm.hour), minute = parseInt(submitForm.minute), where1 = parseInt(submitForm.where1)
+
                         switch (submitForm.type) {
                           case 'hour':
                           case 'minute-n':
-                            if (minute < 0 || minute > 59 || isNaN(minute)) return bt.msg({
-                              status: false,
-                              msg: '请输入正确分钟范围0-59分'
-                            })
+                            if (minute < 0 || minute > 59 || isNaN(minute)) return bt.msg({ status: false, msg: '请输入正确分钟范围0-59分' })
                             if (submitForm.type === 'minute-n') {
                               submitForm.where1 = submitForm.minute
                               submitForm.minute = ''
+                              if(submitForm.where1 < 1) return bt.msg({ status: false, msg: '分钟不能小于1！' })
                             }
                             break;
                           case 'day-n':
                           case 'month':
-                            if (where1 < 1 || where1 > 31 || isNaN(where1)) return bt.msg({
-                              status: false,
-                              msg: '请输入正确天数1-31天'
-                            })
+                            if (where1 < 1 || where1 > 31 || isNaN(where1)) return bt.msg({ status: false, msg: '请输入正确天数1-31天' })
                           case 'week':
                           case 'day':
                           case 'hour-n':
-                            if (hour < 0 || hour > 23 || isNaN(hour)) return bt.msg({
-                              status: false,
-                              msg: '请输入小时范围0-23时'
-                            })
-                            if (minute < 0 || minute > 59 || isNaN(minute)) return bt.msg({
-                              status: false,
-                              msg: '请输入正确分钟范围0-59分'
-                            })
+                            if (hour < 0 || hour > 23 || isNaN(hour)) return bt.msg({ status: false, msg: '请输入小时范围0-23时' })
+                            if (minute < 0 || minute > 59 || isNaN(minute)) return bt.msg({ status: false, msg: '请输入正确分钟范围0-59分' })
                             if (submitForm.type === 'hour-n') {
                               submitForm.where1 = submitForm.hour
                               submitForm.hour = ''
+                              if(submitForm.minute <= 0 && submitForm.where1 <= 0) return bt.msg({ status: false, msg: '小时、分钟不能同时小于1！' })
                             }
                             break;
                         }
-                        if (submitForm.sType == "site" || submitForm.sType == "database" || submitForm.sType == "path") {
-                          if (Number(submitForm.save) < 1) return false;
+                        if (submitForm.sType == "site" || submitForm.sType == "database" || submitForm.sType == "path" || submitForm.sType == "logs") {
+                          if (Number(submitForm.save) < 1 || submitForm.save == '') {
+                            return bt.msg({ status: false, msg: '保留最新不能小于1！'});
+                          }
                         }
                         bt_tools.send({
                           url: '/crontab?action=modify_crond',
@@ -954,9 +938,6 @@ var crontab = {
                           layer.close(indexs)
                           _that.crontabTabel.$refresh_table_list(true);
                         }, '编辑计划任务')
-                      },
-                      success: function () {
-                        console.log('ddd')
                       }
                     })
                   }, '获取计划配置信息')
@@ -976,13 +957,12 @@ var crontab = {
                   content: '<div class="setchmod bt-form">\
 											<pre class="crontab-log" style="overflow: auto; border: 0 none; line-height:23px;padding: 15px; margin: 0;white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0;"></pre>\
 												<div class="bt-form-submit-btn" style="margin-top: 0">\
-												<button type="button" class="btn btn-danger btn-sm btn-title" id="clearLogs" style="margin-right:15px;">' + lan['public']['empty'] + '</button>\
-												<button type="button" class="btn btn-success btn-sm btn-title" onclick="layer.closeAll()">' + lan['public']['close'] + '</button>\
+												<button type="button" class="btn btn-danger btn-sm btn-title" id="clearLogs" style="margin-right:15px;">'+ lan['public']['empty'] + '</button>\
+												<button type="button" class="btn btn-success btn-sm btn-title" onclick="layer.closeAll()">'+ lan['public']['close'] + '</button>\
 											</div>\
 										</div>',
                   success: function () {
-                    var log_body = rdata.msg === '' ? '当前日志为空' : rdata.msg, setchmod = $(".setchmod pre"),
-                      crontab_log = $('.crontab-log')[0]
+                    var log_body = rdata.msg === '' ? '当前日志为空' : rdata.msg, setchmod = $(".setchmod pre"), crontab_log = $('.crontab-log')[0]
                     setchmod.text(log_body);
                     crontab_log.scrollTop = crontab_log.scrollHeight;
                     $('#clearLogs').on('click', function () {
@@ -1321,12 +1301,7 @@ var crontab = {
         url: '/config?action=get_settings'
       }, function (sett) {
         var select = _this.getChannelSwitch(sett, that.config.form[0].group.value);
-        select = $.extend(true, {}, that.config.form[4].group[1], {
-          display: true,
-          label: '',
-          disabled: false,
-          list: select
-        })
+        select = $.extend(true, {}, that.config.form[4].group[1], { display: true, label: '', disabled: false, list: select })
         that.config.form[8].group.disabled = false
         that.$local_refresh("notice_channel", select)
         that.$local_refresh('submitForm', that.config.form[8].group)
@@ -1361,12 +1336,10 @@ var crontab = {
       that.crontabTabel = that.crontabTabel()
       that.getDataList('databases');
     })
-
     function resizeTable () {
       var height = window.innerHeight - 690, table = $('#crontabTabel .divtable');
       table.css({ maxHeight: height < 400 ? '400px' : (height + 'px') })
     }
-
     $(window).on('resize', resizeTable)
     setTimeout(function () {
       resizeTable()

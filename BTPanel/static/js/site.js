@@ -7980,6 +7980,10 @@ var site = {
                     auth_to = ldata.dns_select + "|" + site.dnsapi[ldata.dns_select].s_key + "|" + site.dnsapi[ldata.dns_select].s_token;
                   }
                 }
+                if (ldata.domains.length <= 0) {
+                  layer.msg('至少需要有一个域名', { icon: 2 });
+                  return;
+                }
                 acme.apply_cert(ldata['domains'], auth_type, auth_to, auto_wildcard, function (res) {
                   site.ssl.ssl_result(res, auth_type, web.name);
                 })
