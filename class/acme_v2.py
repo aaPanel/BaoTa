@@ -1308,8 +1308,8 @@ fullchain.pem       粘贴到证书输入框
                         os.makedirs(project_info['ssl_path'])
                     path = project_info['ssl_path']
                     args.auth_to=path
-                    check_result = self.check_auth_env(args)
-                    if check_result: return check_result
+                    # check_result = self.check_auth_env(args)
+                    # if check_result: return check_result
             
                     if args.auto_wildcard == '1':
                         self._auto_wildcard = True
