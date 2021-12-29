@@ -130,7 +130,7 @@ class panelWorkorder:
                         if result["check_version"]:
                             pp = panelPlugin.panelPlugin()
                             soft_list = pp.get_soft_list(common.dict_obj())
-                            if soft_list["pro"] != -1:
+                            if soft_list["ltd"] != -1:
                                 is_allow = True
                             else:
                                 is_allow = False
