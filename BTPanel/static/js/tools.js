@@ -1274,7 +1274,7 @@ var bt_tools = {
           that.$check_event_bind(item.name, event_group)
         }
         html += '<div class="' + (item.dispaly || 'inlineBlock') + ' ' + _that.$verify(item.hide, 'hide', true) + ' ' + (item['class'] || '') + '">';
-        var _value = typeof that.data[item.name] !== "undefined" && that.data[item.name] != '' ? that.data[item.name] : (item.value || '')
+        var _value = typeof that.data[item.name] !== "undefined" && that.data[item.name] !== '' ? that.data[item.name] : (item.value || '')
         switch (item.type) {
           case 'text': // 文本选择
           case 'checkbox': // 复选框
