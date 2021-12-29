@@ -1,0 +1,201 @@
+.bt-form-checkbox{
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    vertical-align: top;
+    border-radius: 1px;
+    position: relative;
+    border-radius: 2px;
+}
+.bt-form-checkbox.active::after{
+    content: '';
+    position: absolute;
+    display: block;
+    left: 50%;
+    top: 50%;
+    margin-left: -2px;
+    margin-top: -6px;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+.bt-form-checkbox.active{
+    background-color: #20a53a;
+    border-color: #20a53a;
+}
+.add_domain_dns{
+    margin-top: 5px;
+}
+
+.cosfs_downup_list .nav_down_list li i{
+    font-size: 13px;
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    color: #666;
+}
+.cosfs_downup_list .nav_down_list{
+    width: 158px;
+    max-width: 158px;
+}
+.cosfs_downup_list .nav_down_list span:nth-child(3){
+    font-size: 12px;
+    color: #20a53a;
+}
+.cosfs_downup_list .nav_down_list li span:nth-child(2){
+    width: 100px;
+}
+
+
+
+.tx_key_bind {
+    padding: 48px 0;
+}
+
+.tx_key_title img {
+    margin-right: 5px;
+}
+
+.tips_placeholder.offset {
+    top: 8px;
+}
+
+.tips_placeholder {
+    position: absolute;
+    top: 50%;
+    margin-top: -10px;
+    left: 62px;
+    color: #aaa;
+    transition: all 300ms;
+    display: inline-block;
+    padding: 2px 5px;
+    background: #fff;
+}
+
+.tx_key_find,
+.tx_key_help {
+    padding: 10px 55px;
+    position: relative;
+}
+
+.tx_key_help {
+    padding: 0px 55px;
+    font-size: 13px;
+    line-height: 20px;
+    color: #555;
+}
+
+.tx_key_title {
+    text-align: center;
+    font-size: 23px;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.tx_key_find input {
+    width: 100%;
+    height: 40px;
+    border: 1px solid #CCC;
+    border-radius: 2px;
+    padding-left: 8px;
+    font-size: 12px;
+    outline: none;
+    transition: all 100ms;
+}
+
+button.set_key_bind{
+    width: 100%;
+    height: 40px;
+    font-size: 15px;
+    color: #fff;
+    background: #20a53a;
+    border: 1px solid #20a53a;
+    border-radius: 2px;
+}
+button.set_clear_bind:hover{
+    color: #fff;
+    background: #c9302c;
+    border: 1px solid #c9302c;
+}
+button.set_clear_bind {
+    transition: all 200ms;
+    width: 100%;
+    height: 40px;
+    font-size: 15px;
+    color: #555;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+}
+
+.tx_key_find input:focus,
+.tx_key_find input:hover {
+    border-color: #20a53a;
+}
+
+.tx_key_find .set_key_bind:hover {
+    background-color: #10952a;
+    border-color: #398439;
+}
+
+.tx_key_find .set_clear_bind:hover {
+    background-color: #b72a26;
+    border-color: #b72a26;
+}
+
+span.close_input:hover {
+    background: #f1f1f1;
+}
+
+span.close_input::after {
+    transform: rotate(45deg);
+}
+
+span.close_input::before,
+span.close_input::after {
+    content: "";
+    display: inline-block;
+    height: 18px;
+    width: 2px;
+    position: absolute;
+    background: red;
+    top: 9px;
+    right: 17px;
+}
+
+span.close_input::before {
+    transform: rotate(-45deg);
+}
+
+.close_input {
+    display: none;
+    background: transparent;
+    height: 38px;
+    width: 38px;
+    display: inline-block;
+    position: absolute;
+    right: 56px;
+    top: 11px;
+    cursor: pointer;
+}
+
+/* 快照 */
+.snapshots_instructions.info-title-tips{
+    line-height: 25px;
+}
+.snapshots_instructions li{
+    font-size:12px
+}
+.snapshots_main .snapshots-tbody .snap-hideen{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 116px;
+    display: inline-block;
+    vertical-align: top;
+}
+/* 快照 end */
