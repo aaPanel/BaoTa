@@ -35,7 +35,7 @@ class ftp:
             public.ExecShell('chown www.www ' + get.path)
             public.ExecShell(self.__runPath + '/pure-pw useradd ' + username + ' -u www -d ' + get.path + '<<EOF \n' + password + '\n' + password + '\nEOF')
             self.FtpReload()
-            ps=get['ps']
+            ps = public.xssencode(get['ps'])
             if get['ps']=='': ps= public.getMsg('INPUT_PS');
             addtime=time.strftime('%Y-%m-%d %X',time.localtime())
             
