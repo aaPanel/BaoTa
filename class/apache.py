@@ -172,7 +172,6 @@ class apache:
                     "value": str(getdict[i])
                 }
                 conflist.append(getpost)
-        public.writeFile("/tmp/list",str(conflist))
         for c in conflist:
             if c["name"] == "KeepAlive":
                 if not re.search("on|off", c["value"]):
