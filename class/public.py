@@ -1537,7 +1537,13 @@ def get_os_version():
         @author hwliang<2021-08-07>
         @return string
     '''
-    version = readFile('/etc/redhat-release')
+    p_file = '/etc/.productinfo'
+    if os.path.exists(p_file):
+        s_tmp = readFile(p_file).split("\n")
+        if s_tmp[0].find('Kylin') != -1 and len(s_tmp) > 1:
+            version = s_tmp[0] + ' ' + s_tmp[1].split('/')[0].strip()
+    else:
+        version = readFile('/etc/redhat-release')
     if not version:
         version = readFile('/etc/issue').strip().split("\n")[0].replace('\\n','').replace('\l','').strip()
     else:
