@@ -2049,7 +2049,7 @@ class config:
             return public.returnMsg(False,'状态码范围错误!')
         
         public.save_config('abort',get.status_code)
-        public.WriteLog('面板设置','将未授权响应状态码设置为:'.format(get.status_code))
+        public.WriteLog('面板设置','将未授权响应状态码设置为:{}'.format(get.status_code))
         return public.returnMsg(True,'设置成功!')
 
     def get_not_auth_status(self):
