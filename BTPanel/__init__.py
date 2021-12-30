@@ -2228,6 +2228,7 @@ def check_csrf_websocket(ws,args):
         @return void
     '''
     if g.is_aes: return True
+    if public.is_debug(): return True
     is_success = True
     if not 'x-http-token' in args: 
         is_success = False
@@ -2236,7 +2237,7 @@ def check_csrf_websocket(ws,args):
         if session['request_token_head'] != args['x-http-token']: 
             is_success = False
 
-    if is_success:
+    if is_success and 'request_token' in session:
         cookie_token = request.cookies.get('request_token')
         if cookie_token != session['request_token']: 
             is_success = False
