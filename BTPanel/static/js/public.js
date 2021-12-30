@@ -1908,7 +1908,7 @@ function ajax_encrypt (request) {
   }
 }
 
-
+var gl_error_body = '';
 function ajaxSetup () {
   var my_headers = {};
   var request_token_ele = document.getElementById("request_token_head");
@@ -1952,23 +1952,9 @@ function ajaxSetup () {
             });
             return;
           }
-          if (error_find != -1) {
-            var error_body = jqXHR.responseText.split('<!--')[2].replace('-->', '')
-            var tmp = error_body.split('During handling of the above exception, another exception occurred:')
-            error_body = tmp[tmp.length - 1];
-            var error_msg = '<div>\
-						<h3 style="margin-bottom: 10px;">出错了，面板运行时发生错误！</h3>\
-						<pre style="height:635px;word-wrap: break-word;white-space: pre-wrap;margin: 0 0 0px">'+ error_body.trim() + '</pre>\
-						<ul class="help-info-text">\
-							<li style="list-style: none;"><b>很抱歉，面板运行时意外发生错误，请尝试按以下顺序尝试解除此错误：</b></li>\
-							<li style="list-style: none;">1、在[首页]右上角点击修复面板，并退出面板重新登录。</li>\
-							<li style="list-style: none;">2、如上述尝试未能解除此错误，请截图此窗口到宝塔论坛发贴寻求帮助, 论坛地址：<a class="btlink" href="https://www.bt.cn/bbs" target="_blank">https://www.bt.cn/bbs</a></li>\
-						</ul>\
-					</div>'
-
-          } else {
-            var error_msg = jqXHR.responseText;
-          }
+          gl_error_body = jqXHR.responseText;
+          error_msg = jqXHR.responseText.split('public.PanelError: ')[1].split("</h4>")[0].replace("面板运行时发生错误:",'').trim();
+          error_msg += "<br><a class='btlink' onclick='show_error_message()'> >>点击查看详情</a>";
           $(".layui-layer-padding").parents('.layer-anim').remove();
           $(".layui-layer-shade").remove();
           setTimeout(function () {
@@ -1976,10 +1962,10 @@ function ajaxSetup () {
               title: false,
               content: error_msg,
               closeBtn: 2,
-              area: ["1200px", "800px"],
               btn: false,
               shadeClose: false,
               shade: 0.3,
+              icon:2,
               success: function () {
                 $('pre').scrollTop(100000000000)
               }
@@ -1987,12 +1973,47 @@ function ajaxSetup () {
           }, 100)
         }
       }
-      // dataFilter: ajax_decrypt,
-      // beforeSend: ajax_encrypt
     });
   }
 }
 ajaxSetup();
+
+
+function show_error_message() {
+    if (error_find != -1) {
+        var error_body = gl_error_body.split('<!--')[2].replace('-->', '')
+        var tmp = error_body.split('During handling of the above exception, another exception occurred:')
+        error_body = tmp[tmp.length - 1];
+        var error_msg = '<div>\
+        <h3 style="margin-bottom: 10px;">出错了，面板运行时发生错误！</h3>\
+        <pre style="height:635px;word-wrap: break-word;white-space: pre-wrap;margin: 0 0 0px">'+ error_body.trim() + '</pre>\
+        <ul class="help-info-text">\
+          <li style="list-style: none;"><b>很抱歉，面板运行时意外发生错误，请尝试按以下顺序尝试解除此错误：</b></li>\
+          <li style="list-style: none;">1、在[首页]右上角点击修复面板，并退出面板重新登录。</li>\
+          <li style="list-style: none;">2、如上述尝试未能解除此错误，请截图此窗口到宝塔论坛发贴寻求帮助, 论坛地址：<a class="btlink" href="https://www.bt.cn/bbs" target="_blank">https://www.bt.cn/bbs</a></li>\
+        </ul>\
+      </div>'
+
+    } else {
+        var error_msg = gl_error_body;
+    }
+    $(".layui-layer-padding").parents('.layer-anim').remove();
+    $(".layui-layer-shade").remove();
+    setTimeout(function () {
+      layer.open({
+        title: false,
+        content: error_msg,
+        closeBtn: 2,
+        area: ["1200px", "810px"],
+        btn: false,
+        shadeClose: false,
+        shade: 0.3,
+        success: function () {
+          $('pre').scrollTop(100000000000)
+        }
+      });
+    }, 100)
+}
 
 function RandomStrPwd (b) {
   b = b || 32;
