@@ -284,11 +284,8 @@ UploadFile.prototype = {
         layerMax.style.display = 'none';
         layerShade.style.display = '';
       },
-      cancel: function () {
-        _this2.cancel_upload()
-      },
       end: function () {
-        _this2.init_data()
+        _this2.cancel_upload();
       }
     });
   },

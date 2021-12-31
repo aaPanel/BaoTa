@@ -434,6 +434,15 @@
             background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAKwwAACsMBNCkkqwAAABZ0RVh0Q3JlYXRpb24gVGltZQAwMy8xNC8xNxpI5/gAAAAcdEVYdFNvZnR3YXJlAEFkb2JlIEZpcmV3b3JrcyBDUzbovLKMAAAEXUlEQVRIiaWXf2iVZRTHv8957t3d3ruSja0mA82NLTMl7gZzjJH0A0RLCKIiskDTzFhmhFrLqKDAMtHMGvvRVn8lSFFS2i/s19rWmC2DVlKbiRtzc2Ngce1u95ynP+7e1/e97/2x6fnvnOf5ns95fr3P8yrMw0RkFYB6AIsAlABgABeUUmcAdCqlOueTL6MZYx5g4QEWZpPFWDjOwqdYeN3VAGtZuDsbLEMRJ1h4abr8Kg10pxjZQ4o87dOjo+CeXtDkFGR4GABAlRUwxUUI1K1EIJzvySNGBMB2TfqtrGAWbiVFmzzArh7EWzsQ/6k37Qwpy0LgztsR2LwBwfKy5AJe0aRfSAtm4UZS9KrjT0witvtlxL//IS3QZ8EchDY+guATj4GCQTd8m3vkDpiFbwXwrT29M4NDiDVsh5w9N3eoywL1dQgd2AttWTY4TorKlFLnAIBcfffaUJ6YQOzxbVcMBYB4ZxemdzTCxOMAAFIUANBqtxMAGGPWk6IaOxjb8TxkZOSKobbNfPMdplva3aHVLHyHAxYjzsLPfPFVyk1ES2/MCFGWBVpY4otPt7ZDxsbdodccMCmqtKOxg2/7xMG71iD/o8Ow2puhQiF/UZUVCB//BPmfH4WaXVPbTCyGWFPL5b6KqgCAWHiXHeT+XyFnzvoS88/9kAsTCNTWIK/poAdO5WUItzeDiosQ7+2DiUZ9+vixL2H+i9muYuENBGCt06G7xycCABk9j+jGLT44lZch/H4bVGEBuLcPlxqeTqk3//4D+W3AHbqHANzgAP4aSikEABkc8sCttiYPNLqlASYWS6vn30+73QoiRdc6yScn0gqT4bo6MmcoAJipKbdbQJ5WlozilKb1/DUASIxcdJyiosydlyyGNbuR+GS/M3KrrSnlbnebKihwu1ME4G8ncfmSzND32hLQ3j5EN231TLvV1uQ7Ssl6l/1JAI7ZXqCuNrVoYYkXOrumyWued2g/QOTTq1AIurrKHfqYSNF+29ORW0ClpT6hXnZT4pz29Po2kgMfG0egOgKVm+vTB+5eA5XrLIXRpDsSl4LwRVJ0DQDMfHocl3Y2+kddXgYZTH/cVCgEtWABZHzc2xDMQfjoEejFixKFGvlFk47Y8/KM02/taugVy32JM0GBxKfRBwWQ8/CDDnTWngO897EzahkbR/S+hyATmc91NgusrIHVcgiYfRCIkR816XrAex8/KiZxjun665D3zptZj1cm01UR5O3b44YaAE/Z7Q5Ykz4C4A3HX74M1ocfQFdF5g0N3n8vwh3NUIWes7tbkz5pO3N67M18fQLTze+CvR96P/C2Vch5cit00t0tRg5o0p4bJOXzloVfBPASqaQv6vAIuKsbPPDH5QR5eaAVN0PX1kAXFiYDDSl6Vin1esaKk+DrWPjUVTzou40xqb9IcyxgMwsPsmT9gzHGGGHh08aY9dnyppzqDEXsQuLhUAyglBSJGBkFcB7AZ5r0vrnm+h+4JqLbk005nAAAAABJRU5ErkJggg==');
             transform: rotate(180deg);
         }
+				.login-images img {
+					height: 85px;
+				}
+				.login-images {
+					width: 440px;
+					display: flex;
+					margin-bottom:25px;
+					justify-content: center;
+				}
     </style>
     <script>
         var ie_version = (function() {
@@ -471,60 +480,61 @@
 </head>
 <body>
     <div class="main">
-        <div class="login{% if session['code'] %} code{% endif %}">
-            <div class="account">
-                <form class="login_form" onsubmit="return false;">
-                    <div class="form_title">{{g.title}}</div>
-                    <div class="form_item">
-                        <input type="text" class="form_input" id="username" placeholder="{{data['lan']['N3']}}" />
-                        <div class="validform_checktip"></div>
-                    </div>
-                    <div class="form_item">
-                        <input type="password" class="form_input" id="password" placeholder="{{data['lan']['N6']}}" />
-                        <div class="validform_checktip"></div>
-                    </div>
-                    <div class="error_tips"></div>
-                    <div class="form_item check_code{% if not session['code'] %} hide{% endif %}">
-                        <input type="text" class="form_input" id="code" placeholder="{{data['lan']['N9']}}" />
-                        <div class="validform_checktip"></div>
-                        <img class="check_img" title="{{data['lan']['N10']}}" src="/code" onClick="this.src = this.src.split('?')[0] + '?' + new Date().getTime()" />
-                    </div>
-                    <button class="login_btn">登录</button>
-                    <a class="forget_pwd" href="http://www.bt.cn/bbs/thread-1172-1-1.html" target="_blank">{{data['lan']['N13']}}</a>
-                    {% if data['hosts'] != '[]' %}
-                        <div class="static_cdn">
-                            <div class="cont">
-                                <div class="name">加速节点</div>
-                                <select id="static_cdn">
-                                    <option value="localhost">计算中...</option>
-                                </select>
-                            </div>
-                        </div>
-                    {% endif %}
-                </form>
-            </div>
-            <div class="scan_code hide">
-                <div class="scan_title">堡塔APP扫码登录</div>
-                <div class="qrcode" id="qrcode"></div>
-                <div class="scan_tip">
-                    <div class="link">
-                        <span>打开</span>
-                        <a href="https://www.bt.cn/bbs/thread-47408-1-1.html" target="_blank" class="bt_link">堡塔APP</a>
-                    </div>
-                    <div class="desc">
-                        <div class="icon scan"></div>
-                        <div class="text">扫一扫</div>
-                    </div>
-                </div>
-            </div>
-            <div class="entrance">
-                <div class="bg_img"></div>
-                <div class="tips">
-                    <div class="icon scan"></div>
-                    <div class="text">切换扫码登录</div>
-                </div>
-            </div>
-        </div>
+			<div class="login-images"><img src="/static/images/bt_logo_new.png"></div>
+			<div class="login{% if session['code'] %} code{% endif %}">
+					<div class="account">
+							<form class="login_form" onsubmit="return false;">
+									<div class="form_title">{{g.title}}</div>
+									<div class="form_item">
+											<input type="text" class="form_input" id="username" placeholder="{{data['lan']['N3']}}" />
+											<div class="validform_checktip"></div>
+									</div>
+									<div class="form_item">
+											<input type="password" class="form_input" id="password" placeholder="{{data['lan']['N6']}}" />
+											<div class="validform_checktip"></div>
+									</div>
+									<div class="error_tips"></div>
+									<div class="form_item check_code{% if not session['code'] %} hide{% endif %}">
+											<input type="text" class="form_input" id="code" placeholder="{{data['lan']['N9']}}" />
+											<div class="validform_checktip"></div>
+											<img class="check_img" title="{{data['lan']['N10']}}" src="/code" onClick="this.src = this.src.split('?')[0] + '?' + new Date().getTime()" />
+									</div>
+									<button class="login_btn">登录</button>
+									<a class="forget_pwd" href="http://www.bt.cn/bbs/thread-1172-1-1.html" target="_blank">{{data['lan']['N13']}}</a>
+									{% if data['hosts'] != '[]' %}
+											<div class="static_cdn">
+													<div class="cont">
+															<div class="name">加速节点</div>
+															<select id="static_cdn">
+																	<option value="localhost">计算中...</option>
+															</select>
+													</div>
+											</div>
+									{% endif %}
+							</form>
+					</div>
+					<div class="scan_code hide">
+							<div class="scan_title">堡塔APP扫码登录</div>
+							<div class="qrcode" id="qrcode"></div>
+							<div class="scan_tip">
+									<div class="link">
+											<span>打开</span>
+											<a href="https://www.bt.cn/bbs/thread-47408-1-1.html" target="_blank" class="bt_link">堡塔APP</a>
+									</div>
+									<div class="desc">
+											<div class="icon scan"></div>
+											<div class="text">扫一扫</div>
+									</div>
+							</div>
+					</div>
+					<div class="entrance">
+							<div class="bg_img"></div>
+							<div class="tips">
+									<div class="icon scan"></div>
+									<div class="text">切换扫码登录</div>
+							</div>
+					</div>
+			</div>
     </div>
     <script>
         // 左右清空空格
@@ -653,7 +663,7 @@
                 })(i);
             }
         }
-        /** 
+        /**
          * 加载完js后运行
          */
         function run () {
