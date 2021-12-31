@@ -430,6 +430,7 @@ def check502():
     try:
         phpversions = public.get_php_versions()
         for version in phpversions:
+            if version in ['52','5.2']: continue
             php_path = '/www/server/php/' + version + '/sbin/php-fpm'
             if not os.path.exists(php_path):
                 continue
