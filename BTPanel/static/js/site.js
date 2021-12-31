@@ -3401,6 +3401,7 @@ var site = {
       if (res.msg[1].challenges === undefined) {
         err_info += "<p><span>响应状态:</span>" + res.msg[1].status + "</p>"
         err_info += "<p><span>错误类型:</span>" + res.msg[1].type + "</p>"
+        err_info += "<p><span>错误来源:</span><a href='https://letsencrypt.org/' class='btlink'>Let's Encrypt官网</a></p>"
         err_info += "<p><span>错误代码:</span>" + res.msg[1].detail + "</p>"
       } else {
         if (!res.msg[1].challenges[1]) {
@@ -6504,7 +6505,7 @@ var site = {
                * @description 渲染验证模板接口
                * @param {Object} data 验证数据
                * @returns void
-               */
+              */
               function reader_domains_cname_check (data) {
                 var html = '';
                 if (data.type) {
@@ -6514,24 +6515,22 @@ var site = {
                     check_html += '<tr><td><span title="' + paths[i].url + '" class="lib-ssl-overflow-span-style">' + paths[i].url + '</span></td><td>' + (paths[i].status == 1 ? '<a class="btlink">通过</a>' : '<span style="color:red">失败[' + paths[i].status + ']</span><a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="bt-ico-ask" style="cursor: pointer;">?</a>') + '</td><td style="text-align:right;"><a href="javascript:bt.pub.copy_pass(\'' + paths[i].url + '\');" class="btlink">复制</a> | <a href="' + paths[i].url + '" target="_blank" class="btlink">打开</a> | <a data-url="' + paths[i].url + '" data-content="' + data.info.fileContent + '" class="btlink check_url_results">重新验证</a></td>'
                   }
                   check_html += '</table></div></div>'
-
                   html = '<div class="lib-ssl-parsing">\
-                                                <div class="parsing_tips">请给以下域名【 <span class="highlight">' + data.domains.join('、') + '</span> 】添加验证文件，验证信息如下：</div>\
-                                                <div class="parsing_parem"><div class="parsing_title">文件所在位置：</div><div class="parsing_info"><input type="text" name="filePath"  class="parsing_input border" value="' + data.info.filePath + '" readonly="readonly" style="width:350px;"/></div></div>\
-                                                <div class="parsing_parem"><div class="parsing_title">文件名：</div><div class="parsing_info"><input type="text" name="fileName" class="parsing_input" value="' + data.info.fileName + '" readonly="readonly" style="width:350px;"/><span class="parsing_icon" data-clipboard-text="' + data.info.fileName + '">复制</span></div></div>\
-                                                <div class="parsing_parem"><div class="parsing_title" style="vertical-align: top;">文件内容：</div><div class="parsing_info"><textarea name="fileValue"  class="parsing_textarea" readonly="readonly" style="width:350px;">' + data.info.fileContent + '</textarea><span class="parsing_icon" style="display: block;width: 60px;border-radius: 3px;" data-clipboard-text="' + data.info.fileContent + '">复制</span></div></div>' +
-                    check_html +
-                    '<div class="parsing_tips" style="font-size:13px;line-height: 24px;">· 请确保以上列表所有项都验证成功后点击【验证域名】重新提交验证</br>· 如长时间验证不通过，请通过【修改验证方式】更改为【DNS验证】</br>· SSL添加文件验证方式 ->> <a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="btlink" >查看教程</a> <span style="padding-left:60px">专属客服QQ：' + data.info.kfqq + '</span></div>\
-                                                <div class="parsing_parem" style="padding: 0 55px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-success set_verify_type">修改验证方式</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
-                                            </div>';
+                    <div class="parsing_tips">请给以下域名【 <span class="highlight">' + data.domains.join('、') + '</span> 】添加验证文件，验证信息如下：</div>\
+                    <div class="parsing_parem"><div class="parsing_title">文件所在位置：</div><div class="parsing_info"><input type="text" name="filePath"  class="parsing_input border" value="' + data.info.filePath + '" readonly="readonly" style="width:350px;"/></div></div>\
+                    <div class="parsing_parem"><div class="parsing_title">文件名：</div><div class="parsing_info"><input type="text" name="fileName" class="parsing_input" value="' + data.info.fileName + '" readonly="readonly" style="width:350px;"/><span class="parsing_icon" data-clipboard-text="' + data.info.fileName + '">复制</span></div></div>\
+                    <div class="parsing_parem"><div class="parsing_title" style="vertical-align: top;">文件内容：</div><div class="parsing_info"><textarea name="fileValue"  class="parsing_textarea" readonly="readonly" style="width:350px;">' + data.info.fileContent + '</textarea><span class="parsing_icon" style="display: block;width: 60px;border-radius: 3px;" data-clipboard-text="' + data.info.fileContent + '">复制</span></div></div>' + check_html +
+                    '<div class="parsing_tips" style="font-size:13px;line-height: 24px;">· 本次验证结果是由【本服务器验证】，实际验证将由【CA服务器】进行验证，请耐心等候</br>· 请确保以上列表所有项都验证成功后点击【验证域名】重新提交验证</br>· 如长时间验证不通过，请通过【修改验证方式】更改为【DNS验证】</br>· SSL添加文件验证方式 ->> <a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="btlink" >查看教程</a> <span style="padding-left:60px">专属客服QQ：' + data.info.kfqq + '</span></div>\
+                        <div class="parsing_parem" style="padding: 0 55px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-success set_verify_type">修改验证方式</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
+                    </div>';
                 } else {
                   html = '<div class="lib-ssl-parsing">\
-                                                <div class="parsing_tips">请给以下域名【 <span class="highlight">' + data.domains.join('、') + '</span> 】添加“' + data.info.dnsType + '”解析，解析参数如下：</div>\
-                                                <div class="parsing_parem"><div class="parsing_title">主机记录：</div><div class="parsing_info"><input type="text" name="host" class="parsing_input" value="' + data.info.dnsHost + '" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="' + data.info.dnsHost + '">复制</span></div></div>\
-                                                <div class="parsing_parem"><div class="parsing_title">记录值：</div><div class="parsing_info"><input type="text" name="domains"  class="parsing_input" value="' + data.info.dnsValue + '" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="' + data.info.dnsValue + '">复制</span></div></div>\
-                                                <div class="parsing_tips" style="font-size:13px;line-height: 24px;">· 请确保以上列表所有项都验证成功后点击【验证域名】重新提交验证</br>· 如长时间验证不通过，请通过【修改验证方式】更改为【DNS验证】</br>· 如何添加域名解析，《<a href="https://cloud.tencent.com/document/product/302/3446" class="btlink" target="__blink">点击查看教程</a>》，和咨询服务器运营商。</div>\
-                                                <div class="parsing_parem" style="padding: 0 55px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default set_verify_type">修改验证方式</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
-                                            </div>';
+                        <div class="parsing_tips">请给以下域名【 <span class="highlight">' + data.domains.join('、') + '</span> 】添加“' + data.info.dnsType + '”解析，解析参数如下：</div>\
+                        <div class="parsing_parem"><div class="parsing_title">主机记录：</div><div class="parsing_info"><input type="text" name="host" class="parsing_input" value="' + data.info.dnsHost + '" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="' + data.info.dnsHost + '">复制</span></div></div>\
+                        <div class="parsing_parem"><div class="parsing_title">记录值：</div><div class="parsing_info"><input type="text" name="domains"  class="parsing_input" value="' + data.info.dnsValue + '" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="' + data.info.dnsValue + '">复制</span></div></div>\
+                        <div class="parsing_tips" style="font-size:13px;line-height: 24px;">· 本次验证结果是由【本服务器验证】，实际验证将由【CA服务器】进行验证，请耐心等候</br>· 请确保以上列表所有项都验证成功后点击【验证域名】重新提交验证</br>· 如长时间验证不通过，请通过【修改验证方式】更改为【DNS验证】</br>· 如何添加域名解析，《<a href="https://cloud.tencent.com/document/product/302/3446" class="btlink" target="__blink">点击查看教程</a>》，和咨询服务器运营商。</div>\
+                        <div class="parsing_parem" style="padding: 0 55px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default set_verify_type">修改验证方式</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
+                    </div>';
                 }
                 return html;
               }
