@@ -685,6 +685,21 @@ def project(mod_name,def_name):
 
     return publicObject(project_obj,defs,None,get)
 
+@app.route('/dbmodel/<mod_name>/<def_name>', methods=method_all)
+def dbmodel(mod_name,def_name):
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    from panelDatabaseController import DatabaseController
+    database_obj = DatabaseController()
+    defs = ('model',)
+    get = get_input()
+    get.action = 'model'
+    get.mod_name = mod_name
+    get.def_name = def_name
+
+    return publicObject(database_obj,defs,None,get)
+
+
 
 @app.route('/files', methods=method_all)
 def files(pdata=None):
