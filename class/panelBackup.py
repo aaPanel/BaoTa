@@ -832,13 +832,12 @@ class backup:
         except Exception as e:
             print(e)
         return False
+
     def save_backup_status(self, status, target="", msg=""):
         """保存备份的状态"""
         try:
             if not self.cron_info:
                 return
-            print("cron info:")
-            print(self.cron_info)
             cron_id = self.cron_info["id"]
             sql = public.M("system").dbfile("system").table("backup_status")
             sql.add("id,target,status,msg,addtime", (cron_id, target, status, msg, time.time(),))
