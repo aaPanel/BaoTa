@@ -5525,7 +5525,7 @@ var site = {
               row['subfilter'] = JSON.stringify(row['subfilter']);
               bt.site.modify_proxy(row, function (rdata) {
                 row['subfilter'] = JSON.parse(row['subfilter']);
-                if (rdata.status) that.$modify_row_data({ cache: row['cache'] });
+                if (rdata.status) site.reload()
                 bt.msg(rdata);
               });
             }
@@ -5546,7 +5546,7 @@ var site = {
               row['subfilter'] = JSON.stringify(row['subfilter']);
               bt.site.modify_proxy(row, function (rdata) {
                 row['subfilter'] = JSON.parse(row['subfilter']);
-                if (rdata.status) that.$modify_row_data({ type: row['type'] });
+                if (rdata.status) site.reload()
                 bt.msg(rdata);
               });
             }
