@@ -7,7 +7,7 @@ $('#cutMode .tabs-item').on('click', function () {
   switch (type) {
     case 'php':
       $('#bt_site_table').empty();
-      if (!isSetup) $('.site_table_view .mask_layer').removeClass('hide').find('.prompt_description').html('未安装Web服务器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nginx\')">安装Nginx</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'apache\')">安装Apache</a>');
+      if (!isSetup) $('.site_table_view .mask_layer').removeClass('hide').find('.prompt_description.web-model').html('未安装Web服务器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nginx\')">安装Nginx</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'apache\')">安装Apache</a>');
       site.php_table_view();
       site.get_types();
       break;
