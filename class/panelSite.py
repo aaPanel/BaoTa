@@ -3594,7 +3594,8 @@ RewriteRule ^%s(.*)$ http://%s/$1 [P,E=Proxy-Host:%s]
         if public.get_webserver() == 'nginx':
             if self.CheckLocation(get):
                 return self.CheckLocation(get)
-
+        if not get.proxysite.split('//')[-1]:
+            return public.returnMsg(False, '目标URL不能为[http://或https://],请填写完整URL，如：https://www.bt.cn')
         proxyUrl = self.__read_config(self.__proxyfile)
         proxyUrl.append({
             "proxyname": get.proxyname,
