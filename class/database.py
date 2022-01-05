@@ -274,6 +274,7 @@ SetLink
             @param name<string> 数据库名
             @return name<string> Unicode编码的数据库名
         '''
+        name = name.replace('.','@002e')
         return name.encode("unicode_escape").replace(b"\\u",b"@").decode()
     
     #删除数据库到回收站  
