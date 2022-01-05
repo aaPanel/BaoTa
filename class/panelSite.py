@@ -590,7 +590,7 @@ set $bt_safe_open "{}/:/tmp/";'''.format(self.sitePath)
         if not result: return public.returnMsg(False,'SITE_ADD_ERR_WRITE')
         
         
-        ps = public.xssencode(get.ps)
+        ps = public.xssencode2(get.ps)
         #添加放行端口
         if self.sitePort != '80':
             import firewalls

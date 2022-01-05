@@ -70,7 +70,7 @@ class database(datatool.datatools):
             self.__CreateUsers(data_name,username,password,address)
             
             if get['ps'] == '': get['ps']=public.getMsg('INPUT_PS')
-            get['ps'] = public.xssencode(get['ps'])
+            get['ps'] = public.xssencode2(get['ps'])
             addTime = time.strftime('%Y-%m-%d %X',time.localtime())
             
             pid = 0
