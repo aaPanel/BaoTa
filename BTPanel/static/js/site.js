@@ -2415,9 +2415,9 @@ var site = {
             style: { top: '15px', left: '15px' },
           },
           input: function (value, form, that, config, ev) { //键盘事件
-            /* oneVal = bt.strim(ress.replace(new RegExp(/([-.])/g), '_')), */
             var array = value.webname.split("\n"),
               ress = array[0].split(":")[0],
+              oneVal = bt.strim(ress.replace(new RegExp(/([-.])/g), '_')),
               defaultPath = $('#defaultPath').text(),
               is_oneVal = ress.length > 0;
             that.$set_find_value(is_oneVal ? {
