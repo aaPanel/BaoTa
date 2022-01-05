@@ -4338,7 +4338,7 @@ location ^~ %s
     def SetHasPwd(self,get):
         if public.get_webserver() == 'openlitespeed':
             return public.returnMsg(False,'该功能暂时还不支持OpenLiteSpeed')
-        if len(get.username.strip()) == 0 or len(get.password.strip()) == 0: return public.returnMsg(False,'LOGIN_USER_EMPTY')
+        if len(get.username.strip()) < 3 or len(get.password.strip()) < 3: return public.returnMsg(False,'用户名或密码不能小于3位！')
 
         if not hasattr(get,'siteName'): 
             get.siteName = public.M('sites').where('id=?',(get.id,)).getField('name')
