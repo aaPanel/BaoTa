@@ -2425,7 +2425,7 @@ var site = {
               'ftp_password': bt.get_random(16),
               'datauser': is_oneVal ? (oneVal.substr(0, 16)) : '',
               'datapassword': bt.get_random(16),
-              'ps': oneVal,
+              'ps': ress,
               'path': bt.rtrim(defaultPath, '/') + '/' + ress
             } : { 'ftp_username': '', 'ftp_password': '', 'datauser': '', 'datapassword': '', 'ps': '', 'path': bt.rtrim(defaultPath, '/') });
           }
