@@ -8891,7 +8891,7 @@ select[disabled] {
 
 .module_details_title>span {
     display: inline-block;
-    max-width: 210px;
+    max-width: 200px;
     display: inline-block;
     text-overflow: ellipsis;
     overflow: hidden;
