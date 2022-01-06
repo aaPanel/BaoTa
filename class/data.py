@@ -366,7 +366,7 @@ class data:
             'ftps'      :   "id,pid,name,password,status,ps,addtime,path",
             'databases' :   "id,pid,name,username,password,accept,ps,addtime",
             'logs'      :   "id,uid,username,type,log,addtime",
-            'backup'    :   "id,pid,name,filename,addtime,size",
+            'backup'    :   "id,pid,name,filename,addtime,size,ps",
             'users'     :   "id,username,phone,email,login_ip,login_time",
             'firewall'  :   "id,port,ps,addtime",
             'domain'    :   "id,pid,name,port,addtime",
