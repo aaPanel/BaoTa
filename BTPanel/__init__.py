@@ -1324,6 +1324,21 @@ def panel_public():
     get = get_input()
     if len("{}".format(get.__dict__)) > 1024 * 32:
         return 'ERROR'
+
+    #获取ping测试
+    if 'get_ping' in get:
+        try:
+            import panelPing
+            p = panelPing.Test()
+            get = p.check(get)
+            if not get: return 'ERROR'
+            result = getattr(p,get['act'])(get)
+            result_type = type(result)
+            if str(result_type).find('Response') != -1: return result
+            return public.getJson(result),json_header
+        except:
+            return public.returnJson(False,public.get_error_info())
+    
     get.client_ip = public.GetClientIp()
     num_key = get.client_ip + '_wxapp'
     if not public.get_error_num(num_key, 10):

@@ -485,8 +485,8 @@ class config:
             isReWeb = True
         
         if get.webname != session['title']: 
-            session['title'] = public.xssencode(get.webname)
-            public.SetConfigValue('title',public.xssencode(get.webname))
+            session['title'] = public.xssencode2(get.webname)
+            public.SetConfigValue('title',public.xssencode2(get.webname))
 
         limitip = public.readFile('data/limitip.conf')
         if get.limitip != limitip: 
