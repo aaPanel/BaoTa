@@ -6209,7 +6209,7 @@ var site = {
                                         <div class="divtable mtb10 ssl_order_list"  style="height: 290px;overflow-y: auto;">\
                                             <table class="table table-hover" id="ssl_order_list">\
                                                 <thead><tr><th width="120px">域名</th><th  width="220px">证书类型</th><th>到期时间</th><th>状态</th><th style="text-align:right;">操作</th></tr></thead>\
-                                                <tbody><tr><td colspan="5" style="text-align:center"><img src="/static/layer/skin/default/loading-2.gif" style="width:15px;vertical-align: middle;"><span class="ml5" style="vertical-align: middle;">正在获取证书列表，请稍候...</span></td></tr></tbody>\
+                                                <tbody><tr><td colspan="5" style="text-align:center"><img src="/static/images/loading-2.gif" style="width:15px;vertical-align: middle;"><span class="ml5" style="vertical-align: middle;">正在获取证书列表，请稍候...</span></td></tr></tbody>\
                                             </table>\
                                         </div>\
                                     </div><ul class="help-info-text c7">\
@@ -7468,7 +7468,7 @@ var site = {
                 for (var i = 0; i < ddata.length; i++) {
                   if (ddata[i].name.indexOf('*') == -1) domains.push({ title: ddata[i].name, value: ddata[i].name });
                 }
-                robj.append("<button name=\"btsslApply\" class=\"btn btn-success btn-sm mr5 btsslApply\">申请证书</button><div id='ssl_order_list' class=\"divtable mtb15 table-fixed-box\" style=\"max-height:340px;overflow-y: auto;\"><table id='bt_order_list' class='table table-hover'><thead><tr><th>域名</th><th>到期时间</th><th>状态</th><th>操作</th></tr></thead><tbody><tr><td colspan='4' style='text-align:center'><img style='height: 18px;margin-right:10px' src='/static/layer/skin/default/loading-2.gif'>正在获取订单,请稍候...</td></tr></tbody></table></div>");
+                robj.append("<button name=\"btsslApply\" class=\"btn btn-success btn-sm mr5 btsslApply\">申请证书</button><div id='ssl_order_list' class=\"divtable mtb15 table-fixed-box\" style=\"max-height:340px;overflow-y: auto;\"><table id='bt_order_list' class='table table-hover'><thead><tr><th>域名</th><th>到期时间</th><th>状态</th><th>操作</th></tr></thead><tbody><tr><td colspan='4' style='text-align:center'><img style='height: 18px;margin-right:10px' src='/static/images/loading-2.gif'>正在获取订单,请稍候...</td></tr></tbody></table></div>");
                 $('.btsslApply').click(function () {
                   var html = '';
                   for (var i = 0; i < domains.length; i++) {

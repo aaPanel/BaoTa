@@ -6465,7 +6465,7 @@ select[disabled] {
 .clear-icon {
     width: 30px;
     height: 30px;
-    background-image: url(../layer/skin/default/icon.png);
+    background-image: url(../images/icon.png);
     background-position: 0 0;
     position: absolute;
     left: 30px;
@@ -9655,7 +9655,7 @@ select[disabled] {
 .localhost-form_tip {
     height: 30px;
     width: 30px;
-    background-image: url(../layer/skin/default/icon.png);
+    background-image: url(../images/icon.png);
     background-size: auto;
     display: inline-block;
     background-position: -150px -0px;
@@ -10515,7 +10515,7 @@ select[name="disk-io"] {
 }
 
 .batch_title .batch_icon {
-    background-image: url('../layer/skin/default/icon.png');
+    background-image: url(../images/icon.png);
     background-position: -30px 0;
     height: 30px;
     width: 30px;
@@ -13567,7 +13567,7 @@ span.unit {
 }
 
 .business_class_loading {
-    background-image: url('/static/layer/skin/default/loading-2.gif');
+    background-image: url('/static/images/loading-2.gif');
     height: 32px;
     background-repeat: no-repeat;
     position: absolute;

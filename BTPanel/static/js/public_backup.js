@@ -4165,7 +4165,7 @@ bt.soft = {
                     </div>\
                 </div>\
                 <div id="pay_product_view">\
-                    <div class="libVoucher-loading"><p><img src="/static/layer/skin/default/loading-2.gif"></p><p>正在获取数据，请稍候...</p></div>\
+                    <div class="libVoucher-loading"><p><img src="/static/images/loading-2.gif"></p><p>正在获取数据，请稍候...</p></div>\
                     <div class="libPay-layer-item">\
                         <div class="libPay-line-item proS" id="libPay-theme-tips">\
                             <p>企业版特权:</p>\
@@ -4190,7 +4190,7 @@ bt.soft = {
                                 </div>\
                             </div>\
                             <div class="libPay-qcode-right">\
-                                <div class="libPay-loading"><p><img src="/static/layer/skin/default/loading-2.gif"></p><p>正在生成订单,请稍候...</p></div>\
+                                <div class="libPay-loading"><p><img src="/static/images/loading-2.gif"></p><p>正在生成订单,请稍候...</p></div>\
                                 <div class= "libPaycode-box">\
                                     <div class="pay-wx" style="height:155px;width: 155px" id="PayQcode" ></div>\
                                     <div class="payqcode-box" >\
@@ -5429,7 +5429,7 @@ bt.soft = {
         content: '<style>\
                         .install-three-plugin{padding:30px 45px;}\
                         .install-header-title{text-align:center;}\
-                        .install-header-title .install-icon{background: url("/static/layer/skin/default/icon.png") no-repeat;height: 30px;width: 30px;display: inline-block;vertical-align: middle;}\
+                        .install-header-title .install-icon{background: url("/static/images/icon.png") no-repeat;height: 30px;width: 30px;display: inline-block;vertical-align: middle;}\
                         .install-header-title .install-tips{display: inline-block;height: 30px;line-height: 30px;font-size: 17px;vertical-align: middle;padding-left: 10px;color: #333;}\
                         .install-header-title .install-tips span{display: inline-block;max-width: 155px;text-overflow: ellipsis;white-space: pre;overflow: hidden;vertical-align: bottom;}\
                         .plugin-title{height: 40px;line-height: 20px;padding:10px;color: #444;margin: 5px 0;}\
