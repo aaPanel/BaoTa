@@ -621,7 +621,9 @@ def GetHost(port = False):
 
 def GetClientIp():
     from flask import request
-    return request.remote_addr.replace('::ffff:','')
+    ipaddr =  request.remote_addr.replace('::ffff:','')
+    if not check_ip(ipaddr): return '未知IP地址'
+    return ipaddr
 
 def get_client_ip():
     return GetClientIp()
