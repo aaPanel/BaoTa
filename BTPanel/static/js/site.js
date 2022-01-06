@@ -2276,7 +2276,7 @@ var site = {
   backup_site_view: function (config, thatC, callback) {
     bt_tools.open({
       title: '备份站点&nbsp;-&nbsp;[&nbsp;' + config.name + '&nbsp;]',
-      area: '720px',
+      area: '790px',
       btn: false,
       skin: 'bt_backup_table',
       content: '<div id="bt_backup_table" class="pd20" style="padding-bottom:40px;"></div>',
@@ -2288,7 +2288,7 @@ var site = {
           default: "[" + config.name + "] 站点备份列表为空", //数据为空时的默认提示
           column: [
             { type: 'checkbox', class: '', width: 20 },
-            { fid: 'name', title: '文件名', width: 320, fixed: true },
+            { fid: 'name', title: '文件名', width: 280, fixed: true },
             {
               fid: 'size',
               title: '文件大小',
@@ -2299,6 +2299,21 @@ var site = {
               }
             },
             { fid: 'addtime', width: 150, title: '备份时间' },
+            { fid: 'ps',
+              title: '备注',
+              type: 'input',
+              blur: function (row, index, ev, key, that) {
+                if (row.ps == ev.target.value) return false;
+                bt.pub.set_data_ps({ id: row.id, table: 'backup', ps: ev.target.value }, function (res) {
+                  bt_tools.msg(res, { is_dynamic: true });
+                });
+              },
+              keyup: function (row, index, ev) {
+                if (ev.keyCode === 13) {
+                  $(this).blur();
+                }
+              }
+            },
             {
               title: '操作',
               type: 'group',
