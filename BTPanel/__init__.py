@@ -293,6 +293,7 @@ def home():
     data['bind'] = False
     if not os.path.exists('data/userInfo.json'):
         data['bind'] = os.path.exists('data/bind.pl')
+    # data[public.to_string([112, 100])], data['pro_end'], data['ltd_end'] = get_pd()
     data[public.to_string([112, 100])], data['pro_end'], data['ltd_end'] = get_pd()
     data['siteCount'] = public.M('sites').count()
     data['ftpCount'] = public.M('ftps').count()
@@ -439,7 +440,7 @@ def database(pdata=None):
     import database
     databaseObject = database.database()
     defs = ('GetdataInfo','check_del_data','get_database_size', 'GetInfo', 'ReTable', 'OpTable', 'AlTable', 'GetSlowLogs', 'GetRunStatus',
-            'SetDbConf', 'GetDbStatus', 'BinLog', 'GetErrorLog', 'GetMySQLInfo', 'SetDataDir', 'SetMySQLPort',
+            'SetDbConf', 'GetDbStatus', 'BinLog', 'GetErrorLog', 'GetMySQLInfo', 'SetDataDir', 'SetMySQLPort','AddCloudDatabase',
             'AddDatabase', 'DeleteDatabase', 'SetupPassword', 'ResDatabasePassword', 'ToBackup', 'DelBackup',
             'InputSql', 'SyncToDatabases', 'SyncGetDatabases', 'GetDatabaseAccess', 'SetDatabaseAccess')
     return publicObject(databaseObject, defs, None, pdata)
@@ -837,7 +838,7 @@ def ajax(pdata=None):
     if comReturn: return comReturn
     import ajax
     ajaxObject = ajax.ajax()
-    defs = ('get_lines', 'php_info', 'change_phpmyadmin_ssl_port', 'set_phpmyadmin_ssl', 'get_phpmyadmin_ssl',
+    defs = ('get_lines', 'php_info', 'change_phpmyadmin_ssl_port', 'set_phpmyadmin_ssl', 'get_phpmyadmin_ssl','get_pd',
             'check_user_auth', 'to_not_beta', 'get_beta_logs', 'apple_beta', 'GetApacheStatus', 'GetCloudHtml',
             'get_load_average', 'GetOpeLogs', 'GetFpmLogs', 'GetFpmSlowLogs', 'SetMemcachedCache', 'GetMemcachedStatus',
             'GetRedisStatus', 'GetWarning', 'SetWarning', 'CheckLogin', 'GetSpeed', 'GetAd', 'phpSort', 'ToPunycode',
@@ -1780,13 +1781,13 @@ def check_login(http_token=None):
 def get_pd():
     # 获取授权信息
     tmp = -1
-    try:
-        import panelPlugin
-        get = public.dict_obj()
-        # get.init = 1
-        tmp1 = panelPlugin.panelPlugin().get_cloud_list(get)
-    except:
-        tmp1 = None
+    # try:
+    #     import panelPlugin
+    #     get = public.dict_obj()
+    #     # get.init = 1
+    #     tmp1 = panelPlugin.panelPlugin().get_cloud_list(get)
+    # except:
+    tmp1 = None
     if tmp1:
         tmp = tmp1[public.to_string([112, 114, 111])]
         ltd = tmp1.get('ltd', -1)
