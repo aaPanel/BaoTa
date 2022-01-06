@@ -1811,10 +1811,12 @@ class panelPlugin:
     def get_icon(self,name,downFile = None):
         iconFile = 'BTPanel/static/img/soft_ico/ico-' + name + '.png'
         if not os.path.exists(iconFile):
-            self.download_icon(name,iconFile,downFile)
+            public.run_thread(self.download_icon,(name,iconFile,downFile))
         else:
             size = os.path.getsize(iconFile)
-            if size == 0: self.download_icon(name,iconFile,downFile)
+            if size == 0: 
+                public.run_thread(self.download_icon,(name,iconFile,downFile))
+                # self.download_icon(name,iconFile,downFile)
         
     #下载图标
     def download_icon(self,name,iconFile,downFile):
@@ -1825,9 +1827,9 @@ class panelPlugin:
             public.ExecShell(r"\cp  -a -r " + srcIcon + " " + iconFile)
         else:
             if downFile:
-                public.ExecShell('wget -O ' + iconFile + ' ' + public.GetConfigValue('home') + downFile)
+                public.ExecShell('wget -O ' + iconFile + ' ' + public.GetConfigValue('home') + downFile + " &")
             else:
-                public.ExecShell('wget -O ' + iconFile + ' ' + public.get_url() + '/install/plugin/' + name + '/icon.png')
+                public.ExecShell('wget -O ' + iconFile + ' ' + public.get_url() + '/install/plugin/' + name + '/icon.png' + " &")
         cache.set(skey,1,86400)
                 
     
