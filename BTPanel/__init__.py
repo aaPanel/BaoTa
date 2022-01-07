@@ -1545,10 +1545,9 @@ def panel_hook():
     # webhook接口
     get = get_input()
     if not os.path.exists('plugin/webhook'):
-        return public.getJson(public.returnMsg(False, 'INIT_WEBHOOK_ERR'))
+        return abort(404)
     public.package_path_append('plugin/webhook')
     import webhook_main
-    session.clear()
     return public.getJson(webhook_main.webhook_main().RunHook(get))
 
 
