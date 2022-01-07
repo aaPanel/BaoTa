@@ -1885,7 +1885,7 @@ def send_authenticated():
     # 发送http认证信息
     request_host = public.GetHost()
     result = Response('', 401, {'WWW-Authenticate': 'Basic realm="%s"' % request_host.strip()})
-    if not 'login' in session and not 'admin_auth' in session: session.clear()
+    # if not 'login' in session and not 'admin_auth' in session: session.clear()
     return result
 
 
