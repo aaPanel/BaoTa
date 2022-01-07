@@ -3875,19 +3875,18 @@ def error_not_login(e = None):
     '''
     from BTPanel import Response,render_template,redirect
     
-
     try:
         abort_code = read_config('abort')
-        
-        if not abort_code in [None,1,0]:
+        if not abort_code in [None,1,0,'0','1']:
             if abort_code == 404: return error_404(e)
             if abort_code == 403: return error_403(e)
-            return Response(status=abort_code)
+            return Response(status=int(abort_code))
     except:
         pass
 
     if e in ['/login']:
         return redirect(e)
+
     return render_template('autherr.html')
 
 def error_403(e):
