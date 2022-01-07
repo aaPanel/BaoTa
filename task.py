@@ -464,17 +464,17 @@ def startPHPVersion(version):
         pid = '/www/server/php/'+version+'/var/run/php-fpm.pid'
         os.system('pkill -9 php-fpm-'+version)
         time.sleep(0.5)
-        if not os.path.exists(cgi):
-            os.system('rm -f ' + cgi)
-        if not os.path.exists(pid):
-            os.system('rm -f ' + pid)
+        if os.path.exists(cgi):
+            os.remove(cgi)
+        if os.path.exists(pid):
+            os.remove(pid)
         os.system(fpm + ' start')
         if checkPHPVersion(version):
             return True
-
         # 检查是否正确启动
         if os.path.exists(cgi):
             return True
+        return False
     except Exception as ex:
         logging.info(ex)
         return True
