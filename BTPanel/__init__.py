@@ -1545,10 +1545,9 @@ def panel_hook():
     # webhook接口
     get = get_input()
     if not os.path.exists('plugin/webhook'):
-        return public.getJson(public.returnMsg(False, 'INIT_WEBHOOK_ERR'))
+        return abort(404)
     public.package_path_append('plugin/webhook')
     import webhook_main
-    session.clear()
     return public.getJson(webhook_main.webhook_main().RunHook(get))
 
 
@@ -1885,7 +1884,7 @@ def send_authenticated():
     # 发送http认证信息
     request_host = public.GetHost()
     result = Response('', 401, {'WWW-Authenticate': 'Basic realm="%s"' % request_host.strip()})
-    if not 'login' in session and not 'admin_auth' in session: session.clear()
+    # if not 'login' in session and not 'admin_auth' in session: session.clear()
     return result
 
 

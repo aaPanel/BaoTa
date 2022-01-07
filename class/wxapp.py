@@ -30,7 +30,7 @@ class wxapp():
     def is_scan_ok(self, get):
         if os.path.exists(self.app_path+"app_login_check.pl"):
             key, init_time = public.readFile(self.app_path+'app_login_check.pl').split(':')
-            if time.time() - float(init_time) > 180:
+            if time.time() - float(init_time) > 60:
                 return public.returnMsg(False, '二维码失效')
             session_id = public.get_session_id()
             if cache.get(session_id) == 'True':
@@ -70,8 +70,10 @@ class wxapp():
             secret_key, init_time = data.split(':')
             if len(session_id)!=64:return public.returnMsg(False,'等待APP扫码登录2')
             if len(secret_key)!=64:return public.returnMsg(False,'等待APP扫码登录2')
-            if time.time() - float(init_time) < 180 and session_id != secret_key:
-                return public.returnMsg(False,'等待APP扫码登录')
+            if  session_id != secret_key:
+                    return public.returnMsg(False,'当前二维码失效')
+            if time.time() - float(init_time) > 60:
+                return public.returnMsg(False, '当前二维码失效')
             cache.delete(session_id)
             userInfo = public.M('users').where("id=?",(1,)).field('id,username').find()
             session['login'] = True

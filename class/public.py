@@ -3079,6 +3079,7 @@ def check_app(check='app'):
     path=get_panel_path() + '/'
     if check=='app':
         try:
+            if not os.path.exists("/www/server/panel/plugin/btapp/btapp_main.py"): return False
             if not os.path.exists(path+'config/api.json'):return False
             if os.path.exists(path+'config/api.json'):
                 btapp_info = json.loads(readFile(path+'config/api.json'))
@@ -3090,6 +3091,8 @@ def check_app(check='app'):
         except:
             return False
     elif check=='app_bind':
+        if not cache_get('get_bind_status'):return False
+        if not os.path.exists("/www/server/panel/plugin/btapp/btapp_main.py"):return False
         if not os.path.exists(path + 'config/api.json'):return False
         btapp_info = json.loads(readFile(path +'config/api.json'))
         if not btapp_info: return False
@@ -3100,6 +3103,7 @@ def check_app(check='app'):
         app_info = json.loads(readFile(path+'plugin/app/user.json'))
         if not app_info: return False
         return True
+
 
 #宝塔邮件报警
 def send_mail(title,body,is_logs=False,is_type="堡塔登录提醒"):
