@@ -464,17 +464,17 @@ def startPHPVersion(version):
         pid = '/www/server/php/'+version+'/var/run/php-fpm.pid'
         os.system('pkill -9 php-fpm-'+version)
         time.sleep(0.5)
-        if not os.path.exists(cgi):
-            os.system('rm -f ' + cgi)
-        if not os.path.exists(pid):
-            os.system('rm -f ' + pid)
+        if os.path.exists(cgi):
+            os.remove(cgi)
+        if os.path.exists(pid):
+            os.remove(pid)
         os.system(fpm + ' start')
         if checkPHPVersion(version):
             return True
-
         # 检查是否正确启动
         if os.path.exists(cgi):
             return True
+        return False
     except Exception as ex:
         logging.info(ex)
         return True
@@ -485,6 +485,10 @@ def checkPHPVersion(version):
     try:
         cgi_file = '/tmp/php-cgi-{}.sock'.format(version)
         if os.path.exists(cgi_file):
+            init_file = '/etc/init.d/php-fpm-{}'.format(version)
+            if os.path.exists(init_file):
+                init_body = public.ReadFile(init_file)
+                if not init_body: return True
             uri = "/phpfpm_"+version+"_status?json"
             result = public.request_php(version, uri, '')
             loads(result)
