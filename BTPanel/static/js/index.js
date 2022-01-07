@@ -1259,8 +1259,32 @@ var index = {
         if (callback) callback(res);
       }
     });
+  },
+  /**
+   * @description 获取当前的产品状态
+   */
+   get_product_status: function () {
+    var loadT = layer.msg('正在获取产品状态，请稍后...', { icon: 16, time: 0 })
+    bt.send('get_pd', 'ajax/get_pd', {}, function (res) {
+      layer.close(loadT);
+      $('.btpro-gray').replaceWith($(res[0]));
+      if(res[1] === 0){
+        $(".btpro span").click(function(e){
+          layer.confirm('切换回免费版可通过解绑账号实现', { icon: 3, btn: ['解绑账号'], closeBtn: 2, title: '是否取消授权' }, function () {
+              $.post('/ssl?action=DelToken', {}, function (rdata) {
+                  layer.msg(rdata.msg);
+                  setTimeout(function () {
+                      window.location.reload();
+                  },2000);
+              });
+          });
+          e.stopPropagation();
+        });
+      }
+    })
   }
 }
+index.get_product_status();
 index.get_init();
 index.consultancy_services()
 //setTimeout(function () { index.get_cloud_list() }, 800);
