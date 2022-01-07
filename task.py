@@ -485,6 +485,10 @@ def checkPHPVersion(version):
     try:
         cgi_file = '/tmp/php-cgi-{}.sock'.format(version)
         if os.path.exists(cgi_file):
+            init_file = '/etc/init.d/php-fpm-{}'.format(version)
+            if os.path.exists(init_file):
+                init_body = public.ReadFile(init_file)
+                if not init_body: return True
             uri = "/phpfpm_"+version+"_status?json"
             result = public.request_php(version, uri, '')
             loads(result)
