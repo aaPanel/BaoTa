@@ -78,7 +78,6 @@ var controlObj = {
         $(this).siblings('.ss').children('.on').removeClass('on');
       });
 
-
       $('.time_range_submit').click(function () {
         $(this).parents(".searcTime").find("span").removeClass("on");
         $(this).parents(".searcTime").find(".st").addClass("on");
@@ -215,7 +214,6 @@ var controlObj = {
     * 获取默认echart配置
     */
     get_default_option: function (startTime, endTime) {
-      var intervalNum = this.get_interval_num(startTime, endTime);
       return {
         tooltip: {
           trigger: 'axis',
@@ -223,9 +221,13 @@ var controlObj = {
             type: 'cross'
           }
         },
+        grid: {
+          bottom: 80
+        },
         xAxis: {
           type: 'time',
-          minInterval: intervalNum,
+          boundaryGap: ['1%', '0%'],
+          splitNumber: 5,
           axisLine: {
             lineStyle: {
               color: "#666"
@@ -233,7 +235,7 @@ var controlObj = {
           },
           axisLabel: {
             formatter: function (value) {
-              return bt.format_data(value / 1000, 'MM/dd hh:mm');
+              return bt.format_data(value / 1000, 'MM/dd\nhh:mm');
             }
           }
         },
@@ -259,6 +261,7 @@ var controlObj = {
             zoomLock: true
           },
           {
+            bottom: 10,
             start: 0,
             end: 100,
             handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
@@ -307,25 +310,35 @@ var controlObj = {
     set_data: function (data, startTime, endTime) {
       if (data.length <= 0) return;
       var time;
-      if ((endTime - startTime) >= 24 * 3600 - 1) {
-        var min = data[0];
-        console.log(min, '-------------', data, startTime, endTime)
-        min.addtime = min.addtime.replace(/([0-9]{2}\/[0-9]{2}).{1}[0-9:]*/, '$1 00:00');
-        data.unshift(min);
-      }
+      // var min = data[0];
+      // min.addtime = min.addtime.replace(/([0-9]{2}\/[0-9]{2}).{1}[0-9:]*/, '$1 00:00');
+      // data.unshift(min);
+      // for (var key in data[0]) {
+      //   if (key == 'addtime') continue;
+      //   data[0][key] = 0;
+      // }
+
       for (var i = 0; i < data.length; i++) {
         if (typeof data[i].addtime === "number") continue;
-        time = this.get_time(data[i].addtime);
+        time = this.get_time(data[i].addtime, data[data.length - 1].addtime);
         data[i].addtime = time;
       }
     },
 
-    get_time: function (date) {
+    get_time: function (date, endDate) {
+      var endMonth = endDate.split(' ')[0].split('/');
+      endMonth = parseInt(endMonth);
+
       var today = new Date();
       var str = date.split(' ');
       var dateStr = str[0].split('/');
       var timeStr = str[1].split(':');
-      var newDate = new Date(today.getFullYear(), dateStr[0] - 1, dateStr[1], timeStr[0], timeStr[1]);
+      var month = parseInt(dateStr[0]);
+      var year = today.getFullYear();
+      if (month > endMonth) {
+        year -= 1;
+      }
+      var newDate = new Date(year, month - 1, dateStr[1], timeStr[0], timeStr[1]);
       return newDate.getTime();
     },
 
@@ -870,7 +883,6 @@ var controlObj = {
     */
     get_load_option: function (startTime, endTime, yData, zData, aData, bData) {
       var option = this.get_default_option(startTime, endTime);
-      var intervalNum = this.get_interval_num(startTime, endTime);
       option.tooltip.formatter = function (config) {
         var line = config[0].axisValueLabel,
           line_color = '';
@@ -918,14 +930,14 @@ var controlObj = {
       // 直角坐标系内绘图网格
       option.grid = [
         {
-          top: '60px',
           left: '5%',
+          bottom: 80,
           right: '55%',
           width: '40%',
           height: 'auto'
         },
         {
-          top: '60px',
+          bottom: 80,
           left: '55%',
           width: '40%',
           height: 'auto'
@@ -935,7 +947,8 @@ var controlObj = {
       option.xAxis = [
         {
           type: 'time',
-          minInterval: intervalNum,
+          boundaryGap: ['1%', '0%'],
+          splitNumber: 5,
           axisLine: {
             lineStyle: {
               color: "#666"
@@ -943,14 +956,15 @@ var controlObj = {
           },
           axisLabel: {
             formatter: function (value) {
-              return bt.format_data(value / 1000, 'MM/dd hh:mm');
+              return bt.format_data(value / 1000, 'MM/dd\nhh:mm');
             }
           }
         },
         {
           type: 'time',
           gridIndex: 1,
-          minInterval: intervalNum,
+          boundaryGap: ['1%', '0%'],
+          splitNumber: 5,
           axisLine: {
             lineStyle: {
               color: "#666"
@@ -958,7 +972,7 @@ var controlObj = {
           },
           axisLabel: {
             formatter: function (value) {
-              return bt.format_data(value / 1000, 'MM/dd hh:mm');
+              return bt.format_data(value / 1000, 'MM/dd\nhh:mm');
             }
           }
         }
@@ -969,7 +983,12 @@ var controlObj = {
           name: '资源使用率',
           boundaryGap: [0, '100%'],
           min: 0,
-          max: 100,
+          max: function (value) {
+            // 最大值超过80
+            if(value.max == 100 || (value.max + 20 > 100)) return 100;
+            // 小于80取当前最大值的首位数字
+            return parseInt((value.max + 10).toString().slice(0,1) + '0')
+          },
           // y轴网格显示
           splitLine: {
             show: true,
