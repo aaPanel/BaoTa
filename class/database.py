@@ -606,7 +606,7 @@ SetLink
                 res = self.CheckCloudDatabase(conn_config)
                 if isinstance(res,dict): return res
                 os.environ["MYSQL_PWD"] = conn_config['db_password']
-                public.ExecShell("/www/server/mysql/bin/mysqldump -h "+ conn_config['db_host'] +" -P "+ str(conn_config['db_port']) +" -R -E --triggers=false --force --opt \"" + db_find['name'] + "\"  -u "+ conn_config['db_user'] +" | gzip > " + backupName)
+                public.ExecShell("/www/server/mysql/bin/mysqldump -h "+ conn_config['db_host'] +" -P "+ str(conn_config['db_port']) +" -R -E --triggers=false --default-character-set=" + public.get_database_character(name) + " --force --opt \"" + db_find['name'] + "\"  -u "+ conn_config['db_user'] +" | gzip > " + backupName)
             except Exception as e:
                 raise
             finally:

@@ -25,17 +25,17 @@ class datatools:
         for d in ds:
             if size < 1024: return ('%.2f' % size) + d
             size = size / 1024
-        return '0b';
+        return '0b'
 
     # 获取当前数据库信息
     def GetdataInfo(self,get):
         '''
         传递一个数据库名称即可 get.databases
         '''
-        if not self.DB_MySQL:self.DB_MySQL = panelMysql.panelMysql()
+        
         db_name=get.db_name
-
         if not db_name:return False
+        if not self.DB_MySQL:self.DB_MySQL = public.get_mysql_obj(db_name)
         ret = {}
         tables = self.map_to_list(self.DB_MySQL.query('show tables from `%s`' % db_name))
         if type(tables) == list:
@@ -80,7 +80,7 @@ class datatools:
         db_name = get.db_name
         tables = json.loads(get.tables)
         if not db_name or not tables: return False
-        if not self.DB_MySQL:self.DB_MySQL = panelMysql.panelMysql()
+        if not self.DB_MySQL:self.DB_MySQL = public.get_mysql_obj(db_name)
         mysql_table = self.map_to_list(self.DB_MySQL.query('show tables from `%s`' % db_name))
         ret=[]
         if type(mysql_table)==list:
@@ -112,10 +112,11 @@ class datatools:
         db_name=web
         tables=['web1','web2']
         '''
-        if not self.DB_MySQL:self.DB_MySQL = panelMysql.panelMysql()
+        
         db_name = get.db_name
         tables = json.loads(get.tables)
         if not db_name or not tables: return False
+        if not self.DB_MySQL:self.DB_MySQL = public.get_mysql_obj(db_name)
         mysql_table = self.map_to_list(self.DB_MySQL.query('show tables from `%s`' % db_name))
         ret=[]
         if type(mysql_table) == list:
@@ -138,13 +139,12 @@ class datatools:
         table_type=innodb
         tables=['web1','web2']
         '''
-        if not self.DB_MySQL:self.DB_MySQL = panelMysql.panelMysql()
         db_name = get.db_name
         table_type = get.table_type
         tables = json.loads(get.tables)
 
         if not db_name or not tables: return False
-        
+        if not self.DB_MySQL:self.DB_MySQL = public.get_mysql_obj(db_name)
         mysql_table = self.map_to_list(self.DB_MySQL.query('show tables from `%s`' % db_name))
         ret=[]
         if type(mysql_table)==list:

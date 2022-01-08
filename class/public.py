@@ -1699,14 +1699,36 @@ def path_safe_check(path,force=True):
 #取数据库字符集
 def get_database_character(db_name):
     try:
-        import panelMysql
-        tmp = panelMysql.panelMysql().query("show create database `%s`" % db_name.strip())
+        db_find = M('databases').where("name=?" ,db_name).find()
+        import db_mysql
+        db_obj = db_mysql.panelMysql()
+        is_cloud_db = db_find['db_type'] in ['1',1]
+        if is_cloud_db:
+            conn_config = json.loads(db_find['conn_config'])
+            db_obj = db_obj.set_host(conn_config['db_host'],conn_config['db_port'],conn_config['db_name'],conn_config['db_user'],conn_config['db_password'])
+        tmp = db_obj.query("show create database `%s`" % db_name.strip())
         c_type = str(re.findall(r"SET\s+([\w\d-]+)\s",tmp[0][1])[0])
         c_types = ['utf8','utf-8','gbk','big5','utf8mb4']
         if not c_type.lower() in c_types: return 'utf8'
         return c_type
     except:
         return 'utf8'
+
+# 取mysql数据库对象
+def get_mysql_obj(db_name):
+    db_find = M('databases').where("name=?" ,db_name).find()
+    
+    is_cloud_db = db_find['db_type'] in ['1',1]
+    if is_cloud_db:
+        import db_mysql
+        db_obj = db_mysql.panelMysql()
+        conn_config = json.loads(db_find['conn_config'])
+        db_obj = db_obj.set_host(conn_config['db_host'],conn_config['db_port'],conn_config['db_name'],conn_config['db_user'],conn_config['db_password'])
+    else:
+        import panelMysql
+        db_obj = panelMysql.panelMysql()
+    return db_obj
+
 
 def get_database_codestr(codeing):
     wheres = {
