@@ -148,6 +148,7 @@ if admin_path in admin_path_checks: admin_path = '/bt'
 # Flask请求勾子
 @app.before_request
 def request_check():
+    if request.method not in ['GET','POST']:return abort(404)
     g.request_time = time.time()
     # 路由和URI长度过滤
     if len(request.path) > 256: return abort(403)
@@ -1187,13 +1188,21 @@ def close():
 @app.route('/tips', methods=method_get)
 def tips():
     # 提示页面
+    get=get_input()
+    if len(get.__dict__.keys()) > 1:return abort(404)
     return render_template('tips.html')
 
 
 @app.route('/get_app_bind_status', methods=method_all)
 def get_app_bind_status(pdata=None):
     # APP绑定状态查询
-    if not public.check_app('app_bind'):return public.returnMsg(False, '未开启API')
+    if not public.check_app('app_bind'):return abort(404)
+    get = get_input()
+    if len(get.__dict__.keys()) > 2: return '存在无意义参数!'
+    v_list = ['bind_token','data']
+    for n in get.__dict__.keys():
+        if not n in v_list:
+            return public.returnJson(False, '不能存在多余参数'), json_header
     import panelApi
     api_object = panelApi.panelApi()
     return json.dumps(api_object.get_app_bind_status(get_input())), json_header
@@ -1202,16 +1211,24 @@ def get_app_bind_status(pdata=None):
 @app.route('/check_bind', methods=method_all)
 def check_bind(pdata=None):
     # APP绑定查询
-    if not public.check_app('app_bind'):return public.returnMsg(False, '未开启API')
+    if not public.check_app('app_bind'):return abort(404)
+    get = get_input()
+    if len(get.__dict__.keys()) > 4: return '存在无意义参数!'
+    v_list = ['bind_token','client_brand','client_model','data']
+    for n in get.__dict__.keys():
+        if not n in v_list:
+            return public.returnJson(False, '不能存在多余参数'), json_header
     import panelApi
     api_object = panelApi.panelApi()
     return json.dumps(api_object.check_bind(get_input())), json_header
 
 
-@app.route('/code')
+@app.route('/code',methods=method_get)
 def code():
     if not 'code' in session: return ''
     if not session['code']: return ''
+    get=get_input()
+    if len(get.__dict__.keys()) > 2: return '存在无意义参数!'
     # 获取图片验证码
     try:
         import vilidate, time
@@ -1250,7 +1267,11 @@ def down(token=None, fname=None):
         if len(token) != 12: return abort(404)
         if not request.args.get('play') in ['true', None, '']:
             return abort(404)
-
+        args = get_input()
+        v_list = ['fname', 'play', 'file_password','data']
+        for n in args.__dict__.keys():
+            if not n in v_list:
+                return public.returnJson(False, '不能存在多余参数'), json_header
         if not re.match(r"^\w+$", token): return abort(404)
         find = public.M('download_token').where('token=?', (token,)).find()
 
@@ -1259,7 +1280,6 @@ def down(token=None, fname=None):
 
         if not os.path.exists(find['filename']): return abort(404)
         if find['password'] and not token in session:
-            args = get_input()
             if 'file_password' in args:
                 if not re.match(r"^\w+$", args.file_password):
                     return public.ReturnJson(False, '密码错误-1!'), json_header
@@ -1340,13 +1360,18 @@ def panel_public():
         except:
             return public.returnJson(False,public.get_error_info())
     
+    v_list = ['fun', 'name','filename', 'data','secret_key']
+    for n in get.__dict__.keys():
+        if not n in v_list:
+            return abort(404)
+
     get.client_ip = public.GetClientIp()
     num_key = get.client_ip + '_wxapp'
     if not public.get_error_num(num_key, 10):
         return public.returnMsg(False, '连续10次认证失败，禁止1小时')
     if not hasattr(get, 'name'): get.name = ''
-    if not hasattr(get, 'fun'): return abort(403)
-    if not public.path_safe_check("%s/%s" % (get.name, get.fun)): return abort(403)
+    if not hasattr(get, 'fun'): return abort(404)
+    if not public.path_safe_check("%s/%s" % (get.name, get.fun)): return abort(404)
     if get.fun in ['login_qrcode', 'is_scan_ok','set_login','static']:
         if get.fun == 'static':
             if not 'filename' in get: return abort(404)
@@ -1359,7 +1384,7 @@ def panel_public():
         # 检查是否验证过安全入口
         global admin_check_auth, admin_path, route_path, admin_path_file
         if admin_path != '/bt' and os.path.exists(admin_path_file) and not 'admin_auth' in session:
-            return abort(403)
+            return abort(404)
         #验证是否绑定了设备
         if not public.check_app('app'):return public.returnMsg(False,'未绑定用户!')
         import wxapp
@@ -1594,6 +1619,8 @@ def install():
 @app.route('/robots.txt', methods=method_all)
 def panel_robots():
     # 爬虫规则响应接口
+    get=get_input()
+    if len(get.__dict__.keys()) > 1:return abort(404)
     robots = '''User-agent: *
 Disallow: /
 '''
