@@ -14,6 +14,110 @@ import public,db,re,time,os,sys,panelMysql,json
 from BTPanel import session
 import datatool
 class database(datatool.datatools):
+
+
+    def AddCloudDatabase(self,get):
+        '''
+            @name 添加远程数据库
+            @author hwliang<2022-01-06>
+            @param db_host<string> 服务器地址
+            @param db_port<port> 数据库端口
+            @param db_user<string> 用户名
+            @param db_name<string> 数据库名称
+            @param db_password<string> 数据库密码
+            @param db_ps<string> 数据库备注
+        '''
+        if not hasattr(get,'db_host'):
+            return public.returnMsg(False,'参数传递错误，请重试!')
+        if not hasattr(get,'db_port'):
+            return public.returnMsg(False,'参数传递错误，请重试!')
+        if not hasattr(get,'db_user'):
+            return public.returnMsg(False,'参数传递错误，请重试!')
+        if not hasattr(get,'db_name'):
+            return public.returnMsg(False,'参数传递错误，请重试!')
+        if not hasattr(get,'db_password'):
+            return public.returnMsg(False,'参数传递错误，请重试!')
+        if not hasattr(get,'db_ps'):
+            return public.returnMsg(False,'参数传递错误，请重试!')
+
+        #检查数据库是否能连接
+        res = self.CheckCloudDatabase(get)
+        if isinstance(res,dict): return res
+
+        if public.M('databases').where('name=?',(get.db_name,)).count():
+            return public.returnMsg(False,'已存在同名的数据库: ['+get.db_name+']')
+
+        conn_config = {
+            'db_host':get.db_host,
+            'db_port':get.db_port,
+            'db_user':get.db_user,
+            'db_password':get.db_password,
+            'db_name':get.db_name
+        }
+
+        pdata = {
+            'name': get.db_name,
+            'ps': get.db_ps,
+            'conn_config': json.dumps(conn_config),
+            'db_type': '1',
+            'username': get.db_user,
+            'password': get.db_password,
+            'accept': '127.0.0.1',
+            'addtime': int(time.time()),
+            'pid': 0
+        }
+
+        result = public.M('databases').insert(pdata)
+        if isinstance(result,int):
+            public.WriteLog('数据库管理','添加远程MySQL数据库[%s]成功' % (get.db_name))
+            return public.returnMsg(True,'添加成功!')
+        return public.returnMsg(False,'添加失败： {}'.format(result))
+
+    
+    def CheckCloudDatabase(self,conn_config):
+        '''
+            @name 检查远程数据库信息是否正确
+            @author hwliang<2022-01-06>
+            @param conn_config<dict> 连接信息
+                db_host<string> 服务器地址
+                db_port<port> 数据库端口
+                db_user<string> 用户名
+                db_name<string> 数据库名称
+                db_password<string> 数据库密码
+            @return True / dict
+        '''
+        try:
+            import db_mysql
+            mysql_obj = db_mysql.panelMysql().set_host(conn_config['db_host'],conn_config['db_port'],conn_config['db_name'],conn_config['db_user'],conn_config['db_password'])
+            result = mysql_obj.query("show databases")
+            for i in result:
+                if i[0] == conn_config['db_name']:
+                    return True
+            return public.returnMsg(False,'指定数据库不存在!')
+        except Exception as ex:
+            res  = self.GetMySQLError(ex)
+            if not res: res = str(ex)
+            return public.returnMsg(False,res)
+
+    def GetMySQLError(self,e):
+        res = ''
+        if e.args[0] == 1045:
+            res = '用户名或密码错误!'
+        if e.args[0] == 1049:
+            res = '数据库不存在!'
+        if e.args[0] == 1044:
+            res = '没有指定数据库的访问权限，或指定数据库不存在!'
+        if e.args[0] == 1062:
+            res = '数据库已存在!'
+        if e.args[0] == 1146:
+            res = '数据表不存在!'
+        if e.args[0] == 2003:
+            res = '数据库服务器连接失败!'
+        if res: 
+            res = str(e) + ': ' + res
+        else:
+            res = str(e)
+        return res
     
     #添加数据库
     def AddDatabase(self,get):
@@ -244,20 +348,20 @@ SetLink
         try:
             id=get['id']
             name = get['name']
-            if os.path.exists('data/recycle_bin_db.pl'): return self.DeleteToRecycleBin(name)
-            
-            find = public.M('databases').where("id=?",(id,)).field('id,pid,name,username,password,accept,ps,addtime').find()
-            accept = find['accept']
-            username = find['username']
-            #删除MYSQL
-            result = panelMysql.panelMysql().execute("drop database `" + name + "`")
-            isError=self.IsSqlError(result)
-            if  isError != None: return isError
-            users = panelMysql.panelMysql().query("select Host from mysql.user where User='" + username + "' AND Host!='localhost'")
-            panelMysql.panelMysql().execute("drop user '" + username + "'@'localhost'")
-            for us in users:
-                panelMysql.panelMysql().execute("drop user '" + username + "'@'" + us[0] + "'")
-            panelMysql.panelMysql().execute("flush privileges")
+            find = public.M('databases').where("id=?",(id,)).field('id,pid,name,username,password,accept,ps,addtime,db_type').find()
+            if find['db_type'] in ['0',0]: # 删除本地数据库
+                if os.path.exists('data/recycle_bin_db.pl'): return self.DeleteToRecycleBin(name)
+                accept = find['accept']
+                username = find['username']
+                #删除MYSQL
+                result = panelMysql.panelMysql().execute("drop database `" + name + "`")
+                isError=self.IsSqlError(result)
+                if  isError != None: return isError
+                users = panelMysql.panelMysql().query("select Host from mysql.user where User='" + username + "' AND Host!='localhost'")
+                panelMysql.panelMysql().execute("drop user '" + username + "'@'localhost'")
+                for us in users:
+                    panelMysql.panelMysql().execute("drop user '" + username + "'@'" + us[0] + "'")
+                panelMysql.panelMysql().execute("flush privileges")
             #删除SQLITE
             public.M('databases').where("id=?",(id,)).delete()
             public.WriteLog("TYPE_DATABASE", 'DATABASE_DEL_SUCCESS',(name,))
@@ -297,7 +401,7 @@ SetLink
 
         db_path = '{}/{}'.format(datadir,u_name)
         if not os.path.exists(db_path):
-            return public.returnMsg(False,'指安数据库数据不存在!')
+            return public.returnMsg(False,'指定数据库数据不存在!')
         
         public.ExecShell("mv -f {} {}".format(db_path,rm_path))
         if not os.path.exists(rm_path):
@@ -470,31 +574,48 @@ SetLink
     #备份
     def ToBackup(self,get):
         #try:
-        result = panelMysql.panelMysql().execute("show databases")
-        isError=self.IsSqlError(result)
-        if isError: return isError
-        id = get['id']
-        name = public.M('databases').where("id=?",(id,)).getField('name')
-        root = public.M('config').where('id=?',(1,)).getField('mysql_root')
-        if not os.path.exists(session['config']['backup_path'] + '/database'): public.ExecShell('mkdir -p ' + session['config']['backup_path'] + '/database')
-        if not self.mypass(True, root):return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
         
+        id = get['id']
+        db_find = public.M('databases').where("id=?",(id,)).find()
+        name = db_find['name']
         fileName = name + '_' + time.strftime('%Y%m%d_%H%M%S',time.localtime()) + '.sql.gz'
         backupName = session['config']['backup_path'] + '/database/' + fileName
 
-        try:
-            password = public.M('config').where('id=?',(1,)).getField('mysql_root')
-            os.environ["MYSQL_PWD"] = password
-            public.ExecShell("/www/server/mysql/bin/mysqldump -R -E --triggers=false --default-character-set="+ public.get_database_character(name) +" --force --opt \"" + name + "\"  -u root | gzip > " + backupName)
-        except Exception as e:
-            raise
-        finally:
-            os.environ["MYSQL_PWD"] = ""
+        if db_find['db_type'] in ['0',0]:
+            # 本地数据库
+            result = panelMysql.panelMysql().execute("show databases")
+            isError=self.IsSqlError(result)
+            if isError: return isError
 
+            root = public.M('config').where('id=?',(1,)).getField('mysql_root')
+            if not os.path.exists(session['config']['backup_path'] + '/database'): public.ExecShell('mkdir -p ' + session['config']['backup_path'] + '/database')
+            if not self.mypass(True, root):return public.returnMsg(False, '数据库配置文件获取失败,请检查MySQL配置文件是否存在')
+            try:
+                password = public.M('config').where('id=?',(1,)).getField('mysql_root')
+                os.environ["MYSQL_PWD"] = password
+                public.ExecShell("/www/server/mysql/bin/mysqldump -R -E --triggers=false --default-character-set="+ public.get_database_character(name) +" --force --opt \"" + name + "\"  -u root | gzip > " + backupName)
+            except Exception as e:
+                raise
+            finally:
+                os.environ["MYSQL_PWD"] = ""
+            self.mypass(False, root)
+        elif db_find['db_type'] in ['1',1]:
+            # 远程数据库
+            try:
+                conn_config = json.loads(db_find['conn_config'])
+                res = self.CheckCloudDatabase(conn_config)
+                if isinstance(res,dict): return res
+                os.environ["MYSQL_PWD"] = conn_config['db_password']
+                public.ExecShell("/www/server/mysql/bin/mysqldump -h "+ conn_config['db_host'] +" -P "+ str(conn_config['db_port']) +" -R -E --triggers=false --force --opt \"" + db_find['name'] + "\"  -u "+ conn_config['db_user'] +" | gzip > " + backupName)
+            except Exception as e:
+                raise
+            finally:
+                os.environ["MYSQL_PWD"] = ""
+        else:
+            return public.returnMsg(False,'不支持的数据库类型')
+            
         if not os.path.exists(backupName): return public.returnMsg(False,'BACKUP_ERROR')
-        
-        self.mypass(False, root)
-        
+
         sql = public.M('backup')
         addTime = time.strftime('%Y-%m-%d %X',time.localtime())
         sql.add('type,name,pid,filename,size,addtime',(1,fileName,id,backupName,0,addTime))
@@ -537,7 +658,7 @@ SetLink
         ext = tmp[len(tmp) -1]
         if ext not in exts:
             return public.returnMsg(False, 'DATABASE_INPUT_ERR_FORMAT')
-            
+        db_find = public.M('databases').where('name=?',name).find()
         isgzip = False
         if ext != 'sql':
             tmp = file.split('/')
@@ -568,9 +689,14 @@ SetLink
                     return public.returnMsg(False, 'FILE_NOT_EXISTS',(tmpFile,))
 
             try:
-                password = public.M('config').where('id=?',(1,)).getField('mysql_root')
-                os.environ["MYSQL_PWD"] = password
-                public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " +'"'+ input_path +'"')
+                if db_find['db_type'] in ['0',0]:
+                    password = public.M('config').where('id=?',(1,)).getField('mysql_root')
+                    os.environ["MYSQL_PWD"] = password
+                    public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " +'"'+ input_path +'"')
+                elif db_find['db_type'] in ['1',1]:
+                    conn_config = json.loads(db_find['conn_config'])
+                    os.environ["MYSQL_PWD"] = conn_config['db_password']
+                    public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -h "+ conn_config['db_host'] +" -P "+str(conn_config['db_port'])+" -u"+conn_config['db_user']+" -p" + conn_config['db_password'] + " --force \"" + name + "\" < " +'"'+ input_path +'"')
             except Exception as e:
                 raise
             finally:
@@ -582,9 +708,14 @@ SetLink
                 public.ExecShell("rm -f " +  input_path)
         else:
             try:
-                password = public.M('config').where('id=?',(1,)).getField('mysql_root')
-                os.environ["MYSQL_PWD"] = password
-                public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < "+'"' +  file+'"')
+                if db_find['db_type'] in ['0',0]:
+                    password = public.M('config').where('id=?',(1,)).getField('mysql_root')
+                    os.environ["MYSQL_PWD"] = password
+                    public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -uroot -p" + root + " --force \"" + name + "\" < " +'"'+ file +'"')
+                elif db_find['db_type'] in ['1',1]:
+                    conn_config = json.loads(db_find['conn_config'])
+                    os.environ["MYSQL_PWD"] = conn_config['db_password']
+                    public.ExecShell(public.GetConfigValue('setup_path') + "/mysql/bin/mysql -h "+ conn_config['db_host'] +" -P "+str(conn_config['db_port'])+" -u"+conn_config['db_user']+" -p" + conn_config['db_password'] + " --force \"" + name + "\" < " +'"'+ file +'"')
             except Exception as e:
                 raise
             finally:
@@ -605,8 +736,10 @@ SetLink
         n = 0
         sql = public.M('databases')
         if type == 0:
-            data = sql.field('id,name,username,password,accept').select()
+            data = sql.field('id,name,username,password,accept,db_type').select()
             for value in data:
+                if value['db_type'] not in ['1',1]:
+                    continue # 跳过远程数据库
                 result = self.ToDataBase(value)
                 if result == 1: n +=1
         else:

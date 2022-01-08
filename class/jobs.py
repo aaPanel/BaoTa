@@ -51,6 +51,12 @@ def control_init():
     if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'backup','%ps%')).count():
         public.M('backup').execute("alter TABLE backup add ps STRING DEFAULT '无'",())
 
+    if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'databases','%db_type%')).count():
+        public.M('databases').execute("alter TABLE databases add db_type integer DEFAULT '0'",())
+    
+    if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'databases','%conn_config%')).count():
+        public.M('databases').execute("alter TABLE databases add conn_config STRING DEFAULT '{}'",())
+
     sql = db.Sql()
     if not sql.table('sqlite_master').where('type=? AND name=?', ('table', 'site_types')).count():
         csql = '''CREATE TABLE IF NOT EXISTS `site_types` (
