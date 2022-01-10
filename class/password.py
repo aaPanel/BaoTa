@@ -42,7 +42,7 @@ class password:
 
     # 设置root 密码
     def set_root_password(self,get):
-        public.ExecShell("echo"+get.user+":"+get.password+"|chpasswd")
+        public.ExecShell("echo "+get.user+":"+get.password+"|chpasswd")
         return True
 
     #查看mysql_root密码
