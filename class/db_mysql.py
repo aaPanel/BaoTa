@@ -26,6 +26,7 @@ class panelMysql:
     __OPT_ORDER  = ""              # order条件
     __OPT_FIELD  = "*"             # field条件
     __OPT_PARAM  = ()              # where值
+    _USER = None
 
     def __init__(self):
         pass
@@ -39,6 +40,7 @@ class panelMysql:
         self.__DB_PORT = int(port)
         self.__DB_NAME = name
         self.__DB_USER = username
+        self._USER = username
         self.__DB_PASS = password
         self.__DB_PREFIX = prefix
         return self

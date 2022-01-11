@@ -5075,12 +5075,12 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
         result = []
 
         import database
-        db_data = database.database().get_database_size(None)
+        db_data = database.database().get_database_size(ids)
 
         limit_size = 50 * 1024 * 1024
         f_list_size = [];db_list_size = []
         for id in ids:
-            data = public.M('sites').where("id=?",(id,)).field('id,name,path,addtime').find();
+            data = public.M('sites').where("id=?",(id,)).field('id,name,path,addtime').find()
             if not data: continue            
 
             addtime = public.to_date(times = data['addtime'])
@@ -5089,7 +5089,7 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
             data['limit'] = False
             data['backup_count'] = public.M('backup').where("pid=? AND type=?",(data['id'],'0')).count()
             f_size = self._check_path_total(data['path'],limit_size)
-            data['total'] = f_size;
+            data['total'] = f_size
             data['score'] = 0
 
             #目录太小不计分
@@ -5109,7 +5109,7 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
                 data['database'] = db_data[find['name']]
                 data['database']['st_time'] = db_addtime
                 
-                db_score = 0;
+                db_score = 0
                 db_size = data['database']['total']                                  
        
                 if db_size > 0: 

@@ -1710,13 +1710,29 @@ def get_database_character(db_name):
 
 # 取mysql数据库对象
 def get_mysql_obj(db_name):
-    db_find = M('databases').where("name=?" ,db_name).find()
-    is_cloud_db = db_find['db_type'] in ['1',1]
+    is_cloud_db = False
+    if db_name:
+        db_find = M('databases').where("name=?" ,db_name).find()
+        if db_find['sid']:
+            return get_mysql_obj_by_sid(db_find['sid'])
+        is_cloud_db = db_find['db_type'] in ['1',1]
     if is_cloud_db:
         import db_mysql
         db_obj = db_mysql.panelMysql()
         conn_config = json.loads(db_find['conn_config'])
         db_obj = db_obj.set_host(conn_config['db_host'],conn_config['db_port'],conn_config['db_name'],conn_config['db_user'],conn_config['db_password'])
+    else:
+        import panelMysql
+        db_obj = panelMysql.panelMysql()
+    return db_obj
+
+# 取mysql数据库对像 By sid
+def get_mysql_obj_by_sid(sid = 0,conn_config = None):
+    if sid:
+        if not conn_config: conn_config = M('database_servers').where("id=?" ,sid).find()
+        import db_mysql
+        db_obj = db_mysql.panelMysql()
+        db_obj = db_obj.set_host(conn_config['db_host'],conn_config['db_port'],None,conn_config['db_user'],conn_config['db_password'])
     else:
         import panelMysql
         db_obj = panelMysql.panelMysql()
@@ -1733,14 +1749,14 @@ def get_database_codestr(codeing):
     return wheres[codeing]
 
 
-def get_database_size():
+def get_database_size(name=None):
     """
     @获取数据库大小
     """
     data = {}
     try:
-        import panelMysql
-        tables = panelMysql.panelMysql().query("select table_schema, (sum(DATA_LENGTH)+sum(INDEX_LENGTH)) as data from information_schema.TABLES group by table_schema")
+        mysql_obj = get_mysql_obj(name)
+        tables = mysql_obj.query("select table_schema, (sum(DATA_LENGTH)+sum(INDEX_LENGTH)) as data from information_schema.TABLES group by table_schema")
         if type(tables) == list: 
             for x in tables:
                 if len(x) < 2:continue
@@ -1748,6 +1764,32 @@ def get_database_size():
                 data[x[0]] = int(x[1])
     except: return data
     return data
+
+def get_database_size_by_name(name):
+    """
+    @获取数据库大小
+    """
+    data = 0
+    try:
+        mysql_obj = get_mysql_obj(name)
+        tables = mysql_obj.query("select table_schema, (sum(DATA_LENGTH)+sum(INDEX_LENGTH)) as data from information_schema.TABLES WHERE table_schema='{}'".format(name))
+        data = tables[0][1]  
+    except: return data
+    return data
+
+def get_database_size_by_id(id):
+    """
+    @获取数据库大小
+    """
+    data = 0
+    try:
+        name = M('databases').where('id=?',id).getField('name')
+        mysql_obj = get_mysql_obj(name)
+        tables = mysql_obj.query("select table_schema, (sum(DATA_LENGTH)+sum(INDEX_LENGTH)) as data from information_schema.TABLES WHERE table_schema='{}'".format(name))
+        data = tables[0][1]  
+    except: return data
+    return data
+
 
 def en_punycode(domain):
     if sys.version_info[0] == 2: 
@@ -2930,7 +2972,8 @@ class dict_obj:
         '''
         if key.find('/') != -1:
             key,format = key.split('/')
-        result = getattr(self,key,default).strip()
+        result = getattr(self,key,default)
+        if isinstance(result,str): result = result.strip()
         if format:
             if format in ['str','string','s']:
                 result = str(result)

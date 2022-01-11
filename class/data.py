@@ -365,7 +365,7 @@ class data:
         fields = {
             'sites'     :   "id,name,path,status,ps,addtime,edate",
             'ftps'      :   "id,pid,name,password,status,ps,addtime,path",
-            'databases' :   "id,pid,name,username,password,accept,ps,addtime,db_type,conn_config",
+            'databases' :   "id,sid,pid,name,username,password,accept,ps,addtime,db_type,conn_config",
             'logs'      :   "id,uid,username,type,log,addtime",
             'backup'    :   "id,pid,name,filename,addtime,size,ps",
             'users'     :   "id,username,phone,email,login_ip,login_time",

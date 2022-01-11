@@ -56,6 +56,10 @@ def control_init():
     
     if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'databases','%conn_config%')).count():
         public.M('databases').execute("alter TABLE databases add conn_config STRING DEFAULT '{}'",())
+    
+    if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'databases','%sid%')).count():
+        public.M('databases').execute("alter TABLE databases add sid integer DEFAULT 0",())
+    
 
     sql = db.Sql()
     if not sql.table('sqlite_master').where('type=? AND name=?', ('table', 'site_types')).count():
@@ -102,6 +106,18 @@ def control_init():
 `login_addr` REAL,
 `logout_time` INTEGER,
 `expire` INTEGER,
+`addtime` INTEGER
+)'''
+        sql.execute(csql,())
+
+    if not sql.table('sqlite_master').where('type=? AND name=?', ('table', 'database_servers')).count():
+        csql = '''CREATE TABLE IF NOT EXISTS `database_servers` (
+`id` INTEGER PRIMARY KEY AUTOINCREMENT,
+`db_host` REAL,
+`db_port` REAL,
+`db_user` INTEGER,
+`db_password` INTEGER,
+`ps` REAL,
 `addtime` INTEGER
 )'''
         sql.execute(csql,())
