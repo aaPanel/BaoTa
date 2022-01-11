@@ -1908,6 +1908,10 @@ listener SSL443 {
     def CloseToHttps(self,get):
         siteName = get.siteName
         file = self.setupPath + '/panel/vhost/nginx/'+siteName+'.conf'
+        if not os.path.exists(file):
+            file = self.setupPath + '/panel/vhost/nginx/node_'+siteName+'.conf'
+        if not os.path.exists(file):
+            file = self.setupPath + '/panel/vhost/nginx/java_'+siteName+'.conf'
         conf = public.readFile(file)
         if conf:
             rep = "\n\s*#HTTP_TO_HTTPS_START(.|\n){1,300}#HTTP_TO_HTTPS_END"
@@ -1933,10 +1937,8 @@ listener SSL443 {
         file = self.setupPath + '/panel/vhost/nginx/'+siteName+'.conf'
         if not os.path.exists(file):
             file = self.setupPath + '/panel/vhost/nginx/node_'+siteName+'.conf'
-            if not os.path.exists(file): return False
         if not os.path.exists(file):
             file = self.setupPath + '/panel/vhost/nginx/java_'+siteName+'.conf'
-            if not os.path.exists(file): return False
         conf = public.readFile(file)
         if conf:
             if conf.find('HTTP_TO_HTTPS_START') != -1: return True
