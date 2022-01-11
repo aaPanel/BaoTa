@@ -1772,8 +1772,9 @@ def get_database_size_by_name(name):
     data = 0
     try:
         mysql_obj = get_mysql_obj(name)
-        tables = mysql_obj.query("select table_schema, (sum(DATA_LENGTH)+sum(INDEX_LENGTH)) as data from information_schema.TABLES WHERE table_schema='{}'".format(name))
+        tables = mysql_obj.query("select table_schema, (sum(DATA_LENGTH)+sum(INDEX_LENGTH)) as data from information_schema.TABLES WHERE table_schema='{}' group by table_schema".format(name))
         data = tables[0][1]  
+        if not data: data = 0
     except: return data
     return data
 
@@ -1785,9 +1786,11 @@ def get_database_size_by_id(id):
     try:
         name = M('databases').where('id=?',id).getField('name')
         mysql_obj = get_mysql_obj(name)
-        tables = mysql_obj.query("select table_schema, (sum(DATA_LENGTH)+sum(INDEX_LENGTH)) as data from information_schema.TABLES WHERE table_schema='{}'".format(name))
+        tables = mysql_obj.query("select table_schema, (sum(DATA_LENGTH)+sum(INDEX_LENGTH)) as data from information_schema.TABLES WHERE table_schema='{}' group by table_schema".format(name))
         data = tables[0][1]  
-    except: return data
+        if not data: data = 0
+    except:
+        return data
     return data
 
 

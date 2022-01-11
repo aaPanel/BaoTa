@@ -341,10 +341,14 @@ class database(datatool.datatools):
     def __CreateUsers(self,dbname,username,password,address):
         mysql_obj = public.get_mysql_obj_by_sid(self.sid)
         mysql_obj.execute("CREATE USER `%s`@`localhost` IDENTIFIED BY '%s'" % (username,password))
-        mysql_obj.execute("grant all privileges on `%s`.* to `%s`@`localhost`" % (dbname,username))
+        result = mysql_obj.execute("grant all privileges on `%s`.* to `%s`@`localhost`" % (dbname,username))
+        if str(result).find('1044') != -1:
+            mysql_obj.execute("grant SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,INDEX,ALTER,CREATE TEMPORARY TABLES,LOCK TABLES,EXECUTE,CREATE VIEW,SHOW VIEW,EVENT,TRIGGER on `%s`.* to `%s`@`localhost`" % (dbname,username))
         for a in address.split(','):
             mysql_obj.execute("CREATE USER `%s`@`%s` IDENTIFIED BY '%s'" % (username,a,password))
-            mysql_obj.execute("grant all privileges on `%s`.* to `%s`@`%s`" % (dbname,username,a))
+            result = mysql_obj.execute("grant all privileges on `%s`.* to `%s`@`%s`" % (dbname,username,a))
+            if str(result).find('1044') != -1:
+                mysql_obj.execute("grant SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,INDEX,ALTER,CREATE TEMPORARY TABLES,LOCK TABLES,EXECUTE,CREATE VIEW,SHOW VIEW,EVENT,TRIGGER on `%s`.* to `%s`@`%s`" % (dbname,username,a))
         mysql_obj.execute("flush privileges")
         
     #检查是否在回收站
