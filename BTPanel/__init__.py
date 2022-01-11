@@ -189,11 +189,7 @@ def request_check():
         if request.args.get('action') in not_networks:
             return public.returnJson(False, 'INIT_REQUEST_CHECK_LOCAL_ERR'), json_header
 
-    if request.path in ['/','/site','/ftp','/database','/soft','/control','/firewall','/files','/xterm','/crontab','/config']:
-        licenes = 'data/licenes.pl'
-        if request.path in ['/'] and not os.path.exists(licenes):
-            return
-            
+    if request.path in ['/site','/ftp','/database','/soft','/control','/firewall','/files','/xterm','/crontab','/config']:
         if not public.is_bind():
             return redirect('/bind',302)
         if public.is_error_path():
@@ -288,7 +284,10 @@ def home():
     licenes = 'data/licenes.pl'
     if 'license' in args:
         public.writeFile(licenes, 'True')
-
+    if not os.path.exists(licenes): return render_template('license.html')
+    if not public.is_bind():
+        return redirect('/bind',302)
+    
     import system
     data = system.system().GetConcifInfo()
     data['bind'] = False
@@ -302,7 +301,6 @@ def home():
     data['lan'] = public.GetLan('index')
     data['js_random'] = get_js_random()
     public.auto_backup_panel()
-    if not os.path.exists(licenes): return render_template('license.html')
     return render_template('index.html', data=data)
 
 
