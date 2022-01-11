@@ -510,9 +510,11 @@ class backup:
             # 连接远程数据库
             if db_find['sid']:
                 conn_config = public.M('database_servers').where('id=?',db_find['sid']).find()
+                if not 'db_name' in conn_config: conn_config['db_name'] = None
             else:
                 conn_config = json.loads(db_find['conn_config'])
-            self._db_mysql.set_host(conn_config['db_host'],conn_config['db_port'],conn_config['db_name'],conn_config['db_user'],conn_config['db_password'])
+            conn_config['db_port'] = str(int(conn_config['db_port']))
+            self._db_mysql.set_host(conn_config['db_host'],int(conn_config['db_port']),conn_config['db_name'],conn_config['db_user'],conn_config['db_password'])
         # ----- 判断是否为远程数据库END @author hwliang<2021-01-08>------------
         d_tmp = self._db_mysql.query("select sum(DATA_LENGTH)+sum(INDEX_LENGTH) from information_schema.tables where table_schema='%s'" % db_name)
         try:
