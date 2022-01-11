@@ -284,8 +284,9 @@ UploadFile.prototype = {
         layerMax.style.display = 'none';
         layerShade.style.display = '';
       },
-      end: function () {
+      cancel:function () { 
         _this2.cancel_upload();
+        return false
       }
     });
   },
@@ -744,7 +745,7 @@ UploadFile.prototype = {
    * @param {Object} e 文件对象
    */
   file_upload_limit: function file_upload_limit (e, path) {
-    // console.log(path,e);
+    console.log(this.fileList);
     var extName = e.name.split('.');
     path = path || e.webkitRelativePath
     var paths = path.split('/');
@@ -780,6 +781,7 @@ UploadFile.prototype = {
 
     var path = item.fullPath || '';
     if (item.isFile) {
+      // console.log(item,this.timeNumber);
       item.file(function (e) {
         _this6.file_upload_limit(e, path);
       });
@@ -788,7 +790,7 @@ UploadFile.prototype = {
         _this6.load.close();
         if (_this6.isUpload) {
           _this6.render_file_list(_this6.fileList);
-        } else {
+        } else {          
           var layers = _this6.layer;
           _this6.init_data();
           _this6.layers = layers;
@@ -831,7 +833,10 @@ UploadFile.prototype = {
         var getAsEntry = ev.webkitGetAsEntry || ev.getAsEntry;
         var item = getAsEntry.call(ev);
         if (item) {
-          if (!_this7.isUpload) return false;
+          if (!_this7.isUpload){
+            console.log(_this7);
+            return false
+          }
           _this7.traverse_file_tree(item);
         }
       });
