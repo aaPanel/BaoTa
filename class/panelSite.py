@@ -4824,12 +4824,12 @@ location ^~ %s
         if os.path.exists(file):
             conf = public.readFile(file)
             if get.status == '1':
+                if conf.find('SECURITY-START') == -1: return public.returnMsg(False,'请先开启防盗链!')
                 r_key = 'valid_referers none blocked'
                 d_key = 'valid_referers'
                 if conf.find(r_key) == -1:
                     conf = conf.replace(d_key,r_key)
                 else:
-                    if conf.find('SECURITY-START') == -1: return public.returnMsg(False,'请先开启防盗链!')
                     conf = conf.replace(r_key,d_key)
             else:
 
