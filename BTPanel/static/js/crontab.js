@@ -921,9 +921,9 @@ var crontab = {
                             if (hour < 0 || hour > 23 || isNaN(hour)) return bt.msg({ status: false, msg: '请输入小时范围0-23时' })
                             if (minute < 0 || minute > 59 || isNaN(minute)) return bt.msg({ status: false, msg: '请输入正确分钟范围0-59分' })
                             if (submitForm.type === 'hour-n') {
+                              if(submitForm.minute <= 0 && submitForm.hour <= 0) return bt.msg({ status: false, msg: '小时、分钟不能同时小于1！' })
                               submitForm.where1 = submitForm.hour
                               submitForm.hour = ''
-                              if(submitForm.minute <= 0 && submitForm.where1 <= 0) return bt.msg({ status: false, msg: '小时、分钟不能同时小于1！' })
                             }
                             break;
                         }
