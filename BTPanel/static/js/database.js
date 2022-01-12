@@ -92,7 +92,7 @@ var database = {
         {
           title:'数据库位置',
           type: 'text',
-          width: 110,
+          width: 116,
           template: function (row) {
             var type_column = '-'
             switch(row.db_type){
@@ -114,7 +114,7 @@ var database = {
                 })
                 break;
             }
-            return '<span class="size_ellipsis" style="width:90px" title="'+type_column+'">'+type_column+'</span>'
+            return '<span class="size_ellipsis" style="width:100px" title="'+type_column+'">'+type_column+'</span>'
           }
         },
         {
