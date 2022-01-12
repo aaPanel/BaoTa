@@ -195,7 +195,7 @@ class database(datatool.datatools):
             'username': get.db_user,
             'password': get.db_password,
             'accept': '127.0.0.1',
-            'addtime': int(time.time()),
+            'addtime': time.strftime('%Y-%m-%d %X',time.localtime()),
             'pid': 0
         }
 
@@ -248,7 +248,7 @@ class database(datatool.datatools):
         if e.args[0] == 2003:
             res = '数据库服务器连接失败!'
         if res: 
-            res = str(e) + ': ' + res
+            res = res + "<pre>" + str(e) + "</pre>"
         else:
             res = str(e)
         return res
@@ -982,7 +982,7 @@ SetLink
         data = panelMysql.panelMysql().query("show databases")
         isError = self.IsSqlError(data)
         if isError != None: return isError
-        self.sid = get.sid('sid/d',0)
+        self.sid = get.get('sid/d',0)
         db_type = 0
         if self.sid: db_type = 2
         mysql_obj = public.get_mysql_obj_by_sid(self.sid)
@@ -1322,7 +1322,7 @@ SetLink
         for key in db_data:
             data = db_data[key]
             if not data['id'] in ids: continue
-
+            
             db_addtime = public.to_date(times = data['addtime'])     
             data['score'] = int(time.time() - db_addtime) + data['total']                
             data['st_time'] = db_addtime
