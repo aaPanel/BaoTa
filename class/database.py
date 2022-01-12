@@ -979,13 +979,13 @@ SetLink
     
     #从服务器获取数据库
     def SyncGetDatabases(self,get):
-        data = panelMysql.panelMysql().query("show databases")
-        isError = self.IsSqlError(data)
-        if isError != None: return isError
         self.sid = get.get('sid/d',0)
         db_type = 0
         if self.sid: db_type = 2
         mysql_obj = public.get_mysql_obj_by_sid(self.sid)
+        data = mysql_obj.query("show databases")
+        isError = self.IsSqlError(data)
+        if isError != None: return isError
         users = mysql_obj.query("select User,Host from mysql.user where User!='root' AND Host!='localhost' AND Host!=''")
         if type(users) == str: return public.returnMsg(False,users)
         
