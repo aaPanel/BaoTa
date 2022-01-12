@@ -983,7 +983,10 @@ var bt = {
         title: data.title,
         closeBtn: 2,
         content: _form.prop("outerHTML"),
-        end: data.end ? data.end : false
+        end: data.end ? data.end : false,
+        success:function(){
+          data.yes()
+        }
       })
       setTimeout(function () {
         bt.render_clicks(clicks, loadOpen, callback);
@@ -6018,8 +6021,9 @@ bt.database = {
       }, 100)
     })
   },
-  add_database: function (callback) {
+  add_database: function (cloudList,callback) {
     bt.data.database.data_add.list[2].items[0].value = bt.get_random(16);
+    bt.data.database.data_add.list[5].items[0].items = cloudList;
     bt.render_form(bt.data.database.data_add, function (rdata) {
       if (callback) callback(rdata);
     });
@@ -6032,9 +6036,9 @@ bt.database = {
       if (callback) callback(rdata);
     })
   },
-  sync_database: function (callback) {
+  sync_database: function (sid,callback) {
     var loadT = bt.load(lan.database.sync_the);
-    bt.send('SyncGetDatabases', 'database/SyncGetDatabases', {}, function (rdata) {
+    bt.send('SyncGetDatabases', 'database/SyncGetDatabases', {sid:sid}, function (rdata) {
       loadT.close();
       if (callback) callback(rdata);
       bt.msg(rdata);
@@ -7238,8 +7242,20 @@ bt.data = {
             }
           ]
         },
-        bt.form.item.data_access
+        bt.form.item.data_access,
+        {
+          title:'添加至',
+          items:[{
+            name:'sid',
+            type: 'select',
+            width: '65%',
+            items: []
+          }]
+        }
       ],
+      yes:function(){
+        $('[name=sid]').after('<a class="btlink" onclick="database.get_cloud_server_list()" style="margin-left: 10px;">管理远程服务器</a>')
+      },
       btns: [
         bt.form.btn.close(),
         bt.form.btn.submit('提交', function (rdata, load, callback) {
