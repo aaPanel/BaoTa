@@ -947,12 +947,13 @@ var bt_tools = {
           $(_that.config.el).on(item.eventType || 'click', '.' + key, function (ev) {
             var index = $(this).parents('tr').index(),
               data1 = $(this).data(),
-              arry = [];
+              arry = [],
+              column_data = _that.config.column[$(this).parents('td').index()];
             switch (item.type) {
               case 'rows':
                 _that.event_rows_model = {
                   el: $(this),
-                  model: _that.config.column[$(this).parents('td').index()],
+                  model: column_data,
                   rows: _that.data[index],
                   index: index
                 }
@@ -1075,7 +1076,7 @@ var bt_tools = {
               case 'eye_open_password':
                 if ($(this).hasClass('glyphicon-eye-open')) {
                   $(this).addClass('glyphicon-eye-close').removeClass('glyphicon-eye-open');
-                  $(this).prev().text(_that.data[index].password);
+                  $(this).prev().text(_that.data[index][column_data.fid]);
                 } else {
                   $(this).addClass('glyphicon-eye-open').removeClass('glyphicon-eye-close');
                   $(this).prev().html('<i>**********</i>');
@@ -1083,7 +1084,7 @@ var bt_tools = {
                 return false;
                 break;
               case 'copy_password':
-                bt.pub.copy_pass(_that.data[index].password);
+                bt.pub.copy_pass(_that.data[index][column_data.fid]);
                 return false;
                 break;
             }

@@ -1,5 +1,7 @@
 var database = {
   database_table: null,
+  dbCloudServerTable:null,  //远程服务器视图
+  cloudDatabaseList:[],     //远程服务器列表
   init: function () {
     this.event();
     this.database_table_view();
@@ -13,251 +15,367 @@ var database = {
   },
   database_table_view: function (search) {
     var that = this;
-    $('#bt_database_table').empty();
-    this.database_table = bt_tools.table({
-      el: '#bt_database_table',
-      url: '/data?action=getData',
-      param: {
-        table: 'databases',
-        search: search || ''
-      }, //参数
-      minWidth: '1000px',
-      autoHeight: true,
-      default: "数据库列表为空", // 数据为空时的默认提示
-      column: [{
-        type: 'checkbox',
-        width: 20
-      },
-      {
-        fid: 'name',
-        title: '数据库名',
-        type: 'text'
-      },
-      {
-        fid: 'username',
-        title: '用户名',
-        type: 'text',
-        sort: true
-      },
-      {
-        fid: 'password',
-        title: '密码',
-        type: 'password',
-        copy: true,
-        eye_open: true,
-        template: function (row) {
-          if (row.password === '') return '<span class="c9 cursor" onclick="database.set_data_pass(\'' + row.id + '\',\'' + row.username + '\',\'' + row.password + '\')">无法获取密码，请点击<span style="color:red">改密</span>重置密码!</span>'
-          return true
-        }
-      },
-      {
-        fid: 'backup',
-        title: '备份',
-        width: 130,
-        template: function (row) {
-          var backup = '点击备份',
-            _class = "bt_warning";
-          if (row.backup_count > 0) backup = lan.database.backup_ok, _class = "bt_success";
-          return '<span><a href="javascript:;" class="btlink ' + _class + '" onclick="database.database_detail(' + row.id + ',\'' + row.name + '\')">' + backup + (row.backup_count > 0 ? ('(' + row.backup_count + ')') : '') + '</a> | ' +
-            '<a href="javascript:database.input_database(\'' + row.name + '\')" class="btlink">' + lan.database.input + '</a></span>';
-        }
-      },
-      {
-        fid: 'ps',
-        title: '备注',
-        type: 'input',
-        blur: function (row, index, ev) {
-          bt.pub.set_data_ps({
-            id: row.id,
-            table: 'databases',
-            ps: ev.target.value
-          }, function (res) {
-            layer.msg(res.msg, { icon: res.status ? 1 : 2 });
-          });
+    var loadT = layer.msg('正在获取远程服务器列表,请稍候...', {
+      icon: 16,
+      time: 0,
+      shade: [0.3, '#000']
+    });
+    var param = {
+      table: 'databases',
+      search: search || ''
+    }
+    bt.send('GetCloudServer','database/GetCloudServer',{},function(cloudData){
+      layer.close(loadT);
+      that.cloudDatabaseList = cloudData
+      $('#bt_database_table').empty();
+      that.database_table = bt_tools.table({
+        el: '#bt_database_table',
+        url: '/data?action=getData',
+        param: param, //参数
+        minWidth: '1000px',
+        autoHeight: true,
+        default: "数据库列表为空", // 数据为空时的默认提示
+        beforeRequest: function(){
+          var db_type_val = $('.database_type_select_filter').val()
+          switch(db_type_val){
+            case 'all':
+              delete param['db_type']
+              delete param['sid']
+              break;
+            case 0:
+              param['db_type'] = 0;
+              break;
+            default:
+              delete param['db_type'];
+              param['sid'] = db_type_val
+          }
+          return param
         },
-        keyup: function (row, index, ev) {
-          if (ev.keyCode === 13) {
-            $(this).blur();
+        column: [{
+          type: 'checkbox',
+          width: 20
+        },
+        {
+          fid: 'name',
+          title: '数据库名',
+          type: 'text'
+        },
+        {
+          fid: 'username',
+          title: '用户名',
+          type: 'text',
+          sort: true
+        },
+        {
+          fid: 'password',
+          title: '密码',
+          type: 'password',
+          copy: true,
+          eye_open: true,
+          template: function (row) {
+            if (row.password === '') return '<span class="c9 cursor" onclick="database.set_data_pass(\'' + row.id + '\',\'' + row.username + '\',\'' + row.password + '\')">无法获取密码，请点击<span style="color:red">改密</span>重置密码!</span>'
+            return true
+          }
+        },
+        {
+          fid: 'backup',
+          title: '备份',
+          width: 130,
+          template: function (row) {
+            var backup = '点击备份',
+              _class = "bt_warning";
+            if (row.backup_count > 0) backup = lan.database.backup_ok, _class = "bt_success";
+            return '<span><a href="javascript:;" class="btlink ' + _class + '" onclick="database.database_detail(' + row.id + ',\'' + row.name + '\')">' + backup + (row.backup_count > 0 ? ('(' + row.backup_count + ')') : '') + '</a> | ' +
+              '<a href="javascript:database.input_database(\'' + row.name + '\')" class="btlink">' + lan.database.input + '</a></span>';
+          }
+        },
+        {
+          title:'数据库位置',
+          type: 'text',
+          width: 80,
+          template: function (row) {
+            var type_column = '-'
+            switch(row.db_type){
+              case 0:
+                type_column = '本地数据库'
+                break;
+              case 1:
+                type_column = ('远程库('+row.conn_config.db_host+':'+row.conn_config.db_port+')').toString()
+                break;
+              case 2:
+                $.each(cloudData,function(index,item){
+                  if(row.sid == item.id){
+                    if(item.ps !== ''){ // 默认显示备注
+                      type_column = item.ps
+                    }else{
+                      type_column = ('远程服务器('+item.db_host+':'+item.db_port+')').toString()
+                    }
+                  }
+                })
+                break;
+            }
+            return '<span class="size_ellipsis" style="width:60px" title="'+type_column+'">'+type_column+'</span>'
+          }
+        },
+        {
+          fid: 'ps',
+          title: '备注',
+          type: 'input',
+          blur: function (row, index, ev) {
+            bt.pub.set_data_ps({
+              id: row.id,
+              table: 'databases',
+              ps: ev.target.value
+            }, function (res) {
+              layer.msg(res.msg, { icon: res.status ? 1 : 2 });
+            });
+          },
+          keyup: function (row, index, ev) {
+            if (ev.keyCode === 13) {
+              $(this).blur();
+            }
+          }
+        },
+        {
+          type: 'group',
+          title: '操作',
+          width: 220,
+          align: 'right',
+          group: [{
+            title: '管理',
+            tips: '数据库管理',
+            hide:function(rows){return rows.db_type != 0},  // 远程数据库和远程服务器
+            event: function (row) {
+              bt.database.open_phpmyadmin(row.name, row.username, row.password);
+            }
+          }, {
+            title: '权限',
+            tips: '设置数据库权限',
+            hide:function(rows){return rows.db_type == 1}, //远程数据库
+            event: function (row) {
+              bt.database.set_data_access(row.username);
+            }
+          }, {
+            title: '工具',
+            tips: 'MySQL优化修复工具',
+            event: function (row) {
+              database.rep_tools(row.name);
+            }
+          }, {
+            title: '改密',
+            tips: '修改数据库密码',
+            hide:function(rows){return rows.db_type == 1},
+            event: function (row) {
+              database.set_data_pass(row.id, row.username, row.password);
+            }
+          }, {
+            title: '删除',
+            tips: '删除数据库',
+            event: function (row) {
+              database.del_database(row.id, row.name,row, function (res) {
+                if (res.status) that.database_table.$refresh_table_list(true);
+                layer.msg(res.msg, {
+                  icon: res.status ? 1 : 2
+                })
+              });
+            }
+          }]
+        }
+        ],
+        sortParam: function (data) {
+          return {
+            'order': data.name + ' ' + data.sort
+          };
+        },
+        tootls: [{ // 按钮组
+          type: 'group',
+          positon: ['left', 'top'],
+          list: [{
+            title: '添加数据库',
+            active: true,
+            event: function () {
+              var cloudList = [{title:'本地数据库',value:0}]
+              $.each(that.cloudDatabaseList,function(index,item){
+                var _tips = item.ps != ''?(item.ps+' (服务器地址:'+item.db_host+')'):item.db_host
+                cloudList.push({title:_tips,value:item.id})
+              })
+              bt.database.add_database(cloudList,function (res) {
+                if (res.status) that.database_table.$refresh_table_list(true);
+              })
+            }
+          }, {
+            title: 'root密码',
+            event: function () {
+              bt.database.set_root('root')
+            }
+          }, {
+            title: 'phpMyAdmin',
+            event: function () {
+              bt.database.open_phpmyadmin('', 'root', bt.config.mysql_root)
+            }
+          },
+          {
+            title:'远程服务器',
+            event:function(){
+              database.get_cloud_server_list();
+            }
+          },{
+            title: '同步所有',
+            style: {
+              'margin-left': '30px'
+            },
+            event: function () {
+              database.sync_to_database({
+                type: 0,
+                data: []
+              }, function (res) {
+                if (res.status) that.database_table.$refresh_table_list(true);
+              })
+            }
+          }, {
+            title: '从服务器获取',
+            event: function () {
+              var _list = [{title:'本地数据库',value:0}];
+              $.each(that.cloudDatabaseList,function (index,item){
+                var _tips = item.ps != ''?(item.ps+' (服务器地址:'+item.db_host+')'):item.db_host
+                _list.push({title:_tips,value:item.id})
+              })
+              bt_tools.open({
+                title:'选择服务器位置',
+                area:'450px',
+                btn: ['确认','取消'],
+                skin: 'databaseCloudServer',
+                content: {
+                  'class':'pd20',
+                  form:[{
+                    label:'服务器位置',
+                    group:{
+                      type:'select',
+                      name:'sid',
+                      width:'260px',
+                      list:_list
+                    }
+                  }]
+                },
+                success:function(layers){
+                  $(layers).find('.layui-layer-content').css('overflow','inherit')
+                },
+                yes:function (form,layers,index){
+                  bt.database.sync_database(form.sid,function (rdata) {
+                    if (rdata.status){
+                      that.database_table.$refresh_table_list(true);
+                      layer.close(layers)
+                    }
+                  })
+                }
+              })
+            }
+          }, {
+            title: '回收站',
+            icon: 'trash',
+            event: function () {
+              bt.recycle_bin.open_recycle_bin(6)
+            }
+          }]
+        }, {
+          type: 'batch', //batch_btn
+          positon: ['left', 'bottom'],
+          placeholder: '请选择批量操作',
+          buttonValue: '批量操作',
+          disabledSelectValue: '请选择需要批量操作的数据库!',
+          selectList: [{
+            title: '同步选中',
+            url: '/database?action=SyncToDatabases&type=1',
+            paramName: 'ids', //列表参数名,可以为空
+            paramId: 'id', // 需要传入批量的id
+            th: '数据库名称',
+            beforeRequest: function (list) {
+              var arry = [];
+              $.each(list, function (index, item) {
+                arry.push(item.id);
+              });
+              return JSON.stringify(arry)
+            },
+            success: function (res, list, that) {
+              layer.closeAll();
+              var html = '';
+              $.each(list, function (index, item) {
+                html += '<tr><td>' + item.name + '</td><td><div style="float:right;"><span style="color:' + (res.status ? '#20a53a' : 'red') + '">' + res.msg + '</span></div></td></tr>';
+              });
+              that.$batch_success_table({
+                title: '批量同步选中',
+                th: '数据库名称',
+                html: html
+              });
+            }
+          }, {
+            title: "删除数据库",
+            url: '/database?action=DeleteDatabase',
+            load: true,
+            param: function (row) {
+              return {
+                id: row.id,
+                name: row.name
+              }
+            },
+            callback: function (config) { // 手动执行,data参数包含所有选中的站点
+              var ids = [];
+              for (var i = 0; i < config.check_list.length; i++) {
+                ids.push(config.check_list[i].id);
+              }
+              database.del_database(ids, function (param) {
+                config.start_batch(param, function (list) {
+                  layer.closeAll()
+                  var html = '';
+                  for (var i = 0; i < list.length; i++) {
+                    var item = list[i];
+                    html += '<tr><td>' + item.name + '</td><td><div style="float:right;"><span style="color:' + (item.request.status ? '#20a53a' : 'red') + '">' + item.request.msg + '</span></div></td></tr>';
+                  }
+                  that.database_table.$batch_success_table({
+                    title: '批量删除',
+                    th: '数据库名称',
+                    html: html
+                  });
+                  that.database_table.$refresh_table_list(true);
+                });
+              })
+            }
+          }]
+        }, {
+          type: 'search',
+          positon: ['right', 'top'],
+          placeholder: '请输入数据库名称/备注',
+          searchParam: 'search', //搜索请求字段，默认为 search
+          value: '',// 当前内容,默认为空
+        }, { //分页显示
+          type: 'page',
+          positon: ['right', 'bottom'], // 默认在右下角
+          pageParam: 'p', //分页请求字段,默认为 : p
+          page: 1, //当前分页 默认：1
+          numberParam: 'limit', //分页数量请求字段默认为 : limit
+          number: 20, //分页数量默认 : 20条
+          numberList: [10, 20, 50, 100, 200], // 分页显示数量列表
+          numberStatus: true, //　是否支持分页数量选择,默认禁用
+          jump: true, //是否支持跳转分页,默认禁用
+        }],
+        success:function(config){
+          //搜索前面新增数据库位置下拉
+          if($('.database_type_select_filter').length == 0){
+            var _option = '<option value="all">全部</option><option value="0">本地数据库</option>'
+            $.each(that.cloudDatabaseList,function(index,item){
+              var _tips = item.ps != ''?item.ps:item.db_host
+              _option +='<option value="'+item.id+'">'+_tips+'</option>'
+            })
+            $('#bt_database_table .bt_search').before('<select class="bt-input-text mr5 database_type_select_filter" style="width:110px" name="db_type_filter">'+_option+'</select>')
+
+            //事件
+            $('.database_type_select_filter').change(function(){
+              that.database_table.$refresh_table_list(true);
+            })
+            $('#bt_database_table ')
           }
         }
-      },
-      {
-        type: 'group',
-        title: '操作',
-        width: 220,
-        align: 'right',
-        group: [{
-          title: '管理',
-          tips: '数据库管理',
-          event: function (row) {
-            bt.database.open_phpmyadmin(row.name, row.username, row.password);
-          }
-        }, {
-          title: '权限',
-          tips: '设置数据库权限',
-          event: function (row) {
-            bt.database.set_data_access(row.username);
-          }
-        }, {
-          title: '工具',
-          tips: 'MySQL优化修复工具',
-          event: function (row) {
-            database.rep_tools(row.name);
-          }
-        }, {
-          title: '改密',
-          tips: '修改数据库密码',
-          event: function (row) {
-            database.set_data_pass(row.id, row.username, row.password);
-          }
-        }, {
-          title: '删除',
-          tips: '删除数据库',
-          event: function (row) {
-            database.del_database(row.id, row.name, function (res) {
-              if (res.status) that.database_table.$refresh_table_list(true);
-              layer.msg(res.msg, {
-                icon: res.status ? 1 : 2
-              })
-            });
-          }
-        }]
-      }
-      ],
-      sortParam: function (data) {
-        return {
-          'order': data.name + ' ' + data.sort
-        };
-      },
-      tootls: [{ // 按钮组
-        type: 'group',
-        positon: ['left', 'top'],
-        list: [{
-          title: '添加数据库',
-          active: true,
-          event: function () {
-            bt.database.add_database(function (res) {
-              if (res.status) that.database_table.$refresh_table_list(true);
-            })
-          }
-        }, {
-          title: 'root密码',
-          event: function () {
-            bt.database.set_root('root')
-          }
-        }, {
-          title: 'phpMyAdmin',
-          event: function () {
-            bt.database.open_phpmyadmin('', 'root', bt.config.mysql_root)
-          }
-        }, {
-          title: '同步所有',
-          style: {
-            'margin-left': '30px'
-          },
-          event: function () {
-            database.sync_to_database({
-              type: 0,
-              data: []
-            }, function (res) {
-              if (res.status) that.database_table.$refresh_table_list(true);
-            })
-          }
-        }, {
-          title: '从服务器获取',
-          event: function () {
-            bt.database.sync_database(function (rdata) {
-              if (rdata.status) that.database_table.$refresh_table_list(true);
-            })
-          }
-        }, {
-          title: '回收站',
-          icon: 'trash',
-          event: function () {
-            bt.recycle_bin.open_recycle_bin(6)
-          }
-        }]
-      }, {
-        type: 'batch', //batch_btn
-        positon: ['left', 'bottom'],
-        placeholder: '请选择批量操作',
-        buttonValue: '批量操作',
-        disabledSelectValue: '请选择需要批量操作的数据库!',
-        selectList: [{
-          title: '同步选中',
-          url: '/database?action=SyncToDatabases&type=1',
-          paramName: 'ids', //列表参数名,可以为空
-          paramId: 'id', // 需要传入批量的id
-          th: '数据库名称',
-          beforeRequest: function (list) {
-            var arry = [];
-            $.each(list, function (index, item) {
-              arry.push(item.id);
-            });
-            return JSON.stringify(arry)
-          },
-          success: function (res, list, that) {
-            layer.closeAll();
-            var html = '';
-            $.each(list, function (index, item) {
-              html += '<tr><td>' + item.name + '</td><td><div style="float:right;"><span style="color:' + (res.status ? '#20a53a' : 'red') + '">' + res.msg + '</span></div></td></tr>';
-            });
-            that.$batch_success_table({
-              title: '批量同步选中',
-              th: '数据库名称',
-              html: html
-            });
-          }
-        }, {
-          title: "删除数据库",
-          url: '/database?action=DeleteDatabase',
-          load: true,
-          param: function (row) {
-            return {
-              id: row.id,
-              name: row.name
-            }
-          },
-          callback: function (config) { // 手动执行,data参数包含所有选中的站点
-            var ids = [];
-            for (var i = 0; i < config.check_list.length; i++) {
-              ids.push(config.check_list[i].id);
-            }
-            database.del_database(ids, function (param) {
-              config.start_batch(param, function (list) {
-                layer.closeAll()
-                var html = '';
-                for (var i = 0; i < list.length; i++) {
-                  var item = list[i];
-                  html += '<tr><td>' + item.name + '</td><td><div style="float:right;"><span style="color:' + (item.request.status ? '#20a53a' : 'red') + '">' + item.request.msg + '</span></div></td></tr>';
-                }
-                that.database_table.$batch_success_table({
-                  title: '批量删除',
-                  th: '数据库名称',
-                  html: html
-                });
-                that.database_table.$refresh_table_list(true);
-              });
-            })
-          }
-        }]
-      }, {
-        type: 'search',
-        positon: ['right', 'top'],
-        placeholder: '请输入数据库名称/备注',
-        searchParam: 'search', //搜索请求字段，默认为 search
-        value: '',// 当前内容,默认为空
-      }, { //分页显示
-        type: 'page',
-        positon: ['right', 'bottom'], // 默认在右下角
-        pageParam: 'p', //分页请求字段,默认为 : p
-        page: 1, //当前分页 默认：1
-        numberParam: 'limit', //分页数量请求字段默认为 : limit
-        number: 20, //分页数量默认 : 20条
-        numberList: [10, 20, 50, 100, 200], // 分页显示数量列表
-        numberStatus: true, //　是否支持分页数量选择,默认禁用
-        jump: true, //是否支持跳转分页,默认禁用
-      }]
+      });
     });
   },
   // 同步所有
@@ -281,7 +399,7 @@ var database = {
       qiniu: '七牛云',
       txcos: '腾讯COS',
       upyun: '又拍云',
-      gcloud_storage: '谷歌云',
+      'Google Cloud': '谷歌云',
       gdrive: '谷歌网盘',
       bos: '百度云',
       obs: '华为云'
@@ -542,6 +660,151 @@ var database = {
       database.input_database(name);
     });
   },
+  // 远程服务器列表
+  get_cloud_server_list:function(){
+    var that = this;
+    bt_tools.open({
+      title:'远程服务器列表',
+      area:'800px',
+      btn: false,
+      skin: 'databaseCloudServer',
+      content: '<div id="db_cloud_server_table" class="pd20" style="padding-bottom:40px;"></div>',
+      dataFilter: function(res) { that.cloudDatabaseList = res},
+      success:function(){
+        that.dbCloudServerTable = bt_tools.table({
+          el:'#db_cloud_server_table',
+          default:'服务器列表为空',
+          url:'/database?action=GetCloudServer',
+          column:[
+            {fid:'db_host',title:'服务器地址'},
+            {fid:'db_port',title:'数据库端口'},
+            {fid:'db_user',title:'管理员名称'},
+            {fid:'db_password',type: 'password',title:'管理员密码',copy: true,eye_open: true},
+            {fid:'ps',title:'备注',width:170},
+            {
+              type: 'group',
+              title: '操作',
+              align: 'right',
+              group: [{
+                title:'编辑',
+                event:function(row){
+                  that.render_db_cloud_server_view(row,true);
+                }
+              },{
+                title:'删除',
+                event:function(row){
+                  that.del_db_cloud_server(row)
+                }
+              }]
+            }
+          ],
+          tootls:[{
+            type:'group',
+            positon: ['left','top'],
+            list:[{
+              title:'添加远程服务器',
+              active: true,
+              event:function(){that.render_db_cloud_server_view()}
+            }]
+          }]
+        })
+      }
+    })
+  },
+  // 添加/编辑远程服务器视图
+  render_db_cloud_server_view:function(config,is_edit){
+    var that = this;
+    if(!config) config = {db_host:'',db_port:'3306',db_user:'',db_password:'',db_user:'root',ps:''}
+    bt_tools.open({
+      title: (is_edit?'编辑':'添加')+'远程服务器',
+      area:'450px',
+      btn:['保存','取消'],
+      skin:'addCloudServerProject',
+      content:{
+        'class':'pd20',
+        form:[{
+          label:'服务器地址',
+          group:{
+            type:'text',
+            name:'db_host',
+            width:'260px',
+            value:config.db_host,
+            placeholder:'请输入服务器地址',
+            event:function(){
+              $('[name=db_host]').on('input',function(){
+                $('[name=db_ps]').val($(this).val())
+              })
+            }
+          }
+        },{
+          label:'数据库端口',
+          group:{
+            type:'number',
+            name:'db_port',
+            width:'260px',
+            value:config.db_port,
+            placeholder:'请输入数据库端口'
+          }
+        },{
+          label:'管理员名称',
+          group:{
+            type:'text',
+            name:'db_user',
+            width:'260px',
+            value:config.db_user,
+            placeholder:'请输入管理员名称'
+          }
+        },{
+          label:'管理员密码',
+          group:{
+            type:'text',
+            name:'db_password',
+            width:'260px',
+            value:config.db_password,
+            placeholder:'请输入管理员密码'
+          }
+        },{
+          label:'备注',
+          group:{
+            type:'text',
+            name:'db_ps',
+            width:'260px',
+            value:config.ps,
+            placeholder:'服务器备注'
+          }
+        },{
+          group:{
+            type:'help',
+            style:{'margin-top':'0'},
+            list:[
+              '支持MySQL5.5、MariaDB10.1及以上版本',
+              '支持阿里云、腾讯云等云厂商的云数据库',
+              '注意1：请确保本服务器有访问数据库的权限',
+              '注意2：请确保填写的管理员帐号具备足够的权限',
+            ]
+          }
+        }]
+      },
+      yes:function(form,indexs){
+        var interface = is_edit?'ModifyCloudServer':'AddCloudServer'
+        if(form.db_host == '') return layer.msg('请输入服务器地址',{icon:2})
+        if(form.db_port == '') return layer.msg('请输入数据库端口',{icon:2})
+        if(form.db_user == '') return layer.msg('请输入管理员名称',{icon:2})
+        if(form.db_password == '') return layer.msg('请输入管理员密码',{icon:2})
+
+        if(is_edit) form['id'] = config['id'];
+        bt.send(interface,'database/'+interface,form,function(rdata){
+          if(rdata.status){
+            that.dbCloudServerTable.$refresh_table_list();
+            layer.close(indexs)
+          }
+          layer.msg(rdata.msg, {
+            icon: rdata.status ? 1 : 2
+          })
+        })
+      }
+    })
+  },
   /**
    * @name 删除导入的文件
    * @author hwliang<2021-09-09>
@@ -575,7 +838,7 @@ var database = {
         bt.open({
           type: 1,
           skin: 'demo-class',
-          area: ["600px", "500px"],
+          area: ["600px", "510px"],
           title: lan.database.input_title_file,
           closeBtn: 2,
           shift: 5,
@@ -825,11 +1088,13 @@ var database = {
     $('.password' + bs).val(password);
   },
   // 删除
-  del_database: function (wid, dbname, callback) {
+  del_database: function (wid, dbname,obj, callback) {
     var rendom = bt.get_random_code(),
       num1 = rendom['num1'],
       num2 = rendom['num2'],
-      title = '';
+      title = '',
+      tips = '是否确认【删除数据库】，删除后可能会影响业务使用！';
+    if(obj && obj.db_type > 0) tips = '远程数据库不支持数据库回收站，删除后将无法恢复，请谨慎操作';
     title = typeof dbname === "function" ? '批量删除数据库' : '删除数据库 [ ' + dbname + ' ]';
     layer.open({
       type: 1,
@@ -841,7 +1106,7 @@ var database = {
       shadeClose: true,
       content: "<div class=\'bt-form webDelete pd30\' id=\'site_delete_form\'>" +
         "<i class=\'layui-layer-ico layui-layer-ico0\'></i>" +
-        "<div class=\'f13 check_title\' style=\'margin-bottom: 20px;\'>是否确认【删除数据库】，删除后可能会影响业务使用！</div>" +
+        "<div class=\'f13 check_title\' style=\'margin-bottom: 20px;\'>"+tips+"</div>" +
         "<div style=\'color:red;margin:18px 0 18px 18px;font-size:14px;font-weight: bold;\'>注意：数据无价，请谨慎操作！！！" + (!recycle_bin_db_open ? '<br>风险操作：当前数据库回收站未开启，删除数据库将永久消失！' : '') + "</div>" +
         "<div class=\'vcode\'>" + lan.bt.cal_msg + "<span class=\'text\'>" + num1 + " + " + num2 + "</span>=<input type=\'number\' id=\'vcodeResult\' value=\'\'></div>" +
         "</div>",
@@ -968,5 +1233,21 @@ var database = {
       }
     })
   },
+  // 删除远程服务器管理关系
+  del_db_cloud_server: function(row){
+    var that = this;
+    layer.confirm('仅删除管理关系以及面板中的数据库记录，不会删除远程服务器中的数据', {
+      title: '删除【'+row.db_host+'】远程服务器',
+      icon: 0,
+      closeBtn: 2
+    }, function () {
+      bt.send('RemoveCloudServer','database/RemoveCloudServer',{id:row.id},function(rdata){
+        if(rdata.status) that.dbCloudServerTable.$refresh_table_list(true);
+        layer.msg(rdata.msg, {
+          icon: rdata.status ? 1 : 2
+        })
+      })
+    })
+  }
 }
 database.init();
