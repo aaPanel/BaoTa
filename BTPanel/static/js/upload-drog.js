@@ -284,8 +284,9 @@ UploadFile.prototype = {
         layerMax.style.display = 'none';
         layerShade.style.display = '';
       },
-      end: function () {
+      cancel:function () { 
         _this2.cancel_upload();
+        return false
       }
     });
   },
@@ -572,7 +573,8 @@ UploadFile.prototype = {
         item.querySelector('.filesize').innerText = config.size;
         item.querySelector('.fileStatus').innerHTML = this.is_upload_status(config.upload, config.upload === 1 ? '(耗时:' + this.diff_time(this.uploadTime.startTime, this.uploadTime.endTime) + ')' : config.errorMsg);
         var dropUpLoadFile = this.queryEl('.dropUpLoadFile');
-        dropUpLoadFile.scrollTop += 45;
+        if(this.uploadList.length === 1) dropUpLoadFile.scrollTop = 0
+        if(this.uploadList.length > 1) dropUpLoadFile.scrollTop += 45.5
       } else {
         item.querySelector('.fileLoading').setAttribute('style', 'width:' + config.percent);
         item.querySelector('.filesize').innerText = config.upload_size + '/' + config.size;
@@ -744,7 +746,6 @@ UploadFile.prototype = {
    * @param {Object} e 文件对象
    */
   file_upload_limit: function file_upload_limit (e, path) {
-    // console.log(path,e);
     var extName = e.name.split('.');
     path = path || e.webkitRelativePath
     var paths = path.split('/');
@@ -757,7 +758,8 @@ UploadFile.prototype = {
       type: extName.length > 1 ? extName[extName.length - 1] : 'txt',
       status: 0
     });
-    this.fileTotalNumber++;
+    console.log(this.fileTotalNumber);
+    this.fileTotalNumber ++;
     this.fileTotalSize += e.size;
     if (this.fileTotalNumber >= this.limit.number) {
       layer.msg('当前文件数量已超过文件上传上限' + this.limit.number + '个， 请压缩文件夹后重试！');
@@ -767,9 +769,9 @@ UploadFile.prototype = {
       layer.msg('当前文件大小已超过文件上传' + bt.format_size(e.size) + '限制， 请使用SFTP/FTP等工具上传文件！');
       return false;
     }
-    return true;
   },
 
+  test_index:0,
 
   /**
    * @description 文件夹文件内容递归
@@ -777,9 +779,10 @@ UploadFile.prototype = {
    */
   traverse_file_tree: function traverse_file_tree (item) {
     var _this6 = this;
-
     var path = item.fullPath || '';
+
     if (item.isFile) {
+      // console.log(item,'-----')
       item.file(function (e) {
         _this6.file_upload_limit(e, path);
       });
@@ -793,15 +796,19 @@ UploadFile.prototype = {
           _this6.init_data();
           _this6.layers = layers;
         }
-      }, 50);
+      }, 10);
     } else if (item.isDirectory) {
       var dirReader = item.createReader();
-      dirReader.readEntries(function (entries) {
-        [].forEach.call(entries, function (e) {
+      var fnReadEntries = function (entries) {
+        [].forEach.call(entries,function (e) {
           if (!_this6.isUpload) return false;
           _this6.traverse_file_tree(e);
         });
-      });
+        if (entries.length > 0) {
+          dirReader.readEntries(fnReadEntries);
+        }
+      };    
+      dirReader.readEntries(fnReadEntries)
       setTimeout(function () {
         if (_this6.fileList.length === 0) {
           layer.msg('拖拽上传文件夹内容为空')
@@ -809,6 +816,7 @@ UploadFile.prototype = {
       }, 500)
     }
   },
+  
 
 
   /**
@@ -823,15 +831,18 @@ UploadFile.prototype = {
     if (ev.target.files) {
       var items = ev.target.files;
       [].forEach.call(items, function (item) {
-        console.log(item);
+        _this7.traverse_file_tree(item);
       });
     } else if (ev.dataTransfer.items) {
       var items = ev.dataTransfer.items;
+      console.log(items);
       [].forEach.call(items, function (ev) {
         var getAsEntry = ev.webkitGetAsEntry || ev.getAsEntry;
-        var item = getAsEntry.call(ev);
+        var item = getAsEntry.call(ev)
         if (item) {
-          if (!_this7.isUpload) return false;
+          if (!_this7.isUpload){
+            return false
+          }
           _this7.traverse_file_tree(item);
         }
       });
