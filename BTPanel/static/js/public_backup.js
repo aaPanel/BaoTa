@@ -985,7 +985,7 @@ var bt = {
         content: _form.prop("outerHTML"),
         end: data.end ? data.end : false,
         success:function(){
-          data.yes()
+          if(data.yes) data.yes()
         }
       })
       setTimeout(function () {

@@ -92,7 +92,7 @@ var database = {
         {
           title:'数据库位置',
           type: 'text',
-          width: 80,
+          width: 116,
           template: function (row) {
             var type_column = '-'
             switch(row.db_type){
@@ -114,7 +114,7 @@ var database = {
                 })
                 break;
             }
-            return '<span class="size_ellipsis" style="width:60px" title="'+type_column+'">'+type_column+'</span>'
+            return '<span class="size_ellipsis" style="width:100px" title="'+type_column+'">'+type_column+'</span>'
           }
         },
         {
@@ -665,7 +665,7 @@ var database = {
     var that = this;
     bt_tools.open({
       title:'远程服务器列表',
-      area:'800px',
+      area:'860px',
       btn: false,
       skin: 'databaseCloudServer',
       content: '<div id="db_cloud_server_table" class="pd20" style="padding-bottom:40px;"></div>',
@@ -676,11 +676,15 @@ var database = {
           default:'服务器列表为空',
           url:'/database?action=GetCloudServer',
           column:[
-            {fid:'db_host',title:'服务器地址'},
-            {fid:'db_port',title:'数据库端口'},
+            {fid:'db_host',title:'服务器地址',width:216,template: function (item) {
+                return '<span style="width:200px;word-wrap:break-word;" title="'+item.db_host+'">'+item.db_host+'</span>'
+              }},
+            {fid:'db_port',width:80,title:'数据库端口'},
             {fid:'db_user',title:'管理员名称'},
             {fid:'db_password',type: 'password',title:'管理员密码',copy: true,eye_open: true},
-            {fid:'ps',title:'备注',width:170},
+            {fid:'ps',title:'备注',width:170,template: function (item) {
+              return '<span class="size_ellipsis" style="width:170px" title="'+item.ps+'">'+item.ps+'</span>'
+            }},
             {
               type: 'group',
               title: '操作',
@@ -793,14 +797,16 @@ var database = {
         if(form.db_password == '') return layer.msg('请输入管理员密码',{icon:2})
 
         if(is_edit) form['id'] = config['id'];
+        that.layerT = bt.load('正在'+(is_edit?'修改':'创建')+'远程服务器,请稍候...');
         bt.send(interface,'database/'+interface,form,function(rdata){
+          that.layerT.close();
           if(rdata.status){
             that.dbCloudServerTable.$refresh_table_list();
             layer.close(indexs)
+            layer.msg(rdata.msg, {icon:1})
+          }else{
+            layer.msg(rdata.msg,{time:0,icon:2,closeBtn: 2, shade: .3,area: '650px'})
           }
-          layer.msg(rdata.msg, {
-            icon: rdata.status ? 1 : 2
-          })
         })
       }
     })
