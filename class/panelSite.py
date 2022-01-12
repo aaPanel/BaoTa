@@ -3474,7 +3474,7 @@ server
         access_log /dev/null;
     }'''
                 if "(gif|jpg|jpeg|png|bmp|swf)$" not in ng_conf:
-                    ng_conf = ng_conf.replace('access_log /www', oldconf + "\n\taccess_log /www")
+                    ng_conf = re.sub('access_log\s*/www', oldconf + "\n\taccess_log  /www",ng_conf)
                 public.writeFile(ng_file, ng_conf)
                 return
             sitenamelist = []
@@ -3507,7 +3507,7 @@ server
         access_log /dev/null;
     }'''
                 if "(gif|jpg|jpeg|png|bmp|swf)$" not in ng_conf:
-                    ng_conf = ng_conf.replace('access_log /www', oldconf + "\n\taccess_log /www")
+                    ng_conf = re.sub('access_log\s*/www', oldconf + "\n\taccess_log  /www",ng_conf)
                 public.writeFile(ng_file, ng_conf)
 
     # 设置apache配置
