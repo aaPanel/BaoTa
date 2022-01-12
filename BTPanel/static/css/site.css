@@ -10543,7 +10543,8 @@ select[name="disk-io"] {
 }
 
 .bt_table .divtable {
-    overflow: auto;
+  overflow: auto;
+  clear: both;
 }
 
 .bt_table .text-overflow {
@@ -12179,6 +12180,11 @@ span.unit {
     font-size: 14px;
     word-wrap: break-word;
 }
+.warning_layer_head .layui-layer-ico{
+  width: 30px;
+  height: 30px;
+}
+
 .warning_layer_box .details {
     display: flex;
     align-items: center;
