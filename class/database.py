@@ -1285,7 +1285,7 @@ SetLink
         if info:
             return public.returnMsg(True,"更改成功")
         else:
-            return public.returnMsg(False,"更改失败")
+            return public.returnMsg(False,"影响行为0，可能是个空表或指定表不支持")
             
     def get_average_num(self,slist):
         """
