@@ -196,7 +196,7 @@ var database = {
             event: function () {
               var cloudList = [{title:'本地数据库',value:0}]
               $.each(that.cloudDatabaseList,function(index,item){
-                var _tips = item.ps != ''?(item.ps+' (服务器地址:'+item.db_host+')'):item.db_host
+                var _tips = item.ps != ''?(item.ps+' ('+item.db_host+')'):item.db_host
                 cloudList.push({title:_tips,value:item.id})
               })
               bt.database.add_database(cloudList,function (res) {
