@@ -8137,14 +8137,14 @@ var site = {
       $('#ssl_tabs').append('<div class="ss-text pull-right mr30" style="position: relative;top:-4px"><em>强制HTTPS</em><div class="ssh-item"><input class="btswitch btswitch-ios" id="toHttps" type="checkbox"><label class="btswitch-btn" for="toHttps"></label></div></div>');
       var ssl_open = $("#toHttps")
       ssl_open.attr('checked', rdata.httpTohttps);
+      var isHttps = ssl_open.prop('checked');
       ssl_open.click(function (sdata) {
-        var isHttps = $(this).prop('checked')
         if (isHttps) {
           layer.confirm('关闭强制HTTPS后需要清空浏览器缓存才能看到效果,继续吗?', { 
             icon: 3, 
             title: "关闭强制HTTPS",
             cancel:function () { 
-              ssl_open.prop('checked', !isHttps);
+              ssl_open.attr('checked', !isHttps);
             }
         }, function () {
             bt.site.close_http_to_https(web.name, function (rdata) {
@@ -8155,7 +8155,7 @@ var site = {
               }
             })
           },function () {
-            ssl_open.prop('checked', !isHttps);
+            ssl_open.attr('checked', !isHttps);
           });
         } else {
           bt.site.set_http_to_https(web.name, function (rdata) {
@@ -8163,8 +8163,9 @@ var site = {
               setTimeout(function () {
                 site.reload(7);
               }, 3000);
+            }else{
+              ssl_open.attr('checked', !isHttps);
             }
-
           })
         }
       })

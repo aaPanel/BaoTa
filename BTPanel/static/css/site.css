@@ -10542,9 +10542,15 @@ select[name="disk-io"] {
     position: relative;
 }
 
+#bt_site_table .divtable,
+#bt_ftp_table .divtable,
+#bt_database_table .divtable{
+  clear: both;
+}
+
+
 .bt_table .divtable {
   overflow: auto;
-  clear: both;
 }
 
 .bt_table .text-overflow {
