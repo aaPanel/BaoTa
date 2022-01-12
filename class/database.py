@@ -294,7 +294,7 @@ class database(datatool.datatools):
                     }
             codeStr=wheres[codeing]
             #添加MYSQL
-            self.sid = get.get('sid',0)
+            self.sid = get.get('sid/d',0)
             mysql_obj = public.get_mysql_obj_by_sid(self.sid)
 
             #从MySQL验证是否存在
