@@ -241,14 +241,14 @@ var database = {
                 _list.push({title:_tips,value:item.id})
               })
               bt_tools.open({
-                title:'选择服务器位置',
+                title:'选择数据库位置',
                 area:'450px',
                 btn: ['确认','取消'],
                 skin: 'databaseCloudServer',
                 content: {
                   'class':'pd20',
                   form:[{
-                    label:'服务器位置',
+                    label:'数据库位置',
                     group:{
                       type:'select',
                       name:'sid',

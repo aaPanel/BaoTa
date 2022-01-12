@@ -7254,7 +7254,8 @@ bt.data = {
         }
       ],
       yes:function(){
-        $('[name=sid]').after('<a class="btlink" onclick="database.get_cloud_server_list()" style="margin-left: 10px;">管理远程服务器</a>')
+
+        $('[name=sid]').after('<a class="btlink" onclick="layer.closeAll();database.get_cloud_server_list()" style="margin-left: 10px;">管理远程服务器</a>')
       },
       btns: [
         bt.form.btn.close(),
