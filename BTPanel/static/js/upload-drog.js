@@ -395,7 +395,9 @@ UploadFile.prototype = {
       this.uploadStatus = 2;
       this.uploaded_files = []; // 上传过的文件
       this.uploadTime.startTime = this.get_time_real(); // 设置上传开始时间
-      this.queryEl('.upload_file_gourp').classList.add('hide');
+      var startUpload = this.queryEl('.startUpload');
+      startUpload.setAttribute('disabled','disabled')
+      startUpload.innerText = '正在上传';
     }
     // 结束上传
     if (this.fileList.length === index) {
@@ -545,8 +547,10 @@ UploadFile.prototype = {
       this.bind(file_upload_info.querySelector('.ico-tips-close'), function (ev) {
         var parent = this.parentNode.parentNode;
         parent.querySelector('.btn-group').classList.remove('hide');
-        parent.querySelector('.file_upload_info').classList.add('hide')
-        document.querySelector('.upload_file_gourp').classList.remove('hide');
+        parent.querySelector('.file_upload_info').classList.add('hide');
+        var startUpload = this.queryEl('.startUpload')
+        startUpload.removeAttribute('disabled')
+        startUpload.innerText = '开始上传'
       });
       return false;
     }
@@ -758,7 +762,6 @@ UploadFile.prototype = {
       type: extName.length > 1 ? extName[extName.length - 1] : 'txt',
       status: 0
     });
-    console.log(this.fileTotalNumber);
     this.fileTotalNumber ++;
     this.fileTotalSize += e.size;
     if (this.fileTotalNumber >= this.limit.number) {
@@ -769,6 +772,7 @@ UploadFile.prototype = {
       layer.msg('当前文件大小已超过文件上传' + bt.format_size(e.size) + '限制， 请使用SFTP/FTP等工具上传文件！');
       return false;
     }
+    return true
   },
 
   test_index:0,
@@ -780,9 +784,8 @@ UploadFile.prototype = {
   traverse_file_tree: function traverse_file_tree (item) {
     var _this6 = this;
     var path = item.fullPath || '';
-
     if (item.isFile) {
-      // console.log(item,'-----')
+      
       item.file(function (e) {
         _this6.file_upload_limit(e, path);
       });
@@ -829,6 +832,7 @@ UploadFile.prototype = {
     this.load = bt.load('正在获取文件信息，请稍后...');
     this.timeNumber = 0;
     if (ev.target.files) {
+      console.log('文件选择上传')
       var items = ev.target.files;
       [].forEach.call(items, function (item) {
         _this7.traverse_file_tree(item);

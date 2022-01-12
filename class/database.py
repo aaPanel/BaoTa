@@ -248,7 +248,7 @@ class database(datatool.datatools):
         if e.args[0] == 2003:
             res = '数据库服务器连接失败!'
         if res: 
-            res = str(e) + ': ' + res
+            res = res + "<pre>" + str(e) + "</pre>"
         else:
             res = str(e)
         return res

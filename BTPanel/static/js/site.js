@@ -7,7 +7,7 @@ $('#cutMode .tabs-item').on('click', function () {
   switch (type) {
     case 'php':
       $('#bt_site_table').empty();
-      if (!isSetup) $('.site_table_view .mask_layer').removeClass('hide').find('.prompt_description.web-model').html('未安装Web服务器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nginx\')">安装Nginx</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'apache\')">安装Apache</a>');
+      // if (!isSetup) $('.site_table_view .mask_layer').removeClass('hide').find('.prompt_description.web-model').html('未安装Web服务器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nginx\')">安装Nginx</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'apache\')">安装Apache</a>');
       site.php_table_view();
       site.get_types();
       break;
@@ -8135,11 +8135,18 @@ var site = {
       ]
       bt.render_tab('ssl_tabs', _tabs);
       $('#ssl_tabs').append('<div class="ss-text pull-right mr30" style="position: relative;top:-4px"><em>强制HTTPS</em><div class="ssh-item"><input class="btswitch btswitch-ios" id="toHttps" type="checkbox"><label class="btswitch-btn" for="toHttps"></label></div></div>');
-      $("#toHttps").attr('checked', rdata.httpTohttps);
-      $('#toHttps').click(function (sdata) {
-        var isHttps = $("#toHttps").attr('checked');
+      var ssl_open = $("#toHttps")
+      ssl_open.attr('checked', rdata.httpTohttps);
+      ssl_open.click(function (sdata) {
+        var isHttps = $(this).prop('checked')
         if (isHttps) {
-          layer.confirm('关闭强制HTTPS后需要清空浏览器缓存才能看到效果,继续吗?', { icon: 3, title: "关闭强制HTTPS" }, function () {
+          layer.confirm('关闭强制HTTPS后需要清空浏览器缓存才能看到效果,继续吗?', { 
+            icon: 3, 
+            title: "关闭强制HTTPS",
+            cancel:function () { 
+              ssl_open.prop('checked', !isHttps);
+            }
+        }, function () {
             bt.site.close_http_to_https(web.name, function (rdata) {
               if (rdata.status) {
                 setTimeout(function () {
@@ -8147,6 +8154,8 @@ var site = {
                 }, 3000);
               }
             })
+          },function () {
+            ssl_open.prop('checked', !isHttps);
           });
         } else {
           bt.site.set_http_to_https(web.name, function (rdata) {
