@@ -504,7 +504,7 @@ class backup:
         # ----- 判断是否为远程数据库START  @author hwliang<2021-01-08>--------
         db_find = public.M('databases').where("name=?",(db_name,)).find()
         conn_config = {}
-        if not self._db_mysql:self._db_mysql = public.get_mysql_obj(db_name)
+        self._db_mysql = public.get_mysql_obj(db_name)
         is_cloud_db = db_find['db_type'] in ['1',1,'2',2]
         if is_cloud_db: 
             # 连接远程数据库
