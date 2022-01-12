@@ -586,18 +586,17 @@ var bt_file = {
 
         //设置单页显示的数量，默认为100，设置local本地缓存
         $('.filePage').on('change', '.showRow', function() {
-            var val = $(this).val();
-            console.log(val);
+            var val = $(this).val()
             bt.set_storage('local','showRow',val);
             that.reader_file_list({ showRow: val, p: 1, is_operating: false });
         });
 
         // 页码跳转
         $('.filePage').on('click', 'div:nth-child(2) a', function(e) {
-            var num = $(this).attr('href').match(/p=([0-9]+)$/)[1];
-            that.reader_file_list({ path: that.path, p: num })
-            e.stopPropagation();
-            e.preventDefault();
+            var num = $(this).attr('href').match(/p=([0-9]+)$/)[1]
+            that.reader_file_list({ path: that.path, p: num})
+            e.stopPropagation()
+            e.preventDefault()
         })
 
         // 获取文件夹大小
@@ -1338,6 +1337,10 @@ var bt_file = {
         $('.file_table_view').removeClass('.list_view,.icon_view').addClass(model == 'list' ? 'list_view' : 'icon_view');
         $('.cut_view_model:nth-child(' + (model == 'list' ? '2' : '1') + ')').addClass('active').siblings().removeClass('active');
         this.file_images_list = [];
+        if(typeof data.search){
+          var search_input = $('.search_path_views .file_search_input').val()
+          data['search'] = search_input
+        }
         this.get_dir_list(data, function(res){
             if (res.status === false && res.msg.indexOf('指定目录不存在!') > -1) {
                 return that.reader_file_list({ path: '/www' })

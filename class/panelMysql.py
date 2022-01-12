@@ -91,8 +91,8 @@ class panelMysql:
                     self.__DB_ERR = e
                     return False
             self.__DB_CONN = MySQLdb.connect(host = host,user = username,passwd = password,port = port,charset="utf8",connect_timeout=10)
-            pymysql.connect
             self.__DB_CUR  = self.__DB_CONN.cursor()
+            return True
         except MySQLdb.Error as e:
             self.__DB_ERR = e
             return False

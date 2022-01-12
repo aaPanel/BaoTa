@@ -531,11 +531,13 @@ var crontab = {
         }
         switch (form.type) {
           case "minute-n":
-            form.where1 = form.minute
+            form.where1 = form.minute;
             form.minute = '';
             if(form.where1 < 1) return bt.msg({ status: false, msg: '分钟不能小于1！' })
             break;
           case "hour-n":
+            form.where1 = form.hour;
+            form.hour = '';
             if(form.minute <= 0 && form.hour <= 0) return bt.msg({ status: false, msg: '小时、分钟不能同时小于1！' })
             break;
           // 天/日默认最小为1
@@ -809,10 +811,10 @@ var crontab = {
                         cycle = { where1: rdata.where1, hour: rdata.where_hour, minute: rdata.where_minute }
                         break;
                       case 'hour-n':
-                        cycle = { where1: '', hour: rdata.where1, minute: rdata.where_minute }
+                        cycle = { where1: rdata.where1, hour: rdata.where1, minute: rdata.where_minute }
                         break;
                       case 'minute-n':
-                        cycle = { where1: '', hour: '', minute: rdata.where1 }
+                        cycle = { where1: rdata.where1, hour: '', minute: rdata.where1 }
                         break;
                       case 'week':
                         formConfig[2].group[1].value = rdata.where1
@@ -919,9 +921,9 @@ var crontab = {
                             if (hour < 0 || hour > 23 || isNaN(hour)) return bt.msg({ status: false, msg: '请输入小时范围0-23时' })
                             if (minute < 0 || minute > 59 || isNaN(minute)) return bt.msg({ status: false, msg: '请输入正确分钟范围0-59分' })
                             if (submitForm.type === 'hour-n') {
+                              if(submitForm.minute <= 0 && submitForm.hour <= 0) return bt.msg({ status: false, msg: '小时、分钟不能同时小于1！' })
                               submitForm.where1 = submitForm.hour
                               submitForm.hour = ''
-                              if(submitForm.minute <= 0 && submitForm.where1 <= 0) return bt.msg({ status: false, msg: '小时、分钟不能同时小于1！' })
                             }
                             break;
                         }
@@ -930,6 +932,7 @@ var crontab = {
                             return bt.msg({ status: false, msg: '保留最新不能小于1！'});
                           }
                         }
+                        
                         bt_tools.send({
                           url: '/crontab?action=modify_crond',
                           data: submitForm

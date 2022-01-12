@@ -278,6 +278,8 @@ class bt_task:
             data = public.ExecShell("tail -n {} {}".format(num, log_file))[0]
             if type(data) == list:
                 return ''
+            if isinstance(data,bytes):
+                data = data.decode('utf-8')
             data = data.replace('\x08', '').replace('\n', '<br>')
         return data
 

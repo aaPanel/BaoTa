@@ -214,6 +214,7 @@ var controlObj = {
     * 获取默认echart配置
     */
     get_default_option: function (startTime, endTime) {
+      var interval = ((endTime - startTime) / 3) * 1000;
       return {
         tooltip: {
           trigger: 'axis',
@@ -227,7 +228,7 @@ var controlObj = {
         xAxis: {
           type: 'time',
           boundaryGap: ['1%', '0%'],
-          splitNumber: 5,
+          minInterval: interval,
           axisLine: {
             lineStyle: {
               color: "#666"
@@ -275,31 +276,6 @@ var controlObj = {
             }
           }
         ]
-      }
-    },
-
-    /**
-    * 获取间隔时间
-    * @param {*} startTime 开始时间
-    * @param {*} endTime 结束时间
-    * @returns 
-    */
-    get_interval_num: function (startTime, endTime) {
-      var hour = (endTime - startTime) / 3600;
-      hour = Math.floor(hour);
-      if (hour < 12) {
-        return 3 * 3600 * 1000;
-      } else if (hour <= 24) {
-        return 4 * 3600 * 1000;
-      }
-      var day = hour / 24;
-      day = Math.floor(day);
-      if (day <= 4) {
-        return 1 * 24 * 3600 * 1000;
-      } else if (day <= 7) {
-        return 2 * 24 * 3600 * 1000;
-      } else {
-        return 10 * 24 * 3600 * 1000;
       }
     },
 
@@ -728,6 +704,7 @@ var controlObj = {
           aData.push(rdata[i].five);
           bData.push(rdata[i].fifteen);
         }
+        var interval = ((e - b) / 3) * 1000;
         option = {
           tooltip: {
             trigger: 'axis'
@@ -741,6 +718,7 @@ var controlObj = {
             type: 'category',
             boundaryGap: false,
             data: xData,
+            minInterval: interval,
             axisLine: {
               lineStyle: {
                 color: "#666"
@@ -883,6 +861,7 @@ var controlObj = {
     */
     get_load_option: function (startTime, endTime, yData, zData, aData, bData) {
       var option = this.get_default_option(startTime, endTime);
+      var interval = ((endTime - startTime) / 3) * 1000;
       option.tooltip.formatter = function (config) {
         var line = config[0].axisValueLabel,
           line_color = '';
@@ -948,7 +927,7 @@ var controlObj = {
         {
           type: 'time',
           boundaryGap: ['1%', '0%'],
-          splitNumber: 5,
+          minInterval: interval,
           axisLine: {
             lineStyle: {
               color: "#666"
@@ -964,7 +943,7 @@ var controlObj = {
           type: 'time',
           gridIndex: 1,
           boundaryGap: ['1%', '0%'],
-          splitNumber: 5,
+          minInterval: interval,
           axisLine: {
             lineStyle: {
               color: "#666"

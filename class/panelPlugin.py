@@ -892,7 +892,7 @@ class panelPlugin:
             return public.returnMsg(True,'PLUGIN_UNINSTALL')
         else:
             if pluginInfo['name'] == 'mysql':
-                if public.M('databases').count() > 0: return public.returnMsg(False,"数据库列表非空，为了您的数据安全，请先<span style='color:red;'>备份所有数据库数据</span>后删除现有数据库<br>强制卸载命令：rm -rf /www/server/mysql")
+                if public.M('databases').where('db_type=?',0).count() > 0: return public.returnMsg(False,"本地数据库列表非空，为了您的数据安全，请先<span style='color:red;'>备份所有本地数据库数据</span>后删除现有本地数据库<br>强制卸载命令：rm -rf /www/server/mysql")
             get.type = '0'
             if session['server_os']['x'] != 'RHEL': get.type = '3'
             get.sName = get.sName.lower()

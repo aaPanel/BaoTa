@@ -2245,15 +2245,13 @@ cd %s
         if not php_v: return ''
         #处理PHP-CLI-INI配置文件
         php_ini = '/www/server/panel/tmp/composer_php_cli_'+php_v+'.ini'
-        if not os.path.exists(php_ini):
-            #如果不存在，则从PHP安装目录下复制一份
-            src_php_ini = php_path + php_v + '/etc/php.ini'
-            import shutil
-            shutil.copy(src_php_ini,php_ini)
-            #解除所有禁用函数
-            php_ini_body = public.readFile(php_ini)
-            php_ini_body = re.sub(r"disable_functions\s*=.*","disable_functions = ",php_ini_body)
-            public.writeFile(php_ini,php_ini_body)
+        src_php_ini = php_path + php_v + '/etc/php.ini'
+        import shutil
+        shutil.copy(src_php_ini,php_ini)
+        #解除所有禁用函数
+        php_ini_body = public.readFile(php_ini)
+        php_ini_body = re.sub(r"disable_functions\s*=.*","disable_functions = ",php_ini_body)
+        public.writeFile(php_ini,php_ini_body)
         return php_path + php_v + '/bin/php -c ' + php_ini
 
 

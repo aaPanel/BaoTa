@@ -197,6 +197,7 @@ class data:
                 if table == 'databases': type = '1'
                 for i in range(len(data['data'])):
                     data['data'][i]['backup_count'] = SQL.table('backup').where("pid=? AND type=?",(data['data'][i]['id'],type)).count()
+                    if table == 'databases': data['data'][i]['conn_config'] = json.loads(data['data'][i]['conn_config'])
                 if table == 'sites':
                     for i in range(len(data['data'])):
                         data['data'][i]['domain'] = SQL.table('domain').where("pid=?",(data['data'][i]['id'],)).count()
@@ -297,7 +298,17 @@ class data:
                 if get.type != '-1':
                     where += " AND type_id={}".format(get.type)
 
-            
+        if get.table == 'databases':
+            if hasattr(get,'db_type'):
+                if where:
+                    where += " AND db_type='{}'".format(get.db_type)
+                else:
+                    where = "db_type='{}'".format(get.db_type)
+            if hasattr(get,'sid'):
+                if where:
+                    where += " AND sid='{}'".format(get.sid)
+                else:
+                    where = "sid='{}'".format(get.sid)
         
         field = self.GetField(get.table)
         #实例化数据库对象
@@ -364,7 +375,7 @@ class data:
         fields = {
             'sites'     :   "id,name,path,status,ps,addtime,edate",
             'ftps'      :   "id,pid,name,password,status,ps,addtime,path",
-            'databases' :   "id,pid,name,username,password,accept,ps,addtime",
+            'databases' :   "id,sid,pid,name,username,password,accept,ps,addtime,db_type,conn_config",
             'logs'      :   "id,uid,username,type,log,addtime",
             'backup'    :   "id,pid,name,filename,addtime,size,ps",
             'users'     :   "id,username,phone,email,login_ip,login_time",

@@ -1908,6 +1908,10 @@ listener SSL443 {
     def CloseToHttps(self,get):
         siteName = get.siteName
         file = self.setupPath + '/panel/vhost/nginx/'+siteName+'.conf'
+        if not os.path.exists(file):
+            file = self.setupPath + '/panel/vhost/nginx/node_'+siteName+'.conf'
+        if not os.path.exists(file):
+            file = self.setupPath + '/panel/vhost/nginx/java_'+siteName+'.conf'
         conf = public.readFile(file)
         if conf:
             rep = "\n\s*#HTTP_TO_HTTPS_START(.|\n){1,300}#HTTP_TO_HTTPS_END"
@@ -1933,10 +1937,8 @@ listener SSL443 {
         file = self.setupPath + '/panel/vhost/nginx/'+siteName+'.conf'
         if not os.path.exists(file):
             file = self.setupPath + '/panel/vhost/nginx/node_'+siteName+'.conf'
-            if not os.path.exists(file): return False
         if not os.path.exists(file):
             file = self.setupPath + '/panel/vhost/nginx/java_'+siteName+'.conf'
-            if not os.path.exists(file): return False
         conf = public.readFile(file)
         if conf:
             if conf.find('HTTP_TO_HTTPS_START') != -1: return True
@@ -4822,12 +4824,12 @@ location ^~ %s
         if os.path.exists(file):
             conf = public.readFile(file)
             if get.status == '1':
+                if conf.find('SECURITY-START') == -1: return public.returnMsg(False,'请先开启防盗链!')
                 r_key = 'valid_referers none blocked'
                 d_key = 'valid_referers'
                 if conf.find(r_key) == -1:
                     conf = conf.replace(d_key,r_key)
                 else:
-                    if conf.find('SECURITY-START') == -1: return public.returnMsg(False,'请先开启防盗链!')
                     conf = conf.replace(r_key,d_key)
             else:
 
@@ -5075,12 +5077,12 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
         result = []
 
         import database
-        db_data = database.database().get_database_size(None)
+        db_data = database.database().get_database_size(ids)
 
         limit_size = 50 * 1024 * 1024
         f_list_size = [];db_list_size = []
         for id in ids:
-            data = public.M('sites').where("id=?",(id,)).field('id,name,path,addtime').find();
+            data = public.M('sites').where("id=?",(id,)).field('id,name,path,addtime').find()
             if not data: continue            
 
             addtime = public.to_date(times = data['addtime'])
@@ -5089,7 +5091,7 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
             data['limit'] = False
             data['backup_count'] = public.M('backup').where("pid=? AND type=?",(data['id'],'0')).count()
             f_size = self._check_path_total(data['path'],limit_size)
-            data['total'] = f_size;
+            data['total'] = f_size
             data['score'] = 0
 
             #目录太小不计分
@@ -5109,7 +5111,7 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
                 data['database'] = db_data[find['name']]
                 data['database']['st_time'] = db_addtime
                 
-                db_score = 0;
+                db_score = 0
                 db_size = data['database']['total']                                  
        
                 if db_size > 0: 

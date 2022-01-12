@@ -4214,6 +4214,11 @@ html .menu .menu_btwaf:hover{
         margin-top: 20px;
     }
 }
+@media only screen and (max-width:1350px) {
+    .database_type_select_filter{
+        display: none;
+    }
+}
 
 .bt-ico-ask {
     border: 1px solid #fb7d00;
@@ -10542,8 +10547,15 @@ select[name="disk-io"] {
     position: relative;
 }
 
+#bt_site_table .divtable,
+#bt_ftp_table .divtable,
+#bt_database_table .divtable{
+  clear: both;
+}
+
+
 .bt_table .divtable {
-    overflow: auto;
+  overflow: auto;
 }
 
 .bt_table .text-overflow {
@@ -12179,6 +12191,11 @@ span.unit {
     font-size: 14px;
     word-wrap: break-word;
 }
+.warning_layer_head .layui-layer-ico{
+  width: 30px;
+  height: 30px;
+}
+
 .warning_layer_box .details {
     display: flex;
     align-items: center;
@@ -15083,7 +15100,7 @@ textarea {
 
 /*数据库划线区分*/
 
-#bt_database_table .tootls_group .pull-left button:nth-child(4):after {
+#bt_database_table .tootls_group .pull-left button:nth-child(5):after {
     content: ' ';
     position: relative;
     left: -76px;

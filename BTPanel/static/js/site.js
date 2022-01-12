@@ -7,7 +7,7 @@ $('#cutMode .tabs-item').on('click', function () {
   switch (type) {
     case 'php':
       $('#bt_site_table').empty();
-      if (!isSetup) $('.site_table_view .mask_layer').removeClass('hide').find('.prompt_description.web-model').html('未安装Web服务器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nginx\')">安装Nginx</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'apache\')">安装Apache</a>');
+      // if (!isSetup) $('.site_table_view .mask_layer').removeClass('hide').find('.prompt_description.web-model').html('未安装Web服务器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nginx\')">安装Nginx</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'apache\')">安装Apache</a>');
       site.php_table_view();
       site.get_types();
       break;
@@ -1421,8 +1421,8 @@ var site = {
               ];
             try {
               if (typeof row.ssl.endtime != 'undefined') {
-                if (row.ssl.endtime < 0) {
-                  return '<a class="btlink bt_danger" href="javascript:;">已过期' + Math.row.ssl.endtime + '天</a>';
+                if (row.ssl.endtime < 1) {
+                  return '<a class="btlink bt_danger" href="javascript:;">已过期</a>';
                 }
               }
             } catch (error) { }
@@ -1683,7 +1683,7 @@ var site = {
             try {
               if (typeof row.ssl.endtime != 'undefined') {
                 if (row.ssl.endtime < 0) {
-                  return '<a class="btlink bt_danger" href="javascript:;">已过期' + Math.row.ssl.endtime + '天</a>';
+                  return '<a class="btlink bt_danger" href="javascript:;">已过期</a>';
                 }
               }
             } catch (error) { }
@@ -1935,7 +1935,6 @@ var site = {
           // theadName: '站点名称',
           // refresh: true,
           callback: function (that) {
-            console.log(that);
             // bt.show_confirm("批量删除站点", "是否同时删除选中站点同名的FTP、数据库、根目录", function() {
             //     var param = {};
             //     $('.bacth_options input[type=checkbox]').each(function() {
@@ -4091,7 +4090,6 @@ var site = {
                 type: 'button',
                 text: '保存',
                 callback: function (pdata) {
-                  console.log(pdata, '1111')
                   bt.site.set_site_runpath(web.id, pdata.dirName, function (ret) {
                     if (ret.status) site.reload(2)
                     layer.msg(ret.msg, { icon: ret.status ? 1 : 2 });
@@ -8137,11 +8135,18 @@ var site = {
       ]
       bt.render_tab('ssl_tabs', _tabs);
       $('#ssl_tabs').append('<div class="ss-text pull-right mr30" style="position: relative;top:-4px"><em>强制HTTPS</em><div class="ssh-item"><input class="btswitch btswitch-ios" id="toHttps" type="checkbox"><label class="btswitch-btn" for="toHttps"></label></div></div>');
-      $("#toHttps").attr('checked', rdata.httpTohttps);
-      $('#toHttps').click(function (sdata) {
-        var isHttps = $("#toHttps").attr('checked');
-        if (isHttps) {
-          layer.confirm('关闭强制HTTPS后需要清空浏览器缓存才能看到效果,继续吗?', { icon: 3, title: "关闭强制HTTPS" }, function () {
+      var ssl_open = $("#toHttps")
+      ssl_open.attr('checked', rdata.httpTohttps);
+      ssl_open.click(function (sdata) {
+        var isHttps = $("#toHttps").is(':checked');
+        if (!isHttps) {
+          layer.confirm('关闭强制HTTPS后需要清空浏览器缓存才能看到效果,继续吗?', { 
+            icon: 3, 
+            title: "关闭强制HTTPS",
+            cancel:function () { 
+              ssl_open.prop('checked', !isHttps);
+            }
+        }, function () {
             bt.site.close_http_to_https(web.name, function (rdata) {
               if (rdata.status) {
                 setTimeout(function () {
@@ -8149,15 +8154,17 @@ var site = {
                 }, 3000);
               }
             })
+          },function () {
+            ssl_open.attr('checked', !isHttps);
           });
         } else {
           bt.site.set_http_to_https(web.name, function (rdata) {
             if (!rdata.status) {
+              ssl_open.prop('checked', !isHttps);
               setTimeout(function () {
                 site.reload(7);
               }, 3000);
             }
-
           })
         }
       })

@@ -1,5 +1,9 @@
-
-if (bind_user == 'True') new BindAccount().installBindUser();
+try {
+  if (bind_user == 'True'){
+    var bindAccount = new BindAccount();
+    bindAccount.installBindUser();
+  }
+} catch (error) {}
 
 $("select[name='network-io'],select[name='disk-io']").change(function () {
   var key = $(this).val(), type = $(this).attr('name')
@@ -295,8 +299,9 @@ var index = {
           bt.system.re_memory(function (res) {
             that.next().show()
             clearInterval(setInter)
+            var memory = data.memRealUsed - res.memRealUsed
             option.series[0].detail = $.extend(option.series[0].detail, {
-              formatter: "已释放\n" + bt.format_size(data.memRealUsed - res.memRealUsed),
+              formatter: "已释放\n" + bt.format_size(memory > 0 ? memory : 0) + "",
               lineHeight: 18,
               padding: [5, 0]
             })
