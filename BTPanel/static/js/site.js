@@ -1421,8 +1421,8 @@ var site = {
               ];
             try {
               if (typeof row.ssl.endtime != 'undefined') {
-                if (row.ssl.endtime < 0) {
-                  return '<a class="btlink bt_danger" href="javascript:;">已过期' + Math.row.ssl.endtime + '天</a>';
+                if (row.ssl.endtime < 1) {
+                  return '<a class="btlink bt_danger" href="javascript:;">已过期</a>';
                 }
               }
             } catch (error) { }
@@ -1683,7 +1683,7 @@ var site = {
             try {
               if (typeof row.ssl.endtime != 'undefined') {
                 if (row.ssl.endtime < 0) {
-                  return '<a class="btlink bt_danger" href="javascript:;">已过期' + Math.row.ssl.endtime + '天</a>';
+                  return '<a class="btlink bt_danger" href="javascript:;">已过期</a>';
                 }
               }
             } catch (error) { }
@@ -1935,7 +1935,6 @@ var site = {
           // theadName: '站点名称',
           // refresh: true,
           callback: function (that) {
-            console.log(that);
             // bt.show_confirm("批量删除站点", "是否同时删除选中站点同名的FTP、数据库、根目录", function() {
             //     var param = {};
             //     $('.bacth_options input[type=checkbox]').each(function() {
@@ -4091,7 +4090,6 @@ var site = {
                 type: 'button',
                 text: '保存',
                 callback: function (pdata) {
-                  console.log(pdata, '1111')
                   bt.site.set_site_runpath(web.id, pdata.dirName, function (ret) {
                     if (ret.status) site.reload(2)
                     layer.msg(ret.msg, { icon: ret.status ? 1 : 2 });
