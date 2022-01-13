@@ -93,8 +93,10 @@ class firewalls:
         if self.__isFirewalld:
             if status:
                 public.ExecShell('systemctl enable firewalld')
+                public.ExecShell('systemctl start firewalld')
             else:
                 public.ExecShell('systemctl disable firewalld')
+                public.ExecShell('systemctl stop firewalld')
         else:
             if status:
                 public.ExecShell("chkconfig iptables on")
