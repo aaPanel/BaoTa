@@ -126,17 +126,17 @@
                 <div class="def-log">
                     <div class="title c6 plr15">
                         <h3 class="f16">系统{{data['lan']['H3']}}</h3>
-                        <div class="mr50 pull-right" >
-                          <div class="ss-text pull-left">
-                              <em>系统防火墙开关</em>
-                              <div class='ssh-item'>
-                                <input class='btswitch btswitch-ios' id='isFirewall' type='checkbox' checked>
-                                <label class='btswitch-btn isFirewall' for='isFirewall' ></label>
-                              </div>
-                          </div>
-                        </div>
                     </div>
                     <div class="divtable pd15">
+                      <div class="mr20 pull-left" style="border-right: 1px solid #ccc; padding-right: 20px;">
+                        <div class="ss-text pull-left ml5">
+                            <em>防火墙开关</em>
+                            <div class='ssh-item'>
+                              <input class='btswitch btswitch-ios' id='isFirewall' type='checkbox' checked>
+                              <label class='btswitch-btn isFirewall' for='isFirewall' ></label>
+                            </div>
+                        </div>
+                      </div>
                       <div class="firewall-port-box">
                         <select id="firewalldType" class="bt-input-text c5 mr5" name="type" style="width:80px;">
                           <option value="port">{{data['lan']['F1']}}</option>
@@ -231,6 +231,10 @@
             firewall.set_firewall_status(status,function(rdata){
               if(!rdata.status){
                 $("#isFirewall").prop("checked",!status)
+              }else{
+                setTimeout(function(){
+                  location.reload()
+                },1000)
               }
             })
           },function () {
@@ -579,22 +583,22 @@
       },
       // 登录日志
       get_logs_view:function(obj){
-              $.post('/ssh_security?action=get_logs',{p:obj.p}, function(res){
-                  $("#ssh_logs").html(res.page)
-                  var _tab =  bt.render({
-                      table:'#ssh_logs_table',
-                      columns:[						    
-                          { title: "详情",templet:function(item){
-                              return '<span title="'+item.log+'" class="overflow_hide_style" style="width:330px">'+item.log+'</span>';
-                          }},
-                          { field: '操作时间',align:'right',width:140, title: "操作",templet:function(item){
-                              return item.addtime
-                          }}
-                      ],
-                      data:res.data
-                  })
-              })	
-          },
+            $.post('/ssh_security?action=get_logs',{p:obj.p}, function(res){
+                $("#ssh_logs").html(res.page)
+                var _tab =  bt.render({
+                    table:'#ssh_logs_table',
+                    columns:[						    
+                        { title: "详情",templet:function(item){
+                            return '<span title="'+item.log+'" class="overflow_hide_style" style="width:330px">'+item.log+'</span>';
+                        }},
+                        { field: '操作时间',align:'right',width:140, title: "操作",templet:function(item){
+                            return item.addtime
+                        }}
+                    ],
+                    data:res.data
+                })
+            })	
+        },
       get_logs_size:function(){
         bt.firewall.get_logs_size(function(rdata){
           $("#logSize").text(rdata);
@@ -624,13 +628,16 @@
         })
           },
       remove_accept_port: function (id,port) {
-              bt.firewall.del_accept_port(id, port, function (rdata) {
-                  if (rdata.status) {
-                      firewall.get_list();
-                  }
-                  bt.msg(rdata);
-              })
-          },
+        if(!$('.isFirewall').is(':checked')){
+          return bt.msg({status:false,msg:'当前系统防火墙未开启，无法操作！'});
+        }
+        bt.firewall.del_accept_port(id, port, function (rdata) {
+            if (rdata.status) {
+                firewall.get_list();
+            }
+            bt.msg(rdata);
+        })
+      },
       get_list:function(page,search){
               if (page == undefined) page = 1;	
               if (!search) search = $("#SearchValue").val();
