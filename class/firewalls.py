@@ -64,15 +64,46 @@ class firewalls:
     #取防火墙状态
     def CheckFirewallStatus(self):
         if self.__isUfw:
-            return 1
+            res = public.ExecShell('ufw status verbose')[0]
+            if res.find('inactive') != -1: return False
+            return True
 
         if self.__isFirewalld:
             res = public.ExecShell("systemctl status firewalld")[0]
-            if res.find('active (running)') != -1: return 1
-            if res.find('disabled') != -1: return -1
-            if res.find('inactive (dead)') != -1: return 0
+            if res.find('active (running)') != -1: return True
+            if res.find('disabled') != -1: return False
+            if res.find('inactive (dead)') != -1: return False
         else:
-            return 1
+            res = public.ExecShell("/etc/init.d/iptables status")[0]
+            if res.find('not running') != -1: return False
+            return True
+
+    def SetFirewallStatus(self,get=None):
+        '''
+            @name 设置系统防火墙状态
+            @author hwliang<2022-01-13>
+        '''
+        status = not self.CheckFirewallStatus()
+        status_msg = {True: '关闭', False: '开启'}
+        if self.__isUfw:
+            if status:
+                public.ExecShell('echo y|ufw enable')
+            else:
+                public.ExecShell('echo y|ufw disable')
+        if self.__isFirewalld:
+            if status:
+                public.ExecShell('systemctl enable firewalld')
+            else:
+                public.ExecShell('systemctl disable firewalld')
+        else:
+            if status:
+                public.ExecShell("chkconfig iptables on")
+                public.ExecShell('/etc/init.d/iptables start')
+            else:
+                public.ExecShell("chkconfig iptables off")
+                public.ExecShell('/etc/init.d/iptables stop')
+        public.WriteLog('TYPE_FIREWALL','{}系统防火墙'.format(status_msg[status]))
+        return public.returnMsg(True,'已{}系统防火墙'.format(status_msg[status]))
         
     #添加屏蔽IP
     def AddDropAddress(self,get):
@@ -323,6 +354,7 @@ class firewalls:
         data['port'] = port
         data['status'] = status
         data['ping'] = isPing
+        data['firewall_status'] = self.CheckFirewallStatus()
         return data
         
     

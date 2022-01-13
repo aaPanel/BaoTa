@@ -575,7 +575,7 @@ def firewall(pdata=None):
     import firewalls
     firewallObject = firewalls.firewalls()
     defs = ('GetList', 'AddDropAddress', 'DelDropAddress', 'FirewallReload', 'SetFirewallStatus',
-            'AddAcceptPort', 'DelAcceptPort', 'SetSshStatus', 'SetPing', 'SetSshPort', 'GetSshInfo')
+            'AddAcceptPort', 'DelAcceptPort', 'SetSshStatus', 'SetPing', 'SetSshPort', 'GetSshInfo','SetFirewallStatus')
     return publicObject(firewallObject, defs, None, pdata)
 
 
