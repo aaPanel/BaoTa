@@ -2128,7 +2128,7 @@ var bt_file = {
      */
     batch_file_delect: function(obj) {
         var that = this;
-        if (that.is_recycle) {
+        if (that.is_recycle == 'true' || (typeof that.is_recycle == 'boolean' && that.is_recycle)) {
             layer.confirm('确认删除选中内容,删除后将移至回收站，是否继续操作?', { title: '批量删除', closeBtn: 2, icon: 3 }, function() {
                 that.$http('SetBatchData', obj, function(res) {
                     if (res.status) that.reader_file_list({ path: that.file_path })
@@ -3380,7 +3380,7 @@ var bt_file = {
      */
     del_file_or_dir: function(data) {
         var that = this;
-        if (that.is_recycle) {
+        if (that.is_recycle == 'true' || (typeof that.is_recycle == 'boolean' && that.is_recycle)) {
             bt.confirm({
                 title: '删除' + data.type_tips + '[&nbsp;' + data.filename + '&nbsp;]',
                 msg: '<span>您确定要删除该' + data.type_tips + '[&nbsp;' + data.path + '&nbsp;]吗，删除后将移至回收站，是否继续操作?</span>'
