@@ -1,0 +1,1144 @@
+{
+  "1": {
+    "id": 1,
+    "type": "file",
+    "harm": "高",
+    "repaired": "1",
+    "level": "3",
+    "name": "确保SSH MaxAuthTries 设置为3-6之间",
+    "file": "/etc/ssh/sshd_config",
+    "Suggestions": "加固建议   在/etc/ssh/sshd_config 中取消MaxAuthTries注释符号#, 设置最大密码尝试失败次数3-6 建议为4",
+    "repair": "MaxAuthTries 4",
+    "rule": [
+      {
+        "re": "\nMaxAuthTries\\s*(\\d+)",
+        "check": {
+          "type": "number",
+          "max": 7,
+          "min": 3
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?#?MaxAuthTries\\s*(\\d+)",
+        "check": "\nMaxAuthTries 4"
+      }
+    ]
+  },
+  "2": {
+    "id": 2,
+    "repaired": "1",
+    "type": "file",
+    "harm": "高",
+    "level": "3",
+    "name": "SSHD 强制使用V2安全协议",
+    "file": "/etc/ssh/sshd_config",
+    "Suggestions": "加固建议   在/etc/ssh/sshd_config 文件按如相下设置参数",
+    "repair": "Protocol 2",
+    "rule": [
+      {
+        "re": "\nProtocol\\s*(\\d+)",
+        "check": {
+          "type": "number",
+          "max": 3,
+          "min": 1
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?#?Protocol\\s*(\\d+)",
+        "check": "\nProtocol 2"
+      }
+    ]
+  },
+  "3": {
+    "id": 3,
+    "repaired": "1",
+    "type": "file",
+    "harm": "高",
+    "level": "3",
+    "name": "设置SSH空闲超时退出时间",
+    "file": "/etc/ssh/sshd_config",
+    "Suggestions": "加固建议   在/etc/ssh/sshd_config 将ClientAliveInterval设置为300到900，即5-15分钟，将ClientAliveCountMax设置为0-3",
+    "repair": "ClientAliveInterval 600  ClientAliveCountMax 2",
+    "rule": [
+      {
+        "re": "\nClientAliveInterval\\s*(\\d+)",
+        "check": {
+          "type": "number",
+          "max": 900,
+          "min": 300
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?#?ClientAliveInterval\\s*(\\d+)",
+        "check": "\nClientAliveInterval 600"
+      }
+    ]
+  },
+  "4": {
+    "id": 4,
+    "repaired": "1",
+    "type": "file",
+    "harm": "高",
+    "level": "3",
+    "name": "确保SSH LogLevel 设置为INFO",
+    "file": "/etc/ssh/sshd_config",
+    "Suggestions": "加固建议   在/etc/ssh/sshd_config 文件以按如下方式设置参数（取消注释）",
+    "repair": "LogLevel INFO",
+    "rule": [
+      {
+        "re": "\nLogLevel\\s*(\\w+)",
+        "check": {
+          "type": "string",
+          "value": [ "INFO" ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?#?LogLevel\\s*(\\w+)",
+        "check": "\nLogLevel INFO"
+      }
+    ]
+  },
+  "5": {
+    "id": 5,
+    "repaired": "1",
+    "type": "file",
+    "harm": "高",
+    "level": "3",
+    "name": "禁止SSH空密码用户登陆",
+    "file": "/etc/ssh/sshd_config",
+    "Suggestions": "加固建议  在/etc/ssh/sshd_config 将PermitEmptyPasswords配置为no",
+    "repair": "PermitEmptyPasswords no",
+    "rule": [
+      {
+        "re": "\nPermitEmptyPasswords\\s*(\\w+)",
+        "check": {
+          "type": "string",
+          "value": [ "no" ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?#?PermitEmptyPasswords\\s*(\\w+)",
+        "check": "\nPermitEmptyPasswords no"
+      }
+    ]
+  },
+  "6": {
+    "id": 6,
+    "repaired": "1",
+    "type": "file",
+    "name": "SSH使用默认端口22",
+    "harm": "高",
+    "level": "3",
+    "file": "/etc/ssh/sshd_config",
+    "Suggestions": "加固建议   在/etc/ssh/sshd_config 将Port 设置为6000到65535随意一个, 例如",
+    "repair": "Port 60151",
+    "rule": [
+      {
+        "re": "Port\\s*(\\d+)",
+        "check": {
+          "type": "number",
+          "max": 65535,
+          "min": 22
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?#?Port\\s*(\\d+)",
+        "check": "\nPort 65531"
+      }
+    ]
+  },
+  "13": {
+    "id": 13,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/www/server/panel/BTPanel",
+    "name": "面板关键性文件权限错误"
+  },
+  "14": {
+    "id": 14,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "600",
+    "user": "root",
+    "group": "root",
+    "file": "/www/server/panel/class",
+    "name": "面板关键性文件权限错误"
+  },
+  "15": {
+    "id": 15,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "600",
+    "user": "root",
+    "group": "root",
+    "file": "/www/server/panel/config",
+    "name": "面板关键性文件权限错误"
+  },
+  "16": {
+    "id": 16,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "600",
+    "user": "root",
+    "group": "root",
+    "file": "/www/server/panel/data",
+    "name": "面板关键性文件权限错误"
+  },
+  "17": {
+    "id": 17,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/www/server/panel/install",
+    "name": "面板关键性文件权限错误"
+  },
+  "18": {
+    "id": 18,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/www/server/panel/logs",
+    "name": "面板关键性文件权限错误"
+  },
+  "19": {
+    "id": 19,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/www/server/panel/package",
+    "name": "面板关键性文件权限错误"
+  },
+  "20": {
+    "id": 20,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/www/server/panel/plugin",
+    "name": "面板关键性文件权限错误"
+  },
+  "21": {
+    "id": 21,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/www/server/panel/rewrite",
+    "name": "面板关键性文件权限错误"
+  },
+  "22": {
+    "id": 22,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/www/server/panel/ssl",
+    "name": "面板关键性文件权限错误"
+  },
+  "23": {
+    "id": 23,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/www/server/panel/temp",
+    "name": "面板关键性文件权限错误"
+  },
+  "24": {
+    "id": 24,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/www/server/panel/vhost",
+    "name": "面板关键性文件权限错误"
+  },
+  "25": {
+    "id": 25,
+    "repaired": "1",
+    "type": "file",
+    "harm": "中",
+    "level": "2",
+    "name": "PHP 5.2 版本泄露 ",
+    "file": "/www/server/php/52/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/52/etc/php.ini expose_php的值修改为Off中修改",
+    "repair": "expose_php = Off",
+    "rule": [
+      {
+        "re": "\nexpose_php\\s*=\\s*(\\w+)",
+        "check": {
+          "type": "string",
+          "value": [ "Off" ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?;?expose_php\\s*=\\s*(\\w+)",
+        "check": "\nexpose_php = Off"
+      }
+    ]
+  },
+  "26": {
+    "id": 26,
+    "repaired": "1",
+    "type": "file",
+    "harm": "中",
+    "level": "2",
+    "name": "PHP 5.3 版本泄露",
+    "file": "/www/server/php/53/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/53/etc/php.ini expose_php的值修改为Off中修改",
+    "repair": "expose_php = Off",
+    "rule": [
+      {
+        "re": "\nexpose_php\\s*=\\s*(\\w+)",
+        "check": {
+          "type": "string",
+          "value": [ "Off" ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?;?expose_php\\s*=\\s*(\\w+)",
+        "check": "\nexpose_php = Off"
+      }
+    ]
+  },
+  "27": {
+    "id": 27,
+    "repaired": "1",
+    "type": "file",
+    "harm": "中",
+    "level": "2",
+    "name": "PHP 5.4 版本泄露",
+    "file": "/www/server/php/54/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/54/etc/php.ini expose_php的值修改为Off中修改",
+    "repair": "expose_php = Off",
+    "rule": [
+      {
+        "re": "\nexpose_php\\s*=\\s*(\\w+)",
+        "check": {
+          "type": "string",
+          "value": [ "Off" ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?;?expose_php\\s*=\\s*(\\w+)",
+        "check": "\nexpose_php = Off"
+      }
+    ]
+  },
+  "28": {
+    "id": 28,
+    "repaired": "1",
+    "type": "file",
+    "harm": "中",
+    "level": "2",
+    "name": "PHP 5.5 版本泄露",
+    "file": "/www/server/php/55/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/55/etc/php.ini expose_php的值修改为Off中修改",
+    "repair": "expose_php = Off",
+    "rule": [
+      {
+        "re": "\nexpose_php\\s*=\\s*(\\w+)",
+        "check": {
+          "type": "string",
+          "value": [ "Off" ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?;?expose_php\\s*=\\s*(\\w+)",
+        "check": "\nexpose_php = Off"
+      }
+    ]
+  },
+  "29": {
+    "id": 29,
+    "repaired": "1",
+    "type": "file",
+    "harm": "中",
+    "level": "2",
+    "name": "PHP 5.6 版本泄露",
+    "file": "/www/server/php/56/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/56/etc/php.ini expose_php的值修改为Off中修改",
+    "repair": "expose_php = Off",
+    "rule": [
+      {
+        "re": "\nexpose_php\\s*=\\s*(\\w+)",
+        "check": {
+          "type": "string",
+          "value": [ "Off" ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?;?expose_php\\s*=\\s*(\\w+)",
+        "check": "\nexpose_php = Off"
+      }
+    ]
+  },
+  "30": {
+    "id": 30,
+    "type": "file",
+    "repaired": "1",
+    "harm": "中",
+    "level": "2",
+    "name": "PHP 7.0 版本泄露",
+    "file": "/www/server/php/70/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/70/etc/php.ini expose_php的值修改为Off中修改",
+    "repair": "expose_php = Off",
+    "rule": [
+      {
+        "re": "\nexpose_php\\s*=\\s*(\\w+)",
+        "check": {
+          "type": "string",
+          "value": [ "Off" ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?;?expose_php\\s*=\\s*(\\w+)",
+        "check": "\nexpose_php = Off"
+      }
+    ]
+  },
+  "31": {
+    "id": 31,
+    "repaired": "1",
+    "type": "file",
+    "harm": "中",
+    "level": "2",
+    "name": "PHP 7.1 版本泄露",
+    "file": "/www/server/php/71/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/71/etc/php.ini expose_php的值修改为Off中修改",
+    "repair": "expose_php = Off",
+    "rule": [
+      {
+        "re": "\nexpose_php\\s*=\\s*(\\w+)",
+        "check": {
+          "type": "string",
+          "value": [ "Off" ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?;?expose_php\\s*=\\s*(\\w+)",
+        "check": "\nexpose_php = Off"
+      }
+    ]
+  },
+  "32": {
+    "id": 32,
+    "repaired": "1",
+    "type": "file",
+    "harm": "中",
+    "level": "2",
+    "name": "PHP 7.2 版本泄露",
+    "file": "/www/server/php/72/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/72/etc/php.ini expose_php的值修改为Off中修改",
+    "repair": "expose_php = Off",
+    "rule": [
+      {
+        "re": "\nexpose_php\\s*=\\s*(\\w+)",
+        "check": {
+          "type": "string",
+          "value": [ "Off" ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?;?expose_php\\s*=\\s*(\\w+)",
+        "check": "\nexpose_php = Off"
+      }
+    ]
+  },
+  "32.5": {
+    "id": 32.5,
+    "repaired": "1",
+    "type": "file",
+    "harm": "中",
+    "level": "2",
+    "name": "PHP 7.3 版本泄露",
+    "file": "/www/server/php/73/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/73/etc/php.ini expose_php的值修改为Off中修改",
+    "repair": "expose_php = Off",
+    "rule": [
+      {
+        "re": "\nexpose_php\\s*=\\s*(\\w+)",
+        "check": {
+          "type": "string",
+          "value": [ "Off" ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\n?;?expose_php\\s*=\\s*(\\w+)",
+        "check": "\nexpose_php = Off"
+      }
+    ]
+  },
+  "33": {
+    "id": 33,
+    "repaired": "1",
+    "type": "file",
+    "harm": "严重",
+    "level": "5",
+    "name": "PHP 5.2 中存在危险函数未禁用",
+    "file": "/www/server/php/52/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/52/etc/php.ini 中 disable_functions= 修改成如下:",
+    "repair": "disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv",
+    "rule": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": {
+          "type": "string",
+          "value": [
+            "passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+          ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": "\ndisable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+      }
+    ]
+  },
+  "34": {
+    "id": 34,
+    "repaired": "1",
+    "type": "file",
+    "harm": "严重",
+    "level": "5",
+    "name": "PHP 5.3 中存在危险函数未禁用",
+    "file": "/www/server/php/53/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/53/etc/php.ini 中 disable_functions= 修改成如下:",
+    "repair": "disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv",
+    "rule": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": {
+          "type": "string",
+          "value": [
+            "passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+          ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": "\ndisable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+      }
+    ]
+  },
+  "35": {
+    "id": 35,
+    "repaired": "1",
+    "type": "file",
+    "harm": "严重",
+    "level": "5",
+    "name": "PHP 5.4 中存在危险函数未禁用",
+    "file": "/www/server/php/54/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/54/etc/php.ini 中 disable_functions= 修改成如下:",
+    "repair": "disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv",
+    "rule": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": {
+          "type": "string",
+          "value": [
+            "passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+          ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": "\ndisable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+      }
+    ]
+  },
+  "36": {
+    "id": 36,
+    "repaired": "1",
+    "type": "file",
+    "harm": "严重",
+    "level": "5",
+    "name": "PHP 5.5 中存在危险函数未禁用",
+    "file": "/www/server/php/55/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/55/etc/php.ini 中 disable_functions= 修改成如下:",
+    "repair": "disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv",
+    "rule": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": {
+          "type": "string",
+          "value": [
+            "passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+          ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": "\ndisable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+      }
+    ]
+  },
+  "37": {
+    "id": 37,
+    "repaired": "1",
+    "type": "file",
+    "harm": "严重",
+    "level": "5",
+    "name": "PHP 5.6 中存在危险函数未禁用",
+    "file": "/www/server/php/56/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/56/etc/php.ini 中 disable_functions= 修改成如下:",
+    "repair": "disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv",
+    "rule": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": {
+          "type": "string",
+          "value": [
+            "passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+          ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": "\ndisable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+      }
+    ]
+  },
+  "38": {
+    "id": 38,
+    "repaired": "1",
+    "type": "file",
+    "harm": "严重",
+    "level": "5",
+    "name": "PHP 7.0 中存在危险函数未禁用",
+    "file": "/www/server/php/70/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/70/etc/php.ini 中 disable_functions= 修改成如下:",
+    "repair": "disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv",
+    "rule": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": {
+          "type": "string",
+          "value": [
+            "passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+          ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": "\ndisable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+      }
+    ]
+  },
+  "39": {
+    "id": 39,
+    "type": "file",
+    "harm": "严重",
+    "repaired": "1",
+    "level": "5",
+    "name": "PHP 7.1 中存在危险函数未禁用",
+    "file": "/www/server/php/71/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/71/etc/php.ini 中 disable_functions= 修改成如下:",
+    "repair": "disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv",
+    "rule": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": {
+          "type": "string",
+          "value": [
+            "passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+          ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": "\ndisable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+      }
+    ]
+  },
+  "40": {
+    "id": 40,
+    "type": "file",
+    "repaired": "1",
+    "harm": "严重",
+    "level": "5",
+    "name": "PHP 7.2 中存在危险函数未禁用",
+    "file": "/www/server/php/72/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/72/etc/php.ini 中 disable_functions= 修改成如下:",
+    "repair": "disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv",
+    "rule": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": {
+          "type": "string",
+          "value": [
+            "passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+          ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": "\ndisable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+      }
+    ]
+  },
+  "40.5": {
+    "id": 40.5,
+    "repaired": "1",
+    "type": "file",
+    "harm": "严重",
+    "level": "5",
+    "name": "PHP 7.3 中存在危险函数未禁用",
+    "file": "/www/server/php/73/etc/php.ini",
+    "Suggestions": "加固建议, 在/www/server/php/73/etc/php.ini 中 disable_functions= 修改成如下:",
+    "repair": "disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv",
+    "rule": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": {
+          "type": "string",
+          "value": [
+            "passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+          ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\ndisable_functions\\s?=\\s?(.+)",
+        "check": "\ndisable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,popen,proc_open,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,putenv"
+      }
+    ]
+  },
+  "41": {
+    "id": 41,
+    "repaired": "0",
+    "type": "dir",
+    "harm": "高",
+    "level": "3",
+    "name": "PHP 5.2 版本过旧",
+    "file": "/www/server/php/52",
+    "Suggestions": "加固建议：不再使用php5.2 ",
+    "repair": "PHP 5.2 已经被淘汰建议升级更高的版本",
+    "rule": [],
+    "repair_loophole": [
+      {
+        "re": "",
+        "check": ""
+      }
+    ]
+  },
+  "42": {
+    "id": 42,
+    "repaired": "0",
+    "type": "file",
+    "harm": "高",
+    "level": "3",
+    "name": "Redis 监听的地址为0.0.0.0",
+    "check_file": "/www/server/redis",
+    "file": "/www/server/redis/redis.conf",
+    "Suggestions": "加固建议, 在/www/server/redis/redis.conf 中的监听IP设置为127.0.0.1 例如",
+    "repair": "bind 127.0.0.1",
+    "rule": [
+      {
+        "re": "\nbind\\s*(.+)",
+        "check": {
+          "type": "string",
+          "value": [ "0.0.0.0" ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\nbind\\s*(.+)",
+        "check": "\nbind 127.0.0.1"
+      }
+    ]
+  },
+  "46": {
+    "id": 46,
+    "repaired": "0",
+    "type": "file",
+    "harm": "高",
+    "level": "3",
+    "name": "Memcache 监听IP为0.0.0.0",
+    "check_file": "/usr/local/memcached",
+    "file": "/etc/init.d/memcached",
+    "Suggestions": "加固建议, 在/etc/init.d/memcached 中的监听IP设置为127.0.0.1 例如",
+    "repair": "IP=127.0.0.1",
+    "rule": [
+      {
+        "re": "\nIP\\s?=\\s?(.+)",
+        "check": {
+          "type": "string",
+          "value": [ "0.0.0.0" ]
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\nIP\\s?=\\s?(.+)",
+        "check": "\nIP=127.0.0.1"
+      }
+    ]
+  },
+  "50": {
+    "id": 50,
+    "type": "file",
+    "repaired": "1",
+    "harm": "中",
+    "level": "2",
+    "name": "SSH 密码复杂度检查",
+    "file": "/etc/security/pwquality.conf",
+    "Suggestions": "加固建议/etc/security/pwquality.conf, 把minlen(密码最小长度)设置为9-32,把minclass(至少包含小写字母，大写字母，数字，特殊字符等3类或者4类)",
+    "repair": "minlen=10  minclass=3",
+    "rule": [
+      {
+        "re": "minlen\\s*=\\s*(\\d+)",
+        "check": {
+          "type": "number",
+          "max": 32,
+          "min": 9
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "minlen\\s*=\\s*(\\d+)",
+        "check": "\nminlen=10"
+      }
+    ]
+  },
+  "51": {
+    "id": 51,
+    "type": "file",
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "name": "SSH 用户设置时间失效时间",
+    "file": "/etc/login.defs",
+    "Suggestions": "加固建议  使用非密码登陆方式密钥对。请忽略此项, 在/etc/login.defs 中将PASS_MAX_DAYS 参数设置为60-180之间",
+    "repair": "PASS_MAX_DAYS 90   需同时执行命令设置root 密码失效时间   命令如下:  chage --maxdays 90 root",
+    "rule": [
+      {
+        "re": "PASS_MAX_DAYS\\s*(\\d+)",
+        "check": {
+          "type": "number",
+          "max": 180,
+          "min": 60
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "PASS_MAX_DAYS\\s*(\\d+)",
+        "check": "\nPASS_MAX_DAYS 90"
+      }
+    ]
+  },
+  "52": {
+    "id": 52,
+    "type": "file",
+    "repaired": "1",
+    "harm": "中",
+    "level": "2",
+    "name": "设置密码修改最小间隔时间",
+    "file": "/etc/login.defs",
+    "Suggestions": "加固建议   在/etc/login.defs PASS_MIN_DAYS 参数设置为7-14之间",
+    "repair": "PASS_MIN_DAYS 7   需同时执行命令设置root 密码失效时间   命令如下:  chage --mindays 7 root",
+    "rule": [
+      {
+        "re": "PASS_MIN_DAYS\\s*(\\d+)",
+        "check": {
+          "type": "number",
+          "max": 14,
+          "min": 6
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "PASS_MIN_DAYS\\s*(\\d+)",
+        "check": "\nPASS_MIN_DAYS 7"
+      }
+    ]
+  },
+  "54": {
+    "id": 54,
+    "repaired": "1",
+    "type": "file",
+    "harm": "中",
+    "level": "2",
+    "name": "开启地址空间布局随机化",
+    "ps": "它将进程的内存空间地址随机化来增加入侵者预测目的地址难度, 从而减低进程成功入侵的风险",
+    "file": "/proc/sys/kernel/randomize_va_space",
+    "Suggestions": "加固建议：执行命令",
+    "repair": "sysctl -w kernel.randomize_va_space=2",
+    "rule": [
+      {
+        "re": "\\d+",
+        "check": {
+          "type": "number",
+          "max": 3,
+          "min": 1
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\\d+",
+        "check": "2"
+      }
+    ]
+  },
+  "55": {
+    "id": 55,
+    "repaired": "1",
+    "type": "file",
+    "harm": "中",
+    "level": "2",
+    "name": "SSH 用户设置时间失效时间",
+    "file": "/etc/login.defs",
+    "Suggestions": "加固建议  在/etc/login.defs PASS_WARN_AGE 参数设置为7-14之间，建议为7",
+    "repair": "PASS_WARN_AGE 7  同时执行命令使root用户设置生效 chage --warndays 7 root",
+    "rule": [
+      {
+        "re": "\nPASS_WARN_AGE\\s*(\\d+)",
+        "check": {
+          "type": "number",
+          "max": 15,
+          "min": 6
+        }
+      }
+    ],
+    "repair_loophole": [
+      {
+        "re": "\nPASS_WARN_AGE\\s*(\\d+)",
+        "check": "\nPASS_WARN_AGE 7"
+      }
+    ]
+  },
+  "57": {
+    "id": 57,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/etc/passwd",
+    "name": "系统关键性文件权限错误/etc/passwd"
+  },
+  "58": {
+    "id": 58,
+    "harm": "高",
+    "repaired": "1",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "400",
+    "user": "root",
+    "group": "root",
+    "file": "/etc/shadow",
+    "name": "系统关键性文件权限错误/etc/shadow"
+  },
+  "59": {
+    "id": 59,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/etc/group",
+    "name": "系统关键性文件权限错误/etc/group"
+  },
+  "60": {
+    "id": 60,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "400",
+    "user": "root",
+    "group": "root",
+    "file": "/etc/gshadow",
+    "name": "系统关键性文件权限错误/etc/gshadow"
+  },
+  "61": {
+    "id": 61,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/etc/hosts.allow",
+    "name": "系统关键性文件权限错误/etc/hosts.allow"
+  },
+  "62": {
+    "id": 62,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/etc/hosts.deny",
+    "name": "系统关键性文件权限错误/etc/hosts.deny"
+  },
+  "63": {
+    "id": 63,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "755",
+    "user": "root",
+    "group": "root",
+    "file": "/www",
+    "name": "系统关键性文件权限错误/www"
+  },
+  "64": {
+    "id": 64,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "755",
+    "user": "root",
+    "group": "root",
+    "file": "/www/server",
+    "name": "系统关键性文件权限错误/www/server"
+  },
+  "66": {
+    "id": 66,
+    "harm": "高",
+    "repaired": "1",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "755",
+    "user": "root",
+    "group": "root",
+    "file": "/www/wwwroot",
+    "name": "系统关键性文件权限错误/www/wwwroot"
+  },
+  "67": {
+    "id": 67,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/etc/rc.local",
+    "name": "系统关键性文件权限错误/etc/rc.local"
+  },
+  "68": {
+    "id": 68,
+    "repaired": "1",
+    "harm": "高",
+    "level": "3",
+    "type": "chmod",
+    "chmod": "644",
+    "user": "root",
+    "group": "root",
+    "file": "/etc/rc.d/rc.local",
+    "name": "系统关键性文件权限错误/etc/rc.d/rc.local"
+  },
+  "69": {
+    "id": 69,
+    "repaired": "1",
+    "level": "3",
+    "harm": "高",
+    "type": "chmod",
+    "chmod": "600",
+    "user": "root",
+    "group": "root",
+    "file": "/var/spool/cron/root",
+    "name": "系统关键性文件权限错误/var/spool/cron/root"
+  }
+}

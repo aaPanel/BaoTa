@@ -1,0 +1,69 @@
+[
+  {
+    "name": "dns_bt",
+    "title": "宝塔DNS云解析",
+    "ps": "使用宝塔DNS云解析插件自动解析申请SSL",
+    "help": "",
+    "data": false
+  },
+  {
+    "name": "dns_dp",
+    "title": "DnsPod",
+    "ps": "使用DnsPod的API接口自动解析申请SSL",
+    "help": "DnsPod后台》用户中心》安全设置，开启API Token",
+    "data": [
+      {
+        "key": "SAVED_DP_Id",
+        "name": "ID",
+        "value": ""
+      },
+      {
+        "key": "SAVED_DP_Key",
+        "name": "Token",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "name": "dns_ali",
+    "title": "阿里云DNS",
+    "ps": "使用阿里云API接口自动解析申请SSL",
+    "help": "阿里云控制台》用户头像》accesskeys按指引获取AccessKey/SecretKey",
+    "data": [
+      {
+        "key": "SAVED_Ali_Key",
+        "name": "AccessKey",
+        "value": ""
+      },
+      {
+        "key": "SAVED_Ali_Secret",
+        "name": "SecretKey",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "name": "dns_cx",
+    "title": "CloudXns",
+    "ps": "使用cloudxns的API接口自动解析申请SSL",
+    "help": "cloudxns后台》用户中心》API管理，按指引获取AccessKey/SecretKey",
+    "data": [
+      {
+        "key": "SAVED_CX_Key",
+        "name": "AccessKey",
+        "value": ""
+      },
+      {
+        "key": "SAVED_CX_Secret",
+        "name": "SecretKey",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "name": "dns",
+    "title": "手动解析",
+    "ps": "返回host和txt值,由用户手动解析",
+    "data": false
+  }
+]
