@@ -233,7 +233,7 @@
                 $("#isFirewall").prop("checked",!status)
               }else{
                 setTimeout(function(){
-                  location.reload()
+                  location.reload();
                 },1000)
               }
             })
@@ -628,7 +628,7 @@
         })
           },
       remove_accept_port: function (id,port) {
-        if(!$('.isFirewall').is(':checked')){
+        if(!$('#isFirewall').is(':checked')){
           return bt.msg({status:false,msg:'当前系统防火墙未开启，无法操作！'});
         }
         bt.firewall.del_accept_port(id, port, function (rdata) {
