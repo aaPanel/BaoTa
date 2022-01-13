@@ -84,7 +84,7 @@ class firewalls:
             @author hwliang<2022-01-13>
         '''
         status = not self.CheckFirewallStatus()
-        status_msg = {True: '关闭', False: '开启'}
+        status_msg = {False: '关闭', True: '开启'}
         if self.__isUfw:
             if status:
                 public.ExecShell('echo y|ufw enable')
