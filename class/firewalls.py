@@ -109,6 +109,7 @@ class firewalls:
         
     #添加屏蔽IP
     def AddDropAddress(self,get):
+        if not self.CheckFirewallStatus(): return public.returnMsg(False,'当前系统防火墙未开启')
         import time
         import re
         ip_format = get.port.split('/')[0]
@@ -138,6 +139,7 @@ class firewalls:
     
     #删除IP屏蔽
     def DelDropAddress(self,get):
+        if not self.CheckFirewallStatus(): return public.returnMsg(False,'当前系统防火墙未开启')
         address = get.port
         id = get.id
         ip_format = get.port.split('/')[0]
@@ -162,6 +164,7 @@ class firewalls:
     
     #添加放行端口
     def AddAcceptPort(self,get):
+        if not self.CheckFirewallStatus(): return public.returnMsg(False,'当前系统防火墙未开启')
         import re
         src_port = get.port
         get.port = get.port.replace('-',':')
@@ -196,6 +199,7 @@ class firewalls:
 
     #添加放行端口
     def AddAcceptPortAll(self,port,ps):
+        if not self.CheckFirewallStatus(): return public.returnMsg(False,'当前系统防火墙未开启')
         import re
         port = port.replace('-',':')
         rep = r"^\d{1,5}(:\d{1,5})?$"
@@ -216,6 +220,7 @@ class firewalls:
     
     #删除放行端口
     def DelAcceptPort(self,get):
+        if not self.CheckFirewallStatus(): return public.returnMsg(False,'当前系统防火墙未开启')
         port = get.port
         id = get.id
         try:
