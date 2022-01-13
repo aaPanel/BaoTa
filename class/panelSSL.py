@@ -875,6 +875,9 @@ class panelSSL:
                     if iss[0] in is_key:
                         result['issuer'] = iss[1].decode()
                         break
+            if not result['issuer']:
+                if hasattr(issuer, 'O'):
+                    result['issuer'] = issuer.O
             # 取到期时间
             result['notAfter'] = self.strf_date(
                 bytes.decode(x509.get_notAfter())[:-1])
@@ -899,7 +902,8 @@ class panelSSL:
                         if sub[0] == b'CN':
                             result['subject'] = sub[1].decode()
                             break
-                    result['dns'].append(result['subject'])
+                    if 'subject' in result:
+                        result['dns'].append(result['subject'])
                 else:
                     result['subject'] = result['dns'][0]
             return result
