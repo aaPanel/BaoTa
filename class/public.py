@@ -1954,9 +1954,18 @@ def auto_backup_panel():
             if time.mktime(time.strptime(f, "%Y-%m-%d")) < time_now: 
                 path = b_path + '/' + f
                 if os.path.exists(path): shutil.rmtree(path)
+        
+        set_php_cli_env()
     except:
         pass
             
+
+def set_php_cli_env():
+    '''
+        @name 重新设置php-cli.ini配置
+    '''
+    import jobs
+    jobs.set_php_cli_env()
     
 
 
