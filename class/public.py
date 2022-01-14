@@ -2647,8 +2647,8 @@ def get_menus():
             if data[i]['id'] in hide_menu: continue
             if data[i]['id'] == "memuAxterm":
                 if debug: continue
-            if data[i]['id'] == "memu_btwaf": 
-                if not os.path.exists('plugin/btwaf/btwaf_main.py'): continue
+            # if data[i]['id'] == "memu_btwaf": 
+            #     if not os.path.exists('plugin/btwaf/btwaf_main.py'): continue
             show_menu.append(data[i])
 
 
