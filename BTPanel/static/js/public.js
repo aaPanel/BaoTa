@@ -1722,6 +1722,7 @@ function openEditorView (type, path, callback) {
     type: 1,
     maxmin: true,
     shade: false,
+    anim:-1,
     area: ['80%', '80%'],
     title: "在线文本编辑器",
     skin: 'aceEditors',
