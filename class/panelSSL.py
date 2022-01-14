@@ -1010,29 +1010,30 @@ class panelSSL:
         """
         rtmp = ""
         data = {}
-        data['username'] = get.username;
+        data['username'] = get.username
         data['password'] = public.md5(get.password);        
         data['serverid'] = panelAuth().get_serverid()
 
-        if 'code' in get: data['code'] = get.code;
-        if 'token' in get: data['token'] = get.token;
+        if 'code' in get: data['code'] = get.code
+        if 'token' in get: data['token'] = get.token
 
         pdata = {}
-        pdata['data'] = self.De_Code(data);
+        pdata['data'] = self.De_Code(data)
         try:
-            rtmp = public.httpPost(self.__APIURL+'/GetAuthToken',pdata) 
+            import requests
+            rtmp = requests.post(self.__APIURL+'/GetAuthToken',pdata) 
             result = json.loads(rtmp);           
-            result['data'] = self.En_Code(result['data']);
+            result['data'] = self.En_Code(result['data'])
             if not result['status']: return result
 
             if result['data']: 
                 result['data']['serverid'] = data['serverid']
-                public.writeFile(self.__UPATH,json.dumps(result['data']));
+                public.writeFile(self.__UPATH,json.dumps(result['data']))
                 if os.path.exists('data/bind_path.pl'): os.remove('data/bind_path.pl')
                 public.flush_plugin_list()
-            del(result['data']);
-            session['focre_cloud'] = True       
-            return result;
+            del(result['data'])
+            session['focre_cloud'] = True
+            return result
         except Exception as ex:
             print(rtmp)
             return public.returnMsg(False,'连接服务器失败!<br>' + rtmp)
@@ -1044,13 +1045,13 @@ class panelSSL:
         rtmp = ""
         data = {}
         data['username'] = get.username
-        data['token'] = get.token;
+        data['token'] = get.token
         pdata = {}
-        pdata['data'] = self.De_Code(data);
+        pdata['data'] = self.De_Code(data)
         try:
             rtmp = public.httpPost(self.__APIURL+'/GetBindCode',pdata)  
             result = json.loads(rtmp);           
-            return result;
+            return result
         except Exception as ex:
             return public.returnMsg(False,'连接服务器失败!<br>' + rtmp)
             
