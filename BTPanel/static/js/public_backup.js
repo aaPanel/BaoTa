@@ -4230,7 +4230,7 @@ bt.soft = {
                 </div>\
             </div>',
       success: function (indexs, layers) {
-        var loadT = bt.load('正在获取产品推荐信息，请稍后...');
+        var loadT = bt.load('正在获取产品推荐信息，请稍候...');
         bt.send('get_plugin_remarks', 'auth/get_plugin_remarks', {}, function (res) {
           loadT.close()
           //初始化
@@ -5055,7 +5055,7 @@ bt.soft = {
   install: function (name, that) {
     var _this = this;
     if (bt.soft.is_install) {
-      layer.msg('正在安装其他软件，请稍后操作！', { icon: 0 });
+      layer.msg('正在安装其他软件，请稍候操作！', { icon: 0 });
       return false;
     }
     _this.get_soft_find(name, function (rdata) {
@@ -5175,7 +5175,7 @@ bt.soft = {
             '<ul class="waiting-down-list">' +
             '<li>' +
             '<div class="down-filse-name">' +
-            '<span class="fname" style="width:80%;" title="">正在下载' + param.name + ' ' + param.version + '.' + param.min_version + '，请稍后...</span>' +
+            '<span class="fname" style="width:80%;" title="">正在下载' + param.name + ' ' + param.version + '.' + param.min_version + '，请稍候...</span>' +
             '<span style="width: 20%;display: inline-block;vertical-align: top;text-align: right;" data-name="down_pre">0%</span></div>' +
             '<div class="down-progress">' +
             '<div class="done-progress" data-name="progress" style="width:0%"></div></div>' +
@@ -5266,7 +5266,7 @@ bt.soft = {
 
     layer.closeAll();
     bt.soft.loadT = layer.open({
-      title: config.title || '正在执行安装脚本，请稍后...',
+      title: config.title || '正在执行安装脚本，请稍候...',
       type: 1,
       closeBtn: false,
       maxmin: true,
@@ -5344,7 +5344,7 @@ bt.soft = {
    */
 
   get_install_plugin: function (item) {
-    var plugin_info = bt.load('正在获取插件安装信息，请稍后<img src="/static/img/ing.gif" />');
+    var plugin_info = bt.load('正在获取插件安装信息，请稍候<img src="/static/img/ing.gif" />');
     bt.send('install_plugin', 'plugin/install_plugin', {
       sName: item.name,
       version: item.install_version.m_version,
@@ -5399,7 +5399,7 @@ bt.soft = {
         title = '修复'
         break;
     }
-    var loadT = bt.load('正在获取插件版本信息，请稍后...');
+    var loadT = bt.load('正在获取插件版本信息，请稍候...');
     if (data === 'error') return false;
     bt.send('get_plugin_upgrades', 'plugin/get_plugin_upgrades', {
       plugin_name: data.name,
@@ -5600,7 +5600,7 @@ bt.soft = {
    * @description 插件管理
    */
   plugin_toolbox_info: function (name, title, version, is_beta) {
-    var loadT = bt.load('获取插件信息，请稍后...')
+    var loadT = bt.load('获取插件信息，请稍候...')
     if (!name) return;
     bt.send('get_plugin_upgrades', 'plugin/get_plugin_upgrades', {
       plugin_name: name,

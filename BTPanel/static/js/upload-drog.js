@@ -151,7 +151,7 @@ UploadFile.prototype = {
     // 放置目标
     this.bind(this.uploadElement, 'drop', function (ev) {
       if (_this.uploadStatus === 2) {
-        layer.msg('正在上传文件，请稍后', {
+        layer.msg('正在上传文件，请稍候', {
           icon: 0
         });
         _this.file_drag_hover(ev);
@@ -834,7 +834,7 @@ UploadFile.prototype = {
   file_select_handler: function file_select_handler (ev) {
     var _this7 = this;
     this.file_drag_hover(ev);
-    this.load = bt.load('正在获取文件信息，请稍后...');
+    this.load = bt.load('正在获取文件信息，请稍候...');
     this.timeNumber = 0;
     if (ev.target.files) {
       var items = ev.target.files;

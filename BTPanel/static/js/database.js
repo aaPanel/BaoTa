@@ -1157,7 +1157,7 @@ var database = {
           countDown = 9;
         if (arrs.length == 1) countDown = 4
         title = typeof dbname === "function" ? '二次验证信息，批量删除数据库' : '二次验证信息，删除数据库 [ ' + dbname + ' ]';
-        var loadT = bt.load('正在检测数据库数据信息，请稍后...')
+        var loadT = bt.load('正在检测数据库数据信息，请稍候...')
         bt.send('check_del_data', 'database/check_del_data', {
           ids: ids
         }, function (res) {
@@ -1227,7 +1227,7 @@ var database = {
             yes: function (indes, layers) {
               console.log(1);
               if ($(layers).hasClass('active')) {
-                layer.tips('请确认信息，稍后在尝试，还剩' + countDown + '秒', $(layers).find('.layui-layer-btn0'), {
+                layer.tips('请确认信息，稍候在尝试，还剩' + countDown + '秒', $(layers).find('.layui-layer-btn0'), {
                   tips: [1, 'red'],
                   time: 3000
                 })

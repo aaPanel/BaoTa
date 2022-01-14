@@ -2292,7 +2292,7 @@ var soft = {
         }
 
       function get_phpmyadmin_ssl() {
-        var loading = bt.load('正在获取SSL状态，请稍后...');
+        var loading = bt.load('正在获取SSL状态，请稍候...');
         bt.send('get_phpmyadmin_ssl', 'ajax/get_phpmyadmin_ssl', {}, function (tdata) {
           loading.close();
           $('#ssl_safe_checkbox').prop("checked", tdata.status);

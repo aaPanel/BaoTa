@@ -229,7 +229,7 @@ export PATH
         if not npm_bin and not yarn_bin: 
             return public.return_error('指定nodejs版本不存在!')
         public.writeFile(self._npm_exec_log,"正在安装依赖包...\n")
-        public.writeFile(self._npm_exec_log,"正在下载依赖包,请稍后...\n")
+        public.writeFile(self._npm_exec_log,"正在下载依赖包,请稍候...\n")
         if yarn_bin:
             if os.path.exists(package_lock_file): 
                 os.remove(package_lock_file)

@@ -1050,7 +1050,7 @@ var host_trem = {
    * @return void 
    */
   get_host_list: function (callback) {
-      var loadT = bt.load('正在获取服务器列表，请稍后...');
+      var loadT = bt.load('正在获取服务器列表，请稍候...');
       this.post('get_host_list', {}, function (rdata) {
           loadT.close();
           if (callback) callback(rdata);
@@ -1064,7 +1064,7 @@ var host_trem = {
    * @return void
    */
   get_host_find: function (host, callback) {
-      var loadT = bt.load('正在获取指定服务器信息，请稍后...');
+      var loadT = bt.load('正在获取指定服务器信息，请稍候...');
       this.post('get_host_find', { host: host }, function (rdata) {
           loadT.close();
           if (callback) callback(rdata);
@@ -1086,7 +1086,7 @@ var host_trem = {
    * @return void
    */
   create_host: function (ssh_info, callback) {
-      var loadT = bt.load('正在添加服务器信息，请稍后...');
+      var loadT = bt.load('正在添加服务器信息，请稍候...');
       this.post('create_host', ssh_info, function (rdata) {
           loadT.close();
           if (!rdata.status) {
@@ -1112,7 +1112,7 @@ var host_trem = {
    * @return void
    */
   modify_host: function (ssh_info, callback) {
-      var loadT = bt.load('正在修改指定服务器信息，请稍后...');
+      var loadT = bt.load('正在修改指定服务器信息，请稍候...');
       this.post('modify_host', ssh_info, function (rdata) {
           loadT.close();
           if (callback) callback(rdata);
@@ -1127,7 +1127,7 @@ var host_trem = {
    * @return void
    */
   remove_host: function (host, callback) {
-      var loadT = bt.load('正在删除指定服务器信息，请稍后...');
+      var loadT = bt.load('正在删除指定服务器信息，请稍候...');
       this.post('remove_host', { host: host }, function (rdata) {
           loadT.close();
           if (callback) callback(rdata);
@@ -1157,7 +1157,7 @@ var host_trem = {
    * @return void
    */
   get_command_list: function (callback) {
-      var loadT = bt.load('正在获取常用命令列表，请稍后...');
+      var loadT = bt.load('正在获取常用命令列表，请稍候...');
       this.post('get_command_list', {}, function (rdata) {
           loadT.close();
           if (callback) callback(rdata);
@@ -1172,7 +1172,7 @@ var host_trem = {
    * @return void
    */
   create_command: function (obj, callback) {
-      var loadT = bt.load('正在创建常用命令，请稍后...');
+      var loadT = bt.load('正在创建常用命令，请稍候...');
       this.post('create_command', obj, function (rdata) {
           loadT.close();
           if (callback) callback(rdata);
@@ -1187,7 +1187,7 @@ var host_trem = {
    * @return void
    */
   get_command_find: function (title, callback) {
-      var loadT = bt.load('正在获取指定常用命令数据，请稍后...');
+      var loadT = bt.load('正在获取指定常用命令数据，请稍候...');
       this.post('get_command_find', { title: title }, function (rdata) {
           loadT.close();
           if (callback) callback(rdata);
@@ -1203,7 +1203,7 @@ var host_trem = {
    * @return void
    */
   modify_command: function (obj, callback) {
-      var loadT = bt.load('正在修改指定常用命令，请稍后...');
+      var loadT = bt.load('正在修改指定常用命令，请稍候...');
       this.post('modify_command', obj, function (rdata) {
           loadT.close();
           if (callback) callback(rdata);
@@ -1217,7 +1217,7 @@ var host_trem = {
    * @return void
    */
   remove_command: function (title, callback) {
-      var loadT = bt.load('正在删除指定常用命令，请稍后...');
+      var loadT = bt.load('正在删除指定常用命令，请稍候...');
       this.post('remove_command', { title: title }, function (rdata) {
           loadT.close();
           // console.log(rdata)

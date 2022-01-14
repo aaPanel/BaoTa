@@ -285,7 +285,7 @@
       },
       // 设置防火墙状态
       set_firewall_status:function(status,callback){
-        var load = bt.load('正在设置系统防火墙状态，请稍后...');
+        var load = bt.load('正在设置系统防火墙状态，请稍候...');
         bt.send('SetFirewallStatus','firewall/SetFirewallStatus',{},function (rdata) {
           load.close()
           bt.msg(rdata);

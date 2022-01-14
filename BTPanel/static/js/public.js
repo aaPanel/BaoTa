@@ -1052,7 +1052,7 @@ var aceEditor = {
   },
   // 重命名请求
   rename_currency_req: function (obj, callback) {
-    var loadT = layer.msg('正在重命名文件或目录，请稍后...', { time: 0, icon: 16, shade: [0.3, '#000'] });
+    var loadT = layer.msg('正在重命名文件或目录，请稍候...', { time: 0, icon: 16, shade: [0.3, '#000'] });
     $.post("/files?action=MvFile", {
       sfile: obj.sfile,
       dfile: obj.dfile,
@@ -1064,7 +1064,7 @@ var aceEditor = {
   },
   // 创建文件事件
   create_file_req: function (obj, callback) {
-    var loadT = layer.msg('正在新建文件，请稍后...', { time: 0, icon: 16, shade: [0.3, '#000'] });
+    var loadT = layer.msg('正在新建文件，请稍候...', { time: 0, icon: 16, shade: [0.3, '#000'] });
     $.post("/files?action=CreateFile", {
       path: obj.path
     }, function (res) {
@@ -1074,7 +1074,7 @@ var aceEditor = {
   },
   // 创建目录请求
   create_dir_req: function (obj, callback) {
-    var loadT = layer.msg('正在新建目录，请稍后...', { time: 0, icon: 16, shade: [0.3, '#000'] });
+    var loadT = layer.msg('正在新建目录，请稍候...', { time: 0, icon: 16, shade: [0.3, '#000'] });
     $.post("/files?action=CreateDir", {
       path: obj.path
     }, function (res) {
@@ -1084,7 +1084,7 @@ var aceEditor = {
   },
   // 删除文件请求
   del_file_req: function (obj, callback) {
-    var loadT = layer.msg('正在删除文件，请稍后...', { time: 0, icon: 16, shade: [0.3, '#000'] });
+    var loadT = layer.msg('正在删除文件，请稍候...', { time: 0, icon: 16, shade: [0.3, '#000'] });
     $.post("/files?action=DeleteFile", {
       path: obj.path
     }, function (res) {
@@ -1094,7 +1094,7 @@ var aceEditor = {
   },
   // 删除目录请求
   del_dir_req: function (obj, callback) {
-    var loadT = layer.msg('正在删除文件目录，请稍后...', { time: 0, icon: 16, shade: [0.3, '#000'] });
+    var loadT = layer.msg('正在删除文件目录，请稍候...', { time: 0, icon: 16, shade: [0.3, '#000'] });
     $.post("/files?action=DeleteDir", {
       path: obj.path
     }, function (res) {
@@ -1104,7 +1104,7 @@ var aceEditor = {
   },
   // 临时文件保存
   auto_save_temp: function (obj, callback) {
-    // var loadT = layer.msg('正在新建目录，请稍后...',{time: 0,icon: 16,shade: [0.3, '#000']});
+    // var loadT = layer.msg('正在新建目录，请稍候...',{time: 0,icon: 16,shade: [0.3, '#000']});
     $.post("/files?action=auto_save_temp", {
       filename: obj.filename,
       body: obj.body
@@ -1115,7 +1115,7 @@ var aceEditor = {
   },
   // 获取临时文件内容
   get_auto_save_body: function (obj, callback) {
-    var loadT = layer.msg('正在获取自动保存文件信息，请稍后...', { time: 0, icon: 16, shade: [0.3, '#000'] });
+    var loadT = layer.msg('正在获取自动保存文件信息，请稍候...', { time: 0, icon: 16, shade: [0.3, '#000'] });
     $.post("/files?action=get_auto_save_body", {
       filename: obj.filename
     }, function (res) {
@@ -1194,7 +1194,7 @@ var aceEditor = {
   },
   // 恢复文件历史
   recovery_file_history: function (obj, callback) {
-    var loadT = layer.msg('正在恢复历史文件，请稍后...', { time: 0, icon: 16, shade: [0.3, '#000'] });
+    var loadT = layer.msg('正在恢复历史文件，请稍候...', { time: 0, icon: 16, shade: [0.3, '#000'] });
     $.post("/files?action=re_history", {
       filename: obj.filename,
       history: obj.history
@@ -1205,7 +1205,7 @@ var aceEditor = {
   },
   // 获取文件列表
   get_file_dir_list: function (obj, callback) {
-    var loadT = layer.msg('正在获取文件列表，请稍后...', { time: 0, icon: 16, shade: [0.3, '#000'] }), _this = this;
+    var loadT = layer.msg('正在获取文件列表，请稍候...', { time: 0, icon: 16, shade: [0.3, '#000'] }), _this = this;
     if (obj['p'] === undefined) obj['p'] = 1;
     if (obj['showRow'] === undefined) obj['showRow'] = 200;
     if (obj['sort'] === undefined) obj['sort'] = 'name';
@@ -1219,7 +1219,7 @@ var aceEditor = {
   },
   // 获取历史文件
   get_file_history: function (obj, callback) {
-    var loadT = layer.msg('正在获取历史文件内容，请稍后...', { time: 0, icon: 16, shade: [0.3, '#000'] }), _this = this;
+    var loadT = layer.msg('正在获取历史文件内容，请稍候...', { time: 0, icon: 16, shade: [0.3, '#000'] }), _this = this;
     $.post("/files?action=read_history", { filename: obj.filename, history: obj.history }, function (res) {
       layer.close(loadT);
       if (callback) callback(res);
@@ -1476,8 +1476,8 @@ var aceEditor = {
       layer.msg('当前文件未修改，无需保存!');
       return false;
     }
-    $('.item_tab_' + ACE.id + ' .icon-tool').attr('title', '保存文件中，请稍后..').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-repeat');
-    layer.msg('保存文件中，请稍后<img src="/static/img/ns-loading.gif" style="width:15px;margin-left:5px">', { icon: 0 });
+    $('.item_tab_' + ACE.id + ' .icon-tool').attr('title', '保存文件中，请稍候..').removeClass('glyphicon-exclamation-sign').addClass('glyphicon-repeat');
+    layer.msg('保存文件中，请稍候<img src="/static/img/ns-loading.gif" style="width:15px;margin-left:5px">', { icon: 0 });
     this.saveFileBody({
       path: ACE.path,
       data: ACE.ace.getValue(),
@@ -1617,7 +1617,7 @@ var aceEditor = {
   getFileList: function () { },
   // 获取文件内容-请求
   getFileBody: function (obj, callback) {
-    var loadT = layer.msg('正在获取文件内容，请稍后...', { time: 0, icon: 16, shade: [0.3, '#000'] }), _this = this;
+    var loadT = layer.msg('正在获取文件内容，请稍候...', { time: 0, icon: 16, shade: [0.3, '#000'] }), _this = this;
     $.post("/files?action=GetFileBody", "path=" + encodeURIComponent(obj.path), function (res) {
       layer.close(loadT);
       if (!res.status) {
@@ -1660,7 +1660,7 @@ var aceEditor = {
   },
   // 	保存ace配置
   saveAceConfig: function (data, callback) {
-    var loadT = layer.msg('正在设置配置文件，请稍后...', { time: 0, icon: 16, shade: [0.3, '#000'] }), _this = this;
+    var loadT = layer.msg('正在设置配置文件，请稍候...', { time: 0, icon: 16, shade: [0.3, '#000'] }), _this = this;
     this.saveFileBody({
       path: '/www/server/panel/BTPanel/static/editor/ace.editor.config.json',
       data: JSON.stringify(data),
@@ -1674,7 +1674,7 @@ var aceEditor = {
   },
   // 获取配置文件
   getAceConfig: function (callback) {
-    var loadT = layer.msg('正在获取配置文件，请稍后...', { time: 0, icon: 16, shade: [0.3, '#000'] }), _this = this;
+    var loadT = layer.msg('正在获取配置文件，请稍候...', { time: 0, icon: 16, shade: [0.3, '#000'] }), _this = this;
     this.getFileBody({ path: '/www/server/panel/BTPanel/static/editor/ace.editor.config.json' }, function (rdata) {
       layer.close(loadT);
       _this.setStorage('aceConfig', JSON.stringify(rdata.data));
@@ -3410,7 +3410,7 @@ function messagebox () {
             reader_message_list()
             break;
           case 2:
-            var loadT = bt.load('正在获取执行日志，请稍后...')
+            var loadT = bt.load('正在获取执行日志，请稍候...')
             bt.send('GetExecLog', 'files/GetExecLog', {}, function (res) {
               loadT.close();
               var exec_log = $('#execLog');
@@ -3465,7 +3465,7 @@ function message_box () {
 
 function get_message_data (page, callback) {
   if (typeof page === "function") callback = page, page = 1;
-  var loadT = bt.load('正在获取消息列表，请稍后...');
+  var loadT = bt.load('正在获取消息列表，请稍候...');
   bt.send("getData", "data/getData", {
     tojs: 'reader_message_list',
     table: 'tasks',
@@ -3868,7 +3868,7 @@ var Term = {
     }
   },
   run: function (ssh_info) {
-    var loadT = layer.msg('正在加载终端所需文件，请稍后...', { icon: 16, time: 0, shade: 0.3 });
+    var loadT = layer.msg('正在加载终端所需文件，请稍候...', { icon: 16, time: 0, shade: 0.3 });
     loadScript([
       "/static/js/xterm.js"
     ], function () {
@@ -4028,7 +4028,7 @@ var Term = {
         }
       });
       form.ps = '本地服务器';
-      var loadT = bt.load('正在添加服务器信息，请稍后...');
+      var loadT = bt.load('正在添加服务器信息，请稍候...');
       bt.send('create_host', 'xterm/create_host', form, function (res) {
         loadT.close();
         bt.msg(res);
@@ -6255,7 +6255,7 @@ BindAccount.prototype = {
    */
   getAuthToken: function (param) {
     var _this = this;
-    var loadT = bt.load(lan.config.token_get);
+    var loadT = bt.load('正在绑定堡塔账号，请稍候...');
     bt.send('GetAuthToken', 'ssl/GetAuthToken', param, function (rdata) {
       loadT.close();
       if (rdata.status) {
@@ -6268,6 +6268,7 @@ BindAccount.prototype = {
         layer.msg(rdata.msg)
         _this.verifyParam = { username: param.username, token: rdata.data.token }
         _this.verifyCodeView();
+        
       }
     })
   },
@@ -6312,7 +6313,7 @@ BindAccount.prototype = {
    * @returns void
    */
   getBindCode: function (param, callback) {
-    var loadT = bt.load('获取验证码，请稍后...');
+    var loadT = bt.load('获取验证码，请稍候...');
     bt.send('GetBindCode', 'ssl/GetBindCode', param, function (rdata) {
       loadT.close();
       bt.msg(rdata);
