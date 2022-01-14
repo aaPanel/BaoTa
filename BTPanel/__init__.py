@@ -1464,7 +1464,15 @@ def panel_other(name=None, fun=None, stype=None):
     p_path = os.path.join('/www/server/panel/plugin/', name)
     if not os.path.exists(p_path): 
         if name == 'btwaf' and fun == 'index':
-            return  render_template('error3.html',data={}) 
+            pdata = {}
+            from pluginAuth import Plugin
+            plugin_list = Plugin(False).get_plugin_list()
+            for p in plugin_list['list']:
+                if p['name'] in ['btwaf']:
+                    if p['endtime'] != 0 and p['endtime'] < time.time():
+                        pdata['error_msg'] = 1
+                        break
+            return  render_template('error3.html',data=pdata)
         return abort(404)
 
     # 是否响插件应静态文件
