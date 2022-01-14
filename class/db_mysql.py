@@ -47,7 +47,7 @@ class panelMysql:
 
     #连接MYSQL数据库
     def __GetConn(self):
-        self.__DB_CONN = pymysql.connect(host=self.__DB_HOST,user=self.__DB_USER,passwd=self.__DB_PASS,db=self.__DB_NAME,port=self.__DB_PORT)
+        self.__DB_CONN = pymysql.connect(host=self.__DB_HOST,user=self.__DB_USER,passwd=str(self.__DB_PASS),db=self.__DB_NAME,port=self.__DB_PORT)
         self.__DB_CUR  = self.__DB_CONN.cursor()
         return True
 
