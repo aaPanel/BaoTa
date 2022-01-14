@@ -125,7 +125,7 @@
                   <li>拦截SQL注入、xss、一句话木马等常见渗透功能</li>
                 </ul>
                 <div class="daily-product-buy">
-                  <a title="购买专业/企业版" href="javascript:;" class="btn btn-success va0 ml15 hide installWaf">立即安装</a>
+                  <a title="购买专业/企业版" href="javascript:;" class="btn btn-success va0 ml15 installWaf">立即安装</a>
                 </div>
               </div>
             </div>
@@ -137,7 +137,7 @@
 {% block scripts %}
   <script type="text/javascript">
     $('.installWaf').on('click',function(){
-      console.log('sss')
+      bt.soft.install('btwaf')
     })
     $('.payPlugin').on('click',function(){
       bt.soft.get_soft_find('btwaf',function(rdata){
