@@ -194,7 +194,8 @@ var database = {
             title: '添加数据库',
             active: true,
             event: function () {
-              var cloudList = [{title:'本地数据库',value:0}]
+              if(that.cloudDatabaseList.length == 0) return bt_tools.msg('至少添加一个远程服务器或安装本地数据库',{icon:2})
+              var cloudList = []
               $.each(that.cloudDatabaseList,function(index,item){
                 var _tips = item.ps != ''?(item.ps+' ('+item.db_host+')'):item.db_host
                 cloudList.push({title:_tips,value:item.id})
@@ -235,7 +236,7 @@ var database = {
           }, {
             title: '从服务器获取',
             event: function () {
-              var _list = [{title:'本地数据库',value:0}];
+              var _list = [];
               $.each(that.cloudDatabaseList,function (index,item){
                 var _tips = item.ps != ''?(item.ps+' (服务器地址:'+item.db_host+')'):item.db_host
                 _list.push({title:_tips,value:item.id})
@@ -361,7 +362,7 @@ var database = {
         success:function(config){
           //搜索前面新增数据库位置下拉
           if($('.database_type_select_filter').length == 0){
-            var _option = '<option value="all">全部</option><option value="0">本地数据库</option>'
+            var _option = '<option value="all">全部</option>'
             $.each(that.cloudDatabaseList,function(index,item){
               var _tips = item.ps != ''?item.ps:item.db_host
               _option +='<option value="'+item.id+'">'+_tips+'</option>'
@@ -411,7 +412,7 @@ var database = {
         bt.open({
           type: 1,
           skin: 'demo-class',
-          area: '700px',
+          area: '850px',
           title: lan.database.backup_title,
           closeBtn: 2,
           shift: 5,
@@ -458,6 +459,13 @@ var database = {
             field: 'addtime',
             title: '备份时间'
           },
+          // {
+          //   field: 'ps',
+          //   title:'备注',
+          //   templet: function (item) {
+          //     return '<span class="size_ellipsis" style="width: 150px" title="'+item.ps+'">'+item.ps+'</span>'
+          //   }
+          // },
           {
             field: 'opt',
             title: '操作',
