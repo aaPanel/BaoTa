@@ -194,7 +194,7 @@ var database = {
             title: '添加数据库',
             active: true,
             event: function () {
-              if(that.cloudDatabaseList.length == 0) return bt_tools.msg('至少添加一个远程服务器或安装本地数据库',{icon:2})
+              if(that.cloudDatabaseList.length == 0) return layer.msg('至少添加一个远程服务器或安装本地数据库',{time:0,icon:2,closeBtn: 2, shade: .3})
               var cloudList = []
               $.each(that.cloudDatabaseList,function(index,item){
                 var _tips = item.ps != ''?(item.ps+' ('+item.db_host+')'):item.db_host
@@ -236,6 +236,7 @@ var database = {
           }, {
             title: '从服务器获取',
             event: function () {
+              if(that.cloudDatabaseList.length == 0) return layer.msg('至少添加一个远程服务器或安装本地数据库',{time:0,icon:2,closeBtn: 2, shade: .3})
               var _list = [];
               $.each(that.cloudDatabaseList,function (index,item){
                 var _tips = item.ps != ''?(item.ps+' (服务器地址:'+item.db_host+')'):item.db_host
