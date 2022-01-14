@@ -4070,6 +4070,21 @@ def get_full_session_file():
     sess_path = get_panel_path() + '/data/session/'
     return sess_path + '/' + md5(full_session_key)
 
+
+
+def install_mysql_client():
+    '''
+        @name 安装mysql客户端
+        @author hwliang<2022-01-14>
+        @return void
+    '''
+
+    if os.path.exists('/usr/bin/yum'):
+        os.system("yum install mariadb -y")
+    elif os.path.exists('/usr/bin/apt-get'):
+        os.system('apt-get install mariadb-client -y')
+
+
 def get_mysqldump_bin():
     '''
         @name 获取mysqldump路径
@@ -4087,6 +4102,13 @@ def get_mysqldump_bin():
     for bin_file in bin_files:
         if os.path.exists(bin_file):
             return bin_file
+    
+    install_mysql_client()
+
+    for bin_file in bin_files:
+        if os.path.exists(bin_file):
+            return bin_file
+
     return bin_files[0]
 
 def get_mysql_bin():
@@ -4103,6 +4125,12 @@ def get_mysql_bin():
         '/usr/local/sbin/mysql'
     ]
     
+    for bin_file in bin_files:
+        if os.path.exists(bin_file):
+            return bin_file
+    
+    install_mysql_client()
+        
     for bin_file in bin_files:
         if os.path.exists(bin_file):
             return bin_file
