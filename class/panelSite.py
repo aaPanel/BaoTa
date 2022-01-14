@@ -5293,7 +5293,9 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
         
         public.serviceReload()
         status_msg = {True:'开启',False:'关闭'}
-        return public.returnMsg(True,'已{}HTTPS严格模式'.format(status_msg[status]))
+        msg = '已{}HTTPS严格模式'.format(status_msg[status])
+        public.WriteLog('网站管理',msg)
+        return public.returnMsg(True,msg)
 
 
     def create_default_cert(self):
