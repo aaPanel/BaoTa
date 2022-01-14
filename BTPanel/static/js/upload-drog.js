@@ -168,7 +168,9 @@ UploadFile.prototype = {
    * @description 文件拖拽悬浮状态
    */
   file_drag_hover: function file_drag_hover (event) {
-    if (event.dataTransfer.items[0].kind == 'string') return false;
+    try {
+      if (event.dataTransfer.items[0].kind == 'string') return false;
+    } catch (error) {}
     is_show(this.uploadElement, !(event.type === 'dragleave' || event.type === 'drop'));
     event.preventDefault();
     event.stopPropagation();
