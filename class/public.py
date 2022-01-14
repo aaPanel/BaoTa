@@ -3459,6 +3459,7 @@ def get_plugin_main_object(plugin_name,sys_path):
     os_file = sys_path + '/' + plugin_name + '_main.so'
     php_file = sys_path + '/index.php'
     is_php = False
+    plugin_obj = None
     if os.path.exists(os_file): # 是否为编译后的so文件
         plugin_obj = __import__(plugin_name + '_main')
     elif os.path.exists(php_file): # 是否为PHP代码
@@ -4068,3 +4069,42 @@ def get_full_session_file():
     full_session_key = app.config['SESSION_KEY_PREFIX'] + get_session_id()
     sess_path = get_panel_path() + '/data/session/'
     return sess_path + '/' + md5(full_session_key)
+
+def get_mysqldump_bin():
+    '''
+        @name 获取mysqldump路径
+        @author hwliang<2022-01-14>
+        @return string
+    '''
+    bin_files = [
+        '{}/mysql/bin/mysqldump'.format(get_panel_path()),
+        '/usr/bin/mysqldump',
+        '/usr/local/bin/mysqldump',
+        '/usr/sbin/mysqldump',
+        '/usr/local/sbin/mysqldump'
+    ]
+    
+    for bin_file in bin_files:
+        if os.path.exists(bin_file):
+            return bin_file
+    return bin_files[0]
+
+def get_mysql_bin():
+    '''
+        @name 获取mysql路径
+        @author hwliang<2022-01-14>
+        @return string
+    '''
+    bin_files = [
+        '{}/mysql/bin/mysql'.format(get_panel_path()),
+        '/usr/bin/mysql',
+        '/usr/local/bin/mysql',
+        '/usr/sbin/mysql',
+        '/usr/local/sbin/mysql'
+    ]
+    
+    for bin_file in bin_files:
+        if os.path.exists(bin_file):
+            return bin_file
+    return bin_files[0]
+

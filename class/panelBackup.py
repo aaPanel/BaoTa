@@ -556,16 +556,17 @@ class backup:
         if os.path.exists(dfile):
             os.remove(dfile)
         #self.mypass(True)
+        mysqldump_bin = public.get_mysqldump_bin()
         try:
             if not is_cloud_db:
                 # 本地数据库 @author hwliang<2021-01-08>
                 password = public.M('config').where('id=?',(1,)).getField('mysql_root')
                 os.environ["MYSQL_PWD"] = password
-                backup_cmd = "/www/server/mysql/bin/mysqldump -E -R --default-character-set="+ character +" --force --hex-blob --opt " + db_name + " -u root" + " 2>"+self._err_log+"| gzip > " + dfile
+                backup_cmd = mysqldump_bin + " -E -R --default-character-set="+ character +" --force --hex-blob --opt " + db_name + " -u root" + " 2>"+self._err_log+"| gzip > " + dfile
             else:
                 # 远程数据库 @author hwliang<2021-01-08>
                 os.environ["MYSQL_PWD"] = conn_config['db_password']
-                backup_cmd = "/www/server/mysql/bin/mysqldump -h " + conn_config['db_host'] + " -P " + conn_config['db_port'] + " -E -R --default-character-set="+ character +" --force --hex-blob --opt " + db_name + " -u " + conn_config['db_user'] + " 2>"+self._err_log+"| gzip > " + dfile
+                backup_cmd = mysqldump_bin + " -h " + conn_config['db_host'] + " -P " + conn_config['db_port'] + " -E -R --default-character-set="+ character +" --force --hex-blob --opt " + db_name + " -u " + conn_config['db_user'] + " 2>"+self._err_log+"| gzip > " + dfile
             public.ExecShell(backup_cmd)
         except Exception as e:
             raise
