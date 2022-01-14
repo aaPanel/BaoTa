@@ -5125,3 +5125,210 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
         slist['file_size'] = self.get_average_num(f_list_size)  
         slist['db_size'] = self.get_average_num(db_list_size)
         return slist
+
+    def get_https_mode(self,get = None):
+        '''
+            @name 获取https模式
+            @author hwliang<2022-01-14>
+            @return bool False.宽松模式 True.严格模式
+        '''
+        web_server = public.get_webserver()
+        if web_server not in ['nginx','apache']:
+            return False
+
+        if web_server == 'nginx':
+            default_conf_file = "{}/nginx/0.default.conf".format(public.get_vhost_path())
+        else:
+            default_conf_file = "{}/apache/0.default.conf".format(public.get_vhost_path())
+
+        if not os.path.exists(default_conf_file): return False
+        default_conf = public.readFile(default_conf_file)
+        if not default_conf: return False
+
+        if default_conf.find('DEFAULT SSL CONFI') != -1: return True
+        return False
+
+    def write_ngx_default_conf_by_ssl(self):
+        '''
+            @name 写nginx默认配置文件（含SSL配置）
+            @author hwliang<2022-01-14>
+            @return bool
+        '''
+        default_conf_body = '''server
+{
+    listen 80;
+    listen 443 ssl;
+    server_name _;
+    index index.html;
+    root /www/server/nginx/html;
+    
+    # DEFAULT SSL CONFIG
+    ssl_certificate    /www/server/panel/vhost/cert/0.default/fullchain.pem;
+    ssl_certificate_key    /www/server/panel/vhost/cert/0.default/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:EECDH+3DES:RSA+3DES:!MD5;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    add_header Strict-Transport-Security "max-age=31536000";
+}'''
+        ngx_default_conf_file = "{}/nginx/0.default.conf".format(public.get_vhost_path())
+        self.create_default_cert()
+        return public.writeFile(ngx_default_conf_file,default_conf_body)
+    
+    def write_ngx_default_conf(self):
+        '''
+            @name 写nginx默认配置文件
+            @author hwliang<2022-01-14>
+            @return bool
+        '''
+        default_conf_body = '''server
+{
+    listen 80;
+    server_name _;
+    index index.html;
+    root /www/server/nginx/html;
+}'''
+        ngx_default_conf_file = "{}/nginx/0.default.conf".format(public.get_vhost_path())
+        return public.writeFile(ngx_default_conf_file,default_conf_body)
+
+    def write_apa_default_conf_by_ssl(self):
+        '''
+            @name 写nginx默认配置文件（含SSL配置）
+            @author hwliang<2022-01-14>
+            @return bool
+        '''
+        default_conf_body = '''<VirtualHost *:80>
+    ServerAdmin webmaster@example.com
+    DocumentRoot "/www/server/apache/htdocs"
+    ServerName bt.default.com
+    <Directory "/www/server/apache/htdocs">
+        SetOutputFilter DEFLATE
+        Options FollowSymLinks
+        AllowOverride All
+        Order allow,deny
+        Allow from all
+        DirectoryIndex index.html
+    </Directory>
+</VirtualHost>
+<VirtualHost *:443>
+    ServerAdmin webmaster@example.com
+    DocumentRoot "/www/server/apache/htdocs"
+    ServerName ssl.default.com
+    
+    # DEFAULT SSL CONFIG
+    SSLEngine On
+    SSLCertificateFile /www/server/panel/vhost/cert/0.default/fullchain.pem
+    SSLCertificateKeyFile /www/server/panel/vhost/cert/0.default/privkey.pem
+    SSLCipherSuite EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:EECDH+3DES:RSA+3DES:!MD5
+    SSLProtocol All -SSLv2 -SSLv3 -TLSv1
+    SSLHonorCipherOrder On
+    
+    <Directory "/www/server/apache/htdocs">
+        SetOutputFilter DEFLATE
+        Options FollowSymLinks
+        AllowOverride All
+        Order allow,deny
+        Allow from all
+        DirectoryIndex index.html
+    </Directory>
+</VirtualHost>'''
+        apa_default_conf_file = "{}/apache/0.default.conf".format(public.get_vhost_path())
+        self.create_default_cert()
+        return public.writeFile(apa_default_conf_file,default_conf_body)
+
+
+    def write_apa_default_conf(self):
+        '''
+            @name 写apache默认配置文件
+            @author hwliang<2022-01-14>
+            @return bool
+        '''
+        default_conf_body = '''<VirtualHost *:80>
+    ServerAdmin webmaster@example.com
+    DocumentRoot "/www/server/apache/htdocs"
+    ServerName bt.default.com
+    <Directory "/www/server/apache/htdocs">
+        SetOutputFilter DEFLATE
+        Options FollowSymLinks
+        AllowOverride All
+        Order allow,deny
+        Allow from all
+        DirectoryIndex index.html
+    </Directory>
+</VirtualHost>'''
+        apa_default_conf_file = "{}/apache/0.default.conf".format(public.get_vhost_path())
+        return public.writeFile(apa_default_conf_file,default_conf_body)
+
+
+    def set_https_mode(self,get = None):
+        '''
+            @name 设置https模式
+            @author hwliang<2022-01-14>
+            @return dict
+        '''
+        web_server = public.get_webserver()
+        if web_server not in ['nginx','apache']:
+            return public.returnMsg(False,'该功能只支持Nginx/Apache')
+        
+        ngx_default_conf_file = "{}/nginx/0.default.conf".format(public.get_vhost_path())
+        apa_default_conf_file = "{}/apache/0.default.conf".format(public.get_vhost_path())
+        ngx_default_conf = public.readFile(ngx_default_conf_file)
+        apa_default_conf = public.readFile(apa_default_conf_file)
+        status = False
+        if ngx_default_conf:
+            if ngx_default_conf.find('DEFAULT SSL CONFIG') != -1:
+                status = False
+                self.write_ngx_default_conf()
+                self.write_apa_default_conf()
+            else:
+                status = True
+                self.write_ngx_default_conf_by_ssl()
+                self.write_apa_default_conf_by_ssl()
+        else:
+            status = True
+            self.write_ngx_default_conf_by_ssl()
+            self.write_apa_default_conf_by_ssl()
+            
+        
+        public.serviceReload()
+        status_msg = {True:'开启',False:'关闭'}
+        return public.returnMsg(True,'已{}HTTPS严格模式'.format(status_msg[status]))
+
+
+    def create_default_cert(self):
+        '''
+            @name 创建默认SSL证书
+            @author hwliang<2022-01-14>
+            @return bool
+        '''
+        cert_pem = '/www/server/panel/vhost/cert/0.default/fullchain.pem'
+        cert_key = '/www/server/panel/vhost/cert/0.default/privkey.pem'
+        if os.path.exists(cert_pem) and os.path.exists(cert_key): return True
+        cert_path = os.path.dirname(cert_pem)
+        if not os.path.exists(cert_path): os.makedirs(cert_path)
+        import OpenSSL
+        key = OpenSSL.crypto.PKey()
+        key.generate_key(OpenSSL.crypto.TYPE_RSA, 2048)
+        cert = OpenSSL.crypto.X509()
+        cert.set_serial_number(0)
+        # cert.get_subject().CN = ''
+        cert.set_issuer(cert.get_subject())
+        cert.gmtime_adj_notBefore(0)
+        cert.gmtime_adj_notAfter(86400 * 3650)
+        cert.set_pubkey( key )
+        cert.sign( key, 'md5' )
+        cert_ca = OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
+        private_key = OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, key)
+        if len(cert_ca) > 100 and len(private_key) > 100:
+            public.writeFile(cert_pem,cert_ca,'wb+')
+            public.writeFile(cert_key,private_key,'wb+')
+            return True
+        return False
+
+
+
+
+
+        
+        

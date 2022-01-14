@@ -372,7 +372,7 @@ def site(pdata=None):
 
     defs = (
     'upload_csv', 'create_website_multiple', 'del_redirect_multiple', 'del_proxy_multiple', 'delete_dir_auth_multiple',
-    'delete_dir_bind_multiple', 'delete_domain_multiple', 'set_site_etime_multiple','check_del_data',
+    'delete_dir_bind_multiple', 'delete_domain_multiple', 'set_site_etime_multiple','check_del_data','set_https_mode','get_https_mode',
     'set_site_php_version_multiple', 'delete_website_multiple', 'set_site_status_multiple', 'get_site_domains',
     'GetRedirectFile', 'SaveRedirectFile', 'DeleteRedirect', 'GetRedirectList', 'CreateRedirect', 'ModifyRedirect',
     'set_dir_auth', 'delete_dir_auth', 'get_dir_auth', 'modify_dir_auth_pass', 'export_domains', 'import_domains',
