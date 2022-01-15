@@ -26,8 +26,16 @@ require.config({
     "jquery.qrcode": "../js/jquery.qrcode.min", // 二维码
     "language": "../language/Simplified_Chinese/lan", // 语言包
     "clipboard": "../js/clipboard.min", // 复制
+    "public": "../js/public", // 公共方法
+    "public_backup": "../js/public_backup", // 公共方法
   },
   shim: {
+    "public":{
+      exports:'aceEditor'
+    },
+    "public_backup":{
+      exports:'bt'
+    },
     "language": {
       exports: "lan"
     },
@@ -38,7 +46,7 @@ require.config({
   }
 })
 
-require(['jquery', 'layer', 'language', 'utils'], function () {
+require(['jquery', 'layer', 'language', 'utils', 'public', 'public_backup'], function () {
   switch (location.pathname) {
     case "/config":
       require(['config'], function (param1) {

@@ -1269,9 +1269,9 @@ var index = {
    * @description 获取当前的产品状态
    */
    get_product_status: function () {
-    var loadT = layer.msg('正在获取产品状态，请稍候...', { icon: 16, time: 0 })
+    // var loadT = layer.msg('正在获取产品状态，请稍候...', { icon: 16, time: 0 })
     bt.send('get_pd', 'ajax/get_pd', {}, function (res) {
-      layer.close(loadT);
+      // layer.close(loadT);
       $('.btpro-gray').replaceWith($(res[0]));
       if(res[1] === 0){
         $(".btpro span").click(function(e){
