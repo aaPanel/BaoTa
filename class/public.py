@@ -1666,6 +1666,17 @@ def set_mode(filename,mode):
     os.chmod(filename,mode)
     return True
 
+def create_linux_user(user,group):
+    '''
+        @name 创建系统用户
+        @author hwliang<2022-01-15>
+        @param user<string> 用户名
+        @param group<string> 所属组
+        @return bool
+    '''
+    ExecShell("groupadd {}".format(group))
+    ExecShell('useradd -s /sbin/nologin -g {} {}'.format(user,group))
+    return True
 
 #设置用户组
 def set_own(filename,user,group=None):
@@ -1678,8 +1689,13 @@ def set_own(filename,user,group=None):
             user_info = getpwnam(group)
         group = user_info.pw_gid
     except:
+        if user == 'www': create_linux_user(user)
         #如果指定用户或组不存在，则使用www
-        user_info = getpwnam('www')
+        try:
+            user_info = getpwnam('www')
+        except:
+            create_linux_user(user)
+            user_info = getpwnam('www')
         user = user_info.pw_uid
         group = user_info.pw_gid
     os.chown(filename,user,group)
