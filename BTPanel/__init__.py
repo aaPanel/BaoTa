@@ -1432,6 +1432,8 @@ def btwaf_error():
 @app.route('/<name>/<fun>', methods=method_all)
 @app.route('/<name>/<fun>/<path:stype>', methods=method_all)
 def panel_other(name=None, fun=None, stype=None):
+    if not public.is_bind():
+        return redirect('/bind',302)
     # 插件接口
     if public.is_error_path():
         return redirect('/error',302)
