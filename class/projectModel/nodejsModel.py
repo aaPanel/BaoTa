@@ -11,6 +11,7 @@
 # node.js模型
 #------------------------------
 import os,sys,re,json,shutil,psutil,time
+from BTPanel import project
 from projectModel.base import projectBase
 import public
 try:
@@ -1113,7 +1114,8 @@ export PATH
             try:
                 p = psutil.Process(i)
                 if p.cwd() == project_find['path']:
-                    if p.name() in ['node','npm','pm2','yarn']:
+                    pname = p.name()
+                    if pname in ['node','npm','pm2','yarn'] or pname.find('node ') == 0:
                         all_pids.append(i)
             except: continue
         return all_pids
@@ -1133,7 +1135,8 @@ export PATH
             try:
                 p = psutil.Process(i)
                 if p.cwd() == project_find['path']:
-                    if p.name() in ['node','npm','pm2','yarn']:
+                    pname = p.name()
+                    if pname in ['node','npm','pm2','yarn'] or pname.find('node ') == 0:
                         all_pids.append(i)
             except: continue
         if all_pids:
@@ -1205,6 +1208,9 @@ export PATH
         node_bin = self.get_node_bin(nodejs_version)
         npm_bin = self.get_npm_bin(nodejs_version)
         project_script = project_find['project_config']['project_script'].strip()
+        if project_script[:3] == 'pm2':
+            project_script = project_script.replace('pm2 ','pm2 -u {} '.format(project_find['project_config']['run_user']))
+            project_find['project_config']['run_user'] = 'root'
         log_file = "{}/{}.log".format(self._node_logs_path,get.project_name)
         if not project_script: return public.return_error('未配置启动脚本')
 
@@ -1265,6 +1271,7 @@ echo $! > {pid_file}
         # 执行脚本文件
         p = public.ExecShell("bash {}".format(script_file),user=project_find['project_config']['run_user'])
         time.sleep(1)
+        self.get_project_state_by_cwd(get.project_name)
         if not os.path.exists(pid_file):
             p = '\n'.join(p)
             if p.find('[Errno 0]') != -1:
@@ -1306,6 +1313,15 @@ echo $! > {pid_file}
         if not pids: return public.return_error('项目未启动')
         self.kill_pids(pids=pids)
         if os.path.exists(pid_file): os.remove(pid_file)
+        project_find = self.get_project_find(get.project_name)
+        project_script = project_find['project_config']['project_script'].strip()
+        if project_script.find('pm2 start') != -1: # 处理PM2启动的项目
+            nodejs_version = project_find['project_config']['nodejs_version']
+            last_env = self.get_last_env(nodejs_version,project_find['path'])
+            project_script = project_script.replace('pm2 start','pm2 stop')
+            public.ExecShell('''{}
+cd {}
+{}'''.format(last_env,project_find['path'],project_script))
         return public.return_data(True, '停止成功')
 
     def restart_project(self,get):
