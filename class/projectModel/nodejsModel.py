@@ -1112,11 +1112,35 @@ export PATH
         for i in self._pids:
             try:
                 p = psutil.Process(i)
-                if p.cwd() == project_find['path'] and p.username() == project_find['project_config']['run_user']:
-                    if p.name() in ['node','npm','pm2']:
+                if p.cwd() == project_find['path']:
+                    if p.name() in ['node','npm','pm2','yarn']:
                         all_pids.append(i)
             except: continue
         return all_pids
+
+    def get_project_state_by_cwd(self,project_name):
+        '''
+            @name 通过cwd获取项目状态
+            @author hwliang<2022-01-17>
+            @param project_name<string> 项目名称
+            @return bool or list
+        '''
+        project_find = self.get_project_find(project_name)
+        if not self._pids: self._pids = psutil.pids()
+        if not project_find: return []
+        all_pids = []
+        for i in self._pids:
+            try:
+                p = psutil.Process(i)
+                if p.cwd() == project_find['path']:
+                    if p.name() in ['node','npm','pm2','yarn']:
+                        all_pids.append(i)
+            except: continue
+        if all_pids:
+            pid_file = "{}/{}.pid".format(self._node_pid_path,project_name)
+            public.writeFile(pid_file,str(all_pids[0]))
+            return True
+        return False
 
     def kill_pids(self,get=None,pids = None):
         '''
@@ -1529,14 +1553,14 @@ echo $! > {pid_file}
         '''
         if get: project_name = get.project_name.strip()
         pid_file = "{}/{}.pid".format(self._node_pid_path,project_name)
-        if not os.path.exists(pid_file): return False
+        if not os.path.exists(pid_file): return self.get_project_state_by_cwd(project_name)
         data=public.readFile(pid_file)
         if isinstance(data,str) and data:
             pid = int(data)
             pids = self.get_project_pids(pid=pid)
         else:
-            return False
-        if not pids: return False
+            return self.get_project_state_by_cwd(project_name)
+        if not pids: return self.get_project_state_by_cwd(project_name)
         return True
 
     def get_project_find(self,project_name):
