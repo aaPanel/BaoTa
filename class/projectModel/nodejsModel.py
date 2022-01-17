@@ -1207,8 +1207,8 @@ export PATH
         nodejs_version = project_find['project_config']['nodejs_version']
         node_bin = self.get_node_bin(nodejs_version)
         npm_bin = self.get_npm_bin(nodejs_version)
-        project_script = project_find['project_config']['project_script'].strip()
-        if project_script[:3] == 'pm2':
+        project_script = project_find['project_config']['project_script'].strip().replace('  ',' ')
+        if project_script[:3] == 'pm2': # PM2启动方式处理
             project_script = project_script.replace('pm2 ','pm2 -u {} '.format(project_find['project_config']['run_user']))
             project_find['project_config']['run_user'] = 'root'
         log_file = "{}/{}.log".format(self._node_logs_path,get.project_name)
@@ -1304,6 +1304,15 @@ echo $! > {pid_file}
         '''
         pid_file = "{}/{}.pid".format(self._node_pid_path,get.project_name)
         if not os.path.exists(pid_file): return public.return_error('项目未启动')
+        project_find = self.get_project_find(get.project_name)
+        project_script = project_find['project_config']['project_script'].strip().replace('  ',' ')
+        if project_script.find('pm2 start') != -1: # 处理PM2启动的项目
+            nodejs_version = project_find['project_config']['nodejs_version']
+            last_env = self.get_last_env(nodejs_version,project_find['path'])
+            project_script = project_script.replace('pm2 start','pm2 stop')
+            public.ExecShell('''{}
+cd {}
+{}'''.format(last_env,project_find['path'],project_script))
         data = public.readFile(pid_file)
         if isinstance(data,str) and data:
             pid = int(data)
@@ -1313,15 +1322,6 @@ echo $! > {pid_file}
         if not pids: return public.return_error('项目未启动')
         self.kill_pids(pids=pids)
         if os.path.exists(pid_file): os.remove(pid_file)
-        project_find = self.get_project_find(get.project_name)
-        project_script = project_find['project_config']['project_script'].strip()
-        if project_script.find('pm2 start') != -1: # 处理PM2启动的项目
-            nodejs_version = project_find['project_config']['nodejs_version']
-            last_env = self.get_last_env(nodejs_version,project_find['path'])
-            project_script = project_script.replace('pm2 start','pm2 stop')
-            public.ExecShell('''{}
-cd {}
-{}'''.format(last_env,project_find['path'],project_script))
         return public.return_data(True, '停止成功')
 
     def restart_project(self,get):
