@@ -11,7 +11,6 @@
 # node.js模型
 #------------------------------
 import os,sys,re,json,shutil,psutil,time
-from BTPanel import project
 from projectModel.base import projectBase
 import public
 try:
@@ -1094,7 +1093,7 @@ export PATH
             @param pid: string<项目pid>
             @return list
         '''
-        plugin_name = None
+        project_name = None
         for pid_name in os.listdir(self._node_pid_path):
             pid_file = '{}/{}'.format(self._node_pid_path,pid_name)
             #s_pid = int(public.readFile(pid_file))
@@ -1104,9 +1103,9 @@ export PATH
             else:
                 return []
             if pid == s_pid:
-                plugin_name = pid_name[:-4]
+                project_name = pid_name[:-4]
                 break
-        project_find = self.get_project_find(plugin_name)
+        project_find = self.get_project_find(project_name)
         if not project_find: return []
         if not self._pids: self._pids = psutil.pids()
         all_pids = []
@@ -1118,6 +1117,11 @@ export PATH
                     if pname in ['node','npm','pm2','yarn'] or pname.find('node ') == 0:
                         cmdline = ','.join(p.cmdline())
                         if cmdline.find('God Daemon') != -1:continue
+                        env_list = p.environ()
+                        if 'name' in env_list:
+                            if not env_list['name'] == project_name: continue
+                        if 'NODE_PROJECT_NAME' in env_list:
+                            if not env_list['NODE_PROJECT_NAME'] == project_name: continue
                         all_pids.append(i)
             except: continue
         return all_pids
@@ -1141,6 +1145,11 @@ export PATH
                     if pname in ['node','npm','pm2','yarn'] or pname.find('node ') == 0:
                         cmdline = ','.join(p.cmdline())
                         if cmdline.find('God Daemon') != -1:continue
+                        env_list = p.environ()
+                        if 'name' in env_list:
+                            if not env_list['name'] == project_name: continue
+                        if 'NODE_PROJECT_NAME' in env_list:
+                            if not env_list['NODE_PROJECT_NAME'] == project_name: continue
                         all_pids.append(i)
             except: continue
         if all_pids:
@@ -1213,7 +1222,7 @@ export PATH
         npm_bin = self.get_npm_bin(nodejs_version)
         project_script = project_find['project_config']['project_script'].strip().replace('  ',' ')
         if project_script[:3] == 'pm2': # PM2启动方式处理
-            project_script = project_script.replace('pm2 ','pm2 -u {} '.format(project_find['project_config']['run_user']))
+            project_script = project_script.replace('pm2 ','pm2 -u {} -n {} '.format(project_find['project_config']['run_user'],get.project_name))
             project_find['project_config']['run_user'] = 'root'
         log_file = "{}/{}.log".format(self._node_logs_path,get.project_name)
         if not project_script: return public.return_error('未配置启动脚本')
@@ -1223,6 +1232,7 @@ export PATH
         # 生成启动脚本
         if os.path.exists(project_script):
             start_cmd = '''{last_env}
+export NODE_PROJECT_NAME="{project_name}"
 cd {project_cwd}
 nohup {node_bin} {project_script} 2>&1 >> {log_file} & 
 echo $! > {pid_file}
@@ -1232,10 +1242,12 @@ echo $! > {pid_file}
     project_script = project_script,
     log_file = log_file,
     pid_file = pid_file,
-    last_env = last_env
+    last_env = last_env,
+    project_name = get.project_name
 )
         elif project_script in scripts_keys:
             start_cmd = '''{last_env}
+export NODE_PROJECT_NAME="{project_name}"
 cd {project_cwd}
 nohup {npm_bin} run {project_script} 2>&1 >> {log_file} &
 echo $! > {pid_file}
@@ -1245,10 +1257,12 @@ echo $! > {pid_file}
     project_script = project_script,
     pid_file = pid_file,
     log_file = log_file,
-    last_env = last_env
+    last_env = last_env,
+    project_name = get.project_name
 )
         else:
             start_cmd = '''{last_env}
+export NODE_PROJECT_NAME="{project_name}"
 cd {project_cwd}
 nohup {project_script} 2>&1 >> {log_file} &
 echo $! > {pid_file}
@@ -1257,7 +1271,8 @@ echo $! > {pid_file}
     project_script = project_script,
     pid_file = pid_file,
     log_file = log_file,
-    last_env = last_env
+    last_env = last_env,
+    project_name = get.project_name
 )
         script_file = "{}/{}.sh".format(self._node_run_scripts,get.project_name)
 
@@ -1582,7 +1597,7 @@ cd {}
         '''
         if get: project_name = get.project_name.strip()
         pid_file = "{}/{}.pid".format(self._node_pid_path,project_name)
-        if not os.path.exists(pid_file): return self.get_project_state_by_cwd(project_name)
+        if not os.path.exists(pid_file): return False
         data=public.readFile(pid_file)
         if isinstance(data,str) and data:
             pid = int(data)
@@ -1629,7 +1644,9 @@ cd {}
         '''
         project_info['project_config'] = json.loads(project_info['project_config'])
         project_info['run'] = self.get_project_run_state(project_name = project_info['name'])
-        project_info['load_info'] = self.get_project_load_info(project_name = project_info['name'])
+        project_info['load_info'] = {}
+        if project_info['run']:
+            project_info['load_info'] = self.get_project_load_info(project_name = project_info['name'])
         project_info['ssl'] = self.get_ssl_end_date(project_name = project_info['name'])
         project_info['listen'] = []
         project_info['listen_ok'] = True
