@@ -1116,6 +1116,8 @@ export PATH
                 if p.cwd() == project_find['path']:
                     pname = p.name()
                     if pname in ['node','npm','pm2','yarn'] or pname.find('node ') == 0:
+                        cmdline = ','.join(p.cmdline())
+                        if cmdline.find('God Daemon') != -1:continue
                         all_pids.append(i)
             except: continue
         return all_pids
@@ -1137,6 +1139,8 @@ export PATH
                 if p.cwd() == project_find['path']:
                     pname = p.name()
                     if pname in ['node','npm','pm2','yarn'] or pname.find('node ') == 0:
+                        cmdline = ','.join(p.cmdline())
+                        if cmdline.find('God Daemon') != -1:continue
                         all_pids.append(i)
             except: continue
         if all_pids:
@@ -1271,7 +1275,10 @@ echo $! > {pid_file}
         # 执行脚本文件
         p = public.ExecShell("bash {}".format(script_file),user=project_find['project_config']['run_user'])
         time.sleep(1)
-        self.get_project_state_by_cwd(get.project_name)
+        n = 0
+        while n < 5:
+            if self.get_project_state_by_cwd(get.project_name): break
+            n+=1
         if not os.path.exists(pid_file):
             p = '\n'.join(p)
             if p.find('[Errno 0]') != -1:
@@ -1302,10 +1309,9 @@ echo $! > {pid_file}
             }
             @return dict
         '''
-        pid_file = "{}/{}.pid".format(self._node_pid_path,get.project_name)
-        if not os.path.exists(pid_file): return public.return_error('项目未启动')
         project_find = self.get_project_find(get.project_name)
         project_script = project_find['project_config']['project_script'].strip().replace('  ',' ')
+        pid_file = "{}/{}.pid".format(self._node_pid_path,get.project_name)
         if project_script.find('pm2 start') != -1: # 处理PM2启动的项目
             nodejs_version = project_find['project_config']['nodejs_version']
             last_env = self.get_last_env(nodejs_version,project_find['path'])
@@ -1313,15 +1319,22 @@ echo $! > {pid_file}
             public.ExecShell('''{}
 cd {}
 {}'''.format(last_env,project_find['path'],project_script))
-        data = public.readFile(pid_file)
-        if isinstance(data,str) and data:
-            pid = int(data)
-            pids = self.get_project_pids(pid=pid)
         else:
-            return  public.return_error('项目未启动')
-        if not pids: return public.return_error('项目未启动')
-        self.kill_pids(pids=pids)
+            pid_file = "{}/{}.pid".format(self._node_pid_path,get.project_name)
+            if not os.path.exists(pid_file): return public.return_error('项目未启动')
+            data = public.readFile(pid_file)
+            if isinstance(data,str) and data:
+                pid = int(data)
+                pids = self.get_project_pids(pid=pid)
+            else:
+                return  public.return_error('项目未启动')
+            if not pids: return public.return_error('项目未启动')
+            self.kill_pids(pids=pids)
         if os.path.exists(pid_file): os.remove(pid_file)
+        time.sleep(0.5)
+        pids = self.get_project_state_by_cwd(get.project_name)
+        if pids: self.kill_pids(pids=pids)
+
         return public.return_data(True, '停止成功')
 
     def restart_project(self,get):
