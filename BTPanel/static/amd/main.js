@@ -52,7 +52,7 @@ var detectBrowser = function (){
     IEReg.test(userAgent);
     IEVersionNum = parseFloat(RegExp['$1'])
   }
-  console.log(IEVersionNum >= 10 || isEdge || isIE11)
+  // console.log(IEVersionNum >= 10 || isEdge || isIE11)
   if(IEVersionNum >= 10 || isEdge || isIE11) requestList.push('polyfill')
 }
 detectBrowser()
