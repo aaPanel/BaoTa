@@ -1130,7 +1130,7 @@ export PATH
             @return bool or list
         '''
         project_find = self.get_project_find(project_name)
-        if not self._pids: self._pids = psutil.pids()
+        self._pids = psutil.pids()
         if not project_find: return []
         all_pids = []
         for i in self._pids:
