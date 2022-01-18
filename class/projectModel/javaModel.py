@@ -24,6 +24,7 @@ class mobj:
 
 class main(projectBase):
     _panel_path = public.get_panel_path()
+    __install='/tmp/panelShell2.pl'
     __bttomcat_path = '/usr/local/bttomcat'
     __jdk_path = '/usr/lib/jvm/'
     __btjdk_path='/usr/local/btjdk/'
@@ -51,6 +52,8 @@ class main(projectBase):
     _vhost_path = '{}/vhost'.format(_panel_path)
 
     def __init__(self):
+        if not os.path.exists(self.__install):
+            public.WriteFile(self.__install,'')
         if not os.path.exists(self.__site_path):
             os.makedirs(self.__site_path)
         if not os.path.exists(self.__bttomcat_path):
