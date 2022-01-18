@@ -2970,7 +2970,7 @@ class main(projectBase):
                 project_state = self.get_duli_run_state(project_name=project_name)
             else:
                 get.project_name = project_name
-                project_state = self.get_duli_run_state(project_name = project_name,bt_tomcat_web='/usr/local/bttomcat/tomcat{}'.format(project_find['project_config']['tomcat_version']),neizhi=True)
+                project_state = self.get_duli_run_state(project_name = project_name,bt_tomcat_web='/usr/local/bttomcat/tomcat{}'.format(project_config['tomcat_version']),neizhi=True)
             if not project_state:
                 get.project_name = project_name
                 result = self.start_project(get)
