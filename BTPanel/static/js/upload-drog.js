@@ -77,7 +77,6 @@ UploadFile.prototype = {
    * @description 初始化数据
   */
   init_data: function init_data () {
-
     this.uploadStatus = 0; // 上传状态 0:等待上传  1:上传成功  2:上传中
     this.uploadLimitSize = 1024 * 1024 * 2; // 上传限制字节
     this.uploadList = []; // 上传列表
@@ -152,7 +151,7 @@ UploadFile.prototype = {
     // 放置目标
     this.bind(this.uploadElement, 'drop', function (ev) {
       if (_this.uploadStatus === 2) {
-        layer.msg('正在上传文件，请稍后', {
+        layer.msg('正在上传文件，请稍候', {
           icon: 0
         });
         _this.file_drag_hover(ev);
@@ -169,7 +168,9 @@ UploadFile.prototype = {
    * @description 文件拖拽悬浮状态
    */
   file_drag_hover: function file_drag_hover (event) {
-    if (event.dataTransfer.items[0].kind == 'string') return false;
+    try {
+      if (event.dataTransfer.items[0].kind == 'string') return false;
+    } catch (error) {}
     is_show(this.uploadElement, !(event.type === 'dragleave' || event.type === 'drop'));
     event.preventDefault();
     event.stopPropagation();
@@ -246,7 +247,6 @@ UploadFile.prototype = {
           _this2.bind(uploadFileInput, 'change', function (ev) {
             _this2.isUpload = true;
             var files = ev.target.files;
-            // console.log(files)
             for (var i = 0; i < files.length; i++) {
               if (!_this2.file_upload_limit(files[i])) return false;
             }
@@ -394,6 +394,7 @@ UploadFile.prototype = {
       this.is_open_cover_layer = 0;
       this.uploadStatus = 2;
       this.uploaded_files = []; // 上传过的文件
+      this.uploadCycleSize = []; // 上传速度匹配
       this.uploadTime.startTime = this.get_time_real(); // 设置上传开始时间
       var startUpload = this.queryEl('.startUpload');
       startUpload.setAttribute('disabled','disabled')
@@ -430,7 +431,7 @@ UploadFile.prototype = {
         var uploadedSize = _this3.uploadInfo.uploadedSize;
         _this3.uploadInterval = setInterval(function () {
           if (_this3.uploadCycleSize.length === 4) _this3.uploadCycleSize.splice(0, 1);
-          _this3.uploadCycleSize.push(_this3.uploadInfo.uploadedSize - uploadedSize);
+          _this3.uploadCycleSize.push(Math.abs(_this3.uploadInfo.uploadedSize - uploadedSize));
         }, 1000);
 
         // 渲染上传时间和上传进度
@@ -444,7 +445,7 @@ UploadFile.prototype = {
           limitSize = _this3.uploadLimitSize;
         // 判断速度是否操作阈值，超过阀值后，采用倍速的方案，最大只能支持4，8MB
         var maxDouble = Math.floor(speed / _this3.uploadLimitSize);
-        if (maxDouble) limitSize = (maxDouble > 4 ? 4 : maxDouble) * limitSize;
+        if (maxDouble && index > 1) limitSize = (maxDouble > 4 ? 4 : maxDouble) * limitSize;
 
         // 实时反馈
         if (fileStart == 0) {
@@ -455,9 +456,11 @@ UploadFile.prototype = {
             upload_size: '0B'
           });
         }
+
         _this3.set_upload_view(index, item);
 
-        fileEnd = Math.min(item.file.size, fileStart + limitSize);
+        fileEnd = Math.min(item.file.size, (fileStart + limitSize))
+
         _this3.uploadInfo.fileSize = fileEnd - fileStart;
 
         var form = new FormData();
@@ -539,19 +542,21 @@ UploadFile.prototype = {
    * @description 设置上传视图
    */
   set_upload_view: function set_upload_view (index, config) {
+    var _this4 = this;
     if (typeof index === 'undefined') {
       var file_upload_info = this.queryEl('.file_upload_info'),
         time = this.get_time_real(),
         s_peed = this.to_size(this.uploadInfo.uploadedSize / ((time - this.uploadTime.startTime) / 1000));
-      file_upload_info.innerHTML = '<span>上传成功 ' + this.uploadList.length + '个文件,' + (this.uploadError ? '上传失败' + this.uploadError + '个文件，' : '') + '耗时' + this.diff_time(this.uploadTime.startTime, time) + ',平均速度 ' + s_peed + '/s</span><i class="ico-tips-close"></i>';
+      file_upload_info.innerHTML = '<span>上传成功 ' + (this.uploadList.length - this.uploadError) + '个文件，' + (this.uploadError ? '上传失败' + this.uploadError + '个文件，' : '') + '耗时' + this.diff_time(this.uploadTime.startTime, time) + ',平均速度 ' + s_peed + '/s</span><i class="ico-tips-close"></i>';
       this.bind(file_upload_info.querySelector('.ico-tips-close'), function (ev) {
         var parent = this.parentNode.parentNode;
         parent.querySelector('.btn-group').classList.remove('hide');
         parent.querySelector('.file_upload_info').classList.add('hide');
-        var startUpload = this.queryEl('.startUpload')
-        startUpload.removeAttribute('disabled')
-        startUpload.innerText = '开始上传'
       });
+      var startUpload = this.queryEl('.startUpload')
+      startUpload.removeAttribute('disabled')
+      startUpload.innerText = '开始上传'
+      _this4.init_data();
       return false;
     }
     try {
@@ -829,17 +834,15 @@ UploadFile.prototype = {
   file_select_handler: function file_select_handler (ev) {
     var _this7 = this;
     this.file_drag_hover(ev);
-    this.load = bt.load('正在获取文件信息，请稍后...');
+    this.load = bt.load('正在获取文件信息，请稍候...');
     this.timeNumber = 0;
     if (ev.target.files) {
-      console.log('文件选择上传')
       var items = ev.target.files;
       [].forEach.call(items, function (item) {
         _this7.traverse_file_tree(item);
       });
     } else if (ev.dataTransfer.items) {
       var items = ev.dataTransfer.items;
-      console.log(items);
       [].forEach.call(items, function (ev) {
         var getAsEntry = ev.webkitGetAsEntry || ev.getAsEntry;
         var item = getAsEntry.call(ev)

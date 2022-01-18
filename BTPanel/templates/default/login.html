@@ -771,7 +771,7 @@
                 timer = setInterval(function () {
                     request.post('/public?name=app&fun=is_scan_ok', {}, function (res) {
                         if (res.status) {
-                            popup.msg('扫码成功，请稍后...', { time: 0, icon: 1 });
+                            popup.msg('扫码成功，请稍候...', { time: 0, icon: 1 });
                             clear_control_time();
                             login_admin(res.msg);
                         }
@@ -792,7 +792,7 @@
                     secret_key: key
                 }, function (res) {
                     if (res.status) {
-                        popup.msg('正在安全登录中,请稍后...', {
+                        popup.msg('正在安全登录中,请稍候...', {
                             icon: 16,
                             time: 800,
                             shade: [0.4, '#fff']

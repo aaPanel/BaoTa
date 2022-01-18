@@ -413,7 +413,7 @@ class panelLets:
                     result['status'] = True
                     BTPanel.dns_client = None
                 else:
-                    result['msg'] = '证书获取失败，请稍后重试.'
+                    result['msg'] = '证书获取失败，请稍候重试.'
 
         except Exception as e:
             self.write_log("|-错误：{}，退出申请程序。".format(e))
@@ -610,7 +610,7 @@ class panelLets:
                     result['status'] = True
 
                 else:
-                    result['msg'] = '证书获取失败，请稍后重试.'
+                    result['msg'] = '证书获取失败，请稍候重试.'
             else:
                 result['msg'] = "签发失败,我们无法验证您的域名:<p>1、检查域名是否绑定到对应站点</p><p>2、检查域名是否正确解析到本服务器,或解析还未完全生效</p><p>3、如果您的站点设置了反向代理,或使用了CDN,请先将其关闭</p><p>4、如果您的站点设置了301重定向,请先将其关闭</p><p>5、如果以上检查都确认没有问题，请尝试更换DNS服务商</p>'"
         except Exception as e:

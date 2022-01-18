@@ -3,16 +3,18 @@
 <style>
   .control-item {
     display: inline-block;
-    padding: 0 25px;
-    font-size: 15px;
-    height: 50px;
-    line-height: 50px;
+    height: 45px;
+    min-width: 100px;
+    padding: 0 20px;
+    line-height: 45px;
+    font-size: 13px;
     cursor: pointer;
+    position: relative;
+    text-align: center;
   }
   .control-item.active {
     color: #20a53a;
-    font-weight: 500;
-    border-bottom: #20a53a 2px solid;
+    background: #20a53a10;
   }
   .daily-thumbnail{
     width: 950px;
@@ -78,13 +80,23 @@
     background-repeat: no-repeat;
     background-position: center;
     border-radius: 4px;
-    
   }
+  .tab-list .tabs-item.active:after {
+    content: '';
+    width: 20px;
+    height: 2px;
+    position: absolute;
+    left: 50%;
+    bottom: 0px;
+    background: red;
+    margin-left: -10px;
+    background: #20a53a;
+}
 </style>
 <div class="main-content pb55" style="min-height: 525px;">
     <div class="container-fluid">
         {% if 'error_msg' in data %}
-          <div class="pos-box bgw mtb15 plr15">
+          <div class="pos-box bgw mtb15">
             <div class="control-nav">
               <div class="control-item active" name="control">概览</div>
             </div>
@@ -109,7 +121,7 @@
             </div>
           </div>
         {% else %}
-          <div class="pos-box bgw mtb15 plr15">
+          <div class="pos-box bgw mtb15 ">
             <div class="control-nav">
               <div class="control-item active" name="control">概览</div>
             </div>
@@ -125,7 +137,7 @@
                   <li>拦截SQL注入、xss、一句话木马等常见渗透功能</li>
                 </ul>
                 <div class="daily-product-buy">
-                  <a title="购买专业/企业版" href="javascript:;" class="btn btn-success va0 ml15 payPlugin">立即购买</a>
+                  <a title="购买专业/企业版" href="javascript:;" class="btn btn-success va0 ml15 installWaf">立即安装</a>
                 </div>
               </div>
             </div>
@@ -136,6 +148,9 @@
 {% endblock %}
 {% block scripts %}
   <script type="text/javascript">
+    $('.installWaf').on('click',function(){
+      bt.soft.install('btwaf')
+    })
     $('.payPlugin').on('click',function(){
       bt.soft.get_soft_find('btwaf',function(rdata){
         bt.soft.product_pay_view({"name":rdata.title,"pid":rdata.pid,"type":rdata.type,"plugin":true,"ps":rdata.ps});

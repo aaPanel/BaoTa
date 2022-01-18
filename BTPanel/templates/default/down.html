@@ -1228,7 +1228,7 @@
     function submit_pass() {
         var file_password = document.getElementById("file_password").value;
         $('.file_content_two').css('padding', "8rem 12rem 12rem").find('.content_box').hide()
-        layer.msg('正在获取文件信息,请稍后...', { icon: 16, time: 1000 });
+        layer.msg('正在获取文件信息,请稍候...', { icon: 16, time: 1000 });
         setTimeout(function () {
             if ($('.file_content_two').find('bg_update_images').length == 0) $('.file_content_two').append(down_template.innerHTML);
         }, 1000);

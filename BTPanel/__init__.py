@@ -372,7 +372,7 @@ def site(pdata=None):
 
     defs = (
     'upload_csv', 'create_website_multiple', 'del_redirect_multiple', 'del_proxy_multiple', 'delete_dir_auth_multiple',
-    'delete_dir_bind_multiple', 'delete_domain_multiple', 'set_site_etime_multiple','check_del_data',
+    'delete_dir_bind_multiple', 'delete_domain_multiple', 'set_site_etime_multiple','check_del_data','set_https_mode','get_https_mode',
     'set_site_php_version_multiple', 'delete_website_multiple', 'set_site_status_multiple', 'get_site_domains',
     'GetRedirectFile', 'SaveRedirectFile', 'DeleteRedirect', 'GetRedirectList', 'CreateRedirect', 'ModifyRedirect',
     'set_dir_auth', 'delete_dir_auth', 'get_dir_auth', 'modify_dir_auth_pass', 'export_domains', 'import_domains',
@@ -575,7 +575,7 @@ def firewall(pdata=None):
     import firewalls
     firewallObject = firewalls.firewalls()
     defs = ('GetList', 'AddDropAddress', 'DelDropAddress', 'FirewallReload', 'SetFirewallStatus',
-            'AddAcceptPort', 'DelAcceptPort', 'SetSshStatus', 'SetPing', 'SetSshPort', 'GetSshInfo')
+            'AddAcceptPort', 'DelAcceptPort', 'SetSshStatus', 'SetPing', 'SetSshPort', 'GetSshInfo','SetFirewallStatus')
     return publicObject(firewallObject, defs, None, pdata)
 
 
@@ -1432,6 +1432,8 @@ def btwaf_error():
 @app.route('/<name>/<fun>', methods=method_all)
 @app.route('/<name>/<fun>/<path:stype>', methods=method_all)
 def panel_other(name=None, fun=None, stype=None):
+    if not public.is_bind():
+        return redirect('/bind',302)
     # 插件接口
     if public.is_error_path():
         return redirect('/error',302)
@@ -1464,7 +1466,15 @@ def panel_other(name=None, fun=None, stype=None):
     p_path = os.path.join('/www/server/panel/plugin/', name)
     if not os.path.exists(p_path): 
         if name == 'btwaf' and fun == 'index':
-            return  render_template('error3.html',data={}) 
+            pdata = {}
+            from pluginAuth import Plugin
+            plugin_list = Plugin(False).get_plugin_list()
+            for p in plugin_list['list']:
+                if p['name'] in ['btwaf']:
+                    if p['endtime'] != 0 and p['endtime'] < time.time():
+                        pdata['error_msg'] = 1
+                        break
+            return  render_template('error3.html',data=pdata)
         return abort(404)
 
     # 是否响插件应静态文件

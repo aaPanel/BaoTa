@@ -1666,6 +1666,17 @@ def set_mode(filename,mode):
     os.chmod(filename,mode)
     return True
 
+def create_linux_user(user,group):
+    '''
+        @name 创建系统用户
+        @author hwliang<2022-01-15>
+        @param user<string> 用户名
+        @param group<string> 所属组
+        @return bool
+    '''
+    ExecShell("groupadd {}".format(group))
+    ExecShell('useradd -s /sbin/nologin -g {} {}'.format(user,group))
+    return True
 
 #设置用户组
 def set_own(filename,user,group=None):
@@ -1678,8 +1689,13 @@ def set_own(filename,user,group=None):
             user_info = getpwnam(group)
         group = user_info.pw_gid
     except:
+        if user == 'www': create_linux_user(user)
         #如果指定用户或组不存在，则使用www
-        user_info = getpwnam('www')
+        try:
+            user_info = getpwnam('www')
+        except:
+            create_linux_user(user)
+            user_info = getpwnam('www')
         user = user_info.pw_uid
         group = user_info.pw_gid
     os.chown(filename,user,group)
@@ -1954,9 +1970,18 @@ def auto_backup_panel():
             if time.mktime(time.strptime(f, "%Y-%m-%d")) < time_now: 
                 path = b_path + '/' + f
                 if os.path.exists(path): shutil.rmtree(path)
+        
+        set_php_cli_env()
     except:
         pass
             
+
+def set_php_cli_env():
+    '''
+        @name 重新设置php-cli.ini配置
+    '''
+    import jobs
+    jobs.set_php_cli_env()
     
 
 
@@ -2638,8 +2663,8 @@ def get_menus():
             if data[i]['id'] in hide_menu: continue
             if data[i]['id'] == "memuAxterm":
                 if debug: continue
-            if data[i]['id'] == "memu_btwaf": 
-                if not os.path.exists('plugin/btwaf/btwaf_main.py'): continue
+            # if data[i]['id'] == "memu_btwaf": 
+            #     if not os.path.exists('plugin/btwaf/btwaf_main.py'): continue
             show_menu.append(data[i])
 
 
@@ -3450,6 +3475,7 @@ def get_plugin_main_object(plugin_name,sys_path):
     os_file = sys_path + '/' + plugin_name + '_main.so'
     php_file = sys_path + '/index.php'
     is_php = False
+    plugin_obj = None
     if os.path.exists(os_file): # 是否为编译后的so文件
         plugin_obj = __import__(plugin_name + '_main')
     elif os.path.exists(php_file): # 是否为PHP代码
@@ -4059,3 +4085,70 @@ def get_full_session_file():
     full_session_key = app.config['SESSION_KEY_PREFIX'] + get_session_id()
     sess_path = get_panel_path() + '/data/session/'
     return sess_path + '/' + md5(full_session_key)
+
+
+
+def install_mysql_client():
+    '''
+        @name 安装mysql客户端
+        @author hwliang<2022-01-14>
+        @return void
+    '''
+
+    if os.path.exists('/usr/bin/yum'):
+        os.system("yum install mariadb -y")
+    elif os.path.exists('/usr/bin/apt-get'):
+        os.system('apt-get install mariadb-client -y')
+
+
+def get_mysqldump_bin():
+    '''
+        @name 获取mysqldump路径
+        @author hwliang<2022-01-14>
+        @return string
+    '''
+    bin_files = [
+        '{}/mysql/bin/mysqldump'.format(get_panel_path()),
+        '/usr/bin/mysqldump',
+        '/usr/local/bin/mysqldump',
+        '/usr/sbin/mysqldump',
+        '/usr/local/sbin/mysqldump'
+    ]
+    
+    for bin_file in bin_files:
+        if os.path.exists(bin_file):
+            return bin_file
+    
+    install_mysql_client()
+
+    for bin_file in bin_files:
+        if os.path.exists(bin_file):
+            return bin_file
+
+    return bin_files[0]
+
+def get_mysql_bin():
+    '''
+        @name 获取mysql路径
+        @author hwliang<2022-01-14>
+        @return string
+    '''
+    bin_files = [
+        '{}/mysql/bin/mysql'.format(get_panel_path()),
+        '/usr/bin/mysql',
+        '/usr/local/bin/mysql',
+        '/usr/sbin/mysql',
+        '/usr/local/sbin/mysql'
+    ]
+    
+    for bin_file in bin_files:
+        if os.path.exists(bin_file):
+            return bin_file
+    
+    install_mysql_client()
+        
+    for bin_file in bin_files:
+        if os.path.exists(bin_file):
+            return bin_file
+    return bin_files[0]
+
