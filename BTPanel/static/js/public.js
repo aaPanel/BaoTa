@@ -720,7 +720,7 @@ var aceEditor = {
           group = group - 1;
         }
       }
-      console.log(element)
+      // console.log(element)
       switch (_type) {
         case 2:
           _this.newly_file_type_dom(element, group, 0);
@@ -824,7 +824,7 @@ var aceEditor = {
         _path = $('.has-children .file_fold.bg').parent().attr('data-menu-path'),
         _type = parseInt($(this).parent().parent().attr('data-edit'));
       if ($(this).parent().parent().parent().attr('data-menu-path') === undefined && parseInt($(this).parent().parent().attr('data-group')) === 1) {
-        console.log('根目录')
+        // console.log('根目录')
         _path = $('.ace_catalogue_title').attr('title');
       }
       // 			return false;
@@ -922,7 +922,7 @@ var aceEditor = {
       _group = parseInt(_active.attr('data-group')),
       _path = _active.parent().attr('data-menu-path'), //当前文件夹新建
       _this = this;
-    console.log(_type);
+    // console.log(_type);
     switch (_type) {
       case 0: //刷新目录
         _active.next().empty();
@@ -3414,7 +3414,7 @@ function messagebox () {
             bt.send('GetExecLog', 'files/GetExecLog', {}, function (res) {
               loadT.close();
               var exec_log = $('#execLog');
-              console.log(exec_log)
+              // console.log(exec_log)
               exec_log.html(res)
               exec_log[0].scrollTop = exec_log[0].scrollHeight
             })
@@ -3825,7 +3825,7 @@ var Term = {
       Term.term.write(msg)
       Term.state = 3;
     } else {
-      console.log(ws_event)
+      // console.log(ws_event)
     }
   },
 
@@ -5732,7 +5732,7 @@ MessageBox.prototype = {
               //      }
               //                     });
             } catch (err) {
-              console.log("操作1不安全")
+              // console.log("操作1不安全")
             }
           } else {
             try {
@@ -5740,7 +5740,7 @@ MessageBox.prototype = {
               var url = image.src;
               image.setAttribute("onclick", 'box.thumbnail(\'' + url + '\')');
             } catch (err) {
-              console.log("操作2不安全")
+              // console.log("操作2不安全")
             }
           }
           $("#feedback-box").show();
@@ -6268,7 +6268,6 @@ BindAccount.prototype = {
         layer.msg(rdata.msg)
         _this.verifyParam = { username: param.username, token: rdata.data.token }
         _this.verifyCodeView();
-        
       }
     })
   },

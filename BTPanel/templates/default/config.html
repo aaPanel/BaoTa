@@ -512,9 +512,147 @@
   </style>
   {% endblock %}
   {% block scripts %}
+    <script src="{{g.cdn_url}}/js/jquery-2.2.4.min.js"></script>
+    <script src="{{g.cdn_url}}/language/{{session['lan']}}/lan.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+    <script src="{{g.cdn_url}}/js/public.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+    <script src="{{g.cdn_url}}/js/public_backup.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+    <script type="text/javascript">
+      bt.set_cookie('order', 'id desc');
+      bt.set_cookie('serverType', "{{session['webserver']}}");
+      $("#setBox").click(function () {
+        if ($(this).prop("checked")) {
+          $("input[name=id]").prop("checked", true);
+        } else {
+          $("input[name=id]").prop("checked", false);
+        }
+      });
+      var is_files_html = false;
+      var task_open = 0;
+      var task_close = false;
+      if ($(".current").attr("id") == 'memuAfiles') {
+        is_files_html = true;
+      }
+
+      function task_stat(my_init) {
+        if (!my_init) {
+          my_init = 0;
+          if (task_open) return;
+        }
+        if (task_close) return;
+        $.post('/task?action=get_task_lists', {
+          status: -3
+        }, function (task_list) {
+          if (task_list.length == 0) {
+            if (my_init && is_files_html) GetFiles(getCookie('Path'));
+            if (task_open) {
+              layer.close(task_open);
+              task_open = false;
+            }
+            return;
+          }
+          var msg_body = '';
+          var is_add = false;
+          for (var i = 0; i < task_list.length; i++) {
+            if (task_list[i]['status'] == -1) {
+              if (!task_open || !$(".message-list").attr("class")) {
+                show_task();
+              }
+
+              if (task_list[i]['type'] == '1') {
+                msg_body +=
+                  '<div class="mw-con">\
+                                    <ul class="waiting-down-list">\
+                                      <li>\
+                                        <div class="down-filse-name"><span class="fname" style="width:80%;" title="正在下载: ' +
+                  task_list[i].shell + '">正在下载: ' + task_list[i].shell +
+                  '</span><span style="position: absolute;left: 84%;top: 25px;color: #999;">' + task_list[i].log
+                  .pre + '%</span><span class="btlink" onclick="remove_task(' + task_list[i].id + ')" style="position: absolute;top: 25px;right: 20px;">取消</span></div>\
+                                        <div class="down-progress"><div class="done-progress" style="width:' + task_list[i]
+                  .log.pre + '%"></div></div>\
+                                        <div class="down-info"><span class="total-size"> ' + task_list[i].log.used + '/' +
+                  ToSize(task_list[i].log.total) + '</span><span class="speed-size">' + (task_list[i].log.speed ==
+                    0 ? '正在连接..' : task_list[i].log.speed) + '/s</span><span style="margin-left: 20px;">预计还要: ' +
+                  task_list[i].log.time + '</span></div>\
+                                      </li>\
+                                          </ul>\
+                                      </div>'
+              } else {
+                msg_body +=
+                  '<div class="mw-title"><span style="max-width: 88%;display: block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">' +
+                  task_list[i].name + ': ' + task_list[i].shell +
+                  '</span><span class="btlink" onclick="remove_task(' + task_list[i].id + ')"  style="position: absolute;top: 10px;right: 15px;">取消</span></div>\
+                                      <div class="mw-con codebg">\
+                                        <code>' + task_list[i].log + '</code>\
+                                      </div>'
+
+              }
+
+            } else {
+              if (!is_add) {
+                msg_body += '<div class="mw-title">等待执行任务</div><div class="mw-con"><ul class="waiting-list">';
+                is_add = true;
+              }
+              msg_body += '<li><span class="wt-list-name" style="width: 90%;">' + task_list[i].name + ': ' +
+                task_list[i].shell + '</span><span class="mw-cancel" onclick="remove_task(' + task_list[i].id +
+                ')">X</span></li>';
+            }
+          }
+          if (task_open) {
+            if (is_add) {
+              msg_body += '</ul></div>';
+            }
+            $(".message-list").html(msg_body);
+          }
+
+
+          if (my_init > 3) {
+            if (is_files_html) GetFiles(getCookie('Path'));
+            my_init = 1;
+          }
+          my_init += 1
+          setTimeout(function () {
+            task_stat(my_init);
+          }, 1000);
+        });
+      }
+
+      function show_task() {
+        task_open = layer.open({
+          type: 1,
+          title: "实时任务队列",
+          area: '500px',
+          closeBtn: 2,
+          shadeClose: false,
+          shade: false,
+          offset: 'auto',
+          content: '<div style="margin: 10px;" class="message-list"></div>',
+          cancel: function () {
+            task_close = true;
+          }
+        });
+      }
+
+      function remove_task(id) {
+        loadT = layer.msg('正在取消任务...', {
+          time: 0,
+          icon: 16,
+          shade: [0.3, '#000']
+        });
+        $.post('/task?action=remove_task', {
+          id: id
+        }, function (rdata) {
+          layer.close(loadT)
+          layer.msg(rdata.msg);
+        });
+      }
+      task_stat(); 
+      {% if data['show_workorder'] %}
+        var box = new MessageBox(); 
+      {%endif %}
+    </script>
     <script type="text/javascript" src="{{g.cdn_url}}/amd/require.min.js" data-main="{{g.cdn_url}}/amd/main"></script>
     <script type="text/javascript">
-      let sessionInfo  = {
+      var sessionInfo  = {
         title:"{{session['title']}}",
         username:"{{session['username']}}",
         statusCode:"{{data['status_code']}}"
