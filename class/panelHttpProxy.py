@@ -11,8 +11,9 @@
 # HTTP代理模块
 #------------------------------
 
-import requests,os
+import requests,os,re
 from BTPanel import request,Response,public,app
+from http.cookies import SimpleCookie
 
 class HttpProxy:
 
@@ -55,8 +56,17 @@ class HttpProxy:
             @return dict
         '''
         headers = {}
+        rm_cookies = [app.config['SESSION_COOKIE_NAME'],'bt_user_info','file_recycle_status','ltd_end',
+        'memSize','page_number','pro_end','request_token','serverType','site_model',
+        'sites_path','soft_remarks','load_page','Path','distribution','order']
         for k in request.headers.keys():
             headers[k] = request.headers.get(k)
+            if k == 'Cookie':
+                cookie_dict = SimpleCookie(headers[k])
+                for rm_cookie in rm_cookies:
+                    if rm_cookie in cookie_dict:
+                        del(cookie_dict[rm_cookie])
+                headers[k] = cookie_dict.output(header='',sep=';').strip()
         return headers
 
     def proxy(self,proxy_url):
@@ -67,9 +77,10 @@ class HttpProxy:
             @return Response
         '''
         try:
+            headers = self.get_request_headers()
             if request.method == 'GET':
                 # 转发GET请求
-                p_res = requests.get(proxy_url,headers=request.headers,verify=False)
+                p_res = requests.get(proxy_url,headers=headers,verify=False)
             elif request.method == 'POST':
                 # 转发POST请求
                 if request.files: # 如果上传文件
@@ -77,7 +88,6 @@ class HttpProxy:
                     if not os.path.exists(tmp_path): os.makedirs(tmp_path,384)
 
                     # 处理请求头
-                    headers = self.get_request_headers()
                     if 'Content-Type' in headers: del(headers['Content-Type'])
                     if 'Content-Length' in headers: del(headers['Content-Length'])
 
