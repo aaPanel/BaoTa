@@ -1,5 +1,3 @@
-// noinspection ES6ConvertVarToLetConst
-
 /*
  * @Description: Require.js主配置文件
  * @Version: 1.0
@@ -8,6 +6,7 @@
  * @LastEditors: chudong
  * @LastEditTime: 2021-12-05 22:59:36
  */
+
 require.config({
   paths: {
     "jquery": "../js/jquery-2.2.4.min", // Jquery
@@ -27,9 +26,16 @@ require.config({
     "jquery.qrcode": "../js/jquery.qrcode.min", // 二维码
     "language": "../language/Simplified_Chinese/lan", // 语言包
     "clipboard": "../js/clipboard.min", // 复制
-    "polyfill":"../vue/polyfill.min"
+    "public": "../js/public", // 公共方法
+    "public_backup": "../js/public_backup", // 公共方法
   },
   shim: {
+    "public":{
+      exports:'aceEditor'
+    },
+    "public_backup":{
+      exports:'bt'
+    },
     "language": {
       exports: "lan"
     },
@@ -40,24 +46,7 @@ require.config({
   }
 })
 
-var requestList = ['jquery', 'layer', 'language']
-var detectBrowser = function (){
-  var userAgent = navigator.userAgent,
-    isLessIE11 = userAgent.indexOf('compatible') > -1 && userAgent.indexOf('MSIE') > -1,
-    isEdge = userAgent.indexOf('Edge') > -1 && !isLessIE11,
-    isIE11 = userAgent.indexOf('Trident') > -1 && userAgent.indexOf('rv:11.0') > -1,
-    IEVersionNum = 0
-  if (isLessIE11) {
-    var IEReg = new RegExp('MSIE (\\d+\\.\\d+);');
-    IEReg.test(userAgent);
-    IEVersionNum = parseFloat(RegExp['$1'])
-  }
-  // console.log(IEVersionNum >= 10 || isEdge || isIE11)
-  if(IEVersionNum >= 10 || isEdge || isIE11) requestList.push('polyfill')
-}
-detectBrowser()
-requestList.push('utils')
-require(requestList, function () {
+require(['jquery', 'layer', 'language', 'utils', 'public', 'public_backup'], function () {
   switch (location.pathname) {
     case "/config":
       require(['config'], function (param1) {
