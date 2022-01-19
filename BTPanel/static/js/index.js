@@ -1,5 +1,9 @@
-
-if (bind_user == 'True') new BindAccount().installBindUser();
+try {
+  if (bind_user == 'True'){
+    var bindAccount = new BindAccount();
+    bindAccount.installBindUser();
+  }
+} catch (error) {}
 
 $("select[name='network-io'],select[name='disk-io']").change(function () {
   var key = $(this).val(), type = $(this).attr('name')
@@ -295,8 +299,9 @@ var index = {
           bt.system.re_memory(function (res) {
             that.next().show()
             clearInterval(setInter)
+            var memory = data.memRealUsed - res.memRealUsed
             option.series[0].detail = $.extend(option.series[0].detail, {
-              formatter: "已释放\n" + bt.format_size(data.memRealUsed - res.memRealUsed),
+              formatter: "已释放\n" + bt.format_size(memory > 0 ? memory : 0) + "",
               lineHeight: 18,
               padding: [5, 0]
             })
@@ -716,7 +721,7 @@ var index = {
     })
   },
   check_update: function () {
-    var _load = bt.load('正在获取更新内容，请稍后...');
+    var _load = bt.load('正在获取更新内容，请稍候...');
     bt.system.check_update(function (rdata) {
       _load.close();
       if (rdata.status === false) {
@@ -1152,7 +1157,7 @@ var index = {
         '</div>',
       success: function () {
         $('.warning_again_scan').click(function () {
-          var loadT = layer.msg('正在重新检测安全风险，请稍后...', { icon: 16 });
+          var loadT = layer.msg('正在重新检测安全风险，请稍候...', { icon: 16 });
           that.get_warning_list(true, function () {
             layer.msg('扫描成功', { icon: 1 });
             reader_warning_list(that.warning_list);
@@ -1235,7 +1240,7 @@ var index = {
    * @return 无返回值
   */
   waring_check_find: function (model_name, callback) {
-    var loadT = layer.msg('正在检测指定模块，请稍后...', { icon: 16, time: 0 });
+    var loadT = layer.msg('正在检测指定模块，请稍候...', { icon: 16, time: 0 });
     bt.send('check_find', 'warning/check_find', { m_name: model_name }, function (res) {
       bt.msg(res);
       if (res.status !== false) {
@@ -1252,7 +1257,7 @@ var index = {
    * @return 无返回值
   */
   warning_set_ignore: function (model_name, callback) {
-    var loadT = layer.msg('正在设置模块状态，请稍后...', { icon: 16, time: 0 });
+    var loadT = layer.msg('正在设置模块状态，请稍候...', { icon: 16, time: 0 });
     bt.send('set_ignore', 'warning/set_ignore', { m_name: model_name }, function (res) {
       bt.msg(res);
       if (res.status !== false) {
@@ -1264,9 +1269,9 @@ var index = {
    * @description 获取当前的产品状态
    */
    get_product_status: function () {
-    var loadT = layer.msg('正在获取产品状态，请稍后...', { icon: 16, time: 0 })
+    // var loadT = layer.msg('正在获取产品状态，请稍候...', { icon: 16, time: 0 })
     bt.send('get_pd', 'ajax/get_pd', {}, function (res) {
-      layer.close(loadT);
+      // layer.close(loadT);
       $('.btpro-gray').replaceWith($(res[0]));
       if(res[1] === 0){
         $(".btpro span").click(function(e){

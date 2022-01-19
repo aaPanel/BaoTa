@@ -7,7 +7,7 @@ $('#cutMode .tabs-item').on('click', function () {
   switch (type) {
     case 'php':
       $('#bt_site_table').empty();
-      if (!isSetup) $('.site_table_view .mask_layer').removeClass('hide').find('.prompt_description.web-model').html('未安装Web服务器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nginx\')">安装Nginx</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'apache\')">安装Apache</a>');
+      // if (!isSetup) $('.site_table_view .mask_layer').removeClass('hide').find('.prompt_description.web-model').html('未安装Web服务器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nginx\')">安装Nginx</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'apache\')">安装Apache</a>');
       site.php_table_view();
       site.get_types();
       break;
@@ -931,7 +931,7 @@ var site = {
         default: "未安装模块，点击一键安装项目模块, 数据为空时的默认提示",
         param: { project_name: row.name, project_cwd: row.path },
         height: '580px',
-        load: '正在获取模块列表，请稍后...',
+        load: '正在获取模块列表，请稍候...',
         beforeRequest: function (params) {
           if (params.hasOwnProperty('data') && typeof params.data === 'string') return params
           return { data: JSON.stringify(params) }
@@ -1240,7 +1240,7 @@ var site = {
      */
     request_module_log_command: function (config) {
       var r_command = layer.open({
-        title: config.name || '正在安装模块，请稍后...',
+        title: config.name || '正在安装模块，请稍候...',
         type: 1,
         closeBtn: 0,
         area: ['500px', '342px'],
@@ -1285,7 +1285,7 @@ var site = {
       minWidth: '1000px',
       autoHeight: true,
       default: "项目列表为空", //数据为空时的默认提示\
-      load: '正在获取Node项目列表，请稍后...',
+      load: '正在获取Node项目列表，请稍候...',
       beforeRequest: function (params) {
         if (params.hasOwnProperty('data') && typeof params.data === 'string') {
           var oldParams = JSON.parse(params['data'])
@@ -1421,8 +1421,8 @@ var site = {
               ];
             try {
               if (typeof row.ssl.endtime != 'undefined') {
-                if (row.ssl.endtime < 0) {
-                  return '<a class="btlink bt_danger" href="javascript:;">已过期' + Math.row.ssl.endtime + '天</a>';
+                if (row.ssl.endtime < 1) {
+                  return '<a class="btlink bt_danger" href="javascript:;">已过期</a>';
                 }
               }
             } catch (error) { }
@@ -1683,7 +1683,7 @@ var site = {
             try {
               if (typeof row.ssl.endtime != 'undefined') {
                 if (row.ssl.endtime < 0) {
-                  return '<a class="btlink bt_danger" href="javascript:;">已过期' + Math.row.ssl.endtime + '天</a>';
+                  return '<a class="btlink bt_danger" href="javascript:;">已过期</a>';
                 }
               }
             } catch (error) { }
@@ -1935,7 +1935,6 @@ var site = {
           // theadName: '站点名称',
           // refresh: true,
           callback: function (that) {
-            console.log(that);
             // bt.show_confirm("批量删除站点", "是否同时删除选中站点同名的FTP、数据库、根目录", function() {
             //     var param = {};
             //     $('.bacth_options input[type=checkbox]').each(function() {
@@ -2991,7 +2990,7 @@ var site = {
         layer.close(indexs)
         var ids = JSON.stringify(wid instanceof Array ? wid : [wid]), countDown = typeof wname === 'string' ? 4 : 9;
         title = typeof wname === "function" ? '二次验证信息，批量删除站点' : '二次验证信息，删除站点 [ ' + wname + ' ]';
-        var loadT = bt.load('正在检测站点数据信息，请稍后...')
+        var loadT = bt.load('正在检测站点数据信息，请稍候...')
         bt.send('check_del_data', 'site/check_del_data', { ids: ids }, function (res) {
           loadT.close()
           layer.open({
@@ -3072,7 +3071,7 @@ var site = {
             },
             yes: function (indes, layers) {
               if ($(layers).hasClass('active')) {
-                layer.tips('请确认信息，稍后在尝试，还剩' + countDown + '秒', $(layers).find('.layui-layer-btn0'), { tips: [1, 'red'], time: 3000 })
+                layer.tips('请确认信息，稍候在尝试，还剩' + countDown + '秒', $(layers).find('.layui-layer-btn0'), { tips: [1, 'red'], time: 3000 })
                 return;
               }
               if (typeof wname === "function") {
@@ -4091,7 +4090,6 @@ var site = {
                 type: 'button',
                 text: '保存',
                 callback: function (pdata) {
-                  console.log(pdata, '1111')
                   bt.site.set_site_runpath(web.id, pdata.dirName, function (ret) {
                     if (ret.status) site.reload(2)
                     layer.msg(ret.msg, { icon: ret.status ? 1 : 2 });
@@ -6488,7 +6486,7 @@ var site = {
                   title: '续签证书',
                   msg: '当前证书订单需要重新生成新订单，需要手动续签，和重新部署证书，是否继续操作?'
                 }, function () {
-                  var loadT = bt.load('正在续签证书，可能等待时间较长，请稍后...');
+                  var loadT = bt.load('正在续签证书，可能等待时间较长，请稍候...');
                   bt.send('renew_cert_order', 'ssl/renew_cert_order', { oid: item.oid }, function (res) {
                     loadT.close();
                     site.reload();
@@ -6745,7 +6743,7 @@ var site = {
                       $(this).prev().click();
                     });
                     $('.business_pay').click(function () {
-                      var loadT = bt.load('正在生成支付订单，请稍后...'),
+                      var loadT = bt.load('正在生成支付订单，请稍候...'),
                         data = product_current,
                         num = 0;
                       if (typeof data.current_num == "undefined") data.current_num = data.num
@@ -6909,7 +6907,7 @@ var site = {
 
                     function reader_product_list (data, callback) {
                       var html = '', period = [];
-                      $('.business_class_list').html('<div class="business_class_loading">正在获取证书列表，请稍后...</div>')
+                      $('.business_class_list').html('<div class="business_class_loading">正在获取证书列表，请稍候...</div>')
                       bt.send('get_product_list', 'ssl/get_product_list', data, function (res) {
                         user_info = res.administrator;
                         product_list = res.data;
@@ -7315,7 +7313,7 @@ var site = {
                             return false;
                           }
                           _this_layer.check_dns_interface(function () {
-                            var loadT = bt.load('正在提交证书资料，请稍后...');
+                            var loadT = bt.load('正在提交证书资料，请稍候...');
                             var auth_to = $("[name='dns_interface_select']") ? $("[name='dns_interface_select']").val() : '';
                             bt.send('apply_order_ca', 'ssl/apply_order_ca', {
                               pdata: JSON.stringify({
@@ -8137,11 +8135,18 @@ var site = {
       ]
       bt.render_tab('ssl_tabs', _tabs);
       $('#ssl_tabs').append('<div class="ss-text pull-right mr30" style="position: relative;top:-4px"><em>强制HTTPS</em><div class="ssh-item"><input class="btswitch btswitch-ios" id="toHttps" type="checkbox"><label class="btswitch-btn" for="toHttps"></label></div></div>');
-      $("#toHttps").attr('checked', rdata.httpTohttps);
-      $('#toHttps').click(function (sdata) {
-        var isHttps = $("#toHttps").attr('checked');
-        if (isHttps) {
-          layer.confirm('关闭强制HTTPS后需要清空浏览器缓存才能看到效果,继续吗?', { icon: 3, title: "关闭强制HTTPS" }, function () {
+      var ssl_open = $("#toHttps")
+      ssl_open.attr('checked', rdata.httpTohttps);
+      ssl_open.click(function (sdata) {
+        var isHttps = $("#toHttps").is(':checked');
+        if (!isHttps) {
+          layer.confirm('关闭强制HTTPS后需要清空浏览器缓存才能看到效果,继续吗?', { 
+            icon: 3, 
+            title: "关闭强制HTTPS",
+            cancel:function () { 
+              ssl_open.prop('checked', !isHttps);
+            }
+        }, function () {
             bt.site.close_http_to_https(web.name, function (rdata) {
               if (rdata.status) {
                 setTimeout(function () {
@@ -8149,15 +8154,17 @@ var site = {
                 }, 3000);
               }
             })
+          },function () {
+            ssl_open.attr('checked', !isHttps);
           });
         } else {
           bt.site.set_http_to_https(web.name, function (rdata) {
             if (!rdata.status) {
+              ssl_open.prop('checked', !isHttps);
               setTimeout(function () {
                 site.reload(7);
               }, 3000);
             }
-
           })
         }
       })

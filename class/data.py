@@ -298,7 +298,17 @@ class data:
                 if get.type != '-1':
                     where += " AND type_id={}".format(get.type)
 
-            
+        if get.table == 'databases':
+            if hasattr(get,'db_type'):
+                if where:
+                    where += " AND db_type='{}'".format(get.db_type)
+                else:
+                    where = "db_type='{}'".format(get.db_type)
+            if hasattr(get,'sid'):
+                if where:
+                    where += " AND sid='{}'".format(get.sid)
+                else:
+                    where = "sid='{}'".format(get.sid)
         
         field = self.GetField(get.table)
         #实例化数据库对象

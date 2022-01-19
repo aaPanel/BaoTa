@@ -1,0 +1,36 @@
+{
+  "JOBS": [
+    {
+      "id": "1",
+      "func": "jobs:control_task",
+      "args": null,
+      "trigger": "interval",
+      "seconds": 15
+    },
+    {
+      "id": "2",
+      "func": "jobs:install_task",
+      "args": null,
+      "trigger": "interval",
+      "seconds": 10
+    },
+    {
+      "id": "3",
+      "func": "jobs:site_end_task",
+      "args": null,
+      "trigger": "interval",
+      "seconds": 10800
+    },
+    {
+      "id": "4",
+      "func": "jobs:php_safe_task",
+      "args": null,
+      "trigger": "interval",
+      "seconds": 30
+    }
+  ],
+  "control": {
+    "open": true,
+    "day": 30
+  }
+}

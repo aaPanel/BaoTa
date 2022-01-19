@@ -247,7 +247,7 @@
               $.post('/firewall_new?action=GetList', { p: page, search: search,collback:'firewall.get_list' }, function (rdata) {
 
                   $('.firewallBody').html(rdata.page);
-                  var ports_ps = { "3306": "MySQL服务默认端口", "888": "phpMyAdmin默认端口", "22": "SSH远程服务", "20": "FTP主动模式数据端口", "21": "FTP协议默认端口", "39000-40000": "FTP被动模端口范围", "30000-40000": "FTP被动模端口范围","11211":"Memcached服务端口","873":"rsync数据同步服务","8888":"宝塔Linux面板默认端口"}
+                  var ports_ps = { "3306": "MySQL服务默认端口", "888": "phpMyAdmin默认端口", "22": "SSH远程服务", "20": "FTP主动模式数据端口", "21": "FTP协议默认端口", "39000-40000": "FTP被动模式端口范围", "30000-40000": "FTP被动模式端口范围","11211":"Memcached服务端口","873":"rsync数据同步服务","8888":"宝塔Linux面板默认端口"}
           var _tab =  bt.render({
             table:'#firewallBody',
             columns:[						

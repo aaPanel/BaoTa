@@ -586,18 +586,17 @@ var bt_file = {
 
         //设置单页显示的数量，默认为100，设置local本地缓存
         $('.filePage').on('change', '.showRow', function() {
-            var val = $(this).val();
-            console.log(val);
+            var val = $(this).val()
             bt.set_storage('local','showRow',val);
             that.reader_file_list({ showRow: val, p: 1, is_operating: false });
         });
 
         // 页码跳转
         $('.filePage').on('click', 'div:nth-child(2) a', function(e) {
-            var num = $(this).attr('href').match(/p=([0-9]+)$/)[1];
-            that.reader_file_list({ path: that.path, p: num })
-            e.stopPropagation();
-            e.preventDefault();
+            var num = $(this).attr('href').match(/p=([0-9]+)$/)[1]
+            that.reader_file_list({ path: that.path, p: num})
+            e.stopPropagation()
+            e.preventDefault()
         })
 
         // 获取文件夹大小
@@ -1338,6 +1337,10 @@ var bt_file = {
         $('.file_table_view').removeClass('.list_view,.icon_view').addClass(model == 'list' ? 'list_view' : 'icon_view');
         $('.cut_view_model:nth-child(' + (model == 'list' ? '2' : '1') + ')').addClass('active').siblings().removeClass('active');
         this.file_images_list = [];
+        if(typeof data.search){
+          var search_input = $('.search_path_views .file_search_input').val()
+          data['search'] = search_input
+        }
         this.get_dir_list(data, function(res){
             if (res.status === false && res.msg.indexOf('指定目录不存在!') > -1) {
                 return that.reader_file_list({ path: '/www' })
@@ -2125,7 +2128,7 @@ var bt_file = {
      */
     batch_file_delect: function(obj) {
         var that = this;
-        if (that.is_recycle) {
+        if (that.is_recycle == 'true' || (typeof that.is_recycle == 'boolean' && that.is_recycle)) {
             layer.confirm('确认删除选中内容,删除后将移至回收站，是否继续操作?', { title: '批量删除', closeBtn: 2, icon: 3 }, function() {
                 that.$http('SetBatchData', obj, function(res) {
                     if (res.status) that.reader_file_list({ path: that.file_path })
@@ -3377,7 +3380,7 @@ var bt_file = {
      */
     del_file_or_dir: function(data) {
         var that = this;
-        if (that.is_recycle) {
+        if (that.is_recycle == 'true' || (typeof that.is_recycle == 'boolean' && that.is_recycle)) {
             bt.confirm({
                 title: '删除' + data.type_tips + '[&nbsp;' + data.filename + '&nbsp;]',
                 msg: '<span>您确定要删除该' + data.type_tips + '[&nbsp;' + data.path + '&nbsp;]吗，删除后将移至回收站，是否继续操作?</span>'

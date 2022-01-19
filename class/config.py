@@ -1433,6 +1433,8 @@ class config:
         public.ExecShell("ln -sf %s %s" % (php_fpm_src,php_fpm))
         public.ExecShell("ln -sf %s %s" % (php_pecl_src,php_pecl))
         public.ExecShell("ln -sf %s %s" % (php_pear_src,php_pear))
+        import jobs
+        jobs.set_php_cli_env()
         if is_chattr != -1:  public.ExecShell('chattr +i /usr/bin')
         public.WriteLog('面板设置','设置PHP-CLI版本为: %s' % get.php_version)
         return public.returnMsg(True,'设置成功!')

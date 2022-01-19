@@ -155,7 +155,8 @@ class datatools:
                             ret.append(i2)
                 if len(ret)>0:
                     for i in ret:
-                        self.DB_MySQL.execute('alter table `%s`.`%s` ENGINE=`%s`' % (db_name,i,table_type))
+                        if not self.DB_MySQL.execute('alter table `%s`.`%s` ENGINE=`%s`' % (db_name,i,table_type)):
+                            return False
                     return True
         return False
 
