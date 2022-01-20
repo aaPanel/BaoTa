@@ -1776,7 +1776,7 @@ var site = {
         { title: '修改默认页', event: function (ev) { site.set_default_page() } },
         { title: '默认站点', event: function (ev) { site.set_default_site() } },
         { title: 'PHP命令行版本', event: function (ev) { site.get_cli_version() } },
-        { title: '网站设置', event: function (ev) { site.open_site_config() } }
+        { title: '安全设置', event: function (ev) { site.open_safe_config() } }
         ]
       }, { // 搜索内容
         type: 'search',
@@ -2912,11 +2912,11 @@ var site = {
       });
     });
   },
-  // 网站设置
-  open_site_config: function () {
+  // 安全设置
+  open_safe_config: function () {
     bt.open({
       type: 1,
-      title: '网站设置',
+      title: '安全设置',
       area: '340px',
       closeBtn: 2,
       shift: 0,
