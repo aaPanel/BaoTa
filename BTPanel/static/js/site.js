@@ -1775,7 +1775,8 @@ var site = {
         },
         { title: '修改默认页', event: function (ev) { site.set_default_page() } },
         { title: '默认站点', event: function (ev) { site.set_default_site() } },
-        { title: 'PHP命令行版本', event: function (ev) { site.get_cli_version() } }
+        { title: 'PHP命令行版本', event: function (ev) { site.get_cli_version() } },
+        { title: '网站设置', event: function (ev) { site.open_site_config() } }
         ]
       }, { // 搜索内容
         type: 'search',
@@ -2909,6 +2910,55 @@ var site = {
         shadeClose: false,
         content: body
       });
+    });
+  },
+  // 网站设置
+  open_site_config: function () {
+    bt.open({
+      type: 1,
+      title: '网站设置',
+      area: '340px',
+      closeBtn: 2,
+      shift: 0,
+      content: '\
+        <div class="bt-form pd20">\
+          <div class="line">\
+            <span class="tname" style="width: 120px;">HTTPS防窜站</span>\
+            <div class="info-r" style="height: 32px; margin-left: 120px; padding-top: 6px;">\
+              <input class="btswitch btswitch-ios" id="https_mode" type="checkbox" name="https_mode">\
+              <label class="btswitch-btn" for="https_mode" style="margin-bottom: 0;"></label>\
+            </div>\
+          </div>\
+          <ul class="help-info-text c7 plr20">\
+            <li>开启后可以解决HTTPS防窜站的问题</li>\
+          </ul>\
+        </div>\
+      ',
+      success: function ($layer) {
+        this.init();
+        $('#https_mode').change(function () {
+          var loadT = bt.load('正在设置HTTPS防窜站，请稍候...');
+          bt.send('set_https_mode', 'site/set_https_mode', {}, function (res) {
+            loadT.close();
+            bt.msg(res);
+            if (!res.status) {
+              var checked = $('#https_mode').is(':checked');
+              $('#https_mode').prop('checked', !checked);
+            }
+          });
+        });
+      },
+      init: function () {
+        var loadT = bt.load('正在获取网站设置，请稍候...');
+        bt.send('get_https_mode', 'site/get_https_mode', {}, function (res) {
+          loadT.close();
+          if (typeof res == 'boolean') {
+            $('#https_mode').prop('checked', res);
+          } else {
+            bt.msg(res);
+          }
+        });
+      }
     });
   },
   set_cli_version: function () {
