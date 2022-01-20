@@ -3934,6 +3934,7 @@ def to_date(format = "%Y-%m-%d %H:%M:%S",times = None):
         if isinstance(times,int): return times
         if isinstance(times,float): return int(times)
         if re.match("^\d+$",times): return int(times)
+    else: return 0
     ts = time.strptime(times, "%Y-%m-%d %H:%M:%S")
     return time.mktime(ts)
 
