@@ -5077,8 +5077,7 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
         result = []
 
         import database
-        db_data = database.database().get_database_size(ids)
-
+        db_data = database.database().get_database_size(ids,True)
         limit_size = 50 * 1024 * 1024
         f_list_size = [];db_list_size = []
         for id in ids:
@@ -5103,7 +5102,6 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
 
             if data['total'] >= limit_size: data['limit'] = True
             data['database'] = False
-
             find = public.M('databases').field('id,pid,name,ps,addtime').where('pid=?',(data['id'],)).find()
             if find: 
                 db_addtime = public.to_date(times = find['addtime'])     
