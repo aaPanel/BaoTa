@@ -1305,13 +1305,16 @@ SetLink
             limit_size =int((slist[0] + slist[-1])/2 * 0.85)
         return limit_size 
 
-    def get_database_size(self,ids):
+    def get_database_size(self,ids,is_pid = False):
         """
         获取数据库大小
         """
         result = {}
         for id in ids:
-            x = public.M('databases').where('id=?',id).field('id,sid,pid,name,ps,addtime').find()
+            if not is_pid:
+                x = public.M('databases').where('id=?',id).field('id,sid,pid,name,ps,addtime').find()
+            else:
+                x = public.M('databases').where('pid=?',id).field('id,sid,pid,name,ps,addtime').find()
             if not x: continue
             x['backup_count'] = public.M('backup').where("pid=? AND type=?",(x['id'],'1')).count()
             x['total'] = int(public.get_database_size_by_id(id))

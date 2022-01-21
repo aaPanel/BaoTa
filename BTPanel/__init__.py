@@ -155,6 +155,7 @@ def request_check():
     if len(request.url) > 1024: return abort(403)
 
     if request.path in ['/service_status']: return
+    # if request.path.find('/phpmyadmin_') == 0: return
 
     # POST参数过滤
     if request.path in ['/login', '/safe', '/hook', '/public', '/down', '/get_app_bind_status', '/check_bind']:
@@ -1432,6 +1433,8 @@ def btwaf_error():
 @app.route('/<name>/<fun>', methods=method_all)
 @app.route('/<name>/<fun>/<path:stype>', methods=method_all)
 def panel_other(name=None, fun=None, stype=None):
+    if not public.is_bind():
+        return redirect('/bind',302)
     # 插件接口
     if public.is_error_path():
         return redirect('/error',302)
@@ -2379,3 +2382,46 @@ def daily():
     defs = ("get_app_usage", "get_daily_data", "get_daily_list")
     result = publicObject(toObject, defs)
     return result
+
+@app.route('/phpmyadmin/<path:path_full>',methods=method_all)
+def pma_proxy(path_full = None):
+    '''
+        @name phpMyAdmin代理
+        @author hwliang<2022-01-19>
+        @return Response
+    '''
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    cache_key = 'pmd_port_path'
+    pmd = cache.get(cache_key)
+    if not pmd:
+        pmd = get_phpmyadmin_dir()
+        if not pmd: return '未安装phpMyAdmin,请到【软件商店】页面安装!'
+        cache.set(cache_key,pmd,10)
+    proxy_url = 'http://127.0.0.1:{}/{}/'.format(pmd[1],pmd[0]) + request.full_path.replace('/phpmyadmin/','')
+    from panelHttpProxy import HttpProxy
+    px = HttpProxy()
+    return px.proxy(proxy_url)
+
+@app.route('/p/<int:port>',methods=method_all)
+@app.route('/p/<int:port>/',methods=method_all)
+@app.route('/p/<int:port>/<path:full_path>',methods=method_all)
+def proxy_port(port,full_path=None):
+    '''
+        @name 代理指定端口
+        @author hwliang<2022-01-19>
+        @return Response
+    '''
+    
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    full_path = request.full_path.replace('/p/{}/'.format(port),'').replace('/p/{}'.format(port),'')
+    uri = '{}/{}'.format(port,full_path)
+    uri = uri.replace('//','/')
+    proxy_url = 'http://127.0.0.1:{}'.format(uri)
+    from panelHttpProxy import HttpProxy
+    px = HttpProxy()
+    return px.proxy(proxy_url)
+
+    
+

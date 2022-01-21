@@ -357,9 +357,9 @@ class data:
         except:
             return ''
         wheres = {
-            'sites'     :   "id='"+search+"' or name like '%"+search+"%' or ps like '%"+search+"%'",
-            'ftps'      :   "id='"+search+"' or name like '%"+search+"%' or ps like '%"+search+"%'",
-            'databases' :   "id='"+search+"' or name like '%"+search+"%' or ps like '%"+search+"%'",
+            'sites'     :   "name like '%"+search+"%' or ps like '%"+search+"%'",
+            'ftps'      :   "name like '%"+search+"%' or ps like '%"+search+"%'",
+            'databases' :   "name like '%"+search+"%' or ps like '%"+search+"%'",
             'logs'      :   "uid='"+search+"' or username='"+search+"' or type like '%"+search+"%' or log like '%"+search+"%' or addtime like '%"+search+"%'",
             'backup'    :   "pid="+search+"",
             'users'     :   "id='"+search+"' or username='"+search+"'",

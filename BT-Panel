@@ -12,10 +12,13 @@ monkey.patch_all()
 import os,sys,ssl
 _PATH = '/www/server/panel'
 os.chdir(_PATH)
+if os.path.exists('class/flask'):
+    os.system('rm -rf class/flask')
 if not 'class/' in sys.path:
     sys.path.insert(0,'class/')
 from BTPanel import app,sys,public
 is_debug = os.path.exists('data/debug.pl')
+
 
 if is_debug:
     import pyinotify,time,logging,re

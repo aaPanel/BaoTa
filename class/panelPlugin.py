@@ -1502,16 +1502,24 @@ class panelPlugin:
 
     #取phpmyadmin状态
     def get_phpmyadmin_stat(self):
-        if public.get_webserver() == 'nginx':
+        webserver = public.get_webserver()
+        if webserver == 'nginx':
             filename = public.GetConfigValue('setup_path') + '/nginx/conf/nginx.conf'
-        elif public.get_webserver() == 'apache':
+        elif webserver == 'apache':
             filename = public.GetConfigValue('setup_path') + '/apache/conf/extra/httpd-vhosts.conf'
         else:
             filename = "/www/server/panel/vhost/openlitespeed/detail/phpmyadmin.conf"
         if not os.path.exists(filename): return False
         conf = public.readFile(filename)
         if not conf: return False
-        return conf.find('/www/server/stop') == -1
+        is_start = conf.find('/www/server/stop') == -1
+        if is_start: 
+            if webserver == 'nginx':
+                is_start = conf.find('allow 127.0.0.1;') == -1
+            elif webserver == 'apache':
+                is_start = conf.find('Allow from 127.0.0.1 ::1 localhost') == -1
+        return is_start
+
 
     #获取指定软件信息
     def get_soft_find(self,get = None):

@@ -26,16 +26,19 @@ def project_model_auto_run():
     project_model_path = '{}/projectModel'.format(public.get_class_path())
     if not os.path.exists(project_model_path): return False
     for mod_name in os.listdir(project_model_path):
-        if mod_name in ['base.py','__init__.py']: continue
-        mod_file = "{}/{}".format(project_model_path,mod_name)
-        if not os.path.exists(mod_file): continue
-        if not os.path.isfile(mod_file): continue
-
-        tmp_mod = public.get_script_object(mod_file)
-        if not hasattr(tmp_mod,'main'): continue
-
-        run_object = getattr(tmp_mod.main(),'auto_run',None)
-        if run_object: run_object()
+        try:
+            if mod_name[-4:] == '.pyc': continue
+            if mod_name in ['base.py','__init__.py']: continue
+            mod_file = "{}/{}".format(project_model_path,mod_name)
+            if not os.path.exists(mod_file): continue
+            if not os.path.isfile(mod_file): continue
+            print(mod_file)
+            tmp_mod = public.get_script_object(mod_file)
+            if not hasattr(tmp_mod,'main'): continue
+            run_object = getattr(tmp_mod.main(),'auto_run',None)
+            if run_object: run_object()
+        except:
+            print(public.get_error_info())
 
 
 def start():
