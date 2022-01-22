@@ -1736,7 +1736,10 @@ def get_mysql_obj(db_name):
         import db_mysql
         db_obj = db_mysql.panelMysql()
         conn_config = json.loads(db_find['conn_config'])
-        db_obj = db_obj.set_host(conn_config['db_host'],conn_config['db_port'],conn_config['db_name'],conn_config['db_user'],conn_config['db_password'])
+        try:
+            db_obj = db_obj.set_host(conn_config['db_host'],conn_config['db_port'],conn_config['db_name'],conn_config['db_user'],conn_config['db_password'])
+        except Exception as e:
+            raise PanelError(GetMySQLError(e))
     else:
         import panelMysql
         db_obj = panelMysql.panelMysql()
@@ -1748,11 +1751,34 @@ def get_mysql_obj_by_sid(sid = 0,conn_config = None):
         if not conn_config: conn_config = M('database_servers').where("id=?" ,sid).find()
         import db_mysql
         db_obj = db_mysql.panelMysql()
-        db_obj = db_obj.set_host(conn_config['db_host'],conn_config['db_port'],None,conn_config['db_user'],conn_config['db_password'])
+        try:
+            db_obj = db_obj.set_host(conn_config['db_host'],conn_config['db_port'],None,conn_config['db_user'],conn_config['db_password'])
+        except Exception as e:
+            raise PanelError(GetMySQLError(e))
     else:
         import panelMysql
         db_obj = panelMysql.panelMysql()
     return db_obj
+
+def GetMySQLError(e):
+    res = ''
+    if e.args[0] == 1045:
+        res = '数据库用户名或密码错误!'
+    if e.args[0] == 1049:
+        res = '数据库不存在!'
+    if e.args[0] == 1044:
+        res = '没有指定数据库的访问权限，或指定数据库不存在!'
+    if e.args[0] == 1062:
+        res = '数据库已存在!'
+    if e.args[0] == 1146:
+        res = '数据表不存在!'
+    if e.args[0] == 2003:
+        res = '数据库服务器连接失败!'
+    if res: 
+        res = res + "<pre>" + str(e) + "</pre>"
+    else:
+        res = str(e)
+    return res
 
 
 def get_database_codestr(codeing):
@@ -3395,7 +3421,7 @@ class PanelError(Exception):
         self.value = value
 
     def __str__(self):
-        return ("面板运行时发生错误: {}".format(repr(self.value)))
+        return ("面板运行时发生错误: {}".format(str(self.value)))
 
 
 def get_plugin_find(upgrade_plugin_name = None):

@@ -1945,7 +1945,7 @@ function ajaxSetup () {
 
         error_key = 'We need to make sure this has a favicon so that the debugger does';
         error_find = jqXHR.responseText.indexOf(error_key)
-        if (jqXHR.status == 500 && (jqXHR.responseText.indexOf('运行时发生错误') != -1 || error_find != -1)) {
+        if (jqXHR.status == 500 && jqXHR.responseText.indexOf('运行时发生错误') != -1) {
           if (jqXHR.responseText.indexOf('请先绑定宝塔帐号!') != -1) {
             if ($('.libLogin').length > 0 || $('.radio_account_view').length > 0) return false;
             bt.pub.bind_btname(function () {
@@ -1954,7 +1954,7 @@ function ajaxSetup () {
             return;
           }
           gl_error_body = jqXHR.responseText;
-          error_msg = jqXHR.responseText.split('public.PanelError: ')[1].split("</h4>")[0].replace("面板运行时发生错误:",'').trim();
+          error_msg = jqXHR.responseText.split('<h4 style="font-size: none;">')[1].split("</h4>")[0].replace("面板运行时发生错误:",'').replace("public.PanelError:",'').trim();
           error_msg += "<br><a class='btlink' onclick='show_error_message()'> >>点击查看详情</a>";
           $(".layui-layer-padding").parents('.layer-anim').remove();
           $(".layui-layer-shade").remove();

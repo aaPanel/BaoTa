@@ -43,6 +43,7 @@ class panelMysql:
         self._USER = username
         self.__DB_PASS = password
         self.__DB_PREFIX = prefix
+        self.__GetConn()
         return self
 
     #连接MYSQL数据库
