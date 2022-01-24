@@ -3490,10 +3490,10 @@ def download_main(upgrade_plugin_name,upgrade_version):
 def get_plugin_bin(plugin_save_file,plugin_timeout):
     list_body = None
     if not os.path.exists(plugin_save_file): return list_body
-    s_time = time.time()
-    m_time = os.stat(plugin_save_file).st_mtime
-    if (s_time - m_time) < plugin_timeout or not plugin_timeout:
-        list_body = readFile(plugin_save_file,'rb')
+    # s_time = time.time()
+    # m_time = os.stat(plugin_save_file).st_mtime
+    # if (s_time - m_time) < plugin_timeout or not plugin_timeout:
+    list_body = readFile(plugin_save_file,'rb')
     return list_body
 
 
