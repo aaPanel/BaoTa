@@ -340,7 +340,7 @@ UploadFile.prototype = {
               <div class="warning_layer_box">\
                 <div class="warning_layer_head">\
                   <i class="layui-layer-ico layui-layer-ico3"></i>\
-                  <div class="cont">检测到有同命名文件【' + config.name + '】，是否覆盖？</div>\
+                  <div class="cont">检测到有同名文件【' + config.name + '】，是否覆盖？</div>\
                 </div>\
                 <div class="details">\
                   <div class="left">\
