@@ -1315,11 +1315,15 @@ class config:
             cert['certPem'] = ''
         else:
             cert['info'] = public.get_cert_data(cert_file)
+            if not cert['info']:
+                self.CreateSSL()
+                cert['info'] = public.get_cert_data(cert_file)
             if cert['info']:
                 if cert['info']['issuer'] == '宝塔面板':
                     if os.path.exists('ssl/baota_root.pfx'):
                         cert['download_root'] = True
                         cert['root_password'] = public.readFile('ssl/root_password.pl')
+                
 
         
         cert['rep'] = os.path.exists('ssl/input.pl')
