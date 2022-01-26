@@ -2923,21 +2923,22 @@ var site = {
       content: '\
         <div class="bt-form pd20">\
           <div class="line">\
-            <span class="tname" style="width: 120px;">HTTPS防篡改</span>\
+            <span class="tname" style="width: 120px;">HTTPS防窜站</span>\
             <div class="info-r" style="height: 32px; margin-left: 120px; padding-top: 6px;">\
               <input class="btswitch btswitch-ios" id="https_mode" type="checkbox" name="https_mode">\
               <label class="btswitch-btn" for="https_mode" style="margin-bottom: 0;"></label>\
             </div>\
           </div>\
           <ul class="help-info-text c7 plr20">\
-            <li>开启后可以解决HTTPS防篡改的问题</li>\
+            <li>开启后可以解决HTTPS窜站的问题</li>\
+            <li>不支持IP证书的防窜，直接使用IP访问的勿开</li>\
           </ul>\
         </div>\
       ',
       success: function ($layer) {
         this.init();
         $('#https_mode').change(function () {
-          var loadT = bt.load('正在设置HTTPS防篡改，请稍候...');
+          var loadT = bt.load('正在设置HTTPS防窜站，请稍候...');
           bt.send('set_https_mode', 'site/set_https_mode', {}, function (res) {
             loadT.close();
             bt.msg(res);
