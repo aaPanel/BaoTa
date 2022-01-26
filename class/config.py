@@ -1304,6 +1304,8 @@ class config:
         cert = {}
         key_file = 'ssl/privateKey.pem'
         cert_file = 'ssl/certificate.pem'
+        if not os.path.exists(key_file):
+            self.CreateSSL()
         cert['privateKey'] = public.readFile(key_file)
         cert['certPem'] = public.readFile(cert_file)
         cert['download_root'] = False
