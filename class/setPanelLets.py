@@ -66,11 +66,14 @@ class setPanelLets:
         get.id = site_id
         get.auto_wildcard = '0'
         get.domains = json.dumps([get.domain])
-        cert_info = acme_v2().apply_cert_api(get)
+        get.siteName = get.domain
+        p = acme_v2()
+        cert_info = p.apply_cert_api(get)
         if 'private_key' not in cert_info:
             return public.returnMsg(False, "申请证书失败,请尝试在网站列表内手动为面板域名申请SSL证书后再到此开启SSL！")
         get.key = cert_info['private_key']
         get.csr = cert_info['cert'] + cert_info['root']
+        
         return self._deploy_cert(get)
 
     # 部署证书
@@ -208,16 +211,14 @@ class setPanelLets:
         if domain_cert:
             self.copy_cert(domain_cert)
             public.writeFile("/www/server/panel/data/ssl.pl", "True")
-            public.writeFile("/www/server/panel/data/reload.pl","1")
             self.__save_cert_source(domain,get.email)
             return public.returnMsg(True, '面板lets https设置成功')
         if not create_site:
             create_lets = self.__create_lets(get)
-            if create_lets['msg']:
+            if create_lets['status']:
                 domain_cert = self.__check_cert_dir(get)
                 self.copy_cert(domain_cert)
                 public.writeFile("/www/server/panel/data/ssl.pl", "True")
-                public.writeFile("/www/server/panel/data/reload.pl", "1")
                 self.__save_cert_source(domain, get.email)
                 return  public.returnMsg(True, '面板lets https设置成功')
             else:
