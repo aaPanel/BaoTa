@@ -566,7 +566,7 @@ class backup:
             else:
                 # 远程数据库 @author hwliang<2021-01-08>
                 os.environ["MYSQL_PWD"] = str(conn_config['db_password'])
-                backup_cmd = mysqldump_bin + " -h " + conn_config['db_host'] + " -P " + conn_config['db_port'] + " -E -R --default-character-set="+ character +" --force --hex-blob --opt " + db_name + " -u " + conn_config['db_user'] + " 2>"+self._err_log+"| gzip > " + dfile
+                backup_cmd = mysqldump_bin + " -h " + conn_config['db_host'] + " -P " + str(conn_config['db_port']) + " -E -R --default-character-set="+ character +" --force --hex-blob --opt " + db_name + " -u " + str(conn_config['db_user']) + " 2>"+self._err_log+"| gzip > " + dfile
             public.ExecShell(backup_cmd)
         except Exception as e:
             raise

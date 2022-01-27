@@ -32,15 +32,15 @@ class panelMysql:
         pass
 
     def set_name(self,name):
-        self.__DB_NAME = name
+        self.__DB_NAME = str(name)
         return self
 
     def set_host(self,host,port,name,username,password,prefix = ''):
         self.__DB_HOST = host
         self.__DB_PORT = int(port)
-        self.__DB_NAME = name
-        self.__DB_USER = username
-        self._USER = username
+        self.__DB_NAME = str(name)
+        self.__DB_USER = str(username)
+        self._USER = str(username)
         self.__DB_PASS = str(password)
         self.__DB_PREFIX = prefix
         self.__GetConn()

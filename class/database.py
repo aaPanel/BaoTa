@@ -771,7 +771,7 @@ SetLink
                 res = self.CheckCloudDatabase(conn_config)
                 if isinstance(res,dict): return res
                 os.environ["MYSQL_PWD"] = str(conn_config['db_password'])
-                public.ExecShell(mysqldump_bin + " -h "+ conn_config['db_host'] +" -P "+ str(int(conn_config['db_port'])) +" -R -E --triggers=false --default-character-set=" + public.get_database_character(name) + " --force --opt \"" + db_find['name'] + "\"  -u "+ conn_config['db_user'] +" | gzip > " + backupName)
+                public.ExecShell(mysqldump_bin + " -h "+ conn_config['db_host'] +" -P "+ str(int(conn_config['db_port'])) +" -R -E --triggers=false --default-character-set=" + public.get_database_character(name) + " --force --opt \"" + str(db_find['name']) + "\"  -u "+ str(conn_config['db_user']) +" | gzip > " + backupName)
             except Exception as e:
                 raise
             finally:
@@ -782,7 +782,7 @@ SetLink
                 res = self.CheckCloudDatabase(conn_config)
                 if isinstance(res,dict): return res
                 os.environ["MYSQL_PWD"] = str(conn_config['db_password'])
-                public.ExecShell(mysqldump_bin + " -h "+ conn_config['db_host'] +" -P "+ str(int(conn_config['db_port'])) +" -R -E --triggers=false --default-character-set=" + public.get_database_character(name) + " --force --opt \"" + db_find['name'] + "\"  -u "+ conn_config['db_user'] +" | gzip > " + backupName)
+                public.ExecShell(mysqldump_bin + " -h "+ conn_config['db_host'] +" -P "+ str(int(conn_config['db_port'])) +" -R -E --triggers=false --default-character-set=" + public.get_database_character(name) + " --force --opt \"" + str(db_find['name']) + "\"  -u "+ str(conn_config['db_user']) +" | gzip > " + backupName)
             except Exception as e:
                 raise
             finally:
@@ -875,11 +875,11 @@ SetLink
                 elif db_find['db_type'] in ['1',1]:
                     conn_config = json.loads(db_find['conn_config'])
                     os.environ["MYSQL_PWD"] = str(conn_config['db_password'])
-                    public.ExecShell(mysql_bin + " -h "+ conn_config['db_host'] +" -P "+str(int(conn_config['db_port']))+" -u"+conn_config['db_user']+" -p" + str(conn_config['db_password']) + " --force \"" + name + "\" < " +'"'+ input_path +'"')
+                    public.ExecShell(mysql_bin + " -h "+ conn_config['db_host'] +" -P "+str(int(conn_config['db_port']))+" -u"+str(conn_config['db_user'])+" -p" + str(conn_config['db_password']) + " --force \"" + name + "\" < " +'"'+ input_path +'"')
                 elif db_find['db_type'] in ['2',2]:
                     conn_config = public.M('database_servers').where('id=?',db_find['sid']).find()
                     os.environ["MYSQL_PWD"] = str(conn_config['db_password'])
-                    public.ExecShell(mysql_bin + " -h "+ conn_config['db_host'] +" -P "+str(int(conn_config['db_port']))+" -u"+conn_config['db_user']+" -p" + str(conn_config['db_password']) + " --force \"" + name + "\" < " +'"'+ input_path +'"')
+                    public.ExecShell(mysql_bin + " -h "+ conn_config['db_host'] +" -P "+str(int(conn_config['db_port']))+" -u"+str(conn_config['db_user'])+" -p" + str(conn_config['db_password']) + " --force \"" + name + "\" < " +'"'+ input_path +'"')
             except Exception as e:
                 raise
             finally:
@@ -898,11 +898,11 @@ SetLink
                 elif db_find['db_type'] in ['1',1]:
                     conn_config = json.loads(db_find['conn_config'])
                     os.environ["MYSQL_PWD"] = str(conn_config['db_password'])
-                    public.ExecShell(mysql_bin + " -h "+ conn_config['db_host'] +" -P "+str(int(conn_config['db_port']))+" -u"+conn_config['db_user']+" -p" + str(conn_config['db_password']) + " --force \"" + name + "\" < " +'"'+ file +'"')
+                    public.ExecShell(mysql_bin + " -h "+ conn_config['db_host'] +" -P "+str(int(conn_config['db_port']))+" -u"+str(conn_config['db_user'])+" -p" + str(conn_config['db_password']) + " --force \"" + name + "\" < " +'"'+ file +'"')
                 elif db_find['db_type'] in ['2',2]:
                     conn_config = public.M('database_servers').where('id=?',db_find['sid']).find()
                     os.environ["MYSQL_PWD"] = str(conn_config['db_password'])
-                    public.ExecShell(mysql_bin + " -h "+ conn_config['db_host'] +" -P "+str(int(conn_config['db_port']))+" -u"+conn_config['db_user']+" -p" + str(conn_config['db_password']) + " --force \"" + name + "\" < " +'"'+ file +'"')
+                    public.ExecShell(mysql_bin + " -h "+ conn_config['db_host'] +" -P "+str(int(conn_config['db_port']))+" -u"+str(conn_config['db_user'])+" -p" + str(conn_config['db_password']) + " --force \"" + name + "\" < " +'"'+ file +'"')
             except Exception as e:
                 raise
             finally:
