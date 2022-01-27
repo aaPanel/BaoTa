@@ -38,7 +38,8 @@ class panelMysql:
     def set_host(self,host,port,name,username,password,prefix = ''):
         self.__DB_HOST = host
         self.__DB_PORT = int(port)
-        self.__DB_NAME = str(name)
+        self.__DB_NAME = name
+        if self.__DB_NAME: self.__DB_NAME = str(self.__DB_NAME)
         self.__DB_USER = str(username)
         self._USER = str(username)
         self.__DB_PASS = str(password)
