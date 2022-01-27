@@ -996,7 +996,9 @@ SetLink
         isError = self.IsSqlError(data)
         if isError != None: return isError
         users = mysql_obj.query("select User,Host from mysql.user where User!='root' AND Host!='localhost' AND Host!=''")
+        
         if type(users) == str: return public.returnMsg(False,users)
+        if type(users) != list: return public.returnMsg(False,public.GetMySQLError(users))
         
         sql = public.M('databases')
         nameArr = ['information_schema','performance_schema','mysql','sys']
@@ -1010,6 +1012,7 @@ SetLink
             if b:continue
             if sql.where("name=?",(value[0],)).count(): continue
             host = '127.0.0.1'
+            
             for user in users:
                 if value[0] == user[0]:
                     host = user[1]

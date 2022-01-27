@@ -1774,6 +1774,8 @@ def GetMySQLError(e):
         res = '数据表不存在!'
     if e.args[0] == 2003:
         res = '数据库服务器连接失败!'
+    if e.args[0] == 1142:
+        res = '指定用户权限不足!'
     if res: 
         res = res + "<pre>" + str(e) + "</pre>"
     else:
