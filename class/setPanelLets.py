@@ -73,8 +73,7 @@ class setPanelLets:
             return public.returnMsg(False, "申请证书失败,请尝试在网站列表内手动为面板域名申请SSL证书后再到此开启SSL！")
         get.key = cert_info['private_key']
         get.csr = cert_info['cert'] + cert_info['root']
-        
-        return self._deploy_cert(get)
+        return public.returnMsg(True, self._deploy_cert(get))
 
     # 部署证书
     def _deploy_cert(self,get):
@@ -121,6 +120,11 @@ class setPanelLets:
             key_file = "{path}{domain}/{key}".format(path="/www/server/panel/vhost/ssl/",domain=domain_cert["subject"],key="privkey.pem")
             cert_file = "{path}{domain}/{cert}".format(path="/www/server/panel/vhost/ssl/", domain=domain_cert["subject"],
                                            cert="fullchain.pem")
+        if not os.path.exists(key_file) and '*.' in key_file:
+            key_file = key_file.replace('*.','')
+            cert_file = cert_file.replace('*.','')
+        if not os.path.exists(key_file):
+            return public.returnMsg(False,'Can not found the ssl file! {}'.format(key_file))
         self.__tmp_key = public.readFile(key_file)
         self.__tmp_cert = public.readFile(cert_file)
 
@@ -184,14 +188,17 @@ class setPanelLets:
 
     # 复制证书
     def copy_cert(self,domain_cert):
-        self.__read_site_cert(domain_cert)
+        res = self.__read_site_cert(domain_cert)
+        if res:
+            return res
         panel_cert_data = self.__check_panel_cert()
         if not panel_cert_data:
             self.__write_panel_cert()
-            return True
+            return public.returnMsg(True,'')
         if panel_cert_data["key"] != self.__tmp_key and panel_cert_data["cert"] != self.__tmp_cert:
             self.__write_panel_cert()
-            return True
+            return public.returnMsg(True,'')
+        return public.returnMsg(True, '')
 
     # 设置lets证书
     def set_lets(self,get):
@@ -209,13 +216,17 @@ class setPanelLets:
             create_site = self.__create_site_of_panel_lets(get)
         domain_cert = self.__check_cert_dir(get)
         if domain_cert:
-            self.copy_cert(domain_cert)
+            res = self.copy_cert(domain_cert)
+            if not res['status']:
+                return res
             public.writeFile("/www/server/panel/data/ssl.pl", "True")
             self.__save_cert_source(domain,get.email)
             return public.returnMsg(True, '面板lets https设置成功')
         if not create_site:
             create_lets = self.__create_lets(get)
-            if create_lets['status']:
+            if not create_lets['status']:
+                return create_lets
+            if create_lets['msg']:
                 domain_cert = self.__check_cert_dir(get)
                 self.copy_cert(domain_cert)
                 public.writeFile("/www/server/panel/data/ssl.pl", "True")
