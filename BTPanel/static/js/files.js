@@ -244,7 +244,9 @@ var bt_file = {
 
         // 上传
         $('.upload_file').on('click', function(e) {
-            uploadFiles.upload_layer()
+            var path = $('#fileInputPath').attr('data-path');
+            uploadFiles.init_upload_path(path);
+            uploadFiles.upload_layer();
         });
         // 下载
         $('.upload_download').on('click', function(e) {
@@ -824,6 +826,8 @@ var bt_file = {
     
     // 上传文件
     file_drop:function(){
+        var path = $('#fileInputPath').attr('data-path');
+        uploadFiles.init_upload_path(path);
         uploadFiles.upload_layer()
     },
     /**
@@ -2036,6 +2040,8 @@ var bt_file = {
                 $('.file_path_refresh').click();
                 break;
             case 'upload': //上传文件
+                var path = $('#fileInputPath').attr('data-path');
+                uploadFiles.init_upload_path(path);
                 uploadFiles.upload_layer();
                 break;
             case 'soft_link': //软链接创建
