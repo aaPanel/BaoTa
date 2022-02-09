@@ -30,7 +30,6 @@ function is_show (el, show) {
 }
 
 UploadFile.prototype = {
-  uploadFilesLimitTips:'当前文件大小已超过文件上传' + bt.format_size(this.limit.size) + '限制， 请使用SFTP/FTP等工具上传文件！',
 
   /**
    * @description 创建节点
@@ -599,7 +598,7 @@ UploadFile.prototype = {
       }
 
       file_info.querySelector('.uploadNumber').innerText = '(' + this.uploadList.length + '/' + this.fileList.length + ')';
-      file_info.querySelector('.uploadProgress').innerText = (this.uploadInfo.uploadedSize / this.fileTotalSize * 100).toFixed(2) + '%';
+      file_info.querySelector('.uploadProgress').innerText = ((this.uploadInfo.uploadedSize / this.fileTotalSize) * 100).toFixed(2) + '%';
     } catch (e) {
       console.log(e)
     }
@@ -775,13 +774,14 @@ UploadFile.prototype = {
       type: extName.length > 1 ? extName[extName.length - 1] : 'txt',
       status: 0
     });
+    this.fileTotalSize += e.size;
     this.fileTotalNumber ++;
     if (this.fileTotalNumber >= this.limit.number) {
       layer.msg('当前文件数量已超过文件上传上限' + this.limit.number + '个， 请压缩文件夹后重试！');
       return false;
     }
     if (this.fileTotalSize >= this.limit.size) {
-      layer.msg(uploadFilesLimitTips);
+      layer.msg('当前文件大小已超过文件上传' + bt.format_size(this.limit.size) + '限制， 请使用SFTP/FTP等工具上传文件！');
       return false;
     }
     return true
@@ -798,7 +798,6 @@ UploadFile.prototype = {
     var path = item.fullPath || '';
     if (item.isFile) {
       item.file(function (e) {
-        _this6.fileTotalSize += e.size;
         _this6.file_upload_limit(e, path);
       });
       clearTimeout(this.timeNumber);
