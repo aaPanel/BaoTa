@@ -2403,7 +2403,7 @@ var site = {
             page: 1, //当前分页 默认：1
             numberParam: 'limit',
             //分页数量请求字段默认为 : limit
-            number: 10,
+            defaultNumber: 10,
             //分页数量默认 : 20条
           }]
         });
