@@ -401,7 +401,7 @@ var database = {
       txcos: '腾讯COS',
       upyun: '又拍云',
       'Google Cloud': '谷歌云',
-      gdrive: '谷歌网盘',
+      'Google Drive': '谷歌网盘',
       bos: '百度云',
       obs: '华为云'
     };
@@ -430,7 +430,7 @@ var database = {
                 if (row.filename.indexOf('|') != -1) {
                   var _path = row.filename;
                   is_cloud = true;
-                  cloud_name = _path.match(/\|(\w+)\|/, "$1")
+                  cloud_name = _path.match(/\|(.+)\|/, "$1")
                 } else {
                   is_cloud = false;
                 }
@@ -480,7 +480,7 @@ var database = {
                   })
                   obj = obj[0] //由于filter返回数组所以取第一位
                   var _path = obj.filename,
-                    cloud_name = _path.match(/\|(\w+)\|/, "$1"),
+                    cloud_name = _path.match(/\|(.+)\|/, "$1"),
                     isYun = _path.indexOf('|') != -1;
                   if (!isYun) {
                     bt.database.input_sql(_path, dataname)
@@ -1020,6 +1020,8 @@ var database = {
             }},
             {
               type: 'group',
+
+
               title: '操作',
               align: 'right',
               group: [{
