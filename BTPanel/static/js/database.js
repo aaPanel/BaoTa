@@ -1177,19 +1177,29 @@ var database = {
         bt.open({
           type: 1,
           skin: 'demo-class',
-          area: ["600px", "510px"],
+          area: ["600px", "478px"],
           title: lan.database.input_title_file,
           closeBtn: 2,
           shift: 5,
           shadeClose: false,
-          content: '<div class="pd15"><button class="btn btn-default btn-sm" onclick="database.upload_files(\'' + name + '\')">' + lan.database.input_local_up + '</button><div class="divtable mtb15" style="max-height:300px; overflow:auto">' +
-            '<table id="DataInputList" class="table table-hover"></table>' +
-            '</div>' +
-            bt.render_help([lan.database.input_ps1, lan.database.input_ps2, (bt.os != 'Linux' ? lan.database.input_ps3.replace(/\/www.*\/database/, path) : lan.database.input_ps3)]) +
-            '</div>'
+          content: '\
+            <div class="pd15">\
+              <div class="clearfix">\
+                <button class="btn btn-default btn-sm" onclick="database.upload_files(\'' + name + '\')">' + lan.database.input_local_up + '</button>\
+                <div class="pull-right">\
+                  \
+                </div>\
+              </div>\
+              <div class="divtable mtb15" style="max-height:274px; overflow:auto; border: 1px solid #ddd;">\
+                <table id="DataInputList" class="table table-hover" style="border: none;"></table>\
+              </div>' +
+              bt.render_help([lan.database.input_ps1, lan.database.input_ps2, (bt.os != 'Linux' ? lan.database.input_ps3.replace(/\/www.*\/database/, path) : lan.database.input_ps3)]) +
+            '</div>\
+          '
         });
       }
       setTimeout(function () {
+        bt.fixed_table('DataInputList');
         bt.render({
           table: '#DataInputList',
           columns: [{

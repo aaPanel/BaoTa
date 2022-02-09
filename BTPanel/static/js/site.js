@@ -4412,11 +4412,11 @@ var site = {
         $('#webedit-con').append(_html);
         $("input[name='exclude_file']").parent().removeAttr('class').html('<textarea name="exclude_file" class="bt-input-text mr5 exclude_file" style="width:35%;height: 130px;"></textarea>');
         $("input[name='test']").parent().parent().html('<div style="padding-left: 29px;border-top: #ccc 1px dashed;margin-top: -7px;"><em style="float: left;color: #555;font-style: normal;line-height: 32px;padding-right: 2px;">私有缓存</em><div style="margin-left: 70px;padding-top: 5px;"><input class="btswitch btswitch-ios" id="ols" type="checkbox"><label class="btswitch-btn" for="ols"></label></div></div>');
-        var private = $("input[name='maxage'],textarea[name='exclude_file'],button[name='private_save']").parent().parent();
+        var privateInput = $("input[name='maxage'],textarea[name='exclude_file'],button[name='private_save']").parent().parent();
         $("input.bt-input-text").parent().append('<span>秒</span>');
         $("button[name='static_save']").parent().append(bt.render_help(['默认的静态文件缓存时间是604800秒', '如果要关闭，请将其更改为0秒']));
         $(".ols").append(bt.render_help(['私有缓存只支持PHP页面缓存，默认缓存时间为120秒', '排除文件仅支持以PHP为后缀的文件']));
-        private.hide();
+        privateInput.hide();
         var loadT = bt.load();
         bt.send('get_ols_private_cache_status', 'config/get_ols_private_cache_status', { id: web.id }, function (kdata) {
           loadT.close();
@@ -4427,7 +4427,7 @@ var site = {
               var ss = fdata.exclude_file.join("&#13;");
               $("textarea[name='exclude_file']").html(ss);
               $("#ols").attr('checked', true);
-              private.show();
+              privateInput.show();
             });
           }
         });
@@ -4435,12 +4435,12 @@ var site = {
           var loadS = bt.load();
           bt.send('switch_ols_private_cache', 'config/switch_ols_private_cache', { id: web.id }, function (res) {
             loadS.close();
-            private.toggle();
-            checked = private.is(':hidden') ? false : true;
+            privateInput.toggle();
+            checked = privateInput.is(':hidden') ? false : true;
             bt.msg(res);
             if (checked) {
               bt.send('get_ols_private_cache', 'config/get_ols_private_cache', { id: web.id }, function (fdata) {
-                private.show();
+                privateInput.show();
                 $("input[name='maxage']").val(fdata.maxage);
                 $("textarea[name='exclude_file']").html(fdata.exclude_file.join("&#13;"));
               });
