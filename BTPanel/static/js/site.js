@@ -324,11 +324,11 @@ var site = {
             var arry = form.domains.replace('\n', '').split('\r'), newArry = []
             for (var i = 0; i < arry.length; i++) {
               var item = arry[i];
-              if (bt.check_domain(item)) {
+              if (bt.check_domain_port(item)) {
                 newArry.push(item.indexOf(':') > -1 ? item : item + ':80')
               } else {
                 bt.msg({ status: false, msg: '【' + item + '】 绑定域名格式错误' })
-                break;
+                return false
               }
             }
             defaultParam.bind_extranet = 1
