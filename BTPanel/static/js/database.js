@@ -390,9 +390,8 @@ var database = {
     });
   },
   // 同步数据库
-  database_detail: function (id, dataname, page) {
-    if (page == undefined) page = '1';
-    var loadT = bt.load(lan.public.the_get);
+  database_detail: function (id, dataname) {
+    var _that = this
     var cloud_list = { //云存储列表名
       alioss: '阿里云OSS',
       ftp: 'FTP',
@@ -406,261 +405,580 @@ var database = {
       bos: '百度云',
       obs: '华为云'
     };
-    bt.pub.get_data('table=backup&search=' + id + '&limit=5&type=1&tojs=database.database_detail&p=' + page, function (frdata) {
-      loadT.close();
-      frdata.page = frdata.page.replace(/'/g, '"').replace(/database.database_detail\(/g, "database.database_detail(" + id + ",'" + dataname + "',");
-      if ($('#DataBackupList').length <= 0) {
-        bt.open({
-          type: 1,
-          skin: 'demo-class',
-          area: '850px',
-          title: lan.database.backup_title,
-          closeBtn: 2,
-          shift: 5,
-          shadeClose: false,
-          content: "<div class='divtable pd15 style='padding-bottom: 0'><button id='btn_data_backup' class='btn btn-success btn-sm' type='button' style='margin-bottom:10px'>" + lan.database.backup + "</button><table width='100%' id='DataBackupList' class='table table-hover'></table><div class='page databackup_page'></div></div>"
-        });
-      }
-      setTimeout(function () {
-        $('.databackup_page').html(frdata.page);
-        bt.render({
-          table: '#DataBackupList',
-          columns: [{
-            field: 'name',
-            title: '文件名称',
-            templet: function (item) {
-              var _arry = item.name.split('/');
-              return '<span style="width:240px;word-break: break-all;display: block;">' + _arry[_arry.length - 1] + '</span>';
-            }
-          },
-          {
-            field: 'storage_type',
-            title: '存储对象',
-            templet: function (item) {
-              var is_cloud = false,
-                cloud_name = '' //当前云存储类型
-              if (item.filename.indexOf('|') != -1) {
-                var _path = item.filename;
-                is_cloud = true;
-                cloud_name = _path.match(/\|(\w+)\|/, "$1")
-              } else {
-                is_cloud = false;
-              }
-              return is_cloud ? cloud_list[cloud_name[1]] : '本地'
-            }
-          },
-          {
-            field: 'size',
-            title: '文件大小',
-            templet: function (item) {
-              return bt.format_size(item.size);
-            }
-          },
-          {
-            field: 'addtime',
-            title: '备份时间'
-          },
-          // {
-          //   field: 'ps',
-          //   title:'备注',
-          //   templet: function (item) {
-          //     return '<span class="size_ellipsis" style="width: 150px" title="'+item.ps+'">'+item.ps+'</span>'
-          //   }
-          // },
-          {
-            field: 'opt',
-            title: '操作',
-            align: 'right',
-            templet: function (item) {
-              var _opt = '<a class="btlink db_restore" herf="javascrpit:;" data-id="' + item.id + '">恢复</a> | ';
-              _opt += '<a class="btlink" href="/download?filename=' + item.filename + '&amp;name=' + item.name + '" target="_blank">下载</a> | ';
-              _opt += '<a class="btlink" herf="javascrpit:;" onclick="bt.database.del_backup(\'' + item.id + '\',\'' + id + '\',\'' + dataname + '\')">删除</a>'
-              return _opt;
-            }
-          },
-          ],
-          data: frdata.data
-        });
-        $('#btn_data_backup').unbind('click').click(function () {
-          bt.database.backup_data(id, dataname, function (rdata) {
-            if (rdata.status) {
-              database.database_detail(id, dataname);
-              database.database_table_view();
-            }
-          })
-        })
-        // 操作》恢复
-        $('.db_restore').on('click', function (e) {
-          var _id = $(this).data('id'),
-            num1 = bt.get_random_num(3, 15),
-            num2 = bt.get_random_num(5, 9),
-            taskID = 0,
-            taskStatus = 0, //0未开始  1正在下载   2下载完成
-            intervalTask = null;
-          // 根据id获取对象数据
-          var obj = frdata.data.filter(function (x) {
-            return x.id === _id
-          })
-          obj = obj[0] //由于filter返回数组所以取第一位
-          var _path = obj.filename,
-            cloud_name = _path.match(/\|(\w+)\|/, "$1"),
-            isYun = _path.indexOf('|') != -1;
-          if (!isYun) {
-            bt.database.input_sql(_path, dataname)
-            return
-          }
-          layer.open({
-            type: 1,
-            title: "从云存储恢复",
-            area: ['500px', '350px'],
-            closeBtn: 2,
-            shadeClose: false,
-            skin: 'db_export_restore',
-            content: "<div style='padding: 20px 20px 0 20px;'>" +
-              "<div class='db_export_content'><ul>" +
-              "<li>此备份文件存储在云存储，需要通过以下步骤才能完成恢复：</li>" +
-              "<li class='db_export_txt'>" +
-              "<span>1</span>" +
-              "<div>" +
-              "<p>从[" + cloud_list[cloud_name[1]] + "]下载备份文件到服务器。</p>" +
-              "<p class='btlink'></p>" +
-              "</div>" +
-              "</li>" +
-              "<li class='db_export_txt2'>" +
-              "<span>2</span>" +
-              "<div>" +
-              "<p>恢复备份</p>" +
-              "<p class='btlink'></p>" +
-              "</div>" +
-              "</li>" +
-              "</ul>" +
-              "<p class='db_confirm_txt'style='color:red;margin-bottom: 10px;'>数据库将被覆盖，是否继续？</p>" +
-              "</div>" +
-              "<div class='db_export_vcode db_two_step' style='margin:0'>" + lan.bt.cal_msg + "" +
-              "<span class='text'>" + num1 + " + " + num2 + "</span>=<input type='number' id='vcodeResult' value=''>" +
-              "</div>" +
-              "<div class='bt-form-submit-btn'>" +
-              "<button type='button' class='btn btn-danger btn-sm db_cloud_close'>取消</button>" +
-              "<button type='button' class='btn btn-success btn-sm db_cloud_confirm'>确认</button></div>" +
-              "</div>",
-            success: function (layers, indexs) {
-              // 确认按钮
-              $('.db_export_restore').on('click', '.db_cloud_confirm', function () {
-                var vcodeResult = $('#vcodeResult');
-                if (vcodeResult.val() === '') {
-                  layer.tips('计算结果不能为空', vcodeResult, {
-                    tips: [1, 'red'],
-                    time: 3000
-                  })
-                  vcodeResult.focus()
-                  return false;
-                } else if (parseInt(vcodeResult.val()) !== (num1 + num2)) {
-                  layer.tips('计算结果不正确', vcodeResult, {
-                    tips: [1, 'red'],
-                    time: 3000
-                  })
-                  vcodeResult.focus()
-                  return false;
+    bt_tools.open({
+      area: '850px',
+      title: '备份数据库&nbsp;-&nbsp;[&nbsp;' + dataname + '&nbsp;]',
+      btn: false,
+      skin: 'bt_backup_table',
+      content: '<div id="bt_backup_table" class="pd20" style="padding-bottom:40px;"></div>',
+      success:function () {
+        var backup_table = bt_tools.table({
+          el: '#bt_backup_table',
+          url: '/data?action=getData',
+          param: { table: 'backup', search: id, type: '1', limit:5 },
+          default: "[" + dataname + "] 数据库备份列表为空", //数据为空时的默认提示
+          column: [
+            { type: 'checkbox', class: '', width: 20 },
+            { fid: 'name', title: '文件名称', width: 220, fixed: true },
+            {
+              fid: 'storage_type',
+              title: '存储对象',
+              type: 'text',
+              width: 70,
+              template: function (row) {
+                var is_cloud = false, cloud_name = '' //当前云存储类型
+                if (row.filename.indexOf('|') != -1) {
+                  var _path = row.filename;
+                  is_cloud = true;
+                  cloud_name = _path.match(/\|(\w+)\|/, "$1")
+                } else {
+                  is_cloud = false;
                 }
-                $('.db_two_step,.db_confirm_txt').remove(); //删除计算
-                $('.db_export_restore .db_export_content li:first').animate({
-                  'margin-bottom': '35px'
-                }, 600);
-                $('.db_export_restore .db_cloud_confirm').addClass('hide'); //隐藏确认按钮
-                //请求云储存链接
-                $.post('/cloud', {
-                  toserver: true,
-                  filename: obj.filename,
-                  name: obj.name
-                }, function (res) {
-                  taskID = res.task_id
-                  if (res.status === false) {
-                    layer.msg(res.msg, {
-                      icon: 2
-                    });
-                    return false;
-                  } else {
-                    // 获取下载进度
-                    function downloadDBFile () {
-                      $.post('/task?action=get_task_log_by_id', {
-                        id: res.task_id,
-                        task_type: 1
-                      }, function (task) {
-                        if (task.status == 1) {
-                          clearInterval(intervalTask)
-                          taskStatus = 2
-                          $('.db_export_txt p:eq(1)').html('下载完成!');
-                          $('.db_export_txt2 p:eq(1)').html('请稍等，正在恢复数据库 <img src="/static/img/ing.gif">');
-                          bt.send('InputSql', 'database/InputSql', {
-                            file: res.local_file,
-                            name: dataname
-                          }, function (rdata) {
-                            layer.close(indexs)
-                            bt.msg(rdata);
-                            console.log('11')
+                return is_cloud ? cloud_list[cloud_name[1]] : '本地'
+              }
+            },
+            {
+              fid: 'size',
+              title: '文件大小',
+              width: 80,
+              type: 'text',
+              template: function (row, index) {
+                return bt.format_size(row.size)
+              }
+            },
+            { fid: 'addtime', width: 150, title: '备份时间' },
+            { fid: 'ps',
+              title: '备注',
+              type: 'input',
+              blur: function (row, index, ev, key, that) {
+                if (row.ps == ev.target.value) return false
+                bt.pub.set_data_ps({ id: row.id, table: 'backup', ps: ev.target.value }, function (res) {
+                  bt_tools.msg(res, { is_dynamic: true })
+                })
+              },
+              keyup: function (row, index, ev) {
+                if (ev.keyCode === 13)  $(this).blur()
+              }
+            },
+            {
+              title: '操作',
+              type: 'group',
+              width: 140,
+              align: 'right',
+              group: [{
+                title: '恢复',
+                event: function (row, index, ev, key, that) {
+                  var _id = row.id
+                  num1 = bt.get_random_num(3, 15),
+                  num2 = bt.get_random_num(5, 9),
+                  taskID = 0,
+                  taskStatus = 0, //0未开始  1正在下载   2下载完成
+                  intervalTask = null;
+                // 根据id获取对象数据
+                  var obj = frdata.data.filter(function (x) {
+                    return x.id === _id
+                  })
+                  obj = obj[0] //由于filter返回数组所以取第一位
+                  var _path = obj.filename,
+                    cloud_name = _path.match(/\|(\w+)\|/, "$1"),
+                    isYun = _path.indexOf('|') != -1;
+                  if (!isYun) {
+                    bt.database.input_sql(_path, dataname)
+                    return
+                  }
+                  layer.open({
+                    type: 1,
+                    title: "从云存储恢复",
+                    area: ['500px', '350px'],
+                    closeBtn: 2,
+                    shadeClose: false,
+                    skin: 'db_export_restore',
+                    content: "<div style='padding: 20px 20px 0 20px;'>" +
+                      "<div class='db_export_content'><ul>" +
+                      "<li>此备份文件存储在云存储，需要通过以下步骤才能完成恢复：</li>" +
+                      "<li class='db_export_txt'>" +
+                      "<span>1</span>" +
+                      "<div>" +
+                      "<p>从[" + cloud_list[cloud_name[1]] + "]下载备份文件到服务器。</p>" +
+                      "<p class='btlink'></p>" +
+                      "</div>" +
+                      "</li>" +
+                      "<li class='db_export_txt2'>" +
+                      "<span>2</span>" +
+                      "<div>" +
+                      "<p>恢复备份</p>" +
+                      "<p class='btlink'></p>" +
+                      "</div>" +
+                      "</li>" +
+                      "</ul>" +
+                      "<p class='db_confirm_txt'style='color:red;margin-bottom: 10px;'>数据库将被覆盖，是否继续？</p>" +
+                      "</div>" +
+                      "<div class='db_export_vcode db_two_step' style='margin:0'>" + lan.bt.cal_msg + "" +
+                      "<span class='text'>" + num1 + " + " + num2 + "</span>=<input type='number' id='vcodeResult' value=''>" +
+                      "</div>" +
+                      "<div class='bt-form-submit-btn'>" +
+                      "<button type='button' class='btn btn-danger btn-sm db_cloud_close'>取消</button>" +
+                      "<button type='button' class='btn btn-success btn-sm db_cloud_confirm'>确认</button></div>" +
+                      "</div>",
+                    success: function (layers, indexs) {
+                      // 确认按钮
+                      $('.db_export_restore').on('click', '.db_cloud_confirm', function () {
+                        var vcodeResult = $('#vcodeResult');
+                        if (vcodeResult.val() === '') {
+                          layer.tips('计算结果不能为空', vcodeResult, {
+                            tips: [1, 'red'],
+                            time: 3000
                           })
-                        } else {
-                          taskStatus = 1;
-                          //更新下载进度
-                          $('.db_export_txt p:eq(1)').html('正在下载文件:已下载 ' + task.used + '/' + ToSize(task.total))
+                          vcodeResult.focus()
+                          return false;
+                        } else if (parseInt(vcodeResult.val()) !== (num1 + num2)) {
+                          layer.tips('计算结果不正确', vcodeResult, {
+                            tips: [1, 'red'],
+                            time: 3000
+                          })
+                          vcodeResult.focus()
+                          return false;
+                        }
+                        $('.db_two_step,.db_confirm_txt').remove(); //删除计算
+                        $('.db_export_restore .db_export_content li:first').animate({
+                          'margin-bottom': '35px'
+                        }, 600);
+                        $('.db_export_restore .db_cloud_confirm').addClass('hide'); //隐藏确认按钮
+                        //请求云储存链接
+                        $.post('/cloud', {
+                          toserver: true,
+                          filename: obj.filename,
+                          name: obj.name
+                        }, function (res) {
+                          taskID = res.task_id
+                          if (res.status === false) {
+                            layer.msg(res.msg, {
+                              icon: 2
+                            });
+                            return false;
+                          } else {
+                            // 获取下载进度
+                            function downloadDBFile () {
+                              $.post('/task?action=get_task_log_by_id', {
+                                id: res.task_id,
+                                task_type: 1
+                              }, function (task) {
+                                if (task.status == 1) {
+                                  clearInterval(intervalTask)
+                                  taskStatus = 2
+                                  $('.db_export_txt p:eq(1)').html('下载完成!');
+                                  $('.db_export_txt2 p:eq(1)').html('请稍等，正在恢复数据库 <img src="/static/img/ing.gif">');
+                                  bt.send('InputSql', 'database/InputSql', {
+                                    file: res.local_file,
+                                    name: dataname
+                                  }, function (rdata) {
+                                    layer.close(indexs)
+                                    bt.msg(rdata);
+                                    console.log('11')
+                                  })
+                                } else {
+                                  taskStatus = 1;
+                                  //更新下载进度
+                                  $('.db_export_txt p:eq(1)').html('正在下载文件:已下载 ' + task.used + '/' + ToSize(task.total))
+                                }
+                              })
+                            }
+                            downloadDBFile();
+                            intervalTask = setInterval(function () {
+                              downloadDBFile();
+                            }, 1500);
+                          }
+                        })
+                      })
+                      // 取消按钮
+                      $('.db_export_restore').on('click', '.db_cloud_close', function () {
+                        switch (taskStatus) {
+                          case 1:
+                            layer.confirm('正在执行从云存储中下载，是否取消', {
+                              title: '下载取消'
+                            }, function () {
+                              clearInterval(intervalTask) //取消轮询下载进度
+                              layer.close(indexs)
+                              database.cancel_cloud_restore(taskID)
+                            })
+                            break;
+                          case 2:
+                            layer.msg('数据正在恢复中，无法取消', {
+                              icon: 2
+                            })
+                            return false;
                         }
                       })
+                    },
+                    cancel: function (layers) {
+                      switch (taskStatus) {
+                        case 0:
+                          layer.close(layers);
+                          break;
+                        case 1:
+                          layer.confirm('正在执行从云存储中下载，是否取消', {
+                            title: '下载取消'
+                          }, function () {
+                            clearInterval(intervalTask) //取消轮询下载进度
+                            layer.close(layers)
+                            database.cancel_cloud_restore(taskID)
+                          }, function () {
+                            return false;
+                          })
+                          break;
+                        case 2:
+                          layer.msg('数据正在恢复中，无法取消', {
+                            icon: 2
+                          })
+                          return false;
+                      }
+                      return false;
                     }
-                    downloadDBFile();
-                    intervalTask = setInterval(function () {
-                      downloadDBFile();
-                    }, 1500);
-                  }
-                })
-              })
-              // 取消按钮
-              $('.db_export_restore').on('click', '.db_cloud_close', function () {
-                switch (taskStatus) {
-                  case 1:
-                    layer.confirm('正在执行从云存储中下载，是否取消', {
-                      title: '下载取消'
-                    }, function () {
-                      clearInterval(intervalTask) //取消轮询下载进度
-                      layer.close(indexs)
-                      database.cancel_cloud_restore(taskID)
-                    })
-                    break;
-                  case 2:
-                    layer.msg('数据正在恢复中，无法取消', {
-                      icon: 2
-                    })
-                    return false;
+                  })
                 }
-              })
-            },
-            cancel: function (layers) {
-              switch (taskStatus) {
-                case 0:
-                  layer.close(layers);
-                  break;
-                case 1:
-                  layer.confirm('正在执行从云存储中下载，是否取消', {
-                    title: '下载取消'
-                  }, function () {
-                    clearInterval(intervalTask) //取消轮询下载进度
-                    layer.close(layers)
-                    database.cancel_cloud_restore(taskID)
-                  }, function () {
-                    return false;
-                  })
-                  break;
-                case 2:
-                  layer.msg('数据正在恢复中，无法取消', {
-                    icon: 2
-                  })
-                  return false;
-              }
-              return false;
+              },{
+                title: '下载',
+                template: function (row, index, ev, key, that) {
+                  return '<a target="_blank" class="btlink" href="/download?filename=' + row.filename + '&amp;name=' + row.name + '">下载</a>'
+                }
+              }, {
+                title: '删除',
+                event: function (row, index, ev, key, that) {
+                  bt.database.del_backup(row.id,id,dataname)
+                }
+              }]
             }
-          })
+          ],
+          methods: {
+            /**
+             * @description 删除站点备份
+             * @param {object} config 
+             * @param {function} callback
+             */
+            del_site_backup: function (config, callback) {
+              bt.confirm({ title: '删除站点备份', msg: '删除站点备份[' + config.name + '],是否继续？' }, function () {
+                bt_tools.send('site/DelBackup', { id: config.id }, function (rdata) {
+                  if (callback) callback(rdata)
+                }, true)
+              });
+            }
+          },
+          success: function () {
+            $('.bt_backup_table').css('top', (($(window).height() - $('.bt_backup_table').height()) / 2) + 'px')
+          },
+          tootls: [{ // 按钮组
+            type: 'group',
+            positon: ['left', 'top'],
+            list: [{
+              title: '备份数据库',
+              active: true,
+              event: function (ev, that) {
+                bt.database.backup_data(id, function (rdata) {
+                  bt_tools.msg(rdata);
+                  if (rdata.status) {
+                    that.$refresh_table_list();
+                    _that.database_table.$refresh_table_list(true)
+                  }
+                });
+              }
+            }]
+          }, {
+            type: 'batch',
+            positon: ['left', 'bottom'],
+            config: {
+              title: '删除',
+              url: '/site?action=DelBackup',
+              paramId: 'id',
+              load: true,
+              callback: function (that) {
+                bt.confirm({ title: '批量删除数据库备份', msg: '是否批量删除选中的数据库备份，是否继续？', icon: 0 }, function (index) {
+                  layer.close(index);
+                  that.start_batch({}, function (list) {
+                    var html = '';
+                    for (var i = 0; i < list.length; i++) {
+                      var item = list[i];
+                      html += '<tr><td><span class="text-overflow" title="' + item.name + '">' + item.name + '</span></td><td><div style="float:right;"><span style="color:' + (item.request.status ? '#20a53a' : 'red') + '">' + item.request.msg + '</span></div></td></tr>';
+                    }
+                    backup_table.$batch_success_table({ title: '批量删除数据库备份', th: '文件名', html: html })
+                    backup_table.$refresh_table_list(true)
+                    _that.database_table.$refresh_table_list(true)
+                  });
+                });
+              }
+            } //分页显示
+          }, {
+            type: 'page',
+            positon: ['right', 'bottom'], // 默认在右下角
+            pageParam: 'p', //分页请求字段,默认为 : p
+            page: 1, //当前分页 默认：1
+            numberParam: 'limit',
+            //分页数量请求字段默认为 : limit
+            number: 10,
+            //分页数量默认 : 20条
+          }]
         })
-      }, 100)
+      }
     });
+
+    // bt.pub.get_data('table=backup&search=' + id + '&limit=5&type=1&tojs=database.database_detail&p=' + page, function (frdata) {
+    //   loadT.close();
+    //   frdata.page = frdata.page.replace(/'/g, '"').replace(/database.database_detail\(/g, "database.database_detail(" + id + ",'" + dataname + "',");
+    //   if ($('#DataBackupList').length <= 0) {
+
+    //   }
+    //   setTimeout(function () {
+        
+
+
+
+
+
+
+
+    //     bt.render({
+    //       table: '#DataBackupList',
+    //       columns: [{
+    //         field: 'name',
+    //         title: '文件名称',
+    //         templet: function (item) {
+    //           var _arry = item.name.split('/');
+    //           return '<span style="width:240px;word-break: break-all;display: block;">' + _arry[_arry.length - 1] + '</span>';
+    //         }
+    //       },
+    //       {
+    //         field: 'storage_type',
+    //         title: '存储对象',
+    //         templet: function (item) {
+    //           var is_cloud = false,
+    //             cloud_name = '' //当前云存储类型
+    //           if (item.filename.indexOf('|') != -1) {
+    //             var _path = item.filename;
+    //             is_cloud = true;
+    //             cloud_name = _path.match(/\|(\w+)\|/, "$1")
+    //           } else {
+    //             is_cloud = false;
+    //           }
+    //           return is_cloud ? cloud_list[cloud_name[1]] : '本地'
+    //         }
+    //       },
+    //       {
+    //         field: 'size',
+    //         title: '文件大小',
+    //         templet: function (item) {
+    //           return bt.format_size(item.size);
+    //         }
+    //       },
+    //       {
+    //         field: 'addtime',
+    //         title: '备份时间'
+    //       },
+    //       { fid: 'ps',
+    //         title: '备注',
+    //         type: 'input',
+    //         blur: function (row, index, ev, key, that) {
+    //           if (row.ps == ev.target.value) return false
+    //           bt.pub.set_data_ps({ id: row.id, table: 'backup', ps: ev.target.value }, function (res) {
+    //             bt_tools.msg(res, { is_dynamic: true })
+    //           })
+    //         },
+    //         keyup: function (row, index, ev) {
+    //           if (ev.keyCode === 13) $(this).blur()
+    //         }
+    //       },
+    //       {
+    //         field: 'opt',
+    //         title: '操作',
+    //         align: 'right',
+    //         templet: function (item) {
+    //           var _opt = '<a class="btlink db_restore" herf="javascrpit:;" data-id="' + item.id + '">恢复</a> | ';
+    //           _opt += '<a class="btlink" href="/download?filename=' + item.filename + '&amp;name=' + item.name + '" target="_blank">下载</a> | ';
+    //           _opt += '<a class="btlink" herf="javascrpit:;" onclick="bt.database.del_backup(\'' + item.id + '\',\'' + id + '\',\'' + dataname + '\')">删除</a>'
+    //           return _opt;
+    //         }
+    //       },
+    //       ],
+    //       data: frdata.data
+    //     });
+    //     $('#btn_data_backup').unbind('click').click(function () {
+    //       bt.database.backup_data(id, dataname, function (rdata) {
+    //         if (rdata.status) {
+    //           database.database_detail(id, dataname);
+    //           database.database_table_view();
+    //         }
+    //       })
+    //     })
+    //     // 操作》恢复
+    //     $('.db_restore').on('click', function (e) {
+    //       var _id = $(this).data('id'),
+    //         num1 = bt.get_random_num(3, 15),
+    //         num2 = bt.get_random_num(5, 9),
+    //         taskID = 0,
+    //         taskStatus = 0, //0未开始  1正在下载   2下载完成
+    //         intervalTask = null;
+    //       // 根据id获取对象数据
+    //       var obj = frdata.data.filter(function (x) {
+    //         return x.id === _id
+    //       })
+    //       obj = obj[0] //由于filter返回数组所以取第一位
+    //       var _path = obj.filename,
+    //         cloud_name = _path.match(/\|(\w+)\|/, "$1"),
+    //         isYun = _path.indexOf('|') != -1;
+    //       if (!isYun) {
+    //         bt.database.input_sql(_path, dataname)
+    //         return
+    //       }
+    //       layer.open({
+    //         type: 1,
+    //         title: "从云存储恢复",
+    //         area: ['500px', '350px'],
+    //         closeBtn: 2,
+    //         shadeClose: false,
+    //         skin: 'db_export_restore',
+    //         content: "<div style='padding: 20px 20px 0 20px;'>" +
+    //           "<div class='db_export_content'><ul>" +
+    //           "<li>此备份文件存储在云存储，需要通过以下步骤才能完成恢复：</li>" +
+    //           "<li class='db_export_txt'>" +
+    //           "<span>1</span>" +
+    //           "<div>" +
+    //           "<p>从[" + cloud_list[cloud_name[1]] + "]下载备份文件到服务器。</p>" +
+    //           "<p class='btlink'></p>" +
+    //           "</div>" +
+    //           "</li>" +
+    //           "<li class='db_export_txt2'>" +
+    //           "<span>2</span>" +
+    //           "<div>" +
+    //           "<p>恢复备份</p>" +
+    //           "<p class='btlink'></p>" +
+    //           "</div>" +
+    //           "</li>" +
+    //           "</ul>" +
+    //           "<p class='db_confirm_txt'style='color:red;margin-bottom: 10px;'>数据库将被覆盖，是否继续？</p>" +
+    //           "</div>" +
+    //           "<div class='db_export_vcode db_two_step' style='margin:0'>" + lan.bt.cal_msg + "" +
+    //           "<span class='text'>" + num1 + " + " + num2 + "</span>=<input type='number' id='vcodeResult' value=''>" +
+    //           "</div>" +
+    //           "<div class='bt-form-submit-btn'>" +
+    //           "<button type='button' class='btn btn-danger btn-sm db_cloud_close'>取消</button>" +
+    //           "<button type='button' class='btn btn-success btn-sm db_cloud_confirm'>确认</button></div>" +
+    //           "</div>",
+    //         success: function (layers, indexs) {
+    //           // 确认按钮
+    //           $('.db_export_restore').on('click', '.db_cloud_confirm', function () {
+    //             var vcodeResult = $('#vcodeResult');
+    //             if (vcodeResult.val() === '') {
+    //               layer.tips('计算结果不能为空', vcodeResult, {
+    //                 tips: [1, 'red'],
+    //                 time: 3000
+    //               })
+    //               vcodeResult.focus()
+    //               return false;
+    //             } else if (parseInt(vcodeResult.val()) !== (num1 + num2)) {
+    //               layer.tips('计算结果不正确', vcodeResult, {
+    //                 tips: [1, 'red'],
+    //                 time: 3000
+    //               })
+    //               vcodeResult.focus()
+    //               return false;
+    //             }
+    //             $('.db_two_step,.db_confirm_txt').remove(); //删除计算
+    //             $('.db_export_restore .db_export_content li:first').animate({
+    //               'margin-bottom': '35px'
+    //             }, 600);
+    //             $('.db_export_restore .db_cloud_confirm').addClass('hide'); //隐藏确认按钮
+    //             //请求云储存链接
+    //             $.post('/cloud', {
+    //               toserver: true,
+    //               filename: obj.filename,
+    //               name: obj.name
+    //             }, function (res) {
+    //               taskID = res.task_id
+    //               if (res.status === false) {
+    //                 layer.msg(res.msg, {
+    //                   icon: 2
+    //                 });
+    //                 return false;
+    //               } else {
+    //                 // 获取下载进度
+    //                 function downloadDBFile () {
+    //                   $.post('/task?action=get_task_log_by_id', {
+    //                     id: res.task_id,
+    //                     task_type: 1
+    //                   }, function (task) {
+    //                     if (task.status == 1) {
+    //                       clearInterval(intervalTask)
+    //                       taskStatus = 2
+    //                       $('.db_export_txt p:eq(1)').html('下载完成!');
+    //                       $('.db_export_txt2 p:eq(1)').html('请稍等，正在恢复数据库 <img src="/static/img/ing.gif">');
+    //                       bt.send('InputSql', 'database/InputSql', {
+    //                         file: res.local_file,
+    //                         name: dataname
+    //                       }, function (rdata) {
+    //                         layer.close(indexs)
+    //                         bt.msg(rdata);
+    //                         console.log('11')
+    //                       })
+    //                     } else {
+    //                       taskStatus = 1;
+    //                       //更新下载进度
+    //                       $('.db_export_txt p:eq(1)').html('正在下载文件:已下载 ' + task.used + '/' + ToSize(task.total))
+    //                     }
+    //                   })
+    //                 }
+    //                 downloadDBFile();
+    //                 intervalTask = setInterval(function () {
+    //                   downloadDBFile();
+    //                 }, 1500);
+    //               }
+    //             })
+    //           })
+    //           // 取消按钮
+    //           $('.db_export_restore').on('click', '.db_cloud_close', function () {
+    //             switch (taskStatus) {
+    //               case 1:
+    //                 layer.confirm('正在执行从云存储中下载，是否取消', {
+    //                   title: '下载取消'
+    //                 }, function () {
+    //                   clearInterval(intervalTask) //取消轮询下载进度
+    //                   layer.close(indexs)
+    //                   database.cancel_cloud_restore(taskID)
+    //                 })
+    //                 break;
+    //               case 2:
+    //                 layer.msg('数据正在恢复中，无法取消', {
+    //                   icon: 2
+    //                 })
+    //                 return false;
+    //             }
+    //           })
+    //         },
+    //         cancel: function (layers) {
+    //           switch (taskStatus) {
+    //             case 0:
+    //               layer.close(layers);
+    //               break;
+    //             case 1:
+    //               layer.confirm('正在执行从云存储中下载，是否取消', {
+    //                 title: '下载取消'
+    //               }, function () {
+    //                 clearInterval(intervalTask) //取消轮询下载进度
+    //                 layer.close(layers)
+    //                 database.cancel_cloud_restore(taskID)
+    //               }, function () {
+    //                 return false;
+    //               })
+    //               break;
+    //             case 2:
+    //               layer.msg('数据正在恢复中，无法取消', {
+    //                 icon: 2
+    //               })
+    //               return false;
+    //           }
+    //           return false;
+    //         }
+    //       })
+    //     })
+    //   }, 100)
+    // });
   },
   // 备份导入》本地导入
   upload_files: function (name) {
