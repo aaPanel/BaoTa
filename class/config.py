@@ -1347,14 +1347,18 @@ class config:
 
     #获取配置
     def get_config(self,get):
+        data = {}
         if 'config' in session:
             session['config']['distribution'] = public.get_linux_distribution()
             session['webserver'] = public.get_webserver()
             session['config']['webserver'] = session['webserver']
-            return session['config']
-        data = public.M('config').where("id=?",('1',)).field('webserver,sites_path,backup_path,status,mysql_root').find()
+            data = session['config']
+        if not data:
+            data = public.M('config').where("id=?",('1',)).field('webserver,sites_path,backup_path,status,mysql_root').find()
         data['webserver'] = public.get_webserver()
         data['distribution'] = public.get_linux_distribution()
+        data['request_iptype'] = self.get_request_iptype()
+        data['request_type'] = self.get_request_type()
         return data
     
 
@@ -2122,3 +2126,70 @@ class config:
             return status_code
         except:
             return 0
+
+    def get_request_iptype(self,get = None):
+        '''
+            @name 获取云端请求线路
+            @author hwliang<2022-02-09>
+            @return auto/ipv4/ipv6        
+        '''
+
+        v4_file = '{}/data/v4.pl'.format(public.get_panel_path())
+        if not os.path.exists(v4_file): return 'auto'
+        iptype = public.readFile(v4_file).strip()
+        if not iptype: return 'auto'
+        if iptype == '-4': return 'ipv4'
+        return 'ipv6'
+
+    
+    def set_request_iptype(self,get):
+        '''
+            @name 设置云端请求线路
+            @author hwliang<2022-02-09>
+            @param iptype<str> auto/ipv4/ipv6
+            @return dict
+        '''
+        v4_file = '{}/data/v4.pl'.format(public.get_panel_path())
+        if not 'iptype' in get:
+            return public.returnMsg(False,'参数错误!')
+        if get.iptype == 'auto':
+            public.writeFile(v4_file,' ')
+        elif get.iptype == 'ipv4':
+            public.writeFile(v4_file,' -4 ')
+        else:
+            public.writeFile(v4_file,' -6 ')
+        public.WriteLog('面板设置','将云端请求线路设置为:{}'.format(get.iptype))
+        return public.returnMsg(True,'设置成功!')
+
+
+    def get_request_type(self,get= None):
+        '''
+            @name 获取云端请求方式
+            @author hwliang<2022-02-09>
+            @return python/curl/php        
+        '''
+        http_type_file = '{}/data/http_type.pl'.format(public.get_panel_path())
+        if not os.path.exists(http_type_file): return 'python'
+        http_type = public.readFile(http_type_file).strip()
+        if not http_type:
+            os.remove(http_type_file)
+            return 'python'
+        return http_type
+
+    
+    def set_request_type(self,get):
+        '''
+            @name 设置云端请求方式
+            @author hwliang<2022-02-09>
+            @param http_type<str> python/curl/php
+            @return dict
+        '''
+        http_type_file = '{}/data/http_type.pl'.format(public.get_panel_path())
+        if not 'http_type' in get:
+            return public.returnMsg(False,'参数错误!')
+        if get.http_type == 'php':
+            if not os.listdir('{}/php'.format(public.get_setup_path())): return public.returnMsg(False,'没有可用的PHP版本!')
+
+        public.writeFile(http_type_file,get.http_type)
+        public.WriteLog('面板设置','将云端请求方式设置为:{}'.format(get.http_type))
+        return public.returnMsg(True,'设置成功!')

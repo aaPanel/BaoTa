@@ -1020,8 +1020,7 @@ class panelSSL:
         pdata = {}
         pdata['data'] = self.De_Code(data)
         try:
-            import requests
-            rtmp = requests.post(self.__APIURL+'/GetAuthToken',pdata).text
+            rtmp = public.httpPost(self.__APIURL+'/GetAuthToken',pdata)
             result = json.loads(rtmp);           
             result['data'] = self.En_Code(result['data'])
             if not result['status']: return result

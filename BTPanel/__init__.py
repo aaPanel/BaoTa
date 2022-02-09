@@ -815,7 +815,7 @@ def config(pdata=None):
     'get_key', 'get_php_session_path', 'set_php_session_path', 'get_cert_source', 'get_users',
     'set_local', 'set_debug', 'get_panel_error_logs', 'clean_panel_error_logs', 'get_menu_list', 'set_hide_menu_list',
     'get_basic_auth_stat', 'set_basic_auth', 'get_cli_php_version', 'get_tmp_token', 'get_temp_login', 'set_temp_login',
-    'remove_temp_login', 'clear_temp_login', 'get_temp_login_logs',
+    'remove_temp_login', 'clear_temp_login', 'get_temp_login_logs','set_request_iptype','set_request_type',
     'set_cli_php_version', 'DelOldSession', 'GetSessionCount', 'SetSessionConf', 'show_recommend', 'show_workorder',
     'GetSessionConf', 'get_ipv6_listen', 'set_ipv6_status', 'GetApacheValue', 'SetApacheValue',
     'GetNginxValue', 'SetNginxValue', 'get_token', 'set_token', 'set_admin_path', 'is_pro','set_not_auth_status',
