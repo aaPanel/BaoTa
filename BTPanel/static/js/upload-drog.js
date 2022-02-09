@@ -598,7 +598,6 @@ UploadFile.prototype = {
       }
 
       file_info.querySelector('.uploadNumber').innerText = '(' + this.uploadList.length + '/' + this.fileList.length + ')';
-      console.log(this.uploadInfo.uploadedSize,this.fileTotalSize)
       file_info.querySelector('.uploadProgress').innerText = ((this.uploadInfo.uploadedSize / this.fileTotalSize) * 100).toFixed(2) + '%';
     } catch (e) {
       console.log(e)
