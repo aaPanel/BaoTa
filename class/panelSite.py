@@ -2197,6 +2197,9 @@ listener SSL443 {
     def SiteStop(self, get, multiple=None):
         path = self.setupPath + '/stop'
         id = get.id
+        site_status = public.M('sites').where("id=?", (id,)).getField('status')
+        if str(site_status) != '1':
+            return public.returnMsg(True, 'SITE_STOP_SUCCESS')
         if not os.path.exists(path):
             os.makedirs(path)
             public.downloadFile('http://{}/stop.html'.format(public.get_url()), path + '/index.html')
