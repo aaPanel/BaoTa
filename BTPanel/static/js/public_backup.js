@@ -6111,7 +6111,7 @@ bt.database = {
       })
     });
   },
-  backup_data: function (id, dataname, callback) {
+  backup_data: function (id, callback) {
     var loadT = bt.load(lan.database.backup_the);
     bt.send('ToBackup', 'database/ToBackup', {
       id: id
