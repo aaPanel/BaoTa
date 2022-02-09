@@ -475,7 +475,7 @@ var database = {
                   taskStatus = 0, //0未开始  1正在下载   2下载完成
                   intervalTask = null;
                 // 根据id获取对象数据
-                  var obj = frdata.data.filter(function (x) {
+                  var obj = that.data.filter(function (x) {
                     return x.id === _id
                   })
                   obj = obj[0] //由于filter返回数组所以取第一位
@@ -644,7 +644,13 @@ var database = {
               }, {
                 title: '删除',
                 event: function (row, index, ev, key, that) {
-                  bt.database.del_backup(row.id,id,dataname)
+                  that.del_site_backup({ name: row.name, id: row.id }, function (rdata) {
+                    bt_tools.msg(rdata);
+                    if (rdata.status) {
+                      that.$refresh_table_list();
+                      _that.database_table.$refresh_table_list(true)
+                    }
+                  });
                 }
               }]
             }
@@ -656,8 +662,8 @@ var database = {
              * @param {function} callback
              */
             del_site_backup: function (config, callback) {
-              bt.confirm({ title: '删除站点备份', msg: '删除站点备份[' + config.name + '],是否继续？' }, function () {
-                bt_tools.send('site/DelBackup', { id: config.id }, function (rdata) {
+              bt.confirm({ title: '删除数据库备份', msg: '删除数据库备份[' + config.name + '],是否继续？' }, function () {
+                bt_tools.send('database/DelBackup', { id: config.id }, function (rdata) {
                   if (callback) callback(rdata)
                 }, true)
               });
