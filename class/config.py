@@ -1347,12 +1347,14 @@ class config:
 
     #获取配置
     def get_config(self,get):
+        data = {}
         if 'config' in session:
             session['config']['distribution'] = public.get_linux_distribution()
             session['webserver'] = public.get_webserver()
             session['config']['webserver'] = session['webserver']
-            return session['config']
-        data = public.M('config').where("id=?",('1',)).field('webserver,sites_path,backup_path,status,mysql_root').find()
+            data = session['config']
+        if not data:
+            data = public.M('config').where("id=?",('1',)).field('webserver,sites_path,backup_path,status,mysql_root').find()
         data['webserver'] = public.get_webserver()
         data['distribution'] = public.get_linux_distribution()
         data['request_iptype'] = self.get_request_iptype()
@@ -2187,7 +2189,7 @@ class config:
             return public.returnMsg(False,'参数错误!')
         if get.http_type == 'php':
             if not os.listdir('{}/php'.format(public.get_setup_path())): return public.returnMsg(False,'没有可用的PHP版本!')
-            
+
         public.writeFile(http_type_file,get.http_type)
         public.WriteLog('面板设置','将云端请求方式设置为:{}'.format(get.http_type))
         return public.returnMsg(True,'设置成功!')
