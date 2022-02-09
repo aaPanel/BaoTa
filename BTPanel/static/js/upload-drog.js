@@ -30,7 +30,6 @@ function is_show (el, show) {
 }
 
 UploadFile.prototype = {
-  uploadFilesLimitTips:'当前文件大小已超过文件上传' + bt.format_size(this.limit.size) + '限制， 请使用SFTP/FTP等工具上传文件！',
 
   /**
    * @description 创建节点
@@ -781,7 +780,7 @@ UploadFile.prototype = {
       return false;
     }
     if (this.fileTotalSize >= this.limit.size) {
-      layer.msg(uploadFilesLimitTips);
+      layer.msg('当前文件大小已超过文件上传' + bt.format_size(this.limit.size) + '限制， 请使用SFTP/FTP等工具上传文件！');
       return false;
     }
     return true
