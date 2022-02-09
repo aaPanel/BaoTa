@@ -22,7 +22,7 @@ function UploadFile () {
   this.event_bind(); // 事件绑定
 }
 
-var uploadListhtml = '<ul class="dropUpLoadFileHead " style="padding-right:17px;"><li class="fileTitle"><span class="filename">文件名</span><span class="filesize">文件大小</span><span class="fileStatus">上传状态</span></li></ul><ul class="dropUpLoadFile list-list"></ul>';
+var uploadListHtml = '<ul class="dropUpLoadFileHead " style="padding-right:17px;"><li class="fileTitle"><span class="filename">文件名</span><span class="filesize">文件大小</span><span class="fileStatus">上传状态</span></li></ul><ul class="dropUpLoadFile list-list"></ul>';
 
 // 是否显示内容
 function is_show (el, show) {
@@ -75,12 +75,11 @@ UploadFile.prototype = {
 
   /**
    * @description 初始化数据
-  */
-  init_data: function init_data () {
+   */
+  init_data: function () {
     this.uploadStatus = 0; // 上传状态 0:等待上传  1:上传成功  2:上传中
     this.uploadLimitSize = 1024 * 1024 * 2; // 上传限制字节
     this.uploadList = []; // 上传列表
-    this.uploadPath = bt.get_cookie('Path'); // 上传目录
     this.isUpload = true;
     this.uploadTime = {
       endTime: 0,
@@ -110,11 +109,17 @@ UploadFile.prototype = {
     this.uploadError = 0;
   },
 
+  /**
+   * @description 初始化上传路径
+   */
+  init_upload_path: function (path) {
+    this.uploadPath = path || bt.get_cookie('Path'); // 上传目录
+  },
 
   /**
    * @description 视图初始化
    */
-  initialize_view: function initialize_view () {
+  initialize_view: function () {
     var title = this.createEl('span');
     this.uploadElement = this.createEl('div');
     this.uploadElement.setAttribute('style', 'position:fixed;top:0;left:0;right:0;bottom:0; background:rgba(255,255,255,0.6);border:3px #ccc dashed;z-index:99999999;color:#999;font-size:40px;text-align:center;overflow:hidden;');
@@ -184,6 +189,7 @@ UploadFile.prototype = {
     var _this2 = this;
 
     if (typeof list === 'undefined') list = [];
+
     if (this.layer) return false;
     var layerMax = null,
       layerShade = null,
@@ -195,7 +201,7 @@ UploadFile.prototype = {
       area: ['650px', '605px'],
       title: '上传文件到【' + uploadPath + '】--- 支持断点续传',
       skin: 'file_dir_uploads',
-      content: '<div class="flex pd15" style="flex-direction: column;-webkit-user-select:none;-moz-user-select:none;">\n                  <div class="upload_btn_groud">\n                    <div class="btn-group">\n                      <button type="button" class="btn btn-primary btn-sm upload_file_btn">上传文件</button>\n                      <button type="button" class="btn btn-primary  btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">\n                        <span class="caret"></span><span class="sr-only">Toggle Dropdown</span>\n                      </button>\n                      <ul class="dropdown-menu">\n                        <li><a href="#" data-type="file">上传文件</a></li>\n                        <li><a href="#" data-type="dir">上传目录</a></li>\n                      </ul>\n                    </div>\n                  <div class="pull-right"><button class="btn btn-sm btn-default empty-record">清空列表</button></div>\n                  <div class="file_upload_info hide">\n                    <span>总进度&nbsp;<i class="uploadProgress"></i>，正在上传&nbsp;<i class="uploadNumber"></i>,</span>\n                    <span class="hide">上传失败&nbsp;<i class="uploadError"></i></span>\n                    <span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span>\n                    <span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span>\n                    <i></i>\n                  </div>\n                </div>\n                <div class="upload_file_body ' + (list.length > 0 ? '' : 'active') + '">' + (list.length > 0 ? uploadListhtml : '<span>请将需要上传的文件拖到此处</span>') + '</div>\n              </div>\n              <div class="upload_file_gourp">\n                <button class="btn btn-defalut btn-sm cancelUpload" style="margin-right:15px">取消上传</button>\n                <button class="btn btn-success btn-sm startUpload">开始上传</button>\n              </div>',
+      content: '<div class="flex pd15" style="flex-direction: column;-webkit-user-select:none;-moz-user-select:none;">\n                  <div class="upload_btn_groud">\n                    <div class="btn-group">\n                      <button type="button" class="btn btn-primary btn-sm upload_file_btn">上传文件</button>\n                      <button type="button" class="btn btn-primary  btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">\n                        <span class="caret"></span><span class="sr-only">Toggle Dropdown</span>\n                      </button>\n                      <ul class="dropdown-menu">\n                        <li><a href="#" data-type="file">上传文件</a></li>\n                        <li><a href="#" data-type="dir">上传目录</a></li>\n                      </ul>\n                    </div>\n                  <div class="pull-right"><button class="btn btn-sm btn-default empty-record">清空列表</button></div>\n                  <div class="file_upload_info hide">\n                    <span>总进度&nbsp;<i class="uploadProgress"></i>，正在上传&nbsp;<i class="uploadNumber"></i>,</span>\n                    <span class="hide">上传失败&nbsp;<i class="uploadError"></i></span>\n                    <span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span>\n                    <span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span>\n                    <i></i>\n                  </div>\n                </div>\n                <div class="upload_file_body ' + (list.length > 0 ? '' : 'active') + '">' + (list.length > 0 ? uploadListHtml : '<span>请将需要上传的文件拖到此处</span>') + '</div>\n              </div>\n              <div class="upload_file_gourp">\n                <button class="btn btn-defalut btn-sm cancelUpload" style="margin-right:15px">取消上传</button>\n                <button class="btn btn-success btn-sm startUpload">开始上传</button>\n              </div>',
       success: function success (layers, indexs) {
         layerMax = _this2.queryEl('.file_dir_uploads').querySelector('.layui-layer-max');
         layerShade = document.querySelector('.layui-layer-shade');
@@ -386,7 +392,7 @@ UploadFile.prototype = {
    */
   upload_file: function (fileStart, index) {
     var _this3 = this;
-    this.uploadPath = bt.get_cookie('Path');
+    this.uploadPath = this.uploadPath || bt.get_cookie('Path');
 
     // 开始上传
     if (fileStart == undefined && this.uploadList.length == 0) {
@@ -407,7 +413,7 @@ UploadFile.prototype = {
       this.uploadTime.endTime = this.get_time_real(); // 设置上传开始时间
       this.set_upload_view();
       this.init_data();
-      bt_file.reader_file_list({ path: this.uploadPath })
+      bt_file.reader_file_list({ path: this.uploadPath });
       return false;
     }
 
@@ -730,7 +736,7 @@ UploadFile.prototype = {
     }
     var upload_file_body = this.queryEl('.upload_file_body');
     upload_file_body.className = 'upload_file_body';
-    upload_file_body.innerHTML = uploadListhtml;
+    upload_file_body.innerHTML = uploadListHtml;
     this.queryEl('.upload_file_gourp').className = 'upload_file_gourp';
     this.queryEl('.dropUpLoadFile').innerHTML = html;
     var dropUpLoadFileHead = this.queryEl('.dropUpLoadFileHead');

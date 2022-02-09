@@ -737,7 +737,7 @@ var crontab = {
           width: 120
         }, {
           fid: 'cycle',
-          title: "执行时机"
+          title: "执行时间"
         }, {
           fid: 'save',
           title: "保存数量",
