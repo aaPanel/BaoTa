@@ -194,6 +194,10 @@ var crontab = {
         notice_channel_form.group[1].display = !!notice
         notice_channel_form.group[0].value = notice
         that.$replace_render_content(4)
+        if (formData.notice === '0') {
+          that.config.form[8].group.disabled = false
+          that.$local_refresh('submitForm', that.config.form[8].group)
+        }
       }
     }, {
       label: '消息通道',
