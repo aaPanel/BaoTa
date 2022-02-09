@@ -339,11 +339,9 @@ exit($header."\r\n\r\n".json_encode($body));
         curl_bin = 'curl'
         for cb in c_bin:
             if os.path.exists(cb): curl_bin = cb
-        if self._ip_type == 'ipv6':
-            curl_bin += ' -6'
-        elif self._ip_type == 'ipv4':
-            curl_bin += ' -4'
-        return curl_bin
+        if self._ip_type != 'auto':
+            v4_file = '{}/data/v4.pl'.format(public.get_panel_path())
+            curl_bin += ' {}'.format(public.readFile(v4_file).strip())
 
     #格式化CURL响应头
     def _curl_format(self,req):
