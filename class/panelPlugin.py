@@ -928,6 +928,11 @@ class panelPlugin:
             softList = Plugin(False).get_plugin_list(force)
             cache.set(skey,softList,3600)
             self.clean_panel_log()
+            if 'ip' in softList:
+                if public.is_ipv6(softList['ip']):
+                    public.writeFile('data/v4.pl',' -6 ')
+                else:
+                    public.writeFile('data/v4.pl',' -4 ')
         sType = 0
         try:
             if hasattr(get,'type'): sType = int(get['type'])

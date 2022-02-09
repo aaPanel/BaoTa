@@ -774,7 +774,7 @@ UploadFile.prototype = {
       return false;
     }
     if (this.fileTotalSize >= this.limit.size) {
-      layer.msg('当前文件大小已超过文件上传' + bt.format_size(e.size) + '限制， 请使用SFTP/FTP等工具上传文件！');
+      layer.msg('当前文件大小已超过文件上传' + bt.format_size(this.limit.size) + '限制， 请使用SFTP/FTP等工具上传文件！');
       return false;
     }
     return true
