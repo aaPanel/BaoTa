@@ -149,7 +149,7 @@
                         <!-- JAVA管理 -->
                         <bt-layer title="JDK管理" v-model="jdkManageView" :area="['480px','400px']" @close="jdkPathValue = ''">
                             <bt-text width="300px" v-model="jdkPathValue" class-name="mr10" placeholder="请输入自定义JDK地址，或选择JDK路径"
-                                     icon="folder-open" @icon-event="select_path('add_load_jdk')"></bt-text>
+                                     icon="folder-open" @icon-event="select_path('add_load_jdk', 'file')"></bt-text>
                             <bt-button type="success" title="添加JDK" class-name="mlr15 mr0"
                                        @click="add_jdk_info"></bt-button>
                             <div class="divtable mt10">
