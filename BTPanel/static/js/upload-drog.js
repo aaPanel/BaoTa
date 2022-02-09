@@ -30,6 +30,8 @@ function is_show (el, show) {
 }
 
 UploadFile.prototype = {
+  uploadFilesLimitTips:'当前文件大小已超过文件上传' + bt.format_size(this.limit.size) + '限制， 请使用SFTP/FTP等工具上传文件！',
+
   /**
    * @description 创建节点
   */
@@ -42,7 +44,6 @@ UploadFile.prototype = {
    * @description 获取节点
   */
   queryEl: function queryEl (el) {
-    4
     return document.querySelector(el);
   },
 
@@ -67,7 +68,7 @@ UploadFile.prototype = {
         item.addEventListener(type || 'click', function (ev) {
           var index = [].indexOf.call(el, item);
           fn.call(item, ev, index);
-        });
+        },false);
       })(item);
     }
   },
@@ -125,7 +126,7 @@ UploadFile.prototype = {
     this.uploadElement.setAttribute('style', 'position:fixed;top:0;left:0;right:0;bottom:0; background:rgba(255,255,255,0.6);border:3px #ccc dashed;z-index:99999999;color:#999;font-size:40px;text-align:center;overflow:hidden;');
     this.uploadElement.id = 'uploadView';
     is_show(this.uploadElement, false);
-    title.setAttribute('style', 'position: absolute;top: 50%;left: 50%;margin-left: -200px;margin-top: -40px;');
+    title.setAttribute('style', 'position: fixed;top: 50%;left: 50%;margin-left: -200px;margin-top: -40px;z-index:99999998');
     title.innerText = '上传文件到当前目录下';
     this.uploadElement.appendChild(title);
     document.querySelector('body').appendChild(this.uploadElement);
@@ -150,6 +151,7 @@ UploadFile.prototype = {
 
     // 离开放置目录
     this.bind(this.uploadElement, 'dragleave', function (ev) {
+      if(ev.path[0].id == 'uploadView') return false
       _this.file_drag_hover(ev);
     });
 
@@ -774,13 +776,12 @@ UploadFile.prototype = {
       status: 0
     });
     this.fileTotalNumber ++;
-    this.fileTotalSize += e.size;
     if (this.fileTotalNumber >= this.limit.number) {
       layer.msg('当前文件数量已超过文件上传上限' + this.limit.number + '个， 请压缩文件夹后重试！');
       return false;
     }
     if (this.fileTotalSize >= this.limit.size) {
-      layer.msg('当前文件大小已超过文件上传' + bt.format_size(this.limit.size) + '限制， 请使用SFTP/FTP等工具上传文件！');
+      layer.msg(uploadFilesLimitTips);
       return false;
     }
     return true
@@ -796,8 +797,8 @@ UploadFile.prototype = {
     var _this6 = this;
     var path = item.fullPath || '';
     if (item.isFile) {
-      
       item.file(function (e) {
+        _this6.fileTotalSize += e.size;
         _this6.file_upload_limit(e, path);
       });
       clearTimeout(this.timeNumber);
