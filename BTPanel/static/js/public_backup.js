@@ -11,11 +11,15 @@ var bt = {
     return reg.test(ip);
   },
   // 验证域名列表
-  check_domain_list: function (domainInfo) {
+  check_domain_list: function (domainInfo, isPort) {
     var domainList = domainInfo.trim().replace(' ', '').split("\n");
     for (var i = 0; i < domainList.length; i++) {
       var item = domainList[i];
-      if (!bt.check_domain(item)) {
+      if (isPort && !bt.check_domain_port(item)) {
+        bt.msg({ status: false, msg: '第' + (i + 1) + '行【' + item + '】域名格式错误' });
+        return false;
+      }
+      if (!isPort && !bt.check_domain(item)) {
         bt.msg({ status: false, msg: '第' + (i + 1) + '行【' + item + '】域名格式错误' });
         return false;
       }
@@ -38,6 +42,10 @@ var bt = {
   check_domain: function (domain) //验证域名
   {
     var reg = /^([\w\u4e00-\u9fa5\-\*]{1,100}\.){1,10}([\w\u4e00-\u9fa5\-]{1,24}|[\w\u4e00-\u9fa5\-]{1,24}\.[\w\u4e00-\u9fa5\-]{1,24})$/;
+    return reg.test(bt.strim(domain));
+  },
+  check_domain_port: function (domain) { //验证域名带端口号
+    var reg = /^([\w\u4e00-\u9fa5\-\*]{1,100}\.){1,10}([\w\u4e00-\u9fa5\-]{1,24}|[\w\u4e00-\u9fa5\-]{1,24}\.[\w\u4e00-\u9fa5\-]{1,24})(:([1-9]|[1-9]\d|[1-9]\d{2}|[1-9]\d{3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5]))?$/;
     return reg.test(bt.strim(domain));
   },
   check_img: function (fileName) //验证是否图片
