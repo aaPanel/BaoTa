@@ -816,7 +816,7 @@ fullchain.pem       粘贴到证书输入框
                 for domain in self._config['orders'][index]['domains']:
                     if domain in cert_init['dns']:
                         return index
-            if cert_init['issuer'].find("Let's Encrypt") != -1:
+            if cert_init['issuer'].find("Let's Encrypt") != -1 or cert_init['issuer'] == 'R3':
                 return pem_file
             return None
         except: return None
@@ -1433,6 +1433,9 @@ fullchain.pem       粘贴到证书输入框
     def get_index(self,domains):
         '''
             @name 获取标识
+            @author hwliang<2022-02-10>
+            @param domains<list> 域名列表
+            @return string
         '''
         identifiers = []
         for domain_name in domains:
@@ -1445,6 +1448,7 @@ fullchain.pem       粘贴到证书输入框
         '''
             @name 续签同品牌其它证书
             @author hwliang<2022-02-10>
+            @return void
         '''
         cert_path = "{}/vhost/cert".format(public.get_panel_path())
         if not os.path.exists(cert_path): return
@@ -1452,25 +1456,29 @@ fullchain.pem       粘贴到证书输入框
         n=0
         if not 'orders' in self._config: self._config['orders'] = {}
         for siteName in os.listdir(cert_path):
-            cert_file = '{}/{}/fullchain.pem'.format(cert_path,siteName)
-            if not os.path.exists(cert_file): continue # 无证书文件
-            siteInfo = public.M('sites').where('name=?',siteName).find()
-            if not siteInfo: continue # 无网站信息
-            cert_init = self.get_cert_init(cert_file)
-            if not cert_init: continue # 无法获取证书
-            end_time = time.mktime(time.strptime(cert_init['notAfter'],'%Y-%m-%d'))
-            if end_time > new_time: continue # 未到期
-            if not cert_init['issuer'] in ['R3',"Let's Encrypt"] and cert_init['issuer'].find("Let's Encrypt") == -1:
-                continue # 非同品牌证书
+            try:
+                cert_file = '{}/{}/fullchain.pem'.format(cert_path,siteName)
+                if not os.path.exists(cert_file): continue # 无证书文件
+                siteInfo = public.M('sites').where('name=?',siteName).find()
+                if not siteInfo: continue # 无网站信息
+                cert_init = self.get_cert_init(cert_file)
+                if not cert_init: continue # 无法获取证书
+                end_time = time.mktime(time.strptime(cert_init['notAfter'],'%Y-%m-%d'))
+                if end_time > new_time: continue # 未到期
+                if not cert_init['issuer'] in ['R3',"Let's Encrypt"] and cert_init['issuer'].find("Let's Encrypt") == -1:
+                    continue # 非同品牌证书
 
-            if isinstance(cert_init['dns'],str): cert_init['dns'] = [cert_init['dns']]
-            index = self.get_index(cert_init['dns'])
-            if index in self._config['orders'].keys(): continue # 已在订单列表
-            
-            n+=1
-            write_log("|-正在续签第 {} 张其它证书，域名: {}..".format(n,cert_init['subject']))
-            write_log("|-正在创建订单..")
-            self.renew_cert_to(cert_init['dns'],'http',siteInfo['path'])
+                if isinstance(cert_init['dns'],str): cert_init['dns'] = [cert_init['dns']]
+                index = self.get_index(cert_init['dns'])
+                if index in self._config['orders'].keys(): continue # 已在订单列表
+                
+                n+=1
+                write_log("|-正在续签第 {} 张其它证书，域名: {}..".format(n,cert_init['subject']))
+                write_log("|-正在创建订单..")
+                self.renew_cert_to(cert_init['dns'],'http',siteInfo['path'])
+            except:
+                write_log("|-[{}]续签失败".format(siteName))
+                
 
 
     def renew_cert_to(self,domains,auth_type,auth_to,index = None):
@@ -1503,7 +1511,6 @@ fullchain.pem       粘贴到证书输入框
             cert['msg'] = '续签成功!'
             write_log("|-续签成功!")
         except Exception as e:
-            print(public.get_error_info())
             if str(e).find('请稍候重试') == -1: # 受其它证书影响和连接CA失败的的不记录重试次数
                 if index:
                     # 设置下次重试时间
@@ -1577,51 +1584,9 @@ fullchain.pem       粘贴到证书输入框
             cert = None
             for index in order_index:
                 n += 1
-                write_log("|-正在续签第 {} 张，域名: {}..".format(n,
-                                                        self._config['orders'][index]['domains']))
+                write_log("|-正在续签第 {} 张，域名: {}..".format(n,self._config['orders'][index]['domains']))
                 write_log("|-正在创建订单..")
-                try:
-                    index = self.create_order(
-                        self._config['orders'][index]['domains'],
-                        self._config['orders'][index]['auth_type'],
-                        self._config['orders'][index]['auth_to'],
-                        index
-                    )
-                
-                    write_log("|-正在获取验证信息..")
-                    self.get_auths(index)
-                    write_log("|-正在验证域名..")
-                    self.auth_domain(index)
-                    write_log("|-正在发送CSR..")
-                    self.remove_dns_record()
-                    self.send_csr(index)
-                    write_log("|-正在下载证书..")
-                    cert = self.download_cert(index)
-                    self._config['orders'][index]['renew_time'] = int(time.time())
-
-                    # 清理失败重试记录
-                    self._config['orders'][index]['retry_count'] = 0
-                    self._config['orders'][index]['next_retry_time'] = 0
-
-                    # 保存证书配置
-                    self.save_config()
-                    cert['status'] = True
-                    cert['msg'] = '续签成功!'
-                    write_log("|-续签成功!")
-                except Exception as e:
-                    if str(e).find('请稍候重试') == -1: # 受其它证书影响和连接CA失败的的不记录重试次数
-                        # 设置下次重试时间
-                        self._config['orders'][index]['next_retry_time'] = int(time.time() + (86400 * 2))
-                        # 记录重试次数
-                        if not 'retry_count' in self._config['orders'][index].keys():
-                            self._config['orders'][index]['retry_count'] = 1
-                        self._config['orders'][index]['retry_count'] += 1
-                        # 保存证书配置
-                        self.save_config()
-
-                    write_log("|-" + str(e).split('>>>>')[0])
-                write_log("-" * 70)
-            
+                self.renew_cert_to(self._config['orders'][index]['domains'],self._config['orders'][index]['auth_type'],self._config['orders'][index]['auth_to'],index)
             return cert
 
         except Exception as ex:
