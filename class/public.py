@@ -1939,6 +1939,35 @@ def get_limit_ip():
     return iplong_list
 
 
+def is_api_limit_ip(ip_list,client_ip):
+    '''
+        @name 判断IP是否在限制列表中
+        @author hwliang<2022-02-10>
+        @param ip_list<list> 限制IP列表
+        @param client_ip<string> 客户端IP
+        @return bool
+    '''
+    iplong_list = []
+    for limit_ip in ip_list:
+        if not limit_ip: continue
+        if limit_ip in ['*','all','0.0.0.0','0.0.0.0/0','0.0.0.0/24','0.0.0.0/32']: return True
+        limit_ip = limit_ip.split('-')
+        iplong = {}
+        iplong['min'] = ip2long(limit_ip[0])
+        if len(limit_ip) > 1:
+            iplong['max'] = ip2long(limit_ip[1])
+        else:
+            iplong['max'] = iplong['min']
+        iplong_list.append(iplong)
+
+    client_ip_long = ip2long(client_ip)
+    for limit_ip in iplong_list:
+        if client_ip_long >= limit_ip['min'] and client_ip_long <= limit_ip['max']:
+            return True
+    return False
+    
+
+
 
 
 #检查IP白名单

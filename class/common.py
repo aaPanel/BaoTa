@@ -224,7 +224,7 @@ class panelAdmin(panelSetup):
                 return public.returnJson(False,'连续20次验证失败,禁止1小时')
 
 
-            if not client_ip in api_config['limit_addr']:
+            if not public.is_api_limit_ip(api_config['limit_addr'],client_ip): #client_ip in api_config['limit_addr']:
                 public.set_error_num(num_key)
                 return public.returnJson(False, 'IP校验失败,您的访问IP为['+client_ip+']')
         else:
