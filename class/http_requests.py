@@ -261,7 +261,7 @@ exit($header."\r\n\r\n".json_encode($body));
         headers_str = self._str_headers(headers)
         _ssl_verify = ''
         if not verify: _ssl_verify = ' -k'
-        result = public.ExecShell("{} -sS -i --connect-timeout {} {} {} 2>&1".format(self._curl_bin() + _ssl_verify,timeout,headers_str,url))[0]
+        result = public.ExecShell("{} -sS -i --connect-timeout {} {} {} 2>&1".format(self._curl_bin() + ' ' +  str(_ssl_verify),timeout,headers_str,url))[0]
         r_body,r_headers,r_status_code = self._curl_format(result)
         return response(r_body,r_status_code,r_headers)
 
@@ -342,6 +342,7 @@ exit($header."\r\n\r\n".json_encode($body));
         if self._ip_type != 'auto':
             v4_file = '{}/data/v4.pl'.format(public.get_panel_path())
             curl_bin += ' {}'.format(public.readFile(v4_file).strip())
+        return curl_bin
 
     #格式化CURL响应头
     def _curl_format(self,req):
