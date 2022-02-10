@@ -46,6 +46,7 @@ class main(projectBase):
         if not os.path.exists(self._www_home):
             os.makedirs(self._www_home,493)
             public.set_own(self._www_home,'www')
+        
 
 
     def get_exec_logs(self,get):
@@ -1325,6 +1326,7 @@ echo $! > {pid_file}
             @return dict
         '''
         project_find = self.get_project_find(get.project_name)
+        if not project_find: return public.return_error('项目不存在')
         project_script = project_find['project_config']['project_script'].strip().replace('  ',' ')
         pid_file = "{}/{}.pid".format(self._node_pid_path,get.project_name)
         if project_script.find('pm2 start') != -1: # 处理PM2启动的项目
@@ -1362,7 +1364,7 @@ cd {}
             @return dict
         '''
         res = self.stop_project(get)
-        if not res['status']: return res
+        # if not res['status']: return res
         res = self.start_project(get)
         if not res['status']: return res
         return public.return_data(True, '重启成功')

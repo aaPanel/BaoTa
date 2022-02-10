@@ -186,6 +186,13 @@ def control_init():
         public.ExecShell("rm -rf /www/server/panel/adminer")
     if os.path.exists('/dev/shm/session.db'):
         os.remove('/dev/shm/session.db')
+
+    node_service_bin = '/usr/bin/nodejs-service'
+    node_service_src = '/www/server/panel/script/nodejs-service.py'
+    if os.path.exists(node_service_src): public.ExecShell("chmod 700 " + node_service_src)
+    if not os.path.exists(node_service_bin):
+        if os.path.exists(node_service_src):
+            public.ExecShell("ln -sf {} {}".format(node_service_src,node_service_bin))
     
     #disable_putenv('putenv')
     #clean_session()
