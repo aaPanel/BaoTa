@@ -738,11 +738,12 @@ var crontab = {
             })
           }
         },
+        // {
+        //   fid: 'type',
+        //   title: "周期",
+        //   width: 120
+        // },
         {
-          fid: 'type',
-          title: "周期",
-          width: 120
-        }, {
           fid: 'cycle',
           title: "执行周期"
         }, {
