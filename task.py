@@ -442,8 +442,6 @@ def check502():
         logging.info(ex)
 
 # 处理指定PHP版本
-
-
 def startPHPVersion(version):
     try:
         fpm = '/etc/init.d/php-fpm-'+version
@@ -542,10 +540,10 @@ def check_panel_ssl():
         while True:
             lets_info = ReadFile("/www/server/panel/ssl/lets.info")
             if not lets_info:
-                time.sleep(600)
+                time.sleep(3600)
                 continue
             os.system(get_python_bin() + " /www/server/panel/script/panel_ssl_task.py > /dev/null")
-            time.sleep(60)
+            time.sleep(3600)
     except Exception as e:
         public.writeFile("/tmp/panelSSL.pl", str(e), "a+")
 
@@ -554,7 +552,7 @@ def panel_status():
     time.sleep(1)
     panel_pid = get_panel_pid()
     while True:
-        time.sleep(5)
+        time.sleep(30)
         if not panel_pid:
             panel_pid = get_panel_pid()
         if not panel_pid:
@@ -585,8 +583,6 @@ def service_panel(action='reload'):
         os.system("bash /www/server/panel/init.sh {} &".format(action))
 
 # 重启面板服务
-
-
 def restart_panel_service():
     rtips = 'data/restart.pl'
     reload_tips = 'data/reload.pl'
@@ -600,8 +596,6 @@ def restart_panel_service():
         time.sleep(1)
 
 # 取面板pid
-
-
 def get_panel_pid():
     pid = ReadFile('/www/server/panel/logs/panel.pid')
     if pid:
