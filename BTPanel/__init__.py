@@ -301,7 +301,7 @@ def home():
     data['databaseCount'] = public.M('databases').count()
     data['lan'] = public.GetLan('index')
     data['js_random'] = get_js_random()
-    public.auto_backup_panel()
+    public.run_thread(public.auto_backup_panel)
     return render_template('index.html', data=data)
 
 
