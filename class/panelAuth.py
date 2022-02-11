@@ -12,8 +12,11 @@
 #------------------------------
 
 import public,time,json,os,re
-from BTPanel import session,cache
 from pluginAuth import Plugin
+try:
+    from BTPanel import session,cache
+except:
+    pass
 
 class panelAuth:
     __product_list_path = 'data/product_list.pl'
