@@ -100,8 +100,6 @@ def DownloadHook(count, blockSize, totalSize):
     pre = pre1
 
 # 写输出日志
-
-
 def WriteLogs(logMsg):
     try:
         global logPath
@@ -351,6 +349,8 @@ def systemTask():
                         lpro = 100
                     sql.table('load_average').add('pro,one,five,fifteen,addtime', (lpro, load_average['one'], load_average['five'], load_average['fifteen'], addtime))
                     sql.table('load_average').where("addtime<?", (deltime,)).delete()
+                    sql.table('process_high_percent').where("addtime<?", (deltime,)).delete()
+                    sql.table('process_tops').where("addtime<?", (deltime,)).delete()
                     sql.close()
                     
                     lpro = None

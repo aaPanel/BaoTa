@@ -12,6 +12,7 @@
 # +-------------------------------------------------------------------
 import os,sys,re
 import ssl
+
 import public
 import json
 import socket
@@ -164,43 +165,54 @@ class http:
         php_version = self._get_php_version()
         if not php_version:
             raise Exception('没有可用的PHP版本!')
+        ip_type = ''
+        if self._ip_type == 'ipv6':
+            ip_type = 'curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6);'
+        elif self._ip_type == 'ipv4':
+            ip_type = 'curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);'
         tmp_file = '/dev/shm/http.php'
         http_php = '''<?php
-if(isset($_POST['data'])){
+error_reporting(E_ERROR);
+if(isset($_POST['data'])){{
     $data = json_decode($_POST['data'],1);
-}else{
-    $data = json_decode(getopt('',array('post:'))['post'],1);
-}
+}}else{{
+    $s = getopt('',array('post:'));
+    $data = json_decode($s['post'],1);
+}}
 $url  = $data['url'];
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
 curl_setopt($ch, CURLOPT_HTTPHEADER,$data['headers']);
 curl_setopt($ch, CURLOPT_HEADER, true);
-curl_setopt($ch, CURLINFO_HEADER_OUT, TRUE);
-curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data['data']));
+curl_setopt($ch, CURLINFO_HEADER_OUT, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $data['data']);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $data['verify']);
 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $data['verify']);
 curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $data['timeout']);
 curl_setopt($ch, CURLOPT_TIMEOUT, $data['timeout']);
-curl_setopt($ch, CURLOPT_POST, true);
+{ip_type}
 $result = curl_exec($ch);
 $h_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
 $header = substr($result, 0, $h_size);
 $body = substr($result,$h_size,strlen($result));
 curl_close($ch);
 exit($header."\r\n\r\n".json_encode($body));
-?>'''
+?>'''.format(ip_type = ip_type)
         public.writeFile(tmp_file,http_php)
         #if 'Content-Type' in headers:
         #    if headers['Content-Type'].find('application/json') != -1:
         #        data = json.dumps(pdata)
-
+        
         data = json.dumps({"url":url,"timeout":timeout,"verify":verify,"headers":self._php_headers(headers),"data":data})
+        if php_version in ['53']:
+            php_version = '/www/server/php/' + php_version + '/bin/php'
         if php_version.find('/www/server/php') != -1:
             result = public.ExecShell(php_version + ' ' + tmp_file + " --post='" + data + "'" )[0]
         else:
             result = public.request_php(php_version,'/http.php','/dev/shm','POST',{"data":data})
+            if isinstance(result,bytes): result = result.decode('utf-8')
 
         if os.path.exists(tmp_file): os.remove(tmp_file)
         r_body,r_headers,r_status_code = self._curl_format(result)
@@ -278,10 +290,12 @@ exit($header."\r\n\r\n".json_encode($body));
             ip_type = 'curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);'
         tmp_file = '/dev/shm/http.php'
         http_php = '''<?php
+error_reporting(E_ERROR);
 if(isset($_POST['data'])){{
     $data = json_decode($_POST['data'],1);
 }}else{{
-    $data = json_decode(getopt('',array('post:'))['post'],1);
+    $s = getopt('',array('post:'));
+    $data = json_decode($s['post'],1);
 }}
 $url  = $data['url'];
 $ch = curl_init();
@@ -307,10 +321,14 @@ exit($header."\r\n\r\n".json_encode($body));
 
         public.writeFile(tmp_file,http_php)
         data = json.dumps({"url":url,"timeout":timeout,"verify":verify,"headers":self._php_headers(headers)})
+        if php_version in ['53']:
+            php_version = '/www/server/php/' + php_version + '/bin/php'
         if php_version.find('/www/server/php') != -1:
             result = public.ExecShell(php_version + ' ' + tmp_file + " --post='" + data + "'" )[0]
         else:
             result = public.request_php(php_version,'/http.php','/dev/shm','POST',{"data":data})
+            if isinstance(result,bytes): result = result.decode('utf-8')
+
         if os.path.exists(tmp_file): os.remove(tmp_file)
         r_body,r_headers,r_status_code = self._curl_format(result)
         return response(json.loads(r_body).strip(),r_status_code,r_headers)
@@ -320,6 +338,7 @@ exit($header."\r\n\r\n".json_encode($body));
     #取可用的PHP版本
     def _get_php_version(self):
         php_versions = public.get_php_versions()
+        php_versions = sorted(php_versions,reverse=True)
         php_path = '/www/server/php/{}/sbin/php-fpm'
         php_sock = '/tmp/php-cgi-{}.sock'
         for pv in php_versions:
