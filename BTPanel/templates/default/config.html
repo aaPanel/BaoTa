@@ -169,6 +169,7 @@
             <button type="button" class="btn btn-success btn-sm ml5 editPanelPassword">设置</button>
             <div class="line-row-tips">设置面板密码</div>
           </div>
+
           <div class="line" title="绑定宝塔账号">
             <div class="line-title">绑定宝塔账号</div>
             <div class="line-input">
@@ -178,6 +179,7 @@
             <button type="button" class="btn btn-default btn-sm ml5 unbindBtUser">解绑</button>
             <div class="line-row-tips">面板大多数功能依赖云端服务(证书申请，产品购买，软件列表等)，该功能仅用于云端服务，不涉及敏感操作</div>
           </div>
+
           <div class="line" title="面板菜单栏隐藏">
             <div class="line-title">面板菜单栏隐藏</div>
             <div class="line-input">
@@ -185,6 +187,22 @@
             </div>
             <button type="button" class="btn btn-success btn-sm ml5 menuBarManage">设置</button>
             <div class="line-row-tips">隐藏左侧菜单栏目</div>
+          </div>
+          <div class="line" title="面板云端请求方式">
+            <div class="line-title">面板云端请求方式</div>
+            <div class="line-input">
+              <input type="text" class="bt-input-text" name="request_type" disabled />
+            </div>
+            <button type="button" class="btn btn-success btn-sm ml5 request_type">设置</button>
+            <div class="line-row-tips">面板请求云端时，使用的请求方式，默认支持python、curl、php，请根据实际情况切换</div>
+          </div>
+          <div class="line" title="面板云端请求线路">
+            <div class="line-title">面板云端请求线路</div>
+            <div class="line-input">
+              <input type="text" class="bt-input-text" name="request_iptype" disabled />
+            </div>
+            <button type="button" class="btn btn-success btn-sm ml5 request_iptype">设置</button>
+            <div class="line-row-tips">面板请求云端时，使用的请求线路，默认支持auto、ipv4、ipv6，请根据实际情况切换</div>
           </div>
         </div>
       </div>
