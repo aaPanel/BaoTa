@@ -481,7 +481,7 @@ var soft = {
                     } else {
                       option += '<a class="btlink" onclick="soft.set_soft_config(\'' + item.name + '\')">' + lan.soft.setup + '</a> | ';
                     }
-                    if (item.type !== 5 && item.type !== 10) option += '<a href="javascript:;" class="btlink" onclick="bt.soft.plugin_toolbox_info(\'' + item.name + '\',\'' + item.title + '\',\'' + item.version + '\',' + item.is_beta + ')">修复</a> | ';
+                    if (item.type !== 5 || item.type !== 10) option += '<a href="javascript:;" class="btlink" onclick="bt.soft.plugin_toolbox_info(\'' + item.name + '\',\'' + item.title + '\',\'' + item.version + '\',' + item.is_beta + ')">修复</a> | ';
                   } else {
                     option = pay_opt + ' | ' + option;
                   }
