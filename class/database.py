@@ -758,7 +758,7 @@ SetLink
             try:
                 password = public.M('config').where('id=?',(1,)).getField('mysql_root')
                 os.environ["MYSQL_PWD"] = str(password)
-                public.ExecShell(mysqldump_bin + " -R -E --triggers=false --default-character-set="+ public.get_database_character(name) +" --force --opt \"" + name + "\"  -u root | gzip > " + backupName)
+                public.ExecShell(mysqldump_bin + " -R -E --triggers=false --default-character-set="+ public.get_database_character(name) +" --force --opt \"" + name + "\"  -u root -p"+str(password)+" | gzip > " + backupName)
             except Exception as e:
                 raise
             finally:
@@ -771,7 +771,7 @@ SetLink
                 res = self.CheckCloudDatabase(conn_config)
                 if isinstance(res,dict): return res
                 os.environ["MYSQL_PWD"] = str(conn_config['db_password'])
-                public.ExecShell(mysqldump_bin + " -h "+ conn_config['db_host'] +" -P "+ str(int(conn_config['db_port'])) +" -R -E --triggers=false --default-character-set=" + public.get_database_character(name) + " --force --opt \"" + str(db_find['name']) + "\"  -u "+ str(conn_config['db_user']) +" | gzip > " + backupName)
+                public.ExecShell(mysqldump_bin + " -h "+ conn_config['db_host'] +" -P "+ str(int(conn_config['db_port'])) +" -R -E --triggers=false --default-character-set=" + public.get_database_character(name) + " --force --opt \"" + str(db_find['name']) + "\"  -u "+ str(conn_config['db_user']) +" -p"+str(conn_config['db_password'])+" | gzip > " + backupName)
             except Exception as e:
                 raise
             finally:
@@ -782,7 +782,7 @@ SetLink
                 res = self.CheckCloudDatabase(conn_config)
                 if isinstance(res,dict): return res
                 os.environ["MYSQL_PWD"] = str(conn_config['db_password'])
-                public.ExecShell(mysqldump_bin + " -h "+ conn_config['db_host'] +" -P "+ str(int(conn_config['db_port'])) +" -R -E --triggers=false --default-character-set=" + public.get_database_character(name) + " --force --opt \"" + str(db_find['name']) + "\"  -u "+ str(conn_config['db_user']) +" | gzip > " + backupName)
+                public.ExecShell(mysqldump_bin + " -h "+ conn_config['db_host'] +" -P "+ str(int(conn_config['db_port'])) +" -R -E --triggers=false --default-character-set=" + public.get_database_character(name) + " --force --opt \"" + str(db_find['name']) + "\"  -u "+ str(conn_config['db_user']) +" -p"+str(conn_config['db_password'])+" | gzip > " + backupName)
             except Exception as e:
                 raise
             finally:
@@ -871,7 +871,7 @@ SetLink
                 if db_find['db_type'] in ['0',0]:
                     password = public.M('config').where('id=?',(1,)).getField('mysql_root')
                     os.environ["MYSQL_PWD"] = str(password)
-                    public.ExecShell(mysql_bin + " -uroot -p" + root + " --force \"" + name + "\" < " +'"'+ input_path +'"')
+                    public.ExecShell(mysql_bin + " -uroot -p" + str(password) + " --force \"" + name + "\" < " +'"'+ input_path +'"')
                 elif db_find['db_type'] in ['1',1]:
                     conn_config = json.loads(db_find['conn_config'])
                     os.environ["MYSQL_PWD"] = str(conn_config['db_password'])

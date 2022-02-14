@@ -562,11 +562,11 @@ class backup:
                 # 本地数据库 @author hwliang<2021-01-08>
                 password = public.M('config').where('id=?',(1,)).getField('mysql_root')
                 os.environ["MYSQL_PWD"] = str(password)
-                backup_cmd = mysqldump_bin + " -E -R --default-character-set="+ character +" --force --hex-blob --opt " + db_name + " -u root" + " 2>"+self._err_log+"| gzip > " + dfile
+                backup_cmd = mysqldump_bin + " -E -R --default-character-set="+ character +" --force --hex-blob --opt " + db_name + " -u root -p" + str(password) + " 2>"+self._err_log+"| gzip > " + dfile
             else:
                 # 远程数据库 @author hwliang<2021-01-08>
                 os.environ["MYSQL_PWD"] = str(conn_config['db_password'])
-                backup_cmd = mysqldump_bin + " -h " + conn_config['db_host'] + " -P " + str(conn_config['db_port']) + " -E -R --default-character-set="+ character +" --force --hex-blob --opt " + db_name + " -u " + str(conn_config['db_user']) + " 2>"+self._err_log+"| gzip > " + dfile
+                backup_cmd = mysqldump_bin + " -h " + conn_config['db_host'] + " -P " + str(conn_config['db_port']) + " -E -R --default-character-set="+ character +" --force --hex-blob --opt " + db_name + " -u " + str(conn_config['db_user']) + " -p"+str(conn_config['db_password'])+" 2>"+self._err_log+"| gzip > " + dfile
             public.ExecShell(backup_cmd)
         except Exception as e:
             raise
