@@ -1741,7 +1741,15 @@ listener SSL443 {
 
         # Apache配置
         file = self.setupPath + '/panel/vhost/apache/' + siteName + '.conf'
-        if not os.path.exists(file): file = self.setupPath + '/panel/vhost/apache/node_' + siteName + '.conf'
+        is_node_apache = False
+        if not os.path.exists(file): 
+            is_node_apache = True
+            file = self.setupPath + '/panel/vhost/apache/node_' + siteName + '.conf'
+        is_java_apache = False
+        if not os.path.exists(file):
+            is_java_apache = True
+            is_node_apache = False
+            file = self.setupPath + '/panel/vhost/apache/java_' + siteName + '.conf'
         conf = public.readFile(file)
         ap_static_security = self._get_ap_static_security(conf)
         if conf:
@@ -1817,6 +1825,16 @@ listener SSL443 {
                 self.apacheAddPort('443')
                 shutil.copyfile(file, self.apache_conf_bak)
                 public.writeFile(file, conf)
+                if is_node_apache: # 兼容Nodejs项目
+                    from projectModel.nodejsModel import main
+                    m = main()
+                    project_find = m.get_project_find(siteName)
+                    m.set_apache_config(project_find)
+                if is_java_apache: # 兼容Java项目
+                    from projectModel.javaModel import main
+                    m = main()
+                    project_find = m.get_project_find(siteName)
+                    m.set_apache_config(project_find)
 
         # OLS
         self.set_ols_ssl(get,siteName)
@@ -1954,6 +1972,7 @@ listener SSL443 {
             file = self.setupPath + '/panel/vhost/nginx/node_' + siteName + '.conf'
         if not os.path.exists(file):
             file = self.setupPath + '/panel/vhost/nginx/java_' + siteName + '.conf'
+
         conf = public.readFile(file)
         if conf:
             rep = "\n\s*#HTTP_TO_HTTPS_START(.|\n){1,300}#HTTP_TO_HTTPS_END"
@@ -1997,6 +2016,10 @@ listener SSL443 {
         file = self.setupPath + '/panel/vhost/apache/' + siteName + '.conf'
         if not os.path.exists(file):
             file = self.setupPath + '/panel/vhost/apache/node_' + siteName + '.conf'
+
+        if not os.path.exists(file):
+            file = self.setupPath + '/panel/vhost/apache/java_' + siteName + '.conf'
+            
         conf = public.readFile(file)
         if conf:
             rep = "\n<VirtualHost \*\:443>(.|\n)*<\/VirtualHost>"
@@ -4540,7 +4563,7 @@ location ^~ %s
     def GetSiteRunPath(self,get):
         siteName = public.M('sites').where('id=?',(get.id,)).getField('name')
         sitePath = public.M('sites').where('id=?',(get.id,)).getField('path')
-        if not siteName: return {"runPath":"/",'dirs':[]}
+        if not siteName or os.path.isfile(sitePath): return {"runPath":"/",'dirs':[]}
         path = sitePath
         if public.get_webserver() == 'nginx':
             filename = self.setupPath + '/panel/vhost/nginx/' + siteName + '.conf'
