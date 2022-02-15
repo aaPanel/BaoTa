@@ -290,22 +290,23 @@ def ReadFile(filename,mode = 'r'):
     """
     import os
     if not os.path.exists(filename): return False
+    fp = None
     try:
         fp = open(filename, mode)
         f_body = fp.read()
-        fp.close()
     except Exception as ex:
         if sys.version_info[0] != 2:
             try:
                 fp = open(filename, mode,encoding="utf-8")
                 f_body = fp.read()
-                fp.close()
             except:
                 fp = open(filename, mode,encoding="GBK")
                 f_body = fp.read()
-                fp.close()
         else:
             return False
+    finally:
+        if fp and not fp.closed:
+            fp.close()
     return f_body
 
 def readFile(filename,mode='r'):
