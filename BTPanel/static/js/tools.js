@@ -2244,7 +2244,6 @@ var bt_tools = {
           this.fragment.splice(0, 150)
           this.el.html(this.fragment.join(''))
         } else {
-          console.log(data)
           this.el.append(rdata)
         }
         this.el.scrollTop(this.el[0].scrollHeight)

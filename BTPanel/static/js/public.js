@@ -3414,7 +3414,6 @@ function messagebox () {
             bt.send('GetExecLog', 'files/GetExecLog', {}, function (res) {
               loadT.close();
               var exec_log = $('#execLog');
-              // console.log(exec_log)
               exec_log.html(res)
               exec_log[0].scrollTop = exec_log[0].scrollHeight
             })
@@ -3427,7 +3426,7 @@ function messagebox () {
       }, 1000)
       reader_message_list()
     }
-  });
+  })
 }
 
 
@@ -3528,27 +3527,36 @@ function reader_realtime_tasks (refresh) {
       html = '<div style="padding:5px;">当前没有任务！</div><div style="position: fixed;bottom: 15px;">若任务长时间未执行，请尝试在首页点【重启面板】来重置任务队列</div>'
       command_install_list.html(html)
     } else {
-      var shell = '', message_split = message.split("\n");
+      var shell = '', message_split = message.split("\n"), del_task = '<a style="color:green" onclick="RemoveTask($id)" href="javascript:;">' + lan.public.del + '</a>', loading_img = "<img src='" + loading + "'/>";
       for (var j = 0; j < message_split.length; j++) {
         shell += message_split[j] + "</br>";
       }
       if (command_install_list.find('li').length) {
         if (command_install_list.find('li').length > res.task.length) command_install_list.find('li:eq(0)').remove();
-        if (task[0].status !== '0' && !command_install_list.find('pre').length) command_install_list.find('li:eq(0)').append('<pre class=\'cmd command_output_pre\'>' + shell + '</pre>')
-        messageBoxWssock.el = command_install_list.find('pre');
+        if(task[0].status === '-1'){
+          var is_scan = task[0].name.indexOf("扫描") !== -1;
+          command_install_list.find('li:eq(0) .state').html((is_scan ? lan.bt.task_scan : lan.bt.task_install) + ' ' + loading_img + ' | ' + del_task.replace('$id', task[0].id));
+        }
+        if (task[0].status !== '0' && !command_install_list.find('pre').length){
+          command_install_list.find('li:eq(0)').append('<pre class=\'cmd command_output_pre\'>' + shell + '</pre>')
+          messageBoxWssock.el = command_install_list.find('pre');
+        }
       } else {
         for (var i = 0; i < task.length; i++) {
-          var item = task[i], task_html = '', del_task = '<a style="color:green" onclick="RemoveTask(' + item.id + ')" href="javascript:;">' + lan.public.del + '</a>', loading_img = "<img src='" + loading + "'/>";
+          var item = task[i], task_html = '';
           if (item.status === '-1' && item.type === 'download') {
             task_html = "<div class='line-progress' style='width:" + message.pre + "%'></div><span class='titlename'>" + item.name + "<a style='margin-left:130px;'>" + (ToSize(message.used) + "/" + ToSize(message.total)) + "</a></span><span class='com-progress'>" + message.pre + "%</span><span class='state'>" + lan.bt.task_downloading + " " + loading_img + " | " + del_task + "</span>";
           } else {
             task_html += '<span class="titlename">' + item.name + '</span>';
             task_html += '<span class="state">';
-            if (item.status !== "-1") {
-              task_html += lan.bt.task_sleep + ' | ' + del_task;
-            } else {
-              var is_scan = item.name.indexOf("扫描") !== -1;
-              task_html += (is_scan ? lan.bt.task_scan : lan.bt.task_install) + ' ' + loading_img + ' | ' + del_task;
+            switch(item.status){
+              case '0':
+                task_html += lan.bt.task_sleep + ' | ' + del_task.replace('$id', item.id);
+                break
+              case '-1':
+                var is_scan = item.name.indexOf("扫描") !== -1;
+                task_html += (is_scan ? lan.bt.task_scan : lan.bt.task_install) + ' ' + loading_img + ' | ' + del_task;
+                break
             }
             task_html += "</span>";
             if (item.type !== "download" && item.status === "-1") {
@@ -3581,8 +3589,7 @@ function reader_realtime_tasks (refresh) {
               }, 100)
             }
           }
-        }
-        );
+        });
       }
     }
   })
