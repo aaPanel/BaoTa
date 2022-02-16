@@ -206,24 +206,27 @@ class main(projectBase):
         if not self.check_auth(): return public.returnMsg(False,self.__auth_msg)
         quota_list = self.get_quota_mysql_list()
         for quota in quota_list:
-            used_size = public.get_database_size_by_name(quota['db_name']) / 1024 / 1024
-            username = public.M('databases').where('name=?',(quota['db_name'],)).getField('username')
-            mysql_obj = public.get_mysql_obj(quota['db_name'])
-            accept = self.map_to_list(mysql_obj.query("select Host from mysql.user where User='" + username + "'"))
-            if used_size < quota['size']: 
-                if not quota['insert_accept']:
-                    for host in accept:
-                        self.rep_mysql_insert_accept(mysql_obj,username,quota['db_name'],host[0])
-                    quota['insert_accept'] = True
-                    public.WriteLog('磁盘配额','数据库[{}]因低于配额[{}MB],恢复插入权限'.format(quota['db_name'],quota['size']))
+            try:
+                used_size = public.get_database_size_by_name(quota['db_name']) / 1024 / 1024
+                username = public.M('databases').where('name=?',(quota['db_name'],)).getField('username')
+                mysql_obj = public.get_mysql_obj(quota['db_name'])
+                accept = self.map_to_list(mysql_obj.query("select Host from mysql.user where User='" + username + "'"))
+                if used_size < quota['size']: 
+                    if not quota['insert_accept']:
+                        for host in accept:
+                            self.rep_mysql_insert_accept(mysql_obj,username,quota['db_name'],host[0])
+                        quota['insert_accept'] = True
+                        public.WriteLog('磁盘配额','数据库[{}]因低于配额[{}MB],恢复插入权限'.format(quota['db_name'],quota['size']))
+                    if hasattr(mysql_obj,'close'): mysql_obj.close()
+                    continue
+                
+                for host in accept:
+                    self.rm_mysql_insert_accept(mysql_obj,username,quota['db_name'],host[0])
+                quota['insert_accept'] = False
+                public.WriteLog('磁盘配额','数据库[{}]因超出配额[{}MB],移除插入权限'.format(quota['db_name'],quota['size']))
                 if hasattr(mysql_obj,'close'): mysql_obj.close()
-                continue
-            
-            for host in accept:
-                self.rm_mysql_insert_accept(mysql_obj,username,quota['db_name'],host[0])
-            quota['insert_accept'] = False
-            public.WriteLog('磁盘配额','数据库[{}]因超出配额[{}MB],移除插入权限'.format(quota['db_name'],quota['size']))
-            if hasattr(mysql_obj,'close'): mysql_obj.close()
+            except:
+                public.print_log(public.get_error_info())
         public.writeFile(self.__mysql_config_file,json.dumps(quota_list))
 
     def create_mysql_quota(self,args):
