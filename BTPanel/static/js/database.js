@@ -745,48 +745,60 @@ var database = {
       content: '<div id="db_cloud_server_table" class="pd20" style="padding-bottom:40px;"></div>',
       dataFilter: function(res) { that.cloudDatabaseList = res},
       success:function(){
-        that.dbCloudServerTable = bt_tools.table({
-          el:'#db_cloud_server_table',
-          default:'服务器列表为空',
-          url:'/database?action=GetCloudServer',
-          column:[
-            {fid:'db_host',title:'服务器地址',width:216,template: function (item) {
-                return '<span style="width:200px;word-wrap:break-word;" title="'+item.db_host+'">'+item.db_host+'</span>'
+        bt_tools.send('/database?action=GetCloudServer',function(rdata){
+          var arry = []
+          for (var i = 0; i < rdata.length; i++) {
+            var element = rdata[i];
+            if(element.db_host === '127.0.0.1') continue
+            arry.push(element)
+          }
+          that.dbCloudServerTable = bt_tools.table({
+            el:'#db_cloud_server_table',
+            default:'服务器列表为空',
+            data:arry,
+            column:[
+              {fid:'db_host',title:'服务器地址',width:216,template: function (item) {
+                  return '<span style="width:200px;word-wrap:break-word;" title="'+item.db_host+'">'+item.db_host+'</span>'
+                }},
+              {fid:'db_port',width:80,title:'数据库端口'},
+              {fid:'db_user',title:'管理员名称'},
+              {fid:'db_password',type: 'password',title:'管理员密码',copy: true,eye_open: true},
+              {fid:'ps',title:'备注',width:170,template: function (item) {
+                return '<span class="size_ellipsis" style="width:170px" title="'+item.ps+'">'+item.ps+'</span>'
               }},
-            {fid:'db_port',width:80,title:'数据库端口'},
-            {fid:'db_user',title:'管理员名称'},
-            {fid:'db_password',type: 'password',title:'管理员密码',copy: true,eye_open: true},
-            {fid:'ps',title:'备注',width:170,template: function (item) {
-              return '<span class="size_ellipsis" style="width:170px" title="'+item.ps+'">'+item.ps+'</span>'
-            }},
-            {
-              type: 'group',
-
-
-              title: '操作',
-              align: 'right',
-              group: [{
-                title:'编辑',
-                event:function(row){
-                  that.render_db_cloud_server_view(row,true);
-                }
-              },{
-                title:'删除',
-                event:function(row){
-                  that.del_db_cloud_server(row)
-                }
+              {
+                type: 'group',
+                title: '操作',
+                align: 'right',
+                group: [{
+                  title:'编辑',
+                  hide:function (row) {
+                    return row.db_host === '127.0.0.1'
+                  },
+                  event:function(row){
+                    that.render_db_cloud_server_view(row,true);
+                  }
+                },{
+                  title:'删除',
+                  hide:function (row) {
+                    return row.db_host === '127.0.0.1'
+                  },
+                  event:function(row){
+                    that.del_db_cloud_server(row)
+                  }
+                }]
+              }
+            ],
+            tootls:[{
+              type:'group',
+              positon: ['left','top'],
+              list:[{
+                title:'添加远程服务器',
+                active: true,
+                event:function(){that.render_db_cloud_server_view()}
               }]
-            }
-          ],
-          tootls:[{
-            type:'group',
-            positon: ['left','top'],
-            list:[{
-              title:'添加远程服务器',
-              active: true,
-              event:function(){that.render_db_cloud_server_view()}
             }]
-          }]
+          })
         })
       }
     })
@@ -1304,7 +1316,7 @@ var database = {
             yes: function (indes, layers) {
               console.log(1);
               if ($(layers).hasClass('active')) {
-                layer.tips('请确认信息，稍候在尝试，还剩' + countDown + '秒', $(layers).find('.layui-layer-btn0'), {
+                layer.tips('请确认信息，稍候再尝试，还剩' + countDown + '秒', $(layers).find('.layui-layer-btn0'), {
                   tips: [1, 'red'],
                   time: 3000
                 })

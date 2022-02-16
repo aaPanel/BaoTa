@@ -3126,7 +3126,7 @@ var site = {
             },
             yes: function (indes, layers) {
               if ($(layers).hasClass('active')) {
-                layer.tips('请确认信息，稍候在尝试，还剩' + countDown + '秒', $(layers).find('.layui-layer-btn0'), { tips: [1, 'red'], time: 3000 })
+                layer.tips('请确认信息，稍候再尝试，还剩' + countDown + '秒', $(layers).find('.layui-layer-btn0'), { tips: [1, 'red'], time: 3000 })
                 return;
               }
               if (typeof wname === "function") {

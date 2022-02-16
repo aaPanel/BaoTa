@@ -8016,14 +8016,14 @@ bt.public = {
 
   // 设置目录配额
   modify_path_quota:function (data,callback) {
-    $.post('/project/quota/modify_path_quota',data,function (res) { 
+    bt_tools.send('/project/quota/modify_path_quota',data,function (res) { 
       if(callback) callback(res)
     })
   },
 
   // 设置mysql配额
   modify_mysql_quota:function (data,callback) {
-    $.post('/project/quota/modify_mysql_quota',data,function (res) { 
+    bt_tools.send('/project/quota/modify_mysql_quota',data,function (res) { 
       if(callback) callback(res)
     })
   },
@@ -8042,7 +8042,7 @@ bt.public = {
         if(!quota.size) return '<a href="javascript:;" class="btlink">未配置</a>'
         var size = quota.size * 1024 * 1024;
         var speed = ((quota.used / size) * 100).toFixed(2)
-        return '<div class=""><div class="progress mb0 cursor" style="height:12px;line-height:12px;vertical-align:middle;border-radius:2px;margin-top:3px;" title="当前可用容量:'+ bt.format_size(quota.used) +'\n当前容量配额：'+ bt.format_size(size) +'\n点击修改容量配额">'+
+        return '<div class=""><div class="progress mb0 cursor" style="height:12px;line-height:12px;vertical-align:middle;border-radius:2px;margin-top:3px;" title="当前已用容量:'+ bt.format_size(quota.used) +'\n当前容量配额：'+ bt.format_size(size) +'\n点击修改容量配额">'+
           '<div class="progress-bar progress-bar-'+ (speed > 60?((speed > 80 && speed < 99)?'warning':'danger'):'success') +'" style="height:15px;line-height:15px;width: '+ speed +'%;display: inline-block;" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>'+
         '</div>'
       },
