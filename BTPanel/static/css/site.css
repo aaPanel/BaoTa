@@ -1178,7 +1178,7 @@ html .menu .menu_btwaf:hover{
     height: 30px;
     width: 250px;
     padding: 0 8px;
-    margin-top: 10px
+    margin-top: 8px
 }
 
 .ser-sub {
@@ -1188,7 +1188,7 @@ html .menu .menu_btwaf:hover{
     background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAxAAAAMQBz4pYTAAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAE2SURBVDiNndJBS1VRFMXx9UzNQUQD0caFk6YhEUFCOPETiJQfIygQbNQgCCeOGjYLGjRJkPoKoSGIRKADs1nQoEIEfw3cry6v+3oPN2z2ufuu8z/7nruC9ORNvMRXHOIFbrTogjQfOniKX87iR2P9HSv/A1zA+xK/wRwmMYV5vKt3r/sBnpTgcb9R8aw0D3sB1/GzTum3uZsfSnupCVgr8vwQgKXSLnR7I0nuJJFkN4PjY9WZbmMkyXGtx4YAjFY9aQI2knSS3B4CMFd1508HV3CE3QHfP17G2sdo7298UJfzChMtmy9jszTLbT4InpfgCx6Vme5hFd/8jW1cbQME93Hg39jDYmOKT5hGOmi7rNkk15KcJvmcZKv6E0k2k9xNsp1keZBx2vIi3tYkG+cBxJmV13HrN6Szg7ZCfX3NAAAAAElFTkSuQmCC") no-repeat center #20a53a;
     cursor: pointer;
     margin-right: 2px;
-    margin-top: 10px
+    margin-top: 8px
 }
 
 .title {
@@ -8896,7 +8896,7 @@ select[disabled] {
 
 .module_details_title>span {
     display: inline-block;
-    max-width: 200px;
+    max-width: 176px;
     display: inline-block;
     text-overflow: ellipsis;
     overflow: hidden;
