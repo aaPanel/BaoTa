@@ -1556,9 +1556,11 @@ var site = {
         param.type = bt.get_cookie('site_type') || -1;
         return param;
       },
-      column: [
-        { type: 'checkbox', class: '', width: 20 },
-        {
+      column: [{ 
+          type: 'checkbox', 
+          class: '', 
+          width: 20 
+        },{
           fid: 'name',
           title: '网站名',
           sort: true,
@@ -1567,8 +1569,7 @@ var site = {
           event: function (row, index, ev) {
             site.web_edit(row, true);
           }
-        },
-        {
+        },{
           fid: 'status',
           title: '状态',
           sort: true,
@@ -1593,8 +1594,7 @@ var site = {
               if (res.status) that.$modify_row_data({ status: parseInt(row.status) ? '0' : '1' });
             });
           }
-        },
-        {
+        },{
           fid: 'backup_count',
           title: '备份',
           width: 80,
@@ -1608,8 +1608,7 @@ var site = {
           event: function (row, index) {
             site.backup_site_view({ id: row.id, name: row.name }, site_table);
           }
-        },
-        {
+        },{
           fid: 'path',
           title: '根目录',
           tips: '打开目录',
@@ -1618,7 +1617,8 @@ var site = {
             openPath(row.path);
           }
         },
-        {
+          bt.public.get_quota_config('site')
+        ,{
           fid: 'edate',
           title: '到期时间',
           width: 85,
@@ -1637,9 +1637,8 @@ var site = {
               }
             }
           },
-          event: function (row) { }
-        }, //模拟点击误删
-        {
+          event: function (row) { }  //模拟点击误删
+        },{
           fid: 'ps',
           title: '备注',
           type: 'input',
@@ -1654,8 +1653,7 @@ var site = {
               $(this).blur();
             }
           }
-        },
-        {
+        },{
           fid: 'php_version',
           title: 'PHP',
           tips: '选择php版本',
@@ -1671,8 +1669,7 @@ var site = {
               $('.site-menu p:eq(9)').click();
             }, 500);
           }
-        },
-        {
+        },{
           fid: 'ssl',
           title: 'SSL证书',
           tips: '部署证书',
@@ -1706,8 +1703,7 @@ var site = {
               $('.site-menu p:eq(8)').click();
             }, 500);
           }
-        },
-        {
+        },{
           title: '操作',
           type: 'group',
           width: 150,
@@ -1991,6 +1987,7 @@ var site = {
     this.init_site_type();
     // return site_table;
   },
+
   init_site_type: function () {
     $('#php_cate_select').remove();
     $('.tootls_group.tootls_top .pull-left').append('<div id="php_cate_select" class="bt_select_updown site_class_type" style="vertical-align: bottom;"><div class="bt_select_value"><span class="bt_select_content">分类:</span><span class="glyphicon glyphicon-triangle-bottom ml5"></span></span></div><ul class="bt_select_list"></ul></div>');
