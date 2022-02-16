@@ -77,6 +77,7 @@ var database = {
             return true
           }
         },
+        bt.public.get_quota_config('database'),
         {
           fid: 'backup',
           title: '备份',
