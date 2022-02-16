@@ -502,12 +502,16 @@ def check502Task():
         while True:
             check502()
             sess_expire()
+            mysql_quota_check()
             time.sleep(600)
     except Exception as ex:
         logging.info(ex)
         time.sleep(600)
         check502Task()
 
+# MySQL配额检查
+def mysql_quota_check():
+    os.system(get_python_bin() +" /www/server/panel/script/mysql_quota.py > /dev/null")
 
 # session过期处理
 def sess_expire():
