@@ -5118,6 +5118,12 @@ var site = {
         if (guardData['password'] == "") {
           return layer.msg('密码不能为空', { icon: 2 });
         }
+        if (guardData.username.length < 3) {
+          return layer.msg('用户名不能少于3位', { icon: 2 });
+        }
+        if (guardData.password.length < 3) {
+          return layer.msg('密码不能少于3位', { icon: 2 });
+        }
         if (type) {
           bt.site.create_dir_guard(guardData, function (rdata) {
             if (rdata.status) {
