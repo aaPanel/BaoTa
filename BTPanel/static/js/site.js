@@ -825,7 +825,14 @@ var site = {
           align: 'right',
           group: [{
             title: '删除',
+            template: function (row, that) {
+              return that.data.length === 1 ? '<span>不可操作</span>' : '删除';
+            },
             event: function (rowc, index, ev, key, rthat) {
+              if (ev.target.tagName == 'SPAN') return;
+              if (rthat.data.length === 1) {
+                return bt.msg({ status: false, msg: '最后一个域名不能删除!' });
+              }
               that.remove_node_project_domain({ project_name: row.name, domain: (rowc.name + ':' + rowc.port) }, function (res) {
                 bt.msg({ status: res.status, msg: res.data || res.error_msg })
                 rthat.$refresh_table_list(true);
@@ -3873,6 +3880,7 @@ var site = {
                 return that.data.length === 1 ? '<span>不可操作</span>' : '删除';
               },
               event: function (row, index, ev, key, that) {
+                if (ev.target.tagName == 'SPAN') return;
                 if (that.data.length === 1) {
                   bt.msg({ status: false, msg: '最后一个域名不能删除!' });
                   return false;
