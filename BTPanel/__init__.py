@@ -74,7 +74,7 @@ if app.config['SSL']:
 else:
     app.config['SESSION_COOKIE_SAMESITE'] = None
 
-    
+
 Session(app)
 
 import common
