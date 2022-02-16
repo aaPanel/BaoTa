@@ -4516,6 +4516,9 @@ var site = {
           text: '保存',
           type: 'button',
           callback: function (ldata) {
+            if (ldata.perserver <= 0 || ldata.perip <= 0 || ldata.limit_rate <= 0) {
+              return layer.msg('并发限制，IP限制，流量限制必需大于0', { icon: 2 });
+            }
             bt.site.set_limitnet(web.id, ldata.perserver, ldata.perip, ldata.limit_rate, function (ret) {
               layer.msg(ret.msg, { icon: ret.status ? 1 : 2 });
               if (ret.status) site.reload(3)
