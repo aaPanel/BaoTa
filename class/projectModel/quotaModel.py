@@ -367,7 +367,7 @@ class main(projectBase):
         if res[1]: return public.returnMsg(False,res[1])
         quota_path_list.append({
             'path':args.path,
-            'size':args.size,
+            'size':size,
             'id': quota_id
         })
         public.writeFile(self.__config_path,json.dumps(quota_path_list))
@@ -413,7 +413,7 @@ class main(projectBase):
         if res[1]: return public.returnMsg(False,res[1])
         for quota in quota_path_list:
             if quota['path'] == path:
-                quota['size'] = args.size
+                quota['size'] = size
                 break
         public.writeFile(self.__config_path,json.dumps(quota_path_list))
         public.WriteLog('磁盘配额','修改目录[{path}]的配额限制为: {size}MB'.format(path=path,size=size))
