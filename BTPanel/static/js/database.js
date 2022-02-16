@@ -115,7 +115,7 @@ var database = {
                 })
                 break;
             }
-            return '<span class="size_ellipsis" style="width:100px" title="'+type_column+'">'+type_column+'</span>'
+            return '<span class="flex" style="width:100px" title="'+type_column+'"><span class="size_ellipsis" style="width: 0; flex: 1;">'+type_column+'</span></span>'
           }
         },
         {

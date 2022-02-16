@@ -1,4 +1,3 @@
-$('.footer').css('position', 'inherit');  //日报悬浮调整
 var controlObj = {
   // 监控
   conTrolView: {
