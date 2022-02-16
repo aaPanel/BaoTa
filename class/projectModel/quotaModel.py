@@ -133,6 +133,9 @@ class main(projectBase):
             if get_name:
                 if quota['db_name'] == get_name:
                     quota['used'] = quota['used'] = int(public.get_database_size_by_name(quota['db_name']))
+                    _size = quota['size'] * 1024 * 1024
+                    if (quota['used'] > _size and quota['insert_accept']) or (quota['used'] < _size and not quota['insert_accept']):
+                        self.mysql_quota_check()
                     return quota
             else:
                 if db_obj.where('name=?',quota['db_name']).count():
