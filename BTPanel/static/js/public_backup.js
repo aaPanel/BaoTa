@@ -8043,7 +8043,7 @@ bt.public = {
         var size = quota.size * 1024 * 1024;
         var speed = ((quota.used / size) * 100).toFixed(2)
         return '<div class=""><div class="progress mb0 cursor" style="height:12px;line-height:12px;vertical-align:middle;border-radius:2px;margin-top:3px;" title="当前已用容量:'+ bt.format_size(quota.used) +'\n当前容量配额：'+ bt.format_size(size) +'\n点击修改容量配额">'+
-          '<div class="progress-bar progress-bar-'+ (speed > 60?((speed > 80 && speed < 99)?'warning':'danger'):'success') +'" style="height:15px;line-height:15px;width: '+ speed +'%;display: inline-block;" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>'+
+          '<div class="progress-bar progress-bar-'+ (speed >= 90?'danger':'success') +'" style="height:15px;line-height:15px;width: '+ speed +'%;display: inline-block;" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>'+
         '</div>'
       },
       event:function(row, index, ev){
@@ -8064,7 +8064,7 @@ bt.public = {
                 '<input type="text" name="quota_size" placeholder="" class="bt-input-text mr10 " style="width:140px;" value="'+ quota.size +'" /><span>MB</span>'+
               '</div>'+
             '</div>'+
-            '<ul class="help-info-text c7 plr20">'+
+            '<ul class="help-info-text c7">'+
               '<li style="color:red;">温馨提示：此功能为企业版专享功能</li>'+
               '<li class="'+ (type == "database"?'hide':'') +'">需要XFS文件系统，且包含prjquota挂载参数才能使用</li>'+
               '<li class="'+ (type == "database"?'hide':'') +'">fstab配置示例：/dev/vdc1 /data xfs defaults,prjquota 0 0</li>'+
