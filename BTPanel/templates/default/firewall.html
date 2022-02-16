@@ -77,11 +77,8 @@
           <div class="tab-list">
               <div class="tabs-item active">{{data['lan']['H2']}}</div>
 	            <div class="search pull-right">
-	                <form target="hid" onsubmit='firewall.get_log_list(1,$("#SearchValue").prop("value"))'>
-	                    <input type="text" id="SearchValue" class="ser-text pull-left" placeholder="{{data['lan']['SEARCH']}}" />
-	                    <button type="button" class="ser-sub pull-left" onclick='firewall.get_log_list(1,$("#SearchValue").prop("value"))'></button>
-	                </form>
-	                <iframe name='hid' id="hid" style="display:none"></iframe>
+	                <input type="text" id="SearchValue" class="ser-text pull-left" placeholder="{{data['lan']['SEARCH']}}" />
+                    <button type="button" class="ser-sub pull-left" id="search-btn"></button>
 	            </div>
           </div>
         </div>
@@ -257,6 +254,16 @@
           $("#AcceptPort").attr('placeholder',p);
           $("#toAccept").html(t);
           $("#f-ps").html(m);			
+        });
+        // 搜索
+        $('#SearchValue').keyup(function (e) {
+            if (e.keyCode == 13) {
+                $(this).next().click();
+            }
+        });
+        $('#search-btn').click(function () {
+            var value = $("#SearchValue").val();
+            firewall.get_log_list(1, value);
         });
       },
       flush_init:function(){

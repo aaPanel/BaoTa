@@ -1262,7 +1262,7 @@ listener Default%s{
                 rep = r"\n*\s+listen.*[\s:]+"+port+r"\s*;"
                 conf = re.sub(rep,'',conf)
             #保存配置
-            public.writeFile(file,conf)
+            public.writeFile(file,conf.strip())
         
         #apache
         file = self.setupPath+'/panel/vhost/apache/'+get['webname']+'.conf'
@@ -1270,7 +1270,7 @@ listener Default%s{
         if conf:
             #删除域名
             try:
-                rep = r"\n*<VirtualHost \*\:" + port + ">(.|\n)*</VirtualHost>"
+                rep = r"\n*<VirtualHost \*\:" + port + ">(.|\n){500,1500}</VirtualHost>"
                 tmp = re.search(rep, conf).group()
                 
                 rep1 = "ServerAlias\s+(.+)\n"
@@ -1284,9 +1284,8 @@ listener Default%s{
                     newServerName = tmp.replace(' '+get['domain']+"\n","\n")
                     newServerName = newServerName.replace(' '+get['domain']+' ',' ')
                     conf = conf.replace(tmp,newServerName)
-            
                 #保存配置
-                public.writeFile(file,conf)
+                public.writeFile(file,conf.strip())
             except:
                 pass
 
@@ -2019,7 +2018,7 @@ listener SSL443 {
 
         if not os.path.exists(file):
             file = self.setupPath + '/panel/vhost/apache/java_' + siteName + '.conf'
-            
+
         conf = public.readFile(file)
         if conf:
             rep = "\n<VirtualHost \*\:443>(.|\n)*<\/VirtualHost>"
@@ -4624,19 +4623,25 @@ location ^~ %s
         filename = self.setupPath + '/panel/vhost/nginx/' + siteName + '.conf'
         if os.path.exists(filename):
             conf = public.readFile(filename)
-            rep = '\s*root\s+(.+);'
-            path = re.search(rep,conf).groups()[0]
-            conf = conf.replace(path,sitePath + get.runPath)
-            public.writeFile(filename,conf)
+            if conf:
+                rep = '\s*root\s+(.+);'
+                tmp = re.search(rep,conf)
+                if tmp:
+                    path = tmp.groups()[0]
+                    conf = conf.replace(path,sitePath + get.runPath)
+                    public.writeFile(filename,conf)
             
         #处理Apache
         filename = self.setupPath + '/panel/vhost/apache/' + siteName + '.conf'
         if os.path.exists(filename):
             conf = public.readFile(filename)
-            rep = '\s*DocumentRoot\s*"(.+)"\s*\n'
-            path = re.search(rep,conf).groups()[0]
-            conf = conf.replace(path,sitePath + get.runPath)
-            public.writeFile(filename,conf)
+            if conf:
+                rep = '\s*DocumentRoot\s*"(.+)"\s*\n'
+                tmp = re.search(rep,conf)
+                if tmp:
+                    path = tmp.groups()[0]
+                    conf = conf.replace(path,sitePath + get.runPath)
+                    public.writeFile(filename,conf)
         # 处理OLS
         self._set_ols_run_path(sitePath,get.runPath,siteName)
         # self.DelUserInI(sitePath)

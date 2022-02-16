@@ -12,7 +12,7 @@
         </div> -->
     <div class="pos-box bgw mtb15">
             <div class="tab-list" id="cutMode">
-                <div class="tabs-item active" data-type="php">PHP项目</div>
+                <div class="tabs-item" data-type="php">PHP项目</div>
                 <div class="tabs-item" data-type="java">Java项目</div>
                 <div class="tabs-item" data-type="nodejs">Node项目</div>
                 <!-- <div class="control-item" data-type="go">Go项目</div> -->
@@ -110,7 +110,7 @@
                             </bt-table-column>
                             <bt-table-column title="备注" min-width="80px" v-slot="scope">
                                 <template v-if="scope.$row.is_file_ok || typeof scope.$row.is_file_ok === 'undefined'">
-                                    <bt-text :ref="`table_editor_ps_${scope.$index}`" cust-class="table-input" :block="true" v-model="scope.$row.ps" width="100%" placeholder="点击编辑内容，按回车或失去焦点自动保存" @blur="editor_project_ps(scope.$row, scope.$index)" @keyup="enter_editor_project_ps($event, scope.$row, scope.$index)" />
+                                    <bt-text cust-class="table-input" :block="true" :value="scope.$row.ps" width="100%" placeholder="点击编辑内容，按回车或失去焦点自动保存" @blur="editor_project_ps($event, scope.$row)" @keyup="enter_editor_project_ps($event)" />
                                 </template>
                                 <template v-else>当前项目域名不在配置文件中，请尝试修复项目</template>
                             </bt-table-column>
@@ -210,7 +210,7 @@
                                                    v-if="item.info.status"></bt-button>
                                         <bt-button @click="set_tomcat_service(item.version,'restart')"
                                                    title="重载配置"></bt-button>
-                                        <bt-button style="margin-left: 15px" type="danger"
+                                        <bt-button type="danger"
                                                    @click="install_tomcat_version(item.version,'uninstall')"
                                                    title="卸载"></bt-button>
                                     </div>

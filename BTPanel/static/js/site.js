@@ -825,7 +825,14 @@ var site = {
           align: 'right',
           group: [{
             title: '删除',
+            template: function (row, that) {
+              return that.data.length === 1 ? '<span>不可操作</span>' : '删除';
+            },
             event: function (rowc, index, ev, key, rthat) {
+              if (ev.target.tagName == 'SPAN') return;
+              if (rthat.data.length === 1) {
+                return bt.msg({ status: false, msg: '最后一个域名不能删除!' });
+              }
               that.remove_node_project_domain({ project_name: row.name, domain: (rowc.name + ':' + rowc.port) }, function (res) {
                 bt.msg({ status: res.status, msg: res.data || res.error_msg })
                 rthat.$refresh_table_list(true);
@@ -3870,6 +3877,7 @@ var site = {
                 return that.data.length === 1 ? '<span>不可操作</span>' : '删除';
               },
               event: function (row, index, ev, key, that) {
+                if (ev.target.tagName == 'SPAN') return;
                 if (that.data.length === 1) {
                   bt.msg({ status: false, msg: '最后一个域名不能删除!' });
                   return false;
@@ -4505,6 +4513,9 @@ var site = {
           text: '保存',
           type: 'button',
           callback: function (ldata) {
+            if (ldata.perserver <= 0 || ldata.perip <= 0 || ldata.limit_rate <= 0) {
+              return layer.msg('并发限制，IP限制，流量限制必需大于0', { icon: 2 });
+            }
             bt.site.set_limitnet(web.id, ldata.perserver, ldata.perip, ldata.limit_rate, function (ret) {
               layer.msg(ret.msg, { icon: ret.status ? 1 : 2 });
               if (ret.status) site.reload(3)
@@ -5103,6 +5114,12 @@ var site = {
         }
         if (guardData['password'] == "") {
           return layer.msg('密码不能为空', { icon: 2 });
+        }
+        if (guardData.username.length < 3) {
+          return layer.msg('用户名不能少于3位', { icon: 2 });
+        }
+        if (guardData.password.length < 3) {
+          return layer.msg('密码不能少于3位', { icon: 2 });
         }
         if (type) {
           bt.site.create_dir_guard(guardData, function (rdata) {
@@ -6597,147 +6614,160 @@ var site = {
               }
               // 购买证书信息
               function pay_ssl_business () {
-                var order_info = {},
-                  user_info = {},
-                  is_check = false;
+                var order_info = {}, user_info = {}, is_check = false;
                 pay_ssl_layer = bt.open({
                   type: 1,
                   title: '购买商业证书',
                   area: ['790px', '860px'],
-                  content: '<div class="bt_business_ssl"><div class="bt_business_tab bt_business_form active">\
-                                                    <div class="business_line">\
-                                                        <div class="business_title">证书优势</div>\
-                                                        <div class="business_info business_advantage">\
-                                                            <div class="business_advantage_item">\
-                                                                <span class="advantage_icon glyphicon glyphicon glyphicon-ok"></span>\
-                                                                <span class="advantage_title">企业级证书</span>\
-                                                            </div>\
-                                                            <div class="business_advantage_item">\
-                                                                <span class="advantage_icon glyphicon glyphicon glyphicon-ok"></span>\
-                                                                <span class="advantage_title">极速申请</span>\
-                                                            </div>\
-                                                            <div class="business_advantage_item">\
-                                                                <span class="advantage_icon glyphicon glyphicon glyphicon-ok"></span>\
-                                                                <span class="advantage_title">安全性高</span>\
-                                                            </div>\
-                                                            <div class="business_advantage_item">\
-                                                                <span class="advantage_icon glyphicon glyphicon glyphicon-ok"></span>\
-                                                                <span class="advantage_title">通过率高</span>\
-                                                            </div>\
-                                                            <div class="business_advantage_item">\
-                                                                <span class="advantage_icon glyphicon glyphicon glyphicon-ok"></span>\
-                                                                <span class="advantage_title">赔付保证</span>\
-                                                            </div>\
-                                                            <div class="business_advantage_item" style="width:75%">\
-                                                                <span class="advantage_icon glyphicon glyphicon glyphicon-ok"></span>\
-                                                                <span class="advantage_title">官方推荐(宝塔官方bt.cn也是使用的该证书)</span>\
-                                                            </div>\
-                                                        </div>\
-                                                    </div>\
-                                                    <div class="business_line">\
-                                                        <div class="business_title">证书分类</div>\
-                                                        <div class="business_info business_type">\
-                                                            <div class="ssl_type_item active" data-type="dv">\
-                                                                <div class="ssl_type_title">域名型证书(DV)</div>\
-                                                                <div class="ssl_type_ps">推荐个人博客、个人网站等个人项目使用</div>\
-                                                            </div>\
-                                                            <div class="ssl_type_item" data-type="ov">\
-                                                                <div class="ssl_type_title">企业型证书(OV)</div>\
-                                                                <div class="ssl_type_ps">推荐企业官网、支付、电商、教育、医疗等部门使用</div>\
-                                                            </div>\
-                                                            <div class="ssl_type_item" data-type="ev">\
-                                                                <div class="ssl_type_title">增强型证书(EV)</div>\
-                                                                <div class="ssl_type_ps">推荐银行、金融、保险、电子商务、中大型企业、政府机关等使用</div>\
-                                                            </div>\
-                                                        </div>\
-                                                    </div>\
-                                                    <div class="business_line">\
-                                                        <div class="business_title">证书类型</div>\
-                                                        <div class="business_info business_class">\
-                                                            <div class="business_class_list"></div>\
-                                                        </div>\
-                                                    </div>\
-                                                    <div class="business_line">\
-                                                        <div class="business_title">域名数量</div>\
-                                                        <div class="business_info">\
-                                                            <div class="domain_number_group">\
-                                                                <div class="domain_number_reduce is_disable" data-type="reduce"></div>\
-                                                                <input type="number" class="domain_number_input" value=""/>\
-                                                                <div class="domain_number_add"  data-type="add"></div>\
-                                                            </div>\
-                                                            <div class="domain_number_tips"></div>\
-                                                        </div>\
-                                                    </div>\
-                                                    <div class="business_line">\
-                                                        <div class="business_title">购买年限</div>\
-                                                        <div class="business_info"><div class="business_period_list"></div></div>\
-                                                    </div>\
-                                                    <div class="business_line">\
-                                                        <div class="business_title">人工服务</div>\
-                                                        <div class="business_info business_artificial">\
-                                                            <div class="business_artificial_content"><div class="business_artificial_checkbox active"></div><div class="business_artificial_label"><span>--元/次</span>，付费安装服务，保证100%成功，不成功可全额退款。</div></div>\
-                                                        </div>\
-                                                    </div>\
-                                                    <div class="business_line">\
-                                                        <div class="business_title">总计费用</div>\
-                                                        <div class="business_info business_cost">\
-                                                            <span class="business_price_large">--</span>\
-                                                            <span class="business_price_small">元/1年</span>\
-                                                            <span class="business_original_price">原价<span>--</span>元/1年</span>\
-                                                        </div>\
-                                                    </div>\
-                                                    <div class="business_line" style="margin-bottom:0;">\
-                                                        <div class="business_info">\
-                                                            <button type="button" class="business_pay">立即购买</button>\
-                                                        </div>\
-                                                    </div>\
-                                                    <span style="position: absolute;bottom: 0;left: 0;right: 0;text-align: center;display: inline-block;height: 45px;line-height: 45px;background: #fafafafa;color: #ff0c00;font-size: 13px;">禁止含有诈骗、赌博、色情、木马、病毒等违法违规业务信息的站点申请SSL证书，如有违反，撤销申请，停用账号</span>\
-                                                </div>\
-                                                <div class="bt_business_tab ssl_applay_info">\
-                                                    <div class="guide_nav"><span class="active">微信支付</span><span >支付宝支付</span></div>\
-                                                    <div class="paymethod">\
-                                                        <div class="pay-wx" id="PayQcode"></div>\
-                                                    </div>\
-                                                    <div class="lib-price-box text-center">\
-                                                        <span class="lib-price-name f14"><b>总计</b></span>\
-                                                        <span class="price-txt"><b class="sale-price"></b>元</span>\
-                                                    </div>\
-                                                    <div class="lib-price-detailed">\
-                                                        <div class="info">\
-                                                            <span class="text-left">商品名称</span>\
-                                                            <span class="text-right"></span>\
-                                                        </div>\
-                                                        <div class="info">\
-                                                            <span class="text-left">下单时间</span>\
-                                                            <span class="text-right"></span>\
-                                                        </div>\
-                                                    </div>\
-                                                    <div class="lib-prompt"><span>微信扫一扫支付</span></div>\
-                                                    <span style="position: absolute;bottom: 0;left: 0;right: 0;text-align: center;display: inline-block;height: 45px;line-height: 45px;background: #fafafafa;color: #ff0c00;font-size: 13px;">禁止含有诈骗、赌博、色情、木马、病毒等违法违规业务信息的站点申请SSL证书，如有违反，撤销申请，停用账号</span>\
-                                                </div>\
-                                                <div class="bt_business_tab ssl_order_check">\
-                                                    <div class="order_pay_title">支付成功</div>\
-                                                    <div class="lib-price-detailed">\
-                                                        <div class="info">\
-                                                            <span class="text-left">商品名称</span>\
-                                                            <span class="text-right"></span>\
-                                                        </div>\
-                                                        <div class="info">\
-                                                            <span class="text-left">商品价格</span>\
-                                                            <span class="text-right"></span>\
-                                                        </div>\
-                                                        <div class="info">\
-                                                            <span class="text-left">下单时间</span>\
-                                                            <span class="text-right"></span>\
-                                                        </div>\
-                                                    </div>\
-                                                    <div class="order_pay_btn"><a href="javascript:;">人工服务</a><a href="javascript:;" data-type="info">完善证书资料</a><a href="javascript:;" data-type="clear">返回列表</a></div>\
-                                                    <ul class="help-info-text c7" style="padding:15px 0 0 70px;font-size:13px;">\
-                                                        <li>支付成功后请点击“完善证书资料”继续申请证书。</li>\
-                                                        <li>如果已购买人工服务，请点击“人工服务”咨询帮助。</li>\
-                                                    </ul>\
-                                                </div>\
-                                            </div>',
+                  content: '\
+                    <div class="bt_business_ssl">\
+                      <div class="bt_business_tab bt_business_form active">\
+                        <div class="business_line">\
+                          <div class="business_title">证书优势</div>\
+                          <div class="business_info business_advantage">\
+                            <div class="business_advantage_item">\
+                              <span class="advantage_icon glyphicon glyphicon glyphicon-ok"></span>\
+                              <span class="advantage_title">企业级证书</span>\
+                            </div>\
+                            <div class="business_advantage_item">\
+                              <span class="advantage_icon glyphicon glyphicon glyphicon-ok"></span>\
+                              <span class="advantage_title">极速申请</span>\
+                            </div>\
+                            <div class="business_advantage_item">\
+                              <span class="advantage_icon glyphicon glyphicon glyphicon-ok"></span>\
+                              <span class="advantage_title">安全性高</span>\
+                            </div>\
+                            <div class="business_advantage_item">\
+                              <span class="advantage_icon glyphicon glyphicon glyphicon-ok"></span>\
+                              <span class="advantage_title">通过率高</span>\
+                            </div>\
+                            <div class="business_advantage_item">\
+                              <span class="advantage_icon glyphicon glyphicon glyphicon-ok"></span>\
+                              <span class="advantage_title">赔付保证</span>\
+                            </div>\
+                            <div class="business_advantage_item" style="width:75%">\
+                              <span class="advantage_icon glyphicon glyphicon glyphicon-ok"></span>\
+                              <span class="advantage_title">官方推荐(宝塔官方bt.cn也是使用的该证书)</span>\
+                            </div>\
+                          </div>\
+                        </div>\
+                        <div class="business_line">\
+                          <div class="business_title">证书分类</div>\
+                          <div class="business_info business_type">\
+                            <div class="ssl_type_item active" data-type="dv">\
+                              <div class="ssl_type_title">域名型证书(DV)</div>\
+                              <div class="ssl_type_ps">推荐个人博客、个人网站等个人项目使用</div>\
+                            </div>\
+                            <div class="ssl_type_item" data-type="ov">\
+                              <div class="ssl_type_title">企业型证书(OV)</div>\
+                              <div class="ssl_type_ps">推荐企业官网、支付、电商、教育、医疗等部门使用</div>\
+                            </div>\
+                            <div class="ssl_type_item" data-type="ev">\
+                              <div class="ssl_type_title">增强型证书(EV)</div>\
+                              <div class="ssl_type_ps">推荐银行、金融、保险、电子商务、中大型企业、政府机关等使用</div>\
+                            </div>\
+                          </div>\
+                        </div>\
+                        <div class="business_line">\
+                          <div class="business_title">证书类型</div>\
+                          <div class="business_info business_class">\
+                            <div class="business_class_list"></div>\
+                          </div>\
+                        </div>\
+                        <div class="business_line">\
+                          <div class="business_title">域名数量</div>\
+                          <div class="business_info">\
+                            <div class="domain_number_group">\
+                              <div class="domain_number_reduce is_disable" data-type="reduce"></div>\
+                              <input type="number" class="domain_number_input" value=""/>\
+                              <div class="domain_number_add"  data-type="add"></div>\
+                            </div>\
+                            <div class="domain_number_tips"></div>\
+                          </div>\
+                        </div>\
+                        <div class="business_line">\
+                          <div class="business_title">购买年限</div>\
+                          <div class="business_info"><div class="business_period_list"></div></div>\
+                        </div>\
+                        <div class="business_line">\
+                          <div class="business_title">人工服务</div>\
+                          <div class="business_info business_artificial">\
+                            <div class="business_artificial_content">\
+                              <div class="business_artificial_checkbox active"></div>\
+                              <div class="business_artificial_label"><span>--元/次</span>，付费安装服务，保证100%成功，不成功可全额退款。</div>\
+                            </div>\
+                          </div>\
+                        </div>\
+                        <div class="business_line">\
+                          <div class="business_title">总计费用</div>\
+                          <div class="business_info business_cost">\
+                            <span class="business_price_large">--</span>\
+                            <span class="business_price_small">元/1年</span>\
+                            <span class="business_original_price">原价<span>--</span>元/1年</span>\
+                          </div>\
+                        </div>\
+                        <div class="business_line" style="margin-bottom:0;">\
+                          <div class="business_info">\
+                            <button type="button" class="business_pay">立即购买</button>\
+                          </div>\
+                        </div>\
+                        <span style="position: absolute;bottom: 0;left: 0;right: 0;text-align: center;display: inline-block;height: 45px;line-height: 45px;background: #fafafafa;color: #ff0c00;font-size: 13px;">禁止含有诈骗、赌博、色情、木马、病毒等违法违规业务信息的站点申请SSL证书，如有违反，撤销申请，停用账号</span>\
+                      </div>\
+                      <div class="bt_business_tab ssl_applay_info">\
+                        <div class="guide_nav">\
+                          <span class="active">微信支付</span>\
+                          <span>支付宝支付</span>\
+                        </div>\
+                        <div class="paymethod">\
+                          <div class="pay-wx" id="PayQcode"></div>\
+                        </div>\
+                        <div class="lib-price-box text-center">\
+                          <span class="lib-price-name f14"><b>总计</b></span>\
+                          <span class="price-txt"><b class="sale-price"></b>元</span>\
+                        </div>\
+                        <div class="lib-price-detailed">\
+                          <div class="info">\
+                            <span class="text-left">商品名称</span>\
+                            <span class="text-right"></span>\
+                          </div>\
+                          <div class="info">\
+                            <span class="text-left">下单时间</span>\
+                            <span class="text-right"></span>\
+                          </div>\
+                        </div>\
+                        <div class="lib-prompt">\
+                          <span>微信扫一扫支付</span>\
+                        </div>\
+                        <span style="position: absolute;bottom: 0;left: 0;right: 0;text-align: center;display: inline-block;height: 45px;line-height: 45px;background: #fafafafa;color: #ff0c00;font-size: 13px;">禁止含有诈骗、赌博、色情、木马、病毒等违法违规业务信息的站点申请SSL证书，如有违反，撤销申请，停用账号</span>\
+                      </div>\
+                      <div class="bt_business_tab ssl_order_check">\
+                        <div class="order_pay_title">支付成功</div>\
+                        <div class="lib-price-detailed">\
+                          <div class="info">\
+                            <span class="text-left">商品名称</span>\
+                            <span class="text-right"></span>\
+                          </div>\
+                          <div class="info">\
+                            <span class="text-left">商品价格</span>\
+                            <span class="text-right"></span>\
+                          </div>\
+                          <div class="info">\
+                            <span class="text-left">下单时间</span>\
+                            <span class="text-right"></span>\
+                          </div>\
+                        </div>\
+                        <div class="order_pay_btn">\
+                          <a href="javascript:;">人工服务</a>\
+                          <a href="javascript:;" data-type="info">完善证书资料</a>\
+                          <a href="javascript:;" data-type="clear">返回列表</a>\
+                        </div>\
+                        <ul class="help-info-text c7" style="padding:15px 0 0 70px;font-size:13px;">\
+                          <li>支付成功后请点击“完善证书资料”继续申请证书。</li>\
+                          <li>如果已购买人工服务，请点击“人工服务”咨询帮助。</li>\
+                        </ul>\
+                      </div>\
+                    </div>\
+                  ',
                   success: function (layero, indexs) {
                     var product_list = [],
                       product_current = {},
@@ -6931,7 +6961,7 @@ var site = {
 
                     function reader_product_info (data) {
                       add_domain_number = data.current_num;
-                      $('.business_original_price span').html(data.src_price);
+
                       $('.domain_number_input').val(data.current_num || data.num).attr('min', data.num);
                       $('.business_artificial .business_artificial_label span').html(data.install_price + '元/次');
                       is_additional_price(install_service, data);
@@ -6947,10 +6977,12 @@ var site = {
                     }
 
                     function is_additional_price (status, data) {
-                      var input = $('.domain_number_input').val(),
-                        price = parseFloat((status ? data.install_price : 0) + ((data.price + (data.add_price * (parseInt(input) - data.num))) * buyPeriod)).toFixed(2)
+                      var input = $('.domain_number_input').val();
+                      var price = parseFloat((status ? data.install_price : 0) + ((data.price + (data.add_price * (parseInt(input) - data.num))) * buyPeriod)).toFixed(2);
+                      var original_price = parseFloat((status ? data.install_price : 0) + ((data.other_price + (data.add_price * (parseInt(input) - data.num))) * buyPeriod)).toFixed(2);
                       $('.business_price_large').html(price)
                       $('.business_price_small').html('元/' + buyPeriod + '年' + (status ? '(包含人工服务)' : ''))
+                      $('.business_original_price span').html(original_price);
                     }
 
                     function reader_product_list (data, callback) {
