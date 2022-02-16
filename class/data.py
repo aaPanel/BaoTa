@@ -171,7 +171,27 @@ class data:
             return int(db_size)
         except:
             return 0
-        
+
+    def get_site_quota(self,path):
+        '''
+            @name 获取网站目录配额信息
+            @author hwliang<2022-02-15>
+            @param path<string> 网站目录
+            @return dict
+        '''
+
+        from projectModel.quotaModel import main
+        return main().get_quota_path_list(get_path = path)
+
+    def get_database_quota(self,db_name):
+        '''
+            @name 获取网站目录配额信息
+            @author hwliang<2022-02-15>
+            @param path<string> 网站目录
+            @return dict
+        '''
+        from projectModel.quotaModel import main
+        return main().get_quota_mysql_list(get_name = db_name)
     
     '''
      * 取数据列表
@@ -198,6 +218,7 @@ class data:
                 for i in range(len(data['data'])):
                     data['data'][i]['backup_count'] = SQL.table('backup').where("pid=? AND type=?",(data['data'][i]['id'],type)).count()
                     if table == 'databases': data['data'][i]['conn_config'] = json.loads(data['data'][i]['conn_config'])
+                    data['data'][i]['quota'] = self.get_database_quota(data['data'][i]['name'])
                 if table == 'sites':
                     for i in range(len(data['data'])):
                         data['data'][i]['domain'] = SQL.table('domain').where("pid=?",(data['data'][i]['id'],)).count()
@@ -205,12 +226,17 @@ class data:
                         data['data'][i]['php_version'] = self.get_php_version(data['data'][i]['name'])
                         if not data['data'][i]['status'] in ['0','1',0,1]:
                             data['data'][i]['status'] = '1'
+                        data['data'][i]['quota'] = self.get_site_quota(data['data'][i]['path'])
             elif table == 'firewall':
                 for i in range(len(data['data'])):
                     if data['data'][i]['port'].find(':') != -1 or data['data'][i]['port'].find('.') != -1 or data['data'][i]['port'].find('-') != -1:
                         data['data'][i]['status'] = -1
                     else:
                         data['data'][i]['status'] = self.CheckPort(int(data['data'][i]['port']))
+
+            elif table == 'ftps':
+                 for i in range(len(data['data'])):
+                     data['data'][i]['quota'] = self.get_site_quota(data['data'][i]['path'])
                 
             #返回
             return data
