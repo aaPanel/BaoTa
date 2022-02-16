@@ -7,7 +7,6 @@
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 import base64
-from pymongo import server
 import public,re,sys,os,nginx,apache,json,time,ols
 try:
     import pyotp

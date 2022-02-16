@@ -16,6 +16,7 @@ from projectModel.base import projectBase
 class main(projectBase):
     __config_path = '{}/config/quota.json'.format(public.get_panel_path())
     __mysql_config_file = '{}/config/mysql_quota.json'.format(public.get_panel_path())
+    __auth_msg = public.to_string([27492, 21151, 33021, 20026, 20225, 19994, 29256, 19987, 20139, 21151, 33021, 65292, 35831, 20808, 36141, 20080, 20225, 19994, 29256])
     
     def __init__(self) -> None:
         xfs_quota_bin = '/usr/sbin/xfs_quota'
@@ -69,13 +70,13 @@ class main(projectBase):
             @param path<string> 需要检查的目录
             @return int
         '''
-        if not os.path.exists(path): return 0
-        if not os.path.isdir(path): return 0
+        if not os.path.exists(path): return -1
+        if not os.path.isdir(path): return -2
         xfs_disks = self.get_xfs_disk()
         for disk in xfs_disks:
             if path.find(disk[0] + '/') == 0:
                 return disk[2] / 1024 / 1024
-        return 0
+        return -3
 
 
     def get_quota_path_list(self,args = None,get_path = None):
@@ -202,6 +203,7 @@ class main(projectBase):
             @author hwliang<2022-02-14>
             @return void
         '''
+        if not self.check_auth(): return public.returnMsg(False,self.__auth_msg)
         quota_list = self.get_quota_mysql_list()
         for quota in quota_list:
             used_size = public.get_database_size_by_name(quota['db_name']) / 1024 / 1024
@@ -234,7 +236,7 @@ class main(projectBase):
             }
             @return dict
         '''
-
+        if not self.check_auth(): return public.returnMsg(False,self.__auth_msg)
         if not os.path.exists(self.__mysql_config_file): 
             public.writeFile(self.__mysql_config_file,'[]')
         size = int(args['size'])
@@ -254,6 +256,14 @@ class main(projectBase):
         self.mysql_quota_check()
         return public.returnMsg(True,'添加成功')
 
+
+    def check_auth(self):
+        return True
+        from pluginAuth import Plugin
+        plugin_obj = Plugin(False)
+        plugin_list = plugin_obj.get_plugin_list()
+        return int(plugin_list['ltd']) > time.time()
+
     def modify_mysql_quota(self,args):
         '''
             @name 修改数据库配额
@@ -264,7 +274,7 @@ class main(projectBase):
             }
             @return dict
         '''
-
+        if not self.check_auth(): return public.returnMsg(False,self.__auth_msg)
         if not os.path.exists(self.__mysql_config_file): 
             public.writeFile(self.__mysql_config_file,'[]')
         size = int(args['size'])
@@ -327,6 +337,7 @@ class main(projectBase):
             }
             @return dict
         '''
+        if not self.check_auth(): return public.returnMsg(False,self.__auth_msg)
         path = args.path.strip()
         size = int(args.size)
         if not os.path.exists(path): return public.returnMsg(False,'指定目录不存在')
@@ -337,6 +348,10 @@ class main(projectBase):
             if quota['path'] == path: return public.returnMsg(False,'指定目录已经设置过配额!')
 
         free_quota_size = self.get_free_quota_size(path)
+        if free_quota_size == -3: return public.returnMsg(False,'指定目录所在分区不是XFS分区,不支持目录配额!')
+        if free_quota_size == -2: return public.returnMsg(False,'这不是一个有效的目录!')
+        if free_quota_size == -1: return public.returnMsg(False,'指定目录不存在!')
+
         if size > free_quota_size: return public.returnMsg(False,'指定磁盘可用的配额容量不足!')
 
         mountpoint = self.get_path_dev_mountpoint(path)
@@ -367,6 +382,7 @@ class main(projectBase):
             }
             @return dict
         '''
+        if not self.check_auth(): return public.returnMsg(False,self.__auth_msg)
         path = args.path.strip()
         size = int(args.size)
         if not os.path.exists(path): return public.returnMsg(False,'指定目录不存在')
@@ -381,6 +397,9 @@ class main(projectBase):
         if not quota_id: return self.create_path_quota(args)
 
         free_quota_size = self.get_free_quota_size(path)
+        if free_quota_size == -3: return public.returnMsg(False,'指定目录所在分区不是XFS分区,不支持目录配额!')
+        if free_quota_size == -2: return public.returnMsg(False,'这不是一个有效的目录!')
+        if free_quota_size == -1: return public.returnMsg(False,'指定目录不存在!')
         if size > free_quota_size: return public.returnMsg(False,'指定磁盘可用的配额容量不足!')
 
         mountpoint = self.get_path_dev_mountpoint(path)
