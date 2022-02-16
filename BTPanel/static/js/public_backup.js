@@ -8067,7 +8067,7 @@ bt.public = {
             '<ul class="help-info-text c7 plr20">'+
               '<li style="color:red;">温馨提示：此功能为企业版专享功能</li>'+
               '<li class="'+ (type == "database"?'hide':'') +'">需要XFS文件系统，且包含prjquota挂载参数才能使用</li>'+
-              '<li class="'+ (type == "database"?'hide':'') +'">挂载示例：/dev/vdc1 /data xfs defaults,prjquota 0 0</li>'+
+              '<li class="'+ (type == "database"?'hide':'') +'">fstab配置示例：/dev/vdc1 /data xfs defaults,prjquota 0 0</li>'+
               '<li>容量配额：如需取消容量配额，请设为“0”</li>'+
             '</ul>'+
           '</div>',
