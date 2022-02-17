@@ -38,12 +38,12 @@ class http:
                 elif self._ip_type == 'ipv6':
                     urllib3_conn.allowed_gai_family = lambda: socket.AF_INET6
                 
-                return requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
+                result = requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
             except:
                 try:
                     # IPV6？
                     urllib3_conn.allowed_gai_family = lambda: socket.AF_INET6
-                    return requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
+                    result = requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
                 except:
                     # 使用CURL
                     result = self._get_curl(url,timeout,headers,verify)
@@ -70,12 +70,12 @@ class http:
                 elif self._ip_type == 'ipv6':
                     urllib3_conn.allowed_gai_family = lambda: socket.AF_INET6
 
-                return requests.post(url,data,timeout=timeout,headers=headers,verify=verify)
+                result = requests.post(url,data,timeout=timeout,headers=headers,verify=verify)
             except:
                 try:
                     # IPV6？
                     urllib3_conn.allowed_gai_family = lambda: socket.AF_INET6
-                    return requests.post(url,data,timeout=timeout,headers=headers,verify=verify)
+                    result = requests.post(url,data,timeout=timeout,headers=headers,verify=verify)
                 except:
                     # 使用CURL
                     result = self._post_curl(url,data,timeout,headers,verify)

@@ -1,3 +1,7 @@
+$('.footer').css({
+  'position': 'inherit',
+  'padding-left': '180px'
+});  //日报悬浮调整
 var controlObj = {
   // 监控
   conTrolView: {
