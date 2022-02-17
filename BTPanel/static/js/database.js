@@ -115,7 +115,7 @@ var database = {
                 })
                 break;
             }
-            return '<span class="size_ellipsis" style="width:100px" title="'+type_column+'">'+type_column+'</span>'
+            return '<span class="flex" style="width:100px" title="'+type_column+'"><span class="size_ellipsis" style="width: 0; flex: 1;">'+type_column+'</span></span>'
           }
         },
         {
@@ -745,63 +745,74 @@ var database = {
       content: '<div id="db_cloud_server_table" class="pd20" style="padding-bottom:40px;"></div>',
       dataFilter: function(res) { that.cloudDatabaseList = res},
       success:function(){
-        bt_tools.send('/database?action=GetCloudServer',function(rdata){
-          var arry = []
-          for (var i = 0; i < rdata.length; i++) {
-            var element = rdata[i];
-            if(element.db_host === '127.0.0.1') continue
-            arry.push(element)
-          }
-          that.dbCloudServerTable = bt_tools.table({
-            el:'#db_cloud_server_table',
-            default:'服务器列表为空',
-            data:arry,
-            column:[
-              {fid:'db_host',title:'服务器地址',width:216,template: function (item) {
-                  return '<span style="width:200px;word-wrap:break-word;" title="'+item.db_host+'">'+item.db_host+'</span>'
-                }},
-              {fid:'db_port',width:80,title:'数据库端口'},
-              {fid:'db_user',title:'管理员名称'},
-              {fid:'db_password',type: 'password',title:'管理员密码',copy: true,eye_open: true},
-              {fid:'ps',title:'备注',width:170,template: function (item) {
-                return '<span class="size_ellipsis" style="width:170px" title="'+item.ps+'">'+item.ps+'</span>'
-              }},
-              {
-                type: 'group',
-                title: '操作',
-                align: 'right',
-                group: [{
-                  title:'编辑',
-                  hide:function (row) {
-                    return row.db_host === '127.0.0.1'
-                  },
-                  event:function(row){
-                    that.render_db_cloud_server_view(row,true);
-                  }
-                },{
-                  title:'删除',
-                  hide:function (row) {
-                    return row.db_host === '127.0.0.1'
-                  },
-                  event:function(row){
-                    that.del_db_cloud_server(row)
-                  }
-                }]
+        that.dbCloudServerTable = bt_tools.table({
+          el:'#db_cloud_server_table',
+          default:'服务器列表为空',
+          data: [],
+          column:[
+            {
+              fid:'db_host',
+              title:'服务器地址',
+              width: 170,
+              template: function (item) {
+                return '<span class="flex" style="width:154px" title="'+item.db_host+'"><span class="size_ellipsis" style="width: 0; flex: 1;">'+item.db_host+'</span></span>'
               }
-            ],
-            tootls:[{
-              type:'group',
-              positon: ['left','top'],
-              list:[{
-                title:'添加远程服务器',
-                active: true,
-                event:function(){that.render_db_cloud_server_view()}
+            },
+            {fid:'db_port',width:80,title:'数据库端口'},
+            {fid:'db_user',width:100,title:'管理员名称'},
+            {fid:'db_password',type: 'password',title:'管理员密码',copy: true,eye_open: true},
+            {fid:'ps',title:'备注',width:160,template: function (item) {
+              return '<span class="flex" style="width:144px" title="'+item.ps+'"><span class="size_ellipsis" style="width: 0; flex: 1;">'+item.ps+'</span></span>'
+            }},
+            {
+              type: 'group',
+              width: 100,
+              title: '操作',
+              align: 'right',
+              group: [{
+                title:'编辑',
+                hide:function (row) {
+                  return row.db_host === '127.0.0.1'
+                },
+                event:function(row){
+                  that.render_db_cloud_server_view(row,true);
+                }
+              },{
+                title:'删除',
+                hide:function (row) {
+                  return row.db_host === '127.0.0.1'
+                },
+                event:function(row){
+                  that.del_db_cloud_server(row)
+                }
               }]
+            }
+          ],
+          tootls:[{
+            type:'group',
+            positon: ['left','top'],
+            list:[{
+              title:'添加远程服务器',
+              active: true,
+              event:function(){that.render_db_cloud_server_view()}
             }]
-          })
+          }]
         })
+        that.render_cloud_server_table();
       }
     })
+  },
+  render_cloud_server_table: function () {
+    var that = this;
+    bt_tools.send('/database?action=GetCloudServer',function(rdata){
+      var arry = []
+      for (var i = 0; i < rdata.length; i++) {
+        var element = rdata[i];
+        if(element.db_host === '127.0.0.1') continue
+        arry.push(element)
+      }
+      that.dbCloudServerTable.$reader_content(arry);
+    });
   },
   // 添加/编辑远程服务器视图
   render_db_cloud_server_view:function(config,is_edit){
@@ -889,7 +900,7 @@ var database = {
         bt.send(interface,'database/'+interface,form,function(rdata){
           that.layerT.close();
           if(rdata.status){
-            that.dbCloudServerTable.$refresh_table_list();
+            that.render_cloud_server_table();
             layer.close(indexs)
             layer.msg(rdata.msg, {icon:1})
           }else{
@@ -1314,7 +1325,7 @@ var database = {
               }, countDown * 1000)
             },
             yes: function (indes, layers) {
-              console.log(1);
+              // console.log(1);
               if ($(layers).hasClass('active')) {
                 layer.tips('请确认信息，稍候再尝试，还剩' + countDown + '秒', $(layers).find('.layui-layer-btn0'), {
                   tips: [1, 'red'],
@@ -1346,7 +1357,7 @@ var database = {
       closeBtn: 2
     }, function () {
       bt.send('RemoveCloudServer','database/RemoveCloudServer',{id:row.id},function(rdata){
-        if(rdata.status) that.dbCloudServerTable.$refresh_table_list(true);
+        if(rdata.status) that.render_cloud_server_table();
         layer.msg(rdata.msg, {
           icon: rdata.status ? 1 : 2
         })
