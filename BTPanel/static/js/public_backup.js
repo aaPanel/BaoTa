@@ -8013,17 +8013,20 @@ var dynamic = {
 
 bt.public = {
     
-
   // 设置目录配额
   modify_path_quota:function (data,callback) {
-    bt_tools.send('/project/quota/modify_path_quota',data,function (res) { 
+    var loadT = bt.load('正在设置目录配额，请稍候...')
+    $.post('/project/quota/modify_path_quota',data,function (res) {
+      loadT.close()
       if(callback) callback(res)
     })
   },
 
   // 设置mysql配额
   modify_mysql_quota:function (data,callback) {
-    bt_tools.send('/project/quota/modify_mysql_quota',data,function (res) { 
+    var loadT = bt.load('正在设置MySql配额，请稍候...')
+    $.post('/project/quota/modify_mysql_quota',data,function (res) {
+      loadT.close()
       if(callback) callback(res)
     })
   },
@@ -8075,11 +8078,12 @@ bt.public = {
             var quota_size = $('[name="quota_size"]').val()
             if(type === 'site' || type === 'ftp'){
               bt.public.modify_path_quota({data:JSON.stringify({size:quota_size,path:row.path})},function (res) {
-                bt.msg(res)
                 if(res.status){
+                  bt.msg(res)
                   layer.close(indexs)
                   setTimeout(function () { location.reload() },200)
-                  
+                }else{
+                  layer.msg(res.msg,{ icon:res.status?1:2, area:'650px',time:0,shade:.3,closeBtn:2})
                 }
               })
             }else{
