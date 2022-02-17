@@ -12,28 +12,38 @@
 # +-------------------------------------------------------------------
 import os,sys,re
 import ssl
+
 import public
 import json
 import socket
 import requests
+import config
 import requests.packages.urllib3.util.connection as urllib3_conn
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 class http:
+    _ip_type = None
+    def __init__(self) -> None:
+        self._ip_type = config.config().get_request_iptype()
+
     def get(self,url,timeout = 60,headers = {},verify = False,type = 'python'):
         url = self.quote(url)
         if type == 'python':
             old_family = urllib3_conn.allowed_gai_family
             try:
                 # 默认使用IPv4
-                urllib3_conn.allowed_gai_family = lambda: socket.AF_INET
-                return requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
+                if self._ip_type == 'ipv4':
+                    urllib3_conn.allowed_gai_family = lambda: socket.AF_INET
+                elif self._ip_type == 'ipv6':
+                    urllib3_conn.allowed_gai_family = lambda: socket.AF_INET6
+                
+                result = requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
             except:
                 try:
                     # IPV6？
                     urllib3_conn.allowed_gai_family = lambda: socket.AF_INET6
-                    return requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
+                    result = requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
                 except:
                     # 使用CURL
                     result = self._get_curl(url,timeout,headers,verify)
@@ -55,13 +65,17 @@ class http:
         if type == 'python':
             old_family = urllib3_conn.allowed_gai_family
             try:
-                urllib3_conn.allowed_gai_family = lambda: socket.AF_INET
-                return requests.post(url,data,timeout=timeout,headers=headers,verify=verify)
+                if self._ip_type == 'ipv4':
+                    urllib3_conn.allowed_gai_family = lambda: socket.AF_INET
+                elif self._ip_type == 'ipv6':
+                    urllib3_conn.allowed_gai_family = lambda: socket.AF_INET6
+
+                result = requests.post(url,data,timeout=timeout,headers=headers,verify=verify)
             except:
                 try:
                     # IPV6？
                     urllib3_conn.allowed_gai_family = lambda: socket.AF_INET6
-                    return requests.post(url,data,timeout=timeout,headers=headers,verify=verify)
+                    result = requests.post(url,data,timeout=timeout,headers=headers,verify=verify)
                 except:
                     # 使用CURL
                     result = self._post_curl(url,data,timeout,headers,verify)
@@ -151,43 +165,54 @@ class http:
         php_version = self._get_php_version()
         if not php_version:
             raise Exception('没有可用的PHP版本!')
+        ip_type = ''
+        if self._ip_type == 'ipv6':
+            ip_type = 'curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6);'
+        elif self._ip_type == 'ipv4':
+            ip_type = 'curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);'
         tmp_file = '/dev/shm/http.php'
         http_php = '''<?php
-if(isset($_POST['data'])){
+error_reporting(E_ERROR);
+if(isset($_POST['data'])){{
     $data = json_decode($_POST['data'],1);
-}else{
-    $data = json_decode(getopt('',array('post:'))['post'],1);
-}
+}}else{{
+    $s = getopt('',array('post:'));
+    $data = json_decode($s['post'],1);
+}}
 $url  = $data['url'];
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
 curl_setopt($ch, CURLOPT_HTTPHEADER,$data['headers']);
 curl_setopt($ch, CURLOPT_HEADER, true);
-curl_setopt($ch, CURLINFO_HEADER_OUT, TRUE);
-curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data['data']));
+curl_setopt($ch, CURLINFO_HEADER_OUT, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $data['data']);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $data['verify']);
 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $data['verify']);
 curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $data['timeout']);
 curl_setopt($ch, CURLOPT_TIMEOUT, $data['timeout']);
-curl_setopt($ch, CURLOPT_POST, true);
+{ip_type}
 $result = curl_exec($ch);
 $h_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
 $header = substr($result, 0, $h_size);
 $body = substr($result,$h_size,strlen($result));
 curl_close($ch);
 exit($header."\r\n\r\n".json_encode($body));
-?>'''
+?>'''.format(ip_type = ip_type)
         public.writeFile(tmp_file,http_php)
         #if 'Content-Type' in headers:
         #    if headers['Content-Type'].find('application/json') != -1:
         #        data = json.dumps(pdata)
-
+        
         data = json.dumps({"url":url,"timeout":timeout,"verify":verify,"headers":self._php_headers(headers),"data":data})
+        if php_version in ['53']:
+            php_version = '/www/server/php/' + php_version + '/bin/php'
         if php_version.find('/www/server/php') != -1:
             result = public.ExecShell(php_version + ' ' + tmp_file + " --post='" + data + "'" )[0]
         else:
             result = public.request_php(php_version,'/http.php','/dev/shm','POST',{"data":data})
+            if isinstance(result,bytes): result = result.decode('utf-8')
 
         if os.path.exists(tmp_file): os.remove(tmp_file)
         r_body,r_headers,r_status_code = self._curl_format(result)
@@ -248,7 +273,7 @@ exit($header."\r\n\r\n".json_encode($body));
         headers_str = self._str_headers(headers)
         _ssl_verify = ''
         if not verify: _ssl_verify = ' -k'
-        result = public.ExecShell("{} -sS -i --connect-timeout {} {} {} 2>&1".format(self._curl_bin() + _ssl_verify,timeout,headers_str,url))[0]
+        result = public.ExecShell("{} -sS -i --connect-timeout {} {} {} 2>&1".format(self._curl_bin() + ' ' +  str(_ssl_verify),timeout,headers_str,url))[0]
         r_body,r_headers,r_status_code = self._curl_format(result)
         return response(r_body,r_status_code,r_headers)
 
@@ -257,13 +282,21 @@ exit($header."\r\n\r\n".json_encode($body));
         php_version = self._get_php_version()
         if not php_version:
             raise Exception('没有可用的PHP版本!')
+
+        ip_type = ''
+        if self._ip_type == 'ipv6':
+            ip_type = 'curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6);'
+        elif self._ip_type == 'ipv4':
+            ip_type = 'curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);'
         tmp_file = '/dev/shm/http.php'
         http_php = '''<?php
-if(isset($_POST['data'])){
+error_reporting(E_ERROR);
+if(isset($_POST['data'])){{
     $data = json_decode($_POST['data'],1);
-}else{
-    $data = json_decode(getopt('',array('post:'))['post'],1);
-}
+}}else{{
+    $s = getopt('',array('post:'));
+    $data = json_decode($s['post'],1);
+}}
 $url  = $data['url'];
 $ch = curl_init();
 $user_agent = "BT-Panel";
@@ -276,6 +309,7 @@ curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $data['verify']);
 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $data['verify']);
 curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $data['timeout']);
 curl_setopt($ch, CURLOPT_TIMEOUT, $data['timeout']);
+{ip_type}
 curl_setopt($ch, CURLOPT_POST, false);
 $result = curl_exec($ch);
 $h_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
@@ -283,13 +317,18 @@ $header = substr($result, 0, $h_size);
 $body = substr($result,$h_size,strlen($result));
 curl_close($ch);
 exit($header."\r\n\r\n".json_encode($body));
-?>'''
+?>'''.format(ip_type=ip_type)
+
         public.writeFile(tmp_file,http_php)
         data = json.dumps({"url":url,"timeout":timeout,"verify":verify,"headers":self._php_headers(headers)})
+        if php_version in ['53']:
+            php_version = '/www/server/php/' + php_version + '/bin/php'
         if php_version.find('/www/server/php') != -1:
             result = public.ExecShell(php_version + ' ' + tmp_file + " --post='" + data + "'" )[0]
         else:
             result = public.request_php(php_version,'/http.php','/dev/shm','POST',{"data":data})
+            if isinstance(result,bytes): result = result.decode('utf-8')
+
         if os.path.exists(tmp_file): os.remove(tmp_file)
         r_body,r_headers,r_status_code = self._curl_format(result)
         return response(json.loads(r_body).strip(),r_status_code,r_headers)
@@ -299,6 +338,7 @@ exit($header."\r\n\r\n".json_encode($body));
     #取可用的PHP版本
     def _get_php_version(self):
         php_versions = public.get_php_versions()
+        php_versions = sorted(php_versions,reverse=True)
         php_path = '/www/server/php/{}/sbin/php-fpm'
         php_sock = '/tmp/php-cgi-{}.sock'
         for pv in php_versions:
@@ -315,9 +355,13 @@ exit($header."\r\n\r\n".json_encode($body));
     #取CURL路径
     def _curl_bin(self):
         c_bin = ['/usr/local/curl2/bin/curl','/usr/local/curl/bin/curl','/usr/local/bin/curl','/usr/bin/curl']
+        curl_bin = 'curl'
         for cb in c_bin:
-            if os.path.exists(cb): return cb
-        return 'curl'
+            if os.path.exists(cb): curl_bin = cb
+        if self._ip_type != 'auto':
+            v4_file = '{}/data/v4.pl'.format(public.get_panel_path())
+            curl_bin += ' {}'.format(public.readFile(v4_file).strip())
+        return curl_bin
 
     #格式化CURL响应头
     def _curl_format(self,req):

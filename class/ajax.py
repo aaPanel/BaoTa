@@ -958,12 +958,44 @@ class ajax:
                 return panelSite.panelSite().SetHasPwd(get)
         
         if hasattr(get,'status'):
-            if conf.find(public.GetConfigValue('setup_path') + '/stop') != -1:
-                conf = conf.replace(public.GetConfigValue('setup_path') + '/stop',public.GetConfigValue('setup_path') + '/phpmyadmin')
+            pma_path = public.GetConfigValue('setup_path') + '/phpmyadmin'
+            stop_path = public.GetConfigValue('setup_path') + '/stop'
+
+
+            webserver = public.get_webserver()
+            if conf.find(stop_path) != -1:
+                conf = conf.replace(stop_path,pma_path)
                 msg = public.getMsg('START')
+            
+            if webserver == 'nginx':
+                sub_string = '''{};
+        allow 127.0.0.1;
+        allow ::1;
+        deny all'''.format(pma_path)
+                if conf.find(sub_string) != -1:
+                    conf = conf.replace(sub_string,pma_path)
+                    msg = public.getMsg('START')
+                else:
+                    conf = conf.replace(pma_path,sub_string)
+                    msg = public.getMsg('STOP')
+            elif webserver == 'apache':
+                src_string = 'AllowOverride All'
+                sub_string = '''{}
+        Deny from all
+        Allow from 127.0.0.1 ::1 localhost'''.format(src_string,pma_path)
+                if conf.find(sub_string) != -1:
+                    conf = conf.replace(sub_string,src_string)
+                    msg = public.getMsg('START')
+                else:
+                    conf = conf.replace(src_string,sub_string)
+                    msg = public.getMsg('STOP')
             else:
-                conf = conf.replace(public.GetConfigValue('setup_path') + '/phpmyadmin',public.GetConfigValue('setup_path') + '/stop')
-                msg = public.getMsg('STOP')
+                if conf.find(stop_path) != -1:
+                    conf = conf.replace(stop_path,pma_path)
+                    msg = public.getMsg('START')
+                else:
+                    conf = conf.replace(pma_path,stop_path)
+                    msg = public.getMsg('STOP')
             
             public.writeFile(filename,conf)
             public.serviceReload()

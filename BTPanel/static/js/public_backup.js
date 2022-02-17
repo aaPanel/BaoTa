@@ -11,11 +11,15 @@ var bt = {
     return reg.test(ip);
   },
   // 验证域名列表
-  check_domain_list: function (domainInfo) {
+  check_domain_list: function (domainInfo, isPort) {
     var domainList = domainInfo.trim().replace(' ', '').split("\n");
     for (var i = 0; i < domainList.length; i++) {
       var item = domainList[i];
-      if (!bt.check_domain(item)) {
+      if (isPort && !bt.check_domain_port(item)) {
+        bt.msg({ status: false, msg: '第' + (i + 1) + '行【' + item + '】域名格式错误' });
+        return false;
+      }
+      if (!isPort && !bt.check_domain(item)) {
         bt.msg({ status: false, msg: '第' + (i + 1) + '行【' + item + '】域名格式错误' });
         return false;
       }
@@ -38,6 +42,10 @@ var bt = {
   check_domain: function (domain) //验证域名
   {
     var reg = /^([\w\u4e00-\u9fa5\-\*]{1,100}\.){1,10}([\w\u4e00-\u9fa5\-]{1,24}|[\w\u4e00-\u9fa5\-]{1,24}\.[\w\u4e00-\u9fa5\-]{1,24})$/;
+    return reg.test(bt.strim(domain));
+  },
+  check_domain_port: function (domain) { //验证域名带端口号
+    var reg = /^([\w\u4e00-\u9fa5\-\*]{1,100}\.){1,10}([\w\u4e00-\u9fa5\-]{1,24}|[\w\u4e00-\u9fa5\-]{1,24}\.[\w\u4e00-\u9fa5\-]{1,24})(:([1-9]|[1-9]\d|[1-9]\d{2}|[1-9]\d{3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5]))?$/;
     return reg.test(bt.strim(domain));
   },
   check_img: function (fileName) //验证是否图片
@@ -6111,7 +6119,7 @@ bt.database = {
       })
     });
   },
-  backup_data: function (id, dataname, callback) {
+  backup_data: function (id, callback) {
     var loadT = bt.load(lan.database.backup_the);
     bt.send('ToBackup', 'database/ToBackup', {
       id: id
@@ -7776,6 +7784,7 @@ bt.data = {
       ]
     }
   }
+  
 }
 var form_group = {
   select_all: function (_arry) {
@@ -7909,6 +7918,7 @@ var form_group = {
       }
     });
   },
+
 }
 
 var dynamic = {
@@ -7987,7 +7997,7 @@ var dynamic = {
     }
   },
   /**
-   * @default 执行延迟文件内容执行
+   * @description 执行延迟文件内容执行
    * @param fileName {string} 文件名称，不要加文件后缀
    * @param callback {function} 回调行数
    */
@@ -7997,5 +8007,93 @@ var dynamic = {
       return false
     }
     this.fileFunList[fileName] = callback
+  },
+
+}
+
+bt.public = {
+    
+
+  // 设置目录配额
+  modify_path_quota:function (data,callback) {
+    bt_tools.send('/project/quota/modify_path_quota',data,function (res) { 
+      if(callback) callback(res)
+    })
+  },
+
+  // 设置mysql配额
+  modify_mysql_quota:function (data,callback) {
+    bt_tools.send('/project/quota/modify_mysql_quota',data,function (res) { 
+      if(callback) callback(res)
+    })
+  },
+
+  /**
+   * @description 获取quoto容量
+  */
+
+  get_quota_config:function (type) {
+    return {
+      fid: 'quota',
+      title:'容量',
+      width: 80,
+      template:function(row,index){
+        var quota = row.quota;
+        if(!quota.size) return '<a href="javascript:;" class="btlink">未配置</a>'
+        var size = quota.size * 1024 * 1024;
+        var speed = ((quota.used / size) * 100).toFixed(2)
+        return '<div class=""><div class="progress mb0 cursor" style="height:12px;line-height:12px;vertical-align:middle;border-radius:2px;margin-top:3px;" title="当前已用容量:'+ bt.format_size(quota.used) +'\n当前容量配额：'+ bt.format_size(size) +'\n点击修改容量配额">'+
+          '<div class="progress-bar progress-bar-'+ (speed >= 90?'danger':'success') +'" style="height:15px;line-height:15px;width: '+ speed +'%;display: inline-block;" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>'+
+        '</div>'
+      },
+      event:function(row, index, ev){
+        var quota = row.quota;
+        layer.open({
+          type:1,
+          title:'【'+ row.name + '】'+ (type == 'site'?'网站':(type == 'ftp'?'FTP':'数据库')) +'容量配额',
+          area:'400px',
+          closeBtn:2,
+          btn:['保存','取消'],
+          content:'<div class="bt-form pd20"><div class="line">'+
+            '<span class="tname" style="width:120px">当前已用容量</span>'+
+            '<div class="info-r" style="maring-right:120px">' +
+              '<input type="text" name="used" disabled placeholder="" class="bt-input-text mr10 " style="width:140px;" value="'+ (bt.format_size(quota.used,false)) +'" /><span>MB</span>'+
+            '</div>'+
+              '<span class="tname" style="width:120px">容量配额</span>'+
+              '<div class="info-r" style="maring-right:120px">'+
+                '<input type="text" name="quota_size" placeholder="" class="bt-input-text mr10 " style="width:140px;" value="'+ quota.size +'" /><span>MB</span>'+
+              '</div>'+
+            '</div>'+
+            '<ul class="help-info-text c7">'+
+              '<li style="color:red;">温馨提示：此功能为企业版专享功能</li>'+
+              '<li class="'+ (type == "database"?'hide':'') +'">需要XFS文件系统，且包含prjquota挂载参数才能使用</li>'+
+              '<li class="'+ (type == "database"?'hide':'') +'">fstab配置示例：/dev/vdc1 /data xfs defaults,prjquota 0 0</li>'+
+              '<li>容量配额：如需取消容量配额，请设为“0”</li>'+
+            '</ul>'+
+          '</div>',
+          yes:function (indexs) { 
+            var quota_size = $('[name="quota_size"]').val()
+            if(type === 'site' || type === 'ftp'){
+              bt.public.modify_path_quota({data:JSON.stringify({size:quota_size,path:row.path})},function (res) {
+                bt.msg(res)
+                if(res.status){
+                  layer.close(indexs)
+                  setTimeout(function () { location.reload() },200)
+                  
+                }
+              })
+            }else{
+              bt.public.modify_mysql_quota({data:JSON.stringify({size:quota_size,db_name:row.name})},function (res) {
+                bt.msg(res)
+                if(res.status){
+                  layer.close(indexs)
+                  setTimeout(function () { location.reload() },200)
+                }
+              })
+            }
+          }
+        })
+      }
+    }
   }
 }

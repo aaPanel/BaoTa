@@ -32,22 +32,27 @@ class panelMysql:
         pass
 
     def set_name(self,name):
-        self.__DB_NAME = name
+        self.__DB_NAME = str(name)
         return self
 
     def set_host(self,host,port,name,username,password,prefix = ''):
         self.__DB_HOST = host
         self.__DB_PORT = int(port)
         self.__DB_NAME = name
-        self.__DB_USER = username
-        self._USER = username
-        self.__DB_PASS = password
+        if self.__DB_NAME: self.__DB_NAME = str(self.__DB_NAME)
+        self.__DB_USER = str(username)
+        self._USER = str(username)
+        self.__DB_PASS = str(password)
         self.__DB_PREFIX = prefix
+        self.__GetConn()
         return self
 
     #连接MYSQL数据库
     def __GetConn(self):
-        self.__DB_CONN = pymysql.connect(host=self.__DB_HOST,user=self.__DB_USER,passwd=str(self.__DB_PASS),db=self.__DB_NAME,port=self.__DB_PORT)
+        try:
+            self.__DB_CONN = pymysql.connect(host=self.__DB_HOST,user=self.__DB_USER,passwd=str(self.__DB_PASS),db=self.__DB_NAME,port=self.__DB_PORT,connect_timeout=15,read_timeout=60,write_timeout=60)
+        except:
+            self.__DB_CONN = pymysql.connect(host=self.__DB_HOST,user=self.__DB_USER,passwd=str(self.__DB_PASS),db=self.__DB_NAME,port=self.__DB_PORT)
         self.__DB_CUR  = self.__DB_CONN.cursor()
         return True
 

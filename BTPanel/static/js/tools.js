@@ -768,10 +768,10 @@ var bt_tools = {
               template = '<div class="bt_batch"><label><i class="cust—checkbox cursor-pointer checkbox_' + this.random + '" data-checkbox="all"></i><input type="checkbox" lass="cust—checkbox-input" /></label>' + (typeof item.config != 'undefined' ? '<button class="btn btn-default btn-sm set_batch_option bt-disabled">批量' + item.config.title + '</button>' : '<div class="bt_table_select_group bt-disabled not-select"><span class="bt_select_value"><span class="bt_select_tips">请选择批量操作<em></em></span><span class="glyphicon glyphicon-triangle-bottom ml5"></span></span><ul class="bt_selects ">' + _html + '</ul></div><button class="btn btn-default btn-sm set_batch_option bt-disabled" >' + item.buttonValue + '</button>') + '</div>';
               break;
             case 'page':
-              this.config.page = item;
-              var pageNumber = bt.get_cookie('page_number');
-              if (this.config.cookiePrefix && pageNumber) this.config.page.number = pageNumber;
-              template = this.$reader_page(this.config.page, '<div><span class="Pcurrent">1</span><span class="Pcount">共0条数据</span></div>');
+              this.config.page = item
+              var pageNumber = bt.get_cookie('page_number')
+              if (this.config.cookiePrefix && pageNumber) this.config.page.number = pageNumber
+              template = this.$reader_page(this.config.page, '<div><span class="Pcurrent">1</span><span class="Pcount">共0条数据</span></div>')
               break;
           }
           if (template) {
@@ -1135,9 +1135,10 @@ var bt_tools = {
           _search = config.search,
           _sort = config.sort || {};
         if (_page) {
-          if (page_number) _page.number = page_number
-          param[_page.numberParam] = _page.number, param[_page.pageParam] = _page.page;
-          bt.set_cookie('page_number', _page.number);
+          if (page_number && !_page.number) _page.number = page_number
+          if (_page.defaultNumber) _page.number = _page.defaultNumber
+          param[_page.numberParam] = _page.number, param[_page.pageParam] = _page.page
+          bt.set_cookie('page_number', _page.number)
         }
         if (_search) param[_search.searchParam] = _search.value;
         if (this.config.beforeRequest) {
@@ -2243,7 +2244,6 @@ var bt_tools = {
           this.fragment.splice(0, 150)
           this.el.html(this.fragment.join(''))
         } else {
-          console.log(data)
           this.el.append(rdata)
         }
         this.el.scrollTop(this.el[0].scrollHeight)

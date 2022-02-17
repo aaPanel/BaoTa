@@ -74,7 +74,7 @@ if app.config['SSL']:
 else:
     app.config['SESSION_COOKIE_SAMESITE'] = None
 
-    
+
 Session(app)
 
 import common
@@ -155,6 +155,7 @@ def request_check():
     if len(request.url) > 1024: return abort(403)
 
     if request.path in ['/service_status']: return
+    # if request.path.find('/phpmyadmin_') == 0: return
 
     # POST参数过滤
     if request.path in ['/login', '/safe', '/hook', '/public', '/down', '/get_app_bind_status', '/check_bind']:
@@ -300,7 +301,7 @@ def home():
     data['databaseCount'] = public.M('databases').count()
     data['lan'] = public.GetLan('index')
     data['js_random'] = get_js_random()
-    public.auto_backup_panel()
+    public.run_thread(public.auto_backup_panel)
     return render_template('index.html', data=data)
 
 
@@ -814,7 +815,7 @@ def config(pdata=None):
     'get_key', 'get_php_session_path', 'set_php_session_path', 'get_cert_source', 'get_users',
     'set_local', 'set_debug', 'get_panel_error_logs', 'clean_panel_error_logs', 'get_menu_list', 'set_hide_menu_list',
     'get_basic_auth_stat', 'set_basic_auth', 'get_cli_php_version', 'get_tmp_token', 'get_temp_login', 'set_temp_login',
-    'remove_temp_login', 'clear_temp_login', 'get_temp_login_logs',
+    'remove_temp_login', 'clear_temp_login', 'get_temp_login_logs','set_request_iptype','set_request_type',
     'set_cli_php_version', 'DelOldSession', 'GetSessionCount', 'SetSessionConf', 'show_recommend', 'show_workorder',
     'GetSessionConf', 'get_ipv6_listen', 'set_ipv6_status', 'GetApacheValue', 'SetApacheValue',
     'GetNginxValue', 'SetNginxValue', 'get_token', 'set_token', 'set_admin_path', 'is_pro','set_not_auth_status',
@@ -2381,3 +2382,46 @@ def daily():
     defs = ("get_app_usage", "get_daily_data", "get_daily_list")
     result = publicObject(toObject, defs)
     return result
+
+@app.route('/phpmyadmin/<path:path_full>',methods=method_all)
+def pma_proxy(path_full = None):
+    '''
+        @name phpMyAdmin代理
+        @author hwliang<2022-01-19>
+        @return Response
+    '''
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    cache_key = 'pmd_port_path'
+    pmd = cache.get(cache_key)
+    if not pmd:
+        pmd = get_phpmyadmin_dir()
+        if not pmd: return '未安装phpMyAdmin,请到【软件商店】页面安装!'
+        cache.set(cache_key,pmd,10)
+    proxy_url = 'http://127.0.0.1:{}/{}/'.format(pmd[1],pmd[0]) + request.full_path.replace('/phpmyadmin/','')
+    from panelHttpProxy import HttpProxy
+    px = HttpProxy()
+    return px.proxy(proxy_url)
+
+@app.route('/p/<int:port>',methods=method_all)
+@app.route('/p/<int:port>/',methods=method_all)
+@app.route('/p/<int:port>/<path:full_path>',methods=method_all)
+def proxy_port(port,full_path=None):
+    '''
+        @name 代理指定端口
+        @author hwliang<2022-01-19>
+        @return Response
+    '''
+    
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    full_path = request.full_path.replace('/p/{}/'.format(port),'').replace('/p/{}'.format(port),'')
+    uri = '{}/{}'.format(port,full_path)
+    uri = uri.replace('//','/')
+    proxy_url = 'http://127.0.0.1:{}'.format(uri)
+    from panelHttpProxy import HttpProxy
+    px = HttpProxy()
+    return px.proxy(proxy_url)
+
+    
+

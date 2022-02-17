@@ -44,7 +44,8 @@ def HttpGet(url,timeout = 6,headers = {}):
         @timeout 超时时间默认60秒
         @return string
     """
-    if is_local(): return False
+    if url.find('GetAuthToken') == -1:
+        if is_local(): return False
     rep_home_host()
     import http_requests
     res = http_requests.get(url,timeout=timeout,headers = headers)
@@ -114,7 +115,8 @@ def HttpPost(url,data,timeout = 6,headers = {}):
         @timeout 超时时间默认60秒
         return string
     """
-    if is_local(): return False
+    if url.find('GetAuthToken') == -1:
+        if is_local(): return False
     rep_home_host()
     import http_requests
     res = http_requests.post(url,data=data,timeout=timeout,headers = headers)
@@ -288,22 +290,23 @@ def ReadFile(filename,mode = 'r'):
     """
     import os
     if not os.path.exists(filename): return False
+    fp = None
     try:
         fp = open(filename, mode)
         f_body = fp.read()
-        fp.close()
     except Exception as ex:
         if sys.version_info[0] != 2:
             try:
                 fp = open(filename, mode,encoding="utf-8")
                 f_body = fp.read()
-                fp.close()
             except:
                 fp = open(filename, mode,encoding="GBK")
                 f_body = fp.read()
-                fp.close()
         else:
             return False
+    finally:
+        if fp and not fp.closed:
+            fp.close()
     return f_body
 
 def readFile(filename,mode='r'):
@@ -1736,7 +1739,10 @@ def get_mysql_obj(db_name):
         import db_mysql
         db_obj = db_mysql.panelMysql()
         conn_config = json.loads(db_find['conn_config'])
-        db_obj = db_obj.set_host(conn_config['db_host'],conn_config['db_port'],conn_config['db_name'],conn_config['db_user'],conn_config['db_password'])
+        try:
+            db_obj = db_obj.set_host(conn_config['db_host'],conn_config['db_port'],conn_config['db_name'],conn_config['db_user'],conn_config['db_password'])
+        except Exception as e:
+            raise PanelError(GetMySQLError(e))
     else:
         import panelMysql
         db_obj = panelMysql.panelMysql()
@@ -1748,11 +1754,36 @@ def get_mysql_obj_by_sid(sid = 0,conn_config = None):
         if not conn_config: conn_config = M('database_servers').where("id=?" ,sid).find()
         import db_mysql
         db_obj = db_mysql.panelMysql()
-        db_obj = db_obj.set_host(conn_config['db_host'],conn_config['db_port'],None,conn_config['db_user'],conn_config['db_password'])
+        try:
+            db_obj = db_obj.set_host(conn_config['db_host'],conn_config['db_port'],None,conn_config['db_user'],conn_config['db_password'])
+        except Exception as e:
+            raise PanelError(GetMySQLError(e))
     else:
         import panelMysql
         db_obj = panelMysql.panelMysql()
     return db_obj
+
+def GetMySQLError(e):
+    res = ''
+    if e.args[0] == 1045:
+        res = '数据库用户名或密码错误!'
+    if e.args[0] == 1049:
+        res = '数据库不存在!'
+    if e.args[0] == 1044:
+        res = '没有指定数据库的访问权限，或指定数据库不存在!'
+    if e.args[0] == 1062:
+        res = '数据库已存在!'
+    if e.args[0] == 1146:
+        res = '数据表不存在!'
+    if e.args[0] == 2003:
+        res = '数据库服务器连接失败!'
+    if e.args[0] == 1142:
+        res = '指定用户权限不足!'
+    if res: 
+        res = res + "<pre>" + str(e) + "</pre>"
+    else:
+        res = str(e)
+    return res
 
 
 def get_database_codestr(codeing):
@@ -1909,6 +1940,35 @@ def get_limit_ip():
     return iplong_list
 
 
+def is_api_limit_ip(ip_list,client_ip):
+    '''
+        @name 判断IP是否在限制列表中
+        @author hwliang<2022-02-10>
+        @param ip_list<list> 限制IP列表
+        @param client_ip<string> 客户端IP
+        @return bool
+    '''
+    iplong_list = []
+    for limit_ip in ip_list:
+        if not limit_ip: continue
+        if limit_ip in ['*','all','0.0.0.0','0.0.0.0/0','0.0.0.0/24','0.0.0.0/32']: return True
+        limit_ip = limit_ip.split('-')
+        iplong = {}
+        iplong['min'] = ip2long(limit_ip[0])
+        if len(limit_ip) > 1:
+            iplong['max'] = ip2long(limit_ip[1])
+        else:
+            iplong['max'] = iplong['min']
+        iplong_list.append(iplong)
+
+    client_ip_long = ip2long(client_ip)
+    for limit_ip in iplong_list:
+        if client_ip_long >= limit_ip['min'] and client_ip_long <= limit_ip['max']:
+            return True
+    return False
+    
+
+
 
 
 #检查IP白名单
@@ -1959,6 +2019,7 @@ def auto_backup_panel():
         backup_path = b_path + '/' + format_date('%Y-%m-%d')
         if os.path.exists(backup_path): return True
         if os.path.getsize(panel_paeh + '/data/default.db') > 104857600 * 2: return False
+        if os.path.getsize(panel_paeh + '/data/system.db') > 104857600 * 2: return False
         os.makedirs(backup_path,384)
         import shutil
         shutil.copytree(panel_paeh + '/data',backup_path + '/data')
@@ -3395,7 +3456,7 @@ class PanelError(Exception):
         self.value = value
 
     def __str__(self):
-        return ("面板运行时发生错误: {}".format(repr(self.value)))
+        return ("面板运行时发生错误: {}".format(str(self.value)))
 
 
 def get_plugin_find(upgrade_plugin_name = None):
@@ -3934,6 +3995,7 @@ def to_date(format = "%Y-%m-%d %H:%M:%S",times = None):
         if isinstance(times,int): return times
         if isinstance(times,float): return int(times)
         if re.match("^\d+$",times): return int(times)
+    else: return 0
     ts = time.strptime(times, "%Y-%m-%d %H:%M:%S")
     return time.mktime(ts)
 

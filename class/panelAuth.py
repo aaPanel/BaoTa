@@ -12,7 +12,11 @@
 #------------------------------
 
 import public,time,json,os,re
-from BTPanel import session,cache
+from pluginAuth import Plugin
+try:
+    from BTPanel import session,cache
+except:
+    pass
 
 class panelAuth:
     __product_list_path = 'data/product_list.pl'
@@ -51,7 +55,7 @@ class panelAuth:
 
     def get_wx_order_status(self,get):
         """
-        检查制服状态
+        检查支付状态
         @get.wxoid 支付id
         """
         params = {}
@@ -115,6 +119,7 @@ class panelAuth:
     
     def get_plugin_list(self,get):
         try:
+            Plugin(False).get_plugin_list(False)
             if not session.get('get_product_bay') or not os.path.exists(self.__product_bay_path):
                 data = self.send_cloud('get_order_list_byuser', {})
                 if data: public.writeFile(self.__product_bay_path,json.dumps(data))
@@ -165,7 +170,7 @@ class panelAuth:
 
     def check_pay_status(self,get):
         """
-        检查制服状态
+        检查支付状态
         @get.id 支付id
         """
         params = {}
