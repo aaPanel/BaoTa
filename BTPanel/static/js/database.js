@@ -35,6 +35,7 @@ var database = {
         minWidth: '1000px',
         autoHeight: true,
         default: "数据库列表为空", // 数据为空时的默认提示
+        pageName: 'database',
         beforeRequest: function(){
           var db_type_val = $('.database_type_select_filter').val()
           switch(db_type_val){
