@@ -1292,4 +1292,25 @@ class ajax:
         s_body = public.ExecShell("tail -n {} {}".format(args.num,args.filename))[0]
         return public.returnMsg(True,s_body)
         
-        
+    def log_analysis(self,get):
+        import log_analysis
+        log_analysis=log_analysis.log_analysis()
+        return log_analysis.log_analysis(get)
+
+
+    def speed_log(self,get):
+        import log_analysis
+        log_analysis=log_analysis.log_analysis()
+        return log_analysis.speed_log(get)
+
+
+
+    def get_result(self,get):
+        import log_analysis
+        log_analysis=log_analysis.log_analysis()
+        return log_analysis.get_result(get)
+
+    def get_detailed(self,get):
+        import log_analysis
+        log_analysis=log_analysis.log_analysis()
+        return log_analysis.get_detailed(get)
