@@ -1128,8 +1128,9 @@ var database = {
       tables: JSON.stringify(dbs)
     }, function (rdata) {
       layer.close(loadT)
-
-      database.rep_tools(db_name, true);
+      if (rdata.status) {
+        database.rep_tools(db_name, true);
+      }
       layer.msg(rdata.msg, {
         icon: rdata.status ? 1 : 2
       });
@@ -1146,8 +1147,9 @@ var database = {
       tables: JSON.stringify(dbs)
     }, function (rdata) {
       layer.close(loadT)
-
-      database.rep_tools(db_name, true);
+      if (rdata.status) {
+        database.rep_tools(db_name, true);
+      }
       layer.msg(rdata.msg, {
         icon: rdata.status ? 1 : 2
       });
@@ -1166,8 +1168,9 @@ var database = {
       table_type: type
     }, function (rdata) {
       layer.close(loadT);
-
-      database.rep_tools(db_name, true);
+      if (rdata.status) {
+        database.rep_tools(db_name, true);
+      }
       layer.msg(rdata.msg, {
         icon: rdata.status ? 1 : 2
       });
