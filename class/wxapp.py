@@ -13,6 +13,7 @@ if not 'class/' in sys.path:
 import public
 import json
 import time
+import uuid
 from BTPanel import session,cache,request
 
 class wxapp():
@@ -34,7 +35,7 @@ class wxapp():
                 if time.time() - float(init_time) > 60:
                     return public.returnMsg(False, '二维码失效')
                 session_id = public.get_session_id()
-                if cache.get(session_id) == 'True':
+                if cache.get(session_id) == public.md5(uuid.UUID(int=uuid.getnode()).hex):
                     return public.returnMsg(True, '扫码成功')
             except:
                 os.remove(self.app_path + "app_login_check.pl")
@@ -54,7 +55,7 @@ class wxapp():
     # 设置登录状态
     def set_login(self, get):
         session_id = public.get_session_id()
-        if cache.get(session_id) == 'True':
+        if cache.get(session_id) == public.md5(uuid.UUID(int=uuid.getnode()).hex):
             return self.check_app_login(get)
         return public.returnMsg(False, '登录失败1')
 
@@ -81,6 +82,7 @@ class wxapp():
             import uuid
             if status != uuid.UUID(int=uuid.getnode()).hex[-12:]: return public.returnMsg(False, '当前二维码失效222')
             cache.delete(session_id)
+            cache.delete(tid)
             userInfo = public.M('users').where("id=?", (1,)).field('id,username').find()
             session['login'] = True
             session['username'] = userInfo['username']
