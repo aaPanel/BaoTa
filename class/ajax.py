@@ -1379,23 +1379,22 @@ class ajax:
         plu_panel =  panelPlugin.panelPlugin()
         plugin_list = plu_panel.get_cloud_list()
         nList = []
-        webserver = public.get_webserver()       
-        try:
-            indexList = json.loads(public.readFile("config/index.json"))
-        except :indexList = []
+        webserver = public.get_webserver()
         for x in sList:
             for plugin_info in plugin_list['list']:
                 if x['name'] == plugin_info['name']:
                     if plugin_info['endtime'] >= 0:
                         x['isBuy'] = True
                 
-            if x['name'] in indexList: continue
-            if not 'dependent' in x: 
-                nList.append(x)
-                continue
-
-            if x['dependent'] == webserver:
+            is_check = False
+            if 'dependent' in x :
+                if  x['dependent'] == webserver: is_check = True                           
+            else:
+                is_check = True
+            if is_check:                
                 info = plu_panel.get_soft_find(x['name'])
-                if info:x['install'] = info['setup']
-                nList.append(x)                
+                if info:
+                    if not info['setup']:                        
+                        x['install'] = info['setup']
+                        nList.append(x)     
         return nList
