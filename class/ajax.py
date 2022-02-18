@@ -1376,6 +1376,7 @@ class ajax:
             @name 获取首页软件列表推荐
         """
         import panelPlugin
+        import pluginAuth
 
         plu_panel =  panelPlugin.panelPlugin()
         nList = []
@@ -1384,23 +1385,22 @@ class ajax:
             indexList = json.loads(public.readFile("config/index.json"))
         except :indexList = []
         for x in sList:
+            x['isBuy'] = True
+            try:
+                pluginAuth.Plugin(x['name'])
+                x['isBuy'] = True
+            except :
+                err = public.get_error_info()
+                if err.find('未购买或已到期') >= 0:
+                    x['isBuy'] = False
             if not 'dependent' in x: 
                 nList.append(x)
-                continue                
+                continue
+
             if x['dependent'] == webserver:
                 if not x['name'] in indexList: 
                  
                     info = plu_panel.get_soft_find(x['name'])
                     if info:x['install'] = info['setup']
-                        
-                    x['isBuy'] = True
-                    try:
-                        import pluginAuth
-                        plu_auth = pluginAuth.Plugin(x['name'])
-                        x['isBuy'] = True
-                    except :
-                        err = public.get_error_info()
-                        if err.find('未购买或已到期') >= 0:
-                            x['isBuy'] = False
                     nList.append(x)                
         return nList
