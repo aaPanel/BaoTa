@@ -4749,6 +4749,7 @@ MessageBox.prototype = {
       $('.debugs').empty();
       $('.debugs').css({ "z-index": "9999" });
       $('.debugs').append('<span>在线</br>客服</span>');
+      bt.set_cookie('pay_source',37)
       bt.soft.updata_ltd(true);
     });
     // 		//重新发送
@@ -6324,6 +6325,144 @@ BindAccount.prototype = {
       loadT.close();
       bt.msg(rdata);
       if (callback) callback(rdata);
+    })
+  }
+}
+
+var product_recommend = {
+  data:null,
+  /**
+   * @description 初始化
+   */
+  init:function(callback){
+    var _this = this;
+    if(location.pathname.indexOf('bind') > -1) return;
+    this.get_product_type(function (rdata) {
+      _this.data = rdata
+      if(callback) callback(rdata)
+    })
+  },
+  /**
+   * @description 获取推荐类型
+   * @param {object} type 参数{type:类型}
+   */
+  get_recommend_type:function(type){
+    var config = null,pathname = location.pathname.replace('/','') || 'home';
+    for (let i = 0; i < this.data.length; i++) {
+      const item = this.data[i];
+      if(item.type == type && item.show) config = item
+    }
+    return config
+  },
+
+  /**
+   * @description 或指定版本事件
+   * @param {} name 
+   */
+  get_version_event:function (item,param) {
+    var pay_status = this.get_pay_status();
+    bt.soft.get_soft_find(item.name,function(res){
+      if((res.type === 12 && pay_status.is_pay && pay_status.advanced !== 'ltd') || !pay_status.is_pay){
+        product_recommend.recommend_product_view(item)
+      }else if(!res.setup){
+        bt.soft.install(item.name)
+      }else{
+        bt.plugin.get_plugin_byhtml(item.name,function(html){
+          if(typeof html === "string"){
+            layer.open({ 
+              type:1,
+              shade:0,
+              skin:'hide',
+              content:html, 
+              success:function(){
+                var is_event = false;
+                for (var i = 0; i < item.eventList.length; i++) {
+                  var data = item.eventList[i];
+                  var oldVersion = data.version.replace('.',''),newVersion = res.version.replace('.','');
+                  if(newVersion <= oldVersion){
+                    is_event = true
+                    setTimeout(function () {                                                                                                                                                                                                                                                                                                                                                                                     
+                      new Function(data.event.replace('$siteName',param))() 
+                    },100)
+                    break; 
+                  }
+                }
+                if(!is_event) new Function(item.eventList[item.eventList.length - 1].event.replace('$siteName',param))() 
+              }
+            })
+          }
+        })
+      }
+
+    })
+  },
+  /**
+   * @description 获取支付状态
+   */
+  get_pay_status:function(){
+    var pro_end = parseInt(bt.get_cookie('pro_end') || -1);
+    var ltd_end = parseInt(bt.get_cookie('ltd_end')  || -1); 
+    var is_pay = pro_end >= -1 && ltd_end > -1; // 是否购买付费版本
+    var advanced = 'ltd'; // 已购买，企业版优先显示
+    if(pro_end === -2 || pro_end > -1) advanced = 'pro';
+    if(ltd_end === -2 || ltd_end > -1) advanced = 'ltd';
+    var end_time = advanced === 'ltd'? ltd_end:pro_end; // 到期时间
+    return { advanced: advanced, is_pay:is_pay,  end_time:end_time };
+  },
+
+  pay_product_sign:function (type,source) {
+    bt.set_cookie('pay_source',source)
+    bt.soft['updata_'+ type ]()
+  },
+  /**
+   * @description 获取项目类型
+   * @param {Function} callback 回调函数
+   */
+  get_product_type:function(callback){
+    bt.send('get_pay_type','ajax/get_pay_type',{},(rdata)=>{
+      bt.set_storage('session','get_pay_type',JSON.stringify(rdata))
+      if(callback) callback(rdata)
+    })
+  },
+  /**
+   * @description 推荐购买产品
+   * @param {Object} pay_id 购买的入口id
+  */
+  recommend_product_view: function (config) {
+    var name = config.name.split('_')[0];
+    var status = this.get_pay_status();
+    bt.open({
+      title:false,
+      area:'650px',
+      btn:false,
+      content:'<div class="ptb15" style="display: flex;">\
+        <div class="product_view"><img src="/static/images/recommend/'+ name +'.png"/></div>\
+        <div class="product_describe ml10">\
+          <div class="describe_title">'+ config.pluginName +'</div>\
+          <div class="describe_ps">'+ config.ps +'</div>\
+          <div class="product_describe_btn">\
+            <a class="btn btn-default mr10 btn-sm productPreview '+ (!config.preview?'hide':'') +'" href="'+ config.preview +'" target="_blank">产品预览</a><button class="btn btn-success btn-sm buyNow">立即购买</button>\
+          </div>\
+        </div>\
+      </div>',
+      success:function () {
+        // 产品预览
+        $('.product_view img').click(function () {
+          layer.open({
+            type:1,
+            title:'查看图片',
+            area:['650px','450px'],
+            closeBtn:2,
+            btn:false,
+            content:'<img src="/static/images/recommend/'+ name +'.png" style="width:100%" />'
+          })
+        })
+        // 立即购买
+        $('.buyNow').click(function(){
+          bt.set_cookie('pay_source',config.pay)
+          bt.soft['updata_' + status.advanced]()
+        })
+      }
     })
   }
 }

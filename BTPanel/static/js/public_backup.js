@@ -4453,6 +4453,7 @@ bt.soft = {
         _cycle = $(".pay-cycle-btns.active").data('data'),
         _source = 0,
         _locahostURL = window.location.pathname;
+    var pay_source = parseInt(bt.get_cookie('pay_source') || 0)
     switch (_locahostURL) {
       case '/':
         if($('.btpro-gray').length == 1){  //是否免费版
@@ -4471,6 +4472,7 @@ bt.soft = {
         _source = 25
         break;
     };
+    if(_source && !pay_source) bt.set_cookie('pay_source', _source);
 
     $(".wx-pay-ico").hide()
     $(".libPay-loading").show();
@@ -4484,7 +4486,7 @@ bt.soft = {
     that.pro.create_order({
       pid: _product.pid,
       cycle: _cycle.cycle,
-      source: _source
+      source: pay_source || _source
     }, function (rdata) {
       var start = that.pay_loading.get('start')
       var end = that.pay_loading.set('end')
@@ -8048,7 +8050,9 @@ bt.public = {
         if(!quota.size) return '<a href="javascript:;" class="btlink">未配置</a>'
         var size = quota.size * 1024 * 1024;
         var speed = ((quota.used / size) * 100).toFixed(2)
-        return '<div class=""><div class="progress mb0 cursor" style="height:12px;line-height:12px;vertical-align:middle;border-radius:2px;margin-top:3px;" title="当前已用容量:'+ bt.format_size(quota.used) +'\n当前容量配额：'+ bt.format_size(size) +'\n点击修改容量配额">'+
+        var quotaFull = false
+        if(quota.size > 0 && quota.used >= (size)) quotaFull = true;
+        return '<div class=""><div class="progress mb0 cursor" style="height:12px;line-height:12px;vertical-align:middle;border-radius:2px;margin-top:3px;" title="当前已用容量：'+ (quotaFull?'已用完':bt.format_size(quota.used)) +'\n当前容量配额：'+ bt.format_size(size) +'\n点击修改容量配额">'+
           '<div class="progress-bar progress-bar-'+ (speed >= 90?'danger':'success') +'" style="height:15px;line-height:15px;width: '+ speed +'%;display: inline-block;" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>'+
         '</div>'
       },
@@ -8067,7 +8071,7 @@ bt.public = {
           content:'<div class="bt-form pd20"><div class="line">'+
             '<span class="tname" style="width:120px">当前已用容量</span>'+
             '<div class="info-r" style="maring-right:120px">' +
-              '<input type="text" name="used" disabled placeholder="" class="bt-input-text mr10 " style="width:120px;" value="'+ (!quotaFull?(quota.size != 0?usedList[0]:0):'容量已满') +'" /><span>'+ (!quotaFull?(quota.size != 0?usedList[1]:'MB'):'') +'</span>'+
+              '<input type="text" name="used" disabled placeholder="" class="bt-input-text mr10 " style="width:120px;" value="'+ (!quotaFull?(quota.size != 0?usedList[0]:0):'容量已用完') +'" /><span>'+ (!quotaFull?(quota.size != 0?usedList[1]:'MB'):'') +'</span>'+
             '</div>'+
               '<span class="tname" style="width:120px">配额容量</span>'+
               '<div class="info-r" style="maring-right:120px">'+
@@ -8107,5 +8111,95 @@ bt.public = {
         })
       }
     }
+  }
+}
+
+
+var dynamic = {
+  loadList: [],
+  fileFunList: {},
+  load: false,
+  callback: null,
+
+  // 初始化执行
+  execution: function () {
+    for (var i = 0; i < this.loadList.length; i++) {
+      var fileName = this.loadList[i];
+      if (fileName in this.fileFunList) this.fileFunList[fileName]()
+    }
+  },
+
+  /**
+   * @description 动态加载js,css文件
+   * @param url {string|array} 文件路径或文件数组
+   * @param fn {function|undefined} 回调函数
+   */
+  require: function (url, fn, config) {
+    var urlList = url, total = 0, num = 0, that = this;
+    if (!Array.isArray(url)) urlList = [url];
+    total = urlList.length;
+    this.load = true;
+    this.fileFunList = {};
+    function createElement (url) {
+      var element = null;
+      if (url.indexOf('.js') > -1) {
+        element = document.createElement('script')
+        element.type = 'text/javascript'
+        element.src = bt.url_merge('/vue/' + url)
+      } else if (url.indexOf('.css') > -1) {
+        element = document.createElement('link')
+        element.rel = 'stylesheet'
+        element.href = bt.url_merge('/vue/' + url)
+      }
+      return element
+    }
+    for (var i = 0; i < urlList.length; i++) {
+      var item = urlList[i], dirArray = item.split('/'), filName = dirArray[dirArray.length - 1].split('.')[0]
+      if (this.loadList.indexOf(filName) > -1) break;
+      this.loadList.push(filName);
+      (function (url) {
+        var element = createElement(url);
+        if (element.readyState) {
+          element.onreadystatechange = function (ev) {
+            if (element.readyState === 'loaded' || element.readyState === 'complete') {
+              element.onreadystatechange = null
+              num++;
+              if (total === num) {
+                that.execution()
+                if (fn) {
+                  fn.call(that)
+                }
+                that.load = false;
+              }
+            }
+          };
+        } else {
+          element.onload = function (ev) {
+            that.loadList[filName] = that.fn
+            num++;
+            if (total === num) {
+              that.execution()
+              if (fn) {
+                fn.call(that)
+              }
+              that.load = false;
+            }
+          }
+        }
+        document.getElementsByTagName('head')[0].appendChild(element);
+      }(item))
+    }
+  },
+  /**
+   * @default 执行延迟文件内容执行
+   * @param fileName {string} 文件名称，不要加文件后缀
+   * @param callback {function} 回调行数
+   */
+  delay: function delay (fileName, callback) {
+    if (!this.load) {
+      callback()
+      return false
+    }
+    this.fileFunList[fileName] = callback
   }
 }
