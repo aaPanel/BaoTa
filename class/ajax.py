@@ -1375,8 +1375,7 @@ class ajax:
         """
             @name 获取首页软件列表推荐
         """
-        import panelPlugin        
-
+        import panelPlugin       
         plu_panel =  panelPlugin.panelPlugin()
         plugin_list = plu_panel.get_cloud_list()
         nList = []
@@ -1390,13 +1389,13 @@ class ajax:
                     if plugin_info['endtime'] >= 0:
                         x['isBuy'] = True
                 
+            if x['name'] in indexList: continue
             if not 'dependent' in x: 
                 nList.append(x)
                 continue
 
             if x['dependent'] == webserver:
-                if not x['name'] in indexList: 
-                    info = plu_panel.get_soft_find(x['name'])
-                    if info:x['install'] = info['setup']
-                    nList.append(x)                
+                info = plu_panel.get_soft_find(x['name'])
+                if info:x['install'] = info['setup']
+                nList.append(x)                
         return nList
