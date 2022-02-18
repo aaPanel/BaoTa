@@ -335,8 +335,11 @@ var soft = {
                   buy_type = 32;
                   break;
               }
+              if(typeof item.preview_url != "undefined" && item.preview_url != ""){
+                pay_opt = '<a class="btlink" href="'+ item.preview_url +'" target="_blank">预览</a> | '
+              }
               if (item.type != 10) {
-                pay_opt = '<a class="btlink" onclick=\'bt.soft.product_pay_view(' + JSON.stringify({
+                pay_opt += '<a class="btlink" onclick=\'bt.soft.product_pay_view(' + JSON.stringify({
                   name: item.title,
                   pid: item.pid,
                   type: item.type,
@@ -346,7 +349,7 @@ var soft = {
                   totalNum:buy_type
                 }) + ')\'>' + re_msg + '</a>';
               } else {
-                pay_opt = '<a class="btlink" onclick="bt.soft.re_plugin_pay_other(\'' + item.title + '\',\'' + item.pid + '\',' + re_status + ',' + item.price + ')">' + re_msg + '</a>';
+                pay_opt += '<a class="btlink" onclick="bt.soft.re_plugin_pay_other(\'' + item.title + '\',\'' + item.pid + '\',' + re_status + ',' + item.price + ')">' + re_msg + '</a>';
               }
 
             }
@@ -499,7 +502,12 @@ var soft = {
                   if (pay_opt) {
                     option = pay_opt;
                   } else {
-                    option = '<a class="btlink" onclick="bt.soft.install(\'' + item.name + '\',this)"  >' + lan.soft.install + '</a>';
+                    if(typeof item.preview_url != "undefined" && item.preview_url != ""){
+                      option = '<a class="btlink" href="'+ item.preview_url +'" target="_blank">预览</a> | '
+                    }else{
+                      option = ''
+                    }
+                    option += '<a class="btlink" onclick="bt.soft.install(\'' + item.name + '\',this)"  >' + lan.soft.install + '</a>';
                   }
                 }
               }

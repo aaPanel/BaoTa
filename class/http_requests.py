@@ -29,7 +29,7 @@ class http:
 
     def get(self,url,timeout = 60,headers = {},verify = False,type = 'python'):
         url = self.quote(url)
-        if type == 'python':
+        if type in ['python','src','php']:
             old_family = urllib3_conn.allowed_gai_family
             try:
                 # 默认使用IPv4
@@ -62,7 +62,7 @@ class http:
 
     def post(self,url,data,timeout = 60,headers = {},verify = False,type = 'python'):
         url = self.quote(url)
-        if type == 'python':
+        if type in ['python','src','php']:
             old_family = urllib3_conn.allowed_gai_family
             try:
                 if self._ip_type == 'ipv4':

@@ -78,6 +78,20 @@ class HttpProxy:
                 headers[k] = cookie_dict.output(header='',sep=';').strip()
         return headers
 
+    def form_to_dict(self,form):
+        '''
+            @name 将表单转为字典
+            @author hwliang<2022-02-18>
+            @param form<request.form> 表单数据
+            @return dict
+        '''
+
+        data = {}
+        for k in form.keys():
+            data[k] = form.getlist(k)
+            if len(data[k]) == 1: data[k] = data[k][0]
+        return data
+        
     def proxy(self,proxy_url):
         '''
             @name 代理指定URL地址
@@ -124,13 +138,14 @@ class HttpProxy:
                         if os.path.exists(tmp_file): os.remove(tmp_file)
     
                     # 转发上传请求
-                    p_res = requests.post(proxy_url,request.form,headers=headers,files=files,verify=False,allow_redirects=False)
+                    
+                    p_res = requests.post(proxy_url,self.form_to_dict(request.form),headers=headers,files=files,verify=False,allow_redirects=False)
     
                     # 释放文件对象
                     for fkey in f_list.keys():
                         f_list[fkey].close()
                 else:
-                    p_res = requests.post(proxy_url,request.form,headers=headers,verify=False,allow_redirects=False)
+                    p_res = requests.post(proxy_url,self.form_to_dict(request.form),headers=headers,verify=False,allow_redirects=False)
             else:
                 return Response('不支持的请求类型',500)
             res = Response(p_res.content,headers=self.get_res_headers(p_res),content_type=p_res.headers.get('content-type',None),status=p_res.status_code)

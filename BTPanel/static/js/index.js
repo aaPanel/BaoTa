@@ -347,11 +347,12 @@ var index = {
       else {
         $(".bind-weixin a").attr("href", "javascript:;");
         $(".bind-weixin a").click(function () {
+
           bt.msg({ msg: '请先绑定宝塔账号!', icon: 2 });
         })
       }
     })
-    setTimeout(function () { _this.get_index_list() }, 400)
+    // setTimeout(function () { _this.get_index_list() }, 400)
     setTimeout(function () { _this.net.init() }, 500);
     setTimeout(function () { _this.iostat.init() }, 500);
     setTimeout(function () { _this.get_warning_list() }, 600);
@@ -672,6 +673,8 @@ var index = {
       var rlen = rdata.length;
       var clickName = '';
       var setup_length = 0;
+      var softboxsum = 12;
+      var softboxcon = '';
       for (var i = 0; i < rlen; i++) {
         if (rdata[i].setup) {
           setup_length++;
@@ -702,15 +705,41 @@ var index = {
         }
       }
       $("#indexsoft").html(con);
+            
+      // 推荐安装软件
+      try {
+        var recomConfig = product_recommend.get_recommend_type(1)
+        if(recomConfig){
+          var pay_status = product_recommend.get_pay_status();
+          for (var i = 0; i < recomConfig['list'].length; i++) {
+            const item = recomConfig['list'][i];
+            if(setup_length > softboxsum) break;
+            if(pay_status.is_pay && item['install']) continue;
+            softboxcon += '<div class="col-sm-3 col-md-3 col-lg-3">\
+              <div class="recommend-soft recom-iconfont">\
+                <div class="product-close hide">关闭推荐</div>\
+                <div class="images"><img src="/static/img/soft_ico/ico-'+ item['name'] +'.png"></div>\
+                <div class="product-name">'+ item['title'] +'</div>\
+                <div class="product-pay-btn">\
+                '+ ((item['isBuy'] && !item['install'])?
+                '<button class="btn btn-sm btn-success" style="margin-left:0;" onclick="bt.soft.install(\''+ item['name'] +'\')">立即安装</button>':
+                '<a class="btn btn-sm btn-default mr5 '+ (!item.preview?'hide':'') +'" href="'+ item.preview +'" target="_blank">预览</a><button type="submit" class="btn btn-sm btn-success" onclick=\"product_recommend.pay_product_sign(\'ltd\','+ item.pay +')\">购买</button>') +'\
+                </div>\
+              </div>\
+            </div>'
+            setup_length ++;
+          }
+        }
+      } catch (error) {
+        console.log(error)
+      }
       //软件位置移动
-      var softboxsum = 12;
-      var softboxcon = '';
       if (setup_length <= softboxsum) {
         for (var i = 0; i < softboxsum - setup_length; i++) {
           softboxcon += '<div class="col-sm-3 col-md-3 col-lg-3 no-bg"></div>'
-        }
-        $("#indexsoft").append(softboxcon);
+        }  
       }
+      $("#indexsoft").append(softboxcon);
       $("#indexsoft").dragsort({ dragSelector: ".spanmove", dragBetween: true, dragEnd: saveOrder, placeHolderTemplate: "<div class='col-sm-3 col-md-3 col-lg-3 dashed-border'></div>" });
 
       function saveOrder () {
@@ -737,30 +766,30 @@ var index = {
           skin: 'layui-layer-dialog',
           closeBtn: 2,
           content: '<div class="setchmod bt-form">\
-                                <div class="update_title"><i class="layui-layer-ico layui-layer-ico1"></i><span>恭喜您，当前已经是最新版本</span></div>\
-                                <div class="update_version">当前版本：<a href="http://www.bt.cn/bbs/forum.php?mod=viewthread&tid=19376" target="_blank" class="btlink" title="查看当前版本日志">宝塔Linux'+ (rdata.msg.is_beta == 1 ? '测试版 ' + rdata.msg.beta.version : '正式版 ' + rdata.msg.version) + '</a>&nbsp;&nbsp;发布时间：' + (rdata.msg.is_beta == 1 ? rdata.msg.beta.uptime : rdata.msg.uptime) + '</div>\
-                                <div class="update_conter">\
-                                    <div class="update_tips">'+ (rdata.msg.is_beta != 1 ? '测试版' : '正式版') + '最新版本为&nbsp;' + (rdata.msg.is_beta != 1 ? rdata.msg.beta.version : rdata.msg.version) + '&nbsp;&nbsp;&nbsp;更新时间&nbsp;&nbsp;' + (rdata.msg.is_beta != 1 ? rdata.msg.beta.uptime : rdata.msg.uptime) + '&nbsp;&nbsp;&nbsp;\
-                                    '+ (rdata.msg.is_beta !== 1 ? '<span>如需更新测试版请点击<a href="javascript:;" onclick="index.beta_msg()" class="btlink btn_update_testPanel">查看详情</a></span>' : '<span>如需切换回正式版请点击<a href="javascript:;" onclick="index.to_not_beta()" class="btlink btn_update_testPanel">切换到正式版</a></span>') + '\
-                                    '+ (rdata.msg.is_beta !== 1 ? rdata.msg.btb : '') + '\
-                                    </div>\
-                                </div>\
-                                <div class="bt-form-submit-btn">\
-                                    <button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">'+ lan.public.cancel + '</button>\
-                                    <button type="button" class="btn btn-success btn-sm btn-title btn_update_panel" onclick="layer.closeAll()">'+ lan.public.know + '</button>\
-                                </div>\
-                            </div>\
-                            <style>\
-                                .setchmod{padding-bottom:50px;}\
-                                .update_title{overflow: hidden;position: relative;vertical-align: middle;margin-top: 10px;}\
-                                .update_title .layui-layer-ico{display: block;left: 60px !important;top: 1px !important;}\
-                                .update_title span{display: inline-block;color: #333;height: 30px;margin-left: 105px;margin-top: 3px;font-size: 20px;}\
-                                .update_conter{background: #f9f9f9;border-radius: 4px;padding: 20px;margin: 15px 37px;margin-top: 15px;}\
-                                .update_version{font-size: 12px;margin:15px 0 10px 85px}\
-                                .update_logs{margin-bottom:10px;border-bottom:1px solid #ececec;padding-bottom:10px;}\
-                                .update_tips{font-size: 13px;color: #666;font-weight: 600;}\
-                                .update_tips span{padding-top: 5px;display: block;font-weight: 500;}\
-                            </style>'
+              <div class="update_title"><i class="layui-layer-ico layui-layer-ico1"></i><span>恭喜您，当前已经是最新版本</span></div>\
+              <div class="update_version">当前版本：<a href="http://www.bt.cn/bbs/forum.php?mod=viewthread&tid=19376" target="_blank" class="btlink" title="查看当前版本日志">宝塔Linux'+ (rdata.msg.is_beta == 1 ? '测试版 ' + rdata.msg.beta.version : '正式版 ' + rdata.msg.version) + '</a>&nbsp;&nbsp;发布时间：' + (rdata.msg.is_beta == 1 ? rdata.msg.beta.uptime : rdata.msg.uptime) + '</div>\
+              <div class="update_conter">\
+                  <div class="update_tips">'+ (rdata.msg.is_beta != 1 ? '测试版' : '正式版') + '最新版本为&nbsp;' + (rdata.msg.is_beta != 1 ? rdata.msg.beta.version : rdata.msg.version) + '&nbsp;&nbsp;&nbsp;更新时间&nbsp;&nbsp;' + (rdata.msg.is_beta != 1 ? rdata.msg.beta.uptime : rdata.msg.uptime) + '&nbsp;&nbsp;&nbsp;\
+                  '+ (rdata.msg.is_beta !== 1 ? '<span>如需更新测试版请点击<a href="javascript:;" onclick="index.beta_msg()" class="btlink btn_update_testPanel">查看详情</a></span>' : '<span>如需切换回正式版请点击<a href="javascript:;" onclick="index.to_not_beta()" class="btlink btn_update_testPanel">切换到正式版</a></span>') + '\
+                  '+ (rdata.msg.is_beta !== 1 ? rdata.msg.btb : '') + '\
+                  </div>\
+              </div>\
+              <div class="bt-form-submit-btn">\
+                  <button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">'+ lan.public.cancel + '</button>\
+                  <button type="button" class="btn btn-success btn-sm btn-title btn_update_panel" onclick="layer.closeAll()">'+ lan.public.know + '</button>\
+              </div>\
+          </div>\
+          <style>\
+              .setchmod{padding-bottom:50px;}\
+              .update_title{overflow: hidden;position: relative;vertical-align: middle;margin-top: 10px;}\
+              .update_title .layui-layer-ico{display: block;left: 60px !important;top: 1px !important;}\
+              .update_title span{display: inline-block;color: #333;height: 30px;margin-left: 105px;margin-top: 3px;font-size: 20px;}\
+              .update_conter{background: #f9f9f9;border-radius: 4px;padding: 20px;margin: 15px 37px;margin-top: 15px;}\
+              .update_version{font-size: 12px;margin:15px 0 10px 85px}\
+              .update_logs{margin-bottom:10px;border-bottom:1px solid #ececec;padding-bottom:10px;}\
+              .update_tips{font-size: 13px;color: #666;font-weight: 600;}\
+              .update_tips span{padding-top: 5px;display: block;font-weight: 500;}\
+          </style>'
         });
         return;
       }
@@ -1268,11 +1297,12 @@ var index = {
   /**
    * @description 获取当前的产品状态
    */
-   get_product_status: function () {
+   get_product_status: function (callback) {
     // var loadT = layer.msg('正在获取产品状态，请稍候...', { icon: 16, time: 0 })
     bt.send('get_pd', 'ajax/get_pd', {}, function (res) {
-      // layer.close(loadT);
       $('.btpro-gray').replaceWith($(res[0]));
+      bt.set_cookie('pro_end', res[1]);
+      bt.set_cookie('ltd_end', res[2]);
       if(res[1] === 0){
         $(".btpro span").click(function(e){
           layer.confirm('切换回免费版可通过解绑账号实现', { icon: 3, btn: ['解绑账号'], closeBtn: 2, title: '是否取消授权' }, function () {
@@ -1286,10 +1316,58 @@ var index = {
           e.stopPropagation();
         });
       }
+      if(callback) callback();
     })
+  },
+    /**
+   * @description 推荐进阶版产品
+  */
+    recommend_paid_version: function () {
+    try {
+      var recomConfig = product_recommend.get_recommend_type(0)
+      var pay_status = product_recommend.get_pay_status()
+      var is_pay = pay_status.is_pay;
+      var advanced =  pay_status.advanced;
+      var end_time = pay_status.end_time;
+      var html = '',list_html = '';
+      if(!is_pay) advanced = ''; //未购买的时候，使用推荐内容
+      if(recomConfig){
+        var item = recomConfig;
+        for (let j = 0; j < item['ps'].length; j++) {
+          const element = item['ps'][j];
+          list_html += '<div class="item">'+ element +'</div>';
+        }
+        var pay_html = '';
+        if(is_pay){
+          pay_html = '<div class="product-buy '+ (advanced || item.name) +'-type">到期时间：<span>'+ (end_time === 0?'永久授权':(end_time === -2?'已过期':bt.format_data(end_time,'yyyy-MM-dd')) + '&nbsp;&nbsp;<a class="btlink" href="javascript:;" onclick="product_recommend.pay_product_sign(\''+ advanced +'\','+ item.pay +')">续费</a>') +'</span></div>'
+        }else{
+          pay_html = '<div class="product-buy"><button type="button" class="btn btn-xs btn-success" onclick="product_recommend.pay_product_sign(\''+ (advanced || item.name) +'\','+ item.pay +')">立即购买</button></div>'
+        }
+        html = '<div class="conter-box bgw">\
+          <div class="recommend-top pd15 '+ (is_pay?( advanced +'-bg'):'') +'">'+ (!is_pay?pay_html:'') +'<div class="product-ico '+ (advanced || item.name) +''+ (!is_pay?'-pay':'') +'-ico"></div>' + (is_pay?pay_html:'') +'\
+            <div class="product-label">'+ list_html +'</div>\
+          </div>\
+        </div>'
+        $('#home-recommend').html(html)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  /**
+   * @description 推荐任务管理器
+  */
+  recommend_task_manager: function () {
+    
   }
 }
-index.get_product_status();
 index.get_init();
 index.consultancy_services()
 //setTimeout(function () { index.get_cloud_list() }, 800);
+
+product_recommend.init(function(){
+  index.get_product_status(function(){ 
+    index.recommend_paid_version()
+  });
+  index.get_index_list();
+})

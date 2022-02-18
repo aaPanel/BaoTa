@@ -6,7 +6,7 @@
 # +-------------------------------------------------------------------
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
-from BTPanel import session,request
+from BTPanel import session,request,cache
 import public,os,json,time,apache,psutil
 class ajax:
 
@@ -1346,3 +1346,55 @@ class ajax:
         import log_analysis
         log_analysis=log_analysis.log_analysis()
         return log_analysis.get_detailed(get)
+
+
+
+    def get_pay_type(self,get):
+        """
+            @name 获取推荐列表
+        """
+        spath = '{}/data/pay_type.json'.format(public.get_panel_path())
+        down = cache.get('pay_type')
+        if not down:
+            public.run_thread(public.downloadFile,(public.get_url() + '/install/lib/pay_type.json',spath))
+            cache.set('pay_type',1,86400)
+        try:
+            data = json.loads(public.readFile("data/pay_type.json"))
+        except :
+            data = {}
+        
+        for item in data:
+            if 'list' in item:
+                item['list'] = self.__get_home_list(item['list'])    
+                if item['type'] == 1:
+                    if len(item['list']) > 4: item['list'] = item['list'][:4]                        
+        return data
+
+
+    def __get_home_list(self,sList):  
+        """
+            @name 获取首页软件列表推荐
+        """
+        import panelPlugin       
+        plu_panel =  panelPlugin.panelPlugin()
+        plugin_list = plu_panel.get_cloud_list()
+        nList = []
+        webserver = public.get_webserver()
+        for x in sList:
+            for plugin_info in plugin_list['list']:
+                if x['name'] == plugin_info['name']:
+                    if plugin_info['endtime'] >= 0:
+                        x['isBuy'] = True
+                
+            is_check = False
+            if 'dependent' in x :
+                if  x['dependent'] == webserver: is_check = True                           
+            else:
+                is_check = True
+            if is_check:                
+                info = plu_panel.get_soft_find(x['name'])
+                if info:
+                    if not info['setup']:                        
+                        x['install'] = info['setup']
+                        nList.append(x)     
+        return nList
