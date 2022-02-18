@@ -547,13 +547,10 @@
         var selectHost = {
             hosts: hosts,
             myHosts: {},
-            hostUrl: '',
             btVersion: "{{g.version}}",
             run: function () {
-                var url = '';
                 for (var i = 0; i < this.hosts.length; i++) {
-                    url = this.hosts[i].url;
-                    this.request(url);
+                    this.request(this.hosts[i].url);
                 }
             },
             request: function (url) {
@@ -571,32 +568,6 @@
                             _this.myHosts[url] = e_time - s_time;
                         }
                     }
-                }
-            },
-            init_option: function () {
-                var hosts = this.hosts;
-                var myHosts = this.myHosts;
-                if (hosts.length > 0) {
-                    var keys = Object.keys(myHosts);
-                    var hostData = [];
-                    for (var i = 0; i < hosts.length; i++) {
-                        if (keys.indexOf(hosts[i].url) == -1) continue;
-                        hosts[i].speed = myHosts[hosts[i].url];
-                        hostData.push(hosts[i]);
-                    }
-                    hostData = hostData.sort(this.compare('speed'));
-                    var cdn_option = '';
-                    for (var i = 0; i < hostData.length; i++) {
-                        cdn_option += '<option value="' + hostData[i].url + '">' + hostData[i].name + '(' + hostData[i].speed  + 'ms)' + '</option>';
-                    }
-                    document.querySelector('#static_cdn').innerHTML = cdn_option;
-                    if (hostData.length > 0){
-                        this.hostUrl = window.location.protocol + '//' + hostData[0].url;
-                    } else {
-                        document.querySelector('#static_cdn').innerHTML = '<option value="local">本服务器</option>';
-                    }
-                } else {
-                    this.btVersion = 'static';
                 }
             },
             compare: function (prop) {
@@ -617,10 +588,39 @@
                 }
             }
         };
+
         selectHost.run();
+
         setTimeout(function () {
-            selectHost.init_option();
-            var hostUrl = selectHost.hostUrl || window.location.protocol + '//' + window.location.host;
+            var hostUrl = '';
+            if (selectHost.hosts.length > 0) {
+                var my_keys = Object.keys(selectHost.myHosts);
+                var host_data = [];
+                for (var i = 0; i < selectHost.hosts.length; i++) {
+                    if(my_keys.indexOf(selectHost.hosts[i].url) == -1) continue;
+                    selectHost.hosts[i].speed = selectHost.myHosts[selectHost.hosts[i].url];
+                    host_data.push(selectHost.hosts[i]);
+                }
+                host_data = host_data.sort(selectHost.compare('speed'));
+                var cdn_option = '';
+                for (var i = 0; i < host_data.length; i++) {
+                    cdn_option += '<option value="' + host_data[i].url + '">' + host_data[i].name + '(' + host_data[i].speed + 'ms)' + '</option>';
+                }
+                
+                document.getElementById('static_cdn').innerHTML = cdn_option;
+
+                hostUrl = '';
+                if (host_data.length > 0) {
+                    hostUrl = window.location.protocol + '//' + host_data[0].url;
+                }
+                if (!hostUrl) {
+                    selectHost.btVersion = 'static';
+                    document.getElementById('static_cdn').innerHTML = '<option value="local">本服务器</option>';
+                }
+            } else {
+                hostUrl = '';
+                selectHost.btVersion = 'static';
+            }
             var urls = [
                 hostUrl + '/' + selectHost.btVersion + '/js/md5.js',
                 hostUrl + '/' + selectHost.btVersion + '/js/qrcode.min.js'
