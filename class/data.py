@@ -386,7 +386,7 @@ class data:
             'sites'     :   "name like '%"+search+"%' or ps like '%"+search+"%'",
             'ftps'      :   "name like '%"+search+"%' or ps like '%"+search+"%'",
             'databases' :   "name like '%"+search+"%' or ps like '%"+search+"%'",
-            'logs'      :   "uid='"+search+"' or username='"+search+"' or type like '%"+search+"%' or log like '%"+search+"%' or addtime like '%"+search+"%'",
+            'logs'      :   "username='"+search+"' or type like '%"+search+"%' or log like '%"+search+"%'",
             'backup'    :   "pid="+search+"",
             'users'     :   "id='"+search+"' or username='"+search+"'",
             'domain'    :   "pid='"+search+"' or name='"+search+"'",
