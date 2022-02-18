@@ -15943,83 +15943,80 @@ margin-bottom: 10px;
 }
 
 .recommend-soft .product-pay-btn{
-text-align: center;
+  text-align: center;
 }
 
-.recommend-soft .product-pay-btn button:last-child{
-margin-left: 10px;
-}
 
 .recommend-soft .product-pay-btn button{
-padding: 3px 8px;
+  padding: 3px 8px;
 }
 
 .recom-iconfont:hover .product-close{
-display: inline-block;
+  display: inline-block;
 }
 .recom-iconfont .product-close{
-position: absolute;
-top: -1.5px;
-right: -6px;
-height: 18px;
-line-height: 18px;
-width: 60px;
-text-align: center;
-background: #efefef;
-opacity: 0.5;
-transform: scale(.8);
-display: none;
-}
-.recom-iconfont .product-close:hover{
-opacity: .8;
-background-color: red;
-color: #fff;
+  position: absolute;
+  top: -1.5px;
+  right: -6px;
+  height: 18px;
+  line-height: 18px;
+  width: 60px;
+  text-align: center;
+  background: #efefef;
+  opacity: 0.5;
+  transform: scale(.8);
+  display: none;
+  }
+  .recom-iconfont .product-close:hover{
+  opacity: .8;
+  background-color: red;
+  color: #fff;
 }
 .recom-iconfont::after{
-content: '推荐';
-height: 18px;
-width: 40px;
-line-height: 18px;
-text-align: center;
-background: #efefef;
-display: inline-block;
-top: -1.5px;
-left: -4px;
-position: absolute;
-opacity: 0.5;
-transform: scale(.8);
+  content: '推荐';
+  height: 18px;
+  width: 40px;
+  line-height: 18px;
+  text-align: center;
+  background: #efefef;
+  display: inline-block;
+  top: -1.5px;
+  left: -4px;
+  position: absolute;
+  opacity: 0.5;
+  transform: scale(.8);
 }
 
 .product_view{
-display: inline-block;
-width: 350px;
-border: 2px solid #ececec;
-border-radius: 4px;
-cursor: pointer;
-flex: 2;
+  display: inline-block;
+  width: 350px;
+  border: 2px solid #ececec;
+  border-radius: 4px;
+  cursor: pointer;
+  flex: 2;
 }
 
 .product_view img{
-width: 100%;
-border-radius: 4px;
+  width: 100%;
+  border-radius: 4px;
 }
 
 .product_describe{
-display: inline-block;
-padding: 5px 0 0 30px;
-flex: 3;
-color: #666;
+  display: inline-block;
+  padding: 5px 0 0 30px;
+  flex: 3;
+  color: #666;
 }
 
 .product_describe .describe_title{
-font-weight: bold;
-font-size: 18px;
+  font-weight: bold;
+  font-size: 18px;
 }
 
 .product_describe .describe_ps{
-padding-top: 10px;
-font-size: 13px;
-height: 110px;
+  padding-top: 10px;
+  font-size: 13px;
+  height: 110px;
 }
 
 
