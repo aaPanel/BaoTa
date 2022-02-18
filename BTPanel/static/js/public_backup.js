@@ -408,6 +408,8 @@ var bt = {
     }, function (rdata) {
       var d = '',
           a = '';
+
+      rdata.PATH = bt.rtrim(rdata.PATH, '/');
       if (rdata.DISK != undefined) {
         for (var f = 0; f < rdata.DISK.length; f++) {
           a += "<dd class=\"bt_open_dir\" path =\"" + rdata.DISK[f].path + "\"><span class='glyphicon glyphicon-hdd'></span>&nbsp;" + rdata.DISK[f].path + "</dd>"
@@ -440,7 +442,7 @@ var bt = {
               e = e.substring(0, 10) + "..."
             }
           }
-          rdata.PATH = bt.rtrim(rdata.PATH, '/')
+          
           d += "<tr><td>" + ((type === 'all' || type === 'file') ? '<input type=\"checkbox\" />' : '') + "<td class=\"bt_open_dir\" title='" + g[0] + "' data-type=\"files\" path =\"" + rdata.PATH + "/" + g[0] + "\"><span class='glyphicon glyphicon-file'></span><span>" + e + "</span></td><td>" + bt.format_data(g[2]) + "</td><td>" + g[3] + "</td><td>" + g[4] + "</td></tr>"
         }
       }
