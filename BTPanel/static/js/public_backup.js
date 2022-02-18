@@ -8054,7 +8054,10 @@ bt.public = {
       },
       event:function(row, index, ev){
         var quota = row.quota;
+        var size = quota.size * 1024 * 1024
         var usedList = bt.format_size(quota.used).split(' ');
+        var quotaFull = false
+        if(quota.size > 0 && quota.used >= (size)) quotaFull = true;
         layer.open({
           type:1,
           title:'【'+ row.name + '】'+ (type == 'site'?'网站':(type == 'ftp'?'FTP':'数据库')) +'配额容量',
@@ -8064,11 +8067,11 @@ bt.public = {
           content:'<div class="bt-form pd20"><div class="line">'+
             '<span class="tname" style="width:120px">当前已用容量</span>'+
             '<div class="info-r" style="maring-right:120px">' +
-              '<input type="text" name="used" disabled placeholder="" class="bt-input-text mr10 " style="width:100px;" value="'+ (quota.size != 0?usedList[0]:0) +'" /><span>'+ (quota.size != 0?usedList[1]:'MB') +'</span>'+
+              '<input type="text" name="used" disabled placeholder="" class="bt-input-text mr10 " style="width:120px;" value="'+ (!quotaFull?(quota.size != 0?usedList[0]:0):'容量已满') +'" /><span>'+ (!quotaFull?(quota.size != 0?usedList[1]:'MB'):'') +'</span>'+
             '</div>'+
               '<span class="tname" style="width:120px">配额容量</span>'+
               '<div class="info-r" style="maring-right:120px">'+
-                '<input type="text" name="quota_size" placeholder="" class="bt-input-text mr10 " style="width:100px;" value="'+ quota.size +'" /><span>MB</span>'+
+                '<input type="text" name="quota_size" placeholder="" class="bt-input-text mr10 " style="width:120px;" value="'+ quota.size +'" /><span>MB</span>'+
               '</div>'+
             '</div>'+
             '<ul class="help-info-text c7">'+
