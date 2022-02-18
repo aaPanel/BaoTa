@@ -1393,11 +1393,14 @@ class ajax:
                     info = plu_panel.get_soft_find(x['name'])
                     if info:x['install'] = info['setup']
                         
+                    x['isBuy'] = True
                     try:
                         import pluginAuth
                         plu_auth = pluginAuth.Plugin(x['name'])
                         x['isBuy'] = True
                     except :
-                        x['isBuy'] = False
+                        err = public.get_error_info()
+                        if err.find('未购买或已到期') >= 0:
+                            x['isBuy'] = False
                     nList.append(x)                
         return nList
