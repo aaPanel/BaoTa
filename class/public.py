@@ -2365,20 +2365,22 @@ def sync_php_address(php_version):
 
 
 def url_encode(data):
-    if type(data) == str: return data
-    import urllib
+    if type(data) != str: return data
     if sys.version_info[0] != 2:
-        pdata = urllib.parse.urlencode(data).encode('utf-8')
+        import urllib.parse
+        pdata = urllib.parse.quote(data)
     else:
+        import urllib
         pdata = urllib.urlencode(data)
     return pdata
 
 def url_decode(data):
-    if type(data) == str: return data
-    import urllib
+    if type(data) != str: return data
     if sys.version_info[0] != 2:
-        pdata = urllib.parse.urldecode(data).encode('utf-8')
+        import urllib.parse
+        pdata = urllib.parse.unquote(data)
     else:
+        import urllib
         pdata = urllib.urldecode(data)
     return pdata
 
