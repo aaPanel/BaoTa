@@ -1297,7 +1297,7 @@ var index = {
   /**
    * @description 获取当前的产品状态
    */
-   get_product_status: function () {
+   get_product_status: function (callback) {
     // var loadT = layer.msg('正在获取产品状态，请稍候...', { icon: 16, time: 0 })
     bt.send('get_pd', 'ajax/get_pd', {}, function (res) {
       $('.btpro-gray').replaceWith($(res[0]));
@@ -1316,6 +1316,7 @@ var index = {
           e.stopPropagation();
         });
       }
+      if(callback) callback();
     })
   },
     /**
@@ -1360,12 +1361,13 @@ var index = {
     
   }
 }
-index.get_product_status();
 index.get_init();
 index.consultancy_services()
 //setTimeout(function () { index.get_cloud_list() }, 800);
 
 product_recommend.init(function(){
-  index.recommend_paid_version()
+  index.get_product_status(function(){ 
+    index.recommend_paid_version()
+  });
   index.get_index_list();
 })
