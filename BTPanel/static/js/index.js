@@ -708,15 +708,13 @@ var index = {
             
       // 推荐安装软件
       try {
-
         var recomConfig = product_recommend.get_recommend_type(1)
         if(recomConfig){
           var pay_status = product_recommend.get_pay_status();
           for (var i = 0; i < recomConfig['list'].length; i++) {
             const item = recomConfig['list'][i];
-            setup_length ++;
-            if(setup_length === softboxsum) break;
-            if(item['isBuy'] && item['install']) continue;
+            if(setup_length > softboxsum) break;
+            if(pay_status.is_pay && item['install']) continue;
             softboxcon += '<div class="col-sm-3 col-md-3 col-lg-3">\
               <div class="recommend-soft recom-iconfont">\
                 <div class="product-close hide">关闭推荐</div>\
@@ -729,6 +727,7 @@ var index = {
                 </div>\
               </div>\
             </div>'
+            setup_length ++;
           }
         }
       } catch (error) {
@@ -738,9 +737,9 @@ var index = {
       if (setup_length <= softboxsum) {
         for (var i = 0; i < softboxsum - setup_length; i++) {
           softboxcon += '<div class="col-sm-3 col-md-3 col-lg-3 no-bg"></div>'
-        }
-        $("#indexsoft").append(softboxcon);
+        }  
       }
+      $("#indexsoft").append(softboxcon);
       $("#indexsoft").dragsort({ dragSelector: ".spanmove", dragBetween: true, dragEnd: saveOrder, placeHolderTemplate: "<div class='col-sm-3 col-md-3 col-lg-3 dashed-border'></div>" });
 
       function saveOrder () {
