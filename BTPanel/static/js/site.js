@@ -4737,6 +4737,10 @@ var site = {
                     return;
                   }
                   bt.site.set_phpversion(web.name, pdata.versions, other, function (ret) {
+                    if (typeof ret === 'string') {
+                      layer.msg(ret, { icon: 2 });
+                      return
+                    }
                     if (ret.status) {
                       var versions = $('[name="versions"]').val();
                       versions = versions.slice(0, versions.length - 1) + '.' + versions.slice(-1);
