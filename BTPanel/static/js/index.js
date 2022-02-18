@@ -721,9 +721,9 @@ var index = {
                 <div class="images"><img src="/static/img/soft_ico/ico-'+ item['name'] +'.png"></div>\
                 <div class="product-name">'+ item['title'] +'</div>\
                 <div class="product-pay-btn">\
-                '+ ((pay_status.is_pay && !item['install'])?
-                '<button class="btn btn-sm btn-success" style="margin-left:0;" onclick="bt.soft.install(\''+ item['name'] +'\')">立即安装</button><button class="hide"></button>':
-                '<a class="btn btn-sm btn-default '+ (!item.preview?'hide':'') +'" href="'+ item.preview +'" target="_blank">预览</a><button type="submit" class="btn btn-sm btn-success" onclick=\"product_recommend.pay_product_sign(\'ltd\','+ item.pay +')\">购买</button>') +'\
+                '+ ((item['isBuy'] && !item['install'])?
+                '<button class="btn btn-sm btn-success" style="margin-left:0;" onclick="bt.soft.install(\''+ item['name'] +'\')">立即安装</button>':
+                '<a class="btn btn-sm btn-default mr5'+ (!item.preview?'hide':'') +'" href="'+ item.preview +'" target="_blank">预览</a><button type="submit" class="btn btn-sm btn-success" onclick=\"product_recommend.pay_product_sign(\'ltd\','+ item.pay +')\">购买</button>') +'\
                 </div>\
               </div>\
             </div>'
@@ -766,30 +766,30 @@ var index = {
           skin: 'layui-layer-dialog',
           closeBtn: 2,
           content: '<div class="setchmod bt-form">\
-                                <div class="update_title"><i class="layui-layer-ico layui-layer-ico1"></i><span>恭喜您，当前已经是最新版本</span></div>\
-                                <div class="update_version">当前版本：<a href="http://www.bt.cn/bbs/forum.php?mod=viewthread&tid=19376" target="_blank" class="btlink" title="查看当前版本日志">宝塔Linux'+ (rdata.msg.is_beta == 1 ? '测试版 ' + rdata.msg.beta.version : '正式版 ' + rdata.msg.version) + '</a>&nbsp;&nbsp;发布时间：' + (rdata.msg.is_beta == 1 ? rdata.msg.beta.uptime : rdata.msg.uptime) + '</div>\
-                                <div class="update_conter">\
-                                    <div class="update_tips">'+ (rdata.msg.is_beta != 1 ? '测试版' : '正式版') + '最新版本为&nbsp;' + (rdata.msg.is_beta != 1 ? rdata.msg.beta.version : rdata.msg.version) + '&nbsp;&nbsp;&nbsp;更新时间&nbsp;&nbsp;' + (rdata.msg.is_beta != 1 ? rdata.msg.beta.uptime : rdata.msg.uptime) + '&nbsp;&nbsp;&nbsp;\
-                                    '+ (rdata.msg.is_beta !== 1 ? '<span>如需更新测试版请点击<a href="javascript:;" onclick="index.beta_msg()" class="btlink btn_update_testPanel">查看详情</a></span>' : '<span>如需切换回正式版请点击<a href="javascript:;" onclick="index.to_not_beta()" class="btlink btn_update_testPanel">切换到正式版</a></span>') + '\
-                                    '+ (rdata.msg.is_beta !== 1 ? rdata.msg.btb : '') + '\
-                                    </div>\
-                                </div>\
-                                <div class="bt-form-submit-btn">\
-                                    <button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">'+ lan.public.cancel + '</button>\
-                                    <button type="button" class="btn btn-success btn-sm btn-title btn_update_panel" onclick="layer.closeAll()">'+ lan.public.know + '</button>\
-                                </div>\
-                            </div>\
-                            <style>\
-                                .setchmod{padding-bottom:50px;}\
-                                .update_title{overflow: hidden;position: relative;vertical-align: middle;margin-top: 10px;}\
-                                .update_title .layui-layer-ico{display: block;left: 60px !important;top: 1px !important;}\
-                                .update_title span{display: inline-block;color: #333;height: 30px;margin-left: 105px;margin-top: 3px;font-size: 20px;}\
-                                .update_conter{background: #f9f9f9;border-radius: 4px;padding: 20px;margin: 15px 37px;margin-top: 15px;}\
-                                .update_version{font-size: 12px;margin:15px 0 10px 85px}\
-                                .update_logs{margin-bottom:10px;border-bottom:1px solid #ececec;padding-bottom:10px;}\
-                                .update_tips{font-size: 13px;color: #666;font-weight: 600;}\
-                                .update_tips span{padding-top: 5px;display: block;font-weight: 500;}\
-                            </style>'
+              <div class="update_title"><i class="layui-layer-ico layui-layer-ico1"></i><span>恭喜您，当前已经是最新版本</span></div>\
+              <div class="update_version">当前版本：<a href="http://www.bt.cn/bbs/forum.php?mod=viewthread&tid=19376" target="_blank" class="btlink" title="查看当前版本日志">宝塔Linux'+ (rdata.msg.is_beta == 1 ? '测试版 ' + rdata.msg.beta.version : '正式版 ' + rdata.msg.version) + '</a>&nbsp;&nbsp;发布时间：' + (rdata.msg.is_beta == 1 ? rdata.msg.beta.uptime : rdata.msg.uptime) + '</div>\
+              <div class="update_conter">\
+                  <div class="update_tips">'+ (rdata.msg.is_beta != 1 ? '测试版' : '正式版') + '最新版本为&nbsp;' + (rdata.msg.is_beta != 1 ? rdata.msg.beta.version : rdata.msg.version) + '&nbsp;&nbsp;&nbsp;更新时间&nbsp;&nbsp;' + (rdata.msg.is_beta != 1 ? rdata.msg.beta.uptime : rdata.msg.uptime) + '&nbsp;&nbsp;&nbsp;\
+                  '+ (rdata.msg.is_beta !== 1 ? '<span>如需更新测试版请点击<a href="javascript:;" onclick="index.beta_msg()" class="btlink btn_update_testPanel">查看详情</a></span>' : '<span>如需切换回正式版请点击<a href="javascript:;" onclick="index.to_not_beta()" class="btlink btn_update_testPanel">切换到正式版</a></span>') + '\
+                  '+ (rdata.msg.is_beta !== 1 ? rdata.msg.btb : '') + '\
+                  </div>\
+              </div>\
+              <div class="bt-form-submit-btn">\
+                  <button type="button" class="btn btn-danger btn-sm btn-title" onclick="layer.closeAll()">'+ lan.public.cancel + '</button>\
+                  <button type="button" class="btn btn-success btn-sm btn-title btn_update_panel" onclick="layer.closeAll()">'+ lan.public.know + '</button>\
+              </div>\
+          </div>\
+          <style>\
+              .setchmod{padding-bottom:50px;}\
+              .update_title{overflow: hidden;position: relative;vertical-align: middle;margin-top: 10px;}\
+              .update_title .layui-layer-ico{display: block;left: 60px !important;top: 1px !important;}\
+              .update_title span{display: inline-block;color: #333;height: 30px;margin-left: 105px;margin-top: 3px;font-size: 20px;}\
+              .update_conter{background: #f9f9f9;border-radius: 4px;padding: 20px;margin: 15px 37px;margin-top: 15px;}\
+              .update_version{font-size: 12px;margin:15px 0 10px 85px}\
+              .update_logs{margin-bottom:10px;border-bottom:1px solid #ececec;padding-bottom:10px;}\
+              .update_tips{font-size: 13px;color: #666;font-weight: 600;}\
+              .update_tips span{padding-top: 5px;display: block;font-weight: 500;}\
+          </style>'
         });
         return;
       }
@@ -1321,44 +1321,44 @@ var index = {
     /**
    * @description 推荐进阶版产品
   */
-     recommend_paid_version: function () {
-      try {
-        var recomConfig = product_recommend.get_recommend_type(0)
-        var pay_status = product_recommend.get_pay_status()
-        var is_pay = pay_status.is_pay;
-        var advanced =  pay_status.advanced;
-        var end_time = pay_status.end_time;
-        var html = '',list_html = '';
-        if(!is_pay) advanced = ''; //未购买的时候，使用推荐内容
-        if(recomConfig){
-          var item = recomConfig;
-          for (let j = 0; j < item['ps'].length; j++) {
-            const element = item['ps'][j];
-            list_html += '<div class="item">'+ element +'</div>';
-          }
-          var pay_html = '';
-          if(is_pay){
-            pay_html = '<div class="product-buy '+ (advanced || item.name) +'-type">到期时间：<span>'+ (end_time === 0?'永久授权':(end_time === -2?'已过期':bt.format_data(end_time,'yyyy-MM-dd')) + '&nbsp;&nbsp;<a class="btlink" href="javascript:;" onclick="product_recommend.pay_product_sign(\''+ advanced +'\','+ item.pay +')">续费</a>') +'</span></div>'
-          }else{
-            pay_html = '<div class="product-buy"><button type="button" class="btn btn-xs btn-success" onclick="product_recommend.pay_product_sign(\''+ (advanced || item.name) +'\','+ item.pay +')">立即购买</button></div>'
-          }
-          html = '<div class="conter-box bgw">\
-            <div class="recommend-top pd15 '+ (is_pay?( advanced +'-bg'):'') +'">'+ (!is_pay?pay_html:'') +'<div class="product-ico '+ (advanced || item.name) +''+ (!is_pay?'-pay':'') +'-ico"></div>' + (is_pay?pay_html:'') +'\
-              <div class="product-label">'+ list_html +'</div>\
-            </div>\
-          </div>'
-          $('#home-recommend').html(html)
+    recommend_paid_version: function () {
+    try {
+      var recomConfig = product_recommend.get_recommend_type(0)
+      var pay_status = product_recommend.get_pay_status()
+      var is_pay = pay_status.is_pay;
+      var advanced =  pay_status.advanced;
+      var end_time = pay_status.end_time;
+      var html = '',list_html = '';
+      if(!is_pay) advanced = ''; //未购买的时候，使用推荐内容
+      if(recomConfig){
+        var item = recomConfig;
+        for (let j = 0; j < item['ps'].length; j++) {
+          const element = item['ps'][j];
+          list_html += '<div class="item">'+ element +'</div>';
         }
-      } catch (error) {
-        console.log(error)
+        var pay_html = '';
+        if(is_pay){
+          pay_html = '<div class="product-buy '+ (advanced || item.name) +'-type">到期时间：<span>'+ (end_time === 0?'永久授权':(end_time === -2?'已过期':bt.format_data(end_time,'yyyy-MM-dd')) + '&nbsp;&nbsp;<a class="btlink" href="javascript:;" onclick="product_recommend.pay_product_sign(\''+ advanced +'\','+ item.pay +')">续费</a>') +'</span></div>'
+        }else{
+          pay_html = '<div class="product-buy"><button type="button" class="btn btn-xs btn-success" onclick="product_recommend.pay_product_sign(\''+ (advanced || item.name) +'\','+ item.pay +')">立即购买</button></div>'
+        }
+        html = '<div class="conter-box bgw">\
+          <div class="recommend-top pd15 '+ (is_pay?( advanced +'-bg'):'') +'">'+ (!is_pay?pay_html:'') +'<div class="product-ico '+ (advanced || item.name) +''+ (!is_pay?'-pay':'') +'-ico"></div>' + (is_pay?pay_html:'') +'\
+            <div class="product-label">'+ list_html +'</div>\
+          </div>\
+        </div>'
+        $('#home-recommend').html(html)
       }
-    },
-    /**
-     * @description 推荐任务管理器
-    */
-    recommend_task_manager: function () {
-      
+    } catch (error) {
+      console.log(error)
     }
+  },
+  /**
+   * @description 推荐任务管理器
+  */
+  recommend_task_manager: function () {
+    
+  }
 }
 index.get_product_status();
 index.get_init();
