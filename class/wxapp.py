@@ -55,8 +55,13 @@ class wxapp():
     # 设置登录状态
     def set_login(self, get):
         session_id = public.get_session_id()
-        if cache.get(session_id) == public.md5(uuid.UUID(int=uuid.getnode()).hex):
-            return self.check_app_login(get)
+        if cache.get(session_id):
+            if cache.get(session_id) == public.md5(uuid.UUID(int=uuid.getnode()).hex):
+                return self.check_app_login(get)
+            else:
+                cache.delete(cache.get(session_id))
+                cache.delete(session_id)
+                return public.returnMsg(False, '登录失败2')
         return public.returnMsg(False, '登录失败1')
 
      #验证APP是否登录成功
