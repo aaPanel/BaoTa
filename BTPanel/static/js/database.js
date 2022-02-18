@@ -35,6 +35,7 @@ var database = {
         minWidth: '1000px',
         autoHeight: true,
         default: "数据库列表为空", // 数据为空时的默认提示
+        pageName: 'database',
         beforeRequest: function(){
           var db_type_val = $('.database_type_select_filter').val()
           switch(db_type_val){
@@ -1127,8 +1128,9 @@ var database = {
       tables: JSON.stringify(dbs)
     }, function (rdata) {
       layer.close(loadT)
-
-      database.rep_tools(db_name, true);
+      if (rdata.status) {
+        database.rep_tools(db_name, true);
+      }
       layer.msg(rdata.msg, {
         icon: rdata.status ? 1 : 2
       });
@@ -1145,8 +1147,9 @@ var database = {
       tables: JSON.stringify(dbs)
     }, function (rdata) {
       layer.close(loadT)
-
-      database.rep_tools(db_name, true);
+      if (rdata.status) {
+        database.rep_tools(db_name, true);
+      }
       layer.msg(rdata.msg, {
         icon: rdata.status ? 1 : 2
       });
@@ -1165,8 +1168,9 @@ var database = {
       table_type: type
     }, function (rdata) {
       layer.close(loadT);
-
-      database.rep_tools(db_name, true);
+      if (rdata.status) {
+        database.rep_tools(db_name, true);
+      }
       layer.msg(rdata.msg, {
         icon: rdata.status ? 1 : 2
       });

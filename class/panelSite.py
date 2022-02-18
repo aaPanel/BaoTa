@@ -5009,6 +5009,7 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
         if len(get.name) > 16: return public.returnMsg(False,"分类名称长度不能超过16位")
         type_sql = public.M('site_types')
         if type_sql.where('id=?',(get.id,)).count()==0: return public.returnMsg(False,"指定分类不存在!")
+        if type_sql.where('name=? AND id!=?',(get.name,get.id)).count()>0: return public.returnMsg(False,"指定分类名称已存在!")
         type_sql.where('id=?',(get.id,)).setField('name',get.name)
         return public.returnMsg(True,"修改成功!")
 

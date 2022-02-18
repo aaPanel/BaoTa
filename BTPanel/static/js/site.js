@@ -1293,6 +1293,7 @@ var site = {
       autoHeight: true,
       default: "项目列表为空", //数据为空时的默认提示\
       load: '正在获取Node项目列表，请稍候...',
+      pageName: 'nodejs',
       beforeRequest: function (params) {
         if (params.hasOwnProperty('data') && typeof params.data === 'string') {
           var oldParams = JSON.parse(params['data'])
@@ -1552,6 +1553,7 @@ var site = {
       minWidth: '1000px',
       autoHeight: true,
       default: "站点列表为空", //数据为空时的默认提示
+      pageName: 'php',
       beforeRequest: function (param) {
         param.type = bt.get_cookie('site_type') || -1;
         return param;

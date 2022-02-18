@@ -769,8 +769,10 @@ var bt_tools = {
               break;
             case 'page':
               this.config.page = item
-              var pageNumber = bt.get_cookie('page_number')
-              if (this.config.cookiePrefix && pageNumber) this.config.page.number = pageNumber
+              // var pageNumber = bt.get_cookie('page_number')
+              var pageNumber = this.$get_page_number();
+              // if (this.config.cookiePrefix && pageNumber) this.config.page.number = pageNumber
+              if (pageNumber) this.config.page.number = pageNumber;
               template = this.$reader_page(this.config.page, '<div><span class="Pcurrent">1</span><span class="Pcount">共0条数据</span></div>')
               break;
           }
@@ -824,7 +826,7 @@ var bt_tools = {
         $page.find('a').addClass('page_link_' + this.random);
         template += $page.html();
         if (config.numberStatus) {
-          var className = 'page_select_' + this.random, number = bt.get_cookie('page_number');
+          var className = 'page_select_' + this.random, number = _that.$get_page_number();
           template += '<select class="page_select_number ' + className + '">';
           $.each(config.numberList, function (index, item) {
             template += '<option value="' + item + '" ' + ((number || config.number) == item ? 'selected' : '') + '>' + item + '条/页</option>';
@@ -1046,7 +1048,7 @@ var bt_tools = {
                 break;
               case 'page_select':
                 var limit = parseInt($(this).val());
-                bt.set_cookie('page_number', limit);
+                _that.$set_page_number(limit);
                 _that.config.page.number = limit;
                 _that.config.page.page = 1;
                 _that.$refresh_table_list(true);
@@ -1122,12 +1124,33 @@ var bt_tools = {
       },
 
       /**
+       * @description 获取分页条数
+       * @return 返回分页条数
+       */
+      $get_page_number: function () {
+        var name = this.config.pageName;
+        if (name) {
+          return bt.get_cookie(name + '_page_number');
+        }
+      },
+
+      /**
+       * @description 设置分页条数
+       * @param {object} limit 分页条数
+       * @return void
+       */
+      $set_page_number: function (limit) {
+        var name = this.config.pageName;
+        if (name) bt.set_cookie(name + '_page_number', limit);
+      },
+
+      /**
        * @description 请求数据，
        * @param {object} param 参数和请求路径
        * @return void
        */
       $http: function (success) {
-        var page_number = bt.get_cookie('page_number'),
+        var page_number = this.$get_page_number(),
           that = this,
           param = {},
           config = this.config,
@@ -1138,8 +1161,9 @@ var bt_tools = {
           if (page_number && !_page.number) _page.number = page_number
           if (_page.defaultNumber) _page.number = _page.defaultNumber
           param[_page.numberParam] = _page.number, param[_page.pageParam] = _page.page
-          bt.set_cookie('page_number', _page.number)
+          // bt.set_cookie('page_number', _page.number)
         }
+        
         if (_search) param[_search.searchParam] = _search.value;
         if (this.config.beforeRequest) {
           config.param = this.config.beforeRequest($.extend(config.param, param, _sort));
