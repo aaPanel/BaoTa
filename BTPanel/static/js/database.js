@@ -248,7 +248,7 @@ var database = {
                     if(isEnable){
                       window.open(url)
                     }else{
-                      layer.msg('未开启公共访问权限，可到软件商店-&gt;phpMyAdmin中开启',{time:0,icon:2,closeBtn: 2, shade: .3})
+                      layer.msg('未开启公共访问权限，可到软件商店-&gt;phpMyAdmin插件中开启公共访问权限',{time:0,icon:2,closeBtn: 2, shade: .3})
                     }
                   })
                 }
