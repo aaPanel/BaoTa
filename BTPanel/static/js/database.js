@@ -214,7 +214,45 @@ var database = {
           }, {
             title: 'phpMyAdmin',
             event: function () {
-              bt.database.open_phpmyadmin('', 'root', bt.config.mysql_root)
+              var url = $('#phpMyAdminUrl').data('url'),
+              isEnable = url !== 'False';
+              console.log(isEnable,url)
+              bt.open({
+                type: 1,
+                title:'phpMyAdmin访问安全提示',
+                area:'450px',
+                btn:false,
+                content:'<div class="bt-form pd25">\
+                  <div class="rebt-con" style="width:100%;display: flex;padding:0;height:auto;justify-content: space-around;">\
+                    <div class="rebt-li panel_visit" style="position:relative;width: 150px;height: 50px;line-height: 50px;">\
+                      <a href="javascript:;" style="font-size:13px;border-radius:2px;">通过面板访问</a>\
+                      <span class="recommend-pay-icon" style="height: 30px;width: 30px;background-size: contain;"></span>\
+                    </div>\
+                    <div class="rebt-li public_visit" style="position:relative;width: 150px;height: 50px;line-height: 50px;">\
+                      <a href="javascript:;"  style="font-size:13px;border-radius:2px;">通过公共访问</a>\
+                    </div>\
+                  </div>\
+                  <ul class="help-info-text c7">'+ (isEnable?
+                    '<li class="color-red">关闭公共访问权限可提升安全性，可到软件商店-&gt;phpMyAdmin中关闭</li><li>面板访问需要登录面板后，才能通过面板访问phpMyAdmin</li>':
+                    '<li>未开启公共访问权限，可到软件商店-&gt;phpMyAdmin中开启</li><li class="color-red">注意：开启公共访问权限存在安全风险，建议非必要不启用</li>'
+                  ) + '</ul>\
+                </div>',
+                success:function (layers,indexs) {
+                  $('.close_layer').click(function () {
+                    layer.close(indexs)
+                  })
+                  $('.panel_visit').click(function () {
+                    bt.database.open_phpmyadmin('', 'root', bt.config.mysql_root)
+                  })
+                  $('.public_visit').click(function () {
+                    if(isEnable){
+                      window.open(url)
+                    }else{
+                      layer.msg('未开启公共访问权限，可到软件商店-&gt;phpMyAdmin中开启',{time:2000,icon:2,closeBtn: 2, shade: .3})
+                    }
+                  })
+                }
+              })
             }
           },
           {
