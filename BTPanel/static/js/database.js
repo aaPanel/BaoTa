@@ -232,8 +232,8 @@ var database = {
                       <a href="javascript:;"  style="font-size:13px;border-radius:2px;">通过公共访问</a>\
                     </div>\
                   </div>\
-                  <ul class="help-info-text c7">'+ (isEnable?
-                    '<li class="color-red">关闭公共访问权限可提升安全性，可到软件商店-&gt;phpMyAdmin中关闭</li><li>面板访问需要登录面板后，才能通过面板访问phpMyAdmin</li>':
+                  <ul class="help-info-text c7"><li>面板访问需要登录面板后，才能通过面板访问phpMyAdmin</li>'+ (isEnable?
+                    '<li class="color-red">关闭公共访问权限可提升安全性，可到软件商店-&gt;phpMyAdmin中关闭</li>':
                     '<li>未开启公共访问权限，可到软件商店-&gt;phpMyAdmin中开启</li><li class="color-red">注意：开启公共访问权限存在安全风险，建议非必要不启用</li>'
                   ) + '</ul>\
                 </div>',
@@ -248,7 +248,7 @@ var database = {
                     if(isEnable){
                       window.open(url)
                     }else{
-                      layer.msg('未开启公共访问权限，可到软件商店-&gt;phpMyAdmin中开启',{time:2000,icon:2,closeBtn: 2, shade: .3})
+                      layer.msg('未开启公共访问权限，可到软件商店-&gt;phpMyAdmin中开启',{time:0,icon:2,closeBtn: 2, shade: .3})
                     }
                   })
                 }
