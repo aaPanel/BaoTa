@@ -2016,20 +2016,28 @@ def auto_backup_panel():
         paths = panel_paeh + '/data/not_auto_backup.pl'
         if os.path.exists(paths): return False
         b_path = '{}/panel'.format(get_backup_path())
-        backup_path = b_path + '/' + format_date('%Y-%m-%d')
-        if os.path.exists(backup_path): return True
+        day_date = format_date('%Y-%m-%d')
+        backup_path = b_path + '/' + day_date
+        backup_file = backup_path + '.zip'
+        if os.path.exists(backup_path) or os.path.exists(backup_file): return True
         os.makedirs(backup_path,384)
         import shutil
-        shutil.copytree(panel_paeh + '/data',backup_path + '/data')
+        shutil.copytree(panel_paeh + '/data',backup_path + '/data',ignore = shutil.ignore_patterns("system.db"))
         shutil.copytree(panel_paeh + '/config',backup_path + '/config')
         shutil.copytree(panel_paeh + '/vhost',backup_path + '/vhost')
-        ExecShell("chmod -R 600 {path};chown -R root.root {path}".format(path=b_path))
+        ExecShell("cd {} && zip {} -r {}/".format(b_path,backup_file,day_date))
+        ExecShell("chmod -R 600 {path};chown -R root.root {path}".format(path=backup_file))
+        if os.path.exists(backup_path): shutil.rmtree(backup_path)
+
         time_now = time.time() - (86400 * 15)
         for f in os.listdir(b_path):
             if time.mktime(time.strptime(f, "%Y-%m-%d")) < time_now: 
                 path = b_path + '/' + f
-                if os.path.exists(path): shutil.rmtree(path)
-        
+                b_file = path + '.zip'
+                if os.path.exists(path): 
+                    shutil.rmtree(path)
+                if os.path.exists(b_file):
+                    os.remove(b_file)
         set_php_cli_env()
     except:
         pass
