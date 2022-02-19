@@ -2018,8 +2018,6 @@ def auto_backup_panel():
         b_path = '{}/panel'.format(get_backup_path())
         backup_path = b_path + '/' + format_date('%Y-%m-%d')
         if os.path.exists(backup_path): return True
-        if os.path.getsize(panel_paeh + '/data/default.db') > 104857600 * 2: return False
-        if os.path.getsize(panel_paeh + '/data/system.db') > 104857600 * 2: return False
         os.makedirs(backup_path,384)
         import shutil
         shutil.copytree(panel_paeh + '/data',backup_path + '/data')

@@ -500,6 +500,7 @@ def checkPHPVersion(version):
 def check502Task():
     try:
         while True:
+            public.auto_backup_panel()
             check502()
             sess_expire()
             mysql_quota_check()
