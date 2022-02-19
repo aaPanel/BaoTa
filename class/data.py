@@ -179,9 +179,10 @@ class data:
             @param path<string> 网站目录
             @return dict
         '''
-
-        from projectModel.quotaModel import main
-        return main().get_quota_path_list(get_path = path)
+        try:
+            from projectModel.quotaModel import main
+            return main().get_quota_path_list(get_path = path)
+        except: return {'size':0 ,'used':0 }
 
     def get_database_quota(self,db_name):
         '''
@@ -190,8 +191,10 @@ class data:
             @param path<string> 网站目录
             @return dict
         '''
-        from projectModel.quotaModel import main
-        return main().get_quota_mysql_list(get_name = db_name)
+        try:
+            from projectModel.quotaModel import main
+            return main().get_quota_mysql_list(get_name = db_name)
+        except: return {'size':0 ,'used':0 }
     
     '''
      * 取数据列表
