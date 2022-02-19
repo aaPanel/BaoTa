@@ -424,10 +424,13 @@ def database(pdata=None):
     if comReturn: return comReturn
     if request.method == method_get[0] and not pdata:
         import ajax
-        pmd = get_phpmyadmin_dir()
+        from panelPlugin import panelPlugin
+        
         session['phpmyadminDir'] = False
-        if pmd:
-            session['phpmyadminDir'] = 'http://' + public.GetHost() + ':' + pmd[1] + '/' + pmd[0]
+        if panelPlugin().get_phpmyadmin_stat():
+            pmd = get_phpmyadmin_dir()
+            if pmd:
+                session['phpmyadminDir'] = 'http://' + public.GetHost() + ':' + pmd[1] + '/' + pmd[0]
         ajax.ajax().set_phpmyadmin_session()
         import system
         data = system.system().GetConcifInfo()
