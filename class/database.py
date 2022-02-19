@@ -536,6 +536,8 @@ SetLink
         username = data['username']
         panelMysql.panelMysql().execute("drop user '" + username + "'@'localhost'")
         users = panelMysql.panelMysql().query("select Host from mysql.user where User='" + username + "' AND Host!='localhost'")
+        if isinstance(users,str):
+            return public.returnMsg(False,'删除失败,连接数据库失败!')
         for us in users:
             panelMysql.panelMysql().execute("drop user '" + username + "'@'" + us[0] + "'")
         panelMysql.panelMysql().execute("flush privileges")
