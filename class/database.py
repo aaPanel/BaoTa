@@ -67,6 +67,8 @@ class database(datatool.datatools):
         '''
         data = public.M('database_servers').select()
         bt_mysql_bin = '{}/mysql/bin/mysql'.format(public.get_setup_path())
+
+        if not isinstance(data,list): data = []
         if os.path.exists(bt_mysql_bin):
             data.insert(0,{'id':0,'db_host':'127.0.0.1','db_port':3306,'db_user':'root','db_password':'','ps':'本地服务器','addtime':0})
         return data
