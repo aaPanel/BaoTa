@@ -2020,9 +2020,16 @@ def auto_backup_panel():
         backup_path = b_path + '/' + day_date
         backup_file = backup_path + '.zip'
         if os.path.exists(backup_path) or os.path.exists(backup_file): return True
+        ignore_default = ''
+        ignore_system = ''
+        max_size = 100 * 1024 * 1024
+        if os.path.getsize('{}/data/default.db'.format(panel_paeh)) > max_size:
+            ignore_default = 'default.db'
+        if os.path.getsize('{}/data/system.db'.format(panel_paeh)) > max_size:
+            ignore_system = 'system.db'
         os.makedirs(backup_path,384)
         import shutil
-        shutil.copytree(panel_paeh + '/data',backup_path + '/data',ignore = shutil.ignore_patterns("system.db"))
+        shutil.copytree(panel_paeh + '/data',backup_path + '/data',ignore = shutil.ignore_patterns(ignore_system,ignore_default))
         shutil.copytree(panel_paeh + '/config',backup_path + '/config')
         shutil.copytree(panel_paeh + '/vhost',backup_path + '/vhost')
         ExecShell("cd {} && zip {} -r {}/".format(b_path,backup_file,day_date))
@@ -2039,8 +2046,8 @@ def auto_backup_panel():
                 if os.path.exists(b_file):
                     os.remove(b_file)
         set_php_cli_env()
-    except:
-        pass
+    except:pass
+
             
 
 def set_php_cli_env():
