@@ -154,9 +154,6 @@ def request_check():
     if len(request.path) > 256: return abort(403)
     if len(request.url) > 1024: return abort(403)
 
-    if request.path in ['/service_status']: return
-    # if request.path.find('/phpmyadmin_') == 0: return
-
     # POST参数过滤
     if request.path in ['/login', '/safe', '/hook', '/public', '/down', '/get_app_bind_status', '/check_bind']:
         pdata = request.form.to_dict()
@@ -203,7 +200,6 @@ def request_check():
 # Flask 请求结束勾子
 @app.teardown_request
 def request_end(reques=None):
-    if request.path in ['/service_status']: return
     not_acts = ['GetTaskSpeed', 'GetNetWork', 'check_pay_status', 'get_re_order_status', 'get_order_stat']
     key = request.args.get('action')
     if not key in not_acts and request.full_path.find('/static/') == -1:
@@ -216,6 +212,7 @@ def request_end(reques=None):
 # Flask 404页面勾子
 @app.errorhandler(404)
 def error_404(e):
+    if not session.get('login',None): return public.error_not_login()
     errorStr = '''<html>
 <head><title>404 Not Found</title></head>
 <body>
@@ -232,6 +229,7 @@ def error_404(e):
 # Flask 403页面勾子
 @app.errorhandler(403)
 def error_403(e):
+    if not session.get('login',None): return public.error_not_login()
     errorStr = '''<html>
 <head><title>403 Forbidden</title></head>
 <body>
@@ -248,6 +246,7 @@ def error_403(e):
 # Flask 500页面勾子
 @app.errorhandler(500)
 def error_500(e):
+    if not session.get('login',None): return public.error_not_login()
     ss = '''404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
 
 During handling of the above exception, another exception occurred:'''
@@ -1410,14 +1409,7 @@ def send_favicon():
     return send_file(s_file, conditional=True, add_etags=True)
 
 
-# @app.route('/service_status', methods=method_get)
-# def service_status():
-#     # 检查面板当前状态
-#     try:
-#         if not 'login' in session: session.clear()
-#     except:
-#         pass
-#     return 'True'
+
 @app.route('/btwaf_error', methods=method_get)
 def btwaf_error():
     # 图标
@@ -1497,39 +1489,6 @@ def panel_other(name=None, fun=None, stype=None):
 
     # 初始化插件对象
     try:
-        # is_php = os.path.exists(p_path + '/index.php')
-        # if not is_php:
-        #     public.package_path_append(p_path)
-        #     plugin_main = __import__(name + '_main')
-        #     try:
-        #         if sys.version_info[0] == 2:
-        #             reload(plugin_main)
-        #         else:
-        #             from imp import reload
-        #             reload(plugin_main)
-        #     except:
-        #         pass
-        #     plu = eval('plugin_main.' + name + '_main()')
-        #     if not hasattr(plu, fun):
-        #         if name == 'btwaf' and fun == 'index':
-        #             return  render_template('error3.html',data={}) 
-        #         return public.returnJson(False, 'PLUGIN_NOT_FUN'), json_header
-
-        # # 执行插件方法
-        # if not is_php:
-        #     if is_accept:
-        #         checks = plu._check(args)
-        #         if type(checks) != bool or not checks:
-        #             return public.getJson(checks), json_header
-        #     data = eval('plu.' + fun + '(args)')
-        # else:
-        #     comReturn = comm.local()
-        #     if comReturn: return comReturn
-        #     import panelPHP
-        #     args.s = fun
-        #     args.name = name
-        #     data = panelPHP.panelPHP(name).exec_php_script(args)
-
         from pluginAuth import Plugin
         try:
             args.s = fun
@@ -1590,6 +1549,7 @@ def panel_hook():
 @app.route('/install', methods=method_all)
 def install():
     # 初始化面板接口
+    if not session.get('login',None): return public.error_not_login()
     if not os.path.exists('install.pl'): return redirect('/login')
     if public.M('config').where("id=?", ('1',)).getField('status') == 1:
         if os.path.exists('install.pl'): os.remove('install.pl')
@@ -1627,15 +1587,15 @@ def install():
         return render_template('install.html', data=data)
 
 
-@app.route('/robots.txt', methods=method_all)
-def panel_robots():
-    # 爬虫规则响应接口
-    get=get_input()
-    if len(get.__dict__.keys()) > 1:return abort(404)
-    robots = '''User-agent: *
-Disallow: /
-'''
-    return robots, {'Content-Type': 'text/plain'}
+# @app.route('/robots.txt', methods=method_all)
+# def panel_robots():
+#     # 爬虫规则响应接口
+#     get=get_input()
+#     if len(get.__dict__.keys()) > 1:return abort(404)
+#     robots = '''User-agent: *
+# Disallow: /
+# '''
+#     return robots, {'Content-Type': 'text/plain'}
 
 @app.route('/rspamd', defaults={'path': ''},methods=method_all)
 @app.route('/rspamd/<path:path>',methods=method_all)
