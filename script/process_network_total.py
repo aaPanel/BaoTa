@@ -19,18 +19,33 @@ try:
     import pcap
 except ImportError:
     if os.path.exists('/usr/bin/apt'):
-        os.system("apt install libpcap-dev")
+        os.system("apt install libpcap-dev -y")
     elif os.path.exists('/usr/bin/dnf'):
-        os.system("dnf install libpcap-devel")
+        red_file = '/etc/redhat-release'
+        if os.path.exists(red_file):
+            f = open(red_file,'r')
+            red_body = f.read()
+            f.close()
+            if red_body.find('CentOS Linux release 8.') != -1:
+                rpm_file = '/root/libpcap-1.9.1.rpm'
+                down_url = "wget -O {} https://repo.almalinux.org/almalinux/8/PowerTools/x86_64/os/Packages/libpcap-devel-1.9.1-5.el8.x86_64.rpm --no-check-certificate -T 10".format(rpm_file)
+                print(down_url)
+                os.system(down_url)
+                os.system("rpm -ivh {}".format(rpm_file))
+                if os.path.exists(rpm_file): os.remove(rpm_file)
+            else:
+                os.system("dnf install libpcap-devel -y")
+        else:
+            os.system("dnf install libpcap-devel -y")
     elif os.path.exists('/usr/bin/yum'):
-        os.system("yum install libpcap-devel")
+        os.system("yum install libpcap-devel -y")
+        
     os.system("btpip install pypcap")
     try:
         import pcap
     except ImportError:
         print("pypcap module install failed.")
         sys.exit()
-
 
 class process_network_total:
     __pid_file = 'logs/process_network_total.pid'
