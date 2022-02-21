@@ -4,7 +4,7 @@ class main (projectBase ):#line:16
     __OOOOO0O00O0OOO0O0 ='{}/config/quota.json'.format (public .get_panel_path ())#line:17
     __O000O00OO00OO00O0 ='{}/config/mysql_quota.json'.format (public .get_panel_path ())#line:18
     __OO0OO0OOO0O0O00O0 =public .to_string ([27492 ,21151 ,33021 ,20026 ,20225 ,19994 ,29256 ,19987 ,20139 ,21151 ,33021 ,65292 ,35831 ,20808 ,36141 ,20080 ,20225 ,19994 ,29256 ])#line:19
-    def __init__ (OO0OOO00OO0O00OOO )->None :#line:21
+    def __init__ (OO0OOO00OO0O00OOO ):#line:21
         _OOO0O00000OO00O0O ='{}/data/quota_install.pl'.format (public .get_panel_path ())#line:22
         if not os .path .exists (_OOO0O00000OO00O0O ):#line:23
             OOOO000O00O000OO0 ='/usr/sbin/xfs_quota'#line:24

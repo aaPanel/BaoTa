@@ -24,7 +24,7 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 class http:
     _ip_type = None
-    def __init__(self) -> None:
+    def __init__(self):
         self._ip_type = config.config().get_request_iptype()
 
     def get(self,url,timeout = 60,headers = {},verify = False,type = 'python'):
