@@ -4062,7 +4062,8 @@ def error_not_login(e = None):
     return render_template('autherr.html')
 
 def error_403(e):
-    from BTPanel import Response
+    from BTPanel import Response,session
+    if not session.get('login',None): return error_not_login()
     errorStr = '''<html>
 <head><title>403 Forbidden</title></head>
 <body>
@@ -4076,7 +4077,8 @@ def error_403(e):
     return Response(errorStr, status=403, headers=headers)
 
 def error_404(e):
-    from BTPanel import Response
+    from BTPanel import Response,session
+    if not session.get('login',None): return error_not_login()
     errorStr = '''<html>
 <head><title>404 Not Found</title></head>
 <body>
