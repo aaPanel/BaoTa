@@ -5904,6 +5904,9 @@ var site = {
                     $.post('/ajax?action=log_analysis&path=/www/wwwlogs/' + web.name+'.log', function (rdata) {
                       if(rdata.status){
                         detect_progress();
+                      }else{
+                        layer.close(progress);
+                        layer.msg(rdata.msg, { icon: 2, time: 0, shade: 0.3, shadeClose: true });
                       }
                     })
                   }
