@@ -5860,6 +5860,132 @@ var site = {
             $('textarea[name="site_logs"]').scrollTop(100000000000)
           })
         }
+      },{
+        title:"日志安全分析",
+        callback: function(robj){
+          var progress = '';  //扫描进度
+          var loadT = bt.load('正在获取日志分析数据，请稍候...');
+          $.post('/ajax?action=get_result&path=/www/wwwlogs/' + web.name+'.log', function (rdata) {
+            loadT.close();
+            //1.扫描按钮
+            var analyes_log_btn = '<button type="button" title="日志扫描" class="btn btn-success analyes_log btn-sm mr5"><span>日志扫描</span></button>'
+
+            //2.功能介绍
+            var analyse_help = '<ul class="help-info-text c7">\
+              <li>日志安全分析：扫描网站(.log)日志中含有攻击类型的请求(类型包含：<em style="color:red">xss,sql,san,php</em>)</li>\
+              <li>分析的日志数据包含已拦截的请求</li>\
+              <li>默认展示上一次扫描数据(如果没有请点击日志扫描）</li>\
+              <li>如日志文件过大，扫描可能等待时间较长，请耐心等待</li>\
+              </ul>'
+
+            robj.append(analyes_log_btn+'<div class="analyse_log_table"></div>'+analyse_help)
+            render_analyse_list(rdata);
+
+            //事件
+            $(robj).find('.analyes_log').click(function(){
+              bt.confirm({
+                title:'扫描网站日志',
+                msg:'建议在服务器负载较低时进行安全分析，本次将对【'+web.name+'.log】文件进行扫描，可能等待时间较长，是否继续？'
+              }, function(index){
+                layer.close(index)
+                progress = layer.open({
+                  type: 1,
+                  closeBtn: 2,
+                  title: false,
+                  shade: 0,
+                  area: '400px',
+                  content: '<div class="pro_style" style="padding: 20px;"><div class="progress-head" style="padding-bottom: 10px;">正在扫描中，扫描进度...</div>\
+                      <div class="progress">\
+                        <div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 0%">0%</div>\
+                      </div>\
+                    </div>',
+                  success:function(){
+                    // 开启扫描并且持续获取进度
+                    $.post('/ajax?action=log_analysis&path=/www/wwwlogs/' + web.name+'.log', function (rdata) {
+                      if(rdata.status){
+                        detect_progress();
+                      }
+                    })
+                  }
+                })
+              })
+            })
+          })
+          // 渲染分析日志列表
+          function render_analyse_list(rdata){
+            var numTotal = rdata.xss+rdata.sql+rdata.san+rdata.php+rdata.ip+rdata.url
+            var analyse_list = '<div class="divtable" style="margin-top: 10px;"><table class="table table-hover">\
+              <thead><tr><th width="142">扫描时间</th><th>耗时</th><th>XSS</th><th>SQL</th><th>扫描</th><th>PHP攻击</th><th>IP(top100)</th><th>URL(top100)</th><th>合计</th></tr></thead>\
+              <tbody class="analyse_body">'
+            if(rdata.is_status){   //检测是否有扫描数据
+              analyse_list +='<tr>\
+                  <td>'+rdata.start_time+'</td>\
+                  <td>'+rdata.time.substring(0,4)+'秒</td>\
+                  <td class="onChangeLogDatail" '+(rdata.xss>0?'style="color:red"':'')+' name="xss">'+rdata.xss+'</td>\
+                  <td class="onChangeLogDatail" '+(rdata.sql>0?'style="color:red"':'')+' name="sql">'+rdata.sql+'</td>\
+                  <td class="onChangeLogDatail" '+(rdata.san>0?'style="color:red"':'')+' name="san">'+rdata.san+'</td>\
+                  <td class="onChangeLogDatail" '+(rdata.php>0?'style="color:red"':'')+' name="php">'+rdata.php+'</td>\
+                  <td class="onChangeLogDatail" '+(rdata.ip>0?'style="color:#20a53a"':'')+' name="ip">'+rdata.ip+'</td>\
+                  <td class="onChangeLogDatail" '+(rdata.url>0?'style="color:#20a53a"':'')+' name="url">'+rdata.url+'</td>\
+                  <td class="onChangeLogDatail">'+numTotal+'</td>\
+                </tr>'
+            }else{
+              analyse_list+='<tr><td colspan="9" style="text-align: center;">没有扫描数据</td></tr>'
+            }
+            analyse_list += '</tbody></table></div>'
+            $('.analyse_log_table').html(analyse_list)
+            $('.onChangeLogDatail').css('cursor','pointer').attr('title','点击查看详情')
+            //查看详情
+            $('.onChangeLogDatail').on('click',function(){
+              get_analysis_data_datail($(this).attr('name'))
+            })
+          }
+          // 扫描进度
+          function detect_progress(){
+            $.post('/ajax?action=speed_log&path=/www/wwwlogs/' + web.name+'.log', function (res) {
+              var pro = res.msg
+              if(pro !== 100){
+                if (pro > 100) pro = 100;
+                if (pro !== NaN) {
+                  $('.pro_style .progress-bar').css('width', pro + '%').html(pro + '%');
+                }
+                setTimeout(function () {
+                  detect_progress();
+                }, 1000);
+              }else{
+                layer.msg('扫描完成',{icon:1,timeout:4000})
+                layer.close(progress);
+                get_analysis_data();
+              }
+            })
+          }
+          // 获取扫描结果
+          function get_analysis_data(){
+            var loadTGA = bt.load('正在获取日志分析数据，请稍候...');
+            $.post('/ajax?action=get_result&path=/www/wwwlogs/' + web.name+'.log', function (rdata) {
+              loadTGA.close();
+              render_analyse_list(rdata,true)
+            })
+          }
+          // 获取扫描结果详情日志
+          function get_analysis_data_datail(name){
+            layer.open({
+              type: 1,
+              closeBtn: 2,
+              shadeClose: false,
+              title: '【'+name+'】日志详情',
+              area: '650px',
+              content:'<pre id="analysis_pre" style="background-color: #333;color: #fff;height: 545px;margin: 0;white-space: pre-wrap;border-radius: 0;"></pre>',
+              success(){
+                var loadTGD = bt.load('正在获取日志详情数据，请稍候...');
+                $.post('/ajax?action=get_detailed&path=/www/wwwlogs/' + web.name+'.log&type='+name+'', function (logs) {
+                  loadTGD.close();
+                  $('#analysis_pre').html((name == 'ip' || name == 'url'?'&nbsp;&nbsp;[次数]&nbsp;&nbsp;['+name+']</br>':'')+logs)
+                })
+              }
+            })
+          }
+        }
       }]
       bt.render_tab('tabLogs', _tab);
       $('#tabLogs span:eq(0)').click();
