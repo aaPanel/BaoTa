@@ -14,6 +14,9 @@
 import requests,os,re
 from BTPanel import request,Response,public,app,get_phpmyadmin_dir
 from http.cookies import SimpleCookie
+import requests.packages.urllib3.util.connection as urllib3_conn
+import socket
+
 
 class HttpProxy:
     _pma_path = None
@@ -100,6 +103,7 @@ class HttpProxy:
             @return Response
         '''
         try:
+            urllib3_conn.allowed_gai_family = lambda: socket.AF_INET
             headers = self.get_request_headers()
             if request.method == 'GET':
                 # 转发GET请求
