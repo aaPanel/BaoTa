@@ -1365,27 +1365,30 @@ class ajax:
         
         for item in data:
             if 'list' in item:
-                item['list'] = self.__get_home_list(item['list'])    
+                item['list'] = self.__get_home_list(item['list'],item['type'])    
                 if item['type'] == 1:
-                    if len(item['list']) > 4: item['list'] = item['list'][:4]                        
+                    if len(item['list']) > 4: item['list'] = item['list'][:4]    
+            if item['type'] == 0:
+                item['show'] = False                    
         return data
 
 
-    def __get_home_list(self,sList):  
+    def __get_home_list(self,sList,stype):  
         """
             @name 获取首页软件列表推荐
         """
-        import panelPlugin       
+        import panelPlugin
+        
+
         plu_panel =  panelPlugin.panelPlugin()
         plugin_list = plu_panel.get_cloud_list()
         nList = []
-        webserver = public.get_webserver()
+        webserver = public.get_webserver()       
         for x in sList:
             for plugin_info in plugin_list['list']:
                 if x['name'] == plugin_info['name']:
                     if plugin_info['endtime'] >= 0:
                         x['isBuy'] = True
-                
             is_check = False
             if 'dependent' in x :
                 if  x['dependent'] == webserver: is_check = True                           
@@ -1394,7 +1397,12 @@ class ajax:
             if is_check:                
                 info = plu_panel.get_soft_find(x['name'])
                 if info:
-                    if not info['setup']:                        
+                    if stype == 1:   
+                        if plugin_list['pro'] >=0: continue                            
+                        if not info['setup']:                        
+                            x['install'] = info['setup']
+                            nList.append(x) 
+                    else:                       
                         x['install'] = info['setup']
-                        nList.append(x)     
+                        nList.append(x) 
         return nList
