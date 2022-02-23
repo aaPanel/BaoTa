@@ -194,10 +194,10 @@ class setPanelLets:
         panel_cert_data = self.__check_panel_cert()
         if not panel_cert_data:
             self.__write_panel_cert()
-            return public.returnMsg(True,'')
+            return public.returnMsg(True,'1')
         if panel_cert_data["key"] != self.__tmp_key and panel_cert_data["cert"] != self.__tmp_cert:
             self.__write_panel_cert()
-            return public.returnMsg(True,'')
+            return public.returnMsg(True,'1')
         return public.returnMsg(True, '')
 
     # 设置lets证书
