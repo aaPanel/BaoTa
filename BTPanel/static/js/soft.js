@@ -1954,8 +1954,12 @@ var soft = {
         break;
       case 'log':
         var loadT = bt.load(lan.public.the_get);
+        var serverType = bt.get_cookie('serverType')
+        var log_file = 'error_log'
+        console.log(serverType)
+        if(serverType === 'nginx') log_file = serverType + '_error.log'
         bt.send('GetOpeLogs', 'ajax/GetOpeLogs', {
-          path: '/www/wwwlogs/nginx_error.log'
+          path: '/www/wwwlogs/'+ log_file
         }, function (rdata) {
           loadT.close();
           if (rdata.msg == '') rdata.msg = '当前没有日志!';
