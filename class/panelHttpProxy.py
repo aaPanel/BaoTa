@@ -12,7 +12,7 @@
 #------------------------------
 
 import requests,os,re
-from BTPanel import request,Response,public,app,get_phpmyadmin_dir
+from BTPanel import request,Response,public,app,get_phpmyadmin_dir,session
 from http.cookies import SimpleCookie
 import requests.packages.urllib3.util.connection as urllib3_conn
 import socket
@@ -50,15 +50,15 @@ class HttpProxy:
             @param p_res<Response> requests响应对像
             @return res<Response>
         '''
-        from datetime import datetime
-        cookie_dict = p_res.cookies.get_dict()
-        expires = datetime.utcnow() + app.permanent_session_lifetime
-        for k in cookie_dict.keys():
-            httponly = True
-            if k in ['phpMyAdmin']: httponly = True
-            res.set_cookie(k, cookie_dict[k],
-                                expires=expires, httponly=httponly,
-                                path='/')
+        # from datetime import datetime
+        # cookie_dict = p_res.cookies.get_dict()
+        # expires = datetime.utcnow() + app.permanent_session_lifetime
+        # for k in cookie_dict.keys():
+        #     httponly = True
+        #     if k in ['phpMyAdmin']: httponly = True
+        #     res.set_cookie(k, cookie_dict[k],
+        #                         expires=expires, httponly=httponly,
+        #                         path='/')
         return res
 
     def get_request_headers(self):
@@ -104,10 +104,22 @@ class HttpProxy:
         '''
         try:
             urllib3_conn.allowed_gai_family = lambda: socket.AF_INET
-            headers = self.get_request_headers()
+            s_key = 'proxy_{}'.format(app.secret_key)
+
+            if not s_key in session:
+                session[s_key] = requests.Session()
+                session[s_key].keep_alive = False
+                session[s_key].headers = {
+                    'User-Agent':'BT-Panel',
+                    'Connection':'close'
+                }
+                if proxy_url.find('phpmyadmin') != -1:
+                    session[s_key].cookies.update({'pma_lang':'zh_CN'})
+            # headers = self.get_request_headers()
+            headers = None
             if request.method == 'GET':
                 # 转发GET请求
-                p_res = requests.get(proxy_url,headers=headers,verify=False,allow_redirects=False)
+                p_res = session[s_key].get(proxy_url,headers=headers,verify=False,allow_redirects=False)
             elif request.method == 'POST':
                 # 转发POST请求
                 if request.files: # 如果上传文件
@@ -143,13 +155,13 @@ class HttpProxy:
     
                     # 转发上传请求
                     
-                    p_res = requests.post(proxy_url,self.form_to_dict(request.form),headers=headers,files=files,verify=False,allow_redirects=False)
+                    p_res = session[s_key].post(proxy_url,self.form_to_dict(request.form),headers=headers,files=files,verify=False,allow_redirects=False)
     
                     # 释放文件对象
                     for fkey in f_list.keys():
                         f_list[fkey].close()
                 else:
-                    p_res = requests.post(proxy_url,self.form_to_dict(request.form),headers=headers,verify=False,allow_redirects=False)
+                    p_res = session[s_key].post(proxy_url,self.form_to_dict(request.form),headers=headers,verify=False,allow_redirects=False)
             else:
                 return Response('不支持的请求类型',500)
             res = Response(p_res.content,headers=self.get_res_headers(p_res),content_type=p_res.headers.get('content-type',None),status=p_res.status_code)
