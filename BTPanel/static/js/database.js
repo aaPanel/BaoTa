@@ -847,7 +847,7 @@ var database = {
       var arry = []
       for (var i = 0; i < rdata.length; i++) {
         var element = rdata[i];
-        if(element.db_host === '127.0.0.1') continue
+        if(element.id == 0) continue
         arry.push(element)
       }
       that.dbCloudServerTable.$reader_content(arry);

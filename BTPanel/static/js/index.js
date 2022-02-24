@@ -1319,10 +1319,10 @@ var index = {
       if(callback) callback();
     })
   },
-    /**
+  /**
    * @description 推荐进阶版产品
   */
-    recommend_paid_version: function () {
+  recommend_paid_version: function () {
     try {
       var recomConfig = product_recommend.get_recommend_type(0)
       var pay_status = product_recommend.get_pay_status()
