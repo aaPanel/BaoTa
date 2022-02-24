@@ -119,7 +119,7 @@ class panelAuth:
     
     def get_plugin_list(self,get):
         try:
-            Plugin(False).get_plugin_list(False)
+            Plugin(False).get_plugin_list(True)
             if not session.get('get_product_bay') or not os.path.exists(self.__product_bay_path):
                 data = self.send_cloud('get_order_list_byuser', {})
                 if data: public.writeFile(self.__product_bay_path,json.dumps(data))
