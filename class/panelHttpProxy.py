@@ -111,7 +111,8 @@ class HttpProxy:
                 session[s_key].keep_alive = False
                 session[s_key].headers = {
                     'User-Agent':'BT-Panel',
-                    'Connection':'close'
+                    'Connection':'close',
+                    'Host': request.host + ':' + str(request.port)
                 }
                 if proxy_url.find('phpmyadmin') != -1:
                     session[s_key].cookies.update({'pma_lang':'zh_CN'})
@@ -127,8 +128,9 @@ class HttpProxy:
                     if not os.path.exists(tmp_path): os.makedirs(tmp_path,384)
     
                     # 处理请求头
-                    if 'Content-Type' in headers: del(headers['Content-Type'])
-                    if 'Content-Length' in headers: del(headers['Content-Length'])
+                    if headers:
+                        if 'Content-Type' in headers: del(headers['Content-Type'])
+                        if 'Content-Length' in headers: del(headers['Content-Length'])
     
                     # 遍历form表单中的所有文件
                     files = {}
