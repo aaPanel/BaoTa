@@ -222,6 +222,9 @@ echo "[*] shut down"
         else:
             result['time'] = "0"
             result['start_time'] = "2022/2/22 22:22:22"
+        if 'time' not in result:
+            result['time'] = "0"
+            result['start_time'] = "2022/2/22 22:22:22"
         result['xss'] = self.get_log_count(speed + 'xss.log')
         result['sql'] = self.get_log_count(speed + 'sql.log')
         result['san'] = self.get_log_count(speed + 'san.log')
