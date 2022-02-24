@@ -1034,8 +1034,7 @@ class panelSSL:
             session['focre_cloud'] = True
             return result
         except Exception as ex:
-            print(rtmp)
-            return public.returnMsg(False,'连接服务器失败!<br>' + rtmp)
+            return public.returnMsg(False,'连接服务器失败!<br>{}'.format(rtmp))
 
     def GetBindCode(self,get):
         """
