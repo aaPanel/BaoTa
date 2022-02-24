@@ -32,6 +32,7 @@ class HttpProxy:
             if h in ['Content-Encoding','Transfer-Encoding']: continue
             headers[h] = p_res.headers[h]
             if h in ['Location']:
+                
                 if headers[h].find('phpmyadmin_') != -1:
                     if not self._pma_path: 
                         self._pma_path = get_phpmyadmin_dir()
@@ -40,6 +41,9 @@ class HttpProxy:
                         else:
                             self._pma_path = ''
                     headers[h] = headers[h].replace(self._pma_path,'phpmyadmin')
+
+                if headers[h].find('127.0.0.1') != -1:
+                    headers[h] = re.sub(r"https?://127.0.0.1(:\d+)?/",request.url_root,headers[h])
         return headers
 
     def set_res_headers(self,res,p_res):
@@ -59,6 +63,7 @@ class HttpProxy:
         #     res.set_cookie(k, cookie_dict[k],
         #                         expires=expires, httponly=httponly,
         #                         path='/')
+        
         return res
 
     def get_request_headers(self):
