@@ -19,6 +19,7 @@ class log_analysis:
     log_analysis_path = '/www/server/panel/script/log_analysis.sh'
 
     def __init__(self):
+        if not os.path.exists(self.path + '/log/'): os.makedirs(self.path + '/log/')
         if not os.path.exists(self.log_analysis_path):
             log_analysis_data = '''help(){
 	echo  "Usage: ./action.sh [options] [FILE] [OUTFILE]     "

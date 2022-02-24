@@ -5930,7 +5930,7 @@ var site = {
                   <td class="onChangeLogDatail" '+(rdata.php>0?'style="color:red"':'')+' name="php">'+rdata.php+'</td>\
                   <td class="onChangeLogDatail" '+(rdata.ip>0?'style="color:#20a53a"':'')+' name="ip">'+rdata.ip+'</td>\
                   <td class="onChangeLogDatail" '+(rdata.url>0?'style="color:#20a53a"':'')+' name="url">'+rdata.url+'</td>\
-                  <td class="onChangeLogDatail">'+numTotal+'</td>\
+                  <td>'+numTotal+'</td>\
                 </tr>'
             }else{
               analyse_list+='<tr><td colspan="9" style="text-align: center;">没有扫描数据</td></tr>'
