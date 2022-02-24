@@ -811,7 +811,7 @@ var database = {
               group: [{
                 title:'编辑',
                 hide:function (row) {
-                  return row.db_host === '127.0.0.1'
+                  return row.id == 0
                 },
                 event:function(row){
                   that.render_db_cloud_server_view(row,true);
@@ -819,7 +819,7 @@ var database = {
               },{
                 title:'删除',
                 hide:function (row) {
-                  return row.db_host === '127.0.0.1'
+                  return row.id == 0
                 },
                 event:function(row){
                   that.del_db_cloud_server(row)
