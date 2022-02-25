@@ -116,9 +116,11 @@ class HttpProxy:
                 session[s_key].keep_alive = False
                 session[s_key].headers = {
                     'User-Agent':'BT-Panel',
-                    'Connection':'close',
-                    'Host': request.host + ':' + str(request.port)
+                    'Connection':'close'
                 }
+                try:
+                    session[s_key].headers['Host'] = request.url_root.replace('http://','').replace('https://','').split('/')[0]
+                except:pass
                 if proxy_url.find('phpmyadmin') != -1:
                     session[s_key].cookies.update({'pma_lang':'zh_CN'})
             # headers = self.get_request_headers()
