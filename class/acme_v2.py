@@ -778,8 +778,10 @@ fullchain.pem       粘贴到证书输入框
                 # 获取目标证书的基本信息
                 to_cert_init = self.get_cert_init(to_pem_file)
                 # 判断证书品牌是否一致
-                if to_cert_init['issuer'] != cert_init['issuer'] and to_cert_init['issuer'].find("Let's Encrypt") == -1 and to_cert_init['issuer'] != 'R3':
-                    continue
+                try:
+                    if to_cert_init['issuer'] != cert_init['issuer'] and to_cert_init['issuer'].find("Let's Encrypt") == -1 and to_cert_init['issuer'] != 'R3':
+                        continue
+                except: continue
                 # 判断目标证书的到期时间是否较早
                 if to_cert_init['notAfter'] > cert_init['notAfter']:
                     continue
@@ -1482,6 +1484,7 @@ fullchain.pem       粘贴到证书输入框
 
 
     def renew_cert_to(self,domains,auth_type,auth_to,index = None):
+        cert = {}
         try:
             index = self.create_order(
                 domains,
@@ -1521,9 +1524,11 @@ fullchain.pem       粘贴到证书输入框
                     self._config['orders'][index]['retry_count'] += 1
                     # 保存证书配置
                     self.save_config()
-
-            write_log("|-" + str(e).split('>>>>')[0])
+            msg = str(e).split('>>>>')[0]
+            write_log("|-" + msg)
+            return public.returnMsg(False, msg)
         write_log("-" * 70)
+        return cert
 
 
     # 续签证书
@@ -1586,7 +1591,7 @@ fullchain.pem       粘贴到证书输入框
                 n += 1
                 write_log("|-正在续签第 {} 张，域名: {}..".format(n,self._config['orders'][index]['domains']))
                 write_log("|-正在创建订单..")
-                self.renew_cert_to(self._config['orders'][index]['domains'],self._config['orders'][index]['auth_type'],self._config['orders'][index]['auth_to'],index)
+                cert = self.renew_cert_to(self._config['orders'][index]['domains'],self._config['orders'][index]['auth_type'],self._config['orders'][index]['auth_to'],index)
             return cert
 
         except Exception as ex:
