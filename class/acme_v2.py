@@ -1467,8 +1467,10 @@ fullchain.pem       粘贴到证书输入框
                 if not cert_init: continue # 无法获取证书
                 end_time = time.mktime(time.strptime(cert_init['notAfter'],'%Y-%m-%d'))
                 if end_time > new_time: continue # 未到期
-                if not cert_init['issuer'] in ['R3',"Let's Encrypt"] and cert_init['issuer'].find("Let's Encrypt") == -1:
-                    continue # 非同品牌证书
+                try:
+                    if not cert_init['issuer'] in ['R3',"Let's Encrypt"] and cert_init['issuer'].find("Let's Encrypt") == -1:
+                        continue # 非同品牌证书
+                except: continue
 
                 if isinstance(cert_init['dns'],str): cert_init['dns'] = [cert_init['dns']]
                 index = self.get_index(cert_init['dns'])
