@@ -718,7 +718,7 @@ def files(pdata=None):
     import files
     filesObject = files.files()
     defs = ('CheckExistsFiles', 'GetExecLog', 'GetSearch', 'ExecShell', 'GetExecShellMsg', 'exec_git', 'exec_composer',
-            'create_download_url',
+            'create_download_url','get_images_resize',
             'UploadFile', 'GetDir', 'CreateFile', 'CreateDir', 'DeleteDir', 'DeleteFile', 'get_download_url_list',
             'remove_download_url', 'modify_download_url',
             'CopyFile', 'CopyDir', 'MvFile', 'GetFileBody', 'SaveFileBody', 'Zip', 'UnZip', 'get_download_url_find',

@@ -7,6 +7,8 @@
 # +-------------------------------------------------------------------
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
+from base64 import b64encode
+from email.mime import base
 import sys
 import os
 import public
@@ -2516,6 +2518,64 @@ cd %s
         import panelSearch
         adad=panelSearch.panelSearch()
         return adad.get_replace_logs(args)
+
+    def get_path_images(self,path):
+        '''
+            @name 获取目录的图片列表
+            @param path 目录路径
+            @return 图片列表
+        '''
+        image_list = []
+        for fname in os.listdir(path):
+            if fname.split('.')[-1] in ['png','jpeg','gif','jpg','bmp','ico']:
+                image_list.append(fname)
+        return ','.join(image_list)
+
+    def get_images_resize(self,args):
+        '''
+            @name 获取指定图片的缩略图
+            @author hwliang<2022-03-02>
+            @param args<dict_obj>{
+                "path": "", 图片路径
+                "files": xx.png,aaa.jpg, 文件名称(不包含目录路径),如果files=*，则返回该目录下的所有图片
+                "width": 50, 宽
+                "heigth:50, 高
+                "return_type": "base64" // base64,file
+            }
+            @return base64编码的图片 or file
+        '''
+        from PIL import Image
+        from base64 import b64encode
+        from io import BytesIO
+        if args.files == '*':
+            args.files = self.get_path_images(args.path)
+        
+        file_list = args.files.split(',')
+
+        width = int(args.width)
+        height = int(args.height)
+
+        data = {}
+        for fname in file_list:
+            filename = os.path.join(args.path,fname)
+            if not os.path.exists(filename): continue
+            im  = Image.open(filename)
+            im.thumbnail((width,height))
+            out = BytesIO()
+            im.save(out, im.format)
+            out.seek(0)
+            image_type = im.format.lower()
+            mimetype = 'image/{}'.format(image_type)
+            if args.return_type == 'base64':
+                b64_data = "data:{};base64,".format(mimetype) + b64encode(out.read()).decode('utf-8')
+                data[fname] = b64_data
+                out.close()
+            else:
+                from flask import send_file
+                return send_file(out, mimetype=mimetype, cache_timeout=0)
+        return public.return_data(True,data)
+
+
 
 
 
