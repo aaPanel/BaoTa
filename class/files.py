@@ -780,6 +780,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         if sys.version_info[0] == 2:
             get.path = get.path.encode('utf-8').strip()
         try:
+            get.path = get.path.strip()
             if get.path[-1] == '.':
                 return public.returnMsg(False, '文件结尾不建议使用 "."，因为可能存在安全隐患')
             if not self.CheckFileName(get.path):
