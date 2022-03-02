@@ -1943,7 +1943,11 @@ def get_input():
     try:
         for key in request.form.keys():
             if key in exludes: continue
-            data[key] = str(request.form.get(key, ''))
+            s = request.form.getlist(key)
+            if len(s) == 1:
+                data[key] = str(s[0])
+            else:
+                data[key] = s
     except:
         try:
             post = request.form.to_dict()
