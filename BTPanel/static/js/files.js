@@ -1688,7 +1688,7 @@ var bt_file = {
         arry.push(list[list.length - 1])
       })
       var files = arry.join(',')
-      this.$http('get_images_resize', { path: this.file_path,files: files,width:30,height:30,return_type:'base64'}, function(res) {
+      this.$http('get_images_resize', { path: this.file_path,files: files,width:45,height:45,return_type:'base64'}, function(res) {
         var rdata = res.data
         $.each(rdata, function(key, item) {
           if(!item){
