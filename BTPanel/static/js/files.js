@@ -1614,39 +1614,43 @@ var bt_file = {
                     return _openTitle;
                 }(item))
             that.file_list[index]['only_id'] = only_id;
-            // console.log(item.down_id);
-            _html += '<div class="file_tr" data-index="' + index + '" data-filename="' + item.filename + '" ' + (bt.get_cookie('rank') == 'icon' ? 'title="' + path + '&#13;' + lan.files.file_size + ':' + bt.format_size(item.size) + '&#13;' + lan.files.file_etime + ':' + bt.format_data(item.mtime) + '&#13;' + lan.files.file_auth + ':' + item.user + '&#13;' + lan.files.file_own + ':' + item.root_level + '"' : '') + '>' +
-                '<div class="file_td file_checkbox"><div class="file_check"></div></div>' +
-                '<div class="file_td file_name">' +
-                '<div class="file_ico_type"><i class="file_icon ' + (item.type == 'dir' ? 'file_folder' : (item.ext == '' ? '' : 'file_' + item.ext).replace('//', '/')) + '"></i></div>' +
-                '<span class="file_title file_' + item.type + '_status" ' + (bt.get_cookie('rank') == 'icon' ? '' : 'title="' + path + '"') + '><i>' + item.filename + item.soft_link + '</i></span>' + (item.caret ? '<span class="iconfont icon-favorites" style="' + (item.down_id != 0 ? 'right:30px' : '') + '" title="文件已收藏，点击取消"></span>' : '') + (item.down_id != 0 ? '<span class="iconfont icon-share1" title="文件已分享，点击查看信息"></span>' : '') +
-                '</div>' +
-                '<div class="file_td file_type hide"><span title="' + (item.type == 'dir' ? '文件夹' : that.ext_type_tips(item.ext)) + '">' + (item.type == 'dir' ? '文件夹' : that.ext_type_tips(item.ext)) + '</span></div>' +
-                '<div class="file_td file_accept"><span>' + item.user + ' / ' + item.root_level + '</span></div>' +
-                '<div class="file_td file_size"><span>' + (item.type == 'dir' ? '<a class="btlink folder_size" href="javascript:;" data-path="' + path + '">计算</a>' : bt.format_size(item.size)) + '</span></div>' +
-                '<div class="file_td file_mtime"><span>' + bt.format_data(item.mtime) + '</span></div>' +
-                '<div class="file_td file_ps"><span class="file_ps_title" title="' + item.ps + '">' + (item.is_os_ps ? item.ps : '<input type="text" class="set_file_ps" data-value="' + item.ps + '" value="' + item.ps + '" />') + '</span></div>' +
-                '<div class="file_td file_operation"><div class="set_operation_group ' + (that.is_mobile ? 'is_mobile' : '') + '">' +
-                '<a href="javascript:;" class="btlink" data-type="open">' + is_editor_tips + '</a>&nbsp;|&nbsp;' +
-                '<a href="javascript:;" class="btlink" data-type="copy">复制</a>&nbsp;|&nbsp;' +
-                '<a href="javascript:;" class="btlink" data-type="shear">剪切</a>&nbsp;|&nbsp;' +
-                '<a href="javascript:;" class="btlink" data-type="rename">重命名</a>&nbsp;|&nbsp;' +
-                '<a href="javascript:;" class="btlink" data-type="authority">权限</a>&nbsp;|&nbsp;' +
-                '<a href="javascript:;" class="btlink" data-type="' + (is_compress ? 'unzip' : 'compress') + '">' + (is_compress ? '解压' : '压缩') + '</a>&nbsp;|&nbsp;' +
-                '<a href="javascript:;" class="btlink" data-type="del">删除</a>&nbsp;|&nbsp;' +
-                '<a href="javascript:;" class="btlink foo_menu_title" data-type="more">更多<i></i></a>' +
-                '</div></div>' +
-                '</div>';
-            if (item.type == 'dir') is_dir_num++;
+            if (item.type == 'dir') is_dir_num ++;
             item.path = path; // 文件路径;
             item.open_type = that.determine_file_type(item.ext); // 打开类型;
             if (item.open_type == 'images') {
-                item.images_id = images_num;
-                that.file_images_list.push(item.path);
-                images_num++;
+              item.images_id = images_num;
+              that.file_images_list.push(item.path);
+              images_num ++;
             }
-        });
-        $('.file_list_content').html(_html);
+            console.log(item.open_type)
+            _html += '<div class="file_tr" data-index="' + index + '" data-filename="' + item.filename + '" ' + (bt.get_cookie('rank') == 'icon' ? 'title="' + path + '&#13;' + lan.files.file_size + ':' + bt.format_size(item.size) + '&#13;' + lan.files.file_etime + ':' + bt.format_data(item.mtime) + '&#13;' + lan.files.file_auth + ':' + item.user + '&#13;' + lan.files.file_own + ':' + item.root_level + '"' : '') + '>' +
+              '<div class="file_td file_checkbox"><div class="file_check"></div></div>' +
+              '<div class="file_td file_name">' +
+              '<div class="file_ico_type">'+
+                (item.open_type == 'images' ? '<img class="file_images" src="/static/images/layer/loading-2.gif" style="width:20px;height:20px;left:5px;top:12.5px;" />' : '') +
+                '<i class="file_icon '+ (item.open_type == 'images' ?'hide ':'') +'' + (item.type == 'dir' ? 'file_folder' : (item.ext == '' ? '' : 'file_' + item.ext).replace('//', '/')) + '"></i>' +
+              '</div>' +
+              '<span class="file_title file_' + item.type + '_status" ' + (bt.get_cookie('rank') == 'icon' ? '' : 'title="' + path + '"') + '><i>' + item.filename + item.soft_link + '</i></span>' + (item.caret ? '<span class="iconfont icon-favorites" style="' + (item.down_id != 0 ? 'right:30px' : '') + '" title="文件已收藏，点击取消"></span>' : '') + (item.down_id != 0 ? '<span class="iconfont icon-share1" title="文件已分享，点击查看信息"></span>' : '') +
+              '</div>' +
+              '<div class="file_td file_type hide"><span title="' + (item.type == 'dir' ? '文件夹' : that.ext_type_tips(item.ext)) + '">' + (item.type == 'dir' ? '文件夹' : that.ext_type_tips(item.ext)) + '</span></div>' +
+              '<div class="file_td file_accept"><span>' + item.user + ' / ' + item.root_level + '</span></div>' +
+              '<div class="file_td file_size"><span>' + (item.type == 'dir' ? '<a class="btlink folder_size" href="javascript:;" data-path="' + path + '">计算</a>' : bt.format_size(item.size)) + '</span></div>' +
+              '<div class="file_td file_mtime"><span>' + bt.format_data(item.mtime) + '</span></div>' +
+              '<div class="file_td file_ps"><span class="file_ps_title" title="' + item.ps + '">' + (item.is_os_ps ? item.ps : '<input type="text" class="set_file_ps" data-value="' + item.ps + '" value="' + item.ps + '" />') + '</span></div>' +
+              '<div class="file_td file_operation"><div class="set_operation_group ' + (that.is_mobile ? 'is_mobile' : '') + '">' +
+              '<a href="javascript:;" class="btlink" data-type="open">' + is_editor_tips + '</a>&nbsp;|&nbsp;' +
+              '<a href="javascript:;" class="btlink" data-type="copy">复制</a>&nbsp;|&nbsp;' +
+              '<a href="javascript:;" class="btlink" data-type="shear">剪切</a>&nbsp;|&nbsp;' +
+              '<a href="javascript:;" class="btlink" data-type="rename">重命名</a>&nbsp;|&nbsp;' +
+              '<a href="javascript:;" class="btlink" data-type="authority">权限</a>&nbsp;|&nbsp;' +
+              '<a href="javascript:;" class="btlink" data-type="' + (is_compress ? 'unzip' : 'compress') + '">' + (is_compress ? '解压' : '压缩') + '</a>&nbsp;|&nbsp;' +
+              '<a href="javascript:;" class="btlink" data-type="del">删除</a>&nbsp;|&nbsp;' +
+              '<a href="javascript:;" class="btlink foo_menu_title" data-type="more">更多<i></i></a>' +
+              '</div></div>' +
+            '</div>';
+        })
+        that.render_file_thumbnail()
+        $('.file_list_content').html(_html)
         if (callback) callback({ is_dir_num: is_dir_num })
         that.clear_table_active(); // 清除表格选中内容
     },
@@ -1656,20 +1660,44 @@ var bt_file = {
      * @return void
      */
     render_file_disk_list: function() {
-        var that = this,
-            html = '',
-            _li = '';
-        that.get_disk_list(function(res) {
-            $.each(res, function(index, item) {
-                html += '<div class="nav_btn" data-menu="' + item.path + '">' +
-                    '<span class="glyphicon glyphicon-hdd"></span>' +
-                    '<span>' + (item.path == '/' ? '/(根目录)' : item.path) + ' (' + item.size[2] + ')</span>' +
-                    '</div>';
-                _li += '<li data-disk="' + item.path + '"><i class="glyphicon glyphicon-hdd"></i><span>' + (item.path == '/' ? '根目录' : item.path) + ' (' + item.size[2] + ')</span></li>'
-            });
-            $('.mount_disk_list').html('<div class="disk_title_group_btn hide"><span class="disk_title_group">磁盘分区</span><i class="iconfont icon-xiala"></i><ul class="nav_down_list">' + _li + '</ul></div><div class="file_disk_list">' + html + '</div>');
-            that.set_menu_line_view_resize();
-        });
+      var that = this,
+        html = '',
+        _li = '';
+      that.get_disk_list(function(res) {
+          $.each(res, function(index, item) {
+              html += '<div class="nav_btn" data-menu="' + item.path + '">' +
+                  '<span class="glyphicon glyphicon-hdd"></span>' +
+                  '<span>' + (item.path == '/' ? '/(根目录)' : item.path) + ' (' + item.size[2] + ')</span>' +
+                  '</div>';
+              _li += '<li data-disk="' + item.path + '"><i class="glyphicon glyphicon-hdd"></i><span>' + (item.path == '/' ? '根目录' : item.path) + ' (' + item.size[2] + ')</span></li>'
+          });
+          $('.mount_disk_list').html('<div class="disk_title_group_btn hide"><span class="disk_title_group">磁盘分区</span><i class="iconfont icon-xiala"></i><ul class="nav_down_list">' + _li + '</ul></div><div class="file_disk_list">' + html + '</div>');
+          that.set_menu_line_view_resize();
+      });
+    },
+
+
+    /**
+     * @description 渲染文件缩略图列表
+    */
+    render_file_thumbnail:function () {
+      if(this.file_images_list.length == 0) return false 
+      var arry = []
+      $.each(this.file_images_list,function (index,item) {
+        var list = item.split('/')
+        arry.push(list[list.length - 1])
+      })
+      var files = arry.join(',')
+      this.$http('get_images_resize', { path: this.file_path,files: files,width:30,height:30,return_type:'base64'}, function(res) {
+        var rdata = res.data
+        $.each(rdata, function(key, item) {
+          if(!item){
+            $('[data-filename="'+ key +'"] .file_images').hide().next().removeClass('hide')
+          }else{
+            $('[data-filename="'+ key +'"] .file_images').attr('src', item).removeAttr('style')
+          }
+        })
+      })
     },
 
     /**
