@@ -123,6 +123,9 @@ class HttpProxy:
                 except:pass
                 if proxy_url.find('phpmyadmin') != -1:
                     session[s_key].cookies.update({'pma_lang':'zh_CN'})
+                
+            if 'Authorization' in request.headers:
+                session[s_key].headers['Authorization'] = request.headers['Authorization']
             # headers = self.get_request_headers()
             headers = None
             if request.method == 'GET':
