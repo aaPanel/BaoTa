@@ -780,7 +780,9 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         if sys.version_info[0] == 2:
             get.path = get.path.encode('utf-8').strip()
         try:
-            get.path = get.path.strip()
+            fname = os.path.basename(get.path).strip()
+            fpath = os.path.dirname(get.path).strip()
+            get.path = os.path.join(fpath,fname)
             if get.path[-1] == '.':
                 return public.returnMsg(False, '文件结尾不建议使用 "."，因为可能存在安全隐患')
             if not self.CheckFileName(get.path):
@@ -2558,22 +2560,25 @@ cd %s
 
         data = {}
         for fname in file_list:
-            filename = os.path.join(args.path,fname)
-            if not os.path.exists(filename): continue
-            im  = Image.open(filename)
-            im.thumbnail((width,height))
-            out = BytesIO()
-            im.save(out, im.format)
-            out.seek(0)
-            image_type = im.format.lower()
-            mimetype = 'image/{}'.format(image_type)
-            if args.return_type == 'base64':
-                b64_data = "data:{};base64,".format(mimetype) + b64encode(out.read()).decode('utf-8')
-                data[fname] = b64_data
-                out.close()
-            else:
-                from flask import send_file
-                return send_file(out, mimetype=mimetype, cache_timeout=0)
+            try:
+                filename = os.path.join(args.path,fname)
+                if not os.path.exists(filename): continue
+                im  = Image.open(filename)
+                im.thumbnail((width,height))
+                out = BytesIO()
+                im.save(out, im.format)
+                out.seek(0)
+                image_type = im.format.lower()
+                mimetype = 'image/{}'.format(image_type)
+                if args.return_type == 'base64':
+                    b64_data = "data:{};base64,".format(mimetype) + b64encode(out.read()).decode('utf-8')
+                    data[fname] = b64_data
+                    out.close()
+                else:
+                    from flask import send_file
+                    return send_file(out, mimetype=mimetype, cache_timeout=0)
+            except:
+                data[fname] = ''
         return public.return_data(True,data)
 
 
