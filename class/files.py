@@ -2560,22 +2560,25 @@ cd %s
 
         data = {}
         for fname in file_list:
-            filename = os.path.join(args.path,fname)
-            if not os.path.exists(filename): continue
-            im  = Image.open(filename)
-            im.thumbnail((width,height))
-            out = BytesIO()
-            im.save(out, im.format)
-            out.seek(0)
-            image_type = im.format.lower()
-            mimetype = 'image/{}'.format(image_type)
-            if args.return_type == 'base64':
-                b64_data = "data:{};base64,".format(mimetype) + b64encode(out.read()).decode('utf-8')
-                data[fname] = b64_data
-                out.close()
-            else:
-                from flask import send_file
-                return send_file(out, mimetype=mimetype, cache_timeout=0)
+            try:
+                filename = os.path.join(args.path,fname)
+                if not os.path.exists(filename): continue
+                im  = Image.open(filename)
+                im.thumbnail((width,height))
+                out = BytesIO()
+                im.save(out, im.format)
+                out.seek(0)
+                image_type = im.format.lower()
+                mimetype = 'image/{}'.format(image_type)
+                if args.return_type == 'base64':
+                    b64_data = "data:{};base64,".format(mimetype) + b64encode(out.read()).decode('utf-8')
+                    data[fname] = b64_data
+                    out.close()
+                else:
+                    from flask import send_file
+                    return send_file(out, mimetype=mimetype, cache_timeout=0)
+            except:
+                data[fname] = ''
         return public.return_data(True,data)
 
 
