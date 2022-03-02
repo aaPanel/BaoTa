@@ -1347,7 +1347,9 @@ class ajax:
         log_analysis=log_analysis.log_analysis()
         return log_analysis.get_detailed(get)
 
-
+    def download_pay_type(self,path):
+        public.downloadFile(public.get_url() + '/install/lib/pay_type.json',path)
+        return True
 
     def get_pay_type(self,get):
         """
@@ -1356,7 +1358,7 @@ class ajax:
         spath = '{}/data/pay_type.json'.format(public.get_panel_path())
         down = cache.get('pay_type')
         if not down:
-            public.run_thread(public.downloadFile,(public.get_url() + '/install/lib/pay_type.json',spath))
+            public.run_thread(self.download_pay_type,(spath,))
             cache.set('pay_type',1,86400)
         try:
             data = json.loads(public.readFile("data/pay_type.json"))
