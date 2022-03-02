@@ -1328,7 +1328,7 @@ SetLink
                 x = public.M('databases').where('pid=?',id).field('id,sid,pid,name,ps,addtime').find()
             if not x: continue
             x['backup_count'] = public.M('backup').where("pid=? AND type=?",(x['id'],'1')).count()
-            x['total'] = int(public.get_database_size_by_id(id))
+            x['total'] = int(public.get_database_size_by_id(x['id']))
             result[x['name']] = x
         return result
 
