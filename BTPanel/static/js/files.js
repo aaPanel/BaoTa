@@ -130,23 +130,18 @@ var bt_file = {
         });
         // 搜索框（获取焦点、回车提交）
         $('.search_path_views .file_search_input').on('focus keyup', function(e) {
-                e = e || window.event;
-                var _obj = { path: that.file_path, search: $(this).val() };
-                switch (e.type) {
-                    case 'keyup':
-                        var isCheck = $('.file_search_checked').hasClass('active')
-                        if (isCheck) _obj['all'] = 'True'
-                        if (e.keyCode != 13 && e.type == 'keyup') return false;
-                        that.loadT = bt.load('正在搜索文件中,请稍候...');
-                        that.reader_file_list(_obj, function(res) {
-                            if (!res.msg) {
-                                that.loadT.close();
-                            }
-                        })
-                        break;
-                }
-                e.stopPropagation();
-                e.preventDefault();
+            e = e || window.event;
+            var _obj = { path: that.file_path, search: $(this).val() };
+            switch (e.type) {
+                case 'keyup':
+                  var isCheck = $('.file_search_checked').hasClass('active')
+                  if (isCheck) _obj['all'] = 'True'
+                  if (e.keyCode != 13 && e.type == 'keyup') return false;
+                  $('.path_btn').click()
+                  break;
+            }
+            e.stopPropagation();
+            e.preventDefault();
             })
             // 文件路径事件（获取焦点、失去焦点、回车提交）
         $('.file_path_input .path_input').on('focus blur keyup', function(e) {
