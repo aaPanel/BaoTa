@@ -216,7 +216,6 @@ var database = {
             event: function () {
               var url = $('#phpMyAdminUrl').data('url'),
               isEnable = url !== 'False';
-              console.log(isEnable,url)
               bt.open({
                 type: 1,
                 title:'phpMyAdmin访问安全提示',
