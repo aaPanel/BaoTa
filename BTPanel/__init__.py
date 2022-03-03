@@ -2357,10 +2357,20 @@ def pma_proxy(path_full = None):
     cache_key = 'pmd_port_path'
     pmd = cache.get(cache_key)
     if not pmd:
-        pmd = get_phpmyadmin_dir()
+        pmd = list(get_phpmyadmin_dir())
         if not pmd: return '未安装phpMyAdmin,请到【软件商店】页面安装!'
         cache.set(cache_key,pmd,10)
-    proxy_url = 'http://127.0.0.1:{}/{}/'.format(pmd[1],pmd[0]) + request.full_path.replace('/phpmyadmin/','')
+    panel_pool = 'http://'
+    if request.url_root[:5] == 'https':
+        panel_pool = 'https://'
+        import ajax
+        ssl_info = ajax.ajax().get_phpmyadmin_ssl(None)
+        if ssl_info['status']:
+            pmd[1] = ssl_info['port']
+        else:
+            panel_pool = 'http://'
+
+    proxy_url = '{}127.0.0.1:{}/{}/'.format(panel_pool,pmd[1],pmd[0]) + request.full_path.replace('/phpmyadmin/','')
     from panelHttpProxy import HttpProxy
     px = HttpProxy()
     return px.proxy(proxy_url)

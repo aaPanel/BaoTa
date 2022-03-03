@@ -44,6 +44,8 @@ class HttpProxy:
 
                 if headers[h].find('127.0.0.1') != -1:
                     headers[h] = re.sub(r"https?://127.0.0.1(:\d+)?/",request.url_root,headers[h])
+                if request.url_root.find('https://') == 0:
+                    headers[h] = headers[h].replace('http://','https://')
         return headers
 
     def set_res_headers(self,res,p_res):
@@ -122,7 +124,10 @@ class HttpProxy:
                     session[s_key].headers['Host'] = request.url_root.replace('http://','').replace('https://','').split('/')[0]
                 except:pass
                 if proxy_url.find('phpmyadmin') != -1:
-                    session[s_key].cookies.update({'pma_lang':'zh_CN'})
+                    if proxy_url.find('https://') == 0:
+                        session[s_key].cookies.update({'pma_lang_https':'zh_CN'})
+                    else:
+                        session[s_key].cookies.update({'pma_lang':'zh_CN'})
                 
             if 'Authorization' in request.headers:
                 session[s_key].headers['Authorization'] = request.headers['Authorization']
@@ -176,6 +181,7 @@ class HttpProxy:
                     p_res = session[s_key].post(proxy_url,self.form_to_dict(request.form),headers=headers,verify=False,allow_redirects=False)
             else:
                 return Response('不支持的请求类型',500)
+
             res = Response(p_res.content,headers=self.get_res_headers(p_res),content_type=p_res.headers.get('content-type',None),status=p_res.status_code)
             res = self.set_res_headers(res,p_res)
             return res
