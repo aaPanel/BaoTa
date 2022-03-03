@@ -108,21 +108,20 @@ var bt_file = {
             }
         });
         $('.search_path_views').find('.file_search_checked').unbind('click').click(function() {
-            if ($(this).hasClass('active')) {
-                $(this).removeClass('active')
-            } else {
-                $(this).addClass('active');
-            }
+          if ($(this).hasClass('active')) {
+            $(this).removeClass('active')
+          } else {
+            $(this).addClass('active')
+          }
         })
         // 搜索按钮
         $('.search_path_views').on('click', '.path_btn', function(e) {
             var _obj = { path: that.file_path, search: $('.file_search_input').val() };
             if ($('#search_all').hasClass('active')) _obj['all'] = 'True'
-            that.loadT = bt.load('正在搜索文件中,请稍候...');
+            that.loadT = bt.load('正在搜索文件中,请稍候...')
+            _obj['file_btn'] = true
             that.reader_file_list(_obj, function(res) {
-                if (!res.msg) {
-                    that.loadT.close();
-                }
+              if (!res.msg) that.loadT.close()
             })
             e.stopPropagation();
         })
@@ -216,16 +215,16 @@ var bt_file = {
         });
         //目录获取子级所有文件夹(箭头图标)
         $('.file_path_input .file_dir_view').on('click', '.file_dir_item i', function(e) {
-                var children_list = $(this).siblings('.nav_down_list')
-                var _path = $(this).siblings('span').attr('title');
-                children_list.show().parent().siblings().find('.nav_down_list').removeAttr('style');
-                that.render_path_down_list(children_list, _path);
-                $(document).one('click', function() {
-                    children_list.removeAttr('style');
-                    e.stopPropagation();
-                });
-                e.stopPropagation();
-            })
+          var children_list = $(this).siblings('.nav_down_list')
+          var _path = $(this).siblings('span').attr('title');
+          children_list.show().parent().siblings().find('.nav_down_list').removeAttr('style');
+          that.render_path_down_list(children_list, _path);
+          $(document).one('click', function() {
+              children_list.removeAttr('style');
+              e.stopPropagation();
+          });
+          e.stopPropagation();
+        })
             //目录子级文件路径跳转（下拉）
         $('.file_path_input .file_dir_view').on('click', '.file_dir_item .nav_down_list li', function(e) {
             that.reader_file_list({ path: $(this).data('path'), is_operating: true });
@@ -1345,9 +1344,16 @@ var bt_file = {
           var search_input = $('.search_path_views .file_search_input').val()
           data['search'] = search_input
         }
+        if(typeof data.file_btn === "undefined"){
+          $('.file_search_input').val('')
+          $('#search_all').removeClass('active')
+          data['search'] = ''
+          delete data['file_btn']
+          delete data['all']
+        }
         this.get_dir_list(data, function(res){
             if (res.status === false && res.msg.indexOf('指定目录不存在!') > -1) {
-                return that.reader_file_list({ path: '/www' })
+              return that.reader_file_list({ path: '/www' })
             }
             that.file_path = that.path_check(res.PATH);
             that.file_list = $.merge(that.data_reconstruction(res.DIR, 'DIR'), that.data_reconstruction(res.FILES));
@@ -1622,7 +1628,6 @@ var bt_file = {
               that.file_images_list.push(item.path);
               images_num ++;
             }
-            console.log(item.open_type)
             _html += '<div class="file_tr" data-index="' + index + '" data-filename="' + item.filename + '" ' + (bt.get_cookie('rank') == 'icon' ? 'title="' + path + '&#13;' + lan.files.file_size + ':' + bt.format_size(item.size) + '&#13;' + lan.files.file_etime + ':' + bt.format_data(item.mtime) + '&#13;' + lan.files.file_auth + ':' + item.user + '&#13;' + lan.files.file_own + ':' + item.root_level + '"' : '') + '>' +
               '<div class="file_td file_checkbox"><div class="file_check"></div></div>' +
               '<div class="file_td file_name">' +
