@@ -722,7 +722,7 @@ var index = {
                 <div class="product-name">'+ item['title'] +'</div>\
                 <div class="product-pay-btn">\
                 '+ ((item['isBuy'] && !item['install'])?
-                '<button class="btn btn-sm btn-success" style="margin-left:0;" onclick="bt.soft.install(\''+ item['name'] +'\')">立即安装</button>':
+                '<button class="btn btn-sm btn-success home_recommend_btn" style="margin-left:0;" onclick="bt.soft.install(\''+ item['name'] +'\')">立即安装</button>':
                 '<a class="btn btn-sm btn-default mr5 '+ (!item.preview?'hide':'') +'" href="'+ item.preview +'" target="_blank">预览</a><button type="submit" class="btn btn-sm btn-success" onclick=\"product_recommend.pay_product_sign(\'ltd\','+ item.pay +')\">购买</button>') +'\
                 </div>\
               </div>\

@@ -23,6 +23,8 @@ var soft = {
     }
     bt.soft.get_soft_list(page, type, search, function (rdata) {
       soft.set_soft_tips(rdata, type);
+      var isClearCloudRefresh = bt.get_cookie('refresh_software_list')
+      if(isClearCloudRefresh) bt.clear_cookie('refresh_software_list')
       var tBody = '';
       rdata.type.unshift({
         icon: 'icon',

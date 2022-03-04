@@ -4156,7 +4156,21 @@ bt.soft = {
     var that = this;
     var user_info = JSON.parse(bt_user_info);
     var username = user_info.data.username;
-    bt.open({
+    var overall_beforeunload = function(){
+      return ''
+    }
+    var overall_keyup = function() {
+      if ((window.event.keyCode == 116) || (window.event.shiftKey && window.event.keyCode == 121)) {
+        layer.msg('提示，正在交易订单，为确保订单支付成功，请关闭支付页面后再刷新页面!', {icon:1})
+        window.event.keyCode = 0;
+        window.event.returnValue = false;
+      }
+      if ((window.event.altKey) && (window.event.keyCode == 115)) { //屏蔽Alt+F4 
+        window.showModelessDialog("about:blank", "", "dialogWidth:1px;dialogheight:1px");
+        return false;
+      }
+    }
+    layer.open({
       type: 1,
       title: false,
       skin: 'libPay-view',
@@ -4193,39 +4207,40 @@ bt.soft = {
                             <span>是否需要客服电话联系，工作时间 9：30-18：00</span>\
                         </div>\
                         <div class="libPay-line-item mtb20" id="libPay-qcode-box">\
-                            <div class="libPay-qcode-left">\
-                                <div class="pay-radio-type" >\
-                                    <div class="pay-type-btn active" data-condition="2" >\
-                                        <label class="pay-type-label"> <span class="pay-radio-ati"></span><span class="pay-radio-tit">微信扫码支付</span></label>\
+                          <div class="libPay-qcode-left">\
+                              <div class="pay-radio-type" >\
+                                  <div class="pay-type-btn active" data-condition="2" >\
+                                      <label class="pay-type-label"> <span class="pay-radio-ati"></span><span class="pay-radio-tit">微信扫码支付</span></label>\
+                                  </div>\
+                                  <div class="pay-type-btn" data-condition="3">\
+                                      <label class="pay-type-label"><span class="pay-radio-ati"></span><span class="pay-radio-tit">支付宝扫码支付</span></label>\
+                                  </div>\
+                              </div>\
+                          </div>\
+                          <div class="libPay-qcode-right">\
+                              <div class="libPay-loading"><p><img src="/static/images/loading-2.gif"></p><p>正在生成订单,请稍候...</p></div>\
+                              <div class= "libPaycode-box">\
+                                  <div class="pay-wx" style="height:155px;width: 155px" id="PayQcode" ></div>\
+                                  <div class="payqcode-box" >\
+                                      <span class="wx-pay-ico mr5 wechat"></span>\
+                                  </div>\
+                                  <div class="libPaycode-foo-txt" >\
+                                    <div class="payment_results_tips">提示：支付后请耐心等待支付结果，请勿刷新浏览器，否则将会导致购买异常。</div>\
+                                    <div class="userinfo">\
+                                        <div class="info_label mb-5">当前账号：</div>\
+                                        <div class="info_value">' + username + '</div>\
+                                        <a class="btlink" onclick="bt.pub.bind_btname()" href="javascript:;">切换账号</a>\
                                     </div>\
-                                    <div class="pay-type-btn" data-condition="3">\
-                                        <label class="pay-type-label"><span class="pay-radio-ati"></span><span class="pay-radio-tit">支付宝扫码支付</span></label>\
-                                    </div>\
-                                </div>\
-                            </div>\
-                            <div class="libPay-qcode-right">\
-                                <div class="libPay-loading"><p><img src="/static/images/loading-2.gif"></p><p>正在生成订单,请稍候...</p></div>\
-                                <div class= "libPaycode-box">\
-                                    <div class="pay-wx" style="height:155px;width: 155px" id="PayQcode" ></div>\
-                                    <div class="payqcode-box" >\
-                                        <span class="wx-pay-ico mr5 wechat"></span>\
-                                    </div>\
-                                    <div class="libPaycode-foo-txt" >\
-                                        <div class="userinfo">\
-                                            <div class="info_label">当前账号：</div>\
-                                            <div class="info_value">' + username + '</div>\
-                                            <a class="btlink" onclick="bt.pub.bind_btname()" href="javascript:;">切换账号</a>\
-                                        </div>\
-                                        <p> 订单总价:</p> <span class="libPayTotal">---</span> /<lable class="libPayCycle">--年</lable>\
-                                        <div class= "libPaycode-pro-cylce">低至--元/天 </div>\
-                                    </div>\
-                                </div >\
-                            </div>\
-                        </div>\
-                        <ul class="libPay-footer-tips">\
-                            <li>所有不在堡塔付款的宝塔产品100%是骗人的，请勿上当。<a class="btlink" href="https://www.bt.cn/bbs/thread-22665-1-1.html" target="_blank">查看详情</a></p>\
-                            <li>如果购买后未立即到账，请耐心等待5分钟后重新登录面板，如遇到支付异常请联系客服QQ：<a class="btlink" href="https://wpa1.qq.com/OUMbED4a?_type=wpa&qidian=true" target="_blank">3007255432</a></p>\
-                        </ul>\
+                                    <p> 订单总价:</p> <span class="libPayTotal">---</span> /<lable class="libPayCycle">--年</lable>\
+                                    <div class= "libPaycode-pro-cylce">低至--元/天 </div>\
+                                  </div>\
+                              </div >\
+                          </div>\
+                      </div>\
+                      <ul class="libPay-footer-tips">\
+                        <li>所有不在堡塔付款的宝塔产品100%是骗人的，请勿上当。<a class="btlink" href="https://www.bt.cn/bbs/thread-22665-1-1.html" target="_blank">查看详情</a></p>\
+                        <li style="color:red;">如果购买后未立即到账，请点击更新软件列表/支付状态按钮，如遇到支付异常请联系客服QQ：<a class="btlink" href="https://wpa1.qq.com/OUMbED4a?_type=wpa&qidian=true" target="_blank">3007255432</a></p>\
+                      </ul>\
                     </div>\
                     <div class="libPay-layer-item">\
                         <p class="voucher-tit">产品类型</p>\
@@ -4312,12 +4327,27 @@ bt.soft = {
             }
           });
         })
+        $(window).on('beforeunload',overall_beforeunload)
+        $(document).on('keydown',overall_keyup)
+        bt.set_cookie('refresh_software_list',1)
+        bt.set_cookie('force', 1)
       },
       end: function () {
-        clearInterval(bt.soft.pub.wxpayTimeId);
-        bt.clear_cookie('pay_source');
+        $(window).unbind('beforeunload',overall_beforeunload)
+        $(document).unbind('keydown',overall_keyup)
+        clearInterval(bt.soft.pub.wxpayTimeId)
+      },
+      cancel:function(indexs){
+        bt.confirm({
+          title:'温馨提示',
+          msg:'支付过程中，请勿关闭该页面，以免出现支付异常！'
+        },function (indexss) {
+          layer.close(indexs)
+          layer.close(indexss)
+        })
+        return false
       }
-    });
+    })
   },
   //获取付款周期
   get_product_change: function (idx, btype) {
@@ -5525,7 +5555,7 @@ bt.soft = {
                             '<div class="index_date">' + bt.format_data(item.update_time) + '</div>' +
                             '<div class="index_title">' + data.title + item.m_version + '.' + item.version + '- ' + (item.beta ? '测试版' : '正式版') + '</div>' +
                             '<div class="index_conter">' + (item.update_msg.replace(/\n/g, '</br>') || '无') + '</div>' +
-                            '</div>'
+                          '</div>'
                       }
                       return html
                     }()) +

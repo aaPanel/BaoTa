@@ -633,6 +633,11 @@ background-color: #e6e9ee
   margin-left: 180px
 }
 
+.home_recommend_btn{
+  background:#fff;
+  color:#20a53a;
+}
+
 .task {
   position: absolute;
   right: 6px;
@@ -14681,6 +14686,15 @@ textarea {
   vertical-align: top;
   font-size: 12px;
 }
+.payment_results_tips{
+  display: block !important;
+  background-color: #fdf6ec;
+  color: #e6a23c;
+  padding: 8px 10px;
+  border-radius: 2px;
+  margin-bottom:05px
+}
+
 
 .libPay-qcode-right div {
   display: inline-block;
@@ -14809,7 +14823,7 @@ textarea {
 .libPay-qcode-right {
   border-left: 1px solid #eee;
   margin-left: -1px;
-  padding: 20px 0 20px 35px;
+  padding: 15px 0 15px 25px;
   position: relative;
 }
 
@@ -14822,7 +14836,7 @@ textarea {
 
 .libPay-qcode-right .libPaycode-foo-txt {
   margin-left: 30px;
-  margin-top: 35px;
+  margin-top: 0;
 }
 
 .libPay-qcode-right .libPaycode-foo-txt p {
@@ -14835,7 +14849,10 @@ textarea {
   font-weight: bold;
   display: inline-block;
   color: #ff7300;
-  margin: 10px 0;
+  margin: 5px 0;
+}
+.libPay-qcode-right .libPaycode-foo-txt .userinfo{
+  margin-bottom: 5px;
 }
 
 .libPay-qcode-right .libPaycode-foo-txt .libPaycode-pro-cylce {
@@ -14857,8 +14874,8 @@ textarea {
 
 .libPay-qcode-right .payqcode-box {
   position: absolute;
-  top: 85px;
-  left: 100px;
+  top: 80px;
+  left: 90px;
   background-color: #fff;
   width: 25px;
   height: 25px;
@@ -16018,6 +16035,5 @@ margin-bottom: 10px;
   font-size: 13px;
   height: 110px;
 }
-
 
 
