@@ -7923,11 +7923,11 @@ var site = {
             var cert_info = '';
             if (rdata.cert_data['notBefore']) {
               cert_info = '<div style="margin-bottom: 10px;" class="alert alert-success">\
-                                        <p style="margin-bottom: 9px;"><span style="width: 357px;display: inline-block;"><b>已部署成功：</b>将在距离到期时间1个月内尝试自动续签</span>\
-                                        <span style="margin-left: 15px;display: inline-block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;max-width: 140px;width: 140px;">\
-                                        <b>证书品牌：</b>' + rdata.cert_data.issuer + '</span></p>\
-                                        <span style="display:inline-block;max-width: 357px;overflow:hidden;text-overflow:ellipsis;vertical-align:-3px;white-space: nowrap;width: 357px;"><b>认证域名：</b> ' + rdata.cert_data.dns.join('、') + '</span>\
-                                        <span style="margin-left: 15px;"><b>到期时间：</b> ' + rdata.cert_data.notAfter + '</span></div>'
+              <p style="margin-bottom: 9px;"><span style="width: 357px;display: inline-block;"><b>已部署成功：</b>将在距离到期时间1个月内尝试自动续签</span>\
+              <span style="margin-left: 15px;display: inline-block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;max-width: 140px;width: 140px;">\
+              <b>证书品牌：</b>' + rdata.cert_data.issuer + '</span></p>\
+              <span style="display:inline-block;max-width: 357px;overflow:hidden;text-overflow:ellipsis;vertical-align:-3px;white-space: nowrap;width: 357px;"><b>认证域名：</b> ' + rdata.cert_data.dns.join('、') + '</span>\
+              <span style="margin-left: 15px;"><b>到期时间：</b> ' + rdata.cert_data.notAfter + '</span></div>'
             }
             robj.append('<div>' + cert_info + '<div><span>密钥(KEY)</span><span style="padding-left:194px">证书(PEM格式)</span></div></div>');
             var datas = [{
@@ -8189,9 +8189,8 @@ var site = {
               callback: function (ldata) {
                 ldata['domains'] = [];
                 $('#ymlist .checked_default input[type="checkbox"]:checked').each(function () {
-                  ldata['domains'].push($(this).val())
+                  if(!ldata.check_dns && $(this).val().indexOf('*.') == -1) ldata['domains'].push($(this).val())
                 })
-
                 var auth_type = 'http'
                 var auth_to = web.id
                 var auto_wildcard = '0'
