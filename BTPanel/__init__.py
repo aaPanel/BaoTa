@@ -2357,8 +2357,9 @@ def pma_proxy(path_full = None):
     cache_key = 'pmd_port_path'
     pmd = cache.get(cache_key)
     if not pmd:
-        pmd = list(get_phpmyadmin_dir())
+        pmd = get_phpmyadmin_dir()
         if not pmd: return '未安装phpMyAdmin,请到【软件商店】页面安装!'
+        pmd = list(pmd)
         cache.set(cache_key,pmd,10)
     panel_pool = 'http://'
     if request.url_root[:5] == 'https':
