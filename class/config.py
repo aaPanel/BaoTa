@@ -460,6 +460,7 @@ class config:
             if not s_time_tmp: s_time_tmp = '0'
             if int(s_time_tmp) != session_timeout:
                 if session_timeout < 300: return public.returnMsg(False,'超时时间不能小于300秒')
+                if session_timeout > 86400: return public.returnMsg(False,'超时时间不能大于86400秒')
                 public.writeFile(sess_out_path,str(session_timeout))
                 isReWeb = True
 
