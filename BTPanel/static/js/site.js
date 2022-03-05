@@ -8189,7 +8189,7 @@ var site = {
               callback: function (ldata) {
                 ldata['domains'] = [];
                 $('#ymlist .checked_default input[type="checkbox"]:checked').each(function () {
-                  if(!ldata.check_dns && $(this).val().indexOf('*.') == -1) ldata['domains'].push($(this).val())
+                  if(!(ldata.check_file && $(this).val().indexOf('*.') > -1)) ldata['domains'].push($(this).val())
                 })
                 var auth_type = 'http'
                 var auth_to = web.id
