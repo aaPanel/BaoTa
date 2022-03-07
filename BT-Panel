@@ -28,7 +28,7 @@ if is_debug:
     class PanelEventHandler(pyinotify.ProcessEvent):
         _exts = ['py','html','BT-Panel','so']
         _explude_patts = [
-            re.compile('{}/plugin/.+'.format(_PATH)),
+            re.compile('{}/plugin/.+\.html'.format(_PATH)),
             re.compile('{}/(tmp|temp)/.+'.format(_PATH)),
             re.compile('{}/pyenv/.+'.format(_PATH))
         ]
