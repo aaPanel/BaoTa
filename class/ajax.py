@@ -1364,26 +1364,25 @@ class ajax:
             data = json.loads(public.readFile("data/pay_type.json"))
         except :
             data = {}
-        
+
+        import panelPlugin
+        plu_panel =  panelPlugin.panelPlugin()
+        plugin_list = plu_panel.get_cloud_list()
+
         for item in data:
             if 'list' in item:
-                item['list'] = self.__get_home_list(item['list'],item['type'])    
+                item['list'] = self.__get_home_list(item['list'],item['type'],plugin_list,plu_panel)    
                 if item['type'] == 1:
                     if len(item['list']) > 4: item['list'] = item['list'][:4]    
-            if item['type'] == 0:
+            if item['type'] == 0 and plugin_list['pro'] >= 0:
                 item['show'] = False                    
         return data
 
 
-    def __get_home_list(self,sList,stype):  
+    def __get_home_list(self,sList,stype,plugin_list,plu_panel):  
         """
             @name 获取首页软件列表推荐
         """
-        import panelPlugin
-        
-
-        plu_panel =  panelPlugin.panelPlugin()
-        plugin_list = plu_panel.get_cloud_list()
         nList = []
         webserver = public.get_webserver()       
         for x in sList:
