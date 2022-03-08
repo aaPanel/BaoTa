@@ -666,7 +666,7 @@ class panelSSL:
                 else:
                     spath = get.path + '/.well-known/pki-validation'
                 if not os.path.exists(spath): public.ExecShell("mkdir -p '" + spath + "'")
-                public.writeFile(spath + '/fileauth.txt',sslInfo['data']['authValue'])
+                public.writeFile(spath + '/' + sslInfo['data']['authKey'],sslInfo['data']['authValue'])
             except:
                 return public.returnMsg(False,'SSL_CHECK_WRITE_ERR')
         try:
