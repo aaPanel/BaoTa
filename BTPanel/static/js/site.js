@@ -6370,7 +6370,7 @@ var site = {
                         var html = '';
                         if (item.renew) html += '<a href="javascript:;" class="btlink options_ssl" data-type="renewal_ssl">续签证书</a>&nbsp;&nbsp;|&nbsp;&nbsp;';
                         if (item.certId == '') {
-                          if (item.install) html += '<a href="' + item.qq + '" class="btlink options_ssl service_method" target="_blank">人工服务</a>&nbsp;&nbsp;|&nbsp;&nbsp;';
+                          if (item.install) html += '<a class="btlink options_ssl service_method" target="_blank">人工服务</a>&nbsp;|&nbsp;';
                           html += '<a href="javascript:;" class="btlink options_ssl"  data-type="perfect_user_info">完善资料</a>';
                           return html;
                         } else if (item.status === 1) {
@@ -6380,7 +6380,7 @@ var site = {
                               return '<a href="javascript:;" data-type="deploy_ssl" class="btlink options_ssl">部署</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="/ssl?action=download_cert&oid=' + item.oid + '" data-type="download_ssl" class="btlink options_ssl">下载</a>'
                               break;
                             case "PENDING": //申请中
-                              if (item.install) html += '<a href="' + item.qq + '" class="btlink options_ssl service_method" target="_blank">人工服务</a>&nbsp;&nbsp;|&nbsp;&nbsp;';
+                              if (item.install) html += '<a class="btlink options_ssl service_method" target="_blank">人工服务</a>&nbsp;|&nbsp;';
                               html += '<a href="javascript:;" data-type="verify_order" class="btlink options_ssl">验证</a>';
                               return html;
                               break;
@@ -6391,7 +6391,7 @@ var site = {
                               return '<a href="javascript:;" data-type="info_order" class="btlink options_ssl">详情</a>';
                               break;
                             default:
-                              if (item.install) html += '<a href="' + item.qq + '" class="btlink options_ssl service_method" target="_blank">人工服务</a>&nbsp;&nbsp;|&nbsp;&nbsp;';
+                              if (item.install) html += '<a class="btlink options_ssl service_method" target="_blank">人工服务</a>&nbsp;|&nbsp;';
                               html += '<a href="javascript:;" data-type="verify_order" class="btlink options_ssl">验证</a>';
                               return html;
                               break;
