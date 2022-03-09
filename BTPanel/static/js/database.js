@@ -938,6 +938,7 @@ var database = {
         bt.send(interface,'database/'+interface,form,function(rdata){
           that.layerT.close();
           if(rdata.status){
+            that.database_table_view();
             that.render_cloud_server_table();
             layer.close(indexs)
             layer.msg(rdata.msg, {icon:1})
@@ -1398,7 +1399,10 @@ var database = {
       closeBtn: 2
     }, function () {
       bt.send('RemoveCloudServer','database/RemoveCloudServer',{id:row.id},function(rdata){
-        if(rdata.status) that.render_cloud_server_table();
+        if(rdata.status){
+          that.database_table_view()
+          that.render_cloud_server_table();
+        }
         layer.msg(rdata.msg, {
           icon: rdata.status ? 1 : 2
         })

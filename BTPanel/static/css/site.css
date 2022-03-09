@@ -14142,6 +14142,234 @@ height: 30px;
 
 /* END */
 
+/*企业微信售前客服*/
+.wechat_ssl_kefu{
+  position: absolute;
+  z-index: 10;
+  text-align: center;
+  color: #7e7e7e;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  padding: 10px;
+  left: 0px;
+  border-radius: 2px;
+  display: none;
+}
+.wechat_ssl_kefu:after{
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-left: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
+  border-top: 10px solid #fff;
+  transform: rotate(136deg);
+  -webkit-transform: rotate(136deg);
+  position: absolute;
+  top: -6px;
+  left: 30px;
+}
+.wechat_ssl_kefu span{
+  line-height: 30px;
+}
+.wechatEnterprise{
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAAAXNSR0IArs4c6QAABXdJREFUaEPlmn9MlVUYxz8Plwv0QiAuRc1ARFf5g4nT2MyfIWXqXP6i5WyJzs2WpVuasVr+wbTaNJQxc9XU0nJCaWrONlxu/jYsjNYPQiw1zUiJ4r38kHs57cBgIlx473vvZcye7e7d7n3O93k+73Pec95zzhXuEpO7hIP/F0h1ffXwkNCQOSjGIQxDBb2ObqAcRZEHzxfRzujTXUXstCIu5RogHnlLoZ7tSijIvxeKQ9YaYngF8gpiNphTRWQXEBfkJC3Li8iLhsPI66hBhyDVDdVTQiSkEHBYjtJNjiKy0nAYm+8M1w6ksrIyJjwm/DsUCd2Um89hlFKPRzmj9I1utXYgZoO5WURe8lm9OxsI30Q6Isd4BalSVbFOj/Mm9PxhWZB5RqjxWQtMm4qYbvM5QXZ05821G0uQj41QY2GHILWe2i2NqvF5u+Ld3K48MjRySIcgLrfrMDDNTkLVtVD0i/4I5X9ApQmV1XBPGPS+F3pHweRkRXIiJPW3E6F9m8jQyNYe1aZr1bhrjinUBF/CnL8IR0uEoyVQZVprmTYKFkxSDL3fmr83L8NhOESkUf/uF8j2QmF7m0HQemLhTlgwGTLT7b/vBAQke7dQWGw9cW+es1Jh1Vx7MH6DrHxP+PaC/xAtCk+OgawM32H8Asn5XNh3KnAQLUoaRAP5YrZBvv8NXtgSnCVMv1jIXabQV6tmGyTvoJB/3GoY3/30w79suvUuZhtk4ivBqUYL8vhhsH5RkEH05PZUdnBB4vvABysUEWHWqmmrInq2zswJHkh8X7hcAVuXK4bFBxGk9HdYmht4kMx0SH3QevK3I9qqSH0DpL8WeJDCdYq/3L9ScOU94o0hzB24xFo5AFsgWn3JZqHsquU4XTrOGAtr5itWlyzg7M2vmvzXPJTDjP7PdNlWO9gGef9LYWdzvICY7lb6XWtF8RyKq5pn2eSYVPJG77ekbxvkyg1YnCPobmbXYiJh6iiYPlYxdABI3U9U1JSx6eo+jt/QqwhYN3IHE+7rejVhG0QH2bhX2H/GHsaUZFjyhEIPs9rk3yM4rq7Bk7gLFfEwJf+c5dC1TygzfyA3ZS9RodGdBvILRFcja4dwrsw3mEFx8NHLzZNdyJ8bEPMkYp5qhohObyN2+PoexD2Q6xWPEB0Bjw0OpVdE+4HGLxAdsaIKsj707cFveR4cpRORutKmxFXUODxJ+zq8I8sP1rH3x+Y+vD49gkWjne38/AbRiofPwZv51ofjVpDy2U2V0NbYbzWNcavaJXjx70bStrmo1zvA0AShYe60gIAcKoK3C6yDRBtQkKUwag/guLQUZYzBw+swKAWcbZPcePIWG0/UN+Wtu1X21HASY0OCA5J7QPj0hPXnJKEvDE+AV+ff9lJ4Zg/q6wJk9hvwQHKT2OnLHuburmF8goP5I5xNH28WkIqs2CoUX2wOkZIEs1IVelPhlhtcdWDWNV+1xfWC2KiO01G7VsLZfEiehqTM5J36mQyMFjJGegdoUQoIyIVrcKhImDRSMWqw9cq08yw9jsp7uvVrWbgJUjMsCQYExFIki05qw3S4dL7Ze8IiJGO9pZZeQUy3eUSQNEsqgXT6+RgqPwv6JCLzspuuVszrBp3L7doGZFoR6QE+nWyZ3nItI4R3e0CSXabQ6Sa2y+XqTzjXulTpAQ6dHivo/Fxu1xagZ+/Id3XQo0H0YU9YY9h5pZTFlXP3l8fS0ZtOq1bVTlaNqlApFdr9aXYe0fJhaIuM2WCmichOIECnGf7fEp+Pp1thlBknHtGz02L/0/BLoVCUrDWcNv4wcHvYqrqqpDBn2Gyl1KMiMkIpFa6XE36l1nnjwP6FI4iJBlza+oIi4KEDK3jXgPwH8FZOUYC1gSwAAAAASUVORK5CYII=");
+  background-size: 25px;
+  width: 25px;
+  height: 25px;
+  display: inline-block;
+}
+.wechatEnterpriseService{
+  background-image: url("data:image/png;base64,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");
+  background-repeat: no-repeat;
+  background-size: 19px 16px;
+  width: 21px;
+  height: 16px;
+  display: inline-block;
+}
+/*企业微信售前客服 end*/
+/*软件管理微信售前客服*/
+.kf_fixed{
+  display: inline-block;
+  margin-left: 20px;
+}
+.wx_kf_mask{
+  display: none;
+  position: fixed;
+  z-index: 100;
+  background: #fff;
+  padding: 20px;
+  box-shadow: 0 2px 5px 1px rgb(54 58 80 / 20%);
+  border-radius: 3px;
+  text-align: center;
+}
+.wx_kf_mask:after{
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-left: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
+  border-top: 10px solid #fff;
+  transform: rotate(136deg);
+  -webkit-transform: rotate(136deg);
+  position: absolute;
+  top: -5px;
+  left: 67px;
+}
+.wx_kf_mask i{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-left: -12.5px;
+  margin-top: -12.5px;
+}
+.wx_kf_mask canvas {
+  border: 1px solid #20a53a;
+  padding: 5px;
+  margin: 5px 0;
+}
+.wx_kf_mask p{
+  font-weight: initial;
+  color:#555;
+  font-size: 12px;
+}
+/*软件管理微信售前客服 end*/
+
+/*证书解决方案样式*/
+.bt_ssl_suggest {
+  position: relative;
+  margin-left: 5px;
+  cursor: pointer;
+  color:#20a53a;
+}
+
+.suggest_content {
+  position: absolute;
+  display: none;
+  background: #fff;
+  width: 410px;
+  left: -267px;
+  top: 23px;
+  z-index: 10;
+  box-shadow: 0 2px 5px 1px rgb(54 58 80 / 20%);
+  padding: 8px 15px;
+  border-radius: 3px;
+  cursor: auto;
+}
+.suggest_content:after{
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-left: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
+  border-top: 10px solid #fff;
+  transform: rotate(136deg);
+  -webkit-transform: rotate(136deg);
+  position: absolute;
+  top: -5px;
+  left: 290px;
+}
+.suggest_content li {
+  display: inline-block;
+  width: 190px;
+  font-size: 14px;
+  color: #20a53a;
+  font-weight: 700;
+}
+.suggest_content li:nth-child(2):after{
+  content: "";
+  display: inline-block;
+  position: absolute;
+  top: 10px;
+  left: 0;
+  bottom: 10px;
+  border-right: 1px solid #e7eaef;
+}
+.suggest_content p {
+  font-size: 12px;
+  font-weight: normal;
+  color: #333;
+  margin-top: 8px;
+}
+.suggest_content div{
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: initial;
+}
+
+/*证书解决方案样式 end*/
+
+/* 人工服务支付成功界面*/
+.bt_business_tab.order_service_check{
+  padding: 20px;
+}
+.prder_pay_service_left{
+  width: 310px;
+  display: inline-block;
+  margin-top: 50px;
+  margin-left:40px;
+}
+.order_service_check .order_pay_title{
+  background-size: 40px;
+  background-position: top left;
+  padding: 6px 0 25px 60px;
+  margin: 0px;
+  text-align: inherit;
+}
+.order_service_check .lib-price-detailed{
+  font-size: 14px;
+  line-height: 25px;
+}
+.order_service_check .lib-price-detailed .info{
+  display: inline-block;
+}
+.order_service_check .lib-price-detailed .info-line{
+  height: 10px;
+  width: 1px;
+  background-color: #bbb;
+  display: inline-block;
+  margin: 0 10px;
+}
+.prder_pay_service_right{
+  display: inline-block;
+  vertical-align: top;
+  width: 250px;
+  text-align: center;
+  margin-top: 15px;
+}
+.prder_pay_service_right .order_wx_qcode{
+  width: 140px;
+  height: 140px;
+  border: 1px solid #20a53a;
+  display: inline-block;
+  margin-top: 25px;
+  padding: 10px;
+}
+
+.service_consult{
+  text-align: center;
+}
+.service_consult_title{
+  font-size: 14px;
+  margin-top: 30px;
+  margin-bottom: 10px;
+}
+.prder_pay_service_right .order_wx_qcode,
+.service_consult .contact_consult{
+  position: relative;
+}
+.prder_pay_service_right .order_wx_qcode i,
+.service_consult .contact_consult i{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-left: -12.5px;
+  margin-top: -12.5px;
+}
+.contact_consult canvas{
+  border: 1px solid #20a53a;
+  padding:5px;
+}
+/* 人工服务支付成功界面 end*/
 
 /* 证书资料页面 */
 
