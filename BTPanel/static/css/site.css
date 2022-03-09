@@ -14422,6 +14422,9 @@ height: 30px;
   vertical-align: middle;
   font-weight: 500;
 }
+.perfect_ssl_info label .bt-ico-ask{
+  margin-left:2px;
+}
 
 .perfect_ssl_info .next-plan {
   padding: 8px 30px;

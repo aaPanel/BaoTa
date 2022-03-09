@@ -6795,7 +6795,7 @@ var site = {
                     area: '520px',
                     btn: ['更改', '取消'],
                     content: '<div class="bt-form pd15"><div class="line"><span class="tname">验证方式</span><div class="info-r"><select class="bt-input-text mr5" name="file_rule" style="width:250px"></select></div></div>\
-                                                    <ul class="help-info-text c7"><li>文件验证（HTTP）：确保网站能够通过http正常访问</li><li>文件验证（HTTPS）：确保网站已开启https，并且网站能够通过https正常访问</li><li>DNS验证：需要手动解析DNS记录值</li></ul>\
+                                                    <ul class="help-info-text c7"><li>文件验证（HTTP）：确保网站能够通过http正常访问</li><li>文件验证（HTTPS）：确保网站已开启https，并且网站能够通过https正常访问</li><li>DNS验证：需要手动解析DNS记录值</li><li style="color:red">注意：20分钟内仅允许更换一次，频繁更换会延长申请时间</li></ul>\
                                                 </div>',
                     success: function (layero, index) {
                       var _option_list = { '文件验证(HTTP)': 'HTTP_CSR_HASH', '文件验证(HTTPS)': 'HTTPS_CSR_HASH', 'DNS验证(CNAME解析)': 'CNAME_CSR_HASH' },
@@ -6821,9 +6821,10 @@ var site = {
               /**
                * @description 验证域名
                * @param {Number} oid 域名订单ID
+               * @param {Boolean} openTips 是否展示状态
                * @returns void
                */
-              function verify_order_veiw (oid, is_success) {
+              function verify_order_veiw (oid, is_success,openTips) {
                 var loads = bt.load('正在获取验证结果,请稍候...');
                 bt.send('get_verify_result', 'ssl/get_verify_result', { oid: oid }, function (res) {
                   loads.close();
@@ -6857,6 +6858,10 @@ var site = {
                     area: '620px',
                     content: reader_domains_cname_check({ type: type, domains: domains, info: info }),
                     success: function (layero, index) {
+                      //展示验证状态
+                      setTimeout(function(){
+                        if(openTips && res.status == 'PENDING') layer.msg('验证中，请耐心等待', { time: 0, shadeClose: true, icon: 0, shade: .3 });
+                      },500)
                       var clipboard = new ClipboardJS('.parsing_info .parsing_icon');
                       clipboard.on('success', function (e) {
                         bt.msg({ status: true, msg: '复制成功' });
@@ -6868,7 +6873,7 @@ var site = {
                         console.error('Trigger:', e.trigger);
                       });
                       $('.verify_ssl_domain').click(function () {
-                        verify_order_veiw(oid);
+                        verify_order_veiw(oid,false,true);
                         layer.close(index);
                       });
 
@@ -6947,15 +6952,16 @@ var site = {
                     <div class="parsing_parem"><div class="parsing_title">文件所在位置：</div><div class="parsing_info"><input type="text" name="filePath"  class="parsing_input border" value="' + data.info.filePath + '" readonly="readonly" style="width:350px;"/></div></div>\
                     <div class="parsing_parem"><div class="parsing_title">文件名：</div><div class="parsing_info"><input type="text" name="fileName" class="parsing_input" value="' + data.info.fileName + '" readonly="readonly" style="width:350px;"/><span class="parsing_icon" data-clipboard-text="' + data.info.fileName + '">复制</span></div></div>\
                     <div class="parsing_parem"><div class="parsing_title" style="vertical-align: top;">文件内容：</div><div class="parsing_info"><textarea name="fileValue"  class="parsing_textarea" readonly="readonly" style="width:350px;">' + data.info.fileContent + '</textarea><span class="parsing_icon" style="display: block;width: 60px;border-radius: 3px;" data-clipboard-text="' + data.info.fileContent + '">复制</span></div></div>' + check_html +
-                    '<div class="parsing_tips" style="font-size:13px;line-height: 24px;">· 本次验证结果是由【本服务器验证】，实际验证将由【CA服务器】进行验证，请耐心等候</br>· 请确保以上列表所有项都验证成功后点击【验证域名】重新提交验证</br>· 如长时间验证不通过，请通过【修改验证方式】更改为【DNS验证】</br>· SSL添加文件验证方式 ->> <a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="btlink" >查看教程</a> <span style="padding-left:60px">专属客服QQ：' + data.info.kfqq + '</span></div>\
-                        <div class="parsing_parem" style="padding: 0 55px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-success set_verify_type">修改验证方式</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
+                    '<div class="parsing_tips" style="font-size:13px;line-height: 24px;">· 本次验证结果是由【本服务器验证】，实际验证将由【CA服务器】进行验证，请等候</br>· 请确保以上列表所有项都验证成功后点击【验证域名】重新提交验证</br>· 如长时间验证不通过，请通过【修改验证方式】更改为【DNS验证】</br>· SSL添加文件验证方式 ->> <a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="btlink" >查看教程</a></div>\
+                        <div class="parsing_parem" style="padding: 0 55px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default set_verify_type">修改验证方式</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
                     </div>';
                 } else {
                   html = '<div class="lib-ssl-parsing">\
                         <div class="parsing_tips">请给以下域名【 <span class="highlight">' + data.domains.join('、') + '</span> 】添加“' + data.info.dnsType + '”解析，解析参数如下：</div>\
                         <div class="parsing_parem"><div class="parsing_title">主机记录：</div><div class="parsing_info"><input type="text" name="host" class="parsing_input" value="' + data.info.dnsHost + '" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="' + data.info.dnsHost + '">复制</span></div></div>\
+                        <div class="parsing_parem"><div class="parsing_title">记录类型：</div><div class="parsing_info"><input type="text" name="host" class="parsing_input" value="' + data.info.dnsType + '" readonly="readonly" style="border-right: 1px solid #ccc;border-radius: 3px;width: 390px;" /></div></div>\
                         <div class="parsing_parem"><div class="parsing_title">记录值：</div><div class="parsing_info"><input type="text" name="domains"  class="parsing_input" value="' + data.info.dnsValue + '" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="' + data.info.dnsValue + '">复制</span></div></div>\
-                        <div class="parsing_tips" style="font-size:13px;line-height: 24px;">· 本次验证结果是由【本服务器验证】，实际验证将由【CA服务器】进行验证，请耐心等候</br>· 请确保以上列表所有项都验证成功后点击【验证域名】重新提交验证</br>· 如长时间验证不通过，请通过【修改验证方式】更改为【DNS验证】</br>· 如何添加域名解析，《<a href="https://cloud.tencent.com/document/product/302/3446" class="btlink" target="__blink">点击查看教程</a>》，和咨询服务器运营商。</div>\
+                        <div class="parsing_tips" style="font-size:13px;line-height: 24px;">· 本次验证结果是由【本服务器验证】，实际验证将由【CA服务器】进行验证，请等候</br>· 请确保以上列表所有项都验证成功后点击【验证域名】重新提交验证</br>· 如长时间验证不通过，请通过【修改验证方式】更改为【DNS验证】</br>· 如何添加域名解析，《<a href="https://cloud.tencent.com/document/product/302/3446" class="btlink" target="__blink">点击查看教程</a>》，和咨询服务器运营商。</div>\
                         <div class="parsing_parem" style="padding: 0 55px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default set_verify_type">修改验证方式</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
                     </div>';
                 }
@@ -7457,17 +7463,17 @@ var site = {
                         <div class="line check_model_line">\
                             <span class="tname">验证方式</span>\
                             <div class="info-r">\
-                              <label title="如网站还未备案完成，可选【DNS验证】." class="mr20">\
+                              <label class="mr20">\
                                 <input type="radio" name="dcvMethod" checked="checked" value="CNAME_CSR_HASH">\
-                                <span>DNS验证(CNAME解析)</span>\
+                                <span>DNS验证(CNAME解析)<a rel="noreferrer noopener" class="bt-ico-ask" style="cursor: pointer;" title="如网站还未备案完成，可选【DNS验证】.">?</a></span>\
                               </label>\
-                              <label title="如网站未开启301、302、强制HTTPS、反向代理功能." class="mr20"  style="display: ' + (isWildcard ? 'none' : 'inline-block') + ';">\
+                              <label class="mr20"  style="display: ' + (isWildcard ? 'none' : 'inline-block') + ';">\
                                   <input type="radio" name="dcvMethod" value="HTTP_CSR_HASH">\
-                                  <span>文件验证(HTTP)</span>\
+                                  <span>文件验证(HTTP)<a rel="noreferrer noopener" class="bt-ico-ask" style="cursor: pointer;" title="如网站未开启301、302、强制HTTPS、反向代理功能.">?</a></span>\
                               </label>\
-                              <label title="如网站开启【强制HTTPS】，请选【HTTPS验证】" class="mr20" style="display: ' + (isWildcard ? 'none' : 'inline-block') + ';">\
+                              <label class="mr20" style="display: ' + (isWildcard ? 'none' : 'inline-block') + ';">\
                                   <input type="radio" name="dcvMethod" value="HTTPS_CSR_HASH">\
-                                  <span>文件验证(HTTPS)</span>\
+                                  <span>文件验证(HTTPS)<a rel="noreferrer noopener" class="bt-ico-ask" style="cursor: pointer;" title="如网站开启【强制HTTPS】，请选【HTTPS验证】">?</a></span>\
                               </label>\
                             </div>\
                         </div>\
