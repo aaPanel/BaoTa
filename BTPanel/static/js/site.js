@@ -6287,6 +6287,7 @@ var site = {
             if (udata.status) {
               var deploy_ssl_info = rdata,
                 html = '',
+                deploy_html = '',
                 product_list, userInfo, order_list, is_check = true,
                 itemData, activeData, loadY, pay_ssl_layer;
               bt.send('get_order_list', 'ssl/get_order_list', {}, function (rdata) {
@@ -6297,8 +6298,8 @@ var site = {
                 }
                 $.each(rdata, function (index, item) {
                   if (deploy_ssl_info.type == 3 && deploy_ssl_info.oid === item.oid) {
-                    html += '<tr data-index="' + index + '">' +
-                      '<td><span>' + item.domainName.join('、') + '</span></td><td>' + item.title + '</td><td>' + (function () {
+                    deploy_html += '<tr data-index="' + index + '">' +
+                      '<td><span>' + item.domainName.join('、') + '</span></td><td><span class="size_ellipsis" title="'+item.title+'" style="width:164px">' + item.title + '</span></td><td>' + (function () {
                         var dayTime = new Date().getTime() / 1000,
                           color = '',
                           endTiems = '';
@@ -6316,7 +6317,7 @@ var site = {
                       '</td><td>订单完成</td><td style="text-align:right">已部署 | <a class="btlink" href="javascript:site.ssl.set_ssl_status(\'CloseSSLConf\',\'' + web.name + '\',2)">关闭</a></td></td>';
                   } else if (deploy_ssl_info.type != 3) {
                     html += '<tr data-index="' + index + '">' +
-                      '<td><span>' + (item.domainName == null ? '--' : item.domainName.join('、')) + '</span></td><td>' + item.title + '</td><td>' + (function () {
+                      '<td><span>' + (item.domainName == null ? '--' : item.domainName.join('、')) + '</span></td><td><span class="size_ellipsis" title="'+item.title+'" style="width:164px">' + item.title + '</span></td><td>' + (function () {
                         var dayTime = new Date().getTime() / 1000,
                           color = '',
                           endTiems = '';
@@ -6332,15 +6333,17 @@ var site = {
                         }
                       }()) +
                       '</td><td>' + (function () {
+                          var suggest = '';
+                          if(!item.install) suggest='&nbsp;|<span class="bt_ssl_suggest"><span>排查方法?</span><div class="suggest_content"><ul><li>自行排查<p>以图文的形式，一步步教您验证并部署商业SSL</p><div><a class="btlink" href="https://www.bt.cn/bbs/thread-85379-1-1.html" target="_blank">如何验证商用证书?</a></div></li><li style="position: relative;padding-left: 15px;">购买人工<p>不会部署?人工客服帮你全程部署，不成功可退款</p><div><button class="btn btn-success btn-xs btn-title service_buy" type="button" data-oid="'+item.oid+'">购买人工</button></div></li></ul></div></span>'
                         if (item.certId == '') {
-                          return '<span style="color:orange;">待完善资料</span>';
+                          return '<span style="color:orange;">待完善资料</span>'+suggest;
                         } else if (item.status === 1) {
                           switch (item.orderStatus) {
                             case 'COMPLETE':
                               return '<span style="color:#20a53a;">订单完成</span>';
                               break;
                             case 'PENDING':
-                              return '<span style="color: orange;">申请中</span>';
+                              return '<span style="color: orange;">验证中</span>'+suggest;
                               break;
                             case 'CANCELLED':
                               return '<span style="color: #888;">已取消</span>';
@@ -6367,7 +6370,7 @@ var site = {
                         var html = '';
                         if (item.renew) html += '<a href="javascript:;" class="btlink options_ssl" data-type="renewal_ssl">续签证书</a>&nbsp;&nbsp;|&nbsp;&nbsp;';
                         if (item.certId == '') {
-                          if (item.install) html += '<a href="' + item.qq + '" class="btlink options_ssl" target="_blank">人工服务</a>&nbsp;&nbsp;|&nbsp;&nbsp;';
+                          if (item.install) html += '<a href="' + item.qq + '" class="btlink options_ssl service_method" target="_blank">人工服务</a>&nbsp;&nbsp;|&nbsp;&nbsp;';
                           html += '<a href="javascript:;" class="btlink options_ssl"  data-type="perfect_user_info">完善资料</a>';
                           return html;
                         } else if (item.status === 1) {
@@ -6377,7 +6380,7 @@ var site = {
                               return '<a href="javascript:;" data-type="deploy_ssl" class="btlink options_ssl">部署</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="/ssl?action=download_cert&oid=' + item.oid + '" data-type="download_ssl" class="btlink options_ssl">下载</a>'
                               break;
                             case "PENDING": //申请中
-                              if (item.install) html += '<a href="' + item.qq + '" class="btlink options_ssl" target="_blank">人工服务</a>&nbsp;&nbsp;|&nbsp;&nbsp;';
+                              if (item.install) html += '<a href="' + item.qq + '" class="btlink options_ssl service_method" target="_blank">人工服务</a>&nbsp;&nbsp;|&nbsp;&nbsp;';
                               html += '<a href="javascript:;" data-type="verify_order" class="btlink options_ssl">验证</a>';
                               return html;
                               break;
@@ -6388,7 +6391,7 @@ var site = {
                               return '<a href="javascript:;" data-type="info_order" class="btlink options_ssl">详情</a>';
                               break;
                             default:
-                              if (item.install) html += '<a href="' + item.qq + '" class="btlink options_ssl" target="_blank">人工服务</a>&nbsp;&nbsp;|&nbsp;&nbsp;';
+                              if (item.install) html += '<a href="' + item.qq + '" class="btlink options_ssl service_method" target="_blank">人工服务</a>&nbsp;&nbsp;|&nbsp;&nbsp;';
                               html += '<a href="javascript:;" data-type="verify_order" class="btlink options_ssl">验证</a>';
                               return html;
                               break;
@@ -6398,29 +6401,240 @@ var site = {
                       '</tr>';
                   }
                 });
-                $('#ssl_order_list tbody').html(html);
+                $('#ssl_order_list tbody').html(deploy_html+html);
+                //解决方案事件
+                $('#ssl_order_list').on('click','.bt_ssl_suggest',function(e){
+                  $('.suggest_content').removeAttr('style');
+                  $(this).find('.suggest_content').show();
+                  $(document).one('click',function(){
+                    $('.suggest_content').removeAttr('style');
+                  })
+                  e.stopPropagation();
+                })
+                //人工客服购买
+                $('#ssl_order_list').on('click','.service_buy',function(){
+                  var loads = bt.load('正在生成支付订单,请稍侯...');
+                  bt.send('apply_cert_install_pay', 'ssl/apply_cert_install_pay', {
+                    pdata: JSON.stringify({oid:$(this).data('oid')})
+                  }, function (res) {
+                    loads.close();
+                    if(res.status != undefined && !res.status){
+                      return layer.msg(res.msg, { time: 0, shadeClose: true, icon: 2, shade: .3 });
+                    }
+                    open_service_buy(res)
+                  })
+                })
+
+                //人工客服咨询
+                $('.service_method').click(function(){
+                  onChangeServiceMethod();
+                })
               });
               robj.append('<div style="margin-bottom: 10px;" class="alert alert-success">此品牌证书适合生产项目使用，宝塔官网BT.CN也是用这款证书，性价比高，推荐使用</div>\
-                                        <div class= "mtb10" >\
-                                        <button class="btn btn-success btn-sm btn-title ssl_business_application" type="button">申请证书</button>\
-                                        <span class="ml5"><a href="http://wpa.qq.com/msgrd?v=3&uin=2927440070&site=qq&menu=yes&from=message&isappinstalled=0" target="_blank" class="btlink"><img src="https://pub.idqqimg.com/qconn/wpa/button/button_old_41.gif" style="margin-right:5px;margin-left:3px;vertical-align: -1px;">售前客服: 2927440070</a></span>\
-                                        <div class="divtable mtb10 ssl_order_list"  style="height: 290px;overflow-y: auto;">\
-                                            <table class="table table-hover" id="ssl_order_list">\
-                                                <thead><tr><th width="120px">域名</th><th  width="220px">证书类型</th><th>到期时间</th><th>状态</th><th style="text-align:right;">操作</th></tr></thead>\
-                                                <tbody><tr><td colspan="5" style="text-align:center"><img src="/static/images/loading-2.gif" style="width:15px;vertical-align: middle;"><span class="ml5" style="vertical-align: middle;">正在获取证书列表，请稍候...</span></td></tr></tbody>\
-                                            </table>\
-                                        </div>\
-                                    </div><ul class="help-info-text c7">\
-                                        <li style="color:red;">证书支持购买多年，只能一年签发一次（有效期一年），需在到期前30天内续签(续签暂不需要验证域名)</li>\
-                                        <li style="color:red;">注意：请勿将SSL证书用于非法网站，一经发现，吊销证书且不退款</li>\
-                                        <li>申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)</li>\
-                                        <li>有效期1年，不支持续签，到期后需要重新申请</li>\
-                                        <li>在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点</li>\
-                                        <li><a style="color:red;">如果您的站点有使用CDN、高防IP、反向代理、301重定向等功能，可能导致验证失败</a></li>\
-                                        <li><a style="color:red;">申请www.bt.cn这种以www为二级域名的证书，需绑定并解析顶级域名(bt.cn)，否则将验证失败</a></li>\
-                                        <li><a style="color:red;">商用证书相对于普通证书，具有更高的安全性、赔付保障和支持通配符和多域名等方式。<a class="btlink" target="_blank" href="https://www.racent.com/sectigo-ssl">点击查看</a></a></li>\
-                                    </ul>');
+                  <div class= "mtb10" >\
+                  <button class="btn btn-success btn-sm btn-title ssl_business_application" type="button">申请证书</button>\
+                  <span class="ml5"><span class="wechatEnterpriseService" style="vertical-align: middle;"></span><span class="btlink service_buy_before">售前客服</span></span>\
+                  <div class="divtable mtb10 ssl_order_list"  style="height: 290px;overflow-y: auto;">\
+                      <table class="table table-hover" id="ssl_order_list">\
+                          <thead><tr><th width="120px">域名</th><th  width="220px">证书类型</th><th>到期时间</th><th>状态</th><th style="text-align:right;">操作</th></tr></thead>\
+                          <tbody><tr><td colspan="5" style="text-align:center"><img src="/static/images/loading-2.gif" style="width:15px;vertical-align: middle;"><span class="ml5" style="vertical-align: middle;">正在获取证书列表，请稍候...</span></td></tr></tbody>\
+                      </table>\
+                  </div>\
+              </div><ul class="help-info-text c7">\
+                  <li style="color:red;">证书支持购买多年，只能一年签发一次（有效期一年），需在到期前30天内续签(续签暂不需要验证域名)</li>\
+                  <li style="color:red;">注意：请勿将SSL证书用于非法网站，一经发现，吊销证书且不退款</li>\
+                  <li>申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)</li>\
+                  <li>有效期1年，不支持续签，到期后需要重新申请</li>\
+                  <li>在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点</li>\
+                  <li><a style="color:red;">如果您的站点有使用CDN、高防IP、反向代理、301重定向等功能，可能导致验证失败</a></li>\
+                  <li><a style="color:red;">申请www.bt.cn这种以www为二级域名的证书，需绑定并解析顶级域名(bt.cn)，否则将验证失败</a></li>\
+                  <li><a style="color:red;">商用证书相对于普通证书，具有更高的安全性、赔付保障和支持通配符和多域名等方式。<a class="btlink" target="_blank" href="https://www.racent.com/sectigo-ssl">点击查看</a></a></li>\
+              </ul>');
+              $('.service_buy_before').click(function(){
+                onChangeServiceMethod('1');
+              })
+              // 人工服务   带有参数为售前客服
+              function onChangeServiceMethod(_key){
+                layer.open({
+                  type: 1,
+                  area: ['300px', (_key?'315px':'290px')],
+                  title: false,
+                  closeBtn: 2,
+                  shift: 0,
+                  content: '<div class="service_consult">\
+                      <div class="service_consult_title">请打开微信"扫一扫"</div>\
+                      <div class="contact_consult" style="margin-bottom: 5px;"><div id="contact_consult_qcode"></div><i class="wechatEnterprise"></i></div>\
+                      <div>【'+(_key?'售前':'人工')+'客服】</div>\
+                      <ul class="help-info-text-info c7" style="margin-left:30px;text-align: left;">\
+                          '+(_key?'<li><a class="btlink" href="https://www.bt.cn/bbs/thread-86119-1-1.html" target="_blank">SSL常见问题</a></li><li>工作时间：9:15 - 18:00</li>':'<li>工作时间：9:15 - 23:00</li>')+'\
+                      </ul>\
+                  </div>',
+                  success:function(){
+                    $('#contact_consult_qcode').qrcode({
+                      render: "canvas",
+                      width: 140,
+                      height: 140,
+                      text: _key?'https://work.weixin.qq.com/kfid/kfc72fcbde93e26a6f3':'https://work.weixin.qq.com/kfid/kfc9151a04b864d993f'
+                    });
+                  }
+                })
+              }
               bt.fixed_table('ssl_order_list');
+              /**
+               * @description 证书购买人工服务
+               * @param {Object} param 支付回调参数
+               * @returns void
+               */
+              function open_service_buy(param){
+                var order_info = {},
+                    is_check = true;
+                pay_ssl_layer = bt.open({
+                  type: 1,
+                  title: '购买人工服务',
+                  area: ['790px', '770px'],
+                  skin:'service_buy_view',
+                  content: '<div class="bt_business_ssl">\
+                      <div class="bt_business_tab ssl_applay_info active">\
+                          <div class="guide_nav"><span class="active">微信支付</span><span >支付宝支付</span></div>\
+                          <div class="paymethod">\
+                              <div class="pay-wx" id="PayQcode"></div>\
+                          </div>\
+                          <div class="lib-price-box text-center">\
+                              <span class="lib-price-name f14"><b>总计</b></span>\
+                              <span class="price-txt"><b class="sale-price"></b>元</span>\
+                          </div>\
+                          <div class="lib-price-detailed">\
+                              <div class="info">\
+                                  <span class="text-left">商品名称</span>\
+                                  <span class="text-right"></span>\
+                              </div>\
+                              <div class="info">\
+                                  <span class="text-left">下单时间</span>\
+                                  <span class="text-right"></span>\
+                              </div>\
+                          </div>\
+                          <div class="lib-prompt"><span>微信扫一扫支付</span></div>\
+                      </div>\
+                      <div class="bt_business_tab order_service_check">\
+                          <div class="prder_pay_service_left">\
+                              <div class="order_pay_title">支付成功</div>\
+                              <div class="lib-price-detailed">\
+                                  <div class="info">\
+                                      <span class="text-left">商品名称：</span>\
+                                      <span class="text-right"></span>\
+                                  </div>\
+                                  <div class="info-line"></div>\
+                                  <div class="info">\
+                                      <span class="text-left">商品价格：</span>\
+                                      <span class="text-right"></span>\
+                                  </div>\
+                                  <div class="info" style="display:block">\
+                                      <span class="text-left">下单时间：</span>\
+                                      <span class="text-right"></span>\
+                                  </div>\
+                              </div>\
+                          </div>\
+                          <div class="prder_pay_service_right">\
+                              <div class="order_service_qcode">\
+                                  <div class="order_open_title">请打开微信扫一扫联系人工客服</div>\
+                                  <div class="order_wx_qcode"><div id="contact_qcode"></div><i class="wechatEnterprise"></i></div>\
+                              </div>\
+                          </div>\
+                      </div>\
+                  </div>',
+                  success: function (layero, indexs) {
+                    var order_wxoid = null,
+                        qq_info = null;
+
+                    $('.guide_nav span').click(function () {
+                      $(this).addClass('active').siblings().removeClass('active');
+                      $('.lib-prompt span').html($(this).index() == 0 ? '微信扫一扫支付' : '支付宝扫一扫支付');
+                      $('#PayQcode').empty();
+                      $('#PayQcode').qrcode({
+                        render: "canvas",
+                        width: 200,
+                        height: 200,
+                        text: $(this).index() != 0 ? order_info.alicode : order_info.wxcode
+                      });
+                    });
+                    reader_applay_qcode($.extend({
+                      name: '证书安装服务',
+                      price: param.price,
+                      time: bt.format_data(new Date().getTime())
+                    }, param), function (info) {
+                      check_applay_status(function (rdata) {
+                        $('.order_service_check').addClass('active').siblings().removeClass('active');
+                        $('.order_service_check .lib-price-detailed .text-right:eq(0)').html(info.name);
+                        $('.order_service_check .lib-price-detailed .text-right:eq(1)').html('￥' + info.price);
+                        $('.order_service_check .lib-price-detailed .text-right:eq(2)').html(info.time);
+                        $('#ssl_tabs .on').click();
+                        //人工客服二维码
+                        $('#contact_qcode').qrcode({
+                          render: "canvas",
+                          width: 120,
+                          height: 120,
+                          text: 'https://work.weixin.qq.com/kfid/kfc9151a04b864d993f'
+                        });
+                        //缩小展示窗口
+                        $('.service_buy_view').width(690).height(350).css({   //设置最外层弹窗大小
+                          'left':(document.body.clientWidth-690)/2+'px',
+                          'top':(document.body.clientHeight-350)/2+'px'
+                        })
+                      }); //检测支付状态
+                    }); //渲染二维码
+
+                    function reader_applay_qcode(data, callback) {
+                      order_wxoid = data.wxoid;
+                      qq_info = data.qq;
+                      order_info = data
+
+                      $('#PayQcode').empty().qrcode({
+                        render: "canvas",
+                        width: 240,
+                        height: 240,
+                        text: data.wxcode
+                      });
+                      $('.price-txt .sale-price').html(data.price);
+                      $('.lib-price-detailed .info:eq(0) span:eq(1)').html(data.name);
+                      $('.lib-price-detailed .info:eq(1) span:eq(1)').html(data.time);
+                      if (typeof data.qq != "undefined") {
+                        $('.order_pay_btn a:eq(0)').attr({
+                          'href': data.qq,
+                          'target': '_blank'
+                        });
+                      } else {
+                        $('.order_pay_btn a:eq(0)').remove();
+                      }
+                      if (callback) callback(data);
+                    }
+
+                    function check_applay_status(callback) {
+                      bt.send('get_wx_order_status', 'auth/get_wx_order_status', {
+                        wxoid: order_wxoid
+                      }, function (res) {
+                        if (res.status) {
+                          is_check = false;
+                          if (callback) callback(res);
+                        } else {
+                          if (!is_check) return false;
+                          setTimeout(function () {
+                            check_applay_status(callback);
+                          }, 2000);
+                        }
+                      });
+                    }
+                  },
+                  cancel: function (index) {
+                    if (is_check) {
+                      if (confirm('当前正在支付订单，是否取消？')) {
+                        layer.close(index)
+                        is_check = false;
+                      }
+                      return false;
+                    }
+                  }
+                });
+              }
               /**
                * @description 对指定表单元素的内容进行效验
                * @param {Object} el jqdom对象
