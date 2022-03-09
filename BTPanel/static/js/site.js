@@ -6436,7 +6436,7 @@ var site = {
                   <span class="ml5"><span class="wechatEnterpriseService" style="vertical-align: middle;"></span><span class="btlink service_buy_before">售前客服</span></span>\
                   <div class="divtable mtb10 ssl_order_list"  style="height: 290px;overflow-y: auto;">\
                       <table class="table table-hover" id="ssl_order_list">\
-                          <thead><tr><th width="120px">域名</th><th  width="220px">证书类型</th><th>到期时间</th><th>状态</th><th style="text-align:right;">操作</th></tr></thead>\
+                          <thead><tr><th width="120px">域名</th><th  width="180px">证书类型</th><th>到期时间</th><th>状态</th><th style="text-align:right;">操作</th></tr></thead>\
                           <tbody><tr><td colspan="5" style="text-align:center"><img src="/static/images/loading-2.gif" style="width:15px;vertical-align: middle;"><span class="ml5" style="vertical-align: middle;">正在获取证书列表，请稍候...</span></td></tr></tbody>\
                       </table>\
                   </div>\
@@ -6465,7 +6465,7 @@ var site = {
                       <div class="service_consult_title">请打开微信"扫一扫"</div>\
                       <div class="contact_consult" style="margin-bottom: 5px;"><div id="contact_consult_qcode"></div><i class="wechatEnterprise"></i></div>\
                       <div>【'+(_key?'售前':'人工')+'客服】</div>\
-                      <ul class="help-info-text-info c7" style="margin-left:30px;text-align: left;">\
+                      <ul class="help-info-text c7" style="margin-left:30px;text-align: left;">\
                           '+(_key?'<li><a class="btlink" href="https://www.bt.cn/bbs/thread-86119-1-1.html" target="_blank">SSL常见问题</a></li><li>工作时间：9:15 - 18:00</li>':'<li>工作时间：9:15 - 23:00</li>')+'\
                       </ul>\
                   </div>',
