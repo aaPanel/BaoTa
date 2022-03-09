@@ -164,6 +164,8 @@ UploadFile.prototype = {
         _this.file_drag_hover(ev);
         return false;
       }
+      var path = $('#fileInputPath').attr('data-path');
+      _this.init_upload_path(path);
       _this.upload_layer();
       _this.isUpload = true;
       _this.file_select_handler(ev);
