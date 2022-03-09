@@ -681,7 +681,7 @@ var site = {
               $('[data-name="project_script"] li:eq(0)').click()
               $('[name="project_script_two"]').val(rows.project_config.project_script)
             }
-          }, 250)
+          }, 1000)
 
           fromConfig[1].group.disabled = true;
           fromConfig[fromConfig.length - 3].hide = true;
