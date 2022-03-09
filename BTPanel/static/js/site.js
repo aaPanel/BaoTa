@@ -101,9 +101,8 @@ var site = {
         form.group.list = arry;
         form.group.disabled = false;
         formObject.$replace_render_content(2)
-        if (arry.length === 1) {
+        if (arry.length === 0) {
           var project_script = $("[data-name=\'project_script\']");
-          // form.group.value = '';
           project_script.parent().after('<div class="inlineBlock"><input type="text" name="project_script_two" id="project_script_two" placeholder="请选择项目启动文件和启动命令，不可为空" class="mt5 bt-input-text mr10 " style="width:420px;" value="" /><span class="glyphicon glyphicon-folder-open cursor" onclick="bt.select_path(\'project_script_two\',\'file\',null,\'' + path + '\')" style="margin-right: 18px;"></span></div>')
         }
       }, function () {
