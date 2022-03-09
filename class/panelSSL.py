@@ -1106,3 +1106,15 @@ class panelSSL:
         except :
             return public.returnMsg(False,public.get_error_info())
 
+
+    def apply_cert_install_pay(self,args):
+        '''
+            @name 单独购买人工安装服务
+            @param args<dict_obj>{
+                'oid'<int> 订单ID
+            }
+        '''
+        pdata = json.loads(args.pdata)           
+        self.__PDATA['data'] = pdata
+        result = self.request('apply_cert_install_pay')
+        return result

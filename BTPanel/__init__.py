@@ -901,7 +901,7 @@ def ssl(pdata=None):
             'download_cert', 'set_cert', 'cancel_cert_order','ApplyDVSSL','apply_cert_order_pay',
             'get_order_list', 'get_order_find', 'apply_order_pay', 'get_pay_status', 'apply_order', 'get_verify_info',
             'get_verify_result', 'get_product_list', 'set_verify_info','renew_cert_order',
-            'GetSSLInfo', 'downloadCRT', 'GetSSLProduct', 'Renew_SSL', 'Get_Renew_SSL','GetAuthToken','GetBindCode')
+            'GetSSLInfo', 'downloadCRT', 'GetSSLProduct', 'Renew_SSL', 'Get_Renew_SSL','GetAuthToken','GetBindCode','apply_cert_install_pay')
     get = get_input()
 
     if get.action == 'download_cert':
