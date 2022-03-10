@@ -6972,7 +6972,7 @@ var site = {
                 pay_ssl_layer = bt.open({
                   type: 1,
                   title: '购买商业证书',
-                  area: ['790px', '860px'],
+                  area: ['790px', '830px'],
                   content: '\
                     <div class="bt_business_ssl">\
                       <div class="bt_business_tab bt_business_form active">\
@@ -7065,7 +7065,6 @@ var site = {
                             <button type="button" class="business_pay">立即购买</button>\
                           </div>\
                         </div>\
-                        <span style="position: absolute;bottom: 0;left: 0;right: 0;text-align: center;display: inline-block;height: 45px;line-height: 45px;background: #fafafafa;color: #ff0c00;font-size: 13px;">禁止含有诈骗、赌博、色情、木马、病毒等违法违规业务信息的站点申请SSL证书，如有违反，撤销申请，停用账号</span>\
                       </div>\
                       <div class="bt_business_tab ssl_applay_info">\
                         <div class="guide_nav">\
@@ -7092,7 +7091,6 @@ var site = {
                         <div class="lib-prompt">\
                           <span>微信扫一扫支付</span>\
                         </div>\
-                        <span style="position: absolute;bottom: 0;left: 0;right: 0;text-align: center;display: inline-block;height: 45px;line-height: 45px;background: #fafafafa;color: #ff0c00;font-size: 13px;">禁止含有诈骗、赌博、色情、木马、病毒等违法违规业务信息的站点申请SSL证书，如有违反，撤销申请，停用账号</span>\
                       </div>\
                       <div class="bt_business_tab ssl_order_check">\
                         <div class="order_pay_title">支付成功</div>\
@@ -7121,6 +7119,7 @@ var site = {
                         </ul>\
                       </div>\
                     </div>\
+                    <span style="width:100%;text-align: center;display: inline-block;height: 45px;line-height: 45px;background: #fafafafa;color: #ff0c00;font-size: 13px;">禁止含有诈骗、赌博、色情、木马、病毒等违法违规业务信息的站点申请SSL证书，如有违反，撤销申请，停用账号</span>\
                   ',
                   success: function (layero, indexs) {
                     var product_list = [],
