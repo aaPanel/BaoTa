@@ -3139,6 +3139,7 @@ var bt_file = {
      */
     copy_file_or_dir: function(data) {
         bt.set_cookie('record_paste', data.path);
+        bt.set_cookie('record_paste_fileType', data.type);
         bt.set_cookie('record_paste_type', 'copy');
         $('.file_all_paste').removeClass('hide');
         layer.msg('复制成功，请点击粘贴按钮，或Ctrl+V粘贴');
@@ -3151,6 +3152,7 @@ var bt_file = {
      */
     cut_file_or_dir: function(data) {
         bt.set_cookie('record_paste', data.path);
+        bt.set_cookie('record_paste_fileType', data.type);
         bt.set_cookie('record_paste_type', 'cut');
         $('.file_all_paste').removeClass('hide');
         layer.msg('剪切成功，请点击粘贴按钮，或Ctrl+V粘贴');
@@ -3162,11 +3164,12 @@ var bt_file = {
     paste_file_or_dir: function() {
         var that = this,
             _isPaste = bt.get_cookie('record_paste_type'),
+            _fileType = bt.get_cookie('record_paste_fileType'),
             _paste = bt.get_cookie('record_paste'),
             _filename = '';
         if (_paste != 'null' && _paste != undefined) _filename = _paste.split('/').pop()
-        if (that.file_path.indexOf(_paste) > -1) {
-            layer.msg('文件夹禁止粘贴到项目本身！', { icon: 0 });
+        if (_fileType == 'dir' && this.file_path.indexOf(_paste) > -1) {
+            layer.msg('错误的复制逻辑，从' + _paste + '粘贴到' + this.file_path + '有包含关系，存在无限循环复制风险!', { icon: 0,time: 0,shade: 0.3,shadeClose: true });
             return false;
         }
         if (_isPaste != 'null' && _isPaste != undefined) {
@@ -3207,12 +3210,10 @@ var bt_file = {
         var that = this,
             dfile = this.file_path + '/' + _filename,
             _type = bt.get_cookie('record_paste_type');
-        if (path == dfile) {
-            return layer.msg('错误的复制逻辑，从' + path + '复制到' + dfile + '有包含关系，存在无限循环复制风险!', { icon: 2 });
-        }
         this.$http(_type == 'copy' ? 'CopyFile' : 'MvFile', { sfile: path, dfile: dfile }, function(rdata) {
             if (rdata.status) {
                 bt.set_cookie('record_paste', null);
+                bt.set_cookie('record_paste_fileType', null);
                 bt.set_cookie('record_paste_type', null);
                 that.reader_file_list({ path: that.file_path })
             }
