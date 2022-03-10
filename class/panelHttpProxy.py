@@ -80,6 +80,18 @@ class HttpProxy:
             return pma_status['phpversion']
         return None
 
+    def get_pma_version(self):
+        '''
+            @name 获取phpmyadmin的版本
+            @author hwliang<2022-01-19>
+            @return str
+        '''
+        pma_vfile = public.get_setup_path() + '/phpmyadmin/version.pl'
+        if not os.path.exists(pma_vfile): return ''
+        pma_version = public.readFile(pma_vfile).strip()
+        if not pma_version: return ''
+        return pma_version
+
     def set_pma_phpversion(self):
         '''
             @name 设置phpmyadmin兼容的php版本
@@ -87,14 +99,13 @@ class HttpProxy:
             @return str
         '''
         
-        pma_vfile = public.get_setup_path() + '/phpmyadmin/version.pl'
-        if not os.path.exists(pma_vfile): return False
-        pma_version = public.readFile(pma_vfile).strip()
+        pma_version = self.get_pma_version()
         if not pma_version: return False
+
         old_phpversion = self.get_pma_phpversion()
         if not old_phpversion: return False
         if pma_version == '4.0':
-            php_versions = ['52','53','5.4']
+            php_versions = ['52','53','54']
         elif pma_version == '4.4':
             php_versions = ['54','55','56']
         elif pma_version == '4.9':
@@ -174,7 +185,7 @@ class HttpProxy:
         '''
         try:
             urllib3_conn.allowed_gai_family = lambda: socket.AF_INET
-            s_key = 'proxy_{}'.format(app.secret_key)
+            s_key = 'proxy_{}_{}'.format(app.secret_key,self.get_pma_version())
 
             if not s_key in session:
                 session[s_key] = requests.Session()
