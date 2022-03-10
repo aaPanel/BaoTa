@@ -1361,7 +1361,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             his_list = sorted(os.listdir(save_path), reverse=True)
             num = public.readFile('data/history_num.pl')
             if not num:
-                num = 10
+                num = 100
             else:
                 num = int(num)
             d_num = len(his_list)
