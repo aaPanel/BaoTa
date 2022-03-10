@@ -1358,7 +1358,7 @@ def panel_public():
             if str(result_type).find('Response') != -1: return result
             return public.getJson(result),json_header
         except:
-            return public.returnJson(False,public.get_error_info())
+            return abort(404)
     
     v_list = ['fun', 'name','filename', 'data','secret_key']
     for n in get.__dict__.keys():
@@ -1372,15 +1372,7 @@ def panel_public():
     if not hasattr(get, 'name'): get.name = ''
     if not hasattr(get, 'fun'): return abort(404)
     if not public.path_safe_check("%s/%s" % (get.name, get.fun)): return abort(404)
-    if get.fun in ['login_qrcode', 'is_scan_ok','set_login','static']:
-        if get.fun == 'static':
-            if not 'filename' in get: return abort(404)
-            if not public.path_safe_check("%s" % (get.filename)): return abort(404)
-            if not re.match(r'^[\w\./_-]+$',get.filename): return abort(404)
-            s_file = '/www/server/panel/BTPanel/static/' + get.filename
-            if s_file.find('..') != -1 or s_file.find('./') != -1: return abort(404)
-            if not os.path.exists(s_file): return abort(404)
-            return send_file(s_file, conditional=True, add_etags=True)
+    if get.fun in ['login_qrcode', 'is_scan_ok','set_login']:
         # 检查是否验证过安全入口
         global admin_check_auth, admin_path, route_path, admin_path_file
         if admin_path != '/bt' and os.path.exists(admin_path_file) and not 'admin_auth' in session:
