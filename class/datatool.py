@@ -81,6 +81,8 @@ class datatools:
         tables = json.loads(get.tables)
         if not db_name or not tables: return False
         if not self.DB_MySQL:self.DB_MySQL = public.get_mysql_obj(db_name)
+        m_version = self.DB_MySQL.query('select version();')[0][0]
+        if m_version.find('5.1.')!=-1:return public.returnMsg(False,"不支持mysql5.1!")
         mysql_table = self.map_to_list(self.DB_MySQL.query('show tables from `%s`' % db_name))
         ret=[]
         if type(mysql_table)==list:

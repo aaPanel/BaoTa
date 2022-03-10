@@ -1279,8 +1279,6 @@ SetLink
     
     #修复表信息
     def ReTable(self,get):
-        m_version = public.readFile(public.GetConfigValue('setup_path') + '/mysql/version.pl')
-        if m_version.find('5.1.')!=-1:return public.returnMsg(False,"不支持mysql5.1!")
         info=self.RepairTable(get)
         if info:
             return public.returnMsg(True,"修复完成!")
