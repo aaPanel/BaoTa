@@ -329,6 +329,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
 
     # 设置文件和目录权限
     def set_mode(self, path):
+        if path[-1] == '/': path = path[:-1]
         s_path = os.path.dirname(path)
         p_stat = os.stat(s_path)
         os.chown(path, p_stat.st_uid, p_stat.st_gid)
