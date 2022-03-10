@@ -121,7 +121,7 @@ class HttpProxy:
                     'Connection':'close'
                 }
                 try:
-                    session[s_key].headers['Host'] = request.url_root.replace('http://','').replace('https://','').split('/')[0]
+                    session[s_key].headers['Host'] = public.en_punycode(request.url_root).replace('http://','').replace('https://','').split('/')[0]
                 except:pass
                 if proxy_url.find('phpmyadmin') != -1:
                     if proxy_url.find('https://') == 0:
