@@ -11,7 +11,7 @@
 # HTTP代理模块
 #------------------------------
 
-import requests,os,re
+import requests,os,re,time
 from BTPanel import request,Response,public,app,get_phpmyadmin_dir,session
 from http.cookies import SimpleCookie
 import requests.packages.urllib3.util.connection as urllib3_conn
@@ -67,6 +67,81 @@ class HttpProxy:
         #                         path='/')
         
         return res
+
+    def get_pma_phpversion(self):
+        '''
+            @name 获取phpmyadmin的php版本
+            @author hwliang<2022-01-19>
+            @return str
+        '''
+        phpversion = '56'
+        configFile = public.get_setup_path() + '/nginx/conf/enable-php.conf'
+        if not os.path.exists(configFile): public.writeFile(configFile,public.readFile(public.get_setup_path() + '/nginx/conf/enable-php-54.conf'))
+        conf = public.readFile(configFile)
+        rep = r"php-cgi-([0-9]+)\.sock"
+        rtmp = re.search(rep,conf)
+        if rtmp:
+            phpversion = rtmp.groups()[0]
+        else:
+            rep = r'127.0.0.1:10(\d{2,2})1'
+            rtmp = re.findall(rep,conf)
+            if rtmp:
+                phpversion = rtmp[0]
+            else:
+                rep = r"php-cgi.*\.sock"
+                public.writeFile(configFile,conf)
+                phpversion = '54'
+        return phpversion
+
+    def set_pma_phpversion(self):
+        '''
+            @name 设置phpmyadmin兼容的php版本
+            @author hwliang<2022-01-19>
+            @return str
+        '''
+        
+        pma_vfile = public.get_setup_path() + '/phpmyadmin/version.pl'
+        if not os.path.exists(pma_vfile): return False
+        pma_version = public.readFile(pma_vfile).strip()
+        if not pma_version: return False
+        old_phpversion = self.get_pma_phpversion()
+        if pma_version == '4.0':
+            php_versions = ['52','53','5.4']
+        elif pma_version == '4.4':
+            php_versions = ['54','55','56']
+        elif pma_version == '4.9':
+            php_versions = ['55','56','70','71','72','73','74']
+        elif pma_version == '5.0':
+            php_versions = ['70','71','72','73','74']
+        elif pma_version == '5.1':
+            php_versions = ['71','72','73','74','80']
+        elif pma_version == '5.2':
+            php_versions = ['72','73','74','80','81']
+        elif pma_version == '5.3':
+            php_versions = ['72','73','74','80','81']
+        else:
+            return False
+
+        if old_phpversion in php_versions: return True
+
+        installed_php_versions = []
+        php_install_path = '/www/server/php'
+        for version in php_versions:
+            php_bin = php_install_path + '/' + version + '/bin/php'
+            if os.path.exists(php_bin):
+                installed_php_versions.append(version)
+        
+        if not installed_php_versions: return False
+
+        php_version = installed_php_versions[-1]
+        
+        import ajax
+        args = public.dict_obj()
+        args.phpversion = php_version
+        ajax.ajax().setPHPMyAdmin(args)
+        public.WriteLog('数据库','检测到phpMyAdmin使用的PHP版本不兼容，已自动修改过兼容版本: PHP-' + php_version)
+        time.sleep(0.5)
+        
 
     def get_request_headers(self):
         '''
@@ -128,6 +203,7 @@ class HttpProxy:
                         session[s_key].cookies.update({'pma_lang_https':'zh_CN'})
                     else:
                         session[s_key].cookies.update({'pma_lang':'zh_CN'})
+                    self.set_pma_phpversion()
                 
             if 'Authorization' in request.headers:
                 session[s_key].headers['Authorization'] = request.headers['Authorization']
@@ -181,7 +257,18 @@ class HttpProxy:
                     p_res = session[s_key].post(proxy_url,self.form_to_dict(request.form),headers=headers,verify=False,allow_redirects=False)
             else:
                 return Response('不支持的请求类型',500)
-
+            
+            # PHP版本自动切换处理
+            if proxy_url.find('phpmyadmin') != -1 and proxy_url.find('/index.php') != -1:
+                if len(p_res.content) < 1024:
+                    if p_res.content.find(b'syntax error, unexpected') != -1 or p_res.content.find(b'+ is required.') != -1:
+                        self.set_pma_phpversion()
+                        return '不兼容的PHP版本,已尝试自动切换到兼容的PHP版本,请刷新页面重试!'
+                elif p_res.content.find(b'<strong>Deprecation Notice</strong>') != -1 and not session.get('set_pma_phpversion'):
+                    self.set_pma_phpversion()
+                    session['set_pma_phpversion'] = True
+                    return '不兼容的PHP版本,已尝试自动切换到兼容的PHP版本,请刷新页面重试!'
+            
             res = Response(p_res.content,headers=self.get_res_headers(p_res),content_type=p_res.headers.get('content-type',None),status=p_res.status_code)
             res = self.set_res_headers(res,p_res)
             return res
