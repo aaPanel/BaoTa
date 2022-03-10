@@ -260,7 +260,7 @@ class HttpProxy:
             # PHP版本自动切换处理
             if proxy_url.find('phpmyadmin') != -1 and proxy_url.find('/index.php') != -1:
                 if len(p_res.content) < 1024:
-                    if p_res.content.find(b'syntax error, unexpected') != -1 or p_res.content.find(b'+ is required.') != -1:
+                    if p_res.content.find(b'syntax error, unexpected') != -1 or p_res.content.find(b'offset access syntax with') != -1 or p_res.content.find(b'+ is required') != -1:
                         self.set_pma_phpversion()
                         return '不兼容的PHP版本,已尝试自动切换到兼容的PHP版本,请刷新页面重试!'
                 elif p_res.content.find(b'<strong>Deprecation Notice</strong>') != -1 and not session.get('set_pma_phpversion'):
