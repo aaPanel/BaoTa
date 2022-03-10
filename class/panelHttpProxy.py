@@ -74,24 +74,11 @@ class HttpProxy:
             @author hwliang<2022-01-19>
             @return str
         '''
-        phpversion = '56'
-        configFile = public.get_setup_path() + '/nginx/conf/enable-php.conf'
-        if not os.path.exists(configFile): public.writeFile(configFile,public.readFile(public.get_setup_path() + '/nginx/conf/enable-php-54.conf'))
-        conf = public.readFile(configFile)
-        rep = r"php-cgi-([0-9]+)\.sock"
-        rtmp = re.search(rep,conf)
-        if rtmp:
-            phpversion = rtmp.groups()[0]
-        else:
-            rep = r'127.0.0.1:10(\d{2,2})1'
-            rtmp = re.findall(rep,conf)
-            if rtmp:
-                phpversion = rtmp[0]
-            else:
-                rep = r"php-cgi.*\.sock"
-                public.writeFile(configFile,conf)
-                phpversion = '54'
-        return phpversion
+        from panelPlugin import panelPlugin
+        pma_status = panelPlugin().getPHPMyAdminStatus()
+        if 'phpversion' in pma_status:
+            return pma_status['phpversion']
+        return None
 
     def set_pma_phpversion(self):
         '''
@@ -105,6 +92,7 @@ class HttpProxy:
         pma_version = public.readFile(pma_vfile).strip()
         if not pma_version: return False
         old_phpversion = self.get_pma_phpversion()
+        if not old_phpversion: return False
         if pma_version == '4.0':
             php_versions = ['52','53','5.4']
         elif pma_version == '4.4':
