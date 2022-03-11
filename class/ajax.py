@@ -1368,7 +1368,8 @@ class ajax:
         import panelPlugin
         plu_panel =  panelPlugin.panelPlugin()
         plugin_list = plu_panel.get_cloud_list()
-
+        if not 'pro' in plugin_list: plugin_list['pro'] = -1
+        
         for item in data:
             if 'list' in item:
                 item['list'] = self.__get_home_list(item['list'],item['type'],plugin_list,plu_panel)    
@@ -1388,7 +1389,7 @@ class ajax:
         for x in sList:
             for plugin_info in plugin_list['list']:
                 if x['name'] == plugin_info['name']:
-                    if plugin_info['endtime'] >= 0:
+                    if not 'endtime' in plugin_info or plugin_info['endtime'] >= 0:
                         x['isBuy'] = True
             is_check = False
             if 'dependent' in x :

@@ -1210,6 +1210,14 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             get.path = get.path.encode('utf-8')
 
         get.path = self.xssdecode(get.path)
+
+        if get.path.find('/rewrite/null/') != -1:
+            webserver = public.get_webserver()
+            get.path = get.path.replace("/rewrite/null/", "/rewrite/{}/".format(webserver))
+        if get.path.find('/vhost/null/') != -1:
+            webserver = public.get_webserver()
+            get.path = get.path.replace("/vhost/null/", "/vhost/{}/".format(webserver))
+
         if not os.path.exists(get.path):
             if get.path.find('rewrite') == -1:
                 return public.returnMsg(False, 'FILE_NOT_EXISTS', (get.path,))
@@ -1217,6 +1225,8 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
 
         if self.__get_ext(get.path) in ['gz', 'zip', 'rar', 'exe', 'db', 'pdf', 'doc', 'xls', 'docx', 'xlsx', 'ppt', 'pptx', '7z', 'bz2', 'png', 'gif', 'jpg', 'jpeg', 'bmp', 'icon', 'ico', 'pyc', 'class', 'so', 'pyd']:
             return public.returnMsg(False, '该文件格式不支持在线编辑!')
+
+
         if os.path.getsize(get.path) > 3145928:
             return public.returnMsg(False, u'不能在线编辑大于3MB的文件!')
         if os.path.isdir(get.path):
@@ -1269,6 +1279,14 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             return public.returnMsg(False, 'path参数不能为空!')
         if sys.version_info[0] == 2:
             get.path = get.path.encode('utf-8')
+        
+        if get.path.find('/rewrite/null/') != -1:
+            webserver = public.get_webserver()
+            get.path = get.path.replace("/rewrite/null/", "/rewrite/{}/".format(webserver))
+        if get.path.find('/vhost/null/') != -1:
+            webserver = public.get_webserver()
+            get.path = get.path.replace("/vhost/null/", "/vhost/{}/".format(webserver))
+
         if not os.path.exists(get.path):
             if get.path.find('.htaccess') == -1:
                 return public.returnMsg(False, 'FILE_NOT_EXISTS')
