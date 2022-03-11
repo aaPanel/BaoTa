@@ -4170,7 +4170,7 @@ def get_mysqldump_bin():
         @return string
     '''
     bin_files = [
-        '{}/mysql/bin/mysqldump'.format(get_panel_path()),
+        '{}/mysql/bin/mysqldump'.format(get_setup_path()),
         '/usr/bin/mysqldump',
         '/usr/local/bin/mysqldump',
         '/usr/sbin/mysqldump',
@@ -4196,7 +4196,7 @@ def get_mysql_bin():
         @return string
     '''
     bin_files = [
-        '{}/mysql/bin/mysql'.format(get_panel_path()),
+        '{}/mysql/bin/mysql'.format(get_setup_path()),
         '/usr/bin/mysql',
         '/usr/local/bin/mysql',
         '/usr/sbin/mysql',
