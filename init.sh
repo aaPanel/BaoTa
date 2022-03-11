@@ -275,8 +275,8 @@ install_used()
                 return;
         fi
 
-        bash $panel_path/mysql_auto.sh &> /dev/null
-        bash $panel_path/php_auto.sh &> /dev/null
+        bash $panel_path/script/mysql_auto.sh &> /dev/null
+        bash $panel_path/script/php_auto.sh &> /dev/null
         rm -f $panel_path/php_mysql_auto.pl
 }
 
