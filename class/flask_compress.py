@@ -107,7 +107,7 @@ class Compress(object):
         
         if response.content_length is not None:
             if response.content_length < 512:
-                if not session.get('login',None) or g.api_request:
+                if not session.get('login',None) or g.get('api_request',None):
                     import public
                     default_pl = "{}/default.pl".format(public.get_panel_path())
                     admin_path = "{}/data/admin_path.pl".format(public.get_panel_path())
