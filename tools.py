@@ -159,6 +159,12 @@ history -c
     os.system(command)
     print('\t\033[1;32m[done]\033[0m')
     
+    a_input = input('|-是否在首次开机自动按机器配置优化PHP/MySQL配置?(y/n default: y): ')
+    print(a_input)
+    if not a_input in ['Y','y','yes','YES']:
+        public.ExecShell("rm -f /www/server/panel/php_mysql_auto.pl")
+    else:
+        public.writeFile('/www/server/panel/php_mysql_auto.pl',"True")
     
     print("|-请选择用户初始化方式：")
     print("="*50)
@@ -182,6 +188,7 @@ history -c
         print('\033[1;41m|-面板初始化地址: http://{SERVERIP}:'+port+'/install\033[0m')
     else:
         print('\033[1;41m|-获取初始帐号密码命令:bt default \033[0m')
+        print('\033[1;41m|-注意：仅在首次登录面板前能正确获取初始帐号密码 \033[0m')
 
 #清空正在执行的任务
 def CloseTask():
