@@ -2,7 +2,7 @@ import sys,os
 from gzip import GzipFile
 from io import BytesIO
 
-from flask import request, current_app,session,Response,g
+from flask import request, current_app,session,Response,g,abort
 
 
 if sys.version_info[:2] == (2, 6):
@@ -105,6 +105,25 @@ class Compress(object):
             if request_token:
                 response.set_cookie('request_token',request_token,path='/',max_age=86400 * 30)
         
+        if response.content_length is not None:
+            if response.content_length < 512:
+                if not session.get('login',None) or g.api_request:
+                    import public
+                    default_pl = "{}/default.pl".format(public.get_panel_path())
+                    admin_path = "{}/data/admin_path.pl".format(public.get_panel_path())
+                    default_body = public.readFile(default_pl,'rb')
+                    admin_body = public.readFile(admin_path,'rb')
+                    
+                    if default_body or admin_body:
+                        if not default_body: default_body = b""
+                        if not admin_body: admin_body = b""
+                        resp_body = response.get_data()
+                        if resp_body.find(default_body.strip()) != -1 or resp_body.find(admin_body.strip()) != -1: 
+                            result = b'{"status":false,"msg":"Error: 403 Forbidden"}'
+                            response.set_data(result)
+                            response.headers['Content-Length'] = len(result)
+                            return response
+
         
         if (response.mimetype not in app.config['COMPRESS_MIMETYPES'] or
             'gzip' not in accept_encoding.lower() or
