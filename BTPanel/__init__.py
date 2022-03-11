@@ -141,7 +141,7 @@ admin_path_checks = [
     '/daily'
 ]
 if admin_path in admin_path_checks: admin_path = '/bt'
-
+uri_match = re.compile(r"(^/static/[\w_\./\-]+\.(js|css|png|jpg|gif|ico|svg|woff|woff2|ttf|otf|eot|map)$|^/[\w_\./\-]*$)")
 
 # ===================================Flask HOOK========================#
 
@@ -153,7 +153,8 @@ def request_check():
     # 路由和URI长度过滤
     if len(request.path) > 256: return abort(403)
     if len(request.url) > 1024: return abort(403)
-
+    # URI过滤
+    if not uri_match.match(request.path): return abort(403)
     # POST参数过滤
     if request.path in ['/login', '/safe', '/hook', '/public', '/down', '/get_app_bind_status', '/check_bind']:
         pdata = request.form.to_dict()
@@ -1424,6 +1425,7 @@ def panel_other(name=None, fun=None, stype=None):
     # 插件接口
     if public.is_error_path():
         return redirect('/error',302)
+    if not name: return abort(404)
     if name != "mail_sys" or fun != "send_mail_http.json":
         comReturn = comm.local()
         if comReturn: return comReturn
@@ -1433,12 +1435,13 @@ def panel_other(name=None, fun=None, stype=None):
                     if not check_csrf(): return public.ReturnJson(False, 'INIT_CSRF_ERR'), json_header
         args = None
     else:
+        p_path = public.get_plugin_path() + '/' + name
+        if not os.path.exists(p_path): return abort(404)
         args = get_input()
         args_list = ['mail_from', 'password', 'mail_to', 'subject', 'content', 'subtype', 'data']
         for k in args.__dict__:
             if not k in args_list: return abort(404)
 
-    is_accept = False
     if not fun: fun = 'index.html'
     if not stype:
         tmp = fun.split('.')
@@ -1450,7 +1453,7 @@ def panel_other(name=None, fun=None, stype=None):
     if not public.path_safe_check("%s/%s/%s" % (name, fun, stype)): return abort(404)
     if name.find('./') != -1 or not re.match(r"^[\w-]+$", name): return abort(404)
     if not name: return public.returnJson(False, 'PLUGIN_INPUT_ERR'), json_header
-    p_path = os.path.join('/www/server/panel/plugin/', name)
+    p_path = public.get_plugin_path() + '/' + name
     if not os.path.exists(p_path): 
         if name == 'btwaf' and fun == 'index':
             pdata = {}
@@ -1640,7 +1643,6 @@ def get_dir_down(filename, token, find):
         pdata = files.files().get_videos(args)
         return public.GetJson(pdata), json_header
     else:
-
         pdata = files.files().GetDir(args)
         pdata['token'] = token
         pdata['ps'] = find['ps']
