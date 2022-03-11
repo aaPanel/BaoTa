@@ -35,6 +35,7 @@ var database = {
         minWidth: '1000px',
         autoHeight: true,
         default: "数据库列表为空", // 数据为空时的默认提示
+        pageName: 'database',
         beforeRequest: function(){
           var db_type_val = $('.database_type_select_filter').val()
           switch(db_type_val){
@@ -77,6 +78,7 @@ var database = {
             return true
           }
         },
+        bt.public.get_quota_config('database'),
         {
           fid: 'backup',
           title: '备份',
@@ -114,7 +116,7 @@ var database = {
                 })
                 break;
             }
-            return '<span class="size_ellipsis" style="width:100px" title="'+type_column+'">'+type_column+'</span>'
+            return '<span class="flex" style="width:100px" title="'+type_column+'"><span class="size_ellipsis" style="width: 0; flex: 1;">'+type_column+'</span></span>'
           }
         },
         {
@@ -212,7 +214,44 @@ var database = {
           }, {
             title: 'phpMyAdmin',
             event: function () {
-              bt.database.open_phpmyadmin('', 'root', bt.config.mysql_root)
+              var url = $('#phpMyAdminUrl').data('url'),
+              isEnable = url !== 'False';
+              bt.open({
+                type: 1,
+                title:'phpMyAdmin访问安全提示',
+                area:'450px',
+                btn:false,
+                content:'<div class="bt-form pd25">\
+                  <div class="rebt-con" style="width:100%;display: flex;padding:0;height:auto;justify-content: space-around;">\
+                    <div class="rebt-li panel_visit" style="position:relative;width: 150px;height: 50px;line-height: 50px;">\
+                      <a href="javascript:;" style="font-size:13px;border-radius:2px;">通过面板访问</a>\
+                      <span class="recommend-pay-icon" style="height: 30px;width: 30px;background-size: contain;"></span>\
+                    </div>\
+                    <div class="rebt-li public_visit" style="position:relative;width: 150px;height: 50px;line-height: 50px;">\
+                      <a href="javascript:;"  style="font-size:13px;border-radius:2px;">通过公共访问</a>\
+                    </div>\
+                  </div>\
+                  <ul class="help-info-text c7"><li>面板访问需要登录面板后，才能通过面板访问phpMyAdmin</li>'+ (isEnable?
+                    '<li class="color-red">关闭公共访问权限可提升安全性，可到软件商店-&gt;phpMyAdmin中关闭</li>':
+                    '<li>未开启公共访问权限，可到软件商店-&gt;phpMyAdmin中开启</li><li class="color-red">注意：开启公共访问权限存在安全风险，建议非必要不启用</li>'
+                  ) + '</ul>\
+                </div>',
+                success:function (layers,indexs) {
+                  $('.close_layer').click(function () {
+                    layer.close(indexs)
+                  })
+                  $('.panel_visit').click(function () {
+                    bt.database.open_phpmyadmin('', 'root', bt.config.mysql_root)
+                  })
+                  $('.public_visit').click(function () {
+                    if(isEnable){
+                      window.open(url)
+                    }else{
+                      layer.msg('未开启公共访问权限')
+                    }
+                  })
+                }
+              })
             }
           },
           {
@@ -747,30 +786,40 @@ var database = {
         that.dbCloudServerTable = bt_tools.table({
           el:'#db_cloud_server_table',
           default:'服务器列表为空',
-          url:'/database?action=GetCloudServer',
+          data: [],
           column:[
-            {fid:'db_host',title:'服务器地址',width:216,template: function (item) {
-                return '<span style="width:200px;word-wrap:break-word;" title="'+item.db_host+'">'+item.db_host+'</span>'
-              }},
+            {
+              fid:'db_host',
+              title:'服务器地址',
+              width: 170,
+              template: function (item) {
+                return '<span class="flex" style="width:154px" title="'+item.db_host+'"><span class="size_ellipsis" style="width: 0; flex: 1;">'+item.db_host+'</span></span>'
+              }
+            },
             {fid:'db_port',width:80,title:'数据库端口'},
-            {fid:'db_user',title:'管理员名称'},
+            {fid:'db_user',width:100,title:'管理员名称'},
             {fid:'db_password',type: 'password',title:'管理员密码',copy: true,eye_open: true},
-            {fid:'ps',title:'备注',width:170,template: function (item) {
-              return '<span class="size_ellipsis" style="width:170px" title="'+item.ps+'">'+item.ps+'</span>'
+            {fid:'ps',title:'备注',width:160,template: function (item) {
+              return '<span class="flex" style="width:144px" title="'+item.ps+'"><span class="size_ellipsis" style="width: 0; flex: 1;">'+item.ps+'</span></span>'
             }},
             {
               type: 'group',
-
-
+              width: 100,
               title: '操作',
               align: 'right',
               group: [{
                 title:'编辑',
+                hide:function (row) {
+                  return row.id == 0
+                },
                 event:function(row){
                   that.render_db_cloud_server_view(row,true);
                 }
               },{
                 title:'删除',
+                hide:function (row) {
+                  return row.id == 0
+                },
                 event:function(row){
                   that.del_db_cloud_server(row)
                 }
@@ -787,8 +836,21 @@ var database = {
             }]
           }]
         })
+        that.render_cloud_server_table();
       }
     })
+  },
+  render_cloud_server_table: function () {
+    var that = this;
+    bt_tools.send('/database?action=GetCloudServer',function(rdata){
+      var arry = []
+      for (var i = 0; i < rdata.length; i++) {
+        var element = rdata[i];
+        if(element.id == 0) continue
+        arry.push(element)
+      }
+      that.dbCloudServerTable.$reader_content(arry);
+    });
   },
   // 添加/编辑远程服务器视图
   render_db_cloud_server_view:function(config,is_edit){
@@ -876,7 +938,8 @@ var database = {
         bt.send(interface,'database/'+interface,form,function(rdata){
           that.layerT.close();
           if(rdata.status){
-            that.dbCloudServerTable.$refresh_table_list();
+            that.database_table_view();
+            that.render_cloud_server_table();
             layer.close(indexs)
             layer.msg(rdata.msg, {icon:1})
           }else{
@@ -1103,8 +1166,9 @@ var database = {
       tables: JSON.stringify(dbs)
     }, function (rdata) {
       layer.close(loadT)
-
-      database.rep_tools(db_name, true);
+      if (rdata.status) {
+        database.rep_tools(db_name, true);
+      }
       layer.msg(rdata.msg, {
         icon: rdata.status ? 1 : 2
       });
@@ -1121,8 +1185,9 @@ var database = {
       tables: JSON.stringify(dbs)
     }, function (rdata) {
       layer.close(loadT)
-
-      database.rep_tools(db_name, true);
+      if (rdata.status) {
+        database.rep_tools(db_name, true);
+      }
       layer.msg(rdata.msg, {
         icon: rdata.status ? 1 : 2
       });
@@ -1141,8 +1206,9 @@ var database = {
       table_type: type
     }, function (rdata) {
       layer.close(loadT);
-
-      database.rep_tools(db_name, true);
+      if (rdata.status) {
+        database.rep_tools(db_name, true);
+      }
       layer.msg(rdata.msg, {
         icon: rdata.status ? 1 : 2
       });
@@ -1301,9 +1367,9 @@ var database = {
               }, countDown * 1000)
             },
             yes: function (indes, layers) {
-              console.log(1);
+              // console.log(1);
               if ($(layers).hasClass('active')) {
-                layer.tips('请确认信息，稍候在尝试，还剩' + countDown + '秒', $(layers).find('.layui-layer-btn0'), {
+                layer.tips('请确认信息，稍候再尝试，还剩' + countDown + '秒', $(layers).find('.layui-layer-btn0'), {
                   tips: [1, 'red'],
                   time: 3000
                 })
@@ -1333,7 +1399,10 @@ var database = {
       closeBtn: 2
     }, function () {
       bt.send('RemoveCloudServer','database/RemoveCloudServer',{id:row.id},function(rdata){
-        if(rdata.status) that.dbCloudServerTable.$refresh_table_list(true);
+        if(rdata.status){
+          that.database_table_view()
+          that.render_cloud_server_table();
+        }
         layer.msg(rdata.msg, {
           icon: rdata.status ? 1 : 2
         })

@@ -303,6 +303,8 @@ class userlogin:
             login_type = 'data/app_login.pl'
             if os.path.exists(login_type):
                 os.remove(login_type)
+            default_pl = "{}/default.pl".format(public.get_panel_path())
+            public.writeFile(default_pl,public.GetRandomString(12))
             return public.returnJson(True,'LOGIN_SUCCESS'),json_header
         except Exception as ex:
             stringEx = str(ex)

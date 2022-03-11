@@ -648,8 +648,6 @@ class ssh_terminal:
         else:
             if self._last_num >= 0:
                 self._last_cmd += send_data
-            else:
-                self._last_cmd.insert(len(self._last_cmd) + self._last_num, send_data)
     
 
     def close(self):

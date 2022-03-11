@@ -7,7 +7,6 @@
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 import base64
-from pymongo import server
 import public,re,sys,os,nginx,apache,json,time,ols
 try:
     import pyotp
@@ -363,6 +362,8 @@ class config:
 
     
     def setPassword(self,get):
+        get.password1 = public.url_decode(get.password1)
+        get.password2 = public.url_decode(get.password2)
         if get.password1 != get.password2: return public.returnMsg(False,'USER_PASSWORD_CHECK')
         if len(get.password1) < 5: return public.returnMsg(False,'USER_PASSWORD_LEN')
         if not self.check_password_safe(get.password1): return public.returnMsg(False,'密码复杂度验证失败，要求：长度大于8位，数字、大写字母、小写字母、特殊字符最少3项组合')
@@ -379,6 +380,8 @@ class config:
         return public.returnMsg(True,'USER_PASSWORD_SUCCESS')
     
     def setUsername(self,get):
+        get.username1 = public.url_decode(get.username1)
+        get.username2 = public.url_decode(get.username2)
         if get.username1 != get.username2: return public.returnMsg(False,'USER_USERNAME_CHECK')
         if len(get.username1) < 3: return public.returnMsg(False,'USER_USERNAME_LEN')
         public.M('users').where("username=?",(session['username'],)).setField('username',get.username1.strip())
@@ -394,6 +397,8 @@ class config:
 
     # 创建新用户
     def create_user(self,args):
+        args.username = public.url_decode(args.username)
+        args.password = public.url_decode(args.password)
         if session['uid'] != 1: return public.returnMsg(False,'没有权限!')
         if len(args.username) < 2: return public.returnMsg(False,'用户名不能少于2位')
         if len(args.password) < 8: return public.returnMsg(False,'密码不能少于8位')
@@ -427,11 +432,13 @@ class config:
         username = public.M('users').where('id=?',(args.id,)).getField('username')
         pdata = {}
         if 'username' in args:
+            args.username = public.url_decode(args.username)
             if len(args.username) < 2: return public.returnMsg(False,'用户名不能少于2位')
             pdata['username'] = args.username.strip()
 
         if 'password' in args:
             if args.password:
+                args.password = public.url_decode(args.password)
                 if len(args.password) < 8: return public.returnMsg(False,'密码不能少于8位')
                 pdata['password'] = public.password_salt(public.md5(args.password.strip()),username=username)
 
@@ -453,6 +460,7 @@ class config:
             if not s_time_tmp: s_time_tmp = '0'
             if int(s_time_tmp) != session_timeout:
                 if session_timeout < 300: return public.returnMsg(False,'超时时间不能小于300秒')
+                if session_timeout > 86400: return public.returnMsg(False,'超时时间不能大于86400秒')
                 public.writeFile(sess_out_path,str(session_timeout))
                 isReWeb = True
 

@@ -74,7 +74,7 @@ if app.config['SSL']:
 else:
     app.config['SESSION_COOKIE_SAMESITE'] = None
 
-    
+
 Session(app)
 
 import common
@@ -141,7 +141,7 @@ admin_path_checks = [
     '/daily'
 ]
 if admin_path in admin_path_checks: admin_path = '/bt'
-
+uri_match = re.compile(r"(^/static/[\w_\./\-]+\.(js|css|png|jpg|gif|ico|svg|woff|woff2|ttf|otf|eot|map)$|^/[\w_\./\-]*$)")
 
 # ===================================Flask HOOK========================#
 
@@ -153,10 +153,8 @@ def request_check():
     # 路由和URI长度过滤
     if len(request.path) > 256: return abort(403)
     if len(request.url) > 1024: return abort(403)
-
-    if request.path in ['/service_status']: return
-    # if request.path.find('/phpmyadmin_') == 0: return
-
+    # URI过滤
+    if not uri_match.match(request.path): return abort(403)
     # POST参数过滤
     if request.path in ['/login', '/safe', '/hook', '/public', '/down', '/get_app_bind_status', '/check_bind']:
         pdata = request.form.to_dict()
@@ -203,7 +201,6 @@ def request_check():
 # Flask 请求结束勾子
 @app.teardown_request
 def request_end(reques=None):
-    if request.path in ['/service_status']: return
     not_acts = ['GetTaskSpeed', 'GetNetWork', 'check_pay_status', 'get_re_order_status', 'get_order_stat']
     key = request.args.get('action')
     if not key in not_acts and request.full_path.find('/static/') == -1:
@@ -216,6 +213,7 @@ def request_end(reques=None):
 # Flask 404页面勾子
 @app.errorhandler(404)
 def error_404(e):
+    if not session.get('login',None): return public.error_not_login()
     errorStr = '''<html>
 <head><title>404 Not Found</title></head>
 <body>
@@ -232,6 +230,7 @@ def error_404(e):
 # Flask 403页面勾子
 @app.errorhandler(403)
 def error_403(e):
+    if not session.get('login',None): return public.error_not_login()
     errorStr = '''<html>
 <head><title>403 Forbidden</title></head>
 <body>
@@ -248,6 +247,7 @@ def error_403(e):
 # Flask 500页面勾子
 @app.errorhandler(500)
 def error_500(e):
+    if not session.get('login',None): return public.error_not_login()
     ss = '''404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
 
 During handling of the above exception, another exception occurred:'''
@@ -301,7 +301,6 @@ def home():
     data['databaseCount'] = public.M('databases').count()
     data['lan'] = public.GetLan('index')
     data['js_random'] = get_js_random()
-    public.run_thread(public.auto_backup_panel)
     return render_template('index.html', data=data)
 
 
@@ -424,10 +423,13 @@ def database(pdata=None):
     if comReturn: return comReturn
     if request.method == method_get[0] and not pdata:
         import ajax
-        pmd = get_phpmyadmin_dir()
+        from panelPlugin import panelPlugin
+        
         session['phpmyadminDir'] = False
-        if pmd:
-            session['phpmyadminDir'] = 'http://' + public.GetHost() + ':' + pmd[1] + '/' + pmd[0]
+        if panelPlugin().get_phpmyadmin_stat():
+            pmd = get_phpmyadmin_dir()
+            if pmd:
+                session['phpmyadminDir'] = 'http://' + public.GetHost() + ':' + pmd[1] + '/' + pmd[0]
         ajax.ajax().set_phpmyadmin_session()
         import system
         data = system.system().GetConcifInfo()
@@ -717,7 +719,7 @@ def files(pdata=None):
     import files
     filesObject = files.files()
     defs = ('CheckExistsFiles', 'GetExecLog', 'GetSearch', 'ExecShell', 'GetExecShellMsg', 'exec_git', 'exec_composer',
-            'create_download_url',
+            'create_download_url','get_images_resize',
             'UploadFile', 'GetDir', 'CreateFile', 'CreateDir', 'DeleteDir', 'DeleteFile', 'get_download_url_list',
             'remove_download_url', 'modify_download_url',
             'CopyFile', 'CopyDir', 'MvFile', 'GetFileBody', 'SaveFileBody', 'Zip', 'UnZip', 'get_download_url_find',
@@ -838,14 +840,14 @@ def ajax(pdata=None):
     if comReturn: return comReturn
     import ajax
     ajaxObject = ajax.ajax()
-    defs = ('get_lines', 'php_info', 'change_phpmyadmin_ssl_port', 'set_phpmyadmin_ssl', 'get_phpmyadmin_ssl','get_pd',
+    defs = ('get_lines', 'php_info', 'change_phpmyadmin_ssl_port', 'set_phpmyadmin_ssl', 'get_phpmyadmin_ssl','get_pd','get_pay_type',
             'check_user_auth', 'to_not_beta', 'get_beta_logs', 'apple_beta', 'GetApacheStatus', 'GetCloudHtml',
             'get_load_average', 'GetOpeLogs', 'GetFpmLogs', 'GetFpmSlowLogs', 'SetMemcachedCache', 'GetMemcachedStatus',
             'GetRedisStatus', 'GetWarning', 'SetWarning', 'CheckLogin', 'GetSpeed', 'GetAd', 'phpSort', 'ToPunycode',
             'GetBetaStatus', 'SetBeta', 'setPHPMyAdmin', 'delClose', 'KillProcess', 'GetPHPInfo', 'GetQiniuFileList','get_process_tops','get_process_cpu_high',
             'UninstallLib', 'InstallLib', 'SetQiniuAS', 'GetQiniuAS', 'GetLibList', 'GetProcessList', 'GetNetWorkList',
             'GetNginxStatus', 'GetPHPStatus', 'GetTaskCount', 'GetSoftList', 'GetNetWorkIo', 'GetDiskIo', 'GetCpuIo',
-            'CheckInstalled', 'UpdatePanel', 'GetInstalled', 'GetPHPConfig', 'SetPHPConfig')
+            'CheckInstalled', 'UpdatePanel', 'GetInstalled', 'GetPHPConfig', 'SetPHPConfig','log_analysis','speed_log','get_result','get_detailed')
 
     return publicObject(ajaxObject, defs, None, pdata)
 
@@ -900,7 +902,7 @@ def ssl(pdata=None):
             'download_cert', 'set_cert', 'cancel_cert_order','ApplyDVSSL','apply_cert_order_pay',
             'get_order_list', 'get_order_find', 'apply_order_pay', 'get_pay_status', 'apply_order', 'get_verify_info',
             'get_verify_result', 'get_product_list', 'set_verify_info','renew_cert_order',
-            'GetSSLInfo', 'downloadCRT', 'GetSSLProduct', 'Renew_SSL', 'Get_Renew_SSL','GetAuthToken','GetBindCode')
+            'GetSSLInfo', 'downloadCRT', 'GetSSLProduct', 'Renew_SSL', 'Get_Renew_SSL','GetAuthToken','GetBindCode','apply_cert_install_pay')
     get = get_input()
 
     if get.action == 'download_cert':
@@ -1357,7 +1359,7 @@ def panel_public():
             if str(result_type).find('Response') != -1: return result
             return public.getJson(result),json_header
         except:
-            return public.returnJson(False,public.get_error_info())
+            return abort(404)
     
     v_list = ['fun', 'name','filename', 'data','secret_key']
     for n in get.__dict__.keys():
@@ -1371,15 +1373,7 @@ def panel_public():
     if not hasattr(get, 'name'): get.name = ''
     if not hasattr(get, 'fun'): return abort(404)
     if not public.path_safe_check("%s/%s" % (get.name, get.fun)): return abort(404)
-    if get.fun in ['login_qrcode', 'is_scan_ok','set_login','static']:
-        if get.fun == 'static':
-            if not 'filename' in get: return abort(404)
-            if not public.path_safe_check("%s" % (get.filename)): return abort(404)
-            if not re.match(r'^[\w\./_-]+$',get.filename): return abort(404)
-            s_file = '/www/server/panel/BTPanel/static/' + get.filename
-            if s_file.find('..') != -1 or s_file.find('./') != -1: return abort(404)
-            if not os.path.exists(s_file): return abort(404)
-            return send_file(s_file, conditional=True, add_etags=True)
+    if get.fun in ['login_qrcode', 'is_scan_ok','set_login']:
         # 检查是否验证过安全入口
         global admin_check_auth, admin_path, route_path, admin_path_file
         if admin_path != '/bt' and os.path.exists(admin_path_file) and not 'admin_auth' in session:
@@ -1408,14 +1402,7 @@ def send_favicon():
     return send_file(s_file, conditional=True, add_etags=True)
 
 
-# @app.route('/service_status', methods=method_get)
-# def service_status():
-#     # 检查面板当前状态
-#     try:
-#         if not 'login' in session: session.clear()
-#     except:
-#         pass
-#     return 'True'
+
 @app.route('/btwaf_error', methods=method_get)
 def btwaf_error():
     # 图标
@@ -1438,6 +1425,7 @@ def panel_other(name=None, fun=None, stype=None):
     # 插件接口
     if public.is_error_path():
         return redirect('/error',302)
+    if not name: return abort(404)
     if name != "mail_sys" or fun != "send_mail_http.json":
         comReturn = comm.local()
         if comReturn: return comReturn
@@ -1447,12 +1435,13 @@ def panel_other(name=None, fun=None, stype=None):
                     if not check_csrf(): return public.ReturnJson(False, 'INIT_CSRF_ERR'), json_header
         args = None
     else:
+        p_path = public.get_plugin_path() + '/' + name
+        if not os.path.exists(p_path): return abort(404)
         args = get_input()
         args_list = ['mail_from', 'password', 'mail_to', 'subject', 'content', 'subtype', 'data']
         for k in args.__dict__:
             if not k in args_list: return abort(404)
 
-    is_accept = False
     if not fun: fun = 'index.html'
     if not stype:
         tmp = fun.split('.')
@@ -1464,7 +1453,7 @@ def panel_other(name=None, fun=None, stype=None):
     if not public.path_safe_check("%s/%s/%s" % (name, fun, stype)): return abort(404)
     if name.find('./') != -1 or not re.match(r"^[\w-]+$", name): return abort(404)
     if not name: return public.returnJson(False, 'PLUGIN_INPUT_ERR'), json_header
-    p_path = os.path.join('/www/server/panel/plugin/', name)
+    p_path = public.get_plugin_path() + '/' + name
     if not os.path.exists(p_path): 
         if name == 'btwaf' and fun == 'index':
             pdata = {}
@@ -1495,39 +1484,6 @@ def panel_other(name=None, fun=None, stype=None):
 
     # 初始化插件对象
     try:
-        # is_php = os.path.exists(p_path + '/index.php')
-        # if not is_php:
-        #     public.package_path_append(p_path)
-        #     plugin_main = __import__(name + '_main')
-        #     try:
-        #         if sys.version_info[0] == 2:
-        #             reload(plugin_main)
-        #         else:
-        #             from imp import reload
-        #             reload(plugin_main)
-        #     except:
-        #         pass
-        #     plu = eval('plugin_main.' + name + '_main()')
-        #     if not hasattr(plu, fun):
-        #         if name == 'btwaf' and fun == 'index':
-        #             return  render_template('error3.html',data={}) 
-        #         return public.returnJson(False, 'PLUGIN_NOT_FUN'), json_header
-
-        # # 执行插件方法
-        # if not is_php:
-        #     if is_accept:
-        #         checks = plu._check(args)
-        #         if type(checks) != bool or not checks:
-        #             return public.getJson(checks), json_header
-        #     data = eval('plu.' + fun + '(args)')
-        # else:
-        #     comReturn = comm.local()
-        #     if comReturn: return comReturn
-        #     import panelPHP
-        #     args.s = fun
-        #     args.name = name
-        #     data = panelPHP.panelPHP(name).exec_php_script(args)
-
         from pluginAuth import Plugin
         try:
             args.s = fun
@@ -1588,6 +1544,7 @@ def panel_hook():
 @app.route('/install', methods=method_all)
 def install():
     # 初始化面板接口
+    if not session.get('login',None): return public.error_not_login()
     if not os.path.exists('install.pl'): return redirect('/login')
     if public.M('config').where("id=?", ('1',)).getField('status') == 1:
         if os.path.exists('install.pl'): os.remove('install.pl')
@@ -1625,15 +1582,15 @@ def install():
         return render_template('install.html', data=data)
 
 
-@app.route('/robots.txt', methods=method_all)
-def panel_robots():
-    # 爬虫规则响应接口
-    get=get_input()
-    if len(get.__dict__.keys()) > 1:return abort(404)
-    robots = '''User-agent: *
-Disallow: /
-'''
-    return robots, {'Content-Type': 'text/plain'}
+# @app.route('/robots.txt', methods=method_all)
+# def panel_robots():
+#     # 爬虫规则响应接口
+#     get=get_input()
+#     if len(get.__dict__.keys()) > 1:return abort(404)
+#     robots = '''User-agent: *
+# Disallow: /
+# '''
+#     return robots, {'Content-Type': 'text/plain'}
 
 @app.route('/rspamd', defaults={'path': ''},methods=method_all)
 @app.route('/rspamd/<path:path>',methods=method_all)
@@ -1686,7 +1643,6 @@ def get_dir_down(filename, token, find):
         pdata = files.files().get_videos(args)
         return public.GetJson(pdata), json_header
     else:
-
         pdata = files.files().GetDir(args)
         pdata['token'] = token
         pdata['ps'] = find['ps']
@@ -2397,8 +2353,19 @@ def pma_proxy(path_full = None):
     if not pmd:
         pmd = get_phpmyadmin_dir()
         if not pmd: return '未安装phpMyAdmin,请到【软件商店】页面安装!'
+        pmd = list(pmd)
         cache.set(cache_key,pmd,10)
-    proxy_url = 'http://127.0.0.1:{}/{}/'.format(pmd[1],pmd[0]) + request.full_path.replace('/phpmyadmin/','')
+    panel_pool = 'http://'
+    if request.url_root[:5] == 'https':
+        panel_pool = 'https://'
+        import ajax
+        ssl_info = ajax.ajax().get_phpmyadmin_ssl(None)
+        if ssl_info['status']:
+            pmd[1] = ssl_info['port']
+        else:
+            panel_pool = 'http://'
+
+    proxy_url = '{}127.0.0.1:{}/{}/'.format(panel_pool,pmd[1],pmd[0]) + request.full_path.replace('/phpmyadmin/','')
     from panelHttpProxy import HttpProxy
     px = HttpProxy()
     return px.proxy(proxy_url)

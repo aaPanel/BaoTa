@@ -7,6 +7,8 @@
 # +-------------------------------------------------------------------
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
+from base64 import b64encode
+from email.mime import base
 import sys
 import os
 import public
@@ -327,6 +329,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
 
     # 设置文件和目录权限
     def set_mode(self, path):
+        if path[-1] == '/': path = path[:-1]
         s_path = os.path.dirname(path)
         p_stat = os.stat(s_path)
         os.chown(path, p_stat.st_uid, p_stat.st_gid)
@@ -778,6 +781,9 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         if sys.version_info[0] == 2:
             get.path = get.path.encode('utf-8').strip()
         try:
+            fname = os.path.basename(get.path).strip()
+            fpath = os.path.dirname(get.path).strip()
+            get.path = os.path.join(fpath,fname)
             if get.path[-1] == '.':
                 return public.returnMsg(False, '文件结尾不建议使用 "."，因为可能存在安全隐患')
             if not self.CheckFileName(get.path):
@@ -1204,6 +1210,14 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             get.path = get.path.encode('utf-8')
 
         get.path = self.xssdecode(get.path)
+
+        if get.path.find('/rewrite/null/') != -1:
+            webserver = public.get_webserver()
+            get.path = get.path.replace("/rewrite/null/", "/rewrite/{}/".format(webserver))
+        if get.path.find('/vhost/null/') != -1:
+            webserver = public.get_webserver()
+            get.path = get.path.replace("/vhost/null/", "/vhost/{}/".format(webserver))
+
         if not os.path.exists(get.path):
             if get.path.find('rewrite') == -1:
                 return public.returnMsg(False, 'FILE_NOT_EXISTS', (get.path,))
@@ -1211,6 +1225,8 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
 
         if self.__get_ext(get.path) in ['gz', 'zip', 'rar', 'exe', 'db', 'pdf', 'doc', 'xls', 'docx', 'xlsx', 'ppt', 'pptx', '7z', 'bz2', 'png', 'gif', 'jpg', 'jpeg', 'bmp', 'icon', 'ico', 'pyc', 'class', 'so', 'pyd']:
             return public.returnMsg(False, '该文件格式不支持在线编辑!')
+
+
         if os.path.getsize(get.path) > 3145928:
             return public.returnMsg(False, u'不能在线编辑大于3MB的文件!')
         if os.path.isdir(get.path):
@@ -1263,6 +1279,14 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             return public.returnMsg(False, 'path参数不能为空!')
         if sys.version_info[0] == 2:
             get.path = get.path.encode('utf-8')
+        
+        if get.path.find('/rewrite/null/') != -1:
+            webserver = public.get_webserver()
+            get.path = get.path.replace("/rewrite/null/", "/rewrite/{}/".format(webserver))
+        if get.path.find('/vhost/null/') != -1:
+            webserver = public.get_webserver()
+            get.path = get.path.replace("/vhost/null/", "/vhost/{}/".format(webserver))
+
         if not os.path.exists(get.path):
             if get.path.find('.htaccess') == -1:
                 return public.returnMsg(False, 'FILE_NOT_EXISTS')
@@ -1355,7 +1379,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             his_list = sorted(os.listdir(save_path), reverse=True)
             num = public.readFile('data/history_num.pl')
             if not num:
-                num = 10
+                num = 100
             else:
                 num = int(num)
             d_num = len(his_list)
@@ -2516,6 +2540,67 @@ cd %s
         import panelSearch
         adad=panelSearch.panelSearch()
         return adad.get_replace_logs(args)
+
+    def get_path_images(self,path):
+        '''
+            @name 获取目录的图片列表
+            @param path 目录路径
+            @return 图片列表
+        '''
+        image_list = []
+        for fname in os.listdir(path):
+            if fname.split('.')[-1] in ['png','jpeg','gif','jpg','bmp','ico']:
+                image_list.append(fname)
+        return ','.join(image_list)
+
+    def get_images_resize(self,args):
+        '''
+            @name 获取指定图片的缩略图
+            @author hwliang<2022-03-02>
+            @param args<dict_obj>{
+                "path": "", 图片路径
+                "files": xx.png,aaa.jpg, 文件名称(不包含目录路径),如果files=*，则返回该目录下的所有图片
+                "width": 50, 宽
+                "heigth:50, 高
+                "return_type": "base64" // base64,file
+            }
+            @return base64编码的图片 or file
+        '''
+        from PIL import Image
+        from base64 import b64encode
+        from io import BytesIO
+        if args.files == '*':
+            args.files = self.get_path_images(args.path)
+        
+        file_list = args.files.split(',')
+
+        width = int(args.width)
+        height = int(args.height)
+
+        data = {}
+        for fname in file_list:
+            try:
+                filename = os.path.join(args.path,fname)
+                if not os.path.exists(filename): continue
+                im  = Image.open(filename)
+                im.thumbnail((width,height))
+                out = BytesIO()
+                im.save(out, im.format)
+                out.seek(0)
+                image_type = im.format.lower()
+                mimetype = 'image/{}'.format(image_type)
+                if args.return_type == 'base64':
+                    b64_data = "data:{};base64,".format(mimetype) + b64encode(out.read()).decode('utf-8')
+                    data[fname] = b64_data
+                    out.close()
+                else:
+                    from flask import send_file
+                    return send_file(out, mimetype=mimetype, cache_timeout=0)
+            except:
+                data[fname] = ''
+        return public.return_data(True,data)
+
+
 
 
 

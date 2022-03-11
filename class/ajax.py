@@ -6,7 +6,7 @@
 # +-------------------------------------------------------------------
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
-from BTPanel import session,request
+from BTPanel import session,request,cache
 import public,os,json,time,apache,psutil
 class ajax:
 
@@ -1324,4 +1324,87 @@ class ajax:
         s_body = public.ExecShell("tail -n {} {}".format(args.num,args.filename))[0]
         return public.returnMsg(True,s_body)
         
+    def log_analysis(self,get):
+        import log_analysis
+        log_analysis=log_analysis.log_analysis()
+        return log_analysis.log_analysis(get)
+
+
+    def speed_log(self,get):
+        import log_analysis
+        log_analysis=log_analysis.log_analysis()
+        return log_analysis.speed_log(get)
+
+
+
+    def get_result(self,get):
+        import log_analysis
+        log_analysis=log_analysis.log_analysis()
+        return log_analysis.get_result(get)
+
+    def get_detailed(self,get):
+        import log_analysis
+        log_analysis=log_analysis.log_analysis()
+        return log_analysis.get_detailed(get)
+
+    def download_pay_type(self,path):
+        public.downloadFile(public.get_url() + '/install/lib/pay_type.json',path)
+        return True
+
+    def get_pay_type(self,get):
+        """
+            @name 获取推荐列表
+        """
+        spath = '{}/data/pay_type.json'.format(public.get_panel_path())
+        down = cache.get('pay_type')
+        if not down:
+            public.run_thread(self.download_pay_type,(spath,))
+            cache.set('pay_type',1,86400)
+        try:
+            data = json.loads(public.readFile("data/pay_type.json"))
+        except :
+            data = {}
+
+        import panelPlugin
+        plu_panel =  panelPlugin.panelPlugin()
+        plugin_list = plu_panel.get_cloud_list()
+        if not 'pro' in plugin_list: plugin_list['pro'] = -1
         
+        for item in data:
+            if 'list' in item:
+                item['list'] = self.__get_home_list(item['list'],item['type'],plugin_list,plu_panel)    
+                if item['type'] == 1:
+                    if len(item['list']) > 4: item['list'] = item['list'][:4]    
+            if item['type'] == 0 and plugin_list['pro'] >= 0:
+                item['show'] = False                    
+        return data
+
+
+    def __get_home_list(self,sList,stype,plugin_list,plu_panel):  
+        """
+            @name 获取首页软件列表推荐
+        """
+        nList = []
+        webserver = public.get_webserver()       
+        for x in sList:
+            for plugin_info in plugin_list['list']:
+                if x['name'] == plugin_info['name']:
+                    if not 'endtime' in plugin_info or plugin_info['endtime'] >= 0:
+                        x['isBuy'] = True
+            is_check = False
+            if 'dependent' in x :
+                if  x['dependent'] == webserver: is_check = True                           
+            else:
+                is_check = True
+            if is_check:                
+                info = plu_panel.get_soft_find(x['name'])
+                if info:
+                    if stype == 1:   
+                        if plugin_list['pro'] >=0: continue                            
+                        if not info['setup']:                        
+                            x['install'] = info['setup']
+                            nList.append(x) 
+                    else:                       
+                        x['install'] = info['setup']
+                        nList.append(x) 
+        return nList

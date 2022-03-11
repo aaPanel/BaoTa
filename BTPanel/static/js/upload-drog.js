@@ -9,6 +9,7 @@
  * @LastEditTime: 2021-11-04 17:12:51
  */
 function UploadFile () {
+  this.uploadPath = ''; // 上传文件位置
   this.init = false; // 是否初始化
   this.compatible = true; // 是否兼容当前系统，默认全部兼容
   this.uploadElement = null; // 更新视图
@@ -163,6 +164,8 @@ UploadFile.prototype = {
         _this.file_drag_hover(ev);
         return false;
       }
+      var path = $('#fileInputPath').attr('data-path');
+      _this.init_upload_path(path);
       _this.upload_layer();
       _this.isUpload = true;
       _this.file_select_handler(ev);
@@ -194,7 +197,7 @@ UploadFile.prototype = {
     if (this.layer) return false;
     var layerMax = null,
       layerShade = null,
-      uploadPath = bt.get_cookie('Path');
+      uploadPath = this.uploadPath || bt.get_cookie('Path');
     this.layer = layer.open({
       type: 1,
       closeBtn: 1,

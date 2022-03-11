@@ -2016,25 +2016,38 @@ def auto_backup_panel():
         paths = panel_paeh + '/data/not_auto_backup.pl'
         if os.path.exists(paths): return False
         b_path = '{}/panel'.format(get_backup_path())
-        backup_path = b_path + '/' + format_date('%Y-%m-%d')
-        if os.path.exists(backup_path): return True
-        if os.path.getsize(panel_paeh + '/data/default.db') > 104857600 * 2: return False
-        if os.path.getsize(panel_paeh + '/data/system.db') > 104857600 * 2: return False
+        day_date = format_date('%Y-%m-%d')
+        backup_path = b_path + '/' + day_date
+        backup_file = backup_path + '.zip'
+        if os.path.exists(backup_path) or os.path.exists(backup_file): return True
+        ignore_default = ''
+        ignore_system = ''
+        max_size = 100 * 1024 * 1024
+        if os.path.getsize('{}/data/default.db'.format(panel_paeh)) > max_size:
+            ignore_default = 'default.db'
+        if os.path.getsize('{}/data/system.db'.format(panel_paeh)) > max_size:
+            ignore_system = 'system.db'
         os.makedirs(backup_path,384)
         import shutil
-        shutil.copytree(panel_paeh + '/data',backup_path + '/data')
+        shutil.copytree(panel_paeh + '/data',backup_path + '/data',ignore = shutil.ignore_patterns(ignore_system,ignore_default))
         shutil.copytree(panel_paeh + '/config',backup_path + '/config')
         shutil.copytree(panel_paeh + '/vhost',backup_path + '/vhost')
-        ExecShell("chmod -R 600 {path};chown -R root.root {path}".format(path=b_path))
+        ExecShell("cd {} && zip {} -r {}/".format(b_path,backup_file,day_date))
+        ExecShell("chmod -R 600 {path};chown -R root.root {path}".format(path=backup_file))
+        if os.path.exists(backup_path): shutil.rmtree(backup_path)
+
         time_now = time.time() - (86400 * 15)
         for f in os.listdir(b_path):
             if time.mktime(time.strptime(f, "%Y-%m-%d")) < time_now: 
                 path = b_path + '/' + f
-                if os.path.exists(path): shutil.rmtree(path)
-        
+                b_file = path + '.zip'
+                if os.path.exists(path): 
+                    shutil.rmtree(path)
+                if os.path.exists(b_file):
+                    os.remove(b_file)
         set_php_cli_env()
-    except:
-        pass
+    except:pass
+
             
 
 def set_php_cli_env():
@@ -2365,20 +2378,22 @@ def sync_php_address(php_version):
 
 
 def url_encode(data):
-    if type(data) == str: return data
-    import urllib
+    if type(data) != str: return data
     if sys.version_info[0] != 2:
-        pdata = urllib.parse.urlencode(data).encode('utf-8')
+        import urllib.parse
+        pdata = urllib.parse.quote(data)
     else:
+        import urllib
         pdata = urllib.urlencode(data)
     return pdata
 
 def url_decode(data):
-    if type(data) == str: return data
-    import urllib
+    if type(data) != str: return data
     if sys.version_info[0] != 2:
-        pdata = urllib.parse.urldecode(data).encode('utf-8')
+        import urllib.parse
+        pdata = urllib.parse.unquote(data)
     else:
+        import urllib
         pdata = urllib.urldecode(data)
     return pdata
 
@@ -4047,7 +4062,8 @@ def error_not_login(e = None):
     return render_template('autherr.html')
 
 def error_403(e):
-    from BTPanel import Response
+    from BTPanel import Response,session
+    if not session.get('login',None): return error_not_login()
     errorStr = '''<html>
 <head><title>403 Forbidden</title></head>
 <body>
@@ -4061,7 +4077,8 @@ def error_403(e):
     return Response(errorStr, status=403, headers=headers)
 
 def error_404(e):
-    from BTPanel import Response
+    from BTPanel import Response,session
+    if not session.get('login',None): return error_not_login()
     errorStr = '''<html>
 <head><title>404 Not Found</title></head>
 <body>
@@ -4156,9 +4173,10 @@ def install_mysql_client():
         @author hwliang<2022-01-14>
         @return void
     '''
-
     if os.path.exists('/usr/bin/yum'):
         os.system("yum install mariadb -y")
+        if not os.path.exists('/usr/bin/mysql'):
+            os.system("yum reinstall mariadb -y")
     elif os.path.exists('/usr/bin/apt-get'):
         os.system('apt-get install mariadb-client -y')
 

@@ -24,12 +24,12 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 class http:
     _ip_type = None
-    def __init__(self) -> None:
+    def __init__(self):
         self._ip_type = config.config().get_request_iptype()
 
     def get(self,url,timeout = 60,headers = {},verify = False,type = 'python'):
         url = self.quote(url)
-        if type == 'python':
+        if type in ['python','src','php']:
             old_family = urllib3_conn.allowed_gai_family
             try:
                 # 默认使用IPv4
@@ -38,12 +38,12 @@ class http:
                 elif self._ip_type == 'ipv6':
                     urllib3_conn.allowed_gai_family = lambda: socket.AF_INET6
                 
-                return requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
+                result = requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
             except:
                 try:
                     # IPV6？
                     urllib3_conn.allowed_gai_family = lambda: socket.AF_INET6
-                    return requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
+                    result = requests.get(url,timeout=timeout,headers=get_headers(headers),verify=verify)
                 except:
                     # 使用CURL
                     result = self._get_curl(url,timeout,headers,verify)
@@ -62,7 +62,7 @@ class http:
 
     def post(self,url,data,timeout = 60,headers = {},verify = False,type = 'python'):
         url = self.quote(url)
-        if type == 'python':
+        if type in ['python','src','php']:
             old_family = urllib3_conn.allowed_gai_family
             try:
                 if self._ip_type == 'ipv4':
@@ -70,12 +70,12 @@ class http:
                 elif self._ip_type == 'ipv6':
                     urllib3_conn.allowed_gai_family = lambda: socket.AF_INET6
 
-                return requests.post(url,data,timeout=timeout,headers=headers,verify=verify)
+                result = requests.post(url,data,timeout=timeout,headers=headers,verify=verify)
             except:
                 try:
                     # IPV6？
                     urllib3_conn.allowed_gai_family = lambda: socket.AF_INET6
-                    return requests.post(url,data,timeout=timeout,headers=headers,verify=verify)
+                    result = requests.post(url,data,timeout=timeout,headers=headers,verify=verify)
                 except:
                     # 使用CURL
                     result = self._post_curl(url,data,timeout,headers,verify)

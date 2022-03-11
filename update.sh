@@ -28,4 +28,3 @@ rm -f $panel_path/*.pyc $panel_path/class/*.pyc
 /etc/init.d/bt restart
 echo "===================================="
 echo "已完成升级!"
-

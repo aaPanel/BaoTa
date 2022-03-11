@@ -1,27 +1,28 @@
 {% extends "layout.html" %}
 
 {% block content %}
+<a id="phpMyAdminUrl" class="hide" data-url="{{session.phpmyadminDir}}"></a>
 <div class="main-content pb55">
-    <div class="container-fluid">
-        <div class="pos-box bgw mtb15 ">
-          <div class="tab-list">
-            <div class="tabs-item active">{{data['lan']['H2']}}</div>
-          </div>
-        </div>
-        <div class="safe bgw mtb15 pd15 tab-view-box">
-            <div class="info-title-tips">
-                <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span> 请在添加数据库后，务必到<a class="btlink" href="/crontab">[计划任务]</a>页面添加定时备份任务，以确保您的数据安全。<span>温馨提示：通过第三方或者MySQL命令行创建的数据库需要点击"从服务器获取"才能在计划任务中备份</span></p>
-            </div>
-            <div id="bt_database_table"></div>
-        </div>
-        <form id="toPHPMyAdmin" public-data="/phpmyadmin/index.php" action="/phpmyadmin/index.php" method="post" style="display: none;" target="_blank">
-            <input type="text" name="pma_username" id="pma_username" value="" />
-            <input type="password" name="pma_password" id="pma_password" value="" />
-            <input type="text" name="server" value="1" />
-            <input type="text" name="target" value="index.php" />
-            <input type="text" name="db" id="db" value="" />
-        </form>
+  <div class="container-fluid">
+    <div class="pos-box bgw mtb15 ">
+      <div class="tab-list">
+        <div class="tabs-item active">{{data['lan']['H2']}}</div>
+      </div>
     </div>
+    <div class="safe bgw mtb15 pd15 tab-view-box">
+      <div class="info-title-tips">
+          <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span> 请在添加数据库后，务必到<a class="btlink" href="/crontab">[计划任务]</a>页面添加定时备份任务，以确保您的数据安全。<span>温馨提示：通过第三方或者MySQL命令行创建的数据库需要点击"从服务器获取"才能在计划任务中备份</span></p>
+      </div>
+      <div id="bt_database_table"></div>
+    </div>
+    <form id="toPHPMyAdmin" public-data="/phpmyadmin/index.php?lang=zh_cn" action="/phpmyadmin/index.php?lang=zh_cn" method="post" style="display: none;" target="_blank">
+      <input type="text" name="pma_username" id="pma_username" value="" />
+      <input type="password" name="pma_password" id="pma_password" value="" />
+      <input type="text" name="server" value="1" />
+      <input type="text" name="target" value="index.php" />
+      <input type="text" name="db" id="db" value="" />
+    </form>
+  </div>
 </div>
 {% endblock %}
 {% block scripts %}
@@ -29,7 +30,7 @@
 <script type="text/javascript" src="{{g.cdn_url}}/js/bt_upload.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/js/database.js?date={{g['version']}}&repair={{data['js_random']}}"></script>
 <script type="text/javascript">
-    bt.set_cookie('backup_path', "{{session['config']['backup_path']}}");
+  bt.set_cookie('backup_path', "{{session['config']['backup_path']}}");
 	{% if not data['isSetup'] %}
 		// layer.msg('{{data["lan"]["JS1"]}}<a href="/soft#i" style="color:#20a53a;float: right;">{{data["lan"]["JS2"]}}</a>',{icon:7,shade: [0.3, '#000'],time:0});
         // $(".layui-layer-shade").css("margin-left", "180px");

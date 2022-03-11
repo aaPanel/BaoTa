@@ -666,7 +666,7 @@ class panelSSL:
                 else:
                     spath = get.path + '/.well-known/pki-validation'
                 if not os.path.exists(spath): public.ExecShell("mkdir -p '" + spath + "'")
-                public.writeFile(spath + '/fileauth.txt',sslInfo['data']['authValue'])
+                public.writeFile(spath + '/' + sslInfo['data']['authKey'],sslInfo['data']['authValue'])
             except:
                 return public.returnMsg(False,'SSL_CHECK_WRITE_ERR')
         try:
@@ -1026,7 +1026,8 @@ class panelSSL:
             if not result['status']: return result
 
             if result['data']: 
-                result['data']['serverid'] = data['serverid']
+                if result['data']['serverid'] != data['serverid']: # 保存新的serverid
+                    public.writeFile('data/sid.pl',result['data']['serverid'])
                 public.writeFile(self.__UPATH,json.dumps(result['data']))
                 if os.path.exists('data/bind_path.pl'): os.remove('data/bind_path.pl')
                 public.flush_plugin_list()
@@ -1034,8 +1035,7 @@ class panelSSL:
             session['focre_cloud'] = True
             return result
         except Exception as ex:
-            print(rtmp)
-            return public.returnMsg(False,'连接服务器失败!<br>' + rtmp)
+            return public.returnMsg(False,'连接服务器失败!<br>{}'.format(rtmp))
 
     def GetBindCode(self,get):
         """
@@ -1106,3 +1106,15 @@ class panelSSL:
         except :
             return public.returnMsg(False,public.get_error_info())
 
+
+    def apply_cert_install_pay(self,args):
+        '''
+            @name 单独购买人工安装服务
+            @param args<dict_obj>{
+                'oid'<int> 订单ID
+            }
+        '''
+        pdata = json.loads(args.pdata)           
+        self.__PDATA['data'] = pdata
+        result = self.request('apply_cert_install_pay')
+        return result

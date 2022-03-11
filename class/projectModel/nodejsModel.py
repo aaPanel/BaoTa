@@ -1299,7 +1299,7 @@ echo $! > {pid_file}
             p = '\n'.join(p)
             if p.find('[Errno 0]') != -1:
                 if os.path.exists('{}/bt_security'.format(public.get_plugin_path())):
-                    return public.return_error('启动命令被【堡塔防提权】拦截，请关闭{}用户的防护'.format(project_find['project_config']['run_user']))
+                    return public.return_error('启动命令被【堡塔防入侵】拦截，请关闭{}用户的防护'.format(project_find['project_config']['run_user']))
                 return public.return_error('启动命令被未知安全软件拦截，请检查安装软件日志')
             return public.return_error('启动失败<pre>{}</pre>'.format(p))
 

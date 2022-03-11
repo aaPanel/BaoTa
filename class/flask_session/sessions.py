@@ -291,7 +291,7 @@ class MemcachedSessionInterface(SessionInterface):
         if request.path in ['/','/tips','/robots.txt']: return
         if request.path in ['/public']:
             get = get_input()
-            if 'get_ping' in get: return
+            if not 'get_ping' in get: return
         if response.status_code in [401]: return
         
         if request.full_path.find('/login?tmp_token=') != 0: 

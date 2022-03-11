@@ -7,7 +7,7 @@
 # Author: hwliang <hwl@bt.cn>
 #-------------------------------------------------------------------
 import public,os,sys,json,time,psutil,re,shutil,requests
-from BTPanel import plugin, session,cache,send_file
+from BTPanel import session,cache,send_file
 from pluginAuth import Plugin
 if sys.version_info[0] == 3: from importlib import reload
 class mget: pass
@@ -854,7 +854,9 @@ class panelPlugin:
             ols_execstr = ols_execstr.format(get.type,mtype)
         execstr = "cd /www/server/panel/install && /bin/bash install_soft.sh {} {} {} {} {}".format(get.type,mtype,get.sName,get.version,ols_execstr)
         if get.sName == "phpmyadmin":
-            execstr += "&> /tmp/panelExec.log && sleep 1 && /usr/local/lsws/bin/lswsctrl restart"
+            execstr += "&> /tmp/panelExec.log"
+        if public.get_webserver() == 'openlitespeed':
+            execstr += " && sleep 1 && /usr/local/lsws/bin/lswsctrl restart"
         
         # execstr += " && echo '>>命令执行完成!'"
         public.M('tasks').add('id,name,type,status,addtime,execstr',(None, mmsg + '['+get.sName+'-'+get.version+']','execshell','0',time.strftime('%Y-%m-%d %H:%M:%S'),execstr))

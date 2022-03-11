@@ -33,6 +33,7 @@
 			minWidth:'1000px',
 			autoHeight:true,
 			default:"FTP列表为空",
+			pageName: 'ftp',
 			methods:{
 				/**
 					* @description 设置FTP端口
@@ -125,6 +126,7 @@
 				{fid:'path',title:'根目录',type:'link',event:function(row,index,ev){
 					openPath(row.path);
 				}},
+        bt.public.get_quota_config('ftp'),
 				{fid:'ps',title:'备注',type:'input',blur:function(row,index,ev){
 					bt.pub.set_data_ps({id:row.id,table:'ftps',ps:ev.target.value},function(res){
 						bt_tools.msg(res);

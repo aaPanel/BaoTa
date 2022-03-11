@@ -408,6 +408,8 @@ var bt = {
     }, function (rdata) {
       var d = '',
           a = '';
+
+      rdata.PATH = bt.rtrim(rdata.PATH, '/');
       if (rdata.DISK != undefined) {
         for (var f = 0; f < rdata.DISK.length; f++) {
           a += "<dd class=\"bt_open_dir\" path =\"" + rdata.DISK[f].path + "\"><span class='glyphicon glyphicon-hdd'></span>&nbsp;" + rdata.DISK[f].path + "</dd>"
@@ -440,6 +442,7 @@ var bt = {
               e = e.substring(0, 10) + "..."
             }
           }
+          
           d += "<tr><td>" + ((type === 'all' || type === 'file') ? '<input type=\"checkbox\" />' : '') + "<td class=\"bt_open_dir\" title='" + g[0] + "' data-type=\"files\" path =\"" + rdata.PATH + "/" + g[0] + "\"><span class='glyphicon glyphicon-file'></span><span>" + e + "</span></td><td>" + bt.format_data(g[2]) + "</td><td>" + g[3] + "</td><td>" + g[4] + "</td></tr>"
         }
       }
@@ -4153,7 +4156,21 @@ bt.soft = {
     var that = this;
     var user_info = JSON.parse(bt_user_info);
     var username = user_info.data.username;
-    bt.open({
+    var overall_beforeunload = function(){
+      return ''
+    }
+    var overall_keyup = function() {
+      if ((window.event.keyCode == 116) || (window.event.shiftKey && window.event.keyCode == 121)) {
+        layer.msg('提示，正在交易订单，为确保订单支付成功，请关闭支付页面后再刷新页面!', {icon:1})
+        window.event.keyCode = 0;
+        window.event.returnValue = false;
+      }
+      if ((window.event.altKey) && (window.event.keyCode == 115)) { //屏蔽Alt+F4 
+        window.showModelessDialog("about:blank", "", "dialogWidth:1px;dialogheight:1px");
+        return false;
+      }
+    }
+    layer.open({
       type: 1,
       title: false,
       skin: 'libPay-view',
@@ -4190,39 +4207,40 @@ bt.soft = {
                             <span>是否需要客服电话联系，工作时间 9：30-18：00</span>\
                         </div>\
                         <div class="libPay-line-item mtb20" id="libPay-qcode-box">\
-                            <div class="libPay-qcode-left">\
-                                <div class="pay-radio-type" >\
-                                    <div class="pay-type-btn active" data-condition="2" >\
-                                        <label class="pay-type-label"> <span class="pay-radio-ati"></span><span class="pay-radio-tit">微信扫码支付</span></label>\
+                          <div class="libPay-qcode-left">\
+                              <div class="pay-radio-type" >\
+                                  <div class="pay-type-btn active" data-condition="2" >\
+                                      <label class="pay-type-label"> <span class="pay-radio-ati"></span><span class="pay-radio-tit">微信扫码支付</span></label>\
+                                  </div>\
+                                  <div class="pay-type-btn" data-condition="3">\
+                                      <label class="pay-type-label"><span class="pay-radio-ati"></span><span class="pay-radio-tit">支付宝扫码支付</span></label>\
+                                  </div>\
+                              </div>\
+                          </div>\
+                          <div class="libPay-qcode-right">\
+                              <div class="libPay-loading"><p><img src="/static/images/loading-2.gif"></p><p>正在生成订单,请稍候...</p></div>\
+                              <div class= "libPaycode-box">\
+                                  <div class="pay-wx" style="height:155px;width: 155px" id="PayQcode" ></div>\
+                                  <div class="payqcode-box" >\
+                                      <span class="wx-pay-ico mr5 wechat"></span>\
+                                  </div>\
+                                  <div class="libPaycode-foo-txt" >\
+                                    <div class="payment_results_tips">提示：支付后请耐心等待支付结果，请勿刷新浏览器，否则将会导致购买异常。</div>\
+                                    <div class="userinfo">\
+                                        <div class="info_label mb-5">当前账号：</div>\
+                                        <div class="info_value">' + username + '</div>\
+                                        <a class="btlink" onclick="bt.pub.bind_btname()" href="javascript:;">切换账号</a>\
                                     </div>\
-                                    <div class="pay-type-btn" data-condition="3">\
-                                        <label class="pay-type-label"><span class="pay-radio-ati"></span><span class="pay-radio-tit">支付宝扫码支付</span></label>\
-                                    </div>\
-                                </div>\
-                            </div>\
-                            <div class="libPay-qcode-right">\
-                                <div class="libPay-loading"><p><img src="/static/images/loading-2.gif"></p><p>正在生成订单,请稍候...</p></div>\
-                                <div class= "libPaycode-box">\
-                                    <div class="pay-wx" style="height:155px;width: 155px" id="PayQcode" ></div>\
-                                    <div class="payqcode-box" >\
-                                        <span class="wx-pay-ico mr5 wechat"></span>\
-                                    </div>\
-                                    <div class="libPaycode-foo-txt" >\
-                                        <div class="userinfo">\
-                                            <div class="info_label">当前账号：</div>\
-                                            <div class="info_value">' + username + '</div>\
-                                            <a class="btlink" onclick="bt.pub.bind_btname()" href="javascript:;">切换账号</a>\
-                                        </div>\
-                                        <p> 订单总价:</p> <span class="libPayTotal">---</span> /<lable class="libPayCycle">--年</lable>\
-                                        <div class= "libPaycode-pro-cylce">低至--元/天 </div>\
-                                    </div>\
-                                </div >\
-                            </div>\
-                        </div>\
-                        <ul class="libPay-footer-tips">\
-                            <li>所有不在堡塔付款的宝塔产品100%是骗人的，请勿上当。<a class="btlink" href="https://www.bt.cn/bbs/thread-22665-1-1.html" target="_blank">查看详情</a></p>\
-                            <li>如果购买后未立即到账，请耐心等待5分钟后重新登录面板，如遇到支付异常请联系客服QQ：<a class="btlink" href="https://wpa1.qq.com/OUMbED4a?_type=wpa&qidian=true" target="_blank">3007255432</a></p>\
-                        </ul>\
+                                    <p> 订单总价:</p> <span class="libPayTotal">---</span> /<lable class="libPayCycle">--年</lable>\
+                                    <div class= "libPaycode-pro-cylce">低至--元/天 </div>\
+                                  </div>\
+                              </div >\
+                          </div>\
+                      </div>\
+                      <ul class="libPay-footer-tips">\
+                        <li>所有不在堡塔付款的宝塔产品100%是骗人的，请勿上当。<a class="btlink" href="https://www.bt.cn/bbs/thread-22665-1-1.html" target="_blank">查看详情</a></p>\
+                        <li style="color:red;">如果购买后未立即到账，请点击更新软件列表/支付状态按钮，如遇到支付异常请联系客服QQ：<a class="btlink" href="https://wpa1.qq.com/OUMbED4a?_type=wpa&qidian=true" target="_blank">3007255432</a></p>\
+                      </ul>\
                     </div>\
                     <div class="libPay-layer-item">\
                         <p class="voucher-tit">产品类型</p>\
@@ -4309,12 +4327,27 @@ bt.soft = {
             }
           });
         })
+        $(window).on('beforeunload',overall_beforeunload)
+        $(document).on('keydown',overall_keyup)
+        bt.set_cookie('refresh_software_list',1)
+        bt.set_cookie('force', 1)
       },
       end: function () {
-        clearInterval(bt.soft.pub.wxpayTimeId);
-        bt.clear_cookie('pay_source');
+        $(window).unbind('beforeunload',overall_beforeunload)
+        $(document).unbind('keydown',overall_keyup)
+        clearInterval(bt.soft.pub.wxpayTimeId)
+      },
+      cancel:function(indexs){
+        bt.confirm({
+          title:'温馨提示',
+          msg:'支付过程中，请勿关闭该页面，以免出现支付异常！'
+        },function (indexss) {
+          layer.close(indexs)
+          layer.close(indexss)
+        })
+        return false
       }
-    });
+    })
   },
   //获取付款周期
   get_product_change: function (idx, btype) {
@@ -4450,6 +4483,7 @@ bt.soft = {
         _cycle = $(".pay-cycle-btns.active").data('data'),
         _source = 0,
         _locahostURL = window.location.pathname;
+    var pay_source = parseInt(bt.get_cookie('pay_source') || 0)
     switch (_locahostURL) {
       case '/':
         if($('.btpro-gray').length == 1){  //是否免费版
@@ -4468,6 +4502,7 @@ bt.soft = {
         _source = 25
         break;
     };
+    if(_source && !pay_source) bt.set_cookie('pay_source', _source);
 
     $(".wx-pay-ico").hide()
     $(".libPay-loading").show();
@@ -4481,7 +4516,7 @@ bt.soft = {
     that.pro.create_order({
       pid: _product.pid,
       cycle: _cycle.cycle,
-      source: _source
+      source: pay_source || _source
     }, function (rdata) {
       var start = that.pay_loading.get('start')
       var end = that.pay_loading.set('end')
@@ -5520,7 +5555,7 @@ bt.soft = {
                             '<div class="index_date">' + bt.format_data(item.update_time) + '</div>' +
                             '<div class="index_title">' + data.title + item.m_version + '.' + item.version + '- ' + (item.beta ? '测试版' : '正式版') + '</div>' +
                             '<div class="index_conter">' + (item.update_msg.replace(/\n/g, '</br>') || '无') + '</div>' +
-                            '</div>'
+                          '</div>'
                       }
                       return html
                     }()) +
@@ -7784,6 +7819,7 @@ bt.data = {
       ]
     }
   }
+  
 }
 var form_group = {
   select_all: function (_arry) {
@@ -7917,7 +7953,197 @@ var form_group = {
       }
     });
   },
+
 }
+
+var dynamic = {
+  loadList: [],
+  fileFunList: {},
+  load: false,
+  callback: null,
+
+  // 初始化执行
+  execution: function () {
+    for (var i = 0; i < this.loadList.length; i++) {
+      var fileName = this.loadList[i];
+      if (fileName in this.fileFunList) this.fileFunList[fileName]()
+    }
+  },
+
+  /**
+   * @description 动态加载js,css文件
+   * @param url {string|array} 文件路径或文件数组
+   * @param fn {function|undefined} 回调函数
+   */
+  require: function (url, fn, config) {
+    var urlList = url, total = 0, num = 0, that = this;
+    if (!Array.isArray(url)) urlList = [url];
+    total = urlList.length;
+    this.load = true;
+    this.fileFunList = {};
+    function createElement (url) {
+      var element = null;
+      if (url.indexOf('.js') > -1) {
+        element = document.createElement('script')
+        element.type = 'text/javascript'
+        element.src = bt.url_merge('/vue/' + url)
+      } else if (url.indexOf('.css') > -1) {
+        element = document.createElement('link')
+        element.rel = 'stylesheet'
+        element.href = bt.url_merge('/vue/' + url)
+      }
+      return element
+    }
+    for (var i = 0; i < urlList.length; i++) {
+      var item = urlList[i], dirArray = item.split('/'), filName = dirArray[dirArray.length - 1].split('.')[0]
+      if (this.loadList.indexOf(filName) > -1) break;
+      this.loadList.push(filName);
+      (function (url) {
+        var element = createElement(url);
+        if (element.readyState) {
+          element.onreadystatechange = function (ev) {
+            if (element.readyState === 'loaded' || element.readyState === 'complete') {
+              element.onreadystatechange = null
+              num++;
+              if (total === num) {
+                that.execution()
+                if (fn) {
+                  fn.call(that)
+                }
+                that.load = false;
+              }
+            }
+          };
+        } else {
+          element.onload = function (ev) {
+            that.loadList[filName] = that.fn
+            num++;
+            if (total === num) {
+              that.execution()
+              if (fn) {
+                fn.call(that)
+              }
+              that.load = false;
+            }
+          }
+        }
+        document.getElementsByTagName('head')[0].appendChild(element);
+      }(item))
+    }
+  },
+  /**
+   * @description 执行延迟文件内容执行
+   * @param fileName {string} 文件名称，不要加文件后缀
+   * @param callback {function} 回调行数
+   */
+  delay: function delay (fileName, callback) {
+    if (!this.load) {
+      callback()
+      return false
+    }
+    this.fileFunList[fileName] = callback
+  },
+
+}
+
+bt.public = {
+    
+  // 设置目录配额
+  modify_path_quota:function (data,callback) {
+    var loadT = bt.load('正在设置目录配额，请稍候...')
+    $.post('/project/quota/modify_path_quota',data,function (res) {
+      loadT.close()
+      if(callback) callback(res)
+    })
+  },
+
+  // 设置mysql配额
+  modify_mysql_quota:function (data,callback) {
+    var loadT = bt.load('正在设置MySql配额，请稍候...')
+    $.post('/project/quota/modify_mysql_quota',data,function (res) {
+      loadT.close()
+      if(callback) callback(res)
+    })
+  },
+
+  /**
+   * @description 获取quoto容量
+  */
+
+  get_quota_config:function (type) {
+    return {
+      fid: 'quota',
+      title:'容量',
+      width: 80,
+      template:function(row,index){
+        var quota = row.quota;
+        if(!quota.size) return '<a href="javascript:;" class="btlink">未配置</a>'
+        var size = quota.size * 1024 * 1024;
+        var speed = ((quota.used / size) * 100).toFixed(2)
+        var quotaFull = false
+        if(quota.size > 0 && quota.used >= (size)) quotaFull = true;
+        return '<div class=""><div class="progress mb0 cursor" style="height:12px;line-height:12px;vertical-align:middle;border-radius:2px;margin-top:3px;" title="当前已用容量：'+ (quotaFull?'已用完':bt.format_size(quota.used)) +'\n当前容量配额：'+ bt.format_size(size) +'\n点击修改容量配额">'+
+          '<div class="progress-bar progress-bar-'+ (speed >= 90?'danger':'success') +'" style="height:15px;line-height:15px;width: '+ speed +'%;display: inline-block;" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>'+
+        '</div>'
+      },
+      event:function(row, index, ev){
+        var quota = row.quota;
+        var size = quota.size * 1024 * 1024
+        var usedList = bt.format_size(quota.used).split(' ');
+        var quotaFull = false
+        if(quota.size > 0 && quota.used >= (size)) quotaFull = true;
+        layer.open({
+          type:1,
+          title:'【'+ row.name + '】'+ (type == 'site'?'网站':(type == 'ftp'?'FTP':'数据库')) +'配额容量',
+          area:'400px',
+          closeBtn:2,
+          btn:['保存','取消'],
+          content:'<div class="bt-form pd20"><div class="line">'+
+            '<span class="tname" style="width:120px">当前已用容量</span>'+
+            '<div class="info-r" style="maring-right:120px">' +
+              '<input type="text" name="used" disabled placeholder="" class="bt-input-text mr10 " style="width:120px;" value="'+ (!quotaFull?(quota.size != 0?usedList[0]:0):'容量已用完') +'" /><span>'+ (!quotaFull?(quota.size != 0?usedList[1]:'MB'):'') +'</span>'+
+            '</div>'+
+              '<span class="tname" style="width:120px">配额容量</span>'+
+              '<div class="info-r" style="maring-right:120px">'+
+                '<input type="text" name="quota_size" placeholder="" class="bt-input-text mr10 " style="width:120px;" value="'+ quota.size +'" /><span>MB</span>'+
+              '</div>'+
+            '</div>'+
+            '<ul class="help-info-text c7">'+
+              '<li style="color:red;">温馨提示：此功能为企业版专享功能</li>'+
+              '<li class="'+ (type == "database"?'hide':'') +'">需要XFS文件系统，且包含prjquota挂载参数才能使用</li>'+
+              '<li class="'+ (type == "database"?'hide':'') +'">fstab配置示例：/dev/vdc1 /data xfs defaults,prjquota 0 0</li>'+
+              '<li class="'+ (type == "database"?'':'hide') +'">使用面板导入或使用root账号导入，不受配额影响</li>'+
+              '<li>配额容量：如需取消容量配额，请设为“0”</li>'+
+            '</ul>'+
+          '</div>',
+          yes:function (indexs) { 
+            var quota_size = $('[name="quota_size"]').val()
+            if(type === 'site' || type === 'ftp'){
+              bt.public.modify_path_quota({data:JSON.stringify({size:quota_size,path:row.path})},function (res) {
+                if(res.status){
+                  bt.msg(res)
+                  layer.close(indexs)
+                  setTimeout(function () { location.reload() },200)
+                }else{
+                  layer.msg(res.msg,{ icon:res.status?1:2, area:'650px',time:0,shade:.3,closeBtn:2})
+                }
+              })
+            }else{
+              bt.public.modify_mysql_quota({data:JSON.stringify({size:quota_size,db_name:row.name})},function (res) {
+                bt.msg(res)
+                if(res.status){
+                  layer.close(indexs)
+                  setTimeout(function () { location.reload() },200)
+                }
+              })
+            }
+          }
+        })
+      }
+    }
+  }
+}
+
 
 var dynamic = {
   loadList: [],

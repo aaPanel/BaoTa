@@ -34,13 +34,27 @@ class panelApi:
 
     def login_for_app(self,get):
         from BTPanel import cache
+        import uuid
         tid = get.tid
-        if(len(tid) != 12): return public.returnMsg(False,'无效的登录密钥')
+        if(len(tid) != 32): return public.returnMsg(False,'无效的登录密钥1')
         session_id = cache.get(tid)
-        if not session_id: return public.returnMsg(False,'指定密钥不存在，或已过期')
-        if(len(session_id) != 64): return public.returnMsg(False,'无效的登录密钥')
-        cache.set(session_id,'True',120)
-        return public.returnMsg(True,'扫码成功,正在登录!')
+        if not session_id: return public.returnMsg(False,'指定密钥不存在，或已过期1')
+        if(len(session_id) != 64): return public.returnMsg(False,'无效的登录密钥2')
+        try:
+            if not os.path.exists('/www/server/panel/data/app_login_check.pl'):return public.returnMsg(False,'无效的登录密钥3')
+            key, init_time, tid2, status = public.readFile('/www/server/panel/data/app_login_check.pl').split(':')
+            if session_id!=key:return public.returnMsg(False,'无效的登录密钥4')
+            if tid != tid2: return public.returnMsg(False, '指定密钥不存在，或已过期5')
+            if time.time() - float(init_time) > 60:
+                return public.returnMsg(False, '二维码失效时间过期6')
+            cache.set(session_id,public.md5(uuid.UUID(int=uuid.getnode()).hex),120)
+            import uuid
+            data = key + ':' + init_time + ':' + tid2 + ':' + uuid.UUID(int=uuid.getnode()).hex[-12:]
+            public.writeFile("/www/server/panel/data/app_login_check.pl", data)
+            return public.returnMsg(True,'扫码成功,正在登录!')
+        except:
+            os.remove("/www/server/panel/data/app_login_check.pl")
+            return public.returnMsg(False,'无效的登录密钥')
 
     def get_api_config(self):
         tmp = public.ReadFile(self.save_path)

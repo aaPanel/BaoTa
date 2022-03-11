@@ -67,6 +67,8 @@ class database(datatool.datatools):
         '''
         data = public.M('database_servers').select()
         bt_mysql_bin = '{}/mysql/bin/mysql'.format(public.get_setup_path())
+
+        if not isinstance(data,list): data = []
         if os.path.exists(bt_mysql_bin):
             data.insert(0,{'id':0,'db_host':'127.0.0.1','db_port':3306,'db_user':'root','db_password':'','ps':'本地服务器','addtime':0})
         return data
@@ -536,6 +538,8 @@ SetLink
         username = data['username']
         panelMysql.panelMysql().execute("drop user '" + username + "'@'localhost'")
         users = panelMysql.panelMysql().query("select Host from mysql.user where User='" + username + "' AND Host!='localhost'")
+        if isinstance(users,str):
+            return public.returnMsg(False,'删除失败,连接数据库失败!')
         for us in users:
             panelMysql.panelMysql().execute("drop user '" + username + "'@'" + us[0] + "'")
         panelMysql.panelMysql().execute("flush privileges")
@@ -1275,8 +1279,6 @@ SetLink
     
     #修复表信息
     def ReTable(self,get):
-        m_version = public.readFile(public.GetConfigValue('setup_path') + '/mysql/version.pl')
-        if m_version.find('5.1.')!=-1:return public.returnMsg(False,"不支持mysql5.1!")
         info=self.RepairTable(get)
         if info:
             return public.returnMsg(True,"修复完成!")
@@ -1324,7 +1326,7 @@ SetLink
                 x = public.M('databases').where('pid=?',id).field('id,sid,pid,name,ps,addtime').find()
             if not x: continue
             x['backup_count'] = public.M('backup').where("pid=? AND type=?",(x['id'],'1')).count()
-            x['total'] = int(public.get_database_size_by_id(id))
+            x['total'] = int(public.get_database_size_by_id(x['id']))
             result[x['name']] = x
         return result
 

@@ -500,14 +500,19 @@ def checkPHPVersion(version):
 def check502Task():
     try:
         while True:
+            public.auto_backup_panel()
             check502()
             sess_expire()
+            mysql_quota_check()
             time.sleep(600)
     except Exception as ex:
         logging.info(ex)
         time.sleep(600)
         check502Task()
 
+# MySQL配额检查
+def mysql_quota_check():
+    os.system(get_python_bin() +" /www/server/panel/script/mysql_quota.py > /dev/null")
 
 # session过期处理
 def sess_expire():
@@ -869,7 +874,7 @@ def main():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s]: %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S', filename=task_log_file, filemode='a+')
     logging.info('服务已启动')
-
+    time.sleep(5)
     import threading
     t = threading.Thread(target=systemTask)
     t.setDaemon(True)

@@ -270,6 +270,14 @@ install_used()
         username=$($pythonV $panel_path/tools.py panel $password)
         echo "$password" > $panel_path/default.pl
         rm -f $panel_path/aliyun.pl
+
+        if [ ! -f $panel_path/php_mysql_auto.pl ];then
+                return;
+        fi
+
+        bash $panel_path/script/mysql_auto.sh &> /dev/null
+        bash $panel_path/script/php_auto.sh &> /dev/null
+        rm -f $panel_path/php_mysql_auto.pl
 }
 
 error_logs()
@@ -333,6 +341,7 @@ case "$1" in
                 echo -e "\033[33mWarning:\033[0m"
                 echo -e "\033[33mIf you cannot access the panel, \033[0m"
                 echo -e "\033[33mrelease the following port (8888|888|80|443|20|21) in the security group\033[0m"
+                echo -e "\033[33m注意：初始密码仅在首次登录面板前能正确获取，其它时间请通过 bt 5 命令修改密码\033[0m"
                 echo -e "=================================================================="
                 ;;
         *)
