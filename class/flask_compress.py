@@ -118,12 +118,19 @@ class Compress(object):
                         if not default_body: default_body = b""
                         if not admin_body: admin_body = b""
                         resp_body = response.get_data()
-                        if resp_body.find(default_body.strip()) != -1 or resp_body.find(admin_body.strip()) != -1: 
+
+                        if default_body and resp_body.find(default_body.strip()) != -1: 
                             result = b'{"status":false,"msg":"Error: 403 Forbidden"}'
                             response.set_data(result)
                             response.headers['Content-Length'] = len(result)
                             return response
-
+                        
+                        if admin_body and resp_body.find(admin_body.strip()) != -1: 
+                            result = b'{"status":false,"msg":"Error: 403 Forbidden"}'
+                            response.set_data(result)
+                            response.headers['Content-Length'] = len(result)
+                            return response
+                        
         
         if (response.mimetype not in app.config['COMPRESS_MIMETYPES'] or
             'gzip' not in accept_encoding.lower() or
