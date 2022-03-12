@@ -1457,6 +1457,9 @@ fullchain.pem       粘贴到证书输入框
         new_time = time.time() + (86400 * 30)
         n=0
         if not 'orders' in self._config: self._config['orders'] = {}
+        import panelSite
+        siteObj = panelSite.panelSite()
+        args = public.dict_obj()
         for siteName in os.listdir(cert_path):
             try:
                 cert_file = '{}/{}/fullchain.pem'.format(cert_path,siteName)
@@ -1479,7 +1482,14 @@ fullchain.pem       粘贴到证书输入框
                 n+=1
                 write_log("|-正在续签第 {} 张其它证书，域名: {}..".format(n,cert_init['subject']))
                 write_log("|-正在创建订单..")
-                self.renew_cert_to(cert_init['dns'],'http',siteInfo['path'])
+                args.id = siteInfo['id']
+                runPath = siteObj.GetRunPath(args)
+                if runPath and not runPath in ['/']: 
+                    path = siteInfo['path'] + '/' + runPath
+                else:
+                    path = siteInfo['path']
+
+                self.renew_cert_to(cert_init['dns'],'http',path.replace('//','/'))
             except:
                 write_log("|-[{}]续签失败".format(siteName))
                 
@@ -1487,11 +1497,23 @@ fullchain.pem       粘贴到证书输入框
 
     def renew_cert_to(self,domains,auth_type,auth_to,index = None):
         cert = {}
+
+        if os.path.exists(auth_to):
+            if public.M('sites').where('path=?',auth_to).count() == 1:
+                site_id = public.M('sites').where('path=?',auth_to).getField('id')
+                import panelSite
+                siteObj = panelSite.panelSite()
+                args = public.dict_obj()
+                args.id = site_id
+                runPath = siteObj.GetRunPath(args)
+                if runPath and not runPath in ['/']: 
+                    path = auth_to + '/' + runPath
+                    if os.path.exists(path): auth_to = path.replace('//','/')
         try:
             index = self.create_order(
                 domains,
                 auth_type,
-                auth_to,
+                auth_to.replace('//','/'),
                 index
             )
         
@@ -1573,8 +1595,8 @@ fullchain.pem       粘贴到证书输入框
                     
                     # 是否到了最大重试次数
                     if 'retry_count' in self._config['orders'][i]:
-                        if self._config['orders'][i]['retry_count'] >= 3: 
-                            write_log('|-本次跳过域名:{}，因连续3次续签失败，不再续签此证书(可尝试手动续签此证书，成功后错误次数将被重置)'.format(self._config['orders'][i]['domains']))
+                        if self._config['orders'][i]['retry_count'] >= 5: 
+                            write_log('|-本次跳过域名:{}，因连续5次续签失败，不再续签此证书(可尝试手动续签此证书，成功后错误次数将被重置)'.format(self._config['orders'][i]['domains']))
                             continue
 
                     # 加入到续签订单
