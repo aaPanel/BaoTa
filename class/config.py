@@ -534,19 +534,10 @@ class config:
 
     def set_admin_path(self,get):
         get.admin_path = get.admin_path.strip()
-        if get.admin_path == '': get.admin_path = '/'
-        if get.admin_path != '/':
-            if len(get.admin_path) < 6: return public.returnMsg(False,'安全入口地址长度不能小于6位!')
-            if get.admin_path in admin_path_checks: return public.returnMsg(False,'该入口已被面板占用,请使用其它入口!')
-            if not public.path_safe_check(get.admin_path) or get.admin_path[-1] == '.':  return public.returnMsg(False,'入口地址格式不正确,示例: /my_panel')
-            if get.admin_path[0] != '/': return public.returnMsg(False,'入口地址格式不正确,示例: /my_panel')
-        else:
-            get.domain = public.readFile('data/domain.conf')
-            if not get.domain: get.domain = ''
-            get.limitip = public.readFile('data/limitip.conf')
-            if not get.limitip: get.limitip = ''
-            if not get.domain.strip() and not get.limitip.strip() and not os.path.exists('config/basic_auth.json'): return public.returnMsg(False,'警告，关闭安全入口等于直接暴露你的后台地址在外网，十分危险，至少开启以下一种安全方式才能关闭：<a style="color:red;"><br>1、绑定访问域名<br>2、绑定授权IP <br> 3.开启BasicAuth认证</a>')
-
+        if len(get.admin_path) < 6: return public.returnMsg(False,'安全入口地址长度不能小于6位!')
+        if get.admin_path in admin_path_checks: return public.returnMsg(False,'该入口已被面板占用,请使用其它入口!')
+        if not public.path_safe_check(get.admin_path) or get.admin_path[-1] == '.':  return public.returnMsg(False,'入口地址格式不正确,示例: /my_panel')
+        if get.admin_path[0] != '/': return public.returnMsg(False,'入口地址格式不正确,示例: /my_panel')
         admin_path_file = 'data/admin_path.pl'
         admin_path = '/'
         if os.path.exists(admin_path_file): admin_path = public.readFile(admin_path_file).strip()
