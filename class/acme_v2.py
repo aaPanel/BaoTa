@@ -18,7 +18,6 @@ import binascii
 import hashlib
 import base64
 import json
-import copy
 import time
 import os
 import sys
