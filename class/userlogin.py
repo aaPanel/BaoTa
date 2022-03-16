@@ -105,31 +105,31 @@ class userlogin:
             if not hasattr(get,'tmp_token'): return public.returnJson(False,'错误的参数!'),json_header
             if len(get.tmp_token) == 48:
                 return self.request_temp(get)
-            if len(get.tmp_token) != 64: return public.returnJson(False,'错误的参数!'),json_header
-            if not re.match(r"^\w+$",get.tmp_token):return public.returnJson(False,'错误的参数!'),json_header
+            # if len(get.tmp_token) != 64: return public.returnJson(False,'错误的参数!'),json_header
+            # if not re.match(r"^\w+$",get.tmp_token):return public.returnJson(False,'错误的参数!'),json_header
 
-            save_path = '/www/server/panel/config/api.json'
-            data = json.loads(public.ReadFile(save_path))
-            if not 'tmp_token' in data or not 'tmp_time' in data: return public.returnJson(False,'验证失败!'),json_header
-            if (time.time() - data['tmp_time']) > 120: return public.returnJson(False,'过期的Token'),json_header
-            if get.tmp_token != data['tmp_token']: return public.returnJson(False,'错误的Token'),json_header
-            userInfo = public.M('users').where("id=?",(1,)).field('id,username').find()
-            session['login'] = True
-            session['username'] = userInfo['username']
-            session['tmp_login'] = True
-            session['uid'] = userInfo['id']
-            public.WriteLog('TYPE_LOGIN','LOGIN_SUCCESS',(userInfo['username'],public.GetClientIp()+ ":" + str(request.environ.get('REMOTE_PORT'))))
-            self.limit_address('-')
-            cache.delete('panelNum')
-            cache.delete('dologin')
-            session['session_timeout'] = time.time() + public.get_session_timeout()
-            del(data['tmp_token'])
-            del(data['tmp_time'])
-            public.writeFile(save_path,json.dumps(data))
-            self.set_request_token()
-            self.login_token()
-            self.set_cdn_host(get)
-            return redirect('/')
+            # save_path = '/www/server/panel/config/api.json'
+            # data = json.loads(public.ReadFile(save_path))
+            # if not 'tmp_token' in data or not 'tmp_time' in data: return public.returnJson(False,'验证失败!'),json_header
+            # if (time.time() - data['tmp_time']) > 120: return public.returnJson(False,'过期的Token'),json_header
+            # if get.tmp_token != data['tmp_token']: return public.returnJson(False,'错误的Token'),json_header
+            # userInfo = public.M('users').where("id=?",(1,)).field('id,username').find()
+            # session['login'] = True
+            # session['username'] = userInfo['username']
+            # session['tmp_login'] = True
+            # session['uid'] = userInfo['id']
+            # public.WriteLog('TYPE_LOGIN','LOGIN_SUCCESS',(userInfo['username'],public.GetClientIp()+ ":" + str(request.environ.get('REMOTE_PORT'))))
+            # self.limit_address('-')
+            # cache.delete('panelNum')
+            # cache.delete('dologin')
+            # session['session_timeout'] = time.time() + public.get_session_timeout()
+            # del(data['tmp_token'])
+            # del(data['tmp_time'])
+            # public.writeFile(save_path,json.dumps(data))
+            # self.set_request_token()
+            # self.login_token()
+            # self.set_cdn_host(get)
+            # return redirect('/')
         except:
             return public.returnJson(False,'登录失败,' + public.get_error_info()),json_header
 

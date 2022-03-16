@@ -232,6 +232,11 @@ class panelAdmin(panelSetup):
             if not public.get_error_num(num_key,20):
                 return public.returnJson(False,'连续20次验证失败,禁止1小时')
             a_file = '/dev/shm/' + get.client_bind_token
+            
+            if not public.path_safe_check(get.client_bind_token):
+                public.set_error_num(num_key)
+                return public.returnJson(False, '非法请求')
+
             if not os.path.exists(a_file):
                 import panelApi
                 if not panelApi.panelApi().get_app_find(get.client_bind_token):

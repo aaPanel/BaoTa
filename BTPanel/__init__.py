@@ -213,7 +213,9 @@ def request_end(reques=None):
 # Flask 404页面勾子
 @app.errorhandler(404)
 def error_404(e):
-    if not session.get('login',None): return public.error_not_login()
+    if not session.get('login',None): 
+        g.auth_error = True
+        return public.error_not_login()
     errorStr = '''<html>
 <head><title>404 Not Found</title></head>
 <body>
@@ -230,7 +232,9 @@ def error_404(e):
 # Flask 403页面勾子
 @app.errorhandler(403)
 def error_403(e):
-    if not session.get('login',None): return public.error_not_login()
+    if not session.get('login',None): 
+        g.auth_error = True
+        return public.error_not_login()
     errorStr = '''<html>
 <head><title>403 Forbidden</title></head>
 <body>
@@ -247,7 +251,9 @@ def error_403(e):
 # Flask 500页面勾子
 @app.errorhandler(500)
 def error_500(e):
-    if not session.get('login',None): return public.error_not_login()
+    if not session.get('login',None): 
+        g.auth_error = True
+        return public.error_not_login()
     ss = '''404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
 
 During handling of the above exception, another exception occurred:'''
@@ -1085,6 +1091,9 @@ def login():
         is_auth_path = True
     # 登录输入验证
     if request.method == method_post[0]:
+        if is_auth_path:
+            g.auth_error = True
+            return public.error_not_login(None)
         v_list = ['username', 'password', 'code', 'vcode', 'cdn_url']
         for v in v_list:
             pv = request.form.get(v, '').strip()
@@ -1360,7 +1369,9 @@ def panel_public():
             return public.getJson(result),json_header
         except:
             return abort(404)
-    
+    global admin_check_auth, admin_path, route_path, admin_path_file
+    if admin_path != '/bt' and os.path.exists(admin_path_file) and not 'admin_auth' in session:
+        return abort(404)
     v_list = ['fun', 'name','filename', 'data','secret_key']
     for n in get.__dict__.keys():
         if not n in v_list:
@@ -1375,7 +1386,6 @@ def panel_public():
     if not public.path_safe_check("%s/%s" % (get.name, get.fun)): return abort(404)
     if get.fun in ['login_qrcode', 'is_scan_ok','set_login']:
         # 检查是否验证过安全入口
-        global admin_check_auth, admin_path, route_path, admin_path_file
         if admin_path != '/bt' and os.path.exists(admin_path_file) and not 'admin_auth' in session:
             return abort(404)
         #验证是否绑定了设备
