@@ -390,7 +390,7 @@ class data:
 
         if type(search) == bytes: search = search.encode('utf-8').strip()
         try:
-            search = re.search(r"[\w\x80-\xff\.]+",search).group()
+            search = re.search(r"[\w\x80-\xff\.\_\-]+",search).group()
         except:
             return ''
         wheres = {
