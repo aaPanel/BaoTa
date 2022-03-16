@@ -67,7 +67,7 @@ panel_start()
                 rm -f $pidfile
                 panel_port_check
                 echo -e "Starting Bt-Panel...\c"
-                nohup $panel_path/BT-Panel >> $log_file 2>&1 &
+                nohup $panel_path/BT-Panel >> /dev/null 2>&1 &
                 isStart=""
                 n=0
                 while [[ "$isStart" == "" ]];

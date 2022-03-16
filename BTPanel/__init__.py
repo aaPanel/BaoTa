@@ -27,7 +27,7 @@ from cachelib import SimpleCache
 from werkzeug.wrappers import Response
 from flask_session import Session
 from flask_compress import Compress
-from flask_sockets import Sockets
+
 
 cache = SimpleCache()
 import public
@@ -35,7 +35,11 @@ import public
 # 初始化Flask应用
 app = Flask(__name__, template_folder="templates/{}".format(public.GetConfigValue('template')))
 Compress(app)
-sockets = Sockets(app)
+try:
+    from flask_sock import Sock
+except:
+    from flask_sockets import Sockets as Sock
+sockets = Sock(app)
 # 注册HOOK
 hooks = {}
 if not hooks:
@@ -479,71 +483,6 @@ def message(action=None):
     'get_messages', 'get_message_find', 'create_message', 'status_message', 'remove_message', 'get_messages_all')
     return publicObject(message_object, defs, action, None)
 
-@app.route('/colony/<module>/<action>',methods=method_all)
-def colony_route(module = 'index',action = None):
-    comReturn = comm.local()
-    if comReturn: return comReturn
-    if module in ['os','sys','public']:
-        return public.returnJson(False,'指定模块不存在!'),json_header 
-    act_temp = action.split('.')
-    action = act_temp[0]
-    if len(act_temp) == 1: act_temp.append('json')
-    act_type = act_temp[1].lower()
-    if not act_type in ['json','html','text','txt']:
-        return public.returnJson(False,'不支持的响应格式声明'),json_header
-
-    #URI输入检测
-    if module[:2] == '__' or module[-2:] == '__' or not re.match(r"^\w+$",action):
-        return public.returnJson(False,'错误的模块名称!'),json_header
-    
-    if action[:2] == '__' or action[-2:] == '__' or not re.match(r"^\w+$",action):
-        return public.returnJson(False,'错误的方法名称!'),json_header
-
-    import colony
-
-    #实例化指定模块，并检测模块或方法是否存在
-    if not module in colony.__dict__.keys():
-        return public.returnJson(False,'指定模块不存在!'),json_header
-    obj = eval('colony.{module}.{module}()'.format(module=module))
-    act = getattr(obj,action,None)
-    if act is None:
-        return public.returnJson(False,'指定方法不存在!'),json_header
-    #执行指定方法
-    try:
-        result = act(get_input())
-    except:
-        return public.get_error_info(),text_header
-
-    #响应执行结果
-    result_type = type(result)
-    if result_type in [Response,Resp]:
-        return result
-    try:
-        if act_type == 'json':
-            return public.GetJson(result),json_header
-        elif act_type == 'html':
-            template_name = '{}_{}.html'.format(module,action)
-            template_file = 'BTPanel/templates/colony/{}'.format(template_name)
-            if not os.path.exists(template_file):
-                return public.returnJson(False,'没有找到指定模板文件!'),json_header
-            try:
-                return render_template(template_name,data=result)
-            except:
-                return public.get_error_info(),text_header
-        elif act_type in ['text','txt']:
-            try:
-                if result_type == bytes:
-                    result = result.decode('utf-8')
-                elif result_type in [int,float,list,dict,tuple]:
-                    result = str(result)
-                return result,text_header
-            except:
-                return str(result),text_header
-        else:
-            return public.GetJson(result),json_header
-
-    except:
-        return public.returnJson(False,'错误的响应格式!'),json_header
 
 
 
@@ -1801,7 +1740,7 @@ def get_pd():
             tmp = public.readFile(tmp_f)
             if tmp: tmp = int(tmp)
     if not ltd: ltd = -1
-    if tmp is None: tmp = -1
+    if tmp == None: tmp = -1
     if ltd < 1:
         if ltd == -2:
             tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 108, 116, 100,
@@ -2052,7 +1991,7 @@ def ws_panel(ws):
 
     while True:
         pdata = ws.receive()
-        if pdata is '{}': break
+        if pdata == '{}': break
         data = json.loads(pdata)
         get = public.to_dict_obj(data)
         get._ws = ws
@@ -2220,7 +2159,7 @@ def sock_recv(cmdstring,ws):
         p = subprocess.Popen(cmdstring + " 2>&1",close_fds=True,shell=True,bufsize=4096,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         sock_pids[p.pid] = ws
         kill_closed()
-        while p.poll() is None:
+        while p.poll() == None:
             send_line = p.stdout.readline().decode()
             if not send_line or send_line.find('tail: ') != -1: continue
             ws.send(send_line)

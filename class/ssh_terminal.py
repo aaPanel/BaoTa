@@ -495,7 +495,7 @@ class ssh_terminal:
         '''
         n = 0
         try:
-            while not self._ws.closed:
+            while True:
                 resp_line = self._ssh.recv(1024)
                 if not resp_line:
                     if not self._tp.is_active():
@@ -509,8 +509,8 @@ class ssh_terminal:
                     if n > 5: break
                     continue
                 n = 0
-                if self._ws.closed:
-                    return
+                # if self._ws.closed:
+                #     return
                 try:
                     result = resp_line.decode('utf-8','ignore')
                 except:
@@ -526,11 +526,11 @@ class ssh_terminal:
             e = str(e)
             if e.find('closed') != -1:
                 self.debug('会话已中断')
-            elif not self._ws.closed:
-                self.debug('读取tty缓冲区数据发生错误,{}'.format(e))
+            # elif not self._ws.closed:
+            #     self.debug('读取tty缓冲区数据发生错误,{}'.format(e))
             
-        if self._ws.closed:
-            self.debug('客户端已主动断开连接')
+        # if self._ws.closed:
+        #     self.debug('客户端已主动断开连接')
         self.close()
     
     def send(self):
@@ -540,7 +540,7 @@ class ssh_terminal:
             @return void
         '''
         try:
-            while not self._ws.closed:
+            while True:
                 if self._s_code:
                     time.sleep(0.1)
                     continue
@@ -567,8 +567,8 @@ class ssh_terminal:
             else:
                 self.debug('写入数据到缓冲区发生错误: {}'.format(ex))
 
-        if self._ws.closed:
-            self.debug('客户端已主动断开连接')
+        # if self._ws.closed:
+        #     self.debug('客户端已主动断开连接')
         self.close()
 
 
@@ -661,7 +661,9 @@ class ssh_terminal:
                 self._ssh.close()
             if self._tp:  # 关闭宿主服务
                 self._tp.close()
-            if not self._ws.closed:
+            # if not self._ws.closed:
+            #     self._ws.close()
+            if self._ws:
                 self._ws.close()
         except:
             pass
@@ -701,10 +703,12 @@ class ssh_terminal:
                 self._tp.send_ignore()
             else:
                 break
-            if not self._ws.closed:
+            # if not self._ws.closed:
+            try:
                 self._ws.send("")
-            else:
-                break
+            except: break
+            # else:
+            #     break
                 
     def debug(self,msg):
         '''
@@ -715,6 +719,8 @@ class ssh_terminal:
         msg = "{} - {}:{} => {} \n".format(public.format_date(),self._host,self._port,msg)
         self.history_send(msg)
         public.writeFile(self._debug_file,msg,'a+')
+        if msg.find('会话已中断') != -1:
+            self.close()
 
     def run(self,web_socket, ssh_info=None):
         '''
