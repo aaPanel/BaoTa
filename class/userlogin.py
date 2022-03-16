@@ -144,6 +144,10 @@ class userlogin:
             if not public.get_error_num(skey,10): return '连续10次验证失败，禁止1小时'
             
             s_time = int(time.time())
+            if public.M('temp_login').where('state=? and expire>?',(0,s_time)).field('id,token,salt,expire').count()==0:
+                public.set_error_num(skey)
+                return '验证失败2!'
+
             data = public.M('temp_login').where('state=? and expire>?',(0,s_time)).field('id,token,salt,expire').find()
             if not data:
                 public.set_error_num(skey)
