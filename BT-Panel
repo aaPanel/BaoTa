@@ -17,7 +17,6 @@ os.chdir(_PATH)
 upgrade_file = 'script/upgrade_flask.sh'
 if os.path.exists(upgrade_file):
     os.system("bash {}".format(upgrade_file))
-    # os.remove(upgrade_file)
     
 if os.path.exists('class/flask'):
     os.system('rm -rf class/flask')
@@ -163,12 +162,14 @@ if __name__ == '__main__':
         pass
 
     if is_debug:
-        dev = threading.Thread(target=debug_event)
-        dev.setDaemon(True)
-        dev.start()
+        try:
+            dev = threading.Thread(target=debug_event)
+            dev.setDaemon(True)
+            dev.start()
+        except:
+            pass
 
     http_server.serve_forever()
-    # app.run(port=PORT,debug=False,threaded=True)
     
             
 
