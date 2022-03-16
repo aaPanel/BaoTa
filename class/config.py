@@ -2192,3 +2192,86 @@ class config:
         public.writeFile(http_type_file,get.http_type)
         public.WriteLog('面板设置','将云端请求方式设置为:{}'.format(get.http_type))
         return public.returnMsg(True,'设置成功!')
+
+    
+    def get_node_config(self,get):
+        '''
+            @name 获取节点配置
+            @author hwliang<2022-03-16>
+            @return list
+        '''
+        node_list = [{"node_name":"自动选择","node_id":0,"node_ip":"","status":1}]
+        node_file = '{}/config/api_node.json'.format(public.get_panel_path())
+        if not os.path.exists(node_file): return node_list
+        node_list = json.loads(public.readFile(node_file))
+        for node in node_list:
+            node['speed'] = self.test_node(node['node_ip'])
+            del(node['node_ip'])
+        return node_list
+
+
+    def test_node(self,node_ip):
+        '''
+            @name 测试节点
+            @author hwliang<2022-03-16>
+            @param node_ip<str> 节点IP
+            @return int 节点延迟
+        '''
+        if not node_ip: node_ip = "api.bt.cn"
+        s_time = time.time()
+        import requests
+        headers = {"Host":"api.bt.cn","User-Agent":"BT-Panel"}
+        try:
+            res = requests.get('https://{}'.format(node_ip),headers=headers,timeout=1,verify=False).text
+        except:
+            return 0
+        e_time = time.time()
+        if res != 'ok': return 0
+        return int((e_time - s_time) * 1000)
+
+    def set_node_config(self,get):
+        '''
+            @name 设置节点配置
+            @author hwliang<2022-03-16>
+            @param node_id<str> 节点ID
+            @return dict
+        '''
+        node_file = '{}/config/api_node.json'.format(public.get_panel_path())
+        if not 'node_id' in get:
+            return public.returnMsg(False,'参数错误!')
+        node_id = int(get.node_id)
+        if not os.path.exists(node_file):
+            return public.returnMsg(False,'节点配置文件不存在!')
+        node_list = json.loads(public.readFile(node_file))
+        node_name = '自动选择'
+        for node in node_list:
+            if node['node_id'] == node_id:
+                node['status'] = 1
+                node_name = node['node_name']
+                continue
+            node['status'] = 0
+        public.writeFile(node_file,json.dumps(node_list))
+        self.sync_node_config()
+        public.WriteLog('面板设置','将节点配置设置为:{}'.format(node_name))
+        return public.returnMsg(True,'设置成功!')
+
+
+    def sync_node_config(self):
+        '''
+            @name 同步节点配置
+            @author hwliang<2022-03-16>
+            @return void
+        '''
+
+        node_file = '{}/config/api_node.json'.format(public.get_panel_path())
+        if not os.path.exists(node_file): return
+        node_list = json.loads(public.readFile(node_file))
+        node_info = {}
+        for node in node_list:
+            if node['status'] == 1:
+                node_info = node
+                break
+        if not node_info: return
+        if not node_info['node_ip']: return
+        public.ExecShell("sed -i '/api.bt.cn/d' /etc/hosts")
+        public.ExecShell("echo '{} api.bt.cn' >> /etc/hosts".format(node_info['node_ip']))

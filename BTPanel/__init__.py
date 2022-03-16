@@ -813,7 +813,7 @@ def config(pdata=None):
     'get_ols_private_cache_status', 'get_ols_value', 'set_ols_value', 'get_ols_private_cache', 'get_ols_static_cache',
     'set_ols_static_cache', 'switch_ols_private_cache', 'set_ols_private_cache',
     'set_coll_open', 'get_qrcode_data', 'check_two_step', 'set_two_step_auth', 'create_user', 'remove_user',
-    'modify_user','set_click_logs',
+    'modify_user','set_click_logs','get_node_config','set_node_config',
     'get_key', 'get_php_session_path', 'set_php_session_path', 'get_cert_source', 'get_users',
     'set_local', 'set_debug', 'get_panel_error_logs', 'clean_panel_error_logs', 'get_menu_list', 'set_hide_menu_list',
     'get_basic_auth_stat', 'set_basic_auth', 'get_cli_php_version', 'get_tmp_token', 'get_temp_login', 'set_temp_login',
