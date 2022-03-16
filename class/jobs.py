@@ -216,7 +216,11 @@ def control_init():
     run_script()
     set_php_cli_env()
     check_enable_php()
+    sync_node_list()
 
+def sync_node_list():
+    import config
+    config.config().sync_cloud_node_list()
 
 def set_php_cli_env():
     '''
@@ -287,7 +291,6 @@ def check_enable_php():
     public.writeFile(ngx_php_conf,'')
     for php_v in php_versions:
         ngx_php_conf = public.get_setup_path() + '/nginx/conf/enable-php-{}.conf'.format(php_v)
-        print(ngx_php_conf)
         if os.path.exists(ngx_php_conf): continue
         enable_conf = '''
     location ~ [^/]\.php(/|$)

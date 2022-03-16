@@ -2255,6 +2255,36 @@ class config:
         public.WriteLog('面板设置','将节点配置设置为:{}'.format(node_name))
         return public.returnMsg(True,'设置成功!')
 
+    def sync_cloud_node_list(self):
+        '''
+            @name  同步云端的节点列表
+            @author hwliang<2022-03-16>
+            @return void
+        '''
+        node_file = '{}/config/api_node.json'.format(public.get_panel_path())
+        if not os.path.exists(node_file):
+            public.writeFile(node_file,'[]')
+        
+        node_list = json.loads(public.readFile(node_file))
+        try:
+            url = "{}/lib/other/api_node.json".format(public.get_url())
+            res = public.httpGet(url)
+            if not res: return
+            cloud_list = json.loads(res)
+        except:
+            return
+        for cloud_node in cloud_list:
+            is_insert = True
+            for node in node_list:
+                if node['node_id'] == cloud_node['node_id']:
+                    node['node_name'] = cloud_node['node_name']
+                    node['node_ip'] = cloud_node['node_ip']
+                    is_insert = False
+                    break
+            if is_insert: node_list.append(cloud_node)
+        public.writeFile(node_file,json.dumps(node_list))
+        self.sync_node_config()
+
 
     def sync_node_config(self):
         '''
@@ -2272,6 +2302,6 @@ class config:
                 node_info = node
                 break
         if not node_info: return
-        if not node_info['node_ip']: return
         public.ExecShell("sed -i '/api.bt.cn/d' /etc/hosts")
+        if not node_info['node_ip']: return
         public.ExecShell("echo '{} api.bt.cn' >> /etc/hosts".format(node_info['node_ip']))
