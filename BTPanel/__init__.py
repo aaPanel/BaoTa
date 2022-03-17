@@ -2272,7 +2272,7 @@ def webssh(ws):
     p = ssh_terminal.ssh_terminal()
     p.run(ws, ssh_info)
     del (p)
-    if not ws.closed:
+    if ws.connected:
         ws.close()
     return 'False'
 
