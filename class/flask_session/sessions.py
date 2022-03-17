@@ -288,7 +288,7 @@ class MemcachedSessionInterface(SessionInterface):
             session_id = session.sid
         from BTPanel import request,g,get_input
         if 'auth_error' in g: return
-        if request.path in ['/','/tips','/robots.txt']: return
+        if request.path in ['/', '/tips', '/robots.txt', '/favicon.ico', '/hook', '/close', '/down/']: return
         if request.path in ['/public']:
             get = get_input()
             if not 'get_ping' in get: return
