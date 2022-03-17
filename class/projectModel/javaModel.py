@@ -1840,9 +1840,10 @@ class main(projectBase):
             # 写入启动脚本
             public.writeFile(script_file,start_cmd)
             if os.path.exists(pid_file): os.remove(pid_file)
-            public.ExecShell("chown -R springboot:springboot {}".format(self._springboot))
+
+            public.ExecShell("chown -R {}:{} {}".format(project_find['project_config']['run_user'],project_find['project_config']['run_user'],self._springboot))
             public.set_mode(script_file,755)
-            public.ExecShell("chown  springboot:springboot {}".format(project_find['path']))
+            public.ExecShell("chown  {}:{} {}".format(project_find['project_config']['run_user'],project_find['project_config']['run_user'],project_find['path']))
             #判断是否在/www/  /www/wwwroot 
 
             # 执行脚本文件
@@ -1886,6 +1887,21 @@ class main(projectBase):
             
         return public.returnMsg(True, ' '.join(return_cmd))
 
+    def send_cmd(self,get):
+        port = get.port if 'port' in get else self.generate_random_port()
+        project_jdk = get.project_jdk
+        if not os.path.exists(project_jdk): return public.returnMsg(False, '项目JDK不存在')
+        project_jar = get.project_jar.strip()
+        if not os.path.exists(project_jar): return public.returnMsg(False, '项目jar不存在')
+        if 'debug' in get:
+            debug_port = self.generate_random_port()
+            return public.returnMsg(True,
+                                    '{} -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address={} -jar -Xmx1024M -Xms256M  {} --server.port={}'.format(
+                                        project_jdk, debug_port, project_jar, port))
+        return public.returnMsg(True, '{} -jar -Xmx1024M -Xms256M  {} --server.port={}'.format(project_jdk, project_jar,
+                                                                                               port))
+
+
     def return_cmd(self,get):
         '''
         @name  获取启动的命令
@@ -1894,15 +1910,76 @@ class main(projectBase):
         @param  port 项目端口号
         @param  project_jdk 项目JDK
         '''
-        port = get.port if 'port' in get else self.generate_random_port()
-        project_jdk = get.project_jdk
-        if not os.path.exists(project_jdk):return public.returnMsg(False,'项目JDK不存在')
-        project_jar = get.project_jar.strip()
-        if not os.path.exists(project_jar):return public.returnMsg(False,'项目jar不存在')
-        if 'debug' in get:
-            debug_port=self.generate_random_port()
-            return public.returnMsg(True,'{} -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address={} -jar -Xmx1024M -Xms256M  {} --server.port={}'.format(project_jdk,debug_port,project_jar,port))
-        return public.returnMsg(True,'{} -jar -Xmx1024M -Xms256M  {} --server.port={}'.format(project_jdk,project_jar,port))
+        if not 'project_cmd' in get:
+            return self.send_cmd(get)
+        else:
+            if not get.project_cmd:
+                return self.send_cmd(get)
+            #修改port
+            project_find = self.get_project_find(get.project_name)
+            if not project_find:
+                return self.send_cmd(get)
+            project_cmd =get.project_cmd.strip()
+            cmd_type=int(get.type)
+
+            if cmd_type==1:
+                project_cmd=project_find['project_config']['project_cmd'].replace(str(project_find['project_config']['port']),
+                                                                      str(get.port))
+                project_find['project_config']['project_cmd']=project_cmd
+                project_find['project_config']['port']=get.port
+                project_find['project_config']['project_jdk']=get.project_jdk.strip()
+                pdata = {
+                    'name': get.project_name.strip(),
+                    'project_config':json.dumps(project_find['project_config'])
+                }
+                public.M('sites').where('name=?', (get.project_name,)).update(pdata)
+                return public.returnMsg(True,project_cmd)
+            if cmd_type==2:
+                if 'project_jdk' in project_find['project_config']:
+                    project_cmd = project_find['project_config']['project_cmd'].replace(
+                        str(project_find['project_config']['project_jdk']), str(get.project_jdk.strip()))
+                    project_cmd = project_cmd.replace(
+                        str(project_find['project_config']['port']), str(get.port))
+                else:
+                    project_cmd='{} -jar -Xmx1024M -Xms256M  {} --server.port={}'.format(get.project_jdk.strip(), get.project_jar.strip(),get.port)
+
+                project_find['project_config']['project_cmd']=project_cmd
+                project_find['project_config']['port'] = get.port
+                project_find['project_config']['project_jdk'] = get.project_jdk.strip()
+                pdata = {
+                    'name': get.project_name.strip(),
+                    'project_config':json.dumps(project_find['project_config'])
+                }
+
+
+                public.M('sites').where('name=?', (get.project_name,)).update(pdata)
+                return public.returnMsg(True, project_cmd)
+            if cmd_type == 3:
+                if 'debug' in get:
+                    if get.debug:
+                        debug_port = self.generate_random_port()
+                        cmd='{} -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address={} -jar -Xmx1024M -Xms256M  {} --server.port={}'.format(get.project_jdk, debug_port, project_find['project_config']['project_jar'], project_find['project_config']['port'])
+
+                        project_find['project_config']['project_cmd'] = cmd
+                        project_find['project_config']['port'] = get.port
+                        project_find['project_config']['project_jdk'] = get.project_jdk.strip()
+                        pdata = {
+                            'name': get.project_name.strip(),
+                            'project_config': json.dumps(project_find['project_config'])
+                        }
+                        public.M('sites').where('name=?', (get.project_name,)).update(pdata)
+                        return public.returnMsg(True,cmd)
+                cmd='{} -jar -Xmx1024M -Xms256M  {} --server.port={}'.format(get.project_jdk,project_find['project_config']['project_jar'],project_find['project_config']['port'])
+                project_find['project_config']['project_cmd'] = cmd
+                project_find['project_config']['port'] = get.port
+                project_find['project_config']['project_jdk'] = get.project_jdk.strip()
+                pdata = {
+                    'name': get.project_name.strip(),
+                    'project_config': json.dumps(project_find['project_config'])
+                }
+                public.M('sites').where('name=?', (get.project_name,)).update(pdata)
+                return public.returnMsg(True, cmd)
+
 
     def unbind_extranet(self,get):
         '''
@@ -2255,6 +2332,11 @@ class main(projectBase):
         if not 'project_cmd' in get: return public.returnMsg(False, "请输入你的项目启动命令")
         if not 'project_ps' in get: return public.returnMsg(False, "请输入你的项目启动命令")
         if not 'is_separation' in get:get.is_separation=0
+        project_path = os.path.dirname(get.project_jar)
+        if not public.check_site_path(project_path):
+            a,c = public.get_sys_path()
+            return public.returnMsg(False,'请不要项目文件放到以下关键目录中: <br>{}'.format("<br>".join(a+c)))
+
         if get.is_separation:
             if public.get_webserver() == 'apache':
                 return public.returnMsg(False, "前后端分离不支持Apache")
@@ -2264,6 +2346,7 @@ class main(projectBase):
             get.static_path = '/www/wwwroot/'+get.project_name.split('/')[0]
         if not 'api_url' in get:
              get.api_url = '/'
+
         else:
             if get.api_url[-1] == '/':
                 get.api_url = get.api_url[:-1]
@@ -2309,7 +2392,6 @@ class main(projectBase):
         project_jar = get.project_jar.strip()
         if not os.path.exists(project_jar): return public.returnMsg(False,'请输入正确的jar包路径')
         #获取jar的根目录
-        project_path = os.path.dirname(project_jar)
         if not get.is_separation:
             get.host_url=False
         pdata = {
@@ -2321,6 +2403,7 @@ class main(projectBase):
             'project_type': 'Java',
             'project_config': json.dumps(
                 {
+                    'project_jdk':get.project_jdk.strip(),
                     'ssl_path': '/www/wwwroot/java_node_ssl',
                     'project_name': get.project_name.strip(),
                     'project_jar': get.project_jar.strip(),
@@ -2352,6 +2435,15 @@ class main(projectBase):
             get.domains = format_domains
             self.project_add_domain(get)
         self.set_config(get.project_name)
+        # 设置java启动目录为某个用户权限
+        public.ExecShell("chown {}:{} {}".format(get.run_user.strip(),get.run_user.strip(),project_path))
+        if get.is_separation:
+            if not os.path.exists(get.static_path):
+                public.ExecShell("mkdir -p {}".format(get.static_path))
+                public.ExecShell("chown {}:{} {}".format(get.run_user.strip(),get.run_user.strip(),get.static_path))
+            else:
+                public.ExecShell("chown -R {}:{} {}".format(get.run_user.strip(), get.run_user.strip(), get.static_path))
+
         public.WriteLog(self._log_name,'添加Java Springboot项目{}'.format(get.project_name))
         self.start_project(get)
         return public.returnMsg(True,'添加项目成功',project_id)
