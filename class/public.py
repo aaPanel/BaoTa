@@ -534,7 +534,7 @@ def ExecShell(cmdstring, timeout=None, shell=True,cwd=None,env=None,user = None)
         if timeout:
             s = 0
             d = 0.01
-            while sub.poll() is None:
+            while sub.poll() == None:
                 time.sleep(d)
                 s += d
                 if s >= timeout:
@@ -723,7 +723,7 @@ def GetNumLines(path,num,p=1):
     pyVersion = sys.version_info[0]
     max_len = 1024*128
     try:
-        import cgi
+        from cgi import html
         if not os.path.exists(path): return ""
         start_line = (p - 1) * num
         count = start_line + num
@@ -748,7 +748,7 @@ def GetNumLines(path,num,p=1):
                         if sp_len > 0:
                             line = line[sp_len:]
                         try:
-                            data.insert(0,cgi.escape(line))
+                            data.insert(0,html.escape(line))
                         except: pass
                     buf = buf[:newline_pos]
                     n += 1
@@ -1462,7 +1462,7 @@ def to_ord(string):
 
 #xss 防御
 def xssencode(text):
-    import cgi
+    from cgi import html
     list=['`','~','&','#','/','*','$','@','<','>','\"','\'',';','%',',','.','\\u']
     ret=[]
     for i in text:
@@ -1470,12 +1470,12 @@ def xssencode(text):
             i=''
         ret.append(i)
     str_convert = ''.join(ret)
-    text2=cgi.escape(str_convert, quote=True)
+    text2=html.escape(str_convert, quote=True)
     return text2
 #xss 防御
 def xssencode2(text):
-    import cgi
-    text2=cgi.escape(text, quote=True)
+    from cgi import html
+    text2=html.escape(text, quote=True)
     return text2
 # 取缓存
 def cache_get(key):
@@ -3113,10 +3113,10 @@ class dict_obj:
                 if not re.match(regex,result):
                     raise ValueError('参数：{}，要求正确的URL格式'.format(key))
             elif format in ['ip','ipaddr','i','ipv4','ipv6']:
-                if format is 'ipv4':
+                if format == 'ipv4':
                     if not is_ipv4(result):
                         raise ValueError('参数：{}，要求正确的ipv4地址'.format(key))
-                elif format is 'ipv6':
+                elif format == 'ipv6':
                     if not is_ipv6(result):
                         raise ValueError('参数：{}，要求正确的ipv6地址'.format(key))
                 else:
@@ -3141,10 +3141,10 @@ class dict_obj:
                 length = int(format[1:].strip())
                 result_len = len(result)
                 error_obj = ValueError("参数：{}，要求长度为{}".format(key,format))
-                if operator is '=':
+                if operator == '=':
                     if result_len != length:
                         raise error_obj
-                elif operator is '>':
+                elif operator == '>':
                     if result_len < length:
                         raise error_obj
                 else:
@@ -3751,9 +3751,9 @@ def return_data(status,data = {},status_code=None,error_msg = None):
         @return dict
 
     '''
-    if status_code is None:
+    if status_code == None:
         status_code = 1 if status else 0
-    if error_msg is None:
+    if error_msg == None:
         error_msg = '' if status else '未知错误'
     
     result = {
@@ -3933,7 +3933,7 @@ def get_session_timeout():
     from BTPanel import cache
     skey = 'session_timeout'
     session_timeout = cache.get(skey)
-    if not session_timeout is None: return session_timeout
+    if not session_timeout == None: return session_timeout
 
     sess_out_path = '{}/data/session_timeout.pl'.format(get_panel_path())
     session_timeout = 86400
@@ -3956,7 +3956,7 @@ def get_login_token_auth():
     from BTPanel import cache
     skey = 'login_token'
     login_token = cache.get(skey)
-    if not login_token is None: return login_token
+    if not login_token == None: return login_token
 
     login_token_file = '{}/data/login_token.pl'.format(get_panel_path())
     login_token = '1234567890'
@@ -4179,7 +4179,8 @@ def install_mysql_client():
             os.system("yum reinstall mariadb -y")
     elif os.path.exists('/usr/bin/apt-get'):
         os.system('apt-get install mariadb-client -y')
-
+        if not os.path.exists('/usr/bin/mysql'):
+            os.system('apt-get reinstall mariadb-client* -y')
 
 def get_mysqldump_bin():
     '''

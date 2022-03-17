@@ -616,9 +616,12 @@ class main(projectBase):
         @param domain<string>
         @return string
         '''
-        Hosts = self.__ENGINE.getchildren()
+        try:
+            Hosts = self.__ENGINE.getchildren()
+        except:
+            Hosts = list(self.__ENGINE)
         for host in Hosts:
-            if host.tag != 'Host': continue;
+            if host.tag != 'Host': continue
             if host.attrib['name'] == domain:
                 return host
         return None
@@ -1177,12 +1180,18 @@ class main(projectBase):
             return False
     # 获取指定虚拟主机
     def Set_Domain_path(self, domain,docBase):
-        Hosts = self.__ENGINE.getchildren()
+        try:
+            Hosts = self.__ENGINE.getchildren()
+        except:
+            Hosts = list(self.__ENGINE)
         flag=False
         for host in Hosts:
-            if host.tag != 'Host': continue;
+            if host.tag != 'Host': continue
             if host.attrib['name'] == domain:
-                ch = host.getchildren()
+                try:
+                    ch = host.getchildren()
+                except:
+                    ch = list(host)
                 for i in ch:
                     print(i.attrib)
                     if 'docBase' in i.attrib:

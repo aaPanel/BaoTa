@@ -10,8 +10,14 @@
 from gevent import monkey
 monkey.patch_all()
 import os,sys,ssl
+
 _PATH = '/www/server/panel'
 os.chdir(_PATH)
+
+upgrade_file = 'script/upgrade_flask.sh'
+if os.path.exists(upgrade_file):
+    os.system("bash {}".format(upgrade_file))
+    
 if os.path.exists('class/flask'):
     os.system('rm -rf class/flask')
 if not 'class/' in sys.path:
@@ -68,9 +74,12 @@ if is_debug:
             self.panel_reload(event.pathname,'[删除]')
         
         def process_IN_MODIFY(self,event):
-
             if not self.is_ext(event.pathname): return
             self.panel_reload(event.pathname,'[修改]')
+        
+        def process_IN_MOVED_TO(self,event):
+            if not self.is_ext(event.pathname): return
+            self.panel_reload(event.pathname,'[覆盖]')
 
     def debug_event():
         logger.debug('以debug模式启动面板')
@@ -78,7 +87,7 @@ if is_debug:
 
         event = PanelEventHandler()
         watchManager = pyinotify.WatchManager()
-        mode = pyinotify.IN_CREATE | pyinotify.IN_DELETE | pyinotify.IN_MODIFY
+        mode = pyinotify.IN_CREATE | pyinotify.IN_DELETE | pyinotify.IN_MODIFY | pyinotify.IN_MOVED_TO
         watchManager.add_watch(_PATH, mode, auto_add=True, rec=True)
         notifier = pyinotify.Notifier(watchManager, event)
         notifier.loop()
@@ -145,12 +154,19 @@ if __name__ == '__main__':
             ssl_context.set_default_verify_paths()
 
     from  gevent.pywsgi import WSGIServer
-    from geventwebsocket.handler import WebSocketHandler
-
-    if is_ssl:
-        http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler,ssl_context = ssl_context)
-    else:
-        http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler)
+    try:
+        import flask_sock
+        if is_ssl:
+            http_server = WSGIServer((HOST, PORT), app,ssl_context = ssl_context)
+        else:
+            http_server = WSGIServer((HOST, PORT), app)
+    except:
+        from geventwebsocket.handler import WebSocketHandler
+        if is_ssl:
+            http_server = WSGIServer((HOST, PORT), app,ssl_context = ssl_context,handler_class=WebSocketHandler)
+        else:
+            http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler)
+            
 
     if is_debug:
         try:
@@ -161,5 +177,6 @@ if __name__ == '__main__':
             pass
 
     http_server.serve_forever()
+    
             
 

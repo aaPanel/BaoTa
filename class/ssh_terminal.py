@@ -495,7 +495,7 @@ class ssh_terminal:
         '''
         n = 0
         try:
-            while not self._ws.closed:
+            while self._ws.connected:
                 resp_line = self._ssh.recv(1024)
                 if not resp_line:
                     if not self._tp.is_active():
@@ -509,7 +509,7 @@ class ssh_terminal:
                     if n > 5: break
                     continue
                 n = 0
-                if self._ws.closed:
+                if not self._ws.connected:
                     return
                 try:
                     result = resp_line.decode('utf-8','ignore')
@@ -526,10 +526,10 @@ class ssh_terminal:
             e = str(e)
             if e.find('closed') != -1:
                 self.debug('会话已中断')
-            elif not self._ws.closed:
+            elif self._ws.connected:
                 self.debug('读取tty缓冲区数据发生错误,{}'.format(e))
             
-        if self._ws.closed:
+        if not self._ws.connected:
             self.debug('客户端已主动断开连接')
         self.close()
     
@@ -540,7 +540,7 @@ class ssh_terminal:
             @return void
         '''
         try:
-            while not self._ws.closed:
+            while self._ws.connected:
                 if self._s_code:
                     time.sleep(0.1)
                     continue
@@ -567,7 +567,7 @@ class ssh_terminal:
             else:
                 self.debug('写入数据到缓冲区发生错误: {}'.format(ex))
 
-        if self._ws.closed:
+        if not self._ws.connected:
             self.debug('客户端已主动断开连接')
         self.close()
 
@@ -661,7 +661,7 @@ class ssh_terminal:
                 self._ssh.close()
             if self._tp:  # 关闭宿主服务
                 self._tp.close()
-            if not self._ws.closed:
+            if self._ws.connected:
                 self._ws.close()
         except:
             pass
@@ -701,7 +701,7 @@ class ssh_terminal:
                 self._tp.send_ignore()
             else:
                 break
-            if not self._ws.closed:
+            if self._ws.connected:
                 self._ws.send("")
             else:
                 break
