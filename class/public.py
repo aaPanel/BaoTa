@@ -4179,7 +4179,8 @@ def install_mysql_client():
             os.system("yum reinstall mariadb -y")
     elif os.path.exists('/usr/bin/apt-get'):
         os.system('apt-get install mariadb-client -y')
-
+        if not os.path.exists('/usr/bin/mysql'):
+            os.system('apt-get reinstall mariadb-client* -y')
 
 def get_mysqldump_bin():
     '''
