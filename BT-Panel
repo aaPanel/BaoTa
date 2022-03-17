@@ -154,12 +154,19 @@ if __name__ == '__main__':
             ssl_context.set_default_verify_paths()
 
     from  gevent.pywsgi import WSGIServer
-
-    if is_ssl:
-        http_server = WSGIServer((HOST, PORT), app,ssl_context = ssl_context)
-    else:
-        http_server = WSGIServer((HOST, PORT), app)
-        pass
+    try:
+        import flask_sock
+        if is_ssl:
+            http_server = WSGIServer((HOST, PORT), app,ssl_context = ssl_context)
+        else:
+            http_server = WSGIServer((HOST, PORT), app)
+    except:
+        from geventwebsocket.handler import WebSocketHandler
+        if is_ssl:
+            http_server = WSGIServer((HOST, PORT), app,ssl_context = ssl_context,handler_class=WebSocketHandler)
+        else:
+            http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler)
+            
 
     if is_debug:
         try:
