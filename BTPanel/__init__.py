@@ -2136,8 +2136,8 @@ def kill_closed():
     pids = psutil.pids()
     keys = sock_pids.copy().keys()
     for pid in keys:
-        logging.debug("PID: {} , sock_stat: {}".format(pid,sock_pids[pid].closed))
-        if not sock_pids[pid].closed:continue
+        # logging.debug("PID: {} , sock_stat: {}".format(pid,sock_pids[pid].closed))
+        # if not sock_pids[pid].closed:continue
         
         if pid in pids:
             try:
