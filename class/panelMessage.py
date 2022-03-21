@@ -81,7 +81,7 @@ class panelMessage:
             @author hwliang <2020-05-18>
             @return list
         '''
-        self.get_cloud_messages(args)
+        public.run_thread(self.get_cloud_messages,args=(args,))
         data = public.M('messages').where('state=? and expire>?',(1,int(time.time()))).order("id desc").select()
         return data
 
@@ -91,7 +91,7 @@ class panelMessage:
             @author hwliang <2020-05-18>
             @return list
         '''
-        self.get_cloud_messages(args)
+        public.run_thread(self.get_cloud_messages,args=(args,))
         data = public.M('messages').order("id desc").select()
         return data
 

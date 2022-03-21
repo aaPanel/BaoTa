@@ -941,7 +941,7 @@ class panelPlugin:
             if hasattr(get,'query'): 
                 if get.query: sType = 0
         except:pass
-
+        
         
         if type(softList)!=dict:
             softList = Plugin(False).get_plugin_list(False)
@@ -962,7 +962,6 @@ class panelPlugin:
                         softInfo['ps'].lower().find(get.query) != -1: 
                         tmpList.append(softInfo)
                 softList['list'] = tmpList
-
         return softList
 
 
@@ -1256,7 +1255,8 @@ class panelPlugin:
             get.force = 1
             softList = self.get_cloud_list(get)
             if not softList: return public.returnMsg(False,'软件列表获取失败(401)!')
-        self.get_cloud_list_status(get)
+
+        public.run_thread(self.get_cloud_list_status,args=(get,))
         softList['list'] = self.set_coexist(softList['list'])
         if not 'type' in get: get.type = '0'
         if get.type == '-1':
@@ -1294,8 +1294,8 @@ class panelPlugin:
     #取首页软件列表
     def get_index_list(self,get=None):
         softList = self.get_cloud_list(get)['list']
-        self.get_cloud_list_status(get)
-        self.is_verify_unbinding(get)
+        public.run_thread(self.get_cloud_list_status,args=(get,))
+        public.run_thread(self.is_verify_unbinding,args=(get,))
         if not softList: 
             get.force = 1
             softList = self.get_cloud_list(get)['list']
