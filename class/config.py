@@ -2283,7 +2283,7 @@ class config:
                     break
             if is_insert: node_list.append(cloud_node)
         public.writeFile(node_file,json.dumps(node_list))
-        self.sync_node_config()
+        # self.sync_node_config()
 
 
     def sync_node_config(self):
