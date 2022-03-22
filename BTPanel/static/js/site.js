@@ -4356,6 +4356,7 @@ var site = {
       });
       var theStatus = 1,authentication_table = null;
       function renderAuthentication(){
+        $('#authentication').empty();
         authentication_table = bt_tools.table({
           el:'#authentication',
           url:'/plugin?action=a&name=ssl_verify&s=get_ssl_list',
@@ -6191,7 +6192,7 @@ var site = {
           pay_status = product_recommend.get_pay_status(),
           recom_Template = '',_introduce = '';
       // 未购买或未安装
-      if(site.edit.render_recommend_product()){{
+      if(site.edit.render_recommend_product()){
         $('#webedit-con').append('<div id="tabTamperProof" class="tab-nav"></div><div class="tab-con" style="padding:15px 0px;"></div>');
         var file_path = '',log_data = [];
         var _tab = [{
