@@ -4364,6 +4364,7 @@ var site = {
       });
       var theStatus = 1,authentication_table = null;
       function renderAuthentication(){
+        $('#authentication').empty();
         authentication_table = bt_tools.table({
           el:'#authentication',
           url:'/plugin?action=a&name=ssl_verify&s=get_ssl_list',
@@ -6199,37 +6200,7 @@ var site = {
           pay_status = product_recommend.get_pay_status(),
           recom_Template = '',_introduce = '';
       // 未购买或未安装
-      if(!pay_status.is_pay || !_config['install']){
-        $.each(_config['product_introduce'],function(index,item){
-          _introduce +='<li>'+item+'</li>'
-        })
-        recom_Template = '<div class="daily-thumbnail recommend">\
-            <div class="thumbnail-box"><div class="pluginTipsGg"></div></div>\
-            <div class="thumbnail-introduce">\
-              <span>'+_config['title']+'功能介绍：</span>\
-              <ul>'+_introduce+'</ul>\
-              <div class="daily-product-buy">\
-              '+((_config['isBuy'] && !_config['install'])?'<button class="btn btn-sm btn-success" style="margin-left:0;" onclick="bt.soft.install(\''+ _config['name'] +'\')">立即安装</button>':
-            '<a class="btn btn-sm btn-default mr5 '+ (!_config.preview?'hide':'') +'" href="'+ _config.preview +'" target="_blank">功能预览</a><button type="submit" class="btn btn-sm btn-success" onclick=\"product_recommend.pay_product_sign(\'ltd\','+ _config.pay +')\">立即购买</button>')+'\
-              </div>\
-            </div>\
-          </div>'
-        $('#webedit-con').append(recom_Template)
-        $('.pluginTipsGg').css('background-image','url('+_config.previewImg+')')
-        $('.thumbnail-box').on('click',function(){
-          layer.open({
-            title:false,
-            btn:false,
-            shadeClose:true,
-            closeBtn: 1,
-            area:['700px','650px'],
-            content:'<img src="'+_config.previewImg+'" style="width:700px"/>',
-            success:function(layero){
-              $(layero).find('.layui-layer-content').css('padding','0')
-            }
-          })
-        })
-      }else{
+      if(site.edit.render_recommend_product()){
         $('#webedit-con').append('<div id="tabTamperProof" class="tab-nav"></div><div class="tab-con" style="padding:15px 0px;"></div>');
         var file_path = '',log_data = [];
         var _tab = [{
@@ -6967,24 +6938,41 @@ var site = {
     render_recommend_product: function(){
       var _config = $('.bt-w-menu.site-menu p.bgw').data('recom'),
           pay_status = product_recommend.get_pay_status(),
-          recom_Template = '';
+          recom_Template = '',_introduce = '';
       // 1.未安装
       if(!pay_status.is_pay || !_config['install']){
-        recom_Template = '<div class="recommend_soft_type_two">'
-            +'<div class="recom_icon recomBlock"><img src="/static/img/soft_ico/ico-'+ _config['name'] +'.png"></div>'
-            +'<div class="recom_product recomBlock">'
-            +   '<div class="recom_product_name">'+_config['title']+'</div>'
-            +   '<p class="recom_product_title">'+_config['ps']+'</p>'
-            +'</div>'
-            +'<div class="preview_buy pull-right recomBlock">'
-            + ((_config['isBuy'] && !_config['install'])?'<button class="btn btn-sm btn-success home_recommend_btn" style="margin-left:0;" onclick="bt.soft.install(\''+ _config['name'] +'\')">立即安装</button>':
-                '<a class="btn btn-sm btn-default mr5 '+ (!_config.preview?'hide':'') +'" href="'+ _config.preview +'" target="_blank">预览</a><button type="submit" class="btn btn-sm btn-success home_recommend_btn" onclick=\"product_recommend.pay_product_sign(\'ltd\','+ _config.pay +')\">购买</button>')
-            +'</div>'
-            +'</div>'
+        $.each(_config['product_introduce'],function(index,item){
+          _introduce +='<li>'+item+'</li>'
+        })
+        recom_Template = '<div class="daily-thumbnail recommend">\
+            <div class="thumbnail-box"><div class="pluginTipsGg"></div></div>\
+            <div class="thumbnail-introduce">\
+              <span>'+_config['title']+'功能介绍：</span>\
+              <ul>'+_introduce+'</ul>\
+              <div class="daily-product-buy">\
+              '+((_config['isBuy'] && !_config['install'])?'<button class="btn btn-sm btn-success" style="margin-left:0;" onclick="bt.soft.install(\''+ _config['name'] +'\')">立即安装</button>':
+            '<a class="btn btn-sm btn-default mr5 '+ (!_config.preview?'hide':'') +'" href="'+ _config.preview +'" target="_blank">功能预览</a><button type="submit" class="btn btn-sm btn-success" onclick=\"product_recommend.pay_product_sign(\'ltd\','+ _config.pay +')\">立即购买</button>')+'\
+              </div>\
+            </div>\
+          </div>'
       }else{
         return true;
       }
       $('#webedit-con').append(recom_Template)
+      $('.pluginTipsGg').css('background-image','url('+_config.previewImg+')')
+      $('.thumbnail-box').on('click',function(){
+        layer.open({
+          title:false,
+          btn:false,
+          shadeClose:true,
+          closeBtn: 1,
+          area:['700px','650px'],
+          content:'<img src="'+_config.previewImg+'" style="width:700px"/>',
+          success:function(layero){
+            $(layero).find('.layui-layer-content').css('padding','0')
+          }
+        })
+      })
     }
   },
   create_let: function (ddata, callback) {
