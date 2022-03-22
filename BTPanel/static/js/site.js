@@ -21,7 +21,7 @@ $('#cutMode .tabs-item').on('click', function () {
       }, function (res) {
         if (typeof res !== 'string') $('#bt_node_table+.mask_layer').removeClass('hide').find('.prompt_description.node-model').html('未安装Node版本管理器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nodejs\')">点击安装</a>');
       })
-      site.node_porject_view();
+      site.node_porject_view(); 
       break;
     case 'java':
       $('.site_class_type').remove()
@@ -1709,7 +1709,7 @@ var site = {
         },{
           title: '操作',
           type: 'group',
-          width: 150,
+          width: 180,
           align: 'right',
           group: (function(){
             var setConfig = [{
