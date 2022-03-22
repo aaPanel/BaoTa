@@ -1986,7 +1986,7 @@ def check_ip_panel():
     try:
         errorStr = errorStr.format(getMsg('PAGE_ERR_TITLE'),getMsg('PAGE_ERR_IP_H1'),getMsg('PAGE_ERR_IP_P1',(GetClientIp(),)),getMsg('PAGE_ERR_IP_P2'),getMsg('PAGE_ERR_IP_P3'),getMsg('NAME'),getMsg('PAGE_ERR_HELP'))
     except IndexError:pass
-    return errorStr
+    return error_not_login(errorStr,True)
 
 #检查面板域名
 def check_domain_panel():
@@ -2000,7 +2000,7 @@ def check_domain_panel():
             try:
                 errorStr = errorStr.format(getMsg('PAGE_ERR_TITLE'),getMsg('PAGE_ERR_DOMAIN_H1'),getMsg('PAGE_ERR_DOMAIN_P1'),getMsg('PAGE_ERR_DOMAIN_P2'),getMsg('PAGE_ERR_DOMAIN_P3'),getMsg('NAME'),getMsg('PAGE_ERR_HELP'))
             except:pass
-            return errorStr
+            return error_not_login(errorStr,True)
     return False
 
 #是否离线模式
@@ -4039,7 +4039,7 @@ def is_apache_nginx():
     setup_path = get_setup_path()
     return os.path.exists(setup_path + '/apache') or os.path.exists(setup_path + '/nginx')
 
-def error_not_login(e = None):
+def error_not_login(e = None,_src = None):
     '''
         @name 未登录时且未输入正确的安全入口时的响应
         @author hwliang<2021-12-16>
@@ -4059,7 +4059,10 @@ def error_not_login(e = None):
     if e in ['/login']:
         return redirect(e)
 
-    return render_template('autherr.html')
+    if _src:
+        return e
+    else:
+        return render_template('autherr.html')
 
 def error_403(e):
     from BTPanel import Response,session
