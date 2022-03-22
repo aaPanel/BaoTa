@@ -4745,7 +4745,7 @@ var site = {
             renderAuthentication()
           }
         }else{
-          $('.recommend_soft_type_two').remove();
+          $('.daily-thumbnail.recommend').remove();
         }
       });
     },
