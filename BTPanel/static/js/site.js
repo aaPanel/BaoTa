@@ -1734,7 +1734,15 @@ var site = {
                     setConfig.unshift({
                       title:item.title,
                       event:function(row){
-                        product_recommend.get_version_event(item,row.name)
+                        if(item.name === 'total'){ // 仅linux系统单独判断
+                          bt.soft.set_lib_config(item.name,item.pluginName)
+                          setTimeout(function(){
+                            site_monitoring_statistics.template_config.site_name = row.name
+                            $('[data-funname="overview"]').click()
+                          },500)
+                        }else{
+                          product_recommend.get_version_event(item,row.name)
+                        }
                       }
                     })
                   }(item))
