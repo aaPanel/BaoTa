@@ -8,8 +8,10 @@ $('#cutMode .tabs-item').on('click', function () {
     case 'php':
       $('#bt_site_table').empty();
       // if (!isSetup) $('.site_table_view .mask_layer').removeClass('hide').find('.prompt_description.web-model').html('未安装Web服务器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nginx\')">安装Nginx</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'apache\')">安装Apache</a>');
-      site.php_table_view();
-      site.get_types();
+      product_recommend.init(function () {
+        site.php_table_view();
+        site.get_types();  
+      })
       break;
     case 'nodejs':
       $('#bt_node_table').empty();
@@ -1709,24 +1711,40 @@ var site = {
           type: 'group',
           width: 150,
           align: 'right',
-          group: [{
-            title: '防火墙',
-            event: function (row, index, ev, key, that) {
-              site.site_waf(row.name);
+          group: (function(){
+            var setConfig = [{
+              title: '设置',
+              event: function (row, index, ev, key, that) {
+                site.web_edit(row, true);
+              }
+            }, {
+              title: '删除',
+              event: function (row, index, ev, key, that) {
+                site.del_site(row.id, row.name, function () {
+                  that.$refresh_table_list(true);
+                });
+              }
+            }]
+            try {
+              var recomConfig = product_recommend.get_recommend_type(5)
+              if(recomConfig){
+                for (var i = 0; i < recomConfig['list'].length; i++) {
+                  var item = recomConfig['list'][i];
+                  (function (item) {
+                    setConfig.unshift({
+                      title:item.title,
+                      event:function(row){
+                        product_recommend.get_version_event(item,row.name)
+                      }
+                    })
+                  }(item))
+                }
+              }
+            } catch (error) {
+              console.log(error)  
             }
-          }, {
-            title: '设置',
-            event: function (row, index, ev, key, that) {
-              site.web_edit(row, true);
-            }
-          }, {
-            title: '删除',
-            event: function (row, index, ev, key, that) {
-              site.del_site(row.id, row.name, function () {
-                that.$refresh_table_list(true);
-              });
-            }
-          }]
+            return setConfig
+          })()
         }
       ],
       sortParam: function (data) {
@@ -7236,17 +7254,21 @@ var site = {
       $('.site-menu p').css('padding-left','28px')
       //推荐安全软件
       product_recommend.init(function(){
-        var recomConfig = product_recommend.get_recommend_type(6);
-        $.each(recomConfig.list,function(index,item){
-          $('.site-menu p:eq('+item.menu_id+')').data('recom',item);
-        })
-        $('.site-menu p').click(function () {
-          $('#webedit-con').html('');
-          $(this).addClass('bgw').siblings().removeClass('bgw');
-          var callback = $(this).data('callback')
-          if (callback) callback(item);
-        })
-        site.reload(0);
+        try {
+          var recomConfig = product_recommend.get_recommend_type(6);
+          $.each(recomConfig.list,function(index,item){
+            $('.site-menu p:eq('+item.menu_id+')').data('recom',item);
+          })
+          $('.site-menu p').click(function () {
+            $('#webedit-con').html('');
+            $(this).addClass('bgw').siblings().removeClass('bgw');
+            var callback = $(this).data('callback')
+            if (callback) callback(item);
+          })
+          site.reload(0);
+        } catch (error) {
+          console.log(error) 
+        }
       })
     }, 100)
   },
