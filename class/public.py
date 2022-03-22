@@ -556,7 +556,9 @@ def ExecShell(cmdstring, timeout=None, shell=True,cwd=None,env=None,user = None)
         #编码修正
         if type(a) == bytes: a = a.decode('utf-8')
         if type(e) == bytes: e = e.decode('utf-8')
-    except:pass
+    except:
+        a = str(a)
+        e = str(e)
 
     return a,e
 
