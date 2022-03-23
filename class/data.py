@@ -219,9 +219,16 @@ class data:
         
             if table == 'backup':
                 import os
+                backup_path = public.M('config').where('id=?',(1,)).getField('backup_path')
                 for i in range(len(data['data'])):
                     if data['data'][i]['size'] == 0:
-                        if os.path.exists(data['data'][i]['filename']): data['data'][i]['size'] = os.path.getsize(data['data'][i]['filename'])
+                        if os.path.exists(data['data'][i]['filename']): 
+                            data['data'][i]['size'] = os.path.getsize(data['data'][i]['filename'])
+                    else:
+                        if not os.path.exists(data['data'][i]['filename']): 
+                            if (data['data'][i]['filename'].find('/www/') != -1 or data['data'][i]['filename'].find(backup_path) != -1) and data['data'][i]['filename'][0] == '/' and data['data'][i]['filename'].find('|') == -1:
+                                data['data'][i]['size'] = 0
+                                data['data'][i]['ps'] = '文件不存在'
         
             elif table == 'sites' or table == 'databases':
                 type = '0'
