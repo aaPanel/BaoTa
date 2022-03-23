@@ -16,7 +16,7 @@ os.chdir(_PATH)
 
 upgrade_file = 'script/upgrade_flask.sh'
 if os.path.exists(upgrade_file):
-    os.system("bash {}".format(upgrade_file))
+    os.system("nohup bash {} &>/dev/null &".format(upgrade_file))
     
 if os.path.exists('class/flask'):
     os.system('rm -rf class/flask')

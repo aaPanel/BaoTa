@@ -348,4 +348,3 @@ case "$1" in
                 $pythonV $panel_path/tools.py cli $1
         ;;
 esac
-

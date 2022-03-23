@@ -205,6 +205,7 @@ def request_check():
 # Flask 请求结束勾子
 @app.teardown_request
 def request_end(reques=None):
+    if request.method not in ['GET','POST']:return
     not_acts = ['GetTaskSpeed', 'GetNetWork', 'check_pay_status', 'get_re_order_status', 'get_order_stat']
     key = request.args.get('action')
     if not key in not_acts and request.full_path.find('/static/') == -1:
@@ -217,6 +218,7 @@ def request_end(reques=None):
 # Flask 404页面勾子
 @app.errorhandler(404)
 def error_404(e):
+    if request.method not in ['GET','POST']:return
     if not session.get('login',None): 
         g.auth_error = True
         return public.error_not_login()
@@ -236,6 +238,7 @@ def error_404(e):
 # Flask 403页面勾子
 @app.errorhandler(403)
 def error_403(e):
+    if request.method not in ['GET','POST']:return
     if not session.get('login',None): 
         g.auth_error = True
         return public.error_not_login()
@@ -255,6 +258,7 @@ def error_403(e):
 # Flask 500页面勾子
 @app.errorhandler(500)
 def error_500(e):
+    if request.method not in ['GET','POST']:return
     if not session.get('login',None): 
         g.auth_error = True
         return public.error_not_login()

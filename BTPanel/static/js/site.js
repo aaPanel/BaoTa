@@ -4746,7 +4746,7 @@ var site = {
             renderAuthentication()
           }
         }else{
-          $('.recommend_soft_type_two').remove();
+          $('.daily-thumbnail.recommend').remove();
         }
       });
     },
@@ -6197,10 +6197,6 @@ var site = {
       })
     },
     set_tamper_proof: function(web){
-      var _config = $('.bt-w-menu.site-menu p.bgw').data('recom'),
-          pay_status = product_recommend.get_pay_status(),
-          recom_Template = '',_introduce = '';
-      // 未购买或未安装
       if(site.edit.render_recommend_product()){
         $('#webedit-con').append('<div id="tabTamperProof" class="tab-nav"></div><div class="tab-con" style="padding:15px 0px;"></div>');
         var file_path = '',log_data = [];
@@ -6359,6 +6355,7 @@ var site = {
                 time: 0,
                 shade: 0.3
               });
+              if(path.val() == '') return layer.msg('请输入或选择需要排除的目录')
               $.post('/plugin?action=a&s=add_excloud&name=tamper_proof', {siteName:web.name,excludePath:path.val()}, function (rdata) {
                 layer.close(loadT);
                 if (rdata.status) {
@@ -6436,6 +6433,7 @@ var site = {
                 time: 0,
                 shade: 0.3
               });
+              if(ext.val() == '') return layer.msg('请输入或选择需要保护的目录')
               $.post('/plugin?action=a&s=add_protect_ext&name=tamper_proof', {siteName:web.name,protectExt:ext.val()}, function (rdata) {
                 layer.close(loadT);
                 if (rdata.status) {
@@ -6562,7 +6560,7 @@ var site = {
                   '</td><td class="text-right"><a class="btlink del_exclude_path" data-path="'+rdata.excludePath[i]+'">删除</a></td></tr>';
             }
             $("#site_exclude_path_con").html(excludeBody);
-            $('.rule_out_box .bt_table .cust—checkbox').click(function(){
+            $('.rule_out_box .bt_table .cust—checkbox').unbind('click').click(function(){
               var checkbox = $(this).data('checkbox'),
                   length = $('#site_exclude_path tbody tr').length,
                   active = $(this).hasClass('active'),
@@ -6592,7 +6590,7 @@ var site = {
                 $('.rule_out_box [data-checkbox="all"]').removeClass('active')
               }
             })
-            $('.rule_out_box .setBatchStatus').click(function(){
+            $('.rule_out_box .setBatchStatus').unbind('click').click(function(){
               var siteState = parseInt($('.rule_out_box [name="status"]').val()),rules = []
               $('#site_exclude_path tbody tr .cust—checkbox.active').each(function(){
                 rules.push(rdata.excludePath[$(this).data('checkbox')])
@@ -6634,7 +6632,7 @@ var site = {
                   '</td><td class="text-right"><a class="btlink remove_protect_ext" data-path="'+rdata.protectExt[i]+'">删除</a></td></tr>';
             }
             $("#site_protect_ext_con").html(protectBody);
-            $('.rule_protect_box .bt_table .cust—checkbox').click(function(){
+            $('.rule_protect_box .bt_table .cust—checkbox').unbind('click').click(function(){
               var checkbox = $(this).data('checkbox'),
                   length = $('#site_protect_ext tbody tr').length,
                   active = $(this).hasClass('active'),
@@ -6664,7 +6662,7 @@ var site = {
                 $('.rule_protect_box [data-checkbox="all"]').removeClass('active')
               }
             })
-            $('.rule_protect_box .setBatchStatus').click(function(){
+            $('.rule_protect_box .setBatchStatus').unbind('click').click(function(){
               var siteState = parseInt($('.rule_protect_box [name="status"]').val()),rules = []
               $('#site_protect_ext tbody tr .cust—checkbox.active').each(function(){
                 rules.push(rdata.protectExt[$(this).data('checkbox')])
@@ -6941,39 +6939,41 @@ var site = {
           pay_status = product_recommend.get_pay_status(),
           recom_Template = '',_introduce = '';
       // 1.未安装
-      if(!pay_status.is_pay || !_config['install']){
-        $.each(_config['product_introduce'],function(index,item){
-          _introduce +='<li>'+item+'</li>'
-        })
-        recom_Template = '<div class="daily-thumbnail recommend">\
+      try{
+        if(!pay_status.is_pay || !_config['install']){
+          $.each(_config['product_introduce'],function(index,item){
+            _introduce +='<li>'+item+'</li>'
+          })
+          recom_Template = '<div class="daily-thumbnail recommend">\
             <div class="thumbnail-box"><div class="pluginTipsGg"></div></div>\
             <div class="thumbnail-introduce">\
               <span>'+_config['title']+'功能介绍：</span>\
               <ul>'+_introduce+'</ul>\
               <div class="daily-product-buy">\
               '+((_config['isBuy'] && !_config['install'])?'<button class="btn btn-sm btn-success" style="margin-left:0;" onclick="bt.soft.install(\''+ _config['name'] +'\')">立即安装</button>':
-            '<a class="btn btn-sm btn-default mr5 '+ (!_config.preview?'hide':'') +'" href="'+ _config.preview +'" target="_blank">功能预览</a><button type="submit" class="btn btn-sm btn-success" onclick=\"product_recommend.pay_product_sign(\'ltd\','+ _config.pay +')\">立即购买</button>')+'\
+              '<a class="btn btn-sm btn-default mr5 '+ (!_config.preview?'hide':'') +'" href="'+ _config.preview +'" target="_blank">功能预览</a><button type="submit" class="btn btn-sm btn-success" onclick=\"product_recommend.pay_product_sign(\'ltd\','+ _config.pay +')\">立即购买</button>')+'\
               </div>\
             </div>\
           </div>'
-      }else{
-        return true;
-      }
-      $('#webedit-con').append(recom_Template)
-      $('.pluginTipsGg').css('background-image','url('+_config.previewImg+')')
-      $('.thumbnail-box').on('click',function(){
-        layer.open({
-          title:false,
-          btn:false,
-          shadeClose:true,
-          closeBtn: 1,
-          area:['700px','650px'],
-          content:'<img src="'+_config.previewImg+'" style="width:700px"/>',
-          success:function(layero){
-            $(layero).find('.layui-layer-content').css('padding','0')
-          }
+        }else{
+          return true;
+        }
+        $('#webedit-con').append(recom_Template)
+        $('.pluginTipsGg').css('background-image','url('+_config.previewImg+')')
+        $('.thumbnail-box').on('click',function(){
+          layer.open({
+            title:false,
+            btn:false,
+            shadeClose:true,
+            closeBtn: 1,
+            area:['700px','650px'],
+            content:'<img src="'+_config.previewImg+'" style="width:700px"/>',
+            success:function(layero){
+              $(layero).find('.layui-layer-content').css('padding','0')
+            }
+          })
         })
-      })
+      }catch(err){}
     }
   },
   create_let: function (ddata, callback) {
@@ -7253,9 +7253,12 @@ var site = {
       product_recommend.init(function(){
         try {
           var recomConfig = product_recommend.get_recommend_type(6);
-          $.each(recomConfig.list,function(index,item){
-            $('.site-menu p:eq('+item.menu_id+')').data('recom',item);
-          })
+          try{
+            $.each(recomConfig.list,function(index,item){
+              $('.site-menu p:eq('+item.menu_id+')').data('recom',item);
+            })
+          }catch(err){}
+
           $('.site-menu p').click(function () {
             $('#webedit-con').html('');
             $(this).addClass('bgw').siblings().removeClass('bgw');
