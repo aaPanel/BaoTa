@@ -16267,4 +16267,155 @@ margin-bottom: 10px;
   height: 110px;
 }
 
+/* 网站管理软件推荐 */
+.recommend_soft_type_two{
+  position:absolute;
+  bottom: 30px;
+  width: 640px;
+  border: 1px solid #ececfb;
+  border-radius: 4px;
+  padding: 15px 35px;
+}
 
+.recommend_soft_type_two .recomBlock {
+  display: inline-block;
+}
+.recommend_soft_type_two::after{
+  content: '推荐';
+  height: 18px;
+  width: 40px;
+  line-height: 18px;
+  text-align: center;
+  background: #efefef;
+  display: inline-block;
+  top: -1.5px;
+  left: -4px;
+  position: absolute;
+  opacity: 0.5;
+  transform: scale(.8);
+}
+.recommend_soft_type_two .recom_icon {
+  margin-right: 20px;
+  height: 40px;
+}
+.recommend_soft_type_two .recom_icon img{
+  height: 40px;
+}
+.recommend_soft_type_two .recom_product {
+  vertical-align: middle;
+}
+.recommend_soft_type_two .recom_product .recom_product_name{
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 25px;
+}
+.recommend_soft_type_two .recom_product .recom_product_title{
+  color: #999;
+}
+.recommend_soft_type_two .preview_buy{
+  margin-top: 5px;
+}
+
+/* 软件推荐预览展示 */
+.webedit-con .daily-thumbnail{
+  width: 640px;
+  position: absolute;
+  top: 26%;
+  text-align: center;
+}
+.webedit-con .thumbnail-box{
+  width: 340px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  display: inline-block;
+  background: #f9f9f9;
+  border-radius: 4px;
+  box-shadow: 1px 1px 30px rgb(0 0 0 / 10%);
+}
+
+.webedit-con .thumbnail-box::before{
+  content: '点击预览';
+  display: none;
+  background: #000;
+  opacity: 0.2;
+  color: #fff;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 340px;
+  height: 315px;
+  line-height: 340px;
+  font-size: 18px;
+  vertical-align: bottom;
+  border-radius: 4px;
+  transition: all 1s;
+}
+
+.webedit-con .thumbnail-box:hover::before{
+  display: inline-block;
+}
+
+.webedit-con .thumbnail-introduce{
+  display: inline-block;
+  vertical-align: top;
+  margin-left: 40px;
+  margin-top: 60px;
+  text-align: left;
+}
+.webedit-con .thumbnail-introduce span{
+  font-size: 17px;
+  font-weight: bold;
+}
+.webedit-con .thumbnail-introduce ul{
+  font-size: 14px;
+  line-height: 30px;
+  margin: 20px 0 20px 20px;
+  list-style: square;
+}
+.webedit-con .pluginTipsGg{
+  width: 340px;
+  height: 315px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 4px;
+}
+.webedit-con .searcTime span input{
+  border: 0 none;
+  height: 16px;
+  padding: 0 5px;
+  width: 95px;
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAHBAMAAADOnLEXAAAAA3NCSVQICAjb4U/gAAAAElBMVEX////v7++oqKiSkpJgYGAzMzNVUvUKAAAABnRSTlMA//////96eeD+AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAFnRFWHRDcmVhdGlvbiBUaW1lADA3LzEzLzE442/mwwAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAApSURBVAiZYxBiAAJFBhEDBgZmRwbmYAYGUwMQBrGAXBAHyAVxgFwgBwBYpgOoNMjLNgAAAABJRU5ErkJggg==);
+  background-repeat: no-repeat;
+  background-position: 80px center;
+  outline: none;
+}
+.webedit-con .searcTime span.last-gt{
+  padding: 5px 10px;
+  border: #ddd 1px solid;
+  margin-right: -1px;
+  cursor: pointer;
+  float: left;
+  line-height: 16px;
+}
+.webedit-con .searcTime span.last-gt.on{
+  background-color: #20a53a;
+  color: #fff;
+}
+.webedit-con .searcTime span.last-gt.on input{
+  color: #fff;
+  background-color: #20a53a;
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAHBAMAAADOnLEXAAAAA3NCSVQICAjb4U/gAAAAElBMVEX////f8+Pg8+Sx2LghpTsgpTp3yIRgAAAACXBIWXMAAA6cAAAOnAEHlFPdAAAAFnRFWHRDcmVhdGlvbiBUaW1lADA3LzEzLzE442/mwwAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAAxSURBVAiZY1B2DQ0NNWJQMA0NDWZkCGYODTUwZQBiIIshNJjZwBRIhRoAhYFUMFARAPlECn96zZKZAAAAAElFTkSuQmCC);
+}
+/* 软件推荐预览展示 end */
+
+
+/* 网站管理软件推荐 end */
+
+/* 网站防篡改样式 */
+.rule_out_box .bt_table .cust—checkbox.active::after,
+.rule_protect_box .bt_table .cust—checkbox.active::after{
+  position: relative;
+}
+/* 网站防篡改样式 end */

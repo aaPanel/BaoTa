@@ -2205,7 +2205,7 @@ class config:
         if not os.path.exists(node_file): return node_list
         node_list = json.loads(public.readFile(node_file))
         for node in node_list:
-            node['speed'] = self.test_node(node['node_ip'])
+            # node['speed'] = self.test_node(node['node_ip'])
             del(node['node_ip'])
         return node_list
 
@@ -2283,7 +2283,7 @@ class config:
                     break
             if is_insert: node_list.append(cloud_node)
         public.writeFile(node_file,json.dumps(node_list))
-        self.sync_node_config()
+        # self.sync_node_config()
 
 
     def sync_node_config(self):
