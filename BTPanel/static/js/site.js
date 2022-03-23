@@ -1731,6 +1731,7 @@ var site = {
                 for (var i = 0; i < recomConfig['list'].length; i++) {
                   var item = recomConfig['list'][i];
                   (function (item) {
+                    layer.closeAll()
                     setConfig.unshift({
                       title:item.title,
                       event:function(row){
