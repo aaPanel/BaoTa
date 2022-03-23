@@ -70,8 +70,8 @@ class ftp:
     def SetUserPassword(self,get):
         try:
             id = get['id']
-            username = get['ftp_username']
-            password = get['new_password']
+            username = get['ftp_username'].strip()
+            password = get['new_password'].strip()
             if len(password) < 6: return public.returnMsg(False,'FTP密码长度不能少于6位!')
             public.ExecShell(self.__runPath + '/pure-pw passwd ' + username + '<<EOF \n' + password + '\n' + password + '\nEOF')
             self.FtpReload()
@@ -110,7 +110,7 @@ class ftp:
      '''
     def setPort(self,get):
         try:
-            port = get['port']
+            port = get['port'].strip()
             if not port: return public.returnMsg(False,'FTP端口不能为空')
             if int(port) < 1 or int(port) > 65535: return public.returnMsg(False,'PORT_CHECK_RANGE')
             file = '/www/server/pure-ftpd/etc/pure-ftpd.conf'
