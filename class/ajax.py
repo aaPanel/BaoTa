@@ -1190,7 +1190,7 @@ class ajax:
                 tmp = public.readFile(tmp_f)
                 if tmp: tmp = int(tmp)
         if not ltd: ltd = -1
-        if tmp is None: tmp = -1
+        if tmp == None: tmp = -1
         if ltd < 1:
             if ltd == -2:
                 tmp3 = public.to_string([60, 115, 112, 97, 110, 32, 99, 108, 97, 115, 115, 61, 34, 98, 116, 108, 116, 100,
