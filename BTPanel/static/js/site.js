@@ -6941,7 +6941,7 @@ var site = {
           recom_Template = '',_introduce = '';
       // 1.未安装
       try{
-        if(!pay_status.is_pay || !_config['install']){
+        if(!_config['isBuy'] || !_config['install']){
           $.each(_config['product_introduce'],function(index,item){
             _introduce +='<li>'+item+'</li>'
           })
@@ -7238,7 +7238,7 @@ var site = {
         { title: '重定向', callback: site.edit.set_301 },
         { title: '反向代理', callback: site.edit.set_proxy },
         { title: '防盗链', callback: site.edit.set_security },
-        { title: '<span class="glyphicon glyphicon-vip ltd-font-icon" style="margin-left: -17px;"></span> 防篡改', callback: site.edit.set_tamper_proof },
+        { title: '<span class="glyphicon glyphicon-vip pro-font-icon" style="margin-left: -17px;"></span> 防篡改', callback: site.edit.set_tamper_proof },
         { title: '网站日志', callback: site.edit.get_site_logs },
         // { title: '错误日志', callback: site.edit.get_site_error_logs }
       ]
