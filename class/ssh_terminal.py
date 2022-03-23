@@ -546,7 +546,7 @@ class ssh_terminal:
                     continue
                 client_data = self._ws.receive()
                 if not client_data: continue
-                if client_data is '{}': continue
+                if client_data == '{}': continue
                 if len(client_data) > 10:
                     if client_data.find('{"host":"') != -1:
                         continue

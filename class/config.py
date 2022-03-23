@@ -507,7 +507,10 @@ class config:
         public.writeFile('data/domain.conf',get.domain.strip())
         public.writeFile('data/iplist.txt',get.address)
         
-        
+        import files
+        fs = files.files()
+        if not fs.CheckDir(get.backup_path): return public.returnMsg(False,'不能使用系统关键目录作为默认备份目录')
+        if not fs.CheckDir(get.sites_path): return public.returnMsg(False,'不能使用系统关键目录作为默认建站目录')
         public.M('config').where("id=?",('1',)).save('backup_path,sites_path',(get.backup_path,get.sites_path))
         session['config']['backup_path'] = os.path.join('/',get.backup_path)
         session['config']['sites_path'] = os.path.join('/',get.sites_path)

@@ -158,8 +158,10 @@ history -c
 '''
     os.system(command)
     print('\t\033[1;32m[done]\033[0m')
-    
-    a_input = input('|-是否在首次开机自动按机器配置优化PHP/MySQL配置?(y/n default: y): ')
+    if sys.version_info[0] == 3:
+        a_input = input('|-是否在首次开机自动按机器配置优化PHP/MySQL配置?(y/n default: y): ')
+    else:
+        a_input = raw_input('|-是否在首次开机自动按机器配置优化PHP/MySQL配置?(y/n default: y): ')
     if not a_input: a_input = 'y'
     print(a_input)
     if not a_input in ['Y','y','yes','YES']:

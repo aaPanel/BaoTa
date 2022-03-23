@@ -396,7 +396,7 @@ class panelWorkorder:
                         kwargs = {}
                     x_thread = threading.Thread(target=ws.run_forever,
                                                 kwargs=kwargs)
-                    x_thread.setDaemon(True)
+                    # x_thread.setDaemon(True)
                     x_thread.start()
                     clients[workorder] = ws
         except Exception as e:

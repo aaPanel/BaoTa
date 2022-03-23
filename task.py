@@ -877,45 +877,45 @@ def main():
     time.sleep(5)
     import threading
     t = threading.Thread(target=systemTask)
-    t.setDaemon(True)
+    # t.setDaemon(True)
     t.start()
 
     p = threading.Thread(target=check502Task)
-    p.setDaemon(True)
+    # p.setDaemon(True)
     p.start()
 
     pl = threading.Thread(target=panel_status)
-    pl.setDaemon(True)
+    # pl.setDaemon(True)
     pl.start()
 
     p = threading.Thread(target=restart_panel_service)
-    p.setDaemon(True)
+    # p.setDaemon(True)
     p.start()
 
     p = threading.Thread(target=check_panel_ssl)
-    p.setDaemon(True)
+    # p.setDaemon(True)
     p.start()
     
     p = threading.Thread(target=update_software_list)
-    p.setDaemon(True)
+    # p.setDaemon(True)
     p.start()
     
     p = threading.Thread(target=send_mail_time)
-    p.setDaemon(True)
+    # p.setDaemon(True)
     p.start()
 
     p = threading.Thread(target=check_files_panel)
-    p.setDaemon(True)
+    # p.setDaemon(True)
     p.start()
     import panelTask
     task_obj = panelTask.bt_task()
     task_obj.not_web = True
     p = threading.Thread(target=task_obj.start_task)
-    p.setDaemon(True)
+    # p.setDaemon(True)
     p.start()
 
     p = threading.Thread(target=check_panel_msg)
-    p.setDaemon(True)
+    # p.setDaemon(True)
     p.start()
 
     startTask()

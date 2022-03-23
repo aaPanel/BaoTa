@@ -2560,7 +2560,7 @@ def submit_keyword(keyword):
 def total_keyword(keyword):
     import threading
     p = threading.Thread(target=submit_keyword,args=(keyword,))
-    p.setDaemon(True)
+    # p.setDaemon(True)
     p.start()
 
 #获取debug日志

@@ -56,6 +56,7 @@ class files:
                  '/selinux',
                  '/www/server',
                  '/www/server/data',
+                 '/www/Recycle_bin',
                  public.GetConfigValue('logs_path'),
                  public.GetConfigValue('setup_path'))
 
@@ -815,6 +816,8 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         if not 'sfile' in get: return public.returnMsg(False,'参数错误')
         if not os.path.exists(get.sfile): return public.returnMsg(False,'指定文件不存在，无法创建软链!')
         if os.path.exists(get.dfile): return public.returnMsg(False,'指定软链文件名已存在，请使用其它文件名，或先删除!')
+        l_name = os.path.basename(get.dfile)
+        if re.match(r"^[\w\-\.]+$",l_name) == None: return public.returnMsg(False,'软链文件名不合法!')
         if get.dfile[0] != '/': return public.returnMsg(False,'指定软链文件名必需包含完整路径(全路径)')
         public.ExecShell("ln -sf {} {}".format(get.sfile,get.dfile))
         if not os.path.exists(get.dfile): return public.returnMsg(False,'软链文件创建失败!')

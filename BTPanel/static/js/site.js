@@ -4552,7 +4552,7 @@ var site = {
                       <span>全部</span>\
                       <input type="checkbox" class="hide" value="0">\
                   </button>\
-                  <button type="button" class="btn btn-default btn-sm btn-success">\
+                  <button type="button" class="btn btn-default btn-sm">\
                       <span>正常</span>\
                       <input type="checkbox" class="hide" value="1">\
                   </button>\
@@ -4561,6 +4561,7 @@ var site = {
                       <input type="checkbox" class="hide" value="-1">\
                   </button>\
               </div></div>')
+              $('.related_status button').eq(theStatus == -1 ?2:theStatus).addClass('btn-success')
               $('#authentication').append('<button type="button" title="证书配置" class="btn btn-default config_ssl_info btn-sm mr5">证书配置</button>')
               $('.config_ssl_info').click(function(){
                 $.post('/plugin?action=a&name=ssl_verify&s=get_config', {}, function (rdata) {
@@ -6547,7 +6548,7 @@ var site = {
             shadeClose: false,
             closeBtn: 2,
             content: '<div class="setchmod bt-form ">'
-                + '<pre class="run-log" style="overflow: auto; border: 0px none; line-height:23px;padding: 15px; margin: 0px; white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0px;font-family: \"微软雅黑\"">' + (item[3].length == '' ? '当前日志为空' : item[3].join('\n')) + '</pre>'
+                + '<pre class="run-log" style="overflow: auto; border: 0px none; line-height:23px;padding: 15px; margin: 0px; white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0px;font-family: \"微软雅黑\"">' + (item[3].length == '' || !item[3] ? '当前日志为空' : item[3].join('\n')) + '</pre>'
                 + '</div>'
           });
         }
@@ -6946,7 +6947,7 @@ var site = {
           recom_Template = '',_introduce = '';
       // 1.未安装
       try{
-        if(!pay_status.is_pay || !_config['install']){
+        if(!_config['isBuy'] || !_config['install']){
           $.each(_config['product_introduce'],function(index,item){
             _introduce +='<li>'+item+'</li>'
           })
@@ -7243,7 +7244,7 @@ var site = {
         { title: '重定向', callback: site.edit.set_301 },
         { title: '反向代理', callback: site.edit.set_proxy },
         { title: '防盗链', callback: site.edit.set_security },
-        { title: '<span class="glyphicon glyphicon-vip ltd-font-icon" style="margin-left: -17px;"></span> 防篡改', callback: site.edit.set_tamper_proof },
+        { title: '<span class="glyphicon glyphicon-vip pro-font-icon" style="margin-left: -17px;"></span> 防篡改', callback: site.edit.set_tamper_proof },
         { title: '网站日志', callback: site.edit.get_site_logs },
         // { title: '错误日志', callback: site.edit.get_site_error_logs }
       ]
