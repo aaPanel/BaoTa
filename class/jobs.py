@@ -471,7 +471,7 @@ def set_pma_access():
 
 #尝试升级到独立环境
 def update_py37():
-    pyenv='/www/server/panel/pyenv/bin/python'
+    pyenv='/www/server/panel/pyenv/bin/python3'
     pyenv_exists='/www/server/panel/data/pyenv_exists.pl'
     if os.path.exists(pyenv) or os.path.exists(pyenv_exists): return False
     download_url = public.get_url()
