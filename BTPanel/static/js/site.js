@@ -6354,6 +6354,7 @@ var site = {
                 time: 0,
                 shade: 0.3
               });
+              if(path.val() == '') return layer.msg('请输入或选择需要排除的目录')
               $.post('/plugin?action=a&s=add_excloud&name=tamper_proof', {siteName:web.name,excludePath:path.val()}, function (rdata) {
                 layer.close(loadT);
                 if (rdata.status) {
@@ -6431,6 +6432,7 @@ var site = {
                 time: 0,
                 shade: 0.3
               });
+              if(ext.val() == '') return layer.msg('请输入或选择需要保护的目录')
               $.post('/plugin?action=a&s=add_protect_ext&name=tamper_proof', {siteName:web.name,protectExt:ext.val()}, function (rdata) {
                 layer.close(loadT);
                 if (rdata.status) {
@@ -6557,7 +6559,7 @@ var site = {
                   '</td><td class="text-right"><a class="btlink del_exclude_path" data-path="'+rdata.excludePath[i]+'">删除</a></td></tr>';
             }
             $("#site_exclude_path_con").html(excludeBody);
-            $('.rule_out_box .bt_table .cust—checkbox').click(function(){
+            $('.rule_out_box .bt_table .cust—checkbox').unbind('click').click(function(){
               var checkbox = $(this).data('checkbox'),
                   length = $('#site_exclude_path tbody tr').length,
                   active = $(this).hasClass('active'),
@@ -6587,7 +6589,7 @@ var site = {
                 $('.rule_out_box [data-checkbox="all"]').removeClass('active')
               }
             })
-            $('.rule_out_box .setBatchStatus').click(function(){
+            $('.rule_out_box .setBatchStatus').unbind('click').click(function(){
               var siteState = parseInt($('.rule_out_box [name="status"]').val()),rules = []
               $('#site_exclude_path tbody tr .cust—checkbox.active').each(function(){
                 rules.push(rdata.excludePath[$(this).data('checkbox')])
@@ -6629,7 +6631,7 @@ var site = {
                   '</td><td class="text-right"><a class="btlink remove_protect_ext" data-path="'+rdata.protectExt[i]+'">删除</a></td></tr>';
             }
             $("#site_protect_ext_con").html(protectBody);
-            $('.rule_protect_box .bt_table .cust—checkbox').click(function(){
+            $('.rule_protect_box .bt_table .cust—checkbox').unbind('click').click(function(){
               var checkbox = $(this).data('checkbox'),
                   length = $('#site_protect_ext tbody tr').length,
                   active = $(this).hasClass('active'),
@@ -6659,7 +6661,7 @@ var site = {
                 $('.rule_protect_box [data-checkbox="all"]').removeClass('active')
               }
             })
-            $('.rule_protect_box .setBatchStatus').click(function(){
+            $('.rule_protect_box .setBatchStatus').unbind('click').click(function(){
               var siteState = parseInt($('.rule_protect_box [name="status"]').val()),rules = []
               $('#site_protect_ext tbody tr .cust—checkbox.active').each(function(){
                 rules.push(rdata.protectExt[$(this).data('checkbox')])
