@@ -1736,11 +1736,17 @@ var site = {
                       title:item.title,
                       event:function(row){
                         if(item.name === 'total'){ // 仅linux系统单独判断
-                          bt.soft.set_lib_config(item.name,item.pluginName)
-                          setTimeout(function(){
-                            site_monitoring_statistics.template_config.site_name = row.name
-                            $('[data-funname="overview"]').click()
-                          },500)
+                          if(!item.isBuy){
+                            product_recommend.recommend_product_view(item)
+                          }else if(!item.install){
+                            bt.soft.install(item.name)
+                          }else{
+                            bt.soft.set_lib_config(item.name,item.pluginName)
+                            setTimeout(function(){
+                              site_monitoring_statistics.template_config.site_name = row.name
+                              $('[data-funname="overview"]').click()
+                            },500)
+                          }
                         }else{
                           product_recommend.get_version_event(item,row.name)
                         }
@@ -4253,6 +4259,7 @@ var site = {
         el: '#dir_dirguard',
         url: '/site?action=get_dir_auth',
         param: { id: web.id },
+        height: 450,
         dataFilter: function (res) {
           return { data: res[web.name] };
         },
@@ -4556,7 +4563,7 @@ var site = {
                   </button>\
               </div></div>')
               $('.related_status button').eq(theStatus == -1 ?2:theStatus).addClass('btn-success')
-              $('#authentication').append('<button type="button" title="证书配置" class="btn btn-default config_ssl_info btn-sm mr5">证书配置</button>')
+              $('#authentication').append('<button type="button" title="证书配置" class="btn btn-default config_ssl_info btn-sm mr5">证书配置</button><ul class="help-info-text-info c7" style="margin-top: 50px;"><li>双向认证仅支持【HTTPS访问】，如需全站设置，还需通过网站设置开启【强制HTTPS】.</li></ul>')
               $('.config_ssl_info').click(function(){
                 $.post('/plugin?action=a&name=ssl_verify&s=get_config', {}, function (rdata) {
                   config_ssl_info(rdata)
