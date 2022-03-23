@@ -56,6 +56,7 @@ class files:
                  '/selinux',
                  '/www/server',
                  '/www/server/data',
+                 '/www/Recycle_bin',
                  public.GetConfigValue('logs_path'),
                  public.GetConfigValue('setup_path'))
 
