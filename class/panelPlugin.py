@@ -922,7 +922,7 @@ class panelPlugin:
     def get_cloud_list(self,get=None):
         force  = False
         if hasattr(get,'force'): 
-            if int(get.force) is 1: force = True
+            if int(get.force) == 1: force = True
         self.__is_bind_user()
         skey = 'TNaMJdG3mDHKRS6Y'
         softList = cache.get(skey)
