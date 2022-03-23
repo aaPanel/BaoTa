@@ -313,7 +313,7 @@ class system:
         cpuW = len(set(d_tmp))
         import threading
         p = threading.Thread(target=self.get_cpu_percent_thead,args=(interval,))
-        p.setDaemon(True)
+        # p.setDaemon(True)
         p.start()
         
         used = cache.get('cpu_used_all')
