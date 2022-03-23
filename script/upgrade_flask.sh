@@ -9,3 +9,5 @@ fi
 
 /www/server/panel/pyenv/bin/pip3 install flask -U
 /www/server/panel/pyenv/bin/pip3 install flask-sock
+bash /www/server/panel/init.sh reload
+rm -f /www/server/panel/script/upgrade_flask.sh
