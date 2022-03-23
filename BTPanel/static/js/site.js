@@ -4376,6 +4376,7 @@ var site = {
         authentication_table = bt_tools.table({
           el:'#authentication',
           url:'/plugin?action=a&name=ssl_verify&s=get_ssl_list',
+          height:'411',
           beforeRequest: function (params) {
             return { status:theStatus,search:params.search }
           },
@@ -4563,7 +4564,7 @@ var site = {
                   </button>\
               </div></div>')
               $('.related_status button').eq(theStatus == -1 ?2:theStatus).addClass('btn-success')
-              $('#authentication').append('<button type="button" title="证书配置" class="btn btn-default config_ssl_info btn-sm mr5">证书配置</button><ul class="help-info-text-info c7" style="margin-top: 50px;"><li>双向认证仅支持【HTTPS访问】，如需全站设置，还需通过网站设置开启【强制HTTPS】.</li></ul>')
+              $('#authentication').append('<button type="button" title="证书配置" class="btn btn-default config_ssl_info btn-sm mr5">证书配置</button><ul class="help-info-text c7" style="margin-top: 50px;"><li>双向认证仅支持【HTTPS访问】，如需全站设置，还需通过网站设置开启【强制HTTPS】.</li><li>给网站开启【双向认证】，开启后用户需要将【证书】导入到浏览器后才能访问该网站（目前支持Nginx/Apache）</li></ul>')
               $('.config_ssl_info').click(function(){
                 $.post('/plugin?action=a&name=ssl_verify&s=get_config', {}, function (rdata) {
                   config_ssl_info(rdata)
