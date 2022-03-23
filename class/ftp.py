@@ -23,12 +23,15 @@ class ftp:
             if not os.path.exists('/www/server/pure-ftpd/sbin/pure-ftpd'): return public.returnMsg(False,'请先到软件商店安装Pure-FTPd服务')
             import files,time
             fileObj=files.files()
-            if re.search("\W + ",get['ftp_username']): return {'status':False,'code':501,'msg':public.getMsg('FTP_USERNAME_ERR_T')}
+            if get['ftp_username'].strip().find(' ') != -1: return public.returnMsg(False,'FTP用户名中不能包含空格')
+            if re.search("\W+",get['ftp_username']): return {'status':False,'code':501,'msg':public.getMsg('FTP_USERNAME_ERR_T')}
             if len(get['ftp_username']) < 3: return {'status':False,'code':501,'msg':public.getMsg('FTP_USERNAME_ERR_LEN')}
             if not fileObj.CheckDir(get['path']): return {'status':False,'code':501,'msg':public.getMsg('FTP_USERNAME_ERR_DIR')}
             if public.M('ftps').where('name=?',(get.ftp_username.strip(),)).count(): return public.returnMsg(False,'FTP_USERNAME_ERR_EXISTS',(get.ftp_username,))
-            username = get['ftp_username'].replace(' ','')
-            password = get['ftp_password']
+            username = get['ftp_username'].strip()
+            password = get['ftp_password'].strip()
+            
+            if len(password) < 6: return public.returnMsg(False,'FTP密码长度不能少于6位!')
             get.path = get['path'].replace(' ','')
             get.path = get.path.replace("\\", "/")
             fileObj.CreateDir(get)
@@ -69,6 +72,7 @@ class ftp:
             id = get['id']
             username = get['ftp_username']
             password = get['new_password']
+            if len(password) < 6: return public.returnMsg(False,'FTP密码长度不能少于6位!')
             public.ExecShell(self.__runPath + '/pure-pw passwd ' + username + '<<EOF \n' + password + '\n' + password + '\nEOF')
             self.FtpReload()
             public.M('ftps').where("id=?",(id,)).setField('password',password)
@@ -81,8 +85,8 @@ class ftp:
     
     #设置用户状态
     def SetStatus(self,get):
-        msg = public.getMsg('OFF');
-        if get.status != '0': msg = public.getMsg('ON');
+        msg = public.getMsg('OFF')
+        if get.status != '0': msg = public.getMsg('ON')
         try:
             id = get['id']
             username = get['username']
@@ -107,6 +111,7 @@ class ftp:
     def setPort(self,get):
         try:
             port = get['port']
+            if not port: return public.returnMsg(False,'FTP端口不能为空')
             if int(port) < 1 or int(port) > 65535: return public.returnMsg(False,'PORT_CHECK_RANGE')
             file = '/www/server/pure-ftpd/etc/pure-ftpd.conf'
             conf = public.readFile(file)
