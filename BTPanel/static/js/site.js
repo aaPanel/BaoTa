@@ -6418,7 +6418,7 @@ var site = {
                   </div>\
                 <ul class="help-info-text c7">\
                   <li>可以是文件扩展名(如:php等)，也可以是文件名</li>\
-                  <li>一般添加常见容易被篡改的扩展名即可，如html,php,js等</li>\
+                  <li>一般添加常见容易被篡改的扩展名即可，如html,php,js等 </li>\
                 </ul>\
                 </div>')
             //选择文件或扩展名
