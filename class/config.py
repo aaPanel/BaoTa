@@ -898,7 +898,6 @@ class config:
     #设置面板SSL
     def SetPanelSSL(self,get):
         if hasattr(get,"email"):
-            #rep_mail = "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$"
             rep_mail = r"[\w!#$%&'*+/=?^_`{|}~-]+(?:\.[\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\w](?:[\w-]*[\w])?\.)+[\w](?:[\w-]*[\w])?"
             if not re.search(rep_mail,get.email):
                 return public.returnMsg(False,'邮箱格式不合法')
@@ -908,18 +907,16 @@ class config:
             return sps
         else:
             sslConf = '/www/server/panel/data/ssl.pl'
-            if os.path.exists(sslConf):
+            if os.path.exists(sslConf) and not 'cert_type' in get:
                 public.ExecShell('rm -f ' + sslConf)
                 g.rm_ssl = True
                 return public.returnMsg(True,'PANEL_SSL_CLOSE')
             else:
-                # public.ExecShell('pip install cffi')
-                # public.ExecShell('pip install cryptography')
-                # public.ExecShell('pip install pyOpenSSL')
-                if get.cert_type in [2,'2']:
+                if get.cert_type in [0,'0']:
                     result = self.SavePanelSSL(get)
                     if not result['status']: return result
                     public.writeFile(sslConf,'True')
+                    public.writeFile('data/reload.pl','True')
                 else:
                     try:
                         if not self.CreateSSL(): return public.returnMsg(False,'PANEL_SSL_ERR')
@@ -1336,6 +1333,9 @@ class config:
         keyPath = 'ssl/privateKey.pem'
         certPath = 'ssl/certificate.pem'
         checkCert = '/tmp/cert.pl'
+        ssl_pl = 'data/ssl.pl'
+        if not 'certPem' in get: return public.returnMsg(False,'缺少certPem参数!')
+        if not 'privateKey' in get: return public.returnMsg(False,'缺少privateKey参数!')
         public.writeFile(checkCert,get.certPem)
         if get.privateKey:
             public.writeFile(keyPath,get.privateKey)
@@ -1343,7 +1343,7 @@ class config:
             public.writeFile(certPath,get.certPem)
         if not public.CheckCert(checkCert): return public.returnMsg(False,'证书错误,请检查!')
         public.writeFile('ssl/input.pl','True')
-        public.writeFile('data/reload.pl','True')
+        if os.path.exists(ssl_pl): public.writeFile('data/reload.pl','True')
         return public.returnMsg(True,'证书已保存!')
 
 
