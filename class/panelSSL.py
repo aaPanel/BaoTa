@@ -1022,7 +1022,7 @@ class panelSSL:
         pdata = {}
         pdata['data'] = self.De_Code(data)
         try:
-            rtmp = public.httpPost(self.__APIURL+'/GetAuthToken',pdata)
+            rtmp = public.httpPost(self.__BINDURL,pdata)
             result = json.loads(rtmp);           
             result['data'] = self.En_Code(result['data'])
             if not result['status']: return result
