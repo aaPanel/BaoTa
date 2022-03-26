@@ -19,8 +19,6 @@ except:
 class panelSSL:
     __APIURL = public.GetConfigValue('home') + '/api/Auth'
     __APIURL2 = public.GetConfigValue('home') + '/api/Cert'
-    __BINDURL = 'https://api.bt.cn/Auth/GetAuthToken'
-    __CODEURL = 'https://api.bt.cn/Auth/GetBindCode'
     __UPATH = 'data/userInfo.json'
     __userInfo = None
     __PDATA = None
@@ -62,7 +60,7 @@ class panelSSL:
         pdata = {}
         pdata['data'] = self.De_Code(data)
         try:
-            rtmp = public.httpPost(self.__BINDURL,pdata)
+            rtmp = public.httpPost(self.__APIURL+'/GetToken',pdata)
             result = json.loads(rtmp)
             result['data'] = self.En_Code(result['data'])
             if result['data']: 
@@ -1022,7 +1020,7 @@ class panelSSL:
         pdata = {}
         pdata['data'] = self.De_Code(data)
         try:
-            rtmp = public.httpPost(self.__BINDURL,pdata)
+            rtmp = public.httpPost(self.__APIURL+'/GetAuthToken',pdata)
             result = json.loads(rtmp);           
             result['data'] = self.En_Code(result['data'])
             if not result['status']: return result
@@ -1050,7 +1048,7 @@ class panelSSL:
         pdata = {}
         pdata['data'] = self.De_Code(data)
         try:
-            rtmp = public.httpPost(self.__CODEURL,pdata)
+            rtmp = public.httpPost(self.__APIURL+'/GetBindCode',pdata)  
             result = json.loads(rtmp);           
             return result
         except Exception as ex:
