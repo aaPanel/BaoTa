@@ -103,8 +103,8 @@ class userlogin:
     def request_tmp(self,get):
         try:
             if not hasattr(get,'tmp_token'): return public.returnJson(False,'错误的参数!'),json_header
-            # if len(get.tmp_token) == 48:
-            #     return self.request_temp(get)
+            if len(get.tmp_token) == 48:
+                return self.request_temp(get)
             if len(get.tmp_token) != 64: return public.returnJson(False,'错误的参数!'),json_header
             if not re.match(r"^\w+$",get.tmp_token):return public.returnJson(False,'错误的参数!'),json_header
 
