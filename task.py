@@ -671,7 +671,6 @@ def check_files_panel():
                 os.popen('{} /www/server/panel/script/check_files.py'.format(python_bin)).read()
                 )
         except:
-            logging.info(public.get_error_info())
             continue
         if result in ['0']:
             continue
