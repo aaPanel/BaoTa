@@ -494,12 +494,16 @@ class panelPlugin:
         filename = '{}/{}.zip'.format(self.__tmp_path,upgrade_plugin_name)
         if not os.path.exists(self.__tmp_path): os.makedirs(self.__tmp_path,384)
         if not cache.get(pkey):
-            download_res = requests.post(self.__download_url,pdata,headers=public.get_requests_headers(),timeout=30,stream=True)
+            try:
+                download_res = requests.post(self.__download_url,pdata,headers=public.get_requests_headers(),timeout=30,stream=True)
+            except Exception as ex:
+                raise public.PanelError(public.error_conn_cloud(str(ex)))
+            
             try:
                 headers_total_size = int(download_res.headers['File-size'])
             except:
                 if download_res.text.find('<html>') != -1:
-                    raise public.PanelError(public.error_conn_cloud())
+                    raise public.PanelError(public.error_conn_cloud(download_res.text))
                 raise public.PanelError(download_res.text)
             res_down_size = 0
             res_chunk_size = 8192

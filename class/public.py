@@ -4238,13 +4238,39 @@ def get_mysql_bin():
             return bin_file
     return bin_files[0]
 
-def error_conn_cloud():
+def error_conn_cloud(text):
     '''
         @name 连接云端失败
         @author hwliang<2021-12-18>
         @return void
     '''
+    code_msg = ''
+    if text.find("502 Bad Gateway") != -1:
+        code_msg = '502 Bad Gateway'
+    elif text.find("Connection refused") != -1:
+        code_msg = 'Connection refused'
+    elif text.find("Connection timed out") != -1:
+        code_msg = 'Connection timed out'
+    elif text.find("Connection reset by peer") != -1:
+        code_msg = 'Connection reset by peer'
+    elif text.find("Name or service not known") != -1:
+        code_msg = 'Name or service not known'
+    elif text.find("No route to host") != -1:
+        code_msg = 'No route to host'
+    elif text.find("No such file or directory") != -1:
+        code_msg = 'No such file or directory'
+    elif text.find("404 Not Found") != -1:
+        code_msg = '404 Not Found'
+    elif text.find("403 Forbidden") != -1:
+        code_msg = '403 Forbidden'
+    elif text.find("401 Unauthorized") != -1:
+        code_msg = '401 Unauthorized'
+    elif text.find("400 Bad Request") != -1:
+        code_msg = '400 Bad Request'
+    elif text.find("Remote end closed connection without response") != -1:
+        code_msg = 'Remote end closed connection'
     err_template_file = '{}/BTPanel/templates/default/error_connect.html'.format(get_panel_path())
     msg = readFile(err_template_file)
+    msg = msg.format(code=code_msg)
     return msg
 
