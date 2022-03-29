@@ -1954,7 +1954,7 @@ function ajaxSetup () {
             return;
           }
           gl_error_body = jqXHR.responseText;
-          error_msg = jqXHR.responseText.split('<h4 style="font-size: none;">')[1].split("</h4>")[0].replace("面板运行时发生错误:",'').replace("public.PanelError:",'').trim();
+          error_msg = jqXHR.responseText.split('public.PanelError: ')[1].split("</pre>")[0].replace("面板运行时发生错误:",'').replace("public.PanelError:",'').trim();
           error_msg += "<br><a class='btlink' onclick='show_error_message()'> >>点击查看详情</a>";
           $(".layui-layer-padding").parents('.layer-anim').remove();
           $(".layui-layer-shade").remove();
@@ -1967,6 +1967,7 @@ function ajaxSetup () {
               shadeClose: false,
               shade: 0.3,
               icon:2,
+              area:"500px",
               success: function () {
                 $('pre').scrollTop(100000000000)
               }

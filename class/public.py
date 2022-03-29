@@ -4238,3 +4238,13 @@ def get_mysql_bin():
             return bin_file
     return bin_files[0]
 
+def error_conn_cloud():
+    '''
+        @name 连接云端失败
+        @author hwliang<2021-12-18>
+        @return void
+    '''
+    err_template_file = '{}/BTPanel/templates/default/error_connect.html'.format(get_panel_path())
+    msg = readFile(err_template_file)
+    return msg
+

@@ -282,8 +282,10 @@ REQUEST_FORM: {request_form}
     panel_version = public.version(),
     os_version = public.get_os_version()
 )
-
-    result = public.readFile(public.get_panel_path() + '/BTPanel/templates/default/panel_error.html').format(error_title=error_info.split("\n")[-1],request_info = request_info,error_msg=error_info)
+    error_title = error_info.split("\n")[-1].replace('public.PanelError: ','').strip()
+    if error_info.find('连接云端服务器失败') != -1:
+        error_title = "连接云端服务器失败!"
+    result = public.readFile(public.get_panel_path() + '/BTPanel/templates/default/panel_error.html').format(error_title=error_title,request_info = request_info,error_msg=error_info)
     return Resp(result,500)
 
 # ===================================Flask HOOK========================#

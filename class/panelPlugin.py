@@ -498,6 +498,8 @@ class panelPlugin:
             try:
                 headers_total_size = int(download_res.headers['File-size'])
             except:
+                if download_res.text.find('<html>') != -1:
+                    raise public.PanelError(public.error_conn_cloud())
                 raise public.PanelError(download_res.text)
             res_down_size = 0
             res_chunk_size = 8192
