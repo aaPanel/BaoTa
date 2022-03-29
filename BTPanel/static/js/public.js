@@ -6420,7 +6420,7 @@ var product_recommend = {
    * @param {Function} callback 回调函数
    */
   get_product_type:function(callback){
-    bt.send('get_pay_type','ajax/get_pay_type',{},(rdata)=>{
+    bt.send('get_pay_type','ajax/get_pay_type',{},function(rdata){
       bt.set_storage('session','get_pay_type',JSON.stringify(rdata))
       if(callback) callback(rdata)
     })

@@ -5482,6 +5482,21 @@ select[disabled] {
   height: 30px;
 }
 
+.bootstrap-select>.dropdown-menu {
+  max-height: 250px;
+  overflow: hidden;
+}
+
+.bootstrap-select.open>.dropdown-menu {
+  display: flex;
+  flex-direction: column;
+}
+
+.bootstrap-select>.dropdown-menu>.dropdown-menu {
+  flex: 1;
+  overflow: auto;
+}
+
 .set_nginx_config,
 .set_Apache_config {
   padding: 10px 10px 10px 0;
