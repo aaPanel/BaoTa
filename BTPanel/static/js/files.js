@@ -21,6 +21,7 @@ var bt_file = {
     file_present_task: null,
     file_selection_operating: {},
     file_share_list: [],
+    recomConfig:{},  //推荐软件
     scroll_width: (function() {
         
         // 创建一个div元素
@@ -66,16 +67,23 @@ var bt_file = {
     },
 
     init: function() {
-        if (bt.get_cookie('rank') == undefined || bt.get_cookie('rank') == null || bt.get_cookie('rank') == 'a' || bt.get_cookie('rank') == 'b') {
-            bt.set_cookie('rank', 'list');
-        }
-        this.area = [window.innerWidth, window.innerHeight];
-        this.file_path = bt.get_cookie('Path');
-        this.event_bind(); // 事件绑定
-        this.reader_file_list({ is_operating: true }); // 渲染文件列表
-        this.render_file_disk_list(); // 渲染文件磁盘列表
-        
-        this.set_file_table_width(); // 设置表格宽度
+        var that = this;
+        //推荐安全软件
+        product_recommend.init(function(){
+            if (bt.get_cookie('rank') == undefined || bt.get_cookie('rank') == null || bt.get_cookie('rank') == 'a' || bt.get_cookie('rank') == 'b') {
+                bt.set_cookie('rank', 'list');
+            }
+            that.area = [window.innerWidth, window.innerHeight];
+            that.file_path = bt.get_cookie('Path');
+            that.event_bind(); // 事件绑定
+            that.reader_file_list({ is_operating: true }); // 渲染文件列表
+            that.render_file_disk_list(); // 渲染文件磁盘列表
+
+            that.set_file_table_width(); // 设置表格宽度
+            that.recomConfig = product_recommend.get_recommend_type(7);
+            var callback = $(this).data('callback')
+            if (callback) callback(item);
+        })
     },
     // 事件绑定
     event_bind: function() {
@@ -343,9 +351,49 @@ var bt_file = {
 
         // 分享列表
         $('.share_file_list').on('click', function() {
-                that.open_share_view();
-            })
-            // 打开硬盘挂载的目录
+            that.open_share_view();
+        })
+        // 数据同步
+        $('.file_rsync_list').on('click',function(){
+            try{
+                $.each(that.recomConfig.list,function(index,item){
+                    if(item.name == 'rsync'){
+                        var _title = '',_tips = '',_status = 0;
+                        if(!item['isBuy'] || !item['install']){
+                            if(item['isBuy'] && !item['install']){
+                                _title = '安装'
+                                _tips = '检测到'+item.title+'功能没有安装，是否立即安装开启使用'
+                            }else{
+                                _title = '购买'
+                                _tips = '未开通此功能，是否跳转至立即开通'
+                                _status = 1
+                            }
+                        }else{
+                            bt.plugin.get_plugin_byhtml(item.name,function(html){
+                                layer.open({
+                                    type:1,
+                                    title:'<img style="width: 24px;margin-right: 5px;margin-left: -10px;margin-top: -3px;" src="/static/img/soft_ico/ico-rsync.png">数据同步工具',
+                                    area:'1000px',
+                                    content:html,
+                                })
+                            })
+                            return false;
+                        }
+                        layer.confirm(_tips, { title: _title+item.title, closeBtn: 2, icon: 3 }, function() {
+                            switch(_status){
+                                case 0:  //未安装
+                                    bt.soft.install(item['name'])
+                                    break;
+                                case 1:  //未购买
+                                    product_recommend.pay_product_sign('ltd',item.pay)
+                                    break;
+                            }
+                        })
+                    }
+                })
+            }catch(err){console.log(err);}
+        })
+        // 打开硬盘挂载的目录
         $('.mount_disk_list').on('click', '.nav_btn', function() {
             var path = $(this).data('menu');
             that.reader_file_list({ path: path, is_operating: true });
@@ -994,8 +1042,9 @@ var bt_file = {
         } else {
             $('.nav_group.mount_disk_list,.nav_group.multi').removeClass('thezoom');
         }
-        if (this.area[0] < 1360) {
-            indexs = Math.ceil(((1360 - this.area[0]) / 68));
+        $('.file_menu_tips').removeAttr('style')
+        if (this.area[0] < 1500) {
+            indexs = Math.ceil(((1500 - this.area[0]) / 68));
             $('.batch_group_list>.nav_btn_group').each(function(index) {
                 if (index >= $('.batch_group_list>.nav_btn_group').length - (indexs + 2)) {
                     $(this).hide()
@@ -1003,6 +1052,7 @@ var bt_file = {
                     $(this).show();
                 }
             });
+            $('.file_menu_tips').hide()
             $('.batch_group_list>.nav_btn_group:last-child').removeClass('hide').show();
         } else {
             $('.batch_group_list>.nav_btn_group').css('display', 'inline-block');
@@ -1500,7 +1550,7 @@ var bt_file = {
                     '<span>' + item['name'] + '</span>' +
                     '</li>'
             })
-            html += '<li data-manage="favorites" onclick="bt_file.set_favorites_manage()"><span class="iconfont icon-shezhi1"></span><span>管理</span></li>'
+            html += '<li data-manage="favorites" data-null onclick="bt_file.set_favorites_manage()"><span class="iconfont icon-shezhi1"></span><span>管理</span></li>'
         } else { html = '<li data-null style="width: 150px;"><i></i><span>（空）</span></li>' }
 
         $('.favorites_file_path .nav_down_list').html(html)
@@ -1587,6 +1637,556 @@ var bt_file = {
                 layer.msg(res.msg, { icon: res.status ? 1 : 2 })
             })
         })
+    },
+    /**
+     * @description 数据同步
+     * @param {String} config 选中的文件信息
+     * @return void
+     */
+    set_dir_rsync:function(config){
+        var loadget =  layer.msg('正在检测配置信息...',{icon:16,time:0,shade: [0.3, '#000']});
+        $.get('/plugin?action=a&name=rsync&s=get_send_conf',function(res){
+            if(res.length > 0){
+                $.each(res,function(index,item){
+                    item.path = item.path.replace(/\/$/, "")
+                    if(item.path == config.path){
+                        layer.close(loadget);
+                        bt_file.set_send_port_view('',item.name,index)
+                        return false;
+                    }
+                    //没有对应的数据时，获取接收端列表
+                    if(index == res.length-1){
+                        get_receive_port_conf()
+                    }
+                })
+            }else{
+                get_receive_port_conf()
+            }
+        })
+        // 获取接收端列表
+        function get_receive_port_conf(){
+            $.get('/plugin?action=a&name=rsync&s=get_global_conf',function(res){
+                if(res['modules'].length > 0){
+                    $.each(res['modules'],function(index,item){
+                        item.path = item.path.replace(/\/$/, "")
+                        if(item.path == config.path){
+                            layer.close(loadget);
+                            item['mName'] = item.name;
+                            var _conf = {title:'编辑接收端',btn:'保存',action:'modify_module',form:item}
+                            bt_file.set_rsync_view('',_conf)
+                            return false;
+                        }
+                        //没有对应的数据时，获取接收端列表
+                        if(index == res['modules'].length-1){
+                            default_create_deply()
+                        }
+                    })
+                }else{
+                    default_create_deply()
+                }
+            })
+        }
+        // 默认创建同步
+        function default_create_deply(){
+            layer.close(loadget);
+            bt.open({
+                type: 1,
+                title:'【'+config.filename+'】设置数据同步',
+                area:'600px',
+                btn:false,
+                content:'<div class="bt-form pd25">\
+                  <div class="rebt-con" style="width:100%;display: flex;padding:0;height:auto;justify-content: space-around;">\
+                    <div class="rebt-li" style="position:relative;width: 200px;" onclick="bt_file.set_rsync_view(\''+config.path+'\')">\
+                      <a href="javascript:;" style="font-size:13px;border-radius:2px;"><span style="display: block;font-weight: bold;font-size: 15px;">接收端</span>我需要从其他服务器中接收数据</a>\
+                    </div>\
+                    <div class="rebt-li" style="position:relative;width: 200px;" onclick="bt_file.set_send_port_view(\''+config.path+'\',false)">\
+                      <a href="javascript:;"  style="font-size:13px;border-radius:2px;"><span style="display: block;font-weight: bold;font-size: 15px;">发送端</span>我需要将本服务器数据发送出去</a>\
+                    </div>\
+                  </div>\
+                  <ul class="help-info-text c7">\
+                    <li>注意：不同的同步任务及服务器请不要使用相同的同步名称及用户名，这会导致管理混乱。</li>\
+                    <li><a class="btlink" target="_blank" href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=11231">详细使用方法，请点击这里查看教程</a><a href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=11231" target="_blank" class="bt-ico-ask" style="cursor: pointer;">?</a></li>\
+                    </ul>\
+                </div>'
+            })
+        }
+    },
+    /**
+     * @description 设置文件夹数据同步   接收端
+     * @param {String} path 文件夹路径
+     * @param {Object} editConfig 编辑参数
+     * @return void
+     */
+    set_rsync_view:function(path,editConfig){
+        var _param = {title:'创建接收端',btn:'提交',action:'add_module',form:{mName:'',password:bt.get_random(12),path:path,comment:''}},
+            receiveForm = null;
+        if(editConfig) _param = editConfig
+        layer.open({
+            type: 1,
+            title: _param.title,
+            area: ['470px','320px'],
+            btn:[_param.btn,'取消'],
+            shadeClose: false,
+            closeBtn: 2,
+            content: '<div class="ptb20" id="receive_port_view"></div>',
+            success: function (layers) {
+                receiveForm = bt_tools.form({
+                    el:'#receive_port_view',
+                    form:[{
+                        label:'用户名',
+                        group: {
+                            type: 'text',
+                            name: 'mName',
+                            width: '300px',
+                            disabled:(typeof editConfig === 'object'?true:false),
+                            placeholder: '请填写用户名,不能有中文或特殊符号'
+                        }
+                    },{
+                        label:'密码',
+                        group: {
+                            type: 'text',
+                            name: 'password',
+                            width: '300px',
+                            icon:{
+                                type:'glyphicon-repeat',
+                                name:'random',
+                            },
+                            placeholder: '请输入密码'
+                        }
+                    },{
+                        label:'同步到',
+                        group: {
+                            type: 'text',
+                            name: 'path',
+                            width: '300px',
+                            disabled:true,
+                            placeholder: '请选择本地路径'
+                        }
+                    },{
+                        label:'备注',
+                        group: {
+                            type: 'text',
+                            name: 'comment',
+                            width: '300px',
+                        }
+                    }],
+                    data:_param.form
+                })
+                //随机密码
+                $('.glyphicon-repeat').click(function(){
+                    $(this).siblings('input').val(bt.get_random(12))
+                })
+            },
+            yes:function(indexs){
+                var _form = receiveForm.$get_form_value();
+                if(_form.mName == '') return layer.msg('请填写用户名',{icon:2})
+                if(_form.password == '') return layer.msg('请填入密码',{icon:2})
+                bt_tools.send({
+                    url: '/plugin?action=a&name=rsync&s='+_param.action,
+                    data: _form
+                }, function (res) {
+                    layer.closeAll();
+                    bt_tools.msg(res)
+                    look_receive_info(_form)
+                }, '提交表单信息')
+            }
+        })
+        // 数据同步账号信息
+        function look_receive_info(form){
+            layer.open({
+                type:1,
+                closeBtn: 1,
+                title:'接收端用户信息',
+                area:['430px','240px'],
+                shadeClose: false,
+                content:'<div class="pd20">\
+                <div class="replace_content_view ">\
+                <div class="replace_content_line">\
+                    <span class="tname">用户名</span>\
+                    <div class="info-r">\
+                        <input class="bt-input-text" disabled="disabled" autocomplete="off" type="text" style="width:280px" value="'+form.mName+'">\
+                    </div>\
+                </div>\
+                <div class="replace_content_line">\
+                    <span class="tname">密码</span>\
+                    <div class="info-r">\
+                        <input class="bt-input-text" disabled="disabled" autocomplete="off" type="text" style="width:280px" value="'+form.password+'">\
+                    </div>\
+                </div></div>\
+                <ul class="help-info-text c7">\
+                    <li>使用上面的用户信息，前往发送数据的服务器上面的创建发送端</li>\
+                </ul></div>'
+            })
+        }
+    },
+    /**
+     * @description 设置文件夹数据同步   发送端
+     * @param {String} path 文件夹路径
+     * @param {String} mName 编辑参数
+     * @param {Number} index 索引位置
+     * @return void
+     */
+    set_send_port_view:function(path,mName,index){
+        var loadget =  layer.msg('正在获取配置信息...',{icon:16,time:0,shade: [0.3, '#000']});
+        var setClientForm = {},setTitle ='',setSubmit = ''
+        $.post('/plugin?action=a&name=rsync&s=get_send_byname',{mName:mName},function(rdata){
+            layer.close(loadget);
+            var aulv = '',alwv = '',real ='',timing='',day = '',min='',none='',hour='',minuten='',open_compress = '',close_compress='';
+            var status = (mName == false)?false:true;
+            if (status){
+                setTitle = '编辑同步任务';
+                setSubmit = '保存';
+                setClientForm = rdata;
+                if (setClientForm.delete != 'true'){
+                    aulv = 'selected ="selected "';
+                }else{
+                    alwv = 'selected ="selected "';
+                }
+                if (setClientForm.realtime) {
+                    real = 'selected ="selected "';
+                    none = 'display:none;';
+                }else{
+                    timing ='selected ="selected "';
+                    none = 'display:block;';
+                }
+                if (setClientForm.cron.type == 'day'){
+                    day = 'selected ="selected "';
+                    hour = 'display:block;';
+                    minuten = 'display:none;';
+                }else{
+                    min ='selected ="selected "';
+                    hour = 'display:none;';
+                    minuten = 'display:block;';
+                }
+
+                if(setClientForm.rsync.compress == 'true'){
+                    open_compress = 'selected ="selected "';
+                }else{
+                    close_compress = 'selected ="selected "';
+                }
+            }else{
+                setTitle = '创建发送任务';
+                setSubmit = '提交';
+                none = 'display:none;';
+                minuten = 'display:none;';
+                setClientForm = {
+                    delete:'false',
+                    cron:{
+                        where_hour:'0',
+                        id:'',
+                        type:'',
+                        where1:'1',
+                        where_minute:'0'
+                    },
+                    rsync:{
+                        bwlimit:1024
+                    },
+                    delay:3,
+                    realtime:true,
+                    secret_key:'',
+                    ip:'',
+                    mName:'',
+                    path:path,
+                    exclude:'',
+                }
+            }
+            layer.open({
+                type: 1,
+                skin: 'demo-class',
+                area: '600px',
+                title: setTitle,
+                closeBtn: 2,
+                shift: 0,
+                shadeClose: false,
+                content: "<form class='bt-form pd20 pb70 ' id='fromServerPath' accept-charset='utf-8'>\
+                            <div class='line'>\
+                                <span class='tname'>服务器IP</span>\
+                                <div class='info-r c4'>\
+                                    <input class='bt-input-text' type='text' name='ip' placeholder='请输入接收服务器IP' value='"+ setClientForm.ip +"' style='width:310px' />\
+                                </div>\
+                            </div>\
+                            <div class='line'>\
+                                <span class='tname'>同步目录</span>\
+                                <div class='info-r c4'>\
+                                    <input id='inputPath' class='bt-input-text mr5' type='text' name='path' value='"+ setClientForm.path +"' placeholder='请选择同步目录' disabled='disabled' style='width:310px' />\
+                                </div>\
+                            </div>\
+                            <div class='line'>\
+                                <span class='tname'>同步方式</span>\
+                                <div class='info-r c4'>\
+                                    <select class='bt-input-text' name='delete' style='width:100px'>\
+                                        <option value='false' "+ aulv +">增量</option>\
+                                        <option value='true' "+ alwv +">完全</option>\
+                                    </select>\
+                                    <a href='https://www.bt.cn/bbs/forum.php?mod=viewthread&amp;tid=11231' target='_blank' class='bt-ico-ask' style='cursor: pointer;'>?</a>\
+                                    <span style='margin-left: 20px;margin-right: 10px;'>同步周期</span>\
+                                    <select class='bt-input-text synchronization' name='realtime' style='width:100px'>\
+                                        <option value='true' "+ real +">实时同步</option>\
+                                        <option value='false' "+ timing +">定时同步</option>\
+                                    </select>\
+                                </div>\
+                            </div>\
+                            <!--<div class='line'>\
+                                <span class='tname'>同步周期</span>\
+                                <div class='info-r c4'>\
+                                    <select class='bt-input-text synchronization' name='realtime' style='width:100px'>\
+                                        <option value='true' "+ real +">实时同步</option>\
+                                        <option value='false' "+ timing +">定时同步</option>\
+                                    </select>\
+                                </div>\
+                            </div>-->\
+                            <div class='line' id='period' style='"+ none +"height:45px;'>\
+                                <span class='tname'>定时周期</span>\
+                                <div class='info-r c4'>\
+                                    <select class='bt-input-text pull-left mr20' name='period' style='width:100px;'>\
+                                        <option value='day' "+ day +">每天</option>\
+                                        <option value='minute-n' "+ min +">N分钟</option>\
+                                    </select>\
+                                    <div class='plan_hms pull-left mr20 bt-input-text hour' style='"+ hour +"'>\
+                                        <span><input type='number' name='hour' value='"+ setClientForm.cron.hour +"' maxlength='2' max='23' min='0'></span>\
+                                        <span class='name'>小时</span>\
+                                    </div>\
+                                    <div class='plan_hms pull-left mr20 bt-input-text minute' style='"+ hour +"'>\
+                                        <span><input type='number' name='minute' value='"+ setClientForm.cron.minute +"' maxlength='2' max='59' min='0'></span>\
+                                        <span class='name'>分钟</span>\
+                                    </div>\
+                                    <div class='plan_hms pull-left mr20 bt-input-text minute-n' style='"+ minuten +"'>\
+                                        <span><input type='number' name='minute-n' value='"+ setClientForm.cron.where1 +"' maxlength='2' max='59' min='0'></span>\
+                                        <span class='name'>分钟</span>\
+                                    </div>\
+                                </div>\
+                            </div>\
+                            <div class='line'>\
+                                <span class='tname'>限速</span>\
+                                <div class='info-r c4'>\
+                                    <input class='bt-input-text' type='number' name='bwlimit' min='0'  value='"+ setClientForm.rsync.bwlimit +"' style='width:100px' /> KB\
+                                    <span style='margin-left: 54px;margin-right: 10px;'>延迟</span><input class='bt-input-text' min='0' type='number' name='delay'  value='"+ setClientForm.delay +"' style='width:100px' /> 秒\
+                                </div>\
+                            </div>\
+                            <div class='line'>\
+                                <span class='tname'>连接方式</span>\
+                                <div class='info-r c4'>\
+                                    <select class='bt-input-text' name='conn_type' style='width:100px'>\
+                                        <option value='key'>密钥</option>\
+                                        <option value='user'>帐号</option>\
+                                    </select>\
+                                    <span style='margin-left: 45px;margin-right: 10px;'>压缩传输</span>\
+                                    <select class='bt-input-text' name='compress' style='width:100px'>\
+                                        <option value='true' "+open_compress+">开启</option>\
+                                        <option value='false' "+close_compress+">关闭</option>\
+                                    </select>\
+                                </div>\
+                            </div>\
+                            <div class='line conn-key'>\
+                                <span class='tname'>接收密钥</span>\
+                                <div class='info-r c4'>\
+                                    <textarea id='mainDomain' class='bt-input-text' name='secret_key' style='width:310px;height:75px;line-height:22px' placeholder='此密钥为 接收配置[接收账号] 的密钥'>"+ setClientForm.secret_key +"</textarea>\
+                                </div>\
+                            </div>\
+                            <div class='line conn-user'>\
+                                <span class='tname'>用户名</span>\
+                                <div class='info-r c4'>\
+                                    <input class='bt-input-text' type='text' name='u_user' min='0'  value='"+(setClientForm.name?setClientForm.name:'')+"' style='width:310px' />\
+                                </div>\
+                            </div>\
+                            <div class='line conn-user'>\
+                                <span class='tname'>密码</span>\
+                                <div class='info-r c4'>\
+                                    <input class='bt-input-text' type='text' name='u_pass' min='0'  value='"+(setClientForm.password?setClientForm.password:'')+"' style='width:310px' />\
+                                </div>\
+                            </div>\
+                            <div class='line conn-user'>\
+                                <span class='tname'>端口</span>\
+                                <div class='info-r c4'>\
+                                    <input class='bt-input-text' type='number' name='u_port' min='0'  value='"+(setClientForm.rsync.port?setClientForm.rsync.port:'873')+"' style='width:310px' />\
+                                </div>\
+                            </div>\
+                            <div class='bt-form-submit-btn'>\
+                                <button type='button' class='btn btn-danger btn-sm btn-title colseView' onclick='layer.closeAll()'>取消</button>\
+                                <button type='button' class='btn btn-success btn-sm btn-title setViewData'>"+ setSubmit +"</button>\
+                            </div>\
+                            <ul class=\"help-info-text c7\">\
+                                <li>【同步目录】：若不以<code>/</code>结尾，则表示将数据同步到二级目录，一般情况下目录路径请以<code>/</code>结尾</li>\
+                                    <li>【同步方式】增量： 数据更改/增加时同步，且只追加和替换文件</li>\
+                                    <li>【同步方式】完全： 保持两端的数据与目录结构的一致性，会同步删除、追加和替换文件和目录</li>\
+                                    <li>【限速】：限制数据同步任务的速度，防止因同步数据导致带宽跑高</li>\
+                                    <li>【延迟】：在延迟时间周期内仅记录不同步，到达周期后一次性同步数据，以节省开销</li>\
+                                    <li>【压缩传输】：开启后可减少带宽开销，但会增加CPU开销，如带宽充足，建议关闭此选项</li>\
+                                </ul>\
+                            </form>",
+
+                success:function(){
+                    $(".conn-user").hide();
+                    $("select[name='conn_type']").change(function(){
+                        if($(this).val() == 'key'){
+                            $(".conn-user").hide();
+                            $(".conn-key").show();
+                        }else{
+                            $(".conn-user").show();
+                            $(".conn-key").hide();
+                        }
+                    });
+                    //默认添加时使用账号密码方式
+                    if(!status){
+                        $("select[name='conn_type']").val('user')
+                        $("select[name='conn_type']").change()
+                    }
+                }
+            });
+
+            $("select[name='delete']").change(function(){
+                if($(this).val() == 'true'){
+                    var mpath = $('input[name="path"]').val();
+                    var msg = '<div><span style="color:orangered;">警告：您选择了完全同步，将会使本机同步与目标机器指定目录的文件保持一致，'
+                        +'<br />请确认目录设置是否有误，一但设置错误，可能导致目标机器的目录文件被删除!</span>'
+                        +'<br /><br /> <span style="color:red;">注意： 同步程序将本机目录：'
+                        +mpath+'的所有数据同步到目标服务器，若目标服务器的同步目录存在其它文件将被删除!</span> <br /><br /> 已了解风险，请按确定继续</div>';
+
+                    layer.confirm(msg,{title:'数据安全风险警告',icon:2,closeBtn: 1,shift: 5,
+                        btn2:function(){
+                            setTimeout(function(){$($("select[name='delete']").children("option")[0]).prop('selected',true);},100);
+                        }
+                    });
+                }
+            });
+            $('.synchronization').click(function(event) {
+                var selVal = $('.synchronization option:selected').val();
+                if (selVal == "false"){
+                    $('#period').show();
+                }else{
+                    $('#period').hide();
+                    $('.hour input,.minute input').val('0');
+                    $('.minute-n input').val('1');
+                }
+            });
+            $('#period select').click(function(event) {
+                var selVal = $('#period select option:selected').val();
+                if (selVal == 'day'){
+                    $('.hour,.minute').show();
+                    if ($('.hour input').val() == ''){
+                        $('.hour input,.minute input').val('0');
+                    }
+                    $('.minute-n').hide();
+                }else{
+                    $('.hour,.minute').hide();
+                    $('.minute-n').show();
+                    if ($('.minute-n input').val() == ''){
+                        $('.minute-n input').val('1');
+                    }
+                }
+            });
+            $('.setViewData').click(function(event) {
+                var server = {
+                    ip:'',
+                    path:'',
+                    secret_key:'',
+                    delete:'true',
+                    realtime:'true',
+                    sname:'',
+                    password:'',
+                    port:873,
+                    cron:{
+                        type:'',
+                        where1:'',
+                        hour:'',
+                        minute:'',
+                        id:'',
+                        port:873
+                    }
+                }
+
+                if ($('input[name="ip"]').val() != ''){
+                    server.ip = $('input[name="ip"]').val();
+                }else{
+                    layer.msg('请输入服务器IP地址！');
+                    return false;
+                }
+                if($('input[name="bwlimit"]').val() > -1){
+                    server.bwlimit = $('input[name="bwlimit"]').val();
+                }
+
+                if($('input[name="delay"]').val() > -1){
+                    server.delay = $('input[name="delay"]').val();
+                }
+
+                if ($('input[name="path"]').val() != ''){
+                    server.path = $('input[name="path"]').val();
+                }else{
+                    layer.msg('请输入同步目录！');
+                    return false;
+                }
+                server.delete = $('select[name="delete"] option:selected').val();
+                server.realtime = ($('select[name="realtime"] option:selected').val() == 'true'?true:false);
+                server.compress = $('select[name="compress"] option:selected').val();
+                if (!server.realtime) {
+                    server.cron.type = $('select[name="period"] option:selected').val();
+                    if (server.cron.type == 'day') {
+                        server.cron.hour = $('input[name="hour"]').val();
+                        server.cron.minute = $('input[name="minute"]').val();
+                        if (server.cron.hour == '' || server.cron.minute =='') {
+                            layer.msg('请输入同步时间！');
+                            return false;
+                        }
+                    }else{
+                        server.cron.where1 = $('input[name="minute-n"]').val();
+                        if (server.cron.where1 == '') {
+                            layer.msg('请输入同步时间！');
+                            return false;
+                        }
+                    }
+                }
+                var conn_type = $("select[name='conn_type']").val();
+                if(conn_type == 'key'){
+                    if ( $('textarea[name="secret_key"]').val() != ''){
+                        server.secret_key = $('textarea[name="secret_key"]').val();
+                    }else{
+                        layer.msg('请输入接收密钥！');
+                        return false;
+                    }
+                }else{
+                    server.sname = $("input[name='u_user']").val();
+                    server.password = $("input[name='u_pass']").val();
+                    server.cron.port = Number($("input[name='u_port']").val());
+                    server.port = server.cron.port;
+                    if (!server.sname || !server.password || !server.cron.port){
+                        layer.msg('请输入帐号、密码、端口信息');
+                        return false;
+                    }
+                }
+
+
+                server.cron = JSON.stringify(server.cron);
+                server.index = index
+                var loading = layer.msg('提交数据中,请稍后...',{icon:16,time:0,shade: [0.3, '#000']});
+                $.post('/plugin?action=a&name=rsync&s=add_ormodify_send',server,function(res){
+                    layer.close(loading);
+                    if (res.status){
+                        layer.closeAll();
+                        setTimeout(function(){
+                            layer.msg(res.msg,{icon:1});
+                        },200)
+                        //创建发送后给文件夹添加备注
+                        if(path){
+                            $.get('/plugin?action=a&name=rsync&s=get_send_conf',function(res){
+                                $.each(res,function(index,item){
+                                    item.path = item.path.replace(/\/$/, "")
+                                    if(item.path == path){
+                                        var ps = '接收服务器:'+item.ip+'::'+item.name;
+                                        bt_tools.send('files/set_file_ps', { filename: path, ps_type: 0, ps_body: ps }, function() {
+                                            $('.file_tr.active .set_file_ps').data('value', ps);
+                                            $('.file_tr.active .set_file_ps').val(ps);
+                                        }, { tips: '设置文件/目录备注', tips: true });
+                                    }
+                                })
+                            })
+
+                        }
+                    }else{
+                        layer.msg(res.msg,{icon:2});
+                    }
+                });
+            });
+        });
     },
     /**
      * @description 渲染文件列表内容
@@ -1722,7 +2322,6 @@ var bt_file = {
           _openTitle = '打开',
           data = that.file_list[index],
           compression = ['zip', 'rar', 'gz', 'war', 'tgz', 'bz2','7z'],
-          offsetNum = 0,
           config = {
             open:_openTitle,
             split_0:true,
@@ -1731,6 +2330,7 @@ var bt_file = {
             cancel_share:'取消分享',
             favorites:'收藏目录/文件',
             cancel_favorites:'取消收藏',
+            rsync:'数据同步',
             split_1:true,
             dir_kill:'目录查杀',
             authority:'权限',
@@ -1745,7 +2345,28 @@ var bt_file = {
             open_find_dir:'打开文件所在目录',
             split_4:true,
             property:'属性'
-          };
+          },
+          info_ps = [
+            '/etc',
+            '/home',
+            '/tmp',
+            '/root',
+            '/home',
+            '/usr',
+            '/boot',
+            '/lib',
+            '/mnt',
+            '/www',
+            '/bin',
+            '/dev',
+            '/www/server',
+            '/www/Recycle_bin'
+        ];
+        $.each(info_ps,function(index,item){
+            if(item == data.path){ //禁止同步关键目录
+                delete config['rsync']
+            }
+        })
         // 文件类型判断
         switch (that.determine_file_type(data.ext)) {
             case 'images':
@@ -1761,6 +2382,7 @@ var bt_file = {
         config['open'] = (data.type == 'dir' ? '打开' : _openTitle);
         if(data.type === 'dir') delete config['download']; // 判断是否文件或文件夹,禁用下载
         if(data.open_type == 'compress') delete config['open']; // 判断是否压缩文件,禁用操作
+        if(data.type !== 'dir') delete config['rsync']; // 判断是否文件夹，删除数据同步
         if(data.down_id != 0){
           delete config['share']; //已分享
         }else{
@@ -1938,6 +2560,11 @@ var bt_file = {
             left: (left + 10),
             top: top
         }).removeClass('left_menu right_menu').addClass(this.area[0] - (left + el_width) < 230 ? 'left_menu' : 'right_menu');
+
+        // 产品推荐
+        $('.file_menu_icon.rsync_file_icon').css("cssText","background-image:url(/static/img/soft_ico/ico-rsync.png);background-size:20px 18px!important;width:20px;height: 18px;margin-left: -2px;");
+        var file_rsync_li = $('.file_menu_icon.rsync_file_icon').parents('li');
+        file_rsync_li.append('<b class="pro-font-icon" style="margin-left: 40px;font-weight: initial;">专业版</b>')
     },
 
     /**
@@ -2044,6 +2671,38 @@ var bt_file = {
                 break;
             case 'cancel_favorites': //取消收藏
                 this.cancel_file_favorites(data);
+                break;
+            case 'rsync':         //数据同步
+                try{
+                    $.each(this.recomConfig.list,function(index,item){
+                        if(item.name == data.open){
+                            var _title = '',_tips = '',_status = 0;
+                            if(!item['isBuy'] || !item['install']){
+                                if(item['isBuy'] && !item['install']){
+                                    _title = '安装'
+                                    _tips = '检测到'+item.title+'功能没有安装，是否立即安装开启使用'
+                                }else{
+                                    _title = '购买'
+                                    _tips = '未开通此功能，是否跳转至立即开通'
+                                    _status = 1
+                                }
+                            }else{
+                                that.set_dir_rsync(data);
+                                return false;
+                            }
+                            layer.confirm(_tips, { title: _title+item.title, closeBtn: 2, icon: 3 }, function() {
+                                switch(_status){
+                                    case 0:  //未安装
+                                        bt.soft.install(item['name'])
+                                        break;
+                                    case 1:  //未购买
+                                        product_recommend.pay_product_sign('ltd',item.pay)
+                                        break;
+                                }
+                            })
+                        }
+                    })
+                }catch(err){}
                 break;
             case 'authority': // 权限
                 this.set_file_authority(data);
@@ -4113,7 +4772,6 @@ var bt_file = {
      */
     compress_file_or_dir: function(data, isbatch) {
         var that = this;
-        // console.log(data);
         $('.selection_right_menu').removeAttr('style');
         this.reader_form_line({
             url: 'Zip',

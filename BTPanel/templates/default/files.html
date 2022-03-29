@@ -2,8 +2,15 @@
 {% block content %}
 <link rel="stylesheet" href="{{g.cdn_url}}/editor/styles/icons.css">
 <link rel="stylesheet" href="{{g.cdn_url}}/css/xterm.css">
-<link rel="stylesheet" type="text/css" href="{{g.cdn_url}}/css/files_style.min.css">
+<link rel="stylesheet" type="text/css" href="{{g.cdn_url}}/css/files_style.css">
 <style id="file_list_info">.file_checkbox{width:40px !important;}.file_name{width:300px !important;}.file_ps{width:200px !important;}.file_size{width:100px !important;}.file_mtime{width:180px !important;}.file_user{width:80px !important;}.file_accept{width:80px !important;}.file_operation{width:220px !important;}.file_table_view.list_view .file_list_content .file_tr{width:auto;}.file_table_view.list_view .file_list_content{width:auto;}</style>
+<style>
+    /* 数据同步 */
+    .demo-class .line{
+        padding-left: 35px;
+    }
+    /* 数据同步 end*/
+</style>
 <div class="main-content">
     <a style="display: none;" id="recycle_bin" data="{{data['recycle_bin']}}"></a>
 	<!-- aceEditors -->
@@ -64,6 +71,11 @@
 				<div class="nav_btn share_file_list">
 					<span class="nav_btn_title">分享列表</span>
 				</div>
+            </div>
+            <div class="nav_group">
+                <div class="nav_btn file_rsync_list">
+                    <span class="nav_btn_title"><span class="glyphicon glyphicon-vip pro-font-icon"></span>&nbsp;数据同步</span>
+                </div>
             </div>
             <div class="nav_group ">
                 <div class="nav_btn terminal_view">
@@ -224,7 +236,7 @@
                 <li data-id="paste_file"><i class="file_menu_icon paste_file_icon"></i><span>粘贴</span></li>
             </ul>
         </div>
-        <div class="filePage pagination page"></div>
+        <div class="filePage pagination page" style="padding:0"></div>
     </div>
 </div>
 <script type="text/template" id="upload_file_template">

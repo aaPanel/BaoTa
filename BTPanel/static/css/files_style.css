@@ -35,7 +35,7 @@
 }
 
 .file_list_header {
-    height: 40px;
+    height: 35px;
     background: #f6f6f6;
     border-bottom: none;
     position: relative;
@@ -45,7 +45,7 @@
 
 .file_list_header .file_checkbox,
 .file_table_view.list_view .file_list_content .file_checkbox {
-    padding: 12px !important;
+    padding: 9px 12px !important;
     margin-left: 0 !important;
     cursor: default;
 }
@@ -68,8 +68,8 @@
     background-color: #fff;
 }
 .file_list_header .file_main_title{
-    line-height: 40px;
-    height: 40px;
+    line-height: 35px;
+    height: 35px;
     overflow: hidden;
     border: 1px solid transparent;
     border-bottom: none;
@@ -171,17 +171,13 @@
     float: left;
     padding-left: 10px;
     padding-right: 10px;
-    height: 40px;
-    line-height: 40px;
+    height: 35px;
+    line-height: 35px;
     font-size: 13px;
     color: #333;
     position: relative;
     cursor: pointer;
     margin-left: -5px;
-}
-
-.file_list_header .file_th>span {
-    vertical-align: middle;
 }
 
 .file_table_view.list_view .file_type {
@@ -227,7 +223,7 @@
     float: left;
     width: 10px;
     margin-left: -5px;
-    height: 40px;
+    height: 30px;
     /* cursor: col-resize; */
     overflow: hidden;
     position: relative;
@@ -239,12 +235,12 @@
     display: block;
     background: #e2e2e2;
     width: 1px;
-    height: 25px;
+    height: 20px;
     position: absolute;
     top: 50%;
     left: 50%;
     margin-left: -1px;
-    margin-top: -12.5px;
+    margin-top: -7.5px;
 }
 
 .file_list_header .file_name {
@@ -313,7 +309,7 @@
 }
 
 .file_table_view.list_view .file_list_content .file_tr {
-    height: 45px;
+    height: 35px;
     box-sizing: border-box;
     color: #fff;
     border-bottom: 1px solid #f3f3f3;
@@ -528,8 +524,8 @@
     background-color: #eff9f7;
 }
 .file_table_view.list_view .file_list_content .file_td {
-    height: 45px;
-    line-height: 45px;
+    height: 35px;
+    line-height: 35px;
     padding: 0 8px;
     color: #777;
     overflow: hidden;
@@ -545,20 +541,20 @@
     text-align: right;
 }
 
-.file_table_view.list_view .file_list_content .file_checkbox {
-    padding: 14px 12px !important;
-}
-
 .file_table_view.list_view .file_list_content .file_ico_type {
-    height: 40px;
-    line-height: 40px;
+    height: 35px;
     display: inline-block;
     position: relative;
 }
-
+.file_table_view.list_view .file_list_content .file_ico_type img.file_images{
+    width: 22px;
+    height: 22px;
+    position: absolute;
+    top: 6.5px;
+}
 .file_table_view.list_view .file_title {
     vertical-align: top;
-    padding-left: 38px;
+    padding-left: 30px;
     width: 100%;
     box-sizing: border-box;
     overflow: hidden;
@@ -593,10 +589,10 @@
 
 .file_list_content .file_icon {
     width: 100%;
-    width: 30px;
-    height: 30px;
+    width: 22px;
+    height: 22px;
     position: absolute;
-    top: 7.5px;
+    top: 6.5px;
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
@@ -644,10 +640,9 @@
 
 .file_list_content .file_py {
     background-image: url(../img/file_icon/python.png);
-    width: 30px;
-    height: 30px;
-    left: 2.5px;
-    top: 10px;
+    width: 22px;
+    height: 22px;
+    top: 6.5px;
 }
 
 .file_list_content .file_png {
@@ -656,10 +651,9 @@
 
 .file_list_content .file_lua {
     background-image: url(../img/file_icon/lua.png);
-    width: 30px;
-    height: 30px;
-    left: 2.5px;
-    top: 10px;
+    width: 22px;
+    height: 22px;
+    top: 6.5px;
 }
 
 /* .file_list_content .file_sh{
@@ -736,9 +730,8 @@
 .file_list_content .file_pptx,
 .file_list_content .file_ppt {
     background-image: url(../img/file_icon/ppt.png);
-    width: 30px;
-    height: 30px;
-    left: 2.5px;
+    width: 22px;
+    height: 22px;
 }
 
 .file_list_content .file_rar {
@@ -784,17 +777,15 @@
 .file_list_content .file_docx,
 .file_list_content .file_doc {
     background-image: url(../img/file_icon/doc.png);
-    width: 30px;
-    height: 30px;
-    left: 2.5px;
+    width: 22px;
+    height: 22px;
 }
 
 .file_list_content .file_xlsx,
 .file_list_content .file_xls {
     background-image: url(../img/file_icon/xls.png);
-    width: 30px;
-    height: 30px;
-    left: 2.5px;
+    width: 22px;
+    height: 22px;
 }
 
 .file_list_content .file_xml {
@@ -1079,7 +1070,7 @@
     border-radius: 1px;
     position: relative;
     background-color: #fff;
-    top: -4px;
+    top: -5px;
     left: 2px;
 }
 
@@ -1089,7 +1080,8 @@
     content: "\e75e";
     position: relative;
     top: -2px;
-    font-size: 14px;
+    left: 1px;
+    font-size: 12px;
     font-family: "iconfont" !important;
     font-style: normal;
     -webkit-font-smoothing: antialiased;
@@ -2843,7 +2835,7 @@
     background-repeat: no-repeat;
 }
 .bt-warp{
-    min-width: 1200px;
+    min-width: 1280px;
 }
 .file_menu_tips{
     display: inline-block;
