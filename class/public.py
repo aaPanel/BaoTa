@@ -4247,6 +4247,8 @@ def error_conn_cloud(text):
     code_msg = ''
     if text.find("502 Bad Gateway") != -1:
         code_msg = '502 Bad Gateway'
+    if text.find("504 Bad Gateway") != -1:
+        code_msg = '504 Bad Gateway'
     elif text.find("Connection refused") != -1:
         code_msg = 'Connection refused'
     elif text.find("Connection timed out") != -1:
