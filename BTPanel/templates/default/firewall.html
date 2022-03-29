@@ -704,11 +704,11 @@
           var _tab =  bt.render({
             table:'#logsBody',
             columns:[						
-              { field: 'id',width:"55", title: "编号"},	
-              { field: 'username',width:"80", title: "用户",templet:function(row){
+              { field: 'id',width:"60", title: "编号"},	
+              { field: 'username',width:"100", title: "用户",templet:function(row){
                               return (row.username == 'system')?'系统日志':row.username;
                           }},	
-              { field: 'type',width:"80", title: "{{data['lan']['LTH2']}}"},	
+              { field: 'type',width:"100", title: "{{data['lan']['LTH2']}}"},	
               { field: 'log', title: "{{data['lan']['LTH3']}}",templet:function(row){
                 return '<span title="'+ _this.escapeHTML(row['log']) +'">'+  _this.escapeHTML(row['log']) +'</span>';
               }},		
