@@ -7220,7 +7220,7 @@ bt.data = {
           bt.send('SetupPassword', 'database/SetupPassword', rdata, function (rRet) {
             loading.close();
             bt.msg(rRet);
-            load.close();
+            if (rRet.status) load.close();
           })
         })
       ]
