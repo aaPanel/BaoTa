@@ -584,13 +584,23 @@ var bt_file = {
         $('.filePage').on('change', '.showRow', function() {
             var val = $(this).val()
             bt.set_storage('local','showRow',val);
-            that.reader_file_list({ showRow: val, p: 1, is_operating: false });
+            var search = $('.file_search_input').val();
+            var data = { showRow: val, p: 1, is_operating: false, search: search, file_btn: !!search }
+            if ($('#search_all').hasClass('active')) {
+                data.all = 'True';
+            }
+            that.reader_file_list(data);
         });
 
         // 页码跳转
         $('.filePage').on('click', 'div:nth-child(2) a', function(e) {
             var num = $(this).attr('href').match(/p=([0-9]+)$/)[1]
-            that.reader_file_list({ path: that.path, p: num})
+            var search = $('.file_search_input').val();
+            var data = { path: that.path, p: num, search: search, file_btn: !!search }
+            if ($('#search_all').hasClass('active')) {
+                data.all = 'True';
+            }
+            that.reader_file_list(data)
             e.stopPropagation()
             e.preventDefault()
         })
@@ -4090,7 +4100,7 @@ var bt_file = {
      */
     compress_file_or_dir: function(data, isbatch) {
         var that = this;
-        console.log(data);
+        // console.log(data);
         $('.selection_right_menu').removeAttr('style');
         this.reader_form_line({
             url: 'Zip',
