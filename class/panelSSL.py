@@ -73,7 +73,8 @@ class panelSSL:
         except Exception as ex:
             # bind = 'data/bind.pl'
             # if os.path.exists(bind): os.remove(bind)
-            return public.returnMsg(False,'连接服务器失败!<br>' + str(ex))
+            # return public.returnMsg(False,'连接服务器失败!<br>' + str(ex))
+            raise public.error_conn_cloud(str(ex))
     
     #删除Token
     def DelToken(self,get):
@@ -231,7 +232,6 @@ class panelSSL:
         is_file_verify = 'fileName' in verify_info
         verify_info['paths'] = []
         verify_info['hosts'] = []
-        print(verify_info)
         for domain in verify_info['domains']:
             if domain[:2] == '*.': domain = domain[2:]
             if is_file_verify:
@@ -447,12 +447,12 @@ class panelSSL:
                 3、检查该网站是否已部署HTTPS并设置强制HTTPS [请暂时关闭强制HTTPS功能]<br>'''.format(c_url = self._check_url)
                 return public.returnMsg(False,msg)
             
-        action = 'ApplyDVSSL';
+        action = 'ApplyDVSSL'
         if hasattr(get,'partnerOrderId'):
-            self.__PDATA['data']['partnerOrderId'] = get.partnerOrderId;
-            action = 'ReDVSSL';
+            self.__PDATA['data']['partnerOrderId'] = get.partnerOrderId
+            action = 'ReDVSSL'
         
-        self.__PDATA['data']['domain'] = get.domain;
+        self.__PDATA['data']['domain'] = get.domain
         self.__PDATA['data']['orgPhone'] = get.orgPhone
         self.__PDATA['data']['orgPostalCode'] = get.orgPostalCode
         self.__PDATA['data']['orgRegion'] = get.orgRegion
@@ -460,16 +460,19 @@ class panelSSL:
         self.__PDATA['data']['orgAddress'] = get.orgAddress
         self.__PDATA['data']['orgDivision'] = get.orgDivision
         self.__PDATA['data']['orgName'] = get.orgName
-        self.__PDATA['data'] = self.De_Code(self.__PDATA['data']);
-        result = public.httpPost(self.__APIURL + '/' + action,self.__PDATA)
+        self.__PDATA['data'] = self.De_Code(self.__PDATA['data'])
         try:
-            result = json.loads(result);
-        except: return result;
-        result['data'] = self.En_Code(result['data']);
+            result = public.httpPost(self.__APIURL + '/' + action,self.__PDATA)
+        except Exception as ex:
+            raise public.error_conn_cloud(str(ex))
+        try:
+            result = json.loads(result)
+        except: return result
+        result['data'] = self.En_Code(result['data'])
       
         if 'authValue' in result['data']:            
-            public.writeFile(authfile,result['data']['authValue']);
-        return result;
+            public.writeFile(authfile,result['data']['authValue'])
+        return result
 
     #完善资料CA(先支付接口)
     def apply_order_ca(self,args):
@@ -494,6 +497,9 @@ class panelSSL:
         result= public.returnMsg(False,'请求失败,请稍候重试!')
         try:
             result = public.httpPost(self.__APIURL2 + '/' + dname,self.__PDATA)
+        except Exception as ex:
+            raise public.error_conn_cloud(str(ex))
+        try:
             result = json.loads(result)
         except:
             pass
@@ -510,7 +516,10 @@ class panelSSL:
                     self.__PDATA['data']['partnerOrderId'] = public.readFile(path)
 
         self.__PDATA['data'] = self.De_Code(self.__PDATA['data'])
-        rs = public.httpPost(self.__APIURL + '/GetSSLList',self.__PDATA)
+        try:
+            rs = public.httpPost(self.__APIURL + '/GetSSLList',self.__PDATA)
+        except Exception as ex:
+            raise public.error_conn_cloud(str(ex))
         try:
             result = json.loads(rs)
         except: return public.returnMsg(False,'获取失败，请稍候重试!')
@@ -1035,7 +1044,8 @@ class panelSSL:
             session['focre_cloud'] = True
             return result
         except Exception as ex:
-            return public.returnMsg(False,'连接服务器失败!<br>{}'.format(rtmp))
+            raise public.error_conn_cloud(str(ex))
+            # return public.returnMsg(False,'连接服务器失败!<br>{}'.format(rtmp))
 
     def GetBindCode(self,get):
         """
@@ -1052,7 +1062,8 @@ class panelSSL:
             result = json.loads(rtmp);           
             return result
         except Exception as ex:
-            return public.returnMsg(False,'连接服务器失败!<br>' + rtmp)
+            raise public.error_conn_cloud(str(ex))
+            # return public.returnMsg(False,'连接服务器失败!<br>' + rtmp)
             
             
     # 解析DNSAPI信息

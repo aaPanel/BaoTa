@@ -46,7 +46,7 @@ def HttpGet(url,timeout = 6,headers = {}):
     """
     if url.find('GetAuthToken') == -1:
         if is_local(): return False
-    rep_home_host()
+    # rep_home_host()
     import http_requests
     res = http_requests.get(url,timeout=timeout,headers = headers)
     if res.status_code == 0:
@@ -117,7 +117,7 @@ def HttpPost(url,data,timeout = 6,headers = {}):
     """
     if url.find('GetAuthToken') == -1:
         if is_local(): return False
-    rep_home_host()
+    # rep_home_host()
     import http_requests
     res = http_requests.post(url,data=data,timeout=timeout,headers = headers)
     if res.status_code == 0:
