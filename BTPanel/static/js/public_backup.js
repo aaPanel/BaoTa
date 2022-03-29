@@ -1589,11 +1589,34 @@ bt.index = {
       var k = layer.open({
         type: 1,
         title: lan.bt.install_title,
-        area: ["670px", "510px"],
+        area: ["670px", "500px"],
         closeBtn: 2,
         shadeClose: false,
-        content: "<div class='rec-install'><div class='important-title'><p><span class='glyphicon glyphicon-alert' style='color: #f39c12; margin-right: 10px;'></span>" + lan.bt.install_ps + " <a href='javascript:jump()' style='color:#20a53a'>" + lan.bt.install_s + "</a> " + lan.bt.install_s1 + "</p></div><div class='rec-box'><h3>" + lan.bt.install_lnmp + "</h3><div class='rec-box-con'><ul class='rec-list'>" + c + "</ul><p class='fangshi1'>" + lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "'><span>" + lan.bt.install_rpm + "</span><input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'><span>" + lan.bt.install_src + "</span><input type='checkbox'></label></p><div class='onekey'>" + lan.bt.install_key + "</div></div></div><div class='rec-box' style='margin-left:16px'><h3>LAMP</h3><div class='rec-box-con'><ul class='rec-list'>" + g + "</ul><p class='fangshi1'>" + lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "'><span>" + lan.bt.install_rpm + "</span><input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'><span>" + lan.bt.install_src + "</span><input type='checkbox'></label></p><div class='onekey'>" + lan.bt.install_key + "</div></div></div></div>",
-        success: function () {
+        content: "\
+        <div class='rec-install'>\
+          <div class='important-title'>\
+            <p><span class='glyphicon glyphicon-alert' style='color: #f39c12; margin-right: 10px;'></span>" + lan.bt.install_ps + " <a href='javascript:jump()' style='color:#20a53a'>" + lan.bt.install_s + "</a> " + lan.bt.install_s1 + "</p>\
+            <button class='btn btn-sm btn-default no-show-rec-btn'>不再显示推荐</button>\
+            \
+          </div>\
+          <div class='rec-box'>\
+            <h3>" + lan.bt.install_lnmp + "</h3>\
+            <div class='rec-box-con'>\
+              <ul class='rec-list'>" + c + "</ul>\
+              <p class='fangshi1'>" + lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "'><span>" + lan.bt.install_rpm + "</span><input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'><span>" + lan.bt.install_src + "</span><input type='checkbox'></label></p>\
+              <div class='onekey'>" + lan.bt.install_key + "</div>\
+            </div>\
+          </div>\
+          <div class='rec-box' style='margin-left:16px'>\
+            <h3>LAMP</h3>\
+            <div class='rec-box-con'>\
+              <ul class='rec-list'>" + g + "</ul>\
+              <p class='fangshi1'>" + lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "'><span>" + lan.bt.install_rpm + "</span><input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'><span>" + lan.bt.install_src + "</span><input type='checkbox'></label></p>\
+              <div class='onekey'>" + lan.bt.install_key + "</div>\
+            </div>\
+          </div>\
+        </div>",
+        success: function ($layer, index) {
           form_group.select_all([
             '#select_Nginx',
             '#select_MySQL',
@@ -1613,6 +1636,23 @@ bt.index = {
                 siblings_label = input.parents('label').siblings()
             input.prop('checked', 'checked').next().addClass('active');
             siblings_label.find('input').removeAttr('checked').next().removeClass('active');
+          });
+          // 不再显示推荐
+          $('.no-show-rec-btn').click(function () {
+            bt.confirm({
+              title: '不再显示推荐',
+              msg: '是否不再显示推荐安装套件？',
+            }, function () {
+              var load = bt.load('正在设置，请稍候...');
+              bt.send('CreateDir', 'files/CreateDir', { path: '/www/server/php' }, function (res) {
+                load.close();
+                if (res.status) res.msg = '设置成功';
+                bt.msg(res);
+                setTimeout(function () {
+                  if (res.status) layer.close(index);
+                }, 2000)
+              });
+            });
           });
           var loadT = '';
           $('.fangshi1 label').hover(function () {
