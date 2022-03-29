@@ -2118,8 +2118,12 @@ var bt_file = {
             _api = '',
             _fname = [],
             _obj = {},
-            _path = $('');
+            _path = $('')
+            types = [];
         $.each(this.file_table_arry, function(index, item) {
+            if (item.type && types.indexOf(item.type) == -1) {
+                types.push(item.type)
+            }
             _fname.push(item.filename)
         })
         switch (stype) {
@@ -2149,6 +2153,15 @@ var bt_file = {
                 _obj['filename'] = _fname.join(',');
                 _obj['open'] = 'tar_gz'
                 _obj['path'] = that.file_path + '/' + file_title;
+                if (types.length > 1) {
+                    _obj['type_tips'] = '目录和文件';
+                } else if (types[0] == 'dir') {
+                    _obj['type_tips'] = '目录';
+                } else if (types[0] == 'file') {
+                    _obj['type_tips'] = '文件';
+                } else {
+                    _obj['type_tips'] = '';
+                }
                 return that.compress_file_or_dir(_obj, true)
                 break;
         }
