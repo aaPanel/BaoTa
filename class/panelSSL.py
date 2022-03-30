@@ -358,7 +358,7 @@ class panelSSL:
                     siteRunPath = self.get_domain_run_path(domain)
                 #if domain[:4] == 'www.': domain = domain[4:]
                 status = 0
-                url = 'http'+ is_https +'://'+ domain +'/.well-known/pki-validation/' + verify_info['data']['DCVfileName'] + '.txt'
+                url = 'http'+ is_https +'://'+ domain +'/.well-known/pki-validation/' + verify_info['data']['DCVfileName']
                 get = public.dict_obj()
                 get.url = url
                 get.content = verify_info['data']['DCVfileContent']
@@ -370,7 +370,7 @@ class panelSSL:
                 verify_path = siteRunPath + '/.well-known/pki-validation'
                 if not os.path.exists(verify_path):
                     os.makedirs(verify_path)
-                verify_file = verify_path + '/' + verify_info['data']['DCVfileName'] + '.txt'
+                verify_file = verify_path + '/' + verify_info['data']['DCVfileName']
                 if os.path.exists(verify_file): continue
                 public.writeFile(verify_file,verify_info['data']['DCVfileContent'])
             else:
@@ -434,8 +434,8 @@ class panelSSL:
             runPath=''
         else:
             runPath = self.GetRunPath(get)
-        if runPath != False and runPath != '/': get.path +=  runPath;
-        authfile = get.path + '/.well-known/pki-validation/fileauth.txt';
+        if runPath != False and runPath != '/': get.path +=  runPath
+        authfile = get.path + '/.well-known/pki-validation/fileauth.txt'
         if not self.CheckDomain(get):
             if not os.path.exists(authfile): 
                 return public.returnMsg(False,'无法写入验证文件: {}'.format(authfile))
@@ -469,8 +469,8 @@ class panelSSL:
             result = json.loads(result)
         except: return result
         result['data'] = self.En_Code(result['data'])
-      
-        if 'authValue' in result['data']:            
+        authfile = get.path + '/.well-known/pki-validation/' + result['data']['authKey']
+        if 'authValue' in result['data']:
             public.writeFile(authfile,result['data']['authValue'])
         return result
 
