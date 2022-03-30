@@ -234,13 +234,7 @@ UploadFile.prototype = {
               title: '清空列表',
               icon: 0
             }, function (indexs) {
-              var dropUpLoadFile = _this2.queryEl('.dropUpLoadFile');
-              for (var i = 0; i < $li.length; i++) {
-                dropUpLoadFile.removeChild($li[i]);
-              }
-              _this2.init_data();
-              var $head = _this2.queryEl('.dropUpLoadFileHead');
-              if ($head) $head.removeAttribute('style');
+              _this2.empty_upload_list();
               layer.close(indexs);
             });
           }
@@ -278,12 +272,20 @@ UploadFile.prototype = {
           _this2.cancel_upload(ev);
         });
         // 开始上传
-        _this2.bind(startUpload, function () {
-          if (_this2.fileList.length === 0) {
-            layer.msg('请选择需要上传的文件')
-            return false
+        _this2.bind(startUpload, function (e) {
+          var btn = e.target;
+          if (btn.classList.contains('againUpload')) {
+            $('.ico-tips-close').click()
+            btn.innerText = '开始上传'
+            btn.classList.remove('againUpload')
+            btn.classList.add('startUpload')
+          } else {
+            if (_this2.fileList.length === 0) {
+              layer.msg('请选择需要上传的文件')
+              return false
+            }
+            _this2.upload_file();
           }
-          _this2.upload_file();
         });
       },
       min: function () {
@@ -299,6 +301,18 @@ UploadFile.prototype = {
         return false
       }
     });
+  },
+
+  // 清空上传列表
+  empty_upload_list: function () {
+    var dropUpLoadFile = this.queryEl('.dropUpLoadFile');
+    var $li = this.queryElAll('.dropUpLoadFile li');
+    for (var i = 0; i < $li.length; i++) {
+      dropUpLoadFile.removeChild($li[i]);
+    }
+    this.init_data();
+    var $head = this.queryEl('.dropUpLoadFileHead');
+    if ($head) $head.removeAttribute('style');
   },
 
 
@@ -517,6 +531,7 @@ UploadFile.prototype = {
                   upload: 1,
                   upload_size: item.size
                 }));
+
               } else {
                 _this3.set_upload_view(index, $.extend(item, {
                   upload: -1,
@@ -562,10 +577,14 @@ UploadFile.prototype = {
         var parent = this.parentNode.parentNode;
         parent.querySelector('.btn-group').classList.remove('hide');
         parent.querySelector('.file_upload_info').classList.add('hide');
+        _this4.empty_upload_list();
       });
+      
       var startUpload = this.queryEl('.startUpload')
       startUpload.removeAttribute('disabled')
-      startUpload.innerText = '开始上传'
+      startUpload.innerText = '重新上传'
+      startUpload.classList.remove('startUpload')
+      startUpload.classList.add('againUpload')
       _this4.init_data();
       return false;
     }
@@ -662,8 +681,8 @@ UploadFile.prototype = {
     var e = 1024;
     for (var b = 0; b < d.length; b += 1) {
       if (a < e) {
-        var num = (b === 0 ? a : a.toFixed(2)) + d[b];
-        return !isNaN(b === 0 ? a : a.toFixed(2)) && typeof num != 'undefined' ? num : '0B';
+        var num = a.toFixed(2) + d[b];
+        return !isNaN(a.toFixed(2)) && typeof num != 'undefined' ? num : '0B';
       }
       a /= e;
     }
