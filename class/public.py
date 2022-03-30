@@ -4324,8 +4324,11 @@ def get_recycle_bin_path(path):
     '''
     mountpoint = get_path_in_mountpoint(path)
     recycle_bin_path = '{}/.Recycle_bin/'.format(mountpoint)
-    if not os.path.exists(recycle_bin_path):
-        os.mkdir(recycle_bin_path,384)
+    try:
+        if not os.path.exists(recycle_bin_path):
+            os.mkdir(recycle_bin_path,384)
+    except:
+        return '/www/.Recycle_bin/'
     return recycle_bin_path
 
 def get_recycle_bin_list():
@@ -4344,9 +4347,12 @@ def get_recycle_bin_list():
     recycle_bin_list = []
     for mountpoint in get_mountpoint_list():
         recycle_bin_path = '{}.Recycle_bin/'.format(mountpoint)
-        if not os.path.exists(recycle_bin_path):
-            os.mkdir(recycle_bin_path,384)
-        recycle_bin_list.append(recycle_bin_path)
+        try:
+            if not os.path.exists(recycle_bin_path):
+                os.mkdir(recycle_bin_path,384)
+            recycle_bin_list.append(recycle_bin_path)
+        except:
+            continue
     
     # 包含默认回收站路径？
     if not default_path in recycle_bin_list:
