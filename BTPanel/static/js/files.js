@@ -1780,6 +1780,7 @@ var bt_file = {
                     layer.closeAll();
                     bt_tools.msg(res)
                     look_receive_info(_form)
+                    if(path) bt_file.add_files_rsync(path,'recv')
                 }, '提交表单信息')
             }
         })
@@ -2171,7 +2172,7 @@ var bt_file = {
                                     }
                                 })
                             })
-
+                            bt_file.add_files_rsync(path,'send')
                         }
                     }else{
                         layer.msg(res.msg,{icon:2});
@@ -2179,6 +2180,16 @@ var bt_file = {
                 });
             });
         });
+    },
+    /**
+     * @description 添加文件同步数据标记
+     * @param {String} path 文件夹路径
+     * @param {String} type 接收/发送
+     * @return void
+     */
+    add_files_rsync:function(path,type){
+        bt_tools.send('files/add_files_rsync', { path:path,s_type:type }, function() {
+        }, { tips: '文件夹标记', tips: true });
     },
     /**
      * @description 渲染文件列表内容
