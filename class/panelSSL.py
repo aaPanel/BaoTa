@@ -358,7 +358,7 @@ class panelSSL:
                     siteRunPath = self.get_domain_run_path(domain)
                 #if domain[:4] == 'www.': domain = domain[4:]
                 status = 0
-                url = 'http'+ is_https +'://'+ domain +'/.well-known/pki-validation/' + verify_info['data']['DCVfileName']
+                url = 'http'+ is_https +'://'+ domain +'/.well-known/pki-validation/' + verify_info['data']['DCVfileName'] + '.txt'
                 get = public.dict_obj()
                 get.url = url
                 get.content = verify_info['data']['DCVfileContent']
@@ -370,7 +370,7 @@ class panelSSL:
                 verify_path = siteRunPath + '/.well-known/pki-validation'
                 if not os.path.exists(verify_path):
                     os.makedirs(verify_path)
-                verify_file = verify_path + '/' + verify_info['data']['DCVfileName']
+                verify_file = verify_path + '/' + verify_info['data']['DCVfileName'] + '.txt'
                 if os.path.exists(verify_file): continue
                 public.writeFile(verify_file,verify_info['data']['DCVfileContent'])
             else:
