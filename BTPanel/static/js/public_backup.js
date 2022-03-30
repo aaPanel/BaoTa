@@ -847,7 +847,7 @@ var bt = {
             break;
           case 'button':
             var _width = _obj.width ? _obj.width : '330px';
-            _html += '<button name=\'' + _name + '\' class="btn btn-success btn-sm mr5 ml5 ' + _name + bs + ' ' + (_obj['class'] ? _obj['class'] : '') + '">' + _obj.text + '</button>';
+            _html += '<button type="button" name=\'' + _name + '\' class="btn btn-success btn-sm mr5 ml5 ' + _name + bs + ' ' + (_obj['class'] ? _obj['class'] : '') + '">' + _obj.text + '</button>';
             break;
           case 'radio':
             var _v = _obj.value === true ? 'checked' : ''
@@ -912,7 +912,7 @@ var bt = {
           break;
         case 'button':
           var _width = item.width ? item.width : '330px';
-          _html += '<button name=\'' + _name + '\' class="btn btn-success btn-sm mr5 ml5 ' + _name + bs + '">' + item.text + '</button>';
+          _html += '<button type="button" name=\'' + _name + '\' class="btn btn-success btn-sm mr5 ml5 ' + _name + bs + '">' + item.text + '</button>';
           break;
         case 'number':
           var _width = item.width ? item.width : '330px';
@@ -1596,7 +1596,7 @@ bt.index = {
         <div class='rec-install'>\
           <div class='important-title'>\
             <p><span class='glyphicon glyphicon-alert' style='color: #f39c12; margin-right: 10px;'></span>" + lan.bt.install_ps + " <a href='javascript:jump()' style='color:#20a53a'>" + lan.bt.install_s + "</a> " + lan.bt.install_s1 + "</p>\
-            <button class='btn btn-sm btn-default no-show-rec-btn'>不再显示推荐</button>\
+            <button type='button' class='btn btn-sm btn-default no-show-rec-btn'>不再显示推荐</button>\
             \
           </div>\
           <div class='rec-box'>\
