@@ -3435,7 +3435,7 @@ def get_sys_path():
         @return tuple
     '''
     a = ['/www','/usr','/','/dev','/home','/media','/mnt','/opt','/tmp','/var']
-    c = ['/www/Recycle_bin/','/www/backup/','/www/php_session/','/www/wwwlogs/','/www/server/','/etc/','/usr/','/var/','/boot/','/proc/','/sys/','/tmp/','/root/','/lib/','/bin/','/sbin/','/run/','/lib64/','/lib32/','/srv/']
+    c = ['/www/.Recycle_bin/','/www/backup/','/www/php_session/','/www/wwwlogs/','/www/server/','/etc/','/usr/','/var/','/boot/','/proc/','/sys/','/tmp/','/root/','/lib/','/bin/','/sbin/','/run/','/lib64/','/lib32/','/srv/']
     return a,c
 
 
@@ -4275,4 +4275,82 @@ def error_conn_cloud(text):
     msg = readFile(err_template_file)
     msg = msg.format(code=code_msg)
     return msg
+
+def get_mountpoint_list():
+    '''
+        @name 获取挂载点列表
+        @author hwliang<2021-12-18>
+        @return list
+    '''
+    import psutil
+    mount_list = []
+    for mount in psutil.disk_partitions():
+        mountpoint = mount.mountpoint if mount.mountpoint[-1] == '/' else mount.mountpoint + '/'
+        mount_list.append(mountpoint)
+    # 根据挂载点字符长度排序
+    mount_list.sort(key = lambda i:len(i),reverse=True)
+    return mount_list
+
+def get_path_in_mountpoint(path):
+    '''
+        @name 获取文件或目录目录所在挂载点
+        @author hwliang<2022-03-30>
+        @param path<string> 文件或目录路径
+        @return string
+    '''
+    # 判断是否是绝对路径
+    if path.find('./') != -1 or path[0] != '/': raise PanelError("不能使用相对路径")
+    if not path: raise PanelError("文件或目录路径不能为空")
+
+    # 在目录尾加/
+    if os.path.isdir(path):
+        path = path if path[-1] == '/' else path + '/'
+    
+    # 匹配挂载点
+    mount_list = get_mountpoint_list()
+    for mountpoint in mount_list:
+        if path.startswith(mountpoint):
+            return mountpoint
+    
+    # 没有匹配到挂载点
+    return '/'
+
+def get_recycle_bin_path(path):
+    '''
+        @name 获取指定文件或目录的回收站路径
+        @author hwliang<2022-03-30>
+        @param path<string> 文件或目录路径
+        @return string
+    '''
+    mountpoint = get_path_in_mountpoint(path)
+    recycle_bin_path = '{}/.Recycle_bin/'.format(mountpoint)
+    if not os.path.exists(recycle_bin_path):
+        os.mkdir(recycle_bin_path,384)
+    return recycle_bin_path
+
+def get_recycle_bin_list():
+    '''
+        @name 获取回收站列表
+        @author hwliang<2022-03-30>
+        @return list
+    '''
+    # 旧的回收站重命名为.Recycle_bin
+    default_path = '/www/.Recycle_bin'
+    default_path_src = '/www/Recycle_bin'
+    if os.path.exists(default_path_src) and not os.path.exists(default_path):
+        os.rename(default_path_src,default_path)
+    
+    # 获取回收站列表
+    recycle_bin_list = []
+    for mountpoint in get_mountpoint_list():
+        recycle_bin_path = '{}.Recycle_bin/'.format(mountpoint)
+        if not os.path.exists(recycle_bin_path):
+            os.mkdir(recycle_bin_path,384)
+        recycle_bin_list.append(recycle_bin_path)
+    
+    # 包含默认回收站路径？
+    if not default_path in recycle_bin_list:
+        recycle_bin_list.append(default_path)
+    
+    return recycle_bin_list
 

@@ -359,7 +359,7 @@ class database(datatool.datatools):
     def CheckRecycleBin(self,name):
         try:
             u_name = self.db_name_to_unicode(name)
-            for n in os.listdir('/www/Recycle_bin'):
+            for n in os.listdir('/www/.Recycle_bin'):
                 if n.find('BTDB_'+name+'_t_') != -1: return True
                 if n.find('BTDB_'+u_name+'_t_') != -1: return True
             return False
@@ -543,7 +543,7 @@ SetLink
         for us in users:
             panelMysql.panelMysql().execute("drop user '" + username + "'@'" + us[0] + "'")
         panelMysql.panelMysql().execute("flush privileges")
-        rPath = '/www/Recycle_bin/'
+        rPath = '/www/.Recycle_bin/'
         data['rmtime'] = int(time.time())
         u_name = self.db_name_to_unicode(name)
         rm_path = '{}/BTDB_{}_t_{}'.format(rPath,u_name,data['rmtime'])

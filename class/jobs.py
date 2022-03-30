@@ -381,7 +381,7 @@ def files_set_mode():
         ["/www/server/stop","","root",755,True],
         ["/www/server/redis","","redis",700,True],
         ["/www/server/redis/redis.conf","","redis",600,False],
-        ["/www/Recycle_bin","","root",600,True],
+        ["/www/.Recycle_bin","","root",600,True],
         ["/www/server/panel/class","","root",600,True],
         ["/www/server/panel/data","","root",600,True],
         ["/www/server/panel/plugin","","root",600,False],

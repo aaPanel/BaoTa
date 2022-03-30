@@ -56,7 +56,7 @@ class files:
                  '/selinux',
                  '/www/server',
                  '/www/server/data',
-                 '/www/Recycle_bin',
+                 '/www/.Recycle_bin',
                  public.GetConfigValue('logs_path'),
                  public.GetConfigValue('setup_path'))
 
@@ -380,7 +380,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         if not os.path.exists(get.path):
             get.path = public.get_site_path()
             #return public.ReturnMsg(False, '指定目录不存在!')
-        if get.path == '/www/Recycle_bin':
+        if get.path == '/www/.Recycle_bin':
             return public.returnMsg(False, '此为回收站目录，请在右上角按【回收站】按钮打开')
         if not os.path.isdir(get.path):
             get.path = os.path.dirname(get.path)
@@ -848,7 +848,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
     def DeleteDir(self, get):
         if sys.version_info[0] == 2:
             get.path = get.path.encode('utf-8')
-        if get.path == '/www/Recycle_bin':
+        if get.path in ['/www/Recycle_bin','/www/.Recycle_bin']:
             return public.returnMsg(False, '不能直接操作回收站目录，请在右上角按【回收站】按钮打开')
         if not os.path.exists(get.path):
             return public.returnMsg(False, 'DIR_NOT_EXISTS')
@@ -925,9 +925,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
 
     # 移动到回收站
     def Mv_Recycle_bin(self, get):
-        rPath = '/www/Recycle_bin/'
-        if not os.path.exists(rPath):
-            public.ExecShell('mkdir -p ' + rPath)
+        rPath = public.get_recycle_bin_path(get.path)
         rFile = rPath + \
             get.path.replace('/', '_bt_') + '_t_' + str(time.time())
         try:
@@ -942,11 +940,23 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
 
     # 从回收站恢复
     def Re_Recycle_bin(self, get):
-        rPath = '/www/Recycle_bin/'
         if sys.version_info[0] == 2:
             get.path = get.path.encode('utf-8')
+        
         dFile = get.path.replace('_bt_', '/').split('_t_')[0]
-        get.path = rPath + get.path
+
+        # 检查所在回收站目录
+        recycle_bin_list  = public.get_recycle_bin_list()
+        _ok = False
+        for r_path in recycle_bin_list:
+            for r_file in os.listdir(r_path):
+                if get.path == r_file:
+                    _ok = True
+                    rPath = r_path
+                    get.path = os.path.join(rPath , get.path)
+                    break
+            if _ok: break  
+
         if dFile.find('BTDB_') != -1:
             import database
             return database.database().RecycleDB(get.path)
@@ -961,47 +971,47 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
 
     # 获取回收站信息
     def Get_Recycle_bin(self, get):
-        rPath = '/www/Recycle_bin/'
-        if not os.path.exists(rPath):
-            public.ExecShell('mkdir -p ' + rPath)
         data = {}
         data['dirs'] = []
         data['files'] = []
         data['status'] = os.path.exists('data/recycle_bin.pl')
         data['status_db'] = os.path.exists('data/recycle_bin_db.pl')
-        for file in os.listdir(rPath):
-            file = self.xssencode(file)
-            try:
-                tmp = {}
-                fname = rPath + file
-                if sys.version_info[0] == 2:
-                    fname = fname.encode('utf-8')
-                else:
-                    fname.encode('utf-8')
-                tmp1 = file.split('_bt_')
-                tmp2 = tmp1[len(tmp1)-1].split('_t_')
-                tmp['rname'] = file
-                tmp['dname'] = file.replace('_bt_', '/').split('_t_')[0]
-                if tmp['dname'].find('@') != -1:
-                    tmp['dname'] = "BTDB_" + tmp['dname'][5:].replace('@',"\\u").encode().decode("unicode_escape")
-                tmp['name'] = tmp2[0]
-                tmp['time'] = int(float(tmp2[1]))
-                if os.path.islink(fname):
-                    filePath = os.readlink(fname)
-                    if os.path.exists(filePath):
-                        tmp['size'] = os.path.getsize(filePath)
+        recycle_bin_list  = public.get_recycle_bin_list()
+        for rPath in recycle_bin_list:
+            if not os.path.exists(rPath): continue
+            for file in os.listdir(rPath):
+                file = self.xssencode(file)
+                try:
+                    tmp = {}
+                    fname = rPath + file
+                    if sys.version_info[0] == 2:
+                        fname = fname.encode('utf-8')
                     else:
-                        tmp['size'] = 0
-                else:
-                    tmp['size'] = os.path.getsize(fname)
-                if os.path.isdir(fname):
-                    if file[:5] == 'BTDB_':
-                        tmp['size'] =  public.get_path_size(fname)
-                    data['dirs'].append(tmp)
-                else:
-                    data['files'].append(tmp)
-            except:
-                continue
+                        fname.encode('utf-8')
+                    tmp1 = file.split('_bt_')
+                    tmp2 = tmp1[len(tmp1)-1].split('_t_')
+                    tmp['rname'] = file
+                    tmp['dname'] = file.replace('_bt_', '/').split('_t_')[0]
+                    if tmp['dname'].find('@') != -1:
+                        tmp['dname'] = "BTDB_" + tmp['dname'][5:].replace('@',"\\u").encode().decode("unicode_escape")
+                    tmp['name'] = tmp2[0]
+                    tmp['time'] = int(float(tmp2[1]))
+                    if os.path.islink(fname):
+                        filePath = os.readlink(fname)
+                        if os.path.exists(filePath):
+                            tmp['size'] = os.path.getsize(filePath)
+                        else:
+                            tmp['size'] = 0
+                    else:
+                        tmp['size'] = os.path.getsize(fname)
+                    if os.path.isdir(fname):
+                        if file[:5] == 'BTDB_':
+                            tmp['size'] =  public.get_path_size(fname)
+                        data['dirs'].append(tmp)
+                    else:
+                        data['files'].append(tmp)
+                except:
+                    continue
 
         data['dirs'] = sorted(data['dirs'],key = lambda x: x['time'],reverse=True)
         data['files'] = sorted(data['files'],key = lambda x: x['time'],reverse=True)
@@ -1009,14 +1019,26 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
 
     # 彻底删除
     def Del_Recycle_bin(self, get):
-        rPath = '/www/Recycle_bin/'
         if sys.version_info[0] == 2:
             get.path = get.path.encode('utf-8')
+        
         dFile = get.path.split('_t_')[0]
-        filename = rPath + get.path
+        # 检查所在回收站目录
+        recycle_bin_list  = public.get_recycle_bin_list()
+        _ok = False
+        for r_path in recycle_bin_list:
+            for r_file in os.listdir(r_path):
+                if get.path == r_file:
+                    _ok = True
+                    rPath = r_path
+                    filename = os.path.join(rPath , get.path)
+                    break
+            if _ok: break  
+
+        
         tfile = get.path.replace('_bt_', '/').split('_t_')[0]
-        if not os.path.exists(filename):
-            return public. returnMsg(True, 'FILE_DEL_RECYCLE_BIN', (tfile,))
+        if not _ok: return public.returnMsg(False, 'FILE_DEL_RECYCLE_BIN_ERR', (tfile,))
+    
         if dFile.find('BTDB_') != -1:
             import database
             return database.database().DeleteTo(filename)
@@ -1040,30 +1062,33 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
 
     # 清空回收站
     def Close_Recycle_bin(self, get):
-        rPath = '/www/Recycle_bin/'
-        public.ExecShell('chattr -R -i ' + rPath)
+        
         import database
         import shutil
-        rlist = os.listdir(rPath)
-        i = 0
-        l = len(rlist)
-        for name in rlist:
-            i += 1
-            path = rPath + name
-            public.writeSpeed(name, i, l)
-            if name.find('BTDB_') != -1:
-                database.database().DeleteTo(path)
-                continue
-            if os.path.isdir(path):
-                try:
-                    shutil.rmtree(path)
-                except:
-                    public.ExecShell('rm -rf ' + path)
-            else:
-                try:
-                    os.remove(path)
-                except:
-                    public.ExecShell('rm -f ' + path)
+
+        recycle_bin_list  = public.get_recycle_bin_list()
+        for rPath in recycle_bin_list:
+            public.ExecShell('chattr -R -i ' + rPath)
+            rlist = os.listdir(rPath)
+            i = 0
+            l = len(rlist)
+            for name in rlist:
+                i += 1
+                path = rPath + name
+                public.writeSpeed(name, i, l)
+                if name.find('BTDB_') != -1:
+                    database.database().DeleteTo(path)
+                    continue
+                if os.path.isdir(path):
+                    try:
+                        shutil.rmtree(path)
+                    except:
+                        public.ExecShell('rm -rf ' + path)
+                else:
+                    try:
+                        os.remove(path)
+                    except:
+                        public.ExecShell('rm -f ' + path)
 
         public.writeSpeed(None, 0, 0)
         public.WriteLog('TYPE_FILE', 'FILE_CLOSE_RECYCLE_BIN')
