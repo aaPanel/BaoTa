@@ -1012,7 +1012,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                 file = self.xssencode(file)
                 try:
                     tmp = {}
-                    fname = rPath + file
+                    fname = os.path.join(rPath , file)
                     if sys.version_info[0] == 2:
                         fname = fname.encode('utf-8')
                     else:
