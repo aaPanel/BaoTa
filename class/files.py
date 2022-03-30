@@ -955,8 +955,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
     # 移动到回收站
     def Mv_Recycle_bin(self, get):
         rPath = public.get_recycle_bin_path(get.path)
-        rFile = rPath + \
-            get.path.replace('/', '_bt_') + '_t_' + str(time.time())
+        rFile = os.path.join(rPath , get.path.replace('/', '_bt_') + '_t_' + str(time.time()))
         try:
             import shutil
             shutil.move(get.path, rFile)
