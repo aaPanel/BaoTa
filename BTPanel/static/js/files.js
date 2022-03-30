@@ -1636,12 +1636,12 @@ var bt_file = {
      * @return void
      */
     set_dir_rsync:function(config){
-        var loadget =  layer.msg('正在检测配置信息...',{icon:16,time:0,shade: [0.3, '#000']});
+        var loadget =  layer.msg('正在检测配置信息...',{icon:16,time:0,shade: [0.3, '#000']}),
+            _path = config.path+'/'
         $.get('/plugin?action=a&name=rsync&s=get_send_conf',function(res){
             if(res.length > 0){
                 $.each(res,function(index,item){
-                    item.path = item.path.replace(/\/$/, "")
-                    if(item.path == config.path){
+                    if(item.path == _path){
                         layer.close(loadget);
                         bt_file.set_send_port_view('',item.name,index)
                         return false;
@@ -1660,8 +1660,7 @@ var bt_file = {
             $.get('/plugin?action=a&name=rsync&s=get_global_conf',function(res){
                 if(res['modules'].length > 0){
                     $.each(res['modules'],function(index,item){
-                        item.path = item.path.replace(/\/$/, "")
-                        if(item.path == config.path){
+                        if(item.path == _path){
                             layer.close(loadget);
                             item['mName'] = item.name;
                             var _conf = {title:'编辑接收端',btn:'保存',action:'modify_module',form:item}
@@ -1780,6 +1779,7 @@ var bt_file = {
                     layer.closeAll();
                     bt_tools.msg(res)
                     look_receive_info(_form)
+                    path = path.replace(/\/$/, "")
                     if(path) bt_file.add_files_rsync(path,'recv')
                 }, '提交表单信息')
             }
@@ -2160,19 +2160,19 @@ var bt_file = {
                         },200)
                         //创建发送后给文件夹添加备注
                         if(path){
+                            var _pathPS = path.replace(/\/$/, "")
                             $.get('/plugin?action=a&name=rsync&s=get_send_conf',function(res){
                                 $.each(res,function(index,item){
-                                    item.path = item.path.replace(/\/$/, "")
                                     if(item.path == path){
                                         var ps = '接收服务器:'+item.ip+'::'+item.name;
-                                        bt_tools.send('files/set_file_ps', { filename: path, ps_type: 0, ps_body: ps }, function() {
+                                        bt_tools.send('files/set_file_ps', { filename: _pathPS, ps_type: 0, ps_body: ps }, function() {
                                             $('.file_tr.active .set_file_ps').data('value', ps);
                                             $('.file_tr.active .set_file_ps').val(ps);
                                         }, { tips: '设置文件/目录备注', tips: true });
                                     }
                                 })
                             })
-                            bt_file.add_files_rsync(path,'send')
+                            bt_file.add_files_rsync(_pathPS,'send')
                         }
                     }else{
                         layer.msg(res.msg,{icon:2});
