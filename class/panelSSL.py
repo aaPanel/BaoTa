@@ -469,7 +469,8 @@ class panelSSL:
             result = json.loads(result)
         except: return result
         result['data'] = self.En_Code(result['data'])
-        authfile = get.path + '/.well-known/pki-validation/' + result['data']['authKey']
+        if not 'authPath' in result['data']: result['data']['authPath'] = '/.well-known/pki-validation/'
+        authfile = get.path + result['data']['authPath'] + result['data']['authKey']
         if 'authValue' in result['data']:
             public.writeFile(authfile,result['data']['authValue'])
         return result
