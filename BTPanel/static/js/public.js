@@ -6349,8 +6349,8 @@ var product_recommend = {
    */
   get_recommend_type:function(type){
     var config = null,pathname = location.pathname.replace('/','') || 'home';
-    for (let i = 0; i < this.data.length; i++) {
-      const item = this.data[i];
+    for (var i = 0; i < this.data.length; i++) {
+      var item = this.data[i];
       if(item.type == type && item.show) config = item
     }
     return config

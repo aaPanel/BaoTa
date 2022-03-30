@@ -3034,6 +3034,7 @@ var site = {
         "</div>",
       btn: [lan.public.ok, lan.public.cancel],
       success: function (layers, indexs) {
+        var _this = this;
         $(layers).find('.check_type_group label').hover(function () {
           var name = $(this).find('input').attr('name');
           if (name === 'data' && !recycle_bin_db_open) {
@@ -3043,7 +3044,12 @@ var site = {
           }
         }, function () {
           layer.closeAll('tips');
-        })
+        });
+        layers.find('#vcodeResult').keyup(function (e) {
+          if (e.keyCode == 13) {
+            _this.yes(indexs);
+          }
+        });
       },
       yes: function (indexs) {
         var vcodeResult = $('#vcodeResult'), data = { id: wid, webname: wname };
@@ -6929,7 +6935,7 @@ var site = {
               title: '【'+name+'】日志详情',
               area: '650px',
               content:'<pre id="analysis_pre" style="background-color: #333;color: #fff;height: 545px;margin: 0;white-space: pre-wrap;border-radius: 0;"></pre>',
-              success(){
+              success: function () {
                 var loadTGD = bt.load('正在获取日志详情数据，请稍候...');
                 $.post('/ajax?action=get_detailed&path=/www/wwwlogs/' + web.name+'.log&type='+name+'', function (logs) {
                   loadTGD.close();
