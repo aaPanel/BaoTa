@@ -1752,6 +1752,7 @@ def get_mysql_obj(db_name):
 
 # 取mysql数据库对像 By sid
 def get_mysql_obj_by_sid(sid = 0,conn_config = None):
+    if sid in ['0','']: sid = 0
     if sid:
         if not conn_config: conn_config = M('database_servers').where("id=?" ,sid).find()
         import db_mysql
