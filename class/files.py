@@ -25,6 +25,7 @@ class files:
     run_path = None
     download_list = None
     download_is_rm = None
+    recycle_list = []
     # 检查敏感目录
 
     def CheckDir(self, path):
@@ -380,7 +381,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         if not os.path.exists(get.path):
             get.path = public.get_site_path()
             #return public.ReturnMsg(False, '指定目录不存在!')
-        if get.path == '/www/.Recycle_bin':
+        if os.path.basename(get.path) == '.Recycle_bin':
             return public.returnMsg(False, '此为回收站目录，请在右上角按【回收站】按钮打开')
         if not os.path.isdir(get.path):
             get.path = os.path.dirname(get.path)
@@ -569,9 +570,37 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             '/www/server/cron':'计划任务脚本与日志目录',
             '/www/server/php':'PHP目录，所有PHP版本的解释器都在此目录下',
             '/www/server/tomcat':'Tomcat程序目录',
-            '/www/php_session':'PHP-SESSION隔离目录'
+            '/www/php_session':'PHP-SESSION隔离目录',
+            '/proc':'系统进程目录',
+            '/dev':'系统设备目录',
+            '/sys':'系统调用目录',
+            '/tmp':'系统临时文件目录',
+            '/var/log':'系统日志目录',
+            '/var/run':'系统运行日志目录',
+            '/var/spool':'系统队列目录',
+            '/var/lock':'系统锁定目录',
+            '/var/mail':'系统邮件目录',
+            '/mnt':'系统挂载目录',
+            '/media':'系统多媒体目录',
+            '/dev/shm':'系统共享内存目录',
+            '/lib':'系统动态库目录',
+            '/lib64':'系统动态库目录',
+            '/lib32':'系统动态库目录',
+            '/usr/lib':'系统动态库目录',
+            '/usr/lib64':'系统动态库目录',
+            '/usr/local/lib':'系统动态库目录',
+            '/usr/local/lib64':'系统动态库目录',
+            '/usr/local/libexec':'系统动态库目录',
+            '/usr/local/sbin':'系统脚本目录',
+            '/usr/local/bin':'系统脚本目录'
+
+            
         }
-        if filename in pss:  return pss[filename]
+        if filename in pss:  return "PS：" + pss[filename]
+        
+        if not self.recycle_list: self.recycle_list = public.get_recycle_bin_list()
+        if filename + '/' in self.recycle_list: return 'PS：回收站目录'
+        if filename in self.recycle_list: return 'PS：回收站目录'
         return ''
 
 
@@ -848,7 +877,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
     def DeleteDir(self, get):
         if sys.version_info[0] == 2:
             get.path = get.path.encode('utf-8')
-        if get.path in ['/www/Recycle_bin','/www/.Recycle_bin']:
+        if os.path.basename(get.path) in ['Recycle_bin','.Recycle_bin']:
             return public.returnMsg(False, '不能直接操作回收站目录，请在右上角按【回收站】按钮打开')
         if not os.path.exists(get.path):
             return public.returnMsg(False, 'DIR_NOT_EXISTS')
@@ -1172,7 +1201,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             return public.returnMsg(False, '文件结尾不建议使用 "."，因为可能存在安全隐患')
         if not self.CheckFileName(get.dfile):
             return public.returnMsg(False, '文件名中不能包含特殊字符!')
-        if get.sfile == '/www/Recycle_bin':
+        if os.path.basename(get.sfile) == '.Recycle_bin':
             return public.returnMsg(False, '不能直接操作回收站目录，请在右上角按【回收站】按钮打开')
         if not os.path.exists(get.sfile):
             return public.returnMsg(False, 'FILE_NOT_EXISTS')
@@ -2628,46 +2657,46 @@ cd %s
                 data[fname] = ''
         return public.return_data(True,data)
 
-def set_rsync_data(self,data):
-    '''
-        @name 写入rsync配置数据
-        @author cjx
-        @param data<dict> 配置数据
-        @return bool
-    '''
-    public.writeFile('{}/data/file_rsync.json'.format(public.get_panel_path()),json.dumps(data))
-    return True
+    def set_rsync_data(self,data):
+        '''
+            @name 写入rsync配置数据
+            @author cjx
+            @param data<dict> 配置数据
+            @return bool
+        '''
+        public.writeFile('{}/data/file_rsync.json'.format(public.get_panel_path()),json.dumps(data))
+        return True
 
-def get_rsync_data(self):
-    '''
-        @name 获取文件同步配置
-        @author cjx
-        @return dict
-    '''
-    data = {}
-    path = '{}/data/file_rsync.json'.format(public.get_panel_path())
-    try:
-        if os.path.exists(path):
-            data = json.loads(public.readFile(path))
-    except :
-        data = {}       
-    return data
+    def get_rsync_data(self):
+        '''
+            @name 获取文件同步配置
+            @author cjx
+            @return dict
+        '''
+        data = {}
+        path = '{}/data/file_rsync.json'.format(public.get_panel_path())
+        try:
+            if os.path.exists(path):
+                data = json.loads(public.readFile(path))
+        except :
+            data = {}       
+        return data
 
-def add_files_rsync(self,get):
-    '''
-        @name 添加数据同步标记
-        @author cjx
-    '''
-    path = get.path
-    s_type = get.s_type
+    def add_files_rsync(self,get):
+        '''
+            @name 添加数据同步标记
+            @author cjx
+        '''
+        path = get.path
+        s_type = get.s_type
 
-    data = self.get_rsync_data()   
-    if not path in data: data[path] = {}
+        data = self.get_rsync_data()   
+        if not path in data: data[path] = {}
 
-    data[path][s_type] = 1
+        data[path][s_type] = 1
 
-    self.set_rsync_data(data)
-    return public.returnMsg(True,'添加成功!')
+        self.set_rsync_data(data)
+        return public.returnMsg(True,'添加成功!')
 
 
 
