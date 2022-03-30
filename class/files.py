@@ -2628,6 +2628,47 @@ cd %s
                 data[fname] = ''
         return public.return_data(True,data)
 
+def set_rsync_data(self,data):
+    '''
+        @name 写入rsync配置数据
+        @author cjx
+        @param data<dict> 配置数据
+        @return bool
+    '''
+    public.writeFile('{}/data/file_rsync.json'.format(public.get_panel_path()),json.dumps(data))
+    return True
+
+def get_rsync_data(self):
+    '''
+        @name 获取文件同步配置
+        @author cjx
+        @return dict
+    '''
+    data = {}
+    path = '{}/data/file_rsync.json'.format(public.get_panel_path())
+    try:
+        if os.path.exists(path):
+            data = json.loads(public.readFile(path))
+    except :
+        data = {}       
+    return data
+
+def add_files_rsync(self,get):
+    '''
+        @name 添加数据同步标记
+        @author cjx
+    '''
+    path = get.path
+    s_type = get.s_type
+
+    data = self.get_rsync_data()   
+    if not path in data: data[path] = {}
+
+    data[path][s_type] = 1
+
+    self.set_rsync_data(data)
+    return public.returnMsg(True,'添加成功!')
+
 
 
 
