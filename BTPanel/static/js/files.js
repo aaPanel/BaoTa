@@ -364,9 +364,8 @@ var bt_file = {
                                 _title = '安装'
                                 _tips = '检测到'+item.title+'功能没有安装，是否立即安装开启使用'
                             }else{
-                                _title = '购买'
-                                _tips = '未开通此功能，是否跳转至立即开通'
-                                _status = 1
+                                product_recommend.recommend_product_view(item)
+                                return false;
                             }
                         }else{
                             bt.plugin.get_plugin_byhtml(item.name,function(html){
@@ -380,14 +379,7 @@ var bt_file = {
                             return false;
                         }
                         layer.confirm(_tips, { title: _title+item.title, closeBtn: 2, icon: 3 }, function() {
-                            switch(_status){
-                                case 0:  //未安装
-                                    bt.soft.install(item['name'])
-                                    break;
-                                case 1:  //未购买
-                                    product_recommend.pay_product_sign('ltd',item.pay)
-                                    break;
-                            }
+                            bt.soft.install(item['name'])
                         })
                     }
                 })
@@ -1797,7 +1789,7 @@ var bt_file = {
                 type:1,
                 closeBtn: 1,
                 title:'接收端用户信息',
-                area:['430px','240px'],
+                area:['400px','220px'],
                 shadeClose: false,
                 content:'<div class="pd20">\
                 <div class="replace_content_view ">\
@@ -2682,23 +2674,15 @@ var bt_file = {
                                     _title = '安装'
                                     _tips = '检测到'+item.title+'功能没有安装，是否立即安装开启使用'
                                 }else{
-                                    _title = '购买'
-                                    _tips = '未开通此功能，是否跳转至立即开通'
-                                    _status = 1
+                                    product_recommend.recommend_product_view(item)
+                                    return false;
                                 }
                             }else{
                                 that.set_dir_rsync(data);
                                 return false;
                             }
                             layer.confirm(_tips, { title: _title+item.title, closeBtn: 2, icon: 3 }, function() {
-                                switch(_status){
-                                    case 0:  //未安装
-                                        bt.soft.install(item['name'])
-                                        break;
-                                    case 1:  //未购买
-                                        product_recommend.pay_product_sign('ltd',item.pay)
-                                        break;
-                                }
+                                bt.soft.install(item['name'])
                             })
                         }
                     })
