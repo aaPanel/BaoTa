@@ -787,7 +787,7 @@ var aceEditor = {
       $('.ace_toolbar_menu').hide();
       if (e.which === 3) {
         if ($(this).hasClass('edit_file_group')) return false;
-        $('.ace_catalogue_menu').css({ 'display': 'block', 'left': x - _left, 'top': y - _top });
+        $('.ace_catalogue_menu').css({ 'display': 'block', 'left': x + 15, 'top': y + 10 });
         _that.removeClass('bg');
         $(this).addClass('bg');
         _active.attr('data-edit') != '2' ? _active.parent().remove() : '';
