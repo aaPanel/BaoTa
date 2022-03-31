@@ -4343,6 +4343,9 @@ def get_recycle_bin_list():
     default_path_src = '/www/Recycle_bin'
     if os.path.exists(default_path_src) and not os.path.exists(default_path):
         os.rename(default_path_src,default_path)
+
+    if not os.path.exists(default_path):
+        os.makedirs(default_path,384)
     
     # 获取回收站列表
     recycle_bin_list = []
