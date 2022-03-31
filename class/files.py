@@ -1102,7 +1102,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             l = len(rlist)
             for name in rlist:
                 i += 1
-                path = rPath + name
+                path = os.path.join(rPath , name)
                 public.writeSpeed(name, i, l)
                 if name.find('BTDB_') != -1:
                     database.database().DeleteTo(path)
