@@ -604,19 +604,25 @@ class ajax:
         phpini = public.readFile(filename)
         data = {}
         rep = "disable_functions\s*=\s{0,1}(.*)\n"
-        tmp = re.search(rep,phpini).groups()
-        data['disable_functions'] = tmp[0]
+
+        tmp = re.search(rep,phpini)
+        if tmp:
+            data['disable_functions'] = tmp.groups()[0]
         
         rep = "upload_max_filesize\s*=\s*([0-9]+)(M|m|K|k)"
-        tmp = re.search(rep,phpini).groups()
-        data['max'] = tmp[0]
+
+        tmp = re.search(rep,phpini)
+        if tmp:
+            data['max'] = tmp.groups()[0]
         
         rep = u"\n;*\s*cgi\.fix_pathinfo\s*=\s*([0-9]+)\s*\n"
-        tmp = re.search(rep,phpini).groups()
-        if tmp[0] == '0':
-            data['pathinfo'] = False
-        else:
-            data['pathinfo'] = True
+        tmp = re.search(rep,phpini)
+        if tmp:
+            if tmp.groups()[0] == '0':
+                data['pathinfo'] = False
+            else:
+                data['pathinfo'] = True
+
         self.getCloudPHPExt(get)
         phplib = json.loads(public.readFile('data/phplib.conf'))
         libs = []
@@ -794,6 +800,22 @@ class ajax:
                 fw.DelAcceptPort(get)
         return public.returnMsg(True, 'SET_PORT_SUCCESS')
 
+    def _get_phpmyadmin_auth(self):
+        import re
+        nginx_conf = '/www/server/nginx/conf/nginx.conf'
+        reg = '#AUTH_START(.|\n)*#AUTH_END'
+        if os.path.exists(nginx_conf):
+            nginx_conf = public.readFile(nginx_conf)
+            auth_tmp = re.search(reg, nginx_conf)
+            if auth_tmp:
+                return True
+        apache_conf = '/www/server/apache/conf/extra/httpd-vhosts.conf'
+        if os.path.exists(apache_conf):
+            apache_conf = public.readFile(apache_conf)
+            auth_tmp = re.search(reg, apache_conf)
+            if auth_tmp:
+                return True
+
     # 设置phpmyadmin ssl
     def set_phpmyadmin_ssl(self,get):
         if public.get_webserver() == "openlitespeed":
@@ -801,6 +823,15 @@ class ajax:
         if not os.path.exists("/www/server/panel/ssl/certificate.pem"):
             return public.returnMsg(False,'面板证书不存在，请申请面板证书后再试')
         if get.v == "1":
+            # 获取auth信息
+            auth = ""
+            if self._get_phpmyadmin_auth():
+                auth = """
+        #AUTH_START
+        auth_basic "Authorization";
+        auth_basic_user_file /www/server/pass/phpmyadmin.pass;
+        #AUTH_END
+"""
         # nginx配置文件
             ssl_conf = """server
     {
@@ -819,6 +850,7 @@ class ajax:
         ssl_session_timeout 10m;
         error_page 497  https://$host$request_uri;
         #SSL-END
+        %s
         include enable-php.conf;
         location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
         {
@@ -833,11 +865,20 @@ class ajax:
             deny all;
         }
         access_log  /www/wwwlogs/access.log;
-    }"""
+    }""" % auth
             public.writeFile("/www/server/panel/vhost/nginx/phpmyadmin.conf",ssl_conf)
             import panelPlugin
             get.sName = "phpmyadmin"
             v = panelPlugin.panelPlugin().get_soft_find(get)
+            if self._get_phpmyadmin_auth():
+                auth = """
+        #AUTH_START
+        AuthType basic
+        AuthName "Authorization "
+        AuthUserFile /www/server/pass/phpmyadmin.pass
+        Require user jose
+        #AUTH_END
+            """
             # apache配置
             ssl_conf = '''Listen 887
 <VirtualHost *:887>
@@ -869,13 +910,14 @@ class ajax:
     
     #PATH
     <Directory "/www/wwwroot/bt.youbadbad.cn/">
+{}
        SetOutputFilter DEFLATE
        Options FollowSymLinks
        AllowOverride All
        Require all granted
        DirectoryIndex index.php index.html index.htm default.php default.html default.htm
     </Directory>
-</VirtualHost>'''.format(public.get_php_proxy(v["ext"]["phpversion"],'apache'))
+</VirtualHost>'''.format(public.get_php_proxy(v["ext"]["phpversion"],'apache'),auth)
             public.writeFile("/www/server/panel/vhost/apache/phpmyadmin.conf", ssl_conf)
         else:
             if os.path.exists("/www/server/panel/vhost/nginx/phpmyadmin.conf"):
@@ -893,6 +935,8 @@ class ajax:
         import re
         #try:
         filename = self.__get_webserver_conffile()
+        if public.get_webserver() == 'openlitespeed':
+            filename = "/www/server/panel/vhost/openlitespeed/detail/phpmyadmin.conf"
         conf = public.readFile(filename)
         if not conf: return public.returnMsg(False,'ERROR')
         if hasattr(get,'port'):
