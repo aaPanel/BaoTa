@@ -47,6 +47,7 @@ class ssh_terminal:
     _debug_file = 'logs/terminal.log'
     _s_code = None
     _last_num = 0
+    _key_passwd = None
 
     def connect(self):
         '''
@@ -681,6 +682,8 @@ class ssh_terminal:
             self._pkey = ssh_info['pkey']
         if 'password' in ssh_info: 
             self._pass = ssh_info['password']
+        if 'pkey_passwd' in ssh_info:
+            self._key_passwd = ssh_info['pkey_passwd']
         try:
             result = self.connect()
         except Exception as ex:
@@ -822,6 +825,7 @@ class ssh_host_admin(ssh_terminal):
         host_info['username'] = info_tmp['username']
         host_info['password'] = info_tmp['password']
         host_info['pkey'] = info_tmp['pkey']
+        host_info['pkey_passwd'] = info_tmp['pkey_passwd']
         return host_info
 
     def modify_host(self,args):
@@ -837,6 +841,7 @@ class ssh_host_admin(ssh_terminal):
                 username: 用户名
                 password: 密码
                 pkey: 密钥(如果不为空，将使用密钥连接)
+                pkey_passwd: 密钥的密码
             }
             @return dict
         '''
@@ -865,6 +870,7 @@ class ssh_host_admin(ssh_terminal):
         host_info['username'] = args['username']
         host_info['password'] = args['password']
         host_info['pkey'] = args['pkey']
+        host_info['pkey_passwd'] = args['pkey_passwd']
         if not host_info['pkey']: host_info['pkey'] = ''
         result = self.set_attr(host_info)
         if not result['status']: return result
@@ -886,6 +892,7 @@ class ssh_host_admin(ssh_terminal):
                 username: 用户名
                 password: 密码
                 pkey: 密钥(如果不为空，将使用密钥连接)
+                pkey_passwd： 密钥的密码
             }
             @return dict
         '''
@@ -908,6 +915,7 @@ class ssh_host_admin(ssh_terminal):
         host_info['username'] = args['username']
         host_info['password'] = args['password']
         host_info['pkey'] = args['pkey']
+        host_info['pkey_passwd'] = args['pkey_passwd']
         result = self.set_attr(host_info)
         if not result['status']: return result
         self.save_ssh_info(args.host,host_info)
