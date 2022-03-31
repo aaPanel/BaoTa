@@ -722,10 +722,12 @@ var host_trem = {
                           case 0:
                               $('.c_password_view').addClass('show').removeClass('hidden');
                               $('.c_pkey_view').addClass('hidden').removeClass('show').find('input').val('');
+                              $('.key_pwd_line').addClass('hidden').removeClass('show');
                               break;
                           case 1:
                               $('.c_password_view').addClass('hidden').removeClass('show').find('input').val('');
                               $('.c_pkey_view').addClass('show').removeClass('hidden');
+                              $('.key_pwd_line').addClass('show').removeClass('hidden');
                               break;
                       }
                   });

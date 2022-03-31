@@ -4830,11 +4830,7 @@ bt.soft = {
       }
       $(".sale-price").text((price * cycle).toFixed(2))
       $(".pay-wx").html('');
-      $(".pay-wx").qrcode({
-        width: 175,
-        height: 175,
-        text: rdata.msg.code
-      });
+      $(".pay-wx").qrcode(rdata.msg.code);
       $(".pay-wx").css({ 'display': 'flex', 'justify-content': 'center', 'margin-bottom': '10px' });
       $(".pay-wx canvas").css({ 'width': '175px', 'height': '175px', 'margin': '0', 'border-bottom-color': '#ddd' });
       bt.set_cookie('other_oid', rdata.msg.oid)
