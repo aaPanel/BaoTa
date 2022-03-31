@@ -151,8 +151,13 @@ UploadFile.prototype = {
 
     // 离开放置目录
     this.bind(this.uploadElement, 'dragleave', function (ev) {
-      if(ev.path[0].id == 'uploadView') return false
-      _this.file_drag_hover(ev);
+      if (ev.path[0].id == 'uploadView') {
+        if (ev.screenX == 0 || ev.screenY == 0) {
+          ev.path[0].style.display = 'none';
+        }
+        return false
+      }
+      // _this.file_drag_hover(ev);
     });
 
     // 放置目标
@@ -165,6 +170,7 @@ UploadFile.prototype = {
         return false;
       }
       var path = $('#fileInputPath').attr('data-path');
+      $('.againUpload').click();
       _this.init_upload_path(path);
       _this.upload_layer();
       _this.isUpload = true;
