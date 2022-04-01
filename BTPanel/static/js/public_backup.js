@@ -5430,34 +5430,45 @@ bt.soft = {
 
   get_install_plugin: function (item) {
     var plugin_info = bt.load('正在获取插件安装信息，请稍候<img src="/static/img/ing.gif" />');
-    bt.send('install_plugin', 'plugin/install_plugin', {
-      sName: item.name,
-      version: item.install_version.m_version,
-      min_version: item.install_version.version,
-      type: item.install_type
-    }, function (rdata) {
-      plugin_info.close();
-      if (rdata.install_opt) {
-        bt.soft.show_plugin_info(rdata);
-        return
-      }
-      if (rdata.size) {
-        bt.soft.install_other(rdata, status);
-        return;
-      }
-      bt.pub.get_task_count(function (rdata) {
-        if (rdata > 0 && item.type === 5) messagebox();
-      });
-      if (typeof soft != "undefined") soft.get_list();
-      if (!rdata.status) layer.closeAll()
-      if (rdata.msg.indexOf('依赖以下软件,请先安装') > -1) {
-        layer.msg(rdata.msg.replace(/.*\[([A-z]*)].*/, function () {
-          return '依赖以下软件,请先安装[' + arguments[1] + ']，<a href="javascript:;" onclick="bt.soft.install(\'' + arguments[1] + '\',this)" class="btlink">点击安装软件</a>'
-        }), { icon: 0, time: 0, closeBtn: 2, shade: .3 })
-        return false;
-      }
-      bt.msg(rdata);
-    })
+    var fn = function () {
+      bt.send('install_plugin', 'plugin/install_plugin', {
+        sName: item.name,
+        version: item.install_version.m_version,
+        min_version: item.install_version.version,
+        type: item.install_type
+      }, function (rdata) {
+        plugin_info.close();
+        if (rdata.install_opt) {
+          bt.soft.show_plugin_info(rdata);
+          return
+        }
+        if (rdata.size) {
+          bt.soft.install_other(rdata, status);
+          return;
+        }
+        bt.pub.get_task_count(function (rdata) {
+          if (rdata > 0 && item.type === 5) messagebox();
+        });
+        if (typeof soft != "undefined") soft.get_list();
+        if (!rdata.status) layer.closeAll()
+        if (rdata.msg.indexOf('依赖以下软件,请先安装') > -1) {
+          layer.msg(rdata.msg.replace(/.*\[([A-z]*)].*/, function () {
+            return '依赖以下软件,请先安装[' + arguments[1] + ']，<a href="javascript:;" onclick="bt.soft.install(\'' + arguments[1] + '\',this)" class="btlink">点击安装软件</a>'
+          }), { icon: 0, time: 0, closeBtn: 2, shade: .3 })
+          return false;
+        }
+        bt.msg(rdata);
+      })
+    }
+    if(item.type === 10 && item.endtime === 0){
+      bt.send('create_plugin_other_order', 'auth/create_plugin_other_order', {
+        pid: item.pid,
+        cycle: 999,
+        type: 0
+      },fn)
+    }else{
+      fn()
+    }
   },
 
   /**
