@@ -2210,6 +2210,7 @@ def check_csrf_websocket(ws,args):
         @return void
     '''
     if g.is_aes: return True
+    if g.api_request: return True
     if public.is_debug(): return True
     is_success = True
     if not 'x-http-token' in args: 
