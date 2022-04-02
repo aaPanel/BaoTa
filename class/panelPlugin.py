@@ -2899,12 +2899,16 @@ class panelPlugin:
         mac=uuid.UUID(int = uuid.getnode()).hex[-12:]
         return ":".join([mac[e:e+2] for e in range(0,11,2)])
         
+    # 获取云端帐户状态
     def get_cloud_list_status(self,get):
         try:
+            ikey = 'cloud_list_status'
+            if cache.get(ikey): return False
             pdata = public.get_user_info()
             pdata['mac'] = self.get_mac_address()
             list_body = public.HttpPost(self._check_url,pdata)
             if not list_body: return False
+            cache.set(ikey,1,600)
             list_body=json.loads(list_body)
             if not list_body['status']:
                 public.writeFile(self.__path_error,"error")
@@ -2935,6 +2939,8 @@ class panelPlugin:
             if os.path.exists(self.__path_error):os.remove(self.__path_error)
             if os.path.exists(self.__error_html):os.remove(self.__error_html)
             return '1'
+
+    # 获取用户信息
     def get_user_info(self):
         user_file = '{}/data/userInfo.json'.format(public.get_panel_path())
         if not os.path.exists(user_file): return {}
@@ -2952,13 +2958,17 @@ class panelPlugin:
         except: pass
         return False
 
+    # 判断是否解除绑定
     def is_verify_unbinding(self,get):
         try:
+            ikey = 'verify_unbinding'
+            if cache.get(ikey): return True
             path='{}/data/userInfo.json'.format(public.get_panel_path())
             pdata = self.get_user_info()
             if not pdata: return 'None'
             list_body = public.HttpPost(self._unbinding_url,pdata)
             if not list_body: return False
+            cache.set(ikey,1,600)
             list_body=json.loads(list_body)
             if not list_body['status']:
                 if os.path.exists(path):os.remove(path)
