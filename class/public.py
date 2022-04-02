@@ -3556,7 +3556,13 @@ def get_plugin_main_object(plugin_name,sys_path):
     is_php = False
     plugin_obj = None
     if os.path.exists(os_file): # 是否为编译后的so文件
-        plugin_obj = __import__(plugin_name + '_main')
+        try:
+            plugin_obj = __import__(plugin_name + '_main')
+        except Exception as ex:
+            if str(ex).find('undefined symbol') != -1:
+                re_download_main(plugin_name,get_plugin_path())
+                writeFile("{}/data/{}.pl".format(get_panel_path(),plugin_name),'1')
+                raise PanelError('插件程序文件异常，已尝试自动修复，请刷新页面重试!')
     elif os.path.exists(php_file): # 是否为PHP代码
         import panelPHP
         is_php = True
@@ -3573,12 +3579,23 @@ def get_plugin_script(plugin_name,plugin_path):
 
     if plugin_body.find(b'import') != -1:
         return plugin_body,True
-    
+
+    # 重新下载空文件
+    if not plugin_body.strip():
+        re_download_main(plugin_name,get_plugin_path())
+        writeFile("{}/data/{}.pl".format(get_panel_path(),plugin_name),'1')
+        plugin_body = readFile(plugin_file,'rb')
+        if plugin_body.find(b'import') != -1: return plugin_body,True
+
+    plugin_file_so = '{plugin_path}/{name}/{name}_main.so'.format(plugin_path =plugin_path, name=plugin_name)
     if len(plugin_body) > 1024 and plugin_body.find(b'+') != -1 and plugin_body.find(b'/') != -1:
+        plugin_path = get_plugin_path(plugin_name)
+        up_file = '{}/upgrade.sh'.format(plugin_path)
+        if os.path.exists(up_file) and os.path.exists(plugin_file_so): # 删除无效的so文件
+            ExecShell("rm -f {}/*.so".format(plugin_path))
         return plugin_body,False
 
     # 无py文件再运行so
-    plugin_file_so = '{plugin_path}/{name}/{name}_main.so'.format(plugin_path =plugin_path, name=plugin_name)
     if os.path.exists(plugin_file_so): return '',True
 
     return plugin_body,False

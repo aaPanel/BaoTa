@@ -1945,6 +1945,7 @@ function ajaxSetup () {
 
         error_key = 'We need to make sure this has a favicon so that the debugger does';
         error_find = jqXHR.responseText.indexOf(error_key)
+        console.log(jqXHR.responseText)
         if (jqXHR.status == 500 && jqXHR.responseText.indexOf('运行时发生错误') != -1) {
           if (jqXHR.responseText.indexOf('请先绑定宝塔帐号!') != -1) {
             if ($('.libLogin').length > 0 || $('.radio_account_view').length > 0) return false;
@@ -1954,7 +1955,13 @@ function ajaxSetup () {
             return;
           }
           gl_error_body = jqXHR.responseText;
-          error_msg = jqXHR.responseText.split('public.PanelError: ')[1].split("</pre>")[0].replace("面板运行时发生错误:",'').replace("public.PanelError:",'').trim();
+          if (jqXHR.responseText.indexOf('建议按顺序逐一尝试以下解决方案') != -1){
+            error_msg = jqXHR.responseText.split('Error: ')[1].split("</pre>")[0].replace("面板运行时发生错误:",'').replace("public.PanelError:",'').trim();
+          }else{
+            error_msg = '<h3>' + jqXHR.responseText.split('<h3>')[1].split('</h3>')[0] + '</h3>'
+            error_msg += '<a style="color:dimgrey;font-size:none">' + jqXHR.responseText.split('<h4 style="font-size: none;">')[1].split("</h4>")[0].replace("面板运行时发生错误:",'').replace("public.PanelError:",'').trim() + '</a>';
+          }
+          
           error_msg += "<br><a class='btlink' onclick='show_error_message()'> >>点击查看详情</a>";
           $(".layui-layer-padding").parents('.layer-anim').remove();
           $(".layui-layer-shade").remove();
@@ -1967,7 +1974,7 @@ function ajaxSetup () {
               shadeClose: false,
               shade: 0.3,
               icon:2,
-              area:"500px",
+              area:"600px",
               success: function () {
                 $('pre').scrollTop(100000000000)
               }

@@ -6022,6 +6022,7 @@ bt.soft = {
           }
           return;
         }
+        rhtml = rhtml.replace(/,\s+error:\s+function(.|\n|\r)+obj.error\(ex\);\s+\}/,"");
         bt.open({
           type: 1,
           shift: 5,
@@ -6249,6 +6250,7 @@ bt.plugin = {
     bt.send('getConfigHtml', 'plugin/getConfigHtml', {
       name: name
     }, function (rdata) {
+      rdata = rdata.replace(/,\s+error:\s+function(.|\n|\r)+obj.error\(ex\);\s+\}/,"")
       if (callback) callback(rdata);
     });
   },
