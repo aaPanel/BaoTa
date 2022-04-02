@@ -129,10 +129,10 @@ if __name__ == '__main__':
         err_f.close()
 
     import threading
-    # import jobs
+    import jobs
 
-    # job = threading.Thread(target=jobs.control_init)
-    # job.start()
+    job = threading.Thread(target=jobs.control_init)
+    job.start()
 
 
     if is_ssl:
