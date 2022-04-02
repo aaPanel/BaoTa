@@ -3573,6 +3573,9 @@ def get_plugin_script(plugin_name,plugin_path):
 
     if plugin_body.find(b'import') != -1:
         return plugin_body,True
+    
+    if len(plugin_body) > 1024 and plugin_body.find(b'+') != -1 and plugin_body.find(b'/') != -1:
+        return plugin_body,False
 
     # 无py文件再运行so
     plugin_file_so = '{plugin_path}/{name}/{name}_main.so'.format(plugin_path =plugin_path, name=plugin_name)
