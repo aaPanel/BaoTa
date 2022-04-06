@@ -46,7 +46,7 @@ def HttpGet(url,timeout = 6,headers = {}):
     """
     if url.find('GetAuthToken') == -1:
         if is_local(): return False
-    rep_home_host()
+    # rep_home_host()
     import http_requests
     res = http_requests.get(url,timeout=timeout,headers = headers)
     if res.status_code == 0:
@@ -117,7 +117,7 @@ def HttpPost(url,data,timeout = 6,headers = {}):
     """
     if url.find('GetAuthToken') == -1:
         if is_local(): return False
-    rep_home_host()
+    # rep_home_host()
     import http_requests
     res = http_requests.post(url,data=data,timeout=timeout,headers = headers)
     if res.status_code == 0:
@@ -1752,6 +1752,7 @@ def get_mysql_obj(db_name):
 
 # 取mysql数据库对像 By sid
 def get_mysql_obj_by_sid(sid = 0,conn_config = None):
+    if sid in ['0','']: sid = 0
     if sid:
         if not conn_config: conn_config = M('database_servers').where("id=?" ,sid).find()
         import db_mysql
@@ -2560,7 +2561,7 @@ def submit_keyword(keyword):
 def total_keyword(keyword):
     import threading
     p = threading.Thread(target=submit_keyword,args=(keyword,))
-    p.setDaemon(True)
+    # p.setDaemon(True)
     p.start()
 
 #获取debug日志
@@ -3435,7 +3436,7 @@ def get_sys_path():
         @return tuple
     '''
     a = ['/www','/usr','/','/dev','/home','/media','/mnt','/opt','/tmp','/var']
-    c = ['/www/Recycle_bin/','/www/backup/','/www/php_session/','/www/wwwlogs/','/www/server/','/etc/','/usr/','/var/','/boot/','/proc/','/sys/','/tmp/','/root/','/lib/','/bin/','/sbin/','/run/','/lib64/','/lib32/','/srv/']
+    c = ['/www/.Recycle_bin/','/www/backup/','/www/php_session/','/www/wwwlogs/','/www/server/','/etc/','/usr/','/var/','/boot/','/proc/','/sys/','/tmp/','/root/','/lib/','/bin/','/sbin/','/run/','/lib64/','/lib32/','/srv/']
     return a,c
 
 
@@ -3555,7 +3556,13 @@ def get_plugin_main_object(plugin_name,sys_path):
     is_php = False
     plugin_obj = None
     if os.path.exists(os_file): # 是否为编译后的so文件
-        plugin_obj = __import__(plugin_name + '_main')
+        try:
+            plugin_obj = __import__(plugin_name + '_main')
+        except Exception as ex:
+            if str(ex).find('undefined symbol') != -1:
+                re_download_main(plugin_name,get_plugin_path())
+                writeFile("{}/data/{}.pl".format(get_panel_path(),plugin_name),'1')
+                raise PanelError('插件程序文件异常，已尝试自动修复，请刷新页面重试!')
     elif os.path.exists(php_file): # 是否为PHP代码
         import panelPHP
         is_php = True
@@ -3573,8 +3580,22 @@ def get_plugin_script(plugin_name,plugin_path):
     if plugin_body.find(b'import') != -1:
         return plugin_body,True
 
-    # 无py文件再运行so
+    # 重新下载空文件
+    if not plugin_body.strip():
+        re_download_main(plugin_name,get_plugin_path())
+        writeFile("{}/data/{}.pl".format(get_panel_path(),plugin_name),'1')
+        plugin_body = readFile(plugin_file,'rb')
+        if plugin_body.find(b'import') != -1: return plugin_body,True
+
     plugin_file_so = '{plugin_path}/{name}/{name}_main.so'.format(plugin_path =plugin_path, name=plugin_name)
+    if len(plugin_body) > 1024 and plugin_body.find(b'+') != -1 and plugin_body.find(b'/') != -1:
+        plugin_path = get_plugin_path(plugin_name)
+        up_file = '{}/upgrade.sh'.format(plugin_path)
+        if os.path.exists(up_file) and os.path.exists(plugin_file_so): # 删除无效的so文件
+            ExecShell("rm -f {}/*.so".format(plugin_path))
+        return plugin_body,False
+
+    # 无py文件再运行so
     if os.path.exists(plugin_file_so): return '',True
 
     return plugin_body,False
@@ -4237,4 +4258,129 @@ def get_mysql_bin():
         if os.path.exists(bin_file):
             return bin_file
     return bin_files[0]
+
+def error_conn_cloud(text):
+    '''
+        @name 连接云端失败
+        @author hwliang<2021-12-18>
+        @return void
+    '''
+    code_msg = ''
+    if text.find("502 Bad Gateway") != -1:
+        code_msg = '502 Bad Gateway'
+    if text.find("504 Bad Gateway") != -1:
+        code_msg = '504 Bad Gateway'
+    elif text.find("Connection refused") != -1:
+        code_msg = 'Connection refused'
+    elif text.find("Connection timed out") != -1:
+        code_msg = 'Connection timed out'
+    elif text.find("Connection reset by peer") != -1:
+        code_msg = 'Connection reset by peer'
+    elif text.find("Name or service not known") != -1:
+        code_msg = 'Name or service not known'
+    elif text.find("No route to host") != -1:
+        code_msg = 'No route to host'
+    elif text.find("No such file or directory") != -1:
+        code_msg = 'No such file or directory'
+    elif text.find("404 Not Found") != -1:
+        code_msg = '404 Not Found'
+    elif text.find("403 Forbidden") != -1:
+        code_msg = '403 Forbidden'
+    elif text.find("401 Unauthorized") != -1:
+        code_msg = '401 Unauthorized'
+    elif text.find("400 Bad Request") != -1:
+        code_msg = '400 Bad Request'
+    elif text.find("Remote end closed connection without response") != -1:
+        code_msg = 'Remote end closed connection'
+    err_template_file = '{}/BTPanel/templates/default/error_connect.html'.format(get_panel_path())
+    msg = readFile(err_template_file)
+    msg = msg.format(code=code_msg)
+    return msg
+
+def get_mountpoint_list():
+    '''
+        @name 获取挂载点列表
+        @author hwliang<2021-12-18>
+        @return list
+    '''
+    import psutil
+    mount_list = []
+    for mount in psutil.disk_partitions():
+        mountpoint = mount.mountpoint if mount.mountpoint[-1] == '/' else mount.mountpoint + '/'
+        mount_list.append(mountpoint)
+    # 根据挂载点字符长度排序
+    mount_list.sort(key = lambda i:len(i),reverse=True)
+    return mount_list
+
+def get_path_in_mountpoint(path):
+    '''
+        @name 获取文件或目录目录所在挂载点
+        @author hwliang<2022-03-30>
+        @param path<string> 文件或目录路径
+        @return string
+    '''
+    # 判断是否是绝对路径
+    if path.find('./') != -1 or path[0] != '/': raise PanelError("不能使用相对路径")
+    if not path: raise PanelError("文件或目录路径不能为空")
+
+    # 在目录尾加/
+    if os.path.isdir(path):
+        path = path if path[-1] == '/' else path + '/'
+    
+    # 匹配挂载点
+    mount_list = get_mountpoint_list()
+    for mountpoint in mount_list:
+        if path.startswith(mountpoint):
+            return mountpoint
+    
+    # 没有匹配到挂载点
+    return '/'
+
+def get_recycle_bin_path(path):
+    '''
+        @name 获取指定文件或目录的回收站路径
+        @author hwliang<2022-03-30>
+        @param path<string> 文件或目录路径
+        @return string
+    '''
+    mountpoint = get_path_in_mountpoint(path)
+    recycle_bin_path = '{}/.Recycle_bin/'.format(mountpoint)
+    try:
+        if not os.path.exists(recycle_bin_path):
+            os.mkdir(recycle_bin_path,384)
+    except:
+        return '/www/.Recycle_bin/'
+    return recycle_bin_path
+
+def get_recycle_bin_list():
+    '''
+        @name 获取回收站列表
+        @author hwliang<2022-03-30>
+        @return list
+    '''
+    # 旧的回收站重命名为.Recycle_bin
+    default_path = '/www/.Recycle_bin'
+    default_path_src = '/www/Recycle_bin'
+    if os.path.exists(default_path_src) and not os.path.exists(default_path):
+        os.rename(default_path_src,default_path)
+
+    if not os.path.exists(default_path):
+        os.makedirs(default_path,384)
+    
+    # 获取回收站列表
+    recycle_bin_list = []
+    for mountpoint in get_mountpoint_list():
+        recycle_bin_path = '{}.Recycle_bin/'.format(mountpoint)
+        try:
+            if not os.path.exists(recycle_bin_path):
+                os.mkdir(recycle_bin_path,384)
+            recycle_bin_list.append(recycle_bin_path)
+        except:
+            continue
+    
+    # 包含默认回收站路径？
+    if not default_path in recycle_bin_list:
+        recycle_bin_list.append(default_path + '/')
+    
+    return recycle_bin_list
 

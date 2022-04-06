@@ -259,7 +259,10 @@ class panelAuth:
                 params['serverid'] = userInfo['serverid']
                 params['access_key'] = userInfo['access_key']
 
-            result = public.httpPost(cloudURL + module,params)
+            try:
+                result = public.httpPost(cloudURL + module,params)
+            except Exception as ex:
+                raise public.error_conn_cloud(str(ex))
             result = json.loads(result.strip())
             if not result: return None
             return result

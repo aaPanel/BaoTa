@@ -1156,7 +1156,7 @@ export PATH
         if all_pids:
             pid_file = "{}/{}.pid".format(self._node_pid_path,project_name)
             public.writeFile(pid_file,str(all_pids[0]))
-            return True
+            return all_pids
         return False
 
     def kill_pids(self,get=None,pids = None):

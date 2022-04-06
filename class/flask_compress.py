@@ -81,7 +81,8 @@ class Compress(object):
         accept_encoding = request.headers.get('Accept-Encoding', '')
         response.headers['Server'] = 'nginx'
         response.headers['Connection'] = 'keep-alive'
-
+        if not 'tmp_login' in session:
+            response.headers["X-Frame-Options"] = "SAMEORIGIN"
         if 'dologin' in g and app.config['SSL']:
             try:
                 for k,v in request.cookies.items():

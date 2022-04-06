@@ -1731,15 +1731,22 @@ var site = {
                 for (var i = 0; i < recomConfig['list'].length; i++) {
                   var item = recomConfig['list'][i];
                   (function (item) {
+                    layer.closeAll()
                     setConfig.unshift({
                       title:item.title,
                       event:function(row){
                         if(item.name === 'total'){ // 仅linux系统单独判断
-                          bt.soft.set_lib_config(item.name,item.pluginName)
-                          setTimeout(function(){
-                            site_monitoring_statistics.template_config.site_name = row.name
-                            $('[data-funname="overview"]').click()
-                          },500)
+                          if(!item.isBuy){
+                            product_recommend.recommend_product_view(item)
+                          }else if(!item.install){
+                            bt.soft.install(item.name)
+                          }else{
+                            bt.soft.set_lib_config(item.name,item.pluginName)
+                            setTimeout(function(){
+                              site_monitoring_statistics.template_config.site_name = row.name
+                              $('[data-funname="overview"]').click()
+                            },500)
+                          }
                         }else{
                           product_recommend.get_version_event(item,row.name)
                         }
@@ -3027,6 +3034,7 @@ var site = {
         "</div>",
       btn: [lan.public.ok, lan.public.cancel],
       success: function (layers, indexs) {
+        var _this = this;
         $(layers).find('.check_type_group label').hover(function () {
           var name = $(this).find('input').attr('name');
           if (name === 'data' && !recycle_bin_db_open) {
@@ -3036,7 +3044,12 @@ var site = {
           }
         }, function () {
           layer.closeAll('tips');
-        })
+        });
+        layers.find('#vcodeResult').keyup(function (e) {
+          if (e.keyCode == 13) {
+            _this.yes(indexs);
+          }
+        });
       },
       yes: function (indexs) {
         var vcodeResult = $('#vcodeResult'), data = { id: wid, webname: wname };
@@ -4252,6 +4265,7 @@ var site = {
         el: '#dir_dirguard',
         url: '/site?action=get_dir_auth',
         param: { id: web.id },
+        height: 450,
         dataFilter: function (res) {
           return { data: res[web.name] };
         },
@@ -4368,6 +4382,7 @@ var site = {
         authentication_table = bt_tools.table({
           el:'#authentication',
           url:'/plugin?action=a&name=ssl_verify&s=get_ssl_list',
+          height:'411',
           beforeRequest: function (params) {
             return { status:theStatus,search:params.search }
           },
@@ -4545,7 +4560,7 @@ var site = {
                       <span>全部</span>\
                       <input type="checkbox" class="hide" value="0">\
                   </button>\
-                  <button type="button" class="btn btn-default btn-sm btn-success">\
+                  <button type="button" class="btn btn-default btn-sm">\
                       <span>正常</span>\
                       <input type="checkbox" class="hide" value="1">\
                   </button>\
@@ -4554,7 +4569,8 @@ var site = {
                       <input type="checkbox" class="hide" value="-1">\
                   </button>\
               </div></div>')
-              $('#authentication').append('<button type="button" title="证书配置" class="btn btn-default config_ssl_info btn-sm mr5">证书配置</button>')
+              $('.related_status button').eq(theStatus == -1 ?2:theStatus).addClass('btn-success')
+              $('#authentication').append('<button type="button" title="证书配置" class="btn btn-default config_ssl_info btn-sm mr5">证书配置</button><ul class="help-info-text c7" style="margin-top: 50px;"><li>双向认证仅支持【HTTPS访问】，如需全站设置，还需通过网站设置开启【强制HTTPS】.</li><li>给网站开启【双向认证】，开启后用户需要将【证书】导入到浏览器后才能访问该网站（目前支持Nginx/Apache）</li></ul>')
               $('.config_ssl_info').click(function(){
                 $.post('/plugin?action=a&name=ssl_verify&s=get_config', {}, function (rdata) {
                   config_ssl_info(rdata)
@@ -6408,8 +6424,8 @@ var site = {
                   </div></div>\
                   </div>\
                 <ul class="help-info-text c7">\
-                  <li>可以是文件扩展名(如:php等)，也可以是文件名或文件全路径(如: /bt.cn/1.txt)</li>\
-                  <li>一般添加常见容易被篡改的扩展名即可，如html,php,js等</li>\
+                  <li>可以是文件扩展名(如:php等)，也可以是文件名</li>\
+                  <li>一般添加常见容易被篡改的扩展名即可，如html,php,js等 </li>\
                 </ul>\
                 </div>')
             //选择文件或扩展名
@@ -6540,7 +6556,7 @@ var site = {
             shadeClose: false,
             closeBtn: 2,
             content: '<div class="setchmod bt-form ">'
-                + '<pre class="run-log" style="overflow: auto; border: 0px none; line-height:23px;padding: 15px; margin: 0px; white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0px;font-family: \"微软雅黑\"">' + (item[3].length == '' ? '当前日志为空' : item[3].join('\n')) + '</pre>'
+                + '<pre class="run-log" style="overflow: auto; border: 0px none; line-height:23px;padding: 15px; margin: 0px; white-space: pre-wrap; height: 405px; background-color: rgb(51,51,51);color:#f1f1f1;border-radius:0px;font-family: \"微软雅黑\"">' + (item[3].length == '' || !item[3] ? '当前日志为空' : item[3].join('\n')) + '</pre>'
                 + '</div>'
           });
         }
@@ -6919,7 +6935,7 @@ var site = {
               title: '【'+name+'】日志详情',
               area: '650px',
               content:'<pre id="analysis_pre" style="background-color: #333;color: #fff;height: 545px;margin: 0;white-space: pre-wrap;border-radius: 0;"></pre>',
-              success(){
+              success: function () {
                 var loadTGD = bt.load('正在获取日志详情数据，请稍候...');
                 $.post('/ajax?action=get_detailed&path=/www/wwwlogs/' + web.name+'.log&type='+name+'', function (logs) {
                   loadTGD.close();
@@ -6939,7 +6955,7 @@ var site = {
           recom_Template = '',_introduce = '';
       // 1.未安装
       try{
-        if(!pay_status.is_pay || !_config['install']){
+        if(!_config['isBuy'] || !_config['install']){
           $.each(_config['product_introduce'],function(index,item){
             _introduce +='<li>'+item+'</li>'
           })
@@ -7236,7 +7252,7 @@ var site = {
         { title: '重定向', callback: site.edit.set_301 },
         { title: '反向代理', callback: site.edit.set_proxy },
         { title: '防盗链', callback: site.edit.set_security },
-        { title: '<span class="glyphicon glyphicon-vip ltd-font-icon" style="margin-left: -17px;"></span> 防篡改', callback: site.edit.set_tamper_proof },
+        { title: '<span class="glyphicon glyphicon-vip pro-font-icon" style="margin-left: -17px;"></span> 防篡改', callback: site.edit.set_tamper_proof },
         { title: '网站日志', callback: site.edit.get_site_logs },
         // { title: '错误日志', callback: site.edit.get_site_error_logs }
       ]

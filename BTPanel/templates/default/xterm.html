@@ -91,6 +91,12 @@
                 <textarea rows="4" name="pkey" class="bt-input-text mr5" placeholder="请输入SSH私钥" style="width:305px;height: 80px;line-height: 18px;padding-top:10px;"><% this.form.pkey %></textarea>
             </div>
         </div>
+        <div class="line key_pwd_line <% this.form.pkey != '' ? 'show' : 'hidden' %>">
+            <span class="tname">私钥密码</span>
+            <div class="info-r">
+                <input type="text" name="pkey_passwd" class="bt-input-text mr5" placeholder="请输入私钥密码" style="width:305px;" value="<% this.form.pkey_passwd %>" autocomplete="off"/>
+            </div>
+        </div>
         <div class="line ssh_ps_tips">
             <span class="tname">备注</span>
             <div class="info-r">

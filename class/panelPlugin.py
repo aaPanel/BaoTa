@@ -494,10 +494,16 @@ class panelPlugin:
         filename = '{}/{}.zip'.format(self.__tmp_path,upgrade_plugin_name)
         if not os.path.exists(self.__tmp_path): os.makedirs(self.__tmp_path,384)
         if not cache.get(pkey):
-            download_res = requests.post(self.__download_url,pdata,headers=public.get_requests_headers(),timeout=30,stream=True)
+            try:
+                download_res = requests.post(self.__download_url,pdata,headers=public.get_requests_headers(),timeout=30,stream=True)
+            except Exception as ex:
+                raise public.PanelError(public.error_conn_cloud(str(ex)))
+            
             try:
                 headers_total_size = int(download_res.headers['File-size'])
             except:
+                if download_res.text.find('<html>') != -1:
+                    raise public.PanelError(public.error_conn_cloud(download_res.text))
                 raise public.PanelError(download_res.text)
             res_down_size = 0
             res_chunk_size = 8192
@@ -922,7 +928,7 @@ class panelPlugin:
     def get_cloud_list(self,get=None):
         force  = False
         if hasattr(get,'force'): 
-            if int(get.force) is 1: force = True
+            if int(get.force) == 1: force = True
         self.__is_bind_user()
         skey = 'TNaMJdG3mDHKRS6Y'
         softList = cache.get(skey)
@@ -2893,12 +2899,16 @@ class panelPlugin:
         mac=uuid.UUID(int = uuid.getnode()).hex[-12:]
         return ":".join([mac[e:e+2] for e in range(0,11,2)])
         
+    # 获取云端帐户状态
     def get_cloud_list_status(self,get):
         try:
+            ikey = 'cloud_list_status'
+            if cache.get(ikey): return False
             pdata = public.get_user_info()
             pdata['mac'] = self.get_mac_address()
             list_body = public.HttpPost(self._check_url,pdata)
             if not list_body: return False
+            cache.set(ikey,1,600)
             list_body=json.loads(list_body)
             if not list_body['status']:
                 public.writeFile(self.__path_error,"error")
@@ -2929,6 +2939,8 @@ class panelPlugin:
             if os.path.exists(self.__path_error):os.remove(self.__path_error)
             if os.path.exists(self.__error_html):os.remove(self.__error_html)
             return '1'
+
+    # 获取用户信息
     def get_user_info(self):
         user_file = '{}/data/userInfo.json'.format(public.get_panel_path())
         if not os.path.exists(user_file): return {}
@@ -2946,13 +2958,17 @@ class panelPlugin:
         except: pass
         return False
 
+    # 判断是否解除绑定
     def is_verify_unbinding(self,get):
         try:
+            ikey = 'verify_unbinding'
+            if cache.get(ikey): return True
             path='{}/data/userInfo.json'.format(public.get_panel_path())
             pdata = self.get_user_info()
             if not pdata: return 'None'
             list_body = public.HttpPost(self._unbinding_url,pdata)
             if not list_body: return False
+            cache.set(ikey,1,600)
             list_body=json.loads(list_body)
             if not list_body['status']:
                 if os.path.exists(path):os.remove(path)

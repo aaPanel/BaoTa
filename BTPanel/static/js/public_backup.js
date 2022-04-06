@@ -847,7 +847,7 @@ var bt = {
             break;
           case 'button':
             var _width = _obj.width ? _obj.width : '330px';
-            _html += '<button name=\'' + _name + '\' class="btn btn-success btn-sm mr5 ml5 ' + _name + bs + ' ' + (_obj['class'] ? _obj['class'] : '') + '">' + _obj.text + '</button>';
+            _html += '<button type="button" name=\'' + _name + '\' class="btn btn-success btn-sm mr5 ml5 ' + _name + bs + ' ' + (_obj['class'] ? _obj['class'] : '') + '">' + _obj.text + '</button>';
             break;
           case 'radio':
             var _v = _obj.value === true ? 'checked' : ''
@@ -912,7 +912,7 @@ var bt = {
           break;
         case 'button':
           var _width = item.width ? item.width : '330px';
-          _html += '<button name=\'' + _name + '\' class="btn btn-success btn-sm mr5 ml5 ' + _name + bs + '">' + item.text + '</button>';
+          _html += '<button type="button" name=\'' + _name + '\' class="btn btn-success btn-sm mr5 ml5 ' + _name + bs + '">' + item.text + '</button>';
           break;
         case 'number':
           var _width = item.width ? item.width : '330px';
@@ -1589,11 +1589,34 @@ bt.index = {
       var k = layer.open({
         type: 1,
         title: lan.bt.install_title,
-        area: ["670px", "510px"],
+        area: ["670px", "500px"],
         closeBtn: 2,
         shadeClose: false,
-        content: "<div class='rec-install'><div class='important-title'><p><span class='glyphicon glyphicon-alert' style='color: #f39c12; margin-right: 10px;'></span>" + lan.bt.install_ps + " <a href='javascript:jump()' style='color:#20a53a'>" + lan.bt.install_s + "</a> " + lan.bt.install_s1 + "</p></div><div class='rec-box'><h3>" + lan.bt.install_lnmp + "</h3><div class='rec-box-con'><ul class='rec-list'>" + c + "</ul><p class='fangshi1'>" + lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "'><span>" + lan.bt.install_rpm + "</span><input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'><span>" + lan.bt.install_src + "</span><input type='checkbox'></label></p><div class='onekey'>" + lan.bt.install_key + "</div></div></div><div class='rec-box' style='margin-left:16px'><h3>LAMP</h3><div class='rec-box-con'><ul class='rec-list'>" + g + "</ul><p class='fangshi1'>" + lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "'><span>" + lan.bt.install_rpm + "</span><input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'><span>" + lan.bt.install_src + "</span><input type='checkbox'></label></p><div class='onekey'>" + lan.bt.install_key + "</div></div></div></div>",
-        success: function () {
+        content: "\
+        <div class='rec-install'>\
+          <div class='important-title'>\
+            <p><span class='glyphicon glyphicon-alert' style='color: #f39c12; margin-right: 10px;'></span>" + lan.bt.install_ps + " <a href='javascript:jump()' style='color:#20a53a'>" + lan.bt.install_s + "</a> " + lan.bt.install_s1 + "</p>\
+            <button type='button' class='btn btn-sm btn-default no-show-rec-btn'>不再显示推荐</button>\
+            \
+          </div>\
+          <div class='rec-box'>\
+            <h3>" + lan.bt.install_lnmp + "</h3>\
+            <div class='rec-box-con'>\
+              <ul class='rec-list'>" + c + "</ul>\
+              <p class='fangshi1'>" + lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "'><span>" + lan.bt.install_rpm + "</span><input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'><span>" + lan.bt.install_src + "</span><input type='checkbox'></label></p>\
+              <div class='onekey'>" + lan.bt.install_key + "</div>\
+            </div>\
+          </div>\
+          <div class='rec-box' style='margin-left:16px'>\
+            <h3>LAMP</h3>\
+            <div class='rec-box-con'>\
+              <ul class='rec-list'>" + g + "</ul>\
+              <p class='fangshi1'>" + lan.bt.install_type + "：<label data-title='" + lan.bt.install_rpm_title + "'><span>" + lan.bt.install_rpm + "</span><input type='checkbox' checked></label><label data-title='" + lan.bt.install_src_title + "'><span>" + lan.bt.install_src + "</span><input type='checkbox'></label></p>\
+              <div class='onekey'>" + lan.bt.install_key + "</div>\
+            </div>\
+          </div>\
+        </div>",
+        success: function ($layer, index) {
           form_group.select_all([
             '#select_Nginx',
             '#select_MySQL',
@@ -1613,6 +1636,23 @@ bt.index = {
                 siblings_label = input.parents('label').siblings()
             input.prop('checked', 'checked').next().addClass('active');
             siblings_label.find('input').removeAttr('checked').next().removeClass('active');
+          });
+          // 不再显示推荐
+          $('.no-show-rec-btn').click(function () {
+            bt.confirm({
+              title: '不再显示推荐',
+              msg: '是否不再显示推荐安装套件？',
+            }, function () {
+              var load = bt.load('正在设置，请稍候...');
+              bt.send('CreateDir', 'files/CreateDir', { path: '/www/server/php' }, function (res) {
+                load.close();
+                if (res.status) res.msg = '设置成功';
+                bt.msg(res);
+                setTimeout(function () {
+                  if (res.status) layer.close(index);
+                }, 2000)
+              });
+            });
           });
           var loadT = '';
           $('.fangshi1 label').hover(function () {
@@ -4791,6 +4831,8 @@ bt.soft = {
       $(".sale-price").text((price * cycle).toFixed(2))
       $(".pay-wx").html('');
       $(".pay-wx").qrcode(rdata.msg.code);
+      $(".pay-wx").css({ 'display': 'flex', 'justify-content': 'center', 'margin-bottom': '10px' });
+      $(".pay-wx canvas").css({ 'width': '175px', 'height': '175px', 'margin': '0', 'border-bottom-color': '#ddd' });
       bt.set_cookie('other_oid', rdata.msg.oid)
       bt.soft.get_order_stat(rdata.msg.oid, type);
     });
@@ -5388,34 +5430,45 @@ bt.soft = {
 
   get_install_plugin: function (item) {
     var plugin_info = bt.load('正在获取插件安装信息，请稍候<img src="/static/img/ing.gif" />');
-    bt.send('install_plugin', 'plugin/install_plugin', {
-      sName: item.name,
-      version: item.install_version.m_version,
-      min_version: item.install_version.version,
-      type: item.install_type
-    }, function (rdata) {
-      plugin_info.close();
-      if (rdata.install_opt) {
-        bt.soft.show_plugin_info(rdata);
-        return
-      }
-      if (rdata.size) {
-        bt.soft.install_other(rdata, status);
-        return;
-      }
-      bt.pub.get_task_count(function (rdata) {
-        if (rdata > 0 && item.type === 5) messagebox();
-      });
-      if (typeof soft != "undefined") soft.get_list();
-      if (!rdata.status) layer.closeAll()
-      if (rdata.msg.indexOf('依赖以下软件,请先安装') > -1) {
-        layer.msg(rdata.msg.replace(/.*\[([A-z]*)].*/, function () {
-          return '依赖以下软件,请先安装[' + arguments[1] + ']，<a href="javascript:;" onclick="bt.soft.install(\'' + arguments[1] + '\',this)" class="btlink">点击安装软件</a>'
-        }), { icon: 0, time: 0, closeBtn: 2, shade: .3 })
-        return false;
-      }
-      bt.msg(rdata);
-    })
+    var fn = function () {
+      bt.send('install_plugin', 'plugin/install_plugin', {
+        sName: item.name,
+        version: item.install_version.m_version,
+        min_version: item.install_version.version,
+        type: item.install_type
+      }, function (rdata) {
+        plugin_info.close();
+        if (rdata.install_opt) {
+          bt.soft.show_plugin_info(rdata);
+          return
+        }
+        if (rdata.size) {
+          bt.soft.install_other(rdata, status);
+          return;
+        }
+        bt.pub.get_task_count(function (rdata) {
+          if (rdata > 0 && item.type === 5) messagebox();
+        });
+        if (typeof soft != "undefined") soft.get_list();
+        if (!rdata.status) layer.closeAll()
+        if (rdata.msg.indexOf('依赖以下软件,请先安装') > -1) {
+          layer.msg(rdata.msg.replace(/.*\[([A-z]*)].*/, function () {
+            return '依赖以下软件,请先安装[' + arguments[1] + ']，<a href="javascript:;" onclick="bt.soft.install(\'' + arguments[1] + '\',this)" class="btlink">点击安装软件</a>'
+          }), { icon: 0, time: 0, closeBtn: 2, shade: .3 })
+          return false;
+        }
+        bt.msg(rdata);
+      })
+    }
+    if(item.type === 10 && item.endtime === 0){
+      bt.send('create_plugin_other_order', 'auth/create_plugin_other_order', {
+        pid: item.pid,
+        cycle: 999,
+        type: 0
+      },fn)
+    }else{
+      fn()
+    }
   },
 
   /**
@@ -5969,6 +6022,7 @@ bt.soft = {
           }
           return;
         }
+        // rhtml = rhtml.replace(/,\s+error:\s+function(.|\n|\r)+obj.error\(ex\);\s+\}/,"");
         bt.open({
           type: 1,
           shift: 5,
@@ -6196,6 +6250,7 @@ bt.plugin = {
     bt.send('getConfigHtml', 'plugin/getConfigHtml', {
       name: name
     }, function (rdata) {
+      // rdata = rdata.replace(/,\s+error:\s+function(.|\n|\r)+obj.error\(ex\);\s+\}/,"")
       if (callback) callback(rdata);
     });
   },
@@ -7220,7 +7275,7 @@ bt.data = {
           bt.send('SetupPassword', 'database/SetupPassword', rdata, function (rRet) {
             loading.close();
             bt.msg(rRet);
-            load.close();
+            if (rRet.status) load.close();
           })
         })
       ]

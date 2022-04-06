@@ -313,8 +313,6 @@
     {% if not data['isSetup'] %}
       layer.msg('未安装Web服务器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nginx\')">安装Nginx</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'apache\')">安装Apache</a>', { icon: 7, shade: [0.3, '#000'], time: 0,area:'380px' });
       $(".layui-layer-shade").css("margin-left", "180px");
-    {% else %}
-      if (isSetup) site.plugin_firewall()
     {% endif %}
 </script>
 {% endblock %}

@@ -381,7 +381,6 @@ def files_set_mode():
         ["/www/server/stop","","root",755,True],
         ["/www/server/redis","","redis",700,True],
         ["/www/server/redis/redis.conf","","redis",600,False],
-        ["/www/Recycle_bin","","root",600,True],
         ["/www/server/panel/class","","root",600,True],
         ["/www/server/panel/data","","root",600,True],
         ["/www/server/panel/plugin","","root",600,False],
@@ -406,6 +405,10 @@ def files_set_mode():
         ["/www/server/phpmyadmin","","root",755,True],
         ["/www/server/coll","","root",700,True]
     ]
+
+    recycle_list = public.get_recycle_bin_list()
+    for recycle_path in recycle_list:
+        m_paths.append([recycle_path,'','root',600,True])
 
     for m in m_paths:
         if not os.path.exists(m[0]): continue
@@ -471,7 +474,7 @@ def set_pma_access():
 
 #尝试升级到独立环境
 def update_py37():
-    pyenv='/www/server/panel/pyenv/bin/python'
+    pyenv='/www/server/panel/pyenv/bin/python3'
     pyenv_exists='/www/server/panel/data/pyenv_exists.pl'
     if os.path.exists(pyenv) or os.path.exists(pyenv_exists): return False
     download_url = public.get_url()

@@ -282,8 +282,10 @@ REQUEST_FORM: {request_form}
     panel_version = public.version(),
     os_version = public.get_os_version()
 )
-
-    result = public.readFile(public.get_panel_path() + '/BTPanel/templates/default/panel_error.html').format(error_title=error_info.split("\n")[-1],request_info = request_info,error_msg=error_info)
+    error_title = error_info.split("\n")[-1].replace('public.PanelError: ','').strip()
+    if error_info.find('连接云端服务器失败') != -1:
+        error_title = "连接云端服务器失败!"
+    result = public.readFile(public.get_panel_path() + '/BTPanel/templates/default/panel_error.html').format(error_title=error_title,request_info = request_info,error_msg=error_info)
     return Resp(result,500)
 
 # ===================================Flask HOOK========================#
@@ -672,7 +674,7 @@ def files(pdata=None):
             'UploadFile', 'GetDir', 'CreateFile', 'CreateDir', 'DeleteDir', 'DeleteFile', 'get_download_url_list',
             'remove_download_url', 'modify_download_url',
             'CopyFile', 'CopyDir', 'MvFile', 'GetFileBody', 'SaveFileBody', 'Zip', 'UnZip', 'get_download_url_find',
-            'set_file_ps','CreateLink',
+            'set_file_ps','CreateLink','add_files_rsync',
             'SearchFiles', 'upload', 'read_history', 're_history', 'auto_save_temp', 'get_auto_save_body', 'get_videos',
             'GetFileAccess', 'SetFileAccess', 'GetDirSize', 'SetBatchData', 'BatchPaste', 'install_rar',
             'get_path_size','get_file_attribute','get_file_hash',
@@ -2208,6 +2210,7 @@ def check_csrf_websocket(ws,args):
         @return void
     '''
     if g.is_aes: return True
+    if g.api_request: return True
     if public.is_debug(): return True
     is_success = True
     if not 'x-http-token' in args: 

@@ -787,7 +787,7 @@ var aceEditor = {
       $('.ace_toolbar_menu').hide();
       if (e.which === 3) {
         if ($(this).hasClass('edit_file_group')) return false;
-        $('.ace_catalogue_menu').css({ 'display': 'block', 'left': x - _left, 'top': y - _top });
+        $('.ace_catalogue_menu').css({ 'display': 'block', 'left': x + 15, 'top': y + 10 });
         _that.removeClass('bg');
         $(this).addClass('bg');
         _active.attr('data-edit') != '2' ? _active.parent().remove() : '';
@@ -1945,6 +1945,7 @@ function ajaxSetup () {
 
         error_key = 'We need to make sure this has a favicon so that the debugger does';
         error_find = jqXHR.responseText.indexOf(error_key)
+        console.log(jqXHR.responseText)
         if (jqXHR.status == 500 && jqXHR.responseText.indexOf('运行时发生错误') != -1) {
           if (jqXHR.responseText.indexOf('请先绑定宝塔帐号!') != -1) {
             if ($('.libLogin').length > 0 || $('.radio_account_view').length > 0) return false;
@@ -1954,7 +1955,13 @@ function ajaxSetup () {
             return;
           }
           gl_error_body = jqXHR.responseText;
-          error_msg = jqXHR.responseText.split('<h4 style="font-size: none;">')[1].split("</h4>")[0].replace("面板运行时发生错误:",'').replace("public.PanelError:",'').trim();
+          if (jqXHR.responseText.indexOf('建议按顺序逐一尝试以下解决方案') != -1){
+            error_msg = jqXHR.responseText.split('Error: ')[1].split("</pre>")[0].replace("面板运行时发生错误:",'').replace("public.PanelError:",'').trim();
+          }else{
+            error_msg = '<h3>' + jqXHR.responseText.split('<h3>')[1].split('</h3>')[0] + '</h3>'
+            error_msg += '<a style="color:dimgrey;font-size:none">' + jqXHR.responseText.split('<h4 style="font-size: none;">')[1].split("</h4>")[0].replace("面板运行时发生错误:",'').replace("public.PanelError:",'').trim() + '</a>';
+          }
+          
           error_msg += "<br><a class='btlink' onclick='show_error_message()'> >>点击查看详情</a>";
           $(".layui-layer-padding").parents('.layer-anim').remove();
           $(".layui-layer-shade").remove();
@@ -1967,6 +1974,7 @@ function ajaxSetup () {
               shadeClose: false,
               shade: 0.3,
               icon:2,
+              area:"600px",
               success: function () {
                 $('pre').scrollTop(100000000000)
               }
@@ -6348,8 +6356,8 @@ var product_recommend = {
    */
   get_recommend_type:function(type){
     var config = null,pathname = location.pathname.replace('/','') || 'home';
-    for (let i = 0; i < this.data.length; i++) {
-      const item = this.data[i];
+    for (var i = 0; i < this.data.length; i++) {
+      var item = this.data[i];
       if(item.type == type && item.show) config = item
     }
     return config
@@ -6419,7 +6427,7 @@ var product_recommend = {
    * @param {Function} callback 回调函数
    */
   get_product_type:function(callback){
-    bt.send('get_pay_type','ajax/get_pay_type',{},(rdata)=>{
+    bt.send('get_pay_type','ajax/get_pay_type',{},function(rdata){
       bt.set_storage('session','get_pay_type',JSON.stringify(rdata))
       if(callback) callback(rdata)
     })

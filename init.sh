@@ -15,10 +15,9 @@ panel_init(){
         panel_path=/www/server/panel
         pidfile=$panel_path/logs/panel.pid
         cd $panel_path
-        env_path=$panel_path/pyenv/bin/activate
+        env_path=$panel_path/pyenv/bin/python3
         if [ -f $env_path ];then
-                source $env_path
-                pythonV=$panel_path/pyenv/bin/python
+                pythonV=$panel_path/pyenv/bin/python3
                 chmod -R 700 $panel_path/pyenv/bin
         else
                 pythonV=/usr/bin/python
@@ -67,7 +66,7 @@ panel_start()
                 rm -f $pidfile
                 panel_port_check
                 echo -e "Starting Bt-Panel...\c"
-                nohup $panel_path/BT-Panel >> /dev/null 2>&1 &
+                nohup $panel_path/BT-Panel >> $log_file 2>&1 &
                 isStart=""
                 n=0
                 while [[ "$isStart" == "" ]];
@@ -263,21 +262,30 @@ panel_reload()
 
 install_used()
 {
-        if [ ! -f $panel_path/aliyun.pl ];then
-                return;
-        fi
-        password=$(cat /dev/urandom | head -n 16 | md5sum | head -c 12)
-        username=$($pythonV $panel_path/tools.py panel $password)
-        echo "$password" > $panel_path/default.pl
-        rm -f $panel_path/aliyun.pl
-
-        if [ ! -f $panel_path/php_mysql_auto.pl ];then
-                return;
+        if [ -f $panel_path/aliyun.pl ];then
+                password=$(cat /dev/urandom | head -n 16 | md5sum | head -c 12)
+                username=$($pythonV $panel_path/tools.py panel $password)
+                echo "$password" > $panel_path/default.pl
+                rm -f $panel_path/aliyun.pl
         fi
 
-        bash $panel_path/script/mysql_auto.sh &> /dev/null
-        bash $panel_path/script/php_auto.sh &> /dev/null
-        rm -f $panel_path/php_mysql_auto.pl
+        if [ -f $panel_path/php_mysql_auto.pl ];then
+                bash $panel_path/script/mysql_auto.sh &> /dev/null
+                bash $panel_path/script/php_auto.sh &> /dev/null
+                rm -f $panel_path/php_mysql_auto.pl
+        fi
+
+        pip_file=/www/server/panel/pyenv/bin/pip3
+        python_file=/www/server/panel/pyenv/bin/python3
+        if [ -f $pip_file ];then
+                is_rep=$(ls -l /usr/bin/btpip|grep pip3.)
+                if [ "${is_rep}" != "" ];then
+                        rm -f /usr/bin/btpip /usr/bin/btpython
+                        ln -sf $pip_file /usr/bin/btpip
+                        ln -sf $python_file /usr/bin/btpython
+                fi
+        fi
+        
 }
 
 error_logs()
@@ -296,7 +304,7 @@ case "$1" in
                 ;;
         'restart')
                 panel_stop
-				sleep 1
+		sleep 1
                 panel_start
                 ;;
         'reload')
@@ -348,3 +356,4 @@ case "$1" in
                 $pythonV $panel_path/tools.py cli $1
         ;;
 esac
+

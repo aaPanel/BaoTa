@@ -14,8 +14,8 @@ var controlObj = {
       }
       var diskType = bt.get_cookie('disk-unitType')
       if (!diskType) {
-        bt.set_cookie('disk-unitType', 'MB/s')
-        diskType = 'MB/s'
+        bt.set_cookie('disk-unitType', 'KB/s')
+        diskType = 'KB/s'
       }
 
       $(".network-unit .picker-text-list").text(networkType);
@@ -440,7 +440,7 @@ var controlObj = {
       var that = this;
       $.get('/ajax?action=GetDiskIo&start=' + b + '&end=' + e, function (rdata) {
         that.set_data(rdata, b, e);
-        var diskview = document.getElementById('diskview'), myChartDisk = echarts.init(diskview), rData = [], wData = [], xData = [], unit_size = 1, _unit = getCookie('disk-unitType');
+        var diskview = document.getElementById('diskview'), myChartDisk = echarts.init(diskview), rData = [], wData = [], xData = [],zData = [],yData = [], unit_size = 1, _unit = getCookie('disk-unitType');
         $(diskview).next().removeClass('hide').addClass('show');
         switch (_unit) {
           case 'MB/s':
@@ -462,10 +462,11 @@ var controlObj = {
           // rData.push(read / unit_size);
           // wData.push(write / unit_size);
           // xData.push(rdata[i].addtime);
-          // yData.push(rdata[i].read_count);
-          // zData.push(rdata[i].write_count);
+
           rData.push([rdata[i].addtime, read / unit_size]);
           wData.push([rdata[i].addtime, write / unit_size]);
+          yData.push([rdata[i].addtime,rdata[i].read_count + rdata[i].write_count]);
+          zData.push([rdata[i].addtime,rdata[i].read_time + rdata[i].write_time]);
           var read_MB = read / 1024;
           var write_MB = write / 1024;
           if ((read_MB >= 1 || write_MB >= 1) && !is_gt_MB) {
@@ -494,7 +495,7 @@ var controlObj = {
         if (rdata.length > 0) {
           var startTime = rdata[0].addtime / 1000;
           var endTime = rdata[rdata.length - 1].addtime / 1000;
-          var option = that.get_disk_option(_unit, startTime, endTime, rData, wData);
+          var option = that.get_disk_option(_unit, startTime, endTime, rData, wData,zData,yData);
           myChartDisk.setOption(option);
           window.addEventListener("resize", function () {
             myChartDisk.resize();
@@ -506,25 +507,35 @@ var controlObj = {
     /**
     * 获取磁盘IO图表配置
     */
-    get_disk_option: function (unit, startTime, endTime, rData, wData) {
+    get_disk_option: function (unit, startTime, endTime, rData, wData,zData,yData) {
       var option = this.get_default_option(startTime, endTime);
       option.tooltip.formatter = function (config) {
         var data = config[0];
         var time = data.data[0];
         var date = bt.format_data(time / 1000);
         var _tips = '';
+        var _style = '<span style="display: inline-block; width: 10px; height: 10px; margin-rigth:10px; border-radius: 50%; background: ';
         for (var i = 0; i < config.length; i++) {
-          _tips += '<span style="display: inline-block; width: 10px; height: 10px; margin-rigth:10px; border-radius: 50%; background: ' + config[i].color + ';"></span>  ' + config[i].seriesName + '：' + config[i].data[1].toFixed(3) + unit + (config.length - 1 !== i ? '<br />' : '');
+          _tips +=  _style + config[i].color + ';"></span>  ' + config[i].seriesName + '：'
+          if(config[i].seriesName == '读取' || config[i].seriesName == '写入'){
+            _tips += config[i].data[1].toFixed(2) + unit + (config.length - 1 !== i ? '<br />' : '');
+          }else{
+            if(config[i].seriesName == '读写次数'){
+              _tips += config[i].data[1] + '次/s' + (config.length - 1 !== i ? '<br />' : '');
+            }else{
+              _tips +=  config[i].data[1] + 'ms' + (config.length - 1 !== i ? '<br />' : '');
+            }
+          }
         }
         return "时间：" + date + "<br />" + _tips;
       };
       option.legend = {
         top: '18px',
-        data: [lan.control.disk_read_bytes, lan.control.disk_write_bytes]
+        data: ['读取', '写入','读写次数','读写延迟']
       };
       option.series = [
         {
-          name: lan.control.disk_read_bytes,
+          name: '读取',
           type: 'line',
           symbol: 'none',
           itemStyle: {
@@ -535,7 +546,7 @@ var controlObj = {
           data: rData
         },
         {
-          name: lan.control.disk_write_bytes,
+          name: '写入',
           type: 'line',
           symbol: 'none',
           itemStyle: {
@@ -544,6 +555,30 @@ var controlObj = {
             }
           },
           data: wData
+        }
+        ,
+        {
+          name: '读写次数',
+          type: 'line',
+          symbol: 'none',
+          itemStyle: {
+            normal: {
+              color: 'rgba(30, 144, 255)'
+            }
+          },
+          data: yData
+        }
+        ,
+        {
+          name: '读写延迟',
+          type: 'line',
+          symbol: 'none',
+          itemStyle: {
+            normal: {
+              color: 'rgba(255, 140, 0)'
+            }
+          },
+          data: zData
         }
       ];
       return option;
