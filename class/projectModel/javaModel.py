@@ -1849,7 +1849,7 @@ class main(projectBase):
             # 写入启动脚本
             public.writeFile(script_file,start_cmd)
             if os.path.exists(pid_file): os.remove(pid_file)
-
+            public.ExecShell("chmod -R 777 /var/tmp/springboot/")
             public.ExecShell("chown -R {}:{} {}".format(project_find['project_config']['run_user'],project_find['project_config']['run_user'],self._springboot))
             public.set_mode(script_file,755)
             public.ExecShell("chown  {}:{} {}".format(project_find['project_config']['run_user'],project_find['project_config']['run_user'],project_find['path']))
