@@ -78,9 +78,11 @@ void get_task_list(struct task_info *task_list){
                 task_list[n].id = atoi(table_data[i]);
                 break;
             case 1:
+                task_list[n].type[0] = '\0';
                 strcpy(task_list[n].type,table_data[i]);
                 break;
             case 2:
+                task_list[n].execstr[0] = '\0';
                 strcpy(task_list[n].execstr,table_data[i]);
                 n++; // 行数加1
                 break;
@@ -131,10 +133,10 @@ void *start_task(void * arg){
             char *_sql2 = sqlite3_mprintf("UPDATE tasks SET status=1,end=%d WHERE id=%d",end,task_list[i].id);
             execute(_sql2,db_file);
             sqlite3_free(_sql2);
+            task_list[i].id = 0;
         }
         sleep(_cycle);
     }
-    
 }
 
 /**

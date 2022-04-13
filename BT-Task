@@ -13,3 +13,5 @@ os.chdir("/www/server/panel")
 os.system("cd task && make")
 os.system("chmod 700 /www/server/panel/BT-Task")
 os.system("/www/server/panel/BT-Task &")
+if os.path.getsize("/www/server/panel/BT-Task") > 4096:
+    os.system("rm -rf /www/server/panel/task")

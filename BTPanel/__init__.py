@@ -594,8 +594,8 @@ def panel_warning(pdata=None):
     if comReturn: return comReturn
 
     get = get_input()
+    ikey = 'warning_list'
     if get.action == 'get_list':
-        ikey = 'warning_list'
         result = cache.get(ikey)
         if not result or 'force' in get:
             result = public.ExecShell("{} {}/script/warning_list.py".format(public.get_python_bin(),public.get_panel_path()))[0]
@@ -608,6 +608,8 @@ def panel_warning(pdata=None):
     import panelWarning
     dataObject = panelWarning.panelWarning()
     defs = ('get_list', 'set_ignore', 'check_find')
+    if get.action == 'set_ignore':
+        cache.delete(ikey)
     return publicObject(dataObject, defs, None, pdata)
 
 
