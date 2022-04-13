@@ -425,7 +425,8 @@ void get_string_md5(char *encrypt,char *result){
     MD5Final(&md5s,decrypt);
     char buff[2] = {0};
     result[0] = '\0';
-    for(int i=0;i<16;i++){
+    int i;
+    for(i=0;i<16;i++){
         sprintf(buff,"%02x",decrypt[i]);
         strncat(result,buff,2);
     }
@@ -453,7 +454,8 @@ void get_file_md5(char *file,char *result){
     MD5Final(&md5s,decrypt);
     char buff_str[2] = {0};
     result[0] = '\0';
-    for(int i=0;i<16;i++){
+    int i;
+    for(i=0;i<16;i++){
         sprintf(buff_str,"%02x",decrypt[i]);
         strncat(result,buff_str,2);
     }

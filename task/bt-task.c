@@ -69,7 +69,8 @@ void get_task_list(struct task_info *task_list){
     int field_num = 3; // 字段数量
     int ncolumn = nrow * field_num + field_num; // 计算实际数组长度
     int n = 0;
-    for(int i=field_num;i<ncolumn;i++){
+    int i;
+    for(i=field_num;i<ncolumn;i++){
         if(table_data[i] == NULL) continue;
         int m = i % field_num; // 计算所属字段编号 0=id,1=type,2=execstr
         switch(m){
@@ -111,7 +112,8 @@ void *start_task(void * arg){
         get_task_list(task_list);
 
         //遍历并执行任务
-        for(int i=0;i<20;i++){
+        int i;
+        for(i=0;i<20;i++){
             if(task_list[i].id == 0) break;
             //标记状态和开始时间
             start = get_time();
@@ -793,7 +795,8 @@ int get_file_task_list(struct file_task_info *task_list){
     int field_num = 4; // 字段数量
     ncolumn = nrow * field_num + field_num; // 计算实际数组长度
     int n = 0;
-    for(int i=field_num;i<ncolumn;i++){
+    int i;
+    for(i=field_num;i<ncolumn;i++){
         if(table_data[i] == NULL) continue;
         int m = i % field_num; // 计算所属字段编号 0=id,1=type,2=shell,3=other
         switch(m){
@@ -850,7 +853,8 @@ void *start_file_task(void * arg){
         struct file_task_info file_task_list[10];
         int num = get_file_task_list(file_task_list);
         if(num <= 0) continue;
-        for(int i=0;i<num;i++){
+        int i;
+        for(i=0;i<num;i++){
             if(file_task_list[i].id[0] == '\0') break;
             execute_file_task(file_task_list[i].id,file_task_list[i].type,file_task_list[i].shell,file_task_list[i].other);
         }

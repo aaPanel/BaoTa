@@ -388,7 +388,8 @@ void get_disk_io(struct disk_info_all *disk_io,int cycle) {
 
     struct disk_info_all disk_io1 = {0,0,0,0,0,0,0,0};
     struct disk_info_all disk_io2 = {0,0,0,0,0,0,0,0};
-    for(int i=0;i<disk_count;i++){
+    int i;
+    for(i=0;i<disk_count;i++){
         char s = disk_info_list1[i].name[strlen(disk_info_list1[i].name) -1];
         char e = disk_info_list1[i].name[strlen(disk_info_list1[i].name) -2];
         if(e != '-' && (s > '0' && s < '9')) continue;
@@ -405,7 +406,7 @@ void get_disk_io(struct disk_info_all *disk_io,int cycle) {
     sleep(cycle);
 
     disk_count = get_disk_info(disk_info_list2);
-    for(int i=0;i<disk_count;i++){
+    for(i=0;i<disk_count;i++){
         char s = disk_info_list2[i].name[strlen(disk_info_list2[i].name) -1];
         char e = disk_info_list2[i].name[strlen(disk_info_list2[i].name) -2];
         if(e != '-' && (s > '0' && s < '9')) continue;
@@ -506,7 +507,8 @@ void get_network_io(struct network_info_all *network_io,int cycle){
 
     struct network_info_all network_io1 = {0.0,0.0,0.0,0.0,0,0,0,0,0,0,"",""};
     struct network_info_all network_io2 = {0.0,0.0,0.0,0.0,0,0,0,0,0,0,"",""};
-    for(int i=0;i<network_count;i++){
+    int i;
+    for(i=0;i<network_count;i++){
         network_io1.bytes_recv += network_info_list1[i].bytes_recv;
         network_io1.packets_recv += network_info_list1[i].packets_recv;
         network_io1.errin += network_info_list1[i].errin;
@@ -525,7 +527,7 @@ void get_network_io(struct network_info_all *network_io,int cycle){
     network_io->sent_json[1] = '\0';
     network_io->recv_json[1] = '\0';
     char j_str[128];
-    for(int i=0;i<network_count;i++){
+    for(i=0;i<network_count;i++){
         network_io2.bytes_recv += network_info_list2[i].bytes_recv;
         network_io2.packets_recv += network_info_list2[i].packets_recv;
         network_io2.errin += network_info_list2[i].errin;
