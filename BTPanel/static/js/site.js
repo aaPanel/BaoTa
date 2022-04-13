@@ -9,8 +9,9 @@ $('#cutMode .tabs-item').on('click', function () {
       $('#bt_site_table').empty();
       // if (!isSetup) $('.site_table_view .mask_layer').removeClass('hide').find('.prompt_description.web-model').html('未安装Web服务器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nginx\')">安装Nginx</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'apache\')">安装Apache</a>');
       product_recommend.init(function () {
+        site.get_scan_list()
         site.php_table_view();
-        site.get_types();  
+        site.get_types();
       })
       break;
     case 'nodejs':
@@ -21,7 +22,7 @@ $('#cutMode .tabs-item').on('click', function () {
       }, function (res) {
         if (typeof res !== 'string') $('#bt_node_table+.mask_layer').removeClass('hide').find('.prompt_description.node-model').html('未安装Node版本管理器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nodejs\')">点击安装</a>');
       })
-      site.node_porject_view(); 
+      site.node_porject_view();
       break;
     case 'java':
       $('.site_class_type').remove()
@@ -38,6 +39,8 @@ $('#cutMode .tabs-item').on('click', function () {
 });
 
 var site = {
+  scan_list:[],//漏洞扫描
+  scan_num:0,
   node: {
     /**
      * @description 选择路径配置
@@ -103,8 +106,9 @@ var site = {
         form.group.list = arry;
         form.group.disabled = false;
         formObject.$replace_render_content(2)
-        if (arry.length === 0) {
+        if (arry.length === 1) {
           var project_script = $("[data-name=\'project_script\']");
+          // form.group.value = '';
           project_script.parent().after('<div class="inlineBlock"><input type="text" name="project_script_two" id="project_script_two" placeholder="请选择项目启动文件和启动命令，不可为空" class="mt5 bt-input-text mr10 " style="width:420px;" value="" /><span class="glyphicon glyphicon-folder-open cursor" onclick="bt.select_path(\'project_script_two\',\'file\',null,\'' + path + '\')" style="margin-right: 18px;"></span></div>')
         }
       }, function () {
@@ -1756,7 +1760,7 @@ var site = {
                 }
               }
             } catch (error) {
-              console.log(error)  
+              console.log(error)
             }
             return setConfig
           })()
@@ -1813,7 +1817,8 @@ var site = {
         { title: '修改默认页', event: function (ev) { site.set_default_page() } },
         { title: '默认站点', event: function (ev) { site.set_default_site() } },
         { title: 'PHP命令行版本', event: function (ev) { site.get_cli_version() } },
-        { title: '安全设置', event: function (ev) { site.open_safe_config() } }
+        { title: '安全设置', event: function (ev) { site.open_safe_config() } },
+        { title: '漏洞扫描', event: function (ev) { site.reader_scan_view() } },
         ]
       }, { // 搜索内容
         type: 'search',
@@ -2949,6 +2954,304 @@ var site = {
         content: body
       });
     });
+  },
+  // 获取漏洞扫描列表
+  get_scan_list: function (callback) {
+    var that = this, obj = {};
+    $.post('project/scanning/list', obj, function (res) {
+      if (res.status !== false) {
+        that.scan_list = res
+        for (var i = 0; i < res.info.length; i++) {
+          if (res.info[i].cms.length > 0) {
+            that.scan_num += res.info[i].cms.length
+          }
+        }
+        $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num">'+ that.scan_num +'</span>')
+        if (callback) callback(res);
+      }
+    })
+  },
+   /**
+   * @description 渲染漏洞扫描视图
+   * @return 无返回值
+  */
+  reader_scan_view: function () {
+    var that = this;
+    //降序
+    function sortDesc(a,b){
+      return b.cms.length - a.cms.length
+    }
+    function sortDanDesc(a,b){
+      return parseInt(b.dangerous) - parseInt(a.dangerous)
+    }
+    function reader_scan_list (res) {
+      var data = {
+        info : res.info.sort(sortDesc),
+        time : res.time,
+        is_pay: res.is_pay
+      }
+      var html = '', scan_time = '', arry = [], level = [['低危', '#e8d544'], ['中危', '#E6A23C'], ['高危', '#ff5722'], ['严重', 'red']]
+      if (!data.is_pay) {
+        layer.msg('此功能为企业版专享功能，请先购买企业版');
+        html +='<div class="webedit-con">\
+          <div class="thumbnail-box">\
+            <div class="pluginTipsGg" style="background-image: url(/static/img/preview/site_scanning.png);">\
+          </div>\
+          </div>\
+          <div class="thumbnail-introduce" style="margin-left: 70px;">\
+            <span>网站漏洞扫描功能介绍：</span>\
+            <ul>\
+            <li class="cmslist cursor" style="color: #20a53a;">可识别多款开源CMS程序</li>\
+            <li>可扫描网站中存在的漏洞</li>\
+            <li>提供修复解决方案</li>\
+            <li>提供付费解决方案</li>\
+            </ul>\
+            <div class="daily-product-buy">\
+            <button type="submit" class="btn btn-sm btn-success" onclick=\"product_recommend.pay_product_sign(\'ltd\','+ 50 +')\"">立即购买</button>\
+            </div>\
+          </div>\
+        </div>'
+      }else{
+        for(var i = 0;i < data.info.length; i++){
+          arry[i] = data.info[i].name
+        }
+        bt.each(arry, function (index, item) {
+          var data_item = [], n = 0 , infoName = [],arr
+          var re=/(http[s]?:\/\/([\w-]+.)+([:\d+])?(\/[\w-\.\/\?%&=]*)?)/gi; 
+          var info = data.info[index]
+          if (info.cms.length >0) {
+            arr = info.cms.sort(sortDanDesc) 
+            for (var i = 0; i < arr.length; i++) {
+              data_item[i] = arr[i].name
+            }
+            for (var i = 0; i < data.info.length; i++) {
+              if (data.info[i].cms.length >0) {
+                infoName[n++] = data.info[i].name
+              }
+            }
+            html += '<li class="module_item">' +
+            '<div class="module_head">' +
+            '<span class="module_title">' + item + '</span>' +
+            '<span class="module_num">' + info.cms.length + '</span>' +
+            '<span style="color: #bbb;margin-left: 10px;">（程序名称：' + info.cms_name + ' ，版本：'+ info.version_info +'）</span>' +
+            '<span class="module_cut_show">' + (item === infoName[0] && info.cms.length > 0 ? '<i>点击折叠</i><span class="glyphicon glyphicon-menu-up" aria-hidden="false"></span>' : '<i>查看详情</i><span class="glyphicon glyphicon-menu-down" aria-hidden="false"></span>') + '</span>' +
+            '</div>'
+            html += '<ul class="module_details_list ' + (item === infoName[0] && info.cms.length > 0 ? 'active' : '') + '">'
+            bt.each(data_item, function (indexs, items) {
+              var cms = arr[indexs]
+              html += '<li class="module_details_item">' +
+                '<div class="module_details_head cursor">' +
+                '<span class="module_details_title">\
+                  <span title="' + items + '">' + items + '</span>\
+                  <i>（&nbsp;等级：' + (function (level) {
+                    var level_html = '';
+                    switch (level) {
+                      case 4:
+                        level_html += '<span style="color:red">严重</span>';
+                        break;
+                      case 3:
+                        level_html += '<span style="color:#ff5722">高危</span>';
+                        break;
+                      case 2:
+                        level_html += '<span style="color:#E6A23C">中危</span>';
+                        break;
+                      case 1:
+                        level_html += '<span style="color:#e8d544">低危</span>';
+                        break;
+                    }
+                    return level_html;
+                  }(parseInt(cms.dangerous))) + '）</i>\
+                </span>' +
+                '<span class="operate_tools">\
+                  <a href="javascript:;" class="btlink cut_details">详情</a>&nbsp;&nbsp;|&nbsp;&nbsp;\
+                  <a href="javascript:;" class="btlink" data-name="' + info.name + '" ">检测</a></span>' +
+                '</div>' +
+                '<div class="module_details_body">' +
+                  '<div class="module_details_line">' +
+                    '<div class="module_details_block">\
+                      <span class="line_title">程序名称：</span>\
+                      <span class="line_content">' + cms.cms_name + '</span>\
+                    </div>' +
+                    '<div class="module_details_block">\
+                      <span class="line_title">风险等级：</span>\
+                      <span class="line_content" style="color:' + level[parseInt(cms.dangerous) - 1][1] + '">' + level[parseInt(cms.dangerous) - 1][0] + '</span>\
+                    </div>' +
+                  '</div>' +
+                  '<div class="module_details_line">\
+                    <span class="line_title">漏洞描述：</span>\
+                    <span class="line_content" style="width: 560px;">' + cms.ps + '</span>\
+                  </div>' +
+                  '<div class="module_details_line">\
+                    <span class="line_title">修复描述：</span>\
+                    <span class="line_content" style="width: 560px;">' + cms.repair.replace(re,function(a){return '<a href="'+a+'" class="btlink" target="_blank">'+a+'</a>';}).replace(/(\r\n)|(\n)/g,'<br>') + '</span>\
+                  </div>' +
+                '</div>' +
+                '</li>';
+            })
+            html += '</ul>'
+            html += '</li>'
+          }
+        })
+      }
+      
+      $('.warning_scan_body').html(html);
+      scan_time = Date.now() / 1000;
+      $('.warning_scan_time').html('检测时间：&nbsp;' + bt.format_data(scan_time));
+    }
+    bt.open({
+      type: '1',
+      title: '漏洞扫描',
+      area: ['750px', '700px'],
+      skin: 'warning_scan_view',
+      content: '<div class="warning_scan_view" style="height:100%;">' +
+        '<div class="warning_scan_head">' +
+        '<span class="warning_scan_ps">' + (that.scan_num > 0 ? ('本次扫描共检测到漏洞项<i>' + that.scan_num + '</i>个,请及时修复！') : '本次扫描检测无漏洞项，请继续保持！') + '</span>' +
+        '<span class="warning_scan_time"></span>' + 
+        '<span class="ml5" style="position: absolute;top: 45px;width:101px;font-size: 13px;">\
+          <span class="wechatEnterpriseService" style="vertical-align: middle;width:21px;float:left;margin-top: 3px;"></span>\
+          <span class="btlink service_buy2" style="width:80px;font-size: 15px;">付费修复</span>\
+        </span>' +
+        '<button class="warning_again_scan">重新检测</button>' +
+        '</div>' +
+        '<ol class="warning_scan_body"></ol>' +
+        '<ul class="c7 help-info-text" style="margin-left: 10px;position:absolute;bottom: 20px;">'+
+          '<li>增加漏洞扫描cms入口：<a class="btlink" target="_blank" href="https://www.bt.cn/bbs/thread-89149-1-1.html">https://www.bt.cn/bbs/thread-89149-1-1.html</a></li>'+
+        '</ul>'+
+        '</div>',
+      success: function (layero) {
+        $(layero).find('.service_buy2').click(function(){
+          layer.open({
+            title:false,
+            btn:false,
+            shadeClose:true,
+            closeBtn: 2,
+            area:['300px', '315px'],
+            skin: 'service_consult',
+            content:'<div class="service_consult">\
+            <div class="service_consult_title">请打开微信"扫一扫"</div>\
+            <div class="contact_consult" style="margin-bottom: 5px;">\
+              <div id="contact_consult_qcode1"></div>\
+              <i class="wechatEnterprise"></i></div>\
+            <div>【付费修复漏洞】</div>\
+            <ul class="help-info-text c7" style="margin-left:30px;text-align: left;">\
+                <li>工作时间：9:15 - 18:00</li>\
+            </ul>\
+            </div>',
+            success:function(layero){
+              $(layero).find('.layui-layer-content').css('padding','0')
+              $(layero).find('#contact_consult_qcode1').qrcode({
+                render: "canvas",
+                width: 140,
+                height: 140,
+                text: 'https://work.weixin.qq.com/kfid/kfc72fcbde93e26a6f3'
+              });
+            }
+          })
+        })
+        $('.warning_scan_body').on('click', '.cmslist' ,function(){
+          layer.open({
+            title:'可识别cms列表',
+            btn:false,
+            shadeClose:true,
+            closeBtn: 2,
+            area:['200px','250px'],
+            content:'<div class="cmsList">\
+              <ol>\
+                <li>迅睿CMS</li><li>pbootcms</li>\
+                <li>苹果CMS</li><li>eyoucms</li>\
+                <li>海洋CMS</li><li>ThinkCMF</li>\
+                <li>zfaka</li><li>dedecms</li>\
+                <li>MetInfo</li><li>emlog</li>\
+                <li>帝国CMS</li><li>discuz</li>\
+                <li>Thinkphp</li><li>Wordpress</li>\
+              </ol>\
+            </div>',
+            success:function(layero){
+              $(layero).find('.layui-layer-content').css('padding','0')
+            }
+          })
+        });
+        $('.warning_scan_body').on('click', '.thumbnail-box' ,function(){
+          layer.open({
+            title:false,
+            btn:false,
+            shadeClose:true,
+            closeBtn: 1,
+            area:['700px','700px'],
+            content:'<img src="/static/img/preview/site_scanning.png" style="width:700px"/>',
+            success:function(layero){
+              $(layero).find('.layui-layer-content').css('padding','0')
+            }
+          })
+        });
+        $('.warning_again_scan').click(function () {
+          var loadT = layer.msg('正在重新检测漏洞，请稍候...', { icon: 16 });
+          $.post('project/scanning/startScan', {}, function (res) {
+            that.scan_num = 0
+            that.scan_list = res
+            for (var i = 0; i < res.info.length; i++) {
+              if (res.info[i].cms.length > 0) {
+                that.scan_num += res.info[i].cms.length
+              }
+            }
+            $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num">'+ that.scan_num +'</span>')
+            layer.msg('检测成功', { icon: 1 });
+            reader_scan_list(that.scan_list);
+          })
+        });
+        $('.warning_scan_body').on('click', '.module_item .module_head', function () {
+          var _parent = $(this).parent(), _parent_index = _parent.index(), _list = $(this).next();
+          if (parseInt($(this).find('.module_num').text()) > 0) {
+            if (_list.hasClass('active')) {
+              _list.css('height', 0);
+              $(this).find('.module_cut_show i').text('查看详情').next().removeClass('glyphicon-menu-up').addClass('glyphicon-menu-down');
+              setTimeout(function () {
+                _list.removeClass('active').removeAttr('style');
+              }, 500);
+            } else {
+              $(this).parent().parent().scrollTop(_parent_index * 41);
+              $(this).find('.module_cut_show i').text('点击折叠').next().removeClass('glyphicon-menu-down').addClass('glyphicon-menu-up');
+              _list.addClass('active');
+              var details_list = _list.parent().siblings().find('.module_details_list');
+              details_list.removeClass('active');
+              details_list.prev().find('.module_cut_show i').text('查看详情').next().removeClass('glyphicon-menu-up').addClass('glyphicon-menu-down')
+            }
+          }
+        });
+        $('.warning_scan_body').on('click', '.module_details_head', function () {
+          if ($(this).children().eq(1).children('.cut_details').hasClass('active')) {
+            $(this).siblings().hide();
+            $(this).children().eq(1).children('.cut_details').removeClass('active').text('详情');
+          }else {
+            var item = $(this).parents('.module_details_item'), indexs = item.index();
+            $(this).children().eq(1).children('.cut_details').addClass('active').text('折叠');
+            item.siblings().find('.module_details_body').hide();
+            item.siblings().find('.operate_tools a:eq(0)').removeClass('active').text('详情');
+            $(this).siblings().show();
+            $('.module_details_list').scrollTop(indexs * 41);
+          }
+        })
+        $('.warning_scan_body').on('click', '.operate_tools a:eq(1)', function () {
+          var index = $(this).index(), data = $(this).data();
+          var obj = JSON.stringify({"name" : data.name})
+          var loadT = layer.msg('正在检测指定模块，请稍候...', { icon: 16, time: 0 });
+          $.post('project/scanning/startAweb', {data : obj}, function (res) {
+            that.scan_num = 0
+            that.scan_list = res
+            for (var i = 0; i < res.info.length; i++) {
+              if (res.info[i].cms.length > 0) {
+                that.scan_num += res.info[i].cms.length
+              }
+            }
+            $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num">'+ that.scan_num +'</span>')
+            layer.msg('检测成功', { icon: 1 });
+            reader_scan_list(that.scan_list);
+          })
+          return false; 
+        });
+        reader_scan_list(that.scan_list);
+      }
+    })
   },
   // 安全设置
   open_safe_config: function () {
@@ -6949,10 +7252,10 @@ var site = {
       bt.render_tab('tabLogs', _tab);
       $('#tabLogs span:eq(0)').click();
     },
-    render_recommend_product: function(){
+    render_recommend_product: function() {
       var _config = $('.bt-w-menu.site-menu p.bgw').data('recom'),
           pay_status = product_recommend.get_pay_status(),
-          recom_Template = '',_introduce = '';
+          recom_Template = '', _introduce = '';
       // 1.未安装
       try{
         if(!_config['isBuy'] || !_config['install']){
@@ -6964,33 +7267,33 @@ var site = {
           recom_Template = '<div class="daily-thumbnail recommend">\
             <div class="thumbnail-box"><div class="pluginTipsGg"></div></div>\
             <div class="thumbnail-introduce">\
-              <span>'+_config['title']+'功能介绍：</span>\
-              <ul>'+_introduce+'</ul>\
+              <span>' + _config['title'] + '功能介绍：</span>\
+              <ul>' + _introduce + '</ul>\
               <div class="daily-product-buy">\
-              '+((_config['isBuy'] && !_config['install'])?'<button class="btn btn-sm btn-success" style="margin-left:0;" onclick="bt.soft.install(\''+ _config['name'] +'\')">立即安装</button>':
-              '<a class="btn btn-sm btn-default mr5 '+ (!_config.preview?'hide':'') +'" href="'+ _config.preview +'" target="_blank">功能预览</a><button type="submit" class="btn btn-sm btn-success" onclick=\"product_recommend.pay_product_sign(\'ltd\','+ _config.pay +')\">立即购买</button>')+'\
+              ' + ((_config['isBuy'] && !_config['install']) ? '<button class="btn btn-sm btn-success" style="margin-left:0;" onclick="bt.soft.install(\'' + _config['name'] + '\')">立即安装</button>' :
+              '<a class="btn btn-sm btn-default mr5 ' + (!_config.preview ? 'hide' : '') + '" href="' + _config.preview + '" target="_blank">功能预览</a><button type="submit" class="btn btn-sm btn-success" onclick=\"product_recommend.pay_product_sign(\'ltd\',' + _config.pay + ')\">立即购买</button>') + '\
               </div>\
             </div>\
           </div>'
-        }else{
+        } else {
           return true;
         }
         $('#webedit-con').append(recom_Template)
-        $('.pluginTipsGg').css('background-image','url('+_config.previewImg+')')
-        $('.thumbnail-box').on('click',function(){
+        $('.pluginTipsGg').css('background-image', 'url(' + _config.previewImg + ')')
+        $('.thumbnail-box').on('click', function () {
           layer.open({
-            title:false,
-            btn:false,
-            shadeClose:true,
+            title: false,
+            btn: false,
+            shadeClose: true,
             closeBtn: 1,
-            area:['700px','650px'],
-            content:'<img src="'+_config.previewImg+'" style="width:700px"/>',
-            success:function(layero){
-              $(layero).find('.layui-layer-content').css('padding','0')
+            area: ['700px', '650px'],
+            content: '<img src="' + _config.previewImg + '" style="width:700px"/>',
+            success: function (layero) {
+              $(layero).find('.layui-layer-content').css('padding', '0')
             }
           })
         })
-      }catch(err){}
+      } catch (err) {}
     }
   },
   create_let: function (ddata, callback) {
@@ -7284,7 +7587,7 @@ var site = {
           })
           site.reload(0);
         } catch (error) {
-          console.log(error) 
+          console.log(error)
         }
       })
     }, 100)
@@ -7446,25 +7749,25 @@ var site = {
                 })
               });
               robj.append('<div style="margin-bottom: 10px;" class="alert alert-success">此品牌证书适合生产项目使用，宝塔官网BT.CN也是用这款证书，性价比高，推荐使用</div>\
-                  <div class= "mtb10" >\
-                  <button class="btn btn-success btn-sm btn-title ssl_business_application" type="button">申请证书</button>\
-                  <span class="ml5"><span class="wechatEnterpriseService" style="vertical-align: middle;"></span><span class="btlink service_buy_before">售前客服</span></span>\
-                  <div class="divtable mtb10 ssl_order_list"  style="height: 290px;overflow-y: auto;">\
-                      <table class="table table-hover" id="ssl_order_list">\
-                          <thead><tr><th width="120px">域名</th><th  width="180px">证书类型</th><th>到期时间</th><th>状态</th><th style="text-align:right;">操作</th></tr></thead>\
-                          <tbody><tr><td colspan="5" style="text-align:center"><img src="/static/images/loading-2.gif" style="width:15px;vertical-align: middle;"><span class="ml5" style="vertical-align: middle;">正在获取证书列表，请稍候...</span></td></tr></tbody>\
-                      </table>\
-                  </div>\
-              </div><ul class="help-info-text c7">\
-                  <li style="color:red;">证书支持购买多年，只能一年签发一次（有效期一年），需在到期前30天内续签(续签暂不需要验证域名)</li>\
-                  <li style="color:red;">注意：请勿将SSL证书用于非法网站，一经发现，吊销证书且不退款</li>\
-                  <li>申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)</li>\
-                  <li>有效期1年，不支持续签，到期后需要重新申请</li>\
-                  <li>在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点</li>\
-                  <li><a style="color:red;">如果您的站点有使用CDN、高防IP、反向代理、301重定向等功能，可能导致验证失败</a></li>\
-                  <li><a style="color:red;">申请www.bt.cn这种以www为二级域名的证书，需绑定并解析顶级域名(bt.cn)，否则将验证失败</a></li>\
-                  <li><a style="color:red;">商用证书相对于普通证书，具有更高的安全性、赔付保障和支持通配符和多域名等方式。<a class="btlink" target="_blank" href="https://www.racent.com/sectigo-ssl">点击查看</a></a></li>\
-              </ul>');
+                                        <div class= "mtb10" >\
+                                        <button class="btn btn-success btn-sm btn-title ssl_business_application" type="button">申请证书</button>\
+                                        <span class="ml5"><span class="wechatEnterpriseService" style="vertical-align: middle;"></span><span class="btlink service_buy_before">售前客服</span></span>\
+                                        <div class="divtable mtb10 ssl_order_list"  style="height: 290px;overflow-y: auto;">\
+                                            <table class="table table-hover" id="ssl_order_list">\
+                                                <thead><tr><th width="120px">域名</th><th  width="180px">证书类型</th><th>到期时间</th><th>状态</th><th style="text-align:right;">操作</th></tr></thead>\
+                                                <tbody><tr><td colspan="5" style="text-align:center"><img src="/static/images/loading-2.gif" style="width:15px;vertical-align: middle;"><span class="ml5" style="vertical-align: middle;">正在获取证书列表，请稍候...</span></td></tr></tbody>\
+                                            </table>\
+                                        </div>\
+                                    </div><ul class="help-info-text c7">\
+                                        <li style="color:red;">证书支持购买多年，只能一年签发一次（有效期一年），需在到期前30天内续签(续签暂不需要验证域名)</li>\
+                                        <li style="color:red;">注意：请勿将SSL证书用于非法网站，一经发现，吊销证书且不退款</li>\
+                                        <li>申请之前，请确保域名已解析，如未解析会导致审核失败(包括根域名)</li>\
+                                        <li>有效期1年，不支持续签，到期后需要重新申请</li>\
+                                        <li>在未指定SSL默认站点时,未开启SSL的站点使用HTTPS会直接访问到已开启SSL的站点</li>\
+                                        <li><a style="color:red;">如果您的站点有使用CDN、高防IP、反向代理、301重定向等功能，可能导致验证失败</a></li>\
+                                        <li><a style="color:red;">申请www.bt.cn这种以www为二级域名的证书，需绑定并解析顶级域名(bt.cn)，否则将验证失败</a></li>\
+                                        <li><a style="color:red;">商用证书相对于普通证书，具有更高的安全性、赔付保障和支持通配符和多域名等方式。<a class="btlink" target="_blank" href="https://www.racent.com/sectigo-ssl">点击查看</a></a></li>\
+                                    </ul>');
               $('.service_buy_before').click(function(){
                 onChangeServiceMethod('1');
               })
@@ -7967,7 +8270,7 @@ var site = {
                     <div class="parsing_parem"><div class="parsing_title">文件所在位置：</div><div class="parsing_info"><input type="text" name="filePath"  class="parsing_input border" value="' + data.info.filePath + '" readonly="readonly" style="width:350px;"/></div></div>\
                     <div class="parsing_parem"><div class="parsing_title">文件名：</div><div class="parsing_info"><input type="text" name="fileName" class="parsing_input" value="' + data.info.fileName + '" readonly="readonly" style="width:350px;"/><span class="parsing_icon" data-clipboard-text="' + data.info.fileName + '">复制</span></div></div>\
                     <div class="parsing_parem"><div class="parsing_title" style="vertical-align: top;">文件内容：</div><div class="parsing_info"><textarea name="fileValue"  class="parsing_textarea" readonly="readonly" style="width:350px;">' + data.info.fileContent + '</textarea><span class="parsing_icon" style="display: block;width: 60px;border-radius: 3px;" data-clipboard-text="' + data.info.fileContent + '">复制</span></div></div>' + check_html +
-                    '<div class="parsing_tips" style="font-size:13px;line-height: 24px;">· 本次验证结果是由【本服务器验证】，实际验证将由【CA服务器】进行验证，请等候</br>· 请确保以上列表所有项都验证成功后点击【验证域名】重新提交验证</br>· 如长时间验证不通过，请通过【修改验证方式】更改为【DNS验证】</br>· SSL添加文件验证方式 ->> <a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="btlink" >查看教程</a></div>\
+                    '<div class="parsing_tips" style="font-size:13px;line-height: 24px;">· 本次验证结果是由【本服务器验证】，实际验证将由【CA服务器】进行验证，请耐心等候</br>· 请确保以上列表所有项都验证成功后点击【验证域名】重新提交验证</br>· 如长时间验证不通过，请通过【修改验证方式】更改为【DNS验证】</br>· SSL添加文件验证方式 ->> <a href="https://www.bt.cn/bbs/thread-56802-1-1.html" target="_blank" class="btlink" >查看教程</a></div>\
                         <div class="parsing_parem" style="padding: 0 55px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default set_verify_type">修改验证方式</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
                     </div>';
                 } else {
@@ -7976,7 +8279,7 @@ var site = {
                         <div class="parsing_parem"><div class="parsing_title">主机记录：</div><div class="parsing_info"><input type="text" name="host" class="parsing_input" value="' + data.info.dnsHost + '" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="' + data.info.dnsHost + '">复制</span></div></div>\
                         <div class="parsing_parem"><div class="parsing_title">记录类型：</div><div class="parsing_info"><input type="text" name="host" class="parsing_input" value="' + data.info.dnsType + '" readonly="readonly" style="border-right: 1px solid #ccc;border-radius: 3px;width: 390px;" /></div></div>\
                         <div class="parsing_parem"><div class="parsing_title">记录值：</div><div class="parsing_info"><input type="text" name="domains"  class="parsing_input" value="' + data.info.dnsValue + '" readonly="readonly" /><span class="parsing_icon" data-clipboard-text="' + data.info.dnsValue + '">复制</span></div></div>\
-                        <div class="parsing_tips" style="font-size:13px;line-height: 24px;">· 本次验证结果是由【本服务器验证】，实际验证将由【CA服务器】进行验证，请等候</br>· 请确保以上列表所有项都验证成功后点击【验证域名】重新提交验证</br>· 如长时间验证不通过，请通过【修改验证方式】更改为【DNS验证】</br>· 如何添加域名解析，《<a href="https://cloud.tencent.com/document/product/302/3446" class="btlink" target="__blink">点击查看教程</a>》，和咨询服务器运营商。</div>\
+                        <div class="parsing_tips" style="font-size:13px;line-height: 24px;">· 本次验证结果是由【本服务器验证】，实际验证将由【CA服务器】进行验证，请耐心等候</br>· 请确保以上列表所有项都验证成功后点击【验证域名】重新提交验证</br>· 如长时间验证不通过，请通过【修改验证方式】更改为【DNS验证】</br>· 如何添加域名解析，《<a href="https://cloud.tencent.com/document/product/302/3446" class="btlink" target="__blink">点击查看教程</a>》，和咨询服务器运营商。</div>\
                         <div class="parsing_parem" style="padding: 0 55px;"><button type="submit" class="btn btn-success verify_ssl_domain">验证域名</button><button type="submit" class="btn btn-default set_verify_type">修改验证方式</button><button type="submit" class="btn btn-default return_ssl_list">返回列表</button></div>\
                     </div>';
                 }
@@ -9157,11 +9460,11 @@ var site = {
             var cert_info = '';
             if (rdata.cert_data['notBefore']) {
               cert_info = '<div style="margin-bottom: 10px;" class="alert alert-success">\
-              <p style="margin-bottom: 9px;"><span style="width: 357px;display: inline-block;"><b>已部署成功：</b>将在距离到期时间1个月内尝试自动续签</span>\
-              <span style="margin-left: 15px;display: inline-block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;max-width: 140px;width: 140px;">\
-              <b>证书品牌：</b>' + rdata.cert_data.issuer + '</span></p>\
-              <span style="display:inline-block;max-width: 357px;overflow:hidden;text-overflow:ellipsis;vertical-align:-3px;white-space: nowrap;width: 357px;"><b>认证域名：</b> ' + rdata.cert_data.dns.join('、') + '</span>\
-              <span style="margin-left: 15px;"><b>到期时间：</b> ' + rdata.cert_data.notAfter + '</span></div>'
+                                        <p style="margin-bottom: 9px;"><span style="width: 357px;display: inline-block;"><b>已部署成功：</b>将在距离到期时间1个月内尝试自动续签</span>\
+                                        <span style="margin-left: 15px;display: inline-block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;max-width: 140px;width: 140px;">\
+                                        <b>证书品牌：</b>' + rdata.cert_data.issuer + '</span></p>\
+                                        <span style="display:inline-block;max-width: 357px;overflow:hidden;text-overflow:ellipsis;vertical-align:-3px;white-space: nowrap;width: 357px;"><b>认证域名：</b> ' + rdata.cert_data.dns.join('、') + '</span>\
+                                        <span style="margin-left: 15px;"><b>到期时间：</b> ' + rdata.cert_data.notAfter + '</span></div>'
             }
             robj.append('<div>' + cert_info + '<div><span>密钥(KEY)</span><span style="padding-left:194px">证书(PEM格式)</span></div></div>');
             var datas = [{
@@ -9633,5 +9936,4 @@ var site = {
     });
   },
 }
-
 $('#cutMode .tabs-item[data-type="' + (bt.get_cookie('site_model') || 'php') + '"]').trigger('click');
