@@ -4225,7 +4225,7 @@ bt.soft = {
                     </div>\
                     <div class="libPay-menu-type lib_ltd" >\
                         <p><span class="recommend-pay-icon"></span><span class="glyphicon glyphicon-vip"></span><span style="margin-left:8px">' + bt.os + '企业版</span></p>\
-                        <p>适用于电商、教育、医疗、事业单位等企业用户</p>\
+                        <p>适用于官网，电商、教育、医疗等企业用户</p>\
                     </div>\
                     <div class="libPay-menu-type lib_ver" >\
                         <p><span></span><span style="margin-left:8px">抵扣券</span></p>\
@@ -4414,20 +4414,35 @@ bt.soft = {
       that.get_product_discount_cache(_data, function (rdata) {
         var _ul = $("#libPay-theme-price ul").empty(),
             num = 0,
-            html = '';
+            html = '',
+            payList = [];
         for (var keys in rdata) {
           var item = rdata[keys];
           if (typeof item === 'object') {
             num++;
             if (num > 4) break
             item['cycle'] = keys
-            var _li = $('<li class="pay-cycle-btns" data-type="' + keys + '"><div class="pay-head-price"><span><div class="libPrice"><i>' + item.price + '</i>元</div>/' + that.pro.conver_unit(item.cycle + '') + '</span><p>原价:' + item.sprice + '元</p></div><div class="pay-foo-price">低至' + (item.price / ((item.cycle / 12) * 365)).toFixed(2) + '元/天</div>' + (item.tip ? '<em>' + item.tip + '</em>' : '') + '</li>')
-            _li.data('data', item).click(function () {
-              that.create_pay_code($(this).index())
-            })
-            _ul.append(_li)
+            payList.push(item)
           }
         }
+        // 排序
+        for (var i = 0; i < payList.length; i++) {
+          for (var j = i + 1; j < payList.length; j++) {
+            if (payList[i].sort > payList[j].sort) {
+              var temp = payList[i];
+              payList[i] = payList[j];
+              payList[j] = temp;
+            }
+          }
+        }
+        $.each(payList, function (index, item) {
+          var keys = item.cycle;
+          var _li = $('<li class="pay-cycle-btns" data-type="' + keys + '"><div class="pay-head-price"><span><div class="libPrice"><i>' + item.price + '</i>元</div>/' + that.pro.conver_unit(item.cycle + '') + '</span><p>原价:' + item.sprice + '元</p></div><div class="pay-foo-price">低至' + (item.price / ((item.cycle / 12) * 365)).toFixed(2) + '元/天</div>' + (item.tip ? '<em>' + item.tip + '</em>' : '') + '</li>')
+          _li.data('data', item).click(function () {
+            that.create_pay_code($(this).index());
+          });
+          _ul.append(_li);
+        });
         // if(num >= 4) $('#libPay-theme-price .pay-cycle-btns').css('width',((910  - ((num - 1) * 10)) / num) + 'px')
         that.create_pay_code(0)
       })
