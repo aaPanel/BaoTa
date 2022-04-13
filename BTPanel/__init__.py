@@ -592,6 +592,19 @@ def panel_warning(pdata=None):
     # 首页安全警告
     comReturn = comm.local()
     if comReturn: return comReturn
+
+    get = get_input()
+    if get.action == 'get_list':
+        ikey = 'warning_list'
+        result = cache.get(ikey)
+        if not result or 'force' in get:
+            result = public.ExecShell("{} {}/script/warning_list.py".format(public.get_python_bin(),public.get_panel_path()))[0]
+            try:
+                json.loads(result)
+                cache.set(ikey, result, 3600)
+            except:
+                result = '{"ignore":[],"risk":[],"security":[]}'
+        return result,json_header
     import panelWarning
     dataObject = panelWarning.panelWarning()
     defs = ('get_list', 'set_ignore', 'check_find')

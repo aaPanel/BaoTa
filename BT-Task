@@ -8,7 +8,8 @@
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 
-import os,sys
-os.chdir('/www/server/panel')
-import task
-task.main()
+import os
+os.chdir("/www/server/panel")
+os.system("cd task && make")
+os.system("chmod 700 /www/server/panel/BT-Task")
+os.system("/www/server/panel/BT-Task &")
