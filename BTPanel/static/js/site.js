@@ -7257,10 +7257,12 @@ var site = {
           pay_status = product_recommend.get_pay_status(),
           recom_Template = '', _introduce = '';
       // 1.未安装
-      try {
-        if (!_config['isBuy'] || !_config['install']) {
-          $.each(_config['product_introduce'], function (index, item) {
-            _introduce += '<li>' + item + '</li>'
+      try{
+        if(!_config['isBuy'] || !_config['install']){
+          if ($('#webedit-con').find('.daily-thumbnail.recommend').length >= 1) return;
+          
+          $.each(_config['product_introduce'],function(index,item){
+            _introduce +='<li>'+item+'</li>'
           })
           recom_Template = '<div class="daily-thumbnail recommend">\
             <div class="thumbnail-box"><div class="pluginTipsGg"></div></div>\
