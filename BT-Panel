@@ -57,9 +57,12 @@ if is_debug:
             logger.debug('检测到文件: {} -> {}'.format(filename,in_type))
             
             fname = os.path.basename(filename)
-            if fname in ['task.py','BT-Task']:
+            if fname in ['BT-Task']:
                 logger.debug('正在后台任务...')
-                public.ExecShell("{} {}/BT-Task".format(public.get_python_bin(),_PATH))
+                if os.path.getsize(filename) < 4096:
+                    public.ExecShell("{} {}/BT-Task".format(public.get_python_bin(),_PATH))
+                else:
+                    public.ExecShell("{}/BT-Task".format(_PATH))
                 logger.debug('后台任务已启动!')
             else:
                 logger.debug('正在重启面板...')
