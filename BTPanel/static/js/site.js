@@ -6956,6 +6956,8 @@ var site = {
       // 1.未安装
       try{
         if(!_config['isBuy'] || !_config['install']){
+          if ($('#webedit-con').find('.daily-thumbnail.recommend').length >= 1) return;
+          
           $.each(_config['product_introduce'],function(index,item){
             _introduce +='<li>'+item+'</li>'
           })
