@@ -8218,12 +8218,37 @@ bt.public = {
                   layer.close(indexs)
                   setTimeout(function () { location.reload() },200)
                 }else{
-                  layer.msg(res.msg,{ icon:res.status?1:2, area:'650px',time:0,shade:.3,closeBtn:2})
+                  // layer.msg(res.msg, { icon:res.status?1:2, time:0, shade:.3, closeBtn:2})
+                  if (res.msg === '此功能为企业版专享功能，请先购买企业版') {
+                    bt.confirm({
+                      title: '提示',
+                      msg: '此功能为企业版专享功能，是否购买企业版？'
+                    }, function () {
+                      bt.soft.updata_pro(51);
+                    });
+                  } else {
+                    layer.msg(res.msg, {
+                      time: 0,
+                      shade: .3,
+                      closeBtn: 2,
+                      maxWidth: 650,
+                      icon: res.status ? 1 : 2
+                    });
+                  }
                 }
               })
             }else{
               bt.public.modify_mysql_quota({data:JSON.stringify({size:quota_size,db_name:row.name})},function (res) {
-                bt.msg(res)
+                if (res.status === false && res.msg === '此功能为企业版专享功能，请先购买企业版') {
+                  bt.confirm({
+                    title: '提示',
+                    msg: '此功能为企业版专享功能，是否购买企业版？'
+                  }, function () {
+                    bt.soft.updata_pro(52);
+                  });
+                } else {
+                  bt.msg(res)
+                }
                 if(res.status){
                   layer.close(indexs)
                   setTimeout(function () { location.reload() },200)
