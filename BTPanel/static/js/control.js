@@ -1173,7 +1173,7 @@ var controlObj = {
         })
         // 购买
         $('.daily-product-buy a').click(function () {
-          bt.soft.updata_ltd()
+          bt.soft.updata_ltd(false, 22);
         })
         return false;
       }

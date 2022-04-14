@@ -18,7 +18,7 @@ $(function () {
         $(this).css({
           'boxSizing': 'content-box',
           'paddingBottom': $(this).find('thead').height()
-        });get_pay_status
+        });
       }
       $(this).css({ 'position': 'relative' });
       var _thead = $(this).find('thead')[0].outerHTML,
@@ -6418,9 +6418,15 @@ var product_recommend = {
     return { advanced: advanced, is_pay:is_pay,  end_time:end_time };
   },
 
-  pay_product_sign:function (type,source) {
-    bt.set_cookie('pay_source',source)
-    bt.soft['updata_'+ type ]()
+  pay_product_sign:function (type, source) {
+    switch (type) {
+      case 'pro':
+        bt.soft['updata_' + type](source);
+        break;
+      case 'ltd':
+        bt.soft['updata_' + type](false, source);
+        break;
+    }
   },
   /**
    * @description 获取项目类型
@@ -6467,8 +6473,14 @@ var product_recommend = {
         })
         // 立即购买
         $('.buyNow').click(function(){
-          bt.set_cookie('pay_source',config.pay)
-          bt.soft['updata_' + status.advanced]()
+          switch (status.advanced) {
+            case 'pro':
+              bt.soft['updata_' + status.advanced](config.pay);
+              break;
+            case 'ltd':
+              bt.soft['updata_' + status.advanced](false, config.pay);
+              break;
+          }
         })
       }
     })
