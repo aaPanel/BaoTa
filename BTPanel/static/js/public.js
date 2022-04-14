@@ -18,7 +18,7 @@ $(function () {
         $(this).css({
           'boxSizing': 'content-box',
           'paddingBottom': $(this).find('thead').height()
-        });
+        });get_pay_status
       }
       $(this).css({ 'position': 'relative' });
       var _thead = $(this).find('thead')[0].outerHTML,
@@ -6408,9 +6408,9 @@ var product_recommend = {
    * @description 获取支付状态
    */
   get_pay_status:function(){
-    var pro_end = parseInt(bt.get_cookie('pro_end') || -1);
-    var ltd_end = parseInt(bt.get_cookie('ltd_end')  || -1); 
-    var is_pay = pro_end >= -1 || ltd_end > -1; // 是否购买付费版本
+    var pro_end = parseInt(bt.get_cookie('pro_end') || -1)
+    var ltd_end = parseInt(bt.get_cookie('ltd_end')  || -1)
+    var is_pay = pro_end > -1 || ltd_end > -1; // 是否购买付费版本
     var advanced = 'ltd'; // 已购买，企业版优先显示
     if(pro_end === -2 || pro_end > -1) advanced = 'pro';
     if(ltd_end === -2 || ltd_end > -1) advanced = 'ltd';
