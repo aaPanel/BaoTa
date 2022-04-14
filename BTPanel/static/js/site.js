@@ -41,6 +41,7 @@ $('#cutMode .tabs-item').on('click', function () {
 var site = {
   scan_list:[],//漏洞扫描
   scan_num:0,
+  span_time:'',
   is_pay:true,
   node: {
     /**
@@ -2968,6 +2969,7 @@ var site = {
           }
         }
         that.is_pay = res.is_pay
+        that.span_time = site.get_simplify_time(res.time)
         $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num">'+ that.scan_num +'</span>')
         if (callback) callback(res);
       }
@@ -2992,6 +2994,7 @@ var site = {
         time : res.time,
         is_pay: res.is_pay
       }
+      that.span_time = site.get_simplify_time(data.time)
       var html = '', scan_time = '', arry = [], level = [['低危', '#e8d544'], ['中危', '#E6A23C'], ['高危', '#ff5722'], ['严重', 'red']]
       if (!data.is_pay) {
         html +='<div class="webedit-con" style="height: 350px;">\
@@ -3013,91 +3016,114 @@ var site = {
           </div>\
         </div>'
       }else{
-        for(var i = 0;i < data.info.length; i++){
-          arry[i] = data.info[i].name
-        }
-        bt.each(arry, function (index, item) {
-          var data_item = [], n = 0 , infoName = [],arr
-          var re=/(http[s]?:\/\/([\w-]+.)+([:\d+])?(\/[\w-\.\/\?%&=]*)?)/gi; 
-          var info = data.info[index]
-          if (info.cms.length >0) {
-            arr = info.cms.sort(sortDanDesc) 
-            for (var i = 0; i < arr.length; i++) {
-              data_item[i] = arr[i].name
-            }
-            for (var i = 0; i < data.info.length; i++) {
-              if (data.info[i].cms.length >0) {
-                infoName[n++] = data.info[i].name
+        if (data.info.length > 0) {
+          for(var i = 0;i < data.info.length; i++){
+            arry[i] = data.info[i].name
+          }
+          bt.each(arry, function (index, item) {
+            var data_item = [], n = 0 , infoName = [],arr
+            var re=/(http[s]?:\/\/([\w-]+.)+([:\d+])?(\/[\w-\.\/\?%&=]*)?)/gi; 
+            var info = data.info[index]
+            if (info.cms.length >0) {
+              arr = info.cms.sort(sortDanDesc) 
+              for (var i = 0; i < arr.length; i++) {
+                data_item[i] = arr[i].name
               }
-            }
-            html += '<li class="module_item">' +
-            '<div class="module_head">' +
-            '<span class="module_title">' + item + '</span>' +
-            '<span class="module_num">' + info.cms.length + '</span>' +
-            '<span style="color: #bbb;margin-left: 10px;">（程序名称：' + info.cms_name + ' ，版本：'+ info.version_info +'）</span>' +
-            '<span class="module_cut_show">' + (item === infoName[0] && info.cms.length > 0 ? '<i>点击折叠</i><span class="glyphicon glyphicon-menu-up" aria-hidden="false"></span>' : '<i>查看详情</i><span class="glyphicon glyphicon-menu-down" aria-hidden="false"></span>') + '</span>' +
-            '</div>'
-            html += '<ul style="height: 300px;" class="module_details_list ' + (item === infoName[0] && info.cms.length > 0 ? 'active' : '') + '">'
-            bt.each(data_item, function (indexs, items) {
-              var cms = arr[indexs]
-              html += '<li class="module_details_item">' +
-                '<div class="module_details_head cursor">' +
-                '<span class="module_details_title">\
-                  <span title="' + items + '">' + items + '</span>\
-                  <i>（&nbsp;等级：' + (function (level) {
-                    var level_html = '';
-                    switch (level) {
-                      case 4:
-                        level_html += '<span style="color:red">严重</span>';
-                        break;
-                      case 3:
-                        level_html += '<span style="color:#ff5722">高危</span>';
-                        break;
-                      case 2:
-                        level_html += '<span style="color:#E6A23C">中危</span>';
-                        break;
-                      case 1:
-                        level_html += '<span style="color:#e8d544">低危</span>';
-                        break;
-                    }
-                    return level_html;
-                  }(parseInt(cms.dangerous))) + '）</i>\
-                </span>' +
-                '<span class="operate_tools">\
-                  <a href="javascript:;" class="btlink cut_details">详情</a>&nbsp;&nbsp;|&nbsp;&nbsp;\
-                  <a href="javascript:;" class="btlink" data-name="' + info.name + '" ">检测</a></span>' +
-                '</div>' +
-                '<div class="module_details_body">' +
-                  '<div class="module_details_line">' +
-                    '<div class="module_details_block">\
-                      <span class="line_title">程序名称：</span>\
-                      <span class="line_content">' + cms.cms_name + '</span>\
+              for (var i = 0; i < data.info.length; i++) {
+                if (data.info[i].cms.length >0) {
+                  infoName[n++] = data.info[i].name
+                }
+              }
+              html += '<li class="module_item">' +
+              '<div class="module_head">' +
+              '<span class="module_title">' + item + '</span>' +
+              '<span class="module_num">' + info.cms.length + '</span>' +
+              '<span style="color: #bbb;margin-left: 10px;">（程序名称：' + info.cms_name + ' ，版本：'+ info.version_info +'）</span>' +
+              '<span class="module_cut_show">' + (item === infoName[0] && info.cms.length > 0 ? '<i>点击折叠</i><span class="glyphicon glyphicon-menu-up" aria-hidden="false"></span>' : '<i>查看详情</i><span class="glyphicon glyphicon-menu-down" aria-hidden="false"></span>') + '</span>' +
+              '</div>'
+              html += '<ul style="height: 300px;" class="module_details_list ' + (item === infoName[0] && info.cms.length > 0 ? 'active' : '') + '">'
+              bt.each(data_item, function (indexs, items) {
+                var cms = arr[indexs]
+                html += '<li class="module_details_item">' +
+                  '<div class="module_details_head cursor">' +
+                  '<span class="module_details_title">\
+                    <span title="' + items + '">' + items + '</span>\
+                    <i>（&nbsp;等级：' + (function (level) {
+                      var level_html = '';
+                      switch (level) {
+                        case 4:
+                          level_html += '<span style="color:red">严重</span>';
+                          break;
+                        case 3:
+                          level_html += '<span style="color:#ff5722">高危</span>';
+                          break;
+                        case 2:
+                          level_html += '<span style="color:#E6A23C">中危</span>';
+                          break;
+                        case 1:
+                          level_html += '<span style="color:#e8d544">低危</span>';
+                          break;
+                      }
+                      return level_html;
+                    }(parseInt(cms.dangerous))) + '）</i>\
+                  </span>' +
+                  '<span class="operate_tools">\
+                    <a href="javascript:;" class="btlink cut_details">详情</a>&nbsp;&nbsp;|&nbsp;&nbsp;\
+                    <a href="javascript:;" class="btlink" data-name="' + info.name + '" ">检测</a></span>' +
+                  '</div>' +
+                  '<div class="module_details_body">' +
+                    '<div class="module_details_line">' +
+                      '<div class="module_details_block">\
+                        <span class="line_title">程序名称：</span>\
+                        <span class="line_content">' + cms.cms_name + '</span>\
+                      </div>' +
+                      '<div class="module_details_block">\
+                        <span class="line_title">风险等级：</span>\
+                        <span class="line_content" style="color:' + level[parseInt(cms.dangerous) - 1][1] + '">' + level[parseInt(cms.dangerous) - 1][0] + '</span>\
+                      </div>' +
+                    '</div>' +
+                    '<div class="module_details_line">\
+                      <span class="line_title">漏洞描述：</span>\
+                      <span class="line_content" style="width: 560px;">' + cms.ps + '</span>\
                     </div>' +
-                    '<div class="module_details_block">\
-                      <span class="line_title">风险等级：</span>\
-                      <span class="line_content" style="color:' + level[parseInt(cms.dangerous) - 1][1] + '">' + level[parseInt(cms.dangerous) - 1][0] + '</span>\
+                    '<div class="module_details_line">\
+                      <span class="line_title">修复描述：</span>\
+                      <span class="line_content" style="width: 560px;">' + cms.repair.replace(re,function(a){return '<a href="'+a+'" class="btlink" target="_blank">'+a+'</a>';}).replace(/(\r\n)|(\n)/g,'<br>') + '</span>\
                     </div>' +
                   '</div>' +
-                  '<div class="module_details_line">\
-                    <span class="line_title">漏洞描述：</span>\
-                    <span class="line_content" style="width: 560px;">' + cms.ps + '</span>\
-                  </div>' +
-                  '<div class="module_details_line">\
-                    <span class="line_title">修复描述：</span>\
-                    <span class="line_content" style="width: 560px;">' + cms.repair.replace(re,function(a){return '<a href="'+a+'" class="btlink" target="_blank">'+a+'</a>';}).replace(/(\r\n)|(\n)/g,'<br>') + '</span>\
-                  </div>' +
-                '</div>' +
-                '</li>';
-            })
-            html += '</ul>'
-            html += '</li>'
-          }
-        })
+                  '</li>';
+              })
+              html += '</ul>'
+              html += '</li>'
+            }
+          })
+        } else {
+          html += '<li class="cms">\
+            <div>\
+              支持网站CMS类型如下：\
+              <ol>\
+                <li>1、迅睿CMS</li><li>2、pbootcms</li>\
+                <li>3、苹果CMS</li><li>4、eyoucms</li>\
+                <li>5、海洋CMS</li><li>6、ThinkCMF</li>\
+                <li>7、zfaka</li><li>8、dedecms</li>\
+                <li>9、MetInfo</li><li>10、emlog</li>\
+                <li>11、帝国CMS</li><li>12、discuz</li>\
+                <li>13、Thinkphp</li><li>14、Wordpress</li>\
+              <ol>\
+            </div>\
+          </li>'
+        }
       }
-      
       $('.warning_scan_body').html(html);
       scan_time = Date.now() / 1000;
       $('.warning_scan_time').html('检测时间：&nbsp;' + bt.format_data(scan_time));
+    }
+    var pay = ''
+    if (that.is_pay) {
+      pay += '<span class="ml5 buy">\
+        <span class="wechatEnterpriseService"></span>\
+        <span class="btlink service_buy2">付费修复</span>\
+      </span>'
     }
     bt.open({
       type: '1',
@@ -3106,14 +3132,20 @@ var site = {
       skin: 'warning_scan_view',
       content: '<div class="warning_scan_view" style="height:100%;">' +
         '<div class="warning_scan_head">' +
-        '<span class="warning_scan_ps">' + (that.scan_num > 0 ? ('本次扫描共检测到漏洞项<i>' + that.scan_num + '</i>个,请及时修复！') : '本次扫描检测无漏洞项，请继续保持！') + '</span>' +
-        '<span class="warning_scan_time"></span>' + 
-        (that.is_pay?
-        '<span class="ml5" style="position: absolute;top: 45px;width:101px;font-size: 13px;">\
-          <span class="wechatEnterpriseService" style="vertical-align: middle;width:21px;float:left;margin-top: 3px;"></span>\
-          <span class="btlink service_buy2" style="width:80px;font-size: 15px;">付费修复</span>\
-        </span>' : '') +
-        '<button class="warning_again_scan">重新检测</button>' +
+          (that.scan_num > 0 ?'<span class="warning_scan_ps">本次扫描共检测到漏洞项<i>' + that.scan_num + '</i>个,请及时修复！</span>' +
+          '<span class="warning_scan_time"></span>' + pay +
+          '<button class="warning_again_scan">重新检测</button>':
+          '<div class="scanNone">\
+            <img src="/static/img/scanning-success.png">\
+            <div class="warning_scan_ps1">\
+              <div style="font-size: 23px;">\
+              距上传扫描已有<i style="color:red;font-style: inherit;">' + that.span_time + '</i>天</div>\
+              <div style="font-size: 15px;">\
+                当前处于安全状态，请继续保持！\
+              </div>\
+            </div>\
+            <button class="warning_again_scan" style="top: 100px;right: 90px;">立即扫描</button>'+ pay +
+          '</div>') +
         '</div>' +
         '<ol class="warning_scan_body"></ol>' +
         '<ul class="c7 help-info-text" style="margin-left: 10px;position:absolute;bottom: 20px;">'+
@@ -3255,6 +3287,22 @@ var site = {
         reader_scan_list(that.scan_list);
       }
     })
+  },
+  /**
+   * @description 获取时间简化缩写
+   * @param {Numbre} dateTimeStamp 需要转换的时间戳
+   * @return {String} 简化后的时间格式
+  */
+   get_simplify_time: function (dateTimeStamp) {
+    if (dateTimeStamp.toString().length == 10) dateTimeStamp = dateTimeStamp * 1000
+    var minute = 1000 * 60, hour = minute * 60, day = hour * 24,now = new Date().getTime(), diffValue = now - dateTimeStamp;
+    var dayC = diffValue / day
+    if (dayC >= 1) {
+      result = "" + parseInt(dayC);
+    }else{
+      result = "0";
+    }
+    return result;
   },
   // 安全设置
   open_safe_config: function () {
@@ -7260,7 +7308,7 @@ var site = {
           pay_status = product_recommend.get_pay_status(),
           recom_Template = '', _introduce = '';
       // 1.未安装
-      try{
+      try {
         if(!_config['isBuy'] || !_config['install']){
           if ($('#webedit-con').find('.daily-thumbnail.recommend').length >= 1) return;
           
