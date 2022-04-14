@@ -59,7 +59,7 @@ class ProjectController:
             else:
                 pdata = args.data
         else:
-            pdata = public.dict_obj()
+            pdata = args
 
         # 前置HOOK
         hook_index = '{}_{}_LAST'.format(mod_name.upper(),def_name.upper())
