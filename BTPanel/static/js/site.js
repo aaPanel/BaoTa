@@ -41,6 +41,7 @@ $('#cutMode .tabs-item').on('click', function () {
 var site = {
   scan_list:[],//漏洞扫描
   scan_num:0,
+  is_pay:true,
   node: {
     /**
      * @description 选择路径配置
@@ -2966,6 +2967,7 @@ var site = {
             that.scan_num += res.info[i].cms.length
           }
         }
+        that.is_pay = res.is_pay
         $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num">'+ that.scan_num +'</span>')
         if (callback) callback(res);
       }
@@ -2992,8 +2994,7 @@ var site = {
       }
       var html = '', scan_time = '', arry = [], level = [['低危', '#e8d544'], ['中危', '#E6A23C'], ['高危', '#ff5722'], ['严重', 'red']]
       if (!data.is_pay) {
-        layer.msg('此功能为企业版专享功能，请先购买企业版');
-        html +='<div class="webedit-con">\
+        html +='<div class="webedit-con" style="height: 350px;">\
           <div class="thumbnail-box">\
             <div class="pluginTipsGg" style="background-image: url(/static/img/preview/site_scanning.png);">\
           </div>\
@@ -3036,7 +3037,7 @@ var site = {
             '<span style="color: #bbb;margin-left: 10px;">（程序名称：' + info.cms_name + ' ，版本：'+ info.version_info +'）</span>' +
             '<span class="module_cut_show">' + (item === infoName[0] && info.cms.length > 0 ? '<i>点击折叠</i><span class="glyphicon glyphicon-menu-up" aria-hidden="false"></span>' : '<i>查看详情</i><span class="glyphicon glyphicon-menu-down" aria-hidden="false"></span>') + '</span>' +
             '</div>'
-            html += '<ul class="module_details_list ' + (item === infoName[0] && info.cms.length > 0 ? 'active' : '') + '">'
+            html += '<ul style="height: 300px;" class="module_details_list ' + (item === infoName[0] && info.cms.length > 0 ? 'active' : '') + '">'
             bt.each(data_item, function (indexs, items) {
               var cms = arr[indexs]
               html += '<li class="module_details_item">' +
@@ -3107,10 +3108,11 @@ var site = {
         '<div class="warning_scan_head">' +
         '<span class="warning_scan_ps">' + (that.scan_num > 0 ? ('本次扫描共检测到漏洞项<i>' + that.scan_num + '</i>个,请及时修复！') : '本次扫描检测无漏洞项，请继续保持！') + '</span>' +
         '<span class="warning_scan_time"></span>' + 
+        (that.is_pay?
         '<span class="ml5" style="position: absolute;top: 45px;width:101px;font-size: 13px;">\
           <span class="wechatEnterpriseService" style="vertical-align: middle;width:21px;float:left;margin-top: 3px;"></span>\
           <span class="btlink service_buy2" style="width:80px;font-size: 15px;">付费修复</span>\
-        </span>' +
+        </span>' : '') +
         '<button class="warning_again_scan">重新检测</button>' +
         '</div>' +
         '<ol class="warning_scan_body"></ol>' +
@@ -3231,9 +3233,10 @@ var site = {
             $('.module_details_list').scrollTop(indexs * 41);
           }
         })
-        $('.warning_scan_body').on('click', '.operate_tools a:eq(1)', function () {
+        $('.warning_scan_body').on('click', '.operate_tools a', function () {
           var index = $(this).index(), data = $(this).data();
           var obj = JSON.stringify({"name" : data.name})
+          if(index==0) return
           var loadT = layer.msg('正在检测指定模块，请稍候...', { icon: 16, time: 0 });
           $.post('project/scanning/startAweb', {data : obj}, function (res) {
             that.scan_num = 0
