@@ -6410,7 +6410,7 @@ var product_recommend = {
   get_pay_status:function(){
     var pro_end = parseInt(bt.get_cookie('pro_end') || -1);
     var ltd_end = parseInt(bt.get_cookie('ltd_end')  || -1); 
-    var is_pay = pro_end >= -1 && ltd_end > -1; // 是否购买付费版本
+    var is_pay = pro_end >= -1 || ltd_end > -1; // 是否购买付费版本
     var advanced = 'ltd'; // 已购买，企业版优先显示
     if(pro_end === -2 || pro_end > -1) advanced = 'pro';
     if(ltd_end === -2 || ltd_end > -1) advanced = 'ltd';
