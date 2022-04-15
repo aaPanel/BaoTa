@@ -2969,7 +2969,8 @@ var site = {
         }
         that.is_pay = res.is_pay
         that.span_time = site.get_simplify_time(res.time)
-        $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num" style="background:'+ (that.scan_num > 0 ? 'red' : '#f0ad4e') +'">'+ that.scan_num +'</span>')        if (callback) callback(res);
+        $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num" style="background:'+ (that.scan_num > 0 ? 'red' : '#f0ad4e') +'">'+ that.scan_num +'</span>');
+        if (callback) callback(res);
       }
     })
 
