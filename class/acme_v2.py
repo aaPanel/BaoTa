@@ -773,7 +773,7 @@ fullchain.pem       粘贴到证书输入框
                     to_key_file = to_path + '/privateKey.pem'
                     if not os.path.exists(to_pem_file):
                         continue
-                    is_panel = True
+                    if path == paths[-1]: is_panel = True
                 # 获取目标证书的基本信息
                 to_cert_init = self.get_cert_init(to_pem_file)
                 # 判断证书品牌是否一致
