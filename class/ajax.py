@@ -1343,9 +1343,10 @@ class ajax:
             php_path = '/usr/local/lsws/lsphp'
         php_bin = php_path + php_version + '/bin/php'
         php_ini = php_path + php_version + '/etc/php.ini'
-        if not os.path.exists('/etc/redhat-release'):
-            php_ini = php_path + php_version + '/etc/php/'+args.php_version+'/litespeed/php.ini'
-        tmp = public.ExecShell(php_bin + ' /www/server/panel/class/php_info.php')[0]
+        php_ini_lit = "/www/server/php/80/etc/php/80/litespeed/php.ini"
+        if os.path.exists(php_ini_lit):
+            php_ini = php_ini_lit
+        tmp = public.ExecShell(php_bin + ' -c {} /www/server/panel/class/php_info.php'.format(php_ini))[0]
         if tmp.find('Warning: JIT is incompatible') != -1:
             tmp = tmp.strip().split('\n')[-1]
         result = json.loads(tmp)
