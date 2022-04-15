@@ -3009,7 +3009,7 @@ var site = {
             <li>可扫描网站中存在的漏洞</li>\
             <li>提供修复解决方案</li>\
             <li>提供付费解决方案</li>\
-            <li>专业版/企业版专享</li>\
+            <li>企业版专享</li>\
             </ul>\
             <div class="daily-product-buy">\
             <button type="submit" class="btn btn-sm btn-success" onclick=\"product_recommend.pay_product_sign(\'ltd\','+ 50 +')\"">立即购买</button>\
