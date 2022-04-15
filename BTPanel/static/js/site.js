@@ -3009,7 +3009,6 @@ var site = {
             <li>可扫描网站中存在的漏洞</li>\
             <li>提供修复解决方案</li>\
             <li>提供付费解决方案</li>\
-            <li>企业版专享</li>\
             </ul>\
             <div class="daily-product-buy">\
             <button type="submit" class="btn btn-sm btn-success" onclick=\"product_recommend.pay_product_sign(\'ltd\','+ 50 +')\"">立即购买</button>\
@@ -7310,11 +7309,9 @@ var site = {
           recom_Template = '', _introduce = '';
       // 1.未安装
       try {
-        if(!_config['isBuy'] || !_config['install']){
-          if ($('#webedit-con').find('.daily-thumbnail.recommend').length >= 1) return;
-          
-          $.each(_config['product_introduce'],function(index,item){
-            _introduce +='<li>'+item+'</li>'
+        if (!_config['isBuy'] || !_config['install']) {
+          $.each(_config['product_introduce'], function (index, item) {
+            _introduce += '<li>' + item + '</li>'
           })
           recom_Template = '<div class="daily-thumbnail recommend">\
             <div class="thumbnail-box"><div class="pluginTipsGg"></div></div>\
@@ -9871,7 +9868,6 @@ var site = {
             '如开启后无法使用HTTPS访问，请检查安全组是否正确放行443端口'
           ]
           robj.append(bt.render_help(helps));
-
         }
       },
       {
