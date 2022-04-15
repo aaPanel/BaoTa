@@ -2935,18 +2935,17 @@ var site = {
         _options += '<option value="' + rdata.versions[i].version + '" ' + ed + '>' + rdata.versions[i].name + '</option>';
       }
       var body = '<div class="bt-form pd20 pb70">\
-                <div class="line">\
-                    <span class="tname">PHP-CLI版本</span>\
-                    <div class="info-r ">\
-                        <select class="bt-input-text mr5" name="php_version" style="width:300px">' + _options + '</select>\
-                    </div>\
-                </div >\
-                <ul class="help-info-text c7 plr20">\
-                    <li>此处可设置命令行运行php时使用的PHP版本</li>\
-                    <li>安装新的PHP版本后此处需要重新设置</li>\
-                </ul>\
-                <div class="bt-form-submit-btn"><button type="button" class="btn btn-sm btn-danger" onclick="layer.closeAll()">关闭</button><button type="button" class="btn btn-sm btn-success" onclick="site.set_cli_version()">提交</button></div></div>';
-
+        <div class="line">\
+          <span class="tname">PHP-CLI版本</span>\
+          <div class="info-r ">\
+            <select class="bt-input-text mr5" name="php_version" style="width:300px">' + _options + '</select>\
+          </div>\
+        </div >\
+        <ul class="help-info-text c7 plr20">\
+          <li>此处可设置命令行运行php时使用的PHP版本</li>\
+          <li>安装新的PHP版本后此处需要重新设置</li>\
+        </ul>\
+        <div class="bt-form-submit-btn"><button type="button" class="btn btn-sm btn-danger" onclick="layer.closeAll()">关闭</button><button type="button" class="btn btn-sm btn-success" onclick="site.set_cli_version()">提交</button></div></div>';
       layer.open({
         type: 1,
         title: "设置PHP-CLI(命令行)版本",
@@ -2970,10 +2969,11 @@ var site = {
         }
         that.is_pay = res.is_pay
         that.span_time = site.get_simplify_time(res.time)
-        $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num">'+ that.scan_num +'</span>')
+        $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num" style="'+ ( that.scan_num > 0?'background-color:red':'' ) +'">'+ that.scan_num +'</span>')
         if (callback) callback(res);
       }
     })
+    
   },
    /**
    * @description 渲染漏洞扫描视图
