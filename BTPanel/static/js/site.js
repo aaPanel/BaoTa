@@ -2969,11 +2969,10 @@ var site = {
         }
         that.is_pay = res.is_pay
         that.span_time = site.get_simplify_time(res.time)
-        $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num" style="'+ ( that.scan_num > 0?'background-color:red':'' ) +'">'+ that.scan_num +'</span>')
-        if (callback) callback(res);
+        $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num" style="background:'+ (that.scan_num > 0 ? 'red' : '#f0ad4e') +'">'+ that.scan_num +'</span>')        if (callback) callback(res);
       }
     })
-    
+
   },
    /**
    * @description 渲染漏洞扫描视图
@@ -3228,7 +3227,7 @@ var site = {
                 that.scan_num += res.info[i].cms.length
               }
             }
-            $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num">'+ that.scan_num +'</span>')
+            $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num" style="background:'+ (that.scan_num > 0 ? 'red' : '#f0ad4e') +'">'+ that.scan_num +'</span>')
             layer.msg('检测成功', { icon: 1 });
             reader_scan_list(that.scan_list);
           })
@@ -3278,7 +3277,7 @@ var site = {
                 that.scan_num += res.info[i].cms.length
               }
             }
-            $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num">'+ that.scan_num +'</span>')
+            $('.pull-left button').eq(5).html('<span>漏洞扫描</span><span class="btn_num" style="background:'+ (that.scan_num > 0 ? 'red' : '#f0ad4e') +'">'+ that.scan_num +'</span>')
             layer.msg('检测成功', { icon: 1 });
             reader_scan_list(that.scan_list);
           })
