@@ -684,3 +684,8 @@ def clean_session():
     except:return False
 
 
+
+if __name__ == '__main__':
+    control_init()
+
+

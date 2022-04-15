@@ -4176,6 +4176,12 @@ bt.soft = {
     var bt_user_info = bt.get_cookie('bt_user_info'),
         ltd_end = bt.get_cookie('ltd_end'),
         pro_end = bt.get_cookie('pro_end');
+    
+    var totalNum = config.totalNum ? config.totalNum : '';
+    if (totalNum) {
+      bt.set_cookie('pay_source', parseInt(totalNum));
+    }
+
     // 判断登录
     if (!bt_user_info) {
       bt.pub.bind_btname(function () {
@@ -4539,25 +4545,37 @@ bt.soft = {
         _source = 0,
         _locahostURL = window.location.pathname;
     var pay_source = parseInt(bt.get_cookie('pay_source') || 0)
-    switch (_locahostURL) {
-      case '/':
-        if($('.btpro-gray').length == 1){  //是否免费版
-          _source = 27;
-        }else{
-          _source = 28;
-        }
-        break;
-      case '/control':
-        _source = 22
-        break;
-      case '/soft':
-        _source = $('.libPay-content-box').data('index');
-        break;
-      case '/btwaf/index':
-        _source = 25
-        break;
-    };
-    if(_source && !pay_source) bt.set_cookie('pay_source', _source);
+    if (pay_source === 0) {
+      if ($('.btpro-gray').length == 1) {  // 是否免费版
+        pay_source = 27;
+      } else {
+        pay_source = 28;
+      }
+    }
+    // switch (_locahostURL) {
+    //   case '/':
+    //     if($('.btpro-gray').length == 1){  //是否免费版
+    //       _source = 27;
+    //     }else{
+    //       _source = 28;
+    //     }
+    //     break;
+    //   case '/control':
+    //     _source = 22
+    //     break;
+    //   case '/soft':
+    //   case '/site':
+    //   case '/ftp':
+    //   case '/database':
+    //     _source = $('.libPay-content-box').data('index');
+    //     break;
+    //   case '/btwaf/index':
+    //     _source = 25
+    //     break;
+    // };
+    // if(_source && !pay_source) bt.set_cookie('pay_source', _source);
+    // console.log(pay_source)
+    // console.log(_source)
 
     $(".wx-pay-ico").hide()
     $(".libPay-loading").show();
@@ -4571,7 +4589,7 @@ bt.soft = {
     that.pro.create_order({
       pid: _product.pid,
       cycle: _cycle.cycle,
-      source: pay_source || _source
+      source: pay_source
     }, function (rdata) {
       var start = that.pay_loading.get('start')
       var end = that.pay_loading.set('end')
@@ -4733,7 +4751,11 @@ bt.soft = {
       pid: 100000032,
       limit: 'ltd'
     };
-    if(num) param['totalNum'] = num
+    if (typeof num !== 'undefined') {
+      param['totalNum'] = num;
+    }
+    bt.set_cookie('pay_source', num);
+
     if (is_alone || false) $.extend(param, {
       source: 5,
       is_alone: true
@@ -4747,7 +4769,8 @@ bt.soft = {
       pid: 100000011,
       limit: 'pro'
     }
-    if(num) param['totalNum'] = num
+    if(num) param['totalNum'] = num;
+    bt.set_cookie('pay_source', num);
     bt.soft.product_pay_view(param);
   },
   //遍历数组和对象
@@ -8195,12 +8218,37 @@ bt.public = {
                   layer.close(indexs)
                   setTimeout(function () { location.reload() },200)
                 }else{
-                  layer.msg(res.msg,{ icon:res.status?1:2, area:'650px',time:0,shade:.3,closeBtn:2})
+                  // layer.msg(res.msg, { icon:res.status?1:2, time:0, shade:.3, closeBtn:2})
+                  if (res.msg === '此功能为企业版专享功能，请先购买企业版') {
+                    bt.confirm({
+                      title: '提示',
+                      msg: '此功能为企业版专享功能，是否购买企业版？'
+                    }, function () {
+                      bt.soft.updata_pro(51);
+                    });
+                  } else {
+                    layer.msg(res.msg, {
+                      time: 0,
+                      shade: .3,
+                      closeBtn: 2,
+                      maxWidth: 650,
+                      icon: res.status ? 1 : 2
+                    });
+                  }
                 }
               })
             }else{
               bt.public.modify_mysql_quota({data:JSON.stringify({size:quota_size,db_name:row.name})},function (res) {
-                bt.msg(res)
+                if (res.status === false && res.msg === '此功能为企业版专享功能，请先购买企业版') {
+                  bt.confirm({
+                    title: '提示',
+                    msg: '此功能为企业版专享功能，是否购买企业版？'
+                  }, function () {
+                    bt.soft.updata_pro(52);
+                  });
+                } else {
+                  bt.msg(res)
+                }
                 if(res.status){
                   layer.close(indexs)
                   setTimeout(function () { location.reload() },200)

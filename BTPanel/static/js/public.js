@@ -6408,9 +6408,9 @@ var product_recommend = {
    * @description 获取支付状态
    */
   get_pay_status:function(){
-    var pro_end = parseInt(bt.get_cookie('pro_end') || -1);
-    var ltd_end = parseInt(bt.get_cookie('ltd_end')  || -1); 
-    var is_pay = pro_end >= -1 && ltd_end > -1; // 是否购买付费版本
+    var pro_end = parseInt(bt.get_cookie('pro_end') || -1)
+    var ltd_end = parseInt(bt.get_cookie('ltd_end')  || -1)
+    var is_pay = pro_end > -1 || ltd_end > -1; // 是否购买付费版本
     var advanced = 'ltd'; // 已购买，企业版优先显示
     if(pro_end === -2 || pro_end > -1) advanced = 'pro';
     if(ltd_end === -2 || ltd_end > -1) advanced = 'ltd';
@@ -6418,9 +6418,15 @@ var product_recommend = {
     return { advanced: advanced, is_pay:is_pay,  end_time:end_time };
   },
 
-  pay_product_sign:function (type,source) {
-    bt.set_cookie('pay_source',source)
-    bt.soft['updata_'+ type ]()
+  pay_product_sign:function (type, source) {
+    switch (type) {
+      case 'pro':
+        bt.soft['updata_' + type](source);
+        break;
+      case 'ltd':
+        bt.soft['updata_' + type](false, source);
+        break;
+    }
   },
   /**
    * @description 获取项目类型
@@ -6467,8 +6473,14 @@ var product_recommend = {
         })
         // 立即购买
         $('.buyNow').click(function(){
-          bt.set_cookie('pay_source',config.pay)
-          bt.soft['updata_' + status.advanced]()
+          switch (status.advanced) {
+            case 'pro':
+              bt.soft['updata_' + status.advanced](config.pay);
+              break;
+            case 'ltd':
+              bt.soft['updata_' + status.advanced](false, config.pay);
+              break;
+          }
         })
       }
     })

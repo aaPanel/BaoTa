@@ -57,9 +57,12 @@ if is_debug:
             logger.debug('检测到文件: {} -> {}'.format(filename,in_type))
             
             fname = os.path.basename(filename)
-            if fname in ['task.py','BT-Task']:
+            if fname in ['BT-Task']:
                 logger.debug('正在后台任务...')
-                public.ExecShell("{} {}/BT-Task".format(public.get_python_bin(),_PATH))
+                if os.path.getsize(filename) < 4096:
+                    public.ExecShell("{} {}/BT-Task".format(public.get_python_bin(),_PATH))
+                else:
+                    public.ExecShell("{}/BT-Task".format(_PATH))
                 logger.debug('后台任务已启动!')
             else:
                 logger.debug('正在重启面板...')
@@ -129,11 +132,14 @@ if __name__ == '__main__':
         err_f.close()
 
     import threading
-    import jobs
-
-    job = threading.Thread(target=jobs.control_init)
-    job.start()
-
+    os.system("nohup {} {}/jobs.py &>/dev/null &".format(public.get_python_bin(),public.get_class_path()))
+    import task
+    p1 = threading.Thread(target=task.systemTask)
+    p1.start()
+    p2 = threading.Thread(target=task.check502Task)
+    p2.start()
+    p3 = threading.Thread(target=task.update_software_list)
+    p3.start()
 
     if is_ssl:
         ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)

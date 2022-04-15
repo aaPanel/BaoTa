@@ -56,8 +56,6 @@ class panelPlugin:
         self.__replace_rule = public.get_plugin_replace_rules()
 
 
-    
-
     def input_package(self,get):
         '''
             @name 导入插件包到面板

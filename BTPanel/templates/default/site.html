@@ -1,6 +1,86 @@
 {% extends "layout.html" %}
 
 {% block content %}
+<style>
+    .module_num{
+        display: inline-block;
+        height: 21px;
+        line-height: 20px;
+        width: 20px;
+        text-align: center;
+        border-radius: 3px;
+        margin-left: 10px;
+        background-color: #fde6e6;
+        border: 1px solid #fccece;
+        color: #ef0808;
+    }
+    .btn_num{
+        margin-left: 10px;
+        padding: 2px;
+        text-align: center;
+        border-radius: 3px;
+        color:#fff;
+        background: red;
+    }
+    .module_details_block .line_content {
+        width: 245px;
+    }
+    .warning_scan_body{
+        position: relative;
+        overflow: auto;
+        max-height:490px;
+    }
+    .cmsList ol{
+        padding: 20px;
+    }
+    .cmsList ol li{
+        width: 140px;
+        display: inline-block;
+        text-align: center;
+    }
+    .cms {
+        font-size:15px;
+        padding: 60px 100px 0 100px;
+        line-height: 30px;
+    }
+    .cms ol li {
+        width: 255px;
+        float: left;
+    }
+    .warning_scan_head .warning_scan_ps1{
+        line-height:30px;
+        display:inline-block;
+        text-align: left;
+        vertical-align: middle;
+        margin-left: 10px;
+    }
+    .warning_scan_head .buy{
+        position: absolute;
+        top: 45px;
+        width:101px;
+        font-size: 13px;
+    }
+    .warning_scan_head .buy .wechatEnterpriseService{
+        vertical-align: middle;
+        width:21px;
+        float:left;
+        margin-top: 3px;
+    }
+    .warning_scan_head .buy .service_buy2{
+        width:80px;
+        font-size: 15px;
+    }
+    .warning_scan_head .scanNone{
+        padding: 60px 0 0 50px;
+    }
+    .scanNone .buy{
+        position: absolute;
+        top: 160px;
+        width:101px;
+        font-size: 13px;
+        right: 85px;
+    }
+</style>
 <!--suppress SpellCheckingInspection, CheckEmptyScriptTag -->
 <div class="main-content pb55">
     <div class="container-fluid">
@@ -313,6 +393,8 @@
     {% if not data['isSetup'] %}
       layer.msg('未安装Web服务器，<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'nginx\')">安装Nginx</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:;" class="btlink" onclick="bt.soft.install(\'apache\')">安装Apache</a>', { icon: 7, shade: [0.3, '#000'], time: 0,area:'380px' });
       $(".layui-layer-shade").css("margin-left", "180px");
+    {% else %}
+      site.plugin_firewall();
     {% endif %}
 </script>
 {% endblock %}
