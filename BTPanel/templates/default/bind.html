@@ -21,7 +21,8 @@
 							<li>单个宝塔帐号支持多台服务器绑定；</li>
 							<li>绑定帐号没有接管服务器的功能权限，请放心使用；</li>
 							<li>帐号绑定过程中遇到问题请联系客服处理；</li>
-							<li>客服QQ：800176556，客服电话：0769-23030556</li>
+							<li>客服电话：0769-23030556</li>
+              <li>客服企业微信：<a class="btlink qrcode" href="javascript:;">查看二维码</a></li>
 						</ul>
           </div>
         </div>
@@ -33,5 +34,24 @@
 {{ super() }} 
 <script type="text/javascript">
   new BindAccount().init();
+
+  var tips = -1;
+  $('.qrcode').hover(
+    function () {
+      var that = $(this);
+      tips = layer.tips('<img style="vertical-align: top; width: 120px; border: 1px solid #ddd;" src="/static/img/icon_qcode_account.png" />', that, {
+        time: 0,
+        area: 'auto',
+        tips: [3, '#fff'],
+        success: function ($layer) {
+          $layer.find('.layui-layer-TipsG').hide();
+          $layer.find('.layui-layer-content').css('padding', '0');
+        }
+      });
+    },
+    function () {
+      if (tips != -1) layer.close(tips);
+    }
+  );
 </script>
 {% endblock %}
