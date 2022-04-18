@@ -268,53 +268,6 @@ int get_process_info(int pid,struct process_info *p_info){
     return 0;
 }
 
-// /**
-//  * @brief 获取进程CPU使用率
-//  * @author hwliang
-//  * @param pid <int> 进程ID
-//  * @return float <float> 进程CPU使用率
-//  */
-// float get_process_cpu_percent(int pid){
-
-//     if (process_old_list.count(pid) == 0){
-//         struct process_info p_info;
-//         get_process_info(pid, &p_info);
-//         if(p_info.pid == 0) p_info.pid = pid;
-//         process_old_list[pid] = p_info;
-//     }
-
-//     int cpu_count = get_cpu_count();
-//     struct process_info p_info2;
-//     get_process_info(pid, &p_info2);
-
-//     int cycle = p_info2.read_time - process_old_list[pid].read_time;
-//     if (cycle == 0) cycle = 1;
-//     float cpu_percent = ((p_info2.user + p_info2.system + p_info2.children_system + p_info2.children_user) - (process_old_list[pid].user + process_old_list[pid].system + process_old_list[pid].children_system + process_old_list[pid].children_user)) / cycle / cpu_count * 100.00;
-//     process_old_list[pid] = p_info2;
-//     return cpu_percent;
-// }
-
-// /**
-//  * @brief 获取PID列表
-//  * @author hwliang
-//  * @param pids <vector<int>> 用于存储PID列表的vector
-//  * @return int 成功返回0
-//  */
-// int get_pids(int *pids){
-//     DIR *dir;
-//     struct dirent *ptr;
-//     dir = opendir("/proc");
-//     if (dir == NULL) return -1;
-//     while ((ptr = readdir(dir)) != NULL){
-//         if (ptr->d_name[0] >= '0' && ptr->d_name[0] <= '9') {
-//             pids.push_back(atoi(ptr->d_name));
-//         }
-//     }
-//     closedir(dir);
-//     free(ptr);
-//     return 0;
-// }
-
 /**
  * @brief 获取磁盘IO信息
  * @author hwliang
@@ -363,14 +316,6 @@ int get_disk_info(struct disk_info *disk_info_list){
         n++;
     }
     fclose(fp);
-    // unsigned long long total_read_bytes = 0;
-    // for(int i = 0; i < n; i++){
-    //     char s = disk_info_list[i].name[strlen(disk_info_list[i].name) -1];
-    //     char e = disk_info_list[i].name[strlen(disk_info_list[i].name) -2];
-    //     if(e != '-' && (s > '0' && s < '9')) continue;
-    //     total_read_bytes += disk_info_list[i].read_bytes;
-    //     printf("name: %s, read_bytes: %ld, write_bytes: %ld, write_count: %ld, read_count: %ld\n", disk_info_list[i].name, disk_info_list[i].read_bytes, disk_info_list[i].write_bytes, disk_info_list[i].write_count, disk_info_list[i].read_count);
-    // }
     return n;
 }
 
@@ -428,15 +373,6 @@ void get_disk_io(struct disk_info_all *disk_io,int cycle) {
     disk_io->write_merged_count = disk_io2.write_merged_count - disk_io1.write_merged_count;
     disk_io->write_bytes = disk_io2.write_bytes - disk_io1.write_bytes;
     disk_io->write_time = disk_io2.write_time - disk_io1.write_time;
-
-    // printf("disk_io->read_count:%ld\n",disk_io->read_count);
-    // printf("disk_io->read_merged_count:%ld\n",disk_io->read_merged_count);
-    // printf("disk_io->read_bytes:%ld\n",disk_io->read_bytes);
-    // printf("disk_io->read_time:%ld\n",disk_io->read_time);
-    // printf("disk_io->write_count:%ld\n",disk_io->write_count);
-    // printf("disk_io->write_merged_count:%ld\n",disk_io->write_merged_count);
-    // printf("disk_io->write_bytes:%ld\n",disk_io->write_bytes);
-    // printf("disk_io->write_time:%ld\n",disk_io->write_time);
 
 }
 
@@ -536,7 +472,6 @@ void get_network_io(struct network_info_all *network_io,int cycle){
         network_io2.packets_sent += network_info_list2[i].packets_sent;
         network_io2.errout += network_info_list2[i].errout;
         network_io2.dropout += network_info_list2[i].dropout;
-        // network_info_list2[i].name[strlen(network_info_list2[i].name)-1] = '\0';
         sprintf(j_str, "\"%s\":%.2f,", network_info_list2[i].name, (network_info_list2[i].bytes_sent - network_info_list1[i].bytes_sent) / 1024.0);
         strcat(network_io->sent_json, j_str);
         sprintf(j_str, "\"%s\":%.2f,", network_info_list2[i].name, (network_info_list2[i].bytes_recv - network_info_list1[i].bytes_recv) / 1024.0);
@@ -544,8 +479,6 @@ void get_network_io(struct network_info_all *network_io,int cycle){
     }
     network_io->sent_json[strlen(network_io->sent_json) - 1] = '}';
     network_io->recv_json[strlen(network_io->recv_json) - 1] = '}';
-    // printf("network_io->sent_json:%s\n",network_io->sent_json);
-    // printf("network_io->recv_json:%s\n",network_io->recv_json);
 
     network_io->total_bytes_sent = network_io2.bytes_sent;
     network_io->total_bytes_recv = network_io2.bytes_recv;
@@ -587,9 +520,6 @@ void get_load_average(struct load_average_info *load_average){
                 // 分割活动进程数/总进程数
                 char **p1;
                 char delim1[] = "/"; 
-                // split(p, delim1, p1);
-                // load_average->running_processes = atoi(p1[0]);
-                // load_average->total_processes = atoi(p1[1]);
             }else if(i == 4){
                 load_average->last_pid = atoi(p);
             }

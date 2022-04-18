@@ -16,9 +16,6 @@
 #include <dirent.h>
 #include <pthread.h>
 #include <signal.h>
-// #include <map>
-// #include <vector>
-// using namespace std;
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "cJSON.c"

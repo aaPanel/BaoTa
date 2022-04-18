@@ -17,87 +17,11 @@
 #include <regex.h>
 #include <unistd.h>
 #include <time.h>
-// #include <curl/curl.h>
 #include "md5.h"
-
-
 
 const char panel_path[] = "/www/server/panel";
 int curl_buff_size = 1024;
-// /**
-//  * @brief CURL写入数据回调函数
-//  * @author hwliang<2022-04-01>
-//  * @param ptr 
-//  * @param size 
-//  * @param nmemb 
-//  * @param stream 
-//  * @return size_t 
-//  */
-// size_t write_data(char *ptr, size_t size, size_t nmemb, char *stream)
-// {
-//     size_t sizes = size * nmemb;
-//     if (sizes > curl_buff_size)
-//     {
-//         curl_buff_size = sizes + 1;
-//         stream = (char *)realloc(stream, curl_buff_size);
-//     }
-//     // memcpy(stream, ptr, sizes);
-//     strncat(stream,ptr,sizes);
-//     return sizes;
-// }
 
-
-// /**
-//  * @brief 以GET方式请求
-//  * @author hwliang<2022-04-01>
-//  * @param url URL地址
-//  * @param data  返回的数据
-//  * @param timeout 超时时间
-//  * @return int 
-//  */
-// int http_get(char *url, char *data,int timeout){
-//     CURL *curl = curl_easy_init();
-//     data[0] = '\0';
-//     strcpy(data, "");
-//     curl_easy_setopt(curl, CURLOPT_URL, url);
-//     curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
-//     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
-//     curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
-//     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-//     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-//     // curl_easy_setopt(curl, CURLOPT_VERBOSE,1L);
-//     CURLcode res = curl_easy_perform(curl);
-//     curl_easy_cleanup(curl);
-//     return res;
-// }
-
-// /**
-//  * @brief 以POST方式请求
-//  * @author hwliang<2022-04-01>
-//  * @param url URL地址
-//  * @param pdata POST数据
-//  * @param data 返回的数据
-//  * @param timeout 超时时间
-//  * @return int 
-//  */
-// int http_post(char *url,char *pdata,char *data,int timeout){
-//     CURL *curl = curl_easy_init();
-//     data[0] = '\0';
-//     strcpy(data, "");
-//     curl_easy_setopt(curl, CURLOPT_URL, url);
-//     curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
-//     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
-//     curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
-//     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-//     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-//     curl_easy_setopt(curl, CURLOPT_POST, 1L);
-//     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, pdata);
-//     // curl_easy_setopt(curl, CURLOPT_VERBOSE,1L);
-//     CURLcode res = curl_easy_perform(curl);
-//     curl_easy_cleanup(curl);
-//     curl_global_cleanup();
-//     return res;
-// }
 
 /**
  * @brief 取数组长度
