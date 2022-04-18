@@ -509,8 +509,11 @@ void install_rar(){
     char bin_rar[] = "/usr/local/bin/rar";
     int os_bit = get_os_bit();
     char _cmd[128];
+    char _ine[12];
+    _ine[0] = '\0';
     char tmp_file[] = "/tmp/bt_rar.tar.gz";
-    sprintf(_cmd,"wget -O %s %s/src/rarlinux-%d-5.6.1.tar.gz",tmp_file,download_url_root,os_bit);
+    if(os_bit == 64) sprintf(_ine,"-x%d",os_bit);
+    sprintf(_cmd,"wget -O %s %s/src/rarlinux%s-5.6.1.tar.gz",tmp_file,download_url_root,_ine);
     system(_cmd);
     if (file_exists(unrar_file)) system("rm -rf /www/server/rar");
     sprintf(_cmd,"tar -zxvf %s -C /www/server/",tmp_file);
@@ -542,10 +545,10 @@ void _unzip(char *sfile,char *dfile,char *password,char *_log_file){
     char file_ext7[8];
     right_cut(sfile,file_ext4,4);
     right_cut(sfile,file_ext7,7);
-    char _cmd[256];
+    char _cmd[512];
     _cmd[0] = '\0';
     if(strcmp(file_ext4 , ".zip") == 0 || strcmp(file_ext4 , ".war") == 0){
-        sprintf(_cmd,"unzip -o -q -P %s %s -d %s &> %s",password,sfile,dfile,_log_file);
+        sprintf(_cmd,"unzip -o -q -P '%s' %s -d %s &> %s",password,sfile,dfile,_log_file);
         system(_cmd);
     }else if(strcmp(file_ext7 , ".tar.gz") == 0 || strcmp(file_ext4 , ".tgz") == 0){
         sprintf(_cmd,"tar -xzvf '%s' -C '%s' &> %s",sfile,dfile,_log_file);
@@ -554,16 +557,18 @@ void _unzip(char *sfile,char *dfile,char *password,char *_log_file){
         char rar_file[] = "/www/server/rar/unrar";
         if(!file_exists(rar_file)) install_rar();
         sprintf(_cmd,"echo '%s'|%s  x -u -y '%s' '%s' &> %s",password,rar_file,sfile,dfile,_log_file);
+        
         system(_cmd);
-    }else if(strcmp(file_ext4 , ".bz2")){
+    }else if(strcmp(file_ext4 , ".bz2") == 0){
         sprintf(_cmd,"tar -xjvf '%s' -C '%s' &> %s",sfile,dfile,_log_file);
         system(_cmd);
     }else{
-        char _dst_file[128];
-        left_cut(sfile,_dst_file,s_len-4);
-        sprintf(_cmd,"gunzip -c %s %s > %s",sfile,_dst_file,_log_file);
+        char _dst_file[256];
+        left_cut(sfile,_dst_file,s_len-3);
+        sprintf(_cmd,"gunzip -c %s > %s",sfile,_dst_file);
         system(_cmd);
     }
+    printf("%s\n",_cmd);
 }
 
 /**
