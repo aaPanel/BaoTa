@@ -4379,7 +4379,7 @@ def get_recycle_bin_list():
             continue
     
     # 包含默认回收站路径？
-    if not default_path in recycle_bin_list:
+    if not default_path + '/' in recycle_bin_list:
         recycle_bin_list.append(default_path + '/')
     
     return recycle_bin_list
