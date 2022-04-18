@@ -568,7 +568,6 @@ void _unzip(char *sfile,char *dfile,char *password,char *_log_file){
         sprintf(_cmd,"gunzip -c %s > %s",sfile,_dst_file);
         system(_cmd);
     }
-    printf("%s\n",_cmd);
 }
 
 /**
