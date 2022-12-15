@@ -1222,7 +1222,7 @@ def code():
     cache.set("codeStr", public.md5("".join(codeImage[1]).lower()), 180)
     cache.set("codeOut", 1, 0.1)
     out.seek(0)
-    return send_file(out, mimetype='image/png', cache_timeout=0)
+    return send_file(out, mimetype='image/png', max_age=0)
 
 
 @app.route('/down/<token>', methods=method_all)
