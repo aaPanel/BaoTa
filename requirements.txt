@@ -21,7 +21,7 @@ IPy==1.1
 itsdangerous==2.1.1
 Jinja2==3.0.3
 MarkupSafe==2.1.0
-oauthlib==3.2.0
+oauthlib==3.2.2
 packaging==21.3
 paramiko==2.10.2
 Pillow==9.0.1
