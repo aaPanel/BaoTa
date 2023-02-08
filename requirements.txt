@@ -7,7 +7,7 @@ click==8.0.4
 configparser==5.2.0
 cos-python-sdk-v5==1.9.15
 crcmod==1.7
-cryptography==36.0.1
+cryptography==39.0.1
 Cython==0.29.28
 Deprecated==1.2.13
 dicttoxml==1.7.4
