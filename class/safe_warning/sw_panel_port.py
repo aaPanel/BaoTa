@@ -25,6 +25,7 @@ _tips = [
     "注意：有【安全组】的服务器应在【安全组】中提前放行新端口，以防新端口无法打开"
     ]
 _help = ''
+_remind = '此方案可以加强面板防护，降低面板被攻击的风险。'
 
 def check_run():
     '''
@@ -40,4 +41,4 @@ def check_run():
     if port != 8888:
         return True,'无安全风险'
     return False,'面板端口为默认端口({}), 这可能造成不必要的安全风险'.format(port)
-    
+

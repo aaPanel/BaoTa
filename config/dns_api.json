@@ -1,0 +1,68 @@
+[{
+	"ps": "使用CloudFlare的API接口自动解析申请SSL",
+	"data": [{
+		"key": "SAVED_CF_MAIL",
+		"value": "",
+		"name": "E-Mail"
+	}, {
+		"key": "SAVED_CF_KEY",
+		"value": "",
+		"name": "API Key"
+	}],
+	"help": "CloudFlare后台获取Global API Key",
+	"name": "CloudFlareDns",
+	"title": "CloudFlare"
+}, {
+	"ps": "使用宝塔DNS云解析插件自动解析申请SSL",
+	"title": "宝塔DNS云解析",
+	"data": false,
+	"help": "",
+	"name": "Dns_com"
+}, {
+	"ps": "使用DnsPod的API接口自动解析申请SSL",
+	"title": "DnsPod",
+	"data": [{
+		"value": "",
+		"key": "SAVED_DP_Id",
+		"name": "ID"
+	}, {
+		"value": "",
+		"key": "SAVED_DP_Key",
+		"name": "Token"
+	}],
+	"help": "DnsPod后台》用户中心》安全设置，开启API Token",
+	"name": "DNSPodDns"
+}, {
+	"ps": "使用阿里云API接口自动解析申请SSL",
+	"title": "阿里云DNS",
+	"data": [{
+		"value": "",
+		"key": "SAVED_Ali_Key",
+		"name": "AccessKey"
+	}, {
+		"value": "",
+		"key": "SAVED_Ali_Secret",
+		"name": "SecretKey"
+	}],
+	"help": "阿里云控制台》用户头像》accesskeys按指引获取AccessKey/SecretKey",
+	"name": "AliyunDns"
+}, {
+	"ps": "使用cloudxns的API接口自动解析申请SSL",
+	"title": "CloudXns",
+	"data": [{
+		"value": "",
+		"key": "SAVED_CX_Key",
+		"name": "AccessKey"
+	}, {
+		"value": "",
+		"key": "SAVED_CX_Secret",
+		"name": "SecretKey"
+	}],
+	"help": "cloudxns后台》用户中心》API管理，按指引获取AccessKey/SecretKey",
+	"name": "CloudxnsDns"
+}, {
+	"ps": "返回host和txt值,由用户手动解析",
+	"data": false,
+	"name": "dns",
+	"title": "手动解析"
+}]

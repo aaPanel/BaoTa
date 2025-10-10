@@ -75,8 +75,16 @@ def check_run():
     #         not_mode_list.append("{} 当前权限: {} : {} 安全权限: {} : {}".format(d[0],u_mode['mode'],u_mode['user'],d[1],d[2]))
     #     if int(u_mode['mode']) != d[1]:
     #         not_mode_list.append("{} 当前权限: {} : {} 安全权限: {} : {}".format(d[0],u_mode['mode'],u_mode['user'],d[1],d[2]))
-    
+
     # if not_mode_list:
     #     return False,'以下关键文件或目录权限错误: <br />' + ("<br />".join(not_mode_list))
+
+    #如果是管理员账号，检查是否有root权限
+
+
+
+    #检测
+
+
 
     return True,'无风险'

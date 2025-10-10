@@ -1,0 +1,240 @@
+[
+  {
+    "id": "121",
+    "ver": "1",
+    "used": true,
+    "source": "site_monitor_violation_word",
+    "title": "网站违规词告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.safe_mod_push",
+      "name": "SiteMonitorViolationWordTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "site_name",
+          "name": "网站名称",
+          "type": "select",
+          "unit": "",
+          "suffix": "",
+          "default": "",
+          "disabled": true,
+          "items": []
+        }
+      ],
+      "sorted": [
+        [
+          "site_name"
+        ]
+      ]
+    },
+    "default": {},
+    "send_type_list": [
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": false,
+    "tags": [
+      "safe",
+      "site"
+    ],
+    "description": "网站违规词告警，定期抓取网站的页面信息，当检测到页面内存在违规词时，发送告警通知",
+    "is_pro": true,
+    "can_create": false
+  },
+  {
+    "id": "122",
+    "ver": "1",
+    "used": true,
+    "source": "vulnerability_scanning",
+    "title": "网站漏洞告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.safe_mod_push",
+      "name": "VulnerabilityScanningTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "cycle",
+          "name": "间隔周期",
+          "type": "number",
+          "suffix": "",
+          "unit": "天",
+          "default": 1
+        },
+        {
+          "attr": "help",
+          "name": "来源",
+          "type": "help",
+          "unit": "",
+          "style": {
+            "margin-top": "6px"
+          },
+          "list": [
+            "【网站】-> 【漏洞扫描】-> 【自动扫描】"
+          ],
+          "suffix": "",
+          "default": 600
+        }
+      ],
+      "sorted": [
+        [
+          "cycle"
+        ],
+        [
+          "help"
+        ]
+      ]
+    },
+    "default": {
+    },
+    "advanced_default": {
+      "number_rule": {
+        "day_num": 1
+      }
+    },
+    "send_type_list": [
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": true,
+    "tags": [
+      "safe",
+      "site"
+    ],
+    "description": "对服务器所有网站进行定期扫描,并识别多种流行的开源CMS程序，帮助用户快速发现网站中存在的潜在安全漏洞,发送告警通知",
+    "is_pro": true
+  },
+  {
+    "id": "123",
+    "ver": "1",
+    "used": true,
+    "source": "file_detect",
+    "title": "系统文件完整性提醒",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.safe_mod_push",
+      "name": "FileDetectTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "hour",
+          "name": "每日",
+          "type": "number",
+          "suffix": "",
+          "unit": "时",
+          "default": 4
+        },
+        {
+          "attr": "minute",
+          "name": " ",
+          "type": "number",
+          "suffix": "执行检测任务",
+          "unit": "分钟",
+          "default": 10
+        },
+        {
+          "attr": "help",
+          "name": "来源",
+          "type": "help",
+          "unit": "",
+          "style": {
+            "margin-top": "6px"
+          },
+          "list": [
+            "【安全】-> 【安全检测】-> 【文件完整性检测】-> 【定期扫描】"
+          ],
+          "suffix": "",
+          "default": 600
+        }
+      ],
+      "sorted": [
+        [
+          "hour",
+          "minute"
+        ],
+        [
+          "help"
+        ]
+      ]
+    },
+    "default": {
+    },
+    "advanced_default": {
+      "number_rule": {
+        "day_num": 1
+      }
+    },
+    "send_type_list": [
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": true,
+    "tags": [
+      "safe"
+    ],
+    "is_pro": true,
+    "description": "跟据规则定期扫描系统关键文件目录（如：/usr/bin），识别出文件被篡改、被删除、被移动等异常情况，并发送告警通知给管理员"
+  },
+    {
+    "id": "124",
+    "ver": "1",
+    "used": true,
+    "source": "safe_cloud_hinge",
+    "title": "云安全中心告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.safe_mod_push",
+      "name": "SafeCloudTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "help",
+          "name": "帮助",
+          "type": "link",
+          "unit": "",
+          "style": {
+            "margin-top": "6px"
+          },
+          "list": [
+            "<a href=\"/\">前往【首页 > 堡塔云安全中心】查看详情</a>"
+          ]
+        }
+      ],
+      "sorted": [
+        [
+          "help"
+        ]
+      ]
+    },
+    "default": {},
+    "advanced_default": {},
+    "send_type_list": [
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook",
+      "wx_account"
+    ],
+    "unique": true,
+    "tags": [
+      "safe"
+    ],
+    "is_pro": true,
+    "description": "堡塔云安全中心会对服务器文件进行扫描，识别出如占用大量资源、恶意控制服务器等异常情况，并向管理员发送告警通知。"
+  }
+]

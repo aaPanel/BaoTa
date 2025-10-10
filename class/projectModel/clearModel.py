@@ -13,9 +13,9 @@ class main (projectBase ):#line:10
         if not os .path .exists (OO0OO000O0OO0000O .__OO000OOOOO0OOO0OO ):#line:19
             os .makedirs (OO0OO000O0OO0000O .__OO000OOOOO0OOO0OO ,384 )#line:20
     def __O000OO00O0OO0O00O (O0O00O00O00OO0OO0 ):#line:22
-        from pluginAuth import Plugin #line:23
-        O0O00000O000OO00O =Plugin (False )#line:24
-        O00000O0O0OOOOOOO =O0O00000O000OO00O .get_plugin_list ()#line:25
+        # from pluginAuth import Plugin #line:23
+        import PluginLoader
+        O00000O0O0OOOOOOO =PluginLoader.get_plugin_list (0)#line:25
         return int (O00000O0O0OOOOOOO ['ltd'])>time .time ()#line:26
     def get_config (O0OO0O00OOOOO00OO ):#line:30
         ""#line:35

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>内容安全评估报告</title>
+	<style>
+		@page {
+			size: A4 portrait;
+		}
+
+		p {
+			margin: 0;
+		}
+
+		table td {
+			border-bottom-color: #000000;
+			border-bottom-style: solid;
+			border-bottom-width: 0.75pt;
+			border-left-color: #000000;
+			border-left-style: solid;
+			border-left-width: 0.75pt;
+			border-right-color: #000000;
+			border-right-style: solid;
+			border-right-width: 0.75pt;
+			border-top-color: #000000;
+			border-top-style: solid;
+			border-top-width: 0.75pt;
+			padding: 8px;
+			vertical-align: middle;
+		}
+
+		.logo {
+			width: 158px;
+			height: 160px;
+			margin: 0 auto;
+		}
+
+		.ellipsis {
+			display: inline-block;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+	</style>
+</head>
+
+<body>
+	<a style="display:none;" id="request_token_head" token="{{session[g.get_csrf_html_token_key]}}"></a>
+	<div style="width: 840px; margin: 0 auto;">
+		<div class="content">
+			<p style="text-align: center; padding-top: 112pt">
+				<span style="font-family: MicrosoftYaHei-Bold; font-size: 32pt; font-weight: bold">堡塔安全 </span><span
+					style="font-family: MicrosoftYaHei-Bold; font-size: 32pt; font-weight: bold">"</span><span
+					style="font-family: MicrosoftYaHei-Bold; font-size: 32pt; font-weight: bold">内容</span><span
+					style="font-family: MicrosoftYaHei-Bold; font-size: 32pt; font-weight: bold">安全系统"</span>
+			</p>
+			<p style="text-align: center">
+				<span style="font-family: MicrosoftYaHei-Bold; font-size: 32pt; font-weight: bold">内容</span><span
+					style="font-family: MicrosoftYaHei-Bold; font-size: 32pt; font-weight: bold">安全</span><span
+					style="font-family: MicrosoftYaHei-Bold; font-size: 32pt; font-weight: bold">评估报告</span>
+			</p>
+			<p style="text-align: center; margin-top: 126pt">
+				<img class="logo"
+					src="data:image/png;base64,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"></img>
+			</p>
+			<p style="margin-top: 200pt; text-align: center">
+				<span style="font-family: 微软雅黑; font-size: 20pt">报表生成时间 </span>
+				<span class="report_time" style="font-family: 微软雅黑; font-size: 20pt">--</span>
+			</p>
+			<p style="margin-top: 40pt; padding-bottom: 1px; text-align: center; border-bottom: 1px solid #000;"></p>
+		</div>
+		<div class="content">
+			<p style="margin-top: 40pt; margin-bottom: 22pt; text-align: center">
+				<span style="font-family: 黑体; font-size: 22pt">目录</span>
+			</p>
+			<p style="text-align: center;">
+			<div style="display: flex; font-family: 微软雅黑; font-size: 12pt">
+				<span>1 参考标准</span>
+				<span style="flex: 1; width: 0; margin: 0 12pt; overflow: hidden; white-space: nowrap;">
+					········································································································································································································
+				</span>
+				<span>3</span>
+			</div>
+			</p>
+			<p style="text-align: center;  margin-top: 16pt;">
+			<div style="display: flex; font-family: 微软雅黑; font-size: 12pt">
+				<span>2 网站概括</span>
+				<span style="flex: 1; width: 0; margin: 0 12pt; overflow: hidden; white-space: nowrap;">
+					········································································································································································································
+				</span>
+				<span>4</span>
+			</div>
+			</p>
+			<p style="text-align: center;  margin-top: 16pt;">
+			<div style="display: flex; font-family: 微软雅黑; font-size: 12pt">
+				<span>3 风险信息</span>
+				<span style="flex: 1; width: 0; margin: 0 11pt; overflow: hidden; white-space: nowrap;">
+					········································································································································································································
+				</span>
+				<span>5</span>
+			</div>
+			</p>
+			<p style="text-align: center;  margin-top: 16pt;">
+			<div style="display: flex; font-family: 微软雅黑; font-size: 12pt">
+				<span>4 被修改网页信息</span>
+				<span style="flex: 1; width: 0; margin: 0 11pt; overflow: hidden; white-space: nowrap;">
+					········································································································································································································
+				</span>
+				<span>6</span>
+			</div>
+			</p>
+		</div>
+		<div class="content">
+			<p style="margin-bottom: 1em;">
+				<span style="font-family: 黑体; font-size: 15pt; font-weight: bold">1 参考标准</span>
+			</p>
+			<p style="margin-bottom: 21px">
+				<span style="font-size: 12pt; font-weight: bold">1.1 单一关键词等级评分标准</span>
+			</p>
+			<table cellspacing="0" cellpadding="0" style="border-collapse: collapse; margin-left: 0pt; width: 100%">
+				<tr style="height: 25.65pt">
+					<td style="background-color: #4f81bd; width: 126.7pt">
+						<p style="font-size: 10pt; line-height: 150%;"><span
+								style="color: #ffffff; font-size: 10pt; font-style: normal; font-weight: bold;">危险程度</span></p>
+					</td>
+					<td style="background-color: #4f81bd; width: 148.75pt">
+						<p style="font-size: 10pt; line-height: 150%;"><span
+								style="color: #ffffff; font-size: 10pt; font-style: normal; font-weight: bold;">危险值区域</span></p>
+					</td>
+					<td style="background-color: #4f81bd; width: 139.05pt">
+						<p style="font-size: 10pt; line-height: 150%;"><span
+								style="color: #ffffff; font-size: 10pt; font-style: normal; font-weight: bold;">危险程度说明</span></p>
+					</td>
+				</tr>
+				<tr style="height: 25.65pt">
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="color: #ff0000; font-size: 10pt; font-style: normal; font-weight: bold;">高</span>
+						</p>
+					</td>
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="font-size: 10pt; font-style: normal;">扣10分</span>
+						</p>
+					</td>
+					<td>
+						<p style="font-size: 10.5pt; line-height: 150%;">
+							<span style="font-size: 10pt; font-style: normal;">存涉政关键词,国家领导人</span>
+						</p>
+					</td>
+				</tr>
+				<tr style="height: 25.65pt">
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="color: #ffc000; font-size: 10pt; font-style: normal; font-weight: bold;">中</span>
+						</p>
+					</td>
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="font-size: 10pt; font-style: normal;">扣5分</span>
+						</p>
+					</td>
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="font-size: 10pt; font-style: normal;">色情、赌博风险关键词</span>
+						</p>
+					</td>
+				</tr>
+				<tr style="height: 27.25pt">
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="color: #92d050; font-size: 10pt; font-style: normal; font-weight: bold;">低</span>
+						</p>
+					</td>
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="font-size: 10pt; font-style: normal;">扣3分</span>
+						</p>
+					</td>
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="font-size: 10pt; font-style: normal;">黑灰产、水军、自定义词</span>
+						</p>
+					</td>
+				</tr>
+			</table>
+			<p style="margin: 21px 0">
+				<span style="font-size: 12pt; font-weight: bold">1.2 网站内容评分标准明细（初始分值100分）</span>
+			</p>
+			<table cellspacing="0" cellpadding="0" style="border-collapse: collapse; margin-left: 0pt; width: 100%">
+				<tr style="height: 25.65pt">
+					<td style="background-color: #4f81bd; width: 126.7pt">
+						<p style="font-size: 10pt; line-height: 150%;"><span
+								style="color: #ffffff; font-size: 10pt; font-style: normal; font-weight: bold;">危险程度</span></p>
+					</td>
+					<td style="background-color: #4f81bd; width: 148.75pt">
+						<p style="font-size: 10pt; line-height: 150%;"><span
+								style="color: #ffffff; font-size: 10pt; font-style: normal; font-weight: bold;">危险值区域</span></p>
+					</td>
+				</tr>
+				<tr style="height: 25.65pt">
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="color: #ff0000; font-size: 10pt; font-style: normal; font-weight: bold;">非常危险</span>
+						</p>
+					</td>
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="font-size: 10pt; font-style: normal;">小于80分</span>
+						</p>
+					</td>
+				</tr>
+				<tr style="height: 25.65pt">
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="color: #ff0000; font-size: 10pt; font-style: normal; font-weight: bold;">危险</span>
+						</p>
+					</td>
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="font-size: 10pt; font-style: normal;">80~84分</span>
+						</p>
+					</td>
+				</tr>
+				<tr style="height: 27.25pt">
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="color: #ffc000; font-size: 10pt; font-style: normal; font-weight: bold;">存在风险</span>
+						</p>
+					</td>
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="font-size: 10pt; font-style: normal;">85~97分</span>
+						</p>
+					</td>
+				</tr>
+				<tr style="height: 27.25pt">
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="color: #92d050; font-size: 10pt; font-style: normal; font-weight: bold;">未发现风险</span>
+						</p>
+					</td>
+					<td>
+						<p style="font-size: 10pt; line-height: 150%;">
+							<span style="font-size: 10pt; font-style: normal;">98~100分</span>
+						</p>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="content">
+			<p style="margin-bottom: 1em;">
+				<span style="font-family: 黑体; font-size: 15pt; font-weight: bold">2 网站概括</span>
+			</p>
+			<table cellspacing="0" cellpadding="0" style="border-collapse: collapse; margin-left: 0pt; width: 100%">
+				<tr>
+					<td style="width: 198.35pt;">
+						<p style="font-size: 10pt;">
+							<span class="site_rating_title"
+								style="font-size: 10pt; font-style: normal; font-weight: bold;">网站内容评分</span>
+						</p>
+					</td>
+					<td>
+						<p style="font-size: 10pt;">
+							<span class="site_rating_value"
+								style="color: #ff0000; font-size: 10pt; font-style: normal; font-weight: bold;">--</span>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<p>
+							<span style="font-size: 10pt; font-style: normal;">网站域名</span>
+						</p>
+					</td>
+					<td style="width: 203pt">
+						<p>
+							<span class="site_name" style="color: #0000ff; font-size: 10pt; font-style: normal;">--</span>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<p><span style="font-size: 10pt; font-style: normal;">扫描URL总数</span></p>
+					</td>
+					<td style="width: 203pt">
+						<p><span class="scans_total" style="font-size: 10pt; font-style: normal;">0</span></p>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<p><span style="font-size: 10pt; font-style: normal;">发现风险数量</span></p>
+					</td>
+					<td style="width: 203pt">
+						<p><span class="risk_num" style="font-size: 10pt; font-style: normal;">0</span></p>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<p><span style="font-size: 10pt; font-style: normal;">扫描发起时间</span></p>
+					</td>
+					<td style="width: 203pt">
+						<p>
+							<span class="start_time" style="font-size: 10pt; font-style: normal;">--</span>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<p><span style="font-size: 10pt; font-style: normal;">扫描结束时间</span></p>
+					</td>
+					<td style="width: 203pt">
+						<p>
+							<span class="end_time" style="font-size: 10pt; font-style: normal;">--</span>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<p><span style="font-size: 10pt; font-style: normal;">关键词模板</span></p>
+					</td>
+					<td style="width: 203pt">
+						<p>
+							<span style="font-size: 10pt; font-style: normal;">默认关键词,自定义关键词</span>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<p><span style="font-size: 10pt; font-style: normal;">风险评分</span></p>
+					</td>
+					<td style="width: 203pt">
+						<p>
+							<span class="risk_rating_value" style="font-size: 10pt; font-style: normal;">--</span>
+						</p>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="content">
+			<p style="margin-bottom: 21pt">
+				<span style="font-family: 黑体; font-size: 15pt; font-weight: bold">3 风险信息</span>
+			</p>
+			<table id="risk-table" cellspacing="0" cellpadding="0"
+				style="border-collapse: collapse; margin-left: 0pt; width: 100%">
+				<thead>
+					<tr>
+						<td colspan="5">
+							<p style="text-align: center">
+								<span style="font-size: 10.5pt; font-style: normal; font-weight: bold;">本机网站扫描</span>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<td style="background-color: #4f81bd;">
+							<span style="color: #ffffff; font-size: 12px; font-style: normal; font-weight: bold;">风险url</span>
+						</td>
+						<td style="background-color: #4f81bd; width: 50px;">
+							<span style="color: #ffffff; font-size: 12px; font-style: normal; font-weight: bold;">关键词</span>
+						</td>
+						<td style="background-color: #4f81bd; width: 50px;">
+							<span style="color: #ffffff; font-size: 12px; font-style: normal; font-weight: bold;">关键词类型</span>
+						</td>
+						<td style="background-color: #4f81bd; width: 100px;">
+							<span style="color: #ffffff; font-size: 12px; font-style: normal; font-weight: bold;">发现时间</span>
+						</td>
+						<td style="background-color: #4f81bd; width: 50px;">
+							<span style="color: #ffffff; font-size: 12px; font-style: normal; font-weight: bold;">风险评分</span>
+						</td>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td colspan="5">
+							<p style="text-align: center;">
+								<span style="font-size: 8pt; font-style: normal;">暂无数据</span>
+							</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p style="margin-top: 120pt; margin-bottom: 22pt;">
+				<span style="font-family: 黑体; font-size: 15pt; font-weight: bold">4 被修改网页信息</span>
+			</p>
+			<table id="update-table" cellspacing="0" cellpadding="0" style="border-collapse: collapse; width: 100%">
+				<thead>
+					<tr>
+						<td colspan="5">
+							<p style="text-align: center">
+								<span style="font-size: 10.5pt; font-style: normal; font-weight: bold;">本机网站扫描</span>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<td style="background-color: #4f81bd; width: 110px;">
+							<span style="color: #ffffff; font-size: 8pt; font-style: normal; font-weight: bold;">更改位置</span>
+						</td>
+						<td style="background-color: #4f81bd;">
+							<span style="color: #ffffff; font-size: 8pt; font-style: normal; font-weight: bold;">url</span>
+						</td>
+						<td style="background-color: #4f81bd;">
+							<span style="color: #ffffff; font-size: 8pt; font-style: normal; font-weight: bold;">更改前的内容</span>
+						</td>
+						<td style="background-color: #4f81bd;">
+							<span style="color: #ffffff; font-size: 8pt; font-style: normal; font-weight: bold;">更改后的内容</span>
+						</td>
+						<td style="background-color: #4f81bd; width: 140px;">
+							<span style="color: #ffffff; font-size: 8pt; font-style: normal; font-weight: bold;">发现时间</span>
+						</td>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td colspan="5">
+							<p style="text-align: center;">
+								<span style="font-size: 8pt; font-style: normal;">暂无数据</span>
+							</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<script src="{{g.cdn_url}}/js/jquery-2.2.4.min.js"></script>
+	<script type="text/javascript" src="{{g.cdn_url}}/layer/layer.js?version={{g['version']}}"></script>
+	<script>
+		window.vite_public_request_token = '{{session[g.get_csrf_html_token_key]}}' // csrf_token，用于请求
+		$(function () {
+			//获取当前页面的url
+			var url = window.location.href;
+			//获取当前页面的url中的参数
+			var id = url.split("?")[1].split("=")[1];
+
+			function resize() {
+				$('.content').css({
+					'min-height': $(window).height() + 'px'
+				});
+			}
+
+
+			function getDpi() {
+				for (var i = 56; i < 2000; i++) {
+					if (matchMedia("(max-resolution: " + i + "dpi)").matches === true) {
+						return i;
+					}
+				}
+			}
+
+			resize();
+
+			if (id) {
+				$.ajax({
+					url: '/project/content/get_report',
+					type: 'POST',
+					data: {
+						data: JSON.stringify({
+							testing_id: id
+						})
+					},
+					headers: {
+						'x-http-token': window.vite_public_request_token
+					},
+					success: function (res) {
+						renderInfo(res);
+						renderRisk(res.risk);
+						renderUpdate(res.risk_update);
+					},
+					error: function (err) {
+						console.log('Error:', err);
+					}
+				});
+				// $.post('/project/content/get_report', {
+				// 	data: JSON.stringify({
+				// 		testing_id: id
+				// 	})
+				// }, function (res) {
+				// 	renderInfo(res);
+				// 	renderRisk(res.risk);
+				// 	renderUpdate(res.risk_update);
+				// })
+			}
+
+			function renderInfo(res) {
+				var info = res.info;
+				setStatus(res.score);
+				$('.site_name').text(info.site_name);
+				$('.start_time').text(format_date(info.start_time));
+				$('.end_time').text(format_date(info.end_time));
+				$('.scans_total').text(info.scans);
+				$('.risk_num').text(info.risks);
+				$('.report_time').text(format_date(info.end_time + 60));
+			}
+
+			function renderRisk(risk) {
+				if (risk && risk.length > 0) {
+					var tbody = '';
+					$.each(risk, function (i, item) {
+						if (i >= 80) return;
+						var score = getScore(item.risk_content);
+						tbody += '\
+						<tr>\
+							<td style="width: 380px;">\
+								<div style="display: flex; width: 100%;">\
+									<a class="ellipsis" href="' + item.url +
+							'" target="_blank" style="width: 0; flex: 1; color: #0000ff; font-size: 8pt; font-style: normal;" title="' +
+							item.url + '">' + item.url + '</a>\
+								</div>\
+							</td>\
+							<td>\
+								<span style="font-size: 8pt; font-style: normal;">' + item.content + '</span>\
+							</td>\
+							<td>\
+								<span style="font-size: 8pt; font-style: normal;">' + item.risk_content + '</span>\
+							</td>\
+							<td>\
+								<span style="font-size: 8pt; font-style: normal;">' + format_date(item.time) + '</span>\
+							</td>\
+							<td>\
+								<span style="font-size: 8pt; font-style: normal; color: #f0ad4e;">-' + score + '</span>\
+							</td>\
+						</tr>';
+					});
+					$('#risk-table tbody').html(tbody);
+				}
+			}
+
+			function renderUpdate(risk) {
+				if (risk && risk.length > 0) {
+					var tbody = '';
+					$.each(risk, function (i, item) {
+						var typeMap = {
+							title: '标题',
+							body: '网页内',
+							keywords: '关键词',
+							descriptions: '描述',
+							title_update: '标题更新',
+							keywords_update: '关键词更新',
+							description_update: '描述更新',
+							tail_hash_update: '尾部script代码块更新',
+							title_hash_update: '头部head代码块更新',
+						}
+						var baseUrl = '/www/server/panel/class/projectModel/content/source/';
+						if (item.risk_type === 'title_hash_update' || item.risk_type === 'tail_hash_update') {
+							baseUrl = '/www/server/panel/class/projectModel/content/hash/' + item.site_name + '/';
+						}
+						var type = typeMap[item.risk_type];
+						var bPath = baseUrl + item.source_content_file;
+						var nPath = baseUrl + item.new_content_file;
+						tbody += '\
+						<tr>\
+							<td>\
+								<span style="font-size: 8pt; font-style: normal;">' + type + '</span>\
+							</td>\
+							<td>\
+								<a class="ellipsis" href="' + item.url +
+							'" target="_blank" style="width: 130px; color: #0000ff; font-size: 8pt; font-style: normal;" title="' +
+							item.url + '">' + item.url + '</a>\
+							</td>\
+							<td>\
+								<span class="ellipsis" style="width: 180px; font-size: 8pt; font-style: normal;" title="' + bPath + '">' +
+							bPath + '</span>\
+							</td>\
+							<td>\
+								<span class="ellipsis" style="width: 180px; font-size: 8pt; font-style: normal;" title="' + nPath + '">' +
+							nPath + '</span>\
+							</td>\
+							<td>\
+								<span style="font-size: 8pt; font-style: normal;">' + format_date(item.time) + '</span>\
+							</td>\
+						</tr>';
+					});
+					$('#update-table tbody').html(tbody);
+				}
+			}
+
+			function setStatus(score) {
+				var tips = '未发现风险';
+				var color = '#20a53a';
+				if (score < 80) {
+					tips = '非常危险';
+					color = '#ff0000';
+				} else if (score >= 80 && score < 85) {
+					tips = '危险';
+					color = '#ff0000';
+				} else if (score >= 85 && score < 97) {
+					tips = '存在风险';
+					color = '#f0ad4e';
+				}
+				$('.site_rating_value').text(tips + '(' + score + '分)')
+				$('.site_rating_value').css('color', color);
+				$('.site_rating_title').css('color', color);
+				$('.risk_rating_value').text(score);
+				$('.risk_rating_value').css('color', color);
+			}
+
+			function getScore(type) {
+				if (type == '国家领导人' || type == '涉政') return 10;
+				if (type == '色情' || type == '赌博') return 5;
+				return 3;
+			}
+
+			function format_date(tm, format) {
+				if (format == undefined) format = "yyyy/MM/dd hh:mm:ss";
+				tm = tm.toString();
+				if (tm.length > 10) {
+					tm = tm.substring(0, 10);
+				}
+				var data = new Date(parseInt(tm) * 1000);
+				var o = {
+					"M+": data.getMonth() + 1, //month
+					"d+": data.getDate(), //day
+					"h+": data.getHours(), //hour
+					"m+": data.getMinutes(), //minute
+					"s+": data.getSeconds(), //second
+					"q+": Math.floor((data.getMonth() + 3) / 3), //quarter
+					"S": data.getMilliseconds() //millisecond
+				}
+				if (/(y+)/.test(format)) format = format.replace(RegExp.$1,
+					(data.getFullYear() + "").substr(4 - RegExp.$1.length));
+				for (var k in o)
+					if (new RegExp("(" + k + ")").test(format))
+						format = format.replace(RegExp.$1,
+							RegExp.$1.length == 1 ? o[k] : ("00" + o[k]).substr(("" + o[k]).length));
+
+				return format;
+			}
+
+		});
+	</script>
+</body>
+
+</html>

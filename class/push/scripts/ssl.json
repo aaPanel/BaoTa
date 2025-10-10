@@ -1,0 +1,10 @@
+{
+	"interval": 600,
+	"type": "ssl",
+	"title": "网站证书(SSL)到期",
+	"project": "all_site",
+	"cycle": 15,
+	"push_count": 1,
+    "module_type":"site_push",
+	"status": true
+}

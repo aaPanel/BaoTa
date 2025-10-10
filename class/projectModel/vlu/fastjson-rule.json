@@ -1,0 +1,424 @@
+{
+    "Name": "Fastjson",
+    "product": "fastjson-",
+    "types":"class",
+    "class": [
+        "com/alibaba/fastjson/util/TypeUtils.class"
+    ],
+    "vlu_list": [
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "9311585152b2064de8162bc7e933f17f51428115fa08843f0d7b523497072992",
+            "MavenVersion": "1.2.10",
+            "hash256": "aa908df716ca46069b2dd601f409dab749fde518211c9d139341d14252949c5f"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "547176d439bab41ab2ece04f2ab55b3e7b9f1d03bfeee384e1a5acf2601efcfc",
+            "MavenVersion": "1.2.11",
+            "hash256": "48b686ee5b5d1cc61f939dbbdf20949468cf01e7127c23e5128f137874db2bae"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "029efa8de580efbe4315502a515ad30b77aad9373d3fccc4e75f38902fd1bf0b",
+            "MavenVersion": "1.2.12",
+            "hash256": "11899a0db7f34c9f461cd6224eceb828d0b806f36ded5e58d5b3a3cf752b431f"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "c89f45042c0bfc19b9855902c8f6da135654da769cf4bd09c5a066b265f33cfb",
+            "MavenVersion": "1.2.13",
+            "hash256": "78525b0b40c8e4c2484e41e68c8a0be6a9ba812ec685d584efecae69e4ceb0fa"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "c89f45042c0bfc19b9855902c8f6da135654da769cf4bd09c5a066b265f33cfb",
+            "MavenVersion": "1.2.14",
+            "hash256": "5634d271c23031e101758b2032e9597ef4673f5961f8c1ea7e7ac3628bda02c5"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "fba0fef6a7e20fe1e4eb33f69f0f7b80dcce3eb3553e8748c0159a6a4b0b6068",
+            "MavenVersion": "1.2.15",
+            "hash256": "23ae801d3c1e28552f50f2da67ad4e623253875baaafabaf24e43449eb7129ec"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "bf09dae82498f770b98411bf7ad57081083041bdb9f2eac12c901508e132b28b",
+            "MavenVersion": "1.2.16",
+            "hash256": "24010f9257b36c93e22e9907a76544b2a9b0ff29ea1e8dbffbf353cdff5b0434"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "fc961b501d9eedea092d74800a66a149d13eb1b2879df08eac82620dc084adb2",
+            "MavenVersion": "1.2.17",
+            "hash256": "d81c24f09e38109d71bb7875fc89b7b0aff2459e78112b068d67187e03439d8d"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "fc961b501d9eedea092d74800a66a149d13eb1b2879df08eac82620dc084adb2",
+            "MavenVersion": "1.2.18",
+            "hash256": "3106f6bd1b3bf59ad15c5e8a4721d0c5c9d712cb56653cf1b9f52ebfcc9b20e9"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "fc961b501d9eedea092d74800a66a149d13eb1b2879df08eac82620dc084adb2",
+            "MavenVersion": "1.2.19",
+            "hash256": "fabec3447774f0420d390b3e98283f7bd1c3c7923451f53074f1729d25c87731"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "fc961b501d9eedea092d74800a66a149d13eb1b2879df08eac82620dc084adb2",
+            "MavenVersion": "1.2.20",
+            "hash256": "9847c07495154d38dcee5936d5fc89125aa29e17ff8b96f778aee8b4a433b770"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "6d5ea9f241108ec7bee8c28c74a87479a6859da11b4d2a16af60b0fbaec2d979",
+            "MavenVersion": "1.2.21",
+            "hash256": "cbff595c5e420babe1d306f01b395a8369612f46c0906465aae413491d73853f"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "b48cff853e789acdc64c044545a30131efcf353b64fe3594330e63d1f6f83e50",
+            "MavenVersion": "1.2.22",
+            "hash256": "dd93eb01bcc3113db5dde88b7b04cc5fca1a27122d169f07144f1d692a86da8b"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "c1c70ea7162151ce4eb716bbc88cdff9d39afdadb47d9674bb43ae61de73abd8",
+            "MavenVersion": "1.2.23",
+            "hash256": "084fb51bcad4abe8214fd2fa62642ad91a16a5a6728f318fcef314a2b435ea16"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "68b77af983a26cfe86e33e8fa87534502a226f5b18de2f4ec655c04ffab7be09",
+            "MavenVersion": "1.2.24",
+            "hash256": "1b4ebbb73676b7048966f5165a9310fb81c761eeab9eb2e2d361b70ff9450c66"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "e6743e950c63268ba1a926d07d276df23a43c26c69eb8ad35209255371a3bfce",
+            "MavenVersion": "1.2.25",
+            "hash256": "60d565e7bacdc1ea76a20249f8fe5851304e2c115b186c155c8186c7b1ebc179"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "e6743e950c63268ba1a926d07d276df23a43c26c69eb8ad35209255371a3bfce",
+            "MavenVersion": "1.2.26",
+            "hash256": "c780e72c51b355dc745c84d9fe67535ca26916feb4f4561446784bc96d9fb09c"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "3176fd07e18715782b1f08499c27509b018d19d547fee40b19c08a933a7fa46c",
+            "MavenVersion": "1.2.27",
+            "hash256": "c4a66ea95007aa1e5c32b5dd642d5ef81d23f98e9429218c4dc33f37b73f32d0"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "e692f02ce45eef29116e37bbc4727da0640e8fa30003ea90156ea0949f04f89d",
+            "MavenVersion": "1.2.28",
+            "hash256": "ac69bec7bef84edb02f87c54fc4da01c70b1532fe89991c28a89b4b5e550fb43"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "72daf4debf8f77857dc9dbbfa66294354c6023a50b3a15fa0feb85cd672327c2",
+            "MavenVersion": "1.2.29",
+            "hash256": "5c4879b2e86d755bcd9450cbc8d3553b2e63b0cf76912c72cb115b054ca65db9"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "32529141d0f31b0e19d005e95a620eded83044969acdf5a1acec03560590e163",
+            "MavenVersion": "1.2.30",
+            "hash256": "a8d60b43d571da6b5284e1aa809d4a8950c0eb00fc6056d58cb2ed0de96b6b62"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "14221de4aef4673fcd67b328c600266b22f941a107ace69959b35beb605647f3",
+            "MavenVersion": "1.2.31",
+            "hash256": "12e6fe4809aa0be98bd2c88ca87dccefd6d1e612cbee8abe242a733f26d6b1f5"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "07f14760dc6548f35ec80587215db4b6df5fb7d741dc1385897fe83bcd0a01e0",
+            "MavenVersion": "1.2.32",
+            "hash256": "3b1029ca7378e4444329e73f4a63267e58a8f1719d4783ef9015685e5f08361f"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "486bf4f62c9ff9fa6c61054956778c6412b5cda6e7b2b4ab2b1bc453514350d1",
+            "MavenVersion": "1.2.33",
+            "hash256": "5c3f85a5447f7b7be7e030be758fe28e13d20380cb9e5a22c8aa5983473071af"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "1efbd7d33eeee0211daf00bf98102f1a8e0c7849fb96cf1998ebe45a9040bf51",
+            "MavenVersion": "1.2.34",
+            "hash256": "de20b4d5be2413e8dc7dc9f593cd7528a391c2f36bd8208c435136170743f46c"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "1efbd7d33eeee0211daf00bf98102f1a8e0c7849fb96cf1998ebe45a9040bf51",
+            "MavenVersion": "1.2.35",
+            "hash256": "6267f6d51ceb30d441cc5b77450159e62311176125fc1a9cc53322bbc5f65123"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "feb03583df5bed21e0b9ee21b56d7ea17b507a8b423a0d58331f5a84c802e9de",
+            "MavenVersion": "1.2.36",
+            "hash256": "b9c16251f8f93f7c931e78ec4ec2eafebf4867312c6ef33177956c05b40b3c7e"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "293d087fb4e0e6edb24be7daa63f023b5d6427317dc4b30af9c37e21edb194b7",
+            "MavenVersion": "1.2.37",
+            "hash256": "5a677adaf62a04eca54bec2521730ee8ca3b9b8a7f7616f5a7fa1b6fd47c5998"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "7f9bf9277d27edc1daf281e7b0d588ef35a816aad27a3908b1ba3fcd6e4e40c9",
+            "MavenVersion": "1.2.38",
+            "hash256": "3f693c3ba6e8fdf49a4e1142b742439d2a2141fbe5f34a229a0ab060fb2a3ab5"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "d8966ae0e96709e46ad44849368429cd3fb0a238ae162b2a460055c8b921f095",
+            "MavenVersion": "1.2.39",
+            "hash256": "374ddfd864ae13f6179027c9b2dbb6d870a40050fec8881270849670c8564bd4"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "aeff100e64488e669f690bacefc7988b1e1a7a4f5c082c22a7de97f7d3fa44e4",
+            "MavenVersion": "1.2.40",
+            "hash256": "5c19b33535cac70a142d1de53b7eeb3aef6bbba5cd97ef93a78772d893b97ead"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "ec845004478cf926e98b8d4ace0c043781213f8af7f9c1a9d4e1a883b16be10d",
+            "MavenVersion": "1.2.41",
+            "hash256": "b843e17b7b4f748257b1f9e765326dc040c44bc669a4643371b365dd13ef4e6a"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "3ee2ec9812cd1d2ad8ea0ef67b4aed06ccf87c711c526ca9a8889b94764c349a",
+            "MavenVersion": "1.2.42",
+            "hash256": "dc19d2c0f7298bc3c157b446d02fcdd6bf6f8dda8876924be1ca90e5db6de240"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "bc4d48a5cd155a48e6e86f150ae4a1754ee09e3855c9b6e246ddc574dcc30a55",
+            "MavenVersion": "1.2.43",
+            "hash256": "b9c69547b9b3506c9692c49b800f91b3690b4dc749e56f8faa48314a15d88568"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "97c94cc883a1c4167c44f4fc9ad0d4e20c9b30b5f38343498ae8c00f780a4f0a",
+            "MavenVersion": "1.2.44",
+            "hash256": "db56b7d16fe703238f735f04f09768cfba92a30ad1bb30b23f7e16586206a498"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "54cf5ffacb8f20146d7975f7484d93bcead5f6f8d0ae31820d7df043dd5f2811",
+            "MavenVersion": "1.2.45",
+            "hash256": "4545b6ea0678ec64acd5eac4942916c95e5884fa78fd9ac9c98588a04d60cfb4"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "616ddda4cbbfff4d054636fedbfe086f3804ae3cb69e4b515898c76971900af5",
+            "MavenVersion": "1.2.46",
+            "hash256": "add35a1cb95e04fb6ab11da3248ac5bc078465abae636bf2995c7abdaad8e7e9"
+        },
+        {
+            "CVE": "FastJson-1.2.47,FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "616ddda4cbbfff4d054636fedbfe086f3804ae3cb69e4b515898c76971900af5",
+            "MavenVersion": "1.2.47",
+            "hash256": "a56d6baee62b36822879d60a961c37cb10cc06814aead115cf65a67917032ccf"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "8a7690dc9bd20c94c9663a30316a4e2377882c42bd7415c85c723197a5bfd3be",
+            "MavenVersion": "1.2.48",
+            "hash256": "da53436d881dda04bf270d30b36240e135b4e0a744f9f10902dd4b6fb74da011"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "051f61c77bd3e9f042a936a50fed8ee18dc9e898061ae6e33d8b973bd715a011",
+            "MavenVersion": "1.2.49",
+            "hash256": "d6304e13196619dd43d659197fafad3034696a16e7cb272ae44fe2b834027da8"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "fb19df361351229e2a363972663a1eca81ddd3addba1c5c919b2d5257f489c7b",
+            "MavenVersion": "1.2.50",
+            "hash256": "14207bdcc92279f56c8ace235b8feb89e79b34194af667ed31ce764d3b2d266e"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "c548344a82e4d87b4025430706e4041132d5e0b1132cbc0db893d606d6845742",
+            "MavenVersion": "1.2.51",
+            "hash256": "65d08a88fb715be89321f783a468ac7efa50b46efb5ab692150d64ef43dc5c68"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "c548344a82e4d87b4025430706e4041132d5e0b1132cbc0db893d606d6845742",
+            "MavenVersion": "1.2.52",
+            "hash256": "49948cfb2f01dbb792420e9717d1e7b8b58244e464885da9b2e7740c294eecfa"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "c548344a82e4d87b4025430706e4041132d5e0b1132cbc0db893d606d6845742",
+            "MavenVersion": "1.2.53",
+            "hash256": "c9a3d05e9450850fb75a86f031a3ea1dad3820f0a3bf60bc980e414ac7c6a359"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "05abc99183df180b882e84a37b2be2011af9588727ecdc8f53f8036faf746925",
+            "MavenVersion": "1.2.54",
+            "hash256": "4a791bd49c812b54beecc00db392c1e139c7a61d6d43a62d591efd2ada9ff799"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "8a6afdae214ef4cb56b14dba1da90c7e32933425133f72cfefe985b32fd70531",
+            "MavenVersion": "1.2.55",
+            "hash256": "774c7e8efed6ad9f2ade30ef3cd3789c5bfb7c45777d9b9233fc3e5e0448236a"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "8a5a025bbdb715147145b16989da60304ae0c44861d006cf91a3fb181167d8ac",
+            "MavenVersion": "1.2.56",
+            "hash256": "9efd0bdc77bfd6ba15d8e1b2908b23b84a3c817fd1537aaa57ed30b3cf7b691e"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "63e7b39aec9ad2847920c6fbdc91f9256e0e1a7ab7932f389e16f704cc8ed35d",
+            "MavenVersion": "1.2.57",
+            "hash256": "25ad3329d7c4f58d4d25cd1d34983b2fdbda2ebf14a83c422e4585d47df95bc7"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "30abf8451de7d8e20d62126580f634a0529ccb18d058bd4ef2f1b49af16f837f",
+            "MavenVersion": "1.2.58",
+            "hash256": "4a25dfcec212ab1b5e31fd6c0ea68272a89bb2e5c5c37deb1a3a9a8172497409"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "30abf8451de7d8e20d62126580f634a0529ccb18d058bd4ef2f1b49af16f837f",
+            "MavenVersion": "1.2.59",
+            "hash256": "9f4c2791440906e1d02f8272445187cdf1acf2007b796e0a65ca2bc624b68c6d"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "38ad4b5c34f4654cdbf5c1bf6b6a3dbd693006aad3cf915e68df00c2a7dcfa3e",
+            "MavenVersion": "1.2.60",
+            "hash256": "84105dfc80a1da046cc3496c150e92267507c03e0580aaa8b2e3533fe53e6450"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "1c1777e89fa0c1a52d7539d4d293cfd0f081ba9932ae74649b5f00c4504c3762",
+            "MavenVersion": "1.2.61",
+            "hash256": "559986ed2dddc11417c9d5d375eaf5f1caf4901dcf7909ef5ad03b2e9eefbd51"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "47fbff717239f2d6d023c6a81f128e3d1622fc62148db91b925641354a8bf002",
+            "MavenVersion": "1.2.62",
+            "hash256": "81d2adab80df28ba2a7a1ea32a348a068222ab0d5677bd49ff6b1d17bcf40e9c"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "e87ea7236d24167f3c19a5a3dbbfb09bcaea03fc06a6af1b9564d07e577ccca8",
+            "MavenVersion": "1.2.66",
+            "hash256": "c6e73f6ad7f1596e72dae5e139dfb9af4dcd3d0e43869833aaf7daa0390ce85b"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "f5acf5a26dd87b3475c418b541828842dc2966a4c0d7fd5ec8ac6b906dd974d9",
+            "MavenVersion": "1.2.67",
+            "hash256": "465ac6e38e6b9c1b85a90d49400b1bef0e807a34767c751c0f6da04a9b061292"
+        },
+        {
+            "CVE": "FastJson-1.2.68,FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "5c473c1236aa3ef9255d3007bc08480bede047947b4df8e57e45901e6fbfa366",
+            "MavenVersion": "1.2.68",
+            "hash256": "706adb09ecde78141f0cf2465a1e9bdf4eee83f9f983cfc162a5a1724872febb"
+        },
+        {
+            "CVE": "FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "7021fd133d91b184f8e0922866e821a612f8fdfd36fc489fbf5b8f1a995bac8b",
+            "MavenVersion": "1.2.69",
+            "hash256": "2a7891744a0378e0099a9b81ddbed4d2e1a7e8632f6f86f8ffcfa383e51e49c8"
+        },
+        {
+            "CVE": "FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "12fdb960db02d563c63723774bedda9afff1d824a2bf6d49512df16574b2a922",
+            "MavenVersion": "1.2.70",
+            "hash256": "cdde33b0152875b62dce0420177e7788a41050e0b0df805116ead89dc959a9d0"
+        },
+        {
+            "CVE": "FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "0030df541f0e0d35ca7a1e97b3207050656530914d24f258ce7dcec32cab89ad",
+            "MavenVersion": "1.2.71",
+            "hash256": "921d99547bba3159eb0fc5eb25a8c7ad8b28810e5731e01183462bc7efcc5131"
+        },
+        {
+            "CVE": "FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "eb53b3ca6312c22591b45bb48a736fe448b2140ef7bbec00c561c8a137a2e125",
+            "MavenVersion": "1.2.72",
+            "hash256": "f8198bd972839cbc890b239e438531d1580870cd978ec17b743b563c41f2e970"
+        },
+        {
+            "CVE": "FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "fe630f9080d7ceda15ef176bb6c9c63fbea3e1a02abb4b61d8123478615917c4",
+            "MavenVersion": "1.2.73",
+            "hash256": "1ad2c03a47d4bb123221604da855494c694faaf878af19425e178cbf63c01ec9"
+        },
+        {
+            "CVE": "FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "5972b1736c2ae265a7bb8e274f3e47af4e10c00c9e90242b8c6ee1cea4aec845",
+            "MavenVersion": "1.2.74",
+            "hash256": "d0559cd05f107c0e5fb3c7afa1e0d8eb519aabfd242da76a4b9d68c1ac207183"
+        },
+        {
+            "CVE": "FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "da708b2adb9084df618fed5436bacb3ab6f2dd12a8030fa95535d1280e976995",
+            "MavenVersion": "1.2.75",
+            "hash256": "9ba58edc4473ee813eca9b8dd4a066378023b7b7e2e605823c07a16abfade189"
+        },
+        {
+            "CVE": "FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "47647eee4f81b4b00f89b0476f50dd7e8d682eadb70fdeabe384c32657fdb941",
+            "MavenVersion": "1.2.76",
+            "hash256": "cecd7e33139c3b762548584b0a50ba0d2e31f589ae02f4699aa850d6b6eec3fe"
+        },
+        {
+            "CVE": "FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "12197f7aec1cf63c411f8d3590839d987492a4fdf6004068d199b68f9eaf04f5",
+            "MavenVersion": "1.2.77",
+            "hash256": "40d72d8f0f1a99c83ec3ff3f48e99d3b280630105608997bafc2b0cb22f2adf3"
+        },
+        {
+            "CVE": "FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "12197f7aec1cf63c411f8d3590839d987492a4fdf6004068d199b68f9eaf04f5",
+            "MavenVersion": "1.2.78",
+            "hash256": "67d77f1cdab86d6b14cd5a1ada168bbf68179079975a16ec8efd07fc325d0cc0"
+        },
+        {
+            "CVE": "FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "a8e44bcbdbce39d5c8bd58edca6e202004924ee377578f7fba33620b82796d6d",
+            "MavenVersion": "1.2.79",
+            "hash256": "3e7ee1af0d9afbd6161356675c28252c2364734f4dc380418d5c80fe1fb6d35a"
+        },
+        {
+            "CVE": "FastJson-1.2.80",
+            "com/alibaba/fastjson/util/TypeUtils.class": "a8e44bcbdbce39d5c8bd58edca6e202004924ee377578f7fba33620b82796d6d",
+            "MavenVersion": "1.2.80",
+            "hash256": "1f5a187949a0e1d445982d0767a234e19d6d6d26d1eb4c3b764c9e17d97f3320"
+        },
+        {
+            "CVE": "",
+            "com/alibaba/fastjson/util/TypeUtils.class": "00fc1b3d7505d46bc25fddbaa49c389e15014003e2b99a986b4f00261bc6d913",
+            "MavenVersion": "1.2.83",
+            "hash256": "641a4d65ab32fbfdccd9c718e3f83ebc4caabdb5e4fe5b3d51527c5fe692631d"
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+{
+	"id":3,
+	"title":"宝塔SSH终端",
+	"tip":"lib",
+	"name":"webssh",
+	"type":"扩展",
+	"ps":"完整功能的SSH客户端，仅用于连接本服务器",
+	"versions":"1.0",
+	"shell":"webssh.sh",
+	"checks":"/www/server/panel/plugin/webssh",
+	"author":"宝塔",
+	"home":"http://www.bt.cn/bbs",
+	"date":"2018-10-20",
+	"default":false,
+	"display":0
+}

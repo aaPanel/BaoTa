@@ -24,6 +24,7 @@ _tips = [
     "请考虑为您的网站部署SSL证书，以提升网站的安全性"
     ]
 _help = ''
+_remind = 'SSL证书确保了网站通信的安全性，防止数据传输过程中被黑客窃取。'
 
 def check_run():
     '''
@@ -42,11 +43,11 @@ def check_run():
         if not s_body: continue
         if s_body.find('ssl_certificate') == -1:
             not_ssl_list.append(site_info['name'])
-        
+
     if not_ssl_list:
-        return False ,'以下站点未部署SSL证书: <br />' + ('<br />'.join(not_ssl_list))
-    
+        return False, '以下站点未部署SSL证书: \n' + ('\n'.join(not_ssl_list))
+
     return True,'无风险'
-        
-        
-    
+
+
+

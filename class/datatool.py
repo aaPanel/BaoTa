@@ -27,51 +27,107 @@ class datatools:
             size = size / 1024
         return '0b'
 
+    # # 获取当前数据库信息
+    # def GetdataInfo(self,get):
+    #     '''
+    #     传递一个数据库名称即可 get.databases
+    #     '''
+
+    #     db_name=get.db_name
+    #     if not db_name:return False
+    #     if not self.DB_MySQL:self.DB_MySQL = public.get_mysql_obj(db_name)
+    #     if not self.DB_MySQL: return self.DB_MySQL
+    #     ret = {}
+    #     tables = self.map_to_list(self.DB_MySQL.query('show tables from `%s`' % db_name))
+    #     if type(tables) == list:
+    #         try:
+    #             data = self.map_to_list(self.DB_MySQL.query("select sum(DATA_LENGTH)+sum(INDEX_LENGTH) from information_schema.tables  where table_schema='%s'" % db_name))[0][0]
+    #         except:
+    #             data=0
+
+    #         if not data: data = 0
+    #         ret['data_size'] = self.ToSize(data)
+    #         ret['database'] = db_name
+
+    #         ret3 = []
+    #         for i in tables:
+    #             if i == 1049: return public.returnMsg(False,'指定数据库不存在!')
+    #             if type(i) == int: continue
+    #             table = self.map_to_list(self.DB_MySQL.query("show table status from `%s` where name = '%s'" % (db_name, i[0])))
+    #             if not table: continue
+    #             try:
+    #                 ret2 = {}
+    #                 ret2['type']=table[0][1]
+    #                 data_size = table[0][6]
+    #                 ret2['rows_count'] = self.DB_MySQL.query("select count(*) from `{}`.`{}`".format(db_name,i[0]))[0][0] #table[0][4]  实时获取行数 @authow hwliang<2021-08-05> 修改
+    #                 ret2['collation'] = table[0][14]
+    #                 ret2['data_size'] = self.ToSize(int(data_size))
+    #                 ret2['table_name'] = i[0]
+    #                 ret3.append(ret2)
+    #             except: continue
+    #         ret['tables'] = (ret3)
+    #     return ret
     # 获取当前数据库信息
-    def GetdataInfo(self,get):
+    def GetdataInfo(self, get):
         '''
         传递一个数据库名称即可 get.databases
         '''
-        
-        db_name=get.db_name
-        if not db_name:return False
-        if not self.DB_MySQL:self.DB_MySQL = public.get_mysql_obj(db_name)
+
+        db_name = get.db_name
+
+        try:
+            table_name =get.table_name
+        except:
+            table_name = None
+
+        if not db_name: return False
+        if not self.DB_MySQL: self.DB_MySQL = public.get_mysql_obj(db_name)
+        if not self.DB_MySQL: return self.DB_MySQL
         ret = {}
         tables = self.map_to_list(self.DB_MySQL.query('show tables from `%s`' % db_name))
         if type(tables) == list:
             try:
                 data = self.map_to_list(self.DB_MySQL.query("select sum(DATA_LENGTH)+sum(INDEX_LENGTH) from information_schema.tables  where table_schema='%s'" % db_name))[0][0]
             except:
-                data=0
+                data = 0
 
             if not data: data = 0
             ret['data_size'] = self.ToSize(data)
             ret['database'] = db_name
 
+            if table_name:
+                regex = re.compile(table_name, re.IGNORECASE)
+                matched_tables = [table for table in tables if regex.search(table[0])]
+                if matched_tables:
+                    tables=matched_tables
+                else:
+                    tables=[]
             ret3 = []
             for i in tables:
-                if i == 1049: return public.returnMsg(False,'指定数据库不存在!')
+                if i == 1049: return public.returnMsg(False, '指定数据库不存在!')
                 if type(i) == int: continue
                 table = self.map_to_list(self.DB_MySQL.query("show table status from `%s` where name = '%s'" % (db_name, i[0])))
                 if not table: continue
                 try:
                     ret2 = {}
-                    ret2['type']=table[0][1]
+                    ret2['type'] = table[0][1]
                     data_size = table[0][6]
-                    ret2['rows_count'] = self.DB_MySQL.query("select count(*) from `{}`.`{}`".format(db_name,i[0]))[0][0] #table[0][4]  实时获取行数 @authow hwliang<2021-08-05> 修改
+                    ret2['rows_count'] = self.DB_MySQL.query("select count(*) from `{}`.`{}`".format(db_name, i[0]))[0][0]  # 实时获取行数
                     ret2['collation'] = table[0][14]
                     ret2['data_size'] = self.ToSize(int(data_size))
+                    ret2['o_size'] = int(data_size)
                     ret2['table_name'] = i[0]
+                    # 获取表的注释信息
+                    comment = self.map_to_list(self.DB_MySQL.query("SELECT table_comment FROM information_schema.tables WHERE table_schema = '{}' AND table_name = '{}'".format(db_name, i[0])))[0][0]
+                    ret2['comment'] = comment
                     ret3.append(ret2)
                 except: continue
-            ret['tables'] = (ret3)
+            ret['tables'] = ret3
         return ret
-
-
 
     #修复表信息
     def RepairTable(self,get):
-        
+
         '''
         POST:
         db_name=web
@@ -94,7 +150,7 @@ class datatools:
                 if len(ret)>0:
                     for i in ret:
                         self.DB_MySQL.execute('REPAIR TABLE `%s`.`%s`'%(db_name,i))
-                    return True 
+                    return True
         return False
 
 
@@ -114,7 +170,7 @@ class datatools:
         db_name=web
         tables=['web1','web2']
         '''
-        
+
         db_name = get.db_name
         tables = json.loads(get.tables)
         if not db_name or not tables: return False
@@ -130,7 +186,7 @@ class datatools:
                 if len(ret)>0:
                     for i in ret:
                         self.DB_MySQL.execute('OPTIMIZE table `%s`.`%s` ENGINE=MyISAM' % (db_name,i))
-                    return True 
+                    return True
         return False
 
     # 更改表引擎

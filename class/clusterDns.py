@@ -8,7 +8,7 @@
 # +-------------------------------------------------------------------
 import public,os,sys,json,time,random
 import requests
-from OpenSSL import crypto
+# from OpenSSL import crypto
 import sys, os
 import time
 import copy
@@ -36,11 +36,11 @@ try:
 except:
     public.ExecShell('pip install requests')
     import requests
-try:
-    import OpenSSL
-except:
-    public.ExecShell('pip install pyopenssl')
-    import OpenSSL
+# try:
+#     import OpenSSL
+# except:
+#     public.ExecShell('pip install pyopenssl')
+#     import OpenSSL
 import random
 import datetime
 import logging
@@ -92,7 +92,7 @@ class aliyun:
         else:
             h = hmac.new(bytes(self.secret + "&", encoding="utf8"), stringToSign.encode('utf8'), sha1)
             signature = base64.encodebytes(h.digest()).strip()
-        
+
         return signature
 
 
@@ -108,11 +108,11 @@ class aliyun:
         otherStyleTime = now.strftime("%Y-%m-%dT%H:%M:%SZ")
         paramsdata = {
             "Action":action,
-            "Format": "json", 
-            "Version": "2015-01-09", 
-            "SignatureMethod": "HMAC-SHA1", 
+            "Format": "json",
+            "Version": "2015-01-09",
+            "SignatureMethod": "HMAC-SHA1",
             "Timestamp": otherStyleTime,
-            "SignatureVersion": "1.0", 
+            "SignatureVersion": "1.0",
             "SignatureNonce": str(randomint),
             "Lang": 'cn',
             "AccessKeyId": self.key
@@ -138,7 +138,7 @@ class aliyun:
             else:
                 return public.returnMsg(False,result['Message'])
         return result
-        
+
     def get_domain_list(self,args = None):
         '''
             @name 获取域名列表
@@ -164,7 +164,7 @@ class aliyun:
         paramsdata['Type'] = s_type
         paramsdata['Value'] = value
         paramsdata = self.get_params('AddDomainRecord',paramsdata)
-        
+
         req = requests.get(url=self.url, params=paramsdata,verify=False)
         result = self.check_result(req)
         if 'status' in result:
@@ -189,7 +189,7 @@ class aliyun:
         if host: paramsdata['RRKeyWord'] = host
         if s_type: paramsdata['TypeKeyWord'] = s_type
         paramsdata = self.get_params('DescribeDomainRecords',paramsdata)
-        
+
         req = requests.get(url=self.url, params=paramsdata,verify=False)
         result = self.check_result(req)
         return result
@@ -227,7 +227,7 @@ class aliyun:
         paramsdata['RecordId'] = record_id
         paramsdata = self.get_params('DeleteDomainRecord',paramsdata)
         req = requests.get(url=self.url, params=paramsdata,verify=False)
-        
+
         result = self.check_result(req)
         if 'status' in result:
             if not result['status']: return result

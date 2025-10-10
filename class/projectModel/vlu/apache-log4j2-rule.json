@@ -1,0 +1,256 @@
+{
+    "Name": "Apache Log4j2",
+    "product": "log4j-core",
+    "types":"class",
+    "class": [
+        "org/apache/logging/log4j/core/lookup/JndiLookup.class"
+    ],
+    "vlu_list": [
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "7f0add9055958365137a8cc7a90969a43c44b20280323bdac718c1ff3795beb8",
+            "MavenVersion": "2.3.2",
+            "hash256": "9348e77bf780ce67bcb8219ea7a2542c993e607f737eec03e73c4841ba479d74"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "edb797a8633f629b7c2187ccafd259a16a0b7b4cce4d42e646f8472358b8962a",
+            "MavenVersion": "2.12.4",
+            "hash256": "542d5c64c5b9456909fb2671a7d0960973fb6cec61f00a8e9530b3399cba27cd"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "0ad99a95ff637fc966fc4ce5fe1f9e78d3b24b113282f9990b95a6fde3383d9c",
+            "MavenVersion": "2.3.1",
+            "hash256": "08174cf19ad32b5190f3c97c8e15f8dbb00cc93bbbdb72fd3a1130784ca7831b"
+        },
+        {
+            "CVE": "CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "edb797a8633f629b7c2187ccafd259a16a0b7b4cce4d42e646f8472358b8962a",
+            "MavenVersion": "2.12.3",
+            "hash256": "048b115555db409892bcd186fbda492041a82cdb84ad6fcf5c928d03f8a92d9a"
+        },
+        {
+            "CVE": "CVE-2021-44832",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "ddad241274b834182525eeddc35c3198247507bd2df59645b58b94cd18fada7c",
+            "MavenVersion": "2.17.0",
+            "hash256": "65c33dc9b24a5e5f6cacae62680641582894749c7bf16c951032ef92f3e12a60"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "febbc7867784d0f06934fec59df55ee45f6b24c55b17fff71cc4fca80bf22ebb",
+            "MavenVersion": "2.12.2",
+            "hash256": "57bc36ea9fbe150b892fd1fe239a18fcf762ce87f198cb9ffbc41d28d8a5b59a"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-44832",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "84057480ba7da6fb6d9ea50c53a00848315833c1f34bf8f4a47f11a14499ae3f",
+            "MavenVersion": "2.16.0",
+            "hash256": "5d241620b10e3f1475320bc9552cf7bcfa27eeb9b1b6a891449e76db4b4a02a8"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "84057480ba7da6fb6d9ea50c53a00848315833c1f34bf8f4a47f11a14499ae3f",
+            "MavenVersion": "2.15.0",
+            "hash256": "419a8512895971b7b4f4f33e620d361254e5c9552b904b0474b09ddd4a6a220b"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "84057480ba7da6fb6d9ea50c53a00848315833c1f34bf8f4a47f11a14499ae3f",
+            "MavenVersion": "2.14.1",
+            "hash256": "ade7402a70667a727635d5c4c29495f4ff96f061f12539763f6f123973b465b0"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "84057480ba7da6fb6d9ea50c53a00848315833c1f34bf8f4a47f11a14499ae3f",
+            "MavenVersion": "2.14.0",
+            "hash256": "f04ee9c0ac417471d9127b5880b96c3147249f20674a8dbb88e9949d855382a8"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "2b32bfc0556ea59307b9b2fde75b6dfbb5bf4f1d008d1402bc9a2357d8a8c61f",
+            "MavenVersion": "2.13.3",
+            "hash256": "9529c55814264ab96b0eeba2920ac0805170969c994cc479bd3d4d7eb24a35a8"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "2b32bfc0556ea59307b9b2fde75b6dfbb5bf4f1d008d1402bc9a2357d8a8c61f",
+            "MavenVersion": "2.13.2",
+            "hash256": "268dc17d3739992d4d1ca2c27f94630fb203a40d07e9ad5dfae131d4e3fa9764"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "2b32bfc0556ea59307b9b2fde75b6dfbb5bf4f1d008d1402bc9a2357d8a8c61f",
+            "MavenVersion": "2.13.1",
+            "hash256": "88ebd503b35a0debe18c2707db9de33a8c6d96491270b7f02dd086b8072426b2"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "2b32bfc0556ea59307b9b2fde75b6dfbb5bf4f1d008d1402bc9a2357d8a8c61f",
+            "MavenVersion": "2.13.0",
+            "hash256": "82e91afe0c5628b32ae99dd6965878402c668773fbd49b45b2b8c06a426c5bbb"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "5c104d16ff9831b456e4d7eaf66bcf531f086767782d08eece3fb37e40467279",
+            "MavenVersion": "2.12.1",
+            "hash256": "885e31a14fc71cb4849e93564d26a221c685a789379ef63cb2d082cedf3c2235"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "5c104d16ff9831b456e4d7eaf66bcf531f086767782d08eece3fb37e40467279",
+            "MavenVersion": "2.12.0",
+            "hash256": "8818f82570d3f509cfb27c209b9a8df6f188857b7462951a61a137be09cf3463"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "0f038a1e0aa0aff76d66d1440c88a2b35a3d023ad8b2e3bac8e25a3208499f7e",
+            "MavenVersion": "2.11.2",
+            "hash256": "d4748cd5d8d67f513de7634fa202740490d7e0ab546f4bf94e5c4d4a11e3edbc"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "0f038a1e0aa0aff76d66d1440c88a2b35a3d023ad8b2e3bac8e25a3208499f7e",
+            "MavenVersion": "2.11.1",
+            "hash256": "a20c34cdac4978b76efcc9d0db66e95600bd807c6a0bd3f5793bcb45d07162ec"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "0f038a1e0aa0aff76d66d1440c88a2b35a3d023ad8b2e3bac8e25a3208499f7e",
+            "MavenVersion": "2.11.0",
+            "hash256": "c32029b32da3d8cf2feca0790a4bc2331ea7eb62ab368a8980b90c7d8c8101e0"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "0f038a1e0aa0aff76d66d1440c88a2b35a3d023ad8b2e3bac8e25a3208499f7e",
+            "MavenVersion": "2.10.0",
+            "hash256": "22b58febab566eddd5d4863f09dad4d5cc57677b6d4be745e3c6ce547124a66d"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "0f038a1e0aa0aff76d66d1440c88a2b35a3d023ad8b2e3bac8e25a3208499f7e",
+            "MavenVersion": "2.9.1",
+            "hash256": "dc435b35b5923eb05afe30a24f04e9a0a5372da8e76f986efe8508b96101c4ff"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "0f038a1e0aa0aff76d66d1440c88a2b35a3d023ad8b2e3bac8e25a3208499f7e",
+            "MavenVersion": "2.9.0",
+            "hash256": "fb086e42c232d560081d5d76b6b9e0979e5693e5de76734cad5e396dd77278fd"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "d4ec57440cd6db6eaf6bcb6b197f1cbaf5a3e26253d59578d51db307357cbf15",
+            "MavenVersion": "2.8.2",
+            "hash256": "10ef331115cbbd18b5be3f3761e046523f9c95c103484082b18e67a7c36e570c"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "66c89e2d5ae674641138858b571e65824df6873abb1677f7b2ef5c0dd4dbc442",
+            "MavenVersion": "2.8.1",
+            "hash256": "815a73e20e90a413662eefe8594414684df3d5723edcd76070e1a5aee864616e"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "66c89e2d5ae674641138858b571e65824df6873abb1677f7b2ef5c0dd4dbc442",
+            "MavenVersion": "2.8",
+            "hash256": "ccf02bb919e1a44b13b366ea1b203f98772650475f2a06e9fac4b3c957a7c3fa"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "cee2305065bb61d434cdb45cfdaa46e7da148e5c6a7678d56f3e3dc8d7073eae",
+            "MavenVersion": "2.7",
+            "hash256": "5bb84e110d5f18cee47021a024d358227612dd6dac7b97fa781f85c6ad3ccee4"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "e8ffed196e04f81b015f847d4ec61f22f6731c11b5a21b1cfc45ccbc58b8ea45",
+            "MavenVersion": "2.6.2",
+            "hash256": "cf65f0d33640f2cd0a0b06dd86a5c6353938ccb25f4ffd14116b4884181e0392"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "e8ffed196e04f81b015f847d4ec61f22f6731c11b5a21b1cfc45ccbc58b8ea45",
+            "MavenVersion": "2.6.1",
+            "hash256": "28433734bd9e3121e0a0b78238d5131837b9dbe26f1a930bc872bad44e68e44e"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "e8ffed196e04f81b015f847d4ec61f22f6731c11b5a21b1cfc45ccbc58b8ea45",
+            "MavenVersion": "2.6",
+            "hash256": "df00277045338ceaa6f70a7b8eee178710b3ba51eac28c1142ec802157492de6"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "a534961bbfce93966496f86c9314f46939fd082bb89986b48b7430c3bea903f7",
+            "MavenVersion": "2.5",
+            "hash256": "4f53e4d52efcccdc446017426c15001bb0fe444c7a6cdc9966f8741cf210d997"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "a534961bbfce93966496f86c9314f46939fd082bb89986b48b7430c3bea903f7",
+            "MavenVersion": "2.4.1",
+            "hash256": "42de36e61d454afff5e50e6930961c85b55d681e23931efd248fd9b9b9297239"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "a534961bbfce93966496f86c9314f46939fd082bb89986b48b7430c3bea903f7",
+            "MavenVersion": "2.4",
+            "hash256": "535e19bf14d8c76ec00a7e8490287ca2e2597cae2de5b8f1f65eb81ef1c2a4c6"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "a768e5383990b512f9d4f97217eda94031c2fa4aea122585f5a475ab99dc7307",
+            "MavenVersion": "2.3",
+            "hash256": "6ae3b0cb657e051f97835a6432c2b0f50a651b36b6d4af395bbe9060bb4ef4b2"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "a768e5383990b512f9d4f97217eda94031c2fa4aea122585f5a475ab99dc7307",
+            "MavenVersion": "2.2",
+            "hash256": "c830cde8f929c35dad42cbdb6b28447df69ceffe99937bf420d32424df4d076a"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "a768e5383990b512f9d4f97217eda94031c2fa4aea122585f5a475ab99dc7307",
+            "MavenVersion": "2.1",
+            "hash256": "8bdb662843c1f4b120fb4c25a5636008085900cdf9947b1dadb9b672ea6134dc"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "9626798cce6abd0f2ffef89f1a3d0092a60d34a837a02bbe571dbe00236a2c8c",
+            "MavenVersion": "2.0.2",
+            "hash256": "c584d1000591efa391386264e0d43ec35f4dbb146cad9390f73358d9c84ee78d"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "964fa0bf8c045097247fa0c973e0c167df08720409fd9e44546e0ceda3925f3e",
+            "MavenVersion": "2.0.1",
+            "hash256": "a00a54e3fb8cb83fab38f8714f240ecc13ab9c492584aa571aec5fc71b48732d"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "fd6c63c11f7a6b52eff04be1de3477c9ddbbc925022f7216320e6db93f1b7d29",
+            "MavenVersion": "2.0",
+            "hash256": "85338f694c844c8b66d8a1b981bcf38627f95579209b2662182a009d849e1a4c"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "a03e538ed25eff6c4fe48aabc5514e5ee687542f29f2206256840e74ed59bcd2",
+            "MavenVersion": "2.0-rc2",
+            "hash256": "ec411a34fee49692f196e4dc0a905b25d0667825904862fdba153df5e53183e0"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "39a495034d37c7934b64a9aa686ea06b61df21aa222044cc50a47d6903ba1ca8",
+            "MavenVersion": "2.0-rc1",
+            "hash256": "db3906edad6009d1886ec1e2a198249b6d99820a3575f8ec80c6ce57f08d521a"
+        },
+        {
+            "CVE": "CVE-2021-45105,CVE-2021-45046,CVE-2021-44832,CVE-2021-44228",
+            "org/apache/logging/log4j/core/lookup/JndiLookup.class": "39a495034d37c7934b64a9aa686ea06b61df21aa222044cc50a47d6903ba1ca8",
+            "MavenVersion": "2.0-beta9",
+            "hash256": "dcde6033b205433d6e9855c93740f798951fa3a3f252035a768d9f356fde806d"
+        }
+    ]
+}

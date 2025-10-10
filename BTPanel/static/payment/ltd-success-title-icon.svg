@@ -1,0 +1,61 @@
+<svg width="40.000008" height="37.000000" viewBox="0 0 40 37" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<desc>
+			Created with Pixso.
+	</desc>
+	<g id="企业版">
+		<g id="矢量 780">
+			<path d="M7.81981 17.4958L9.52922 10.4927C9.71254 9.7417 10.6423 9.47363 11.1971 10.012L17.6383 16.2622C18.0968 16.707 18.0263 17.4619 17.4932 17.8142L12.1938 21.3159C11.8032 21.574 11.2856 21.5266 10.9485 21.2014L8.09727 18.4529C7.84109 18.2061 7.73543 17.8416 7.81981 17.4958Z" fill-rule="evenodd" fill="#E5AF35"/>
+		</g>
+		<g id="矢量 781">
+			<path d="M22.9241 14.0173L28.7693 8.89819C29.318 8.41748 30.1799 8.66699 30.387 9.36646L32.7219 17.2495C32.8743 17.7637 32.5938 18.3066 32.0862 18.4797L27.8438 19.9282C27.4713 20.0554 27.0589 19.9521 26.7902 19.6648L22.8524 15.4524C22.4666 15.0396 22.4991 14.3894 22.9241 14.0173Z" fill-rule="evenodd" fill="#E5AF35"/>
+		</g>
+		<g id="矢量 779">
+			<path d="M6.45264 28.6816L2.71174 11.0312L12.5741 17.5073L20.0559 2.77759L27.8778 17.5073L37.7402 11.0312L33.9992 28.6816C29.5404 30.9673 17.7887 34.1672 6.45264 28.6816Z" fill-rule="evenodd" fill="#FFD16B"/>
+		</g>
+		<g id="矢量 779">
+			<path d="M20.0001 1.96216L27.8634 16.9697L38.3335 10.6516L34.4446 28.5911C31.9057 30.9702 23.6148 31.9331 20.0001 32.2349L20.0001 1.96216Z" fill-rule="evenodd" fill="#E6B139"/>
+		</g>
+		<g id="椭圆 259">
+			<ellipse cx="2.711874" cy="10.878662" rx="2.711874" ry="2.777556" fill="#F3BB4D"/>
+		</g>
+		<g id="椭圆 260">
+			<ellipse cx="20.112967" cy="2.777588" rx="2.711874" ry="2.777556" fill="#F3BB4D"/>
+		</g>
+		<g id="椭圆 261">
+			<ellipse cx="37.288132" cy="11.110352" rx="2.711874" ry="2.777556" fill="#F3BB4D"/>
+		</g>
+		<g id="椭圆 262" filter="url(#filter_5_388_dd)">
+			<ellipse cx="2.162097" cy="9.793945" rx="1.081085" ry="1.088236" fill="#FFFFFF"/>
+		</g>
+		<g id="椭圆 265" filter="url(#filter_5_389_dd)">
+			<ellipse cx="19.459536" cy="2.176270" rx="1.081085" ry="1.088236" fill="#FFFFFF"/>
+		</g>
+		<g id="椭圆 266" filter="url(#filter_5_390_dd)">
+			<ellipse cx="37.567722" cy="9.521973" rx="0.810814" ry="0.816177" fill="#FFFFFF"/>
+		</g>
+		<g id="矢量 778">
+			<path d="M6.44065 28.7014C10.2825 30.4373 20.6141 33.8184 34.4446 28.5908L34.4446 34.2683C29.2469 36.3296 16.0904 39.2156 6.32766 34.2681L6.44065 28.7014Z" fill-rule="evenodd" fill="url(#paint_linear_5_391_0)"/>
+		</g>
+	</g>
+	<defs>
+		<filter id="filter_5_388_dd" x="0.081011" y="7.705811" width="4.162170" height="4.176514" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+			<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+			<feGaussianBlur stdDeviation="0.333333" result="effect_layerBlur_1"/>
+		</filter>
+		<filter id="filter_5_389_dd" x="17.378450" y="0.088135" width="4.162170" height="4.176514" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+			<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+			<feGaussianBlur stdDeviation="0.333333" result="effect_layerBlur_1"/>
+		</filter>
+		<filter id="filter_5_390_dd" x="35.756908" y="7.705811" width="3.621628" height="3.632324" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+			<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+			<feGaussianBlur stdDeviation="0.333333" result="effect_layerBlur_1"/>
+		</filter>
+		<linearGradient id="paint_linear_5_391_0" x1="6.327656" y1="31.895416" x2="34.768578" y2="32.795341" gradientUnits="userSpaceOnUse">
+			<stop offset="0.027377" stop-color="#FDC764"/>
+			<stop offset="0.994194" stop-color="#B58236"/>
+		</linearGradient>
+	</defs>
+</svg>

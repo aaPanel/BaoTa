@@ -32,7 +32,7 @@ class panelLets:
     let_url = "https://acme-v02.api.letsencrypt.org/directory"
     #let_url = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
-    setupPath = None #安装路径  
+    setupPath = None #安装路径
     server_type = None
     log_file = '/www/server/panel/logs/letsencrypt.log'
 
@@ -42,7 +42,7 @@ class panelLets:
         self.server_type = public.get_webserver()
 
     def write_log(self,log_str):
-        
+
         f = open(self.log_file,'ab+')
         log_str += "\n"
         f.write(log_str.encode('utf-8'))
@@ -67,13 +67,13 @@ class panelLets:
             ret = p12.set_ca_certificates((crypto.load_certificate(crypto.FILETYPE_PEM, ca_pem.encode()),) )
         if friendly_name:
             ret = p12.set_friendlyname(friendly_name.encode())
-        return p12
+        return p12.export()
 
     def extract_zone(self,domain_name):
         domain_name = domain_name.lstrip("*.")
-        top_domain_list = ['.ac.cn', '.ah.cn', '.bj.cn', '.com.cn', '.cq.cn', '.fj.cn', '.gd.cn', 
-                            '.gov.cn', '.gs.cn', '.gx.cn', '.gz.cn', '.ha.cn', '.hb.cn', '.he.cn', 
-                            '.hi.cn', '.hk.cn', '.hl.cn', '.hn.cn', '.jl.cn', '.js.cn', '.jx.cn', 
+        top_domain_list = ['.ac.cn', '.ah.cn', '.bj.cn', '.com.cn', '.cq.cn', '.fj.cn', '.gd.cn',
+                            '.gov.cn', '.gs.cn', '.gx.cn', '.gz.cn', '.ha.cn', '.hb.cn', '.he.cn',
+                            '.hi.cn', '.hk.cn', '.hl.cn', '.hn.cn', '.jl.cn', '.js.cn', '.jx.cn',
                             '.ln.cn', '.mo.cn', '.net.cn', '.nm.cn', '.nx.cn', '.org.cn']
         old_domain_name = domain_name
         m_count = domain_name.count(".")
@@ -85,7 +85,7 @@ class panelLets:
             domain_name = domain_name[:-len(top_domain)] + new_top_domain
 
         if domain_name.count(".") > 1:
-            zone, middle, last = domain_name.rsplit(".", 2)        
+            zone, middle, last = domain_name.rsplit(".", 2)
             acme_txt = "_acme-challenge.%s" % zone
             if is_tow_top: last = top_domain[1:]
             root = ".".join([middle, last])
@@ -99,7 +99,7 @@ class panelLets:
     def get_root_domain(self,domain_name):
         d_root,tow_name,acme_txt = self.extract_zone(domain_name)
         return d_root
-    
+
     #获取acmename
     def get_acme_name(self,domain_name):
         d_root,tow_name,acme_txt = self.extract_zone(domain_name)
@@ -163,12 +163,12 @@ class panelLets:
         elif data['dnsapi'] == 'dns_dp':
             dns_class = sewer.DNSPodDns(DNSPOD_ID = data['dns_param'][0] ,DNSPOD_API_KEY = data['dns_param'][1])
             return dns_class
-        elif data['dnsapi'] == 'dns_cx':   
+        elif data['dnsapi'] == 'dns_cx':
             import panelDnsapi
             public.mod_reload(panelDnsapi)
             dns_class = panelDnsapi.CloudxnsDns(key = data['dns_param'][0] ,secret =data['dns_param'][1])
             result = dns_class.get_domain_list()
-            if result['code'] == 1:                
+            if result['code'] == 1:
                 return dns_class
         elif data['dnsapi'] == 'dns_bt':
             import panelDnsapi
@@ -178,43 +178,47 @@ class panelLets:
         return False
 
     #续签证书
-    def renew_lest_cert(self,data):  
+    def renew_lest_cert(self,data):
         #续签网站
         path = self.setupPath + '/panel/vhost/cert/'+ data['siteName'];
-        if not os.path.exists(path):  return public.returnMsg(False, '续签失败,证书目录不存在.') 
+        if not os.path.exists(path):  return public.returnMsg(False, '续签失败,证书目录不存在.')
 
         account_path = path + "/account_key.key"
-        if not os.path.exists(account_path): return public.returnMsg(False, '续签失败,缺少account_key.') 
+        if not os.path.exists(account_path): return public.returnMsg(False, '续签失败,缺少account_key.')
 
         #续签
         data['account_key'] = public.readFile(account_path)
 
         if not 'first_domain' in data:  data['first_domain'] = data['domains'][0]
 
-        if 'dnsapi' in data:                
+        if 'dnsapi' in data:
             certificate = self.crate_let_by_dns(data)
-        else:            
-            certificate = self.crate_let_by_file(data)       
+        else:
+            certificate = self.crate_let_by_file(data)
 
         if not certificate['status']: return public.returnMsg(False, certificate['msg'])
-                 
+
         #存储证书
         public.writeFile(path + "/privkey.pem",certificate['key'])
         public.writeFile(path + "/fullchain.pem",certificate['cert'] + certificate['ca_data'])
         public.writeFile(path + "/account_key.key", certificate['account_key']) #续签KEY
 
         #转为IIS证书
-        p12 = self.dump_pkcs12(certificate['key'], certificate['cert'] + certificate['ca_data'],certificate['ca_data'],data['first_domain'])
-        pfx_buffer = p12.export()
+        try:
+            p12 = self.dump_pkcs12(certificate['key'], certificate['cert'] + certificate['ca_data'],certificate['ca_data'],data['first_domain'])
+        except:
+            import ssl_info
+            p12 = ssl_info.ssl_info().dump_pkcs12_new(certificate['key'], certificate['cert'] + certificate['ca_data'],certificate['ca_data'],data['first_domain'])
+        pfx_buffer = p12
         public.writeFile(path + "/fullchain.pfx",pfx_buffer,'wb+')
-         
+
         return public.returnMsg(True, '[%s]证书续签成功.' % data['siteName'])
 
 
 
     #申请证书
     def apple_lest_cert(self,get):
-        data = {}        
+        data = {}
         data['siteName'] = get.siteName
         data['domains'] = json.loads(get.domains)
         data['email'] = get.email
@@ -222,9 +226,9 @@ class panelLets:
         self.write_log("准备申请SSL，域名{}".format(data['domains']))
         self.write_log("="*50)
         if len(data['domains']) <=0 : return public.returnMsg(False, '申请域名列表不能为空.')
-        
-        data['first_domain'] = data['domains'][0]       
-     
+
+        data['first_domain'] = data['domains'][0]
+
         path = self.setupPath + '/panel/vhost/cert/'+ data['siteName'];
         if not os.path.exists(path): os.makedirs(path)
 
@@ -237,11 +241,11 @@ class panelLets:
 
         re_password = path + '/password';
         if os.path.exists(re_password): os.remove(re_password)
-        
-        data['account_key'] = None   
-        if hasattr(get, 'dnsapi'): 
+
+        data['account_key'] = None
+        if hasattr(get, 'dnsapi'):
             if not 'app_root' in get: get.app_root = '0'
-            data['app_root'] = get.app_root   
+            data['app_root'] = get.app_root
             domain_list = data['domains']
             if data['app_root'] == '1':
                 public.writeFile(self.log_file,'');
@@ -265,7 +269,7 @@ class panelLets:
                     result = self.crate_let_by_oper(data)
                     if 'status' in result and not result['status']:  return result
                     result['status'] = True
-                    public.writeFile(domain_path, json.dumps(result)) 
+                    public.writeFile(domain_path, json.dumps(result))
                     result['msg'] = '获取成功,请手动解析域名'
                     result['code'] = 2;
                     return result
@@ -281,11 +285,11 @@ class panelLets:
         else:
             #文件验证
             public.writeFile(self.log_file,'');
-            data['site_dir'] = get.site_dir;     
-            certificate = self.crate_let_by_file(data)       
+            data['site_dir'] = get.site_dir;
+            certificate = self.crate_let_by_file(data)
 
         if not certificate['status']: return public.returnMsg(False, certificate['msg'])
-        
+
         #保存续签
         self.write_log("|-正在保存证书..")
         cpath = self.setupPath + '/panel/vhost/cert/crontab.json'
@@ -305,11 +309,15 @@ class panelLets:
         public.writeFile(path + "/account_key.key",certificate['account_key']) #续签KEY
 
         #转为IIS证书
-        p12 = self.dump_pkcs12(certificate['key'], certificate['cert'] + certificate['ca_data'],certificate['ca_data'],data['first_domain'])
-        pfx_buffer = p12.export()
-        public.writeFile(path + "/fullchain.pfx",pfx_buffer,'wb+')        
-        public.writeFile(path + "/README","let") 
-        
+        try:
+            p12 = self.dump_pkcs12(certificate['key'], certificate['cert'] + certificate['ca_data'],certificate['ca_data'],data['first_domain'])
+        except:
+            import ssl_info
+            p12 = ssl_info.ssl_info().dump_pkcs12_new(certificate['key'], certificate['cert'] + certificate['ca_data'],certificate['ca_data'],data['first_domain'])
+        pfx_buffer = p12
+        public.writeFile(path + "/fullchain.pfx",pfx_buffer,'wb+')
+        public.writeFile(path + "/README","let")
+
         #计划任务续签
         self.write_log("|-正在设置自动续签配置..")
         self.set_crond()
@@ -367,7 +375,7 @@ class panelLets:
                     dns_challenge_url = identifier_auth["dns_challenge_url"]
 
                     acme_keyauthorization, domain_dns_value = BTPanel.dns_client.get_keyauthorization(dns_token)
-                 
+
                     acme_name = self.get_acme_name(dns_name)
                     dns_names_to_delete.append({"dns_name": public.de_punycode(dns_name),"acme_name":acme_name, "domain_dns_value": domain_dns_value})
                     responders.append(
@@ -378,7 +386,7 @@ class panelLets:
                             "dns_challenge_url": dns_challenge_url,
                         }
                     )
-            
+
                 dns = {}
                 dns['dns_names'] = dns_names_to_delete
                 dns['responders'] = responders
@@ -390,7 +398,7 @@ class panelLets:
                 responders = data['dns']['responders']
                 dns_names_to_delete = data['dns']['dns_names']
                 finalize_url = data['dns']['finalize_url']
-                for i in responders:  
+                for i in responders:
                     self.write_log("|-正在请求CA验证域名[{}]...".format(i['dns_name']))
                     auth_status_response = BTPanel.dns_client.check_authorization_status(i["authorization_url"])
                     if auth_status_response.json()["status"] == "pending":
@@ -430,12 +438,12 @@ class panelLets:
     #dns验证
     def crate_let_by_dns(self,data):
         dns_class = self.get_dns_class(data)
-        if not dns_class: 
+        if not dns_class:
             self.write_log("|-错误，DNS连接失败，请检查密钥是否正确。")
             self.write_log("|-已退出申请程序!")
             self.write_log("="*50)
             return public.returnMsg(False, 'DNS连接失败，请检查密钥是否正确.')
-     
+
         result = {}
         result['status'] = False
         try:
@@ -476,7 +484,7 @@ class panelLets:
                         if r_data["status"] == "pending":
                             client.respond_to_challenge(i["acme_keyauthorization"], i["dns_challenge_url"])
 
-                    for i in responders: 
+                    for i in responders:
                         self.write_log("|-检查CA验证结果[{}]...".format(i['dns_name']))
                         client.check_authorization_status(i["authorization_url"], ["valid","invalid"])
                 except Exception as ex:
@@ -489,7 +497,7 @@ class panelLets:
                         r_data = auth_status_response.json()
                         if r_data["status"] == "pending":
                             client.respond_to_challenge(i["acme_keyauthorization"], i["dns_challenge_url"])
-                    for i in responders: 
+                    for i in responders:
                         self.write_log("|-检查CA验证结果[{}]...".format(i['dns_name']))
                         client.check_authorization_status(i["authorization_url"], ["valid","invalid"])
                 self.write_log("|-所有域名验证通过，正在发送CSR...")
@@ -506,17 +514,17 @@ class panelLets:
 
             except Exception as e:
                 raise e
-            finally:   
+            finally:
                 try:
-                    for i in dns_names_to_delete: 
+                    for i in dns_names_to_delete:
                         self.write_log("|-正在清除解析记录[{}]".format(i["dns_name"]))
                         dns_class.delete_dns_record(i["dns_name"], i["domain_dns_value"])
                 except :
                     pass
 
-        except Exception as e:  
+        except Exception as e:
             try:
-                for i in dns_names_to_delete: 
+                for i in dns_names_to_delete:
                     self.write_log("|-正在清除解析记录[{}]".format(i["dns_name"]))
                     dns_class.delete_dns_record(i["dns_name"], i["domain_dns_value"])
             except:pass
@@ -549,29 +557,29 @@ class panelLets:
             self.write_log("|-正在获取验证信息...")
             for url in authorizations:
                 identifier_auth = self.get_identifier_authorization(client,url)
-             
+
                 authorization_url = identifier_auth["url"]
                 http_name = identifier_auth["domain"]
                 http_token = identifier_auth["http_token"]
                 http_challenge_url = identifier_auth["http_challenge_url"]
 
-                acme_keyauthorization, domain_http_value = client.get_keyauthorization(http_token)   
+                acme_keyauthorization, domain_http_value = client.get_keyauthorization(http_token)
                 acme_dir = '%s/.well-known/acme-challenge' % (data['site_dir']);
                 if not os.path.exists(acme_dir): os.makedirs(acme_dir)
-               
+
                 #写入token
-                wellknown_path = acme_dir + '/' + http_token 
+                wellknown_path = acme_dir + '/' + http_token
                 self.write_log("|-正在写入验证文件[{}]...".format(wellknown_path))
                 public.writeFile(wellknown_path,acme_keyauthorization)
                 wellknown_url = "http://{0}/.well-known/acme-challenge/{1}".format(http_name, http_token)
-                
+
                 result['clecks'].append({'wellknown_url':wellknown_url,'http_token':http_token});
                 is_check = False
                 n = 0
                 self.write_log("|-尝试通过HTTP验证文件内容[{}]...".format(wellknown_url))
                 while n < 5:
                     print("wait_check_authorization_status")
-                    try:                       
+                    try:
                         retkey = public.httpGet(wellknown_url,20)
                         if retkey == acme_keyauthorization:
                             is_check = True
@@ -581,10 +589,10 @@ class panelLets:
                         pass
                     n += 1;
                     time.sleep(1)
-                sucess_domains.append(http_name) 
+                sucess_domains.append(http_name)
                 responders.append({"http_name":http_name,"authorization_url": authorization_url, "acme_keyauthorization": acme_keyauthorization,"http_challenge_url": http_challenge_url})
 
-            if len(sucess_domains) > 0: 
+            if len(sucess_domains) > 0:
                 #验证
                 for i in responders:
                     self.write_log("|-请求CA验证域名[{}]...".format(i['http_name']))
@@ -600,7 +608,7 @@ class panelLets:
                 certificate_url = client.send_csr(finalize_url)
                 self.write_log("|-正在获取证书内容...")
                 certificate = client.download_certificate(certificate_url)
-               
+
                 if certificate:
                     certificate = self.split_ca_data(certificate)
                     result['cert'] = certificate['cert']
@@ -624,9 +632,9 @@ class panelLets:
             result['msg'] =  [self.get_error(res[0]),err]
         return result
 
-    
+
     def get_identifier_authorization(self,client, url):
-        
+
         headers = {"User-Agent": client.User_Agent}
         get_identifier_authorization_response = requests.get(url, timeout = client.ACME_REQUEST_TIMEOUT, headers=headers,verify=False)
         if get_identifier_authorization_response.status_code not in [200, 201]:
@@ -662,7 +670,7 @@ class panelLets:
                 for j in ns.response.answer:
                     for i in j.items:
                         txt_value = i.to_text().replace('"','').strip()
-                        if txt_value == value: 
+                        if txt_value == value:
                             self.write_log("|-验证成功,域名[{}],记录类型[{}],记录值[{}]!".format(domain,type,txt_value))
                             print("验证成功：%s" % txt_value)
                             return True
@@ -674,19 +682,19 @@ class panelLets:
             n+=1
             time.sleep(5)
         return True
-    
+
     #获取证书哈希
     def get_cert_data(self,path):
         try:
-            if path[-4:] == '.pfx':   
-                f = open(path,'rb') 
-                pfx_buffer = f.read() 
+            if path[-4:] == '.pfx':
+                f = open(path,'rb')
+                pfx_buffer = f.read()
                 p12 = crypto.load_pkcs12(pfx_buffer,'')
                 x509 = p12.get_certificate()
             else:
                 cret_data = public.readFile(path)
                 x509 = crypto.load_certificate(crypto.FILETYPE_PEM, cret_data)
-            
+
             buffs = x509.digest('sha1')
             hash =  bytes.decode(buffs).replace(':','')
             data = {}
@@ -694,16 +702,16 @@ class panelLets:
             data['timeout'] = bytes.decode(x509.get_notAfter())[:-1]
             return data
         except :
-            return False      
+            return False
 
 
     #获取快过期的证书
     def get_renew_lets_bytimeout(self,cron_list):
         tday = 30
-        path = self.setupPath + '/panel/vhost/cert'      
+        path = self.setupPath + '/panel/vhost/cert'
         nlist = {}
         new_list = {}
-        for siteName in cron_list:   
+        for siteName in cron_list:
             spath =  path + '/' + siteName
             #验证是否存在续签KEY
             if os.path.exists(spath + '/account_key.key'):
@@ -720,22 +728,22 @@ class panelLets:
 
     #===================================== 计划任务续订证书 =====================================#
     #续订
-    def renew_lets_ssl(self):        
+    def renew_lets_ssl(self):
         cpath = self.setupPath + '/panel/vhost/cert/crontab.json'
-        if not os.path.exists(cpath):  
-            print("|-当前没有可以续订的证书. " )      
+        if not os.path.exists(cpath):
+            print("|-当前没有可以续订的证书. " )
         else:
-            old_list = json.loads(public.ReadFile(cpath))    
+            old_list = json.loads(public.ReadFile(cpath))
             print('=======================================================================')
-            print('|-%s 共计[%s]续签证书任务.' % (time.strftime('%Y-%m-%d %X',time.localtime()),len(old_list)))                        
+            print('|-%s 共计[%s]续签证书任务.' % (time.strftime('%Y-%m-%d %X',time.localtime()),len(old_list)))
             cron_list = self.get_renew_lets_bytimeout(old_list)
 
             tlist = []
-            for siteName in old_list:                 
+            for siteName in old_list:
                 if not siteName in cron_list: tlist.append(siteName)
             print('|-[%s]未到期或网站未使用Let\'s Encrypt证书.' % (','.join(tlist)))
             print('|-%s 等待续签[%s].' % (time.strftime('%Y-%m-%d %X',time.localtime()),len(cron_list)))
-            
+
             sucess_list  = []
             err_list = []
             for siteName in cron_list:
@@ -745,10 +753,10 @@ class panelLets:
                     sucess_list.append(siteName)
                 else:
                     err_list.append({"siteName":siteName,"msg":ret['msg']})
-            print("|-任务执行完毕，共需续订[%s]，续订成功[%s]，续订失败[%s]. " % (len(cron_list),len(sucess_list),len(err_list)))    
-            if len(sucess_list) > 0:       
+            print("|-任务执行完毕，共需续订[%s]，续订成功[%s]，续订失败[%s]. " % (len(cron_list),len(sucess_list),len(err_list)))
+            if len(sucess_list) > 0:
                 print("|-续订成功：%s" % (','.join(sucess_list)))
-            if len(err_list) > 0:       
+            if len(err_list) > 0:
                 print("|-续订失败：")
                 for x in err_list:
                     print("    %s ->> %s" % (x['siteName'],x['msg']))

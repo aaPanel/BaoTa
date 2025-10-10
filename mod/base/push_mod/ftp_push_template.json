@@ -1,0 +1,117 @@
+[
+  {
+    "id": "101",
+    "ver": "1",
+    "used": true,
+    "source": "ftp_log",
+    "title": "FTP日志扫描告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.ftp_push",
+      "name": "FTPLogTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "task_type",
+          "name": "风险项",
+          "suffix": "将扫描以上选定的风险项",
+          "type": "multiple-select",
+          "items": [
+            {
+              "value": "login_error",
+              "title": "多次登录失败"
+            },
+            {
+              "value": "area",
+              "title": "登录地区异常"
+            },
+            {
+              "value": "upload_shell",
+              "title": "上传脚本文件"
+            },
+            {
+              "value": "time",
+              "title": "登录时间异常"
+            },
+            {
+              "value": "anonymous",
+              "title": "匿名用户登录"
+            }
+          ],
+          "default": [
+            "login_error",
+            "area",
+            "upload_shell",
+            "time",
+            "anonymous"
+          ]
+        }
+      ],
+      "sorted": [
+        [
+          "task_type"
+        ]
+      ]
+    },
+    "default": {},
+    "advanced_default": {},
+    "send_type_list": [
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": true,
+    "tags": ["soft"],
+    "description": "定期扫描FTP日志文件，识别潜在的安全威胁、异常行为或操作，并根据预定义的规则触发告警通知,帮助系统管理员及时发现并响应可能的入侵行为或其他异常情况",
+    "is_pro": true
+  },
+  {
+    "id": "102",
+    "ver": "1",
+    "used": true,
+    "source": "ftp_user",
+    "title": "FTP用户密码到期提醒",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.ftp_push",
+      "name": "FTPUserTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "help",
+          "name": "到期时间",
+          "type": "link",
+          "unit": "",
+          "style": {
+            "margin-top": "6px"
+          },
+          "list": [
+            "<a href=\"/ftp\">前往FTP设置具体用户到期时间</a>"
+          ],
+          "suffix": ""
+        }
+      ],
+      "sorted": [
+        [
+          "help"
+        ]
+      ]
+    },
+    "default": {},
+    "advanced_default": {},
+    "send_type_list": [
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": true,
+    "tags": ["soft"],
+    "description": "每日检查设置的FTP用户密码是否已过期，如果过期则发送告警通知给管理员，同时根据规则进行FTP用户管理，如自动重置密码、锁定用户等"
+  }
+]

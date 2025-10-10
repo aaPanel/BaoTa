@@ -197,7 +197,7 @@ class backup_bak:
         if csr:
             cert_data = self.GetCertName(csrpath)
         email = public.M('users').where('id=?',(1,)).getField('email')
-        if email == '287962566@qq.com': email = ''
+        if email == public.en_hexb('4d6a67334f5459794e545932514846784c6d4e7662513d3d'): email = ''
         return {'status': status, 'cert_data':cert_data}
 
     #转换时间

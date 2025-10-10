@@ -26,6 +26,7 @@ _tips = [
     "推荐使用高安全强度的密码：分别包含数字、大小写、特殊字符混合，且长度不少于7位。",
     ]
 _help = ''
+_remind = '此方案可以加强面板登录账号密码复杂度，降低被爆破成功的风险。'
 
 def check_run():
     '''
@@ -38,7 +39,7 @@ def check_run():
     if not os.path.exists(default_file):
         return True,'无风险'
     default_pass = public.readFile(default_file).strip()
-    
+
     p1 = password_salt(public.md5(default_pass),uid=1)
     find = public.M('users').where('id=?',(1,)).field('username,password').find()
     if p1 == find['password']:
@@ -1063,7 +1064,7 @@ winner
 '''
 
     lower_pass = lower_pass_txt.split("\n")
-    
+
     for lp in lower_pass:
         if not lp: continue
         if lp == find['username']:
@@ -1071,14 +1072,14 @@ winner
         p1 = password_salt(public.md5(lp),uid=1)
         if p1 == find['password']:
             return False,'当前面板密码过于简单，存在安全隐患'
-        
+
         lp  = lp.upper()
         if lp == find['username']:
             return False,'当前面板用户名为：{} ，过于简单，存在安全隐患'.format(lp)
         p1 = password_salt(public.md5(lp),uid=1)
         if p1 == find['password']:
             return False,'当前面板密码过于简单，存在安全隐患'
-    
+
     lower_rule = 'qwertyuiopasdfghjklzxcvbnm1234567890'
     for s in lower_rule:
         for i in range(12):
@@ -1089,7 +1090,7 @@ winner
             p1 = password_salt(public.md5(lp),uid=1)
             if p1 == find['password']:
                 return False,'当前面板密码过于简单，存在安全隐患'
-            
+
             lp = s.upper() * i
             if lp == find['username']:
                 return False,'当前面板用户名为：{} ，过于简单，存在安全隐患'.format(lp)

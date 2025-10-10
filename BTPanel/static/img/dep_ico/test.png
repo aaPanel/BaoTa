@@ -103,7 +103,7 @@
             position: fixed;
             right: 20px;
             bottom: 300px;
-            font-size: 12px;
+            font-size: var(--el-font-size-small);
             box-sizing: initial;
         }
 
@@ -229,7 +229,7 @@
 	position: absolute;
     top: 10px;
     right: 20px;
-    font-size: 14px;
+    font-size: var(--el-font-size-base);
     color: #fff;
 }
 .solution{
@@ -260,7 +260,7 @@
 	background: #fff;
 	padding: 0 10px;
 	border: none;
-	font-size: 14px;
+	font-size: var(--el-font-size-base);
 	border-radius: 3px;
 	float: left;
     margin-right: 5px
@@ -271,7 +271,7 @@
 	background: yellow;
 	padding: 0 15px;
 	border: none;
-	font-size: 14px;
+	font-size: var(--el-font-size-base);
 	border-radius: 3px;
 	cursor: pointer;
 	float: left;
@@ -281,7 +281,7 @@
 }
 .solution_form .sel {
 	height: 36px;
-	font-size: 14px;
+	font-size: var(--el-font-size-base);
 	color: #333;
 	width: 180px;
 	background:#fff url(Public/images/xiala.png) no-repeat 158px center; 

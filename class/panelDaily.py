@@ -1,469 +1,914 @@
-import os #line:14
-import sys #line:15
-import time #line:16
-import psutil #line:17
-os .chdir ("/www/server/panel")#line:19
-sys .path .insert (0 ,"/www/server/panel")#line:20
-sys .path .insert (0 ,"class/")#line:21
-import public #line:23
-from system import system #line:24
-from panelPlugin import panelPlugin #line:25
-from BTPanel import auth ,cache #line:26
-class panelDaily :#line:28
-    def check_databases (O000OOOO0OOOO00O0 ):#line:30
-        ""#line:31
-        OOOO000000OO0000O =["app_usage","server_status","backup_status","daily"]#line:32
-        import sqlite3 #line:33
-        OOO00OOO00000O0OO =sqlite3 .connect ("/www/server/panel/data/system.db")#line:34
-        O0OOOOOO000000OOO =OOO00OOO00000O0OO .cursor ()#line:35
-        O00O0O000OOOO0OOO =",".join (["'"+OOO0O0000O0OO0O00 +"'"for OOO0O0000O0OO0O00 in OOOO000000OO0000O ])#line:36
-        OO0O0OOOO0000O0O0 =O0OOOOOO000000OOO .execute ("SELECT name FROM sqlite_master WHERE type='table' and name in ({})".format (O00O0O000OOOO0OOO ))#line:37
-        OOOO000OO000OO00O =OO0O0OOOO0000O0O0 .fetchall ()#line:38
-        O000O0OOO0O0OOOO0 =False #line:41
-        OO0OOO00OOO000OO0 =[]#line:42
-        if OOOO000OO000OO00O :#line:43
-            OO0OOO00OOO000OO0 =[O000O0OOO000OO00O [0 ]for O000O0OOO000OO00O in OOOO000OO000OO00O ]#line:44
-        if "app_usage"not in OO0OOO00OOO000OO0 :#line:46
-            O000O0O000000O0OO ='''CREATE TABLE IF NOT EXISTS `app_usage` (
+#coding: utf-8
+#-------------------------------------------------------------------
+# 宝塔Linux面板
+#-------------------------------------------------------------------
+# Copyright (c) 2015-2019 宝塔软件(http:#bt.cn) All rights reserved.
+#-------------------------------------------------------------------
+# Author: linxiao
+# Maintainer： hezhihong
+#-------------------------------------------------------------------
+
+#------------------------------
+# 面板日报
+# 为用户呈现服务器数据概况
+#------------------------------
+import os
+import re
+import sys
+import time
+import psutil
+import json
+import datetime
+
+os.chdir("/www/server/panel")
+sys.path.insert(0, "/www/server/panel")
+sys.path.insert(0, "class/")
+
+import public
+from system import system
+from panelPlugin import panelPlugin
+from BTPanel import auth, cache
+
+class panelDaily:
+    def __init__(self):
+        self.check_databases()
+    def check_databases(self):
+        """检查数据表是否存在"""
+        tables = ["app_usage", "server_status", "backup_status", "daily"]
+        import sqlite3
+        conn = sqlite3.connect("/www/server/panel/data/system.db")
+        cur = conn.cursor()
+        table_key = ",".join(["'"+t+"'" for t in tables])
+        sel_res = cur.execute("SELECT name FROM sqlite_master WHERE type='table' and name in ({})".format(table_key))
+        res = sel_res.fetchall()
+        to_commit = False
+        exists_dbs = []
+        if res:
+            exists_dbs = [d[0] for d in res]
+
+        if "app_usage" not in exists_dbs:
+            csql = '''CREATE TABLE IF NOT EXISTS `app_usage` (
                     `time_key` INTEGER PRIMARY KEY,
                     `app` TEXT,
                     `disks` TEXT,
                     `addtime` DATETIME DEFAULT CURRENT_TIMESTAMP
-                )'''#line:52
-            O0OOOOOO000000OOO .execute (O000O0O000000O0OO )#line:53
-            O000O0OOO0O0OOOO0 =True #line:54
-        if "server_status"not in OO0OOO00OOO000OO0 :#line:56
-            print ("创建server_status表:")#line:57
-            O000O0O000000O0OO ='''CREATE TABLE IF NOT EXISTS `server_status` (
+                )'''
+            cur.execute(csql)
+            to_commit = True
+
+        if "server_status" not in exists_dbs:
+            csql = '''CREATE TABLE IF NOT EXISTS `server_status` (
                     `status` TEXT,
                     `addtime` DATETIME DEFAULT CURRENT_TIMESTAMP
-                )'''#line:61
-            O0OOOOOO000000OOO .execute (O000O0O000000O0OO )#line:62
-            O000O0OOO0O0OOOO0 =True #line:63
-        if "backup_status"not in OO0OOO00OOO000OO0 :#line:65
-            print ("创建备份状态表:")#line:66
-            O000O0O000000O0OO ='''CREATE TABLE IF NOT EXISTS `backup_status` (
+                )'''
+            cur.execute(csql)
+            to_commit = True
+
+        if "backup_status" not in exists_dbs:
+            csql = '''CREATE TABLE IF NOT EXISTS `backup_status` (
                     `id` INTEGER,
                     `target` TEXT,
                     `status` INTEGER,
                     `msg` TEXT DEFAULT "",
                     `addtime` DATETIME DEFAULT CURRENT_TIMESTAMP
-                )'''#line:73
-            O0OOOOOO000000OOO .execute (O000O0O000000O0OO )#line:74
-            O000O0OOO0O0OOOO0 =True #line:75
-        if "daily"not in OO0OOO00OOO000OO0 :#line:77
-            O000O0O000000O0OO ='''CREATE TABLE IF NOT EXISTS `daily` (
+                )'''
+            cur.execute(csql)
+            to_commit = True
+
+        if "daily" not in exists_dbs:
+            csql = '''CREATE TABLE IF NOT EXISTS `daily` (
                     `time_key` INTEGER,
                     `evaluate` INTEGER,
                     `addtime` DATETIME DEFAULT CURRENT_TIMESTAMP
-                )'''#line:82
-            O0OOOOOO000000OOO .execute (O000O0O000000O0OO )#line:83
-            O000O0OOO0O0OOOO0 =True #line:84
-        if O000O0OOO0O0OOOO0 :#line:86
-            OOO00OOO00000O0OO .commit ()#line:87
-        O0OOOOOO000000OOO .close ()#line:88
-        OOO00OOO00000O0OO .close ()#line:89
-        return True #line:90
-    def get_time_key (OO00000O0000OOO00 ,date =None ):#line:92
-        if date is None :#line:93
-            date =time .localtime ()#line:94
-        OO00O0OO0OO0OO0O0 =0 #line:95
-        OO0000OO00000O00O ="%Y%m%d"#line:96
-        if type (date )==time .struct_time :#line:97
-            OO00O0OO0OO0OO0O0 =int (time .strftime (OO0000OO00000O00O ,date ))#line:98
-        if type (date )==str :#line:99
-            OO00O0OO0OO0OO0O0 =int (time .strptime (date ,OO0000OO00000O00O ))#line:100
-        return OO00O0OO0OO0OO0O0 #line:101
-    def store_app_usage (OOOO0O00O000O0O00 ,time_key =None ):#line:103
-        ""#line:111
-        OOOO0O00O000O0O00 .check_databases ()#line:113
-        if time_key is None :#line:115
-            time_key =OOOO0O00O000O0O00 .get_time_key ()#line:116
-        OOO0OOO0O00OO0000 =public .M ("system").dbfile ("system").table ("app_usage")#line:118
-        OOOO0OOO0O0OOOO00 =OOO0OOO0O00OO0000 .field ("time_key").where ("time_key=?",(time_key )).find ()#line:119
-        if OOOO0OOO0O0OOOO00 and "time_key"in OOOO0OOO0O0OOOO00 :#line:120
-            if OOOO0OOO0O0OOOO00 ["time_key"]==time_key :#line:121
-                return True #line:123
-        O000OOO00OOO0O0OO =public .M ('sites').field ('path').select ()#line:125
-        O00OOO00000OO00O0 =0 #line:126
-        for O00O0O0OOOOO0OO00 in O000OOO00OOO0O0OO :#line:127
-            OO00O0OO00OO0O000 =O00O0O0OOOOO0OO00 ["path"]#line:128
-            if OO00O0OO00OO0O000 :#line:129
-                O00OOO00000OO00O0 +=public .get_path_size (OO00O0OO00OO0O000 )#line:130
-        O00000OOOOO0O0O0O =public .get_path_size ("/www/server/data")#line:132
-        O0O000000O0OO00O0 =public .M ("ftps").field ("path").select ()#line:134
-        OOO00O0OOO00OO0OO =0 #line:135
-        for O00O0O0OOOOO0OO00 in O0O000000O0OO00O0 :#line:136
-            O0OOO000O0O0O0OO0 =O00O0O0OOOOO0OO00 ["path"]#line:137
-            if O0OOO000O0O0O0OO0 :#line:138
-                OOO00O0OOO00OO0OO +=public .get_path_size (O0OOO000O0O0O0OO0 )#line:139
-        O000OO0OOOOOO0OOO =public .get_path_size ("/www/server/panel/plugin")#line:141
-        O0OOO00000OOOOOOO =["/www/server/total","/www/server/btwaf","/www/server/coll","/www/server/nginx","/www/server/apache","/www/server/redis"]#line:149
-        for OO0O000O0O0OO0000 in O0OOO00000OOOOOOO :#line:150
-            O000OO0OOOOOO0OOO +=public .get_path_size (OO0O000O0O0OO0000 )#line:151
-        OOO000O000OOO00O0 =system ().GetDiskInfo2 (human =False )#line:153
-        OO0O000OOO0O0OO00 =""#line:154
-        O00O0O0O000O00000 =0 #line:155
-        O000O00O0O0O0O0OO =0 #line:156
-        for OOO00OO00000OO0O0 in OOO000O000OOO00O0 :#line:157
-            O0OOO0OOO00000OOO =OOO00OO00000OO0O0 ["path"]#line:158
-            if OO0O000OOO0O0OO00 :#line:159
-                OO0O000OOO0O0OO00 +="-"#line:160
-            O0O0OOOO0OO0OOOO0 ,OOO0OO00O000O0O00 ,O0OOOOOOOOO0OO0O0 ,O0O00OO00O000OOO0 =OOO00OO00000OO0O0 ["size"]#line:161
-            OOO00OOOOO00OOO0O ,O00000OO00OO0OOO0 ,_O00O00OO0OOO00OO0 ,_O0OOOOO0O0OOO000O =OOO00OO00000OO0O0 ["inodes"]#line:162
-            OO0O000OOO0O0OO00 ="{},{},{},{},{}".format (O0OOO0OOO00000OOO ,OOO0OO00O000O0O00 ,O0O0OOOO0OO0OOOO0 ,O00000OO00OO0OOO0 ,OOO00OOOOO00OOO0O )#line:163
-            if O0OOO0OOO00000OOO =="/":#line:164
-                O00O0O0O000O00000 =O0O0OOOO0OO0OOOO0 #line:165
-                O000O00O0O0O0O0OO =OOO0OO00O000O0O00 #line:166
-        OOOO00O0O0O0OOO00 ="{},{},{},{},{},{}".format (O00O0O0O000O00000 ,O000O00O0O0O0O0OO ,O00OOO00000OO00O0 ,O00000OOOOO0O0O0O ,OOO00O0OOO00OO0OO ,O000OO0OOOOOO0OOO )#line:171
-        OOO0O0OO000000OOO =public .M ("system").dbfile ("system").table ("app_usage").add ("time_key,app,disks",(time_key ,OOOO00O0O0O0OOO00 ,OO0O000OOO0O0OO00 ))#line:173
-        if OOO0O0OO000000OOO ==time_key :#line:174
-            return True #line:175
-        return False #line:178
-    def parse_app_usage_info (O00O0OO0000O00O00 ,O00OOO0O0OOOOOOOO ):#line:180
-        ""#line:181
-        if not O00OOO0O0OOOOOOOO :#line:182
-            return {}#line:183
-        print (O00OOO0O0OOOOOOOO )#line:184
-        O0000OOO0O00OOOOO ,OO00O00OO0OO0OO0O ,O0OOO00O0O0000000 ,OO0O00O00OOOOO000 ,OO00O0000OO00000O ,O0OOOOOOO0000OOO0 =O00OOO0O0OOOOOOOO ["app"].split (",")#line:185
-        OOO0O00O0O0OO0000 =O00OOO0O0OOOOOOOO ["disks"].split ("-")#line:186
-        OOO00OOO0O0O00OOO ={}#line:187
-        for OOO0O0OO0OOO000OO in OOO0O00O0O0OO0000 :#line:188
-            O00OO00000O000000 ,OOOO0OOOOOO00OOOO ,O0O00000O00OO0OO0 ,O00000OO00OO0OO00 ,O0000OOOOOOO0O0O0 =OOO0O0OO0OOO000OO .split (",")#line:189
-            OOO0O0O000OO000O0 ={}#line:190
-            OOO0O0O000OO000O0 ["usage"]=OOOO0OOOOOO00OOOO #line:191
-            OOO0O0O000OO000O0 ["total"]=O0O00000O00OO0OO0 #line:192
-            OOO0O0O000OO000O0 ["iusage"]=O00000OO00OO0OO00 #line:193
-            OOO0O0O000OO000O0 ["itotal"]=O0000OOOOOOO0O0O0 #line:194
-            OOO00OOO0O0O00OOO [O00OO00000O000000 ]=OOO0O0O000OO000O0 #line:195
-        return {"apps":{"disk_total":O0000OOO0O00OOOOO ,"disk_usage":OO00O00OO0OO0OO0O ,"sites":O0OOO00O0O0000000 ,"databases":OO0O00O00OOOOO000 ,"ftps":OO00O0000OO00000O ,"plugins":O0OOOOOOO0000OOO0 },"disks":OOO00OOO0O0O00OOO }#line:206
-    def get_app_usage (O0O00O0OO0OO0OO00 ,O00O0O000OO0O0O0O ):#line:208
-        O000000OO0OO0O0O0 =time .localtime ()#line:210
-        O00OOOOO00000OOOO =O0O00O0OO0OO0OO00 .get_time_key ()#line:211
-        O00OOO0000OO00O00 =time .localtime (time .mktime ((O000000OO0OO0O0O0 .tm_year ,O000000OO0OO0O0O0 .tm_mon ,O000000OO0OO0O0O0 .tm_mday -1 ,0 ,0 ,0 ,0 ,0 ,0 )))#line:214
-        O0OO0O0OO0OO0O0O0 =O0O00O0OO0OO0OO00 .get_time_key (O00OOO0000OO00O00 )#line:215
-        O0O000OO0O0OOOO00 =public .M ("system").dbfile ("system").table ("app_usage").where ("time_key =? or time_key=?",(O00OOOOO00000OOOO ,O0OO0O0OO0OO0O0O0 ))#line:217
-        OO00O00O000OO00OO =O0O000OO0O0OOOO00 .select ()#line:218
-        if type (OO00O00O000OO00OO )==str or not OO00O00O000OO00OO :#line:221
-            return {}#line:222
-        OO00O000O00OO00OO ={}#line:223
-        OO00O0O0OOO0O0O0O ={}#line:224
-        for O0OOO00O0OOO0OOOO in OO00O00O000OO00OO :#line:225
-            if O0OOO00O0OOO0OOOO ["time_key"]==O00OOOOO00000OOOO :#line:226
-                OO00O000O00OO00OO =O0O00O0OO0OO0OO00 .parse_app_usage_info (O0OOO00O0OOO0OOOO )#line:227
-            if O0OOO00O0OOO0OOOO ["time_key"]==O0OO0O0OO0OO0O0O0 :#line:228
-                OO00O0O0OOO0O0O0O =O0O00O0OO0OO0OO00 .parse_app_usage_info (O0OOO00O0OOO0OOOO )#line:229
-        if not OO00O000O00OO00OO :#line:231
-            return {}#line:232
-        for O000O0000OO0OOO00 ,OO0O0OOOO0O0O0000 in OO00O000O00OO00OO ["disks"].items ():#line:235
-            O0000OO0O0OO0O00O =int (OO0O0OOOO0O0O0000 ["total"])#line:236
-            OOOOOOOO000O00OOO =int (OO0O0OOOO0O0O0000 ["usage"])#line:237
-            OOO00O0OOO00O0OO0 =int (OO0O0OOOO0O0O0000 ["itotal"])#line:239
-            O0O0OOOOOO0000O00 =int (OO0O0OOOO0O0O0000 ["iusage"])#line:240
-            if OO00O0O0OOO0O0O0O and O000O0000OO0OOO00 in OO00O0O0OOO0O0O0O ["disks"].keys ():#line:242
-                OO0OO0O0OOO0000O0 =OO00O0O0OOO0O0O0O ["disks"]#line:243
-                OO00OOO00OO00O0OO =OO0OO0O0OOO0000O0 [O000O0000OO0OOO00 ]#line:244
-                O0OOO00OO0O00OOO0 =int (OO00OOO00OO00O0OO ["total"])#line:245
-                if O0OOO00OO0O00OOO0 ==O0000OO0O0OO0O00O :#line:246
-                    OOO0O0OOOO00OOO0O =int (OO00OOO00OO00O0OO ["usage"])#line:247
-                    OO0000O0O00OOOOO0 =0 #line:248
-                    OO00000OOOOO0OO00 =OOOOOOOO000O00OOO -OOO0O0OOOO00OOO0O #line:249
-                    if OO00000OOOOO0OO00 >0 :#line:250
-                        OO0000O0O00OOOOO0 =round (OO00000OOOOO0OO00 /O0000OO0O0OO0O00O ,2 )#line:251
-                    OO0O0OOOO0O0O0000 ["incr"]=OO0000O0O00OOOOO0 #line:252
-                OOO00000OOO000OO0 =int (OO00OOO00OO00O0OO ["itotal"])#line:255
-                if True :#line:256
-                    O0O0O0OOOOOOO0O0O =int (OO00OOO00OO00O0OO ["iusage"])#line:257
-                    OOOO00O000000O000 =0 #line:258
-                    OO00000OOOOO0OO00 =O0O0OOOOOO0000O00 -O0O0O0OOOOOOO0O0O #line:259
-                    if OO00000OOOOO0OO00 >0 :#line:260
-                        OOOO00O000000O000 =round (OO00000OOOOO0OO00 /OOO00O0OOO00O0OO0 ,2 )#line:261
-                    OO0O0OOOO0O0O0000 ["iincr"]=OOOO00O000000O000 #line:262
-        OO0O000OO0OO00OO0 =OO00O000O00OO00OO ["apps"]#line:266
-        O000OOOOOO0000O00 =int (OO0O000OO0OO00OO0 ["disk_total"])#line:267
-        if OO00O0O0OOO0O0O0O and OO00O0O0OOO0O0O0O ["apps"]["disk_total"]==OO0O000OO0OO00OO0 ["disk_total"]:#line:268
-            OO00O0OOO0OO0O000 =OO00O0O0OOO0O0O0O ["apps"]#line:269
-            for OOO0OO0OOO00O000O ,O0O0O0OO0O000OO00 in OO0O000OO0OO00OO0 .items ():#line:270
-                if OOO0OO0OOO00O000O =="disks":continue #line:271
-                if OOO0OO0OOO00O000O =="disk_total":continue #line:272
-                if OOO0OO0OOO00O000O =="disk_usage":continue #line:273
-                OO00O000O000OO0O0 =0 #line:274
-                O000OO0O0000OO000 =int (O0O0O0OO0O000OO00 )-int (OO00O0OOO0OO0O000 [OOO0OO0OOO00O000O ])#line:275
-                if O000OO0O0000OO000 >0 :#line:276
-                    OO00O000O000OO0O0 =round (O000OO0O0000OO000 /O000OOOOOO0000O00 ,2 )#line:277
-                OO0O000OO0OO00OO0 [OOO0OO0OOO00O000O ]={"val":O0O0O0OO0O000OO00 ,"incr":OO00O000O000OO0O0 }#line:282
-        return OO00O000O00OO00OO #line:283
-    def get_timestamp_interval (O0O0O00000OO0O000 ,O0O0O0000O0OO00OO ):#line:285
-        OOOO000000O0O0OO0 =None #line:286
-        O0OOOO0O0000000O0 =None #line:287
-        OOOO000000O0O0OO0 =time .mktime ((O0O0O0000O0OO00OO .tm_year ,O0O0O0000O0OO00OO .tm_mon ,O0O0O0000O0OO00OO .tm_mday ,0 ,0 ,0 ,0 ,0 ,0 ))#line:289
-        O0OOOO0O0000000O0 =time .mktime ((O0O0O0000O0OO00OO .tm_year ,O0O0O0000O0OO00OO .tm_mon ,O0O0O0000O0OO00OO .tm_mday ,23 ,59 ,59 ,0 ,0 ,0 ))#line:291
-        return OOOO000000O0O0OO0 ,O0OOOO0O0000000O0 #line:292
-    def check_server (OOO0O0O00O00OO000 ):#line:295
-        try :#line:296
-            O000O0OO0OOO0OO00 =["php","nginx","apache","mysql","tomcat","pure-ftpd","redis","memcached"]#line:299
-            O0O0O0O000OOOOOO0 =panelPlugin ()#line:300
-            OO00O00OO000O00OO =public .dict_obj ()#line:301
-            O00OOO00OO00OO0OO =""#line:302
-            for OO0O0OOO0OO0O0OOO in O000O0OO0OOO0OO00 :#line:303
-                OOO0OO000OO00OOO0 =False #line:304
-                OO0OOOO0O0OO0000O =False #line:305
-                OO00O00OO000O00OO .name =OO0O0OOO0OO0O0OOO #line:306
-                O0O000O00000OO00O =O0O0O0O000OOOOOO0 .getPluginInfo (OO00O00OO000O00OO )#line:307
-                if not O0O000O00000OO00O :#line:308
-                    continue #line:309
-                OOO00OOOO0O00OO00 =O0O000O00000OO00O ["versions"]#line:310
-                for O000O0OOO0O00OOO0 in OOO00OOOO0O00OO00 :#line:312
-                    if O000O0OOO0O00OOO0 ["status"]:#line:315
-                        OO0OOOO0O0OO0000O =True #line:316
-                    if "run"in O000O0OOO0O00OOO0 .keys ()and O000O0OOO0O00OOO0 ["run"]:#line:317
-                        OO0OOOO0O0OO0000O =True #line:319
-                        OOO0OO000OO00OOO0 =True #line:320
-                        break #line:321
-                OOO00OO0000000O0O =0 #line:322
-                if OO0OOOO0O0OO0000O :#line:323
-                    OOO00OO0000000O0O =1 #line:324
-                    if not OOO0OO000OO00OOO0 :#line:326
-                        OOO00OO0000000O0O =2 #line:327
-                O00OOO00OO00OO0OO +=str (OOO00OO0000000O0O )#line:328
-            if '2'in O00OOO00OO00OO0OO :#line:332
-                public .M ("system").dbfile ("server_status").add ("status, addtime",(O00OOO00OO00OO0OO ,time .time ()))#line:334
-        except Exception as O00OO00OOOO0000O0 :#line:335
-            return True #line:337
-    def get_daily_data (OOOOO00OO0O0OO0OO ,OO0OOOO0O000OOO00 ):#line:339
-        ""#line:340
-        O00O000O000OOOOOO ="IS_PRO_OR_LTD_FOR_PANEL_DAILY"#line:342
-        O00OOOOOOO0O0O0OO =cache .get (O00O000O000OOOOOO )#line:343
-        if not O00OOOOOOO0O0O0OO :#line:344
-            try :#line:345
-                O0O0O0O00O00OOO00 =panelPlugin ()#line:346
-                O0OOOOOOO0OO0000O =O0O0O0O00O00OOO00 .get_soft_list (OO0OOOO0O000OOO00 )#line:347
-                if O0OOOOOOO0OO0000O ["pro"]<0 and O0OOOOOOO0OO0000O ["ltd"]<0 :#line:348
-                    if os .path .exists ("/www/server/panel/data/start_daily.pl"):#line:349
-                        os .remove ("/www/server/panel/data/start_daily.pl")#line:350
-                    return {"status":False ,"msg":"No authorization.","data":[],"date":OO0OOOO0O000OOO00 .date }#line:356
-                cache .set (O00O000O000OOOOOO ,True ,86400 )#line:357
-            except :#line:358
-                return {"status":False ,"msg":"获取不到授权信息，请检查网络是否正常","data":[],"date":OO0OOOO0O000OOO00 .date }#line:364
-        if not os .path .exists ("/www/server/panel/data/start_daily.pl"):#line:367
-            public .writeFile ("/www/server/panel/data/start_daily.pl",OO0OOOO0O000OOO00 .date )#line:368
-        return OOOOO00OO0O0OO0OO .get_daily_data_local (OO0OOOO0O000OOO00 .date )#line:369
-    def get_daily_data_local (OOO00O00O000O0O00 ,OO0OOO0OO0000O000 ):#line:371
-        OO00OOO00OOO00OO0 =time .strptime (OO0OOO0OO0000O000 ,"%Y%m%d")#line:372
-        O0O000OO0OOOOO00O =OOO00O00O000O0O00 .get_time_key (OO00OOO00OOO00OO0 )#line:373
-        OOO00O00O000O0O00 .check_databases ()#line:375
-        O0O0O00OO00OO0OOO =time .strftime ("%Y-%m-%d",OO00OOO00OOO00OO0 )#line:377
-        O0OOO00O0O00OOOO0 =0 #line:378
-        OOOOOO000O00OO00O ,O0O00O000O0O00OOO =OOO00O00O000O0O00 .get_timestamp_interval (OO00OOO00OOO00OO0 )#line:379
-        O0OO0OOO0O0OOOOO0 =public .M ("system").dbfile ("system")#line:380
-        OO0OO00O00OOOOOO0 =O0OO0OOO0O0OOOOO0 .table ("process_high_percent")#line:381
-        O00O0OOO00O0O0000 =OO0OO00O00OOOOOO0 .where ("addtime>=? and addtime<=?",(OOOOOO000O00OO00O ,O0O00O000O0O00OOO )).order ("addtime").select ()#line:382
-        O00O0O000O0OO0000 =[]#line:386
-        if len (O00O0OOO00O0O0000 )>0 :#line:387
-            for OOO0000OO0OOOOO0O in O00O0OOO00O0O0000 :#line:389
-                OOO000O000O00O00O =int (OOO0000OO0OOOOO0O ["cpu_percent"])#line:391
-                if OOO000O000O00O00O >=80 :#line:392
-                    O00O0O000O0OO0000 .append ({"time":OOO0000OO0OOOOO0O ["addtime"],"name":OOO0000OO0OOOOO0O ["name"],"pid":OOO0000OO0OOOOO0O ["pid"],"percent":OOO000O000O00O00O })#line:400
-        O0O0OOOO00O0O0O00 =len (O00O0O000O0OO0000 )#line:402
-        OO0000O00O0OOO00O =0 #line:403
-        OOO0O0O0O0000OOO0 =""#line:404
-        if O0O0OOOO00O0O0O00 ==0 :#line:405
-            OO0000O00O0OOO00O =20 #line:406
-        else :#line:407
-            OOO0O0O0O0000OOO0 ="CPU出现过载情况"#line:408
-        O0OOOOO000O0OOOOO ={"ex":O0O0OOOO00O0O0O00 ,"detail":O00O0O000O0OO0000 }#line:412
-        O000000OO0O00000O =[]#line:415
-        if len (O00O0OOO00O0O0000 )>0 :#line:416
-            for OOO0000OO0OOOOO0O in O00O0OOO00O0O0000 :#line:418
-                O0O000O0OOOOO00O0 =float (OOO0000OO0OOOOO0O ["memory"])#line:420
-                O0O0O0O0O0000O0OO =psutil .virtual_memory ().total #line:421
-                OO0000OOO00O0000O =round (100 *O0O000O0OOOOO00O0 /O0O0O0O0O0000O0OO ,2 )#line:422
-                if OO0000OOO00O0000O >=80 :#line:423
-                    O000000OO0O00000O .append ({"time":OOO0000OO0OOOOO0O ["addtime"],"name":OOO0000OO0OOOOO0O ["name"],"pid":OOO0000OO0OOOOO0O ["pid"],"percent":OO0000OOO00O0000O })#line:431
-        O0000OOO000O0OO00 =len (O000000OO0O00000O )#line:432
-        OOO00O0OOOOOO0OO0 =""#line:433
-        O0OO000O00O0O0000 =0 #line:434
-        if O0000OOO000O0OO00 ==0 :#line:435
-            O0OO000O00O0O0000 =20 #line:436
-        else :#line:437
-            if O0000OOO000O0OO00 >1 :#line:438
-                OOO00O0OOOOOO0OO0 ="内存在多个时间点出现占用80%"#line:439
-            else :#line:440
-                OOO00O0OOOOOO0OO0 ="内存出现占用超过80%"#line:441
-        O0OOO0OOOOOO00O00 ={"ex":O0000OOO000O0OO00 ,"detail":O000000OO0O00000O }#line:445
-        OOO0OOOOOO0OO0O00 =public .M ("system").dbfile ("system").table ("app_usage").where ("time_key=?",(O0O000OO0OOOOO00O ,))#line:449
-        O0000OO0OO0OOOO0O =OOO0OOOOOO0OO0O00 .select ()#line:450
-        O000000O0OO00OO0O ={}#line:451
-        if O0000OO0OO0OOOO0O and type (O0000OO0OO0OOOO0O )!=str :#line:452
-            O000000O0OO00OO0O =OOO00O00O000O0O00 .parse_app_usage_info (O0000OO0OO0OOOO0O [0 ])#line:453
-        OOO0O000OOO00O0O0 =[]#line:454
-        if O000000O0OO00OO0O :#line:455
-            OOOO000O00O0OO0O0 =O000000O0OO00OO0O ["disks"]#line:456
-            for OOOOO000OOO000OO0 ,OOO0OO0O0OO0OOOOO in OOOO000O00O0OO0O0 .items ():#line:457
-                O000OO0OOOOO000O0 =int (OOO0OO0O0OO0OOOOO ["usage"])#line:458
-                O0O0O0O0O0000O0OO =int (OOO0OO0O0OO0OOOOO ["total"])#line:459
-                O00OO00OOO00000O0 =round (O000OO0OOOOO000O0 /O0O0O0O0O0000O0OO ,2 )#line:460
-                O000OOOOOO0O0O0OO =int (OOO0OO0O0OO0OOOOO ["iusage"])#line:462
-                O000000O0O0OO0000 =int (OOO0OO0O0OO0OOOOO ["itotal"])#line:463
-                if O000000O0O0OO0000 >0 :#line:464
-                    OO0OOO0OOO0O00000 =round (O000OOOOOO0O0O0OO /O000000O0O0OO0000 ,2 )#line:465
-                else :#line:466
-                    OO0OOO0OOO0O00000 =0 #line:467
-                if O00OO00OOO00000O0 >=0.8 :#line:471
-                    OOO0O000OOO00O0O0 .append ({"name":OOOOO000OOO000OO0 ,"percent":O00OO00OOO00000O0 *100 ,"ipercent":OO0OOO0OOO0O00000 *100 ,"usage":O000OO0OOOOO000O0 ,"total":O0O0O0O0O0000O0OO ,"iusage":O000OOOOOO0O0O0OO ,"itotal":O000000O0O0OO0000 })#line:480
-        OOOO0OO0OO00OO0O0 =len (OOO0O000OOO00O0O0 )#line:482
-        OO0O00OOO0OOOO0O0 =""#line:483
-        OO0O0O000000O0O00 =0 #line:484
-        if OOOO0OO0OO00OO0O0 ==0 :#line:485
-            OO0O0O000000O0O00 =20 #line:486
-        else :#line:487
-            OO0O00OOO0OOOO0O0 ="有磁盘空间占用已经超过80%"#line:488
-        O00O000O000O00O00 ={"ex":OOOO0OO0OO00OO0O0 ,"detail":OOO0O000OOO00O0O0 }#line:493
-        O00O0O0OO000O0OOO =public .M ("system").dbfile ("system").table ("server_status").where ("addtime>=? and addtime<=?",(OOOOOO000O00OO00O ,O0O00O000O0O00OOO ,)).order ("addtime desc").select ()#line:497
-        OO00OO000OOO000O0 =["php","nginx","apache","mysql","tomcat","pure-ftpd","redis","memcached"]#line:502
-        OO00000000O0000O0 ={}#line:504
-        O0O000OO000O000OO =0 #line:505
-        O00O0O0OOOOOOOOO0 =""#line:506
-        for OO0O0000OO0OO0OO0 ,OO00OO0O00O00OO0O in enumerate (OO00OO000OOO000O0 ):#line:507
-            if OO00OO0O00O00OO0O =="pure-ftpd":#line:508
-                OO00OO0O00O00OO0O ="ftpd"#line:509
-            O0000O0000000O0OO =0 #line:510
-            O0O00000OO00OOOOO =[]#line:511
-            for OOO0O00000O000O0O in O00O0O0OO000O0OOO :#line:512
-                _O0OOO0O000000OOOO =OOO0O00000O000O0O ["status"]#line:515
-                if OO0O0000OO0OO0OO0 <len (_O0OOO0O000000OOOO ):#line:516
-                    if _O0OOO0O000000OOOO [OO0O0000OO0OO0OO0 ]=="2":#line:517
-                        O0O00000OO00OOOOO .append ({"time":OOO0O00000O000O0O ["addtime"],"desc":"退出"})#line:518
-                        O0000O0000000O0OO +=1 #line:519
-                        O0O000OO000O000OO +=1 #line:520
-            OO00000000O0000O0 [OO00OO0O00O00OO0O ]={"ex":O0000O0000000O0OO ,"detail":O0O00000OO00OOOOO }#line:525
-        OOOOO0OO00O00O0O0 =0 #line:527
-        if O0O000OO000O000OO ==0 :#line:528
-            OOOOO0OO00O00O0O0 =20 #line:529
-        else :#line:530
-            O00O0O0OOOOOOOOO0 ="系统级服务有出现异常退出情况"#line:531
-        O0OO00O0O00OOO0OO =public .M ("crontab").field ("sName,sType").where ("sType in (?, ?)",("database","site",)).select ()#line:534
-        O0000O0O000O0O0OO =set (O0OO0O0O0OO000O00 ["sName"]for O0OO0O0O0OO000O00 in O0OO00O0O00OOO0OO if O0OO0O0O0OO000O00 ["sType"]=="database")#line:537
-        OO0O0OOO000O000O0 ="ALL"in O0000O0O000O0O0OO #line:538
-        OOO00O0OOOOOO0O00 =set (O0O0OOOOOOO0000O0 ["sName"]for O0O0OOOOOOO0000O0 in O0OO00O0O00OOO0OO if O0O0OOOOOOO0000O0 ["sType"]=="site")#line:539
-        O0OO00O0O0OOO0000 ="ALL"in OOO00O0OOOOOO0O00 #line:540
-        O0000OOO00OO00OOO =[]#line:541
-        OOOO00OOO0O000O0O =[]#line:542
-        if not OO0O0OOO000O000O0 :#line:543
-            O000OO00000000O00 =public .M ("databases").field ("name").select ()#line:544
-            for OO000O00O00O00OOO in O000OO00000000O00 :#line:545
-                O0000000OO0000000 =OO000O00O00O00OOO ["name"]#line:546
-                if O0000000OO0000000 not in O0000O0O000O0O0OO :#line:547
-                    O0000OOO00OO00OOO .append ({"name":O0000000OO0000000 })#line:548
-        if not O0OO00O0O0OOO0000 :#line:550
-            O0OO000000O00O0O0 =public .M ("sites").field ("name").select ()#line:551
-            for O0O00OOO0OOOO000O in O0OO000000O00O0O0 :#line:552
-                OOO0O0OO00O000O00 =O0O00OOO0OOOO000O ["name"]#line:553
-                if OOO0O0OO00O000O00 not in OOO00O0OOOOOO0O00 :#line:554
-                    OOOO00OOO0O000O0O .append ({"name":OOO0O0OO00O000O00 })#line:555
-        O00OO0O00OOO0O0OO =public .M ("system").dbfile ("system").table ("backup_status").where ("addtime>=? and addtime<=?",(OOOOOO000O00OO00O ,O0O00O000O0O00OOO )).select ()#line:558
-        OOO000O00OO0O000O ={"database":{"no_backup":O0000OOO00OO00OOO ,"backup":[]},"site":{"no_backup":OOOO00OOO0O000O0O ,"backup":[]},"path":{"no_backup":[],"backup":[]}}#line:573
-        O00OOOO0O0OOO0OOO =0 #line:574
-        for O000OOO00O0OOO00O in O00OO0O00OOO0O0OO :#line:575
-            OO00OOO0OOO0O0OOO =O000OOO00O0OOO00O ["status"]#line:576
-            if OO00OOO0OOO0O0OOO :#line:577
-                continue #line:578
-            O00OOOO0O0OOO0OOO +=1 #line:580
-            O0000OO0O00O00000 =O000OOO00O0OOO00O ["id"]#line:581
-            O00OO0O00OOOOO000 =public .M ("crontab").where ("id=?",(O0000OO0O00O00000 )).find ()#line:582
-            if not O00OO0O00OOOOO000 :#line:583
-                continue #line:584
-            O000O000OO00OOO00 =O00OO0O00OOOOO000 ["sType"]#line:585
-            if not O000O000OO00OOO00 :#line:586
-                continue #line:587
-            OO000O0OOOOOOO000 =O00OO0O00OOOOO000 ["name"]#line:588
-            OOOOOO0000OO000O0 =O000OOO00O0OOO00O ["addtime"]#line:589
-            O0OO0O00O000OO00O =O000OOO00O0OOO00O ["target"]#line:590
-            if O000O000OO00OOO00 not in OOO000O00OO0O000O .keys ():#line:591
-                OOO000O00OO0O000O [O000O000OO00OOO00 ]={}#line:592
-                OOO000O00OO0O000O [O000O000OO00OOO00 ]["backup"]=[]#line:593
-                OOO000O00OO0O000O [O000O000OO00OOO00 ]["no_backup"]=[]#line:594
-            OOO000O00OO0O000O [O000O000OO00OOO00 ]["backup"].append ({"name":OO000O0OOOOOOO000 ,"target":O0OO0O00O000OO00O ,"status":OO00OOO0OOO0O0OOO ,"target":O0OO0O00O000OO00O ,"time":OOOOOO0000OO000O0 })#line:601
-        O0OO0OO00O000O0O0 =""#line:603
-        O0O000O0OOO0OOO0O =0 #line:604
-        if O00OOOO0O0OOO0OOO ==0 :#line:605
-            O0O000O0OOO0OOO0O =20 #line:606
-        else :#line:607
-            O0OO0OO00O000O0O0 ="有计划任务备份失败"#line:608
-        if len (O0000OOO00OO00OOO )==0 :#line:610
-            O0O000O0OOO0OOO0O +=10 #line:611
-        else :#line:612
-            if O0OO0OO00O000O0O0 :#line:613
-                O0OO0OO00O000O0O0 +=";"#line:614
-            O0OO0OO00O000O0O0 +="有数据库未及时备份"#line:615
-        if len (OOOO00OOO0O000O0O )==0 :#line:617
-            O0O000O0OOO0OOO0O +=10 #line:618
-        else :#line:619
-            if O0OO0OO00O000O0O0 :#line:620
-                O0OO0OO00O000O0O0 +=";"#line:621
-            O0OO0OO00O000O0O0 +="有网站未备份"#line:622
-        OO00OOOOOOO0O0OO0 =0 #line:625
-        O0O000O0OOOOOO0O0 =public .M ('logs').where ('addtime like "{}%" and type=?'.format (O0O0O00OO00OO0OOO ),('用户登录',)).select ()#line:626
-        OOO0000O0OO00O00O =[]#line:627
-        if O0O000O0OOOOOO0O0 and type (O0O000O0OOOOOO0O0 )==list :#line:628
-            for OOOO00O0OO0O00OOO in O0O000O0OOOOOO0O0 :#line:629
-                O0O00O00OO00O0O00 =OOOO00O0OO0O00OOO ["log"]#line:630
-                if O0O00O00OO00O0O00 .find ("失败")>=0 or O0O00O00OO00O0O00 .find ("错误")>=0 :#line:631
-                    OO00OOOOOOO0O0OO0 +=1 #line:632
-                    OOO0000O0OO00O00O .append ({"time":time .mktime (time .strptime (OOOO00O0OO0O00OOO ["addtime"],"%Y-%m-%d %H:%M:%S")),"desc":OOOO00O0OO0O00OOO ["log"],"username":OOOO00O0OO0O00OOO ["username"],})#line:637
-            OOO0000O0OO00O00O .sort (key =lambda O000O00OOOOOOOO0O :O000O00OOOOOOOO0O ["time"])#line:638
-        O0O00OO0O0OO0OO0O =public .M ('logs').where ('type=?',('SSH安全',)).where ("addtime like '{}%'".format (O0O0O00OO00OO0OOO ),()).select ()#line:640
-        O000O000OOOOO000O =[]#line:642
-        OO00O0000OOOO0OOO =0 #line:643
-        if O0O00OO0O0OO0OO0O :#line:644
-            for OOOO00O0OO0O00OOO in O0O00OO0O0OO0OO0O :#line:645
-                O0O00O00OO00O0O00 =OOOO00O0OO0O00OOO ["log"]#line:646
-                if O0O00O00OO00O0O00 .find ("存在异常")>=0 :#line:647
-                    OO00O0000OOOO0OOO +=1 #line:648
-                    O000O000OOOOO000O .append ({"time":time .mktime (time .strptime (OOOO00O0OO0O00OOO ["addtime"],"%Y-%m-%d %H:%M:%S")),"desc":OOOO00O0OO0O00OOO ["log"],"username":OOOO00O0OO0O00OOO ["username"]})#line:653
-            O000O000OOOOO000O .sort (key =lambda O000OOOO0000O00O0 :O000OOOO0000O00O0 ["time"])#line:654
-        O0O0OO0OO000O000O =""#line:656
-        O0000O0O0OOO0O0O0 =0 #line:657
-        if OO00O0000OOOO0OOO ==0 :#line:658
-            O0000O0O0OOO0O0O0 =10 #line:659
-        else :#line:660
-            O0O0OO0OO000O000O ="SSH有异常登录"#line:661
-        if OO00OOOOOOO0O0OO0 ==0 :#line:663
-            O0000O0O0OOO0O0O0 +=10 #line:664
-        else :#line:665
-            if OO00OOOOOOO0O0OO0 >10 :#line:666
-                O0000O0O0OOO0O0O0 -=10 #line:667
-            if O0O0OO0OO000O000O :#line:668
-                O0O0OO0OO000O000O +=";"#line:669
-            O0O0OO0OO000O000O +="面板登录有错误".format (OO00OOOOOOO0O0OO0 )#line:670
-        O00O0O0OO000O0OOO ={"panel":{"ex":OO00OOOOOOO0O0OO0 ,"detail":OOO0000O0OO00O00O },"ssh":{"ex":OO00O0000OOOO0OOO ,"detail":O000O000OOOOO000O }}#line:680
-        O0OOO00O0O00OOOO0 =OO0000O00O0OOO00O +O0OO000O00O0O0000 +OO0O0O000000O0O00 +OOOOO0OO00O00O0O0 +O0O000O0OOO0OOO0O +O0000O0O0OOO0O0O0 #line:682
-        OOO00OO00000O0OO0 =[OOO0O0O0O0000OOO0 ,OOO00O0OOOOOO0OO0 ,OO0O00OOO0OOOO0O0 ,O00O0O0OOOOOOOOO0 ,O0OO0OO00O000O0O0 ,O0O0OO0OO000O000O ]#line:683
-        O00000OOO00O0O000 =[]#line:684
-        for OO0OO0O0OOOO0000O in OOO00OO00000O0OO0 :#line:685
-            if OO0OO0O0OOOO0000O :#line:686
-                if OO0OO0O0OOOO0000O .find (";")>=0 :#line:687
-                    for O000O0OO00000OOO0 in OO0OO0O0OOOO0000O .split (";"):#line:688
-                        O00000OOO00O0O000 .append (O000O0OO00000OOO0 )#line:689
-                else :#line:690
-                    O00000OOO00O0O000 .append (OO0OO0O0OOOO0000O )#line:691
-        if not O00000OOO00O0O000 :#line:693
-            O00000OOO00O0O000 .append ("服务器运行正常，请继续保持！")#line:694
-        OO00O0OOOOO00000O =OOO00O00O000O0O00 .evaluate (O0OOO00O0O00OOOO0 )#line:698
-        return {"data":{"cpu":O0OOOOO000O0OOOOO ,"ram":O0OOO0OOOOOO00O00 ,"disk":O00O000O000O00O00 ,"server":OO00000000O0000O0 ,"backup":OOO000O00OO0O000O ,"exception":O00O0O0OO000O0OOO ,},"evaluate":OO00O0OOOOO00000O ,"score":O0OOO00O0O00OOOO0 ,"date":O0O000OO0OOOOO00O ,"summary":O00000OOO00O0O000 ,"status":True }#line:715
-    def evaluate (O0O0000O0000OO000 ,O0O0OOO00OO00O0OO ):#line:717
-        O0OO0000OOO0000O0 =""#line:718
-        if O0O0OOO00OO00O0OO >=100 :#line:719
-            O0OO0000OOO0000O0 ="正常"#line:720
-        elif O0O0OOO00OO00O0OO >=80 :#line:721
-            O0OO0000OOO0000O0 ="良好"#line:722
-        else :#line:723
-            O0OO0000OOO0000O0 ="一般"#line:724
-        return O0OO0000OOO0000O0 #line:725
-    def get_daily_list (O00O00OO00OOO0OOO ,O0000O0O0O000O0O0 ):#line:727
-        OO0O0OO0000OO0O00 =public .M ("system").dbfile ("system").table ("daily").where ("time_key>?",0 ).select ()#line:728
-        O000O0OOOO0O0000O =[]#line:729
-        for O0OO000000OOO0OOO in OO0O0OO0000OO0O00 :#line:730
-            O0OO000000OOO0OOO ["evaluate"]=O00O00OO00OOO0OOO .evaluate (O0OO000000OOO0OOO ["evaluate"])#line:731
-            O000O0OOOO0O0000O .append (O0OO000000OOO0OOO )#line:732
-        return O000O0OOOO0O0000O 
+                )'''
+            cur.execute(csql)
+            to_commit = True
+
+        if to_commit:
+            conn.commit()
+        cur.close()
+        conn.close()
+        return True
+
+    def get_time_key(self, date=None):
+        if date is None:
+            date = time.localtime()
+        time_key = 0
+        time_key_format = "%Y%m%d"
+        if type(date) == time.struct_time:
+            time_key = int(time.strftime(time_key_format, date))
+        if type(date) == str:
+            time_key = int(time.strptime(date, time_key_format))
+        return time_key
+    
+    def check_daily_status(self,get=None):
+        if os.path.exists('/www/server/panel/data/start_daily.pl'):
+            return True
+        else:
+            return False
+    def set_daily_status(self,get=None):
+        set_status=get.status
+        if set_status == "start":
+            public.set_module_logs('daily', 'set_daily_status', 1)
+            date = time.time()
+            yesterday_date_str = public.format_date("%Y%m%d", date - 86400)
+            public.writeFile('/www/server/panel/data/start_daily.pl', yesterday_date_str)
+            return public.returnMsg(True, '开启成功')
+        elif set_status == "stop":
+            if os.path.exists('/www/server/panel/data/start_daily.pl'):
+                os.remove('/www/server/panel/data/start_daily.pl')
+                return public.returnMsg(True, '关闭成功')
+
+    def store_app_usage(self, time_key=None):
+        """存储应用磁盘空间使用情况
+
+        应用分类:
+        网站,数据库,FTP,插件
+
+        磁盘:
+        名称,磁盘1已使用,磁盘1总空间-名称,磁盘2已使用,磁盘2总空间
+        """
+
+        self.check_databases()
+
+        if time_key is None:
+            time_key = self.get_time_key()
+        # 重复存取判断
+        import db
+        sql = db.Sql().dbfile('system')
+        sql1 = sql.table("system").table("app_usage")
+        record = sql1.field("time_key").where("time_key=?", (time_key)).find()
+        if record and "time_key" in record:
+            if record["time_key"] == time_key:
+                return True
+
+        site_paths = public.M('sites').field('path').select()
+        site_path_size = 0
+        for p in site_paths:
+            site_path = p["path"]
+            if site_path:
+                site_path_size += public.get_path_size(site_path)
+
+        database_size = public.get_path_size("/www/server/data")
+
+        ftp_paths = public.M("ftps").field("path").select()
+        ftp_path_size = 0
+        for p in ftp_paths:
+            ftp_path = p["path"]
+            if ftp_path:
+                ftp_path_size += public.get_path_size(ftp_path)
+
+        plugins_size = public.get_path_size("/www/server/panel/plugin")
+        other_plugin_dirs = [
+            "/www/server/total",
+            "/www/server/btwaf",
+            "/www/server/coll",
+            "/www/server/nginx",
+            "/www/server/apache",
+            "/www/server/redis"
+        ]
+        for plugin_path in other_plugin_dirs:
+            plugins_size += public.get_path_size(plugin_path)
+
+
+        wwwlogs_size=public.get_path_size("/www/wwwlogs")
+
+        default_backup_path = '/www/backup'
+        backup_path = public.M('config').where("id=?", (1,)).getField('backup_path')
+        if backup_path: 
+            if os.path.exists(backup_path):
+                default_backup_path = backup_path
+        backup_size=public.get_path_size(default_backup_path)
+
+
+        disk_info = system().GetDiskInfo2(human=False)
+        disk_line = ""
+        disk_total = 0
+        disk_usage = 0
+        for info in disk_info:
+            disk_name = info["path"].replace("-", "_")
+            if disk_line:
+                disk_line += "-"
+            t, u, un, per = info["size"]
+            it, iu, _1, _2 = info["inodes"]
+            n_disk_line = "{},{},{},{},{}".format(disk_name, u, t, iu, it)
+            if disk_name == "/":
+                disk_total = t
+                disk_usage = u
+
+            disk_line =  disk_line + n_disk_line
+
+        # usage_rate = round(disk_use_size / disk_total_size, 2)
+
+        app_line = "{},{},{},{},{},{}".format(disk_total, disk_usage, site_path_size, database_size, ftp_path_size, plugins_size,wwwlogs_size,backup_size)
+        res = public.M("system").dbfile("system").table("app_usage").add("time_key,app,disks",
+            (time_key, app_line, disk_line))
+        if res == time_key:
+            return True
+        return False
+
+    def parse_char_unit(self, num_str):
+        num_val = 0
+        try:
+            num_val = float(num_str)
+        except:
+            usage = num_str
+            if usage.find("G") != -1:
+                usage = usage.replace("G", "")
+                num_val = float(usage) * 1024 * 1024 * 1024
+            elif usage.find("M") != -1:
+                usage = usage.replace("M", "")
+                num_val = float(usage) * 1024 * 1024
+            else:
+                num_val = float(usage)
+        return num_val
+
+    def parse_app_usage_info(self, info):
+        """解析空间占用信息"""
+        if not info:
+            return {}
+        
+        app_data = info["app"].split(",")
+        if len(app_data) == 8:
+            disk_total, disk_usage, sites, databases, ftps, plugins, logs, backup= info["app"].split(",")
+        elif len(app_data) == 6:
+            disk_total, disk_usage, sites, databases, ftps, plugins = info["app"].split(",")
+            logs = 0
+            backup = 0
+
+        disk_total, disk_usage, sites, databases, ftps, plugins = info["app"].split(",")
+        disk_tmp = info["disks"].split("-")
+        disk_info = {}
+        for dinfo in disk_tmp:
+            disk_name,usage,total,iusage,itotal= dinfo.split(",")
+            tinfo = {}
+            tinfo["usage"] = self.parse_char_unit(usage)
+            tinfo["total"] = self.parse_char_unit(total)
+            tinfo["iusage"] = iusage
+            tinfo["itotal"] = itotal
+            disk_info[disk_name] = tinfo
+        return {
+            "apps": {
+                "disk_total": disk_total,
+                "disk_usage": disk_usage,
+                "sites": public.to_size(sites),
+                "databases": public.to_size(databases),
+                "ftps": ftps,
+                "plugins": public.to_size(plugins),
+                "logs": public.to_size(logs),
+                "backup": public.to_size(backup),
+            },
+            "disks": disk_info
+        }
+
+    def get_app_usage(self, get):
+
+        cur_date = time.localtime()
+        cur_time_key = self.get_time_key()
+        last_day = time.localtime(time.mktime((
+            cur_date.tm_year, cur_date.tm_mon, cur_date.tm_mday-1, 0,0,0,0,0,0
+        )))
+        last_time_key = self.get_time_key(last_day)
+        selector = public.M("system").dbfile("system").table("app_usage") \
+        .where("time_key =? or time_key=?", (cur_time_key, last_time_key))
+        res = selector.select()
+        if type(res) == str or not res:
+            return {}
+        today_data = {}
+        last_data = {}
+        for usage_info in res:
+            if usage_info["time_key"] == cur_time_key:
+                today_data = self.parse_app_usage_info(usage_info)
+            if usage_info["time_key"] == last_time_key:
+                last_data = self.parse_app_usage_info(usage_info)
+
+        if not today_data:
+            return {}
+
+        # disk
+        for disk_key, disk_info in today_data["disks"].items():
+            total = int(disk_info["total"])
+            usage = int(disk_info["usage"])
+
+            itotal = int(disk_info["itotal"])
+            iusage = int(disk_info["iusage"])
+
+            if last_data and disk_key in last_data["disks"].keys():
+                last_data_info = last_data["disks"]
+                compare_info = last_data_info[disk_key]
+                ltotal = int(compare_info["total"])
+                if ltotal == total:  # 扩容
+                    lusage = int(compare_info["usage"])
+                    increase = 0
+                    diff = usage - lusage
+                    if diff > 0:
+                        increase = round(diff / total, 2)
+                    disk_info["incr"] = increase
+
+                litotal = int(compare_info["itotal"])
+                if True:  # 扩容
+                    liusage = int(compare_info["iusage"])
+                    iincrease = 0
+                    diff = iusage - liusage
+                    if diff > 0:
+                        iincrease = round(diff / itotal, 2)
+                    disk_info["iincr"] = iincrease
+
+        # apps
+        today_app_data = today_data["apps"]
+        disk_total = int(today_app_data["disk_total"])
+        if last_data and last_data["apps"]["disk_total"] == today_app_data["disk_total"]:
+            last_app_data = last_data["apps"]
+            for size_key, size_value in today_app_data.items():
+                if size_key == "disks": continue
+                if size_key == "disk_total": continue
+                if size_key == "disk_usage": continue
+                size_increase = 0
+                size_diff = int(size_value) - int(last_app_data[size_key])
+                if size_diff>0:
+                    size_increase = round(size_diff / disk_total, 2)
+
+                today_app_data[size_key] = {
+                    "val": size_value,
+                    "incr": size_increase
+                }
+        return today_data
+
+    def get_timestamp_interval(self, local_time):
+        start = None
+        end = None
+        start = time.mktime((local_time.tm_year, local_time.tm_mon,
+                             local_time.tm_mday, 0, 0, 0, 0, 0, 0))
+        end = time.mktime((local_time.tm_year, local_time.tm_mon,
+                           local_time.tm_mday, 23, 59, 59, 0, 0, 0))
+        return start, end
+
+    #服务是否启动
+    def check_server(self):
+        try:
+            check_list = [
+                "php", "nginx", "apache", "mysql", "tomcat", "pure-ftpd", "redis", "memcached"
+            ]
+            pp = panelPlugin()
+            get = public.dict_obj()
+            status_str = ""
+            for serv in check_list:
+                started = False
+                installed = False
+                get.name = serv
+                info = pp.getPluginInfo(get)
+                if not info:
+                    continue
+                versions = info["versions"]
+                for v in versions:
+                    if v["status"]:
+                        installed = True
+                    if "run" in v.keys() and v["run"]:
+                        installed = True
+                        started = True
+                        break
+                tag = 0
+                if installed:
+                    tag = 1
+                    if not started:
+                        tag = 2
+                status_str += str(tag)
+
+            if '2' in status_str:
+                public.M("system").dbfile("server_status").add(
+                    "status, addtime", (status_str, time.time()))
+        except Exception as e:
+            return True
+
+    def get_daily_data(self, get):
+        """根据日期获取面板日报数据"""
+        auth_key = "IS_PRO_OR_LTD_FOR_PANEL_DAILY"
+        cache_res = cache.get(auth_key)
+        if not cache_res:
+            try:
+                pp = panelPlugin()
+                soft_list = pp.get_soft_list(get)
+                if soft_list["pro"] < 0 and soft_list["ltd"] < 0:
+                    if os.path.exists("/www/server/panel/data/start_daily.pl"):
+                        os.remove("/www/server/panel/data/start_daily.pl")
+                    return {
+                        "status": False,
+                        "msg": "No authorization.",
+                        "data": [],
+                        "date": get.date
+                    }
+                cache.set(auth_key, True, 86400)
+            except:
+
+                return {
+                    "status": False,
+                    "msg": "获取不到授权信息，请检查网络是否正常->{}".format(public.get_error_info()),
+                    "data": [],
+                    "date": get.date
+                }
+        if not os.path.exists("/www/server/panel/data/start_daily.pl"):
+            public.writeFile("/www/server/panel/data/start_daily.pl", get.date)
+        return self.get_daily_data_local(get.date)
+
+    def get_daily_data_local(self, date_str):
+        name = ""
+        date = time.strptime(date_str, "%Y%m%d")
+        time_key = self.get_time_key(date)
+
+        self.check_databases()
+
+        addtime_fmt = time.strftime("%Y-%m-%d", date)
+        score = 0
+        start, end = self.get_timestamp_interval(date)
+        db = public.M("system").dbfile("system")
+        # cpu data
+        # return high_percent_data
+        cpu_detail = []
+        try:
+            sql= db.table("cpuio")
+            cpu_data = sql.where("addtime>=? and addtime<=? and pro > 80.00", (start, end)).order("addtime").select()
+            last_time = None
+            #return cpu_mem_data
+            cpu_high_data = []
+            for record in cpu_data:
+                current_time = record['addtime']
+                # 如果是第一次记录或者与上条记录相隔超过5分钟（300秒），则保留此记录
+                if last_time is None or current_time - last_time > 300:
+                    last_time = current_time
+                    sql = db.table("process_top_list")
+                    process_top_data=sql.where("addtime>=? and addtime<=?", (last_time, current_time)).order("addtime").select()
+                    cpu_top_data = json.loads(process_top_data[0]['cpu_top'])
+                    record['pid'] = cpu_top_data[0][1]
+                    record['cmdline'] = cpu_top_data[0][2]
+                    cpu_high_data.append(record)
+                    last_time = current_time
+                    cpu_detail.append(
+                        {
+                            "time": last_time,
+                            "name": cpu_top_data[0][2],
+                            "pid": cpu_top_data[0][1],
+                            "percent": record["pro"]
+                        }
+                    )
+            # sql = db.table("process_high_percent")
+            # high_percent_data = sql.where("addtime>=? and addtime<=?", (start, end)).order("addtime").select()
+            # if len(high_percent_data)> 0:
+            #     # st = float(high_percent_data[0]["addtime"])
+            #     for hpro in high_percent_data:
+            #         # _t = float(hpro["addtime"])
+            #         cpu_percent = int(hpro["cpu_percent"])
+            #         if cpu_percent >= 80:
+            #             cpu_detail.append(
+            #                 {
+            #                     "time": hpro["addtime"],
+            #                     "name": hpro["name"],
+            #                     "pid": hpro["pid"],
+            #                     "percent": cpu_percent
+            #                 }
+            #             )
+        except:
+            sql = db.table("process_top_list")
+            high_percent_data = sql.where("addtime>=? and addtime<=?", (start, end)).order("addtime").select()
+            if len(high_percent_data)> 0:
+                for hpro in high_percent_data:
+                    cpu_list = json.loads(hpro["cpu_top"])
+                    for hhpro in cpu_list:
+                        cpu_percent =int(hhpro[0])
+                        if cpu_percent >= 80:
+                            cpu_detail.append(
+                            {
+                                "time": hhpro[5],
+                                "name": hhpro[3],
+                                "pid": hhpro[1],
+                                "percent": cpu_percent
+                            }
+                        )
+        cpu_ex = len(cpu_detail)
+        cpu_score = 0
+        cpu_desc = ""
+        if cpu_ex == 0:
+            cpu_score = 20
+        else:
+            cpu_desc = "CPU出现过载情况"
+        cpu_data = {
+            "ex": cpu_ex,
+            "detail": cpu_detail
+        }
+
+        # ram
+        ram_detail = []
+        #if len(high_percent_data)> 0:
+        try:
+            sql= db.table("cpuio")
+            ram_data = sql.where("addtime>=? and addtime<=? and mem > 80.00", (start, end)).order("addtime").select()
+            last_time = None
+            ram_high_data = []
+            for record in ram_data:
+                current_time = record['addtime']
+                # 如果是第一次记录或者与上条记录相隔超过5分钟（300秒），则保留此记录
+                if last_time is None or current_time - last_time > 300:
+                    last_time = current_time
+                    sql = db.table("process_top_list")
+                    process_top_data=sql.where("addtime>=? and addtime<=?", (last_time, current_time)).order("addtime").select()
+                    ram_top_data = json.loads(process_top_data[0]['memory_top'])
+                    record['pid'] = ram_top_data[0][1]
+                    record['cmdline'] = ram_top_data[0][2]
+                    ram_high_data.append(record)
+                    last_time = current_time
+                    sql = db.table("process_top_list")
+                    ram_detail.append(
+                        {
+                            "time": last_time,
+                            "name": ram_top_data[0][2],
+                            "pid": ram_top_data[0][1],
+                            "percent": record["mem"]
+                        }
+                    )
+            # # st = float(high_percent_data[0]["addtime"])
+            #     for hpro in high_percent_data:
+            #         # _t = float(hpro["addtime"])
+            #         rss = float(hpro["memory"])
+            #         total = psutil.virtual_memory().total
+            #         mem_percent = round(100 * rss / total, 2)
+            #         if mem_percent >= 80:
+            #             ram_detail.append(
+            #                 {
+            #                     "time": hpro["addtime"],
+            #                     "name": hpro["name"],
+            #                     "pid": hpro["pid"],
+            #                     "percent": mem_percent
+            #                 }
+            #             )
+        except:
+            for hpro in high_percent_data:
+                ram_list = json.loads(hpro["memory_top"])
+                total = psutil.virtual_memory().total
+                for hhpro in ram_list:
+                    # return hhpro[1]
+                    mem_percent =round(100 *hhpro[0] / total, 2)
+                    # return hhpro[5]
+                    if mem_percent >= 80:
+                        ram_detail.append(
+                        {
+                            "time": hhpro[5],
+                            "name": hhpro[3],
+                            "pid": hhpro[1],
+                            "percent": mem_percent
+                        }
+                    )
+        ram_ex = len(ram_detail)
+        ram_desc = ""
+        ram_score = 0
+        if ram_ex == 0:
+            ram_score = 20
+        else:
+            if ram_ex > 1:
+                ram_desc = "内存在多个时间点出现占用80%"
+            else:
+                ram_desc = "内存出现占用超过80%"
+        ram_data = {
+            "ex": ram_ex,
+            "detail": ram_detail
+        }
+
+        # disk
+        selector = public.M("system").dbfile("system").table("app_usage") \
+        .where("time_key=?", (time_key,))
+        res = selector.select()
+        app_info = {}
+        if res and type(res) != str:
+            app_info = self.parse_app_usage_info(res[0])
+        disk_detail = []
+        if app_info:
+            disk_info = app_info["disks"]
+            for key, info in disk_info.items():
+                usage = int(info["usage"])
+                total = int(info["total"])
+                usage_percent = round(usage / total, 2)
+                iusage = int(info["iusage"])
+                itotal = int(info["itotal"])
+                if itotal > 0:
+                    iusage_percent = round(iusage / itotal, 2)
+                else:
+                    iusage_percent = 0
+                if usage_percent >= 0.8:
+                    disk_detail.append({
+                        "name": key,
+                        "percent": usage_percent*100,
+                        "ipercent": iusage_percent*100,
+                        "usage": usage,
+                        "total": total,
+                        "iusage": iusage,
+                        "itotal": itotal
+                    })
+
+        disk_ex = len(disk_detail)
+        disk_desc = ""
+        disk_score = 0
+        if disk_ex == 0:
+            disk_score = 20
+        else:
+            disk_desc = "有磁盘空间占用已经超过80%"
+
+        disk_data = {
+            "ex": disk_ex,
+            "detail": disk_detail,
+            "app_data":app_info["apps"]
+        }
+
+        # server
+        exception_data = public.M("system").dbfile("system").table("server_status") \
+        .where("addtime>=? and addtime<=?", (start, end,)).order("addtime desc").select()
+        check_list = [
+                "php", "nginx", "apache", "mysql", "tomcat", "pure-ftpd", "redis", "memcached"
+            ]
+
+        server_data = {}
+        server_ex = 0
+        server_desc = ""
+        for i, serv in enumerate(check_list):
+            if serv == "pure-ftpd":
+                serv = "ftpd"
+            ex = 0
+            sub_detail = []
+            for ss in exception_data:
+                _stat = ss["status"]
+                if i < len(_stat):
+                    if _stat[i] == "2":
+                        sub_detail.append({"time": ss["addtime"], "desc": "退出"})
+                        ex += 1
+                        server_ex += 1
+
+            server_data[serv] = {
+                "ex": ex,
+                "detail": sub_detail
+            }
+
+        server_score = 0
+        if server_ex == 0:
+            server_score = 20
+        else:
+            server_desc = "系统级服务有出现异常退出情况"
+
+        # backup
+        no_select_data = public.M("crontab").field("name,sName,sType").where(
+            "sType in (?, ?, ?) and addtime<?", ("database", "enterpriseBackup", "site", datetime.datetime.fromtimestamp(int(end)))).select()
+        db_backup = set()
+        for x in no_select_data:
+            if x["sType"] == "database":
+                db_backup.add(x["sName"])
+            elif x["sType"] == "enterpriseBackup":
+                s = x["name"]
+                name = s[s.rfind("[")+1:s.rfind("]")]
+                db_backup.add(name)
+        all_db_backup = "ALL" in db_backup
+        site_backup = set(x["sName"] for x in no_select_data if x["sType"] == "site")
+        all_site_backup = "ALL" in site_backup
+        no_db_backup = []
+        no_site_backup = []
+
+        if not all_db_backup:
+            databases = public.M("databases").field("name,addtime").where("LOWER(type)=LOWER('mysql')",()).select()
+            for tdb in databases:
+                dt = time.strptime(tdb['addtime'], '%Y-%m-%d %H:%M:%S')
+                if int(end) < int(time.mktime(dt)): continue
+                db_name = tdb["name"]
+                if db_name not in db_backup:
+                    no_db_backup.append({"name":db_name})
+
+        if not all_site_backup:
+            sites = public.M("sites").field("name,addtime").select()
+            for tsite in sites:
+                dt = time.strptime(tsite['addtime'], '%Y-%m-%d %H:%M:%S')
+                if int(end) < int(time.mktime(dt)): continue
+                site_name = tsite["name"]
+                if site_name not in site_backup:
+                    no_site_backup.append({"name":site_name})
+
+        select_data = public.M("system").dbfile("system").table("backup_status") \
+            .where("addtime>=? and addtime<=?", (start, end)).select()
+
+        backup_data = {
+            "database": {
+                "no_backup": no_db_backup,
+                "backup": []
+            },
+            "site": {
+                "no_backup": no_site_backup,
+                "backup": []
+            },
+            "path": {
+                "no_backup": [],
+                "backup": []
+            }
+        }
+        backup_ex = 0
+        for data_line in select_data:
+            status = data_line["status"]
+            if status:
+                continue
+
+            target = data_line["target"]
+            cron_id = data_line["id"]
+            cron_info = public.M("crontab").where("id=?", (cron_id)).find()
+            if not cron_info:
+                if target.find("|") == -1:
+                    continue
+                target_tmp = target.split("|")
+                backup_type = target_tmp[1]
+            else:
+                name = cron_info["name"]
+                backup_type = cron_info["sType"]
+
+            backup_ex += 1
+            backup_time = data_line["addtime"]
+            if backup_type not in backup_data.keys():
+                backup_data[backup_type] = {}
+                backup_data[backup_type]["backup"] = []
+                backup_data[backup_type]["no_backup"] = []
+            backup_data[backup_type]["backup"].append({
+                "name": name,
+                "target": target,
+                "status": status,
+                "target": target,
+                "time": backup_time
+            })
+
+        backup_desc = ""
+        backup_score = 0
+        if backup_ex == 0:
+            backup_score = 20
+        else:
+            backup_desc = "有计划任务备份失败"
+
+        if len(no_db_backup) == 0:
+            backup_score += 10
+        else:
+            if backup_desc:
+                backup_desc += ";"
+            backup_desc += "有数据库未及时备份"
+
+        if len(no_site_backup) == 0:
+            backup_score += 10
+        else:
+            if backup_desc:
+                backup_desc += ";"
+            backup_desc += "有网站未备份"
+
+        # exception
+        panel_ex = 0
+        panel_ex_data = public.M('logs').where('addtime like ? and type=?',(str(addtime_fmt)+"%",'用户登录',)).select()
+        panel_ex_detail = []
+        if panel_ex_data and type(panel_ex_data) == list:
+            for line in panel_ex_data:
+                log = line["log"]
+                if log.find("失败") >=0 or log.find("错误") >= 0:
+                    panel_ex += 1
+                    panel_ex_detail.append({
+                        "time": time.mktime(time.strptime(line["addtime"], "%Y-%m-%d %H:%M:%S")),
+                        "desc": line["log"],
+                        "username": line["username"],
+                    })
+            panel_ex_detail.sort(key=lambda x: x["time"])
+
+        sel_data = public.M('logs').where('type=?', ('SSH安全',)).where("addtime like ?", (str(addtime_fmt)+"%",)).select()
+        # data = public.get_page(count, int(args.p), int(rows))
+        ssh_detail = []
+        ssh_ex = 0
+        if sel_data:
+            for line in sel_data:
+                log = line["log"]
+                if log.find("存在异常") >= 0:
+                    ssh_ex += 1
+                    ssh_detail.append({
+                        "time": time.mktime(time.strptime(line["addtime"], "%Y-%m-%d %H:%M:%S")),
+                        "desc": line["log"],
+                        "username": line["username"]
+                    })
+            ssh_detail.sort(key=lambda x: x["time"])
+
+        exception_desc = ""
+        exception_score = 0
+        if ssh_ex == 0:
+            exception_score = 10
+        else:
+            exception_desc = "SSH有异常登录"
+
+        if panel_ex == 0:
+            exception_score += 10
+        else:
+            if panel_ex > 10:
+                exception_score -= 10
+            if exception_desc:
+                exception_desc += ";"
+            exception_desc += "面板登录有错误".format(panel_ex)
+        exception_data = {
+            "panel": {
+                "ex": panel_ex,
+                "detail": panel_ex_detail
+            },
+            "ssh": {
+                "ex": ssh_ex,
+                "detail": ssh_detail
+            }
+        }
+
+        try:
+            from projectModel.safecloudModel import main as safecloud
+            safe_json=safecloud().get_security_logs(self)
+            safe_data={}
+            safe_data['home_risks']={}
+            safe_data['home_risks']['ex']=safe_json['data']['home_risks']['count']
+            safe_data['home_risks']['detail']={}
+            safe_data['home_risks']['detail']['check_time']=safe_json['data']['home_risks']['check_time']
+            safe_data['home_risks']['detail']['items']=safe_json['data']['home_risks']['items']
+
+            safe_data['vulnerabilities']={}
+            safe_data['vulnerabilities']['ex']=safe_json['data']['vulnerabilities']['risk_count']
+            safe_data['vulnerabilities']['detail']={}
+            safe_data['vulnerabilities']['detail']['check_time']=safe_json['data']['vulnerabilities']['scan_time']
+            safe_data['vulnerabilities']['detail']['items']=safe_json['data']['vulnerabilities']['items']
+
+            safe_data['malware']={}
+            safe_data['malware']['ex']=safe_json['data']['malware']['count']
+            safe_data['malware']['detail']={}
+            safe_data['malware']['detail']['check_time']=safe_json['data']['malware']['last_scan_time']
+            safe_data['malware']['detail']['risk_stats']=safe_json['data']['malware']['risk_stats']
+            safe_data['malware']['detail']['items']=safe_json['data']['malware']['items']
+        except:
+            safe_data={}
+            safe_data['home_risks']={}
+            safe_data['home_risks']['ex']=0
+            safe_data['home_risks']['detail']={}
+            safe_data['home_risks']['detail']['check_time']= None
+            safe_data['vulnerabilities']={}
+            safe_data['vulnerabilities']['ex']=0
+            safe_data['vulnerabilities']['detail']={}
+            safe_data['vulnerabilities']['detail']['check_time']= None
+            safe_data['malware']={}
+            safe_data['malware']['ex']=0
+            safe_data['malware']['detail']={}
+            safe_data['malware']['detail']['check_time']= None
+            
+            
+
+        score = cpu_score + ram_score + disk_score + server_score + backup_score + exception_score
+        descs = [cpu_desc, ram_desc, disk_desc, server_desc, backup_desc, exception_desc]
+        summary = []
+        for d in descs:
+            if d:
+                if d.find(";")>=0:
+                    for xd in d.split(";"):
+                        summary.append(xd)
+                else:
+                    summary.append(d)
+
+        if not summary:
+            summary.append("服务器运行正常，请继续保持！")
+
+        evaluate_desc = self.evaluate(score)
+
+        # return
+        return {
+            "data": {
+                "cpu": cpu_data,
+                "ram": ram_data,
+                "disk": disk_data,
+                "server": server_data,
+                "backup": backup_data,
+                "exception": exception_data,
+                "safe": safe_data
+            },
+            "evaluate": evaluate_desc,
+            "score": score,
+            "date": time_key,
+            "summary": summary,
+            "status": True
+        }
+
+    def evaluate(self, score):
+        desc = ""
+        if score >= 100:
+            desc = "正常"
+        elif score >= 80:
+            desc = "良好"
+        else:
+            desc = "一般"
+        return desc
+
+    def get_daily_list(self, get):
+        if not os.path.exists("/www/server/panel/data/start_daily.pl"):
+            date = time.time()
+            # 格式化日期为字符串
+            yesterday_date_str = public.format_date("%Y%m%d", date - 86400)
+            public.writeFile("/www/server/panel/data/start_daily.pl", yesterday_date_str)
+        import db
+        sql = db.Sql().dbfile('system')
+        daily_list = sql.table("daily").where("time_key>?", 0).select()
+        data = []
+        if not isinstance(daily_list, list):
+            return data
+        for line in daily_list:
+            line["evaluate"] = self.evaluate(line["evaluate"])
+            data.append(line)
+        return data

@@ -1,0 +1,117 @@
+{
+    "php":{
+        "files_exists":["{SetupPath}/php/{Version}/bin/php","{SetupPath}/php/{Version}/etc/php.ini","/etc/init.d/php-fpm-{Version}"],
+        "pid":"{SetupPath}/php/{Version}/var/run/php-fpm.pid",
+        "cmd":[
+            {
+                "exec":"/etc/init.d/php-fpm-{Version} status",
+                "success":"is running"
+            }
+        ]
+    },
+    "nginx":{
+        "files_exists":["{SetupPath}/nginx/sbin/nginx","{SetupPath}/nginx/conf/nginx.conf","/etc/init.d/nginx"],
+        "pid":"{SetupPath}/nginx/logs/nginx.pid",
+        "cmd":[
+            {
+                "exec":"/etc/init.d/nginx status",
+                "success":"already running"
+            }
+        ]
+    },
+    "mysql":{
+        "files_exists":["{SetupPath}/mysql/bin/mysql","/etc/my.cnf","/etc/init.d/mysqld"],
+        "pid":"",
+        "cmd":[]
+    },
+    "redis":{
+        "files_exists":["{SetupPath}/redis/src/redis-server","{SetupPath}/redis/redis.conf","/etc/init.d/redis"],
+        "pid":"{SetupPath}/redis/redis.pid",
+        "cmd":[
+            {
+                "exec":"/etc/init.d/redis status",
+                "success":"is running"
+            }
+        ]
+    },
+    "memcached":{
+        "files_exists":["/usr/local/memcached/bin/memcached","/etc/init.d/memcached"],
+        "pid":"/var/run/memcached.pid",
+        "cmd":[]
+    },
+    "mongodb":{
+        "files_exists":["{SetupPath}/mongodb/bin/mongod","{SetupPath}/mongodb/config.conf","/etc/init.d/mongodb"],
+        "pid":"{SetupPath}/mongodb/log/configsvr.pid",
+        "cmd":[]
+    },
+    "apache":{
+        "files_exists":["{SetupPath}/apache/bin/httpd","{SetupPath}/apache/conf/httpd.conf","/etc/init.d/httpd"],
+        "pid":"{SetupPath}/apache/logs/httpd.pid",
+        "cmd":[
+            {
+                "exec":"/etc/init.d/httpd status",
+                "success":"is running"
+            }
+        ]
+    },
+    "httpd":{
+        "files_exists":["{SetupPath}/apache/bin/httpd","{SetupPath}/apache/conf/httpd.conf","/etc/init.d/httpd"],
+        "pid":"{SetupPath}/apache/logs/httpd.pid",
+        "cmd":[
+            {
+                "exec":"/etc/init.d/httpd status",
+                "success":"is running"
+            }
+        ]
+    },
+    "pure-ftpd":{
+        "files_exists":["{SetupPath}/pure-ftpd/sbin/pure-ftpd","{SetupPath}/pure-ftpd/etc/pure-ftpd.conf","/etc/init.d/pure-ftpd"],
+        "pid":"/var/run/pure-ftpd.pid",
+        "cmd":[
+            {
+                "exec":"/etc/init.d/pure-ftpd status",
+                "success":"is running"
+            }
+        ]
+    },
+    "phpmyadmin":{
+        "files_exists":["{SetupPath}/phpmyadmin/version.pl"],
+        "pid":"",
+        "cmd":[
+            {
+                "exec":"curl -Ss http://127.0.0.1:$(cat /www/server/phpmyadmin/port.pl)/$(ls /www/server/phpmyadmin|grep phpmyadmin_)/index.php -I|grep HTTP",
+                "success":"200 OK"
+            }
+        ]
+    },
+    "rabbitmq":{
+        "files_exists":["/usr/lib/erlang/bin/epmd"],
+        "pid":"/var/lib/rabbitmq/mnesia/rabbit@{Host}.pid",
+        "cmd":[]
+    },
+    "sphinx":{
+        "files_exists":["{SetupPath}/sphinx/bin/searchd","{SetupPath}/sphinx/etc/sphinx.conf","/etc/init.d/sphinx","{SetupPath}/panel/plugin/sphinx/sphinx_main.py"],
+        "pid":"{SetupPath}/sphinx/log/searchd.pid",
+        "cmd":[]
+    },
+    "docker":{
+        "files_exists":["/usr/bin/docker","/usr/bin/dockerd","/usr/bin/docker-compose","/usr/lib/systemd/system/docker.service"],
+        "pid":"",
+        "cmd":[
+            {
+                "exec":"systemctl status docker",
+                "success":"(running)"
+            }
+        ]
+    },
+    "安装 [宝塔多用户虚拟主机面板]": {
+        "files_exists": ["/www/server/vhost_virtual/vhost_virtual", "/www/server/apache/bin/httpd"],
+        "pid": "/www/server/vhost_virtual/run/vhost_virtual.pid",
+        "cmd": [
+            {
+                "exec": "systemctl status vhost_virtual.service",
+                "success": "active"
+            }
+        ]
+    }
+}

@@ -23,9 +23,12 @@ class panelMysql:
         if self.__DB_NET: return True
         try:
             myconf = public.readFile('/etc/my.cnf')
-            socket_re = re.search(r"socket\s*=\s*(.+)",myconf)
-            if socket_re:
-                socket = socket_re.groups()[0]
+            if myconf:
+                socket_re = re.search(r"socket\s*=\s*(.+)",myconf)
+                if socket_re:
+                    socket = socket_re.groups()[0]
+                else:
+                    socket = '/tmp/mysql.sock'
             else:
                 socket = '/tmp/mysql.sock'
 
@@ -49,13 +52,13 @@ class panelMysql:
                     self.__DB_ERR = e
                     return False
             try:
-                
+
                 rep = r"port\s*=\s*([0-9]+)"
                 self.__DB_PORT = int(re.search(rep,myconf).groups()[0])
             except:
                 self.__DB_PORT = 3306
             self.__DB_PASS = public.M('config').where('id=?',(1,)).getField('mysql_root')
-            
+
             try:
                 self.__DB_CONN = MySQLdb.connect(host = self.__DB_HOST,user = self.__DB_USER,passwd = self.__DB_PASS,port = self.__DB_PORT,charset="utf8",connect_timeout=1,unix_socket=socket)
             except MySQLdb.Error as e:
@@ -98,7 +101,7 @@ class panelMysql:
             return False
 
 
-          
+
     def execute(self,sql):
         #执行SQL语句返回受影响行
         if not self.__Conn(): return self.__DB_ERR
@@ -109,8 +112,8 @@ class panelMysql:
             return result
         except Exception as ex:
             return ex
-    
-    
+
+
     def query(self,sql):
         #执行SQL语句返回数据集
         if not self.__Conn(): return self.__DB_ERR
@@ -126,9 +129,9 @@ class panelMysql:
             return data
         except Exception as ex:
             return ex
-        
-     
-    #关闭连接        
+
+
+    #关闭连接
     def __Close(self):
         self.__DB_CUR.close()
         self.__DB_CONN.close()

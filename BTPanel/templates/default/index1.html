@@ -1,0 +1,36 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta content="IE=edge"><meta name="referer" content="never"><meta name="referer" content="no-referrer"><meta name="renderer" content="webkit"><title>{{g.title}}</title><link rel="shortcut icon" href="{{g['panel_theme']['logo']['favicon']}}" type="image/x-icon"><script>this.globalThis || (this.globalThis = this)
+			; (function () {
+				window.vite_public_title = '{{g.title}}' // 网站标题
+				window.vite_public_menu = '{{g.menus}}' // 菜单栏目
+				window.vite_public_debug = '{{g['debug']}}' // 是否开启调试模式
+				window.vite_public_pyversion = '{{g['pyversion']}}' // python版本
+				window.vite_public_version = '{{session['version']}}' // 当前本地版本号
+				window.vite_public_ip = '{{session['address']}}' // 当前服务器IP地址
+				window.vite_public_brand = '{{session['brand']}}' // 品牌
+				window.vite_public_product = '{{session['product']}}' // 产品
+				window.vite_public_year = '{{g['yaer']}}' // 年份
+				window.vite_public_cdn_url = '{{g.cdn_url}}' // cdn地址
+				window.vite_public_request_token = '{{session[g.get_csrf_html_token_key]}}' // csrf_token
+				window.vite_public_soft_flush = '{{session['is_flush_soft_list']}}' // 是否刷新软件列表，解决缓存问题
+				window.vite_public_encryption = '{{session['rsa_public_key']}}' // rsa加密公钥
+				window.vite_public_proxy_key = '' // 代理服务信息
+				window.vite_public_proxy_ip = '192.168.1.196' // 代理服务信息
+				window.vite_public_proxy_port = '8888' // 代理服务信息
+				window.vite_public_panel_type = '{{g['other_js']}}' // 面板类型
+				window.vite_public_file_version = '%VERSION-NUMBER%' // 当前版本随机数，用于编译替换
+				window.vite_public_panel_theme = JSON.parse('{{g['panel_theme']}}'.replace(/\&\#39;/g, '"').replace(/\&\#34;/g, '"').replace(/True/g, 'true').replace(/False/g, 'false')) // 主题信息
+
+				// 禁止后退
+				function blockHist() {
+					if (window.history && window.history.pushState) {
+						window.onpopstate = function () {
+							window.history.pushState('forward', null, '')
+							window.history.forward(1)
+						}
+					}
+					window.history.pushState('forward', null, '') //在IE中必须得有这两行
+					window.history.forward(1)
+				}
+				// 跳转处理
+				blockHist()
+			})()</script><script type="module" crossorigin src="./static/js/main.js?v=1758787359"></script><link rel="stylesheet" crossorigin href="./static/css/style.css?v=1758787359"><script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script><script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script></head><body><div id="root"></div><script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script><script nomodule crossorigin id="vite-legacy-polyfill" src="./static/js/polyfills-legacy.js?v=1758787359"></script><script nomodule crossorigin id="vite-legacy-entry" data-src="./static/js/main-legacy.js?v=1758787359">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script></body></html>

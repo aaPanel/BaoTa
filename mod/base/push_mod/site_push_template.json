@@ -1,0 +1,593 @@
+[
+  {
+    "id": "1",
+    "ver": "1",
+    "used": true,
+    "source": "site_ssl",
+    "title": "网站证书(SSL)到期",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.site_push",
+      "name": "SSLTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "project",
+          "name": "网站",
+          "type": "select",
+          "default": "all",
+          "items": [
+            {
+              "title": "所有网站",
+              "value": "all"
+            }
+          ]
+        },
+        {
+          "attr": "cycle",
+          "name": "剩余天数",
+          "type": "number",
+          "suffix": "",
+          "unit": "天",
+          "default": 15
+        }
+      ],
+      "sorted": [
+        [
+          "project"
+        ],
+        [
+          "cycle"
+        ]
+      ]
+    },
+    "default": {
+      "project": "all",
+      "cycle": 15
+    },
+    "advanced_default": {
+      "number_rule": {
+        "total": 2
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook",
+      "sms"
+    ],
+    "unique": false,
+    "tags": ["site", "common", "ssl"],
+    "description": "定时检查网站证书(SSL)是否即将到期，如果即将到期则发送告警通知给管理员"
+  },
+  {
+    "id": "2",
+    "ver": "1",
+    "used": true,
+    "source": "site_end_time",
+    "title": "网站到期",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.site_push",
+      "name": "SiteEndTimeTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "cycle",
+          "name": "剩余天数",
+          "type": "number",
+          "unit": "天",
+          "suffix": "",
+          "default": 7
+        }
+      ],
+      "sorted": [
+        [
+          "cycle"
+        ]
+      ]
+    },
+    "default": {
+      "cycle": 7
+    },
+    "advanced_default": {
+      "number_rule": {
+        "total": 2
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": true,
+    "tags": ["site"],
+    "description": "定时检查设置有过期时间的网站是否临近过期，如果临近过期则发送告警通知给管理员"
+  },
+  {
+    "id": "3",
+    "ver": "1",
+    "used": true,
+    "source": "panel_pwd_end_time",
+    "title": "面板密码有效期",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.site_push",
+      "name": "PanelPwdEndTimeTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "cycle",
+          "name": "剩余天数",
+          "type": "number",
+          "unit": "天",
+          "suffix": "",
+          "default": 15
+        }
+      ],
+      "sorted": [
+        [
+          "cycle"
+        ]
+      ]
+    },
+    "default": {
+      "cycle": 15
+    },
+    "advanced_default": {
+      "number_rule": {
+        "total": 2
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": true,
+    "tags": ["panel"],
+    "description": "定时检查设置面板密码过期时间，如果临近过期则发送告警通知给管理员"
+  },
+  {
+    "id": "4",
+    "ver": "1",
+    "used": true,
+    "source": "ssh_login_error",
+    "title": "SSH登录失败告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.site_push",
+      "name": "SSHLoginErrorTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "cycle",
+          "name": "触发条件",
+          "type": "number",
+          "unit": "分钟",
+          "suffix": "内，",
+          "default": 30
+        },
+        {
+          "attr": "count",
+          "name": "登录失败",
+          "type": "number",
+          "unit": "次",
+          "suffix": "",
+          "default": 3
+        },
+        {
+          "attr": "interval",
+          "name": "间隔时间",
+          "type": "number",
+          "unit": "秒",
+          "suffix": "后再次监控检测条件",
+          "default": 600
+        }
+      ],
+      "sorted": [
+        [
+          "cycle",
+          "count"
+        ],
+        [
+          "interval"
+        ]
+      ]
+    },
+    "default": {
+      "cycle": 30,
+      "count": 3,
+      "interval": 600
+    },
+    "advanced_default": {
+      "number_rule": {
+        "day_num": 3
+      },
+      "time_rule": {
+        "send_interval": 600
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": true,
+    "tags": ["system", "common", "safe"],
+    "description": "定期扫描系统中的SSH登录日志，检测频繁失败的登录的异常登录行为，并在发现异常时及时触发告警通知，帮助发现潜在的安全威胁",
+    "is_pro": true
+  },
+  {
+    "id": "5",
+    "ver": "1",
+    "used": true,
+    "source": "services",
+    "title": "服务停止告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.site_push",
+      "name": "ServicesTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "project",
+          "name": "通知类型",
+          "type": "select",
+          "default": null,
+          "items": [
+          ]
+        },
+        {
+          "attr": "count",
+          "name": "自动重启",
+          "type": "radio",
+          "suffix": "",
+          "default": 1,
+          "items": [
+            {
+              "title": "自动尝试重启项目",
+              "value": 1
+            },
+            {
+              "title": "不做重启尝试",
+              "value": 2
+            }
+          ]
+        },
+        {
+          "attr": "interval",
+          "name": "间隔时间",
+          "type": "number",
+          "unit": "秒",
+          "suffix": "后再次监控检测条件",
+          "default": 600
+        }
+      ],
+      "sorted": [
+        [
+          "project"
+        ],
+        [
+          "count"
+        ],
+        [
+          "interval"
+        ]
+      ]
+    },
+    "default": {
+      "project": "",
+      "count": 2,
+      "interval": 600
+    },
+    "advanced_default": {
+      "number_rule": {
+        "day_num": 3
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook",
+      "sms"
+    ],
+    "unique": false,
+    "tags": ["soft", "system", "common"],
+    "description": "定时监控系统中的运行状态，如果发现服务停止，则及时触发告警通知，可设置尝试重启，帮助服务器快速恢复到可用状态"
+  },
+  {
+    "id": "6",
+    "ver": "1",
+    "used": true,
+    "source": "panel_safe_push",
+    "title": "面板安全告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.site_push",
+      "name": "PanelSafePushTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "help",
+          "name": "告警内容",
+          "type": "help",
+          "unit": "",
+          "style": {
+            "margin-top": "6px"
+          },
+          "list": [
+            "面板用户变更、面板日志删除、面板开启开发者"
+          ],
+          "suffix": "",
+          "default": 600
+        }
+      ],
+      "sorted": [
+        [
+          "help"
+        ]
+      ]
+    },
+    "default": {
+    },
+    "advanced_default": {
+      "number_rule": {
+        "day_num": 3
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": true,
+    "tags": ["panel", "common", "safe"],
+    "description": "定期检查面板的安全状态，如用户变更、日志删除、开启开发者模式等，及时触发告警通知，帮助管理员及时处理安全风险"
+  },
+  {
+    "id": "7",
+    "ver": "1",
+    "used": true,
+    "source": "ssh_login",
+    "title": "SSH登录告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.site_push",
+      "name": "SSHLoginTask"
+    },
+    "template": {
+      "field": [
+      ],
+      "sorted": [
+      ]
+    },
+    "default": {
+    },
+    "advanced_default": {
+      "number_rule": {
+        "day_num": 3
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": true,
+    "tags": ["system", "common", "safe"],
+    "description": "当出现root用户异常登录时，及时触发告警通知，帮助管理员及时处理安全风险"
+  },
+  {
+    "id": "8",
+    "ver": "1",
+    "used": true,
+    "source": "panel_login",
+    "title": "面板登录告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.site_push",
+      "name": "PanelLoginTask"
+    },
+    "template": {
+      "field": [
+      ],
+      "sorted": [
+      ]
+    },
+    "default": {
+    },
+    "advanced_default": {
+      "number_rule": {
+        "day_num": 3
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook",
+      "sms"
+    ],
+    "unique": true,
+    "tags": ["panel", "common", "safe"],
+    "description": "当出现面板异常登录时，及时触发告警通知"
+  },
+  {
+    "id": "9",
+    "ver": "1",
+    "used": true,
+    "source": "project_status",
+    "title": "项目停止告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.site_push",
+      "name": "ProjectStatusTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "cycle",
+          "name": "项目类型",
+          "type": "select",
+          "default": 1,
+          "items": [
+            {
+              "title": "Java项目",
+              "value": 1
+            },
+            {
+              "title": "Node项目",
+              "value": 2
+            },
+            {
+              "title": "Go项目",
+              "value": 3
+            },
+            {
+              "title": "Python项目",
+              "value": 4
+            },
+            {
+              "title": "其他项目",
+              "value": 5
+            }
+          ]
+        },
+        {
+          "attr": "project",
+          "name": "项目名称",
+          "type": "select",
+          "default": null,
+          "all_items": null,
+          "items": [
+          ]
+        },
+        {
+          "attr": "interval",
+          "name": "间隔时间",
+          "type": "number",
+          "unit": "秒",
+          "suffix": "后再次监控检测条件",
+          "default": 600
+        },
+        {
+          "attr": "count",
+          "name": "自动重启",
+          "type": "radio",
+          "suffix": "",
+          "default": 1,
+          "items": [
+            {
+              "title": "自动尝试重启项目",
+              "value": 1
+            },
+            {
+              "title": "不做重启尝试",
+              "value": 2
+            }
+          ]
+        }
+      ],
+      "sorted": [
+        [
+          "cycle"
+        ],
+        [
+          "project"
+        ],
+        [
+          "interval"
+        ],
+        [
+          "count"
+        ]
+      ]
+    },
+    "default": {
+      "cycle": 1,
+      "project": "",
+      "interval": 600,
+      "count": 2
+    },
+    "advanced_default": {
+      "number_rule": {
+        "day_num": 3
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": false,
+    "tags": ["site", "common"],
+    "description": "定期检查网站项目运行状态，当项目非人为停止时，及时触发告警通知"
+  },
+  {
+    "id": "10",
+    "ver": "1",
+    "used": true,
+    "source": "panel_update",
+    "title": "面板更新提醒",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.site_push",
+      "name": "PanelUpdateTask"
+    },
+    "template": {
+      "field": [
+      ],
+      "sorted": [
+      ]
+    },
+    "default": {
+    },
+    "advanced_default": {
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": true,
+    "tags": ["panel", "common"],
+    "description": "定期检查面板更新情况，当面板有新版本时，触发告警通知(面板的每个新版本会触发一次)"
+  }
+]
+

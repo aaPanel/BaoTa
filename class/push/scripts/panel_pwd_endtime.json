@@ -1,0 +1,9 @@
+{
+	"interval": 600,
+	"type": "panel_pwd_endtime",
+	"title": "面板密码有效期",
+	"cycle": 15,
+	"push_count": 1,
+    "module_type":"site_push",
+	"status": true
+}

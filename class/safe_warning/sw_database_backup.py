@@ -27,6 +27,7 @@ _tips = [
 ]
 
 _help = ''
+_remind = '此方案可以预防数据库丢失数据，保证数据的安全。'
 
 
 def check_run():
@@ -35,13 +36,12 @@ def check_run():
         @author hwliang<2020-08-03>
         @return tuple (status<bool>,msg<string>)
     '''
-
     if os.path.exists('/www/server/panel/plugin/enterprise_backup'):
         return True, '无风险'
-
-    if public.M('crontab').where('sType=? AND sName=?',
-                                 ('database', 'ALL')).count():
+    if public.M('crontab').where('sType=? AND (sName=? OR sName=?)', ('database', 'ALL', '全部')).count():
         return True, '无风险'
+    # if public.M('crontab').where('sType=? AND sName=?', ('database', '全部')).count():
+    #     return True, '无风险'
 
     db_list = public.M('databases').field('name').select()
 

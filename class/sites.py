@@ -40,8 +40,8 @@ class sites:
         domainExists = self.domain_exists(pdata['domains'])
         if domainExists: return public.ReturnMsg(False,'域名[%s]已存在!' % domainExists)
         return self._generate_nginx_conf(pdata['siteName'])
-        
-        
+
+
         '''
 server
 {
@@ -49,43 +49,43 @@ server
     server_name huang.bt.cn bt001.bt.cn;
     index index.php index.html index.htm default.php default.htm default.html;
     root /www/wwwroot/huang.bt.cn;
-        
+
     #SSL-START SSL相关配置，请勿删除或修改下一行带注释的404规则
     #error_page 404/404.html;
     #SSL-END
-    
+
     #ERROR-PAGE-START  错误页配置，可以注释、删除或修改
     error_page 404 /404.html;
     error_page 502 /502.html;
     #ERROR-PAGE-END
-    
+
     #PHP-INFO-START  PHP引用配置，可以注释或修改
     include enable-php-70.conf;
     #PHP-INFO-END
-    
+
     #REWRITE-START URL重写规则引用,修改后将导致面板设置的伪静态规则失效
     include /www/server/panel/vhost/rewrite/huang.bt.cn.conf;
     #REWRITE-END
-    
+
     #禁止访问的文件或目录
     location ~ ^/(\.user\.ini|\.htaccess|\.git|\.svn|\.project|LICENSE|README\.md)
     {
         return 404;
     }
-    
+
     #一键申请SSL证书验证目录相关设置
     location ~ \.well-known
     {
         allow all;
     }
-    
+
     location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
     {
         expires      30d;
         error_log off;
         access_log off;
     }
-    
+
     location ~ .*\.(js|css)?$
     {
         expires      12h;
@@ -100,7 +100,7 @@ server
         return pdata
         #if pdata['siteName'].find('*') != -1: return public.returnMsg(False,'SITE_ADD_ERR_DOMAIN_TOW');
 
-        
+
 
 
 
@@ -131,10 +131,10 @@ server
         for domain in domains:
             tmp = domain.split(':')
             if len(tmp) == 1: tmp.append('80')
-            pid = sql.table('domain').where('name=? and port=?',(tmp[0],tmp[1])).getField('pid')
-            if pid: 
-                if not sql.table('sites').where('id=?',(pid,)).count():
-                    sql.table('domain').where('pid=?',(pid,)).delete()
+            pid = public.M('domain').where('name=? and port=?',(tmp[0],tmp[1])).getField('pid')
+            if pid:
+                if not public.M('sites').where('id=?',(pid,)).count():
+                    public.M('domain').where('pid=?',(pid,)).delete()
                 else:
                     return domain
         return False
@@ -223,6 +223,6 @@ server
 
 
         return siteConfig
-        
+
 
 

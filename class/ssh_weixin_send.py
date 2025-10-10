@@ -47,7 +47,7 @@ def get_ip():
             return 'None'
     else:
         return 'None'
-    
+
 def dingding_send(config_url,url, content):
     host=url.replace('https://','').replace('http://','').split('/')[0]
     send_url=url.replace('https://','').replace('http://','').replace(host,'')
@@ -79,7 +79,7 @@ def dingding_send(config_url,url, content):
         except:
             return False
         return False
-  
+
 def action_wechat(config_url,url,content):
     """微信通知"""
     return dingding_send(config_url,url, content)
@@ -118,9 +118,9 @@ def pam_sm_authenticate(pamh, flags, argv):
         url=config_url['dingding_url']
     except:
         return pamh.PAM_SUCCESS
-    PIN_LENGTH = 6 
-    PIN_LIVE = 120 
-    PIN_LIMIT = 3 
+    PIN_LENGTH = 6
+    PIN_LIVE = 120
+    PIN_LIMIT = 3
     try:
         user = pamh.get_user()
     except pamh.exception as e:

@@ -1,0 +1,68 @@
+.acediff__wrap {
+	display: flex;
+	flex-direction: row;
+	position: absolute;
+	bottom: 0;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	overflow: auto;
+}
+.acediff__gutter {
+	flex: 0 0 60px;
+	border-left: 1px solid #000;
+	border-right: 1px solid #000;
+	overflow: hidden;
+}
+.acediff__gutter,
+.acediff__gutter svg {
+	background-color: #272727;
+}
+.acediff__left,
+.acediff__right {
+	height: 100%;
+	flex: 1;
+}
+.acediff__diffLine {
+	background-color: #004d7a;
+	border-top: 1px solid #003554;
+	border-bottom: 1px solid #003554;
+	position: absolute;
+	z-index: 4;
+}
+.acediff__diffLine.targetOnly {
+	height: 0 !important;
+	border-top: 1px solid #003554;
+	border-bottom: 0;
+	position: absolute;
+}
+.acediff__connector {
+	fill: #004d7a;
+	stroke: #003554;
+}
+.acediff__copy--left,
+.acediff__copy--right {
+	position: relative;
+}
+.acediff__copy--left div,
+.acediff__copy--right div {
+	color: #fff;
+	text-shadow: 1px 1px rgba(0, 0, 0, 0.7);
+	position: absolute;
+	margin: 2px 3px;
+	cursor: pointer;
+}
+.acediff__copy--right div:hover {
+	color: #61a2e7;
+}
+.acediff__copy--left {
+	float: right;
+}
+.acediff__copy--left div {
+	right: 0;
+}
+.acediff__copy--left div:hover {
+	color: #f7b742;
+}
+/*# sourceMappingURL=/ace-diff-dark.min.css.map */

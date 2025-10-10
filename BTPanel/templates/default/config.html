@@ -1,687 +1,2311 @@
-{% extends "layout.html" %}
-{% block content %}
+{% extends "layout.html" %} {% block content %}
 <link href="{{g.cdn_url}}/layer/layer.css" rel="stylesheet" />
+<link href="{{g.cdn_url}}/jqueryCsxz/zyzn_1.css" rel="stylesheet" />
 <div class="main-content">
-  <div class="container-fluid" style="padding-bottom:54px">
-    <div class="pos-box bgw mtb15 radius4" >
-      <div class="tab-list" id="configTab">
-        <div class="tabs-item active" data-type="allConfig">全部设置</div>
-        <div class="tabs-item" data-type="panelConfig">{{data['lan']['H2']}}</div>
-        <div class="tabs-item" data-type="securityConfig">安全设置</div>
-        <div class="tabs-item" data-type="pushConfig">通知设置</div>
-      </div>
-    </div>
-    <div class="setbox bgw mtb15 tab-view-box configure-box" >
-      <div class="panel-config hide" data-type="panelConfig">
-        <div class="configure-title">面板设置</div>
-        <div class="configure-block">
+	<div class="container-fluid" style="padding-bottom: 54px">
+		<div class="pos-box bgw mtb15 radius4">
+			<div
+					class="flex tab-list"
+					id="configTab"
+					style="justify-content: space-between"
+			>
+				<div class="flex">
+					<div class="tabs-item" data-type="allConfig">全部设置</div>
+					<div class="tabs-item" data-type="baseConfig">
+						<span>基础设置</span>
+					</div>
+					<div class="tabs-item" data-type="panelConfig">
+						{{data['lan']['H2']}}
+					</div>
+					<div class="tabs-item" data-type="securityConfig">安全设置</div>
+					<div class="tabs-item" data-type="alertConfig">告警通知</div>
+				</div>
+				<div class="search pull-right">
+					<input
+							type="text"
+							id="search-val"
+							class="ser-text pull-left"
+							placeholder="搜索设置"
+					/>
+					<button
+							type="button"
+							class="ser-sub pull-left"
+							id="search-btn"
+					></button>
+				</div>
+			</div>
+		</div>
+		<div class="setbox bgw mtb15 tab-view-box configure-box">
+			<div class="panel-search hide" data-type="searchConfig">
+				<div class="configure-title">搜索设置</div>
+				<div style="padding-top: 25px"></div>
+				<div class="panel-search-box text-center"></div>
+			</div>
+			<div class="panel-config panel-base hide" data-type="baseConfig">
+				<div class="configure-title">基础设置</div>
+				<div class="configure-block">
+					<div class="line" title="关闭面板">
+						<div class="line-title">关闭面板</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="closePanel"
+											type="checkbox"
+											name="close_panel"
+									/>
+									<label
+											class="btswitch-btn"
+											for="closePanel"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+							</div>
+							<div class="line-row-tips">
+								仅关闭当前的面板服务，不影响web服务器，数据库等程序运行
+							</div>
+						</div>
+					</div>
+					<div class="line" title="面板SSL">
+						<div class="line-title">面板SSL</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="panelSsl"
+											type="checkbox"
+											name="ssl"
+									/>
+									<label
+											class="btswitch-btn"
+											for="panelSsl"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+								<button
+										type="button"
+										class="btn btn-default btn-xs panelSslConfig"
+										style="vertical-align: middle; margin-left: 10px"
+								>
+									面板SSL配置
+								</button>
+							</div>
+							<div class="line-row-tips">
+								为面板设置https协议访问，提升面板访问安全性，<a
+									href="https://www.bt.cn/bbs/thread-105443-1-1.html"
+									class="btlink"
+									target="_blank"
+							>了解详情</a
+							>
+							</div>
+						</div>
+					</div>
 
-          <div class="line" title="关闭面板">
-            <div class="line-title">关闭面板</div>
-            <div class="line-form">
-              <div class="line-row">
-                <div class="ssh-item" style="margin-left: 0;padding: 0;">
-                  <input class="btswitch btswitch-ios" id="closePanel" type="checkbox" name="close_panel"/>
-                  <label class="btswitch-btn" for="closePanel" style="margin-bottom: 0;"></label>
-                </div>
-              </div>
-              <div class="line-row-tips">仅关闭当前的面板服务，不影响web服务器，数据库等程序运行</div>
-            </div>
-          </div>
+					<div class="line" title="API接口">
+						<div class="line-title">API接口</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="apiInterface"
+											type="checkbox"
+											name="api"
+									/>
+									<label
+											class="btswitch-btn"
+											for="apiInterface"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+								<button
+										type="button"
+										class="btn btn-default btn-xs apiInterfaceBtn"
+										style="vertical-align: middle; margin-left: 10px"
+								>
+									API接口配置
+								</button>
+							</div>
+							<div class="line-row-tips">
+								提供面板API接口访问的支持（堡塔APP需要开启该功能），<a
+									href="https://www.bt.cn/bbs/thread-20376-1-1.html"
+									class="btlink"
+									target="_blank"
+							>了解详情</a
+							>
+							</div>
+						</div>
+					</div>
 
-          <div class="line" title="监听IPv6">
-            <div class="line-title">监听IPv6</div>
-            <div class="line-form">
-              <div class="line-row">
-                <div class="ssh-item" style="margin-left: 0;padding: 0;">
-                  <input class="btswitch btswitch-ios" id="monitorIPv6" type="checkbox" name="ipv6"/>
-                  <label class="btswitch-btn" for="monitorIPv6" style="margin-bottom: 0;"></label>
-                </div>
-              </div>
-              <div class="line-row-tips">监听IPv6地址的访问</div>
-            </div>
-          </div>
+					<div class="line" title="监听IPv6">
+						<div class="line-title">监听IPv6</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="monitorIPv6"
+											type="checkbox"
+											name="ipv6"
+									/>
+									<label
+											class="btswitch-btn"
+											for="monitorIPv6"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+							</div>
+							<div class="line-row-tips">监听IPv6地址的访问</div>
+						</div>
+					</div>
 
-          <div class="line" title="离线模式">
-            <div class="line-title">离线模式</div>
-            <div class="line-form">
-              <div class="line-row">
-                <div class="ssh-item" style="margin-left: 0;padding: 0;">
-                  <input class="btswitch btswitch-ios" id="offlineMode" type="checkbox" name="is_local"/>
-                  <label class="btswitch-btn" for="offlineMode" style="margin-bottom: 0;"></label>
-                </div>
-              </div>
-            </div>
-            <div class="line-row-tips">离线模式下，面板更新，插件购买等联网服务将无法使用</div>
-          </div>
+					<div class="line" title="BasicAuth认证">
+						<div class="line-title">BasicAuth认证</div>
+						<div class="line-form">
+							<div class="line">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="basicAuth"
+											type="checkbox"
+											name="basic_auth"
+									/>
+									<label
+											class="btswitch-btn"
+											for="basicAuth"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+							</div>
+						</div>
+						<div class="line-row-tips">
+							为面板增加一道基于BasicAuth的认证服务，有效防止面板被扫描，<a
+								href="https://www.bt.cn/bbs/thread-34374-1-1.html"
+								class="btlink"
+								target="_blank"
+						>了解详情</a
+						>
+						</div>
+					</div>
 
-          <div class="line" title="开发者模式">
-            <div class="line-title">开发者模式</div>
-            <div class="line-form">
-              <div class="line-row">
-                <div class="ssh-item" style="margin-left: 0;padding: 0;">
-                  <input class="btswitch btswitch-ios" id="developerMode" type="checkbox" name="debug"/>
-                  <label class="btswitch-btn" for="developerMode" style="margin-bottom: 0;"></label>
-                </div>
-              </div>
-              <div class="line-row-tips">仅第三方开发者开发阶段使用（普通用户请勿开启）</div>
-            </div>
-          </div>
+					<div class="line" title="动态口令认证">
+						<div class="line-title">动态口令认证</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="checkTwoStep"
+											type="checkbox"
+											name="check_two_step"
+									/>
+									<label
+											class="btswitch-btn"
+											for="checkTwoStep"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+								<button
+										type="button"
+										class="btn btn-default btn-xs checkTwoStepConfig"
+										style="vertical-align: middle; margin-left: 10px"
+								>
+									动态口令配置
+								</button>
+							</div>
+							<div class="line-row-tips">
+								(Google
+								Authenticator，谷歌身份认证)为面板提供动态口令的登录的验证，<a
+									href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=105839"
+									class="btlink"
+									target="_blank"
+							>了解详情</a
+							>
+							</div>
+						</div>
+					</div>
 
-          <div class="line" title="API接口">
-            <div class="line-title">API接口</div>
-            <div class="line-form">
-              <div class="line-row">
-                <div class="ssh-item" style="margin-left: 0;padding: 0;">
-                  <input class="btswitch btswitch-ios" id="apiInterface" type="checkbox" name="api" />
-                  <label class="btswitch-btn" for="apiInterface" style="margin-bottom: 0;"></label>
-                </div>
-                <button ype="button" class="btn btn-default btn-xs apiInterfaceBtn" style="vertical-align: middle;
-                margin-left: 10px;">API接口配置</button>
-              </div>
-              <div class="line-row-tips">提供面板API接口访问的支持（堡塔APP需要开启该功能），<a href="https://www.bt.cn/bbs/thread-20376-1-1.html" class="btlink" target="_blank">了解详情</a></div>
-            </div>
-          </div>
+					<div class="line" title="面板别名">
+						<div class="line-title">面板别名</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{session['title']}}"
+									name="webname"
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 savePanelConfig"
+								disabled
+						>
+							保存
+						</button>
+						<div class="line-row-tips">给面板取个别的名称，用于网页标题</div>
+					</div>
 
-          <div class="line"  title="在线客服">
-            <div class="line-title">在线客服</div>
-            <div class="line-form">
-              <div class="line-row">
-                <div class="ssh-item" style="margin-left: 0;padding: 0;">
-                  <input class="btswitch btswitch-ios" id="onlineService" type="checkbox" name="show_workorder"/>
-                  <label class="btswitch-btn" for="onlineService" style="margin-bottom: 0;"></label>
-                </div>
-              </div>
-              <div class="line-row-tips">显示在线客服功能按钮</div>
-            </div>
-          </div>
+					<div class="line" title="绑定域名">
+						<div class="line-title">绑定域名</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['panel']['domain']}}"
+									name="domain"
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 savePanelConfig"
+								disabled
+						>
+							保存
+						</button>
+						<div class="line-row-tips">
+							为面板绑定一个访问域名，<span class="color-red"
+						>注意：一旦绑定域名，只能通过域名访问面板</span
+						>
+						</div>
+					</div>
 
-          <div class="line" title="面板别名">
-            <div class="line-title">面板别名</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" value="{{session['title']}}" name="webname" />
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 savePanelConfig" disabled>保存</button>
-            <div class="line-row-tips">给面板取个别的名称，用于网页标题</div>
-          </div>
-          
-          <div class="line" title="超时时间">
-            <div class="line-title">超时时间</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" value="{{data['session_timeout']}}" name="session_timeout" />
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 savePanelConfig" disabled>保存</button>
-            <div class="line-row-tips">如果用户超过以上时间 <span class="color-red">{{data['session_timeout']}}秒</span>，未操作面板，面板将自动退出登录</div>
-          </div>
+					<div class="line" title="授权IP">
+						<div class="line-title">授权IP</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									placeholder="示例: 1.1.1.1,2.2.2.1-2.2.2.2"
+									name="limitip"
+									value="{{data['panel']['limitip']}}"
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 savePanelConfig"
+								disabled
+						>
+							保存
+						</button>
+						<div class="line-row-tips">
+							设置访问授权IP，多个IP地址，请使用“,”分割，<span class="color-red"
+						>注意：一旦设置授权IP，只有指定IP的电脑能访问面板</span
+						>
+						</div>
+					</div>
 
-          <div class="line" title="默认建站目录">
-            <div class="line-title">默认建站目录</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" value="{{data['sites_path']}}" name="sites_path" />
-              <div class="selected-file sitesPath"><span class="glyphicon glyphicon-folder-open cursor"></span></div>
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 savePanelConfig" disabled>保存</button>
-            <div class="line-row-tips">创建的站点，默认将保存到该目录下</div>
-          </div>
+					<div class="line" title="服务器IP">
+						<div class="line-title">服务器IP</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['panel']['address']}}"
+									name="address"
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 savePanelConfig"
+								disabled
+						>
+							保存
+						</button>
+						<div class="line-row-tips">
+							默认为外网IP,若您在本地虚拟机测试，请填写虚拟机内网IP
+						</div>
+					</div>
 
-          <div class="line" title="默认备份目录">
-            <div class="line-title">默认备份目录</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" value="{{data['backup_path']}}" name="backup_path" />
-              <div class="selected-file backupPath"><span class="glyphicon glyphicon-folder-open cursor"></span></div>
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 savePanelConfig"  disabled>保存</button>
-            <div class="line-row-tips">网站和站点默认的备份目录</div>
-          </div>
+					<div class="line" title="服务器时间">
+						<div class="line-title">服务器时间</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['systemdate']}}"
+									name="systemdate"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 syncDateBtn"
+						>
+							同步
+						</button>
+						<div class="line-row-tips">同步当前服务器时间</div>
+					</div>
 
-          <div class="line" title="服务器IP">
-            <div class="line-title">服务器IP</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" value="{{data['panel']['address']}}" name="address"/>
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 savePanelConfig"disabled>保存</button>
-            <div class="line-row-tips">默认为外网IP,若您在本地虚拟机测试，请填写虚拟机内网IP</div>
-          </div>
+					<div class="line" title="默认建站目录">
+						<div class="line-title">默认建站目录</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['sites_path']}}"
+									name="sites_path"
+							/>
+							<div class="selected-file sitesPath">
+								<span class="glyphicon glyphicon-folder-open cursor"></span>
+							</div>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 savePanelConfig"
+								disabled
+						>
+							保存
+						</button>
+						<div class="line-row-tips">创建的站点，默认将保存到该目录下</div>
+					</div>
 
-          <div class="line" title="服务器时间">
-            <div class="line-title">服务器时间</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" value="{{data['systemdate']}}" name="systemdate" disabled />
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 syncDateBtn">同步</button>
-            <div class="line-row-tips">同步当前服务器时间</div>
-          </div>
-          
-          <div class="line" title="面板账号">
-            <div class="line-title">面板账号</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" name="username" value="{{session['username']}}" disabled />
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 editPanelAccount">设置</button>
-            <div class="line-row-tips">设置面板账号</div>
-          </div>
+					<div class="line" title="默认备份目录">
+						<div class="line-title">默认备份目录</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['backup_path']}}"
+									name="backup_path"
+							/>
+							<div class="selected-file backupPath">
+								<span class="glyphicon glyphicon-folder-open cursor"></span>
+							</div>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 savePanelConfig"
+								disabled
+						>
+							保存
+						</button>
+						<div class="line-row-tips">网站和站点默认的备份目录</div>
+					</div>
 
-          <div class="line" title="面板密码">
-            <div class="line-title">面板密码</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" name="password" value="********" disabled />
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 editPanelPassword">设置</button>
-            <div class="line-row-tips">设置面板密码</div>
-          </div>
+					<div class="line" title="面板端口">
+						<div class="line-title">面板端口</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['panel']['port']}}"
+									name="port"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 setPanelPort"
+						>
+							设置
+						</button>
+						<div class="line-row-tips">
+							建议端口范围8888 - 65535，<span class="color-red"
+						>注意：有安全组的服务器请提前在安全组放行新端口</span
+						>，<a
+								href="https://www.bt.cn/bbs/thread-109457-1-1.html"
+								class="btlink"
+								target="_blank"
+						>了解详情</a
+						>
+						</div>
+					</div>
 
-          <div class="line" title="绑定宝塔账号">
-            <div class="line-title">绑定宝塔账号</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" name="bind_user_info" disabled />
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 bindBtUser">设置</button>
-            <button type="button" class="btn btn-default btn-sm ml5 unbindBtUser">解绑</button>
-            <div class="line-row-tips">面板大多数功能依赖云端服务(证书申请，产品购买，软件列表等)，该功能仅用于云端服务，不涉及敏感操作</div>
-          </div>
+					<div class="line" title="安全入口">
+						<div class="line-title">安全入口</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['panel']['admin_path']}}"
+									name="entrance"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 setSafetyEntrance"
+						>
+							设置
+						</button>
+						<div class="line-row-tips">
+							面板管理入口，设置后只能通过指定安全入口登录面板,如: /www_bt_cn
+						</div>
+					</div>
 
-          <div class="line" title="面板菜单栏隐藏">
-            <div class="line-title">面板菜单栏隐藏</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" name="menu_hide_list" disabled />
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 menuBarManage">设置</button>
-            <div class="line-row-tips">隐藏左侧菜单栏目</div>
-          </div>
-          <div class="line" title="面板云端请求方式">
-            <div class="line-title">面板云端请求方式</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" name="request_type" disabled />
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 request_type">设置</button>
-            <div class="line-row-tips">面板请求云端时，使用的请求方式，默认支持python、curl、php，请根据实际情况切换</div>
-          </div>
-          <div class="line" title="面板云端请求线路">
-            <div class="line-title">面板云端请求线路</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" name="request_iptype" disabled />
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 request_iptype">设置</button>
-            <div class="line-row-tips">面板请求云端时，使用的请求线路，默认支持auto、ipv4、ipv6，请根据实际情况切换</div>
-          </div>
-          <div class="line" title="面板云端通讯节点配置">
-            <div class="line-title">面板云端通讯节点配置</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" name="node_config" disabled />
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 node_config">设置</button>
-            <div class="line-row-tips">请勿随意调整节点配置，仅获取云端数据出现未响应或错误时，可尝试切换该节点</div>
-          </div>
-        </div>
-      </div>
-      <div class="panel-config hide" data-type="securityConfig">
-        <div class="configure-title">安全设置</div>
-        <div class="configure-block">
+					<div class="line" title="面板账号">
+						<div class="line-title">面板账号</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									name="username"
+									value="{{session['username']}}"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 editPanelAccount"
+						>
+							设置
+						</button>
+						<div class="line-row-tips">设置面板账号</div>
+					</div>
 
-          <div class="line" title="面板SSL">
-            <div class="line-title">面板SSL</div>
-            <div class="line-form">
-              <div class="line-row">
-                <div class="ssh-item" style="margin-left: 0;padding: 0;">
-                  <input class="btswitch btswitch-ios" id="panelSsl" type="checkbox" name="ssl">
-                  <label class="btswitch-btn" for="panelSsl" style="margin-bottom: 0;"></label>
-                </div>
-                <button ype="button" class="btn btn-default btn-xs panelSslConfig" style="vertical-align: middle;
-                margin-left: 10px;">面板SSL配置</button>
-              </div>
-              <div class="line-row-tips">为面板设置https协议访问，提升面板访问安全性，<a href="https://www.bt.cn/bbs/thread-704-1-1.html" class="btlink" target="_blank">了解详情</a></div>
-            </div>
-          </div>
+					<div class="line" title="面板密码">
+						<div class="line-title">面板密码</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									name="password"
+									value="********"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 editPanelPassword"
+						>
+							设置
+						</button>
+						<div class="line-row-tips">设置面板密码</div>
+					</div>
 
-          <div class="line" title="BasicAuth认证">
-            <div class="line-title">BasicAuth认证</div>
-            <div class="line-form">
-              <div class="line">
-                <div class="ssh-item" style="margin-left: 0;padding: 0;">
-                  <input class="btswitch btswitch-ios" id="basicAuth" type="checkbox" name="basic_auth"/>
-                  <label class="btswitch-btn" for="basicAuth" style="margin-bottom: 0;"></label>
-                </div>
-              </div>
-            </div>
-            <div class="line-row-tips">为面板增加一道基于BasicAuth的认证服务，有效防止面板被扫描，<a href="https://www.bt.cn/bbs/thread-34374-1-1.html" class="btlink" target="_blank">了解详情</a></div>
-          </div>
+					<div class="line" title="绑定宝塔账号">
+						<div class="line-title">绑定宝塔账号</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									name="bind_user_info"
+									disabled
+							/>
+						</div>
+						<button type="button" class="btn btn-success btn-sm ml5 bindBtUser">
+							设置
+						</button>
+						<button
+								type="button"
+								class="btn btn-default btn-sm ml5 unbindBtUser"
+						>
+							解绑
+						</button>
+						<div class="line-row-tips">
+							面板大多数功能依赖云端服务(证书申请，产品购买，软件列表等)，该功能仅用于云端服务，不涉及敏感操作
+						</div>
+					</div>
 
-          <div class="line" title="动态口令认证">
-            <div class="line-title">动态口令认证</div>
-            <div class="line-form">
-              <div class="line-row">
-                <div class="ssh-item" style="margin-left: 0;padding: 0;">
-                  <input class="btswitch btswitch-ios" id="checkTwoStep" type="checkbox" name="check_two_step"/>
-                  <label class="btswitch-btn" for="checkTwoStep" style="margin-bottom: 0;"></label>
-                </div>
-                <button ype="button" class="btn btn-default btn-xs checkTwoStepConfig" style="vertical-align: middle;
-                margin-left: 10px;">动态口令配置</button>
-              </div>
-              <div class="line-row-tips">(Google Authenticator，谷歌身份认证)为面板提供动态口令的登录的验证，<a href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=37437" class="btlink" target="_blank">了解详情</a></div>
-            </div>
-          </div>
+					<div class="line" title="临时访问授权">
+						<div class="line-title">临时访问授权</div>
+						<div class="line-input">
+							<button
+									type="button"
+									class="btn btn-success btn-sm setTempAuthView"
+							>
+								临时访问授权管理
+							</button>
+						</div>
+						<div class="line-row-tips">为非管理员临时提供面板访问权限</div>
+					</div>
+				</div>
+			</div>
+			<div class="panel-config hide" data-type="panelConfig">
+				<div class="configure-title">面板设置</div>
+				<div class="configure-block">
+					<div class="line" title="关闭面板">
+						<div class="line-title">关闭面板</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="closePanel"
+											type="checkbox"
+											name="close_panel"
+									/>
+									<label
+											class="btswitch-btn"
+											for="closePanel"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+							</div>
+							<div class="line-row-tips">
+								仅关闭当前的面板服务，不影响web服务器，数据库等程序运行
+							</div>
+						</div>
+					</div>
 
-          <div class="line" title="访问设备验证">
-            <div class="line-title">访问设备验证</div>
-            <div class="line-form">
-              <div class="line-row">
-                <div class="ssh-item" style="margin-left: 0;padding: 0;">
-                  <input class="btswitch btswitch-ios" id="sslVerify" type="checkbox" name="ssl_verify"/>
-                  <label class="btswitch-btn" for="sslVerify" style="margin-bottom: 0;"></label>
-                </div>
-                <button ype="button" class="btn btn-default btn-xs sslVerifyConfig" style="vertical-align: middle;
-                margin-left: 10px;">访问设备验证配置</button>
-              </div>
-              <div class="line-row-tips">基于SSL证书双向验证，开启后电脑需要安装此证书，否则将无法访问，属于极高安全级别的访问限制方式，类似银行账号U盘密钥登录。<a href="https://www.bt.cn/bbs/thread-77863-1-1.html" class="btlink" target="_blank">了解详情</a></div>
-            </div>
-          </div>
+					<div class="line" title="监听IPv6">
+						<div class="line-title">监听IPv6</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="monitorIPv6"
+											type="checkbox"
+											name="ipv6"
+									/>
+									<label
+											class="btswitch-btn"
+											for="monitorIPv6"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+							</div>
+							<div class="line-row-tips">监听IPv6地址的访问</div>
+						</div>
+					</div>
 
-          <div class="line" title="密码复杂度验证">
-            <div class="line-title">密码复杂度验证</div>
-            <div class="line-form">
-              <div class="line-row">
-                <div class="ssh-item" style="margin-left: 0;padding: 0;">
-                  <input class="btswitch btswitch-ios" id="passwordSafe" type="checkbox" name="paw_complexity"/>
-                  <label class="btswitch-btn" for="passwordSafe" style="margin-bottom: 0;"></label>
-                </div>
-              </div>
-              <div class="line-row-tips">为面板密码提供复杂度验证方式，复杂度验证规则：<span class="color-red">密码必须满足密码长度大于8位且大写字母、小写字母、数字、特殊字符至少3项组合</span></div>
-            </div>
-          </div>
+					<div class="line" title="离线模式">
+						<div class="line-title">离线模式</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="offlineMode"
+											type="checkbox"
+											name="is_local"
+									/>
+									<label
+											class="btswitch-btn"
+											for="offlineMode"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+							</div>
+						</div>
+						<div class="line-row-tips">
+							离线模式下，面板更新，插件购买等联网服务将无法使用
+						</div>
+					</div>
 
-          <div class="line" title="面板端口">
-            <div class="line-title">面板端口</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" value="{{data['panel']['port']}}" name="port" disabled/>
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 setPanelPort">设置</button>
-            <div class="line-row-tips">建议端口范围8888 - 65535，<span class="color-red">注意：有安全组的服务器请提前在安全组放行新端口</span></div>
-          </div>
+					<div class="line" title="开发者模式">
+						<div class="line-title">开发者模式</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="developerMode"
+											type="checkbox"
+											name="debug"
+									/>
+									<label
+											class="btswitch-btn"
+											for="developerMode"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+							</div>
+							<div class="line-row-tips">
+								仅第三方开发者开发阶段使用（普通用户请勿开启）
+							</div>
+						</div>
+					</div>
 
-          <div class="line" title="安全入口">
-            <div class="line-title">安全入口</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" value="{{data['panel']['admin_path']}}" name="entrance" disabled />
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 setSafetyEntrance">设置</button>
-            <div class="line-row-tips">面板管理入口，设置后只能通过指定安全入口登录面板,如: /www_bt_cn</div>
-          </div>
+					<div class="line" title="API接口">
+						<div class="line-title">API接口</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="apiInterface"
+											type="checkbox"
+											name="api"
+									/>
+									<label
+											class="btswitch-btn"
+											for="apiInterface"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+								<button
+										type="button"
+										class="btn btn-default btn-xs apiInterfaceBtn"
+										style="vertical-align: middle; margin-left: 10px"
+								>
+									API接口配置
+								</button>
+							</div>
+							<div class="line-row-tips">
+								提供面板API接口访问的支持（堡塔APP需要开启该功能），<a
+									href="https://www.bt.cn/bbs/thread-20376-1-1.html"
+									class="btlink"
+									target="_blank"
+							>了解详情</a
+							>
+							</div>
+						</div>
+					</div>
 
-          <div class="line" title="未认证的响应状态">
-            <div class="line-title">未认证响应状态</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" value="" name="status_code" disabled />
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 setStatusCodeView">设置</button>
-            <div class="line-row-tips">用于在未登录且未正确输入安全入口时的响应，可用于隐藏面板特征</div>
-          </div>
+					<div class="line" title="在线客服">
+						<div class="line-title">在线客服</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="onlineService"
+											type="checkbox"
+											name="show_workorder"
+									/>
+									<label
+											class="btswitch-btn"
+											for="onlineService"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+							</div>
+							<div class="line-row-tips">显示在线客服功能按钮</div>
+						</div>
+					</div>
 
-          <div class="line" title="绑定域名">
-            <div class="line-title">绑定域名</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" value="{{data['panel']['domain']}}" name="domain"/>
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 savePanelConfig" disabled>保存</button>
-            <div class="line-row-tips">为面板绑定一个访问域名，<span class="color-red">注意：一旦绑定域名，只能通过域名访问面板</span></div>
-          </div>
+					<div class="line" title="用户体验改善计划">
+						<div class="line-title">用户体验改善计划</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="setImprovement"
+											type="checkbox"
+											name="improvement"
+									/>
+									<label
+											class="btswitch-btn"
+											for="setImprovement"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+							</div>
+							<div class="line-row-tips">参加用户体验改善计划来帮助我们改进产品，<a href="https://www.bt.cn/new/agreement_privacy.html" target="_blank" class="btlink">查看隐私政策</a></div>
+						</div>
+					</div>
 
-          <div class="line" title="授权IP">
-            <div class="line-title">授权IP</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" placeholder="示例: 1.1.1.1,2.2.2.1-2.2.2.2" name="limitip" value="{{data['panel']['limitip']}}"/>
-            </div>
-            <button type="button" class="btn btn-success btn-sm ml5 savePanelConfig" disabled>保存</button>
-            <div class="line-row-tips">设置访问授权IP，多个IP地址，请使用“,”分割，<span class="color-red">注意：一旦设置授权IP，只有指定IP的电脑能访问面板</span></div>
-          </div>
+					<div class="line" title="面板别名">
+						<div class="line-title">面板别名</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{session['title']}}"
+									name="webname"
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 savePanelConfig"
+								disabled
+						>
+							保存
+						</button>
+						<div class="line-row-tips">给面板取个别的名称，用于网页标题</div>
+					</div>
 
-          <div class="line" title="密码过期时间">
-            <div class="line-title">密码过期时间</div>
-            <div class="line-input">
-              <input type="text" class="bt-input-text" value="未设置" name="paw_expire_time" disabled />
-              <button type="button" class="btn btn-success btn-sm ml5 setPawExpiration">设置</button>
-            </div>
-            <div class="line-row-tips">为面板密码设置过期时间，过期后需要重新设置密码</div>
-          </div>
+					<div class="line" title="超时时间">
+						<div class="line-title">超时时间</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['session_timeout']}}"
+									name="session_timeout"
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 savePanelConfig"
+								disabled
+						>
+							保存
+						</button>
+						<div class="line-row-tips">
+							如果用户超过以上时间
+							<span class="color-red">{{data['session_timeout']}}秒</span
+							>，未操作面板，面板将自动退出登录
+						</div>
+					</div>
 
-          <div class="line" title="临时访问授权">
-            <div class="line-title">临时访问授权</div>
-            <div class="line-input">
-              <button type="button" class="btn btn-success btn-sm setTempAuthView">临时访问授权管理</button>
-            </div>
-            <div class="line-row-tips">为非管理员临时提供面板访问权限</div>
-          </div>
-        </div>
-      </div>
-      <div class="panel-config hide" data-type="pushConfig">
-        <div class="configure-title">通知设置</div>
-        <div class="configure-block">
-          <div class="line" title="消息通道">
-            <div class="line-title">消息通道</div>
-            <div class="line-input">
-              <div class="line-row">
-                <a href="javascript:;" class="bt_warning setMessageChannelMail">邮箱未设置</a>
-                <span>&nbsp;&nbsp;|&nbsp;&nbsp;</span>
-                <a href="javascript:;" class="bt_warning setMessageChannelNailNail">钉钉/企业微信未设置</a>&nbsp;&nbsp;&nbsp;&nbsp;
-              </div>
-              <button type="button" class="btn btn-success btn-xs setMessageChannelMailBtn">设置消息通道</button>
-            </div>
-            <div class="line-row-tips">设置消息推送配置，设置后可以将消息推送至邮箱、钉钉/企业微信</div>
-          </div>
-          <div class="line" title="登录告警">
-            <div class="line-title">登录告警</div>
-            <div class="line-input">
-              <div class="line-row">
-                <a href="javascript:;" class="bt_warning setAlarmMail">邮箱未设置</a>
-                <span class="interval">&nbsp;&nbsp;|&nbsp;&nbsp;</span>
-                <a href="javascript:;" class="bt_warning setAlarmNailNail">钉钉/企业微信未设置</a>&nbsp;&nbsp;&nbsp;&nbsp;
-              </div>
-              <button type="button" class="btn btn-success btn-xs setAlarmMailBtn">设置登录告警</button>
-            </div>
-            <div class="line-row-tips">设置登录告警提示，每次登录面板都会使用消息推送功能，发送邮件或发送信息至钉钉/企业微信</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <style>
-    .configure-box{
-      padding: 20px;
-    }
+					<div class="line" title="默认建站目录">
+						<div class="line-title">默认建站目录</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['sites_path']}}"
+									name="sites_path"
+							/>
+							<div class="selected-file sitesPath">
+								<span class="glyphicon glyphicon-folder-open cursor"></span>
+							</div>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 savePanelConfig"
+								disabled
+						>
+							保存
+						</button>
+						<div class="line-row-tips">创建的站点，默认将保存到该目录下</div>
+					</div>
 
-    .configure-block > .line{
-      padding: 6px 0;
-    }
+					<div class="line" title="默认备份目录">
+						<div class="line-title">默认备份目录</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['backup_path']}}"
+									name="backup_path"
+							/>
+							<div class="selected-file backupPath">
+								<span class="glyphicon glyphicon-folder-open cursor"></span>
+							</div>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 savePanelConfig"
+								disabled
+						>
+							保存
+						</button>
+						<div class="line-row-tips">网站和站点默认的备份目录</div>
+					</div>
 
-    .configure-block > .line:hover{
-      background: #a5a5a514;
-      transition: background .2s;
-      cursor: pointer;
-    }
+					<div class="line" title="服务器IP">
+						<div class="line-title">服务器IP</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['panel']['address']}}"
+									name="address"
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 savePanelConfig"
+								disabled
+						>
+							保存
+						</button>
+						<div class="line-row-tips">
+							默认为外网IP,若您在本地虚拟机测试，请填写虚拟机内网IP
+						</div>
+					</div>
 
-    .configure-title{
-      line-height: 30px;
-      font-size: 14px;
-      border-bottom: 1px solid #e7e7e7;
-      padding: 5px 5px 8px 10px;
-      font-weight: bold;
-      color: #666;
-    }
-    .configure-box  .configure-block{
-      padding: 25px 0;
-    }
+					<div class="line" title="服务器时间">
+						<div class="line-title">服务器时间</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['systemdate']}}"
+									name="systemdate"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 syncDateBtn"
+						>
+							同步
+						</button>
+						<div class="line-row-tips">同步当前服务器时间</div>
+					</div>
 
-    .configure-box .line .line-title{
-      font-size: 12px;
-      color: #333;
-      display: inline-block;
-      width: 140px;
-      text-align: right;
-      padding-right: 15px;
-      height: 30px;
-      line-height: 30px;
-      vertical-align: top;
-    }
+					<div class="line" title="面板账号">
+						<div class="line-title">面板账号</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									name="username"
+									value="{{session['username']}}"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 editPanelAccount"
+						>
+							设置
+						</button>
+						<div class="line-row-tips">设置面板账号</div>
+					</div>
 
-    .configure-box .line input[type="text"]{
-      width: 260px;
-    }
+					<div class="line" title="面板密码">
+						<div class="line-title">面板密码</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									name="password"
+									value="********"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 editPanelPassword"
+						>
+							设置
+						</button>
+						<div class="line-row-tips">设置面板密码</div>
+					</div>
 
-    .configure-box .line .line-tips{
-      margin-top: 5px;
-      color: #999;
-      margin-left: 135px;
-    }
-    .configure-box .line>button{
-      height: 30px;
-      vertical-align: top;
-    }
+					<div class="line" title="绑定宝塔账号">
+						<div class="line-title">绑定宝塔账号</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									name="bind_user_info"
+									disabled
+							/>
+						</div>
+						<button type="button" class="btn btn-success btn-sm ml5 bindBtUser">
+							设置
+						</button>
+						<button
+								type="button"
+								class="btn btn-default btn-sm ml5 unbindBtUser"
+						>
+							解绑
+						</button>
+						<div class="line-row-tips">
+							面板大多数功能依赖云端服务(证书申请，产品购买，软件列表等)，该功能仅用于云端服务，不涉及敏感操作
+						</div>
+					</div>
 
-    .configure-box .line .line-input input,
-    .configure-box .line .line-form input{
-      height: 30px;
-      line-height: 30px;
-    }
+					<div class="line" title="面板菜单栏隐藏">
+						<div class="line-title">面板菜单栏隐藏</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									name="menu_hide_list"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 menuBarManage"
+						>
+							设置
+						</button>
+						<div class="line-row-tips">隐藏左侧菜单栏目</div>
+					</div>
 
-    .configure-box .line .line-input{
-      display: inline-block;
-      position: relative;
-    }
-    .configure-box .line .line-form{
-      display: inline-block;
-      vertical-align: top;
-    }
-    .configure-box .line .line-form .ssh-item{
-      display: inline-block;
-      margin: 0;
-      padding: 0;
-      float: none;
-      vertical-align: middle;
-    }
-    .line-row,.line-row-tips{
-      height: 30px;
-      line-height: 30px;
-      display: inline-block;
-    }
-    .line-row-tips{
-      margin-left: 10px !important;
-      color: #999;
-    }
+					<div class="line" title="面板云端请求方式">
+						<div class="line-title">面板云端请求方式</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									name="request_type"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 request_type"
+						>
+							设置
+						</button>
+						<div class="line-row-tips">
+							面板请求云端时，使用的请求方式，默认支持python、curl、php，请根据实际情况切换
+						</div>
+					</div>
 
-    .bt_warning{
-      color: #fc6d26;
-    }
+					<div class="line" title="面板云端请求线路">
+						<div class="line-title">面板云端请求线路</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									name="request_iptype"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 request_iptype"
+						>
+							设置
+						</button>
+						<div class="line-row-tips">
+							面板请求云端时，使用的请求线路，默认支持auto、ipv4、ipv6，请根据实际情况切换
+						</div>
+					</div>
 
-    .line-split{
-      border-bottom: 1px #ececec dashed;
-      margin: 10px 0;
-    }
-    .selected-file{
-      height: 30px;
-      line-height: 30px;
-      width: 40px;
-      text-align: center;
-      background: #fafafa;
-      position: absolute;
-      right: 0;
-      top: 0;
-      border: 1px solid #cccccc;
-      border-top-right-radius: 2px;
-      border-bottom-right-radius: 2px;
-      cursor: pointer;
-    }
+					<div class="line" title="面板云端通讯节点配置">
+						<div class="line-title">面板云端通讯节点配置</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									name="node_config"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 node_config"
+						>
+							设置
+						</button>
+						<div class="line-row-tips">
+							请勿随意调整节点配置，仅获取云端数据出现未响应或错误时，可尝试切换该节点
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="panel-config hide" data-type="securityConfig">
+				<div class="configure-title">安全设置</div>
+				<div class="configure-block">
+					<div class="line" title="面板安全告警">
+						<div class="line-title">面板安全告警</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="panelSafe"
+											type="checkbox"
+											name="panel_safe"
+									/>
+									<label
+											class="btswitch-btn"
+											for="panelSafe"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+							</div>
+							<button
+									type="button"
+									class="btn btn-default btn-xs panelSafeAlertMethod"
+									style="vertical-align: middle; margin-left: 10px"
+							>
+								提醒方式
+							</button>
+						</div>
+						<div class="line-row-tips">
+							告警内容包含：面板用户变更、面板日志删除、面板开启开发者、面板开启API
+						</div>
+					</div>
+					<div class="line" title="面板SSL">
+						<div class="line-title">面板SSL</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="panelSsl"
+											type="checkbox"
+											name="ssl"
+									/>
+									<label
+											class="btswitch-btn"
+											for="panelSsl"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+								<button
+										type="button"
+										class="btn btn-default btn-xs panelSslConfig"
+										style="vertical-align: middle; margin-left: 10px"
+								>
+									面板SSL配置
+								</button>
+							</div>
+							<div class="line-row-tips">
+								为面板设置https协议访问，提升面板访问安全性，<a
+									href="https://www.bt.cn/bbs/thread-105443-1-1.html"
+									class="btlink"
+									target="_blank"
+							>了解详情</a
+							>
+							</div>
+						</div>
+					</div>
 
-    .btn-success[disabled]{
-      opacity: 0.65;
-    }
-    .info-title-tips{
-      width: 100%;
-      margin: 0 auto;
-      margin-bottom: 25px;
-      padding-left: 25px;
-    }
-    .download_Qcode {
-      overflow: hidden;
-      padding: 10px 0;
-    }
+					<div class="line" title="BasicAuth认证">
+						<div class="line-title">BasicAuth认证</div>
+						<div class="line-form">
+							<div class="line">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="basicAuth"
+											type="checkbox"
+											name="basic_auth"
+									/>
+									<label
+											class="btswitch-btn"
+											for="basicAuth"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+							</div>
+						</div>
+						<div class="line-row-tips">
+							为面板增加一道基于BasicAuth的认证服务，有效防止面板被扫描，<a
+								href="https://www.bt.cn/bbs/thread-34374-1-1.html"
+								class="btlink"
+								target="_blank"
+						>了解详情</a
+						>
+						</div>
+					</div>
 
-    .download_Qcode .item_down {
-      width: 100%;
-      text-align: center;
-      border-right: 1px solid #ececee;
-      text-align: center;
-      box-sizing: border-box;
-    }
+					<div class="line" title="动态口令认证">
+						<div class="line-title">动态口令认证</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="checkTwoStep"
+											type="checkbox"
+											name="check_two_step"
+									/>
+									<label
+											class="btswitch-btn"
+											for="checkTwoStep"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+								<button
+										type="button"
+										class="btn btn-default btn-xs checkTwoStepConfig"
+										style="vertical-align: middle; margin-left: 10px"
+								>
+									动态口令配置
+								</button>
+							</div>
+							<div class="line-row-tips">
+								(Google
+								Authenticator，谷歌身份认证)为面板提供动态口令的登录的验证，<a
+									href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=105839"
+									class="btlink"
+									target="_blank"
+							>了解详情</a
+							>
+							</div>
+						</div>
+					</div>
 
-    .download_Qcode .item_down:last-child {
-      border-right: none;
-    }
+					<div class="line" title="访问设备验证">
+						<div class="line-title">访问设备验证</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="sslVerify"
+											type="checkbox"
+											name="ssl_verify"
+									/>
+									<label
+											class="btswitch-btn"
+											for="sslVerify"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+								<button
+										type="button"
+										class="btn btn-default btn-xs sslVerifyConfig"
+										style="vertical-align: middle; margin-left: 10px"
+								>
+									访问设备验证配置
+								</button>
+							</div>
+							<div class="line-row-tips">
+								基于SSL证书双向验证，开启后电脑需要安装此证书，否则将无法访问，属于极高安全级别的访问限制方式，类似银行账号U盘密钥登录。<a
+									href="https://www.bt.cn/bbs/thread-77863-1-1.html"
+									class="btlink"
+									target="_blank"
+							>了解详情</a
+							>
+							</div>
+						</div>
+					</div>
 
-    .download_Qcode .qcode_title {
-      margin-bottom: 5px;
-    }
+					<div class="line" title="密码复杂度验证">
+						<div class="line-title">密码复杂度验证</div>
+						<div class="line-form">
+							<div class="line-row">
+								<div class="ssh-item" style="margin-left: 0; padding: 0">
+									<input
+											class="btswitch btswitch-ios"
+											id="passwordSafe"
+											type="checkbox"
+											name="paw_complexity"
+									/>
+									<label
+											class="btswitch-btn"
+											for="passwordSafe"
+											style="margin-bottom: 0"
+									></label>
+								</div>
+							</div>
+							<div class="line-row-tips">
+								为面板密码提供复杂度验证方式，复杂度验证规则：<span
+									class="color-red"
+							>密码必须满足密码长度大于8位且大写字母、小写字母、数字、特殊字符至少3项组合</span
+							>
+							</div>
+						</div>
+					</div>
 
-    .download_Qcode .item_down img {
-      width: 120px;
-    }
-    .create_temp_view {
-        padding: 15px 20px;
-    }
+					<div class="line" title="绑定域名">
+						<div class="line-title">绑定域名</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['panel']['domain']}}"
+									name="domain"
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 savePanelConfig"
+								disabled
+						>
+							保存
+						</button>
+						<div class="line-row-tips">
+							为面板绑定一个访问域名，<span class="color-red"
+						>注意：一旦绑定域名，只能通过域名访问面板</span
+						>
+						</div>
+					</div>
 
-    .create_temp_view .line .tname {
-        text-align: left;
-        float: inherit;
-    }
+					<div class="line" title="授权IP">
+						<div class="line-title">授权IP</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									placeholder="示例: 1.1.1.1,2.2.2.1-2.2.2.2"
+									name="limitip"
+									value="{{data['panel']['limitip']}}"
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 savePanelConfig"
+								disabled
+						>
+							保存
+						</button>
+						<div class="line-row-tips">
+							设置访问授权IP，多个IP地址，请使用“,”分割，<span class="color-red"
+						>注意：一旦设置授权IP，只有指定IP的电脑能访问面板</span
+						>
+						</div>
+					</div>
 
-    .create_temp_view .info-r {
-        margin: 0;
-    }
-  </style>
-  {% endblock %}
-  {% block scripts %}
-    <script src="{{g.cdn_url}}/js/jquery-2.2.4.min.js"></script>
-    <script src="{{g.cdn_url}}/language/{{session['lan']}}/lan.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-    <script src="{{g.cdn_url}}/js/public.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-    <script src="{{g.cdn_url}}/js/public_backup.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-    <script type="text/javascript">
-      bt.set_cookie('order', 'id desc');
-      bt.set_cookie('serverType', "{{session['webserver']}}");
-      $("#setBox").click(function () {
-        if ($(this).prop("checked")) {
-          $("input[name=id]").prop("checked", true);
+					<div class="line" title="面板端口">
+						<div class="line-title">面板端口</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['panel']['port']}}"
+									name="port"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 setPanelPort"
+						>
+							设置
+						</button>
+						<div class="line-row-tips">
+							建议端口范围8888 - 65535，<span class="color-red"
+						>注意：有安全组的服务器请提前在安全组放行新端口</span
+						>，<a
+								href="https://www.bt.cn/bbs/thread-109457-1-1.html"
+								class="btlink"
+								target="_blank"
+						>了解详情</a
+						>
+						</div>
+					</div>
+
+					<div class="line" title="安全入口">
+						<div class="line-title">安全入口</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="{{data['panel']['admin_path']}}"
+									name="entrance"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 setSafetyEntrance"
+						>
+							设置
+						</button>
+						<div class="line-row-tips">
+							面板管理入口，设置后只能通过指定安全入口登录面板,如: /www_bt_cn
+						</div>
+					</div>
+
+					<div class="line" title="未认证的响应状态">
+						<div class="line-title">未认证响应状态</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value=""
+									name="status_code"
+									disabled
+							/>
+						</div>
+						<button
+								type="button"
+								class="btn btn-success btn-sm ml5 setStatusCodeView"
+						>
+							设置
+						</button>
+						<div class="line-row-tips">
+							用于在未登录且未正确输入安全入口时的响应，可用于隐藏面板特征
+						</div>
+					</div>
+
+					<div class="line" title="密码过期时间">
+						<div class="line-title">密码过期时间</div>
+						<div class="line-input">
+							<input
+									type="text"
+									class="bt-input-text"
+									value="未设置"
+									name="paw_expire_time"
+									disabled
+							/>
+							<button
+									type="button"
+									class="btn btn-success btn-sm ml5 setPawExpiration"
+							>
+								设置
+							</button>
+						</div>
+						<div class="line-row-tips">
+							为面板密码设置过期时间，过期后需要重新设置密码
+						</div>
+					</div>
+
+					<div class="line" title="临时访问授权">
+						<div class="line-title">临时访问授权</div>
+						<div class="line-input">
+							<button
+									type="button"
+									class="btn btn-success btn-sm setTempAuthView"
+							>
+								临时访问授权管理
+							</button>
+						</div>
+						<div class="line-row-tips">为非管理员临时提供面板访问权限</div>
+					</div>
+					<div class="line" title="地区登录限制">
+						<div class="line-title" style="vertical-align:middle;">地区登录限制</div>
+						<div class="line-input" id="select-region" value="" data-value="">
+						</div>
+						<input type="text" class="area-duoxuan" style="width: 0;height: 0; display: none;" />
+						<div class="line-row-tips regional-entry-policy">设置面板地区登录策略</div>
+					</div>
+				</div>
+			</div>
+			<div class="panel-config alert-view-box hide" data-type="alertConfig">
+				<div class="tab-nav-border">
+					<span class="on">告警列表</span>
+					<span >告警设置</span>
+					<span>告警日志</span>
+				</div>
+				<div class="tab-con " style="padding:10px 0">
+					<div class="tab-block on">
+						<div id="addAlertTask" style="padding: 15px 45px;"></div>
+						<div id="alertList"></div>
+					</div>
+					<div class="tab-block " id="alertConfig"></div>
+					<div class="tab-block" id="alertLog"></div>
+				</div>
+			</div>
+			<div class="panel-search hide" style="padding-top: 25px"></div>
+		</div>
+	</div>
+	<style>
+		#configTab .ser-text{
+			border: #20a53a 1px solid;
+		}
+		#configTab .ser-sub{
+			background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAxAAAAMQBz4pYTAAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAE2SURBVDiNndJBS1VRFMXx9UzNQUQD0caFk6YhEUFCOPETiJQfIygQbNQgCCeOGjYLGjRJkPoKoSGIRKADs1nQoEIEfw3cry6v+3oPN2z2ufuu8z/7nruC9ORNvMRXHOIFbrTogjQfOniKX87iR2P9HSv/A1zA+xK/wRwmMYV5vKt3r/sBnpTgcb9R8aw0D3sB1/GzTum3uZsfSnupCVgr8vwQgKXSLnR7I0nuJJFkN4PjY9WZbmMkyXGtx4YAjFY9aQI2knSS3B4CMFd1508HV3CE3QHfP17G2sdo7298UJfzChMtmy9jszTLbT4InpfgCx6Vme5hFd/8jW1cbQME93Hg39jDYmOKT5hGOmi7rNkk15KcJvmcZKv6E0k2k9xNsp1keZBx2vIi3tYkG+cBxJmV13HrN6Szg7ZCfX3NAAAAAElFTkSuQmCC) no-repeat center #20a53a;
+		}
+		.configure-box {
+			padding: 20px;
+		}
+
+		.configure-block > .line {
+			padding: 6px 0;
+		}
+
+		.configure-block > .line:hover {
+			background: #a5a5a514;
+			transition: background 0.2s;
+			cursor: pointer;
+		}
+
+		.configure-title {
+			line-height: 30px;
+			font-size: 14px;
+			border-bottom: 1px solid #e7e7e7;
+			padding: 5px 5px 8px 10px;
+			font-weight: bold;
+			color: #666;
+		}
+		.configure-box .configure-block {
+			padding: 25px 0;
+		}
+
+		.configure-box .line .line-title {
+			font-size: 12px;
+			color: #333;
+			display: inline-block;
+			width: 140px;
+			text-align: right;
+			padding-right: 15px;
+			height: 30px;
+			line-height: 30px;
+			vertical-align: top;
+		}
+
+		.configure-box .line input[type='text'] {
+			width: 260px;
+		}
+
+		.configure-box .line .line-tips {
+			margin-top: 5px;
+			color: #999;
+			margin-left: 135px;
+		}
+		.configure-box .line > button {
+			height: 30px;
+			vertical-align: top;
+		}
+
+		.configure-box .line .line-input input,
+		.configure-box .line .line-form input {
+			height: 30px;
+			line-height: 30px;
+		}
+
+		.configure-box .line .line-input {
+			display: inline-block;
+			position: relative;
+		}
+		.configure-box .line .line-form {
+			display: inline-block;
+			vertical-align: top;
+		}
+		.configure-box .line .line-form .ssh-item {
+			display: inline-block;
+			margin: 0;
+			padding: 0;
+			float: none;
+			vertical-align: middle;
+		}
+		.line-row,
+		.line-row-tips {
+			height: 30px;
+			line-height: 30px;
+			display: inline-block;
+		}
+		.line-row-tips {
+			margin-left: 10px !important;
+			color: #999;
+		}
+
+		.bt_warning {
+			color: #fc6d26;
+		}
+
+		.line-split {
+			border-bottom: 1px #ececec dashed;
+			margin: 10px 0;
+		}
+		.selected-file {
+			height: 30px;
+			line-height: 30px;
+			width: 40px;
+			text-align: center;
+			background: #fafafa;
+			position: absolute;
+			right: 0;
+			top: 0;
+			border: 1px solid #cccccc;
+			border-top-right-radius: 2px;
+			border-bottom-right-radius: 2px;
+			cursor: pointer;
+		}
+
+		.btn-success[disabled] {
+			opacity: 0.65;
+		}
+		.info-title-tips {
+			width: 100%;
+			margin: 0 auto;
+			margin-bottom: 25px;
+			padding-left: 25px;
+		}
+		.download_Qcode {
+			overflow: hidden;
+			padding: 10px 0;
+		}
+
+		.download_Qcode .item_down {
+			width: 100%;
+			text-align: center;
+			border-right: 1px solid #ececee;
+			text-align: center;
+			box-sizing: border-box;
+		}
+
+		.download_Qcode .item_down:last-child {
+			border-right: none;
+		}
+
+		.download_Qcode .qcode_title {
+			margin-bottom: 5px;
+		}
+
+		.download_Qcode .item_down img {
+			width: 120px;
+		}
+		.create_temp_view {
+			padding: 15px 20px;
+		}
+
+		.create_temp_view .line .tname {
+			text-align: left;
+			float: inherit;
+		}
+
+		.create_temp_view .info-r {
+			margin: 0;
+		}
+
+		/*消息推送模块*/
+		.layui-layer.layui-layer-page.panel_push_form .bt-form .form-checkbox-label {
+			height: 18px;
+			line-height: 18px;
+		}
+		.layui-layer.layui-layer-page.panel_push_form .bt-form .inlineBlock.group span.unit {
+			line-height: 28px;
+		}
+		/*消息推送模块 end*/
+		#panel_menu_tab .bterror{text-decoration: underline;}
+
+		.line-row-tips i,
+		.line-title i {
+			display: inline-flex;
+			line-height: 1.4;
+			background-color: yellow;
+			font-style: normal;
+		}
+
+		.show-default {
+			position: relative;
+			top: -3px;
+			display: inline-block;
+			width: 4px;
+			height: 4px;
+			margin-left: 6px;
+			background-color: #cbcbcb;
+			border-radius: 50%;
+		}
+
+		/* 配置模块图标 */
+		.config-alert-icon{
+			width: 36px;
+			height: 36px;
+			display: inline-block;
+			background: url(../../static/img/config_alert.png);
+			background-size: 100%;
+			border-radius: 7px;
+			margin-right:8px;
+		}
+		.alert-icon-mail{background-position: 0 36px;}
+		.alert-icon-feishu{background-position: 0 144px;}
+		.alert-icon-weixin{background-position: 0 72px;}
+		.alert-icon-sms{background-position: 0 180px;}
+		.alert-icon-wx_account{background-position: 0 108px;}
+
+		.alert-config-content{
+			display: inline-block;
+			vertical-align: top;
+		}
+		.alert-config-content span{
+			font-weight: bold;
+			font-size: 14px;
+		}
+		.alert-config-content p{
+			font-size: 12px;
+		}
+
+
+
+		/* 添加告警任务 */
+		.panel_alert_task_view .bt_select_updown .bt_select_list{
+			max-height: 140px;
+		}
+
+		#addAlertTask .line .tname {
+			height: 35px;
+			line-height: 35px;
+			font-size: 13px;
+		}
+		#addAlertTask .bt_select_updown,
+		#addAlertTask .inlineBlock.group .unit,
+		#addAlertTask .bt-input-text {
+			height: 35px;
+			line-height: 35px;
+		}
+		#addAlertTask span.inlineBlock{
+			vertical-align: -3px;
+		}
+		#addAlertTask .bt_select_updown .bt_select_value {
+			height: 33px;
+			line-height: 33px;
+		}
+		#addAlertTask .bt_select_updown .bt_select_list .item {
+			height: 30px;
+			line-height: 30px;
+		}
+		#addAlertTask .bt_select_updown .bt_select_content {
+			font-size: 13px;
+		}
+		#addAlertTask .btn {
+			font-size: 13px;
+			padding: 7px 30px;
+		}
+		#addAlertTask .line .info-r {
+			margin-bottom: 10px;
+		}
+		/* 添加告警任务 end*/
+
+		/*ssl证书*/
+		.panel-ssl div.mb15{
+			text-align: center;
+		}
+		.panel-ssl .layer-info-title{
+			font-size: 20px;
+			color:#333;
+			margin-left: 5px;
+		}
+		.panel-ssl .bt-form .layui-layer-ico{
+			background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABHNCSVQICAgIfAhkiAAAAWpJREFUSIm9llFuhCAQhn/wIlxjiUnZa3TTs6hnMew1tEmzvYYXEfqwwAoiQlzLk4Hh/xjGGQb4p0FSi6yvBagSIPrDTWoinjv1CE2+3byi4/T1M2aBPGEr6FlrXyhmA3QxsAMxyVsAjSc6Vx0ApE7K+voJix2Q6HH6/L2GIG3FU8I5g/W1QDU30ERMtwcBABoaHYVsaaxAZ423gly8zgQxyVtQNWzB3gLy/liqzgEFadFNt0dbBGJ9LYzIYUgSBKoGAM0WrASSBtlSEoGVQnxQUMfM5hWsCLLQ9D0KiuQKdr8M2ZBA6wUyBTTMAw/22pyEOI3FM7KOUTU34VTg2X5MbC4pOtop/z26XwZoIqDo9UhxZZJrc0Cn73tkri/mVQGkNZ9dyg5M8pZJrk3giyFMch3LvWjP4H7hgofQXftGDDebk9x8MX3GsGe33wWZJzkU8tYyPE+CHHDpnc32zJwqAnnAZY9X0Mj8Aa5a6BugrbJUAAAAAElFTkSuQmCC');
+			background-position:none;
+			width: 27px;
+			height: 27px;
+		}
+		.panel-ssl .explainDescribeList{
+			color:#333;
+			font-size:14px;
+			background:#F5F7FA;
+			margin-top:24px;
+			padding:10px 20px 10px 20px;
+			border-radius: 2px;
+		}
+		.panel-ssl .explainDescribeList>li {
+			list-style: none;
+			line-height: 30px;
+		}
+		.panel-ssl .pt10 .line{
+			padding-bottom: 0;
+		}
+		.panel-ssl .pt10 .line:first-child .tname{
+			font-size:14px;
+		}
+		.panel-ssl .pt10 .line .info-r{
+			margin-bottom: 0;
+		}
+		select[name='cert_type']{
+			width:420px !important;
+		}
+		.panel-ssl .sslSafeTips{
+			color:#666;
+			margin-top:20px;
+		}
+		.pd40{
+			padding:25px 40px ;
+		}
+		.panel-ssl .explainDescribeList img{
+			cursor: pointer;
+			border: 1px solid #dcdfe6;
+			margin-top: 10px;
+		}
+		.panel-ssl .ssl-con-box{
+			height: 542px;
+			overflow: auto;
+		}
+		.ssl-jump-view .explainDescribeList{
+			margin: 0;
+			margin-bottom: 15px;
+		}
+		/*ssl证书 end*/
+
+/* 地区登录限制*/
+#select-region .green{
+		color: #20a53a;
+	}
+	#select-region .bt_select_value{
+		display: flex;
+		flex-wrap: wrap;
+		min-height: 33px;
+	}
+	#select-region .bt_select_list{
+		position: absolute;
+	}
+	#select-region .bt_select_content {
+    background-color: #f4f4f5;
+    border-color: #e9e9eb;
+    color: #909399;
+    height: 24px;
+    padding: 0px 8px;
+    line-height: 22px;
+    border: 1px solid #e9e9eb;
+    border-radius: 4px;
+    white-space: nowrap;
+    align-items: center;
+    max-width: 100%;
+    margin: 4px 15px 4px 0;
+    overflow: unset;
+		font-size: 13px;
+}
+	#select-region .arrow{
+		width: 15px;
+		float: left;
+	}
+	#select-region .svg{
+		margin-right: 10px;
+		fill: rgb(102, 102, 102);
+	}
+	#select-region .svg-ac{
+		transform: rotate(90deg);
+		fill: #20a53a;
+	}
+	#select-region .select-region{
+		position: relative;
+	}
+	#select-region .item-child .ac{
+		color: #20a53a;
+	}
+
+	#select-region .select-region .icon-item-active::before {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 6px;
+    border-left: 2px solid #20a532;
+    border-bottom: 2px solid #20a532;
+    transform: rotate(-45deg);
+    position: absolute;
+    right: 10px;
+    top: 8px;
+}
+	/* 地区登录限制 end*/
+
+		/*new 动态告警列表*/
+		.inlineBlock.group .unit {
+			height: 32px;
+			line-height: 32px;
+		}
+		.bt-input-text,
+		.inlineBlock.group span.unit{
+			border-color:#DCDFE6;
+		}
+		.panel_alert_task_view .bt_select_updown,
+		.panel_alert_task_view .bt_select_updown .bt_select_value{
+			height: 32px;
+			line-height:32px;
+		}
+		.bt-form span.inlineBlock,
+		span.text-tips {
+			vertical-align: sub;
+		}
+		/*new 动态告警列表 end*/
+	</style>
+	{% endblock %} {% block scripts %}
+	<script src="{{g.cdn_url}}/js/jquery-2.2.4.min.js"></script>
+	<script
+			type="text/javascript"
+			src="{{g.cdn_url}}/js/jquery.qrcode.min.js"
+	></script>
+	<script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js"></script>
+	<script src="{{g.cdn_url}}/language/{{session['lan']}}/lan.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+	<script type="text/javascript" src="{{g.cdn_url}}/js/clipboard.min.js"></script>
+	<script src="{{g.cdn_url}}/js/public.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+	<script src="{{g.cdn_url}}/js/public_backup.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+	<script src="{{g.cdn_url}}/js/tools.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+	<script src="{{g.cdn_url}}/js/jsencrypt.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+	<script src="{{g.cdn_url}}/jqueryCsxz/City_data.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+	<script src="{{g.cdn_url}}/jqueryCsxz/areadata.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+	<script src="{{g.cdn_url}}/jqueryCsxz/auto_area.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+	<script
+			type="text/javascript"
+			src="{{g.cdn_url}}/amd/require.min.js"
+			data-main="{{g.cdn_url}}/amd/main"
+	></script>
+	<script type="text/javascript">
+		if(bt.get_storage('edit_ssh')) {
+			bt.set_storage('edit_ssh', '')
+			var time = setInterval(function (){
+				if(bt.get_cookie('ssl_config')=='1') {
+					clearInterval(time)
+					bt.set_cookie('ssl_config', '0')
+					$('[for=panelSsl]').eq(1).click()
+				}
+			},500)
+		}
+
+		window.localStorage.setItem('mypcip',"{{session['address']}}");
+		var mypcip = window.localStorage.getItem('mypcip')
+		var ipArr = mypcip.split('.'),numberIp = window.localStorage.getItem('mypcipShow')
+		$('.mypcip .cw').text(numberIp !== null && parseInt(numberIp) ? ipArr[0] + '.***.***.' + ipArr[ipArr.length - 1] : mypcip);
+		numberIp !== null && parseInt(numberIp) ? $('.mypcip').removeClass('active') : $('.mypcip').addClass('active')
+
+		$('.mypcip').mousedown(function () {
+			var stime = new Date().getTime();//当前时间
+			$(this).mouseup(function (e) {
+				if(new Date().getTime() - stime < 200) {//鼠标按下和松开的时间间隔小于200为点击事件
+					var is_show = $(this).hasClass('active')
+					$('.mypcip .cw').text(is_show ? ipArr[0] + '.***.***.' + ipArr[ipArr.length - 1] : mypcip);
+					window.localStorage.setItem('mypcipShow',is_show ? 1 : 0);
+					if(is_show) $(this).removeClass('active');
+					else $(this).addClass('active');
+					e.stopPropagation()
+					e.preventDefault()
+				}
+			});
+		})
+		$('.mypcip').on('dblclick', function () {
+			bt.pub.copy_pass(mypcip);
+			bt_tools.msg({msg:'复制成功',status: true});
+		})
+
+		bt.set_cookie('order', 'id desc');
+		bt.set_cookie('serverType', "{{session['webserver']}}");
+		$("#setBox").click(function () {
+			if ($(this).prop("checked")) {
+				$("input[name=id]").prop("checked", true);
+			} else {
+				$("input[name=id]").prop("checked", false);
+			}
+		});
+		$('[name="limitip"]').keyup(function () {
+			$('[name="limitip"]').val($(this).val().replace(/，/g,','))
+		})
+		var is_files_html = false;
+		var task_open = 0;
+		var task_close = false;
+		if ($(".current").attr("id") == 'memuAfiles') {
+			is_files_html = true;
+		}
+
+		$('.tabs-item').click(function () {
+			if($(this).data('type') === 'alertConfig') $('.search.pull-right').hide()
+			else $('.search.pull-right').show()
+		})
+
+		function task_stat(my_init) {
+			if (!my_init) {
+				my_init = 0;
+				if (task_open) return;
+			}
+			if (task_close) return;
+			$.post('/task?action=get_task_lists', {
+				status: -3
+			}, function (task_list) {
+				if (task_list.length == 0) {
+					if (my_init && is_files_html) GetFiles(getCookie('Path'));
+					if (task_open) {
+						layer.close(task_open);
+						task_open = false;
+					}
+					return;
+				}
+				var msg_body = '';
+				var is_add = false;
+				for (var i = 0; i < task_list.length; i++) {
+					if (task_list[i]['status'] == -1) {
+						if (!task_open || !$(".message-list").attr("class")) {
+							show_task();
+						}
+
+						if (task_list[i]['type'] == '1') {
+							msg_body +=
+									'<div class="mw-con">\
+                                                      <ul class="waiting-down-list">\
+                                                        <li>\
+                                                          <div class="down-filse-name"><span class="fname" style="width:80%;" title="正在下载: ' +
+									task_list[i].shell + '">正在下载: ' + task_list[i].shell +
+									'</span><span style="position: absolute;left: 84%;top: 25px;color: #999;">' + task_list[i].log
+											.pre + '%</span><span class="btlink" onclick="remove_task(' + task_list[i].id + ')" style="position: absolute;top: 25px;right: 20px;">取消</span></div>\
+		                                  <div class="down-progress"><div class="done-progress" style="width:' + task_list[i]
+											.log.pre + '%"></div></div>\
+		                                  <div class="down-info"><span class="total-size"> ' + task_list[i].log.used + '/' +
+									ToSize(task_list[i].log.total) + '</span><span class="speed-size">' + (task_list[i].log.speed ==
+									0 ? '正在连接..' : task_list[i].log.speed) + '/s</span><span style="margin-left: 20px;">预计还要: ' +
+									task_list[i].log.time + '</span></div>\
+		                                </li>\
+		                                    </ul>\
+		                                </div>'
+						} else {
+							msg_body +=
+									'<div class="mw-title"><span style="max-width: 88%;display: block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">' +
+									task_list[i].name + ': ' + task_list[i].shell +
+									'</span><span class="btlink" onclick="remove_task(' + task_list[i].id + ')"  style="position: absolute;top: 10px;right: 15px;">取消</span></div>\
+		                                <div class="mw-con codebg">\
+		                                  <code>' + task_list[i].log + '</code>\
+		                                </div>'
+
+						}
+
+					} else {
+						if (!is_add) {
+							msg_body += '<div class="mw-title">等待执行任务</div><div class="mw-con"><ul class="waiting-list">';
+							is_add = true;
+						}
+						msg_body += '<li><span class="wt-list-name" style="width: 90%;">' + task_list[i].name + ': ' +
+								task_list[i].shell + '</span><span class="mw-cancel" onclick="remove_task(' + task_list[i].id +
+								')">X</span></li>';
+					}
+				}
+				if (task_open) {
+					if (is_add) {
+						msg_body += '</ul></div>';
+					}
+					$(".message-list").html(msg_body);
+				}
+
+
+				if (my_init > 3) {
+					if (is_files_html) GetFiles(getCookie('Path'));
+					my_init = 1;
+				}
+				my_init += 1
+				setTimeout(function () {
+					task_stat(my_init);
+				}, 1000);
+			});
+		}
+
+		function show_task() {
+			task_open = layer.open({
+				type: 1,
+				title: "实时任务队列",
+				area: '500px',
+				closeBtn: 2,
+				shadeClose: false,
+				shade: false,
+				offset: 'auto',
+				content: '<div style="margin: 10px;" class="message-list"></div>',
+				cancel: function () {
+					task_close = true;
+				}
+			});
+		}
+
+		function remove_task(id) {
+			loadT = layer.msg('正在取消任务...', {
+				time: 0,
+				icon: 16,
+				shade: [0.3, '#000']
+			});
+			$.post('/task?action=remove_task', {
+				id: id
+			}, function (rdata) {
+				layer.close(loadT)
+				layer.msg(rdata.msg);
+			});
+		}
+		task_stat();
+		var sessionInfo  = {
+			title:"{{session['title']}}",
+			username:"{{session['username']}}",
+			statusCode:"{{data['status_code']}}"
+		}
+
+		// 消息推送
+		// $('.setAlarmType').on('click', function(){open_three_channel_auth('MsgPush')});
+		$('.setAlarmType').on('click', function(){$('[data-type=alertConfig]').click()});
+
+		$('#onlineCustomer').click(function (){
+			var customer = $("#wechat-customer");
+			var ltd_end = bt.get_cookie('ltd_end');
+			if (!(ltd_end > 0)){
+				if(!$('#pay_product_view').length > 0){
+					product_recommend.pay_product_sign('ltd',45,'ltd')
+					layer.msg('在线客服仅支持企业版用户使用', {icon: 5});
+					return false;
+				}
+			}else{
+				if(customer.hasClass('hide')){
+					customer.removeClass('hide');
+				}else{
+					customer.addClass('hide');
+				}
+			}
+		})
+		var num = 0,too = false,time = 0
+		$('.toolbar-right .service').hover(function () {
+			if(too) return false
+			$(this).css({'background-image':'url(/static/img/service_2.svg)','background-color':'rgb(32, 165, 58)'})
+			$('.toolbar-right').css({'border-top-left-radius': '4px','border-top-right-radius': '4px'})
+			$('#wechat-customer').removeClass('hide')
+			$('.wechat-close').hide()
+			num=0
+		},function () {
+			if(too) return false
+			$(this).attr('style','')
+			$('.toolbar-right').attr('style','')
+			clearTimeout(time)
+			time = setTimeout(function (){
+				$('#wechat-customer').addClass('hide')
+			},50)
+			num=1
+		})
+    $('.wechat-close').on('click',function(){
+      $('.toolbar-right .service').attr('style','')
+      $('.toolbar-right').attr('style','')
+      $(this).parent().addClass('hide');
+      too=false
+    })
+		$('#wechat-customer').hover(function (){
+			clearTimeout(time)
+		},function (){
+			if(too) return false
+			$('.toolbar-right .service').attr('style','')
+			$('.toolbar-right').attr('style','')
+			clearTimeout(time)
+			$('#wechat-customer').addClass('hide')
+			num=1
+		})
+    $('.toolbar-right .service').click(function (){
+      $('.wechat-close').show()
+      if(num==0){
+        too = true
+        num=1
+      }else if (num==1){
+        $(this).attr('style','')
+        $('.toolbar-right').attr('style','')
+        $('#wechat-customer').addClass('hide')
+        too=false
+        num=2
+      }else {
+        if ($('#wechat-customer').hasClass('hide')) {
+          too = true
+          $('.toolbar-right .service').css({'background-image':'url(/static/img/service_2.svg)','background-color':'rgb(32, 165, 58)'})
+          $('.toolbar-right').css({'border-top-left-radius': '4px','border-top-right-radius': '4px'})
+          $('#wechat-customer').removeClass('hide')
         } else {
-          $("input[name=id]").prop("checked", false);
+          $('.toolbar-right .service').attr('style','')
+          $('.toolbar-right').attr('style','')
+          $('#wechat-customer').addClass('hide')
+          too=false
         }
-      });
-      var is_files_html = false;
-      var task_open = 0;
-      var task_close = false;
-      if ($(".current").attr("id") == 'memuAfiles') {
-        is_files_html = true;
       }
-
-      function task_stat(my_init) {
-        if (!my_init) {
-          my_init = 0;
-          if (task_open) return;
+    })
+    var id = 0;
+    $('.feedback').hover(function () {
+      $('#wechat-customer').addClass('hide')
+      id = layer.tips('点击打开调查问卷', '.feedback',{
+        tips: [4, 'rgb(54, 58, 80)'],
+        time: 0,
+        success: function (layero, index) {
+          var top = layero.css("top");
+          console.log(top)
+          layero.css("top", parseInt(top) + 20 + "px");
         }
-        if (task_close) return;
-        $.post('/task?action=get_task_lists', {
-          status: -3
-        }, function (task_list) {
-          if (task_list.length == 0) {
-            if (my_init && is_files_html) GetFiles(getCookie('Path'));
-            if (task_open) {
-              layer.close(task_open);
-              task_open = false;
-            }
-            return;
-          }
-          var msg_body = '';
-          var is_add = false;
-          for (var i = 0; i < task_list.length; i++) {
-            if (task_list[i]['status'] == -1) {
-              if (!task_open || !$(".message-list").attr("class")) {
-                show_task();
-              }
+      })
+      $('.toolbar-right').css({'border-bottom-left-radius': '10px','border-bottom-right-radius': '10px'})
+      $(this).css({'background-image':'url(/static/img/feedback_2.svg)','background-color':'rgb(32, 165, 58)'})
+    },function (){
+      layer.close(id)
+      $(this).attr('style','')
+      $('.toolbar-right').attr('style','')
+    })
+		$('.toolbar-right .feedback').on('click',function(){
+			if($('.nps_survey').length >= 1) return false;  //防止多层
+			if(window.localStorage.getItem('panelNPS') == null) window.localStorage.setItem('panelNPS',true)
+			layer.open({
+				type:1,
+				title:false,
+				offset: 'auto',
+				btn:false,
+				area:'580px',
+				skin:'nps_survey',
+				closeBtn: 2,
+				content:'<div class="nps_survey_box"">\
+	           <div class="nps_survey_banner">\
+	                <span>\
+	                    <i></i>\
+	                    <span style="vertical-align: 4px;">宝塔面板产品体验调查</span>\
+	                </span>\
+	           </div>\
+	           <div style="padding:30px 40px;">\
+    	           <div class="nps_survey_score" style="height: 130px;">\
+                   <div class="survey_title">您向朋友或同事推荐宝塔面板的可能性有多大?</div>\
+                   <ul class="survey_score_num small">\
+                        <li data-content="0">0</li>\
+                        <li data-content="1">1</li>\
+                        <li data-content="2">2</li>\
+                        <li data-content="3">3</li>\
+                        <li data-content="4">4</li>\
+                        <li data-content="5">5</li>\
+                        <li data-content="6">6</li>\
+                    </ul>\
+                    <ul class="survey_score_num medium">\
+                        <li data-content="7">7</li>\
+                        <li data-content="8">8</li>\
+                    </ul>\
+                    <ul class="survey_score_num large">\
+                        <li data-content="9">9</li>\
+                        <li data-content="10">10</li>\
+                    </ul>\
+    	           </div>\
+    	           <div class="nps_survey_content hide">\
+										<div class="nps_survey_line">\
+											<span class="nps_survey_title"><i>* </i>1.您的哪些需求在宝塔面板上还没有被满足的?</span>\
+											<textarea type="text" name="problem_one" placeholder=""></textarea>\
+											<div class="placeholder c9 problem_tips" style="top: 36px; left: 10px; display: block;font-size: 12px;">您在使用产品过程中有什么需求没有被满足，或遇到什么BUG没被解决，请将您的问题或需<br>求详细描述给我们，我们尽力为您解决及开发对应的功能</div>\
+										</div>\
+										<div class="nps_survey_line hide">\
+												<span class="nps_survey_title">2.您给出该分数的主要原因是什么?</span>\
+												<span class="nps_surver_tips">例如影响您评分的因素：功能、操作这些等等</span>\
+												<input type="text" name="problem_two">\
+										</div>\
+										<div class="nps_survey_line hide">\
+												<span class="nps_survey_title">3.您的哪些需求在宝塔面板上没有得到满足?</span>\
+												<span class="nps_surver_tips">您的建议很可能在下个版本更新发布</span>\
+												<input type="text" name="problem_three">\
+										</div>\
+										<div class="score_title"><span>我们特别重视您的需求反馈，我们会定期每周进行需求评审。希望能更好的帮到您</span></div>\
+    	           </div>\
+				   <button class="btn btn-success set_survey_info" style="margin-top:30px">提交</button>\
+    	       </div>\
+	        </div>\
+	        <style>\
+	        .nps_survey_banner{position: relative;background: url(/static/img/feedback/QA_banner.png);width:100%;background-size: 100%;height: 92px;margin-top: -1px;}\
+	        .nps_survey_banner>span{position: absolute;left: 32px;top: 16px;font-size: 17px;color: #fff;}\
+	        .nps_survey_banner i{background-image: url(/static/images/svg/logo-white.svg);background-repeat: no-repeat;background-size: 18px;display: inline-block;width: 20px;height: 20px;}\
+	        .survey_title {font-size: 19px;font-weight: bold;text-align: center;color: #000;}\
+	        .score_title{font-size:13px;color:#20a53a;text-align:center;line-height: 35px;}\
+	        .nps_survey_score ul{position: relative;margin-top:25px;display: inline-block;border: 1px solid #ccc;border-radius: 2px;font-size:0;cursor: pointer;}\
+            .survey_score_num::before {content: "";height: 35px;width: 100%;display: inline-block;position: absolute;bottom: -37px;cursor: auto;}\
+            .nps_survey_score ul.small::before{background:linear-gradient(to bottom,#ffdfdd,#fff)}\
+            .nps_survey_score ul.medium::before{background:linear-gradient(to bottom,#fff2db,#fff);}\
+            .nps_survey_score ul.large::before{background:linear-gradient(to bottom,#ebf9e0,#fff)}\
+            .survey_score_num.small::after {content: "不可能推荐";position: absolute;top: 48px;left: 117px;font-size: 12px;cursor: auto;}\
+            .survey_score_num.medium::after {content: "可能推荐";position: absolute;top: 48px;left: 18px;font-size: 12px;cursor: auto;}\
+            .survey_score_num.large::after {content: "一定推荐";position: absolute;top: 48px;left: 18px;font-size: 12px;cursor: auto;}\
+            .survey_score_num li {position: relative;display: inline-block;width: 42px;height: 42px;line-height: 42px;text-align: center;font-size:15px;font-weight: bold;}\
+            .survey_score_num .act::before {content: attr(data-content);color: #fff;height: 52px;line-height: 52px;width: 100%;position: absolute;top: -5px;font-size: 19px;background: inherit;border-radius: 4px;font-weight: initial;text-align: left;padding-left: 10px;}\
+            .survey_score_num .ten::before {content: attr(data-content);color: #fff;height: 52px;line-height: 52px;width: 100%;position: absolute;top: -5px;font-size: 19px;background: inherit;border-radius: 4px;font-weight: initial;text-align: left;padding-left: 2px;}\
+            .survey_score_num .act::after {content: "分";font-size:12px;color: #fff;position: absolute;left:21px;margin-left: 2px;}\
+            .survey_score_num .ten::after {content: "分";font-size:12px;color: #fff;position: absolute;left:25px;}\
+            .survey_score_num li::before{content:"";position: absolute;right: 0;top:10px;border-right-style: solid;border-right-width: 1px;border-color: rgb(255 255 255 / 30%);height: 25px;}\
+            .survey_score_num li:last-child::before{border:none}\
+            .survey_score_num.small{border-color: #f3a8a5;background: #f7cfce;color: #ed6d68;}\
+            .survey_score_num.medium{border-color: #f4cf8f;background: #fbe6c0;color: #f7be56;margin: 0 5px;}\
+            .survey_score_num.large{border-color: #a7db88;background: #d8f0ca;color: #69be3d;}\
+            .nps_survey_content{margin-top: 35px;}\
+            .nps_survey_line{ font-size:15px;position: relative;}\
+						.nps_survey_line.problem_rule input,.nps_survey_line.problem_rule textarea{border-color:#f56c6c}\
+            .nps_survey_line.problem_rule::before{content:"请输入您的需求再提交~";position:absolute;top:72px;font-size:12px;color:#f56c6c}\
+						.nps_survey_line.problem_rule1::before{content:"请输入您的需求再提交~";position:absolute;top:190px;font-size:12px;color:#f56c6c}\
+            .nps_survey_line .nps_survey_title{margin:20px 0 7px 0;font-weight: bold;}\
+            .nps_survey_line .nps_survey_title i{color:red;}\
+            .nps_survey_line .nps_surver_tips{font-size:12px;color:#999;}\
+            .nps_survey_line p{color:#999;font-size:12px;margin-bottom:5px;}\
+            .nps_survey_line input{width:490px;height:45px;border:1px solid #cccccc;font-size:12px;margin-top: 5px;margin-bottom: 20px;padding-left: 5px;}\
+            .nps_survey_line textarea{width:500px;height:160px;border:1px solid #cccccc;font-size:12px;margin-top: 5px;margin-bottom: 20px;padding: 5px 10px;line-height: 22px;}\
+            .set_survey_info{margin: 5px auto 0;display: block;padding: 6px 40px;}\
+	        </style>',
+				success:function(layers,indexs){
+					var goNum = 0;
+					var chooseScore = null;
+					//评分栏目鼠标经过事件
+					$('.survey_score_num').on('mouseenter','li',function(){
+						if(goNum < 1) {
+							$(window).resize()
+							goNum++
+						}
+						var _mouseScore = $(this).text()
+						if(!$(this).hasClass('act')&& !$(this).hasClass('ten')){
+							$.each($('.survey_score_num li'),function (i,v){
+								if(i != chooseScore){
+									$(v).removeAttr('class')
+									$(v).removeAttr('style')
+								}
+							})
+							$(this).addClass('act')
+							if(_mouseScore <= 6){
+								$(this).css({'background-color':'red','opacity': '0.8'})
 
-              if (task_list[i]['type'] == '1') {
-                msg_body +=
-                  '<div class="mw-con">\
-                                    <ul class="waiting-down-list">\
-                                      <li>\
-                                        <div class="down-filse-name"><span class="fname" style="width:80%;" title="正在下载: ' +
-                  task_list[i].shell + '">正在下载: ' + task_list[i].shell +
-                  '</span><span style="position: absolute;left: 84%;top: 25px;color: #999;">' + task_list[i].log
-                  .pre + '%</span><span class="btlink" onclick="remove_task(' + task_list[i].id + ')" style="position: absolute;top: 25px;right: 20px;">取消</span></div>\
-                                        <div class="down-progress"><div class="done-progress" style="width:' + task_list[i]
-                  .log.pre + '%"></div></div>\
-                                        <div class="down-info"><span class="total-size"> ' + task_list[i].log.used + '/' +
-                  ToSize(task_list[i].log.total) + '</span><span class="speed-size">' + (task_list[i].log.speed ==
-                    0 ? '正在连接..' : task_list[i].log.speed) + '/s</span><span style="margin-left: 20px;">预计还要: ' +
-                  task_list[i].log.time + '</span></div>\
-                                      </li>\
-                                          </ul>\
-                                      </div>'
-              } else {
-                msg_body +=
-                  '<div class="mw-title"><span style="max-width: 88%;display: block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">' +
-                  task_list[i].name + ': ' + task_list[i].shell +
-                  '</span><span class="btlink" onclick="remove_task(' + task_list[i].id + ')"  style="position: absolute;top: 10px;right: 15px;">取消</span></div>\
-                                      <div class="mw-con codebg">\
-                                        <code>' + task_list[i].log + '</code>\
-                                      </div>'
+							}else if(_mouseScore == 7 || _mouseScore == 8){
+								$(this).css({'background-color':'#ff7f00','opacity': '0.8'})
+							}else if(_mouseScore == 10){
+								$(this).css({'background-color':'#20a53a','opacity': '0.8'})
+								$(this).addClass('ten')
+							} else{
+								$(this).css({'background-color':'#20a53a','opacity': '0.8'})
+							}
+						}
+					})
+					$('.survey_score_num').on('mouseout','li',function(){
+						$.each($('.survey_score_num li'),function (i,v){
+							if(i != chooseScore){
+								$(v).removeAttr('class')
+								$(v).removeAttr('style')
+							}
+						})
+					})
+					$('.survey_score_num').on('click','li',function (e){
+						chooseScore = $(this).text()
+						$.each($('.survey_score_num li'),function (i,v){
+							if(i != chooseScore){
+								$(v).removeAttr('class')
+								$(v).removeAttr('style')
+							}
+						})
+						$(this).css('opacity','1')
+						$('.nps_survey_content').removeClass('hide')
+						$('.nps_survey').css('top',($(window).height()-663)/2+'px')
+						// 取消按钮样式
+						$('.set_survey_info').removeAttr('style')
+					})
+					// 聚焦问题1取消验证类名
+					$('[name=problem_one]').focus(function(){
+						$('.nps_survey_line').removeClass('problem_rule')
+					})
 
-              }
+					// 文本域触发隐藏显示
+          $('.nps_survey_line .problem_tips').click(function () {
+            $(this).prev().focus()
+          })
+          $('.nps_survey_line textarea').on('focus',function () {
+            $('.nps_survey_line').removeClass('problem_rule1')
+            $(this).next().hide();
+            layer.tips($(this).next().html(), $(this), {
+              tips: [1, '#20a53a'],
+              time: 0,
+              area: $(this).width()
+            });
+          })
+          $('.nps_survey_line textarea').on('blur',function () {
+            if ($(this).val() === '') $(this).next().show();
+            layer.closeAll('tips')
+          })
 
-            } else {
-              if (!is_add) {
-                msg_body += '<div class="mw-title">等待执行任务</div><div class="mw-con"><ul class="waiting-list">';
-                is_add = true;
-              }
-              msg_body += '<li><span class="wt-list-name" style="width: 90%;">' + task_list[i].name + ': ' +
-                task_list[i].shell + '</span><span class="mw-cancel" onclick="remove_task(' + task_list[i].id +
-                ')">X</span></li>';
-            }
-          }
-          if (task_open) {
-            if (is_add) {
-              msg_body += '</ul></div>';
-            }
-            $(".message-list").html(msg_body);
-          }
+					// 设置调查信息
+					$('.set_survey_info').click(function(){
+						var _score = $('.act').text()
+							// _one = $('input[name=problem_one]').val(),
+							// _two = $('input[name=problem_two]').val(),
+							// _three = $('input[name=problem_three]').val()
 
+						// _two = _two == '' ? ' ' : _two
+						// _three = _three == '' ? ' ' : _three
+						if(_score == '') layer.msg('打个分数再提交吧，麻烦您了~',{icon:0})
+						// if(_one == ''){
+						// 	$('input[name=problem_one]').parent('.nps_survey_line').addClass('problem_rule')
+						// 	return false;
+						// }
+						
+						// 文本域问题 清除所有校验
+						$('textarea').parent('.nps_survey_line').removeClass('problem_rule1')
+						// 排查未填写的必填项
+						_one = $('textarea[name=problem_one]').val()
+						if(_one == '') {
+							$('textarea[name=problem_one]').parent('.nps_survey_line').addClass('problem_rule1')
+							return false
+						}
+						$('textarea[name=problem_one]').parent('.nps_survey_line').removeClass('problem_rule1')
+						// 文本域问题 end
 
-          if (my_init > 3) {
-            if (is_files_html) GetFiles(getCookie('Path'));
-            my_init = 1;
-          }
-          my_init += 1
-          setTimeout(function () {
-            task_stat(my_init);
-          }, 1000);
-        });
-      }
+						$.post('/config?action=write_nps',{software_name:'panel',product_type:0,rate:_score,questions:JSON.stringify({
+										"LMdrUlYWLMjhjYjczNTUyMDIwcoCSWTt": _one,
+										// "PCpsJvGUmMjRjYjczNTUyMDExLGAMKPd": _two,
+										// "IYlVujIciMmM4YjczNTUyMDMzfselTpB":_three,
+										"RS4shJeBIMmIwYjczNTUyMDJim9MuCVq":'v1-'+window.localStorage.getItem('panelVersion')})},
+								function (rdata) {
+									if(rdata.status){
+										layer.close(indexs)
+										layer.open({
+											title: false,
+											btn: false,
+											shadeClose: true,
+											shade:0.1,
+											closeBtn: 0,
+											skin:'qa_thank_dialog',
+											area: '230px',
+											content: '<div class="qa_thank_box" style="background-color:#F1F9F3;text-align: center;padding: 20px 0;"><img src="/static/img/feedback/QA_like.png" style="width: 55px;"><p style="margin-top: 15px;">感谢您的参与!</p></div>',
+											success: function (layero,index) {
+												$(layero).find('.layui-layer-content').css({'padding': '0','border-radius': '5px'})
+												$(layero).css({'border-radius': '5px','min-width': '230px'})
 
-      function show_task() {
-        task_open = layer.open({
-          type: 1,
-          title: "实时任务队列",
-          area: '500px',
-          closeBtn: 2,
-          shadeClose: false,
-          shade: false,
-          offset: 'auto',
-          content: '<div style="margin: 10px;" class="message-list"></div>',
-          cancel: function () {
-            task_close = true;
-          }
-        });
-      }
+												setTimeout(function(){layer.close(index)},3000)
+											}
+										})
+									}
+								});
+					})
+				},cancel:function(index){
+					var _width = $(window).width(),revers = Math.abs(_width) * -1,_height = $(window).height()
+					$('.nps_survey_box').append('<style>\
+                .nps_survey {-webkit-animation: slide-out-elliptic-right-bck 0.7s ease-in both;animation: slide-out-elliptic-right-bck 0.7s ease-in both;}\
+                @-webkit-keyframes slide-out-elliptic-right-bck {\
+                  0% {\
+                    -webkit-transform: translateX(0) rotateY(0) scale(1);\
+                            transform: translateX(0) rotateY(0) scale(1);\
+                    -webkit-transform-origin: '+revers+'px 200%;\
+                            transform-origin: '+revers+'px 200%;\
+                    opacity: 1;\
+                  }\
+                  100% {\
+                    -webkit-transform: translateX('+(Number(_width)+200)+'px) rotateY(-30deg) scale(0);\
+                            transform: translateX('+(Number(_width)+200)+'px) rotateY(-30deg) scale(0);\
+                    -webkit-transform-origin: -60% 100%;\
+                            transform-origin: -60% '+(_height-(_height-600))+'px;\
+                    opacity: 1;\
+                  }\
+                }\
+              </style>')
+					setTimeout(function(){layer.close(index)},700)
+					// 关闭nps
+					$.post('/config?action=stop_nps',{software_name:'panel'})
+					return false;
+				}
+			})
+		})
 
-      function remove_task(id) {
-        loadT = layer.msg('正在取消任务...', {
-          time: 0,
-          icon: 16,
-          shade: [0.3, '#000']
-        });
-        $.post('/task?action=remove_task', {
-          id: id
-        }, function (rdata) {
-          layer.close(loadT)
-          layer.msg(rdata.msg);
-        });
-      }
-      task_stat(); 
-      {% if data['show_workorder'] %}
-        var box = new MessageBox(); 
-      {%endif %}
-    </script>
-    <script type="text/javascript" src="{{g.cdn_url}}/amd/require.min.js" data-main="{{g.cdn_url}}/amd/main"></script>
-    <script type="text/javascript">
-      var sessionInfo  = {
-        title:"{{session['title']}}",
-        username:"{{session['username']}}",
-        statusCode:"{{data['status_code']}}"
-      }
-    </script>
-  {% endblock %}
+	</script>
+	{% endblock %}
+</div>

@@ -1,25 +1,7 @@
-# -*- coding: utf-8 -*-
-from cachelib._compat import iteritems
+import typing as _t
 
 
-def _items(mappingorseq):
-    """Wrapper for efficient iteration over mappings represented by dicts
-    or sequences::
-
-        >>> for k, v in _items((i, i*i) for i in xrange(5)):
-        ...    assert k*k == v
-
-        >>> for k, v in _items(dict((i, i*i) for i in xrange(5))):
-        ...    assert k*k == v
-
-    """
-    if hasattr(mappingorseq, 'items'):
-        return iteritems(mappingorseq)
-    return mappingorseq
-
-
-class BaseCache(object):
-
+class BaseCache:
     """Baseclass for the cache systems.  All the cache systems implement this
     API or a superset of it.
 
@@ -28,15 +10,15 @@ class BaseCache(object):
                             of 0 indicates that the cache never expires.
     """
 
-    def __init__(self, default_timeout=300):
+    def __init__(self, default_timeout: int = 300):
         self.default_timeout = default_timeout
 
-    def _normalize_timeout(self, timeout):
+    def _normalize_timeout(self, timeout: _t.Optional[int]) -> int:
         if timeout is None:
             timeout = self.default_timeout
         return timeout
 
-    def get(self, key):
+    def get(self, key: str) -> _t.Any:
         """Look up key in the cache and return the value for it.
 
         :param key: the key to be looked up.
@@ -44,7 +26,7 @@ class BaseCache(object):
         """
         return None
 
-    def delete(self, key):
+    def delete(self, key: str) -> bool:
         """Delete `key` from the cache.
 
         :param key: the key to delete.
@@ -53,7 +35,7 @@ class BaseCache(object):
         """
         return True
 
-    def get_many(self, *keys):
+    def get_many(self, *keys: str) -> _t.List[_t.Any]:
         """Returns a list of values for the given keys.
         For each key an item in the list is created::
 
@@ -66,7 +48,7 @@ class BaseCache(object):
         """
         return [self.get(k) for k in keys]
 
-    def get_dict(self, *keys):
+    def get_dict(self, *keys: str) -> _t.Dict[str, _t.Any]:
         """Like :meth:`get_many` but return a dict::
 
             d = cache.get_dict("foo", "bar")
@@ -76,9 +58,11 @@ class BaseCache(object):
         :param keys: The function accepts multiple keys as positional
                      arguments.
         """
-        return dict(zip(keys, self.get_many(*keys)))
+        return dict(zip(keys, self.get_many(*keys)))  # noqa: B905
 
-    def set(self, key, value, timeout=None):
+    def set(
+        self, key: str, value: _t.Any, timeout: _t.Optional[int] = None
+    ) -> _t.Optional[bool]:
         """Add a new key/value to the cache (overwrites value, if key already
         exists in the cache).
 
@@ -94,7 +78,7 @@ class BaseCache(object):
         """
         return True
 
-    def add(self, key, value, timeout=None):
+    def add(self, key: str, value: _t.Any, timeout: _t.Optional[int] = None) -> bool:
         """Works like :meth:`set` but does not overwrite the values of already
         existing keys.
 
@@ -109,48 +93,52 @@ class BaseCache(object):
         """
         return True
 
-    def set_many(self, mapping, timeout=None):
+    def set_many(
+        self, mapping: _t.Dict[str, _t.Any], timeout: _t.Optional[int] = None
+    ) -> _t.List[_t.Any]:
         """Sets multiple keys and values from a mapping.
 
         :param mapping: a mapping with the keys/values to set.
         :param timeout: the cache timeout for the key in seconds (if not
                         specified, it uses the default timeout). A timeout of
                         0 indicates that the cache never expires.
-        :returns: Whether all given keys have been set.
+        :returns: A list containing all keys sucessfuly set
         :rtype: boolean
         """
-        rv = True
-        for key, value in _items(mapping):
-            if not self.set(key, value, timeout):
-                rv = False
-        return rv
+        set_keys = []
+        for key, value in mapping.items():
+            if self.set(key, value, timeout):
+                set_keys.append(key)
+        return set_keys
 
-    def delete_many(self, *keys):
+    def delete_many(self, *keys: str) -> _t.List[_t.Any]:
         """Deletes multiple keys at once.
 
         :param keys: The function accepts multiple keys as positional
                      arguments.
-        :returns: Whether all given keys have been deleted.
+        :returns: A list containing all sucessfuly deleted keys
         :rtype: boolean
         """
-        return all(self.delete(key) for key in keys)
+        deleted_keys = []
+        for key in keys:
+            if self.delete(key):
+                deleted_keys.append(key)
+        return deleted_keys
 
-    def has(self, key):
+    def has(self, key: str) -> bool:
         """Checks if a key exists in the cache without returning it. This is a
         cheap operation that bypasses loading the actual data on the backend.
-
-        This method is optional and may not be implemented on all caches.
 
         :param key: the key to check
         """
         raise NotImplementedError(
-            '%s doesn\'t have an efficient implementation of `has`. That '
-            'means it is impossible to check whether a key exists without '
-            'fully loading the key\'s data. Consider using `self.get` '
-            'explicitly if you don\'t care about performance.'
+            "%s doesn't have an efficient implementation of `has`. That "
+            "means it is impossible to check whether a key exists without "
+            "fully loading the key's data. Consider using `self.get` "
+            "explicitly if you don't care about performance."
         )
 
-    def clear(self):
+    def clear(self) -> bool:
         """Clears the cache.  Keep in mind that not all caches support
         completely clearing the cache.
 
@@ -159,7 +147,7 @@ class BaseCache(object):
         """
         return True
 
-    def inc(self, key, delta=1):
+    def inc(self, key: str, delta: int = 1) -> _t.Optional[int]:
         """Increments the value of a key by `delta`.  If the key does
         not yet exist it is initialized with `delta`.
 
@@ -172,7 +160,7 @@ class BaseCache(object):
         value = (self.get(key) or 0) + delta
         return value if self.set(key, value) else None
 
-    def dec(self, key, delta=1):
+    def dec(self, key: str, delta: int = 1) -> _t.Optional[int]:
         """Decrements the value of a key by `delta`.  If the key does
         not yet exist it is initialized with `-delta`.
 
@@ -187,12 +175,11 @@ class BaseCache(object):
 
 
 class NullCache(BaseCache):
-
     """A cache that doesn't cache.  This can be useful for unit testing.
 
     :param default_timeout: a dummy parameter that is ignored but exists
                             for API compatibility with other caches.
     """
 
-    def has(self, key):
+    def has(self, key: str) -> bool:
         return False

@@ -60,21 +60,21 @@ class fastcgi_client:
             print(repr(msg))
             return False
         return True
-        
+
     def _chr(self,num):
         if sys.version_info[0] == 3:
             return chr(num).encode('latin1')
         return chr(num)
-        
+
     def _ord(self,sbody):
         if sys.version_info[0] == 3:
             return sbody
         return ord(sbody)
-        
+
     def __encodeFastCGIRecord(self, fcgi_type, content, requestid):
         if type(content) == str: content = content.encode()
         length = len(content)
-        
+
         return self._chr(self.__FCGI_VERSION) \
                + self._chr(fcgi_type) \
                + self._chr((requestid >> 8) & 0xFF) \
@@ -147,24 +147,24 @@ class fastcgi_client:
                                  + self._chr(0) * 5
         request += self.__encodeFastCGIRecord(self.__FCGI_TYPE_BEGIN,
                                               beginFCGIRecordContent, requestId)
-        
+
         paramsRecord = b''
-        
+
         if nameValuePairs:
             v_items = sorted(nameValuePairs.items())
             for (name, value) in v_items:
                 paramsRecord += self.__encodeNameValueParams(name, value)
-                
-        
+
+
         if paramsRecord:
             request += self.__encodeFastCGIRecord(self.__FCGI_TYPE_PARAMS, paramsRecord, requestId)
-            
+
         request += self.__encodeFastCGIRecord(self.__FCGI_TYPE_PARAMS, b'', requestId)
 
         if post:
             request += self.__encodeFastCGIRecord(self.__FCGI_TYPE_STDIN, post, requestId)
         request += self.__encodeFastCGIRecord(self.__FCGI_TYPE_STDIN, b'', requestId)
-        
+
         self.sock.send(request)
         self.requests[requestId]['state'] = self.FCGI_STATE_SEND
         self.requests[requestId]['response'] = b''
@@ -194,7 +194,7 @@ class fastcgi_client:
 
     def __repr__(self):
         return "fastcgi connect host:{} port:{}".format(self.host, self.port)
-        
-        
+
+
 
 

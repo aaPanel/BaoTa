@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>访问面板失败-域名绑定已开启</title>
+</head>
+<body>
+    <h1>请使用正确的域名访问面板</h1>
+    <p><b>错误原因：</b>当前面板已开启域名访问，请输入您设置的域名访问面板，如您没记录或不记得了，可以使用以下方式解决</p>
+    <p><b>解决方法：</b>在SSH终端输入以下一种命令来解决</p>
+    <p>1.如果您忘记了正确的绑定域名，请登录SSH，执行命令查看绑定信息：<code>bt default</code></p>
+    <p>2.如果您的域名已弃用，请登录SSH，执行<code>bt 12</code>，取消域名绑定</p>
+		<style> 
+			code{
+				background-color: #efefef;
+				padding:2px 5px;
+				font-size:18px;
+				font-weight: 700;
+				font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif

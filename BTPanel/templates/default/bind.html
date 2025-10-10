@@ -7,10 +7,14 @@
           <div class="info-title-tips">
             <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span>宝塔面板许多功能都依赖于官网，绑定仅限于为您提供更好的面板服务体验，不涉及您服务器任何敏感信息，请放心使用。</p>
         </div>
+          <div class="public_key" style="display: block;" data="{{data['public_key']}}"></div>
           <p style="font-size: 18px;margin-top: 38px;">绑定宝塔帐号</p>
           <div class="libLogin pd20">
             <div class="bt-form text-center">
-              <div class="line"><input class="bt-input-text" type="text" name="username" placeholder="手机号" /></div>
+              <div class="line relative" style="margin-bottom:16px">
+								<input class="bt-input-text" type="text" name="username" placeholder="手机号" />
+								<span class="vaildName" style="display:none;position:absolute;bottom:-14px;left:0;color:red">请使用宝塔官网登陆账号进行登录，若未有账号，可进行<a class="btlink" href="https://www.bt.cn/register.html" target="_blank">免费注册</a></span>
+							</div>
               <div class="line"><input class="bt-input-text" type="password" name="password" placeholder="密码" /></div>
               <div class="line verifyCodeView"><input class="bt-input-text" type="text" name="verifyCode" placeholder="验证码" /><div class="pull-right"><span class="getVerifyCode">获取验证码</span></div></div>
               <div class="line" style="margin-top: 15px;"><input class="login-button" value="登录" type="button" /></div>
@@ -22,7 +26,7 @@
 							<li>绑定帐号没有接管服务器的功能权限，请放心使用；</li>
 							<li>帐号绑定过程中遇到问题请联系客服处理；</li>
 							<li>客服电话：0769-23030556</li>
-              <li>客服企业微信：<a class="btlink qrcode" href="javascript:;">查看二维码</a></li>
+              <li>客服咨询：<a class="btlink qrcode" href="javascript:;">查看二维码</a></li>
 						</ul>
           </div>
         </div>
@@ -31,7 +35,8 @@
   </div>
 {% endblock %}
 {% block scripts %}
-{{ super() }} 
+{{ super() }}
+<script src="{{g.cdn_url}}/js/jsencrypt.min.js?version={{g['version']}}"></script>
 <script type="text/javascript">
   new BindAccount().init();
 
@@ -39,7 +44,7 @@
   $('.qrcode').hover(
     function () {
       var that = $(this);
-      tips = layer.tips('<img style="vertical-align: top; width: 120px; border: 1px solid #ddd;" src="/static/img/icon_qcode_account.png" />', that, {
+      tips = layer.tips('<img style="vertical-align: top; width: 120px; border: 1px solid #ddd;" src="/static/images/customer-qrcode.png" />', that, {
         time: 0,
         area: 'auto',
         tips: [3, '#fff'],
@@ -53,5 +58,14 @@
       if (tips != -1) layer.close(tips);
     }
   );
+
+	$('.libLogin input[name="username"]').on("input propertychange",function(){
+		// 校验输入是否符合电话号码形式,不符合则显示提示信息
+		if(!bt.check_phone($(this).val())){
+			$('.vaildName').show()
+		}else{
+			$('.vaildName').hide()
+		}
+	})
 </script>
 {% endblock %}

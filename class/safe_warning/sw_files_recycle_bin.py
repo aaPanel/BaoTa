@@ -26,6 +26,7 @@ _tips = [
     ]
 
 _help = ''
+_remind = '此方案可以防止文件被误删，及时通过回收站进行恢复。'
 
 
 def check_run():

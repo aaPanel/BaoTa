@@ -1,0 +1,131 @@
+[
+  {
+    "id": "70",
+    "ver": "1",
+    "used": false,
+    "source": "domain_endtime",
+    "title": "域名到期",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.ssl_push",
+      "name": "DomainEndTimeTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "project",
+          "name": "域名",
+          "type": "select",
+          "default": "all",
+          "items": [
+            {
+              "title": "所有域名",
+              "value": "all"
+            }
+          ]
+        },
+        {
+          "attr": "cycle",
+          "name": "剩余天数",
+          "type": "number",
+          "suffix": "",
+          "unit": "天",
+          "default": 30
+        }
+      ],
+      "sorted": [
+        [
+          "project"
+        ],
+        [
+          "cycle"
+        ]
+      ]
+    },
+    "default": {
+      "project": "all",
+      "cycle": 30
+    },
+    "advanced_default": {
+      "number_rule": {
+        "total": 2
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": false,
+    "tags": ["ssl"],
+    "description": "定时检查域名的到期时间（根据配置的域名有效期），如果剩余天数小于配置的阈值，则发送告警通知给管理员"
+  },
+  {
+    "id": "71",
+    "ver": "1",
+    "used": true,
+    "source": "cert_endtime",
+    "title": "证书到期",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.ssl_push",
+      "name": "CertEndTimeTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "project",
+          "name": "证书",
+          "type": "select",
+          "default": "all",
+          "items": [
+            {
+              "title": "所有证书",
+              "value": "all"
+            }
+          ]
+        },
+        {
+          "attr": "cycle",
+          "name": "剩余天数",
+          "type": "number",
+          "suffix": "",
+          "unit": "天",
+          "default": 30
+        }
+      ],
+      "sorted": [
+        [
+          "project"
+        ],
+        [
+          "cycle"
+        ]
+      ]
+    },
+    "default": {
+      "project": "all",
+      "cycle": 30
+    },
+    "advanced_default": {
+      "number_rule": {
+        "total": 2
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": false,
+    "tags": ["ssl"],
+    "description": "定时检查证书的到期时间，如果剩余天数小于配置的阈值，则发送告警通知给管理员"
+  }
+]
+

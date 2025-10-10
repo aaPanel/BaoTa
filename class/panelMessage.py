@@ -10,23 +10,17 @@
 # +-------------------------------------------------------------------
 # | 消息提醒
 # +-------------------------------------------------------------------
-import os,sys,time
-import public,json
-if os.environ.get('BT_TASK') != '1':
+import time
+import json
+import public
+try:
     from BTPanel import cache
-else:
+except :
     import cachelib
     cache = cachelib.SimpleCache()
 
 class panelMessage:
     os = 'linux'
-
-    def __init__(self):
-        if not public.M('sqlite_master').where('type=? AND name=? AND sql LIKE ?', ('table', 'messages','%retry_num%')).count():
-            public.M('messages').execute("alter TABLE messages add send integer DEFAULT 0",())
-            public.M('messages').execute("alter TABLE messages add retry_num integer DEFAULT 0",())
-        pass
-
 
     def set_send_status(self, id, data):
         '''
@@ -47,10 +41,11 @@ class panelMessage:
     获取官网推送消息，一天获取一次
     """
     def get_cloud_messages(self,args):
+
         try:
             ret = cache.get('get_cloud_messages')
             if ret: return public.returnMsg(True,'同步成功1!')
-            data = {}        
+            data = {}
             data['version'] = public.version()
             data['os'] = self.os
             sUrl = public.GetConfigValue('home') + '/api/wpanel/get_messages'
@@ -58,10 +53,10 @@ class panelMessage:
             http_requests.DEFAULT_TYPE = 'src'
             info = http_requests.post(sUrl,data).json()
             # info = json.loads(public.httpPost(sUrl,data))
-            for x in info:          
+            for x in info:
                 count = public.M('messages').where('level=? and msg=?',(x['level'],x['msg'],)).count()
                 if count: continue
-                
+
                 pdata = {
                     "level":x['level'],
                     "msg":x['msg'],
@@ -81,8 +76,13 @@ class panelMessage:
             @author hwliang <2020-05-18>
             @return list
         '''
-        public.run_thread(self.get_cloud_messages,args=(args,))
-        data = public.M('messages').where('state=? and expire>?',(1,int(time.time()))).order("id desc").select()
+        ikey = 'get_message'
+        data = cache.get(ikey)
+        if not data:
+            if not public.is_aarch():
+                public.run_thread(self.get_cloud_messages,args=(args,))
+            data = public.M('messages').where('state=? and expire>?',(1,int(time.time()))).order("id desc").select()
+            cache.set(ikey,data,86400)
         return data
 
     def get_messages_all(self,args = None):
@@ -193,5 +193,164 @@ class panelMessage:
         else:
             return True
 
+    def init_msg_module(self, module):
+        """
+        初始化消息通道, 迁移自windows
+        @module 消息通道模块名称
+        @author lx
+        """
+        try:
+            # 统一使用public中的方式处理
+            ret = public.init_msg(module)
+            if ret and hasattr(ret, "send_msg"):
+                return ret
+            import os, sys
+            if not os.path.exists('class/msg'): os.makedirs('class/msg')
+            panelPath = "/www/server/panel"
 
+            if  "{}/class/msg".format(panelPath) not in sys.path:
+                sys.path.insert(0, "{}/class/msg".format(panelPath))
 
+            if module in ("dingding", "feishu", "mail", "sms", "weixin", "wx_account"):
+                sfile = 'class/msg/{}_msg.py'.format(module)
+                if not os.path.exists(sfile):
+                    return False
+                msg_main = __import__('{}_msg'.format(module))
+                is_hook = False
+            else:
+                sfile = 'class/msg/web_hook_msg.py'
+                if not os.path.exists(sfile):
+                    return False
+                msg_main = __import__('web_hook_msg')
+                is_hook = True
+            try:
+                public.reload_mod(msg_main)
+            except:
+                pass
+            if is_hook:
+                if module == "web_hook":
+                    module = None
+                msg_cls_obj = getattr(msg_main, "web_hook_msg")(module)
+                return msg_cls_obj
+            return eval('msg_main.{}_msg()'.format(module))
+        except:
+            return None
+
+    def get_default_channel(self, args=None):
+        """获取面板默认消息通道
+        Returns:
+            channel: str/None，没有安装消息通道的情况下返回None。
+        """
+        default_channel_pl = "/www/server/panel/data/default_msg_channel.pl"
+        default_channel = public.readFile(default_channel_pl)
+        if default_channel:
+            return public.returnMsg(True, default_channel)
+        return public.returnMsg(False, "")
+
+    # def get_default_channel(self):
+    #     """获取面板默认消息通道，默认是邮箱，其次默认选择已安装的第一个消息通道
+
+    #     Returns:
+    #         channel: str/None，没有安装消息通道的情况下返回None。
+    #     """
+    #     from config import config
+    #     c = config()
+    #     get = public.dict_obj()
+    #     configs = c.get_msg_configs(get)
+    #     installed = []
+    #     for channel, obj in configs.items():
+    #         if "setup" in obj and obj["setup"]:
+    #             installed.append(channel)
+    #             if "default" in obj and obj["default"]:
+    #                 return channel
+    #     if "mail" in installed:
+    #         return "mail"
+    #     if installed:
+    #         return installed[0]
+    #     return None
+
+    def notify(self, args):
+        """发送通知
+
+        Args:
+            args (dict):
+            title: 消息标题
+            msg: 消息内容
+            channel: 消息通道
+        """
+
+        msg = ""
+        if "msg" in args:
+            body = args.msg
+        title = ""
+        if "title" in args:
+            title = args.title
+        sm_type = None
+        if "sm_type" in args:
+            sm_type = args.sm_type
+        sm_args = {}
+        if "sm_args" in args:
+            sm_args = json.loads(args.sm_args)
+        channel = None
+        channels = []
+        if "channel" in args:
+            channel = args.channel
+            if channel.find(",") != -1:
+                channels = channel.split(",")
+            else:
+                channels = [channel]
+        if not channel:
+            channel_res = self.get_default_channel()
+            if "msg" in channel_res:
+                channels = [channel_res["msg"]]
+        if not channels:
+            return False
+        try:
+            from config import config
+            c = config()
+            get = public.dict_obj()
+            msg_channels = c.get_msg_configs(get)
+
+            error_channel = []
+            channel_data = {}
+            for ch in channels:
+                msg_data = {}
+                # 根据不同的消息通道准备不同的内容
+                if ch == "mail":
+                    # 如果邮箱通知，没有标题直接跳过
+                    if not title: continue
+                    msg_data = {
+                        "msg": body.replace("\n", "<br/>"),
+                        "title": title
+                    }
+                if ch in ["dingding", "weixin", "feishu"]:
+                    # 钉钉类必须有消息内容
+                    if not body: continue
+                    msg_data["msg"] = body
+                if ch in ["sms"]:
+                    # 短信必须指定短信模板名
+                    if not sm_type: continue
+                    msg_data["sm_type"] = sm_type
+                    msg_data["sm_args"] = sm_args
+                if not msg_data:
+                    channel_data[ch] = args
+            # print("channel data:")
+            # print(channel_data)
+            # 即时推送
+
+            from panelPush import panelPush
+            pp = panelPush()
+            error_count = 0
+            push_res = pp.push_message_immediately(channel_data)
+            if push_res["status"]:
+                channel_res = push_res["msg"]
+                for ch, res in channel_res.items():
+                    if not res["status"]:
+                        if ch in msg_channels:
+                            error_channel.append(msg_channels[ch]["title"])
+                            error_count +=1
+            if error_count == len(channels):
+                return False
+            return True
+        except Exception as e:
+            return False

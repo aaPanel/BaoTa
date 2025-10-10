@@ -1,0 +1,252 @@
+﻿<div class="conter_box active box_mail">
+    <div class="bt-form">
+        <div style="padding-bottom: 12px; margin-bottom: 18px; border-bottom: #ccc 1px dashed;">
+            <div class="flex" style="align-item: center; height: 32px;">
+                <span class="tname" style="width: 99px; line-height: 30px; padding-right: 20px; text-align: right;"><i class="total_tips">?</i>设为默认</span>
+                <div>
+                    <input class="btswitch btswitch-ios" id="default_setting" type="checkbox" />
+                    <label style="position: relative;top: 5px;" class="btswitch-btn" for="default_setting"></label>
+                </div>
+            </div>
+        </div>
+        <div class="line">
+            <div class="tab-nav recipient_nav relative">
+                <span class="on" data-ctype="0" style="line-height: 30px;">收件者设置</span>
+                <span data-ctype="1" style="line-height: 30px;">发送者设置</span>
+            </div>
+        </div>
+        <div class="line recipient_view">
+            <div class="line relative">
+                <textarea name="recipient_textarea" class="bt-input-text mr5" type="text" style="width: 300px; height:120px; line-height:20px"></textarea>
+                <div class="placeholder c9 reci_tips" style="position: absolute;top: 25px;left: 25px; display:none">每行填写一个邮箱，例：<br>xxx@163.com<br>xxx@qq.com</div>
+            </div>
+            <button class="btn btn-success btn-sm recipient_submit" style="/* margin-left: 100px; */">保存</button>
+        </div>
+        <div class="line sender_view" style="display:none">
+            <div class="line">
+                <span class="tname">发送人邮箱</span>
+                <div class="info-r">
+                    <input name="sender_mail_value" class="bt-input-text mr5" type="text" style="width: 300px">
+                </div>
+            </div>
+            <div class="line">
+                <span class="tname">smtp密码</span>
+                <div class="info-r">
+                    <input name="sender_mail_password" class="bt-input-text mr5" type="password" style="width: 300px">
+                </div>
+            </div>
+            <div class="line">
+                <span class="tname">smtp服务器</span>
+                <div class="info-r">
+                    <input name="sender_mail_server" class="bt-input-text mr5" type="text" style="width: 300px">
+                </div>
+            </div>
+            <div class="line">
+                <span class="tname">端口</span>
+                <div class="info-r">
+                    <input name="sender_mail_port" class="bt-input-text mr5" type="text" style="width: 300px">
+                </div>
+            </div>
+            <button class="btn btn-success btn-sm sender_submit" style="margin-left: 100px;">保存</button>
+            <ul class="help-info-text c7">
+                <li>推荐使用465端口，协议为SSL/TLS</li>
+                <li>25端口为SMTP协议，587端口为STARTTLS协议</li>
+                <li><a href="https://www.bt.cn/bbs/thread-71298-1-1.html" target="_blank" class="btlink">配置教程</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+<style type="text/css">
+.total_tips {
+    border: 1px solid #cbcbcb;
+    border-radius: 8px;
+    color: #cbcbcb;
+    cursor: pointer;
+    display: inline-block;
+    font-family: arial;
+    font-size: 12px;
+    font-style: normal;
+    height: 14px;
+    line-height: 14px;
+    margin-right: 5px;
+    text-align: center;
+    width: 14px;
+}
+</style>
+<!--邮箱模块-->
+<script type="text/javascript">
+    var mail = {
+        all_mail_info: {},
+        init: function () {
+            var that = this;
+            this.all_mail_info = $('.alarm-view .bt-w-menu p.bgw').data('data'); //设置全局数据
+            this.gat_info();
+            this.init_default();
+            // 选项卡切换时
+            $('.recipient_nav span').click(function () {
+                var _type = $(this).attr('data-ctype');
+                $(this).addClass('on').siblings().removeClass('on')
+                switch (_type) {
+                    case '0':
+                        $('.recipient_view').show();
+                        $('.sender_view').hide();
+                        break;
+                    case '1':
+                        $('.recipient_view').hide();
+                        $('.sender_view').show();
+                        that.get_sender_data();
+                        break;
+                }
+            })
+            // 收件者保存按钮
+            $('.recipient_submit').click(function () {
+                that.recipient_submit();
+            })
+            // 发送者信息设置
+            $('.sender_submit').click(function () {
+                that.sender_submit();
+            })
+
+            // 设置默认
+            $('#default_setting').change(function () {
+                var _default = $(this).prop('checked');
+                var _send = that.all_mail_info.data.send;
+                if (!_send) {
+                    layer.msg('未配置邮箱发送者设置', { icon: 2 })
+                    $(this).prop('checked', !_default);
+                    return
+                }
+                var loadTs = layer.msg('正在设置邮箱配置中，请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+                $.post('/config?action=set_default_channel&channel=mail', { default: _default }, function (res) {
+                    layer.close(loadTs);
+                    layer.msg(res.msg, { icon: res.status ? 1 : 2 })
+                    if (res.status) that.refresh_data();
+                });
+            });
+
+            var showTips = ''
+            $('.total_tips').hover(function(){
+                showTips = setTimeout(function(){
+                    layer.tips('设置为默认后，消息通知优先使用该消息通道发送。', $('.total_tips'), {
+                        tips: [1, '#20a53a'],
+                        time: 0,
+                        success:function(layero,indexs){
+                            layero.css("left", $('.total_tips').offset().left - 10);
+                    }})
+                },200)
+            },function(){
+                clearTimeout(showTips)
+                layer.closeAll('tips');
+            })
+        },
+        /**
+            *@description 获取邮箱信息、设置收件者提示语事件
+        */
+        gat_info: function () {
+            var _tips = $('textarea[name=recipient_textarea]');
+            var msg = ''
+            if (!$.isEmptyObject(this.all_mail_info['data']['receive'])) {
+                msg = mail.all_mail_info['data']['receive'] ? mail.all_mail_info['data']['receive'].join('\n') : ''
+            }
+            _tips.html(msg)
+            // 设置收件者tips
+            if (_tips.val() == '') $('.reci_tips.placeholder').show();
+            $('.placeholder').click(function () { $(this).hide().siblings('textarea').focus() })
+            _tips.focus(function () {
+                $('.reci_tips.placeholder').hide()
+            })
+            _tips.blur(function () {
+                _tips.val() == '' ? $('.reci_tips.placeholder').show() : $('.reci_tips.placeholder').hide()
+            });
+        },
+
+        init_default: function () {
+            var data = this.all_mail_info.data;
+            if (!$.isEmptyObject(data)) {
+                var _default = data.hasOwnProperty('default') ? data.default : false;
+                $('#default_setting').prop('checked', _default);
+            }
+        },
+        /**
+            *@description 设置发送者信息
+        */
+        get_sender_data: function () {
+            var that = this;
+            var data = this.all_mail_info.data;
+
+            if (!$.isEmptyObject(data) && !$.isEmptyObject(data.send)) {
+                var send = data.send;
+
+                var mail_ = send.qq_mail || '',
+                    stmp_pwd_ = send.qq_stmp_pwd || '',
+                    hosts_ = send.hosts || '',
+                    port_ = send.port || '';
+
+                $('input[name=sender_mail_value]').val(mail_)
+                $('input[name=sender_mail_password]').val(stmp_pwd_)
+                $('input[name=sender_mail_server]').val(hosts_)
+                $('input[name=sender_mail_port]').val(port_)
+            } else {
+                $('input[name=sender_mail_port]').val('465')
+            }
+        },
+        /**
+            *@description 设置收件者邮箱，保存按钮
+        */
+        recipient_submit: function () {
+            var that = this;
+            var reci_ = $('textarea[name=recipient_textarea]').val();
+            var loadTs = layer.msg('正在设置收件者邮箱中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+            $.post('/config?action=set_msg_config&name=mail', { mails: reci_ }, function (res) {
+                layer.close(loadTs);
+                layer.msg(res.msg, { icon: res.status ? 1 : 2 })
+                if (res.status) that.refresh_data();
+            })
+        },
+        /**
+            *@description 设置发送者邮箱，保存按钮
+        */
+        sender_submit: function () {
+            var that = this;
+            var _email = $('input[name=sender_mail_value]').val(),
+                _passW = $('input[name=sender_mail_password]').val(),
+                _server = $('input[name=sender_mail_server]').val(),
+                _port = $('input[name=sender_mail_port]').val();
+
+            if (_email == '') return layer.msg('邮箱地址不能为空！', { icon: 2 });
+            if (_passW == '') return layer.msg('STMP密码不能为空！', { icon: 2 });
+            if (_server == '') return layer.msg('STMP服务器地址不能为空！', { icon: 2 });
+            if (_port == '') return layer.msg('请输入有效的端口号', { icon: 2 });
+
+            var loadTs = layer.msg('正在生成邮箱通道中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+            $.post('/config?action=set_msg_config&name=mail', {
+                send: 1,
+                qq_mail: _email,
+                qq_stmp_pwd: _passW,
+                hosts: _server,
+                port: _port
+            }, function (rdata) {
+                layer.close(loadTs);
+                if (rdata.status) that.refresh_data();
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 });
+            });
+        },
+        refresh_data: function () {
+            var that = this
+            $.post('/config?action=get_msg_configs', function (rdata) {
+                $.each(rdata, function (key, item) {
+                    var $el = $('.alarm-view .bt-w-menu .men_' + key);
+                    if (item.data && item.data.default) {
+                        $el.html($el.text() + '<span class="show-default"></span>');
+                    } else {
+                        $el.find('span').remove();
+                    }
+                    $('.alarm-view .bt-w-menu .men_' + key).data('data', item);
+                    if (key === 'mail') {
+                        that.all_mail_info = item;
+                    }
+                });
+            })
+        }
+    }
+</script>

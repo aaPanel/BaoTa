@@ -40,9 +40,9 @@ class Monitor:
     def _get_site_list(self):
         sites = public.M('sites').where('status=?', (1,)).field('name').get()
         return sites
-    
+
     def _statuscode_distribute_site(self, site_name):
-        
+
         try:
             day_401 = 0
             day_500 = 0
@@ -53,14 +53,14 @@ class Monitor:
             start_date, end_date = self.get_time_interval(time.localtime())
             select_sql = "select time/100 as time1, sum(status_401), sum(status_500), sum(status_502), sum(status_503) from request_stat where time between {} and {}"\
             .format(start_date, end_date)
-    
+
             db_path = os.path.join("/www/server/total/", "logs/{}/logs.db".format(site_name))
             if os.path.isfile(db_path):
                 conn = sqlite3.connect(db_path)
                 ts = conn.cursor()
                 ts.execute(select_sql)
                 results = ts.fetchall()
-                
+
                 if type(results) == list:
                     for result in results:
                         time_key = str(result[0])
@@ -75,9 +75,9 @@ class Monitor:
                 ts.close()
             if conn:
                 conn.close()
-                
+
         return day_401, day_500, day_502, day_503
-        
+
     def _statuscode_distribute_site_old(self, site_name):
         today = time.strftime('%Y-%m-%d', time.localtime())
         path = '/www/server/total/total/' + site_name + '/request/' + today + '.json'
@@ -219,7 +219,7 @@ class Monitor:
         statuscode_distribute = self._statuscode_distribute(args)
         data.update(statuscode_distribute)
         return data
-        
+
     def get_spider(self, args):
         request_data = {}
         sites = public.M('sites').field('name').order("addtime").select();
@@ -231,14 +231,14 @@ class Monitor:
                 start_date, end_date = self.get_time_interval(time.localtime())
                 select_sql = "select time, spider from request_stat where time between {} and {}"\
                 .format(start_date, end_date)
-                
+
                 db_path = os.path.join("/www/server/total/", "logs/{}/logs.db".format(site_name))
                 if not os.path.isfile(db_path): continue
                 conn = sqlite3.connect(db_path)
                 ts = conn.cursor()
                 ts.execute(select_sql)
                 results = ts.fetchall()
-                
+
                 if type(results) == list:
                     for result in results:
                         time_key = str(result[0])
@@ -256,7 +256,7 @@ class Monitor:
                 if conn:
                     conn.close()
         return request_data
-        
+
     # 获取蜘蛛数量分布
     def get_spider_old(self, args):
         today = time.strftime('%Y-%m-%d', time.localtime())
@@ -289,7 +289,7 @@ class Monitor:
             up_flow = round(sum([item['up'] for item in data]) / 5, 2)
 
         return {'load_five': load_five, 'cpu_count': cpu_count, 'up_flow': up_flow}
-    
+
     def get_time_interval(self, local_time):
         start = None
         end = None
@@ -298,7 +298,7 @@ class Monitor:
         time_key_format = "%Y%m%d23"
         end = int(time.strftime(time_key_format, local_time))
         return start, end
-        
+
     def get_request_count_by_hour(self, args):
         # 获取站点每小时的请求数据
         request_data = {}
@@ -334,7 +334,7 @@ class Monitor:
                 if conn:
                     conn.close()
         return request_data
-    
+
     # 取每小时的请求数
     def get_request_count_by_hour_old(self, args):
         today = time.strftime('%Y-%m-%d', time.localtime())

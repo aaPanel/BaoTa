@@ -1,0 +1,1 @@
+import{_ as s}from"./utils-lib.js?v=1758787359";import{v as a,x as e,z as t,C as n}from"./base-lib.js?v=1758787359";import"./__commonjsHelpers__.js?v=1758787359";const o={class:"free-tag"};const r=s({},[["render",function(s,r){return a(),e("span",o,r[0]||(r[0]=[t("span",{class:"tencent-icon"},null,-1),n("腾讯云专版免费 ",-1)]))}],["__scopeId","data-v-8ea6da81"]]);export{r as default};

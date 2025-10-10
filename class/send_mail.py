@@ -9,9 +9,12 @@
 # +--------------------------------------------------------------------
 # |   宝塔内置消息通道
 # +--------------------------------------------------------------------
-import os, sys, public, base64, json, re
-import smtplib, requests
-# import http_requests as requests
+import os, sys, public, json, re
+import smtplib
+try:
+    import requests
+except:
+    pass
 from email.mime.text import MIMEText
 from email.utils import formataddr
 
@@ -168,27 +171,29 @@ class send_mail:
 
     def GetLocalIp(self):
         # 取本地外网IP
-        try:
-            filename = '/www/server/panel/data/iplist.txt'
-            ipaddress = public.readFile(filename)
-            if not ipaddress:
-                import urllib2
-                url = 'http://pv.sohu.com/cityjson?ie=utf-8'
-                opener = urllib2.urlopen(url)
-                m_str = opener.read()
-                ipaddress = re.search('\d+.\d+.\d+.\d+', m_str).group(0)
-                public.WriteFile(filename, ipaddress)
-            c_ip = public.check_ip(ipaddress)
-            if not c_ip:
-                a, e = public.ExecShell("curl ifconfig.me")
-                return a
-            return ipaddress
-        except:
-            try:
-                url = public.GetConfigValue('home') + '/Api/getIpAddress'
-                return public.HttpGet(url)
-            except:
-                return public.GetHost()
+        return public.GetLocalIp()
+        # try:
+        #     filename = '/www/server/panel/data/iplist.txt'
+        #     ipaddress = public.readFile(filename)
+        #     if not ipaddress:
+        #         import urllib2
+        #         url = 'http://pv.sohu.com/cityjson?ie=utf-8'
+        #         opener = urllib2.urlopen(url)
+        #         m_str = opener.read()
+        #         ipaddress = re.search('\d+.\d+.\d+.\d+', m_str).group(0)
+        #         public.WriteFile(filename, ipaddress)
+        #     c_ip = public.check_ip(ipaddress)
+        #     if not c_ip:
+        #         a, e = public.ExecShell("curl ifconfig.me")
+        #         return a
+        #     return ipaddress
+        # except:
+        #     try:
+        #         url = public.GetConfigValue('home') + '/Api/getIpAddress'
+        #         return public.HttpGet(url)
+        #     except:
+        #         return public.GetHost()
+
 
     # 钉钉保存账户
     def dingding_insert(self, url, atall, user='1'):

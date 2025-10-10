@@ -1,0 +1,297 @@
+[
+  {
+    "id": "130",
+    "ver": "1",
+    "used": true,
+    "source": "monitor_traffic_attack",
+    "title": "[监控报表]网站流量异常告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.monitor_push",
+      "name": "MonitorTrafficAttackTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "site",
+          "name": "网站",
+          "type": "select",
+          "suffix": "",
+          "default": "",
+          "items": []
+        },
+        {
+          "attr": "cycle",
+          "name": "周期",
+          "type": "number",
+          "default": 5
+        },
+        {
+          "attr": "cycle_unit",
+          "name": "",
+          "type": "select",
+          "default": "m",
+          "width": "70px",
+          "items": [
+            {
+              "title": "小时",
+              "value": "h"
+            },
+            {
+              "title": "分钟",
+              "value": "m"
+            }
+          ]
+        },
+        {
+          "attr": "traffic",
+          "name": "流量阈值",
+          "type": "number",
+          "default": 1
+        },
+        {
+          "attr": "traffic_unit",
+          "name": "",
+          "type": "select",
+          "default": "mb",
+          "width": "70px",
+          "items": [
+            {
+              "title": "MB",
+              "value": "mb"
+            },
+            {
+              "title": "GB",
+              "value": "gb"
+            }
+          ]
+        }
+      ],
+      "sorted": [
+        [
+          "site"
+        ],
+        [
+          "cycle",
+          "cycle_unit"
+        ],
+        [
+          "traffic",
+          "traffic_unit"
+        ]
+      ]
+    },
+    "default": {},
+    "advanced_default": {
+      "number_rule": {
+        "total": 3
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": false,
+    "tags": [
+      "site",
+      "plugin"
+    ],
+    "description": "监控报表网站流量异常告警,当最近的一个时间窗口内的流量超过阈值时，发送告警消息"
+  },
+  {
+    "id": "131",
+    "ver": "1",
+    "used": true,
+    "source": "monitor_traffic_total",
+    "title": "[监控报表]网站流量限额提醒",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.monitor_push",
+      "name": "MonitorTrafficTotalTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "site",
+          "name": "网站",
+          "type": "select",
+          "default": "",
+          "items": []
+        },
+        {
+          "attr": "cycle",
+          "name": "时间段",
+          "type": "date",
+          "default": 0,
+          "default_show": "每个自然月",
+          "show_format": "自${value}日起(包含该日)"
+        },
+        {
+          "attr": "traffic",
+          "name": "流量阈值",
+          "type": "number",
+          "default": 1
+        },
+        {
+          "attr": "traffic_unit",
+          "name": "",
+          "type": "select",
+          "default": "mb",
+          "width": "70px",
+          "items": [
+            {
+              "title": "MB",
+              "value": "mb"
+            },
+            {
+              "title": "GB",
+              "value": "gb"
+            }
+          ]
+        }
+      ],
+      "sorted": [
+        [
+          "site"
+        ],
+        [
+          "cycle"
+        ],
+        [
+          "traffic",
+          "traffic_unit"
+        ]
+      ]
+    },
+    "default": {},
+    "advanced_default": {
+      "number_rule": {
+        "total": 3
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": false,
+    "tags": [
+      "site",
+      "plugin"
+    ],
+    "description": "监控报表网站流量累计用量提醒,当某个时间段内的流量总量超过阈值时，发送告警消息"
+  },
+  {
+    "id": "132",
+    "ver": "1",
+    "used": true,
+    "source": "monitor_http_flood",
+    "title": "[监控报表]网站请求异常告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.monitor_push",
+      "name": "MonitorHttpFloodTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "site",
+          "name": "网站",
+          "type": "select",
+          "default": "",
+          "items": []
+        },
+        {
+          "attr": "cycle",
+          "name": "周期",
+          "type": "number",
+          "default": 5
+        },
+        {
+          "attr": "cycle_unit",
+          "name": "",
+          "type": "select",
+          "default": "h",
+          "width": "70px",
+          "items": [
+            {
+              "title": "小时",
+              "value": "h"
+            },
+            {
+              "title": "分钟",
+              "value": "m"
+            }
+          ]
+        },
+        {
+          "attr": "request",
+          "name": "请求数阈值",
+          "type": "number",
+          "default": 10
+        },
+        {
+          "attr": "request_unit",
+          "name": "",
+          "type": "select",
+          "width": "70px",
+          "default": "kc",
+          "items": [
+            {
+              "title": "次",
+              "value": "c"
+            },
+            {
+              "title": "千次",
+              "value": "kc"
+            },
+            {
+              "title": "百万次",
+              "value": "mc"
+            }
+          ]
+        }
+      ],
+      "sorted": [
+        [
+          "site"
+        ],
+        [
+          "cycle",
+          "cycle_unit"
+        ],
+        [
+          "request",
+          "request_unit"
+        ]
+      ]
+    },
+    "default": {},
+    "advanced_default": {
+      "number_rule": {
+        "total": 3
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": false,
+    "tags": [
+      "site",
+      "plugin"
+    ],
+    "description": "监控报表网站请求数量异常告警,当最近的一个时间窗口内的接收到的请求数超过阈值时，发送告警消息"
+  }
+]

@@ -141,6 +141,7 @@
 	"CRONTAB_N_HOUR":"Per{1}Hour",
 	"CRONTAB_N_HOUR_CYCLE":"Per{1}Hour, {2}Minute Execute",
 	"CRONTAB_N_MINUTE":"Per{1}Minute",
+	"CRONTAB_N_SECOND":"Per{1}Second",
 	"CRONTAB_N_MINUTE_CYCLE":"Per{1}Minute Execute",
 	"CRONTAB_WEEK":"Weekly",
 	"CRONTAB_WEEK_CYCLE":"Weekly{1}, {2}Hour{3}Minute Execute",

@@ -43,7 +43,7 @@ def check_run():
         if u_info['pass'] == '*': continue
         if u_info['uid'] == 0:
             try_users.append(u_info['user'] + ' > 未知的管理员用户 [高危]')
-        
+
         if u_info['login'] in ['/bin/bash','/bin/sh']:
             try_users.append(u_info['user'] + ' > 可登录的用户 [中危]')
 
@@ -51,7 +51,7 @@ def check_run():
         return False, '以下用户存在安全风险: <br />' + ('<br />'.join(try_users))
 
     return True,'无风险'
-        
+
 
 
 #获取用户列表

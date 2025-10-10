@@ -1,0 +1,235 @@
+[
+  {
+    "id": "220",
+    "ver": "1",
+    "used": true,
+    "source": "nodes_nginx_http_load_push",
+    "title": "节点管理-负载均衡",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.mod_node_push",
+      "name": "NodeHttpLoadTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "project",
+          "name": "负载名称",
+          "type": "select",
+          "default": 0,
+          "unit": "",
+          "suffix": "<i style='color: #999;font-style: initial;font-size: 12px;margin-right: 5px'>*</i><span style='color:#999'>选中的负载配置中，出现节点访问失败时，触发告警</span>",
+          "items": [
+          ]
+        },
+        {
+          "attr": "codes",
+          "name": "成功的状态码",
+          "type": "textarea",
+          "unit": "",
+          "suffix": "<br><i style='color: #999;font-style: initial;font-size: 12px;margin-right: 5px'>*</i><span style='color:#999'>状态码以逗号分隔，如：200,301,302,403,404</span>",
+          "width": "400px",
+          "style": {
+            "height": "70px"
+          },
+          "default": "200,301,302,403,404"
+        }
+      ],
+      "sorted": [
+        [
+          "project"
+        ],
+        [
+          "codes"
+        ]
+      ]
+    },
+    "default": {
+      "codes": "200,301,302,403,404"
+    },
+    "advanced_default": {
+      "number_rule": {
+        "day_num": 3
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": false,
+    "tags": [
+      "nodes"
+    ],
+    "description": "每隔一段时间检查节点管理-负载均衡中，设置的节点是否可以正常访问，当访问异常时发送告警通知"
+  },
+    {
+    "id": "221",
+    "ver": "1",
+    "used": true,
+    "source": "nodes_nginx_tcp_load_push",
+    "title": "节点管理-tcp负载均衡",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.mod_node_push",
+      "name": "NodeTcpLoadTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "project",
+          "name": "负载名称",
+          "type": "select",
+          "default": 0,
+          "unit": "",
+          "suffix": "<i style='color: #999;font-style: initial;font-size: 12px;margin-right: 5px'>*</i><span style='color:#999'>选中的负载配置中，出现节点访问失败时，触发告警</span>",
+          "items": [
+          ]
+        },
+        {
+          "attr": "err_num",
+          "name": "错误次数",
+          "type": "number",
+          "unit": "次",
+          "default": 3
+        }
+      ],
+      "sorted": [
+        [
+          "project"
+        ],
+        [
+          "err_num"
+        ]
+      ]
+    },
+    "default": {
+      "err_num": 3
+    },
+    "advanced_default": {
+      "number_rule": {
+        "day_num": 3
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": false,
+    "tags": [
+      "nodes"
+    ],
+    "description": "每隔一段时间检查节点管理-tcp负载均衡中，设置的节点是否可以正常访问，当访问异常时发送告警通知"
+  },
+  {
+    "id": "222",
+    "ver": "1",
+    "used": true,
+    "source": "nodes_mysql_slave_err_push",
+    "title": "节点管理-Mysql主从告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.mod_node_push",
+      "name": "NodeMysqlSlave"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "help",
+          "name": "告警内容",
+          "type": "help",
+          "unit": "",
+          "style": {
+            "margin-top": "6px"
+          },
+          "list": [
+            "当【节点管理-Mysql主从】配置中任意配置出现异常时，发送告警通知"
+          ],
+          "suffix": "",
+          "default": 600
+        }
+      ],
+      "sorted": [
+      ]
+    },
+    "default": {
+    },
+    "advanced_default": {
+      "number_rule": {
+        "day_num": 3
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": true,
+    "tags": [
+      "nodes"
+    ],
+    "description": "当【节点管理-Mysql主从】配置中任意配置出现异常时，发送告警通知"
+  },
+  {
+    "id": "223",
+    "ver": "1",
+    "used": true,
+    "source": "nodes_redis_slave_err_push",
+    "title": "节点管理-Redis主从告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.mod_node_push",
+      "name": "NodeRedisSlave"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "help",
+          "name": "告警内容",
+          "type": "help",
+          "unit": "",
+          "style": {
+            "margin-top": "6px"
+          },
+          "list": [
+            "当【节点管理-Redis主从】配置中出现危险情况时，发送告警通知"
+          ],
+          "suffix": "",
+          "default": 600
+        }
+      ],
+      "sorted": [
+      ]
+    },
+    "default": {
+    },
+    "advanced_default": {
+      "number_rule": {
+        "day_num": 3
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": true,
+    "tags": [
+      "nodes"
+    ],
+    "description": "当【节点管理-Redis主从】配置中出现危险情况时，发送告警通知"
+  }
+]

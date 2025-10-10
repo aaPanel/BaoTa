@@ -15,24 +15,51 @@
 						<div class="col-md-12">
 							<span class="filter-title f14 c4">应用搜索</span>
 							<div class="soft-search">
-								<form target="hid" onsubmit='soft.get_list(1,0,$("#SearchValue").val())'>
+								<div class="records_search"
+										style="display:none;box-shadow: 4px 4px 8px rgba(0, 0, 0, .1), -4px -4px 8px rgba(0, 0, 0, .1);"
+										id="records_search">
+										<div class="records_search_item">
+											<div class="search_item_title">
+												<span style="font-size: 14px;color:#999" id="item_title_history">搜索历史</span>
+											</div>
+											<div class="search_item_body" id="historySearch"></div>
+										</div>
+										<div class="records_search_item" style="margin-top:20px">
+											<div class="search_item_title">
+												<span style="font-size: 14px;color:#999" id="item_title_hot"></span>
+												<div style="margin-left:5px"><img style="width:24px;height:12px" src="/static/images/hot.png">
+												</div>
+											</div>
+											<div class="search_item_body" id="hotsearch"></div>
+										</div>
+										<div class="records_search_item" style="margin-top:20px">
+											<div class="search_item_title">
+												<span style="font-size: 14px;color:#999" id="item_title_tendency"></span>
+												<div style="margin-left:5px"><img style="width:14px;height:14px" src="/static/images/hots.png">
+												</div>
+											</div>
+											<div class="search_item_body" id="tendency"></div>
+										</div>
+									</div>
+								<!-- <form target="hid" onsubmit='soft.get_list(1,0,$("#SearchValue").val())'> -->
 									<input type="text" id="SearchValue" class="ser-text pull-left" placeholder="支持应用名称、字段模糊搜索"
-												 style="width:232px"/>
+									style="width:535px" autocomplete="off" />
 									<button type="button" class="ser-sub pull-left"
 													onclick='soft.get_list(1,0,$("#SearchValue").val())'></button>
-								</form>
+								<!-- </form> -->
 								<iframe name='hid' id="hid" style="display:none"></iframe>
 							</div>
 						</div>
 					</div>
-					<div class="row soft-filter-box">
-						<div class="col-md-12"><span class="filter-title f14 c4">应用分类</span>
+					<div class="row soft-filter-box" style="display: flex;align-items: center;">
+						<div class="col-md-12" style="display: flex;padding-right: 180px;align-items: center;">
+							<span class="filter-title f14 c4" style="flex: none;">应用分类</span>
 							<div class="menu-sub softtype"></div>
 						</div>
+						<button class="btn btn-default btn-sm" onclick="soft.flush_cache()" title="从云端更新列表" style="margin-right: 15px;">更新软件列表 / 支付状态</button>
 					</div>
 				</div>
 				<div class="divtable pd15 relative">
-					<button class="btn btn-default btn-sm" onclick="soft.flush_cache()" title="从云端更新列表" style="position:absolute;top:-49px;right:15px">更新软件列表 / 支付状态</button>
 					<div id="updata_pro_info"></div>
 					<div id="commonly_software" class="commonly_software"><div class="commonly_software_title">最近使用入口</div><div class="commonly_software_list"></div></div>
 					<table id="softList" class="table table-hover" width="100%" cellspacing="0" cellpadding="0" border="0"></table>
@@ -44,7 +71,7 @@
 </div>
 {% endblock %}
 {% block scripts %}
-	{{ super() }} 
+	{{ super() }}
 <script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js?version={{g['version']}}"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
@@ -56,6 +83,162 @@
 	$(document).ready(function () {
 		soft.get_list();
 		soft.render_soft_recommend() // 渲染常用软件列表
+		$('#SearchValue').keyup(function (e) {
+			if (e.keyCode == 13) {
+				$('#records_search').css('opacity', '0');
+				setTimeout(function () {
+				$('#records_search').css('display', 'none');
+				}, 80);
+				soft.get_list(1,0,$("#SearchValue").val())
+			}
+		});
 	});
 </script>
+<style>
+	#kf_fixed .layui-layer-TipsG1 {
+		width: 15px !important;
+		height: 15px !important;
+		transform: rotate(45deg);
+		border-color: rgb(232 246 235) !important;
+		z-index: 0;
+	}
+
+	#kf_fixed .layui-layer-TipsR:after {
+		position: absolute;
+		bottom: -2px;
+		left: -15px;
+		content: '';
+		width: 31px;
+		height: 50px;
+		background: #fff;
+		transform: rotate(45deg);
+	}
+	#SearchValue {
+		transition: all .3s;
+	}
+
+	.soft-search {
+		position: relative;
+	}
+
+	.records_search {
+		width: 576px;
+		opacity: 0;
+		background: #fff;
+		position: absolute;
+		z-index: 999;
+		top: 37px;
+		left: -1px;
+		transition: all .3s;
+		padding: 15px;
+		font-size: 12px
+	}
+
+	.search_item_title {
+		display: flex;
+		align-items: center;
+	}
+
+	.title_icon {
+		width: 31px;
+		height: 18px;
+		border: 1px solid #f64041;
+		color: #f64041;
+		border-radius: 2px;
+		font-size: 12px;
+		text-align: center;
+		margin-left: 10px
+	}
+
+	.title_icon_tendency {
+		width: 31px;
+		height: 18px;
+		border: 1px solid #0052d9;
+		color: #0052d9;
+		border-radius: 2px;
+		font-size: 12px;
+		text-align: center;
+		margin-left: 5px
+	}
+
+	.search_item_body {
+		display: flex;
+		flex-direction: row;
+		justify-content: start;
+		flex-wrap: wrap;
+		margin-top: 17px;
+		font-size: 14px;
+		line-height: 33px;
+	}
+
+	.body_item {
+		cursor: pointer;
+	}
+
+	.body_item:hover {
+		color: #20A53A;
+		background: #F1F9F3;
+		border-radius: 3px
+	}
+	.item_box:hover{
+		color: #20A53A;
+		background: #F1F9F3;
+		border-radius: 3px
+	}
+
+	.body_item {
+		margin-right: 10px
+	}
+	.bt-checkbox, .bt-checkbox-all {
+		height: 18px;
+		width: 18px;
+		border: 1px solid #ccc;
+		border-radius: 2px;
+		margin-right: 8px;
+		position: relative;
+	}
+	.bt-checkbox.active{
+		background-color: #20a53a;
+		border-color: #20a53a;
+	}
+	.bt-checkbox.active::after{
+		content: '';
+		display: block;
+		width: 11px;
+		height: 5.5px;
+		transform: rotate(-45deg);
+		border-bottom: 2px solid #fff;
+		border-left: 2px solid #fff;
+		margin: 3px;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		margin-left: -5px;
+		margin-top: -4px;
+	}
+	input[type="radio"]+label::before {
+		content: " ";
+		display: inline-block;
+		vertical-align: middle;
+		width: 13px;
+		height: 13px;
+		border-radius: 50%;
+		border: 1px solid #999999;
+		margin-right: 0.2rem;
+		box-sizing: border-box;
+		margin-top: -0.1rem;
+	}
+
+	input[type="radio"]:checked+label::before {
+		background-color: rgb(32, 165, 58);
+		background-clip: content-box;
+		border: 1px solid rgb(32, 165, 58);
+		padding: 0.1rem;
+		box-sizing: border-box;
+	}
+	input[type="radio"] {
+		position: absolute;
+		clip: rect(0, 0, 0, 0);
+	}
+</style>
 {% endblock %}

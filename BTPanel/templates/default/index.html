@@ -1,241 +1,33 @@
-{% extends "layout.html" %}
-
-{% block content %}
-<style>
-  .chart-box{
-    display: flex;
-    flex-direction: row;
-    padding: 20px 0;
-  }
-  
-  .rank{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: #999;
-    line-height: 30px;
-    font-size: 15px;
-    font-weight: 500;
-  }
-  .rank .diskName {
-    width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .chart-li{
-    width: 105px;
-    height: 105px;
-    position: relative;
-  }
-  .chart-li canvas{
-    cursor: pointer;
-  }
-  .mem_mask{
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    background: rgba(220,220,220,.1);
-    border-radius: 50%;
-    cursor: pointer;
-  }
-  .mem_mask .men_inside_mask{
-    position: absolute;
-    left: 7px;
-    top: 7px;
-    bottom: 7px;
-    right: 7px;
-    background: rgba(255,255,255,0.8);
-    border-radius: 50%; 
-  }
-  .info-status{
-    height: 30px;
-    line-height: 30px;
-  }
-  .outerCircle{
-    width: 105px;
-    height: 105px;
-    text-align: center;
-    background-color: #e5e5e5;
-    border-radius: 50%;
-    padding: 7px;
-  }
-  .outerCircle .innerCircle{
-    width: 100%;
-    height: 100%;
-    line-height: 91px;
-    text-align: center;
-    border-radius: 50%;
-    font-size: 17px;
-    background-color: #fff;
-  }
-</style>
-<div class="main-content">
-    <div class="container-fluid" style="padding-bottom: 66px;">
-		<div class="index-pos-box bgw mtb15 radius4">
-            <div class="position f12 c6 pull-left" style="background:none;padding-left:15px">
-                <span class="bind-user c4">
-                    <a href="javascript:bt.pub.bind_btname();" class="btlink">宝塔账户</a>
-                </span>
-                {% if data['pd'].find('免费版') != -1 %}
-                    <span id="bt-fuli" class="bt-dashi">
-                        <a class="btlink ml5" href="https://www.bt.cn/invite" target="_blank">邀请奖励</a>
-                    </span>
-                {% endif %}
-                <span class="ico-system">系统:</span><span id="info" style="margin-left:10px;">{{data['lan']['S2']}}</span>&#12288;&#12288;{{data['lan']['S3']}} <span id="running">{{data['lan']['S4']}}</span>
-            </div>
-			<span class="pull-right f12 c6" style="line-height:52px; margin-right:15px">
-				{{data['pd']|safe}} <span id="btversion" style="margin-right:10px"><a onclick="index.open_log()">{{session['version']}}</a></span>
-				<span id="toUpdate"><a class="btlink" href="javascript:index.check_update();">更新</a></span>
-				<span style="margin:0 10px"><a class="btlink" href="javascript:index.re_panel();">修复</a></span>
-				<span style="margin-right:10px"><a class="btlink" href="javascript:index.re_server();">重启</a></span>
-			</span>
-		</div>
-    <div class="col-xs-24 col-sm-24 col-md-24" id="home-recommend"></div>
-    <div class="danger-tips">
-      <div class="important-title" id="messageError" style="display: none; margin-top:15px"></div>
-    </div>
-    <div class="server bgw mtb15 radius4">
-            <div class="title c6 f16 plr15">
-                <h3 class="c6 f16 pull-left">状态</h3>
-            </div>
-            <div class="server-circle">
-                <ul class="row" id="systemInfoList">
-                  <li class="rank col-xs-6 col-sm-3 col-md-3 col-lg-2 mtb20 circle-box text-center">
-                    <div class="titles">
-                      <span>负载状态</span>
-                      <a href="https://www.bt.cn/bbs/thread-11402-1-1.html" target="_blank" class="bt-ico-ask" style="cursor: pointer;">?</a>
-                    </div>
-                    <div id="loadChart" class="chart-li">
-                      <div class="outerCircle"><div class="innerCircle">0%</div></div>
-                    </div>
-                    <div id="load" class="info-status">获取中...</div>
-                  </li>
-                  <li class="rank col-xs-6 col-sm-3 col-md-3 col-lg-2 mtb20 circle-box text-center">
-                    <div class="titles">CPU使用率</div>
-                    <div id="cpuChart" class="chart-li">
-                      <div class="outerCircle"><div class="innerCircle">0%</div></div>
-                    </div>
-                    <div id="cpu" class="info-status">获取中...</div>
-                  </li>
-                  <li class="rank col-xs-6 col-sm-3 col-md-3 col-lg-2 mtb20 circle-box text-center">
-                    <div class="titles">内存使用率</div>
-                    <div id="memChart" class="chart-li">
-                      <div class="outerCircle"><div class="innerCircle">0%</div></div>
-                    </div>
-                    <div id="mem" class="info-status">获取中...</div>
-                  </li>
-                </ul>
-            </div>
-        </div>
-    <div class="system-info bgw clearfix mtb15 radius4">
-            <div class="title c6 f16 plr15">概览</div>
-            <div class="system-info-con mtb20">
-                <ul class="clearfix text-center">
-                <li class="sys-li-box col-xs-4 col-sm-4 col-md-4 col-lg-3 radius2">
-                        <p class="name f15 c9">{{data['lan']['N1']}}</p>
-                        <div class="val"><a class="btlink" href="/site">{{data['siteCount']}}</a></div>
-                    </li>
-                <li class="sys-li-box col-xs-4 col-sm-4 col-md-4 col-lg-3 radius2">
-                        <p class="name f15 c9">{{data['lan']['N3']}}</p>
-                        <div class="val"><a class="btlink" href="/ftp">{{data['ftpCount']}}</a></div>
-                    </li>
-                <li class="sys-li-box col-xs-4 col-sm-4 col-md-4 col-lg-3 radius2">
-                        <p class="name f15 c9">{{data['lan']['N2']}}</p>
-                        <div class="val"><a class="btlink" href="/database">{{data['databaseCount']}}</a></div>
-                    </li>
-                <li class="sys-li-box ccol-xs-4 col-sm-4 col-md-4 col-lg-3 radius2">
-                        <p class="name f15 c9">{{data['lan']['N4']}}</p>
-                        <div class="val"><a class="btlink warning_num" href="javascript:;" onclick="index.reader_warning_view()"><img src="/static/images/loading-2.gif" style="width:20px" /><span class="ml5" style="font-size:17px;vertical-align: middle;color:#aaa;">检测中</span></a></div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-        <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0">
-            <div class="pr8">
-            <div class="bgw radius4">
-                    <div class="title c6 f16 plr15">{{data['lan']['P4']}}</div>
-                    <div class="setting-con" style="padding:0; height:442px; margin-right: -4px; overflow: hidden;">
-                        <div class="container-fluid soft-man">
-                            <input name="list1SortOrder" type="hidden" value="" />
-                            <div id="indexsoft" class="row"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0">
-            <div class="pl7">
-            <div class="bgw radius4" style="height:283.5px">
-                    <div class="title c6 f16 plr15 tabs-nav">
-                      <span class="active">流量</span>
-                      <span>磁盘IO</span>
-                      <div class="tabs-down">
-                        <select class="bt-input-text" name="network-io" style="font-size: 12px;"></select>
-                        <select class="bt-input-text hide" name="disk-io" style="font-size: 12px;"></select>
-                      </div>
-                    </div>
-                    <div class="tabs-content">
-                  <div class="tabs-active radius4 tabs-item">
-                        <div class="bw-info">
-                          <div class="col-sm-6 col-md-3"><p class="c9"><span class="ico-up"></span>上行</p><a id="upSpeed">{{data['lan']['S2']}}</a></div>
-                          <div class="col-sm-6 col-md-3"><p class="c9"><span class="ico-down"></span>下行</p><a id="downSpeed">{{data['lan']['S2']}}</a></div>
-                          <div class="col-sm-6 col-md-3"><p class="c9">总发送</p><a id="upAll">{{data['lan']['S2']}}</a></div>
-                          <div class="col-sm-6 col-md-3"><p class="c9">总接收</p><a id="downAll">{{data['lan']['S2']}}</a></div>
-                        </div>
-                        <div id="NetImg" style="width:100%;height: 370px;"></div>
-                      </div>
-                  <div class="tabs-item radius4">
-                        <div class="bw-info">
-                          <div class="col-sm-6 col-md-3"><p class="c9"><span class="ico-read"></span>读取</p><a id="readBytes">{{data['lan']['S2']}}</a></div>
-                          <div class="col-sm-6 col-md-3"><p class="c9"><span class="ico-write"></span>写入</p><a id="writeBytes">{{data['lan']['S2']}}</a></div>
-                          <div class="col-sm-6 col-md-3"><p class="c9">每秒读写</p><a id="diskIops">{{data['lan']['S2']}}</a></div>
-                          <div class="col-sm-6 col-md-3"><p class="c9">IO延迟</p><a id="diskTime">{{data['lan']['S2']}}</a></div>
-                        </div>
-                        <div id="IoStat" style="width:100%;height: 370px;"></div>
-                      </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 mtb15"> -->
-            <!-- <div class="pl7"> -->
-                <!-- <div class="bgw" style="height:283.5px"> -->
-                    <!-- <div class="title c6 f16 plr15"><span style="float: right;"><select class="bt-input-text" name="disk-io" style="font-size: 12px;"></select></span></div> -->
-                    
-                <!-- </div> -->
-            <!-- </div> -->
-        <!-- </div> -->
-    </div>
-</div>
-{% endblock %}
-{% block scripts %}
-  {{ super() }} 
-  <script type="text/javascript">
-      var bind_user = "{{data['bind']}}"
-  </script>
-  <script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-  <script type="text/javascript" src="{{g.cdn_url}}/js/echarts.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-  <script type="text/javascript" src="{{g.cdn_url}}/js/index.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-  <script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-  <script type="text/javascript" src="{{g.cdn_url}}/editor/ace.js?version={{g['version']}}&repair={{data['js_random']}}" defer></script>
-  <script type="text/javascript">
-      $(".btpro span").click(function(e){
-          layer.confirm('切换回免费版可通过解绑账号实现', { icon: 3, btn: ['解绑账号'], closeBtn: 2, title: '是否取消授权' }, function () {
-              $.post('/ssl?action=DelToken', {}, function (rdata) {
-                  layer.msg(rdata.msg);
-                  setTimeout(function () {
-                      window.location.reload();
-                  },2000);
-              });
-          });
-          e.stopPropagation();
-    });
-      setCookie('pro_end',{{data.pro_end}});
-      setCookie('ltd_end',{{data.ltd_end}});
-      setCookie('serverType', "{{session['webserver']}}");
-      bt.soft.get_index_renew();
-  </script>
-{% endblock %}
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta content="IE=edge"><meta name="referer" content="never"><meta name="referer" content="no-referrer"><meta name="renderer" content="webkit"><meta name="viewport"><title>{{g.title}}</title><link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon"><script>this.globalThis || (this.globalThis = this)
+			;(function () {
+				// 禁止后退
+				function blockHist() {
+					if (window.history && window.history.pushState) {
+						window.onpopstate = function () {
+							window.history.pushState('forward', null, '')
+							window.history.forward(1)
+						}
+					}
+					window.history.pushState('forward', null, '') //在IE中必须得有这两行
+					window.history.forward(1)
+				}
+				blockHist()
+				window.vite_public_title = '{{g.title}}' // 网站标题
+				window.vite_public_menu = '{{g.menus}}' // 菜单栏目
+				window.vite_public_debug = '{{g['debug']}}' // 是否开启调试模式
+				window.vite_public_pyversion = '{{g['pyversion']}}' // python版本
+				window.vite_public_version = '{{session['version']}}' // 当前本地版本号
+				window.vite_public_ip = '{{session['address']}}' // 当前服务器IP地址
+				window.vite_public_brand = '{{session['brand']}}' // 品牌
+				window.vite_public_product = '{{session['product']}}' // 产品
+				window.vite_public_year = '{{g['yaer']}}' // 年份
+				window.vite_public_cdn_url = '{{g.cdn_url}}' // cdn地址
+				window.vite_public_request_token = '{{session[g.get_csrf_html_token_key]}}' // csrf_token
+				window.vite_public_soft_flush = '{{session['is_flush_soft_list']}}' // 是否刷新软件列表，解决缓存问题
+				window.vite_public_encryption = '{{session['rsa_public_key']}}' // rsa加密公钥
+				window.vite_public_proxy_key = '' // 代理服务信息
+				window.vite_public_proxy_ip = '192.168.1.196' // 代理服务信息
+				window.vite_public_proxy_port = '8888' // 代理服务信息
+				window.vite_public_panel_type = '{{g['other_js']}}' // 面板类型
+				window.vite_public_file_version = '%VERSION-NUMBER%' // 当前版本随机数，用于编译替换
+			})()</script><script type="module" crossorigin src="/static/vite/js/main.js"></script><link rel="modulepreload" crossorigin href="/static/vite/js/modulepreload-polyfill.js"><link rel="modulepreload" crossorigin href="/static/vite/js/__commonjsHelpers__.js"><link rel="modulepreload" crossorigin href="/static/vite/js/element-lib.js"><link rel="modulepreload" crossorigin href="/static/vite/js/vue-lib.js"><link rel="modulepreload" crossorigin href="/static/vite/js/preload-helper.js"><link rel="modulepreload" crossorigin href="/static/vite/js/public-lib.js"><link rel="modulepreload" crossorigin href="/static/vite/js/request-lib.js"><link rel="stylesheet" crossorigin href="/static/vite/css/style.css"></head><body><link rel="stylesheet" crossorigin href="/static/vite/font/svgtofont.css"><div id="root"></div></body></html>

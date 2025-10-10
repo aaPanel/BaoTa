@@ -1,303 +1,98 @@
-#coding: utf-8
-#-------------------------------------------------------------------
+# coding: utf-8
+# -------------------------------------------------------------------
 # 宝塔Linux面板
-#-------------------------------------------------------------------
-# Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
-#-------------------------------------------------------------------
+# -------------------------------------------------------------------
+# Copyright (c) 2015-2017 宝塔软件(http:#bt.cn) All rights reserved.
+# -------------------------------------------------------------------
 # Author: zouhw <zhw@bt.cn>
-#-------------------------------------------------------------------
+# -------------------------------------------------------------------
 
-#------------------------------
-# Docker模型
-#------------------------------
-from projectModel.base import projectBase
-import public
+# ------------------------------
+# 项目管理控制器
+# ------------------------------
+import os, public, json, re, time
 
-class main(projectBase):
+class main:
 
-    # 主机（本地docker/远程docker）操作方法
-    @staticmethod
-    def hosts_fun():
-        import projectModel.bt_docker.host as dh
-        return dh.docker_host()
+    def __init__(self):
+        pass
 
-    def set_hosts(self,args):
-        """
-        操作主机 添加/删除
-        :param args:
-        :return:
-        """
-        if args.act == "add":
-            return self.hosts_fun().add(args)
-        else:
-            return self.hosts_fun().delete(args)
+    def model(self, args):
+        '''
+            @name 调用指定项目模型
+            @author hwliang<2021-07-15>
+            @param args<dict_obj> {
+                mod_name: string<模型名称>
+                def_name: string<方法名称>
+                data: JSON
+            }
+        '''
+        import panelPlugin
+        a = public.to_dict_obj({})
+        a.focre = 1
+        plugin_list = panelPlugin.panelPlugin().get_soft_list(a)
+        __ltd_bool = int(plugin_list['ltd']) > 1
+        # __string_pro = public.to_string(
+        #     [20307, 39564, 26102, 38388, 32467, 26463, 65292, 32487, 32493, 20351, 29992, 35831, 36141, 20080, 20225, 19994, 29256, 65281])
+        # if time.time() > 1652975999:
+        #     if not __ltd_bool:
+        #         return public.returnMsg(False,__string_pro)
+        try:  # 表单验证
+            args.def_name = args.dk_def_name
+            args.mod_name = args.dk_model_name
+            if args['mod_name'] in ['base']: return public.return_status_code(1000, 'Wrong call!')
+            public.exists_args('def_name,mod_name', args)
+            if args['def_name'].find('__') != -1: return public.return_status_code(1000, 'The called method name cannot contain the "__" characterrong call!')
+            if not re.match(r"^\w+$", args['mod_name']): return public.return_status_code(1000, 'The called module name cannot contain characters other than \w')
+            if not re.match(r"^\w+$", args['def_name']): return public.return_status_code(1000, 'The called module name cannot contain characters other than \w')
+        except:
+            return public.get_error_object()
+        # 参数处理
+        mod_name = "dk_{}".format(args['mod_name'].strip())
+        def_name = args['def_name'].strip()
 
-    def get_hosts_list(self,args=None):
-        """
-        获取主机列表
-        :param args:
-        :return:
-        """
-        return self.hosts_fun().get_list()
+        # 指定模型是否存在
+        mod_file = "{}/projectModel/bt_docker/{}.py".format(public.get_class_path(), mod_name)
+        if not os.path.exists(mod_file):
+            return public.return_status_code(1003, mod_name)
+        # 实例化
+        def_object = public.get_script_object(mod_file)
+        if not def_object: return public.return_status_code(1000, '{} model not found'.format(mod_name))
+        run_object = getattr(def_object.main(), def_name, None)
+        if not run_object: return public.return_status_code(1000, '{} method not found in {} model'.format(mod_name, def_name))
+        # if not hasattr(args, 'data'): args.data = {}
+        # if args.data:
+        #     if isinstance(args.data, str):
+        #         try:  # 解析为dict_obj
+        #             pdata = public.to_dict_obj(json.loads(args.data))
+        #         except:
+        #             return public.get_error_object()
+        #     else:
+        #         pdata = args.data
+        # else:
+        #     pdata = public.dict_obj()
 
-    # 容器编排(目前仅支持单机，使用命令方式部署)
-    def compose_fun(self):
-        import projectModel.bt_docker.compose as bc
-        return bc.compose()
+        # 前置HOOK
+        hook_index = '{}_{}_LAST'.format(mod_name.upper(), def_name.upper())
+        hook_result = public.exec_hook(hook_index, args)
+        if isinstance(hook_result, public.dict_obj):
+            pdata = hook_result  # 桥接
+        elif isinstance(hook_result, dict):
+            return hook_result  # 响应具体错误信息
+        elif isinstance(hook_result, bool):
+            if not hook_result:  # 直接中断操作
+                return public.return_data(False, {}, error_msg='Pre-HOOK interrupt operation')
 
-    def compose_create(self,args):
-        return self.compose_fun().create(args)
+        # 调用处理方法
+        result = run_object(args)
 
-    # def compose_file_list(self,args):
-    #     return self.compose_fun().compose_file_list()
-
-    def compose_project_list(self,args):
-        return self.compose_fun().compose_project_list(args)
-
-    def compose_remove(self,args):
-        return self.compose_fun().remove(args)
-
-    def compose_start(self,args):
-        return self.compose_fun().start(args)
-
-    def compose_stop(self,args):
-        return self.compose_fun().stop(args)
-
-    def compose_restart(self,args):
-        return self.compose_fun().restart(args)
-
-    def compose_pull(self,args):
-        return self.compose_fun().pull(args)
-
-    def compose_pause(self,args):
-        return self.compose_fun().pause(args)
-
-    def compose_unpause(self,args):
-        return self.compose_fun().unpause(args)
-
-    def compose_add_template(self,args):
-        return self.compose_fun().add_template(args)
-
-    def compose_remove_template(self,args):
-        return self.compose_fun().remove_template(args)
-
-    def compose_template_list(self,args):
-        return self.compose_fun().template_list()
-
-    # 容器操作方法
-    @staticmethod
-    def containers_fun():
-        import projectModel.bt_docker.container as dc
-        return dc.contianer()
-
-    def get_all_containers(self,args):
-        """
-        获取所有容器的详细配置
-        :param url
-        :param args:
-        :return:
-        """
-        return self.containers_fun().get_list(args)
-
-    def get_containers_logs(self,args):
-        """
-        获取某个容器的日志
-        :param args:
-        :return:
-        """
-        return self.containers_fun().get_logs(args)
-
-    def run_a_container(self,args):
-        """
-        创建并运行一个容器
-        :return:
-        """
-        return self.containers_fun().run(args)
-
-    def delete_a_container(self,args):
-        """
-        :param id
-        :param args:
-        :return:
-        """
-        return self.containers_fun().del_container(args)
-
-    def commit_a_container(self,args):
-        return self.containers_fun().commit(args)
-
-    def export_a_container(self,args):
-        return self.containers_fun().export(args)
-
-    # 镜像操作方法
-    @staticmethod
-    def image_fun():
-        import projectModel.bt_docker.image as di
-        return di.image()
-
-    def image_list(self,args):
-        return self.image_fun().image_list(args)
-
-    def image_save(self,args):
-        return self.image_fun().save(args)
-
-    def image_load(self,args):
-        return self.image_fun().load(args)
-
-    def image_pull(self,args):
-        return self.image_fun().pull(args)
-
-    def image_pull_from(self,args):
-        return self.image_fun().pull_from_some_registry(args)
-
-    def image_remove(self,args):
-        return self.image_fun().remove(args)
-
-    def image_push(self,args):
-        return self.image_fun().push(args)
-
-    def image_build(self,args):
-        return self.image_fun().build(args)
-
-    # 仓库操作方法
-    @staticmethod
-    def registry_fun():
-        import projectModel.bt_docker.registry as di
-        return di.registry()
-
-    # def login_check(self,args):
-    #     return self.registry_fun().login(args)
-
-    def registry_list(self,args):
-        return self.registry_fun().registry_list()
-
-    def registry_add(self,args):
-        return self.registry_fun().add(args)
-
-    def registry_remove(self,args):
-        return self.registry_fun().remove(args)
-
-    # 大屏
-
-    def get_screen_data(self,args):
-        """
-        获取大屏数据
-        :return:
-        """
-        data = {
-            # docker服务器信息
-            "host_lists": self.get_hosts_list(),
-            # 所有docker容器数量
-            "container_total": self.container_for_all_hosts(),
-            # 获取所有镜像信息
-            "image_total": self.image_for_all_host()
-        }
-        return public.returnMsg(True,data)
-
-    # 大屏所有主机下的容器数量
-    def container_for_all_hosts(self,args=None):
-        """
-        获取所有服务器的容器数量
-        :param args:
-        :return:
-        """
-        import projectModel.bt_docker.public as dp
-        hosts = dp.sql('hosts').select()
-        num = 0
-        for i in hosts:
-            args.url = i['url']
-            res = self.container_for_host(args)
-            if not res['status']:
-                continue
-            num += res['msg']
-        return public.returnMsg(True,num)
-
-    def container_for_host(self,args):
-        """
-        获取某台服务器的docker容器数量
-        :param url
-        :param args:
-        :return:
-        """
-        res = self.get_all_containers(args)
-        if not res['status']:
-            return res
-        return public.returnMsg(True,len(res['msg']))
-
-    def image_for_host(self,args):
-        """
-        获取镜像大小和获取镜像数量
-        :param args:
-        :return:
-        """
-        res = self.image_list(args)
-        if not res['status']:
-            return res
-        num = len(res['msg'])
-        size = 0
-        for i in res['msg']:
-            size += i['Size']
-        return public.returnMsg(True,{'num':num,'size':size})
-
-    def image_for_all_host(self,args=None):
-        """
-        获取所有服务器的镜像数量和大小
-        :param args:
-        :return:
-        """
-        import projectModel.bt_docker.public as dp
-        hosts = dp.sql('hosts').select()
-        num = 0
-        size = 0
-        for i in hosts:
-            args.url = i['url']
-            res = self.image_for_host(args)
-            if not res['status']:
-                continue
-            num += res['msg']['num']
-            size += res['msg']['size']
-        return public.returnMsg(True,{'num':num,'size':size})
-
-    # 网络
-    @staticmethod
-    def network_fun():
-        import projectModel.bt_docker.network as dn
-        return dn.network()
-
-    def get_host_network(self,args):
-        """
-        获取主机上的所有网络
-        :param args:
-        :return:
-        """
-        return self.network_fun().get_host_network(args)
-
-    def add_network(self,args):
-        """
-        添加一个网络
-        :param args:
-        :return:
-        """
-        return self.network_fun().add(args)
-
-    def del_network(self,args):
-        """
-
-        :param args:
-        :return:
-        """
-        return self.network_fun().del_network(args)
-
-    # volumes方法
-    @staticmethod
-    def volume_fun():
-        import projectModel.bt_docker.volume as dv
-        return dv.volume()
-
-    def get_volume_lists(self,args):
-        return self.volume_fun().get_volume_list(args)
-
-    def add_volume(self,args):
-        return self.volume_fun().add(args)
-
-    def remove_volume(self,args):
-        return self.volume_fun().remove(args)
+        # 后置HOOK
+        hook_index = '{}_{}_END'.format(mod_name.upper(), def_name.upper())
+        hook_data = public.to_dict_obj({
+            'args': args,
+            'result': result
+        })
+        hook_result = public.exec_hook(hook_index, hook_data)
+        if isinstance(hook_result, dict):
+            result = hook_result['result']
+        return result

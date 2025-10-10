@@ -61,6 +61,24 @@
     ]
   },
   {
+    "name": "DNSLADns",
+    "title": "DNS.LA",
+    "ps": "使用DNS.LA API接口自动解析申请SSL",
+    "help": "DNS.LA控制台》账号中心》API密钥, 设置APPID/API密钥",
+    "data": [
+      {
+        "key": "SAVED_APIID",
+        "name": "APIID",
+        "value": ""
+      },
+      {
+        "key": "SAVED_APIPASS",
+        "name": "APIPASS",
+        "value": ""
+      }
+    ]
+  },
+  {
     "name": "dns",
     "title": "手动解析",
     "ps": "返回host和txt值,由用户手动解析",

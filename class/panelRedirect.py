@@ -5,6 +5,7 @@
 # Copyright (c) 2015-2018 宝塔软件(http:#bt.cn) All rights reserved.
 #-------------------------------------------------------------------
 # Author: hwliang <hwl@bt.cn>
+# Author: hezhihong <272267659@bt.cn>
 #-------------------------------------------------------------------
 
 #------------------------------
@@ -16,6 +17,7 @@ class panelRedirect:
 
     setupPath = '/www/server'
     __redirectfile = "/www/server/panel/data/redirect.conf"
+    __firsturl=""
 
     #匹配目标URL的域名并返回
     def GetToDomain(self,tourl):
@@ -64,26 +66,29 @@ class panelRedirect:
         if repeat:
             return repeat
     # 检测URL是否可以访问
-    def __CheckRedirectUrl(self, get):
-        sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sk.settimeout(0.5)
-        rep = "(https?)://([\w\.]+):?([\d]+)?"
-        h = re.search(rep, get.tourl).group(1)
-        d = re.search(rep, get.tourl).group(2)
-        try:
-            p = re.search(rep, get.tourl).group(3)
-        except:
-            p = ""
-        try:
-            if p:
-                sk.connect((d, int(p)))
-            else:
-                if h == "http":
-                    sk.connect((d, 80))
-                else:
-                    sk.connect((d, 443))
-        except:
-            return public.returnMsg(False, "目标URL无法访问")
+    def __CheckRedirectUrl(self, domainlist):
+        """
+        @name 检测URL是否可以访问
+        @author: hezhihong
+        @param domainlist: 域名列表 
+        """
+        http_list=[]
+        import requests
+        for i in domainlist:
+            i = i.replace("*.", "")
+            https_url = "https://" + i
+            http_url = "http://" + i
+            try:
+                response=requests.get(https_url,timeout=20)
+                if response.status_code==200:return https_url
+            except:pass
+            try:
+                response=requests.get(http_url,timeout=20)
+                if response.status_code==200:http_list.append(http_url) 
+            except:pass
+        if http_list:return http_list[0] 
+        else:return []
+        
     # 计算proxyname md5
     def __calc_md5(self,redirectname):
         import hashlib
@@ -158,52 +163,68 @@ class panelRedirect:
             else:
                 if len(get.redirectname.encode("utf-8")) < 3 or len(get.redirectname.encode("utf-8")) > 15:
                     return public.returnMsg(False, '名称必须大于3小于15个字符串')
-            if self.__CheckRedirect(get.sitename,get.redirectname):
+            if 'errorpage' in get:is_error_page = True 
+            else:is_error_page = False
+            if self.__CheckRedirect(get.sitename,get.redirectname,is_error_page):
                 return public.returnMsg(False, '指定重定向名称已存在')
-        #检测是否选择域名
-        if get.domainorpath == "domain":
-            if not json.loads(get.redirectdomain):
-                return public.returnMsg(False, '请选择重定向域名')
-        else:
-            if not get.redirectpath:
-                return public.returnMsg(False, '请输入重定向路径')
-            #repte = "[\?\=\[\]\)\(\*\&\^\%\$\#\@\!\~\`{\}\>\<\,\',\"]+"
-            # 检测路径格式
-            if "/" not in get.redirectpath:
-                return public.returnMsg(False, "路径格式不正确，格式为/xxx")
-            #if re.search(repte, get.redirectpath):
-            #    return public.returnMsg(False, "代理目录不能有以下特殊符号 ?,=,[,],),(,*,&,^,%,$,#,@,!,~,`,{,},>,<,\,',\"]")
-        #检测域名是否已经存在配置文件
-        repeatdomain = self.__CheckRepeatDomain(get,action)
-        if repeatdomain:
-            return public.returnMsg(False, '重定向域名重复 %s' % (repeatdomain))
-        #检测路径是否有存在配置文件
-        repeatpath = self.__CheckRepeatPath(get)
-        if repeatpath:
-            return public.returnMsg(False, '重定向路径重复 %s' % (repeatpath))
         #检测目标URL格式
         rep = "http(s)?\:\/\/([a-zA-Z0-9][-a-zA-Z0-9]{0,62}\.)+([a-zA-Z0-9][a-zA-Z0-9]{0,62})+.?"
-        if not re.match(rep, get.tourl):
+        if 'tourl' in get and get.tourl and not re.match(rep, get.tourl):
             return public.returnMsg(False, '目标URL格式不对 %s' + get.tourl)
-        #检测目标URL是否可用
-        #if self.__CheckRedirectUrl(get):
-        #    return public.returnMsg(False, '目标URL无法访问')
 
-        #检查目标URL的域名和被重定向的域名是否一样
-        if get.domainorpath == "domain":
-            for d in json.loads(get.redirectdomain):
-                tu = self.GetToDomain(get.tourl)
-                if d == tu:
-                    return public.returnMsg(False,'域名 "%s" 和目标域名一致请取消选择' % (d))
+        #非404页面重定向检测项
+        if 'errorpage' not in get:
+            #检测是否选择域名
+            if get.domainorpath == "domain":
+                if not json.loads(get.redirectdomain):
+                    return public.returnMsg(False, '请选择重定向域名')
+            else:
+                if not get.redirectpath:
+                    return public.returnMsg(False, '请输入重定向路径')
+                #repte = "[\?\=\[\]\)\(\*\&\^\%\$\#\@\!\~\`{\}\>\<\,\',\"]+"
+                # 检测路径格式
+                if "/" not in get.redirectpath:
+                    return public.returnMsg(False, "路径格式不正确，格式为/xxx")
+                #if re.search(repte, get.redirectpath):
+                #    return public.returnMsg(False, "代理目录不能有以下特殊符号 ?,=,[,],),(,*,&,^,%,$,#,@,!,~,`,{,},>,<,\,',\"]")
+            #检测域名是否已经存在配置文件
+            repeatdomain = self.__CheckRepeatDomain(get,action)
+            if repeatdomain:
+                return public.returnMsg(False, '重定向域名重复 %s' % (repeatdomain))
+            #检测路径是否有存在配置文件
+            repeatpath = self.__CheckRepeatPath(get)
+            if repeatpath:
+                return public.returnMsg(False, '重定向路径重复 %s' % (repeatpath))
+            #检测目标URL是否可用
+            #if self.__CheckRedirectUrl(get):
+            #    return public.returnMsg(False, '目标URL无法访问')
 
-        if get.domainorpath == "path":
-            domains = self.GetAllDomain(get.sitename)
-            rep = "https?://(.*)"
-            tu = re.search(rep,get.tourl).group(1)
-            for d in domains:
-                ad = "%s%s" % (d,get.redirectpath) #站点域名+重定向路径
-                if tu == ad:
-                    return public.returnMsg(False, '"%s" ，目标URL和被重定向路径一致会导致无限重定向！请不要花样作死' % (tu))
+            #检查目标URL的域名和被重定向的域名是否一样
+            if get.domainorpath == "domain":
+                for d in json.loads(get.redirectdomain):
+                    tu = self.GetToDomain(get.tourl)
+                    if d == tu:
+                        return public.returnMsg(False,'域名 "%s" 和目标域名一致请取消选择' % (d))
+
+            if get.domainorpath == "path":
+                domains = self.GetAllDomain(get.sitename)
+                rep = "https?://(.*)"
+                tu = re.search(rep,get.tourl).group(1)
+                for d in domains:
+                    ad = "%s%s" % (d,get.redirectpath) #站点域名+重定向路径
+                    if tu == ad:
+                        return public.returnMsg(False, '"%s" ，目标URL和被重定向路径一致会导致无限重定向！请不要花样作死' % (tu))
+
+        #404页面重定向检测项
+        else:
+            if 'tourl' not in get and 'topath' not in get:
+                return public.returnMsg(False, '首页或自定义页面必须二选一')
+            # #网站首页访问检测
+            # if 'topath' in get and get.topath == "/":
+            #     domainlist=self.GetAllDomain(get.sitename)
+            #     self.__firsturl=self.__CheckRedirectUrl(domainlist)
+            #     if not self.__firsturl:return public.returnMsg(False, '网站首页无法访问，请检查网站是否正常运行')
+
     #创建重定向
     def CreateRedirect(self,get):
 
@@ -227,6 +248,198 @@ class panelRedirect:
         self.SetRedirect(get)
         public.serviceReload()
         return public.returnMsg(True, '创建成功')
+
+
+    def ModifyRedirect(self,get):
+        """
+        @name 修改、启用、禁用重定向
+        @author hezhihong 
+        @param get.sitename 站点名称
+        @param get.redirectname 重定向名称
+        @param get.tourl 目标URL
+        @param get.redirectdomain 重定向域名
+        @param get.redirectpath 重定向路径
+        @param get.redirecttype 重定向类型
+        @param get.type 重定向状态 0禁用 1启用
+        @param get.domainorpath 重定向类型 domain 域名重定向 path 路径重定向
+        @param get.holdpath 保留路径 0不保留 1保留
+        @return json
+        """
+        # 基本信息检查
+        if self.__CheckRedirectStart(get):
+            return self.__CheckRedirectStart(get)
+        redirectconf = self.__read_config(self.__redirectfile)
+        for i in range(len(redirectconf)):
+            domainorpath=''
+            if 'domainorpath' not in get or not get.domainorpath:domainorpath='domain' if get.tourl else 'path'
+            if not domainorpath:domainorpath=get.domainorpath
+            if redirectconf[i]["redirectname"] == get.redirectname and redirectconf[i]["sitename"] == get.sitename:
+                redirectconf[i]["tourl"] =get.tourl if 'tourl' in get and get.tourl else ""
+                redirectconf[i]["redirectdomain"] = "" if 'redirectdomain' not in get else json.loads(get.redirectdomain)
+                redirectconf[i]["redirectpath"] ="" if 'redirectpath' not in get else get.redirectpath
+                redirectconf[i]["redirecttype"] ='' if 'redirecttype' not in get else get.redirecttype
+                redirectconf[i]["type"] = int(get.type)
+                redirectconf[i]["domainorpath"] = domainorpath
+                redirectconf[i]["topath"] = "" if 'topath' not in get else get.topath
+                redirectconf[i]["holdpath"] =999 if 'holdpath' not in get else int(get.holdpath) 
+                redirectconf[i]["errorpage"]=1 if 'errorpage' in get and get.errorpage in [1,'1']  else 0
+        self.__write_config(self.__redirectfile, redirectconf)
+        redirect_path=get.tourl.strip() if 'tourl' in get and get.tourl else get.topath.strip()
+        #404页面重定向
+        is_del= True if int(get.type) == 0 else False
+        if 'errorpage' in get and get.errorpage in [1,'1']:
+            web_type=public.get_webserver()
+            if web_type == 'nginx':
+                self.SetRedirectNginx(get)
+                self.unset_nginx_conf(get.sitename)
+                self.get_nginx_conf(redirect_path,get.redirecttype,get.sitename,get.redirectname,is_del)
+            elif web_type == 'apache' or web_type == 'openlitespeed':
+                self.get_apache_conf(redirect_path,get.sitename,get.redirectname,str(get.redirecttype),is_del)
+            else:
+                return public.returnMsg(False,'未安装web服务器或未知的web服务器')
+        #非404页面重定向
+        else:
+            self.SetRedirect(get)
+            self.SetRedirectNginx(get)
+            self.SetRedirectApache(get.sitename)
+        public.serviceReload()
+        print("修改成功")
+        return public.returnMsg(True, '修改成功')
+
+
+    def set_error_redirect(self,get):
+        """
+        @name 设置404重定向
+        @author hezhihong
+        @param get.sitename 站点名称
+        @param get.redirectname 重定向名称(唯一key标志)
+        @param get.tourl 重定向到的url
+        @param get.topath 重定向到的路径
+        @param get.redirecttype 重定向类型
+        @param get.type 重定向状态 0禁用 1启用
+        @param get.domainorpath 重定向类型 domain 域名重定向 path 路径重定向
+        @param get.holdpath 是否保留原路径 0不保留 1保留
+        @param get.errorpage 是否为404重定向 1是 0否
+        @return json
+        """
+        public.set_module_logs('panelRedirect','set_error_redirect')
+        check_result = self.__CheckRedirectStart(get,"create")
+        if check_result:return check_result
+        redirectconf = self.__read_config(self.__redirectfile)
+        site_name= get.sitename.strip()
+        redirect_path=get.tourl if  'tourl' in get and get.tourl and get.tourl.strip() else get.topath.strip()
+        redirectconf.append({
+            "sitename":site_name,
+            "redirectname":get.redirectname,
+            "tourl":get.tourl if 'tourl' in get else '',
+            "redirectdomain":"",
+            "redirectpath":"",
+            "topath": get.topath.strip() if 'topath' in get and get.topath.strip() else "",
+            "redirecttype":get.redirecttype,
+            "type":int(get.type),
+            "domainorpath":'domain' if 'tourl' in get else 'path', 
+            "holdpath":999,
+            "errorpage":1
+        })
+        self.__write_config(self.__redirectfile,redirectconf)
+        web_type=public.get_webserver()
+        if web_type == 'nginx':
+            self.SetRedirectNginx(get)
+            self.unset_nginx_conf(site_name)
+            self.get_nginx_conf(redirect_path,get.redirecttype,site_name,get.redirectname)
+        elif web_type == 'apache' or web_type == 'openlitespeed':
+            self.SetRedirectApache(get.sitename)
+            self.get_apache_conf(redirect_path,site_name,get.redirectname,str(get.redirecttype))
+        else:
+            return public.returnMsg(False,'未安装web服务器或未知的web服务器')
+        public.serviceReload()
+        return public.returnMsg(True, '404重定向设置成功')
+
+
+    def get_nginx_conf(self,redirect_path,redirecttype,site_name,redirectname,is_del=False):
+        """
+        @name 设置nginx 404重定向
+        @author hezhihong
+        @param redirect_path 重定向到（路径或地址）
+        @param redirecttype 重定向方式（301/302）
+        @param site_name 站点名称
+        @param redirectname 重定向名称（唯一key标志）
+        @param is_del 是否删除
+        """
+        redirectname_md5 = self.__calc_md5(redirectname)
+        file_path= "%s/panel/vhost/nginx/redirect/%s" % (self.setupPath,site_name)
+        public.ExecShell("mkdir -p %s" % file_path)
+        file_path+= '/%s_%s.conf' % (redirectname_md5, site_name)
+        add_str='#REWRITE-START\nerror_page 404 = @notfound;\nlocation @notfound {\n    return '+str(redirecttype)+' '+ redirect_path+'; \n}\n#REWRITE-END'
+        if os.path.isfile(file_path):public.ExecShell("rm -f %s" % file_path)
+        if not is_del:public.writeFile(file_path,add_str)
+
+    def get_apache_conf(self,redirect_path,site_name,redirectname='',r_type='301',is_del=False):
+        """
+        @name 设置apache 404重定向
+        @author hezhihong
+        @param redirect_path 重定向到（路径或地址）
+        @param site_name 站点名称
+        @param redirectname 重定向名称（唯一key标志）
+        @param is_del 是否删除
+        @param r_type 重定向方式
+        """
+        if self.__firsturl:redirect_path=self.__firsturl
+        add_type=',R={}]'.format(str(r_type))
+        add_str='#REWRITE-START\n<IfModule mod_rewrite.c>\n    RewriteEngine on\n    RewriteCond %\{REQUEST_FILENAME\} !-f\n    RewriteCond %{REQUEST_FILENAME} !-d\n    RewriteRule . '+redirect_path+' [L'+add_type+'\n</IfModule>\n#REWRITE-END'
+        redirectname_md5 = self.__calc_md5(redirectname)
+        file_path= "%s/panel/vhost/apache/redirect/%s" % (self.setupPath,site_name)
+        public.ExecShell("mkdir -p %s" % file_path)
+        file_path+= '/%s_%s.conf' % (redirectname_md5, site_name)
+        if os.path.isfile(file_path):public.ExecShell("rm -f %s" % file_path)
+        if not is_del:public.writeFile(file_path,add_str)
+ 
+
+    def unset_nginx_conf(self,site_name):
+        """
+        @name 取消设置nginx 404重定向
+        @author hezhihong
+        @param site_name 站点名称
+        """
+        file_path='/www/server/panel/vhost/nginx/{}.conf'.format(site_name)
+        hta_path='/www/server/panel/vhost/rewrite/{}.conf'.format(site_name)
+        rep_str_one='error_page 404 /404.html'
+        rep_str_two='location = /404.html'
+        #清理nginx伪静态404配置
+        hta_conf=public.readFile(hta_path)
+        if hta_conf:
+            hta_conf=self.replace_str_to_srt(hta_conf,rep_str_one,'','\n')
+            hta_conf=self.replace_str_to_srt(hta_conf,rep_str_two,'','}')
+        public.writeFile(hta_path,hta_conf)
+        #清理nginx网站配置文件非include方式404配置
+        conf=public.readFile(file_path)
+        conf=self.replace_str_to_srt(conf,rep_str_one,'','\n')
+        conf=self.replace_str_to_srt(conf,rep_str_two,'','}')
+        public.writeFile(file_path,conf)
+
+
+    def replace_str_to_srt(self,conf,str_src,str_d,end_str,is_replace=False):
+        """
+        @name 替换字符串
+        @author hezhihong
+        @param conf 配置文件内容
+        @param str_src 要替换的字符串
+        @param str_d 替换成的字符串
+        @param end_str 结束字符串
+        @param is_replace 是否替换 
+        """
+        if conf.strip():
+            start_num=conf.find(str_src)
+            if start_num !=-1:
+                d_conf=conf[start_num:]
+                end_num = d_conf.find(end_str)
+                if end_num ==-1:end_num=len(conf)
+                d_conf=d_conf[:end_num+1]
+                if is_replace:conf=conf.replace(d_conf,str_d)
+                else:conf=conf.replace(d_conf,'')
+        return conf
+        
+
 
     # 设置重定向
     def SetRedirect(self,get):
@@ -253,9 +466,13 @@ class panelRedirect:
                 holdpath = int(get.holdpath)
                 if holdpath == 1:
                     for sd in domains:
+                        if sd.startswith("*."):
+                            sd = r"[\w-.]+\." + sd[2:]
                         rconf += domainstr % (sd,get.redirecttype,tourl,"$request_uri")
                 else:
                     for sd in domains:
+                        if sd.startswith("*."):
+                            sd = r"[\w-.]+\." + sd[2:]
                         rconf += domainstr % (sd,get.redirecttype,tourl,"")
             if get.domainorpath == "path":
                 redirectpath = get.redirectpath
@@ -297,9 +514,13 @@ class panelRedirect:
                 holdpath = int(get.holdpath)
                 if holdpath == 1:
                     for sd in domains:
+                        if sd.startswith("*."):
+                            sd = r"[\w-.]+\." + sd[2:]
                         rconf += domainstr % ("%",sd,tourl,"$1",get.redirecttype)
                 else:
                     for sd in domains:
+                        if sd.startswith("*."):
+                            sd = r"[\w-.]+\." + sd[2:]
                         rconf += domainstr % ("%",sd,tourl,"",get.redirecttype)
 
             if get.domainorpath == "path":
@@ -341,28 +562,6 @@ class panelRedirect:
                 if os.path.exists(rf):
                     os.remove(rf)
 
-    def ModifyRedirect(self,get):
-        # 基本信息检查
-        if self.__CheckRedirectStart(get):
-            return self.__CheckRedirectStart(get)
-        redirectconf = self.__read_config(self.__redirectfile)
-        for i in range(len(redirectconf)):
-            if redirectconf[i]["redirectname"] == get.redirectname and redirectconf[i]["sitename"] == get.sitename:
-                redirectconf[i]["tourl"] = get.tourl
-                redirectconf[i]["redirectdomain"] = json.loads(get.redirectdomain)
-                redirectconf[i]["redirectpath"] = get.redirectpath
-                redirectconf[i]["redirecttype"] = get.redirecttype
-                redirectconf[i]["type"] = int(get.type)
-                redirectconf[i]["domainorpath"] = get.domainorpath
-                redirectconf[i]["holdpath"] = int(get.holdpath)
-        self.__write_config(self.__redirectfile, redirectconf)
-        self.SetRedirect(get)
-        self.SetRedirectNginx(get)
-        self.SetRedirectApache(get.sitename)
-        public.serviceReload()
-        print("修改成功")
-        return public.returnMsg(True, '修改成功')
-
     def del_redirect_multiple(self,get):
         '''
             @name 批量删除重定向
@@ -390,6 +589,10 @@ class panelRedirect:
                 'success': del_successfully}
 
     def DeleteRedirect(self,get,multiple=None):
+        if not hasattr(get, 'redirectname'):
+            return public.returnMsg(False, '缺少参数redirectname')
+        if not hasattr(get, 'sitename'):
+            return public.returnMsg(False, '缺少参数sitename')
         redirectconf = self.__read_config(self.__redirectfile)
         sitename = get.sitename
         redirectname = get.redirectname
@@ -407,61 +610,21 @@ class panelRedirect:
                 return public.returnMsg(True, '删除成功')
 
     def GetRedirectList(self,get):
+        """
+        @name 获取重定向列表
+        @author hezhihong
+        @param  get.sitename 站点名
+        @param  get.errorpage 1:404页面重定向 0:非404页面重定向
+        @return 重定向列表
+        """
         redirectconf = self.__read_config(self.__redirectfile)
         sitename = get.sitename
-        # conf_path = "%s/panel/vhost/nginx/%s.conf" % (self.setupPath, get.sitename)
-        # old_conf = public.readFile(conf_path)
-        # rep = "#301-START\n+[\s\w\:\/\.\;\$\(\)\'\^\~\{\}]+#301-END"
-        # url_rep = "return\s(\d+)\s(https?\:\/\/[\w\.]+)"
-        # host_rep = "\$host\s~\s'\^(.*)'"
-        # if re.search(rep, old_conf):
-        #     # 构造代理配置
-        #     get.host = ""
-        #     if re.search(host_rep, old_conf):
-        #         get.host += str(re.search(host_rep, old_conf).group(1))
-        #     get.redirecttype = str(re.search(url_rep, old_conf).group(1))
-        #     get.tourl = str(re.search(url_rep, old_conf).group(2))
-
-        #     get.redirectpath = ""
-        #     if get.host:
-        #         get.domainorpath = "domain"
-        #         get.redirectdomain = "[\"%s\"]" % get.host
-        #     else:
-        #         get.domainorpath = "path"
-        #         get.redirectpath = "/"
-        #         get.redirectdomain = "[]"
-        #     get.sitename = sitename
-        #     get.redirectname = '旧重定向'
-        #     get.type = 1
-        #     get.holdpath = 1
-
-        #     # 备份并替换老虚拟主机配置文件
-        #     if not os.path.exists(conf_path + "_bak"):
-        #         public.ExecShell("cp %s %s_bak" % (conf_path, conf_path))
-        #     conf = re.sub(rep, "", old_conf)
-        #     public.writeFile(conf_path, conf)
-        #     self.CreateRedirect(get)
-        #     # 取消老重定向
-        #     import panelSite
-        #     ps = panelSite.panelSite()
-        #     get.type=0
-        #     get.siteName = sitename
-        #     get.srcDomain = ''
-        #     get.toDomain = ''
-        #     ps.Set301Status(get)
-            # 写入代理配置
-            #proxypath = "%s/panel/vhost/%s/proxy/%s/%s_%s.conf" % (
-            #self.setupPath, w, get.sitename, proxyname_md5, get.sitename)
-            # proxycontent = str(re.search(rep, old_conf).group(1))
-            # public.writeFile(proxypath, proxycontent)
-
-            #public.serviceReload()
-        # redirectconf = self.__read_config(self.__redirectfile)
         redirectlist = []
         for i in redirectconf:
             if i["sitename"] == sitename:
+                if 'errorpage' in get and 'errorpage' in i and int(get.errorpage)!=int(i['errorpage']):continue
+                if  'errorpage' in i and i['errorpage'] in [1,'1']:i['redirectdomain']=['404页面']
                 redirectlist.append(i)
-        print(redirectlist)
         return redirectlist
 
     def ClearOldRedirect(self,get):
@@ -501,10 +664,12 @@ class panelRedirect:
         return f.SaveFileBody(get)
         #	return public.returnMsg(True, '保存成功')
 
-    def __CheckRedirect(self,sitename,redirectname):
+    def __CheckRedirect(self,sitename,redirectname,is_error=False):
         conf_data = self.__read_config(self.__redirectfile)
         for i in conf_data:
             if i["sitename"] == sitename:
+                if is_error and  "errorpage" in i and i["errorpage"] in [1,'1']:
+                    return i
                 if i["redirectname"] == redirectname:
                     return i
 

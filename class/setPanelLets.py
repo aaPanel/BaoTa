@@ -36,7 +36,7 @@ class setPanelLets:
     # 检查是否存在站点aapanel主机名站点
     def __check_host_name(self, domain):
         sql = db.Sql()
-        path = sql.table('sites').where('name=?', (domain,)).getField('path')
+        path = public.M('sites').where('name=?', (domain,)).getField('path')
         return path
 
     # 创建证书使用的站点
@@ -61,14 +61,24 @@ class setPanelLets:
     def __create_lets(self,get):
         from acme_v2 import acme_v2
         site_id = str(public.M('sites').where('name=?',(get.domain,)).getField('id'))
-        get.auth_type = 'http'
         get.auth_to = site_id
         get.id = site_id
         get.auto_wildcard = '0'
         get.domains = json.dumps([get.domain])
         get.siteName = get.domain
         p = acme_v2()
-        cert_info = p.apply_cert_api(get)
+        if not get.get('index'):
+            cert_info = p.apply_cert_api(get)
+        else:
+            cert_info = p.validate_domain(get)
+        if not cert_info['status']:
+            if "设置解析记录失败" in cert_info['msg']:
+                detail = p.get_order_detail(public.to_dict_obj(cert_info))
+                if 'status' in detail or 'msg' in detail:
+                    return detail
+                detail.update({"status": False, "msg": "设置解析记录失败，请尝试手动设置解析记录后验证！", "index": cert_info['index']})
+                return detail
+
         if 'private_key' not in cert_info:
             return public.returnMsg(False, "申请证书失败,请尝试在网站列表内手动为面板域名申请SSL证书后再到此开启SSL！")
         get.key = cert_info['private_key']
@@ -84,6 +94,7 @@ class setPanelLets:
     def __check_cert_dir(self,get):
         import panelSSL,time
         pssl = panelSSL.panelSSL()
+        get.vpath = "/www/server/panel/vhost/ssl_saved/"
         gcl = pssl.GetCertList(get)
         for i in gcl:
             if get.domain in i['dns'] or get.domain == i['subject']:
@@ -216,11 +227,16 @@ class setPanelLets:
             create_site = self.__create_site_of_panel_lets(get)
         domain_cert = self.__check_cert_dir(get)
         if domain_cert:
+            if domain_cert.get("issuer") not in ["R3", "R5", "R8", "R10", "R11", "Let's Encrypt"] and domain_cert.get("issuer_O", "") != "Let's Encrypt":
+                return public.returnMsg(False, "开启 ssl 失败！证书类型不是 Let's Encrypt!")
+
             res = self.copy_cert(domain_cert)
             if not res['status']:
                 return res
             public.writeFile("/www/server/panel/data/ssl.pl", "True")
             self.__save_cert_source(domain,get.email)
+            # 设置面板自动替换最新证书计划任务
+            self.set_panel_update_ssl_task()
             return public.returnMsg(True, '面板lets https设置成功')
         if not create_site:
             create_lets = self.__create_lets(get)
@@ -228,11 +244,51 @@ class setPanelLets:
                 return create_lets
             if create_lets['msg']:
                 domain_cert = self.__check_cert_dir(get)
+                if not domain_cert:
+                    return public.returnMsg(False, "申请证书失败！")
+                if domain_cert.get("issuer") not in ["R3", "Let's Encrypt"] and domain_cert.get("issuer_O", "") != "Let's Encrypt":
+                    return public.returnMsg(False, "开启 ssl 失败！证书类型不是 Let's Encrypt!")
                 self.copy_cert(domain_cert)
                 public.writeFile("/www/server/panel/data/ssl.pl", "True")
                 self.__save_cert_source(domain, get.email)
+                # 设置面板自动替换最新证书计划任务
+                self.set_panel_update_ssl_task()
                 return  public.returnMsg(True, '面板lets https设置成功')
             else:
                 return public.returnMsg(False, create_lets)
         else:
             return public.returnMsg(False, create_site)
+
+    def set_panel_update_ssl_task(self):
+        shell = "/www/server/panel/pyenv/bin/python3 -u /www/server/panel/script/panel_ssl_task.py"
+        task = public.M('crontab').where("sBody=?", (shell,)).find()
+        if task:
+            return
+        import crontab
+        import random
+        cron = crontab.crontab()
+        get = public.dict_obj()
+        get.name = "更新面板SSL证书"
+        get.sBody = shell
+        get.type = "day"
+        get.week = 1
+        get.hour = random.randint(0, 23)
+        get.minute = random.randint(0, 59)
+        get.second = ""
+        get.sName = ""
+        get.backupTo = ""
+        get.save = ""
+        get.urladdress = ""
+        get.notice_channel = ""
+        get.datab_name = ""
+        get.tables_name = ""
+        get.keyword = ""
+        get.where1 = 1
+        get.timeSet = 1
+        get.timeType = 'sday'
+        get.sType = 'toShell'
+        get.save_local = 0
+        get.notice = 0
+        get.flock = 1
+
+        return cron.AddCrontab(get)

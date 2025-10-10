@@ -33,11 +33,11 @@ class nginx:
             rep = "(%s)\s+(\w+)" % i
             k = re.search(rep, ngconfcontent)
             if not k:
-                return public.returnMsg(False,"获取 key {} 失败".format(k))
+                return public.returnMsg(False,"获取 key {} 失败,请检查配置文件中的{}配置是否正常".format(k,i))
             k = k.group(1)
             v = re.search(rep, ngconfcontent)
             if not v:
-                return public.returnMsg(False,"获取 value {} 失败".format(v))
+                return public.returnMsg(False,"获取 value {} 失败,请检查配置文件中的{}配置是否正常".format(v,i))
             v = v.group(2)
             if re.search(unitrep,v):
                 u = str.upper(v[-1])
@@ -78,8 +78,49 @@ class nginx:
             kv = {"name":k, "value":v, "unit":u,"ps":psstr}
             conflist.append(kv)
             n+=1
-        print(conflist)
+        for i in conflist:
+            if i['name'] == 'worker_processes':
+                i['max_num'] = self.check_worker_processes()
+                break
         return conflist
+
+    def check_worker_processes(self) -> int:
+        import psutil
+        nginx_pid = 0
+        try:
+            pro = psutil.process_iter()
+            for i in pro:
+                if i.ppid() == 1 and i.name() == "nginx":
+                    nginx_pid = i.pid
+                    break
+        except psutil.NoSuchProcess:
+            # 处理进程不存在的情况
+            pass
+        except FileNotFoundError:
+            pass
+
+
+        sad = 99999999999999999
+        try:
+            pro = psutil.process_iter()
+            for i in pro:
+                if i.ppid() == nginx_pid:
+                    if sad > i.memory_info().rss:
+                        sad = i.memory_info().rss
+        except psutil.NoSuchProcess:
+            # 处理进程不存在的情况
+            pass
+        except FileNotFoundError:
+            pass
+
+        mem = psutil.virtual_memory()
+        total = mem.total
+        used = mem.used
+        surplus = total - used
+        if sad == 0:
+            sad = 41943040
+        num_max = int(surplus / sad)
+        return num_max
 
     def SetNginxValue(self,get):
         ngconfcontent = public.readFile(self.nginxconf)

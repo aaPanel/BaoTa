@@ -1,0 +1,115 @@
+{
+  "mysql_pwd_endtime": {
+    "field": [
+      {
+        "attr": "project",
+        "name": "选择用户",
+        "type": "cascader",
+        "default": 0,
+        "items": [
+            {
+                "url": "database?action=GetPushUser"
+            },
+            {
+                "url": "database?action=GetPushUser",
+                "data": ["sid"]
+            },
+            {
+                "url": "database?action=GetPushUser",
+                "data": ["sid", "username"]
+            }
+        ]
+      },
+      {
+        "attr": "cycle",
+        "name": "剩余天数",
+        "type": "number",
+        "unit": "天",
+        "suffix": "",
+        "default": 15
+      },
+      {
+        "attr": "push_count",
+        "name": "发送次数",
+        "type": "number",
+        "unit": "次",
+        "suffix": "后将不再发送告警信息，如需发送多次请填写2次以上",
+        "default": 1
+      }
+    ],
+    "sorted": [
+      [
+        "project"
+      ],
+      [
+        "cycle"
+      ],
+      [
+        "push_count"
+      ]
+    ],
+    "type": "mysql_pwd_endtime",
+    "module": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin"
+    ],
+    "tid": "database_push@0",
+    "title": "MySQL数据库密码到期",
+    "name": "database_push"
+  },
+  "mysql_replicate_status": {
+    "field": [
+      {
+        "attr": "project",
+        "name": "选择监控的从库",
+        "type": "select",
+        "default": null,
+        "items": []
+      },
+      {
+        "attr": "count",
+        "name": "自动修复",
+        "type": "radio",
+        "suffix": "",
+        "default": 1,
+        "items": [
+          {
+            "title": "自动尝试修复",
+            "value": 1
+          },
+          {
+            "title": "不做修复尝试",
+            "value": 2
+          }
+        ]
+      },
+      {
+        "attr": "interval",
+        "name": "间隔时间",
+        "type": "number",
+        "unit": "秒",
+        "suffix": "后再次监控检测条件",
+        "default": 600
+      }
+    ],
+    "sorted": [
+      ["project"],
+      ["count"],
+      ["interval"]
+    ],
+    "type": "mysql_replicate_status",
+    "module": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin"
+    ],
+    "tid": "database_push@1",
+    "title": "MySQL主从复制异常告警",
+    "name": "database_push"
+  }
+}

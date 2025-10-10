@@ -58,6 +58,7 @@
   "DATABASE_ADD_SUCCESS": "添加数据库[{1}]成功!",
   "DATABASE_ADD_ERR": "添加数据库[{1}]失败!,{2}",
   "DATABASE_DEL_SUCCESS": "删除数据库[{1}]成功!",
+  "DATABASE_DEL_SUCCESS_FOR_RECYCLE_BIN": "从数据库回收站中删除数据库[{1}]成功!",
   "DATABASE_DEL_ERR": "删除数据库[{1}]失败!,{2}",
   "DATABASE_ROOT_SUCCESS": "数据库root密码修改成功!",
   "DATABASE_PASS_SUCCESS": "修改数据库[{1}]密码成功!",

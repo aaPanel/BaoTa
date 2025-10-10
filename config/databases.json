@@ -1,0 +1,1199 @@
+{
+	"ssl_data.db": {
+		"ssl_info": {
+			"sql": "CREATE TABLE IF NOT EXISTS 'ssl_info' ('id' INTEGER PRIMARY KEY AUTOINCREMENT,'group_id' INTEGER NOT NULL DEFAULT 0,'hash' TEXT NOT NULL UNIQUE,'path' TEXT NOT NULL,'dns' TEXT NOT NULL,'subject' TEXT NOT NULL,'info' TEXT NOT NULL DEFAULT '','cloud_id' INTEGER NOT NULL DEFAULT -1,'not_after' TEXT NOT NULL,'use_for_panel' INTEGER NOT NULL DEFAULT 0,'use_for_site' TEXT NOT NULL DEFAULT '[]','auth_info' TEXT NOT NULL DEFAULT '{}','create_time' INTEGER NOT NULL DEFAULT (strftime('%s')), 'ps' TEXT NOT NULL DEFAULT '');",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "hash", "TEXT", 0, "''", 0],
+				[2, "path", "TEXT", 0, "''", 0],
+				[3, "dns", "TEXT", 0, "''", 0],
+				[4, "subject", "TEXT", 0, "''", 0],
+				[5, "info", "TEXT", 0, "''", 0],
+				[6, "cloud_id", "INTEGER", 0, "-1", 0],
+				[7, "not_after", "TEXT", 0, "''", 0],
+				[8, "use_for_panel", "INTEGER", 0, "0", 0],
+				[9, "use_for_site", "TEXT", 0, "'[]'", 0],
+				[10, "auth_info", "TEXT", 0, "'{}'", 0],
+				[11, "create_time", "TEXT", 0, "strftime('%s')", 0],
+				[12, "ps", "TEXT", 0, "''", 0],
+				[13, "group_id", "INTEGER", 0, 0, 0]
+			]
+		}
+	},
+	"panel.db": {
+		"config": {
+			"sql": "CREATE TABLE `config` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `webserver` TEXT,\n  `backup_path` TEXT,\n  `sites_path` TEXT,\n  `status` INTEGER,\n  `mysql_root` TEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "webserver", "TEXT", 0, "''", 0],
+				[2, "backup_path", "TEXT", 0, "''", 0],
+				[3, "sites_path", "TEXT", 0, "''", 0],
+				[4, "status", "INTEGER", 0, 0, 0],
+				[5, "mysql_root", "TEXT", 0, "''", 0]
+			]
+		},
+		"users": {
+			"sql": "CREATE TABLE `users` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `username` TEXT,\n  `password` TEXT,\n  `login_ip` TEXT,\n  `login_time` TEXT,\n  `phone` TEXT,\n  `email` TEXT,\n  `salt` TEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "username", "TEXT", 0, "''", 0],
+				[2, "password", "TEXT", 0, "''", 0],
+				[3, "login_ip", "TEXT", 0, "''", 0],
+				[4, "login_time", "TEXT", 0, "''", 0],
+				[5, "phone", "TEXT", 0, "''", 0],
+				[6, "email", "TEXT", 0, "''", 0],
+				[7, "salt", "TEXT", 0, "''", 0]
+			]
+		}
+	},
+	"site.db": {
+		"sites": {
+			"sql": "CREATE TABLE `sites` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `name` TEXT,\n  `path` TEXT,\n  `status` TEXT,\n  `index` TEXT,\n  `ps` TEXT,\n  `addtime` TEXT,\n  `type_id` integer DEFAULT 0,\n  `edate` integer DEFAULT '0000-00-00',\n  `project_type` STRING DEFAULT 'PHP',\n  `project_config` STRING DEFAULT '{}',\n  `rname` text DEFAULT '',\n `stop` text DEFAULT ''\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "TEXT", 0, "''", 0],
+				[2, "path", "TEXT", 0, "''", 0],
+				[3, "status", "TEXT", 0, "''", 0],
+				[4, "index", "TEXT", 0, "''", 0],
+				[5, "ps", "TEXT", 0, "''", 0],
+				[6, "addtime", "TEXT", 0, "''", 0],
+				[7, "type_id", "integer", 0, "0", 0],
+				[8, "edate", "integer", 0, "'0000-00-00'", 0],
+				[9, "project_type", "STRING", 0, "'PHP'", 0],
+				[10, "project_config", "STRING", 0, "'{}'", 0],
+				[11, "rname", "text", 0, "''", 0],
+				[12, "stop", "text", 0, "''", 0]
+			]
+		},
+		"site_types": {
+			"sql": "CREATE TABLE `site_types` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `name` REAL,\n  `ps` REAL\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "REAL", 0, 0, 0],
+				[2, "ps", "REAL", 0, 0, 0]
+			]
+		},
+		"domain": {
+			"sql": "CREATE TABLE `domain` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `pid` INTEGER,\n  `name` TEXT,\n  `port` INTEGER,\n  `addtime` TEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "pid", "INTEGER", 0, 0, 0],
+				[2, "name", "TEXT", 0, "''", 0],
+				[3, "port", "INTEGER", 0, 0, 0],
+				[4, "addtime", "TEXT", 0, "''", 0]
+			]
+		},
+		"binding": {
+			"sql": "CREATE TABLE `binding` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `pid` INTEGER,\n  `domain` TEXT,\n  `path` TEXT,\n  `port` INTEGER,\n  `addtime` TEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "pid", "INTEGER", 0, 0, 0],
+				[2, "domain", "TEXT", 0, "''", 0],
+				[3, "path", "TEXT", 0, "''", 0],
+				[4, "port", "INTEGER", 0, 0, 0],
+				[5, "addtime", "TEXT", 0, "''", 0]
+			]
+		},
+		"app_package": {
+		    "sql": "CREATE TABLE `app_package` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `pid` INTEGER,\n  `site_name` TEXT,\n  `app_name` TEXT,\n  `app_version` TEXT,\n  `package_name` TEXT,\n  `package_path` TEXT,\n  `size` TEXT,\n  `addtime` TEXT,\n  `update_log` TEXT,\n  `php_versions` TEXT,\n  `php_libs` TEXT,\n  `php_functions` TEXT,\n  `mysql_versions` TEXT,\n  `db_character` TEXT,\n  `init_sql` TEXT,\n  `db_config_file` TEXT\n)",
+		    "fields": [
+                [0, "id", "INTEGER", 0, 0, 1],
+                [1, "pid", "INTEGER", 0, 0, 0],
+                [2, "site_name", "TEXT", 0, "''", 0],
+                [3, "app_name", "TEXT", 0, "''", 0],
+                [4, "app_version", "TEXT", 0, "''", 0],
+                [5, "package_name", "TEXT", 0, "''", 0],
+                [6, "package_path", "TEXT", 0, "''", 0],
+                [7, "size", "TEXT", 0, "''", 0],
+                [8, "addtime", "TEXT", 0, "''", 0],
+                [9, "update_log", "TEXT", 0, "''", 0],
+                [10, "php_versions", "TEXT", 0, "''", 0],
+                [11, "php_libs", "TEXT", 0, "''", 0],
+                [12, "php_functions", "TEXT", 0, "''", 0],
+                [13, "mysql_versions", "TEXT", 0, "''", 0],
+                [14, "db_character", "TEXT", 0, "''", 0],
+                [15, "init_sql", "TEXT", 0, "''", 0],
+                [16, "db_config_file", "TEXT", 0, "''", 0]
+		    ]
+		},
+		"app_package_upload": {
+            "sql": "CREATE TABLE `app_package_upload` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `app_name` TEXT,\n  `app_version` TEXT,\n  `package_path` TEXT,\n  `size` TEXT,\n  `addtime` TEXT,\n  `update_log` TEXT,\n  `php_versions` TEXT,\n  `php_libs` TEXT,\n  `php_functions` TEXT,\n  `mysql_versions` TEXT,\n  `db_character` TEXT,\n  `init_sql` TEXT,\n  `db_config_file` TEXT\n)",
+            "fields": [
+                [0, "id", "INTEGER", 0, 0, 1],
+                [1, "app_name", "TEXT", 0, "''", 0],
+                [2, "app_version", "TEXT", 0, "''", 0],
+                [3, "package_path", "TEXT", 0, "''", 0],
+                [4, "size", "TEXT", 0, "''", 0],
+                [5, "addtime", "TEXT", 0, "''", 0],
+                [6, "update_log", "TEXT", 0, "''", 0],
+                [7, "php_versions", "TEXT", 0, "''", 0],
+                [8, "php_libs", "TEXT", 0, "''", 0],
+                [9, "php_functions", "TEXT", 0, "''", 0],
+                [10, "mysql_versions", "TEXT", 0, "''", 0],
+                [11, "db_character", "TEXT", 0, "''", 0],
+                [12, "init_sql", "TEXT", 0, "''", 0],
+                [13, "db_config_file", "TEXT", 0, "''", 0]
+            ]
+		}
+	},
+	"ftp.db": {
+		"ftps": {
+			"sql": "CREATE TABLE `ftps` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `pid` INTEGER,\n  `name` TEXT,\n  `password` TEXT,\n  `path` TEXT,\n  `status` TEXT,\n  `ps` TEXT,\n  `addtime` TEXT,\n `type_id` INTEGER\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "pid", "INTEGER", 0, 0, 0],
+				[2, "name", "TEXT", 0, "''", 0],
+				[3, "password", "TEXT", 0, "''", 0],
+				[4, "path", "TEXT", 0, "''", 0],
+				[5, "status", "TEXT", 0, "''", 0],
+				[6, "ps", "TEXT", 0, "''", 0],
+				[7, "addtime", "TEXT", 0, "''", 0],
+				[8, "type_id", "INTEGER", 0, 0, 0]
+			]
+		}
+	},
+	"database.db": {
+		"database_servers": {
+			"sql": "CREATE TABLE `database_servers` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `db_host` REAL,\n  `db_port` REAL,\n  `db_user` INTEGER,\n  `db_password` INTEGER,\n  `ps` REAL,\n  `addtime` INTEGER,\n  `db_type` REAL DEFAULT 'mysql',\n  `type` STRING DEFAULT 'MySQL'\n )",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "db_host", "REAL", 0, 0, 0],
+				[2, "db_port", "REAL", 0, 0, 0],
+				[3, "db_user", "INTEGER", 0, 0, 0],
+				[4, "db_password", "INTEGER", 0, 0, 0],
+				[5, "ps", "REAL", 0, 0, 0],
+				[6, "addtime", "INTEGER", 0, 0, 0],
+				[7, "db_type", "REAL", 0, "'mysql'", 0],
+				[8, "type", "STRING", 0, "'MySQL'", 0]
+
+			]
+		},
+		"databases": {
+			"sql": "CREATE TABLE `databases` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `pid` INTEGER,\n  `name` TEXT,\n  `username` TEXT,\n  `password` TEXT,\n  `accept` TEXT,\n  `ps` TEXT,\n  `addtime` TEXT,\n  `db_type` integer DEFAULT '0',\n  `conn_config` STRING DEFAULT '{}',\n  `sid` integer DEFAULT 0,\n  `type` TEXT DEFAULT 'MySQL',\n `type_id` INTEGER\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "pid", "INTEGER", 0, 0, 0],
+				[2, "name", "TEXT", 0, "''", 0],
+				[3, "username", "TEXT", 0, "''", 0],
+				[4, "password", "TEXT", 0, "''", 0],
+				[5, "accept", "TEXT", 0, "''", 0],
+				[6, "ps", "TEXT", 0, "''", 0],
+				[7, "addtime", "TEXT", 0, "''", 0],
+				[8, "db_type", "integer", 0, "'0'", 0],
+				[9, "conn_config", "STRING", 0, "'{}'", 0],
+				[10, "sid", "integer", 0, "0", 0],
+				[11, "type", "TEXT", 0, "'MySQL'", 0],
+				[12, "type_id", "INTEGER", 0, 0, 0]
+			]
+		},
+		"mysql_increment_settings": {
+			"sql": "CREATE TABLE `mysql_increment_settings` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `cron_id` INTEGER,\n  `db_name` TEXT DEFAULT '',\n  `tb_name` TEXT DEFAULT '',\n  `zip_password` TEXT DEFAULT '',\n  `last_backup_time` TEXT DEFAULT ''\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "cron_id", "INTEGER", 0, 0, 0],
+				[2, "db_name", "TEXT", 0, "''", 0],
+				[3, "tb_name", "TEXT", 0, "''", 0],
+				[4, "zip_password", "TEXT", 0, "''", 0],
+				[5, "last_backup_time", "TEXT", 0, "''", 0]
+			]
+		},
+		"mysql_increment_backup": {
+			"sql": "CREATE TABLE `mysql_increment_backup` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `cron_id` INTEGER,\n  `size` INTEGER DEFAULT 0,\n  `type` INTEGER DEFAULT 0,\n  `addtime` TEXT DEFAULT '',\n  `name` TEXT DEFAULT '',\n  `localhost` TEXT DEFAULT '',\n  `ftp` TEXT DEFAULT '',\n  `alioss` TEXT DEFAULT '',\n  `txcos` TEXT DEFAULT '',\n  `qiniu` TEXT DEFAULT '',\n  `aws_s3` TEXT DEFAULT '',\n  `upyun` TEXT DEFAULT '',\n  `obs` TEXT DEFAULT '',\n  `bos` TEXT DEFAULT '',\n  `gcloud_storage` TEXT DEFAULT '',\n  `gdrive` TEXT DEFAULT '',\n  `msonedrive` TEXT DEFAULT '',\n  `jdcloud` TEXT DEFAULT '',\n `tianyiyun` TEXT DEFAULT '',\n `webdav` TEXT DEFAULT '',\n `minio` TEXT DEFAULT '',\n `dogecloud` TEXT DEFAULT ''\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "cron_id", "INTEGER", 0, 0, 0],
+				[2, "size", "INTEGER", 0, "0", 0],
+				[3, "type", "INTEGER", 0, "0", 0],
+				[4, "addtime", "TEXT", 0, "''", 0],
+				[5, "name", "TEXT", 0, "''", 0],
+				[6, "localhost", "TEXT", 0, "''", 0],
+				[7, "ftp", "TEXT", 0, "''", 0],
+				[8, "alioss", "TEXT", 0, "''", 0],
+				[9, "txcos", "TEXT", 0, "''", 0],
+				[10, "qiniu", "TEXT", 0, "''", 0],
+				[11, "aws_s3", "TEXT", 0, "''", 0],
+				[12, "upyun", "TEXT", 0, "''", 0],
+				[13, "obs", "TEXT", 0, "''", 0],
+				[14, "bos", "TEXT", 0, "''", 0],
+				[15, "gcloud_storage", "TEXT", 0, "''", 0],
+				[16, "gdrive", "TEXT", 0, "''", 0],
+				[17, "msonedrive", "TEXT", 0, "''", 0],
+				[18, "jdcloud", "TEXT", 0, "''", 0],
+				[19, "tianyiyun", "TEXT", 0, "''", 0],
+				[20, "webdav", "TEXT", 0, "''", 0],
+				[21, "minio", "TEXT", 0, "''", 0],
+				[22, "dogecloud", "TEXT", 0, "''", 0]
+			]
+		}
+	},
+	"docker.db": {
+		"dk_container_remark": {
+			"sql": "CREATE TABLE `dk_container_remark` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `container_id` TEXT,\n  `container_name` TEXT,\n  `remark` TEXT,\n  `addtime` TEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "container_id", "TEXT", 0, "''", 0],
+				[2, "container_name", "TEXT", 0, "''", 0],
+				[3, "remark", "TEXT", 0, "''", 0],
+				[4, "addtime", "TEXT", 0, "''", 0]
+			]
+		},
+		"dk_sites": {
+			"sql": "CREATE TABLE `dk_sites` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `name` TEXT,\n  `path` TEXT,\n  `status` TEXT DEFAULT 1,\n  `ps` TEXT,\n  `addtime` TEXT,\n  `type_id` integer DEFAULT 111,\n  `edate` integer DEFAULT '0000-00-00',\n  `project_type` STRING DEFAULT 'dk_proxy',\n  `container_id` TEXT DEFAULT '',\n  `container_name` TEXT DEFAULT '',\n  `container_port` TEXT DEFAULT ''\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "TEXT", 0, "''", 0],
+				[2, "path", "TEXT", 0, "''", 0],
+				[3, "status", "TEXT", 0, "1", 0],
+				[4, "ps", "TEXT", 0, "''", 0],
+				[5, "addtime", "TEXT", 0, "''", 0],
+				[6, "type_id", "integer", 0, "111", 0],
+				[7, "edate", "integer", 0, "'0000-00-00'", 0],
+				[8, "project_type", "STRING", 0, "'dk_proxy'", 0],
+				[9, "container_id", "TEXT", 0, "''", 0],
+				[10, "container_name", "TEXT", 0, "''", 0],
+				[11, "container_port", "TEXT", 0, "''", 0]
+			]
+		},
+		"dk_domain": {
+			"sql": "CREATE TABLE `dk_domain` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `pid` INTEGER,\n  `name` TEXT,\n  `addtime` TEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "pid", "INTEGER", 0, 0, 0],
+				[2, "name", "TEXT", 0, "''", 0],
+				[3, "addtime", "TEXT", 0, "''", 0]
+			]
+		},
+		"runtime": {
+			"sql": "CREATE TABLE `runtime` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `name` TEXT,\n  `type` TEXT,\n  `version` TEXT,\n  `addtime` INTEGER,\n  `ports` TEXT,\n  `path` TEXT,\n  `repo_url` TEXT,\n  `exts` TEXT,\n  `command` TEXT,\n  `runtime_path` TEXT,\n  `compose` TEXT,\n  `log_file` TEXT,\n  `remark` TEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "TEXT", 0, "''", 0],
+				[2, "type", "TEXT", 0, "''", 0],
+				[3, "version", "TEXT", 0, "''", 0],
+				[4, "addtime", "INTEGER", 0, 0, 0],
+				[5, "ports", "TEXT", 0, 0, 0],
+				[6, "path", "TEXT", 0, "''", 0],
+				[7, "repo_url", "TEXT", 0, "''", 0],
+				[8, "exts", "TEXT", 0, "''", 0],
+				[9, "command", "TEXT", 0, "''", 0],
+				[10, "runtime_path", "TEXT", 0, "''", 0],
+				[11, "compose", "TEXT", 0, "''", 0],
+				[12, "log_file", "TEXT", 0, "''", 0],
+				[13, "remark", "TEXT", 0, "''", 0]
+			]
+		},
+		"ext_templates": {
+			"sql": "CREATE TABLE `ext_templates` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `name` TEXT,\n  `version` TEXT,\n  `exts` TEXT,\n  `addtime` INTEGER\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "TEXT", 0, "''", 0],
+				[2, "version", "TEXT", 0, "''", 0],
+				[3, "exts", "TEXT", 0, "''", 0],
+				[4, "addtime", "INTEGER", 0, 0, 0]
+			]
+		},
+		"docker_sites": {
+			"sql": "CREATE TABLE `docker_sites` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `name` TEXT,\n  `path` TEXT,\n  `run_path` TEXT,\n  `status` TEXT DEFAULT 1,\n  `remark` TEXT,\n  `addtime` TEXT,\n  `edate` integer DEFAULT '0000-00-00',\n  `type` TEXT DEFAULT '',\n  `service_info` TEXT DEFAULT '',\n  `old_info` TEXT DEFAULT '',\n  `container_id` TEXT DEFAULT '',\n  `classify` integer DEFAULT 0\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "TEXT", 0, "''", 0],
+				[2, "path", "TEXT", 0, "''", 0],
+				[3, "run_path", "TEXT", 0, "''", 0],
+				[4, "status", "TEXT", 0, "1", 0],
+				[5, "remark", "TEXT", 0, "''", 0],
+				[6, "addtime", "TEXT", 0, "''", 0],
+				[7, "edate", "integer", 0, "'0000-00-00'", 0],
+				[8, "type", "TEXT", 0, "''", 0],
+				[9, "service_info", "TEXT", 0, "''", 0],
+				[10, "old_info", "TEXT", 0, "''", 0],
+				[11, "container_id", "TEXT", 0, "''", 0],
+				[12, "classify", "integer", 0, 0, 0]
+			]
+		},
+		"docker_domain": {
+			"sql": "CREATE TABLE `docker_domain` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `pid` INTEGER,\n  `name` TEXT,\n  `port` INTEGER,\n  `addtime` TEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "pid", "INTEGER", 0, 0, 0],
+				[2, "name", "TEXT", 0, "''", 0],
+				[3, "port", "INTEGER", 0, 0, 0],
+				[4, "addtime", "TEXT", 0, "''", 0]
+			]
+		},
+		"docker_site_classifys": {
+			"sql": "CREATE TABLE `docker_site_classifys` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `name` TEXT,\n  `ps` TEXT,\n  `addtime` TEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 0],
+				[1, "name", "TEXT", 0, "''", 0],
+				[2, "ps", "TEXT", 0, "''", 0],
+				[3, "addtime", "TEXT", 0, "''", 0]
+			]
+		},
+		"dk_backup": {
+			"sql": "CREATE TABLE `dk_backup` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `type` INTEGER,\n  `name` TEXT,\n  `container_id` TEXT,\n  `container_name` TEXT,\n  `filename` TEXT,\n  `size` INTEGER,\n  `addtime` TEXT,\n`ps` STRING DEFAULT '\u65e0',\n`cron_id` INTEGER DEFAULT 0\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "type", "INTEGER", 0, 0, 0],
+				[2, "name", "TEXT", 0, "''", 0],
+				[3, "container_id", "TEXT", 0, "''", 0],
+				[4, "container_name", "TEXT", 0, "''", 0],
+				[5, "filename", "TEXT", 0, "''", 0],
+				[6, "size", "INTEGER", 0, 0, 0],
+				[7, "addtime", "TEXT", 0, "''", 0],
+				[8, "ps", "STRING", 0, "'\u65e0'", 0],
+				[9, "cron_id", "INTEGER", 0, "0", 0]
+			],
+			"comment": {
+				"table": "容器备份表",
+				"type": {
+					"ps": "备份类型",
+					"0": "容器备份",
+					"1": "镜像备份",
+					"2": "容器日志备份",
+					"3": "容器目录或文件备份"
+				},
+				"name": "备份名称",
+				"container_id": "容器ID",
+				"container_name": "容器名",
+				"filename": "备份文件名",
+				"size": "备份文件大小",
+				"addtime": "备份时间",
+				"ps": "备注",
+				"cron_id": "计划任务ID"
+			}
+		},
+		"container": {
+			"sql": "CREATE TABLE `container` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `cpu_limit` VARCHAR DEFAULT (1),\n  `container_name` VARCHAR DEFAULT ''\n);",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "cpu_limit", "VARCHAR", 0, "1", 0],
+				[2, "container_name", "VARCHAR", 0, "''", 0]
+			]
+		},
+		"container_count": {
+			"sql": "CREATE TABLE `container_count` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `container_count` INTEGER,\n  `time` INTEGER\n);",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "container_count", "INTEGER", 0, 0, 0],
+				[2, "time", "INTEGER", 0, 0, 0]
+			]
+		},
+		"cpu_stats": {
+			"sql": "CREATE TABLE `cpu_stats` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `time` INTEGER, \n  `cpu_usage` VARCHAR,\n  `online_cpus` INT,\n  `container_id` VARCHAR\n);",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "time", "INTEGER", 0, 0, 0],
+				[2, "cpu_usage", "VARCHAR", 0, "''", 0],
+				[3, "online_cpus", "INT", 0, 0, 0],
+				[4, "container_id", "VARCHAR", 0, "''", 0]
+			]
+		},
+		"hosts": {
+			"sql": "CREATE TABLE `hosts` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `url` VARCHAR,\n  `remark` VARCHAR DEFAULT (''),\n  `time` INTEGER\n);",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "url", "VARCHAR", 0, "''", 0],
+				[2, "remark", "VARCHAR", 0, "''", 0],
+				[3, "time", "INTEGER", 0, 0, 0]
+			]
+		},
+		"image_infos": {
+			"sql": "CREATE TABLE `image_infos` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `num` INTEGER,\n  `size` INTEGER,\n  `time` INTEGER\n);",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "num", "INTEGER", 0, 0, 0],
+				[2, "size", "INTEGER", 0, 0, 0],
+				[3, "time", "INTEGER", 0, 0, 0]
+			]
+		},
+		"io_stats": {
+			"sql": "CREATE TABLE `io_stats` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `container_id` VARCHAR,\n  `time` VARCHAR,\n  `read_total` INTEGER,\n  `write_total` INTEGER\n);",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "container_id", "VARCHAR", 0, "''", 0],
+				[2, "time", "VARCHAR", 0, "''", 0],
+				[3, "read_total", "INTEGER", 0, 0, 0],
+				[4, "write_total", "INTEGER", 0, 0, 0]
+			]
+		},
+		"mem_stats": {
+			"sql": "CREATE TABLE `mem_stats` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `mem_limit` VARCHAR,\n  `cache` VARCHAR,\n  `usage` VARCHAR,\n  `usage_total` VARCHAR,\n  `container_id` VARCHAR,\n  `time` INTEGER\n);",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "mem_limit", "VARCHAR", 0, "''", 0],
+				[2, "cache", "VARCHAR", 0, "''", 0],
+				[3, "usage", "VARCHAR", 0, "''", 0],
+				[4, "usage_total", "VARCHAR", 0, "''", 0],
+				[5, "container_id", "VARCHAR", 0, "''", 0],
+				[6, "time", "INTEGER", 0, 0, 0]
+			]
+		},
+		"net_stats": {
+			"sql": "CREATE TABLE `net_stats` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `container_id` INTEGER,\n  `rx_total` INTEGER,\n  `tx_total` INTEGER,\n  `rx` INTEGER,\n  `tx` INTEGER,\n  `time` VARCHAR\n);",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "container_id", "INTEGER", 0, 0, 0],
+				[2, "rx_total", "INTEGER", 0, 0, 0],
+				[3, "tx_total", "INTEGER", 0, 0, 0],
+				[4, "rx", "INTEGER", 0, 0, 0],
+				[5, "tx", "INTEGER", 0, 0, 0],
+				[6, "time", "VARCHAR", 0, "''", 0]
+			]
+		},
+		"registry": {
+			"sql": "CREATE TABLE `registry` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `url` VARCHAR,\n  `username` VARCHAR DEFAULT (''),\n  `password` VARCHAR DEFAULT (''),\n  `name` VARCHAR,\n  `namespace` VARCHAR,\n  `remark` VARCHAR DEFAULT (''),\n  `reg_name` VARCHAR DEFAULT ('')\n);",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "url", "VARCHAR", 0, "''", 0],
+				[2, "username", "VARCHAR", 0, "''", 0],
+				[3, "password", "VARCHAR", 0, "''", 0],
+				[4, "name", "VARCHAR", 0, "''", 0],
+				[5, "namespace", "VARCHAR", 0, "''", 0],
+				[6, "remark", "VARCHAR", 0, "''", 0],
+        		[7, "reg_name", "VARCHAR", 0, "''", 0]
+			]
+		},
+		"stacks": {
+			"sql": "CREATE TABLE `stacks` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `name` VARCHAR UNIQUE,\n  `status` VARCHAR,\n  `path` VARCHAR,\n  `template_id` INTEGER,\n  `time` INTEGER,\n  `remark` VARCHAR DEFAULT ('')\n);",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "VARCHAR", 0, "''", 0],
+				[2, "status", "VARCHAR", 0, "''", 0],
+				[3, "path", "VARCHAR", 0, "''", 0],
+				[4, "template_id", "INTEGER", 0, 0, 0],
+				[5, "time", "INTEGER", 0, 0, 0],
+				[6, "remark", "VARCHAR", 0, "''", 0]
+			]
+		},
+		"templates": {
+			"sql": "CREATE TABLE `templates` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `path` VARCHAR,\n  `name` VARCHAR UNIQUE,\n  `remark` VARCHAR DEFAULT (''),\n  `add_in_path` INTEGER\n);",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "path", "VARCHAR", 0, "''", 0],
+				[2, "name", "VARCHAR", 0, "''", 0],
+				[3, "remark", "VARCHAR", 0, "''", 0],
+				[4, "add_in_path", "INTEGER", 0, 0, 0]
+			]
+		}
+	},
+	"firewall.db": {
+		"firewall": {
+			"sql": "CREATE TABLE `firewall` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `port` TEXT,\n  `ps` TEXT,\n  `addtime` TEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "port", "TEXT", 0, "''", 0],
+				[2, "ps", "TEXT", 0, "''", 0],
+				[3, "addtime", "TEXT", 0, "''", 0]
+			]
+		},
+		"firewall_country": {
+			"sql": "CREATE TABLE `firewall_country` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `types` TEXT,\n  `country` TEXT DEFAULT '',\n  `brief` TEXT DEFAULT '',\n  `addtime` TEXT DEFAULT '',\n  `ports` TEXT DEFAULT ''\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "types", "TEXT", 0, "''", 0],
+				[2, "country", "TEXT", 0, "''", 0],
+				[3, "brief", "TEXT", 0, "''", 0],
+				[4, "addtime", "TEXT", 0, "''", 0],
+				[5, "ports", "TEXT", 0, "''", 0]
+			]
+		},
+		"firewall_domain": {
+			"sql": "CREATE TABLE `firewall_domain` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `types` TEXT,\n  `domain` TEXT,\n  `domain_total` TEXT,\n  `port` TEXT,\n  `sid` int DEFAULT 0,\n  `address` TEXT DEFAULT '',\n  `brief` TEXT DEFAULT '',\n  `protocol` TEXT DEFAULT '',\n  `addtime` TEXT DEFAULT ''\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "types", "TEXT", 0, "''", 0],
+				[2, "domain", "TEXT", 0, "''", 0],
+				[3, "domain_total", "TEXT", 0, "''", 0],
+				[4, "port", "TEXT", 0, "''", 0],
+				[5, "sid", "int", 0, "0", 0],
+				[6, "address", "TEXT", 0, "''", 0],
+				[7, "brief", "TEXT", 0, "''", 0],
+				[8, "protocol", "TEXT", 0, "''", 0],
+				[9, "addtime", "TEXT", 0, "''", 0]
+			]
+		},
+		"firewall_ip": {
+			"sql": "CREATE TABLE `firewall_ip` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `types` TEXT,\n  `address` TEXT DEFAULT '',\n  `brief` TEXT DEFAULT '',\n  `addtime` TEXT DEFAULT '',\n  `sid`  int DEFAULT 0,\n  `domain` TEXT DEFAULT '',\n  `chain` TEXT DEFAULT ''\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "types", "TEXT", 0, "''", 0],
+				[2, "address", "TEXT", 0, "''", 0],
+				[3, "brief", "TEXT", 0, "''", 0],
+				[4, "addtime", "TEXT", 0, "''", 0],
+				[5, "sid", "INTEGER", 0, 0, 0],
+				[6, "domain", "TEXT", 0, "''", 0],
+        		[7, "chain", "TEXT", 0, "''", 0]
+			]
+		},
+		"firewall_new": {
+			"sql": "CREATE TABLE `firewall_new` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `protocol` TEXT DEFAULT '',\n  `ports` TEXT,\n  `types` TEXT,\n  `address` TEXT DEFAULT '',\n  `brief` TEXT DEFAULT '',\n  `addtime` TEXT DEFAULT '',\n  `domain` TEXT DEFAULT '',\n  `sid`  int DEFAULT 0,\n  `chain` TEXT DEFAULT ''\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "protocol", "TEXT", 0, "''", 0],
+				[2, "ports", "TEXT", 0, "''", 0],
+				[3, "types", "TEXT", 0, "''", 0],
+				[4, "address", "TEXT", 0, "''", 0],
+				[5, "brief", "TEXT", 0, "''", 0],
+				[6, "addtime", "TEXT", 0, "''", 0],
+				[7, "domain", "TEXT", 0, "''", 0],
+				[8, "sid", "INTEGER", 0, 0, 0],
+        		[9, "chain", "TEXT", 0, "''", 0]
+			]
+		},
+		"firewall_trans": {
+			"sql": "CREATE TABLE `firewall_trans` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `start_port` TEXT,\n  `ended_ip` TEXT,\n  `ended_port` TEXT,\n  `protocol` TEXT DEFAULT '',\n  `addtime` TEXT DEFAULT ''\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "start_port", "TEXT", 0, "''", 0],
+				[2, "ended_ip", "TEXT", 0, "''", 0],
+				[3, "ended_port", "TEXT", 0, "''", 0],
+				[4, "protocol", "TEXT", 0, "''", 0],
+				[5, "addtime", "TEXT", 0, "''", 0]
+			]
+		},
+		"firewall_forward": {
+			"sql": "CREATE TABLE `firewall_forward` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `S_Address` TEXT,\n  `S_Domain` TEXT,\n  `S_Port` TEXT,\n  `T_Address` TEXT,\n  `T_Domain` TEXT,\n  `T_Port` TEXT DEFAULT '',\n  `Protocol` TEXT DEFAULT '',\n  `Family` TEXT DEFAULT '',\n  `addtime` TEXT DEFAULT '',\n  `brief` TEXT DEFAULT ''\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, null, 1],
+				[1, "S_Address", "TEXT", 0, null, 0],
+				[2, "S_Domain", "TEXT", 0, null, 0],
+				[3, "S_Port", "TEXT", 0, null, 0],
+				[4, "T_Address", "TEXT", 0, null, 0],
+				[5, "T_Domain", "TEXT", 0, null, 0],
+				[6, "T_Port", "TEXT", 0, "''", 0],
+				[7, "Protocol", "TEXT", 0, "''", 0],
+				[8, "Family", "TEXT", 0, "''", 0],
+				[9, "addtime", "TEXT", 0, "''", 0],
+				[10, "brief", "TEXT", 0, "''", 0]
+			]
+		},
+		"firewall_malicious_ip": {
+			"sql": "CREATE TABLE `firewall_malicious_ip` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `address` TEXT DEFAULT '',\n  `brief` TEXT DEFAULT '',\n  `addtime` TEXT DEFAULT ''\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "address", "TEXT", 0, "''", 0],
+				[2, "brief", "TEXT", 0, "''", 0],
+				[3, "addtime", "TEXT", 0, "''", 0]
+			]
+		}
+	},
+	"log.db": {
+		"logs": {
+			"sql": "CREATE TABLE `logs` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `type` TEXT,\n  `log` TEXT,\n  `addtime` TEXT,\n  `uid` integer DEFAULT '1',\n  `username` TEXT DEFAULT 'system'\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "type", "TEXT", 0, "''", 0],
+				[2, "log", "TEXT", 0, "''", 0],
+				[3, "addtime", "TEXT", 0, "''", 0],
+				[4, "uid", "integer", 0, "'1'", 0],
+				[5, "username", "TEXT", 0, "'system'", 0]
+			]
+		}
+	},
+	"crontab.db": {
+		"crontab": {
+			"sql": "CREATE TABLE \"crontab\" (\n  \"id\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"name\" TEXT,\n  \"type\" TEXT,\n  \"where1\" TEXT,\n  \"where_hour\" INTEGER,\n  \"where_minute\" INTEGER,\n  \"echo\" TEXT,\n  \"addtime\" TEXT,\n  \"status\" INTEGER DEFAULT 1,\n  \"save\" INTEGER DEFAULT 3,\n  \"backupTo\" TEXT DEFAULT off,\n  \"sName\" TEXT,\n  \"sBody\" TEXT,\n  \"sType\" TEXT,\n  \"urladdress\" TEXT,\n  \"save_local\" INTEGER DEFAULT 0,\n  \"notice\" INTEGER DEFAULT 0,\n  \"notice_channel\" TEXT DEFAULT '',\n  `db_type` TEXT DEFAULT '',\n  `split_type` TEXT DEFAULT '',\n  `split_value` INTEGER DEFAULT 0,\n  `rname` TEXT DEFAULT '',\n  `type_id` INTEGER,\n `backup_mode` TEXT,\n `db_backup_path` TEXT,\n `time_type` TEXT,\n `special_time` TEXT,\n `flock` INTEGER DEFAULT 0,\n `post_param` TEXT,\n `log_cut_path` TEXT,\n `user_agent` TEXT,\n `version` TEXT,\n `table_list` TEXT,\n `time_set` TEXT,\n `keyword` TEXT,\n `result` INTEGER DEFAULT 1,\n `second` TEXT ,\n `stop_site` TEXT \n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "TEXT", 0, "''", 0],
+				[2, "type", "TEXT", 0, "''", 0],
+				[3, "where1", "TEXT", 0, "''", 0],
+				[4, "where_hour", "INTEGER", 0, 0, 0],
+				[5, "where_minute", "INTEGER", 0, 0, 0],
+				[6, "echo", "TEXT", 0, "''", 0],
+				[7, "addtime", "TEXT", 0, "''", 0],
+				[8, "status", "INTEGER", 0, "1", 0],
+				[9, "save", "INTEGER", 0, "3", 0],
+				[10, "backupTo", "TEXT", 0, "off", 0],
+				[11, "sName", "TEXT", 0, "''", 0],
+				[12, "sBody", "TEXT", 0, "''", 0],
+				[13, "sType", "TEXT", 0, "''", 0],
+				[14, "urladdress", "TEXT", 0, "''", 0],
+				[15, "save_local", "INTEGER", 0, "0", 0],
+				[16, "notice", "INTEGER", 0, "0", 0],
+				[17, "notice_channel", "TEXT", 0, "''", 0],
+				[18, "db_type", "TEXT", 0, "''", 0],
+				[19, "split_type", "TEXT", 0, "''", 0],
+				[20, "split_value", "INTEGER", 0, "0", 0],
+				[21, "rname", "TEXT", 0, "''", 0],
+				[22, "type_id", "INTEGER", 0, 0, 0],
+				[23, "backup_mode", "TEXT", 0, "''", 0],
+				[24, "db_backup_path", "TEXT", 0, "''", 0],
+				[25, "time_type", "TEXT", 0, "''", 0],
+				[26, "special_time", "TEXT", 0, "''", 0],
+				[27, "flock", "INTEGER", 0, "0", 0],
+				[28, "post_param", "TEXT", 0, "''", 0],
+				[29, "log_cut_path", "TEXT", 0, "''", 0],
+				[30, "user_agent", "TEXT", 0, "''", 0],
+				[31, "version", "TEXT", 0, "''", 0],
+				[32, "table_list", "TEXT", 0, "''", 0],
+				[33, "time_set", "TEXT", 0, "''", 0],
+				[34, "keyword", "TEXT", 0, "''", 0],
+				[35, "result", "INTEGER", 0, "1", 0],
+				[36, "second", "TEXT", 0, "''", 0],
+				[37, "stop_site", "TEXT", 0, "''", 0],
+                [38, "params", "TEXT", 0, "'{}'", 0]
+			]
+		},
+		"crontab_types": {
+			"sql": "CREATE TABLE \"crontab_types\" (\n  \"id\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"name\" VARCHAR DEFAULT '',\n  \"ps\"  VARCHAR DEFAULT ''\n )",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "VARCHAR", 0, "''", 0],
+				[2, "ps", "VARCHAR", 0, "''", 0]
+			]
+		}
+	},
+	"backup.db": {
+		"backup": {
+			"sql": "CREATE TABLE `backup` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `type` INTEGER,\n  `name` TEXT,\n  `pid` INTEGER,\n  `filename` TEXT,\n  `size` INTEGER,\n  `addtime` TEXT,\n\t`ps` STRING DEFAULT '\u65e0',\n\t`cron_id` INTEGER DEFAULT 0\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "type", "INTEGER", 0, 0, 0],
+				[2, "name", "TEXT", 0, "''", 0],
+				[3, "pid", "INTEGER", 0, 0, 0],
+				[4, "filename", "TEXT", 0, "''", 0],
+				[5, "size", "INTEGER", 0, 0, 0],
+				[6, "addtime", "TEXT", 0, "''", 0],
+				[7, "ps", "STRING", 0, "'\u65e0'", 0],
+				[8, "cron_id", "INTEGER", 0, "0", 0]
+			]
+		},
+		"backup_site_file": {
+			"sql": "CREATE TABLE `backup_site_file` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `type` INTEGER,\n  `name` TEXT,\n  `src_folder` TEXT,\n  `filename` TEXT,\n  `size` INTEGER,\n  `addtime` TEXT,\n\t`ps` STRING DEFAULT '\u65e0',\n\t`cron_id` INTEGER DEFAULT 0,\n  `backupTo` TEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "type", "INTEGER", 0, 0, 0],
+				[2, "name", "TEXT", 0, "''", 0],
+				[3, "src_folder", "TEXT", "''", 0, 0],
+				[4, "filename", "TEXT", 0, "''", 0],
+				[5, "size", "INTEGER", 0, 0, 0],
+				[6, "addtime", "TEXT", 0, "''", 0],
+				[7, "ps", "STRING", 0, "'\u65e0'", 0],
+				[8, "cron_id", "INTEGER", 0, "0", 0],
+				[9, "backupTo", "TEXT", "''", 0, 0]
+			]
+		}
+	},
+	"task.db": {
+		"boce_task": {
+			"sql": "CREATE TABLE `boce_task` (\n  `id`      INTEGER      PRIMARY KEY AUTOINCREMENT,\n  `name`    STRING (64),\n  `url`     STRING (128),\n  `status`  INTEGER,\n  `channel` STRING (128),\n  `cycle`   INTEGER default 10,\n  `addtime` INTEGER default 0,\n  `address` STRING (128) default 'localhost',\n  `keyword` STRING (128) default '',\n  `status_code` BOOLEAN default 0,\n  `delay` INTEGER default 0,\n  `similarity` TEXT default '',\n  `size` INTEGER default 0,\n  `sensitive` BOOLEAN default 0,\n  `alarm_count` integer default -1\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "STRING (64)", 0, "''", 0],
+				[2, "url", "STRING (128)", 0, "''", 0],
+				[3, "status", "INTEGER", 0, 0, 0],
+				[4, "channel", "STRING (128)", 0, "''", 0],
+				[5, "cycle", "INTEGER", 0, "10", 0],
+				[6, "addtime", "INTEGER", 0, "0", 0],
+				[7, "address", "STRING (128)", 0, "'localhost'", 0],
+				[8, "keyword", "STRING (128)", 0, "''", 0],
+				[9, "status_code", "BOOLEAN", 0, "0", 0],
+				[10, "delay", "INTEGER", 0, "0", 0],
+				[11, "similarity", "TEXT", 0, "''", 0],
+				[12, "size", "INTEGER", 0, "0", 0],
+				[13, "sensitive", "BOOLEAN", 0, "0", 0],
+				[14, "alarm_count", "integer", 0, "-1", 0]
+			]
+		},
+		"boce_list": {
+			"sql": "CREATE TABLE `boce_list` (\n  `id`      INTEGER PRIMARY KEY AUTOINCREMENT,\n  `pid`     INTEGER,\n  `data`    TEXT,\n  `status`  INTEGER,\n  `addtime` INTEGER\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "pid", "INTEGER", 0, 0, 0],
+				[2, "data", "TEXT", 0, "''", 0],
+				[3, "status", "INTEGER", 0, 0, 0],
+				[4, "addtime", "INTEGER", 0, 0, 0]
+			]
+		},
+		"task_list": {
+			"sql": "CREATE TABLE `task_list` (\n  `id`              INTEGER PRIMARY KEY AUTOINCREMENT,\n  `name` \t\t\tTEXT,\n  `type`\t\t\tTEXT,\n  `status` \t\t\tINTEGER,\n  `shell` \t\t\tTEXT,\n  `other`           TEXT,\n  `exectime` \t  \tINTEGER,\n  `endtime` \t  \tINTEGER,\n  `addtime`\t\t\tINTEGER\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "TEXT", 0, "''", 0],
+				[2, "type", "TEXT", 0, "''", 0],
+				[3, "status", "INTEGER", 0, 0, 0],
+				[4, "shell", "TEXT", 0, "''", 0],
+				[5, "other", "TEXT", 0, "''", 0],
+				[6, "exectime", "INTEGER", 0, 0, 0],
+				[7, "endtime", "INTEGER", 0, 0, 0],
+				[8, "addtime", "INTEGER", 0, 0, 0]
+			]
+		},
+		"tasks": {
+			"sql": "CREATE TABLE `tasks` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `name` \t\t\tTEXT,\n  `type`\t\t\tTEXT,\n  `status` \t\tTEXT,\n  `addtime` \tTEXT,\n  `start` \t  INTEGER,\n  `end` \t    INTEGER,\n  `execstr` \tTEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "TEXT", 0, "''", 0],
+				[2, "type", "TEXT", 0, "''", 0],
+				[3, "status", "TEXT", 0, "''", 0],
+				[4, "addtime", "TEXT", 0, "''", 0],
+				[5, "start", "INTEGER", 0, 0, 0],
+				[6, "end", "INTEGER", 0, 0, 0],
+				[7, "execstr", "TEXT", 0, "''", 0],
+				[8, "msg", "TEXT", 0, "'安装成功'", 0],
+				[9, "install_status","INTEGER", 0, 1, 0]
+			]
+		}
+	},
+	"default.db": {
+		"div_list": {
+			"sql": "CREATE TABLE `div_list` (\n`id` INTEGER PRIMARY KEY AUTOINCREMENT,\n`div` TEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "div", "TEXT", 0, "''", 0]
+			]
+		},
+		"download_token": {
+			"sql": "CREATE TABLE `download_token` (\n`id` INTEGER PRIMARY KEY AUTOINCREMENT,\n`token` REAL,\n`filename` REAL,\n`total` INTEGER DEFAULT 0,\n`expire` INTEGER,\n`password` REAL,\n`ps` REAL,\n`addtime` INTEGER\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "token", "REAL", 0, 0, 0],
+				[2, "filename", "REAL", 0, 0, 0],
+				[3, "total", "INTEGER", 0, "0", 0],
+				[4, "expire", "INTEGER", 0, 0, 0],
+				[5, "password", "REAL", 0, 0, 0],
+				[6, "ps", "REAL", 0, 0, 0],
+				[7, "addtime", "INTEGER", 0, 0, 0]
+			]
+		},
+		"messages": {
+			"sql": "CREATE TABLE `messages` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `level` TEXT,\n  `msg` TEXT,\n  `state` INTEGER DEFAULT 0,\n  `expire` INTEGER,\n  `addtime` INTEGER,\n  `send` integer DEFAULT 0,\n  `retry_num` integer DEFAULT 0\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "level", "TEXT", 0, "''", 0],
+				[2, "msg", "TEXT", 0, "''", 0],
+				[3, "state", "INTEGER", 0, "0", 0],
+				[4, "expire", "INTEGER", 0, 0, 0],
+				[5, "addtime", "INTEGER", 0, 0, 0],
+				[6, "send", "integer", 0, "0", 0],
+				[7, "retry_num", "integer", 0, "0", 0]
+			]
+		},
+		"temp_login": {
+			"sql": "CREATE TABLE `temp_login` (\n`id` INTEGER PRIMARY KEY AUTOINCREMENT,\n`token` REAL,\n`salt` REAL,\n`state` INTEGER,\n`login_time` INTEGER,\n`login_addr` REAL,\n`logout_time` INTEGER,\n`expire` INTEGER,\n`addtime` INTEGER\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "token", "REAL", 0, 0, 0],
+				[2, "salt", "REAL", 0, 0, 0],
+				[3, "state", "INTEGER", 0, 0, 0],
+				[4, "login_time", "INTEGER", 0, 0, 0],
+				[5, "login_addr", "REAL", 0, 0, 0],
+				[6, "logout_time", "INTEGER", 0, 0, 0],
+				[7, "expire", "INTEGER", 0, 0, 0],
+				[8, "addtime", "INTEGER", 0, 0, 0]
+			]
+		},
+		"security": {
+			"sql": "CREATE TABLE `security` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `type` TEXT,\n  `log` TEXT,\n  `addtime` INTEGER DEFAULT 0\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "type", "TEXT", 0, "''", 0],
+				[2, "log", "TEXT", 0, "''", 0],
+				[3, "addtime", "INTEGER", 0, "0", 0]
+			]
+		},
+		"send_msg": {
+			"sql": "CREATE TABLE `send_msg` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `name` TEXT,\n  `send_type` TEXT,\n  `msg` TEXT,\n  `is_send` TEXT,\n  `type` TEXT,\n  `inser_time` TEXT DEFAULT ''\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "TEXT", 0, "''", 0],
+				[2, "send_type", "TEXT", 0, "''", 0],
+				[3, "msg", "TEXT", 0, "''", 0],
+				[4, "is_send", "TEXT", 0, "''", 0],
+				[5, "type", "TEXT", 0, "''", 0],
+				[6, "inser_time", "TEXT", 0, "''", 0]
+			]
+		},
+		"send_settings": {
+			"sql": "CREATE TABLE `send_settings` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `name` TEXT,\n  `type` TEXT,\n  `path` TEXT,\n  `send_type` TEXT,\n  `last_time` TEXT,\n  `time_frame` TEXT,\n  `inser_time` TEXT DEFAULT''\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "TEXT", 0, "''", 0],
+				[2, "type", "TEXT", 0, "''", 0],
+				[3, "path", "TEXT", 0, "''", 0],
+				[4, "send_type", "TEXT", 0, "''", 0],
+				[5, "last_time", "TEXT", 0, "''", 0],
+				[6, "time_frame", "TEXT", 0, "''", 0],
+				[7, "inser_time", "TEXT", 0, "''", 0]
+			]
+		},
+		"ssh_login_record": {
+			"sql": "CREATE TABLE `ssh_login_record` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `addr` TEXT,\n  `server_ip` TEXT,\n  `user_agent` TEXT,\n  `ssh_user` TEXT,\n  `login_time` INTEGER DEFAULT 0,\n  `close_time` INTEGER DEFAULT 0,\n  `video_addr` TEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "addr", "TEXT", 0, "''", 0],
+				[2, "server_ip", "TEXT", 0, "''", 0],
+				[3, "user_agent", "TEXT", 0, "''", 0],
+				[4, "ssh_user", "TEXT", 0, "''", 0],
+				[5, "login_time", "INTEGER", 0, "0", 0],
+				[6, "close_time", "INTEGER", 0, "0", 0],
+				[7, "video_addr", "TEXT", 0, "''", 0]
+			]
+		},
+		"rsync_oss": {
+			"sql": "CREATE TABLE `rsync_oss` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `rsync_path` DEFAULT '',\n  `rsync_name` DEFAULT '',\n  `all_num` INTEGER DEFAULT 0,\n  `rsync_num` INTEGER DEFAULT 0,\n  `recycle_bin` DEFAULT '',\n  `where_1` DEFAULT '',\n  `where_2` DEFAULT '',\n  `webdav` DEFAULT '',\n  `ftp` DEFAULT '',\n  `alioss` DEFAULT '',\n  `txcos` DEFAULT '',\n  `qiniu` DEFAULT '',\n  `aws` DEFAULT '',\n  `upyun` DEFAULT '',\n  `obs` DEFAULT '',\n  `bos` DEFAULT '',\n  `gcloud_storage` DEFAULT '',   \n  `gdrive` DEFAULT '',\n  `notice` DEFAULT '',\n  `notice_channel` DEFAULT '',\n  `rsync_status` DEFAULT '',\n  `rsync_cycle` DEFAULT '',\n  `last_time` TEXT DEFAULT '',\n  `rsync_mode` TEXT DEFAULT '',\n  `is_del` TEXT DEFAULT '',\n  `add_time` DEFAULT ''\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "rsync_path", "", 0, "''", 0],
+				[2, "rsync_name", "", 0, "''", 0],
+				[3, "all_num", "INTEGER", 0, "0", 0],
+				[4, "rsync_num", "INTEGER", 0, "0", 0],
+				[5, "recycle_bin", "", 0, "''", 0],
+				[6, "where_1", "", 0, "''", 0],
+				[7, "where_2", "", 0, "''", 0],
+				[8, "webdav", "", 0, "''", 0],
+				[9, "ftp", "", 0, "''", 0],
+				[10, "alioss", "", 0, "''", 0],
+				[11, "txcos", "", 0, "''", 0],
+				[12, "qiniu", "", 0, "''", 0],
+				[13, "aws", "", 0, "''", 0],
+				[14, "upyun", "", 0, "''", 0],
+				[15, "obs", "", 0, "''", 0],
+				[16, "bos", "", 0, "''", 0],
+				[17, "gcloud_storage", "", 0, "''", 0],
+				[18, "gdrive", "", 0, "''", 0],
+				[19, "notice", "", 0, "''", 0],
+				[20, "notice_channel", "", 0, "''", 0],
+				[21, "rsync_status", "", 0, "''", 0],
+				[22, "rsync_cycle", "", 0, "''", 0],
+				[23, "last_time", "TEXT", 0, "''", 0],
+				[24, "rsync_mode", "TEXT", 0, "''", 0],
+				[25, "is_del", "TEXT", 0, "''", 0],
+				[26, "add_time", "", 0, "''", 0]
+			]
+		},
+		"panel_search_log": {
+			"sql": "CREATE TABLE `panel_search_log` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `rtext` TEXT,\n  `exts` TEXT,\n  `path` TEXT,\n  `mode` TEXT,\n  `isword` TEXT,\n  `iscase` TEXT,\n  `noword` TEXT,\n  `backup_path` TEXT,\n  `time` TEXT\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "rtext", "TEXT", 0, "''", 0],
+				[2, "exts", "TEXT", 0, "''", 0],
+				[3, "path", "TEXT", 0, "''", 0],
+				[4, "mode", "TEXT", 0, "''", 0],
+				[5, "isword", "TEXT", 0, "''", 0],
+				[6, "iscase", "TEXT", 0, "''", 0],
+				[7, "noword", "TEXT", 0, "''", 0],
+				[8, "backup_path", "TEXT", 0, "''", 0],
+				[9, "time", "TEXT", 0, "''", 0]
+			]
+		}
+	},
+	"client_info.db": {
+		"client_info": {
+			"sql": "CREATE TABLE client_info (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            remote_addr VARCHAR(50) NOT NULL,\n            remote_port INTEGER DEFAULT 0,\n            session_id VARCHAR(32) NOT NULL,\n            user_agent TEXT NOT NULL,\n            login_time  INTEGER DEFAULT 0\n        )",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "remote_addr", "VARCHAR(50)", 1, "''", 0],
+				[2, "remote_port", "INTEGER", 0, 0, 0],
+				[3, "session_id", "VARCHAR(32)", 1, "''", 0],
+				[4, "user_agent", "TEXT", 1, "''", 0],
+				[5, "login_time", "INTEGER", 0, 0, 0],
+				[6, "login_type", "INTEGER", 0, 1, 0]
+			]
+		}
+	},
+	"script.db": {
+		"operator_where": {
+			"sql": "CREATE TABLE operator_where (\n    where_id INTEGER PRIMARY KEY AUTOINCREMENT,\n    trigger_id INTEGER,\n    operator VARCHAR,\n    op_value VARCHAR,\n    args VARCHAR,\n    run_script_id INTEGER,\n    run_script TEXT,\n    create_time INTEGER DEFAULT (0)\n)",
+			"fields": [
+				[0, "where_id", "INTEGER", 0, 0, 1],
+				[1, "trigger_id", "INTEGER", 0, 0, 0],
+				[2, "operator", "VARCHAR", 0, "''", 0],
+				[3, "op_value", "VARCHAR", 0, "''", 0],
+				[4, "args", "VARCHAR", 0, "''", 0],
+				[5, "run_script_id", "INTEGER", 0, 0, 0],
+				[6, "run_script", "TEXT", 0, "''", 0],
+				[7, "create_time", "INTEGER", 0, 0, 0]
+			]
+		},
+		"scripts": {
+			"sql": "CREATE TABLE scripts (\n    script_id INTEGER PRIMARY KEY AUTOINCREMENT,\n    type_id INTEGER DEFAULT (0), is_baota INTEGER DEFAULT (0),\n    name VARCHAR, status INTEGER DEFAULT (1),\n    author VARCHAR, script TEXT,\n    version VARCHAR,\n    return_type VARCHAR DEFAULT string,\n    is_args INTEGER DEFAULT (0),\n    script_type INTEGER DEFAULT (0),\n    ps VARCHAR,\n    create_time INTEGER DEFAULT (0)\n, 'args_title' VARCHAR, 'args_ps' VARCHAR)",
+			"fields": [
+				[0, "script_id", "INTEGER", 0, 0, 1],
+				[1, "type_id", "INTEGER", 0, 0, 0],
+				[2, "is_baota", "INTEGER", 0, 0, 0],
+				[3, "name", "VARCHAR", 0, "''", 0],
+				[4, "status", "INTEGER", 0, "1", 0],
+				[5, "author", "VARCHAR", 0, "''", 0],
+				[6, "script", "TEXT", 0, "''", 0],
+				[7, "version", "VARCHAR", 0, "''", 0],
+				[8, "return_type", "VARCHAR", 0, "string", 0],
+				[9, "is_args", "INTEGER", 0, 0, 0],
+				[10, "script_type", "INTEGER", 0, 0, 0],
+				[11, "ps", "VARCHAR", 0, "''", 0],
+				[12, "create_time", "INTEGER", 0, 0, 0],
+				[13, "args_title", "VARCHAR", 0, "''", 0],
+				[14, "args_ps", "VARCHAR", 0, "''", 0]
+			]
+		},
+		"trigger": {
+			"sql": "CREATE TABLE \"trigger\" (\n    trigger_id INTEGER PRIMARY KEY AUTOINCREMENT,\n    name VARCHAR,\n    status INTEGER DEFAULT (1),\n    script_id INTEGER DEFAULT (0),\n    script_body TEXT,\n    cycle_type VARCHAR,\n    cycle_where VARCHAR,\n    cycle_hour INTEGER DEFAULT (0),\n    cycle_minute INTEGER DEFAULT (0),\n    ps VARCHAR,\n    create_time INTEGER DEFAULT (0),\n 'args' VARCHAR,\n  crontab_expression TEXT,\n start_time TEXT,\n exec_count TEXT,\n `type_id` INTEGER\n)",
+			"fields": [
+				[0, "trigger_id", "INTEGER", 0, 0, 1],
+				[1, "name", "VARCHAR", 0, "''", 0],
+				[2, "status", "INTEGER", 0, "1", 0],
+				[3, "script_id", "INTEGER", 0, 0, 0],
+				[4, "script_body", "TEXT", 0, "''", 0],
+				[5, "cycle_type", "VARCHAR", 0, "''", 0],
+				[6, "cycle_where", "VARCHAR", 0, "''", 0],
+				[7, "cycle_hour", "INTEGER", 0, 0, 0],
+				[8, "cycle_minute", "INTEGER", 0, 0, 0],
+				[9, "ps", "VARCHAR", 0, "''", 0],
+				[10, "create_time", "INTEGER", 0, 0, 0],
+				[11, "args", "VARCHAR", 0, "''", 0],
+				[12, "crontab_expression", "TEXT", 0, "''", 0],
+				[13, "start_time", "TEXT", 0, "''", 0],
+				[14, "exec_count", "TEXT", 0, "''", 0],
+				[15, "type_id", "INTEGER", 0, 0, 0]
+			]
+		},
+		"types": {
+			"sql": "CREATE TABLE types (\n    type_id INTEGER PRIMARY KEY AUTOINCREMENT,\n    name VARCHAR, title VARCHAR\n)",
+			"fields": [
+				[0, "type_id", "INTEGER", 0, 0, 1],
+				[1, "name", "VARCHAR", 0, "''", 0],
+				[2, "title", "VARCHAR", 0, "''", 0]
+			]
+		},
+		"tasks": {
+			"sql": "CREATE TABLE tasks (\n    log_id INTEGER PRIMARY KEY AUTOINCREMENT,\n    script_id INTEGER DEFAULT (0),\n    trigger_id INTEGER DEFAULT (0),\n    where_id INTEGER DEFAULT (0),\n    status INTEGER DEFAULT (0),\n    result_succ VARCHAR,\n    result_err VARCHAR,\n    start_time INTEGER DEFAULT (0),\n    end_time INTEGER DEFAULT (0)\n)",
+			"fields": [
+				[0, "log_id", "INTEGER", 0, 0, 1],
+				[1, "script_id", "INTEGER", 0, 0, 0],
+				[2, "trigger_id", "INTEGER", 0, 0, 0],
+				[3, "where_id", "INTEGER", 0, 0, 0],
+				[4, "status", "INTEGER", 0, 0, 0],
+				[5, "result_succ", "VARCHAR", 0, "''", 0],
+				[6, "result_err", "VARCHAR", 0, "''", 0],
+				[7, "start_time", "INTEGER", 0, 0, 0],
+				[8, "end_time", "INTEGER", 0, 0, 0]
+			]
+		},
+		"trigger_types": {
+			"sql": "CREATE TABLE \"trigger_types\" (\n  \"id\" INTEGER PRIMARY KEY AUTOINCREMENT,\n  \"name\" VARCHAR DEFAULT '',\n  \"ps\"  VARCHAR DEFAULT ''\n )",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "VARCHAR", 0, "''", 0],
+				[2, "ps", "VARCHAR", 0, "''", 0]
+			]
+		}
+	},
+  	"node.db": {
+		"category": {
+			"sql": "CREATE TABLE category (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    name VARCHAR,\n    create_time INTEGER DEFAULT (0)\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "name", "VARCHAR", 0, "''", 0],
+				[2, "create_time", "INTEGER", 0, 0, 0]
+			]
+		},
+		"node": {
+			"sql": "CREATE TABLE node (id INTEGER PRIMARY KEY AUTOINCREMENT, address VARCHAR, category_id INTEGER, remarks VARCHAR, api_key VARCHAR, create_time INTEGER DEFAULT (0), server_ip TEXT, status INTEGER DEFAULT (1), error TEXT DEFAULT ('{}'), error_num INTEGER DEFAULT (0), app_key TEXT DEFAULT (''), ssh_conf TEXT DEFAULT ('{}'), ssh_test INTEGER DEFAULT (0), lpver TEXT DEFAULT (''))",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "address", "VARCHAR", 0, "''", 0],
+				[2, "category_id", "INTEGER", 0, 0, 0],
+				[3, "remarks", "VARCHAR", 0, "''", 0],
+				[4, "api_key", "VARCHAR", 0, "''", 0],
+				[5, "create_time", "INTEGER", 0, 0, 0],
+				[6, "server_ip", "TEXT", 0, "''", 0],
+				[7, "status", "INTEGER", 0, "1", 0],
+				[8, "error", "TEXT", 0, "'{}'", 0],
+				[9, "error_num", "INTEGER", 0, 0, 0],
+				[10, "app_key", "TEXT", 0, "''", 0],
+				[11, "ssh_conf", "TEXT", 0, "'{}'", 0],
+                [12, "ssh_test", "INTEGER", 0, 0, 0],
+				[13, "lpver", "TEXT", 0, "''", 0]
+			]
+		}
+  	},
+	"node_load_balance.db": {
+		"load_sites": {
+			"sql": "CREATE TABLE `load_sites`\n(\n    `load_id`     INTEGER PRIMARY KEY AUTOINCREMENT, -- \u8d1f\u8f7d\u5747\u8861ID\n    `name`        TEXT    NOT NULL UNIQUE,           -- \u8d1f\u8f7d\u5747\u8861\u540d\u79f0\n    `site_id`     INTEGER NOT NULL DEFAULT 0,        -- \u7ad9\u70b9ID\n    `site_name`   TEXT    NOT NULL UNIQUE,           -- \u7ad9\u70b9\u540d\u79f0\uff0c\u7f51\u7ad9\u4e3b\u57df\u540d\n    `site_type`   TEXT    NOT NULL DEFAULT 'http',   -- http, tcp (http:\u4ee3\u8868http\u8d1f\u8f7d\u5747\u8861\uff0ctcp:\u4ee3\u8868tcp/udp\u8d1f\u8f7d\u5747\u8861)\n    `ps`          TEXT    NOT NULL DEFAULT '',\n    `http_config` TEXT    NOT NULL DEFAULT '{\"proxy_next_upstream\":\"error timeout http_500 http_502 http_503 http_504\",\"http_alg\":\"sticky_cookie\"}',\n    `tcp_config`  TEXT    NOT NULL DEFAULT '{\"proxy_connect_timeout\":8,\"proxy_timeout\":86400,\"host\":\"127.0.0.1\",\"port\":80,\"type\":\"tcp\"}',\n    `created_at`  TIMESTAMP        DEFAULT CURRENT_TIMESTAMP\n)",
+			"fields": [
+				[0, "load_id", "INTEGER", 0, 0, 1],
+				[1, "name", "TEXT", 1, "''", 0],
+				[2, "site_id", "INTEGER", 1, 0, 0],
+				[3, "site_name", "TEXT", 1, "''", 0],
+				[4, "site_type", "TEXT", 1, "'http'", 0],
+				[5, "ps", "TEXT", 1, "''", 0],
+				[6, "http_config", "TEXT", 1, "'{\"proxy_next_upstream\":\"error timeout http_500 http_502 http_503 http_504\",\"http_alg\":\"sticky_cookie\"}'", 0],
+				[7, "tcp_config", "TEXT", 1, "'{\"proxy_connect_timeout\":8,\"proxy_timeout\":86400,\"host\":\"127.0.0.1\",\"port\":80,\"type\":\"tcp\"}'", 0],
+				[8, "created_at", "TIMESTAMP", 0, "CURRENT_TIMESTAMP", 0]
+			]
+		},
+		"http_nodes": {
+			"sql": "CREATE TABLE `http_nodes`\n(\n    `id`             INTEGER PRIMARY KEY AUTOINCREMENT,\n    `load_id`        INTEGER NOT NULL DEFAULT 0,        -- \u8d1f\u8f7d\u5747\u8861ID\n    `node_id`        INTEGER NOT NULL DEFAULT 0,        -- \u8282\u70b9ID\n    `node_site_id`   INTEGER NOT NULL DEFAULT 0,        -- \u8282\u70b9\u4e0a\u7684\u7f51\u7ad9ID\n    `node_site_name` TEXT    NOT NULL DEFAULT '',       -- \u8282\u70b9\u4e0a\u7684\u7f51\u7ad9\u540d\u79f0\n    `port`           INTEGER NOT NULL DEFAULT 0,        -- \u7aef\u53e3\n    `location`       TEXT    NOT NULL DEFAULT '/',      -- \u5b9e\u65bd\u4ee3\u7406\u7684\u8def\u7531\uff0c \u9ed8\u8ba4\u662f\u6839\u8def\u7531 '/' \u5f53\u524d\u7248\u672c\u4e5f\u53ea\u652f\u6301\u6839\u8def\u7531\n    `path`           TEXT    NOT NULL DEFAULT '/',      -- \u8bbf\u95ee\u9a8c\u8bc1\u8def\u5f84\n    `node_status`    TEXT    NOT NULL DEFAULT 'online', -- \u8282\u70b9\u72b6\u6001 online, backup, down\n    `weight`         INTEGER NOT NULL DEFAULT 1,        -- \u6743\u91cd\n    `max_fail`       INTEGER NOT NULL DEFAULT 0,        -- \u6700\u5927\u5931\u8d25\u6b21\u6570\n    `fail_timeout`   INTEGER NOT NULL DEFAULT 0,        -- \u5931\u8d25\u6062\u590d\u65f6\u95f4\n    `max_conns`      INTEGER NOT NULL DEFAULT 0,        -- \u6700\u5927\u8fde\u63a5\u6570\n    `ps`             TEXT    NOT NULL DEFAULT '',\n    `created_at`     TIMESTAMP        DEFAULT CURRENT_TIMESTAMP\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "load_id", "INTEGER", 1, 0, 0],
+				[2, "node_id", "INTEGER", 1, 0, 0],
+				[3, "node_site_id", "INTEGER", 1, 0, 0],
+				[4, "node_site_name", "TEXT", 1, "''", 0],
+				[5, "port", "INTEGER", 1, 0, 0],
+				[6, "location", "TEXT", 1, "'/'", 0],
+				[7, "path", "TEXT", 1, "'/'", 0],
+				[8, "node_status", "TEXT", 1, "'online'", 0],
+				[9, "weight", "INTEGER", 1, "1", 0],
+				[10, "max_fail", "INTEGER", 1, 0, 0],
+				[11, "fail_timeout", "INTEGER", 1, 0, 0],
+				[12, "max_conns", "INTEGER", 1, 0, 0],
+				[13, "ps", "TEXT", 1, "''", 0],
+				[14, "created_at", "TIMESTAMP", 0, "CURRENT_TIMESTAMP", 0]
+			]
+		},
+		"tcp_nodes": {
+			"sql": "CREATE TABLE `tcp_nodes`\n(\n    `id`           INTEGER PRIMARY KEY AUTOINCREMENT,\n    `load_id`      INTEGER NOT NULL DEFAULT 0,        -- \u8d1f\u8f7d\u5747\u8861ID\n    `node_id`      INTEGER NOT NULL DEFAULT 0,        -- \u8282\u70b9ID\n    `host`         TEXT    NOT NULL,\n    `port`         INTEGER NOT NULL DEFAULT 0,\n    `node_status`  TEXT    NOT NULL DEFAULT 'online', -- \u8282\u70b9\u72b6\u6001 online, backup, down\n    `weight`       INTEGER NOT NULL DEFAULT 1,\n    `max_fail`     INTEGER NOT NULL DEFAULT 0,\n    `fail_timeout` INTEGER NOT NULL DEFAULT 0,\n    `ps`           TEXT    NOT NULL DEFAULT '',\n    `created_at`   TIMESTAMP        DEFAULT CURRENT_TIMESTAMP\n)",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "load_id", "INTEGER", 1, 0, 0],
+				[2, "node_id", "INTEGER", 1, 0, 0],
+				[3, "host", "TEXT", 1, "''", 0],
+				[4, "port", "INTEGER", 1, 0, 0],
+				[5, "node_status", "TEXT", 1, "'online'", 0],
+				[6, "weight", "INTEGER", 1, "1", 0],
+				[7, "max_fail", "INTEGER", 1, 0, 0],
+				[8, "fail_timeout", "INTEGER", 1, 0, 0],
+				[9, "ps", "TEXT", 1, "''", 0],
+				[10, "created_at", "TIMESTAMP", 0, "CURRENT_TIMESTAMP", 0]
+			]
+		}
+	},
+	"node_file_transfer.db": {
+		"transfer_tasks": {
+			"sql": "CREATE TABLE transfer_tasks\n(\n    task_id          INTEGER PRIMARY KEY AUTOINCREMENT,\n    source_node      TEXT    NOT NULL DEFAULT '{}', -- {\"address\":\"https:/xxxx\", \"api_key\":\"xxxxx\", \"name\":\"xxxx\"}\n    target_node      TEXT    NOT NULL DEFAULT '{}', -- {\"address\":\"https:/xxxx\", \"api_key\":\"xxxxx\", \"name\":\"xxxx\"}\n    source_path_list TEXT    NOT NULL DEFAULT '[]', -- \u6e90\u8282\u70b9\u4e0a\u7684\u8def\u5f84 [{\"path\":\"/www/wwwroot/aaaa\", \"is_dir\":true}]\n    target_path      TEXT    NOT NULL,              -- \u76ee\u6807\u8282\u70b9\u4e0a\u7684\u8def\u5f84\n    task_action      TEXT    NOT NULL,              -- upload/download\n    status           TEXT    NOT NULL,              -- pending/running/completed/failed\n    default_mode     TEXT    NOT NULL, -- \u9ed8\u8ba4\u5904\u7406\u6a21\u5f0f  cover: \u8986\u76d6\uff0cignore: \u8df3\u8fc7\uff0crename:\u91cd\u547d\u540d\n    created_at       TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,\n    started_at       TIMESTAMP,\n    completed_at     TIMESTAMP,\n    created_by       TEXT    NOT NULL,              -- \u521b\u5efa\u7684\u8282\u70b9\u540d\u79f0\n    target_task_id   INTEGER NOT NULL,\n    is_source_node   BOOLEAN NOT NULL,              -- \u662f\u5426\u4e3a\u672c\u8282\u70b9\u53d1\u9001\n    is_target_node   BOOLEAN NOT NULL               -- \u662f\u5426\u4e3a\u672c\u8282\u70b9\u63a5\u6536\n)",
+			"fields": [
+				[0, "task_id", "INTEGER", 0, 0, 1],
+				[1, "source_node", "TEXT", 1, "'{}'", 0],
+				[2, "target_node", "TEXT", 1, "'{}'", 0],
+				[3, "source_path_list", "TEXT", 1, "'[]'", 0],
+				[4, "target_path", "TEXT", 1, "''", 0],
+				[5, "task_action", "TEXT", 1, "''", 0],
+				[6, "status", "TEXT", 1, "''", 0],
+				[7, "default_mode", "TEXT", 1, "''", 0],
+				[8, "created_at", "TIMESTAMP", 0, "CURRENT_TIMESTAMP", 0],
+				[9, "started_at", "TIMESTAMP", 0, null, 0],
+				[10, "completed_at", "TIMESTAMP", 0, null, 0],
+				[11, "created_by", "TEXT", 1, "''", 0],
+				[12, "target_task_id", "INTEGER", 1, 0, 0],
+				[13, "is_source_node", "BOOLEAN", 1, null, 0],
+				[14, "is_target_node", "BOOLEAN", 1, null, 0]
+			]
+		},
+		"file_transfers": {
+			"sql": "CREATE TABLE file_transfers\n(\n    transfer_id  INTEGER PRIMARY KEY AUTOINCREMENT,\n    task_id      INTEGER NOT NULL,\n    src_file     TEXT    NOT NULL,           -- \u6e90\u6587\u4ef6\n    dst_file     TEXT    NOT NULL,           -- \u76ee\u6807\u6587\u4ef6\n    file_size    INTEGER NOT NULL,           -- \u6587\u4ef6\u5927\u5c0f\n    is_dir       INTEGER NOT NULL DEFAULT 0,\n    status       TEXT    NOT NULL,           -- pending/running/completed/failed\n    progress     INTEGER          DEFAULT 0, -- 0-100\n    message      TEXT    NOT NULL DEFAULT '',\n    created_at   TIMESTAMP        DEFAULT CURRENT_TIMESTAMP,\n    started_at   TIMESTAMP,\n    completed_at TIMESTAMP\n)",
+			"fields": [
+				[0, "transfer_id", "INTEGER", 0, 0, 1],
+				[1, "task_id", "INTEGER", 1, 0, 0],
+				[2, "src_file", "TEXT", 1, "''", 0],
+				[3, "dst_file", "TEXT", 1, "''", 0],
+				[4, "file_size", "INTEGER", 1, 0, 0],
+				[5, "is_dir", "INTEGER", 1, 0, 0],
+				[6, "status", "TEXT", 1, "''", 0],
+				[7, "progress", "INTEGER", 0, 0, 0],
+				[8, "message", "TEXT", 1, "''", 0],
+				[9, "created_at", "TIMESTAMP", 0, "CURRENT_TIMESTAMP", 0],
+				[10, "started_at", "TIMESTAMP", 0, null, 0],
+				[11, "completed_at", "TIMESTAMP", 0, null, 0]
+			]
+		}
+    },
+    "node_task_flow.db": {
+        "scripts": {
+            "sql": "CREATE TABLE scripts\n(\n    id          INTEGER PRIMARY KEY AUTOINCREMENT,\n    name        TEXT    NOT NULL CHECK (length(name) <= 255),\n    script_type TEXT    NOT NULL CHECK (length(script_type) <= 255),\n    content     TEXT    NOT NULL,\n    description TEXT,\n    created_at  INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),\n    updated_at  INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))\n)",
+            "fields": [
+                [0, "id", "INTEGER", 0, 0, 1],
+                [1, "name", "TEXT", 1, "''", 0],
+                [2, "script_type", "TEXT", 1, "''", 0],
+                [3, "content", "TEXT", 1, "''", 0],
+                [4, "description", "TEXT", 0, "''", 0],
+                [5, "created_at", "INTEGER", 1, "strftime('%s', 'now')", 0],
+                [6, "updated_at", "INTEGER", 1, "strftime('%s', 'now')", 0]
+            ]
+        },
+        "flows": {
+            "sql": "CREATE TABLE flows\n(\n    id         INTEGER PRIMARY KEY AUTOINCREMENT,\n    server_ids TEXT    NOT NULL, -- \u5b58\u50a8\u670d\u52a1\u5668ID\u5217\u8868\n    step_count INTEGER NOT NULL,\n    strategy   TEXT    NOT NULL, -- \u5bf9\u4e8e\u4e0d\u540c\u4efb\u52a1\u7684\u5904\u7406\u7b56\u7565\uff0c json\u5b57\u6bb5\n    status     TEXT    NOT NULL, -- \u603b\u4f53\u72b6\u6001\n    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),\n    updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))\n)",
+            "fields": [
+                [0, "id", "INTEGER", 0, 0, 1],
+                [1, "server_ids", "TEXT", 1, "''", 0],
+                [2, "step_count", "INTEGER", 1, 0, 0],
+                [3, "strategy", "TEXT", 1, "''", 0],
+                [4, "status", "TEXT", 1, "''", 0],
+                [5, "created_at", "INTEGER", 1, "strftime('%s', 'now')", 0],
+                [6, "updated_at", "INTEGER", 1, "strftime('%s', 'now')", 0]
+            ]
+        },
+        "command_tasks": {
+            "sql": "CREATE TABLE command_tasks\n(\n    id             INTEGER PRIMARY KEY AUTOINCREMENT,\n    flow_id        INTEGER NOT NULL,\n    name           TEXT    NOT NULL CHECK (length(name) <= 255),\n    step_index     INTEGER NOT NULL,\n    script_id      INTEGER NOT NULL,\n    script_content TEXT    NOT NULL,\n    script_type    TEXT    NOT NULL CHECK (length(script_type) <= 255),\n    status         INTEGER NOT NULL DEFAULT 0 CHECK (status IN (0, 1, 2, 3)), -- 0: \u7b49\u5f85\u4e2d, 1: \u8fdb\u884c\u4e2d, 2: \u6210\u529f, 3: \u5931\u8d25\n    created_at     INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),\n    updated_at     INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))\n)",
+            "fields": [
+                [0, "id", "INTEGER", 0, 0, 1],
+                [1, "flow_id", "INTEGER", 1, 0, 0],
+                [2, "name", "TEXT", 1, "''", 0],
+                [3, "step_index", "INTEGER", 1, 0, 0],
+                [4, "script_id", "INTEGER", 1, 0, 0],
+                [5, "script_content", "TEXT", 1, "''", 0],
+                [6, "script_type", "TEXT", 1, "''", 0],
+                [7, "status", "INTEGER", 1, 0, 0],
+                [8, "created_at", "INTEGER", 1, "strftime('%s', 'now')", 0],
+                [9, "updated_at", "INTEGER", 1, "strftime('%s', 'now')", 0]
+            ]
+        },
+        "command_logs": {
+            "sql": "CREATE TABLE command_logs\n(\n    id              INTEGER PRIMARY KEY AUTOINCREMENT,\n    command_task_id INTEGER NOT NULL,\n    server_id       INTEGER NOT NULL,\n    ssh_host        TEXT    NOT NULL,\n    status          INTEGER NOT NULL DEFAULT 0 CHECK (status IN (0, 1, 2, 3, 4)), -- 0: \u7b49\u5f85\u4e2d, 1: \u8fdb\u884c\u4e2d, 2: \u6210\u529f, 3: \u5931\u8d25, 4: \u5f02\u5e38\n    log_name        TEXT    NOT NULL CHECK (length(log_name) <= 255)\n)",
+            "fields": [
+                [0, "id", "INTEGER", 0, 0, 1],
+                [1, "command_task_id", "INTEGER", 1, 0, 0],
+                [2, "server_id", "INTEGER", 1, 0, 0],
+                [3, "ssh_host", "TEXT", 1, "''", 0],
+                [4, "status", "INTEGER", 1, 0, 0],
+                [5, "log_name", "TEXT", 1, "''", 0]
+            ]
+        },
+        "transfer_tasks": {
+            "sql": "CREATE TABLE transfer_tasks\n(\n    id               INTEGER PRIMARY KEY AUTOINCREMENT,\n    name             TEXT    NOT NULL CHECK (length(name) <= 255),\n    flow_id          INTEGER NOT NULL,                                          -- \u5f53\u672c\u673a\u4e0d\u662f\u6570\u636e\u6e90\u8282\u70b9\u65f6\uff0c \u672c\u5b57\u6bb5\u7684\u503c\u4e3a 0\n    step_index       INTEGER NOT NULL,\n    src_node         TEXT    NOT NULL,                                          -- \u6570\u636e\u6e90\u8282\u70b9\uff0c json\u5b57\u6bb5\n    src_node_task_id INTEGER NOT NULL,                                          -- \u5f53\u672c\u673a\u662f\u6570\u636e\u6e90\u8282\u70b9\u65f6\uff0c \u672c\u5b57\u6bb5\u7684\u503c\u4e3a 0\uff0c \u5426\u5219\u4e3a\u76ee\u6807\u673a\u5668\u4e0a\u7684transfer_tasks.id\n    dst_nodes        TEXT    NOT NULL,                                          -- \u76ee\u6807\u8282\u70b9\uff0c\u591a\u4e2a\uff0cjson\u5b57\u6bb5\n    message          TEXT    NOT NULL DEFAULT '',                               -- \u4e0e\u76ee\u6807\u8282\u70b9\u7684\u94fe\u63a5\u9519\u8bef\u4fe1\u606f\n    path_list        TEXT    NOT NULL DEFAULT '[]',                             -- \u6e90\u8282\u70b9\u4e0a\u7684\u8def\u5f84 [{\"path\":\"/www/wwwroots\", \"is_dir\":true}]\n    status           INTEGER NOT NULL DEFAULT 0 CHECK (status IN (0, 1, 2, 3)), -- 0: \u7b49\u5f85\u4e2d, 1: \u8fdb\u884c\u4e2d, 2: \u6210\u529f, 3: \u5931\u8d25\n    created_at       INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),\n    updated_at       INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))\n)",
+            "fields": [
+                [0, "id", "INTEGER", 0, 0, 1],
+                [1, "name", "TEXT", 1, "''", 0],
+                [2, "flow_id", "INTEGER", 1, 0, 0],
+                [3, "step_index", "INTEGER", 1, 0, 0],
+                [4, "src_node", "TEXT", 1, "''", 0],
+                [5, "src_node_task_id", "INTEGER", 1, 0, 0],
+                [6, "dst_nodes", "TEXT", 1, "''", 0],
+                [7, "message", "TEXT", 1, "''", 0],
+                [8, "path_list", "TEXT", 1, "'[]'", 0],
+                [9, "status", "INTEGER", 1, 0, 0],
+                [10, "created_at", "INTEGER", 1, "strftime('%s', 'now')", 0],
+                [11, "updated_at", "INTEGER", 1, "strftime('%s', 'now')", 0]
+            ]
+        },
+        "transfer_files": {
+            "sql": "CREATE TABLE transfer_files\n(\n    id               INTEGER PRIMARY KEY AUTOINCREMENT,\n    flow_id          INTEGER NOT NULL,\n    transfer_task_id INTEGER NOT NULL,\n    src_file         TEXT    NOT NULL, -- \u6e90\u6587\u4ef6\n    dst_file         TEXT    NOT NULL, -- \u76ee\u6807\u6587\u4ef6\n    file_size        INTEGER NOT NULL, -- \u6587\u4ef6\u5927\u5c0f\n    is_dir           INTEGER NOT NULL DEFAULT 0\n)",
+            "fields": [
+                [0, "id", "INTEGER", 0, 0, 1],
+                [1, "flow_id", "INTEGER", 1, 0, 0],
+                [2, "transfer_task_id", "INTEGER", 1, 0, 0],
+                [3, "src_file", "TEXT", 1, "''", 0],
+                [4, "dst_file", "TEXT", 1, "''", 0],
+                [5, "file_size", "INTEGER", 1, 0, 0],
+                [6, "is_dir", "INTEGER", 1, 0, 0]
+            ]
+        },
+        "transfer_logs": {
+            "sql": "CREATE TABLE transfer_logs\n(\n    id               INTEGER PRIMARY KEY AUTOINCREMENT,\n    flow_id          INTEGER NOT NULL,\n    transfer_task_id INTEGER NOT NULL,\n    transfer_file_id INTEGER NOT NULL,\n    dst_node_idx     INTEGER NOT NULL,                                             -- \u76ee\u6807\u8282\u70b9\u7d22\u5f15\uff0c\u57fa\u4e8e transfer_tasks.dst_nodes\n    status           INTEGER NOT NULL DEFAULT 0 CHECK (status IN (0, 1, 2, 3, 4)), -- 0: \u7b49\u5f85\u4e2d, 1: \u8fdb\u884c\u4e2d, 2: \u6210\u529f, 3: \u5931\u8d25, 4: \u8df3\u8fc7\n    progress         INTEGER          DEFAULT 0,                                   -- 0-100\n    message          TEXT    NOT NULL DEFAULT '',\n    created_at       INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),\n    started_at       INTEGER,\n    completed_at     INTEGER\n)",
+            "fields": [
+                [0, "id", "INTEGER", 0, 0, 1],
+                [1, "flow_id", "INTEGER", 1, 0, 0],
+                [2, "transfer_task_id", "INTEGER", 1, 0, 0],
+                [3, "transfer_file_id", "INTEGER", 1, 0, 0],
+                [4, "dst_node_idx", "INTEGER", 1, 0, 0],
+                [5, "status", "INTEGER", 1, 0, 0],
+                [6, "progress", "INTEGER", 0, 0, 0],
+                [7, "message", "TEXT", 1, "''", 0],
+                [8, "created_at", "INTEGER", 1, "strftime('%s', 'now')", 0],
+                [9, "started_at", "INTEGER", 0, 0, 0],
+                [10, "completed_at", "INTEGER", 0, 0, 0]
+            ]
+        }
+    }
+}

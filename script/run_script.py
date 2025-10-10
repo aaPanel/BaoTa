@@ -15,6 +15,7 @@ panel_path = '/www/server/panel'
 os.chdir(panel_path)
 if not 'class/' in sys.path: sys.path.insert(0,'class/')
 import public,time,psutil
+import PluginLoader
 
 
 def project_model_auto_run():
@@ -29,14 +30,23 @@ def project_model_auto_run():
         try:
             if mod_name[-4:] == '.pyc': continue
             if mod_name in ['base.py','__init__.py']: continue
+            if mod_name.find('.src.py') != -1: continue
             mod_file = "{}/{}".format(project_model_path,mod_name)
             if not os.path.exists(mod_file): continue
             if not os.path.isfile(mod_file): continue
-            print(mod_file)
-            tmp_mod = public.get_script_object(mod_file)
-            if not hasattr(tmp_mod,'main'): continue
-            run_object = getattr(tmp_mod.main(),'auto_run',None)
-            if run_object: run_object()
+            try:
+                tmp_mod = public.get_script_object(mod_file)
+                if not hasattr(tmp_mod,'main'): continue
+                run_object = getattr(tmp_mod.main(),'auto_run',None)
+                if run_object: run_object()
+            except Exception as ex:
+                if str(ex).find('invalid token') == -1: continue
+                args = public.dict_obj()
+                args.module_get_object = 1
+                mod_name_last = mod_name.replace("Model.py","")
+                run_object = PluginLoader.module_run(mod_name_last,'auto_run',args)
+                if isinstance(run_object,dict): continue
+                if run_object: run_object()
         except:
             print(public.get_error_info())
 

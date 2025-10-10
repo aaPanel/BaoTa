@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-try:
-    import cPickle as pickle
-except ImportError:  # pragma: no cover
-    import pickle
+import typing as _t
 
-from cachelib.base import BaseCache, _items
-from cachelib._compat import string_types, integer_types
+from cachelib.base import BaseCache
+from cachelib.serializers import RedisSerializer
 
 
 class RedisCache(BaseCache):
@@ -31,124 +26,124 @@ class RedisCache(BaseCache):
     Any additional keyword arguments will be passed to ``redis.Redis``.
     """
 
-    def __init__(self, host='localhost', port=6379, password=None,
-                 db=0, default_timeout=300, key_prefix=None, **kwargs):
+    _read_client: _t.Any = None
+    _write_client: _t.Any = None
+    serializer = RedisSerializer()
+
+    def __init__(
+        self,
+        host: _t.Any = "localhost",
+        port: int = 6379,
+        password: _t.Optional[str] = None,
+        db: int = 0,
+        default_timeout: int = 300,
+        key_prefix: _t.Optional[str] = None,
+        **kwargs: _t.Any
+    ):
         BaseCache.__init__(self, default_timeout)
         if host is None:
-            raise ValueError('RedisCache host parameter may not be None')
-        if isinstance(host, string_types):
+            raise ValueError("RedisCache host parameter may not be None")
+        if isinstance(host, str):
             try:
                 import redis
-            except ImportError:
-                raise RuntimeError('no redis module found')
-            if kwargs.get('decode_responses', None):
-                raise ValueError('decode_responses is not supported by '
-                                 'RedisCache.')
-            self._client = redis.Redis(host=host, port=port, password=password,
-                                       db=db, **kwargs)
+            except ImportError as err:
+                raise RuntimeError("no redis module found") from err
+            if kwargs.get("decode_responses", None):
+                raise ValueError("decode_responses is not supported by RedisCache.")
+            self._write_client = self._read_client = redis.Redis(
+                host=host, port=port, password=password, db=db, **kwargs
+            )
         else:
-            self._client = host
-        self.key_prefix = key_prefix or ''
+            self._read_client = self._write_client = host
+        self.key_prefix = key_prefix or ""
 
-    def _normalize_timeout(self, timeout):
+    def _normalize_timeout(self, timeout: _t.Optional[int]) -> int:
+        """Normalize timeout by setting it to default of 300 if
+        not defined (None) or -1 if explicitly set to zero.
+
+        :param timeout: timeout to normalize.
+        """
         timeout = BaseCache._normalize_timeout(self, timeout)
         if timeout == 0:
             timeout = -1
         return timeout
 
-    def dump_object(self, value):
-        """Dumps an object into a string for redis.  By default it serializes
-        integers as regular string and pickle dumps everything else.
-        """
-        t = type(value)
-        if t in integer_types:
-            return str(value).encode('ascii')
-        return b'!' + pickle.dumps(value)
+    def get(self, key: str) -> _t.Any:
+        return self.serializer.loads(self._read_client.get(self.key_prefix + key))
 
-    def load_object(self, value):
-        """The reversal of :meth:`dump_object`.  This might be called with
-        None.
-        """
-        if value is None:
-            return None
-        if value.startswith(b'!'):
-            try:
-                return pickle.loads(value[1:])
-            except pickle.PickleError:
-                return None
-        try:
-            return int(value)
-        except ValueError:
-            # before 0.8 we did not have serialization.  Still support that.
-            return value
-
-    def get(self, key):
-        return self.load_object(self._client.get(self.key_prefix + key))
-
-    def get_many(self, *keys):
+    def get_many(self, *keys: str) -> _t.List[_t.Any]:
         if self.key_prefix:
-            keys = [self.key_prefix + key for key in keys]
-        return [self.load_object(x) for x in self._client.mget(keys)]
-
-    def set(self, key, value, timeout=None):
-        timeout = self._normalize_timeout(timeout)
-        dump = self.dump_object(value)
-        if timeout == -1:
-            result = self._client.set(name=self.key_prefix + key,
-                                      value=dump)
+            prefixed_keys = [self.key_prefix + key for key in keys]
         else:
-            result = self._client.setex(name=self.key_prefix + key,
-                                        value=dump, time=timeout)
+            prefixed_keys = list(keys)
+        return [self.serializer.loads(x) for x in self._read_client.mget(prefixed_keys)]
+
+    def set(self, key: str, value: _t.Any, timeout: _t.Optional[int] = None) -> _t.Any:
+        timeout = self._normalize_timeout(timeout)
+        dump = self.serializer.dumps(value)
+        if timeout == -1:
+            result = self._write_client.set(name=self.key_prefix + key, value=dump)
+        else:
+            result = self._write_client.setex(
+                name=self.key_prefix + key, value=dump, time=timeout
+            )
         return result
 
-    def add(self, key, value, timeout=None):
+    def add(self, key: str, value: _t.Any, timeout: _t.Optional[int] = None) -> _t.Any:
         timeout = self._normalize_timeout(timeout)
-        dump = self.dump_object(value)
-        return (
-            self._client.setnx(name=self.key_prefix + key, value=dump) and
-            self._client.expire(name=self.key_prefix + key, time=timeout)
-        )
+        dump = self.serializer.dumps(value)
+        created = self._write_client.setnx(name=self.key_prefix + key, value=dump)
+        # handle case where timeout is explicitly set to zero
+        if created and timeout != -1:
+            self._write_client.expire(name=self.key_prefix + key, time=timeout)
+        return created
 
-    def set_many(self, mapping, timeout=None):
+    def set_many(
+        self, mapping: _t.Dict[str, _t.Any], timeout: _t.Optional[int] = None
+    ) -> _t.List[_t.Any]:
         timeout = self._normalize_timeout(timeout)
         # Use transaction=False to batch without calling redis MULTI
         # which is not supported by twemproxy
-        pipe = self._client.pipeline(transaction=False)
+        pipe = self._write_client.pipeline(transaction=False)
 
-        for key, value in _items(mapping):
-            dump = self.dump_object(value)
+        for key, value in mapping.items():
+            dump = self.serializer.dumps(value)
             if timeout == -1:
                 pipe.set(name=self.key_prefix + key, value=dump)
             else:
-                pipe.setex(name=self.key_prefix + key, value=dump,
-                           time=timeout)
-        return pipe.execute()
+                pipe.setex(name=self.key_prefix + key, value=dump, time=timeout)
+        results = pipe.execute()
+        res = zip(mapping.keys(), results)  # noqa: B905
+        return [k for k, was_set in res if was_set]
 
-    def delete(self, key):
-        return self._client.delete(self.key_prefix + key)
+    def delete(self, key: str) -> bool:
+        return bool(self._write_client.delete(self.key_prefix + key))
 
-    def delete_many(self, *keys):
+    def delete_many(self, *keys: str) -> _t.List[_t.Any]:
         if not keys:
-            return
+            return []
         if self.key_prefix:
-            keys = [self.key_prefix + key for key in keys]
-        return self._client.delete(*keys)
-
-    def has(self, key):
-        return self._client.exists(self.key_prefix + key)
-
-    def clear(self):
-        status = False
-        if self.key_prefix:
-            keys = self._client.keys(self.key_prefix + '*')
-            if keys:
-                status = self._client.delete(*keys)
+            prefixed_keys = [self.key_prefix + key for key in keys]
         else:
-            status = self._client.flushdb()
-        return status
+            prefixed_keys = [k for k in keys]
+        self._write_client.delete(*prefixed_keys)
+        return [k for k in prefixed_keys if not self.has(k)]
 
-    def inc(self, key, delta=1):
-        return self._client.incr(name=self.key_prefix + key, amount=delta)
+    def has(self, key: str) -> bool:
+        return bool(self._read_client.exists(self.key_prefix + key))
 
-    def dec(self, key, delta=1):
-        return self._client.decr(name=self.key_prefix + key, amount=delta)
+    def clear(self) -> bool:
+        status = 0
+        if self.key_prefix:
+            keys = self._read_client.keys(self.key_prefix + "*")
+            if keys:
+                status = self._write_client.delete(*keys)
+        else:
+            status = self._write_client.flushdb()
+        return bool(status)
+
+    def inc(self, key: str, delta: int = 1) -> _t.Any:
+        return self._write_client.incr(name=self.key_prefix + key, amount=delta)
+
+    def dec(self, key: str, delta: int = 1) -> _t.Any:
+        return self._write_client.incr(name=self.key_prefix + key, amount=-delta)

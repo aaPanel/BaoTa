@@ -1,0 +1,458 @@
+{
+  "ssl": {
+    "field": [
+      {
+        "attr": "project",
+        "name": "网站",
+        "type": "select",
+        "default": "all",
+        "items": [
+          {
+            "title": "所有网站",
+            "value": "all"
+          }
+        ]
+      },
+      {
+        "attr": "cycle",
+        "name": "剩余天数",
+        "type": "number",
+        "suffix": "",
+        "unit": "天",
+        "default": 15
+      },
+      {
+        "attr": "push_count",
+        "name": "发送次数",
+        "type": "number",
+        "unit": "次",
+        "suffix": "后不再推送这个站点的SSL到期信息，如需发送多次请填写2次以上",
+        "default": 1
+      }
+    ],
+    "sorted": [
+      [
+        "project"
+      ],
+      [
+        "cycle"
+      ],
+      [
+        "push_count"
+      ]
+    ],
+    "type": "ssl",
+    "module": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "sms"
+    ],
+    "tid": "site_push@0",
+    "title": "网站证书(SSL)到期",
+    "name": "site_push"
+  },
+  "site_endtime": {
+    "field": [
+      {
+        "attr": "cycle",
+        "name": "剩余天数",
+        "type": "number",
+        "unit": "天",
+        "suffix": "",
+        "default": 7
+      },
+      {
+        "attr": "push_count",
+        "name": "发送次数",
+        "type": "number",
+        "unit": "次",
+        "suffix": "后将不再推送这个站点的到期信息，如需发送多次请填写2次以上",
+        "default": 1
+      }
+    ],
+    "sorted": [
+      [
+        "cycle"
+      ],
+      [
+        "push_count"
+      ]
+    ],
+    "type": "site_endtime",
+    "module": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin"
+    ],
+    "tid": "site_push@1",
+    "title": "网站到期",
+    "name": "site_push"
+  },
+  "panel_pwd_endtime": {
+    "field": [
+      {
+        "attr": "cycle",
+        "name": "剩余天数",
+        "type": "number",
+        "unit": "天",
+        "suffix": "",
+        "default": 15
+      },
+      {
+        "attr": "push_count",
+        "name": "发送次数",
+        "type": "number",
+        "unit": "次",
+        "suffix": "后将不再发送告警信息，如需发送多次请填写2次以上",
+        "default": 1
+      }
+    ],
+    "sorted": [
+      [
+        "cycle"
+      ],
+      [
+        "push_count"
+      ]
+    ],
+    "type": "panel_pwd_endtime",
+    "module": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin"
+    ],
+    "tid": "site_push@2",
+    "title": "面板密码有效期",
+    "name": "site_push"
+  },
+  "panel_login": {
+    "field": [
+    ],
+    "type": "panel_login",
+    "module": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "sms"
+    ],
+    "tid": "site_push@3",
+    "title": "面板登录告警",
+    "name": "site_push"
+  },
+  "ssh_login": {
+    "field": [
+    ],
+    "type": "ssh_login",
+    "module": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin"
+    ],
+    "tid": "site_push@4",
+    "title": "SSH登录告警",
+    "name": "site_push"
+  },
+  "ssh_login_error": {
+    "field": [
+      {
+        "attr": "cycle",
+        "name": "触发条件",
+        "type": "number",
+        "unit": "分钟",
+        "suffix": "内，",
+        "default": 30
+      },
+      {
+        "attr": "count",
+        "name": "登录失败",
+        "type": "number",
+        "unit": "次",
+        "suffix": "",
+        "default": 3
+      },
+      {
+        "attr": "interval",
+        "name": "间隔时间",
+        "type": "number",
+        "unit": "秒",
+        "suffix": "后再次监控检测条件",
+        "default": 600
+      },
+      {
+        "attr": "day_limit",
+        "name": "每天发送",
+        "type": "number",
+        "unit": "次",
+        "suffix": "后，当日不再发送，次日恢复",
+        "default": 3
+      }
+    ],
+    "sorted": [
+      [
+        "cycle",
+        "count"
+      ],
+      [
+        "interval"
+      ],
+      [
+        "day_limit"
+      ]
+    ],
+    "type": "ssh_login_error",
+    "module": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin"
+    ],
+    "tid": "site_push@5",
+    "title": "SSH登录失败告警",
+    "name": "site_push"
+  },
+  "services": {
+    "field": [
+      {
+        "attr": "project",
+        "name": "通知类型",
+        "type": "select",
+        "default": null,
+        "items": [
+        ]
+      },
+      {
+        "attr": "count",
+        "name": "自动重启",
+        "type": "radio",
+        "suffix": "",
+        "default": 1,
+        "items": [
+            {
+                "title": "自动尝试重启项目",
+                "value": 1
+            },
+            {
+                "title": "不做重启尝试",
+                "value": 2
+            }
+        ]
+      },
+      {
+        "attr": "interval",
+        "name": "间隔时间",
+        "type": "number",
+        "unit": "秒",
+        "suffix": "后再次监控检测条件",
+        "default": 600
+      },
+      {
+        "attr": "day_limit",
+        "name": "每天发送",
+        "type": "number",
+        "unit": "次",
+        "suffix": "后，当日不再发送，次日恢复",
+        "default": 3
+      }
+    ],
+    "sorted": [
+      [
+        "project"
+      ],
+      [
+        "count"
+      ],
+      [
+        "interval"
+      ],
+      [
+        "day_limit"
+      ]
+    ],
+    "type": "services",
+    "module": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "sms"
+    ],
+    "tid": "site_push@6",
+    "title": "服务停止告警",
+    "name": "site_push"
+  },
+  "panel_safe_push": {
+    "field": [
+      {
+        "attr": "help",
+        "name": "告警内容",
+        "type": "help",
+        "unit": "",
+        "style": {
+          "margin-top": "6px"
+        },
+        "list": [
+          "面板用户变更、面板日志删除、面板开启开发者"
+        ],
+        "suffix": "",
+        "default": 600
+      },
+      {
+        "attr": "day_limit",
+        "name": "每天发送",
+        "type": "number",
+        "unit": "次",
+        "suffix": "后，当日不再发送，次日恢复",
+        "default": 3
+      }
+    ],
+    "type": "panel_safe_push",
+    "module": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin"
+    ],
+    "sorted": [
+      [
+        "day_limit"
+      ],
+      [
+        "help"
+      ]
+    ],
+    "tid": "site_push@7",
+    "title": "面板安全告警",
+    "name": "site_push"
+  },
+  "panel_update": {
+    "field": [
+    ],
+    "type": "panel_update",
+    "module": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin"
+    ],
+    "tid": "site_push@8",
+    "title": "面板更新提醒",
+    "name": "site_push"
+  },
+  "project_status": {
+    "field": [
+      {
+        "attr": "cycle",
+        "name": "项目类型",
+        "type": "select",
+        "default": 1,
+        "items": [
+          {
+            "title": "Java项目",
+            "value": 1
+          },
+          {
+            "title": "Node项目",
+            "value": 2
+          },
+          {
+            "title": "Go项目",
+            "value": 3
+          },
+          {
+            "title": "Python项目",
+            "value": 4
+          },
+          {
+            "title": "其他项目",
+            "value": 5
+          }
+        ]
+      },
+      {
+        "attr": "project",
+        "name": "项目名称",
+        "type": "select",
+        "default": null,
+        "all_items": null,
+        "items": [
+        ]
+      },
+      {
+        "attr": "interval",
+        "name": "间隔时间",
+        "type": "number",
+        "unit": "秒",
+        "suffix": "后再次监控检测条件",
+        "default": 600
+      },
+      {
+        "attr": "push_count",
+        "name": "每天发送",
+        "type": "number",
+        "unit": "次",
+        "suffix": "后，当日不再发送，次日恢复",
+        "default": 3
+      },
+      {
+        "attr": "count",
+        "name": "自动重启",
+        "type": "radio",
+        "suffix": "",
+        "default": 1,
+        "items": [
+            {
+                "title": "自动尝试重启项目",
+                "value": 1
+            },
+            {
+                "title": "不做重启尝试",
+                "value": 2
+            }
+        ]
+      }
+    ],
+    "type": "project_status",
+    "module": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin"
+    ],
+    "sorted": [
+      [
+        "cycle"
+      ],
+      [
+        "project"
+      ],
+      [
+        "interval"
+      ],
+      [
+        "count"
+      ],
+      [
+        "push_count"
+      ]
+    ],
+    "tid": "site_push@9",
+    "title": "项目停止告警",
+    "name": "site_push"
+  }
+}

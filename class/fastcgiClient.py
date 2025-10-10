@@ -316,7 +316,7 @@ class FCGIApp(object):
         rec = Record(FCGI_DATA, requestId)
         rec.write(sock)
         return sock
-        
+
 
     def _getConnection(self):
         if self._connect is not None:

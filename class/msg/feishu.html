@@ -1,0 +1,142 @@
+﻿<div class="conter_box box_feishu">
+    <div style="padding-bottom: 12px; margin-bottom: 18px; border-bottom: #ccc 1px dashed;">
+        <div class="flex" style="align-item: center; height: 32px;">
+            <span class="tname" style="width: 99px; line-height: 30px; padding-right: 20px; text-align: right;"><i class="total_tips">?</i>设为默认</span>
+            <div>
+                <input class="btswitch btswitch-ios" id="default_setting" type="checkbox" />
+                <label style="position: relative;top: 5px;" class="btswitch-btn" for="default_setting"></label>
+            </div>
+        </div>
+    </div>
+    <div class="bt-form">
+        <div class="line">
+            <span class="tname">通知全体</span>
+            <div class="info-r" style="height:28px; margin-left:100px">
+                <input class="btswitch btswitch-ios" id="panel_alert_all" type="checkbox" >
+                <label style="position: relative;top: 5px;" title="仅支持通知全体." class="btswitch-btn" for="panel_alert_all"></label>
+            </div>
+        </div>
+        <div class="line">
+            <span class="tname">飞书URL</span>
+            <div class="info-r">
+                <textarea name="channel_feishu_value" class="bt-input-text mr5" type="text" placeholder="请输入飞书url" style="width: 300px; height:90px; line-height:20px"></textarea>
+            </div>
+            <button class="btn btn-success btn-sm feishu_submit" style="margin: 10px 0 0 100px;">保存</button>
+        </div>
+    </div>
+</div>
+<style type="text/css">
+.total_tips {
+    border: 1px solid #cbcbcb;
+    border-radius: 8px;
+    color: #cbcbcb;
+    cursor: pointer;
+    display: inline-block;
+    font-family: arial;
+    font-size: 12px;
+    font-style: normal;
+    height: 14px;
+    line-height: 14px;
+    margin-right: 5px;
+    text-align: center;
+    width: 14px;
+}
+</style>
+<!--飞书模块-->
+<script type="text/javascript">
+    var feishu = {
+        all_info: {},
+        init: function () {
+            var that = this;
+            this.all_info = $('.alarm-view .bt-w-menu p.bgw').data('data'); //设置全局数据
+            this.get_feishu_data();
+
+            $('#panel_alert_all').attr('checked',this.all_info.data.isAtAll)
+
+             // 设置默认
+            $('#default_setting').change(function () {
+                var _default = $(this).prop('checked');
+                var _url = that.all_info.data.feishu_url;
+                if (!_url) {
+                    layer.msg('未配置飞书URL', { icon: 2 })
+                    $(this).prop('checked', !_default);
+                    return
+                }
+                var loadTs = layer.msg('正在设置飞书配置中，请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+                $.post('/config?action=set_default_channel&channel=feishu', { default: _default }, function (res) {
+                    layer.close(loadTs);
+                    layer.msg(res.msg, { icon: res.status ? 1 : 2 })
+                    if (res.status) that.refresh_data();
+                });
+            });
+
+            var showTips = ''
+            $('.total_tips').hover(function(){
+                showTips = setTimeout(function(){
+                    layer.tips('设置为默认后，消息通知优先使用该消息通道发送。', $('.total_tips'), {
+                        tips: [1, '#20a53a'],
+                        time: 0,
+                        success:function(layero,indexs){
+                            layero.css("left", $('.total_tips').offset().left - 10);
+                    }})
+                },200)
+            },function(){
+                clearTimeout(showTips)
+                layer.closeAll('tips');
+            })
+        },
+        /**
+            *@description 获取飞书url，保存按钮添加事件
+        */
+        get_feishu_data: function () {
+            var that = this;
+            var data = this.all_info.data;
+
+            if (data) {
+                var url = data.feishu_url || '';
+                var _default = data.hasOwnProperty('default') ? data.default : false
+
+                $('textarea[name=channel_feishu_value]').val(url);
+                $('#default_setting').prop('checked', _default);
+            }
+            // 飞书信息设置
+            $('.feishu_submit').click(function () {
+                that.set_submit_ding();
+            });
+        },
+        /**
+            *@description 设置飞书url信息，保存按钮
+        */
+        set_submit_ding: function () {
+            var that = this;
+
+            var _url = $('textarea[name=channel_feishu_value]').val(),
+                _isAll = $('#panel_alert_all').prop('checked');
+            if (_url == '') return layer.msg('请输入飞书url', { icon: 2 })
+            var loadT = layer.msg('正在设置飞书通道中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+            $.post('/config?action=set_msg_config&name=feishu', { url: _url, atall: _isAll?'True':'False' }, function (rdata) {
+                layer.close(loadT);
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 })
+                if (rdata.status) that.refresh_data();
+            })
+        },
+        refresh_data: function () {
+            var that = this
+            $.post('/config?action=get_msg_configs', function (rdata) {
+                $.each(rdata, function (key, item) {
+                    var $el = $('.alarm-view .bt-w-menu .men_' + key);
+                    if (item.data && item.data.default) {
+                        $el.html($el.text() + '<span class="show-default"></span>');
+                    } else {
+                        $el.find('span').remove();
+                    }
+                    $('.alarm-view .bt-w-menu .men_' + key).data('data', item);
+                    if (key === 'feishu') {
+                        that.all_info = item
+                    }
+                });
+            })
+        }
+    }
+
+</script>

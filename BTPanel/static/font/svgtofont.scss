@@ -1,0 +1,388 @@
+@font-face {font-family: "svgtofont";
+  src: url('svgtofont.eot?t=1747810202915'); /* IE9*/
+  src: url('svgtofont.eot?t=1747810202915#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url("svgtofont.woff2?t=1747810202915") format("woff2"),
+  url("svgtofont.woff?t=1747810202915") format("woff"),
+  url('svgtofont.ttf?t=1747810202915') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+  url('svgtofont.svg?t=1747810202915#svgtofont') format('svg'); /* iOS 4.1- */
+}
+
+[class^="svgtofont-"], [class*=" svgtofont-"] {
+  font-family: 'svgtofont' !important;font-size: var(--el-font-size-base);
+  font-style:normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.svgtofont-alarm-settings:before { content: "\ea01"; }
+.svgtofont-arrow-down:before { content: "\ea02"; }
+.svgtofont-arrow:before { content: "\ea03"; }
+.svgtofont-contact-customer:before { content: "\ea04"; }
+.svgtofont-crown:before { content: "\ea05"; }
+.svgtofont-customer-service:before { content: "\ea06"; }
+.svgtofont-desired:before { content: "\ea07"; }
+.svgtofont-display-menu:before { content: "\ea08"; }
+.svgtofont-el-arrow-down-bold:before { content: "\ea09"; }
+.svgtofont-el-arrow-down:before { content: "\ea0a"; }
+.svgtofont-el-arrow-left-bold:before { content: "\ea0b"; }
+.svgtofont-el-arrow-left:before { content: "\ea0c"; }
+.svgtofont-el-arrow-right-bold:before { content: "\ea0d"; }
+.svgtofont-el-arrow-right:before { content: "\ea0e"; }
+.svgtofont-el-arrow-up-bold:before { content: "\ea0f"; }
+.svgtofont-el-arrow-up:before { content: "\ea10"; }
+.svgtofont-el-back:before { content: "\ea11"; }
+.svgtofont-el-bell:before { content: "\ea12"; }
+.svgtofont-el-bottom:before { content: "\ea13"; }
+.svgtofont-el-caret-bottom:before { content: "\ea14"; }
+.svgtofont-el-caret-left:before { content: "\ea15"; }
+.svgtofont-el-caret-right:before { content: "\ea16"; }
+.svgtofont-el-caret-top:before { content: "\ea17"; }
+.svgtofont-el-check:before { content: "\ea18"; }
+.svgtofont-el-circle-check-filled:before { content: "\ea19"; }
+.svgtofont-el-circle-check:before { content: "\ea1a"; }
+.svgtofont-el-circle-close-filled:before { content: "\ea1b"; }
+.svgtofont-el-circle-close:before { content: "\ea1c"; }
+.svgtofont-el-circle-plus-filled:before { content: "\ea1d"; }
+.svgtofont-el-clock:before { content: "\ea1e"; }
+.svgtofont-el-close-bold:before { content: "\ea1f"; }
+.svgtofont-el-close:before { content: "\ea20"; }
+.svgtofont-el-d-arrow-left:before { content: "\ea21"; }
+.svgtofont-el-d-arrow-right:before { content: "\ea22"; }
+.svgtofont-el-delete-filled:before { content: "\ea23"; }
+.svgtofont-el-delete:before { content: "\ea24"; }
+.svgtofont-el-document-copy:before { content: "\ea25"; }
+.svgtofont-el-document:before { content: "\ea26"; }
+.svgtofont-el-download:before { content: "\ea27"; }
+.svgtofont-el-edit-pen:before { content: "\ea28"; }
+.svgtofont-el-edit:before { content: "\ea29"; }
+.svgtofont-el-empty:before { content: "\ea2a"; }
+.svgtofont-el-expand:before { content: "\ea2b"; }
+.svgtofont-el-fold:before { content: "\ea2c"; }
+.svgtofont-el-folder-opened:before { content: "\ea2d"; }
+.svgtofont-el-folder:before { content: "\ea2e"; }
+.svgtofont-el-fullscreen-expand:before { content: "\ea2f"; }
+.svgtofont-el-fullscreen-shrink:before { content: "\ea30"; }
+.svgtofont-el-hide:before { content: "\ea31"; }
+.svgtofont-el-info-filled:before { content: "\ea32"; }
+.svgtofont-el-link:before { content: "\ea33"; }
+.svgtofont-el-loading:before { content: "\ea34"; }
+.svgtofont-el-message:before { content: "\ea35"; }
+.svgtofont-el-monitor:before { content: "\ea36"; }
+.svgtofont-el-more-filled:before { content: "\ea37"; }
+.svgtofont-el-mute-notification:before { content: "\ea38"; }
+.svgtofont-el-plus:before { content: "\ea39"; }
+.svgtofont-el-qrcode:before { content: "\ea3a"; }
+.svgtofont-el-question-filled:before { content: "\ea3b"; }
+.svgtofont-el-refresh-left:before { content: "\ea3c"; }
+.svgtofont-el-refresh-right:before { content: "\ea3d"; }
+.svgtofont-el-refresh:before { content: "\ea3e"; }
+.svgtofont-el-remove-filled:before { content: "\ea3f"; }
+.svgtofont-el-remove:before { content: "\ea40"; }
+.svgtofont-el-right:before { content: "\ea41"; }
+.svgtofont-el-search:before { content: "\ea42"; }
+.svgtofont-el-select:before { content: "\ea43"; }
+.svgtofont-el-semi-select:before { content: "\ea44"; }
+.svgtofont-el-service:before { content: "\ea45"; }
+.svgtofont-el-setting:before { content: "\ea46"; }
+.svgtofont-el-share:before { content: "\ea47"; }
+.svgtofont-el-star-filled:before { content: "\ea48"; }
+.svgtofont-el-success-filled:before { content: "\ea49"; }
+.svgtofont-el-top:before { content: "\ea4a"; }
+.svgtofont-el-unlock:before { content: "\ea4b"; }
+.svgtofont-el-upload-filled:before { content: "\ea4c"; }
+.svgtofont-el-upload:before { content: "\ea4d"; }
+.svgtofont-el-view:before { content: "\ea4e"; }
+.svgtofont-el-warn-triangle-filled:before { content: "\ea4f"; }
+.svgtofont-el-warning-filled:before { content: "\ea50"; }
+.svgtofont-el-warning:before { content: "\ea51"; }
+.svgtofont-el-zoom-in:before { content: "\ea52"; }
+.svgtofont-el-zoom-out:before { content: "\ea53"; }
+.svgtofont-empty:before { content: "\ea54"; }
+.svgtofont-evaluation-feedback:before { content: "\ea55"; }
+.svgtofont-file-hdd:before { content: "\ea56"; }
+.svgtofont-file-text:before { content: "\ea57"; }
+.svgtofont-folder-open:before { content: "\ea58"; }
+.svgtofont-free-certificate-icon:before { content: "\ea59"; }
+.svgtofont-free-customer:before { content: "\ea5a"; }
+.svgtofont-free-fifteen-icon:before { content: "\ea5b"; }
+.svgtofont-free-function-icon:before { content: "\ea5c"; }
+.svgtofont-free-group-icon:before { content: "\ea5d"; }
+.svgtofont-free-ip-icon:before { content: "\ea5e"; }
+.svgtofont-free-message-icon:before { content: "\ea5f"; }
+.svgtofont-free-plunge-icon:before { content: "\ea60"; }
+.svgtofont-free-recommend:before { content: "\ea61"; }
+.svgtofont-free-refund-icon:before { content: "\ea62"; }
+.svgtofont-free-time-icon:before { content: "\ea63"; }
+.svgtofont-hint-confirm-icon:before { content: "\ea64"; }
+.svgtofont-ico-mysql:before { content: "\ea65"; }
+.svgtofont-ico-nginx:before { content: "\ea66"; }
+.svgtofont-ico-php:before { content: "\ea67"; }
+.svgtofont-icon-anonymous:before { content: "\ea68"; }
+.svgtofont-icon-balancepay-default:before { content: "\ea69"; }
+.svgtofont-icon-browse:before { content: "\ea6a"; }
+.svgtofont-icon-bug-scan:before { content: "\ea6b"; }
+.svgtofont-icon-centos:before { content: "\ea6c"; }
+.svgtofont-icon-copy:before { content: "\ea6d"; }
+.svgtofont-icon-customer-service:before { content: "\ea6e"; }
+.svgtofont-icon-debian:before { content: "\ea6f"; }
+.svgtofont-icon-drag:before { content: "\ea70"; }
+.svgtofont-icon-dynamic-kill:before { content: "\ea71"; }
+.svgtofont-icon-eye-close:before { content: "\ea72"; }
+.svgtofont-icon-fedora:before { content: "\ea73"; }
+.svgtofont-icon-file-lock:before { content: "\ea74"; }
+.svgtofont-icon-file-unlock:before { content: "\ea75"; }
+.svgtofont-icon-file_mode:before { content: "\ea76"; }
+.svgtofont-icon-ftp-log:before { content: "\ea77"; }
+.svgtofont-icon-history:before { content: "\ea78"; }
+.svgtofont-icon-linux:before { content: "\ea79"; }
+.svgtofont-icon-log:before { content: "\ea7a"; }
+.svgtofont-icon-login-address:before { content: "\ea7b"; }
+.svgtofont-icon-login-time:before { content: "\ea7c"; }
+.svgtofont-icon-ltd:before { content: "\ea7d"; }
+.svgtofont-icon-max-black:before { content: "\ea7e"; }
+.svgtofont-icon-memo-active:before { content: "\ea7f"; }
+.svgtofont-icon-minmax-black:before { content: "\ea80"; }
+.svgtofont-icon-new-file-lock:before { content: "\ea81"; }
+.svgtofont-icon-new-file-unlock:before { content: "\ea82"; }
+.svgtofont-icon-other:before { content: "\ea83"; }
+.svgtofont-icon-pro:before { content: "\ea84"; }
+.svgtofont-icon-proc:before { content: "\ea85"; }
+.svgtofont-icon-refresh:before { content: "\ea86"; }
+.svgtofont-icon-refresh2:before { content: "\ea87"; }
+.svgtofont-icon-rootkit:before { content: "\ea88"; }
+.svgtofont-icon-safaty-detect:before { content: "\ea89"; }
+.svgtofont-icon-safe-report:before { content: "\ea8a"; }
+.svgtofont-icon-scan:before { content: "\ea8b"; }
+.svgtofont-icon-shell-file:before { content: "\ea8c"; }
+.svgtofont-icon-sshd_service:before { content: "\ea8d"; }
+.svgtofont-icon-start:before { content: "\ea8e"; }
+.svgtofont-icon-stop:before { content: "\ea8f"; }
+.svgtofont-icon-term:before { content: "\ea90"; }
+.svgtofont-icon-top:before { content: "\ea91"; }
+.svgtofont-icon-transferpay-default:before { content: "\ea92"; }
+.svgtofont-icon-ubuntu:before { content: "\ea93"; }
+.svgtofont-icon-user:before { content: "\ea94"; }
+.svgtofont-icon-website_permissions:before { content: "\ea95"; }
+.svgtofont-icon-wechatpay-ltd:before { content: "\ea96"; }
+.svgtofont-icon-windows:before { content: "\ea97"; }
+.svgtofont-layer-close:before { content: "\ea98"; }
+.svgtofont-left-config:before { content: "\ea99"; }
+.svgtofont-left-control:before { content: "\ea9a"; }
+.svgtofont-left-crontab:before { content: "\ea9b"; }
+.svgtofont-left-database:before { content: "\ea9c"; }
+.svgtofont-left-docker:before { content: "\ea9d"; }
+.svgtofont-left-exit:before { content: "\ea9e"; }
+.svgtofont-left-files:before { content: "\ea9f"; }
+.svgtofont-left-firewall:before { content: "\eaa0"; }
+.svgtofont-left-ftp:before { content: "\eaa1"; }
+.svgtofont-left-home:before { content: "\eaa2"; }
+.svgtofont-left-logs:before { content: "\eaa3"; }
+.svgtofont-left-mail:before { content: "\eaa4"; }
+.svgtofont-left-node:before { content: "\eaa5"; }
+.svgtofont-left-site:before { content: "\eaa6"; }
+.svgtofont-left-soft:before { content: "\eaa7"; }
+.svgtofont-left-ssl:before { content: "\eaa8"; }
+.svgtofont-left-sub:before { content: "\eaa9"; }
+.svgtofont-left-total:before { content: "\eaaa"; }
+.svgtofont-left-vhost:before { content: "\eaab"; }
+.svgtofont-left-waf:before { content: "\eaac"; }
+.svgtofont-left-wp:before { content: "\eaad"; }
+.svgtofont-left-xterm:before { content: "\eaae"; }
+.svgtofont-loading:before { content: "\eaaf"; }
+.svgtofont-lower-select:before { content: "\eab0"; }
+.svgtofont-menu-setting:before { content: "\eab1"; }
+.svgtofont-scanning-danger:before { content: "\eab2"; }
+.svgtofont-scanning-scan:before { content: "\eab3"; }
+.svgtofont-scanning-success:before { content: "\eab4"; }
+.svgtofont-scroll-bar-down:before { content: "\eab5"; }
+.svgtofont-scroll-bar-up:before { content: "\eab6"; }
+.svgtofont-shrink-menu:before { content: "\eab7"; }
+.svgtofont-tamper-pro:before { content: "\eab8"; }
+.svgtofont-wechat-pay:before { content: "\eab9"; }
+
+$svgtofont-alarm-settings: "\ea01";
+$svgtofont-arrow-down: "\ea02";
+$svgtofont-arrow: "\ea03";
+$svgtofont-contact-customer: "\ea04";
+$svgtofont-crown: "\ea05";
+$svgtofont-customer-service: "\ea06";
+$svgtofont-desired: "\ea07";
+$svgtofont-display-menu: "\ea08";
+$svgtofont-el-arrow-down-bold: "\ea09";
+$svgtofont-el-arrow-down: "\ea0a";
+$svgtofont-el-arrow-left-bold: "\ea0b";
+$svgtofont-el-arrow-left: "\ea0c";
+$svgtofont-el-arrow-right-bold: "\ea0d";
+$svgtofont-el-arrow-right: "\ea0e";
+$svgtofont-el-arrow-up-bold: "\ea0f";
+$svgtofont-el-arrow-up: "\ea10";
+$svgtofont-el-back: "\ea11";
+$svgtofont-el-bell: "\ea12";
+$svgtofont-el-bottom: "\ea13";
+$svgtofont-el-caret-bottom: "\ea14";
+$svgtofont-el-caret-left: "\ea15";
+$svgtofont-el-caret-right: "\ea16";
+$svgtofont-el-caret-top: "\ea17";
+$svgtofont-el-check: "\ea18";
+$svgtofont-el-circle-check-filled: "\ea19";
+$svgtofont-el-circle-check: "\ea1a";
+$svgtofont-el-circle-close-filled: "\ea1b";
+$svgtofont-el-circle-close: "\ea1c";
+$svgtofont-el-circle-plus-filled: "\ea1d";
+$svgtofont-el-clock: "\ea1e";
+$svgtofont-el-close-bold: "\ea1f";
+$svgtofont-el-close: "\ea20";
+$svgtofont-el-d-arrow-left: "\ea21";
+$svgtofont-el-d-arrow-right: "\ea22";
+$svgtofont-el-delete-filled: "\ea23";
+$svgtofont-el-delete: "\ea24";
+$svgtofont-el-document-copy: "\ea25";
+$svgtofont-el-document: "\ea26";
+$svgtofont-el-download: "\ea27";
+$svgtofont-el-edit-pen: "\ea28";
+$svgtofont-el-edit: "\ea29";
+$svgtofont-el-empty: "\ea2a";
+$svgtofont-el-expand: "\ea2b";
+$svgtofont-el-fold: "\ea2c";
+$svgtofont-el-folder-opened: "\ea2d";
+$svgtofont-el-folder: "\ea2e";
+$svgtofont-el-fullscreen-expand: "\ea2f";
+$svgtofont-el-fullscreen-shrink: "\ea30";
+$svgtofont-el-hide: "\ea31";
+$svgtofont-el-info-filled: "\ea32";
+$svgtofont-el-link: "\ea33";
+$svgtofont-el-loading: "\ea34";
+$svgtofont-el-message: "\ea35";
+$svgtofont-el-monitor: "\ea36";
+$svgtofont-el-more-filled: "\ea37";
+$svgtofont-el-mute-notification: "\ea38";
+$svgtofont-el-plus: "\ea39";
+$svgtofont-el-qrcode: "\ea3a";
+$svgtofont-el-question-filled: "\ea3b";
+$svgtofont-el-refresh-left: "\ea3c";
+$svgtofont-el-refresh-right: "\ea3d";
+$svgtofont-el-refresh: "\ea3e";
+$svgtofont-el-remove-filled: "\ea3f";
+$svgtofont-el-remove: "\ea40";
+$svgtofont-el-right: "\ea41";
+$svgtofont-el-search: "\ea42";
+$svgtofont-el-select: "\ea43";
+$svgtofont-el-semi-select: "\ea44";
+$svgtofont-el-service: "\ea45";
+$svgtofont-el-setting: "\ea46";
+$svgtofont-el-share: "\ea47";
+$svgtofont-el-star-filled: "\ea48";
+$svgtofont-el-success-filled: "\ea49";
+$svgtofont-el-top: "\ea4a";
+$svgtofont-el-unlock: "\ea4b";
+$svgtofont-el-upload-filled: "\ea4c";
+$svgtofont-el-upload: "\ea4d";
+$svgtofont-el-view: "\ea4e";
+$svgtofont-el-warn-triangle-filled: "\ea4f";
+$svgtofont-el-warning-filled: "\ea50";
+$svgtofont-el-warning: "\ea51";
+$svgtofont-el-zoom-in: "\ea52";
+$svgtofont-el-zoom-out: "\ea53";
+$svgtofont-empty: "\ea54";
+$svgtofont-evaluation-feedback: "\ea55";
+$svgtofont-file-hdd: "\ea56";
+$svgtofont-file-text: "\ea57";
+$svgtofont-folder-open: "\ea58";
+$svgtofont-free-certificate-icon: "\ea59";
+$svgtofont-free-customer: "\ea5a";
+$svgtofont-free-fifteen-icon: "\ea5b";
+$svgtofont-free-function-icon: "\ea5c";
+$svgtofont-free-group-icon: "\ea5d";
+$svgtofont-free-ip-icon: "\ea5e";
+$svgtofont-free-message-icon: "\ea5f";
+$svgtofont-free-plunge-icon: "\ea60";
+$svgtofont-free-recommend: "\ea61";
+$svgtofont-free-refund-icon: "\ea62";
+$svgtofont-free-time-icon: "\ea63";
+$svgtofont-hint-confirm-icon: "\ea64";
+$svgtofont-ico-mysql: "\ea65";
+$svgtofont-ico-nginx: "\ea66";
+$svgtofont-ico-php: "\ea67";
+$svgtofont-icon-anonymous: "\ea68";
+$svgtofont-icon-balancepay-default: "\ea69";
+$svgtofont-icon-browse: "\ea6a";
+$svgtofont-icon-bug-scan: "\ea6b";
+$svgtofont-icon-centos: "\ea6c";
+$svgtofont-icon-copy: "\ea6d";
+$svgtofont-icon-customer-service: "\ea6e";
+$svgtofont-icon-debian: "\ea6f";
+$svgtofont-icon-drag: "\ea70";
+$svgtofont-icon-dynamic-kill: "\ea71";
+$svgtofont-icon-eye-close: "\ea72";
+$svgtofont-icon-fedora: "\ea73";
+$svgtofont-icon-file-lock: "\ea74";
+$svgtofont-icon-file-unlock: "\ea75";
+$svgtofont-icon-file_mode: "\ea76";
+$svgtofont-icon-ftp-log: "\ea77";
+$svgtofont-icon-history: "\ea78";
+$svgtofont-icon-linux: "\ea79";
+$svgtofont-icon-log: "\ea7a";
+$svgtofont-icon-login-address: "\ea7b";
+$svgtofont-icon-login-time: "\ea7c";
+$svgtofont-icon-ltd: "\ea7d";
+$svgtofont-icon-max-black: "\ea7e";
+$svgtofont-icon-memo-active: "\ea7f";
+$svgtofont-icon-minmax-black: "\ea80";
+$svgtofont-icon-new-file-lock: "\ea81";
+$svgtofont-icon-new-file-unlock: "\ea82";
+$svgtofont-icon-other: "\ea83";
+$svgtofont-icon-pro: "\ea84";
+$svgtofont-icon-proc: "\ea85";
+$svgtofont-icon-refresh: "\ea86";
+$svgtofont-icon-refresh2: "\ea87";
+$svgtofont-icon-rootkit: "\ea88";
+$svgtofont-icon-safaty-detect: "\ea89";
+$svgtofont-icon-safe-report: "\ea8a";
+$svgtofont-icon-scan: "\ea8b";
+$svgtofont-icon-shell-file: "\ea8c";
+$svgtofont-icon-sshd_service: "\ea8d";
+$svgtofont-icon-start: "\ea8e";
+$svgtofont-icon-stop: "\ea8f";
+$svgtofont-icon-term: "\ea90";
+$svgtofont-icon-top: "\ea91";
+$svgtofont-icon-transferpay-default: "\ea92";
+$svgtofont-icon-ubuntu: "\ea93";
+$svgtofont-icon-user: "\ea94";
+$svgtofont-icon-website_permissions: "\ea95";
+$svgtofont-icon-wechatpay-ltd: "\ea96";
+$svgtofont-icon-windows: "\ea97";
+$svgtofont-layer-close: "\ea98";
+$svgtofont-left-config: "\ea99";
+$svgtofont-left-control: "\ea9a";
+$svgtofont-left-crontab: "\ea9b";
+$svgtofont-left-database: "\ea9c";
+$svgtofont-left-docker: "\ea9d";
+$svgtofont-left-exit: "\ea9e";
+$svgtofont-left-files: "\ea9f";
+$svgtofont-left-firewall: "\eaa0";
+$svgtofont-left-ftp: "\eaa1";
+$svgtofont-left-home: "\eaa2";
+$svgtofont-left-logs: "\eaa3";
+$svgtofont-left-mail: "\eaa4";
+$svgtofont-left-node: "\eaa5";
+$svgtofont-left-site: "\eaa6";
+$svgtofont-left-soft: "\eaa7";
+$svgtofont-left-ssl: "\eaa8";
+$svgtofont-left-sub: "\eaa9";
+$svgtofont-left-total: "\eaaa";
+$svgtofont-left-vhost: "\eaab";
+$svgtofont-left-waf: "\eaac";
+$svgtofont-left-wp: "\eaad";
+$svgtofont-left-xterm: "\eaae";
+$svgtofont-loading: "\eaaf";
+$svgtofont-lower-select: "\eab0";
+$svgtofont-menu-setting: "\eab1";
+$svgtofont-scanning-danger: "\eab2";
+$svgtofont-scanning-scan: "\eab3";
+$svgtofont-scanning-success: "\eab4";
+$svgtofont-scroll-bar-down: "\eab5";
+$svgtofont-scroll-bar-up: "\eab6";
+$svgtofont-shrink-menu: "\eab7";
+$svgtofont-tamper-pro: "\eab8";
+$svgtofont-wechat-pay: "\eab9";
+

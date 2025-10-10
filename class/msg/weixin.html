@@ -1,0 +1,75 @@
+﻿<div class="conter_box box_weixin">
+    <div class="bt-form">
+        <div class="line">
+            <span class="tname">通知全体</span>
+            <div class="info-r" style="height:28px; margin-left:100px">
+                <input class="btswitch btswitch-ios" id="panel_alert_all" type="checkbox" disabled="disabled" checked>
+                <label style="position: relative;top: 5px;" title="仅支持通知全体." class="btswitch-btn" for="panel_alert_all"></label>
+            </div>
+        </div>
+        <div class="line">
+            <span class="tname">微信URL</span>
+            <div class="info-r">
+                <textarea name="channel_weixin_value" class="bt-input-text mr5" type="text" placeholder="请输入微信url" style="width: 300px; height:90px; line-height:20px"></textarea>
+            </div>
+            <button class="btn btn-success btn-sm weixin_submit" style="margin: 10px 0 0 100px;">保存</button>
+        </div>
+        <div class="line">
+            <ul class="help-info-text c7">
+                <li>默认通知全体，不可更改</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!--微信模块-->
+<script type="text/javascript">
+    var weixin = {
+        all_info: {},
+        init: function () {
+            this.all_info = $('.alarm-view .bt-w-menu p.bgw').data('data'); //设置全局数据
+            this.get_weixin_data();
+        },
+        /**
+            *@description 获取微信url，保存按钮添加事件
+        */
+        get_weixin_data: function () {
+            var that = this;
+
+            if (weixin.all_info['data']) {
+                $('textarea[name=channel_weixin_value]').val(weixin.all_info['data']['weixin_url']);
+            }
+            // 微信信息设置
+            $('.weixin_submit').click(function () {
+                that.set_submit_ding();
+            })
+        },
+        /**
+            *@description 设置微信url信息，保存按钮
+        */
+        set_submit_ding: function () {
+            var that = this;
+
+            var _url = $('textarea[name=channel_weixin_value]').val();
+            if (_url == '') return layer.msg('请输入微信url', { icon: 2 })
+            var loadT = layer.msg('正在设置微信通道中,请稍候...', { icon: 16, time: 0, shade: [0.3, '#000'] });
+            $.post('/config?action=set_msg_config&name=weixin', { url: _url, atall: 'True' }, function (rdata) {
+                layer.close(loadT);
+                layer.msg(rdata.msg, { icon: rdata.status ? 1 : 2 })
+                if (rdata.status) that.refresh_data();
+            })
+        },
+        refresh_data: function () {
+            var that = this
+            $.post('/config?action=get_msg_configs', function (rdata) {
+                $.each(rdata, function (index, item) {
+                    if (item.name == that.all_info.name) {
+                        $('.alarm-view .bt-w-menu p.bgw').data('data', item)
+                        // that.init()
+                    }
+                });
+            })
+        }
+    }
+
+</script>

@@ -58,13 +58,13 @@ function get_info(){
 	$data['3photo']['EXIF'] = get_extension_funcs('exif')?true:false;
 	$data['3photo']['GD library'] = get_extension_funcs('gd')?true:false;
 	$data['3photo']['ImageMagick'] = in_array('imagick',$data['modules']);
-	
+
 	//其它第三方库
 	$data['6other'] = array();
 	$data['6other']['xDebug'] = get_extension_funcs('xdebug')?true:false;
 	$data['6other']['phalcon'] = in_array('phalcon',$data['modules']);
 	$data['6other']['yaf'] = in_array('yaf',$data['modules']);
-	
+
 
 	$data['ini'] = array();
 	$data['ini']['memory_limit'] = ini_get('memory_limit');

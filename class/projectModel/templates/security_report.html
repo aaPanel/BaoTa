@@ -1,0 +1,1738 @@
+<link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon" />
+<link href="{{g.cdn_url}}/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<link href="{{g.cdn_url}}/css/site.css?version={{g['version']}}&repair={{data['js_random']}}" rel="stylesheet" />
+{% for css_f in g['other_css'] %}
+<link href="{{css_f}}" rel="stylesheet" />
+{% endfor %}
+<style>
+    @page {
+        size: A4 portrait;
+    }
+    sup {
+        position: relative;
+        top: -0.4em;
+        vertical-align: baseline;
+    }
+
+    sub {
+        position: relative;
+        top: 0.4em;
+        vertical-align: baseline;
+    }
+
+    a:link {
+        text-decoration: none;
+    }
+
+    a:visited {
+        text-decoration: none;
+    }
+
+    @media screen and (min-device-pixel-ratio: 0), (-webkit-min-device-pixel-ratio: 0), (min--moz-device-pixel-ratio: 0) {
+        .view {
+            font-size: 10em;
+            transform: scale(0.1);
+            -moz-transform: scale(0.1);
+            -webkit-transform: scale(0.1);
+            -moz-transform-origin: top left;
+            -webkit-transform-origin: top left;
+        }
+    }
+
+    .layer {
+    }
+
+    .ie {
+        font-size: 1pt;
+    }
+
+    .ie body {
+        font-size: 12em;
+    }
+
+    .stl_01 {
+        position: absolute;
+        white-space: nowrap;
+    }
+
+    .stl_02 {
+        height: 70.16666em;
+        font-size: 1em;
+        line-height: 0.0em;
+        display: block;
+        border-style: none;
+        width: 49.58333em;
+        margin: 0 auto
+    }
+
+    .stl_03 {
+        position: relative;
+    }
+
+    .stl_04 {
+        position: absolute;
+        left: 0em;
+        top: 0em;
+    }
+
+    .stl_05 {
+        position: relative;
+        width: 49.58333em;
+    }
+
+    .stl_06 {
+        height: 7.016666em;
+    }
+
+    .ie .stl_06 {
+        height: 70.16666em;
+    }
+
+    @font-face {
+        font-family: "JVTHOI+MicrosoftYaHei";
+        src: url("0aaed9d4-0000-0000-0000-000000000000.woff") format("woff");
+    }
+
+    .stl_07 {
+        font-size: 2.370833em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #444444;
+    }
+
+    .stl_08 {
+        line-height: 1.041992em;
+    }
+
+    .stl_09 {
+        letter-spacing: 0.0067em;
+    }
+
+    .ie .stl_09 {
+        letter-spacing: 0.2528px;
+    }
+
+    .stl_10 {
+        letter-spacing: 0.0072em;
+    }
+
+    .ie .stl_10 {
+        letter-spacing: 0.2742px;
+    }
+
+    .stl_11 {
+        font-size: 1em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #444444;
+    }
+
+    .stl_12 {
+        letter-spacing: 0.008em;
+    }
+
+    .ie .stl_12 {
+        letter-spacing: 0.1276px;
+    }
+
+    .stl_13 {
+        letter-spacing: 0.0082em;
+    }
+
+    .ie .stl_13 {
+        letter-spacing: 0.1318px;
+    }
+
+    .stl_14 {
+        letter-spacing: 0.0085em;
+    }
+
+    .ie .stl_14 {
+        letter-spacing: 0.1361px;
+    }
+
+    .stl_15 {
+        font-size: 0.791667em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #444444;
+    }
+
+    .stl_16 {
+        letter-spacing: -0.0211em;
+    }
+
+    .ie .stl_16 {
+        letter-spacing: -0.2671px;
+    }
+
+    .stl_17 {
+        font-size: 1.170833em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #666666;
+    }
+
+    .stl_18 {
+        letter-spacing: -0.0605em;
+    }
+
+    .ie .stl_18 {
+        letter-spacing: -1.1333px;
+    }
+
+    .stl_19 {
+        font-size: 1em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #333333;
+    }
+
+    .stl_20 {
+        letter-spacing: 0.0044em;
+    }
+
+    .ie .stl_20 {
+        letter-spacing: 0.0708px;
+    }
+
+    .stl_21 {
+        letter-spacing: 0.0032em;
+    }
+
+    .ie .stl_21 {
+        letter-spacing: 0.0511px;
+    }
+
+    .stl_22 {
+        letter-spacing: -0.0001em;
+    }
+
+    .ie .stl_22 {
+        letter-spacing: -0.0024px;
+    }
+
+    .stl_23 {
+        letter-spacing: 0em;
+    }
+
+    .ie .stl_23 {
+        letter-spacing: 0px;
+    }
+
+    .stl_24 {
+        letter-spacing: -0.0052em;
+    }
+
+    .ie .stl_24 {
+        letter-spacing: -0.0832px;
+    }
+
+    .stl_25 {
+        font-size: 1em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #666666;
+    }
+
+    @font-face {
+        font-family: "JQKVHW+MicrosoftYaHei-Bold";
+        src: url("e00e92be-0000-0000-0000-000000000000.woff") format("woff");
+    }
+
+    .stl_26 {
+        font-size: 1.170833em;
+        font-family: "JQKVHW+MicrosoftYaHei-Bold", "Times New Roman";
+        color: #1C2438;
+    }
+
+    .stl_27 {
+        letter-spacing: 0.0173em;
+    }
+
+    .ie .stl_27 {
+        letter-spacing: 0.3241px;
+    }
+
+    .stl_28 {
+        font-size: 1.170833em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #3E71AE;
+    }
+
+    .stl_29 {
+        letter-spacing: 0.0076em;
+    }
+
+    .ie .stl_29 {
+        letter-spacing: 0.1432px;
+    }
+
+    .stl_30 {
+        font-size: 5em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #000000;
+    }
+
+    .stl_31 {
+        font-size: 0.920833em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #495060;
+    }
+
+    .stl_32 {
+        letter-spacing: -0.0223em;
+    }
+
+    .ie .stl_32 {
+        letter-spacing: -0.3284px;
+    }
+
+    .stl_33 {
+        letter-spacing: -0.0154em;
+    }
+
+    .ie .stl_33 {
+        letter-spacing: -0.2271px;
+    }
+
+    .stl_34 {
+        letter-spacing: -0.0106em;
+    }
+
+    .ie .stl_34 {
+        letter-spacing: -0.1559px;
+    }
+
+    .stl_35 {
+        font-size: 0.920833em;
+        font-family: "JQKVHW+MicrosoftYaHei-Bold", "Times New Roman";
+        color: #4A4A4A;
+    }
+
+    .stl_36 {
+        letter-spacing: -0.0136em;
+    }
+
+    .ie .stl_36 {
+        letter-spacing: -0.2005px;
+    }
+
+    .stl_37 {
+        letter-spacing: -0.0009em;
+    }
+
+    .ie .stl_37 {
+        letter-spacing: -0.0134px;
+    }
+
+    .stl_38 {
+        letter-spacing: -0.0118em;
+    }
+
+    .ie .stl_38 {
+        letter-spacing: -0.1739px;
+    }
+
+    .stl_39 {
+        font-size: 1.420833em;
+        font-family: "JQKVHW+MicrosoftYaHei-Bold", "Times New Roman";
+        color: #000000;
+    }
+
+    .stl_40 {
+        letter-spacing: -0.0026em;
+    }
+
+    .ie .stl_40 {
+        letter-spacing: -0.058px;
+    }
+
+    .stl_41 {
+        letter-spacing: -0.0008em;
+    }
+
+    .ie .stl_41 {
+        letter-spacing: -0.019px;
+    }
+
+    .stl_42 {
+        letter-spacing: -0.0018em;
+    }
+
+    .ie .stl_42 {
+        letter-spacing: -0.0401px;
+    }
+
+    .stl_43 {
+        letter-spacing: -0.0014em;
+    }
+
+    .ie .stl_43 {
+        letter-spacing: -0.0325px;
+    }
+
+    .stl_44 {
+        font-size: 1em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #495060;
+    }
+
+    .stl_45 {
+        letter-spacing: -0.0116em;
+    }
+
+    .ie .stl_45 {
+        letter-spacing: -0.1858px;
+    }
+
+    .stl_46 {
+        font-size: 1.170833em;
+        font-family: "JQKVHW+MicrosoftYaHei-Bold", "Times New Roman";
+        color: #4A4A4A;
+    }
+
+    .stl_47 {
+        letter-spacing: -0.0041em;
+    }
+
+    .ie .stl_47 {
+        letter-spacing: -0.0777px;
+    }
+
+    .stl_48 {
+        letter-spacing: -0.0027em;
+    }
+
+    .ie .stl_48 {
+        letter-spacing: -0.0603px;
+    }
+
+    .stl_49 {
+        letter-spacing: -0.001em;
+    }
+
+    .ie .stl_49 {
+        letter-spacing: -0.0234px;
+    }
+
+    .stl_50 {
+        letter-spacing: -0.0112em;
+    }
+
+    .ie .stl_50 {
+        letter-spacing: -0.1792px;
+    }
+
+    .stl_51 {
+        letter-spacing: -0.0036em;
+    }
+
+    .ie .stl_51 {
+        letter-spacing: -0.067px;
+    }
+
+    .stl_52 {
+        font-size: 0.920833em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #3E71AE;
+    }
+
+    .stl_53 {
+        letter-spacing: -0.0082em;
+    }
+
+    .ie .stl_53 {
+        letter-spacing: -0.1205px;
+    }
+
+    .stl_54 {
+        font-size: 0.791667em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #FFFFFF;
+    }
+
+    .stl_55 {
+        letter-spacing: 0.0135em;
+    }
+
+    .ie .stl_55 {
+        letter-spacing: 0.1714px;
+    }
+
+    .stl_56 {
+        letter-spacing: 0.0041em;
+    }
+
+    .ie .stl_56 {
+        letter-spacing: 0.0652px;
+    }
+
+    .stl_57 {
+        letter-spacing: 0.0009em;
+    }
+
+    .ie .stl_57 {
+        letter-spacing: 0.0147px;
+    }
+
+    .stl_58 {
+        font-size: 0.958333em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #4D8DD9;
+    }
+
+    .stl_59 {
+        letter-spacing: -0.0252em;
+    }
+
+    .ie .stl_59 {
+        letter-spacing: -0.3868px;
+    }
+
+    .stl_60 {
+        letter-spacing: -0.0263em;
+    }
+
+    .ie .stl_60 {
+        letter-spacing: -0.3868px;
+    }
+
+    .stl_61 {
+        letter-spacing: -0.0021em;
+    }
+
+    .ie .stl_61 {
+        letter-spacing: -0.0315px;
+    }
+
+    .stl_62 {
+        font-size: 1.170833em;
+        font-family: "JQKVHW+MicrosoftYaHei-Bold", "Times New Roman";
+        color: #495060;
+    }
+
+    .stl_63 {
+        letter-spacing: -0.0194em;
+    }
+
+    .ie .stl_63 {
+        letter-spacing: -0.3637px;
+    }
+
+    .stl_64 {
+        letter-spacing: -0.0247em;
+    }
+
+    .ie .stl_64 {
+        letter-spacing: -0.3637px;
+    }
+
+    .stl_65 {
+        letter-spacing: -0.0147em;
+    }
+
+    .ie .stl_65 {
+        letter-spacing: -0.216px;
+    }
+
+    .stl_66 {
+        letter-spacing: -0.0289em;
+    }
+
+    .ie .stl_66 {
+        letter-spacing: -0.5416px;
+    }
+
+    .stl_67 {
+        letter-spacing: -0.0182em;
+    }
+
+    .ie .stl_67 {
+        letter-spacing: -0.2678px;
+    }
+
+    .stl_68 {
+        letter-spacing: -0.0296em;
+    }
+
+    .ie .stl_68 {
+        letter-spacing: -0.5554px;
+    }
+
+    .stl_69 {
+        letter-spacing: 0.0065em;
+    }
+
+    .ie .stl_69 {
+        letter-spacing: 0.1208px;
+    }
+
+    .stl_70 {
+        letter-spacing: -0.0172em;
+    }
+
+    .ie .stl_70 {
+        letter-spacing: -0.2533px;
+    }
+
+    .stl_71 {
+        letter-spacing: -0.0095em;
+    }
+
+    .ie .stl_71 {
+        letter-spacing: -0.1407px;
+    }
+
+    .stl_72 {
+        font-size: 1em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #3E71AE;
+    }
+
+    .stl_73 {
+        letter-spacing: 0.0457em;
+    }
+
+    .ie .stl_73 {
+        letter-spacing: 0.7313px;
+    }
+
+    .stl_74 {
+        font-size: 1em;
+        font-family: "JQKVHW+MicrosoftYaHei-Bold", "Times New Roman";
+        color: #3E71AE;
+    }
+
+    .stl_75 {
+        letter-spacing: -0.0086em;
+    }
+
+    .ie .stl_75 {
+        letter-spacing: -0.1371px;
+    }
+
+    .stl_76 {
+        letter-spacing: 0.016em;
+    }
+
+    .ie .stl_76 {
+        letter-spacing: 0.2555px;
+    }
+
+    .stl_77 {
+        letter-spacing: -0.0087em;
+    }
+
+    .ie .stl_77 {
+        letter-spacing: -0.1399px;
+    }
+
+    .stl_78 {
+        letter-spacing: 0.045em;
+    }
+
+    .ie .stl_78 {
+        letter-spacing: 0.7198px;
+    }
+
+    .stl_79 {
+        letter-spacing: -0.008em;
+    }
+
+    .ie .stl_79 {
+        letter-spacing: -0.1287px;
+    }
+
+    .stl_80 {
+        font-size: 0.920833em;
+        font-family: "JQKVHW+MicrosoftYaHei-Bold", "Times New Roman";
+        color: #495060;
+    }
+
+    .stl_81 {
+        letter-spacing: -0.0045em;
+    }
+
+    .ie .stl_81 {
+        letter-spacing: -0.0667px;
+    }
+
+    .stl_82 {
+        font-size: 1.079167em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #DAD8DB;
+    }
+
+    .stl_83 {
+        letter-spacing: 0.0316em;
+    }
+
+    .ie .stl_83 {
+        letter-spacing: 0.5462px;
+    }
+
+    .stl_84 {
+        font-size: 1.708333em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #DAD8DB;
+    }
+
+    .stl_85 {
+        letter-spacing: -0.0023em;
+    }
+
+    .ie .stl_85 {
+        letter-spacing: -0.0636px;
+    }
+
+    .stl_86 {
+        letter-spacing: 0.01em;
+    }
+
+    .ie .stl_86 {
+        letter-spacing: 0.1729px;
+    }
+
+    .stl_87 {
+        letter-spacing: -0.0022em;
+    }
+
+    .ie .stl_87 {
+        letter-spacing: -0.0614px;
+    }
+
+    .stl_88 {
+        letter-spacing: 0.0286em;
+    }
+
+    .ie .stl_88 {
+        letter-spacing: 0.4931px;
+    }
+
+    .stl_89 {
+        letter-spacing: -0.0003em;
+    }
+
+    .ie .stl_89 {
+        letter-spacing: -0.0089px;
+    }
+
+    .stl_90 {
+        font-size: 1.079167em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #ADA9AE;
+    }
+
+    .stl_91 {
+        letter-spacing: 0.0255em;
+    }
+
+    .ie .stl_91 {
+        letter-spacing: 0.4396px;
+    }
+
+    .stl_92 {
+        letter-spacing: 0.0347em;
+    }
+
+    .ie .stl_92 {
+        letter-spacing: 0.5999px;
+    }
+
+    .stl_93 {
+        letter-spacing: 0.0005em;
+    }
+
+    .ie .stl_93 {
+        letter-spacing: 0.0139px;
+    }
+
+    .stl_94 {
+        letter-spacing: 0.0091em;
+    }
+
+    .ie .stl_94 {
+        letter-spacing: 0.17px;
+    }
+
+    .stl_95 {
+        letter-spacing: -0.0091em;
+    }
+
+    .ie .stl_95 {
+        letter-spacing: -0.1338px;
+    }
+
+    .stl_96 {
+        letter-spacing: 0.0118em;
+    }
+
+    .ie .stl_96 {
+        letter-spacing: 0.1745px;
+    }
+
+    .stl_97 {
+        letter-spacing: 0.0129em;
+    }
+
+    .ie .stl_97 {
+        letter-spacing: 0.1906px;
+    }
+
+    .stl_98 {
+        letter-spacing: 0.012em;
+    }
+
+    .ie .stl_98 {
+        letter-spacing: 0.1762px;
+    }
+
+    .stl_99 {
+        letter-spacing: 0.0149em;
+    }
+
+    .ie .stl_99 {
+        letter-spacing: 0.2194px;
+    }
+
+    .stl_100 {
+        letter-spacing: 0.0131em;
+    }
+
+    .ie .stl_100 {
+        letter-spacing: 0.1934px;
+    }
+
+    .stl_101 {
+        letter-spacing: 0.0121em;
+    }
+
+    .ie .stl_101 {
+        letter-spacing: 0.1783px;
+    }
+
+    .stl_102 {
+        letter-spacing: 0.0115em;
+    }
+
+    .ie .stl_102 {
+        letter-spacing: 0.1694px;
+    }
+
+    .stl_103 {
+        letter-spacing: 0.0146em;
+    }
+
+    .ie .stl_103 {
+        letter-spacing: 0.2152px;
+    }
+
+    .stl_104 {
+        letter-spacing: 0.0132em;
+    }
+
+    .ie .stl_104 {
+        letter-spacing: 0.1947px;
+    }
+
+    .stl_105 {
+        letter-spacing: 0.0161em;
+    }
+
+    .ie .stl_105 {
+        letter-spacing: 0.2372px;
+    }
+
+    .stl_106 {
+        letter-spacing: 0.0148em;
+    }
+
+    .ie .stl_106 {
+        letter-spacing: 0.2178px;
+    }
+
+    .stl_107 {
+        letter-spacing: 0.0125em;
+    }
+
+    .ie .stl_107 {
+        letter-spacing: 0.1842px;
+    }
+
+    .stl_108 {
+        letter-spacing: 0.0157em;
+    }
+
+    .ie .stl_108 {
+        letter-spacing: 0.232px;
+    }
+
+    .stl_109 {
+        letter-spacing: 0.0105em;
+    }
+
+    .ie .stl_109 {
+        letter-spacing: 0.1544px;
+    }
+
+    .stl_110 {
+        letter-spacing: 0.0143em;
+    }
+
+    .ie .stl_110 {
+        letter-spacing: 0.2113px;
+    }
+
+    .stl_111 {
+        letter-spacing: 0.0137em;
+    }
+
+    .ie .stl_111 {
+        letter-spacing: 0.2024px;
+    }
+
+    .stl_112 {
+        letter-spacing: 0.0176em;
+    }
+
+    .ie .stl_112 {
+        letter-spacing: 0.3292px;
+    }
+
+    .stl_113 {
+        letter-spacing: 0.0097em;
+    }
+
+    .ie .stl_113 {
+        letter-spacing: 0.182px;
+    }
+
+    .stl_114 {
+        letter-spacing: 0.0144em;
+    }
+
+    .ie .stl_114 {
+        letter-spacing: 0.2126px;
+    }
+
+    .stl_115 {
+        letter-spacing: 0.0117em;
+    }
+
+    .ie .stl_115 {
+        letter-spacing: 0.1724px;
+    }
+
+    .stl_116 {
+        letter-spacing: 0.0123em;
+    }
+
+    .ie .stl_116 {
+        letter-spacing: 0.1811px;
+    }
+
+    .stl_117 {
+        letter-spacing: 0.0147em;
+    }
+
+    .ie .stl_117 {
+        letter-spacing: 0.2163px;
+    }
+
+    .stl_118 {
+        letter-spacing: 0.014em;
+    }
+
+    .ie .stl_118 {
+        letter-spacing: 0.2056px;
+    }
+
+    .stl_119 {
+        letter-spacing: 0.0114em;
+    }
+
+    .ie .stl_119 {
+        letter-spacing: 0.1683px;
+    }
+
+    .stl_120 {
+        letter-spacing: 0.0138em;
+    }
+
+    .ie .stl_120 {
+        letter-spacing: 0.2033px;
+    }
+
+    .stl_121 {
+        letter-spacing: 0.0102em;
+    }
+
+    .ie .stl_121 {
+        letter-spacing: 0.1505px;
+    }
+
+    .stl_122 {
+        letter-spacing: 0.0119em;
+    }
+
+    .ie .stl_122 {
+        letter-spacing: 0.176px;
+    }
+
+    .stl_123 {
+        letter-spacing: 0.0142em;
+    }
+
+    .ie .stl_123 {
+        letter-spacing: 0.2099px;
+    }
+
+    .stl_124 {
+        letter-spacing: 0.0145em;
+    }
+
+    .ie .stl_124 {
+        letter-spacing: 0.2129px;
+    }
+
+    .stl_125 {
+        letter-spacing: 0.0172em;
+    }
+
+    .ie .stl_125 {
+        letter-spacing: 0.3223px;
+    }
+
+    .stl_126 {
+        font-size: 0.920833em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #4D8DD9;
+    }
+
+    .stl_127 {
+        font-size: 0.920833em;
+        font-family: "JQKVHW+MicrosoftYaHei-Bold", "Times New Roman";
+        color: #22B07B;
+    }
+
+    .stl_128 {
+        font-size: 0.920833em;
+        font-family: "JQKVHW+MicrosoftYaHei-Bold", "Times New Roman";
+        color: #4D8DD9;
+    }
+
+    .stl_129 {
+        font-size: 0.920833em;
+        font-family: "JQKVHW+MicrosoftYaHei-Bold", "Times New Roman";
+        color: #EE5555;
+    }
+
+    .stl_130 {
+        letter-spacing: -0.0134em;
+    }
+
+    .ie .stl_130 {
+        letter-spacing: -0.1973px;
+    }
+
+    .stl_131 {
+        letter-spacing: -0.0184em;
+    }
+
+    .ie .stl_131 {
+        letter-spacing: -0.2711px;
+    }
+
+    .stl_132 {
+        letter-spacing: -0.004em;
+    }
+
+    .ie .stl_132 {
+        letter-spacing: -0.0594px;
+    }
+
+    .stl_133 {
+        letter-spacing: -0.0053em;
+    }
+
+    .ie .stl_133 {
+        letter-spacing: -0.0777px;
+    }
+
+    .stl_134 {
+        letter-spacing: -0.0226em;
+    }
+
+    .ie .stl_134 {
+        letter-spacing: -0.3333px;
+    }
+
+    .stl_135 {
+        font-size: 0.920833em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #E74C3C;
+    }
+
+    .stl_136 {
+        letter-spacing: -0.0326em;
+    }
+
+    .ie .stl_136 {
+        letter-spacing: -0.48px;
+    }
+
+    .stl_137 {
+        font-size: 0.920833em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #AF614B;
+    }
+
+    .stl_138 {
+        letter-spacing: -0.0552em;
+    }
+
+    .ie .stl_138 {
+        letter-spacing: -0.8135px;
+    }
+
+    .stl_139 {
+        font-size: 0.920833em;
+        font-family: "JVTHOI+MicrosoftYaHei", "Times New Roman";
+        color: #FF9800;
+    }
+
+    .stl_140 {
+        letter-spacing: -0.0218em;
+    }
+
+    .ie .stl_140 {
+        letter-spacing: -0.3213px;
+    }
+
+    .stl_141 {
+        letter-spacing: -0.018em;
+    }
+
+    .ie .stl_141 {
+        letter-spacing: -0.2649px;
+    }
+
+    .local_table th,td{
+        text-align: center;
+    }
+    .local_table th{
+        font-size: 10em;
+        background-color: #f5f5f5;
+    }
+    .local_table td{
+        font-size: 10em;
+        background-color: #fff;
+        padding: 0.5em;
+        word-wrap:break-word;
+        white-space: pre-wrap;
+    }
+
+    .local_table thead,
+    .local_table tbody tr {
+        display: table;
+        width: 100%;
+        table-layout: fixed;/*重要  表格固定算法*/
+    }
+
+
+
+    .local_table tbody {
+        display: block;
+        height: 577em;
+        overflow-y: auto;
+    }
+    .local_table tbody::-webkit-scrollbar {
+        width: 5em;
+        border-radius: 8px;
+    }
+    /* 滚动槽 */
+    .local_table tbody::-webkit-scrollbar-track {
+        /* -webkit-box-shadow: inset006pxrgba(0, 0, 0, 0.5); */
+        background-color: #ffffff;
+    }
+    /* 滚动条滑块 */
+    .local_table tbody::-webkit-scrollbar-thumb {
+        border-radius: 8px;
+        background: #9a9a9a;
+        /* -webkit-box-shadow: inset006pxrgba(0, 0, 0, 0.5); */
+    }
+
+    .local_table thead {/*留出滚动条的位置*/
+        width: calc(100% - 5em)
+    }
+    .new-ltd-icon{
+        background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTguMDAwMDAwIiBoZWlnaHQ9IjE4LjAwMDAwMCIgdmlld0JveD0iMCAwIDE4IDE4IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj4KCTxkZXNjPgoJCQlDcmVhdGVkIHdpdGggUGl4c28uCgk8L2Rlc2M+Cgk8cGF0aCBpZD0i55+i6YePIDEwNTUiIGQ9Ik0xMy42NTg4IDMuNTk5OThMMTYuMiA3LjQ5NTQyTDkgMTUuMjg2NEwxLjc5OTk5IDcuNDk1NDJMNC4zNDExNiAzLjU5OTk4TDEzLjY1ODggMy41OTk5OFoiIHN0cm9rZT0iIzlCN0U0OCIvPgoJPHBhdGggaWQ9IuS8gSIgZD0iTTkuMjgzNzggOC44MTI4N0wxMS4xMjM0IDguODEyODdMMTEuMTIzNCA4LjM1ODk1TDkuMjgzNzggOC4zNTg5NUw5LjI4Mzc4IDYuODA1MTFMOC43OTIzOSA2LjgwNTExTDguNzkyMzkgMTAuNDk1OUw3LjU5NSAxMC40OTU5TDcuNTk1IDcuOTkyODZMNy4xMzAwNCA3Ljk5Mjg2TDcuMTMwMDQgMTAuNDk1OUw2LjMyNzY0IDEwLjQ5NTlMNi4zMjc2NCAxMC45NTgxTDExLjcxNTkgMTAuOTU4MUwxMS43MTU5IDEwLjQ5NTlMOS4yODM3OCAxMC40OTU5TDkuMjgzNzggOC44MTI4N1pNOC45NzEyMiA0Ljg5ODQ0QzguMzUyMjkgNS45Mjg4MyA3LjIwNjI0IDYuODU5OCA2LjAzNTI4IDcuMzYxNjlDNi4xNTUwMyA3LjQ4MjY3IDYuMjg4NzYgNy42NTMyNiA2LjM1ODczIDcuNzgyNDdDNy4zNjAxNyA3LjMwNzA3IDguMzA4NzggNi41NTk5NCA4Ljk5NjA5IDUuNjg1M0M5LjgxMDk0IDYuNzAyMzkgMTAuNjkxMSA3LjI4NzE3IDExLjY1ODQgNy43ODkxMkMxMS43MjIxIDcuNjQwMDEgMTEuODU1OCA3LjQ2OTM2IDExLjk2NDcgNy4zNjE2OUMxMC45NzcyIDYuODk5NTQgMTAuMDQ3MyA2LjMyMzA2IDkuMjUxMTMgNS4zMzI0NkM5LjMwMjQzIDUuMjU3OTMgOS4zNTM3NiA1LjE5IDkuMzk3MzEgNS4xMTU0Mkw4Ljk3MTIyIDQuODk4NDRaIiBmaWxsLXJ1bGU9Im5vbnplcm8iIGZpbGw9IiM5QjdFNDgiLz4KCTxkZWZzLz4KPC9zdmc+Cg==);
+    }
+    .new-file-icon{
+        width: 20px;
+        background-size: 102%;
+        background-repeat: no-repeat;
+        height: 18px;
+        display: inline-block;
+    }
+    .export_pdf{
+        position: fixed;
+        top: 112pt;
+        margin-left: 78em;
+        vertical-align: inherit;
+        padding: 6px 12px;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.42857143;
+        text-align: center;
+        white-space: nowrap;
+        touch-action: manipulation;
+        cursor: pointer;
+        user-select: none;
+        background-image: none;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        color: #20a53a;
+        background-color: #ffffff;
+        border-color: #20a53a;
+    }
+    /*.btn-success{*/
+    /*    color: #20a53a;*/
+    /*    background-color: #ffffff;*/
+    /*    border-color: #20a53a;*/
+    /*}*/
+
+    /*.btn-success:focus {*/
+    /*    color:#20a53a;*/
+    /*    background-color: #ffffff;*/
+    /*    border-color: #20a53a;*/
+    /*}*/
+    /*.btn-success:hover {*/
+    /*    color: #20a53a;*/
+    /*    background: #20a53a1f;*/
+    /*}*/
+    .pay-cycle-btn.auto{
+        height: 42px;
+        display: inline-flex;
+        flex-direction: row;
+        align-content: center;
+        justify-content: center;
+        align-items: center;
+    }
+    .libPay-layer-item .libVoucher-list{
+        height: 100px;
+    }
+    .pay-btn-group>.pay-cycle-btn{
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+    }
+    #level_reason {
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+</style>
+
+<body style="font-size: 1.9em">
+<div class="stl_02">
+  <a style="display:none;" id="request_token_head" token="{{session[g.get_csrf_html_token_key]}}"></a>
+  <div class="stl_03 ">
+    <!-- <button type="button" title="下载word报告" class="btn btn-default export_pdf group_PM6dt_4 btn-sm mr5"><span style="position:relative"><span class="new-file-icon new-ltd-icon" style="position:absolute;top:-2px"></span><span style="margin-left:22px">下载报告</span></span></button> -->
+
+    <img style="height: 1090px" src="/static/img/report/01.png">
+    <div class="stl_01" style="top:43.9276em; left:36.89em;"><span class="stl_07 stl_08 stl_09">堡塔安全 &nbsp;</span>
+    </div>
+    <div class="stl_01" style="top:47.0677em; left:36.89em;"><span
+      class="stl_07 stl_08 stl_10">风险扫描报告 &nbsp;</span></div>
+    <div class="stl_01" style="top:54.0263em; left:31.25em;"><span  class="stl_11 stl_08 stl_12">检测时间：【<span id="date"></span>】 &nbsp;</span></div>
+    <div class="stl_01" style="top:55.8962em; left:31.25em;"><span  class="stl_11 stl_08 stl_13">主机名：【<span id="host"></span>】 &nbsp;</span></div>
+    <div class="stl_01" style="top:57.7763em; left:31.25em;"><span class="stl_11 stl_08 stl_13">服务器外网IP：【<span id="ip"></span>】 &nbsp;</span></div>
+    <div class="stl_01" style="top:59.6462em; left:31.25em;"><span  class="stl_11 stl_08 stl_14">内网IP：【<span id="local_ip"></span>】 &nbsp;</span></div>
+    <div class="stl_01" style="top:65.2508em; left:39.5799em;"><span class="stl_15 stl_08 stl_16" style="word-spacing:0.0429em;">审核员 ：堡塔安全团队 &nbsp;</span>
+    </div>
+  </div>
+</div>
+<div class="stl_02">
+  <div class="stl_03">
+    <object data="/static/img/report/img_10.svg" type="image/svg+xml" class="stl_04"
+            style="position:absolute; width:49.5833em; height:70.1667em;">
+      <embed src="/static/img/report/img_10.svg" type="image/svg+xml" class="stl_04"/>
+    </object>
+  </div>
+  <div class="view">
+    <div class="stl_05 stl_06">
+      <div class="stl_01" style="top:4.3231em; left:23.77em;"><span class="stl_17 stl_08 stl_18">目录 &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:8.2863em; left:2.59em;"><span class="stl_19 stl_08 stl_20">一、综合安全态势总览 &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:10.3863em; left:5.2em;"><span class="stl_19 stl_08 stl_21"
+                                                                   style="word-spacing:0.0572em;">.1 整体安全评级 &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:12.4763em; left:5.31em;"><span class="stl_19 stl_08 stl_22"
+                                                                    style="word-spacing:0.0438em;">.2 已检测风险 &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:14.5763em; left:5.2em;"><span class="stl_19 stl_08 stl_21"
+                                                                   style="word-spacing:0.0471em;">.3 重点关注风险 &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:16.7363em; left:2.6em;"><span
+        class="stl_19 stl_08 stl_23">二、潜在风险详情 &nbsp;</span></div>
+      <div class="stl_01" style="top:18.8363em; left:5.78em;"><span class="stl_19 stl_08 stl_24"
+                                                                    style="word-spacing:0.044em;">.1 漏洞详情 &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:20.9363em; left:2.6em;"><span class="stl_19 stl_08 stl_23">三、参考标准及名词解释 &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:8.2863em; left:46.5299em;"><span class="stl_25 stl_08 stl_23">3</span></div>
+      <div class="stl_01" style="top:10.3863em; left:46.55em;"><span class="stl_25 stl_08 stl_23">3</span></div>
+      <div class="stl_01" style="top:12.4763em; left:46.57em;"><span class="stl_25 stl_08 stl_23">5</span></div>
+      <div class="stl_01" style="top:14.5763em; left:46.54em;"><span class="stl_25 stl_08 stl_23">6</span></div>
+      <div class="stl_01" style="top:10.3863em; left:4.61em;"><span class="stl_19 stl_08 stl_23">1</span></div>
+      <div class="stl_01" style="top:12.4763em; left:4.72em;"><span class="stl_19 stl_08 stl_23">1</span></div>
+      <div class="stl_01" style="top:14.5763em; left:4.61em;"><span class="stl_19 stl_08 stl_23">1</span></div>
+      <div class="stl_01" style="top:16.7363em; left:46.54em;"><span class="stl_25 stl_08 stl_23" style="word-spacing:0.6173em;">7</span></div>
+      <div class="stl_01" style="top:18.8363em; left:5.19em;"><span class="stl_19 stl_08 stl_23">2</span></div>
+      <div class="stl_01" style="top:18.8363em; left:46.49em;"><span class="stl_25 stl_08 stl_23">7</span></div>
+      <div class="stl_01" style="top:20.9363em; left:46.49em;"><span class="stl_25 stl_08 stl_23">8</span></div>
+    </div>
+  </div>
+</div>
+<div class="stl_02">
+  <div class="stl_03">
+    <object data="/static/img/report/img_14.svg" type="image/svg+xml" class="stl_04"
+            style="position:absolute; width:49.5833em; height:70.1667em;">
+      <embed src="/static/img/report/img_14.svg" type="image/svg+xml" class="stl_04"/>
+    </object>
+  </div>
+  <div class="view">
+    <div class="stl_05 stl_06">
+      <div class="stl_01" style="top:5.3231em; left:2.4299em;"><span class="stl_26 stl_08 stl_27">一、综合安全态势总览 &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:7.5931em; left:3.21em;"><span class="stl_28 stl_08 stl_29"
+                                                                   style="word-spacing:0.0537em;">.1 整体安全评级 &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:7.5931em; left:2.52em;"><span class="stl_28 stl_08 stl_23">1</span></div>
+      <div class="stl_01" style="top:14.3446em; left:7.29em;"><span id="total_level"
+                                                                    class="stl_30 stl_08 stl_22">差</span></div>
+      <div class="stl_01" style="top:26.9425em; left:3.5299em;"><span id="last_date" class="stl_31 stl_08 stl_32" style="word-spacing:0.0435em;"></span>
+      </div>
+      <div class="stl_01" style="top:28.7226em; left:3.49em;"><span class="stl_31 stl_08 stl_33"
+                                                                    style="word-spacing:0.0624em;">评级原因 ： &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:30.3026em; left:3.88em;"><span id="level_reason" class="stl_31 stl_08 stl_34">level_reason &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:30.3026em; left:3.49em;"><span class="stl_31 stl_08 stl_23">-</span></div>
+      <div class="stl_01" style="top:34.9826em; left:2.42em;"><span class="stl_35 stl_08 stl_36"
+                                                                    style="word-spacing:0.048em;">受影响业务概览 ： &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:40.5026em; left:7.87em;"><span class="stl_31 stl_08 stl_37">检查名称 &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:40.4526em; left:23.11em;"><span class="stl_31 stl_08 stl_38">评级 &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:40.4526em; left:28.1299em;"><span class="stl_31 stl_08 stl_38">风险 &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:46.4863em; left:23.32em;"><span id="warn_level" class="stl_39 stl_08 stl_40">warn_level &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:46.4863em; left:28.2799em;"><span id="first_warn" class="stl_44 stl_08 stl_45">first_warn &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:46.6731em; left:8.35em;"><span
+        class="stl_46 stl_08 stl_47">安全风险评估 &nbsp;</span></div>
+      <div class="stl_01" style="top:55.4262em; left:23.32em;"><span id="cve_level" class="stl_39 stl_08 stl_23">cve_level</span>
+      </div>
+      <div class="stl_01" style="top:55.4262em; left:28.2799em;"><span id="first_cve" class="stl_44 stl_08 stl_50">first_cve &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:55.6231em; left:8.2299em;"><span
+        class="stl_46 stl_08 stl_51">系统漏洞 &nbsp;</span></div>
+    </div>
+  </div>
+</div>
+<div class="stl_02">
+  <div class="stl_03">
+    <object data="/static/img/report/img_16.svg" type="image/svg+xml" class="stl_04"
+            style="position:absolute; width:49.5833em; height:70.1667em;">
+      <embed src="/static/img/report/img_16.svg" type="image/svg+xml" class="stl_04"/>
+    </object>
+  </div>
+  <div class="view">
+    <div class="stl_05 stl_06">
+      <div class="stl_01" style="top:3.9726em; left:4.81em;"><span class="stl_52 stl_08 stl_53">持续服务 &nbsp;</span>
+      </div>
+      <div class="stl_01" style="top:7.3363em; left:15.49em;"><span class="stl_44 stl_08 stl_56"
+                                                                    style="word-spacing:0.2619em;">近七天检测情况（</span>
+        <span id="month_or_day" class="stl_44 stl_08 stl_56" style="word-spacing:0.1319em;">07月22日 - 07月28日）</span>
+      </div>
+      <div class="stl_01" style="top:11.9512em; left:4.25em;">
+        <span class="stl_58 stl_08 stl_59" style="word-spacing:0.6056em;">臼 </span>
+        <span class="stl_31 stl_08 stl_60" style="word-spacing:0.6302em;">安全检测<span id="warn_times" style="font-size: 1.5em">21</span>次</span>
+      </div>
+      <div class="stl_01" style="top:12.8426em; left:16.65em;">
+        <span id="second_warn" class="stl_31 stl_08 stl_61">每日登陆面板，例行服务器安全风险检测。</span>
+      </div>
+      <div class="stl_01" style="top:17.1212em; left:4.17em;">
+        <span class="stl_58 stl_08 stl_59" style="word-spacing:0.6057em;">囪 </span>
+        <span class="stl_31 stl_08 stl_60" style="word-spacing:0.6303em;">漏洞扫描<span id="cve_times" style="font-size: 1.5em">21</span>次</span>
+      </div>
+      <div  class="stl_01" style="top:18em; left:16.29em;"><span id="second_cve" class="stl_31 stl_08 stl_65">对系统内核版本以及流行应用进行漏洞扫描，发现存在漏洞风险。</span>
+      </div>
+      <div class="stl_01" style="top:22.9em; left:5.95em;"><span class="stl_31 stl_08 stl_60">风险修复<span id="repair_times" style="font-size: 1.5em">21</span>次</span></div>
+      <div  class="stl_01" style="top:23.1em; left:16.27em;"><span
+        id="repair" class="stl_31 stl_08 stl_67">执行一键修复，解决安全问题。</span>
+      </div>
+    </div>
+  </div>
+  <div class="stl_02">
+    <div class="stl_03">
+      <object data="/static/img/report/img_22.svg" type="image/svg+xml" class="stl_04"
+              style="position:absolute; width:49.5833em; height:70.1667em;">
+        <embed src="/static/img/report/img_22.svg" type="image/svg+xml" class="stl_04"/>
+      </object>
+    </div>
+    <div class="view">
+      <div class="stl_05 stl_06">
+        <div class="stl_01" style="top:4.8731em; left:2.52em;"><span class="stl_28 stl_08 stl_23">1</span></div>
+        <div class="stl_01" style="top:4.8731em; left:3.21em;"><span class="stl_28 stl_08 stl_69" style="word-spacing:0.0561em;">.2 已检测风险概览 &nbsp;</span></div>
+        <div  class="stl_01" style="top:7.1026em; left:3.3em;"><span class="stl_31 stl_08 stl_70" id="warn_and_cve">本次安全检测为您的服务器进行warn_num项安全风险分析，cve_num项系统漏洞扫描，详细种类如下； &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:8.3726em; left:3.25em;"><span class="stl_31 stl_08 stl_71" style="word-spacing:0.0291em;">宝塔面板持续为您监测和防护 ，避免漏洞带来的黑客入侵和通报风险。 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:11.3563em; left:3.74em;"><span
+          class="stl_72 stl_08 stl_73">网站安全风险检测 &nbsp;</span></div>
+        <div class="stl_01" style="top:15.3663em; left:3.71em;"><span
+          class="stl_72 stl_08 stl_73">系统安全风险检测 &nbsp;</span></div>
+        <div class="stl_01" style="top:11.3663em; left:13.97em;">
+          <span id="web_num" class="stl_74 stl_08 stl_75">web_num条 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:11.3663em; left:24.5299em;">
+          <span class="stl_72 stl_08 stl_76" style="word-spacing:0.0182em;">流行系统应用漏洞扫描 </span>
+          <span id="cve_num" class="stl_74 stl_08 stl_76" style="word-spacing:0.0182em;">cve_num种 &nbsp;</span></div>
+        <div class="stl_01" style="top:15.2363em; left:14.52em;">
+          <span id="sys_num" class="stl_74 stl_08 stl_77">sys_num条 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:15.2363em; left:24.4em;"><span
+          class="stl_72 stl_08 stl_78">内核级漏洞扫描 &nbsp;</span></div>
+        <div class="stl_01" style="top:15.2363em; left:33.74em;">
+          <span id="kernel_num" class="stl_74 stl_08 stl_79">kernel_num种 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:23.5526em; left:2.41em;"><span
+          class="stl_80 stl_08 stl_81">风险检测 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:25.89em; left:25.4em;"><span class="stl_82 stl_08 stl_83">低危漏洞 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:27.7827em; left:25.42em;"><span id="low_cve" class="stl_84 stl_08 stl_85">low_cve &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:28.7899em; left:7.49em;"><span
+          class="stl_82 stl_08 stl_86">中危漏洞 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:30.3527em; left:7.42em;"><span id="mid_cve" class="stl_84 stl_08 stl_87">mid_cve &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:33.7399em; left:33.9em;"><span
+          class="stl_82 stl_08 stl_88">高危风险 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:35.7728em; left:33.9099em;"><span id="high_warn" class="stl_84 stl_08 stl_89">high_warn &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:39.2199em; left:15.99em;"><span
+          class="stl_90 stl_08 stl_88">系统漏洞 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:45.6499em; left:22.0299em;"><span
+          class="stl_90 stl_08 stl_83">安全风险 &nbsp;</span></div>
+        <div class="stl_01" style="top:46.2599em; left:6.42em;"><span
+          class="stl_82 stl_08 stl_91">高危漏洞 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:47.8327em; left:6.42em;"><span id="high_cve" class="stl_84 stl_08 stl_87">high_cve &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:48.7399em; left:29.49em;"><span
+          class="stl_82 stl_08 stl_86">中危风险 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:51.2599em; left:20.89em;"><span
+          class="stl_82 stl_08 stl_92">低危风险 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:50.7728em; left:29.4299em;"><span id="mid" class="stl_84 stl_08 stl_93">mid &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:53.0827em; left:20.91em;"><span id="low_warn" class="stl_84 stl_08 stl_89">low_warn &nbsp;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="stl_02">
+    <div class="stl_03">
+      <object data="/static/img/report/img_23.svg" type="image/svg+xml" class="stl_04"
+              style="position:absolute; width:49.5833em; height:70.1667em;">
+        <embed src="/static/img/report/img_23.svg" type="image/svg+xml" class="stl_04"/>
+      </object>
+    </div>
+    <div class="view">
+      <div class="stl_05 stl_06">
+        <div class="stl_01" style="top:5.3731em; left:2.51em;"><span class="stl_28 stl_08 stl_23">1</span></div>
+        <div class="stl_01" style="top:5.3731em; left:3.2em;"><span class="stl_28 stl_08 stl_94"
+                                                                    style="word-spacing:0.0422em;">.3 重点关注风险 &nbsp;</span>
+        </div>
+        <div class="stl_01"  style="top:7.3731em; left:3.2em;">
+          <table class="local_table" border="1" style="width: 535em;border: 1px black;">
+            <thead>
+            <tr>
+              <th style="width: 3em;">序号</th>
+              <th style="width: 9em;">风险名称</th>
+              <th style="width: 9em;">风险描述</th>
+              <th style="width: 3em;">级别</th>
+              <th>修复建议</th>
+              <th style="width: 5em;height: 2em;">一键修复</th>
+            </tr>
+            </thead>
+            <tbody id="table1"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <div class="stl_02">
+    <div class="stl_03">
+      <object data="/static/img/report/img_24.svg" type="image/svg+xml" class="stl_04"
+              style="position:absolute; width:49.5833em; height:70.1667em;">
+        <embed src="/static/img/report/img_24.svg" type="image/svg+xml" class="stl_04"/>
+      </object>
+    </div>
+    <div class="view">
+      <div class="stl_05 stl_06">
+        <div class="stl_01" style="top:3.4131em; left:2.4299em;"><span class="stl_26 stl_08 stl_112">二、潜在风险详情 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:7.9631em; left:2.47em;"><span class="stl_28 stl_08 stl_23">2</span></div>
+        <div class="stl_01" style="top:7.9631em; left:3.16em;"><span class="stl_28 stl_08 stl_113"
+                                                                     style="word-spacing:0.0581em;">.1 漏洞详情 &nbsp;</span>
+        </div>
+        <div class="stl_01"  style="top:9.8731em; left:3.2em;">
+          <table  class="local_table" border="1" style="width: 535em;border: 1px black;">
+            <thead>
+            <tr>
+              <th style="width: 3em;">序号</th>
+              <th style="width: 9em;">风险名称</th>
+              <th style="width: 9em;">风险描述</th>
+              <th style="width: 3em;">级别</th>
+              <th>修复建议</th>
+              <th style="width: 5em;height: 2em;">一键修复</th>
+            </tr>
+            </thead>
+            <tbody id="table2"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="stl_02">
+    <div class="stl_03">
+      <object data="/static/img/report/img_25.svg" type="image/svg+xml" class="stl_04"
+              style="position:absolute; width:49.5833em; height:70.1667em;">
+        <embed src="/static/img/report/img_25.svg" type="image/svg+xml" class="stl_04"/>
+      </object>
+    </div>
+    <div class="view">
+      <div class="stl_05 stl_06">
+        <div class="stl_01" style="top:3.9231em; left:2.47em;"><span class="stl_26 stl_08 stl_125">三、参考标准及名词解释 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:6.5826em; left:2.42em;"><span class="stl_126 stl_08 stl_81">业务系统风险等级定义 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:9.7826em; left:3.0799em;"><span class="stl_31 stl_08 stl_53"
+                                                                       style="word-spacing:1.0579em;">风险等级 评级原因 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:12.4625em; left:4.47em;"><span class="stl_127 stl_08 stl_23">优</span></div>
+        <div class="stl_01" style="top:14.8226em; left:4.51em;"><span class="stl_128 stl_08 stl_23">良</span></div>
+        <div class="stl_01" style="top:17.1826em; left:4.47em;"><span class="stl_129 stl_08 stl_23">差</span></div>
+        <div class="stl_01" style="top:12.4526em; left:7.9299em;"><span class="stl_31 stl_08 stl_130">服务器不存在漏洞以及重大安全风险，整体处于较为安全状态。 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:14.8226em; left:7.9299em;"><span class="stl_31 stl_08 stl_131">服务器存在系统漏洞，或是存在安全风险。 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:17.2326em; left:7.9299em;"><span class="stl_31 stl_08 stl_67">服务器存在可被利用的高危漏洞以及高危安全风险。 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:22.5026em; left:2.4em;"><span class="stl_126 stl_08 stl_132">漏洞危险等级定义 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:25.7026em; left:3.0799em;"><span
+          class="stl_31 stl_08 stl_53">危险程度 &nbsp;</span></div>
+        <div class="stl_01" style="top:25.7026em; left:9.47em;"><span
+          class="stl_31 stl_08 stl_95">分值范围（1-10分） &nbsp;</span></div>
+        <div class="stl_01" style="top:25.7026em; left:20.4em;"><span
+          class="stl_31 stl_08 stl_133">危险程度说明 &nbsp;</span></div>
+        <div class="stl_01" style="top:28.4425em; left:20.41em;"><span class="stl_31 stl_08 stl_134"
+                                                                       style="word-spacing:0.0441em;">攻击者可以远程操作系统文件 ，读写后台数据库</span><span
+          class="stl_31 stl_08 stl_134" style="word-spacing:0.055em;"> ，执行任意命令 &nbsp;</span></div>
+        <div class="stl_01" style="top:29.7226em; left:20.41em;"><span class="stl_31 stl_08 stl_81">或者进行远程拒绝服务攻击。 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:28.9526em; left:4.09em;"><span class="stl_135 stl_08 stl_134">高危 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:29.0625em; left:11.86em;"><span class="stl_31 stl_08 stl_136"
+                                                                       style="word-spacing:0.055em;">7 - 10分 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:32.0625em; left:20.41em;"><span class="stl_31 stl_08 stl_36"
+                                                                       style="word-spacing:0.0481em;">攻击者可以利用Web网站攻击其他用户 ，读取系统文件或后台数 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:33.4326em; left:20.41em;"><span class="stl_31 stl_08 stl_70">据库。 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:32.6826em; left:4.15em;"><span class="stl_137 stl_08 stl_138">中危 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:35.9125em; left:4.0799em;"><span class="stl_139 stl_08 stl_38">低危 &nbsp;</span>
+        </div>
+        <div class="stl_01" style="top:32.7826em; left:11.85em;"><span class="stl_31 stl_08 stl_140"
+                                                                       style="word-spacing:0.0434em;">4 -</span><span
+          class="stl_31 stl_08 stl_140" style="word-spacing:0.056em;"> 6分 &nbsp;</span></div>
+        <div class="stl_01" style="top:36.0226em; left:11.77em;"><span class="stl_31 stl_08 stl_136"
+                                                                       style="word-spacing:0.0432em;">1 -</span><span
+          class="stl_31 stl_08 stl_136" style="word-spacing:0.0558em;"> 3分 &nbsp;</span></div>
+        <div class="stl_01" style="top:36.0226em; left:20.41em;"><span class="stl_31 stl_08 stl_141"
+                                                                       style="word-spacing:0.0459em;">攻击者可以获得某些系统 ，文件的信息或冒用身份。 &nbsp;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+
+<script type="text/javascript" src="{{g.cdn_url}}/js/jquery-2.2.4.min.js"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/layer/layer.js?version={{g['version']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/language/{{session['lan']}}/lan.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/clipboard.min.js" defer></script>
+<script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js" defer></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.qrcode.min.js"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/public.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/public_backup.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/tools.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+<script src="{{g.cdn_url}}/js/jsencrypt.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+<script>
+  $.post({url:'/safe/report/get_report'},function(data){
+    if(data.status){
+      $('#cve_level').text(data.msg.second.cve_level)
+      if(data.msg.second.cve_level == '优'){
+        $('#cve_level').css('color','#22B07B')
+      }else if(data.msg.second.cve_level == '良'){
+        $('#cve_level').css('color','#4D8DD9')
+      }else if(data.msg.second.cve_level == '差'){
+        $('#cve_level').css('color','#EE5555')
+      }
+      $('#first_cve').text(data.msg.second.first_cve)
+      $('#first_warn').text(data.msg.second.first_warn)
+      $('#level_color').text(data.msg.second.level_color)
+      $('#level_reason').html(data.msg.second.level_reason)
+      $('#total_level').text(data.msg.second.total_level)
+      if(data.msg.second.total_level == '优'){
+        $('#total_level').css('color','#22B07B')
+      }else if(data.msg.second.total_level == '良'){
+        $('#total_level').css('color','#4D8DD9')
+      }else if(data.msg.second.total_level == '差'){
+        $('#total_level').css('color','#EE5555')
+      }
+      $('#warn_level').text(data.msg.second.warn_level)
+      if(data.msg.second.warn_level == '优'){
+        $('#warn_level').css('color','#22B07B')
+      }else if(data.msg.second.warn_level == '良'){
+        $('#warn_level').css('color','#4D8DD9')
+      }else if(data.msg.second.warn_level == '差'){
+        $('#warn_level').css('color','#EE5555')
+      }
+      $('#date').text(data.msg.first.date)
+      $('#host').text(data.msg.first.host)
+      $('#ip').text(data.msg.first.ip)
+      $('#local_ip').text(data.msg.first.local_ip)
+      $('#last_date').text(data.msg.second.last_date + '至' + data.msg.second.date + '期间 ，经过宝塔面板对服务器进行安全风险评估 ，整体状态评级为 ：' + data.msg.second.total_level + '。');
+      $('#month_or_day').text(data.msg.third.last_month+'月'+data.msg.third.last_day+'日 - '+data.msg.third.month+'月'+data.msg.third.day+'日）')
+      $('#warn_times').text(data.msg.third.warn_times)
+      $('#cve_times').text(data.msg.third.cve_times)
+      $('#repair_times').text(data.msg.third.repair_times)
+      $('#second_warn').text(data.msg.third.second_warn)
+      $('#second_cve').text(data.msg.third.second_cve)
+      $('#repair').text(data.msg.third.repair)
+      $('#warn_and_cve').text('本次安全检测为您的服务器进行'+data.msg.fourth.warn_num+'项安全风险分析，'+data.msg.fourth.cve_num+'项系统漏洞扫描，详细种类如下： ')
+      $('#web_num').text(data.msg.fourth.web_num+'条')
+      $('#cve_num').text(data.msg.fourth.cve_num+'种')
+      $('#sys_num').text(data.msg.fourth.sys_num+'条')
+      $('#kernel_num').text(data.msg.fourth.kernel_num+'种')
+      $('#low_cve').text(data.msg.fourth.low_cve).css('color','#ffc400')
+      $('#mid_cve').text(data.msg.fourth.mid_cve).css('color','#ff8500')
+      $('#high_warn').text(data.msg.fourth.high_warn).css('color','#ff0000')
+      $('#high_cve').text(data.msg.fourth.high_cve).css('color','#ff0000')
+      $('#mid').text(data.msg.fourth.mid_warn).css('color','#ff8500')
+      $('#low_warn').text(data.msg.fourth.low_warn).css('color','#ffc600')
+      var table1 = ''
+      function getTable (num,name){
+        var table = ''
+        $.each(data.msg[num][name],function(i,v){
+          table += '\
+          <tr>\
+            <td style="width: 3em;">'+v.num+'</td>\
+            <td style="width: 9em">'+v.name+'</td>\
+            <td style="width: 9em">'+v.ps+'</td>\
+            <td style="width: 3em">'+v.level+'</td>\
+            <td style="text-align: left">'+v.tips+'</td>\
+            <td style="width:5.01em;height: 2em;">'+v.auto+'</td>\
+          </tr>'
+        })
+        return table
+      }
+      table1+=getTable('fifth','focus_high_list')
+      table1+=getTable('fifth','focus_mid_list')
+      table1+=getTable('fifth','focus_cve_list')
+      $('#table1').html(table1)
+      var table2 = ''
+      table2+=getTable('sixth','low_warn_list')
+      table2+=getTable('sixth','ignore_list')
+      $('#table2').html(table2)
+    }
+  })
+
+  $(document).contextmenu(function(e) {
+    return false;
+  })
+  $('.export_pdf').click(function(){
+    var ltd = parseInt(bt.get_cookie('ltd_end')  || -1)
+    if(ltd <= 0){
+      product_recommend.pay_product_sign('ltd',191,'ltd')
+    }else {
+      bt_tools.send({url:'/safe/exportreport/get_pdf'},function (res) {
+        if(res.status){
+          window.open('/download?filename=' + encodeURIComponent(res.path));
+        }else {
+          bt.msg(res)
+        }
+      },'生成报告')
+    }
+  })
+  function getPaymentStatus(){
+    bt.send('get_pd', 'ajax/get_pd', {}, function (res) {
+      var tab = $('.pos-box .tab-list'),
+        proHTML = '',
+        _index = res[1] > 0 ? 1 : 2,
+        is_pay = res[1] >= 0 || res[2] > 0, //是否购买
+        advanced = res[1] == 0 || res[1] > 0 ? 'pro':'ltd';
+      bt.set_cookie('pro_end', res[1]);
+      bt.set_cookie('ltd_end', res[2]);
+      if(is_pay){
+        // 已购买
+        proHTML = '<div class="product-buy" style="margin-right:0;font-size: 12px;">到期时间：<span style="vertical-align: initial">'+(res[1] === 0?'永久授权':((res[1] === -2 || res[2] === -2)?'已过期':bt.format_data(res[_index],'yyyy-MM-dd'))+ '&nbsp;&nbsp;<a class="btlink" href="javascript:;" onclick="product_recommend.pay_product_sign(\''+ advanced +'\',81,\''+ advanced +'\')">续费</a>')+'</span></div>'
+      }else {
+        proHTML = '<div class="product-buy" style="margin-right:0;"><button type="button" class="btn btn-success btn-xs" style="vertical-align: 1px;" onclick="product_recommend.pay_product_sign(\'ltd\',80,\'ltd\')">立即升级</button></div>'
+        // proHTML = '<div class="product-buy" style="margin-right:0;display:flex;align-items:center"><div onclick="product_recommend.pay_product_sign(\'ltd\',80,\'ltd\')" class="immediately-tip"><span class="recommend-immediate-icon"></span><span style="color:rgb(239, 159, 0);line-height:18.2px">安全、高效，让您更安心！</span></div><button type="button" class="btn btn-xs immediate-experience" style="vertical-align: 1px;" onclick="product_recommend.pay_product_sign(\'ltd\',80,\'ltd\')">立即体验</button></div>'
+      }
+      $(window).resize(function(){
+        if($(window).innerWidth()<1080){
+          $('.recommend-immediate-icon').next().addClass('hide')
+        }else{
+          $('.recommend-immediate-icon').next().removeClass('hide')
+        }
+      })
+      if((tab.children().length*105 + 306.28) < tab.parent().width()){
+        tab.parent().css({display:'flex','justify-content':'space-between'});
+        // var _html = '<div class="authState" style="line-height: 45px;padding-right: 20px;"><span class="'+(!is_pay?'btltd-gray':'bt'+advanced)+'" style="vertical-align: bottom;"></span><div style="display: inline-block;font-size: 12px" class="mr10">'+(!is_pay?'免费版&nbsp;&nbsp;':'')+' {{session["version"]}}</div> ' + proHTML +'</div>'
+        var _html = '<div class="authState" style="line-height: 45px;padding-right: 20px;"><span class="'+(!is_pay? 'btltd-gray' : 'bt'+advanced)+'" '+ (is_pay ? 'onclick="product_recommend.pay_product_sign(\''+ advanced +'\',90,\''+ advanced +'\')"' : 'onclick="product_recommend.pay_product_sign(\'ltd\',80,\'ltd\')"') +' style="vertical-align: bottom;"></span><div style="display: inline-block;font-size: 12px;color:#666" class=" product_version mr10">'+(!is_pay?'免费版&nbsp;&nbsp;':'')+' {{session["version"]}}</div> ' + proHTML +'</div>'
+        if(tab.next().hasClass('authState')) tab.next().remove()
+        tab.after(_html);
+      }
+      // window.LayerTitle = ('<div class="layer-title-free">' +
+      //   '<span class="'+ (is_pay?'':'') +'">面版版本：' + (!is_pay?'免费版': advanced == 'pro' ? '专业版' : '企业版') + '&nbsp;' + panelVersion + '&nbsp;</span>' +
+      //   '<span class="btlink ' + (!is_pay?'hide':'') + '" onclick="product_recommend.pay_product_sign(\''+ advanced +'\',90,\''+ advanced +'\')">续费</span>' +
+      //   '<span class="btlink '+ (is_pay?'hide':'') +'" onclick="product_recommend.pay_product_sign(\'ltd\',90,\'ltd\')">立即升级</span>' +
+      // '</div>')
+    })
+  }
+  if(bt.get_cookie('bt_user_info') == null || bt.get_cookie('bt_user_info') == ''){
+    bt.pub.get_user_info(function(userInfo){
+      if (userInfo.status) {
+        bt.set_cookie('bt_user_info', JSON.stringify(userInfo));
+        getPaymentStatus();
+      }
+    })
+  }else{
+    getPaymentStatus();
+  }
+</script>

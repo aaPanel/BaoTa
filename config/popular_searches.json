@@ -1,0 +1,107 @@
+{
+  "pull_day": 1,
+  "push_plugin": [
+    {
+      "title": "搜索排行",
+      "plugin": [
+        {
+          "name": "PHP",
+          "ename": "php-8.1"
+        },
+        {
+          "name": "Redis",
+          "ename": "redis"
+        },
+        {
+          "name": "MySql",
+          "ename": "mysql"
+        },
+        {
+          "name": "Nginx",
+          "ename": "nginx"
+        },
+        {
+          "name": "Docker",
+          "ename": "docker"
+        },
+        {
+          "name": "JAVA",
+          "ename": "tomcat2"
+        },
+        {
+          "name": "FTP",
+          "ename": "pureftpd"
+        },
+        {
+          "name": "Tomcat",
+          "ename": "tomcat"
+        },
+        {
+          "name": "phpMyadmin",
+          "ename": "phpmyadmin"
+        },
+        {
+          "name": "Python",
+          "ename": "pythonmamager"
+        },
+        {
+          "name": "启动项管理",
+          "ename": "boot"
+        },
+        {
+          "name": "Node",
+          "ename": "nodejs"
+        },
+        {
+          "name": "一键迁移",
+          "ename": "psync_api"
+        },
+        {
+          "name": "Git",
+          "ename": "git_deploy"
+        },
+        {
+          "name": "Apache",
+          "ename": "apache"
+        }
+      ]
+    },
+    {
+      "title": "热门推荐",
+      "plugin": [
+        {
+          "name": "Nginx防火墙",
+          "ename": "btwaf"
+        },
+        {
+          "name": "堡塔企业级防篡改",
+          "ename": "tamper_core"
+        },
+        {
+          "name": "网站监控报表",
+          "ename": "monitor"
+        },
+        {
+          "name": "文件同步工具",
+          "ename": "rsync"
+        },
+        {
+          "name": "宝塔任务管理器",
+          "ename": "task_manager"
+        },
+        {
+          "name": "宝塔系统加固",
+          "ename": "syssafe"
+        },
+        {
+          "name": "堡塔防入侵",
+          "ename": "bt_security"
+        },
+        {
+          "name": "PHP网站安全告警",
+          "ename": "security_notice"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,244 @@
+{
+    "name": "Apache Shiro",
+    "product": "shiro-core",
+    "types":"class",
+    "class": [
+        "org/apache/shiro/mgt/AbstractRememberMeManager.class",
+        "org/apache/shiro/util/AntPathMatcher.class",
+        "org/apache/shiro/config/Ini.class"
+    ],
+    "vlu_list": [
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957,CVE-2019-12422,CVE-2016-6802,CVE-2016-4437,CVE-2014-0074,CVE-2010-3863",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "7bd673e6ace1746696fc5c368d73c434689a7a4cd71325394a785a02f5cf2463",
+            "org/apache/shiro/util/AntPathMatcher.class": "a4b290d36f3fcd6b351f41c952e0134cd5803f0c72f4efebae898f397d6152a1",
+            "org/apache/shiro/config/Ini.class": "86023203131dc978bbd49bbdf366336de3bd09ab991707d579a6cbb9dfa94d64",
+            "MavenVersion": "1.1.0",
+            "hash256": "ca59ef5cb3ff18d3b7451b97e13afd459297f84ef5733cae190f337da51298f3"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957,CVE-2019-12422,CVE-2016-6802,CVE-2016-4437,CVE-2014-0074",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "7bd673e6ace1746696fc5c368d73c434689a7a4cd71325394a785a02f5cf2463",
+            "org/apache/shiro/util/AntPathMatcher.class": "a4b290d36f3fcd6b351f41c952e0134cd5803f0c72f4efebae898f397d6152a1",
+            "org/apache/shiro/config/Ini.class": "86023203131dc978bbd49bbdf366336de3bd09ab991707d579a6cbb9dfa94d64",
+            "MavenVersion": "1.2.0",
+            "hash256": "6640336fd7b297f4e823e06bb0c5ae17ee56b0351d1131de2cb0f0d386ed8dbc"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957,CVE-2019-12422,CVE-2016-6802,CVE-2016-4437,CVE-2014-0074",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "7bd673e6ace1746696fc5c368d73c434689a7a4cd71325394a785a02f5cf2463",
+            "org/apache/shiro/util/AntPathMatcher.class": "a4b290d36f3fcd6b351f41c952e0134cd5803f0c72f4efebae898f397d6152a1",
+            "org/apache/shiro/config/Ini.class": "86023203131dc978bbd49bbdf366336de3bd09ab991707d579a6cbb9dfa94d64",
+            "MavenVersion": "1.2.1",
+            "hash256": "8e682488434a87232ef441ed8aa426bf9ca7d4641f54e0467f564ed38bbf857f"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957,CVE-2019-12422,CVE-2016-6802,CVE-2016-4437,CVE-2014-0074",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "7bd673e6ace1746696fc5c368d73c434689a7a4cd71325394a785a02f5cf2463",
+            "org/apache/shiro/util/AntPathMatcher.class": "a4b290d36f3fcd6b351f41c952e0134cd5803f0c72f4efebae898f397d6152a1",
+            "org/apache/shiro/config/Ini.class": "86023203131dc978bbd49bbdf366336de3bd09ab991707d579a6cbb9dfa94d64",
+            "MavenVersion": "1.2.2",
+            "hash256": "ebd46554df8fb0399ce63de7dc2802d0e7d00442aef986e66465dd18f5dd0d7d"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957,CVE-2019-12422,CVE-2016-6802,CVE-2016-4437",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "7bd673e6ace1746696fc5c368d73c434689a7a4cd71325394a785a02f5cf2463",
+            "org/apache/shiro/util/AntPathMatcher.class": "a4b290d36f3fcd6b351f41c952e0134cd5803f0c72f4efebae898f397d6152a1",
+            "org/apache/shiro/config/Ini.class": "86023203131dc978bbd49bbdf366336de3bd09ab991707d579a6cbb9dfa94d64",
+            "MavenVersion": "1.2.3",
+            "hash256": "5dd287822291d4bb3585084963b7be565920ce7cf8bbcb0633879daad1059128"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957,CVE-2019-12422,CVE-2016-6802,CVE-2016-4437",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "0471ded8ada516815852f2115e79b66ba42f36122de6470d884e9f185815b6ce",
+            "org/apache/shiro/util/AntPathMatcher.class": "aa5f37ee68dde1cee4e4e4100e3e6e9a4e77c55aa3d0b6902499d7ffa3119f5c",
+            "org/apache/shiro/config/Ini.class": "e2941e372baecfa36af4522a38c4dd3f344d8a1d890b37bcba0bb1b072db1ae8",
+            "MavenVersion": "1.2.4",
+            "hash256": "a49c097e30cbc75548eade65d47c5335f1acbccf5a905b11221c3705d945cf9e"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957,CVE-2019-12422,CVE-2016-6802",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "de82216618a4362addebdeb1bba73a85868bd4aa7a861d21dd2852ec75d9c49f",
+            "org/apache/shiro/util/AntPathMatcher.class": "aa5f37ee68dde1cee4e4e4100e3e6e9a4e77c55aa3d0b6902499d7ffa3119f5c",
+            "org/apache/shiro/config/Ini.class": "c3e286a15669d6ba78a8ffd326aa8b68c3bbb303060a68a6fa461cec225bc2da",
+            "MavenVersion": "1.2.5",
+            "hash256": "0acb6df3ddf5394bca2b78fc7ebc87b28bb82284d24fc23f7f905a3736b4c2b5"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957,CVE-2019-12422,CVE-2016-6802",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "0ea8919e0f4ba640db30a0259a7edfdbdb9e6b460a4cef0a67199fa9cb82ae5b",
+            "org/apache/shiro/util/AntPathMatcher.class": "e5be0dc31e89c3069d4cc9ddc3a25cc4d09dbc01df3f0c82c01a6aefab87a446",
+            "org/apache/shiro/config/Ini.class": "447ffe147144cb861322df3ddf6dcb8be2142c8a9941e2336af296ee781cb157",
+            "MavenVersion": "1.2.6",
+            "hash256": "c3a3f14f7acc4a222bbbf4e24250d2b3195a2205417dadae07bbd2bda2cfba97"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957,CVE-2019-12422,CVE-2016-6802",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "0ea8919e0f4ba640db30a0259a7edfdbdb9e6b460a4cef0a67199fa9cb82ae5b",
+            "org/apache/shiro/util/AntPathMatcher.class": "e5be0dc31e89c3069d4cc9ddc3a25cc4d09dbc01df3f0c82c01a6aefab87a446",
+            "org/apache/shiro/config/Ini.class": "d123c6496816a56b6fe9887c800e9b6c3d15d176cf78a133504108e35646d8c1",
+            "MavenVersion": "1.3.0",
+            "hash256": "0692e6de4a06934f08291bdee9f4d3ad3377cc4b0046a37d3298d17b862d1386"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957,CVE-2019-12422,CVE-2016-6802",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "b134e924f1c5abb334b66d349ee7df05144e8ec73d4c8a899ca6789ceab1469b",
+            "org/apache/shiro/util/AntPathMatcher.class": "aa5f37ee68dde1cee4e4e4100e3e6e9a4e77c55aa3d0b6902499d7ffa3119f5c",
+            "org/apache/shiro/config/Ini.class": "d123c6496816a56b6fe9887c800e9b6c3d15d176cf78a133504108e35646d8c1",
+            "MavenVersion": "1.3.1",
+            "hash256": "a5da0717fb21f8fc15a5c425ca93f4317480773ddb3674f7016f3709e378c415"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957,CVE-2019-12422",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "b134e924f1c5abb334b66d349ee7df05144e8ec73d4c8a899ca6789ceab1469b",
+            "org/apache/shiro/util/AntPathMatcher.class": "aa5f37ee68dde1cee4e4e4100e3e6e9a4e77c55aa3d0b6902499d7ffa3119f5c",
+            "org/apache/shiro/config/Ini.class": "d123c6496816a56b6fe9887c800e9b6c3d15d176cf78a133504108e35646d8c1",
+            "MavenVersion": "1.3.2",
+            "hash256": "2d5f2658e691012b9e62c6061fd817a98518d03e6370ab2f370d274835ca3a8c"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957,CVE-2019-12422",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "5a597337bf8b946d47d0a44ab704e827a8c4213dc09d86b4526324fc2208a3ad",
+            "org/apache/shiro/util/AntPathMatcher.class": "206aece74dd7c82ef3cf48ca6942ca751eef21775c3cc246099f1a131298ff5b",
+            "org/apache/shiro/config/Ini.class": "1ced0fe9505965910f82356793e334a2cc80374a2c20b1ededa1672920ace7a4",
+            "MavenVersion": "1.4.0",
+            "hash256": "1c1aa41af7a3314678154ff0456d7592bbd00f298ce3a94a417a1bd4bcfd1104"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957,CVE-2019-12422",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "b134e924f1c5abb334b66d349ee7df05144e8ec73d4c8a899ca6789ceab1469b",
+            "org/apache/shiro/util/AntPathMatcher.class": "e5be0dc31e89c3069d4cc9ddc3a25cc4d09dbc01df3f0c82c01a6aefab87a446",
+            "org/apache/shiro/config/Ini.class": "c88ef493472cab67f4960701f94a40282cb9ae422180367a51cfc0bb60f2d44a",
+            "MavenVersion": "1.4.1",
+            "hash256": "44b7175173d46d7d3f2a3018d2e725da2ac7003ed373dd75c01bd97844143767"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "b134e924f1c5abb334b66d349ee7df05144e8ec73d4c8a899ca6789ceab1469b",
+            "org/apache/shiro/util/AntPathMatcher.class": "e5be0dc31e89c3069d4cc9ddc3a25cc4d09dbc01df3f0c82c01a6aefab87a446",
+            "org/apache/shiro/config/Ini.class": "c88ef493472cab67f4960701f94a40282cb9ae422180367a51cfc0bb60f2d44a",
+            "MavenVersion": "1.4.2",
+            "hash256": "0479aa12731377d6dcbace161ce4498a64326f0005453ce5c63891cc39e9c2b6"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "0e3fba43178823208a3bcd93deddcd84ebf9e8677f94084ccdbff4c425a60d75",
+            "org/apache/shiro/util/AntPathMatcher.class": "f054e7e3906eb1d6faca3afa5065ec8e3ded1a1ddb78093dd39b6900d3fe30b4",
+            "org/apache/shiro/config/Ini.class": "e8cb8875cae112f1d2ae33336fdf9009e145684d3a75103a11caba8ff8149265",
+            "MavenVersion": "1.5.0",
+            "hash256": "85305ecc0856101089af3e1d096aa97fd9058342e0bf8fee8dcfafa96bac1bd1"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989,CVE-2020-1957",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "0e3fba43178823208a3bcd93deddcd84ebf9e8677f94084ccdbff4c425a60d75",
+            "org/apache/shiro/util/AntPathMatcher.class": "f054e7e3906eb1d6faca3afa5065ec8e3ded1a1ddb78093dd39b6900d3fe30b4",
+            "org/apache/shiro/config/Ini.class": "e8cb8875cae112f1d2ae33336fdf9009e145684d3a75103a11caba8ff8149265",
+            "MavenVersion": "1.5.1",
+            "hash256": "c6e016c8a235c3203e0e782bba0456593ee327304366cfc7088430c650e618cd"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933,CVE-2020-11989",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "0e3fba43178823208a3bcd93deddcd84ebf9e8677f94084ccdbff4c425a60d75",
+            "org/apache/shiro/util/AntPathMatcher.class": "f054e7e3906eb1d6faca3afa5065ec8e3ded1a1ddb78093dd39b6900d3fe30b4",
+            "org/apache/shiro/config/Ini.class": "e8cb8875cae112f1d2ae33336fdf9009e145684d3a75103a11caba8ff8149265",
+            "MavenVersion": "1.5.2",
+            "hash256": "c3c93af57e2a9281bc7956dd24660c9ba166ea0a47823f1670ceb5becb663ca9"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510,CVE-2020-13933",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "0e3fba43178823208a3bcd93deddcd84ebf9e8677f94084ccdbff4c425a60d75",
+            "org/apache/shiro/util/AntPathMatcher.class": "f054e7e3906eb1d6faca3afa5065ec8e3ded1a1ddb78093dd39b6900d3fe30b4",
+            "org/apache/shiro/config/Ini.class": "e8cb8875cae112f1d2ae33336fdf9009e145684d3a75103a11caba8ff8149265",
+            "MavenVersion": "1.5.3",
+            "hash256": "47e3b7e9da466aea0b2b89d820b240c16e19a20f3bc6508ddbafb841d3a7321b"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523,CVE-2020-17510",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "ba47c3059dc72328b75348beb30b6367438a93e919cbf739c63506a6f70d872e",
+            "org/apache/shiro/util/AntPathMatcher.class": "3edac11eae38422a09f630e6fd2af3368d2eee9a19935afd6698798e6d304aae",
+            "org/apache/shiro/config/Ini.class": "fa1a1ad6e49a00860beeebe29e902bbe28a213d430a77eee88bbcbb8a2a25b00",
+            "MavenVersion": "1.6.0",
+            "hash256": "2370d47faf2d2fff381e4ed5c60fa78b6dd9f0e372fb1f00cb03ddbdcaed2672"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303,CVE-2020-17523",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "ba47c3059dc72328b75348beb30b6367438a93e919cbf739c63506a6f70d872e",
+            "org/apache/shiro/util/AntPathMatcher.class": "3edac11eae38422a09f630e6fd2af3368d2eee9a19935afd6698798e6d304aae",
+            "org/apache/shiro/config/Ini.class": "fa1a1ad6e49a00860beeebe29e902bbe28a213d430a77eee88bbcbb8a2a25b00",
+            "MavenVersion": "1.7.0",
+            "hash256": "75bffa4316777d4fceb60bd99b4f602098f2abf424afd6990c7236ad8ae960af"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532,CVE-2021-41303",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "ba47c3059dc72328b75348beb30b6367438a93e919cbf739c63506a6f70d872e",
+            "org/apache/shiro/util/AntPathMatcher.class": "005e6e5980883984fcbc2205ca00fe18ecb75b8d1d82a7101b9b064c04958bbe",
+            "org/apache/shiro/config/Ini.class": "fa1a1ad6e49a00860beeebe29e902bbe28a213d430a77eee88bbcbb8a2a25b00",
+            "MavenVersion": "1.7.1",
+            "hash256": "ac45467d22156ba2399c772b59b99c1726f6334c150b98a939c677c7f35b96af"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "ba47c3059dc72328b75348beb30b6367438a93e919cbf739c63506a6f70d872e",
+            "org/apache/shiro/util/AntPathMatcher.class": "005e6e5980883984fcbc2205ca00fe18ecb75b8d1d82a7101b9b064c04958bbe",
+            "org/apache/shiro/config/Ini.class": "fa1a1ad6e49a00860beeebe29e902bbe28a213d430a77eee88bbcbb8a2a25b00",
+            "MavenVersion": "1.8.0",
+            "hash256": "e2cd7c6bb9066f89023060a2b3a22c983d490f4edb515d5ddd4a92eb42269bc5"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664,CVE-2022-32532",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "ba47c3059dc72328b75348beb30b6367438a93e919cbf739c63506a6f70d872e",
+            "org/apache/shiro/util/AntPathMatcher.class": "005e6e5980883984fcbc2205ca00fe18ecb75b8d1d82a7101b9b064c04958bbe",
+            "org/apache/shiro/config/Ini.class": "fa1a1ad6e49a00860beeebe29e902bbe28a213d430a77eee88bbcbb8a2a25b00",
+            "MavenVersion": "1.9.0",
+            "hash256": "c5b46f06c353c1a8d16574550e50b9bcee20cce932ed14746eb9376d67fceff9"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602,CVE-2022-40664",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "ba47c3059dc72328b75348beb30b6367438a93e919cbf739c63506a6f70d872e",
+            "org/apache/shiro/util/AntPathMatcher.class": "005e6e5980883984fcbc2205ca00fe18ecb75b8d1d82a7101b9b064c04958bbe",
+            "org/apache/shiro/config/Ini.class": "fa1a1ad6e49a00860beeebe29e902bbe28a213d430a77eee88bbcbb8a2a25b00",
+            "MavenVersion": "1.9.1",
+            "hash256": "30133f175ae1e590a3418287b53e323618d809274e91995044d1369c7efb1fe2"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "ba47c3059dc72328b75348beb30b6367438a93e919cbf739c63506a6f70d872e",
+            "org/apache/shiro/util/AntPathMatcher.class": "005e6e5980883984fcbc2205ca00fe18ecb75b8d1d82a7101b9b064c04958bbe",
+            "org/apache/shiro/config/Ini.class": "fa1a1ad6e49a00860beeebe29e902bbe28a213d430a77eee88bbcbb8a2a25b00",
+            "MavenVersion": "1.10.0",
+            "hash256": "5d6170ad2ff6a9cbb07e94f4ba3b87e6554fafb5f1159a99d0458d01e3638730"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478,CVE-2023-22602",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "ba47c3059dc72328b75348beb30b6367438a93e919cbf739c63506a6f70d872e",
+            "org/apache/shiro/util/AntPathMatcher.class": "005e6e5980883984fcbc2205ca00fe18ecb75b8d1d82a7101b9b064c04958bbe",
+            "org/apache/shiro/config/Ini.class": "fa1a1ad6e49a00860beeebe29e902bbe28a213d430a77eee88bbcbb8a2a25b00",
+            "MavenVersion": "1.10.1",
+            "hash256": "01678d5203cd7c97b42c12413c1ebef5abdc13ff7edc2ffbfa595a7b5702637c"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750,CVE-2023-34478",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "ba47c3059dc72328b75348beb30b6367438a93e919cbf739c63506a6f70d872e",
+            "org/apache/shiro/util/AntPathMatcher.class": "005e6e5980883984fcbc2205ca00fe18ecb75b8d1d82a7101b9b064c04958bbe",
+            "org/apache/shiro/config/Ini.class": "fa1a1ad6e49a00860beeebe29e902bbe28a213d430a77eee88bbcbb8a2a25b00",
+            "MavenVersion": "1.11.0",
+            "hash256": "a153ec271d77e1c336858260d956c52433f51761494119e58ee0cfc4c475d293"
+        },
+        {
+            "CVE": "CVE-2023-46749,CVE-2023-46750",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "ba47c3059dc72328b75348beb30b6367438a93e919cbf739c63506a6f70d872e",
+            "org/apache/shiro/util/AntPathMatcher.class": "005e6e5980883984fcbc2205ca00fe18ecb75b8d1d82a7101b9b064c04958bbe",
+            "org/apache/shiro/config/Ini.class": "fa1a1ad6e49a00860beeebe29e902bbe28a213d430a77eee88bbcbb8a2a25b00",
+            "MavenVersion": "1.12.0",
+            "hash256": "1ad56fdb8df8c92f6550c9a0013bf894c31e7f0fdd17eef68c8ec2639de9a138"
+        },
+        {
+            "CVE": "CVE-2023-46749",
+            "org/apache/shiro/mgt/AbstractRememberMeManager.class": "0e3fba43178823208a3bcd93deddcd84ebf9e8677f94084ccdbff4c425a60d75",
+            "org/apache/shiro/util/AntPathMatcher.class": "6a54e8c645a5f8065dd594cfcb5a83a573fcd6ccb2b428e871931d497b117f38",
+            "org/apache/shiro/config/Ini.class": "e8cb8875cae112f1d2ae33336fdf9009e145684d3a75103a11caba8ff8149265",
+            "MavenVersion": "1.13.0",
+            "hash256": "ddb03b68cdc08792ec2a18f0ae6edb298ce94073a87862cb44b5db3fa40643ff"
+        }
+    ]
+}

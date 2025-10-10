@@ -1,171 +1,510 @@
 {% extends "layout.html" %}
-
 {% block content %}
 <div class="main-content">
-    <div class="container-fluid" style="padding-bottom:54px">
-        <div class="pos-box bgw mtb15">
-          <div class="tab-list">
-              <div class="tabs-item active">{{data['lan']['H2']}}</div>
-          </div>
-        </div>
-        <div class="setbox bgw mtb15 radius4">
-            <div class="title c6 plr15">
-                <h3 class="f16">{{data['lan']['H3']}}</h3>
-            </div>
-            <div class="setting-con ptb20" id="crontabForm" style="min-height:350px"></div>
-        </div>
 
-        <div class="setbox bgw mtb15 radius4">
-            <div class="title c6 plr15">
-                <h3 class="f16">{{data['lan']['H4']}}</h3>
-            </div>
-            <div id="crontabTabel" class="pd15 setting-con"></div>
-        </div>
-    </div>
+	<div class="container-fluid" style="padding-bottom:54px">
+		<div class="pos-box bgw mtb15">
+			<div class="tab-list" id="cronMode">
+				<div class="tabs-item" data-type="crontab">{{data['lan']['H2']}}</div>
+				<div class="tabs-item" data-type="trigger">任务编排</div>
+				<div class="tabs-item" data-type="script">脚本库</div>
+			</div>
+		</div>
+		<div class="info-title-tips task-orchestration-title" style="display: none">
+			<p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span>【使用提醒】此功能为企业版专享功能</p>
+		</div>
+		<div class="site_table_view bgw mtb15 pd15 tab-view-box">
+			<div class="tab-con" style="padding: 0;overflow: inherit;">
+				<div class="tab-con-block">
+					<div class="setbox radius4">
+						<div class="title c6 plr15">
+							<div class="flex" >
+								<h3 class="f16">{{data['lan']['H3']}}</h3>
+								<div class="ml15">
+									<span class="bt-desired" style="background-size:contain;">
+										<a href="javascript:;" class="btlink ml5 npsFeedback">需求反馈</a>
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="setting-con ptb20" id="crontabForm" style="min-height:350px"></div>
+					</div>
+					<div class="setbox radius4">
+						<div class="title c6 plr15 flex justify-between" style="align-items: center;">
+							<h3 class="f16">{{data['lan']['H4']}}</h3>
+							<div class="order_search">
+								<input type="text" class="search_input" placeholder="支持任务名称、关键字模糊搜索" />
+								<span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+							</div>
+						</div>
+						<div id="crontabTabel" class="pd15 setting-con"></div>
+					</div>
+				</div>
+				<div class="tab-con-block task-orchestration" style="display: none">
+					<div id="crontabTrigger"></div>
+					<div class="thumbnail-introduce-new" style="padding: 34px 20% 0 20%;">
+						<div class="thumbnail-introduce-title-new" style="width:100%;">
+							<div class="thumbnail-title-left-new">
+								<div class="thumbnail-title-text-new">
+									<p>任务编排-功能介绍</p>
+									<p>脚本库含有：服务管理、进程监控、告警通知、负载监控、网站监控等常用脚本任务，可以实现自动化的脚本定时执行、服务器状态监控和任务追踪功能。</p>
+								</div>
+							</div>
+							<div class="thumbnail-title-button-new daily-product-buy">
+								<a title="立即购买" href="javascript:;" class="btn btn-success va0 ml15"
+									onclick="product_recommend.pay_product_sign('ltd',160,'ltd')">立即购买</a>
+							</div>
+						</div>
+						<div class="thumbnail-introduce-hr" style="width: 100%;"></div>
+						<div class="thumbnail-introduce-ul-new" style="width:100%;">
+							<ul style="justify-content:space-evenly">
+								<li><span class="li-icon"></span>脚本定时执行</li>
+								<li><span class="li-icon"></span>监控服务器状态</li>
+								<li><span class="li-icon"></span>任务追踪</li>
+							</ul>
+						</div>
+						<img class="product_view_img"
+							src="https://www.bt.cn/Public/new/plugin/introduce/crontab/crontab_trigger.png"
+							style="width: 100%;box-shadow: 0px 6px 10px rgba(145, 145, 145, 0.25);margin-top:30px" />
+					</div>
+				</div>
+				<div class="tab-con-block">
+					<div id="crontabScriptBox"></div>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>
 <style>
-    /* tools.js */
-    .bt-form .line label.cursor-pointer i.form-checkbox{
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        border: 1px solid #ccc;
-        background-color: #fff;
-        vertical-align: top;
-        position: relative;
-        border-radius: 2px;
-        vertical-align:middle;
-    }
-    .bt-form .line label.cursor-pointer i.form-checkbox.active{
-        background-color: #20a53a;
-        border-color: #20a53a;
-    }
-    .bt-form .line label.cursor-pointer i.form-checkbox.active::after {
-        content: '';
-        position: absolute;
-        display: block;
-        left: 50%;
-        top: 50%;
-        margin-left: -2.5px;
-        margin-top: -6px;
-        width: 5px;
-        height: 10px;
-        border: solid #fff;
-        border-width: 0 2px 2px 0;
-        transform: rotate(45deg);
-    }
-    /* tools.js end */
-    .layer-create-content .layui-layer-content {
-        overflow: inherit;
-    }
+   	/* tools.js */
+	.bt-form .line label.cursor-pointer i.form-checkbox {
+		display: inline-block;
+		width: 16px;
+		height: 16px;
+		border: 1px solid #ccc;
+		background-color: #fff;
+		vertical-align: top;
+		position: relative;
+		border-radius: 2px;
+		vertical-align: middle;
+	}
+	.bt-form .line label.cursor-pointer i.form-checkbox.active {
+		background-color: #20a53a;
+		border-color: #20a53a;
+	}
+	.bt-form .line label.cursor-pointer i.form-checkbox.active::after {
+		content: '';
+		position: absolute;
+		display: block;
+		left: 50%;
+		top: 50%;
+		margin-left: -2.5px;
+		margin-top: -6px;
+		width: 5px;
+		height: 10px;
+		border: solid #fff;
+		border-width: 0 2px 2px 0;
+		transform: rotate(45deg);
+	}
+	/* tools.js end */
+	.layer-create-content .layui-layer-content {
+		overflow: inherit;
+	}
 
-    .crontab_form {
-        padding: 15px 45px;
-    }
+	.crontab_form {
+		padding: 15px 45px;
+	}
 
-    .crontab_form .inlineBlock {
-        vertical-align: middle;
-    }
+	.crontab_form .inlineBlock {
+		vertical-align: middle;
+	}
 
-    .crontab_form .tname {
-        font-size: 13px;
-    }
+	.crontab_form .tname {
+		font-size: 13px;
+	}
 
-    .crontab_form .line .tname {
-        height: 35px;
-        line-height: 35px;
-    }
+	.crontab_form .line .tname {
+		height: 35px;
+		line-height: 35px;
+	}
 
-    .crontab_form .line .info-r {
-        margin-bottom: 15px;
-    }
+	.crontab_form .line .info-r {
+		margin-bottom: 15px;
+	}
 
-    .crontab_form .bt_select_updown {
-        height: 35px;
-        line-height: 35px;
-    }
+	.crontab_form .bt_select_updown {
+		height: 35px;
+		line-height: 35px;
+	}
 
-    .crontab_form .bt-input-text {
-        height: 35px;
-        line-height: 35px;
-        padding-left: 10px;
-        font-size: 13px;
-    }
+	.crontab_form .bt-input-text {
+		height: 35px;
+		line-height: 35px;
+		padding-left: 10px;
+		font-size: 13px;
+	}
 
 
-    .crontab_form .bt_select_updown .bt_select_list {
-        max-height: 240px;
-    }
+	.crontab_form .bt_select_updown .bt_select_list {
+		max-height: 240px;
+	}
 
-    .crontab_form .inlineBlock.group span {
-        height: 35px;
-        line-height: 33px
-    }
+	.crontab_form .inlineBlock.group span {
+		height: 35px;
+		line-height: 33px
+	}
 
-    .crontab_form .bt_select_updown .bt_select_value {
-        height: 33px;
-        line-height: 33px;
-    }
+	.crontab_form .bt_select_updown .bt_select_value {
+		height: 33px;
+		line-height: 33px;
+	}
 
-    .crontab_form .bt_select_updown .bt_select_content {
-        font-size: 13px;
-    }
+	.crontab_form .bt_select_updown .bt_select_content {
+		font-size: 13px;
+	}
 
-    .crontab_form .bt_select_updown .bt_select_list {
-        top: 35px;
-    }
+	.crontab_form .bt_select_updown .bt_select_list {
+		top: 35px;
+	}
 
-    .crontab_form .bt_select_updown .bt_select_list .item {
-        height: 30px;
-        line-height: 30px;
-    }
+	.crontab_form .bt_select_updown .bt_select_list .item {
+		height: 30px;
+		line-height: 30px;
+	}
 
-    .crontab_form .inlineBlock {
-        margin-right: 10px;
-    }
+	.crontab_form .inlineBlock {
+		margin-right: 10px;
+	}
 
-    .crontab_form .btn {
-        font-size: 13px;
-        padding: 7px 30px;
-    }
-    #crontabTabel .divtable thead{
-        position: relative;
-        z-index: 999;
-    }
-    #crontabTabel .divtable{
-        border: 1px solid #ddd;
-    }
-    #crontabTabel table{
-        border: none;
-    }
-    .layer-alarm-channel .bt-w-main{ height:430px}
+	.crontab_form .btn {
+		font-size: 13px;
+		padding: 7px 30px;
+	}
+	#crontabTabel .divtable thead {
+		position: relative;
+		z-index: 999;
+	}
+	#crontabTabel .divtable {
+		border: 1px solid #ddd;
+	}
+	#crontabTabel table {
+		border: none;
+	}
+	.layer-alarm-channel .bt-w-main {
+		height: 430px
+	}
 
-    /* 消息通道 */
-    .channel_config_view a.layui-layer-btn2{
-        background-color: #fff;
-        border: 1px solid #ccc !important;
-        color: #555;
-        font-weight:initial;
-        float: left;
-    }
-    .channel_config_view a.layui-layer-btn2:hover{
-        color: #fff;
-        background-color: #10952a;
-        border-color: #398439;
-    }
+	/* 消息通道 */
+	.channel_config_view a.layui-layer-btn2 {
+		background-color: #fff;
+		border: 1px solid #ccc !important;
+		color: #555;
+		font-weight: initial;
+		float: left;
+	}
+	.channel_config_view a.layui-layer-btn2:hover {
+		color: #fff;
+		background-color: #10952a;
+		border-color: #398439;
+	}
 
-    .email_alarm thead{
-        position: relative;
-        z-index: 11;
-    }
-    /* 消息通道 end*/
+	.email_alarm thead {
+		position: relative;
+		z-index: 11;
+	}
+	/* 消息通道 end*/
+	/* 触发器 */
+	#trigger_form_box .inlineBlock.group span {
+		height: 32px;
+		line-height: 30px
+	}
+
+	#trigger_form_box .inlineBlock.group {
+		margin-right: 10px;
+	}
+
+	/* 触发器 end*/
+	#crontabScriptBox .tab-con {
+		padding: 0;
+	}
+
+	/* tools二级下拉 */
+	.bt_seconday_menu .bt_select_list {
+		overflow: inherit;
+	}
+
+	.bt_select_list .item-parent span {
+		position: absolute;
+		right: 5px;
+		top: 8px;
+	}
+
+	.bt_select_list li.item-parent {
+		height: 28px;
+		line-height: 28px;
+		position: relative;
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.bt_select_list li.item-parent.down {
+		color: rgb(32, 165, 58);
+	}
+
+	.bt_select_list li.item-parent:hover,
+	.bt_select_list li.item-parent.down,
+	.bt_select_list .item-menu-body-list .item-child:hover {
+		background-color: rgb(245, 247, 250);
+	}
+
+	.bt_select_list .item-menu-body-list {
+		display: none;
+		position: absolute;
+		transition: all 500ms;
+		top: 0;
+		right: -204px;
+		box-shadow: 0px 3px 16px rgba(153, 153, 153, 0.42);
+		border-radius: 1px;
+		width: 208px;
+		z-index: 999;
+		background-color: #fff;
+		max-height: 168px;
+		overflow: auto;
+	}
+
+	.bt_select_list .item-menu-body-list .item-child {
+		height: 28px;
+		line-height: 28px;
+		color: rgb(102, 102, 102)
+	}
+
+	.bt_select_list .item-menu-body-list .item-child.active {
+		color: rgb(32, 165, 58);
+	}
+
+	.item-menu-title.active {
+		color: rgb(32, 165, 58);
+	}
+
+	.bt_select_list .item-menu-title {
+		padding-left: 10px;
+		width: max-content;
+	}
+
+	/* tools二级下拉 end*/
+	.bt_seconday_menu .bt_select_list {
+		overflow: inherit;
+	}
+
+	.bt_select_list .item-parent span {
+		position: absolute;
+		right: 5px;
+		top: 8px;
+	}
+
+	.bt_select_list li.item-parent {
+		height: 28px;
+		line-height: 28px;
+		position: relative;
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.bt_select_list li.item-parent.down {
+		color: rgb(32, 165, 58);
+	}
+
+	.bt_select_list li.item-parent:hover,
+	.bt_select_list li.item-parent.down,
+	.bt_select_list .item-menu-body-list .item-child:hover {
+		background-color: rgb(245, 247, 250);
+	}
+
+	.bt_select_list .item-menu-body-list {
+		display: none;
+		position: absolute;
+		transition: all 500ms;
+		top: 0;
+		right: -204px;
+		box-shadow: 0px 3px 16px rgba(153, 153, 153, 0.42);
+		border-radius: 1px;
+		width: 208px;
+		z-index: 999;
+		background-color: #fff;
+		max-height: 168px;
+		overflow: auto;
+	}
+
+	.bt_select_list .item-menu-body-list .item-child {
+		height: 28px;
+		line-height: 28px;
+		color: rgb(102, 102, 102)
+	}
+
+	.bt_select_list .item-menu-body-list .item-child.active {
+		color: rgb(32, 165, 58);
+	}
+
+	.item-menu-title.active {
+		color: rgb(32, 165, 58);
+	}
+
+	.bt_select_list .item-menu-title {
+		padding-left: 10px;
+		width: max-content;
+	}
+
+
+	.messageCard {
+		overflow-y: scroll;
+	}
+
+	.messageCard::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+
+	.messageCard::-webkit-scrollbar-thumb {
+		border-radius: 10px;
+		background: rgba(0, 0, 0, 0.2);
+	}
+
+	.messageCard::-webkit-scrollbar-track {
+		border-radius: 0;
+		background: rgba(0, 0, 0, 0.1);
+	}
+
+	.green {
+		color: #20A53A;
+	}
+	.orange {
+		color: #F0AD4E;
+	}
+	.red {
+		color: #EF0808;
+	}
+	/* 计划任务列表置顶*/
+	.crontab-topping {
+		width: 20px;
+		height: 20px;
+		cursor: pointer;
+	}
+
+	.crontab-gray {
+		filter: grayscale(80%)
+	}
+
+	.bt_multiple_select_updown .bt_select_content span:first-child {
+		max-width: 120px;
+		overflow: hidden;
+		display: inline-block;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	/* 计划任务列表置顶 end*/
+	/* 计划任务测试本地url提示样式*/
+	.localManu {
+		display: none;
+		width: 98%;
+		max-height: 300px;
+		overflow: auto;
+		position: absolute;
+		top: 36px;
+		left: 0px;
+		padding: 5px 0;
+		background-color: #fff;
+		border-radius: 4px;
+		border: 1px solid rgb(228, 231, 237);
+		box-shadow: 0px 3px 16px rgba(153, 153, 153, 0.42);
+		z-index: 99999;
+	}
+
+	.localManu .domain-li {
+		width: 100%;
+		padding: 0 10px;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		line-height: 30px;
+		cursor: pointer;
+	}
+
+	.localManu .domain-li:hover {
+		background-color: #F5F7FA;
+	}
+
+	.localManu .active {
+		color: #20A53A;
+	}
+	/* 计划任务测试本地url提示样式 end*/
+	/* 任务列表搜索框样式*/
+	.order_search {
+		display: inline-block;
+		height: 30px;
+		line-height: 30px;
+		position: relative;
+	}
+	.order_search .search_input {
+		height: 30px;
+		line-height: 30px;
+		border-radius: 2px;
+		border: 1px solid #DCDFE6;
+		outline: none;
+		padding-left: 8px;
+		vertical-align: top;
+		width: 230px;
+	}
+	.order_search .search_input:focus {
+		border-color: #20a53a;
+	}
+	.order_search .glyphicon-search {
+		height: 28px;
+		line-height: 28px;
+		padding: 0 10px;
+		color: #888;
+		position: absolute;
+		right: 0;
+		font-size: 14px;
+		cursor: pointer;
+	}
+	.order_search .search_input:focus+span.glyphicon-search {
+		color: #20a53a;
+	}
+	#time_choose {
+		border: #ddd 1px solid;
+		height: 30px;
+		padding: 0 10px;
+		width: 180px;
+		background-image:
+			url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAHBAMAAADOnLEXAAAAA3NCSVQICAjb4U/gAAAAElBMVEX////v7++oqKiSkpJgYGAzMzNVUvUKAAAABnRSTlMA//////96eeD+AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAFnRFWHRDcmVhdGlvbiBUaW1lADA3LzEzLzE442/mwwAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAApSURBVAiZYxBiAAJFBhEDBgZmRwbmYAYGUwMQBrGAXBAHyAVxgFwgBwBYpgOoNMjLNgAAAABJRU5ErkJggg==);
+		background-repeat: no-repeat;
+		background-position: 160px center;
+		outline: none;
+	}
+	/* 任务列表搜索框样式end*/
 </style>
 {% endblock %}
 {% block scripts %}
-  {{ super() }} 
+  {{ super() }}
+	<script type="text/javascript" src="{{g.cdn_url}}/laydate/laydate.js"></script>
   <script src="{{g.cdn_url}}/js/crontab.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-  <script type="text/javascript">
-      crontab.init()
+	<script type="text/javascript" src="{{g.cdn_url}}/editor/ace.js" defer></script>
+	<script type="text/javascript">
+      // crontab.init()
       setCookie('serverType',"{{session['webserver']}}");
+	  bt.newDotTips([
+		{el: '#cronMode .tabs-item:eq(1)',name: 'task',style: 'top: 18px;margin-left: 6px;'},
+		{el: '#cronMode .tabs-item:eq(2)',name: 'shell',style: 'top: 18px;margin-left: 6px;'}
+		])
+			// 计划任务nps入口
+			$('.npsFeedback').on('click',function(){
+				bt_tools.nps({name:'计划任务', type: 6 })
+			})
+
+
   </script>
 {% endblock %}

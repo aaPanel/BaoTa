@@ -1,12 +1,12 @@
-#coding: utf-8
+# coding: utf-8
 # +-------------------------------------------------------------------
 # | 宝塔Linux面板
 # +-------------------------------------------------------------------
-# | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
+# | Copyright (c)  2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
-# | Author: hwliang <hwl@bt.cn>
+# | Author :   hwliang  <hwl@bt.cn>
 # +-------------------------------------------------------------------
-from BTPanel import session, cache , request, redirect, g
+from BTPanel import session, cache, request, redirect, g, abort,Response
 from datetime import datetime
 from public import dict_obj
 import os
@@ -14,6 +14,7 @@ import public
 import json
 import sys
 import time
+from theme_config import ThemeConfigManager
 
 
 class panelSetup:
@@ -21,19 +22,26 @@ class panelSetup:
         panel_path = public.get_panel_path()
         if os.getcwd() != panel_path: os.chdir(panel_path)
 
-        g.ua = request.headers.get('User-Agent','')
+        g.ua = request.headers.get('User-Agent', '')
         if g.ua:
             ua = g.ua.lower()
             if ua.find('spider') != -1 or g.ua.find('bot') != -1:
-                return redirect('https://www.baidu.com')
-        
-        g.version = '7.9.25'
+                return abort(403)
+
+        g.version = '11.1.0'
         g.title = public.GetConfigValue('title')
         g.uri = request.path
         g.debug = os.path.exists('data/debug.pl')
         g.pyversion = sys.version_info[0]
         session['version'] = g.version
-        
+        # 初始化主题配置管理器（默认检测是否存在配置文件，并新建）
+        theme_manager = ThemeConfigManager()
+        # 获取主题配置数据
+        theme_manager_data = theme_manager.get_config()
+        # 获取主题配置
+        g.panel_theme = theme_manager_data['data']
+
+        if not public.get_improvement(): session['is_flush_soft_list'] = 1
         if request.method == 'GET':
             if not g.debug:
                 g.cdn_url = public.get_cdn_url()
@@ -44,16 +52,15 @@ class panelSetup:
             else:
                 g.cdn_url = '/static'
             session['title'] = g.title
-            
+
         g.recycle_bin_open = 0
         if os.path.exists("data/recycle_bin.pl"): g.recycle_bin_open = 1
-        
+
         g.recycle_bin_db_open = 0
         if os.path.exists("data/recycle_bin_db.pl"): g.recycle_bin_db_open = 1
         g.is_aes = False
         self.other_import()
         return None
-
 
     def other_import(self):
         g.o = public.readFile('data/o.pl')
@@ -64,11 +71,46 @@ class panelSetup:
             css_name = "css/{}.css".format(g.o)
             css_file = s_path.format(css_name)
             if os.path.exists(css_file): g.other_css.append('/static/other/{}'.format(css_name))
-            
+
             js_name = "js/{}.js".format(g.o)
             js_file = s_path.format(js_name)
             if os.path.exists(js_file): g.other_js.append('/static/other/{}'.format(js_name))
 
+    def auto_complete_params(self,target_params,default_values,param_mapping=None):
+        '''
+        自动补全参数缺少的值并支持参数名称替换
+        参数:
+        target_params (dict): 参数字典
+        default_values (dict): 默认值字典（默认值）
+        param_mapping (dict, optional): 参数名称映射字典，用于替换参数名称
+        返回:
+        dict: {'status': bool, 'data': dict}
+        '''
+        # 创建一个新字典，避免修改原始字典
+        result = target_params.copy()
+
+        mapping_adjusted = False
+        # 处理参数名称替换
+        if param_mapping:
+            for old_name, new_name in param_mapping.items():
+                if old_name in result:
+                    result[new_name] = result.pop(old_name)
+                    mapping_adjusted = True
+
+        # 遍历默认值字典，检查目标参数字典
+        for key, value in default_values.items():
+            if key not in result:
+                result[key] = value
+            elif isinstance(result[key], dict) and isinstance(value, dict):
+                # 递归处理嵌套字典
+                recursive_result = self.auto_complete_params(result[key], value, param_mapping)
+                if not recursive_result['status']:
+                    mapping_adjusted = True
+                result[key] = recursive_result['data']
+
+        if mapping_adjusted:
+            return {'status': False, 'data': {}}
+        return {'status': True, 'data': result}
 
 
 class panelAdmin(panelSetup):
@@ -97,7 +139,11 @@ class panelAdmin(panelSetup):
     # 设置基础Session
     def setSession(self):
         if request.method == 'GET':
-            g.menus = public.get_menus()
+            import config
+            con = config.config()
+            menus = con.get_menu_list(None)
+            g.menus = json.dumps(menus)
+            session['menus'] = g.menus
             g.yaer = datetime.now().year
 
         if not 'brand' in session:
@@ -108,8 +154,15 @@ class panelAdmin(panelSetup):
             session['setupPath'] = session['rootPath'] + '/server'
             session['logsPath'] = '/www/wwwlogs'
             session['yaer'] = datetime.now().year
-        if not 'menu' in session:
-            session['menu'] = public.GetLan('menu')
+        # if not 'menu' in session:
+        if session.get('uid', None) == 1:
+            import config
+            con = config.config()
+            menus = con.get_menu_list(None)
+            g.menus = json.dumps(menus)
+            session['menus'] = g.menus
+            g.yaer = datetime.now().year
+                
         if not 'lan' in session:
             session['lan'] = public.GetLanguage()
         if not 'home' in session:
@@ -118,7 +171,7 @@ class panelAdmin(panelSetup):
 
     # 检查Web服务器类型
     def checkWebType(self):
-        #if request.method == 'GET':
+        # if request.method == 'GET':
         if not 'webserver' in session:
             if os.path.exists('/usr/local/lsws/bin/lswsctrl'):
                 session['webserver'] = 'openlitespeed'
@@ -127,11 +180,11 @@ class panelAdmin(panelSetup):
             else:
                 session['webserver'] = 'nginx'
         if not 'webversion' in session:
-            if os.path.exists(self.setupPath+'/'+session['webserver']+'/version.pl'):
-                session['webversion'] = public.ReadFile(self.setupPath+'/'+session['webserver']+'/version.pl').strip()
-            
+            if os.path.exists(self.setupPath + '/' + session['webserver'] + '/version.pl'):
+                session['webversion'] = public.ReadFile(self.setupPath + '/' + session['webserver'] + '/version.pl').strip()
+
         if not 'phpmyadminDir' in session:
-            filename = self.setupPath+'/data/phpmyadminDirName.pl'
+            filename = self.setupPath + '/data/phpmyadminDirName.pl'
             if os.path.exists(filename):
                 session['phpmyadminDir'] = public.ReadFile(filename).strip()
         return False
@@ -141,6 +194,16 @@ class panelAdmin(panelSetup):
         if os.path.exists('data/close.pl'):
             return redirect('/close')
 
+    # 跳转到登录页面
+    def to_login(self,url,msg = "登录已失效，请重新登录"):
+        x_http_token = request.headers.get('X-Http-Token', '')
+        if x_http_token:
+            # 如果是ajax请求
+            res = {"status":False,"msg":msg,"redirect":url}
+            return Response(json.dumps(res), content_type='application/json')
+
+        return redirect(url)
+
     # 检查登录
     def check_login(self):
         try:
@@ -149,90 +212,97 @@ class panelAdmin(panelSetup):
             if not 'login' in session:
                 api_check = self.get_sk()
                 if api_check:
-                    # session.clear()
                     return api_check
                 g.api_request = True
             else:
                 if session['login'] == False:
                     session.clear()
-                    return redirect('/login')
-                
+                    return self.to_login(public.get_admin_path())
+
                 if 'tmp_login_expire' in session:
                     s_file = 'data/session/{}'.format(session['tmp_login_id'])
                     if session['tmp_login_expire'] < time.time():
                         session.clear()
                         if os.path.exists(s_file): os.remove(s_file)
-                        return redirect('/login')
+                        return self.to_login(public.get_admin_path(), '临时登录已过期，请重新登录')
                     if not os.path.exists(s_file):
                         session.clear()
-                        return redirect('/login')
-                ua_md5 = public.md5(g.ua)
-                if ua_md5 != session.get('login_user_agent',ua_md5):
+                        return self.to_login(public.get_admin_path(),'临时登录已失效，请重新登录')
+
+                # 检查客户端hash -- 不要删除
+                if not public.check_client_hash():
                     session.clear()
-                    return redirect('/login')
-                
+                    return self.to_login(public.get_admin_path(),'客户端验证失败，请重新登录')
+
             if api_check:
                 now_time = time.time()
-                session_timeout = session.get('session_timeout',0)
+                session_timeout = session.get('session_timeout', 0)
                 if session_timeout < now_time and session_timeout != 0:
                     session.clear()
-                    return redirect('/login?dologin=True&go=0')
-        
-            login_token = session.get('login_token','')
+                    return self.to_login(public.get_admin_path(),"登录会话已过期，请重新登录")
+
+            login_token = session.get('login_token', '')
             if login_token:
                 if login_token != public.get_login_token_auth():
                     session.clear()
-                    return redirect('/login?dologin=True&go=1')
-            
+                    return self.to_login(public.get_admin_path(),'登录验证失败，请重新登录')
+
             # if api_check:
             #     filename = 'data/sess_files/' + public.get_sess_key()
             #     if not os.path.exists(filename):
             #         session.clear()
-            #         return redirect('/login?dologin=True&go=2')
+            #         return redirect(public.get_admin_path())
 
             # 标记新的会话过期时间
-            session['session_timeout'] = time.time() + public.get_session_timeout()
+            self.check_session()
         except:
-            public.WriteLog('登录检查', public.get_error_info())
             session.clear()
-            return redirect('/login')
+            public.print_error()
+            return self.to_login('/login','登录已失效，请重新登录')
+
+
+    def check_session(self):
+        white_list = ['/favicon.ico', '/system?action=GetNetWork']
+        if g.uri in white_list:
+            return
+        session['session_timeout'] = time.time() + public.get_session_timeout()
 
     # 获取sk
     def get_sk(self):
         save_path = '/www/server/panel/config/api.json'
         if not os.path.exists(save_path):
-            return public.error_not_login('/login')
+            return public.redirect_to_login()
 
-        
         try:
             api_config = json.loads(public.ReadFile(save_path))
         except:
             os.remove(save_path)
-            return  public.error_not_login('/login')
-        
+            return public.redirect_to_login()
+
         if not api_config['open']:
-            return  public.error_not_login('/login')
+            return public.redirect_to_login()
         from BTPanel import get_input
         get = get_input()
         client_ip = public.GetClientIp()
         if not 'client_bind_token' in get:
             if not 'request_token' in get or not 'request_time' in get:
-                return  public.error_not_login('/login')
-            
+                return public.redirect_to_login()
+
             num_key = client_ip + '_api'
-            if not public.get_error_num(num_key,20):
-                return public.returnJson(False,'连续20次验证失败,禁止1小时')
+            if not public.get_error_num(num_key, 20):
+                return public.returnJson(False, '连续20次验证失败,禁止1小时')
 
-
-            if not public.is_api_limit_ip(api_config['limit_addr'],client_ip): #client_ip in api_config['limit_addr']:
+            if not public.is_api_limit_ip(api_config['limit_addr'], client_ip):  # client_ip in api_config['limit_addr']:
                 public.set_error_num(num_key)
-                return public.returnJson(False, 'IP校验失败,您的访问IP为['+client_ip+']')
+                return public.returnJson(False, 'IP校验失败,您的访问IP为[' + client_ip + ']')
         else:
+            if not public.check_app('app'):
+                return public.returnMsg(False, '未绑定用户!')
             num_key = client_ip + '_app'
-            if not public.get_error_num(num_key,20):
-                return public.returnJson(False,'连续20次验证失败,禁止1小时')
+            if not public.get_error_num(num_key, 20):
+                return public.returnJson(False, '连续20次验证失败,禁止1小时')
             a_file = '/dev/shm/' + get.client_bind_token
-            
+
             if not public.path_safe_check(get.client_bind_token):
                 public.set_error_num(num_key)
                 return public.returnJson(False, '非法请求')
@@ -241,27 +311,28 @@ class panelAdmin(panelSetup):
                 import panelApi
                 if not panelApi.panelApi().get_app_find(get.client_bind_token):
                     public.set_error_num(num_key)
-                    return public.returnJson(False,'未绑定的设备')
-                public.writeFile(a_file,'')
-            
+                    return public.returnJson(False, '未绑定的设备')
+                public.writeFile(a_file, '')
+
             if not 'key' in api_config:
                 public.set_error_num(num_key)
                 return public.returnJson(False, '密钥校验失败')
             if not 'form_data' in get:
                 public.set_error_num(num_key)
-                return public.returnJson(False,'没有找到form_data数据')
-            
-            g.form_data = json.loads(public.aes_decrypt(get.form_data,api_config['key']))
-            
+                return public.returnJson(False, '没有找到form_data数据')
+
+            g.form_data = json.loads(public.aes_decrypt(get.form_data, api_config['key']))
+
             get = get_input()
             if not 'request_token' in get or not 'request_time' in get:
-                return  public.error_not_login('/login')
+                return public.error_not_login('/login')
             g.is_aes = True
             g.aes_key = api_config['key']
-        
+
         request_token = public.md5(get.request_time + api_config['token'])
         if get.request_token == request_token:
-            public.set_error_num(num_key,True)
+            public.set_error_num(num_key, True)
+            session["api_request_tip"] = True
             return False
         public.set_error_num(num_key)
         return public.returnJson(False, '密钥校验失败')
@@ -271,7 +342,7 @@ class panelAdmin(panelSetup):
         if not 'config' in session:
             session['config'] = public.M('config').where("id=?", ('1',)).field(
                 'webserver,sites_path,backup_path,status,mysql_root').find()
-            if not 'email' in session['config']:
+            if session['config'] and not 'email' in session['config']:
                 session['config']['email'] = public.M(
                     'users').where("id=?", ('1',)).getField('email')
             if not 'address' in session:
@@ -296,8 +367,7 @@ class panelAdmin(panelSetup):
             session['server_os'] = tmp
         return False
 
-
-    def get_osname(self,i_file):
+    def get_osname(self, i_file):
         '''
             @name 从指定文件中获取系统名称
             @author hwliang<2021-04-07>

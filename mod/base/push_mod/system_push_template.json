@@ -1,0 +1,341 @@
+[
+  {
+    "id": "20",
+    "ver": "1",
+    "used": true,
+    "source": "system_disk",
+    "title": "首页磁盘告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.system_push",
+      "name": "PanelSysDiskTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "project",
+          "name": "磁盘信息",
+          "type": "select",
+          "items": [
+          ]
+        },
+        {
+          "attr": "cycle",
+          "name": "检测类型",
+          "type": "radio",
+          "suffix": "",
+          "default": 2,
+          "items": [
+            {
+              "title": "剩余容量",
+              "value": 1
+            },
+            {
+              "title": "占用百分比",
+              "value": 2
+            }
+          ]
+        },
+        {
+          "attr": "count",
+          "name": "占用率超过",
+          "type": "number",
+          "unit": "%",
+          "suffix": "后触发告警",
+          "default": 80,
+          "err_msg_prefix": "磁盘阈值"
+        }
+      ],
+      "sorted": [
+        [
+          "project"
+        ],
+        [
+          "cycle"
+        ],
+        [
+          "count"
+        ]
+      ]
+    },
+    "default": {
+      "project": "/",
+      "cycle": 2,
+      "count": 80
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook",
+      "sms"
+    ],
+    "unique": false,
+    "tags": [
+      "system",
+      "safe",
+      "common"
+    ],
+    "description": "首页磁盘告警，当磁盘剩余容量低于设定值时，发送告警通知给管理员，帮助管理员及时发现并清理磁盘空间，以避免磁盘空间不足导致的系统崩溃或数据丢失。"
+  },
+  {
+    "id": "21",
+    "ver": "1",
+    "used": true,
+    "source": "system_cpu",
+    "title": "首页CPU告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.system_push",
+      "name": "PanelSysCPUTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "cycle",
+          "name": "每",
+          "type": "select",
+          "unit": "分钟",
+          "suffix": "内平均",
+          "width": "70px",
+          "disabled": true,
+          "default": 5,
+          "items": [
+            {
+              "title": "1",
+              "value": 3
+            },
+            {
+              "title": "5",
+              "value": 5
+            },
+            {
+              "title": "15",
+              "value": 15
+            }
+          ]
+        },
+        {
+          "attr": "count",
+          "name": "CPU占用超过",
+          "type": "number",
+          "unit": "%",
+          "suffix": "后触发告警",
+          "default": 80,
+          "err_msg_prefix": "CPU"
+        },
+        {
+          "attr": "next_data",
+          "name": "告警后执行",
+          "suffix": "请选择告警后的下一步操作",
+          "type": "multiple-select",
+          "items": [],
+          "default": []
+        }
+      ],
+      "sorted": [
+        [
+          "cycle",
+          "count"
+        ],
+        [
+          "next_data"
+        ]
+      ]
+    },
+    "default": {
+      "cycle": 5,
+      "count": 80
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook",
+      "sms"
+    ],
+    "unique": true,
+    "tags": [
+      "system",
+      "safe",
+      "common"
+    ],
+    "description": "首页CPU告警，当CPU平均使用率超过设定值时，发送告警通知给管理员，帮助管理员及时发现并优化系统负载，以避免CPU资源不足导致的系统崩溃或服务异常。"
+  },
+  {
+    "id": "22",
+    "ver": "1",
+    "used": true,
+    "source": "system_load",
+    "title": "首页负载告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.system_push",
+      "name": "PanelSysLoadTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "cycle",
+          "name": "每",
+          "type": "select",
+          "unit": "分钟",
+          "suffix": "内平均",
+          "default": 5,
+          "width": "70px",
+          "disabled": true,
+          "items": [
+            {
+              "title": "1",
+              "value": 1
+            },
+            {
+              "title": "5",
+              "value": 5
+            },
+            {
+              "title": "15",
+              "value": 15
+            }
+          ]
+        },
+        {
+          "attr": "count",
+          "name": "负载超过",
+          "type": "number",
+          "unit": "%",
+          "suffix": "后触发告警",
+          "default": 80,
+          "err_msg_prefix": "负载"
+        },
+        {
+          "attr": "next_data",
+          "name": "告警后执行",
+          "suffix": "请选择告警后的下一步操作",
+          "type": "multiple-select",
+          "items": [],
+          "default": []
+        }
+      ],
+      "sorted": [
+        [
+          "cycle",
+          "count"
+        ],
+        [
+          "next_data"
+        ]
+      ]
+    },
+    "default": {
+      "cycle": 5,
+      "count": 80
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook",
+      "sms"
+    ],
+    "unique": true,
+    "tags": [
+      "system",
+      "safe",
+      "common"
+    ],
+    "description": "首页负载告警，当负载平均值超过设定值时，发送告警通知给管理员，帮助管理员及时发现并优化系统负载，以避免负载过重导致的系统崩溃或服务异常。"
+  },
+  {
+    "id": "23",
+    "ver": "1",
+    "used": true,
+    "source": "system_mem",
+    "title": "首页内存告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.system_push",
+      "name": "PanelSysMEMTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "cycle",
+          "name": "每",
+          "type": "select",
+          "unit": "分钟",
+          "suffix": "内平均",
+          "width": "70px",
+          "disabled": true,
+          "default": 5,
+          "items": [
+            {
+              "title": "1",
+              "value": 3
+            },
+            {
+              "title": "5",
+              "value": 5
+            },
+            {
+              "title": "15",
+              "value": 15
+            }
+          ]
+        },
+        {
+          "attr": "count",
+          "name": "内存使用率超过",
+          "type": "number",
+          "unit": "%",
+          "suffix": "后触发告警",
+          "default": 80,
+          "err_msg_prefix": "内存"
+        },
+        {
+          "attr": "next_data",
+          "name": "告警后执行",
+          "suffix": "请选择告警后的下一步操作",
+          "type": "multiple-select",
+          "items": [],
+          "default": []
+        }
+      ],
+      "sorted": [
+        [
+          "cycle",
+          "count"
+        ],
+        [
+          "next_data"
+        ]
+      ]
+    },
+    "default": {
+      "cycle": 5,
+      "count": 80
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook",
+      "sms"
+    ],
+    "unique": true,
+    "tags": [
+      "system",
+      "safe",
+      "common"
+    ],
+    "description": "首页内存告警，当内存使用率超过设定值时，发送告警通知给管理员，帮助管理员及时发现并优化系统内存使用情况，以避免内存不足导致的系统崩溃或服务异常。"
+  }
+]

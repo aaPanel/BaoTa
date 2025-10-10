@@ -1,187 +1,522 @@
 #!/www/server/panel/pyenv/bin/python
 #coding: utf-8
 # +-------------------------------------------------------------------
-# | 宝塔Linux面板 
+# | 宝塔Linux面板
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
+
+import os
+import sys
+import ssl
+import time
+import logging
+import threading
+import pyinotify
+import socket
+import re
 from gevent import monkey
-monkey.patch_all()
-import os,sys,ssl
+from gevent.pywsgi import WSGIServer
+from gevent.pool import Pool
+from concurrent.futures import ThreadPoolExecutor
 
+# 尽早打猴子补丁，确保所有I/O操作被协程化
+monkey.patch_all(socket=True, select=True)
+
+# 常量定义
 _PATH = '/www/server/panel'
-os.chdir(_PATH)
+PID_FILE = f"{_PATH}/logs/panel.pid"
+TASK_PID_FILE = f"{_PATH}/logs/task.pid"
+UPGRADE_FLASK_TIME_FILE = f"{_PATH}/upgrade_flask_time.pl"
+ERROR_LOG = f"{_PATH}/logs/error.log"
+PORT_FILE = f"{_PATH}/data/port.pl"
+IPV6_FLAG = f"{_PATH}/data/ipv6.pl"
+SSL_FLAG = f"{_PATH}/data/ssl.pl"
+SSL_KEY = f"{_PATH}/ssl/privateKey.pem"
+SSL_CERT = f"{_PATH}/ssl/certificate.pem"
+SSL_ERROR_FLAG = f"{_PATH}/data/panel_ssl_error.pl"
+SSL_VERIFY_FLAG = f"{_PATH}/data/ssl_verify_data.pl"
+SSL_CRL = f"{_PATH}/ssl/crl.pem"
+SSL_CA = f"{_PATH}/ssl/ca.pem"
+UPGRADE_FILE = f"{_PATH}/script/upgrade_flask.sh"
 
-upgrade_file = 'script/upgrade_flask.sh'
-if os.path.exists(upgrade_file):
-    os.system("nohup bash {} &>/dev/null &".format(upgrade_file))
-    
-if os.path.exists('class/flask'):
-    os.system('rm -rf class/flask')
-if not 'class/' in sys.path:
-    sys.path.insert(0,'class/')
-from BTPanel import app,sys,public
+# 性能优化参数
+MAX_WORKERS = 1000          # 最大协程数
+MAX_THREAD_WORKERS = 10     # 线程池大小(用于CPU密集型任务)
+TCP_BUFFER_SIZE = 1024*1024 # TCP缓冲区大小
+
+# 设置工作目录和导入路径
+os.chdir(_PATH)
+if 'class/' not in sys.path:
+    sys.path.insert(0, 'class/')
+
+# 导入面板模块
+from BTPanel import app, public
+
+# 检查调试模式
 is_debug = os.path.exists('data/debug.pl')
 
+# 创建协程池和线程池
+greenlet_pool = Pool(MAX_WORKERS)
+thread_pool = ThreadPoolExecutor(max_workers=MAX_THREAD_WORKERS)
 
-if is_debug:
-    import pyinotify,time,logging,re
-    logging.basicConfig(level=logging.DEBUG,format="[%(asctime)s][%(levelname)s] - %(message)s")
-    logger = logging.getLogger()
+# 配置日志
+logging.basicConfig(
+    level=logging.DEBUG if is_debug else logging.WARNING,
+    format="[%(asctime)s][%(levelname)s] - %(message)s"
+)
+logger = logging.getLogger(app.name)
 
-    class PanelEventHandler(pyinotify.ProcessEvent):
-        _exts = ['py','html','BT-Panel','so']
-        _explude_patts = [
-            re.compile('{}/plugin/.+\.html'.format(_PATH)),
-            re.compile('{}/(tmp|temp)/.+'.format(_PATH)),
-            re.compile('{}/pyenv/.+'.format(_PATH))
-        ]
-        _lsat_time = 0
-        
+def setup_logging():
+    """设置日志配置"""
+    if is_debug:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.WARNING)
+    
+    # 将Flask应用日志与主日志集成
+    app.logger.handlers = logger.handlers
+    app.logger.setLevel(logger.level)
 
-        def is_ext(self,filename):
-            fname = os.path.basename(filename)
-            result = fname.split('.')[-1] in self._exts
-            if not result: return False
-            for e in self._explude_patts:
-                if e.match(filename): return False
-            return True
+def check_plugin_loader():
+    """检查并加载适当的插件加载器"""
+    try:
+        machine = os.uname().machine
+    except Exception as e:
+        logger.error(f"获取系统架构失败: {e}")
+        machine = 'x86_64'
+    
+    plugin_loader_file = 'class/PluginLoader.so'
+    plugin_loader_src_file = f"class/PluginLoader.{machine}.Python3.7.so"
+    
+    # 特殊处理x86_64架构的glibc版本
+    if machine == 'x86_64':
+        glibc_version = public.get_glibc_version()
+        if glibc_version in ['2.14', '2.13', '2.12', '2.11', '2.10']:
+            plugin_loader_src_file = f"class/PluginLoader.{machine}.glibc214.Python3.7.so"
+    
+    if os.path.exists(plugin_loader_src_file):
+        try:
+            os.system(f"\cp -f {plugin_loader_src_file} {plugin_loader_file}")
+            logger.info(f"已加载插件加载器: {plugin_loader_src_file}")
+        except Exception as e:
+            logger.error(f"加载插件加载器失败: {e}")
 
-        def panel_reload(self,filename,in_type):
-            stime = time.time()
-            if stime - self._lsat_time < 2:
-                return
-            self._lsat_time = stime
-            logger.debug('检测到文件: {} -> {}'.format(filename,in_type))
+def start_background_task():
+    """启动后台任务"""
+    try:
+        public.ExecShell(f"chmod 700 {_PATH}/BT-Task")
+        public.ExecShell(f"{_PATH}/BT-Task")
+        logger.info("后台任务已启动")
+    except Exception as e:
+        logger.error(f"启动后台任务失败: {e}")
+
+def monitor_task():
+    """监控后台任务状态，必要时重启"""
+    cycle = 60
+    while True:
+        try:
+            time.sleep(cycle)
             
-            fname = os.path.basename(filename)
-            if fname in ['BT-Task']:
-                logger.debug('正在后台任务...')
-                if os.path.getsize(filename) < 4096:
-                    public.ExecShell("{} {}/BT-Task".format(public.get_python_bin(),_PATH))
-                else:
-                    public.ExecShell("{}/BT-Task".format(_PATH))
-                logger.debug('后台任务已启动!')
-            else:
-                logger.debug('正在重启面板...')
-                public.ExecShell("bash {}/init.sh reload &>/dev/null &".format(_PATH))
+            # 检查pid文件
+            if not os.path.exists(TASK_PID_FILE):
+                logger.warning("任务PID文件不存在，重启任务")
+                start_background_task()
+                continue
+            
+            # 读取pid
+            task_pid = public.readFile(TASK_PID_FILE).strip()
+            if not task_pid:
+                logger.warning("任务PID为空，重启任务")
+                start_background_task()
+                continue
+            
+            # 检查进程是否存在
+            comm_file = f"/proc/{task_pid}/comm"
+            if not os.path.exists(comm_file):
+                logger.warning(f"任务进程 {task_pid} 不存在，重启任务")
+                start_background_task()
+                continue
+            
+            # 检查是否为面板任务进程
+            comm = public.readFile(comm_file).strip()
+            if 'BT-Task' not in comm:
+                logger.warning(f"进程 {task_pid} 不是面板任务，重启任务")
+                start_background_task()
+                
+        except Exception as e:
+            logger.error(f"监控任务时发生错误: {e}")
 
-        def process_IN_CREATE(self, event):
-            if not self.is_ext(event.pathname): return
-            self.panel_reload(event.pathname,'[创建]')
-
-        def process_IN_DELETE(self,event):
-            if not self.is_ext(event.pathname): return
-            self.panel_reload(event.pathname,'[删除]')
-        
-        def process_IN_MODIFY(self,event):
-            if not self.is_ext(event.pathname): return
-            self.panel_reload(event.pathname,'[修改]')
-        
-        def process_IN_MOVED_TO(self,event):
-            if not self.is_ext(event.pathname): return
-            self.panel_reload(event.pathname,'[覆盖]')
-
-    def debug_event():
-        logger.debug('以debug模式启动面板')
-        logger.debug('监听端口：0.0.0.0:{}'.format(public.readFile('data/port.pl')))
-
-        event = PanelEventHandler()
-        watchManager = pyinotify.WatchManager()
-        mode = pyinotify.IN_CREATE | pyinotify.IN_DELETE | pyinotify.IN_MODIFY | pyinotify.IN_MOVED_TO
-        watchManager.add_watch(_PATH, mode, auto_add=True, rec=True)
-        notifier = pyinotify.Notifier(watchManager, event)
-        notifier.loop()
-
-if __name__ == '__main__':
-    pid_file = "{}/logs/panel.pid".format(_PATH)
-    if os.path.exists(pid_file):
-        public.ExecShell("kill -9 {}".format(public.readFile(pid_file)))
-    pid = os.fork()
-    if pid: sys.exit(0)
+def setup_ssl_context():
+    """配置SSL上下文"""
+    if not (os.path.exists(SSL_FLAG) and os.path.exists(SSL_KEY) and os.path.exists(SSL_CERT)):
+        return None
     
-    os.setsid()
-
-    _pid = os.fork()
-    if _pid:
-        public.writeFile(pid_file,str(_pid))
-        sys.exit(0)
-
-    sys.stdout.flush()
-    sys.stderr.flush()
-
-    f = open('data/port.pl')
-    PORT = int(f.read())
-    HOST = '0.0.0.0'
-    if os.path.exists('data/ipv6.pl'):
-        HOST = "0:0:0:0:0:0:0:0"
-    f.close()
+    # 检查证书文件大小
+    if os.path.getsize(SSL_KEY) < 10 or os.path.getsize(SSL_CERT) < 10:
+        logger.warning("SSL证书文件大小异常，禁用SSL")
+        try:
+            os.remove(SSL_KEY)
+            os.remove(SSL_CERT)
+            os.remove(SSL_FLAG)
+            public.writeFile(SSL_ERROR_FLAG, 'True')
+        except Exception as e:
+            logger.error(f"清理SSL文件失败: {e}")
+        return None
     
-    
-    keyfile = 'ssl/privateKey.pem'
-    certfile = 'ssl/certificate.pem'
-    is_ssl = False
-    if os.path.exists('data/ssl.pl') and os.path.exists(keyfile) and os.path.exists(certfile):
-        is_ssl = True
-    
-    if not is_ssl or is_debug:
-        err_f = open('logs/error.log','a+')
-        os.dup2(err_f.fileno(),sys.stderr.fileno())
-        err_f.close()
-
-    import threading
-    os.system("nohup {} {}/jobs.py &>/dev/null &".format(public.get_python_bin(),public.get_class_path()))
-    import task
-    p1 = threading.Thread(target=task.systemTask)
-    p1.start()
-    p2 = threading.Thread(target=task.check502Task)
-    p2.start()
-    p3 = threading.Thread(target=task.update_software_list)
-    p3.start()
-
-    if is_ssl:
+    try:
         ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        ssl_context.load_cert_chain(certfile=certfile,keyfile=keyfile)
+        ssl_context.load_cert_chain(certfile=SSL_CERT, keyfile=SSL_KEY)
+        
+        # 设置最低TLS版本
         if hasattr(ssl_context, "minimum_version"):
             ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
         else:
-            ssl_context.options = (ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1)
+            ssl_context.options |= (ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1)
         
+        # 设置加密套件
         ssl_context.set_ciphers("ECDHE-RSA-AES128-GCM-SHA256:HIGH:!aNULL:!MD5:!RC4:!DHE")
-        is_ssl_verify = os.path.exists('/www/server/panel/data/ssl_verify_data.pl')
-        if is_ssl_verify:
-            crlfile = '/www/server/panel/ssl/crl.pem'
-            rootcafile = '/www/server/panel/ssl/ca.pem'
-            #注销列表
-            # ssl_context.load_verify_locations(crlfile)
-            # ssl_context.verify_flags |= ssl.VERIFY_CRL_CHECK_CHAIN
-            #加载证书
-            ssl_context.load_verify_locations(rootcafile)
-            ssl_context.verify_mode = ssl.CERT_REQUIRED
-            ssl_context.set_default_verify_paths()
+        
+        # 证书验证配置
+        if os.path.exists(SSL_VERIFY_FLAG):
+            if os.path.exists(SSL_CA):
+                ssl_context.load_verify_locations(SSL_CA)
+                ssl_context.verify_mode = ssl.CERT_REQUIRED
+                ssl_context.set_default_verify_paths()
+                logger.info("启用SSL证书验证")
+            else:
+                logger.warning("SSL验证数据存在但CA证书不存在")
+        
+        logger.info("SSL上下文配置完成")
+        return ssl_context
+    except Exception as e:
+        logger.error(f"配置SSL上下文失败: {e}")
+        return None
 
-    from  gevent.pywsgi import WSGIServer
+def check_upgrade():
+    """检查并执行面板升级"""
     try:
-        import flask_sock
-        if is_ssl:
-            http_server = WSGIServer((HOST, PORT), app,ssl_context = ssl_context)
-        else:
-            http_server = WSGIServer((HOST, PORT), app)
-    except:
-        from geventwebsocket.handler import WebSocketHandler
-        if is_ssl:
-            http_server = WSGIServer((HOST, PORT), app,ssl_context = ssl_context,handler_class=WebSocketHandler)
-        else:
-            http_server = WSGIServer((HOST, PORT), app,handler_class=WebSocketHandler)
-            
+        need_upgrade = True
+        # 检查是否需要升级
+        last_upgrade_time = 0 if not os.path.exists(UPGRADE_FLASK_TIME_FILE) else os.path.getmtime(UPGRADE_FLASK_TIME_FILE)
+        if time.time() - last_upgrade_time < 86400:  # 24小时内不重复升级
+            logger.info("未到升级时间，跳过升级检查")
+            need_upgrade = False
 
+        for path_dir in sys.path:
+            if not path_dir.endswith("site-packages"):
+                continue
+            file = os.path.join(path_dir, "flask", "__init__.py")
+            if os.path.exists(file):
+                with open(file, "rt") as f:
+                    data = f.read()
+                if re.search("__version__\s*=\s*\"1\.\d+", data):
+                    need_upgrade = True
+
+        if not need_upgrade:
+            return
+
+        # 检查升级时间文件
+        if not os.path.exists(UPGRADE_FLASK_TIME_FILE):
+            with open(UPGRADE_FLASK_TIME_FILE, 'w') as f:
+                f.write(str(time.time()))
+            logger.info("创建升级时间文件")
+        
+        # 执行升级脚本
+        if os.path.exists(UPGRADE_FILE):
+            logger.info("开始执行面板升级...")
+            os.system(f"nohup bash {UPGRADE_FILE} &>/dev/null &")
+            with open(UPGRADE_FLASK_TIME_FILE, 'w') as f:
+                f.write(str(time.time()))
+            logger.info("面板升级已启动")
+    except Exception as e:
+        logger.error(f"检查升级时发生错误: {e}")
+
+def cleanup():
+    """清理临时文件和旧文件"""
+    try:
+        # 清理临时文件
+        public.clear_tmp_file()
+        logger.info("临时文件清理完成")
+        
+        # 移除旧的flask目录
+        if os.path.exists('class/flask'):
+            os.system('rm -rf class/flask')
+            logger.info("移除旧的Flask目录")
+    except Exception as e:
+        logger.error(f"清理过程中发生错误: {e}")
+
+def init_database():
+    """初始化数据库（如果需要）"""
+    if not os.path.exists(f"{_PATH}/data/db"):
+        try:
+            logger.info("初始化数据库...")
+            os.system(f"nohup {public.get_python_bin()} {_PATH}/script/init_db.py &>/dev/null &")
+        except Exception as e:
+            logger.error(f"初始化数据库失败: {e}")
+
+class PanelEventHandler(pyinotify.ProcessEvent):
+    """面板文件变更事件处理器"""
+    _exts = ['py', 'html', 'BT-Panel', 'so']
+    _exclude_patterns = [
+        re.compile(f'{_PATH}/plugin/.+'),
+        re.compile(f'{_PATH}/(tmp|temp|install)/.+'),
+        re.compile(f'{_PATH}/pyenv/.+'),
+        re.compile(f'{_PATH}/class/projectModel/.+'),
+        re.compile(f'{_PATH}/class/databaseModel/.+')
+    ]
+    _last_time = 0
+
+    def is_ext(self, filename):
+        """检查文件是否为需要监控的类型"""
+        fname = os.path.basename(filename)
+        if not fname or '.' not in fname:
+            return False
+            
+        ext = fname.split('.')[-1]
+        if ext not in self._exts:
+            return False
+            
+        for pattern in self._exclude_patterns:
+            if pattern.match(filename):
+                return False
+                
+        return True
+
+    def panel_reload(self, filename, event_type):
+        """处理面板重载事件"""
+        stime = time.time()
+        if stime - self._last_time < 2:  # 防抖处理
+            return
+            
+        self._last_time = stime
+        logger.debug(f'检测到文件: {filename} -> {event_type}')
+
+        fname = os.path.basename(filename)
+        if fname in ['BT-Task', 'task.py']:
+            logger.info('正在重启后台任务...')
+            public.ExecShell(f"nohup bash {_PATH}/init.sh restart &>{ERROR_LOG} &")
+            logger.info('后台任务已启动!')
+        else:
+            logger.info('正在重启面板...')
+            time.sleep(0.5)  # 给系统一些时间处理文件变更
+            public.ExecShell(f"nohup bash {_PATH}/init.sh reload &>{ERROR_LOG} &")
+
+    def process_IN_CREATE(self, event):
+        """处理文件创建事件"""
+        if self.is_ext(event.pathname):
+            # 使用协程池处理事件
+            greenlet_pool.spawn(self.panel_reload, event.pathname, '[创建]')
+
+    def process_IN_DELETE(self, event):
+        """处理文件删除事件"""
+        if self.is_ext(event.pathname):
+            greenlet_pool.spawn(self.panel_reload, event.pathname, '[删除]')
+
+    def process_IN_MODIFY(self, event):
+        """处理文件修改事件"""
+        if self.is_ext(event.pathname):
+            greenlet_pool.spawn(self.panel_reload, event.pathname, '[修改]')
+
+    def process_IN_MOVED_TO(self, event):
+        """处理文件移动事件"""
+        if self.is_ext(event.pathname):
+            greenlet_pool.spawn(self.panel_reload, event.pathname, '[覆盖]')
+
+def start_file_watcher():
+    """启动文件变更监控"""
+    logger.info('启动文件变更监控...')
+    try:
+        event_handler = PanelEventHandler()
+        watch_manager = pyinotify.WatchManager()
+        mask = pyinotify.IN_CREATE | pyinotify.IN_DELETE | pyinotify.IN_MODIFY | pyinotify.IN_MOVED_TO
+        watch_manager.add_watch(_PATH, mask, auto_add=True, rec=True)
+        notifier = pyinotify.Notifier(watch_manager, event_handler)
+        notifier.loop()
+    except Exception as e:
+        logger.error(f"启动文件监控失败: {e}")
+
+def get_server_port():
+    """获取服务器端口配置"""
+    try:
+        with open(PORT_FILE) as f:
+            port = int(f.read().strip())
+            return port if port else 8888
+    except Exception as e:
+        logger.warning(f"读取端口配置失败，使用默认端口 8888: {e}")
+        return 8888
+
+def get_server_host():
+    """获取服务器主机配置"""
+    return "0:0:0:0:0:0:0:0" if os.path.exists(IPV6_FLAG) else '0.0.0.0'
+
+def optimize_socket_options(server_socket):
+    """优化套接字选项"""
+    try:
+        # 增大TCP缓冲区提高吞吐量
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, TCP_BUFFER_SIZE)
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, TCP_BUFFER_SIZE)
+        
+        # 启用TCP keep-alive
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        
+        # 设置TCP keep-alive参数
+        server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 60)
+        server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 10)
+        server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
+        
+        logger.info(f"套接字优化已应用: 缓冲区大小={TCP_BUFFER_SIZE}")
+    except Exception as e:
+        logger.warning(f"套接字优化失败: {e}")
+
+def create_server_socket(host, port, ssl_context=None):
+    """创建并优化服务器套接字"""
+    
+    # 创建套接字
+    if host == "0:0:0:0:0:0:0:0":  # IPv6
+        server_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        server_socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+    else:  # IPv4
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
+    # 设置套接字选项
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    optimize_socket_options(server_socket)
+    
+    # 绑定地址和端口
+    server_socket.bind((host, port))
+    server_socket.listen(100)  # 增大backlog
+    
+    logger.info(f"服务器套接字已创建: {host}:{port}")
+    return server_socket
+
+def start_web_server():
+    """启动Web服务器"""
+    # 获取配置
+    PORT = get_server_port()
+    HOST = get_server_host()
+    ssl_context = setup_ssl_context()
+    
+    # 启动服务器
+    try:
+        # 创建并优化服务器套接字
+        server_socket = create_server_socket(HOST, PORT, ssl_context)
+        
+        # 尝试使用flask_sock
+        try:
+            import flask_sock
+            if ssl_context:
+                http_server = WSGIServer(server_socket, app, ssl_context=ssl_context, log=app.logger,spawn=100)
+            else:
+                http_server = WSGIServer(server_socket, app, log=app.logger,spawn=100)
+            logger.info(f"服务器将使用flask_sock在 {HOST}:{PORT} 启动")
+        except:
+            # 回退到geventwebsocket
+            from geventwebsocket.handler import WebSocketHandler
+            if ssl_context:
+                http_server = WSGIServer(server_socket, app, ssl_context=ssl_context, 
+                                        handler_class=WebSocketHandler, log=app.logger,spawn=100)
+            else:
+                http_server = WSGIServer(server_socket, app, handler_class=WebSocketHandler, log=app.logger,spawn=100)
+            logger.info(f"服务器将使用geventwebsocket在 {HOST}:{PORT} 启动")
+        
+        # 记录启动信息
+        protocol = "HTTPS" if ssl_context else "HTTP"
+        logger.info(f"{protocol} 服务器已启动，监听地址: {HOST}:{PORT}")
+        
+        # 启动服务器
+        http_server.serve_forever()
+    except Exception as e:
+        logger.critical(f"启动Web服务器失败: {e}")
+        sys.exit(1)
+
+def daemonize():
+    """将进程转为守护进程"""
+    # 确保我们不是进程组组长
+    if os.fork():
+        sys.exit(0)
+    
+    # 创建新会话
+    os.setsid()
+    
+    # 再次fork，确保我们不是会话组长
+    if os.fork():
+        sys.exit(0)
+    
+    # 关闭标准输入输出
+    sys.stdout.flush()
+    sys.stderr.flush()
+    
+    # 重定向标准输入到/dev/null
+    si = open(os.devnull, 'r')
+    os.dup2(si.fileno(), sys.stdin.fileno())
+    
+    # 重定向标准输出和错误到日志文件
     if is_debug:
         try:
-            dev = threading.Thread(target=debug_event)
-            dev.start()
-        except:
-            pass
+            so = open(ERROR_LOG, 'a+')
+            os.dup2(so.fileno(), sys.stdout.fileno())
+            os.dup2(so.fileno(), sys.stderr.fileno())
+        except Exception as e:
+            logger.error(f"重定向输出失败: {e}")
 
-    http_server.serve_forever()
+def init_jobs():
+    '''初始化面板环境检查任务'''
+    public.ExecShell("nohup {} {}/class/jobs.py &>{}/logs/jobs.log &".format(public.get_python_bin(), _PATH, _PATH))
+
+def main():
+    """主函数"""
+    try:
+        # 设置日志
+        setup_logging()
+        
+        # 清理旧进程
+        if os.path.exists(PID_FILE):
+            try:
+                pid = public.readFile(PID_FILE).strip()
+                if pid:
+                    os.system(f"kill -9 {pid}")
+                    logger.info(f"已终止旧面板进程 {pid}")
+            except Exception as e:
+                logger.warning(f"终止旧面板进程失败: {e}")
+        
+        # 守护进程模式
+        daemonize()
+        # 写入新的PID
+        with open(PID_FILE, 'w') as f:
+            f.write(str(os.getpid()))
+        
+        # 初始化
+        logger.info("面板启动中...")
+        check_plugin_loader()
+        cleanup()
+        check_upgrade()
+        init_database()
+        init_jobs()
+        
+        # 启动后台任务
+        start_background_task()
+        
+        # 启动任务监控线程
+        task_thread = threading.Thread(target=monitor_task)
+        task_thread.daemon = True
+        task_thread.start()
+        
+        # 调试模式下启动文件监控
+        if is_debug:
+            logger.info("调试模式已启用")
+            dev_thread = threading.Thread(target=start_file_watcher)
+            dev_thread.daemon = True
+            dev_thread.start()
+        
+        # 启动Web服务器
+        start_web_server()
+        
+    except Exception as e:
+        logger.critical(f"面板启动失败: {e}")
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()

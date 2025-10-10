@@ -7,35 +7,35 @@
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 
-#使用示例： 
+#使用示例：
 #    1、将此文件重命名为btkill.py , 然后上传到服务器/root目录
 #    2、执行 python /root/btkill.py
 
 import psutil,time,os
 
 class btkill:
-    __limit = 10;   #Cpu使用率触发上限
-    __vmsize = 1048576/4;  #虚拟内存触发上限(字节)
+    __limit = 10   #Cpu使用率触发上限
+    __vmsize = 1048576/4  #虚拟内存触发上限(字节)
 
     def checkMain(self):
         pids = psutil.pids()
-        num = 0;
+        num = 0
         for pid in pids:
             try:
-                p = psutil.Process(pid);
+                p = psutil.Process(pid)
                 if p.exe() == "": continue;
                 name = p.name()
                 if self.whiteList(name): continue;
                 cputimes = p.cpu_times()
                 if cputimes.user < 0.1: continue;
-                percent = p.cpu_percent(interval = 0.1);
+                percent = p.cpu_percent(interval = 0.1)
                 vm = p.memory_info().vms
                 if percent > self.__limit or vm > self.__vmsize:
                     log = time.strftime('%Y-%m-%d %X',time.localtime()) + "  (PID=" + str(pid) + ", NAME=" + name + ", VMS=" + str(vm) + ", PERCENT=" + str(percent) + "%)";
-                    p.kill();
+                    p.kill()
                     num += 1
-                    print log + " >> killed\n";
-            except Exception as ex:print str(ex)
+                    print(" >> killed\n")
+            except Exception as ex:print(str(ex))
         return num
 
     #检查白名单
@@ -62,18 +62,18 @@ class btkill:
 
     #开始处理
     def start(self):
-        num = 0;
+        num = 0
         while True:
-            num += self.checkMain();
-            time.sleep(3);
-        print '======================================='
-        print "查杀完成, 共查杀["+str(num)+"]个异常进程!"
-        print "官网: https://www.bt.cn/bbs"
+            num += self.checkMain()
+            time.sleep(3)
+        print('=======================================')
+        print("查杀完成, 共查杀["+str(num)+"]个异常进程!")
+        print("官网: https://www.bt.cn/bbs")
 
 
 
 if __name__ == "__main__":
-    print "正在检测异常进程..."
-    print '======================================='
-    c = btkill();
-    c.start();
+    print("正在检测异常进程...")
+    print('=======================================')
+    c = btkill()
+    c.start()

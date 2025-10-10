@@ -78,8 +78,8 @@ class wxapp():
             data = public.readFile(self.app_path + 'app_login_check.pl')
             public.ExecShell('rm ' + self.app_path + "app_login_check.pl")
             secret_key, init_time, tid, status = data.split(':')
-            if len(session_id) != 64: return public.returnMsg(False, '等待APP扫码登录2')
-            if len(secret_key) != 64: return public.returnMsg(False, '等待APP扫码登录2')
+            if len(session_id) not in (64, 71): return public.returnMsg(False, '等待APP扫码登录2')
+            if len(secret_key) not in (64, 71): return public.returnMsg(False, '等待APP扫码登录2')
             if session_id != secret_key:
                 return public.returnMsg(False, '当前二维码失效')
             if time.time() - float(init_time) > 60:
@@ -92,7 +92,7 @@ class wxapp():
             session['login'] = True
             session['username'] = userInfo['username']
             session['tmp_login'] = True
-            public.WriteLog('TYPE_LOGIN', 'APP扫码登录，帐号：{},登录IP：{}'.format(userInfo['username'],public.GetClientIp() + ":" + str(request.environ.get('REMOTE_PORT'))))
+            public.WriteLog('TYPE_LOGIN', 'APP扫码登录，帐号：{},登录IP：{}'.format(userInfo['username'],public.GetClientIp() + ":" + str(public.get_remote_port())))
             cache.delete('panelNum')
             cache.delete('dologin')
             session['session_timeout'] = time.time() + public.get_session_timeout()
@@ -101,7 +101,7 @@ class wxapp():
             import config
             config.config().reload_session()
             public.writeFile(login_type, 'True')
-            public.login_send_body("堡塔APP", userInfo['username'], public.GetClientIp(),str(request.environ.get('REMOTE_PORT')))
+            public.run_thread(public.login_send_body, ("堡塔APP", userInfo['username'], public.GetClientIp(),str(public.get_remote_port())))
             return public.returnMsg(True, '登录成功!')
         except:
             return public.returnMsg(False, '登录失败2')

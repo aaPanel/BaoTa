@@ -11,41 +11,44 @@ import sys
 import time
 import os
 import struct
-
 os.chdir('/www/server/panel')
 if 'class/' in sys.path: sys.path.insert(0,"class/")
 import copy
 try:
     import pcap
 except ImportError:
-    if os.path.exists('/usr/bin/apt'):
-        os.system("apt install libpcap-dev -y")
-    elif os.path.exists('/usr/bin/dnf'):
-        red_file = '/etc/redhat-release'
-        if os.path.exists(red_file):
-            f = open(red_file,'r')
-            red_body = f.read()
-            f.close()
-            if red_body.find('CentOS Linux release 8.') != -1:
-                rpm_file = '/root/libpcap-1.9.1.rpm'
-                down_url = "wget -O {} https://repo.almalinux.org/almalinux/8/PowerTools/x86_64/os/Packages/libpcap-devel-1.9.1-5.el8.x86_64.rpm --no-check-certificate -T 10".format(rpm_file)
-                print(down_url)
-                os.system(down_url)
-                os.system("rpm -ivh {}".format(rpm_file))
-                if os.path.exists(rpm_file): os.remove(rpm_file)
+    # 标记只安装一次
+    tip_file = '/www/server/panel/install/check/tip.json'
+    if not os.path.exists(tip_file):
+        if os.path.exists('/usr/bin/apt'):
+            os.system("apt install libpcap-dev -y")
+        elif os.path.exists('/usr/bin/dnf'):
+            red_file = '/etc/redhat-release'
+            if os.path.exists(red_file):
+                f = open(red_file,'r')
+                red_body = f.read()
+                f.close()
+                if red_body.find('CentOS Linux release 8.') != -1:
+                    rpm_file = '/root/libpcap-1.9.1.rpm'
+                    down_url = "wget -O {} https://download.bt.cn/src/libpcap-devel-1.9.1-5.el8.x86_64.rpm --no-check-certificate -T 10".format(rpm_file)
+                    if os.path.exists(rpm_file):
+                        os.system(down_url)
+                        os.system("rpm -ivh {}".format(rpm_file))
+                        if os.path.exists(rpm_file): os.remove(rpm_file)
+                else:
+                    os.system("dnf install libpcap-devel -y")
             else:
                 os.system("dnf install libpcap-devel -y")
-        else:
-            os.system("dnf install libpcap-devel -y")
-    elif os.path.exists('/usr/bin/yum'):
-        os.system("yum install libpcap-devel -y")
-        
-    os.system("btpip install pypcap")
-    try:
-        import pcap
-    except ImportError:
-        print("pypcap module install failed.")
-        sys.exit()
+        elif os.path.exists('/usr/bin/yum'):
+            os.system("yum install libpcap-devel -y")
+        os.system("btpip install pypcap")
+        # 写入标记文件
+        os.system("echo True > {}".format(tip_file))
+        try:
+            import pcap
+        except ImportError:
+            print("pypcap module install failed.")
+            sys.exit()
 
 class process_network_total:
     __pid_file = 'logs/process_network_total.pid'
@@ -62,7 +65,7 @@ class process_network_total:
             @author hwliang<2021-09-13>
             @param timeout<int> 结束时间(秒)，0表示持久运行，默认为0
             @return void
-        '''        
+        '''
         stime = time.time()
         self.__end_time = timeout + stime
         self.__last_stat = stime
@@ -78,7 +81,7 @@ class process_network_total:
                         break
         except:
             self.rm_pid_file()
-        
+
     def handle_packet(self, pcap_data):
         '''
             @name 处理pcap数据包
@@ -94,7 +97,7 @@ class process_network_total:
         # 解析sport/dport端口
         src_port = pcap_data[34:36]
         dst_port = pcap_data[36:38]
-        
+
         src = src_ip + b':' + src_port
         dst = dst_ip + b':' + dst_port
         # 计算数据包长度
@@ -201,15 +204,15 @@ class process_network_total:
             remote_ip,remote_port = self.hex_to_ip(tcp_tmp[2])
             if local_ip == remote_ip: continue
             if remote_ip == '0.0.0.0': continue
-            
+
             pid = self.inode_to_pid(inode,force)
-            if not pid: continue 
-            
+            if not pid: continue
+
             key = self.get_ip_pack(local_ip) + b':' + self.get_port_pack(local_port)
             self.__net_process_list[key] = pid
         return self.__net_process_list
-            
-    
+
+
     def get_port_pack(self,port):
         '''
             @name 将端口转换为字节流
@@ -218,7 +221,7 @@ class process_network_total:
             @return bytes
         '''
         return struct.pack('H',int(port))[::-1]
-    
+
     def get_ip_pack(self,ip):
         '''
             @name 将IP地址转换为字节流

@@ -1,696 +1,1828 @@
 {% extends "layout.html" %}
 {% block content %}
-<link rel="stylesheet" href="{{g.cdn_url}}/editor/styles/icons.css">
+<link rel="stylesheet" href="{{g.cdn_url}}/vite/ace/styles/icons.css">
 <link rel="stylesheet" href="{{g.cdn_url}}/css/xterm.css">
 <link rel="stylesheet" type="text/css" href="{{g.cdn_url}}/css/files_style.css">
-<style id="file_list_info">.file_checkbox{width:40px !important;}.file_name{width:300px !important;}.file_ps{width:200px !important;}.file_size{width:100px !important;}.file_mtime{width:180px !important;}.file_user{width:80px !important;}.file_accept{width:80px !important;}.file_operation{width:220px !important;}.file_table_view.list_view .file_list_content .file_tr{width:auto;}.file_table_view.list_view .file_list_content{width:auto;}</style>
+<link href="{{g.cdn_url}}/vite/ace/diff/ace-diff.min.css" rel="stylesheet">
+<link href="{{g.cdn_url}}/vite/ace/diff/ace-diff-dark.min.css" rel="stylesheet">
+<style id="file_list_info">
+    .file_checkbox {
+        width: 40px !important;
+
+    }
+
+    .file_name {
+        width: 300px !important;
+    }
+
+    .file_tamper_core {
+        width: 100px !important;
+    }
+
+    .file_ps {
+        width: 200px !important;
+    }
+
+    .file_size {
+        width: 100px !important;
+    }
+
+    .file_mtime {
+        width: 180px !important;
+    }
+
+    .file_user {
+        width: 80px !important;
+    }
+
+    .file_accept {
+        width: 80px !important;
+    }
+
+    .file_operation {
+        width: 220px !important;
+    }
+
+    .file_table_view.list_view .file_list_content .file_tr {
+        width: auto;
+    }
+
+    .file_table_view.list_view .file_list_content {
+        width: auto;
+    }
+</style>
 <style>
+    /* 远程下载样式 */
+    .upload_download .nav_down_list li span:nth-child(2) {
+        width: 140px
+    }
+
+    /* 置顶样式 */
+    .file_list_content .glyphicon-pushpin {
+        font-size: 17px;
+        position: absolute;
+        color: #23527c;
+        margin-top: 11px;
+        cursor: pointer;
+    }
+
+    /* 置顶样式 end*/
+
+    /* 文件高级搜索 */
+    .replace_content_view.layui-layer-page .layui-layer-content {
+        overflow: inherit;
+    }
+
+    .file-expert-search .tname {
+        width: 70px
+    }
+
+    .file-expert-search .line {
+        padding: 0;
+    }
+
+    .file-expert-search .line:first-child {
+        padding-top: 0;
+    }
+
+    .file-expert-search .line .info-r {
+        margin-left: 70px;
+        margin-bottom: 0px;
+    }
+
+    .file-expert-search .line-no-pd {
+        padding-top: 0px
+    }
+
+    .file-expert-search .bt_select_updown .bt_select_value,
+    .file-expert-search .bt_select_updown {
+        height: 36px;
+        line-height: 35px;
+    }
+
+    .file-expert-search-ext li {
+        display: inline-block;
+        padding: 2px 10px;
+        color: #767575;
+        background: #f7f7f7;
+        border-radius: 4px;
+        margin-right: 5px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        border: 1px solid #eee;
+    }
+
+    .file-expert-search-ext li:hover {
+        background: #e5e5e5
+    }
+
+    .file-expert-search .inlineBlock.vertBootom {
+        vertical-align: bottom;
+    }
+
+    .file-expert-search .inlineBlock.vertBootom.pr8 {
+        vertical-align: middle;
+    }
+
+    /* 文件高级搜索end */
     /* 数据同步 */
-    .demo-class .line{
+    .demo-class .line {
         padding-left: 35px;
     }
+
     /* 数据同步 end*/
+
+    /* 单个文件覆盖 */
+    .cover_single_file {
+        padding: 20px;
+    }
+
+    .cover_single_file .rows {
+        display: flex;
+        line-height: 25px;
+    }
+
+    .cover_single_file .rows+.rows {
+        margin-top: 12px;
+    }
+
+    .cover_single_file .rows.input {
+        line-height: 30px;
+    }
+
+    .cover_single_file .rows-label {
+        width: 110px;
+        padding-left: 10px;
+    }
+
+    .cover_single_file .rows-value {
+        flex: 1;
+        width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    /* end */
+
+    /* 目录查杀 */
+    @keyframes load8 {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @-webkit-keyframes load8 {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+
+    .spyware_detection_view {
+        padding: 20px;
+    }
+
+    .spyware_detection_head {
+        display: flex;
+        align-items: center;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #F1F1F1;
+    }
+
+    .spyware_detection_head .head_icon {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 76px;
+        height: 76px;
+    }
+
+    .spyware_detection_head .head_icon .icon {
+        width: 76px;
+        height: 76px;
+    }
+
+    .spyware_detection_head .head_icon .start_icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .spyware_detection_head .head_icon .status_loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-top: -33px;
+        margin-left: -33px;
+        width: 66px;
+        height: 66px;
+        border: 2px solid #20a53a;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: load8 1.1s infinite linear;
+        -webkit-animation: load8 1.1s infinite linear;
+    }
+
+    .spyware_detection_head .head_icon .status_loading.danger {
+        border-color: red;
+        border-top-color: transparent;
+    }
+
+    .spyware_detection_head .scanned_num {
+        margin-left: 4px;
+    }
+
+    .spyware_detection_head .total_num {
+        margin-right: 4px;
+    }
+
+    .spyware_detection_head .tqnum {
+        margin: 0 4px;
+        color: red;
+    }
+
+    .spyware_detection_head .head_left {
+        flex: 1;
+        width: 0;
+        height: 76px;
+        margin: 0 15px;
+        padding-top: 12px;
+    }
+
+    .spyware_detection_head .info {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 18px;
+        color: #444;
+        font-weight: 600;
+    }
+
+    .spyware_detection_head .file {
+        width: 100%;
+        word-break: break-all;
+        font-size: 12px;
+        color: #666;
+    }
+
+    .spyware_detection_head .btn {
+        width: 100px;
+        height: 38px;
+    }
+
+    .spyware_detection_progress {
+        display: flex;
+        align-items: center;
+    }
+
+    .spyware_detection_progress .progress_bar {
+        position: relative;
+        flex: 1;
+        height: 2px;
+        border-radius: 100px;
+        background-color: #ebeef5;
+    }
+
+    .spyware_detection_progress .progress_bar .inner {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        background-color: #20a53a;
+        border-radius: 100px;
+        transition: width .6s ease;
+    }
+
+    .spyware_detection_progress .text {
+        width: 40px;
+        margin-left: 10px;
+        text-align: right;
+    }
+
+    .spyware_detection_body {
+        margin-top: 20px;
+    }
+
+    .spyware_detection_view .divtable {
+        border: 1px solid #ddd;
+    }
+
+    .spyware_detection_view .divtable table {
+        border: none;
+    }
+
+    .text_ellipsis {
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    /* end */
+    /* 云存储样式 */
+    .cloud-head-box {
+        height: 62px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .cloud-content-box {
+        height: 510px;
+        overflow: auto;
+    }
+
+    .cloud-layer-view .btn {
+        border-radius: 0;
+    }
+
+    .cloud-layer-view .place-input {
+        background-color: #f3f3f3;
+        border: 1px solid #ccc;
+        height: 30px;
+        line-height: 28px;
+        overflow: hidden;
+        margin: 1px 0 0 -1px;
+        width: 340px;
+    }
+
+    .cloud-layer-view .place-input ul {
+        display: inline-block;
+        position: relative;
+        width: auto;
+    }
+
+    .cloud-layer-view .place-input ul li {
+        background: url("/static/img/ico/ico-ltr.png") no-repeat right center;
+        float: left;
+        padding-left: 10px;
+        padding-right: 18px;
+    }
+
+    .cloud-layer-view .place-input ul li a {
+        height: 28px;
+        cursor: pointer;
+        display: inline-block;
+    }
+
+    .cloud-content-box .list-list .cursor span {
+        line-height: 30px;
+    }
+
+    /* 云存储样式 end */
+    /* 上传  */
+    span.Conflict {
+        color: red;
+        width: 72px !important;
+    }
+
+    .dropUpLoadFile li .cancel-btn {
+        display: inline !important;
+        padding-top: 5px;
+    }
+
+    button.btn.btn-primary.btn-sm.upload_file_btn {
+        background: #f1f9f3;
+        border-color: #20a53a;
+        color: #20a53a;
+    }
+
+    button.btn.btn-primary.btn-sm.dropdown-toggle {
+        background: #f1f9f3;
+        color: #20A53A;
+        border-color: #20A53A;
+    }
+
+    button.btn.btn-sm.btn-default.empty-record {
+        padding-left: 12px;
+        padding-right: 12px;
+        border-radius: 2px;
+    }
+
+    button.btn.btn-sm.btn-default.empty-record:hover {
+        border-color: #BCE4C4;
+        background-color: #F1F9F3;
+        color: #20A53A;
+        outline: 0;
+
+    }
+
+    button.btn.btn-sm.btn-default.empty-record:active {
+        border-color: #1D9534;
+        background-color: #F1F9F3;
+        color: #20A53A;
+        -webkit-box-shadow: none !important;
+        box-shadow: none !important;
+    }
+
+    button.btn.btn-sm.btn-default.empty-record:focus {
+        background-color: #F1F9F3 !important;
+    }
+
+    .btn:active {
+        -webkit-box-shadow: none !important;
+        box-shadow: none !important;
+    }
+
+    .dropUpLoadFileHead li.fileTitle span {
+        font-size: 14px;
+        color: #999;
+    }
+
+    #icon_clean:hover {
+        fill: #cbcbcb;
+    }
+
+    .upload_btn_groud {
+        margin-bottom: 10px;
+    }
+
+    .flex.pd15 {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .list-list .ico-file {
+        background-size: 14px 14px;
+    }
+
+    .upload_btn_groud .dropdown-menu {
+        top: 38px;
+        border-color: #e4e7ed;
+    }
+
+    .upload_btn_groud .dropdown-menu>li>a:hover {
+        background-color: rgb(245, 247, 250);
+        color: #20a53a;
+    }
+
+    .upload_btn_groud .dropdown-menu:before {
+        top: -12px;
+        height: 12px;
+    }
+
+    .upload_btn_groud .dropdown-menu::after {
+        content: '';
+        position: absolute;
+        top: -9px;
+        right: 50px;
+        background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAAOCAYAAADE84fzAAAABHNCSVQICAgIfAhkiAAAATFJREFUOI2tks9Og0AQhwdTEVISiGLa6MF48BG882h79eYbER/BxBjj0kxBFlL+1EIqyKGMB6MxtLQU+11n8v1mdhagIxxDC93ZXdd+AIBB10YJyF7VK+AoypvrS7ZPyFbct+g+SfOCiMgV0YyjOIyco2Bxmk3oD54f+f8O4CiY58cuNSjKihwMqHcAx9ByMKCirJruRkBotTmO2goSkG0YWqUq8sa6qshwMT4DCcjeFrCGg4Edp4vpxpH32GBtco6CaUNFMU/1qy6DqIoMhq597tyAo2BTL3ruMnGTZJ7NW2/AUTAHAyKiso+ciChOF/4Ew4eG+PtnLD/Kp77i34Ake3UwsAEApJ8Dapo6HJnGbZd33kWcZI/5sngfcAwtVT3OR6YxBoCXQ8jPTf2kplr5AtnIvg9TDvU3AAAAAElFTkSuQmCC') no-repeat;
+        width: 14px;
+        height: 14px;
+        background-size: 14px;
+    }
+
+    /* 文件拆分样式  */
+    .splitOpen .inlineBlock.group span {
+        height: 32px;
+        line-height: 31px;
+    }
+
+    .sn-home--open-condition {
+        display: inline-block;
+        color: #E6A23C;
+        background: #FDF6EC;
+        border-radius: 2px;
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    .sn-home--open-condition .sn-home--important-note {
+        border: 1px solid #E6A23C;
+        border-radius: 8px;
+        cursor: help;
+        display: inline-block;
+        font-family: arial;
+        font-size: 11px;
+        font-style: normal;
+        height: 16px;
+        line-height: 16px;
+        margin-right: 5px;
+        text-align: center;
+        width: 16px;
+    }
+
+    .joinFile {
+        position: absolute;
+        right: 0;
+        bottom: 12px;
+        background-color: transparent;
+        color: #20A53A;
+        height: 14px;
+        line-height: 14px;
+        font-size: 14px;
+    }
+
+    .joinFile:hover {
+        color: #1d9534;
+    }
+
+    #search_history {
+        width: 230px;
+        position: absolute;
+        z-index: 99999999;
+        background: #fff;
+        height: 270px;
+        top: 33px;
+    }
+
+    .replaceContentValue:focus {
+        outline: none;
+    }
+
+    .input_option_active {
+        background: #272822;
+        color: #fff;
+    }
+
+    .show {
+        display: block !important;
+    }
+
+    .ext-close::before {
+        content: '×';
+        font-style: normal;
+    }
+    .search-box {
+        display: flex;
+        height: 100%;
+        border: 1px solid #EBEEF5;
+    }
+    #search_file_btn{
+        border-radius: 2px;
+    }
+    #search_file_btn.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .box-left {
+        width: 20%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .box-left_top {
+        padding: 7px;
+        border-bottom: 1px solid #EBEEF5;
+        border-right: 1px solid #EBEEF5;
+    }
+    .box-left_bottom {
+        cursor: pointer;
+        height: 100%;
+        overflow: auto;
+    }
+    .box-left_bottom .left_bottom_item {
+        background: #fff;
+        padding: 5px 4px 5px 10px;
+        display: flex;
+        justify-content: space-between;
+        min-height: 40px;
+        align-items: center;
+        overflow: auto;
+        border-bottom: 1px solid #ececec;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    .box-left_bottom .left_bottom_item.active {
+        background-color: #EEF8F0;
+        color: #20a53a;
+    }
+    .box-left_bottom .left_bottom_item .bottom_item_name {
+        flex: 1;
+        position: relative;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    .box-left_bottom .left_bottom_item .bottom_item_num {
+        padding: 0px 2px;
+        background-color: #cdcdcd;
+        color: #fff;
+        border-radius: 2px;
+        transform: scale(0.8, 0.8);
+    }
+
+    .box-right_top .right_top_title {
+        position: relative;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        max-width: 730px;
+    }
+    .box-right {
+        width: 80%;
+        display: flex;
+        flex-direction: column;
+    }
+    .box-right_top{
+        padding: 7px;
+        display: flex;
+    }
+    .box-right_bottom {
+        background: #272822;
+        height: 100%;
+        color: #fff;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        overflow: auto;
+        word-break: break-all;
+    }
+    .search_content {
+        border: 1px solid #DCDFE6;
+    }
+    .search_content .content_item{
+        display: flex;
+        justify-content: space-between;
+        padding: 8px;
+        border-bottom: 1px solid #DCDFE6;
+    }
+    .search_content .content_item:last-child {
+        border-bottom: none;
+    }
+    /* 文件搜索 */
+    .input_option::before{
+        content: '';
+        width:1px;
+        height: 20px;
+        background: #ddd;
+        position: absolute;
+        left: -10px;
+        top: 2px;
+    }
+    .input_option span{
+        width:32px;
+        height:24px;
+        border-radius:2px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        cursor:pointer;
+    }
+    .input_option span:last-child{
+        font-size: 16px;
+    }
+    .input_option span.active{
+        background: #F1F9F3 !important;
+        color: #20a53a !important;
+        border: 1px solid #BCE4C4;
+    }
+    .firwall_place_of_attribution{
+        width: 20px;
+        height: 20px;
+        background-size: 20px;
+    }
+    .buy_search_introduce{
+        background: #FDF6EC;
+        color: #E6A23C;
+        width: 560px;
+        border-radius: 4px;
+        border: 1px dashed #E6A23C;
+        margin: 0 auto;
+        padding: 15px;
+        margin: 100px auto 0 auto;
+    }
+    .buy_search_introduce ul li{
+        margin: 15px 0 20px 0;
+        list-style: inside disc;
+    }
+    .inlineFloatExt{
+        display: none;
+        width: 322px;
+        position: absolute;
+        right: 22px;
+        padding: 4px 6px;
+        border: 1px solid #ddd;
+        background: #fff;
+        z-index:1;
+    }
+    .inlineFloatExt li {
+        display: inline-block;
+        padding: 2px 10px;
+        color: #767575;
+        background: #f7f7f7;
+        border-radius: 4px;
+        margin-right: 5px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        border: 1px solid #eee;
+    }
+
+    .inlineFloatExt li:hover {
+        background: #e5e5e5
+    }
+    .content_item .search_item_name{
+        max-width: 620px;
+        word-wrap: break-word;
+    }
+    /* 文件搜索 end */
+
+
+    .tools-multiple-choices div {
+        cursor: pointer;
+        margin: 5px;
+        display: inline-block;
+        position: relative;
+        padding: 4px;
+    }
+
+    .tools-multiple-choices div.selected i {
+        display: inline-block;
+        width: 6px;
+        height: 3px;
+        vertical-align: 2px;
+        margin-left: 2px;
+        border-left: 1px solid #909399;
+        border-bottom: 1px solid #909399;
+        transform: rotate(-45deg);
+    }
+
+    .tools-multiple-choices div.selected {
+        color: #909399;
+        background-color: #f4f4f5;
+        border-color: #e9e9eb;
+    }
+
+    .tools-multiple-choices div:hover {
+        background-color: rgb(245, 247, 250);
+    }
 </style>
 <div class="main-content">
-    <a style="display: none;" id="recycle_bin" data="{{data['recycle_bin']}}"></a>
-	<!-- aceEditors -->
-	<div class="file_bodys radius4">
-		<div class="file_path_views">
-            <div class="file_path_upper" title="上一层">
-                <span class="glyphicon glyphicon-arrow-left"></span>
-                <!-- <span>上一层</span> -->
+  <a style="display: none;" id="recycle_bin" data="{{data['recycle_bin']}}"></a>
+  <!-- aceEditors -->
+  <div class="file_bodys radius4" style="min-width: 1116px;">
+    <div class="file_path_views">
+      <div class="file_path_upper" title="上一层">
+        <span class="glyphicon glyphicon-arrow-left"></span>
+        <!-- <span>上一层</span> -->
+      </div>
+      <div class="file_path_input">
+        <div class="file_path_shadow"></div>
+        <div class="file_dir_view"></div>
+        <input type="text" data-path="/www/wwwroot" data-backspace class="path_input" id="fileInputPath" />
+      </div>
+      <div class="file_path_refresh" title="刷新列表"><i class="icon-file icon-file-refresh"></i></div>
+      <div class="search_path_views">
+        <input type="text" placeholder="搜索文件/目录" class="file_search_input">
+        <button type="submit" class="path_btn"><i class="iconfont icon-search"></i></button>
+        <div class="file_search_config" draggable="false">
+          <div id="search_all" class="file_search_checked"></div>
+          <label for="search_all">包含子目录</label>
+        </div>
+        <!-- <div id="search_history" style="display: none;">
+          <div class="history_list_box">
+            <div style=""><span style="font-size: 14px;color:#5f7292">历史搜索</span><img id="all_delete"
+                src="/static/img/soft_ico/deletes.png" alt="清除"></div>
+            <div class="list_box_body">12312</div>
+          </div>
+        </div> -->
+      </div>
+    </div>
+    <div class="file_nav_view">
+      <div class="nav_group">
+        <div class="nav_btn upload_file">
+          <span class="nav_btn_title">上传</span>
+        </div>
+      </div>
+      <div class="nav_group">
+        <div class="nav_btn upload_download">
+          <span class="nav_btn_title">远程下载</span><i class="iconfont icon-xiala"></i>
+          <ul class="nav_down_list"></ul>
+        </div>
+      </div>
+      <div class="nav_group">
+        <div class="nav_btn create_file_or_dir">
+          <span class="nav_btn_title">新建</span><i class="iconfont icon-xiala"></i>
+          <ul class="nav_down_list" data-menu="newFileType">
+            <li data-type="newBlankDir"><i class="file_menu_icon create_file_icon"></i><span>新建目录</span></li>
+            <li data-type="newBlankFile"><i class="file_new_icon"></i><span>新建空白文件</span></li>
+            <li data-type="newBlankFile"><i class="file_new_icon soft_link_file_icon"></i><span>软链接文件</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="nav_group">
+        <div class="nav_btn replace_content">
+          <span class="nav_btn_title">文件内容搜索</span>
+        </div>
+      </div>
+      <div class="nav_group">
+        <div class="nav_btn favorites_file_path">
+          <span class="nav_btn_title" data-menu="favorites">收藏夹</span><i class="iconfont icon-xiala"></i>
+          <ul class="nav_down_list"></ul>
+        </div>
+      </div>
+      <div class="nav_group">
+        <div class="nav_btn share_file_list">
+          <span class="nav_btn_title">分享列表</span>
+        </div>
+      </div>
+      <div class="nav_group ">
+        <div class="nav_btn terminal_view">
+          <i class="iconfont icon-terminal"></i>
+          <span class="nav_btn_title">终端</span>
+        </div>
+      </div>
+      <div class="nav_group">
+        <div class="nav_btn file_history_show">
+          <span class="nav_btn_title"><span>文件操作记录</span></span>
+        </div>
+      </div>
+      <!-- 挂载磁盘列表 -->
+      <div class="nav_group mount_disk_list"></div>
+      <div class="nav_group tamper_core">
+        <div class="nav_btn tamper_hover_tips">
+          <!--<span class="nav_btn_title"><span class="glyphicon glyphicon-vip ltd-font-icon"></span>&nbsp;企业级防篡改</span>-->
+          <!-- <span class="nav_btn_title"><span class="glyphicon new-ltd-icon new-file-icon" style="position: absolute;top: 5px;"></span>&nbsp;<span style="margin-left:20px">企业级防篡改</span></span> -->
+          <span class="nav_btn_title"><span>企业级防篡改</span></span>
+        </div>
+      </div>
+      <div class="nav_group ml5">
+        <div class="nav_btn file_rsync_list">
+          <!--<span class="nav_btn_title"><span class="glyphicon glyphicon-vip pro-font-icon"></span>&nbsp;文件同步</span>-->
+          <!-- <span class="nav_btn_title"><span class="glyphicon new-pro-icon new-file-icon" style="position: absolute;top: 5px;"></span>&nbsp;<span style="margin-left:20px">文件同步</span></span> -->
+          <span class="nav_btn_title"><span>文件同步</span></span>
+        </div>
+      </div>
+      <div class="float_r menu-header-foot">
+        <div class="file_menu_tips"><span class="glyphicon glyphicon-info-sign"></span><span>文件操作可使用右键</span></div>
+        <div class="nav_group multi hide">
+          <div class="batch_multi_title">
+            <span>批量操作</span>
+            <i class="iconfont icon-xiala"></i>
+            <div class="batch_group_list">
+              <div class="nav_btn_group" data-type="copy"><i class="file_menu_icon copy_file_icon"></i><span
+                class="nav_btn_title">复制</span></div>
+              <div class="nav_btn_group" data-type="shear"><i class="file_menu_icon shear_file_icon"></i><span
+                class="nav_btn_title">剪切</span></div>
+              <div class="nav_btn_group" data-type="compress"><i class="file_menu_icon compress_file_icon"></i><span
+                class="nav_btn_title">压缩</span></div>
+              <div class="nav_btn_group" data-type="authority"><i class="file_menu_icon power_file_icon"></i><span
+                class="nav_btn_title">权限</span></div>
+              <div class="nav_btn_group" data-type="del"><i class="file_menu_icon del_file_icon"></i><span
+                class="nav_btn_title">删除</span></div>
+              <div class="nav_btn_group hide"
+                   style="padding-left:10px;border-left: 1px solid #cfcfcf;margin-left: -1px;">
+                <span class="nav_btn_title">更多</span><i class="iconfont icon-xiala"></i>
+                <ul class="nav_down_list">
+                  <li data-type="copy"><i class="file_menu_icon copy_file_icon"></i><span>复制</span></li>
+                  <li data-type="shear"><i class="file_menu_icon shear_file_icon"></i><span>剪切</span></li>
+                  <li data-type="compress"><i class="file_menu_icon compress_file_icon"></i><span>压缩</span></li>
+                  <li data-type="authority"><i class="file_menu_icon power_file_icon"></i><span>权限</span></li>
+                  <li data-type="del"><i class="file_menu_icon del_file_icon"></i><span>删除</span></li>
+                </ul>
+              </div>
             </div>
-			<div class="file_path_input">
-				<div class="file_path_shadow"></div>
-				<div class="file_dir_view"></div>
-				<input type="text" data-path="/www/wwwroot" data-backspace class="path_input" id="fileInputPath"/>
-			</div>
-			<div class="file_path_refresh" title="刷新列表"><i class="icon-file icon-file-refresh"></i></div>
-			<div class="search_path_views">
-                <input type="text" placeholder="搜索文件/目录" class="file_search_input">
-                <button type="submit" class="path_btn"><i class="iconfont icon-search"></i></button>
-                <div class="file_search_config" draggable="false">
-                    <div id="search_all" class="file_search_checked"></div>
-                    <label for="search_all">包含子目录</label>
-                </div>
-			</div>
-		</div>
-		<div class="file_nav_view">
-            <div class="nav_group">
-				<div class="nav_btn upload_file">
-					<span class="nav_btn_title">上传</span>
-				</div>
-			</div>
-            <div class="nav_group">
-				<div class="nav_btn upload_download">
-					<span class="nav_btn_title">远程下载</span>
-				</div>
-			</div>
-			<div class="nav_group">
-				<div class="nav_btn create_file_or_dir">
-					<span class="nav_btn_title">新建</span><i class="iconfont icon-xiala"></i>
-					<ul class="nav_down_list" data-menu="newFileType">
-						<li data-type="newBlankDir"><i class="file_menu_icon create_file_icon"></i><span>新建目录</span></li>
-						<li data-type="newBlankFile"><i class="file_new_icon"></i><span>新建空白文件</span></li>
-						<li data-type="newBlankFile"><i class="file_new_icon soft_link_file_icon"></i><span>软链接文件</span></li>
-					</ul>
-				</div>
-			</div>
-			<div class="nav_group">
-                <div class="nav_btn replace_content">
-                    <span class="nav_btn_title">文件查找</span>
-                </div>
-            </div>
-			<div class="nav_group">
-				<div class="nav_btn favorites_file_path">
-					<span class="nav_btn_title" data-menu="favorites">收藏夹</span><i class="iconfont icon-xiala"></i>
-					<ul class="nav_down_list"></ul>
-				</div>
-            </div>
-            <div class="nav_group">
-				<div class="nav_btn share_file_list">
-					<span class="nav_btn_title">分享列表</span>
-				</div>
-            </div>
-            <div class="nav_group">
-                <div class="nav_btn file_rsync_list">
-                    <span class="nav_btn_title"><span class="glyphicon glyphicon-vip pro-font-icon"></span>&nbsp;数据同步</span>
-                </div>
-            </div>
-            <div class="nav_group ">
-                <div class="nav_btn terminal_view">
-                    <i class="iconfont icon-terminal"></i>
-                    <span class="nav_btn_title">终端</span>
-                </div>
-            </div>
-            <!-- 挂载磁盘列表 -->
-            <div class="nav_group mount_disk_list"></div>
-			<div class="float_r menu-header-foot">
-                <div class="file_menu_tips"><span class="glyphicon glyphicon-info-sign"></span><span>文件操作可使用右键</span></div>
-                <div class="nav_group multi hide">
-                    <div class="batch_multi_title">
-                        <span>批量操作</span>
-                        <i class="iconfont icon-xiala"></i>
-                        <div class="batch_group_list">
-                            <div class="nav_btn_group" data-type="copy"><i class="file_menu_icon copy_file_icon"></i><span
-                                class="nav_btn_title">复制</span></div>
-                            <div class="nav_btn_group" data-type="shear"><i class="file_menu_icon shear_file_icon"></i><span
-                                    class="nav_btn_title">剪切</span></div>
-                            <div class="nav_btn_group" data-type="compress"><i class="file_menu_icon compress_file_icon"></i><span
-                                    class="nav_btn_title">压缩</span></div>
-                            <div class="nav_btn_group" data-type="authority"><i class="file_menu_icon power_file_icon"></i><span
-                                    class="nav_btn_title">权限</span></div>
-                            <div class="nav_btn_group" data-type="del"><i class="file_menu_icon del_file_icon"></i><span
-                                    class="nav_btn_title">删除</span></div>
-                            <div class="nav_btn_group hide" style="padding-left:10px;border-left: 1px solid #cfcfcf;margin-left: -1px;">
-                                <span class="nav_btn_title">更多</span><i class="iconfont icon-xiala"></i>
-                                <ul class="nav_down_list">
-                                    <li data-type="copy"><i class="file_menu_icon copy_file_icon"></i><span>复制</span></li>
-                                    <li data-type="shear"><i class="file_menu_icon shear_file_icon"></i><span>剪切</span></li>
-                                    <li data-type="compress"><i class="file_menu_icon compress_file_icon"></i><span>压缩</span></li>
-                                    <li data-type="authority"><i class="file_menu_icon power_file_icon"></i><span>权限</span></li>
-                                    <li data-type="del"><i class="file_menu_icon del_file_icon"></i><span>删除</span></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="nav_group file_all_paste hide">
-                    <div class="nav_btn_group">
-                        <i class="file_menu_icon paste_file_icon"></i><span class="nav_btn_title">粘贴</span>
-                    </div>
-                </div>
-				<div class="nav_group recycle_bin">
-					<div class="nav_btn"><span class="glyphicon glyphicon-trash"></span><span class="nav_btn_title">回收站</span></div>
-				</div>
+          </div>
+        </div>
+        <div class="nav_group file_all_paste hide">
+          <div class="nav_btn_group">
+            <i class="file_menu_icon paste_file_icon"></i><span class="nav_btn_title">粘贴</span>
+          </div>
+        </div>
+        <div class="nav_group recycle_bin">
+          <div class="nav_btn"><span class="glyphicon glyphicon-trash"></span><span class="nav_btn_title">回收站</span>
+          </div>
+        </div>
 				<div class="nav_group btn-group btn-group-sm">
-                    <div class="btn btn-default cut_view_model" data-type="icon"><i class="glyphicon glyphicon-th"></i></div>
-                    <div class="btn btn-default cut_view_model" data-type="list"><i class="glyphicon glyphicon-th-list"></i></div>
-				</div>
-			</div>
-		</div>
-		<div class="file_table_view">
-			<div class="file_list_header">
-                <div class="file_main_title">
-                    <div class="file_checkbox file_th">
-                        <div class="file_check" data-type="all" data-checkbox="0"></div>
-                    </div>
-                    <div class="file_name file_th" data-tid="name">
-                        <span>文件名</span>
-                        <div class="icon_sort"></div>
-                    </div>
-                    <!-- <div class="file_width_resize"></div>
+          <div class="btn btn-default cut_view_model" data-type="icon"><i class="glyphicon glyphicon-th"></i></div>
+          <div class="btn btn-default cut_view_model" data-type="list"><i class="glyphicon glyphicon-th-list"></i></div>
+        </div> -->
+        <div class="nav_group">
+          <div class="set_list_fid_dropdown" style="font-size: 12px;">
+            <div class="setting_btn" style="width: 32px;height: 32px;">
+              <i class="glyphicon glyphicon-cog icon-setting"></i>
+            </div>
+            <ul class="setting_ul" style="display: none;">
+              <li class="setting_ul_li active disabled">
+                <i></i><span class="ml10">文件名</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="file_table_view">
+      <div class="file_list_header">
+        <div class="file_main_title">
+          <div class="file_checkbox file_th">
+            <div class="file_check" data-type="all" data-checkbox="0"></div>
+          </div>
+          <div class="file_name file_th" data-tid="name">
+            <span>文件名</span>
+            <div class="icon_sort"></div>
+          </div>
+          <!-- <div class="file_width_resize"></div>
                     <div class="file_type file_th" data-tid="type">
                         <span>类型</span>
                         <div class="icon_sort"></div>
                     </div> -->
-                    <div class="file_width_resize"></div>
-                    <div class="file_accept file_th" data-tid="accept">
-                        <span>权限 / 所有者</span>
-                        <div class="icon_sort"></div>
-                    </div>
-                    <div class="file_width_resize"></div>
-                    <div class="file_size file_th" data-tid="size">
-                        <span>大小</span>
-                        <div class="icon_sort"></div>
-                    </div>
-                    <div class="file_width_resize"></div>
-                    <div class="file_mtime file_th" data-tid="mtime">
-                        <span>修改时间</span>
-                        <div class="icon_sort"></div>
-                    </div>
-                    <div class="file_width_resize"></div>
-                    <div class="file_ps file_th" data-tid="ps">
-                        <span>备注</span>
-                        <div class="icon_sort"></div>
-                    </div>
-                    <!-- <div class="file_width_resize"></div> -->
-                    <div class="file_width_resize"></div>
-                    <div class="file_operation file_th align-right" data-tid="operation">
-                        <span>操作</span>
-                    </div>
-                </div>
-            </div>
-            <div class="file_list_shadow file_shadow_top" style="opacity: 0;"></div>
-            <div class="file_list_content"></div>
-            <div class="file_list_shadow file_shadow_bottom" style="opacity: 0;"></div>
-			<div class="onselectstart"></div>
+          <div class="file_width_resize"></div>
+          <div class="file_tamper_core file_th" data-tid="tamper_core">
+            <span>防篡改</span>
+            <div class="icon_sort"></div>
+          </div>
+          <div class="file_width_resize"></div>
+          <div class="file_accept file_th" data-tid="accept">
+            <span>权限 / 所有者</span>
+            <div class="icon_sort"></div>
+          </div>
+          <div class="file_width_resize"></div>
+          <div class="file_size file_th" data-tid="size">
+            <span>大小</span>
+            <div class="icon_sort"></div>
+          </div>
+          <div class="file_width_resize"></div>
+          <div class="file_mtime file_th" data-tid="mtime">
+            <span>修改时间</span>
+            <div class="icon_sort"></div>
+          </div>
+          <div class="file_width_resize"></div>
+          <div class="file_ps file_th" data-tid="ps">
+            <span>备注</span>
+            <div class="icon_sort"></div>
+          </div>
+          <!-- <div class="file_width_resize"></div> -->
+          <div class="file_width_resize"></div>
+          <div class="file_operation file_th align-right" data-tid="operation">
+            <span>操作</span>
+          </div>
         </div>
-        <div class="file_right_menu file_menu_list">
-            <ul class="set_group">
-                <!-- <li data-id="open_file"><i class="file_menu_icon open_file_icon"></i><span>打开文件夹</span></li> -->
-                <li data-id="edit_file"><i class="file_menu_icon edit_file_icon"></i><span>打开</span></li>
-                <li data-id="download_file"><i class="file_menu_icon download_file_icon"></i><span>下载</span></li>
-                <li class="separate"></li>
-                <li data-id="copy_file"><i class="file_menu_icon copy_file_icon"></i><span>复制</span></li>
-                <li data-id="paste_file"><i class="file_menu_icon paste_file_icon"></i><span>粘贴</span></li>
-                <!-- 判断类型是文件夹时，提示是否复制文件至该文件夹 -->
-                <li data-id="shear_file"><i class="file_menu_icon shear_file_icon"></i><span>剪切</span></li>
-                <li class="separate"></li>
-                <li data-id="rename_file"><i class="file_menu_icon rename_file_icon"></i><span>重命名</span></li>
-                <li data-id="power_file"><i class="file_menu_icon power_file_icon"></i><span>权限</span></li>
-                <li data-id="decompression_file"><i
-                        class="file_menu_icon decompression_file_icon"></i><span>解压</span></li>
-                <li data-id="compress_file">
-                    <i class="file_menu_icon compress_file_icon"></i><span>创建压缩</span>
-                    <div class="file_menu_down">
-                        <span class="glyphicon glyphicon-triangle-right" aria-hidden="true"></span>
-                        <ul class="set_group">
-                            <li><i class="file_menu_icon compress_file_icon"></i><span>tar.gz（推荐）</span></li>
-                            <li><i class="file_menu_icon compress_file_icon"></i><span>zip（通用格式）</span></li>
-                            <li><i class="file_menu_icon compress_file_icon"></i><span>rar（WinRAR对中文兼容较好）</span>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-                <li data-id="del_file"><i class="file_menu_icon del_file_icon"></i><span>删除</span></li>
-                <li class="separate"></li>
-                <li data-id="add_favorites"><i class="file_menu_icon add_favorites_icon"></i><span>添加至收藏夹</span>
-                </li>
-            </ul>
-        </div>
-        <div class="selection_right_menu file_menu_list">
-            <ul class="set_group">
-                <li data-id="copy_file"><i class="file_menu_icon copy_file_icon"></i><span>复制</span></li>
-                <li data-id="paste_file"><i class="file_menu_icon shear_file_icon"></i><span>剪切</span></li>
-                <li data-id="download_file"><i class="file_menu_icon download_file_icon"></i><span>下载</span></li>
-                <li class="separate"></li>
-                <li data-id="del_file"><i class="file_menu_icon del_file_icon"></i><span>删除</span></li>
-                <li class="separate"></li>
-                <li data-id="paste_file"><i class="file_menu_icon copy_file_icon"></i><span>复制到</span></li>
-                <li data-id="paste_file"><i class="file_menu_icon shear_file_icon"></i><span>移动到</span></li>
-                <li class="separate"></li>
-                <li data-id="compress_file">
-                    <i class="file_menu_icon compress_file_icon"></i><span>创建压缩</span>
-                    <div class="file_menu_down"><span class="glyphicon glyphicon-triangle-right" aria-hidden="true"></span></div>
-                </li>
-            </ul>
-        </div>
-        <div class="content_right_menu file_menu_list">
-            <ul class="set_group">
-                <li data-id="refresh_file"><i class="file_menu_icon refresh_file_icon"></i><span>刷新</span></li>
-                <li class="separate"></li>
-                <li data-id="upload_file"><i class="file_menu_icon upload_file_icon"></i><span>上传</span></li>
-                <li data-id="newly_file"><i class="file_menu_icon newly_file_icon"></i><span>新建文件夹/文件</span></li>
-                <li class="separate"></li>
-                <li data-id="paste_file"><i class="file_menu_icon paste_file_icon"></i><span>粘贴</span></li>
-            </ul>
-        </div>
-        <div class="filePage pagination page" style="padding:0"></div>
+      </div>
+      <div class="file_list_shadow file_shadow_top" style="opacity: 0;"></div>
+      <div class="file_list_content file_manage"></div>
+      <div class="file_list_shadow file_shadow_bottom" style="opacity: 0;"></div>
+      <div class="onselectstart"></div>
     </div>
+    <div class="file_right_menu file_menu_list">
+      <ul class="set_group">
+        <!-- <li data-id="open_file"><i class="file_menu_icon open_file_icon"></i><span>打开文件夹</span></li> -->
+        <li data-id="edit_file"><i class="file_menu_icon edit_file_icon"></i><span>打开</span></li>
+        <li data-id="download_file"><i class="file_menu_icon download_file_icon"></i><span>下载</span></li>
+        <li class="separate"></li>
+        <li data-id="copy_file"><i class="file_menu_icon copy_file_icon"></i><span>复制</span></li>
+        <li data-id="paste_file"><i class="file_menu_icon paste_file_icon"></i><span>粘贴</span></li>
+        <!-- 判断类型是文件夹时，提示是否复制文件至该文件夹 -->
+        <li data-id="shear_file"><i class="file_menu_icon shear_file_icon"></i><span>剪切</span></li>
+        <li class="separate"></li>
+        <li data-id="rename_file"><i class="file_menu_icon rename_file_icon"></i><span>重命名</span></li>
+        <li data-id="power_file"><i class="file_menu_icon power_file_icon"></i><span>权限</span></li>
+        <li data-id="decompression_file"><i class="file_menu_icon decompression_file_icon"></i><span>解压</span></li>
+        <li data-id="compress_file">
+          <i class="file_menu_icon compress_file_icon"></i><span>创建压缩</span>
+          <div class="file_menu_down">
+            <span class="glyphicon glyphicon-triangle-right" aria-hidden="true"></span>
+            <ul class="set_group">
+              <li><i class="file_menu_icon compress_file_icon"></i><span>tar.gz（推荐）</span></li>
+              <li><i class="file_menu_icon compress_file_icon"></i><span>zip（通用格式）</span></li>
+              <li><i class="file_menu_icon compress_file_icon"></i><span>rar（WinRAR对中文兼容较好）</span>
+              </li>
+            </ul>
+          </div>
+        </li>
+        <li data-id="del_file"><i class="file_menu_icon del_file_icon"></i><span>删除</span></li>
+        <li class="separate"></li>
+        <li data-id="add_favorites"><i class="file_menu_icon add_favorites_icon"></i><span>添加至收藏夹</span>
+        </li>
+      </ul>
+    </div>
+    <div class="selection_right_menu file_menu_list">
+      <ul class="set_group">
+        <li data-id="copy_file"><i class="file_menu_icon copy_file_icon"></i><span>复制</span></li>
+        <li data-id="paste_file"><i class="file_menu_icon shear_file_icon"></i><span>剪切</span></li>
+        <li data-id="download_file"><i class="file_menu_icon download_file_icon"></i><span>下载</span></li>
+        <li class="separate"></li>
+        <li data-id="del_file"><i class="file_menu_icon del_file_icon"></i><span>删除</span></li>
+        <li class="separate"></li>
+        <li data-id="paste_file"><i class="file_menu_icon copy_file_icon"></i><span>复制到</span></li>
+        <li data-id="paste_file"><i class="file_menu_icon shear_file_icon"></i><span>移动到</span></li>
+        <li class="separate"></li>
+        <li data-id="compress_file">
+          <i class="file_menu_icon compress_file_icon"></i><span>创建压缩</span>
+          <div class="file_menu_down"><span class="glyphicon glyphicon-triangle-right" aria-hidden="true"></span></div>
+        </li>
+      </ul>
+    </div>
+    <div class="content_right_menu file_menu_list">
+      <ul class="set_group">
+        <li data-id="refresh_file"><i class="file_menu_icon refresh_file_icon"></i><span>刷新</span></li>
+        <li class="separate"></li>
+        <li data-id="upload_file"><i class="file_menu_icon upload_file_icon"></i><span>上传</span></li>
+        <li data-id="newly_file"><i class="file_menu_icon newly_file_icon"></i><span>新建文件夹/文件</span></li>
+        <li class="separate"></li>
+        <li data-id="paste_file"><i class="file_menu_icon paste_file_icon"></i><span>粘贴</span></li>
+      </ul>
+    </div>
+    <div class="filePage pagination page" style="padding:0"></div>
+  </div>
 </div>
 <script type="text/template" id="upload_file_template">
-	<div class="upload_or_download_view">
-		<div class="upload_or_download_content active" data-type="upload">
-			<div class="upload_btn_groud">
-				<div class="btn-group">
-					<button type="button" class="btn btn-primary btn-sm upload_file_btn">上传文件</button>
-					<button type="button" class="btn btn-primary  btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-						<span class="caret"></span>
-						<span class="sr-only">Toggle Dropdown</span>
-					</button>
-					<ul class="dropdown-menu">
-						<li><a href="#" data-type="file">上传文件</a></li>
-						<li><a href="#" data-type="dir">上传目录</a></li>
-					</ul>
-				</div>
-				<div class="file_upload_info" style="display:none;">
-					<span>总进度&nbsp;<i class="uploadProgress"></i>，正在上传&nbsp;<i class="uploadNumber"></i>，</span>
-					<span style="display:none">上传失败&nbsp;<i class="uploadError"></i></span>
-					<span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span>
-					<span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span><i></i>
-				</div>
-			</div>
-			<div class="upload_file_body active"><span>请将需要上传的文件拖到此处</span></div>
-			<div class="upload_btn_group"><button type="button" class="btn btn-danger btn-sm upload_file_clear">取消上传</button><button type="button" class="btn btn-success btn-sm upload_file_submit">开始上传</button></div>
-		</div>
-	</div>
+  <div class="upload_or_download_view">
+    <div class="upload_or_download_content active" data-type="upload">
+      <div class="upload_btn_groud">
+        <div class="btn-group">
+          <button type="button" class="btn btn-primary btn-sm upload_file_btn">上传文件</button>
+          <button type="button" class="btn btn-primary  btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <span class="caret"></span>
+            <span class="sr-only">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a href="#" data-type="file">上传文件</a></li>
+            <li><a href="#" data-type="dir">上传目录</a></li>
+          </ul>
+        </div>
+        <div class="file_upload_info" style="display:none;">
+          <span>总进度&nbsp;<i class="uploadProgress"></i>，正在上传&nbsp;<i class="uploadNumber"></i>，</span>
+          <span style="display:none">上传失败&nbsp;<i class="uploadError"></i></span>
+          <span>上传速度&nbsp;<i class="uploadSpeed">获取中</i>，</span>
+          <span>预计上传时间&nbsp;<i class="uploadEstimate">获取中</i></span><i></i>
+        </div>
+      </div>
+      <div class="upload_file_body active"><span>请将需要上传的文件拖到此处</span></div>
+      <div class="upload_btn_group"><button type="button" class="btn btn-danger btn-sm upload_file_clear">取消上传</button><button type="button" class="btn btn-success btn-sm upload_file_submit">开始上传</button></div>
+    </div>
+  </div>
 </script>
 <script type="text/template" id="aceTmplate">
-    <div id="ace_conter">
-        <div class="ace_header" style="top: 0">
-            <span class="saveFile"><i class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></i><span>保存</span></span>
-            <span class="saveFileAll"><i class="glyphicon glyphicon-duplicate" aria-hidden="true"></i><span>全部保存</span></span>
-            <span class="refreshs"><i class="glyphicon glyphicon-refresh" aria-hidden="true"></i><span>刷新</span></span>
-            <span class="searchs"><i class="glyphicon glyphicon-search" aria-hidden="true"></i><span>搜索</span></span>
-            <span class="replaces"><i class="glyphicon glyphicon-retweet" aria-hidden="true"></i><span>替换</span></span>
-            <span class="jumpLine"><i class="glyphicon glyphicon-pushpin" aria-hidden="true"></i><span>跳转行</span></span>
-            <span class="fontSize"><i class="glyphicon glyphicon-text-width" aria-hidden="true"></i><span>字体</span></span>
-            <span class="themes"><i class="glyphicon glyphicon-magnet" aria-hidden="true"></i><span>主题</span></span>
-            <span class="setUp"><i class="glyphicon glyphicon-cog" aria-hidden="true"></i><span>设置</span><div class="red-poins" style="display: none;"></div></span>
-            <span class="helps"><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i><span>快捷键</span></span>
-            <div class="pull-down" title="隐藏工具条" style="top: 0"><i class="glyphicon glyphicon-menu-down" aria-hidden="true"></i></div>
-        </div>
-        <div class="ace_overall" style="top: 35px;">
-            <!-- 编辑器目录 -->
-            <div class="ace_catalogue" style="left:0px">
-                <div class="ace_catalogue_title">目录<div class="dir-menu-right"><span class="glyphicon glyphicon-minus" aria-hidden="true"></span></div></div>
-            	<div class="ace_dir_tools">
-            		<div class="upper_level"  title="返回上级目录">
-            			<i class="glyphicon glyphicon-share-alt" aria-hidden="true"></i>
-            			<span>上一级</span>
-            		</div>
-            		<div class="search_file" title="搜索内容">
-            			<i class="glyphicon glyphicon-search" aria-hidden="true"></i>
-            			<span>搜索</span>
-            		</div>
-            		<div class="new_folder" title="新建文件/目录">
-            			<i class="glyphicon glyphicon-plus"  aria-hidden="true"></i>
-            			<span>新建</span>
-            			<ul class="folder_down_up">
-            				<li data-type="2"><i class="folder-icon"></i>新建文件夹</li>
-	                    	<li data-type="3"><i class="text-icon"></i>新建文件</li>
-            			</ul>
-            		</div>
-            		<div class="refresh_dir" title="刷新当前目录">
-            			<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
-            			<span>刷新</span>
-            		</div>
-            		<span class="ace_editor_main_storey"></span>
-            	</div>
-                <div class="ace_catalogue_list">
-                    <ul class="cd-accordion-menu"></ul>
-                    <ul class="ace_catalogue_menu">
-                    	<li data-type="0"><i class="glyphicon glyphicon-refresh" aria-hidden="true"></i><span>刷新目录</span></li>
-                    	<li data-type="1"><i class="glyphicon glyphicon-folder-open" aria-hidden="true"></i><span>打开子目录</span></li>
-	                    <li data-type="2"><i class="folder-icon"></i><span>新建文件夹</span></li>
-	                    <li data-type="3"><i class="text-icon"></i><span>新建文件</span></li>
-	                    <li data-type="4"><i class="rename-icon img-icon"></i><span>重命名</span></li>
-	                    <li data-type="5"><i class="down-icon img-icon"></i><span>下载</span></li>
-	                    <li data-type="6"><i class="del-icon img-icon"></i><span>删除</span></li>
-	                </ul>
-                </div>
-                <div class="ace_catalogue_drag_icon">
-                    <div class="drag_icon_conter"></div>
-                    <span class="fold_icon_conter" title="隐藏文件目录"></span>
-                </div>
-
-            </div>
-            <!-- 编辑内容 -->
-            <div class="ace_editor_main" style="margin-left:265px">
-                <ul class="ace_conter_menu"></ul>
-                <div class="ace_conter_tips"><div class="tips"></div></div>
-                <div class="ace_editor_main_storey"></div>
-                <div class="ace_conter_editor"></div>
-                // 编辑器终端
-                <div class="term-parent">
-                    <div class="term-content" id="termContent"></div>
-                </div>
-                <div class="ace_conter_toolbar">
-                    <div class="pull-left size_ellipsis">
-                        <span data-type="path" class="size_ellipsis"></span>
-                    </div>
-                    <div class="pull-right">
-                        <span data-type="cursor"></span>
-                        <span data-type="history"></span>
-                        <span data-type="tab"></span>
-                        <span data-type="encoding"></span>
-                        <span data-type="lang"></span>
-                    </div>
-                </div>
-            </div>
-            <div class="ace_toolbar_menu" style="display: none;">
-                <div class="menu-item menu-tabs" style="display: none;">
-                    <div class="menu-title">设置制表符</div>
-                    <ul class="tabsType">
-                        <li data-value="nbsp">使用空格缩进</li>
-                        <li data-value="tabs">使用 "Tab" 缩进</li>
-                    </ul>
-                    <div class="menu-title" style="margin-top:15px">设置制表符长度</div>
-                    <ul class="tabsSize">
-                        <li data-value="1">1</li>
-                        <li data-value="2">2</li>
-                        <li data-value="3">3</li>
-                        <li data-value="4">4</li>
-                        <li data-value="5">5</li>
-                        <li data-value="6">6</li>
-                    </ul>
-                </div>
-                <div class="menu-item menu-encoding" style="display: none;">
-                    <div class="menu-title">设置文件保存编码格式</div>
-                    <ul></ul>
-                </div>
-                <div class="menu-item menu-files" style="display: none;">
-                    <div class="menu-conter">
-                    	<input type="text" class="menu-input" placeholder="输入语言模式">
-                    	<i class="fa fa-close" aria-hidden="true"></i>
-                    </div>
-                    <div class="menu-title">设置文件语言关联</div>
-                    <ul></ul>
-                </div>
-                <div class="menu-item menu-fontSize" style="display: none;">
-                    <div class="menu-title">设置编辑器字体大小</div>
-                    <div class="menu-conter">
-                        <div class="set_font_size">
-                            <input type="number" min="12" max="45"/>
-                            <span class="tips error">字体设置范围 12-45</span>
-                            <button class="btn-save">保存</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="menu-item menu-jumpLine" style="display: none;">
-                    <div class="menu-title">跳转到指定行</div>
-                    <div class="menu-conter">
-                        <div class="set_jump_line">
-                            <input type="number" min="0"/>
-                            <div class="jump_tips">当前：行&nbsp;<span></span>&nbsp;，列&nbsp;<span></span>&nbsp;，输入行数(介于&nbsp;1&nbsp;-&nbsp;<span></span>&nbsp;之间)</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="menu-item menu-themes" style="display: none;">
-                    <div class="menu-title">设置编辑器主题</div>
-                    <ul></ul>
-                </div>
-                <div class="menu-item menu-history" style="display: none;">
-                    <div class="menu-title">文件历史版本</div>
-                    <ul></ul>
-                </div>
-                <div class="menu-item menu-setUp"  style="display: none;">
-                	<div class="menu-title">编辑器设置【部分设置需要重新打开编辑生效】</div>
-                	<ul class="editor_menu">
-                		<li data-type="wrap">自动换行</li>
-                		<li data-type="enableLiveAutocompletion">代码自动完成</li>
-                		<li data-type="enableSnippets">启用代码段</li>
-                		<li data-type="showInvisibles">显示隐藏字符</li>
-                		<li data-type="showLineNumbers">显示行号</li>
-                	</ul>
-                </div>
-            </div>
-        </div>
+  <div id="ace_conter">
+    <div class="ace_header" style="top: 0">
+      <span class="saveFile"><i class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></i><span>保存</span></span>
+      <span class="saveFileAll"><i class="glyphicon glyphicon-duplicate" aria-hidden="true"></i><span>全部保存</span></span>
+      <span class="openFile"><i class="glyphicon glyphicon-open" aria-hidden="true"></i><span>文件</span></span>
+      <span class="refreshs"><i class="glyphicon glyphicon-refresh" aria-hidden="true"></i><span>刷新</span></span>
+      <span class="searchs"><i class="glyphicon glyphicon-search" aria-hidden="true"></i><span>搜索</span></span>
+      <span class="replaces"><i class="glyphicon glyphicon-retweet" aria-hidden="true"></i><span>替换</span></span>
+      <span class="jumpLine"><i class="glyphicon glyphicon-pushpin" aria-hidden="true"></i><span>跳转行</span></span>
+      <span class="fontSize"><i class="glyphicon glyphicon-text-width" aria-hidden="true"></i><span>字体</span></span>
+      <span class="themes"><i class="glyphicon glyphicon-magnet" aria-hidden="true"></i><span>主题</span></span>
+      <span class="setUp"><i class="glyphicon glyphicon-cog" aria-hidden="true"></i><span>设置</span><div class="red-poins" style="display: none;"></div></span>
+      <span class="helps"><i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i><span>快捷键</span></span>
+      <span class="historys"style="display: flex;align-items: center;"><i class="icon-historys" aria-hidden="true"></i><span>文件历史记录</span></span>
+      <div class="pull-down" title="隐藏工具条" style="top: 0"><i class="glyphicon glyphicon-menu-down" aria-hidden="true"></i></div>
     </div>
+    <div class="ace_overall" style="top: 30px;">
+      <!-- 编辑器目录 -->
+      <div class="ace_catalogue" style="left:0px">
+        <div class="ace_catalogue_title">目录<input type="text" id="ace_catalogue_input" class="ace_catalogue_input" value=""/></div>
+        <div class="ace_dir_tools">
+          <div class="upper_level"  title="返回上级目录">
+            <i class="glyphicon glyphicon-share-alt" aria-hidden="true"></i>
+            <span>上一级</span>
+          </div>
+          <div class="search_file" title="搜索内容">
+            <i class="glyphicon glyphicon-search" aria-hidden="true"></i>
+            <span>搜索</span>
+          </div>
+          <div class="new_folder" title="新建文件/目录">
+            <i class="glyphicon glyphicon-plus"  aria-hidden="true"></i>
+            <span>新建</span>
+            <ul class="folder_down_up">
+              <li data-type="2"><i class="folder-icon"></i>新建文件夹</li>
+              <li data-type="3"><i class="text-icon"></i>新建文件</li>
+            </ul>
+          </div>
+          <div class="refresh_dir" title="刷新当前目录">
+            <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+            <span>刷新</span>
+          </div>
+          <span class="ace_editor_main_storey"></span>
+        </div>
+        <div class="ace_catalogue_list">
+          <ul class="cd-accordion-menu"></ul>
+          <ul class="ace_catalogue_menu">
+            <li data-type="0"><i class="glyphicon glyphicon-refresh" aria-hidden="true"></i><span>刷新目录</span></li>
+            <li data-type="1"><i class="glyphicon glyphicon-folder-open" aria-hidden="true"></i><span>打开子目录</span></li>
+            <li data-type="2"><i class="folder-icon"></i><span>新建文件夹</span></li>
+            <li data-type="3"><i class="text-icon"></i><span>新建文件</span></li>
+            <li data-type="4"><i class="rename-icon img-icon"></i><span>重命名</span></li>
+            <li data-type="5"><i class="down-icon img-icon"></i><span>下载</span></li>
+            <li data-type="6"><i class="del-icon img-icon"></i><span>删除</span></li>
+          </ul>
+        </div>
+        <div class="ace_catalogue_drag_icon">
+          <div class="drag_icon_conter"></div>
+          <span class="fold_icon_conter" title="隐藏文件目录"></span>
+        </div>
+
+      </div>
+      <!-- 编辑内容 -->
+      <div class="ace_editor_main" style="margin-left:265px">
+        <ul class="ace_conter_menu"></ul>
+        <div class="ace_conter_tips"><div class="tips"></div></div>
+        <div class="ace_editor_main_storey"></div>
+        <div class="ace_conter_editor"></div>
+        // 编辑器终端
+        <div class="term-parent">
+          <div class="term-content" id="termContent"></div>
+        </div>
+        <div class="ace_conter_toolbar">
+          <div class="pull-left size_ellipsis">
+            <span data-type="path" class="size_ellipsis"></span>
+          </div>
+          <div class="pull-right">
+            <span data-type="cursor"></span>
+            <span data-type="history"></span>
+            <span data-type="tab"></span>
+            <span data-type="encoding"></span>
+            <span data-type="lang"></span>
+            <span data-type="readOnly"></span>
+          </div>
+        </div>
+      </div>
+      <div class="ace_toolbar_menu other" style="display: none;">
+        <div class="menu-item menu-tabs" style="display: none;">
+          <div class="menu-title">设置制表符</div>
+          <ul class="tabsType">
+            <li data-value="nbsp">使用空格缩进</li>
+            <li data-value="tabs">使用 "Tab" 缩进</li>
+          </ul>
+          <div class="menu-title" style="margin-top:15px">设置制表符长度</div>
+          <ul class="tabsSize">
+            <li data-value="1">1</li>
+            <li data-value="2">2</li>
+            <li data-value="3">3</li>
+            <li data-value="4">4</li>
+            <li data-value="5">5</li>
+            <li data-value="6">6</li>
+          </ul>
+        </div>
+        <div class="menu-item menu-encoding" style="display: none;">
+          <div class="menu-title">设置文件保存编码格式</div>
+          <ul></ul>
+        </div>
+        <div class="menu-item menu-files" style="display: none;">
+          <div class="menu-conter">
+            <input type="text" class="menu-input" placeholder="输入语言模式">
+            <i class="fa fa-close" aria-hidden="true"></i>
+          </div>
+          <div class="menu-title">设置文件语言关联</div>
+          <ul></ul>
+        </div>
+        <div class="menu-item menu-fontSize" style="display: none;">
+          <div class="menu-title">设置编辑器字体大小</div>
+          <div class="menu-conter">
+            <div class="set_font_size">
+              <input type="number" min="12" max="45"/>
+              <span class="tips error">字体设置范围 12-45</span>
+              <button class="btn-save">保存</button>
+            </div>
+          </div>
+        </div>
+        <div class="menu-item menu-jumpLine" style="display: none;">
+          <div class="menu-title">跳转到指定行</div>
+          <div class="menu-conter">
+            <div class="set_jump_line">
+              <input type="number" min="0"/>
+              <div class="jump_tips">当前：行&nbsp;<span></span>&nbsp;，列&nbsp;<span></span>&nbsp;，输入行数(介于&nbsp;1&nbsp;-&nbsp;<span></span>&nbsp;之间)</div>
+            </div>
+          </div>
+        </div>
+        <div class="menu-item menu-themes" style="display: none;">
+          <div class="menu-title">设置编辑器主题</div>
+          <ul></ul>
+        </div>
+        <div class="menu-item menu-history" style="display: none;">
+          <div class="menu-title">文件历史版本</div>
+          <ul></ul>
+        </div>
+
+        <div class="menu-item menu-setUp"  style="display: none;">
+          <div class="menu-title">编辑器设置【部分设置需要重新打开编辑生效】</div>
+          <ul class="editor_menu">
+            <li data-type="wrap">自动换行</li>
+            <li data-type="enableLiveAutocompletion">代码自动完成</li>
+            <li data-type="enableSnippets">启用代码段</li>
+            <li data-type="showInvisibles">显示隐藏字符</li>
+            <li data-type="showLineNumbers">显示行号</li>
+          </ul>
+        </div>
+      </div>
+      <div class="ace_toolbar_menu ace_toolbar_menu_open" style="display: none;left:375px;">
+        <div class="menu-item menu-open" style="display: none;">
+          <div class="menu-title">文件打开操作</div>
+          <ul class="open_menu">
+            <li data-type="createFile">新建文件</li>
+            <li data-type="createDir">新建文件夹</li>
+            <!-- <li data-type="openFile"><input type="file" id="fileData"/></li>
+            <li data-type="openFile">打开文件</li>
+            <li data-type="openDir">打开文件夹</li> -->
+            <li data-type="openLatelyFile" class="relative openLateFile">打开最近文件<ul class="late_file"></ul></li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </script>
 <script type="text/template" id="aceShortcutKeys">
-	<div class ="keysUp_left">
-        <div class="keysUp-row">
-            <div class="keysUp-title">常用快捷键</div>
-            <div class="keysUp-content">
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">S</span>
-                    <span class="keysUp-tips">保存文件</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">C</span>
-                    <span class="keysUp-tips">复制内容</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">X</span>
-                    <span class="keysUp-tips">剪切内容</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">V</span>
-                    <span class="keysUp-tips">粘贴内容</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">A</span>
-                    <span class="keysUp-tips">全选内容</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Z</span>
-                    <span class="keysUp-tips">撤销操作</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Y</span>
-                    <span class="keysUp-tips">反撤销操作</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">F</span>
-                    <span class="keysUp-tips">搜索内容</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">H</span>
-                    <span class="keysUp-tips">替换内容</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAACkElEQVQ4T62UTWhTQRDHZ6bhFZpK9CAetEoPocF6MG83jRaqFvHjIgrFQ9WLQkHsyZMWvAkFL978QET0YPVUxUuLFFK/Ynk7W0tAqeIHFFEoQqGGWKt9I6+Y2Mh7iQcX9jT//c3Of2cW4T8vXMmbnp5eNT8/34uIKtgAoESEEXGsubl5MJVKfa2Xvwo4OTm52/f9sahDWusqfZiuSuB53gARDYYJRWQ4k8n0WGsPAMAPpdTo37qJiYnNVUBmvg8AB0MzIx5TSt1m5msA0IeIIyIyS0SffN/fFNiDiLMVYD6fX+84znsAcMKAi4uLTZ2dnd+YeRYA1kZUca4CZOZDAHAvwr/XWuuU53ktRDQT5TEi/jHZGHMVEVsRsSAiz3zfd2KxWKvv+6cR8ZZS6gwznwKASxHAj1rrlsoNc7lcrLu7+2eI0RsaGxs3ptPpvDFmHBF3RgCva637KsBCobBmYWFhLxHtAYCEiIw2NDQ8d133VRlgrR0XkVAgIvYopYaXgcx8EgCuRGQe0lofLceMMSeIKCsiwct+EZG3sVjsoeM4hfb29uIy0BhzAxGPhwGJ6Kzruhestf2lUmmoq6trrta0IDM3IeKUiCTDhEtLS23ZbPYNMwsAzIjIIxGxIvKOiILeawuK1FpfDM6jMWYXIuYispa01nFr7X4RGanRLjuUUk+Wgcw8AACh4wYAd7TWR5g5aJWgZcLWy0QioZLJ5Pcy8DEitohIUPYHRNwOANuCoIj0ZjKZu7WmAwBuaq0r/qPneVs7OjqmVqY2xmwBgN5isXg+Ho+vJqLPNR6iX2t9uRyv+x3VmQ4goozruvzPwEBord0nIod/W7EOER8AwFMiepFOp6uqq3vDWj0XFvsFsp0JRWHn0UYAAAAASUVORK5CYII=" /></span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Alt</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">0</span>
-                    <span class="keysUp-tips">折叠代码</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAACkElEQVQ4T62UTWhTQRDHZ6bhFZpK9CAetEoPocF6MG83jRaqFvHjIgrFQ9WLQkHsyZMWvAkFL978QET0YPVUxUuLFFK/Ynk7W0tAqeIHFFEoQqGGWKt9I6+Y2Mh7iQcX9jT//c3Of2cW4T8vXMmbnp5eNT8/34uIKtgAoESEEXGsubl5MJVKfa2Xvwo4OTm52/f9sahDWusqfZiuSuB53gARDYYJRWQ4k8n0WGsPAMAPpdTo37qJiYnNVUBmvg8AB0MzIx5TSt1m5msA0IeIIyIyS0SffN/fFNiDiLMVYD6fX+84znsAcMKAi4uLTZ2dnd+YeRYA1kZUca4CZOZDAHAvwr/XWuuU53ktRDQT5TEi/jHZGHMVEVsRsSAiz3zfd2KxWKvv+6cR8ZZS6gwznwKASxHAj1rrlsoNc7lcrLu7+2eI0RsaGxs3ptPpvDFmHBF3RgCva637KsBCobBmYWFhLxHtAYCEiIw2NDQ8d133VRlgrR0XkVAgIvYopYaXgcx8EgCuRGQe0lofLceMMSeIKCsiwct+EZG3sVjsoeM4hfb29uIy0BhzAxGPhwGJ6Kzruhestf2lUmmoq6trrta0IDM3IeKUiCTDhEtLS23ZbPYNMwsAzIjIIxGxIvKOiILeawuK1FpfDM6jMWYXIuYispa01nFr7X4RGanRLjuUUk+Wgcw8AACh4wYAd7TWR5g5aJWgZcLWy0QioZLJ5Pcy8DEitohIUPYHRNwOANuCoIj0ZjKZu7WmAwBuaq0r/qPneVs7OjqmVqY2xmwBgN5isXg+Ho+vJqLPNR6iX2t9uRyv+x3VmQ4goozruvzPwEBord0nIod/W7EOER8AwFMiepFOp6uqq3vDWj0XFvsFsp0JRWHn0UYAAAAASUVORK5CYII=" /></span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Alt</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Shift</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">0</span>
-                    <span class="keysUp-tips">展开代码</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Esc</span>
-                    <span class="keysUp-tips">退出搜索、取消自动提示</span>
-                </div>
-            </div>
+  <div class ="keysUp_left">
+    <div class="keysUp-row">
+      <div class="keysUp-title">常用快捷键</div>
+      <div class="keysUp-content">
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">S</span>
+          <span class="keysUp-tips">保存文件</span>
         </div>
-        <div class="keysUp-row">
-            <div class="keysUp-title">光标移动</div>
-            <div class="keysUp-content">
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Home</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">End</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">Up</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">Left</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">Down</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">Right</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Home</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">End</span>
-                    <span class="keysUp-tips">光标移动到文档首/尾</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">P</span>
-                    <span class="keysUp-tips">跳转到匹配的标签</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">pageUp</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">pageDown</span>
-                    <span class="keysUp-tips">光标上/下翻页</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Alt</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Left</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">Right</span>
-                    <span class="keysUp-tips">光标移动到行首/尾</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">I</span>
-                    <span class="keysUp-tips">跳转到指定行</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Alt</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Up</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">Down</span>
-                    <span class="keysUp-tips">上/下增加光标</span>
-                </div>
-            </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">C</span>
+          <span class="keysUp-tips">复制内容</span>
         </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">X</span>
+          <span class="keysUp-tips">剪切内容</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">V</span>
+          <span class="keysUp-tips">粘贴内容</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">A</span>
+          <span class="keysUp-tips">全选内容</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Z</span>
+          <span class="keysUp-tips">撤销操作</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Y</span>
+          <span class="keysUp-tips">反撤销操作</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">F</span>
+          <span class="keysUp-tips">搜索内容</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">H</span>
+          <span class="keysUp-tips">替换内容</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAACkElEQVQ4T62UTWhTQRDHZ6bhFZpK9CAetEoPocF6MG83jRaqFvHjIgrFQ9WLQkHsyZMWvAkFL978QET0YPVUxUuLFFK/Ynk7W0tAqeIHFFEoQqGGWKt9I6+Y2Mh7iQcX9jT//c3Of2cW4T8vXMmbnp5eNT8/34uIKtgAoESEEXGsubl5MJVKfa2Xvwo4OTm52/f9sahDWusqfZiuSuB53gARDYYJRWQ4k8n0WGsPAMAPpdTo37qJiYnNVUBmvg8AB0MzIx5TSt1m5msA0IeIIyIyS0SffN/fFNiDiLMVYD6fX+84znsAcMKAi4uLTZ2dnd+YeRYA1kZUca4CZOZDAHAvwr/XWuuU53ktRDQT5TEi/jHZGHMVEVsRsSAiz3zfd2KxWKvv+6cR8ZZS6gwznwKASxHAj1rrlsoNc7lcrLu7+2eI0RsaGxs3ptPpvDFmHBF3RgCva637KsBCobBmYWFhLxHtAYCEiIw2NDQ8d133VRlgrR0XkVAgIvYopYaXgcx8EgCuRGQe0lofLceMMSeIKCsiwct+EZG3sVjsoeM4hfb29uIy0BhzAxGPhwGJ6Kzruhestf2lUmmoq6trrta0IDM3IeKUiCTDhEtLS23ZbPYNMwsAzIjIIxGxIvKOiILeawuK1FpfDM6jMWYXIuYispa01nFr7X4RGanRLjuUUk+Wgcw8AACh4wYAd7TWR5g5aJWgZcLWy0QioZLJ5Pcy8DEitohIUPYHRNwOANuCoIj0ZjKZu7WmAwBuaq0r/qPneVs7OjqmVqY2xmwBgN5isXg+Ho+vJqLPNR6iX2t9uRyv+x3VmQ4goozruvzPwEBord0nIod/W7EOER8AwFMiepFOp6uqq3vDWj0XFvsFsp0JRWHn0UYAAAAASUVORK5CYII=" /></span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Alt</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">0</span>
+          <span class="keysUp-tips">折叠代码</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAACkElEQVQ4T62UTWhTQRDHZ6bhFZpK9CAetEoPocF6MG83jRaqFvHjIgrFQ9WLQkHsyZMWvAkFL978QET0YPVUxUuLFFK/Ynk7W0tAqeIHFFEoQqGGWKt9I6+Y2Mh7iQcX9jT//c3Of2cW4T8vXMmbnp5eNT8/34uIKtgAoESEEXGsubl5MJVKfa2Xvwo4OTm52/f9sahDWusqfZiuSuB53gARDYYJRWQ4k8n0WGsPAMAPpdTo37qJiYnNVUBmvg8AB0MzIx5TSt1m5msA0IeIIyIyS0SffN/fFNiDiLMVYD6fX+84znsAcMKAi4uLTZ2dnd+YeRYA1kZUca4CZOZDAHAvwr/XWuuU53ktRDQT5TEi/jHZGHMVEVsRsSAiz3zfd2KxWKvv+6cR8ZZS6gwznwKASxHAj1rrlsoNc7lcrLu7+2eI0RsaGxs3ptPpvDFmHBF3RgCva637KsBCobBmYWFhLxHtAYCEiIw2NDQ8d133VRlgrR0XkVAgIvYopYaXgcx8EgCuRGQe0lofLceMMSeIKCsiwct+EZG3sVjsoeM4hfb29uIy0BhzAxGPhwGJ6Kzruhestf2lUmmoq6trrta0IDM3IeKUiCTDhEtLS23ZbPYNMwsAzIjIIxGxIvKOiILeawuK1FpfDM6jMWYXIuYispa01nFr7X4RGanRLjuUUk+Wgcw8AACh4wYAd7TWR5g5aJWgZcLWy0QioZLJ5Pcy8DEitohIUPYHRNwOANuCoIj0ZjKZu7WmAwBuaq0r/qPneVs7OjqmVqY2xmwBgN5isXg+Ho+vJqLPNR6iX2t9uRyv+x3VmQ4goozruvzPwEBord0nIod/W7EOER8AwFMiepFOp6uqq3vDWj0XFvsFsp0JRWHn0UYAAAAASUVORK5CYII=" /></span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Alt</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Shift</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">0</span>
+          <span class="keysUp-tips">展开代码</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Esc</span>
+          <span class="keysUp-tips">退出搜索、取消自动提示</span>
+        </div>
+      </div>
     </div>
-    <div class ="keysUp_right">
-        <div class="keysUp-row">
-            <div class="keysUp-title">内容选择</div>
-            <div class="keysUp-content">
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">鼠标框选——拖动</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Shift</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Home</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">End</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">Up</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">Left</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">Down</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">Right</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Shift</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">pageUp</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">PageDown</span>
-                    <span class="keysUp-tips">上下翻页选中</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Shift</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Home</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-tips">当前光标至头/尾</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Alt</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">鼠标拖动</span>
-                    <span class="keysUp-tips">块选择</span>
-                </div>
-            </div>
+    <div class="keysUp-row">
+      <div class="keysUp-title">光标移动</div>
+      <div class="keysUp-content">
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Home</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">End</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">Up</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">Left</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">Down</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">Right</span>
         </div>
-        <div class="keysUp-row">
-            <div class="keysUp-title">编辑</div>
-            <div class="keysUp-content">
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">/</span>
-                    <span class="keysUp-tips">注释&取消注释</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Tab</span>
-                    <span class="keysUp-tips">对齐</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Shift</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Tab</span>
-                    <span class="keysUp-tips">整体前移</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Delete</span>
-                    <span class="keysUp-tips">删除</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">D</span>
-                    <span class="keysUp-tips">删除整行</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Alt</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Shift</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Up</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">Down</span>
-                    <span class="keysUp-tips">复制行并添加到上一行/下一行</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Alt</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Delete</span>
-                    <span class="keysUp-tips">删除光标右侧内容</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Alt</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Up</span>
-                    <span class="keysUp-symbols">/</span>
-                    <span class="keysUp-btn">Down</span>
-                    <span class="keysUp-tips">当前行和上一行/下一行交换</span>
-                </div>
-                <div class="keysUp-item">
-                    <span class="keysUp-btn">Ctrl</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">Shift</span>
-                    <span class="keysUp-symbol">+</span>
-                    <span class="keysUp-btn">D</span>
-                    <span class="keysUp-tips">复制行并添加到下面</span>
-                </div>
-            </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Home</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">End</span>
+          <span class="keysUp-tips">光标移动到文档首/尾</span>
         </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">P</span>
+          <span class="keysUp-tips">跳转到匹配的标签</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">pageUp</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">pageDown</span>
+          <span class="keysUp-tips">光标上/下翻页</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Alt</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Left</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">Right</span>
+          <span class="keysUp-tips">光标移动到行首/尾</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">I</span>
+          <span class="keysUp-tips">跳转到指定行</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Alt</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Up</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">Down</span>
+          <span class="keysUp-tips">上/下增加光标</span>
+        </div>
+      </div>
     </div>
+  </div>
+  <div class ="keysUp_right">
+    <div class="keysUp-row">
+      <div class="keysUp-title">内容选择</div>
+      <div class="keysUp-content">
+        <div class="keysUp-item">
+          <span class="keysUp-btn">鼠标框选——拖动</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Shift</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Home</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">End</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">Up</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">Left</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">Down</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">Right</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Shift</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">pageUp</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">PageDown</span>
+          <span class="keysUp-tips">上下翻页选中</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Shift</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Home</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-tips">当前光标至头/尾</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Alt</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">鼠标拖动</span>
+          <span class="keysUp-tips">块选择</span>
+        </div>
+      </div>
+    </div>
+    <div class="keysUp-row">
+      <div class="keysUp-title">编辑</div>
+      <div class="keysUp-content">
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">/</span>
+          <span class="keysUp-tips">注释&取消注释</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Tab</span>
+          <span class="keysUp-tips">对齐</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Shift</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Tab</span>
+          <span class="keysUp-tips">整体前移</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Delete</span>
+          <span class="keysUp-tips">删除</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">D</span>
+          <span class="keysUp-tips">删除整行</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Alt</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Shift</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Up</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">Down</span>
+          <span class="keysUp-tips">复制行并添加到上一行/下一行</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Alt</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Delete</span>
+          <span class="keysUp-tips">删除光标右侧内容</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Alt</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Up</span>
+          <span class="keysUp-symbols">/</span>
+          <span class="keysUp-btn">Down</span>
+          <span class="keysUp-tips">当前行和上一行/下一行交换</span>
+        </div>
+        <div class="keysUp-item">
+          <span class="keysUp-btn">Ctrl</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">Shift</span>
+          <span class="keysUp-symbol">+</span>
+          <span class="keysUp-btn">D</span>
+          <span class="keysUp-tips">复制行并添加到下面</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </script>
+<style type="text/css">
+    .compFilesPreview {
+        padding: 20px;
+        font-size: 12px
+    }
+
+    .compToolbarHeader {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 15px;
+    }
+
+    .compDirNavbar {
+        padding: 0 5px;
+        padding-bottom: 15px;
+        display: flex;
+        align-items: center;
+    }
+
+    .compDirNavbar .returnUpperStory {
+        display: inline-block;
+        padding-right: 10px;
+        margin-right: 10px;
+        border-right: 1px solid #999;
+    }
+
+    .compDirNavbar .returnUpperStory a {
+        text-decoration: none;
+    }
+
+    .compDirNavbar .dirList,
+    .compDirNavbar .dirItem {
+        display: flex;
+        align-items: center;
+        max-width: 120px;
+    }
+
+    .compDirNavbar .dirItem_more {
+        width: 50px;
+    }
+
+    .compDirNavbar .dirItem_more a {
+        padding: 0 5px;
+        text-decoration: none;
+    }
+
+    .compDirNavbar .dirItem a {
+        max-width: 100px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .compDirNavbar .dirItem .iconfont,
+    .compDirNavbar .dirItem_more .iconfont {
+        margin: 0 5px;
+        font-weight: 700;
+        color: #888;
+    }
+
+    .compDirNavbar .dirItem .iconfont:before {
+        position: relative;
+        top: 1px;
+    }
+
+    .compfileListBody {
+        max-height: 390px;
+        overflow: auto;
+        user-select: none;
+    }
+
+    .compfileList .compfileListHeader,
+    .compfileListBody .compBodyItemTd {
+        height: 38px;
+        line-height: 38px;
+        background-color: #f6f6f6;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #ececec;
+    }
+
+    .compfileListHeader .compHeaderItem,
+    .compfileListBody .compBodyItemTd .compBodyItem {
+        padding: 0 10px;
+        display: flex;
+    }
+
+    .compfileListBody .compBodyItemTd .compBodyItem .openDir {
+        color: #888;
+        display: flex;
+        align-items: center;
+        height: 22px;
+        line-height: 22px;
+    }
+
+    .compfileListBody .compBodyItemTd .compBodyItem .openDir:hover {
+        color: #20a53a;
+    }
+
+    .compfileListBody .compBodyItemTd:hover span.hide {
+        display: inline-block !important;
+    }
+
+    .compfileListHeader .compHeaderItem {
+        border-right: 1px solid #ccc;
+    }
+
+    .compfileListHeader .compHeaderItem:last-child {
+        border-right: none;
+    }
+
+    .compfileListHeader .compHeaderItem span {
+        display: inline-block;
+        height: 18px;
+        line-height: 18px;
+        width: 100%;
+        color: #666;
+    }
+
+    .compfileListHeader .compHeaderItem .fileCheck,
+    .compfileListBody .compBodyItemTd .compBodyItem .fileCheck {
+        width: 16px;
+        height: 16px;
+        border-radius: 2px;
+        border: 1px solid #d2d2d2;
+        background-color: #fff;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .compfileListHeader .compHeaderItem .fileCheck.active2::after,
+    .compfileListBath .cust—checkbox.active2::after {
+        content: '';
+        position: absolute;
+        display: block;
+        height: 2px;
+        width: 8px;
+        left: 50%;
+        top: 50%;
+        margin-top: -1px;
+        margin-left: -4px;
+        background-color: #fff;
+    }
+
+    .compfileListBody .compBodyItemTd.active {
+        background: #f0f9f7 !important;
+    }
+
+    .compfileListBody .compBodyItemTd.active .compBodyItem:last-child span {
+        display: inline-block !important;
+    }
+
+    .compfileListHeader .compHeaderItem .fileCheck.active2,
+    .compfileListHeader .compHeaderItem .fileCheck.active,
+    .compfileListBath .cust—checkbox.active,
+    .compfileListBath .cust—checkbox.active2,
+    .compfileListBody .compBodyItemTd.active .fileCheck {
+        background-color: #20a53a;
+        border-color: #20a53a;
+    }
+
+    .compfileListHeader .compHeaderItem .fileCheck.active::after,
+    .compfileListBody .compBodyItemTd.active .fileCheck::after,
+    .compfileListBath .cust—checkbox.active::after {
+        content: '';
+        position: absolute;
+        display: block;
+        left: 50%;
+        top: 50%;
+        margin-left: -2px;
+        margin-top: -6px;
+        width: 5px;
+        height: 10px;
+        border: solid #fff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+
+    .compfileListBody .compBodyItemTd {
+        height: 40px;
+        line-height: 40px;
+        background-color: #fff;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .compfileListBody .compBodyItemTd:hover {
+        background: #f0f9f7 !important;
+    }
+
+    .compfileListBody .compBodyItemTd .compBodyItem {
+        color: #666;
+        position: relative;
+    }
+
+    .compfileListBody .compBodyItemTd .compBodyItem .file_icon {
+        width: 22px;
+        height: 22px;
+        margin-top: -11px;
+        top: 50%;
+        left: 5px;
+    }
+
+    .compfileListBody .compBodyItemTd .compBodyItem .fileName {
+        display: inline-block;
+        margin-left: 22px;
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .compfileListBath {
+        margin-top: 15px;
+    }
+
+    .compfileListBath .bt_batch {
+        display: flex;
+    }
+
+    .compfileListBath .bt_batch label {
+        width: 40px;
+        margin: 0;
+        height: 28px;
+        display: flex;
+        padding: 0 10px;
+        align-items: center;
+    }
+
+    .compfileListBath .cust—checkbox {
+        width: 16px;
+        height: 16px;
+        border-radius: 2px;
+        border: 1px solid #d2d2d2;
+        background-color: #fff;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .compfileListBath .cust—checkbox-input {
+        display: none;
+    }
+
+    #batchTable .divtable .table {
+        border: none;
+    }
+
+    #batchTable .divtable {
+        border: 1px solid #ddd;
+    }
+
+    #batchTable .table>tbody>tr>td {
+        border-top: .5px solid #ddd;
+    }
+
+    .zipPreview.layui-layer-page .layui-layer-content {
+        overflow: inherit !important;
+    }
+    .files_type_select:focus{
+        border:none
+    }
+</style>
 {% endblock %}
 {% block scripts %}
-  {{ super() }} 
-    <script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js" defer></script>
-    <script type="text/javascript" src="{{g.cdn_url}}/js/jquery.qrcode.min.js" defer></script>
-    <script type="text/javascript" src="{{g.cdn_url}}/js/public.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-    <script type="text/javascript" src="{{g.cdn_url}}/js/public_backup.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-    <script type="text/javascript" src="{{g.cdn_url}}/js/clipboard.min.js" defer></script>
-    <script type="text/javascript" src="{{g.cdn_url}}/js/polyfill.js"></script>
-    <script type="text/javascript" src="{{g.cdn_url}}/editor/ace.js" defer></script>
-    <script type="text/javascript" src="{{g.cdn_url}}/editor/ext-language_tools.js" defer></script>
-    <script type="text/javascript" src="{{g.cdn_url}}/vue/polyfill.min.js" defer></script>
-    <script type="text/javascript" src="{{g.cdn_url}}/js/xterm.js" defer></script>
-    <!--<script type="text/javascript" src="{{g.cdn_url}}/js/files.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>-->
-    <script type="text/javascript" src="{{g.cdn_url}}/js/files.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
-    <script type="text/javascript" src="{{g.cdn_url}}/js/upload-drog.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+{{ super() }}
+<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.dragsort-0.5.2.min.js" defer></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/jquery.qrcode.min.js" defer></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/public.js?version={{g['version']}}&repair={{data['js_random']}}">
+</script>
+<script type="text/javascript"
+        src="{{g.cdn_url}}/js/public_backup.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/clipboard.min.js" defer></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/polyfill.js"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/vite/ace/ace.js" defer></script>
+<script type="text/javascript" src="{{g.cdn_url}}/vite/ace/ext-language_tools.js" defer></script>
+<script type="text/javascript" src="{{g.cdn_url}}/vue/polyfill.min.js" defer></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/xterm.js" defer></script>
+<!--<script type="text/javascript" src="{{g.cdn_url}}/js/files.min.js?version={{g['version']}}&repair={{data['js_random']}}"></script>-->
+<script type="text/javascript" src="{{g.cdn_url}}/js/files.js?version={{g['version']}}&repair={{data['js_random']}}">
+</script>
+<script type="text/javascript"
+        src="{{g.cdn_url}}/js/upload-drog.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+<script src="{{g.cdn_url}}/vite/ace/diff/ace-diff.min.js"></script>
+<script>
+  if (bt.get_cookie('searchFile') == 'true' && bt.get_cookie('searchFile') != null && bt.get_cookie('searchFile') !=
+    undefined) {
+    bt.set_cookie('searchFile', '')
+    var interval_open_search = setInterval(function () {
+      if (!$('.layui-layer-page.replace_content_view').length) {
+        $('.nav_btn.replace_content').click()
+      } else {
+        clearInterval(interval_open_search)
+      }
+    }, 500)
+  }
+  // $(function () {
+  // 	var mySelect = $("#mySelect").mySelect({
+  // 		mult: true, //true为多选,false为单选
+  // 		option: [ //选项数据
+  // 			{
+  // 				label: "全部",
+  // 				value: '*'
+  // 			},
+  // 			{
+  // 				label: "无后缀",
+  // 				value: 'no_ext'
+  // 			},
+  // 			{
+  // 				label: "PHP",
+  // 				value: 'php'
+  // 			},
+  // 			{
+  // 				label: "Python",
+  // 				value: 'py'
+  // 			},
+  // 			{
+  // 				label: "HTML",
+  // 				value: 'html'
+  // 			},
+  // 			{
+  // 				label: "JS",
+  // 				value: 'js'
+  // 			},
+  // 			{
+  // 				label: "JSON",
+  // 				value: 'json'
+  // 			},
+  // 			{
+  // 				label: "Conf",
+  // 				value: 'conf'
+  // 			},
+  // 			{
+  // 				label: "Log",
+  // 				value: 'log'
+  // 			},
+  // 		],
+  // 		onChange: function (res) { //选择框值变化返回结果
+  // 			console.log(res)
+  // 		}
+  // 	});
+  // 	mySelect.setResult(["*"]);
+
+  // })
+</script>
 {% endblock %}

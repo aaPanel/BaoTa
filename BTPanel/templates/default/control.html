@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="main-content">
-    <div class="container-fluid">
+    <div class="container-fluid" style="padding-bottom:52px">
         <div class="pos-box bgw mtb15">
             <div class="tab-list" id="tabs-cut">
                 <div class="tabs-item active" data-name="control">系统监控</div>
@@ -36,8 +36,10 @@
                     <div class="col-xs-12 col-sm-12 col-md-12 pull-left pd0 view0">
                         <div class="mb15">
                             <div class="bgw pb15 radius4">
-                                <div class="title c6 plr15 mb15">
-                                    <h3 class="c-tit f16">平均负载</h3>
+                                <div class="title c6 plr15 mb15 load-title">
+                                    <h3 class="c-tit f16 flex-center">平均负载
+																			<span title="全屏展示" class="btlink full-icon full-screen-load"></span>
+																		</h3> 
                                     <div class="searcTime pull-right">
                                         <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'getload')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'getload')">{{data['lan']['D2']}}</span>
                                         <span class="gt" onclick="controlObj.conTrolView.Wday(7,'getload')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'getload')">{{data['lan']['D4']}}</span>
@@ -58,8 +60,11 @@
                     <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view1">
                         <div class="pr8">
                             <div class="bgw pb15 radius4">
-                                <div class="title c6 plr15">
-                                    <h3 class="c-tit f16">{{data['lan']['T1']}}</h3>
+                                <div class="title c6 plr15 cpu-title">
+                                    <h3 class="c-tit f16 flex-center">{{data['lan']['T1']}}
+																			<span title="全屏展示" title="全屏展示" class="btlink full-icon full-screen-cpu"></span>
+																		</h3>
+																		
                                     <div class="searcTime pull-right">
                                         <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'cpu')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'cpu')">{{data['lan']['D2']}}</span>
                                         <span class="gt" onclick="controlObj.conTrolView.Wday(7,'cpu')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'cpu')">{{data['lan']['D4']}}</span>
@@ -80,8 +85,10 @@
                     <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view2">
                         <div class="pl7">
                             <div class="bgw pb15 radius4">
-                                <div class="title c6 plr15">
-                                    <h3 class="c-tit f16">{{data['lan']['T2']}}</h3>
+                                <div class="title c6 plr15 mem-title">
+                                    <h3 class="c-tit f16 flex-center">{{data['lan']['T2']}}
+																			<span title="全屏展示" class="btlink full-icon full-screen-mem"></span>
+																		</h3>
                                     <div class="searcTime pull-right">
                                         <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'mem')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'mem')">{{data['lan']['D2']}}</span>
                                         <span class="gt" onclick="controlObj.conTrolView.Wday(7,'mem')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'mem')">{{data['lan']['D4']}}</span>
@@ -102,8 +109,11 @@
                     <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view1">
                         <div class="pr8">
                             <div class="bgw pb15 radius4">
-                                <div class="title c6 plr15 mb15">
-                                    <h3 class="c-tit f16">{{data['lan']['T3']}}</h3>
+                                <div class="title c6 plr15 mb15 disk-title">
+                                    <h3 class="c-tit f16  flex-center">{{data['lan']['T3']}}
+																			<span title="全屏展示" class="btlink full-icon full-screen-disk"></span>
+																		</h3>
+																		
                                     <div class="searcTime pull-right">
                                         <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'disk')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'disk')">{{data['lan']['D2']}}</span>
                                         <span class="gt" onclick="controlObj.conTrolView.Wday(7,'disk')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'disk')">{{data['lan']['D4']}}</span>
@@ -144,9 +154,15 @@
                     <div class="col-xs-12 col-sm-12 col-md-6 pull-left pd0 view2">
                         <div class="pl7">
                             <div class="bgw pb15 radius4">
-                                <div class="title c6 plr15 mb15">
-                                    <h3 class="c-tit f16"><span class="mr5" style="vertical-align: middle;">{{data['lan']['T4']}}:</span><select class="bt-input-text hide" style="vertical-align: middle;font-size:13px;" name="network-io" ><option value="all">全部</option></select></h3>
-                                    <div class="searcTime pull-right">
+                                <div class="title c6 plr15 mb15 net-title">
+                                    <h3 class="c-tit f16 flex-center">
+																			<span class="mr5" style="vertical-align: middle;">{{data['lan']['T4']}}:</span>
+																			<select class="bt-input-text hide" style="vertical-align: middle;font-size:13px;" name="network-io" >
+																				<option value="all">全部</option>
+																			</select>
+																			<span title="全屏展示" class="btlink full-icon full-screen-net"></span>
+																		</h3>
+																		<div class="searcTime pull-right">
                                         <span class="tit">{{data['lan']['S1']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(1,'network')">{{data['lan']['D1']}}</span><span class="gt on" onclick="controlObj.conTrolView.Wday(0,'network')">{{data['lan']['D2']}}</span>
                                         <span class="gt" onclick="controlObj.conTrolView.Wday(7,'network')">{{data['lan']['D3']}}</span><span class="gt" onclick="controlObj.conTrolView.Wday(30,'network')">{{data['lan']['D4']}}</span>
                                         <div class="ss">
@@ -263,7 +279,7 @@
         background-color: #f2f2f2;
     }
     .daily-table .daily-title{
-        font-weight:bold; 
+        font-weight:bold;
         background: #f7f7f7;
     }
     .daily-table tr td {
@@ -275,6 +291,7 @@
     .daily_details_mask{
         position: absolute;
         box-shadow: 5px 5px 12px rgb(0 0 0 / 15%);
+        z-index: 9999;
     }
     .daily_details_mask::after{
         content: '^';
@@ -334,8 +351,7 @@
         }
         .thumbnail-box.shadow_mask::after{
             content: '点击预览';
-            background: #000;
-            opacity: 0.2;
+            background: rgba(0, 0, 0, .2);
             color: #fff;
             position: absolute;
             left: 0;
@@ -343,7 +359,7 @@
             height: 363px;
             font-size: 18px;
             vertical-align: bottom;
-            line-height: 500px;
+            line-height: 363px;
         }
         .thumbnail-introduce{
             display: inline-block;
@@ -523,13 +539,30 @@
       right: 0;
       z-index: 1;
     } */
+		
+		/*全屏展示*/
+		.full-icon{
+			background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYuMDAwMDAwIiBoZWlnaHQ9IjE2LjAwMDAwMCIgdmlld0JveD0iMCAwIDE2IDE2IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj4KCTxkZXNjPgoJCQlDcmVhdGVkIHdpdGggUGl4c28uCgk8L2Rlc2M+Cgk8ZGVmcy8+Cgk8cGF0aCBpZD0icGF0aCIgZD0iTTEwLjcxNDkgNS45ODNMMTUuMDA5IDEuNzAzNTdMMTQuOTk0MyA0LjEyODdDMTQuOTg4MyA0LjMyOTgyIDE1LjE1MSA0LjUwNzI0IDE1LjM1MjEgNC41MDEzNEwxNS42MDk0IDQuNTAxMzRDMTUuODEwNSA0LjQ5NTQgMTUuOTc5IDQuMzc3MTIgMTUuOTgyIDQuMTczMDRMMTUuOTkzOCAwLjU2MTk1OEMxNS45OTM4IDAuNTU4OTgzIDE1Ljk5OTggMC4zNjk3MiAxNS45OTk4IDAuMzY5NzJDMTYuMDAyNyAwLjI2OTE5NiAxNS45NzkgMC4xNzc0ODMgMTUuOTE0IDAuMTEyNDExQzE1Ljg0ODkgMC4wNDczNDA0IDE1Ljc2MDIgMC4wMDU5NzM4MiAxNS42NTY3IDAuMDA4OTExMTNMMTUuNDczMyAwLjAxMTg4NjZMMTEuODgzMSAyLjI4ODgyZS0wNUMxMS42ODE5IDAuMDA1OTUwOTMgMTEuNTEzNCAwLjE3MTYxNiAxMS41MTA0IDAuMzc1NjMzTDExLjUxMDQgMC42MzI5NDJDMTEuNTQwMSAwLjg3MjQ5OCAxMS43MjkzIDEuMDExNTEgMTEuOTMwNCAxLjAwNTU4TDE0LjI5MDQgMS4wMTE1MUwxMC4wMDgxIDUuMjc2MjFDOS44MTI4OCA1LjQ3MTQzIDkuODEyODggNS43ODc4MSAxMC4wMDgxIDUuOTgzQzEwLjIwMzMgNi4xODExOCAxMC41MTk3IDYuMTgxMTggMTAuNzE0OSA1Ljk4M1pNNS4zMDI4MyAxMC4wMTdMMS4wMDU3NCAxNC4yODE3TDEuMDIwNTUgMTEuODY4M0MxLjAyNjQ3IDExLjY2NzMgMC44NjM3NyAxMS40ODk5IDAuNjYyNjUxIDExLjQ5NTdMMC4zOTA2MTcgMTEuNDk1N0MwLjE4OTQ5OSAxMS41MDE2IDAuMDIwOTUwMyAxMS42MTk5IDAuMDE3OTk3NyAxMS44MjRMMC4wMDYxNTY5MiAxNS40MzgxQzAuMDA2MTU2OTIgMTUuNDQxIDAuMDAwMjQ0MTQxIDE1LjYzMDMgMC4wMDAyNDQxNDEgMTUuNjMwM0MtMC4wMDI3MzEzMiAxNS43MzA5IDAuMDIwOTczMiAxNS44MjI1IDAuMDg1OTUyOCAxNS44ODc2QzAuMTUxMDI0IDE1Ljk1MjcgMC4yMzk3NzcgMTUuOTk0IDAuMzQzMjU0IDE1Ljk5MTFMMC41MjY2MDQgMTUuOTg4MUw0LjEzMTc1IDE2QzQuMzMyNzggMTUuOTk0IDQuNTAxNDIgMTUuODI4NSA0LjUwNDM3IDE1LjYyNDRMNC41MDQzNyAxNS4zNjcxQzQuNDc0NzYgMTUuMTI3NSA0LjI4NTQ4IDE0Ljk4ODUgNC4wODQzNCAxNC45OTQ0TDEuNzI0MzMgMTQuOTg4NUw2LjAwMzY2IDEwLjcyMzlDNi4xOTg4OCAxMC41Mjg3IDYuMTk4ODggMTAuMjEyMiA2LjAwMzY2IDEwLjAxN0M1LjgxMTUyIDkuODE4ODIgNS40OTgwMyA5LjgxODgyIDUuMzAyODMgMTAuMDE3Wk0xNS45OTM5IDE1LjQzODFMMTUuOTg1IDExLjgyNEMxNS45NzkgMTEuNjIyOSAxNS44MTM0IDExLjUwMTYgMTUuNjEyMyAxMS40OTU3TDE1LjM1NTEgMTEuNDk1N0MxNS4xNTM5IDExLjQ4OTkgMTQuOTk0MyAxMS42NjczIDE0Ljk5NzEgMTEuODY4M0wxNS4wMTIgMTQuMjkzNkwxMC43MTQ5IDEwLjAxN0MxMC41MTk3IDkuODIxODEgMTAuMjAzMiA5LjgyMTgxIDEwLjAwOCAxMC4wMTdDOS44MTI4OCAxMC4yMTIyIDkuODEyODggMTAuNTI4NyAxMC4wMDggMTAuNzIzOUwxNC4yODc0IDE0Ljk4ODVMMTEuOTI3NCAxNC45OTQ0QzExLjcyNjMgMTQuOTg4NSAxMS41NCAxNS4xMzA1IDExLjUwNzQgMTUuMzY3MUwxMS41MDc0IDE1LjYyNDRDMTEuNTEzMyAxNS44MjU1IDExLjY3OSAxNS45OTQxIDExLjg4IDE2TDE1LjQ2MTUgMTUuOTg1MkwxNS42NTM3IDE1Ljk5MTFDMTUuNzU0MiAxNS45OTQxIDE1Ljg0NiAxNS45NTU3IDE1LjkxMSAxNS44ODc2QzE1Ljk3NjEgMTUuODIyNiAxNS45OTk3IDE1LjczMDkgMTUuOTk2NyAxNS42MzAzQzE1Ljk5NjcgMTUuNjMwMyAxNS45OTM5IDE1LjQ0MSAxNS45OTM5IDE1LjQzODFaTTEuNzI3NCAxLjAxMTUxTDQuMDg3MzkgMS4wMDU1OEM0LjI4ODQxIDEuMDExNTEgNC40NzQ3NCAwLjg2OTUyMiA0LjUwNzMyIDAuNjMyOTQyTDQuNTA3MzIgMC4zNzU2MUM0LjUwMTQgMC4xNzQ0ODQgNC4zMzU4MiAwLjAwNTkyODA0IDQuMTM0NyAwTDAuNTM1NTc2IDAuMDE0ODE2M0wwLjM0MzM0NiAwLjAwODg2NTM2QzAuMjQyNzI5IDAuMDA1OTEyNzggMC4xNTExMTUgMC4wNDQzMTkyIDAuMDg2MDQ0MyAwLjExMjM3M0MwLjAyMDk3MzIgMC4xNzc0NDQgLTAuMDAyNzMxMzIgMC4yNjkwNjYgMC4wMDAzMzU2OTMgMC4zNjk2ODJDMC4wMDAzMzU2OTMgMC4zNjk2ODIgMC4wMDYyNDA4NCAwLjU1ODk2IDAuMDA2MjQwODQgMC41NjE5MkwwLjAxNTA0NTIgNC4xNzU5NkMwLjAxODAyMDYgNC4zNzcwMSAwLjE4NjYzIDQuNDk4MzQgMC4zODc2NjUgNC41MDQxOEwwLjY1OTc4MiA0LjUwNDE4QzAuODYwOTAxIDQuNTEwMDkgMS4wMjA1NiA0LjMzMjY3IDEuMDE3NTkgNC4xMzE1NUwxLjAwNTc3IDEuNzE4MjNMNS4yOTk5OCA1Ljk4NTk0QzUuNDk1MDggNi4xODExNSA1LjgxMTU0IDYuMTgxMTUgNi4wMDY3MyA1Ljk4NTk0QzYuMjAxOTMgNS43OTA3MyA2LjIwMTkzIDUuNDc0MjcgNi4wMDY3MyA1LjI3OTA2TDEuNzI3NCAxLjAxMTUxWiIgZmlsbC1ydWxlPSJub256ZXJvIiBmaWxsPSIjNjY2NjY2Ii8+Cjwvc3ZnPgo=') no-repeat;
+			display: inline-block;
+			width: 16px;
+			background-size: 90%;
+			position: inherit;
+			height: 16px;
+			margin-left: 6px;
+			margin-top: 2px;
+		}
+		.flex-center{
+			display: inline-flex !important;
+			align-items: center;
+		}
 </style>
-{% endblock %} 
+{% endblock %}
 {% block scripts %}
-  {{ super() }} 
-	<script type="text/javascript" src="{{g.cdn_url}}/js/echarts.min.js?version={{g['version']}}"></script>
+  {{ super() }}
+  <script type="text/javascript" src="{{g.cdn_url}}/js/echarts.min.js?version={{g['version']}}"></script>
   <script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
   <script type="text/javascript" src="{{g.cdn_url}}/js/control.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
+  <script type="text/javascript" src="{{g.cdn_url}}/editor/ace.js"></script>
   <script type="text/javascript">
     var tabsCut = $('#tabs-cut'),controlType = bt.get_cookie('controlType') || 'control';
     tabsCut.on('click', '.tabs-item', function() {
@@ -537,13 +570,13 @@
         bt.set_cookie('controlType', name)
         $(this).addClass('active').siblings().removeClass('active');
         $('.control-content .control-item-block').eq(index).show().siblings().hide()
-        switch (name) {
+				switch (name) {
           case 'control':
             controlObj.conTrolView.init();
           break;
           case 'daily':
             controlObj.dailyView();
-          break;
+					break;
         }
     })
     controlObj.conTrolView.init()

@@ -28,6 +28,7 @@ _tips = [
     "Redis一但出现安全问题，这将大概率导致服务器被入侵，请务必认真处理"
     ]
 _help = ''
+_remind = '此方案可以加强对Redis数据库的防护，降低服务器被入侵的风险。修复风险时要确保已开放相关网站IP访问，并同步修改访问密码，防止服务器无法访问Redis。'
 
 
 def check_run():
@@ -50,7 +51,7 @@ def check_run():
     redis_pass = tmp[0].strip()
     if not is_strong_password(redis_pass):
         return False, 'Redis访问密码过于简单，存在安全隐患'
-    
+
     return True,'无风险'
 
 

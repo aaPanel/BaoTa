@@ -208,11 +208,4 @@ class password:
         return result
 
     def RestartSsh(self):
-        version = public.readFile('/etc/redhat-release')
-        act = 'restart'
-        if not os.path.exists('/etc/redhat-release'):
-            public.ExecShell('service ssh ' + act)
-        elif version.find(' 7.') != -1:
-            public.ExecShell("systemctl " + act + " sshd.service")
-        else:
-            public.ExecShell("/etc/init.d/sshd " + act)
+        public.set_sshd_status(status_act="restart")

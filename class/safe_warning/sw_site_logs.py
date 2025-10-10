@@ -27,13 +27,14 @@ _tips = [
     ]
 
 _help = ''
+_remind = '此方案可以通过留存日志，帮助发现外来入侵及漏洞风险，保障网站的安全性。需要确保日志存放空间充足'
 
 
 def check_run():
     '''
         @name 开始检测
         @author hwliang<2020-08-03>
-        @return tuple (status<bool>,msg<string>)        
+        @return tuple (status<bool>,msg<string>)
     '''
 
     if public.M('crontab').where('sType=? AND sName=? AND save>=?',('logs','ALL',180)).count():
@@ -63,7 +64,7 @@ def check_run():
 
     if not_logs:
         return False ,'以下网站日志保存周期不合规: <br />' + ('<br />'.join(not_logs))
-    
+
     return True,'无风险'
-    
+
 

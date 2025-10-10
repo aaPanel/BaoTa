@@ -4,16 +4,38 @@
 <a id="phpMyAdminUrl" class="hide" data-url="{{session.phpmyadminDir}}"></a>
 <div class="main-content pb55">
   <div class="container-fluid">
-    <div class="pos-box bgw mtb15 ">
+    <div class="pos-box database-pos bgw mtb15" style="height:45px">
       <div class="tab-list">
-        <div class="tabs-item active">{{data['lan']['H2']}}</div>
+        <div class="tabs-item active" data-type="mysql">{{data['lan']['H3']}}</div>
+        <div class="tabs-item" data-type="sqlserver">{{data['lan']['H4']}}</div>
+        <div class="tabs-item" data-type="mongodb">{{data['lan']['H5']}}</div>
+        <div class="tabs-item" data-type="redis">{{data['lan']['H6']}}</div>
+        <div class="tabs-item" data-type="pgsql">{{data['lan']['H7']}}</div>
       </div>
     </div>
-    <div class="safe bgw mtb15 pd15 tab-view-box">
-      <div class="info-title-tips">
-          <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span> 请在添加数据库后，务必到<a class="btlink" href="/crontab">[计划任务]</a>页面添加定时备份任务，以确保您的数据安全。<span>温馨提示：通过第三方或者MySQL命令行创建的数据库需要点击"从服务器获取"才能在计划任务中备份</span></p>
+    <div class="db_table_view safe bgw mtb15 pd15 tab-view-box">
+      <div class="tab-con" style="padding: 0;overflow: inherit;">
+        <div class="tab-con-block">
+          <div class="info-title-tips">
+            <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span> 请在添加数据库后，务必到<a class="btlink" href="/crontab">[计划任务]</a>页面添加定时备份任务，以确保您的数据安全。<span>温馨提示：通过第三方或者MySQL命令行创建的数据库需要点击"从服务器获取"才能在计划任务中备份</span></p>
+          </div>
+          <div id="bt_database_table"></div>
+        </div>
+        <div class="tab-con-block hide">
+          <div id="bt_sqldatabase_table"></div>
+        </div>
+        <div class="tab-con-block hide">
+          <div id="bt_mongodb_table"></div>
+        </div>
+        <div class="tab-con-block hide">
+          <div id="bt_redis_view"></div>
+        </div>
+        <div class="tab-con-block hide">
+          <div id="bt_pgsql_table"></div>
+        </div>
       </div>
-      <div id="bt_database_table"></div>
+      <div class="mask_layer" style="display: none;"><div class="prompt_description"></div></div>
+
     </div>
     <form id="toPHPMyAdmin" public-data="/phpmyadmin/index.php?lang=zh_cn" action="/phpmyadmin/index.php?lang=zh_cn" method="post" style="display: none;" target="_blank">
       <input type="text" name="pma_username" id="pma_username" value="" />
@@ -24,26 +46,216 @@
     </form>
   </div>
 </div>
+<style>
+  /* 清空数据库样式 */
+  .rule_content_list {
+    overflow: auto;
+    width: 230px;
+    max-height: 200px;
+    border: 1px solid #ececec;
+    padding: 5px;
+    border-radius: 2px;
+  }
+
+  .rule_content_list li {
+    line-height: 30px;
+  }
+
+  .rule_content_list > li:last-child {
+    border-bottom: none;
+  }
+
+  .rule_content_list .rule_checkbox_group {
+    height: 30px;
+    line-height: 30px;
+    position: relative;
+    font-size: 0px;
+    cursor: pointer;
+    padding-left: 10px;
+  }
+  .bt_checkbox_groups.active {
+    border: none;
+    position: relative;
+    top: 1px;
+    display: inline-block;
+    font-family: 'Glyphicons Halflings';
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    background: #20a53a;
+    color: #fff;
+  }
+  .rule_content_list .bt_checkbox_groups {
+    position: relative;
+    top: 7px;
+  }
+
+  .rule_checkbox_find_list {
+    background: #fff;
+    cursor: pointer;
+  }
+
+  .rule_checkbox_find_list li {
+    position: relative;
+  }
+
+  .rule_content_list .rule_checkbox_group:hover {
+    background-color: #efefef;
+    cursor: pointer;
+  }
+
+  .rule_checkbox_find_list .rule_checkbox_group {
+    background: transparent;
+    padding-left: 45px;
+    margin-left: 10px;
+  }
+
+  .rule_content_list .rule_checkbox_group .glyphicon {
+    width: 25px;
+    display: inline-block;
+    height: 30px;
+    line-height: 28px;
+    text-align: center;
+    color: #bbb;
+  }
+
+  .rule_checkbox_list span, .rule_content_list .rule_checkbox_title {
+    font-size: 12px;
+    color: #666;
+    vertical-align: middle;
+    display: inline-block;
+  }
+
+  .rule_content_list .rule_checkbox_title {
+    margin-left: 10px;
+  }
+
+  .rule_content_list .rule_checkbox_title i {
+    font-style: normal;
+    color: #bbb;
+  }
+  .bt_checkbox_groups {
+    display: inline-block;
+    height: 16px;
+    width: 16px;
+    border-radius: 1px;
+    cursor: pointer;
+    border: 1px solid #c2c2c2;
+    position: relative;
+    text-align: center;
+    line-height: 20px;
+    margin: 0;
+    vertical-align: top;
+  }
+  .bt_checkbox_groups.active:after {
+    content: "\e013";
+    font-size: 12px;
+    transform: scale(.85);
+    position: absolute;
+    left: 2px;
+    top: 2px;
+  }
+
+  .choose_redis_library.layui-layer-page .layui-layer-content{
+    overflow: inherit;
+  }
+  .mask_layer .prompt_description{
+    width: 430px;
+  }
+
+	 /* 集群管理 */
+	 .redis_mode_table tbody tr td input,
+  .redis_mode_table tbody tr td select{
+    border: 1px solid #DCDFE6;
+    outline: none;
+    height: 24px;
+    padding-left: 6px;
+  }
+  .redis_mode_table tbody tr td:first-child input{
+    width: 68px;
+  }
+  .redis_mode_table tbody tr td:nth-child(2) input{
+    width: 46px;
+  }
+  .redis_mode_table tbody tr td:nth-child(3) input{
+    width: 68px;
+  }
+  .redis_mode_table tbody tr td .unit{
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-left: 0;
+    border-radius: 2px;
+    width: 30px;
+    height: 24px;
+    line-height: 22px;
+    text-align: center;
+    background-color: #f6f6f6;
+    vertical-align: bottom;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+  .cluster_dialog_box .unit{
+    height: 32px;
+    line-height: 31px;
+  }
+  .compose_list_title {
+    line-height: 35px;
+    border-top: 1px solid #F1F1F1;
+  }
+
+  /* 集群管理 end */
+	/* mysql增量备份 */
+	.group .unit{
+		height: 32px;
+		line-height: 31px;
+		margin-right: 10px;
+	}
+	#addDbbackup .sn-alarm--selectBox {
+    display: inline-block;
+    cursor: pointer;
+		position: relative;
+	}
+	#addDbbackup .sn-alarm--channel {
+			border: 1px solid #EFEFEF;
+			border-radius: 2px;
+			color: #999999;
+			width: 140px;
+			display: inline-block;
+			padding: 5px 5px 5px 10px;
+			margin-left: 4px;
+	}
+	#addDbbackup .sn-alram--selectIcon {
+			color: #999;
+			position: absolute;
+			top: 8px;
+			left: 124px;
+	}
+	#addDbbackup .sn-alarm--list {
+			display: none;
+			position: absolute;
+			background: #fff;
+			z-index: 10;
+			transition: all 500ms;
+			top: 30px;
+			left: 4px;
+			box-shadow: 0 1px 5px rgb(0 0 0 / 50%);
+			border-radius: 1px;
+			width: 140px;
+	}
+  /* mysql增量备份 end */
+</style>
+
 {% endblock %}
 {% block scripts %}
-{{ super() }} 
+{{ super() }}
+<script type="text/javascript" src="{{g.cdn_url}}/editor/ace.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/js/bt_upload.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
 <script type="text/javascript" src="{{g.cdn_url}}/js/database.js?date={{g['version']}}&repair={{data['js_random']}}"></script>
+<script type="text/javascript" src="{{g.cdn_url}}/js/soft.js?version={{g['version']}}&repair={{data['js_random']}}"></script>
 <script type="text/javascript">
+	var isSetup = '{{ data.isSetup }}' == 'True';
   bt.set_cookie('backup_path', "{{session['config']['backup_path']}}");
-	{% if not data['isSetup'] %}
-		// layer.msg('{{data["lan"]["JS1"]}}<a href="/soft#i" style="color:#20a53a;float: right;">{{data["lan"]["JS2"]}}</a>',{icon:7,shade: [0.3, '#000'],time:0});
-        // $(".layui-layer-shade").css("margin-left", "180px");
-        setTimeout(function(){
-            $("button[title='phpMyAdmin']").hide();
-            $("button[title='root密码']").hide();
-            $("button[title='回收站']").hide();
-            layer.msg('未安装本地数据库，已隐藏无法使用的功能!',{time:2000})
-        },500)
-
-    // {% else %}
-    	// database.get_list();
-    {% endif %}
 </script>
 <!-- <script src="{{g.cdn_url}}/js/upload.js?date={{g['version']}}"></script> -->
 {% endblock %}

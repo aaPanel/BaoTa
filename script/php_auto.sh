@@ -32,7 +32,7 @@ Set_PHP_FPM_Opt()
 		sed -i "s#pm.max_spare_servers.*#pm.max_spare_servers = 50#" ${php_setup_path}/etc/php-fpm.conf
 	fi
 	#backLogValue=$(cat ${php_setup_path}/etc/php-fpm.conf |grep max_children|awk '{print $3*1.5}')
-	#sed -i "s#listen.backlog.*#listen.backlog = "${backLogValue}"#" ${php_setup_path}/etc/php-fpm.conf	
+	#sed -i "s#listen.backlog.*#listen.backlog = "${backLogValue}"#" ${php_setup_path}/etc/php-fpm.conf
 	sed -i "s#listen.backlog.*#listen.backlog = 8192#" ${php_setup_path}/etc/php-fpm.conf
 }
 
@@ -67,7 +67,7 @@ Set_Phpini(){
 	fi
 
 	sed -i 's/expose_php = On/expose_php = Off/g' ${php_setup_path}/etc/php.ini
-	
+
 }
 
 php_versions=$(ls /www/server/php/|xargs)

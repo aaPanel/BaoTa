@@ -1,12 +1,8 @@
-# -*- coding: utf-8 -*-
+import typing as _t
 from time import time
-import os,struct
-try:
-    import cPickle as pickle
-except ImportError:  # pragma: no cover
-    import pickle
 
 from cachelib.base import BaseCache
+from cachelib.serializers import SimpleSerializer
 
 
 class SimpleCache(BaseCache):
@@ -22,112 +18,94 @@ class SimpleCache(BaseCache):
                             specified on :meth:`~BaseCache.set`. A timeout of
                             0 indicates that the cache never expires.
     """
-    __session_key = 'BT_:'
-    __session_basedir = '/www/server/panel/data/session'
 
-    def __init__(self, threshold=500, default_timeout=300):
+    serializer = SimpleSerializer()
+
+    def __init__(
+        self,
+        threshold: int = 500,
+        default_timeout: int = 300,
+    ):
         BaseCache.__init__(self, default_timeout)
-        self._cache = {}
-        self.clear = self._cache.clear
-        self._threshold = threshold
+        self._cache: _t.Dict[str, _t.Any] = {}
+        self._threshold = threshold or 500  # threshold = 0
 
-    def _prune(self):
-        if len(self._cache) > self._threshold:
+    def _over_threshold(self) -> bool:
+        return len(self._cache) > self._threshold
+
+    def _remove_expired(self, now: float) -> None:
+        toremove = [k for k, (expires, _) in self._cache.items() if expires < now]
+        for k in toremove:
+            self._cache.pop(k, None)
+
+    def _remove_older(self) -> None:
+        k_ordered = (
+            k
+            for k, v in sorted(
+                self._cache.items(), key=lambda item: item[1][0]  # type: ignore
+            )
+        )
+        for k in k_ordered:
+            self._cache.pop(k, None)
+            if not self._over_threshold():
+                break
+
+    def _prune(self) -> None:
+        if self._over_threshold():
             now = time()
-            toremove = []
-            for idx, (key, (expires, _)) in enumerate(self._cache.items()):
-                if (expires != 0 and expires <= now) or idx % 3 == 0:
-                    toremove.append(key)
-            for key in toremove:
-                self._cache.pop(key, None)
+            self._remove_expired(now)
+        # remove older items if still over threshold
+        if self._over_threshold():
+            self._remove_older()
 
-
-    def _normalize_timeout(self, timeout):
+    def _normalize_timeout(self, timeout: _t.Optional[int]) -> int:
         timeout = BaseCache._normalize_timeout(self, timeout)
         if timeout > 0:
-            timeout = time() + timeout
+            timeout = int(time()) + timeout
         return timeout
 
-    def get(self, key):
+    def get(self, key: str) -> _t.Any:
         try:
-            expires, value = self._cache[key]   
+            expires, value = self._cache[key]
             if expires == 0 or expires > time():
-                return pickle.loads(value)
-        except (KeyError, pickle.PickleError):
-            try:
-                if key[:4] == self.__session_key:
-                    filename =  '/'.join((self.__session_basedir,self.md5(key)))                    
-                    if not os.path.exists(filename): return None
-
-                    with open(filename, 'rb') as fp:
-                        _val = fp.read()
-                        fp.close()
-                        expires = struct.unpack('f',_val[:4])[0] 
-                        if expires == 0 or expires > time():
-                            value = _val[4:]
-
-                            self._cache[key] = (expires,value)  
-                            return pickle.loads(value)
-            except :pass
+                return self.serializer.loads(value)
+        except KeyError:
             return None
 
-    def set(self, key, value, timeout=None):
-        
+    def set(
+        self, key: str, value: _t.Any, timeout: _t.Optional[int] = None
+    ) -> _t.Optional[bool]:
         expires = self._normalize_timeout(timeout)
         self._prune()
-        
-        _val =  pickle.dumps(value, pickle.HIGHEST_PROTOCOL)
-        self._cache[key] = (expires,_val)        
-        try:
-            if key[:4] == self.__session_key:
-                if len(_val) < 256: return True
-                from BTPanel import session
-                if 'request_token_head' in session:
-                    if not os.path.exists(self.__session_basedir): os.makedirs(self.__session_basedir,384)
-                    expires = struct.pack('f',expires)
-                    filename =  '/'.join((self.__session_basedir,self.md5(key)))
-                    fp = open(filename, 'wb+')
-                    fp.write(expires + _val)
-                    fp.close()
-                    os.chmod(filename,384)
-        except :pass
+        self._cache[key] = (expires, self.serializer.dumps(value))
         return True
 
-    def add(self, key, value, timeout=None):
+    def add(self, key: str, value: _t.Any, timeout: _t.Optional[int] = None) -> bool:
         expires = self._normalize_timeout(timeout)
         self._prune()
-        item = (expires, pickle.dumps(value,
-                                      pickle.HIGHEST_PROTOCOL))
+        item = (expires, self.serializer.dumps(value))
         if key in self._cache:
             return False
         self._cache.setdefault(key, item)
         return True
 
-    def delete(self, key):
-        result = self._cache.pop(key, None) is not None
-        try:
-            if key[:4] == self.__session_key:
-                filename =  '/'.join((self.__session_basedir,self.md5(key))) 
-                if os.path.exists(filename): os.remove(filename)
-        except : pass
-        return result
+    def delete(self, key: str) -> bool:
+        return self._cache.pop(key, None) is not None
 
-    def has(self, key):
+    def has(self, key: str) -> bool:
         try:
             expires, value = self._cache[key]
-            return expires == 0 or expires > time()
+            return bool(expires == 0 or expires > time())
         except KeyError:
             return False
 
-    def md5(self,strings):
-        """
-        生成MD5
-        @strings 要被处理的字符串
-        return string(32)
-        """
-        import hashlib
-        m = hashlib.md5()
- 
-        m.update(strings.encode('utf-8'))
-        return m.hexdigest()
+    def clear(self) -> bool:
+        self._cache.clear()
+        return not bool(self._cache)
 
+    def get_expire_time(self, key):
+        try:
+            expires, value = self._cache[key]
+            return expires
+        except KeyError:
+            return 0

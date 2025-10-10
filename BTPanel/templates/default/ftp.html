@@ -10,7 +10,7 @@
     </div>
     <div class="safe bgw mtb15 pd15 tab-view-box">
       <div class="info-title-tips">
-          <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span>{{data['lan']['PS']}} <a target="_blank" class="btlink" href=" ftp://{{session['address']}}:{{session['port']}}"> ftp://{{session['address']}}:{{session['port']}}</a></p>
+          <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span>{{data['lan']['PS']}} ftp://{{session['address']}}:{{session['port']}}</p>
       </div>
       <div id="bt_ftp_table"></div>
     </div>
@@ -18,12 +18,12 @@
 </div>
 {% endblock %}
 {% block scripts %}
-	{{ super() }} 
+	{{ super() }}
 <script type="text/javascript">
 
 	bt.set_cookie('sites_path',"{{session['config']['sites_path']}}");
     {% if not data['isSetup'] %}
-		layer.msg('{{data["lan"]["JS1"]}}<a href="/soft" style="color:#20a53a; float: right;">{{data["lan"]["JS2"]}}</a>',{icon:7,time:0,shade: [0.3, '#000']});
+		layer.msg('{{data["lan"]["JS1"]}}<a href="javascript:;" onclick="bt.soft.install(\'pureftpd\');" style="color:#20a53a; float: right;">立即安装</a>',{icon:7,time:0,shade: [0.3, '#000']});
         $(".layui-layer-shade").css("margin-left", "180px");
     {% else %}
 		var ftp_table = bt_tools.table({
@@ -55,7 +55,7 @@
 				*/
 				del_ftp_user:function(obj,callback){
 					var that = this;
-					bt.show_confirm(lan.public.del+"["+ obj.name +"]",lan.get('confirm_del',[obj.name]),function(){
+					bt.compute_confirm({title:"删除FTP账号【"+ obj.name +"】",msg:'删除选中的FTP账号后，该FTP账号将彻底删除并失去访问权限，是否继续操作？'},function(){
 						bt.ftp.del(obj.id,obj.name,function(rdata){
 							if(callback) callback(rdata);
 							bt.msg(rdata);
@@ -89,7 +89,7 @@
 							setTimeout(function () {
 								window.location.reload()
 							}, 1000)
-						}	
+						}
 					})
 					$('.port'+bs).val('{{session["port"]}}');
 				},
@@ -101,11 +101,13 @@
 				*/
 				set_ftp_status:function(obj,callback){
 					if(!parseInt(obj.status)){
-						bt.ftp.set_status(obj.id,obj.name,"1",function(rdata){
-							if(callback) callback(rdata);
+						bt.confirm({msg:'启用选中的FTP账号后，该FTP账号恢复访问权限，是否继续操作？',title:'启用FTP账号【'+ obj.name +'】'},function(index){
+							bt.ftp.set_status(obj.id,obj.name,"1",function(rdata){
+								if(callback) callback(rdata);
+							});
 						});
 					}else{
-						bt.confirm({msg:lan.ftp.stop_confirm.replace('{1}',obj.name),title:lan.ftp.stop_title},function(index){			
+						bt.confirm({msg:'停用选中的FTP账号后，该FTP账号将失去访问权限，是否继续操作？',title:'停用FTP账号【'+ obj.name +'】'},function(index){
 							bt.ftp.set_status(obj.id,obj.name,"0",function(rdata){
 								if(callback) callback(rdata);
 							});
@@ -123,9 +125,19 @@
 						if(res.status) that.$modify_row_data({status:parseInt(row.status)?'0':'1'});
 					});
 				}},
-				{fid:'path',title:'根目录',type:'link',event:function(row,index,ev){
-					openPath(row.path);
-				}},
+				{fid:'path',title:'根目录',type:'link',align:'left',
+				event:function(row,index,ev){
+						openPath(row.path)
+        }},
+				{
+					// <span '+(bt.get_cookie('ltd_end')>0?' style="cursor:text" ':'onclick="bt.soft.product_pay_view({ totalNum: 51, limit: \'ltd\', closePro: true })"')+'  class="firwall_place_of_attribution"></span>
+					title: '目录详情',
+					width:120,
+					type: 'text',
+					template:function(row,index,ev){
+						return bt.files.dir_details_span(row.path);
+					},
+				},
         bt.public.get_quota_config('ftp'),
 				{fid:'ps',title:'备注',type:'input',blur:function(row,index,ev){
 					bt.pub.set_data_ps({id:row.id,table:'ftps',ps:ev.target.value},function(res){
@@ -142,6 +154,192 @@
 							if(rdata.status) that.$refresh_table_list(true);
 						});
 					}
+				}, {
+					title: '日志', event: function (row, index, ev, key, that) {
+						var ltd = parseInt(bt.get_cookie('ltd_end')  || -1)
+        				if(ltd > 0) {//为企业版
+							bt.send('ftp', 'ftp/set_ftp_logs', {exec_name: 'getlog'}, function (res) {
+								var _status = res.msg === 'start' ? true : false
+								if(!_status){
+									bt.confirm({title:'提示',msg:'当前未开启FTP日志管理，是否开启？',icon:0},function(index){
+										layer.close(index);
+										bt.send('ftp', 'ftp/set_ftp_logs', {exec_name: 'start'}, function (res) {
+											bt_tools.msg(res)
+											if(res.status){
+												$("#bt_ftp_table #isFtplog").prop("checked", true);
+												setTimeout(function(){
+													open_ftp_log()
+												},1000)
+											}
+										})
+									})
+									return
+								}else{
+									open_ftp_log()
+								}
+								function open_ftp_log() {
+									var web_tab = bt_tools.tab({
+										class: 'pd20',
+										type: 0,
+										theme: { nav: 'ml0' },
+										active: 1, //激活TAB下标
+										list:[
+										{
+												title: '登录日志',
+												content: '<div id="bt_ftp_Login_logs"></div>',
+												success: function () {
+													$('#bt_ftp_Login_logs').parent().parent().css('padding','10px 0')
+													$('#bt_ftp_Login_logs').empty()
+													bt_tools.table({
+														el: '#bt_ftp_Login_logs',
+														default: '暂无日志信息',
+														height: 390,
+														url: '/ftp?action=get_login_logs',
+														param: {
+															user_name: row.name
+														},
+														column: [
+															{ title: '用户名', type: 'text', width: 100,template:function() {
+																return '<span>' + row.name + '</span>';
+															}},
+															{ fid: 'ip', title: '登录IP', type: 'text', width: 110},
+															{ fid: 'status', title: '状态', type: 'text', width: 75,
+															template: function (rowc, index, ev) {
+															    var status = rowc.status.indexOf('登录成功') > -1
+																return '<span class="' + (status ?  'btlink' : 'bterror' ) + '">' + (status ?  '登录成功' : '登录失败' ) + '<span>';
+															}},
+															{ fid: 'in_time', title: '登录时间', type: 'text', width: 150 },
+															{ fid: 'out_time', title: '登出时间', type: 'text', width: 200},
+														],
+														tootls: [
+															{
+																type:'group',
+																positon:['left','top'],
+																list:[
+																	{title:'刷新日志',active:true,event:function(ev,ethat){
+																	    $('#bt_ftp_Login_logs .search_input').val('')
+																	    ethat.config.search.value = ''
+																		ethat.$refresh_table_list(true)
+																	}},
+																]
+															},
+															{
+																type: 'search',
+																positon: ['right', 'top'],
+																placeholder: '请输入登录IP/状态/时间',
+																searchParam: 'search', //搜索请求字段，默认为 search
+																value: '',// 当前内容,默认为空
+															},
+															{
+																type: 'page',
+																positon: ['right', 'bottom'], // 默认在右下角
+																pageParam: 'p', //分页请求字段,默认为 : p
+																page: 1, //当前分页 默认：1
+															}
+														]
+													})
+												}
+											}, {
+												title: '操作日志',
+												content: '<div id="bt_ftp_logsOperation"></div><ul class="help-info-text c7"><li>部分ftp客户端上传带中文名称的文件时，写入的ftp日志中文部分为乱码，这将导致显示的文件名称中文部分无法转换</li></ul>',
+												success: function () {
+													var typeList = [
+														{ title: '全部', value: 'all' },
+														{ title: '上传', value: 'upload' },
+														{ title: '下载', value: 'download' },
+														{ title: '删除', value: 'delete' },
+														{ title: '重命名', value: 'rename' }]
+													table_logsOperation('all')
+													function table_logsOperation(type) {
+														$('#bt_ftp_logsOperation').empty()
+														bt_tools.table({
+															el: '#bt_ftp_logsOperation',
+															default: '暂无日志信息',
+															height: 350,
+															url: '/ftp?action=get_action_logs',
+															param: {
+																user_name: row.name,
+																type: type
+															},
+															column: [
+																{ title: '用户名', type: 'text', width: 100,template:function() {
+																	return '<span>' + row.name + '</span>';
+																}},
+																{ fid: 'ip', title: '操作IP', type: 'text', width: 110},
+																{ fid: 'file', title: '文件', type: 'text', width: 240,fixed: true },
+																{ fid: 'type', title: '操作类型', type: 'text', width: 75},
+																{ fid: 'time', title: '操作时间', type: 'text', width: 100 },
+															],
+															tootls: [{
+																	type:'group',
+																	positon:['left','top'],
+																	list:[
+																		{title:'刷新日志',active:true,event:function(){
+																			table_logsOperation(type)
+																		}},
+																	]
+																},
+																{
+																	type: 'search',
+																	positon: ['right', 'top'],
+																	placeholder: '请输入操作IP/文件/类型/时间',
+																	searchParam: 'search', //搜索请求字段，默认为 search
+																	value: '',// 当前内容,默认为空
+																},
+																{
+																	type: 'page',
+																	positon: ['right', 'bottom'], // 默认在右下角
+																	pageParam: 'p', //分页请求字段,默认为 : p
+																	page: 1, //当前分页 默认：1
+																}
+															],
+															success: function () {
+																if(!$('#bt_ftp_logsOperation .log_type').length){
+																	var _html = ''
+																	$.each(typeList, function (index, item) {
+																		_html += '<option value="' + item.value + '">' + item.title + '</option>'
+																	})
+																	$('#bt_ftp_logsOperation .bt_search').before('<select class="bt-input-text mr5 log_type" style="width:110px" name="log_type">'+ _html +'</select>')
+																	$('#bt_ftp_logsOperation .log_type').val(type)
+																	$('#bt_ftp_logsOperation .log_type').change(function () {
+																		table_logsOperation($(this).val())
+																	})
+																}
+															}
+														})
+													}
+												}
+										}]
+									})
+									bt_tools.open({
+										area: ['700px', '605px'],
+										title: '【' + row.name + '】- 日志',
+										closeBtn: 2,
+										btn: false,
+										skin: 'bt_ftp_logsLogin',
+										content: web_tab.$reader_content(),
+										success: function () {
+											web_tab.$init();
+										}
+									})
+								}
+							})
+
+						}else{
+							var item = {
+								pluginName: 'FTP日志',
+								description:['记录和查看当前FTP日志','登录日志','操作日志'],
+								ps: 'FTP日志是FTP服务器记录的各种FTP操作、事件以及异常情况等信息的记录，如登录日志、上传下载日志、错误日志等。',
+								preview: false,
+								limit: 'ltd',
+								imgSrc:'https://www.bt.cn/Public/new/plugin/introduce/ftp/ftplog.png'
+							}
+							product_recommend.recommend_product_view(item, {
+								imgArea: ['783px', '718px']
+							},'ltd',57,'ltd')
+						}
+
+					}
 				},{
 					title:'删除',event:function(row,index,ev,key,that){
 						that.del_ftp_user({id:row.id,name:row.name},function(res){
@@ -150,6 +348,9 @@
 					}
 				}]}
 			],
+			sortParam: function (data) {
+				return { 'order': data.name + ' ' + data.sort };
+			},
 			tootls:[{
 				type:'group',
 				positon:['left','top'],
@@ -202,8 +403,12 @@
 				numberList:[10,20,50,100,200], // 分页显示数量列表
 				numberStatus:true, //　是否支持分页数量选择,默认禁用
 				jump:true, //是否支持跳转分页,默认禁用
-			}]
+			}],
+      success: function (obj) {
+        // 详情事件
+        bt.files.dir_details()
+      }
 		});
-    {% endif %}	
+    {% endif %}
 </script>
 {% endblock %}

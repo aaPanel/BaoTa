@@ -1,0 +1,21 @@
+=======================http负载=====================
+
+nginx + Sticky Cookie/ip_hash/Least Connections/Weighted Round Robin 实现网站负载均衡
+1. 支持配置开源nginx中upstream相关的常用参数 （错误，恢复，备份，权重等等）
+2. 配置文件划分: 网站的配置文件 = server块主配置 + location块代理配置（proxy）+ upstream块上游服务配置 => 嵌入到nginx主配置文件中
+    2.1.nginx主配置文件无需处理
+    2.2 /www/server/panel/vhost/nginx 目录存放 server块主配置 和 upstream块上游服务配置， 分别以"网站名+.conf" 和 "upstream_ + 网站名+.conf" 命名
+    2.3 /www/server/panel/vhost/nginx/proxy/+网站名 目录存放 location块代理配置（proxy）， 以"load_proxy_ +网站名+.conf" 命名
+3.使用sqlite数据库存储这些配置，需要有site_id列表示这个网站在大系统中的id序列， 需要有记录每个节点的信息
+4.配置节点时需要简单检查链接，并支持随时检查节点信息
+5.代理部分需要记录额外的日志，用于追溯请求过程，区分和统计不同节点的响应耗时，处理了那些请求等等
+
+
+=======================tcp/udp负载=====================
+nginx + Steam配置
+1. 配置文件划分: 网站的配置文件 = server块主配置 + upstream块上游服务配置 => 嵌入到nginx主配置文件中
+    2.1.nginx主配置文件无需处理
+2.使用sqlite数据库存储这些配置， 需要有记录每个节点的信息
+3.配置节点时需要简单检查链接，并支持随时检查节点信息
+
+使用python3.7.9实现该项目 nginx的相关操作（检查配置，启动，重载等写todo即可）

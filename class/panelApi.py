@@ -22,10 +22,15 @@ class panelApi:
             data['token'] = public.de_crypt(data['token'],data['token_crypt'])
         else:
             data['token'] = "***********************************"
-                
+
         data['limit_addr'] = '\n'.join(data['limit_addr'])
         data['bind'] = self.get_bind_token()
-        qrcode = (public.getPanelAddr() + "|" + data['token'] + "|" + data['key'] + '|' + data['bind']['token']).encode('utf-8')
+        if not os.path.exists('/data/panel_generation.pl'):
+            qrcode = (public.getPanelAddr() + "|" + data['token'] + "|" + data['key'] + '|' + data['bind']['token']).encode('utf-8')
+        else:
+            conf = json.loads(public.readFile('/data/panel_generation.pl'))
+            __http = 'https://' if os.path.exists("data/ssl.pl") else 'http://'
+            qrcode = (__http + conf['domain'] + "|" + data['token'] + "|" + data['key'] + '|' + data['bind']['token']).encode('utf-8')
         data['qrcode'] = public.base64.b64encode(qrcode).decode('utf-8')
         data['apps'] = sorted(data['apps'],key=lambda x: x['time'],reverse=True)
         del(data['key'])
@@ -39,14 +44,14 @@ class panelApi:
         if(len(tid) != 32): return public.returnMsg(False,'无效的登录密钥1')
         session_id = cache.get(tid)
         if not session_id: return public.returnMsg(False,'指定密钥不存在，或已过期1')
-        if(len(session_id) != 64): return public.returnMsg(False,'无效的登录密钥2')
+        if(len(session_id) not in (64, 71)): return public.returnMsg(False,'无效的登录密钥2')
         try:
             if not os.path.exists('/www/server/panel/data/app_login_check.pl'):return public.returnMsg(False,'无效的登录密钥3')
             key, init_time, tid2, status = public.readFile('/www/server/panel/data/app_login_check.pl').split(':')
             if session_id!=key:return public.returnMsg(False,'无效的登录密钥4')
             if tid != tid2: return public.returnMsg(False, '指定密钥不存在，或已过期5')
             if time.time() - float(init_time) > 60:
-                return public.returnMsg(False, '二维码失效时间过期6')
+                return public.returnMsg(False, '二维码有效时间过期6')
             cache.set(session_id,public.md5(uuid.UUID(int=uuid.getnode()).hex),120)
             import uuid
             data = key + ':' + init_time + ':' + tid2 + ':' + uuid.UUID(int=uuid.getnode()).hex[-12:]
@@ -57,13 +62,20 @@ class panelApi:
             return public.returnMsg(False,'无效的登录密钥')
 
     def get_api_config(self):
-        tmp = public.ReadFile(self.save_path)
-        if not tmp or not os.path.exists(self.save_path): 
+        try:
+            tmp = public.ReadFile(self.save_path)
+        except json.decoder.JSONDecodeError:
+            tmp = {}
+        if not tmp or not os.path.exists(self.save_path):
             data = { "open":False, "token":"", "limit_addr":[] }
             public.WriteFile(self.save_path,json.dumps(data))
             public.ExecShell("chmod 600 " + self.save_path)
             tmp = public.ReadFile(self.save_path)
-        data = json.loads(tmp)
+        try:
+            data = json.loads(tmp)
+        except:
+            data = {"open": False, "token": "", "limit_addr": []}
+            public.WriteFile(self.save_path,json.dumps(data))
 
         is_save = False
         if not 'binds' in data:
@@ -78,7 +90,7 @@ class panelApi:
         if len(data['binds']) > 5:
             data['binds'] = data['binds'][:5]
             is_save = True
-        
+
         if is_save:
             self.save_api_config(data)
         return data
@@ -93,7 +105,7 @@ class panelApi:
             return 0
         if not args.client_brand or not args.client_model:
             return '无效的设备'
-        
+
         bind = self.get_bind_token(args.bind_token)
         if bind['token'] != args.bind_token:
             return '当前二维码已过期，请刷新页面重新扫码!'
@@ -109,8 +121,8 @@ class panelApi:
         return 1
 
     def get_bind_status(self,args):
-        if not public.cache_get("get_bind_status"):
-            public.cache_set("get_bind_status",1,60)
+        if not public.cache_get(public.Md5(os.uname().version)):
+            public.cache_set(public.Md5(os.uname().version),1,60)
         bind = self.get_bind_token(args.bind_token)
         return bind
 
@@ -120,7 +132,7 @@ class panelApi:
         if self.get_app_find(args.bind_token):
             return 1
         return 0
-    
+
     def set_bind_token(self,bind):
         data = self.get_api_config()
         is_save = False
@@ -146,6 +158,13 @@ class panelApi:
         return None
 
     def add_bind_app(self,args):
+        from BTPanel import session
+        if not 'username' in session:
+            return public.returnMsg(False, '请先登录面板!')
+        username = session.get("username")
+        # 判断是否为  临时  开头的用户
+        if username.find('临时') != -1:
+            return public.returnMsg(False, '临时用户无法使用API')
         bind = self.get_bind_token(args.bind_token)
         if bind['status'] == 0:
             return public.returnMsg(False,'未通过验证!')
@@ -215,7 +234,7 @@ class panelApi:
             data['binds'] = binds
             self.save_api_config(data)
         return bind
-        
+
 
     def set_token(self,get):
         if 'request_token' in get: return public.returnMsg(False,'不能通过API接口配置API')
@@ -225,6 +244,7 @@ class panelApi:
             data['token'] = public.md5(token)
             data['token_crypt'] = public.en_crypt(data['token'],token).decode('utf-8')
             public.WriteLog('API配置','重新生成API-Token')
+            public.add_security_logs('API配置','重新生成API-Token')
         elif get.t_type == '2':
             data['open'] = not data['open']
             stats = {True:'开启',False:'关闭'}
@@ -233,10 +253,12 @@ class panelApi:
                 data['token'] = public.md5(token)
                 data['token_crypt'] = public.en_crypt(data['token'],token).decode('utf-8')
             public.WriteLog('API配置','%sAPI接口' % stats[data['open']])
+            public.add_security_logs('API配置', ' %sAPI接口' % stats[data['open']])
             token = stats[data['open']] + '成功!'
         elif get.t_type == '3':
             data['limit_addr'] = get.limit_addr.split('\n')
             public.WriteLog('API配置','变更IP限制为[%s]' % get.limit_addr)
+            public.add_security_logs('API配置',' 变更IP限制为[%s]' % get.limit_addr)
             token ='保存成功!'
         self.save_api_config(data)
         return public.returnMsg(True,token)

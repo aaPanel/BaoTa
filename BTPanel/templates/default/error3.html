@@ -89,21 +89,21 @@
     background: #20a53a;
   }
   .thumbnail-box .thumbnail-tab {
-    margin-right: 20px;
-    width: 120px;
-    border-left: 1px solid #def2e2;
+    margin-right: 40px;
+    width: 130px;
+    border-right: 1px solid #def2e2;
   }
   .thumbnail-tab li {
     padding: 0 20px;
-    line-height: 36px;
+    line-height: 46px;
+    width: 130px;
     cursor: pointer;
     font-size: 14px;
   }
   .thumbnail-tab li.on {
-    border-left: 2px solid #20a53a;
+    border-right: 2px solid #20a53a;
     color: #20a53a;
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 14px;
   }
   .thumbnail-item {
     display: none;
@@ -111,6 +111,71 @@
   .thumbnail-item.show {
     display: block;
   }
+  .thumbnail-introduce-new{
+     display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 50px;
+}
+ .thumbnail-introduce-title-new{
+    display: flex;
+    align-items: flex-start;
+    width: 92%;
+    justify-content: flex-start;
+ }
+ .thumbnail-title-left-new{
+       display: flex;
+    align-items: center;
+ }
+ .thumbnail-title-left-new img{
+     width: 88px;
+     flex-shrink: 0;
+     margin-right: 14px;
+ }
+ .thumbnail-introduce-ul-new{
+     width: 90%;
+ }
+ .thumbnail-introduce-ul-new ul{
+     display: flex;
+     align-items: center;
+     font-size: 14px;
+     justify-content: space-evenly;
+ }
+ .thumbnail-title-text-new p{
+     color: #666;
+
+ }
+ .thumbnail-title-text-new p:first-child{
+     font-weight: bold;
+     font-size: 24px;
+     margin-bottom: 12px;
+ }
+  .thumbnail-title-text-new p:last-child{
+     font-size: 14px;
+     line-height:24px;
+     width: 70%;
+ }
+ .thumbnail-title-button-new{
+     display: flex;
+     align-items: center;
+ }
+ .thumbnail-title-button-new a{
+     padding: 10px 16px;
+ }
+ .li-icon{
+    height: 9px;
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTMuMjc0NzgwIiBoZWlnaHQ9IjkuMTI2NTg3IiB2aWV3Qm94PSIwIDAgMTMuMjc0OCA5LjEyNjU5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj4KCTxkZXNjPgoJCQlDcmVhdGVkIHdpdGggUGl4c28uCgk8L2Rlc2M+Cgk8cGF0aCBpZD0i55+i6YePIDEwNTEiIGQ9Ik0wLjcxMzUxNiA0LjAyOTExTDQuMzc5NDMgNy43NjI0NUwxMi42Mjc3IDAuNzYyNDUxIiBzdHJva2U9IiMyMEE1M0EiIHN0cm9rZS13aWR0aD0iMi4wMDAwMDAiLz4KCTxkZWZzLz4KPC9zdmc+Cg==');
+    background-size: 100%;
+    width: 13px;
+    display: inline-block;
+    margin-right: 8px;
+ }
+ .thumbnail-introduce-hr{
+     width: 92%;
+     height: 1px;
+     margin: 36px 0;
+     border: 1px dashed #e1e1e185;
+ }
 </style>
 <div class="main-content pb55" style="min-height: 525px;">
   <div class="container-fluid">
@@ -125,18 +190,43 @@
           <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span>提示：此页面可在面板设置中关闭</p>
         </div>
         <div class="daily-thumbnail">
-          <div class="thumbnail-introduce">
-            <span>Nginx防火墙功能介绍</span>
+       <!--   <div class="thumbnail-introduce">-->
+       <!--     <span>Nginx防火墙功能介绍111</span>-->
+       <!--     <ul>-->
+       <!--       <li>仅支持Nginx</li>-->
+       <!--       <li>抵御CC攻击</li>-->
+       <!--       <li>关键词拦截</li>-->
+       <!--       <li>拦截恶意扫描</li>-->
+       <!--       <li>阻止黑客入侵</li>-->
+       <!--     </ul>-->
+       <!--     <div class="daily-product-buy">-->
+       <!--       <a class="btn btn-default mr10" title="产品预览" href="https://www.bt.cn/new/product_nginx_firewall.html" target="_blank">产品预览</a>-->
+							<!--<a title="购买专业/企业版" href="javascript:;" class="btn btn-success va0 ml15 payPlugin">立即购买</a>-->
+       <!--     </div>-->
+       <!--   </div>-->
+       <div class="thumbnail-introduce-new">
+              <div class="thumbnail-introduce-title-new" style="display: block;">
+                  <div class="thumbnail-title-left-new">
+                      <img src="/static/img/soft_ico/ico-btwaf.png" alt="" />
+                      <div class="thumbnail-title-text-new">
+                          <p>Nginx防火墙-功能介绍</p>
+                          <p style="width: 100%;">Nginx防火墙是保护Web应用程序免受各种网络攻击，检测过滤恶意请求限制访问频率，增强应用程序的安全，易于配置和使用，是保护Web应用程序安全的重要工具之一</p>
+                      </div>
+                  </div>
+                   <div class="thumbnail-title-button-new daily-product-buy" style="margin: 16px 102px;">
+                      <a class="btn btn-default mr10" style="color:#666" title="产品预览" href="https://www.bt.cn/new/product_nginx_firewall.html" target="_blank">产品预览</a>
+                      <a title="购买专业/企业版" href="javascript:;" class="btn btn-success va0 ml15 payPlugin">立即购买</a>
+                  </div>
+              </div>
+              <div class="thumbnail-introduce-hr"></div>
+              <div class="thumbnail-introduce-ul-new">
             <ul>
-              <li>仅支持Nginx</li>
-              <li>抵御CC攻击</li>
-              <li>关键词拦截</li>
-              <li>拦截恶意扫描</li>
-              <li>阻止黑客入侵</li>
+                      <li><span class="li-icon"></span>仅支持Nginx</li>
+                      <li><span class="li-icon"></span>抵御CC攻击</li>
+                      <li><span class="li-icon"></span>关键词拦截</li>
+                      <li><span class="li-icon"></span>拦截恶意扫描</li>
+                      <li><span class="li-icon"></span>阻止黑客入侵</li>
             </ul>
-            <div class="daily-product-buy">
-              <a class="btn btn-default mr10" title="产品预览" href="https://www.bt.cn/new/product_nginx_firewall.html" target="_blank">产品预览</a>
-              <a title="购买专业/企业版" href="javascript:;" class="btn btn-success va0 ml15 payPlugin">立即购买</a>
             </div>
           </div>
           <div class="thumbnail-box">
@@ -150,25 +240,25 @@
               <li>操作日志</li>
             </ul>
             <div class="thumbnail-item show">
-                <div class="pluginTipsGg" style="background-image: url(/static/img/nginx_firewall/1.png);"></div>
+                <div class="pluginTipsGg" style="background-image: url(https://www.bt.cn/Public/new/plugin/introduce/waf/nginx_firewall_1.png);"></div>
             </div>
             <div class="thumbnail-item">
-                <div class="pluginTipsGg" style="background-image: url(/static/img/nginx_firewall/2.png);"></div>
+                <div class="pluginTipsGg" style="background-image: url(https://www.bt.cn/Public/new/plugin/introduce/waf/nginx_firewall_2.png);"></div>
             </div>
             <div class="thumbnail-item">
-                <div class="pluginTipsGg" style="background-image: url(/static/img/nginx_firewall/3.png);"></div>
+                <div class="pluginTipsGg" style="background-image: url(https://www.bt.cn/Public/new/plugin/introduce/waf/nginx_firewall_3.png);"></div>
             </div>
             <div class="thumbnail-item">
-                <div class="pluginTipsGg" style="background-image: url(/static/img/nginx_firewall/4.png);"></div>
+                <div class="pluginTipsGg" style="background-image: url(https://www.bt.cn/Public/new/plugin/introduce/waf/nginx_firewall_4.png);"></div>
             </div>
             <div class="thumbnail-item">
-                <div class="pluginTipsGg" style="background-image: url(/static/img/nginx_firewall/5.png);"></div>
+                <div class="pluginTipsGg" style="background-image: url(https://www.bt.cn/Public/new/plugin/introduce/waf/nginx_firewall_5.png);"></div>
             </div>
             <div class="thumbnail-item">
-                <div class="pluginTipsGg" style="background-image: url(/static/img/nginx_firewall/6.png);"></div>
+                <div class="pluginTipsGg" style="background-image: url(https://www.bt.cn/Public/new/plugin/introduce/waf/nginx_firewall_6.png);"></div>
             </div>
             <div class="thumbnail-item">
-                <div class="pluginTipsGg" style="background-image: url(/static/img/nginx_firewall/7.png);"></div>
+                <div class="pluginTipsGg" style="background-image: url(https://www.bt.cn/Public/new/plugin/introduce/waf/nginx_firewall_7.png);"></div>
             </div>
           </div>
         </div>
@@ -184,18 +274,43 @@
           <p><span class="glyphicon glyphicon-alert" style="color: #f39c12; margin-right: 10px;"></span>提示：此页面可在面板设置中关闭</p>
         </div>
         <div class="daily-thumbnail">
-          <div class="thumbnail-introduce">
-            <span>Nginx防火墙功能介绍</span>
+          <!--<div class="thumbnail-introduce">-->
+          <!--  <span>Nginx防火墙功能介绍222</span>-->
+          <!--  <ul>-->
+          <!--    <li>仅支持Nginx</li>-->
+          <!--    <li>抵御CC攻击</li>-->
+          <!--    <li>关键词拦截</li>-->
+          <!--    <li>拦截恶意扫描</li>-->
+          <!--    <li>阻止黑客入侵</li>-->
+          <!--  </ul>-->
+          <!--  <div class="daily-product-buy">-->
+          <!--    <a class="btn btn-default mr10" title="产品预览" href="https://www.bt.cn/new/product_nginx_firewall.html" target="_blank">产品预览</a>-->
+          <!--    <a title="购买专业/企业版" href="javascript:;" class="btn btn-success va0 ml15 payPlugin">立即购买</a>-->
+          <!--  </div>-->
+          <!--</div>-->
+          <div class="thumbnail-introduce-new">
+              <div class="thumbnail-introduce-title-new" style="display: block;">
+                  <div class="thumbnail-title-left-new">
+                      <img src="/static/img/soft_ico/ico-btwaf.png" alt="" />
+                      <div class="thumbnail-title-text-new">
+                          <p>Nginx防火墙-功能介绍</p>
+                        <p style="width: 100%;">Nginx防火墙是保护Web应用程序免受各种网络攻击，检测过滤恶意请求限制访问频率，增强应用程序的安全，易于配置和使用，是保护Web应用程序安全的重要工具之一</p>
+                      </div>
+                  </div>
+                   <div class="thumbnail-title-button-new daily-product-buy" style="margin: 16px 102px;">
+                      <a class="btn btn-default mr10" style="color:#666" title="产品预览" href="https://www.bt.cn/new/product_nginx_firewall.html" target="_blank">产品预览</a>
+                      <a title="购买专业/企业版" href="javascript:;" class="btn btn-success va0 ml15 payPlugin">立即购买</a>
+                  </div>
+              </div>
+              <div class="thumbnail-introduce-hr"></div>
+              <div class="thumbnail-introduce-ul-new">
             <ul>
-              <li>仅支持Nginx</li>
-              <li>抵御CC攻击</li>
-              <li>关键词拦截</li>
-              <li>拦截恶意扫描</li>
-              <li>阻止黑客入侵</li>
+                      <li><span class="li-icon"></span>仅支持Nginx</li>
+                      <li><span class="li-icon"></span>抵御CC攻击</li>
+                      <li><span class="li-icon"></span>关键词拦截</li>
+                      <li><span class="li-icon"></span>拦截恶意扫描</li>
+                      <li><span class="li-icon"></span>阻止黑客入侵</li>
             </ul>
-            <div class="daily-product-buy">
-              <a class="btn btn-default mr10" title="产品预览" href="https://www.bt.cn/new/product_nginx_firewall.html" target="_blank">产品预览</a>
-              <a title="购买专业/企业版" href="javascript:;" class="btn btn-success va0 ml15 payPlugin">立即购买</a>
             </div>
           </div>
           <div class="thumbnail-box">
@@ -209,25 +324,25 @@
               <li>操作日志</li>
             </ul>
             <div class="thumbnail-item show">
-                <div class="pluginTipsGg" style="background-image: url(/static/img/nginx_firewall/1.png);"></div>
+                <div class="pluginTipsGg" style="background-image: url(https://www.bt.cn/Public/new/plugin/introduce/waf/nginx_firewall_1.png);"></div>
             </div>
             <div class="thumbnail-item">
-                <div class="pluginTipsGg" style="background-image: url(/static/img/nginx_firewall/2.png);"></div>
+                <div class="pluginTipsGg" style="background-image: url(https://www.bt.cn/Public/new/plugin/introduce/waf/nginx_firewall_2.png);"></div>
             </div>
             <div class="thumbnail-item">
-                <div class="pluginTipsGg" style="background-image: url(/static/img/nginx_firewall/3.png);"></div>
+                <div class="pluginTipsGg" style="background-image: url(https://www.bt.cn/Public/new/plugin/introduce/waf/nginx_firewall_3.png);"></div>
             </div>
             <div class="thumbnail-item">
-                <div class="pluginTipsGg" style="background-image: url(/static/img/nginx_firewall/4.png);"></div>
+                <div class="pluginTipsGg" style="background-image: url(https://www.bt.cn/Public/new/plugin/introduce/waf/nginx_firewall_4.png);"></div>
             </div>
             <div class="thumbnail-item">
-                <div class="pluginTipsGg" style="background-image: url(/static/img/nginx_firewall/5.png);"></div>
+                <div class="pluginTipsGg" style="background-image: url(https://www.bt.cn/Public/new/plugin/introduce/waf/nginx_firewall_5.png);"></div>
             </div>
             <div class="thumbnail-item">
-                <div class="pluginTipsGg" style="background-image: url(/static/img/nginx_firewall/6.png);"></div>
+                <div class="pluginTipsGg" style="background-image: url(https://www.bt.cn/Public/new/plugin/introduce/waf/nginx_firewall_6.png);"></div>
             </div>
             <div class="thumbnail-item">
-                <div class="pluginTipsGg" style="background-image: url(/static/img/nginx_firewall/7.png);"></div>
+                <div class="pluginTipsGg" style="background-image: url(https://www.bt.cn/Public/new/plugin/introduce/waf/nginx_firewall_7.png);"></div>
             </div>
           </div>
         </div>
@@ -237,16 +352,35 @@
 </div>
 {% endblock %}
 {% block scripts %}
+<script>
+	window.plugin_view = {
+		isDev: function () {
+			return false;
+		},
+		getToken: function () {
+			return '';
+		},
+	};
+	window.vite_public_request_token = '{{session[g.get_csrf_html_token_key]}}'; // csrf_token，用于请求
+</script>
+<script src="{{g.cdn_url}}/js/jquery-2.2.4.min.js"></script>
+<script src="{{g.cdn_url}}/layer/layer.js"></script>
+<script src="{{g.cdn_url}}/js/utils.min.js"></script>
   <script type="text/javascript">
-    $('.installWaf').on('click',function(){
+		bt_tools.send({url:'/plugin?action=get_soft_find',data:{sName: 'btwaf'}}, function (res) {
+        if (res.endtime >= 0) {
+            $('.payPlugin').after('<a href="javascript:;" class="btn btn-success va0 ml15 installWaf">立即安装</a>');
+            $('.payPlugin').remove();
+        }
+    });
+
+    $('.daily-product-buy').on('click', '.installWaf', function(){
       bt.soft.install('btwaf')
-    })
+    });
+
     $('.payPlugin').on('click',function(){
       bt.soft.get_soft_find('btwaf',function(rdata){
-        bt.soft.product_pay_view({"name":rdata.title,"pid":rdata.pid,"type":rdata.type,"plugin":true,"ps":rdata.ps, 'totalNum': 25});
-        setTimeout(function(){
-          $('.lib_ltd').click();
-        },500);
+        window.parent.pay({ disablePro: true, sourceId: 25, plugin: true, pluginInfo:rdata})
       });
     })
     $('.thumbnail-tab li').click(function () {

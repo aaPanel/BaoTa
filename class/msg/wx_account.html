@@ -1,0 +1,258 @@
+<div class="conter_box wx_account_box">
+	<div class="bt-form">
+		<div class="form-item">
+			<div class="form-label">绑定微信账号</div>
+			<div class="form-content">
+				<div class="bind_wechat hide">
+					<div class="userinfo"></div>
+				</div>
+				<div class="nobind_wechat">
+					<span class="red">未绑定</span>
+				</div>
+				<button class="btn btn-xs btn-success btn-bind-wechat">立即绑定</button>
+			</div>
+		</div>
+		<div class="form-item">
+			<div class="form-label">绑定微信公众号</div>
+			<div class="form-content">
+				<div class="bind_account hide">
+					<span style="color: #20a53a;">已绑定</span>
+				</div>
+				<div class="nobind_account">
+					<span class="red">未绑定</span>
+					<button class="btn btn-xs btn-success btn-bind-account">立即绑定</button>
+				</div>
+			</div>
+		</div>
+		<div class="form-item hide">
+			<div class="form-label">今日剩余发送次数</div>
+			<div class="form-content">
+				<span class="account_remaining">0</span>
+				<button class="btn btn-xs btn-success btn-send-test">发送测试消息</button>
+			</div>
+		</div>
+	</div>
+	<ul class="help-info-text c7">
+		<li>当前为体验版，限制每个宝塔账号发送频率100条/天</li>
+	</ul>
+</div>
+<style>
+	.wx_account_box .bt-form {
+		padding-top: 15px;
+	}
+	.wx_account_box .form-item {
+		display: flex;
+	}
+	.wx_account_box .form-item + .form-item {
+		margin-top: 15px;
+	}
+	.wx_account_box .form-label,
+	.wx_account_box .form-content {
+		display: flex;
+		align-items: center;
+		min-height: 32px;
+	}
+	.wx_account_box .form-label {
+		justify-content: flex-end;
+		width: 140px;
+		padding-right: 20px;
+		line-height: 1.4;
+	}
+	.wx_account_box .form-content {
+		flex: 1;
+	}
+	.wx_account_box .userinfo {
+		display: flex;
+		align-items: center;
+	}
+	.wx_account_box .userinfo img {
+		width: 30px;
+		height: 30px;
+		border-radius: 50%;
+		margin-right: 10px;
+	}
+	.wx_account_box .form-item .btn + .btn {
+		margin-left: 12px;
+	}
+	.bind_wechat_box .qrcode {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 150px;
+		height: 150px;
+		margin: 0 auto;
+		border: 1px solid #ddd;
+	}
+	.bind_wechat_box .qrcode img {
+		width: 148px;
+		height: 148px;
+	}
+	.nobind_account {
+		display: flex;
+		align-items: center;
+	}
+	.btn-send-test,
+	.btn-bind-wechat,
+	.btn-bind-account {
+		margin-left: 12px;
+	}
+
+	.help-info-text {
+		position: absolute;
+		left: 20px;
+		bottom: 50px;
+	}
+</style>
+<script src="/static/js/jquery.qrcode.min.js"></script>
+<script type="text/javascript">
+	var wx_account = {
+		config: {},
+		init: function () {
+			var that = this;
+
+			this.get_config();
+
+			// 发送测试信息
+			$('.btn-send-test').click(function () {
+				var laod = bt.load('正在发送测试信息，请稍候...');
+				$.post(
+					'/config?action=get_msg_fun',
+					{
+						module_name: 'wx_account',
+						fun_name: 'push_data',
+						msg: '发送测试信息',
+					},
+					function (res) {
+						laod.close();
+						bt.msg(res);
+						if (res.status) {
+							var num = $('.account_remaining').text();
+							if (!isNaN(num)) {
+								num -= 1;
+								$('.account_remaining').text(num);
+							}
+						}
+					}
+				);
+			});
+
+			// 绑定微信公众号
+			$('.btn-bind-account').click(function () {
+				layer.open({
+					type: 1,
+					area: '280px',
+					title: '绑定微信公众号',
+					closeBtn: 2,
+					shadeClose: false,
+					content: '\
+					<div class="bind_wechat_box pd20">\
+						<div class="text-center">微信扫码</div>\
+						<div class="mt10">\
+							<div class="qrcode">\
+								<img src="https://www.bt.cn/Public/img/bt_wx.jpg" />\
+							</div>\
+						</div>\
+					</div>\
+					',
+					cancel: function () {
+						that.get_config();
+					}
+				});
+			})
+
+			// 更换绑定账号
+			$('.btn-bind-wechat').click(function () {
+				that.show_bind_account();
+			});
+		},
+		/**
+		 * @description 显示更换微信账号
+		 */
+		show_bind_account: function () {
+			var that = this;
+			layer.open({
+				type: 1,
+				area: '280px',
+        title: '绑定微信账号',
+        closeBtn: 2,
+        shadeClose: false,
+				content: '\
+				<div class="bind_wechat_box pd20">\
+					<div class="text-center">微信扫码</div>\
+					<div class="mt10">\
+						<div class="qrcode" id="wechat-qrcode"></div>\
+					</div>\
+				</div>\
+				',
+				success: function () {
+					$.post('/config?action=get_msg_fun', {
+						module_name: 'wx_account',
+						fun_name: 'get_auth_url',
+					}, function (rdata) {
+						var url = rdata.msg.res;
+						$('#wechat-qrcode').qrcode({
+							render: 'canvas',
+							width: 135,
+							height: 135,
+							text: url,
+							correctLevel: 1
+						});
+					});
+				},
+				cancel: function () {
+					that.get_config();
+				}
+			});
+		},
+		/**
+		 * @description 获取配置
+		 */
+		get_config: function () {
+			var that = this;
+			var loadT = bt.load('正在获取配置，请稍候...');
+			$.post(
+				'/config?action=get_msg_fun',
+				{
+					module_name: 'wx_account',
+					fun_name: 'get_web_info',
+				},
+				function (rdata) {
+					loadT.close();
+
+					if (rdata.status === false) {
+						bt.msg(rdata);
+					}
+
+					var data = rdata && rdata.msg && rdata.msg.res ? rdata.msg.res : {};
+
+					// 绑定微信账号
+					if (data.is_bound === 1) {
+						$('.userinfo').html('<img src="' + data.head_img + '" /><div>' + data.nickname + '</div>');
+						$('.btn-bind-wechat').text('更换微信账号');
+						$('.bind_wechat').removeClass('hide');
+						$('.nobind_wechat').addClass('hide');
+					} else {
+						$('.btn-bind-wechat').text('立即绑定');
+						$('.bind_wechat').addClass('hide');
+						$('.nobind_wechat').removeClass('hide');
+					}
+					// 判断是否绑定公众号
+					if (data.is_subscribe === 1) {
+						$('.bind_account').removeClass('hide');
+						$('.nobind_account').addClass('hide');
+					} else {
+						$('.bind_account').addClass('hide');
+						$('.nobind_account').removeClass('hide');
+					}
+					// 判断是否存在发送消息
+					if (data.remaining === undefined) {
+						$('.account_remaining').parents('.form-item').addClass('hide');
+					} else {
+						$('.account_remaining').parents('.form-item').removeClass('hide');
+						$('.account_remaining').text(data.remaining);
+					}
+				}
+			);
+		},
+	};
+</script>

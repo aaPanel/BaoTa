@@ -1,0 +1,152 @@
+{
+  "field_validators": {
+    "theme.dark": {
+      "type": "bool",
+      "required": true,
+      "description": "是否启用暗色主题"
+    },
+    "theme.color": {
+      "type": "str",
+      "required": true,
+      "pattern": "^#[0-9a-fA-F]{3,6}$",
+      "description": "主题颜色，十六进制格式"
+    },
+    "theme.view": {
+      "type": "str",
+      "required": true,
+      "choices": ["default", "compact", "wide"],
+      "description": "主题视图模式"
+    },
+    "logo.image": {
+      "type": "str",
+      "required": false,
+      "description": "Logo图片路径"
+    },
+    "logo.favicon": {
+      "type": "str",
+      "required": false,
+      "description": "网站图标路径"
+    },
+    "sidebar.dark": {
+      "type": "bool",
+      "required": true,
+      "description": "侧边栏是否启用暗色模式"
+    },
+    "sidebar.color": {
+      "type": "str",
+      "required": true,
+      "pattern": "^#[0-9a-fA-F]{3,6}$",
+      "description": "侧边栏颜色，十六进制格式"
+    },
+    "sidebar.opacity": {
+      "type": "int",
+      "required": true,
+      "min": 0,
+      "max": 100,
+      "description": "侧边栏透明度（0-100）"
+    },
+    "interface.rounded": {
+      "type": "str",
+      "required": true,
+      "choices": ["none", "small", "medium", "large"],
+      "description": "界面圆角大小"
+    },
+    "interface.is_show_bg": {
+      "type": "bool",
+      "required": true,
+      "description": "是否显示背景图片"
+    },
+    "interface.bg_image": {
+      "type": "str",
+      "required": false,
+      "description": "背景图片路径"
+    },
+    "interface.bg_image_opacity": {
+      "type": "int",
+      "required": true,
+      "min": 0,
+      "max": 100,
+      "description": "背景图片透明度（0-100）"
+    },
+    "interface.content_opacity": {
+      "type": "int",
+      "required": true,
+      "min": 0,
+      "max": 100,
+      "description": "内容区域透明度（0-100）"
+    },
+    "interface.shadow_color": {
+      "type": "str",
+      "required": true,
+      "pattern": "^#[0-9a-fA-F]{3,6}$",
+      "description": "阴影颜色，十六进制格式"
+    },
+    "interface.shadow_opacity": {
+      "type": "int",
+      "required": true,
+      "min": 0,
+      "max": 100,
+      "description": "阴影透明度（0-100）"
+    },
+    "home.overview_view": {
+      "type": "str",
+      "required": true,
+      "choices": ["default", "grid", "list"],
+      "description": "首页概览视图模式"
+    },
+    "home.overview_size": {
+      "type": "int",
+      "required": true,
+      "min": 12,
+      "max": 48,
+      "description": "概览区域字体大小（12-48）"
+    },
+    "login.logo": {
+      "type": "str",
+      "required": false,
+      "description": "登录页Logo路径"
+    },
+    "login.is_show_logo": {
+      "type": "bool",
+      "required": true,
+      "description": "是否显示登录页Logo"
+    },
+    "login.bg_image": {
+      "type": "str",
+      "required": false,
+      "description": "登录页背景图片路径"
+    },
+    "login.is_show_bg": {
+      "type": "bool",
+      "required": true,
+      "description": "是否显示登录页背景图片"
+    },
+    "login.bg_image_opacity": {
+      "type": "int",
+      "required": true,
+      "min": 0,
+      "max": 100,
+      "description": "登录页背景图片透明度（0-100）"
+    },
+    "login.content_opacity": {
+      "type": "int",
+      "required": true,
+      "min": 0,
+      "max": 100,
+      "description": "登录页内容透明度（0-100）"
+    }
+  },
+  "legacy_mapping": {
+    "theme_dark": "theme.dark",
+    "theme_color": "theme.color",
+    "theme_view": "theme.view",
+    "logo_image": "logo.image",
+    "logo_favicon": "logo.favicon",
+    "sidebar_dark": "sidebar.dark",
+    "sidebar_color": "sidebar.color",
+    "menu_bg_opacity": "sidebar.opacity",
+    "sidebar_opacity": "sidebar.opacity",
+    "theme_color": "sidebar.color",
+    "home_state_font_size": "home.overview_size"
+  }
+}

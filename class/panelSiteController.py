@@ -58,13 +58,13 @@ class panelSiteController:
                     if os.path.exists(check):
                         versions.append(version)
         return public.return_data(True,versions)
-                
 
 
-        
 
 
-    
+
+
+
     def create_site(self,args):
         '''
             @name 创建网站

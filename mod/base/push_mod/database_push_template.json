@@ -1,0 +1,154 @@
+[
+  {
+    "id": "30",
+    "ver": "1",
+    "used": false,
+    "source": "mysql_pwd_end",
+    "title": "MySQL数据库密码到期",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.database_push",
+      "name": "MysqlPwdEndTimeTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "project",
+          "name": "选择用户",
+          "type": "cascader",
+          "default": 0,
+          "items": [
+            {
+              "url": "database?action=GetPushUser"
+            },
+            {
+              "url": "database?action=GetPushUser",
+              "data": [
+                "sid"
+              ]
+            },
+            {
+              "url": "database?action=GetPushUser",
+              "data": [
+                "sid",
+                "username"
+              ]
+            }
+          ]
+        },
+        {
+          "attr": "cycle",
+          "name": "剩余天数",
+          "type": "number",
+          "unit": "天",
+          "suffix": "",
+          "default": 15
+        }
+      ],
+      "sorted": [
+        [
+          "project"
+        ],
+        [
+          "cycle"
+        ]
+      ]
+    },
+    "default": {
+      "project": [],
+      "cycle": 15
+    },
+    "advanced_default": {
+      "number_rule": {
+        "total": 2
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": false
+  },
+  {
+    "id": "31",
+    "ver": "1",
+    "used": false,
+    "source": "mysql_replicate_status",
+    "title": "Msql主从同步告警",
+    "load_cls": {
+      "load_type": "path",
+      "cls_path": "mod.base.push_mod.database_push",
+      "name": "MysqlReplicateStatusTask"
+    },
+    "template": {
+      "field": [
+        {
+          "attr": "project",
+          "name": "选择监控的从库",
+          "type": "select",
+          "default": null,
+          "items": []
+        },
+        {
+          "attr": "count",
+          "name": "自动修复",
+          "type": "radio",
+          "suffix": "",
+          "default": 1,
+          "items": [
+            {
+              "title": "自动尝试修复",
+              "value": 1
+            },
+            {
+              "title": "不做修复尝试",
+              "value": 2
+            }
+          ]
+        },
+        {
+          "attr": "interval",
+          "name": "间隔时间",
+          "type": "number",
+          "unit": "秒",
+          "suffix": "后再次监控检测条件",
+          "default": 600
+        }
+      ],
+      "sorted": [
+        [
+          "project"
+        ],
+        [
+          "count"
+        ],
+        [
+          "interval"
+        ]
+      ]
+    },
+    "default": {
+      "project": "",
+      "count": 2,
+      "interval": 600
+    },
+    "advanced_default": {
+      "number_rule": {
+        "day_num": 3
+      }
+    },
+    "send_type_list": [
+      "wx_account",
+      "dingding",
+      "feishu",
+      "mail",
+      "weixin",
+      "webhook"
+    ],
+    "unique": false
+  }
+]

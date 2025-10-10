@@ -3,11 +3,16 @@
     <div style="margin-bottom: 15px;margin-top: 15px;color: red;">
         <h4 style="font-size: none;">{error_title}</h4>
     </div>
-    <pre style="height:165px;word-wrap: break-word;white-space: pre-wrap;margin: 0 0 10px">{request_info}</pre>
-    <pre style="height:427px;word-wrap: break-word;white-space: pre-wrap;margin: 0 0 0px">{error_msg}</pre>
-    <ul class="help-info-text">
+    <pre style="height:112px;word-wrap: break-word;white-space: pre-wrap;margin: 0 0 10px">{request_info}</pre>
+    <pre style="height:370px;word-wrap: break-word;white-space: pre-wrap;margin: 0 0 0px">{error_msg}</pre>
+    <ul className="help-info-text err_project_ul" style="display:inline-block">
         <li style="list-style: none;"><b>很抱歉，面板运行时意外发生错误，请尝试按以下顺序尝试解除此错误：</b></li>
-        <li style="list-style: none;">1、在[首页]右上角点击修复面板，并退出面板重新登录。</li>
-        <li style="list-style: none;">2、如上述尝试未能解除此错误，请截图此窗口到宝塔论坛发贴寻求帮助, 论坛地址：<a class="btlink" href="https://www.bt.cn/bbs" target="_blank">https://www.bt.cn/bbs</a></li>
+        <li style="list-style: none;">修复方案一：在[首页]右上角点击修复面板，并退出面板重新登录。<a class="btlink repairPanel" href="javascript:;">尝试点击修复</a></li>
+        <li style="list-style: none;">修复方案二：如上述尝试未能解除此错误，请截图此窗口到宝塔论坛发贴寻求帮助, 论坛地址：<a className="btlink" href="https://www.bt.cn/bbs" target="_blank">https://www.bt.cn/bbs</a>
+        </li>
+        <li className="consult_project" style="list-style: none;display: none;">修复方案三(<span style="color:#ff7300">推荐</span>)：使用微信扫描右侧二维码，联系技术客服。</li>
     </ul>
+    <div style="position: relative;margin-top: 20px;margin-right: 40px;text-align: center;font-size: 12px;display: none;" className="pull-right consult_project"><span id="err_kefu_img" style="padding: 5px;border: 1px solid #20a53a;display: inline-block;height: 113px;"></span><i className="wechatEnterprise" style="position: absolute;top: 44px;left: 44px;"></i>
+        <div>【微信客服】</div>
+    </div>
 </div>

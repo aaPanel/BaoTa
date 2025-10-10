@@ -27,6 +27,7 @@ _tips = [
     ]
 
 _help = ''
+_remind = 'WAF防火墙是保护服务器的第一道防线，能够阻挡外部的网路攻击，保障网站安全稳定的运行。'
 
 
 def check_run():
@@ -49,7 +50,7 @@ def check_run():
 
     if not is_install_web:
         return True,'无风险'
-    
+
     waf_list = [
         '/www/server/panel/plugin/btwaf/info.json',
         '/www/server/panel/plugin/btwaf_httpd/info.json',
@@ -62,7 +63,6 @@ def check_run():
     for waf in waf_list:
         if os.path.exists(waf):
             return True,'无风险'
-        
+
     return True,'未安装WAF防火墙，服务器网站容易受到攻击，存在安全风险'
 
-    

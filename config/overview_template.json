@@ -1,0 +1,377 @@
+[
+    {
+        "template": "base",
+        "option": [
+            {
+                "title": "网站",
+                "name": "sites",
+                "status": true,
+                "type": "base",
+                "source": {
+                    "click": "href",
+                    "href": "/site"
+                },
+                "params": [
+                    {
+                        "name": "网站类型",
+                        "type": "select",
+                        "option": [
+                            {
+                                "name": "全部",
+                                "source": "all"
+                            },
+                            {
+                                "name": "PHP项目",
+                                "source": "php"
+                            },
+                            {
+                                "name": "Java项目",
+                                "source": "java"
+                            },
+                            {
+                                "name": "Node项目",
+                                "source": "node"
+                            },
+                            {
+                                "name": "Go项目",
+                                "source": "go"
+                            },
+                            {
+                                "name": "Python项目",
+                                "source": "python"
+                            },
+                            {
+                                "name": "其它项目",
+                                "source": "other"
+                            },
+                            {
+                                "name": "反向代理",
+                                "source": "proxy"
+                            },
+                            {
+                                "name": "docker网站",
+                                "source": "docker/dockersite"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "title": "FTP",
+                "name": "ftps",
+                "status": true,
+                "type": "base",
+                "source": {
+                    "click": "href",
+                    "href": "/ftp"
+                },
+                "params": [
+                    {
+                        "name": "FTP",
+                        "type": "select",
+                        "option": [
+                            {
+                                "name": "FTP",
+                                "source": "all"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "title": "数据库",
+                "name": "databases",
+                "status": true,
+                "type": "base",
+                "source": {
+                    "click": "href",
+                    "href": "/database"
+                },
+                "params": [
+                    {
+                        "name": "数据库类型",
+                        "type": "select",
+                        "option": [
+                            {
+                                "name": "全部",
+                                "source": "all"
+                            },
+                            {
+                                "name": "MySQL",
+                                "source": "mysql"
+                            },
+                            {
+                                "name": "SQLServer",
+                                "source": "sqlserver"
+                            },
+                            {
+                                "name": "MongoDB",
+                                "source": "mongodb"
+                            },
+                            {
+                                "name": "Redis",
+                                "source": "redis"
+                            },
+                            {
+                                "name": "PgSQL",
+                                "source": "pgsql"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "title": "安全风险",
+                "name": "safety_risk",
+                "status": true,
+                "type": "model",
+                "source": {
+                    "click": "href",
+                    "href": "/"
+                },
+                "params": [
+                    {
+                        "name": "网站类型",
+                        "type": "select",
+                        "option": [
+                            {
+                                "name": "安全风险",
+                                "source": "safety_risk"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "title": "备忘录",
+                "name": "memo",
+                "status": true,
+                "type": "model",
+                "source": {
+                    "click": "href",
+                    "href": "/memo"
+                },
+                "params": [
+                    {
+                        "name": "备忘录",
+                        "type": "select",
+                        "option": [
+                            {
+                                "name": "备忘录",
+                                "source": "memo"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "template": "browse",
+        "option": [
+            {
+                "title": "网站监控报表",
+                "name": "monitor",
+                "status": false,
+                "type": "plugin",
+                "action": {
+                    "click": "href",
+                    "href": "/monitor"
+                },
+                "params": [
+                    {
+                        "name": "网站",
+                        "type": "select",
+                        "select_option": "site_all",
+                        "option": []
+                    },
+                    {
+                        "name": "指标",
+                        "type": "select",
+                        "option": [
+                            {
+                                "name": "浏览量",
+                                "source": "pv"
+                            },
+                            {
+                                "name": "访客量",
+                                "source": "uv"
+                            },
+                            {
+                                "name": "ip",
+                                "source": "ip"
+                            },
+                            {
+                                "name": "蜘蛛数",
+                                "source": "spider"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "title": "旧版监控报表",
+                "name": "total",
+                "status": false,
+                "type": "plugin",
+                "action": {
+                    "click": "href",
+                    "href": "/total"
+                },
+                "params": [
+                    {
+                        "name": "网站",
+                        "type": "select",
+                        "select_option": "site_all",
+                        "option": []
+                    },
+                    {
+                        "name": "指标",
+                        "type": "select",
+                        "option": [
+                            {
+                                "name": "浏览量",
+                                "source": "pv"
+                            },
+                            {
+                                "name": "访客量",
+                                "source": "uv"
+                            },
+                            {
+                                "name": "ip",
+                                "source": "ip"
+                            },
+                            {
+                                "name": "蜘蛛数",
+                                "source": "spider"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "title": "WAF",
+                "name": "btwaf",
+                "status": false,
+                "type": "plugin",
+                "source": {
+                    "click": "href",
+                    "href": "/btwaf/index"
+                },
+                "params": [
+                    {
+                        "name": "展示",
+                        "type": "select",
+                        "option": [
+                            {
+                                "name": "风险拦截",
+                                "source": "intercept"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "title": "防篡改",
+                "name": "tamper_core",
+                "status": false,
+                "type": "plugin",
+                "source": {
+                    "click": "href",
+                    "href": ""
+                },
+                "params": [
+                    {
+                        "name": "展示",
+                        "type": "select",
+                        "option": [
+                            {
+                                "name": "拦截数",
+                                "source": "intercept"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "template": "browse",
+        "option": [
+            {
+                "title": "SSH登录日志数",
+                "name": "ssh_log",
+                "status": true,
+                "type": "model",
+                "source": {
+                    "click": "href",
+                    "href": "/logs"
+                },
+                "params": [
+                    {
+                        "name": "日志类型",
+                        "type": "select",
+                        "option": [
+                            {
+                                "name": "SSH登录日志-全部",
+                                "source": "ALL"
+                            },
+                            {
+                                "name": "SSH登录日志-成功数",
+                                "source": "Accepted"
+                            },
+                            {
+                                "name": "SSH登录日志-失败数",
+                                "source": "Failed"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "template": "open_dir",
+        "status": true,
+        "type": "model",
+        "option": [
+            {
+                "title": "快捷目录",
+                "name": "open_dir",
+                "source": {
+                    "click": "href",
+                    "href": "/files"
+                },
+                "params": [
+                    {
+                        "name": "目录",
+                        "type": "dir",
+                        "option": [
+                            {
+                                "name": "/www/wwwroot",
+                                "source": "/www/wwwroot"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "template": "search_file",
+        "status": true,
+        "type": "model",
+        "option": [
+            {
+                "title": "文件/内容快速查找",
+                "name": "search_file",
+                "source": {
+                    "click": "href",
+                    "href": "/files",
+                    "xx": "xxx"
+                },
+                "params": []
+            }
+        ]
+    }
+]

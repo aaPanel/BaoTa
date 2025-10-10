@@ -1,15 +1,12 @@
-# -*- coding: utf-8 -*-
 import platform
-try:
-    import cPickle as pickle
-except ImportError:  # pragma: no cover
-    import pickle
+import typing as _t
 
 from cachelib.base import BaseCache
+from cachelib.serializers import UWSGISerializer
 
 
 class UWSGICache(BaseCache):
-    """ Implements the cache using uWSGI's caching framework.
+    """Implements the cache using uWSGI's caching framework.
 
     .. note::
         This class cannot be used when running under PyPy, because the uWSGI
@@ -22,43 +19,65 @@ class UWSGICache(BaseCache):
         same instance as the werkzeug app, you only have to provide the name of
         the cache.
     """
-    def __init__(self, default_timeout=300, cache=''):
+
+    serializer = UWSGISerializer()
+
+    def __init__(
+        self,
+        default_timeout: int = 300,
+        cache: str = "",
+    ):
         BaseCache.__init__(self, default_timeout)
 
-        if platform.python_implementation() == 'PyPy':
-            raise RuntimeError("uWSGI caching does not work under PyPy, see "
-                               "the docs for more details.")
+        if platform.python_implementation() == "PyPy":
+            raise RuntimeError(
+                "uWSGI caching does not work under PyPy, see "
+                "the docs for more details."
+            )
 
         try:
-            import uwsgi
+            import uwsgi  # type: ignore
+
             self._uwsgi = uwsgi
-        except ImportError:
-            raise RuntimeError("uWSGI could not be imported, are you "
-                               "running under uWSGI?")
+        except ImportError as err:
+            raise RuntimeError(
+                "uWSGI could not be imported, are you running under uWSGI?"
+            ) from err
 
         self.cache = cache
 
-    def get(self, key):
+    def get(self, key: str) -> _t.Any:
         rv = self._uwsgi.cache_get(key, self.cache)
         if rv is None:
             return
-        return pickle.loads(rv)
+        return self.serializer.loads(rv)
 
-    def delete(self, key):
-        return self._uwsgi.cache_del(key, self.cache)
+    def delete(self, key: str) -> bool:
+        return bool(self._uwsgi.cache_del(key, self.cache))
 
-    def set(self, key, value, timeout=None):
-        return self._uwsgi.cache_update(key, pickle.dumps(value),
-                                        self._normalize_timeout(timeout),
-                                        self.cache)
+    def set(
+        self, key: str, value: _t.Any, timeout: _t.Optional[int] = None
+    ) -> _t.Optional[bool]:
+        result = self._uwsgi.cache_update(
+            key,
+            self.serializer.dumps(value),
+            self._normalize_timeout(timeout),
+            self.cache,
+        )  # type: bool
+        return result
 
-    def add(self, key, value, timeout=None):
-        return self._uwsgi.cache_set(key, pickle.dumps(value),
-                                     self._normalize_timeout(timeout),
-                                     self.cache)
+    def add(self, key: str, value: _t.Any, timeout: _t.Optional[int] = None) -> bool:
+        return bool(
+            self._uwsgi.cache_set(
+                key,
+                self.serializer.dumps(value),
+                self._normalize_timeout(timeout),
+                self.cache,
+            )
+        )
 
-    def clear(self):
-        return self._uwsgi.cache_clear(self.cache)
+    def clear(self) -> bool:
+        return bool(self._uwsgi.cache_clear(self.cache))
 
-    def has(self, key):
+    def has(self, key: str) -> bool:
         return self._uwsgi.cache_exists(key, self.cache) is not None

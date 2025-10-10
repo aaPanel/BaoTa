@@ -1,0 +1,86 @@
+User类：
+    返回值默认类型：
+    Dict[str, Any]
+        {
+            'status': bool,
+            'msg': str,
+            'data': Any
+        }
+    def get_user_list(self, search: str = '') -> Dict[str, Union[bool, str, List[Dict[str, Any]]]]:
+        # 获取用户列表
+        # 传参：search（可选参数，搜索关键词）
+
+    def _get_user_ps(self, name: str, ps: str) -> str:
+        # 获取用户备注
+        # 传参：name（用户名），ps（备注）
+
+    def _get_group_name(self, gid: str) -> str:
+        # 获取用户组名称
+        # 传参：gid（用户组ID）
+
+    def _search_user(self, data: List[Dict[str, Any]], search: str) -> List[Dict[str, Union[str, Any]]]:
+        # 搜索用户
+        # 传参：data（用户列表），search（搜索关键词）
+
+    def _get_group_list(self) -> List[Dict[str, Union[str, str]]]:
+        # 获取用户组列表
+
+    def remove_user(self, user: str) -> Dict[str, Any]:
+        # 删除用户
+        # 传参：user（用户名）
+
+    def add_user(self, user: str, pwd: str, group: str) -> Dict[str, Any]:
+        # 添加用户
+        # 传参：user（用户名），pwd（密码），group（用户组）
+
+    def edit_user(self, user: str, pwd: str) -> Dict[str, Any]:
+        # 修改用户密码
+        # 传参：user（用户名），pwd（新密码）
+
+    def edit_group(self, user: str, group: str) -> Dict[str, Any]:
+        # 修改用户组
+        # 传参：user（用户名），group（新用户组）
+
+    def edit_ps(self, user: str, ps: str) -> Dict[str, Any]:
+        # 修改用户备注
+        # 传参：user（用户名），ps（新备注）
+
+    def edit_login_shell(self, user: str, login_shell: str) -> Dict[str, Any]:
+        # 修改用户登录Shell
+        # 传参：user（用户名），login_shell（新Shell）
+
+    def edit_home(self, user: str, home: str) -> Dict[str, Any]:
+        # 修改用户家目录
+        # 传参：user（用户名），home（新家目录）
+
+    def get_user_info(self, user: str) -> Dict[str, Any]:
+        # 获取用户信息
+        # 传参：user（用户名）
+
+    def add_group(self, group: str) -> Dict[str, Any]:
+        # 添加用户组
+        # 传参：group（用户组）
+
+    def remove_group(self, group: str) -> Dict[str, Any]:
+        # 删除用户组
+        # 传参：group（用户组）
+
+    def edit_group_name(self, group: str, new_group: str) -> Dict[str, Any]:
+        # 修改用户组名称
+        # 传参：group（用户组），new_group（新用户组）
+
+    def get_group_list(self) -> Dict[str, Union[bool, str, List[Dict[str, Any]]]]:
+        # 获取用户组列表
+
+    def get_group_info(self, group) -> Dict[str, Any]:
+        # 获取用户组信息
+        # 传参：group（用户组）
+
+    def get_group_user(self, group: str) -> Dict[str, Any]:
+        # 获取用户组用户
+        # 传参：group（用户组）
+
+    def get_user_group(self, user: str) -> Dict[str, Any]:
+        # 获取用户组用户
+        # 传参：user（用户）
+

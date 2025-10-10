@@ -21,7 +21,7 @@ import public,time,json
 def set_mysql_root(password):
     import db,os
     sql = db.Sql()
-    
+
     root_mysql = '''#!/bin/bash
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
@@ -50,25 +50,26 @@ service mysqld start
 echo '==========================================='
 echo "root密码成功修改为: ${pwd}"
 echo "The root password set ${pwd}  successuful"''';
-    
+
     public.writeFile('mysql_root.sh',root_mysql)
     os.system("/bin/bash mysql_root.sh " + password)
     os.system("rm -f mysql_root.sh")
-    
-    result = sql.table('config').where('id=?',(1,)).setField('mysql_root',password)
+
+    result = public.M('config').where('id=?',(1,)).setField('mysql_root',password)
     print(result);
 
 #设置面板密码
 def set_panel_pwd(password,ncli = False):
     import db
     sql = db.Sql()
-    result = sql.table('users').where('id=?',(1,)).setField('password',public.md5(password))
-    username = sql.table('users').where('id=?',(1,)).getField('username')
+    result = public.M('users').where('id=?',(1,)).setField('password',public.md5(password))
+    username = public.M('users').where('id=?',(1,)).getField('username')
     if ncli:
         print("|-用户名: " + username);
         print("|-新密码: " + password);
     else:
-        print(username)
+        print("|-用户名: " + username);
+        print("|-新密码: " + password);
 
 #设置数据库目录
 def set_mysql_dir(path):
@@ -164,7 +165,7 @@ def CloseTask():
     os.system("kill `ps -ef |grep 'install_soft.sh'|grep -v grep|grep -v panelExec|awk '{print $2}'`");
     os.system('/etc/init.d/bt restart');
     print("成功清理 " + int(ncount) + " 个任务!")
-    
+
 #自签证书
 def CreateSSL():
     import OpenSSL
@@ -275,7 +276,7 @@ def ClearRecycle_Bin():
     import files
     f = files.files();
     f.Close_Recycle_bin(None);
-    
+
 #清理其它
 def ClearOther():
     clearPath = [
@@ -286,7 +287,7 @@ def ClearOther():
                  {'path':'/www/server/panel/install','find':'.zip'},
                  {'path':'/www/server/panel/install','find':'.gz'}
                  ]
-    
+
     total = count = 0;
     print('|-正在清理临时文件及网站日志 ...');
     for c in clearPath:
@@ -342,16 +343,16 @@ def set_panel_username(username = None):
             print("|-错误，不能使用过于简单的用户名")
             return;
 
-        sql.table('users').where('id=?',(1,)).setField('username',username)
+        public.M('users').where('id=?',(1,)).setField('username',username)
         print("|-新用户名: %s" % username)
         return;
-    
-    username = sql.table('users').where('id=?',(1,)).getField('username')
-    if username == 'admin': 
+
+    username = public.M('users').where('id=?',(1,)).getField('username')
+    if username == 'admin':
         username = public.GetRandomString(8).lower()
-        sql.table('users').where('id=?',(1,)).setField('username',username)
+        public.M('users').where('id=?',(1,)).setField('username',username)
     print('username: ' + username)
-    
+
 #设定idc
 def setup_idc():
     try:
@@ -377,6 +378,116 @@ def setup_idc():
             public.writeFile(tFile,titleNew)
         return True
     except:pass
+
+def set_panel_port(panelport):
+    input_port=int(panelport)
+
+    if not input_port:
+            print("|-错误，未输入任何有效端口")
+            return
+    if input_port in [80, 443, 21, 20, 22]:
+        print("|-错误，请不要使用常用端口作为面板端口")
+        return
+
+    try:
+        port_str = public.readFile('data/port.pl')
+        if port_str:
+            old_port = int(port_str)
+        else:
+            old_port = 0
+    except:
+        old_port = 0
+
+    if old_port == input_port:
+        print("|-错误，与面板当前端口一致，无需修改")
+        return
+    if input_port > 65535 or input_port < 1:
+        print("|-错误，可用端口范围在1-65535之间")
+        return
+
+    print("|-开始设置面板端口")
+    is_exists = public.ExecShell("lsof -i:%s|grep LISTEN|grep -v grep" % input_port)
+    if len(is_exists[0]) > 5:
+        print("|-错误，指定端口已被其它应用占用")
+        return
+    public.writeFile('data/port.pl', str(input_port))
+    if os.path.exists("/usr/bin/firewall-cmd"):
+        os.system("firewall-cmd --permanent --zone=public --add-port=%s/tcp" % input_port)
+        os.system("firewall-cmd --reload")
+    elif os.path.exists("/etc/sysconfig/iptables"):
+        os.system("iptables -I INPUT -p tcp -m state --state NEW -m tcp --dport %s -j ACCEPT" % input_port)
+        os.system("service iptables save")
+    else:
+        os.system("ufw allow %s" % input_port)
+        os.system("ufw reload")
+    os.system("/etc/init.d/bt reload")
+    print("|-已将面板端口修改为：%s" % input_port)
+    print(
+        "|-若您的服务器提供商是[阿里云][腾讯云][华为云]或其它开启了[安全组]的服务器,请在安全组放行[%s]端口才能访问面板" % input_port)
+    panelPath = '/www/server/panel/data/o.pl'
+    if not os.path.exists(panelPath): return False
+    o = public.readFile(panelPath).strip()
+    if 'tencent' == o:
+        print("|-若使用腾讯轻量云-Linux专享版面板，则不需要添加至安全组")
+
+def set_panel_path(adminpath):
+    admin_path = adminpath
+    msg = ''
+    from BTPanel import admin_path_checks
+    if len(admin_path) < 6: msg = '安全入口地址长度不能小于6位!'
+    if admin_path in admin_path_checks: msg = '该入口已被面板占用,请使用其它入口!'
+    if not public.path_safe_check(admin_path) or admin_path[-1] == '.': msg = '入口地址格式不正确,示例: /my_panel'
+    if admin_path[0] != '/': 
+        admin_path = "/" + admin_path
+    admin_path_file = 'data/admin_path.pl'
+    admin_path1 = '/'
+    if os.path.exists(admin_path_file): admin_path1 = public.readFile(admin_path_file).strip()
+    if msg != '':
+        print('设置出错:{}'.format(msg))
+        return
+    public.writeFile(admin_path_file, admin_path)
+    public.restart_panel()
+    print('安全入口设置成功：{}'.format(admin_path))
+
+def set_panel_ssl(status):
+    status=status
+    if status == "enable":
+        CreateSSL()
+    if status == "disable":
+        os.system('btpython /www/server/panel/class/config.py SetPanelSSL')
+        os.system("/etc/init.d/bt reload")
+
+def get_temp_login():
+    s_time = int(time.time())
+    expire_time=int(int(time.time()) + 3600 * 3)
+    public.M('temp_login').where('state=? and expire>?', (0, s_time)).delete()
+    token = public.GetRandomString(48)
+    salt = public.GetRandomString(12)
+
+    pdata = {
+        'token': public.md5(token + salt),
+        'salt': salt,
+        'state': 0,
+        'login_time': 0,
+        'login_addr': '',
+        'expire': expire_time,
+    }
+
+    if not public.M('temp_login').count():
+        pdata['id'] = 101
+
+    if public.M('temp_login').insert(pdata):
+        if os.path.exists('/www/server/panel/data/ssl.pl'):
+            HTTP_C="https://"
+        else:
+            HTTP_C="http://"
+        
+        IP_ADDRES=public.ExecShell("curl -sS --connect-timeout 10 -m 20 https://www.bt.cn/Api/getIpAddress")[0]
+
+        PANEL_PORT=public.readFile("/www/server/panel/data/port.pl")
+    
+        PANEL_ADDRESS=HTTP_C+IP_ADDRES+":"+PANEL_PORT+"/login?tmp_token="+token
+        print(PANEL_ADDRESS)
 
 #将插件升级到6.0
 def update_to6():
@@ -463,7 +574,7 @@ def bt_cli():
         if not re.match(rep, input_mysql):
             print("|-错误，密码中不能包含特殊符号")
             return;
-        
+
         print(input_mysql)
         set_mysql_root(input_mysql.strip())
     elif u_input == 8:
@@ -532,7 +643,10 @@ if __name__ == "__main__":
     elif type == 'panel':
         set_panel_pwd(sys.argv[2])
     elif type == 'username':
-        set_panel_username()
+        if len(sys.argv) > 2:
+            set_panel_username(sys.argv[2])
+        else:
+            set_panel_username()
     elif type == 'o':
         setup_idc()
     elif type == 'mysql_dir':
@@ -551,7 +665,18 @@ if __name__ == "__main__":
         CloseLogs();
     elif type == 'update_to6':
         update_to6()
+    elif type == 'set_panel_port':
+        set_panel_port(sys.argv[2])
+    elif type == 'set_panel_path':
+        set_panel_path(sys.argv[2])
+    elif type == 'set_panel_ssl':
+        set_panel_ssl(sys.argv[2])
+    elif type == 'get_temp_login':
+        get_temp_login()
     elif type == "cli":
         bt_cli()
+    elif type == "panelversion":
+        version=public.version()
+        print(version)
     else:
         print('ERROR: Parameter error')

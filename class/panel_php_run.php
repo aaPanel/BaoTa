@@ -17,10 +17,10 @@ class bt_panel_plugin
 		$this->init();
 		return $this->plugin_main();
 	}
-		
+
 	//初始化插件环境
 	private function init(){
-		//获取命令行参数	
+		//获取命令行参数
 		$args_arr = getopt('',array('plugin_name:','args_tmp:','fun:'));
 		if(!$args_arr['plugin_name']){
 			return_status(false,'指定插件不存在!');
@@ -39,7 +39,7 @@ class bt_panel_plugin
 		if(!preg_match("/^[\w-]+$/",PLU_FUN)) return_status(false,'指定方法不存在!');
 		chdir(PLU_PATH);
 	}
-	
+
 	//调用插件主程序
 	private function plugin_main(){
 		include_once PLU_PATH . '/index.php';

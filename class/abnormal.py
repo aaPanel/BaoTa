@@ -179,8 +179,6 @@ class abnormal():
         else:
             return False
 
-
-
     # 入口位置
     def start(self,get):
         ret={}

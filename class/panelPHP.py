@@ -11,7 +11,7 @@
 # | PHP插件兼容模块
 # +-------------------------------------------------------------------
 
-import json,os,public,time,re,sys   
+import json,os,public,time,re,sys
 import time
 import fastcgiClient as fcgi_client
 import struct
@@ -34,7 +34,7 @@ class panelPHP:
             self.__args_dir = self.__plugin_path + '/args'
             self.__args_tmp = self.__args_dir + '/' + public.GetRandomString(32)
             if not os.path.exists(self.__args_dir): os.makedirs(self.__args_dir, 384)
-        
+
     #调用PHP插件
     def exec_php_script(self,args):
         #取PHP执行文件和CLI配置参数
@@ -42,17 +42,17 @@ class panelPHP:
         if not php_bin: return public.returnMsg(False,'没有找到兼容的PHP版本，请先安装')
         #是否将参数写到文件
         self.__write_args(args)
-        result = os.popen("cd " + self.__plugin_path + " && %s /www/server/panel/class/panel_php_run.php --args_tmp=\"%s\" --plugin_name=\"%s\" --fun=\"%s\"" % 
+        result = os.popen("cd " + self.__plugin_path + " && %s /www/server/panel/class/panel_php_run.php --args_tmp=\"%s\" --plugin_name=\"%s\" --fun=\"%s\"" %
                           (php_bin,self.__args_tmp,self.__plugin_name,args.s)).read()
         try:
             #解析执行结果
             result = json.loads(result)
         except: pass
         #删除参数文件
-        if os.path.exists(self.__args_tmp): 
+        if os.path.exists(self.__args_tmp):
             os.remove(self.__args_tmp)
         return result
-    
+
     #将参数写到文件
     def __write_args(self,args):
         from BTPanel import request
@@ -66,7 +66,7 @@ class panelPHP:
         data['POST']['client_ip'] = public.GetClientIp()
         data = json.dumps(data)
         public.writeFile(self.__args_tmp,data)
-    
+
     #清理参数文件
     def __clean_args_file(self):
         args_dir = self.__plugin_path + '/args'
@@ -77,12 +77,12 @@ class panelPHP:
             if not os.path.exists(filename): continue
             #清理创建时间超过60秒的参数文件
             if now_time - os.path.getctime(filename) > 60: os.remove(filename)
-    
+
     #取PHP-CLI执行命令
     def __get_php_bin(self):
         #如果有指定兼容的PHP版本
         php_v_file = self.__plugin_path + '/php_version.json'
-        if os.path.exists(php_v_file): 
+        if os.path.exists(php_v_file):
              php_vs = json.loads(public.readFile(php_v_file).replace('.',''))
         else:
             #否则兼容所有版本
@@ -92,10 +92,10 @@ class panelPHP:
         php_v = None
         for pv in php_vs:
             php_bin = php_path + pv + "/bin/php"
-            if os.path.exists(php_bin): 
+            if os.path.exists(php_bin):
                 php_v = pv
                 break
-        
+
         #如果没安装直接返回False
         if not php_v: return False
         #处理PHP-CLI-INI配置文件
@@ -124,7 +124,7 @@ class panelPHP:
         php_v = None
         for pv in php_vs:
             php_bin = php_path + pv + "/bin/php"
-            if os.path.exists(php_bin) and os.path.exists("/tmp/php-cgi-{}.sock".format(pv)): 
+            if os.path.exists(php_bin) and os.path.exists("/tmp/php-cgi-{}.sock".format(pv)):
                 php_v = pv
                 break
         return php_v
@@ -192,10 +192,10 @@ class panelPHP:
 #             if os.path.exists(src_vfile):
 #                 public.writeFile(pma_version_f1,public.readFile(src_vfile))
 #         v_sync = public.readFile(pma_version_f1) == public.readFile(pma_version_f2)
-        
+
 #         if not os.path.exists(pma_root + '/index.php') or not v_sync:
 #             o_pma_root = self.get_pma_root()
-            
+
 #             if o_pma_root:
 #                 if not os.path.exists(pma_root):
 #                     os.makedirs(pma_root)
@@ -215,9 +215,9 @@ class panelPHP:
 #                         resp = "if(function_exists('opcache_invalidate')) opcache_invalidate('/www/server/phpmyadmin/pma/config.inc.php');\nrequire_once 'libraries/common.inc.php';"
 #                         index = index.replace("require_once 'libraries/common.inc.php';",resp)
 
-                    
+
 #                     public.writeFile(pma_root + '/index.php',index)
-        
+
 #         if not os.path.exists(pma_version_f2):
 #             return False
 
@@ -274,10 +274,10 @@ class panelPHP:
 #         rep = r"/\* Authentication type \*/(.|\n)+/\* Server parameters \*/"
 #         rstr = '''/* Authentication type */
 # $cfg['Servers'][$i]['auth_type'] = '{}';
-# $cfg['Servers'][$i]['host'] = 'localhost'; 
+# $cfg['Servers'][$i]['host'] = 'localhost';
 # $cfg['Servers'][$i]['port'] = '{}';
-# $cfg['Servers'][$i]['user'] = '{}'; 
-# $cfg['Servers'][$i]['password'] = '{}'; 
+# $cfg['Servers'][$i]['user'] = '{}';
+# $cfg['Servers'][$i]['password'] = '{}';
 # /* Server parameters */'''.format(pconfig,self.get_mysql_port(),username,password)
 #         conf = re.sub(rep,rstr,conf)
 #         public.writeFile(pma_config_file,conf)
@@ -313,7 +313,7 @@ class panelPHP:
 #         self.document_root = document_root
 #         self.last_path = last_path
 #         filename = document_root + puri
-        
+
 #         from BTPanel import request,abort,send_file,Resp,cache
 #         #如果是PHP文件
 #         if puri[-4:] == '.php':
@@ -339,7 +339,7 @@ class panelPHP:
 
 #                     if not self.php_version in php_versions:
 #                         self.php_version = self.get_php_version(php_versions)
-                    
+
 #                         if not self.php_version:
 #                                 return Resp('没有找到支持的PHP版本: {}'.format(php_versions))
 #                     cache.set(ikey,self.php_version,1)
@@ -379,15 +379,15 @@ class panelPHP:
 #                     cache.set(ikey,self.php_version,10)
 #                     if not self.php_version:
 #                         return Resp('没有找到可用的PHP版本')
-                    
+
 
 #             #文件是否存在？
 #             if not os.path.exists(filename):
 #                return abort(404)
-            
+
 #             #发送到FPM
 #             try:
-                
+
 #                 return self.request_php(puri)
 #             except Exception as ex:
 #                 if str(ex).find('No such file or directory') != -1:
@@ -396,11 +396,11 @@ class panelPHP:
 
 #         if not os.path.exists(filename):
 #             return abort(404)
-        
+
 #         #如果是静态文件
 #         return send_file(filename)
 
-    
+
 
     #获取头部32KB数据
     def get_header_data(self,sock):
@@ -412,7 +412,7 @@ class panelPHP:
         '''
         headers_data = b''
         total_len = 0
-        header_len = 1024 * 128 
+        header_len = 1024 * 128
         while True:
             fastcgi_header = sock.recv(8)
             if not fastcgi_header: break
@@ -421,20 +421,20 @@ class panelPHP:
                 break
             fast_pack = struct.unpack(FCGI_Header, fastcgi_header)
             if fast_pack[1] == 3: break
-            
+
             tlen = fast_pack[3]
             while tlen > 0:
                 sd = sock.recv(tlen)
                 if not sd: break
                 headers_data += sd
                 tlen -= len(sd)
-            
+
             total_len += fast_pack[3]
             if fast_pack[4]:
                 sock.recv(fast_pack[4])
             if total_len > header_len: break
         return headers_data
-    
+
     #格式化响应头
     def format_header_data(self,headers_data):
         '''
@@ -528,7 +528,7 @@ class FPM(object):
             @param content stream(POST数据io对象)
             @return fastcgi-socket
         '''
-        
+
         fcgi = fcgi_client.FCGIApp(connect=self.fcgi_sock)
         try:
             script_name, query_string = url.split('?')
@@ -551,12 +551,12 @@ class FPM(object):
             'DOCUMENT_ROOT': self.document_root,
             'SERVER_PROTOCOL' : 'HTTP/1.1',
             'REMOTE_ADDR': request.remote_addr.replace('::ffff:',''),
-            'REMOTE_PORT': str(request.environ.get('REMOTE_PORT')),
+            'REMOTE_PORT': str(public.get_remote_port()),
             'SERVER_ADDR': request.headers.get('host'),
             'SERVER_PORT': '80',
             'SERVER_NAME': 'BT-Panel',
         }
-        
+
         for k in request.headers.keys():
             key = 'HTTP_' + k.replace('-','_').upper()
             env[key] = request.headers[k]

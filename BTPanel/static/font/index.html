@@ -1,0 +1,1179 @@
+<!DOCTYPE html><html><head>
+		<meta charset="utf-8">
+		<title>svgfont-icon</title>
+		<link rel="stylesheet" href="./svgtofont.css">
+		<style>
+			.main {
+				width: 1200px;
+				margin: 0 auto;
+				padding: 20px;
+			}
+
+			.main .title {
+				font-weight: 700;
+				font-size: 30px;
+			}
+
+			.flex {
+				display: flex;
+			}
+
+			.flex-col {
+				flex-direction: column;
+			}
+
+			.items-center {
+				align-items: center;
+			}
+
+			.ml-6 {
+				margin-left: 6px;
+			}
+
+			.ml-10 {
+				margin-left: 10px;
+			}
+
+			.mb-10 {
+				margin-bottom: 10px;
+			}
+
+			.mb-20 {
+				margin-bottom: 20px;
+			}
+
+			.line_group {
+				display: flex;
+				flex-direction: column;
+				flex-direction: row;
+				align-items: center;
+				margin-bottom: 10px;
+			}
+
+			.line_group .box {
+				width: 120px;
+				height: 120px;
+				background-color: #f5f5f5;
+				display: flex;
+				flex-direction: column;
+				justify-content: space-between;
+				align-items: center;
+				border-radius: 4px;
+				margin-right: 20px;
+			}
+
+			.line_group .box .icon-name {
+				font-size: 10px;
+				color: #999;
+				font-weight: 700;
+				width: 100%;
+				text-align: center;
+				cursor: pointer;
+			}
+
+			.line_group .box [class^='svgtofont-'],
+			[class*=' svgtofont-'] {
+				font-size: 36px;
+				height: 36px;
+				line-height: 36px;
+				margin-top: 20px;
+				margin-bottom: 10px;
+			}
+
+			.line_group .box .copy {
+				font-size: 12px;
+				display: block;
+				height: 30px;
+				line-height: 30px;
+				color: #999;
+				font-weight: 700;
+				width: 100%;
+				text-align: center;
+				cursor: pointer;
+			}
+
+			.line_group .box .copy:hover {
+				background-color: #eee;
+			}
+
+			.switch {
+				position: relative;
+				display: inline-block;
+				width: 60px;
+				height: 30px;
+				border-radius: 50%;
+			}
+
+			.switch input {
+				opacity: 0;
+				width: 0;
+				height: 0;
+			}
+
+			.slider {
+				position: absolute;
+				cursor: pointer;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background-color: #ccc;
+				transition: 0.4s;
+				border-radius: 16px;
+			}
+
+			.slider:before {
+				position: absolute;
+				content: '';
+				height: 22px;
+				width: 22px;
+				left: 4px;
+				bottom: 4px;
+				background-color: white;
+				transition: 0.4s;
+				border-radius: 50%;
+			}
+
+			input:checked + .slider {
+				background-color: #2196f3;
+			}
+
+			input:checked + .slider:before {
+				transform: translateX(26px);
+			}
+
+			.slider.round {
+				border-radius: 34px;
+			}
+
+			.slider.round:before {
+				border-radius: 50%;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="main">
+			<div class="mb-20 flex items-center">
+				<div class="title">SVGFONT-ICON 图标</div>
+				<div class="flex items-center ml-10">
+					<label class="switch">
+						<input type="checkbox" checked="">
+						<span class="slider"></span>
+					</label>
+					<span class="ml-6">显示标尺</span>
+				</div>
+			</div>
+			<div class="flex flex-col mb-10" id="svgfont-content">
+			
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-alarm-settings"></i><span class="icon-name">alarm-settings</span><span class="copy" data-clipboard-text="svgtofont-alarm-settings">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-arrow-down"></i><span class="icon-name">arrow-down</span><span class="copy" data-clipboard-text="svgtofont-arrow-down">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-arrow"></i><span class="icon-name">arrow</span><span class="copy" data-clipboard-text="svgtofont-arrow">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-contact-customer"></i><span class="icon-name">contact-customer</span><span class="copy" data-clipboard-text="svgtofont-contact-customer">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-crown"></i><span class="icon-name">crown</span><span class="copy" data-clipboard-text="svgtofont-crown">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-customer-service"></i><span class="icon-name">customer-service</span><span class="copy" data-clipboard-text="svgtofont-customer-service">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-desired"></i><span class="icon-name">desired</span><span class="copy" data-clipboard-text="svgtofont-desired">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-display-menu"></i><span class="icon-name">display-menu</span><span class="copy" data-clipboard-text="svgtofont-display-menu">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-arrow-down-bold"></i><span class="icon-name">el-arrow-down-bold</span><span class="copy" data-clipboard-text="svgtofont-el-arrow-down-bold">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-el-arrow-down"></i><span class="icon-name">el-arrow-down</span><span class="copy" data-clipboard-text="svgtofont-el-arrow-down">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-arrow-left-bold"></i><span class="icon-name">el-arrow-left-bold</span><span class="copy" data-clipboard-text="svgtofont-el-arrow-left-bold">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-arrow-left"></i><span class="icon-name">el-arrow-left</span><span class="copy" data-clipboard-text="svgtofont-el-arrow-left">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-arrow-right-bold"></i><span class="icon-name">el-arrow-right-bold</span><span class="copy" data-clipboard-text="svgtofont-el-arrow-right-bold">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-arrow-right"></i><span class="icon-name">el-arrow-right</span><span class="copy" data-clipboard-text="svgtofont-el-arrow-right">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-arrow-up-bold"></i><span class="icon-name">el-arrow-up-bold</span><span class="copy" data-clipboard-text="svgtofont-el-arrow-up-bold">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-arrow-up"></i><span class="icon-name">el-arrow-up</span><span class="copy" data-clipboard-text="svgtofont-el-arrow-up">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-back"></i><span class="icon-name">el-back</span><span class="copy" data-clipboard-text="svgtofont-el-back">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-bell"></i><span class="icon-name">el-bell</span><span class="copy" data-clipboard-text="svgtofont-el-bell">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-el-bottom"></i><span class="icon-name">el-bottom</span><span class="copy" data-clipboard-text="svgtofont-el-bottom">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-caret-bottom"></i><span class="icon-name">el-caret-bottom</span><span class="copy" data-clipboard-text="svgtofont-el-caret-bottom">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-caret-left"></i><span class="icon-name">el-caret-left</span><span class="copy" data-clipboard-text="svgtofont-el-caret-left">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-caret-right"></i><span class="icon-name">el-caret-right</span><span class="copy" data-clipboard-text="svgtofont-el-caret-right">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-caret-top"></i><span class="icon-name">el-caret-top</span><span class="copy" data-clipboard-text="svgtofont-el-caret-top">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-check"></i><span class="icon-name">el-check</span><span class="copy" data-clipboard-text="svgtofont-el-check">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-circle-check-filled"></i><span class="icon-name">el-circle-check-filled</span><span class="copy" data-clipboard-text="svgtofont-el-circle-check-filled">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-circle-check"></i><span class="icon-name">el-circle-check</span><span class="copy" data-clipboard-text="svgtofont-el-circle-check">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-circle-close-filled"></i><span class="icon-name">el-circle-close-filled</span><span class="copy" data-clipboard-text="svgtofont-el-circle-close-filled">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-el-circle-close"></i><span class="icon-name">el-circle-close</span><span class="copy" data-clipboard-text="svgtofont-el-circle-close">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-circle-plus-filled"></i><span class="icon-name">el-circle-plus-filled</span><span class="copy" data-clipboard-text="svgtofont-el-circle-plus-filled">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-clock"></i><span class="icon-name">el-clock</span><span class="copy" data-clipboard-text="svgtofont-el-clock">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-close-bold"></i><span class="icon-name">el-close-bold</span><span class="copy" data-clipboard-text="svgtofont-el-close-bold">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-close"></i><span class="icon-name">el-close</span><span class="copy" data-clipboard-text="svgtofont-el-close">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-d-arrow-left"></i><span class="icon-name">el-d-arrow-left</span><span class="copy" data-clipboard-text="svgtofont-el-d-arrow-left">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-d-arrow-right"></i><span class="icon-name">el-d-arrow-right</span><span class="copy" data-clipboard-text="svgtofont-el-d-arrow-right">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-delete-filled"></i><span class="icon-name">el-delete-filled</span><span class="copy" data-clipboard-text="svgtofont-el-delete-filled">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-delete"></i><span class="icon-name">el-delete</span><span class="copy" data-clipboard-text="svgtofont-el-delete">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-el-document-copy"></i><span class="icon-name">el-document-copy</span><span class="copy" data-clipboard-text="svgtofont-el-document-copy">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-document"></i><span class="icon-name">el-document</span><span class="copy" data-clipboard-text="svgtofont-el-document">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-download"></i><span class="icon-name">el-download</span><span class="copy" data-clipboard-text="svgtofont-el-download">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-edit-pen"></i><span class="icon-name">el-edit-pen</span><span class="copy" data-clipboard-text="svgtofont-el-edit-pen">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-edit"></i><span class="icon-name">el-edit</span><span class="copy" data-clipboard-text="svgtofont-el-edit">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-empty"></i><span class="icon-name">el-empty</span><span class="copy" data-clipboard-text="svgtofont-el-empty">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-expand"></i><span class="icon-name">el-expand</span><span class="copy" data-clipboard-text="svgtofont-el-expand">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-fold"></i><span class="icon-name">el-fold</span><span class="copy" data-clipboard-text="svgtofont-el-fold">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-folder-opened"></i><span class="icon-name">el-folder-opened</span><span class="copy" data-clipboard-text="svgtofont-el-folder-opened">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-el-folder"></i><span class="icon-name">el-folder</span><span class="copy" data-clipboard-text="svgtofont-el-folder">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-fullscreen-expand"></i><span class="icon-name">el-fullscreen-expand</span><span class="copy" data-clipboard-text="svgtofont-el-fullscreen-expand">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-fullscreen-shrink"></i><span class="icon-name">el-fullscreen-shrink</span><span class="copy" data-clipboard-text="svgtofont-el-fullscreen-shrink">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-hide"></i><span class="icon-name">el-hide</span><span class="copy" data-clipboard-text="svgtofont-el-hide">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-info-filled"></i><span class="icon-name">el-info-filled</span><span class="copy" data-clipboard-text="svgtofont-el-info-filled">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-link"></i><span class="icon-name">el-link</span><span class="copy" data-clipboard-text="svgtofont-el-link">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-loading"></i><span class="icon-name">el-loading</span><span class="copy" data-clipboard-text="svgtofont-el-loading">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-message"></i><span class="icon-name">el-message</span><span class="copy" data-clipboard-text="svgtofont-el-message">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-monitor"></i><span class="icon-name">el-monitor</span><span class="copy" data-clipboard-text="svgtofont-el-monitor">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-el-more-filled"></i><span class="icon-name">el-more-filled</span><span class="copy" data-clipboard-text="svgtofont-el-more-filled">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-mute-notification"></i><span class="icon-name">el-mute-notification</span><span class="copy" data-clipboard-text="svgtofont-el-mute-notification">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-plus"></i><span class="icon-name">el-plus</span><span class="copy" data-clipboard-text="svgtofont-el-plus">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-qrcode"></i><span class="icon-name">el-qrcode</span><span class="copy" data-clipboard-text="svgtofont-el-qrcode">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-question-filled"></i><span class="icon-name">el-question-filled</span><span class="copy" data-clipboard-text="svgtofont-el-question-filled">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-refresh-left"></i><span class="icon-name">el-refresh-left</span><span class="copy" data-clipboard-text="svgtofont-el-refresh-left">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-refresh-right"></i><span class="icon-name">el-refresh-right</span><span class="copy" data-clipboard-text="svgtofont-el-refresh-right">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-refresh"></i><span class="icon-name">el-refresh</span><span class="copy" data-clipboard-text="svgtofont-el-refresh">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-remove-filled"></i><span class="icon-name">el-remove-filled</span><span class="copy" data-clipboard-text="svgtofont-el-remove-filled">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-el-remove"></i><span class="icon-name">el-remove</span><span class="copy" data-clipboard-text="svgtofont-el-remove">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-right"></i><span class="icon-name">el-right</span><span class="copy" data-clipboard-text="svgtofont-el-right">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-search"></i><span class="icon-name">el-search</span><span class="copy" data-clipboard-text="svgtofont-el-search">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-select"></i><span class="icon-name">el-select</span><span class="copy" data-clipboard-text="svgtofont-el-select">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-semi-select"></i><span class="icon-name">el-semi-select</span><span class="copy" data-clipboard-text="svgtofont-el-semi-select">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-service"></i><span class="icon-name">el-service</span><span class="copy" data-clipboard-text="svgtofont-el-service">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-setting"></i><span class="icon-name">el-setting</span><span class="copy" data-clipboard-text="svgtofont-el-setting">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-share"></i><span class="icon-name">el-share</span><span class="copy" data-clipboard-text="svgtofont-el-share">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-star-filled"></i><span class="icon-name">el-star-filled</span><span class="copy" data-clipboard-text="svgtofont-el-star-filled">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-el-success-filled"></i><span class="icon-name">el-success-filled</span><span class="copy" data-clipboard-text="svgtofont-el-success-filled">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-top"></i><span class="icon-name">el-top</span><span class="copy" data-clipboard-text="svgtofont-el-top">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-unlock"></i><span class="icon-name">el-unlock</span><span class="copy" data-clipboard-text="svgtofont-el-unlock">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-upload-filled"></i><span class="icon-name">el-upload-filled</span><span class="copy" data-clipboard-text="svgtofont-el-upload-filled">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-upload"></i><span class="icon-name">el-upload</span><span class="copy" data-clipboard-text="svgtofont-el-upload">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-view"></i><span class="icon-name">el-view</span><span class="copy" data-clipboard-text="svgtofont-el-view">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-warn-triangle-filled"></i><span class="icon-name">el-warn-triangle-filled</span><span class="copy" data-clipboard-text="svgtofont-el-warn-triangle-filled">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-warning-filled"></i><span class="icon-name">el-warning-filled</span><span class="copy" data-clipboard-text="svgtofont-el-warning-filled">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-warning"></i><span class="icon-name">el-warning</span><span class="copy" data-clipboard-text="svgtofont-el-warning">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-el-zoom-in"></i><span class="icon-name">el-zoom-in</span><span class="copy" data-clipboard-text="svgtofont-el-zoom-in">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-el-zoom-out"></i><span class="icon-name">el-zoom-out</span><span class="copy" data-clipboard-text="svgtofont-el-zoom-out">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-empty"></i><span class="icon-name">empty</span><span class="copy" data-clipboard-text="svgtofont-empty">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-evaluation-feedback"></i><span class="icon-name">evaluation-feedback</span><span class="copy" data-clipboard-text="svgtofont-evaluation-feedback">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-file-hdd"></i><span class="icon-name">file-hdd</span><span class="copy" data-clipboard-text="svgtofont-file-hdd">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-file-text"></i><span class="icon-name">file-text</span><span class="copy" data-clipboard-text="svgtofont-file-text">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-folder-open"></i><span class="icon-name">folder-open</span><span class="copy" data-clipboard-text="svgtofont-folder-open">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-free-certificate-icon"></i><span class="icon-name">free-certificate-icon</span><span class="copy" data-clipboard-text="svgtofont-free-certificate-icon">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-free-customer"></i><span class="icon-name">free-customer</span><span class="copy" data-clipboard-text="svgtofont-free-customer">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-free-fifteen-icon"></i><span class="icon-name">free-fifteen-icon</span><span class="copy" data-clipboard-text="svgtofont-free-fifteen-icon">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-free-function-icon"></i><span class="icon-name">free-function-icon</span><span class="copy" data-clipboard-text="svgtofont-free-function-icon">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-free-group-icon"></i><span class="icon-name">free-group-icon</span><span class="copy" data-clipboard-text="svgtofont-free-group-icon">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-free-ip-icon"></i><span class="icon-name">free-ip-icon</span><span class="copy" data-clipboard-text="svgtofont-free-ip-icon">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-free-message-icon"></i><span class="icon-name">free-message-icon</span><span class="copy" data-clipboard-text="svgtofont-free-message-icon">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-free-plunge-icon"></i><span class="icon-name">free-plunge-icon</span><span class="copy" data-clipboard-text="svgtofont-free-plunge-icon">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-free-recommend"></i><span class="icon-name">free-recommend</span><span class="copy" data-clipboard-text="svgtofont-free-recommend">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-free-refund-icon"></i><span class="icon-name">free-refund-icon</span><span class="copy" data-clipboard-text="svgtofont-free-refund-icon">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-free-time-icon"></i><span class="icon-name">free-time-icon</span><span class="copy" data-clipboard-text="svgtofont-free-time-icon">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-hint-confirm-icon"></i><span class="icon-name">hint-confirm-icon</span><span class="copy" data-clipboard-text="svgtofont-hint-confirm-icon">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-ico-mysql"></i><span class="icon-name">ico-mysql</span><span class="copy" data-clipboard-text="svgtofont-ico-mysql">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-ico-nginx"></i><span class="icon-name">ico-nginx</span><span class="copy" data-clipboard-text="svgtofont-ico-nginx">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-ico-php"></i><span class="icon-name">ico-php</span><span class="copy" data-clipboard-text="svgtofont-ico-php">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-anonymous"></i><span class="icon-name">icon-anonymous</span><span class="copy" data-clipboard-text="svgtofont-icon-anonymous">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-balancepay-default"></i><span class="icon-name">icon-balancepay-default</span><span class="copy" data-clipboard-text="svgtofont-icon-balancepay-default">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-browse"></i><span class="icon-name">icon-browse</span><span class="copy" data-clipboard-text="svgtofont-icon-browse">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-bug-scan"></i><span class="icon-name">icon-bug-scan</span><span class="copy" data-clipboard-text="svgtofont-icon-bug-scan">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-centos"></i><span class="icon-name">icon-centos</span><span class="copy" data-clipboard-text="svgtofont-icon-centos">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-icon-copy"></i><span class="icon-name">icon-copy</span><span class="copy" data-clipboard-text="svgtofont-icon-copy">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-customer-service"></i><span class="icon-name">icon-customer-service</span><span class="copy" data-clipboard-text="svgtofont-icon-customer-service">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-dask"></i><span class="icon-name">icon-dask</span><span class="copy" data-clipboard-text="svgtofont-icon-dask">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-day"></i><span class="icon-name">icon-day</span><span class="copy" data-clipboard-text="svgtofont-icon-day">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-debian"></i><span class="icon-name">icon-debian</span><span class="copy" data-clipboard-text="svgtofont-icon-debian">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-drag"></i><span class="icon-name">icon-drag</span><span class="copy" data-clipboard-text="svgtofont-icon-drag">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-dynamic-kill"></i><span class="icon-name">icon-dynamic-kill</span><span class="copy" data-clipboard-text="svgtofont-icon-dynamic-kill">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-eye-close"></i><span class="icon-name">icon-eye-close</span><span class="copy" data-clipboard-text="svgtofont-icon-eye-close">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-fedora"></i><span class="icon-name">icon-fedora</span><span class="copy" data-clipboard-text="svgtofont-icon-fedora">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-icon-file-lock"></i><span class="icon-name">icon-file-lock</span><span class="copy" data-clipboard-text="svgtofont-icon-file-lock">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-file-unlock"></i><span class="icon-name">icon-file-unlock</span><span class="copy" data-clipboard-text="svgtofont-icon-file-unlock">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-file_mode"></i><span class="icon-name">icon-file_mode</span><span class="copy" data-clipboard-text="svgtofont-icon-file_mode">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-ftp-log"></i><span class="icon-name">icon-ftp-log</span><span class="copy" data-clipboard-text="svgtofont-icon-ftp-log">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-history"></i><span class="icon-name">icon-history</span><span class="copy" data-clipboard-text="svgtofont-icon-history">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-linux"></i><span class="icon-name">icon-linux</span><span class="copy" data-clipboard-text="svgtofont-icon-linux">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-log"></i><span class="icon-name">icon-log</span><span class="copy" data-clipboard-text="svgtofont-icon-log">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-login-address"></i><span class="icon-name">icon-login-address</span><span class="copy" data-clipboard-text="svgtofont-icon-login-address">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-login-time"></i><span class="icon-name">icon-login-time</span><span class="copy" data-clipboard-text="svgtofont-icon-login-time">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-icon-ltd"></i><span class="icon-name">icon-ltd</span><span class="copy" data-clipboard-text="svgtofont-icon-ltd">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-max-black"></i><span class="icon-name">icon-max-black</span><span class="copy" data-clipboard-text="svgtofont-icon-max-black">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-memo-active"></i><span class="icon-name">icon-memo-active</span><span class="copy" data-clipboard-text="svgtofont-icon-memo-active">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-minmax-black"></i><span class="icon-name">icon-minmax-black</span><span class="copy" data-clipboard-text="svgtofont-icon-minmax-black">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-new-file-lock"></i><span class="icon-name">icon-new-file-lock</span><span class="copy" data-clipboard-text="svgtofont-icon-new-file-lock">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-new-file-unlock"></i><span class="icon-name">icon-new-file-unlock</span><span class="copy" data-clipboard-text="svgtofont-icon-new-file-unlock">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-other"></i><span class="icon-name">icon-other</span><span class="copy" data-clipboard-text="svgtofont-icon-other">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-pro"></i><span class="icon-name">icon-pro</span><span class="copy" data-clipboard-text="svgtofont-icon-pro">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-proc"></i><span class="icon-name">icon-proc</span><span class="copy" data-clipboard-text="svgtofont-icon-proc">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-icon-refresh"></i><span class="icon-name">icon-refresh</span><span class="copy" data-clipboard-text="svgtofont-icon-refresh">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-refresh2"></i><span class="icon-name">icon-refresh2</span><span class="copy" data-clipboard-text="svgtofont-icon-refresh2">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-rootkit"></i><span class="icon-name">icon-rootkit</span><span class="copy" data-clipboard-text="svgtofont-icon-rootkit">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-safaty-detect"></i><span class="icon-name">icon-safaty-detect</span><span class="copy" data-clipboard-text="svgtofont-icon-safaty-detect">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-safe-report"></i><span class="icon-name">icon-safe-report</span><span class="copy" data-clipboard-text="svgtofont-icon-safe-report">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-scan"></i><span class="icon-name">icon-scan</span><span class="copy" data-clipboard-text="svgtofont-icon-scan">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-shell-file"></i><span class="icon-name">icon-shell-file</span><span class="copy" data-clipboard-text="svgtofont-icon-shell-file">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-sshd_service"></i><span class="icon-name">icon-sshd_service</span><span class="copy" data-clipboard-text="svgtofont-icon-sshd_service">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-start"></i><span class="icon-name">icon-start</span><span class="copy" data-clipboard-text="svgtofont-icon-start">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-icon-stop"></i><span class="icon-name">icon-stop</span><span class="copy" data-clipboard-text="svgtofont-icon-stop">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-term"></i><span class="icon-name">icon-term</span><span class="copy" data-clipboard-text="svgtofont-icon-term">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-top"></i><span class="icon-name">icon-top</span><span class="copy" data-clipboard-text="svgtofont-icon-top">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-transferpay-default"></i><span class="icon-name">icon-transferpay-default</span><span class="copy" data-clipboard-text="svgtofont-icon-transferpay-default">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-ubuntu"></i><span class="icon-name">icon-ubuntu</span><span class="copy" data-clipboard-text="svgtofont-icon-ubuntu">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-user"></i><span class="icon-name">icon-user</span><span class="copy" data-clipboard-text="svgtofont-icon-user">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-website_permissions"></i><span class="icon-name">icon-website_permissions</span><span class="copy" data-clipboard-text="svgtofont-icon-website_permissions">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-wechatpay-ltd"></i><span class="icon-name">icon-wechatpay-ltd</span><span class="copy" data-clipboard-text="svgtofont-icon-wechatpay-ltd">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-icon-windows"></i><span class="icon-name">icon-windows</span><span class="copy" data-clipboard-text="svgtofont-icon-windows">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-layer-close"></i><span class="icon-name">layer-close</span><span class="copy" data-clipboard-text="svgtofont-layer-close">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-config"></i><span class="icon-name">left-config</span><span class="copy" data-clipboard-text="svgtofont-left-config">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-control"></i><span class="icon-name">left-control</span><span class="copy" data-clipboard-text="svgtofont-left-control">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-crontab"></i><span class="icon-name">left-crontab</span><span class="copy" data-clipboard-text="svgtofont-left-crontab">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-database"></i><span class="icon-name">left-database</span><span class="copy" data-clipboard-text="svgtofont-left-database">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-docker"></i><span class="icon-name">left-docker</span><span class="copy" data-clipboard-text="svgtofont-left-docker">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-exit"></i><span class="icon-name">left-exit</span><span class="copy" data-clipboard-text="svgtofont-left-exit">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-files"></i><span class="icon-name">left-files</span><span class="copy" data-clipboard-text="svgtofont-left-files">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-firewall"></i><span class="icon-name">left-firewall</span><span class="copy" data-clipboard-text="svgtofont-left-firewall">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-left-ftp"></i><span class="icon-name">left-ftp</span><span class="copy" data-clipboard-text="svgtofont-left-ftp">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-home"></i><span class="icon-name">left-home</span><span class="copy" data-clipboard-text="svgtofont-left-home">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-logs"></i><span class="icon-name">left-logs</span><span class="copy" data-clipboard-text="svgtofont-left-logs">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-mail"></i><span class="icon-name">left-mail</span><span class="copy" data-clipboard-text="svgtofont-left-mail">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-site"></i><span class="icon-name">left-site</span><span class="copy" data-clipboard-text="svgtofont-left-site">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-soft"></i><span class="icon-name">left-soft</span><span class="copy" data-clipboard-text="svgtofont-left-soft">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-ssl"></i><span class="icon-name">left-ssl</span><span class="copy" data-clipboard-text="svgtofont-left-ssl">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-total"></i><span class="icon-name">left-total</span><span class="copy" data-clipboard-text="svgtofont-left-total">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-vhost"></i><span class="icon-name">left-vhost</span><span class="copy" data-clipboard-text="svgtofont-left-vhost">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-left-waf"></i><span class="icon-name">left-waf</span><span class="copy" data-clipboard-text="svgtofont-left-waf">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-wp"></i><span class="icon-name">left-wp</span><span class="copy" data-clipboard-text="svgtofont-left-wp">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-left-xterm"></i><span class="icon-name">left-xterm</span><span class="copy" data-clipboard-text="svgtofont-left-xterm">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-loading"></i><span class="icon-name">loading</span><span class="copy" data-clipboard-text="svgtofont-loading">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-lower-select"></i><span class="icon-name">lower-select</span><span class="copy" data-clipboard-text="svgtofont-lower-select">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-menu-setting"></i><span class="icon-name">menu-setting</span><span class="copy" data-clipboard-text="svgtofont-menu-setting">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-scanning-danger"></i><span class="icon-name">scanning-danger</span><span class="copy" data-clipboard-text="svgtofont-scanning-danger">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-scanning-scan"></i><span class="icon-name">scanning-scan</span><span class="copy" data-clipboard-text="svgtofont-scanning-scan">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-scanning-success"></i><span class="icon-name">scanning-success</span><span class="copy" data-clipboard-text="svgtofont-scanning-success">复制代码</span></div>
+			
+    
+			</div>
+			<div class="line_group">
+			<div class="box"><i class="svgtofont-scroll-bar-down"></i><span class="icon-name">scroll-bar-down</span><span class="copy" data-clipboard-text="svgtofont-scroll-bar-down">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-scroll-bar-up"></i><span class="icon-name">scroll-bar-up</span><span class="copy" data-clipboard-text="svgtofont-scroll-bar-up">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-shrink-menu"></i><span class="icon-name">shrink-menu</span><span class="copy" data-clipboard-text="svgtofont-shrink-menu">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-tamper-pro"></i><span class="icon-name">tamper-pro</span><span class="copy" data-clipboard-text="svgtofont-tamper-pro">复制代码</span></div>
+			
+    
+			
+			
+			<div class="box"><i class="svgtofont-wechat-pay"></i><span class="icon-name">wechat-pay</span><span class="copy" data-clipboard-text="svgtofont-wechat-pay">复制代码</span></div>
+			</div>
+    </div>
+		</div>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js"></script>
+		<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+		<script src="https://cdn.bootcdn.net/ajax/libs/layer/3.5.1/layer.min.js"></script>
+		<script src="https://cdn.bootcdn.net/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+		<script type="text/javascript">
+			$(function () {
+				var clipboard = new ClipboardJS('.copy');
+				clipboard.on('success', function (e) {
+					layer.msg('复制成功', {
+						icon: 1,
+					});
+				});
+				clipboard.on('error', function (e) {
+					layer.msg('复制失败', {
+						icon: 0,
+					});
+				});
+
+				function CreateDashedLines() {
+					// 获取元素的位置
+					var lineGroup = $('.line_group');
+					var lineBoxGroup = $('.line_group:eq(0) .box i');
+					var lineTopGroupDashed = [];
+					var lineLeftGroupDashed = [];
+
+					lineGroup.each(function (element) {
+						var top = $(this).offset().top + 20;
+						lineTopGroupDashed.push(top);
+						lineTopGroupDashed.push(top + 35);
+					});
+
+					lineBoxGroup.each(function (element) {
+						var left = $(this).offset().left;
+						lineLeftGroupDashed.push(left);
+						lineLeftGroupDashed.push(left + 35);
+					});
+
+					lineTopGroupDashed.forEach(function (item) {
+						// 创建一条全屏的虚线
+						var line = $('<div class="line">').css({
+							position: 'absolute',
+							top: item,
+							left: 0,
+							width: '100%',
+							borderTop: '1px dashed red',
+							height: 0,
+						});
+						// 将虚线添加到页面上
+						$('body').append(line);
+					});
+
+					lineLeftGroupDashed.forEach(function (item) {
+						// 创建一条全屏的虚线
+						var line = $('<div class="line">').css({
+							position: 'absolute',
+							top: 0,
+							left: item,
+							width: 0,
+							borderLeft: '1px dashed red',
+							height: '100%',
+						});
+						// 将虚线添加到页面上
+						$('body').append(line);
+					});
+				}
+
+				// CreateDashedLines()
+				$('.switch input').change(function () {
+					// 根据开关的状态来控制虚线的显示和隐藏
+					if (this.checked) {
+						CreateDashedLines();
+					} else {
+						$('.line').remove();
+					}
+				});
+
+				const socket = io();
+				socket.on('refresh', () => {
+					location.reload();
+				});
+			});
+		</script>
+	
+
+</body></html>

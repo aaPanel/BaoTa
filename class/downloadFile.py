@@ -38,8 +38,8 @@ class downloadFile:
             self.timeoutCount += 1
             time.sleep(5)
             self.DownloadFile(url,filename)
-            
-    #下载文件进度回调  
+
+    #下载文件进度回调
     def DownloadHook(self,count, blockSize, totalSize):
         used = count * blockSize
         pre1 = int((100.0 * used / totalSize))
@@ -58,7 +58,7 @@ class downloadFile:
         speedLog = public.ReadFile(self.logPath)
         if not speedLog: return  {'name':'下载文件','total':0,'used':0,'pre':0,'speed':0}
         return json.loads(speedLog)
-    
+
     #写输出日志
     def WriteLogs(self,logMsg):
         public.WriteFile(self.logPath,logMsg)

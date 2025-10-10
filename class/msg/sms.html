@@ -1,0 +1,104 @@
+<div class="conter_box box_sms">
+    <div class="bt-form">
+        <div class="progress">
+            <div class="progress-bar progress-bar-success" id="smsTotalNumber" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
+                <div class="progress_text"><span>总条数：</span><span class="sm_total">{{ data.get("total", -1) }}</span><span> 剩余条数：</span><span class="sm_count">{{ data.get("count", -1) }}</span></div>
+            </div>
+        </div>
+        <!--<div class="progress_text"><span>总条数：</span><span class="sm_total">0</span><span> 剩余条数：</span><span class="sm_count">0</span></div>-->
+        <ul class="help-info-text c7">
+            <li><span style="color:red">重要：开启短信登录【必须开启安全入口】，否则存在【安全风险】</span></li>
+            <li>当前短信仅支持面板消息推送</li>
+            <li>如需面板部分功能需要增加短信推送，请联系客服</li>
+            <li>如需购买短信条数，请联系微信客服<a class="btlink" onclick="bt.onlineService()">微信客服</a></li>
+        </ul>
+    </div>
+</div>
+<script src="/static/js/jquery.qrcode.min.js" defer=""></script>
+<!--短信模块-->
+<script type="text/javascript">
+    var sms = {
+        all_info: {},
+        init: function () {
+            this.all_info = $('.alarm-view .bt-w-menu p.bgw').data('data'); //设置全局数据
+            //this.get_sms_data();
+        },
+        /**
+            *@description 获取短信消息，保存按钮添加事件
+        */
+        get_sms_data: function () {
+            var that = this;
+            if (sms.all_info['data']['count']) {
+                var info_data = sms.all_info['data'];
+                var data = (info_data['count'] / info_data['total']) * 100
+                $('.sm_count').text(info_data['count'])
+                $('.sm_total').text(info_data['total'])
+                $('#smsTotalNumber').css('width', data.toFixed(2) + '%')
+                // $('#smsTotalNumber').text(data.toFixed(2) + '%')
+                $('#panel_login').prop('checked',info_data['login'] == 1 ?true:false);
+            }
+            $('.sms_label').click(function(){
+                var _ev = $('#panel_login'),tips = '';
+                console.log(_ev.prop('checked'),'che')
+                if(_ev.prop('checked')){
+                    tips = '是否关闭短信登录？'
+                }else{
+                    tips = '<span style="color:red">开启短信登录必须【开启安全入口】，否则存在【安全风险】</span>,是否继续？'
+                }
+                layer.confirm(tips,{btn:['确认','取消'],icon:3,closeBtn: 2,title:'短信登录'},function(){
+                    that.set_config_data();
+                },function(index){
+                    _ev.prop('checked',!_ev.prop('checked'))
+                })
+            })
+        },
+        set_config_data: function () {
+            var that = this
+            $.post('/config?action=set_msg_config&name=sms', {login:$('#panel_login').prop('checked')?1:0}, function (rdata) {
+                if(rdata.status){
+                    that.refresh_data();
+                }else{
+                    $('#panel_login').prop('checked',!$('#panel_login').prop('checked'));
+                }
+                layer.msg(rdata.msg,{icon:rdata.status?1:2});
+            })
+        },
+        refresh_data: function () {
+            var that = this
+            $.post('/config?action=get_msg_configs', function (rdata) {
+                $.each(rdata, function (index, item) {
+                    if (item.name == that.all_info.name) {
+                        $('.alarm-view .bt-w-menu p.bgw').data('data', item)
+                        // that.init()
+                    }
+                });
+            })
+        }
+    }
+    // 人工服务   带有参数为售前客服
+  function wechatKefuConsult(){
+    layer.open({
+      type: 1,
+      area: ['300px', '290px'],
+      title: false,
+      closeBtn: 2,
+      shift: 0,
+      content: '<div class="service_consult">\
+            <div class="service_consult_title">请打开微信"扫一扫"</div>\
+            <div class="contact_consult" style="margin-bottom: 5px;"><div id="contact_consult_qcode"></div><i class="wechatEnterprise"></i></div>\
+            <div>【微信客服】</div>\
+            <ul class="c7" style="margin-top:22px;text-align: center;">\
+                <li>工作时间：9:15 - 18:00</li>\
+            </ul>\
+        </div>',
+      success:function(){
+        $('#contact_consult_qcode').qrcode({
+          render: "canvas",
+          width: 140,
+          height: 140,
+          text:'https://work.weixin.qq.com/kfid/kfc72fcbde93e26a6f3'
+        });
+      }
+    })
+  }
+</script>

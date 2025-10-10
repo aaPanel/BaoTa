@@ -1,17 +1,14 @@
-#!/usr/bin/python
+#!/www/server/panel/pyenv/bin/python
 #coding: utf-8
 # +-------------------------------------------------------------------
-# | 宝塔Linux面板 
+# | 宝塔Linux面板
 # +-------------------------------------------------------------------
 # | Copyright (c) 2015-2099 宝塔软件(http://bt.cn) All rights reserved.
 # +-------------------------------------------------------------------
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
 
-import os
-os.chdir("/www/server/panel")
-os.system("cd task && make")
-os.system("chmod 700 /www/server/panel/BT-Task")
-os.system("/www/server/panel/BT-Task &")
-if os.path.getsize("/www/server/panel/BT-Task") > 4096:
-    os.system("rm -rf /www/server/panel/task")
+import os,sys
+os.chdir('/www/server/panel')
+import task
+task.main()

@@ -28,7 +28,7 @@ class panelRun:
             os.makedirs(self.__run_config_path)
         if not os.path.exists(self.__run_pids_path):
             os.makedirs(self.__run_pids_path)
-            
+
     def get_run_list(self,get):
         '''
             @name 获取启动配置列表
@@ -56,7 +56,7 @@ class panelRun:
 
         return run_list
 
-    
+
     def get_run_info(self,get = None,run_name = None):
         '''
             @name 获取启动配置信息
@@ -83,8 +83,8 @@ class panelRun:
                 run_title: string<启动项显示标题>
                 run_name: string<启动项名称> 格式：\w
                 run_type: string<启动类型> python shell php node java等，也可以是一个可执行文件的路径 或直接为空
-                run_path: string<运行目录> 
-                run_script: string<启动脚本> 
+                run_path: string<运行目录>
+                run_script: string<启动脚本>
                 run_script_args: string<启动脚本参数>
                 run_env: list<启动环境变量>
             }
@@ -99,7 +99,7 @@ class panelRun:
         run_env = json.loads(get['run_env'])
         if not os.path.exists(run_path):
             return public.returnMsg(False,'指定运行目录{}不存在!'.format(run_path))
-            
+
         if not re.match(r'^\w+$',run_name):
             return public.returnMsg(False, '启动项名称格式不正确，支持:[a-zA-Z0-9_]!')
 
@@ -146,11 +146,11 @@ class panelRun:
 
         if not os.path.exists(run_path):
             return public.returnMsg(False,'指定运行目录{}不存在!'.format(run_path))
-        
+
         if not re.match(r'^\w+$',run_name):
             return public.returnMsg(False, '启动项名称格式不正确，支持:[a-zA-Z0-9_]!')
 
-        
+
         run_file = '{}/{}'.format(self.__run_config_path,run_name)
         if not os.path.exists(run_file):
             return public.returnMsg(False,'启动配置不存在!')
@@ -230,7 +230,7 @@ class panelRun:
             @param pid int<PID>
             @return bool
         '''
-        if not isinstance(pid,int): 
+        if not isinstance(pid,int):
             pid = int(pid)
         if pid == 0:
             return True
@@ -249,7 +249,7 @@ class panelRun:
         pid_file = '{}/{}.pid'.format(self.__run_pids_path,run_name)
         if not os.path.exists(pid_file):
             return None
-        
+
         run_pid = int(public.readFile(pid_file))
         if run_pid is 0:
             return None
@@ -271,7 +271,7 @@ class panelRun:
         process_info = self.get_process_info(pid)
         if not process_info: return public.returnMsg(False,'无法获取进程信息')
         return process_info
-    
+
     def get_process_info(self,pid):
         '''
             @name 获取进程信息
@@ -292,17 +292,17 @@ class panelRun:
             process_info['exe'] = p.exe()
             process_info['name'] = p.name()
             process_info['pid'] = pid
-            process_info['ppid'] = p.ppid()                              
-            process_info['create_time'] = int(p.create_time())          
+            process_info['ppid'] = p.ppid()
+            process_info['create_time'] = int(p.create_time())
             process_info['status'] = p_state
             process_info['user'] = p.username()
-            process_info['memory_used'] = p_mem.uss                      
+            process_info['memory_used'] = p_mem.uss
             # process_info['cpu_percent'] = self.get_cpu_percent(str(pid),p_cpus,self.new_info['cpu_time'])
             process_info['io_write_bytes'] = pio.write_bytes
             process_info['io_read_bytes'] = pio.read_bytes
             # process_info['io_write_speed'] = self.get_io_write(str(pid),pio.write_bytes)
             # process_info['io_read_speed'] = self.get_io_read(str(pid),pio.read_bytes)
-            process_info['connects'] = self.get_connects(pid)            
+            process_info['connects'] = self.get_connects(pid)
             process_info['threads'] = p.num_threads()
         return process_info
 
@@ -350,7 +350,7 @@ class panelRun:
             if p.exe() == script_last and p.cwd() == run_info['run_path']:
                 return pid
         return None
-        
+
 
     def start_run(self,run_name):
         '''
@@ -361,7 +361,7 @@ class panelRun:
         '''
         run_info = self.get_run_info(run_name)
         if not run_info: return False
-        
+
         log_file = '{}/{}.log'.format(self.__run_logs_path,run_name)
         pid_file = '{}/{}.pid'.format(self.__run_pids_path,run_name)
         public.ExecShell("nohup {} 2>&1 >> {} & $! > {}".format(run_info['run_script'],log_file,pid_file),cwd=run_info['run_path'],env=run_info['run_env'])[0]
@@ -376,7 +376,7 @@ class panelRun:
         '''
             @name 启动所有启动项
             @author hwliang<2021-08-06>
-            @param 
+            @param
             @return bool
         '''
         run_list = self.get_run_list(public.dict_obj())
@@ -385,4 +385,3 @@ class panelRun:
                 self.start_run(run_name)
         return True
 
-    

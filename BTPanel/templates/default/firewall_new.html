@@ -2,11 +2,11 @@
 
 {% block content %}
 <style>
-   .weblog {
-        font-size: 14px;
-        display: inline-block;
-        line-height: 30px;
-    }
+  .weblog {
+    font-size: 14px;
+    display: inline-block;
+    line-height: 30px;
+  }
 	.weblog em {
 		font-style: normal;
 		color: #666;
@@ -26,16 +26,16 @@
 <div class="main-content">
     <div class="container-fluid" style="padding-bottom: 50px;">
         <div class="pos-box bgw mtb15">
-            <div class="position f14 c9 pull-left">
-                <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
-            </div>
-            <div class="search pull-right">
-                <form target="hid" onsubmit='firewall.get_log_list(1,$("#SearchValue").prop("value"))'>
-                    <input type="text" id="SearchValue" class="ser-text pull-left" placeholder="{{data['lan']['SEARCH']}}" />
-                    <button type="button" class="ser-sub pull-left" onclick='firewall.get_log_list(1,$("#SearchValue").prop("value"))'></button>
-                </form>
-                <iframe name='hid' id="hid" style="display:none"></iframe>
-            </div>
+          <div class="position f14 c9 pull-left">
+            <a class="plr10 c4" href="/">{{data['lan']['H1']}}</a>/<span class="plr10 c4">{{data['lan']['H2']}}</span>
+          </div>
+          <div class="search pull-right">
+            <form target="hid" onsubmit='firewall.get_log_list(1,$("#SearchValue").prop("value"))'>
+              <input type="text" id="SearchValue" class="ser-text pull-left" placeholder="{{data['lan']['SEARCH']}}" />
+              <button type="button" class="ser-sub pull-left" onclick='firewall.get_log_list(1,$("#SearchValue").prop("value"))'></button>
+            </form>
+            <iframe name='hid' id="hid" style="display:none"></iframe>
+          </div>
         </div>
         <div class="safe container-fluid bgw mtb15 pd15">
             <div class="mr50 pull-left">
@@ -54,7 +54,7 @@
                     <input type="text" class="bt-input-text" id="mstscPort" value="" />
                 </div>
                 <div class="ss-text pull-left">
-                    <button id="mstscSubmit" onclick='bt.firewall.set_mstsc($("#mstscPort").prop("value"))' class="btn btn-default btn-sm" type="button">{{data['lan']['BTN3']}}</button>
+                  <button id="mstscSubmit" class="btn btn-default btn-sm" type="button">{{data['lan']['BTN3']}}</button>
                 </div>
             </div>
             <div class="mr50 pull-left" style="border-right: 1px solid #ccc; padding-right: 40px;">
@@ -94,11 +94,11 @@
                             <span id="f-ps" class="c9" style="margin-left: 10px;">{{data['lan']['F6']}}</span>
                         </div>
                         <div class="tablescroll">
-                            <table id="firewallBody" class="table table-hover" style="min-width: 640px;border: 0 none;">                               
+                            <table id="firewallBody" class="table table-hover" style="min-width: 640px;border: 0 none;">
                             </table>
                         </div>
                         <div class="dataTables_paginate paging_bootstrap page firewallBody" style="margin-bottom:0">
-                            
+
                         </div>
                     </div>
                 </div>
@@ -115,10 +115,10 @@
                     <div class="divtable pd15">
                         <div class="tablescroll">
                             <table id="logsBody" class="table table-hover" style="min-width: 640px;border: 0 none;">
-                                                        
+
                             </table>
                         </div>
-                         <div class="dataTables_paginate paging_bootstrap page logsBody" style="margin-bottom:0">              
+                         <div class="dataTables_paginate paging_bootstrap page logsBody" style="margin-bottom:0">
                         </div>
                     </div>
                 </div>
@@ -129,15 +129,15 @@
 {% endblock %}
 
 {% block scripts %}
-  {{ super() }} 
+  {{ super() }}
   <script type="text/javascript">
-    
-    var firewall = {		
-      get_init:function(){			
+
+    var firewall = {
+      get_init:function(){
         firewall.flush_init();
         firewall.get_list();
         firewall.get_log_list();
-        firewall.get_logs_size();			
+        firewall.get_logs_size();
         $('.sshswitch').click(function(){
           var status = $("#sshswitch").prop("checked")==true?1:0;
           bt.firewall.set_mstsc_status(status,function(rdata){
@@ -147,7 +147,7 @@
               }else{
                 $("#sshswitch").removeAttr('checked');
               }
-            }else{						
+            }else{
               bt.msg(rdata);
               firewall.flush_init();
             }
@@ -162,12 +162,12 @@
               }else{
                 $("#noping").removeAttr('checked');
               }
-            }else{						
+            }else{
               bt.msg(rdata);
               firewall.flush_init();
             }
           })
-        })			
+        })
         $("#firewalldType").change(function(){
           var type = $(this).val();
           var w = '120px';
@@ -187,11 +187,11 @@
           $("#AcceptPort").css("width",w);
           $("#AcceptPort").attr('placeholder',p);
           $("#toAccept").html(t);
-          $("#f-ps").html(m);			
+          $("#f-ps").html(m);
         });
       },
       flush_init:function(){
-        bt.firewall.get_ssh_info(function(rdata){				
+        bt.firewall.get_ssh_info(function(rdata){
           if(!rdata.status){
             $("#mstscSubmit").attr('disabled','disabled')
             $("#mstscPort").attr('disabled','disabled')
@@ -217,7 +217,7 @@
       },
       clear_logs_files:function(){
         bt.firewall.clear_logs_files(function(rdata){
-          $("#logSize").text(rdata);						
+          $("#logSize").text(rdata);
           bt.msg({msg:lan.firewall.empty,icon:1});
         })
       },
@@ -243,15 +243,15 @@
               })
           },
       get_list:function(page,search){
-        if(page==undefined) page=1;			
+        if(page==undefined) page=1;
               $.post('/firewall_new?action=GetList', { p: page, search: search,collback:'firewall.get_list' }, function (rdata) {
 
                   $('.firewallBody').html(rdata.page);
                   var ports_ps = { "3306": "MySQL服务默认端口", "888": "phpMyAdmin默认端口", "22": "SSH远程服务", "20": "FTP主动模式数据端口", "21": "FTP协议默认端口", "39000-40000": "FTP被动模式端口范围", "30000-40000": "FTP被动模式端口范围","11211":"Memcached服务端口","873":"rsync数据同步服务","8888":"宝塔Linux面板默认端口"}
           var _tab =  bt.render({
             table:'#firewallBody',
-            columns:[						
-              { field: 'id', title: "{{data['lan']['TH1']}}"},	
+            columns:[
+              { field: 'id', title: "{{data['lan']['TH1']}}"},
               { field: 'port', title: "{{data['lan']['TH2']}}",templet:function(item){
                 var _ps = lan.firewall.accept_port;
                 if(bt.contains(item.port,'.')){
@@ -279,14 +279,14 @@
                           { field: 'ps', title: "{{data['lan']['TH5']}}", templet: function (item) {
                               if (item.port in ports_ps) return ports_ps[item.port];
                               return item.ps;
-                          }},	
+                          }},
               { field: 'opt',align:'right',width:50, title: "{{data['lan']['TH6']}}",templet:function(item){
                 return '<a href="javascript:;" class="btlink" onclick="firewall.remove_accept_port('+item.id+',\''+item.port+'\')">删除</a>';
               }}
             ],
             data:rdata.data
-          })		
-        })	
+          })
+        })
       },
       get_log_list:function(page,search){
               if (page == undefined) page = 1;
@@ -295,15 +295,15 @@
           $('.logsBody').html(rdata.page);
           var _tab =  bt.render({
             table:'#logsBody',
-            columns:[						
-              { field: 'id', title: "{{data['lan']['LTH1']}}"},	
-              { field: 'type', title: "{{data['lan']['LTH2']}}"},	
-              { field: 'log', title: "{{data['lan']['LTH3']}}"},		
-              { field: 'addtime', title: "{{data['lan']['LTH4']}}"}				
+            columns:[
+              { field: 'id', title: "{{data['lan']['LTH1']}}"},
+              { field: 'type', title: "{{data['lan']['LTH2']}}"},
+              { field: 'log', title: "{{data['lan']['LTH3']}}"},
+              { field: 'addtime', title: "{{data['lan']['LTH4']}}"}
             ],
             data:rdata.data
-          })		
-        })			
+          })
+        })
           },
           //查看面板运行日志
           get_panel_error_logs: function () {

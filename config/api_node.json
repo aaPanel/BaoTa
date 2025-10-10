@@ -2,6 +2,6 @@
     {"node_name":"自动选择","node_id":0,"node_ip":"","status":1},
     {"node_name":"广东节点","node_id":1,"node_ip":"42.157.129.47","status":0},
     {"node_name":"河南节点","node_id":2,"node_ip":"116.10.184.219","status":0},
-    {"node_name":"香港节点","node_id":3,"node_ip":"116.213.43.206","status":0},
+    {"node_name":"香港节点","node_id":3,"node_ip":"103.179.243.14","status":0},
     {"node_name":"美国节点","node_id":4,"node_ip":"128.1.164.196","status":0}
 ]

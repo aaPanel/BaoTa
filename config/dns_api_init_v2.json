@@ -1,0 +1,167 @@
+[
+  {
+    "name": "Dns_com",
+    "title": "宝塔DNS云解析",
+    "ps": "使用宝塔DNS云解析插件自动解析申请SSL",
+    "data": false
+  },
+  {
+    "name": "dns",
+    "title": "手动解析",
+    "ps": "返回host和txt值,由用户手动解析",
+    "data": false
+  },
+  {
+    "name": "DNSPodDns",
+    "title": "DnsPod",
+    "ps": "使用DnsPod的API接口自动解析申请SSL",
+    "help": [
+      {
+        "title": "如何获取通行证？",
+        "link": "https://www.bt.cn/bbs/thread-122507-1-1.html"
+      },
+      {
+        "title": "跳转到DNSPod登陆页面",
+        "link": "https://www.dnspod.cn/login"
+      }
+    ],
+    "add_table": [
+      {
+        "name": "使用Token链接DnsPod",
+        "fields": [
+          "ID",
+          "Token"
+        ]
+      }
+    ],
+    "data": []
+  },
+  {
+    "name": "AliyunDns",
+    "title": "阿里云DNS",
+    "ps": "使用阿里云API接口自动解析申请SSL",
+    "help": [
+      {
+        "title": "如何获取AccessKey/SecretKey？",
+        "link": "https://www.bt.cn/bbs/thread-122506-1-1.html"
+      },
+      {
+        "title": "跳转到阿里云登陆页面",
+        "link": "https://account.aliyun.com/login/login.html"
+      }
+    ],
+    "add_table": [
+      {
+        "name": "使用通行证链接阿里云DNS",
+        "fields": [
+          "AccessKey",
+          "SecretKey"
+        ]
+      }
+    ],
+    "data": []
+  },
+  {
+    "name": "CloudFlareDns",
+    "title": "CloudFlare",
+    "ps": "使用CloudFlare的API接口自动解析申请SSL",
+    "help": [
+      {
+        "title": "如何获取Global API Key或API 令牌？",
+        "link": "https://www.bt.cn/bbs/thread-122508-1-1.html"
+      },
+      {
+        "title": "跳转到CloudFlare登陆页面",
+        "link": "https://dash.cloudflare.com/login"
+      }
+    ],
+    "add_table": [
+      {
+        "name": "使用Global Key链接CloudFlare",
+        "fields": [
+          "E-Mail",
+          "API Key"
+        ]
+      },
+      {
+        "name": "使用API Token链接CloudFlare",
+        "fields": [
+          "API Token"
+        ]
+      }
+    ],
+    "data": []
+  },
+  {
+    "name": "GoDaddyDns",
+    "title": "GoDaddy",
+    "ps": "使用GoDaddyAPI接口自动解析申请SSL",
+    "help": [
+      {
+        "title": "如何获取Key/Secret？",
+        "link": "https://www.bt.cn/bbs/thread-122509-1-1.html"
+      },
+      {
+        "title": "跳转到GoDaddy登陆页面",
+        "link": "https://sso.godaddy.com/"
+      }
+    ],
+    "add_table": [
+      {
+        "name": "使用API Key链接GoDaddyDns",
+        "fields": [
+          "Key",
+          "Secret"
+        ]
+      }
+    ],
+    "data": []
+  },
+  {
+    "name": "DNSLADns",
+    "title": "DNS.LA",
+    "ps": "使用DNS.LA API接口自动解析申请SSL",
+    "help": [
+      {
+        "title": "如何获取DNS.LA的平台密钥？",
+        "link": "https://www.bt.cn/bbs/thread-122748-1-1.html"
+      },
+      {
+        "title": "跳转到DNS.LA登陆页面",
+        "link": "https://console.dns.la/login"
+      }
+    ],
+    "add_table": [
+      {
+        "name": "使用API秘钥链接CloudXns",
+        "fields": [
+          "APIID",
+          "API密钥"
+        ]
+      }
+    ],
+    "data": []
+  },
+  {
+    "name": "CloudXnsDns",
+    "title": "CloudXns",
+    "ps": "使用cloudxns的API接口自动解析申请SSL",
+    "help": [
+      {
+        "title": "CloudXns平台已无法使用",
+        "link": "https://"
+      }
+    ],
+    "add_table": [
+      {
+        "name": "使用通行证链接CloudXns",
+        "fields": [
+          "AccessKey",
+          "SecretKey"
+        ]
+      }
+    ],
+    "data": [
+    ]
+  }
+]

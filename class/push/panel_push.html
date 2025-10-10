@@ -1,0 +1,402 @@
+<style>
+    .module-check i.form-checkbox{
+        vertical-align: bottom;
+    }
+    .module-check span{
+        vertical-align: revert;
+    }
+    .module-check.check_disabled label,
+    .module-check.check_disabled i{
+        cursor: no-drop;
+    }
+    .panel_push_form .bt_select_updown .bt_select_list{
+        max-height: 140px;
+    }
+    #bt_panel_push_table .divtable thead {
+        position: relative;
+        z-index: 999;
+    }
+    #bt_panel_push_table .divtable {
+        border: 1px solid #ddd;
+    }
+    #bt_panel_push_table table {
+        border: none;
+    }
+    .bt-form .bt-disabled{
+        border: 1px solid #DDD;
+        background-color: #F5F5F5;
+        color: #ACA899;
+    }
+</style>
+<div id="bt_panel_push_table"></div>
+
+<!--面板消息推送模块-->
+<script type="text/javascript">
+
+    var panel_push = {
+        all_info: {},
+        module_name: 'panel_push',
+        module_config: [],
+        msg_list:[],
+        push_type:'',
+        init: function () {
+            this.all_info = $('.alarm-view .bt-w-menu p.bgw').data('data'); //设置全局数据
+            this.get_push_data();
+        },
+        /**
+        *@description
+        */
+        get_push_data: function () {
+            var _this = this,data = this.all_info.data,rdata = [];
+            $.each(data,function(index,item){
+                item['id'] = index;
+                item['name'] = _this.module_name;
+                rdata.push(item)
+            })
+            // console.log(rdata,'rdata')
+            bt_tools.table({
+                el: '#bt_panel_push_table',
+                data: rdata,
+                default: "列表为空",
+                autoHeight: true,
+                height:410,
+                column: [
+                    { fid: 'title', title: '标题' },
+                    { fid: 'm_title', title: '推送通道' },
+                    { fid: 'm_cycle', title: '执行周期' },
+                    {
+                        fid: 'status',
+                        title: '状态',
+                        config: {
+                            icon: true,
+                            list: [
+                                [true, '正常', 'bt_success', 'glyphicon-play'],
+                                [false, '停用', 'bt_danger', 'glyphicon-pause']
+                            ]
+                        },
+                        type: 'status',
+                        event: function(row){
+                            bt_tools.send({
+                                url:'/push?action=set_push_status',
+                                data: {id:row.id,name:_this.module_name,status:row['status']?0:1}
+                            },function(res){
+                                if(res.status){
+                                    panel_push.refresh_data();
+                                }
+                                bt_tools.msg(res)
+                            },'设置推送状态')
+                        }
+                    },
+                    {
+                        title: '操作', type: 'group', width: 100, align: 'right', group: [{
+                            title: '编辑', event: function(row){
+                                var _typeA = []
+                                _this.get_config_data(function(){
+                                    $.each(_this.module_config,function(index,item){
+                                        _typeA.push(item.project)
+                                    })
+                                    _this.panel_push_view($.extend(true,$.inArray(row.project,_typeA) < 0 ? {isOther:true} : {},row));
+                                })
+                            }
+                        },{
+                            title: '删除', event: function (row) {
+                                bt.confirm({title:'删除推送通道',msg:'删除【'+row.title+'】推送,是否继续?'},function(){
+                                    _this.del_push_config(row.id, function (res) {
+                                        if (res.status) panel_push.refresh_data();
+                                        bt_tools.msg(res)
+                                    });
+                                });
+                            }
+                        }]
+                    }
+                ],
+                tootls:[{
+                    type:'group',
+                    positon: ['left', 'top'],
+                    list: [{
+                        title: '添加推送',
+                        active: true,
+                        event: function () {
+                            _this.get_config_data(function(){
+                                _this.panel_push_view();
+                            })
+                        }
+                    }]
+                }]
+            });
+        },
+        /**
+         *面板推送视图
+         */
+        panel_push_view:function(res){
+            var _this = this,config = {title:'添加推送',btn:'添加'},proList = [],editIndex = 0,param = {} ;
+            if(res){
+                param = $.extend(true,{},res)
+                config = {title:'编辑推送',btn:'保存'}
+            }
+            $.each(this.module_config,function(index,item){
+                if(param && param.project === item.project) editIndex = index;
+                proList.push({title:item.title,value:item.project})
+            })
+            bt_tools.open({
+                type: 1,
+                title: config.title,
+                area:'520px',
+                btn:[config.btn,'取消'],
+                skin:'panel_push_form',
+                content:{
+                    class:'pd15',
+                    data:param || {},
+                    form:[{
+                        label:'通知类型',
+                        group:{
+                            type: 'select',
+                            name: 'project',
+                            width: '300px',
+                            value:'ssl',
+                            class:'projectBox',
+                            list: proList,
+                            disabled:!!res,
+                            change:function(formData,element,that){
+                                var config = panel_push.switch_push_type(that,res?res:formData)
+                                that.$again_render_form(config)
+                            }
+                        }
+                    },{
+                        label:'服务名称',
+                        display: false,
+                        group:{
+                            type: 'text',
+                            name: 'proName',
+                            width: '300px',
+                            placeholder:'请输入完整的服务名称',
+                            value:''
+                        }
+                    },{
+                        label:'服务状态',
+                        display:false,
+                        group:{
+                            type: 'select',
+                            name: 'key',
+                            width: '300px',
+                            placeholder:'无服务状态',
+                            value:'stop',
+                            list:[]
+                        }
+                    },{
+                        label:'剩余天数',
+                        group:[{
+                            type: 'number',
+                            name: 'cycle',
+                            width: '100px',
+                            unit: '天',
+                            value:1,
+                        }]
+                    },{
+                        label:'消息通道',
+                        style:{'margin-top': '7px'},
+                        group:[]  //动态获取
+                    },{
+                        label:'推送间隔',
+                        display: false,
+                        group:{
+                            type: 'number',
+                            name:'interval',
+                            width: '100px',
+                            class: 'group',
+                            unit: '秒',
+                            value:600
+                        }
+                    },{
+                        group:{
+                            type: 'help',
+                            style: { 'margin-top': '0' },
+                            class: 'none-list-style',
+                            list: []
+                        }
+                    }]
+                },
+                success:function(layers,indexs,forms){
+                    forms.element.find('[data-name="project"] ul li:eq('+editIndex+')').click()
+                },
+                yes:function(formData,index){
+
+                    var _configD = {},eData = $.extend(true,{status:true,type:_this.push_type},formData);
+                    // 默认添加的参数
+                    _configD['name'] = _this.module_name;
+                    _configD['id'] = res ? param['id'] : new Date().getTime();
+                    eData['title'] = $('.projectBox .bt_select_content').html();
+
+                    //删除推送类型
+                    $.each(_this.msg_list,function(index,item){
+                        delete eData[item.name]
+                    })
+
+                    //拼接选中推送方式
+                    var isCheck = []
+                    $('.module-check').not('.check_disabled').each(function(){
+                        if($(this).find('input').prop('checked')){
+                            isCheck.push($(this).find('input').prop('name'))
+                        }
+                    })
+                    eData['module'] = isCheck.join();
+                    eData['cycle'] = eData['cycle']?parseInt(eData['cycle']):1;
+                    eData['interval'] = eData['interval']?parseInt(eData['interval']):600;
+                    if(!eData['module']){
+                        layer.msg('请选择一种消息通道',{icon:2});
+                        return false
+                    }
+                    // 自定义类型时
+                    if(eData.project === 'other'){
+                        eData.project = eData.proName
+                        eData['title'] = eData.proName+'服务停止'
+                        delete eData.proName;   //删除临时服务名称
+                    }
+                    _configD['data'] = JSON.stringify(eData)
+                    //提交
+                    bt_tools.send({
+                        url:'/push?action=set_push_config',
+                        data:_configD
+                    },function(Sres){
+                        if(Sres.status){
+                            layer.close(index);
+                            panel_push.refresh_data();
+                        }
+                        bt_tools.msg(Sres)
+                    },(res ?'保存':'添加')+'推送设置')
+                }
+            })
+        },
+        // 推送类型判断
+        switch_push_type: function(config,formData){
+            var that = this,_config = config.config.form,_checklist = [],isInvalid = false,isCheckType = [];
+            if(!formData['project']) formData['project'] = 'ssl'
+            formData['isOther'] ? formData['project'] = 'other':''
+            $.each(this.module_config,function(index,item){
+                if(formData.project === item.project){
+                    if(formData['module']){
+                        isCheckType = formData['module'].split(',')
+                    }
+                    $.each(item.push,function(indexP,ic){
+                        if(typeof that.msg_list[ic] != 'undefined') {
+                            _checklist.push({
+                                type: 'checkbox',
+                                name:that.msg_list[ic].name,
+                                class:'module-check '+(!that.msg_list[ic].setup?'check_disabled':'')+'',
+                                style:{'margin-right': '10px'},
+                                disabled:!that.msg_list[ic].setup,
+                                value:$.inArray(that.msg_list[ic].name,isCheckType) >= 0 ?1:0,
+                                title:that.msg_list[ic].title+(!that.msg_list[ic].setup?'<span style="color:red;cursor: pointer;" onclick="panel_push.alarm_jump(\''+that.msg_list[ic].title+'\')">[点击安装]</span>':''),
+                                event:function(formData,element,thatE){
+                                    thatE.config.form[4].group[indexP].value = !formData[that.msg_list[ic].name]?0:1;
+                                }
+                            })
+                        }
+                    })
+                    _config[0].group.value = formData.project;
+                    _config[1].display = false;
+                    _config[4].group = _checklist;
+                    _config[6].group.list = item.helps;    //动态帮助提醒
+                    formData['type'] = item.type;
+                    if(formData.project === 'other'){
+                        _config[1].display = true
+                        _config[1].group.value = formData['title']?formData['title'].slice(0, -4):''
+                    }
+                    that.push_type = item.type;   //保存当前类型
+                    switch(item.type){
+                        case 'services':
+                            var keyList = []
+                            $.each(item.keys,function(indexK,ik){
+                                keyList.push({title:ik.val,value:ik.key})
+                            })
+                            _config[2].display = true;
+                            _config[2].group.list = keyList;
+                            _config[3].display = false;
+                            _config[5].display = true;
+                            _config[5].group.value = item.interval
+                            break;
+                        default:
+                            _config[2].display = false;
+                            _config[3].display = true;
+                            _config[3].group[0].value = parseInt(item.cycle);
+                            _config[5].display = false;
+                    }
+                    isInvalid = true;
+                    return true;
+                }
+            })
+            if(isInvalid) return _config
+        },
+        //安装跳转提示
+        alarm_jump:function(name){
+            layer.confirm("当前模块<span style='color:red'>未安装</span>，是否跳转到安装界面，是否继续？",{title:"跳转提醒",icon:3,closeBtn:2}, function() {
+                layer.closeAll();
+                setTimeout(function(){
+                    open_three_channel_auth(name)
+                },200)
+            })
+        },
+        get_config_data:function(callback){
+            var _this = this;
+            if(_this.module_config.length === 0 || _this.msg_list.length === 0){
+                _this.get_module_config(function(res){
+                    _this.module_config = res
+                    _this.get_push_msg_list(function(list){
+                        _this.msg_list = list
+                        if(callback) callback(true)
+                    })
+                })
+            }else{
+                if(callback) callback(true)
+            }
+        },
+        /**
+         *@description 删除配置
+         */
+        del_push_config: function (id,callback) {
+            var that = this
+            $.post('/push?action=del_push_config', { name: that.module_name,id:id }, function (rdata) {
+                if(callback) callback(rdata)
+            })
+        },
+        /**
+        *@description 刷新配置
+        */
+        refresh_data: function () {
+            var that = this
+            $.post('/push?action=get_modules_list', function (rdata) {
+                $('#bt_panel_push_table').empty()
+                that.all_info = rdata[that.module_name];
+                $('.alarm-view .bt-w-menu p.bgw').data('data',rdata[that.module_name]);
+                that.get_push_data()
+            })
+        },
+        /**
+        *@description 获取模块执行日志
+        */
+        get_module_logs: function () {
+            var that = this
+            $.post('/push?action=get_module_logs', { name: that.module_name }, function (rdata) {
+
+            })
+
+        },
+        /**
+        *@description 获取配置项
+        */
+        get_module_config: function (callback) {
+            var that = this
+            $.post('/push?action=get_module_config', { name: that.module_name }, function (rdata) {
+                if(callback) callback(rdata)
+            })
+        },
+        /**
+         *@description 获取消息通道安装情况
+         */
+        get_push_msg_list: function(callback) {
+            $.post('/push?action=get_push_msg_list', function (rdata) {
+                if(callback) callback(rdata)
+            })
+        }
+    }
+</script>

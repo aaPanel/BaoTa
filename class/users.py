@@ -36,7 +36,7 @@ class users_main:
 
         if(public.M('users').where('username=?',(pdata['username'],)).count()):
             return public.returnMsg(False,'指定用户名已存在!')
-        
+
         if(public.M('users').insert(pdata)):
             public.WriteLog('用户管理','创建新用户{}'.format(pdata['username']))
             return public.returnMsg(True,'创建新用户{}成功!'.format(pdata['username']))
@@ -71,4 +71,4 @@ class users_main:
             public.WriteLog('用户管理',"编辑用户{}".format(username))
             return public.returnMsg(True,'修改成功!')
         return public.returnMsg(False,'没有提交修改!')
-    
+

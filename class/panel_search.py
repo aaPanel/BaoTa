@@ -172,7 +172,7 @@ class panel_search:
                 return resutl
             return False
     '''
-        text 搜索内容   
+        text 搜索内容
         exts 后缀名   参数例子 php,html
         path 目录
         is_subdir  0 不包含子目录  1 包含子目录
@@ -199,10 +199,10 @@ class panel_search:
         return is_tmpe_files
 
     '''
-        text 搜索内容   
-        rtext  替换成的内容 
+        text 搜索内容
+        rtext  替换成的内容
         exts 后缀名   参数例子 php,html
-        path 目录   
+        path 目录
         is_subdir  0 不包含子目录  1 包含子目录
         mode  0 为普通模式  1 为正则模式
         isword  1 全词匹配  0  默认

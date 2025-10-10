@@ -17,7 +17,7 @@ class ProjectController:
 
     def __init__(self):
         pass
-    
+
     def model(self,args):
         '''
             @name 调用指定项目模型
@@ -36,19 +36,31 @@ class ProjectController:
             if not re.match(r"^\w+$",args['def_name']): return public.return_status_code(1000,'调用的方法名称中不能包含\w以外的字符')
         except:
             return public.get_error_object()
+
+        #静态html调用
+        if 'stype' in args and args['stype'] == 'html':
+            from BTPanel import render_template_string
+            t_path_root = public.get_panel_path()+'/class/projectModel/templates/'
+            t_path = t_path_root + args['mod_name']+"_"+args['def_name'] + '.html'
+            if not os.path.exists(t_path):
+                return public.return_status_code(1000,'调用的模板不存在!'+t_path)
+            t_body = public.readFile(t_path)
+            return render_template_string(t_body, data={})
+
         # 参数处理
+        module_name = args['mod_name'].strip()
         mod_name = "{}Model".format(args['mod_name'].strip())
         def_name = args['def_name'].strip()
-        
-        # 指定模型是否存在
-        mod_file = "{}/projectModel/{}.py".format(public.get_class_path(),mod_name)
-        if not os.path.exists(mod_file):
-            return public.return_status_code(1003,mod_name)
-        # 实例化
-        def_object = public.get_script_object(mod_file)
-        if not def_object: return public.return_status_code(1000,'没有找到{}模型'.format(mod_name))
-        run_object = getattr(def_object.main(),def_name,None)
-        if not run_object: return public.return_status_code(1000,'没有在{}模型中找到{}方法'.format(mod_name,def_name))
+
+        # # 指定模型是否存在
+        # mod_file = "{}/projectModel/{}.py".format(public.get_class_path(),mod_name)
+        # if not os.path.exists(mod_file):
+        #     return public.return_status_code(1003,mod_name)
+        # # 实例化
+        # def_object = public.get_script_object(mod_file)
+        # if not def_object: return public.return_status_code(1000,'没有找到{}模型'.format(mod_name))
+        # run_object = getattr(def_object.main(),def_name,None)
+        # if not run_object: return public.return_status_code(1000,'没有在{}模型中找到{}方法'.format(mod_name,def_name))
         if not hasattr(args,'data'): args.data = {}
         if args.data:
             if isinstance(args.data,str):
@@ -60,6 +72,10 @@ class ProjectController:
                 pdata = args.data
         else:
             pdata = args
+
+        if isinstance(pdata,dict): pdata =  public.to_dict_obj(pdata)
+
+        pdata.model_index = 'project'
 
         # 前置HOOK
         hook_index = '{}_{}_LAST'.format(mod_name.upper(),def_name.upper())
@@ -73,7 +89,14 @@ class ProjectController:
                 return public.return_data(False,{},error_msg='前置HOOK中断操作')
 
         # 调用处理方法
-        result = run_object(pdata)
+        # result = run_object(pdata)
+        import PluginLoader
+        result = PluginLoader.module_run(module_name,def_name,pdata)
+        if isinstance(result,dict):
+            if 'status' in result and result['status'] == False and 'msg' in result:
+                if isinstance(result['msg'],str):
+                    if result['msg'].find('Traceback ') != -1:
+                        raise public.PanelError(result['msg'])
 
         # 后置HOOK
         hook_index = '{}_{}_END'.format(mod_name.upper(),def_name.upper())
@@ -87,4 +110,3 @@ class ProjectController:
         return result
 
 
-        
