@@ -1747,6 +1747,21 @@ cd {}
             if process_info: load_info[i] = process_info
         return load_info
 
+    def get_pm2_load_info_new(self,pids: list):
+        '''
+            @name 获取项目负载信息
+            @author hwliang<2021-08-12>
+            @param get<dict_obj>{
+                project_name: string<项目名称>
+            }
+            @return dict
+        '''
+        load_info = {}
+        for i in pids:
+            process_info = self.get_process_info_by_pid(i)
+            if process_info: load_info[i] = process_info
+        return load_info
+
 
     def object_to_dict(self,obj):
         '''
@@ -1998,19 +2013,21 @@ cd {}
             from mod.project.nodejs.pm2Mod import main
             pm2_list = main().get_jlist()
             project_info['run'] = False
+            pm2_name = project_info['project_config'].get("pm2_name", project_info['name'])
+            pm2_pids = []
             for pm2_info in pm2_list:
                 if pm2_info.get("name") in ("pm2-sysmonit", "pm2-logrotate"):
                     continue
                 env_projectname = ""
                 if "pm2_env" in pm2_info and "NODE_PROJECT_NAME" in pm2_info["pm2_env"]:
                     env_projectname = pm2_info["pm2_env"]["NODE_PROJECT_NAME"]
-                if project_info['name'] != pm2_info.get("name") and project_info['name'] != env_projectname:
+                if pm2_name != pm2_info.get("name") and pm2_name != env_projectname:
                     continue
                 project_info['run'] = pm2_info.get("pm2_env").get("status") == "online"
                 if project_info['run']:
-                    project_info['load_info'] = pm2_info
+                    pm2_pids.append(pm2_info.get("pid"))
                     break
-            project_info['load_info'] = self.get_pm2_load_info(project_name=project_info['name'])
+            project_info['load_info'] = self.get_pm2_load_info_new(pm2_pids)
         else:
             project_info['run'] = self.get_project_run_state(project_name=project_info['name'])
             if project_info['run']:

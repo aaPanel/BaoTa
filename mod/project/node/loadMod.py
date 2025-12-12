@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from typing import List
 
 import simple_websocket
@@ -471,6 +472,68 @@ class main():
 
         crg = config_generator.NginxConfigGenerator()
         err = crg.set_http_proxy_next_upstream(load["site_name"], load["http_config"]["proxy_next_upstream"])
+        if err:
+            return json_response(False, err)
+        return json_response(True, "设置成功")
+
+    def set_http_cache(self, get):
+        """
+         @route /mod/node/load/set_http_cache
+         @param load_id int
+         @param proxy_cache_status int
+         @param cache_time str
+         @param cache_suffix str
+         @return {
+             "status": bool,
+             "msg" str
+         }
+        """
+
+        load_id = get.get("load_id/d", 0)
+        proxy_cache_status = bool(get.get("proxy_cache_status/d", 0))
+        cache_time = get.get("cache_time/s", "1d")
+        cache_suffix = get.get("cache_suffix/s", "")
+        if not re.match(r"^[0-9]+([smhd])$", cache_time):
+            return json_response(False, "缓存时间格式错误")
+        cache_suffix_list = []
+        for suffix in cache_suffix.split(","):
+            tmp_suffix = re.sub(r"\s", "", suffix)
+            if tmp_suffix:
+                cache_suffix_list.append(tmp_suffix)
+        real_cache_suffix = ",".join(cache_suffix_list)
+        if not real_cache_suffix:
+            real_cache_suffix = "css,js,jpe,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map"
+
+        node_db = NodeDB()
+        load, err = node_db.get_load(load_id)
+        if err:
+            return json_response(False, "未找到该负载配置")
+
+        load["http_config"] = json.loads(load["http_config"])
+        load["http_config"]["proxy_cache_status"] = proxy_cache_status
+        load["http_config"]["cache_time"] = cache_time
+        load["http_config"]["cache_suffix"] = real_cache_suffix
+        err = node_db.update_load_key(load_id, {
+            "http_config": json.dumps(load["http_config"])
+        })
+        if err:
+            return json_response(False, err)
+
+        public.print_log(load)
+        load, err = LoadSite.bind_http_load(load)
+        if err:
+            return json_response(False, err)
+        node_datas, err= node_db.get_nodes(load_id,"http")
+        if err:
+            return json_response(False, err)
+        nodes = []
+        for node in node_datas:
+            node, _ = HttpNode.bind(node)
+            if node is None: continue
+            nodes.append(node)
+
+        crg = config_generator.NginxConfigGenerator()
+        err = crg.set_http_proxy_cache(load.site_name, load,  nodes)
         if err:
             return json_response(False, err)
         return json_response(True, "设置成功")

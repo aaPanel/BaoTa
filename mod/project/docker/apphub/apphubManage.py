@@ -256,3 +256,11 @@ class AppHub():
                     pass
 
         return app_list
+
+    def clean_apphub(self, get):
+        '''
+            @name 清理应用缓存
+            @param None
+        '''
+        public.ExecShell("rm -rf {}".format(self.hub_home_path))
+        return public.returnMsg(True, "清理成功")

@@ -10,6 +10,7 @@
 # docker模型 - docker compose 基类
 # ------------------------------
 import sys
+import time
 from typing import List
 
 if "/www/server/panel/class" not in sys.path:
@@ -252,9 +253,11 @@ class Compose():
                             "{}".format(line.decode('utf-8').rstrip()),
                         )))
                 except:
-                    continue
+                    break
             else:
                 break
+            time.sleep(0.01)
+            
 
     # 2024/6/25 下午2:40 获取日志类型的websocket返回值
     def status_exec_logs(self, get, command, cwd=None):

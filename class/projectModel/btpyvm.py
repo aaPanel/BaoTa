@@ -1,4 +1,4 @@
-#! /www/server/panel/pyenv/bin/python3.7
+#! /www/server/panel/pyenv/bin/python3
 import copy
 import json
 import os
@@ -556,14 +556,19 @@ class PYVM(object):
 
     def __parser_xml(self, data_txt: str) -> List[PythonVersion]:
         res_list = []
-        data_txt = data_txt.replace("<hr>", "")  # 去除hr标签导致的错误
+        # 只取pre部分
+        start = data_txt.rfind("<pre>")
+        end = data_txt.rfind("</pre>") + len("</pre>")
+        if not start > 0 or not end > 0:
+            return res_list
+        data_txt = data_txt[start:end] # 去除hr标签导致的错误
         last_2 = {
             "data": (2, 0, 0),
             "version": None,
         }
 
         root = cElementTree.fromstring(data_txt)
-        for data in root.findall("./body/pre/a"):
+        for data in root.findall("./a"):
             v_str = data.text
             if v_str.startswith("2."):
                 ver = v_str.strip("/")

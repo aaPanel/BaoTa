@@ -21,6 +21,7 @@ from .config_mgr import ConfigMgr
 from .default_site import set_default_site, get_default_site, check_default
 from .access_control import cors_manager
 from .nginx_gzip import NginxGzipMgr
+from .nginx_cache import NginxStaticCacheMgr
 from .server_extension import NginxExtension as ng_ext, ApacheExtension as ap_ext
 
 

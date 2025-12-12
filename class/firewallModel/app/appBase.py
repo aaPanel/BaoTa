@@ -47,6 +47,9 @@ class Base(object):
             if public.ExecShell("iptables -t nat -C POSTROUTING_BT -j MASQUERADE")[1] != '':
                 public.ExecShell(""" grep -q 'DEFAULT_FORWARD_POLICY="DROP"' /etc/default/ufw && sed -i 's/DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw && ufw reload """)
                 public.ExecShell("iptables -t nat -N POSTROUTING_BT; iptables -t nat -A POSTROUTING -j POSTROUTING_BT; iptables -t nat -A POSTROUTING_BT -j MASQUERADE")
+        elif os.path.exists("/usr/sbin/firewalld"):
+                if 'no' in public.ExecShell("firewall-cmd --query-masquerade")[0]:
+                    public.ExecShell("firewall-cmd --permanent --add-masquerade;firewall-cmd --reload")
         stdout, stderr = public.ExecShell("sysctl net.ipv4.ip_forward")
         if "net.ipv4.ip_forward = 1" not in stdout:
             # 2024/3/22 下午 4:56 永久设置

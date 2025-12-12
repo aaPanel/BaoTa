@@ -381,8 +381,8 @@ class process_task:
   `addtime` INTEGER
 )'''
             _sql.execute(csql, ())
-            _sql.execute(
-                'CREATE INDEX `addtime` ON `process_top_list` (`addtime`)', ())
+            # _sql.execute(
+            #     'CREATE INDEX `addtime` ON `process_top_list` (`addtime`)', ())
             _sql.close()
             public.writeFile(tip_file, 'True')
 
@@ -397,36 +397,6 @@ class process_task:
     def get_cpu_time(self):
         s = cpu_times()
         return s.user + s.system + s.nice + s.idle
-
-    def get_old(self):
-        if self.old_info: return True
-        data = self.__cache.get(self.old_key)
-        if not data: return False
-        if not data: return False
-        self.old_info = data
-        del (data)
-        return True
-
-    # def get_cpu_percent(self,pid,cpu_times,cpu_time):
-    #     self.get_old()
-    #     percent = 0.00
-    #     process_cpu_time = self.get_process_cpu_time(cpu_times)
-    #     if not self.old_info: self.old_info = {}
-    #     if not pid in self.old_info:
-    #         self.new_info[pid] = {}
-    #         self.new_info[pid]['cpu_time'] = process_cpu_time
-    #         return percent
-    #     percent = round(100.00 * (process_cpu_time - self.old_info[pid]['cpu_time']) / (cpu_time - self.old_info['cpu_time']),2)
-    #     self.new_info[pid] = {}
-    #     self.new_info[pid]['cpu_time'] = process_cpu_time
-    #     if percent > 0: return percent
-    #     return 0.00
-
-    def get_process_cpu_time(self, cpu_times):
-        cpu_time = 0.00
-        for s in cpu_times:
-            cpu_time += s
-        return cpu_time
 
     def get_cpu_percent(self, pid, cpu_time_total, s_cpu_times):
         '''

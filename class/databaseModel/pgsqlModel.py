@@ -155,6 +155,22 @@ class panelPgsql:
         except Exception as ex:
             return ex
 
+    def use_database(self, database_name):
+        """
+        切换到指定数据库
+        @param database_name: 数据库名称
+        @return: Tuple[bool, str] (成功状态, 消息)
+        """
+        # 如果已经有连接，先关闭
+        if self.__DB_CONN is not None and not self.__DB_CONN.closed:
+            self.__Close()
+        
+        # 更新数据库名称
+        self.__CONN_KWARGS["database"] = database_name
+        
+        # 重新连接
+        return self.connect()
+
     # 关闭连接
     def __Close(self):
         self.__DB_CUR.close()
@@ -345,6 +361,68 @@ class main(databaseBase, panelPgsql):
         @修改远程数据库
         '''
         return self.ModifyBaseCloudServer(args)
+
+    def GetMainVersion(self,args):
+        '''
+        @获取主版本号
+        '''
+        if not os.path.exists('/www/server/pgsql/bin/psql'):
+            return 0
+        cli_version_result = public.ExecShell('/www/server/pgsql/bin/psql --version')
+        try:
+            major_version = int(cli_version_result[0].strip('\n').split(' ')[-1].split('.')[0])
+        except:
+            return 0
+        return major_version
+
+    def AddPluginDatabaseConf(self,database,username,password,listen_ip):
+        """
+        @添加插件数据库配置
+        @database 数据库名称
+        @username 用户名
+        @password 密码
+        @listen_ip 监听ip
+        """
+
+        dbuser_info_path = "/www/server/panel/plugin/pgsql_manager_dbuser_info.json"
+        dbuser_info_str = public.ReadFile(dbuser_info_path)
+        dbuser_info_list = []
+        
+        if dbuser_info_str:
+            for line in dbuser_info_str.strip().split('\n'):
+                if line.strip():
+                    item = json.loads(line)
+                    if item['database'] == database:
+                        return public.returnMsg(False, '数据库已存在')
+                    dbuser_info_list.append(item)
+        
+        dbuser_info_list.append({'database': database, 'username': username, 'password': password, 'listen_ip': listen_ip})
+        
+        jsonl_content = '\n'.join([json.dumps(item) for item in dbuser_info_list])
+        public.WriteFile(dbuser_info_path, jsonl_content, mode='w')
+
+    def DeletePluginDatabaseConf(self,database):
+        """
+        @删除插件数据库配置
+        @database 数据库名称
+        """
+        dbuser_info_path = "/www/server/panel/plugin/pgsql_manager_dbuser_info.json"
+        dbuser_info_str = public.ReadFile(dbuser_info_path)
+        dbuser_info_list = []
+        
+        if dbuser_info_str:
+            for line in dbuser_info_str.strip().split('\n'):
+                if line.strip():
+                    item = json.loads(line)
+                    if item['database'] != database:
+                        dbuser_info_list.append(item)
+        
+        if dbuser_info_list:
+            jsonl_content = '\n'.join([json.dumps(item) for item in dbuser_info_list])
+            public.WriteFile(dbuser_info_path, jsonl_content, mode='w')
+        else:
+            public.WriteFile(dbuser_info_path, '', mode='w')
+    
     def AddDatabase(self, args):
         """
         @添加数据库
@@ -411,6 +489,10 @@ class main(databaseBase, panelPgsql):
         config_file_path = self.get_data_directory(args)['data'] + "/pg_hba.conf"
         public.WriteFile(config_file_path.strip(), "\nhost    {}  {}    {}    md5".format(data_name, username, listen_ip), mode='a')
         public.ExecShell("/etc/init.d/pgsql reload")
+        try:
+            self.AddPluginDatabaseConf(data_name, username, password, listen_ip)
+        except:
+            pass
         return public.returnMsg(True, 'ADD_SUCCESS')
 
     def get_data_directory(self, args):  # 获取储存路径
@@ -508,6 +590,12 @@ class main(databaseBase, panelPgsql):
         # 删除SQLITE
         public.M('databases').where("id=? AND LOWER(type)=LOWER('PgSql')", (id,)).delete()
         public.WriteLog("TYPE_DATABASE", 'DATABASE_DEL_SUCCESS', (name,))
+
+        #删除配置文件中的数据库配置
+        try:
+            self.DeletePluginDatabaseConf(name)
+        except:
+            pass
         return public.returnMsg(True, 'DEL_SUCCESS')
 
     def ToBackup(self, args):
@@ -1050,11 +1138,48 @@ class main(databaseBase, panelPgsql):
     def __CreateUsers(self, sid, data_name, username, password, address):
         """
         @创建数据库用户
+
         """
         sql_obj = self.get_sql_obj_by_sid(sid)
         sql_obj.execute("""CREATE USER "{}" WITH PASSWORD '{}';""".format(username, password))
         sql_obj.execute("""GRANT ALL PRIVILEGES ON DATABASE "{}" TO "{}";""".format(data_name, username))
+        sql_obj.execute("""CREATE SCHEMA AUTHORIZATION "{}";""".format(username))
+        major_version = self.GetMainVersion(None)
+        if major_version >= 15:
+            sql_obj.execute("""GRANT USAGE, CREATE ON SCHEMA public TO "{}";""".format(username))
+            status, err_msg = sql_obj.use_database(data_name)
+            #sql_obj.execute("""GRANT USAGE, CREATE ON SCHEMA public TO "{}";""".format(username))
+            sql_obj.execute("""GRANT USAGE, CREATE ON SCHEMA public TO "{}";""".format(username))
+        
+            # # 授予 public schema 中所有表的权限
+            # sql_obj.execute("""GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "{}";""".format(username))
+            
+            # # 授予 public schema 中所有序列的权限
+            # sql_obj.execute("""GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "{}";""".format(username))
+            
+            # # 授予 public schema 中所有函数的权限
+            # sql_obj.execute("""GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO "{}";""".format(username))
+            
+            # # 设置未来创建的表的默认权限（重要！）
+            # sql_obj.execute("""ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "{}";""".format(username))
+            # sql_obj.execute("""ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "{}";""".format(username))
+            # sql_obj.execute("""ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO "{}";""".format(username))
+
         return True
+
+    # def __CreateUsers2(self, sid, data_name, username, password, address):
+    #     """
+    #     @创建数据库用户
+    #     """
+    #     sql_obj = self.get_sql_obj_by_sid(sid)
+    #     sql_obj.execute("""CREATE USER "{}" WITH PASSWORD '{}';""".format(username, password))
+    #     sql_obj.execute("""GRANT ALL PRIVILEGES ON DATABASE "{}" TO "{}";""".format(data_name, username))
+    #     sql_obj.execute("""CREATE SCHEMA AUTHORIZATION "{}";""".format(username))
+    #     major_version = self.GetMainVersion(None)
+    #     if major_version >= 15:
+    #         sql_obj.execute("""GRANT USAGE, CREATE ON SCHEMA public TO "{}";""".format(username))
+    #         retrun 39
+    #     return 1
 
     def __get_db_list(self, sql_obj):
         """
@@ -1201,4 +1326,5 @@ class main(databaseBase, panelPgsql):
 
         result["total_size"] = public.to_size(result["total_size"])
         return {"status": True, "msg": "ok", "data": result}
+
 

@@ -190,6 +190,13 @@ class Block(IBlock):
     def get_parent(self) -> Optional[IDirective]:
         return self._parent
 
+    def replace_directive(self, old_directive: IDirective, new_directive: IDirective):
+        """替换指令"""
+        for i, directive in enumerate(self.directives):
+            if directive == old_directive:
+                self.directives[i] = new_directive
+                break
+
 
 class _Trans(ABC):
 

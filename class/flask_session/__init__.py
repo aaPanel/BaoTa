@@ -7,6 +7,7 @@ from .sessions import (
     NullSessionInterface,
     RedisSessionInterface,
     SqlAlchemySessionInterface,
+    SqliteSessionInterface,
 )
 
 __version__ = "0.6.0"
@@ -119,7 +120,7 @@ class Session:
                 **common_params,
             )
         elif config["SESSION_TYPE"] == "sqlalchemy":
-            session_interface = SqlAlchemySessionInterface(
+            session_interface = SqliteSessionInterface(
                 app,
                 config["SESSION_SQLALCHEMY"],
                 config["SESSION_SQLALCHEMY_TABLE"],

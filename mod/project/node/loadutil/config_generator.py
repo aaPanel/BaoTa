@@ -103,6 +103,32 @@ class NginxConfigGenerator:
         if not os.path.exists("/www/wwwlogs/load_balancing/logs/" + load.site_name):
             os.makedirs("/www/wwwlogs/load_balancing/logs/" + load.site_name)
 
+        proxy_cache = ""
+        if load.http_config.get("proxy_cache_status", False):
+            cache_suffix = load.http_config.get("cache_suffix", "")
+            if cache_suffix:
+                parameter = r".*\.(" + "|".join([re.escape(i) for i in cache_suffix.split(",")]) + ")$"
+            else:
+                parameter = None
+            cache_time = load.http_config.get("cache_time", "1d")
+            if not re.match(r"^[0-9]+([smhd])$", cache_time):
+                cache_time = "1d"
+            if parameter:
+                proxy_cache = """
+    add_header X-Cache $upstream_cache_status;
+    location ~ {parameter} {{
+        proxy_pass {is_https}://{name};
+        proxy_cache cache_one;
+        proxy_cache_key $host$uri$is_args$args;
+        proxy_ignore_headers Set-Cookie Cache-Control expires X-Accel-Expires;
+        proxy_cache_valid 200 304 301 302 {cache_time};
+        proxy_cache_valid 404 {cache_time};
+    }}
+""".format(is_https="https" if is_https else "http",
+           name=load.name,
+           cache_time=cache_time,
+           parameter=parameter)
+
         config = """location / {{
     proxy_pass {is_https}://{name};
     
@@ -114,7 +140,7 @@ class NginxConfigGenerator:
     # 禁用缓存
     proxy_cache off;
     # 错误处理
-    proxy_next_upstream {next_upstream};
+    proxy_next_upstream {next_upstream};{proxy_cache}
 }}
 
 # 使用详细日志格式
@@ -124,6 +150,7 @@ access_log /www/wwwlogs/load_balancing/logs/{site_name}/proxy_access.log load_ba
             name=load.name,
             is_https="https" if is_https else "http",
             next_upstream=load.http_config["proxy_next_upstream"],
+            proxy_cache=proxy_cache,
         )
         return config
 
@@ -210,8 +237,7 @@ server {
             else:
                 NginxUtils.reload_nginx()
 
-
-    def set_http_proxy_next_upstream(self, site_name:  str, proxy_next_upstream: str) -> str:
+    def set_http_proxy_next_upstream(self, site_name: str, proxy_next_upstream: str) -> str:
         proxy_path = os.path.join(self.nginx_proxy_conf_dir, site_name, "load_proxy_{}.conf".format(site_name))
         proxy_back = ""
         if os.path.exists(proxy_path):
@@ -229,8 +255,25 @@ server {
                 NginxUtils.reload_nginx()
         return ""
 
+    def set_http_proxy_cache(self, site_name: str, load: LoadSite, nodes: List[Union[TcpNode, HttpNode]]) -> str:
+        proxy_path = os.path.join(self.nginx_proxy_conf_dir, site_name, "load_proxy_{}.conf".format(site_name))
+        proxy_back = ""
+        if os.path.exists(proxy_path):
+            proxy_back = public.readFile(proxy_path)
 
-    def delete_node_conf(self, load: LoadSite, mutil = False):
+        proxy_conf = self._generate_proxy_config(load, nodes)
+        if proxy_conf != proxy_back:
+            public.writeFile(proxy_path, proxy_conf)
+            flag, err = NginxUtils.check_config()
+            if not flag:
+                public.writeFile(proxy_path, proxy_back)
+                return err
+            else:
+                NginxUtils.reload_nginx()
+        return ""
+
+
+    def delete_node_conf(self, load: LoadSite, mutil=False):
         if load.site_type == "http":
             site_name = load.site_name
             upstream_path = os.path.join(self.nginx_conf_dir, "upstream_{}.conf".format(site_name))

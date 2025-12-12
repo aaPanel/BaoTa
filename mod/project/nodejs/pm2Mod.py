@@ -14,6 +14,7 @@ import re
 # ------------------------------
 import sys
 import datetime
+from typing import Dict, List, Tuple
 
 if "/www/server/panel/class" not in sys.path:
     sys.path.insert(0, "/www/server/panel/class")
@@ -192,7 +193,7 @@ class main(NodeJs):
         return public.returnResult(True, '', data=stdout, code=0)
 
     # 2024/7/11 下午5:55 重启pm2项目
-    def restart(self, mode: str = None, id: str = None, name: str = None, *args, **kwargs):
+    def restart(self, mode: str = None, id: str = None, name: str = None, project_name: str = None, *args, **kwargs):
         '''
             @name 重启pm2项目
         '''
@@ -217,7 +218,7 @@ class main(NodeJs):
         return public.returnResult(True, "重启成功", code=0)
 
     # 2024/7/11 下午5:56 停止pm2项目
-    def stop(self, mode: str = None, id: str = None, name: str = None, *args, **kwargs):
+    def stop(self, mode: str = None, id: str = None, name: str = None, project_name: str = None, *args, **kwargs):
         '''
             @name 停止pm2项目
         '''
@@ -241,7 +242,7 @@ class main(NodeJs):
         return public.returnResult(True, "停止成功", code=0)
 
     # 2024/7/11 下午5:56 启动pm2项目
-    def start(self, mode: str = None, id: str = None, name: str = None, *args, **kwargs):
+    def start(self, mode: str = None, id: str = None, name: str = None, project_name: str = None, *args, **kwargs):
         '''
             @name 启动pm2项目
         '''
@@ -250,7 +251,7 @@ class main(NodeJs):
             return public.returnResult(False, '未检测到pm2，请先安装pm2或切换node版本后再试', code=5)
 
         get = public.dict_obj()
-        get.project_name = name
+        get.project_name = project_name
         return self.start_project(get)
 
     # 2024/7/11 下午5:56 删除pm2项目
@@ -424,6 +425,12 @@ class main(NodeJs):
             self.structure_ecosystem_for_config_body(get)
         else:
             self.structure_ecosystem(get)
+            # 临时补丁实际上疑似存在问题 project_file 不是 pm2配置文件？
+            project_file_body = public.readFile(get.project_file)
+            if "module.exports" in project_file_body and "apps:" in project_file_body:
+                name_re = re.compile(r'name:.*?,')
+                name = name_re.search(project_file_body).group()
+                get.pm2_name = name.split(":")[1].strip().replace("'", "").replace('"', "").replace(",", "")
 
         get._ws.send(json.dumps(self.wsResult(True, "正在构造启动脚本...", code=0)))
         self.structure_start_script(get)

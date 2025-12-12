@@ -542,6 +542,27 @@ class panelSSL:
                     get.content = domain['value']
                     verify_info['paths'].append({"url": url,"status": self.check_url_txt(get)})
 
+                    # 判断是否是Springboot 项目
+                    if public.M('sites').where('id=?',
+                                               (public.M('domain').where('name=?', (domain['domain'])).getField(
+                                                       'pid'),)).getField('project_type') == 'Java' or public.M(
+                        'sites').where('id=?', (public.M(
+                        'domain').where('name=?', (domain['domain'])).getField('pid'),)).getField(
+                        'project_type') == 'Go' or public.M('sites').where('id=?', (public.M('domain').where('name=?', (
+                            domain['domain'])).getField('pid'),)).getField('project_type') == 'Other':
+                        siteRunPath = '/www/wwwroot/java_node_ssl'
+                    else:
+                        siteRunPath = self.get_domain_run_path(domain['domain'])
+                    if not siteRunPath: continue
+                    if siteRunPath.endswith("/"):
+                        siteRunPath = siteRunPath[:-1]
+                    verify_file = siteRunPath + domain['file_name']
+                    verify_path = os.path.dirname(verify_file)
+                    if not os.path.exists(verify_path):
+                        os.makedirs(verify_path)
+                    if os.path.exists(verify_file): continue
+                    public.writeFile(verify_file, domain['value'])
+
                 verify_info['data']['DCVfileName'] = os.path.basename(verify_info['res']['list'][0]['file_name'])
                 verify_info['data']['DCVfileContent'] = os.path.basename(verify_info['res']['list'][0]['value'])
                 verify_info['data']['DCVfilePath'] = "http://example.com"+verify_info['res']['list'][0]['file_name']
@@ -707,6 +728,8 @@ class panelSSL:
         """
         申请证书
         """
+        public.set_module_logs('TrustAsiaCA', 'ApplyDVSSL', 1)
+
         if not 'orgName' in get: return public.returnMsg(False,'确实必要参数 orgName')
         if not 'orgPhone' in get: return public.returnMsg(False,'确实必要参数 orgPhone')
         if not 'orgPostalCode' in get: return public.returnMsg(False,'确实必要参数 orgPostalCode')

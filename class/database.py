@@ -2245,7 +2245,10 @@ SetLink
         mysql_obj = public.get_mysql_obj(db_name)
         if mysql_obj is False:
             return public.returnMsg(False, "连接数据库失败")
-        users = mysql_obj.query("select Host from mysql.user where User='" + name + "' AND Host!='localhost'")
+        # users = mysql_obj.query("select Host from mysql.user where User='" + name + "' AND Host!='localhost'")
+        sql = "select Host from mysql.user where User=%s AND Host!='localhost'"
+        users = mysql_obj.query(sql, param=(name,))
+        
         isError = self.IsSqlError(users)
         if isError != None: return isError
         users = self.map_to_list(users)

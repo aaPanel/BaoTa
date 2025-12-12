@@ -256,9 +256,11 @@ class panelApi:
             public.add_security_logs('API配置', ' %sAPI接口' % stats[data['open']])
             token = stats[data['open']] + '成功!'
         elif get.t_type == '3':
-            data['limit_addr'] = get.limit_addr.split('\n')
-            public.WriteLog('API配置','变更IP限制为[%s]' % get.limit_addr)
-            public.add_security_logs('API配置',' 变更IP限制为[%s]' % get.limit_addr)
+            limit_addr = list(set(get.limit_addr.split('\n')))
+            limit_addr_str = "，".join(limit_addr)
+            data['limit_addr'] = limit_addr
+            public.WriteLog('API配置','变更IP限制为[%s]' % limit_addr_str)
+            public.add_security_logs('API配置',' 变更IP限制为[%s]' % limit_addr_str)
             token ='保存成功!'
         self.save_api_config(data)
         return public.returnMsg(True,token)

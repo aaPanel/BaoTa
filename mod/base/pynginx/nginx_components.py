@@ -4,7 +4,7 @@
 Nginx组件实现 - Python版本
 包含Http、Server、Location、Upstream等具体组件
 """
-
+import re
 from typing import List, Optional, Dict, Union
 from dataclasses import dataclass, field
 
@@ -123,9 +123,10 @@ class Server(Directive, _Trans):
 
     # 只在server块内部查询，不会返回子块中的指令如：location 块内信息，
     # param 将顺序依次匹配
-    def top_find_directives_with_param(self, directive_name: str, *params: str):
+    def top_find_directives_with_param(self, directive_name: str, *params: Union[str, re.Pattern]):
         directives = self.get_block().get_directives()
         res = []
+        params_match = lambda x, y: x == y if not isinstance(x, re.Pattern) else re.match(x, y)
         for d in directives:
             if d.get_name() == directive_name:
                 if len(params) == 0:
@@ -133,7 +134,7 @@ class Server(Directive, _Trans):
                 else:
                     d_params = d.get_parameters()
                     min_len = min(len(params), len(d_params))
-                    if all([d_params[i] == params[i] for i in range(min_len)]):
+                    if all([params_match(params[i], d_params[i]) for i in range(min_len)]):
                         res.append(d)
         return  res
 

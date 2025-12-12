@@ -4,6 +4,7 @@ import os
 import datetime
 import time
 sys.path.insert(0, '/www/server/panel/class')
+sys.path.insert(0, '/www/server/panel')
 from panelSite import panelSite
 from data import data
 import public

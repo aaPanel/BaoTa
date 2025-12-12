@@ -1630,15 +1630,20 @@ CREATE TABLE IF NOT EXISTS `network` (
                 msg = public.getMsg('START')
             
             if webserver == 'nginx':
-                sub_string = '''{};
-        allow 127.0.0.1;
-        allow ::1;
-        deny all'''.format(pma_path)
-                if conf.find(sub_string) != -1:
-                    conf = conf.replace(sub_string, pma_path)
+                has_restrictions = (
+                    re.search(r'allow\s+127\.0\.0\.1\s*;', conf) and
+                    re.search(r'allow\s+::1\s*;', conf) and
+                    re.search(r'deny\s+all\s*;', conf)
+                )
+                if has_restrictions:
+                    conf = re.sub(r'^[ \t]*allow\s+127\.0\.0\.1\s*;[ \t]*$\n?', '', conf, flags=re.MULTILINE)
+                    conf = re.sub(r'^[ \t]*allow\s+::1\s*;[ \t]*$\n?', '', conf, flags=re.MULTILINE)
+                    conf = re.sub(r'^[ \t]*deny\s+all\s*;[ \t]*$\n?', '', conf, flags=re.MULTILINE)
                     msg = public.getMsg('START')
                 else:
-                    conf = conf.replace(pma_path, sub_string)
+                    root_pattern = r'(root\s+' + re.escape(pma_path) + r'\s*;)'
+                    replacement = r'\1\n        allow 127.0.0.1;\n        allow ::1;\n        deny all;'
+                    conf = re.sub(root_pattern, replacement, conf)
                     msg = public.getMsg('STOP')
             elif webserver == 'apache':
                 src_string = 'AllowOverride All'

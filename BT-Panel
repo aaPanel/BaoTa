@@ -429,6 +429,12 @@ def start_web_server():
         # 启动服务器
         http_server.serve_forever()
     except Exception as e:
+        try:
+            if e.errno == 98 or 'Address already in use' in str(e):
+                logger.info(f"端口 {PORT} 已被占用，请检查是否有其他程序占用该端口。")
+                logger.info(f"如是新安装面板可尝试重装解决")
+        except:
+            pass
         logger.critical(f"启动Web服务器失败: {e}")
         sys.exit(1)
 
@@ -478,6 +484,10 @@ def main():
                 pid = public.readFile(PID_FILE).strip()
                 if pid:
                     os.system(f"kill -9 {pid}")
+                    if os.path.exists(PID_FILE):
+                        time.sleep(0.5)
+                        os.system(f"kill -9 {pid}")
+                        time.sleep(0.5)
                     logger.info(f"已终止旧面板进程 {pid}")
             except Exception as e:
                 logger.warning(f"终止旧面板进程失败: {e}")

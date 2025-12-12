@@ -36,6 +36,7 @@ from panelRedirect import panelRedirect
 import site_dir_auth
 # from panelModel.syncsiteModel import main as syncsite
 from ssl_manage import SSLManger
+from mod.base import json_response
 
 
 class panelSite(panelRedirect):
@@ -2358,6 +2359,11 @@ listener SSL443 {
             public.writeFile(ng_file, ng_conf)
         # OLS
         self.set_ols_ssl(get, siteName)
+        http2https_pl = "{}/data/http2https.pl".format(public.get_panel_path())
+        if os.path.exists(http2https_pl):
+            self.CloseToHttps(public.to_dict_obj({'siteName': siteName}), without_reload=True)
+            # 尝试设置 http2https，并暂时重启，等到后续测试配置后，在重启
+            self.HttpToHttps(public.to_dict_obj({'siteName': siteName}), without_reload=True)
         isError = public.checkWebConfig()
         if (isError != True):
             if os.path.exists(self.nginx_conf_bak): shutil.copyfile(self.nginx_conf_bak, ng_file)
@@ -2393,7 +2399,7 @@ listener SSL443 {
         # return False;
 
     # HttpToHttps
-    def HttpToHttps(self, get):
+    def HttpToHttps(self, get, without_reload=False):
         siteName = get.siteName
         # Nginx配置
         file = self.setupPath + '/panel/vhost/nginx/' + siteName + '.conf'
@@ -2465,11 +2471,12 @@ listener SSL443 {
 </IfModule>
 #HTTP_TO_HTTPS_END'''
         public.writeFile(file, ols_force_https)
-        public.serviceReload()
+        if not without_reload:
+            public.serviceReload()
         return public.returnMsg(True, 'SET_SUCCESS')
 
     # CloseToHttps
-    def CloseToHttps(self, get):
+    def CloseToHttps(self, get, without_reload=False):
         siteName = get.siteName
         file = self.setupPath + '/panel/vhost/nginx/' + siteName + '.conf'
         if not os.path.exists(file):
@@ -2511,7 +2518,8 @@ listener SSL443 {
         file = '{}/panel/vhost/openlitespeed/redirect/{}/force_https.conf'.format(self.setupPath, siteName)
         if os.path.exists(file):
             public.ExecShell('rm -f {}*'.format(file))
-        public.serviceReload()
+        if not without_reload:
+            public.serviceReload()
         return public.returnMsg(True, 'SET_SUCCESS')
 
     # 是否跳转到https
@@ -4197,6 +4205,13 @@ server
                     rep = "include\s+enable-php-(\w{2,5})\.conf"
                     tmp = re.search(rep, conf)
                     if tmp: conf = conf.replace(tmp.group(), 'include ' + dst)
+                elif re.search(r"enable-php-\d+-wpfastcgi.conf", conf):
+                    dst = 'enable-php-{}-wpfastcgi.conf'.format(version)
+                    conf = conf.replace(other_rep, dst)
+                    rep = r"enable-php-\d+-wpfastcgi.conf"
+                    tmp = re.search(rep, conf)
+                    if tmp: conf = conf.replace(tmp.group(), dst)
+                    self._create_wp_fastcgi_cache_conf(version)
                 else:
                     dst = 'enable-php-' + version + '.conf'
                     conf = conf.replace(other_rep, dst)
@@ -4244,6 +4259,11 @@ server
         except:
             return public.get_error_info()
             return public.returnMsg(False, '设置失败，没有在网站配置文件中找到enable-php-xx相关配置项!')
+
+    @staticmethod
+    def _create_wp_fastcgi_cache_conf(php_v: str):
+        from wptoolkitModel.wp_toolkit.core import wpfastcgi_cache
+        wpfastcgi_cache().set_fastcgi_php_conf(php_v)
 
     # 是否开启目录防御
     def GetDirUserINI(self, get):
@@ -6716,6 +6736,24 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
 
         if default_conf.find('DEFAULT SSL CONFI') != -1: return True
         return False
+
+    def get_https_settings(self, get):
+        http2https_pl = "{}/data/http2https.pl".format(public.get_panel_path())
+        return json_response(status=True, msg="ok", data={
+            "https_mode": self.get_https_mode(),
+            "http2https": os.path.exists(http2https_pl),
+        })
+
+    @staticmethod
+    def set_global_http2https(get):
+        status = get.get("status/d", 0)
+        http2https_pl = "{}/data/http2https.pl".format(public.get_panel_path())
+        if status:
+            public.writeFile(http2https_pl, "", "w")
+        else:
+            if os.path.exists(http2https_pl):
+                os.remove(http2https_pl)
+        return json_response(status=True, msg="设置成功")
 
     def write_ngx_default_conf_by_ssl(self):
         '''
@@ -9338,3 +9376,47 @@ RewriteRule \.(BTPFILE)$    /404.html   [R,NC]
                 if white_ips:
                     status['white_ips'] = white_ips.strip(",")
         return  status
+
+    def set_free_total_status(self, get):
+        site_id = get.get("site_id/s", "")
+        site_status = bool(get.get("status/d", 1))
+        set_type = "site"
+        if site_id == "global":
+            set_type = "global"
+        else:
+            try:
+                site_id = int(site_id)
+            except:
+                return public.returnMsg(False, "参数错误")
+        from mod.base.free_site_total import SiteTotalConfig
+        if set_type == "site":
+            stc = SiteTotalConfig()
+            res = stc.one_site_status(site_id, site_status)
+            if res:
+                return public.returnMsg(False,
+                                        "设置失败，可能无法更新收集服务导致的，请检查网络状态是否可以正常访问到bt.cn")
+            return public.returnMsg(True, "设置成功")
+        else:
+            stc = SiteTotalConfig()
+            stc.stop_always(not site_status)
+            return public.returnMsg(True, "设置成功")
+
+    def get_free_total_status(self, get):
+        from mod.base.free_site_total import SiteTotalConfig
+        stc = SiteTotalConfig()
+        site_id = get.get("site_id/s", "")
+        if site_id != "global":
+            try:
+                site_id = int(site_id)
+            except:
+                return public.returnMsg(False, "参数错误")
+        conf = stc.get_status()
+        if site_id != "global":
+            status = True
+            for site in conf["sites"]:
+                if site["site_id"] == site_id:
+                    status = site["is_open"]
+        else:
+            status = conf["is_open"]
+        return {"status": True, "data": {"status": status}, "msg": "获取成功", "code":200}
+

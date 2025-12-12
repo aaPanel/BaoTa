@@ -122,7 +122,7 @@ class ServerNode:
             else:
                 return "绑定失败，错误信息为：{}".format(json.loads(res_str))
         except Exception as e:
-            return "绑定节点失败，错误信息为：{}".format(str(e))
+            return "网络连接失败，无法请求到目标服务器"
 
     def app_bind_status(self) -> Optional[str]:
         if self.app_key is None:
@@ -307,7 +307,7 @@ class ServerNode:
                 return json.loads(real_data), ""
             return resp.json(), ""
         except Exception as e:
-            public.print_error()
+            # public.print_error()
             # return None, "请求节点失败，请检查节点地址和api是否正确，错误信息为:{}".format(str(e))
             if self.remarks:
                 return None, "请求节点【{}】失败，请检查节点地址和api是否正确".format(self.remarks)

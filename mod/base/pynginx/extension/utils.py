@@ -20,7 +20,7 @@ class _IndexBlockTools:
     def __init__(self):
         self._block: Union[Block, Http, Config, Upstream] = Block()
 
-    def find_index(self, *ops: Union[OpL, OpR]) -> int:
+    def find_index(self, *ops: Union[OpL, OpR], default: int = -1) -> int:
         directives = self._block.get_directives()
         if self._block.__class__ is Http:
             directives = self._block.directives
@@ -51,7 +51,7 @@ class _IndexBlockTools:
                                 return target_idx + op.offset
             if target_idx >= 0:
                 return target_idx + op.offset
-        return -1
+        return default
 
     def insert_after(self, idx: int, *directives: IDirective):
         cls = type(self._block)

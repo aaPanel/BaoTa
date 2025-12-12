@@ -204,6 +204,7 @@ class FileSystemCache(BaseCache):
         return os.path.join(self._path, bkey_hash)
 
     def get(self, key: str) -> _t.Any:
+        if not isinstance(key, str): return False
         filename = self._get_filename(key)
         try:
             with self._safe_stream_open(filename, "rb") as f:
@@ -221,6 +222,11 @@ class FileSystemCache(BaseCache):
         return None
 
     def add(self, key: str, value: _t.Any, timeout: _t.Optional[int] = None) -> bool:
+        if not isinstance(key, str): return False
+        type_list = (int, float, bool, str, list, dict, tuple, set, bytes)
+        value_type = type(value)
+        if value_type not in type_list:
+            return False
         filename = self._get_filename(key)
         if not os.path.exists(filename):
             return self.set(key, value, timeout)
@@ -233,6 +239,11 @@ class FileSystemCache(BaseCache):
         timeout: _t.Optional[int] = None,
         mgmt_element: bool = False,
     ) -> bool:
+        if not isinstance(key, str): return False
+        type_list = (int, float, bool, str, list, dict, tuple, set, bytes)
+        value_type = type(value)
+        if value_type not in type_list:
+            return False
         # Management elements have no timeout
         if mgmt_element:
             timeout = 0

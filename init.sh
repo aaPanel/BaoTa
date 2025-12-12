@@ -393,7 +393,7 @@ case "$1" in
                         btpython /www/server/panel/script/reload_check.py
                 fi
                 panel_stop
-		sleep 1
+		            sleep 1
                 panel_start
                 ;;
         'reload')

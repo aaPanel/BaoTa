@@ -1,9 +1,9 @@
 #coding: utf-8
 import os,sys,time
+from json import loads
 os.chdir('/www/server/panel/')
 sys.path.insert(0,"class/")
-import setPanelLets,public
-from json import loads
+import setPanelLets, public
 lets_info = public.readFile("/www/server/panel/ssl/lets.info")
 cert_info = public.get_cert_data("/www/server/panel/ssl/certificate.pem")
 if lets_info:

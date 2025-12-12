@@ -1,3 +1,4 @@
+import re
 from typing import Iterable
 from copy import deepcopy
 
@@ -642,3 +643,99 @@ class ServerTools(_IndexBlockTools):
 
         if add_dirs:
             self._block.directives.extend(add_dirs)
+
+    def set_static_cache(self, old_suffix:List[str], new_suffix:List[str], time_out: str) -> Optional[str]:
+        static_pattern = re.compile(r'\.\*\\\.\((?P<suffix>[^)]+)\)\??\$')
+        tmp_locations = self._server.top_find_directives_with_param("location", "~", static_pattern)
+        new_match = r".*\.({})$".format("|".join([re.escape(s) for s in new_suffix]))
+        if old_suffix:
+            if tmp_locations:
+                target_loc = None
+                match_percent = 0
+                this_loc = None
+                for loc in tmp_locations:
+                    loc_obj = trans_(loc, Location)
+                    if not loc_obj:
+                        continue
+                    if not loc_obj.top_find_directives("expires"):
+                        continue
+                    suffix = static_pattern.match(loc_obj.match).group("suffix").split("|")
+                    tmp_match_percent = len(set(suffix) & set(old_suffix)) / len(suffix)
+                    if tmp_match_percent > match_percent:
+                        target_loc = loc_obj
+                        this_loc = loc
+                        match_percent = tmp_match_percent
+                if target_loc:
+                    target_loc.match = new_match
+                    target_loc.parameters = ["~", new_match]
+                    the_directive = target_loc.top_find_directives("expires")[0]
+                    expires = trans_(the_directive, Directive)
+                    expires.parameters = [time_out]
+                    target_loc.block.replace_directive(the_directive, expires)
+                    self._server.block.replace_directive(this_loc, target_loc)
+                    # 正常修改成功
+                    return None
+            # 指定后操作后配置文件被修改了？，无法正常修改， 此时返回异常信息
+            return "未匹配到静态缓存配置，无法修改"
+        else:
+            # 没有指定原后缀
+            # tmp_locations = [loc for loc in tmp_locations if loc.top_find_directives("expires")]
+            # if len(tmp_locations) >= 2: # 匹配到两个即以上,执行替换第一个，不在允许添加，符合设计
+            #     target_loc = trans_(tmp_locations[0], Location)
+            #     target_loc.match = new_match
+            #     target_loc.parameters[1] = new_match
+            #     the_directive = target_loc.top_find_directives("expires")[0]
+            #     expires = trans_(the_directive, Directive)
+            #     expires.parameters = [time_out]
+            #     target_loc.block.replace_directive(the_directive, expires)
+            #     self._server.block.replace_directive(tmp_locations[0], target_loc)
+            #     return None
+            # else:
+            new_loc = Location(
+                name="location",
+                match=new_match,
+                parameters=["~", new_match],
+                block=Block(directives=[
+                    Directive(name="expires", parameters=[time_out]),
+                    Directive(name="error_log", parameters=["/dev/null"]),
+                    Directive(name="access_log", parameters=["/dev/null"]),
+                ]),
+            )
+            idx = self._server.block.directives.index(tmp_locations[0]) + 1 if tmp_locations else 0
+            if not idx:
+                idx = self.find_index(
+                    self.OpR("access_log"),
+                    self.OpR("location", +1),
+                    default=len(self._server.block.directives) - 1
+                )
+            self.insert_after(idx, new_loc)
+            return None
+
+
+    def remove_static_cache(self, old_suffix:List[str]) -> Optional[str]:
+        if not old_suffix:
+            return "请指定需要删除的静态缓存后缀"
+        static_pattern = re.compile(r'\.\*\\\.\((?P<suffix>[^)]+)\)\??\$')
+        tmp_locations = self._server.top_find_directives_with_param("location", "~", static_pattern)
+        if not tmp_locations:
+            return "未匹配到静态缓存配置，无法删除"
+
+        loc_len = 0
+        this_loc = None
+        for loc in tmp_locations:
+            loc_obj = trans_(loc, Location)
+            if not loc_obj:
+                continue
+            if not loc_obj.top_find_directives("expires"):
+                continue
+            suffix = static_pattern.match(loc_obj.match).group("suffix").split("|")
+            tmp_loc_len = len(set(suffix) & set(old_suffix))
+            if tmp_loc_len > loc_len:
+                this_loc = loc
+                loc_len = tmp_loc_len
+
+        if this_loc:
+            self._server.block.directives.remove(this_loc)
+            return None
+        else:
+            return "未匹配到静态缓存配置，无法删除"

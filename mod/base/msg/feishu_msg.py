@@ -44,8 +44,8 @@ class FeiShuMsg:
         else:
             user = []
 
-        if "atall" in args and isinstance(args["atall"], bool):
-            atall = args["atall"]
+        if "isAtAll" in args and isinstance(args["isAtAll"], bool):
+            atall = args["isAtAll"]
         else:
             atall = True
 
@@ -86,11 +86,19 @@ class FeiShuMsg:
             tmp = tmp.groups()[0]
             msg = re.sub(reg, tmp, msg)
 
-        if "isAtAll" not in self.config:
+        if "isAtAll" not in self.config and not self.config["user"]:
             self.config["isAtAll"] = True
 
         if self.config["isAtAll"]:
-            msg += "<at userid='all'>所有人</at>"
+            msg += "<at user_id=\"all\">所有人</at>"
+
+        user_list = []
+        for user in self.config["user"]:
+            user: str
+            if user.count("|") == 1:
+                user_id, user_name = user.split("|")
+                user_list.append("<at user_id=\"{}\">{}</at>".format(user_id, user_name))
+        msg += "".join(user_list)
 
         headers = {'Content-Type': 'application/json'}
         data = {

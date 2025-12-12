@@ -187,7 +187,8 @@ class LocationTools(_IndexBlockTools):
         idx = len(self._block.directives)
         self.insert_after(idx, *add_dirs)
 
-    def set_proxy_cache(self, status: bool, cache_name: str, cache_time: str = "1d"):
+    # 旧版本,该版本的配置方式不会正确生效，目前弃用，新版本会调用其方法尝试清空旧的错误配置，并添加新的配置
+    def set_proxy_cache_old(self, status: bool, cache_name: str, cache_time: str = "1d"):
         """设置location块级别的代理缓存"""
         directives = self._block.directives
         dir_list = []
@@ -241,6 +242,76 @@ class LocationTools(_IndexBlockTools):
             self.OpR("allow", +1),  # 放到ip黑白名单配置的后面
         )
         self.insert_after(max(0, idx), *add_dirs)
+
+
+    def set_proxy_cache(self,
+                        status: bool, cache_name: str, cache_time: str = "1d",
+                        cache_suffix: str = "css,js,jpe,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map.js.map"):
+        self.set_proxy_cache_old(status=False, cache_name="", cache_time="")  # 旧版清除
+        proxy_pass = self._location.top_find_directives("proxy_pass")
+        if len(proxy_pass) < 0:
+            proxy_pass_copy = None
+        else:
+            pp = trans_(proxy_pass[0], Directive)
+            proxy_pass_copy = Directive(name=pp.get_name(), parameters=pp.get_parameters())
+        sub_location = self._location.top_find_directives("location")
+        target_location = None
+        if len(sub_location) > 0:
+            for sl in sub_location:
+                the_sl = trans_(sl, Location)
+                has_proxy_cache = the_sl.top_find_directives("proxy_cache")
+                has_proxy_cache_valid = the_sl.top_find_directives("proxy_cache_valid")
+                has_proxy_cache_key = the_sl.top_find_directives("proxy_cache_key")
+                if len(has_proxy_cache) > 0 or len(has_proxy_cache_valid) > 0 or len(has_proxy_cache_key) > 0:
+                    target_location = sl
+                    break
+        if target_location is not None:
+            self._block.directives.remove(target_location)
+
+        if not status:
+            return
+
+        parameter2 = r".*\.(" + "|".join([re.escape(i) for i in cache_suffix.split(",")]) + ")$"
+        add_loc = Location(
+            name="location",
+            parameters=["~", parameter2],
+            block=Block(directives=[
+                Directive(name="proxy_cache", parameters=[cache_name]),
+                Directive(name="proxy_cache_key", parameters=["$host$uri$is_args$args"]),
+                Directive(name="proxy_ignore_headers", parameters=["Set-Cookie", "Cache-Control", "expires", "X-Accel-Expires"]),
+                Directive(name="proxy_cache_valid", parameters=["200", "304","301","302", cache_time]),
+                Directive(name="proxy_cache_valid", parameters=["404", "1m"]),
+                Directive(name="access_log", parameters=["/dev/null"]),
+                Directive(name="error_log", parameters=["/dev/null"]),
+            ]),)
+
+        if proxy_pass_copy is not None:
+            add_loc.block.directives.insert(0, proxy_pass_copy)
+
+        proxy_cache = self._location.top_find_directives("proxy_cache")
+        for pc in proxy_cache:
+            self._block.directives.remove(pc)
+
+        add_x_caches = self._location.top_find_directives_with_param("add_header", "X-Cache")
+        for ac in add_x_caches:
+            self._block.directives.remove(ac)
+
+        add_list = [
+            Directive(name="proxy_cache", parameters=["off"]),
+            Directive(name="add_header", parameters=["X-Cache", "$upstream_cache_status"]),
+            add_loc
+        ]
+
+        idx = self.find_index(
+            self.OpL("proxy_set_header", +1, "Remote-Host"),  # 放到ip黑白名单配置的后面
+            self.OpL("proxy_set_header", +1, "Connection"),  # 放到ip黑白名单配置的后面
+            self.OpL("gzip"),  # 放到gzip配置的前面
+            self.OpL("sub_filter"),  # 放到sub_filter配置的前面
+            self.OpR("deny", +1),  # 放到ip黑白名单配置的后面
+            self.OpR("allow", +1),  # 放到ip黑白名单配置的后面
+        )
+        self.insert_after(max(0, idx), *add_list)
+
 
     def set_gzip(self, status: bool, level: int, min_size: str, gz_type: List[str]):
         # 先移除原有gzip相关指令

@@ -229,7 +229,6 @@ class RuntimeManage(Runtime):
                 data = public.readFile(yf)
                 if data:
                     data = yaml.safe_load(data)
-                    public.print_log(data)
                     data["services"]["{}-python3".format(get.runtime_name)]["environment"][1] = "COMMAND={}".format(get.command)
                     public.writeFile(yf, yaml.dump(data))
         except:
@@ -261,6 +260,7 @@ class RuntimeManage(Runtime):
         if not os.path.exists(self.project_path): os.makedirs(self.project_path, 384, True)
         self.compose_file = "{}/docker-compose.yml".format(self.project_path)
         self.create_log = "{}/create.log".format(self.project_path)
+        public.ExecShell("rm -f {}".format(self.create_log))
 
         public.ExecShell("\cp -r {}/go/* {}/".format(self.service_templates_path, self.project_path))
         public.ExecShell("\cp -r {}/go/.env {}/".format(self.service_templates_path, self.project_path))
@@ -283,7 +283,6 @@ class RuntimeManage(Runtime):
                 data = public.readFile(yf)
                 if data:
                     data = yaml.safe_load(data)
-                    public.print_log(data)
                     data["services"]["{}-python3".format(get.runtime_name)]["environment"][1] = "COMMAND={}".format(get.command)
                     public.writeFile(yf, yaml.dump(data))
         except:
@@ -315,6 +314,7 @@ class RuntimeManage(Runtime):
         if not os.path.exists(self.project_path): os.makedirs(self.project_path, 384, True)
         self.compose_file = "{}/docker-compose.yml".format(self.project_path)
         self.create_log = "{}/create.log".format(self.project_path)
+        public.ExecShell("rm -f {}".format(self.create_log))
 
         public.ExecShell("\cp -r {}/java/* {}/".format(self.service_templates_path, self.project_path))
         public.ExecShell("\cp -r {}/java/.env {}/".format(self.service_templates_path, self.project_path))
@@ -337,7 +337,6 @@ class RuntimeManage(Runtime):
                 data = public.readFile(yf)
                 if data:
                     data = yaml.safe_load(data)
-                    public.print_log(data)
                     data["services"]["{}-python3".format(get.runtime_name)]["environment"][1] = "COMMAND={}".format(get.command)
                     public.writeFile(yf, yaml.dump(data))
         except:
@@ -357,6 +356,48 @@ class RuntimeManage(Runtime):
 
         public.set_module_logs('runtime_java', 'runtime_java_{}'.format(get.runtime_version), 1)
 
+    def run_nodejs_project(self, get):
+        '''
+            @name 运行nodejs项目
+        '''
+        self.service_templates_path = self.service_templates_path.format("nodejs")
+        self.service_run_path = self.service_run_path.format("nodejs")
+        if not os.path.exists(self.service_run_path): os.makedirs(self.service_run_path, 384, True)
+        self.project_path = "{}/{}".format(self.service_run_path, get.runtime_name)
+        if not os.path.exists(self.project_path): os.makedirs(self.project_path, 384, True)
+        self.compose_file = "{}/docker-compose.yml".format(self.project_path)
+        self.create_log = "{}/create.log".format(self.project_path)
+        public.ExecShell("rm -f {}".format(self.create_log))
+        public.ExecShell("\cp -r {}/nodejs/* {}/".format(self.service_templates_path, self.project_path))
+        public.ExecShell("\cp -r {}/nodejs/.env {}/".format(self.service_templates_path, self.project_path))
+
+        if not os.path.exists(self.compose_file):
+            return public.returnResult(False, msg="Nodejs模板不存在")
+        
+        repo_url = '"{}"'.format(get.repo_url.replace("/","\\/"))
+        public.ExecShell("sed -i 's/^VERSION=.*/VERSION={}/' {}/.env".format(get.runtime_version, self.project_path))
+        public.ExecShell("sed -i 's/^REPO_URL=.*/REPO_URL={}/' {}/.env".format(repo_url, self.project_path))
+        public.ExecShell("sed -i 's,^SITE_PATH=.*,SITE_PATH={},' {}/.env".format(get.site_path, self.project_path))
+
+        public.ExecShell("sed -i 's/btnodejs:/{}/g' {}/*.yml".format(get.runtime_name, self.project_path))
+        port_conf = self.handle_ports(get.ports)
+        public.ExecShell("sed -i 's,:BTPORT_CONF:,{},g' {}/*.yml".format(port_conf, self.project_path))
+        public.ExecShell("sed -i 's/:COMMAND:/{}/g' {}/*.yml".format(get.command, self.project_path))
+
+        cmd = ("nohup echo '正在创建【{runtime_name}】,可能需要等待1-5分钟以上...' >> {build_log};"
+               "docker-compose -f {compose_file} up -d >> {build_log} 2>&1 && "
+               "echo 'bt_successful' >> {build_log} || echo 'bt_failed' >> {build_log} &"
+        .format(
+            runtime_name=get.runtime_name,
+            build_log=self.create_log,
+            compose_file=self.compose_file,
+        ))
+
+        import subprocess
+        subprocess.Popen(cmd, shell=True)
+
+        public.set_module_logs('runtime_nodejs', 'runtime_nodejs_{}'.format(get.runtime_version), 1)
+
     # 2024/11/1 15:29 处理端口配置信息
     def handle_ports(self, ports):
         '''
@@ -372,14 +413,12 @@ class RuntimeManage(Runtime):
             ports_str += "      - "
             if isinstance(ports[port], list):
                 if "tcp/udp" in port:
-                    ports_str += "127.0.0.1:{}:{}/tcp".format(ports[port][1], port.split("/")[0])
-                    ports_str += "127.0.0.1:{}:{}/udp".format(ports[port][1], port.split("/")[0])
+                    ports_str += "127.0.0.1:{}:{}".format(ports[port][1], port.split("/")[0])
                 else:
                     ports_str += "127.0.0.1:{}:{}".format(ports[port][1], port)
             else:
                 if "tcp/udp" in port:
-                    ports_str += "0.0.0.0:{}:{}/tcp".format(ports[port], port.split("/")[0])
-                    ports_str += "0.0.0.0:{}:{}/udp".format(ports[port], port.split("/")[0])
+                    ports_str += "0.0.0.0:{}:{}".format(ports[port], port.split("/")[0])
                 else:
                     ports_str += "0.0.0.0:{}:{}".format(ports[port], port)
         return ports_str
@@ -436,7 +475,6 @@ class RuntimeManage(Runtime):
         all_runtime_list = self.check_runtime_status(all_runtime_list)
         all_runtime_list = self.get_page(all_runtime_list, get)
 
-        public.set_module_logs('docker_site', 'get_runtime_list', 1)
         return self.pageResult(data=all_runtime_list["data"], page=all_runtime_list["page"])
 
     # 2024/11/1 11:40 检查运行环境的状态
@@ -463,7 +501,7 @@ class RuntimeManage(Runtime):
                     if "{}:{}".format(runtime["name"], runtime["version"]) in image["RepoTags"]:
                         runtime["status"] = "normal"
                         break
-            elif runtime["type"] in ["java", "go", "python"]:
+            elif runtime["type"] in ["java", "go", "python","nodejs"]:
                 runtime["status"] = "running"
                 # 检查是否存在运行中的容器
                 stdout, stderr = public.ExecShell(
@@ -485,11 +523,11 @@ class RuntimeManage(Runtime):
         if get.runtime_version is None: return public.returnResult(False, msg="请传运行环境版本：runtime_version")
         get.remark = get.get("remark", "")
 
-        if get.runtime_type in ["php", "python"]:
+        if get.runtime_type in ["php", "python","nodejs"]:
             get.repo_url = get.get("repo_url", None)
-            if get.repo_url is None: return public.returnResult(False, msg="请传代码仓库地址：repo_url")
+            if get.repo_url is None: return public.returnResult(False, msg="请传源加速地址：repo_url")
             get.exts = get.get("exts", None)
-        if get.runtime_type in ["java", "go", "python"]:
+        if get.runtime_type in ["java", "go", "python","nodejs"]:
             get.site_path = get.get("site_path", None)
             if get.site_path is None: return public.returnResult(False, msg="请传站点路径：site_path")
             get.command = get.get("command", None)
@@ -510,7 +548,6 @@ class RuntimeManage(Runtime):
 
         self.check_templates(get)
         public.set_module_logs('runtime'.format(get.runtime_version), 'create_runtime', 1)
-        public.set_module_logs('docker_site', 'create_runtime', 1)
 
         if get.runtime_type == "php":
             self.build_php_image(get)
@@ -527,44 +564,30 @@ class RuntimeManage(Runtime):
                 "log_file": self.build_log,
                 "remark": public.xssencode2(get.remark)
             })
-
-        elif get.runtime_type in ["java", "go", "python"]:
+        else:
             if get.runtime_type == "python":
                 self.run_python_project(get)
+            elif get.runtime_type == "go":
+                self.run_go_project(get)
+            elif get.runtime_type == "java":
+                self.run_java_project(get)
+            elif get.runtime_type == "nodejs":
+                self.run_nodejs_project(get)
 
-                dp.sql("runtime").insert({
-                    "name": get.runtime_name,
-                    "type": get.runtime_type,
-                    "version": get.runtime_version,
-                    "repo_url": get.repo_url,
-                    "path": get.site_path,
-                    "command": get.command,
-                    "ports": json.dumps(get.ports_dict),
-                    "addtime": int(time.time()),
-                    "runtime_path": self.project_path,
-                    "compose": self.compose_file,
-                    "log_file": self.create_log,
-                    "remark": public.xssencode2(get.remark)
-                })
-            else:
-                if get.runtime_type == "go":
-                    self.run_go_project(get)
-                else:
-                    self.run_java_project(get)
-
-                dp.sql("runtime").insert({
-                    "name": get.runtime_name,
-                    "type": get.runtime_type,
-                    "version": get.runtime_version,
-                    "path": get.site_path,
-                    "command": get.command,
-                    "ports": json.dumps(get.ports_dict),
-                    "addtime": int(time.time()),
-                    "runtime_path": self.project_path,
-                    "compose": self.compose_file,
-                    "log_file": self.create_log,
-                    "remark": public.xssencode2(get.remark)
-                })
+            dp.sql("runtime").insert({
+                "name": get.runtime_name,
+                "type": get.runtime_type,
+                "version": get.runtime_version,
+                "repo_url": get.get('repo_url',''),
+                "path": get.site_path,
+                "command": get.command,
+                "ports": json.dumps(get.ports_dict),
+                "addtime": int(time.time()),
+                "runtime_path": self.project_path,
+                "compose": self.compose_file,
+                "log_file": self.create_log,
+                "remark": public.xssencode2(get.remark)
+            })
         return public.returnResult(msg="创建运行环境【{}】成功".format(get.runtime_name))
 
     # 2024/11/19 11:59
@@ -598,7 +621,7 @@ class RuntimeManage(Runtime):
             get.repo_url = get.get("repo_url", None)
             if get.repo_url is None: return public.returnResult(False, msg="请传代码仓库地址：repo_url")
             get.exts = get.get("exts", None)
-        if get.runtime_type in ["java", "go", "python"]:
+        if get.runtime_type in ["java", "go", "python","nodejs"]:
             get.site_path = get.get("site_path", None)
             if get.site_path is None: return public.returnResult(False, msg="请传站点路径：site_path")
             get.command = get.get("command", None)
@@ -627,27 +650,25 @@ class RuntimeManage(Runtime):
                 "repo_url": get.repo_url,
                 "exts": get.exts
             })
-        elif get.runtime_type in ["java", "go", "python"]:
+        else:
             if get.runtime_type == "python":
                 self.run_python_project(get)
-
-                dp.sql("runtime").where("id=? and type=?", (get.id, get.runtime_type)).update({
-                    "repo_url": get.repo_url,
-                    "path": get.site_path,
-                    "command": get.command,
-                    "ports": json.dumps(get.ports_dict)
-                })
+            elif get.runtime_type == "java":
+                self.run_java_project(get)
+            elif get.runtime_type == "nodejs":
+                self.run_nodejs_project(get)
+            elif get.runtime_type == "go":
+                self.run_go_project(get)
             else:
-                if get.runtime_type == "java":
-                    self.run_java_project(get)
-                else:
-                    self.run_go_project(get)
+                return public.returnResult(False, msg="不支持的运行环境类型：{}".format(get.runtime_type))
 
-                dp.sql("runtime").where("id=? and type=?", (get.id, get.runtime_type)).update({
-                    "path": get.site_path,
-                    "command": get.command,
-                    "ports": json.dumps(get.ports_dict)
-                })
+
+            dp.sql("runtime").where("id=? and type=?", (get.id, get.runtime_type)).update({
+                "path": get.site_path,
+                "repo_url": get.get("repo_url", ""),
+                "command": get.command,
+                "ports": json.dumps(get.ports_dict)
+            })
         return public.returnResult(msg="编辑成功")
 
     # 2024/11/1 14:29 删除指定运行环境
@@ -722,12 +743,14 @@ class RuntimeManage(Runtime):
         from btdockerModel.dockerSock import image
         sk_image = image.dockerImage()
         sk_image.build_prune()
+        get.force_update = 1
+        self.check_templates(get)
         return public.returnResult(msg="清理所有构建缓存成功")
 
-    # 2024/10/31 10:33 设置运行环境运行状态（仅java/go/python）
+    # 2024/10/31 10:33 设置运行环境运行状态（仅java/go/python/nodejs）
     def set_runtime_status(self, get):
         '''
-            @name 设置运行环境运行状态（仅java/go/python）
+            @name 设置运行环境运行状态（仅java/go/python/nodejs）
         '''
         get.compose_file = get.get("compose_file", None)
         if get.compose_file is None: return public.returnResult(False, msg="请传compose文件路径：compose_file")
@@ -780,8 +803,8 @@ class RuntimeManage(Runtime):
         '''
         get.runtime_type = get.get("runtime_type", "all")
         if get.runtime_type == "": return public.returnResult(False, msg="请传运行环境类型：runtime_type")
-        if not get.runtime_type in ("all", "php", "java", "go", "python"):
-            return public.returnResult(False, msg="运行环境类型【{}】错误，仅支持：all、php、java、go、python".format(get.runtime_type))
+        if not get.runtime_type in ("all", "php", "java", "go", "python","nodejs"):
+            return public.returnResult(False, msg="运行环境类型【{}】错误，仅支持：all、php、java、go、python、nodejs".format(get.runtime_type))
 
         repo_urls = [
             {
@@ -805,7 +828,9 @@ class RuntimeManage(Runtime):
             "php": ["8.3", "8.2", "8.1", "8.0", "7.4", "7.3", "7.2", "7.1", "7.0", "5.6"],
             "java": ["22", "21", "17", "11", "1.8"],
             "go": ["1.22", "1.21"],
-            "python": ["3.13", "3.12", "3.11", "3.10", "3.9", "3.8", "3.7"]
+            "python": ["3.13", "3.12", "3.11", "3.10", "3.9", "3.8", "3.7"],
+            "nodejs": ["25.1.0","25","24", "23", "22.21.1","21.7.3","20.19.5","18.20.8"],
+            "repo_urls": repo_urls
         }
 
         if os.path.exists(self.versions_file):
@@ -813,14 +838,27 @@ class RuntimeManage(Runtime):
             if new_versions:
                 try:
                     new_versions = json.loads(new_versions)
-                    versions = new_versions
+                    if new_versions.get(get.runtime_type,"") != "":
+                        versions = new_versions
+                    else:
+                        get.force_update = 1
+                        self.check_templates(get)
                 except:
                     pass
 
         if get.runtime_type != "all":
             versions = {get.runtime_type: versions.get(get.runtime_type, [])}
-
-        versions["repo_urls"] = repo_urls
+    
+        if get.runtime_type == "nodejs":
+            versions["repo_urls"] = [
+                {"name": "淘宝源","repo": "https://registry.npmmirror.com/"},
+                {"name": "阿里源","repo": "https://npm.aliyun.com/"},
+                {"name": "网易源","repo": "https://mirrors.163.com/npm/"},
+                {"name": "中国科学技术大学源","repo": "https://mirrors.ustc.edu.cn/npm/"},
+                {"name": "清华大学源","repo": "https://mirrors.tuna.tsinghua.edu.cn/npm/"},
+            ]
+        else:
+            versions["repo_urls"] = repo_urls
 
         return public.returnResult(data=versions)
 

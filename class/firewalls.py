@@ -314,6 +314,10 @@ class firewalls:
         file = '/etc/ssh/sshd_config'
         conf = public.readFile(file)
         if not conf: return public.returnMsg(False, 'SSH配置文件异常，请手动重新安装SSH服务后再试!')
+        #判断端口是否被占用
+        is_exists = public.ExecShell("lsof -i:{}|grep LISTEN|grep -v grep".format(port))
+        if len(is_exists[0]) > 5:
+            return public.returnMsg(False,'该端口已被使用 请使用其他端口！')
 
         rep = r"#*Port\s+([0-9]+)\s*\n"
         conf = re.sub(rep, "Port "+port+"\n", conf)

@@ -192,7 +192,7 @@ class main(panelBase):
             now_time = int(time.time())
             start_time = public.format_date(format="%Y%m%d", times=now_time)
 
-            fields = 'SUM(sent_bytes) as one_day_total_flow'
+            fields = 'SUM(sent_bytes) as one_day_total_flow, SUM(uv_number) as one_day_total_uv, SUM(ip_number) as one_day_total_ip, SUM(pv_number) as one_day_total_pv, SUM(request) as one_day_total_request'
 
             for i in names:
                 db_file = '{}/{}/{}.db'.format(db_path, i, "request_total")
@@ -204,7 +204,7 @@ class main(panelBase):
                 if 'one_day_total_flow' in tmp_result:
                     result_data[i] = tmp_result
                 else:
-                    result_data[i] = {"one_day_total_flow": 0}
+                    result_data[i] = {"one_day_total_flow": 0, "one_day_total_uv": 0, "one_day_total_ip": 0, "one_day_total_pv": 0, "one_day_total_request": 0}
                 db_obj.close()
             return {'data': result_data, 'msg': True, 'status': True}
         except:

@@ -642,6 +642,11 @@ class config:
             return public.returnMsg(False, '入口地址格式不正确,示例: /my_panel')
         if get.admin_path.find("//") != -1:
             return public.returnMsg(False, '入口地址格式不正确,示例: /my_panel')
+
+        valid_path_pattern = re.compile(r'^(/?([a-zA-Z0-9\-._~:/@]|%[0-9A-Fa-f]{2})*)$')
+        if not valid_path_pattern.match(get.admin_path):
+            return public.returnMsg(False, '入口地址格式不正确,示例: /my_panel')
+
         admin_path_file = 'data/admin_path.pl'
         admin_path = '/'
         if os.path.exists(admin_path_file):
@@ -1494,7 +1499,7 @@ class config:
 
     # 提交PHP配置参数
     def SetPHPConf(self, get):
-        php_list = ["52", "53", "54", "55", "56", "70", "71", "72", "73", "74", "80", "81", "82", "83", "84"]
+        php_list = ["52", "53", "54", "55", "56", "70", "71", "72", "73", "74", "80", "81", "82", "83", "84", "85"]
         if not hasattr(get, 'version'):
             return public.returnMsg(False, 'PHP版本错误!')
         if get.version not in php_list:
@@ -1774,7 +1779,7 @@ class config:
                 pwd = public.readFile('{}/root_password.pl'.format(ssl_path))
                 if pwd.strip():
                     passwd = "-passin file:{ssl_path}root_password.pl".format(ssl_path=ssl_path)
-            shell = 'openssl pkcs12 -in {ssl_path}/baota_root.pfx -clcerts -nokeys -out {ssl_path}/baota_root.crt {passwd}'.format(ssl_path=ssl_path,passwd=passwd)
+            shell = 'openssl pkcs12 -legacy -in {ssl_path}/baota_root.pfx -clcerts -nokeys -out {ssl_path}/baota_root.crt {passwd}'.format(ssl_path=ssl_path,passwd=passwd)
             public.print_log(public.ExecShell(shell))
         cert['rep'] = os.path.exists('ssl/input.pl')
         return cert
@@ -4355,7 +4360,7 @@ class config:
     @staticmethod
     def get_versionnumber(get):
         # 打时会替换 为版本时间戳
-        return {"status": True, "msg": "ok", "code": 200, "data": {"version_number": int("1758787359")}}
+        return {"status": True, "msg": "ok", "code": 200, "data": {"version_number": int("1764728423")}}
 
 
 

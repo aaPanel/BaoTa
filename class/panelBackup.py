@@ -259,7 +259,7 @@ class backup:
                 self.echo_info("正在上传到{}，请稍候...".format(self._cloud._title))
                 
                 # 判断是否 大于 5 GB 进行切割上传
-                if backup_size >= self._SPLIT_SIZE and self.cron_info.get("split_type") != "0" and self.cron_info.get("split_value") and (
+                if backup_size >= self._SPLIT_SIZE and self.cron_info.get("split_type","0") != "0" and self.cron_info.get("split_value") and (
                         self.cron_info.get("split_type") != "size" or backup_size // 1024 // 1024 > self.cron_info.get("split_value")):
                     is_status, err = self.split_upload_file(dfile, upload_path)
                     if is_status is False:

@@ -18,6 +18,9 @@ _LAN_TEMPLATE = None
 
 from urllib.parse import urlparse, urlunparse
 
+import warnings
+warnings.filterwarnings("ignore", message=r".*doesn't\s+match\s+a\s+supported\s+version", module="requests")
+
 if sys.version_info[0] == 2:
     reload(sys)
     sys.setdefaultencoding('utf8')
@@ -641,7 +644,7 @@ def ExecShell(cmdstring, timeout=None, shell=True, cwd=None, env=None, user=None
     '''
     a = ''
     e = ''
-    import subprocess, tempfile
+    import subprocess, tempfile, shutil
     preexec_fn = None
     tmp_dir = '/dev/shm'
     if writeFile(tmp_dir + "/execShell_test.pl", b'\0'*1024, "wb+"):
@@ -656,12 +659,21 @@ def ExecShell(cmdstring, timeout=None, shell=True, cwd=None, env=None, user=None
     if user:
         preexec_fn = get_preexec_fn(user)
         tmp_dir = '/tmp'
+
+    bash_bin = shutil.which("bash")
+    # 将执行命令的shell改为bash，因为Debian13中 &> 的输出重定向被shell截断到&（即后台执行）
+    if not bash_bin:
+        bash_paths = ("/usr/bin/bash", "/bin/bash", "/usr/local/bin/bash")
+        for path in bash_paths:
+            if os.path.exists(path):
+                bash_bin = path
+                break
     try:
         rx = md5(cmdstring)
         succ_f = tempfile.SpooledTemporaryFile(max_size=4096, mode='wb+', suffix='_succ', prefix='btex_' + rx, dir=tmp_dir)
         err_f = tempfile.SpooledTemporaryFile(max_size=4096, mode='wb+', suffix='_err', prefix='btex_' + rx, dir=tmp_dir)
         # env = {"BT-NAME":"panel"}
-        sub = subprocess.Popen(cmdstring, close_fds=True, shell=shell, bufsize=128, stdout=succ_f, stderr=err_f, cwd=cwd, env=env, preexec_fn=preexec_fn)
+        sub = subprocess.Popen(cmdstring, close_fds=True, shell=shell, bufsize=128, stdout=succ_f, stderr=err_f, cwd=cwd, env=env, preexec_fn=preexec_fn, executable=bash_bin)
         if timeout:
             s = 0
             d = 0.01
@@ -788,7 +800,21 @@ def GetHost(port=False):
 
 def GetClientIp():
     from flask import request
-    ipaddr = request.remote_addr.replace('::ffff:', '')
+    ipaddr = request.remote_addr
+    if ipaddr:
+        ipaddr = ipaddr.replace('::ffff:', '')
+    if ipaddr in ('127.0.0.1', '::1', "localhost"): # 仅信任本地代理，在本地代理时，认为是开启了免端口访问
+        forwarded_ips = request.headers.get('X-Forwarded-For', "").split(',')
+        if len(forwarded_ips) > 0:
+            ipaddr = forwarded_ips[-1]
+        elif "X-Real-Ip" in request.headers:
+            ipaddr = request.headers.get('X-Real-Ip')
+
+    if not isinstance(ipaddr, str):
+        return '未知IP地址'
+
+    ipaddr = ipaddr.replace('::ffff:', '')
+
     if not check_ip(ipaddr): return '未知IP地址'
     return ipaddr
 
@@ -2052,6 +2078,7 @@ def xsssec(text):
 
 # xss 防御
 def xsssec2(text):
+    if not text or not isinstance(text, str): return text
     return text.replace('<', '&lt;').replace('>', '&gt;')
 
 
@@ -5837,7 +5864,7 @@ def get_php_versions(reverse=False):
     if os.path.exists(_file):
         version_list = json.loads(readFile(_file))
     else:
-        version_list = ['52', '53', '54', '55', '56', '70', '71', '72', '73', '74', '80', '81', '82', '83','84']
+        version_list = ['52', '53', '54', '55', '56', '70', '71', '72', '73', '74', '80', '81', '82', '83','84','85']
 
     return sorted(version_list, reverse=reverse)
 

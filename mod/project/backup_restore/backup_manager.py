@@ -250,7 +250,17 @@ class BackupManager(SiteModule,DatabaseModule,FtpModule,DataManager,BaseUtil,Con
         public.WriteFile(self.backup_pl_file,timestamp)
 
         backup_conf=self.get_backup_conf(timestamp)
-        backup_data_list=backup_conf['backup_data']
+        
+        try:
+            backup_data_list=backup_conf['backup_data']
+        except:
+            backup_data_list=[]
+            backup_data_list.extend(["soft","site","database","wp_tools","ftp","crontab","vmail","ssh","firewall","node","plugin"])
+            backup_conf['backup_data'] = backup_data_list
+            backup_conf['database_id'] = '["ALL"]'
+            backup_conf['site_id'] = '["ALL"]'
+            self.save_backup_conf(timestamp,backup_conf)
+
 
         backup_conf['backup_status']=1
         self.save_backup_conf(timestamp,backup_conf)

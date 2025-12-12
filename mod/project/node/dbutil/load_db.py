@@ -23,7 +23,10 @@ class LoadSite:
     ps: str = ''
     http_config: dict = field(default_factory=lambda: {
         "proxy_next_upstream": "error timeout http_500 http_502 http_503 http_504",
-        "http_alg": "sticky_cookie"
+        "http_alg": "sticky_cookie",
+        "proxy_cache_status": False,
+        "cache_time": "1d",
+        "cache_suffix": "css,js,jpe,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map",
     })
     tcp_config: dict = field(default_factory=lambda: {
         "proxy_connect_timeout": 8,
@@ -48,14 +51,35 @@ class LoadSite:
         if not isinstance(data.get('http_config', None), dict):
             return None, 'http_config is required'
         else:
-            for k in ['proxy_next_upstream', 'http_alg']:
-                if not data['http_config'].get(k):
+            if "proxy_cache_status" not in dict.keys(data['http_config']): #兼容旧版本数据
+                data['http_config']["proxy_cache_status"] = False
+                data['http_config']["cache_time"] = "1d"
+                data['http_config']["cache_suffix"] = "css,js,jpe,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map"
+            for k in ['proxy_next_upstream', 'http_alg', "proxy_cache_status", "cache_time", "cache_suffix"]:
+                if k not in dict.keys(data['http_config']):
                     return None, 'http_config.{} is required'.format(k)
             for i in data['http_config']['proxy_next_upstream'].split():
                 if i not in ('error', 'timeout') and not re.match(r'^http_\d{3}$', i):
                     return None, 'http_config.proxy_next_upstream is invalid'
             if data['http_config']['http_alg'] not in ('sticky_cookie', 'round_robin', 'least_conn', 'ip_hash'):
                 return None, 'http_config.http_alg is invalid'
+            if not isinstance(data['http_config']['proxy_cache_status'], bool):
+                return None, 'http_config.proxy_cache_status is invalid'
+            if not isinstance(data['http_config']['cache_time'], str):
+                return None, 'http_config.cache_time is invalid'
+            if not re.match(r"^[0-9]+([smhd])$", data['http_config']['cache_time']):
+                return None, 'http_config.cache_time is invalid'
+            cache_suffix = data['http_config']['cache_suffix']
+            cache_suffix_list = []
+            for suffix in cache_suffix.split(","):
+                tmp_suffix = re.sub(r"\s", "", suffix)
+                if not tmp_suffix:
+                    continue
+                cache_suffix_list.append(tmp_suffix)
+            real_cache_suffix = ",".join(cache_suffix_list)
+            if not real_cache_suffix:
+                real_cache_suffix = "css,js,jpe,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map"
+            data['http_config']['cache_suffix'] = real_cache_suffix
 
         l = LoadSite(data.get('name'), data.get('site_name'), 'http', data.get('ps', ''),
                      http_config=data.get('http_config'),
@@ -284,7 +308,7 @@ class NodeDB:
             return self.db.table("load_sites").where(
                 "site_type = ? AND ps like ?", ("tcp", "%" + query + "%")).count()
 
-    def loads_list(self, site_type: str, offset: int, limit: int, query: str=""):
+    def loads_list(self, site_type: str, offset: int, limit: int, query: str = ""):
         if site_type == "all":
             if query:
                 return self.db.table("load_sites").where("ps like ?", "%" + query + "%").limit(limit, offset).select()

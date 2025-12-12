@@ -1,1 +1,1 @@
-import{s as a,j as m}from"./base-lib.js?v=1758787359";const s=m("DOCKER-APPSTORE-STORE",{state:()=>({deployMenuData:{app_type:"all",maximum_cpu:"--",maximum_memory:"--"}})}),e=()=>{const m=s();return{refs:a(m),...m}};export{e as g};
+import{s as a,j as m}from"./base-lib.js?v=1764728423";const s=m("DOCKER-APPSTORE-STORE",{state:()=>({deployMenuData:{app_type:"all",maximum_cpu:"--",maximum_memory:"--"}})}),e=()=>{const m=s();return{refs:a(m),...m}};export{e as g};

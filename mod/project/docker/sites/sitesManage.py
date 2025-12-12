@@ -75,7 +75,7 @@ location ~ [^/]\.php(/|$) {{
             @name 获取所有Docker网站项目列表
         '''
         get.type = get.get("type", "all")
-        if not get.type in ("php", "java", "go", "python", "proxy", "app", "all"):
+        if not get.type in ("php", "java", "go", "python", "proxy", "app", "all","nodejs"):
             return public.returnResult(False, msg="type仅支持php、java、go、python、proxy、app、all")
 
         if not os.path.exists("{}/synced_docker_sites.pl".format(self.sites_config_path)):
@@ -140,7 +140,8 @@ location ~ [^/]\.php(/|$) {{
             "go": "Go",
             "python": "Python",
             "proxy": "反向代理",
-            "app": "Docker应用"
+            "app": "Docker应用",
+            "nodejs": "Nodejs"
         }
 
         for site in sites_result["data"]:
@@ -229,7 +230,7 @@ location ~ [^/]\.php(/|$) {{
             if enable_php_body: self.enable_php_template = enable_php_body
             get.enable_php_conf = self.enable_php_template.format(port=get.runtime_port)
 
-        elif get.type in ("java", "go", "python", "app", "proxy"):
+        elif get.type in ("java", "go", "python", "app", "proxy","nodejs"):
 
             get.proxy_pass = get.get("proxy_pass", "http://127.0.0.1:{}".format(get.port))
             get.proxy_host = get.get("proxy_host", "$http_host")
@@ -1856,7 +1857,6 @@ location ~ [^/]\.php(/|$) {{
             else:
                 return public.returnResult(status=False, msg="未找到此URL【{}】的代理信息！".format(get.proxy_path))
 
-        public.set_module_logs('docker_site', 'get_proxy_list', 1)
         return public.returnResult(data=get.proxy_json_conf["proxy_info"])
 
     # 2024/4/23 上午11:16 获取指定网站的所有配置信息
@@ -2086,7 +2086,6 @@ location ~ [^/]\.php(/|$) {{
             return public.returnResult(status=False, msg=update_result["msg"])
         public.serviceReload()
 
-        public.set_module_logs('docker_site', 'add_proxy', 1)
         return public.returnResult(msg="添加成功！")
 
     # 2024/4/22 下午9:34 删除指定网站指定URL的反向代理
@@ -2808,7 +2807,6 @@ location ~ [^/]\.php(/|$) {{
             if domain["name"] not in get.proxy_json_conf["domain_list"]:
                 domain["healthy"] = 0
 
-        public.set_module_logs('docker_site', 'get_domain_list', 1)
         return public.returnResult(data=result_data)
 
     # 2024/11/7 17:05 设置指定网站的伪静态
@@ -3099,7 +3097,10 @@ location ~ [^/]\.php(/|$) {{
         get.site_path = get.proxy_json_conf["site_path"]
         get.run_path = get.proxy_json_conf["run_path"]
 
-        file_path = os.path.join(get.site_path, get.run_path, "404.html")
+        if get.run_path == "/":
+            file_path = os.path.join(get.site_path, "404.html")
+        else:
+            file_path = os.path.join(get.site_path, get.run_path, "404.html")
         get.path = file_path
         get.data = get.file_body
         import files

@@ -348,6 +348,16 @@ class ReceiveMail(object):
                 content_type = part.get_content_type()
                 content_disposition = str(part.get("Content-Disposition"))
 
+                if part.get_content_maintype() == "multipart" and part.get_content_subtype() == "alternative":
+                    # 遍历 alternative 的子部分
+                    for subpart in part.iter_parts():
+                        sub_type = subpart.get_content_type()
+                        if sub_type == "text/html":
+                            body["html"] = subpart.get_content()
+                        elif sub_type == "text/plain" and not body["html"]:
+                            body["body"] = subpart.get_content()
+                    continue
+
                 # 解析正文
                 if content_type == "text/plain" and "attachment" not in content_disposition:
                     body["body"] = part.get_content()

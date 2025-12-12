@@ -158,6 +158,7 @@ class main(panelBase):
             data['hide_ad'] = True
         else:
             data['hide_ad'] = False
+        data['o'] = public.get_oem_name()
         return data
 
     def get_pd(self, get):

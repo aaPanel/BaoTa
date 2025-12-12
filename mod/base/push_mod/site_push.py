@@ -431,8 +431,6 @@ class PanelLoginTask(BaseTask):
         return msg
 
     def task_config_update_hook(self, task: dict) -> None:
-        # import public
-        # public.print_log(4444444444444)
         sender = task["sender"]
         if len(sender) > 0:
             send_id = sender[0]
@@ -444,8 +442,6 @@ class PanelLoginTask(BaseTask):
             write_file(self.push_tip_file, sender_data["sender_type"])
 
     def task_config_create_hook(self, task: dict) -> None:
-        # import public
-        # public.print_log(444444433333)
         sender = task["sender"]
         if len(sender) > 0:
             send_id = sender[0]
@@ -457,8 +453,6 @@ class PanelLoginTask(BaseTask):
             write_file(self.push_tip_file, sender_data["sender_type"])
 
     def task_config_remove_hook(self, task: dict) -> None:
-        # import public
-        # public.print_log(33333333333333333333333)
         if os.path.exists(self.push_tip_file):
             os.remove(self.push_tip_file)
 
@@ -1070,9 +1064,9 @@ class PanelUpdateTask(BaseTask):
         # 不在固定时间段内，跳过
         if self.user_can_request_hour() != datetime.now().hour:
             return None
-        sub_path = "/api/panel/get_panel_version_v2"
+        sub_path = "/api/panel/get_panel_version_v3"
         if self.is_stable_version:
-            sub_path = "/api/panel/get_stable_panel_version"
+            sub_path = "/api/panel/get_stable_panel_version_v3"
         try:
             res = json.loads(read_file('/www/server/panel/data/node_url.pl'))
             www_url = res['www-node']['url']

@@ -1245,26 +1245,27 @@ fullchain.pem       粘贴到证书输入框
             exclude_data["exclude_hash_let"] = {}
 
         data = self.read_config()
-        try:
-            self.get_apis()
-        except:
-            return exclude_data
 
-        for order in data.get('orders', {}).values():
-            if order['status'] != "valid" or not order.get("certificate_url"):
-                continue
+        if data.get('orders', {}):
             try:
-                res = self.acme_request(
-                    order['certificate_url'], "")
-                if res.status_code not in [200, 201]:
-                    continue
-                pem_certificate = res.content
-                if type(pem_certificate) == bytes:
-                    pem_certificate = pem_certificate.decode('utf-8')
-                cert = self.split_ca_data(pem_certificate)
-                exclude_data["exclude_hash_let"].update({order['index']: self._hash(certificate=cert['cert'] + cert['root'])})
+                self.get_apis()
             except:
-                pass
+                return exclude_data
+            for order in data.get('orders', {}).values():
+                if order['status'] != "valid" or not order.get("certificate_url"):
+                    continue
+                try:
+                    res = self.acme_request(
+                        order['certificate_url'], "")
+                    if res.status_code not in [200, 201]:
+                        continue
+                    pem_certificate = res.content
+                    if type(pem_certificate) == bytes:
+                        pem_certificate = pem_certificate.decode('utf-8')
+                    cert = self.split_ca_data(pem_certificate)
+                    exclude_data["exclude_hash_let"].update({order['index']: self._hash(certificate=cert['cert'] + cert['root'])})
+                except:
+                    pass
         exclude_data['version_let'] = '1'
         public.writeFile(path, json.dumps(exclude_data))
         return exclude_data

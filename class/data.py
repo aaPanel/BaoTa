@@ -599,7 +599,7 @@ class data:
                 for _find in data['data']:
                     _keys = _find.keys()
                     for _key in _keys:
-                        _find[_key] = public.xsssec(_find[_key])
+                        _find[_key] = public.xsssec2(_find[_key])
             except:
                 pass
 
@@ -956,7 +956,11 @@ class data:
         port = get.port
         old_conf = re.search(rep, conf).groups()[0]
         old_port = re.search(r"listen\s+(\d+)\s*ssl", old_conf).groups()[0]
-        new_conf = 'listen {} ssl http2;'.format(port)
+        use_http2_on = public.is_change_nginx_http2()
+        if not use_http2_on:
+            new_conf = 'listen {} ssl http2;'.format(port)
+        else:
+            new_conf = 'listen {} ssl;'.format(port)
         conf = conf.replace(old_conf, new_conf)
         public.writeFile('/www/server/panel/vhost/nginx/{}.conf'.format(get.siteName), conf)
         apa_conf = public.readFile('/www/server/panel/vhost/apache/{}.conf'.format(get.siteName))

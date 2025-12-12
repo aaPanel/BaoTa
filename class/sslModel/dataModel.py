@@ -21,6 +21,7 @@ class main(sslBase):
     def __init__(self):
         super().__init__()
         # self.__init_data()
+        self.__create_table()
 
 
 
@@ -56,7 +57,7 @@ class main(sslBase):
         """
         @name 获取域名列表
         """
-        self.__init_data()
+        # self.__init_data()
 
         filter_sql = ''
         if get.get('search'):
@@ -75,11 +76,12 @@ class main(sslBase):
         if 'limit' in get:
             limit = int(get.limit)
 
-        count = public.M('ssl_domains').where('1=1 {}'.format(filter_sql), ()).count()
-        page_data = public.get_page(count, p, limit, collback)
+        # count = public.M('ssl_domains').where("dns_id not like 'cloud_id=%' {}".format(filter_sql), ()).count()
+        # page_data = public.get_page(count, p, limit, collback)
 
         dns_data = self.get_dns_data(get)
-        data = public.M('ssl_domains').field('id,domain,type_id,dns_id,endtime,ps').where('1=1 {}'.format(filter_sql), ()).limit(page_data['shift'] + ',' + page_data['row']).select()
+        data = public.M('ssl_domains').field('id,domain,type_id,dns_id,endtime,ps').where("dns_id not like 'cloud_id=%' {}".format(filter_sql), ()).select()
+
         record_data = self.get_record_data()
 
         from mod.project.push import taskMod
@@ -105,7 +107,18 @@ class main(sslBase):
             val['dns'] = dns_data.get(val['dns_id'],{})
             # 获取子域名数量
             val['sbd_count'] = record_data.get(val["domain"], {}).get('info', {}).get('record_total', '-')
-            _data.append(val)
+
+            if val['dns_id'] != '':
+                _data.append(val)
+            else:
+                remove_ids.append(str(val['id']))
+
+        count = len(_data)
+
+        begin = (p - 1) * limit
+        end = begin + limit
+        _data = _data[begin:end]
+        page_data = public.get_page(count, p, limit, collback)
         try:
             public.M('ssl_domains').where("id in ({})".format(",".join(remove_ids)), ()).delete()
         except Exception as e:
@@ -155,6 +168,9 @@ class main(sslBase):
         res = public.M('ssl_domains').executemany('update ssl_domains set dns_id=? where id=?',params)
         if type(res) != int:
             return public.returnMsg(False,'设置失败!')
+        if res != len(ids):
+            insert_res = public.M('ssl_domains').executemany('insert into ssl_domains (dns_id,domain) values (?,?)', params)
+            return public.returnMsg(True, '设置成功，已更新 {} 条记录，新增 {} 条记录!'.format(res, insert_res))
 
         return public.returnMsg(True,'设置成功，已更新 {} 条记录!'.format(res))
 
@@ -258,51 +274,51 @@ class main(sslBase):
             return public.returnMsg(True, '删除失败')
         
 
-    def __init_data(self):
-        """
-        @name 同步数据
-        """
-        # 检查表是否存在
-        self.__create_table()
-
-        # 根据文件修改时间判断是否要同步
-        check_path = "/www/server/panel/data/sync_domains.pl"
-        m_time = str(os.stat("/www/server/panel/data/db/site.db").st_mtime)
-        check_path_docker = "/www/server/panel/data/sync_domains_docker.pl"
-        m_time_docker = str(os.stat("/www/server/panel/data/db/docker.db").st_mtime)
-        if os.path.exists(check_path) and os.path.exists(check_path_docker):
-            if m_time == public.readFile(check_path) and m_time_docker == public.readFile(check_path_docker):
-                return
-        public.writeFile(check_path, m_time)
-        public.writeFile(check_path_docker, m_time)
-
-        # 获取手动删除的域名
-        del_path = '{}/config/del_domains.pl'.format(public.get_panel_path())
-        try:
-            skip_domains = json.loads(public.readFile(del_path))
-        except:
-            skip_domains = []
-
-        root_domains = {i['domain'] for i in public.M('ssl_domains').field('domain').select()}
-        site_domains = set()
-        for i in public.M('domain').field('name').select():
-            if not self._is_ip(i['name']):
-                site_domains.add(self.extract_zone(i['name'])[0])
-
-        docker_site_domains = set()
-        for i in public.M('docker_domain').field('name').select():
-            if not self._is_ip(i['name']):
-                docker_site_domains.add(self.extract_zone(i['name'])[0])
-        add_domains = (site_domains | docker_site_domains) - root_domains - set(skip_domains)
-        # del_domains = root_domains - (docker_site_domains | site_domains)
-
-        # 添加域名
-        for domain in add_domains:
-            public.M('ssl_domains').add('domain,dns_id,type_id,endtime,ps', (domain, 0, 0, 0, ''))
-
-        # 删除域名
-        # for domain in del_domains:
-        #     public.M('ssl_domains').where("domain=?", (domain,)).delete()
+    # def __init_data(self):
+    #     """
+    #     @name 同步数据
+    #     """
+    #     # 检查表是否存在
+    #     self.__create_table()
+    #
+    #     # 根据文件修改时间判断是否要同步
+    #     check_path = "/www/server/panel/data/sync_domains.pl"
+    #     m_time = str(os.stat("/www/server/panel/data/db/site.db").st_mtime)
+    #     check_path_docker = "/www/server/panel/data/sync_domains_docker.pl"
+    #     m_time_docker = str(os.stat("/www/server/panel/data/db/docker.db").st_mtime)
+    #     if os.path.exists(check_path) and os.path.exists(check_path_docker):
+    #         if m_time == public.readFile(check_path) and m_time_docker == public.readFile(check_path_docker):
+    #             return
+    #     public.writeFile(check_path, m_time)
+    #     public.writeFile(check_path_docker, m_time)
+    #
+    #     # 获取手动删除的域名
+    #     del_path = '{}/config/del_domains.pl'.format(public.get_panel_path())
+    #     try:
+    #         skip_domains = json.loads(public.readFile(del_path))
+    #     except:
+    #         skip_domains = []
+    #
+    #     root_domains = {i['domain'] for i in public.M('ssl_domains').field('domain').select()}
+    #     site_domains = set()
+    #     for i in public.M('domain').field('name').select():
+    #         if not self._is_ip(i['name']):
+    #             site_domains.add(self.extract_zone(i['name'])[0])
+    #
+    #     docker_site_domains = set()
+    #     for i in public.M('docker_domain').field('name').select():
+    #         if not self._is_ip(i['name']):
+    #             docker_site_domains.add(self.extract_zone(i['name'])[0])
+    #     add_domains = (site_domains | docker_site_domains) - root_domains - set(skip_domains)
+    #     # del_domains = root_domains - (docker_site_domains | site_domains)
+    #
+    #     # 添加域名
+    #     for domain in add_domains:
+    #         public.M('ssl_domains').add('domain,dns_id,type_id,endtime,ps', (domain, 0, 0, 0, ''))
+    #
+    #     # 删除域名
+    #     # for domain in del_domains:
+    #     #     public.M('ssl_domains').where("domain=?", (domain,)).delete()
 
     def del_domains(self, get):
         """
@@ -323,36 +339,36 @@ class main(sslBase):
         except:
             return public.returnMsg(False, '删除失败')
 
-    # 手动同步域名
-    def sync_domains(self, get):
-        """
-        @name 手动同步域名
-        """
-        root_domains = {i['domain'] for i in public.M('ssl_domains').field('domain').select()}
-        site_domains = set()
-        for i in public.M('domain').field('name').select():
-            if not self._is_ip(i['name']):
-                site_domains.add(self.extract_zone(i['name'])[0])
-
-        docker_site_domains=set()
-        for i in public.M('docker_domain').field('name').select():
-            if not self._is_ip(i['name']):
-                docker_site_domains.add(self.extract_zone(i['name'])[0])
-
-        add_domains = (site_domains | docker_site_domains) - root_domains
-        del_domains = root_domains - (docker_site_domains | site_domains)
-
-        # 添加域名
-        for domain in add_domains:
-            public.M('ssl_domains').add('domain,dns_id,type_id,endtime,ps', (domain, 0, 0, 0, ''))
-        # 删除域名
-        for domain in del_domains:
-            public.M('ssl_domains').where("domain=?", (domain,)).delete()
-        # 删除文件
-        try:
-            os.remove('{}/config/del_domains.pl'.format(public.get_panel_path()))
-        except: pass
-        return public.returnMsg(True, '同步成功')
+    # # 手动同步域名
+    # def sync_domains(self, get):
+    #     """
+    #     @name 手动同步域名
+    #     """
+    #     root_domains = {i['domain'] for i in public.M('ssl_domains').field('domain').select()}
+    #     site_domains = set()
+    #     for i in public.M('domain').field('name').select():
+    #         if not self._is_ip(i['name']):
+    #             site_domains.add(self.extract_zone(i['name'])[0])
+    #
+    #     docker_site_domains=set()
+    #     for i in public.M('docker_domain').field('name').select():
+    #         if not self._is_ip(i['name']):
+    #             docker_site_domains.add(self.extract_zone(i['name'])[0])
+    #
+    #     add_domains = (site_domains | docker_site_domains) - root_domains
+    #     del_domains = root_domains - (docker_site_domains | site_domains)
+    #
+    #     # 添加域名
+    #     for domain in add_domains:
+    #         public.M('ssl_domains').add('domain,dns_id,type_id,endtime,ps', (domain, 0, 0, 0, ''))
+    #     # 删除域名
+    #     for domain in del_domains:
+    #         public.M('ssl_domains').where("domain=?", (domain,)).delete()
+    #     # 删除文件
+    #     try:
+    #         os.remove('{}/config/del_domains.pl'.format(public.get_panel_path()))
+    #     except: pass
+    #     return public.returnMsg(True, '同步成功')
 
     @staticmethod
     def _is_ip(data: str):
@@ -411,7 +427,7 @@ class main(sslBase):
         return obj_main.model(args)
 
     def get_domain_dns_config(self, get):
-        self.__init_data()
+        # self.__init_data()
 
         dns_data = self.get_dns_data(get)
         root_data = public.M('ssl_domains').field('id,domain,dns_id').select()
@@ -431,11 +447,11 @@ class main(sslBase):
         for i in data:
             root, sub_domain, _ = self.extract_zone(i['name'])
             i["status"] = 0
-            i["domain_id"] = -1
+            i["domain_id"] = root
             for j in root_data:
                 if j['domain'] == root:
                     i["domain_id"] = j["id"]
-                    i["status"] = 1 if j["dns_id"] in dns_data.keys() else 0
+                    i["status"] = 1 if j["dns_id"].find("cloud_id=")!=-1 or j["dns_id"] in dns_data.keys()else 0
                     break
         if 'auto_wildcard' in get and get.auto_wildcard == '1':
             new_data = []
@@ -475,65 +491,97 @@ class main(sslBase):
         return manager.PushManager().remove_task_conf(get)
 
     def add_dns_value_by_domain(self, domain, dns_value, record_type="TXT", is_let_txt=False, mx=10):
-        root, _, subd = self.extract_zone(domain, is_let_txt)
+        root, sub, subd = self.extract_zone(domain, is_let_txt)
         domain_name = subd+'.'+root if is_let_txt else domain
         try:
             data = public.M('ssl_domains').field('dns_id').where("domain=?", (root,)).select()
             dns_id = data[0]['dns_id']
         except:
             dns_id = ''
-        for dns_config in self.get_dns_data(public.dict_obj()).values():
-            if root in dns_config.get("domains", []) or str(dns_id) == dns_config["id"]:
-                args = {
-                    "fun_name": "create_dns_record",
-                    "dns_id": dns_id,
-                    "domain_dns_value": dns_value,
-                    "record_type": record_type,
-                    "domain_name": domain_name,
-                    "mx": mx,
-                }
-                _return = self.run_fun(public.to_dict_obj(args))
-                if not _return["status"] and '记录已存在' not in _return["msg"]:
-                    raise Exception("设置解析记录失败：{}".format(_return["msg"]))
-                else:
-                    return _return
+        if dns_id.find("cloud_id=") != -1:
+            domain_id = dns_id.split("cloud_id=")[1]
+            from mod.project.domain import domainMod
+            domain_obj = domainMod.main()
+            rep = domain_obj.request({"url":"/api/v1/dns/record/create","domain_type":1,"domain_id":domain_id,"record":subd if is_let_txt else sub,"value":dns_value,"type":record_type,"mx":mx,"ttl":600,"remark":"","view_id":0})
+            if not rep["status"] and '记录已存在' not in rep["msg"]:
+                public.print_log(rep)
+                raise Exception("设置解析记录失败：{}".format(rep["msg"]))
+            else:
+                return rep
+        else:
+            for dns_config in self.get_dns_data(public.dict_obj()).values():
+                if root in dns_config.get("domains", []) or str(dns_id) == dns_config["id"]:
+                    args = {
+                        "fun_name": "create_dns_record",
+                        "dns_id": dns_id,
+                        "domain_dns_value": dns_value,
+                        "record_type": record_type,
+                        "domain_name": domain_name,
+                        "mx": mx,
+                    }
+                    _return = self.run_fun(public.to_dict_obj(args))
+                    if not _return["status"] and '记录已存在' not in _return["msg"]:
+                        raise Exception("设置解析记录失败：{}".format(_return["msg"]))
+                    else:
+                        return _return
         raise Exception("设置解析记录失败：没有找到域名为{}的有效的DNS API密钥信息".format(domain))
 
     def get_dns_value_by_domain(self, domain, record_type="TXT", is_let_txt=False):
-        root, _, subd = self.extract_zone(domain, is_let_txt)
+        root, sub, subd = self.extract_zone(domain, is_let_txt)
         domain_name = subd + '.' + root if is_let_txt else domain
         try:
             data = public.M('ssl_domains').field('dns_id').where("domain=?", (root,)).select()
             dns_id = data[0]['dns_id']
         except:
             dns_id = ''
-        for dns_config in self.get_dns_data(public.dict_obj()).values():
-            if root in dns_config.get("domains", []) or str(dns_id) == dns_config["id"]:
-                args = {
-                    "fun_name": "get_dns_record",
-                    "dns_id": dns_id,
-                    "domain_name": domain,
-                }
-                record_data = self.run_fun(public.to_dict_obj(args))
-                _return = []
-                for record in record_data.get("list", []):
-                    if record["type"] == record_type and record["name"] == domain_name:
-                        _return.append(record["RecordId"])
-                return _return, dns_id
+        if dns_id.find("cloud_id=") != -1:
+            domain_id = dns_id.split("cloud_id=")[1]
+            from mod.project.domain import domainMod
+            domain_obj = domainMod.main()
+            record_data = domain_obj.request({"url": "/api/v1/dns/record/list", "domain_type": 1, "domain_id": domain_id, "searchKey": "record", "searchValue": subd if is_let_txt else sub})
+            _return = []
+            for record in record_data["data"].get("data", []):
+                if record["type"] == record_type and record["record"] == (subd if is_let_txt else sub):
+                    _return.append(record["record_id"])
+            return _return, dns_id
+        else:
+            for dns_config in self.get_dns_data(public.dict_obj()).values():
+                if root in dns_config.get("domains", []) or str(dns_id) == dns_config["id"]:
+                    args = {
+                        "fun_name": "get_dns_record",
+                        "dns_id": dns_id,
+                        "domain_name": domain,
+                    }
+                    record_data = self.run_fun(public.to_dict_obj(args))
+                    _return = []
+                    for record in record_data.get("list", []):
+                        if record["type"] == record_type and record["name"] == domain_name:
+                            _return.append(record["RecordId"])
+                    return _return, dns_id
         return [], ""
 
     def del_dns_value_by_domain(self, domain, record_type="TXT", is_let_txt=False):
         ids, dns_id = self.get_dns_value_by_domain(domain, record_type, is_let_txt)
-        for record_id in ids:
-            args = {
-                "fun_name": "delete_dns_record",
-                "dns_id": dns_id,
-                "RecordId": record_id,
-                "domain_name": domain,
-            }
-            _return = self.run_fun(public.to_dict_obj(args))
-            if not _return["status"]:
-                raise Exception("删除解析记录失败：{}".format(_return["msg"]))
+        if dns_id.find("cloud_id=") != -1:
+            domain_id = dns_id.split("cloud_id=")[1]
+            from mod.project.domain import domainMod
+            domain_obj = domainMod.main()
+            for record_id in ids:
+                rep = domain_obj.request({"url": "/api/v1/dns/record/delete", "domain_type": 1, "domain_id": domain_id, "record_id": record_id})
+                if not rep["status"]:
+                    raise Exception("删除解析记录失败：{}".format(rep["msg"]))
+            return
+        else:
+            for record_id in ids:
+                args = {
+                    "fun_name": "delete_dns_record",
+                    "dns_id": dns_id,
+                    "RecordId": record_id,
+                    "domain_name": domain,
+                }
+                _return = self.run_fun(public.to_dict_obj(args))
+                if not _return["status"]:
+                    raise Exception("删除解析记录失败：{}".format(_return["msg"]))
 
     def get_sub_domains(self, get):
         import socket
@@ -548,6 +596,12 @@ class main(sslBase):
     def add_domain(self, get):
         domain_name = get.domain_name
         dns_id = get.dns_id
+
+        # 检查是否为顶级域名
+        root, sub, _ = self.extract_zone(domain_name)
+        if sub != '':
+            return public.returnMsg(False, '只能添加顶级域名')
+
         data = public.M('ssl_domains').field('id').where("domain=?", (domain_name,)).select()
         if data:
             return public.returnMsg(False, '域名已存在')

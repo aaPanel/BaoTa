@@ -13,6 +13,7 @@ from mod.project.node.task_flow import flow_useful_version
 class main():
     def __init__(self):
         self.tip_file = public.get_panel_path() + "/data/mod_node_used.pl"
+        self.show_mode_file = public.get_panel_path() + "/data/mod_node_show_mode.pl"
 
     def add_node(self, get):
         """
@@ -132,6 +133,24 @@ class main():
             monitor_node_once_with_timeout(node)
         return json_response(True, "节点更新成功")
 
+    def default_show_mode(self) -> str:
+        if not os.path.exists(self.show_mode_file):
+            return "list"
+        show_mode = public.readFile(self.show_mode_file)
+        if not show_mode:
+            return "list"
+        if show_mode not in ["list", "block"]:
+            return "list"
+        return show_mode
+
+    def set_show_mode(self, mode_name: str):
+        if mode_name not in ["list", "block"]:
+            return False
+        if mode_name == "block":
+            public.set_module_logs("node_show_block", "node_show_block")
+        public.writeFile(self.show_mode_file, mode_name)
+        return True
+
     def get_node_list(self, get):
         """
         获取节点列表
@@ -143,6 +162,17 @@ class main():
         search = get.get('search', "").strip()
         category_id = get.get('category_id/d', -1)
         refresh = get.get('refresh/s', "")
+        show_mode = get.get('show_mode/s', "")
+        if not show_mode or show_mode not in ["list", "block"]:
+            show_mode = self.default_show_mode()
+        else:
+            if not self.set_show_mode(show_mode):
+                show_mode = self.default_show_mode()
+
+        if show_mode == "block": # 返回所有数据
+            page_num = 1
+            limit = 9999999
+
         srv_db = ServerNodeDB()
         data, err = srv_db.get_node_list(search, category_id, (page_num - 1) * limit, limit)
         if err:
@@ -158,7 +188,6 @@ class main():
             for th in th_list:
                 th.join()
 
-
         for node in data:
             if isinstance(node["ssh_conf"], str):
                 node["ssh_conf"] = json.loads(node["ssh_conf"])
@@ -173,6 +202,7 @@ class main():
         count = srv_db.node_count(search, category_id)
         page = public.get_page(count, page_num, limit)
         page["data"] = data
+        page["show_mode"] = show_mode
         return page
 
     @staticmethod

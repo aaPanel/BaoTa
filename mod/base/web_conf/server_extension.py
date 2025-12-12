@@ -81,7 +81,7 @@ class ApacheExtension(NginxExtension):
             re.compile(r"<VirtualHost\s+\S+:\d+>\s(.*\n){0,6}\s*DocumentRoot\s+[^\n]*\n"),
         ]
 
-        insert_ext = "    IncludeOptional {}/*.conf;\n".format(ext_path)
+        insert_ext = "    IncludeOptional {}/*.conf\n".format(ext_path)
         for rep_exp in rep_exp_list:
             find_list = list(re.finditer(rep_exp, config_data))
             if not find_list:
@@ -94,10 +94,10 @@ class ApacheExtension(NginxExtension):
 
     @staticmethod
     def remove_extension_from_config(site_name: str, config_data: str):
-        regexp = re.compile(r"\s*IncludeOptional\s+/.*extension/.*/\*\.conf;[^\n]*\n")
+        regexp = re.compile(r"\s*IncludeOptional\s+/.*extension/.*/\*\.conf[^\n]*\n")
         return re.sub(regexp, "\n", config_data)
 
     @staticmethod
     def has_extension(conf_data: str) -> bool:
-        regexp = re.compile(r"\s*IncludeOptional\s+/.*extension/.*/\*\.conf;[^\n]*\n")
+        regexp = re.compile(r"\s*IncludeOptional\s+/.*extension/.*/\*\.conf[^\n]*\n")
         return bool(re.search(regexp, conf_data))

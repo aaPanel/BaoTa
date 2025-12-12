@@ -336,10 +336,14 @@ class main(AppManage, RuntimeManage, SitesManage, OllamaMod):
 
             apps = AppHub().parser_zip_apphub(get)
             app_list.extend(apps)
-        public.print_log(app_list)
         return public.returnResult(True,data=app_list)
 
-
+    def clean_apphub(self,get):
+        '''
+            @name 清理apphub缓存
+            @author csj <2025/11/3>
+        '''
+        return AppHub().clean_apphub(get)
 
 if __name__ == '__main__':
     pass

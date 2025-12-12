@@ -120,7 +120,7 @@ class HttpProxy:
         elif pma_version == '5.1':
             php_versions = ['71','72','73','74','80']
         elif pma_version == '5.2':
-            php_versions = ['72','73','74','80','81','82']
+            php_versions = ['72','73','74','80','81','82','83','84']
         elif pma_version == '5.3':
             php_versions = ['72','73','74','80','81']
         elif pma_version == '6.0':

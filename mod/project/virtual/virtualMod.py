@@ -365,6 +365,7 @@ class main():
         """
         @安装虚拟空间服务
         """
+        public.set_module_logs('vhost_virtual', 'install_service', 1)
         public.httpPost(public.GetConfigValue('home') + '/api/panel/plugin_total', {"pid": "402", 'p_name': "vhost_virtual"}, 3)
         # 检测证书目录是否存在，不存在则创建
         if not os.path.exists(self.cert_path):

@@ -57,6 +57,8 @@ if not hooks:
 dns_client = None
 app.config['DEBUG'] = os.path.exists('data/debug.pl')
 app.config['SSL'] = os.path.exists('data/ssl.pl')
+app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 16 # 最大请求大小，用于支持3M内文件编辑和文件分片传输
+app.config['MAX_FORM_MEMORY_SIZE'] = 1024 * 1024 * 4 # 一个表单最大内存大小，用于支持3M内文件编辑
 
 # 设置BasicAuth
 basic_auth_conf = 'config/basic_auth.json'
@@ -461,9 +463,9 @@ REQUEST_FORM: {request_form}
     result = public.readFile(
         public.get_panel_path() +
         '/BTPanel/templates/default/panel_error.html').format(
-        error_title=error_title,
+        error_title=public.xsssec(error_title),
         request_info=request_info,
-        error_msg=error_info)
+        error_msg=public.xsssec(error_info))
 
     # 用户信息
     # if not public.cache_get("infos"):
@@ -668,7 +670,8 @@ def site(action=None,pdata=None):
             "add_dns_api", "remove_dns_api", "set_dns_api", "test_domains_api",
             "multiple_basedir", "multiple_limit_net", "multiple_referer", 'check_ssl', "set_404_config", "get_404_config", "set_restart_task", "get_restart_task",
             "get_domains", "InputBackup","export_sites_to_csv","DelRewriteTel","open_cdn_ip","set_site_dns", "set_site_ignore_https_mode",
-            "set_ignore_view_domain_title", "get_view_title_content")
+            "set_ignore_view_domain_title", "get_view_title_content", "set_free_total_status", "get_free_total_status",
+            "get_https_settings", "set_global_http2https")
     return publicObject(siteObject, defs, None, pdata)
 
 
@@ -863,8 +866,8 @@ def ssh_security(pdata=None):
             'check_so_file', 'get_so_file', 'get_pin', 'set_login_send',
             'get_login_send', 'get_msg_push_list', 'clear_login_send', 'get_login_record', 'start_login_record',
             'stop_login_record', 'get_record_list', 'get_file_json', 'set_root_password',
-            'set_anti_conf', 'get_anti_conf', 'get_sshd_anti_logs', 'del_ban_ip',
-            'get_sys_user', 'add_sys_user', 'del_sys_user', 'set_user_send', 'get_user_send')
+            'set_anti_conf', 'get_anti_conf', 'get_sshd_anti_logs', 'del_ban_ip', "remove_video_record",
+            'get_sys_user', 'add_sys_user', 'del_sys_user', 'set_user_send', 'get_user_send', "get_record_video")
     return publicObject(firewallObject, defs, None, pdata, is_csrf)
 
 
@@ -1272,7 +1275,7 @@ def system(pdata=None):
             'GetDiskInfo', 'GetCpuInfo', 'GetBootTime', 'GetSystemVersion',
             'GetMemInfo', 'GetSystemTotal', 'GetConcifInfo', 'ServiceAdmin',
             'ReWeb', 'RestartServer', 'ReMemory', 'RepPanel','set_rname','ReloadWeb','reload_task',
-            'repair_panel','upgrade_panel','get_upgrade_log',
+            'repair_panel','upgrade_panel','get_upgrade_log', 'upgrade_env', 'upgrade_env_log',
             'GetTemplateOverview', 'GetOverview', 'AddOverview', 'SetOverview', 'DelOverview'  # 首页概览
             )
     return publicObject(sysObject, defs, None, pdata)
@@ -1333,6 +1336,15 @@ def node(action=None,pdata=None):
     is_bind()
     return render_template('index1.html', data={})
 
+@app.route('/domain', methods=method_all)
+@app.route('/domain/<action>', methods=method_all)
+@app.route('/domain/<action>/', methods=method_all)
+def domain(action=None,pdata=None):
+    # 图标
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    is_bind()
+    return render_template('index1.html', data={})
 
 @app.route('/vhost', methods=method_all)
 @app.route('/vhost/<action>', methods=method_all)
@@ -1453,6 +1465,7 @@ def auth(pdata=None):
     defs = ('get_plugin_remarks', 'get_re_order_status_plugin',
             'create_plugin_other_order', 'get_order_stat',
             'get_voucher_plugin', 'create_order_voucher_plugin',
+						'get_auth_bind_num',
             'get_product_discount_by', 'get_re_order_status',
             'create_order_voucher', 'create_order', 'get_order_status',
             'get_voucher', 'flush_pay_status', 'create_serverid',
@@ -1461,7 +1474,7 @@ def auth(pdata=None):
             'get_renew_code', 'check_renew_code', 'get_business_plugin',
             'get_ad_list', 'check_plugin_end', 'get_plugin_price', 'get_apply_copon', 'get_coupon_list', 'ignore_coupon_time',
             'set_user_adviser', 'rest_unbind_count', 'unbind_authorization', 'get_all_voucher_plugin',
-            'get_pay_unbind_count', 'get_coupons', 'get_credits', 'create_with_credit_by_panel', 'get_last_paid_time')
+            'get_pay_unbind_count', 'get_coupons', 'get_credits', 'create_with_credit_by_panel', 'get_last_paid_time', 'receive_products', 'get_free_activity_info')
     result = publicObject(toObject, defs, None, pdata)
     return result
 
@@ -1783,7 +1796,7 @@ def proxy_rspamd_requests(path):
     for h in request.headers.keys():
         headers[h] = request.headers[h]
     if request.method == "GET":
-        if re.search("\.(js|css)$", path):
+        if re.search(r"\.(js|css)$", path):
             return send_file('/usr/share/rspamd/www/rspamd/' + path,
                              conditional=True,
                              etag=True)
@@ -2952,7 +2965,7 @@ def ws_panel_thread(get):
     get.mod_name = get.mod_name.strip()
     get.def_name = get.def_name.strip()
     check_str = '{}{}'.format(get.mod_name, get.def_name)
-    if not re.match("^\w+$", check_str) or get.mod_name in [
+    if not re.match(r"^\w+$", check_str) or get.mod_name in [
         'public', 'common', 'db', 'db_mysql', 'downloadFile', 'jobs'
     ]:
         get._ws.send(

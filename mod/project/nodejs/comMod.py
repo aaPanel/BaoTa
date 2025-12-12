@@ -303,7 +303,7 @@ class main(NodeJs):
             return public.returnResult(False, 'action参数错误, 只支持restart/stop/start', code=5)
 
         self.set_project_model("pm2")
-        return getattr(self.projectModel, get.status)(get.mode, get.id, get.name)
+        return getattr(self.projectModel, get.status)(get.mode, get.id, get.name, get.get("project_name/s", ""))
 
     # 2024/7/11 下午8:07 删除指定pm2项目
     def del_pm2_project(self, get):

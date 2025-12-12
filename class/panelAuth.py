@@ -90,6 +90,7 @@ class panelAuth:
         @get.coupon 优惠券
         """
         params = {}
+        if hasattr(get,'type'): params['type'] = get.type
         data = self.send_cloud('apply_coupon', params)
         cache.delete('get_coupon_list')
 
@@ -110,6 +111,22 @@ class panelAuth:
             return 1
         return 0
 
+    def _get_coupon_list_no_cache(self,get):
+        """
+        获取优惠券-无缓存
+        @get.coupon 优惠券
+        """
+        params = {}
+        if hasattr(get,'type'): params['type'] = get.type
+        if hasattr(get,'pid'): params['pid'] = get.pid
+        data = self.send_cloud('get_coupon_list', params)
+
+        if not data:
+            if type(data) == list:
+                return []
+            return self.res_request_error()
+        return data
+
     def get_coupon_list(self,get):
         """
         获取优惠券
@@ -119,20 +136,24 @@ class panelAuth:
         if self.get_ignore_time(get):
             return []
 
+        if not hasattr(get,'type') or get.type in (5, "5"):
+            return self._get_coupon_list_no_cache(get)
+
         skey = 'get_coupon_list'
         data = cache.get(skey)
         if type(data) == list: return data
 
         params = {}
+        if hasattr(get,'type'): params['type'] = get.type
+        if hasattr(get,'pid'): params['pid'] = get.pid
         data = self.send_cloud('get_coupon_list', params)
-
 
         if not data:
             if type(data) == list:
-                cache.set(skey,data,3600)
+                cache.set(skey,data,600)
                 return []
             return self.res_request_error()
-        cache.set(skey,data,3600)
+        cache.set(skey,data,600)
         return data
 
     def ignore_coupon_time(self, get):
@@ -472,6 +493,16 @@ class panelAuth:
             if 'get_product_bay' in session: del (session['get_product_bay'])
         return data
 
+    def get_auth_bind_num(self, get):
+      """
+      @name 获取授权绑定次数
+      """
+      params = {}
+      params['pid'] = getattr(get, 'pid', 0)
+      data = self.send_cloud('get_auth_unbind_count', params)
+      if not data: return self.res_request_error()
+      return data
+
     def get_voucher(self, get):
         params = {}
         params['product_id'] = self.__product_id
@@ -651,3 +682,92 @@ class panelAuth:
             params['access_key'] = userInfo['access_key']
 
         return self.request_post(cloudURL + module, params)
+
+
+    def receive_products(self, get):
+        """
+        @name 领取活动产品
+        @author chudong<2025-11-26>
+        @param get.detail_id 详情ID
+        @return dict
+        """
+        try:
+            u = public.get_user_info()
+            if not isinstance(u, dict):
+                return public.returnMsg(False, '请先绑定宝塔账号')
+            serverid = u.get('serverid')
+            access_key = u.get('access_key')
+            uid = u.get('uid')
+            if not serverid or not access_key or uid is None:
+                return public.returnMsg(False, '请先绑定宝塔账号')
+            
+            detail_id = getattr(get, 'detail_id', '')
+            if not detail_id:
+                return public.returnMsg(False, '参数错误')
+
+            payload = {
+                'serverid': serverid,
+                'access_key': access_key,
+                'uid': uid,
+                'detail_id': detail_id,
+                'mac': self.get_mac_address()
+            }
+            url = 'https://www.bt.cn/newapi/activity/panelapi/receive_products'
+            res = public.httpPost(url, payload)
+
+            if not res:
+                return public.returnMsg(False, '连接服务器失败')
+            try:
+                result = json.loads(res)
+            except:
+                return public.returnMsg(False, '服务器返回数据错误')
+            # 刷新软件列表状态,确保最新软件列表信息获取
+            public.flush_plugin_list()
+            return result
+        except:
+            return public.returnMsg(False, '领取失败')
+
+
+
+    def get_free_activity_info(self, get):
+        """
+        @name 获取活动产品信息
+        @author chudong<2025-11-26>
+        @param get.activity_id 活动ID
+        @return dict
+        """
+        try:
+            u = public.get_user_info()
+            if not isinstance(u, dict):
+                return public.returnMsg(False, '请先绑定宝塔账号')
+            serverid = u.get('serverid')
+            access_key = u.get('access_key')
+            uid = u.get('uid')
+            if not serverid or not access_key or uid is None:
+                return public.returnMsg(False, '请先绑定宝塔账号')
+            
+            activity_id = getattr(get, 'activity_id', 0)
+            if not activity_id:
+                return public.returnMsg(False, '参数错误，activity_id不能为空')
+
+            payload = {
+                'serverid': serverid,
+                'access_key': access_key,
+                'uid': uid,
+                'activity_id': activity_id
+            }
+            url = 'https://www.bt.cn/newapi/activity/panelapi/get_free_activity_info'
+            res = public.httpPost(url, payload)
+            if not res:
+                return public.returnMsg(False, '连接服务器失败')
+            try:
+                result = json.loads(res)
+                result_detail  = result['data'][0]
+            except:
+                return public.returnMsg(False, '服务器返回数据错误')
+            return public.returnResult(True, '获取成功', result_detail)
+        except:
+            return public.returnMsg(False, '领取失败')
+
+
+    

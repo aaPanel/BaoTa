@@ -1,5 +1,5 @@
 {
-  "version": "9.7.0",
+  "version": "11.3.0",
   "menu":
   [
     {
@@ -184,12 +184,21 @@
       "children": []
     },
     {
+      "title": "域名",
+      "href": "/domain",
+      "class": "menu_domain",
+      "id": "memuAdomain",
+      "sort": 13,
+      "show": true,
+      "children": []
+    },
+    {
       "title": "SSL",
       "href": "/ssl",
       "class": "menu_ssl",
       "id": "memuAssl",
       "sort": 13,
-      "show": false,
+      "show": true,
       "children": []
     },
     {
@@ -198,7 +207,7 @@
       "class": "menu_vhost",
       "id": "memuAvhost",
       "sort": 13,
-      "show": true,
+      "show": false,
       "children": []
     },
     {

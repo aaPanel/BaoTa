@@ -67,20 +67,42 @@ class main(JournalctlManage, SecureManage):
             'error': 0,
             'success': 0,
             'today_error': 0,
-            'today_success': 0
+            'today_success': 0,
+            'yesterday_error': 0,
+            'yesterday_success': 0,
+            'sevenday_error': 0,
+            'sevenday_success': 0
         }
         try:
+            from datetime import datetime, timedelta
+            
+            # 获取并更新日志数据
             today = datetime.now()
-            if "auth" in self.ssh_log_path:
+            yesterday = today - timedelta(days=1)
+            
+            osv = public.get_os_version().lower()
+            #个别系统使用标准时间格式
+            date_v1 = ["debian", "opencloudos"]
+            is_iso_date = any(d in osv for d in date_v1)
+            if is_iso_date:
+                # Debian/OpenCloudOS 日志为标准时间
                 today_str = today.strftime("%Y-%m-%d")
+                yesterday_str = yesterday.strftime("%Y-%m-%d")
             else:
-                today_str = today.strftime("%B %d").replace(" 0", " ")
-
+                #centos ubuntu 等日志为月份日期
+                today_str = today.strftime("%b %d").replace(" 0", "  ")
+                yesterday_str = yesterday.strftime("%b %d").replace(" 0", "  ")
+                
+            stats['today_error'] = self.get_secure_log_count(self.login_failed_flag, today_str)
+            stats['today_success'] = self.get_secure_log_count(self.login_access_flag, today_str)
+            stats['yesterday_success'] = self.get_secure_log_count(self.login_access_flag, yesterday_str)
+            stats['yesterday_error'] = self.get_secure_log_count(self.login_failed_flag, yesterday_str)
+            stats['sevenday_error'] = self.get_secure_log_count(self.login_failed_flag, "")
+            stats['sevenday_success'] = self.get_secure_log_count(self.login_access_flag, "")
+            
             self.ssh_log_path += "*"
             stats['error'] = self.get_secure_log_count(self.login_failed_flag)
             stats['success'] = self.get_secure_log_count(self.login_access_flag)
-            stats['today_error'] = self.get_secure_log_count(self.login_failed_flag, today_str)
-            stats['today_success'] = self.get_secure_log_count(self.login_access_flag, today_str)
         except Exception as e:
             import traceback
             public.print_log(f"获取SSH登录信息失败: {traceback.format_exc()}")
@@ -111,14 +133,18 @@ class main(JournalctlManage, SecureManage):
             today = datetime.now()
             yesterday = today - timedelta(days=1)
 
-            if "debian" in public.get_os_version().lower():
-                # Debian 日志为标准时间
+            osv = public.get_os_version().lower()
+            #个别系统使用标准时间格式
+            date_v1 = ["debian", "opencloudos"]
+            is_iso_date = any(d in osv for d in date_v1)
+            if is_iso_date:
+                # Debian/OpenCloudOS 日志为标准时间
                 today_str = today.strftime("%Y-%m-%d")
                 yesterday_str = yesterday.strftime("%Y-%m-%d")
             else:
                 #centos ubuntu 等日志为月份日期
-                today_str = today.strftime("%b %d").replace(" 0", " ")
-                yesterday_str = yesterday.strftime("%b %d").replace(" 0", " ")
+                today_str = today.strftime("%b %d").replace(" 0", "  ")
+                yesterday_str = yesterday.strftime("%b %d").replace(" 0", "  ")
 
             today_count = self.get_secure_log_count(self.login_all_flag, today_str)
             yesterday_count = self.get_secure_log_count(self.login_all_flag, yesterday_str)

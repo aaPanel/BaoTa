@@ -60,6 +60,13 @@ def load_task_cls_by_function(
 
 def load_task_cls_by_path(path: str, cls_name: str) -> Optional[Type[T_CLS]]:
     try:
+        import os
+        path_sep = path.split(".")
+        if len(path_sep) >= 2 and path_sep[0] == "plugin":
+            plugin_path = "/www/server/panel/plugin/{}".format(path_sep[1])
+            if not os.path.isdir(plugin_path):
+                return None
+
         module = import_module(path)
         cls = getattr(module, cls_name, None)
         if issubclass(cls, BaseTask):
@@ -69,8 +76,6 @@ def load_task_cls_by_path(path: str, cls_name: str) -> Optional[Type[T_CLS]]:
         else:
             return None
     except:
-        print(traceback.format_exc())
-        print(sys.path)
         debug_log(traceback.format_exc())
         return None
 

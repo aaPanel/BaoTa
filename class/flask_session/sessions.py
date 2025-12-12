@@ -1,3 +1,4 @@
+import dataclasses
 import random
 import secrets
 import time
@@ -344,7 +345,7 @@ class FileSystemSessionInterface(ServerSideSessionInterface):
     """
 
     session_class = FileSystemSession
-    _save_check_keys = ("login", "tmp_login", "admin_auth", "api_request_tip")
+    _save_check_keys = ("login", "tmp_login", "admin_auth", "api_request_tip", "down")
 
     def __init__(
         self,
@@ -725,3 +726,184 @@ class SqlAlchemySessionInterface(ServerSideSessionInterface):
                 self.db.session.rollback()
 
 
+
+class SqliteSessionInterface(ServerSideSessionInterface):
+    """
+    sqlite 专用session实现，使用自定义的数据库连接，不在依赖SqlAlchemy
+    """
+    serializer = pickle
+    session_class = SqlAlchemySession
+
+    def __init__(
+        self,
+        app,
+        db,
+        table,
+        sequence,
+        schema,
+        bind_key,
+        key_prefix,
+        use_signer,
+        permanent,
+        sid_length,
+    ):
+        from .sqlite_pool import FlaskSQLitePool, SQLiteConnection
+        if db is None:
+            app.config['SQLITE_DATABASE'] = app.config["SQLALCHEMY_DATABASE_URI"]
+            db = FlaskSQLitePool(app)
+
+        self.db: FlaskSQLitePool = db
+        super().__init__(self.db, key_prefix, use_signer, permanent, sid_length)
+        app.before_request(self._cleanup_n_requests)
+        self.cleanup_n_requests = 100
+        with app.app_context():
+            with db.get_connection() as conn:
+                conn.executescript(
+                    """CREATE TABLE IF NOT EXISTS `sessions` (
+        `id` INTEGER NOT NULL, 
+        `session_id` VARCHAR(255), 
+        `data` BLOB, 
+        `expiry` DATETIME, 
+        PRIMARY KEY (`id`), 
+        UNIQUE (`session_id`)
+);
+CREATE INDEX IF NOT EXISTS `ix_sessions_expiry` ON sessions (`expiry`);
+""")
+                conn.commit()
+
+        @dataclasses.dataclass
+        class Record:
+            id: int
+            session_id: str
+            data: bytes
+            expiry: datetime
+
+            @classmethod
+            def from_row(cls, row) -> "Record":
+                r_id = row[0]
+                r_expiry = datetime.fromisoformat(row[3])
+                r_expiry = r_expiry.replace(tzinfo=timezone.utc)
+                return cls(r_id, row[1], row[2], r_expiry)
+
+        self.record_class = Record
+
+
+    def fetch_session(self, sid):
+        # Get the saved session (record) from the database
+        store_id = self.key_prefix + sid
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            res = cursor.execute("select * from sessions where session_id=? limit 1", (store_id,))
+            row = res.fetchone()
+            if not row:
+                record = None
+            else:
+                record = self.record_class.from_row(row)
+
+            # If the expiration time is less than or equal to the current time (expired), delete the document
+            if record is not None:
+                expiration_datetime = record.expiry
+                now = datetime.now(tz=timezone.utc)
+                if expiration_datetime is None or expiration_datetime <= now:
+                    cursor.execute("DELETE FROM sessions WHERE id = ?", (record.id,))
+                    cursor.close()
+                    conn.commit()
+                    conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
+                    record = None
+            else:
+                cursor.close()
+
+
+        # If the saved session still exists after checking for expiration, load the session data from the document
+        if record:
+            try:
+                session_data = self.serializer.loads(want_bytes(record.data))
+                return self.session_class(session_data, sid=sid)
+            except pickle.UnpicklingError:
+                return self.session_class(sid=sid, permanent=self.permanent)
+        return self.session_class(sid=sid, permanent=self.permanent)
+
+    def save_session(self, app, session, response):
+        if not self.should_set_cookie(app, session):
+            return
+
+        # Get the domain and path for the cookie from the app
+        domain = self.get_cookie_domain(app)
+        path = self.get_cookie_path(app)
+
+        # Generate a prefixed session id
+        prefixed_session_id = self.key_prefix + session.sid
+
+        # If the session is empty, do not save it to the database or set a cookie
+        if not session:
+            # If the session was deleted (empty and modified), delete the saved session  from the database and tell the client to delete the cookie
+            if session.modified:
+                with self.db.get_connection() as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("DELETE FROM sessions WHERE id = ?", (prefixed_session_id,))
+                    cursor.close()
+                    conn.commit()
+                    conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
+                response.delete_cookie(
+                    app.config["SESSION_COOKIE_NAME"], domain=domain, path=path
+                )
+            return
+
+        # Serialize session data
+        serialized_session_data = self.serializer.dumps(dict(session))
+
+        # Get the new expiration time for the session
+        expiration_datetime = self.get_expiration_time(app, session)
+
+        with self.db.get_connection() as conn:
+            # Update existing or create new session in the database
+            cursor = conn.cursor()
+            res = cursor.execute("select * from sessions where session_id=? limit 1", (prefixed_session_id,))
+            row = res.fetchone()
+            if not row:
+                record = None
+            else:
+                record = self.record_class.from_row(row)
+
+            if record:
+                record.data = serialized_session_data
+                record.expiry = expiration_datetime
+                cursor.execute(
+                    "update sessions set data = ?, expiry = ? where session_id = ?",
+                    (serialized_session_data, expiration_datetime.isoformat(), prefixed_session_id),
+                )
+                cursor.close()
+                conn.commit()
+                conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
+            else:
+                cursor.execute(
+                    "insert into sessions (session_id, data, expiry) values (?, ?, ?)",
+                    (prefixed_session_id, serialized_session_data, expiration_datetime.isoformat()))
+                cursor.close()
+                conn.commit()
+                conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
+
+        # Set the browser cookie
+        self.set_cookie_to_response(app, session, response, expiration_datetime)
+
+
+    def _cleanup_n_requests(self) -> None:
+        """
+        Delete expired sessions on average every N requests.
+
+        This is less desirable than using the scheduled app command cleanup as it may
+        slow down some requests but may be useful for rapid development.
+        """
+        if self.cleanup_n_requests and random.randint(0, self.cleanup_n_requests) == 0:
+            try:
+                with self.db.get_connection() as conn:
+                    now = datetime.now(tz=timezone.utc)
+                    cursor = conn.cursor()
+                    cursor.execute("DELETE FROM sessions WHERE expiry  < ?", (now,))
+                    cursor.close()
+                    conn.commit()
+                    conn.execute("PRAGMA wal_checkpoint(FULL)")
+            except Exception:
+                import traceback
+                print("Error: Failed to delete expired sessions", traceback.format_exc(), flush=True)
+                pass

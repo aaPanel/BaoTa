@@ -41,19 +41,21 @@ class DingDingMsg:
         if "user" not in self.config:
             self.config['user'] = []
 
-        if "isAtAll" not in self.config:
-            self.config['isAtAll'] = []
+        if "isAtAll" not in self.config and not self.config['user']:
+            self.config['isAtAll'] = True
 
         if not isinstance(self.config['url'], str):
             return '钉钉配置错误，请重新配置钉钉机器人'
 
-        at_info = ''
+        at_info = []
+        at_str =  "\n>"
         for user in self.config['user']:
             if re.match(r"^[0-9]{11}$", str(user)):
-                at_info += '@' + user + ' '
+                at_info.append(str(user))
+                at_str += " @{} ".format(str(user))
 
         if at_info:
-            msg = msg + '\n\n>' + at_info
+            msg += at_str
 
         headers = {'Content-Type': 'application/json'}
         data = {
@@ -63,8 +65,8 @@ class DingDingMsg:
                 "text": msg
             },
             "at": {
-                "atMobiles": self.config['user'],
-                "isAtAll": self.config['isAtAll']
+                "atMobiles": at_info,
+                "isAtAll": bool(self.config['isAtAll'])
             }
         }
 
@@ -113,8 +115,8 @@ class DingDingMsg:
         else:
             user = []
 
-        if "atall" in args and isinstance(args["atall"], bool):
-            atall = args["atall"]
+        if "isAtAll" in args and isinstance(args["isAtAll"], bool):
+            atall = args["isAtAll"]
         else:
             atall = True
 

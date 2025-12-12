@@ -13,6 +13,9 @@ try:
 except:
     pass
 
+from mod.base import json_response
+from typing import Tuple
+
 
 class system:
     setupPath = None
@@ -412,7 +415,7 @@ class system:
                 suffix = suf
                 break
             bytes_num /= 1024
-            
+
         return ["{:.{precision}f}".format(bytes_num, precision=precision), suffix]
 
     def bytes_to_human_readable(self, bytes_num, precision=2):
@@ -422,7 +425,7 @@ class system:
         :return: 格式化后的字符串 xxx mb
         """
         return self.bytes_format(bytes_num, precision)[0] + self.bytes_format(bytes_num, precision)[1]
-    
+
 
     def GetMemInfo(self, get=None):
         # 取内存信息
@@ -466,7 +469,7 @@ class system:
             TX_CLOUD=re.search(r'VM-[0-9]+-[0-9]+', HOSTNAME_MSG) is not None
             if TX_CLOUD:
                 DISK_INFO_STATUS=True
-        
+
         disk_info_dict = {}
         try:
             if DISK_INFO_STATUS:
@@ -480,22 +483,22 @@ class system:
 
                 for line in lines[1:]:
                     columns = re.split(r'\s+', line.strip())
-                    if len(columns) >= 3 and columns[2] in ['disk', 'part', 'lvm']: 
+                    if len(columns) >= 3 and columns[2] in ['disk', 'part', 'lvm']:
                         entry = {headers[i]: columns[i] for i in range(len(columns))}
                         entry['NAME'] = re.sub(r'[├─└─]+', '', entry['NAME'])
                         if columns[2] == 'disk':
                             current_main_part = entry['NAME']
                         entry['main_part'] = current_main_part
                         disk_info_dict[entry['NAME']] = entry
-        
+
                 pdisk_info_dict = {}
                 for line in lines[1:]:
                     columns = re.split(r'\s+', line.strip())
                     if len(columns) >= 3 and columns[2] in ['disk']:  # Check
                         entry = {headers[i]: columns[i] for i in range(len(columns))}
                         if columns[2] == 'disk':
-                            current_main_part = entry['NAME']  
-                        entry['main_part'] = current_main_part  
+                            current_main_part = entry['NAME']
+                        entry['main_part'] = current_main_part
                     pdisk_info_dict[entry['NAME']] = entry
         except:
             pass
@@ -504,8 +507,8 @@ class system:
             diskIo = psutil.disk_partitions(True)
             diskInfo = []
             processed_devices = set()
-            processed_mountpoints = set() 
-            
+            processed_mountpoints = set()
+
             cuts = ['/mnt/cdrom', '/boot', '/boot/efi', '/dev', '/dev/shm', '/run/lock', '/run', '/run/shm', '/run/user','/dev/zram']
             coutine_keys = ['docker','volume','overlay','/snap','/run/user','/dev/']
             coutine_types = ['ext2','ext3', 'ext4', 'xfs','btrfs','fat32','nfs','cifs','smb','iscsi']
@@ -567,7 +570,7 @@ class system:
                 tmp['filesystem'] = disk.device
                 tmp['type'] = disk.fstype
                 tmp['inodes'] = [statvfs.f_files,inodes_used,statvfs.f_ffree,"{:.2f} %".format(inodes_pre)]
-                
+
                 if disk_info_dict:
                     main_part = disk_info_dict.get(disk.device, {}).get('main_part', None)
                     if main_part and main_part in disk_info_dict:
@@ -576,11 +579,11 @@ class system:
                         tmp['d_size'] = 'None'
                 else:
                     tmp['d_size'] = 'None'
-                
+
                 diskInfo.append(tmp)
                 processed_devices.add(disk.device)
                 processed_mountpoints.add(disk.mountpoint)
-                
+
             if disk_info_dict:
                 existing_filesystems = {entry["filesystem"] for entry in diskInfo}
                 mounted_main_parts = set()
@@ -588,9 +591,9 @@ class system:
                     if fs in disk_info_dict:
                         main_part = disk_info_dict[fs]["main_part"]
                         mounted_main_parts.add(main_part)
-                    
+
                 unmounted_main_parts = set(disk_info_dict[device]["main_part"] for device in disk_info_dict if disk_info_dict[device]["main_part"] not in mounted_main_parts)
-                unmounted_devices_info = [info for device, info in disk_info_dict.items() if info["main_part"] not in 
+                unmounted_devices_info = [info for device, info in disk_info_dict.items() if info["main_part"] not in
                 mounted_main_parts and info["TYPE"] == "disk"]
 
                 new_device_info = []
@@ -896,9 +899,10 @@ class system:
         return networkInfo
 
     def get_cpu_times(self):
-        skey = 'cpu_times'
-        data = cache.get(skey)
-        if data: return data
+        # skey = 'cpu_times'
+        # data = cache.get(skey)
+        # if data: return data
+        # psutil.cpu_times_percent() 本来就有缓存，无需使用cache再次缓存
         try:
             data = {}
             cpu_times_p = psutil.cpu_times_percent()
@@ -926,8 +930,7 @@ class system:
                 except:
                     continue
                 data['总进程数'] += 1
-
-            cache.set(skey, data, 60)
+            # cache.set(skey, data, 60)
         except:
             public.print_log(public.get_error_info())
             return None
@@ -1352,6 +1355,15 @@ class system:
         public.run_thread(self._repair_panel, (get,))
         return True
 
+    @staticmethod
+    def _normalize_version(version_str: str) -> Tuple[int, int, int]:
+        try:
+            tmp = version_str.split(".")
+            if len(tmp) < 3:
+                tmp += [0] * (3 - len(tmp))
+            return int(tmp[0]), int(tmp[1]), int(tmp[2])
+        except:
+            return 0, 0, 0
 
     def upgrade_panel(self, get):
         """
@@ -1395,7 +1407,7 @@ class system:
             data['uid'] = ajax_obj.get_uid()
             # msg = public.getMsg('PANEL_UPDATE_MSG');
             data['o'] = public.get_oem_name()
-            sUrl = public.GetConfigValue('home') + '/api/panel/get_panel_version_v2'
+            sUrl = public.GetConfigValue('home') + '/api/panel/get_panel_version_v3'
             try:
                 updateInfo = json.loads(public.httpPost(sUrl, data))
             except:
@@ -1419,48 +1431,45 @@ class system:
             return public.returnMsg(False, '无法连接【宝塔官网】，请检查网络原因.')
 
         if not 'force' in get:
-            data = {'local': {}, 'cloud': {}}
-            data['local']['version'] = '{}'.format(public.version())
+            data = {'local': {}, 'cloud': {}, 'upgrade': 0}
+            local_panel_ver = '{}'.format(public.version())
+            data['local']['version'] = local_panel_ver
             update_time = public.readFile("{}/config/update_time.pl".format(public.get_panel_path()))
             if not update_time:
                 update_time = os.path.getmtime('{}/class/common.py'.format(public.get_panel_path()))
 
+            lockfile_path = os.path.join(public.get_panel_path(), ".upgrade_py313.lock")
+            env_update_running = os.path.exists(lockfile_path)
             data['local']['update_time'] = int(update_time)
+            data['local']['has_env_py313'] = self._has_py313() and not env_update_running
+            data['local']['need_env_check'] = False # 默认为不需要环境检查
+            data['local']['plugins_check'] = [] # 默认为不需要插件检查
+            data['local']['env_update_running'] = env_update_running
             data['local']['uptime'] = time.strftime('%Y/%m/%d', time.localtime(data['local']['update_time']))
             data['cloud'] = updateInfo
 
-# 2024/12/24 09:30
-# data['upgrade'] = 0 不需要更新面板，已经是最新的正式版
-# data['upgrade'] = 1 显示小红点，建议更新到推荐的正式版
-# data['upgrade'] = 2 不显示小红点，可以更新到最新的正式版
-# 例子：
-# 例如当前版本是9.2.0，官方推荐安装的正式版版本是9.3.0，那么upgrade=1，此时显示更新小红点，建议更新到9.3.0，不会显示9.4.0的更新提示
-# 例如当前版本是9.3.0，官方最新发布的正式版版本是9.4.0，那么upgrade=2，此时不显示更新小红点，不会显示9.4.0的更新提示，但是点击更新按钮可以获取到9.4.0的更新提示，点击即可更新
-# 例如当前版本已经是9.4.0，官方最新发布的正式版版本是9.4.0，那么upgrade=0，此时不显示更新小红点，点击更新按钮也不会有更新提示，显示当前为最新版正式版
-            data['upgrade'] = 0
-
+            # 2024/12/24 09:30
+            # data['upgrade'] = 0 不需要更新面板，已经是最新的正式版
+            # data['upgrade'] = 1 显示小红点，建议更新到推荐的正式版
+            # data['upgrade'] = 2 不显示小红点，可以更新到最新的正式版
+            # 例子：
+            # 例如当前版本是9.2.0，官方推荐安装的正式版版本是9.3.0，那么upgrade=1，此时显示更新小红点，建议更新到9.3.0，不会显示9.4.0的更新提示
+            # 例如当前版本是9.3.0，官方最新发布的正式版版本是9.4.0，那么upgrade=2，此时不显示更新小红点，不会显示9.4.0的更新提示，但是点击更新按钮可以获取到9.4.0的更新提示，点击即可更新
+            # 例如当前版本已经是9.4.0，官方最新发布的正式版版本是9.4.0，那么upgrade=0，此时不显示更新小红点，点击更新按钮也不会有更新提示，显示当前为最新版正式版
             # 当local比cloud版本高时，upgrade=0
             try:
-                c_version = data['cloud']['OfficialVersion']['version'].split('.')
-                lc_version = data['cloud']['OfficialVersionLatest']['version'].split('.') if 'OfficialVersionLatest' in data['cloud'] and data['cloud']['OfficialVersionLatest'] else data['local']['version'].split('.')
-                l_version = data['local']['version'].split('.')
-                try:
-                    if int(lc_version[0]) > int(l_version[0]):
-                        data['upgrade'] = 2
-                    elif int(lc_version[0]) == int(l_version[0]) and int(lc_version[1]) > int(l_version[1]):
-                        data['upgrade'] = 2
-                    elif int(lc_version[0]) == int(l_version[0]) and int(lc_version[1]) == int(l_version[1]) and int(lc_version[2]) > int(l_version[2]):
-                        data['upgrade'] = 2
-                    elif int(c_version[0]) > int(l_version[0]):
-                        data['upgrade'] = 1
-                    elif int(c_version[0]) == int(l_version[0]) and int(c_version[1]) > int(l_version[1]):
-                        data['upgrade'] = 1
-                    elif int(c_version[0]) == int(l_version[0]) and int(c_version[1]) == int(l_version[1]) and int(c_version[2]) > int(l_version[2]):
-                        data['upgrade'] = 1
-                    else:
-                        data['upgrade'] = 0
-                except:
+                c_version = self._normalize_version(data['cloud']['OfficialVersion']['version'])
+                if 'OfficialVersionLatest' in data['cloud'] and data['cloud']['OfficialVersionLatest']:
+                    lc_version = self._normalize_version(data['cloud']['OfficialVersionLatest']['version'])
+                else:
+                    lc_version = self._normalize_version(data['local']['version'])
+                l_version = self._normalize_version(data['local']['version'])
+                if lc_version > l_version:
+                    data['upgrade'] = 2
+                elif c_version > l_version:
                     data['upgrade'] = 1
+                else:
+                    data['upgrade'] = 0
             except:
                 data['upgrade'] = 1
 
@@ -1477,6 +1486,19 @@ class system:
             except:
                 data['upgrade'] = 0
 
+            target_v = {}
+            if data['upgrade'] == 1:
+                target_v = data['cloud'].get('OfficialVersion', {})
+            elif data['upgrade'] == 2:
+                target_v = data['cloud'].get('OfficialVersionLatest', {})
+
+            plugin_restrictions = target_v.get("plugin_restrictions", {})
+            if isinstance(plugin_restrictions, dict):
+                py_check = plugin_restrictions.get("python", "3.7") == '3.13'
+                if py_check:
+                    data['local']['need_env_check'] = True
+                    data['local']['plugins_check'] = self._get_plugin_for_py313()
+
             return data
         else:
             get.version = get.get("version", None)
@@ -1484,7 +1506,8 @@ class system:
                 return public.returnMsg(False, '版本号不能为空')
 
             logPath = '/tmp/upgrade_panel.log'
-            shell = 'nohup {} -u {}/script/upgrade_panel.py repair_panel {} &>{} &'.format(public.get_python_bin(), public.get_panel_path(), get.version, logPath)
+            public.writeFile(logPath, "")
+            shell = 'nohup {} -u {}/script/upgrade_panel_optimized.py upgrade_panel {} &>{} &'.format(public.get_python_bin(), public.get_panel_path(), get.version, logPath)
             public.ExecShell(shell)
 
             return public.returnMsg(True, '面板更新任务已启动，请稍后查看修复结果')
@@ -1510,14 +1533,13 @@ class system:
                 pass
 
         if not 'force' in get:
-            data = {'local':{},'cloud':{}}
+            data = {'local':{},'cloud':{}, 'upgrade':0}
             data['local']['version'] = '{}'.format(public.version())
             update_time = public.readFile("{}/config/update_time.pl".format(public.get_panel_path()))
             if not update_time:
                 update_time = os.path.getmtime('{}/class/common.py'.format(public.get_panel_path()))
 
             data['local']['update_time'] = int(update_time)
-            data['upgrade'] = 0
             try:
                 down_url = 'http://download.bt.cn/install/update/LinuxPanel-{}.pl'.format(data['local']['version'])
                 if os.path.exists("/tmp/LinuxPanel-{}.pl".format(data['local']['version'])):
@@ -1548,7 +1570,8 @@ class system:
                 pass
 
             logPath = '/tmp/upgrade_panel.log'
-            shell = 'nohup {} -u {}/script/upgrade_panel.py repair_panel {} &>{} &'.format(public.get_python_bin(), public.get_panel_path(), public.version(), logPath)
+            public.writeFile(logPath, "")
+            shell = 'nohup {} -u {}/script/upgrade_panel_optimized.py repair_panel {} &>{} &'.format(public.get_python_bin(), public.get_panel_path(), public.version(), logPath)
             public.ExecShell(shell)
 
             return public.returnMsg(True, '面板修复任务已启动，请稍后查看修复结果')
@@ -1569,8 +1592,112 @@ class system:
 
         logs = public.GetNumLines(logPath, 1000)
         try:
-            logs = json.loads(logs)
-            return logs
-        except:pass
+            # 适配旧版的日志
+            return json.loads(logs)
+        except:
+            pass
+
+        if logs.find('Success：面板更新成功') != -1:
+            return {
+                'status': True,
+                'msg': "面板更新成功",
+                'data': public.GetNumLines(logPath, 100)
+            }
 
         return public.returnMsg(True, logs)
+
+    @staticmethod
+    def _has_py313() -> bool:
+        import subprocess
+        code = "import sys, urllib3, _sqlite3; print('%d.%d' % (sys.version_info.major, sys.version_info.minor))"
+        now_env = os.path.join(public.get_panel_path(), "pyenv/bin/python3")
+        pre_env = os.path.join(public.get_panel_path(), "pyenv313/bin/python3")
+        for env in (now_env, pre_env):
+            if not os.path.exists(env):
+                continue
+            try:
+                ver = subprocess.check_output([env, "-c", code], text=True)
+                if ver.strip() == "3.13":
+                    return True
+            except:
+                pass
+        return False
+
+    def upgrade_env(self, get):
+        """
+        @name 升级环境
+        """
+        if self._has_py313():
+            return json_response(status=True, msg='当前环境已升级为Python3.13')
+
+        lockfile_path = os.path.join(public.get_panel_path(), ".upgrade_py313.lock")
+        if os.path.exists(lockfile_path):
+            return json_response(status=False, msg='当前环境正在升级中，请勿重复操作')
+        else:
+            log_path = os.path.join(public.get_panel_path(), "logs/upgrade_py313.log")
+            if os.path.isfile(log_path):  # 删除之前的日志信息
+                public.writeFile(log_path, "")
+
+        sh = "cd {} \n nohup {} -u script/upgrade_py313.py prepare-env > /dev/null 2>&1 &".format(
+            public.get_panel_path(), public.get_python_bin()
+        )
+        public.ExecShell(sh)
+        return json_response(status=True, msg='环境升级任务已启动...')
+
+    @staticmethod
+    def upgrade_env_log(get):
+        """
+        @name 获取环境升级日志
+        """
+
+        lockfile_path = os.path.join(public.get_panel_path(), ".upgrade_py313.lock")
+        env_update_running = os.path.exists(lockfile_path)
+
+        log_path = os.path.join(public.get_panel_path(), "logs/upgrade_py313.log")
+        if not os.path.exists(log_path):
+            return json_response(status=True, msg="暂无日志信息", data={
+                "env_update_running": env_update_running,
+                "log": ""
+            })
+
+        logs = public.GetNumLines(log_path, 1000)
+        msg = "获取成功"
+        if not env_update_running:
+            msg = "环境升级已结束"
+        return json_response(status=True, msg=msg, data={
+            "env_update_running": env_update_running,
+            "log": logs
+        })
+
+
+    def _get_plugin_for_py313(self):
+        config_file = os.path.join(public.get_panel_path(), "data/py313_plugins.json")
+        m_time = 0
+        if os.path.exists(config_file):
+            m_time = os.path.getmtime(config_file)
+
+        if m_time < time.time() - 3600:
+            public.downloadFile('{}/install/update/py313_plugins.json'.format(public.get_url()), config_file)
+
+        try:
+            data = json.loads(public.readFile(config_file))
+        except:
+            data = []
+
+        plugins = []
+        plugin_path = os.path.join(public.get_panel_path(), "plugin")
+        for i in data:
+            if_file = os.path.join(plugin_path, i["name"], "info.json")
+            if not os.path.exists(if_file):
+                continue
+            try:
+                info = json.loads(public.readFile(if_file))
+                lv = self._normalize_version(info.get("versions", "99.99"))
+                nv = self._normalize_version(i.get("version", "0.0"))
+                if lv < nv:
+                    i["local_version"] = info["versions"]
+                    plugins.append(i)
+            except:
+                continue
+        plugins.sort(key=lambda x: x["level"])
+        return  plugins

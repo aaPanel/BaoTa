@@ -308,9 +308,9 @@ class ssh_terminal:
         self.set_sshd_config(True)
         self.debug('通道已构建')
         from BTPanel import session
-        self._video_addr = "/www/server/panel/plugin/jumpserver/static/video/%s.json" % str(int(self._connect_time))
-        if not os.path.exists("/www/server/panel/plugin/jumpserver/static/video/"):
-            os.makedirs("/www/server/panel/plugin/jumpserver/static/video/")
+        self._video_addr = "/www/server/panel/data/jumpserver_video/%s.json" % str(int(self._connect_time))
+        if not os.path.exists("/www/server/panel/data/jumpserver_video/"):
+            os.makedirs("/www/server/panel/data/jumpserver_video/")
         # 如果开启了录像功能
         self._connect_ua = str(request.headers.get('User-Agent'))
         if os.path.exists(public.get_panel_path() + "/data/open_ssh_login.pl"):
@@ -1083,9 +1083,39 @@ class local_ssh_terminal(ssh_terminal):
         def _preexec_fn():
             os.setsid()
             os.chdir("/root")
+            import signal
+            # 重置 SIGINT 处理方式为默认
+            signal.signal(signal.SIGINT, signal.SIG_DFL)
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            signal.signal(signal.SIGQUIT, signal.SIG_DFL)
 
         def __init__(self):
             self.master_fd, slave_fd = pty.openpty()
+
+            # 设置PTY的终端属性，确保它可以正确处理控制字符
+            try:
+                # 获取当前终端属性
+                attrs = termios.tcgetattr(slave_fd)
+                # 启用规范模式和回显等
+                attrs[0] |= termios.BRKINT | termios.ICRNL | termios.IXON
+                attrs[0] &= ~termios.BRKINT  # 清除 IGNBRK 标志位
+                attrs[3] |= termios.ECHO | termios.ECHONL | termios.ICANON | termios.ISIG | termios.IEXTEN
+                # 设置输出标志
+                attrs[1] |= termios.OPOST | termios.ONLCR
+                # 设置控制字符
+                attrs[6][termios.VINTR] = 3   # Ctrl+C -> SIGINT
+                attrs[6][termios.VQUIT] = 28  # Ctrl+\ -> SIGQUIT
+                attrs[6][termios.VERASE] = 127 # Backspace
+                attrs[6][termios.VKILL] = 21  # Ctrl+U
+                attrs[6][termios.VSTART] = 17 # Ctrl+Q
+                attrs[6][termios.VSTOP] = 19  # Ctrl+S
+                attrs[6][termios.VSUSP] = 26  # Ctrl+Z
+                # 应用设置
+                termios.tcsetattr(slave_fd, termios.TCSANOW, attrs)
+            except termios.error:
+                # 如果设置失败，继续使用默认设置
+                public.print_error()
+
             # env -0 以\0 分割环境变量更稳定
             res = public.ExecShell("source /etc/profile > /dev/null 2>&1 && env -0", timeout=1, env=self.basic_env)
             env_dict = {}
@@ -1107,7 +1137,7 @@ class local_ssh_terminal(ssh_terminal):
             if not sh_path:
                 sh_path = "bash"
             self.proc = subprocess.Popen(
-                [sh_path],
+                [sh_path, "-l"],
                 preexec_fn=self._preexec_fn,
                 stdin=slave_fd,
                 stdout=slave_fd,
@@ -1134,6 +1164,7 @@ class local_ssh_terminal(ssh_terminal):
             except OSError as e:
                 self.close()
                 raise
+
         def send_ignore(self):
             self.send('')
 
@@ -1220,9 +1251,9 @@ class local_ssh_terminal(ssh_terminal):
         public.WriteLog(self._log_type, '成功登录到SSH服务器 [{}:{}]'.format(self._host, self._port))
         self.history_send("登录成功\n")
         self.debug('通道已构建')
-        self._video_addr = "/www/server/panel/plugin/jumpserver/static/video/%s.json" % str(int(self._connect_time))
-        if not os.path.exists("/www/server/panel/plugin/jumpserver/static/video/"):
-            os.makedirs("/www/server/panel/plugin/jumpserver/static/video/")
+        self._video_addr = "/www/server/panel/data/jumpserver_video/%s.json" % str(int(self._connect_time))
+        if not os.path.exists("//www/server/panel/data/jumpserver_video/"):
+            os.makedirs("/www/server/panel/data/jumpserver_video/")
         # 如果开启了录像功能
         self._connect_ua = str(request.headers.get('User-Agent'))
         if os.path.exists(public.get_panel_path() + "/data/open_ssh_login.pl"):

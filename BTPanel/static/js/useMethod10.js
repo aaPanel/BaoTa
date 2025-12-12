@@ -1,7 +1,1 @@
-import{n as t,Q as o}from"./utils-lib.js?v=1758787359";import"./base-lib.js?v=1758787359";const e=(e,a)=>t({isAsync:!0,title:"批量设置".concat("certificate"===a?"证书分组":"域名分类"),area:42,component:()=>o(()=>import("./index391.js?v=1758787359"),__vite__mapDeps([]),import.meta.url),compData:{type:a,itemList:e},showFooter:!0}),a=async e=>{await t({title:"批量操作结果",area:46,component:()=>o(()=>import("./index121.js?v=1758787359"),__vite__mapDeps([]),import.meta.url),compData:{resultTitle:e.resultTitle,resultData:e.resultData,resultColumn:e.resultColumn}})},i=e=>t({isAsync:!0,title:"".concat(e.title?"证书":"域名","到期提醒配置"),area:50,compData:e,component:()=>o(()=>import("./index392.js?v=1758787359"),__vite__mapDeps([]),import.meta.url),showFooter:!0,confirmText:"保存配置",onCancel:e.cancel}),r=(e,a)=>t({isAsync:!0,title:"".concat(a&&a.length?"批量":"","配置DNS接口"),area:45,component:()=>o(()=>import("./index393.js?v=1758787359"),__vite__mapDeps([]),import.meta.url),compData:{row:e,rowList:a},showFooter:!0});export{i as a,r as d,a as r,e as s};
-function __vite__mapDeps(indexes) {
-  if (!__vite__mapDeps.viteFileDeps) {
-    __vite__mapDeps.viteFileDeps = []
-  }
-  return indexes.map((i) => __vite__mapDeps.viteFileDeps[i])
-}
+import{k as t,r as e}from"./base-lib.js?v=1764728423";function a(t,e){const a=new Date(t);return a.setDate(a.getDate()+e),a}function s(t){const e=new Date(t);return e.setHours(0,0,0,0),e}function n(t){const e=new Date(t);return e.setHours(23,59,59,999),e}const o=t("menu-mail-market","overview"),r=e(null),u=e(!1),c=e(-1),i=t=>{o.value=t},l=t=>{c.value=t,i("contact")};export{a,i as b,u as c,c as d,n as e,l as f,o as m,s,r as t};

@@ -28,7 +28,7 @@ class panelSetup:
             if ua.find('spider') != -1 or g.ua.find('bot') != -1:
                 return abort(403)
 
-        g.version = '11.1.0'
+        g.version = '11.3.0'
         g.title = public.GetConfigValue('title')
         g.uri = request.path
         g.debug = os.path.exists('data/debug.pl')
@@ -351,21 +351,122 @@ class panelAdmin(panelSetup):
 
     # 获取操作系统类型
     def GetOS(self):
+        """
+        获取操作系统类型
+        1. 以 /etc/os-release 为主要判断依据
+        2. 多种包管理工具为辅助判断
+        3. 添加更多条件判断方式
+        """
         if not 'server_os' in session:
-            tmp = {}
-            issue_file = '/etc/issue'
-            redhat_release = '/etc/redhat-release'
-            if os.path.exists(redhat_release):
-                tmp['x'] = 'RHEL'
-                tmp['osname'] = self.get_osname(redhat_release)
-            elif os.path.exists('/usr/bin/yum'):
-                tmp['x'] = 'RHEL'
-                tmp['osname'] = self.get_osname(issue_file)
-            elif os.path.exists(issue_file):
-                tmp['x'] = 'Debian'
-                tmp['osname'] = self.get_osname(issue_file)
+            tmp = {
+                'x': 'Unknown',  # 默认操作系统类型
+                'osname': 'Linux'  # 默认系统名称
+            }
+
+            try:
+                # 优先使用 /etc/os-release 文件判断（最标准的方式）
+                if os.path.exists('/etc/os-release'):
+                    os_info = self.parse_os_release('/etc/os-release')
+                    tmp['x'] = os_info['type']
+                    tmp['osname'] = os_info['name']
+                else:
+                    # 备用判断方式
+                    tmp = self.detect_os_by_traditional_methods(tmp)
+
+            except Exception as e:
+                # 记录错误但不影响程序继续执行
+                public.WriteLog('系统检测', f'操作系统检测失败: {str(e)}')
+                tmp['x'] = 'Unknown'
+                tmp['osname'] = 'Linux'
+            # public.print_log('系统检测', f'操作系统类型: {tmp["x"]}, 系统名称: {tmp["osname"]}')
             session['server_os'] = tmp
         return False
+
+    @staticmethod
+    def parse_os_release(filepath):
+        """
+        解析 /etc/os-release 文件获取系统信息
+        """
+        os_type = 'Unknown'
+        os_name = 'Linux'
+
+        try:
+            with open(filepath, 'r') as f:
+                content = f.read()
+                lines = content.split('\n')
+                os_info = {}
+                for line in lines:
+                    if '=' in line:
+                        key, value = line.split('=', 1)
+                        os_info[key] = value.strip('"')
+
+                # 根据 ID 判断系统类型
+                if 'ID' in os_info:
+                    os_id = os_info['ID'].lower()
+                    if os_id in ['centos', 'rhel', 'fedora', 'rocky', 'almalinux', "alinux", "alibaba"
+                                 "centos-stream", "opencloudos", "tencentos", "openeuler"]:
+                        os_type = 'RHEL'
+                    elif os_id in ['ubuntu', 'debian']:
+                        os_type = 'Debian'
+                    elif os_id in ['opensuse', 'sles']:
+                        os_type = 'SUSE'
+                    else:
+                        os_type = 'RHEL'
+
+                # 获取系统名称
+                if 'PRETTY_NAME' in os_info:
+                    os_name = os_info['PRETTY_NAME']
+                elif 'NAME' in os_info:
+                    os_name = os_info['NAME']
+
+        except Exception:
+            pass
+
+        return {'type': os_type, 'name': os_name}
+
+    def detect_os_by_traditional_methods(self, tmp):
+        """
+        使用传统方法检测操作系统
+        """
+        # RedHat 系列检测
+        if os.path.exists('/etc/redhat-release'):
+            tmp['x'] = 'RHEL'
+            tmp['osname'] = self.get_osname('/etc/redhat-release') or 'RHEL'
+        elif os.path.exists('/etc/centos-release'):
+            tmp['x'] = 'RHEL'
+            tmp['osname'] = self.get_osname('/etc/centos-release') or 'CentOS'
+        elif os.path.exists('/etc/fedora-release'):
+            tmp['x'] = 'RHEL'
+            tmp['osname'] = self.get_osname('/etc/fedora-release') or 'Fedora'
+
+        # Debian 系列检测
+        elif os.path.exists('/etc/debian_version'):
+            tmp['x'] = 'Debian'
+            tmp['osname'] = self.get_osname('/etc/issue') or 'Debian'
+        elif os.path.exists('/etc/issue'):
+            issue_content = public.ReadFile('/etc/issue') or ''
+            if 'Ubuntu' in issue_content:
+                tmp['x'] = 'Debian'
+                tmp['osname'] = 'Ubuntu'
+            elif 'Debian' in issue_content:
+                tmp['x'] = 'Debian'
+                tmp['osname'] = 'Debian'
+            else:
+                tmp['x'] = 'Debian'
+                tmp['osname'] = self.get_osname('/etc/issue') or 'Linux'
+
+        # 通过包管理器判断
+        elif os.path.exists('/usr/bin/yum') or os.path.exists('/bin/yum'):
+            tmp['x'] = 'RHEL'
+            tmp['osname'] = 'RHEL-based'
+        elif os.path.exists('/usr/bin/apt') or os.path.exists('/bin/apt'):
+            tmp['x'] = 'Debian'
+            tmp['osname'] = 'Debian-based'
+        elif os.path.exists('/usr/bin/zypper') or os.path.exists('/bin/zypper'):
+            tmp['x'] = 'SUSE'
+            tmp['osname'] = 'SUSE'
+
+        return tmp
 
     def get_osname(self, i_file):
         '''

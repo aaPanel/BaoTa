@@ -108,9 +108,7 @@ class NginxGzipMgr:
 
         new_conf = self._gzip_pattern.sub("\n", conf_data)
         server_level = self._get_server_level(new_conf)
-        import public
         if len(server_level) > 0:
-            public.print_log(server_level)
             for srv in server_level[::-1]:
                 new_conf = new_conf[:srv[-1][0]] + gzip_config + new_conf[srv[-1][0]:]
         else:

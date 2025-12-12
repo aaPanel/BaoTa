@@ -65,6 +65,7 @@ class SimpleCache(BaseCache):
         return timeout
 
     def get(self, key: str) -> _t.Any:
+        if not isinstance(key, str): return False
         try:
             expires, value = self._cache[key]
             if expires == 0 or expires > time():
@@ -75,12 +76,22 @@ class SimpleCache(BaseCache):
     def set(
         self, key: str, value: _t.Any, timeout: _t.Optional[int] = None
     ) -> _t.Optional[bool]:
+        if not isinstance(key, str): return False
+        type_list = (int, float, bool, str, list, dict, tuple, set, bytes)
+        value_type = type(value)
+        if value_type not in type_list:
+            return False
         expires = self._normalize_timeout(timeout)
         self._prune()
         self._cache[key] = (expires, self.serializer.dumps(value))
         return True
 
     def add(self, key: str, value: _t.Any, timeout: _t.Optional[int] = None) -> bool:
+        if not isinstance(key, str): return False
+        type_list = (int, float, bool, str, list, dict, tuple, set, bytes)
+        value_type = type(value)
+        if value_type not in type_list:
+            return False
         expires = self._normalize_timeout(timeout)
         self._prune()
         item = (expires, self.serializer.dumps(value))

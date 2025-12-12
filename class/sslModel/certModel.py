@@ -1409,5 +1409,108 @@ class main(sslBase):
         ssl_info["cert"] = public.readFile("/www/server/panel/vhost/ssl_saved/{}/fullchain.pem".format(ssl_hash))
         return {"status": True, "msg": "获取成功", "content": ssl_info}
 
+    def new_ssl_proxy(self, get):
+        """
+        创建SSL代理
+        """
+
+        return self.new_ssl_proxy_request(vars(get))
+
+    def new_ssl_proxy_request(self, params=None):
+        if params is None:
+            params = {}
+        request_url = "https://api.bt.cn/v2/NewSsl/proxy"
+        user_info = public.get_user_info()
+
+
+        # 特殊处理优惠券列表和证书列表
+        if params["url"] in ("/api/v1/ssl/get_order_list", "/api/v1/ssl/get_user_discount_list"):
+            try:
+                newssl_discount_serverid = json.loads(public.readFile("/www/server/panel/data/newssl_discount.json"))["serverid"]
+            except:
+                data = self._get_newssl_discount()
+                newssl_discount_serverid = data["data"]["serverid"] if data["status"] else ""
+            if user_info["serverid"] != newssl_discount_serverid:
+                params["exclude_discount_id"] = "22,23,24"
+
+        params = {"data": json.dumps(params)}
+
+        params.update(user_info)
+
+        msg = '接口请求失败（{}）'.format(request_url)
+        try:
+            res = public.httpPost(request_url, params)
+
+            if res == False:
+                raise public.error_conn_cloud(msg)
+        except Exception as ex:
+            raise public.error_conn_cloud(str(ex))
+
+        result = public.returnMsg(False, msg)
+        try:
+            result = json.loads(res.strip())
+        except:
+            pass
+        return result
+
+    def get_newssl_discount(self, get=None):
+        result = {"status": False, "msg": "", "data": {}}
+        if public.get_oem_name() != "ssl251104":
+            return result
+        if os.path.exists("/www/server/panel/data/newssl_discount.json"):
+            try:
+                data = json.loads(public.readFile("/www/server/panel/data/newssl_discount.json"))
+                if data and "serverid" in data:
+                    self._get_newssl_discount()
+            except:
+                self._get_newssl_discount()
+            return result
+        else:
+            disc_dic = {22: "0元购DV单域名商用SSL*1张", 23: "4.9元购DV单域名商用SSL*1张", 24: "9.9元购DV单域名商用SSL*1张"}
+            try:
+                data = self._get_newssl_discount()
+                if not data["status"] or not data["data"]:
+                    return result
+                data = data["data"]
+                user_info = public.get_user_info()
+                if data["serverid"] != user_info["serverid"]:
+                    return result
+                data.update({"discount_info": disc_dic[data["discount_id"]] if data["discount_id"] in disc_dic else "未知优惠券"})
+                result["status"] = True
+                result["msg"] = "领取成功"
+                result["data"] = data
+                return result
+            except:
+                return {"status": False, "msg": "", "data": {}}
+
+
+    def _get_newssl_discount(self):
+        """
+        获取NewSSL状态
+        """
+
+        request_url = "https://api.bt.cn/v2/new_ssl/claim_ssl_package"
+        user_info = public.get_user_info()
+
+        msg = '接口请求失败（{}）'.format(request_url)
+        try:
+            res = public.httpPost(request_url, user_info)
+
+            if res == False:
+                raise public.error_conn_cloud(msg)
+        except Exception as ex:
+            raise public.error_conn_cloud(str(ex))
+
+        result = public.returnMsg(False, msg)
+        try:
+            result = json.loads(res.strip())
+        except:
+            pass
+
+        if result["status"]:
+            public.writeFile("/www/server/panel/data/newssl_discount.json", json.dumps(result["data"]))
+        return result
+
+
 
 

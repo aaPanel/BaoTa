@@ -21,7 +21,10 @@ class main(wpbase):
         action = query['action']
         get = public.to_dict_obj(vars(get))
         method = getattr(self, action)
-        return method(get)
+        try:
+            return method(get)
+        except public.HintException as e:
+            return public.return_message(-1, 0, str(e))
 
     # 新增站点
     def AddWPSite(self, get):

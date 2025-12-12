@@ -87,12 +87,8 @@ Install_almalinux(){
     if [[ ! -f "/usr/sbin/dovecot" ]]; then
         yum install dovecot -y
     fi
-    #安装rspamd
-    if [ $ping_url != "200" ]; then
-       Install_rspamd_rpm
-    else
-       install_rspamd
-    fi
+    # 安装rspamd
+    install_rspamd
     yum install cyrus-sasl-plain -y
 }
 
@@ -121,12 +117,8 @@ Install_opencloudos() {
     if [[ ! -f "/usr/sbin/dovecot" ]]; then
         yum install dovecot -y
     fi
-    #安装rspamd
-    if [ $ping_url != "200" ]; then
-       Install_rspamd_rpm
-    else
-       install_rspamd
-    fi
+    # 安装rspamd
+    install_rspamd
 
 
     if ps -ef|grep rspamd|grep -v grep; then
@@ -167,7 +159,7 @@ Install_centos7() {
     fi
     #安装rspamd
     if [ $ping_url != "200" ]; then
-        Install_rspamd_rpm
+        install_rspamd
     else
         install_rspamd
     fi
@@ -177,35 +169,89 @@ Install_centos7() {
 }
 
 install_rspamd() {
-    if [[ $systemver7 = "7" ]]; then
-        wget -O /etc/yum.repos.d/rspamd.repo https://rspamd.com/rpm-stable/centos-7/rspamd.repo
-        rpm --import https://rspamd.com/rpm-stable/gpg.key
-        yum makecache -y
-        yum install rspamd -y
-    elif [ $systemver8 = "8" ] || [ $systemver = "centos" ]; then
-        wget -O /etc/yum.repos.d/rspamd.repo https://rspamd.com/rpm-stable/centos-8/rspamd.repo
-        rpm --import https://rspamd.com/rpm-stable/gpg.key
-        yum makecache -y
-    elif [ $systemver = "opencloudos" ] || [ $systemver = "alinux" ]; then
-        source /etc/os-release
-        export EL_VERSION=`echo -n $PLATFORM_ID | sed "s/.*el//"`
-        curl https://rspamd.com/rpm-stable/centos-${EL_VERSION}/rspamd.repo > /etc/yum.repos.d/rspamd.repo
-        yum install rspamd -y
-    elif [ $systemver = "almalinux" ]; then
-        source /etc/os-release
-        export EL_VERSION=`echo -n $PLATFORM_ID | sed "s/.*el//"`
-        curl https://rspamd.com/rpm-stable/centos-${EL_VERSION}/rspamd.repo > /etc/yum.repos.d/rspamd.repo
-        yum install rspamd -y
-    else
-        apt-get install -y lsb-release wget gpg  # for install
-        CODENAME=`lsb_release -c -s`
-        mkdir -p /etc/apt/keyrings
-        wget -O- https://rspamd.com/apt-stable/gpg.key | gpg --dearmor |  tee /etc/apt/keyrings/rspamd.gpg > /dev/null
-        echo "deb [signed-by=/etc/apt/keyrings/rspamd.gpg] http://rspamd.com/apt-stable/ $CODENAME main" |  tee /etc/apt/sources.list.d/rspamd.list
-        echo "deb-src [signed-by=/etc/apt/keyrings/rspamd.gpg] http://rspamd.com/apt-stable/ $CODENAME main"  |  tee -a /etc/apt/sources.list.d/rspamd.list
+    # 优先尝试系统源安装并启动
+    local installed_ok=0
+    if command -v apt-get >/dev/null 2>&1; then
         apt-get update
-        apt-get --no-install-recommends install rspamd -y
+        if apt-get install -y rspamd; then
+            systemctl enable rspamd || true
+            systemctl restart rspamd || true
+            if systemctl is-active --quiet rspamd && [ -x /usr/bin/rspamd ]; then
+                installed_ok=1
+            fi
+        fi
+    else
+        if command -v dnf >/dev/null 2>&1; then
+            if dnf install -y rspamd; then
+                systemctl enable rspamd || true
+                systemctl restart rspamd || true
+                if systemctl is-active --quiet rspamd && [ -x /usr/bin/rspamd ]; then
+                    installed_ok=1
+                fi
+            fi
+        else
+            if yum install -y rspamd; then
+                systemctl enable rspamd || true
+                systemctl restart rspamd || true
+                if systemctl is-active --quiet rspamd && [ -x /usr/bin/rspamd ]; then
+                    installed_ok=1
+                fi
+            fi
+        fi
     fi
+
+    # 如果系统源安装不可用，则使用官方源安装
+    if [ "$installed_ok" != "1" ]; then
+        if [[ $systemver7 = "7" ]]; then
+            wget -O /etc/yum.repos.d/rspamd.repo https://rspamd.com/rpm-stable/centos-7/rspamd.repo
+            rpm --import https://rspamd.com/rpm-stable/gpg.key
+            yum makecache -y
+            yum install rspamd -y
+        elif [ $systemver8 = "8" ] || [ $systemver = "centos" ]; then
+            wget -O /etc/yum.repos.d/rspamd.repo https://rspamd.com/rpm-stable/centos-8/rspamd.repo
+            rpm --import https://rspamd.com/rpm-stable/gpg.key
+            yum makecache -y
+            yum install rspamd -y
+        elif [ $systemver = "opencloudos" ] || [ $systemver = "alinux" ]; then
+            source /etc/os-release
+            export EL_VERSION=`echo -n $PLATFORM_ID | sed "s/.*el//"`
+            curl https://rspamd.com/rpm-stable/centos-${EL_VERSION}/rspamd.repo > /etc/yum.repos.d/rspamd.repo
+            yum install rspamd -y
+        elif [ $systemver = "almalinux" ]; then
+            source /etc/os-release
+            export EL_VERSION=`echo -n $PLATFORM_ID | sed "s/.*el//"`
+            curl https://rspamd.com/rpm-stable/centos-${EL_VERSION}/rspamd.repo > /etc/yum.repos.d/rspamd.repo
+            yum install rspamd -y
+        else
+            apt-get install -y lsb-release wget gpg  # for install
+            CODENAME=`lsb_release -c -s`
+            mkdir -p /etc/apt/keyrings
+            wget -O- https://rspamd.com/apt-stable/gpg.key | gpg --dearmor |  tee /etc/apt/keyrings/rspamd.gpg > /dev/null
+            echo "deb [signed-by=/etc/apt/keyrings/rspamd.gpg] http://rspamd.com/apt-stable/ $CODENAME main" |  tee /etc/apt/sources.list.d/rspamd.list
+            echo "deb-src [signed-by=/etc/apt/keyrings/rspamd.gpg] http://rspamd.com/apt-stable/ $CODENAME main"  |  tee -a /etc/apt/sources.list.d/rspamd.list
+            apt-get update
+            apt-get --no-install-recommends install rspamd -y
+        fi
+        systemctl enable rspamd || true
+        systemctl restart rspamd || true
+        if ! systemctl is-active --quiet rspamd || [ ! -x /usr/bin/rspamd ]; then
+            if command -v apt-get >/dev/null 2>&1; then
+                echo "官方源安装失败，请检查网络或源配置"
+                exit 1
+            else
+                echo "官方源安装失败，尝试RPM安装..."
+                Install_rspamd_rpm
+                systemctl enable rspamd || true
+                systemctl restart rspamd || true
+                if ! systemctl is-active --quiet rspamd || [ ! -x /usr/bin/rspamd ]; then
+                    echo "rspamd安装失败，请检查网络或源配置"
+                    exit 1
+                fi
+            fi
+        fi
+    fi
+
+    # 补充前端资源
     wget -O /usr/share/rspamd/www/rspamd.zip $download_Url/install/plugin/mail_sys/rspamd.zip -T 5
     cd /usr/share/rspamd/www
     unzip -o rspamd.zip
@@ -331,7 +377,7 @@ Install_ubuntu() {
     #  安装rspamd
 #    Install_rspamd_rpm
     if [ $ping_url != "200" ]; then
-        Install_rspamd_rpm
+        install_rspamd
     else
         install_rspamd
     fi
@@ -481,7 +527,7 @@ Install() {
     Install_redis
 
     # 2024/3/15 下午 3:49 运行邮局初始化
-    /www/server/panel/pyenv/bin/python3.7 /www/server/panel/class/mailModel/server_init.py setup_mail_sys
+    /www/server/panel/pyenv/bin/python3.7 $pluginPath/mail_server_init.py setup_mail_sys
 
     # 2024/3/15 下午 10:26 处理因权限问题无法接收邮件
     if [ ! -d "/www/vmail" ]; then
@@ -529,7 +575,7 @@ Uninstall() {
 #检查rspamd服务是否安装，不存在则rpm包安装
 check_rspamd() {
     if [ ! -f /usr/bin/rspamd ]; then
-        Install_rspamd_rpm
+        install_rspamd
     fi
 }
 
@@ -545,5 +591,5 @@ elif [ "${1}" == 'uninstall' ]; then
 elif [ "${1}" == 'rspamd' ]; then
     Get_Public
     check_linux
-    Install_rspamd_rpm
+    install_rspamd
 fi

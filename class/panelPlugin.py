@@ -3811,13 +3811,21 @@ class panelPlugin:
         if get:
             public.ExecShell("rm -rf " + tmp_path + '/*')
             tmp_file = tmp_path + '/plugin_tmp.zip'
-            from werkzeug.utils import secure_filename
-            from flask import request
-            f = request.files['plugin_zip']
-            if f.filename[-4:] != '.zip':
-                tmp_file = tmp_path + '/plugin_tmp.tar.gz'
+            plugin_zip_path = get.get("plugin_zip_path", "")
+            if plugin_zip_path:
+                if not plugin_zip_path.endswith('.zip'):
+                    tmp_file = tmp_path + '/plugin_tmp.tar.gz'
+                if not os.path.exists(plugin_zip_path):
+                    return public.returnMsg(False, '文件不存在!')
+                shutil.move(plugin_zip_path, tmp_file)
+            else:
+                from werkzeug.utils import secure_filename
+                from flask import request
+                f = request.files['plugin_zip']
+                if f.filename[-4:] != '.zip':
+                    tmp_file = tmp_path + '/plugin_tmp.tar.gz'
 
-            f.save(tmp_file)
+                f.save(tmp_file)
 
         import panelTask
         panelTask.bt_task()._unzip(tmp_file, tmp_path, '', '/dev/null')

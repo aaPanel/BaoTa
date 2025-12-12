@@ -701,6 +701,10 @@ class wp_sets:
 
     # 新建整合包
     def create_set(self, name: str) -> int:
+        # 不允许创建相同名称的集合包
+        if self.__query().where('name=?', name).find():
+            return 0
+
         set_id = self.__query().insert({
             'name': name,
         })
@@ -1100,15 +1104,24 @@ class wpmgr:
 
         # 查询到对应的数据库信息
         db_info = self.retrieve_database_info()
+        import pymysql
+        try:
+            # 连接数据库进行查询
+            with public.MysqlConn(db_info.name) as conn:
+                data = conn.find(
+                    r"select `user_id` from `{prefix}usermeta` where `meta_key` = '{prefix}capabilities' and `meta_value` like '%s:13:\"administrator\";b:1;%'".format(
+                        prefix=db_info.prefix))
+        except pymysql.OperationalError as e:
+            # 数据库连接失败，用户名或密码错误
+            if str(e).startswith('(1045, '):
+                return public.aap_t_simple_result(False, "Mysql数据库连接失败，用户名或密码错误，您可以尝试修改或更新对应数据的密码")
 
-        # 连接数据库进行查询
-        with public.MysqlConn(db_info.name) as conn:
-            data = conn.find(
-                r"select `user_id` from `{prefix}usermeta` where `meta_key` = '{prefix}capabilities' and `meta_value` like '%s:13:\"administrator\";b:1;%'".format(
-                    prefix=db_info.prefix))
-
+            # 数据库连接失败，无法建立连接
+            if str(e).startswith('(2003, '):
+                raise public.HintException("Mysql数据库连接失败，无法建立连接，请检查数据库服务器是否正常启动")
+        else:
             if not data:
-                raise public.HintException(public.get_msg_gettext('Sorry. No administrator in wordpress.'))
+                raise public.HintException(public.get_msg_gettext('未查询到管理员ID信息，请尝试手动登录'))
 
         # 缓存本次查询到的管理员ID
         self.__WP_ADMIN_ID = int(data['user_id'])
@@ -1144,7 +1157,23 @@ class wpmgr:
         # print("mysql_db_info", mysql_db_info)
 
         if not isinstance(mysql_db_info, dict):
-            raise public.HintException(public.get_msg_gettext('没有找到指定的数据库'))
+            # 开始数据库关联检测修复机制
+            db_info_from_wp_config = self.__get_db_config_by_config_file()
+
+            # 仅处理db_host为localhost、127.0.0.1的情况
+            if db_info_from_wp_config is not None and db_info_from_wp_config.get('db_host', '') in ('localhost', '127.0.0.1'):
+                mysql_db_info = public.M('databases').where('name=?', db_info_from_wp_config.get('db_name', '')).field('id,name,username,password').find()
+                public.print_log(mysql_db_info)
+
+                if isinstance(mysql_db_info, dict) and mysql_db_info.get('id'):
+                    # 更新数据库信息
+                    public.M('wordpress_onekey').where('s_id=?', self.__SITE_ID).update({
+                        'd_id': int(mysql_db_info['id']),
+                    })
+
+            if not isinstance(mysql_db_info, dict):
+                raise public.HintException(public.get_msg_gettext('没有找到指定的数据库'))
+
 
         # 查询数据库表前缀
         wp_info = public.M('wordpress_onekey').where('s_id=?', (self.__SITE_ID,)).field('prefix').find()
@@ -1157,9 +1186,19 @@ class wpmgr:
             raise public.HintException(
                 public.get_msg_gettext('对不起。指定的wordpress数据库前缀格式不合法。'))
 
+        # 从配置文件中读取表前缀
+        table_prefix = self.__get_table_prefix_by_config_file()
+
+        # 对比表前缀，不同则更新数据库中的表前缀
+        if wp_info['prefix'] != table_prefix:
+            with public.M('wordpress_onekey') as query:
+                query.where('d_id', mysql_db_info['id']).update({
+                    'prefix': table_prefix,
+                })
+
         self.__DB_INFO = wp_db_info(id=int(mysql_db_info['id']),
                                     name=mysql_db_info['name'],
-                                    prefix=wp_info['prefix'],
+                                    prefix=table_prefix,
                                     user=str(mysql_db_info['username']),
                                     password=str(mysql_db_info['password']))
 
@@ -1172,13 +1211,30 @@ class wpmgr:
 
         wp_config_file = '{}/wp-config.php'.format(self.retrieve_wp_root_path())
 
+        if not os.path.exists(wp_config_file):
+            raise public.HintException('站点的wp-config.php配置文件丢失')
+
         with open(wp_config_file, 'r') as fp:
             for line in fp:
                 if line.strip().startswith('$table_prefix') and line.find('=') > -1:
                     self.__TABLE_PREFIX = line.strip().split('=')[1].strip(' \'";')
                     return self.__TABLE_PREFIX
 
-        raise public.HintException(public.get_msg_gettext('Sorry, Specified wordpress site table_prefix not find in config file.'))
+        raise public.HintException('无法在wp-config.php文件中读取到table_prefix')
+
+    # 读取wp-config.php中的数据库连接信息
+    def __get_db_config_by_config_file(self) -> typing.Dict[str, str]:
+        db_config = {}
+        wp_config_file = '{}/wp-config.php'.format(self.retrieve_wp_root_path())
+
+        with open(wp_config_file, 'r') as fp:
+            for line in fp:
+                if line.strip().startswith('define(') and line.find('\'DB_') > -1:
+                    key = line.strip().split(',')[0].strip('define(\'').strip('\' ').lower()
+                    value = line.strip().split(',')[1].strip(' )\'";')
+                    db_config[key] = value
+
+        return db_config
 
     # 查询Wordpress加载库目录
     def retrieve_wp_inc(self) -> str:
@@ -2496,6 +2552,53 @@ global $nginx_purger;
 
 $nginx_purger->purge_them_all();
 ''')
+
+        try:
+            # 清理WordPress自带缓存
+            self.run_wp_with_cli(r'''
+            // 清理对象缓存
+            wp_cache_flush();
+    
+            // 清理Transient缓存
+            global $wpdb;
+            $wpdb->query("DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_%' OR option_name LIKE '_site_transient_%'");
+    
+            echo "WordPress内置缓存清理成功";
+            ''')
+
+            # 清理常见缓存插件缓存
+            plugins = {
+                'wp-super-cache': r'''
+                       if (function_exists('wp_cache_clear_cache')) {
+                           wp_cache_clear_cache();
+                           echo "WP Super Cache清理成功";
+                       } else {
+                           echo "WP Super Cache未激活";
+                       }
+                   ''',
+                'w3-total-cache': r'''
+                       if (class_exists('W3_Plugin_TotalCacheAdmin')) {
+                           $w3tc = W3_Plugin_TotalCacheAdmin::instance();
+                           $w3tc->flush_all();
+                           echo "W3 Total Cache清理成功";
+                       } else {
+                           echo "W3 Total Cache未激活";
+                       }
+                   ''',
+                'wp-rocket': r'''
+                       if (function_exists('rocket_clean_domain')) {
+                           rocket_clean_domain();
+                           echo "WP Rocket清理成功";
+                       } else {
+                           echo "WP Rocket未激活";
+                       }
+                   '''
+            }
+
+            for plugin, code in plugins.items():
+                self.run_wp_with_cli(code)
+        except Exception as e:
+            pass
 
         return True
 
@@ -4333,7 +4436,7 @@ class wpdeployment:
             i = 0
             for line in fp:
                 # 查找数据库前缀
-                if line.strip().startswith('$table_prefix ='):
+                if line.strip().startswith('$table_prefix') and line.find('=') > -1:
                     wp_config_index['table_prefix'] = i
                 else:
                     # 查找配置项
@@ -4364,12 +4467,13 @@ class wpdeployment:
 
             if v is None:
                 is_remove = True
-                v = 'true' if v else 'false'
             elif isinstance(v, bool):
-                is_remove = True
+                v = 'true' if v else 'false'
             elif isinstance(v, int):
                 v = int(v)
-            elif isinstance(v, str) or public.is_number(v):
+            elif public.is_number(v):
+                v = float(v)
+            elif isinstance(v, str):
                 v = "'{}'".format(str(v).replace("'", r"\'"))
             else:
                 raise RuntimeError(public.get_msg_gettext('Invalid wp-config value {} {}', (type(v), v)))
@@ -4518,6 +4622,17 @@ class wpdeployment:
 
                     continue
 
+        # 检查是否有以<?php开头的行
+        if len(new_lines) > 0:
+            flag = False
+            for line in new_lines:
+                if line.strip().startswith('<?php'):
+                    flag = True
+                    break
+
+            if not flag:
+                new_lines.insert(0, '<?php\r\n')
+
         # 更新WP配置文件
         with open(wp_config_file, 'w') as fp:
             fp.write(''.join(new_lines))
@@ -4550,11 +4665,11 @@ class wpdeployment:
         except pymysql.OperationalError as e:
             # 数据库连接失败，用户名或密码错误
             if str(e).startswith('(1045, '):
-                return public.aap_t_simple_result(False, str(e)[8:-2])
+                return public.aap_t_simple_result(False, "Mysql数据库连接失败，用户名或密码错误，您可以尝试修改或更新对应数据的密码")
 
             # 数据库连接失败，无法建立连接
             if str(e).startswith('(2003, '):
-                return public.aap_t_simple_result(False, str(e)[8:-2])
+                return public.aap_t_simple_result(False, "Mysql数据库连接失败，无法建立连接，请检查数据库服务器是否正常启动")
 
             # 查询错误，字段或表不存在（当出现这个错误时，说明测试通过）
             if str(e).startswith('(1054, '):
@@ -4700,52 +4815,60 @@ class wpmgr_remote:
 
     # 添加WP远程站点
     def add(self, login_url: str, username: str, password: str) -> bool:
-        # 尝试登录并添加远程站点
-        if not self.login_with_credentials(login_url, username, password):
-            raise public.HintException(public.lang('无法登录wordpress'))
+        try:
+            # 尝试登录并添加远程站点
+            if not self.login_with_credentials(login_url, username, password):
+                raise public.HintException(public.lang('无法登录wordpress'))
 
-        # 安装远程管理插件
-        self.setup_aapenel_wp_toolkit()
+            # 安装远程管理插件
+            self.setup_aapenel_wp_toolkit()
 
-        # 获取WP信息
-        self.environment_info()
+            # 获取WP信息
+            self.environment_info()
 
-        # 提交安装统计
-        threading.Thread(target=requests.post, kwargs={
-            'url': '{}/api/panel/panel_count_daily'.format(public.OfficialApiBase()),
-            'data': {
-                'name': 'wp_toolkit_remote',
-            }}).start()
+            # 提交安装统计
+            threading.Thread(target=requests.post, kwargs={
+                'url': '{}/api/panel/panel_count_daily'.format(public.OfficialApiBase()),
+                'data': {
+                    'name': 'wp_toolkit_remote',
+                }}).start()
+        except:
+            self.remove()
+            raise
 
         return True
 
     # 添加WP远程站点（手动安装）
     def add_manually(self, login_url: str, security_key: str, security_token: str) -> bool:
-        self.__security_key = security_key
-        self.__security_token = security_token
+        try:
+            self.__security_key = security_key
+            self.__security_token = security_token
 
-        # 解析WP登录地址（获取WP首页地址）
-        self.__parse_login_url(login_url)
+            # 解析WP登录地址（获取WP首页地址）
+            self.__parse_login_url(login_url)
 
-        # 获取WP信息
-        env_info = self.environment_info()
+            # 获取WP信息
+            env_info = self.environment_info()
 
-        # 新增WP远程站点
-        self.__remote_id = self.__query().insert({
-            'create_time': int(time.time()),
-            'site_url': self.__wp_site_url,
-            'login_url': login_url,
-            'security_key': security_key,
-            'security_token': security_token,
-            'env_info': json.dumps(env_info),
-        })
+            # 新增WP远程站点
+            self.__remote_id = self.__query().insert({
+                'create_time': int(time.time()),
+                'site_url': self.__wp_site_url,
+                'login_url': login_url,
+                'security_key': security_key,
+                'security_token': security_token,
+                'env_info': json.dumps(env_info),
+            })
 
-        # 提交安装统计
-        threading.Thread(target=requests.post, kwargs={
-            'url': '{}/api/panel/panel_count_daily'.format(public.OfficialApiBase()),
-            'data': {
-                'name': 'wp_toolkit_remote',
-            }}).start()
+            # 提交安装统计
+            threading.Thread(target=requests.post, kwargs={
+                'url': '{}/api/panel/panel_count_daily'.format(public.OfficialApiBase()),
+                'data': {
+                    'name': 'wp_toolkit_remote',
+                }}).start()
+        except:
+            self.remove()
+            raise
 
         return True
 
@@ -4863,6 +4986,11 @@ class wpmgr_remote:
             # 当响应码为403时，尝试再次请求登录
             if resp.status_code == 403 and retry_count < 1:
                 return self.login_with_credentials(login_url, username, password, retry_count + 1)
+
+        seps = resp.url.split('/wp-admin/')
+
+        if len(seps) > 1:
+            self.__wp_site_url = seps[0]
 
         return resp.ok
 
@@ -5002,7 +5130,8 @@ class wpmgr_remote:
     # 通过security_key发起请求
     def request_with_security_key(self, action: str, data: typing.Dict = {}):
         data['_aap_action'] = action
-        resp = requests.post(self.__wp_site_url, json=data, headers={
+
+        resp = requests.post(self.__wp_site_url.rstrip('/') + '/', json=data, headers={
             'AAP-WP-TOOLKIT-{}'.format(self.__security_key): self.__security_token,
         }, verify=False, timeout=120)
 

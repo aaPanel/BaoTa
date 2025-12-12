@@ -163,7 +163,7 @@ class BaseTask:
         msg_list = push_data.get('msg_list', None)
         if msg_list is None:
             raise ValueError("任务：{}的告警推送数据参数错误, 没有msg_list字段".format(self.title))
-        return self.public_headers_msg(push_public_data) + "\n\n" + "\n\n".join(msg_list)
+        return self.public_headers_msg(push_public_data) + "\n" + "\n".join(msg_list)
 
     def to_mail_msg(self, push_data: dict, push_public_data: dict) -> str:
         msg_list = push_data.get('msg_list', None)

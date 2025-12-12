@@ -307,6 +307,12 @@ class SslManage(Sites):
             shutil.copyfile(ng_file, self.nginx_conf_bak)
             public.writeFile(ng_file, ng_conf)
 
+        http2https_pl = "{}/data/http2https.pl".format(public.get_panel_path())
+        if os.path.exists(http2https_pl):
+            self.CloseToHttps(public.to_dict_obj({'siteName': siteName}), without_reload=True)
+            # 尝试设置 http2https，并暂时重启，等到后续测试配置后，在重启
+            self.HttpToHttps(public.to_dict_obj({'siteName': siteName}), without_reload=True)
+
         isError = public.checkWebConfig()
         if (isError != True):
             if os.path.exists(self.nginx_conf_bak): shutil.copyfile(self.nginx_conf_bak, ng_file)
@@ -512,7 +518,7 @@ class SslManage(Sites):
             return public.returnMsg(False,'SET_ERROR,' + public.get_error_info())
 
     # HttpToHttps
-    def HttpToHttps(self, get):
+    def HttpToHttps(self, get, without_reload=False):
         siteName = get.siteName
         # Nginx配置
         file = self.setupPath + '/panel/vhost/nginx/' + siteName + '.conf'
@@ -534,12 +540,12 @@ class SslManage(Sites):
     #HTTP_TO_HTTPS_END"""
             conf = conf.replace('#error_page 404/404.html;', to)
             public.writeFile(file, conf)
-
-        public.serviceReload()
+        if not without_reload:
+            public.serviceReload()
         return public.returnMsg(True, 'SET_SUCCESS')
 
     # CloseToHttps
-    def CloseToHttps(self, get):
+    def CloseToHttps(self, get, without_reload=False):
         siteName = get.siteName
         file = self.setupPath + '/panel/vhost/nginx/' + siteName + '.conf'
         conf = public.readFile(file)
@@ -549,8 +555,8 @@ class SslManage(Sites):
             rep = "\s+if.+server_port.+\n.+\n\s+\s*}"
             conf = re.sub(rep, '', conf)
             public.writeFile(file, conf)
-
-        public.serviceReload()
+        if not without_reload:
+            public.serviceReload()
         return public.returnMsg(True, 'SET_SUCCESS')
 
 

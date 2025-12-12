@@ -224,9 +224,10 @@ class main:
                 "run_status": item["run_status"],
                 "db_name": item["db_name"]
             }
-
+            check_slave_result = self.slave_manager.check_slave(item.get("panel_addr"), item.get("panel_key"), item.get("master_ip"), item.get("slave_ip"))
             slave_ip = item.get("slave_ip")
-            if item.get("config_status") == "done":
+            slave_ip = item.get("slave_ip")
+            if item.get("config_status") == "done" and check_slave_result.get("status") is True:
                 try:
                     slave_status = json.loads(self.slave_manager.get_slave_info(slave_ip))
                     io_status = slave_status.get("Slave_IO_Running")
@@ -246,6 +247,9 @@ class main:
                 except:
                     info["io_status"] = "None"
                     info["sql_status"] = "None"
+            else:
+                info["io_status"] = "api_error"
+                info["sql_status"] = "api_error"
 
             api_status_result = self.slave_manager.get_slave_mysql_status(slave_ip)
             info["api_status"] = api_status_result.get("status")

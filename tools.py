@@ -562,7 +562,7 @@ def set_panel_username(username=None):
     sql = db.Sql()
     if username:
         print("|-正在设置面板用户名...")
-        re_list = re.findall("[^\w\d,.]+", username)
+        re_list = re.findall(r"[^\w,.]+", username)
         if re_list:
             print("|-错误，密码不能包含中文和特殊字符： {}".format(" ".join(re_list)))
             return
@@ -670,9 +670,14 @@ def set_panel_path(adminpath):
     if not public.path_safe_check(admin_path) or admin_path[-1] == '.': msg = '入口地址格式不正确,示例: /my_panel'
     if admin_path[0] != '/':
         admin_path = "/" + admin_path
+    if admin_path.find("//") != -1:
+        msg = '入口地址格式不正确,示例: /my_panel'
+
+    valid_path_pattern = re.compile(r'^(/?([a-zA-Z0-9\-._~:/@]|%[0-9A-Fa-f]{2})*)$')
+    if not valid_path_pattern.match(admin_path):
+        msg ='入口地址格式不正确,示例: /my_panel'
+
     admin_path_file = 'data/admin_path.pl'
-    admin_path1 = '/'
-    if os.path.exists(admin_path_file): admin_path1 = public.readFile(admin_path_file).strip()
     if msg != '':
         print('设置出错:{}'.format(msg))
         return
@@ -1085,7 +1090,7 @@ def check_disk_space():
     if disk_info.free < 500 * 1024 * 1024:
         print("==========================================================================")
         # 2025/2/17 14:34 输出格式化后的总磁盘空间和剩余空间
-        os.system("echo -e '\e[31m紧急：根目录(\"/\")磁盘空间不足500M，请先清理磁盘空间后再执行命令！\\e[0m'")
+        os.system("echo -e '\\e[31m紧急：根目录(\"/\")磁盘空间不足500M，请先清理磁盘空间后再执行命令！\\e[0m'")
         print("总磁盘空间：{}，剩余空间：{}".format(public.to_size(disk_info.total), public.to_size(disk_info.free)))
         print("计算空间由字节转换，请以实际大小为准！")
         print("")
@@ -1111,12 +1116,13 @@ def bt_cli(u_input=0):
         print("(6) 修改面板用户名                (13) 取消IP访问限制                              |")
         print("(7) 强制修改MySQL密码             (14) 查看面板默认信息                            |")
         print("(22) 显示面板错误日志             (15) 清理系统垃圾                                |")
-        print("(23) 关闭BasicAuth认证            (16) 修复面板(检查错误并更新面板文件到最新版)    |")
+        print("(23) 关闭BasicAuth认证            (16) 修复面板(安装当前版本的最新bug修复包)       |")
         print("(24) 关闭动态口令认证             (17) 设置日志切割是否压缩                        |")
         print("(25) 设置是否保存文件历史副本     (18) 设置是否自动备份面板                        |")
         print("(26) 关闭面板ssl                  (19) 关闭面板登录地区限制                        |")
         print("(28) 修改面板安全入口             (29) 取消访问设备验证                            |")
         print("(30) 取消访问UA验证               (32) 开启/关闭【80、443】端口访问面板            |")
+        print("(34) 更新面板(更新到最新版本)                                                      |")
         print("(0) 取消                                                                           |")
         print(raw_tip1)
         try:
@@ -1175,7 +1181,7 @@ def bt_cli(u_input=0):
     except:
         pass
 
-    nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 32, 33]
+    nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 32, 33, 34]
     if not u_input in nums:
         print(raw_tip)
         print("已取消!")
@@ -1447,14 +1453,11 @@ def bt_cli(u_input=0):
     elif u_input == 15:
         ClearSystem()
     elif u_input == 16:
-        nfile = '/www/server/panel/script/local_fix.sh'
-        if not os.path.exists(nfile):
-            os.system('btpython /www/server/panel/script/reload_check.py repair')
+        sh_path = "{}/script/upgrade_panel_optimized.py".format(public.get_panel_path())
+        if not os.path.exists(sh_path):
+            print("|-未找到修复脚本")
+        os.system("bash {} repair_panel".format(sh_path))
 
-            shell  = "curl -k {}/install/update6.sh|bash".format(public.get_url())
-            os.system(shell)
-        else:
-            os.system('bash ' + nfile)
     elif u_input == 17:
         l_path = '/www/server/panel/data/log_not_gzip.pl'
         if os.path.exists(l_path):
@@ -1595,6 +1598,19 @@ def bt_cli(u_input=0):
             print("|-检测到已开启文件副本功能,正在关闭...")
             public.writeFile(l_path, 'True')
             print("|-已关闭文件副本功能")
+    elif u_input == 34:
+        ver = sys.argv[3] if len(sys.argv) > 3 and sys.argv[2]=="34" else ""
+        sh_path = "{}/script/upgrade_panel_optimized.py".format(public.get_panel_path())
+        if not os.path.exists(sh_path):
+            print("|-未找到升级脚本")
+        ret_code = os.system("bash {} upgrade_panel {} --dry-run".format(sh_path, ver))
+        if ret_code != 0:
+            return
+        continue_tip = input("是否继续执行更新?(y/n):")
+        if continue_tip.strip().lower() in ('y', 'yes'):
+            os.system("bash {} upgrade_panel {}".format(sh_path, ver))
+        else:
+            print("已取消更新!")
 
 
 if __name__ == "__main__":

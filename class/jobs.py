@@ -23,6 +23,7 @@ def control_init():
     run_new()
     set_nginx_extension()
     set_apache_extension()
+    setup_site_total()
     check_cryptography_pyopenssl_version()
     check_docker_version()
     clear_fastcgi_safe()
@@ -1469,6 +1470,9 @@ def set_nginx_extension():
     if "/www/server/panel" not in sys.path:
         sys.path.insert(0, "/www/server/panel")
 
+    if not os.path.exists("/www/server/nginx/sbin/nginx"):
+        return
+
     if not public.get_webserver() == "nginx":
         return
 
@@ -1513,7 +1517,7 @@ def set_nginx_extension():
             print("重启Nginx成功！", flush=True)
 
         public.writeFile(tip_file, "1")
-        setup_site_total()
+        # setup_site_total()
     except:
         pass
 
@@ -1571,16 +1575,54 @@ def set_apache_extension():
             print("重启Apache成功！", flush=True)
 
         public.writeFile(tip_file, "1")
-        setup_site_total()
+        # setup_site_total()
     except:
         pass
 
 
 def setup_site_total():
     from mod.base.free_site_total import SiteTotalService
-    s = SiteTotalService()
-    if not s.running():
-        s.start()
+    # s = SiteTotalService()
+    # if not s.running():
+    #     s.start()
+
+    # 2025/11/17 修改free_site_total 安装逻辑， 使用一个记录文件，记录上次更新对应的面板更新时间，如果一致，则不更新，否则就更新
+    if os.path.exists(SiteTotalService().stop_always_flags): # 存在则说明用户设置的是永久关闭
+         return
+
+    panel_path = public.get_panel_path()
+    config_py = "{}/class/config.py".format(panel_path)
+    last_install_file = "{}/data/free_site_total.pl".format(panel_path)
+    config_content = public.readFile(config_py)
+    match_ret = re.search(r'''version_number":\s*int\("(?P<upt>\d+)"\)''', config_content)
+    update_time = -1
+    if match_ret:
+        try:
+            update_time = int(match_ret.group("upt"))
+        except:
+            update_time = -1
+
+    if not update_time:
+        update_time = os.path.getmtime(config_py)
+
+    last_install_time = 0
+    if os.path.exists(last_install_file):
+        try:
+            last_install_time = int(public.readFile(last_install_file))
+        except:
+            pass
+
+    if last_install_time == update_time:
+        tmp_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(last_install_time))
+        print("当前面板安装时间与free_site_total一致（{}），无需更新！".format(tmp_time), flush=True)
+        return
+
+    install_sh = "{} {}/script/free_total_update.py".format(public.get_python_bin(), panel_path)
+    res = public.ExecShell(install_sh)
+    print(res[0]+ res[1])
+    print("free_site_total 安装成功！", flush=True)
+    public.writeFile(last_install_file, str(update_time))
+
 
 if __name__ == '__main__':
     stime = time.time()

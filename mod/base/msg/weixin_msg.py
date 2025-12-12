@@ -46,10 +46,22 @@ class WeiXinMsg:
         else:
             send_type = "markdown"
 
+        if "user" in args and isinstance(args["user"], list):
+            user = args["user"]
+        else:
+            user = []
+
+        if "isAtAll" in args and isinstance(args["isAtAll"], bool):
+            atall = args["isAtAll"]
+        else:
+            atall = True
+
         data = {
             "url": args["url"],
             "title": title,
-            "send_type": send_type
+            "send_type": send_type,
+            "user": user,
+            "isAtAll": atall,
         }
 
         test_obj = cls({"data": data, "id": None})
@@ -81,6 +93,24 @@ class WeiXinMsg:
         if not self.config:
             return '未正确配置微信信息。'
 
+        # user没有时默认为空
+        if "user" not in self.config:
+            self.config['user'] = []
+
+        if "isAtAll" not in self.config and not self.config['user']:
+            self.config['isAtAll'] = True
+
+        at_user = []
+        at_tag_str=""
+        for user in self.config['user']:
+            if isinstance(user, str):
+                at_user.append(user)
+                at_tag_str +="<@{}>".format(user)
+
+        if self.config['isAtAll']:
+            at_user.append("@all")
+            # at_tag_str += "<@AllUsers>"  # 未找到 markdown 格式下如何 @all （@所有人）
+
         if "send_type" in self.config and self.config["send_type"] == "text":
             sep = "\n                "
             if sep in msg:
@@ -94,14 +124,15 @@ class WeiXinMsg:
             data = {
                 "msgtype": "text",
                 "text": {
-                    "content": msg
+                    "content": msg,
+                    "mentioned_list": at_user
                 }
             }
         else:
             data = {
                 "msgtype": "markdown",
                 "markdown": {
-                    "content": msg
+                    "content": msg + "\n" + at_tag_str
                 }
             }
         headers = {'Content-Type': 'application/json'}

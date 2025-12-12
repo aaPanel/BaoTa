@@ -1,9 +1,33 @@
 # coding: utf-8
 import os, sys, time, re, json
+import psutil
+import traceback
 
-os.chdir('/www/server/panel/')
+PANEL_PATH='/www/server/panel'
+os.chdir(PANEL_PATH)
 sys.path.insert(0, "class/")
-sys.path.insert(0, "/www/server/panel/")
+sys.path.insert(0, PANEL_PATH)
+
+# 检测是否有正在执行的任务， 有则杀死上个任务
+for i in psutil.pids():
+    try:
+        if i == os.getpid():
+            continue
+        p = psutil.Process(i)
+        is_python = False
+        cmdline = p.cmdline()
+    except:
+        traceback.print_exc()
+        continue
+
+    for cmd_split in cmdline:
+        if cmd_split.find('python') > 0:
+            is_python = True
+        if is_python and cmd_split.find('site_task.py') > 0:
+            print("当前有站点任务正在执行，杀死上一个任务")
+            p.kill()
+
+
 import public
 
 
@@ -11,6 +35,7 @@ import public
 def SetStatus(get):
     msg = public.getMsg('OFF')
     if get.status != '0': msg = public.getMsg('ON')
+    username = 'Unknown'
     try:
         id = get['id']
         username = get['username']
@@ -69,12 +94,17 @@ def flush_ssh_log():
         else:
             pass
     except:
+        import traceback
+        print(traceback.format_exc())
         pass
 
 
 oldEdate = public.readFile('data/edate.pl')
 if not oldEdate: oldEdate = '0000-00-00'
 mEdate = time.strftime('%Y-%m-%d', time.localtime())
+if oldEdate == mEdate:
+    print('今日已处理')
+    exit(0)
 edateSites = public.M('sites').where('edate>? AND edate<? AND (status=? OR status=?)', ('0000-00-00', mEdate, 1, u'正在运行')).field('id,name,project_type', ).select()
 import panelSite
 
@@ -132,7 +162,47 @@ for site in edateSites:
 oldEdate = mEdate
 public.writeFile('/www/server/panel/data/edate.pl', mEdate)
 
-flush_ssh_log()
+# flush_ssh_log()
+
+def deal_with_docker_expired_site():
+    '''
+        @name Docker网站项目-网站到期处理
+    '''
+    try:
+        # 2024/11/19 11:13 1天只检查1次
+        # pl_file = '{}/data/check_deal_with_docker_expired_site.pl'.format(PANEL_PATH)
+        # if os.path.exists(pl_file):
+        #     mtime = os.path.getmtime(pl_file)
+        #     if time.time() - mtime < 86400: return
+        # ↑
+        # └-----如上的检查逻辑已在 data/edate.pl 中处理，本脚本每天实际只运行一次
+
+        from btdockerModel import dk_public as dp
+        sresult = dp.sql("docker_sites").field("id,name,edate").select()
+        if not sresult: return
+
+        from mod.project.docker.sites.sitesManage import SitesManage
+        site_manage = SitesManage()
+
+        for site in sresult:
+            if not site: continue
+            if site['edate'] == '0000-00-00': continue
+            if site['edate'] == time.strftime('%Y-%m-%d', time.localtime()): continue
+            if site['edate'] < time.strftime('%Y-%m-%d', time.localtime()):
+                args = public.dict_obj()
+                args.id = site['id']
+                args.status = 0
+                args.site_name = site['name']
+                site_manage.set_site_status(args)
+                public.WriteLog("Docker网站项目-网站到期处理", "网站{}已到期".format(site['name']))
+
+        # if not os.path.exists(pl_file): public.writeFile(pl_file, 'True')
+    except:
+        pass
+
+
+deal_with_docker_expired_site()
+
 
 if public.get_improvement():
     import PluginLoader

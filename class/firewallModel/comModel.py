@@ -89,6 +89,18 @@ class main(Base):
     def check_iptables_env(self,firewall_status):
         if firewall_status:
             if not os.path.exists('/etc/systemd/system/BT-FirewallServices.service'):
+                #判断 数据库是否有数据 如果没数据直接初始化(新安装面板场景)
+                if public.M('firewall_country').count() == 0 and \
+                    public.M('firewall_ip').count() == 0 and \
+                    public.M('firewall_malicious_ip').count() == 0 and \
+                    public.M('firewall_forward').count() == 0 :
+                    
+                    exec_shell = '('
+                    if not os.path.exists('/usr/sbin/ipset'):
+                        exec_shell = exec_shell + '{} install ipset -y;'.format(public.get_sys_install_bin())
+                    exec_shell = exec_shell + 'sh {panel_path}/script/init_firewall.sh)'.format(panel_path=public.get_panel_path())
+                    public.ExecShell(exec_shell)
+                    return {'status': True, 'msg': '已安装.'}
                 return {'status': False, 'msg': '防火墙未初始化.'}
             elif public.ExecShell("iptables -C INPUT -j IN_BT")[1] != '':         #丢失iptable链 需要重新创建
                 exec_shell = 'sh {}/script/init_firewall.sh'.format(public.get_panel_path())
@@ -193,8 +205,7 @@ class main(Base):
         '''
         forward_rules_list = self.port_forward_list(get)
         for item in forward_rules_list["data"]:
-            if item["S_Address"] == get.S_Address and item["S_Port"] == get.S_Port and item["T_Address"] == get.T_Address and \
-                    item["T_Port"] == get.T_Port:
+            if item["S_Port"] == get.S_Port and item["T_Address"] == get.T_Address and item["T_Port"] == get.T_Port and item["Protocol"].upper() == get.protocol.upper():
                 return False
 
         return True
@@ -498,7 +509,9 @@ class main(Base):
                 for i in range(len(rule_db)):
                     if (rule_db[i]['T_Address'] == list_forward[j]['T_Address'] and
                             rule_db[i]['S_Port'] == list_forward[j]['S_Port'] and
-                            rule_db[i]['T_Port'] == list_forward[j]['T_Port']):
+                            rule_db[i]['T_Port'] == list_forward[j]['T_Port'] and
+                            rule_db[i]['Protocol'].upper() == list_forward[j]['Protocol'].upper()
+                        ):
                         list_forward[j]['id'] = rule_db[i]['id']
                         list_forward[j]['brief'] = rule_db[i]['brief']
                         list_forward[j]['addtime'] = rule_db[i]['addtime']
@@ -1917,20 +1930,17 @@ class main(Base):
         args1.S_Port = get.old_data['S_Port']
         args1.T_Address = get.old_data['T_Address']
         args1.T_Port = get.old_data['T_Port']
-        args1.Protocol = get.old_data['Protocol']
+        args1.protocol = get.old_data['Protocol']
         args1.id = get.old_data['id']
         args1.reload = "0"
         self.set_port_forward(args1)
 
         args2 = public.dict_obj()
         args2.operation = 'add'
-        # args2.S_Address = get.new_data['S_Address']
         args2.S_Port = get.new_data['S_Port']
         args2.T_Address = get.new_data['T_Address']
         args2.T_Port = get.new_data['T_Port']
-        args2.Protocol = get.new_data['protocol']
+        args2.protocol = get.new_data['protocol']
         args2.brief = get.new_data['brief']
         args2.reload = "0"
-        self.set_port_forward(args2)
-
-        return public.returnMsg(True, '修改成功')
+        return self.set_port_forward(args2)

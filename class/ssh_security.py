@@ -8,7 +8,11 @@
 # -------------------------------------------------------------------
 # SSH 安全类
 # ------------------------------
+import shutil
 import warnings  # 处理requests库版本警告
+
+from flask import send_file
+
 warnings.filterwarnings("ignore", message=r".*doesn't\s+match\s+a\s+supported\s+version", module="requests")
 
 import public, os, re, send_mail, json
@@ -104,8 +108,7 @@ class ssh_security:
     def get_ssh_port(self):
         conf = public.readFile(self.__SSH_CONFIG)
         if not conf: conf = ''
-        rep = "#*Port\s+([0-9]+)\s*\n"
-        tmp1 = re.search(rep, conf)
+        tmp1 = re.search(r"#*Port\s+([0-9]+)\s*\n", conf)
         port = '22'
         if tmp1:
             port = tmp1.groups(0)[0]
@@ -563,6 +566,7 @@ disown $!''' % (self.return_python())
         else:
             file_result = re.sub(ssh_password, '\nPasswordAuthentication yes', file)
         self.wirte(self.__SSH_CONFIG, file_result)
+        public.ExecShell("sed -i 's/^PasswordAuthentication no$/PasswordAuthentication yes/' /etc/ssh/sshd_config.d/*.conf")
         self.restart_ssh()
         public.WriteLog('SSH管理', '开启密码登陆')
         return public.returnMsg(True, '开启成功')
@@ -934,6 +938,7 @@ disown $!''' % (self.return_python())
         ssh_password = '\n#?PasswordAuthentication\s\w+'
         file_result = re.sub(ssh_password, '\nPasswordAuthentication no', file)
         self.wirte(self.__SSH_CONFIG, file_result)
+        public.ExecShell("sed -i 's/^PasswordAuthentication yes$/PasswordAuthentication no/' /etc/ssh/sshd_config.d/*.conf")
         self.restart_ssh()
         public.WriteLog('SSH管理', '关闭密码访问')
         return public.returnMsg(True, '关闭成功')
@@ -1102,6 +1107,63 @@ disown $!''' % (self.return_python())
             str(page.SHIFT) + ',' + str(page.ROW)).select()
 
         return data
+
+    def get_record_video(self, get):
+        old_path = "/www/server/panel/plugin/jumpserver/static/video/"
+        new_path = "/www/server/panel/data/jumpserver_video/"
+        if not os.path.exists(new_path):
+            os.makedirs(new_path)
+        if os.path.isdir(old_path):
+            for old_file in os.listdir(old_path):
+                shutil.move(os.path.join(old_path, old_file), new_path)
+            shutil.rmtree(old_path)
+
+        record_id = get.get("record_id/d", 0)
+        if not record_id:
+            return public.returnMsg(False, '记录id错误不存在')
+        video_info = public.M('ssh_login_record').where("id=?", (record_id,)).find()
+        if not video_info or not isinstance(video_info, dict):
+            return public.returnMsg(False, '记录不存在')
+        if video_info["close_time"] == 0:
+            return public.returnMsg(False, '记录未结束')
+        video_path = video_info["video_addr"]
+        if video_path.startswith(old_path):
+            video_path = video_path.replace(old_path, new_path)
+        if not os.path.exists(video_path):
+            return public.returnMsg(False, '记录文件不存在')
+        else:
+            return send_file(video_path, download_name=os.path.basename(video_path))
+
+    def remove_video_record(self, get):
+        record_ids = get.get("record_ids/s")
+        try:
+            record_ids = json.loads(record_ids)
+            record_ids = [str(int(i)) for i in record_ids if i]
+        except:
+            return public.returnMsg(False, '参数错误')
+
+        old_path = "/www/server/panel/plugin/jumpserver/static/video/"
+        new_path = "/www/server/panel/data/jumpserver_video/"
+
+        videos_info = public.M('ssh_login_record').where("id in ({})".format(",".join(record_ids)), ()).select()
+        if not videos_info or not isinstance(videos_info, list):
+            return public.returnMsg(False, '记录不存在')
+        for v in videos_info:
+            if v["close_time"] == 0:
+                record_ids.remove(str(v["id"]))
+                continue
+            v_file = v["video_addr"]
+            if v_file.startswith(old_path):
+                v_file = v_file.replace(old_path, new_path)
+            try:
+                if os.path.exists(v_file):
+                    os.remove(v_file)
+            except:
+                pass
+
+        public.M('ssh_login_record').where("id in ({})".format(",".join(record_ids)), ()).delete()
+        return public.returnMsg(True, '删除成功')
+
 
     def get_file_json(self, get):
 

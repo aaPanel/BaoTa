@@ -9,6 +9,7 @@
 # ------------------------------
 # 反向代理模型
 # ------------------------------
+import re
 import sys
 import json
 import os
@@ -266,6 +267,7 @@ server {{
                 "cache_zone": get.site_name.replace(".", "_") + "_cache",
                 "static_cache": "",
                 "expires": "1d",
+                "cache_suffix": "css,js,jpe,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map",
                 "cache_conf": "",
             },
             "gzip": {
@@ -3190,6 +3192,23 @@ server {{
         if get.expires[0] == "0" or get.expires.startswith("-"):
             return public.returnResult(status=False, msg="expires参数不合法，请输入大于0的数字！")
 
+        get.cache_suffix = get.get("cache_suffix/s", "")
+        if get.cache_suffix == "" and get.cache_status == 1:
+            return public.returnResult(status=False, msg="cache_suffix不能为空，请输入后缀！")
+        cache_suffix_list = []
+        for suffix in get.cache_suffix.split(","):
+            tmp_suffix = re.sub(r"\s", "", suffix)
+            if not tmp_suffix:
+                continue
+            cache_suffix_list.append(tmp_suffix)
+
+        if not cache_suffix_list and get.cache_status == 1:
+            return public.returnResult(status=False, msg="cache_suffix参数错误，请输入有效后缀！")
+
+        if not cache_suffix_list:
+            cache_suffix_list = ["css", "js", "jpg", "jpeg", "png", "webp", "woff", "eot", "ttf", "svg", "ico", "css.map", "js.map"]
+
+        get.cache_suffix = ",".join(cache_suffix_list)
         expires = "expires {}".format(get.expires)
 
         get.proxy_json_conf = self.read_json_conf(get)
@@ -3209,6 +3228,7 @@ server {{
             if info["proxy_path"] == get.proxy_path:
                 info["proxy_cache"]["cache_status"] = True if get.cache_status == 1 else False
                 info["proxy_cache"]["expires"] = get.expires
+                info["proxy_cache"]["cache_suffix"] = get.cache_suffix
                 if get.cache_status == 1:
                     info["proxy_cache"]["cache_conf"] = ("\n    proxy_cache {cache_zone};"
                                                          "\n    proxy_cache_key $host$uri$is_args$args;"
@@ -3471,11 +3491,9 @@ class ProxyProjectV2(main):
             return res
         # 执行结束生成配置文件
         new_conf = ctool.to_string()
-        public.print_log(new_conf)
         public.writeFile(pync.file_path, new_conf)
         ret_nginx = public.checkWebConfig()
         if ret_nginx is not True:
-            public.print_log(ret_nginx)
             public.writeFile(pync.file_path, old_conf)
             return public.returnResult(status=False, msg="保存配置文件失败！无法添加配置")
 
@@ -3552,6 +3570,9 @@ class ProxyProjectV2(main):
             )
         )
 
+    # 该功能理论上不支持， 我们已经视使用了 ^~ / 匹配过后端，同级的所有正则匹配，都不会生效，故此配置从未生效
+    # 针对代理的缓存配置只能在内部生效
+    # PS: 该功能是废弃的功能，请勿使用
     @_warp_check_nginx_conf
     def set_global_cache(self, get):
         res = super().set_global_cache(get)
@@ -3755,6 +3776,7 @@ class ProxyProjectV2(main):
                 bool(get.cache_status),
                 get.proxy_json_conf["proxy_cache"]["cache_zone"],
                 get.expires,
+                get.cache_suffix,
             )
 
         return self._warp_do_func(get, func)

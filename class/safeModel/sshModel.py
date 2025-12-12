@@ -277,6 +277,7 @@ class main(safeBase):
         data = {}
         data['port'] = port
         data['status'] = status
+        data['status_text'] = '运行中' if status else '已停止'
         data['ping'] = isPing
         data['firewall_status'] = self.CheckFirewallStatus()
         # data['error'] = self.get_ssh_intrusion(get)

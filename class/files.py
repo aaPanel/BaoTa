@@ -35,7 +35,10 @@ try:
     import chardet
 except:
     os.system('btpip install chardet')
-    import chardet
+    try:
+        import chardet
+    except:
+        chardet = None
 
 
 class files:
@@ -869,12 +872,12 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             content = os.stat(filename) if not os.path.islink(filename) or os.path.exists(filename) else public.to_dict_obj({'st_size': 0, 'st_mtime': 0, 'st_mode': 0, 'st_uid': 0})
 
             try:
-                if get.path != "/":
-                    user_name = pwd.getpwuid(content.st_uid).pw_name
-                else:
-                    user_name = 'root'
+                # if get.path != "/":
+                user_name = pwd.getpwuid(content.st_uid).pw_name
+                # else:
+                #     user_name = 'root'
             except KeyError:
-                user_name = ''
+                user_name = '-'
 
             if str(filename).endswith(".bt_split_json"):
                 pss.update({filename: "PS：拆分恢复配置文件"})
@@ -2404,21 +2407,31 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
             try:
                 fp = open(get.path, 'rb')
                 if fp:
+                    data['encoding'] = 'utf-8'
+                    if chardet:
+                        chardet_data = fp.read(1024)
+                        res = chardet.detect(chardet_data)
+                        if res and res['confidence'] > 0.9:
+                            data['encoding'] = res['encoding']
+                        fp.seek(0)
                     srcBody = fp.read()
                     fp.close()
                     try:
-                        data['encoding'] = 'utf-8'
                         data['data'] = srcBody.decode(data['encoding'])
                     except:
                         try:
-                            data['encoding'] = 'GBK'
+                            data['encoding'] = 'utf-8'
                             data['data'] = srcBody.decode(data['encoding'])
                         except:
                             try:
-                                data['encoding'] = 'BIG5'
+                                data['encoding'] = 'GBK'
                                 data['data'] = srcBody.decode(data['encoding'])
                             except:
-                                return public.returnMsg(False, u'文件编码不被兼容，无法正确读取文件!')
+                                try:
+                                    data['encoding'] = 'BIG5'
+                                    data['data'] = srcBody.decode(data['encoding'])
+                                except:
+                                    return public.returnMsg(False, u'文件编码不被兼容，无法正确读取文件!')
             except OSError as e:
                 return public.returnMsg(False, '打开文件失败，文件可能被其它进程占用!')
             except Exception as e:
@@ -3741,6 +3754,7 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
     def DownloadFile(self, get):
         import panelTask
         task_obj = panelTask.bt_task()
+        get.filename = public.xsssec2(get.filename)
         task_obj.create_task('下载文件', 1, get.url, get.path + '/' + get.filename)
         # if sys.version_info[0] == 2: get.path = get.path.encode('utf-8')
         # import db,time
