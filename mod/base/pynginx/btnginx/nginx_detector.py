@@ -1,16 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+import re
+import shutil
+import subprocess
+
 import psutil
-from collections import namedtuple
-from typing import List, Dict, Tuple, Optional, Union, Set, NamedTuple
+from dataclasses import dataclass
+from typing import List, Dict, Tuple, Optional, Union, Set
 
 
 # 定义Nginx实例信息的namedtuple
-class NginxInstance(NamedTuple):
+@dataclass
+class NginxInstance:
     nginx_bin: str
     nginx_conf: str
+    working_dir: str
+    version: str = ""
+    running: bool = False
 
+    def to_dict(self):
+        return {
+            "nginx_bin": self.nginx_bin,
+            "nginx_conf": self.nginx_conf,
+            "working_dir": self.working_dir,
+            "version": self.version,
+            "running": self.running,
+        }
 
 class NginxDetector:
     """
@@ -20,17 +36,56 @@ class NginxDetector:
 
     # 常见Nginx安装路径
     COMMON_PATHS = [
-        '/usr/local/nginx/',
-        '/etc/nginx/',
-        '/usr/share/nginx/',
-        '/opt/nginx/',
-        '/home/nginx/',
-        '/www/server/nginx/'
+        '/usr/sbin/nginx',
+        '/usr/local/nginx/sbin/nginx',
+        '/usr/share/nginx',
+        '/opt/nginx/sbin/nginx',
+        '/home/nginx/sbin/nginx',
+        '/www/server/nginx/sbin/nginx',
     ]
 
     def __init__(self):
         # type: () -> None
         pass
+
+    @staticmethod
+    def _parse_ng_v(ng: NginxInstance):
+        try:
+            v_out = subprocess.check_output([ng.nginx_bin, "-V"], stderr=subprocess.STDOUT).decode()
+        except:
+            return False
+
+        regexp_ver = re.compile(r"nginx version:\s*(?P<ver>\S+)\n")
+        regexp_config_path = re.compile("\s+--conf-path=(?P<path>(/\S+)+)\s*")
+        regexp_prefix = re.compile("\s+--prefix=(?P<path>(/\S+)+)\s*")
+        ver_res = regexp_ver.search(v_out)
+        if ver_res:
+            ng.version = ver_res.group("ver")
+
+        regexp_working_dir = regexp_prefix.search(v_out)
+        if regexp_working_dir:
+            ng.working_dir = ng.working_dir or regexp_working_dir.group("path")
+
+        regexp_config_path = regexp_config_path.search(v_out)
+        if regexp_config_path:
+            ng.nginx_conf = ng.nginx_conf or regexp_config_path.group("path")
+
+        if not ng.nginx_conf and ng.working_dir:
+            nginx_conf = os.path.join(ng.working_dir, "conf", "nginx.conf")
+            if os.path.exists(nginx_conf):
+                ng.nginx_conf = nginx_conf
+
+        if not ng.nginx_conf:
+            return False
+        try:
+            t_out = subprocess.check_output([ng.nginx_bin, "-t", "-c", ng.nginx_conf, '-p', ng.working_dir], stderr=subprocess.STDOUT).decode()
+        except:
+            t_out = ""
+
+        if "test is successful" in t_out:
+            return True
+        return False
+
 
     def detect_nginx_all(self, only_running =False):
         # type: (bool) -> List[NginxInstance]
@@ -44,13 +99,6 @@ class NginxDetector:
         # 策略1: 进程名称匹配
         process_results = self._detect_by_process_all()
         for result in process_results:
-            if result.nginx_conf not in found_configs:
-                results.append(result)
-                found_configs.add(result.nginx_conf)
-
-        # 策略2: 标准端口监听探测
-        port_results = self._detect_by_port_all()
-        for result in port_results:
             if result.nginx_conf not in found_configs:
                 results.append(result)
                 found_configs.add(result.nginx_conf)
@@ -75,110 +123,53 @@ class NginxDetector:
         :param cmdline: 命令行参数列表
         :return: tuple(nginx_bin, nginx_conf)
         """
-        nginx_bin = None  # type: Optional[str]
-        nginx_conf = None  # type: Optional[str]
+        nginx_conf = ''  # type: Optional[str]
+        working_dir = ''  # type: Optional[str]
 
         # 解析命令行参数
         for i, arg in enumerate(cmdline):
-            if arg.endswith('nginx') and os.path.exists(arg):
-                nginx_bin = arg
-            elif arg == '-c' and i + 1 < len(cmdline):
+            if arg == '-c' and i + 1 < len(cmdline):
                 nginx_conf = cmdline[i + 1]
+            elif arg == '-p' and i + 1 < len(cmdline):
+                working_dir = cmdline[i + 1]
 
-        # 如果没有通过-c参数指定配置文件，则使用默认路径
-        if not nginx_conf and nginx_bin:
-            # 尝试在可执行文件同目录下查找配置文件
-            bin_dir = os.path.dirname(nginx_bin)
-            possible_conf = os.path.join(bin_dir, '..', 'conf', 'nginx.conf')
-            if os.path.exists(possible_conf):
-                nginx_conf = os.path.abspath(possible_conf)
-            else:
-                # 尝试默认配置路径
-                possible_conf = '/etc/nginx/nginx.conf'
-                if os.path.exists(possible_conf):
-                    nginx_conf = possible_conf
+        return nginx_conf, working_dir
 
-        return nginx_bin, nginx_conf
-
-    @staticmethod
-    def _detect_by_process_all():
+    @classmethod
+    def _detect_by_process_all(cls):
         # type: () -> List[NginxInstance]
         """
         策略1: 通过进程名称匹配定位所有Nginx实例
         :return: list[NginxInstance]
         """
         results = []  # type: List[NginxInstance]
-        processed_pids = set()  # type: Set[int] # 避免重复处理相同PID
-
-        try:
-            # 使用pids()获取所有进程ID，然后逐一获取进程信息
-            for pid in psutil.pids():
-                try:
-                    # 检查是否已处理过该PID
-                    if pid in processed_pids:
-                        continue
-
-                    proc = psutil.Process(pid)
-                    # 查找nginx主进程
-                    if proc.name() == 'nginx' and 'master' in ' '.join(proc.cmdline()):
-                        cmdline = proc.cmdline()
-                        processed_pids.add(pid)
-
-                        # 提取Nginx信息
-                        nginx_bin, nginx_conf = NginxDetector._extract_nginx_info(cmdline)
-
-                        if nginx_bin and nginx_conf:
-                            results.append(NginxInstance(nginx_bin=nginx_bin, nginx_conf=nginx_conf))
-                except (psutil.NoSuchProcess, psutil.AccessDenied, IndexError, psutil.ZombieProcess):
-                    # 忽略单个进程的错误，继续处理其他进程
-                    continue
-        except Exception:
-            # 忽略整体错误，返回已找到的结果
-            pass
-
+        # 使用pids()获取所有进程ID，然后逐一获取进程信息
+        for pid in psutil.pids():
+            ins = cls._detect_by_pid(pid)
+            if ins:
+                results.append(ins)
         return results
 
-    @staticmethod
-    def _detect_by_port_all():
-        # type: () -> List[NginxInstance]
-        """
-        策略2: 通过80/443端口绑定检测定位所有Nginx实例
-        :return: list[NginxInstance]
-        """
-        results = []  # type: List[NginxInstance]
-        processed_pids = set()  # type: Set[int] # 避免重复处理相同PID
-
+    @classmethod
+    def _detect_by_pid(cls, pid: int) -> Optional[NginxInstance]:
         try:
-            # 获取监听80和443端口的连接
-            connections = psutil.net_connections(kind='inet')
+            proc = psutil.Process(pid)
+            # 查找nginx主进程
+            if proc.name() == 'nginx' and 'master' in ' '.join(proc.cmdline()):
+                cmdline = proc.cmdline()
 
-            # 遍历所有连接
-            for conn in connections:
-                if conn.laddr.port in [80, 443] and conn.status == 'LISTEN':
-                    try:
-                        # 检查是否已处理过该PID
-                        if conn.pid in processed_pids:
-                            continue
 
-                        proc = psutil.Process(conn.pid)
-                        processed_pids.add(conn.pid)
+                # 提取Nginx信息
+                nginx_conf, working_dir = cls._extract_nginx_info(cmdline)
+                bin_path = os.path.realpath(proc.exe())
 
-                        # 检查是否为nginx进程
-                        if 'nginx' in proc.name():
-                            # 获取进程命令行参数
-                            cmdline = proc.cmdline()
-
-                            # 提取Nginx信息
-                            nginx_bin, nginx_conf = NginxDetector._extract_nginx_info(cmdline)
-
-                            if nginx_bin and nginx_conf:
-                                results.append(NginxInstance(nginx_bin=nginx_bin, nginx_conf=nginx_conf))
-                    except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                        continue
+                ins = NginxInstance(nginx_bin=bin_path, nginx_conf=nginx_conf, working_dir=working_dir, version="",
+                                    running=True)
+                if cls._parse_ng_v(ins):
+                    return ins
         except Exception:
-            pass
-
-        return results
+            # 忽略单个进程的错误，继续处理其他进程
+            return
 
     @classmethod
     def _detect_by_common_paths_all(cls):
@@ -188,33 +179,26 @@ class NginxDetector:
         :return: list[NginxInstance]
         """
         results = []  # type: List[NginxInstance]
-        processed_configs = set()  # type: Set[str] # 避免重复处理相同配置文件
+        common_paths = cls.COMMON_PATHS.copy()
+        nginx_which = shutil.which("nginx")
+        if nginx_which:
+            common_paths.append(os.path.dirname(nginx_which))
 
-        for base_path in cls.COMMON_PATHS:
-            # 检查可执行文件是否存在
-            nginx_bin = os.path.join(base_path, 'sbin', 'nginx')
-            if not os.path.exists(nginx_bin):
-                nginx_bin = os.path.join(base_path, 'nginx')
-                if not os.path.exists(nginx_bin):
-                    continue
-
-            # 检查配置文件是否存在
-            nginx_conf = os.path.join(base_path, 'conf', 'nginx.conf')
-            if not os.path.exists(nginx_conf):
-                nginx_conf = os.path.join(base_path, 'nginx.conf')
-                if not os.path.exists(nginx_conf):
-                    nginx_conf = '/etc/nginx/nginx.conf'
-                    if not os.path.exists(nginx_conf):
-                        continue
-
-            # 避免重复处理相同配置文件
-            if nginx_conf in processed_configs:
-                continue
-
-            processed_configs.add(nginx_conf)
-            results.append(NginxInstance(nginx_bin=nginx_bin, nginx_conf=nginx_conf))
+        for bin_path in common_paths:
+            ins = cls.detect_by_bin(bin_path)
+            if ins:
+                results.append(ins)
 
         return results
+
+    @classmethod
+    def detect_by_bin(cls, bin_path: str) -> Optional[NginxInstance]:
+        if os.path.exists(bin_path) and os.access(bin_path, os.X_OK):
+            # 检查可执行文件是否正确
+            ins = NginxInstance(nginx_bin=bin_path, nginx_conf="", working_dir="", version="", running=False)
+            if cls._parse_ng_v(ins):
+                return ins
+        return None
 
 
 def ng_detect(only_running=False):
@@ -224,3 +208,11 @@ def ng_detect(only_running=False):
     :return: list[NginxInstance]
     """
     return NginxDetector().detect_nginx_all(only_running=only_running)
+
+
+def ng_detect_by_bin(bin_path):
+    # type: (str) -> Optional[NginxInstance]
+    """
+    通过可执行文件路径获取Nginx实例
+    """
+    return NginxDetector().detect_by_bin(bin_path)

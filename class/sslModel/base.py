@@ -22,7 +22,7 @@ import public
 caa_value = '0 issue "letsencrypt.org"'
 # godaddy接口访问不了，先注释
 # 'GoDaddyDns':'godaddy'
-dns_type = {'DNSPodDns': 'dnspod', 'AliyunDns': 'aliyun', 'HuaweiCloudDns': 'huaweicloud', 'TencentCloudDns': 'tencentcloud', 'CloudFlareDns': 'cloudflare', 'WestDns': 'west'}
+dns_type = {'DNSPodDns': 'dnspod', 'AliyunDns': 'aliyun', 'HuaweiCloudDns': 'huaweicloud', 'TencentCloudDns': 'tencentcloud', 'CloudFlareDns': 'cloudflare', 'WestDns': 'west', 'BtDns': 'bt', 'AwsDns': 'aws', 'VolcengineCloudDns': 'volcenginecloud'}
 # dns_name = {'DNSPodDns':'DNSPod','AliyunDns':'阿里云DNS','HuaweiCloudDns':'华为云DNS','TencentCloudDns':'腾讯云DNS','CloudflareDns':'CloudFlare',}
 class sslBase(object):
     def __init__(self):

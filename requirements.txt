@@ -53,3 +53,5 @@ gevent==22.10.2
 pyyaml==6.0
 nvidia-ml-py==12.570.86
 python-dateutil==2.9.0.post0
+openai==1.39.0
+numpy==1.21.6

@@ -37,7 +37,7 @@ class Style:
     space_before_blocks: bool = False
     start_indent: int = 0
     indent: int = 4
-    
+
     def iterate(self) -> 'Style':
         """创建下一级缩进的样式"""
         return Style(
@@ -53,6 +53,7 @@ INDENTED_STYLE = Style()
 
 class IDirective(ABC):
     """指令接口"""
+
     @abstractmethod
     def get_name(self) -> str:
         raise NotImplementedError
@@ -106,8 +107,23 @@ class IBlock(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def find_directives(self, directive_name: str) -> List[IDirective]:
-        raise NotImplementedError
+    def find_directives(self, directive_name: str, include: bool = False, sub_block: bool = False) -> List[IDirective]:
+        """查找指定名称的指令
+        :param directive_name: 指令名称
+        :param include: 是否包含include子块, 前提是解析时有传递parse_include参数，默认为False
+        :param sub_block: 是否包含子块, 对与nginx配置文件来说 {} 包裹的就是一个块， 如: http, server, if, location, map 等
+        """
+        directives = []
+        for directive in self.get_directives():
+            if include and directive.get_name() == "include" and directive_name != "include":
+                if getattr(directive, 'configs', []) and callable(getattr(directive, 'find_directives', None)):
+                    directives.extend(getattr(directive, 'find_directives')(directive_name, include, sub_block))
+
+            if directive.get_name() == directive_name:
+                directives.append(directive)
+            if sub_block and directive.get_block() is not None:
+                directives.extend(directive.get_block().find_directives(directive_name))
+        return directives
 
     @abstractmethod
     def set_parent(self, parent: Optional[IDirective]):
@@ -128,28 +144,28 @@ class Directive(IDirective):
     inline_comment: List[str] = field(default_factory=list)
     parameters: List[str] = field(default_factory=list)
     _parent: Optional['IDirective'] = field(default=None, repr=False, compare=False)
-    
+
     def get_name(self) -> str:
         return self.name
-    
+
     def get_parameters(self) -> List[str]:
         return self.parameters
-    
+
     def get_block(self) -> Optional['Block']:
         return self.block
-    
+
     def get_comment(self) -> List[str]:
         return self.comment
 
     def set_comment(self, comment: List[str]):
         self.comment = comment
-    
+
     def get_line(self) -> int:
         return self.line
-    
+
     def set_parent(self, parent: Optional['IDirective']):
         self._parent = parent
-    
+
     def get_parent(self) -> Optional['IDirective']:
         return self._parent
 
@@ -167,26 +183,20 @@ class Block(IBlock):
     is_lua_block: bool = False
     literal_code: str = ""
     _parent: Optional[IDirective] = field(default=None, repr=False, compare=False)
-    
+
     def get_directives(self) -> List[IDirective]:
         return self.directives
 
     def get_code_block(self) -> str:
         return self.literal_code
-    
-    def find_directives(self, directive_name: str) -> List[IDirective]:
+
+    def find_directives(self, directive_name: str, include: bool = False, sub_block: bool = False) -> List[IDirective]:
         """查找指定名称的指令"""
-        directives = []
-        for directive in self.get_directives():
-            if directive.get_name() == directive_name:
-                directives.append(directive)
-            if directive.get_block() is not None:
-                directives.extend(directive.get_block().find_directives(directive_name))
-        return directives
-    
+        return super().find_directives(directive_name, include, sub_block)
+
     def set_parent(self, parent: Optional[IDirective]):
         self._parent = parent
-    
+
     def get_parent(self) -> Optional[IDirective]:
         return self._parent
 
@@ -199,22 +209,14 @@ class Block(IBlock):
 
 
 class _Trans(ABC):
-
-    @classmethod
-    @abstractmethod
-    def from_directive(cls, directive: Directive) -> IDirective:
-        raise NotImplementedError
+    pass
 
 
 # 定义类型变量
 _T = TypeVar('_T')
 
+
 def trans_(any_dir, cls: Type[_T]) -> Optional[_T]:
     if cls is any_dir.__class__:
         return any_dir
-    try:
-        if isinstance(any_dir, _Trans):
-            return cls.from_directive(any_dir)
-    except:
-        pass
     return None

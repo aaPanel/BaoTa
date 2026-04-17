@@ -4,7 +4,7 @@ import threading
 import queue
 import time
 import traceback
-from typing import List, Dict, Callable, Any, Union, Optional
+from typing import List, Dict, Callable, Any, Union, Optional, Tuple
 
 from mod.base.ssh_executor import SSHExecutor
 from mod.project.node.dbutil import ServerNodeDB, CommandTask, CommandLog, TaskFlowsDB, TransferTask
@@ -39,11 +39,17 @@ class FlowTask:
         if not self.steps:
             raise RuntimeError("任务内容不存在")
         self.now_idx = 1
+        # 当任意错误出现时，是否继续执行
         self.run_when_error = False
         if self.flow.strategy.get("run_when_error", False):
             self.run_when_error = True
+        # 当某个节点出错时，是否在后续步骤中跳过
+        self.exclude_when_error = True
+        if not self.flow.strategy.get("exclude_when_error", True):
+            self.exclude_when_error = False
 
         self.status_server = StatusServer(self.get_status, (_SOCKET_FILE_DIR + "/flow_task_" + str(flow_id)))
+        self.flow_all_nodes = set([int(i) for i in self.flow.server_ids.split("|") if i and i.isdigit()])
 
     def get_status(self, init: bool = False):
         flow_data = self.flow.to_dict()
@@ -64,19 +70,26 @@ class FlowTask:
             self.update_status(log_data)
 
         all_status = True  # 任务全部成功
+        error_nodes = set()
         for step in self.steps:
+            if not (self.flow_all_nodes - error_nodes): # 没有节点可执行
+                continue
             if isinstance(step, CommandTask):
                 if step.status != 2: # 跳过已完成的
-                    has_err = self.run_cmd_task(step, call_log)
+                    has_err, task_error_nodes = self.run_cmd_task(step, call_log, exclude_nodes=list(error_nodes))
                     all_status = all_status and not has_err
                     if has_err and not self.run_when_error:
                         return False
+                    if self.exclude_when_error and task_error_nodes:
+                        error_nodes.update(task_error_nodes)
             elif isinstance(step, TransferTask):
                 if step.status != 2: # 跳过已完成的
-                    has_err = self.run_transfer_task(step, call_log)
+                    has_err, task_error_nodes = self.run_transfer_task(step, call_log, exclude_nodes=list(error_nodes))
                     all_status = all_status and not has_err
                     if has_err and not self.run_when_error:
                         return False
+                    if self.exclude_when_error and task_error_nodes:
+                        error_nodes.update(task_error_nodes)
             self.now_idx += 1
         return all_status
 
@@ -90,23 +103,26 @@ class FlowTask:
         self._fdb.Flow.update(self.flow)
 
         self.status_server.stop()
+        # fdb = TaskFlowsDB()
+        # print(fdb.history_flow_task(self.flow.id))
         return
 
     @staticmethod
-    def run_cmd_task(task: CommandTask, call_log: Callable[[Any], None]) -> bool:
-        task = CMDTask(task, 0, call_log)
+    def run_cmd_task(task: CommandTask, call_log: Callable[[Any], None], exclude_nodes: List[int] = None) -> Tuple[bool, List[int]]:
+        task = CMDTask(task, 0, call_log, exclude_nodes=exclude_nodes)
         task.start()
-        return task.status_dict["error"] > 0
+        return task.status_dict["error"] > 0, task.status_dict["error_nodes"]
 
     @staticmethod
-    def run_transfer_task(task: TransferTask, call_log: Callable[[Any], None]) -> Optional[str]:
+    def run_transfer_task(task: TransferTask, call_log: Callable[[Any], None], exclude_nodes: List[int] = None) -> Tuple[bool, List[int]]:
         if task.src_node_task_id != 0:
-            task = NodeFiletransferTask(task, call_log)
+            task = NodeFiletransferTask(task, call_log, exclude_nodes=exclude_nodes, the_log_id=None)
             task.start()
+            return task.status_dict["error"] > 0, task.status_dict["error_nodes"]
         else:
-            task = FiletransferTask(task, call_log)
+            task = FiletransferTask(task, call_log, exclude_nodes=exclude_nodes)
             task.start()
-            return task.status_dict["error"] > 0
+            return task.status_dict["error"] > 0, task.status_dict["error_nodes"]
 
 
 def flow_running_log(task_id: int, call_log:  Callable[[Union[str,dict]], None], timeout:float = 3.0) -> str:
@@ -129,7 +145,7 @@ def flow_useful_version(ver: str):
         ver_list = [int(i) for i in ver.split(".")]
         if ver_list[0] > 11:
             return True
-        if ver_list[0] == 11 and ver_list[1] >= 1:
+        if ver_list[0] == 11 and ver_list[1] >= 4:
             return True
     except:
         pass

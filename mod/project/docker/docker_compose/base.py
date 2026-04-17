@@ -234,30 +234,39 @@ class Compose():
             @param "data":{"参数名":""} <数据类型> 参数描述
             @return dict{"status":True/False,"msg":"提示信息"}
         '''
-        import json
+        import json,select
         if self.def_name is None: self.set_def_name(get.def_name)
         from subprocess import Popen, PIPE, STDOUT
+        # import simple_websocket
+        # get._ws:simple_websocket.ws.Server
+        
+        if not hasattr(get, '_ws'):
+            return
 
         p = Popen(command, stdout=PIPE, stderr=STDOUT, cwd=cwd)
-
-        while True:
-            if p.poll() is not None:
-                break
-
-            line = p.stdout.readline()  # 非阻塞读取
-            if line:
-                try:
-                    if hasattr(get, '_ws'):
-                        get._ws.send(json.dumps(self.wsResult(
-                            True,
-                            "{}".format(line.decode('utf-8').rstrip()),
-                        )))
-                except:
+        try:
+            while True:
+                # 优先检查连接状态，如果断开则立即停止
+                if not get._ws.connected:
                     break
-            else:
-                break
-            time.sleep(0.01)
-            
+
+                # 检查是否有数据可读
+                readable, _, _ = select.select([p.stdout], [], [], 0.01)
+                
+                if p.stdout in readable:
+                    line = p.stdout.readline()
+                    if line:
+                        try:
+                            get._ws.send(json.dumps(self.wsResult(True, "{}".format(line.decode('utf-8').rstrip()))))
+                        except:
+                            break
+                elif p.poll() is not None:
+                    # 没有数据可读，且进程已结束，则退出
+                    break
+                    
+        finally:
+            if p.poll() is None:
+                p.kill()
 
     # 2024/6/25 下午2:40 获取日志类型的websocket返回值
     def status_exec_logs(self, get, command, cwd=None):

@@ -1547,7 +1547,20 @@ class main(Base):
 
             if get.operation == "add" and not self.check_ip_exist(get):
                 return public.returnMsg(False, '目标地址{}已存在，请勿重复添加'.format(get.address))
-
+            
+            if get.strategy == "drop":
+                #读取封禁列表
+                ip_rules_file = "data/ssh_deny_ip_rules.json"
+                try:
+                    ip_rules = json.loads(public.readFile(ip_rules_file))
+                except Exception:
+                    ip_rules = []
+                    
+                if get.address in ip_rules:
+                    #移除封禁列表
+                    ip_rules.remove(get.address)
+                    public.writeFile(ip_rules_file, json.dumps(ip_rules))
+            
             self.set_ip_db(get)
 
             info = {

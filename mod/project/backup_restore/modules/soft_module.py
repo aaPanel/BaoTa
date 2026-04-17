@@ -58,6 +58,17 @@ class SoftModule(BaseUtil,ConfigManager):
             }
             self.print_log("nginx {} ✓".format(nginx_version),'backup')
             return result
+        if os.path.exists("/www/server/apache/bin/httpd"):
+            version_pl_path="/www/server/apache/version.pl"
+            apache_version=public.ReadFile(version_pl_path)
+            
+            result = {
+                "name": "apache",
+                "version": apache_version,
+                "size": BaseUtil().get_file_size("/www/server/apache/")
+            }
+            self.print_log("apache {} ✓".format(apache_version),'backup')
+            return result
         pass
         
     def get_php_server(self):
@@ -287,7 +298,7 @@ class SoftModule(BaseUtil,ConfigManager):
         return dotnet_list
 
     def get_mongodb_server(self):
-        if os.path.exists("/www/server/mongodb/bin/mongo") and os.path.exists("/www/server/mongodb/version.pl"):
+        if os.path.exists("/www/server/mongodb/bin/mongod") and os.path.exists("/www/server/mongodb/version.pl"):
             mongodb_version=public.ReadFile("/www/server/mongodb/version.pl")
             size=BaseUtil().get_file_size("/www/server/mongodb/")
             self.print_log("mongodb {} ✓".format(mongodb_version[0:3]),'backup')

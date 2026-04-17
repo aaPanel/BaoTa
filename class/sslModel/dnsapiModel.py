@@ -41,6 +41,21 @@ class main(sslBase):
                 'id': 'WestDns',
                 'params': ['user_name', 'api_password']
             },
+            {
+                'name': '宝塔域名',
+                'id': 'BtDns',
+                'params': ['AccessKey', 'SecretKey', 'AccountID']
+            },
+            {
+                'name': 'AWS',
+                'id': 'AwsDns',
+                'params': ['AccessKey', 'SecretKey', 'region']
+            },
+            {
+                'name': '火山引擎DNS',
+                'id': 'VolcengineCloudDns',
+                'params': ['AccessKey', 'SecretKey']
+            },
             # godaddy接口访问不了，先注释
             # {
             #     'name': 'GoDaddy',

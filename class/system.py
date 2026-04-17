@@ -178,6 +178,9 @@ class system:
         data['panel'] = self.GetPanelInfo()
         data['systemdate'] = public.ExecShell('date +"%Y-%m-%d %H:%M:%S %Z %z"')[0].strip();
         data['show_workorder'] = not os.path.exists('data/not_workorder.pl')
+        data['show_panelai'] = not os.path.exists('data/not_panelai.pl')
+        data['show_evaluate'] = not os.path.exists('data/not_evaluate.pl')
+        
         return data
 
     def GetPanelInfo(self, get=None):
@@ -516,7 +519,7 @@ class system:
             for disk in diskIo:
                 if disk.mountpoint in cuts: continue
                 if disk.mountpoint.startswith('/proc'): continue
-                if disk.device in processed_devices:
+                if disk.device in processed_devices and not disk.fstype.startswith("fuse"):
                     continue
                 if disk.device.startswith("/dev/loop"):
                     continue
@@ -1088,7 +1091,8 @@ class system:
         if not "name" in get: return public.returnMsg(False, '请传入name参数')
         if not "type" in get: return public.returnMsg(False, '请传入type参数')
         if get.name == 'mysqld':
-            public.CheckMyCnf()
+            if not os.path.exists('/www/server/mysql/sys_install.pl'):
+                public.CheckMyCnf()
             self.__check_mysql_path()
         if get.name.find('webserver') != -1:
             get.name = public.get_webserver()
@@ -1142,6 +1146,22 @@ class system:
 
         # 检查nginx配置文件
         elif get.name == 'nginx':
+
+            if os.path.exists('/www/server/nginx/sys_install.pl'):
+                systemd_list = self.GetSystemdList()
+                for line in systemd_list:
+                    if "nginx.service" in line:
+                        execStr = "systemctl {} {}".format(get.type,line)
+                        break
+                if execStr == '':
+                    if os.path.exists('/etc/init.d/nginx'):
+                        execStr = "/etc/init.d/nginx {}".format(get.type)
+                    else:
+                        return public.returnMsg(True, '找不到系统nginx启动文件，请检查是否存在/etc/init.d/nginx或nginx.service')
+                public.ExecShell(execStr)
+                return public.returnMsg(True, 'SYS_EXEC_SUCCESS')
+
+
             if not os.path.exists("/etc/init.d/nginx"):
                 return public.returnMsg(True, 'nginx启动文件丢失，请尝试重装nginx后再试！')
 
@@ -1196,6 +1216,10 @@ class system:
         execStr = "/etc/init.d/" + get.name + " " + get.type
         if get.name in ('redis',):
             execStr = "/etc/init.d/redis {}".format(get.type)
+            if os.path.exists('/usr/lib/systemd/system/redis.service'):
+                redis_service = public.ReadFile('/usr/lib/systemd/system/redis.service')
+                if "/www/server/redis/" in redis_service:
+                    execStr = "systemctl {} redis".format(get.type)
         if execStr == '/etc/init.d/pure-ftpd reload': execStr = self.setupPath + '/pure-ftpd/bin/pure-pw mkdb ' + self.setupPath + '/pure-ftpd/etc/pureftpd.pdb'
         if execStr == '/etc/init.d/pure-ftpd start': public.ExecShell('pkill -9 pure-ftpd')
         if execStr == '/etc/init.d/tomcat reload': execStr = '/etc/init.d/tomcat stop && /etc/init.d/tomcat start'
@@ -1204,11 +1228,25 @@ class system:
         if get.name != 'mysqld':
             result = public.ExecShell(execStr)
         else:
+            #系统mysql判断
+            if os.path.exists('/www/server/mysql/sys_install.pl'):
+                service_list=['mysql','mariadb','mysqld','mariadbd']
+                systemd_list = self.GetSystemdList()
+                for line in systemd_list:
+                    for service in service_list:
+                        if service + ".service" in line:
+                            execStr = "systemctl {} {}".format(get.type,line)
+                            break
+                if execStr == '':
+                    for service in service_list:
+                        if os.path.exists('/etc/init.d/' + service):
+                            execStr = "/etc/init.d/{} {}".format(service,get.type)
+                            break
             public.ExecShell(execStr)
             result = []
             result.append('')
             result.append('')
-
+            
         if result[1].find('nginx.pid') != -1:
             public.ExecShell('pkill -9 nginx && sleep 1')
             public.ExecShell('/etc/init.d/nginx start')
@@ -1268,6 +1306,8 @@ class system:
             @return bool
         '''
         if name in ['mysqld', 'mariadbd']:
+            if os.path.exists('/www/server/mysql/sys_install.pl'):
+                return self.GetProcessStatus('mysql')
             return public.is_mysql_process_exists()
         elif name == 'redis':
             return public.is_redis_process_exists()
@@ -1505,6 +1545,15 @@ class system:
             if get.version is None:
                 return public.returnMsg(False, '版本号不能为空')
 
+            update_time_file = "{}/config/update_time.pl".format(public.get_panel_path())
+            if os.path.exists(update_time_file):
+                os.remove(update_time_file)
+            try:
+                pl_info = json.loads(public.readFile("/tmp/LinuxPanel-{}.pl".format(public.version())))
+                public.writeFile(update_time_file, str(pl_info['update_time']))
+            except:
+                pass
+
             logPath = '/tmp/upgrade_panel.log'
             public.writeFile(logPath, "")
             shell = 'nohup {} -u {}/script/upgrade_panel_optimized.py upgrade_panel {} &>{} &'.format(public.get_python_bin(), public.get_panel_path(), get.version, logPath)
@@ -1701,3 +1750,30 @@ class system:
                 continue
         plugins.sort(key=lambda x: x["level"])
         return  plugins
+    
+    def GetSystemdList(self,get=None):
+        """
+        @name 获取系统服务列表
+        """
+        try:
+            result = public.ExecShell("systemctl list-units --type=service --all")[0].split("\n")
+            return result
+        except:
+            return []
+
+    def GetProcessStatus(self,sName):
+        sys_server_list=["nginx","mysql","mysqld","php-fpm","mariadbd","mariadb"]
+        if sName in sys_server_list:
+            pids = []
+            for proc in psutil.process_iter():
+                if sName == 'mysql':
+                    if proc.name() == 'mysqld' or proc.name() == 'mariadbd':
+                        pids.append(proc.pid)
+                else:
+                    if proc.name() == sName:
+                        pids.append(proc.pid)
+            if len(pids) > 0:
+                return True
+            else:
+                return False
+        return False

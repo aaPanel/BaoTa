@@ -3490,7 +3490,9 @@ class main(projectBase):
                     "deductions": [],
                     "suggestions": [],
                     "rewards": []
-                }
+                },
+                "tamper": False,
+                "hids": False
             }
 
             # 1. 统计首页风险
@@ -3610,6 +3612,11 @@ class main(projectBase):
             # 10. 获取病毒库更新时间
             result['virus_update_time'] = self.get_virus_db_time()
 
+            # 11. 判断入侵检测和防篡改是否安装
+            # 判断路径/www/server/panel/plugin/bt_hids是否存在
+            result['hids'] = os.path.exists('/www/server/panel/plugin/bt_hids')
+            # 判断路径/www/server/panel/plugin/bt_tamper是否存在
+            result['tamper'] = os.path.exists('/www/server/panel/plugin/tamper_core')
             return result
 
         except Exception as e:
@@ -3661,66 +3668,66 @@ class main(projectBase):
             risk_counts = self._get_risk_counts()
             current_total = risk_counts['high_risk'] + risk_counts['medium_risk'] + risk_counts['low_risk']
 
-            # 2. 处理趋势数据
-            trend_data = []
-            need_update = False
+            # # 2. 处理趋势数据
+            # trend_data = []
+            # need_update = False
 
-            # 2.1 读取现有数据（如果存在）
-            if os.path.exists(trend_file):
-                try:
-                    file_content = public.readFile(trend_file)
-                    if file_content and file_content != -1:
-                        trend_data = json.loads(file_content)
+            # # 2.1 读取现有数据（如果存在）
+            # if os.path.exists(trend_file):
+            #     try:
+            #         file_content = public.readFile(trend_file)
+            #         if file_content and file_content != -1:
+            #             trend_data = json.loads(file_content)
 
-                        # 检查是否需要更新
-                        last_update_time = trend_data[-1]['timestamp'] if trend_data else 0
-                        last_count = trend_data[-1]['count'] if trend_data else 0
+            #             # 检查是否需要更新
+            #             last_update_time = trend_data[-1]['timestamp'] if trend_data else 0
+            #             last_count = trend_data[-1]['count'] if trend_data else 0
 
-                        # 如果时间间隔超过更新间隔或者总数发生变化，需要更新
-                        need_update = (current_time - last_update_time > UPDATE_INTERVAL) or (
-                                current_total != last_count)
-                    else:
-                        need_update = True
-                except:
-                    need_update = True
-            else:
-                # 2.2 文件不存在，创建初始数据
-                need_update = True
+            #             # 如果时间间隔超过更新间隔或者总数发生变化，需要更新
+            #             need_update = (current_time - last_update_time > UPDATE_INTERVAL) or (
+            #                     current_total != last_count)
+            #         else:
+            #             need_update = True
+            #     except:
+            #         need_update = True
+            # else:
+            #     # 2.2 文件不存在，创建初始数据
+            #     need_update = True
 
-            # 3. 如果需要更新，准备新数据
-            if need_update:
-                # 如果是新文件或数据无效，创建初始数据
-                if not trend_data:
-                    trend_data = [
-                        {'timestamp': current_time, 'count': current_total},
-                        {'timestamp': current_time, 'count': current_total}
-                    ]
-                else:
-                    # 添加新数据点
-                    trend_data.append({
-                        'timestamp': current_time,
-                        'count': current_total
-                    })
+            # # 3. 如果需要更新，准备新数据
+            # if need_update:
+            #     # 如果是新文件或数据无效，创建初始数据
+            #     if not trend_data:
+            #         trend_data = [
+            #             {'timestamp': current_time, 'count': current_total},
+            #             {'timestamp': current_time, 'count': current_total}
+            #         ]
+            #     else:
+            #         # 添加新数据点
+            #         trend_data.append({
+            #             'timestamp': current_time,
+            #             'count': current_total
+            #         })
 
-                    # 限制数据点数量
-                    if len(trend_data) > MAX_POINTS:
-                        trend_data = trend_data[-MAX_POINTS:]
+            #         # 限制数据点数量
+            #         if len(trend_data) > MAX_POINTS:
+            #             trend_data = trend_data[-MAX_POINTS:]
 
-                # 确保目录存在
-                trend_dir = os.path.dirname(trend_file)
-                if not os.path.exists(trend_dir):
-                    os.makedirs(trend_dir, mode=0o755, exist_ok=True)
+            #     # 确保目录存在
+            #     trend_dir = os.path.dirname(trend_file)
+            #     if not os.path.exists(trend_dir):
+            #         os.makedirs(trend_dir, mode=0o755, exist_ok=True)
 
-                # 写入新数据（只保存趋势列表）
-                public.writeFile(trend_file, json.dumps(trend_data))
+            #     # 写入新数据（只保存趋势列表）
+            #     public.writeFile(trend_file, json.dumps(trend_data))
 
             # 4. 返回数据
             return {
                 'total': current_total,
                 'high_risk': risk_counts['high_risk'],
                 'medium_risk': risk_counts['medium_risk'],
-                'low_risk': risk_counts['low_risk'],
-                'trend_list': trend_data
+                'low_risk': risk_counts['low_risk']
+                # 'trend_list': trend_data
             }
 
         except Exception as e:
@@ -3756,9 +3763,33 @@ class main(projectBase):
             try:
                 risk_file = '/www/server/panel/data/warning/resultresult.json'
                 if os.path.exists(risk_file):
-                    risk_data = json.loads(public.readFile(risk_file))
-                    result['high_risk'] += sum(1 for risk in risk_data.get('risk', [])
-                                               if not risk.get('status', True))
+                    data = public.readFile(risk_file)
+                    if data and data != -1:
+                        risk_data = json.loads(data)
+                        for r in risk_data.get('risk', []):
+                            if r.get('status', True):
+                                continue
+                            lv = r.get('level', 0)
+                            try:
+                                lv_int = int(lv)
+                            except:
+                                lv_str = str(lv).strip().lower()
+                                if lv_str == 'high':
+                                    lv_int = 3
+                                elif lv_str == 'medium':
+                                    lv_int = 2
+                                elif lv_str == 'low':
+                                    lv_int = 1
+                                elif lv_str == 'serious':
+                                    lv_int = 4
+                                else:
+                                    lv_int = 0
+                            if lv_int == 3:
+                                result['high_risk'] += 1
+                            elif lv_int == 2:
+                                result['medium_risk'] += 1
+                            elif lv_int == 1:
+                                result['low_risk'] += 1
             except Exception as e:
                 pass
 
@@ -3767,7 +3798,22 @@ class main(projectBase):
                 vul_file = '/www/server/panel/data/scanning.json'
                 if os.path.exists(vul_file):
                     vul_data = json.loads(public.readFile(vul_file))
-                    result['medium_risk'] += vul_data.get('loophole_num', 0)
+                    rc = vul_data.get('risk_count', {})
+                    try:
+                        # 获取中危风险数量
+                        result['medium_risk'] += int(rc.get('middle', 0) or 0)
+                    except:
+                        pass
+                    try:
+                        high_val = int(rc.get('high', 0) or 0)
+                    except:
+                        high_val = 0
+                    try:
+                        dangerous_val = int(rc.get('dangerous', 0) or 0)
+                    except:
+                        dangerous_val = 0
+                    # 获取高危风险数量
+                    result['high_risk'] += high_val + dangerous_val
             except Exception as e:
                 pass
 
@@ -3976,7 +4022,18 @@ class main(projectBase):
             }
 
     def get_security_dynamic(self, get) -> dict:
-        """获取安全动态"""
+        """获取安全动态
+        @return: dict
+            behavior：行为类型
+            description：时间描述
+            detect_type：
+            file_path：文件路径
+            level：风险级别
+            scan_type：类型（中文）
+            solution：解决方案
+            time: 事件时间戳
+            type: 事件类型
+        """
         try:
             events = []
 
@@ -4048,7 +4105,7 @@ class main(projectBase):
                             'time': risk_time,
                             'scan_type': '主机入侵检测',
                             'description': risk.get('msg', ''),
-                            'solution': risk.get('solution', '请及时处理该安全风险'),
+                            'solution': risk.get('repair', '请及时处理该安全风险'),
                             'file_path': risk.get('file_path', ''),
                             'detect_type': risk.get('risk_type', '')
                         })
@@ -4056,7 +4113,96 @@ class main(projectBase):
                         continue
             except Exception as e:
                 pass
+            
+            #  3. 获取网站漏洞扫描事件
+            try:
+                sf = '/www/server/panel/data/scanning.json'
+                if os.path.exists(sf):
+                    s = public.readFile(sf)
+                    if s and s != -1:
+                        data = json.loads(s)
+                        t = data.get('time', int(time.time()))
+                        try:
+                            t_int = int(t)
+                        except:
+                            t_int = int(time.time())
+                        info_list = data.get('info', [])
+                        for site in info_list:
+                            cms_list = site.get('cms', [])
+                            for cms in cms_list:
+                                lv = cms.get('dangerous', 0)
+                                try:
+                                    lv_int = int(lv)
+                                except:
+                                    lv_int = 0
+                                site_name = site.get('name', '')
+                                site_path = site.get('path', '')
+                                events.append({
+                                    'type': 'vul_scan',
+                                    'behavior': '网站漏洞',
+                                    'level': lv_int,
+                                    'time': t_int,
+                                    'scan_type': '网站漏洞扫描',
+                                    'description': '网站{}存在{}'.format(site_name, cms.get('name', '')),
+                                    'solution': cms.get('repair', ''),
+                                    'file_path': site_path,
+                                    'detect_type': ''
+                                })
+            except Exception as e:
+                pass
+            
+            # 4. 首页风险检测
+            try:
+                rf = '/www/server/panel/data/warning/resultresult.json'
+                if os.path.exists(rf):
+                    s = public.readFile(rf)
+                    if s and s != -1:
+                        data = json.loads(s)
+                        for r in data.get('risk', []):
+                            if not isinstance(r, dict):
+                                continue
+                            if r.get('status', True):
+                                continue
+                            lv = r.get('level', 0)
+                            try:
+                                lv_int = int(lv)
+                            except:
+                                if lv == 'serious':
+                                    lv_int = 4
+                                elif lv == 'high':
+                                    lv_int = 3
+                                elif lv == 'medium':
+                                    lv_int = 2
+                                else:
+                                    lv_int = 1
+                            ct = r.get('check_time', int(time.time()))
+                            try:
+                                ct_int = int(ct)
+                            except:
+                                try:
+                                    ct_int = int(time.mktime(time.strptime(str(ct), '%Y-%m-%d %H:%M:%S')))
+                                except:
+                                    ct_int = int(time.time())
+                            tips = r.get('tips', '')
+                            if isinstance(tips, list):
+                                sol = '；'.join([str(x) for x in tips])
+                            else:
+                                sol = str(tips) if tips is not None else ''
+                            events.append({
+                                'type': 'homepage_risk',
+                                'behavior': '首页风险',
+                                'level': lv_int,
+                                'time': ct_int,
+                                'scan_type': '首页风险检测',
+                                'description': r.get('msg', ''),
+                                'solution': sol,
+                                'file_path': '',
+                                'detect_type': ''
+                            })
+            except Exception as e:
+                pass
 
+            
             # 确保所有时间戳都是整数类型
             events = [event for event in events if isinstance(event['time'], int)]
 

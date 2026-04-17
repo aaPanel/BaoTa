@@ -34,7 +34,7 @@ collect_network() {
   fi
 
   # 收集所有网络接口的信息
-  for iface in $(ls /sys/class/net/ | grep -v "lo"); do
+  for iface in $(ls /sys/class/net/ | grep -v "lo" |grep -v "veth" | grep -v "docker"); do
     if [ "$first" = true ]; then
       first=false
       echo "\"interfaces\": {" >> "$temp_current_data"
@@ -58,8 +58,10 @@ collect_network() {
 
     if [ -n "$prev_data" ]; then
       # 提取之前的数据
-      prev_rx_bytes=$(echo "$prev_data" | grep -o "\"$iface\".*rx_bytes.*tx_bytes" | grep -o "rx_bytes\": [0-9]*" | awk '{print $2}')
-      prev_tx_bytes=$(echo "$prev_data" | grep -o "\"$iface\".*tx_bytes.*rx_packets" | grep -o "tx_bytes\": [0-9]*" | awk '{print $2}')
+      prev_rx_bytes=$(echo "$prev_data" | grep -o "\"$iface\".*rx_bytes.*tx_bytes" | grep -o "rx_bytes\": [0-9]*" | awk '{print $2}' | awk '{print $1}' )
+      prev_tx_bytes=$(echo "$prev_data" | grep -o "\"$iface\".*tx_bytes.*rx_packets" | grep -o "tx_bytes\": [0-9]*" | awk '{print $2}'| awk '{print $1}')
+      prev_rx_bytes=$(echo $prev_rx_bytes |awk '{print $1}')
+      prev_tx_bytes=$(echo $prev_tx_bytes |awk '{print $1}')
 
       # 如果找到了之前的数据，计算速率
       if [ -n "$prev_rx_bytes" ] && [ -n "$prev_tx_bytes" ]; then
@@ -76,6 +78,13 @@ collect_network() {
         up_speed=$(awk "BEGIN {printf \"%.2f\", $tx_diff / $time_diff / 1024}")
       fi
     fi
+    #如果down_speed 为空 则赋值0
+    [ -z "$down_speed" ] && down_speed=0
+    [ -z "$up_speed" ] && up_speed=0
+    [ -z "$rx_bytes" ] && rx_bytes=0
+    [ -z "$tx_bytes" ] && tx_bytes=0
+    [ -z "$rx_packets" ] && rx_packets=0
+    [ -z "$tx_packets" ] && tx_packets=0
 
     # 添加接口信息到结果
     result+=$(cat << EOF
@@ -136,7 +145,7 @@ collect_total_network() {
   fi
 
   # 收集当前总流量
-  for iface in $(ls /sys/class/net/ | grep -v "lo"); do
+  for iface in $(ls /sys/class/net/ | grep -v "lo"|grep -v "docker" |grep -v "veth"); do
     # 读取当前网络接口统计
     rx_bytes=$(cat /sys/class/net/$iface/statistics/rx_bytes 2>/dev/null || echo 0)
     tx_bytes=$(cat /sys/class/net/$iface/statistics/tx_bytes 2>/dev/null || echo 0)
@@ -435,7 +444,7 @@ EOF
 
 # 收集磁盘信息
 collect_disk() {
-  df_output=$(df -TPB1 -x tmpfs -x devtmpfs | tail -n +2 | grep -vE "/boot\$" | grep -vE "docker/overlay2")
+  df_output=$(df -TPB1 -x tmpfs -x devtmpfs | tail -n +2 |grep -vE "docker/overlay2"|grep -vE "kubelet/pods"| grep -vE "/boot\$" |grep -vE "/run/")
 
   result="["
   first=true
@@ -748,6 +757,14 @@ main() {
   down_total=$(echo "$network_stats" | grep -o '"downTotal": [0-9]*' | cut -d ":" -f 2 | tr -d " " || echo "0")
   up_total=$(echo "$network_stats" | grep -o '"upTotal": [0-9]*' | cut -d ":" -f 2 | tr -d " " || echo "0")
   physical_memory=$(collect_physical_memory)
+
+  #如果$down 为空 则赋值0.00
+  [ -z "$down" ] && down="0"
+  [ -z "$up" ] && up="0"
+  [ -z "$down_packets" ] && down_packets="0"
+  [ -z "$up_packets" ] && up_packets="0"
+  [ -z "$down_total" ] && down_total="0"
+  [ -z "$up_total" ] && up_total="0"
 
   # 生成最终JSON
   cat << EOF

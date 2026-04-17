@@ -38,29 +38,32 @@ def return_login_log():
     if os.path.exists(rpath):
         for d in os.listdir(rpath):
             filename = rpath + '/' + d
-            if os.path.isdir(filename):
-                if filename in con:
-                    for i in os.listdir(filename):
-                        ret_size = { }
-                        name = filename + '/' + i
-                        if not os.path.exists(name):
-                            continue
-                        size = os.path.getsize(name)
+            try:
+                if os.path.isdir(filename):
+                    if filename in con:
+                        for i in os.listdir(filename):
+                            ret_size = { }
+                            name = filename + '/' + i
+                            if not os.path.exists(name):
+                                continue
+                            size = os.path.getsize(name)
+                            ret_size['size'] = to_size(size)
+                            ret_size['filename'] = i
+                            ret_size['name'] = filename + '/' + i
+                            ret_size['count_size'] = size
+                            ret.append(ret_size)
+                else:
+                    if 'maillog' in d:
+                        continue
+                    ret_size = { }
+                    size = os.path.getsize(filename)
+                    if size >= 100:
                         ret_size['size'] = to_size(size)
-                        ret_size['filename'] = i
-                        ret_size['name'] = filename + '/' + i
                         ret_size['count_size'] = size
+                        ret_size['name'] = filename
                         ret.append(ret_size)
-            else:
-                if 'maillog' in d:
-                    continue
-                ret_size = { }
-                size = os.path.getsize(filename)
-                if size >= 100:
-                    ret_size['size'] = to_size(size)
-                    ret_size['count_size'] = size
-                    ret_size['name'] = filename
-                    ret.append(ret_size)
+            except:
+                continue
     return ret
 
 
@@ -523,6 +526,8 @@ def remove_file(get):
 
         if mysql_logs:
             for log in mysql_logs:
+                if 'count_size' not in log:
+                    continue
                 count_size = int(log['count_size'])
 
                 # 小于 1KB 的文件不清理

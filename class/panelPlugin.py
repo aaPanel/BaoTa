@@ -438,7 +438,6 @@ class panelPlugin:
         log_file = '/tmp/panelShell.pl'
         if os.path.exists(log_file): os.remove(log_file)
         public.stop_syssafe()
-        print('cd ' + plugin_path_panel + ' && bash {} &> /tmp/panelShell.pl'.format(i_opts[input_install_opt]))
         public.ExecShell('cd ' + plugin_path_panel + ' && bash {} &> /tmp/panelShell.pl'.format(i_opts[input_install_opt]))
         public.start_syssafe()
         # 清理临时文件
@@ -877,6 +876,18 @@ class panelPlugin:
             return debian
         return True
 
+    # 获取插件title
+    def get_dep_title(self, dependnet):
+        if not dependnet: return ''
+        dependnets = dependnet.split(',')
+        title_list = []
+        for dep in dependnets:
+            if not dep: continue
+            pluginInfo = self.get_soft_find(dep)
+            if not pluginInfo: continue
+            title_list.append(pluginInfo['title'])
+        return '、'.join(title_list)
+
     # 安装插件
     def install_plugin(self, get):
         if not public.check_sys_write():
@@ -896,7 +907,7 @@ class panelPlugin:
         if not hasattr(get, 'id'):
             if not self.check_dependnet(pluginInfo['dependnet']):
                 return public.returnMsg(
-                    False, '依赖以下软件,请到[软件商店]先安装[%s]' % pluginInfo['dependnet'])
+                    False, '依赖以下软件,请到[软件商店]先安装[%s]' % self.get_dep_title(pluginInfo['dependnet']))
         if 'version' in get:
             for versionInfo in pluginInfo['versions']:
                 if versionInfo['m_version'] != get.version or versionInfo['version'] != get.min_version: continue
@@ -925,7 +936,7 @@ class panelPlugin:
                     if not self.check_dependnet(versionInfo['dependnet']):
                         return public.returnMsg(
                             False,
-                            '依赖以下软件,请到[软件商店]先安装[%s]' % versionInfo['dependnet'])
+                            '依赖以下软件,请到[软件商店]先安装[%s]' % self.get_dep_title(versionInfo['dependnet']))
 
         if pluginInfo['type'] != 5:
             result = self.install_sync(pluginInfo, get)
@@ -1261,8 +1272,10 @@ class panelPlugin:
                 self.__clear_panel_cache()
 
         tkey = 'is_flush_plugin_list'
-        if not session.get(tkey):  # 更新最新的软件列表
-            session[tkey] = 1
+        last_flush_plugin_list_time = session.get(tkey)
+        if not isinstance(last_flush_plugin_list_time, int) or time.time() - last_flush_plugin_list_time > 86400:
+            # 更新最新的软件列表
+            session[tkey] = int(time.time())
             _cmd = "nohup {} {}/script/flush_plugin.py > /dev/null 2>&1 &".format(
                 public.get_python_bin(), public.get_panel_path())
             public.ExecShell(_cmd)
@@ -2186,6 +2199,11 @@ class panelPlugin:
         softInfo['is_beta'] = self.is_beta_plugin(softInfo['name']) if "name" in softInfo else False
         softInfo['ps'] = self.get_soft_ps(softInfo['ps'])
 
+        if softInfo['name'] == 'nginx':
+            if os.path.exists('/www/server/nginx/sys_install.pl'):
+                softInfo['setup'] = True
+                softInfo['status'] = True
+
         key_info = ''
         if 'keys' in softInfo:
             softInfo['keys'] = softInfo['keys'].split('|')
@@ -2548,8 +2566,10 @@ class panelPlugin:
 
             try:
                 for proc in psutil.process_iter():
-                    if proc.name() == "mysqld":
+                    if proc.name() == "mysqld" or proc.name() == "mariadbd":
                         cmdline = proc.cmdline()
+                        if os.path.exists('/www/server/mysql/sys_install.pl'):
+                            return True
                         if cmdline and any("/www/server" in arg for arg in cmdline):
                             return True
                         else:

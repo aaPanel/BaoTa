@@ -496,7 +496,12 @@ class data:
                             data['data'][i]['backup_status'] = 1
                             data['data'][i]['size'] = os.path.getsize(data['data'][i]['filename'])
                         except:
-                            data['data'][i]['size'] = os.path.getsize(data['data'][i]['filename'])
+                            # 出错意味着备份已经结束
+                            data['data'][i]['backup_status'] = 0
+                            if os.path.exists(data['data'][i]['filename']):
+                                data['data'][i]['size'] = os.path.getsize(data['data'][i]['filename'])
+                            else:
+                                data['data'][i]['size'] = 0
                             os.remove(pl_path)
             elif table == 'sites' or table == 'databases':
                 type = '0'
@@ -567,7 +572,10 @@ class data:
                 for i in data:
                     if isinstance(i, dict):
                         try:
-                            i['cn_name'] = idna.decode(i['name'])
+                            if i["name"].startswith("*."):
+                                i['cn_name'] = "*." + idna.decode(i['name'][2:])
+                            else:
+                                i['cn_name'] = idna.decode(i['name'])
                         except:
                             i['cn_name'] = i['name']
 
@@ -964,9 +972,10 @@ class data:
         conf = conf.replace(old_conf, new_conf)
         public.writeFile('/www/server/panel/vhost/nginx/{}.conf'.format(get.siteName), conf)
         apa_conf = public.readFile('/www/server/panel/vhost/apache/{}.conf'.format(get.siteName))
-        apa_conf = apa_conf.replace('<VirtualHost *:{}>'.format(old_port), '<VirtualHost *:{}>'.format(port))
-        self.apacheAddPort(port)
-        public.writeFile('/www/server/panel/vhost/apache/{}.conf'.format(get.siteName), apa_conf)
+        if apa_conf and public.get_webserver() == "apache":
+            apa_conf = apa_conf.replace('<VirtualHost *:{}>'.format(old_port), '<VirtualHost *:{}>'.format(port))
+            self.apacheAddPort(port)
+            public.writeFile('/www/server/panel/vhost/apache/{}.conf'.format(get.siteName), apa_conf)
         public.serviceReload()
         return public.returnMsg(True, '设置成功,请在防火墙放行该端口!')
 

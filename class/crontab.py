@@ -873,6 +873,8 @@ class crontab:
                 sync_res=self.sync_to_crond(cronInfo)
                 if not sync_res['status']:
                     return public.returnMsg(False, sync_res['msg'])
+            else:
+                self.GetShell(cronInfo)
             columns = 'type,where1,where_hour,where_minute,save,backupTo,sName,sBody,urladdress,db_type,split_type,split_value,rname,post_param,flock,time_set,backup_mode,db_backup_path,time_type,special_time,log_cut_path,user_agent,version,table_list,second,stop_site,params'
             values = (get['type'], get['where1'], get['hour'],
                       get['minute'], get['save'], get['backupTo'], cronInfo['sName'], get['sBody']
@@ -1055,92 +1057,155 @@ class crontab:
             result['id'] = addData
             return result
         return public.returnMsg(False, 'ADD_ERROR')
-    
+
+    # ============ AddCrontab 私有方法 ============
+    def _validate_task_request(self, get):
+        """参数验证：处理所有前置验证"""
+        # 拔测任务周期验证
+        if "拔测" in get['name'] and "/www/server/panel/class/monitorModel/boceModel.py" in get['sBody']:
+            if get['type'] == "minute-n":
+                if int(get['where1']) < 10:
+                    return public.returnMsg(False, "拔测周期最短不能少于10分钟！")
+            if get['type'] == "second-n":
+                return public.returnMsg(False, "网站拔测任务不支持设置为秒级任务！")
+        # 日志切割任务重复检查
+        if get['name'] == "[勿删]切割计划任务日志":
+            if public.M('crontab').where("name=?", ('[勿删]切割计划任务日志',)).select():
+                return public.returnMsg(False, '该任务不支持直接复制！')
+        # 网站增量备份重复检查
+        if "网站增量备份" in get['name']:
+            if public.M('crontab').where("name=?", (get['name'],)).select():
+                return public.returnMsg(False, '该任务不支持直接复制！')
+        # 任务名称空检查
+        if len(get['name']) < 1:
+            return public.returnMsg(False, 'CRONTAB_TASKNAME_EMPTY')
+        return None
+
+    def _preprocess_task_params(self, get):
+        """参数预处理：处理参数转换"""
+        # second-n 类型转换
+        if get['type'] == "second-n":
+            get['type'] = "minute-n"
+            get['where1'] = "1"
+            get['hour'] = 1
+            get['minute'] = 1
+            get['flock'] = 0
+        # sweek 类型转换
+        if get['type'] == 'sweek':
+            get['type'] = 'minute-n'
+        # toShell 类型处理
+        if get['sType'] == 'toShell':
+            get['sBody'] = get['sBody'].replace('\r\n', '\n')
+            user = get.get('user', 'root')
+            if user and user != 'root':
+                get['sBody'] = "sudo -u {0} bash -c '{1}'".format(user, get['sBody'])
+            if get.get('version', ''):
+                version = get['version'].replace(".", "")
+                get['sBody'] = get['sBody'].replace("${1/./}", version)
+        return get
+
+    def _build_cron_config(self, get, cronName, cronJob, cronLog, cuonConfig):
+        """构建 cron 配置"""
+        if int(get.get('flock', 0)) == 1:
+            flock_name = cronJob + '.lock'
+            public.writeFile(flock_name, '')
+            os.system('chmod 777 {}'.format(flock_name))
+            cuonConfig += ' flock -xn {flock_name} -c {cronJob}  >> {cronLog} 2>&1'.format(
+                flock_name=flock_name, cronJob=cronJob, cronLog=cronLog)
+        else:
+            cuonConfig += ' {cronJob} >> {cronLog} 2>&1'.format(cronJob=cronJob, cronLog=cronLog)
+        return cuonConfig
+
+    def _prepare_db_values(self, get, cronName, db_backup_path):
+        """准备数据库插入值，统一处理数据库插入逻辑"""
+        columns = 'name,type,where1,where_hour,where_minute,echo,addtime,status,save,backupTo,sType,sName,sBody,urladdress,db_type,split_type,split_value,keyword,post_param,flock,time_set,backup_mode,db_backup_path,time_type,special_time,log_cut_path,user_agent,version,table_list,result,second,stop_site,rname,params'
+        values = (
+            public.xssencode2(get['name']), get['type'], get['where1'], get['hour'],
+            get['minute'], cronName, time.strftime('%Y-%m-%d %X', time.localtime()),
+            1, get['save'], get['backupTo'], get['sType'], get['sName'], get['sBody'],
+            get['urladdress'], get.get("db_type"), get.get("split_type"), get.get("split_value"),
+            get.get('keyword', ''), get.get('post_param', ''), get.get('flock', 0),
+            get.get('time_set', ''), get.get('backup_mode', ''), db_backup_path,
+            get.get('time_type', ''), get.get('special_time', ''), get.get('log_cut_path', ''),
+            get.get('user_agent', ''), get.get('verison', ''), get.get('table_list', ''),
+            get.get('result', 1), get.get('second', ''), get.get('stop_site', ''),
+            get.get('rname', get['name']), get.get('params', '{}')
+        )
+        # 如果有 save_local 字段，追加相关字段
+        if "save_local" in get:
+            columns += ",save_local,notice,notice_channel"
+            values = (
+                public.xssencode2(get['name']), get['type'], get['where1'], get['hour'],
+                get['minute'], cronName, time.strftime('%Y-%m-%d %X', time.localtime()),
+                1, get['save'], get['backupTo'], get['sType'], get['sName'], get['sBody'],
+                get['urladdress'], get.get("db_type"), get.get("split_type"), get.get("split_value"),
+                get.get('keyword', ''), get.get('post_param', ''), get.get('flock', 0),
+                get.get('time_set', ''), get.get('backup_mode', ''), db_backup_path,
+                get.get('time_type', ''), get.get('special_time', ''), get.get('log_cut_path', ''),
+                get.get('user_agent', ''), get.get('verison', ''), get.get('table_list', ''),
+                get.get('result', 1), get.get('second', ''), get.get('stop_site', ''),
+                get.get('rname', get['name']), get.get('params', '{}'),
+                get["save_local"], get['notice'], get['notice_channel']
+            )
+        return columns, values
+
+    def _insert_crontab_record(self, columns, values, task_name):
+        """插入数据库记录并处理结果"""
+        addData = public.M('crontab').add(columns, values)
+        public.add_security_logs('计划任务', '添加计划任务[' + task_name + ']成功' + str(values))
+        if type(addData) == str:
+            return public.returnMsg(False, addData)
+        public.WriteLog('计划任务', '添加计划任务[' + task_name + ']成功')
+        if addData > 0:
+            result = public.returnMsg(True, 'ADD_SUCCESS')
+            result['id'] = addData
+            return result
+        return public.returnMsg(False, 'ADD_ERROR')
+
+    # ============ AddCrontab 私有方法结束 ============
+
     # 添加计划任务
     def AddCrontab(self, get):
-        
         try:
-            if "拔测" in get['name'] and "/www/server/panel/class/monitorModel/boceModel.py" in get['sBody']:
-                if get['type']=="minute-n":
-                    if int(get['where1'])<10:
-                        return public.returnMsg(False, "拔测周期最短不能少于10分钟！")
-                if get['type']=="second-n":
-                    return public.returnMsg(False, "网站拔测任务不支持设置为秒级任务！")
-            if get['name']=="[勿删]切割计划任务日志":
-                if public.M('crontab').where("name=?", ('[勿删]切割计划任务日志',)).select():
-                    return public.returnMsg(False, '该任务不支持直接复制！')
-            if "网站增量备份" in get['name']:
-                if public.M('crontab').where("name=?", (get['name'],)).select():
-                    return public.returnMsg(False, '该任务不支持直接复制！')
-            if get['type']=="second-n":
-                get['type']="minute-n"
-                get['where1']= "1"
-                get['hour']=1
-                get['minute']=1
-                get['flock']=0
-            if len(get['name']) < 1:
-                return public.returnMsg(False, 'CRONTAB_TASKNAME_EMPTY')
-            if get['sType'] == 'toShell':
-                get['sBody'] = get['sBody'].replace('\r\n', '\n')
-                # 如果user有值，则修改sBody
-                user = get.get('user', 'root')
-                if user and user!='root':
-                    get['sBody'] = "sudo -u {0} bash -c '{1}'".format(user, get['sBody'])
-                # 如果get中有version键，就替换sBody中的版本号占位符
-                if get.get('version',''):
-                    version = get['version'].replace(".", "")
-                    get['sBody'] = get['sBody'].replace("${1/./}", version)
-            if get['sType'] == 'startup_services':
-                return self.ensure_execute_commands_script(get)  # 检查并创建脚本
-            
-            if get['type']=='sweek':
-                get['type']='minute-n'
+            # 1. 参数验证
+            validation_result = self._validate_task_request(get)
+            if validation_result:
+                return validation_result
+
+            # 不知是何意味，先干掉
+            # # 2. 特殊任务类型处理（startup_services）
+            # if get['sType'] == 'startup_services':
+            #     return self.ensure_execute_commands_script(get)
+
+            # 3. 参数预处理
+            get = self._preprocess_task_params(get)
+
+            # 4. 获取周期配置
             cuonConfig, get, name = self.GetCrondCycle(get)
+
+            # 5. 生成脚本和路径
             cronPath = public.GetConfigValue('setup_path') + '/cron'
             cronName = self.GetShell(get)
+            if type(cronName) == dict:
+                return cronName
 
+            # 6. 构建 cron 配置并写入
             cronJob = cronPath + '/' + cronName
             cronLog = cronJob + '.log'
-
-            if type(cronName) == dict: return cronName
-            if int(get.get('flock', 0)) == 1:
-                flock_name = cronJob + '.lock'
-                public.writeFile(flock_name, '')
-                os.system('chmod 777 {}'.format(flock_name))
-                cuonConfig += ' flock -xn {flock_name} -c {cronJob}  >> {cronLog} 2>&1'.format(flock_name=flock_name, cronJob=cronJob, cronLog=cronLog)
-            else:
-                cuonConfig += ' {cronJob} >> {cronLog} 2>&1'.format(cronJob=cronJob, cronLog=cronLog)
+            cuonConfig = self._build_cron_config(get, cronName, cronJob, cronLog, cuonConfig)
             wRes = self.WriteShell(cuonConfig)
-            if not wRes['status']: return wRes
+            if not wRes['status']:
+                return wRes
             self.CrondReload()
-            
+
+            # 7. 准备数据库值并插入
             db_backup_path = public.M('config').where("id=?", ('1',)).getField('backup_path')
             if get.get('db_backup_path') == db_backup_path:
-                db_backup_path=""
+                db_backup_path = ""
             else:
-                db_backup_path=get.get('db_backup_path','')
-            columns = 'name,type,where1,where_hour,where_minute,echo,addtime,status,save,backupTo,sType,sName,sBody,urladdress,db_type,split_type,split_value,keyword,post_param,flock,time_set,backup_mode,db_backup_path,time_type,special_time,log_cut_path,user_agent,version,table_list,result,second,stop_site,rname,params'
-            values = (public.xssencode2(get['name']), get['type'], get['where1'], get['hour'],
-                      get['minute'], cronName, time.strftime('%Y-%m-%d %X', time.localtime()),
-                      1, get['save'], get['backupTo'], get['sType'], get['sName'], get['sBody'],
-                      get['urladdress'], get.get("db_type"), get.get("split_type"), get.get("split_value"), get.get('keyword', ''), get.get('post_param', ''), get.get('flock', 0),get.get('time_set', ''),get.get('backup_mode',''),db_backup_path,get.get('time_type',''),get.get('special_time',''),get.get('log_cut_path',''),get.get('user_agent',''),get.get('verison',''),get.get('table_list',''),get.get('result',1),get.get('second',''),get.get('stop_site',''), get.get('rname',get['name']),get.get('params','{}'))
-            if "save_local" in get:
-                columns += ",save_local,notice,notice_channel"
-                values = (public.xssencode2(get['name']), get['type'], get['where1'], get['hour'],
-                          get['minute'], cronName, time.strftime('%Y-%m-%d %X', time.localtime()),
-                          1, get['save'], get['backupTo'], get['sType'], get['sName'], get['sBody'],
-                          get['urladdress'], get.get("db_type"), get.get("split_type"), get.get("split_value"), get.get('keyword', ''), get.get('post_param', ''), get.get('flock', 0),get.get('time_set', ''),get.get('backup_mode', ''),db_backup_path,get.get('time_type',''),get.get('special_time',''),get.get('log_cut_path',''),get.get('user_agent',''),get.get('verison',''),get.get('table_list',''),get.get('result',1),get.get('second',''),get.get('stop_site',''), get.get('rname',get['name']),get.get('params','{}'),
-                          get["save_local"], get['notice'], get['notice_channel'])
-            addData = public.M('crontab').add(columns, values)
-            public.add_security_logs('计划任务', '添加计划任务[' + get['name'] + ']成功' + str(values))
-            if type(addData) == str:
-                return public.returnMsg(False, addData)
-            public.WriteLog('计划任务', '添加计划任务[' + get['name'] + ']成功')
-            if addData > 0:
-                result = public.returnMsg(True, 'ADD_SUCCESS')
-                result['id'] = addData
-                return result
-            return public.returnMsg(False, 'ADD_ERROR')
+                db_backup_path = get.get('db_backup_path', '')
+            columns, values = self._prepare_db_values(get, cronName, db_backup_path)
+            return self._insert_crontab_record(columns, values, get['name'])
         except Exception as e:
             return public.returnMsg(False, str(e))
     

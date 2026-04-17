@@ -1,7 +1,7 @@
 help(){
 	echo  "Usage: ./action.sh [options] [FILE] [OUTFILE]     "
 	echo  "Options:"
-	echo  "xxx.sh san_log     [FILE] 获取成功访问请求中带有xss|sql|铭感信息|php代码执行 关键字的日志列表  [OUTFILE]   11"
+	echo  "xxx.sh san_log     [FILE] 获取成功访问请求中带有xss|sql|敏感信息|php代码执行 关键字的日志列表  [OUTFILE]   11"
 	echo  "xxx.sh san     [FILE] 获取成功访问请求中带有sql关键字的日志列表   [OUTFILE]   11  "
 }
 

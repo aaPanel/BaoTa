@@ -1,16 +1,24 @@
-<!doctype html><html lang="cn"><head><meta charset="utf-8"><meta content="IE=edge"><meta name="referer" content="never"><meta name="renderer" content="webkit"><title>{{g.title}}</title><link rel="shortcut icon" href="{{g['panel_theme']['logo']['favicon']}}" type="image/x-icon"><link rel="stylesheet" crossorigin href="/static/css/login.min.css?v=1764728423"><script>window.vite_public_title = '{{g.title}}' // 网站标题
-			window.vite_public_login_token = '{{data['last_login_token']}}'; // 登录token
-			window.vite_public_encryption = '{{session['rsa_public_key']}}'; // rsa加密公钥
-			window.vite_public_login_check = '{{session['code']}}' === 'True'; // 是否登录检查
-			window.vite_public_hosts_list = JSON.parse('{{data.hosts|safe}}'.replace(/\&\#34;/g, '"')); // cdn主机列表
-			window.vite_public_panel_theme = JSON.parse('{{g['panel_theme']}}'.replace(/\&\#39;/g, '"').replace(/\&\#34;/g, '"').replace(/True/g, 'true').replace(/False/g, 'false')); // 网站图标信息
+<!doctype html><html lang="cn"><head><meta charset="utf-8"><meta content="IE=edge"><meta name="referer" content="never"><meta name="renderer" content="webkit"><title>{{g.title}}</title><link rel="shortcut icon" href="{{g['panel_theme']['logo']['favicon']}}" type="image/x-icon"><link rel="stylesheet" crossorigin href="/static/css/login.min.css?v=1776335489"><script>window.vite_public_title = '{{g.title}}' // 网站标题
+			window.vite_public_login_token = '{{data['last_login_token']}}' // 登录token
+			window.vite_public_encryption = '{{session['rsa_public_key']}}' // rsa加密公钥
+			window.vite_public_login_check = '{{session['code']}}' === 'True' // 是否登录检查
+			window.vite_public_hosts_list = JSON.parse('{{data.hosts|safe}}'.replace(/\&\#34;/g, '"')) // cdn主机列表
+			window.vite_public_panel_theme = JSON.parse(
+				'{{g['panel_theme']}}'
+					.replace(/\&\#39;/g, '"')
+					.replace(/\&\#34;/g, '"')
+					.replace(/True/g, 'true')
+					.replace(/False/g, 'false')
+			) // 网站图标信息
+			window.vite_public_passkey_status = '{{data['passkey_status']}}' === 'True' // Passkey登录状态
+			window.vite_public_wechat_status = '{{data['wechat_status']}}' === 'True' // WeChat登录状态
 
 			// 主题预加载脚本 - 避免闪屏
-			(function () {
+			;(function () {
 				//  获取系统配置主题
 				var getSystemTheme = function () {
 					try {
-						return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+						return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 					} catch (error) {
 						return 'light'
 					}
@@ -20,9 +28,9 @@
 				// 获取本地配置主题
 				var getLocalTheme = function () {
 					try {
-						return window.vite_public_panel_theme.theme.preset || 'light';
+						return window.vite_public_panel_theme.theme.preset || 'light'
 					} catch (error) {
-						return 'light';
+						return 'light'
 					}
 				}
 
@@ -89,76 +97,76 @@
 				// 设置主题变化监听器
 				setupThemeListener()
 			})()
-				; (function () {
-					// 浏览器兼容性检测
-					function browserCompatible() {
-						// IE浏览器版本检测
-						var ieVersion = (function () {
-							var userAgent = navigator.userAgent,
-								isLessIE11 = userAgent.indexOf('compatible') > -1 && userAgent.indexOf('MSIE') > -1,
-								isEdge = userAgent.indexOf('Edge') > -1 && !isLessIE11,
-								isIE11 = userAgent.indexOf('Trident') > -1 && userAgent.indexOf('rv:11.0') > -1
-							if (isLessIE11) {
-								var IEReg = new RegExp('MSIE (\\d+\\.\\d+);')
-								IEReg.test(userAgent)
-								var IEVersionNum = parseFloat(RegExp['$1'])
-								if ([7, 8, 9, 10].indexOf(IEVersionNum) > -1) {
-									return IEVersionNum
-								} else {
-									return 6
-								}
-							} else if (isEdge) {
-								return 'edge'
-							} else if (isIE11) {
-								return 11
+			;(function () {
+				// 浏览器兼容性检测
+				function browserCompatible() {
+					// IE浏览器版本检测
+					var ieVersion = (function () {
+						var userAgent = navigator.userAgent,
+							isLessIE11 = userAgent.indexOf('compatible') > -1 && userAgent.indexOf('MSIE') > -1,
+							isEdge = userAgent.indexOf('Edge') > -1 && !isLessIE11,
+							isIE11 = userAgent.indexOf('Trident') > -1 && userAgent.indexOf('rv:11.0') > -1
+						if (isLessIE11) {
+							var IEReg = new RegExp('MSIE (\\d+\\.\\d+);')
+							IEReg.test(userAgent)
+							var IEVersionNum = parseFloat(RegExp['$1'])
+							if ([7, 8, 9, 10].indexOf(IEVersionNum) > -1) {
+								return IEVersionNum
 							} else {
-								return -1
+								return 6
 							}
-						})()
-						if ((ieVersion != -1 && ieVersion <= 11) || ieVersion === 'edge') location.href = '/tips'
+						} else if (isEdge) {
+							return 'edge'
+						} else if (isIE11) {
+							return 11
+						} else {
+							return -1
+						}
+					})()
+					if ((ieVersion != -1 && ieVersion <= 11) || ieVersion === 'edge') location.href = '/tips'
 
-						// 支持Firefox\Chrome\Safari浏览器判断，排除移动设备
-						var browserVersion = function (config) {
-							var userAgent = navigator.userAgent
-							// 判断是否为移动端设备
-							if (userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i)) return false
-							if (type === 'Safari') type = 'Version'
-							for (var i = 0; i < config.length; i++) {
-								var type = config[i][0]
-								var version = config[i][1]
-								if (userAgent.indexOf(type) > -1) {
-									var reg = new RegExp(type + '/(\\d+\\.\\d+)')
-									reg.test(userAgent)
-									var versionNum = parseFloat(RegExp['$1'])
-									return version > versionNum
-								} else {
-									return false
-								}
+					// 支持Firefox\Chrome\Safari浏览器判断，排除移动设备
+					var browserVersion = function (config) {
+						var userAgent = navigator.userAgent
+						// 判断是否为移动端设备
+						if (userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i)) return false
+						if (type === 'Safari') type = 'Version'
+						for (var i = 0; i < config.length; i++) {
+							var type = config[i][0]
+							var version = config[i][1]
+							if (userAgent.indexOf(type) > -1) {
+								var reg = new RegExp(type + '/(\\d+\\.\\d+)')
+								reg.test(userAgent)
+								var versionNum = parseFloat(RegExp['$1'])
+								return version > versionNum
+							} else {
+								return false
 							}
 						}
-						if (
-							browserVersion([
-								['Chrome', 60],
-								['Safari', 11],
-								['Firefox', 55],
-							])
-						) {
-							location.href = '/tips'
-						}
-						if (!location.origin) location.origin = location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '')
 					}
+					if (
+						browserVersion([
+							['Chrome', 60],
+							['Safari', 11],
+							['Firefox', 55],
+						])
+					) {
+						location.href = '/tips'
+					}
+					if (!location.origin) location.origin = location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '')
+				}
 
-					// 禁止后退
-					function blockHist() {
-						if (window.history && window.history.pushState) {
-							window.onpopstate = function () {
-								window.history.pushState('forward', null, '')
-								window.history.forward(1)
-							}
+				// 禁止后退
+				function blockHist() {
+					if (window.history && window.history.pushState) {
+						window.onpopstate = function () {
+							window.history.pushState('forward', null, '')
+							window.history.forward(1)
 						}
-						window.history.pushState('forward', null, '') //在IE中必须得有这两行
-						window.history.forward(1)
 					}
-					browserCompatible()
-					blockHist()
-				})()</script><script type="module" crossorigin src="/static/js/login.js?v=1764728423"></script><script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script><script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script></head><body><script src="/static/js/qrcode.min.js?v=1764728423"></script><script src="/static/js/jsencrypt.min.js?v=1764728423"></script><script src="/static/js/md5.js?v=1764728423"></script><div id="app"><div class="login-bg" id="login-bg"><div class="login-images" id="login-images"></div><div class="login-main" id="login-main" style="display:none"><aside class="login-svg" id="login-svg"><img src="/static/icons/logo-green.svg" alt="logo" id="login-logo"></aside><aside class="cut-login-type account" id="cut-login-type"><svg class="login-type-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="5"></rect><rect x="3" y="16" width="5" height="5"></rect><rect x="16" y="3" width="5" height="5"></rect><path d="m5 5 0 0"></path><path d="m5 18 0 0"></path><path d="m18 5 0 0"></path><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path></svg><div class="tips"><span class="tips-text">切换扫码登录</span></div></aside><aside class="login-account" id="login-account"><div class="w-full"><div class="login-title"><span class="title-text" id="login-title-text"></span></div><div class="login-form"><div class="login-form-item"><div class="form-group"><input class="login-form-input" name="username" autocomplete="off" autofocus placeholder="账号"><div class="input-action-icon"></div></div></div><div class="login-form-item"><div class="form-group"><input class="login-form-input" name="password" autocomplete="off" type="password" placeholder="密码"><div class="input-action-icon"></div></div></div><div class="login-form-item"><div class="form-group"><div class="login-safe-mode !w-[230px]"></div><div class="loading-icon svgtofont-el-question-filled cursor-pointer !text-warning h-[20px] ml-[15px] text-round"></div></div></div><div class="login-form-item flex login-code-view !hidden"><div class="form-group"><input class="login-form-input !w-[230px] mr-[15px]" name="code" type="code" placeholder="验证码"><div class="input-action-icon"></div></div><div class="cut-login-code"><img title="点击切换验证码" class="w-[100%] h-[40px]"></div></div><div class="login-form-item"><div class="form-group"><button class="login-form-button login-submit">登录</button></div></div><div class="login-form-footer"><div class="flex"><div class="cdn-node">加速节点</div><div class="login-cdn-accelerate"></div></div><span><a class="bt-link noreferrer_tips" href="https://www.bt.cn/new/wechat_customer" target="_blank" rel="noreferrer noopener">无法登录？联系客服</a><div class="el-divider el-divider--vertical"></div><a class="bt-link" href="https://www.bt.cn/bbs/thread-1172-1-1.html" target="_blank" rel="noreferrer noopener">忘记密码</a></span></div><div class="login-form google-verify-view !hidden"><div class="login-google-verify"><div class="close-popup-btn -right-[15px] -top-[15px]"></div><div class="login-title !mt-0">动态口令认证</div><div class="login-form-item"><div class="form-group"><input class="login-form-input" name="vcode" placeholder="请输入动态口令"><div class="input-action-icon"></div></div></div><div class="login-form-item"><button class="login-form-button login-google-verify-submit">验证并登录</button></div><ul class="mt-4x leading-8 text-small"><li>请使用宝塔APP或谷歌认证器获取验证代码</li><li><a href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=105839" target="_blank" rel="noreferrer noopener" class="bt-link"><span class="el-link--inner">无法验证，点击帮助</span></a></li></ul></div><div class="google-verify-shade"></div></div></div></div></aside><aside class="login-scan !hidden" id="login-scan"><div class="login-scan-view"><div class="login-scan-success"><div class="login-title">堡塔APP扫码登录</div><div id="canvas" class="login-scan-canvas"></div><div class=""><span><a href="https://www.bt.cn/bbs/thread-47408-1-1.html" target="_blank" title="点击查看链接信息" class="bt-link text-middle login-scan-tips">关于堡塔APP</a></span></div></div><div class="login-scan-error !hidden"><span class="title">当前面板未绑定扫描登录，请按照以下顺序检查：</span> <span class="line">1、检查堡塔APP插件(面板插件)是否安装，是否绑定</span> <span class="line">2、打开<a class="bt-link text-middle" rel="noreferrer noopener" href="https://www.bt.cn/bbs/thread-47408-1-1.html">堡塔APP(手机APP)</a>查看绑定情况</span> <span class="line">3、如果以上操作均无法解决问题，请<a target="_block" rel="noreferrer noopener" class="bt-link text-middle" href="https://www.bt.cn/new/wechat_customer">联系客服</a></span></div></div></aside></div></div></div><svg id="__svg__icons__dom__" xmlns="http://www.w3.org/2000/svg" xmlns:link="http://www.w3.org/1999/xlink" style="position:absolute;width:0;height:0"><symbol fill="none" viewBox="0 0 613 657" id="icon-tools-logo"><path id="icon-tools-logo_logo-white 1" d="M0 0h613v657H0z"></path><defs><style>#icon-tools-logo .logo-left-color{fill:currentColor;opacity:.7}#icon-tools-logo .logo-right-color{fill:currentColor}</style></defs><g id="icon-tools-logo_左侧内容"><path class="logo-left-color" d="M304.858 203.122c1.642 0 2.737 1.643 2.189 2.738V657l-1.642-.547-39.407-13.141c-44.88-16.424-87.571-36.682-124.789-67.342-20.798-16.973-38.86-36.135-51.996-59.678-3.83-6.57-5.473-14.235-5.473-21.9.548-73.912.548-147.277 1.095-220.642 0-4.38 1.095-6.023 5.473-7.118 13.136-3.285 25.724-7.117 38.86-10.95 2.189 2.19 1.642 4.38 1.642 6.57v21.9c0 5.475.547 6.023 6.02 4.928 2.19-.547 4.379-.547 6.021 0l26.271-6.57c3.284-.548 3.284-2.19 3.284-4.928v-31.207c0-2.19 0-4.38 2.737-4.928 13.683-3.832 27.366-7.665 41.049-12.045 2.189 2.19 1.642 4.928 1.642 7.665 0 9.308-.547 18.615.547 27.923 3.284 2.737 6.021-.548 8.757-.548 1.642-.547 2.19 0 4.926 0 7.663-2.19 15.873-4.38 24.082-6.57 3.832-1.095 5.474-2.19 5.474-6.57-.548-10.95 0-21.352 0-31.755 0-2.19 0-3.832 2.736-4.38 12.041-4.38 26.272-8.212 40.502-12.045ZM307.047 101.287v57.488c0 3.285 0 5.475-3.284 6.57-23.534 6.57-46.522 13.688-70.057 20.805-61.847 17.52-124.242 35.04-186.636 53.107-2.19.548-4.379 2.191-6.568-1.095C27.366 221.19 14.23 204.217.547 186.15l20.799-2.19c1.094 0 2.189 0 3.284 1.095 1.094.547 1.642 1.095 2.736 2.19 10.4 10.95 21.893 10.95 36.67 7.117 73.889-21.9 147.777-41.61 221.666-62.415 3.284-1.095 6.02-2.189 6.568-6.57.547-4.38 2.736-8.76 3.284-13.687.547-7.665 4.925-9.855 11.493-10.403ZM307.047.547V81.03c0 2.19 0 4.38-1.094 6.57-35.576 9.855-71.699 20.258-107.823 30.113-37.765 10.95-76.077 21.352-114.39 32.302-4.926 1.643-8.21.548-11.494-3.285-13.135-14.235-26.818-28.47-39.407-42.158 4.379-.547 10.947-1.642 17.514-2.19 2.737-.547 4.38 1.095 6.021 2.738 10.946 10.95 22.44 10.402 36.67 6.023 62.943-19.71 125.885-38.326 188.826-56.94 4.379-1.096 6.021-3.286 6.568-7.666 2.19-13.14 4.926-25.732 7.116-38.325 0-6.57 2.189-9.307 8.209-8.212 1.642.547 2.19.547 3.284.547ZM485.474 255.135v2.19a181.501 181.501 0 0 1 0 34.493c-4.926-.548-8.757-2.19-13.683-3.285v-25.185c0-4.381 1.095-6.023 5.473-6.571 2.737-.547 5.473-1.642 8.21-1.642Zm-92.497 10.95c-2.737-.547-4.926-1.095-7.663-2.19V236.52c0-4.38 1.095-5.475 4.926-6.023 2.737 0 5.473-2.19 8.757-1.642-2.189 4.38-1.094 9.855-1.094 14.235v20.805c.547 3.285.547 3.832-4.926 2.19Z"></path></g><g id="icon-tools-logo_右侧内容"><path class="logo-right-color" d="M307.047 655.357c-1.094-2.737-1.642-6.022-1.642-9.307V217.358c0-4.38 0-8.76-.547-13.688 0-.547 0-1.095 1.095-1.643 1.094 0 2.736 0 4.378.548 13.683 3.833 26.819 7.665 40.502 10.95 3.284 1.095 4.379 2.19 4.379 5.475v31.207c0 4.38 1.094 6.023 5.473 6.57 8.757 1.643 16.967 4.928 25.724 6.023h.547c3.284-1.095 5.473.548 7.663 1.643h.547c6.021 0 1.095-2.738 2.189-3.833-.547-8.76 0-17.52 0-26.828 0-2.19 0-4.38 2.19-6.022h1.094c13.683 3.832 27.366 7.665 40.502 11.497 2.737.548 2.737 2.738 2.737 4.928v30.66c0 3.285.547 4.927 4.378 5.475 8.21 1.642 16.42 4.38 24.082 6.57h1.095c3.831-1.095 7.115 1.642 10.946 1.642.548 0 1.095-.547 1.095-1.094 1.095-4.381 0-9.308.547-14.236.548-5.475 0-11.497 0-17.52v-1.095c0-2.19.548-1.095 2.19-1.095 13.135 3.833 26.818 7.665 39.954 11.498 3.284 1.095 2.737 3.285 2.737 5.475 0 33.397.547 67.342.547 100.74 0 41.062 0 82.672.547 123.735 0 4.927-1.094 9.855-3.284 14.235-10.946 21.9-26.271 39.42-44.333 55.845-32.839 29.565-71.151 49.822-111.653 66.795-18.609 7.665-38.313 13.14-57.469 20.805-1.642.547-2.189 1.095-2.189 1.095h-.547c-1.095.547-2.737 1.095-4.379 1.095m-1.095-553.523c6.568.548 10.947 3.285 12.041 10.403 1.095 6.022 1.642 14.235 5.474 17.52 3.831 3.832 11.493 4.38 17.514 5.475 74.436 20.805 148.324 41.61 222.76 62.415 3.831 1.095 6.568 1.095 9.852-1.643 0 0 .547-.547 1.094-.547 10.399-10.403 22.44-13.688 36.671-7.665.547 1.095-1.095 2.19-2.19 3.285-12.041 15.33-23.534 30.66-35.028 46.537-2.19 3.285-3.831 3.833-7.663 2.738-84.835-24.638-170.217-49.275-255.052-73.913-2.736-1.095-5.473-1.095-8.209-1.095 2.189-6.57 1.642-13.687 1.642-20.257v-35.588c-.548-2.737-1.095-5.475 1.094-7.665ZM307.047.547C316.899 0 316.899 0 319.088 9.855c2.19 12.593 4.926 25.185 7.116 37.778 0 2.737 2.189 4.927 4.378 5.474l206.888 62.415c2.189 1.095 4.378.548 6.02-1.095 0 0 .547-.547 1.095-.547 10.946-9.855 23.535-15.33 38.312-7.665 0 1.095-1.642 1.642-2.736 2.737-13.136 13.14-26.819 25.733-39.407 38.873-3.284 3.285-6.021 3.832-10.4 2.737-72.793-20.805-146.134-41.062-218.928-61.32-1.642-.547-3.831-1.095-5.473-1.095-.548-1.642-1.095-3.832-.548-5.475V9.308c0-3.285-.547-6.023 1.642-8.76ZM142.304 288.532c-3.284 1.096-7.116 2.191-10.947 3.285-3.284.548-2.189-2.19-2.737-4.38v-32.302h.548c13.136 2.19 13.136 2.19 13.136 14.782-.548 6.023 0 12.593 0 18.615ZM226.044 264.99c1.642 0 3.284-.547 4.378-1.095-3.284 0-2.189-2.19-2.189-4.38v-24.637c0-1.643.547-3.833-2.189-4.38-3.832-.548-7.115-2.738-10.947-2.191v32.303c0 .548 0 5.475 1.095 6.023h2.189c.548 0 1.095 0 2.19-.548"></path></g></symbol></svg><script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script><script nomodule crossorigin id="vite-legacy-polyfill" src="/static/js/polyfills-legacy.js?v=1764728423"></script><script nomodule crossorigin id="vite-legacy-entry" data-src="/static/js/login-legacy.js?v=1764728423">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script><script src="/static/js/load-file.min.js?v=1764728423"></script></head></html>
+					window.history.pushState('forward', null, '') //在IE中必须得有这两行
+					window.history.forward(1)
+				}
+				browserCompatible()
+				blockHist()
+			})()</script><script type="module" crossorigin src="/static/js/login.js?v=1776335489"></script><script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script><script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script></head><body><script src="/static/js/qrcode.min.js?v=1776335489"></script><script src="/static/js/jsencrypt.min.js?v=1776335489"></script><script src="/static/js/md5.js?v=1776335489"></script><div id="app"><div class="login-bg" id="login-bg"><div class="login-images" id="login-images"></div><div class="login-main" id="login-main" style="display:none"><aside class="login-svg" id="login-svg"><img src="/static/icons/logo-green.svg" alt="logo" id="login-logo"></aside><aside class="cut-login-type account !hidden" id="cut-login-type"><svg class="login-type-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><div class="tips"><span class="tips-text">切换账号登录</span></div></aside><aside class="login-account" id="login-account"><div class="w-full"><div class="login-title"><span class="title-text" id="login-title-text"></span></div><div class="login-form"><div class="login-form-item"><div class="form-group"><input class="login-form-input" name="username" autocomplete="off" autofocus placeholder="账号"><div class="input-action-icon"></div></div></div><div class="login-form-item"><div class="form-group"><input class="login-form-input" name="password" autocomplete="off" type="password" placeholder="密码"><div class="input-action-icon"></div></div></div><div class="login-form-item"><div class="form-group"><div class="login-safe-mode !w-[230px]"></div><div class="loading-icon svgtofont-el-question-filled cursor-pointer !text-warning h-[20px] ml-[15px] text-round"></div></div></div><div class="login-form-item flex login-code-view !hidden"><div class="form-group"><input class="login-form-input !w-[230px] mr-[15px]" name="code" type="code" placeholder="验证码"><div class="input-action-icon"></div></div><div class="cut-login-code"><img title="点击切换验证码" class="w-[100%] h-[40px]"></div></div><div class="login-form-item"><div class="form-group"><button class="login-form-button login-submit">登录</button></div></div><div class="login-form-footer"><div class="flex"><div><div class="cdn-node">加速节点</div><div class="login-cdn-accelerate"></div></div></div><span><a class="bt-link noreferrer_tips" href="https://www.bt.cn/new/wechat_customer" target="_blank" rel="noreferrer noopener">无法登录？联系客服</a><div class="el-divider el-divider--vertical"></div><a class="bt-link" href="https://www.bt.cn/bbs/thread-1172-1-1.html" target="_blank" rel="noreferrer noopener">忘记密码</a></span></div><div class="login-third-party"><div class="third-party-divider"><span class="divider-line"></span> <span class="divider-text">其他登录方式</span> <span class="divider-line"></span></div><div class="third-party-icons"><div class="third-party-item wechat-login-btn hide" title="微信登录"><div class="third-party-icon"><svg t="1749545795651" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="9096" width="20" height="20"><path d="M391.95 175.27c-159.03 0-289.29 108.4-289.29 246.04 0 79.45 43.35 144.67 115.74 195.2l-28.93 87.05 101.12-50.74c36.19 7.19 65.22 14.54 101.33 14.54 9.08 0 18.09-0.45 27.01-1.16-5.64-19.37-8.92-39.61-8.92-60.62 0-126.32 108.54-228.89 245.97-228.89 9.37 0 18.64 0.69 27.86 1.71C658.8 261.87 534.2 175.27 391.95 175.27z m-93.97 195.31c-21.67 0-43.56-14.52-43.56-36.21 0-21.77 21.89-36.09 43.56-36.09s36.12 14.33 36.12 36.09c-0.02 21.69-14.45 36.21-36.12 36.21z m202.46 0c-21.69 0-43.45-14.52-43.45-36.21 0-21.77 21.76-36.09 43.45-36.09 21.79 0 36.21 14.33 36.21 36.09 0 21.69-14.43 36.21-36.21 36.21z m0 0" fill="var(--el-color-primary)" p-id="9097"></path><path d="M920.01 602.12c0-115.59-115.74-209.86-245.72-209.86-137.64 0-246.05 94.27-246.05 209.86 0 115.84 108.41 209.92 246.05 209.92 28.81 0 57.85-7.25 86.79-14.51l79.36 43.44-21.76-72.3c58.06-43.53 101.33-101.3 101.33-166.55z m-325.5-36.14c-14.41 0-28.95-14.31-28.95-28.92 0-14.44 14.54-28.96 28.95-28.96 21.89 0 36.21 14.52 36.21 28.96 0 14.61-14.33 28.92-36.21 28.92z m159.13 0c-14.31 0-28.74-14.31-28.74-28.92 0-14.44 14.43-28.96 28.74-28.96 21.67 0 36.21 14.52 36.21 28.96 0 14.61-14.54 28.92-36.21 28.92z m0 0" fill="var(--el-color-primary)" p-id="9098"></path></svg></div><span class="third-party-label">微信</span></div><div class="third-party-item passkey-login-btn hide" title="Passkey登录"><div class="third-party-icon login-passkey-submit"><svg width="16" height="16" data-v-35201bbf="" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512"><path d="M218.1 167.17c0 13 0 25.6 4.1 37.4c-43.1 50.6-156.9 184.3-167.5 194.5a20.17 20.17 0 0 0-6.7 15c0 8.5 5.2 16.7 9.6 21.3c6.6 6.9 34.8 33 40 28c15.4-15 18.5-19 24.8-25.2c9.5-9.3-1-28.3 2.3-36s6.8-9.2 12.5-10.4s15.8 2.9 23.7 3c8.3.1 12.8-3.4 19-9.2c5-4.6 8.6-8.9 8.7-15.6c.2-9-12.8-20.9-3.1-30.4s23.7 6.2 34 5s22.8-15.5 24.1-21.6s-11.7-21.8-9.7-30.7c.7-3 6.8-10 11.4-11s25 6.9 29.6 5.9c5.6-1.2 12.1-7.1 17.4-10.4c15.5 6.7 29.6 9.4 47.7 9.4c68.5 0 124-53.4 124-119.2S408.5 48 340 48s-121.9 53.37-121.9 119.17zM400 144a32 32 0 1 1-32-32a32 32 0 0 1 32 32z" fill="var(--el-color-primary)" stroke-linejoin="round" stroke-width="32"></path></svg></div><span class="third-party-label">Passkey</span></div><div class="third-party-item app-login-btn hide" title="APP登录"><div class="third-party-icon"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 14 14" width="14.000000" height="14.000000" fill="none" customFrame="#000000"><g id="堡塔APP"><g id="组合 1716"><g id="组合 78"><g id="组合 77"><path id="矢量 47 (边框)" d="M2.26562 1.4675L2.26562 4.23443L2.81108 4.23443L2.81108 1.4675L10.881 1.4675L10.881 3.9735L11.4265 3.9735L11.4265 1.4675C11.4265 1.43415 11.4225 1.40153 11.4145 1.36964C11.4074 1.34099 11.397 1.31293 11.3835 1.28545C11.3701 1.25833 11.3541 1.23271 11.3354 1.20862C11.3155 1.18301 11.2926 1.15911 11.2667 1.13693C11.2408 1.11473 11.2129 1.09512 11.183 1.07808C11.1549 1.06205 11.1251 1.0483 11.0934 1.03683C11.0614 1.02521 11.0286 1.01634 10.9952 1.01022C10.958 1.00341 10.9199 1 10.881 1L2.81108 1C2.77217 1 2.73411 1.00341 2.69689 1.01022C2.66347 1.01634 2.63073 1.02521 2.59868 1.03683C2.56704 1.0483 2.53717 1.06205 2.50907 1.07807C2.47917 1.09511 2.45128 1.11473 2.42538 1.13693C2.39949 1.15912 2.3766 1.18303 2.35671 1.20865C2.33802 1.23274 2.32198 1.25834 2.3086 1.28545C2.29504 1.31293 2.28469 1.34098 2.27755 1.36963C2.2696 1.40152 2.26562 1.43415 2.26562 1.4675Z" fill="rgb(153,153,153)" fill-rule="evenodd"></path><path id="矢量 47 (边框)" d="M0 0.467497L0 3.23443L0.545455 3.23443L0.545455 0.467497L8.61539 0.467497L8.61539 2.9735L9.16084 2.9735L9.16084 0.467497C9.16084 0.434149 9.15687 0.401529 9.14891 0.369637C9.14177 0.340988 9.13142 0.312928 9.11786 0.285454C9.10448 0.258326 9.08843 0.232714 9.06973 0.208618C9.04985 0.183009 9.02697 0.159112 9.00108 0.136927C8.97519 0.114734 8.9473 0.0951174 8.91741 0.0780758C8.8893 0.0620516 8.85943 0.0483044 8.82778 0.0368342C8.79573 0.0252145 8.76299 0.0163439 8.72957 0.0102226C8.69236 0.00340752 8.6543 0 8.61539 0L0.545455 2.7865e-08C0.506543 2.7865e-08 0.468481 0.00340767 0.431269 0.010223C0.397846 0.0163443 0.365108 0.0252148 0.333055 0.0368342C0.301418 0.0483033 0.271547 0.062049 0.243443 0.0780714C0.21355 0.095114 0.185655 0.114732 0.15976 0.136927C0.133865 0.159121 0.110974 0.183029 0.0910898 0.20865C0.0723958 0.232737 0.056358 0.258339 0.0429765 0.285454C0.0294194 0.312926 0.0190699 0.340985 0.0119277 0.369631C0.00397591 0.401525 0 0.434147 0 0.467497Z" fill="rgb(153,153,153)" fill-rule="evenodd" transform="matrix(1,0,0,-1,2.26562,13)"></path><path id="矢量 49" d="M5.02245 8.53975L4.06148 8.53975L3.73914 7.53512L2.25153 7.53512L1.92919 8.53975L1 8.53975L2.46794 4.62582L3.54695 4.62582L5.02245 8.53975ZM5.56195 8.53975L6.47903 8.53975L6.47903 7.14902L7.09194 7.14902C8.07863 7.14902 8.86557 6.74614 8.86557 5.85256C8.86557 4.9267 8.08468 4.62582 7.06772 4.62582L5.56195 4.62582L5.56195 8.53975ZM10.6135 8.53975L9.69639 8.53975L9.69639 4.62582L11.2022 4.62582C12.2191 4.62582 13 4.9267 13 5.85256C13 6.74614 12.2131 7.14902 11.2264 7.14902L10.6135 7.14902L10.6135 8.53975ZM2.58598 6.49821L2.44978 6.92692L3.54089 6.92692L3.40469 6.49821C3.26244 6.09145 3.13834 5.64079 3.00214 5.21853L2.97642 5.21853C2.85838 5.64595 2.72218 6.09145 2.58598 6.49821ZM6.47903 6.53049L6.47903 5.24436L6.99962 5.24436C7.6322 5.24436 7.96664 5.39802 7.96664 5.85256C7.96664 6.30193 7.66246 6.53049 7.02989 6.53049L6.47903 6.53049ZM10.6135 5.24436L10.6135 6.53049L11.1643 6.53049C11.7969 6.53049 12.1011 6.30193 12.1011 5.85256C12.1011 5.39802 11.7666 5.24436 11.1341 5.24436L10.6135 5.24436Z" fill="var(--el-color-primary)" fill-rule="evenodd"></path><path id="椭圆 15" d="M5.92285 10.7576C5.92285 10.3974 6.26725 10.1053 6.69208 10.1053C7.11692 10.1053 7.46131 10.3974 7.46131 10.7576C7.46131 11.1179 7.11692 11.41 6.69208 11.41C6.26725 11.41 5.92285 11.1179 5.92285 10.7576Z" fill="rgb(153,153,153)" fill-rule="evenodd"></path></g></g></g><rect id="矩形 419" width="14.000000" height="14.000000" x="0.000000" y="0.000000"></rect></g></svg></div><span class="third-party-label">APP</span></div></div></div><div class="login-form google-verify-view !hidden"><div class="login-google-verify"><div class="close-popup-btn -right-[15px] -top-[15px]"></div><div class="login-title !mt-0">动态口令认证</div><div class="login-form-item"><div class="form-group"><input class="login-form-input" name="vcode" placeholder="请输入动态口令"><div class="input-action-icon"></div></div></div><div class="login-form-item"><button class="login-form-button login-google-verify-submit">验证并登录</button></div><ul class="mt-4x leading-8 text-small"><li>请使用宝塔APP或谷歌认证器获取验证代码</li><li><a href="https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=105839" target="_blank" rel="noreferrer noopener" class="bt-link"><span class="el-link--inner">无法验证，点击帮助</span></a></li></ul></div><div class="google-verify-shade"></div></div></div></div></aside><aside class="login-scan !hidden" id="login-scan"><div class="login-scan-view"><div class="login-scan-success"><div class="login-title">堡塔APP扫码登录</div><div id="canvas" class="login-scan-canvas"></div><div class=""><span><a href="https://www.bt.cn/bbs/thread-47408-1-1.html" target="_blank" title="点击查看链接信息" class="bt-link text-middle login-scan-tips">关于堡塔APP</a></span></div></div><div class="login-scan-error !hidden"><span class="title">当前面板未绑定扫描登录，请按照以下顺序检查：</span> <span class="line">1、检查堡塔APP插件(面板插件)是否安装，是否绑定</span> <span class="line">2、打开<a class="bt-link text-middle" rel="noreferrer noopener" href="https://www.bt.cn/bbs/thread-47408-1-1.html" target="_blank">堡塔APP(手机APP)</a>查看绑定情况</span> <span class="line">3、如果以上操作均无法解决问题，请<a target="_block" rel="noreferrer noopener" class="bt-link text-middle" href="https://www.bt.cn/new/wechat_customer">联系客服</a></span></div></div></aside></div></div></div><svg id="__svg__icons__dom__" xmlns="http://www.w3.org/2000/svg" xmlns:link="http://www.w3.org/1999/xlink" style="position:absolute;width:0;height:0"><symbol fill="none" viewBox="0 0 613 657" id="icon-tools-logo"><path id="icon-tools-logo_logo-white 1" d="M0 0h613v657H0z"></path><defs><style>#icon-tools-logo .logo-left-color{fill:currentColor;opacity:.7}#icon-tools-logo .logo-right-color{fill:currentColor}</style></defs><g id="icon-tools-logo_左侧内容"><path class="logo-left-color" d="M304.858 203.122c1.642 0 2.737 1.643 2.189 2.738V657l-1.642-.547-39.407-13.141c-44.88-16.424-87.571-36.682-124.789-67.342-20.798-16.973-38.86-36.135-51.996-59.678-3.83-6.57-5.473-14.235-5.473-21.9.548-73.912.548-147.277 1.095-220.642 0-4.38 1.095-6.023 5.473-7.118 13.136-3.285 25.724-7.117 38.86-10.95 2.189 2.19 1.642 4.38 1.642 6.57v21.9c0 5.475.547 6.023 6.02 4.928 2.19-.547 4.379-.547 6.021 0l26.271-6.57c3.284-.548 3.284-2.19 3.284-4.928v-31.207c0-2.19 0-4.38 2.737-4.928 13.683-3.832 27.366-7.665 41.049-12.045 2.189 2.19 1.642 4.928 1.642 7.665 0 9.308-.547 18.615.547 27.923 3.284 2.737 6.021-.548 8.757-.548 1.642-.547 2.19 0 4.926 0 7.663-2.19 15.873-4.38 24.082-6.57 3.832-1.095 5.474-2.19 5.474-6.57-.548-10.95 0-21.352 0-31.755 0-2.19 0-3.832 2.736-4.38 12.041-4.38 26.272-8.212 40.502-12.045ZM307.047 101.287v57.488c0 3.285 0 5.475-3.284 6.57-23.534 6.57-46.522 13.688-70.057 20.805-61.847 17.52-124.242 35.04-186.636 53.107-2.19.548-4.379 2.191-6.568-1.095C27.366 221.19 14.23 204.217.547 186.15l20.799-2.19c1.094 0 2.189 0 3.284 1.095 1.094.547 1.642 1.095 2.736 2.19 10.4 10.95 21.893 10.95 36.67 7.117 73.889-21.9 147.777-41.61 221.666-62.415 3.284-1.095 6.02-2.189 6.568-6.57.547-4.38 2.736-8.76 3.284-13.687.547-7.665 4.925-9.855 11.493-10.403ZM307.047.547V81.03c0 2.19 0 4.38-1.094 6.57-35.576 9.855-71.699 20.258-107.823 30.113-37.765 10.95-76.077 21.352-114.39 32.302-4.926 1.643-8.21.548-11.494-3.285-13.135-14.235-26.818-28.47-39.407-42.158 4.379-.547 10.947-1.642 17.514-2.19 2.737-.547 4.38 1.095 6.021 2.738 10.946 10.95 22.44 10.402 36.67 6.023 62.943-19.71 125.885-38.326 188.826-56.94 4.379-1.096 6.021-3.286 6.568-7.666 2.19-13.14 4.926-25.732 7.116-38.325 0-6.57 2.189-9.307 8.209-8.212 1.642.547 2.19.547 3.284.547ZM485.474 255.135v2.19a181.501 181.501 0 0 1 0 34.493c-4.926-.548-8.757-2.19-13.683-3.285v-25.185c0-4.381 1.095-6.023 5.473-6.571 2.737-.547 5.473-1.642 8.21-1.642Zm-92.497 10.95c-2.737-.547-4.926-1.095-7.663-2.19V236.52c0-4.38 1.095-5.475 4.926-6.023 2.737 0 5.473-2.19 8.757-1.642-2.189 4.38-1.094 9.855-1.094 14.235v20.805c.547 3.285.547 3.832-4.926 2.19Z"></path></g><g id="icon-tools-logo_右侧内容"><path class="logo-right-color" d="M307.047 655.357c-1.094-2.737-1.642-6.022-1.642-9.307V217.358c0-4.38 0-8.76-.547-13.688 0-.547 0-1.095 1.095-1.643 1.094 0 2.736 0 4.378.548 13.683 3.833 26.819 7.665 40.502 10.95 3.284 1.095 4.379 2.19 4.379 5.475v31.207c0 4.38 1.094 6.023 5.473 6.57 8.757 1.643 16.967 4.928 25.724 6.023h.547c3.284-1.095 5.473.548 7.663 1.643h.547c6.021 0 1.095-2.738 2.189-3.833-.547-8.76 0-17.52 0-26.828 0-2.19 0-4.38 2.19-6.022h1.094c13.683 3.832 27.366 7.665 40.502 11.497 2.737.548 2.737 2.738 2.737 4.928v30.66c0 3.285.547 4.927 4.378 5.475 8.21 1.642 16.42 4.38 24.082 6.57h1.095c3.831-1.095 7.115 1.642 10.946 1.642.548 0 1.095-.547 1.095-1.094 1.095-4.381 0-9.308.547-14.236.548-5.475 0-11.497 0-17.52v-1.095c0-2.19.548-1.095 2.19-1.095 13.135 3.833 26.818 7.665 39.954 11.498 3.284 1.095 2.737 3.285 2.737 5.475 0 33.397.547 67.342.547 100.74 0 41.062 0 82.672.547 123.735 0 4.927-1.094 9.855-3.284 14.235-10.946 21.9-26.271 39.42-44.333 55.845-32.839 29.565-71.151 49.822-111.653 66.795-18.609 7.665-38.313 13.14-57.469 20.805-1.642.547-2.189 1.095-2.189 1.095h-.547c-1.095.547-2.737 1.095-4.379 1.095m-1.095-553.523c6.568.548 10.947 3.285 12.041 10.403 1.095 6.022 1.642 14.235 5.474 17.52 3.831 3.832 11.493 4.38 17.514 5.475 74.436 20.805 148.324 41.61 222.76 62.415 3.831 1.095 6.568 1.095 9.852-1.643 0 0 .547-.547 1.094-.547 10.399-10.403 22.44-13.688 36.671-7.665.547 1.095-1.095 2.19-2.19 3.285-12.041 15.33-23.534 30.66-35.028 46.537-2.19 3.285-3.831 3.833-7.663 2.738-84.835-24.638-170.217-49.275-255.052-73.913-2.736-1.095-5.473-1.095-8.209-1.095 2.189-6.57 1.642-13.687 1.642-20.257v-35.588c-.548-2.737-1.095-5.475 1.094-7.665ZM307.047.547C316.899 0 316.899 0 319.088 9.855c2.19 12.593 4.926 25.185 7.116 37.778 0 2.737 2.189 4.927 4.378 5.474l206.888 62.415c2.189 1.095 4.378.548 6.02-1.095 0 0 .547-.547 1.095-.547 10.946-9.855 23.535-15.33 38.312-7.665 0 1.095-1.642 1.642-2.736 2.737-13.136 13.14-26.819 25.733-39.407 38.873-3.284 3.285-6.021 3.832-10.4 2.737-72.793-20.805-146.134-41.062-218.928-61.32-1.642-.547-3.831-1.095-5.473-1.095-.548-1.642-1.095-3.832-.548-5.475V9.308c0-3.285-.547-6.023 1.642-8.76ZM142.304 288.532c-3.284 1.096-7.116 2.191-10.947 3.285-3.284.548-2.189-2.19-2.737-4.38v-32.302h.548c13.136 2.19 13.136 2.19 13.136 14.782-.548 6.023 0 12.593 0 18.615ZM226.044 264.99c1.642 0 3.284-.547 4.378-1.095-3.284 0-2.189-2.19-2.189-4.38v-24.637c0-1.643.547-3.833-2.189-4.38-3.832-.548-7.115-2.738-10.947-2.191v32.303c0 .548 0 5.475 1.095 6.023h2.189c.548 0 1.095 0 2.19-.548"></path></g></symbol></svg><script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script><script nomodule crossorigin id="vite-legacy-polyfill" src="/static/js/polyfills-legacy.js?v=1776335489"></script><script nomodule crossorigin id="vite-legacy-entry" data-src="/static/js/login-legacy.js?v=1776335489">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script><script src="/static/js/load-file.min.js?v=1776335489"></script></head></html>

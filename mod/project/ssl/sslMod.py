@@ -138,6 +138,8 @@ class main:
                 dns_value = item.get("dns_value", "")
                 dns_id = item.get("dns_id", None)
 
+                domain_name,_ = public.split_domain_sld(domain_name)
+
                 # 本地验证
                 local_verify = False
                 try:
@@ -146,6 +148,11 @@ class main:
                     for j in ns.response.answer:
                         for i in j.items:
                             txt_value = i.to_text().replace('"', '').strip()
+                            # 特殊处理CNAME
+                            if record_type.lower() == "cname" and txt_value[-1] == ".":
+                                txt_value = txt_value[:-1]
+
+                            public.print_log(txt_value)
                             if txt_value == dns_value:
                                 local_verify = True
                 except Exception as e:

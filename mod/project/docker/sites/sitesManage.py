@@ -389,6 +389,10 @@ location ~ [^/]\.php(/|$) {{
             if not get.proxy_json_conf:
                 return public.returnResult(status=False, msg="读取配置文件失败，请删除网站重新添加！")
 
+        get.proxy_json_conf["stop_site_conf"] = '''rewrite ^/(?!bt-stop\.html$).* /bt-stop.html last;
+    location = /bt-stop.html { # 网站停止，并设置网站停止页面
+        root /www/server/stop;
+    }'''
         if int(get.status) == 1:
             get.proxy_json_conf["stop_site"] = False
             args = public.dict_obj()
@@ -396,6 +400,18 @@ location ~ [^/]\.php(/|$) {{
             args.classify = get.proxy_json_conf["classify"] if "classify" in get.proxy_json_conf else 0
             self.set_site_type(args)
         else:
+            path = '/www/server/stop'
+            if not os.path.exists(path) or not os.path.isfile(path + '/index.html'):
+                os.makedirs(path)
+                public.downloadFile('http://{}/stop.html'.format(public.get_url()), path + '/index.html')
+
+            bt_stop = path + '/bt-stop.html'
+            if not os.path.exists(bt_stop):
+                os.symlink(path + '/index.html', bt_stop)
+            if not os.path.islink(bt_stop):
+                os.unlink(bt_stop)
+                os.symlink(path + '/index.html', bt_stop)
+
             get.proxy_json_conf["stop_site"] = True
             args = public.dict_obj()
             args.id = [get.id]
@@ -1112,7 +1128,7 @@ location ~ [^/]\.php(/|$) {{
                 ))
             get.proxy_json_conf["proxy_log"]["rsyslog_host"] = get.log_path
         elif get.log_type == "off":
-            get.proxy_json_conf["proxy_log"]["log_conf"] = "\n    access_log off;\n    error_log off;"
+            get.proxy_json_conf["proxy_log"]["log_conf"] = "\n    access_log off;\n    error_log /dev/null;"
         else:
             get.proxy_json_conf["proxy_log"]["log_conf"] = "    " + self.init_site_json["proxy_log"][
                 "log_conf"].format(
@@ -1493,7 +1509,10 @@ location ~ [^/]\.php(/|$) {{
 
         get.sitename = get.site_name
         get.type = 1
-        get.holdpath = 1
+        try:
+            get.holdpath = int(get.get("holdpath", 1))
+        except:
+            get.holdpath = 1
 
         get.proxy_json_conf = self.read_json_conf(get)
         if not get.proxy_json_conf:
@@ -1700,7 +1719,7 @@ location ~ [^/]\.php(/|$) {{
         get.proxy_json_conf["security"]["static_resource"] = get.fix
         get.proxy_json_conf["security"]["domains"] = get.domains
         get.proxy_json_conf["security"]["return_resource"] = get.return_rule
-        get.proxy_json_conf["security"]["http_status"] = True if get.http_status else False
+        get.proxy_json_conf["security"]["http_status"] = True if get.http_status == 'true' else False
 
         update_result = self.update_nginx_conf(get)
         if not update_result["status"]:
@@ -2503,28 +2522,37 @@ location ~ [^/]\.php(/|$) {{
         if not get.proxy_json_conf:
             return public.returnResult(status=False, msg="读取配置文件失败，请删除网站重新添加！")
 
-        static_cache = ("\n    location ~ .*\\.(css|js|jpe?g|gif|png|webp|woff|eot|ttf|svg|ico|css\.map|js\.map)$"
-                        "\n    {{"
-                        "\n        {expires};"
-                        "\n        error_log /dev/null;"
-                        "\n        access_log /dev/null;"
-                        "\n    }}").format(
-            expires=expires,
-        )
+
 
         for info in get.proxy_json_conf["proxy_info"]:
             if info["proxy_path"] == get.proxy_path:
+                from urllib.parse import urlparse
+                parsed = urlparse(info["proxy_pass"])
+                proxy_pass = f"{parsed.scheme}://{parsed.netloc}"
+
+                static_cache = (
+                    "\n    location ~ .*\\.(css|js|jpe?g|gif|png|webp|woff|eot|ttf|svg|ico|css\.map|js\.map)$"
+                    "\n    {{"
+                    "\n    proxy_pass {proxy_pass};"
+                    "\n    proxy_cache {cache_zone};"
+                    "\n    proxy_cache_key $host$uri$is_args$args;"
+                    "\n    proxy_ignore_headers Set-Cookie Cache-Control expires X-Accel-Expires;"
+                    "\n    proxy_cache_valid 200 304 301 302 {expires};"
+                    "\n    proxy_cache_valid 404 1m;"
+                    "\n        error_log /dev/null;"
+                    "\n        access_log /dev/null;"
+                    "\n    }}").format(
+                    proxy_pass=proxy_pass,
+                    cache_zone=get.proxy_json_conf["proxy_cache"]["cache_zone"],
+                    expires=get.expires,
+                )
+
                 info["proxy_cache"]["cache_status"] = True if get.cache_status == 1 else False
                 info["proxy_cache"]["expires"] = get.expires
                 if get.cache_status == 1:
-                    info["proxy_cache"]["cache_conf"] = ("\n    proxy_cache {cache_zone};"
-                                                         "\n    proxy_cache_key $host$uri$is_args$args;"
-                                                         "\n    proxy_ignore_headers Set-Cookie Cache-Control expires X-Accel-Expires;"
-                                                         "\n    proxy_cache_valid 200 304 301 302 {expires};"
-                                                         "\n    proxy_cache_valid 404 1m;"
+                    info["proxy_cache"]["cache_conf"] = ("\n    proxy_cache off;"
+                                                         "\n    add_header X-Cache $upstream_cache_status;"
                                                          "{static_cache}").format(
-                        cache_zone=get.proxy_json_conf["proxy_cache"]["cache_zone"],
-                        expires=get.expires,
                         static_cache=static_cache,
                     )
                 else:

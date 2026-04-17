@@ -17,6 +17,13 @@
                 "exec":"/etc/init.d/nginx status",
                 "success":"already running"
             }
+        ],
+        "log": [
+            {
+                "regexp": "bind\\(\\)\\s+to\\s+\\S+:(80|888|443)\\s+failed",
+                "msg": "nginx默认端口80已被占用，请检查！",
+                "status": true
+            }
         ]
     },
     "mysql":{

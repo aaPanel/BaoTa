@@ -8,6 +8,7 @@
 # -------------------------------------------------------------------
 import json
 import os
+import re
 # ------------------------------
 # nodejs项目业务接口
 # ------------------------------
@@ -160,6 +161,9 @@ class main(NodeJs):
         get.project_type = get.get("project_type", None)
         get.port = get.get('port', "")
         get.bind_extranet = get.get('bind_extranet', 0)
+        get.project_cwd = get.get("project_cwd", "")
+        if re.search(r"\s", get.project_cwd):
+            self.ws_err_exit(False, '项目路径不能有空格', code=2)
         if get.project_type is None:
             self.ws_err_exit(False, 'project_type参数不能为空', code=2)
         if not get.project_type in ("nodejs", "pm2", "general"):
@@ -185,10 +189,14 @@ class main(NodeJs):
             if not public.is_apache_nginx():
                 self.ws_err_exit(False, '需要安装Nginx或Apache才能使用外网映射功能', code=3)
 
-            for domain in domains:
-                domain_arr = domain.split(':')
-                if public.M('domain').where('name=?', domain_arr[0]).count():
+            from mod.base.web_conf import normalize_domain
+            domains, err = normalize_domain(*domains)
+            if err:
+                self.ws_err_exit(False, "域名输入错误", code=5)
+            for domain, port in domains:
+                if public.M('domain').where('name=? AND port=?', (domain, port)).count():
                     self.ws_err_exit(False, '指定域名已存在: {}'.format(domain), code=4)
+            get.domains = ["{}:{}".format(d,p) for d, p in domains]
 
         get.nodejs_version = get.get("nodejs_version", None)
         if get.nodejs_version is None:

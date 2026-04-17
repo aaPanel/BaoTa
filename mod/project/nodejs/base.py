@@ -348,7 +348,7 @@ class NodeJs():
         for domain in domains:
             domain = domain.strip()
             if not domain: continue
-            domain_arr = domain.split(':')
+            domain_arr = domain.rsplit(':', 1)
             domain_arr[0] = self.check_domain(domain_arr[0])
             if domain_arr[0] is False:
                 res_domains.append({"name": domain, "status": False, "msg": '域名格式错误'})
@@ -365,7 +365,7 @@ class NodeJs():
             except ValueError:
                 res_domains.append({"name": domain, "status": False, "msg": '域名格式错误'})
                 continue
-            if not public.M('domain').where('name=?', (domain_arr[0],)).count():
+            if not public.M('domain').where('name=? and port=?', (domain_arr[0], domain_arr[1])).count():
                 public.M('domain').add('name,pid,port,addtime',
                                        (domain_arr[0], project_id, domain_arr[1], public.getDate()))
                 if not domain in project_find['project_config']['domains']:
@@ -655,9 +655,16 @@ class NodeJs():
     def is_nginx_http3(self):
         """判断nginx是否可以使用http3"""
         if getattr(self, "_is_nginx_http3", None) is None:
-            _is_nginx_http3 = public.ExecShell("nginx -V 2>&1| grep 'http_v3_module'")[0] != ''
+            _is_nginx_http3 = public.is_nginx_http3()
             setattr(self, "_is_nginx_http3", _is_nginx_http3)
         return self._is_nginx_http3
+
+    def ng_ssl_early_data_enabled(self):
+        """判断nginx是否可以使用http3"""
+        if getattr(self, "_ng_ssl_early_data_enabled", None) is None:
+            _ng_ssl_early_data_enabled = public.ng_ssl_early_data_enabled()
+            setattr(self, "_ng_ssl_early_data_enabled", _ng_ssl_early_data_enabled)
+        return self._ng_ssl_early_data_enabled
 
     @staticmethod
     def _replace_nginx_conf(config_file, mut_config: dict) -> bool:
@@ -716,6 +723,9 @@ class NodeJs():
             http3_header = ""
             if self.is_nginx_http3():
                 http3_header = '''\n    add_header Alt-Svc 'quic=":443"; h3=":443"; h3-29=":443"; h3-27=":443";h3-25=":443"; h3-T050=":443"; h3-Q050=":443";h3-Q049=":443";h3-Q048=":443"; h3-Q046=":443"; h3-Q043=":443"';'''
+                http3_header += "\n    quic_retry on;\n    quic_gso on;"
+                if self.ng_ssl_early_data_enabled():
+                    http3_header += "\n    ssl_early_data on;"
 
             nginx_ver = public.nginx_version()
             if nginx_ver:
@@ -738,7 +748,8 @@ class NodeJs():
                         listen_ports_list.append("    listen {} quic;".format(p))
                 if use_http2_on:
                     listen_ports_list.append("    http2 on;")
-
+                if self.is_nginx_http3():
+                    listen_ports_list.append("    http3 on;")
             else:
                 listen_ports_list.append("    listen 443 ssl;")
 
@@ -968,6 +979,7 @@ export PATH
         public.writeFile(file_path, json.dumps(data))
 
     # 2024/7/12 下午12:40 websocket错误退出函数
+    # 2026/4/8 备注：关闭ws并不会结束ws处理线程，此处写法或用法不合理
     def ws_err_exit(self, status: bool = True,
                     msg: str = "",
                     data: any = None,

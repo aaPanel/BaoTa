@@ -6,12 +6,12 @@
 # +-------------------------------------------------------------------
 # | Author: hwliang <hwl@bt.cn>
 # +-------------------------------------------------------------------
-
 # +--------------------------------------------------------------------
 # |   自动部署网站
 # +--------------------------------------------------------------------
 
 import public, json, os, time, sys, re
+import shutil
 
 try:
     from BTPanel import session, cache
@@ -139,7 +139,7 @@ class plugin_deployment:
         if sys.version_info[0] == 2: filename = filename.encode('utf-8')
         if os.path.exists(filename):
             if os.path.getsize(filename) > 100: return pinfo
-        public.ExecShell("wget -O " + filename + ' https://www.bt.cn' + m_uri + " &")
+        public.ExecShell("wget -O " + filename + ' ' + public.get_home_node("https://www.bt.cn" + m_uri) + " &")
         return pinfo
 
     # 获取插件列表
@@ -171,7 +171,10 @@ class plugin_deployment:
             pdata["version"] = "v2"
             tmp = public.httpPost(downloadUrl, pdata, 30)
             tmp = json.loads(tmp)
-            if not tmp: return public.returnMsg(False, '从云端获取失败!')
+            if not tmp:
+                demo_data = r'{"list":[{"id":11,"type":11,"sort":4.5,"name":"kodbox","title":"可道云KODBOX","ps":"几分钟内搭建您的专属私有云盘/企业网盘<a href=\"http://bbs.kodcloud.com/\" target=\"_blank\" class=\"bt-ico-ask\" rel=\"noreferrer noopener\" style=\"cursor: pointer;\">?</a>","version":"v1.62","author":"kodcloud","price":0,"auth_price":0,"home":"http://bbs.kodcloud.com/","min_image":"/api/Pluginother/get_file?fname=image/20200831/83b5f26ecc688e363bcd9aa747338608.png","php":"70,71,72,73,74,80,81,82,83,84","official":"https://kodcloud.com/","enable_functions":"exec,shell_exec","count":79635,"score":"4.5","is_site_show":0,"project_type":0,"install_type":0,"versions":[{"m_version":"v1","version":"62","dependnet":"","mem_limit":32,"cpu_limit":1,"os_limit":0,"version_msg":"主要新增: 外部网盘联合分享功能(跨站点分享,接收) ... 发布于: 2025.8.14 最后更新于: 2025.8.21(1.61.09)","download":"other/20250919/b3b1ad600773af265c6073e558026c88.zip","md5":"06b2d7e8d3bad551fa1f0bbd823c093a","size":38783277}],"t":11,"ty":11,"typ":11},{"id":11,"type":11,"sort":3.8,"name":"zblogphp","title":"Z-BlogPHP","ps":"一款小巧,功能强大,插件主题等应用众多的Blog和CMS程序<a href=\"\" target=\"_blank\" class=\"bt-ico-ask\" rel=\"noreferrer noopener\" style=\"cursor: pointer;\">?</a>","version":"1.7.3.3290","author":"ZBlogTeam","price":0,"auth_price":0,"home":"","min_image":"/api/Pluginother/get_file?fname=image/20200511/12acba2e32703e6b23d36ebe1ef68870.png","php":"53,54,55,56,70,71,72,73,74,80","official":"https://www.zblogcn.com/","enable_functions":"","count":69055,"score":"3.8","is_site_show":1003,"project_type":0,"install_type":0,"versions":[{"m_version":"1","version":"7.3.3290","dependnet":"","mem_limit":32,"cpu_limit":1,"os_limit":0,"version_msg":"1.7.3 Finch Build 173290","download":"other/20230821/4375e1dfd8bd522df10bc3cee48c3ecf.zip","md5":"675dff168ad0a31e40e67a15e024ea6c","size":3158053}],"t":11,"ty":11,"typ":11},{"id":11,"type":11,"sort":4.5,"name":"discuz-X3.4","title":"discuz-X3.4","ps":"国内知名论坛程序<a href=\"https://www.bt.cn/bbs/thread-40982-1-1.html\" target=\"_blank\" class=\"bt-ico-ask\" rel=\"noreferrer noopener\" style=\"cursor: pointer;\">?</a>","version":"20220811.","author":"宝塔","price":0,"auth_price":0,"home":"https://www.bt.cn/bbs/thread-40982-1-1.html","min_image":"/api/Pluginother/get_file?fname=image/20191203/af7f0ba60f8700b09cb2903223198166.png","php":"53,54,55,56,70,71,72,73,74","official":"https://www.discuz.net/","enable_functions":"","count":62498,"score":"4.5","is_site_show":1001,"project_type":0,"install_type":0,"versions":[{"m_version":"20220811","version":"","dependnet":"","mem_limit":32,"cpu_limit":1,"os_limit":0,"version_msg":"UFT8","download":"other/20220903/5ce39903aaf925f84e36f463054801b2.zip","md5":"4c528db86e728b9e42fc150e260acb53","size":12065820}],"t":11,"ty":11,"typ":11},{"id":11,"type":11,"sort":4,"name":"wee7","title":"微擎","ps":"微信第三方管理引擎<a href=\"https://w7.cc\" target=\"_blank\" class=\"bt-ico-ask\" rel=\"noreferrer noopener\" style=\"cursor: pointer;\">?</a>","version":"2.8.66","author":"宿州市微擎云计算有限公司","price":0,"auth_price":0,"home":"https://w7.cc","min_image":"/api/Pluginother/get_file?fname=image/20220712/3380e0d8072956799e061d600c665745.png","php":"56,72,73,74,80","official":"https://www.w7.cc/","enable_functions":"","count":47359,"score":"4.0","is_site_show":1009,"project_type":0,"install_type":0,"versions":[{"m_version":"2","version":"8.66","dependnet":"","mem_limit":32,"cpu_limit":1,"os_limit":0,"version_msg":"优化安装更新","download":"other/20240424/fcc9e856db878fd4b97ddeec13b17eed.zip","md5":"387ca1a252192add3ecd256ffbb543f0","size":37544}],"t":11,"ty":11,"typ":11},{"id":11,"type":11,"sort":4.8,"name":"shopxo","title":"ShopXO开源商城","ps":"PC+APP+小程序、分销、多仓、开店、门店、进销存、DIY<a href=\"https://doc.shopxo.net/article/1/260680208858742784.html\" target=\"_blank\" class=\"bt-ico-ask\" rel=\"noreferrer noopener\" style=\"cursor: pointer;\">?</a>","version":"v6.6 250428","author":"gongfuxiang","price":0,"auth_price":0.01,"home":"https://doc.shopxo.net/article/1/260680208858742784.html","min_image":"/api/Pluginother/get_file?fname=image/20230410/2c986675184d43f07309a3108f9b0bff.png","php":"80,81,82,83","official":"https://shopxo.net/","enable_functions":"","count":43751,"score":"4.8","is_site_show":0,"project_type":0,"install_type":0,"versions":[{"m_version":"v6","version":"6 250428","dependnet":"","mem_limit":32,"cpu_limit":1,"os_limit":0,"version_msg":"插件支持DIY，其他细节优化","download":"other/20250428/d2e6338e89d781cebfdbe74619156e9f.zip","md5":"5fd8c8a6056e4f237d4d99b786f6b671","size":75820034}],"t":11,"ty":11,"typ":11},{"id":11,"type":11,"sort":3.8,"name":"emlog","title":"emlog","ps":"简洁易用的PHP博客建站系统<a href=\"https://www.emlog.net\" target=\"_blank\" class=\"bt-ico-ask\" rel=\"noreferrer noopener\" style=\"cursor: pointer;\">?</a>","version":"pro 2.5.24","author":"emlog","price":0,"auth_price":0,"home":"https://www.emlog.net","min_image":"/api/Pluginother/get_file?fname=image/20210414/f374fc51fd4718169e6e4ac2f7197c9b.png","php":"56,70,71,72,73,74,80,81,82,83","official":"https://www.emlog.net","enable_functions":"","count":37861,"score":"3.8","is_site_show":1010,"project_type":0,"install_type":0,"versions":[{"m_version":"pro 2","version":"5.24","dependnet":"","mem_limit":32,"cpu_limit":1,"os_limit":0,"version_msg":"emlog","download":"other/20251120/80ee140230655daea248ec7b670267ec.zip","md5":"d58c10eb4f0a15e5e0671b3020286814","size":1372869}],"t":11,"ty":11,"typ":11},{"id":11,"type":11,"sort":4.1,"name":"zfaka-zlkb","title":"ZFAKA发卡系统","ps":"免费、安全、稳定、高效的发卡系统，值得拥有!<a href=\"https://www.bt.cn/bbs/thread-33944-1-1.html\" target=\"_blank\" class=\"bt-ico-ask\" rel=\"noreferrer noopener\" style=\"cursor: pointer;\">?</a>","version":"1.4.3","author":"资料空白","price":0,"auth_price":0,"home":"https://www.bt.cn/bbs/thread-33944-1-1.html","min_image":"/api/Pluginother/get_file?fname=image/20190620/5c27a89b5f28482c123438d0ed6f8ba8.png","php":"70,71,72,73","official":"https://faka.zlkb.net","enable_functions":"","count":32916,"score":"4.1","is_site_show":0,"project_type":0,"install_type":0,"versions":[{"m_version":"1","version":"4.3","dependnet":"","mem_limit":32,"cpu_limit":1,"os_limit":0,"version_msg":"ZFAKA1.4.3 宝塔自动部署专用(由baiyue.one提供支持)","download":"other/20190620/28297ce9ee5e8a3ef2684a794f237dec.zip","md5":"473302bc02fad4c571151d3e89a47bcf","size":11424416}],"t":11,"ty":11,"typ":11},{"id":11,"type":11,"sort":4.3,"name":"ThinkPHP-5.0","title":"ThinkPHP-5.0","ps":"国内知名PHP框架<a href=\"\" target=\"_blank\" class=\"bt-ico-ask\" rel=\"noreferrer noopener\" style=\"cursor: pointer;\">?</a>","version":"5.0.24","author":"宝塔","price":0,"auth_price":0,"home":"","min_image":"/api/Pluginother/get_file?fname=image/20190702/cc480887ab3b85243aeb7bd6f9ffc624.png","php":"54,55,56,70,71,72","official":"http://www.thinkphp.cn/","enable_functions":"","count":31401,"score":"4.3","is_site_show":3,"project_type":0,"install_type":0,"versions":[{"m_version":"5","version":"0.24","dependnet":"","mem_limit":32,"cpu_limit":1,"os_limit":0,"version_msg":"5.0.24完整版","download":"other/20190702/82add708c7ee9b8a19b672ef156263d7.zip","md5":"baaa01684e1ef010b7d6dd72d1fbe746","size":2460174}],"t":11,"ty":11,"typ":11},{"id":11,"type":11,"sort":4.9,"name":"yun_shop","title":"芸众商城智慧商业系统","ps":"可商用swoole高性能的私域/分销裂变/企微商城系统<a href=\"https://www.bt.cn/bbs/thread-43962-1-1.html\" target=\"_blank\" class=\"bt-ico-ask\" rel=\"noreferrer noopener\" style=\"cursor: pointer;\">?</a>","version":"3.0.2","author":"芸众科技","price":0,"auth_price":0,"home":"https://www.bt.cn/bbs/thread-43962-1-1.html","min_image":"/api/Pluginother/get_file?fname=image/20251112/5eaedd158b10a2ab581b88a2dfd00a1b.png","php":"74","official":"https://www.yunzmall.com","enable_functions":"putenv","count":27056,"score":"4.9","is_site_show":0,"project_type":0,"install_type":0,"versions":[{"m_version":"3","version":"0.2","dependnet":"","mem_limit":32,"cpu_limit":1,"os_limit":1,"version_msg":"一键部署--配置https--更新后台--启动队列!","download":"other/20251103/7feaada0de1cb1eb8caf9d715e4e725b.zip","md5":"5d15543c47eff18f5d3b6ece55ac8dac","size":3650}],"t":11,"ty":11,"typ":11}],"type":[{"id":5,"title":"运行环境","sort":20,"ps":"运行环境","icon":"icon"},{"id":6,"title":"安全应用","sort":30,"ps":"安全应用","icon":"icon"},{"id":13,"title":"Docker应用","sort":35,"ps":"Docker应用","icon":""},{"id":7,"title":"免费应用","sort":40,"ps":"免费应用","icon":"icon"},{"id":8,"title":"专业版应用","sort":50,"ps":"专业版应用","icon":"icon"},{"id":12,"title":"企业版应用","sort":60,"ps":"企业版应用","icon":""},{"id":10,"title":"第三方应用","sort":70,"ps":"第三方应用","icon":"icon"},{"id":11,"title":"一键部署","sort":80,"ps":"一键部署第三方源码","icon":""}],"dep_type":[{"tid":1,"title":"建站"},{"tid":2,"title":"商城"},{"tid":3,"title":"论坛"},{"tid":4,"title":"博客"},{"tid":5,"title":"微信"},{"tid":6,"title":"框架"}]}'
+                public.writeFile(jsonFile, demo_data)
+                return public.returnMsg(False, '从云端获取失败!')
             public.writeFile(jsonFile, json.dumps(tmp))
             return public.returnMsg(True, '更新成功!')
         except:
@@ -218,22 +221,35 @@ class plugin_deployment:
         pinfo['id'] = 0
         pinfo['type'] = 100
         pinfo['author'] = '本地导入'
-        from werkzeug.utils import secure_filename
-        from flask import request
-        f = request.files['dep_zip']
-        # 获取安全的文件名
-        filename = secure_filename(f.filename)
+        # 分片上传方案
+        if get.get("dep_zip_path/s", "") and os.path.exists(get.dep_zip_path):
+            if not os.path.isfile(get.dep_zip_path):
+                return public.returnMsg(False, '上传目标不是一个有效的文件!')
+            # 检查文件扩展名是否为 .zip
+            if not get.dep_zip_path.endswith('.zip'):
+                # 如果文件扩展名不是 .zip，则返回错误
+                return public.returnMsg(False, '仅允许上传 zip 格式的文件')
+            s_file = self.__panelPath + '/package/' + pinfo['name'] + '.zip'
+            if os.path.exists(s_file):
+                os.remove(s_file)
+            shutil.move(get.dep_zip_path, s_file)
+        else:
+            from werkzeug.utils import secure_filename
+            from flask import request
+            f = request.files['dep_zip']
+            # 获取安全的文件名
+            filename = secure_filename(f.filename)
 
-        # 检查文件扩展名是否为 .zip
-        if not filename.endswith('.zip'):
-            # 如果文件扩展名不是 .zip，则返回错误
-            return public.returnMsg(False, '仅允许上传 zip 格式的文件')
+            # 检查文件扩展名是否为 .zip
+            if not filename.endswith('.zip'):
+                # 如果文件扩展名不是 .zip，则返回错误
+                return public.returnMsg(False, '仅允许上传 zip 格式的文件')
 
-        s_path = self.__panelPath + '/package'
-        if not os.path.exists(s_path): os.makedirs(s_path, 384)
-        s_file = s_path + '/' + pinfo['name'] + '.zip'
-        if os.path.exists(s_file): os.remove(s_file)
-        f.save(s_file)
+            s_path = self.__panelPath + '/package'
+            if not os.path.exists(s_path): os.makedirs(s_path, 384)
+            s_file = s_path + '/' + pinfo['name'] + '.zip'
+            if os.path.exists(s_file): os.remove(s_file)
+            f.save(s_file)
         os.chmod(s_file, 384)
         con = {}
         try:

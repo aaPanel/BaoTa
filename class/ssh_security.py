@@ -271,7 +271,7 @@ class ssh_security:
     def login_last(self):
         self.check_files()
         data = public.ExecShell('last -n 50')
-        data = re.findall("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)", data[0])
+        data = re.findall(r"(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)", data[0])
         if data >= 1:
             data2 = list(set(data))
             for i in data2:
@@ -283,7 +283,7 @@ class ssh_security:
     # 获取ROOT当前登陆的IP
     def get_ip(self):
         data = public.ExecShell(''' who am i |awk ' {print $5 }' ''')
-        data = re.findall("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)", data[0])
+        data = re.findall(r"(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)", data[0])
         return data
 
     def get_user(self):
@@ -321,6 +321,17 @@ class ssh_security:
 
     # 登陆的情况下
     def login(self):
+        path_time = "/www/server/panel/data/ssh_login_times.pl"
+        import time
+        if not os.path.exists(path_time):
+            public.writeFile(path_time, json.dumps({"time": int(time.time())}))
+            nginx_file_infos = {"time": 0}
+        else:
+            nginx_file_infos = json.loads(public.readFile(path_time))
+        if (int(time.time()) - nginx_file_infos["time"]) < 10:
+            return False
+        nginx_file_infos["time"] = int(time.time())
+        public.writeFile(path_time, json.dumps(nginx_file_infos))
         self.check_files()
         self.check_user()
         self.__ip_data = json.loads(public.ReadFile(self.__ClIENT_IP))
@@ -558,7 +569,7 @@ disown $!''' % (self.return_python())
         开启密码登陆
         get: 无需传递参数
         '''
-        ssh_password = '\n#?PasswordAuthentication\s\w+'
+        ssh_password = re.compile(r'\n#?PasswordAuthentication\s\w+')
         file = public.readFile(self.__SSH_CONFIG)
         if not file: return public.returnMsg(False, '错误：sshd_config配置文件不存在，无法继续!')
         if len(re.findall(ssh_password, file)) == 0:
@@ -586,13 +597,13 @@ disown $!''' % (self.return_python())
         file = ['/root/.ssh/id_{}.pub'.format(s_type), '/root/.ssh/id_{}'.format(s_type)]
         for i in file:
             if os.path.exists(i):
-                public.ExecShell('sed -i "\~$(cat %s)~d" %s' % (file[0], authorized_keys))
+                public.ExecShell('sed -i "\\~$(cat %s)~d" %s' % (file[0], authorized_keys))
                 os.remove(i)
         os.system("ssh-keygen -t {s_type} -P '' -f /root/.ssh/id_{s_type} |echo y".format(s_type=s_type))
         if os.path.exists(file[0]):
             public.ExecShell('cat %s >> %s && chmod 600 %s' % (file[0], authorized_keys, authorized_keys))
-            rec = '\n#?RSAAuthentication\s\w+'
-            rec2 = '\n#?PubkeyAuthentication\s\w+'
+            rec = re.compile(r'\n#?RSAAuthentication\s\w+')
+            rec2 = re.compile(r'\n#?PubkeyAuthentication\s\w+')
             file = public.readFile(self.__SSH_CONFIG)
             if not file: return public.returnMsg(False, '错误：sshd_config配置文件不存在，无法继续!')
             if len(re.findall(rec, file)) == 0: file = file + '\nRSAAuthentication yes'
@@ -600,7 +611,7 @@ disown $!''' % (self.return_python())
             file_ssh = re.sub(rec, '\nRSAAuthentication yes', file)
             file_result = re.sub(rec2, '\nPubkeyAuthentication yes', file_ssh)
             if ssh == 'no':
-                ssh_password = '\n#?PasswordAuthentication\s\w+'
+                ssh_password = re.compile(r'\n#?PasswordAuthentication\s\w+')
                 if len(re.findall(ssh_password, file_result)) == 0:
                     file_result = file_result + '\nPasswordAuthentication no'
                 else:
@@ -819,8 +830,8 @@ disown $!''' % (self.return_python())
         无需参数传递
         '''
         is_ssh_status = self.GetSshInfo()
-        rec = '\n\s*#?\s*RSAAuthentication\s+\w+'
-        rec2 = '\n\s*#?\s*PubkeyAuthentication\s+\w+'
+        rec = re.compile(r'\n\s*#?\s*RSAAuthentication\s+\w+')
+        rec2 = re.compile(r'\n\s*#?\s*PubkeyAuthentication\s+\w+')
         file = public.readFile(self.__SSH_CONFIG)
         if not file: return public.returnMsg(False, '错误：sshd_config配置文件不存在，无法继续!')
         file_ssh = re.sub(rec, '\nRSAAuthentication no', file)
@@ -918,7 +929,7 @@ disown $!''' % (self.return_python())
         开启密码登陆
         get: 无需传递参数
         '''
-        ssh_password = '\n\s*PermitRootLogin\s+\w+'
+        ssh_password = re.compile(r'\n\s*PermitRootLogin\s+\w+')
         file = public.readFile(self.__SSH_CONFIG)
         if len(re.findall(ssh_password, file)) == 0:
             file_result = file + '\nPermitRootLogin no'
@@ -935,7 +946,7 @@ disown $!''' % (self.return_python())
         无参数传递
         '''
         file = public.readFile(self.__SSH_CONFIG)
-        ssh_password = '\n#?PasswordAuthentication\s\w+'
+        ssh_password = re.compile(r'\n#?PasswordAuthentication\s\w+')
         file_result = re.sub(ssh_password, '\nPasswordAuthentication no', file)
         self.wirte(self.__SSH_CONFIG, file_result)
         public.ExecShell("sed -i 's/^PasswordAuthentication yes$/PasswordAuthentication no/' /etc/ssh/sshd_config.d/*.conf")

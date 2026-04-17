@@ -28,7 +28,7 @@ class panelSetup:
             if ua.find('spider') != -1 or g.ua.find('bot') != -1:
                 return abort(403)
 
-        g.version = '11.3.0'
+        g.version = '11.7.0'
         g.title = public.GetConfigValue('title')
         g.uri = request.path
         g.debug = os.path.exists('data/debug.pl')
@@ -40,6 +40,13 @@ class panelSetup:
         theme_manager_data = theme_manager.get_config()
         # 获取主题配置
         g.panel_theme = theme_manager_data['data']
+
+        # 初始化广告隐藏配置
+        try:
+            from config import config
+            g.ad_hide_config = config().get_ad_hide_config(None)
+        except:
+            g.ad_hide_config = {}
 
         if not public.get_improvement(): session['is_flush_soft_list'] = 1
         if request.method == 'GET':

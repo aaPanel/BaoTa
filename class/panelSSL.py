@@ -129,6 +129,10 @@ class panelSSL:
 
 
         result = self.request('get_product_list_v3?p_type={}'.format(p_type))
+        for i in range(len(result["data"])-1, -1, -1):
+            if result["data"][i]["pid"] in (9011, 9013,8804,8590,8593):
+                del result["data"][i]
+
         return result
 
     def get_cert_oid(self,get):
@@ -152,6 +156,8 @@ class panelSSL:
         if type(result) == list:
             oid = self.get_cert_oid(get)
             for val in result:
+                if val['orderStatus'] in ('COMPLETE', 5, 6, 7, 8, 11, 12):
+                    val["endtime"] = 0
                 val['endDay'] = 0
                 val['ssl_state'] = 0
                 val['sort'] = 0
@@ -180,17 +186,22 @@ class panelSSL:
                     else:
                         #待提交证书
                         val['sort'] = -1
+                if time.time() > val['endtime'] > 0:
+                    val['sort'] = -4
 
                 if val['oid'] == oid:
                     val['sort'] = 2000
                     val['ssl_state'] = 1
             if len(result):
+                result.sort(key = lambda item: item['endtime'] if item['endtime'] > 0 else 9999999999999,reverse=False)
                 result.sort(key = lambda item: (item['sort']),reverse=True)
         return result
 
     # TODO 修改接口后重构
     #获取商业证书订单列表
     def get_order_list(self,get):
+        if not os.path.isfile(self.__UPATH):
+            return []
         result = self.request('get_bt_ssl_list')
         return self.get_cert_sort(get,result)
 
@@ -576,7 +587,7 @@ class panelSSL:
                 verify_info['data']['dcvList'] = []
                 for domain in verify_info['res']['list']:
                     verify_info['data']['dcvList'].append({"dcvEmail": "", "dcvMethod": "CNAME_CSR_HASH","domainName": domain['domain']})
-                verify_info['data']['DCVdnsHost'] = os.path.basename(verify_info['res']['list'][0]['file_name'].split('.')[0])
+                verify_info['data']['DCVdnsHost'] = os.path.basename(verify_info['res']['list'][0]['file_name'])
                 verify_info['data']['DCVdnsType'] = "CNAME"
                 verify_info['data']['DCVdnsValue'] = os.path.basename(verify_info['res']['list'][0]['value'])
                 verify_info['certStatus'] = verify_info['status'] = status
@@ -907,6 +918,7 @@ class panelSSL:
             data["oid"] = str(pdata["oid"])
             data["administrator"] = {
                 "name": pdata["Administrator"]["lastName"],
+                "organization": pdata["Administrator"]["organation"],
                 "email": pdata["Administrator"]["email"],
                 "zip_code": pdata["Administrator"]["postCode"],
                 "country": pdata["Administrator"]["country"],
@@ -2397,9 +2409,17 @@ class panelSSL:
             res_list.sort(key=lambda x: x["not_after"], reverse=reverse)
             return res_list
         except ValueError as e:
-            return public.returnMsg(False, str(e))
+            msg = str(e)
         except Exception as e:
-            return public.returnMsg(False, "操作错误：" + str(e))
+            msg = "操作错误：" + str(e)
+        if force_refresh:
+            get.force_refresh = ""
+            data = panelSSL.get_cert_list(get)
+        else:
+            return {"status":False, "data":[], "msg": msg}
+        if not isinstance(data, list):
+            data = []
+        return {"status":False, "data":data, "msg": msg}
 
     def set_ssl_ps(self, get):
         """设置SSL证书的备份说明"""

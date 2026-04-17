@@ -9,9 +9,11 @@
 import base64
 import sys
 import traceback
+
 import public, re, os, nginx, apache, json, time, ols
 import PluginLoader
 from theme_config import ThemeConfigManager
+from webauthn_util_compatibility import WebAuthn
 
 try:
     import pyotp
@@ -31,10 +33,11 @@ class config:
     _bk_key_file = _setup_path + "/data/bk_two_step_auth.txt"
     _username_file = _setup_path + "/data/username.txt"
     _core_fle_path = _setup_path + '/data/qrcode'
-    __mail_config = '/www/server/panel/data/stmp_mail.json'
-    __mail_list_data = '/www/server/panel/data/mail_list.json'
-    __dingding_config = '/www/server/panel/data/dingding.json'
-    __panel_asset_config = '/www/server/panel/data/panel_asset.json'
+    __mail_config = None
+    __mail_list_data = None
+    __dingding_config = None
+    __panel_asset_config = None
+    __ad_hide_config = None
     __mail_list = []
     __weixin_user = []
 
@@ -44,6 +47,12 @@ class config:
 
     def __init__(self):
         try:
+            self.__mail_config = '{}/data/stmp_mail.json'.format(public.get_panel_path())
+            self.__mail_list_data = '{}/data/mail_list.json'.format(public.get_panel_path())
+            self.__dingding_config = '{}/data/dingding.json'.format(public.get_panel_path())
+            self.__panel_asset_config = '{}/data/panel_asset.json'.format(public.get_panel_path())
+            self.__ad_hide_config = '{}/data/ad_hide_config.json'.format(public.get_panel_path())
+
             self.themeManager = ThemeConfigManager(self.__panel_asset_config)
             
             ssl_dir = os.path.join(self._setup_path, "ssl")
@@ -198,6 +207,161 @@ class config:
             return public.returnMsg(True, '发送成功')
         else:
             return public.returnMsg(False, '发送失败')
+
+    # 获取广告隐藏配置
+    def get_ad_hide_config(self, get):
+        if not os.path.exists(self.__ad_hide_config):
+            default_config = {
+                "menuHost": False,
+                "menuMail": False,
+                "menuWaf": False,
+                # "homeHeaderPay": False,
+                "homeHeaderTooltip": False,
+                "homeOverview": False,
+                "homeSoft": False,
+                # "homeAuth": False,
+                "homeDisk": False,
+                "homeProcess": False,
+                # "tab": False,
+                "siteScan": False,
+                "siteSafe": False,
+                "siteTableWafIcon": False,
+                "siteTableQuota": False,
+                "siteTableTotal": False,
+                "siteTableWaf": False,
+                "siteTableDayStatistic": False,
+                "siteConfigSync": False,
+                "siteConfigAuth": False,
+                "siteConfigPhp": False,
+                "siteConfigTamper": False,
+                "siteConfigSafe": False,
+                "siteConfigLog": False,
+                "siteConfigNode": False,
+                "siteMonitor": False,
+                "ftpLog": False,
+                "ftpTableLog": False,
+                "ftpTableQuota": False,
+                "databaseTableBackup": False,
+                "controlDaily": False,
+                "firewallMalicious": False,
+                "firewallSshLog": False,
+                "firewallSshAccount": False,
+                "firewallSshReinforce": False,
+                "firewallServerSsh": False,
+                "firewallSafeDetect": False,
+                "firewallKeyword": False,
+                "firewallPhp": False,
+                "firewallIntrusion": False,
+                "firewallFixed": False,
+                "firewallScan": False,
+                "fileTamper": False,
+                "fileSync": False,
+                "fileCloud": False,
+                "fileDiskAnalysis": False,
+                "logIp": False,
+                "logSsh": False,
+                "crontabBackup": False
+            }
+            public.writeFile(self.__ad_hide_config, json.dumps(default_config))
+            return default_config
+        
+        try:
+            config = json.loads(public.ReadFile(self.__ad_hide_config))
+            return config
+        except:
+            return public.returnMsg(False, '配置文件解析失败')
+
+    # 设置广告隐藏配置
+    def set_ad_hide_config(self, get):
+      # "homeHeaderPay", "tab" , "homeAuth"
+        all_keys = [
+            "menuHost", "menuMail", "menuWaf",
+            "homeHeaderTooltip", "homeOverview", "homeSoft", 
+            "homeDisk", "homeProcess", "siteScan", "siteSafe", 
+            "siteTableWafIcon", "siteTableQuota", "siteTableTotal", "siteTableWaf", "siteTableDayStatistic",
+            "siteConfigSync", "siteConfigAuth", "siteConfigPhp", "siteConfigTamper", 
+            "siteConfigSafe", "siteConfigLog", "siteConfigNode", "siteMonitor", 
+            "ftpLog", "ftpTableLog", "ftpTableQuota", "databaseTableBackup", 
+            "controlDaily", "firewallMalicious", "firewallSshLog", "firewallSshAccount", 
+            "firewallSshReinforce", "firewallServerSsh", "firewallSafeDetect", 
+            "firewallKeyword", "firewallPhp", "firewallIntrusion", "firewallFixed", 
+            "firewallScan", "fileTamper", "fileSync", "fileCloud", "fileDiskAnalysis",
+            "logIp", "logSsh", "crontabBackup"
+        ]
+        
+        # 创建新配置对象，覆盖旧配置，避免缓存问题
+        new_config = {}
+
+        if hasattr(get, 'all'):
+            is_all = get.all
+            if isinstance(is_all, str):
+                is_all = is_all.lower() in ['true', '1']
+            
+            # 一键设置所有模块
+            for key in all_keys:
+                new_config[key] = is_all
+        else:
+            # 获取旧配置用于保留未修改的值
+            old_config = self.get_ad_hide_config(get)
+            if 'status' in old_config and old_config['status'] is False:
+                old_config = {}
+            
+            # 基于 all_keys 构建新配置，确保只包含有效的 key
+            for key in all_keys:
+                if hasattr(get, key):
+                    # 如果传入了新值，使用新值
+                    val = getattr(get, key)
+                    if isinstance(val, str):
+                        val = val.lower() in ['true', '1']
+                    new_config[key] = val
+                elif key in old_config:
+                    # 否则保留旧值
+                    new_config[key] = old_config[key]
+                else:
+                    # 如果是新增的 key，默认为 False
+                    new_config[key] = False
+
+        public.writeFile(self.__ad_hide_config, json.dumps(new_config))
+
+        # 处理菜单联动隐藏
+        try:
+            menu_map = {
+                "menuHost": "memuAvhost",
+                "menuMail": "memuAmail",
+                "menuWaf": "memu_btwaf"
+            }
+            
+            toggle_list = []
+            menu_data_full = self.get_menu_list("local")
+            menus = menu_data_full.get('menu', [])
+            
+            def find_menu_show(menu_list, mid):
+                for m in menu_list:
+                    if m['id'] == mid:
+                        return m.get('show', True)
+                    if m.get('children'):
+                        res = find_menu_show(m['children'], mid)
+                        if res is not None: return res
+                return None
+
+            for config_key, menu_id in menu_map.items():
+                if config_key in new_config:
+                    should_hide = new_config[config_key]
+                    is_showing = find_menu_show(menus, menu_id)
+                    
+                    if is_showing is not None:
+                        # 如果需要隐藏且当前显示，或者需要显示且当前隐藏，则需要切换
+                        if should_hide == is_showing:
+                            toggle_list.append(menu_id)
+            
+            if toggle_list:
+                p_get = public.dict_obj()
+                p_get.hide_list = json.dumps(toggle_list)
+                self.set_hide_menu_list(p_get)
+        except:
+            pass
+
+        return public.returnMsg(True, '设置成功')
 
     def getPanelState(self, get):
         return os.path.exists('/www/server/panel/data/close.pl')
@@ -1267,7 +1431,15 @@ class config:
             import setPanelLets
             sp = setPanelLets.setPanelLets()
             sps = sp.set_lets(get)
-            public.reload_panel()
+            if sps['status']:
+                public.reload_panel()
+            return sps
+        elif hasattr(get, "ca"):
+            import setPanelLets
+            sp = setPanelLets.setPanelLets()
+            sps = sp.set_lets(get)
+            if sps['status']:
+                public.reload_panel()
             return sps
         else:
             sslConf = '/www/server/panel/data/ssl.pl'
@@ -1499,7 +1671,7 @@ class config:
 
     # 提交PHP配置参数
     def SetPHPConf(self, get):
-        php_list = ["52", "53", "54", "55", "56", "70", "71", "72", "73", "74", "80", "81", "82", "83", "84", "85"]
+        php_list = ["52", "53", "54", "55", "56", "70", "71", "72", "73", "74", "80", "81", "82", "83", "84","85"]
         if not hasattr(get, 'version'):
             return public.returnMsg(False, 'PHP版本错误!')
         if get.version not in php_list:
@@ -1782,6 +1954,8 @@ class config:
             shell = 'openssl pkcs12 -legacy -in {ssl_path}/baota_root.pfx -clcerts -nokeys -out {ssl_path}/baota_root.crt {passwd}'.format(ssl_path=ssl_path,passwd=passwd)
             public.print_log(public.ExecShell(shell))
         cert['rep'] = os.path.exists('ssl/input.pl')
+        from panelModel.panel_reverse_generationModel import main as panelNginxPrxoyMain
+        cert['proxy_status'] = bool(panelNginxPrxoyMain().proxy_site())
         return cert
 
     # 保存面板证书
@@ -1810,6 +1984,17 @@ class config:
             public.writeFile(keyPath, get.privateKey)
         if get.certPem:
             public.writeFile(certPath, get.certPem)
+        if 'save_to_proxy' in get and get.save_to_proxy == '1':
+            from panelModel.panel_reverse_generationModel import main as panelNginxPrxoyMain
+            proxy_site = panelNginxPrxoyMain().proxy_site()
+            domain = proxy_site.get('name') if proxy_site else ''
+            if domain:
+                res = panelNginxPrxoyMain().set_panel_generation(public.to_dict_obj({
+                    'domain': domain,
+                    'key': get.privateKey,
+                    'cert': get.certPem,
+                }))
+                public.print_log(res)
         public.writeFile('ssl/input.pl', 'True')
         if os.path.exists(ssl_pl): public.writeFile('data/reload.pl', 'True')
         return public.returnMsg(True, '证书已保存!')
@@ -1896,7 +2081,7 @@ class config:
         data['session_timeout'] = self.show_time_by_seconds(s_time)
 
         data['SSL'] = os.path.exists('data/ssl.pl')
-
+        data['node_host'] = public.read_node_host()
         return data
         # data = {}
         # if 'config' in session:
@@ -2141,10 +2326,7 @@ class config:
         public.restart_panel()
         return public.returnMsg(True, '设置成功!')
 
-    # 获取debug状态
-    def get_debug(self):
-        debug_path = 'data/debug.pl'
-        return ((os.path.exists(debug_path) and (public.readFile(debug_path) == "True")))
+    get_debug = staticmethod(public.is_debug)
 
     def Get_debug(self, get):
         return {"debug": "checked" if self.get_debug() else ""}
@@ -2320,9 +2502,29 @@ class config:
             public.writeFile(pfile, 'True')
         return public.returnMsg(True, '设置成功!')
 
-    # 是否显示工单
+    # 是否显示AI助手
     def show_workorder(self, get):
         pfile = 'data/not_workorder.pl'
+        if os.path.exists(pfile):
+            os.remove(pfile)
+            public.set_module_logs("AI", "close_aiworkorder")
+        else:
+            public.writeFile(pfile, 'True')
+        return public.returnMsg(True, '设置成功!')
+    
+    # 是否显示面板AI功能
+    def show_panelai(self, get):
+        pfile = 'data/not_panelai.pl'
+        if os.path.exists(pfile):
+            os.remove(pfile)
+            public.set_module_logs("AI", "close_panelai")
+        else:
+            public.writeFile(pfile, 'True')
+        return public.returnMsg(True, '设置成功!')
+
+    # 是否显示评价功能
+    def show_evaluate(self, get):
+        pfile = 'data/not_evaluate.pl'
         if os.path.exists(pfile):
             os.remove(pfile)
         else:
@@ -2443,6 +2645,48 @@ class config:
                     menu['children'] = self.update_menu_show(menu['children'], show_menu_data[menu['id']].get("children", []))
         return menu_data
 
+    def _sync_menu_to_ad_config(self, menu_data):
+        """
+        同步菜单显示状态到广告隐藏配置
+        :param menu_data: 菜单数据字典
+        """
+        try:
+            menu_id_map = {
+                "memuAvhost": "menuHost",
+                "memuAmail": "menuMail",
+                "memu_btwaf": "menuWaf"
+            }
+            
+            ad_config = self.get_ad_hide_config(None)
+            if 'status' in ad_config and ad_config['status'] is False:
+                 ad_config = {}
+
+            def find_menu_show(menu_list, mid):
+                for m in menu_list:
+                    if m['id'] == mid:
+                        return m.get('show', True)
+                    if m.get('children'):
+                        res = find_menu_show(m['children'], mid)
+                        if res is not None: return res
+                return None
+
+            updated = False
+            menus = menu_data.get('menu', [])
+            for mid, config_key in menu_id_map.items():
+                is_showing = find_menu_show(menus, mid)
+                if is_showing is not None:
+                    # 广告配置中: True = 隐藏, False = 显示
+                    # 菜单配置中: show=True = 显示, show=False = 隐藏
+                    new_val = not is_showing
+                    if ad_config.get(config_key) != new_val:
+                        ad_config[config_key] = new_val
+                        updated = True
+            
+            if updated:
+                public.writeFile(self.__ad_hide_config, json.dumps(ad_config))
+        except:
+            pass
+
     def get_menu_list(self, get):
         default_path = '/www/server/panel/config/menu.json'
         local_menu_path = '/www/server/panel/config/local_menu.json'
@@ -2467,6 +2711,10 @@ class config:
         else:
             menu_data = default_data
             public.writeFile(local_menu_path, json.dumps(menu_data))
+
+        # 联动更新广告隐藏配置
+        self._sync_menu_to_ad_config(menu_data)
+
         if get == "local":
             return menu_data
 
@@ -2482,6 +2730,10 @@ class config:
         menu_data = self.get_menu_list("local")
         menu_data['menu'] = self._edit_menu(menu_data['menu'], hide_list)
         public.writeFile('/www/server/panel/config/local_menu.json', json.dumps(menu_data))
+
+        # 联动更新广告隐藏配置
+        self._sync_menu_to_ad_config(menu_data)
+
         return public.returnMsg(True, '设置成功')
 
     def _edit_menu(self, menu_data, hide_list):
@@ -3077,6 +3329,7 @@ class config:
         public.WriteLog('面板设置', '将云端请求方式设置为:{}'.format(get.http_type))
         return public.returnMsg(True, '设置成功!')
 
+    # 已废弃的功能
     def get_node_config(self, get):
         '''
             @name 获取节点配置
@@ -3219,6 +3472,15 @@ class config:
         if not node_info['node_ip']: return
         public.ExecShell("echo '{} api.bt.cn' >> /etc/hosts".format(node_info['node_ip']))
         public.ExecShell("echo '{} www.bt.cn' >> /etc/hosts".format(node_info['node_ip']))
+
+    @staticmethod
+    def reset_node_host(get):
+        log_file = "/tmp/bt_node_host_check.log"
+        public.ExecShell("nohup {} {}/script/reload_check.py repair > {} 2>&1 &".format(
+            sys.executable, public.get_panel_path(), log_file
+        ))
+        return public.returnMsg(True, "节点状态检查已开始")
+
 
     def set_click_logs(self, get):
         '''
@@ -4360,9 +4622,150 @@ class config:
     @staticmethod
     def get_versionnumber(get):
         # 打时会替换 为版本时间戳
-        return {"status": True, "msg": "ok", "code": 200, "data": {"version_number": int("1764728423")}}
+        return {"status": True, "msg": "ok", "code": 200, "data": {"version_number": int("1776335489")}}
+
+    @staticmethod
+    def get_passkey_list(get):
+        search = get.get('search/s', '')
+        p = get.get('p/d', 1)
+        limit = get.get('limit/d', 10)
+        if WebAuthn.fake:
+            return public.returnMsg(False, '功能载入失败，请尝试重启面板')
+        try:
+            res_list, count, is_enable = WebAuthn().query_users(search, p, limit)
+            data = public.get_page(count, p, limit)
+            data["data"] = res_list
+            data["is_enable"] = is_enable
+            return data
+        except:
+            return public.returnMsg(False, '获取列表失败')
+
+    @staticmethod
+    def create_passkey_option(get):
+        if session.get('tmp_login', False):
+            return public.returnMsg(False, '临时登录无法操作')
+        origin = get.get('origin/s', '')
+        name = get.get('name/s', '')
+        if WebAuthn.fake:
+            return public.returnMsg(False, '功能载入失败，请尝试重启面板')
+        try:
+            res_data = WebAuthn().register_options(name, origin)
+            if isinstance(res_data, str):
+                return public.returnMsg(False, res_data)
+            return res_data
+        except:
+            return public.returnMsg(False, '创建选项失败')
+
+    @staticmethod
+    def create_passkey_verify(get):
+        credential = get.get('credential/s', '')
+        challenge = get.get('challenge/s', '')
+        if WebAuthn.fake:
+            return public.returnMsg(False, '功能载入失败，请尝试重启面板')
+        if not credential or not challenge:
+            return public.returnMsg(False, '缺少必要参数')
+        try:
+            credential = json.loads(credential)
+        except:
+            return public.returnMsg(False, 'credential参数错误')
+        try:
+            res_data = WebAuthn().verify_registration(credential, challenge)
+            if isinstance(res_data, str):
+                return public.returnMsg(False, res_data)
+            return res_data
+        except:
+            public.print_error()
+            return public.returnMsg(False, '创建凭证失败')
+
+    @staticmethod
+    def set_passkey_status(get):
+        if session.get('tmp_login', False):
+            return public.returnMsg(False, '临时登录无法操作')
+        status = get.get('status/d', 0)
+        passkey_id = get.get('passkey_id/d', 0)
+        if WebAuthn.fake:
+            return public.returnMsg(False, '功能载入失败，请尝试重启面板')
+        if not passkey_id:
+            return public.returnMsg(False, '缺少必要参数')
+        if status not in [0, 1]:
+            return public.returnMsg(False, 'status参数错误')
+        try:
+            err = WebAuthn().set_user_satus(passkey_id, bool(status))
+            if err:
+                return public.returnMsg(False, err)
+            return public.returnMsg(True, '设置成功')
+        except:
+            return public.returnMsg(False, '设置失败')
+
+    @staticmethod
+    def remove_passkey(get):
+        if session.get('tmp_login', False):
+            return public.returnMsg(False, '临时登录无法操作')
+        if WebAuthn.fake:
+            return public.returnMsg(False, '功能载入失败，请尝试重启面板')
+        passkey_id = get.get('passkey_id/d', 0)
+        if not passkey_id:
+            return public.returnMsg(False, '缺少必要参数')
+        try:
+            err = WebAuthn().remove_pass(passkey_id)
+            if err:
+                return public.returnMsg(False, err)
+            return public.returnMsg(True, '删除成功')
+        except:
+            return public.returnMsg(False, '删除失败')
 
 
+    @staticmethod
+    def set_passkey_global_status(get):
+        if session.get('tmp_login', False):
+            return public.returnMsg(False, '临时登录无法操作')
+        status = get.get('status/d', 0)
+        if WebAuthn.fake:
+            return public.returnMsg(False, '功能载入失败，请尝试重启面板')
+        if status not in [0, 1]:
+            return public.returnMsg(False, 'status参数错误')
+        try:
+            if status == 1:
+                op_status = WebAuthn().enable_passkey()
+            else:
+                op_status = WebAuthn().disable_passkey()
+
+            if not op_status:
+                return public.returnMsg(False, "设置失败")
+            else:
+                return public.returnMsg(True, "设置成功")
+        except:
+            return public.returnMsg(False, '设置失败')
+
+
+    def set_wechat_login_status(self, get):
+        wechat_login_file = '/www/server/panel/data/wechat_login.pl'
+        if not 'status' in get: return public.returnMsg(False, '必需要有status参数!')
+        status = 1 if int(get.status) else 0
+        if status:
+            if not os.path.exists("/www/server/panel/data/userInfo.json"):
+                return public.returnMsg(False, '开启微信登录前请先给面板绑定宝塔账号!')
+            account_wechat_bind_status = self.account_wechat_bind_status(None)
+            if not account_wechat_bind_status['status'] or not account_wechat_bind_status['msg'].get('id', False):
+                return public.returnMsg(False, '开启微信登录前请先给宝塔账号绑定微信!')
+            t_str = '开启'
+            public.writeFile(wechat_login_file, 'True')
+        else:
+            t_str = '关闭'
+            os.remove(wechat_login_file)
+        public.WriteLog('面板配置', '{}微信登录'.format(t_str))
+        return public.returnMsg(True, '设置成功!')
+
+    def account_wechat_bind_status(self, get):
+        result = public.httpPost("https://www.bt.cn/api/v2/wx_auth/user_bind_status",public.get_user_info())
+        data = public.returnMsg(False, {})
+        if result:
+            try:
+                res = json.loads(result)
+                data = public.returnMsg(True, res['res'] if isinstance(res['res'], dict) else {})
+            except:
+                pass
+        return data
 
 if __name__ == '__main__':
     c = config()

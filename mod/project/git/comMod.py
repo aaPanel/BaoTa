@@ -437,7 +437,7 @@ class main():
                 return public.return_data(True,data=data)
 
         branch_cmd = f"git ls-remote --heads {repo}"
-        branch_result = public.ExecShell(branch_cmd)
+        branch_result = public.ExecShell(branch_cmd,timeout=30)
         if branch_result == "Timed out":
             return public.ReturnMsg(False,f"git分支列表操作超时，请检查仓库地址和ssh密钥状态！")
 
@@ -482,6 +482,25 @@ class main():
             
             # 获取分页后的记录
             records = sql.where(where, params).order('id desc').limit('{},{}'.format(page_data['shift'], page_data['row'])).select()
+            for record in records: record['active'] = False
+            
+            
+            # 获取网站目录
+            config = public.M('git_manager').where("id = ?", (git_manager_id,)).find()
+            site_name = config['type_parm'] if config else ''
+            if not site_name:
+                return public.ReturnMsg(False, '未找到对应的git管理记录.')
+            site = public.M('sites').where("name = ?", (site_name,)).find()
+            site_path = site['path']
+            current_branch = public.ExecShell("cd {} && git rev-parse --abbrev-ref HEAD".format(site_path),user='www')[0].strip()
+            # 从数据库中查询 最后一条部署记录 并且 branch == 当前分支 的记录id
+            record_id = public.M('git_deploy_logs').where("git_manager_id=? and branch=?", (git_manager_id, current_branch)).order('id desc').getField('id')
+            
+            for record in records:
+                if record['id'] == record_id:
+                    record['active'] = True
+                    break
+                
             page_data['data'] = records
             public.set_module_logs(f'Git-Tools', 'get_deploy_records')
             return page_data
@@ -545,6 +564,7 @@ class main():
         修正指定路径的文件权限
         - 所有目录设置为 755 权限，所有者为 www:www
         - 所有文件设置为 644 权限，所有者为 www:www
+        - 添加git safe.directory配置，避免所属用户问题
         
         :param path: 要处理的根目录路径
         :return: 成功返回True，失败返回False
@@ -555,6 +575,10 @@ class main():
         try:
             chown_cmd = f"chown -R www:www {path}"
             public.ExecShell(chown_cmd)
+
+            # 添加git safe.directory配置
+            git_safe_cmd = f"git config --global --add safe.directory {path}"
+            public.ExecShell(git_safe_cmd)
 
             for root, dirs, files in os.walk(path):
                 # 处理目录权限（755）

@@ -6,7 +6,7 @@ import json
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, date
-from typing import Optional, List, Dict, Tuple, Any, Union, Type, Generic, TypeVar, TextIO
+from typing import Optional, List, Dict, Tuple, Any, Union, Type, Generic, TypeVar, TextIO, Iterable
 import sqlite3
 
 if "/www/server/panel/class" not in sys.path:
@@ -288,7 +288,7 @@ class TransferTask:
     step_index: int
     src_node: Dict[str, Any]
     src_node_task_id: int
-    dst_nodes: List[Dict[str, Any]]
+    dst_nodes: Dict[int, Dict[str, Any]]
     name: str = ""
     message: str = ""
     path_list: List[Dict[str, Any]] = field(default_factory=lambda: [])
@@ -299,6 +299,12 @@ class TransferTask:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'TransferTask':
+        if "dst_nodes" in data:
+            tmp = data["dst_nodes"]
+            if isinstance(tmp, list): # 兼容旧版数据，只是防止报错，但无法正常展示，会持续清理过期数据
+                tmp = {idx: i for idx, i in enumerate(tmp)}
+
+            data["dst_nodes"] = {int(i): tmp[i] for i in tmp}
         return cls(
             id=int(data['id']) if data.get('id') is not None else None,
             flow_id=int(data['flow_id']),
@@ -336,7 +342,7 @@ class TransferTask:
         for key in ("api_key", "app_key", "ssh_conf"):
             if key in tmp["src_node"]:
                 tmp["src_node"].pop(key)
-            for node in tmp["dst_nodes"]:
+            for node in tmp["dst_nodes"].values():
                 if key in node:
                     node.pop(key)
         tmp["task_type"] = "file"
@@ -439,6 +445,7 @@ class TransferLog:
         ret = self.to_dict()
         if self._tf:
             ret.update(self._tf.to_dict())
+            ret["id"] = self.id
         if self._log_idx > -1:
             ret["log_idx"] = self.log_idx
         return ret
@@ -450,6 +457,65 @@ class TransferLog:
     @log_idx.setter
     def log_idx(self, log_idx: int):
         self._log_idx = log_idx
+
+
+@dataclass
+class FlowTemplates:
+    name: str
+    key_words: str = ""
+    description: str = ""
+    content: str = ""
+    id: Optional[int] =  None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'FlowTemplates':
+        return cls(
+            id=int(data['id']) if data.get('id', None) is not None else None,
+            name=str(data['name']) if data.get('name', None) is not None else "Unknow",
+            key_words=str(data['key_words']) if data.get('key_words', None) is not None else "",
+            description=str(data['description']) if data.get('description', None) is not None else "",
+            content=str(data['content']) if data.get('content', None) is not None else "",
+            created_at=datetime.fromtimestamp(data['created_at']) if data.get('created_at') else None,
+            updated_at=datetime.fromtimestamp(data['updated_at']) if data.get('updated_at') else None
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        now = int(time.time())
+        return {
+            'id': self.id,
+            'name': self.name,
+            'key_words': self.key_words,
+            'description': self.description,
+            'content': self.content,
+            'created_at': int(self.created_at.timestamp()) if self.created_at else now,
+            'updated_at': int(self.updated_at.timestamp()) if self.updated_at else now
+        }
+
+    @staticmethod
+    def check(data: Dict[str, Any]) -> str:
+        if "name" not in data:
+            return "name is required"
+        if "content" not in data:
+            return "content is required"
+        try:
+            content_dat =json.loads(data["content"])
+        except json.JSONDecodeError:
+            return "content is not json"
+        if "flow_data" not in content_dat:
+            return "flow_data is required"
+        if not isinstance(content_dat["flow_data"], list):
+            return "flow_data must be list"
+        names = []
+        for i in content_dat["flow_data"]:
+            if "name" not in i or not isinstance(i["name"], str) or not i["name"]:
+                return "flow_data item must have name"
+            names.append(i["name"])
+            if "task_type" not in i or i["task_type"] not in ["command", "file"]:
+                return "flow_data item must have task_type"
+        data["key_words"] = ",".join(names)
+        return ""
 
 
 _TableType = TypeVar(
@@ -643,7 +709,7 @@ class _Table(Generic[_TableType]):
             return res
         return str(res)
 
-    def delete_where(self, where_str: str, parms: List[Any]) -> str:
+    def delete_where(self, where_str: str, parms: Iterable[Any]) -> str:
         try:
             self._db.table(self.table_name).where(where_str, parms).delete()
             return ""
@@ -699,7 +765,7 @@ class _CommandTaskTable(_Table[CommandTask]):
             else:
                 where_args.append(search_str)
 
-        public.print_log("查询条件: {}".format(" AND ".join(where_args)), parms)
+        # public.print_log("查询条件: {}".format(" AND ".join(where_args)), parms)
         count = self.count(
             " AND ".join(where_args),
             (*parms,)
@@ -717,6 +783,12 @@ class _CommandLogTable(_Table[CommandLog]):
     """命令日志表"""
     table_name = "command_logs"
     data_cls = CommandLog
+
+
+class _FlowTemplateTable(_Table[FlowTemplates]):
+    """任务模板表"""
+    table_name = "flow_templates"
+    data_cls = FlowTemplates
 
 
 class _TransferTaskTable(_Table[TransferTask]):
@@ -753,14 +825,24 @@ class TaskFlowsDB(object):
         self.TransferTask = _TransferTaskTable(self.db)
         self.TransferFile = _TransferFileTable(self.db)
         self.TransferLog = _TransferLogTable(self.db)
+        self.FlowTemplate = _FlowTemplateTable(self.db)
 
     def init_db(self):
+        import sqlite3
         sql_data = public.readFile(self._DB_INIT_FILE)
         if not os.path.exists(self._DB_FILE) or os.path.getsize(self._DB_FILE) == 0:
             public.writeFile(self._DB_FILE, "")
-            import sqlite3
             conn = sqlite3.connect(self._DB_FILE)
             cursor = conn.cursor()
+            cursor.executescript(sql_data)
+            conn.commit()
+            conn.close()
+        else:
+            conn = sqlite3.connect(self._DB_FILE)
+            cursor = conn.cursor()
+            ret = cursor.execute("SELECT * from sqlite_master where type='index' and name = 'idx_flow_templates_name'")
+            if ret.fetchone():
+                return
             cursor.executescript(sql_data)
             conn.commit()
             conn.close()
@@ -884,14 +966,15 @@ class TaskFlowsDB(object):
         if not path_list:
             return None, "请选择文件"
 
-        dst_nodes = [
-            {
+        dst_nodes = {
+            node["id"]: {
                 "name": node["remarks"], "address": node["address"],
                 "api_key": node["api_key"], "app_key": node["app_key"],
-                "ssh_conf": node["ssh_conf"], "lpver": node["lpver"]
+                "ssh_conf": node["ssh_conf"], "lpver": node["lpver"],
+                "id": node["id"]
             }
             for node in nodes if node["id"] != src_node_id
-        ]
+        }
 
         tt = TransferTask(
             name=task_data.get('name', random_name()),
@@ -934,7 +1017,6 @@ class TaskFlowsDB(object):
         else:
             log_list = self.TransferLog.query("transfer_task_id = ?", (file_id,))
             files = self.TransferFile.query("transfer_task_id = ?", (file_id,))
-            print( log_list,  files, flush=True)
             fils_map = {i.id: i for i in files}
             error_num = len([i for i in log_list if i.status == 3])
         for i in log_list:
@@ -948,28 +1030,57 @@ class TaskFlowsDB(object):
             "count": count,
             "complete": count - error_num - running_count,
             "error": error_num,
+            "error_nodes": list(set(int(i.dst_node_idx) for i in log_list if i.status == 3)),
+            "exclude_nodes": [] if running_count == count else list(set(int(i.dst_node_idx) for i in log_list if i.status == 0)),
             "data": [i.to_show_data() for i in log_list],
+        }
+
+    def history_transferfile_task_log(self, file_id: int, log_id: int) -> Dict:
+        log_data = self.TransferLog.query("transfer_task_id = ? and id = ?", (file_id, log_id))
+        file_record = self.TransferFile.get_byid(file_id)
+        if not log_data or not file_record:
+            return {
+                "task_type": "file",
+                "task_id": file_id,
+                "count": 0,
+                "complete": 0,
+                "error": 0,
+                "error_nodes": [],
+            }
+        the_log = log_data[0]
+        the_log.tf = file_record
+        return {
+            "task_type": "file",
+            "task_id": file_id,
+            "count": 0,
+            "complete": 0,
+            "error": 0,
+            "error_nodes": [],
+            "exclude_nodes": [],
+            "data": [the_log.to_show_data()],
         }
 
     def history_command_task(self, cmd_id: int, only_error: bool = True) -> Dict:
         if only_error:
-            log_list = self.CommandLog.query("command_task_id = ? and status = ?", (cmd_id, 3))
+            log_list = self.CommandLog.query("command_task_id = ? and status in (?, ?)", (cmd_id, 3, 4))
             error_num = len(log_list)
         else:
             log_list = self.CommandLog.query("command_task_id = ?", (cmd_id,))
             error_num = len([i for i in log_list if i.status == 3])
         count = self.CommandLog.count("command_task_id = ?", (cmd_id,))
-        running_count = self.TransferLog.count("transfer_task_id = ? and status in (0,1)", (cmd_id,))
+        running_count = self.CommandLog.count("command_task_id = ? and status in (0,1)", (cmd_id,))
         return {
             "task_type": "command",
             "task_id": cmd_id,
             "count": count,
             "complete": count - error_num - running_count,
             "error": error_num,
+            "error_nodes": list(set(int(i.server_id) for i in log_list if i.status in (3, 4))),
+            "exclude_nodes": [] if running_count == count else list(set(int(i.server_id) for i in log_list if i.status == 0)),
             "data": [i.to_show_data(only_error=only_error) for i in log_list],
         }
 
-    def history_flow_task(self, flow: Union[int, Flow]) -> Dict:
+    def history_flow_task(self, flow: Union[int, Flow], has_sub_data: bool = False) -> Dict:
         if isinstance(flow, int):
             flow = self.Flow.get_byid(flow)
         steps: List[Union[CommandTask, TransferTask]] = [
@@ -987,6 +1098,52 @@ class TaskFlowsDB(object):
 
         flow.steps = steps
         flow_data = flow.to_dict()
-        flow_data["steps"] = [i.to_show_data() for i in steps]
+        flow_data["steps"] = []
+        for i in steps:
+            if isinstance(i, CommandTask):
+                tmp = i.to_show_data()
+                if has_sub_data:
+                    tmp.update(self.history_command_task(i.id, only_error=False))
+                flow_data["steps"].append(tmp)
+            elif isinstance(i, TransferTask):
+                tmp = i.to_show_data()
+                if has_sub_data:
+                    tmp.update(self.history_transferfile_task(i.id, only_error=False))
+                flow_data["steps"].append(tmp)
+
         flow_data["now_idx"] = now_idx
         return flow_data
+
+    def clear_old_log(self):
+        """
+        select * from transfer_tasks where dst_nodes like '[{"%' order by id desc limit 1;
+        """
+        t_task = self.TransferTask.find("dst_nodes like ?", ('[{"%',), order_by="id desc")
+        if t_task:
+            old_flow_id = t_task.flow_id
+        else:
+            old_flow_id = 0
+        exp_flow = self.Flow.find("created_at < ?", (int(time.time() - 86400 * 7),), order_by="id desc")
+        if exp_flow:
+            old_flow_id = max(old_flow_id, exp_flow.id)
+        if not old_flow_id: # 没有过期的数据需要清理
+            return
+
+        last_command_task = self.CommandTask.find("flow_id = ?", (old_flow_id,), order_by="id desc")
+        if not last_command_task:
+            self.CommandLog.delete_where("command_task_id <= ?", (last_command_task.id,))
+
+        self.Flow.delete_where("id <= ?", (old_flow_id,))
+        self.CommandTask.delete_where("id <= ?", (last_command_task.id,))
+
+        # 清理文件任务
+        self.TransferTask.delete_where("flow_id <= ?", (old_flow_id,))
+        self.TransferFile.delete_where("flow_id <= ?", (old_flow_id,))
+        self.TransferLog.delete_where("flow_id <= ?", (old_flow_id,))
+
+        for log_file in os.listdir(_EXECUTOR_LOG_DIR):
+            file_path = os.path.join(_EXECUTOR_LOG_DIR, log_file)
+            mtime = os.path.getmtime(file_path)
+            if mtime < time.time() - 86400 * 7:
+                os.remove(file_path)
+

@@ -134,9 +134,16 @@ class SslManage(Sites):
 
     def is_nginx_http3(self):
         if getattr(self, "_is_nginx_http3", None) is None:
-            _is_nginx_http3 = public.ExecShell("nginx -V 2>&1| grep 'http_v3_module'")[0] != ''
+            _is_nginx_http3 = public.is_nginx_http3()
             setattr(self, "_is_nginx_http3", _is_nginx_http3)
         return self._is_nginx_http3
+
+    def ng_ssl_early_data_enabled(self):
+        """判断nginx是否可以使用http3"""
+        if getattr(self, "_ng_ssl_early_data_enabled", None) is None:
+            _ng_ssl_early_data_enabled = public.ng_ssl_early_data_enabled()
+            setattr(self, "_ng_ssl_early_data_enabled", _ng_ssl_early_data_enabled)
+        return self._ng_ssl_early_data_enabled
 
     # 2024/11/8 10:31 给指定网站设置SSL
     def set_ssl_to_site(self, get):
@@ -235,6 +242,10 @@ class SslManage(Sites):
         if ng_conf:
             if ng_conf.find('ssl_certificate') == -1:
                 http3_header = '''\n    add_header Alt-Svc 'quic=":443"; h3=":443"; h3-29=":443"; h3-27=":443";h3-25=":443"; h3-T050=":443"; h3-Q050=":443";h3-Q049=":443";h3-Q048=":443"; h3-Q046=":443"; h3-Q043=":443"';'''
+                http3_header += "\n    quic_retry on;\n    quic_gso on;"
+                if self.ng_ssl_early_data_enabled():
+                    http3_header += "\n    ssl_early_data on;"
+
                 if not self.is_nginx_http3():
                     http3_header = ""
                 sslStr = """#error_page 404/404.html;
@@ -297,6 +308,8 @@ class SslManage(Sites):
                                 listen_add_str.append("\n    listen {} quic;".format(p))
                         if use_http2_on:
                             listen_add_str.append("\n    http2 on;")
+                        if self.is_nginx_http3():
+                            listen_add_str.append("\n    http3 on;")
 
                     else:
                         listen_add_str.append("\n    listen 443 ssl " + default_site + ";")
@@ -344,7 +357,9 @@ class SslManage(Sites):
         if conf:
             rep = "\n\s*#HTTP_TO_HTTPS_START(.|\n){1,300}#HTTP_TO_HTTPS_END"
             conf = re.sub(rep, '', conf)
-            rep = "\s+ssl_certificate\s+.+;\s+ssl_certificate_key\s+.+;"
+            rep = re.compile(r"\s+ssl_certificate\s+.+;[^\n]*")
+            conf = re.sub(rep, '', conf)
+            rep = re.compile(r"\s+ssl_certificate_key\s+.+;[^\n]*")
             conf = re.sub(rep, '', conf)
             rep = "\s+ssl_protocols\s+.+;\n"
             conf = re.sub(rep, '', conf)
@@ -379,6 +394,12 @@ class SslManage(Sites):
             rep = "\s+listen\s+\[::\]:443.*;"
             conf = re.sub(rep, '', conf)
             rep = "\s+http2\s+on;"
+            conf = re.sub(rep, '', conf)
+            rep = "\s+http3\s+on;"
+            conf = re.sub(rep, '', conf)
+            rep = "\s+quic_(gso|retry)\s+.*;"
+            conf = re.sub(rep, '', conf)
+            rep = "\s+ssl_early_data\s+.*;"
             conf = re.sub(rep, '', conf)
             public.writeFile(file, conf)
 
@@ -1275,7 +1296,7 @@ class Acme_V2(Sites):
     #从云端验证域名是否可访问
     def cloud_check_domain(self,domain):
         try:
-            result = requests.post('https://www.bt.cn/api/panel/check_domain',{"domain":domain,"ssl":1},s_type=self._request_type).json()
+            result = requests.post(public.get_home_node('https://www.bt.cn/api/panel/check_domain'),{"domain":domain,"ssl":1},s_type=self._request_type).json()
             return result['status']
         except: return False
 

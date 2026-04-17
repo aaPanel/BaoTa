@@ -966,6 +966,7 @@ def update_panel_files(n_list, src_dir, retry_count=3, start_func=None):
                 print_x('正在重启面板...')
                 if start_func and callable(start_func):
                     start_func()
+                print_x('Stopping Bt-Panel ...') # <- 用于触发面板上终端的重载操作
                 exec_shell('bash {}/init.sh restart'.format(PANEL_PATH))
                 time.sleep(1)
 

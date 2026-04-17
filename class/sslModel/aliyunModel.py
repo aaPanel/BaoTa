@@ -242,7 +242,7 @@ class main(sslBase):
 
     def get_domain_list(self, get):
         try:
-            response = self.sign_to_response(get.dns_id, "DescribeDomains", {})
+            response = self.sign_to_response(get.dns_id, "DescribeDomains", {"PageNumber": 1, "PageSize": 100})
             if response.status_code != 200:
                 return public.returnMsg(False, self.get_error(response.text))
             data = response.json()

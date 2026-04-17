@@ -1,8 +1,9 @@
-<svg width="16" height="100%" viewBox="0 0 16 50" fill="none"
-     xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-  <rect rx="8" width="16" height="50" fill="#D6D7DB"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none" preserveAspectRatio="none">
+  <rect rx="8" ty="8" width="100%" height="100%" fill="#D6D7DB"/>
+    <svg viewBox="0 0 16 50" preserveAspectRatio="xMidYMax meet">
   <path d="m12.5 41-4 4.5-5-4.5" stroke="#FFF" stroke-width=".8" stroke-linecap="round"/>
   <path d="m12.5 36-4 4.5-5-4.5" stroke="#FFF" stroke-opacity=".8" stroke-width=".8" stroke-linecap="round"/>
   <path d="m12.5 31-4 4.5-5-4.5" stroke="#FFF" stroke-opacity=".6" stroke-width=".8" stroke-linecap="round"/>
   <path d="m12.5 26-4 4.5-5-4.5" stroke="#FFF" stroke-width=".8" stroke-linecap="round" opacity=".4"/>
+    </svg>
 </svg>

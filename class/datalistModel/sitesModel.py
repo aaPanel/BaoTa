@@ -14,6 +14,7 @@ import public
 import panelSite
 import idna
 from datalistModel.base import dataBase
+from mod.base.free_site_total import SiteTotalConfig
 if '/www/server/panel' not in sys.path:
     sys.path.insert(0, '/www/server/panel')
 try:
@@ -71,6 +72,7 @@ class main(dataBase):
             val['backup_count'] = public.M('backup').where("pid=? and type=?", (val['id'],'0')).count()
             val['domain'] = domain_obj.where("pid=?", (val['id'],)).count()
             val['ssl'] = self.get_site_ssl_info(val['name'])
+            val['git_manager'] = self.get_site_git(val['name'])
             val['php_version'],val['php_version_status'] = self.get_php_version(val['name'])
             if 'project_config' in  val.keys() and 'type' in  val["project_config"].keys() and 'PHPMOD' == val["project_config"]["type"]:
                 if "php_version" in val['project_config'].keys() and len(val['project_config']['php_version']) > 1:
@@ -131,6 +133,27 @@ class main(dataBase):
 
             if 'net' in custom_conf:
                 val['net'] = custom_conf['net'].get(val['name'], {})
+
+            # 检查是否安装了监控报表或者开启了基础统计模块
+            stc = SiteTotalConfig()
+            st_conf = stc.get_status()
+            st_global_open = st_conf.get("is_open", True)
+            st_site_map = {i.get("site_id"): i.get("is_open") for i in st_conf.get("sites", [])}
+            monitor_on = os.path.exists('/www/server/panel/plugin/monitor')
+
+            # 检查单站点是否开启了基础统计模块
+            val['site_total_status'] = False
+            if monitor_on:
+                val['site_total_status'] = True
+            elif not st_global_open:
+                val['site_total_status'] = False
+            else:
+                sid = val.get('id')
+                if sid in st_site_map:
+                    val['site_total_status'] = bool(st_site_map.get(sid))
+                else:
+                    val['site_total_status'] = False
+                
         return data_list
 
     def get_php_mod_status(self,val):
@@ -249,6 +272,18 @@ class main(dataBase):
             # public.print_error()
             pass
         return self.free_get_site_netinfo(names)
+
+    def get_site_git(self, site_name):
+        """
+        获取网站绑定的git仓库信息
+        """
+        
+        # 查询git仓库信息
+        git_manager = public.M('git_manager').where("type = 'site' and type_parm = ?", (site_name,)).find()
+        if git_manager:
+            return git_manager
+        
+        return None
 
     @staticmethod
     def free_get_site_netinfo(names=None):

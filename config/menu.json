@@ -1,5 +1,5 @@
 {
-  "version": "11.3.0",
+  "version": "11.7.1",
   "menu":
   [
     {
@@ -149,7 +149,7 @@
     },
     {
       "title": "WAF",
-      "href": "/btwaf/index",
+      "href": "/waf",
       "class": "menu_btwaf",
       "id": "memu_btwaf",
       "sort": 8,
@@ -189,7 +189,7 @@
       "class": "menu_domain",
       "id": "memuAdomain",
       "sort": 13,
-      "show": true,
+      "show": false,
       "children": []
     },
     {
@@ -229,11 +229,20 @@
       "children": []
     },
     {
+      "title": "AI",
+      "href": "/ai",
+      "class": "memu_ai",
+      "id": "memuAai",
+      "sort": 15,
+      "show": true,
+      "children": []
+    },
+    {
       "title": "节点管理",
       "href": "/node",
       "class": "memu_node",
       "id": "memuAnode",
-      "sort": 15,
+      "sort": 16,
       "show": true,
       "children": []
     },
@@ -242,7 +251,7 @@
       "href": "/crontab",
       "class": "menu_day",
       "id": "memuAcrontab",
-      "sort": 16,
+      "sort": 17,
       "show": true,
       "children": []
     },
@@ -251,7 +260,7 @@
       "href": "/soft",
       "class": "menu_soft",
       "id": "memuAsoft",
-      "sort": 17,
+      "sort": 18,
       "show": true,
       "children": []
     },
@@ -260,7 +269,7 @@
       "href": "/config",
       "class": "menu_set",
       "id": "memuAconfig",
-      "sort": 18,
+      "sort": 19,
       "show": true,
       "children": []
     },
@@ -269,7 +278,7 @@
       "href": "/login?dologin=True",
       "class": "menu_exit",
       "id": "dologin",
-      "sort": 19,
+      "sort": 20,
       "show": true,
       "children": []
     }

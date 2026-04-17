@@ -4,6 +4,7 @@ import time
 os.chdir('/www/server/panel')
 if not 'class/' in sys.path:
     sys.path.insert(0,'class/')
+sys.path.insert(1,'.')
 
 import public
 

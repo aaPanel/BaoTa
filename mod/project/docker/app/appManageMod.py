@@ -56,6 +56,11 @@ class AppManage(App):
         get.app_name = get.get("app_name", None)
         if get.app_name is None:
             return public.returnResult(False, "参数错误,请传app_name参数")
+            
+        # 校验是否包含中文字符
+        import re
+        if re.search(r'[\u4e00-\u9fff]', get.service_name):
+            return public.returnMsg(False, "应用名称不能包含中文字符")
 
         self.set_app_name(get.app_name)
         self.get_app_json()
@@ -988,7 +993,7 @@ class AppManage(App):
                 if i["id"] == get.id:
                     if i["m_version"] != get.m_version:
                         return public.returnResult(False, "只能选择大版本相同的版本号进行更新!")
-                    if "." in i["s_version"]:
+                    if "." in i["s_version"] or get.s_version:
                         if float(i["s_version"]) == float(get.s_version):
                             return public.returnResult(False, "当前应用已是最新版本,无需更新!")
                         if float(i["s_version"]) > float(get.s_version):

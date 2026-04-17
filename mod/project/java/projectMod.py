@@ -434,7 +434,7 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
                 return "<br>".join(["域名：{}，错误信息：{}".format(i['domain'], i['msg']) for i in err])
             else:
                 for d, p in domains:
-                    if public.M('domain').where('name=?', d).count():
+                    if public.M('domain').where('name=? and port=?', (d, p)).count():
                         return '指定域名已存在: {}'.format(d)
         
         return {
@@ -503,7 +503,7 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
         
         if project_config["domains"]:
             for domain in project_config["domains"]:
-                domain_name, port = domain.split(":")
+                domain_name, port = domain.rsplit(":", 1)
                 public.M('domain').insert(
                     {
                         'name': domain_name,
@@ -544,7 +544,7 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
         if project_config["domains"]:
             res = self.create_config(
                 pdata,
-                domains = [i.split(":", 1) for i in project_config["domains"]],
+                domains = [i.rsplit(":", 1) for i in project_config["domains"]],
                 use_ssl = False,
             )
         
@@ -613,9 +613,11 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
             "chown {usr}:{usr} {file}".format(usr = project_config["run_user"], file = log_file)
         )
         public.set_mode(log_file, "666")  # 保障其他用户也可以写入日志（syslog）
+        public.set_mode(pid_file, "666")  # 保障其他用户也可以写入日志（syslog）
         public.ExecShell(
             "chown {usr}:{usr} {file}".format(usr = project_config["run_user"], file = pid_file)
         )
+        public.set_mode(os.path.dirname(pid_file), "777")
         utils.pass_dir_for_user(os.path.dirname(log_file), project_config['run_user'])
 
         # 写入启动脚本
@@ -855,15 +857,20 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
         port = None
         jdk_path = None
         project_name = get.get("project_name", "")
+        input_domains = []
         try:
+            domain = []
             if get.get("domain", ""):
                 domain = get.domain
             elif get.get("domains", ""):
                 domain = get.domains
             if isinstance(domain, str):
-                domain = domain.strip()
+                if "," in domain:
+                    input_domains = domain.split(",")
+                else:
+                    input_domains = [domain.strip()]
             elif isinstance(domain, list):
-                domain = domain[0]
+                input_domains = domain
             tomcat_version = int(get.tomcat_version)
             project_path = get.project_path.strip()
             if hasattr(get, "port"):
@@ -873,8 +880,8 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
             ps = get.project_ps.strip()
         except:
             return "参数错误"
-        
-        if not is_domain(domain):
+
+        if not input_domains:
             return "请输入正确的域名"
         
         if not os.path.exists(project_path):
@@ -901,14 +908,17 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
         #     if not utils.check_port(port):
         #         return "端口被占用"
         
-        domain_list, err = normalize_domain(domain)
+        domain_list, err = normalize_domain(*input_domains)
+        domain = []
         if not err:
-            domain = domain_list[0]
-            if public.M('domain').where('name=?', domain[0]).count():
-                return '指定域名已存在: {}'.format(domain[0])
+            if not domain_list:
+                return "请输入正确的域名"
+            for i in domain_list:
+                if public.M('domain').where('name=? and port =?', (i[0], i[1])).count():
+                    return '指定域名已存在: {}'.format(i[0])
+                domain.append("{}:{}".format(i[0], i[1]))
             if not project_name:
-                project_name = domain[0]
-            domain = "{}:{}".format(domain[0], domain[1])
+                project_name = domain_list[0][0]
         else:
             return "<br>".join(["域名：{}，错误信息：{}".format(i['domain'], i['msg']) for i in err])
         
@@ -917,7 +927,7 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
             "project_jdk": jdk_path,
             "ps": ps,
             "port": port,
-            "domains": [domain, ],
+            "domains": domain,
             "tomcat_version": tomcat_version,
             "project_path": project_path,
         }
@@ -955,10 +965,12 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
         if config["port"] and not tomcat.set_port(config["port"]):
             return json_response(status = False, msg = "设置端口失败")
         
-        tomcat_host_name = (config["domains"][0] if isinstance(config["domains"], list) else config["domains"]).split(":")[0]
-        if not tomcat.add_host(name=tomcat_host_name, path = config["project_path"]):
-            return json_response(status = False, msg = "添加失败")
-        
+        # tomcat_host_name = (config["domains"][0] if isinstance(config["domains"], list) else config["domains"]).split(":")[0]
+        tomcat_host_names = set([i.rsplit(":", 1)[0] for i in config["domains"]])
+        for tomcat_host_name in tomcat_host_names:
+            if not tomcat.add_host(name=tomcat_host_name, path = config["project_path"]):
+                return json_response(status = False, msg = "添加失败")
+
         # 有web服务且可以重启
         if public.is_apache_nginx() and not isinstance(public.checkWebConfig(), str):
             bind_extranet = 1
@@ -1001,7 +1013,7 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
         project_id = public.M('sites').insert(pdata)
         pdata["id"] = project_id
         for domain in config["domains"]:
-            domain_name, port = domain.split(":")
+            domain_name, port = domain.rsplit(":", 1)
             public.M('domain').insert(
                 {
                     'name': domain_name,
@@ -1017,7 +1029,7 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
         if bind_extranet:
             self.create_config(
                 pdata,
-                domains = [i.split(":") for i in config['domains']],
+                domains = [i.rsplit(":", 1) for i in config['domains']],
                 use_ssl = False
             )
         
@@ -1236,7 +1248,10 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
             project_path = project_jar
         if not os.path.exists(project_path):
             return json_response(False, "项目文件路径不存在")
-        
+        # 项目路径不可以包含空白字符，会导致nginx异常
+        if re.search(r"\s", project_path):
+            return json_response(False, "项目文件路径不能包含空白字符")
+
         # *处理项目文件
         # if os.path.isfile(project_path) and os.path.basename(project_path).endswith(".war") and project_type != 0:
         #     target_dir = project_path.replace(".war", "")
@@ -2212,6 +2227,20 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
             return json_response(False, '指定项目不存在')
         
         data = self._project_domain_list(project_data['id'])
+        for d in data:
+            domain_str = d["name"]
+            cn_name = domain_str
+            if "xn--" in domain_str:
+                try:
+                    import idna
+                    if domain_str.startswith("*."):
+                        cn_name = "*." + idna.decode(domain_str[2:])
+                    else:
+                        cn_name =  idna.decode(domain_str)
+                except:
+                    pass
+
+            d["cn_name"] = cn_name
         return json_response(True, data = data)
     
     def add_domains(self, get):
@@ -2241,9 +2270,9 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
         res_domains = []
         check_cloud = False
         for d, p in domain_list:
-            if not public.M('domain').where('name=?', (d,)).count():
+            if not public.M('domain').where('name=? and port=?', (d, p)).count():
                 public.M('domain').add('name,pid,port,addtime', (d, project_id, p, public.getDate()))
-                self.write_project_log('成功添加域名{}到项目{}'.format(d, get.project_name))
+                self.write_project_log('成功添加域名{}到项目{}'.format("{}:{}".format(d, p), get.project_name))
                 res_domains.append({"name": d, "status": True, "msg": '添加成功'})
                 if not check_cloud:
                     public.check_domain_cloud(d)
@@ -2442,7 +2471,7 @@ class main(JavaWebConfig, Proxy, Redirect, GitMager):
             # 删除tomcat站点
             try:
                 domains = project_config.get("domains", project_config.get("domain", ""))
-                domain = (domains[0] if isinstance(domains, list) and domains else domains).split(":")[0]
+                domain = (domains[0] if isinstance(domains, list) and domains else domains).rsplit(":", 1)[0]
                 tomcat = utils.bt_tomcat(project_config["tomcat_version"])
                 tomcat.remove_host(domain, project_name)
                 tomcat.save_config_xml()

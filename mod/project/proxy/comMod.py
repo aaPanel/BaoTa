@@ -182,9 +182,14 @@ server {{
     {server_block}
     #SERVER-BLOCK END
 
-    #禁止访问的文件或目录
-    location ~ ^/(\.user.ini|\.htaccess|\.git|\.env|\.svn|\.project|LICENSE|README.md)
+    # 禁止访问的敏感文件
+    location ~* (\.user.ini|\.htaccess|\.htpasswd|\.env.*|\.project|\.bashrc|\.bash_profile|\.bash_logout|\.DS_Store|\.gitignore|\.gitattributes|LICENSE|README\.md|CLAUDE\.md|CHANGELOG\.md|CHANGELOG|CONTRIBUTING\.md|TODO\.md|FAQ\.md|composer\.json|composer\.lock|package(-lock)?\.json|yarn\.lock|pnpm-lock\.yaml|\.\w+~|\.swp|\.swo|\.bak(up)?|\.old|\.tmp|\.temp|\.log|\.sql(\.gz)?|docker-compose\.yml|docker\.env|Dockerfile|\.csproj|\.sln|Cargo\.toml|Cargo\.lock|go\.mod|go\.sum|phpunit\.xml|phpunit\.xml|pom\.xml|build\.gradl|pyproject\.toml|requirements\.txt|application(-\w+)?\.(ya?ml|properties))$
     {{
+        return 404;
+    }}
+    
+    # 禁止访问的敏感目录
+    location ~* /(\.git|\.svn|\.bzr|\.vscode|\.claude|\.idea|\.ssh|\.github|\.npm|\.yarn|\.pnpm|\.cache|\.husky|\.turbo|\.next|\.nuxt|node_modules|runtime)/ {{
         return 404;
     }}
 
@@ -264,10 +269,10 @@ server {{
             "basic_auth": {},
             "proxy_cache": {
                 "cache_status": False,
-                "cache_zone": get.site_name.replace(".", "_") + "_cache",
+                "cache_zone": get.cache_name,
                 "static_cache": "",
                 "expires": "1d",
-                "cache_suffix": "css,js,jpe,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map",
+                "cache_suffix": "css,js,jpg,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map",
                 "cache_conf": "",
             },
             "gzip": {
@@ -340,9 +345,7 @@ server {{
         self._init_proxy_conf["remark"] = get.remark
         self._init_proxy_conf["http_block"] = ""
         self._init_proxy_conf["proxy_info"].append(get.proxy_info)
-        self._init_proxy_conf["proxy_cache"]["cache_zone"] = get.site_name.replace(".",
-                                                                                   "_") + "_cache" if get.site_port == "80" else "{}_{}_cache".format(
-            get.site_name.replace(".", "_"), get.site_port)
+        self._init_proxy_conf["proxy_cache"]["cache_zone"] = get.cache_name
         self._init_proxy_conf["primary_port"] = get.site_port
 
     # 2024/4/18 上午10:35 写入Nginx配置文件 仅在创建时使用
@@ -365,7 +368,7 @@ server {{
         else:
             ipv4_port_conf = self._init_proxy_conf["ipv4_port_conf"].format(listen_port=get.port_list[0])
             ipv6_port_conf = self._init_proxy_conf["ipv6_port_conf"].format(listen_port=get.port_list[0])
-        port_conf = ipv4_port_conf + "\n" + ipv6_port_conf
+        port_conf = ipv4_port_conf + "\n" + (ipv6_port_conf if self.open_ipv6_status() else "")
 
         # 2024/6/4 下午4:20 兼容新版监控报表的配置
         monitor_conf = ""
@@ -384,7 +387,7 @@ server {{
             php_info_start=public.getMsg('NGINX_CONF_MSG3'),
             rewrite_start_msg=public.getMsg('NGINX_CONF_MSG4'),
             log_path=public.get_logs_path(),
-            domains=' '.join(get.domain_list) if len(get.domain_list) > 1 else get.site_name,
+            domains=' '.join([i.rsplit(":", 1)[0] for i in get.domain_list]),
             site_name=get.site_name,
             ssl_info="#error_page 404/404.html;",
             err_age_404=get.err_age_404,
@@ -423,7 +426,7 @@ server {{
             @param "data":{"参数名":""} <数据类型> 参数描述
             @return dict{"status":True/False,"msg":"提示信息"}
         '''
-        return public.ExecShell("nginx -V 2>&1| grep 'http_v3_module' -o")[0]
+        return public.is_nginx_http3()
 
     # 2024/4/18 上午9:26 创建反向代理
     def create(self, get):
@@ -480,52 +483,83 @@ server {{
 
         # 2024/4/18 上午9:45 创建反向代理
         get.domain_list = get.domains.split("\n")
-        get.site_name = util.to_puny_code(get.domain_list[0].strip().split(":")[0]).strip().lower()
-        public.check_domain_cloud(get.site_name)
-        if get.site_name.find('*') != -1: return public.returnResult(False, '主域名不能为泛解析')
-        get.site_path = "/www/wwwroot/" + get.site_name
-        get.site_port = get.domain_list[0].strip().split(":")[1] if ":" in get.domain_list[0] else "80"
-        get.port_list = [get.site_port]
-        if not public.checkPort(get.site_port):
-            return public.returnResult(status=False, msg='端口【{}】不合法！'.format(get.site_port))
-
-        if len(get.domain_list) > 1:
-            for domain in get.domain_list[1:]:
+        get.port_list = []
+        if len(get.domain_list) > 0:
+            g_domain_list = []
+            for domain in get.domain_list:
                 if not ":" in domain.strip():
+                    if not "80" in get.port_list:
+                        get.port_list.append("80")
+                    g_domain_list.append(util.to_puny_code(domain.strip()) + ":80")
                     continue
-
-                d_port = domain.strip().split(":")[1]
+                if domain.startswith("[") and domain.endswith("]"):
+                    if not "80" in get.port_list:
+                        get.port_list.append("80")
+                    g_domain_list.append(util.to_puny_code(domain.strip()) + ":80")
+                    continue
+                d_name , d_port = domain.strip().rsplit(":", 1)
+                g_domain_list.append("{}:{}".format(util.to_puny_code(d_name), d_port))
                 if not public.checkPort(d_port):
                     return public.returnResult(status=False, msg='端口【{}】不合法！'.format(d_port))
 
                 if not d_port in get.port_list:
                     get.port_list.append(d_port)
+            get.domain_list = g_domain_list
 
-        if get.site_port != "80":
-            get.site_path = "/www/wwwroot/{}_{}".format(get.site_name, get.site_port)
-            cache_name = "{}_{}".format(get.site_name.replace(".", "_"), get.site_port)
-            self._site_path = "{}/{}_{}".format(self._proxy_config_path, get.site_name, get.site_port)
-            get.main_domain = self.json_name = "{}_{}".format(get.site_name, get.site_port)
-        else:
-            get.site_path = "/www/wwwroot/" + get.site_name
-            cache_name = get.site_name.replace(".", "_")
-            self._site_path = self._proxy_config_path + '/' + get.site_name
-            get.main_domain = self.json_name = get.site_name
+        get.site_name = util.to_puny_code(get.domain_list[0].strip().rsplit(":", 1)[0]).strip().lower()
+        get.real_server_name = get.site_name
+        public.check_domain_cloud(get.site_name)
+        if get.site_name.find('*') != -1: return public.returnResult(False, '主域名不能为泛解析')
+        get.site_path = "/www/wwwroot/" + get.site_name
+        need_rename = ""
+        if get.site_name < "0.websocket":
+            need_rename = get.site_name
+            get.site_name = "1" + get.site_name
+        main_domain = need_rename or get.site_name
+        get.site_port = get.port_list[0]
+        if not public.checkPort(get.site_port):
+            return public.returnResult(status=False, msg='端口【{}】不合法！'.format(get.site_port))
 
         # 2024/4/18 上午10:06 检查域名是否存在
-        opid = public.M('domain').where("name=? and port=?", (get.site_name, int(get.site_port))).getField('pid')
+        opid = public.M('domain').where("name=? and port=?", (main_domain, int(get.site_port))).getField('pid')
         if opid:
             if public.M('sites').where('id=?', (opid,)).count():
-                return public.returnResult(status=False, msg='网站【{}】已存在，请勿重复添加！'.format(get.site_name))
+                return public.returnResult(status=False, msg='网站【{}】已存在，请勿重复添加！'.format(main_domain))
             public.M('domain').where('pid=?', (opid,)).delete()
 
-        if public.M('binding').where('domain=?', (get.site_name,)).count():
-            return public.returnResult(status=False, msg='网站【{}】已存在，请勿重复添加！'.format(get.site_name))
+        if public.M('binding').where('domain=?', (main_domain,)).count():
+            return public.returnResult(status=False, msg='网站【{}】已存在，请勿重复添加！'.format(main_domain))
 
         # 2024/4/18 上午10:06 检查网站是否存在
         sql = public.M('sites')
-        if sql.where("name=?", (get.main_domain,)).count():
-            return public.returnResult(status=False, msg='网站【{}】已存在，请勿重复添加！'.format(get.main_domain))
+        per_port_name = True
+        if sql.where("name=?", (get.site_name,)).count():
+            get.site_name = get.site_name + "_" + str(get.site_port)
+            if need_rename:
+                need_rename += "_" + str(get.site_port)
+        else:
+            per_port_name = False
+
+        if get.site_port != "80":
+            if not per_port_name:
+                get.site_path = "/www/wwwroot/{}_{}".format(get.site_name, get.site_port)
+                get.cache_name = "{}_{}_cache".format(get.site_name.replace(".", "_").replace(":","_").replace("[", "").replace("]", ""), get.site_port)
+                self._site_path = "{}/{}_{}".format(self._proxy_config_path, get.site_name, get.site_port)
+                get.main_domain = self.json_name = "{}_{}".format(get.site_name, get.site_port)
+                get.site_name = get.site_name + "_" + str(get.site_port)
+                if need_rename:
+                    need_rename += "_" + str(get.site_port)
+            else:
+                get.main_domain = self.json_name = get.site_name
+                get.site_path = "/www/wwwroot/{}".format(get.site_name)
+                get.cache_name = get.site_name.replace(".", "_").replace(":","_").replace("[", "").replace("]", "") + "_cache"
+                self._site_path = "{}/{}".format(self._proxy_config_path, get.site_name)
+
+        else:
+            get.site_path = "/www/wwwroot/" + get.site_name
+            get.cache_name = get.site_name.replace(".", "_").replace(":","_").replace("[", "").replace("]", "") + "_cache"
+            self._site_path = self._proxy_config_path + '/' + get.site_name
+            get.main_domain = self.json_name = get.site_name
 
         # 2024/4/18 上午10:21 添加端口到系统防火墙
         from firewallModel.comModel import main as comModel
@@ -536,9 +570,9 @@ server {{
         # 2024/4/18 上午9:41 前置处理结束
 
         # 2024/4/18 上午10:46 写入网站配置文件
-        get.http_block = "proxy_cache_path {site_path}/proxy_cache_dir levels=1:2 keys_zone={cache_name}_cache:20m inactive=1d max_size=5g;".format(
+        get.http_block = "proxy_cache_path {site_path}/proxy_cache_dir levels=1:2 keys_zone={cache_name}:20m inactive=1d max_size=5g;".format(
             site_path=get.site_path,
-            cache_name=cache_name
+            cache_name=get.cache_name
         )
 
         if not os.path.exists(self._site_path):
@@ -565,14 +599,15 @@ server {{
 
         # 2024/4/18 上午10:22 写入数据库
         pdata = {
-            'name': get.main_domain,
+            'name': get.site_name,
             'path': get.site_path,
             'ps': get.remark,
             'status': 1,
             'type_id': 0,
             'project_type': 'proxy',
             'project_config': json.dumps(self._init_proxy_conf),
-            'addtime': public.getDate()
+            'addtime': public.getDate(),
+            'rname': need_rename,
         }
 
         get.pid = public.M('sites').insert(pdata)
@@ -581,9 +616,9 @@ server {{
 
         for domain in get.domain_list:
             public.M('domain').insert({
-                'name': domain if ":" not in domain else domain.split(":")[0],
+                'name': domain if ":" not in domain else domain.rsplit(":", 1)[0],
                 'pid': str(get.pid),
-                'port': '80' if ":" not in domain else domain.split(":")[1],
+                'port': '80' if ":" not in domain else domain.rsplit(":", 1)[1],
                 'addtime': public.getDate()
             })
 
@@ -610,7 +645,7 @@ server {{
                     wc_err.replace("\n", '<br>') + '</a>'
             )
 
-        public.WriteLog('TYPE_SITE', 'SITE_ADD_SUCCESS', (get.site_name,))
+        public.WriteLog('TYPE_SITE', 'SITE_ADD_SUCCESS', (get.main_domain,))
         public.set_module_logs('site_proxy', 'create', 1)
         public.serviceReload()
         return public.returnResult(msg="反向代理项目添加成功！")
@@ -681,7 +716,7 @@ server {{
                 ))
             get.proxy_json_conf["proxy_log"]["rsyslog_host"] = get.log_path
         elif get.log_type == "off":
-            get.proxy_json_conf["proxy_log"]["log_conf"] = "\n    access_log off;\n    error_log off;"
+            get.proxy_json_conf["proxy_log"]["log_conf"] = "\n    access_log off;\n    error_log /dev/null;"
         else:
             get.proxy_json_conf["proxy_log"]["log_conf"] = "    " + self._init_proxy_conf["proxy_log"][
                 "log_conf"].format(
@@ -1450,8 +1485,9 @@ server {{
         for domain in get.domain_list:
             if not ":" in domain.strip():
                 continue
-
-            d_port = domain.strip().split(":")[1]
+            if domain.startswith("[") and domain.endswith("]"):
+                continue
+            d_port = domain.strip().rsplit(":",1)[1]
             if not public.checkPort(d_port):
                 return public.returnResult(status=False, msg='域名【{}】的端口号不合法！'.format(domain))
 
@@ -1489,7 +1525,7 @@ server {{
         get.port = get.get("port", "")
         if get.port == "":
             return public.returnResult(status=False, msg="port不能为空！")
-        get.domain = get.get("domain", "").split(":")[0]
+        get.domain = get.get("domain", "").rsplit(":", 1)[0]
         if get.domain == "":
             return public.returnResult(status=False, msg="domain不能为空！")
         get.site_name = get.get("site_name", "")
@@ -1522,10 +1558,11 @@ server {{
         public.writeFile(self._site_proxy_conf_path, json.dumps(get.proxy_json_conf))
 
         from panelSite import panelSite
-        if ":" in get.domain:
-            domain, port = get.domain.split(":")
-            get.port = port
-            get.domain = domain
+        # 先注释
+        # if ":" in get.domain:
+        #     domain, port = get.domain.split(":")
+        #     get.port = port
+        #     get.domain = domain
         get.id = site_info["id"]
         result = panelSite().DelDomain(get)
         return public.returnResult(status=result["status"], msg=result["msg"])
@@ -1662,6 +1699,12 @@ server {{
                 force_conf=get.proxy_json_conf["ssl_info"]["force_ssl_conf"],
             )
 
+        if public.is_nginx_http3():
+            http3_header = '''\n    add_header Alt-Svc 'quic=":443"; h3=":443"; h3-29=":443"; h3-27=":443";h3-25=":443"; h3-T050=":443"; h3-Q050=":443";h3-Q049=":443";h3-Q048=":443"; h3-Q046=":443"; h3-Q043=":443"';'''
+            ssl_conf += http3_header + "\n    quic_retry on;\n    quic_gso on;"
+            if public.ng_ssl_early_data_enabled():
+                ssl_conf += "\n    ssl_early_data on;"
+
         if "如果反代网站访问异常且这里已经配置了内容，请优先排查此处的配置是否正确" in get.proxy_json_conf["http_block"]:
             http_block = get.proxy_json_conf["http_block"]
         else:
@@ -1735,6 +1778,10 @@ server {{
         public.serviceReload()
 
         return public.returnResult(msg="保存成功！")
+
+    @staticmethod
+    def open_ipv6_status():
+        return os.path.exists(public.get_panel_path() + '/data/ipv6.pl')
 
     # 2024/4/20 下午3:11 根据proxy_json_conf，填入self._template_conf，然后生成nginx配置，保存到指定网站的conf文件中
     def generate_config(self, get):
@@ -1907,7 +1954,7 @@ server {{
                 listen_port=p,
             ) + "\n    "
         if get.proxy_json_conf["ssl_info"]["ssl_status"]:
-            if public.ExecShell("nginx -V 2>&1| grep 'http_v3_module' -o")[0] != "":
+            if public.is_nginx_http3():
                 ipv4_http3_ssl_port_conf = get.proxy_json_conf["ipv4_http3_ssl_port_conf"].format(
                     ipv4_port_conf=ipv4_port_conf,
                     https_port=get.proxy_json_conf["https_port"],
@@ -1916,7 +1963,7 @@ server {{
                     ipv6_port_conf=ipv6_port_conf,
                     https_port=get.proxy_json_conf["https_port"],
                 ) + "\n    "
-                port_conf = ipv4_http3_ssl_port_conf + ipv6_http3_ssl_port_conf + "\n    http2 on;"
+                port_conf = ipv4_http3_ssl_port_conf + (ipv6_http3_ssl_port_conf if self.open_ipv6_status() else "") + "\n    http2 on;\n    http3 on;"
             else:
                 ipv4_ssl_port_conf = get.proxy_json_conf["ipv4_ssl_port_conf"].format(
                     ipv4_port_conf=ipv4_port_conf,
@@ -1926,15 +1973,20 @@ server {{
                     ipv6_port_conf=ipv6_port_conf,
                     https_port=get.proxy_json_conf["https_port"],
                 ) + "\n    "
-                port_conf = ipv4_ssl_port_conf + ipv6_ssl_port_conf
+                port_conf = ipv4_ssl_port_conf + (ipv6_ssl_port_conf if self.open_ipv6_status() else "")
             ssl_conf = get.proxy_json_conf["ssl_info"]["ssl_conf"].format(site_name=get.site_name)
             if get.proxy_json_conf["ssl_info"]["force_https"]:
                 ssl_conf = get.proxy_json_conf["ssl_info"]["force_ssl_conf"].format(
                     site_name=get.site_name,
                     force_conf=get.proxy_json_conf["ssl_info"]["force_conf"]
                 )
+            if public.is_nginx_http3():
+                http3_header = '''\n    add_header Alt-Svc 'quic=":443"; h3=":443"; h3-29=":443"; h3-27=":443";h3-25=":443"; h3-T050=":443"; h3-Q050=":443";h3-Q049=":443";h3-Q048=":443"; h3-Q046=":443"; h3-Q043=":443"';'''
+                ssl_conf += http3_header + "\n    quic_retry on;\n    quic_gso on;"
+                if public.ng_ssl_early_data_enabled():
+                    ssl_conf += "\n    ssl_early_data on;"
         else:
-            port_conf = ipv4_port_conf + "\n" + ipv6_port_conf
+            port_conf = ipv4_port_conf + "\n" + (ipv6_port_conf if self.open_ipv6_status() else "")
 
         redirect_conf = ""
         if get.proxy_json_conf["redirect"]["redirect_status"]:
@@ -1982,8 +2034,7 @@ server {{
             err_page_msg=public.getMsg('NGINX_CONF_MSG2'),
             php_info_start=public.getMsg('NGINX_CONF_MSG3'),
             rewrite_start_msg=public.getMsg('NGINX_CONF_MSG4'),
-            domains=' '.join(get.proxy_json_conf["domain_list"]) if len(
-                get.proxy_json_conf["domain_list"]) > 1 else get.site_name,
+            domains=' '.join(get.proxy_json_conf["domain_list"]),
             site_name=get.site_name,
             ssl_info=ssl_conf,
             err_age_404=get.proxy_json_conf["err_age_404"],
@@ -2348,7 +2399,10 @@ server {{
 
         get.sitename = get.site_name
         get.type = 1
-        get.holdpath = 1
+        try:
+            get.holdpath = int(get.get("holdpath", 1))
+        except:
+            get.holdpath = 1
 
         get.proxy_json_conf = self.read_json_conf(get)
         if not get.proxy_json_conf:
@@ -3321,27 +3375,15 @@ server {{
             @param "data":{"参数名":""} <数据类型> 参数描述
             @return dict{"status":True/False,"msg":"提示信息"}
         '''
-        get.site_name = get.get("site_name", "")
-        if get.site_name == "":
-            return public.returnResult(status=False, msg="site_name不能为空！")
-
-        get.type = get.get("type", "access")
-        log_name = get.site_name
-        if get.type != "access":
-            log_name = get.site_name + ".error"
-
-        get.proxy_json_conf = self.read_json_conf(get)
-        if not get.proxy_json_conf:
-            return public.returnResult(status=False, msg="读取配置文件失败，请删除网站重新添加！")
-
-        if get.proxy_json_conf["proxy_log"]["log_type"] == "default":
-            log_file = public.get_logs_path() + "/" + log_name + '.log'
-        elif get.proxy_json_conf["proxy_log"]["log_type"] == "file":
-            log_file = get.proxy_json_conf["proxy_log"]["log_path"] + "/" + log_name + '.log'
-        else:
-            return public.returnResult(data={"msg": "", "size": 0})
-
-        if os.path.exists(log_file):
+        from logsModel.siteModel import main as siteLogMain
+        # 统一采用 logsModel.siteModel 中获取网站的方法保证前端逻辑的一致性
+        site_name = get.get("site_name", "")
+        log_type = get.get("type", "access")
+        log_file_data = siteLogMain().get_site_log_file(public.to_dict_obj({
+            "siteName": site_name, "is_error_log": ("1" if log_type == "error" else "0")
+        }))
+        log_file = log_file_data.get('log_file', None)
+        if log_file and os.path.isfile(log_file):
             return public.returnResult(
                 data={
                     "msg": self.xsssec(public.GetNumLines(log_file, 1000)),
@@ -3350,6 +3392,36 @@ server {{
             )
 
         return public.returnResult(data={"msg": "", "size": 0})
+
+        # get.site_name = get.get("site_name", "")
+        # if get.site_name == "":
+        #     return public.returnResult(status=False, msg="site_name不能为空！")
+        #
+        # get.type = get.get("type", "access")
+        # log_name = get.site_name
+        # if get.type != "access":
+        #     log_name = get.site_name + ".error"
+        #
+        # get.proxy_json_conf = self.read_json_conf(get)
+        # if not get.proxy_json_conf:
+        #     return public.returnResult(status=False, msg="读取配置文件失败，请删除网站重新添加！")
+        #
+        # if get.proxy_json_conf["proxy_log"]["log_type"] == "default":
+        #     log_file = public.get_logs_path() + "/" + log_name + '.log'
+        # elif get.proxy_json_conf["proxy_log"]["log_type"] == "file":
+        #     log_file = get.proxy_json_conf["proxy_log"]["log_path"] + "/" + log_name + '.log'
+        # else:
+        #     return public.returnResult(data={"msg": "", "size": 0})
+        #
+        # if os.path.exists(log_file):
+        #     return public.returnResult(
+        #         data={
+        #             "msg": self.xsssec(public.GetNumLines(log_file, 1000)),
+        #             "size": public.to_size(os.path.getsize(log_file))
+        #         }
+        #     )
+        #
+        # return public.returnResult(data={"msg": "", "size": 0})
 
     # 2024/4/25 上午10:51 清理指定网站的反向代理缓存
     def clear_cache(self, get):
@@ -3491,8 +3563,10 @@ class ProxyProjectV2(main):
             return res
         # 执行结束生成配置文件
         new_conf = ctool.to_string()
+        public.print_log(new_conf)
         public.writeFile(pync.file_path, new_conf)
         ret_nginx = public.checkWebConfig()
+        public.print_log(ret_nginx)
         if ret_nginx is not True:
             public.writeFile(pync.file_path, old_conf)
             return public.returnResult(status=False, msg="保存配置文件失败！无法添加配置")
@@ -3501,7 +3575,8 @@ class ProxyProjectV2(main):
             path=self._proxy_config_path,
             site_name=get.site_name
         )
-        public.writeFile(_site_proxy_conf_path, json.dumps(get.proxy_json_conf))
+        if hasattr(get, "proxy_json_conf") and isinstance(get.proxy_json_conf, dict):
+            public.writeFile(_site_proxy_conf_path, json.dumps(get.proxy_json_conf))
         public.serviceReload()
         return public.returnResult(msg="设置成功！")
 
@@ -3609,9 +3684,9 @@ class ProxyProjectV2(main):
             connect_timeout = get.get("proxy_connect_timeout", "60s")
             send_timeout = get.get("proxy_send_timeout", "600s")
             read_timeout = get.get("proxy_read_timeout", "600s")
-            ltool = stool.get_location(get.proxy_path, create=False)  # 尝试不创建，任意匹配规则均可只管路由一致的
+            ltool = stool.get_proxy_location(get.proxy_path, create=False)  # 尝试不创建，任意匹配规则均可只管路由一致的
             if ltool is None:  # 无法匹配路由的时候，尝试创建，且匹配规则为 ^~
-                ltool = stool.get_location(get.proxy_path, "^~", create=True, comment="# 代理路由")
+                ltool = stool.get_proxy_location(get.proxy_path, "^~", create=True, comment="# 代理路由")
             ltool.add_proxy(get.proxy_pass, get.proxy_host, get.proxy_pass.startswith("https://"))
             ltool.set_proxy_timeout(connect_timeout, send_timeout, read_timeout)
             ltool.set_websocket_support(get.proxy_json_conf["websocket"]["websocket_status"])
@@ -3681,7 +3756,7 @@ class ProxyProjectV2(main):
 
     def _set_sub_filter(self, get):
         def func(stool: ServerTools):
-            ltool = stool.get_location(get.proxy_path, create=False)
+            ltool = stool.get_proxy_location(get.proxy_path, create=False)
             if ltool is None:
                 return public.returnResult(status=False, msg="未找到此URL【{}】的代理信息！".format(get.proxy_path))
 
@@ -3716,7 +3791,7 @@ class ProxyProjectV2(main):
             return res
 
         def func(stool: ServerTools):
-            ltool = stool.get_location(get.proxy_path, create=False)
+            ltool = stool.get_proxy_location(get.proxy_path, create=False)
             if ltool is None:
                 return public.returnResult(status=False, msg="未找到此URL【{}】的代理信息！".format(get.proxy_path))
 
@@ -3726,7 +3801,7 @@ class ProxyProjectV2(main):
 
     def _set_url_ip_limit(self, get):
         def func(stool: ServerTools):
-            ltool = stool.get_location(get.proxy_path, create=False)
+            ltool = stool.get_proxy_location(get.proxy_path, create=False)
             if ltool is None:
                 return public.returnResult(status=False, msg="未找到此URL【{}】的代理信息！".format(get.proxy_path))
 
@@ -3768,11 +3843,11 @@ class ProxyProjectV2(main):
             return res
 
         def func(stool: ServerTools):
-            ltool = stool.get_location(get.proxy_path, create=False)
+            ltool = stool.get_proxy_location(get.proxy_path, create=False)
             if ltool is None:
                 return public.returnResult(status=False, msg="未找到此URL【{}】的代理信息！".format(get.proxy_path))
 
-            ltool.set_proxy_cache(
+            return ltool.set_proxy_cache(
                 bool(get.cache_status),
                 get.proxy_json_conf["proxy_cache"]["cache_zone"],
                 get.expires,
@@ -3789,15 +3864,13 @@ class ProxyProjectV2(main):
             return res
 
         def func(stool: ServerTools):
-            http_v3 = bool(public.ExecShell("nginx -V 2>&1| grep 'http_v3_module' -o")[0])
-            nginx_ver = public.ExecShell("nginx -V 2>&1| nginx -version 2>&1 | cut -d'/' -f2")[0]
-            nginx_ver_list = list(map(lambda x: int(x) if x.isdecimal() else 0, nginx_ver.split('.')[:3]))
+            http_v3 = public.is_nginx_http3()
             is_ipv6 = os.path.exists(public.get_panel_path() + '/data/ipv6.pl')
             stool.set_ssl_port(
                 get.https_port,
                 is_http3=http_v3,
                 is_ipv6=is_ipv6,
-                is_http2on=nginx_ver_list > [1, 25, 0] # 从 1.25.1 开始可用 http2 on; 命令
+                is_http2on=public.nginx_version() > [1, 25, 0] # 从 1.25.1 开始可用 http2 on; 命令
             )
 
         return self._warp_do_func(get, func)
@@ -3813,7 +3886,6 @@ class ProxyProjectV2(main):
 
         get.encoding = "utf-8"
         get.path = public.get_setup_path() + '/panel/vhost/nginx/' + get.site_name + '.conf'
-        public.print_log(get.path)
 
         import files
         f = files.files()
@@ -3936,7 +4008,7 @@ class ProxyProjectV2(main):
             return public.returnResult(status=False, msg="未找到此URL【{}】的代理信息！".format(get.proxy_path))
 
         def func(stool: ServerTools):
-            ltool = stool.get_location(get.proxy_path, create=False)
+            ltool = stool.get_proxy_location(get.proxy_path, create=False)
             if ltool is None:
                 return public.returnResult(status=False, msg="未找到此URL【{}】的代理信息！".format(get.proxy_path))
 
@@ -3952,6 +4024,31 @@ class ProxyProjectV2(main):
 
         return self._warp_do_func(get, func)
 
+    @_warp_check_nginx_conf
+    def set_site_stop(self, get):
+        path = '/www/server/stop'
+        if not os.path.exists(path) or not os.path.isfile(path + '/index.html'):
+            os.makedirs(path)
+            public.downloadFile('{}/stop.html'.format(public.get_url()), path + '/index.html')
+
+        bt_stop = path + '/bt-stop.html'
+        if not os.path.exists(bt_stop):
+            os.symlink(path + '/index.html', bt_stop)
+        if not os.path.islink(bt_stop):
+            os.unlink(bt_stop)
+            os.symlink(path + '/index.html', bt_stop)
+
+        set_status = bool(get.get("status/d", 0))
+
+        def func(stool: ServerTools):
+            stool.set_stop_status(not set_status)
+
+        res = self._warp_do_func(get, func)
+        if not res["status"]:
+            return  res
+
+        public.M('sites').where("name=?", (get.site_name,)).setField('status', str(int(set_status)))
+        return res
 
 
 main = ProxyProjectV2

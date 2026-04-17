@@ -192,17 +192,26 @@ class main(sslBase):
     def create_dns_record(self, get):
         domain_name = get.domain_name
         domain_dns_value = get.domain_dns_value
+        try:
+            records = json.loads(domain_dns_value)
+        except:
+            records = [domain_dns_value]
         remark = get.get("remark", "")
         record_type = 'TXT'
         if 'record_type' in get:
             record_type = get.record_type
-        if record_type == 'TXT':
-            domain_dns_value = "\"{}\"".format(domain_dns_value)
-        if get.record_type == 'MX':
-            if not get.get('mx'):
-                return public.returnMsg(False, 'MX记录类型必须填写MX值')
-            mx = get.mx
-            domain_dns_value = "{} {}".format(mx, domain_dns_value)
+        for i in range(len(records)):
+            record = records[i]
+            if get.record_type == 'MX':
+                if record.split(' ')[0].isdigit():
+                    continue
+                if not get.get('mx'):
+                    return public.returnMsg(False, 'MX记录类型必须填写MX值')
+                try:
+                    mx = int(get.mx)
+                except:
+                    mx = 10
+                records[i] = "{} {}".format(mx, record)
 
         root_domain, sub_domain, _ = self.extract_zone(domain_name)
         if sub_domain == "@":
@@ -214,7 +223,7 @@ class main(sslBase):
             body = json.dumps({
                 "name": domain_name,
                 "type": record_type,
-                "records": [domain_dns_value],
+                "records": records,
                 "description": remark,
             })
 
@@ -293,12 +302,12 @@ class main(sslBase):
                 {
                     "RecordId": i["id"],
                     "name": i["name"][:-1],
-                    "value":'\r\n'.join(i["records"]).split(' ')[-1] if i["type"] == "MX" else '\r\n'.join(i["records"]).replace('"', '') if i["type"] == "TXT" else '\r\n'.join(i["records"]),
+                    "value": i["records"],
                     "line": line_type_dict.get(i["line"], "其它"),
                     "ttl": i["ttl"],
                     "type": i["type"],
                     "status": "启用"if i["status"] == "ACTIVE" else "暂停" if i["status"] == "DISABLE" else i["status"],
-                    "mx": '\r\n'.join(i["records"]).split(' ')[0],
+                    "weight": i.get("weight", "-") or "-",
                     "updated_on": i.get("update_at", ""),
                     "remark": i.get("description") or "",
                 }
@@ -318,17 +327,26 @@ class main(sslBase):
         record_type = get.record_type
         remark = get.get("remark", "")
         domain_dns_value = get.domain_dns_value
+        try:
+            records = json.loads(domain_dns_value)
+        except:
+            records = [domain_dns_value]
         root_domain, sub_domain, _ = self.extract_zone(domain_name)
 
         if sub_domain == "@":
             domain_name = root_domain
-        if get.record_type == 'MX':
-            if not get.get('mx'):
-                return public.returnMsg(False, 'MX记录类型必须填写MX值')
-            mx = get.mx
-            domain_dns_value = "{} {}".format(mx, domain_dns_value)
-        if record_type == 'TXT':
-            domain_dns_value = "\"{}\"".format(domain_dns_value)
+        for i in range(len(records)):
+            record = records[i]
+            if record_type == 'MX':
+                if record.split(' ')[0].isdigit():
+                    continue
+                if not get.get('mx'):
+                    return public.returnMsg(False, 'MX记录类型必须填写MX值')
+                try:
+                    mx = int(get.mx)
+                except:
+                    mx = 10
+                records[i] = "{} {}".format(mx, record)
 
         zone_dic = self.get_zoneid_dict(get.dns_id)
         zone_id = zone_dic[root_domain]
@@ -336,7 +354,7 @@ class main(sslBase):
             body = json.dumps({
                 "name": domain_name,
                 "type": record_type,
-                "records": [domain_dns_value],
+                "records": records,
                 "description": remark,
             })
 

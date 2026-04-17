@@ -159,6 +159,9 @@ class main(panelBase):
         else:
             data['hide_ad'] = False
         data['o'] = public.get_oem_name()
+        from webauthn_util_compatibility import WebAuthn
+        data['passkey_status'] = WebAuthn.is_enabled()
+        data['wechat_login_status'] = os.path.exists('/www/server/panel/data/wechat_login.pl')
         return data
 
     def get_pd(self, get):
@@ -339,7 +342,7 @@ class main(panelBase):
 
         public.restart_panel()
         return public.returnMsg(True, "设置成功")
-    
+
     def get_soft_status(self, get):
         if not hasattr(get, 'name'): return public.returnMsg(False, '参数错误')
         s_status = False
@@ -385,6 +388,25 @@ class main(panelBase):
                         except:
                             pass
 
+
+        sys_server_list=["nginx","mysql","mysqld","php-fpm","mariadbd","mariadb"]
+        if name in sys_server_list:
+            if os.path.exists('/www/server/{}/sys_install.pl'.format(name)):
+                status = True
+                setup = True
+                pids = []
+                for proc in psutil.process_iter():
+                    if name == 'mysql':
+                        if proc.name() == 'mysqld':
+                            pids.append(proc.pid)
+                        if proc.name() == 'mariadbd':
+                            pids.append(proc.pid)
+                    else:
+                        if proc.name() == name:
+                            pids.append(proc.pid)
+                if len(pids) > 0:
+                    s_status = True
+
         if not s_status:
                 other_check = {   # 软件名称 to 进程名称
                     "mysql": "mysqld",
@@ -425,7 +447,7 @@ class main(panelBase):
             'mysql': 'mysqld',
             'apache': 'httpd',
         }
-        
+
         data = {
             "status": status,
             "s_status": s_status,
@@ -438,7 +460,7 @@ class main(panelBase):
             "setup": setup
         }
         return data
-    
+
     def get_xfs_disk(self, get):
         try:
             path = get.path.strip()
@@ -450,7 +472,7 @@ class main(panelBase):
             return public.returnMsg(True, res)
         except Exception as e:
             return public.returnMsg(False, str(e))
-        
+
     def __get_path_dev_mountpoint(self, path: str):
         disk_list = self.__get_xfs_disk()
         disk_list.sort(key=lambda item: (item["mountpoint"].count("/"), len(item["mountpoint"][item["mountpoint"].find("/"):])), reverse=True)
@@ -552,3 +574,151 @@ class main(panelBase):
 
         time.tzset() # 重新加载时区
         return {'status': True, 'msg': "设置成功!"}
+
+    # 首页获取滚动公告
+    def get_panel_notices(self, get):
+        try:
+            import panelPlugin
+            panelPlugin = panelPlugin.panelPlugin()
+            content = panelPlugin.get_cloud_list()["remarks"]["panel_notices"]
+        except:
+            content = []
+        notices = []
+        for notice in content:
+            if notice['name'] == 'newssl_discount':
+                try:
+                    from sslModel import certModel
+                    from datetime import datetime, timezone
+                    data = certModel.main().new_ssl_proxy_request({"url":"/api/v1/ssl/get_user_discount_list","status":0})
+                    if not data['status']:
+                        continue
+                    now = datetime.now()
+                    discount_num = 0
+                    will_end_discount_num = 0
+                    min_end_at = None
+                    for discount in data['data']:
+                        # 解析 GMT 时间
+                        if not discount["end_at"]:
+                            discount_num += 1
+                            continue
+                        target = datetime.strptime(discount["end_at"], "%a, %d %b %Y %H:%M:%S GMT")
+                        if now > target:
+                            continue
+                        if not min_end_at:
+                            min_end_at = target
+                        else:
+                            if target < min_end_at:
+                                min_end_at = target
+                        discount_num += 1
+                        will_end_discount_num += 1
+                    if will_end_discount_num < 1:
+                        continue
+                    notice["content"] = notice['content'].format(discount_num=discount_num, will_end_discount_num=will_end_discount_num)
+                    notices.append(notice)
+                except:
+                    public.print_log(public.get_error_info())
+
+            elif notice['name'] == 'newssl_order':
+                try:
+                    from sslModel import certModel
+                    data = certModel.main().new_ssl_proxy_request({"url":"/api/v1/ssl/get_order_list","p":1,"limit":999,"status":"0"})
+                    if not data['status']:
+                        continue
+                    if data['data']['count'] < 1:
+                        continue
+                    ssl_num = data['data']['count']
+                    ssl_will_expire_num = 0
+                    for ssl in data['data']['data']:
+                        if ssl.get('expire_at', False):
+                            ssl_will_expire_num += 1
+
+                    notice["content"] = notice['content'].format(ssl_num=ssl_num, ssl_will_expire_num=ssl_will_expire_num)
+                    notices.append(notice)
+                except:
+                    pass
+            else:
+                notices.append(notice)
+        # 其他公告直接展示
+        try:
+            notice_risk_ignore = json.loads(public.readFile("/www/server/panel/data/notice_risk_ignore.json"))
+        except:
+            notice_risk_ignore = {}
+        if not notice_risk_ignore.get("root_password_expiry", False):
+            # root密码过期提醒
+            expiry_days = self.root_password_expiry_days()
+            if isinstance(expiry_days, int) and expiry_days < 0:
+                notices.append({
+                    "name": "root_password_expiry",
+                    "title": "root密码过期",
+                    "content": "root密码过期提醒: root密码已过期，请尽快修改root密码以确保系统安全！"
+                })
+            elif isinstance(expiry_days, int) and expiry_days <= 3:
+                notices.append({
+                    "name": "root_password_expiry",
+                    "title": "root密码过期",
+                    "content": "root密码过期提醒: root密码将于{}天后过期，请尽快修改root密码以确保系统安全！".format(expiry_days)
+                })
+
+        return notices
+
+    def root_password_expiry_days(self):
+        import datetime
+        try:
+            with open("/etc/shadow") as f:
+                for line in f:
+                    if line.startswith("root:"):
+                        fields = line.strip().split(":")
+
+                        last_change = fields[2]
+                        max_days = fields[4]
+
+                        # 没设置过期时间
+                        if not max_days or max_days in ["-1", "99999"]:
+                            return "never"
+
+                        last_change = int(last_change)
+                        max_days = int(max_days)
+
+                        epoch = datetime.date(1970, 1, 1)
+                        last_change_date = epoch + datetime.timedelta(days=last_change)
+                        expire_date = last_change_date + datetime.timedelta(days=max_days)
+
+                        today = datetime.date.today()
+                        return (expire_date - today).days
+        except:
+            pass
+        return None
+
+    def check_plugin(self, get):
+        '''
+            @name 检查插件是否安装、版本匹配
+            @param get.name 插件名称
+            @param get.version 插件版本（可选）
+            
+            @return status: 已安装且版本匹配(版本为空时仅校验安装)返回True，否则返回False
+        '''
+        plugin_name = get.get("name", "").strip()
+        plugin_version = get.get("version", "").strip()
+        
+        if not plugin_name:
+            return public.returnMsg(False, "参数错误: 插件名称不能为空")
+        
+        import panelPlugin
+        plu_obj = panelPlugin.panelPlugin()
+        webhook_status = plu_obj.get_soft_find(public.to_dict_obj({'sName':plugin_name}))
+        msg = f"当前{webhook_status.get('title',plugin_name)}插件未安装"
+        res_data = {
+            "install_status": False,
+            "version_status": True
+        }
+        if webhook_status['status']:
+            res_data["install_status"] = True
+            msg=""
+        if public.version_to_tuple(webhook_status.get('version', '')) < public.version_to_tuple(plugin_version):
+            msg = f"当前{webhook_status.get('title',plugin_name)}插件版本过低，请升级到{plugin_version}以上版本"
+            res_data["version_status"] = False
+        
+        return public.return_data(status=res_data["install_status"] and res_data["version_status"], data=res_data,error_msg=msg)
+        
+        
+        

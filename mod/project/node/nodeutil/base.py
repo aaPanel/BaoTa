@@ -569,7 +569,7 @@ class ServerNode:
             else:
                 resp_json = resp.json()
             if not resp_json["status"]:
-                return "上传文件失败，错误信息为:{}".format(resp.json()["msg"])
+                return "上传文件失败，错误信息为:{}".format(resp_json["msg"])
             return ""
         except Exception as e:
             public.print_error()
@@ -768,7 +768,7 @@ class ServerNode:
         except Exception as e:
             return str(e)
 
-    def proxy_transferfile_status(self, task_id: int, call_back: Callable[[Any],None]) -> str:
+    def proxy_transferfile_status(self, task_id: int, exclude_nodes: List[int], the_log_id: int, call_back: Callable[[Any],None]) -> str:
         return self._proxy_websocket(
             call_data={
                 "mod_name": "node",
@@ -777,6 +777,8 @@ class ServerNode:
                 "callback": "node_proxy_transferfile_status",
                 "data": {
                     "task_id": task_id,
+                    "exclude_nodes": exclude_nodes,
+                    "the_log_id": the_log_id
                 }
             },
             uri="ws_modsoc",

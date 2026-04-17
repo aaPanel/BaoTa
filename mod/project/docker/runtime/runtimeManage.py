@@ -283,7 +283,7 @@ class RuntimeManage(Runtime):
                 data = public.readFile(yf)
                 if data:
                     data = yaml.safe_load(data)
-                    data["services"]["{}-python3".format(get.runtime_name)]["environment"][1] = "COMMAND={}".format(get.command)
+                    data["services"]["{}-golang".format(get.runtime_name)]["environment"][0] = "COMMAND={}".format(get.command)
                     public.writeFile(yf, yaml.dump(data))
         except:
             public.ExecShell("sed -i 's/:COMMAND:/{}/g' {}/*.yml".format(get.command, self.project_path))
@@ -337,7 +337,7 @@ class RuntimeManage(Runtime):
                 data = public.readFile(yf)
                 if data:
                     data = yaml.safe_load(data)
-                    data["services"]["{}-python3".format(get.runtime_name)]["environment"][1] = "COMMAND={}".format(get.command)
+                    data["services"]["{}-java".format(get.runtime_name)]["environment"][0] = "COMMAND={}".format(get.command)
                     public.writeFile(yf, yaml.dump(data))
         except:
             public.ExecShell("sed -i 's/:COMMAND:/{}/g' {}/*.yml".format(get.command, self.project_path))

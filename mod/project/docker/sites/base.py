@@ -222,7 +222,10 @@ h1{
             "index_conf": "index.php index.html index.htm default.php default.htm default.html",
             "redirect_conf_404": "",
             "stop_site": False,
-            "stop_site_conf": "    location / {\n        try_files $uri /index.html;\n    }",
+            "stop_site_conf": '''rewrite ^/(?!bt-stop\.html$).* /bt-stop.html last;
+    location = /bt-stop.html { # 网站停止，并设置网站停止页面
+        root /www/server/stop;
+    }''',
             "proxy_info": [],
             "classify": 0,
         }
@@ -294,9 +297,14 @@ server {{
     {server_block}
     #SERVER-BLOCK END
 
-    #禁止访问的文件或目录
-    location ~ ^/(\.user.ini|\.htaccess|\.git|\.env|\.svn|\.project|LICENSE|README.md)
+    # 禁止访问的敏感文件
+    location ~* (\.user.ini|\.htaccess|\.htpasswd|\.env.*|\.project|\.bashrc|\.bash_profile|\.bash_logout|\.DS_Store|\.gitignore|\.gitattributes|LICENSE|README\.md|CLAUDE\.md|CHANGELOG\.md|CHANGELOG|CONTRIBUTING\.md|TODO\.md|FAQ\.md|composer\.json|composer\.lock|package(-lock)?\.json|yarn\.lock|pnpm-lock\.yaml|\.\w+~|\.swp|\.swo|\.bak(up)?|\.old|\.tmp|\.temp|\.log|\.sql(\.gz)?|docker-compose\.yml|docker\.env|Dockerfile|\.csproj|\.sln|Cargo\.toml|Cargo\.lock|go\.mod|go\.sum|phpunit\.xml|phpunit\.xml|pom\.xml|build\.gradl|pyproject\.toml|requirements\.txt|application(-\w+)?\.(ya?ml|properties))$
     {{
+        return 404;
+    }}
+    
+    # 禁止访问的敏感目录
+    location ~* /(\.git|\.svn|\.bzr|\.vscode|\.claude|\.idea|\.ssh|\.github|\.npm|\.yarn|\.pnpm|\.cache|\.husky|\.turbo|\.next|\.nuxt|node_modules|runtime)/ {{
         return 404;
     }}
 
@@ -877,7 +885,7 @@ server {{
                 ) + "\n    "
 
         if get.proxy_json_conf["ssl_info"]["ssl_status"]:
-            if public.ExecShell("nginx -V 2>&1| grep 'http_v3_module' -o")[0] != "":
+            if public.is_nginx_http3():
                 ipv4_http3_ssl_port_conf = get.proxy_json_conf["ipv4_http3_ssl_port_conf"].format(
                     ipv4_port_conf=ipv4_port_conf,
                     https_port=get.proxy_json_conf["https_port"],
@@ -890,7 +898,7 @@ server {{
                         https_port=get.proxy_json_conf["https_port"],
                         default_site=default_server,
                     ) + "\n    "
-                port_conf = ipv4_http3_ssl_port_conf + ipv6_http3_ssl_port_conf + "\n    http2 on;"
+                port_conf = ipv4_http3_ssl_port_conf + ipv6_http3_ssl_port_conf + "\n    http2 on;\n    http3 on;"
             else:
                 ipv4_ssl_port_conf = get.proxy_json_conf["ipv4_ssl_port_conf"].format(
                     ipv4_port_conf=ipv4_port_conf,
@@ -911,6 +919,11 @@ server {{
                     site_name=get.site_name,
                     force_conf=get.proxy_json_conf["ssl_info"]["force_conf"]
                 )
+            if public.is_nginx_http3():
+                http3_header = '''\n    add_header Alt-Svc 'quic=":443"; h3=":443"; h3-29=":443"; h3-27=":443";h3-25=":443"; h3-T050=":443"; h3-Q050=":443";h3-Q049=":443";h3-Q048=":443"; h3-Q046=":443"; h3-Q043=":443"';'''
+                ssl_conf += http3_header + "\n    quic_retry on;\n    quic_gso on;"
+                if public.ng_ssl_early_data_enabled():
+                    ssl_conf += "\n    ssl_early_data on;"
         else:
             port_conf = ipv4_port_conf + "\n" + ipv6_port_conf
 
@@ -951,7 +964,7 @@ server {{
                 sites_data = json.loads(public.readFile("/www/server/monitor/config/sites.json"))
 
                 if sites_data[get.site_name]["open"]:
-                    id = public.M('docker_domain').where("name=?", (get.site_name,)).getField('id')
+                    id = public.M('docker_domain').where("name=?", (get.site_name,)).getField('pid')
                     if id:
                         monitor_conf = '''#Monitor-Config-Start 网站监控报表日志发送配置
         access_log syslog:server=unix:/tmp/bt-monitor.sock,nohostname,tag=dp{sid}__access {log_format};
@@ -982,7 +995,7 @@ server {{
             rewrite_start_msg=public.getMsg('NGINX_CONF_MSG4'),
             rewrite_conf=get.proxy_json_conf["rewrite_conf"],
             redirect_conf_404=get.proxy_json_conf["redirect_conf_404"],
-            domains=' '.join(get.proxy_json_conf["domain_list"]) if len(get.proxy_json_conf["domain_list"]) > 1 else get.site_name,
+            domains=' '.join(get.proxy_json_conf["domain_list"]) if len(get.proxy_json_conf["domain_list"]) > 0 else get.site_name,
             site_name=get.site_name,
             ssl_info=ssl_conf,
             err_age_404=get.proxy_json_conf["err_age_404"],

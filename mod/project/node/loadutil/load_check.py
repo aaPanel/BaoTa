@@ -15,22 +15,22 @@ def check_http_node(node:HttpNode, main_domain, log_call:Callable[[str], None]) 
         return "无法连接到目标节点的机器"
     if srv.is_local:
         return _check_local_http_node(node, main_domain, log_call)
+    if node.node_site_id != -1:
+        if not node.node_site_id:
+            log_call("负载服务节点：{}不存在，即将在目标机器创建网站！".format(node.node_site_name))
+            site_id, err = srv.create_php_site(node.node_site_name, node.port)
+            if err:
+                return "无法在目标节点{}的机器创建网站：{}".format(srv.show_name(), err)
 
-    if not node.node_site_id:
-        log_call("负载服务节点：{}不存在，即将在目标机器创建网站！".format(node.node_site_name))
-        site_id, err = srv.create_php_site(node.node_site_name, node.port)
-        if err:
-            return "无法在目标节点{}的机器创建网站：{}".format(srv.show_name(), err)
+            node.node_site_id = site_id
+            log_call("成功创建网站：{}".format(node.node_site_name))
 
-        node.node_site_id = site_id
-        log_call("成功创建网站：{}".format(node.node_site_name))
-
-    if srv and node.node_site_name != main_domain and main_domain!="" and not srv.has_domain(node.node_site_id, main_domain):
-        log_call("负载服务节点：{}的域名与主域名不一致，即将把主域名添加至目标机器".format(node.node_site_name))
-        flag, msg = srv.add_domain(node.node_site_id, node.node_site_name, main_domain, node.port)
-        if not flag:
-            return "无法在目标节点{}的机器更新域名".format(srv.show_name())
-        log_call("成功更新域名：{}".format(node.node_site_name))
+        if srv and node.node_site_name != main_domain and main_domain!="" and not srv.has_domain(node.node_site_id, main_domain):
+            log_call("负载服务节点：{}的域名与主域名不一致，即将把主域名添加至目标机器".format(node.node_site_name))
+            flag, msg = srv.add_domain(node.node_site_id, node.node_site_name, main_domain, node.port)
+            if not flag:
+                return "无法在目标节点{}的机器更新域名".format(srv.show_name())
+            log_call("成功更新域名：{}".format(node.node_site_name))
 
     log_call("开始检查负载服务节点：{}访问情况".format(node.node_site_name))
     if not RequestChecker.check_http_node(node):

@@ -1113,6 +1113,8 @@ class main(dockerBase):
                     if item["Driver"] == "nvidia":
                         sk_container_info["gpu_count"] = item["Count"]
                         break
+            sk_container_info['from_compose'] = 1 if sk_container_info.get("Config",{}).get("Labels", {}).get("com.docker.compose.project", "") != "" else 0
+            
             return sk_container_info
         except Exception as e:
             if "No such container" in str(e):

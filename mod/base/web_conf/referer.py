@@ -477,7 +477,7 @@ class Referer:
             if not isinstance(domains_info, list):
                 return json_response(status=False, msg="站点查询错误")
 
-            default_conf["domains"] = ",".join(map(lambda x: x["name"], domains_info))
+            default_conf["domains"] = ",".join(set(map(lambda x: x["name"], domains_info)))
             return json_response(status=True, data=default_conf)
 
         if isinstance(data["status"], str):

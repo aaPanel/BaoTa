@@ -6,13 +6,13 @@ Nginx配置解析器 - Python版本
 """
 
 import re
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Callable
 import glob
 import os
 
 # 导入基础类和接口
 from .nginx_base import (
-    TokenType, Token, Style, INDENTED_STYLE,
+    TokenType, Token, Style, INDENTED_STYLE, IBlock, IDirective,
     IDirective, IBlock, Directive, Block, trans_
 )
 
@@ -216,8 +216,19 @@ class Lexer:
 
 # 关于非行内注释的解析， 我们仅将命令的前n行(默认为1)作为该指令的注释，如果有>n的情况，则生成纯注释指令
 class Parser:
-    """语法分析器"""
-    def __init__(self, lexer: Lexer, parse_include: bool=False, comment_line_count: int=1):
+    """语法分析器
+    ps: 在使用到 extension/btnginx 请保障comment_line_count==1
+    """
+    def __init__(self, lexer: Lexer, parse_include: bool=False, comment_line_count: int=1, main_config_path:str=None):
+        self.main_cwd = None
+        if main_config_path:
+            if os.path.isfile(main_config_path):
+                self.main_cwd  = os.path.dirname(os.path.abspath(main_config_path))
+            elif os.path.isdir(main_config_path):
+                self.main_cwd = os.path.abspath(main_config_path)
+            else:
+                raise ValueError("主配置文件路径错误, {} 文件或目录不存在".format(main_config_path))
+
         self.lexer = lexer
         self.current_token = self.lexer.next_token()
         self.following_token = self.lexer.next_token()
@@ -226,6 +237,11 @@ class Parser:
         self.parse_include = parse_include
         # 缓存已经解析的include文件 key:文件绝对路径 value:Config
         self.parsed_includes: Dict[str, Config] = dict()
+        self._skip_include_func = lambda x: False
+
+    # 当设置了跳过include函数时， 解析include时，如果返回True则跳过
+    def set_skip_include_func(self, func: Callable[[str],bool]):
+        self._skip_include_func = func
 
     def _update_parsed_includes(self, **kwargs):
         self.parsed_includes.update(**kwargs)
@@ -284,17 +300,24 @@ class Parser:
 
                 context.directives.append(statement)
             elif self._current_token_is(TokenType.COMMENT):
-                if len(self.comment_buffer) >= self.comment_line_count:
-                    other, self.comment_buffer = self.comment_buffer[0], self.comment_buffer[1:]
+                if self.comment_line_count == 0:
                     context.directives.append(Directive(
                         name="",
                         parameters=[],
-                        comment=[other],
-                        line=self.current_token.line - self.comment_line_count
+                        comment=[self.current_token.literal],
+                        line=self.current_token.line
                     ))
+                else:
+                    if len(self.comment_buffer) >= self.comment_line_count:
+                        other, self.comment_buffer = self.comment_buffer[0], self.comment_buffer[1:]
+                        context.directives.append(Directive(
+                            name="",
+                            parameters=[],
+                            comment=[other],
+                            line=self.current_token.line - self.comment_line_count
+                        ))
 
-                self.comment_buffer.append(self.current_token.literal)
-
+                    self.comment_buffer.append(self.current_token.literal)
 
             self._next_token()
         if self.comment_buffer:
@@ -398,24 +421,31 @@ class Parser:
         include_path = icl.include_path
         # 绝对路径
         if not os.path.isabs(include_path):
+            if not self.main_cwd:
+                raise ValueError(f"无法解析文件路径: {include_path} (请指定主配置文件所在目录)")
             # 以主配置文件所在目录为基准
-            base_dir = os.path.dirname(self.lexer.file_path)
-            include_path = os.path.abspath(os.path.join(base_dir, include_path))
+            include_path = os.path.abspath(os.path.join(self.main_cwd, include_path))
         # glob 匹配
         paths = glob.glob(include_path)
         for path in paths:
-            abs_path = os.path.abspath(path)
-            if self.parsed_includes is not None and abs_path in self.parsed_includes:
-                config = self.parsed_includes[abs_path]
+            real_path = os.path.realpath(path)
+            if real_path in self.parsed_includes:
+                config = self.parsed_includes[real_path]
             else:
+                # 当设置了跳过include函数时，如果返回True则跳过
+                if self._skip_include_func and self._skip_include_func(real_path):
+                    continue
                 # 递归解析
-                with open(abs_path, 'r', encoding='utf-8') as f:
+                with open(real_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-                lexer = Lexer(content.replace('\r\n', '\n'), abs_path)
-                parser = Parser(lexer, parse_include=self.parse_include)
-                parser._update_parsed_includes(**self.parsed_includes)
-                config = parser.parse()
-                self._update_parsed_includes(**parser.parsed_includes)
+                lexer = Lexer(content.replace('\r\n', '\n'), real_path)
+                sub_parser = Parser(lexer, parse_include=self.parse_include,
+                                main_config_path=self.main_cwd, comment_line_count=self.comment_line_count)
+                # 子配置文件include解析与父配置文件include解析共享同一个字典缓存
+                sub_parser.parsed_includes = self.parsed_includes
+                sub_parser._skip_include_func = self._skip_include_func
+                config = sub_parser.parse()
+                self.parsed_includes[real_path] = config
             icl.configs.append(config)
         return icl
 
@@ -516,7 +546,7 @@ def dump_directive(directive: IDirective, style: Style) -> str:
         return ''.join(buf)
 
 
-def dump_block(block: IBlock, style: Style) -> str:
+def dump_block(block: IBlock, style: Style=INDENTED_STYLE) -> str:
     # 支持排序
     directives = block.get_directives()
     buf = []
@@ -539,20 +569,23 @@ def write_config(config: Config, style: Style) -> None:
         f.write(content)
 
 
-def parse_string(content: str, parse_include: bool = False) -> Config:
+def parse_string(content: str, parse_include: bool = False, comment_line_count: int = 1) -> Config:
     """从字符串解析配置"""
     lexer = Lexer(content.replace('\r\n', '\n'))
-    parser = Parser(lexer, parse_include)
+    parser = Parser(lexer, parse_include, comment_line_count=comment_line_count)
     return parser.parse()
 
 
-def parse_file(file_path: str, parse_include: bool = False) -> Config:
+def parse_file(file_path: str,
+               parse_include: bool = False,
+               main_config_path: str = None, # 主配置文件路径，在解析include时十分必要，用于定位include文件的相对路径
+               comment_line_count: int = 1) -> Config:
     """从文件解析配置"""
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
     lexer = Lexer(content.replace('\r\n', '\n'), file_path)
-    parser = Parser(lexer, parse_include)
+    parser = Parser(lexer, parse_include, comment_line_count=comment_line_count, main_config_path=main_config_path)
     return parser.parse()
 
 

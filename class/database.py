@@ -141,6 +141,7 @@ class database(datatool.datatools):
         self.panel_path = '/www/server/panel'
         self.migrate_file(self.panel_path)
         self.filepath="{}/data/database_types.json".format(self.panel_path)
+        self.system_mysql_pl_file='/www/server/mysql/sys_install.pl'
     # 兼容旧的分类文件   
     def migrate_file(self,panel_path):
         import shutil
@@ -302,7 +303,12 @@ class database(datatool.datatools):
                 # 添加分类，使用server中的id
                 if server['db_host'] == '127.0.0.1':
                     # 本地服务器分类
-                    special_types.append({"id": server['id'], "ps": "本地服务器", "db_type": db_type})
+                    ps = "本地服务器"
+                    if server.get("ps","") and server["ps"] != "本地服务器":
+                        if "mysql" in server["ps"]:
+                            ps = "docker数据库({})".format(server["ps"])
+
+                    special_types.append({"id": server['id'], "ps": ps, "db_type": db_type})
                 else:
                     # 远程服务器分类
                     special_types.append({"id": server['id'], "ps": server['db_host'], "db_type": db_type})
@@ -2248,7 +2254,6 @@ SetLink
         # users = mysql_obj.query("select Host from mysql.user where User='" + name + "' AND Host!='localhost'")
         sql = "select Host from mysql.user where User=%s AND Host!='localhost'"
         users = mysql_obj.query(sql, param=(name,))
-        
         isError = self.IsSqlError(users)
         if isError != None: return isError
         users = self.map_to_list(users)
@@ -2299,6 +2304,8 @@ SetLink
 
     # 获取数据库配置信息
     def GetMySQLInfo(self, get):
+        if os.path.exists(self.system_mysql_pl_file):
+            return public.returnMsg(False, '此功能暂时只支持面板软件商店安装的mysql！')
         data = {}
         try:
             public.CheckMyCnf()
@@ -2430,6 +2437,9 @@ SetLink
 
     # 获取错误日志
     def GetErrorLog(self, get):
+        if os.path.exists(self.system_mysql_pl_file):
+            return public.returnMsg(False, '此功能暂时只支持面板软件商店安装的mysql！')
+        
         path = self.GetMySQLInfo(get)['datadir']
         if not os.path.exists(path):
             return public.returnMsg(False, '数据库目录不存在，请检查Mysql是否安装正常')
@@ -2473,6 +2483,9 @@ SetLink
 
     # 二进制日志开关
     def BinLog(self, get):
+        if os.path.exists(self.system_mysql_pl_file):
+            return public.returnMsg(False, '此功能暂时只支持面板软件商店安装的mysql！')
+
         status = getattr(get, "status", None)
         mysql_cnf = public.readFile(self._MYSQL_CNF)
 
@@ -2534,6 +2547,9 @@ SetLink
 
     # 获取MySQL配置状态
     def GetDbStatus(self, get):
+        if os.path.exists(self.system_mysql_pl_file):
+            return public.returnMsg(False, '此功能暂时只支持面板软件商店安装的mysql！')
+        
         result = {}
         data = self.map_to_list(panelMysql.panelMysql().query('show variables'))
         gets = ['bt_mysql_set', 'bt_mem_size', 'bt_query_cache_size', 'table_open_cache', 'thread_cache_size',
@@ -2680,12 +2696,17 @@ SetLink
 
     # 取慢日志
     def GetSlowLogs(self, get):
+        if os.path.exists(self.system_mysql_pl_file):
+            return public.returnMsg(False, '此功能暂时只支持面板软件商店安装的mysql！')
         path = self.GetMySQLInfo(get)['datadir'] + '/mysql-slow.log'
         if not os.path.exists(path): return public.returnMsg(False, '日志文件不存在!')
         return public.returnMsg(True, public.xsssec(public.GetNumLines(path, 100)))
 
     # 获取binlog文件列表
     def GetMySQLBinlogs(self, get):
+        if os.path.exists(self.system_mysql_pl_file):
+            return public.returnMsg(False, '此功能暂时只支持面板软件商店安装的mysql！')
+        
         data_dir = self.GetMySQLInfo(get)["datadir"]
         index_file = os.path.join(data_dir, "mysql-bin.index")
         if not os.path.exists(index_file): return public.returnMsg(False, '未开启binlog或者日志文件不存在!')
@@ -3928,6 +3949,10 @@ USE \`{db_name}\`;
             return public.returnMsg(False, "获取失败" + str(e))
         
     def mysql_oom_adj(self,get):
+
+        if os.path.exists(self.system_mysql_pl_file):
+            return public.returnMsg(False, '此功能暂时只支持面板软件商店安装的mysql！')
+        
         if not hasattr(get, "status"):
             oom_score_adj_value=None
         else:
@@ -4337,3 +4362,116 @@ USE \`{db_name}\`;
         if not os.path.exists(path): return public.returnMsg(False, '日志文件不存在!')
         return public.returnMsg(True, public.xsssec(public.GetNumLines(path, 100)))
         
+
+    def InitSystemMysql(self,get=None):
+        """
+        初始化系统MySQL配置
+        - 查找并链接mysql二进制文件
+        - 查找并链接mysql.pid和mysql.sock文件
+        - 检测MySQL/MariaDB版本并写入配置文件
+        """
+        try:
+
+            root_password = get.root_password
+            if not root_password:
+                return public.returnMsg(False, "缺少参数！root_password")
+
+            # 创建MySQL目录
+            mysql_base_dir = "/www/server/mysql"
+            public.ExecShell("mkdir -p {}".format(mysql_base_dir))
+            
+            # 查找并链接mysql二进制文件
+            mysql_bin_paths = ["/usr/bin/mysql", "/usr/local/mysql/bin/mysql","/usr/sbin/mysql"]
+            mysql_bin_found = False
+
+
+            for mysql_bin in mysql_bin_paths:
+                if os.path.isfile(mysql_bin):
+                    mysql_shell_exe = "mysql -uroot -p{} -e 'SELECT 1;'".format(root_password)
+                    result = public.ExecShell(mysql_shell_exe)
+                    if not "1" in result[0]:
+                        return public.returnMsg(False, "root密码错误，请检查密码是否正确！".format(result[0]))
+                    
+                    public.M('config').where("id=?", (1,)).setField('mysql_root', root_password)
+                    session['config']['mysql_root'] = root_password
+                    
+                    bin_dir = os.path.join(mysql_base_dir, "bin")
+                    public.ExecShell("mkdir -p {}".format(bin_dir))
+                    target_bin = os.path.join(bin_dir, "mysql")
+                    public.ExecShell("ln -sf {} {}".format(mysql_bin, target_bin))
+                    mysql_bin_found = True
+                    break
+            
+            if not mysql_bin_found:
+                return public.returnMsg(False, "未找到MySQL二进制文件")
+            
+            # mysql_pid_paths = [
+            #     "/var/run/mysqld/mysqld.pid",
+            #     "/run/mysqld/mysqld.pid",
+            #     "/run/mysqld.pid"
+            # ]
+            
+            # for mysql_pid in mysql_pid_paths:
+            #     if os.path.isfile(mysql_pid):
+            #         pid_dir = os.path.join(mysql_base_dir, "pid")
+            #         public.ExecShell("mkdir -p {}".format(pid_dir))
+            #         public.ExecShell("ln -sf {} /tmp/mysql.pid".format(mysql_pid))
+            #         break
+            
+            # 查找并链接mysql.sock文件
+            mysql_sock_paths = [
+                "/var/run/mysqld/mysqld.sock",
+                "/run/mysqld/mysqld.sock",
+                "/run/mysqld.sock",
+                "/var/lib/mysql/mysql.sock"
+            ]
+            
+            for mysql_sock in mysql_sock_paths:
+                if os.path.exists(mysql_sock):
+                    public.ExecShell("ln -sf {} /tmp/mysql.sock".format(mysql_sock))
+                    break
+
+
+            # 获取MySQL版本信息
+            version_output = public.ExecShell("mysql -V 2>&1")
+            if version_output[1]:  # 如果有错误
+                return public.returnMsg(False, "Error: mysql命令未找到或执行失败")
+            
+            version_str = version_output[0].strip()
+            version = ""
+            version_check = ""
+            
+            # 检查是否为MariaDB
+            if "MariaDB" in version_str or "mariadb" in version_str.lower():
+                # 提取MariaDB版本
+                match = re.search(r'(\d+\.\d+\.\d+)-MariaDB', version_str)
+                if match:
+                    version_num = match.group(1)
+                    version = "mariadb_{}".format(version_num)
+                    version_check = "{}-MariaDB".format(version_num)
+                    print("Detected MariaDB: {}".format(version_str))
+            else:
+                # 提取MySQL版本
+                match = re.search(r'(\d+\.\d+\.\d+)', version_str)
+                if match:
+                    version = match.group(1)
+                    version_check = version
+                    print("Detected MySQL: {}".format(version_str))
+            
+            if not version:
+                return public.returnMsg(False, "无法解析MySQL版本信息")
+            
+            # 写入version.pl文件
+            version_pl_path = os.path.join(mysql_base_dir, "version.pl")
+            public.writeFile(version_pl_path, version)
+            
+            # 写入version_check.pl文件
+            version_check_pl_path = os.path.join(mysql_base_dir, "version_check.pl")
+            public.writeFile(version_check_pl_path, version_check)
+
+            public.ExecShell("echo 'Ture' > /www/server/mysql/sys_install.pl")            
+
+            return public.returnMsg(True, "MySQL初始化成功，版本: {}".format(version))
+            
+        except Exception as e:
+            return public.returnMsg(False, "初始化失败: {}".format(str(e)))

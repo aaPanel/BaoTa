@@ -1,5 +1,7 @@
 #!/bin/bash
 pyversion=${1}
+need_openssl111check=${2}
+extended_args=${3}
 py_path=/www/server/pyporject_evn/versions
 py_cache=/www/server/pyporject_evn/versions/cached
 cpuCore=$(cat /proc/cpuinfo |grep "physical id"|sort |uniq|wc -l)
@@ -19,8 +21,11 @@ install_python() {
     else
       WITH_SSL=""
     fi
+    if [[ "$need_openssl111check"=="not_check_openssl" ]]; then
+      WITH_SSL=""
+    fi
     cd /tmp/Python-${pyversion} || exit
-    ./configure --prefix=${py_path}/${pyversion} ${WITH_SSL} -with-openssl-rpath=auto
+    ./configure --prefix=${py_path}/${pyversion} ${WITH_SSL} -with-openssl-rpath=auto ${extended_args}
     make -j${cpuCore}
     make install
     rm -rf /tmp/Python-*

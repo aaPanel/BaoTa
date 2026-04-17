@@ -502,7 +502,7 @@ class main():
                 cache_suffix_list.append(tmp_suffix)
         real_cache_suffix = ",".join(cache_suffix_list)
         if not real_cache_suffix:
-            real_cache_suffix = "css,js,jpe,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map"
+            real_cache_suffix = "css,js,jpg,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map"
 
         node_db = NodeDB()
         load, err = node_db.get_load(load_id)

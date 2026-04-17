@@ -11,8 +11,9 @@ import simple_websocket
 from mod.base import json_response, list_args
 from mod.project.node.nodeutil import ServerNode, LocalNode, LPanelNode, SSHApi
 from mod.project.node.dbutil import Script, CommandLog, TaskFlowsDB, CommandTask, ServerNodeDB, TransferTask, \
-    ServerMonitorRepo, Flow
-from mod.project.node.task_flow import self_file_running_log, flow_running_log, flow_useful_version
+    ServerMonitorRepo, Flow, FlowTemplates
+from mod.project.node.task_flow import self_file_running_log, flow_running_log, flow_useful_version, file_task_run_sync, \
+    command_task_run_sync
 
 import public
 
@@ -350,6 +351,8 @@ class main:
         transfer_task_data["step_index"] = 0
         transfer_task_data["src_node"] = {"name": "local"}
         transfer_task_data["src_node_task_id"] = 0
+        if not isinstance(transfer_task_data["dst_nodes"], dict):
+            return json_response(status=False, msg="请升级升级您当前使用的主节点面板版本")
 
         fdb = TaskFlowsDB()
         tt = TransferTask.from_dict(transfer_task_data)
@@ -376,10 +379,17 @@ class main:
             return json_response(False, "请使用 WebSocket 连接")
 
         task_id = get.get('task_id/d', 0)
+        exclude_nodes = list_args(get, "exclude_nodes")
+        the_log_id = get.get('the_log_id/d', 0)
         if not task_id:
             ws.send(json.dumps({"type": "end", "msg": "任务ID不能为空"}))
             ws.send("{}")
             return
+
+        try:
+            exclude_nodes = [int(i) for i in exclude_nodes]
+        except:
+            exclude_nodes = []
 
         fdb = TaskFlowsDB()
         task = fdb.TransferTask.get_byid(task_id)
@@ -387,8 +397,19 @@ class main:
             ws.send(json.dumps({"type": "end", "msg": "任务不存在"}))
             ws.send("{}")
             return
+        if the_log_id: # 单任务重试
+            res_data = file_task_run_sync(task_id, the_log_id)
+            if isinstance(res_data, str):
+                ws.send(json.dumps({"type": "error", "msg": res_data}))
+                ws.send("{}")
+            else:
+                ws.send(json.dumps({"type": "end", "data": res_data}))
+                ws.send("{}")
+            fdb.close()
+            return
+
         if task.status in (0, 3):  # 初次执行 或 出错后再次尝试
-            pid = cls._start_task("file", task_id)
+            pid = cls._start_task("file", task_id, exclude_nodes=exclude_nodes)
         elif task.status == 2: # 运行成功了， 获取历史数据并返回
             ret = fdb.history_transferfile_task(task_id)
             ws.send(json.dumps({"type": "end", "data": ret}))
@@ -450,9 +471,9 @@ class main:
             ws.send(json.dumps({"type": "error", "msg": "流程数据格式错误"}))
             return
 
-        strategy = {}
-        if "run_when_error" in get and get.run_when_error in ("1", "true", 1, True):
-            strategy["run_when_error"] = True
+        strategy = {"run_when_error": True}
+        if "exclude_when_error" in get and get.exclude_when_error not in ("1", "true", 1, True):
+            strategy["exclude_when_error"] = False
 
         has_cmd_task = False
         data_src_node = []
@@ -510,12 +531,13 @@ class main:
         err = flow_running_log(flow.id, update_status)
         if err:
             ws.send(json.dumps({"type": "error", "msg": err}))
-
+        # flow_data = fdb.history_flow_task(flow.id)
+        # ws.send(json.dumps({"type": "data", "data": flow_data}))
         ws.send(json.dumps({"type": "end", "msg": "任务结束"}))
         return
 
     @classmethod
-    def _start_task(cls, task_type: str, task_id: int) -> Optional[int]:
+    def _start_task(cls, task_type: str, task_id: int, exclude_nodes: List[int]=None) -> Optional[int]:
         pid_file = "{}/logs/executor_log/{}_{}_0.pid".format(public.get_panel_path(), task_type, task_id)
         if os.path.exists(pid_file):
             pid = int(public.readFile(pid_file))
@@ -523,9 +545,20 @@ class main:
                 return pid
 
         script_py = "{}/script/node_command_executor.py".format(public.get_panel_path())
-        public.ExecShell("nohup {} {} {} {} > /dev/null 2>&1 &".format(
-            public.get_python_bin(), script_py, task_type, task_id)
-        )
+        cmd = [
+            public.get_python_bin(), script_py,
+           "--task_type={}".format(task_type),
+           "--task_id={}".format(task_id),
+           ]
+
+        exclude_nodes = exclude_nodes or []
+        if exclude_nodes:
+            exclude_nodes = [str(i) for i in exclude_nodes if i]
+            exclude_nodes_str = "'{}'".format(",".join(exclude_nodes))
+            cmd.append("--exclude_nodes={}".format(exclude_nodes_str))
+
+        cmd_str = "nohup {} > /dev/null 2>&1 &".format(" ".join(cmd))
+        public.ExecShell(cmd_str)
         for i in range(60):
             if os.path.exists(pid_file):
                 pid = int(public.readFile(pid_file))
@@ -718,6 +751,25 @@ class main:
         ws.send(json.dumps({"type": "end", "msg": "任务结束"}))
         return
 
+    # 重试某个单一任务, 如：单机器文件上传或单机器命令执行
+    @staticmethod
+    def retry_flow_task(get):
+        task_type = get.get("task_type/s", "")
+        task_id = get.get("task_id/d", 0)
+        log_id = get.get("log_id/d", 0)
+        if not task_type or not task_id or not log_id:
+            return json_response(status=False, msg="参数错误")
+        if task_type not in ("file", "command"):
+            return json_response(status=False, msg="参数错误")
+        if task_type == "file":
+            ret = file_task_run_sync(task_id, log_id)
+        else:
+            ret = command_task_run_sync(task_id, log_id)
+        if isinstance(ret, str):
+            return json_response(status=False, msg=ret)
+        return json_response(status=True, msg="任务已重试", data=ret)
+
+
     @staticmethod
     def stop_flow(get):
         flow_id = get.get("flow_id/d", 0)
@@ -758,7 +810,6 @@ class main:
                 res["err"] = err
             ret.append(res)
 
-
         th_list = []
         for i in node_ids:
             n = nodes_db.get_node_by_id(i)
@@ -782,7 +833,71 @@ class main:
 
         return json_response(status=True, data=ret)
 
+    @staticmethod
+    def create_flow_template(get):
+        err = FlowTemplates.check(get)
+        if err:
+            return json_response(status=False, msg=err)
+        s = FlowTemplates.from_dict(get)
+        # 查重
+        e_db = TaskFlowsDB()
+        if e_db.FlowTemplate.find("name = ?", (s.name,)):
+            return json_response(status=False, msg="脚本名称已存在")
+        err = e_db.FlowTemplate.create(s)
+        if isinstance(err, str):
+            return json_response(status=False, msg=err)
+        e_db.close()
+        return json_response(status=True, msg="创建成功", data=s.to_dict())
 
+    @staticmethod
+    def modify_flow_template(get):
+        err = FlowTemplates.check(get)
+        if err:
+            return json_response(status=False, msg=err)
+        e_db = TaskFlowsDB()
+        ft = FlowTemplates.from_dict(get)
+        if not ft.id:
+            return json_response(status=False, msg="请选择要修改的模板")
+        if not e_db.FlowTemplate.get_byid(ft.id):
+            return json_response(status=False, msg="模板不存在")
+        err = e_db.FlowTemplate.update(ft)
+        if isinstance(err, str) and  err:
+            return json_response(status=False, msg=err)
+        e_db.close()
+        return json_response(status=True, msg="修改成功", data=ft.to_dict())
 
+    @staticmethod
+    def delete_flow_template(get):
+        e_db = TaskFlowsDB()
+        if not get.get("id/d", 0):
+            return json_response(status=False, msg="脚本ID不能为空")
+        try:
+            del_id = int(get.id)
+        except:
+            return json_response(status=False, msg="脚本ID格式错误")
+
+        e_db.FlowTemplate.delete(del_id)
+        return json_response(status=True, msg="删除成功")
+
+    @staticmethod
+    def get_flow_template_list(get):
+        page_num = max(int(get.get('p/d', 1)), 1)
+        limit = max(int(get.get('limit/d', 16)), 1)
+        search = get.get('search', "").strip()
+
+        where_list, params = [], []
+        if search:
+            where_list.append("(name like ? or key_words like ? or description like ?)")
+            params.append("%{}%".format(search))
+            params.append("%{}%".format(search))
+            params.append("%{}%".format(search))
+
+        where = " and ".join(where_list)
+        e_db = TaskFlowsDB()
+        data_list = e_db.FlowTemplate.query_page(where, (*params,), page_num=page_num, limit=limit)
+        count = e_db.FlowTemplate.count(where, params)
+        page = public.get_page(count, page_num, limit)
+        page["data"] = [i.to_dict() for i in data_list]
+        return page
 
 

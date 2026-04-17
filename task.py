@@ -11,6 +11,7 @@
 # 面板后台任务
 # ------------------------------
 import heapq
+import re
 import sys
 import os
 import psutil
@@ -26,7 +27,7 @@ import pickle
 from multiprocessing import Process
 from datetime import datetime, timezone, timedelta
 from collections import namedtuple
-from typing import Optional, Dict, List, Any, Tuple
+from typing import Optional, Dict, List, Any, Tuple, Callable
 
 os.environ['BT_TASK'] = '1'
 SETUP_PATH = '/www/server'
@@ -2157,6 +2158,16 @@ class _SoftService:
                     if not os.path.exists(filename):
                         return 0, '安装失败,文件不存在:{}'.format(filename)
 
+            if "log" in soft_config and soft_config['log']:
+                log_data = read_file(EXEC_LOG_PATH) or ""
+                for log_rule in soft_config['log']:
+                    try:
+                        regexp = re.compile(log_rule['regexp'])
+                        if regexp.search(log_data):
+                            return int(log_rule['status']), log_rule['msg']
+                    except:
+                        pass
+
             # 检查pid文件是否有效
             if 'pid' in soft_config and soft_config['pid']:
                 pid_file = replace_all(soft_config['pid'])
@@ -2827,14 +2838,17 @@ CREATE INDEX IF NOT EXISTS 'proc' ON 'process_top_list'('addtime');
 
 
 class _Script:
-    __slots__ = ('name', 'cmd', 'interval', '_is_first', '_ident')
+    __slots__ = ('name', 'cmd', 'interval', '_is_first', '_ident', 'congestion', 'prep_func')
 
-    def __init__(self, name: str, cmd: str, interval: int):
+    def __init__(self, name: str, cmd: str, interval: int, congestion=True,
+                 prep_func: Callable[[], bool]=None):
         self.name = name
         self.cmd = cmd
         self.interval = interval
         self._is_first = True
         self._ident = 0
+        self.congestion = congestion # 拥塞检查，为True时，如果下次执行前上次执行未结束，则触发拥塞处理
+        self.prep_func = prep_func or (lambda: True)
 
     def first(self) -> int:
         if self._is_first:
@@ -2865,6 +2879,9 @@ class _Script:
         """
         运行任务
         """
+        if not self.prep_func():
+            write_log("任务: {} 无需启动，已跳过".format(self.name))
+            return
         write_log("执行任务: {}".format(self.name))
         try:
             # write_log("cmd:", self.cmd, _level='debug')
@@ -2874,10 +2891,12 @@ class _Script:
 
 
 class _ScriptService:
+    _redirection_regexp = re.compile(r"\s+>\s+")
 
     def __init__(self):
         self.heap: List[Tuple[int, int, _Script]] = []
         self.lock = threading.Lock()
+        self._my_pid = os.getpid()
         self._tasks: List[_Script] = []
 
     def register(self, name: str, cmd: str, interval: int):
@@ -2901,6 +2920,41 @@ class _ScriptService:
                 heapq.heappush(self.heap, (next_execution_time, task.get_ident(), task))
         self._tasks = None
 
+    def repetition_check(self, task: _Script) -> bool:
+        real_cmd = task.cmd.strip()
+        if real_cmd.startswith("nohup"):
+            real_cmd = real_cmd[len("nohup"):].strip()
+        if self._redirection_regexp.search(real_cmd):
+            # 切分重定向
+            real_cmd = self._redirection_regexp.split(real_cmd)[0].strip()
+
+        real_cmd_list = real_cmd.split(" ")
+        for p in psutil.pids():
+            try:
+                if p == self._my_pid:
+                    continue
+                proc = psutil.Process(p)
+                cmd = proc.cmdline()
+                if cmd[:len(real_cmd_list)] != real_cmd_list:
+                    continue
+
+                run_times = time.time() - proc.create_time()
+                if run_times < task.interval:
+                    write_log("任务[{}]未达到运行间隔，跳过".format(task.name))
+                    return False
+                if run_times < 10 * 60:
+                    write_log("任务【{}】执行拥塞，跳过本次执行".format(task.name), _level='error', color='red')
+                    return True
+                else:
+                    write_log("任务【{}】执行超时，已杀死".format(task.name), _level='error', color='red')
+                    proc.kill()
+                    return False
+            except Exception as e:
+                continue
+
+        return False
+
+
     def start(self):
         """运行任务队列"""
         self.init_tasks()
@@ -2921,8 +2975,9 @@ class _ScriptService:
             if wait_time > 0:
                 time.sleep(wait_time)
 
-            # 执行任务
-            task.run()
+            # 出现拥塞，跳过本次执行
+            if not task.congestion or not self.repetition_check(task):
+                task.run()
 
             # 获取下一次执行时间重新入队
             try:
@@ -2938,16 +2993,16 @@ class _ScriptService:
 def start_scripts_service():
     check_panel_ssl = _Script(
         name="面板SSL证书监控",
-        cmd='lets_info="{}/ssl/lets.info";[ -f "${{lets_info}}" ] && '
-            'nohup {} {}/script/panel_ssl_task.py > /dev/null 2>&1 &'.format(PANEL_PATH, PY_BIN, PANEL_PATH),
+        cmd='nohup {} {}/script/panel_ssl_task.py > /dev/null 2>&1 &'.format(PY_BIN, PANEL_PATH),
         interval=3600)
 
-    send_mail_time = _Script(
-        name="邮件发送任务",
-        cmd='nohup {} {}/script/mail_task.py > /dev/null 2>&1 &'.format(
-            PY_BIN, PANEL_PATH
-        ),
-        interval=3600)
+    # 2026/1/30 该告警发送任务已经不再使用
+    # send_mail_time = _Script(
+    #     name="邮件发送任务",
+    #     cmd='nohup {} {}/script/mail_task.py > /dev/null 2>&1 &'.format(
+    #         PY_BIN, PANEL_PATH
+    #     ),
+    #     interval=3600)
 
     class ProjectDemons(_Script):
         def __init__(self, ):
@@ -2971,52 +3026,97 @@ def start_scripts_service():
 
     project_demons = ProjectDemons()
 
-    ssh_error_count_code = (
-        'import sys; sys.path.insert(0, "{}/class"); import PluginLoader, public;'
-        'PluginLoader.module_run("syslog", "task_ssh_error_count", public.dict_obj())'
-    ).format(PANEL_PATH)
-
     task_ssh_error_count=_Script(
         name="SSH错误次数",
-        cmd='nohup {} -c \'{}\' > /dev/null 2>&1 &'.format(
-            PY_BIN, ssh_error_count_code
+        cmd='nohup {} {}/script/task_script_extension.py {} > /dev/null 2>&1 &'.format(
+            PY_BIN, PANEL_PATH, 'task_ssh_error_count'
         ),
         interval=3600)
 
-    check_panel_msg = _Script(
-        name="面板消息提醒",
-        cmd='nohup {py_bin} {panel_path}/script/check_msg.py > /dev/null 2>&1 &'.format(
-            py_bin=PY_BIN, panel_path=PANEL_PATH
-        ),
-        interval=3600)
+    # 2026/1/30 该任务无需存在，移除
+    # check_panel_msg = _Script(
+    #     name="面板消息提醒",
+    #     cmd='nohup {py_bin} {panel_path}/script/check_msg.py > /dev/null 2>&1 &'.format(
+    #         py_bin=PY_BIN, panel_path=PANEL_PATH
+    #     ),
+    #     interval=3600)
 
+    push_task_config_file = "{}/data/mod_push_data/task.json".format(PANEL_PATH)
     push_msg = _Script(
         name="消息推送",
         cmd='nohup {py_bin} {panel_path}/script/push_msg.py > /dev/null 2>&1 &'.format(
             py_bin=PY_BIN, panel_path=PANEL_PATH
         ),
-        interval=60)
+        interval=60,
+        prep_func=lambda : os.path.exists(push_task_config_file) and os.path.getsize(push_task_config_file) > 10
+    )
+
+    def has_load_site():
+        db_file = "{}/data/db/node_load_balance.db".format(PANEL_PATH)
+        if not os.path.exists(db_file) or os.path.getsize(db_file) < 2:
+            return False
+        try:
+            with sqlite3.connect(db_file) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT count(*) FROM load_sites")
+                return cursor.fetchone()[0] > 0
+        except:
+            return False
 
     total_load_msg=_Script(
         name="面板负载均衡统计",
         cmd='nohup {py_bin} {panel_path}/script/total_load_msg.py > /dev/null 2>&1 &'.format(
             py_bin=PY_BIN, panel_path=PANEL_PATH
         ),
-        interval=60)
+        interval=60,
+        prep_func=has_load_site
+    )
+
+    def has_sub_node():
+        db_file = "{}/data/db/node.db".format(PANEL_PATH)
+        if not os.path.exists(db_file) or os.path.getsize(db_file) < 2:
+            return False
+        try:
+            with sqlite3.connect(db_file) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT count(*) FROM node")
+                return cursor.fetchone()[0] > 1
+        except:
+            return  False
 
     node_monitor=_Script(
         name="节点监控",
         cmd='nohup {py_bin} {panel_path}/script/node_monitor.py > /dev/null 2>&1 &'.format(
             py_bin=PY_BIN, panel_path=PANEL_PATH
         ),
-        interval=60)
+        interval=120,
+        prep_func=has_sub_node
+    )
+
+    def need_safecloud_task():
+        run_tip_file = "/www/server/panel/data/warning_list_runtime.pl"
+        last_run_time = 0
+        if os.path.exists(run_tip_file):
+            with open(run_tip_file, 'r') as fp:
+                try:
+                    last_run_time = int(fp.read())
+                except:
+                    return True
+
+            today = int(datetime.now().replace(hour=0, minute=0, second=0).timestamp())
+            if  last_run_time > today:
+                return False
+
+        return True
 
     check_safecloud_task = _Script(
         name="云安全扫描",
         cmd='nohup {py_bin} {panel_path}/script/warning_list.py > /dev/null 2>&1 &'.format(
             py_bin=PY_BIN, panel_path=PANEL_PATH
         ),
-        interval=3600)
+        interval=3600,
+        prep_func=need_safecloud_task
+    )
 
     start_daily = _Script(
         name="日报统计",
@@ -3075,14 +3175,38 @@ def start_scripts_service():
         cmd='nohup {} {}/script/task_script_extension.py {} > /dev/null 2>&1 &'.format(
             PY_BIN, PANEL_PATH, "maillog_event"
         ),
-        interval=600)
+        interval=600,
+        congestion=False  # 无需触发拥塞检查
+    )
+
+    def check_database_quota_prep():
+        run_tip_file = "/www/server/panel/config/quota_list.json"
+        try:
+            if os.path.exists(run_tip_file):
+                with open(run_tip_file, 'r') as fp:
+                    quota_dict = json.loads(fp.read())
+                    for path, quota in quota_dict.items():
+                        if quota["quota_type"] == "database":
+                            return True
+        except:
+            pass
+        return False
+
+    check_database_quota = _Script(
+        name="检查数据库空间使用情况",
+        cmd='nohup {} {}/script/task_script_extension.py {} > /dev/null 2>&1 &'.format(
+            PY_BIN, PANEL_PATH, "check_database_quota"
+        ),
+        interval=3600,
+        prep_func=check_database_quota_prep
+    )
 
     _scripts = (
         check_panel_ssl,
-        send_mail_time,
+        # send_mail_time,
         project_demons,
         task_ssh_error_count,
-        check_panel_msg,
+        # check_panel_msg,
         push_msg,
         total_load_msg,
         node_monitor,
@@ -3094,6 +3218,7 @@ def start_scripts_service():
         refresh_domain_cache,
         update_software_list,
         maillog_event,
+        check_database_quota
     )
 
     while True:

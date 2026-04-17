@@ -154,7 +154,7 @@ class RealServerProxy:
         # 伪静态文件路径
         rewrite_conf_path = "%s/vhost/rewrite/%s%s.conf" % (self.panel_path, self.config_prefix, self.site_name)
 
-        rep_location = re.compile(r"s*location\s+(\^~\s*)?%s\s*{" % proxy_dir)
+        rep_location = re.compile(r"\s*location\s+(\^~\s*)?%s\s*{" % re.escape(proxy_dir))
 
         for i in [rewrite_conf_path, self._ng_file]:
             conf = read_file(i)

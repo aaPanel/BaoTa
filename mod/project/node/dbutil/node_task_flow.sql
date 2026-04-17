@@ -94,6 +94,18 @@ CREATE TABLE IF NOT EXISTS transfer_logs
     completed_at     INTEGER
 );
 
+-- 创建流程模板表
+CREATE TABLE IF NOT EXISTS flow_templates
+(
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT    NOT NULL CHECK (length(name) <= 255),
+    key_words   TEXT    NOT NULL DEFAULT '',                        -- 关键字词，用来查询内容是子任务的名称
+    description TEXT    NOT NULL DEFAULT '',                        -- 模板描述
+    content     TEXT    NOT NULL,                                   -- json字段，由前端构建，实际流程内容
+    created_at  INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    updated_at  INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_scripts_name ON scripts (name);
 CREATE INDEX IF NOT EXISTS idx_scripts_description ON scripts (description);
 
@@ -122,6 +134,10 @@ CREATE INDEX IF NOT EXISTS idx_transfer_logs_task_id ON transfer_logs (transfer_
 CREATE INDEX IF NOT EXISTS idx_transfer_logs_file_id ON transfer_logs (transfer_file_id);
 -- transfer_logs 状态查询
 CREATE INDEX IF NOT EXISTS idx_transfer_logs_status ON transfer_logs (transfer_file_id, status);
+
+-- flow_templates 表
+CREATE INDEX IF NOT EXISTS idx_flow_templates_name ON flow_templates (name);
+CREATE INDEX IF NOT EXISTS idx_flow_templates_key_words ON flow_templates (key_words);
 
 
 

@@ -2,16 +2,16 @@
 ; (function () { 
 	// Description: 预加载文件
 	var loadResource = [
-		"/static/css/style.css?v=1764728423",
-		"/static/js/main.js?v=1764728423",
-		"/static/js/base-lib.js?v=1764728423",
-		"/static/js/__commonjsHelpers__.js?v=1764728423",
-		"/static/js/modulepreload-polyfill.js?v=1764728423",
-		"/static/js/utils-lib.js?v=1764728423",
-		"/static/js/software.js?v=1764728423",
-		"/static/js/jquery-2.2.4.min.js?v=1764728423",
-		"/static/js/utils.min.js?v=1764728423",
-		"/static/layer/layer.js?v=1764728423",
+		"/static/css/style.css?v=1776335489",
+		"/static/js/main.js?v=1776335489",
+		"/static/js/base-lib.js?v=1776335489",
+		"/static/js/__commonjsHelpers__.js?v=1776335489",
+		"/static/js/modulepreload-polyfill.js?v=1776335489",
+		"/static/js/utils-lib.js?v=1776335489",
+		"/static/js/software.js?v=1776335489",
+		"/static/js/jquery-2.2.4.min.js?v=1776335489",
+		"/static/js/utils.min.js?v=1776335489",
+		"/static/layer/layer.js?v=1776335489",
 	]
 
 	/**

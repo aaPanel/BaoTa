@@ -130,9 +130,9 @@ class main(Compose):
         '''
         get.option = "重建"
         command = self.set_type(1).set_path(get.path).get_compose_down()
-        self.exec_logs(get, command)
+        self.status_exec_logs(get, command)
         command = self.set_type(1).set_path(get.path).get_compose_up_remove_orphans()
-        self.exec_logs(get, command)
+        self.status_exec_logs(get, command)
 
     # 2024/6/24 下午10:54 停止指定docker-compose项目
     @check_file
@@ -740,3 +740,249 @@ class main(Compose):
             old_remark,
             public.xsssec(get.remark)))
         return public.returnResult(True, "修改成功!")
+    
+    def compose_backup_list(self, get):
+        '''
+            @name 获取 指定compose项目备份列表
+            @param p <int> 当前页码 默认1
+            @param limit <int> 每页数量 默认20
+            @param search <str> 搜索关键词
+            @param type <str> 备份类型 1:本机备份 2:上传备份
+            @return dict{"status":True/False,"msg":"提示信息"}
+        '''
+        
+        page = int(get.p) if hasattr(get, 'p') else 1
+        limit = int(get.limit) if hasattr(get, 'limit') else 20
+        query = get.get("search", "")
+        _type = get.get("type", "")
+        
+        where_str = "1=?"
+        where_param = [1]
+        if query:
+            where_str += "and name=?"
+            where_param.append(query)
+        
+        if _type:
+            where_str += "and type=?"
+            where_param.append(_type)
+        count = public.M("compose_backup").where(where_str,where_param).count()
+        page_data = public.get_page(count=count,p=page,rows=limit)
+        
+        backup_list = public.M("compose_backup").where(where_str,where_param).limit(page_data['row'],page_data['shift']).order('time desc').select()
+        page_data["data"] = backup_list
+        
+        for backup in backup_list:
+            backup["time"] = public.format_date(times= backup["time"])
+        public.set_module_logs('composeBackup', 'backup_list', 1)
+        return page_data
+    
+    def compose_backup_delete(self, get):
+        '''
+            @name 删除 compose项目备份
+            @param id <int> 备份ID
+            @return dict{"status":True/False,"msg":"提示信息"}
+        '''
+
+        # 1. 获取id参数
+        backup_id = get.get("id", None)
+        if backup_id is None:
+            return public.returnResult(False, "id参数不能为空")
+
+        # 2. 检查备份是否存在
+        backup_info = public.M("compose_backup").where("id=?", (backup_id,)).find()
+        if not backup_info:
+            return public.returnResult(False, "备份不存在")
+
+        # 3. 删除备份记录
+        public.M("compose_backup").where("id=?", (backup_id,)).delete()
+        
+        # 4. 删除备份文件
+        public.ExecShell(f"rm -rf {backup_info['path']}")
+        
+        return public.returnResult(True, "删除成功")
+
+    def compose_backup(self, get):
+        '''
+            @name 备份 compose项目
+            @param path <str> compose项目路径
+            @param name <str> 备份名称
+            @return dict{"status":True/False,"msg":"提示信息"}
+        '''
+
+        #往TMP下写入锁文件,防止重复备份
+        lock_file = f"/tmp/compose_backup.pl"
+        if os.path.exists(lock_file):
+            return public.returnResult(False, "当前有应用正在备份中,请等待完成后再试...")
+        public.writeFile(lock_file, "")
+
+        # 1. 获取path参数
+        path = get.get("path", None)
+        if path is None:
+            return public.returnResult(False, "path参数不能为空")
+
+        # 2. 检查path是否存在
+        if not os.path.exists(path):
+            return public.returnResult(False, "path参数不存在")
+        
+        compose_name = get.get("name", "")
+        if not compose_name:
+            return public.returnResult(False, "name参数不能为空")
+        
+        #检查name包含特殊字符
+        if "&" in compose_name or "|" in compose_name or ";" in compose_name or " " in compose_name:
+            return public.returnResult(False, "name参数不能包含特殊字符(& | ; 空格等)")
+
+        panel_path = public.get_panel_path()
+        exec_shell = '(btpython -u {panel_path}/script/docker_compose_backup.py "{compose_name}" "{path}";rm -rf {lock_file})'.format(panel_path=panel_path, compose_name=compose_name, path=path, lock_file=lock_file)
+
+        import panelTask
+        task_obj = panelTask.bt_task()
+        task_id = task_obj.create_task('compose项目备份任务', 0, exec_shell)
+        public.set_module_logs('composeBackup', 'backup', 1)
+        return {'status': True, 'msg': 'compose项目备份任务已创建.', 'task_id': task_id}
+    
+    def compose_restore_config(self, get):
+        '''
+            @name 恢复 compose项目配置
+            @param id <int> 备份ID
+            @return dict{"status":True/False,"msg":"提示信息"}
+        '''
+        backup_id = get.get("id", None)
+        if backup_id is None:
+            return public.returnResult(False, "id参数不能为空")
+
+        backup_info = public.M("compose_backup").where("id=?", (backup_id,)).find()
+        if not backup_info:
+            return public.returnResult(False, "备份不存在")
+
+        file_path = backup_info.get("path", "")
+        if not file_path or not os.path.exists(file_path):
+            return public.returnResult(False, "备份文件不存在")
+
+        back_config = {}
+        try:
+            base = os.path.splitext(os.path.basename(file_path))[0]
+            target_path = f"{base}/config.json"
+            cmd = f"tar -xf {file_path} -C /tmp {target_path}"
+            public.ExecShell(cmd)
+            config = public.ReadFile(f"/tmp/{target_path}")
+            back_config = json.loads(config)
+        except Exception as e:
+            return public.returnResult(False, "读取备份失败: {}".format(str(e)))
+
+        if not back_config:
+            return public.returnResult(False, "备份配置文件读取失败...")
+
+
+        try:
+            from mod.project.docker.docker_compose.compose_utils import DockerComposeUtils
+            # 检查网络是否存在
+            nets = back_config.get("networks", [])
+            for net in nets:
+                net_name = net.get('name')
+                if net_name:
+                    net["exists"] = DockerComposeUtils.network_exists(net_name)
+
+        except Exception as e:
+            return public.returnResult(False, "恢复配置失败: {}".format(str(e)))
+        
+
+        return public.returnResult(True, "获取成功", back_config)
+
+    def compose_restore(self, get):
+        '''
+            @name 恢复 compose项目
+            @param id <int> 备份ID
+            @param skip_volumes <str> 不恢复的卷,多个用逗号分隔
+            @return dict{"status":True/False,"msg":"提示信息"}
+        '''
+        backup_id = get.get("id", None)
+        if backup_id is None:
+            return public.returnResult(False, "id参数不能为空")
+
+        lock_file = f"/tmp/compose_restore.pl"
+        if os.path.exists(lock_file):
+            return public.returnResult(False, "当前有应用正在备份中,请等待完成后再试...")
+        public.writeFile(lock_file, "")
+
+        backup_info = public.M("compose_backup").where("id=?", (backup_id,)).find()
+        if not backup_info:
+            return public.returnResult(False, "备份不存在")
+
+        file_path = backup_info.get("path", "")
+        if not file_path or not os.path.exists(file_path):
+            return public.returnResult(False, "备份文件不存在")
+
+        skip_volumes = get.get("skip_volumes", "")
+
+        panel_path = public.get_panel_path()
+        exec_shell = '(btpython -u {panel_path}/script/docker_compose_restore.py "{path}" {skip_volumes};rm -rf {lock_file})'.format(panel_path=panel_path,path=file_path, skip_volumes=skip_volumes, lock_file=lock_file)
+        # public.print_log(exec_shell)
+        import panelTask
+        task_obj = panelTask.bt_task()
+        task_id = task_obj.create_task('compose项目恢复任务', 0, exec_shell)
+        public.set_module_logs('composeBackup', 'restore', 1)
+        return {'status': True, 'msg': 'compose项目恢复任务已创建.', 'task_id': task_id}
+
+    def import_backup(self, get):
+        '''
+            @name 导入compose项目备份
+            @param path <str> 备份文件路径
+            @param ps <str> 备注信息
+            @return dict{"status":True/False,"msg":"提示信息"}
+        '''
+        path = get.get("path", "")
+        if not path:
+            return public.returnResult(False, "path参数不能为空")
+
+        if not os.path.exists(path):
+            return public.returnResult(False, "备份文件不存在")
+        
+        # 检查是否已存在
+        # if public.M("compose_backup").where("path=?", (path,)).count() > 0:
+        #     return public.returnResult(False, "该备份文件已存在记录中")
+
+        try:
+            # 读取备份配置
+            base = os.path.splitext(os.path.basename(path))[0]
+            target_path = f"{base}/config.json"
+            cmd = f"tar -xf {path} -C /tmp {target_path}"
+            public.ExecShell(cmd)
+            
+            tmp_path = f"/tmp/{target_path}"
+            config_content = public.ReadFile(tmp_path)
+            
+            if not config_content:
+                return public.returnResult(False, "读取备份失败: 未能提取配置文件")
+            
+            config = json.loads(config_content)
+            
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
+        except Exception as e:
+            return public.returnResult(False, "读取备份文件失败: {}".format(str(e)))
+
+        # 准备数据库数据
+        try:
+            file_size = os.path.getsize(path)
+            project_name = config.get("project_name", "")
+            project_dir = config.get("project_dir", "")
+            back_time = config.get("back_time", "")
+            
+
+            pdata = {
+                "type": "2",    # 上传备份
+                "name": project_name,
+                "path": path,
+                "file_size": file_size,
+                "compose_path": project_dir,
+                "time": back_time,
+                "ps": get.get("ps", "手动导入")
+            }
+            
+            public.M("compose_backup").insert(pdata)
+            public.set_module_logs('composeBackup', 'import_backup', 1)
+            return public.returnResult(True, "导入成功")
+        except Exception as e:
+            return public.returnResult(False, "导入失败: {}".format(str(e)))

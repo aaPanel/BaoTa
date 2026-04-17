@@ -23,6 +23,7 @@ from .access_control import cors_manager
 from .nginx_gzip import NginxGzipMgr
 from .nginx_cache import NginxStaticCacheMgr
 from .server_extension import NginxExtension as ng_ext, ApacheExtension as ap_ext
+from .nginx_realip import NginxRealIP
 
 
 def remove_sites_service_config(site_name: str, config_prefix: str = ""):

@@ -25,7 +25,7 @@ class main():
             {"name": "SSH防爆破", "desc": "防止SSH暴力破解攻击","suggest":"开启防SSH破解", "check": self.check_ssh_fail2ban_brute, "repair": None,"status": False,"value":None},
             {"name": "面板登录告警", "desc": "面板登录时发送告警通知","suggest":"开启面板登录告警","check": self.check_panel_swing, "repair": None,"value":None},
             {"name": "面板登录动态口令认证", "desc": "启用TOTP动态口令增强安全性","suggest":"开启OTP动态口令验证", "check": self.check_panel_login_2fa,"repair": None,"value":None},
-            {"name": "未登录响应状态码", "desc": "设置未登录访问时的HTTP响应状态码","suggest":"设置404为响应吗","check": self.check_panel_not_auth_code, "repair": None,"value":None},
+            {"name": "未登录响应状态码", "desc": "设置未登录访问时的HTTP响应状态码","suggest":"设置404为响应码","check": self.check_panel_not_auth_code, "repair": None,"value":None},
             {"name": "面板开启SSL", "desc": "启用HTTPS加密传输（设置会重启面板）","suggest":"开启面板HTTPS", "check": self.check_panel_ssl,"repair": None,"value":None}
         ]
     

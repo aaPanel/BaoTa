@@ -1,1 +1,1 @@
-import{j as s,r as i}from"./base-lib.js?v=1764728423";const a=s("WP-LOCAL-Config-STORE",()=>({tabActive:i("domain"),isRefreshDomain:i(!1),domain:i(""),showSSLTips:i(!1),sslTabActive:i("current")}));export{a as u};
+import{aJ as r,r as o}from"./base-lib.js?v=1776335489";const c=r("WP-LOCAL-Config-STORE",()=>{const s=o("domain"),e=o(!1),t=o(""),n=o(!1),a=o("current");return{tabActive:s,isRefreshDomain:e,domain:t,showSSLTips:n,sslTabActive:a}});export{c as u};

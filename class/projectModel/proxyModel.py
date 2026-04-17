@@ -698,19 +698,21 @@ listener Default%s{
 
     # 检查伪静态、主配置文件是否有location冲突
     def CheckLocation(self, get):
+        proxy_dir = get.get("proxydir/s", "")
+        if not proxy_dir:
+            return public.returnMsg(False, '没有指定代理路径')
         # 伪静态文件路径
         rewriteconfpath = "%s/panel/vhost/rewrite/%s.conf" % (self.setupPath, get.sitename)
-        # 主配置文件路径
-        nginxconfpath = "%s/nginx/conf/nginx.conf" % (self.setupPath)
         # vhost文件
         vhostpath = "%s/panel/vhost/nginx/%s.conf" % (self.setupPath, get.sitename)
 
-        rep = "location\s+/[\n\s]+{"
-
-        for i in [nginxconfpath, vhostpath]:
+        rep = re.compile(r"location\s+(\^~\s+)?%s/\s*{" % re.escape(proxy_dir))
+        for i in [rewriteconfpath, vhostpath]:
             conf = public.readFile(i)
+            if not isinstance(conf, str):
+                continue
             if re.findall(rep, conf):
-                return public.returnMsg(False, '伪静态/nginx主配置/vhost/文件已经存在全局反向代理')
+                return public.returnMsg(False, '伪静态/网站配置文件已经存在路径【{}】的反向代理'.format(proxy_dir))
 
     # 读配置
     def __read_config(self, path):
@@ -1526,12 +1528,17 @@ location ^~ %s
     include {setup_path}/panel/vhost/file-restrict/{site_name}.conf;
     #FILE-RESTRICT-END
     
-    #禁止访问的文件或目录
-    location ~ ^/(\.user.ini|\.htaccess|\.git|\.env|\.svn|\.project|LICENSE|README.md)
+    # 禁止访问的敏感文件
+    location ~* (\.user.ini|\.htaccess|\.htpasswd|\.env.*|\.project|\.bashrc|\.bash_profile|\.bash_logout|\.DS_Store|\.gitignore|\.gitattributes|LICENSE|README\.md|CLAUDE\.md|CHANGELOG\.md|CHANGELOG|CONTRIBUTING\.md|TODO\.md|FAQ\.md|composer\.json|composer\.lock|package(-lock)?\.json|yarn\.lock|pnpm-lock\.yaml|\.\w+~|\.swp|\.swo|\.bak(up)?|\.old|\.tmp|\.temp|\.log|\.sql(\.gz)?|docker-compose\.yml|docker\.env|Dockerfile|\.csproj|\.sln|Cargo\.toml|Cargo\.lock|go\.mod|go\.sum|phpunit\.xml|phpunit\.xml|pom\.xml|build\.gradl|pyproject\.toml|requirements\.txt|application(-\w+)?\.(ya?ml|properties))$
     {{
         return 404;
     }}
-
+    
+    # 禁止访问的敏感目录
+    location ~* /(\.git|\.svn|\.bzr|\.vscode|\.claude|\.idea|\.ssh|\.github|\.npm|\.yarn|\.pnpm|\.cache|\.husky|\.turbo|\.next|\.nuxt|node_modules|runtime)/ {{
+        return 404;
+    }}
+    
     #一键申请SSL证书验证目录相关设置
     location ~ \.well-known{{
         allow all;

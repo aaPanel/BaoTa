@@ -14,6 +14,7 @@ import threading
 import time
 import re
 import traceback
+import types
 import uuid
 import psutil
 import socket
@@ -145,9 +146,9 @@ session_id_match = re.compile(r"^[\w\.\-]+$")
 def user_Authority():
     if 'login' not in session: return True
     if session['login'] == False: return True
-    menu = ['/', '/home', '/site', '/ftp', '/database', '/docker', '/control', '/firewall', '/waf', '/files', '/logs', '/xterm', '/crontab', '/ssl','/mail','/vhost','/wp','/soft', '/config', '/site_ifame', '/ftp_ifame',
+    menu = ['/', '/home', '/site', '/ftp', '/database', '/docker', '/control', '/firewall', '/waf', '/files', '/logs', '/xterm', '/crontab', '/ssl','/mail','/vhost','/wp','/soft', '/config', '/node', '/domain', '/site_ifame', '/ftp_ifame',
             '/database_ifame',
-            '/docker_ifame', '/control_ifame', '/firewall_ifame', '/waf_ifame', '/files_ifame', '/logs_ifame', '/xterm_ifame', '/crontab_ifame', '/soft_ifame', '/config_ifame', 'ssl_ifame']
+            '/docker_ifame', '/control_ifame', '/firewall_ifame', '/waf_ifame', '/files_ifame', '/logs_ifame', '/xterm_ifame', '/crontab_ifame', '/soft_ifame', '/config_ifame', '/ssl_ifame', '/node_ifame', '/domain_ifame']
     uid = session.get('uid')
     if not uid: return False
     if uid == 1: return True
@@ -247,7 +248,9 @@ def request_check():
         pdata = request.form.to_dict()
         for k in pdata.keys():
             if len(k) > 48: return abort(404)
-            if len(pdata[k]) > 256: return abort(404)
+            # 一键登录中的 passkey_token 参数的长度检查
+            if k == "passkey_token" and len(pdata[k]) > 2048: return abort(404)
+            if len(pdata[k]) > 256 and k != "passkey_token": return abort(404)
     # SESSIONID过滤
     session_id = request.cookies.get(app.config['SESSION_COOKIE_NAME'], '')
     if session_id and not session_id_match.match(session_id): return abort(404)
@@ -279,7 +282,7 @@ def request_check():
 
     if request.path.startswith('/static/') or request.path == '/code':
         if not 'login' in session and not 'admin_auth' in session and not 'down' in session:
-            return abort(401)
+            return abort(404)
     domain_check = public.check_domain_panel()
     if domain_check: return domain_check
     if public.is_local():
@@ -371,6 +374,15 @@ def request_end(reques=None):
             if g.api_request:
                 session.clear()
 
+# Flask 请求结束钩子
+@app.after_request
+def request_after(response):
+    try:
+        from mod.project.activity import activityMod
+        activityMod.main().check_task_status(response)
+    except:
+        public.print_log(public.get_error_info())
+    return response
 
 # Flask 404页面勾子
 @app.errorhandler(404)
@@ -457,15 +469,22 @@ REQUEST_FORM: {request_form}
         os_version=public.get_os_version())
     error_title = error_info.split("\n")[-1].replace('public.PanelError: ',
                                                      '').strip()
-    if error_info.find('连接云端服务器失败') != -1:
-        error_title = "连接云端服务器失败!"
+    if '<div><h3>请求云端异常</h3>' in error_info:
+        error_title = "连接云端服务失败!"
+        error_info = error_info[error_info.rfind("<div><h3>请求云端异常</h3>"):]
 
-    result = public.readFile(
-        public.get_panel_path() +
-        '/BTPanel/templates/default/panel_error.html').format(
-        error_title=public.xsssec(error_title),
-        request_info=request_info,
-        error_msg=public.xsssec(error_info))
+    if error_title != "连接云端服务失败!":
+        result = public.readFile(
+            public.get_panel_path() +
+            '/BTPanel/templates/default/panel_error.html').format(
+            error_title=public.xsssec(error_title),
+            request_info=request_info,
+            error_msg=public.xsssec(error_info)
+        )
+    else:
+        # 2026/4/14 使用前端模板，只返回动态的连接接口
+        res_err = re.search(r'<b style="line-height: 24px;">(?P<error>抱歉，连接云端服务器失败! - [^<]*)</b>', error_info)
+        result = res_err.group("error")
 
     # 用户信息
     # if not public.cache_get("infos"):
@@ -563,9 +582,9 @@ def xterm():
 
     ssh_host_admin = ssh_terminal.ssh_host_admin()
     defs = ('get_host_list', 'get_host_find', 'modify_host', 'create_host',
-            'remove_host', 'set_sort', 'get_command_list', 'create_command',
-            'get_command_find', 'modify_command', 'remove_command',
-            'into_command', 'out_command', 'completion_tool_status', 'set_completion_tool_status')
+            'remove_host', 'set_sort', 'get_command_list', 'create_command', 'into_command_more',
+            'get_command_find', 'modify_command', 'remove_command', "set_terminal_theme",
+            'into_command', 'out_command', 'completion_tool_status', 'set_completion_tool_status','set_ai_shell_status','set_ai_shell_analyze')
     return publicObject(ssh_host_admin, defs, None)
 
 
@@ -746,7 +765,7 @@ def database(action=None,pdata=None):
             'GetBackupDatabase', 'GetAllBackup', 'GetBackupInfo', 'ToBackupAll', 'InputSqlAll',
             'set_auto_sqlist', 'set_auto_sqlist', 'GetPushUser', 'ModifyTableComment', 'export_table_structure', 'set_restart_task', 'get_restart_task','view_database_types',
             'add_database_types','delete_database_types','update_database_types','set_database_type_by_name','find_databases_by_name_and_type',
-            'is_zip_password_protected','mysql_oom_adj','GetStartErrType','ClearMysqlBinLog','SetInnodbRecovery','GetBackupSize','GetImportLog','GetImportSize',"GetValidatePasswordConfig","SetValidatePasswordConfig","GetLoginFailed","SetLoginFailed","GetTimeOut","SetTimeOut","GetAuditLogConfig","SetAuditLogConfig","GeUserHostList","GetMysqlCommands","SetAuditLogRules","GetAuditLog","GetDatabaseList","GetmvDataDirSpeed"
+            'is_zip_password_protected','mysql_oom_adj','GetStartErrType','ClearMysqlBinLog','SetInnodbRecovery','GetBackupSize','GetImportLog','GetImportSize',"GetValidatePasswordConfig","SetValidatePasswordConfig","GetLoginFailed","SetLoginFailed","GetTimeOut","SetTimeOut","GetAuditLogConfig","SetAuditLogConfig","GeUserHostList","GetMysqlCommands","SetAuditLogRules","GetAuditLog","GetDatabaseList","GetmvDataDirSpeed","InitSystemMysql","GetImportStatus"
             )
     return publicObject(databaseObject, defs, None, pdata)
 
@@ -938,7 +957,7 @@ def panel_warning(pdata=None):
                 pass
         return result
 
-    defs = ('get_list', 'set_ignore', 'get_result', 'check_find', 'check_cve', 'set_vuln_ignore', 'get_scan_bar', 'get_tmp_result',
+    defs = ('get_list', 'set_ignore', 'get_result', 'check_find', 'check_cve', 'set_vuln_ignore', 'get_scan_bar', 'get_tmp_result', 'set_scan_categories',
             'kill_get_list')
     if get.action in ['set_ignore', 'check_find', 'set_vuln_ignore']:
         cache.delete(ikey)
@@ -1083,7 +1102,7 @@ def files(pdata=None):
             'SplitFile', 'JoinConfigFile', 'JoinFile',  # 切割文件，合并文件
             'file_history', 'file_history_list', 'del_file_history', 'list_backups', 'restore_backup', 'delete_backup', 'download_backup', 'get_backup_config', 'edit_backup_config','set_backup_status',
             'SearchFilesData', 'update_cors_config', 'delete_cors_config', 'view_cors_config',
-            'merge_split_file', 'get_zip_status', 'GetDirNew','upload_files_exists', 'del_history', 'Del_Recycle_bin_new', 'Close_Recycle_bin_new', 'Batch_Del_Recycle_bin'
+            'merge_split_file', 'get_zip_status', 'GetDirNew','upload_files_exists', 'del_history','del_history_recursive', 'Del_Recycle_bin_new', 'Close_Recycle_bin_new', 'Batch_Del_Recycle_bin'
             )
     return publicObject(filesObject, defs, None, pdata)
 
@@ -1198,7 +1217,7 @@ def config(action=None,pdata=None):
         'set_temp_login', 'remove_temp_login', 'clear_temp_login',
         'get_temp_login_logs', 'set_request_iptype', 'set_request_type',
         'set_cli_php_version', 'DelOldSession', 'GetSessionCount',
-        'SetSessionConf', 'show_recommend', 'show_workorder', 'GetSessionConf',
+        'SetSessionConf', 'show_recommend', 'show_workorder','show_panelai','show_evaluate', 'GetSessionConf',
         'get_ipv6_listen', 'set_ipv6_status', 'GetApacheValue',
         'SetApacheValue', 'GetNginxValue', 'SetNginxValue', 'get_token',
         'set_token', 'set_admin_path', 'is_pro', 'set_not_auth_status',
@@ -1224,8 +1243,11 @@ def config(action=None,pdata=None):
         "get_memo_body", "delete_ua", "modify_ua", "modify_ua", "get_limit_ua", "set_ua",
         "get_nps_info","balance_pay_cert","err_collection","GetPhpPeclLog","phpPeclInstall",
         "phpPeclUninstall","GetPeclInstallList","set_login_origin",
-				"get_panel_theme","set_panel_theme","update_panel_theme","validate_theme_file","import_theme_config","export_theme_config","get_export_file_info",
-        "SetNoticeIgnore", "get_versionnumber",
+        "get_panel_theme","set_panel_theme","update_panel_theme","validate_theme_file","import_theme_config","export_theme_config","get_export_file_info",
+        "SetNoticeIgnore", "get_versionnumber", "get_ad_hide_config", "set_ad_hide_config",
+        "get_passkey_list","create_passkey_option","create_passkey_verify","set_passkey_status",
+        "remove_passkey","set_passkey_global_status","reset_node_host",
+        "set_wechat_login_status", "account_wechat_bind_status",
     )
 
     return publicObject(config.config(), defs, None, pdata)
@@ -1330,6 +1352,16 @@ def wp(action=None,pdata=None):
 @app.route('/node/<action>', methods=method_all)
 @app.route('/node/<action>/', methods=method_all)
 def node(action=None,pdata=None):
+    # 图标
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    is_bind()
+    return render_template('index1.html', data={})
+
+@app.route('/ai', methods=method_all)
+@app.route('/ai/<action>', methods=method_all)
+@app.route('/ai/<action>/', methods=method_all)
+def ai(action=None,pdata=None):
     # 图标
     comReturn = comm.local()
     if comReturn: return comReturn
@@ -1465,7 +1497,7 @@ def auth(pdata=None):
     defs = ('get_plugin_remarks', 'get_re_order_status_plugin',
             'create_plugin_other_order', 'get_order_stat',
             'get_voucher_plugin', 'create_order_voucher_plugin',
-						'get_auth_bind_num',
+            'get_auth_bind_num',
             'get_product_discount_by', 'get_re_order_status',
             'create_order_voucher', 'create_order', 'get_order_status',
             'get_voucher', 'flush_pay_status', 'create_serverid',
@@ -1474,7 +1506,9 @@ def auth(pdata=None):
             'get_renew_code', 'check_renew_code', 'get_business_plugin',
             'get_ad_list', 'check_plugin_end', 'get_plugin_price', 'get_apply_copon', 'get_coupon_list', 'ignore_coupon_time',
             'set_user_adviser', 'rest_unbind_count', 'unbind_authorization', 'get_all_voucher_plugin',
-            'get_pay_unbind_count', 'get_coupons', 'get_credits', 'create_with_credit_by_panel', 'get_last_paid_time', 'receive_products', 'get_free_activity_info')
+            'get_pay_unbind_count', 'get_coupons', 'get_credits', 'create_with_credit_by_panel', 'get_last_paid_time', 'receive_products', 'get_free_activity_info',
+            'create_plugin_with_credit'
+            )
     result = publicObject(toObject, defs, None, pdata)
     return result
 
@@ -1865,7 +1899,7 @@ def login():
         if is_auth_path:
             g.auth_error = True
             return public.error_not_login(None)
-        v_list = ['username', 'password', 'code', 'vcode', 'cdn_url', 'safe_mode']
+        v_list = ['username', 'password', 'code', 'vcode', 'cdn_url', 'safe_mode', 'passkey_action', 'passkey_token', 'wechat_action', 'wxcode', 'state']
         for v in v_list:
             if v in ['username', 'password']: continue
             pv = request.form.get(v, '').strip()
@@ -1881,11 +1915,15 @@ def login():
             if v == 'code': p_len = 4
             if v == 'vcode': p_len = 6
             if v == 'safe_mode': p_len = 1
-            if len(pv) != p_len:
+            if v == 'passkey_action': p_len=7
+            if v == 'wechat_action': p_len=10
+            if v == 'wxcode': continue
+            if v == 'state': continue
+            if len(pv) != p_len and v != "passkey_token":
                 if v == 'code':
                     return public.returnJson(False, '验证码长度错误'), json_header
                 return public.returnJson(False, '错误的参数长度'), json_header
-            if not re.match(r"^\w+$", pv):
+            if not re.match(r"^[\w/+=\n]+$", pv):
                 return public.returnJson(False, '错误的参数格式'), json_header
 
         for n in request.form.keys():
@@ -1957,6 +1995,26 @@ def login():
     comReturn = common.panelSetup().init()
     if comReturn: return comReturn
 
+    if request.method == method_post[0] and hasattr(get, "passkey_action"):
+        import base64
+        passkey_token = get.passkey_token
+        try:
+            passkey_data = json.loads(public.rsa_decrypt(passkey_token))
+        except:
+            public.print_error()
+            return public.returnMsg(False, 'Invalid token'), json_header
+        if get.passkey_action == "options":
+            return userlogin.userlogin().get_passkey_auth(passkey_data)
+        elif get.passkey_action == "do_auth":
+            return userlogin.userlogin().do_passkey_auth(passkey_data)
+    if request.method == method_post[0] and hasattr(get, "wechat_action"):
+        if not os.path.exists('data/wechat_login.pl'):
+            return public.returnMsg(False, '微信登录未启用'), json_header
+        if get.wechat_action == "get_qrcode":
+            return userlogin.userlogin().get_wechat_qrcode()
+        elif get.wechat_action == "checklogin":
+            return userlogin.userlogin().check_wechat_login(get)
+
     if request.method == method_post[0]:
         result = userlogin.userlogin().request_post(get)
         return is_login(result)
@@ -1995,6 +2053,8 @@ def login():
 
         data[last_key] = session[last_key]
         data['public_key'] = public.get_rsa_public_key()
+        data['passkey_status'] = os.path.exists('data/passkey_auth.pl')
+        data['wechat_status'] = os.path.exists('data/wechat_login.pl')
         return render_template('login.html', data=data)
 
 
@@ -2507,6 +2567,7 @@ class run_exec:
         if not hasattr(get, 'html') and not hasattr(get, 's_module'):
             r_type = type(result)
             if r_type in [Response, Resp]: return result
+            if r_type == types.GeneratorType: return Response(result, mimetype="text/event-stream")
             result = public.GetJson(result), json_header
 
         if g.is_aes:
@@ -2895,8 +2956,12 @@ def ws_panel(ws):
             }
             raise Exception('json load error !')
         get._ws = ws
-        p = threading.Thread(target=ws_panel_thread, args=(get,))
-        p.start()
+        # 全双工通信模式
+        if hasattr(get, 'interactive') and get.interactive:
+            ws_panel_thread(get)
+        else:
+            p = threading.Thread(target=ws_panel_thread, args=(get,))
+            p.start()
 
 
 
@@ -3713,11 +3778,54 @@ def ws_mod_thread(_obj, get):
         if mod_result is None:
             return
         result = {'callback': get.get("ws_callback", get.get("callback", "")), 'result': mod_result}
-        get._ws.send(public.getJson(result))
+        if get._ws.connected:
+            get._ws.send(public.getJson(result))
+        
     except:
         if public.is_debug():
             public.print_error()
         return
+
+@app.route('/sse_panel', methods=method_all)
+def sse_panel():
+    '''
+        @name 面板接口sse入口
+        @author csj<2026-01-06>
+        @return void
+    '''
+    comReturn = comm.local()
+    if comReturn: return comReturn
+    
+    get = get_mod_input()
+    get.mod_name = get.get("mod_name","").strip()
+    get.def_name = get.get("def_name","").strip()
+
+    check_str = '{}{}'.format(get.mod_name, get.def_name)
+    if not re.match(r"^\w+$", check_str) or get.mod_name in [
+        'public', 'common', 'db', 'db_mysql', 'downloadFile', 'jobs'
+    ]:
+        return public.returnJson(False, '不安全的mod_name,def_name参数内容')
+
+    mod_file = '{}/{}.py'.format(public.get_class_path(), get.mod_name)
+    if not os.path.exists(mod_file):
+        return public.returnJson(False,'指定模块{}不存在'.format(get.mod_name))
+    _obj = public.get_script_object(mod_file)
+    if not _obj:
+        return public.returnJson(False,'指定模块{}不存在'.format(get.mod_name))
+
+    _cls = getattr(_obj, get.mod_name)
+    if not _cls:
+        return public.returnJson(False, '在{}模块中没有找到{}对像'.format(get.mod_name,get.mod_name))
+
+    _def = getattr(_cls(), get.def_name)
+    if not _def:
+        return public.returnJson(False, '在{}对像中没有找到{}方法'.format(get.mod_name,get.def_name))
+    result = _def(get)
+    
+    if not isinstance(result, types.GeneratorType):
+        return public.returnJson(False, '调用方法错误,不支持的方法')
+    
+    return Response(result, mimetype="text/event-stream")
 
 # ========================== 邮局退订链接 ====================
 @app.route('/mailUnsubscribe', methods=method_all)

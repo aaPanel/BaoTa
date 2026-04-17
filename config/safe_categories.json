@@ -1,0 +1,14 @@
+{
+    "bt_basic": {
+        "name": "宝塔基础安全检查",
+        "enabled": true
+    },
+    "international": {
+        "name": "国际标准基线检查",
+        "enabled": false
+    },
+    "nginx": {
+        "name": "Nginx安全基线检查",
+        "enabled": false
+    }
+}

@@ -11,7 +11,7 @@ from mod.project.node.dbutil import ServerNodeDB, CommandTask, CommandLog, TaskF
 
 class CMDTask(object):
 
-    def __init__(self, task: Union[int, CommandTask], log_id: int, call_update: Callable[[Any], None]):
+    def __init__(self, task: Union[int, CommandTask], log_id: int, call_update: Callable[[Any], None], exclude_nodes: List[int] = None):
         self._edb = TaskFlowsDB()
         if isinstance(task, int):
             self.task = self._edb.CommandTask.find("id = ?", (task,))
@@ -28,6 +28,9 @@ class CMDTask(object):
         if not self.task.elogs:
             raise RuntimeError("任务无执行条目")
 
+        self._exclude_nodes = exclude_nodes or []
+        self.task.elogs = [x for x in self.task.elogs if x.server_id not in self._exclude_nodes]
+
         self.task.status = 1
         self._edb.CommandTask.update(self.task)
         self.end_queue  = queue.Queue()
@@ -41,6 +44,8 @@ class CMDTask(object):
             "count": len(self.task.elogs),
             "complete": 0,
             "error": 0,
+            "exclude_nodes": self._exclude_nodes,
+            "error_nodes": [],
             "data": [],
         }
 
@@ -64,6 +69,7 @@ class CMDTask(object):
 
             if elog.status in (3, 4):
                 error_set.add(elog.id)
+                self.status_dict["error_nodes"].append(int(elog.server_id))
                 self.status_dict["error"] = len(error_set)
             elif elog.status == 2:
                 complete_set.add(elog.id)
@@ -168,3 +174,22 @@ class CMDTask(object):
             elog.write_log("\n任务失败，错误：" + str(e), is_end_log=True)
             self.end_queue.put(elog)
             return
+
+
+# 同步执行命令相关任务的重试
+def command_task_run_sync(task_id: int, log_id: int) -> Union[str, Dict[str, Any]]:
+    fdb = TaskFlowsDB()
+    task = fdb.CommandTask.get_byid(task_id)
+    if not task:
+        return "任务不存在"
+    log = fdb.CommandLog.get_byid(log_id)
+    if not log:
+        return "子任务不存在"
+    if log.status not in (3, 4):
+        return "子任务状态不为失败，无法重试"
+    if log.command_task_id != task_id:
+        return "子任务不属于该任务，无法重试"
+    cmd_task = CMDTask(task, log_id=log_id, call_update=print)
+    cmd_task.start()
+    return cmd_task.status_dict
+

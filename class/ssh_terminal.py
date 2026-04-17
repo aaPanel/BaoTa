@@ -19,6 +19,7 @@ import threading
 import re
 import ipaddress
 import traceback
+import tempfile
 from itertools import chain
 
 import fcntl
@@ -28,6 +29,7 @@ import termios
 if not 'class/' in sys.path:
     sys.path.insert(0, 'class/')
 from io import BytesIO, StringIO
+import psutil
 
 
 def returnMsg(status, msg):
@@ -299,6 +301,15 @@ class ssh_terminal:
         self._ssh = self._tp.open_session()
         self._ssh.get_pty(term='xterm', width=100, height=34)
         self._ssh.invoke_shell()
+        if self._host in ('127.0.0.1', 'localhost'):
+            time.sleep(0.1)
+            payload_cmd = (
+                b"source /www/server/panel/script/safe_bt_shell.sh paramiko > /dev/null 2>&1\n"
+                br"printf '\033[1A\033[2K\033[1A\033[2K'"b"\n"  # 上移一行+清除+换行（确保清除正确）
+            )
+            self._ssh.send(payload_cmd)
+            time.sleep(0.1)
+
         self._connect_time = time.time()
         self._last_send = []
         from BTPanel import request
@@ -976,7 +987,7 @@ class ssh_terminal:
                 ht.join()
                 self.close()
             else:
-                self._ws.send(result['msg'])
+                self._ws.send("BT-Terminal Error:" + result['msg'])
                 self.close()
         except:
             print(traceback.format_exc(), flush=True)
@@ -1038,14 +1049,122 @@ fi
             os.remove(tmp_sh_file)
 
 
+# WebSSH 会话清理
+# 环境变量标识：BT_SSH_SESSION=1 标识这是 webssh 会话进程
+# 清理规则：
+# 1. 进程名是 bash
+# 2. PPID=1（被 init 收养的孤儿进程）
+# 3. 环境变量包含 BT_SSH_SESSION=1
+# 4. 运行时间超过 5 分钟（可选）
+
+def cleanup_orphan_ssh_sessions(max_age_seconds=300):
+    """
+    清理孤儿 webssh 会话进程
+
+    @param max_age_seconds {int} 最大运行时间（秒），默认 300 秒（5 分钟）
+                              设置为 0 则清理所有匹配的进程
+    @return {int} 清理的进程数量
+    """
+    if psutil is None:
+        return 0
+
+    cleaned = 0
+    current_time = time.time()
+
+    try:
+        for proc_pid in psutil.pids():
+            try:
+                proc=psutil.Process(proc_pid)
+                info = proc.info
+
+                # 检查进程名
+                if not info['name'] or 'bash' not in info['name']:
+                    continue
+                # 检查 PPID 是否为 1（孤儿进程）
+                if info['ppid'] != 1:
+                    continue
+                # 检查环境变量 BT_SSH_SESSION
+                environ = info['environ'] or {}
+                if environ.get('BT_SSH_SESSION') != '1':
+                    continue
+
+                # 检查运行时间
+                if max_age_seconds > 0:
+                    try:
+                        create_time = info['create_time']
+                        if current_time - create_time < max_age_seconds:
+                            continue  # 运行时间不足，跳过
+                    except (psutil.NoSuchProcess, KeyError, TypeError):
+                        continue
+
+                # 杀死进程
+                proc.terminate()
+                cleaned += 1
+            except psutil.NoSuchProcess:
+                continue
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    return cleaned
+
+
 class local_ssh_terminal(ssh_terminal):
 
     class _LocalShell:
+        IS_LOCAL = True
         basic_env = {
             "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
             "HOME": "/root",  # 或其他你希望的家目录
             "TERM": "xterm-256color",
         }
+
+        @staticmethod
+        def get_locale():
+            out, _ = public.ExecShell("locale -a")
+            if out.startswith("b'") and out.endswith("'") and "\\\\n" in out:
+                return [ line for line in out[2:-1].split("\\\\n") if line]
+            return [line for line in out.split("\n") if line]
+
+        @staticmethod
+        def do_ssh_login_push():
+            try:
+                # 防抖 10s
+                ssh_login_times_file = "/www/server/panel/data/ssh_login_times.pl"
+                last_time = {"time": 0}
+                try:
+                    if os.path.exists(ssh_login_times_file):
+                        last_time = json.loads(public.readFile(ssh_login_times_file))
+                    if (int(time.time()) - last_time["time"]) < 10:
+                        return False
+                except:
+                    pass
+                last_time["time"] = int(time.time())
+                public.writeFile(ssh_login_times_file, json.dumps(last_time))
+
+                client_ip_file = "/www/server/panel/data/host_login_ip.json"
+                try:
+                    ip_list = json.loads(public.readFile(client_ip_file))
+                except:
+                    ip_list = []
+
+                if "127.0.0.1" in ip_list or "localhost" in ip_list:
+                    return
+
+                server_ip = public.GetLocalIp()
+                msg = server_ip + '服务器存在异常登陆登陆IP为127.0.0.1，登陆用户为: root'
+                from mod.base.push_mod import push_by_task_keyword
+                push_data = {
+                    "login_ip": "127.0.0.1",
+                    "msg_list": ['>发送内容：' + msg]
+                }
+                res = push_by_task_keyword("ssh_login", "ssh_login", push_data=push_data)
+                if res:
+                    return
+            except:
+                pass
+
 
         @staticmethod
         def get_last_login(username) -> str:
@@ -1089,6 +1208,152 @@ class local_ssh_terminal(ssh_terminal):
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             signal.signal(signal.SIGQUIT, signal.SIG_DFL)
 
+        @staticmethod
+        def get_safe_bt_script():
+            not_debug_str = '''
+    16)
+      if [[ "$tool_en" == true ]]; then
+        echo "Repairing the panel cannot be done in the panel terminal. Please operate at [Home] > [Repair]"
+      else
+        echo "修复面板无法在面板终端进行，请在【首页】>【修复】处操作"
+      fi
+      ;;
+    34)
+      if [[ "$tool_en" == true ]]; then
+        echo "Updating the panel cannot be done in the panel terminal. Please operate at [Home] > [Update]"
+      else
+        echo "更新面板无法在面板终端进行，请在【首页】>【更新】处操作"
+      fi
+      ;;
+'''
+            if public.is_debug():
+                not_debug_str=""
+            return r'''
+source /etc/profile 2>/dev/null
+source ~/.bash_profile 2>/dev/null
+source ~/.bashrc 2>/dev/null
+
+export XDG_RUNTIME_DIR="/run/user/0"
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+
+cd /root
+bt() {
+  tool_en=false
+  if [[ "$1" == "switch_tool_en" ]]; then
+    shift
+    tool_en=true
+  fi
+  if [ $# -eq 0 ]; then
+    if [[ "$tool_en" == true ]]; then
+      echo "" | btpython /www/server/panel/tools_en.py cli; printf '\033[1A\033[2K\033[1A\033[2K'
+      read -p "Please enter command number:" u_input
+    else
+      echo "" | /etc/init.d/bt; printf '\033[1A\033[2K\033[1A\033[2K'
+      read -p "请输入命令编号：" u_input
+    fi
+    if ! [[ "$u_input" =~ ^[0-9]+$ ]]; then
+        u_input=0
+    fi
+    case "$u_input" in
+      99)
+        bt switch_tool_en
+        ;;
+      1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|28|29|30|31|32|33|34|35|36)
+        if [[ "$tool_en" == true ]]; then
+          bt switch_tool_en "$u_input"
+        else
+          bt "$u_input"
+        fi
+        ;;
+      *)
+        echo "==============================================="
+        if [[ "$tool_en" == true ]]; then
+          echo "Cancelled!"
+        else
+          echo "已取消!"
+        fi
+        ;;
+    esac
+  else
+    case $1 in
+    2|stop)
+      if [[ "$tool_en" == true ]]; then
+        echo "Do not stop the panel service directly in the panel terminal. To stop, please go to [Settings] > [Panel Settings] > [Shutdown Panel]"
+      else
+        echo "请勿在面板终端直接停止面板服务，如需停止请前往【设置】>【面板设置】>【关闭面板】"
+      fi
+      ;;
+    # 1|start|restart|reload|3|4|10)
+    #   if [[ "$tool_en" == true ]]; then
+    #     echo "Do not restart the panel service in the panel terminal. To restart, please go to [Home] > [Restart]"
+    #   else
+    #     echo "请勿在面板终端重启面板服务，如需重启请前往【首页】>【重启】"
+    #   fi
+    #   ;;
+    26)
+      if [[ "$tool_en" == true ]]; then
+        echo "Disabling panel SSL will restart the panel service. Please operate at [Settings] > [Security Settings] > [Panel SSL]"
+      else
+        echo "关闭面板 SSL 将会重启面板服务，请在【设置】>【安全设置】>【面板 SSL】处操作"
+      fi
+      ;;
+    29)
+      if [[ "$tool_en" == true ]]; then
+        echo "Disabling access device verification will restart the panel service. Please operate at [Settings] > [Security Settings] > [Access Device Verification]"
+      else
+        echo "关闭访问设备验证将会重启面板服务，请在【设置】>【安全设置】>【访问设备验证】处操作"
+      fi
+      ;;
+    8)
+      if [[ "$tool_en" == true ]]; then
+        echo "Changing the panel port number will restart the service. Please operate at [Settings] > [Common Settings] > [Panel Port]"
+      else
+        echo "修改面板端口号将重启服务，请在【设置】>【常用设置】>【面板端口】处操作"
+      fi
+      ;;
+    9)
+      if [[ "$tool_en" == true ]]; then
+        echo "Clearing panel cache cannot be executed in the panel terminal. You can delete [/www/server/panel/data/session] and restart the panel"
+      else
+        echo "清除面板缓存无法在面板终端执行，您可以删除【/www/server/panel/data/session】并重启面板"
+      fi
+      ;;
+    12)
+      if [[ "$tool_en" == true ]]; then
+        echo "Canceling domain binding restriction will restart the panel service. Please operate at [Settings] > [Common Settings] > [Domain Binding]"
+      else
+        echo "取消域名绑定限制将会重启面板服务，请在【设置】>【常用设置】>【域名绑定】处操作"
+      fi
+      ;;
+    13)
+      if [[ "$tool_en" == true ]]; then
+        echo "Canceling IP access restriction will restart the panel service. Please operate at [Settings] > [Security Settings] > [Authorized IP]"
+      else
+        echo "取消 IP 访问限制将会重启面板服务，请在【设置】>【安全设置】>【授权 IP】处操作"
+      fi
+      ;;
+    23)
+      if [[ "$tool_en" == true ]]; then
+        echo "Disabling BasicAuth authentication will restart the panel service. Please operate at [Settings] > [Security Settings] > [BasicAuth Authentication]"
+      else
+        echo "关闭 BasicAuth 认证将重启面板服务，请在【设置】>【安全设置】>【BasicAuth 认证】处操作"
+      fi
+      ;;
+    99)
+      bt switch_tool_en
+      ;;
+    %s
+    * )
+      if [[ "$tool_en" == true ]]; then
+        btpython /www/server/panel/tools_en.py cli $@
+      else
+        /etc/init.d/bt $@
+      fi
+    esac
+  fi
+}
+''' % (not_debug_str)
+
         def __init__(self):
             self.master_fd, slave_fd = pty.openpty()
 
@@ -1124,7 +1389,33 @@ class local_ssh_terminal(ssh_terminal):
                     tmp = line.split('=', 1)
                     if len(tmp) == 2:
                         env_dict[tmp[0]] = tmp[1]
-            env_dict.update(PWD="/root")
+            locale_name = "en_US.utf8"
+            locale_list = self.get_locale()
+            if locale_name not in locale_list:
+                locale_name = "zh_CN.utf8"
+            if locale_name not in locale_list:
+                locale_name = ""
+            for k, v in os.environ.items():
+                if k.startswith("LC_") or k in ("LANG", "LANGUAGE"): # 继承本地语言信息
+                    env_dict[k] = locale_name or v
+            env_dict.update(PWD="/root", BT_SSH_SESSION="1")
+
+            safe_bt_script = self.get_safe_bt_script()
+            tmp_safe_bt_script = tempfile.NamedTemporaryFile(
+                mode='w',
+                suffix='.sh',
+                prefix='bt_session_',
+                delete=False
+            )
+            tmp_safe_bt_script_path = tmp_safe_bt_script.name
+
+            # 2. 【核心技巧】第一行写自毁命令
+            #    Bash source 时先 open() 拿到 fd，再逐行执行
+            #    rm 删掉的是目录项，fd 仍然有效，后续行照常读取
+            tmp_safe_bt_script.write(f'rm -f "{tmp_safe_bt_script_path}" 2>/dev/null\n')
+            tmp_safe_bt_script.write(safe_bt_script)
+            tmp_safe_bt_script.close()
+
             sh_path = shutil.which('bash')
             if not sh_path:
                 sh_path = shutil.which('sh')
@@ -1136,17 +1427,30 @@ class local_ssh_terminal(ssh_terminal):
                         break
             if not sh_path:
                 sh_path = "bash"
+
+            # 使用 start_new_session=True 创建独立会话
+            # 这样 bash 进程会脱离主进程的控制，主进程死亡后 bash 仍会继续运行
+            # 直到用户主动关闭或退出 bash
             self.proc = subprocess.Popen(
-                [sh_path, "-l"],
-                preexec_fn=self._preexec_fn,
+                [sh_path, "--rcfile", tmp_safe_bt_script_path, "-i"],
                 stdin=slave_fd,
                 stdout=slave_fd,
                 stderr=slave_fd,
                 close_fds=True,
-                env=env_dict,  # 只传递你想要的环境变量
+                env=env_dict,  # 包含 BT_SSH_SESSION=1 标识
+                start_new_session=True,  # 创建新的会话，脱离父进程的控制
             )
 
             os.close(slave_fd)
+
+            # 记录启动时间和空闲超时时间（秒）
+            self._start_time = time.time()
+            self._last_activity = time.time()
+            self._idle_timeout = 1800  # 30 分钟空闲超时
+
+            # 启动空闲检测线程
+            public.run_thread(self._check_idle_timeout, daemon=False)
+
             self.maybe_logout = False
             self.first_recv = b"The current terminal create by BT-Panel.\r\n"
             last_log = self.get_last_login("root")
@@ -1155,12 +1459,37 @@ class local_ssh_terminal(ssh_terminal):
             motd = self.get_motd()
             if motd:
                 self.first_recv = motd.encode() + self.first_recv
+            public.run_thread(self.do_ssh_login_push)
+
+        def _check_idle_timeout(self):
+            """检测空闲超时，超时后自动关闭 bash"""
+            import signal
+
+            while self.proc and self.proc.poll() is None:
+                time.sleep(30)
+
+                # 检查空闲时间
+                if time.time() - self._last_activity > self._idle_timeout:
+                    # 空闲超时，杀死 bash 进程组
+                    try:
+                        os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
+                    except:
+                        try:
+                            self.proc.terminate()
+                        except:
+                            pass
+                    break
+
+        def _touch_activity(self):
+            """更新活动时间"""
+            self._last_activity = time.time()
 
         def send(self, data: str):
             if not self.is_active():
                 return
             try:
-                os.write(self.master_fd, data.encode())
+                self._touch_activity()  # 更新活动时间
+                os.write(self.master_fd, data.encode() if isinstance(data, str) else data)
             except OSError as e:
                 self.close()
                 raise
@@ -1170,6 +1499,7 @@ class local_ssh_terminal(ssh_terminal):
 
         def recv(self, length: int) -> bytes:
             if self.first_recv:
+                self._touch_activity()  # 更新活动时间
                 res = self.first_recv
                 self.first_recv = None
                 return res
@@ -1177,6 +1507,7 @@ class local_ssh_terminal(ssh_terminal):
             res = b''
             if self.master_fd in r:
                 try:
+                    self._touch_activity()  # 更新活动时间
                     res = os.read(self.master_fd, length)
                     if res.endswith(b"exit\r\n"):
                         self.maybe_logout = True
@@ -1194,6 +1525,7 @@ class local_ssh_terminal(ssh_terminal):
             fcntl.ioctl(self.master_fd, termios.TIOCSWINSZ, win_size)
 
         def close(self):
+            # 关闭 PTY 主设备
             if hasattr(self, 'master_fd') and self.master_fd >= 0:
                 try:
                     os.close(self.master_fd)
@@ -1202,12 +1534,26 @@ class local_ssh_terminal(ssh_terminal):
                 finally:
                     self.master_fd = -1  # 标记为已关闭
 
+            # 终止 bash 进程
+            # 由于使用了 start_new_session=True，bash 是独立的进程组组长
+            # 需要向整个进程组发送信号
             if hasattr(self, 'proc') and self.proc:
                 try:
-                    self.proc.terminate()
-                    self.proc.wait(timeout=1)
-                except (subprocess.TimeoutExpired, OSError):
-                    self.proc.kill()
+                    # 向整个进程组发送 SIGHUP 信号
+                    import signal
+                    os.killpg(os.getpgid(self.proc.pid), signal.SIGHUP)
+                    self.proc.wait(timeout=2)
+                except (subprocess.TimeoutExpired, OSError, ProcessLookupError):
+                    # 如果失败，强制杀死整个进程组
+                    try:
+                        import signal
+                        os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
+                    except:
+                        # 最后尝试直接终止
+                        try:
+                            self.proc.kill()
+                        except:
+                            pass
                 finally:
                     self.proc = None
 
@@ -1705,13 +2051,25 @@ class ssh_host_admin(ssh_terminal):
         ff = fileObj.upload(args)
 
         if ff["status"]:
-            command = self.get_command_list(sys_cmd=True)
-            import csv
-            import chardet
+            res = self._merge_command_of_file(command_file_path)
+            # 删除临时文件
+            if os.path.exists(command_file_path):
+                os.remove(command_file_path)
+            if res:
+                return public.returnMsg(False, res)
+            return public.returnMsg(True, '导入成功')
 
+        return public.returnMsg(False, '导入失败, 上传文件异常')
+
+    def _merge_command_of_file(self, command_file_path) -> str:
+        command = self.get_command_list(sys_cmd=True)
+        import csv
+        import chardet
+        try:
             encoding = "utf-8"
             with open(command_file_path, "rb") as f:
-                encoding = chardet.detect(f.read())['encoding']
+                encoding = chardet.detect(f.read(1024))['encoding']
+            add_command_names = []
             with open(command_file_path, 'r', encoding=encoding) as f:
                 reader = csv.reader(f)
 
@@ -1724,22 +2082,37 @@ class ssh_host_admin(ssh_terminal):
 
                     if self.command_exists(command, cmd['title']):
                         continue
-
+                    add_command_names.append(cmd['title'])
                     command.append(cmd)
 
-            # 写日志
-            titles = [t["title"] for t in command]
-            public.WriteLog(self._log_type, '导入常用命令[{}]'.format(titles))
+            if len(add_command_names) > 10:
+                add_command_names = add_command_names[:10] + ["...."]
 
+            # 写日志
+            public.WriteLog(self._log_type, '导入常用命令[{}]'.format(add_command_names))
             self.save_command(command)
 
-            # 删除临时文件
-            if os.path.exists(command_file_path):
-                os.remove(command_file_path)
+            return ""
+        except Exception as e:
+            return "导入失败，数据格式异常"
 
-            return public.returnMsg(True, '导入成功')
+    def into_command_more(self, args):
+        command_file_path = args.get("command_file_path/s", "")
+        if not command_file_path:
+            return public.returnMsg(False, '请选择导入文件')
+        if not os.path.isfile(command_file_path):
+            return public.returnMsg(False, '文件不存在')
 
-        return public.returnMsg(False, '导入失败')
+        if not command_file_path.endswith(".csv"):
+            return public.returnMsg(False, '请选择csv文件')
+
+        res = self._merge_command_of_file(command_file_path)
+        # 删除临时文件
+        if os.path.exists(command_file_path):
+            os.remove(command_file_path)
+        if res:
+            return public.returnMsg(False, res)
+        return public.returnMsg(True, '导入成功')
 
 
     def out_command(self, args):
@@ -1784,27 +2157,104 @@ class ssh_host_admin(ssh_terminal):
 
     @staticmethod
     def completion_tool_status(args):
+        default_config = {
+            "use_completion": False,
+            "terminal_theme": False,
+            "ai_shell": False
+        }
+        
         zh_json_file = "{}/BTPanel/static/zh.json.gz".format(public.get_panel_path())
         status_file = "{}/data/use_completion_tool.pl".format(public.get_panel_path())
-        if os.path.exists(status_file) and os.path.exists(zh_json_file):
-                return public.returnMsg(True, "启用中")
-        return public.returnMsg(False, "未启用")
+
+        try:
+            config_data = json.loads(public.readFile(status_file))
+        except:
+            config_data = default_config
+        config_data["use_completion"] = config_data.get("use_completion", True) and os.path.exists(zh_json_file)
+        config_data["ai_shell"] = config_data.get("ai_shell", False)
+        config_data["ai_shell_analyze"] = config_data.get("ai_shell_analyze", True)
+        return config_data
 
     @staticmethod
     def set_completion_tool_status(args):
         status = args.get("status/d", 0)
         status_file = "{}/data/use_completion_tool.pl".format(public.get_panel_path())
-        if not status:
-            if os.path.exists(status_file):
-                os.remove(status_file)
-            return public.returnMsg(True, "关闭成功")
+        try:
+            config_data = json.loads(public.readFile(status_file))
+        except:
+            config_data = {
+                "use_completion": os.path.exists(status_file),
+                "terminal_theme": False
+            }
 
+        if not status:
+            config_data["use_completion"] = False
+            public.writeFile(status_file, json.dumps(config_data))
+            return public.returnMsg(True, "关闭成功")
 
         zh_json_file = "{}/BTPanel/static/zh.json.gz".format(public.get_panel_path())
         if not os.path.exists(zh_json_file):
             public.downloadFile("https://download.bt.cn/src/zh.json.gz", zh_json_file)
         if not os.path.exists(zh_json_file):
             return public.returnMsg(False, "开启失败，获取补全插件包失败，无法打开，请检查网络环境后再重试")
-        if not os.path.exists(status_file):
-            public.writeFile(status_file, "")
+        config_data["use_completion"] = True
+        public.writeFile(status_file, json.dumps(config_data))
+        return public.returnMsg(True, "开启成功")
+
+    @staticmethod
+    def set_terminal_theme(args):
+        status = args.get("status/d", 0)
+        status_file = "{}/data/use_completion_tool.pl".format(public.get_panel_path())
+        if os.path.exists(status_file):
+            try:
+                config_data = json.loads(public.readFile(status_file))
+            except:
+                config_data = {
+                    "use_completion": True,
+                    "terminal_theme": False
+                }
+            config_data['terminal_theme'] = bool(status)
+            public.writeFile(status_file, json.dumps(config_data))
+        else:
+            public.writeFile(status_file, json.dumps({'terminal_theme': bool(status), 'use_completion': True}))
+        return public.returnMsg(True, "设置成功")
+    
+    @staticmethod
+    def set_ai_shell_status(args):
+        """设置AI终端状态"""
+        status = args.get("status/d", 0)
+        
+        status_file = "{}/data/use_completion_tool.pl".format(public.get_panel_path())
+        try:
+            config_data = json.loads(public.readFile(status_file))
+        except:
+            config_data = {}
+        
+        if not status:
+            config_data["ai_shell"] = False
+            public.writeFile(status_file, json.dumps(config_data))
+            return public.returnMsg(True, "关闭成功")
+        
+        config_data["ai_shell"] = True
+        public.writeFile(status_file, json.dumps(config_data))
+        return public.returnMsg(True, "开启成功")
+    
+    @staticmethod
+    def set_ai_shell_analyze(args):
+        """设置AI终端分析状态"""
+        status = args.get("status/d", 0)
+        
+        status_file = "{}/data/use_completion_tool.pl".format(public.get_panel_path())
+        try:
+            config_data = json.loads(public.readFile(status_file))
+        except:
+            config_data = {}
+        
+        if not status:
+            config_data["ai_shell_analyze"] = False
+            public.writeFile(status_file, json.dumps(config_data))
+            return public.returnMsg(True, "关闭成功")
+        
+        config_data["ai_shell_analyze"] = True
+        public.writeFile(status_file, json.dumps(config_data))
         return public.returnMsg(True, "开启成功")

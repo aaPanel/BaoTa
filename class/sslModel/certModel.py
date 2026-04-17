@@ -190,6 +190,7 @@ class main(sslBase):
             data = {
                 "comodo-positivessl-wildcard": "Sectigo RSA Domain Validation Secure Server CA",
                 "comodo-positivessl": "Sectigo RSA Domain Validation Secure Server CA",
+                "ssltrus-dv-ssl": "锐安信DV SSL证书",
             }
             public.writeFile(path, json.dumps(data))
             return data
@@ -589,6 +590,8 @@ class main(sslBase):
             import acme_v2
             _return = acme_v2.acme_v2()._delete_order(public.to_dict_obj({"index": index, "ssl_hash": ssl_hash, "local": local, "cloud": cloud, "force": force}))
             _return['finish_list'].extend(finish_list)
+            if len(_return['finish_list']) == 1 and cloud and not local:
+                _return = _return['finish_list'][0]
             return _return
         except ValueError as e:
             return public.ReturnMsg(status=False, msg=str(e))
@@ -631,7 +634,10 @@ class main(sslBase):
         if target["cloud_id"] != -1 and cloud:
             _, _, user_info = self._get_cbc_key_and_iv(with_uer_info=True)
             if user_info is None:
-                raise ValueError('面板未登录，无法上传云端!')
+                if local:
+                    # 未登录直接返回
+                    return public.returnMsg(True, "删除成功")
+                raise ValueError('面板未登录，无法连接云端!')
             url = "https://www.bt.cn/api/Cert_cloud_deploy/del_cert"
             try:
                 res_text = public.httpPost(url, {
@@ -677,7 +683,7 @@ class main(sslBase):
     def upload_cert(self, ssl_id=None, ssl_hash=None):
         key, iv, user_info = self._get_cbc_key_and_iv()
         if key is None or iv is None:
-            raise ValueError(False, '面板未登录，无法上传云端!')
+            raise ValueError('面板未登录，无法上传云端!')
 
         target = self.find_ssl_info(ssl_id=ssl_id, ssl_hash=ssl_hash)
         if not target:
@@ -747,7 +753,7 @@ class main(sslBase):
         try:
             user_info = json.loads(public.readFile(uer_info_file))
             uid = user_info["uid"]
-        except (json.JSONDecodeError, KeyError):
+        except (json.JSONDecodeError, KeyError, TypeError):
             return None, None, None
 
         md5_obj = md5()
@@ -1213,7 +1219,7 @@ class main(sslBase):
 
             if not ssl_info:
                 return public.returnMsg(False, "未找到证书信息")
-            if ssl_info.get("issuer_O") != "Let's Encrypt":
+            if ssl_info.get("issuer_O", '') != "Let's Encrypt":
                 return public.returnMsg(False, "证书不是Let's Encrypt颁发的")
             index = public.md5(str(uuid.uuid4()))
             order_data = {
@@ -1261,12 +1267,15 @@ class main(sslBase):
 
         if 'auto_wildcard' in get and get.auto_wildcard == '1':
             acm_obj._auto_wildcard = True
+        ca = False
+        if "ca" in get:
+            ca = get.ca
 
         domains = json.loads(get.domains)
         auth_type = get.auth_type
         auth_to = get.auth_to
 
-        return acm_obj.apply_cert(domains, auth_type, auth_to)
+        return acm_obj.apply_cert(domains, auth_type, auth_to, ca=ca)
 
     def update_cert_from_cloud(self, get):
         """
@@ -1455,7 +1464,7 @@ class main(sslBase):
 
     def get_newssl_discount(self, get=None):
         result = {"status": False, "msg": "", "data": {}}
-        if public.get_oem_name() != "ssl251104":
+        if public.get_oem_name() not in ("ssl251104", "ssl251210"):
             return result
         if os.path.exists("/www/server/panel/data/newssl_discount.json"):
             try:
@@ -1466,7 +1475,6 @@ class main(sslBase):
                 self._get_newssl_discount()
             return result
         else:
-            disc_dic = {22: "0元购DV单域名商用SSL*1张", 23: "4.9元购DV单域名商用SSL*1张", 24: "9.9元购DV单域名商用SSL*1张"}
             try:
                 data = self._get_newssl_discount()
                 if not data["status"] or not data["data"]:
@@ -1475,7 +1483,7 @@ class main(sslBase):
                 user_info = public.get_user_info()
                 if data["serverid"] != user_info["serverid"]:
                     return result
-                data.update({"discount_info": disc_dic[data["discount_id"]] if data["discount_id"] in disc_dic else "未知优惠券"})
+                data.update({"discount_info": "价值128元的商用SSL证书"})
                 result["status"] = True
                 result["msg"] = "领取成功"
                 result["data"] = data
@@ -1510,6 +1518,330 @@ class main(sslBase):
         if result["status"]:
             public.writeFile("/www/server/panel/data/newssl_discount.json", json.dumps(result["data"]))
         return result
+
+    def verify_certificate_chain(self, get):
+        """
+        验证证书链完整性
+        """
+        if "cert" in get and get.cert:
+            cert = get.cert
+        elif "oid" in get and get.oid:
+            import panelSSL
+            ssl_obj = panelSSL.panelSSL()
+            rep = ssl_obj.get_order_find(get)
+            # public.print_log(rep)
+            cert = rep['certificate'] + "\n" + rep['caCertificate']
+        elif ("ssl_hash" in get and get.ssl_hash) or ("index" in get and get.index):
+            cert_info = self.GetCert(get)
+            cert = cert_info['fullchain']
+        else:
+            return {'status': False, 'msg': '缺少证书参数'}
+
+        check_chain_flag, check_chain_msg = self._verify_certificate_chain(cert)
+
+        return public.returnMsg(check_chain_flag, check_chain_msg)
+
+    def _verify_certificate_chain(self, cert_pem):
+        """
+        验证证书链是否完整
+        :param cert_pem: 证书链内容
+        :return: (bool, str) 验证成功返回(True, "验证成功"),失败返回(False, "错误信息")
+        """
+        try:
+            from cryptography.hazmat.primitives.asymmetric import padding, ec, rsa
+            from cryptography import x509
+            from cryptography.exceptions import InvalidSignature
+            from cryptography.x509.oid import ExtensionOID
+            from cryptography.hazmat.backends import default_backend
+            from ssl_info import ssl_info
+            import ssl
+
+            # 解析证书链
+            cert_chain = [
+                (i + "-----END CERTIFICATE-----").strip()
+                for i in cert_pem.strip().split("-----END CERTIFICATE-----")
+                if i.strip()
+            ]
+
+            # 验证证书链数量
+            chain_length = len(cert_chain)
+
+            if chain_length < 1:
+                return False, "证书链为空,请提供有效的证书。"
+            ssl_info_obj = ssl_info()
+            # 单个证书处理
+            if chain_length == 1:
+                cert = ssl_info_obj.analysis_certificate(cert_chain[0])
+                if not cert:
+                    return False, "证书格式错误,无法解析。"
+
+                # 检查是否为自签名证书
+                if cert.issuer == cert.subject:
+                    try:
+                        public_key = cert.public_key()
+                        if isinstance(public_key, ec.EllipticCurvePublicKey):
+                            public_key.verify(
+                                cert.signature,
+                                cert.tbs_certificate_bytes,
+                                ec.ECDSA(cert.signature_hash_algorithm)
+                            )
+                        elif isinstance(public_key, rsa.RSAPublicKey):
+                            public_key.verify(
+                                cert.signature,
+                                cert.tbs_certificate_bytes,
+                                padding.PKCS1v15(),
+                                cert.signature_hash_algorithm
+                            )
+                        return True, "单个自签名根证书验证通过。"
+                    except InvalidSignature:
+                        return False, "自签名证书签名验证失败。"
+                else:
+                    # 尝试使用系统信任的根CA验证
+                    is_trusted, msg = self._verify_with_system_ca(cert)
+                    if is_trusted:
+                        return True, f"单个证书验证通过,由系统信任的根CA签发: {msg}"
+                    return False, "证书链不完整,缺少颁发者证书且未被系统信任。"
+
+            # 验证证书链（至少2个证书）
+            for i in range(chain_length - 1):
+                cert = ssl_info_obj.analysis_certificate(cert_chain[i])
+                issuer_cert = ssl_info_obj.analysis_certificate(cert_chain[i + 1])
+
+                if not cert:
+                    return False, f"第 {i + 1} 个证书格式错误,无法解析。"
+
+                if not issuer_cert:
+                    return False, f"第 {i + 2} 个证书格式错误,无法解析。"
+
+                # 验证颁发者是否匹配
+                if cert.issuer != issuer_cert.subject:
+                    return False, f"证书链断裂：第 {i + 1} 个证书的颁发者与第 {i + 2} 个证书的主体不匹配。"
+
+                # 验证颁发者证书是否为CA证书
+                try:
+                    basic_constraints = issuer_cert.extensions.get_extension_for_oid(
+                        ExtensionOID.BASIC_CONSTRAINTS
+                    )
+                    if not basic_constraints.value.ca:
+                        return False, f"第 {i + 2} 个证书不是CA证书,无法签发其他证书。"
+                except x509.ExtensionNotFound:
+                    if i + 2 != chain_length:
+                        return False, f"第 {i + 2} 个证书缺少CA标识,无法验证其签发权限。"
+
+                # 验证证书签名
+                try:
+                    issuer_public_key = issuer_cert.public_key()
+
+                    if isinstance(issuer_public_key, ec.EllipticCurvePublicKey):
+                        issuer_public_key.verify(
+                            cert.signature,
+                            cert.tbs_certificate_bytes,
+                            ec.ECDSA(cert.signature_hash_algorithm)
+                        )
+                    elif isinstance(issuer_public_key, rsa.RSAPublicKey):
+                        issuer_public_key.verify(
+                            cert.signature,
+                            cert.tbs_certificate_bytes,
+                            padding.PKCS1v15(),
+                            cert.signature_hash_algorithm
+                        )
+                    else:
+                        return False, f"不支持的公钥类型：{type(issuer_public_key).__name__}"
+
+                except InvalidSignature:
+                    return False, f"第 {i + 1} 个证书未被第 {i + 2} 个证书正确签发,签名验证失败。"
+                except Exception as e:
+                    public.print_log(f"证书 {i + 1} 签名验证异常: {str(e)}")
+                    return False, f"第 {i + 1} 个证书签名验证失败：{str(e)}"
+
+            # 验证根证书（最后一个证书）
+            root_cert = ssl_info_obj.analysis_certificate(cert_chain[-1])
+            if not root_cert:
+                return False, f"根证书（第 {chain_length} 个）格式错误,无法解析。"
+
+            # 检查根证书是否为自签名
+            is_self_signed = (root_cert.issuer == root_cert.subject)
+
+            if is_self_signed:
+                try:
+                    root_public_key = root_cert.public_key()
+                    if isinstance(root_public_key, ec.EllipticCurvePublicKey):
+                        root_public_key.verify(
+                            root_cert.signature,
+                            root_cert.tbs_certificate_bytes,
+                            ec.ECDSA(root_cert.signature_hash_algorithm)
+                        )
+                    elif isinstance(root_public_key, rsa.RSAPublicKey):
+                        root_public_key.verify(
+                            root_cert.signature,
+                            root_cert.tbs_certificate_bytes,
+                            padding.PKCS1v15(),
+                            root_cert.signature_hash_algorithm
+                        )
+                    return True, f"证书链验证成功（共 {chain_length} 个证书,根证书为自签名）。"
+                except InvalidSignature:
+                    return False, f"根证书（第 {chain_length} 个）自签名验证失败。"
+            else:
+                # 根证书不是自签名,验证是否由系统信任的根CA签发
+                is_trusted, trust_msg = self._verify_with_system_ca(root_cert)
+                if is_trusted:
+                    return True, f"证书链验证成功（共 {chain_length} 个证书, {trust_msg}）。"
+                else:
+                    return False, f"证书链不完整：顶级证书（第 {chain_length} 个）为中间CA但未被系统信任的根CA签发。{trust_msg}"
+
+        except ImportError as e:
+            error_msg = f"缺少必要的加密库：{str(e)}"
+            public.print_log(error_msg)
+            return False, error_msg
+        except Exception as e:
+            error_info = public.get_error_info()
+            public.print_log(f"证书链验证异常：{error_info}")
+            return False, f"证书链验证过程出错：{str(e)}"
+
+
+    def _verify_with_system_ca(self, cert):
+        """
+        验证证书是否由系统信任的根CA签发
+        :param cert: 证书对象
+        :return: (bool, str) 验证结果和消息
+        """
+        try:
+            from cryptography import x509
+            from cryptography.hazmat.backends import default_backend
+            from cryptography.hazmat.primitives import serialization
+            from cryptography.hazmat.primitives.asymmetric import padding, ec, rsa
+            from cryptography.exceptions import InvalidSignature
+            import ssl
+
+            # 获取系统信任的CA证书路径
+            ca_paths = [
+                '/etc/ssl/certs/ca-certificates.crt',  # Debian/Ubuntu
+                '/etc/pki/tls/certs/ca-bundle.crt',  # RedHat/CentOS
+                '/etc/ssl/ca-bundle.pem',  # OpenSUSE
+                '/etc/ssl/cert.pem',  # macOS
+            ]
+
+            # 尝试使用Python的ssl模块获取默认CA路径
+            try:
+                default_ca = ssl.get_default_verify_paths()
+                if default_ca.cafile:
+                    ca_paths.insert(0, default_ca.cafile)
+            except:
+                pass
+
+            # 查找可用的CA证书文件
+            ca_bundle_path = None
+            for path in ca_paths:
+                if os.path.exists(path):
+                    ca_bundle_path = path
+                    break
+
+            if not ca_bundle_path:
+                return False, "未找到系统CA证书存储"
+
+            # 读取系统CA证书
+            try:
+                ca_bundle = public.readFile(ca_bundle_path)
+            except:
+                return False, "无法读取系统CA证书"
+
+            # 解析所有CA证书
+            ca_certs = []
+            for cert_pem in ca_bundle.split('-----END CERTIFICATE-----'):
+                if '-----BEGIN CERTIFICATE-----' in cert_pem:
+                    try:
+                        cert_data = (cert_pem + '-----END CERTIFICATE-----').strip().encode('utf-8')
+                        ca_cert = x509.load_pem_x509_certificate(cert_data, default_backend())
+                        ca_certs.append(ca_cert)
+                    except:
+                        continue
+
+            if not ca_certs:
+                return False, "系统CA证书加载失败"
+            res = None
+            # 查找匹配的颁发者证书
+            for ca_cert in ca_certs:
+                # 判断证书是否在系统CA中
+                if cert.subject == ca_cert.subject:
+                    try:
+                        ca_name = ca_cert.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)[0].value
+                    except:
+                        ca_name = "系统信任的根CA"
+                    return True, f"顶级证书为系统信任的根CA: 【{ca_name}】"
+                elif cert.issuer == ca_cert.subject:
+                    # 验证签名
+                    try:
+                        ca_public_key = ca_cert.public_key()
+
+                        if isinstance(ca_public_key, ec.EllipticCurvePublicKey):
+                            ca_public_key.verify(
+                                cert.signature,
+                                cert.tbs_certificate_bytes,
+                                ec.ECDSA(cert.signature_hash_algorithm)
+                            )
+                        elif isinstance(ca_public_key, rsa.RSAPublicKey):
+                            ca_public_key.verify(
+                                cert.signature,
+                                cert.tbs_certificate_bytes,
+                                padding.PKCS1v15(),
+                                cert.signature_hash_algorithm
+                            )
+                        else:
+                            continue
+
+                        # 获取CA名称
+                        try:
+                            ca_name = ca_cert.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)[0].value
+                        except:
+                            ca_name = "系统信任的根CA"
+                        try:
+                            cert_name = cert.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)[0].value
+                        except:
+                            cert_name = "中间CA证书"
+
+                        res = (True, f"顶级证书为中间ca【{cert_name}】，由系统信任的根CA签发: 【{ca_name}】")
+
+                    except InvalidSignature:
+                        continue
+                    except Exception as e:
+                        continue
+            if res:
+                return res
+            return False, "未找到匹配的系统信任根CA"
+
+        except Exception as e:
+            public.print_log(f"系统CA验证异常: {str(e)}")
+            return False, f"系统CA验证失败: {str(e)}"
+
+
+    # 获取自动续签开启状态
+    def get_auto_renewal(self, get=None):
+        """
+        获取自动续签开启状态
+        """
+        # 判断标记文件
+        status = True
+        if os.path.exists("/www/server/panel/data/close_ssl_auto_renewal.pl"):
+            status = False
+        import acme_v2
+        acm_obj = acme_v2.acme_v2()
+        acm_obj.set_crond()
+        return public.returnMsg(True, {'status': status})
+
+
+    # 设置是否开启自动续签
+    def set_auto_renewal(self, get=None):
+        """
+        设置是否开启自动续签
+        """
+        if os.path.exists("/www/server/panel/data/close_ssl_auto_renewal.pl"):
+            os.remove("/www/server/panel/data/close_ssl_auto_renewal.pl")
+        else:
+            public.writeFile("/www/server/panel/data/close_ssl_auto_renewal.pl", "1")
+        import acme_v2
+        acm_obj = acme_v2.acme_v2()
+        acm_obj.set_crond()
+        return public.returnMsg(True, '设置成功')
 
 
 

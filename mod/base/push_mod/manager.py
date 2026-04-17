@@ -3,15 +3,18 @@ import os
 import time
 from typing import Union, Optional
 
-from .util import debug_log, set_module_logs, write_log
+from .util import debug_log, set_module_logs, write_log, DB
 from .mods import TaskTemplateConfig, TaskConfig, SenderConfig, TaskRecordConfig
 from .system import PushSystem
 from mod.base import json_response
 
 import sys
+
 if "/www/server/panel/class" not in sys.path:
     sys.path.insert(0, "/www/server/panel/class/")
 import public
+
+
 class PushManager:
 
     def __init__(self):
@@ -150,7 +153,8 @@ class PushManager:
         if not task_obj:
             return "加载任务类型错误，您可以尝试修复面板"
 
-        if task_obj.source_name in ("nodes_nginx_http_load_push", "nodes_nginx_tcp_load_push", "nodes_mysql_slave_err_push"):
+        if task_obj.source_name in ("nodes_nginx_http_load_push", "nodes_nginx_tcp_load_push",
+                                    "nodes_mysql_slave_err_push"):
             public.set_module_logs("nodes_push_9", task_obj.source_name)
 
         res = self.normalize_task_config(task, template)
@@ -186,7 +190,7 @@ class PushManager:
         if not target_task_conf:
             res["id"] = self.task_conf.nwe_id()
             res["template_id"] = template_id
-            res["status"] = True
+            res["status"] = True if "status" not in res else res["status"]
             res["pre_hook"] = {}
             res["after_hook"] = {}
             res["last_check"] = 0
@@ -232,7 +236,7 @@ class PushManager:
         # 查找对应的 task_id
         task_title = get.title.strip()  # 假设 get 中有 title 参数
         task_id = None
-        
+
         for task in tasks:
             if task.get('title') == task_title:
                 task_id = task.get('id')
@@ -298,101 +302,114 @@ class PushManager:
         return json_response(status=True, msg="操作成功")
 
     def update_ssl_task(self, get):
-        import sys
-        sys.path.insert(0, "/www/server/panel/class/")
-        import public
-
-        """
-        根据前端发送的参数，修改对应任务的配置
-        :param file_path: JSON文件的路径
-        :param task_id: 需要修改的任务ID
-        :param update_data: 前端发送的更新数据
-        :return: 修改结果
-        """
-        
-        def load_task_data():
-            try:
-                file_path = f'{public.get_panel_path()}/data/mod_push_data/task.json'
-                return json.loads(public.readFile(file_path))
-            except:
-                return []
-
-        def save_task_data(data):
-            file_path = f'{public.get_panel_path()}/data/mod_push_data/task.json'
-            with open(file_path, 'w') as file:
-                json.dump(data, file, indent=4)
-        
-        def find_task(data, project):
-            for task in data:
-                if task.get('source') == 'site_ssl' and task.get('task_data', {}).get('project') == project:
-                    return task
-            return None
-
+        status = bool(get.get("status/d", 1))
         try:
-            task_id = get.task_id
-            update_data = json.loads(get.task_data)
+            task_data = json.loads(get.get("task_data/s", "{}"))
+            project = task_data["task_data"]["project"]
+            cycle = int(task_data["task_data"]["cycle"])
+            sender = task_data["sender"]
+        except:
+            return json_response(status=False, msg="参数错误")
 
-            if not update_data.get('sender'):
-                return {'status': False, 'msg': '请设置告警的通知方式！'}
+        task_config = TaskConfig()
+        ssl_task_list = task_config.get_by_source("site_ssl")
 
-            status = int(get.status)
-            project = update_data['task_data']['project']
+        if project == "all":
+            site_list = DB("sites").field("id,name").select()
+            push_project = [site["id"] for site in site_list]
+            push_project.append("after_site")  # 全选等于支持后续创建的站点
+        else:
+            site_list = DB("sites").where("name=?", (project,)).field("id,name").select()
+            if not site_list:
+                return json_response(status=False, msg="未查询到站点【{}】".format(project))
+            push_project = [site["id"] for site in site_list]
 
-            data = load_task_data()
+        if not ssl_task_list:
+            if not status:
+                return json_response(status=True, msg="关闭任务成功")
 
-            if not task_id:
-                return self.set_task_conf(get)
+            res = self.set_task_conf_data({
+                "template_id": "1",
+                "task_data": {
+                    "status": True,
+                    "task_data": {
+                        "project": push_project,
+                        "cycle": cycle,
+                    },
+                    "sender": sender,
+                    "number_rule": {
+                        "day_num": 0,
+                        "total": 3
+                    }
+                }
+            })
+            if res:
+                return json_response(status=False, msg=res)
+            return json_response(status=True, msg="告警任务保存成功")
+        else:
+            ssl_task = ssl_task_list[0]
+            # 如果有 after_site 设置，则需要更新 project 字段确保是最新状态下，在设置
+            if "after_site" in ssl_task["task_data"]["project"]:
+                after_site_id = ssl_task["task_data"].get("after_site_id", -1)
+                if after_site_id >= 0:
+                    site_list = DB("sites").where("id>?", (after_site_id,)).field("id,name").select()
+                    for site in site_list:
+                        if site["id"] not in ssl_task["task_data"]["project"]:
+                            ssl_task["task_data"]["project"].append(site["id"])
 
-            task = find_task(data, project)
-            if task:
-                get.task_id = task['id']
-            else:
-                get.task_id = ""
+            if status and not ssl_task["status"]: # 原来的任务是关闭的，新的任务需要开启
+                real_status = True
+                real_push_project = push_project
+            elif status and  ssl_task["status"]: # 原来的任务是开启的，新的任务也是开启
+                real_status = True
+                real_push_project = list(set(ssl_task["task_data"]["project"]) | set(push_project))
+            elif not status and ssl_task["status"]: # 原来的任务是开启的，新的任务需要关闭
+                real_push_project = list(set(ssl_task["task_data"]["project"]) - set(push_project))
+                real_status = len(real_push_project)
+            else: # 原来的任务是关闭的，新的任务需要关闭
+                real_status = False
+                real_push_project = list(set(ssl_task["task_data"]["project"]) | set(push_project))
 
-            self.set_task_conf(get)
+            push_data = {
+                "template_id": "1",
+                "task_id": ssl_task["task_id"],
+                "task_data": {
+                    "status": real_status ,
+                    "task_data": {
+                        "project": real_push_project,
+                        "cycle": cycle,
+                    },
+                    "sender": sender,
+                    "number_rule": {
+                        "day_num": 0,
+                        "total": 3
+                    }
+                }
+            }
 
-            if status == 0:
-                task_found = False
-                for task in data:
-                    if task.get('source') == 'site_ssl' and task.get('task_data', {}).get('project') == project:
-                        task['status'] = False
-                        task_found = True
-                
-                if not task_found:
-                    get.task_id = ""
-                    self.set_task_conf(get)
-                    data = load_task_data()
-                    for task in data:
-                        if task.get('source') == 'site_ssl' and task.get('keyword') == project:
-                            task['status'] = False
-                            break
+            res = self.set_task_conf_data(push_data)
+            if res:
+                return json_response(status=False, msg=res)
 
-                save_task_data(data)
+            return json_response(status=True, msg="告警任务保存成功")
 
-            return {'status': True, 'msg': '操作成功'}
-
-        except Exception as e:
-            return {'status': False, 'msg': str(e)}
-                     
-        
-    def change_task(self,task_id,status):
+    def change_task(self, task_id, status):
         tmp = self.task_conf.get_by_id(task_id)
         tmp["status"] = bool(status)  # 将status转换为布尔值并设置
         self.task_conf.save_config()
-       
 
     def change_ssl_task(self, get):
         # result = public.M('sites').select()
         try:
             task_id = get.task_id.strip()
             status = int(get.status)  # 获取status字段并转换为整数
-            
+
         except (AttributeError, ValueError):
             return json_response(status=False, msg="参数错误")
 
         if status not in [0, 1]:
             return json_response(status=False, msg="无效的状态值")
-        project=get.project
+        project = get.project
         try:
             data = json.loads(public.readFile('{}/data/mod_push_data/task.json'.format(public.get_panel_path())))
         except:

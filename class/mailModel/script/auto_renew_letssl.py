@@ -17,7 +17,7 @@ domain_data = mainModel.main().get_domains(public.to_dict_obj({"p": 1, "limit": 
 
 for domain in domain_data["data"]:
     print("正在续签：{}".format(domain['domain']))
-    if domain['ssl_info'].get("issuer_O") != "Let's Encrypt" or not domain['ssl_status']:
+    if domain['ssl_info'].get("issuer_O", '') != "Let's Encrypt" or not domain['ssl_status']:
         print("证书不符合续签条件，跳过")
         continue
     if domain['ssl_info']["endtime"] >= 30:

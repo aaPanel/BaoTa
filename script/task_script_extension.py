@@ -427,7 +427,7 @@ class Task:
             print("未安装企业版邮局，邮件日志事件服务退出")
             return None
 
-        mail_log_event_pid = "{}/data/mail_log_event.pid"
+        mail_log_event_pid = "{}/data/mail_log_event.pid".format(PANEL_PATH)
         pid = self.get_mail_log_event_pid()
         if pid:
             try:
@@ -447,7 +447,7 @@ class Task:
 
     @staticmethod
     def get_mail_log_event_pid():
-        mail_log_event_pid = "{}/data/mail_log_event.pid"
+        mail_log_event_pid = "{}/data/mail_log_event.pid".format(PANEL_PATH)
         if os.path.exists(mail_log_event_pid):
             try:
                 pid = int(public.readFile(mail_log_event_pid))
@@ -473,6 +473,20 @@ class Task:
             except:
                 continue
 
+    def check_database_quota(self):
+        '''
+            @name 数据库配额检查
+            @return None
+        '''
+        get = public.dict_obj()
+        get.model_index = "project"
+        self.write_log("启动数据库配额检查")
+        PluginLoader.module_run("quota", "database_quota_check", get)
+
+
+def task_ssh_error_count():
+    PluginLoader.module_run("syslog", "task_ssh_error_count", public.dict_obj())
+
 
 def main(action: str):
     if action == "check502Task":
@@ -483,6 +497,10 @@ def main(action: str):
         Task().update_software_list()
     elif action == "maillog_event":
         Task().maillog_event_service()
+    elif action == "check_database_quota":
+        Task().check_database_quota()
+    elif action == "task_ssh_error_count":
+        task_ssh_error_count()
     else:
         print("Unknown action: {}".format(action))
 

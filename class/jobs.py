@@ -12,6 +12,8 @@ today_time = str(time.time())
 run_time_file = '/www/server/panel/jobs_run_time.pl'
 
 def control_init():
+    install_packages_for_11_5()
+    clean_up_orphan_ssh_sessions()
     public.chdck_salt()
     rep_websocket_conf()
     rep_nginx_conf()
@@ -24,12 +26,14 @@ def control_init():
     set_nginx_extension()
     set_apache_extension()
     setup_site_total()
+    clear_node_executor_log()
     check_cryptography_pyopenssl_version()
     check_docker_version()
     clear_fastcgi_safe()
     check_enable_php()
     rm_apache_cgi_test()
     ping_test()
+    upgrade_fastcgi_cache_conf_format()
     sync_default_msg_channel()
     update_python_project_env()
     if not os.path.exists('/www/server/panel/data/check_ssl_cron.pl'): check_ssl_cron()
@@ -1623,6 +1627,34 @@ def setup_site_total():
     print("free_site_total 安装成功！", flush=True)
     public.writeFile(last_install_file, str(update_time))
 
+
+def clear_node_executor_log():
+    """
+    @name 清理node->executor 模块的日志
+    """
+    try:
+        from mod.project.node.dbutil import TaskFlowsDB
+        TaskFlowsDB().clear_old_log()
+        print("清理node->executor 模块的日志成功！", flush=True)
+    except:
+        print("清理node->executor 模块的日志失败！")
+        print(public.get_error_info(), flush=True)
+
+def install_packages_for_11_5():
+    try:
+        import asn1crypto, cbor2
+    except:
+        os.system("{} -m pip install asn1crypto==1.5.1 cbor2==5.4.6".format(sys.executable))
+
+# 将旧的fastcgi缓存配置文件升级到新的配置文件格式
+def upgrade_fastcgi_cache_conf_format():
+    from wptoolkitModel.wp_toolkit.core import wpfastcgi_cache
+    wpfastcgi_cache().upgrade_fastcgi_cache_format()
+
+# 清理可能存在的本地bash会话
+def clean_up_orphan_ssh_sessions():
+    from ssh_terminal import cleanup_orphan_ssh_sessions
+    cleanup_orphan_ssh_sessions()
 
 if __name__ == '__main__':
     stime = time.time()

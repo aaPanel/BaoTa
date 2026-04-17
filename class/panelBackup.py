@@ -71,7 +71,8 @@ class backup:
         'tianyiyun':"【天翼云ZOS】",
         'webdav':"【WebDav存储】",
         'minio':"【MinIO存储】",
-        'dogecloud':"【多吉云COS】"
+        'dogecloud':"【多吉云COS】",
+        'alipan_manage':"【阿里云盘】",
     }
     
     def __init__(self, cloud_object=None, cron_info={}):
@@ -603,8 +604,7 @@ class backup:
         
         backup_size = os.path.getsize(dfile)
         backup_dir=os.path.join(site_backup_dir, 'site')
-        if not self._backup_all:
-            self.check_disk_space(backup_size,backup_dir)
+
         if self._cloud:
             upload_path = os.path.join("site", siteName)
             self.echo_info("正在上传到{}，请稍候...".format(self._cloud._title))
@@ -718,6 +718,10 @@ class backup:
         
         self.delete_old(backups, save, 'site', siteName)
         self.echo_end()
+        
+        if not self._backup_all:
+            self.check_disk_space(backup_size,backup_dir)
+        
         return dfile
     
     # 备份所有站点
@@ -908,8 +912,7 @@ class backup:
         
         backup_path = msg
         backup_size = os.path.getsize(backup_path)
-        if not self._backup_all:
-            self.check_disk_space(backup_size,backup_path)
+
         file_name = os.path.basename(backup_path)
         # 上传对象
         if self._cloud is None:
@@ -969,7 +972,7 @@ class backup:
                     #     upload_path = os.path.join(self._cloud_new.backup_path, "database", db_type, file_name)
                     # else:
                     #     upload_path = os.path.join(self._cloud_new.backup_path, "database", db_type, db_name, file_name)
-                    upload_method = self._cloud.upload_file if self._cloud._title == "Google Drive" else self._cloud_new.cloud_upload_file
+                    upload_method = self._cloud.upload_file if self._cloud._title in ("Google Drive", "阿里云盘") else self._cloud_new.cloud_upload_file
                     if upload_method(backup_path, upload_path):
                         self.echo_info("已成功上传到{}".format(self._cloud._title))
                     else:
@@ -1048,6 +1051,9 @@ class backup:
         self.delete_old(backups, save, "database")
         self.echo_end()
         self.save_backup_status(True, target="{}|database".format(db_name))
+        
+        if not self._backup_all:
+            self.check_disk_space(backup_size,backup_path)
         return True, backup_path
     
     # mysql 备份数据库
@@ -1519,7 +1525,9 @@ class backup:
             self.echo_error(error_msg)
             return False, error_msg
         
+        ALL_BAKCUP = False
         if "ALL" in table_list:
+            ALL_BAKCUP=True
             tb_l = pgsql_obj.query("SELECT tablename FROM pg_tables WHERE schemaname = 'public';")
             if isinstance(tb_l, list) and tb_l:
                 table_list = [i[0] for i in tb_l]
@@ -1570,12 +1578,19 @@ class backup:
         if not os.path.isdir(export_dir):
             os.makedirs(export_dir)
         
-        for table_name in table_list:
-            tb_backup_path = os.path.join(export_dir, "{table_name}.sql".format(table_name=table_name))
-            tb_shell = shell + " --table='{table_name}' > '{tb_backup_path}'".format(table_name=table_name, tb_backup_path=tb_backup_path)
+        if ALL_BAKCUP:
+            tb_shell = shell + " > '{export_dir}.sql'".format(export_dir=export_dir)
             public.ExecShell(tb_shell, env={"PGPASSWORD": db_password})
+        else:
+            for table_name in table_list:
+                tb_backup_path = os.path.join(export_dir, "{table_name}.sql".format(table_name=table_name))
+                tb_shell = shell + " --table='{table_name}' > '{tb_backup_path}'".format(table_name=table_name, tb_backup_path=tb_backup_path)
+                public.ExecShell(tb_shell, env={"PGPASSWORD": db_password})
         backup_path = "{export_dir}.zip".format(export_dir=export_dir)
-        public.ExecShell("cd '{backup_dir}' && zip -m '{backup_path}' -r '{file_name}'".format(backup_dir=db_backup_dir, backup_path=backup_path, file_name=file_name))
+        if ALL_BAKCUP:
+            public.ExecShell("cd '{backup_dir}' && zip -m '{backup_path}' -r '{file_name}.sql'".format(backup_dir=db_backup_dir, backup_path=backup_path, file_name=file_name))
+        else:
+            public.ExecShell("cd '{backup_dir}' && zip -m '{backup_path}' -r '{file_name}'".format(backup_dir=db_backup_dir, backup_path=backup_path, file_name=file_name))
         if not os.path.exists(backup_path):
             public.ExecShell("rm -rf {}", format(export_dir))
         

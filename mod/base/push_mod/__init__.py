@@ -35,6 +35,7 @@ __all__ = [
     "PUSH_DATA_PATH",
     "get_default_module_dict",
     'update_mod_push_system2',
+    'update_ssl_task_for_11_7',
 ]
 
 
@@ -704,3 +705,69 @@ def _update_file_detect_task(pmgr: PushManager, df_mdl: Dict[str, str]):
         }
         aaa = pmgr.set_task_conf_data(push_data)
         # debug_log(aaa)
+
+
+def update_ssl_task_for_11_7():
+    # 合并所有的ssl任务
+    task_config = TaskConfig()
+    ssl_tasks = task_config.get_by_source("site_ssl")
+    if not ssl_tasks:
+        return
+    # 仅有一项则是已经处理过了
+    if len(ssl_tasks) == 1 and isinstance(ssl_tasks[0]["task_data"]["project"], list):
+        return
+
+    push_web_map = {}
+    sender_set = set()
+    cycle_num = 15
+    for i in ssl_tasks:
+        task_config.config.remove(i)
+        tmp_task_data = i["task_data"]
+        if not isinstance(tmp_task_data["project"], str):
+            continue
+        push_web_map[tmp_task_data["project"]] = i["status"]
+        if i["status"]:
+            sender_set.update(set(i["sender"]))
+            cycle_num = max(cycle_num, tmp_task_data["cycle"])
+
+    # 保存移除
+    task_config.save_config()
+
+    sql = DB("sites")
+    push_site_ids = []
+    web_list = sql.where('status=1', ()).select()
+    if "all" in push_web_map:
+        all_status = push_web_map.pop("all")
+        if all_status:  # 所有网站开启
+            push_site_ids.extend([w["id"] for w in web_list])
+            push_site_ids.append("after_site")
+
+    for i in web_list:
+        push_name = i["name"]
+        site_id = i["id"]
+        if push_name in push_web_map:
+            # 需要告警但不在其中
+            if push_web_map[push_name] and site_id not in push_site_ids:
+                push_site_ids.append(site_id)
+            # 无需告警但在其中就移除
+            if not push_web_map[push_name] and site_id in push_site_ids:
+                push_site_ids.remove(site_id)
+
+    if not push_site_ids:
+        return
+
+    push_data = {
+        "template_id": "1",
+        "task_data": {
+            "status": True,
+            "sender": list(sender_set),
+            "task_data": {
+                "project": push_site_ids,
+                "cycle": cycle_num
+            },
+            "number_rule": {
+                "day_num": 1
+            }
+        }
+    }
+    PushManager().set_task_conf_data(push_data)

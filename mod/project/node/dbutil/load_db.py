@@ -26,7 +26,7 @@ class LoadSite:
         "http_alg": "sticky_cookie",
         "proxy_cache_status": False,
         "cache_time": "1d",
-        "cache_suffix": "css,js,jpe,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map",
+        "cache_suffix": "css,js,jpg,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map",
     })
     tcp_config: dict = field(default_factory=lambda: {
         "proxy_connect_timeout": 8,
@@ -54,7 +54,7 @@ class LoadSite:
             if "proxy_cache_status" not in dict.keys(data['http_config']): #兼容旧版本数据
                 data['http_config']["proxy_cache_status"] = False
                 data['http_config']["cache_time"] = "1d"
-                data['http_config']["cache_suffix"] = "css,js,jpe,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map"
+                data['http_config']["cache_suffix"] = "css,js,jpg,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map"
             for k in ['proxy_next_upstream', 'http_alg', "proxy_cache_status", "cache_time", "cache_suffix"]:
                 if k not in dict.keys(data['http_config']):
                     return None, 'http_config.{} is required'.format(k)
@@ -78,7 +78,7 @@ class LoadSite:
                 cache_suffix_list.append(tmp_suffix)
             real_cache_suffix = ",".join(cache_suffix_list)
             if not real_cache_suffix:
-                real_cache_suffix = "css,js,jpe,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map"
+                real_cache_suffix = "css,js,jpg,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map,js.map"
             data['http_config']['cache_suffix'] = real_cache_suffix
 
         l = LoadSite(data.get('name'), data.get('site_name'), 'http', data.get('ps', ''),

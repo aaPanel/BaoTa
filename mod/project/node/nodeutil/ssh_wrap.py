@@ -1,7 +1,7 @@
 import json
 import os.path
 import traceback
-from typing import Optional, Tuple, Callable
+from typing import Optional, Tuple, Callable, Union, Dict
 from mod.base.ssh_executor import SSHExecutor, CommandResult
 from mod.project.node.dbutil import ServerNodeDB, Node
 
@@ -114,9 +114,10 @@ class SSHApi:
             result, err = executor.path_exists(target_file)
             return result, err
         except RuntimeError:
-            print(traceback.format_exc())
+            print(traceback.format_exc(), flush=True)
             return False, "ssh连接失败"
         except Exception as e:
+            print(traceback.format_exc(), flush=True)
             return False, str(e)
 
     def create_dir(self, path: str) -> Tuple[bool, str]:
@@ -138,14 +139,14 @@ class SSHApi:
             return "文件:{}不存在".format(filename)
 
         target_file = os.path.join(target_path, os.path.basename(filename))
-        exits, err = self.target_file_exits(target_file)
-        if err:
-            return err
+        path_info = self.path_info(target_file)
+        if isinstance(path_info, str):
+            return path_info
 
-        if exits and mode == "ignore":
+        if path_info['exists'] and mode == "ignore":
             call_log(0, "文件上传:{} -> {},目标文件已存在,跳过上传".format(filename, target_file))
             return ""
-        if exits and mode == "rename":
+        if path_info['exists'] and mode == "rename":
             upload_name = "{}_{}".format(os.path.basename(filename), public.md5(filename))
             call_log(0, "文件上传:{} -> {},目标文件已存在,将重命名为{}".format(filename, target_file, upload_name))
         else:
@@ -155,12 +156,15 @@ class SSHApi:
             executor = self._get_ssh_executor()
             executor.open()
             def progress_callback(current_size: int, total_size: int):
+                if total_size == 0:
+                    return
                 call_log(current_size * 100 // total_size, "" )
             executor.upload(filename, os.path.join(target_path, upload_name), progress_callback=progress_callback)
         except RuntimeError:
-            print(traceback.format_exc())
+            print(traceback.format_exc(), flush=True)
             return "ssh连接失败"
         except Exception as e:
+            print(traceback.format_exc(), flush=True)
             return str(e)
         return ""
 
@@ -175,7 +179,21 @@ class SSHApi:
                 return "该名称路径不是目录"
             return ""
         except RuntimeError:
-            print(traceback.format_exc())
+            print(traceback.format_exc(), flush=True)
             return "ssh连接失败"
         except Exception as e:
+            print(traceback.format_exc(), flush=True)
             return str(e)
+
+    def path_info(self, path: str) -> Union[str, Dict]:
+        try:
+            executor = self._get_ssh_executor()
+            executor.open()
+            path_info = executor.path_info(path)
+            return path_info
+        except RuntimeError as e:
+            print(traceback.format_exc(), flush=True)
+            return "ssh连接失败: {}".format(str(e))
+        except Exception as e:
+            print(traceback.format_exc(), flush=True)
+            return "获取路径信息失败:{}".format(str(e))

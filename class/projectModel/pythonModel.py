@@ -308,18 +308,6 @@ class main(projectBase):
         res = EnvironmentManager().multi_remove_env(os.path.realpath(python_bin))
         return res
 
-    # def remove_python(self, pyv):
-    #     """删除安装目录
-    #     @author baozi <202-02-22>
-    #     @param:
-    #         pyv  ( str ):  版本号
-    #     @return
-    #     """
-    #     py_path = f'{self._pyv_path}/versions/{pyv}'
-    #     if os.path.exists(py_path):
-    #         import shutil
-    #         shutil.rmtree(py_path)
-
     def _get_project_conf(self, name_id) -> Union[Dict, bool]:
         """获取项目的配置信息
         @author baozi <202-02-22>
@@ -346,62 +334,6 @@ class main(projectBase):
         if not os.path.exists(data["path"]):
             self.__stop_project(project_conf)
         return project_conf
-
-        # 获取已经安装的模块
-
-    # def GetPackages(self, get):
-    #     conf = self._get_project_conf(get.name.strip())
-    #     if not conf:
-    #         return public.returnMsg(False, "没有该项目，请尝试刷新页面")
-    #
-    #     piplist = []
-    #     l = public.ExecShell("%s list" % self._get_vp_pip(conf["vpath"]))[0].split("\n")
-    #     for d in l[2:]:
-    #         try:
-    #             p, v = d.split()
-    #             piplist.append((p, v))
-    #         except:
-    #             pass
-    #     return piplist
-
-    # def MamgerPackage(self, get):
-    #     """安装与卸载虚拟环境模块
-    #     @author baozi <202-02-22>
-    #     @param:
-    #         get  ( 请求信息 ):  包含操作act,pjname,p,v
-    #     @return  msg : 操作成功与否
-    #     """
-    #     conf = self._get_project_conf(get.name.strip())
-    #     if not conf:
-    #         return public.returnMsg(False, "没有该项目，请尝试刷新页面")
-    #     if self.prep_status(conf) == "running":
-    #         return public.returnMsg(False, "项目环境安装制作中.....<br>请勿操作")
-    #     vp = conf["vpath"]
-    #     if get.act == "install":
-    #         tmp_env = self.build_mysql_env()
-    #         _sh = f"%s install -i {self._pip_source} %s"
-    #         pkg = get.p if not get.v else f"{get.p}=={get.v}"
-    #         if get.p.lower() == "mysqlclient":
-    #             _sh = tmp_env + _sh
-    #         public.ExecShell(_sh % (self._get_vp_pip(vp), pkg))
-    #         pkgs = public.ExecShell("%s list" % self._get_vp_pip(vp))[0]
-    #         _pkg = get.p.lower()
-    #         if '_' in _pkg:
-    #             _pkg = _pkg.replace("_", "-")
-    #         if get.p.lower() in pkgs.lower() or _pkg in pkgs.lower():
-    #             return public.returnMsg(True, "安装成功")
-    #         else:
-    #             return public.returnMsg(False, "安装失败")
-    #     else:
-    #         if get.p == "pip":
-    #             return public.returnMsg(False, "PIP不能卸载。。。。")
-    #         _sh = "echo 'y' | %s uninstall %s"
-    #         public.ExecShell(_sh % (self._get_vp_pip(vp), get.p))
-    #         packages = public.ExecShell("%s list" % self._get_vp_pip(vp))[0]
-    #         if get.p not in packages.lower():
-    #             return public.returnMsg(True, "卸载成功")
-    #         else:
-    #             return public.returnMsg(False, "卸载失败")
 
     def _get_vp_pip(self, vpath):
         """获取虚拟环境下的pip
@@ -492,28 +424,6 @@ class main(projectBase):
         if xsgi == "asgi" and stype == "uwsgi":
             return "uWsgi服务框架不支持asgi协议"
 
-    # @staticmethod
-    # def copy_pyv(src: str, dst: str):
-    #     """复制python环境到指定项目"""
-    #     import files
-    #     get = public.dict_obj()
-    #     get.sfile = src
-    #     get.dfile = dst
-    #     files.files().CopyFile(get)
-    #
-    #     if not os.path.exists(dst):
-    #         return False
-    #     python3 = os.path.join(dst, 'bin/python3')
-    #     python = os.path.join(dst, 'bin/python')
-    #     if os.path.exists(python3) and not os.path.exists(python):
-    #         os.symlink(python3, python)
-    #
-    #     import pwd
-    #     res = pwd.getpwnam('www')
-    #     uid = res.pw_uid
-    #     gid = res.pw_gid
-    #     os.chown(get.dfile, uid, gid)
-    #     return True
 
     def simple_prep_env(self, values: dict) -> Optional[bool]:
         """
@@ -744,6 +654,8 @@ class main(projectBase):
             port = get.port
             stype = get.stype.strip()
             path = get.path.strip().rstrip("/")
+            if re.search(r"\s", path):
+                return False, public.returnMsg(False, "项目路径不能包含空格")
             python_bin = get.get("python_bin/s", "")
             if not python_bin or not os.path.exists(python_bin):
                 return False, public.returnMsg(False, "python环境选择错误")
@@ -818,42 +730,6 @@ class main(projectBase):
         is_pypy = False
         if "is_pypy" in get:
             is_pypy = get.is_pypy in ("1", "true", 1, True, "True")
-
-        # 处理环境相关参数
-        # if "venv_path" in get and get.venv_path.strip():
-        #     venv_path: str = get.venv_path.strip()
-        #     if not os.path.exists(venv_path):
-        #         return False, public.returnMsg(False, "指定的环境不存在")
-        #     if venv_path.endswith("/"):
-        #         venv_path = venv_path[:-1]
-        #     if venv_path.endswith("/bin"):
-        #         venv_path = venv_path[:-4]
-        #     python_bin = None
-        #     if os.path.isfile(venv_path + "/bin/python"):
-        #         python_bin = venv_path + "/bin/python"
-        #     elif os.path.isfile(venv_path + "/bin/python3"):
-        #         python_bin = venv_path + "/bin/python3"
-        #
-        #     if not python_bin:
-        #         return False, public.returnMsg(False, "指定的环境不存在")
-        #
-        #     out, error = public.ExecShell("{} -V".format(python_bin))
-        #     res = re.search(r"(?P<ver>(\d+\.){1,2}\d*)", out)
-        #     if not res:
-        #         return False, public.returnMsg(False, "指定的环境检测错误")
-        #     else:
-        #         version = res.group("ver")
-        # elif "version" in get and get.version.strip():
-        #     version = get.version.strip()
-        #     if is_pypy:
-        #         if not os.path.exists("{}/pypy_versions/{}".format(self._pyv_path, version)):
-        #             return False, public.returnMsg(False, "指定的环境版本不存在")
-        #     else:
-        #         if not os.path.exists("{}/versions/{}".format(self._pyv_path, version)):
-        #             return False, public.returnMsg(False, "指定的环境版本不存在")
-        #     venv_path = self._pyv_path + '/' + pjname + "_venv"
-        # else:
-        #     return False, public.returnMsg(False, "未指定运行环境")
 
         em = EnvironmentManager()
         env = em.get_env_py_path(python_bin)
@@ -949,7 +825,7 @@ class main(projectBase):
         }
         res = public.M("sites").insert(p_data)
         if isinstance(res, str) and res.startswith("error"):
-            return public.returnMsg(False, "项目记录失败，请联系官方")
+            return public.returnMsg(False, "数据库记录失败，请检查面板数据库状态")
 
         self.run_simple_prep_env(res, values)
         time.sleep(0.5)
@@ -1630,14 +1506,6 @@ echo $! > {pid_file}'''.format(
         self.remove_redirect_by_project_name(get.name)
         self.clear_config(get.name)
         logfile = self._logs_path + "/%s.log" % conf["pjname"]
-        # if hasattr(get, "remove_env") and get.remove_env not in (1, "1", "true", True):
-        #     if os.path.basename(conf["vpath"]).find(project["name"]) == -1:
-        #         try:
-        #             shutil.move(conf["vpath"], self._pyv_path + '/' + project["name"] + "_venv")
-        #         except:
-        #             pass
-        # elif os.path.exists(conf["vpath"]) and self._check_venv_path(conf["vpath"], project["id"]):
-        #     shutil.rmtree(conf["vpath"])
 
         try:
             em = EnvironmentManager()
@@ -1739,20 +1607,6 @@ echo $! > {pid_file}'''.format(
         return {"status": True, "path": log_file, "data": self.xsssec(public.GetNumLines(log_file, 3000)),
                 "size": public.to_size(log_file_size)}
 
-    # def GetPythonInstallLog(self, get):
-    #     log_file = f"{self._logs_path}/py.log"
-    #     if not os.path.exists(log_file): return public.returnMsg(False, '日志文件不存在')
-    #     if os.path.getsize(log_file) > 3145928:
-    #         return public.returnMsg(True, self.xsssec(self.last_lines(log_file, 3000)))
-    #     return public.returnMsg(True, self.xsssec(public.GetNumLines(log_file, 3000)))
-    #
-    # def GetProjectCreateLog(self, get):
-    #     name = get.name.strip()
-    #     log_file = f"{self._logs_path}/{name}.log"
-    #     if not os.path.exists(log_file): return public.returnMsg(False, '日志文件不存在')
-    #     if os.path.getsize(log_file) > 3145928:
-    #         return public.returnMsg(True, self.xsssec(self.last_lines(log_file, 3000)))
-    #     return public.returnMsg(True, self.xsssec(public.GetNumLines(log_file, 3000)))
 
     def GetProjectList(self, get):
         """获取项目列表
@@ -1861,38 +1715,17 @@ echo $! > {pid_file}'''.format(
         res = set()
         try:
             for i in pids:
-                p = psutil.Process(i)
-                for conn in p.connections():
-                    if conn.status == "LISTEN":
-                        res.add(conn.laddr.port)
+                try:
+                    p = psutil.Process(i)
+                    for conn in (p.net_connections() if hasattr(p, "net_connections") else  p.connections()):
+                        if conn.status == "LISTEN":
+                            res.add(conn.laddr.port)
+                except:
+                    pass
         except:
             pass
         return list(res)
 
-    # def GetProjectConf(self, get):
-    #     """获取项目配置信息
-    #     @author baozi <202-02-22>
-    #     @param:
-    #         get  ( dict ):  请求信息，站点名称name
-    #     @return  可修改项目  uwsgi: rfile, processes, threads, is_http, port, user, logpath, other
-    #                         gunicorn: rfile, processes, threads, port, user, logpath, loglevel, other
-    #     """
-    #     project_conf = self._get_project_conf(get.name.strip())
-    #     if not project_conf:
-    #         return public.return_error('项目不存在')
-    #     res_data = {
-    #         "rfile": project_conf["rfile"],
-    #         "xsgi": project_conf["xsgi"],
-    #         "processes": project_conf["processes"] if "processes" in project_conf else 4,
-    #         "threads": project_conf["threads"] if "threads" in project_conf else 2,
-    #         "port": project_conf["port"],
-    #         "user": project_conf["user"],
-    #         "logpath": project_conf["logpath"],
-    #         "stype": project_conf["stype"],
-    #         "is_http": project_conf["is_http"] if "is_http" in project_conf else True,
-    #         "loglevel": project_conf["loglevel"] if "loglevel" in project_conf else 'info'
-    #     }
-    #     return res_data
 
     def ChangeProjectConf(self, get):
         """修改项目配置信息
@@ -2437,7 +2270,7 @@ echo $! > {pid_file}'''.format(
         ports = []
         domains = []
         for d in project['project_config']['domains']:
-            domain_tmp = d.split(':')
+            domain_tmp = d.rsplit(':', 1)
             if len(domain_tmp) == 1:
                 domain_tmp.append(80)
             if not int(domain_tmp[1]) in ports:
@@ -2457,6 +2290,18 @@ echo $! > {pid_file}'''.format(
 
         from panelSite import panelSite
         s = panelSite()
+
+        proxy_port = project['project_config'].get("port", "")
+        if not proxy_port:
+            pids = self.get_project_run_state(project_name)
+            if not pids:
+                listen_port = self._list_listen(pids)
+                if listen_port:
+                    proxy_port = listen_port[0]
+        if not proxy_port:
+            proxy_info = project['project_config'].get("proxy_info", [])
+            if proxy_info:
+                proxy_port = proxy_info[0].get("proxy_port", "")
 
         # 根据端口列表生成配置
         for p in ports:
@@ -2490,7 +2335,7 @@ echo $! > {pid_file}'''.format(
                 domains=' '.join(domains),
                 log_path=public.get_logs_path(),
                 server_admin='admin@{}'.format(project_name),
-                url='http://127.0.0.1:{}'.format(project['project_config']['port']),
+                url='http://127.0.0.1:{}'.format(proxy_port),
                 port=p,
                 ssl_config=ssl_config,
                 project_name=project_name
@@ -2512,7 +2357,7 @@ echo $! > {pid_file}'''.format(
         public.writeFile(config_file, apache_config_body)
         return True
 
-    def set_nginx_config(self, project, is_modify=False, proxy_port=None):
+    def set_nginx_config(self, project):
         '''
             @name 设置Nginx配置
             @author hwliang<2021-08-09>
@@ -2524,168 +2369,126 @@ echo $! > {pid_file}'''.format(
         domains = []
 
         for d in project['project_config']['domains']:
-            domain_tmp = d.split(':')
+            domain_tmp = d.rsplit(':', 1)
             if len(domain_tmp) == 1: domain_tmp.append(80)
             if not int(domain_tmp[1]) in ports:
                 ports.append(int(domain_tmp[1]))
             if not domain_tmp[0] in domains:
                 domains.append(domain_tmp[0])
         listen_ipv6 = public.listen_ipv6()
-        is_ssl, is_force_ssl = self.exists_nginx_ssl(project_name)
-        listen_ports_list = []
-        for p in ports:
-            listen_ports_list.append("    listen {};".format(p))
-            if listen_ipv6:
-                listen_ports_list.append("    listen [::]:{};".format(p))
-
-        ssl_config = ''
-        if is_ssl:
-            http3_header = ""
-            if self.is_nginx_http3():
-                http3_header = '''\n    add_header Alt-Svc 'quic=":443"; h3=":443"; h3-29=":443"; h3-27=":443";h3-25=":443"; h3-T050=":443"; h3-Q050=":443";h3-Q049=":443";h3-Q048=":443"; h3-Q046=":443"; h3-Q043=":443"';'''
-
-            nginx_ver = public.nginx_version()
-            if nginx_ver:
-                port_str = ["443"]
-                if listen_ipv6:
-                    port_str.append("[::]:443")
-                use_http2_on = False
-                for p in port_str:
-                    listen_str = "    listen {} ssl".format(p)
-                    if nginx_ver < [1, 9, 5]:
-                        listen_str += ";"
-                    elif [1, 9, 5] <= nginx_ver < [1, 25, 1]:
-                        listen_str += " http2;"
-                    else:  # >= [1, 25, 1]
-                        listen_str += ";"
-                        use_http2_on = True
-                    listen_ports_list.append(listen_str)
-
-                    if self.is_nginx_http3():
-                        listen_ports_list.append("    listen {} quic;".format(p))
-                if use_http2_on:
-                    listen_ports_list.append("    http2 on;")
-
-            else:
-                listen_ports_list.append("    listen 443 ssl;")
-
-            ssl_config = '''ssl_certificate    {vhost_path}/cert/{priject_name}/fullchain.pem;
-    ssl_certificate_key    {vhost_path}/cert/{priject_name}/privkey.pem;
-    ssl_protocols TLSv1.1 TLSv1.2 TLSv1.3;
-    ssl_ciphers EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:EECDH+3DES:RSA+3DES:!MD5;
-    ssl_prefer_server_ciphers on;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
-    add_header Strict-Transport-Security "max-age=31536000";{http3_header}
-    error_page 497  https://$host$request_uri;'''.format(vhost_path=self._vhost_path, priject_name=project_name, http3_header=http3_header)
-
-            if is_force_ssl:
-                ssl_config += '''
-    #HTTP_TO_HTTPS_START
-    if ($server_port !~ 443){
-        rewrite ^(/.*)$ https://$host$1 permanent;
-    }
-    #HTTP_TO_HTTPS_END'''
-
         config_file = "{}/nginx/python_{}.conf".format(self._vhost_path, project_name)
-        template_file = "{}/template/nginx/python_http.conf".format(self._vhost_path)
-        listen_ports = "\n".join(listen_ports_list).strip()
 
-        p_port = proxy_port if proxy_port else project['project_config']['port']
+        def creat_by_template():
+            listen_ports_list = []
+            for p in ports:
+                listen_ports_list.append("    listen {};".format(p))
+                if listen_ipv6:
+                    listen_ports_list.append("    listen [::]:{};".format(p))
 
-        proxy_content = "# proxy"
-
-        if is_modify != "close" and (is_modify or project["project_config"]["stype"] != "command"):
-            proxy_content = '''# proxy
-    location / {{
-        proxy_pass http://127.0.0.1:{p_port};
-        proxy_set_header Host {host}:$server_port;
+            template_file = "{}/template/nginx/python_http.conf".format(self._vhost_path)
+            listen_ports = "\n".join(listen_ports_list).strip()
+            proxy_info = project['project_config'].get('proxy_info', [])
+            proxy_str = ""
+            if proxy_info:
+                for p in proxy_info:
+                    if not p["status"]:
+                        continue
+                    proxy_str += """location {} {{
+        proxy_pass http://127.0.0.1:{};
+        proxy_set_header Host $http_host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Real-Port $remote_port;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header REMOTE-HOST $remote_addr;
-        add_header X-Cache $upstream_cache_status;
-        proxy_set_header X-Host $host:$server_port;
-        proxy_set_header X-Scheme $scheme;
-        proxy_connect_timeout 30s;
-        proxy_read_timeout 86400s;
-        proxy_send_timeout 30s;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }}'''.format(p_port=p_port, host="127.0.0.1")
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+        proxy_set_header Remote-Host $remote_addr;
+    }}
+    """.format(p["proxy_path"], p["proxy_port"])
 
-        config_body = public.readFile(template_file)
-        mut_config = {
-            "site_path": project['path'],
-            "domains": ' '.join(domains),
-            "ssl_config": ssl_config,
-            "listen_ports": listen_ports,
-            "proxy": proxy_content  # 添加代理内容替换
-        }
-        config_body = config_body.format(
-            site_path=project['path'],
-            domains=mut_config["domains"],
-            project_name=project_name,
-            panel_path=self._panel_path,
-            log_path=public.get_logs_path(),
-            host='127.0.0.1',
-            listen_ports=listen_ports,
-            ssl_config=ssl_config,
-            proxy=mut_config["proxy"]  # 添加代理替换
-        )
-
-        rewrite_file = "{panel_path}/vhost/rewrite/python_{project_name}.conf".format(
-            panel_path=self._panel_path, project_name=project_name)
-        if not os.path.exists(rewrite_file):
-            public.writeFile(rewrite_file, '# 请将伪静态规则或自定义NGINX配置填写到此处\n')
-        if not os.path.exists("/www/server/panel/vhost/nginx/well-known"):
-            os.makedirs("/www/server/panel/vhost/nginx/well-known", 0o600)
-        apply_check = "{}/vhost/nginx/well-known/{}.conf".format(self._panel_path, project_name)
-        from mod.base.web_conf import ng_ext
-        config_body = ng_ext.set_extension_by_config(project_name, config_body)
-        if not os.path.exists(apply_check):
-            public.writeFile(apply_check, '')
-        if not os.path.exists(config_file):
-            public.writeFile(config_file, config_body)
-        else:
-            if not self._replace_nginx_conf(config_file, mut_config):
-                public.writeFile(config_file, config_body)
-        return True
-
-    @staticmethod
-    def _replace_nginx_conf(config_file, mut_config: dict) -> bool:
-        """尝试替换"""
-        data: str = public.readFile(config_file)
-        tab_spc = "    "
-        rep_list = [
-            (
-                 r"([ \f\r\t\v]*listen[^;\n]*;\n(\s*http2\s+on\s*;[^\n]*\n)?)+",
-                mut_config["listen_ports"] + "\n"
-            ),
-            (
-                r"[ \f\r\t\v]*root [ \f\r\t\v]*/[^;\n]*;",
-                "    root {};".format(mut_config["site_path"])
-            ),
-            (
-                r"[ \f\r\t\v]*server_name [ \f\r\t\v]*[^\n;]*;",
-                "   server_name {};".format(mut_config["domains"])
-            ),
-            (
-                r"(location / {)(.*?)(})",
-                mut_config["proxy"].strip()
-            ),
-            (
-                "[ \f\r\t\v]*#SSL-START(.*\n){2,15}[ \f\r\t\v]*#SSL-END",
-                "{}#SSL-START SSL相关配置\n{}#error_page 404/404.html;\n{}{}\n{}#SSL-END".format(
-                    tab_spc, tab_spc, tab_spc, mut_config["ssl_config"], tab_spc)
+            config_body_template = public.readFile(template_file)
+            config_body = config_body_template.format(
+                site_path=project['path'],
+                domains=' '.join(domains),
+                project_name=project_name,
+                panel_path=self._panel_path,
+                log_path=public.get_logs_path(),
+                listen_ports=listen_ports,
+                ssl_config='',
+                proxy=proxy_str  # 添加代理替换
             )
-        ]
-        for rep, info in rep_list:
-            if re.search(rep, data):
-                data = re.sub(rep, info, data, 1)
-            else:
-                return False
-        public.writeFile(config_file, data)
+            rewrite_file = "{panel_path}/vhost/rewrite/python_{project_name}.conf".format(
+                panel_path=self._panel_path, project_name=project_name)
+            if not os.path.exists(rewrite_file):
+                public.writeFile(rewrite_file, '# 请将伪静态规则或自定义NGINX配置填写到此处\n')
+            if not os.path.exists("/www/server/panel/vhost/nginx/well-known"):
+                os.makedirs("/www/server/panel/vhost/nginx/well-known", 0o600)
+            apply_check = "{}/vhost/nginx/well-known/{}.conf".format(self._panel_path, project_name)
+            if not os.path.exists(apply_check):
+                public.writeFile(apply_check, '')
+            from mod.base.web_conf import ng_ext
+            config_body = ng_ext.set_extension_by_config(project_name, config_body)
+            public.writeFile(config_file, config_body)
+
+        def _modify_nginx_config():
+            proxy_info = project['project_config'].get('proxy_info', [])
+
+            from mod.base import pynginx
+            from mod.base.pynginx.extension import ServerTools, ConfigTools, ConfigFinder, LocationTools
+
+            config_data = public.readFile(config_file)
+            # 暂时禁用comment_line_count, 防止删除时误删除注释
+            pycn = pynginx.parse_string(config_data)
+            ctools = ConfigTools(pycn)
+            stools = ctools.get_mian_server()
+            if not stools:
+                raise Exception("未找到主配置")
+
+            stools.modify_server_config(
+                domains=domains,
+                ports=ports,
+            )
+
+            match_level = {"~*": 0, "~": 1, "=": 2,"": 3, "^~":4}
+            l_list = stools.get_location(sub_directives=["proxy_pass"])
+            l_list.sort(key=lambda x: match_level[x.match] if x.match in match_level else -1, reverse=True)
+            for l in l_list:
+                proxy_pass = l.get_block().find_directives("proxy_pass")[0].get_parameters()[0]
+                proxy_url = parse_url(proxy_pass)
+                public.print_log(proxy_url.hostname)
+                if proxy_url.hostname not in ("127.0.0.1", "localhost", "0.0.0.0", "::1"):
+                    continue
+                proxy_path_data = [p["proxy_path"] for p in proxy_info if p["proxy_port"] == proxy_url.port]
+                if len(proxy_path_data) == 0: # 不包含端口的本地代理，删除
+                    stools.remove_location(l.match, l.modifier, hold_comments=("HTTP反向代理", )) # 保留注释
+                else: # 匹配成功，处理了的代理就重计划列中移除
+                    l.match = proxy_path_data[0]
+                    l.parameters = [l.match] if not l.modifier else [l.modifier, l.match]
+                    proxy_info = [p for p in proxy_info if p["proxy_port"] != proxy_url.port]
+
+            if len(proxy_info) > 0:
+                for p in proxy_info:
+                    loc = stools.get_location(path=p["proxy_path"], modifier="", create=True)[0]
+                    ltools = LocationTools(loc)
+                    ltools.add_proxy("http://127.0.0.1:{}".format(p["proxy_port"]))
+
+            public.writeFile(config_file, ctools.to_string())
+            error = public.checkWebConfig()
+            if error is not True:
+                public.print_log(error)
+                public.writeFile(config_file, config_data)
+                raise ValueError("Nginx配置文件有错误")
+
+
+        if not os.path.isfile(config_file):
+            creat_by_template()
+        else:
+            try:
+                _modify_nginx_config()
+            except :
+                public.print_error()
+                creat_by_template()
+
         return True
 
     def clear_nginx_config(self, project):
@@ -2750,7 +2553,7 @@ echo $! > {pid_file}'''.format(
         public.serviceReload()
         return True
 
-    def set_config(self, project_name, is_modify=False, proxy_port=None):
+    def set_config(self, project_name):
         '''
             @name 设置项目配置
             @author hwliang<2021-08-09>
@@ -2762,7 +2565,7 @@ echo $! > {pid_file}'''.format(
         if not project_find['project_config']: return False
         if not project_find['project_config']['bind_extranet']: return False
         if not project_find['project_config']['domains']: return False
-        self.set_nginx_config(project_find, is_modify, proxy_port)
+        self.set_nginx_config(project_find)
         self.set_apache_config(project_find)
         public.serviceReload()
         return True
@@ -2826,6 +2629,8 @@ echo $! > {pid_file}'''.format(
         if not project_id:
             return public.returnMsg(False, '未查询到该网站')
         domains = public.M('domain').where('pid=?', (project_id,)).order('id desc').select()
+        for d in domains:
+            d["cn_name"] = self.try_unpunycode(d["name"]) or d["name"]
         return domains
 
     def RemoveProjectDomain(self, get):
@@ -2842,7 +2647,7 @@ echo $! > {pid_file}'''.format(
         project_find = self.get_project_find(project_name)
         if not project_find:
             return public.return_error('指定项目不存在')
-        domain_arr = get.domain.split(':')
+        domain_arr = get.domain.rsplit(':', 1)
         if len(domain_arr) == 1:
             domain_arr.append(80)
 
@@ -2851,7 +2656,7 @@ echo $! > {pid_file}'''.format(
         if len(project_find['project_config']['domains']) == 1:
             if int(project_find['project_config']['bind_extranet']):
                 return public.returnMsg(False, '项目至少需要一个域名')
-        domain_id = public.M('domain').where('name=? AND pid=?', (domain_arr[0], project_id)).getField('id')
+        domain_id = public.M('domain').where('name=? AND port=? AND pid=?', (domain_arr[0], domain_arr[1], project_id)).getField('id')
         if not domain_id:
             return public.returnMsg(False, '指定域名不存在')
         public.M('domain').where('id=?', (domain_id,)).delete()
@@ -2961,7 +2766,13 @@ echo $! > {pid_file}'''.format(
         for domain in domains:
             domain = domain.strip()
             if not domain: continue
-            domain_arr = domain.split(':')
+            if "[" in domain and "]" in domain:  # IPv6格式特殊处理
+                if "]:" in domain:
+                    domain_arr = domain.rsplit(":", 1)
+                else:
+                    domain_arr = [domain]
+            else:
+                domain_arr = domain.split(':')
             domain_arr[0] = self.check_domain(domain_arr[0])
             if domain_arr[0] is False:
                 res_domains.append({"name": domain, "status": False, "msg": '域名格式错误'})
@@ -2978,11 +2789,12 @@ echo $! > {pid_file}'''.format(
             except ValueError:
                 res_domains.append({"name": domain, "status": False, "msg": '域名格式错误'})
                 continue
-            if not public.M('domain').where('name=?', (domain_arr[0],)).count():
+            if not public.M('domain').where('name=? AND port=?', (domain_arr[0], domain_arr[1])).count():
                 public.M('domain').add('name,pid,port,addtime',
                                        (domain_arr[0], project_id, domain_arr[1], public.getDate()))
-                if not domain in project_find['project_config']['domains']:
-                    project_find['project_config']['domains'].append(domain)
+                real_d = "{}:{}".format(domain_arr[0], domain_arr[1])
+                if not real_d in project_find['project_config']['domains']:
+                    project_find['project_config']['domains'].append(real_d)
                 public.WriteLog(self._log_name, '成功添加域名{}到项目{}'.format(domain, project_name))
                 res_domains.append({"name": domain_arr[0], "status": True, "msg": '添加成功'})
                 if not check_cloud:
@@ -3619,122 +3431,6 @@ echo $! > {pid_file}'''.format(
         res = self.get_project_run_state(project_name=project_info["name"])
         return bool(res), project_info["name"]
 
-    # def update_env(self, get):
-    #     is_pypy = False
-    #     try:
-    #         name = get.name.strip()
-    #         update_version = get.update_version.strip()
-    #         if hasattr(get, "is_pypy") and get.is_pypy.strip() in (True, 1, "1", "true"):
-    #             is_pypy = True
-    #     except AttributeError:
-    #         return public.returnMsg(False, "参数错误")
-    #     project_conf = self._get_project_conf(name_id=name)
-    #     if not project_conf:
-    #         return public.returnMsg(False, "没有该项目，请尝试刷新页面")
-    #     if is_pypy:
-    #         sfile = "{}/pypy_versions/{}".format(self._pyv_path, update_version)
-    #     else:
-    #         sfile = "{}/versions/{}".format(self._pyv_path, update_version)
-    #     if not os.path.exists(sfile):
-    #         return public.returnMsg(False, "没有安装指定的版本，无法升级")
-    #     if self._update_env(project_conf, update_version, is_pypy=is_pypy):
-    #         project_conf["version"] = update_version
-    #         project_conf["is_pypy"] = is_pypy
-    #         pdata = {
-    #             "project_config": json.dumps(project_conf)
-    #         }
-    #         public.M('sites').where('name=?', (project_conf['pjname'].strip(),)).update(pdata)
-    #
-    #     return public.returnMsg(True, "升级操作已执行")
-    #
-    # def _update_env(self, project_conf: dict, update_version: str, is_pypy: bool) -> Optional[bool]:
-    #     """
-    #     准备python虚拟环境和服务器应用
-    #     """
-    #     import files
-    #     log_path: str = "{}/{}_update.log".format(self._logs_path, project_conf['pjname'])
-    #     pip_freeze_file: str = "{}/{}_update.text".format(self._project_path, project_conf['pjname'])
-    #     fd = None
-    #     try:
-    #         fd = open(log_path, 'w')
-    #         fd.write("\n|- 开始升级虚拟环境的python版本.......\n")
-    #         fd.write("\n|- 开始记录虚拟环境中的包.......\n")
-    #         vp_pip = self._get_vp_pip(project_conf["vpath"])
-    #         self.exec_shell("{} freeze > {}".format(vp_pip, pip_freeze_file), fd)
-    #         if not os.path.exists(pip_freeze_file):
-    #             fd.write("\n|- 未备份成功.......\n")
-    #             fd.flush()
-    #             return False
-    #         fd.write("\n|- 包版本记录完成.......\n")
-    #         fd.write("\n|- 开始备份当前环境.......\n")
-    #         fd.flush()
-    #         back_path = project_conf["vpath"] + "_backup"
-    #         if os.path.exists(back_path):
-    #             shutil.rmtree(back_path)
-    #         copy_shell = "\mv {} {}_backup".format(project_conf["vpath"], project_conf["vpath"])
-    #         self.exec_shell(copy_shell, fd)
-    #         if not os.path.exists(project_conf["vpath"] + "_backup"):
-    #             fd.write("\n|- 未备份成功.......\n")
-    #             fd.flush()
-    #             return False
-    #         fd.write("\n|- 备份成功.......\n")
-    #         fd.write("\n|- 开始虚拟环境版本升级.......\n")
-    #         fd.flush()
-    #         get = public.dict_obj()
-    #         if not is_pypy:
-    #             get.sfile = "{}/versions/{}".format(self._pyv_path, update_version)
-    #         else:
-    #             get.sfile = "{}/pypy_versions/{}".format(self._pyv_path, update_version)
-    #         get.dfile = project_conf["vpath"]
-    #         res = files.files().CopyFile(get)
-    #         if res["status"] is False:
-    #             return False
-    #         os.chown(get.dfile, *self._get_www_state())
-    #         self.install_pip(project_conf['vpath'], update_version)
-    #         if not os.path.exists(project_conf['vpath']):
-    #             return False
-    #         fd.write("\n|- 虚拟环境版本升级成功\n")
-    #         fd.write("\n|- 开始恢复包版本\n")
-    #         fd.flush()
-    #         v_python = self._get_vp_python(project_conf["vpath"])
-    #         _sh = "{} -m pip install -i {} -r {}".format(v_python, self._pip_source, pip_freeze_file)
-    #         self.exec_shell(_sh, fd)
-    #         fd.write("\n|- 包版本恢复已执行\n")
-    #         fd.write("\n|- 虚拟环境升级成功\n")
-    #         fd.flush()
-    #         return True
-    #     except:
-    #         import traceback
-    #         if fd is not None:
-    #             fd.close()
-    #         return False
-    #
-    # def recover_env(self, get):
-    #     try:
-    #         name = get.name.strip()
-    #     except AttributeError:
-    #         return public.returnMsg(False, "参数错误")
-    #     project_conf = self._get_project_conf(name_id=name)
-    #     if not project_conf:
-    #         return public.returnMsg(False, "没有该项目，请尝试刷新页面")
-    #     back_path = project_conf["vpath"] + "_backup"
-    #     if not os.path.exists(back_path):
-    #         return public.returnMsg(False, "没有历史文件不能恢复")
-    #
-    #     public.ExecShell("\mv {} {}_change".format(project_conf["vpath"], project_conf["vpath"]))
-    #     public.ExecShell("\mv {}_backup {}".format(project_conf["vpath"], project_conf["vpath"]))
-    #     public.ExecShell("\mv {}_change {}_backup".format(project_conf["vpath"], project_conf["vpath"]))
-    #     v_python = self._get_vp_python(project_conf["vpath"])
-    #     version_str = public.ExecShell("{} -V".format(v_python))[0]
-    #     result = re.search(r"(?P<target>\d+\.\d+\.\d*)", version_str)
-    #     if result:
-    #         project_conf["version"] = result.group("target")
-    #         pdata = {
-    #             "project_config": json.dumps(project_conf)
-    #         }
-    #         public.M('sites').where('name=?', (project_conf['pjname'].strip(),)).update(pdata)
-    #
-    #     return public.returnMsg(True, "恢复操作已执行")
 
     @staticmethod
     def _serializer_of_list(s: list, installed: List[str]) -> List[Dict]:
@@ -3779,46 +3475,6 @@ echo $! > {pid_file}'''.format(
 
         return res
 
-    # def _project_env_path_list(self):
-    #     site_list = public.M('sites').where('project_type=?', ('Python',)).select()
-    #     if not isinstance(site_list, list):
-    #         return []
-    #     res = []
-    #     paths = set()
-    #     for site in site_list:
-    #         conf = json.loads(site["project_config"])
-    #         bin_path = os.path.join(conf["vpath"], "bin")
-    #         paths.add(conf["vpath"])
-    #         if not os.path.exists(bin_path):
-    #             continue
-    #         res.append({
-    #             "python_path": bin_path,
-    #             "type": "project",
-    #             "project_name": site["name"],
-    #             "is_pypy": os.path.exists(os.path.join(conf["vpath"], "is_pypy.pl"))
-    #         })
-    #
-    #     for i in os.listdir(self._pyv_path):
-    #         if i == "versions":
-    #             continue
-    #         if i.endswith("_backup"):
-    #             continue
-    #         if not i.endswith("_venv"):
-    #             continue
-    #         tmp_path = os.path.join(self._pyv_path, i)
-    #         if tmp_path in paths:
-    #             continue
-    #         if not os.path.isdir(tmp_path):
-    #             continue
-    #
-    #         res.append({
-    #             "python_path": os.path.join(tmp_path, "bin"),
-    #             "type": "project",
-    #             "project_name": os.path.basename(tmp_path)[:-5],
-    #             "is_pypy": os.path.exists(os.path.join(tmp_path, "is_pypy.pl"))
-    #         })
-    #
-    #     return res
 
     @staticmethod
     def _parser_version(version: str) -> Optional[str]:
@@ -3828,41 +3484,6 @@ echo $! > {pid_file}'''.format(
             return v_res.group("target")
         return None
 
-    # def set_python_version(self, get):
-    #     try:
-    #         env_type = get.env_type.strip()
-    #         env_key = get.env_key.strip()
-    #         if "is_pypy" in get:
-    #             is_pypy = get.is_pypy.strip()
-    #         else:
-    #             is_pypy = False
-    #     except AttributeError:
-    #         return public.returnMsg(False, "参数错误")
-    #
-    #     if env_type == "project":
-    #         python_path = "{}/{}_venv/bin".format(self._pyv_path, env_key)
-    #         if not os.path.exists(python_path):
-    #             project_conf = self._get_project_conf(env_key)
-    #             if not project_conf:
-    #                 return public.returnMsg(False, "没有指定项目")
-    #             python_path = os.path.join(project_conf["vpath"], "bin")
-    #     elif env_type == "clear":
-    #         flag, msg = self.pyvm.set_python_path(None)
-    #         return public.returnMsg(flag, msg)
-    #     else:
-    #         if is_pypy in ("1", "true"):
-    #             python_path = os.path.join(self._pyv_path, "pypy_versions", env_key, "bin")
-    #         else:
-    #             python_path = os.path.join(self._pyv_path, "versions", env_key, "bin")
-    #
-    #     if not os.path.exists(python_path):
-    #         return public.returnMsg(False, "没有指定的环境已丢失")
-    #
-    #     flag, msg = self.pyvm.set_python_path(python_path)
-    #     if not flag:
-    #         return public.returnMsg(False, msg)
-    #     else:
-    #         return public.returnMsg(True, "设置成功")
 
     def install_py_version(self, get: public.dict_obj) -> Dict:
         """
@@ -4163,26 +3784,23 @@ echo $! > {pid_file}'''.format(
                 return public.returnMsg(False, "卸载失败")
 
 
-    # ————————————————————————————————————
-    #              虚拟终端               |
-    # ————————————————————————————————————
-
-    def set_export(self, project_name):
-        conf = self._get_project_conf(project_name)
-        if not conf:
-            return False, "没有该项目\r\n"
-        v_path_bin = conf["vpath"] + "/bin"
-        if not os.path.exists(conf["path"]):
-            return False, "项目文件丢失\r\n"
-        if not os.path.exists(v_path_bin):
-            return False, "没有该虚拟环境\r\n"
-        pre_v_path_bin = self.__prevent_re(v_path_bin)
-        msg = "虚拟环境已就绪！"  # 使用中文的感叹号
-        _cd_sh = "clear\ncd %s\n" % conf["path"]
-        _sh = 'if [[ "$PATH" =~ "^%s:.*" ]]; then { echo "%s"; } else { export PATH="%s:${PATH}"; echo "%s"; } fi\n' % (
-            pre_v_path_bin, msg, v_path_bin, msg
-        )
-        return True, _sh + _cd_sh
+    # # 虚拟终端环境启动
+    # def set_export(self, project_name):
+    #     conf = self._get_project_conf(project_name)
+    #     if not conf:
+    #         return False, "没有该项目\r\n"
+    #     v_path_bin = conf["vpath"] + "/bin"
+    #     if not os.path.exists(conf["path"]):
+    #         return False, "项目文件丢失\r\n"
+    #     if not os.path.exists(v_path_bin):
+    #         return False, "没有该虚拟环境\r\n"
+    #     pre_v_path_bin = self.__prevent_re(v_path_bin)
+    #     msg = "虚拟环境已就绪！"  # 使用中文的感叹号
+    #     _cd_sh = "clear\ncd %s\n" % conf["path"]
+    #     _sh = 'if [[ "$PATH" =~ "^%s:.*" ]]; then { echo "%s"; } else { export PATH="%s:${PATH}"; echo "%s"; } fi\n' % (
+    #         pre_v_path_bin, msg, v_path_bin, msg
+    #     )
+    #     return True, _sh + _cd_sh
 
     def get_port_status(self, get):
         try:
@@ -4196,18 +3814,7 @@ echo $! > {pid_file}'''.format(
         if not pids:
             return json_response(False, "项目未启动")
 
-        ports = []
-        for pid in pids:
-            try:
-                p = psutil.Process(pid)
-                for i in p.connections():
-                    if conf["project_config"]["stype"] != "command" and str(i.laddr.port) != conf["project_config"]["port"]:
-                        continue
-
-                    if i.status == "LISTEN" and i.laddr.port not in ports:
-                        ports.append(str(i.laddr.port))
-            except:
-                pass
+        ports = self._list_listen(pids)
 
         if not ports:
             return json_response(False, "未找到端口")
@@ -4230,34 +3837,40 @@ echo $! > {pid_file}'''.format(
         try:
             # 读取配置文件
             file_path = "{}/nginx/python_{}.conf".format(self._vhost_path, get.project_name)
-            config_file = public.readFile(file_path)
+            config_data = public.readFile(file_path)
+            from mod.base import pynginx
+            from mod.base.pynginx.extension import ServerTools, ConfigTools, ConfigFinder
 
-            # 匹配 location 块
-            rep_location = re.compile(r"\s*location\s+([=*~^]*\s+)?/\s*{")
-            tmp = rep_location.search(config_file)
+            pync = pynginx.parse_string(config_data)
+            if pync is None:
+                return public.returnResult(status=False, msg="nginx配置文件解析失败！请尝试关闭外网映射并重新开启")
 
-            # 找到 location 块结束位置
-            end_idx = self.find_nginx_block_end(config_file, tmp.end() + 1)
-            if not end_idx:
-                return json_response(True, data=res)
-            block = config_file[tmp.start():end_idx]
-            # 获取 proxy_pass 配置
-            res_pass = re.compile(r"proxy_pass\s+(?P<pass>\S+)\s*;", re.M)
-            res_pass_res = res_pass.search(block)
+            ctool = ConfigTools(pync)
+            stool = ctool.get_mian_server()
+            if stool is None:
+                return public.returnResult(status=False, msg="未找到nginx配置")
 
-            # 解析端口信息
-            res_url = parse_url(res_pass_res.group("pass"))
+            locs = stool.get_location(create=False, sub_directives=["proxy_pass", ["proxy_set_header", "Host"]])
+            proxy_map = {}
+            if locs:
+                for loc in locs:
+                    proxy_pass = loc.top_find_directives("proxy_pass")
+                    pass_url = proxy_pass[0].get_parameters()[0]
+                    # 解析端口信息
+                    res_url = parse_url(pass_url)
+                    if not res_url.hostname in ("127.0.0.1", "localhost", "0.0.0.0", "::1"):
+                        continue
+                    proxy_map[str(res_url.port)] = loc.match
 
             # 更新 nginx_proxy 信息
             for i in res:
-                if i == str(res_url.port):
+                if i in proxy_map:
                     res[i]['nginx_proxy'] = {
-                        "proxy_dir": "/",
+                        "proxy_dir": proxy_map[i],
                         "status": True,
                         "site_name": get.project_name,
                         "proxy_port": i
                     }
-
             return json_response(True, "获取成功", data=list(res.values()))
         except:
             return json_response(True, "获取成功", data=list(res.values()))
@@ -4275,97 +3888,116 @@ echo $! > {pid_file}'''.format(
         if not project_data:
             return json_response(False, "未找到项目")
 
-        if not hasattr(get, "proxy_port"):
-            return json_response(status=False, msg="参数错误")
-        else:
-            if 65535 < int(get.proxy_port) < 0:
-                return json_response(False, "请输入正确的端口范围")
+        status = get.get("status/d")
+        proxy_path = get.get("proxy_path/s", "/")
+        proxy_port = get.get("proxy_port/d", 0)
+        if not 0 < proxy_port < 65535:
+            return json_response(False, "请输入正确的端口范围")
+        if not proxy_path.startswith("/"):
+            proxy_path = "/" + proxy_path
+        if not proxy_path.endswith("/"):
+            proxy_path = proxy_path + "/"
 
-        if not hasattr(get, "status"):
-            return json_response(status=False, msg="参数错误")
+        # 不能包含../ 这样的不安全路由路径
+        re_safe_uri = re.compile(r"\.\./")
+        if re_safe_uri.search(proxy_path):
+            return json_response(False, "请输入安全的路径")
 
         file_path = "{}/nginx/python_{}.conf".format(self._vhost_path, get.site_name)
         config_file = public.readFile(file_path)
         if not isinstance(config_file, str):
-            return json_response(False, "未找到配置文件")
+            return json_response(False, "未找到配置文件，请先开启外网映射")
 
-        if int(get.status):
-            self.set_config(get.site_name, is_modify=True, proxy_port=get.proxy_port)
+        proxy_info = project_data["project_config"].setdefault("proxy_info", [])
+
+        for p_info in proxy_info:
+            if p_info["proxy_port"] == proxy_port:
+                p_info["proxy_path"] = proxy_path
+                p_info["status"] = status
+                break
         else:
-            is_modify = "close" if project_data["project_config"]["stype"] != "command" else False
-            self.set_config(get.site_name, is_modify=is_modify)
+            proxy_info.append({
+                "proxy_path": proxy_path,
+                "proxy_port": proxy_port,
+                "status": status
+            })
+        default_port = project_data["project_config"].get("port", "")
+        try:
+            default_ports = [int(default_port)]
+        except:
+            default_ports = []
+        listens = self._list_listen(self.get_project_run_state(get.site_name)) or default_ports
+        for idx in range(len(proxy_info) - 1, -1, -1):
+            p_info = proxy_info[idx]
+            if not p_info["status"]:
+                proxy_info.pop(idx)
+                continue
+            if p_info["proxy_port"] not in listens:
+                proxy_info.pop(idx)
+
+        pdata = {
+            "project_config": json.dumps(project_data["project_config"])
+        }
+        public.M('sites').where('name=?', (project_data["name"],)).update(pdata)
+        self.set_config(project_data["name"])
 
         return json_response(status=True, msg="成功更新代理配置")
 
-    @staticmethod
-    def find_nginx_block_end(data: str, start_idx: int) -> Optional[int]:
-        if len(data) < start_idx + 1:
-            return None
 
-        level = 1
-        line_start = 0
-        for i in range(start_idx + 1, len(data)):
-            if data[i] == '\n':
-                line_start = i + 1
-            if data[i] == '{' and line_start and data[line_start: i].find("#") == -1:  # 没有注释的下一个{
-                level += 1
-            elif data[i] == '}' and line_start and data[line_start: i].find("#") == -1:  # 没有注释的下一个}
-                level -= 1
-            if level == 0:
-                return i
+class PyenvSshTerminal(ssh_terminal.local_ssh_terminal):
+    """
+    实际上依靠前端执行 切换目录 + 设置环境变量
+    """
+    pass
 
-        return None
-
-
-class PyenvSshTerminal(ssh_terminal.ssh_terminal):
-    _set_python_export = None
-
-    def send(self):
-        '''
-            @name 写入数据到缓冲区
-            @author hwliang<2020-08-07>
-            @return void
-        '''
-        try:
-            while self._ws.connected:
-                if self._s_code:
-                    time.sleep(0.1)
-                    continue
-                client_data = self._ws.receive()
-                if not client_data: continue
-                if client_data == '{}': continue
-                if len(client_data) > 10:
-                    if client_data.find('{"host":"') != -1:
-                        continue
-                    if client_data.find('"resize":1') != -1:
-                        self.resize(client_data)
-                        continue
-                    if client_data.find('{"pj_name"') != -1:
-                        client_data = self.__set_export(client_data)
-                        if not client_data:
-                            continue
-
-                self._ssh.send(client_data)
-        except Exception as ex:
-            ex = str(ex)
-
-            if ex.find('_io.BufferedReader') != -1:
-                self.debug('从websocket读取数据发生错误，正在重新试')
-                self.send()
-                return
-            elif ex.find('closed') != -1:
-                self.debug('会话已中断')
-            else:
-                self.debug('写入数据到缓冲区发生错误: {}'.format(ex))
-
-        if not self._ws.connected:
-            self.debug('客户端已主动断开连接')
-        self.close()
-
-    def __set_export(self, client_data):
-        _data = json.loads(client_data)
-        flag, msg = main().set_export(_data["pj_name"])
-        if not flag:
-            self._ws.send(msg)
-            return None
-        return msg
+    # _set_python_export = None
+    #
+    # def send(self):
+    #     '''
+    #         @name 写入数据到缓冲区
+    #         @author hwliang<2020-08-07>
+    #         @return void
+    #     '''
+    #     try:
+    #         while self._ws.connected:
+    #             if self._s_code:
+    #                 time.sleep(0.1)
+    #                 continue
+    #             client_data = self._ws.receive()
+    #             if not client_data: continue
+    #             if client_data == '{}': continue
+    #             if len(client_data) > 10:
+    #                 if client_data.find('{"host":"') != -1:
+    #                     continue
+    #                 if client_data.find('"resize":1') != -1:
+    #                     self.resize(client_data)
+    #                     continue
+    #                 if client_data.find('{"pj_name"') != -1:
+    #                     client_data = self.__set_export(client_data)
+    #                     if not client_data:
+    #                         continue
+    #
+    #             self._ssh.send(client_data)
+    #     except Exception as ex:
+    #         ex = str(ex)
+    #
+    #         if ex.find('_io.BufferedReader') != -1:
+    #             self.debug('从websocket读取数据发生错误，正在重新试')
+    #             self.send()
+    #             return
+    #         elif ex.find('closed') != -1:
+    #             self.debug('会话已中断')
+    #         else:
+    #             self.debug('写入数据到缓冲区发生错误: {}'.format(ex))
+    #
+    #     if not self._ws.connected:
+    #         self.debug('客户端已主动断开连接')
+    #     self.close()
+    #
+    # def __set_export(self, client_data):
+    #     _data = json.loads(client_data)
+    #     flag, msg = main().set_export(_data["pj_name"])
+    #     if not flag:
+    #         self._ws.send(msg)
+    #         return None
+    #     return msg

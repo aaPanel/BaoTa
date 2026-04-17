@@ -63,7 +63,7 @@ class main:
             for lp in local_plugins:
                 if cp['name'] == lp['name']:
                     cp['install'] = False
-                    cp['path'] = lp['path']
+                    cp.update(lp)
                     if cp['version'] != lp['version']:
                         cp['update'] = True
                     break
@@ -88,8 +88,8 @@ class main:
             return {'status': False, 'msg': '缺少参数plugin_name'}
         name = get.plugin_name
 
-        if public.M('tasks').where('name=? and status=?', ('安装SSL证书部署插件[{}]'.format(get.plugin_name), '0')).count() > 0:
-            return public.returnMsg(False, '安装任务已存在')
+        if os.path.exists("/tmp/deploy_plugin_{}.log".format(name)):
+            return public.returnMsg(False, '已有相同安装任务在队列中，请稍后再试')
         else:
             # 判断系统架构
             arch = public.ExecShell("uname -m")[0].strip()
@@ -100,12 +100,14 @@ class main:
             else:
                 return public.returnMsg(False, '不支持当前系统架构：{}'.format(arch))
 
-            execstr = "wget -O /www/server/deploy_plugin/{} {}/thirdparty_deploy/deploy_plugin/{} -T 10 && chmod 755 /www/server/deploy_plugin/{}".format(
-                name, public.get_url(), get.plugin_name, name)
-            public.M('tasks').add('id,name,type,status,addtime,execstr', (
-            None, '安装SSL证书部署插件[{}]'.format(get.plugin_name), 'execshell', '0', time.strftime('%Y-%m-%d %H:%M:%S'), execstr))
-            public.writeFile('/tmp/panelTask.pl', 'True')
-            return public.returnMsg(True, '安装任务已添加到任务队列中')
+            public.ExecShell("(wget -O /www/server/deploy_plugin/{} {}/thirdparty_deploy/deploy_plugin/{} -T 10 && chmod 755 /www/server/deploy_plugin/{}) >> /tmp/deploy_plugin_{}.log 2>&1".format(
+                name, public.get_url(), get.plugin_name, name, name))
+            public.ExecShell("rm -f /tmp/deploy_plugin_{}.log".format(name))
+
+            if not os.path.exists("/www/server/deploy_plugin/{}".format(name)):
+                return public.returnMsg(False, '插件下载安装失败，请稍后重试')
+
+            return public.returnMsg(True, '安装完成')
 
     def uninstall_plugin(self, get):
         if 'plugin_name' not in get or not get.plugin_name:
@@ -144,9 +146,9 @@ class main:
             config = json.loads(get.config)
         except Exception as e:
             return {'status': False, 'msg': '参数config格式错误，必须为JSON格式'}
-        for key in plugin_config.keys():
-            if key not in config:
-                return {'status': False, 'msg': '参数config缺少字段{}'.format(key)}
+        for key in plugin_config:
+            if key["name"] not in config and key['required']:
+                return {'status': False, 'msg': '参数config缺少字段{}'.format(key["name"])}
 
         # 检查同名授权是否存在
         exist = self.M('deploy_auths').where('name=?', (get.name,)).count()
@@ -187,9 +189,9 @@ class main:
             config = json.loads(get.config)
         except Exception as e:
             return {'status': False, 'msg': '参数config格式错误，必须为JSON格式'}
-        for key in plugin_config.keys():
-            if key not in config:
-                return {'status': False, 'msg': '参数config缺少字段{}'.format(key)}
+        for key in plugin_config:
+            if key["name"] not in config and key['required']:
+                return {'status': False, 'msg': '参数config缺少字段{}'.format(key["name"])}
 
         # 检查同名授权是否存在
         exist = self.M('deploy_auths').where('name=? AND id!=?', (get.name, get.auth_id)).count()
@@ -284,9 +286,9 @@ class main:
                             params = json.loads(get.params)
                         except Exception as e:
                             return {'status': False, 'msg': '参数params格式错误，必须为JSON格式'}
-                        for key in action['params'].keys():
-                            if key not in params:
-                                return {'status': False, 'msg': '参数params缺少字段{}'.format(key)}
+                        for key in action['params']:
+                            if key["name"] not in params and key['required']:
+                                return {'status': False, 'msg': '参数params缺少字段{}'.format(key["name"])}
                         break
                 if not action_found:
                     return {'status': False, 'msg': '部署方法不存在'}
@@ -348,9 +350,9 @@ class main:
                             params = json.loads(get.params)
                         except Exception as e:
                             return {'status': False, 'msg': '参数params格式错误，必须为JSON格式'}
-                        for key in action['params'].keys():
-                            if key not in params:
-                                return {'status': False, 'msg': '参数params缺少字段{}'.format(key)}
+                        for key in action['params']:
+                            if key["name"] not in params and key['required']:
+                                return {'status': False, 'msg': '参数params缺少字段{}'.format(key["name"])}
                         break
                 if not action_found:
                     return {'status': False, 'msg': '部署方法不存在'}

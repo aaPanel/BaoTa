@@ -15,7 +15,7 @@ from mod.base import json_response
 
 from mod.base.push_mod import PushManager, TaskConfig, TaskRecordConfig, TaskTemplateConfig, PushSystem, SenderConfig
 from mod.base.push_mod import update_mod_push_system, UPDATE_MOD_PUSH_FILE, load_task_template_by_file, \
-    UPDATE_VERSION_FILE, update_mod_push_system2
+    UPDATE_VERSION_FILE, update_mod_push_system2, update_ssl_task_for_11_7
 from mod.base.msg import update_mod_push_msg
 from mod.base.push_mod.rsync_push import load_rsync_template
 from mod.base.push_mod.task_manager_push import load_task_manager_template
@@ -27,7 +27,7 @@ from mod.base.push_mod.web_log_push import load_web_log_template
 def update_mod():
     try:
         with open(UPDATE_VERSION_FILE, 'r') as f:
-            if f.read() == "11.0a":
+            if f.read() == "11.7":
                 pl = False
             else:
                 pl = True
@@ -35,7 +35,6 @@ def update_mod():
         pl = True
 
     if pl:
-        print("========================rewrite=====================")
         load_task_template_by_file("/www/server/panel/mod/base/push_mod/site_push_template.json")
         load_task_template_by_file("/www/server/panel/mod/base/push_mod/system_push_template.json")
         load_task_template_by_file("/www/server/panel/mod/base/push_mod/database_push_template.json")
@@ -49,8 +48,9 @@ def update_mod():
         load_load_template()
         load_web_log_template()
         update_mod_push_system2()
+        update_ssl_task_for_11_7()
         with open(UPDATE_VERSION_FILE, "w") as f:
-            f.write("11.0a")
+            f.write("11.7")
             # debug_log(">>>>>>> update_mod_push_system <<<<<<<<")
 
     if not os.path.exists(UPDATE_MOD_PUSH_FILE):

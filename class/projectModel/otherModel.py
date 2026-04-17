@@ -527,7 +527,7 @@ class main(projectBase):
         ports = []
         domains = []
         for d in project_find['project_config']['domains']:
-            domain_tmp = d.split(':')
+            domain_tmp = d.rsplit(':', 1)
             if len(domain_tmp) == 1: domain_tmp.append(80)
             if not int(domain_tmp[1]) in ports:
                 ports.append(int(domain_tmp[1]))
@@ -612,7 +612,7 @@ class main(projectBase):
         domains = []
 
         for d in project_find['project_config']['domains']:
-            domain_tmp = d.split(':')
+            domain_tmp = d.rsplit(':', 1)
             if len(domain_tmp) == 1: domain_tmp.append(80)
             if not int(domain_tmp[1]) in ports:
                 ports.append(int(domain_tmp[1]))
@@ -631,6 +631,9 @@ class main(projectBase):
             http3_header = ""
             if self.is_nginx_http3():
                 http3_header = '''\n    add_header Alt-Svc 'quic=":443"; h3=":443"; h3-29=":443"; h3-27=":443";h3-25=":443"; h3-T050=":443"; h3-Q050=":443";h3-Q049=":443";h3-Q048=":443"; h3-Q046=":443"; h3-Q043=":443"';'''
+                http3_header += "\n    quic_retry on;\n    quic_gso on;"
+                if self.ng_ssl_early_data_enabled():
+                    http3_header += "\n    ssl_early_data on;"
 
             nginx_ver = public.nginx_version()
             if nginx_ver:
@@ -653,6 +656,8 @@ class main(projectBase):
                         listen_ports_list.append("    listen {} quic;".format(p))
                 if use_http2_on:
                     listen_ports_list.append("    http2 on;")
+                if self.is_nginx_http3():
+                    listen_ports_list.append("    http3 on;")
 
             else:
                 listen_ports_list.append("    listen 443 ssl;")
@@ -1083,6 +1088,8 @@ echo $! > {pid_file}'''.format(
         if not project_id:
             return public.return_data(False, '站点查询失败')
         domains = public.M('domain').where('pid=?', (project_id,)).order('id desc').select()
+        for d in domains:
+            d["cn_name"] = self.try_unpunycode(d["name"]) or d["name"]
         # project_find = self.get_project_find(get.project_name)
         # if not project_find:
         #     return public.return_data(False, '站点查询失败')
@@ -1116,13 +1123,13 @@ echo $! > {pid_file}'''.format(
         if not project_find:
             return public.return_error('指定项目不存在')
         last_domain = get.domain
-        domain_arr = get.domain.split(':')
+        domain_arr = get.domain.rsplit(':', 1)
         if len(domain_arr) == 1:
             domain_arr.append(80)
 
         project_id = public.M('sites').where('name=?', (get.project_name,)).getField('id')
         if len(project_find['project_config']['domains']) == 1: return public.return_error('项目至少需要一个域名')
-        domain_id = public.M('domain').where('name=? AND pid=?', (domain_arr[0], project_id)).getField('id')
+        domain_id = public.M('domain').where('name=? AND port=? AND pid=?', (domain_arr[0], domain_arr[1], project_id)).getField('id')
         if not domain_id:
             return public.return_error('指定域名不存在')
         public.M('domain').where('id=?', (domain_id,)).delete()
@@ -1159,7 +1166,13 @@ echo $! > {pid_file}'''.format(
         for domain in domains:
             domain = domain.strip()
             if not domain: continue
-            domain_arr = domain.split(':')
+            if "[" in domain and "]" in domain:  # IPv6格式特殊处理
+                if "]:" in domain:
+                    domain_arr = domain.rsplit(":", 1)
+                else:
+                    domain_arr = [domain]
+            else:
+                domain_arr = domain.split(':')
             domain_arr[0] = self.check_domain(domain_arr[0])
             if domain_arr[0] is False:
                 res_domains.append({"name": domain, "status": False, "msg": '域名格式错误'})
@@ -1176,11 +1189,12 @@ echo $! > {pid_file}'''.format(
             except ValueError:
                 res_domains.append({"name": domain, "status": False, "msg": '域名格式错误'})
                 continue
-            if not public.M('domain').where('name=?', (domain_arr[0],)).count():
+            if not public.M('domain').where('name=? AND port=? ', (domain_arr[0], domain_arr[1])).count():
                 public.M('domain').add('name,pid,port,addtime',
                                        (domain_arr[0], project_id, domain_arr[1], public.getDate()))
-                if not domain in project_find['project_config']['domains']:
-                    project_find['project_config']['domains'].append(domain)
+                real_d = "{}:{}".format(domain_arr[0], domain_arr[1])
+                if not real_d in project_find['project_config']['domains']:
+                    project_find['project_config']['domains'].append(real_d)
                 public.WriteLog(self._log_name, '成功添加域名{}到项目{}'.format(domain, get.project_name))
                 res_domains.append({"name": domain_arr[0], "status": True, "msg": '添加成功'})
                 if not check_cloud:
@@ -1240,6 +1254,8 @@ echo $! > {pid_file}'''.format(
         # get.project_path = get.project_path.strip()
         if not os.path.exists(get.project_exe):
             return public.return_error('项目目录不存在: {}'.format(get.project_exe))
+        if re.search(r"\s", get.project_exe):
+            return public.return_error('项目目录路径中不能包含空白字符')
 
         # 端口占用检测
         if get.port == "": return public.return_error("请填写好端口")
@@ -1250,8 +1266,22 @@ echo $! > {pid_file}'''.format(
             domains = get.domains
             public.check_domain_cloud(domains[0])
         for domain in domains:
-            domain_arr = domain.split(':')
-            if public.M('domain').where('name=?', domain_arr[0]).count():
+            if "[" in domain and "]" in domain:  # IPv6格式特殊处理
+                if "]:" in domain:
+                    domain_arr = domain.rsplit(":", 1)
+                else:
+                    domain_arr = [domain]
+            else:
+                domain_arr = domain.split(':')
+            domain_arr[0] = self.check_domain(domain_arr[0])
+            if domain_arr[0] is False:
+                return public.return_error('域名格式错误: {}'.format(domain))
+            if len(domain_arr) == 1:
+                domain_arr.append("")
+            if domain_arr[1] == "":
+                domain_arr[1] = 80
+                domain += ':80'
+            if public.M('domain').where('name=? and port=?', (domain_arr[0], domain_arr[1])).count():
                 return public.return_error('指定域名已存在: {}'.format(domain))
 
         # 获取可执行文件的的根目录

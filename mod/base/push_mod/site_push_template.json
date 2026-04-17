@@ -14,13 +14,13 @@
       "field": [
         {
           "attr": "project",
-          "name": "网站",
-          "type": "select",
-          "default": "all",
+          "name": "选中网站",
+          "type": "all-multiple-select",
+          "default": "after_site",
           "items": [
             {
-              "title": "所有网站",
-              "value": "all"
+              "title": "自动应用到后续新建的网站",
+              "value": "after_site"
             }
           ]
         },
@@ -60,7 +60,7 @@
       "webhook",
       "sms"
     ],
-    "unique": false,
+    "unique": true,
     "tags": ["site", "common", "ssl"],
     "description": "定时检查网站证书(SSL)是否即将到期，如果即将到期则发送告警通知给管理员"
   },
@@ -257,17 +257,18 @@
         },
         {
           "attr": "count",
-          "name": "自动重启",
-          "type": "radio",
+          "name": "进程守护",
+          "type": "select",
           "suffix": "",
           "default": 1,
+          "disabled": true,
           "items": [
             {
               "title": "自动尝试重启项目",
               "value": 1
             },
             {
-              "title": "不做重启尝试",
+              "title": "自动尝试重启项目",
               "value": 2
             }
           ]
@@ -426,7 +427,7 @@
     },
     "advanced_default": {
       "number_rule": {
-        "day_num": 3
+        "day_num": 0
       }
     },
     "send_type_list": [

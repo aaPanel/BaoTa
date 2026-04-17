@@ -169,6 +169,8 @@ rewrite ^%s(.*) %s%s %s;
         rep = r"http(s)?\:\/\/([a-zA-Z0-9][-a-zA-Z0-9]{0,62}\.)+([a-zA-Z0-9][a-zA-Z0-9]{0,62})+.?"
         if to_url and not re.match(rep, to_url):
             return '目标URL格式不对【%s】' % to_url
+        if to_url.endswith("/"): # 无论是否以/结尾都移除，并在使用携带路由参数时自动补充
+            to_url = to_url[:-1]
 
         # 非404页面de重定向检测项
         if error_page != 1:
@@ -237,10 +239,10 @@ rewrite ^%s(.*) %s%s %s;
 
     def _set_include(self, res_conf) -> Optional[str]:
         flag, msg = self._set_nginx_redirect_include(res_conf)
-        if not flag:
+        if not flag and public.get_webserver() == "nginx":
             return msg
         flag, msg = self._set_apache_redirect_include(res_conf)
-        if not flag:
+        if not flag and public.get_webserver() == "apache":
             return msg
 
     def _write_config(self, res_conf) -> Optional[str]:
@@ -448,7 +450,7 @@ rewrite ^%s(.*) %s%s %s;
                     redirect_type = "permanent"
                 else:
                     redirect_type = "redirect"
-                hold_path = "$1" if redirect_conf["holdpath"] == 1 else ""
+                hold_path = "/$1" if redirect_conf["holdpath"] == 1 else ""
                 conf_list.append(self._ng_path_format % (redirect_path, to_url, hold_path, redirect_type))
 
             conf_list.append("#REWRITE-END")

@@ -603,11 +603,12 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                                 sort_val = fstat.st_uid
                         except:
                             pass
-
-                    nlist.append((entry.name, sort_val, entry.is_dir()))
-
-                    # 计数
-                    count += 1
+                    try:  # 2026/02/26 处理软连接的目标文件或文件不存在，导致的 entry.is_dir() 报错
+                        nlist.append((entry.name, sort_val, entry.is_dir()))
+                        # 计数
+                        count += 1
+                    except:
+                        pass
             except:
                 pass
 
@@ -2896,6 +2897,66 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
                 return public.ReturnMsg(False, "没有足够的权限操作文件或目录!")
         return public.returnMsg(True, "历史版本【{}】删除成功".format(args.history))
 
+    # 递归删除指定副本内容
+    def del_history_recursive(self, args):
+        if not hasattr(args, "filename"):
+            return public.returnMsg(False, "缺少参数filename")
+
+        if not hasattr(args, "history"):
+            return public.returnMsg(False, "缺少参数history")
+
+        if not os.path.exists(args.filename):
+            return public.returnMsg(False, '文件不存在!')
+            
+        import json
+        history_list = args.history
+        if isinstance(history_list, str):
+            try:
+                history_list = json.loads(history_list)
+            except:
+                if ',' in history_list:
+                    history_list = history_list.split(',')
+                else:
+                    history_list = [history_list]
+        if not isinstance(history_list, list):
+            history_list = [history_list]
+
+        save_path = ('/www/backup/file_history/' +
+                     args.filename).replace('//', '/')
+                     
+        success_count = 0
+
+        for history in history_list:
+            args.history = str(history)
+            path = save_path + '/' + args.history
+
+            if os.path.exists(path):
+                if os.path.isdir(path):
+                    old_history = args.history
+                    for item in os.listdir(path):
+                        args.history = old_history + '/' + item
+                        res = self.del_history_recursive(args)
+                        if isinstance(res, dict) and not res.get('status'):
+                            args.history = old_history
+                            return res
+                    args.history = old_history
+                    try:
+                        os.rmdir(path)
+                        success_count += 1
+                    except PermissionError as e:
+                        if e.errno == 13:
+                            return public.ReturnMsg(False, "没有足够的权限操作文件或目录!")
+                else:
+                    res = self.del_history(args)
+                    if isinstance(res, dict) and not res.get('status'):
+                        return res
+                    success_count += 1
+
+        if len(history_list) == 1:
+            return public.returnMsg(True, "历史版本【{}】删除成功".format(history_list[0]))
+        else:
+            return public.returnMsg(True, "成功批量删除 {} 个历史版本".format(success_count))
+
     # 读取指定历史副本
     def read_history(self, args):
         if not hasattr(args, "filename"):
@@ -3429,6 +3490,13 @@ session.save_handler = files'''.format(path, sess_path, sess_path)
         except:
             data['chmod'] = 755
             data['chown'] = 'www'
+        # 常用用户
+
+        commonly_users = {"root", "www", "mysql", "redis", "bt-monitor"}
+        # 获取服务器所有用户
+        import pwd
+        users = {user.pw_name for user in pwd.getpwall()}
+        data['users'] = list(commonly_users & users) + list(users - commonly_users)
         return data
 
     # 设置文件权限和所有者

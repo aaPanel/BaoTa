@@ -135,7 +135,7 @@ class SiteDetector:
         :param servers: server块列表
         :return: 监听端口列表
         """
-        ports = []
+        ports = set()
         for server in servers:
             server_block = server.get_block()
             if not server_block:
@@ -154,11 +154,11 @@ class SiteDetector:
                         try:
                             p_int = int(p)
                             if 0 <= p_int <= 65535:
-                                ports.append(p)
+                                ports.add(p_int)
                         except ValueError:
                             pass
 
-        return ports
+        return list(ports) or [80]
 
 def site_detector(main_conf: Config) -> List[SiteInfo]:
     """

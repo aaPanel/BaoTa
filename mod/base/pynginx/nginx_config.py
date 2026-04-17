@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
 
-from .nginx_base import Block, Directive, _Trans, IDirective
+from .nginx_base import Block, Directive, _Trans, IDirective, trans_
 from .nginx_components import Server, Http, Upstream
 
 
@@ -13,10 +13,10 @@ class Config(Block):
     def find_servers(self) -> List['Server']:
         """查找所有server块"""
         servers = []
-        directives = self.find_directives("server")
+        directives = self.find_directives("server", include=True)
         for directive in directives:
             # 使用字符串类型检查避免循环依赖
-            if hasattr(directive, '__class__') and directive.__class__.__name__ == 'Server':
+            if  directive.__class__.__name__ == 'Server':
                 servers.append(directive)
         return servers
 
@@ -26,8 +26,8 @@ class Config(Block):
         if directives:
             directive = directives[0]
             # 使用字符串类型检查避免循环依赖
-            if hasattr(directive, '__class__') and directive.__class__.__name__ == 'Http':
-                return directive
+            if  directive.__class__.__name__ == 'Http':
+                return trans_(directive, Http)
         return None
 
     def find_upstreams(self) -> List['Upstream']:
@@ -36,7 +36,7 @@ class Config(Block):
         directives = self.find_directives("upstream")
         for directive in directives:
             # 使用字符串类型检查避免循环依赖
-            if hasattr(directive, '__class__') and directive.__class__.__name__ == 'Upstream':
+            if  directive.__class__.__name__ == 'Upstream':
                 upstreams.append(directive)
         return upstreams
 
@@ -50,7 +50,7 @@ class Include(Directive, _Trans):  # 不实现 IBlock 接口，但可以解析
     @classmethod
     def from_directive(cls, directive: Union[IDirective, Directive]) -> 'Include':
         if directive.__class__ is cls:
-            return directive
+            return trans_(directive, cls)
         parameters = directive.get_parameters()
         if not len(parameters) == 1:
             raise ValueError("include指令参数数量错误")
@@ -71,8 +71,8 @@ class Include(Directive, _Trans):  # 不实现 IBlock 接口，但可以解析
             res.extend(config.get_directives())
         return  res
 
-    def find_directives(self, directive_name: str) -> List[IDirective]:
+    def find_directives(self, directive_name: str, include: bool = False, sub_block: bool = False) -> List[IDirective]:
         res =[]
         for config in self.configs:
-            res.extend(config.find_directives(directive_name))
+            res.extend(config.find_directives(directive_name, include=include, sub_block=sub_block))
         return  res

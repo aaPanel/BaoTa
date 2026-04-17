@@ -190,6 +190,25 @@ class panelAuth:
                 return public.returnMsg(False, '请先绑定宝塔官网帐号!')
             raise public.PanelError('{}\n{}\n连接官网失败，请检查网络状况!'.format(p_url, res))
 
+    def create_plugin_with_credit(self, get):
+        if not hasattr(get, 'pid') or not hasattr(get, 'cycle'): return public.returnMsg(False, '参数错误!')
+        pdata = self.create_serverid(get)
+        pdata['pid'] = get.pid
+        pdata['cycle'] = get.cycle
+        p_url = public.GetConfigValue('home') + '/api/v2/order/product/create_plugin_with_credit'
+        if get.type == '1':
+            pdata['renew'] = 1
+            p_url = public.GetConfigValue('home') + '/api/v2/order/product/create_plugin_with_credit'
+        try:
+            res = public.httpPost(p_url, pdata)
+            res = json.loads(res)
+
+            return {'status': res['success'], 'msg': res['res']}
+        except:
+            if pdata['uid'] == -1:
+                return public.returnMsg(False, '请先绑定宝塔官网帐号!')
+            raise public.PanelError('{}\n{}\n连接官网失败，请检查网络状况!'.format(p_url, res))
+
     def get_order_stat(self, get):
         pdata = self.create_serverid(get)
         pdata['order_id'] = get.oid

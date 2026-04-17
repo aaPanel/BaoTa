@@ -4,6 +4,8 @@ os.chdir(panelPath)
 
 sys.path.insert(0, panelPath + "class/")
 import public
+# 作为脚本执行，不应该展示Debug日志信息
+public.is_debug = lambda : False
 
 """
 @name 检测节点是否可用
@@ -122,37 +124,41 @@ def check_node_url():
     #检测www节点
     if 'www-node' in data:
         #0.5秒检测一次
-        for node in data['www-node']:
+        for node in ({"name": "源站","url": "www.bt.cn"}, *data['www-node']):
             print_debug("检测www节点(0.5S)：{}".format(node))
             if check_url('https://{}/node/check'.format(node['url']),0.5):
                 www_node = node
                 break
         #2秒检测一次
         if not www_node:
-            for node in data['www-node']:
+            for node in ({"name": "源站","url": "www.bt.cn"}, *data['www-node']):
                 print_debug("检测www节点(2s)：{}".format(node))
                 if check_url('https://{}/node/check'.format(node['url']),2):
                     www_node = node
                     break
         if not www_node:
             print_debug("无可用www节点")
+        else:
+            print_debug("当前www节点：{}".format(www_node))
     #检测api节点
     if 'api-node' in data:
         #0.5秒检测一次
-        for node in data['api-node']:
+        for node in ({"name": "源站","url": "api.bt.cn"}, *data['api-node']):
             print_debug("检测api节点(0.5S)：{}".format(node))
             if check_url('https://{}/node/check'.format(node['url']),0.5):
                 api_node = node
                 break
         #2秒检测一次
         if not api_node:
-            for node in data['api-node']:
+            for node in ({"name": "源站","url": "api.bt.cn"}, *data['api-node']):
                 print_debug("检测api节点(2s)：{}".format(node))
                 if check_url('https://{}/node/check'.format(node['url']),2):
                     api_node = node
                     break
         if not api_node:
             print_debug("无可用api节点")
+        else:
+            print_debug("当前api节点：{}".format(api_node))
 
     node_url['api-node'] = api_node
     node_url['www-node'] = www_node
@@ -291,6 +297,10 @@ if __name__ == '__main__':
     try:
         check_type = sys.argv[1]
     except:pass
-
-    start_check(check_type)
+    try:
+        start_check(check_type)
+    except:
+        pass
+    finally:
+        print_debug("节点测试检测结束")
 

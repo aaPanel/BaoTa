@@ -166,7 +166,7 @@ def HttpPost(url, data, timeout=(3, 6), headers={}):
         return string
     """
     if url.find('GetAuthToken') == -1:
-        if is_local(): return False
+        if is_local(): return 1
     # rep_home_host()
     import http_requests
     res = http_requests.post(url, data=data, timeout=timeout, headers=headers)
@@ -510,8 +510,8 @@ def GetConfigValue(key):
     '''
     config = GetConfig()
 
-    if key == 'home': return en_hexb("6148523063484d364c79393364336375596e51755932343d")
-    if key == 'download': return en_hexb("6148523063484d364c79396b62336475624739685a4335696443356a62673d3d")
+    if key == 'home': return read_bt_prefix("www")
+    if key == 'download': return read_bt_prefix("down")
     if not key in config.keys():
         return None
     return config[key]
@@ -804,11 +804,15 @@ def GetClientIp():
     if ipaddr:
         ipaddr = ipaddr.replace('::ffff:', '')
     if ipaddr in ('127.0.0.1', '::1', "localhost"): # 仅信任本地代理，在本地代理时，认为是开启了免端口访问
+        real_ipaddr = ""
         forwarded_ips = request.headers.get('X-Forwarded-For', "").split(',')
         if len(forwarded_ips) > 0:
-            ipaddr = forwarded_ips[-1]
+            real_ipaddr = forwarded_ips[-1]
         elif "X-Real-Ip" in request.headers:
-            ipaddr = request.headers.get('X-Real-Ip')
+            real_ipaddr = request.headers.get('X-Real-Ip')
+
+        if check_ip(real_ipaddr):
+            ipaddr = real_ipaddr
 
     if not isinstance(ipaddr, str):
         return '未知IP地址'
@@ -851,6 +855,37 @@ def get_timeout(url, timeout=3):
         return result, int((time.time() - start) * 1000 - 500)
     except:
         return 0, False
+
+
+def read_node_host():
+    default_map = {
+        "api-node": {"url": "api.bt.cn", "name": "主节点"},
+        "www-node": {"url": "www.bt.cn", "name": "主节点"},
+        "down-node": {"url": "download.bt.cn", "name": "主节点"}
+    }
+    try:
+        res: dict = json.loads(readFile('{}/data/node_url.pl'.format(get_panel_path())))
+        if all([k in res for k in default_map.keys()]):
+            for v in res.values():
+                if "ip" in v:
+                    v.pop("ip")
+            return res
+    except:
+        pass
+    return default_map
+
+
+def read_bt_prefix(key: str):
+    if key == "download":
+        key = "down"
+    if key not in ("api", "www", "down"):
+        return "https://www.bt.cn"
+
+    node_host_map = read_node_host()
+    if key in ("api", "www"):
+        return "https://" + node_host_map["{}-node".format(key)]["url"]
+    else:
+        return "http://" + node_host_map["down-node"]["url"]
 
 
 def get_url(timeout=0.5):
@@ -1107,7 +1142,8 @@ def get_home_node(url):
         parsed_url = urlparse(url)
         domain = parsed_url.netloc
         if domain in ['www.bt.cn', 'api.bt.cn', 'download.bt.cn']:
-            if parsed_url.path in ['/api/index']:
+            # "/api/index" 结果应该是返回 True 用于直接判断节点是否可以联通
+            if parsed_url.path in ['/api/index', '/node/check']:
                 return url
             sfile = '{}/data/node_url.pl'.format(get_panel_path())
             node_info = json.loads(readFile(sfile))
@@ -4739,7 +4775,7 @@ def free_login_area(login_ip, login_type='panel'):
 
 
 # 登陆告警
-def login_send_body(is_type, username, login_ip, port):
+def login_send_body(is_type, username, login_ip, port, passkey_name=""):
     send_type = ""
     panel_path = get_panel_path()
     login_send_type_conf = "/www/server/panel/data/panel_login_send.pl"
@@ -4795,6 +4831,8 @@ def login_send_body(is_type, username, login_ip, port):
             ">登录IP：" + login_ip + ":" + port,
             ">登录状态：<font color=#20a53a>成功</font>"
         ]
+    if passkey_name:
+        plist.append(">凭证名称：" + passkey_name)
 
     push_data = {
         "ip": get_server_ip(),
@@ -5534,6 +5572,7 @@ def get_session_timeout():
         return session_timeout
     try:
         session_timeout = int(readFile(sess_out_path))
+        session_timeout = max(min(session_timeout, 86400 * 30), 60) # 最长30天,最短1分钟,获取异常返回1天
     except:
         session_timeout = 86400
     cache.set(skey, session_timeout, 3600)
@@ -5864,7 +5903,7 @@ def get_php_versions(reverse=False):
     if os.path.exists(_file):
         version_list = json.loads(readFile(_file))
     else:
-        version_list = ['52', '53', '54', '55', '56', '70', '71', '72', '73', '74', '80', '81', '82', '83','84','85']
+        version_list = ['52', '53', '54', '55', '56', '70', '71', '72', '73', '74', '80', '81', '82', '83','84',"85"]
 
     return sorted(version_list, reverse=reverse)
 
@@ -5887,6 +5926,8 @@ def install_mysql_client():
         @author hwliang<2022-01-14>
         @return void
     '''
+    if not os.path.exists('/usr/bin/mysql') or os.path.exists('/usr/sbin/mysql'):
+        return
     if os.path.exists('/usr/bin/yum'):
         os.system("yum install mariadb -y")
         if not os.path.exists('/usr/bin/mysql'):
@@ -5956,6 +5997,11 @@ def error_conn_cloud(text):
         @author hwliang<2021-12-18>
         @return void
     '''
+    text = text.strip()
+    err_template_file = '{}/BTPanel/templates/default/error_connect.html'.format(get_panel_path())
+    msg = readFile(err_template_file)
+    if text.startswith("面板运行时发生错误: {}".format(msg.split("\n")[0])):
+        return PanelError(text[11:])
     code_msg = ''
     if text.find("502 Bad Gateway") != -1:
         code_msg = '502 Bad Gateway'
@@ -5984,9 +6030,7 @@ def error_conn_cloud(text):
     elif text.find("Remote end closed connection without response") != -1:
         code_msg = 'Remote end closed connection'
     else:
-        code_msg = text
-    err_template_file = '{}/BTPanel/templates/default/error_connect.html'.format(get_panel_path())
-    msg = readFile(err_template_file)
+        code_msg = xsssec(text)
     msg = msg.format(code=code_msg)
     return PanelError(msg)
 
@@ -8550,11 +8594,17 @@ def remove_nginx_server_quic(nginx_file: str):
     if not isinstance(data, str):
         return
 
-    rep_listen_quic = re.compile(r"\s*listen\s+.*quic;", re.M)
-    if not rep_listen_quic.search(data):
-        return
+    rep_quic_list = [
+        re.compile(r"\s*listen\s+.*quic[^\n]*", re.M),
+        re.compile(r"\s*http3\s+on[^\n]*", re.M),
+        re.compile(r"\s*quic_retry\s+on[^\n]*", re.M),
+        re.compile(r"\s*quic_gso\s+on[^\n]*", re.M),
+        re.compile(r"\s*ssl_early_data\s+on[^\n]*", re.M),
+    ]
 
-    new_conf = rep_listen_quic.sub('', data)
+    new_conf = data
+    for rep in rep_quic_list:
+        new_conf = rep.sub("", new_conf)
     writeFile(nginx_file, new_conf)
 
 
@@ -8598,9 +8648,28 @@ def repair_nginx_server_quic_ssl_protocols(nginx_file: str):
 
     writeFile(nginx_file, data)
 
-
+# 2026/1/28 调整为需要完全支持http3才返回 True
 def is_nginx_http3():
-    return ExecShell("nginx -V 2>&1| grep 'http_v3_module'")[0].strip() != ''
+    out = ExecShell("{}/nginx/sbin/nginx -V 2>&1".format(get_setup_path()))[0].strip()
+    openssl_regexp = re.compile(r"built\s+with\s+OpenSSL\s+(?P<ver>[\d.]+)")
+    search = openssl_regexp.search(out)
+    if not search:
+        return False
+    ver = search.group("ver").split(".")
+    if len(ver) < 3:
+        ver.extend(['0'] * (3 - len(ver)))
+    for i in range(3):
+        try:
+            ver[i] = int(ver[i])
+        except:
+            ver[i] = 0
+    if ver >= [3, 5, 1] and "http_v3_module" in out:
+        return True
+    else:
+        return False
+
+# 2026/1/28 调整为需要完全支持http3才返回 True (openssl >= 3.5.1)
+ng_ssl_early_data_enabled = is_nginx_http3
 
 
 def repair_lack_field():
@@ -9043,6 +9112,7 @@ def split_domain_sld(domain: str):
         return ".".join(parts[-num_of_tld_parts-1:]), ".".join(parts[:-num_of_tld_parts-1])
 
 
+# 2025/12/09 已放弃此请求方案，改为直接在 create_connection 阶段通过检查host是否为bt.cn来应用ipv6
 def _record_allowed_gai_family():
     import requests.packages.urllib3.util.connection as urllib3_conn
 
@@ -9054,3 +9124,140 @@ def _record_allowed_gai_family():
     return _reset_allowed_gai_family
 
 reset_allowed_gai_family = _record_allowed_gai_family()
+
+
+def panel_ip_type():
+    import os
+    v4_file = '{}/data/v4.pl'.format(get_panel_path())
+    if not os.path.exists(v4_file):
+        return 'auto'
+    else:
+        ip_type = readFile(v4_file)
+        if not ip_type:
+            return 'auto'
+        ip_type = ip_type.strip()
+        if ip_type == '-4':
+            return 'ipv4'
+        elif ip_type == '-6':
+            return 'ipv6'
+        else:
+            return 'auto'
+
+
+def _change_create_connection():
+    import socket
+    try:
+        from urllib3.packages import six
+    except:
+        import six
+    from urllib3.exceptions import LocationParseError
+    from urllib3.util import connection as urllib3_conn
+    from datetime import datetime
+
+    global_default_timeout = getattr(socket, "_GLOBAL_DEFAULT_TIMEOUT")
+
+    def _set_socket_options(sock, options):
+        if options is None:
+            return
+
+        for opt in options:
+            sock.setsockopt(*opt)
+
+    # This function is copied from socket.py in the Python 2.7 standard
+    # library test suite. Added to its signature is only `socket_options`.
+    # One additional modification is that we avoid binding to IPv6 servers
+    # discovered in DNS if the system doesn't have IPv6 functionality.
+    def create_connection(
+            address,
+            timeout=global_default_timeout,
+            source_address=None,
+            socket_options=None,
+    ):
+        """Connect to *address* and return the socket object.
+
+        Convenience function.  Connect to *address* (a 2-tuple ``(host,
+        port)``) and return the socket object.  Passing the optional
+        *timeout* parameter will set the timeout on the socket instance
+        before attempting to connect.  If no *timeout* is supplied, the
+        global default timeout setting returned by :func:`socket.getdefaulttimeout`
+        is used.  If *source_address* is set it must be a tuple of (host, port)
+        for the socket to bind as a source address before making the connection.
+        An host of '' or port 0 tells the OS to use the default.
+        """
+
+        host, port = address
+        if host.startswith("["):
+            host = host.strip("[]")
+        err = None
+
+        # Using the value from allowed_gai_family() in the context of getaddrinfo lets
+        # us select whether to work with IPv4 DNS records, IPv6 records, or both.
+        # The original create_connection function always returns all records.
+        # family = allowed_gai_family()
+
+        try:
+            host.encode("idna")
+        except UnicodeError:
+            return six.raise_from(
+                LocationParseError(u"'%s', label empty or too long" % host), None
+            )
+        ip_type = panel_ip_type()
+        default_family = socket.AF_UNSPEC if urllib3_conn.HAS_IPV6 else socket.AF_INET
+        if ip_type == 'ipv4':
+            family = socket.AF_INET
+        elif ip_type == 'ipv6' and urllib3_conn.HAS_IPV6:
+            family = socket.AF_INET6
+        else: # auto
+            family = default_family
+        try:
+            res_list = socket.getaddrinfo(host, port, family, socket.SOCK_STREAM)
+        except socket.gaierror as e:
+            if "Name or service not known" in str(e) and ip_type == 'ipv6':
+                res_list = socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM)
+            else:
+                try:
+                    res_list = socket.getaddrinfo(host, port, default_family, socket.SOCK_STREAM)
+                except socket.gaierror as e:
+                    raise e
+
+
+        for res in res_list:
+            af, socktype, proto, canonname, sa = res
+            sock = None
+            try:
+                sock = socket.socket(af, socktype, proto)
+
+                # If provided, set socket level options before connecting.
+                _set_socket_options(sock, socket_options)
+
+                if timeout is not global_default_timeout:
+                    sock.settimeout(timeout)
+                if source_address:
+                    sock.bind(source_address)
+                sock.connect(sa)
+                if is_debug():
+                    print(
+                        '[%s][Debug]: create_connection to %s:%s (%s) use family: %s.' % (
+                            str(datetime.now()), host, str(port), str(sa), str(family)
+                        ), flush=True
+                    )
+                return sock
+
+            except socket.error as e:
+                err = e
+                if sock is not None:
+                    sock.close()
+                    sock = None
+
+        if err is not None:
+            raise err
+
+        raise socket.error("getaddrinfo returns an empty list")
+
+    setattr(urllib3_conn, "create_connection", create_connection)
+
+try:
+    _change_create_connection()
+    del _change_create_connection
+except Exception:
+    print_error()

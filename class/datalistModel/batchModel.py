@@ -1069,6 +1069,78 @@ class main(dataBase):
         db_obj = database.database()
         return db_obj.set_database_type_by_name(get)
 
+
+    # 2026/3/27 11:15 批量设置mysql密码
+    def batch_set_mysql_password(self, get):
+        '''
+            @name 批量设置mysql密码
+        '''
+
+        # check_parm = self.check_db_parm(get)
+        # if not check_parm["status"]: return check_parm
+        
+        database_list = get.get("database_list", "")
+        
+        if not database_list:
+            return public.returnMsg(False, "缺少必要参数！database_list")
+
+        
+        try:
+            import json
+            db_list = json.loads(database_list)
+        except:
+            return public.returnMsg(False, "参数格式错误！")
+        
+        if not isinstance(db_list, list) or len(db_list) == 0:
+            return public.returnMsg(False, "database_list 参数必须是非空列表！")
+        
+        import database
+        db_obj = database.database()
+        
+        success_list = []
+        fail_dict = {}
+        
+        for db_item in db_list:
+            try:
+                db_id = db_item.get("id")
+                db_password = db_item.get("password")
+                
+                if not db_id:
+                    fail_dict["unknown"] = "缺少数据库ID"
+                    continue
+                
+                if not db_password:
+                    fail_dict[db_item.get("name", str(db_id))] = "缺少密码参数"
+                    continue
+                
+                db_info = public.M('databases').where("id=? AND LOWER(type)=LOWER('mysql')", (db_id,)).find()
+                if not db_info:
+                    fail_dict[db_item.get("name", str(db_id))] = "数据库不存在"
+                    continue
+                
+                get.id = db_id
+                get.name = db_info['username']
+                get.password = db_password
+                
+                result = db_obj.ResDatabasePassword(get)
+                
+                if result.get('status'):
+                    success_list.append(db_info['name'])
+                else:
+                    fail_dict[db_info['name']] = result.get('msg', '修改失败')
+            except Exception as e:
+                db_name = db_item.get("name", str(db_item.get("id", "unknown")))
+                fail_dict[db_name] = str(e)
+        
+        # if len(db_list) > 1:
+        return {
+            'status': True, 
+            'msg': '成功修改 [{}] 个数据库密码'.format(len(success_list)),
+            'success': success_list,
+            'error': fail_dict
+        }
+    
+
     # 2024/12/20 11:20 批量同步数据库到服务器
     def batch_sync_db_to_server(self, get):
         '''

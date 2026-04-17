@@ -587,7 +587,13 @@ export PATH
             domains = get.domains
             if not public.is_apache_nginx(): return public.return_error('需要安装Nginx或Apache才能使用外网映射功能')
         for domain in domains:
-            domain_arr = domain.split(':')
+            if "[" in domain and "]" in domain:  # IPv6格式特殊处理
+                if "]:" in domain:
+                    domain_arr = domain.rsplit(":", 1)
+                else:
+                    domain_arr = [domain]
+            else:
+                domain_arr = domain.split(':')
             if public.M('domain').where('name=?',domain_arr[0]).count():
                 return public.return_error('指定域名已存在: {}'.format(domain))
         if "pkg_manager" not in get or get.pkg_manager not in ("npm", "pnpm", "yarn"):
@@ -765,6 +771,8 @@ export PATH
         if not project_id:
             return public.return_data(False, '站点查询失败')
         domains = public.M('domain').where('pid=?', (project_id,)).order('id desc').select()
+        for d in domains:
+            d["cn_name"] = self.try_unpunycode(d["name"]) or d["name"]
         # project_find = self.get_project_find(get.project_name)
         # if not project_find:
         #     return public.return_data(False, '站点查询失败')
@@ -806,7 +814,13 @@ export PATH
         for domain in domains:
             domain = domain.strip()
             if not domain: continue
-            domain_arr = domain.split(':')
+            if "[" in domain and "]" in domain:  # IPv6格式特殊处理
+                if "]:" in domain:
+                    domain_arr = domain.rsplit(":", 1)
+                else:
+                    domain_arr = [domain]
+            else:
+                domain_arr = domain.split(':')
             domain_arr[0] = self.check_domain(domain_arr[0])
             if domain_arr[0] is False:
                 res_domains.append({"name": domain, "status": False, "msg": '域名格式错误'})
@@ -823,10 +837,11 @@ export PATH
             except ValueError:
                 res_domains.append({"name": domain, "status": False, "msg": '域名格式错误'})
                 continue
-            if not public.M('domain').where('name=?',(domain_arr[0],)).count():
+            if not public.M('domain').where('name=? and port =? ',(domain_arr[0],domain_arr[1])).count():
                 public.M('domain').add('name,pid,port,addtime',(domain_arr[0],project_id,domain_arr[1],public.getDate()))
-                if not domain in project_find['project_config']['domains']:
-                    project_find['project_config']['domains'].append(domain)
+                real_d = "{}:{}".format(domain_arr[0], domain_arr[1])
+                if not real_d in project_find['project_config']['domains']:
+                    project_find['project_config']['domains'].append(real_d)
                 public.WriteLog(self._log_name,'成功添加域名{}到项目{}'.format(domain,get.project_name))
                 res_domains.append({"name": domain_arr[0], "status": True, "msg": '添加成功'})
                 flag = True
@@ -853,7 +868,7 @@ export PATH
         project_find = self.get_project_find(get.project_name)
         if not project_find:
             return public.returnResult(False, '指定项目不存在', code=2)
-        domain_arr = get.domain.split(':')
+        domain_arr = get.domain.rsplit(":", 1)
         if len(domain_arr) == 1:
             domain_arr.append(80)
 
@@ -861,7 +876,7 @@ export PATH
         if (len(public.M('domain').where('pid=?', (project_find['id'],)).select()) == 1 and
                 project_find["project_config"]["bind_extranet"] == 1):
             return public.returnResult(False, '项目至少需要一个域名', code=2)
-        domain_id = public.M('domain').where('name=? AND pid=?',(domain_arr[0],project_id)).getField('id')
+        domain_id = public.M('domain').where('name=? AND port=? AND pid=?',(domain_arr[0],domain_arr[1], project_id)).getField('id')
         if not domain_id:
             return public.returnResult(False, '指定域名不存在', code=2)
         public.M('domain').where('id=?',(domain_id,)).delete()
@@ -981,16 +996,16 @@ export PATH
             @return bool
         '''
         project_name = project_find['name']
-        ports = []
-        domains = []
+        ports = set()
+        domains = set()
 
         for d in project_find['project_config']['domains']:
-            domain_tmp = d.split(':')
+            domain_tmp = d.rsplit(":", 1)
             if len(domain_tmp) == 1: domain_tmp.append(80)
             if not int(domain_tmp[1]) in ports:
-                ports.append(int(domain_tmp[1]))
+                ports.add(int(domain_tmp[1]))
             if not domain_tmp[0] in domains:
-                domains.append(domain_tmp[0])
+                domains.add(domain_tmp[0])
         listen_ipv6 = public.listen_ipv6()
         is_ssl, is_force_ssl = self.exists_nginx_ssl(project_name)
         listen_ports_list = []
@@ -1004,6 +1019,9 @@ export PATH
             http3_header = ""
             if self.is_nginx_http3():
                 http3_header = '''\n    add_header Alt-Svc 'quic=":443"; h3=":443"; h3-29=":443"; h3-27=":443";h3-25=":443"; h3-T050=":443"; h3-Q050=":443";h3-Q049=":443";h3-Q048=":443"; h3-Q046=":443"; h3-Q043=":443"';'''
+                http3_header += "\n    quic_retry on;\n    quic_gso on;"
+                if self.ng_ssl_early_data_enabled():
+                    http3_header += "\n    ssl_early_data on;"
 
             nginx_ver = public.nginx_version()
             if nginx_ver:
@@ -1026,6 +1044,8 @@ export PATH
                         listen_ports_list.append("    listen {} quic;".format(p))
                 if use_http2_on:
                     listen_ports_list.append("    http2 on;")
+                if self.is_nginx_http3():
+                    listen_ports_list.append("    http3 on;")
 
             else:
                 listen_ports_list.append("    listen 443 ssl;")
@@ -1224,15 +1244,15 @@ export PATH
         project_name = project_find['name']
 
         # 处理域名和端口
-        ports = []
-        domains = []
+        ports = set()
+        domains = set()
         for d in project_find['project_config']['domains']:
-            domain_tmp = d.split(':')
+            domain_tmp = d.rsplit(":", 1)
             if len(domain_tmp) == 1: domain_tmp.append(80)
             if not int(domain_tmp[1]) in ports:
-                ports.append(int(domain_tmp[1]))
+                ports.add(int(domain_tmp[1]))
             if not domain_tmp[0] in domains:
-                domains.append(domain_tmp[0])
+                domains.add(domain_tmp[0])
 
 
         config_file = "{}/apache/node_{}.conf".format(self._vhost_path,project_name)
@@ -1243,7 +1263,7 @@ export PATH
         # 旧的配置文件是否配置SSL
         is_ssl,is_force_ssl  = self.exists_apache_ssl(project_name)
         if is_ssl:
-            if not 443 in ports: ports.append(443)
+            if not 443 in ports: ports.add(443)
 
         from panelSite import panelSite
         s = panelSite()

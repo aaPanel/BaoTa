@@ -73,6 +73,9 @@ class userlogin:
             return public.returnMsg(False, format_error), json_header
         last_login_token = session.get('last_login_token', None)
         if not last_login_token:
+            if session.get("login", False):
+                # 已经登录成功的就直接跳转
+                return public.returnMsg(True, "登录成功"), json_header
             public.WriteLog('TYPE_LOGIN', 'LOGIN_ERR_CODE', ('****', '****', public.GetClientIp()))
             self.__login_error()
             return public.returnJson(False, "验证失败，请刷新页面重新登录!"), json_header
@@ -449,14 +452,17 @@ class userlogin:
             public.print_error()
             return limit
 
-    # 登录成功设置session
+    # 登录成功设置session (临时登录不要使用)
     def _set_login_session(self, userInfo, acc_client_ip=None):
         try:
+            if 'tmp_login' in session:  # 会话可以从临时会话转为正常会话（例：节点管理的临时访问，之后在该浏览器登录）
+                session.pop('tmp_login')
             session['login'] = True
             session['username'] = userInfo['username']
             session['uid'] = userInfo['id']
             session['login_user_agent'] = public.md5(request.headers.get('User-Agent', ''))
-            ids = public.WriteLog('TYPE_LOGIN', 'LOGIN_SUCCESS', (userInfo['username'], public.GetClientIp() + ":" + str(public.get_remote_port())))
+            passkey_log = "" if not userInfo.get("passkey_name", None) else "(PassKey:{})".format(userInfo["passkey_name"])
+            ids = public.WriteLog('TYPE_LOGIN', 'LOGIN_SUCCESS', (userInfo['username']+passkey_log, public.GetClientIp() + ":" + str(public.get_remote_port())))
             public.cache_set(public.GetClientIp() + ":" + str(public.get_remote_port()), ids)
             self.limit_address('-')
             cache.delete('panelNum')
@@ -579,3 +585,147 @@ class userlogin:
             public.record_client_info(type=0)
         except:
             pass
+
+    def get_passkey_auth(self, passkey_data: dict):
+        try:
+            public.WriteLog('TYPE_LOGIN', '尝试使用Passkey进行登录，IP:{}'.format(public.GetClientIp()), ())
+            from webauthn_util_compatibility import WebAuthn
+            if not WebAuthn.is_enabled():
+                return public.returnMsg(False, 'WebAuthn is not enabled')
+            origin = passkey_data.get('origin', "")
+            name = passkey_data.get('name', "")
+            if not origin:
+                return public.returnMsg(False, 'origin is empty')
+            res = WebAuthn().login_options(origin, name)
+            if isinstance(res, str):
+                return public.returnMsg(False, res)
+            return res
+        except Exception as e:
+            return public.returnMsg(False,"PassKey一键登陆暂时不可用")
+
+    def do_passkey_auth(self, passkey_data: dict):
+        try:
+            from webauthn_util_compatibility import WebAuthn
+            if not WebAuthn.is_enabled():
+                return public.returnMsg(False, 'WebAuthn is not enabled')
+            challenge = passkey_data.get('challenge', "")
+            credential = passkey_data.get('credential', {})
+            try:
+                res = WebAuthn().authentication_options(credential, challenge)
+                if isinstance(res, str):
+                    return public.returnMsg(False, res)
+                else:
+                    user_id, passkey_name = res
+                userInfo = public.M('users').where("id=?", (user_id,)).field('id,username').find()
+                userInfo["passkey_name"] = passkey_name
+                if not userInfo:
+                    self.__login_error()
+                    return public.returnMsg(False, "用户不存在")
+
+                public.run_thread(public.login_send_body, (
+                    "Passkey凭证登录", userInfo['username'], public.GetClientIp(), str(int(public.get_remote_port())),
+                    passkey_name
+                ))
+                return self._set_login_session(userInfo)
+            except Exception as e:
+                public.WriteLog('TYPE_LOGIN', 'Passkey登录失败，IP:{}'.format(public.GetClientIp()), ())
+                public.print_error()
+                self.__login_error()
+                return public.returnMsg(False, "凭证验证失败")
+        except Exception as e:
+            public.print_error()
+            return public.returnMsg(False, "一键登录异常，请改用密码登录")
+
+    def get_wechat_qrcode(self):
+        """
+        获取微信扫码登录二维码和公钥
+        :return:
+        """
+        try:
+            params = {}
+            userinfo = public.get_user_info()
+            if not userinfo:
+                return public.returnMsg(False, "请先登录宝塔面板账号")
+            params.update(userinfo)
+            # 从官网获取二维码和公钥
+            result = public.httpPost("https://www.bt.cn/api/v2/wx_auth_panel/auth_url",params)
+            if not result:
+                return public.returnMsg(False, "获取微信登录二维码失败")
+            result = json.loads(result)
+            if not result['success']:
+                return public.returnMsg(False, result['msg'])
+            import base64
+            # 保存公钥到session
+            public_key = result['res']['public_key']
+            session['wechat_login'] = {
+                'public_key': public_key
+            }
+            return public.returnMsg(result['success'], result['res'])
+        except:
+            public.print_log(public.get_error_info())
+            return public.returnMsg(False, "获取微信登录二维码失败")
+
+    def check_wechat_login(self, get):
+        """
+        检测微信扫码登录状态
+        :param get:
+        :return:
+        """
+        try:
+            if 'wechat_login' not in session:
+                self.__login_error()
+                return public.returnMsg(False, "请先获取微信登录二维码")
+            params = {}
+            userinfo = public.get_user_info()
+            if not userinfo:
+                self.__login_error()
+                return public.returnMsg(False, "请先登录宝塔面板账号")
+            params.update(userinfo)
+            params['code'] = get.wxcode
+            params['state'] = get.state
+            # 生成token并使用公钥加密
+            import base64
+            public_key = session['wechat_login']['public_key']
+            # 转换为公钥对象
+            from cryptography.hazmat.primitives import serialization
+            from cryptography.hazmat.primitives.asymmetric import padding
+            from cryptography.hazmat.primitives import hashes
+            public_key_obj = serialization.load_pem_public_key(public_key.encode())
+            # 生成token
+            token = public.GetRandomString(32)
+            # 使用公钥加密token
+            encrypted = public_key_obj.encrypt(
+                token.encode(),
+                padding.OAEP(
+                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None
+                )
+            )
+            # base64编码加密后的token
+            encrypted_token = base64.b64encode(encrypted).decode()
+            params['cipher'] = encrypted_token
+
+            # 发送请求检测登录状态
+            result = public.httpPost("https://www.bt.cn/api/v2/wx_auth_panel/auth_login_bound",params)
+            if not result:
+                self.__login_error()
+                return public.returnMsg(False, "微信登录失败1")
+            result = json.loads(result)
+            if not result['success']:
+                self.__login_error()
+                return public.returnMsg(False, result['res'])
+            if result['res'] and 'token' in result['res']:
+                if result['res']['token'] == token:
+                    # 登录成功
+                    userInfo = public.M('users').where("id=?", (1,)).field('id,username').find()
+                    public.run_thread(public.login_send_body, (
+                        "微信扫码登录", userInfo['username'], public.GetClientIp(), str(int(public.get_remote_port()))
+                    ))
+                    return self._set_login_session(userInfo)
+            self.__login_error()
+            return public.returnMsg(False, "微信登录失败2")
+        except:
+            public.print_log(public.get_error_info())
+            self.__login_error()
+            return public.returnMsg(False, "微信登录失败3")

@@ -92,7 +92,8 @@ class wp_version:
 
     def __init__(self):
         # 用宝塔官网的
-        self.__API_URL = 'https://download.bt.cn/wordpress/version-check.json'
+        # self.__API_URL = 'https://download.bt.cn/wordpress/version-check.json'
+        self.__API_URL = 'https://api.wordpress.org/core/version-check/1.7/'
         self.__CACHE_KEY = 'SHM_:_CACHED_WP_VERSIONS'
         self.__PACKAGE_STORAGE = '{}/data/wp_packages'.format(public.get_panel_path())
         self.__PACKAGE_SAVE_TIMEOUT = 30 * 86400
@@ -153,7 +154,8 @@ class wp_version:
 
         # 请求Wordpress官网的文件校验值
         # 用宝塔官网的
-        package_md5 = requests.get('https://download.bt.cn/wordpress/wordpress-{}-zh_CN.zip.md5'.format(package_version)).text
+        # package_md5 = requests.get('https://download.bt.cn/wordpress/wordpress-{}-zh_CN.zip.md5'.format(package_version)).text
+        package_md5 = requests.get('https://downloads.wordpress.org/release/zh_CN/wordpress-{}.zip.md5'.format(package_version)).text
 
         # 检查接口是否正常响应了md5值
         if not match_md5_format.match(package_md5):
@@ -218,7 +220,8 @@ class wp_version:
 
         # 安装包下载URL
         # 用宝塔官网的
-        download_url = 'https://download.bt.cn/wordpress/wordpress-{}-zh_CN.zip'.format(package_version)
+        # download_url = 'https://download.bt.cn/wordpress/wordpress-{}-zh_CN.zip'.format(package_version)
+        download_url = 'https://downloads.wordpress.org/release/zh_CN/wordpress-{}.zip'.format(package_version)
         try:
             download_res = requests.get(
                 download_url,
@@ -1192,7 +1195,7 @@ class wpmgr:
         # 对比表前缀，不同则更新数据库中的表前缀
         if wp_info['prefix'] != table_prefix:
             with public.M('wordpress_onekey') as query:
-                query.where('d_id', mysql_db_info['id']).update({
+                query.where('d_id = ?', mysql_db_info['id']).update({
                     'prefix': table_prefix,
                 })
 
@@ -2718,6 +2721,11 @@ echo \json_encode([
 
         return data
 
+    # 更新open_basedir
+    def update_open_basedirs(self, open_basedirs: typing.Dict[str, bool]):
+        wpdeployment_obj = wpdeployment()
+        wpdeployment_obj.set_wpmgr(self)
+        return wpdeployment_obj.update_open_basedir(open_basedirs)
 
 # WP-Nginx-FastCGI-cache配置管理
 class wpfastcgi_cache:
@@ -2725,7 +2733,16 @@ class wpfastcgi_cache:
     # 构造函数
     def __init__(self):
         self.__LOG_FILE = '/tmp/schedule.log'
-        self.__CACHE_PATH = '/dev/shm/nginx-cache/wp'
+        self.__CACHE_PATH_OLD = '/dev/shm/nginx-cache/wp'
+        self.__CACHE_PATH = '{}/fastcgi_cache'.format(public.get_setup_path())
+        self.__FASTCGI_CACHE_CONF_PATH = '{}/vhost/nginx/0.fastcgi_cache.conf'.format(public.get_panel_path())
+        self.__KEYS_ZONE = 'WORDPRESS'
+
+        # 确保缓存目录创建
+        self.__ensure_cache_path_exists()
+        # 将旧的fastcgi缓存配置文件升级到新的配置文件格式
+        if not os.path.exists(self.__FASTCGI_CACHE_CONF_PATH):
+            self.upgrade_fastcgi_cache_format()
 
     # 输出日志
     def __log(self, content: str):
@@ -2736,9 +2753,8 @@ class wpfastcgi_cache:
     def __ensure_cache_path_exists(self):
         if not os.path.exists(self.__CACHE_PATH):
             os.makedirs(self.__CACHE_PATH)
-            cache_path_parent = os.path.dirname(self.__CACHE_PATH)
-            os.system('chmod -R 755 ' + cache_path_parent)
-            os.system('chown -R www.www ' + cache_path_parent)
+            os.system('chmod -R 755 ' + self.__CACHE_PATH)
+            os.system('chown -R www.www ' + self.__CACHE_PATH)
 
     # 获取nginx-fastcgi配置文件内容
     def get_fastcgi_conf(self, php_v: str) -> str:
@@ -3026,6 +3042,180 @@ fastcgi_ignore_headers Cache-Control Expires Set-Cookie;
         self.__log("|-Anti-cross-site configuration is successful...")
 
         return True
+
+    # 将旧配置文件格式升级到新的配置文件格式
+    def upgrade_fastcgi_cache_format(self):
+        # 当WEB服务是Nginx时才需要更新配置
+        if public.get_webserver() != 'nginx':
+            return
+
+        # 检测到旧的fastcgi缓存配置文件存在时，重命名其以作备份
+        old_fastcgi_cache_conf_path = '{}/vhost/nginx/wp_fastcgi.conf'.format(public.get_panel_path())
+        if os.path.exists(old_fastcgi_cache_conf_path):
+            public.ExecShell("mv {} {}_bak".format(old_fastcgi_cache_conf_path, old_fastcgi_cache_conf_path))
+
+        # 当检测到新的fastcgi缓存配置文件存在时，不继续后续的升级流程
+        if os.path.exists(self.__FASTCGI_CACHE_CONF_PATH):
+            return
+
+        reload_flag = False
+
+        self.__log('|-开始更新FastCGI缓存配置文件格式')
+
+        # 查找所有fastcgi子配置文件
+        search_pattern = "{}/nginx/conf/enable-php-*-wpfastcgi.conf".format(public.get_setup_path())
+
+        # 开始查找配置文件
+        from glob import glob
+
+        reg1 = re.compile(r'(fastcgi_cache|fastcgi_cache_purge) +([\w\-]+)')
+        fix_try_files_reg = re.compile(r'try_files +\$uri +=404;')
+
+        for filename in glob(search_pattern):
+            self.__log('|-扫描到配置文件 {}'.format(filename))
+
+            # 修改fastcgi_cache KEYS_ZONE
+            with open(filename, 'r') as fp:
+                content = fp.read()
+
+            update_flag = False
+
+            if reg1.search(content) is not None:
+                self.__log('|-正在更新配置文件 {}'.format(filename))
+
+                # 替换KEYS_ZONE
+                content = reg1.sub(r'\g<1> {}'.format(self.__KEYS_ZONE), content)
+
+                # 标记需要更新配置文件
+                update_flag = True
+
+            if fix_try_files_reg.search(content) is not None:
+                self.__log('|-正在修改try_files {}'.format(filename))
+
+                # 更新try_files
+                content = fix_try_files_reg.sub(r'try_files $uri $uri/ /index.php?$args;', content, 1)
+
+                # 标记需要更新配置文件
+                update_flag = True
+
+            if update_flag:
+                with open(filename, 'w') as fp:
+                    fp.write(content)
+
+                reload_flag = True
+
+            self.__log('|-配置文件 {} 更新完毕'.format(filename))
+
+        # 更新主配置文件
+        conf_path = '{}/nginx/conf/nginx.conf'.format(public.get_setup_path())
+        conf_backup_flag = False
+
+        if os.path.exists(conf_path):
+            self.__log('|-开始检测主配置文件 {}'.format(conf_path))
+
+            reg2 = re.compile(r'#AAPANEL_FASTCGI_CONF_BEGIN[\s\S]+?#AAPANEL_FASTCGI_CONF_END')
+
+            with open(conf_path, 'r') as fp:
+                content = fp.read()
+
+            if reg2.search(content) is not None:
+                self.__log('|-正在更新主配置文件 {}'.format(conf_path))
+
+                public.back_file(conf_path)
+                conf_backup_flag = True
+
+                content = reg2.sub('', content, 1)
+
+                with open(conf_path, 'w') as fp:
+                    fp.write(content)
+
+                reload_flag = True
+
+            self.__log('|-主配置文件 {} 更新完毕'.format(conf_path))
+
+        self.__log('|-更新FastCGI缓存配置文件格式完毕')
+
+        import shutil
+
+        # 检查旧缓存目录是否存在，存在则将其复制到新的缓存目录中
+        if os.path.exists(self.__CACHE_PATH_OLD):
+            self.__log('|-检测到旧缓存目录 {} 正在将其拷贝到新目录 {}'.format(self.__CACHE_PATH_OLD, self.__CACHE_PATH))
+            if not os.path.exists(self.__CACHE_PATH):
+                os.makedirs(self.__CACHE_PATH)
+            public.ExecShell('cp -rf {}/* {}'.format(self.__CACHE_PATH_OLD, self.__CACHE_PATH))
+
+            # 设置用户、用户组、权限
+            public.set_ownership(self.__CACHE_PATH, 'www')
+            public.set_permissions(self.__CACHE_PATH, 0o750)
+
+        # 检查fastcgi缓存配置文件是否存在
+        if not os.path.exists(self.__FASTCGI_CACHE_CONF_PATH):
+            self.__log('|-检测到FastCGI缓存配置文件 {} 未创建，正在创建FastCGI缓存配置文件'.format(
+                self.__FASTCGI_CACHE_CONF_PATH))
+
+            # 不存在时创建
+            with open(self.__FASTCGI_CACHE_CONF_PATH, 'w') as fp:
+                fp.write('''fastcgi_cache_key "$scheme$request_method$host$request_uri";
+fastcgi_cache_path {} levels=1:2 keys_zone={}:100m inactive=60m max_size=1g;
+fastcgi_cache_use_stale error timeout invalid_header http_500;
+fastcgi_ignore_headers Cache-Control Expires Set-Cookie;'''.format(self.__CACHE_PATH, self.__KEYS_ZONE))
+
+            # 修改为www用户
+            shutil.chown(self.__FASTCGI_CACHE_CONF_PATH, 'www', 'www')
+
+            # 修改权限0644
+            os.chmod(self.__FASTCGI_CACHE_CONF_PATH, 0o644)
+
+            self.__log('|-检测到FastCGI缓存配置文件 {} 创建完毕'.format(self.__FASTCGI_CACHE_CONF_PATH))
+
+            reload_flag = True
+
+        # 移除掉启动文件中的创建缓存目录的代码
+        init_path = '/etc/init.d/nginx'
+
+        if os.path.exists(init_path):
+            self.__log('|-正在检测Nginx启动文件 {}'.format(init_path))
+
+            reg3 = re.compile(r'#AAPANEL_FASTCGI_CONF_BEGIN[\s\S]+?#AAPANEL_FASTCGI_CONF_END')
+
+            with open(init_path, 'r') as fp:
+                content = fp.read()
+
+            if reg3.search(content) is not None:
+                self.__log('|-正在更新Nginx启动文件 {}'.format(init_path))
+
+                content = reg3.sub('', content, 1)
+
+                with open(init_path, 'w') as fp:
+                    fp.write(content)
+
+            self.__log('|-Nginx启动文件 {} 更新完毕'.format(init_path))
+
+        # 删除旧的缓存目录
+        if os.path.exists(self.__CACHE_PATH_OLD):
+            self.__log('|-正在删除旧缓存目录 {}'.format(self.__CACHE_PATH_OLD))
+            shutil.rmtree(self.__CACHE_PATH_OLD)
+
+        # 重载服务
+        if reload_flag:
+            self.__log('|-正在重载Nginx服务')
+            public.ServiceReload()
+
+        # 扫描所有Wordpress站点，修改nginx-helper缓存目录
+        self.__log('|-正在扫描Wordpress站点列表')
+        wp_sites = wpmgr.all_sites()
+
+        self.__log('|-扫描到Wordpress站点列表 {}'.format(wp_sites))
+
+        for wp_site in wp_sites:
+            self.__log('|-正在更新Wordpress站点 {}'.format(wp_site['name']))
+            wpmgr_obj = wpmgr(wp_site['id'])
+            wpmgr_obj.update_wp_config({'RT_WP_NGINX_HELPER_CACHE_PATH': self.__CACHE_PATH})
+            wpmgr_obj.update_open_basedirs({
+                self.__CACHE_PATH_OLD: False,
+                self.__CACHE_PATH: True,
+            })
+            self.__log('|-Wordpress站点列表 {} 更新完毕'.format(wp_site['name']))
 
 
 # WP备份类
@@ -4743,7 +4933,64 @@ class wpdeployment:
             yield user_ini_file
         finally:
             self.fix_user_ini()
+    # 更新open_basedir
+    def update_open_basedir(self, open_basedirs: typing.Dict[str, bool]):
+        if not isinstance(open_basedirs, dict):
+            raise RuntimeError('parameter open_basedirs must a type of dict')
 
+        with self.modify_user_ini_with_context() as filename:
+            lines: typing.List[str] = []
+            idx = -1
+            with open(filename, 'r') as fp:
+                i = 0
+                for line in fp:
+                    lines.append(line)
+                    s = line.strip()
+                    if s.startswith('open_basedir'):
+                        idx = i
+                    i += 1
+
+            if idx == -1:
+                idx = len(lines)
+                lines.append('')
+
+            # 解析现有的open_basedir
+            cur_open_basedirs = set()
+
+            seps = lines[idx].strip().split('=')
+
+            if len(seps) == 2:
+                lst = seps[1].strip().split(':')
+
+                for d in lst:
+                    # 目录末尾添加斜杠/
+                    if not d.endswith('/'):
+                        d += '/'
+
+                    cur_open_basedirs.add(d)
+
+            # 对比增减open_basedir
+            for k in open_basedirs.keys():
+                v = open_basedirs[k]
+
+                # 目录末尾添加斜杠/
+                if not k.endswith('/'):
+                    k += '/'
+
+                if not v:
+                    if k in cur_open_basedirs:
+                        cur_open_basedirs.remove(k)
+                    continue
+
+                cur_open_basedirs.add(k)
+
+            if len(cur_open_basedirs) == 0:
+                lines.pop(idx)
+            else:
+                lines[idx] = 'open_basedir = {}\n'.format(':'.join(cur_open_basedirs))
+
+            with open(filename, 'w') as fp:
+                fp.write(''.join(lines))
 
 # WP远程管理类
 class wpmgr_remote:

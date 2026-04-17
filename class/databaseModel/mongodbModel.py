@@ -1389,16 +1389,377 @@ class main(databaseBase):
             collection = db_obj.command("collStats", collection_name)
             data = {
                 "collection_name": collection_name,
-                "count": collection.get("count"),  # 文档数
-                "size": collection.get("size"),  # 内存中的大小
-                "avg_obj_size": collection.get("avgObjSize"),  # 对象平均大小
-                "storage_size": collection.get("storageSize"),  # 存储大小
-                "capped": collection.get("capped"),
-                "nindexes": collection.get("nindexes"),  # 索引数
-                "total_index_size": collection.get("totalIndexSize"),  # 索引大小
+                "count": collection.get("count", 0),
+                "size": collection.get("size", 0),
+                "avg_obj_size": collection.get("avgObjSize", 0),
+                "storage_size": collection.get("storageSize", 0),
+                "capped": collection.get("capped", False),
+                "nindexes": collection.get("nindexes", 0),
+                "total_index_size": collection.get("totalIndexSize", 0),
             }
             result["collection_list"].append(data)
         return {"status": True, "msg": "ok", "data": result}
+    
+    def GetCollection(self, db_name, collection_name):
+        """
+        获取指定数据库、指定集合的集合对象
+        @param db_name: 数据库名
+        @param collection_name: 集合名
+        @return: 集合对象
+        """
+        db_find = public.M("databases").where(
+            "name=? AND LOWER(type)=LOWER('MongoDB')", (db_name,)
+        ).find()
+        if not db_find:
+            return False, "数据库不存在!"
+
+        if not public.process_exists("mongod") and not int(db_find["sid"]):
+            return False, "Mongodb服务还未开启！"
+
+        status, mongodb_obj = self.get_obj_by_sid(db_find["sid"])
+        if status is False:
+            return False, mongodb_obj
+
+        status, db_obj = mongodb_obj.get_db_obj_new(db_name)
+        if status is False:
+            return False, db_obj
+
+        if collection_name not in db_obj.list_collection_names():
+            return False, "集合不存在!"
+
+        return True, db_obj[collection_name]
+
+    def DeleteCollection(self, get):
+        """
+        删除整个集合
+
+        参数：
+        - get.db_name
+        - get.collection_name
+        """
+
+        db_name = get.db_name
+        collection_name = get.collection_name
+
+        db_find = public.M("databases").where("name=? AND LOWER(type)=LOWER('MongoDB')", (db_name,)).find()
+        if not db_find: return public.returnMsg(False, "数据库不存在!")
+        status, mongodb_obj = self.get_obj_by_sid(db_find["sid"])
+        if status is False:
+            return public.returnMsg(False, mongodb_obj)
+        status, db_obj = mongodb_obj.get_db_obj_new(db_name)
+        if status is False:
+            return public.returnMsg(False, db_obj)
+
+        if collection_name not in db_obj.list_collection_names():
+            return public.returnMsg(False, "集合不存在!")
+
+        try:
+            db_obj.drop_collection(collection_name)
+            return {
+                "status": True,
+                "msg": f"集合 {collection_name} 删除成功"
+            }
+        except Exception as e:
+            return public.returnMsg(False, f"删除集合失败: {str(e)}")
+
+    def GetCollectionData(self, get):
+        """
+        获取指定数据库、指定集合的分页数据（支持筛选和字段过滤）
+        参数说明：
+          get.db_name: 数据库名
+          get.collection_name: 集合名
+          get.page: 页码（默认1）
+          get.page_size: 每页数量（默认20，最大100）
+          get.query: JSON字符串，查询条件，例如 '{"age": {"$gt": 30}}'
+          get.fields: 逗号分隔的字段名字符串，只返回指定字段，例如 'name,email'
+        """
+        import json
+
+        db_name = get.db_name
+        collection_name = get.collection_name
+        page = int(get.page) if hasattr(get, "page") else 1
+        page_size = int(get.page_size) if hasattr(get, "page_size") else 20
+        page_size = min(page_size, 100)  # 限制最大返回100条，防止爆内存
+
+        query = {}
+
+        if hasattr(get, "query") and get.query:
+            try:
+                if isinstance(get.query, str):
+                    query = json.loads(get.query)
+                else:
+                    query = get.query
+            except Exception as e:
+                return public.returnMsg(False, f"查询条件解析错误: {str(e)}")
+
+        projection = None
+        if hasattr(get, "fields") and get.fields:
+            # 生成 projection 字段格式 {'name': 1, 'email': 1}
+            projection = {field.strip(): 1 for field in get.fields.split(",")}
+
+        status, coll_or_msg = self.GetCollection(db_name, collection_name)
+        if not status:
+            return public.returnMsg(False, coll_or_msg)
+            
+        coll = coll_or_msg
+
+        try:
+            total_count = coll.count_documents(query)
+        except Exception as e:
+            return public.returnMsg(False, f"统计文档数失败: {str(e)}")
+
+        from bson import json_util
+        import json
+        
+        try:
+            cursor = coll.find(query, projection).skip((page - 1) * page_size).limit(page_size)
+            docs = list(cursor)
+            json_data = json_util.dumps(docs)
+            data = json.loads(json_data)
+
+        except Exception as e:
+            return public.returnMsg(False, f"获取数据失败: {str(e)}")
+
+        return {
+            "status": True,
+            "msg": "ok",
+            "data": {
+                "db_name": db_name,
+                "collection_name": collection_name,
+                "page": page,
+                "page_size": page_size,
+                "total_count": total_count,
+                "docs": data,
+            }
+        }
+        
+    def DeleteCollectionData(self, get):
+        """
+        删除指定数据库集合中的数据
+
+        参数：
+        - get.db_name: 数据库名
+        - get.collection_name: 集合名
+        - get.delete_query: dict 或 JSON字符串，删除过滤条件（必填）
+
+        返回：
+        - 删除匹配的文档数量
+        """
+        import json
+        from bson import ObjectId
+
+        db_name = get.db_name
+        collection_name = get.collection_name
+
+        status, coll_or_msg = self.GetCollection(db_name, collection_name)
+        if not status:
+            return public.returnMsg(False, coll_or_msg)
+            
+        coll = coll_or_msg
+
+        if not hasattr(get, "delete_query") or not get.delete_query:
+            return public.returnMsg(False, "缺少删除过滤条件(delete_query)")
+
+        try:
+            raw_query = get.delete_query
+
+            if isinstance(raw_query, str):
+                delete_query = json.loads(raw_query)
+            elif isinstance(raw_query, dict):
+                delete_query = raw_query
+            else:
+                return public.returnMsg(False, "delete_query 类型错误")
+        except Exception as e:
+            return public.returnMsg(False, f"删除条件解析失败: {str(e)}")
+
+        if not delete_query:
+            return public.returnMsg(False, "禁止无条件删除")
+
+        if "_id" in delete_query and isinstance(delete_query["_id"], dict):
+            if "$oid" in delete_query["_id"]:
+                delete_query["_id"] = ObjectId(delete_query["_id"]["$oid"])
+
+        try:
+            result = coll.delete_many(delete_query)
+            return {
+                "status": True,
+                "msg": f"删除成功，删除了 {result.deleted_count} 条文档",
+                "data": {
+                    "deleted_count": result.deleted_count
+                }
+            }
+        except Exception as e:
+            return public.returnMsg(False, f"删除失败: {str(e)}")
+
+    def InsertCollectionData(self, get):
+        """
+        向指定数据库集合中新增数据
+
+        参数：
+        - get.db_name: 数据库名
+        - get.collection_name: 集合名
+        - get.insert_data: dict / JSON字符串 / list（必填）
+
+        返回：
+        - 新增文档的 _id 列表
+        """
+        import json
+        from bson import ObjectId
+        from datetime import datetime
+
+        db_name = get.db_name
+        collection_name = get.collection_name
+
+        db_find = public.M("databases").where(
+            "name=? AND LOWER(type)=LOWER('MongoDB')", (db_name,)
+        ).find()
+        if not db_find:
+            return False, "数据库不存在!"
+
+        status, mongodb_obj = self.get_obj_by_sid(db_find["sid"])
+        if status is False:
+            return False, mongodb_obj
+
+        status, db_obj = mongodb_obj.get_db_obj_new(db_name)
+        if status is False:
+            return False, db_obj
+            
+        coll = db_obj[collection_name]
+
+        if not hasattr(get, "insert_data") or not get.insert_data:
+            return public.returnMsg(False, "缺少插入数据(insert_data)")
+
+        try:
+            raw_data = get.insert_data
+
+            if isinstance(raw_data, str):
+                insert_data = json.loads(raw_data)
+            elif isinstance(raw_data, (dict, list)):
+                insert_data = raw_data
+            else:
+                return public.returnMsg(False, "insert_data 类型错误")
+        except Exception as e:
+            return public.returnMsg(False, f"插入数据解析失败: {str(e)}")
+
+        if isinstance(insert_data, dict):
+            insert_data = [insert_data]
+
+        if not insert_data:
+            return public.returnMsg(False, "插入数据不能为空")
+
+
+        def normalize_doc(doc):
+            for k, v in doc.items():
+                if isinstance(v, dict):
+                    if "$oid" in v:
+                        doc[k] = ObjectId(v["$oid"])
+                    elif "$date" in v:
+                        # 毫秒时间戳
+                        doc[k] = datetime.fromtimestamp(v["$date"] / 1000)
+                    else:
+                        normalize_doc(v)
+                elif isinstance(v, list):
+                    for item in v:
+                        if isinstance(item, dict):
+                            normalize_doc(item)
+
+        for doc in insert_data:
+            normalize_doc(doc)
+
+        try:
+            if len(insert_data) == 1:
+                result = coll.insert_one(insert_data[0])
+                inserted_ids = [str(result.inserted_id)]
+            else:
+                result = coll.insert_many(insert_data)
+                inserted_ids = [str(_id) for _id in result.inserted_ids]
+
+            return {
+                "status": True,
+                "msg": "插入成功",
+                "data": {
+                    "inserted_count": len(inserted_ids),
+                    "inserted_ids": inserted_ids
+                }
+            }
+        except Exception as e:
+            return public.returnMsg(False, f"插入失败: {str(e)}")
+
+    def ReplaceCollectionData(self, get):
+        """
+        完全替换指定条件匹配的单条文档（替换整个文档）
+
+        参数：
+        - get.db_name: 数据库名
+        - get.collection_name: 集合名
+        - get.replace_data: JSON字符串，完整新文档（必须包含 _id）
+        
+        返回：
+        - 替换结果（匹配数和修改数）
+        """
+        import json
+        from bson import ObjectId
+        from datetime import datetime
+
+        db_name = get.db_name
+        collection_name = get.collection_name
+
+        status, coll_or_msg = self.GetCollection(db_name, collection_name)
+        if not status:
+            return public.returnMsg(False, coll_or_msg)
+            
+        coll = coll_or_msg
+
+        if not hasattr(get, "replace_data") or not get.replace_data:
+            return public.returnMsg(False, "缺少替换文档(replace_data)")
+
+        try:
+            if isinstance(get.replace_data, str):
+                replace_data = json.loads(get.replace_data)
+            else:
+                replace_data = get.replace_data
+        except Exception as e:
+            return public.returnMsg(False, f"替换文档解析失败: {str(e)}")
+
+        if not isinstance(replace_data, dict):
+            return public.returnMsg(False, "替换文档必须是JSON对象")
+
+        if "_id" not in replace_data:
+            return public.returnMsg(False, "替换文档必须包含 _id 字段")
+
+        _id = replace_data["_id"]
+        if isinstance(_id, dict) and "$oid" in _id:
+            replace_data["_id"] = ObjectId(_id["$oid"])
+        elif isinstance(_id, str):
+            replace_data["_id"] = ObjectId(_id)
+        else:
+            pass
+
+        def normalize_doc(doc):
+            for k, v in doc.items():
+                if isinstance(v, dict):
+                    if "$date" in v:
+                        doc[k] = datetime.fromtimestamp(v["$date"] / 1000)
+                    else:
+                        normalize_doc(v)
+                elif isinstance(v, list):
+                    for item in v:
+                        if isinstance(item, dict):
+                            normalize_doc(item)
+        normalize_doc(replace_data)
+
+        try:
+            result = coll.replace_one({"_id": replace_data["_id"]}, replace_data)
+            return {
+                "status": True,
+                "msg": "替换成功",
+                "data": {
+                    "matched_count": result.matched_count,
+                    "modified_count": result.modified_count
+                }
+            }
+        except Exception as e:
+            return public.returnMsg(False, f"替换失败: {str(e)}")
 
     def GetRole(self, get):
         """

@@ -18,6 +18,8 @@ from datetime import datetime, timedelta
 from logsModel.base import logsBase
 import public, db
 from html import unescape, escape
+from mod.base import json_response, list_args
+from mod.base.web_conf import NginxRealIP
 
 
 class main(logsBase):
@@ -573,6 +575,7 @@ class main(logsBase):
             return {
                 "status": False,
                 "log_file": '',
+                "cdn_ip": {},
                 "msg": "网站不存在"
             }
         res = res[0]['project_type'].lower()
@@ -603,6 +606,7 @@ class main(logsBase):
         return {
             "status": True,
             "log_file": log_file,
+            "cdn_ip": NginxRealIP().get_real_ip(get.siteName),
             "msg": "获取成功"
         }
     
@@ -632,7 +636,7 @@ class main(logsBase):
         # apache
         apache_config_path = '/www/server/panel/vhost/apache/{}.conf'.format(site_name)
         apache_config = public.readFile(apache_config_path)
-        if not apache_config:
+        if not apache_config and public.get_webserver() == "apache":
             return public.returnMsg(False, "网站配置文件丢失，无法配置")
         
         old_log_list = []
@@ -659,27 +663,29 @@ class main(logsBase):
             return public.returnMsg(False, "未找到日志配置，无法操作")
         
         # apache
-        old_log_file = self.apache_get_log_file_path(apache_config, site_name, is_error_log=False)
-        old_error_log_file = self.apache_get_log_file_path(apache_config, site_name, is_error_log=True)
-        
-        old_log_list.append(old_log_file)
-        old_log_list.append(old_error_log_file)
-        
-        if old_log_file and old_error_log_file:
-            new_apache_conf = apache_config
-            log_file_rep = re.compile(r'''CustomLog +['"]?''' + public.prevent_re_key(old_log_file) + '''['"]?''')
-            error_log_file_rep = re.compile(r'''ErrorLog +['"]?''' + public.prevent_re_key(old_error_log_file) + '''['"]?''')
-            if log_file_rep.search(apache_config):
-                new_apache_conf = log_file_rep.sub('CustomLog "{}/{}-access_log"'.format(log_path, site_name), new_apache_conf)
-            
-            if error_log_file_rep.search(apache_config):
-                new_apache_conf = error_log_file_rep.sub('ErrorLog "{}/{}.-error_log"'.format(log_path, site_name),
-                                                         new_apache_conf)
-            public.writeFile(apache_config_path, new_apache_conf)
+        if apache_config:
+            old_log_file = self.apache_get_log_file_path(apache_config, site_name, is_error_log=False)
+            old_error_log_file = self.apache_get_log_file_path(apache_config, site_name, is_error_log=True)
+
+            old_log_list.append(old_log_file)
+            old_log_list.append(old_error_log_file)
+
+            if old_log_file and old_error_log_file:
+                new_apache_conf = apache_config
+                log_file_rep = re.compile(r'''CustomLog +['"]?''' + public.prevent_re_key(old_log_file) + '''['"]?''')
+                error_log_file_rep = re.compile(r'''ErrorLog +['"]?''' + public.prevent_re_key(old_error_log_file) + '''['"]?''')
+                if log_file_rep.search(apache_config):
+                    new_apache_conf = log_file_rep.sub('CustomLog "{}/{}-access_log"'.format(log_path, site_name), new_apache_conf)
+
+                if error_log_file_rep.search(apache_config):
+                    new_apache_conf = error_log_file_rep.sub('ErrorLog "{}/{}.-error_log"'.format(log_path, site_name),
+                                                             new_apache_conf)
+                public.writeFile(apache_config_path, new_apache_conf)
         
         if public.checkWebConfig() is not True:
             public.writeFile(nginx_config_path, nginx_config)
-            public.writeFile(apache_config_path, apache_config)
+            if apache_config:
+                public.writeFile(apache_config_path, apache_config)
             return public.returnMsg(False, "设置失败")
         
         if mv_log:  # 迁移日志文件
@@ -774,3 +780,24 @@ class main(logsBase):
             public.ExecShell('rm -rf {}'.format(filename))
         public.M('backup').where('id=?', (id,)).delete()
         return public.returnMsg(True, '停止成功！')
+
+    @staticmethod
+    def set_cdn_ip(get):
+        real_ip_status = get.get("cdn_ip/d", 0)
+        site_name = get.get("siteName/s", "").strip()
+        if not site_name:
+            return json_response(False, "请选择要设置的站点")
+        if not real_ip_status:
+            NginxRealIP().close_real_ip(site_name)
+            return public.returnMsg(True, "关闭成功")
+
+        header_cdn = get.get("header_cdn/s", "X-Forwarded-For").strip()
+        recursive = get.get("cdn_recursive", False)
+        white_ips = list_args(get, "white_ips")
+
+        ret = NginxRealIP().set_real_ip(site_name, header_cdn, white_ips, recursive)
+        if ret:
+            return json_response(False, ret)
+        else:
+            return json_response(True, "设置成功")
+

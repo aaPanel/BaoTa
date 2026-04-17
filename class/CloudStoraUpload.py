@@ -453,6 +453,29 @@ class dogecloud:
         else:
             return False
 
+class alipan_manage:
+    flag = True
+    dgc_obj = None
+
+    def __init__(self):
+        if not '/www/server/panel/plugin/alipan_manage' in sys.path:
+            sys.path.insert(0, '/www/server/panel/plugin/alipan_manage')
+        try:
+            from alipan_manage_main import alipan_manage_main as alp
+            self.alipanc_obj = alp()
+            self.alipanc_obj.delete_file = None
+            self.alipanc_obj.cloud_delete_file = None
+            self.alipanc_obj.resumable_upload = None
+        except:
+            print(traceback.format_exc())
+            self.flag = False
+
+    def get_obj(self):
+        if self.flag:
+            return self.alipanc_obj
+        else:
+            return False
+
 # 总函数
 class CloudStoraUpload:
     cloud_list = []
@@ -472,7 +495,8 @@ class CloudStoraUpload:
         'tianyiyun': tianyiyun,
         'webdav':webdav,
         'minio':minio,
-        'dogecloud':dogecloud
+        'dogecloud':dogecloud,
+        'alipan_manage': alipan_manage,
     }
     backup_path = "/backup_path/"
 
@@ -492,7 +516,8 @@ class CloudStoraUpload:
         'tianyiyun': "天翼云ZOS",
         'webdav':"WebDav",
         'minio':"MinIO存储",
-        'dogecloud':"多吉云COS"
+        'dogecloud':"多吉云COS",
+        'alipan_manage': "阿里云盘",
     }
 
     def __init__(self):

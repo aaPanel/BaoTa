@@ -69,6 +69,18 @@ class main(panelBase):
 
         overview_template = public.readFile(self._OVERVIEW_TEMPLATE)
         overview_template = json.loads(overview_template)
+
+        try:
+            import config
+            conf = config.config()
+            ad_config = conf.get_ad_hide_config(None)
+            if ad_config.get('homeOverview'):
+                hide_modules = ['safety_risk', 'monitor', 'btwaf', 'tamper_core', 'ssh_log']
+                for template in overview_template:
+                    template_option = template.get("option", [])
+                    template['option'] = [x for x in template_option if x.get('name') not in hide_modules]
+        except:
+            pass
         for template in overview_template:
             template_option = template.get("option", [])
             for i in range(len(template_option)-1, -1, -1):
@@ -112,6 +124,16 @@ class main(panelBase):
             overview_setting = json.loads(overview_setting)
         except Exception as err:
             overview_setting = []
+        
+        try:
+            import config
+            conf = config.config()
+            ad_config = conf.get_ad_hide_config(None)
+            if ad_config.get('homeOverview'):
+                hide_modules = ['safety_risk', 'monitor', 'btwaf', 'tamper_core', 'ssh_log']
+                overview_setting = [x for x in overview_setting if x.get('name') not in hide_modules]
+        except:
+            pass
 
         nlist = []
         for overview in overview_setting:

@@ -7,9 +7,6 @@ from .base_task import BaseTask
 from .util import GET_CLASS, get_client_ip, debug_log
 
 
-T_CLS = TypeVar('T_CLS', bound=BaseTask)
-
-
 def load_task_cls_by_function(
     name: str,
     func_name: str,
@@ -17,7 +14,7 @@ def load_task_cls_by_function(
     model_index: str = '',
     args: Optional[dict] = None,
     sub_name: Optional[str] = None,
-) -> Optional[Type[T_CLS]]:
+) -> Optional[Type[BaseTask]]:
     """
     从执行函数的结果中获取任务类
     @param model_index: 模块来源，例如：新场景就是mod
@@ -58,7 +55,7 @@ def load_task_cls_by_function(
     return None
 
 
-def load_task_cls_by_path(path: str, cls_name: str) -> Optional[Type[T_CLS]]:
+def load_task_cls_by_path(path: str, cls_name: str) -> Optional[Type[BaseTask]]:
     try:
         import os
         path_sep = path.split(".")
@@ -80,7 +77,7 @@ def load_task_cls_by_path(path: str, cls_name: str) -> Optional[Type[T_CLS]]:
         return None
 
 
-def load_task_cls(load_cls_data) -> Optional[Type[T_CLS]]:
+def load_task_cls(load_cls_data) -> Optional[Type[BaseTask]]:
     if "load_type" not in load_cls_data:
         return None
     if load_cls_data["load_type"] == "func":

@@ -23,6 +23,59 @@ class SlaveManager:
     def __init__(self):
         self.config_manager = ConfigManager()
 
+    def _get_mysql_commands(self, slave_ip: str) -> Dict[str, str]:
+        """根据MySQL版本获取对应的命令"""
+        info = self.config_manager.get_slave_config(slave_ip)
+        if not info:
+            return self._get_legacy_commands()
+        
+        bt_api_obj = BtApi(info.get("panel_addr"), info.get("panel_key"))
+        result = bt_api_obj.get_config()
+        
+        if result.get("status") is False:
+            return self._get_legacy_commands()
+        
+        mysql_version = result.get("mysql", {}).get("version", "")
+        
+        # MySQL 8.0.22+ 或 MariaDB 10.5+ 使用新命令
+        use_new_commands = False
+        if "8.0" in mysql_version or "8.4" in mysql_version or "9.0" in mysql_version:
+            try:
+                version_parts = mysql_version.split(".")
+                if len(version_parts) >= 3:
+                    major = int(version_parts[0])
+                    minor = int(version_parts[1])
+                    patch = int(version_parts[2].split("-")[0])
+                    if major > 8 or (major == 8 and minor > 0) or (major == 8 and minor == 0 and patch >= 22):
+                        use_new_commands = True
+            except:
+                pass
+        elif "10.5" in mysql_version or "10.6" in mysql_version or "10.7" in mysql_version or \
+             "10.8" in mysql_version or "10.9" in mysql_version or "10.11" in mysql_version:
+            use_new_commands = True
+        
+        return self._get_replica_commands() if use_new_commands else self._get_legacy_commands()
+    
+    @staticmethod
+    def _get_replica_commands() -> Dict[str, str]:
+        """获取新版本(REPLICA)命令"""
+        return {
+            "show_status": "show replica status\\G",
+            "start": "start replica",
+            "stop": "stop replica",
+            "change_source": "CHANGE REPLICATION SOURCE TO SOURCE_HOST='{master_host}',SOURCE_USER='{master_user}',SOURCE_PASSWORD='{master_password}',SOURCE_AUTO_POSITION=1,GET_SOURCE_PUBLIC_KEY=1;"
+        }
+    
+    @staticmethod
+    def _get_legacy_commands() -> Dict[str, str]:
+        """获取旧版本(SLAVE)命令"""
+        return {
+            "show_status": "show slave status\\G",
+            "start": "start slave",
+            "stop": "stop slave",
+            "change_source": "change master to master_host='{master_host}',master_user='{master_user}',master_password='{master_password}',MASTER_AUTO_POSITION=1,GET_MASTER_PUBLIC_KEY=1;"
+        }
+
     def check_slave(self, panel_addr: str, panel_key: str, master_ip: str, slave_ip: str) -> Dict[str, Any]:
         """检查从库连接和配置"""
         # 验证面板地址格式
@@ -122,7 +175,8 @@ class SlaveManager:
             return public.returnMsg(False, "重启从库MySQL服务失败")
 
         # 配置从库连接信息
-        set_slave_sql = "change master to master_host='{master_host}',master_user='{master_user}',master_password='{master_password}',MASTER_AUTO_POSITION = 1;".format(
+        commands = self._get_mysql_commands(slave_ip)
+        set_slave_sql = commands["change_source"].format(
             master_host=info.get("master_ip"),
             master_user=info.get("master_user"),
             master_password=info.get("master_password")
@@ -160,7 +214,8 @@ class SlaveManager:
         if not info:
             return public.returnMsg(False, "未找到从库配置信息")
         
-        status_sql = "show slave status\\G"
+        commands = self._get_mysql_commands(slave_ip)
+        status_sql = commands["show_status"]
         slave_status = self.exec_shell_sql(slave_ip, status_sql)
         lines = slave_status.strip().split("\n")
         slave_status_dict = {}
@@ -179,7 +234,8 @@ class SlaveManager:
         if not info:
             return {}
         
-        status_sql = "show slave status\\G"
+        commands = self._get_mysql_commands(slave_ip)
+        status_sql = commands["show_status"]
         slave_status = self.exec_shell_sql(slave_ip, status_sql)
         lines = slave_status.strip().split("\n")
         slave_status_dict = {}
@@ -199,10 +255,11 @@ class SlaveManager:
         info["run_status"] = status
         self.config_manager.save_slave_config(slave_ip, info)
         
+        commands = self._get_mysql_commands(slave_ip)
         if status == "stop":
-            mysql_sql = "stop slave"
+            mysql_sql = commands["stop"]
         else:
-            mysql_sql = "start slave"
+            mysql_sql = commands["start"]
         
         self.exec_shell_sql(slave_ip, mysql_sql)
         return public.returnMsg(True, "设置成功!")

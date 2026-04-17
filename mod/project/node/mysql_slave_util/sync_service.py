@@ -393,7 +393,9 @@ class SyncService:
         """启动从库同步"""
         step_index = 4 if self.config_manager.get_slave_config(slave_ip).get("sync_type") == "manual" else 5
         
-        start_sql = "start slave;"
+        commands = self.slave_manager._get_mysql_commands(slave_ip)
+        start_sql = commands["start"] + ";"
+        
         self.slave_manager.exec_shell_sql(slave_ip, start_sql)
         
         self.config_manager.update_slave_status(

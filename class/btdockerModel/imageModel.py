@@ -475,7 +475,7 @@ class main(dockerBase):
         if not hasattr(get, "tag"): get.tag = get.image.split(":")[-1]
 
         if get.registry != "docker.io":
-            get.image = "{}/{}/{}:{}".format(get.registry, get.namespace, get.name, get.image)
+            get.image = "{}/{}/{}".format(get.registry, get.namespace, get.image)
 
         if get.get("registry_mirrors","") != "":
             if "//" in get.registry_mirrors or "/" in get.registry_mirrors:

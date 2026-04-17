@@ -766,7 +766,10 @@ CREATE TABLE IF NOT EXISTS `network` (
                                     value['up_packets'] = json.loads(
                                         value['up_packets'])
                             tmp.append(value)
-                    continue
+                    if types == "cpu" and value['pro'] > 50:
+                        pass
+                    else:
+                        continue
                 try:
                     if types:
                         key = '{}_top'.format(types)

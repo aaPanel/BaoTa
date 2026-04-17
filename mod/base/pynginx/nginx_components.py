@@ -9,7 +9,7 @@ from typing import List, Optional, Dict, Union
 from dataclasses import dataclass, field
 
 # 导入基础类
-from .nginx_base import Directive, Block, IDirective, IBlock, _Trans
+from .nginx_base import Directive, Block, IDirective, IBlock, _Trans, trans_
 
 
 @dataclass
@@ -22,9 +22,8 @@ class Http(IDirective, IBlock, _Trans):
     _parent: Optional['IDirective'] = field(default=None, repr=False, compare=False)
     line: int = 0
 
-
     def get_parameters(self) -> List[str]:
-        return  []
+        return []
 
     def get_block(self) -> Optional['IBlock']:
         return self
@@ -54,31 +53,20 @@ class Http(IDirective, IBlock, _Trans):
         return self.inline_comment
 
     def get_directives(self) -> List[IDirective]:
-        res = []
-        for directive in self.directives:
-            res.append(directive)
-        for srv in self.servers:
-            res.append(srv)
-        return  res
+        return self.directives
 
     def get_code_block(self) -> str:
         return ""
 
-    def find_directives(self, directive_name: str) -> List[IDirective]:
+    def find_directives(self, directive_name: str, include: bool = False, sub_block: bool = False) -> List[IDirective]:
         if directive_name == "server":
             return self.servers
-        directives = []
-        for directive in self.get_directives():
-            if directive.get_name() == directive_name:
-                directives.append(directive)
-            if directive.get_block() is not None:
-                directives.extend(directive.get_block().find_directives(directive_name))
-        return directives
+        return super().find_directives(directive_name, include, sub_block)
 
     @classmethod
-    def from_directive(cls, directive: Union[IDirective,Directive]) -> 'Http':
+    def from_directive(cls, directive: Union[IDirective, Directive]) -> 'Http':
         if directive.__class__ is cls:
-            return directive
+            return trans_(directive, cls)
         if directive.get_block() is None:
             raise ValueError("http 块为空")
         servers = []
@@ -86,8 +74,10 @@ class Http(IDirective, IBlock, _Trans):
         for directive in directive.get_block().get_directives():
             if directive.__class__ is Server:
                 servers.append(directive)
-            else:
-                _directives.append(directive)
+            if directive.get_name() == "include":
+                if getattr(directive, 'configs', []) and callable(getattr(directive, 'find_directives', None)):
+                    servers.extend(getattr(directive, 'find_directives')("server", include=True, sub_block=False))
+            _directives.append(directive)
         return cls(
             servers=servers,
             line=directive.get_line(),
@@ -104,7 +94,7 @@ class Server(Directive, _Trans):
     @classmethod
     def from_directive(cls, directive: Union[IDirective, Directive]) -> 'Server':
         if directive.__class__ is cls:
-            return directive
+            return trans_(directive, cls)
         if directive.get_block() is None:
             raise ValueError("Server块组件需要有块内容")
         return cls(
@@ -136,9 +126,7 @@ class Server(Directive, _Trans):
                     min_len = min(len(params), len(d_params))
                     if all([params_match(params[i], d_params[i]) for i in range(min_len)]):
                         res.append(d)
-        return  res
-
-
+        return res
 
 
 @dataclass
@@ -146,6 +134,9 @@ class Location(Directive, _Trans):
     """Location块组件"""
     modifier: str = ""
     match: str = ""
+
+    def get_name(self) -> str:
+        return "location"
 
     def top_find_directives(self, directive_name: str) -> List[IDirective]:
         """在 server 的顶块中查找"""
@@ -166,7 +157,7 @@ class Location(Directive, _Trans):
                     min_len = min(len(params), len(d_params))
                     if all([d_params[i] == params[i] for i in range(min_len)]):
                         res.append(d)
-        return  res
+        return res
 
     def top_find_directives_like_param(self, directive_name: str, param: str):
         directives = self.get_block().get_directives()
@@ -180,12 +171,12 @@ class Location(Directive, _Trans):
                     for d_param in d_params:
                         if param in d_param:
                             res.append(d)
-        return  res
+        return res
 
     @classmethod
     def from_directive(cls, directive: Union[IDirective, Directive]) -> 'Location':
         if directive.__class__ is cls:
-            return directive
+            return trans_(directive, cls)
         param = directive.get_parameters()
         match, modifier = "", ""
         if len(param) == 1:
@@ -221,16 +212,16 @@ class Upstream(IDirective, IBlock, _Trans):
         return "upstream"
 
     def get_parameters(self) -> List[str]:
-        return  [self.upstream_name]
+        return [self.upstream_name]
 
     def get_block(self) -> Optional['IBlock']:
-        return  self
+        return self
 
     def get_comment(self) -> List[str]:
         return self.comment
 
     def set_comment(self, comment: List[str]):
-        self.comment =  comment
+        self.comment = comment
 
     def get_line(self) -> int:
         return self.line
@@ -256,20 +247,13 @@ class Upstream(IDirective, IBlock, _Trans):
     def get_code_block(self) -> str:
         return ""
 
-    def find_directives(self, directive_name: str) -> List[IDirective]:
-        """查找指定名称的指令"""
-        directives = []
-        for directive in self.get_directives():
-            if directive.get_name() == directive_name:
-                directives.append(directive)
-            if directive.get_block() is not None:
-                directives.extend(directive.get_block().find_directives(directive_name))
-        return directives
+    def find_directives(self, directive_name: str, include: bool = False, sub_block: bool = False) -> List[IDirective]:
+        return super().find_directives(directive_name, include, sub_block)
 
     @classmethod
     def from_directive(cls, directive: Union[IDirective, Directive]) -> 'Upstream':
         if type(directive) is cls:
-            return directive
+            return trans_(directive, cls)
         parameters = directive.get_parameters()
         if len(parameters) != 1:
             raise ValueError("upstream指令参数数量错误")
@@ -294,7 +278,7 @@ class Upstream(IDirective, IBlock, _Trans):
         res.servers = servers
         res.directives = directives
 
-        return  res
+        return res
 
 
 @dataclass
@@ -339,9 +323,9 @@ class UpstreamServer(IDirective, _Trans):
         self.inline_comment.append(comment)
 
     @classmethod
-    def from_directive(cls, directive: Union[Directive,IDirective]) -> 'UpstreamServer':
+    def from_directive(cls, directive: Union[Directive, IDirective]) -> 'UpstreamServer':
         if cls is directive.__class__:
-            return directive
+            return trans_(directive, cls)
         dpt = directive.get_parameters()
         if len(dpt) < 1:
             raise ValueError("upstream 中的server命令至少有一个参数且为地址信息")
@@ -359,7 +343,7 @@ class UpstreamServer(IDirective, _Trans):
             address=address,
         )
 
-    def to_directive(self)-> Directive:
+    def to_directive(self) -> Directive:
         parameters = [self.address]
         for k, v in self.parameters.items():
             parameters.append(f"{k}={v}")
@@ -430,19 +414,13 @@ class LuaBlock(IDirective, IBlock, _Trans):
     def get_code_block(self) -> str:
         return self.lua_code
 
-    def find_directives(self, directive_name: str) -> List[IDirective]:
-        directives = []
-        for directive in self.get_directives():
-            if directive.get_name() == directive_name:
-                directives.append(directive)
-            if directive.get_block() is not None:
-                directives.extend(directive.get_block().find_directives(directive_name))
-        return directives
+    def find_directives(self, directive_name: str, include: bool = False, sub_block: bool = False) -> List[IDirective]:
+        return []
 
     @classmethod
     def from_directive(cls, directive: Union[IDirective, Directive]) -> 'LuaBlock':
         if directive.__class__ is LuaBlock:
-            return directive
+            return trans_(directive, cls)
         if directive.get_block() is None:
             raise ValueError("Directive does not have a block")
         return cls(
@@ -453,5 +431,3 @@ class LuaBlock(IDirective, IBlock, _Trans):
             parameters=directive.get_parameters(),
             lua_code=directive.get_block().get_code_block(),
         )
-
-

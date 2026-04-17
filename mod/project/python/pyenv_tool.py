@@ -247,6 +247,8 @@ if [ -f '/www/server/panel/data/bt_etc_pyenv.sh' ]; then source /www/server/pane
         record_file = ""
         name_lower = pkg_name.lower()
         if not self.site_packages or not os.path.exists(self.site_packages):
+            self.site_packages = _EnvironmentDetector.get_site_packages(self.bin_path)
+        if not self.site_packages or not os.path.exists(self.site_packages):
             return None
         for i in os.listdir(self.site_packages):
             i_lower = i.lower()
@@ -411,6 +413,8 @@ export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr ':' '\\n' | grep -v 'conda' 
                         continue
                     if tmp[0].startswith("-----"):
                         continue
+                    if tmp[1].startswith("("):
+                        tmp[1] = tmp[1].strip("()")
                     pip_list.append((tmp[0], tmp[1]))
             except:
                 pass
@@ -574,6 +578,7 @@ class _EnvironmentDetector:
     _ver_regexp = re.compile(r"Python\s+(\d+\.\d+(\.\d+)?)")
     _pypy_regexp = re.compile(r"PyPy\s+(\d+\.\d+(\.\d+)?)")
     _site_packages_regexp = re.compile(r"pip\s+[\d.]+\s+from\s+(?P<path>(/[^/]+)+)/pip\s+\(python")
+    _site_packages_regexp2 = re.compile(r"pip\s+[\d.]+\s+from\s+(?P<path>(/[^/]+)+)\s+\(python")
 
     def detect(self) -> List[PythonEnvironment]:
         raise NotImplementedError
@@ -607,6 +612,9 @@ class _EnvironmentDetector:
     @classmethod
     def _parse_site_packages(cls, data: str) -> Optional[str]:
         path_res = cls._site_packages_regexp.search(data)
+        if path_res:
+            return path_res.group("path")
+        path_res = cls._site_packages_regexp2.search(data)
         if path_res:
             return path_res.group("path")
         return None

@@ -27,6 +27,7 @@ class main(dockerBase):
 
     def __init__(self):
         if not os.path.exists(self.__CONFIG_FILE):
+            public.ExecShell("mkdir -p /etc/docker")
             public.writeFile(self.__CONFIG_FILE, '{}')
 
     def get_docker_compose_version(self):
@@ -137,12 +138,6 @@ class main(dockerBase):
         try:
             data = json.loads(public.readFile(cls.__CONFIG_FILE))
 
-            proxy = {
-                "http_proxy": data.get("http-proxy"),
-                "https_proxy": data.get("https-proxy"),
-                "no_proxy": data.get("no-proxy")
-            } if data.get("http-proxy", "") else default_config["proxy"]
-
             return {
                 "warehouse": data.get("insecure-registries", default_config["warehouse"]),
                 "log_cutting": data.get("log-opts", default_config["log_cutting"]),
@@ -152,7 +147,7 @@ class main(dockerBase):
                 "socket": data.get("hosts", default_config["socket"]),
                 "ipv6_status": data.get("ipv6", default_config["ipv6_status"]),
                 "ipv6_addr": data.get("fixed-cidr-v6", default_config["ipv6_addr"]),
-                "proxy": proxy,
+                "proxy": data.get('proxies', default_config['proxy']),
                 "data-root": data.get("data-root", default_config["data-root"])
             }
         except:
@@ -280,6 +275,7 @@ class main(dockerBase):
         @param get:
         @return:
         """
+
         try:
             conf = json.loads(public.readFile(self.__CONFIG_FILE))
             if "registry-mirrors" not in conf:
@@ -288,58 +284,123 @@ class main(dockerBase):
                 reg_mirrors = conf['registry-mirrors']
         except:
             reg_mirrors = []
+        
+        # 获取镜像源状态缓存
+        cache_key = 'detector_mirrors'
+        if str(get.get('force',"0")) == "1":
+            from mod.project.docker.config.mirrorDetector import DockerMirrorDetector
+            detector_mirrors = DockerMirrorDetector.test_batch(reg_mirrors,max_workers=4)
+            detector_mirrors = {item["url"]:item for item in detector_mirrors}
+            public.cache_set(cache_key, detector_mirrors, 86400)
+        else:
+            detector_mirrors = public.cache_get(cache_key)
+            if not detector_mirrors:
+                detector_mirrors = {}
+
+        res_mirrors = []
+        for mirr_url in reg_mirrors:
+            if mirr_url in detector_mirrors.keys():
+                res_mirrors.append({
+                    "url": mirr_url,
+                    "ts": detector_mirrors[mirr_url]["ts"],
+                    "available": detector_mirrors[mirr_url]["available"]
+                })
+            else:
+                res_mirrors.append({"url": mirr_url,"ts": "","available": None}) 
 
         # 缓存一天获取列表  不用每次都去请求
         com_reg_mirrors = public.cache_get("com_reg_mirrors")
         if not com_reg_mirrors:
             com_reg_mirrors = self._get_com_registry_mirrors()
             public.cache_set("com_reg_mirrors", com_reg_mirrors, 86400)
-
+        # 将com_reg_mirrors与reg_mirrors进行过滤 如果reg_mirrors中有 则去除com_reg_mirrors中的项
+        com_reg_mirrors = dict(filter(lambda x: x[0] not in reg_mirrors, com_reg_mirrors.items()))
         return {
-            "registry_mirrors": reg_mirrors,
+            "registry_mirrors": res_mirrors,
             "com_reg_mirrors": com_reg_mirrors
         }
 
     # 设置加速配置
     def set_registry_mirrors(self, get):
         """
-        :param registry_mirrors_address registry.docker-cn.com\nhub-mirror.c.163.com
+        :param registry_mirrors_address registry.docker-cn.com,hub-mirror.c.163.com
         :param get:
         :return:
         """
         import re
         try:
-            get.registry_mirrors_address = get.get("registry_mirrors_address/s", "")
+            registry_mirrors_address = get.get("registry_mirrors_address/s", "").strip()
             conf = self.get_daemon_json()
-
-            if not get.registry_mirrors_address.strip():
-                if "registry-mirrors" in conf:
-                    del (conf['registry-mirrors'])
-            else:
-                registry_mirrors = get.registry_mirrors_address.strip()
-                if registry_mirrors == "":
-                    # 2024/4/16 下午12:10 双重保险
-                    if 'registry-mirrors' in conf:
-                        del (conf['registry-mirrors'])
+            
+            # 处理镜像地址列表
+            new_mirrors = []
+            if registry_mirrors_address:
+                mirrors = registry_mirrors_address.split(',')
+                for mirror in mirrors:
+                    mirror = mirror.strip().rstrip('/')
+                    if not mirror:
+                        continue
+                    
+                    # 校验URL格式
+                    if not re.match(r'^https?://', mirror):
+                        return public.returnMsg(False,'加速地址[{}]格式错误 参考：https://mirror.ccs.tencentyun.com'.format(mirror))
+                    
+                    if mirror not in new_mirrors:
+                        new_mirrors.append(mirror)
+            
+            # 获取当前配置中的镜像
+            current_mirrors = conf.get('registry-mirrors', [])
+            if not isinstance(current_mirrors, list):
+                if isinstance(current_mirrors, str):
+                    current_mirrors = [current_mirrors]
                 else:
-                    if not re.search('https?://', registry_mirrors):
-                        return public.returnMsg(
-                            False,
-                            '加速地址[{}]格式错误 参考：https://mirror.ccs.tencentyun.com'.format(registry_mirrors)
-                        )
+                    current_mirrors = []
+            
+            # 如果配置未发生变化，直接返回成功
+            if current_mirrors == new_mirrors:
+                 return public.returnMsg(True, '设置成功')
 
-                    conf['registry-mirrors'] = public.xsssec2(registry_mirrors)
-                    if isinstance(conf['registry-mirrors'], str):
-                        conf['registry-mirrors'] = [conf['registry-mirrors']]
+            # 更新配置
+            if new_mirrors:
+                conf['registry-mirrors'] = new_mirrors
+            else:
+                if 'registry-mirrors' in conf:
+                    del conf['registry-mirrors']
 
             public.writeFile(self.__CONFIG_FILE, json.dumps(conf, indent=2))
-            self.update_com_registry_mirrors(get)
             dp.write_log("设置Docker加速成功!")
-            get.act = "restart"
-            self.docker_service(get)
+            
             return public.returnMsg(True, '设置成功')
         except Exception as e:
             return public.returnMsg(False, "设置失败！{}".format(str(e)))
+    
+    def detector_mirrors(self, get):
+        """
+        检测当前加速源地址是否可用
+        @param get:
+        @return:
+        """
+        mirrors_list = get.get("mirrors","").split(",")
+        if mirrors_list == [""]:
+            return public.return_data(True,[])
+
+        cache_key = "detector_mirrors"
+        detector_dict = public.cache_get(cache_key)
+        if not detector_dict:
+            detector_dict = {}
+        
+        from mod.project.docker.config.mirrorDetector import DockerMirrorDetector
+        detector_result = DockerMirrorDetector.test_batch(mirrors_list,max_workers=4)
+        
+        for detector in detector_result:
+            detector_dict[detector["url"]] = {
+                "ts": detector["ts"],
+                "available": detector["available"]
+            }
+
+        public.cache_set(cache_key, detector_dict, 86400)
+        return public.return_data(True,detector_result)
+        
 
     def update_com_registry_mirrors(self, get):
         """
@@ -829,7 +890,7 @@ fi
                 result = func_name(get)
                 return result
 
-        return public.returnMsg(False, "为存在的配置项！")
+        return public.returnMsg(False, "不存在的配置项！")
     def set_docker_root_dir(self, get):
         '''
         设置docker根目录
@@ -917,15 +978,14 @@ fi
 
             data = self.get_daemon_json()
 
-            if not proxy_settings and "http-proxy" in data:
-                del data["http-proxy"]
-                del data["https-proxy"]
-                del data["no-proxy"]
+            if not proxy_settings and "proxies" in data:
+                del data["proxies"]
             else:
-                data["http-proxy"] = http_proxy
-                data["https-proxy"] = https_proxy
-                data["no-proxy"] = no_proxy
-
+                daemon_proxy = data.get("proxies", {})
+                daemon_proxy["http-proxy"] = http_proxy
+                daemon_proxy["https-proxy"] = https_proxy
+                daemon_proxy["no-proxy"] = no_proxy
+                data["proxies"] = daemon_proxy
 
             public.writeFile(self.__CONFIG_FILE, json.dumps(data, indent=2))
 

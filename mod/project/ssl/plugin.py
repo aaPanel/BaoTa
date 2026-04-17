@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 from typing import Any, Dict, List, Optional
+import public
 
 plugin_registry: Dict[str, Dict[str, Any]] = {}
 
@@ -16,7 +17,7 @@ def scan_plugins(dir_path: str) -> List[Dict[str, Any]]:
             try:
                 meta = get_metadata(path)
             except Exception as err:
-                print("插件无效:", path, "错误:", err)
+                public.print_log("插件无效:", path, "错误:", err)
                 continue
             meta["path"] = path
             plugins.append(meta)
@@ -47,15 +48,41 @@ def get_metadata(path: str) -> Dict[str, Any]:
     if status != "success":
         raise RuntimeError(f"插件响应错误: {payload.get('message', '')}")
     result = payload.get("result") or {}
+    if not isinstance(result, dict):
+        raise RuntimeError("响应格式无效")
+    if not result:
+        raise RuntimeError("响应结果为空")
+    config = result.get("config", [])
+    if config and isinstance(config, list):
+        for c in config:
+            if not isinstance(c, dict):
+                raise RuntimeError("配置参数格式无效")
+            if not c.get("name") or not c.get("description") or not c.get("type"):
+                raise RuntimeError("配置参数缺失字段")
+    else:
+        result["config"] = []
+
     actions_payload = result.get("actions") or []
-    actions = [
-        {
+    actions = []
+    for a in actions_payload:
+        if not isinstance(a, dict):
+            raise RuntimeError("操作格式无效")
+        if not a.get("name") or not a.get("description"):
+            raise RuntimeError("操作缺失字段")
+        params = a.get("params", [])
+        if params and isinstance(params, list):
+            for p in params:
+                if not isinstance(p, dict):
+                    raise RuntimeError("操作参数格式无效")
+                if not p.get("name") or not p.get("description") or not p.get("type"):
+                    raise RuntimeError("操作参数缺失字段")
+        else:
+            params = []
+        actions.append({
             "name": a.get("name", ""),
             "description": a.get("description", ""),
-            "params": a.get("params") or None,
-        }
-        for a in actions_payload
-    ]
+            "params": params,
+        })
     meta = {
         "name": result.get("name", ""),
         "description": result.get("description", ""),

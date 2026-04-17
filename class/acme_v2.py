@@ -54,6 +54,12 @@ import ssl_info
 # 新版 auth to 格式：
 # DNS->手动：dns DNS->api: dns#@api
 
+url_dic = {
+    "letsencrypt": "https://acme-v02.api.letsencrypt.org/directory",
+    "letsencrypt_staging": "https://acme-staging-v02.api.letsencrypt.org/directory",
+    "litessl": "https://acme.litessl.com/acme/v2/directory"
+}
+
 class acme_v2:
     _url = None
     _apis = None
@@ -68,7 +74,7 @@ class acme_v2:
     _digest = "sha256"
     _max_check_num = 15
     _wait_time = 5
-    _mod_index = {True: "Staging", False: "Production"}
+    _mod_index = {True: "Staging", False: "Production", "litessl": "litessl", "letsencrypt": "Production"}
     _debug = False
     _auto_wildcard = False
     _dnsapi_file = 'config/dns_api.json'
@@ -82,6 +88,8 @@ class acme_v2:
             shutil.copyfile(self._conf_file, self._conf_file_v2)
         if self._debug:
             self._url = 'https://acme-staging-v02.api.letsencrypt.org/directory'
+            if self._debug == 'litessl':
+                self._url = 'https://acme.litessl.com/acme/v2/directory'
         else:
             self._url = 'https://acme-v02.api.letsencrypt.org/directory'
         self._config = self.read_config()
@@ -192,39 +200,39 @@ class acme_v2:
 
     # 取接口目录
     def get_apis(self):
-        if not self._apis:
-            # 尝试从配置文件中获取
-            api_index = self._mod_index[self._debug]
-            if not 'apis' in self._config:
-                self._config['apis'] = {}
-            if api_index in self._config['apis']:
-                if 'expires' in self._config['apis'][api_index] and 'directory' in self._config['apis'][api_index]:
-                    if time.time() < self._config['apis'][api_index]['expires']:
-                        self._apis = self._config['apis'][api_index]['directory']
-                        return self._apis
+        # if not self._apis:
+        # 尝试从配置文件中获取
+        api_index = self._mod_index[self._debug]
+        if not 'apis' in self._config:
+            self._config['apis'] = {}
+        if api_index in self._config['apis']:
+            if 'expires' in self._config['apis'][api_index] and 'directory' in self._config['apis'][api_index]:
+                if time.time() < self._config['apis'][api_index]['expires']:
+                    self._apis = self._config['apis'][api_index]['directory']
+                    return self._apis
 
-            # 尝试从云端获取
-            res = requests.get(self._url,s_type=self._request_type)
-            if not res.status_code in [200, 201]:
-                result = res.json()
-                if "type" in result:
-                    if result['type'] == 'urn:acme:error:serverInternal':
-                        raise Exception('服务因维护而关闭或发生内部错误，查看 <a href="https://letsencrypt.status.io/" target="_blank" class="btlink">https://letsencrypt.status.io/</a> 了解更多详细信息。')
-                raise Exception(res.content)
-            s_body = res.json()
-            self._apis = {}
-            self._apis['newAccount'] = s_body['newAccount']
-            self._apis['newNonce'] = s_body['newNonce']
-            self._apis['newOrder'] = s_body['newOrder']
-            self._apis['revokeCert'] = s_body['revokeCert']
-            self._apis['keyChange'] = s_body['keyChange']
+        # 尝试从云端获取
+        res = requests.get(self._url,s_type=self._request_type)
+        if not res.status_code in [200, 201]:
+            result = res.json()
+            if "type" in result:
+                if result['type'] == 'urn:acme:error:serverInternal':
+                    raise Exception('服务因维护而关闭或发生内部错误，查看 <a href="https://letsencrypt.status.io/" target="_blank" class="btlink">https://letsencrypt.status.io/</a> 了解更多详细信息。')
+            raise Exception(res.content)
+        s_body = res.json()
+        self._apis = {}
+        self._apis['newAccount'] = s_body['newAccount']
+        self._apis['newNonce'] = s_body['newNonce']
+        self._apis['newOrder'] = s_body['newOrder']
+        self._apis['revokeCert'] = s_body['revokeCert']
+        self._apis['keyChange'] = s_body['keyChange']
 
-            # 保存到配置文件
-            self._config['apis'][api_index] = {}
-            self._config['apis'][api_index]['directory'] = self._apis
-            self._config['apis'][api_index]['expires'] = time.time() + \
-                86400  # 24小时后过期
-            self.save_config()
+        # 保存到配置文件
+        self._config['apis'][api_index] = {}
+        self._config['apis'][api_index]['directory'] = self._apis
+        self._config['apis'][api_index]['expires'] = time.time() + \
+            86400  # 24小时后过期
+        self.save_config()
         return self._apis
 
     # 获取帐户信息
@@ -369,7 +377,7 @@ class acme_v2:
         domain_list = []
         for domain in domains:
             root, zone = self.extract_zone(domain)
-            tmp_list = zone.rsplit(".", 1)
+            tmp_list = zone.split(".", 1)
             if len(tmp_list) == 1:
                 if root not in domain_list:
                     domain_list.append(root)
@@ -419,12 +427,26 @@ class acme_v2:
     def create_order(self, domains, auth_type, auth_to, index=None):
         domains = self.format_domains(domains)
         if not domains:
-            raise Exception("至少需要有一个域名")
+            raise Exception("至少需要有一个域名或者IP")
+        # 判断是否全部为IP或域名
         # 构造标识
         identifiers = []
+        all_is_ip = set()
         for domain_name in domains:
+            is_ip = public.check_ip(domain_name)
+            all_is_ip.add(is_ip)
+            if is_ip:
+                identifiers.append({ "type": "ip", "value": domain_name })
+                continue
             identifiers.append({"type": 'dns', "value": domain_name})
         payload = {"identifiers": identifiers}
+        if len(all_is_ip) != 1:
+            raise Exception("域名和IP不能同时申请证书!")
+        all_is_ip = next(iter(all_is_ip))
+        if all_is_ip:
+            payload = {"identifiers": identifiers, "profile": "shortlived"}
+            if auth_type != 'http':
+                raise Exception("IP地址只能使用HTTP文件验证方式申请证书!")
 
         # 请求创建订单
         res = self.acme_request(self._apis['newOrder'], payload)
@@ -457,6 +479,8 @@ class acme_v2:
         # 返回验证地址和验证
         s_json = res.json()
         s_json['auth_type'] = auth_type
+        s_json['url'] = res.headers.get("Location")
+        s_json['ca'] = self._debug
         s_json['domains'] = domains
         s_json['auth_to'] = auth_to
         index = self.save_order(s_json, index)
@@ -573,7 +597,16 @@ class acme_v2:
             identifier_auth['type'] = self._config['orders'][index]['auth_type']
 
             # 设置验证信息
-            self.set_auth_info(identifier_auth, index=index)
+            set_auth = True
+            for auth in auths:
+                if (
+                        auth['domain'].replace("*.", "") == identifier_auth['domain'].replace("*.", "")
+                        and auth['auth_value'] == identifier_auth['auth_value']
+                ):
+                    set_auth = False
+                    break
+            if set_auth:
+                self.set_auth_info(identifier_auth, index=index)
             auths.append(identifier_auth)
         self._config['orders'][index]['auths'] = auths
         self.save_config()
@@ -610,7 +643,7 @@ class acme_v2:
     #从云端验证域名是否可访问
     def cloud_check_domain(self,domain):
         try:
-            result = requests.post('https://www.bt.cn/api/panel/check_domain',{"domain":domain,"ssl":1},s_type=self._request_type).json()
+            result = requests.post(public.get_home_node('https://www.bt.cn/api/panel/check_domain'),{"domain":domain,"ssl":1},s_type=self._request_type).json()
             return result['status']
         except: return False
 
@@ -942,12 +975,16 @@ if ( $well_known != "" ) {
         """
         index = get.index
         domain = get.domain
-        self.get_apis()
 
         write_log("|-正在验证域名：{}".format(domain))
         if index not in self._config['orders']:
             return public.returnMsg(False, '指定订单不存在!')
         order = self._config['orders'][index]
+        if "ca" in order:
+            self._debug = order['ca']
+            self._url = url_dic.get(order['ca'], url_dic['letsencrypt'])
+        self.get_apis()
+
         if "auths" not in order:
             return public.returnMsg(False, '订单验证信息丢失，请尝试重新申请!')
 
@@ -994,6 +1031,10 @@ if ( $well_known != "" ) {
                 time.sleep(self._wait_time)
             check_authorization_status_response = self.acme_request(url, "")
             a_auth = check_authorization_status_response.json()
+            if 'type' in a_auth and a_auth['type'].find('error:badNonce') != -1:
+                # 如果随机数失效
+                self.get_nonce(force=True)
+                a_auth = self.acme_request(url, "").json()
             if not isinstance(a_auth, dict):
                 write_log(a_auth)
                 continue
@@ -1123,8 +1164,26 @@ if ( $well_known != "" ) {
                     response=send_csr_response.json(),
                 )
             )
-        send_csr_response_json = send_csr_response.json()
-        certificate_url = send_csr_response_json["certificate"]
+        # 轮询获取证书
+        l=0
+        while True:
+            res = self.acme_request(
+                url=self._config['orders'][index]['url'], payload=""
+            ).json()
+            public.print_log(res)
+            if res["status"] == "valid":
+                certificate_url = res["certificate"]
+                break
+            if l >= self._max_check_num:
+                raise Exception(
+                    "错误：已尝试获取证书{0}次. 最大尝试次数为{1}. 尝试间隔为{2}秒.".format(
+                        l,
+                        self._max_check_num,
+                        self._wait_time
+                    )
+                )
+            time.sleep(1)
+            l+=1
         self._config['orders'][index]['certificate_url'] = certificate_url
         self.save_config()
         return certificate_url
@@ -1437,7 +1496,7 @@ fullchain.pem       粘贴到证书输入框
             n += 1
             try:
                 import dns.resolver
-                ns = dns.resolver.query(domain, s_type)
+                ns = dns.resolver.query(domain, s_type, lifetime=5.0)
                 for j in ns.response.answer:
                     for i in j.items:
                         txt_value = i.to_text().replace('"', '').strip()
@@ -1460,13 +1519,21 @@ fullchain.pem       粘贴到证书输入框
             return self._config['orders']['csr']
         domain_name, domain_alt_names = self.get_alt_names(index)
         X509Req = OpenSSL.crypto.X509Req()
-        X509Req.get_subject().CN = domain_name
-        if domain_alt_names:
-            SAN = "DNS:{0}, ".format(domain_name).encode("utf8") + ", ".join(
-                "DNS:" + i for i in domain_alt_names
-            ).encode("utf8")
+        if not public.check_ip(domain_name):
+            X509Req.get_subject().CN = domain_name
+            if domain_alt_names:
+                SAN = "DNS:{0}, ".format(domain_name).encode("utf8") + ", ".join(
+                    "DNS:" + i for i in domain_alt_names
+                ).encode("utf8")
+            else:
+                SAN = "DNS:{0}".format(domain_name).encode("utf8")
         else:
-            SAN = "DNS:{0}".format(domain_name).encode("utf8")
+            if domain_alt_names:
+                SAN = "IP:{0}, ".format(domain_name).encode("utf8") + ", ".join(
+                    "IP:" + i for i in domain_alt_names
+                ).encode("utf8")
+            else:
+                SAN = "IP:{0}".format(domain_name).encode("utf8")
 
         X509Req.add_extensions(
             [
@@ -1493,6 +1560,7 @@ fullchain.pem       粘贴到证书输入框
         from cryptography.hazmat.primitives.asymmetric import rsa
         from cryptography.hazmat.primitives import hashes
         from cryptography.hazmat.primitives import serialization
+        import ipaddress
         # 如果已经生成了 CSR，直接返回
         if 'csr' in self._config['orders'][index]:
             return self._config['orders'][index]['csr']
@@ -1504,18 +1572,29 @@ fullchain.pem       粘贴到证书输入框
         pk = self.create_certificate_key(index).encode()
         private_key = serialization.load_pem_private_key(pk, password=None)
 
-        # 构建 CSR
-        csr_builder = x509.CertificateSigningRequestBuilder().subject_name(
-            x509.Name([
-                x509.NameAttribute(NameOID.COMMON_NAME, domain_name),
-            ])
-        )
-
-        # 添加 subjectAltName 扩展
-        if domain_alt_names:
-            alt_names = [x509.DNSName(domain_name)] + [x509.DNSName(alt) for alt in domain_alt_names]
+        if public.check_ip(domain_name):
+            # IP证书不需要CN
+            csr_builder = x509.CertificateSigningRequestBuilder().subject_name(
+                x509.Name([])
+            )
+            # 添加 subjectAltName 扩展
+            if domain_alt_names:
+                alt_names = [x509.IPAddress(ipaddress.ip_address(domain_name))] + [x509.IPAddress(ipaddress.ip_address(alt)) for alt in domain_alt_names]
+            else:
+                alt_names = [x509.IPAddress(ipaddress.ip_address(domain_name))]
         else:
-            alt_names = [x509.DNSName(domain_name)]
+            # 构建 CSR
+            csr_builder = x509.CertificateSigningRequestBuilder().subject_name(
+                x509.Name([
+                    x509.NameAttribute(NameOID.COMMON_NAME, domain_name),
+                ])
+            )
+
+            # 添加 subjectAltName 扩展
+            if domain_alt_names:
+                alt_names = [x509.DNSName(domain_name)] + [x509.DNSName(alt) for alt in domain_alt_names]
+            else:
+                alt_names = [x509.DNSName(domain_name)]
 
         csr_builder = csr_builder.add_extension(
             x509.SubjectAlternativeName(alt_names),
@@ -1644,6 +1723,12 @@ fullchain.pem       粘贴到证书输入框
             }
         else:
             payload = {"termsOfServiceAgreed": True}
+        if self._debug == 'litessl':
+            payload["externalAccountBinding"] = self.build_eab(
+                account_jwk_pem=self.get_account_key(),
+                new_account_url=self._apis['newAccount']
+            )
+            public.print_log(payload["externalAccountBinding"])
 
         res = self.acme_request(url=self._apis['newAccount'], payload=payload)
 
@@ -1651,6 +1736,75 @@ fullchain.pem       粘贴到证书输入框
             raise Exception("注册ACME帐户失败: {}".format(res.json()))
         kid = res.headers["Location"]
         return kid
+
+    def build_eab(self, account_jwk_pem: str, new_account_url: str):
+        """
+        构造 External Account Binding (EAB)
+        account_jwk_pem: RSA 私钥的 PEM 字符串
+        """
+        import base64
+        import json
+        import hmac
+        import hashlib
+        from cryptography.hazmat.primitives import serialization
+
+        # Base64URL 编码
+        def b64url(data: bytes) -> str:
+            return base64.urlsafe_b64encode(data).rstrip(b"=").decode("utf-8")
+
+        # 将整数转成 Base64URL（big-endian）
+        def b64url_uint(val: int) -> str:
+            length = (val.bit_length() + 7) // 8
+            return base64.urlsafe_b64encode(val.to_bytes(length, "big")).rstrip(b"=").decode("utf-8")
+
+        # PEM 字符串 → RSA 私钥对象
+        private_key = serialization.load_pem_private_key(
+            account_jwk_pem.encode("utf-8"),
+            password=None
+        )
+
+        # RSA 公钥 → JWK dict
+        public_numbers = private_key.public_key().public_numbers()
+        public_jwk = {
+            "kty": "RSA",
+            "e": b64url_uint(public_numbers.e),
+            "n": b64url_uint(public_numbers.n)
+        }
+
+        # 1. 请求 EAB 参数
+        eab_res = requests.post(public.get_home_node("https://www.bt.cn/api/v3/litessl/eab"))
+        eab_data = eab_res.json()
+        self._config["eab_kid"] = eab_data["res"]["data"]["eab_kid"]
+        self._config["eab_hmac_key"] = eab_data["res"]["data"]["eab_mac_key"]
+
+        # 2. protected header
+        protected = {
+            "alg": "HS256",
+            "kid": self._config["eab_kid"],
+            "url": new_account_url
+        }
+        protected_b64 = b64url(json.dumps(protected, separators=(",", ":")).encode())
+
+        # 3. payload = 公钥 JWK
+        payload_b64 = b64url(json.dumps(public_jwk, separators=(",", ":")).encode())
+
+        # 4. HMAC-SHA256 签名
+        def base64url_decode(s: str) -> bytes:
+            # 补全 '=' 使长度能被4整除
+            s = s + "=" * (-len(s) % 4)
+            return base64.urlsafe_b64decode(s)
+
+        hmac_key = base64url_decode(self._config["eab_hmac_key"])
+        signing_input = f"{protected_b64}.{payload_b64}".encode()
+        signature = hmac.new(hmac_key, signing_input, hashlib.sha256).digest()
+        signature_b64 = b64url(signature)
+
+        # 5. 返回 EAB
+        return {
+            "protected": protected_b64,
+            "payload": payload_b64,
+            "signature": signature_b64
+        }
 
     # 请求到ACME接口
     def acme_request(self, url, payload):
@@ -1879,7 +2033,13 @@ fullchain.pem       粘贴到证书输入框
     def apply_cert(self, domains, auth_type='dns', auth_to='Dns_com|None|None', **args):
         index = ''
         write_log("", "wb+")
+        for i in range(len(domains)):
+            domains[i] = domains[i].replace("[", "").replace("]", "")
         try:
+            if 'ca' in args:
+                public.set_module_logs(args['ca'], "apply_cert_ca", 1)
+                self._debug = args['ca']
+                self._url = url_dic.get(self._debug, url_dic['letsencrypt'])
             self.get_apis()
             index = None
             if 'index' in args:
@@ -1895,6 +2055,11 @@ fullchain.pem       粘贴到证书输入框
                         self._config['orders'][index]["error"] = True
                         self._config['orders'][index]["error_msg"] = "检测到解析记录存在冲突，请分别验证以下域名"
                     return self._config['orders'][index]
+            else:
+                if "ca" in self._config['orders'][index]:
+                    self._debug = self._config['orders'][index]['ca']
+                    self._url = url_dic.get(self._debug, url_dic['letsencrypt'])
+                    self.get_apis()
             write_log("|-正在验证域名..")
             self.auth_domain(index)
             self.remove_dns_record()
@@ -1902,6 +2067,8 @@ fullchain.pem       粘贴到证书输入框
             self.send_csr(index)
             write_log("|-正在下载证书..")
             cert = self.download_cert(index)
+            if domains and public.check_ip(domains[0]):
+                public.set_module_logs("apply_ipssl_success", "apply_ipssl_success", 1)
             cert['status'] = True
             cert['msg'] = '申请成功!'
             write_log("|-申请成功，正在部署到站点..")
@@ -1986,7 +2153,12 @@ fullchain.pem       粘贴到证书输入框
                 if check_result:
                     return check_result
 
-        return self.apply_cert(json.loads(args.domains), args.auth_type, args.auth_to)
+        if "ca" in args and args.ca:
+            ca = args.ca
+        else:
+            ca = False
+
+        return self.apply_cert(json.loads(args.domains), args.auth_type, args.auth_to,ca=ca)
 
     # 检查认证环境
     def check_auth_env(self,args):
@@ -2059,6 +2231,9 @@ fullchain.pem       粘贴到证书输入框
             import random
             args_obj = public.dict_obj()
             if not cron_id:
+                # 计划任务不存在且未关闭自动续签则创建任务
+                if os.path.exists("/www/server/panel/data/close_ssl_auto_renewal.pl"):
+                    return
                 cronPath = public.GetConfigValue('setup_path') + '/cron/' + echo
                 shell = '{} -u /www/server/panel/class/acme_v2.py --renew_v2=1'.format(sys.executable)
                 public.writeFile(cronPath,shell)
@@ -2069,6 +2244,12 @@ fullchain.pem       粘贴到证书输入框
                 args_obj.id = public.M('crontab').add('name,type,where1,where_hour,where_minute,echo,addtime,status,save,backupTo,sType,sName,sBody,urladdress',("续签Let's Encrypt证书",'day','',hour,minute,echo,time.strftime('%Y-%m-%d %X',time.localtime()),0,'','localhost','toShell','',shell,''))
                 crontab.crontab().set_cron_status(args_obj)
             else:
+                # 计划任务存在则检查是否关闭自动续签，关闭则删除任务
+                if os.path.exists("/www/server/panel/data/close_ssl_auto_renewal.pl"):
+                    # 删除任务
+                    args_obj.id = cron_id
+                    crontab.crontab().DelCrontab(args_obj)
+                    return
                 # 检查任务如果是0点10分执行，改为随机时间
                 if find['where_hour'] == 0 and find['where_minute'] == 10:
                     print('修改任务时间')
@@ -2481,8 +2662,17 @@ fullchain.pem       粘贴到证书输入框
                 write_log(public.get_error_info())
                 write_log("|-【{}】证书信息格式错误，无法续签，请尝试手动续签!".format(ssl_hash))
                 continue
-            if cert_info.get('issuer') not in ("R3", "R8", "R11", "R10", "R5") and cert_info.get('issuer_O') != "Let's Encrypt":
-                write_log("|-【{}】不是Let's Encrypt证书，无法续签!".format(ssl_hash))
+            ca = ""
+            if cert_info.get('issuer') in ("R3", "R8", "R11", "R10", "R5") or cert_info.get('issuer_O', '') == "Let's Encrypt":
+                ca = "Let's Encrypt"
+                self._debug = False
+                self._url = "https://acme-v02.api.letsencrypt.org/directory"
+            if "LiteSSl" in cert_info.get('issuer') or cert_info.get('issuer_O', '') == "TrustAsia Technologies, Inc.":
+                ca = "TrustAsia Technologies, Inc."
+                self._debug = "litessl"
+                self._url = "https://acme.litessl.com/acme/v2/directory"
+            if ca not in ("Let's Encrypt", "TrustAsia Technologies, Inc."):
+                write_log("|-【{}】非Let's Encrypt或TrustAsia证书，无法续签，请尝试手动续签!".format(ssl_hash))
                 continue
             # 计算 30 天后的日期
             if cycle:
@@ -2519,7 +2709,7 @@ fullchain.pem       粘贴到证书输入框
             for i in cert_info['dns']:
                 root_domain, _, _ = base.sslBase().extract_zone(i)
                 root_domain_info = public.M('ssl_domains').where("domain=?", root_domain).find()
-                if not root_domain_info or root_domain_info.get("dns_id") not in dns_data.keys():
+                if not root_domain_info or (root_domain_info.get("dns_id") not in dns_data.keys() and "cloud_id=" not in root_domain_info.get("dns_id")):
                     write_log("|-根域名【{}】未绑定dns-api，跳过域名: {}!".format(root_domain, i))
                     continue
                 auth_domains.append(i)
@@ -2593,9 +2783,15 @@ fullchain.pem       粘贴到证书输入框
         data = self.read_config()
         if not data.get('orders'):
             return []
+        status_id = int(get.status_id) if hasattr(get, 'status_id') else -1
 
         del_list = []
         _return = []
+
+        import panelSSL
+        exclude_hash = panelSSL.panelSSL().get_exclude_hash(get)
+        format_time_strs = ("%Y-%m-%d", "%Y-%m-%d %H:%M:%S")
+        today_time = datetime.datetime.today().timestamp()
 
         orders = list(data['orders'].values())
         for i in range(len(orders) - 1, -1, -1):
@@ -2613,12 +2809,39 @@ fullchain.pem       粘贴到证书输入框
                 )
             except Exception as e:
                 end_time = 90
+            hash = exclude_hash.get("exclude_hash_let", {}).get(orders[i]['index'], '')
+            if hash:
+                cert_data = public.M('ssl_info').where('hash=?', hash).find()
+                if cert_data:
+                    for f_str in format_time_strs:
+                        try:
+                            end_time = int(
+                                (datetime.datetime.strptime(cert_data["not_after"], f_str).timestamp() - today_time) / (60 * 60 * 24)
+                            )
+                        except Exception as e:
+                            continue
+
             orders[i]['endDay'] = end_time
+
+            if status_id == 0 and (orders[i]['status'] != "pending" or orders[i]['endDay'] <= 0):
+                del orders[i]
+                continue
+            elif status_id == 1 and (orders[i]['endDay'] <= 0 or orders[i]['status'] == "pending"):
+                del orders[i]
+                continue
+            elif status_id == 2 and (orders[i]['endDay'] > 30 or orders[i]['endDay'] <= 0):
+                del orders[i]
+                continue
+            elif status_id == 3 and (orders[i]['endDay'] > 0):
+                del orders[i]
+                continue
         try:
             arg = public.to_dict_obj({"index": ",".join(del_list), "d": "1"})
             self.delete_order(arg)
         except:
             pass
+        orders.sort(key=lambda x: x['endDay'], reverse=True)
+        orders.sort(key=lambda x: x['status']=="valid", reverse=True)
         return orders
 
     def get_order_detail(self, get):
@@ -2672,20 +2895,22 @@ fullchain.pem       粘贴到证书输入框
                 domains = auth['domain'].split('.')
                 if domains[0] == '*':
                     domain = ".".join(domains[1:])
-                _return["auths"].append({
-                    "domain": auth['domain'],
-                    "status": auth.get('status', "pending"),
-                    "data": [{
+                dns_auth = [{
                         "domain": "_acme-challenge.{}".format(domain),
                         "auth_value": auth["auth_value"],
                         "type": "TXT",
                         "must": "是"
-                    }, {
+                    }]
+                if 'ca' in data and data['ca'] != 'litessl':
+                    dns_auth.append({
                         "domain": domain,
                         "auth_value": '0 issue "letsencrypt.org"',
                         "type": "CAA",
-                        "must": "否"
-                    }]
+                        "must": "否"})
+                _return["auths"].append({
+                    "domain": auth['domain'],
+                    "status": auth.get('status', "pending"),
+                    "data": dns_auth
                 })
             return _return
         else:
@@ -2695,7 +2920,7 @@ fullchain.pem       粘贴到证书输入框
                     "domain": domain,
                     "data": [{
                         "domain": auth['domain'],
-                        "file_path": "{}.well-known/acme-challenge/{}".format(auth['auth_to'], auth['token']),
+                        "file_path": os.path.join(auth['auth_to'], ".well-known/acme-challenge/", auth['token']),
                         "content": auth['acme_keyauthorization'],
                         "must": "是"
                     }]
@@ -2776,7 +3001,7 @@ fullchain.pem       粘贴到证书输入框
                     order_err = str(e)
             if local_err:
                 finish["status"] = False
-                finish["msg"] = "本地证书删除失败: {}".format(local_err)
+                finish["msg"] = "证书删除失败: {}".format(local_err)
             if order_err:
                 finish["status"] = False
                 if finish["msg"] == "删除成功":

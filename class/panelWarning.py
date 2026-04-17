@@ -96,33 +96,42 @@ class panelWarning:
         # 旧版本漏洞检测
         # else:
         #     self.system_scan()  # 旧版本系统漏洞扫描
-        # 加载安全风险模块
-        p = public.get_modules('class/safe_warning')
-        for m_name in p.__dict__.keys():
-            ignore_file = self.__ignore + '/' + m_name + '.pl'
-            # 忽略的检查项
-            if p[m_name]._level == 0: continue
+        
+        # 加载分类配置，获取启用的分类
+        config = self.load_category_config()
+        enabled_categories = [k for k, v in config.items() if v.get('enabled', False)]
+        if not enabled_categories:
+            enabled_categories = ['bt_basic']
 
+        # 逐个加载子目录模块，然后合并
+        p_all = self.load_modules_from_categories(enabled_categories)
+
+        # 加载安全风险模块
+        for m_name in p_all.__dict__.keys():
+            ignore_file = self.__ignore + '/' + m_name + '.pl'
+
+            # 忽略的检查项
+            if p_all.__dict__[m_name]._level == 0: continue
             m_info = {
-                'title': p[m_name]._title,
+                'title': p_all.__dict__[m_name]._title,
                 'm_name': m_name,
-                'ps': p[m_name]._ps,
-                'version': p[m_name]._version,
-                'level': p[m_name]._level,
-                'ignore': p[m_name]._ignore,
-                'date': p[m_name]._date,
-                'tips': p[m_name]._tips,
-                'help': p[m_name]._help
+                'ps': p_all.__dict__[m_name]._ps,
+                'version': p_all.__dict__[m_name]._version,
+                'level': p_all.__dict__[m_name]._level,
+                'ignore': p_all.__dict__[m_name]._ignore,
+                'date': p_all.__dict__[m_name]._date,
+                'tips': p_all.__dict__[m_name]._tips,
+                'help': p_all.__dict__[m_name]._help
             }
             try:
-                m_info['remind'] = p[m_name]._remind
+                m_info['remind'] = p_all.__dict__[m_name]._remind
             except:
                 pass
             result_file = self.__result + '/' + m_name + '.pl'
 
             try:
                 s_time = time.time()
-                m_info['status'], m_info['msg'] = p[m_name].check_run()
+                m_info['status'], m_info['msg'] = p_all.__dict__[m_name].check_run()
                 m_info['taking'] = round(time.time() - s_time, 6)
                 m_info['check_time'] = int(time.time())
                 public.writeFile(result_file, json.dumps(
@@ -148,7 +157,8 @@ class panelWarning:
                     if self.score < 0:
                         self.score = 0
 
-            bar = ("%.2f" % (float(bar_num) / float(len(p.__dict__.keys())) * 50 + 50))
+            total_checks = len(p_all.__dict__.keys())
+            bar = ("%.2f" % (float(bar_num) / float(total_checks) * 50 + 50))
             #  通过进度条限制，防止写文件频繁占用高
             if int(float(bar)) >= bar_limit:
                 context = {"status": "{}".format(m_info['title']), "percentage": int(float(bar)),
@@ -186,6 +196,8 @@ class panelWarning:
         self.data['security'] = sorted(self.data['security'], key=lambda x: x['level'], reverse=True)
         self.data['ignore'] = sorted(self.data['ignore'], key=lambda x: x['level'], reverse=True)
         self.data['check_time'] = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+        # 新增：返回分类信息
+        self.data['categories'] = self.get_categories_list()
         # 将结果输出一份到报告目录下
         with open("/www/server/panel/data/warning_report/data.json", "w") as f:
             json.dump(self.data, f)
@@ -965,8 +977,18 @@ class panelWarning:
                 tmp["scan"].append({"date": last_date, "times": 0})
                 tmp["repair"].append({"date": last_date, "times": 0})
             public.WriteFile("/www/server/panel/data/warning_report/record.json", json.dumps(tmp))
-        with open("/www/server/panel/data/warning_report/record.json", "r") as f:
-            record = json.load(f)
+        try:
+            with open("/www/server/panel/data/warning_report/record.json", "r") as f:
+                record = json.load(f)
+        except (json.JSONDecodeError, ValueError):
+            # 文件损坏或为空，重新初始化
+            tmp = {"scan": [], "repair": []}
+            for i in range(6, -1, -1):
+                last_date = (date_obj - datetime.timedelta(days=i)).strftime("%Y/%m/%d")
+                tmp["scan"].append({"date": last_date, "times": 0})
+                tmp["repair"].append({"date": last_date, "times": 0})
+            public.WriteFile("/www/server/panel/data/warning_report/record.json", json.dumps(tmp))
+            record = tmp
         if record["scan"][weekday]["date"] == datetime.datetime.now().strftime("%Y/%m/%d"):
             record["scan"][weekday]["times"] += 1
         else:
@@ -1406,6 +1428,136 @@ class panelWarning:
             self.new_vul_list = self.__path + '/vul_debian11.json'
         elif sys_version == "debian_10":
             self.new_vul_list = self.__path + '/vul_debian10.json'
+
+    def load_category_config(self):
+        """
+        加载分类配置
+        @return dict
+        """
+        config_file = '/www/server/panel/config/safe_categories.json'
+        try:
+            with open(config_file, 'r') as f:
+                return json.load(f)
+        except:
+            return self.get_default_category_config()
+
+    def get_default_category_config(self):
+        """
+        获取默认分类配置（配置文件不存在时使用）
+        @return dict
+        """
+        return {
+            "bt_basic": {
+                "name": "宝塔基础安全检查",
+                "enabled": True
+            },
+            "international": {
+                "name": "国际标准基线检查",
+                "enabled": False
+            },
+            "nginx": {
+                "name": "Nginx安全基线检查",
+                "enabled": False
+            }
+        }
+
+    def load_modules_from_categories(self, categories):
+        """
+        从多个分类目录加载模块，合并返回
+        @param categories list 启用的分类列表
+        @return object 合并后的模块对象
+        """
+        base_dir = '/www/server/panel/class/safe_warning'
+
+        # 创建一个空的模块对象用于合并
+        class MergedModules:
+            def __init__(self):
+                self.__dict__ = {}
+
+        merged = MergedModules()
+
+        for cat in categories:
+            cat_dir = os.path.join(base_dir, cat)
+            if not os.path.exists(cat_dir):
+                continue
+
+            # 加载该分类目录下的模块
+            cat_modules = public.get_modules(f'class/safe_warning/{cat}')
+
+            # 合并到总模块中，只复制真正的检测项模块（具有_level属性的模块）
+            for m_name in cat_modules.__dict__.keys():
+                
+                # 跳过特殊属性（以__开头）
+                if m_name.startswith('__'):
+                    continue
+                # 只复制具有检测项特征的模块（有_level属性）
+                m_obj = cat_modules[m_name]
+                if hasattr(m_obj, '_level'):
+                    merged.__dict__[m_name] = m_obj
+        return merged
+
+    def get_categories_list(self):
+        """
+        获取分类列表（供扫描结果返回）
+        @return list
+        """
+        config = self.load_category_config()
+        result = []
+        base_dir = '/www/server/panel/class/safe_warning'
+
+        for cat_id, cat_config in config.items():
+            cat_dir = os.path.join(base_dir, cat_id)
+            count = 0
+            if os.path.exists(cat_dir):
+                count = len([f for f in os.listdir(cat_dir) if f.endswith('.py')])
+
+            result.append({
+                'name_id': cat_id,
+                'name': cat_config['name'],
+                'enabled': cat_config.get('enabled', False),
+                'count': count
+            })
+
+        return result
+
+    def set_scan_categories(self, args):
+        """
+        设置扫描分类
+        @author lwh<2024-02-05>
+        @param dict_obj{
+            categories<list> 要启用的分类列表，字符串形式传入如"["bt_basic","international"]"
+        }
+        @return dict
+        """
+        config = self.load_category_config()
+
+        # 解析分类列表
+        try:
+            if isinstance(args.categories, str):
+                # 如果是字符串，用 json.loads 解析
+                categories = json.loads(args.categories)
+            else:
+                # 如果已经是列表对象，直接使用
+                categories = args.categories
+        except Exception as e:
+            categories = None
+
+        # 不传参数或传空数组
+        if categories is None or (isinstance(categories, list) and len(categories) == 0):
+            return public.returnMsg(True, '保持当前配置')
+    
+        # 先全部禁用，再启用指定的
+        for cat in config:
+            config[cat]['enabled'] = cat in categories
+    
+        # 如果全部禁用，默认启用bt_basic
+        has_enabled = any(v.get('enabled', False) for v in config.values())
+        if not has_enabled:
+            config['bt_basic']['enabled'] = True
+    
+        # 保存配置
+        public.WriteFile('/www/server/panel/config/safe_categories.json', json.dumps(config))
+        return public.returnMsg(True, '设置成功')
 
 
 class Dpkg:

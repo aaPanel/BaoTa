@@ -110,11 +110,15 @@ class main(JournalctlManage, SecureManage):
 
     def clean_ssh_list(self, get):
         """
-        @name 清空SSH登录记录 只保留最近一周的数据（从周日开始为一周）
+        @name 清空SSH登录记录
         @return: {"status": True, "msg": "清空成功"}
         """
-
+        
+        if 'message' in self.ssh_log_path:
+            return public.returnMsg(False, '当前系统SSH日志为融合日志无法通过此功能清理!')
+        
         public.ExecShell("rm -rf /var/log/secure-*;rm -rf /var/log/auth.log.*".format())
+        public.ExecShell("echo '' > {}".format(self.ssh_log_path))
 
         return public.returnMsg(True, '清理成功')
 
@@ -224,9 +228,9 @@ class main(JournalctlManage, SecureManage):
             return public.returnMsg(False, '移除失败,定时任务不存在!')
 
     def run_ban_login_failed_ip(self,get):
-        hour = get.get("hour", 1)
-        fail_count = get.get("fail_count", 10)
-        ban_hour = get.get("ban_hour", 10)
+        hour = get.get("hour/d", 1)
+        fail_count = get.get("fail_count/d", 10)
+        ban_hour = get.get("ban_hour/d", 10)
 
         exec_shell = "{path}/pyenv/bin/python3 -u {path}/script/ssh_ban_login_failed.py {hour} {fail_count} {ban_second}".format(
             path=public.get_panel_path(),
@@ -236,6 +240,13 @@ class main(JournalctlManage, SecureManage):
         )
         import panelTask
         task_obj = panelTask.bt_task()
+        task_path_log_path = "{}/tmp".format(public.get_panel_path())
+        if not os.path.exists(task_path_log_path):
+            os.makedirs(task_path_log_path, 0o644)
         task_id = task_obj.create_task('SSH封禁爆破IP程序', 0, exec_shell)
+        log_file ="{}/{}.log".format(task_path_log_path, str(task_id))
+        if not os.path.exists(log_file):
+            # 提前创建日志文件，防止前端读取错误
+            public.writeFile(log_file, '')
         public.set_module_logs('SSH', 'run_ban_login_failed_ip', 1)
         return {'status': True, 'msg': '任务已创建.', 'task_id': task_id}

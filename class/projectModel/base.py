@@ -85,7 +85,9 @@ class projectBase(LimitNet, Redirect):
 
         # 判断域名格式
         reg = "^([\w\-\*]{1,100}\.){1,24}([\w\-]{1,24}|[\w\-]{1,24}\.[\w\-]{1,24})$"
-        if not re.match(reg, domain):
+
+        import public
+        if not re.match(reg, domain) and not public.check_ip(domain.replace("[","").replace("]","")):
             return False
         return domain
 
@@ -289,9 +291,16 @@ class projectBase(LimitNet, Redirect):
     def is_nginx_http3(self):
         """判断nginx是否可以使用http3"""
         if getattr(self, "_is_nginx_http3", None) is None:
-            _is_nginx_http3 = public.ExecShell("nginx -V 2>&1| grep 'http_v3_module'")[0] != ''
+            _is_nginx_http3 = public.is_nginx_http3()
             setattr(self, "_is_nginx_http3", _is_nginx_http3)
         return self._is_nginx_http3
+
+    def ng_ssl_early_data_enabled(self):
+        """判断nginx是否可以使用http3"""
+        if getattr(self, "_ng_ssl_early_data_enabled", None) is None:
+            _ng_ssl_early_data_enabled = public.ng_ssl_early_data_enabled()
+            setattr(self, "_ng_ssl_early_data_enabled", _ng_ssl_early_data_enabled)
+        return self._ng_ssl_early_data_enabled
 
     def set_daemon_time(self, get):
         """设置守护进程重启检测时间"""
@@ -474,6 +483,8 @@ class projectBase(LimitNet, Redirect):
     # 域名编码转换
     @staticmethod
     def domain_to_puny_code(domain):
+        if "xn--" in domain:
+            return domain
         match = re.search(u"[^u\0000-u\001f]+", domain)
         if not match:
             return domain
@@ -484,6 +495,19 @@ class projectBase(LimitNet, Redirect):
                 return idna.encode(domain).decode("utf8")
         except:
             return domain
+
+    # 域名编码转换
+    @staticmethod
+    def try_unpunycode(domain: str):
+        if "xn--" not in domain:
+            return ""
+        try:
+            if domain.startswith("*."):
+                return "*." + idna.decode(domain[2:])
+            else:
+                return idna.decode(domain)
+        except:
+            return ""
 
     @staticmethod
     def del_user_ini_file(path, sub_path_limit=0):

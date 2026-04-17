@@ -1,11 +1,11 @@
 import re
-from typing import Iterable
+from typing import Iterable, Union
 from copy import deepcopy
-
 
 from .utils import _IndexBlockTools
 from .location import LocationTools
 from itertools import product
+from .nginx_info import NgInfo, DEFAULT_NGINX
 from .. import *
 
 
@@ -16,48 +16,50 @@ class ServerTools(_IndexBlockTools):
         self._server = server
         self._block: Block = server.get_block()
 
-    def add_domain(self, domain: str, port: str = "", ipv6: bool = False, ssl=False, http3=False):
-        # 查找或创建 server_name 指令
-        sn_list = self._block.find_directives("server_name")
-        if sn_list:
-            sn = sn_list[0]
-            if domain not in sn.get_parameters():
-                sn.get_parameters().append(domain)
-        else:
-            sn = Directive(name="server_name", parameters=[domain])
-            idx = self.find_index(self.OpL("http2"), self.OpR("listen"))
-            if idx >= 0:
-                self.insert_after(idx, sn)
-            else:
-                self.insert_after(0, sn)
-        if not port:
-            return
-        # listen
-        listen_list = self._server.get_block().find_directives("listen")
-        if not any(port in l.get_parameters() for l in listen_list):
-            param = [port]
-            if ssl:
-                param.append("ssl")
-            listens = [Directive(name="listen", parameters=param)]
-            if ipv6:
-                param = ["[::]:{}".format(port)]
-                if ssl:
-                    param.append("ssl")
-                listens.append(Directive(name="listen", parameters=param, inline_comment=["# ipv6"]))
+    # def add_domain(self, domain: str, port: str = "", ipv6: bool = False, ssl=False, http3=False):
+    #     # 查找或创建 server_name 指令
+    #     sn_list = self._block.find_directives("server_name")
+    #     if sn_list:
+    #         sn = sn_list[0]
+    #         if domain not in sn.get_parameters():
+    #             sn.get_parameters().append(domain)
+    #     else:
+    #         sn = Directive(name="server_name", parameters=[domain])
+    #         idx = self.find_index(self.OpL("http2"), self.OpR("listen"))
+    #         if idx >= 0:
+    #             self.insert_after(idx, sn)
+    #         else:
+    #             self.insert_after(0, sn)
+    #     if not port:
+    #         return
+    #     # listen
+    #     listen_list = self._server.get_block().find_directives("listen")
+    #     if not any(port in l.get_parameters() for l in listen_list):
+    #         param = [port]
+    #         if ssl:
+    #             param.append("ssl")
+    #         listens = [Directive(name="listen", parameters=param)]
+    #         if ipv6:
+    #             param = ["[::]:{}".format(port)]
+    #             if ssl:
+    #                 param.append("ssl")
+    #             listens.append(Directive(name="listen", parameters=param, inline_comment=["# ipv6"]))
+    #
+    #         if http3:
+    #             new_list = []
+    #             for listen in listens:
+    #                 l = deepcopy(listen)
+    #                 l.parameters[1] = "quic"
+    #                 new_list.append(l)
+    #             listens.extend(new_list)
+    #
+    #         idx = self.find_index(self.OpR("listen", +1), self.OpL("http2", -1), self.OpL("server_name", -1))
+    #         idx = max(0, idx)
+    #         self.insert_after(idx, *listens)
+    #
 
-            if http3:
-                new_list = []
-                for listen in listens:
-                    l = deepcopy(listen)
-                    l.parameters[1] = "quic"
-                    new_list.append(l)
-                listens.extend(new_list)
-
-            idx = self.find_index(self.OpR("listen", +1), self.OpL("http2", -1), self.OpL("server_name", -1))
-            idx = max(0, idx)
-            self.insert_after(idx, *listens)
-
-    def set_ssl_port(self, port: str, is_http3:bool=False, is_http2on:bool=False, is_ipv6:bool=False):
+    def set_ssl_port(self, port: str, is_http3:bool=False, is_http2on:bool=False,
+                     is_ipv6:bool=False):
         self._block.directives = [
             d for d in self._block.directives
             if not (d.get_name() == "listen" and any(p in ("ssl", "quic") for p in d.get_parameters()))
@@ -78,10 +80,12 @@ class ServerTools(_IndexBlockTools):
         if is_http2on:
             self._block.directives = [d for d in self._block.directives if d.get_name() != "http2"]
             add_dirs.append(Directive(name="http2", parameters=["on"]))
+        if is_http3:
+            self._block.directives = [d for d in self._block.directives if d.get_name() != "http3"]
+            add_dirs.append(Directive(name="http3", parameters=["on"]))
 
         idx = self.find_index(self.OpR("listen", +1), self.OpL("server_name"))
         self.insert_after(max(idx, 0), *add_dirs)
-
 
     def remove_domain(self, domain: str, port: str = ""):
         # 移除server_name中的domain
@@ -113,10 +117,11 @@ class ServerTools(_IndexBlockTools):
         idx = max(idx, 0)
         self.insert_after(idx, index)
 
-    def set_ssl(self, cert: str, key: str, protocols: Iterable[str] = ("TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"),
-                http3_header: str = ('quic=":443"; h3=":443"; h3-29=":443"; h3-27=":443";h3-25=":443";'
-                                     ' h3-T050=":443"; h3-Q050=":443";h3-Q049=":443";h3-Q048=":443"; '
-                                     'h3-Q046=":443"; h3-Q043=":443"')):
+    def _set_ssl(self, cert: str, key: str,
+                 http3_header: str = ('quic=":443"; h3=":443"; h3-29=":443"; h3-27=":443";h3-25=":443";'
+                                      ' h3-T050=":443"; h3-Q050=":443";h3-Q049=":443";h3-Q048=":443"; '
+                                      'h3-Q046=":443"; h3-Q043=":443"'),
+                 ng_info: NgInfo = DEFAULT_NGINX):
 
         # 只保障一组ssl_certificate/ssl_certificate_key/ssl_protocols
         idx = self.find_index(self.OpL("ssl_certificate"))
@@ -140,17 +145,16 @@ class ServerTools(_IndexBlockTools):
                 self.OpL("index", +1),
                 self.OpL("server_name", +1),
             )
-            print(idx)
             self.insert_after(max(idx, 0), *dir_list)
 
         idx = self.find_index(self.OpL("ssl_certificate_key", +1))
         ssl_protocols = self._server.top_find_directives("ssl_protocols")
         if len(ssl_protocols) >= 1:
-            ssl_protocols[0].parameters = list(protocols)
-            for d in ssl_protocols:
+            trans_(ssl_protocols[0], Directive).parameters = list(ng_info.tls_versions())
+            for d in ssl_protocols[1:]:
                 self._block.get_directives().remove(d)
         else:
-            self.insert_after(idx, Directive(name="ssl_protocols", parameters=list(protocols)))
+            self.insert_after(idx, Directive(name="ssl_protocols", parameters=ng_info.tls_versions()))
             idx += 1
 
         default = [
@@ -162,8 +166,14 @@ class ServerTools(_IndexBlockTools):
             ("add_header", "Strict-Transport-Security", ["Strict-Transport-Security", "\"max-age=31536000\""]),
             ("error_page", "497", ["497", "https://$host$request_uri"]),
         ]
-        if http3_header:
-            default.append(("add_header", "Alt-Svc", ["Alt-Svc", http3_header]))
+        if ng_info.http3_enabled():
+            default = default + [
+                ("quic_retry", '', ["on"]),
+                ("quic_gso", '', ["on"]),
+                ("ssl_early_data", '', ["on"]),
+            ]
+            if http3_header:
+                default.append(("add_header", "Alt-Svc", ["Alt-Svc", http3_header]))
         add_directives = []
         for d, dp, param in default:
             if dp:
@@ -174,6 +184,195 @@ class ServerTools(_IndexBlockTools):
                 add_directives.append(Directive(name=d, parameters=param))
 
         self.insert_after(idx, *add_directives)
+
+    def _remove_ssl(self):
+        ssl_directives = (
+            ("ssl_certificate",), ("ssl_certificate_key",),
+            ("ssl_protocols",), ("ssl_ciphers",),
+            ("ssl_prefer_server_ciphers",), ("ssl_session_tickets",),
+            ("ssl_session_cache",), ("ssl_session_timeout",),
+            ("add_header", "Strict-Transport-Security"), ("add_header", "Alt-Svc"),
+            ("quic_retry",), ("quic_gso",),
+            ("ssl_early_data",), ("error_page", "497"),
+        )
+        new_directives: List[Directive] = []
+        for d in self._block.directives:
+            if d.get_name() == "ssl_certificate":
+                if d.get_comment() == "#error_page 404/404.html;":
+                    new_directives.append(Directive(comment=["#error_page 404/404.html;"]))
+                continue
+            for d_name, *d_param in ssl_directives:
+                if d.get_name() == d_name:
+                    if d_param:
+                        if d.get_parameters() == d_param:
+                            break
+                    else:
+                        break
+            else:
+                new_directives.append(d)
+
+        has_tip = False
+        for idx in range(len(new_directives), -1, -1):
+            if "#error_page 404/404.html;" in new_directives[idx].comment:
+                if has_tip:
+                    new_directives[idx].comment.remove("#error_page 404/404.html;")
+                    has_tip = True
+
+        if not has_tip:
+            idx = self.find_index(
+                self.OpL("include", +1, parameter="nginx/well-known"),
+                self.OpL("root", +1),
+                self.OpL("index", +1),
+                self.OpL("server_name", +1),
+            )
+            self.insert_after(max(idx, 0), Directive(comment=["#error_page 404/404.html;"])),
+
+        self._block.directives = new_directives
+
+
+    def _set_ports(self, ports: List[int], has_ssl=False, ng_info=DEFAULT_NGINX):
+        ports = list(set([int(i) for i in ports]))
+        is_default_server = False
+        new_directives = []
+
+        for di in self._block.directives:
+            if di.get_name() != "listen":
+                if di.get_name() in ("http2", "http3"):
+                    continue  # 跟随443端口一起处理
+                new_directives.append(di)
+                continue  # 跳过非listen指令
+            if len(di.get_parameters()) == 0:
+                continue  # 无参数的listen直接删除
+            addr, other_parms = di.get_parameters()[0], di.get_parameters()[1:]
+            if addr.startswith("unix:"):
+                new_directives.append(di)
+                continue  # unix socket 监听不处理
+
+            if "default_server" in other_parms:
+                is_default_server = True
+            if "[" in addr and "]" in addr:
+                port_str = addr[addr.find("]") + 1:].rsplit(":", 1)[-1]
+            else:
+                if ":" in addr:
+                    port_str = addr.rsplit(":", 1)[1]
+                else:
+                    port_str = "80"
+            try:
+                port = int(port_str)
+            except:
+                continue  # 无法解析的端口不处理
+
+            if port == 443:
+                continue  # 443 端口额外处理，如果没有使用ssl，则不需要设置
+
+            if port not in ports:
+                continue  # 端口不在列表中的删除
+            else:
+                ports.remove(port)
+
+            new_directives.append(di)
+
+        self._block.directives = new_directives
+
+        add_list = []
+        other_parms: List[str] = []
+        if is_default_server:
+            other_parms.append("default_server")
+
+        for port in ports:
+            if port == 443:  # 443 端口额外处理，如果没有使用ssl，则不需要设置
+                continue
+            add_list.append(Directive(name="listen", parameters=[str(port), *other_parms]))
+            if ng_info.listen_ipv6():
+                add_list.append(Directive(name="listen", parameters=["[::]:" + str(port), *other_parms]))
+
+        if has_ssl:
+            if ng_info.listen_http2_enabled():
+                add_list.append(Directive(name="listen", parameters=["443", "ssl", "http2", *other_parms]))
+            else:
+                add_list.append(Directive(name="listen", parameters=["443", "ssl", *other_parms]))
+            if ng_info.listen_ipv6():
+                if ng_info.listen_http2_enabled():
+                    add_list.append(Directive(name="listen", parameters=["[::]:443", "ssl", "http2", *other_parms]))
+                else:
+                    add_list.append(Directive(name="listen", parameters=["[::]:443", "ssl", *other_parms]))
+
+            if ng_info.http3_enabled():
+                add_list.append(Directive(name="listen", parameters=["443", "quic", *other_parms]))
+                if ng_info.listen_ipv6():
+                    add_list.append(Directive(name="listen", parameters=["[::]:443", "ssl", "quic", *other_parms]))
+
+            if ng_info.http2_on_enabled():
+                add_list.append(Directive(name="http2", parameters=["on"]))
+            if ng_info.http3_enabled():
+                add_list.append(Directive(name="http3", parameters=["on"]))
+
+        self.insert(max(self.find_index(self.OpL("server_name")), 0), *add_list)
+
+    def modify_server_config(
+            self, domains: List[str] = None, ports: List[int] = None, root_path: str = None,
+            ssl_cert: str = None, ssl_key: str = None, ng_info: Union[NgInfo, str] = None,
+            http2https: bool=None,
+    ):
+
+        ng_info = ng_info or DEFAULT_NGINX
+        if isinstance(ng_info, str):
+            try:
+                ng_info = NgInfo(ng_info)
+            except Exception:
+                ng_info = DEFAULT_NGINX
+        if ng_info.version is None:
+            raise ValueError("Nginx binary path cannot be determined")
+
+        if bool(ssl_cert) != bool(ssl_key):
+            raise ValueError("ssl_cert and ssl_key must be both set or both unset")
+
+        has_ssl = False
+        if self._server.top_find_directives("ssl_certificate") and self._server.top_find_directives(
+                "ssl_certificate_key"):
+            has_ssl = True
+
+        if ssl_cert == ssl_key == "":
+            has_ssl = False
+        elif isinstance(ssl_cert, str) and isinstance(ssl_key, str) and ssl_cert and ssl_key:
+            has_ssl = True
+
+        # 处理域名
+        if domains:
+            domains = list(set(domains))
+            server_names = self._server.top_find_directives("server_name")
+            for sn in server_names[1:]:
+                self._block.directives.remove(sn)
+            server_name = trans_(server_names[0], Directive)
+            server_name.parameters = domains
+
+        # 处理端口
+        if ports:
+            self._set_ports(ports, has_ssl=has_ssl, ng_info=ng_info)
+
+        if root_path:
+            roots = self._server.top_find_directives("root")
+            if len(roots) == 0:
+                idx = self.find_index(
+                    self.OpL("index", +1),
+                    self.OpL("include", 0),
+                    self.OpL("server_name", +1),
+                )
+                self.insert(max(idx, 0), Directive(name="root", parameters=[root_path]))
+            else:
+                for root in roots[1:]:
+                    self._block.directives.remove(root)
+                r = trans_(roots[0], Directive)
+                r.parameters = [root_path]
+
+        if ssl_cert and ssl_key:
+            self._set_ssl(ssl_cert, ssl_key, ng_info=ng_info)
+        if ssl_cert == "" and ssl_key == "":
+            self._remove_ssl()
+
+        if has_ssl:
+            http2https = ng_info.default_http2https() if http2https is None else http2https
+            self.set_http2https(http2https)
 
     def set_php_info(self, php_version: str):
         # 先移除原有PHP-INFO块
@@ -212,7 +411,8 @@ class ServerTools(_IndexBlockTools):
             else:
                 now_directives.append(d)
         if start_idx:
-            now_directives.insert(start_idx, Directive(name="", comment=["#IP-RESTRICT-START 限制访问ip的配置，IP黑白名单"]))
+            now_directives.insert(start_idx,
+                                  Directive(name="", comment=["#IP-RESTRICT-START 限制访问ip的配置，IP黑白名单"]))
         block.directives = now_directives
         if not deny_ips and not allow_ips:
             return
@@ -299,7 +499,7 @@ class ServerTools(_IndexBlockTools):
     def set_gzip(self, status: bool, level: int, min_size: str, gz_type: List[str]):
         # 先移除原有gzip相关指令
         block = self._server.get_block()
-        gzip_d =  None
+        gzip_d = None
         for d in block.directives:
             if d.get_name() == "gzip":
                 gzip_d = d
@@ -444,7 +644,7 @@ class ServerTools(_IndexBlockTools):
             ("proxy_set_header", "Connection", ["Connection", "$connection_upgrade"]),
         )
         add_dirs: List[Directive] = []
-        dirs_list: List[Directive]  = []
+        dirs_list: List[Directive] = []
         for name, param, param_vals in default:
             if param:
                 tmp_dirs = self._server.top_find_directives_with_param(name, param)
@@ -474,7 +674,7 @@ class ServerTools(_IndexBlockTools):
         else:
             add_dirs[0].inline_comment = ["# 支持websocket链接"]
             idx = self.find_index(
-            self.OpL(comment="WEBSOCKET-SUPPORT START", offset=+1),
+                self.OpL(comment="WEBSOCKET-SUPPORT START", offset=+1),
                 self.OpL(comment="WEBSOCKET-SUPPORT END"),
                 self.OpL("location", +1, r".*\.(css|js"),  # 放到全局PROXY_CACHE后面
                 self.OpL("gzip_disable", +1),  # 放到gzip配置的后面
@@ -487,8 +687,71 @@ class ServerTools(_IndexBlockTools):
             )
             self.insert_after(max(idx, 0), *add_dirs)
 
+    # create 为True时，需要传入 path和modifier，此时会尝试创建一个空的location，并返回
+    # sub_directives 检查匹配的location中是否包含全部的这些指定指令，可以传递多个指令，指令可以为列表，此时[0]=>匹配指令，[:1]=>匹配参数
+    def get_location(self,
+                     path: Optional[str] = None,
+                     modifier: Optional[str] = None,
+                     create: bool = False,
+                     sub_directives: Optional[List[Union[str, List[str]]]] = None
+                     ) -> List[Location]:
+        tmp_locations = self._server.top_find_directives("location")
+        locs: List[Location] = []
+        for loc_if in tmp_locations:
+            loc_obj = trans_(loc_if, Location)
+            if not loc_obj:
+                continue
+            if path and loc_obj.match != path:
+                continue
+            if modifier is not None and loc_obj.modifier != modifier:
+                continue
+            if sub_directives:
+                matched = True
+                for sub_directive in sub_directives:
+                    if isinstance(sub_directive, str):
+                        if not loc_obj.top_find_directives_with_param(sub_directive):
+                            matched = False
+                            break
+                    elif isinstance(sub_directive, (list, tuple, Iterable)) and len(sub_directive) >= 1:
+                        if not loc_obj.top_find_directives_with_param(sub_directive[0], *sub_directive[1:]):
+                            matched = False
+                            break
+                if not matched:
+                    continue
+            locs.append(loc_obj)
+
+        if locs:
+            return locs
+
+        if create and (not path):
+            raise ValueError("创建时请指定path")
+
+        if create:
+            modifier = "" if modifier is None else modifier
+            l = Location(
+                name="location",
+                comment=list(),
+                parameters=[path] if not modifier else [modifier, path],
+                block=Block(directives=[]),
+                _parent=self._server,
+                modifier=modifier,
+                match=path
+            )
+            ops = [
+                self.OpL(comment="HTTP反向代理相关配置开始", offset=+1),
+                self.OpL(comment="PROXY-CONF-START", offset=+1),
+                self.OpL("location", +1),
+                self.OpL("server_name", +1),
+            ]
+            idx = self.find_index(*ops)
+            self.insert_after(min(max(idx, 0), len(self._block.directives)), l)
+            locs.append(l)
+
+        return locs
+
     # is_proxy = True 当需要创建 location 时插入到 #PROXY-CONF-END
-    def get_location(self, path: str, modifier: Optional[str] = None, create: bool = True, comment="", is_proxy: bool = True) -> Optional[LocationTools]:
+    def get_proxy_location(self, path: str, modifier: Optional[str] = None, create: bool = True, comment="",
+                           is_proxy: bool = True) -> Optional[LocationTools]:
         tmp_locations = self._server.top_find_directives("location")
         loc: Optional[LocationTools] = None
         for loc_if in tmp_locations:
@@ -514,16 +777,17 @@ class ServerTools(_IndexBlockTools):
             ]
             if is_proxy:
                 ops = [
-                    self.OpL(comment="PROXY-CONF-END"),
-                    self.OpL(comment="PROXY-CONF-START", offset=+1),
-                ] +  ops
+                          self.OpL(comment="PROXY-CONF-END"),
+                          self.OpL(comment="PROXY-CONF-START", offset=+1),
+                      ] + ops
             idx = self.find_index(*ops)
             self.insert_after(min(max(idx, 0), len(self._block.directives)), l)
             loc = LocationTools(l)
 
         return loc
 
-    def remove_location(self, path: str, modifier: Optional[str]=None):
+    def remove_location(self, path: str, modifier: Optional[str] = None,
+                        hold_comments:Iterable[str] = ("PROXY-CONF", "HTTP反向代理") ):
         tmp_locations = self._server.top_find_directives("location")
         loc: Optional[Location] = None
         for loc_if in tmp_locations:
@@ -535,7 +799,7 @@ class ServerTools(_IndexBlockTools):
                 break
 
         idx = self._block.directives.index(loc)
-        if any("PROXY-CONF" in i for i in loc.get_comment()):
+        if any(any(c in i for c in hold_comments) for i in loc.get_comment()):
             self._block.directives.remove(loc)
             self._block.directives.insert(idx, Directive(name="", comment=loc.get_comment()))
         else:
@@ -618,7 +882,7 @@ class ServerTools(_IndexBlockTools):
 
         return
 
-    def set_log_path(self, access_path: str, error_path: str, uninclude: List[str] = ("bt-monitor.sock", )):
+    def set_log_path(self, access_path: str, error_path: str, uninclude: List[str] = ("bt-monitor.sock",)):
         access_logs = [
             i for i in self._block.directives
             if i.get_name() == "access_log" and not any(unp in p for unp, p in product(uninclude, i.get_parameters()))
@@ -644,7 +908,7 @@ class ServerTools(_IndexBlockTools):
         if add_dirs:
             self._block.directives.extend(add_dirs)
 
-    def set_static_cache(self, old_suffix:List[str], new_suffix:List[str], time_out: str) -> Optional[str]:
+    def set_static_cache(self, old_suffix: List[str], new_suffix: List[str], time_out: str) -> Optional[str]:
         static_pattern = re.compile(r'\.\*\\\.\((?P<suffix>[^)]+)\)\??\$')
         tmp_locations = self._server.top_find_directives_with_param("location", "~", static_pattern)
         new_match = r".*\.({})$".format("|".join([re.escape(s) for s in new_suffix]))
@@ -711,8 +975,7 @@ class ServerTools(_IndexBlockTools):
             self.insert_after(idx, new_loc)
             return None
 
-
-    def remove_static_cache(self, old_suffix:List[str]) -> Optional[str]:
+    def remove_static_cache(self, old_suffix: List[str]) -> Optional[str]:
         if not old_suffix:
             return "请指定需要删除的静态缓存后缀"
         static_pattern = re.compile(r'\.\*\\\.\((?P<suffix>[^)]+)\)\??\$')
@@ -739,3 +1002,54 @@ class ServerTools(_IndexBlockTools):
             return None
         else:
             return "未匹配到静态缓存配置，无法删除"
+
+    def set_stop_status(self, to_stop: bool):
+        if to_stop:  # 停止
+            loc_list = self._server.top_find_directives_with_param("location", "=", "/bt-stop.html")
+            if not loc_list:
+                self.insert_after(
+                    0,
+                    Location(
+                        name="location",
+                        modifier="=",
+                        match="/bt-stop.html",
+                        parameters=["=", "/bt-stop.html"],
+                        inline_comment=["# 网站停止，并设置网站停止页面"],
+                        block=Block(directives=[
+                            Directive(name="root", parameters=["/www/server/stop"])
+                        ])
+                    )
+                )
+
+            rewrite_all_list = self._server.top_find_directives_with_param(
+                "rewrite", "^/(?!bt-stop\.html$).*", "/bt-stop.html", "last"
+            )
+
+            new_rewrite_all = Directive(
+                name="rewrite",
+                parameters=[
+                    "^/(?!bt-stop\.html$).*",
+                    "/bt-stop.html",
+                    "last"
+                ]
+            )
+
+            if not rewrite_all_list:
+                self.insert_after(0, new_rewrite_all)
+
+            else:
+                for tmp in rewrite_all_list:
+                    self._block.directives.remove(tmp)
+                self.insert_after(0, new_rewrite_all)
+        else:  # 关闭
+            loc_list = self._server.top_find_directives_with_param("location", "=", "/bt-stop.html")
+            if loc_list:
+                for tmp in loc_list:
+                    self._block.directives.remove(tmp)
+
+            rewrite_all_list = self._server.top_find_directives_with_param(
+                "rewrite", "^/(?!bt-stop\.html$).*", "/bt-stop.html", "last"
+            )
+            if rewrite_all_list:
+                for tmp in rewrite_all_list:
+                    self._block.directives.remove(tmp)

@@ -149,7 +149,7 @@ class RealProxy:
         # vhost文件
         vhost_path = "%s/vhost/nginx/%s%s.conf" % (self.panel_path, self.config_prefix, site_name)
 
-        rep_location = re.compile(r"location\s+(\^~\s*)?%s\s*{" % proxy_dir)
+        rep_location = re.compile(r"location\s+(\^~\s*)?%s\s*{" % re.escape(proxy_dir))
 
         for i in [rewrite_conf_path, vhost_path]:
             conf = read_file(i)

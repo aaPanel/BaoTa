@@ -5984,6 +5984,9 @@ def install_mysql_client():
         @author hwliang<2022-01-14>
         @return void
     '''
+    if not os.path.exists('/usr/bin/mysql') or os.path.exists('/usr/sbin/mysql'):
+        return
+    
     if os.path.exists('/usr/bin/yum'):
         os.system("yum install mariadb -y")
         if not os.path.exists('/usr/bin/mysql'):

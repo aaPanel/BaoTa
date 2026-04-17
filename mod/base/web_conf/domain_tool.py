@@ -1,26 +1,21 @@
 import os
 import re
+import idna
 from typing import Tuple, Optional, Union, List, Dict
 
 from .util import webserver, check_server_config, write_file, read_file, service_reload, listen_ipv6, use_http2
 
 
 def domain_to_puny_code(domain: str) -> str:
-    new_domain = ''
-    for dkey in domain.split('.'):
-        if dkey == '*' or dkey == "":
-            continue
-        # 匹配非ascii字符
-        match = re.search(u"[\x80-\xff]+", dkey)
-        if not match:
-            match = re.search(u"[\u4e00-\u9fa5]+", dkey)
-        if not match:
-            new_domain += dkey + '.'
+    try:
+        if "xn--" in domain:
+            return domain
+        if domain.startswith("*."):
+            return "*." + idna.encode(domain[2:]).decode("ascii")
         else:
-            new_domain += 'xn--' + dkey.encode('punycode').decode('utf-8') + '.'
-    if domain.startswith('*.'):
-        new_domain = "*." + new_domain
-    return new_domain[:-1]
+            return idna.encode(domain).decode("ascii")
+    except:
+        return domain
 
 
 def check_domain(domain: str) -> Optional[str]:
@@ -31,7 +26,9 @@ def check_domain(domain: str) -> Optional[str]:
 
     # 判断域名格式
     rep_domain = re.compile(r"^([\w\-*]{1,100}\.){1,24}([\w\-]{1,24}|[\w\-]{1,24}\.[\w\-]{1,24})$")
-    if not rep_domain.match(domain):
+
+    import public
+    if not rep_domain.match(domain) and not public.check_ip(domain.replace("[","").replace("]","")):
         return None
     return domain
 
@@ -41,8 +38,11 @@ def is_domain(domain: str) -> bool:
         r'(?:[A-Z0-9_](?:[A-Z0-9-_]{0,247}[A-Z0-9])?\.)+(?:[A-Z]{2,6}|[A-Z0-9-]{2,}(?<!-))\Z',
         re.IGNORECASE
     )
-    return True if domain_regex.match(domain) else False
-
+    import public
+    if public.check_ip(domain.replace("[","").replace("]","")) or domain_regex.match(domain):
+        return True
+    else:
+        return False
 
 # 检查原始的域名列表，返回[(domain, port)] 的格式，并返回其中有错误的项目
 def normalize_domain(*domains: str) -> Tuple[List[Tuple[str, str]], List[Dict]]:
@@ -50,7 +50,14 @@ def normalize_domain(*domains: str) -> Tuple[List[Tuple[str, str]], List[Dict]]:
     for i in domains:
         if not i.strip():
             continue
-        d_list = [i.strip() for i in i.split(":")]
+        if "[" in i and "]" in i:
+            # ipv6
+            if "]:" in i:
+                d_list = [i.strip() for i in i.rsplit(":", 1)]
+            else:
+                d_list = [i.strip(), "80"]
+        else:
+            d_list = [i.strip() for i in i.split(":")]
         if len(d_list) > 1:
             try:
                 p = int(d_list[1])

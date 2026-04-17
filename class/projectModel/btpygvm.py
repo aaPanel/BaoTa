@@ -72,7 +72,7 @@ class _Mirror(object):
             return sys.float_info.max
 
     def get_versions_by_cloud(self, arch: str) -> Tuple[Union[List["GoVersion"], str], Optional[List["GoVersion"]]]:
-        raise NotImplemented()
+        return "请求云端数据错误！请检查网络连接", None
 
     def download_url(self, go_v: "GoVersion") -> str:
         raise NotImplemented()
@@ -186,6 +186,7 @@ class _GoOfficialCNMirror(_GoOfficialDeVMirror):
     name = "官方源"
 
 
+# 2026-01-16 验证中科大源无法使用
 class _UstcMirror(_Mirror):
     _cloud = "https://mirrors.ustc.edu.cn/golang/"
     name = "中科大源"
@@ -288,8 +289,7 @@ def get_cloud() -> _Mirror:
         except:
             pass
 
-    # 都无法获取时，使用 中科大 的源
-    return _UstcMirror()
+    return _Mirror()
 
 
 class GoVersion:

@@ -19,7 +19,7 @@ def clear_hosts():
         requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
 
         url = 'https://www.bt.cn/api/ip/info_json'
-        res = requests.post(url, verify=False)
+        res = requests.post(url, verify=False, timeout=30)
 
         if res.status_code == 404:
             remove = 1

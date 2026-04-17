@@ -171,6 +171,8 @@ class panelRedirect:
         rep = "http(s)?\:\/\/([a-zA-Z0-9][-a-zA-Z0-9]{0,62}\.)+([a-zA-Z0-9][a-zA-Z0-9]{0,62})+.?"
         if 'tourl' in get and get.tourl and not re.match(rep, get.tourl):
             return public.returnMsg(False, '目标URL格式不对 %s' + get.tourl)
+        if get.tourl.endswith("/"): # 无论是否以/结尾都移除，并在使用携带路由参数时自动补充
+            get.tourl = get.tourl[:-1]
 
         #非404页面重定向检测项
         if 'errorpage' not in get:
@@ -481,11 +483,11 @@ class panelRedirect:
                 else:
                     redirecttype = "redirect"
                 if int(get.holdpath) == 1 and redirecttype == "permanent":
-                    rconf += pathstr % (redirectpath,tourl,"$1",redirecttype)
+                    rconf += pathstr % (redirectpath,tourl,"/$1",redirecttype)
                 elif int(get.holdpath) == 0 and redirecttype == "permanent":
                     rconf += pathstr % (redirectpath, tourl,"",redirecttype)
                 elif int(get.holdpath) == 1 and redirecttype == "redirect":
-                    rconf += pathstr % (redirectpath,tourl,"$1",redirecttype)
+                    rconf += pathstr % (redirectpath,tourl,"/$1",redirecttype)
                 elif int(get.holdpath) == 0 and redirecttype == "redirect":
                     rconf += pathstr % (redirectpath, tourl,"",redirecttype)
             rconf += "#REWRITE-END"

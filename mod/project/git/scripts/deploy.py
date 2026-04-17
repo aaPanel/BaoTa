@@ -11,6 +11,9 @@ if '/www/server/panel' not in sys.path:
     sys.path.insert(0, '/www/server/panel')
 
 import public
+env = os.environ.copy()
+if 'HOME' not in env:
+    env['HOME'] = os.path.expanduser("~")
 
 # 全局日志收集变量
 DEPLOY_LOGS = []
@@ -33,7 +36,7 @@ def run_cmd(cmd, cwd=None):
     """执行命令并返回输出"""
     cmd = f'bash -l -c \'{cmd}\''
     try:
-        result = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True)
+        result = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True, env=env)
         if result.stdout:
             print(result.stdout.strip())
             DEPLOY_LOGS.append(result.stdout.strip())
@@ -65,14 +68,14 @@ def display_git_info(site_path):
     try:
         # 获取当前分支
         result = subprocess.run(f"cd {site_path} && git rev-parse --abbrev-ref HEAD", 
-                              shell=True, capture_output=True, text=True)
+                              shell=True, capture_output=True, text=True, env=env)
         if result.returncode == 0:
             current_branch = result.stdout.strip()
             log(f"当前分支: {current_branch}")
             
             # 获取最新commit信息
             result = subprocess.run(f"cd {site_path} && git log -1 --pretty=format:'%h|%s|%an'", 
-                                  shell=True, capture_output=True, text=True)
+                                  shell=True, capture_output=True, text=True, env=env)
             if result.returncode == 0:
                 commit_info = result.stdout.strip().split('|')
                 if len(commit_info) >= 3:
@@ -220,11 +223,11 @@ def save_deploy_log(config, success, error_msg="", deploy_mode=1):
         status = 1 if success else 0
         
         # 获取commit信息
-        commit_hash, commit_message, commit_author = "", "", ""
+        commit_hash, commit_message, commit_author, current_branch = "", "", "", ""
         if site_name:
             site_info = get_site_info(site_name)
             if site_info:
-                commit_hash, commit_message, commit_author = get_commit_info(site_info['path'])
+                commit_hash, commit_message, commit_author, current_branch = get_commit_info(site_info['path'])
         
         # 插入日志记录
         public.M('git_deploy_logs').insert({
@@ -236,7 +239,7 @@ def save_deploy_log(config, success, error_msg="", deploy_mode=1):
             'deploy_time': deploy_time,
             'duration': round(duration, 2),
             'commit_hash': commit_hash,
-            'branch': branch,
+            'branch': current_branch,
             'log_content': log_content,
             'error_msg': error_msg,
             'deploy_script': deploy_script,
@@ -244,6 +247,11 @@ def save_deploy_log(config, success, error_msg="", deploy_mode=1):
             'commit_message': commit_message,
             'commit_author': commit_author
         })
+        
+        # 更新数据库中的分支信息（如果发生了变化）
+        if branch != current_branch:
+            public.M('git_manager').where('id=?', (git_manager_id,)).update({'branch': current_branch})
+            log(f"更新配置分支: {branch} -> {current_branch}", "📝")
         
         mode_name = {1: "自动部署", 2: "手动分支部署", 3: "手动回滚部署"}.get(deploy_mode, "未知")
         log(f"部署日志已保存 ({mode_name}, git_manager_id: {git_manager_id})", "📋")
@@ -256,26 +264,34 @@ def get_commit_info(site_path):
     commit_hash = ""
     commit_message = ""
     commit_author = ""
+    branch = ""
     
     try:
         # 获取commit hash
         result = subprocess.run(f"cd {site_path} && git rev-parse HEAD", 
-                                shell=True, capture_output=True, text=True)
+                                shell=True, capture_output=True, text=True, env=env)
         if result.returncode == 0:
             commit_hash = result.stdout.strip()
             
             # 获取commit message和author
             result = subprocess.run(f"cd {site_path} && git log -1 --pretty=format:'%s|%an' {commit_hash}", 
-                                  shell=True, capture_output=True, text=True)
+                                  shell=True, capture_output=True, text=True, env=env)
             if result.returncode == 0:
                 log_info = result.stdout.strip().split('|')
                 if len(log_info) >= 2:
                     commit_message = log_info[0]
                     commit_author = log_info[1]
+        
+        # 获取当前分支
+        result = subprocess.run(f"cd {site_path} && git rev-parse --abbrev-ref HEAD", 
+                              shell=True, capture_output=True, text=True, env=env)
+        if result.returncode == 0:
+            branch = result.stdout.strip()
+            
     except:
         pass
     
-    return commit_hash, commit_message, commit_author
+    return commit_hash, commit_message, commit_author, branch
 
 def get_deploy_logs():
     """获取完整的部署日志"""

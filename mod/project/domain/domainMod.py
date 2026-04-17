@@ -200,7 +200,7 @@ class main:
 
     def poxy_whois_query(self, get):
         public.set_module_logs("poxy_whois_query", "poxy_whois_query")
-        rep = requests.get("https://www.bt.cn/api/whois/query", vars(get))
+        rep = requests.get(public.get_home_node("https://www.bt.cn/api/whois/query"), vars(get))
         try:
             data = rep.json()
         except Exception as e:

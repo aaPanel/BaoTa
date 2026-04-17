@@ -164,7 +164,8 @@ class ServerNodeDB:
         cur.execute("PRAGMA table_info(node)")
         existing_cols = [row[1] for row in cur.fetchall()]
         if "ssh_test" in existing_cols:
-            print("字段 ssh_test 已存在")
+            pass
+            # print("字段 ssh_test 已存在")
         else:
             cur.execute("ALTER TABLE node ADD COLUMN ssh_test INTEGER DEFAULT (0)")
         conn.commit()

@@ -474,6 +474,31 @@
 				[3, "remark", "VARCHAR", 0, "''", 0],
 				[4, "add_in_path", "INTEGER", 0, 0, 0]
 			]
+		},
+		"compose_backup": {
+			"sql": "CREATE TABLE `compose_backup` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `type` VARCHAR DEFAULT '', `name` VARCHAR DEFAULT '', `path` VARCHAR DEFAULT '', `file_size` INTEGER DEFAULT 0, `compose_path` VARCHAR DEFAULT '', `time` INTEGER DEFAULT 0, `ps` VARCHAR DEFAULT '');",
+			"fields": [
+				[0, "id", "INTEGER", 0, 0, 1],
+				[1, "type", "VARCHAR", 0, "''", 0],
+				[2, "name", "VARCHAR", 0, "''", 0],
+                [3, "path", "VARCHAR", 0, "''", 0],
+				[4, "file_size", "INTEGER", 0, 0, 0],
+				[5, "compose_path", "VARCHAR", 0, "''", 0],
+				[6, "time", "INTEGER", 0, 0, 0],
+				[7, "ps", "VARCHAR", 0, "''", 0]
+			],
+			"comment":{
+				"type":{
+					"1":"本机备份",
+					"2":"上传备份"
+				},
+				"name":"备份名称",
+				"path":"备份文件路径",
+				"file_size":"备份文件大小",
+				"compose_path":"备份compose文件路径",
+				"time":"备份时间",
+				"ps":"备份备注"
+			}
 		}
 	},
 	"firewall.db": {
@@ -877,7 +902,42 @@
 				[8, "backup_path", "TEXT", 0, "''", 0],
 				[9, "time", "TEXT", 0, "''", 0]
 			]
-		}
+		},
+        "git_manager": {
+          "sql": "CREATE TABLE `git_manager` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `type` TEXT,\n  `repo_url` TEXT DEFAULT '',\n  `branch` TEXT DEFAULT '',\n  `type_parm` TEXT DEFAULT '',\n  `webhook_name` TEXT DEFAULT '',\n `webhook_url` TEXT DEFAULT '',\n  `deploy_script` TEXT DEFAULT '',\n  `args` TEXT DEFAULT ''\n)",
+          "fields": [
+            [0, "id", "INTEGER", 0, 0, 1],
+            [1, "type", "TEXT", 0, "''", 0],
+            [2, "repo_url", "TEXT", 0, "''", 0],
+            [3, "branch", "TEXT", 0, "''", 0],
+            [4, "type_parm", "TEXT", 0, "''", 0],
+            [5, "webhook_name", "TEXT", 0, "''", 0],
+            [6, "webhook_url", "TEXT", 0, "''", 0],
+            [7, "deploy_script", "TEXT", 0, "''", 0],
+            [8, "args", "TEXT", 0, "'{}'", 0]
+          ]
+        },
+        "git_deploy_logs": {
+          "sql": "CREATE TABLE `git_deploy_logs` (\n  `id` INTEGER PRIMARY KEY AUTOINCREMENT,\n  `git_manager_id` INTEGER DEFAULT 0,\n  `webhook_name` TEXT DEFAULT '',\n  `site_name` TEXT DEFAULT '',\n  `type` TEXT DEFAULT '',\n  `status` INTEGER DEFAULT 0,\n  `deploy_time` INTEGER DEFAULT 0,\n  `duration` REAL DEFAULT 0,\n  `commit_hash` TEXT DEFAULT '',\n  `branch` TEXT DEFAULT '',\n  `log_content` TEXT DEFAULT '',\n  `error_msg` TEXT DEFAULT '',\n  `deploy_script` TEXT DEFAULT '',\n  `deploy_mode` INTEGER DEFAULT 1,\n  `commit_message` TEXT DEFAULT '',\n  `commit_author` TEXT DEFAULT ''\n)",
+          "fields": [
+            [0, "id", "INTEGER", 0, 0, 1],
+            [1, "git_manager_id", "INTEGER", 0, "0", 0],
+            [2, "webhook_name", "TEXT", 0, "''", 0],
+            [3, "site_name", "TEXT", 0, "''", 0],
+            [4, "type", "TEXT", 0, "''", 0],
+            [5, "status", "INTEGER", 0, "0", 0],
+            [6, "deploy_time", "INTEGER", 0, "0", 0],
+            [7, "duration", "REAL", 0, "0", 0],
+            [8, "commit_hash", "TEXT", 0, "''", 0],
+            [9, "branch", "TEXT", 0, "''", 0],
+            [10, "log_content", "TEXT", 0, "''", 0],
+            [11, "error_msg", "TEXT", 0, "''", 0],
+            [12, "deploy_script", "TEXT", 0, "''", 0],
+            [13, "deploy_mode", "INTEGER", 0, "1", 0],
+            [14, "commit_message", "TEXT", 0, "''", 0],
+            [15, "commit_author", "TEXT", 0, "''", 0]
+          ]
+        }
 	},
 	"client_info.db": {
 		"client_info": {

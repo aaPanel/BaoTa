@@ -49,7 +49,7 @@ class SiteMonitorViolationWordTask(BaseTask):  # 网站违规词告警检查
         @param template: 任务的模板信息
         @return:
         """
-        _, items_type = web_info_data(project_types=("PHP",))
+        _, items_type = web_info_data(project_types=("PHP",), value_field="id")
         template["field"][0]["items"].extend(items_type["PHP"])
         return template
 
@@ -187,6 +187,15 @@ class VulnerabilityScanningTask(BaseTask):
 
     @classmethod
     def set_push_task(cls, status: bool, day: int, sender: list):
+        if not status:
+            task_conf = TaskConfig()
+            target = task_conf.get_by_keyword("vulnerability_scanning", "vulnerability_scanning")
+            if target:
+                task_conf.config.remove(target)
+                task_conf.save_config()
+                cls.del_crontab()
+                return
+
         push_data = {
             "template_id": "122",
             "task_data": {

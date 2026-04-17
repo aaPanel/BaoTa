@@ -14,6 +14,7 @@ from time import time
 
 from cachelib.base import BaseCache
 from cachelib.serializers import FileSystemSerializer
+from cachelib.simple import SimpleCache
 
 
 class FileSystemCache(BaseCache):
@@ -53,6 +54,8 @@ class FileSystemCache(BaseCache):
         self._path = cache_dir
         self._threshold = threshold
         self._hash_method = hash_method
+        # 当出现磁盘空间不足时，触发使用内存进行会话存储的能力，保证用户可登录，操作删除垃圾文件
+        self._mem_cache = SimpleCache(threshold=threshold, default_timeout=default_timeout)
 
         # Mode set by user takes precedence. If no mode has
         # been given, we need to set the correct default based
@@ -193,6 +196,7 @@ class FileSystemCache(BaseCache):
                 self._update_count(delta=-i)
                 return False
         self._update_count(value=0)
+        self._mem_cache.clear()
         return True
 
     def _get_filename(self, key: str) -> str:
@@ -219,6 +223,8 @@ class FileSystemCache(BaseCache):
                 filename,
                 exc_info=True,
             )
+        if self._mem_cache.has(key):
+            return self._mem_cache.get(key)
         return None
 
     def add(self, key: str, value: _t.Any, timeout: _t.Optional[int] = None) -> bool:
@@ -267,7 +273,9 @@ class FileSystemCache(BaseCache):
             self._run_safely(os.chmod, filename, self._mode)
 
             fsize = Path(filename).stat().st_size
-        except OSError:
+        except OSError as e:
+            if "No space left on device" in str(e):
+                return self._mem_cache.set(key, value, timeout)
             logging.warning(
                 "Exception raised while handling cache file '%s'",
                 filename,
@@ -281,6 +289,8 @@ class FileSystemCache(BaseCache):
             return fsize > 0  # function should fail if file is empty
 
     def delete(self, key: str, mgmt_element: bool = False) -> bool:
+        if self._mem_cache.has(key):
+            self._mem_cache.delete(key)
         try:
             os.remove(self._get_filename(key))
         except FileNotFoundError:  # if file doesn't exist we consider it deleted
@@ -295,6 +305,8 @@ class FileSystemCache(BaseCache):
             return True
 
     def has(self, key: str) -> bool:
+        if self._mem_cache.has(key):
+            return True
         filename = self._get_filename(key)
         try:
             with self._safe_stream_open(filename, "rb") as f:

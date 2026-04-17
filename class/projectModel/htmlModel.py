@@ -20,6 +20,7 @@ from typing import Optional, List, Iterator, Tuple, Dict
 
 import public
 from projectModel.base import projectBase
+from mod.base.web_conf.domain_tool import normalize_domain
 
 
 class main(projectBase):
@@ -146,7 +147,7 @@ class main(projectBase):
         if not project_find:
             return public.return_error('指定项目不存在')
         project_name = project_find["name"]
-        domain_arr = get.domain.split(':')
+        domain_arr = get.domain.rsplit(':', 1)
         if len(domain_arr) == 1:
             domain_arr.append("80")
 
@@ -172,7 +173,7 @@ class main(projectBase):
         for i in domain_list:
             if not i.strip():
                 continue
-            d_list = [i.strip() for i in i.split(":")]
+            d_list = [i.strip() for i in i.rsplit(":", 1)]
             if len(d_list) > 1:
                 try:
                     p = int(d_list[1])
@@ -235,7 +236,13 @@ class main(projectBase):
             domain = domain.strip()
             if not domain:
                 continue
-            domain_arr = domain.split(':')
+            if "[" in domain and "]" in domain:  # IPv6格式特殊处理
+                if "]:" in domain:
+                    domain_arr = domain.rsplit(":", 1)
+                else:
+                    domain_arr = [domain]
+            else:
+                domain_arr = domain.split(':')
             domain_arr[0] = self.check_domain(domain_arr[0])
             if domain_arr[0] is False:
                 res_domains.append({"name": domain, "status": False, "msg": '域名格式错误'})
@@ -358,7 +365,7 @@ class main(projectBase):
 
     @staticmethod
     def _format_path_str(path: str):
-        return path.replace('//', '/').rstrip("/")
+        return path.replace('//', '/').rstrip("/").strip()
 
     @staticmethod
     def _check_site_path(path):
@@ -477,6 +484,8 @@ class main(projectBase):
                                            '<a style="color:red;">' + isError.replace("\n", '<br>') + '</a>')
         public.set_module_logs("create_html_project", "create")
         get.path = self._format_path_str(get.path)
+        if re.search(r"\s", get.path):
+            return public.returnMsg(False, "网站目录路径不能包含空白字符")
         if not public.check_site_path(get.path):
             a, c = public.get_sys_path()
             return public.returnMsg(False, '请不要将网站根目录设置到以下关键目录中: <br>{}'.format("<br>".join(a + c)))
@@ -484,10 +493,14 @@ class main(projectBase):
             siteMenu = json.loads(get.webname.strip())
         except json.JSONDecodeError:
             return public.returnMsg(False, 'webname参数格式不正确，应该是可被解析的JSON字符串')
-        site_name = self.domain_to_puny_code(siteMenu['domain'].strip().split(':')[0]).strip().lower()
+        domain_list, err = normalize_domain(*(siteMenu['domain'], *siteMenu['domainlist']))
+        if err:
+            err_str = "\n".join(["域名【{}】异常：{}".format(i["domain"], i["msg"]) for i in err])
+            return public.returnMsg(False, '域名解析错误: {}'.format(err_str))
+        site_name = domain_list[0][0]
         public.check_domain_cloud(site_name)
         site_path = get.path.replace(' ', '')
-        site_port = get.port.strip().replace(' ', '')
+        site_port = domain_list[0][1]
 
         if site_port == "":
             site_port = "80"
@@ -497,7 +510,7 @@ class main(projectBase):
         # 表单验证
         if not self._check_site_path(site_path):
             return public.returnMsg(False, 'PATH_ERROR')
-        if not re.match(r"^([\w\-*]{1,100}\.){1,24}([\w\-]{1,24}|[\w\-]{1,24}\.[\w\-]{1,24})$", site_name):
+        if not re.match(r"^([\w\-*]{1,100}\.){1,24}([\w\-]{1,24}|[\w\-]{1,24}\.[\w\-]{1,24})$", site_name) and not public.check_ip(site_name.replace('[', '').replace(']', '')):
             return public.returnMsg(False, 'SITE_ADD_ERR_DOMAIN')
         if site_name.find('*') != -1:
             return public.returnMsg(False, 'SITE_ADD_ERR_DOMAIN_TOW')
@@ -518,19 +531,10 @@ class main(projectBase):
         # 是否重复
         sql = public.M('sites')
         if sql.where("name=?", (site_name,)).count():
-            if public.is_ipv4(site_name):
-                site_name = site_name + "_" + str(site_port)
-            else:
-                return public.returnMsg(False, 'SITE_ADD_ERR_EXISTS')
-
-        domain_list, error = self._test_domain_list(siteMenu['domainlist'])
-        if error:
-            return public.returnMsg(False, '域名信息解析错误')
+            site_name = site_name + "_" + str(site_port)
 
         all_domains = set((i[0] for i in domain_list))
-        all_domains.add(site_name)
         all_ports = set((i[1] for i in domain_list))
-        all_ports.add(site_port)
 
         # 创建根目录
         if not os.path.exists(site_path):

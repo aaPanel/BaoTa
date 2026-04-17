@@ -44,9 +44,12 @@ class Base(object):
         import os
         if os.path.exists("/etc/default/ufw"):
             #ufw需要开启转发
-            if public.ExecShell("iptables -t nat -C POSTROUTING_BT -j MASQUERADE")[1] != '':
+            if public.ExecShell("iptables -t nat -C POSTROUTING_BT -m conntrack --ctstate DNAT -j MASQUERADE")[1] != '':
                 public.ExecShell(""" grep -q 'DEFAULT_FORWARD_POLICY="DROP"' /etc/default/ufw && sed -i 's/DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw && ufw reload """)
-                public.ExecShell("iptables -t nat -N POSTROUTING_BT; iptables -t nat -A POSTROUTING -j POSTROUTING_BT; iptables -t nat -A POSTROUTING_BT -j MASQUERADE")
+                public.ExecShell("iptables -t nat -N POSTROUTING_BT && iptables -t nat -A POSTROUTING -j POSTROUTING_BT;iptables -t nat -A POSTROUTING_BT -m conntrack --ctstate DNAT -j MASQUERADE")
+                #移除历史旧规则
+                public.ExecShell("iptables -t nat -D POSTROUTING_BT -j MASQUERADE")
+                
         elif os.path.exists("/usr/sbin/firewalld"):
                 if 'no' in public.ExecShell("firewall-cmd --query-masquerade")[0]:
                     public.ExecShell("firewall-cmd --permanent --add-masquerade;firewall-cmd --reload")

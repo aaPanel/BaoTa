@@ -26,7 +26,7 @@ def check_db():
 
 
 def sql(table):
-    check_db()
+    # check_db()
     with db.Sql() as sql:
         # sql.dbfile(db_path)
         return sql.table(table)

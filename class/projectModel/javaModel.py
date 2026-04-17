@@ -1078,7 +1078,10 @@ make
             http3_header = ""
             if self.is_nginx_http3():
                 http3_header = '''\n    add_header Alt-Svc 'quic=":443"; h3=":443"; h3-29=":443"; h3-27=":443";h3-25=":443"; h3-T050=":443"; h3-Q050=":443";h3-Q049=":443";h3-Q048=":443"; h3-Q046=":443"; h3-Q043=":443"';'''
-            
+                http3_header += "\n    quic_retry on;\n    quic_gso on;"
+                if self.ng_ssl_early_data_enabled():
+                    http3_header += "\n    ssl_early_data on;"
+
             nginx_ver = public.nginx_version()
             if nginx_ver:
                 port_str = ["443"]
@@ -1100,6 +1103,8 @@ make
                         listen_ports_list.append("    listen {} quic;".format(p))
                 if use_http2_on:
                     listen_ports_list.append("    http2 on;")
+                if self.is_nginx_http3():
+                    listen_ports_list.append("    http3 on;")
             
             else:
                 listen_ports_list.append("    listen 443 ssl;")

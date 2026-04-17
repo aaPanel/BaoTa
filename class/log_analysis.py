@@ -57,7 +57,7 @@ class log_analysis:
             log_analysis_data = '''help(){
 	echo  "Usage: ./action.sh [options] [FILE] [OUTFILE]     "
 	echo  "Options:"
-	echo  "xxx.sh san_log     [FILE] 获取成功访问请求中带有xss|sql|铭感信息|php代码执行 关键字的日志列表  [OUTFILE]   11"
+	echo  "xxx.sh san_log     [FILE] 获取成功访问请求中带有xss|sql|敏感信息|php代码执行 关键字的日志列表  [OUTFILE]   11"
 	echo  "xxx.sh san     [FILE] 获取成功访问请求中带有sql关键字的日志列表   [OUTFILE]   11  "
 }
 
@@ -286,7 +286,7 @@ echo "[*] shut down"
             path = get.path.strip()
             log_path = public.Md5(path)
             speed = self.path + '/log/' + log_path
-            type_list = ['xss', 'sql', 'san', 'php', 'ip', 'url']
+            type_list = ['xss', 'sql', 'san', 'php', 'ip', 'url',"all"]
             if get.type not in type_list: return public.ReturnMsg(False, '类型不匹配')
             if hasattr(get, 'time') and time != '':
                 try:

@@ -44,7 +44,7 @@ class setPanelLets:
         import panelSite
         ps = panelSite.panelSite()
         get.webname = json.dumps({"domain":get.domain,"domainlist":[],"count":0})
-        get.ps = "用于面板Let's Encrypt 证书申请和续签，请勿删除"
+        get.ps = "用于面板免费证书申请和续签，请勿删除"
         get.path = "/www/wwwroot/panel_ssl_site"
         get.ftp = "false"
         get.sql = "false"
@@ -97,6 +97,10 @@ class setPanelLets:
         get.vpath = "/www/server/panel/vhost/ssl_saved/"
         gcl = pssl.GetCertList(get)
         for i in gcl:
+            if ("ca" not in get or get.ca == "letsencrypt") and i['issuer'] not in ["R10", "Let's Encrypt", "R8", "R11", "R5", "R3"] and i.get('issuer_O', "") != "Let's Encrypt":
+                continue
+            if ("ca"in get and get.ca=="litessl") and "LiteSSl" not in i.get('issuer') and i.get('issuer_O', "") != "TrustAsia Technologies, Inc.":
+                continue
             if get.domain in i['dns'] or get.domain == i['subject']:
                 try:
                     time_stamp = int(i['notAfter'])
@@ -220,15 +224,22 @@ class setPanelLets:
         """
         create_site = ""
         domain = self.__check_panel_domain()
-        get.domain = domain
         if not domain:
-            return public.returnMsg(False, '需要为面板绑定域名后才能申请 Let\'s Encrypt 证书')
+            if "ca" in get and get.ca == "litessl":
+                return public.returnMsg(False, '需要为面板绑定域名后才能申请LiteSSL证书')
+            if get.auth_type != "http":
+                return public.returnMsg(False, '需要为面板绑定域名后才能使用dns验证申请 Let\'s Encrypt 证书')
+            public.set_module_logs("panel_apply_ipssl", "panel_apply_ipssl", 1)
+            domain = public.GetLocalIp()
+        get.domain = domain
         if not self.__check_host_name(domain):
             create_site = self.__create_site_of_panel_lets(get)
         domain_cert = self.__check_cert_dir(get)
         if domain_cert:
-            if domain_cert.get("issuer") not in ["R3", "R5", "R8", "R10", "R11", "Let's Encrypt"] and domain_cert.get("issuer_O", "") != "Let's Encrypt":
+            if ("ca" not in get or get.ca == "letsencrypt") and domain_cert['issuer'] not in ["R10", "Let's Encrypt", "R8", "R11", "R5", "R3"] and domain_cert.get('issuer_O', "") != "Let's Encrypt":
                 return public.returnMsg(False, "开启 ssl 失败！证书类型不是 Let's Encrypt!")
+            if ("ca"in get and get.ca=="litessl") and "LiteSSl" not in domain_cert.get('issuer') and domain_cert.get('issuer_O', "") != "TrustAsia Technologies, Inc.":
+                return public.returnMsg(False, "开启 ssl 失败！证书类型不是 LiteSSL!")
 
             res = self.copy_cert(domain_cert)
             if not res['status']:
@@ -246,8 +257,10 @@ class setPanelLets:
                 domain_cert = self.__check_cert_dir(get)
                 if not domain_cert:
                     return public.returnMsg(False, "申请证书失败！")
-                if domain_cert.get("issuer") not in ["R3", "Let's Encrypt"] and domain_cert.get("issuer_O", "") != "Let's Encrypt":
+                if ("ca" not in get or get.ca == "letsencrypt") and domain_cert['issuer'] not in ["R10", "Let's Encrypt", "R8","R11", "R5", "R3"] and domain_cert.get('issuer_O', "") != "Let's Encrypt":
                     return public.returnMsg(False, "开启 ssl 失败！证书类型不是 Let's Encrypt!")
+                if ("ca" in get and get.ca == "litessl") and "LiteSSl" not in domain_cert.get( 'issuer') and domain_cert.get('issuer_O', "") != "TrustAsia Technologies, Inc.":
+                    return public.returnMsg(False, "开启 ssl 失败！证书类型不是 LiteSSL!")
                 self.copy_cert(domain_cert)
                 public.writeFile("/www/server/panel/data/ssl.pl", "True")
                 self.__save_cert_source(domain, get.email)

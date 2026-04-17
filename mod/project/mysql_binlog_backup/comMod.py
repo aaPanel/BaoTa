@@ -514,7 +514,9 @@ class main:
             db_size=int(db_size[0][0])
         except:
             db_size = public.ExecShell("du -sb /www/server/data/{}".format(db_name))[0].split("\t")[0]
-            if int(db_size) < 100:
+            if not db_size:
+                db_size=0
+            elif int(db_size) < 100:
                 db_size=0
         
         try:

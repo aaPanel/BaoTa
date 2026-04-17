@@ -175,9 +175,14 @@ server {{
     {server_block}
     #SERVER-BLOCK END
 
-    #禁止访问的文件或目录
-    location ~ ^/(\.user.ini|\.htaccess|\.git|\.env|\.svn|\.project|LICENSE|README.md)
+    # 禁止访问的敏感文件
+    location ~* (\.user.ini|\.htaccess|\.htpasswd|\.env.*|\.project|\.bashrc|\.bash_profile|\.bash_logout|\.DS_Store|\.gitignore|\.gitattributes|LICENSE|README\.md|CLAUDE\.md|CHANGELOG\.md|CHANGELOG|CONTRIBUTING\.md|TODO\.md|FAQ\.md|composer\.json|composer\.lock|package(-lock)?\.json|yarn\.lock|pnpm-lock\.yaml|\.\w+~|\.swp|\.swo|\.bak(up)?|\.old|\.tmp|\.temp|\.log|\.sql(\.gz)?|docker-compose\.yml|docker\.env|Dockerfile|\.csproj|\.sln|Cargo\.toml|Cargo\.lock|go\.mod|go\.sum|phpunit\.xml|phpunit\.xml|pom\.xml|build\.gradl|pyproject\.toml|requirements\.txt|application(-\w+)?\.(ya?ml|properties))$
     {{
+        return 404;
+    }}
+    
+    # 禁止访问的敏感目录
+    location ~* /(\.git|\.svn|\.bzr|\.vscode|\.claude|\.idea|\.ssh|\.github|\.npm|\.yarn|\.pnpm|\.cache|\.husky|\.turbo|\.next|\.nuxt|node_modules|runtime)/ {{
         return 404;
     }}
 
@@ -406,7 +411,7 @@ server {{
             @param "data":{"参数名":""} <数据类型> 参数描述
             @return dict{"status":True/False,"msg":"提示信息"}
         '''
-        return public.ExecShell("nginx -V 2>&1| grep 'http_v3_module' -o")[0]
+        return public.is_nginx_http3()
 
     # 2024/7/29 下午3:00 添加反代前置配置检测
     def check_before_create(self, get):
@@ -650,7 +655,10 @@ server {{
                 if not ":" in domain.strip():
                     continue
 
-                d_port = domain.strip().split(":")[1]
+                if domain.startswith("[") and domain.endswith("]"):
+                    continue
+
+                d_port = domain.strip().rsplit(":", 1)[1]
                 if not public.checkPort(d_port):
                     return public.returnResult(status=False, msg='端口【{}】不合法！'.format(d_port))
 
@@ -760,7 +768,7 @@ server {{
             ))
             get.proxy_json_conf["proxy_log"]["rsyslog_host"] = get.log_path
         elif get.log_type == "off":
-            get.proxy_json_conf["proxy_log"]["log_conf"] = "\n    access_log off;\n    error_log off;"
+            get.proxy_json_conf["proxy_log"]["log_conf"] = "\n    access_log off;\n    error_log /dec/null;"
         else:
             get.proxy_json_conf["proxy_log"]["log_conf"] = "    " + self._init_proxy_conf["proxy_log"][
                 "log_conf"].format(
@@ -1497,7 +1505,10 @@ server {{
             if not ":" in domain.strip():
                 continue
 
-            d_port = domain.strip().split(":")[1]
+            if domain.startswith("[") and domain.endswith("]"):
+                continue
+
+            d_port = domain.strip().rsplit(":", 1)[1]
             if not public.checkPort(d_port):
                 return public.returnResult(status=False, msg='域名【{}】的端口号不合法！'.format(domain))
 
@@ -1702,6 +1713,11 @@ server {{
                 site_name=get.site_name,
                 force_conf=get.proxy_json_conf["ssl_info"]["force_ssl_conf"],
             )
+        if public.is_nginx_http3():
+            http3_header = '''\n    add_header Alt-Svc 'quic=":443"; h3=":443"; h3-29=":443"; h3-27=":443";h3-25=":443"; h3-T050=":443"; h3-Q050=":443";h3-Q049=":443";h3-Q048=":443"; h3-Q046=":443"; h3-Q043=":443"';'''
+            ssl_conf += http3_header + "\n    quic_retry on;\n    quic_gso on;"
+            if public.ng_ssl_early_data_enabled():
+                ssl_conf += "\n    ssl_early_data on;"
 
         if "如果反代网站访问异常且这里已经配置了内容，请优先排查此处的配置是否正确" in get.proxy_json_conf["http_block"]:
             http_block = get.proxy_json_conf["http_block"]
@@ -1943,7 +1959,7 @@ server {{
                 listen_port=p,
             ) + "\n    "
         if get.proxy_json_conf["ssl_info"]["ssl_status"]:
-            if public.ExecShell("nginx -V 2>&1| grep 'http_v3_module' -o")[0] != "":
+            if public.is_nginx_http3():
                 ipv4_http3_ssl_port_conf = get.proxy_json_conf["ipv4_http3_ssl_port_conf"].format(
                     ipv4_port_conf=ipv4_port_conf,
                     https_port=get.proxy_json_conf["https_port"],
@@ -1952,7 +1968,7 @@ server {{
                     ipv6_port_conf=ipv6_port_conf,
                     https_port=get.proxy_json_conf["https_port"],
                 ) + "\n    "
-                port_conf = ipv4_http3_ssl_port_conf + ipv6_http3_ssl_port_conf + "\n    http2 on;"
+                port_conf = ipv4_http3_ssl_port_conf + ipv6_http3_ssl_port_conf + "\n    http2 on;\n    http3 on;"
             else:
                 ipv4_ssl_port_conf = get.proxy_json_conf["ipv4_ssl_port_conf"].format(
                     ipv4_port_conf=ipv4_port_conf,
@@ -1969,6 +1985,11 @@ server {{
                     site_name=get.site_name,
                     force_conf=get.proxy_json_conf["ssl_info"]["force_conf"]
                 )
+            if public.is_nginx_http3():
+                http3_header = '''\n    add_header Alt-Svc 'quic=":443"; h3=":443"; h3-29=":443"; h3-27=":443";h3-25=":443"; h3-T050=":443"; h3-Q050=":443";h3-Q049=":443";h3-Q048=":443"; h3-Q046=":443"; h3-Q043=":443"';'''
+                ssl_conf += http3_header + "\n    quic_retry on;\n    quic_gso on;"
+                if public.ng_ssl_early_data_enabled():
+                    ssl_conf += "\n    ssl_early_data on;"
         else:
             port_conf = ipv4_port_conf + "\n" + ipv6_port_conf
 
@@ -2383,7 +2404,10 @@ server {{
 
         get.sitename = get.site_name
         get.type = 1
-        get.holdpath = 1
+        try:
+            get.holdpath = int(get.get("holdpath", 1))
+        except:
+            get.holdpath = 1
 
         get.proxy_json_conf = self.read_json_conf(get)
         if not get.proxy_json_conf:

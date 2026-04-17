@@ -6,7 +6,7 @@ import time
 import traceback
 import itertools
 from datetime import datetime
-from typing import List, Dict, Callable, Any, Tuple, Union
+from typing import List, Dict, Callable, Any, Tuple, Union, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from mod.base.ssh_executor import SSHExecutor
@@ -43,7 +43,11 @@ def _dir_walk(path: str) -> Tuple[List[dict], str]:
 
 class FiletransferTask(object):
 
-    def __init__(self, task: Union[int, TransferTask], call_update: Callable[[Any], None]):
+    def __init__(self, task: Union[int, TransferTask],
+                 call_update: Callable[[Any], None],
+                 exclude_nodes: List[int] = None,
+                 the_log_id: int = None,
+                 ):
         self._fdb = TaskFlowsDB()
         if isinstance(task, int):
             self.task = self._fdb.TransferTask.get_byid(task)
@@ -55,6 +59,8 @@ class FiletransferTask(object):
         if not self.task:
             raise RuntimeError("任务不存在")
 
+        self.exclude_nodes = exclude_nodes or []
+        self.the_log_id = max(the_log_id, 0) if isinstance(the_log_id, int) else 0
         self.event_queue = queue.Queue()
         self.trans_queue = queue.Queue()
         self.mut = threading.Lock()
@@ -66,6 +72,8 @@ class FiletransferTask(object):
             "count": 0,
             "complete": 0,
             "error": 0,
+            "error_nodes": [],
+            "exclude_nodes": self.exclude_nodes,
             "data": None,
         }
         self.is_trans_end = False
@@ -125,12 +133,12 @@ class FiletransferTask(object):
             return self._fdb.TransferLog.query("transfer_task_id = ?", (self.task.id,))
 
         fl_list =  []
-        for (tf, idx) in itertools.product(tf_list, range(len(self.task.dst_nodes))):
+        for (tf, dst_node_id) in itertools.product(tf_list, self.task.dst_nodes.keys()):
             fl = TransferLog(
                 flow_id=self.task.flow_id,
                 transfer_task_id=self.task.id,
                 transfer_file_id=tf.id,
-                dst_node_idx=idx,
+                dst_node_idx=int(dst_node_id),
                 status=0,
                 progress=0,
                 message=""
@@ -144,10 +152,13 @@ class FiletransferTask(object):
 
 
     def _get_srv(self, idx: int) -> Union[SSHApi, LPanelNode, ServerNode]:
+        idx = int(idx)
+        if idx in self._srv_cache:
+            return self._srv_cache[idx]
         with self.mut:
             if idx in self._srv_cache:
                 return self._srv_cache[idx]
-            if idx >= len(self.task.dst_nodes):
+            if idx not in self.task.dst_nodes:
                 raise RuntimeError("节点索引超出范围")
             srv_data: dict = self.task.dst_nodes[idx]
             if srv_data.get("lpver", None):
@@ -165,8 +176,18 @@ class FiletransferTask(object):
         self._fdb.TransferTask.update(self.task)
         self._init_files()
         self._init_files_log()
-        # 获取未完成文件列表
-        files_logs = self._fdb.TransferLog.query("transfer_task_id = ? and status = 0", (self.task.id,))
+        if self.the_log_id > 0: # 重试某个固定任务
+            query_where = "transfer_task_id = ? and id = ?"
+            files_logs = self._fdb.TransferLog.query(query_where, (self.task.id, self.the_log_id))
+        else:
+            if self.exclude_nodes:
+                # 获取未完成文件列表
+                query_where = "transfer_task_id = ? and status not in (2, 4) and dst_node_idx not in ({})".format(
+                    ",".join(["?"] * len(self.exclude_nodes))
+                )
+            else:
+                query_where = "transfer_task_id = ? and status not in (2, 4)"
+            files_logs = self._fdb.TransferLog.query(query_where, (self.task.id, *self.exclude_nodes))
         files_list = self._fdb.TransferFile.query("transfer_task_id = ?", (self.task.id,))
         if not files_logs:
             return
@@ -190,7 +211,14 @@ class FiletransferTask(object):
 
         self.is_trans_end = True
         th_event.join()
-        self.task.status = 2 if self.status_dict["error"] == 0 else 3
+        if self.the_log_id > 0:
+            # 如果有未完成或错误的文件， 则任务完成
+            if self._fdb.TransferLog.count("transfer_task_id = ? and status in (0,1,3)", (self.task.id, )) == 0:
+                self.task.status = 3
+            else:
+                self.task.status = 2
+        else:
+            self.task.status = 2 if self.status_dict["error"] == 0 else 3
         self._fdb.TransferTask.update(self.task)
         self._fdb.close()
 
@@ -230,12 +258,14 @@ class FiletransferTask(object):
                         elif isinstance(res, dict):
                             if res["status"]:
                                 tl.status = 2
+                                tl.message = ""
                                 tl.progress = 100
                             else:
                                 tl.message = res["msg"]
                                 tl.status = 3
                         else:
                             tl.status = 2
+                            tl.message = ""
                             tl.progress = 100
 
                         self.event_queue.put(tl)
@@ -257,6 +287,7 @@ class FiletransferTask(object):
                         tl.message = err
                     else:
                         tl.status = 2
+                        tl.message = ""
                         tl.progress = 100
 
                     self.event_queue.put(tl)
@@ -272,6 +303,7 @@ class FiletransferTask(object):
         tmp_dict = {}
         update_fields = ("status", "message", "progress", "completed_at", "started_at")
         complete_set, error_set = set(), set()
+        error_node_set = set()
         while True:
             try:
                 tl: TransferLog = self.event_queue.get(timeout=0.1)
@@ -293,6 +325,7 @@ class FiletransferTask(object):
                 error_set.add(tl.id)
                 self.status_dict["error"] = len(error_set)
                 tl.completed_at = datetime.now()
+                error_node_set.add(tl.dst_node_idx)
             elif tl.status == 1:
                 tl.started_at = datetime.now()
 
@@ -302,6 +335,7 @@ class FiletransferTask(object):
                 last_time = time.time()
 
                 self.status_dict["data"] = [i.to_show_data() for i in tmp_dict.values()]
+                self.status_dict["error_nodes"] = list(error_node_set)
                 self.call_update(self.status_dict)
                 tmp_dict.clear()
 
@@ -309,6 +343,7 @@ class FiletransferTask(object):
         if tmp_dict:
             fdb.TransferLog.bath_update(tmp_dict.values(), update_fields=update_fields)
             self.status_dict["data"] = [i.to_show_data() for i in tmp_dict.values()]
+            self.status_dict["error_nodes"] = list(error_node_set)
             self.call_update(self.status_dict)
 
         fdb.close()
@@ -317,10 +352,16 @@ class FiletransferTask(object):
 # 在远程节点上执行文件传输
 class NodeFiletransferTask(object):
 
-    def __init__(self, task: TransferTask, call_update: Callable[[Any], None]):
+    def __init__(self, task: TransferTask,
+                 call_update: Callable[[Any], None],
+                 exclude_nodes: List[int] = None,
+                 the_log_id: int = None,
+                 ):
         self.task = task
         src_node = task.src_node
+        self.exclude_nodes = exclude_nodes or []
         self.srv = ServerNode(src_node["address"],src_node["api_key"], src_node["app_key"], src_node["name"])
+        self.the_log_id = max(the_log_id, 0) if isinstance(the_log_id, int) else 0
         self.call_update = call_update
         self.default_status_data = {
             "task_id": self.task.id,
@@ -332,7 +373,7 @@ class NodeFiletransferTask(object):
         fdb = TaskFlowsDB()
         self.task.status = 1
         fdb.TransferTask.update(self.task)
-        err = self.srv.proxy_transferfile_status(self.task.src_node_task_id, self.handle_proxy_data)
+        err = self.srv.proxy_transferfile_status(self.task.src_node_task_id, self.exclude_nodes, self.the_log_id, self.handle_proxy_data)
         if err:
             self.task.status = 3
             self.task.message += ";" + err
@@ -347,7 +388,7 @@ class NodeFiletransferTask(object):
         fdb.TransferTask.update(self.task)
 
     def handle_proxy_data(self, data):
-        ret = {"count": 0,"complete": 0,"error": 0,"data": []}
+        ret = {"count": 0,"complete": 0,"error": 0, "error_nodes":[], "data": []}
         try:
             data_dict = json.loads(data)
             if  "type" not in data_dict:
@@ -377,12 +418,12 @@ class NodeFiletransferTask(object):
 # 本机执行文件传输，返回信息到远程节点
 class SelfFiletransferTask(object):
 
-    def __init__(self, task_id: int):
+    def __init__(self, task_id: int, exclude_nodes: List[int] = None, the_log_id: int = None):
         self.status_server = StatusServer(self.get_status, (_SOCKET_FILE_DIR + "/file_task_" + str(task_id)))
-        self.f_task = FiletransferTask(task_id, self.update_status)
+        self.f_task = FiletransferTask(task_id, self.update_status, exclude_nodes, the_log_id)
 
     @staticmethod
-    def get_status( init: bool = False):
+    def get_status( init: bool = False) -> Dict:
         return {"init": True }
 
     def start_status_server(self):
@@ -411,3 +452,33 @@ def self_file_running_log(task_id: int, call_log:  Callable[[Union[str,dict]], N
     s_client.connect()
     s_client.wait_receive()
     return  ""
+
+
+# 同步执行文件相关任务的重试
+def file_task_run_sync(task_id: int, log_id: int) -> Union[str, Dict[str, Any]]:
+    fdb = TaskFlowsDB()
+    task = fdb.TransferTask.get_byid(task_id)
+    if not task:
+        return "任务不存在"
+
+    # 远程节点任务
+    if task.src_node_task_id > 0:
+        node_file_task = NodeFiletransferTask(task, print, exclude_nodes=[], the_log_id=log_id)
+        node_file_task.start()
+        return node_file_task.status_dict
+
+    if not log_id:
+        return "日志ID不能为空"
+    log = fdb.TransferLog.get_byid(log_id)
+    if not log:
+        return "日志不存在"
+
+    if log.status != 3:
+        return "任务状态不是异常, 无需重试"
+
+    if log.transfer_task_id != task_id:
+        return "日志ID与任务ID不匹配"
+
+    file_task = FiletransferTask(task, print, exclude_nodes=[], the_log_id=log_id)
+    file_task.start()
+    return file_task.status_dict

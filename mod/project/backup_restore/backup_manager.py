@@ -439,23 +439,29 @@ class BackupManager(SiteModule,DatabaseModule,FtpModule,DataManager,BaseUtil,Con
         if storage_type != "local" and os.path.exists(tar_file_name):
             from CloudStoraUpload import CloudStoraUpload
             _cloud = CloudStoraUpload()
-            _cloud.run(storage_type)
-            cloud_name_cn = _cloud.obj._title
-            if not _cloud.obj:
-                return False
-            self.print_log("正在上传备份文件到{}...".format(cloud_name_cn),"backup")
-            try:
-                backup_path = _cloud.obj.backup_path
-                if not backup_path.endswith('/'):
-                    backup_path += '/'
-                upload_path = os.path.join(backup_path, "backup_restore", os.path.basename(tar_file_name))
-                if _cloud.cloud_upload_file(tar_file_name, upload_path):
-                    self.print_log(f"已成功上传到{cloud_name_cn}","backup")
-            except Exception as e:
-                self.print_log(f"上传到{cloud_name_cn}时发生错误: {str(e)}","backup")
+            
+            self.print_log(f"测试连接云存储{storage_type}...","backup")
+            if not self.test_cloud_connection(storage_type):
+                self.print_log(f"无法连接到云存储：{storage_type}","backup")
+                self.print_log("已经备份保存至本地")
+            else:
+                _cloud.run(storage_type)
+                cloud_name_cn = _cloud.obj._title
+                self.print_log("正在上传备份文件到{}...".format(cloud_name_cn),"backup")
+                
+                try:
+                    backup_path = _cloud.obj.backup_path
+                    if not backup_path.endswith('/'):
+                        backup_path += '/'
+                    upload_path = os.path.join(backup_path, "backup_restore", os.path.basename(tar_file_name))
+                    if _cloud.cloud_upload_file(tar_file_name, upload_path):
+                        self.print_log(f"已成功上传到{cloud_name_cn}","backup")
+                    else:
+                        self.print_log(f"上传到{cloud_name_cn}失败","backup")
+                except Exception as e:
+                    self.print_log(f"上传到{cloud_name_cn}时发生错误: {str(e)}","backup")
 
         self.save_backup_conf(timestamp,backup_conf)
-
 
     def add_backup(self, timestamp: int) -> dict:
         """添加备份任务"""
@@ -986,6 +992,24 @@ class BackupManager(SiteModule,DatabaseModule,FtpModule,DataManager,BaseUtil,Con
             "syssafe": "系统加固"
         }
         return plugin_display_names.get(plugin_name, plugin_name)
+
+    def test_cloud_connection(self,cloud_name):
+        """云存储连接测试"""
+        from CloudStoraUpload import CloudStoraUpload
+        _cloud = CloudStoraUpload()
+        obj = _cloud.run(cloud_name)  # cloud_name 如: 'alioss', 'qiniu', 'txcos' 等
+        if not obj:
+            return False
+        
+        try:
+            _cloud.obj.get_list('/')
+            return True
+        except:
+            try:
+                _cloud.obj.get_list(_cloud.obj.backup_path)
+                return True
+            except:
+                return False
 
 if __name__ == '__main__':
     # 获取命令行参数

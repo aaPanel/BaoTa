@@ -15,6 +15,8 @@ import uuid
 from sslModel.base import sslBase
 import public
 
+from BTPanel import project
+
 
 class main(sslBase):
 
@@ -35,6 +37,11 @@ class main(sslBase):
         if 'fun_name' not in get:
             return public.returnMsg(False,'缺少参数 fun_name')
 
+        import idna
+        try:
+            get.domain_name = idna.encode(get.domain_name).decode()
+        except: pass
+            
         if not get.fun_name in ['delete_dns_record','create_dns_record','get_dns_record','update_dns_record','set_dns_record_status', 'get_domain_list']:
             return public.returnMsg(False,'参数错误，未知的函数名')
 
@@ -48,6 +55,12 @@ class main(sslBase):
         get.dns_type = dns_type
         try:
             res = self.func_models(get, get.fun_name)
+            if "list" in res:
+                for i in res["list"]:
+                    try:
+                        i['name'] = idna.decode(i['name'])
+                        public.print_log('解码域名 {} 成功'.format(i['name']))
+                    except: pass
             return res
         except Exception as e:
             return public.returnMsg(False,'执行失败:{}'.format(str(e)))
@@ -93,7 +106,12 @@ class main(sslBase):
         domain_list = []
         _data = []
         remove_ids = []
+        import idna
         for val in data:
+            try:
+                val['domain'] = idna.decode(val['domain'])
+            except: pass
+
             if val['domain'] in domain_list:
                 remove_ids.append(str(val['id']))
                 continue
@@ -325,16 +343,28 @@ class main(sslBase):
         @name 删除域名
         @param get.domains 域名列表，以逗号分隔
         """
+        import idna
         domains = get.domains.split(',')
-        try:
-            public.M('ssl_domains').where("domain in ('{}')".format("','".join(domains)), ()).delete()
-            path = '{}/config/del_domains.pl'.format(public.get_panel_path())
+
+        all_domains = []
+        for domain in domains:
+            domain = domain.strip()
             try:
-                del_domains = json.loads(public.readFile(path))
-                del_domains.extend(domains)
-                public.writeFile(path, json.dumps(del_domains))
-            except:
-                public.writeFile(path, json.dumps(domains))
+                en_domain = idna.encode(domain).decode()
+            except: en_domain = domain
+            if domain not in all_domains:
+                all_domains.append(domain)
+            if en_domain not in all_domains:
+                all_domains.append(en_domain)
+        try:
+            public.M('ssl_domains').where("domain in ('{}')".format("','".join(all_domains)), ()).delete()
+            # path = '{}/config/del_domains.pl'.format(public.get_panel_path())
+            # try:
+            #     del_domains = json.loads(public.readFile(path))
+            #     del_domains.extend(all_domains)
+            #     public.writeFile(path, json.dumps(del_domains))
+            # except:
+            #     public.writeFile(path, json.dumps(all_domains))
             return public.returnMsg(True, '删除成功')
         except:
             return public.returnMsg(False, '删除失败')
@@ -474,7 +504,27 @@ class main(sslBase):
     def get_site_list(self, get):
         # 自动部署不兼容docker网站
         # return public.M('sites').field("name,id,'site_id' as type").select() + public.M('docker_sites').field("name,id,'docker_site_id' as type").select()
-        return public.M('sites').field("name,id,'site_id' as type").select()
+        from mod.base.web_conf.ssl import RealSSLManger
+        from datalistModel import sitesModel
+        sites_model = sitesModel.main()
+        # 获取所有域名
+        domain_data = public.M('domain').field('pid,name').select()
+        domain_dic = {}
+        for item in domain_data:
+            if item['pid'] not in domain_dic:
+                domain_dic[item['pid']] = []
+            domain_dic[item['pid']].append(item['name'])
+
+        data = public.M('sites').field("name,id,'site_id' as type,project_type").select()
+        for item in data:
+            if item['project_type'] in ['PHP', 'proxy', 'WP2']:
+                item['ssl'] = sites_model.get_site_ssl_info(item['name'])
+            else:
+                item['ssl'] = RealSSLManger('{}_'.format(item['project_type'].lower())).get_site_ssl_info(item['name'])
+                if not item['ssl']:
+                    item['ssl'] = -1
+            item['domains'] = domain_dic.get(item['id'], [])
+        return data
 
     def create_report_task(self, get):
         from mod.base.push_mod import manager
@@ -518,6 +568,7 @@ class main(sslBase):
                         "record_type": record_type,
                         "domain_name": domain_name,
                         "mx": mx,
+                        "is_append": True,
                     }
                     _return = self.run_fun(public.to_dict_obj(args))
                     if not _return["status"] and '记录已存在' not in _return["msg"]:
@@ -594,18 +645,27 @@ class main(sslBase):
         return domains
 
     def add_domain(self, get):
-        domain_name = get.domain_name
+        import idna
+        domain_name = get.domain_name.strip()
         dns_id = get.dns_id
 
+        try:
+            en_domain_name = idna.encode(domain_name).decode()
+        except: en_domain_name = domain_name
+
+        try:
+            de_domain_name = idna.decode(en_domain_name)
+        except: de_domain_name = en_domain_name
+
         # 检查是否为顶级域名
-        root, sub, _ = self.extract_zone(domain_name)
+        root, sub, _ = self.extract_zone(de_domain_name)
         if sub != '':
             return public.returnMsg(False, '只能添加顶级域名')
 
-        data = public.M('ssl_domains').field('id').where("domain=?", (domain_name,)).select()
+        data = public.M('ssl_domains').field('id').where("domain=? or domain=?", (de_domain_name, en_domain_name)).select()
         if data:
             return public.returnMsg(False, '域名已存在')
-        public.M('ssl_domains').add('domain,dns_id,type_id,endtime,ps', (domain_name, dns_id, 0, 0, ''))
+        public.M('ssl_domains').add('domain,dns_id,type_id,endtime,ps', (en_domain_name, dns_id, 0, 0, ''))
         return public.returnMsg(True, '添加成功')
 
 

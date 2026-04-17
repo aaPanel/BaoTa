@@ -140,10 +140,10 @@ class ssl_info:
             result['issuer_O'] = issuer.O
         # 取到期时间
         result['notAfter'] = self.strf_date(
-            bytes.decode(x509.get_notAfter())[:-1])
+            bytes.decode(x509.get_notAfter()))
         # 取申请时间
         result['notBefore'] = self.strf_date(
-            bytes.decode(x509.get_notBefore())[:-1])
+            bytes.decode(x509.get_notBefore()))
         # 取可选名称
         result['dns'] = []
         for i in range(x509.get_extension_count()):
@@ -151,7 +151,7 @@ class ssl_info:
             if s_name.get_short_name() in [b'subjectAltName', 'subjectAltName']:
                 s_dns = str(s_name).split(',')
                 for d in s_dns:
-                    result['dns'].append(d.split(':')[1])
+                    result['dns'].append(d.strip().split(':',1)[1])
         subject = x509.get_subject().get_components()
         # 取主要认证名称
         if len(subject) == 1:
@@ -171,7 +171,13 @@ class ssl_info:
 
        # 转换时间
     def strf_date(self, sdate):
-        return time.strftime('%Y-%m-%d', time.strptime(sdate, '%Y%m%d%H%M%S'))
+        # 先按 UTC 解析
+        t = time.strptime(sdate, "%Y%m%d%H%M%SZ")
+        # 当成 UTC 时间转为时间戳
+        timestamp = time.mktime(t) - time.timezone
+        # 再转为本地时间
+        local_time = time.localtime(timestamp)
+        return time.strftime('%Y-%m-%d', local_time)
 
     #转换时间
     def strfToTime(self,sdate):

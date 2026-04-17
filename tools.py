@@ -119,7 +119,7 @@ sleep 6
 m_version=$(cat /www/server/mysql/version.pl)
 if echo "$m_version" | grep -E "(5\.1\.|5\.5\.|5\.6\.|10\.0\.|10\.1\.)" >/dev/null; then
     mysql -uroot -e "UPDATE mysql.user SET password=PASSWORD('${pwd}') WHERE user='root';"
-elif echo "$m_version" | grep -E "(10\.4\.|10\.5\.|10\.6\.|10\.7\.|10\.11\.|11\.3\.|11\.4\.)" >/dev/null; then
+elif echo "$m_version" | grep -E "(10\.4\.|10\.5\.|10\.6\.|10\.7\.|10\.11\.|11\.3\.|11\.4\.|11\.8\.)" >/dev/null; then
     mysql -uroot -e "
     FLUSH PRIVILEGES;
     ALTER USER 'root'@'localhost' IDENTIFIED BY '${pwd}';
@@ -836,7 +836,7 @@ def get_temp_login():
         else:
             HTTP_C="http://"
 
-        IP_ADDRES=public.ExecShell("curl -sS --connect-timeout 10 -m 20 https://www.bt.cn/Api/getIpAddress")[0]
+        IP_ADDRES=public.ExecShell("curl -sS --connect-timeout 10 -m 20 {}".format(public.get_home_node("https://www.bt.cn/Api/getIpAddress")))[0]
 
         PANEL_PORT=public.readFile("/www/server/panel/data/port.pl")
 
@@ -868,7 +868,7 @@ def get_temp_login_ipv4():
         else:
             HTTP_C="http://"
 
-        IP_ADDRES=public.ExecShell("curl -4 -sS --connect-timeout 10 -m 20 https://www.bt.cn/Api/getIpAddress")[0]
+        IP_ADDRES=public.ExecShell("curl -4 -sS --connect-timeout 10 -m 20 {}".format(public.get_home_node("https://www.bt.cn/Api/getIpAddress")))[0]
 
         PANEL_PORT=public.readFile("/www/server/panel/data/port.pl")
 
@@ -1083,14 +1083,16 @@ def get_reverse_proxy():
 # 2025/2/17 14:29 检测如果磁盘剩余空间是否小于500M，是就返回False
 def check_disk_space():
     '''
-        @name 检测如果磁盘剩余空间是否小于500M，是就返回False，否则返回True
+        @name 检测如果磁盘剩余空间是否小于50M，是就返回False，否则返回True
         @return bool
     '''
     disk_info = public.get_disk_usage("/")
-    if disk_info.free < 500 * 1024 * 1024:
+    if disk_info.free < 50 * 1024 * 1024:
         print("==========================================================================")
         # 2025/2/17 14:34 输出格式化后的总磁盘空间和剩余空间
-        os.system("echo -e '\\e[31m紧急：根目录(\"/\")磁盘空间不足500M，请先清理磁盘空间后再执行命令！\\e[0m'")
+        os.system("echo -e '\\e[31m紧急：根目录(\"/\")磁盘空间不足50M，请先清理磁盘空间后再执行命令！\\e[0m'")
+        print("可执行下面命令进行手动清理")
+        os.system("echo -e '\\e[33m命令：btpython /www/server/panel/script/btcli.py\\e[0m'")
         print("总磁盘空间：{}，剩余空间：{}".format(public.to_size(disk_info.total), public.to_size(disk_info.free)))
         print("计算空间由字节转换，请以实际大小为准！")
         print("")
@@ -1122,8 +1124,9 @@ def bt_cli(u_input=0):
         print("(26) 关闭面板ssl                  (19) 关闭面板登录地区限制                        |")
         print("(28) 修改面板安全入口             (29) 取消访问设备验证                            |")
         print("(30) 取消访问UA验证               (32) 开启/关闭【80、443】端口访问面板            |")
-        print("(34) 更新面板(更新到最新版本)                                                      |")
-        print("(0) 取消                                                                           |")
+        print("(34) 更新面板(更新到最新版本)     (35) btcli命令行管理工具                         |")
+        print("(36) 磁盘空间清理工具             (99) Switch to English                          |")
+        print("(0) 取消                                                                          |")
         print(raw_tip1)
         try:
             u_input = input("请输入命令编号：")
@@ -1181,7 +1184,7 @@ def bt_cli(u_input=0):
     except:
         pass
 
-    nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 32, 33, 34]
+    nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 32, 33, 34, 35, 36, 99]
     if not u_input in nums:
         print(raw_tip)
         print("已取消!")
@@ -1611,7 +1614,14 @@ def bt_cli(u_input=0):
             os.system("bash {} upgrade_panel {}".format(sh_path, ver))
         else:
             print("已取消更新!")
-
+    elif u_input == 35:
+        public.ExecShell("chmod +x /www/server/panel/script/btcli.py")
+        os.system("/www/server/panel/script/btcli.py")
+    elif u_input == 36:
+        public.ExecShell("chmod +x /www/server/panel/script/btcli.py")
+        os.system("/www/server/panel/script/btcli.py")
+    elif u_input == 99:
+        os.system("btpython /www/server/panel/tools_en.py cli")
 
 if __name__ == "__main__":
     type = sys.argv[1]

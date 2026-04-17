@@ -503,6 +503,11 @@ class main:
         pass
 
     @staticmethod
+    def proxy_site() -> Optional[dict]:
+        p = PanelNginxProxy()
+        return p.get_proxy_site()
+
+    @staticmethod
     def get_panel_generation(get: public.dict_obj = None):
         p = PanelNginxProxy()
         site = p.get_proxy_site()

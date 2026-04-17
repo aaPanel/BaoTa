@@ -18,7 +18,7 @@ from mod.base.web_conf import IpRestrict, remove_sites_service_config
 from mod.base.process.process import RealProcess
 from mod.base.process.server import RealServer
 from mod.base.database_tool import add_database
-from mod.base.web_conf import NginxDomainTool, check_domain
+from mod.base.web_conf import NginxDomainTool, check_domain, normalize_domain
 from mod.base.web_conf.dir_tool import DirTool
 from mod.base.web_conf.proxy import Proxy
 from mod.base.backup_tool import VersionTool
@@ -78,6 +78,9 @@ class main(IpRestrict, RealProcess, Proxy, Redirect):  # 继承并使用同ip黑
                 return public.returnResult(False, '请输入域名！')
             if not hasattr(get, 'site_path'):
                 return public.returnResult(False, '请输入项目路径！')
+            # 不能包含空白字符
+            if re.search('\s+', get.site_path):
+                return public.returnResult(False, '项目路径不能包含空白字符！')
             if not os.path.exists(get.site_path): public.ExecShell('mkdir -p {}'.format(get.site_path))
             if not hasattr(get, 'project_proxy_path') and hasattr(get, 'open_proxy') and int(get.open_proxy) == 1:
                 return public.returnResult(False, '设置反向代理！')
@@ -107,33 +110,36 @@ class main(IpRestrict, RealProcess, Proxy, Redirect):  # 继承并使用同ip黑
             webname = json.loads(get.webname)
             # 域名重复性检查
             domains = [webname['domain']] + webname['domainlist']
-            for domain in domains:
-                if public.M('sites').where('name=?', (domain.split(':')[0].strip(),)).count():
-                    return public.returnResult(False, '指定域名已存在: {}'.format(domain))
+            domains_list, err = normalize_domain(*domains)
+            if err:
+                err_str = "\n".join(["域名【{}】异常： {}".format(i["domain"], i["msg"]) for i in err])
+                return public.returnResult(False, err_str)
+            for domain, port in domains_list:
+                if public.M('domain').where('name=? and port=?', (domain, port)).count():
+                    return public.returnResult(False, '指定域名已存在: {}:{}'.format(domain, port))
             
             # 域名存在检查
             get.project_cmd = get.project_cmd.strip()
-            
+
+            self.sitePort = int(domains_list[0][1])
+            self.siteName = domains_list[0][0] + ("" if self.sitePort == 80 else "_{}".format(self.sitePort))
+            need_rename = ""
+            if self.siteName < "0.websocket":
+                need_rename = self.siteName
+                self.siteName = "1" + self.siteName
             # 创建项目
-            if public.M('sites').where('name=?', (webname['domain'].split(':')[0].strip(),)).count():
+            if public.M('sites').where('name=?', (self.siteName,)).count():
                 return public.returnResult(False, '指定项目已存在: {}'.format(webname))
-            
-            self.siteName = self.ToPunycode(webname['domain'].split(':')[0].strip())
-            self.sitePath = self.ToPunycodePath(get.site_path)
-            self.sitePort = 80 if ':' not in webname['domain'] else webname['domain'].split(':')[1].strip()
+
+            self.sitePath = get.site_path
             self.phpVersion = get.php_version
             # 添加nginx网站配置文件
             self.nginxAdd()
             # 添加多余的域名
-            domainlist = []
-            for domain in domains:
-                domainname = domain.split(':')[0].strip()
-                domainport = '80' if ':' not in domain else domain.split(':')[1].strip()
-                domainlist.append((domainname, domainport))
-            if len(domainlist) > 1:
-                NginxDomainTool().nginx_set_domain(self.siteName, *domainlist)
+            if len(domains_list) > 1:
+                NginxDomainTool().nginx_set_domain(self.siteName, *domains_list)
                 # 创建默认文档
-            if not os.path.exists('{}/index.ttml'.format(self.sitePath)):
+            if not os.path.exists('{}/index.html'.format(self.sitePath)):
                 connect = """
 <!doctype html>
 <html>
@@ -228,7 +234,7 @@ class main(IpRestrict, RealProcess, Proxy, Redirect):  # 继承并使用同ip黑
                     {
                         'ssl_path': '/www/wwwroot/phpa_ssl',
                         'sitename': self.siteName,
-                        'domains': [webname['domain']] + webname['domainlist'],
+                        'domains': ["{}:{}".format(d,p) for d,p in domains_list],
                         'project_path': get.site_path,
                         'project_cmd': get.project_cmd,
                         'is_power_on': get.is_power_on,
@@ -244,13 +250,11 @@ class main(IpRestrict, RealProcess, Proxy, Redirect):  # 继承并使用同ip黑
                 ),
                 'addtime': public.getDate()
             }
+            if need_rename:
+                pdata["rname"] = need_rename
             pid = public.M('sites').insert(pdata)
-            for domain in domains:
-                domain_arr = domain.split(':')
-                if len(domain_arr) == 1:
-                    domain_arr.append(80)
-                domain_arr[0] = self.ToPunycode(domain_arr[0].strip())
-                public.M('domain').add('pid,name,port,addtime', (pid, domain_arr[0], domain_arr[1], public.getDate()))
+            for domain, port in domains_list:
+                public.M('domain').add('pid,name,port,addtime', (pid, domain, port, public.getDate()))
             
             # 检查是否创建数据库
             if get.sql == "MYSQL":
@@ -522,9 +526,14 @@ class main(IpRestrict, RealProcess, Proxy, Redirect):  # 继承并使用同ip黑
     include {setup_path}/panel/vhost/rewrite/{site_name}.conf;
     #REWRITE-END
 
-    #禁止访问的文件或目录
-    location ~ ^/(\.user.ini|\.htaccess|\.git|\.env|\.svn|\.project|LICENSE|README.md)
+    # 禁止访问的敏感文件
+    location ~* (\.user.ini|\.htaccess|\.htpasswd|\.env.*|\.project|\.bashrc|\.bash_profile|\.bash_logout|\.DS_Store|\.gitignore|\.gitattributes|LICENSE|README\.md|CLAUDE\.md|CHANGELOG\.md|CHANGELOG|CONTRIBUTING\.md|TODO\.md|FAQ\.md|composer\.json|composer\.lock|package(-lock)?\.json|yarn\.lock|pnpm-lock\.yaml|\.\w+~|\.swp|\.swo|\.bak(up)?|\.old|\.tmp|\.temp|\.log|\.sql(\.gz)?|docker-compose\.yml|docker\.env|Dockerfile|\.csproj|\.sln|Cargo\.toml|Cargo\.lock|go\.mod|go\.sum|phpunit\.xml|phpunit\.xml|pom\.xml|build\.gradl|pyproject\.toml|requirements\.txt|application(-\w+)?\.(ya?ml|properties))$
     {{
+        return 404;
+    }}
+    
+    # 禁止访问的敏感目录
+    location ~* /(\.git|\.svn|\.bzr|\.vscode|\.claude|\.idea|\.ssh|\.github|\.npm|\.yarn|\.pnpm|\.cache|\.husky|\.turbo|\.next|\.nuxt|node_modules|runtime)/ {{
         return 404;
     }}
 
@@ -812,6 +821,19 @@ class main(IpRestrict, RealProcess, Proxy, Redirect):  # 继承并使用同ip黑
         #     if project_info['listen']:
         #         project_info['listen_ok'] = project_info['project_config']['port'] in project_info['listen']
         return project_info
+
+    @staticmethod
+    def try_unpunycode(domain: str):
+        if "xn--" not in domain:
+            return ""
+        try:
+            import idna
+            if domain.startswith("*."):
+                return "*." + idna.decode(domain[2:])
+            else:
+                return idna.decode(domain)
+        except:
+            return ""
     
     # 获取指定项目的域名列表
     def project_get_domain(self, get):
@@ -826,21 +848,9 @@ class main(IpRestrict, RealProcess, Proxy, Redirect):  # 继承并使用同ip黑
         try:
             project_id = public.M('sites').where('name=?', (get.sitename,)).getField('id')
             domains = public.M('domain').where('pid=?', (project_id,)).order('id desc').select()
-            # project_find = self.get_project_find(get.sitename)
-            # if len(domains) != len(project_find['project_config']['domains']):
-            #     public.M('domain').where('pid=?', (project_id,)).delete()
-            #     if not project_find: return []
-            #     for d in project_find['project_config']['domains']:
-            #         domain = {}
-            #         arr = d.split(':')
-            #         if len(arr) < 2: arr.append(80)
-            #         domain['name'] = arr[0]
-            #         domain['port'] = int(arr[1])
-            #         domain['pid'] = project_id
-            #         domain['addtime'] = public.getDate()
-            #         public.M('domain').insert(domain)
-            #     if project_find['project_config']['domains']:
-            #         domains = public.M('domain').where('pid=?', (project_id,)).select()
+            for d in domains:
+                d["cn_name"] = self.try_unpunycode(d["name"]) or d["name"]
+
             return public.returnResult(True, data=domains)
         except:
             return public.returnResult(False, traceback.format_exc())
@@ -928,42 +938,30 @@ class main(IpRestrict, RealProcess, Proxy, Redirect):  # 继承并使用同ip黑
             domains = get.domains
             if not isinstance(domains, list):
                 domains = json.loads(domains)
+
+            domain_list, err_list = normalize_domain(*domains)
+            if err_list:
+                res_domains = [
+                    {"name": i["domain"], "status": False, "msg": i["msg"]
+                } for i in err_list]
+                return res_domains
+
             flag = False
             res_domains = []
-            for domain in domains:
-                domain = domain.strip()
-                if not domain: continue
-                if not self.check_domain(domain.split(':')[0]):
-                    res_domains.append({"name": domain, "status": False, "msg": '域名格式错误'})
-                    continue
-                domain_arr = domain.split(':')
-                domain_arr[0] = self.ToPunycode(domain_arr[0])
-                if domain_arr[0] is False:
-                    res_domains.append({"name": domain, "status": False, "msg": '域名格式错误'})
-                    continue
-                if len(domain_arr) == 1:
-                    domain_arr.append("")
-                if domain_arr[1] == "":
-                    domain_arr[1] = 80
-                    domain += ':80'
-                try:
-                    if not (0 < int(domain_arr[1]) < 65535):
-                        res_domains.append({"name": domain, "status": False, "msg": '域名格式错误'})
-                        continue
-                except ValueError:
-                    res_domains.append({"name": domain, "status": False, "msg": '域名格式错误'})
-                    continue
-                if not public.M('domain').where('name=?', (domain_arr[0],)).count():
-                    public.M('domain').add('name,pid,port,addtime',
-                                           (domain_arr[0], project_id, domain_arr[1], public.getDate()))
-                    if not domain in project_find['project_config']['domains']:
-                        project_find['project_config']['domains'].append(domain)
-                    public.WriteLog(self._log_name, '成功添加域名{}到项目{}'.format(domain, get.sitename))
-                    res_domains.append({"name": domain_arr[0], "status": True, "msg": '添加成功'})
+            for d, p in domain_list:
+                real_d = "{}:{}".format(d, p)
+                if not public.M('domain').where('name=? and port=?', (d,p)).count():
+                    public.M('domain').add('name,pid,port,addtime',(d, project_id, p, public.getDate()))
+                    if not real_d in project_find['project_config']['domains']:
+                        project_find['project_config']['domains'].append(real_d)
+                    public.WriteLog(self._log_name, '成功添加域名{}到项目{}'.format(real_d, get.sitename))
+                    res_domains.append({"name": real_d, "status": True, "msg": '添加成功'})
                     flag = True
                 else:
-                    public.WriteLog(self._log_name, '添加域名错误，域名{}已存在'.format(domain))
-                    res_domains.append({"name": domain_arr[0], "status": False, "msg": '添加失败，域名{}已存在'.format(domain)})
+                    public.WriteLog(self._log_name, '添加域名错误，域名{}已存在'.format(real_d))
+                    res_domains.append(
+                        {"name": real_d, "status": False, "msg": '添加失败，域名{}已存在'.format(real_d)})
+
             if flag:
                 public.M('sites').where('id=?', (project_id,)).save('project_config', json.dumps(project_find['project_config']))
                 domain_list = public.M('domain').where('pid=?', (project_id)).select()
@@ -1051,36 +1049,7 @@ class main(IpRestrict, RealProcess, Proxy, Redirect):  # 继承并使用同ip黑
         except:
             public.print_log(traceback.format_exc())
             return public.returnResult(False, '获取项目状态失败')
-    
-    def domain_to_puny_code(self, domain: str) -> str:
-        new_domain = ''
-        for dkey in domain.split('.'):
-            if dkey == '*' or dkey == "":
-                continue
-            # 匹配非ascii字符
-            match = re.search(u"[\x80-\xff]+", dkey)
-            if not match:
-                match = re.search(u"[\u4e00-\u9fa5]+", dkey)
-            if not match:
-                new_domain += dkey + '.'
-            else:
-                new_domain += 'xn--' + dkey.encode('punycode').decode('utf-8') + '.'
-        if domain.startswith('*.'):
-            new_domain = "*." + new_domain
-        return new_domain[:-1]
-    
-    def check_domain(self, domain: str):
-        domain = self.domain_to_puny_code(domain)
-        # 判断通配符域名格式
-        if domain.find('*') != -1 and domain.find('*.') == -1:
-            return None
-        
-        # 判断域名格式
-        rep_domain = re.compile(r"^([\w\-*]{1,100}\.){1,24}([\w\-]{1,24}|[\w\-]{1,24}\.[\w\-]{1,24})$")
-        if not rep_domain.match(domain):
-            return None
-        return domain
-    
+
     # 修改项目运行状态
     def modify_project_run_state(self, get):
         sitename = get.sitename
@@ -1160,8 +1129,7 @@ class main(IpRestrict, RealProcess, Proxy, Redirect):  # 继承并使用同ip黑
             public.ExecShell('chown root:root {}'.format(php_ini_path))
             public.ExecShell('chmod 644 {}'.format(php_ini_path))
             public.ExecShell("sed -i '/disable_functions/d' {}".format(php_ini_path))
-            public.writeFile(php_ini_path, php_cli_ini)
-        
+            # public.writeFile(php_ini_path, php_cli_ini)
         except:
             pass
     
@@ -1355,7 +1323,7 @@ class main(IpRestrict, RealProcess, Proxy, Redirect):  # 继承并使用同ip黑
             if not hasattr(get, 'sitename'):
                 return public.returnResult(False, '项目名称不能为空')
             if not hasattr(get, 'version'):
-                return publihuoc.returnResult(False, '版本号不能为空')
+                return public.returnResult(False, '版本号不能为空')
             conf = self.get_project_find(get.sitename)
             versiontool = VersionTool()
             res = versiontool.recover(get.sitename, get.version, conf['path'], DirTool().get_site_run_path(get.sitename))

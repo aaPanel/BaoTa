@@ -88,6 +88,8 @@ random_string: Callable[[int], str] = public.GetRandomString
 
 set_module_logs: Callable[[str, str], None] = public.set_module_logs
 
+get_mysql_datadir: Callable[[], str] = public.get_datadir
+
 # 获取证书列表
 get_cert_list = certModel.main().get_cert_list
 to_dict_obj = public.to_dict_obj

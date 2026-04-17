@@ -361,7 +361,7 @@ class SSLManger:
         try:
             user_info = json.loads(public.readFile(uer_info_file))
             uid = user_info["uid"]
-        except (json.JSONDecodeError, KeyError):
+        except (json.JSONDecodeError, KeyError, TypeError):
             return None, None, None
 
         md5_obj = md5()
@@ -654,7 +654,7 @@ class SSLManger:
     def upload_cert(self, ssl_id=None, ssl_hash=None):
         key, iv, user_info = self._get_cbc_key_and_iv()
         if key is None or iv is None:
-            raise ValueError(False, '面板未登录，无法上传云端!')
+            raise ValueError('面板未登录，无法上传云端!')
 
         target = self.find_ssl_info(ssl_id=ssl_id, ssl_hash=ssl_hash)
         if not target:

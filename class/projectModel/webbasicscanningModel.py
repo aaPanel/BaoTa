@@ -11,6 +11,8 @@
 # -------------------------------------------------------------------
 import re
 import sys, json, os, public, hashlib, requests, time
+import urllib.parse
+from datetime import datetime
 from BTPanel import cache
 import PluginLoader
 
@@ -161,7 +163,6 @@ class main:
             result = public.ExecShell(cmd)[0]
             # 过滤掉空行
             result = [line for line in result.split('\n') if line.strip()]
-            # public.print_log(f"过滤后的日志内容，共{len(result)}行")
             return result
         except Exception as e:
             # 如果grep失败，直接读取原始日志
@@ -186,30 +187,65 @@ class main:
             
             for line in log_content.split('\n'):
                 if line.strip():
-                    line_lower = line.lower()
-                    # 检查是否包含攻击模式
-                    for pattern in pattern_info['patterns']:
-                        if pattern.lower() in line_lower:
-                            attack_stats[attack_type]['count'] += 1
-                            
-                            # 提取IP地址
-                            try:
-                                ip = line.split()[0]
-                                if ip not in attack_stats[attack_type]['sample_ips']:
-                                    attack_stats[attack_type]['sample_ips'].append(ip)
-                            except:
-                                pass
-                            
-                            # 提取URL
-                            try:
-                                parts = line.split()
-                                if len(parts) >= 7:
-                                    url = parts[6]
-                                    if url not in attack_stats[attack_type]['sample_urls']:
-                                        attack_stats[attack_type]['sample_urls'].append(url)
-                            except:
-                                pass
-                            break
+                    ip = None
+                    req_url = None
+                    ref_url = None
+                    try:
+                        parts = line.split()
+                        if parts:
+                            ip = parts[0]
+                    except:
+                        pass
+                    try:
+                        m_req = re.search(r"\"?(GET|POST|HEAD|PUT|DELETE|OPTIONS|PATCH)\s+(.*?)\s+HTTP\/[0-9.]+\"?", line)
+                        if m_req:
+                            req_url = m_req.group(2)
+                    except:
+                        pass
+                    try:
+                        qs = re.findall(r'"([^\"]*)"', line)
+                        if len(qs) >= 2:
+                            ref_full = qs[1]
+                            if ref_full and ref_full != '-':
+                                try:
+                                    parsed = urllib.parse.urlparse(ref_full)
+                                    ref_url = (parsed.path or '/') + (('?' + parsed.query) if parsed.query else '')
+                                except:
+                                    ref_url = ref_full
+                    except:
+                        pass
+                    def field_matches(s):
+                        if not s:
+                            return False
+                        s_low = s.lower()
+                        try:
+                            dec = urllib.parse.unquote(s_low)
+                        except:
+                            dec = s_low
+                        for p in pattern_info['patterns']:
+                            pl = p.lower()
+                            if pl in s_low or (dec and pl in dec):
+                                return True
+                        return False
+                    matched = False
+                    if field_matches(req_url):
+                        matched = True
+                        url = req_url
+                    elif field_matches(ref_url):
+                        matched = True
+                        url = ref_url
+                    if matched:
+                        attack_stats[attack_type]['count'] += 1
+                        try:
+                            if ip and ip not in attack_stats[attack_type]['sample_ips']:
+                                attack_stats[attack_type]['sample_ips'].append(ip)
+                        except:
+                            pass
+                        try:
+                            if url and url not in attack_stats[attack_type]['sample_urls']:
+                                attack_stats[attack_type]['sample_urls'].append(url)
+                        except:
+                            pass
         
         return attack_stats
 
@@ -220,7 +256,7 @@ class main:
         @return IP访问频率统计
         """
         ip_stats = {}
-        
+
         for line in log_content.split('\n'):
             if line.strip():
                 try:
@@ -228,9 +264,59 @@ class main:
                     ip_stats[ip] = ip_stats.get(ip, 0) + 1
                 except:
                     continue
-        
+
         # 返回访问次数排序的结果
         return sorted(ip_stats.items(), key=lambda x: x[1], reverse=True)
+
+    def _parse_time_to_timestamp(self, time_str):
+        """
+        将日志时间转换为时间戳
+        @param time_str 日志时间字符串，格式：13/Jan/2026:14:39:42
+        @return int 时间戳（秒级）
+        """
+        try:
+            dt = datetime.strptime(time_str, "%d/%b/%Y:%H:%M:%S")
+            return int(dt.timestamp())
+        except:
+            return int(time.time())
+
+    def _parse_log_line(self, line):
+        """
+        解析单行日志，提取完整信息
+        @param line 日志行
+        @return dict|null 包含 ip, time, url, ua 的字典
+        """
+        if not line.strip():
+            return None
+
+        try:
+            parts = line.split()
+            if len(parts) < 7:
+                return None
+
+            ip = parts[0]
+
+            # 提取时间
+            time_match = re.search(r"\[(.*?)\]", line)
+            time_str = time_match.group(1) if time_match else ""
+            timestamp = str(self._parse_time_to_timestamp(time_str))
+
+            # 提取 URL
+            url_match = re.search(r"\"?(GET|POST|HEAD|PUT|DELETE|OPTIONS|PATCH)\s+(.*?)\s+HTTP\/[0-9.]+\"?", line)
+            url = url_match.group(2) if url_match else ""
+
+            # 提取 UA（最后一个引号内容）
+            ua_match = re.search(r"\"([^\"]*)\"$", line)
+            ua = ua_match.group(1) if ua_match else ""
+
+            return {
+                "ip": ip,
+                "time": timestamp,
+                "url": url,
+                "ua": ua
+            }
+        except:
+            return None
 
     def _analyze_url_attacks(self, log_content, security_patterns):
         """
@@ -497,8 +583,7 @@ class main:
         site_path = webinfo['path']
         
         # 备份文件扩展名
-        backup_extensions = ['.bak', '.backup', '.old', '.orig', '.tmp', 
-                           '.zip', '.rar', '.tar', '.gz', '.7z']
+        backup_extensions = ['.bak', '.backup', '.zip', '.rar', '.tar', '.gz', '.7z']
 
         # 只扫描站点根目录是否存在备份文件（不遍历子目录）
         if os.path.exists(site_path):
@@ -636,21 +721,42 @@ class main:
     def WebLogDetection(self, webinfo, get):
         '''
         @name 网站日志检测
-        @author wpl<2025-11-4> 
+        @author wpl<2025-11-4>
         @param webinfo 网站信息
         @param get 请求参数
-        @return list 检测结果
+        @return list 检测结果（单元素汇总 list）
         '''
-        if '_ws' in get: 
+        # 记录开始时间
+        start_time = time.time()
+
+        if '_ws' in get:
             get._ws.send(public.getJson({
-                "end": False, "ws_callback": get.ws_callback, 
+                "end": False, "ws_callback": get.ws_callback,
                 "info": "正在扫描 %s 网站日志" % get.name,
                 "type": "weblog",
                 "bar": self.bar
             }))
 
-        result = []
-        
+        # 初始化汇总数据
+        result = {
+            "name": webinfo['name'],
+            "type": "weblog",
+            "dangerous": 0,
+            "scan_time": public.format_date(),
+            "duration": 0,
+            "start_time": int(start_time),
+            "xss": 0, "xss_detail": [],
+            "sql": 0, "sql_detail": [],
+            "san": 0, "san_detail": [],
+            "php": 0, "php_detail": [],
+            "ip": 0, "ip_detail": [],
+            "url": 0, "url_detail": [],
+            "total": 0
+        }
+
+        # 收集攻击详情（最大1000条/类型）
+        details = {'xss': [], 'sql': [], 'san': [], 'php': []}
+
         # 安全检测规则定义
         security_patterns = {
             'xss': {
@@ -659,8 +765,8 @@ class main:
                            'document.cookie', 'document.location', 'window.location', 'eval(',
                            'expression(', 'vbscript:', 'livescript:', 'mocha:'],
                 'name': 'XSS跨站脚本攻击',
-                'repair': '1.对用户输入进行HTML编码 2.使用CSP内容安全策略 3.过滤危险标签和属性',
-                'risk_level': 2
+                'repair': '为了保护您的网站安全，建议使用【 Nginx防火墙 】以有效防御当前站点的XSS跨站脚本攻击',
+                'risk_level': 0
             },
             'sql_injection': {
                 'patterns': ['union select', 'or 1=1', 'and 1=1', 'drop table', 'insert into',
@@ -668,8 +774,8 @@ class main:
                            'information_schema', 'mysql.user', 'pg_user', 'sysobjects',
                            'waitfor delay', 'benchmark(', 'sleep(', 'pg_sleep'],
                 'name': 'SQL注入攻击',
-                'repair': '1.使用参数化查询 2.对输入进行严格验证 3.限制数据库权限 4.使用WAF防护',
-                'risk_level': 2
+                'repair': '为了保护您的网站安全，建议使用【 Nginx防火墙 】以有效防御当前站点的sql攻击',
+                'risk_level': 0
             },
             'file_traversal': {
                 'patterns': ['../', '..\\', '/etc/', '/var/', '/usr/', '/root/', '/home/',
@@ -677,8 +783,8 @@ class main:
                            'wp-config.php', 'database.php', '/proc/', '/dev/',
                            'file://', 'php://filter', 'php://input'],
                 'name': '目录遍历/文件包含攻击',
-                'repair': '1.验证文件路径 2.使用白名单限制访问 3.禁用危险函数 4.设置适当的文件权限',
-                'risk_level': 2
+                'repair': '为了保护您的网站安全，建议使用【 Nginx防火墙 】以有效防御当前站点的目录遍历/文件包含攻击',
+                'risk_level': 0
             },
             'php_execution': {
                 'patterns': ['eval(', 'system(', 'exec(', 'shell_exec(', 'passthru(',
@@ -687,8 +793,8 @@ class main:
                            'php://', 'data://', 'expect://', 'phar://', 'assert(',
                            'preg_replace(/.*e', 'create_function('],
                 'name': 'PHP代码执行攻击',
-                'repair': '1.禁用危险函数 2.严格过滤用户输入 3.使用安全的代码执行方式 4.定期更新PHP版本',
-                'risk_level': 2
+                'repair': '为了保护您的网站安全，建议使用【 Nginx防火墙 】以有效防御当前站点的PHP代码执行攻击',
+                'risk_level': 0
             },
             'sensitive_files': {
                 'patterns': ['.env', '.env.local', '.env.production', 'wp-config.php',
@@ -696,36 +802,21 @@ class main:
                            'composer.json', 'package.json', '.git/config', 'phpinfo.php',
                            'info.php', 'test.php', 'shell.php', 'webshell.php', 'setup.php', '.DS_Store', 'Thumbs.db'],
                 'name': '敏感文件访问尝试',
-                'repair': '1.删除或移动敏感文件 2.设置访问权限 3.使用.htaccess限制访问 4.定期检查文件权限',
-                'risk_level': 2
+                'repair': '为了保护您的网站安全，建议使用【 Nginx防火墙 】以有效防御当前站点的敏感文件访问尝试',
+                'risk_level': 0
             }
         }
-        
+
         # 只检测access.log文件，移除error.log检测
         access_log = '/www/wwwlogs/%s.log' % get.name
-        
-        # 检测日志文件大小
+
+        # 检测日志文件
         if os.path.exists(access_log):
-            file_size = os.path.getsize(access_log)
-            # 如果日志文件大于500MB，提示清理
-            # if file_size > 500 * 1024 * 1024:
-            #     result.append({
-            #         "name": "访问日志文件过大: %s (%.2fMB)" % (os.path.basename(access_log), file_size/1024/1024),
-            #         "repair": "1.配置日志轮转 2.定期清理旧日志 3.压缩历史日志文件",
-            #         "dangerous": 1, 
-            #         "type": "weblog",
-            #         "file_path": access_log
-            #     })
-            # public.print_log(f"访问日志文件大小: {file_size/1024/1024:.2f}MB")
-
-            
             try:
-                # 优化的日志读取策略：只读取最近10000行，并进行初步过滤
+                # 读取日志
                 log_content = self._read_recent_logs(access_log, 10000)
-                # 输出前10条数据
-                # public.print_log(f"前10条日志数据: {log_content[:10]}")
 
-                # 归一化日志内容类型，确保分析函数总是接收到字符串
+                # 归一化日志内容
                 if isinstance(log_content, list):
                     normalized_lines = []
                     for line in log_content:
@@ -739,7 +830,6 @@ class main:
                         elif line is None:
                             continue
                         else:
-                            # 对于其他类型(如数字/对象)，转为字符串以避免异常
                             normalized_lines.append(str(line))
                     log_content = '\n'.join(normalized_lines)
                 elif isinstance(log_content, bytes):
@@ -749,73 +839,126 @@ class main:
                         log_content = log_content.decode('latin-1', errors='ignore')
 
                 if log_content:
-                    # 统计分析
-                    # public.print_log(f"开始分析日志内容，共{len(log_content)}行")
-                    attack_stats = self._analyze_attack_distribution(log_content, security_patterns)
+                    # 攻击类型映射（合并 san 类型）
+                    attack_mapping = {
+                        'xss': 'xss',
+                        'sql_injection': 'sql',
+                        'file_traversal': 'san',
+                        'sensitive_files': 'san',
+                        'php_execution': 'php'
+                    }
+
+                    # 统计攻击URL（用于 url_detail）
+                    url_attack_stats = {}
+
+                    # 遍历日志行，收集攻击详情
+                    for line in log_content.split('\n'):
+                        if not line.strip():
+                            continue
+
+                        # 解析日志行
+                        log_info = self._parse_log_line(line)
+                        if not log_info:
+                            continue
+
+                        # 检测攻击类型
+                        matched_type = None
+                        for attack_type, pattern_info in security_patterns.items():
+                            # 检查请求URL
+                            req_url = log_info.get('url', '').lower()
+                            # 检查引用URL
+                            try:
+                                qs = re.findall(r'"([^"]*)"', line)
+                                if len(qs) >= 2:
+                                    ref_full = qs[1]
+                                    if ref_full and ref_full != '-':
+                                        try:
+                                            parsed = urllib.parse.urlparse(ref_full)
+                                            ref_url = ((parsed.path or '/') + (('?' + parsed.query) if parsed.query else '')).lower()
+                                        except:
+                                            ref_url = ref_full.lower()
+                                    else:
+                                        ref_url = ''
+                                else:
+                                    ref_url = ''
+                            except:
+                                ref_url = ''
+
+                            # 检查是否匹配攻击模式
+                            for pattern in pattern_info['patterns']:
+                                pl = pattern.lower()
+                                if pl in req_url or pl in ref_url:
+                                    matched_type = attack_type
+                                    break
+                            if matched_type:
+                                break
+
+                        if matched_type:
+                            mapped_type = attack_mapping.get(matched_type)
+                            if mapped_type and len(details[mapped_type]) < 1000:
+                                details[mapped_type].append({
+                                    "ip": log_info.get('ip', ''),
+                                    "time": log_info.get('time', ''),
+                                    "url": log_info.get('url', ''),
+                                    "ua": log_info.get('ua', '')
+                                })
+
+                                # 统计攻击URL
+                                url = log_info.get('url', '')
+                                if url:
+                                    url_attack_stats[url] = url_attack_stats.get(url, 0) + 1
+
+                    # 填充汇总数据
+                    result['xss'] = len(details['xss'])
+                    result['xss_detail'] = details['xss'][:1000]
+                    result['sql'] = len(details['sql'])
+                    result['sql_detail'] = details['sql'][:1000]
+                    result['san'] = len(details['san'])
+                    result['san_detail'] = details['san'][:1000]
+                    result['php'] = len(details['php'])
+                    result['php_detail'] = details['php'][:1000]
+
+                    # IP统计
                     ip_stats = self._analyze_ip_frequency(log_content)
-                    # url_stats = self._analyze_url_attacks(log_content, security_patterns) // 统计URL访问排行
-                    # public.print_log(f"分析完成，共检测到{sum(stats['count'] for stats in attack_stats.values())}次攻击")
-                    
-                    # 生成安全检测结果
-                    for attack_type, stats in attack_stats.items():
-                        if stats['count'] > 0:
-                            pattern_info = security_patterns[attack_type]
-                            result.append({
-                                "name": f"{webinfo['name']} 检测到{pattern_info['name']}",
-                                "info": f"检测到{pattern_info['name']}攻击，共{stats['count']}次尝试",
-                                "repair": pattern_info['repair'],
-                                "dangerous": pattern_info['risk_level'],
-                                "type": "weblog",
-                                "attack_count": stats['count'],
-                                "attack_type": attack_type,
-                                "sample_ips": stats['sample_ips'][:5]  # 显示前5个攻击IP
-                                # "sample_urls": stats['sample_urls'][:3]  # 显示前3个被攻击URL
-                            })
-                    
-                    # IP Top10
+                    result['ip'] = len(ip_stats)
+                    result['ip_detail'] = [
+                        {"num": str(count), "path": ip}
+                        for ip, count in ip_stats[:1000]
+                    ]
+
+                    # URL攻击统计
+                    result['url'] = len(url_attack_stats)
+                    result['url_detail'] = [
+                        {"num": str(count), "path": url}
+                        for url, count in sorted(url_attack_stats.items(), key=lambda x: x[1], reverse=True)[:1000]
+                    ]
+
+                    # IP Top10（保持兼容）
                     if ip_stats:
                         suspicious_ips = [f"{ip}|{count}" for ip, count in ip_stats][:10]
                         if suspicious_ips:
-                            # 仅打印日志，不写入result，避免将统计计入问题数
-                            # public.print_log(f"可疑IP（Top10）：{suspicious_ips}")
-                            # 保留结果但不计入问题数：存入临时属性，供汇总阶段写入meta
                             self._last_weblog_ip_top = suspicious_ips
 
-                    # URL攻击统计
-                    # if url_stats:
-                    #     result.append({
-                    #         "name": f"检测到被攻击的URL ({len(url_stats)}个)",
-                    #         "repair": "1.检查相关页面安全性 2.加强输入验证 3.更新相关组件 4.考虑隐藏敏感页面",
-                    #         "dangerous": 2,
-                    #         "type": "weblog",
-                    #         "attacked_urls": url_stats[:10]  # 显示前10个被攻击URL
-                    #     })
-                        
-            except Exception as e:
-                result.append({
-                    "name": "日志分析过程中出现错误",
-                    "repair": f"检查日志文件权限和格式，错误信息：{str(e)}",
-                    "dangerous": 1,
-                    "type": "weblog"
-                })
-        else:
-            result.append({
-                "name": "未找到访问日志文件",
-                "repair": "1.检查网站配置 2.确认日志记录已启用 3.检查日志文件路径设置",
-                "dangerous": 0,
-                "type": "weblog"
-            })
+                    # 计算合计
+                    result['total'] = result['xss'] + result['sql'] + result['san'] + result['php']
 
-        if '_ws' in get: 
+            except Exception as e:
+                # 出错时添加错误信息
+                result['error'] = f"日志分析过程中出现错误: {str(e)}"
+
+        # 计算扫描耗时
+        result['duration'] = round(time.time() - start_time, 6)
+
+        if '_ws' in get:
             get._ws.send(public.getJson({
-                "end": False, "ws_callback": get.ws_callback, 
-                "info": "扫描 %s 网站日志完成，发现 %d 个问题" % (get.name, len(result)),
+                "end": False, "ws_callback": get.ws_callback,
+                "info": "扫描 %s 网站日志完成" % get.name,
                 "type": "weblog",
-                "results": result,
+                "results": [result],
                 "bar": self.bar
             }))
 
-        return result
+        return [result]
 
     def ScanSingleSite(self, get):
         '''
@@ -1094,18 +1237,30 @@ class main:
                     self.bar = int((self._done_units / max(1, self._total_units)) * 100)
 
                     # 按模块聚合写入详情
-                    aggregated_details[m].append({
-                        'site_name': get.name,
-                        'items': result_items
-                    })
+                    # weblog 模块特殊处理：新格式直接扩展，不包装 {site_name, items}
+                    if m == 'weblog':
+                        # weblog 返回的是新格式单元素 list: [{name, xss, sql, san, php, ...}]
+                        # 直接扩展到 aggregated_details[m] 中
+                        if isinstance(result_items, list) and result_items:
+                            aggregated_details[m].extend(result_items)
+                    else:
+                        # 其他模块保持原逻辑：包装成 {site_name, items}
+                        aggregated_details[m].append({
+                            'site_name': get.name,
+                            'items': result_items
+                        })
 
                 except Exception as e:
                     # 异常也记入详情，避免遗漏
-                    aggregated_details[m].append({
-                        'site_name': site.get('name'),
-                        'error': str(e),
-                        'items': []
-                    })
+                    if m == 'weblog':
+                        # weblog 模块异常时不添加数据
+                        pass
+                    else:
+                        aggregated_details[m].append({
+                            'site_name': site.get('name'),
+                            'error': str(e),
+                            'items': []
+                        })
                     # 进度也应计入
                     self._done_units += 1
                     self.bar = int((self._done_units / max(1, self._total_units)) * 100)
@@ -1176,7 +1331,7 @@ class main:
             public.writeFile(file_path, json.dumps(result, indent=2, ensure_ascii=False))
             
         except Exception as e:
-            public.WriteLog('网站基础安全扫描', '保存扫描结果失败: %s' % str(e))
+            public.print_log('网站基础安全扫描', '保存扫描结果失败: %s' % str(e))
 
     def save_statistics_result(self, details=None):
         '''
@@ -1203,40 +1358,84 @@ class main:
             total_attack = {t: 0 for t in allowed_types}
             if isinstance(details, dict):
                 weblog_sites = details.get('weblog')
-                if isinstance(weblog_sites, list):
-                    for site_entry in weblog_sites:
-                        if not isinstance(site_entry, dict):
-                            continue
-                        items = site_entry.get('items', [])
-                        for it in items:
-                            if not isinstance(it, dict):
+                if isinstance(weblog_sites, list) and len(weblog_sites) > 0:
+                    # 检查是否是新格式（有 xss/sql/san/php 字段）
+                    summary = weblog_sites[0]
+                    # 增强格式检测：检查 summary 是否为 dict
+                    is_new_format = isinstance(summary, dict) and 'xss' in summary
+
+                    if is_new_format:
+                        # 新格式：累加所有站点的攻击数据
+                        total_attack = {
+                            'xss': 0,
+                            'sql_injection': 0,
+                            'file_traversal': 0,
+                            'php_execution': 0,
+                            'sensitive_files': 0
+                        }
+                        for site in weblog_sites:
+                            if not isinstance(site, dict):
                                 continue
-                            if it.get('type') != 'weblog':
+                            total_attack['xss'] += site.get('xss', 0)
+                            total_attack['sql_injection'] += site.get('sql', 0)
+                            total_attack['file_traversal'] += site.get('san', 0)
+                            total_attack['php_execution'] += site.get('php', 0)
+                            # sensitive_files 暂无数据来源，保持为 0
+                    else:
+                        # 旧格式：保持原逻辑
+                        for site_entry in weblog_sites:
+                            if not isinstance(site_entry, dict):
                                 continue
-                            atype = it.get('attack_type')
-                            if atype not in total_attack:
-                                continue
-                            count = it.get('attack_count', 1)
-                            try:
-                                total_attack[atype] += int(count)
-                            except Exception:
-                                total_attack[atype] += 1
-            
+                            items = site_entry.get('items', [])
+                            for it in items:
+                                if not isinstance(it, dict):
+                                    continue
+                                if it.get('type') != 'weblog':
+                                    continue
+                                atype = it.get('attack_type')
+                                if atype not in total_attack:
+                                    continue
+                                count = it.get('attack_count', 1)
+                                try:
+                                    total_attack[atype] += int(count)
+                                except Exception:
+                                    total_attack[atype] += 1
+
+
             # 规整 details：按模块扁平化，仅保留非空 items
             flattened_details = {}
             if isinstance(details, dict):
                 for mod_key, entries in details.items():
                     if not isinstance(entries, list):
                         continue
-                    flat_items = []
-                    for en in entries:
-                        if not isinstance(en, dict):
-                            continue
-                        items = en.get('items')
-                        if isinstance(items, list) and items:
-                            flat_items.extend([it for it in items if isinstance(it, dict)])
-                    if flat_items:
-                        flattened_details[mod_key] = flat_items
+
+                    # weblog 特殊处理（单元素新格式）
+                    if mod_key == 'weblog':
+                        # 检查是否是新格式（有 xss/sql/san/php 字段）
+                        if len(entries) > 0 and isinstance(entries[0], dict) and 'xss' in entries[0]:
+                            # 新格式：直接使用单元素 list
+                            flattened_details[mod_key] = entries
+                        else:
+                            # 旧格式：保持原逻辑，展开 items
+                            flat_items = []
+                            for en in entries:
+                                if not isinstance(en, dict):
+                                    continue
+                                items = en.get('items')
+                                if isinstance(items, list) and items:
+                                    flat_items.extend([it for it in items if isinstance(it, dict)])
+                            flattened_details[mod_key] = flat_items if flat_items else []
+                    else:
+                        # 其他模块保持原逻辑
+                        flat_items = []
+                        for en in entries:
+                            if not isinstance(en, dict):
+                                continue
+                            items = en.get('items')
+                            if isinstance(items, list) and items:
+                                flat_items.extend([it for it in items if isinstance(it, dict)])
+                        if flat_items:
+                            flattened_details[mod_key] = flat_items
             elif isinstance(details, list):
                 # 当 details 为列表时，按每条 item 的 type 进行归类到模块键
                 flat_map = {}
@@ -1286,13 +1485,11 @@ class main:
             # 保存到文件
             save_file = os.path.join(save_path, 'webbasic_scan_result.json')
             public.writeFile(save_file, json.dumps(result_data, indent=2, ensure_ascii=False))
-            
-            # 记录日志
-            # public.WriteLog('网站基础安全扫描', '保存统计结果成功: %s' % str(result_data))
+
             return True
             
         except Exception as e:
-            public.WriteLog('网站基础安全扫描', '保存统计结果失败: %s' % str(e))
+            public.print_log('网站基础安全扫描', '保存统计结果失败: %s' % str(e))
             return False
 
     # 读取当前最近一次扫描结果
@@ -1345,9 +1542,12 @@ class main:
 
                 data['ip_top'] = transformed
 
+            # weblog 数据原样输出，不做格式转换
+            # 新格式: [{name, xss, sql, san, php, xss_detail, sql_detail, ...}]
+
             return data
         except Exception as e:
-            public.WriteLog('网站基础安全扫描', '读取最近一次扫描结果失败: %s' % str(e))
+            public.print_log('网站基础安全扫描', '读取最近一次扫描结果失败: %s' % str(e))
             return None
     # 辅助方法
     def GetSiteRunPath(self, siteName, sitePath):

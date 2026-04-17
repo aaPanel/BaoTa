@@ -1,4 +1,5 @@
 from typing import Tuple
+from urllib.parse import urlparse
 
 from .utils import _IndexBlockTools
 from .. import *
@@ -246,7 +247,7 @@ class LocationTools(_IndexBlockTools):
 
     def set_proxy_cache(self,
                         status: bool, cache_name: str, cache_time: str = "1d",
-                        cache_suffix: str = "css,js,jpe,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map.js.map"):
+                        cache_suffix: str = "css,js,jpg,jpeg,gif,png,webp,woff,eot,ttf,svg,ico,css.map.js.map") -> Optional[Dict]:
         self.set_proxy_cache_old(status=False, cache_name="", cache_time="")  # 旧版清除
         proxy_pass = self._location.top_find_directives("proxy_pass")
         if len(proxy_pass) < 0:
@@ -286,7 +287,24 @@ class LocationTools(_IndexBlockTools):
             ]),)
 
         if proxy_pass_copy is not None:
-            add_loc.block.directives.insert(0, proxy_pass_copy)
+            proxy_pass_url = proxy_pass_copy.get_parameters()[0]
+            url_data = urlparse(proxy_pass_url)
+            # 父级块的 代理路径
+            to_url_path = url_data.path
+            # 父级块的 location 的 url前缀
+            form_url = self._location.match
+            if to_url_path in ("/", "") or form_url == "/":
+                proxy_pass_copy.parameters = ["{}://{}".format(url_data.scheme, url_data.netloc)]
+                add_loc.block.directives.insert(0, proxy_pass_copy)
+            else:
+                if self._location.modifier in ("~", "~*"):  # 父级为正则匹配，无法操作
+                    return {"status": False, "msg": "URL【{}】的代理使用了正则匹配无法设置缓存".format(form_url)}
+                proxy_pass_copy.parameters = ["{}://{}".format(url_data.scheme, url_data.netloc)]
+                add_loc.block.directives.insert(0, proxy_pass_copy)
+                # 使用 rewrite 重写路由，保持和上级location一直
+                add_loc.block.directives.insert(
+                    0,
+                    Directive(name="rewrite", parameters=[r"^{}(.*)".format(re.escape(form_url)), "{}$1".format(to_url_path)]))
 
         proxy_cache = self._location.top_find_directives("proxy_cache")
         for pc in proxy_cache:

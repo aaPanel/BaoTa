@@ -1369,6 +1369,9 @@ class main(Base):
                 if dns_dic:
                     item['dns_id'] = dns_data['dns_id']
                     item['dns_name'] = dns_dic['dns_name']
+                elif dns_data['dns_id'].find("cloud_id=") != -1:
+                    item['dns_id'] = "宝塔DNS"
+                    item['dns_name'] = "宝塔DNS"
             bind = "@" + item['domain']
             ip_tags = multipleipModel_main.get_tag_bind(bind=bind)
             now_tag = ip_tags[0] if ip_tags else ''

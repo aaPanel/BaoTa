@@ -80,7 +80,7 @@ class SiteTotalService:
         if os.path.exists(self.pid_file):
             os.remove(self.pid_file)
         if os.path.exists(self.service_file):
-            public.ExecShell("systemctl start site_total")
+            public.ExecShell("nohup systemctl start site_total &")
         else:
             public.ExecShell("nohup {} 2>&1 >/dev/null &".format(self.bin_path))
 
@@ -246,9 +246,9 @@ class SiteTotalConfig:
         获取流量统计模块版本
         :return: 流量统计模块版本
         """
-        out, err = public.ExecShell("cd /www/server/site_total && ./site_total version")
+        res = public.ExecShell("cd /www/server/site_total && ./site_total version", timeout=0.5)
         version_regexp = re.compile(r"Version:\s+(?P<ver>\d+\.\d+)")
-        ver = version_regexp.search(out +  err)
+        ver = version_regexp.search(res if isinstance(res, str) else "\n".join(res))
         if not ver:
             self.version = 0.0
         else:

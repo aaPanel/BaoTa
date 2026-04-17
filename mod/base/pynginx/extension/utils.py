@@ -53,7 +53,37 @@ class _IndexBlockTools:
                 return target_idx + op.offset
         return default
 
+    def insert(self, idx: int, *directives: IDirective):
+        if idx < 0:
+            raise ValueError("索引不能小于0")
+        cls = type(self._block)
+        prep = [] if idx == 0 else self._block.directives[:idx]
+        after = [] if idx >= (len(self._block.directives)-1 ) else self._block.directives[idx:]
+
+        if cls in (Block, Config):
+            self._block.directives = prep + list(directives) + after
+        elif cls is Http:
+            srv_list, dir_list = [], []
+            for directive in directives:
+                if directive.__class__ is Server:
+                    srv_list.append(directive)
+                else:
+                    dir_list.append(directive)
+            self._block.servers.extend(srv_list)
+            self._block.directives = prep + list(dir_list) + after
+        elif cls is Upstream:
+            srv_list, dir_list = [], []
+            for directive in directives:
+                if directive.__class__ is UpstreamServer:
+                    srv_list.append(directive)
+                else:
+                    dir_list.append(directive)
+            self._block.servers.extend(srv_list)
+            self._block.directives = prep + dir_list + after
+
     def insert_after(self, idx: int, *directives: IDirective):
+        if idx < 0:
+            raise ValueError("索引不能小于0")
         cls = type(self._block)
         if cls in (Block, Config):
             self._block.directives = self._block.directives[:idx] + list(directives) + self._block.directives[idx:]

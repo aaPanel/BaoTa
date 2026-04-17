@@ -16,7 +16,7 @@ from .send_tool import WxAccountMsg, WxAccountLoginMsg
 from .base_task import BaseTask, BaseTaskViewMsg
 from .mods import PUSH_DATA_PATH, TaskConfig, SenderConfig
 from .util import read_file, DB, write_file, check_site_status, GET_CLASS, ExecShell, get_config_value, public_get_cache_func, \
-    public_set_cache_func, get_network_ip, public_get_user_info, public_http_post, panel_version
+    public_set_cache_func, get_network_ip, public_get_user_info, public_http_post, panel_version, get_mysql_datadir
 from mod.base.web_conf import RealSSLManger
 
 
@@ -28,7 +28,7 @@ class _WebInfo:
 
     @property
     def site_list(self) -> List[Dict]:
-        if self._site_cache is not None and time.time() - self.last_time < 300:
+        if self._site_cache is not None and time.time() - self.last_time < 3:
             return self._site_cache
         try:
             site_list = DB('sites').field('id,name,project_type,project_config').select()
@@ -39,7 +39,7 @@ class _WebInfo:
 
         return site_list
 
-    def __call__(self, project_types=None, all_type=False) -> Tuple[List[Dict], Dict[str, List[Dict]]]:
+    def __call__(self, project_types=None, all_type=False, value_field="name") -> Tuple[List[Dict], Dict[str, List[Dict]]]:
         if project_types is None:
             project_types = ()
 
@@ -51,12 +51,12 @@ class _WebInfo:
                 continue
             items.append({
                 "title": i["name"] + "[" + i["project_type"] + "]",
-                "value": i["name"]
+                "value": i[value_field]
             })
 
             items_by_type.setdefault(i["project_type"], []).append({
                 "title": i["name"],
-                "value": i["id"]
+                "value": i[value_field]
             })
 
         return items, items_by_type
@@ -94,12 +94,13 @@ class SSLTask(BaseTask):
         write_file(self._tip_file, json.dumps(self.tips))
 
     def get_keyword(self, task_data: dict) -> str:
-        return task_data["project"]
+        return self.source_name
 
-    def get_push_data(self, task_id: str, task_data: dict) -> Optional[dict]:
+    def get_push_data_old(self, task_id: str, task_data: dict) -> Optional[dict]:
         panelPath = '/www/server/panel/'
         os.chdir(panelPath)
-        sys.path.insert(0, panelPath)
+        if panelPath not in sys.path:
+            sys.path.insert(0, panelPath)
         # 过滤单独设置提醒的网站
         not_push_web = [i["task_data"]["project"] for i in self._task_config.config if i["source"] == self.source_name]
         sql = DB("sites")
@@ -162,6 +163,59 @@ class SSLTask(BaseTask):
         self.title = self.get_title(task_data)
         return {"msg_list": s_list}
 
+    def get_push_data(self, task_id: str, task_data: dict) -> Optional[dict]:
+        if "after_site" in task_data["project"]:
+            after_site_id = task_data["after_site_id"]
+        else:
+            after_site_id = -1
+
+        sql = DB("sites")
+        where = []
+        parms = [i for i in task_data["project"] if isinstance(i, int)]
+        if parms:
+            where.append("id in ({})".format(",".join(["?"] * len(parms))))
+        if isinstance(after_site_id, int) and after_site_id > -1:
+            where.append("id > ?")
+            parms.append(after_site_id)
+
+        if not parms:
+            return
+        total = self._task_config.get_by_id(task_id).get("number_rule", {}).get("total", 1)
+        web_list = sql.where('status=1 and ({})'.format(" or ".join(where)), parms).select()
+        need_check_list = []
+        for web in web_list:
+            if web['project_type']!="PHP":
+                if not check_site_status(web):
+                    continue
+
+            if self.tips.get(task_id, {}).get(web['name'], 0) > total:
+                continue
+
+            if not web['project_type'].lower() in ['php', 'proxy']:
+                project_type = web['project_type'].lower() + '_'
+            else:
+                project_type = ''
+
+            need_check_list.append((web['name'], project_type))
+
+        for name, project_type in need_check_list:
+            info = self._check_ssl_end_time(name, task_data['cycle'], project_type)
+            if isinstance(info, dict):  # 返回的是详情，说明需要推送了
+                info['site_name'] = name
+                self.push_keys.append(name)
+                self.ssl_list.append(info)
+
+        if len(self.ssl_list) == 0:
+            return None
+
+        s_list = ['>即将到期：<font color=#ff0000>{} 张</font>'.format(len(self.ssl_list))]
+        for x in self.ssl_list:
+            s_list.append(">网站：{}  到期：{}".format(x['site_name'], x['notAfter']))
+
+        self.task_id = task_id
+        self.title = self.get_title(task_data)
+        return {"msg_list": s_list}
+
     @staticmethod
     def _check_ssl_end_time(site_name, limit, prefix) -> Optional[dict]:
         info = RealSSLManger(conf_prefix=prefix).get_site_ssl_info(site_name)
@@ -172,9 +226,7 @@ class SSLTask(BaseTask):
         return None
 
     def get_title(self, task_data: dict) -> str:
-        if task_data["project"] == "all":
-            return "所有网站证书(SSL)到期提醒"
-        return "网站[{}]证书(SSL)到期提醒".format(task_data["project"])
+        return "网站证书(SSL)到期提醒"
 
     def to_sms_msg(self, push_data: dict, push_public_data: dict) -> Tuple[str, dict]:
         return 'ssl_end|宝塔面板SSL到期提醒', {
@@ -195,10 +247,15 @@ class SSLTask(BaseTask):
         task_data["interval"] = 60 * 60 * 24  # 默认检测间隔时间 1 天
         if not (isinstance(task_data['cycle'], int) and task_data['cycle'] >= 1):
             return "剩余时间参数错误，至少为1天"
+        if "after_site" in task_data["project"]:
+            items, _ = web_info_data(all_type=True, value_field="id")
+            task_data["after_site_id"] = 0 if len(items) == 0 else max([i["value"] for i in items])
+        else:
+            task_data["after_site_id"] = -1
         return task_data
 
     def filter_template(self, template) -> dict:
-        items, _ = web_info_data(all_type=True)
+        items, _ = web_info_data(all_type=True, value_field="id")
         template["field"][0]["items"].extend(items)
         return template
 
@@ -600,8 +657,9 @@ class ServicesTask(BaseTask):
         default, s_list = self.services_list()
         if task_data["project"] not in {i["value"] for i in s_list}:
             return "所选择的服务不存在"
-        if task_data["count"] not in (1, 2):
-            return "自动重启选择错误"
+        # if task_data["count"] not in (1, 2):
+        #     return "自动重启选择错误"
+        task_data["count"] = 1 # 11.3版本后所有服务都守护并重启
         if not (isinstance(task_data['interval'], int) and task_data['interval'] >= 60):
             return "间隔时间参数错误，至少为60秒"
         return task_data
@@ -624,14 +682,19 @@ class ServicesTask(BaseTask):
 
         self.service_name = task_data["project"]
 
-        if task_data["count"] == 1:
-            self._services_start(task_data["project"])
-            if not self.get_server_status(task_data["project"]):
-                self.restart = False
-                s_list[1] = ">服务状态：【" + task_data["project"] + "】服务重启失败"
-            else:
-                self.restart = True
-                s_list[1] = ">服务状态：【" + task_data["project"] + "】服务重启成功"
+        # if task_data["count"] == 1: 不管是否选择了重启，都执行重启
+        self._services_start(task_data["project"])
+        # 2025/11/20
+        # 告警任务调度方式由单线程改为多线程模式，
+        # 单一任务执行耗时只要在60秒内就不会出现，难以预估的重复执行错误问题
+        # 所以这里休眠3秒不会大幅影响任务执行速度
+        time.sleep(3)
+        if not self.get_server_status(task_data["project"]):
+            self.restart = False
+            s_list[1] = ">服务状态：【" + task_data["project"] + "】服务重启失败"
+        else:
+            self.restart = True
+            s_list[1] = ">服务状态：【" + task_data["project"] + "】服务重启成功"
 
         return {
             "msg_list": s_list
@@ -674,7 +737,6 @@ class ServicesTask(BaseTask):
             return True
 
     def get_server_status(self, name: str) -> bool:
-        # time.sleep(5)
         if name == "php-fpm":
             base_path = "/www/server/php"
             if not os.path.exists(base_path):
@@ -692,12 +754,9 @@ class ServicesTask(BaseTask):
             if os.path.exists('/etc/init.d/nginx'):
                 pid_f = '/www/server/nginx/logs/nginx.pid'
                 if os.path.exists(pid_f):
-                    try:
-                        pid = read_file(pid_f)
-                        print('/www/server/nginx/logs/nginx.pid', pid)
-                        return self.check_process(pid)
-                    except:
-                        pass
+                    pid = read_file(pid_f)
+                    return self.check_process(pid)
+
             return False
 
         elif name == 'apache':
@@ -709,8 +768,11 @@ class ServicesTask(BaseTask):
             return False
 
         elif name == 'mysql':
-            if os.path.exists('/tmp/mysql.sock'):
-                return True
+            datadir = get_mysql_datadir() or '/www/server/data'
+            pid_file = "{}/{}.pid".format(datadir, self.get_hostname())
+            if os.path.exists(pid_file):
+                pid = read_file(pid_file)
+                return self.check_process(pid)
             return False
 
         elif name == 'tomcat':
@@ -746,9 +808,22 @@ class ServicesTask(BaseTask):
 
         return True
 
-    def check_process(self, pid):
+    @staticmethod
+    def get_hostname():
         try:
-            return psutil.pid_exists(int(pid))
+            import socket
+            return socket.gethostname()
+        except:
+            return "localhost.localdomain"
+
+    @staticmethod
+    def check_process(pid):
+        try:
+            pid = int(pid)
+            if pid <= 0:
+                return False
+            p = psutil.Process(pid)
+            return p.is_running()
         except Exception as e:
             return False
 
@@ -1260,7 +1335,7 @@ class ProjectStatusTask(BaseTask):
 
     def filter_template(self, template: dict) -> Optional[dict]:
         supported = ("Java", "Node", "Go", "Python", "Other")
-        _, web_by_type_map = web_info_data(project_types=supported)
+        _, web_by_type_map = web_info_data(project_types=supported, value_field="id")
         web_by_type = [[] for _ in range(len(supported))]
         for i, web_list in web_by_type_map.items():
             web_by_type[self._to_project_id(i)] = web_list

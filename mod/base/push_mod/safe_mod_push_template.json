@@ -70,13 +70,13 @@
         {
           "attr": "help",
           "name": "来源",
-          "type": "help",
+          "type": "link",
           "unit": "",
           "style": {
             "margin-top": "6px"
           },
           "list": [
-            "【网站】-> 【漏洞扫描】-> 【自动扫描】"
+            "<div class=\"flex items-center\" style=\"color:#666\">前往【PHP网站-&gt; 漏洞扫描-&gt; 自动扫描】<a href=\"/site/php\" class=\"bt-link\n\">查看详情</a></div>"
           ],
           "suffix": "",
           "default": 600
@@ -110,7 +110,7 @@
       "safe",
       "site"
     ],
-    "description": "对服务器所有网站进行定期扫描,并识别多种流行的开源CMS程序，帮助用户快速发现网站中存在的潜在安全漏洞,发送告警通知",
+    "description": "定期扫描服务器中所有网站，支持多种流行的开源CMS程序，帮助用户快速发现潜在的安全漏洞，并发送告警通知",
     "is_pro": true
   },
   {
@@ -145,13 +145,13 @@
         {
           "attr": "help",
           "name": "来源",
-          "type": "help",
+          "type": "link",
           "unit": "",
           "style": {
             "margin-top": "6px"
           },
           "list": [
-            "【安全】-> 【安全检测】-> 【文件完整性检测】-> 【定期扫描】"
+            "<div class=\"flex items-center\" style=\"color:#666\">前往【安全-&gt; 安全检测-&gt; 文件完整性检测】<a href=\"/firewall/safe-detect\" class=\"bt-link\n\">查看详情</a></div>"
           ],
           "suffix": "",
           "default": 600
@@ -210,7 +210,7 @@
             "margin-top": "6px"
           },
           "list": [
-            "<a href=\"/\">前往【首页 > 堡塔云安全中心】查看详情</a>"
+            "<div class=\"flex items-center\" style=\"color:#666\">前往【首页-&gt; 堡塔云安全中心】<a href=\"/\" class=\"bt-link\n\">查看详情</a></div>"
           ]
         }
       ],

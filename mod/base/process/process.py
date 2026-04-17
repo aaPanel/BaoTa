@@ -593,7 +593,9 @@ class RealProcess:
                     time.time() - self.last_net_process_time))
         return up, up_package, down, down_package
 
+    # 2026/02/05 使用中并不展示进程的网络， 返回空
     def get_process_net_list(self):
+        return
         w_file = '/dev/shm/bt_net_process'
         if not os.path.exists(w_file): return
         self.last_net_process = cache.get('net_process')

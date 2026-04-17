@@ -42,22 +42,28 @@ class main(dockerBase):
             return res
 
         r_list = self.registry_list(args)
-        if len(r_list) > 0:
-            for r in r_list:
-                if "reg_name" in r:
-                    if r['reg_name'] == args.name and r["reg_url"] == args.registry and r['username'] == args.username:
-                        return public.returnMsg(False, "仓库信息已存在！")
-
-                if r['name'] == args.name and r["reg_url"] == args.registry and r['username'] == args.username:
-                    return public.returnMsg(False, "仓库信息已存在！")
+        
+        username_enc = public.aes_encrypt(args.username, self.aes_key)
+        password_enc = public.aes_encrypt(args.password, self.aes_key)
+        
         pdata = {
             "reg_name": args.name,
             "url": args.registry,
             "namespace": args.namespace,
-            "username": public.aes_encrypt(args.username, self.aes_key),
-            "password": public.aes_encrypt(args.password, self.aes_key),
+            "username": '' if not args.username else username_enc,
+            "password": '' if not args.password else password_enc,
             "remark": public.xsssec(args.remark)
         }
+        
+        if len(r_list) > 0:
+            for r in r_list:
+                if "reg_name" in r:
+                    if r['reg_name'] == args.name and r["url"] == args.registry and r['username'] == pdata['username']:
+                        return public.returnMsg(False, "仓库信息已存在！")
+
+                if r['name'] == args.name and r["url"] == args.registry and r['username'] == pdata['username']:
+                    return public.returnMsg(False, "仓库信息已存在！")
+
         dp.sql("registry").insert(pdata)
         dp.write_log("添加仓库 [{}] [{}] 成功！".format(args.name, args.registry))
         return public.returnMsg(True, "添加成功！")
@@ -155,9 +161,6 @@ class main(dockerBase):
                 "namespace": "",
                 "remark": "docker官方库"
             })
-        if "error: no such table: registry" in search_result or len(search_result) == 0:
-            public.ExecShell("mv -f /www/server/panel/data/docker.db /www/server/panel/data/db/docker.db")
-            dp.check_db()
 
         res = dp.sql("registry").select()
         if not isinstance(res, list):
@@ -227,6 +230,8 @@ class main(dockerBase):
         :param args:
         :return:
         """
+        if not username and not username.strip():
+            return public.returnMsg(True, "登录测试成功！")
         import docker.errors
         try:
             res = self.docker_client(url).login(

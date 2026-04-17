@@ -1,14 +1,16 @@
 import os
+import threading
 import time
 import traceback
+from collections.abc import Callable
 from typing import Optional, List, Tuple, Dict, Type, Any, Union
 import datetime
-from threading import Thread
+from threading import Thread, Lock as ThreadLock
 
 from .base_task import BaseTask
 from .mods import TaskTemplateConfig, TaskConfig, TaskRecordConfig, SenderConfig
 from .send_tool import sms_msg_normalize
-from .tool import load_task_cls_by_path, load_task_cls_by_function, T_CLS, load_task_cls
+from .tool import load_task_cls_by_path, load_task_cls_by_function, load_task_cls
 from .util import get_server_ip, get_network_ip, format_date, get_config_value
 from .compatible import rsync_compatible
 
@@ -19,10 +21,14 @@ WAIT_TASK_LIST: List[Thread] = []
 class PushSystem:
 
     def __init__(self):
-        self.task_cls_cache: Dict[str, Type[T_CLS]] = {}
+        self.task_cls_cache: Dict[str, Type[BaseTask]] = {}
         self._today_zero: Optional[datetime.datetime] = None
         self._sender_type_class: Optional[dict] = {}
         self.sd_cfg = SenderConfig()
+        tmp = self.sd_cfg.config
+        self.lock = ThreadLock()
+        self.task_cfg = TaskConfig()
+        self.task_cfg_lock = ThreadLock()
 
     def sender_cls(self, sender_type: str):
         if not self._sender_type_class:
@@ -44,15 +50,18 @@ class PushSystem:
                 return sender["id"]
         return None
 
+    def change_task_data(self, func):
+        with self.task_cfg_lock:
+            func(self.task_cfg)
+
     def can_run_task_list(self) -> Tuple[List[dict], Dict[int, dict]]:
         import datetime
         result = []
         result_template = {}
         task_template_ids = set()
-        for task in TaskConfig().config:
+        for task in self.task_cfg.config:
             if not task["status"]:
                 continue
-            task_template_ids.add(task['template_id'])
             # 间隔检测时间未到跳过
             if "interval" in task["task_data"] and isinstance(task["task_data"]["interval"], int):
                 if "type" in task["task_data"] and task["task_data"]['type'] == "site_ssl":
@@ -66,6 +75,7 @@ class PushSystem:
                 if time.time() < task["last_check"] + task["task_data"]["interval"]:
                     continue
             result.append(task)
+            task_template_ids.add(task['template_id'])
 
         for template in TaskTemplateConfig().config:
             if template["id"] not in task_template_ids:
@@ -77,31 +87,39 @@ class PushSystem:
     def get_task_object(self, template_id, load_cls_data: dict) -> Optional[BaseTask]:
         if template_id in self.task_cls_cache:
             return self.task_cls_cache[template_id]()
+        with self.lock:
+            if template_id in self.task_cls_cache:
+                return self.task_cls_cache[template_id]()
 
-        cls = load_task_cls(load_cls_data)
+            cls = load_task_cls(load_cls_data)
+            if not cls:
+                return None
 
-        if not cls:
-            return None
-        self.task_cls_cache[template_id] = cls
-        return cls()
+            self.task_cls_cache[template_id] = cls
+            return cls()
 
     def run(self):
         rsync_compatible()
         task_list, task_template = self.can_run_task_list()
+        global WAIT_TASK_LIST
+
+        def _run(task, tp):
+            try:
+                _PushRunner(task, tp, self)()
+            except:
+                print("任务执行失败", t["id"], template["title"], t["task_data"])
+                traceback.print_exc()
+
         for t in task_list:
             if t["template_id"] not in task_template:
                 continue
             template = task_template[t["template_id"]]
             if not template["used"]:
                 continue
-            try:
-                _PushRunner(t, template, self)()
-            except:
-                print("任务执行失败", t["id"], template["title"], t["task_data"])
-                traceback.print_exc()
-                continue
+            th_task = Thread(target=_run, args=(t, template), daemon=True)
+            WAIT_TASK_LIST.append(th_task)
+            th_task.start()
 
-        global WAIT_TASK_LIST
         if WAIT_TASK_LIST:  # 有任务启用子线程的，要等到这个线程结束，再结束主线程
             for i in WAIT_TASK_LIST:
                 i.join()
@@ -138,18 +156,19 @@ class _PushRunner:
         self.is_number_rule_by_func = False  # 记录这个任务是否使用自定义的次数检测， 如果是，就不需要做次数更新
 
     def save_result(self):
+        def _change_task(t: TaskConfig):
+            tmp = t.get_by_id(self.task["id"])
+            if tmp:
+                for f in self.change_fields:
+                    tmp[f] = self.task[f]
 
-        t = TaskConfig()
-        tmp = t.get_by_id(self.task["id"])
-        if tmp:
-            for f in self.change_fields:
-                tmp[f] = self.task[f]
+                if self.result["do_send"]:
+                    tmp["last_send"] = int(time.time())
+                tmp["last_check"] = int(time.time())
 
-            if self.result["do_send"]:
-                tmp["last_send"] = int(time.time())
-            tmp["last_check"] = int(time.time())
+                t.save_config()
 
-            t.save_config()
+        self.push_system.change_task_data(_change_task)
 
         if self.result["push_data"]:
             result_data = self.result.copy()
@@ -253,7 +272,7 @@ class _PushRunner:
                 self.result['check_stop_on'] = "time_rule_send_interval"
                 return False
 
-        time_range = time_rule.get("time_range", None)
+        time_range: List[int] = time_rule.get("time_range", [])
         if time_range and isinstance(time_range, list) and len(time_range) == 2:
             t_zero = self.push_system.get_today_zero()
             start_time = t_zero + datetime.timedelta(seconds=time_range[0])
@@ -388,7 +407,7 @@ def push_by_task_keyword(source: str, keyword: str, push_data: Optional[dict] = 
     @return:
     """
     push_system = PushSystem()
-    target_task = None
+    target_task: Optional[dict] = None
     for i in TaskConfig().config:
         if i["source"] == source and i["keyword"] == keyword:
             target_task = i

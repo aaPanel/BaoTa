@@ -165,7 +165,7 @@ class FileExecuteDeny:
 ''' %  (name,dir,suffix,name)
             if '#BEGIN_DENY_{}\n'.format(name) in conf:
                 return True
-            conf = re.sub('#ERROR-PAGE-END','#ERROR-PAGE-END'+new,conf)
+            conf = re.sub('#SSL-END','#SSL-END'+new,conf)
         public.writeFile(self.ng_website_conf,conf)
         return True
 

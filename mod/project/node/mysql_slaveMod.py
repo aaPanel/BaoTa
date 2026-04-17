@@ -232,6 +232,12 @@ class main:
                     slave_status = json.loads(self.slave_manager.get_slave_info(slave_ip))
                     io_status = slave_status.get("Slave_IO_Running")
                     sql_status = slave_status.get("Slave_SQL_Running")
+                    
+                    if io_status == None:
+                        io_status = slave_status.get("Replica_IO_Running")
+                    if sql_status == None:
+                        sql_status = slave_status.get("Replica_SQL_Running")
+
                     if io_status and sql_status:
                         info["io_status"] = io_status
                         info["sql_status"] = sql_status

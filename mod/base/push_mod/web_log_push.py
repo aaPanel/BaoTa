@@ -44,7 +44,7 @@ class WEBLogTask(BaseTask):
         site_name = task_data.get("site_name", "")
         if not site_name:
             return "请配置站点名称"
-        items, _ = web_info_data(all_type=True)
+        items, _ = web_info_data(all_type=True, value_field="name")
         for item in items:
             if item["value"] == site_name:
                 break
@@ -90,7 +90,7 @@ class WEBLogTask(BaseTask):
         @param template: 任务的模板信息
         @return:
         """
-        items, _ = web_info_data(all_type=True)
+        items, _ = web_info_data(all_type=True, value_field="name")
         template["field"][0]["items"].extend(items)
         return template
 

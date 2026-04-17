@@ -21,7 +21,7 @@ import shutil
 import tarfile
 import tempfile
 import urllib.parse
-from typing import Dict, Any, Optional, Union, Tuple
+from typing import Dict, Any, Tuple
 from functools import wraps
 
 
@@ -121,7 +121,8 @@ class ThemeConfigManager:
         "theme": {
             "preset": "light",
             "color": "#20a53a",
-            "view": "default"
+            "view": "default",
+            "ai_opacity": 100
         },
         "logo": {
             "image": "/static/icons/logo-white.svg",
@@ -133,7 +134,7 @@ class ThemeConfigManager:
             "opacity": 100
         },
         "interface": {
-            "rounded": "small",
+            "rounded": "smaller",
             "is_show_bg": True,
             "bg_image": "/static/images/bg-default.png",
             "bg_image_opacity": 20,
@@ -152,6 +153,14 @@ class ThemeConfigManager:
             "bg_image": "",
             "bg_image_opacity": 70,
             "content_opacity": 100
+        },
+        "terminal":{
+            "show": False,
+            "url":"",
+            "opacity":70
+        },
+        "plugin": {
+            "comparison": True
         }
     }
     
@@ -159,11 +168,11 @@ class ThemeConfigManager:
     FIELD_VALIDATORS = {
         "theme.preset": FieldValidator(str, required=True, choices=["light", "dark"]),
         "theme.color": FieldValidator(str, required=True, pattern=r"^#[0-9a-fA-F]{3,6}$"),
-        "theme.view": FieldValidator(str, required=True, choices=["default", "compact", "wide"]),
+        "theme.view": FieldValidator(str, required=True, choices=["default", "aapanel", "compact"]),
         "sidebar.dark": FieldValidator(bool, required=True),
         "sidebar.color": FieldValidator(str, required=True, pattern=r"^#[0-9a-fA-F]{3,6}$"),
         "sidebar.opacity": FieldValidator(int, required=True, min_val=0, max_val=100),
-        "interface.rounded": FieldValidator(str, required=True, choices=["none", "small", "medium", "large"]),
+        "interface.rounded": FieldValidator(str, required=True, choices=["none","smaller", "small", "medium", "large"]),
         "interface.is_show_bg": FieldValidator(bool, required=True),
         "interface.bg_image_opacity": FieldValidator(int, required=True, min_val=0, max_val=100),
         "interface.content_opacity": FieldValidator(int, required=True, min_val=0, max_val=100),
@@ -174,7 +183,11 @@ class ThemeConfigManager:
         "login.is_show_logo": FieldValidator(bool, required=True),
         "login.is_show_bg": FieldValidator(bool, required=True),
         "login.bg_image_opacity": FieldValidator(int, required=True, min_val=0, max_val=100),
-        "login.content_opacity": FieldValidator(int, required=True, min_val=0, max_val=100)
+        "login.content_opacity": FieldValidator(int, required=True, min_val=0, max_val=100),
+        "terminal.show":FieldValidator(bool, required=True),
+        "terminal.url":FieldValidator(str, required=True, pattern=r"^(?!\s*$).+"),
+        "terminal.opacity":FieldValidator(int, required=True, min_val=0, max_val=100),
+        "plugin.comparison": FieldValidator(bool, required=True),
     }
     
     # 旧版本字段映射
@@ -383,13 +396,12 @@ class ThemeConfigManager:
             
             for field_path in critical_fields:
                 value = self._get_nested_value(validated_config, field_path)
-                if value is not None:
-                    validation_result = self.validate_field(field_path, value)
-                    if not validation_result["status"]:
-                        default_value = self._get_nested_value(self.DEFAULT_CONFIG, field_path)
-                        if default_value is not None:
-                            self._set_nested_value(validated_config, field_path, default_value)
-                            validation_fix_count += 1
+                validation_result = self.validate_field(field_path, value)
+                if not validation_result["status"]:
+                    default_value = self._get_nested_value(self.DEFAULT_CONFIG, field_path)
+                    if default_value is not None:
+                        self._set_nested_value(validated_config, field_path, default_value)
+                        validation_fix_count += 1
             
             # 构建返回消息
             message_parts = []
@@ -523,6 +535,12 @@ class ThemeConfigManager:
         validation_result = self.validate_config(config_data)
         if validation_result['status']:
             validated_config = validation_result['data']
+            
+            # 兼容代码：当暗色主题使用旧版默认背景图时，禁用背景显示
+            if (validated_config.get('theme', {}).get('preset') == 'dark' and 
+                validated_config.get('interface', {}).get('bg_image') == '/static/images/bg-default.png'):
+                validated_config['interface']['is_show_bg'] = False
+            
             # 如果配置有变更，保存更新
             if self._config_has_changes(config_data, validated_config):
                 self.save_config(validated_config, skip_validation=True)
@@ -585,6 +603,13 @@ class ThemeConfigManager:
             
             if isinstance(config, str):
                 config = json.loads(config)
+            
+            # 检测并修复缺失的字段
+            missing_check = self.detect_missing_fields(config)
+            if missing_check['status'] and missing_check['data']['total_missing'] > 0:
+                fill_result = self.auto_fill_missing_fields(config)
+                if fill_result['status']:
+                    config = fill_result['data']['config']
             
             if not skip_validation:
                 validation_result = self.validate_config(config)

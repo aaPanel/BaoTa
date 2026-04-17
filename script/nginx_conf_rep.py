@@ -265,17 +265,23 @@ def remove_nginx_server_quic(nginx_file: str) -> bool:
     if not isinstance(data, str):
         return False
 
-    rep_listen_quic = re.compile(r"\s*listen\s+.*quic;", re.M)
-    if not rep_listen_quic.search(data):
-        return False
+    rep_quic_list = [
+        re.compile(r"\s*listen\s+.*quic[^\n]*", re.M),
+        re.compile(r"\s*http3\s+on[^\n]*", re.M),
+        re.compile(r"\s*quic_retry\s+on[^\n]*", re.M),
+        re.compile(r"\s*quic_gso\s+on[^\n]*", re.M),
+        re.compile(r"\s*ssl_early_data\s+on[^\n]*", re.M),
+    ]
 
-    new_conf = rep_listen_quic.sub('', data)
+    new_conf = data
+    for rep in rep_quic_list:
+        new_conf = rep.sub("", new_conf)
     public.writeFile(nginx_file, new_conf)
     return True
 
 
 def is_nginx_http3() -> bool:
-    return public.ExecShell("nginx -V 2>&1| grep 'http_v3_module'")[0].strip() != ''
+    return public.is_nginx_http3()
 
 
 def repair_not_such_well_know(error_msg) -> bool:
