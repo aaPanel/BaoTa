@@ -80,7 +80,11 @@ class main(projectBase):
         "豆瓣": "https://pypi.douban.com/simple/",
         "腾讯云": "https://mirrors.cloud.tencent.com/pypi/simple",
         "华为云": "https://mirrors.huaweicloud.com/repository/pypi/simple",
-        "网易": "https://mirrors.163.com/pypi/simple/"
+        "网易": "https://mirrors.163.com/pypi/simple/",
+        "华中科技大学": "https://mirrors.hust.edu.cn/pypi/web/simple",
+        "南京大学": "https://mirror.nju.edu.cn/pypi/web/simple",
+        "北京大学": "https://mirrors.pku.edu.cn/pypi/web/simple",
+        "校园网联合镜像站": "https://mirrors.cernet.edu.cn/pypi/web/simple",
     }
 
     def __init__(self):
