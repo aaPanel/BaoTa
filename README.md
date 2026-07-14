@@ -16,7 +16,7 @@ url=https://download.bt.cn/install/install_panel.sh;if [ -f /usr/bin/curl ];then
 
 ```
 
-##### Debain
+##### Debian
 ```bash
 wget -O install_panel.sh https://download.bt.cn/install/install_panel.sh && bash install_panel.sh btg26
 ```
