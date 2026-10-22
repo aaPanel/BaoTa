@@ -122,6 +122,7 @@ class ajax:
     listen 80;
     server_name 127.0.0.1;
     allow 127.0.0.1;
+    deny all;
     location /nginx_status {
         stub_status on;
         access_log off;
